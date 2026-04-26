@@ -1,0 +1,144 @@
+                        
+global function StatsRegister_Control
+
+#if SERVER
+// stats hooks
+global function StatsHook_Control_OnObjectiveCaptured
+global function StatsHook_Control_PersonalEXPPointsEarned
+global function StatsHook_Control_OnCaptureBonusClaimedByTeam
+global function StatsHook_Control_OnKilledHigherTierEnemy
+global function StatsHook_Control_OnKilledObjectiveEnemy
+global function StatsHook_Control_OnBecomeEXPLeader
+global function StatsHook_Control_OnEXPEarnedWhileEXPLeader
+global function StatsHook_Control_AddPlayerTimeOnObjective
+
+// event hooks
+global function StatsEvent_Control_OnPlayerKilled
+#endif
+
+void function StatsRegister_Control()
+{
+	CAREER_STATS.gamemode_control_objectives_captured = RegisterAccumulatedStat_Int( null, "gamemode_control_objectives_captured", eChallengeGameMode.CONTROL, CHALLENGES_CALC_DEPENDS )
+	CAREER_STATS.gamemode_control_personal_exp_points_earned = RegisterAccumulatedStat_Int( null, "gamemode_control_personal_exp_points_earned", eChallengeGameMode.CONTROL, CHALLENGES_CALC_DEPENDS )
+	CAREER_STATS.gamemode_control_capture_bonuses_claimed_by_team = RegisterAccumulatedStat_Int( null, "gamemode_control_capture_bonuses_claimed_by_team", eChallengeGameMode.CONTROL, CHALLENGES_CALC_DEPENDS )
+	CAREER_STATS.gamemode_control_killed_enemy_1_tier_higher = RegisterAccumulatedStat_Int( null, "gamemode_control_killed_enemy_1_tier_higher", eChallengeGameMode.CONTROL, CHALLENGES_CALC_DEPENDS )
+	CAREER_STATS.gamemode_control_killed_enemy_2_tier_higher = RegisterAccumulatedStat_Int( null, "gamemode_control_killed_enemy_2_tier_higher", eChallengeGameMode.CONTROL, CHALLENGES_CALC_DEPENDS )
+	CAREER_STATS.gamemode_control_killed_objective_attacker = RegisterAccumulatedStat_Int( null, "gamemode_control_killed_objective_attacker", eChallengeGameMode.CONTROL, CHALLENGES_CALC_DEPENDS )
+	CAREER_STATS.gamemode_control_killed_objective_defender = RegisterAccumulatedStat_Int( null, "gamemode_control_killed_objective_defender", eChallengeGameMode.CONTROL, CHALLENGES_CALC_DEPENDS )
+	CAREER_STATS.gamemode_control_became_expleader = RegisterAccumulatedStat_Int( null, "gamemode_control_became_expleader", eChallengeGameMode.CONTROL, CHALLENGES_CALC_DEPENDS )
+	CAREER_STATS.gamemode_control_killed_expleader = RegisterAccumulatedStat_Int( null, "gamemode_control_killed_expleader", eChallengeGameMode.CONTROL, CHALLENGES_CALC_DEPENDS )
+	CAREER_STATS.gamemode_control_highest_exp_as_expleader = RegisterAccumulatedStat_Int( null, "gamemode_control_highest_exp_as_expleader", eChallengeGameMode.CONTROL, CHALLENGES_CALC_DEPENDS )
+	CAREER_STATS.gamemode_control_time_on_objective = RegisterAccumulatedStat_Int( null, "gamemode_control_time_on_objective", eChallengeGameMode.CONTROL, TRACKERS_NEED )
+}
+
+#if SERVER
+// Increment when a player captures an objective in Control Mode
+void function StatsHook_Control_OnObjectiveCaptured( entity player )
+{
+	if ( !IsValid( player ) )
+		return
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_control_objectives_captured ), 1 )
+}
+
+// Increment by the passed in amount, when the player gains personal EXP points in Control Mode
+void function StatsHook_Control_PersonalEXPPointsEarned( entity player, int expEarned )
+{
+	if ( !IsValid( player ) )
+		return
+
+	if ( expEarned > 0 )
+		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_control_personal_exp_points_earned ), expEarned )
+
+
+}
+
+// Increment when the players team wins a capture bonus
+void function StatsHook_Control_OnCaptureBonusClaimedByTeam( entity player )
+{
+	if ( !IsValid( player ) )
+		return
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_control_capture_bonuses_claimed_by_team ), 1 )
+}
+
+// Increment when a player kills an enemy with a higher EXP Tier
+void function StatsHook_Control_OnKilledHigherTierEnemy( entity player, int expTierDifference )
+{
+	if ( !IsValid( player ) )
+		return
+
+	if ( expTierDifference == 1 )
+	{
+		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_control_killed_enemy_1_tier_higher ), 1 )
+	}
+	else if ( expTierDifference == 2 )
+	{
+		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_control_killed_enemy_2_tier_higher ), 1 )
+	}
+}
+
+// Increment when a player kills an objective attacker or defender
+void function StatsHook_Control_OnKilledObjectiveEnemy( entity player, bool isEnemyAttacker )
+{
+	if ( !IsValid( player ) )
+		return
+
+	if ( isEnemyAttacker )
+	{
+		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_control_killed_objective_attacker ), 1 )
+	}
+	else
+	{
+		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_control_killed_objective_defender ), 1 )
+	}
+}
+
+// Increment when a player becomes the EXP Leader in Control
+void function StatsHook_Control_OnBecomeEXPLeader( entity player )
+{
+	if ( !IsValid( player ) )
+		return
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_control_became_expleader ), 1 )
+}
+
+// Set the highest total Exp the player has gained in their career while being Exp Leader. Only gets written if higher than previous highest total.
+void function StatsHook_Control_OnEXPEarnedWhileEXPLeader( entity player, int currentExp )
+{
+	if ( !IsValid( player ) || !GradeFlagsHas( player, eTargetGrade.EXP_LEADER ) )
+		return
+
+	if ( currentExp > 0 )
+	{
+		int oldHighestExpTotal = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_control_highest_exp_as_expleader ), eStatGetWhen.CURRENT )
+		if ( currentExp > oldHighestExpTotal )
+			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_control_highest_exp_as_expleader ), currentExp - oldHighestExpTotal )
+	}
+}
+
+// Increment when a player captures an objective in Control Mode
+void function StatsHook_Control_AddPlayerTimeOnObjective( entity player, float timeOnObjective )
+{
+	if ( !IsValid( player ) )
+		return
+
+	if ( timeOnObjective <= 0 )
+		return
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_control_time_on_objective ), int( timeOnObjective ) )
+}
+
+// Track killing the exp leader in Control
+void function StatsEvent_Control_OnPlayerKilled( entity victim, entity attacker )
+{
+	if ( GameMode_IsActive( eGameModes.CONTROL ) )
+	{
+		if ( GradeFlagsHas( victim, eTargetGrade.EXP_LEADER ) )
+		{
+			__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.gamemode_control_killed_expleader ), 1 )
+		}
+	}
+}
+#endif // SERVER
+                              

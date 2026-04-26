@@ -3,129 +3,98 @@ global function InitArmoryPanel
 struct
 {
 	var                       panel
-	array<var>                buttons
+	array<var>                allButtons
 	table<var, ItemFlavor>    buttonToCategory
 
-	var miscCustomizeButton
+	int activeTabIndex = 0
 } file
+
 
 void function InitArmoryPanel( var panel )
 {
 	file.panel = panel
-	file.buttons = GetPanelElementsByClassname( panel, "WeaponCategoryButtonClass" )
-	Assert( file.buttons.len() == 6 )
 
-	SetPanelTabTitle( panel, "#ARMORY" )
 	SetPanelTabTitle( panel, "#LOADOUT" )
-	Hud_SetY( file.buttons[0], 120 )
 
 	AddPanelEventHandler( panel, eUIEvent.PANEL_SHOW, ArmoryPanel_OnShow )
 	AddPanelEventHandler( panel, eUIEvent.PANEL_HIDE, ArmoryPanel_OnHide )
-	AddPanelEventHandler_FocusChanged( panel, ArmoryPanel_OnFocusChanged )
 
-	foreach ( button in file.buttons )
 	{
-		Hud_AddEventHandler( button, UIE_GET_FOCUS, CategoryButton_OnGetFocus )
-		Hud_AddEventHandler( button, UIE_CLICK, CategoryButton_OnActivate )
+		var childPanel = Hud_GetChild( file.panel, "ArmoryWeaponsPanel" )
+		TabDef tab = AddTab( file.panel, childPanel, "#LOOT_CAT_MAINWEAPON" )
+		SetTabBaseWidth( tab, 160 )
+	}
+	{
+		var childPanel = Hud_GetChild( file.panel, "ArmoryMorePanel" )
+		TabDef tab = AddTab( file.panel, childPanel, "#MORE" )
+		SetTabBaseWidth( tab, 160 )
 	}
 
-	file.miscCustomizeButton = Hud_GetChild( panel, "MiscCustomizeButton" )
-	Hud_AddEventHandler( file.miscCustomizeButton, UIE_CLICK, MiscCustomizeButton_OnActivate )
-	Hud_SetVisible( file.miscCustomizeButton, true )
-
-	AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
-	AddPanelFooterOption( panel, LEFT, BUTTON_A, false, "#A_BUTTON_CUSTOMIZE_WEAPON", "", null, IsButtonFocused )
+	TabData tabData = GetTabDataForPanel( file.panel )
+	tabData.centerTabs = true
+	SetTabBackground( tabData, Hud_GetChild( file.panel, "TabsBackground" ), eTabBackground.STANDARD )
+	SetTabDefsToSeasonal(tabData)
 }
 
 
 bool function IsButtonFocused()
 {
-	if ( file.buttons.contains( GetFocus() ) )
-		return true
-
-	if ( GetFocus() == file.miscCustomizeButton )
+	if ( file.allButtons.contains( GetFocus() ) )
 		return true
 
 	return false
 }
 
 
+bool function ButtonNotFocused()
+{
+	return !IsButtonFocused()
+}
+
+
 void function ArmoryPanel_OnShow( var panel )
 {
-	file.buttonToCategory.clear()
+	TabData tabData = GetTabDataForPanel( panel )
+
+	DeactivateTab( tabData )
+	SetTabNavigationEnabled( file.panel, false )
+	SetTabNavigationEnabled( file.panel, true )
+
+	if ( GetLastMenuNavDirection() == MENU_NAV_FORWARD )
+	{
+		ActivateTab( tabData, 0 )
+		thread AnimateInSmallTabBar( tabData )
+	}
+	else
+	{
+		ActivateTab( tabData, file.activeTabIndex )
+	}
 
 	UI_SetPresentationType( ePresentationType.WEAPON_CATEGORY )
 
-	array<ItemFlavor> categories = GetAllWeaponCategories()
-
-	foreach ( index, button in file.buttons )
-		CategoryButton_Init( button, categories[index] )
-
-	MiscCustomizeButton_Init( file.miscCustomizeButton )
+	{
+		var childPanel = Hud_GetChild( file.panel, "ArmoryWeaponsPanel" )
+		Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.ArmoryWeaponsTab, OnNewnessQueryChangedUpdatePanelTab, childPanel )
+	}
+	{
+		var childPanel = Hud_GetChild( file.panel, "ArmoryMorePanel" )
+		Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.ArmoryMoreTab, OnNewnessQueryChangedUpdatePanelTab, childPanel )
+	}
 }
 
 
 void function ArmoryPanel_OnHide( var panel )
 {
-	file.buttonToCategory.clear()
-}
 
+	file.activeTabIndex = GetMenuActiveTabIndex( panel )
 
-void function ArmoryPanel_OnFocusChanged( var panel, var oldFocus, var newFocus )
-{
-	if ( !IsValid( panel ) ) // uiscript_reset
-		return
+	{
+		var childPanel = Hud_GetChild( file.panel, "ArmoryWeaponsPanel" )
+		Newness_RemoveCallback_OnRerverseQueryUpdated( NEWNESS_QUERIES.ArmoryWeaponsTab, OnNewnessQueryChangedUpdatePanelTab, childPanel )
+	}
+	{
+		var childPanel = Hud_GetChild( file.panel, "ArmoryMorePanel" )
+		Newness_RemoveCallback_OnRerverseQueryUpdated( NEWNESS_QUERIES.ArmoryMoreTab, OnNewnessQueryChangedUpdatePanelTab, childPanel )
+	}
 
-	if ( !newFocus || GetParentMenu( panel ) != GetActiveMenu() )
-		return
-
-	UpdateFooterOptions()
-}
-
-
-void function CategoryButton_Init( var button, ItemFlavor category )
-{
-	bool isNew = (Newness_ReverseQuery_GetNewCount( NEWNESS_QUERIES.WeaponCategoryButton[category] ) > 0)
-	Hud_SetNew( button, isNew )
-
-	var rui = Hud_GetRui( button )
-	RuiSetString( rui, "buttonText", Localize( ItemFlavor_GetLongName( category ) ).toupper() )
-	RuiSetImage( rui, "buttonImage", ItemFlavor_GetIcon( category ) )
-	RuiSetInt( rui, "numPips", GetWeaponsInCategory( category ).len() )
-
-	file.buttonToCategory[button] <- category
-}
-
-
-void function MiscCustomizeButton_Init( var button )
-{
-	bool isNew = (Newness_ReverseQuery_GetNewCount( NEWNESS_QUERIES.GameCustomizationButton ) > 0)
-	Hud_SetNew( button, isNew )
-
-	var rui = Hud_GetRui( button )
-	RuiSetString( rui, "buttonText", Localize( "#MISC_CUSTOMIZATION" ).toupper() )
-	RuiSetInt( rui, "numPips", 3 )
-}
-
-
-void function CategoryButton_OnGetFocus( var button )
-{
-	ItemFlavor category = file.buttonToCategory[button]
-
-	printt( ItemFlavor_GetHumanReadableRef( category ) )
-}
-
-
-void function CategoryButton_OnActivate( var button )
-{
-	ItemFlavor category = file.buttonToCategory[button]
-	SetTopLevelCustomizeContext( category )
-
-	AdvanceMenu( GetMenu( "CustomizeWeaponMenu" ) )
-}
-
-
-void function MiscCustomizeButton_OnActivate( var button )
-{
-	AdvanceMenu( GetMenu( "MiscCustomizeMenu" ) )
 }

@@ -10,7 +10,6 @@ global function OnWeaponDeactivate_weapon_tesla_trap
 global function OnWeaponOwnerChanged_weapon_tesla_trap
 global function OnWeaponPrimaryAttack_weapon_tesla_trap
 global function CodeCallback_TeslaTrapCrossed
-global function Placement_IsHitEntScriptedPlaceable
 
 #if CLIENT
 	global function TeslaTrap_AreTrapsLinked
@@ -270,8 +269,8 @@ void function MpWeaponTeslaTrap_Init()
 		RegisterSignal( "TeslaTrap_StopPlacementProxy" )
 		RegisterSignal( "TeslaTrap_StopHudIconUpdate" )
 
-		RegisterNetworkedVariableChangeCallback_ent( "focalTrap", OnFocusTrapChanged )
-		
+		RegisterNetworkedVariableChangeCallback_entSafe( "focalTrap", OnFocusTrapChanged )
+
 		AddCallback_ModifyDamageFlyoutForScriptName( TESLA_TRAP_NAME, OnModifyDamageFlyout )
 		AddCallback_PlayerClassActuallyChanged( TeslaTrap_OnPlayerClassChanged )
 		AddCallback_OnPlayerChangedTeam( TeslaTrap_OnPlayerTeamChanged )
@@ -398,26 +397,6 @@ bool function OnWeaponAttemptOffhandSwitch_weapon_tesla_trap( entity weapon )
 	return true
 }
 
-bool function Placement_IsHitEntScriptedPlaceable( entity hitEnt, int depth )
-{
-	if ( hitEnt.IsWorld() )
-		return false
-
-	var hitEntClassname = hitEnt.GetNetworkedClassName()
-	if ( hitEntClassname == "func_brush" || hitEnt.GetScriptName() == "train_brush" || hitEntClassname == "script_mover" || hitEntClassname == "func_brush_lightweight" || hitEntClassname == "script_mover_train_node" )
-		return true
-
-	//if ( ALLOWED_SCRIPT_PARENT_ENTS.contains( hitEnt.GetScriptName() ) )
-	//{
-	//	return true
-	//}
-
-	if ( depth > 0  && IsValid( hitEnt.GetParent() ))
-		return Placement_IsHitEntScriptedPlaceable( hitEnt.GetParent(), depth - 1 )
-
-	return false
-}
-
 var function OnWeaponPrimaryAttack_weapon_tesla_trap( entity weapon, WeaponPrimaryAttackParams attackParams )
 {
 	entity ownerPlayer = weapon.GetWeaponOwner()
@@ -437,7 +416,7 @@ var function OnWeaponPrimaryAttack_weapon_tesla_trap( entity weapon, WeaponPrima
 			#if DEVELOPER
 				printf( "mp_weapon_tesla_trap: No more ammo before placing trap. Switching out with 'invnext'." )
 			#endif
-			
+
 			ownerPlayer.ClientCommand( "invnext" )
 		#endif
 
@@ -455,7 +434,7 @@ var function OnWeaponPrimaryAttack_weapon_tesla_trap( entity weapon, WeaponPrima
 		#if CLIENT
 			if ( currAmmo < ammoReq )
 			{
-				#if DEVELOPER 
+				#if DEVELOPER
 					printf( "mp_weapon_tesla_trap: No more ammo after placing trap. Switching out with 'invnext'." )
 				#endif
 				ownerPlayer.ClientCommand( "invnext" )
@@ -498,7 +477,7 @@ TeslaTrapPlacementInfo function TeslaTrap_GetPlacementInfo( entity player, entit
 	vector traceOffset = TESLA_TRAP_PLACEMENT_TRACE_OFFSET_UPDATE
 
 	array<entity> ignoreEnts = TeslaTrap_GetAllDead()
-	ignoreEnts.extend( GetFriendlySquadArrayForPlayer_AliveConnected( player ) )	
+	ignoreEnts.extend( GetFriendlySquadArrayForPlayer_AliveConnected( player ) )
 	ignoreEnts.append( player )
 	ignoreEnts.append( proxy )
 
@@ -910,7 +889,7 @@ int function TeslaTrap_GetPlacementMaxLinks( entity player )
 
 	if ( !IsValid( weapon ) )
 		return -1
-		
+
 	if ( weapon.GetWeaponClassName() != "mp_weapon_tesla_trap" )
 		return -1
 
@@ -1361,7 +1340,7 @@ float function TeslaTrap_GetTrapViewRating( TeslaTrapPlayerPlacementData mainPla
 	return (viewRating + feetRating)
 }
 
-bool function TeslaTrap_CanUse( entity player, entity ent )
+bool function TeslaTrap_CanUse( entity player, entity ent, int useFlags )
 {
 	if ( Bleedout_IsBleedingOut( player ) )
 		return false
@@ -2239,7 +2218,7 @@ void function Flowstate_CreateTeslaTrap( entity weapon, asset model, TeslaTrapPl
 	{
 		poleFence = snapTo
 		alreadyCreatedPole = true
-	} 
+	}
 	else
 	{
 		poleFence = CreateEntity( "prop_script" )
@@ -2281,7 +2260,7 @@ void function Flowstate_CreateTeslaTrap( entity weapon, asset model, TeslaTrapPl
 
 			TeslaTrap_ClearFocalTrapForPlayer( player )
 			TeslaTrap_SetFocalTrapForPlayer( player, poleFence )
-			
+
 			poleFence.Minimap_SetCustomState( eMinimapObject_prop_script.ARC_TRAP )
 			poleFence.Minimap_AlwaysShow( player.GetTeam(), null )
 			poleFence.Minimap_SetAlignUpright( true )
@@ -2431,7 +2410,7 @@ void function Flowstate_CreateTeslaTrap( entity weapon, asset model, TeslaTrapPl
 
 		if( !attachTo.IsLinkedToEnt(poleFence) )
 			attachTo.LinkToEnt(poleFence)
-		
+
 		if( poleFence.GetLinkEntArray().len() > 1 && attachTo.GetLinkEntArray().len() > 1 && alreadyCreatedPole )
 		{
 			TeslaTrap_SetFocalTrapForPlayer( player, null )
@@ -2815,7 +2794,7 @@ void function SetPoleFenceUsable( entity poleFence )
 	AddCallback_OnUseEntity( poleFence, OnPolePickedUp )
 }
 
-bool function PoleFence_CanUse(entity player, entity pole)
+bool function PoleFence_CanUse(entity player, entity pole, int useFlags )
 {
 	if(	!IsValid(player) || !IsValid(pole))
 		return false

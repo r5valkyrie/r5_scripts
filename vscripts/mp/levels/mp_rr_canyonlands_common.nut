@@ -128,8 +128,6 @@ void function Canyonlands_MapInit_Common()
 
 		FlagSet( "DisableDropships" )
 
-		svGlobal.evacEnabled = false //Need to disable this on a map level if it doesn't support it at all
-
 
 		RegisterSignal( SIGNAL_HOVERTANK_AT_ENDPOINT )
 		RegisterSignal( "PathFinished" )
@@ -145,7 +143,6 @@ void function Canyonlands_MapInit_Common()
 		SURVIVAL_SetPlaneHeight( 24000 )
 		SURVIVAL_SetAirburstHeight( 8000 )
 		SURVIVAL_SetMapCenter( <0, 0, 0> )
-        SURVIVAL_SetMapDelta( 4900 )
 
         AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_pvpcurrency_container", OnPvpCurrencyContainerSpawned )
         AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_upgrade_station", OnSurvivalUpgradeStationSpawned )
@@ -953,15 +950,15 @@ array<entity> function GetHoverTankEndNodes( int count, int endNodeType, array<e
 	// Don't allow hover tank positions that will be within one of the final circles because they are OP positions for end game
 	array<entity> nodesNotInFinalCircles
 	int deathFieldStageIndexSmall = GetCurrentPlaylistVarInt( "canyonlands_hovertanks_circle_index", HOVER_TANKS_DEFAULT_CIRCLE_INDEX ) + 1
-	if ( deathFieldStageIndexSmall >= SURVIVAL_GetDeathFieldStages().len() )
+	if ( deathFieldStageIndexSmall >= SURVIVAL_GetDeathFieldStages(-1).len() )
 	{
 		#if DEVELOPER
 			Warning( "Hovertank playlist var 'canyonlands_hovertanks_circle_index' has bad death field stage: %d", deathFieldStageIndexSmall )
 		#endif
 
-		deathFieldStageIndexSmall = SURVIVAL_GetDeathFieldStages().len() - 1
+		deathFieldStageIndexSmall = SURVIVAL_GetDeathFieldStages(-1).len() - 1
 	}
-	DeathFieldStageData deathFieldStageDataSmall = GetDeathFieldStage(  deathFieldStageIndexSmall )
+	DeathFieldStageData deathFieldStageDataSmall = GetDeathFieldStage( 0, deathFieldStageIndexSmall )
 	float invalidRadius = deathFieldStageDataSmall.endRadius + HOVER_TANK_RADIUS
 	for ( int i = potentialEndNodes.len() - 1; i >= 0; i-- )
 	{
@@ -973,15 +970,15 @@ array<entity> function GetHoverTankEndNodes( int count, int endNodeType, array<e
 	{
 		// Exclude end nodes that are outside the current safe circle
 		int deathFieldStageIndexLarge = GetCurrentPlaylistVarInt( "canyonlands_hovertanks_circle_index", HOVER_TANKS_DEFAULT_CIRCLE_INDEX )
-		if ( deathFieldStageIndexLarge >= SURVIVAL_GetDeathFieldStages().len() )
+		if ( deathFieldStageIndexLarge >= SURVIVAL_GetDeathFieldStages(-1).len() )
 		{
 			#if DEVELOPER
 				Warning( "Hovertank playlist var 'canyonlands_hovertanks_circle_index' has bad death field stage: %d", deathFieldStageIndexLarge )
 			#endif
 
-			deathFieldStageIndexLarge = SURVIVAL_GetDeathFieldStages().len() - 1
+			deathFieldStageIndexLarge = SURVIVAL_GetDeathFieldStages(-1).len() - 1
 		}
-		DeathFieldStageData deathFieldStageDataLarge = GetDeathFieldStage(  deathFieldStageIndexLarge )
+		DeathFieldStageData deathFieldStageDataLarge = GetDeathFieldStage( 0, deathFieldStageIndexLarge )
 		for ( int i = potentialEndNodes.len() - 1; i >= 0; i-- )
 		{
 			if ( Distance2D( deathFieldStageDataLarge.endPos, potentialEndNodes[i].GetOrigin() ) >= deathFieldStageDataLarge.endRadius )

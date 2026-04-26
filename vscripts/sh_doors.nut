@@ -1408,7 +1408,7 @@ void function DelayedSetDoorUsable( entity door, float delay )
 
 
 #if SERVER || CLIENT
-bool function BlockableDoorCanUseCheck( entity player, entity door )
+bool function BlockableDoorCanUseCheck( entity player, entity door, int useFlags )
 {
 	// todo(dw): move the constants out
 
@@ -2260,7 +2260,7 @@ void function SurvivalDoorSlidingPostDamage( entity ent, var damageInfo )
 #endif
 
 #if SERVER || CLIENT
-bool function Survival_DoorSliding_CanUseFunction( entity playerUser, entity doorModel )
+bool function Survival_DoorSliding_CanUseFunction( entity playerUser, entity doorModel, int useFlags )
 {
 	float doorUseRangeSquared = SURVIVAL_SLIDING_DOOR_USE_RANGE_SQUARED
 	float doorUseRange        = SURVIVAL_SLIDING_DOOR_USE_RANGE

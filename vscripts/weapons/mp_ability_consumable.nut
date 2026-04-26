@@ -1,15 +1,13 @@
-untyped //required for CPlayer class functions
-
 global function WeaponDrivenConsumablesEnabled
 
 global function OnWeaponAttemptOffhandSwitch_Consumable
 global function OnWeaponActivate_Consumable
+global function OnWeaponDeactivate_Consumable
+global function OnWeaponRaise_Consumable
 global function OnWeaponChargeBegin_Consumable
 global function OnWeaponChargeEnd_Consumable
 global function OnWeaponPrimaryAttack_Consumable
-global function OnWeaponDeactivate_Consumable
 global function OnWeaponOwnerChanged_Consumable
-global function OnWeaponRaise_Consumable
 
 global function Consumable_Init
 global function Consumable_PredictConsumableUse
@@ -17,6 +15,9 @@ global function Consumable_IsValidConsumableInfo
 global function Consumable_GetConsumableInfo
 global function Consumable_CanUseConsumable
 global function Consumable_CreatePotentialHealData
+global function Consumable_CanUseUltAccel
+global function Consumable_CalculateTotalHealFromItem
+global function Consumable_CalculateTotalShieldFromItem
 #if CLIENT
 global function OnCreateChargeEffect_Consumable
 global function OnCreateMuzzleFlashEffect_Consumable
@@ -25,32 +26,41 @@ global function Consumable_UseItemByType
 global function Consumable_UseItemByRef
 global function Consumable_UseCurrentSelectedItem
 global function Consumable_GetBestConsumableTypeForPlayer
+global function TryUpdateCurrentSelectedConsumableToBest
 global function Consumable_GetLocalViewPlayerSelectedConsumableType
 global function Consumable_SetSelectedConsumableType
 global function Consumable_OnSelectedConsumableTypeNetIntChanged
+global function Consumable_GetClientSelectedConsumableType
 global function Consumable_CancelHeal
 global function Consumable_IsCurrentSelectedConsumableTypeUseful
 
 global function Consumable_SetClientTypeOnly
-global function AddModAndFireWeapon_Thread
+
+global function Consumable_DoUltAccelScreenFx
 global function Consumable_DoHealScreenFx
+
+global function ServerCallback_TryUseConsumable
 global function ServerToClient_DoUltAccelScreenFx
 global function ServerToClient_SetClientChargeTime
+
+                        
+                                                     
+                                            
+      
 #endif // CLIENT
 
 #if SERVER
 global function Consumable_AddCallback_OnPlayerHealingStarted
 global function Consumable_AddCallback_OnPlayerHealingEnded
-
-#endif // SERVER
+global function TryTriggerConsumableUse
+global function ClientCallback_SetNextHealModType
+global function ClientCallback_SetSelectedConsumableTypeNetInt
 global function GetConsumableInfoFromRef
+#endif // SERVER
 
 global function Consumable_IsValidModCommand
 global function Consumable_IsHealthItem
 global function Consumable_IsShieldItem
-global const int SCORE_BOMBPLANTED_REWARD = 500
-global const int SCORE_BOMBCARRIERKILLED_BONUS = 100
-global const int SCORE_BOMBCARRIERKILLED = 100
 
 global enum eConsumableType
 {
@@ -60,9 +70,16 @@ global enum eConsumableType
 	SHIELD_SMALL
 	COMBO_FULL
 	// do not change order of above as autoplayers depends on it - see "enum class HealingItem"
+                         
+                       
+                        
+                       
+       
+                      
+               
+       
 	ULTIMATE
-	SND_BOMB
-	
+
 	_count
 }
 
@@ -71,7 +88,6 @@ global struct ConsumableInfo
 {
 	LootData&           lootData
 	float               chargeTime = UNSET_CHARGE_TIME
-	string              chargeSoundName = ""
 	string              cancelSoundName = ""
 	int					healAmount
 	int					shieldAmount
@@ -94,11 +110,11 @@ global struct ConsumableInfo
 
 global struct PotentialHealData
 {
-	ConsumableInfo &consumableInfo
-	int kitType
-	int count
-	int overHeal
-	int overShield
+	ConsumableInfo & consumableInfo
+	int              kitType
+	int              count
+	int              overHeal
+	int              overShield
 
 	int possibleHealthAdd
 	int possibleShieldAdd
@@ -186,10 +202,22 @@ struct
 
 } file
 
+const bool DEBUG_PRINTS = false
+
 global const int OFFHAND_SLOT_FOR_CONSUMABLES = OFFHAND_ANTIRODEO
 global const string CONSUMABLE_WEAPON_NAME = "mp_ability_consumable"
 
+                        
+                                                   
+                                                    
+                                                   
+          
+                                                      
+      
+      
+
 const string SHOW_ULT_ACCEL_FX_PLAYLIST_VAR = "ult_accel_vfx_enable"
+
 const float HEAL_CHATTER_DEBOUNCE = 10.0
 const RESTORE_HEALTH_COCKPIT_FX = $"P_heal_loop_screen"
 const asset VFX_ULT_ACCEL_POP = $"P_UltAcc_screenSpace"
@@ -207,7 +235,11 @@ void function Consumable_Init()
 
 	PrecacheParticleSystem( VFX_ULT_ACCEL_POP )
 
-	{ // Phoenix Kit - Full health and shields
+	Remote_RegisterServerFunction( "ClientCallback_SetSelectedConsumableTypeNetInt", "int", INT_MIN, INT_MAX )
+	Remote_RegisterServerFunction( "ClientCallback_SetNextHealModType", "int", 0, eConsumableType._count - 1 )
+
+	{
+		// Phoenix Kit - Full health and shields
 		ConsumableInfo phoenixKit
 		{
 			phoenixKit.lootData = SURVIVAL_Loot_GetLootDataByRef( "health_pickup_combo_full" )
@@ -227,13 +259,57 @@ void function Consumable_Init()
 			shieldLarge.healAmount = 0
 			shieldLarge.shieldAmount = 999
 			shieldLarge.healCap = 0.0
-			shieldLarge.chargeSoundName = "Shield_Battery_Charge"
 			shieldLarge.cancelSoundName = "shield_battery_failure"
 			shieldLarge.modName = "shield_large"
 		}
 		file.consumableTypeToInfo[ eConsumableType.SHIELD_LARGE ] <- shieldLarge
 	}
+                         
+  
+                           
+                                     
+   
+                                                                                          
+                                      
+                                          
+                                     
+                                                                  
+                                                          
+                                                    
+   
+                                                                                             
+  
 
+  
+                            
+                                      
+   
+                                                                                           
+                                       
+                                          
+                                      
+                                                                   
+                                                            
+                                                     
+   
+                                                                                               
+  
+
+  
+                           
+                                     
+   
+                                                                                          
+                                      
+                                         
+                                     
+                                                                  
+                                                          
+                                                    
+   
+                                                                                             
+  
+       
 	{
 		// Small shield cell
 		ConsumableInfo shieldSmall
@@ -268,12 +344,26 @@ void function Consumable_Init()
 			healthSmall.lootData = SURVIVAL_Loot_GetLootDataByRef( "health_pickup_health_small" )
 			healthSmall.healAmount = 25
 			healthSmall.shieldAmount = 0
-			healthSmall.chargeSoundName = "Health_Syringe_Charge_Short"
 			healthSmall.cancelSoundName = "Health_Syringe_Failure"
 			healthSmall.modName = "health_small"
 		}
 		file.consumableTypeToInfo[ eConsumableType.HEALTH_SMALL ] <- healthSmall
 	}
+
+                      
+  
+                                                  
+                              
+   
+                                                                                            
+                                
+                                  
+                                                           
+                                           
+   
+                                                                              
+  
+       
 
 	{
 		// Ultimate battery
@@ -289,69 +379,63 @@ void function Consumable_Init()
 		file.consumableTypeToInfo[ eConsumableType.ULTIMATE ] <- ultimateBattery
 	}
 
-	if( Gamemode() == eGamemodes.fs_snd )
-	{
-		// Bomb
-		ConsumableInfo bomb
-		{
-			bomb.ultimateAmount = 0.0
-			bomb.healAmount = 0
-			bomb.healTime = 0.0
-			bomb.lootData = SURVIVAL_Loot_GetLootDataByRef( "snd_bomb" )
-			bomb.chargeSoundName = "Wattson_Xtra_A"
-			bomb.cancelSoundName = "ui_lobby_rankchip_disable"//"UI_Networks_Invitation_Canceled"
-			bomb.modName = "snd_bomb"
-		}
-		file.consumableTypeToInfo[ eConsumableType.SND_BOMB ] <- bomb
-	}
-	
 	file.modNameToConsumableType[ "health_small" ] <-        eConsumableType.HEALTH_SMALL
 	file.modNameToConsumableType[ "health_large" ] <-        eConsumableType.HEALTH_LARGE
 	file.modNameToConsumableType[ "shield_small" ] <-        eConsumableType.SHIELD_SMALL
 	file.modNameToConsumableType[ "shield_large" ] <-        eConsumableType.SHIELD_LARGE
+                         
+                                                                                                          
+                                                                                                            
+                                                                                                          
+       
 	file.modNameToConsumableType[ "phoenix_kit" ] <-        eConsumableType.COMBO_FULL
 	file.modNameToConsumableType[ "ultimate_battery" ] <-    eConsumableType.ULTIMATE
-	
-	if( Gamemode() == eGamemodes.fs_snd )
-		file.modNameToConsumableType[ "snd_bomb" ] <-    eConsumableType.SND_BOMB
-	
+	                    
+	file.modNameToConsumableType[ "ultimate_battery_fast" ] <-    eConsumableType.ULTIMATE
+       
+                      
+                                                                                      
+       
+
 	file.consumableUseOrder.append( eConsumableType.SHIELD_LARGE )
+                         
+                                                                         
+                                                                          
+                                                                         
+       
 	file.consumableUseOrder.append( eConsumableType.SHIELD_SMALL )
 	file.consumableUseOrder.append( eConsumableType.COMBO_FULL )
 	file.consumableUseOrder.append( eConsumableType.HEALTH_LARGE )
 	file.consumableUseOrder.append( eConsumableType.HEALTH_SMALL )
-	if( Gamemode() == eGamemodes.fs_snd )
-		file.consumableUseOrder.append( eConsumableType.SND_BOMB )
-	
+
 	#if SERVER
 		AddCallback_OnClientConnected( OnClientConnected )
-
-		AddClientCommandCallbackVoid( "SetSelectedConsumableTypeNetInt", ClientCommand_SetSelectedConsumableTypeNetInt )
-		AddClientCommandCallbackVoid( "SetNextHealModType", ClientCommand_SetNextHealModType  )
-
-		RegisterSignal( "StartHeal" )
+		AddCallback_OnClientConnectionRestored( OnClientConnectionRestored )
 	#endif
 
 	#if CLIENT
 		AddCallback_OnPlayerConsumableInventoryChanged( SwitchSelectedConsumableIfEmptyAndPushClientSelectionToServer ) //client authoritative selection
 
 		SetCallback_UseConsumable( Consumable_HandleConsumableUseCommand )
-		AddTargetNameCreateCallback( "flowstate_bomb", BombCreated )
-		RegisterSignal("OnlyOneBombSound")
+		AddCallback_GameStateEnter( eGameState.Resolution, Consumable_OnGamestateEnterResolution )
 	#endif
+
+	                    
+		AddCallback_OnPassiveChanged( ePassives.PAS_ULT_UPGRADE_ONE, UpgradedUltAccel_PassiveToggle )
+       
 }
 
-
+#if SERVER
 void function OnClientConnected( entity player )
 {
 	file.playerHealResourceIds[player] <- []
 
-	#if SERVER
-	//printt("OnClientConnected SERVER")
-	file.playerToNextMod[player] <- "phoenix_kit"
-	#endif
+	AddButtonPressedPlayerInputCallback( player, IN_OFFHAND4, TryUseUltAccel )
 }
+#endif // SERVER
 
+
+                    
 void function UpgradedUltAccel_PassiveToggle( entity player, int pas, bool didHave, bool nowHas )
 {
 	#if CLIENT
@@ -388,6 +472,8 @@ void function UpgradedUltAccel_PassiveToggle( entity player, int pas, bool didHa
 		}
 	}
 }
+      
+
 
 // =========================================================================================================================
 // #     # #######    #    ######  ####### #     #       ####### #     # #     #  #####  ####### ### ####### #     #  #####
@@ -414,9 +500,9 @@ void function OnWeaponOwnerChanged_Consumable( entity weapon, WeaponOwnerChanged
 
 	if ( !IsValid( changeParams.oldOwner ) )
 	{
-		#if CLIENT
-			if ( weaponOwner == GetLocalViewPlayer() )
-		#endif // CLIENT
+#if CLIENT
+		if ( weaponOwner == GetLocalViewPlayer() )
+#endif // CLIENT
 		{
 			TryAddWeaponPersistenceData( weapon )
 		}
@@ -508,6 +594,45 @@ void function TryTriggerConsumableUse( entity player )
 	player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, CONSUMABLE_WEAPON_NAME )
 }
 #endif
+
+#if CLIENT
+void function ApplyStickers( entity weapon )
+{
+	entity weaponOwner = weapon.GetOwner()
+	string modName = GetConsumableModOnWeapon( weapon )
+
+	entity weaponVm = weapon.GetWeaponViewmodel()
+	/*if ( weaponVm )
+	{
+		DestroyAllStickersOnEntity( weaponVm )
+
+		int stickerObjectType = GetStickerObjectType( modName )
+		if ( stickerObjectType != -1 )
+		{
+			EHI weaponOwnerEHI = ToEHI( weaponOwner )
+			int maxStickersForObjectType = GetMaxStickersForObjectType( stickerObjectType )
+
+			for ( int stickerSlot = 0; stickerSlot < maxStickersForObjectType; ++stickerSlot )
+			{
+				SettingsAssetGUID stickerLoadoutSlotGuid = weaponOwner.GetStickerSlot( stickerObjectType * maxStickersForObjectType + stickerSlot )
+				ItemFlavor ornull stickerItemOrNull = GetItemFlavorOrNullByGUID( stickerLoadoutSlotGuid )
+
+				if (stickerItemOrNull == null)
+					continue
+
+				ItemFlavor stickerItem = expect ItemFlavor( stickerItemOrNull )
+
+				if ( !Sticker_IsTheEmpty( stickerItem ) )
+				{
+					float scale = Sticker_GetDecalScale( stickerItem, stickerObjectType, stickerSlot + 1 )
+					Sticker_PlaceDecalForLocalPlayer( weaponVm, Sticker_GetDecalMaterialAsset( stickerItem ), "STICKER_" + ( stickerSlot + 1 ), scale )
+				}
+			}
+		}
+	}*/
+}
+#endif
+
 void function OnWeaponActivate_Consumable( entity weapon )
 {
 	entity weaponOwner = weapon.GetOwner()
@@ -516,7 +641,7 @@ void function OnWeaponActivate_Consumable( entity weapon )
 	TryAddWeaponPersistenceData( weapon )
 
 	#if SERVER
-		weaponOwner.p.playerIsPlantingBomb = true
+		                    
 			if( file.playerToNextMod[ weaponOwner ] == "ultimate_battery" )
 			{
 				if( PlayerHasPassive( weaponOwner, ePassives.PAS_BATTERY_POWERED ) && PlayerHasPassive( weaponOwner, ePassives.PAS_ULT_UPGRADE_ONE ) )
@@ -530,17 +655,24 @@ void function OnWeaponActivate_Consumable( entity weapon )
 		weaponOwner.SetPlayerNetBool( "isHealing", true )
 
 		//Certain player movements are always restricted
-		weaponOwner.DisableMantle()
+		DisableMantle( weaponOwner )
 
 		//Create tracking point of intrest for this heal.
 		TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_HEAL, weaponOwner, weaponOwner.GetOrigin(), weaponOwner.GetTeam(), weaponOwner )
 	#endif // SERVER
 
 	#if CLIENT
+		// For players that are not the owners, we always apply the sticker now. Owner players we apply later down the the function
+		// as we will be predicting and the weapon mod is set later.
+		if ( weapon.GetOwner() != GetLocalClientPlayer() && GetLocalViewPlayer() == weapon.GetOwner() )		
+		{
+			ApplyStickers( weapon )
+		}
+	#endif
+
+	#if CLIENT
 		if ( weapon.GetOwner() != GetLocalViewPlayer() && !IsSpectatorSpectatingPlayer( weapon.GetOwner() ) )
 			return
-		
-		weaponOwner.p.playerIsPlantingBomb = true
 
 	                    
 		if( file.clientPlayerNextMod == "ultimate_battery" )
@@ -548,7 +680,7 @@ void function OnWeaponActivate_Consumable( entity weapon )
 			if( PlayerHasPassive( weaponOwner, ePassives.PAS_BATTERY_POWERED ) && PlayerHasPassive( weaponOwner, ePassives.PAS_ULT_UPGRADE_ONE ) )
 				file.clientPlayerNextMod = "ultimate_battery_fast"
 		}
-
+       
 		modName = file.clientPlayerNextMod
 		printt( format( "[CONSUMABlE] Activating consumable (%s)", modName ) )
 
@@ -563,10 +695,11 @@ void function OnWeaponActivate_Consumable( entity weapon )
 			return
 
 		file.healCompletedSuccessfully = false
+
 	#endif // CLIENT
 
 #if CLIENT
-	if ( InPrediction() )
+	if ( InPrediction())// && weapon.IsPredicted())
 #endif
 	{
 		if ( modName == "phoenix_kit" )
@@ -579,6 +712,10 @@ void function OnWeaponActivate_Consumable( entity weapon )
 		printt( format( "[CONSUMABlE-%s] OnWeaponActivate_Consumable: Add mod (%s)", weaponOwner.GetPlayerName(), modName ) )
 	}
 
+#if CLIENT
+	ApplyStickers( weapon )
+#endif
+
 	ConsumablePersistentData useData
 #if CLIENT
 	if ( IsSpectatorSpectatingPlayer( weapon.GetOwner() ) && (weapon in file.weaponPersistentData) )
@@ -588,32 +725,65 @@ void function OnWeaponActivate_Consumable( entity weapon )
 		ResetConsumableData( useData )
 	}
 
-		if ( GetCurrentPlaylistVarBool( "survival_healthkits_limit_movement", true ) )
+	if ( GetCurrentPlaylistVarBool( "survival_healthkits_limit_movement", true ) )
+	{
+#if CLIENT
+		if ( InPrediction() )
+#endif
 		{
-			#if CLIENT
-					if ( InPrediction() )
-			#endif
-			{
-				if( modName != "ultimate_battery" && !PlayerHasPassive( weaponOwner, ePassives.PAS_SUPPORT ) )
-					useData.statusEffectHandles.append( StatusEffect_AddEndless( weaponOwner, eStatusEffect.move_slow, 0.479 ) )
-				else if( PlayerHasPassive( weaponOwner, ePassives.PAS_SUPPORT ) || modName == "ultimate_battery" )
-					useData.statusEffectHandles.append( StatusEffect_AddEndless( weaponOwner, eStatusEffect.move_slow, 0.183 ) )
-
-				useData.statusEffectHandles.append( StatusEffect_AddEndless( weaponOwner, eStatusEffect.disable_wall_run_and_double_jump, 1.0 ) )
-			}
+                          
+                                                                                                                                                                                                                                                                                
+    
+         
+                            
+                                                 
+     
+                                                                                 
+                                                                                                               
+     
+        
+          
+				{
+					useData.statusEffectHandles.append( StatusEffect_AddEndless( weaponOwner, eStatusEffect.move_slow, GetCurrentPlaylistVarFloat( "survival_healthkits_move_speed_reduction", 0.4 ) ) )
+				}
+                          
+    
+         
+			useData.statusEffectHandles.append( StatusEffect_AddEndless( weaponOwner, eStatusEffect.disable_wall_run, 1.0 ) )
+			useData.statusEffectHandles.append( StatusEffect_AddEndless( weaponOwner, eStatusEffect.disable_double_jump, 1.0 ) )
 		}
+	}
 
 	int consumableType  = file.modNameToConsumableType[ modName ]
 	ConsumableInfo info = file.consumableTypeToInfo[ consumableType ]
 
-#if CLIENT
-	if ( SURVIVAL_CountItemsInInventory( weapon.GetOwner(), info.lootData.ref ) <= 0 )
-	{
-		Consumable_CancelHeal( weapon.GetOwner() )
-	}
-	
-	Chroma_ConsumableBegin( weapon, info )
-#endif // CLIENT
+	#if CLIENT
+                          
+                                         
+                                                                                            
+
+                                                                                                    
+   
+                                                                                                                         
+   
+                                                                                                          
+   
+
+                                                                                 
+
+                                             
+                                                                                                         
+   
+      
+        
+		if ( SURVIVAL_CountItemsInInventory( weapon.GetOwner(), info.lootData.ref ) <= 0 )
+		{
+			printt( format( "[CONSUMABlE] Cancelling activation since we don't have required item (%s)", info.lootData.ref	) )
+			Consumable_CancelHeal( weapon.GetOwner() )
+		}
+
+		Chroma_ConsumableBegin( weapon, info )
+	#endif // CLIENT
 
 	#if SERVER
 		weaponOwner.SetPlayerNetInt( "healingKitTypeCurrentlyBeingUsed", consumableType )
@@ -625,11 +795,10 @@ void function OnWeaponActivate_Consumable( entity weapon )
 	{
 		if ( (weaponOwner in file.playerToLastHealChatterTime) && Time() - file.playerToLastHealChatterTime[ weaponOwner ] > HEAL_CHATTER_DEBOUNCE )
 		{
-			#if CLIENT
+#if CLIENT
 			if ( !IsSpectatorSpectatingPlayer( weaponOwner ) )
-			#endif
+#endif
 			{
-			
 				file.playerToLastHealChatterTime[ weaponOwner ] <- Time()
 				if(modName == "phoenix_kit")
 				{
@@ -646,9 +815,9 @@ void function OnWeaponActivate_Consumable( entity weapon )
 	{
 		if ( (weaponOwner in file.playerToLastHealChatterTime) && Time() - file.playerToLastShieldChatterTime[ weaponOwner ] > HEAL_CHATTER_DEBOUNCE )
 		{
-		#if CLIENT
+#if CLIENT
 			if ( !IsSpectatorSpectatingPlayer( weaponOwner ) )
-		#endif
+#endif
 			{
 				file.playerToLastShieldChatterTime[ weaponOwner ] <- Time()
 				PlayBattleChatterToSelfOnClientAndTeamOnServer( weaponOwner, "bc_usingShieldCell" )
@@ -658,9 +827,9 @@ void function OnWeaponActivate_Consumable( entity weapon )
 
 	int consumableRecoveryType = Consumable_GetConsumableRecoveryType( consumableType )
 
-	#if CLIENT
-		if ( InPrediction() )
-	#endif // CLIENT
+#if CLIENT
+	if ( InPrediction() )
+#endif // CLIENT
 	{
 		weapon.SetScriptInt0( consumableRecoveryType )
 		printt( format( "[CONSUMABlE-%s] Done activating, setting consumable int to %d", weaponOwner.GetPlayerName(), consumableRecoveryType ) )
@@ -682,7 +851,7 @@ void function OnWeaponActivate_Consumable( entity weapon )
 #endif
 
 	#if CLIENT
-		thread Consumable_DisplayProgressBar( weaponOwner, weapon, consumableRecoveryType, modName )
+		thread Consumable_DisplayProgressBar( weaponOwner, weapon, consumableRecoveryType )
 	#endif
 }
 
@@ -701,14 +870,13 @@ void function OnWeaponDeactivate_Consumable( entity weapon )
 		string currentMod = GetConsumableModOnWeapon( weapon )
 		Assert( currentMod != "", "No consumable mod on weapon" )
 		
-		weaponOwner.p.playerIsPlantingBomb = false
-
 		if ( currentMod == "health_small" || currentMod == "health_large" )
 			StopSoundOnEntity( weaponOwner, "Health_Syringe_Draw_3p" )
 		else if ( currentMod == "shield_small" || currentMod == "shield_large" || currentMod == "phoenix_kit" )
 			StopSoundOnEntity( weaponOwner, "Shield_Battery_Draw_3p" )
 		else if ( currentMod == "ultimate_battery" )
 			StopSoundOnEntity( weaponOwner, "Ult_Acc_Start_3p" )
+
 		weaponOwner.SetPlayerNetBool( "isHealing", false )
 		weaponOwner.SetPlayerNetInt( "healingKitTypeCurrentlyBeingUsed", -1 )
 
@@ -716,16 +884,35 @@ void function OnWeaponDeactivate_Consumable( entity weapon )
 
 		if ( IsValid( weaponOwner ) )
 		{
-			foreach ( effectHandle in useData.statusEffectHandles )
-				StatusEffect_Stop( weaponOwner, effectHandle )
+			EnableMantle( weaponOwner )
 
-			weaponOwner.EnableMantle()
 			if ( useData.shieldStatusHandle != 0 )
 				StatusEffect_Stop( weaponOwner, useData.shieldStatusHandle )
 
 			if ( useData.healthStatusHandle != 0 )
 				StatusEffect_Stop( weaponOwner, useData.healthStatusHandle )
-			
+
+			                               
+				/*if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_VALENTINES_S15 ) )
+				{
+					if ( useData.useFinished )
+					{
+						Signal( weaponOwner, VALENTINES_S15_HEAL_SUCCESS_SIGNAL )
+					}
+					else
+					{
+						Signal( weaponOwner, VALENTINES_S15_HEAL_CANCELED_SIGNAL )
+					}
+				}*/
+                                       
+
+                                     
+                               
+    
+                                              
+    
+         
+
 			if ( weaponOwner in file.playerToNextMod )
 				printt( format( "[CONSUMABLE-%s] OnWeaponDeactivate, file struct's nextMod is (%s)", weaponOwner.GetPlayerName(), file.playerToNextMod[ weaponOwner ] ) )
 		}
@@ -746,9 +933,7 @@ void function OnWeaponDeactivate_Consumable( entity weapon )
 	#if CLIENT
 		if ( IsValid( weaponOwner ) && weaponOwner != GetLocalViewPlayer() )
 			return
-		
-		weaponOwner.p.playerIsPlantingBomb = false
-		
+
 		Signal( weaponOwner, "ConsumableDestroyRui" )
 		Chroma_ConsumableEnd()
 
@@ -789,6 +974,12 @@ void function OnWeaponDeactivate_Consumable( entity weapon )
 			{
 				WaitFrame()
 			}
+
+			printt( "[CONSUMABLE] Removing stickers" )
+
+			// If we still have a view model, destroy the stickers on it.
+			//if ( IsValid( weaponVm ) )
+			//	DestroyAllStickersOnEntity( weaponVm )
 		}()
 	}
 #endif
@@ -835,46 +1026,26 @@ void function OnWeaponRaise_Consumable( entity weapon )
 
 
 #if CLIENT
-void function Consumable_DisplayProgressBar( entity player, entity weapon, int consumableRecoveryType, string modName)
+void function Consumable_DisplayProgressBar( entity player, entity weapon, int consumableRecoveryType )
 {
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnChargeEnd" )
 	player.EndSignal( "ConsumableDestroyRui" )
 
 	string consumableName = weapon.GetWeaponSettingString( eWeaponVar.printname )
-	asset hudIcon = weapon.GetWeaponSettingAsset( eWeaponVar.hud_icon )
-	float raiseTime = weapon.GetWeaponSettingFloat( eWeaponVar.raise_time )
-	if(modName == "snd_bomb")
-		raiseTime = 0.4
-	float chargeTime = weapon.GetWeaponSettingFloat( eWeaponVar.charge_time )
+	asset hudIcon         = weapon.GetWeaponSettingAsset( eWeaponVar.hud_icon )
+	float raiseTime       = weapon.GetWeaponSettingFloat( eWeaponVar.raise_time )
+	float chargeTime      = weapon.GetWeaponSettingFloat( eWeaponVar.charge_time )
 
 	var rui = CreateFullscreenRui( $"ui/consumable_progress.rpak" )
 
+	RuiSetGameTime( rui, "healStartTime", Time() )
+	RuiSetString( rui, "consumableName", consumableName )
+	RuiSetFloat( rui, "raiseTime", raiseTime )
+	RuiSetFloat( rui, "chargeTime", chargeTime )
+	RuiSetImage( rui, "hudIcon", hudIcon )
+	RuiSetInt( rui, "consumableType", consumableRecoveryType )
 
-	if(modName == "snd_bomb")
-	{
-		chargeTime -= 2
-		raiseTime -= 2
-		RuiSetGameTime( rui, "healStartTime", Time() )
-		RuiSetString( rui, "consumableName", consumableName )
-		RuiSetFloat( rui, "raiseTime", raiseTime )
-		RuiSetFloat( rui, "chargeTime", chargeTime )
-		RuiSetImage( rui, "hudIcon", $"rui/flowstatecustom/bombicon" )
-		RuiSetInt( rui, "consumableType", 0 )
-
-		RuiSetString( rui, "hintController", "PRESS %attack% TO STOP PLANTING" )
-		RuiSetString( rui, "hintKeyboardMouse", "PRESS %attack% TO STOP PLANTING" )
-	}
-	else 
-	{
-		RuiSetGameTime( rui, "healStartTime", Time() )
-		RuiSetString( rui, "consumableName", consumableName )
-		RuiSetFloat( rui, "raiseTime", raiseTime )
-		RuiSetFloat( rui, "chargeTime", chargeTime )
-		RuiSetImage( rui, "hudIcon", hudIcon )
-		RuiSetInt( rui, "consumableType", consumableRecoveryType )
-	}
-	
 	OnThreadEnd(
 		function() : ( rui, player )
 		{
@@ -885,7 +1056,6 @@ void function Consumable_DisplayProgressBar( entity player, entity weapon, int c
 	//wait raiseTime + chargeTime
 	float startTime = Time()
 	float endTime = startTime + raiseTime + chargeTime
-	
 	while ( Time() < endTime )
 	{
 		//+crypto specific stuff
@@ -900,13 +1070,11 @@ void function Consumable_DisplayProgressBar( entity player, entity weapon, int c
 			RuiSetString( rui, "hintKeyboardMouse", "#SURVIVAL_CANCEL_HEAL_PC" )
 		}
 		//-crypto specific stuff
+
 		if( chargeTime != weapon.GetWeaponSettingFloat( eWeaponVar.charge_time ) )
 		{
-			if(modName == "snd_bomb")
-				raiseTime = 0.4
-			else
-				raiseTime = weapon.GetWeaponSettingFloat( eWeaponVar.raise_time )
-			
+			//reset the End Time
+			raiseTime = weapon.GetWeaponSettingFloat( eWeaponVar.raise_time )
 			chargeTime = weapon.GetWeaponSettingFloat( eWeaponVar.charge_time )
 			endTime = startTime + raiseTime + chargeTime
 
@@ -953,10 +1121,7 @@ void function OnCreateChargeEffect_Consumable( entity weapon, int fxHandle )
 
 	if ( modName == "health_large" )
 		return
-	
-	if ( modName == "snd_bomb" )
-		return
-	
+
 	int armorTier   = EquipmentSlot_GetEquipmentTier( weapon.GetOwner(), "armor" )
 	vector colorVec = GetFXRarityColorForTier( armorTier )
 
@@ -1000,39 +1165,35 @@ bool function OnWeaponChargeBegin_Consumable( entity weapon )
 
 	weapon.SetWeaponChargeFractionForced( 0.0 )
 
+	TryAddWeaponPersistenceData( weapon )
+
 	#if SERVER
 		ConsumablePersistentData useData = file.weaponPersistentData[ weapon ]
-		
-		if(itemName == "snd_bomb")
-		{
-			player.SetVelocity(Vector(0,0,0))
-			player.MovementDisable()
-			player.SetMoveSpeedScale(0)
-			player.ForceCrouch() 
-			// thread UseConsumable_Bomb( player, info )			
-		}
-		else
-			thread UseConsumable( player, info, useData )
 
+		thread UseConsumable( player, info, useData )
 	#endif // SERVER
 
 	#if CLIENT
 		if ( player != GetLocalViewPlayer() || !(InPrediction() && IsFirstTimePredicted()) )
 			return true
 
-		if ( info.chargeSoundName != "" && DoesAliasExist( info.chargeSoundName ) )
-		{
-			EmitSoundOnEntity( player, info.chargeSoundName )
-		}
-
 		if ( ShouldPlayUltimateSuperchargedFX( player ) && DoesAliasExist( WATTSON_EXTRA_ULT_ACCEL_SFX ) )
 		{
 			EmitSoundOnEntity( player, WATTSON_EXTRA_ULT_ACCEL_SFX )
 		}
 
+                          
+                                                                                            
+
+                                                                                                       
+   
+                                                                                                                         
+   
+      
+        
 		if ( SURVIVAL_CountItemsInInventory( weapon.GetOwner(), info.lootData.ref ) <= 0 )
 		{
-			//printt( format( "[CONSUMABlE] Cancelling charge since we don't have required item (%s)", info.lootData.ref	) )
+			printt( format( "[CONSUMABlE] Cancelling charge since we don't have required item (%s)", info.lootData.ref	) )
 			Consumable_CancelHeal( weapon.GetOwner() )
 		}
 	#endif // CLIENT
@@ -1040,6 +1201,7 @@ bool function OnWeaponChargeBegin_Consumable( entity weapon )
 	return true
 
 }
+
 
 void function OnWeaponChargeEnd_Consumable( entity weapon )
 {
@@ -1055,38 +1217,28 @@ void function OnWeaponChargeEnd_Consumable( entity weapon )
 	Assert( currentMod != "", "[CONSUMABlE] No consumable mod on weapon" )
 	entity player = weapon.GetOwner()
 
-	int consumableType  = file.modNameToConsumableType[ currentMod ]
-	ConsumableInfo info = file.consumableTypeToInfo[ consumableType ]
-	string itemName     = info.lootData.ref
+	if ( IsValid( player ) )
+		printt( format( "[CONSUMABLE-%s] OnWeaponChargeEnd (%s)", player.GetPlayerName(), currentMod ) )
 
 	float chargeFracAtEnd = weapon.GetWeaponChargeFraction()
-
 	if ( chargeFracAtEnd < 1.0 )
 	{
 		Signal( player, "OnChargeEnd" )
 	}
 
-	#if DEVELOPER
-		printt( "chargeFracAtEnd", chargeFracAtEnd )
-	#endif
-
-	#if CLIENT
+#if CLIENT
 	if ( player != GetLocalViewPlayer() )
 		return
 
 	if ( currentMod != "" ) // TODO: hope we get the above assert in dev, defensive fix here for now
 	{
-		if ( info.chargeSoundName != "" )
-		{
-			StopSoundOnEntity( player, info.chargeSoundName )
-		}
-
 		if ( ShouldPlayUltimateSuperchargedFX( player ) )
 		{
 			StopSoundOnEntity( player, WATTSON_EXTRA_ULT_ACCEL_SFX )
 		}
 	}
-#endif
+#endif // CLIENT
+
 
 	#if SERVER
 		ConsumablePersistentData useData = file.weaponPersistentData[ weapon ]
@@ -1097,23 +1249,6 @@ void function OnWeaponChargeEnd_Consumable( entity weapon )
 			{
 				EntityHealResource_Remove( player, useData.healthKitResourceId )
 			}
-		}
-	
-		if(itemName == "snd_bomb")
-		{
-			player.SetMoveSpeedScale(1)
-			player.UnforceCrouch()
-			player.MovementEnable()
-			
-			thread function() : (player)
-			{
-				player.ForceStand()
-
-				WaitFrame()
-
-				if ( IsValid( player ) && IsAlive( player ) )
-					player.UnforceStand()
-			}()
 		}
 	#endif // SERVER
 }
@@ -1136,8 +1271,16 @@ var function OnWeaponPrimaryAttack_Consumable( entity weapon, WeaponPrimaryAttac
 
 	int consumableType  = file.modNameToConsumableType[ currentMod ]
 	ConsumableInfo info = file.consumableTypeToInfo[ consumableType ]
-
 	#if CLIENT
+                         
+                                                                                           
+                                                                                                      
+  
+                                                 
+                                                            
+  
+     
+       
 	if ( SURVIVAL_CountItemsInInventory( weapon.GetOwner(), info.lootData.ref ) <= 0 )
 	{
 		return 1
@@ -1145,8 +1288,8 @@ var function OnWeaponPrimaryAttack_Consumable( entity weapon, WeaponPrimaryAttac
 	#endif
 
 	#if SERVER
-		string itemName = info.lootData.ref
-		float healAmount = CalculateTotalHealFromItem( player, info )
+		string itemName  = info.lootData.ref
+		float healAmount = Consumable_CalculateTotalHealFromItem( player, info )
 
 		PIN_OnPlayerHealed( player, int( min( info.shieldAmount, player.GetShieldHealthMax() - player.GetShieldHealth() ) ), itemName, player, true )
 		PIN_OnPlayerHealed( player, int( min( healAmount, player.GetMaxHealth() - player.GetHealth() ) ), itemName, player )
@@ -1156,27 +1299,20 @@ var function OnWeaponPrimaryAttack_Consumable( entity weapon, WeaponPrimaryAttac
 		UpdateConsumableUse( player, info, useData, true )
 		useData.healAmount = int( healAmount )
 
-		if( info.ultimateAmount > 0 )
+		if ( info.ultimateAmount > 0 )
 			UltimatePackUse( player, info )
 
-		if( Gamemode() == eGamemodes.fs_snd && itemName == "snd_bomb" || Gamemode() != eGamemodes.fs_snd )
-		{
-			int dropAmount = 1
-			if ( !PlayerHasPassive( player, ePassives.PAS_INFINITE_HEAL ) )
-				SURVIVAL_RemoveFromPlayerInventory( player, itemName, dropAmount )
-
-			LiveAPI_WriteLogUsingDefinedFields( eLiveAPI_EventTypes.inventoryUse,
-				[ LiveAPI_GetPlayerIdentityTable( player ), itemName,  dropAmount ],
-				[ 3/*player*/,                              4/*item*/, 5/*quantity*/ ]
-			)
-		}
+		if ( !PlayerHasPassive( player, ePassives.PAS_INFINITE_HEAL ) )
+			SURVIVAL_RemoveFromPlayerInventory( player, itemName, 1 )
 
 		StatsHook_PlayerUsedResource( player, null, itemName )
 		Remote_CallFunction_NonReplay( player, "ServerCallback_RefreshInventory" )
+
+		LiveAPI_SendInventoryAction( eLiveAPI_EventTypes.inventoryUse, player, itemName )
 	#endif
 
 	#if CLIENT
-		if ( player != GetLocalClientPlayer() )
+		if ( player != GetLocalViewPlayer() )
 			return
 
 		file.healCompletedSuccessfully = true
@@ -1185,7 +1321,11 @@ var function OnWeaponPrimaryAttack_Consumable( entity weapon, WeaponPrimaryAttac
 			return
 
 		bool playerAtFullHealthAndShields = (player.GetHealth() + info.healAmount) >= player.GetMaxHealth() && (player.GetShieldHealth() + info.shieldAmount) >= player.GetShieldHealthMax()
+                          
+                                                                                                                                                                                                      
+		     
 		if ( !playerAtFullHealthAndShields && !IsConsumableTypeUsefulToPlayer( player, file.clientSelectedConsumableType, info.healAmount, info.shieldAmount ) )
+        
 		{
 			TryUpdateCurrentSelectedConsumableToBest( player, info.healAmount, info.shieldAmount )
 		}
@@ -1206,24 +1346,25 @@ var function OnWeaponPrimaryAttack_Consumable( entity weapon, WeaponPrimaryAttac
 }
 
 
-float function CalculateTotalHealFromItem( entity player, ConsumableInfo info )
+float function Consumable_CalculateTotalHealFromItem( entity player, ConsumableInfo info )
 {
-	if( PlayerHasPassive( player, ePassives.PAS_SYRINGE_BONUS ) )
+	if ( PlayerHasPassive( player, ePassives.PAS_SYRINGE_BONUS ) )
 		return info.healAmount + info.healBonus[ ePassives.PAS_SYRINGE_BONUS ]
 
-	if( PlayerHasPassive( player, ePassives.PAS_HEALTH_BONUS_MED ) )
+	if ( PlayerHasPassive( player, ePassives.PAS_HEALTH_BONUS_MED ) )
 		return info.healAmount + info.healBonus[ ePassives.PAS_HEALTH_BONUS_MED ]
 
-	if( PlayerHasPassive( player, ePassives.PAS_HEALTH_BONUS_ALL ) )
+	if ( PlayerHasPassive( player, ePassives.PAS_HEALTH_BONUS_ALL ) )
 		return info.healAmount + info.healBonus[ ePassives.PAS_HEALTH_BONUS_ALL ]
 
-	if( PlayerHasPassive( player, ePassives.PAS_BONUS_SMALL_HEAL ) && info.lootData.ref == "health_pickup_health_small" )
+	if ( PlayerHasPassive( player, ePassives.PAS_BONUS_SMALL_HEAL ) && info.lootData.ref == "health_pickup_health_small" )
 		return info.healAmount + info.healBonus[ ePassives.PAS_BONUS_SMALL_HEAL ]
-	
+
 	return float( info.healAmount )
 }
 
-float function CalculateTotalShieldFromItem( entity player, ConsumableInfo info )
+
+float function Consumable_CalculateTotalShieldFromItem( entity player, ConsumableInfo info )
 {
 	if ( PlayerHasPassive( player, ePassives.PAS_BONUS_SMALL_HEAL ) && info.lootData.ref == "health_pickup_combo_small" )
 		return info.shieldAmount + info.shieldBonus[ ePassives.PAS_BONUS_SMALL_HEAL ]
@@ -1297,6 +1438,7 @@ void function ServerCallback_TryUseConsumable( entity player, int consumableType
 
 	Consumable_UseItemByType( player, consumableType )
 }
+
 void function Consumable_HandleConsumableUseCommand( entity player, string consumableCommand )
 {
 	int consumableType = eConsumableType._count
@@ -1309,11 +1451,17 @@ void function Consumable_HandleConsumableUseCommand( entity player, string consu
 		consumableType = eConsumableType.SHIELD_SMALL
 	if ( consumableCommand == "SHIELD_LARGE" )
 		consumableType = eConsumableType.SHIELD_LARGE
+                         
+                                                     
+                                                         
+                                                      
+                                                          
+                                                     
+                                                         
+       
 	if ( consumableCommand == "PHOENIX_KIT" )
 		consumableType = eConsumableType.COMBO_FULL
-	if ( consumableCommand == "snd_bomb" )
-		consumableType = eConsumableType.CUSTOMPICKUP
-	
+
 	if ( consumableType == eConsumableType._count )
 		return
 
@@ -1322,7 +1470,7 @@ void function Consumable_HandleConsumableUseCommand( entity player, string consu
 
 void function AddModAndFireWeapon_Thread( entity player, string modName )
 {
-	if ( ! (player == GetLocalClientPlayer() && player == GetLocalViewPlayer()) )
+	if ( !( player == GetLocalClientPlayer() && player == GetLocalViewPlayer() ) )
 		return
 
 	if ( player.IsBot() )
@@ -1332,7 +1480,7 @@ void function AddModAndFireWeapon_Thread( entity player, string modName )
 	{
 		modName = "ultimate_battery_fast"
 	}
-
+       
 	int consumableType  = file.modNameToConsumableType[ modName ]
 	if ( !Consumable_CanUseConsumable( player, consumableType, true ) )
 	{
@@ -1350,15 +1498,19 @@ void function AddModAndFireWeapon_Thread( entity player, string modName )
 		return
 	}
 
-	entity weapon = player.GetOffhandWeapon( OFFHAND_SLOT_FOR_CONSUMABLES )
+	if ( !IsWatchingReplay() )
+	{
+		if ( CharacterSelect_MenuIsOpen() )
+			CloseCharacterSelectMenu()
+
+		RunUIScript( "CloseAllMenus" )
+	}
 
 	printt( format( "[CONSUMABLE] Activating offhand weapon, mod is %s", modName ) )
 	file.clientPlayerNextMod = modName
-	player.ClientCommand( "SetNextHealModType " + file.modNameToConsumableType[ modName ] )
 
-	#if DEVELOPER
-		printt("AddModAndFireWeapon_Thread", "SetNextHealModType " + modName )
-	#endif
+	if( modName in file.modNameToConsumableType )
+		Remote_ServerCallFunction( "ClientCallback_SetNextHealModType", file.modNameToConsumableType[ modName ] )
 
 	ActivateOffhandWeaponByIndex( OFFHAND_SLOT_FOR_CONSUMABLES )
 }
@@ -1378,21 +1530,12 @@ int function GetSelectedConsumableTypeForPlayer( entity player )
 
 void function Consumable_SetSelectedConsumableType( int type )
 {
-	// #if DEVELOPER
-		// DumpStack()
-	// #endif 
-	if( GetLocalClientPlayer().GetPlayerNetInt( "selectedHealthPickupType" ) == type ) //player has that consumable equipped already.. Cafe
-		return
-	
-	GetLocalClientPlayer().ClientCommand( "SetSelectedConsumableTypeNetInt " + type )
+	Remote_ServerCallFunction( "ClientCallback_SetSelectedConsumableTypeNetInt", type )
 	file.clientSelectedConsumableType = type
 }
 
-void function Consumable_OnSelectedConsumableTypeNetIntChanged( entity player, int oldkitType, int kitType, bool actuallyChanged )
+void function Consumable_OnSelectedConsumableTypeNetIntChanged( entity player, int kitType )
 {
-	if ( !actuallyChanged )
-		return
-
 	if ( player != GetLocalClientPlayer() )
 		return
 
@@ -1458,12 +1601,10 @@ int function Consumable_GetBestConsumableTypeForPlayer( entity player, int added
 
 	healthDataArray.sort( CompareHealData )
 
-	// foreach ( PotentialHealData healData in healthDataArray )
-	// {
-		// #if CLIENT
-			// printt( Localize( healData.consumableInfo.lootData.pickupString ), healData.totalAppliedHeal, healData.healthPerSecond )
-		// #endif
-	// }
+	#if CLIENT && DEBUG_PRINTS
+		foreach ( PotentialHealData healData in healthDataArray )
+			printt( "Consumable_GetBestConsumableTypeForPlayer", Localize( healData.consumableInfo.lootData.pickupString ), healData.totalAppliedHeal, healData.healthPerSecond )
+	#endif
 
 	foreach ( PotentialHealData healData in healthDataArray )
 	{
@@ -1521,7 +1662,7 @@ void function DoHealScreenFx( entity player )
 		return
 
 	int fxID = GetParticleSystemIndex( RESTORE_HEALTH_COCKPIT_FX )
-	file.healScreenFxHandle = StartParticleEffectOnEntity( cockpit, fxID, FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
+	file.healScreenFxHandle = StartParticleEffectOnEntity( cockpit, fxID, FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
 	EffectSetIsWithCockpit( file.healScreenFxHandle, true )
 
 	OnThreadEnd( function() {
@@ -1555,7 +1696,7 @@ void function DoUltAccelScreenFx( entity player )
 		return
 
 	int fxID = GetParticleSystemIndex( VFX_ULT_ACCEL_POP )
-	file.ultAccelScreenFxHandle = StartParticleEffectOnEntity( cockpit, fxID, FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
+	file.ultAccelScreenFxHandle = StartParticleEffectOnEntity( cockpit, fxID, FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
 	EffectSetIsWithCockpit( file.ultAccelScreenFxHandle, true )
 	EffectSetControlPointVector( file.ultAccelScreenFxHandle, 1, <255, 208, 56> )
 
@@ -1571,7 +1712,7 @@ void function PlayConsumableUseChroma( entity weapon, ConsumableInfo info )
 {
 	EndSignal( weapon.GetOwner(), "EndChroma" )
 
-	float raiseTime = weapon.GetWeaponSettingFloat( eWeaponVar.raise_time )
+	float raiseTime  = weapon.GetWeaponSettingFloat( eWeaponVar.raise_time )
 	float chargeTime = weapon.GetWeaponSettingFloat( eWeaponVar.charge_time )
 
 	Chroma_ConsumableBegin( weapon, info )
@@ -1584,7 +1725,6 @@ void function PlayConsumableUseChroma( entity weapon, ConsumableInfo info )
 	)
 
 	wait raiseTime + chargeTime
-
 }
 
 void function Consumable_CancelHeal( entity player )
@@ -1617,6 +1757,14 @@ bool function PlayerHasShieldKits( entity player )
 	{
 		if ( info.shieldAmount > 0 )
 		{
+                           
+                                                                                             
+                                                                                                                                                       
+    
+               
+    
+       
+         
 			if ( SURVIVAL_CountItemsInInventory( player, info.lootData.ref ) > 0 )
 			{
 				return true
@@ -1632,7 +1780,11 @@ bool function ShouldDisplayConsumableSwitchHint( entity player )
 	if ( player.IsShadowForm() )
 		return false
 
+                        
 	return (PlayerHasHealthKits( player ) && player.GetHealth() < player.GetMaxHealth()) || (PlayerHasShieldKits( player ) && player.GetShieldHealth() < player.GetShieldHealthMax() && !StatusEffect_HasSeverity( player, eStatusEffect.healing_denied ))
+      
+                                                                                                                                                                                  
+       
 }
 
 string function GetCanUseResultString( int consumableUseActionResult )
@@ -1671,7 +1823,16 @@ string function GetCanUseResultString( int consumableUseActionResult )
 			return "#DENY_NO_KITS"
 
 		case eUseConsumableResult.DENY_NO_SHIELDS:
-			return "#DENY_NO_SHIELDS"
+		{
+                       
+				if( UpgradeCore_IsEnabled() )
+					return "#DENY_NO_SHIELD_CORE"
+				else
+					return "#DENY_NO_SHIELDS"
+        
+                             
+         
+		}
 
 		case eUseConsumableResult.DENY_FULL:
 			return "#DENY_FULL"
@@ -1719,7 +1880,7 @@ void function ServerToClient_SetClientChargeTime( int consumableType, float char
 void function UseConsumable( entity player, ConsumableInfo info, ConsumablePersistentData useData )
 {
 	EndSignal( player, "OnChargeEnd" )
-	EndSignal( player, "OnDisconnected" )
+	EndSignal( player, "OnDisconnecting" )
 	EndSignal( player, "OnDestroy" )
 
 	string itemName = info.lootData.ref
@@ -1731,15 +1892,28 @@ void function UseConsumable( entity player, ConsumableInfo info, ConsumablePersi
 		delayScale = 1.0
 	float delayTime = (info.chargeTime * delayScale)
 
-	float healAmount   = CalculateTotalHealFromItem( player, info )
-	float shieldAmount = CalculateTotalShieldFromItem( player, info )
+	float healAmount   = Consumable_CalculateTotalHealFromItem( player, info )
+	float shieldAmount = Consumable_CalculateTotalShieldFromItem( player, info )
 
 	if ( info.healTime > 0 )
-		useData.healAmountRemaining = int ( CalculateTotalHealFromItem( player, info ) )
+		useData.healAmountRemaining = int ( Consumable_CalculateTotalShieldFromItem( player, info ) )
 
 	int currentHealth  = player.GetHealth() // cache these because we'll need it below for stats
 	int currentShields = player.GetShieldHealth()
 
+	                               
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_VALENTINES_S15 ) )
+		{
+		//	thread ValentinesHandleSharedHealingTells_Thread( player, info, delayTime )
+		}
+                                     
+
+                                   
+                                                                                
+  
+                                                                     
+  
+       
 
 	float endTime = Time() + delayTime - 0.01 	// Accounting for float math issues to make sure it's always the same amount of ticks
 	while ( Time() < endTime )
@@ -1748,19 +1922,43 @@ void function UseConsumable( entity player, ConsumableInfo info, ConsumablePersi
 		WaitFrame()
 	}
 
+                         
+                    
+  
+                   
+                                              
+        
+                       
+                                                 
+        
+                  
+                                             
+        
+                          
+                                                    
+        
+                       
+                                                 
+        
+                               
+                                               
+        
+  
+                               
+
 	int healthMax = player.GetMaxHealth()
 	if ( currentHealth + int( healAmount ) > healthMax )
 		healAmount = float( healthMax - currentHealth )
 
-	//if ( healAmount > 0 )
-	//	StatsHook_GenericPlayer_OnEntityHealResourceFinished( player, int( healAmount ) )
+	if ( healAmount > 0 )
+		StatsHook_GenericPlayer_OnEntityHealResourceFinished( player, int( healAmount ) )
 
 	int shieldHealthMax = player.GetShieldHealthMax()
 	if ( currentShields + int( shieldAmount ) > shieldHealthMax )
 		shieldAmount = float( shieldHealthMax - currentShields )
 
-	//if ( shieldAmount > 0 )
-	//	StatsHook_GenericPlayer_OnEntityShieldResourceFinished( player, int( shieldAmount ) )
+	if ( shieldAmount > 0 )
+		StatsHook_GenericPlayer_OnEntityShieldResourceFinished( player, int( shieldAmount ) )
 }
 
 void function UpdateConsumableUse( entity player, ConsumableInfo info, ConsumablePersistentData useData, bool allowApply )
@@ -1781,8 +1979,8 @@ void function UpdateConsumableUse( entity player, ConsumableInfo info, Consumabl
 	//int virtualShields		= minint ( StatusEffect_GetSeverity( player, eStatusEffect.target_shields ) * float ( shieldHealthMax ) ) - float ( currentShields )
 
 	// TODO: These don't play nice with healTime > 0, should probaby move out unless we want heal amounts to change while using the consumable
-	float healAmount   = CalculateTotalHealFromItem( player, info )
-	float shieldAmount = CalculateTotalShieldFromItem( player, info )
+	float healAmount   = Consumable_CalculateTotalHealFromItem( player, info )
+	float shieldAmount = Consumable_CalculateTotalShieldFromItem( player, info )
 
 	bool shouldUpdateHealth  = missingHealth != useData.lastMissingHealth
 	bool shouldUpdateShields = missingShields != useData.lastMissingShields
@@ -1796,10 +1994,6 @@ void function UpdateConsumableUse( entity player, ConsumableInfo info, Consumabl
 		{
 			if ( useData.useFinished )
 			{
-				//Cafe check if item still exists
-				if( SURVIVAL_CountItemsInInventory( player, info.lootData.ref ) == 0 )
-					return
-				
 				StatusEffect_Stop( player, useData.healthStatusHandle )
 				if ( info.healTime == 0 )
 				{
@@ -1831,15 +2025,7 @@ void function UpdateConsumableUse( entity player, ConsumableInfo info, Consumabl
 			else if ( shouldUpdateHealth )
 			{
 				StatusEffect_Stop( player, useData.healthStatusHandle )
-
-				int predictedHealth = minint( virtualHealth + healthToApply, healthMax )
-				float targetFrac    = predictedHealth / float( healthMax )
-
-				useData.healthStatusHandle = StatusEffect_AddEndless(
-					player,
-					eStatusEffect.target_health,
-					targetFrac
-				)
+				useData.healthStatusHandle = StatusEffect_AddEndless( player, eStatusEffect.target_health, (healthToApply + resourceHealthRemaining) / float(healthMax) )
 			}
 		}
 	}
@@ -1850,10 +2036,6 @@ void function UpdateConsumableUse( entity player, ConsumableInfo info, Consumabl
 		{
 			if ( useData.useFinished )
 			{
-				//Cafe check if item still exists
-				if( SURVIVAL_CountItemsInInventory( player, info.lootData.ref ) == 0 )
-					return
-				
 				if ( info.healTime > 0 )
 				{
 					if ( useData.healAmountRemaining > 0  )
@@ -1876,23 +2058,121 @@ void function UpdateConsumableUse( entity player, ConsumableInfo info, Consumabl
 		if ( shouldUpdateShields )
 		{
 			StatusEffect_Stop( player, useData.shieldStatusHandle )
-
-			float targetShields = 0.0
+			float targetShields = 0
 			if ( shieldHealthMax > 0 )
-			{
-				int shieldsToApply   = minint( int( shieldAmount ), missingShields )
-				int predictedShields = minint( currentShields + shieldsToApply, shieldHealthMax )
-				targetShields        = predictedShields / float( shieldHealthMax )
-			}
-
-			useData.shieldStatusHandle = StatusEffect_AddEndless(
-				player,
-				eStatusEffect.target_shields,
-				targetShields
-			)
+				targetShields = shieldAmount / float( shieldHealthMax )
+			useData.shieldStatusHandle = StatusEffect_AddEndless( player, eStatusEffect.target_shields, targetShields )
 		}
 	}
 
+                               
+	/*if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_VALENTINES_S15 ) )
+	{
+		if ( allowApply && useData.useFinished && info.healTime == 0 )
+		{
+			entity partner = ValentinesGetPartner( player )
+
+			if ( IsValid( partner ) )
+			{
+				float partnerHealAmount = Consumable_CalculateTotalHealFromItem( partner, info )
+				float partnerShieldAmount = Consumable_CalculateTotalShieldFromItem( partner, info )
+
+				int partnerHealth = partner.GetHealth()
+				int partnerMaxHealth = partner.GetMaxHealth()
+				int partnerShieldHealth = partner.GetShieldHealth()
+				int partnerMaxShieldHealth = partner.GetShieldHealthMax()
+
+				bool hasHealingToApply = ( partnerHealth != partnerMaxHealth ) && ( partnerHealAmount > 0 )
+				bool hasShieldsToApply = ( partnerShieldHealth != partnerMaxShieldHealth ) && ( partnerShieldAmount > 0 )
+
+				if ( hasHealingToApply || hasShieldsToApply )
+				{
+					if ( ValentinesIsPlayerInRangeForProximityBuff( partner ) )
+					{
+						if ( hasHealingToApply )
+						{
+							partner.SetHealth( minint( int( partnerHealth + partnerHealAmount ), partnerMaxHealth ) )
+						}
+						if ( hasShieldsToApply )
+						{
+							partner.SetShieldHealth( minint( int( partnerShieldHealth + partnerShieldAmount ), partnerMaxShieldHealth ) )
+						}
+
+						if ( partnerHealAmount > 0 && partnerShieldAmount > 0 )
+						{
+							StopSoundOnEntity( partner, "DateNight_AOE_PhoenixKit_Charge_1P" )
+							if ( hasHealingToApply || hasShieldsToApply )
+							{
+								EmitSoundOnEntityOnlyToPlayer( partner, partner, "DateNight_AOE_PhoenixKit_Success_1P" )
+								EmitSoundOnEntityOnlyToPlayer( player, player, "DateNight_AOE_Success_Stinger_1P" )
+								EmitSoundOnEntityToEnemies( partner, "DateNight_AOE_Success_Stinger_3P", player.GetTeam() )
+							}
+						}
+						else if ( partnerHealAmount > 0 )
+						{
+							StopSoundOnEntity( partner, "DateNight_AOE_Healing_Charge_1P" )
+							if ( hasHealingToApply )
+							{
+								EmitSoundOnEntityOnlyToPlayer( partner, partner, "DateNight_AOE_Healing_Success_1P" )
+								EmitSoundOnEntityOnlyToPlayer( player, player, "DateNight_AOE_Success_Stinger_1P" )
+								EmitSoundOnEntityToEnemies( partner, "DateNight_AOE_Success_Stinger_3P", player.GetTeam() )
+							}
+						}
+						else
+						{
+							StopSoundOnEntity( partner, "DateNight_AOE_Shield_Charge_1P" )
+							if ( hasShieldsToApply )
+							{
+								EmitSoundOnEntityOnlyToPlayer( partner, partner, "DateNight_AOE_Shield_Success_1P" )
+								EmitSoundOnEntityOnlyToPlayer( player, player, "DateNight_AOE_Success_Stinger_1P" )
+								EmitSoundOnEntityToEnemies( partner, "DateNight_AOE_Success_Stinger_3P", player.GetTeam() )
+							}
+						}
+
+						Remote_CallFunction_NonReplay( partner, "ServerCallback_PromptSayThanks", player )
+					}
+				}
+			}
+		}
+	}*/
+                                    
+
+                                   
+                                                               
+  
+                                      
+  
+
+                                                                        
+  
+                                                                                   
+                                                                                           
+   
+                                                                    
+   
+  
+
+                                                                                                                                      
+  
+                                               
+                                             
+
+                                             
+                                                                   
+                                                                                                                    
+                                                 
+                    
+   
+                                                         
+                                                    
+    
+                                                                                       
+                                                                                    
+                                           
+    
+   
+  
+       
 
 	useData.lastMissingHealth = missingHealth
 	useData.lastMissingShields = missingShields
@@ -1919,61 +2199,120 @@ int function EntityHealResource_GetRemainingTotal( entity player )
 
 void function UltimatePackUse( entity player, ConsumableInfo info )
 {
-	entity ultimateAbility = player.GetOffhandWeapon( OFFHAND_INVENTORY )
-	int ammo = ultimateAbility.GetWeaponPrimaryClipCount()
-	int maxAmmo = ultimateAbility.GetWeaponPrimaryClipCountMax()
-	ammo += int( maxAmmo * (info.ultimateAmount/100) )
+	entity ultWeapon = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
+	int oldAmmo = ultWeapon.GetWeaponPrimaryClipCount()
+	int ammoMax = ultWeapon.GetWeaponPrimaryClipCountMax()
+	int newAmmoRaw = (oldAmmo + int( ammoMax * (GetUltimateChargeAmount( player, info ) / 100) ))
+	int newAmmo = minint( newAmmoRaw, ammoMax )
 
-	if( ammo < maxAmmo )
-		ultimateAbility.SetWeaponPrimaryClipCount( ammo )
-	else
-		ultimateAbility.SetWeaponPrimaryClipCount( maxAmmo )
-	// Gives Wattson full ult on ult accel
-	if( PlayerHasPassive( player, ePassives.PAS_BATTERY_POWERED )) {
-		ultimateAbility.SetWeaponPrimaryClipCount( maxAmmo )
-	}
+	ultWeapon.SetWeaponPrimaryClipCountNoRegenReset( newAmmo )
+
+	if ( (newAmmo > oldAmmo) && (newAmmo >= ammoMax) )
+		Ultimates_OnPlayerUltIsReady( player, ultWeapon )
+
+
+                               
+	/*if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_VALENTINES_S15 ) )
+	{
+		entity partner = ValentinesGetPartner( player )
+
+		if ( IsValid( partner ) )
+		{
+			entity ultWeaponPartner = partner.GetOffhandWeapon( OFFHAND_ULTIMATE )
+			int oldAmmoPartner = ultWeaponPartner.GetWeaponPrimaryClipCount()
+			int ammoMaxPartner = ultWeaponPartner.GetWeaponPrimaryClipCountMax()
+			int newAmmoRawPartner = (oldAmmoPartner + int( ammoMaxPartner * (GetUltimateChargeAmount( partner, info ) / 100) ))
+			int newAmmoPartner = minint( newAmmoRawPartner, ammoMaxPartner )
+
+			bool canChargeUlt = true
+			if ( oldAmmoPartner >= ammoMaxPartner )
+				canChargeUlt = false
+			if ( !ultWeaponPartner.IsReadyToFire() )
+				canChargeUlt = false
+			if ( ultWeaponPartner.HasMod( MOBILE_HMG_ACTIVE_MOD ) || ultWeaponPartner.HasMod( ULTIMATE_ACTIVE_MOD_STRING ) )
+				canChargeUlt = false
+
+			StopSoundOnEntity( partner, "DateNight_AOE_Ult_Acc_Charge_1P" )
+
+			if ( canChargeUlt && ValentinesIsPlayerInRangeForProximityBuff( partner ))
+			{
+				ultWeaponPartner.SetWeaponPrimaryClipCountNoRegenReset( newAmmoPartner )
+
+				if ( (newAmmoPartner > oldAmmoPartner) && (newAmmoPartner >= ammoMaxPartner) )
+					Ultimates_OnPlayerUltIsReady( partner, ultWeaponPartner )
+
+				EmitSoundOnEntityOnlyToPlayer( partner, partner, "DateNight_AOE_Ult_Acc_Success_1P" )
+				EmitSoundOnEntityOnlyToPlayer( player, player, "DateNight_AOE_Success_Stinger_1P" )
+				EmitSoundOnEntityToEnemies( partner, "DateNight_AOE_Success_Stinger_3P", player.GetTeam() )
+
+				Remote_CallFunction_Replay( partner, "ServerToClient_DoUltAccelScreenFx" )
+				Remote_CallFunction_NonReplay( partner, "ServerCallback_PromptSayThanks", player )
+			}
+		}
+	}*/
+                                    
 }
 
-
-void function ClientCommand_SetNextHealModType( entity player, array<string> args )
+float function GetUltimateChargeAmount( entity player, ConsumableInfo info )
 {
-	if ( args.len() == 0 )
-		return
+	float ultimateAmount = info.ultimateAmount
 
-	int nextModType = int( args[0] )
+	if ( PlayerHasPassive( player, ePassives.PAS_BATTERY_POWERED ) )
+		ultimateAmount += GetCurrentPlaylistVarFloat( "wattson_passive_ulti_accel_bonus", 80.0 )
+	else if ( PlayerHasPassive( player, ePassives.PAS_LOBA_EYE_FOR_QUALITY ) )
+		ultimateAmount = GetCurrentPlaylistVarFloat( "loba_ulti_accel_mul", 25.0 )
+	                    
+	else if( PlayerHasPassive( player, ePassives.PAS_ULT_ACCEL_CHARGE ) )
+		ultimateAmount = GetCurrentPlaylistVarFloat( "upgrade_ult_accel_charge_frac", 66.6 )
+	else if( PlayerHasPassive( player, ePassives.PAS_ULT_ACCEL_DOUBLE_CHARGE ) )
+		ultimateAmount *= 2.0
+       
 
-	if( !( nextModType in file.consumableTypeToInfo ) )
-		return
+	return min( ultimateAmount, 100 )
+}
 
-	string nextModName = file.consumableTypeToInfo[ nextModType ].modName
-
-	#if DEVELOPER
-		printt( format( "[CONSUMABLE] Setting Next Heal Mod Type for player %s to %s", player.GetPlayerName(), nextModName ) )
-	#endif 
-	
-	file.playerToNextMod[ player ] <- nextModName}
-
-void function ClientCommand_SetSelectedConsumableTypeNetInt( entity player, array<string> args )
+void function ClientCallback_SetNextHealModType( entity player, int type )
 {
-	if ( args.len() == 0 )
+	if( !( type in file.consumableTypeToInfo ) )
 		return
 
-	int consumableType = int( args[0] )
+	string nextModName = file.consumableTypeToInfo[ type ].modName
+	                    
+	if( nextModName == "ultimate_battery" &&  PlayerHasPassive( player, ePassives.PAS_BATTERY_POWERED ) && PlayerHasPassive( player, ePassives.PAS_ULT_UPGRADE_ONE ) )
+	{
+		nextModName = "ultimate_battery_fast"
+	}
+       
+	printt( format( "[CONSUMABLE] Setting Next Heal Mod Type for player %s to %s", player.GetPlayerName(), nextModName ) )
+	file.playerToNextMod[ player ] <- nextModName
 
+	#if SERVER
+	//	WeaponStatsHook_OnUseHealModStart( player, nextModName )
+	#endif
+}
+
+void function ClientCallback_SetSelectedConsumableTypeNetInt( entity player, int consumableType )
+{
 	SetSelectedConsumableTypeNetInt( player, consumableType )
 }
 
 void function SetSelectedConsumableTypeNetInt( entity player, int consumableType )
 {
-	Warning( "SetSelectedConsumableTypeNetInt " + player + " " + consumableType )
 	switch( consumableType )
 	{
 		case eConsumableType.COMBO_FULL:
 		case eConsumableType.SHIELD_LARGE:
+                          
+                                              
+                                               
+                                              
+        
+                       
+                                      
+        
 		case eConsumableType.SHIELD_SMALL:
 		case eConsumableType.HEALTH_LARGE:
 		case eConsumableType.HEALTH_SMALL:
-		case eConsumableType.SND_BOMB:
 			player.SetPlayerNetInt( "selectedHealthPickupType", consumableType )
 			return
 
@@ -1981,6 +2320,22 @@ void function SetSelectedConsumableTypeNetInt( entity player, int consumableType
 			Assert( false, "tried to set an unsupported Consumable Type" )
 			return
 	}
+}
+
+//Forces reconnected client to match its local selected consumable type to the NetInt on the server
+void function OnClientConnectionRestored( entity player )
+{
+	int consumableType = player.GetPlayerNetInt( "selectedHealthPickupType" )
+
+	SetSelectedConsumableTypeNetInt( player, consumableType )
+}
+
+void function TryUseUltAccel( entity player )
+{
+	if ( !Consumable_CanUseUltAccel( player ) )
+		return
+
+	Remote_CallFunction_NonReplay( player, "ServerCallback_TryUseConsumable", player, eConsumableType.ULTIMATE )
 }
 
 void function Consumable_AddCallback_OnPlayerHealingStarted( void functionref(entity, float) callbackFunc )
@@ -1994,325 +2349,34 @@ void function Consumable_AddCallback_OnPlayerHealingEnded( void functionref(enti
 	Assert( !file.Callbacks_OnPlayerHealingEnded.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with Consumable_AddCallback_OnPlayerHealingEnded" )
 	file.Callbacks_OnPlayerHealingEnded.append( callbackFunc )
 }
-
 #endif // SERVER
 
-void function UseConsumable_Bomb( entity player, ConsumableInfo info )//, ConsumablePersistentData useData )
+bool function Consumable_CanUseUltAccel( entity player , bool checkMinToFire = true )
 {
-	// if( !IsValid(player) || player.GetTeam() != Safe_GetAttackerTeam() || GetGameState() != eGameState.Playing ) return
-	
-	// if( Gamemode() == eGamemodes.fs_snd )
-		// PlayBattleChatterToSelfOnClientAndTeamOnServer( player,"bc_super" )
+	entity ult = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
+	if ( !IsValid( ult ) )
+		return false
 
-	// #if SERVER
-	// EndSignal( player, "OnDeath" )
-	// EndSignal( player, "OnChargeEnd" )
+	if ( checkMinToFire )
+	{
+		int minToFire = ult.GetWeaponSettingInt( eWeaponVar.ammo_min_to_fire )
+		int burstCount = ult.GetWeaponSettingInt( eWeaponVar.burst_fire_count )
+		if ( burstCount > 0 )
+			minToFire *= burstCount
 
-	// string itemName = info.lootData.ref
+		if ( ult.GetWeaponPrimaryClipCount() >= minToFire )
+			return false
+	}
 
-	// float delayScale = 1.0
-	// float delayTime = ( info.chargeTime * delayScale )
+	int maxClipCount = ult.GetWeaponPrimaryClipCountMax()
+	if ( ult.GetWeaponPrimaryClipCount() == maxClipCount )
+		return false
 
-	// float endTime = Time() + delayTime
-	
-	// while ( Time() < endTime )
-		// WaitFrame()
+	if( ult.HasMod( MOBILE_HMG_ACTIVE_MOD ) )
+		return false
 
-	// if( !IsValid(player) || player.GetTeam() != Safe_GetAttackerTeam() || GetGameState() != eGameState.Playing ) return
-	
-	// player.SetPlayerNetInt("planted", player.GetPlayerNetInt("planted") + 1 )
-	// player.p.playerHasBomb = false
-
-	// entity bomb = CreatePropDynamic($"mdl/Weapons/bomb/w_bomb.rmdl", player.GetOrigin() + Vector(0,0,2), Vector(0,0,0))
-
-	// if(!IsValid(bomb)) return
-	
-	// // foreach( sPlayer in GetPlayerArray() )
-	// // {
-		// // if(!IsValid(sPlayer)) continue
-	
-		// // Message(sPlayer, "Bomb planted", "Exploding in " + EXPLODE_BOMB_TIME.tostring() + " seconds")
-	// // }
-
-	// foreach ( entity sPlayer in GetPlayerArrayOfTeam(Safe_GetDefenderTeam()) )
-	// {
-		// thread function() : (sPlayer)
-		// {
-			// wait 1
-			// if(!IsValid(sPlayer)) return
-			
-			// Remote_CallFunction_NonReplay( sPlayer, "SND_HintCatalog", 10, 0)
-		// }()
-	// }
-	
-	// foreach ( sPlayer in GetPlayerArrayOfTeam(Safe_GetAttackerTeam()) )
-	// {
-		// if(!IsValid(sPlayer)) continue
-		
-		// int moneytoGive = SCORE_BOMBPLANTED_REWARD
-		// sPlayer.p.availableMoney += moneytoGive
-		// Remote_CallFunction_NonReplay( sPlayer, "ServerCallback_OnMoneyAdded",moneytoGive )
-		// // Remote_CallFunction_NonReplay( sPlayer, "SND_HintCatalog", 9, moneytoGive)
-		// AddPlayerScore( sPlayer, "FS_SND_BombPlanted", sPlayer, "", moneytoGive)
-	// }
-	
-	// bomb.SetOwner( player )
-	// bomb.kv.fadedist = 99999
-	// // EmitSoundOnEntity(bomb, "HUD_MP_BountyHunt_BankBonusPts_Deposit_End_Successful_3P")
-
-	// thread HandleBombExplosion(bomb)
-	
-	// if( IsValid( GetPlantedBombEntity() ) )
-		// GetPlantedBombEntity().Destroy()
-	
-	// SetPlantedBombEntity(bomb)
-	// SetBombState(bombState.ONGROUND_PLANTED)
-	
-	// SetTargetName(bomb, "flowstate_bomb")
-	// bomb.SetUsable()
-	// bomb.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
-	// bomb.SetUsableValue( USABLE_BY_ALL | USABLE_CUSTOM_HINTS )
-	// bomb.SetUsePrompts( "Press %use%to defuse the bomb", "Press %use% to defuse the bomb" )
-	
-	// Highlight_SetNeutralHighlight( bomb, "sp_objective_entity" )
-
-	// SetCallback_CanUseEntityCallback( bomb, Bomb_CanUse )
-	// AddCallback_OnUseEntity( bomb, Bomb_OnUse )
-
-	// thread function() : (player)
-	// {
-		// player.ForceStand()
-		// WaitFrame()
-		// if ( IsValid( player ) && IsAlive( player ) )
-			// player.UnforceStand()
-	// }()
-	// #endif
-}
-
-#if SERVER
-void function HandleBombExplosion(entity bomb)
-{
-	// EndSignal(bomb, "OnDestroy")
-
-	// float endTime = Time() + EXPLODE_BOMB_TIME
-	
-	// foreach ( player in GetPlayerArray() )
-	// {
-		// if(!IsValid(player)) continue
-		
-		// Remote_CallFunction_Replay( player, "ServerCallback_OnBombPlantedInGameHint", bomb, endTime)
-	// }
-	
-	// // if( endTime >= GetRoundEndTime() )
-		// UpdateRoundEndTime( endTime + 1 ) // just adding a bit of extra time to guarantee the bomb to explode or being defused (time won't ran over)
-	
-	// while( Time() < endTime && IsValid(bomb) )
-		// WaitFrame()
-	
-	// if(!IsValid(bomb) || GetGameState() != eGameState.Playing ) return
-	
-	// SetBombState( bombState.ONGROUND_EXPLODED )
-	
-	// foreach ( player in GetPlayerArrayOfTeam( Safe_GetAttackerTeam() ) )
-	// {
-		// if(!IsValid(player)) continue
-		
-		// player.p.availableMoney += 3500
-		// Remote_CallFunction_NonReplay(player, "ServerCallback_OnMoneyAdded", 3500)
-	// }
-	
-	// StartParticleEffectInWorld( PrecacheParticleSystem( $"P_xo_exp_nuke_3P" ), bomb.GetOrigin(), <0,0,0> )
-	// EmitSoundAtPosition( TEAM_UNASSIGNED, bomb.GetOrigin(), "bangalore_ultimate_explosion_concrete" )
-	
-	// foreach ( player in GetPlayerArray_Alive() )
-	// {
-		// if(!IsValid(player)) continue
-		
-		// float playerDist = Distance2D( player.GetOrigin(), bomb.GetOrigin() )
-		// if ( playerDist <= 700 )
-		// {
-			// entity attacker
-			
-			// if( IsValid(bomb.GetOwner()) && IsAlive(bomb.GetOwner()) )
-				// attacker = bomb.GetOwner()
-			// else
-				// attacker = null
-			
-			// player.TakeDamage( player.GetMaxHealth() + 1, attacker, attacker, { damageSourceId = eDamageSourceId.snd_bomb, scriptType=DF_BYPASS_SHIELD } )
-		// }
-	// }
-	
-	// bomb.Destroy()
-}
-
-#endif
-
-#if CLIENT
-void function HandleBombSound(entity bomb)
-{
-	// EndSignal(bomb, "OnDestroy")
-
-	// Signal(GetLocalClientPlayer(), "OnlyOneBombSound")
-	// EndSignal(GetLocalClientPlayer(), "OnlyOneBombSound")
-	
-	// // P_thermite_spark
-	// // P_thermite_igniter_dlight_FP
-	
-	// float startTime = Time()
-	// float endTime = Time() + EXPLODE_BOMB_TIME
-	// string soundtoplay = "HUD_match_start_timer_tick_1P" 
-	// float waittime
-	// float timePercentage
-	
-	// while( Time() < endTime && IsValid(bomb) ) //sorry for this it was a desperate action
-	// {
-		// if(endTime - Time() <= 2)
-		// {
-			// // soundtoplay = "ui_ingame_markedfordeath_countdowntoyouaremarked"
-			// // EmitSoundOnEntity( bomb, soundtoplay )
-			// // wait 2
-			// // break
-			// waittime = 0.05
-		// }
-		// else if(endTime - Time() <= 5)
-		// {
-			// waittime = 0.1
-		// }
-		// else if(endTime - Time() <= 10)
-		// {
-			// waittime = 0.2
-		// }
-		// else if(endTime - Time() <= 15)
-		// {
-			// waittime = 0.4
-		// }
-		// else if(endTime - Time() <= 20)
-		// {
-			// waittime = 0.7
-		// }
-		// else
-		// {
-			// waittime = 1
-		// }
-		
-		// //lerp will update waittime each second, do we want that?
-		
-		// // timePercentage = (Time() - startTime) / ((endTime+5) - Time())	
-		// // waittime = LerpFloat( 1, 0.15, timePercentage )
-		
-		// StopSoundOnEntity( bomb, soundtoplay )
-		// EmitSoundOnEntity( bomb, soundtoplay )
-		// wait waittime
-	// }
-}
-
-void function BombCreated( entity ent )
-{
-	// SetCallback_CanUseEntityCallback( ent, Bomb_CanUse )
-	// AddCallback_OnUseEntity( ent, Bomb_OnUse )
-	
-	// thread HandleBombSound(ent)
-}
-#endif
-
-bool function Bomb_CanUse( entity player, entity bomb)
-{
-	// if(!IsValid(player) || !IsValid(bomb)) return false
-	// #if SERVER
-		// player.Server_TurnOffhandWeaponsDisabledOff()
-	// #endif
-	// if ( player.GetWeaponDisableFlags() == WEAPON_DISABLE_FLAGS_ALL )
-		// return false
-	
-	// if ( player.GetTeam() == Safe_GetAttackerTeam() )
-		// return false
-	
 	return true
 }
-
-void function Bomb_OnUse( entity bomb, entity player, int useInputFlags )
-{
-	// if ( !(useInputFlags & USE_INPUT_LONG ) )
-		// return
-
-	// #if CLIENT
-	// HidePlayerHint( "Press %use% to defuse the bomb" )
-	// #endif
-
-	// ExtendedUseSettings settings
-	// settings.successSound = "UI_InGame_HalftimeText_Enter"
-	// #if CLIENT
-		// settings.loopSound = "HUD_MP_BountyHunt_BankBonusPts_Ticker_Loop_1P"
-		// settings.displayRui = $"ui/consumable_progress.rpak"
-		// settings.displayRuiFunc = DisplayRuiForBomb
-		// settings.icon = $"rui/flowstatecustom/bombicon"
-		// settings.hint = "Defusing Bomb"
-	// #elseif SERVER
-		// //settings.startFunc = RespawnBeaconStartUse
-		// //settings.endFunc = RespawnBeaconStopUse
-		// settings.successFunc = BombDefused
-		// settings.exclusiveUse = true
-		// settings.movementDisable = true
-		// settings.holsterWeapon = true
-		// #endif
-	// settings.duration = DEFUSE_BOMB_TIME
-	// settings.useInputFlag = IN_USE_LONG
-	
-	// #if SERVER
-		// if( Gamemode() == eGamemodes.fs_snd )
-		// {
-			// Highlight_SetFriendlyHighlight( player, "hackers_wallhack" )
-		// }
-	// #endif
-	
-	// thread ExtendedUse( bomb, player, settings )
-	
-}
-
-#if CLIENT
-void function DisplayRuiForBomb( entity ent, entity player, var rui, ExtendedUseSettings settings )
-{
-	DisplayRuiForBomb_Internal( rui, settings.icon, Time(), Time() + settings.duration, settings.hint )
-}
-
-void function DisplayRuiForBomb_Internal( var rui, asset icon, float startTime, float endTime, string hint )
-{
-	RuiSetGameTime( rui, "healStartTime", Time() )
-	RuiSetString( rui, "consumableName", "Defusing bomb" )
-	RuiSetFloat( rui, "raiseTime", 0 )
-	RuiSetFloat( rui, "chargeTime", endTime - Time() )
-	RuiSetImage( rui, "hudIcon", $"rui/flowstatecustom/bombicon" )
-	RuiSetInt( rui, "consumableType", 0 )
-
-	RuiSetString( rui, "hintController", "" )
-	RuiSetString( rui, "hintKeyboardMouse", "" )
-}
-#endif
-
-void function BombDefused( entity bomb, entity player, ExtendedUseSettings settings )
-{
-	// //player has bomb?
-	// #if CLIENT
-	// Signal(GetLocalClientPlayer(), "OnlyOneBombSound")
-	// #endif
-	
-	// #if SERVER
-	// foreach ( sPlayer in GetPlayerArrayOfTeam(Safe_GetDefenderTeam()) )
-	// {
-		// if(!IsValid(sPlayer)) continue
-		
-		// sPlayer.p.availableMoney += 3500
-		// Remote_CallFunction_NonReplay(sPlayer, "ServerCallback_OnMoneyAdded", 3500)
-	// }
-	
-	// SetPlantedBombEntity(null)
-	// SetBombState(bombState.ONGROUND_DEFUSED)
-	// bomb.Destroy()
-	// player.SetPlayerNetInt("defused", player.GetPlayerNetInt("defused") + 1 )
-	// //Message(player, "You've defused the bomb", "Poggers")
-	// #endif
-}
-
 
 // ======================================================================================================================
 //  #####  #     #    #    ######  ####### ######     ####### #     # #     #  #####  ####### ### ####### #     #  #####
@@ -2379,14 +2443,16 @@ PotentialHealData function Consumable_CreatePotentialHealData( entity player, in
 	missingShields = maxint( 0, missingShields )
 
 
+
 	healData.consumableInfo = clone info
+
 
 	int appliedHeal = minint( missingHealth, info.healAmount)
 	healData.overHeal = maxint( info.healAmount - missingHealth, 0 )
 
 	int appliedShields = minint( missingShields, info.shieldAmount)
 	healData.overShield = maxint( info.shieldAmount  - missingShields, 0 )
-	
+
 	healData.totalAppliedHeal = appliedHeal + appliedShields
 	healData.totalOverheal = (healData.overHeal + healData.overShield)
 
@@ -2399,6 +2465,7 @@ PotentialHealData function Consumable_CreatePotentialHealData( entity player, in
 
 int function CompareHealData( PotentialHealData a, PotentialHealData b )
 {
+                                 
 		///SORT SHIELDS
 		if ( a.possibleShieldAdd > 0 && a.totalAppliedHeal == b.totalAppliedHeal && a.consumableInfo.chargeTime < b.consumableInfo.chargeTime )
 			return -1
@@ -2417,6 +2484,32 @@ int function CompareHealData( PotentialHealData a, PotentialHealData b )
 			return 1
 
 		return 0
+      
+                                                                                             
+           
+                                                                                                  
+            
+
+                                                          
+            
+                                                               
+           
+
+                                                             
+   
+                                                   
+             
+                                                        
+            
+   
+
+                                                                  
+            
+                                                                       
+           
+
+          
+       
 }
 
 int function Consumable_GetConsumableRecoveryType( int consumableType )
@@ -2444,16 +2537,18 @@ int function Consumable_GetConsumableRecoveryType( int consumableType )
 
 bool function Consumable_CanUseConsumable( entity player, int consumableType, bool printReason = true )
 {
-	if ( IsFallLTM() && IsPlayerShadowSquad( player ) )
-		return false
+	                             
+		if ( IsPlayerShadowZombie( player ) )
+			return false
+                                    
+
 
 	int canUseResult = TryUseConsumable( player, consumableType )
 
-	// if( consumableType == eConsumableType.SND_BOMB && canUseResult == eUseConsumableResult.ALLOW )
-		// return CanPlantBombHere( player )
-
 	if ( canUseResult == eUseConsumableResult.ALLOW )
+	{
 		return true
+	}
 
 	#if CLIENT
 		if ( printReason && !player.GetPlayerNetBool( "isHealing" ) )
@@ -2467,11 +2562,11 @@ bool function Consumable_CanUseConsumable( entity player, int consumableType, bo
 				case eUseConsumableResult.DENY_NO_SHIELDS:
 					if ( player.GetHealth() < player.GetMaxHealth() && !PlayerHasHealthKits( player ) )
 					{
-						player.ClientCommand( "ClientCommand_Quickchat " + eCommsAction.INVENTORY_NEED_HEALTH )
+						Remote_ServerCallFunction( "ClientCallback_Quickchat", eCommsAction.INVENTORY_NEED_HEALTH, eCommsFlags.NONE )
 					}
 					else if ( player.GetShieldHealth() < player.GetShieldHealthMax() && !PlayerHasShieldKits( player ) )
 					{
-						player.ClientCommand( "ClientCommand_Quickchat " + eCommsAction.INVENTORY_NEED_SHIELDS )
+						Remote_ServerCallFunction( "ClientCallback_Quickchat", eCommsAction.INVENTORY_NEED_SHIELDS, eCommsFlags.NONE )
 					}
 					break
 
@@ -2479,9 +2574,14 @@ bool function Consumable_CanUseConsumable( entity player, int consumableType, bo
 				case eUseConsumableResult.DENY_HEALTH_FULL:
 					if ( player.GetShieldHealth() < player.GetShieldHealthMax() && !PlayerHasShieldKits( player ) )
 					{
-						player.ClientCommand( "ClientCommand_Quickchat " + eCommsAction.INVENTORY_NEED_SHIELDS )
+						Remote_ServerCallFunction( "ClientCallback_Quickchat", eCommsAction.INVENTORY_NEED_SHIELDS, eCommsFlags.NONE )
 					}
 					break
+                       
+				case eUseConsumableResult.DENY_SHIELD_HEAL_DENIED:
+					EmitSoundOnEntity( player, "crafting_replicator_menu_deny" )
+					break
+      
 
 				default:
 				}
@@ -2504,12 +2604,6 @@ bool function Consumable_CanUseConsumable( entity player, int consumableType, bo
 int function TryUseConsumable( entity player, int consumableType )
 {
 #if CLIENT
-	if( Playlist() == ePlaylists.fs_1v1 || Playlist() == ePlaylists.fs_vamp_1v1 || Playlist() == ePlaylists.fs_1v1_headshots_only || Playlist() == ePlaylists.fs_lgduels_1v1 )
-	{
-		if( player.GetPlayerNetInt( "FS_1v1_PlayerState" ) == e1v1State.RESTING || player.GetPlayerNetInt( "FS_1v1_PlayerState" ) == e1v1State.SPECTATING )
-			return eUseConsumableResult.DENY_NONE
-	}
-	
 	if ( player != GetLocalClientPlayer() )
 		return eUseConsumableResult.DENY_NONE
 
@@ -2523,9 +2617,6 @@ int function TryUseConsumable( entity player, int consumableType )
 		return eUseConsumableResult.DENY_NONE
 #endif
 
-	if ( player.IsDisabledFor( WPT_CONSUMABLE ) )
-		return eUseConsumableResult.DENY_NONE
-
 	while ( player.ContextAction_IsActive() ) // not a real loop
 	{
 		if ( player.ContextAction_IsRodeo() )
@@ -2533,7 +2624,7 @@ int function TryUseConsumable( entity player, int consumableType )
 
 		return eUseConsumableResult.DENY_NONE
 	}
-	
+
 	if ( Bleedout_IsBleedingOut( player ) )
 		return eUseConsumableResult.DENY_NONE
 
@@ -2543,17 +2634,17 @@ int function TryUseConsumable( entity player, int consumableType )
 	if ( player.IsPhaseShifted() )
 		return eUseConsumableResult.DENY_NONE
 
-	if ( StatusEffect_GetSeverity( player, eStatusEffect.placing_phase_tunnel ) )
+	if ( StatusEffect_HasSeverity( player, eStatusEffect.placing_phase_tunnel ) )
 		return eUseConsumableResult.DENY_NONE
                        
-	if ( StatusEffect_GetSeverity( player, eStatusEffect.healing_denied ) )
+	if ( StatusEffect_HasSeverity( player, eStatusEffect.healing_denied ) )
 	{
 		if ( consumableType == eConsumableType.SHIELD_LARGE || consumableType == eConsumableType.SHIELD_SMALL )
 		{
 			return eUseConsumableResult.DENY_SHIELD_HEAL_DENIED
 		}
 	}
-
+      
 
 	if ( player.GetWeaponDisableFlags() == WEAPON_DISABLE_FLAGS_ALL )
 		return eUseConsumableResult.DENY_NONE
@@ -2561,14 +2652,8 @@ int function TryUseConsumable( entity player, int consumableType )
 	if ( player.IsTitan() )
 		return eUseConsumableResult.DENY_NONE
 
-	if ( consumableType == eConsumableType.SND_BOMB )
-	{
-		return eUseConsumableResult.ALLOW
-	}
-	
 	if ( DeathTotem_PlayerCanRecall( player ) )
 		return eUseConsumableResult.DENY_DEATH_TOTEM
-	
 	if ( consumableType == eConsumableType.ULTIMATE )
 	{
 		ConsumableInfo info = file.consumableTypeToInfo[ consumableType ]
@@ -2582,10 +2667,13 @@ int function TryUseConsumable( entity player, int consumableType )
 			return eUseConsumableResult.DENY_ULT_NOTREADY
 		int ammo    = ultimateAbility.GetWeaponPrimaryClipCount()
 		int maxAmmo = ultimateAbility.GetWeaponPrimaryClipCountMax()
-		
+
 		if ( ammo >= maxAmmo )
 			return eUseConsumableResult.DENY_ULT_FULL
 		if ( !ultimateAbility.IsReadyToFire() )
+			return eUseConsumableResult.DENY_ULT_NOTREADY
+
+		if( ultimateAbility.HasMod( MOBILE_HMG_ACTIVE_MOD ) || ultimateAbility.HasMod( ULTIMATE_ACTIVE_MOD_STRING ) )
 			return eUseConsumableResult.DENY_ULT_NOTREADY
 	}
 	else
@@ -2598,11 +2686,52 @@ int function TryUseConsumable( entity player, int consumableType )
 		bool canShield     = false
 		bool needHeal      = currentHealth < maxHealth
 		bool needShield    = currentShields < maxShields
-		
+
+
+		                               
+		/*	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_VALENTINES_S15 ) )
+			{
+				entity partner = ValentinesGetPartner( player )
+				if ( IsValid( partner ) )
+				{
+					int partnerCurrentHealth  = partner.GetHealth()
+					int partnerCurrentShields = partner.GetShieldHealth()
+					needHeal      = needHeal || (partnerCurrentHealth < partner.GetMaxHealth())
+					needShield    = needShield || (partnerCurrentShields < partner.GetShieldHealthMax())
+				}
+			}*/
+                                      
+
+                                    
+                                       
+   
+                                                                           
+                                          
+    
+                            
+             
+                                                    
+                                                          
+                                                                                                                                      
+                                               
+                                                 
+    
+   
+
+                                                                                            
+   
+                                                                
+   
+        
+
 		ConsumableInfo info = file.consumableTypeToInfo[ consumableType ]
 
 		int count = SURVIVAL_CountItemsInInventory( player, info.lootData.ref )
+                          
+                                                                                                                                                         
+		     
 		if ( count == 0 )
+        
 		{
 			if ( info.healAmount > 0 && info.shieldAmount > 0 )
 				return eUseConsumableResult.DENY_NO_PHOENIX_KIT
@@ -2692,6 +2821,8 @@ string function GetConsumableModOnWeapon( entity weapon )
 			{
 				return mod
 			}
+         
+
 		}
 	}
 
@@ -2712,46 +2843,24 @@ TargetKitHealthAmounts function Consumable_PredictConsumableUse( entity player, 
 	int missingShields          = shieldHealthMax - currentShields
 
 	TargetKitHealthAmounts targetValues
-	targetValues.targetHealth  = 0.0
-	targetValues.targetShields = 0.0
 
-	float healAmount   = CalculateTotalHealFromItem( player, kitInfo )
-	float shieldAmount = CalculateTotalShieldFromItem( player, kitInfo )
+	float healAmount   = Consumable_CalculateTotalHealFromItem( player, kitInfo )
+	float shieldAmount = Consumable_CalculateTotalShieldFromItem( player, kitInfo )
 
-	// Optional: quick debug to see what the kit is actually doing
-	// print( "Consumable_PredictConsumableUse: healAmount=" + healAmount + " shieldAmount=" + shieldAmount +
-	//        " currentShields=" + currentShields + " missingShields=" + missingShields )
-
-	// HEALTH
 	if ( healAmount > 0 )
 	{
 		int healthToApply = minint( int( healAmount ), missingHealth )
 		Assert( virtualHealth + healthToApply <= maxHealth, "Bad math: " + virtualHealth + " + " + healthToApply + " > max health of " + maxHealth )
 
-		if ( healthToApply > 0 || kitInfo.healTime > 0 ) // healTime items can exceed the cap elsewhere
-		{
-			int predictedHealth = virtualHealth + healthToApply
-			targetValues.targetHealth = predictedHealth / float( maxHealth )
-		}
+		if ( healthToApply != 0 || kitInfo.healTime > 0 ) // healTime items can exceed the cap
+			targetValues.targetHealth = (healthToApply + resourceHealthRemaining) / float( maxHealth )
 	}
 
-	// SHIELDS
 	if ( shieldAmount > 0 && shieldHealthMax > 0 )
-	{
-		// Clamp how much this *one use* can actually give
-		int shieldsToApply   = minint( int( shieldAmount ), missingShields )
-		int predictedShields = currentShields + shieldsToApply
-
-		// Just in case
-		if ( predictedShields > shieldHealthMax )
-			predictedShields = shieldHealthMax
-
-		targetValues.targetShields = predictedShields / float( shieldHealthMax )
-	}
+		targetValues.targetShields = shieldAmount / float( shieldHealthMax )
 
 	return targetValues
 }
-
 
 
 void function ResetConsumableData( ConsumablePersistentData useData )
@@ -2789,6 +2898,7 @@ bool function Consumable_IsShieldItem( int consumableType )
 
 	return false
 }
+
 bool function WeaponDrivenConsumablesEnabled()
 {
 	return (GetCurrentPlaylistVarInt( "weapon_driven_consumables", 1 ) == 1)

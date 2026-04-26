@@ -14,13 +14,14 @@ global function RemoveCausticDirtyBomb
 #endif
 
 global const string DIRTY_BOMB_TARGETNAME = "caustic_trap"
+global const string CAUSTIC_DIRTY_BOMB_WEAPON_CLASS_NAME = "mp_weapon_dirty_bomb"
 
 const asset DIRTY_BOMB_CANISTER_MODEL = $"mdl/props/caustic_gas_tank/caustic_gas_tank.rmdl"
 
 const asset DIRTY_BOMB_CANISTER_EXP_FX = $"P_meteor_trap_EXP"
 const asset DIRTY_BOMB_CANISTER_FX_ALL = $"P_gastrap_start"
 
-int DIRTY_BOMB_MAX_GAS_CANISTERS = 6
+global int DIRTY_BOMB_MAX_GAS_CANISTERS = 6
 const float DIRTY_BOMB_SPAWN_MIN = 1 			 //Min Spawn Delay
 const float DIRTY_BOMB_SPAWN_MAX = 2 			 //Max Spawn Delay
 const float DIRTY_BOMB_SPAWN_FORCE_MIN = 0.2 	 //Min Spawning Vel Force
@@ -77,7 +78,7 @@ struct
 void function MpWeaponDirtyBomb_Init()
 {
 	DirtyBombPrecache()
-	
+
 	if( GetCurrentPlaylistVarBool( "lsm_mod6", false ) )
 	{
 		DIRTY_BOMB_MAX_GAS_CANISTERS = 300
@@ -276,7 +277,7 @@ void function DeployCausticTrap( entity owner, DirtyBombPlacementInfo placementI
 	AddSonarDetectionForPropScript( canisterProxy )
 
 	//Create a threat zone for the passive voices and store the ID so we can clean it up later.
-	int threatZoneID = ThreatDetection_CreateThreatZone( owner, eThreatDetectionZoneType.TRAP, canisterProxy.GetOrigin(), team, 512, 128, 1, 0.1, 0)
+	int threatZoneID = ThreatDetection_CreateThreatZoneForTrap( canisterProxy, owner, canisterProxy.GetOrigin(), team)
 
 	// Landing sound handled in impact table: exp_dirty_bomb.txt
 	// EmitSoundOnEntity( canisterProxy, "GasTrap_Land_Default" )
@@ -285,7 +286,7 @@ void function DeployCausticTrap( entity owner, DirtyBombPlacementInfo placementI
 
 	if ( IsValid( placementInfo.parentTo ) )
 	{
-		mover = CreateScriptMover( origin, angles )
+		mover = CreateScriptMover( "", origin, angles )
 		mover.SetParent( placementInfo.parentTo )
 		canisterProxy.SetParent( mover )
 	}
@@ -296,7 +297,7 @@ void function DeployCausticTrap( entity owner, DirtyBombPlacementInfo placementI
 
 	OnThreadEnd(
 	function() : ( owner, canisterProxy, mover, noSpawnIdx, threatZoneID )
-		{		
+		{
 			DeleteNoSpawnArea( noSpawnIdx )
 
 			//Remove the threat zone for this trap.
@@ -316,12 +317,12 @@ void function DeployCausticTrap( entity owner, DirtyBombPlacementInfo placementI
 			thread RemoveCanister( canisterProxy, mover )
 		}
 	)
-	
+
 	canisterProxy.EndSignal( "OnDestroy" )
 	canisterProxy.EndSignal( "DirtyBomb_Detonated" )
 	canisterProxy.EndSignal( "DirtyBomb_PickedUp" )
 	canisterProxy.EndSignal( "DirtyBomb_Disarmed" )
-	
+
 	canisterProxy.SetTakeDamageType( DAMAGE_EVENTS_ONLY )
 	AddEntityCallback_OnDamaged( canisterProxy, OnDirtyBombCanisterDamaged_PreArmed )
 
@@ -338,7 +339,7 @@ void function DeployCausticTrap( entity owner, DirtyBombPlacementInfo placementI
 
 	RemoveEntityCallback_OnDamaged( canisterProxy, OnDirtyBombCanisterDamaged_PreArmed )
 	AddEntityCallback_OnDamaged( canisterProxy, OnDirtyBombCanisterDamaged )
-	
+
 	owner.e.activeTraps.insert( 0, canisterProxy )
 
 	while ( owner.e.activeTraps.len() > DIRTY_BOMB_MAX_GAS_CANISTERS )
@@ -349,7 +350,7 @@ void function DeployCausticTrap( entity owner, DirtyBombPlacementInfo placementI
 			entToDelete.Destroy()
 		}
 	}
-	
+
 	if( GetCurrentPlaylistVarBool( "lsm_mod6", false ) )
 	{
 		while(true)
@@ -407,12 +408,15 @@ void function Mitosis(vector attackPos, vector dir, entity weapon, entity owner)
 
 #if SERVER
 //some reason using the global OnProjectilePlanted wasn't working so
-void function OnProjectilePlanted( entity projectile, void functionref(entity) deployFunc )
+void function OnProjectilePlanted( entity projectile, void functionref(entity, DeployableCollisionParams) deployFunc )
 {
 	projectile.EndSignal( "OnDestroy" )
 	projectile.WaitSignal( "Planted" )
 	projectile.proj.isPlanted = true
-	thread deployFunc( projectile )
+	DeployableCollisionParams collisionParams
+	collisionParams.pos = projectile.GetOrigin()
+	collisionParams.normal = projectile.GetUpVector()
+	thread deployFunc( projectile, collisionParams )
 }
 #endif
 
@@ -421,7 +425,7 @@ void function CausticTrap_OnDamaged_Activated(entity ent, var damageInfo)
 {
 	if( !IsValid( ent ) )
 		return
-	
+
 	entity attacker = DamageInfo_GetAttacker(damageInfo)
 	entity inflictor = DamageInfo_GetInflictor( damageInfo )
 
@@ -436,19 +440,19 @@ void function CausticTrap_OnDamaged_Activated(entity ent, var damageInfo)
 		(
 			ent,
 			DamageInfo_GetHitBox( damageInfo ),
-			DamageInfo_GetDamagePosition( damageInfo ), 
+			DamageInfo_GetDamagePosition( damageInfo ),
 			DamageInfo_GetCustomDamageType( damageInfo ),
 			DamageInfo_GetDamage( damageInfo ),
-			DamageInfo_GetDamageFlags( damageInfo ), 
+			DamageInfo_GetDamageFlags( damageInfo ),
 			DamageInfo_GetHitGroup( damageInfo ),
-			DamageInfo_GetWeapon( damageInfo ), 
+			DamageInfo_GetWeapon( damageInfo ),
 			DamageInfo_GetDistFromAttackOrigin( damageInfo )
 		)
 	}
-	
+
 	// Handle damage, props get destroyed on death, we don't want that.
 	// printt( "DEBUG CANNISTER DAMAGE - Damage: " + DamageInfo_GetDamage( damageInfo ) + " Health: " + ent.GetHealth() )
-	
+
 	// Handle damage, props get destroyed on death, we don't want that.
 	float nextHealth = ent.GetHealth() - DamageInfo_GetDamage( damageInfo )
 	if( nextHealth > 0 )
@@ -456,14 +460,14 @@ void function CausticTrap_OnDamaged_Activated(entity ent, var damageInfo)
 		ent.SetHealth(nextHealth)
 		return
 	}
-	
+
 	// "Died"
 	// Don't take damage anymore
 
 	ent.SetTakeDamageType( DAMAGE_NO )
 	ent.kv.solid = 0
 	DamageInfo_SetDamage( damageInfo, 0 )
-	
+
 	thread RemoveCanister( ent, null )
 }
 
@@ -473,7 +477,7 @@ void function RemoveCanister( entity canisterProxy, entity mover )
 		function () : (mover, canisterProxy)
 		{
 			// mover is being destroyed in sh_gas.gnut now. Colombia
-			
+
 			// if ( IsValid( mover ) )
 			// {
 				// mover.Destroy()
@@ -531,7 +535,7 @@ void function CreateDirtyBombTriggerArea( entity canisterProxy, int team )
 	file.triggerTargets[ trigger ] <- 0
 	trigger.SetEnterCallback( OnDirtyBombAreaEnter )
 	trigger.SetOrigin( origin )
-	
+
 	trigger.SetParent( IsValid( canisterProxy.GetParent() ) ? canisterProxy.GetParent() : canisterProxy, "", true, 0.0 )
 
 	OnThreadEnd(
@@ -607,7 +611,7 @@ void function DirtyBombProximityActivationUpdate( entity trigger )
 		{
 			if ( !ent.DoesShareRealms( trigger ) )
 				continue
-				
+
 			//Don't trigger on phase shifted targets.
 			if ( ent.IsPhaseShifted() )
 				continue
@@ -646,7 +650,7 @@ void function DirtyBombProximityActivationUpdate( entity trigger )
 void function OnDirtyBombCanisterDamaged( entity canisterProxy, var damageInfo )
 {
 	// printt( "canisterProxy damaged " + canisterProxy )
-	
+
 	if(canisterProxy.e.isBusy)
 		return
 
@@ -660,10 +664,10 @@ void function OnDirtyBombCanisterDamaged( entity canisterProxy, var damageInfo )
 	}
 
 	int damageFlags = DamageInfo_GetCustomDamageType( damageInfo )
-	
+
 	bool isMelee                   = (damageFlags & DF_MELEE) ? true : false
 	bool isExplosion               = (damageFlags & DF_EXPLOSION) ? true : false
-	
+
 	if ( isExplosion || isMelee )
 	{
 		thread DetonateDirtyBombCanister( canisterProxy )
@@ -673,7 +677,7 @@ void function OnDirtyBombCanisterDamaged( entity canisterProxy, var damageInfo )
 	//Check hitBoxes
 	int hitBox = DamageInfo_GetHitBox( damageInfo )
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
-	
+
 	if( !IsValid( attacker ) )
 		return
 
@@ -695,12 +699,12 @@ void function OnDirtyBombCanisterDamaged_PreArmed( entity canisterProxy, var dam
 
 	if( !IsValid( attacker ) || !attacker.IsPlayer() || attacker == canisterProxy.GetBossPlayer() )
 		return
-	
+
 	entity inflictor = DamageInfo_GetInflictor( damageInfo )
 
 	if( IsValid( inflictor ) && inflictor.GetScriptName() == "caustic_trap_gas" )
 		return
-	
+
 	//printt( "Bomb disarmed: " + canisterProxy )
 	canisterProxy.Signal( "DirtyBomb_Disarmed" )
 }
@@ -709,7 +713,7 @@ void function DetonateDirtyBombCanister( entity canisterProxy )
 {
 	if ( !IsValid( canisterProxy ) )
 		return
-	
+
 	canisterProxy.e.isBusy = true
 
 	Assert( IsNewThread(), "Must be threaded off." )
@@ -717,19 +721,19 @@ void function DetonateDirtyBombCanister( entity canisterProxy )
 	canisterProxy.Signal( "DirtyBomb_Active" )
 
 	entity owner = canisterProxy.GetBossPlayer()
-	
+
 	owner.EndSignal( "CleanUpPlayerAbilities" )
-	
+
 	//If the owner is alive we should use the owner, otherwise world is attacker
 	entity attacker = IsValid( owner ) ? owner : svGlobal.worldspawn
-	
+
 	canisterProxy.SetOwner( attacker )
 
 	if ( !IsValid( attacker ) )
 		return
 
 	if ( IsValid( owner ) )
-		StatsHook_DirtyBomb_OnDetonate( owner, attacker )
+		StatsHook_DirtyBomb_OnDetonate( owner, attacker, canisterProxy )
 
 	EmitSoundOnEntity( canisterProxy, "GasTrap_Activate" )
 	EmitSoundOnEntity( canisterProxy, "GasTrap_TrapLoop" ) // Sweetener for gas trap -- cloud has its own sound in sh_gas.gnut
@@ -745,23 +749,23 @@ void function DetonateDirtyBombCanister( entity canisterProxy )
 	canisterProxy.SetHealth( DIRTY_BOMB_HEALTH )
 	// canisterProxy.SetTakeDamageType( DAMAGE_YES )
 	canisterProxy.SetDamageNotifications( true )
-	
+
 	RemoveEntityCallback_OnDamaged( canisterProxy, OnDirtyBombCanisterDamaged )
-	AddEntityCallback_OnDamaged( canisterProxy, CausticTrap_OnDamaged_Activated ) 
-	
+	AddEntityCallback_OnDamaged( canisterProxy, CausticTrap_OnDamaged_Activated )
+
 	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITIES_GAS, canisterProxy, canisterProxy.GetOrigin(), attacker.GetTeam(), attacker )
 	CreateGasCloudMediumAtOrigin( canisterProxy, attacker, canisterProxy.GetOrigin() + <0,0,DIRTY_BOMB_GAS_CLOUD_HEIGHT>, DIRTY_BOMB_GAS_DURATION )
 
 	wait DIRTY_BOMB_GAS_DURATION - 5.0
-	
+
 	if( IsValid( canisterProxy ) )
 		thread BeepSound( canisterProxy )
 
 	wait 5.0
-	
+
 	if ( IsValid( fx ) )
 		fx.Destroy()
-	
+
 	if( IsValid( canisterProxy ) )
 	{
 		StopSoundOnEntity( canisterProxy, "GasTrap_TrapLoop" )
@@ -1068,11 +1072,7 @@ DirtyBombPlacementInfo function DirtyBomb_GetPlacementInfoFromTraceResults( enti
 	{
 		var hitEntClassname = hullTraceResults.hitEnt.GetNetworkedClassName()
 
-		if ( hitEntClassname == "prop_script" )
-		{
-			if ( hullTraceResults.hitEnt.GetScriptPropFlags() == PROP_IS_VALID_FOR_TURRET_PLACEMENT )
-				isScriptedPlaceable = true
-		}
+
 	}
 
 	bool success = !hullTraceResults.startSolid && hullTraceResults.fraction < 1.0 && ( hullTraceResults.hitEnt.IsWorld() || hullTraceResults.hitEnt.GetNetworkedClassName() == "func_brush" || isScriptedPlaceable )
@@ -1187,7 +1187,7 @@ void function OnWeaponTossPrep_weapon_dirty_bomb( entity weapon, WeaponTossPrepP
 	weapon.EmitWeaponSound_1p3p( GetGrenadeDeploySound_1p( weapon ), GetGrenadeDeploySound_3p( weapon ) )
 }
 
-void function OnDirtyBombPlanted( entity projectile )
+void function OnDirtyBombPlanted( entity projectile, DeployableCollisionParams collisionParams )
 {
 	#if SERVER
 		DirtyBombPlacementInfo placementInfo

@@ -1,6 +1,1310 @@
+untyped
+
 global function Lobby_Init
+global function Lobby_OnClientConnectionStarted
+global function Lobby_OnClientConnectionCompleted
+
+global function SetMinTeamSize
+global function SetMaxTeamSize
+global function ClearAllNewItems
+global function PrintServerGameHistory
+
+global function PrintFNFSchedule
+global function GetFNFScheduleTimes
+
+global function StartCountDown
+global function StopCountDown
+global function GetMinLobbyTeamSize
+global function GetMaxLobbyTeamSize
+global function IsTeamReady
+global function SetTeamReady
+global function GetAnyoneHere
+global function GetBothTeamsHere
+
+global function DevEndLobbyCountdown
+
+global function CodeCallback_OnPlayerMatchmakingChanged
+global function ClientCallback_CancelMatchSearch
+global function ClientCallback_ValidateLoadout
+global function ClientCallback_lastSeenPremiumCurrency
+global function ClientCallback_ResetReconnectParams
+global function ClientCallback_ReconnectCheckStatus
+global function ClientCallback_ViewedModes
+global function ClientCallback_ViewedGameSummary
+                            
+global function ClientCallback_ViewedOrientationMatchDialog
+                                 
+                 
+global function ClientCallback_ViewedCupsAboutDialog
+global function ClientCallback_ViewedActiveCup
+                      
+global function ClientCallback_ViewingMainLobbyPage
+global function ClientCallback_MarkHeirloomShopPopupAsSeen
+global function ClientCallback_MarkQuestPopupAsSeen
+global function ClientCallback_SetSeasonalHubButtonClickedSeason
+global function ClientCallback_MarkCurrencyExpirationPopupAsSeen
+global function ClientCallback_MarkLegendTokensPopupAsSeen
+
+#if SERVER
+global function ClientCallback_SetClubIsMember
+global function ClientCallback_SetClubTimelineViewedTime
+global function ClientCallback_SetClubChatViewedTime
+global function ClientCallback_SetClubAnnouncementViewedTime
+global function ClientCallback_SetClubIsPendingApproval
+global function CodeCallback_LobbyReportPlayerCustomerService 
+#endif
+
+#if SERVER
+global function ClientCallback_MarkBattlePassPopupAsSeen
+global function ClientCallback_MarkBattlePassMilestoneAsSeen
+global function ClientCallback_MarkStoryEventDialoguePopupAsAttempted
+global function ClientCallback_MarkStoryEventDialoguePopupAsSeen
+global function ClientCallback_MarkStoryEventChallengesPopupAsSeen
+#endif
+
+
+#if SERVER
+                         
+global function ClientCallback_GamemodeSelectorDismiss
+      
+#endif
+
+global function AddCallback_Lobby_OnClientConnected
+
+global function ready
+
+const float historyClearRate = 21600 //6 hours
+
+struct MapModeCombo
+{
+	int    mapIdx = -1
+	string mapName = ""
+	int    modeIdx = -1
+	string modeName = ""
+}
+
+struct
+{
+	int minTeamSize = 0
+	int maxTeamSize = 0
+
+	table<int, float> teamMinPlayersTime = {
+		[TEAM_IMC] = 0.0,
+		[TEAM_MILITIA] = 0.0
+	}
+
+	table<int, bool> teamReady = {
+		[TEAM_IMC] = false,
+		[TEAM_MILITIA] = false
+	}
+
+	MapModeCombo& nextMapModeCombo
+
+	float nextLaunchCommandValid = 0.0
+
+	bool anyoneHere = false
+	bool bothTeamsHere = false
+
+	float lobbyStartTime
+	float hadBothTeamsTime
+
+	table<entity, int> playerForcedMatchmakingMap
+
+	array<void functionref( entity )> callbacks_lobby_onClientConnected
+	table< string, array < string > > userReportHistory
+	float lastHistoryClearTime
+} file
+
+
+const string REV_CONVEYOR_MODEL = $"mdl/props/lobby_revenant_prop1/lobby_revenant_prop1.rmdl"
 
 void function Lobby_Init()
 {
-  RegisterSignal( "GameStateChanged" )
+	RegisterSignal( "end_lobby_logic" )
+
+	RegisterSignal( "_disconnectedInternal" )
+	RegisterSignal( "CountDownTimerStopped" )
+	RegisterSignal( "UpdateLastSeenPremiumCurrency" )
+	RegisterSignal( "PlayerDidSpawn" )
+
+	FlagInit( "private_lobby_logic" )
+	FlagInit( "CountDownTimerStarted" )
+
+	//ConveyorInit( REV_CONVEYOR_MODEL, "", 5, 20, <0, 0, 0>, "revenant_teaser_lobby_hanging_torso")
+
+	//PrivateLobby_Init()
+
+	AddCallback_OnUpdatingPlayerStryderCharDataArray( Stryder_UpdatePlayerInMatchState )
+
+	#if SERVER
+	AddCallback_OnPersistentDataReady( Lobby_OnPersistentDataReady )
+	#endif
+
+	GameRules_EnableGlobalChat( true )
+
+	if ( IsMatchmakingServer() )
+	{
+		printt( "============================================" )
+		printt( "Using matchmaking" )
+		printt( "============================================" )
+
+		thread ControlMatchmakingServerLobbyLogic()
+	}
+	else
+	{
+		printt( "============================================" )
+		printt( "NOT using matchmaking" )
+		printt( "============================================" )
+
+		//thread LocalServerLobbyLogic()
+	}
+
+	AddCallback_EntitiesDidLoad( OnEntitiesDidLoad )
+
+	StatsHook_LobbyStart()
+
+	file.lastHistoryClearTime = Time()
+	thread WatchTeamStates()
+}
+
+
+#if SERVER
+void function CodeCallback_LobbyReportPlayerCustomerService( entity player, int hardwareID, string uid, string eaid, string reason )
+{
+
+	string hardware = GetNameFromHardware( hardwareID )
+
+	if ( !GetCurrentPlaylistVarBool( "eac_report_enable", true ) )
+	{
+		printt( "LobbyReportPlayerCustomerService: eac_report_enable false" )
+		return
+	}
+
+	//Every historyClearRate seconds clear the table to prevent too much memory usage
+	if( Time() > file.lastHistoryClearTime + historyClearRate )
+	{
+		file.userReportHistory.clear()
+		file.lastHistoryClearTime = Time()
+	}
+
+	bool isReportReasonValid                 = false
+	array<string> validFriendlyReportReasons = GetReportReasons( player.GetHardware() )
+	isReportReasonValid = isReportReasonValid || validFriendlyReportReasons.contains( reason )
+
+	array<string> validEnemyReportReasons = GetReportReasons( player.GetHardware()  )
+	isReportReasonValid = isReportReasonValid || validEnemyReportReasons.contains( reason )
+
+	if ( !isReportReasonValid )
+	{
+		printt( "LobbyReportPlayerCustomerService: Report reason is invalid" )
+		return
+	}
+	string reporterUID      = player.GetPlayerName()
+	string reporterHardware = player.GetHardware()
+	string reporter = reporterUID + "_" + reporterHardware
+
+	if(!(reporter in file.userReportHistory))
+		file.userReportHistory[reporter] <- [] //Add new player to list
+
+	if ( file.userReportHistory[reporter].contains( hardware + "-" + uid + "_" + reason ) )
+	{
+		printt( "LobbyReportPlayerCustomerService: The reporter already reported this player for this reason" )
+		return
+	}
+
+	if ( file.userReportHistory[reporter].len() >= GetCurrentPlaylistVarInt( "eac_report_player_max", 12 ) )
+	{
+		printt( "LobbyReportPlayerCustomerService: Player has spammed the report in this session" )
+		return
+	}
+
+	switch ( reason )
+	{
+		case "#REPORT_PLAYER_REASON_OFFENSIVE":
+		case "#REPORT_PLAYER_REASON_STALKING":
+		case "#REPORT_PLAYER_REASON_SUICIDE":
+		case "#REPORT_PLAYER_REASON_DRUGSFIREARMS":
+		case "#REPORT_PLAYER_REASON_NAME":
+		case "#REPORT_PLAYER_REASON_TAG":
+		case "#REPORT_PLAYER_REASON_CONTENT":
+		case "#REPORT_PLAYER_REASON_SPAM":
+		case "#REPORT_PLAYER_REASON_ILLEGAL_HATE_SPEECH":
+		case "#REPORT_PLAYER_REASON_ILLEGAL_SEXUAL_CONTENT":	
+		case "#REPORT_PLAYER_REASON_ILLEGAL_CHILD_SOLICITATION":
+		case "#REPORT_PLAYER_REASON_ILLEGAL_SUICIDE_THREAT":
+		case "#REPORT_PLAYER_REASON_ILLEGAL_LEWDNESS":
+		case "#REPORT_PLAYER_REASON_ILLEGAL_TERRORIST_THREAT":
+		case "#REPORT_PLAYER_REASON_ILLEGAL_VIOLENT":
+			printt( "LobbyReportPlayerCustomerService: ReportAbusiveChat", player.GetPlayerName() + " reported player " + hardware + "-" + uid + " for " + reason )
+			ReportAbusiveChat( uid, hardware, reason )
+			break
+
+		default:
+			printt( "LobbyReportPlayerCustomerService: ReportCheater", player.GetPlayerName() + " reported player " + hardware + "-" + uid + "/" + eaid + " for " + reason  )
+			ReportCheater( uid, hardware, reason )
+	}
+
+	file.userReportHistory[reporter].append( hardware + "-" + uid + "_" + reason )
+}
+
+array<string> function GetReportReasons( string platform )
+{
+	array<string> prefixes
+	array<string> reportReasons = []
+
+	if ( platform.tolower() == "pc" || platform.tolower() == "pc_steam" )
+	{
+		prefixes.append( "report_player_reason_pc_" + "cheat" + "_" )
+		prefixes.append( "report_player_reason_pc_" + "gameplay" + "_" )
+		prefixes.append( "report_player_reason_pc_" + "harassment" + "_" )
+		prefixes.append( "report_player_reason_pc_" + "content" + "_" )
+	}
+	else
+	{
+		prefixes.append( "report_player_reason_console_" + "cheat" + "_" )
+		prefixes.append( "report_player_reason_console_" + "gameplay" + "_" )
+		prefixes.append( "report_player_reason_console_" + "harassment" + "_" )
+		prefixes.append( "report_player_reason_console_" + "content" + "_" )
+	}
+
+	foreach ( playlistVarPrefix in prefixes )
+	{
+		int numReasons = GetCurrentPlaylistVarInt( playlistVarPrefix + "count", 0 )
+		for ( int index = 0; index < numReasons; index++ )
+		{
+			reportReasons.append( GetCurrentPlaylistVarString( playlistVarPrefix + (index + 1), "#UNAVAILABLE" ) )
+		}
+	}
+
+	return reportReasons
+}
+#endif
+
+void function OnEntitiesDidLoad()
+{
+	#if DEV
+		SetGlobalNetBoolSafe( "isOptInServer", AnyOptInPlaylists() )
+	#endif
+}
+
+bool function AnyOptInPlaylists()
+{
+	int numPlaylists = GetPlaylistCount()
+
+	for ( int i = 0; i < numPlaylists; i++ )
+	{
+		string name    = string( GetPlaylistName( i ) )
+
+		if ( GetPlaylistVarBool( name, "opt_in_only", false ) )
+			return true
+	}
+
+	return false
+}
+
+
+void function Lobby_OnClientConnectionStarted( entity player )
+{
+	Assert( IsLobby() )
+
+	printl( "!!! Player connect started: " + player.GetPlayerName() + " | " + player )
+
+	table results
+	results.player <- player
+	svGlobal.levelEnt.Signal( "PlayerDidSpawn", results )
+
+	                          
+		if ( IsPrivateMatchLobby() )
+			PrivateMatch_OnPlayerConnecting( player )
+       
+}
+
+void function Lobby_OnClientConnectionCompleted( entity player )
+{
+	// Finalize Script's player connection state following initial Loadout validation
+	//printl( "Lobby - player connect complete: " + player.GetPlayerName() + " | " + player )
+
+	SaveDateLoggedIn( player )
+
+	player.FreezeControlsOnServer()
+	player.hasConnected = true
+
+	UpdateBadRepPresent()
+
+	player.SetPersistentVar( "privateMatchState", 0 )
+
+	QueueUpdateStryderWithPlayersStryderCharDataArray( player )
+
+	                      
+		if ( MatchBehavior_Enabled() )
+			MatchBehaviorPlayer_OnClientConnected( player )
+       
+
+	                          
+		if ( IsPrivateMatchLobby() )
+			PrivateMatch_OnPlayerConnected( player )
+       
+
+	Ranked_SetStatsForRankedSeasonTwo( player  )
+
+	// these run following Loadout validation (threaded), so should *NOT* be timing-sensitive
+	foreach ( func in file.callbacks_lobby_onClientConnected )
+	{
+		func( player )
+	}
+}
+
+#if SERVER
+void function Lobby_OnPersistentDataReady( entity player )
+{
+	if ( IsValid (player) )
+	{
+                         
+		int currentSeasonGUID = GetLatestSeason( GetUnixTimestamp() ).guid
+		if ( player.GetPersistentVarAsInt( "gamemodeSelectorInitializedSeasonGUID" ) != currentSeasonGUID )
+		{
+			for ( int i = 0; i <= GAMEMODE_MAX_SEEN_INDEX; i++ )
+				player.SetPersistentVar( format("gamemodeSelectorSeenIndex[%d]", i ), false )
+			player.SetPersistentVar( "gamemodeSelectorInitializedSeasonGUID", currentSeasonGUID )
+		}
+
+		//Remote_CallFunction_UI( player, "ServerCallback_GamemodeSelectorInitialize" )
+      
+	}
+}
+                         
+void function ClientCallback_GamemodeSelectorDismiss( entity player, int gamemodeSelectorIndex )
+{
+	if ( gamemodeSelectorIndex < 0 || gamemodeSelectorIndex > GAMEMODE_MAX_SEEN_INDEX )
+		return
+	player.SetPersistentVar( format("gamemodeSelectorSeenIndex[%d]", gamemodeSelectorIndex ), true )
+}
+      
+#endif
+
+void function CancelMatchmakingForPenalty( entity player )
+{
+	if ( !(player in file.playerForcedMatchmakingMap) )
+		file.playerForcedMatchmakingMap[player] <- 0
+
+	file.playerForcedMatchmakingMap[player]++
+
+	RunClientCommandOnPlayer( player, "matchmake_cancel" )
+	if ( player.WantsMatchmaking() && file.playerForcedMatchmakingMap[player] > 1 )
+		DisconnectWithMessage( player, "#DISCONNECT_PENALTY_MATCHMAKING" )
+}
+
+
+void function CodeCallback_OnPlayerMatchmakingChanged( entity player )
+{
+	if ( !IsValid( player ) )
+	{
+		printt( "invalid player in CodeCallback_OnPlayerMatchmakingChanged - not doing anything!" )
+		return
+	}
+
+	bool isAllowedToMatchmake = IsLobby() || GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_TRAINING ) || GameMode_IsActive( eGameModes.FREELANCE )
+
+                            
+	isAllowedToMatchmake = isAllowedToMatchmake || IsMatchmakingFromMatchAllowed( player )
+      
+
+	if ( isAllowedToMatchmake )
+	{
+		isAllowedToMatchmake = ( player.IsPlayer() )
+		if ( !isAllowedToMatchmake && player.WantsMatchmaking() )
+			Warning( "Player " + player.GetPlayerName() + " tried to search a custom match playlist but isn't allowed." )
+	}
+
+	if ( player.WantsMatchmaking() && isAllowedToMatchmake )
+	{
+		printt( "Starting matchmaking for player " + player.GetPlayerName() )
+		MatchmakePlayer( player )
+	}
+	else
+	{
+		if ( player.WantsMatchmaking() && !isAllowedToMatchmake )
+			Warning( FUNC_NAME() + " GetLobbyType() = " + GetLobbyType() + " GetMapName() = " + GetMapName() + " where matchmaking is not allowed" )
+
+		printt( "Stopping matchmaking for player " + player.GetPlayerName() )
+
+		AbortMatchSearchesForPlayer( "player's matchmaking preference changed", player )
+	}
+}
+
+
+void function ControlMatchmakingServerLobbyLogic()
+{
+	OnThreadEnd(
+		function()
+		{
+			printl( "!!! ControlMatchmakingServerLobbyLogic ended" )
+		}
+	)
+
+	printl( "!!! ControlMatchmakingServerLobbyLogic started" )
+
+	bool prev_isPrivateeMatch = false
+	bool isPrivateMatch       = false
+
+	while ( true )
+	{
+		isPrivateMatch = IsPrivateMatch()
+
+		if ( isPrivateMatch != prev_isPrivateeMatch )
+		{
+			if ( isPrivateMatch )
+			{
+				//thread PrivateMatchLobbyLogic()
+			}
+			else
+			{
+				svGlobal.levelEnt.Signal( "end_lobby_logic" )
+			}
+
+			prev_isPrivateeMatch = isPrivateMatch
+		}
+
+		WaitFrame()
+	}
+}
+
+
+int function GetMaxLobbyTeamSize()
+{
+	return file.maxTeamSize
+}
+
+
+int function GetMinLobbyTeamSize()
+{
+	return file.minTeamSize
+}
+
+
+bool function IsTeamReady( int teamID )
+{
+	return file.teamReady[teamID]
+}
+
+
+void function SetTeamReady( int teamID, bool state )
+{
+	file.teamReady[teamID] = state
+}
+
+
+bool function GetAnyoneHere()
+{
+	return file.anyoneHere
+}
+
+
+bool function GetBothTeamsHere()
+{
+	return file.bothTeamsHere
+}
+
+
+function SetMinTeamSize( int num )
+{
+	file.minTeamSize = num
+}
+
+
+function SetMaxTeamSize( int num )
+{
+	file.maxTeamSize = num
+}
+
+
+void function UpdateTeamStates()
+{
+	int imcPlayers = GetTeamPlayerCount( TEAM_IMC )
+	int milPlayers = GetTeamPlayerCount( TEAM_MILITIA )
+
+	bool anyoneHere    = (imcPlayers > 0 || milPlayers > 0)
+	bool bothTeamsHere = (imcPlayers > 0 && milPlayers > 0)
+
+	if ( anyoneHere && !file.anyoneHere )
+		file.lobbyStartTime = Time()
+
+	if ( bothTeamsHere && !file.bothTeamsHere )
+		file.hadBothTeamsTime = Time()
+
+	file.anyoneHere = anyoneHere
+	file.bothTeamsHere = bothTeamsHere
+}
+
+
+void function WatchTeamStates()
+{
+	file.anyoneHere = false
+	file.bothTeamsHere = false
+
+	file.lobbyStartTime = Time()
+	file.hadBothTeamsTime = Time()
+
+	for ( ; ; )
+	{
+		UpdateTeamStates()
+		wait 0.5
+	}
+}
+
+
+void function StopCountDown()
+{
+	svGlobal.levelEnt.Signal( "CountDownTimerStopped" )
+
+	level.ui.uiGameStartTime = -1.0
+
+	FlagClear( "CountDownTimerStarted" )
+	AllPlayersUnMuteAll()
+}
+
+
+void function ready()
+{
+	// dev command to start the server
+	float time = Time() + 30
+	level.ui.uiGameStartTime = time
+}
+
+// Used by dev-only dedicated server UI:
+void function DevEndLobbyCountdown()
+{
+	if ( level.ui.uiGameStartTime == -1.0 )
+		return
+	level.ui.uiGameStartTime = Time() + 3
+}
+
+
+void function StartCountDown()
+{
+	int countdownDefault = GetCurrentPlaylistVarInt( "lobby_countdown", 60 )
+
+	if ( IsPrivateMatch() || DevLobbyIsFrozen() )
+	{
+		level.ui.uiGameStartTime = Time() + countdownDefault
+	}
+	else
+	{
+		UpdateTeamStates()
+		float endTime = file.hadBothTeamsTime + countdownDefault
+
+		int countdownMin = GetCurrentPlaylistVarInt( "lobby_countdown_min", 30 )
+		float delta      = (endTime - Time())
+		if ( delta < countdownMin )
+			endTime = (Time() + countdownMin)
+
+		level.ui.uiGameStartTime = endTime
+	}
+
+	FlagSet( "CountDownTimerStarted" )
+
+	int fadeTime = MUTEALLFADEIN
+	float delay  = (expect float( level.ui.uiGameStartTime ) - Time()) - fadeTime
+
+	thread MuteAllOnExitLobby( delay, fadeTime )
+}
+
+
+void function MuteAllOnExitLobby( float delay, int fadeTime )
+{
+	svGlobal.levelEnt.EndSignal( "CountDownTimerStopped" )
+
+	wait delay
+
+	AllPlayersMuteAll( fadeTime )
+}
+/*
+void function LocalServerLobbyLogic()
+{
+	Assert( !IsMatchmakingServer() )
+
+	SetTeamReady( TEAM_IMC, false )
+	SetTeamReady( TEAM_MILITIA, false )
+
+	thread UpdateTeamReadyStatus()
+
+	array<entity> players
+	float timeRemaining
+	float tickTime
+	float lastTickTime
+
+	for ( ;; )
+	{
+		if ( ReadyToStart() )
+		{
+			if ( !DevLobbyIsFrozen() && file.nextMapModeCombo.mapIdx == -1 )
+			{
+				SelectNextMap()
+			}
+			else
+			{
+				if ( DevLobbyIsFrozen() || level.ui.gameStartTime == null )
+					StartCountDown()
+
+				timeRemaining = expect float( level.ui.gameStartTime ) - Time()
+
+				if ( timeRemaining <= 10 )
+				{
+					tickTime = ceil( timeRemaining )
+
+					if ( tickTime != lastTickTime )
+					{
+						players = GetPlayerArray()
+						foreach ( player in players )
+							EmitSoundAtPositionOnlyToPlayer( TEAM_UNASSIGNED, <0,0,0>, player, PREMATCH_COUNTDOWN_SOUND )
+
+						lastTickTime = tickTime
+					}
+				}
+
+				if ( Time() > level.ui.gameStartTime )
+					break
+			}
+		}
+		else
+		{
+			if ( level.ui.gameStartTime != null )
+				StopCountDown()
+		}
+
+		WaitFrame()
+	}
+
+	if ( GetCurrentPlaylistVarInt( "local_autostart", 1 ) )
+		GameRules_ChangeMap( file.nextMapModeCombo.mapName, file.nextMapModeCombo.modeName )
+}
+*/
+
+void function PrintServerGameHistory()
+{
+	printt( "==============================================" )
+	printt( "Server Game History" )
+
+	int mapHistoryCount  = GetServerMapHistory().len()
+	int modeHistoryCount = GetServerModeHistory().len()
+
+	array<string> mapHistory = GetServerMapHistory( mapHistoryCount )
+	mapHistory.reverse()
+	foreach ( map in mapHistory )
+		printt( map )
+
+	array<string> modeHistory = GetServerModeHistory( modeHistoryCount )
+	modeHistory.reverse()
+	foreach ( mode in modeHistory )
+		printt( mode )
+}
+
+
+MapModeCombo function GetRecentMapModeCombo()
+{
+	MapModeCombo mapModeCombo
+	for ( int i = 1; i < 5; i++ )
+	{
+		string map  = GameRules_GetRecentMap( i )
+		string mode = GameRules_GetRecentGameMode( i )
+
+		if ( IsLobbyMapName( map ) )
+			continue
+
+		mapModeCombo.mapName = map
+		mapModeCombo.modeName = mode
+		break
+	}
+
+	return mapModeCombo
+}
+
+
+MapModeCombo function GetNextComboInOrder()
+{
+	int numModes = GetCurrentPlaylistGamemodesCount()
+	Assert( numModes != 0 )
+
+	MapModeCombo currentCombo = GetRecentMapModeCombo()
+	MapModeCombo nextCombo
+	for ( int modeIdx = 0; modeIdx < numModes; ++modeIdx )
+	{
+		string modeName = GetCurrentPlaylistGamemodeByIndex( modeIdx )
+		if ( modeName != currentCombo.modeName )
+			continue
+
+		int numMaps = GetCurrentPlaylistGamemodeByIndexMapsCount( modeIdx )
+		for ( int mapIdx = 0; mapIdx < numMaps; ++mapIdx )
+		{
+			string mapName = GetCurrentPlaylistGamemodeByIndexMapByIndex( modeIdx, mapIdx )
+			if ( mapName != currentCombo.mapName )
+				continue
+
+			if ( mapIdx == (numMaps - 1) )
+			{
+				// there are no more maps in this mode; use the next mode's map
+				mapIdx = 0
+				if ( modeIdx == (numModes - 1) )
+				{
+					// there are no more modes; wrap around
+					modeIdx = 0
+				}
+			}
+
+			nextCombo.mapIdx = mapIdx
+			nextCombo.mapName = GetCurrentPlaylistGamemodeByIndexMapByIndex( modeIdx, mapIdx )
+			nextCombo.modeIdx = modeIdx
+			nextCombo.modeName = GetCurrentPlaylistGamemodeByIndex( modeIdx )
+			break
+		}
+
+		if ( nextCombo.mapIdx != -1 )
+			break
+	}
+
+	printt( "Selecting next map/mode: " + nextCombo.mapName + "/" + nextCombo.modeName )
+	return nextCombo
+}
+
+
+MapModeCombo function GetNextComboRandom()
+{
+	int numModes = GetCurrentPlaylistGamemodesCount()
+	Assert( numModes != 0 )
+
+	int modeIdx = RandomInt( numModes )
+	int numMaps = GetCurrentPlaylistGamemodeByIndexMapsCount( modeIdx )
+	Assert( numMaps != 0 )
+
+	int mapIdx      = RandomInt( numMaps )
+	string mapName  = GetCurrentPlaylistGamemodeByIndexMapByIndex( modeIdx, mapIdx )
+	string modeName = GetCurrentPlaylistGamemodeByIndex( modeIdx )
+	printt( "Selecting random map/mode: " + mapName + "/" + modeName )
+
+	MapModeCombo mapModeCombo
+	mapModeCombo.mapIdx = mapIdx
+	mapModeCombo.mapName = mapName
+	mapModeCombo.modeIdx = modeIdx
+	mapModeCombo.modeName = modeName
+	return mapModeCombo
+}
+
+struct ScheduleTimes
+{
+	int start
+	int end
+}
+
+ScheduleTimes function GetFNFScheduleTimes()
+{
+	int startTime = GetCurrentPlaylistVarInt( "fnf_schedule_start_time", -1 )
+	int endTime   = GetCurrentPlaylistVarInt( "fnf_schedule_end_time", -1 )
+
+	if ( startTime < 0 || endTime < 0 )
+	{
+		startTime = 1420243200 //+ ( 1 * SECONDS_PER_HOUR ) // 1/2/2015 05:00:00PM PST // This does not account for Daylight Saving Time
+		int resetTime = startTime + FNF_SCHEDULE_RESET_SECONDS
+
+		int currentTimeStamp = GetUnixTimestamp()
+
+		while ( resetTime < currentTimeStamp )
+		{
+			startTime += SECONDS_PER_WEEK
+			resetTime = startTime + FNF_SCHEDULE_RESET_SECONDS
+		}
+
+		endTime = startTime + 5400 // 1.5 hours
+	}
+
+	Assert( endTime > startTime )
+
+	ScheduleTimes times
+	times.start = startTime
+	times.end = endTime
+
+	return times
+}
+
+struct MapModeSchedule
+{
+	MapModeCombo mapModeCombo
+	int          startTime
+	int          endTime
+}
+
+array<MapModeSchedule> function GetFNFSchedule()
+{
+	ScheduleTimes fnfScheduleTimes = GetFNFScheduleTimes()
+	int scheduleStartTime          = fnfScheduleTimes.start
+	int scheduleEndTime            = fnfScheduleTimes.end
+
+	int numMapsInPlaylist = GetCurrentPlaylistMapsCount()
+	int chunkTime         = int( (scheduleEndTime - scheduleStartTime) / (numMapsInPlaylist + 0.5) ) // using numMapsInPlaylist + 0.5 so last map gets a larger time chunk
+
+	array<MapModeSchedule> fnfSchedule
+	fnfSchedule.resize( numMapsInPlaylist )
+
+	int comboIdx = 0
+	int numModes = GetCurrentPlaylistGamemodesCount()
+	Assert( numModes != 0 )
+	for ( int modeIdx = 0; modeIdx < numModes; ++modeIdx )
+	{
+		string modeName = GetCurrentPlaylistGamemodeByIndex( modeIdx )
+		int numMaps     = GetCurrentPlaylistGamemodeByIndexMapsCount( modeIdx )
+		Assert( numMaps != 0 )
+		for ( int mapIdx = 0; mapIdx < numMaps; ++mapIdx )
+		{
+			string mapName = GetCurrentPlaylistGamemodeByIndexMapByIndex( modeIdx, mapIdx )
+			fnfSchedule[comboIdx].mapModeCombo.mapIdx = mapIdx
+			fnfSchedule[comboIdx].mapModeCombo.mapName = mapName
+			fnfSchedule[comboIdx].mapModeCombo.modeIdx = modeIdx
+			fnfSchedule[comboIdx].mapModeCombo.modeName = modeName
+			fnfSchedule[comboIdx].startTime = scheduleStartTime + chunkTime * comboIdx
+			++comboIdx
+			fnfSchedule[comboIdx].endTime = scheduleStartTime + chunkTime * comboIdx
+		}
+	}
+
+	return fnfSchedule
+}
+
+
+MapModeCombo function GetNextFNFScheduledMap()
+{
+	array<MapModeSchedule> fnfSchedule = GetFNFSchedule()
+
+	int scheduleIdx      = 0
+	int currentTimeStamp = GetUnixTimestamp()
+
+	for ( int i = 1; i < fnfSchedule.len(); i++ )
+	{
+		if ( fnfSchedule[ i ].startTime > currentTimeStamp )
+			break
+
+		scheduleIdx++
+	}
+
+	MapModeCombo mapModeCombo = fnfSchedule[scheduleIdx].mapModeCombo
+	printt( "Selecting scheduled map/mode: " + mapModeCombo.mapName + "/" + mapModeCombo.modeName )
+	return mapModeCombo
+}
+
+
+void function PrintFNFSchedule()
+{
+	printt( "Schedule for playlist: " + GetCurrentPlaylistName() + "\n" )
+
+	array<MapModeSchedule> fnfSchedule = GetFNFSchedule()
+
+	foreach ( schedule in fnfSchedule )
+	{
+		TimeParts timeParts = GetUnixTimeParts( schedule.startTime + (PST_TIME_ZONE_OFFSET - 1) * SECONDS_PER_HOUR )
+
+		string date = timeParts.month + "/" + timeParts.day + "/" + timeParts.year
+		date = PadString( date, 12 )
+
+		string minute = string( timeParts.minute )
+		if ( minute.len() == 1 )
+			minute = "0" + minute
+
+		string time = timeParts.hour % 12 + ":" + minute
+		time = PadString( time, 7 )
+
+		string mode = PadString( schedule.mapModeCombo.modeName, 6 )
+		string map  = schedule.mapModeCombo.mapName
+
+		printt( date + time + mode + map )
+	}
+}
+
+
+MapModeCombo function Lobby_PickNextMapModeCombo()
+{
+	if ( GetCurrentPlaylistVarInt( "play_in_order", 0 ) != 0 )
+	{
+		return GetNextComboInOrder()
+	}
+
+	if ( GetCurrentPlaylistVarInt( "fnf_schedule_enabled", 0 ) == 1 )
+	{
+		ScheduleTimes fnfSchedule = GetFNFScheduleTimes()
+		int currentTimeStamp      = GetUnixTimestamp()
+		int buffer                = 10 * SECONDS_PER_MINUTE
+
+		// start schedule 10 minutes early, end 10 minutes later than actual times
+		if ( (currentTimeStamp > fnfSchedule.start - buffer) &&
+						(currentTimeStamp < fnfSchedule.end + buffer) )
+			return GetNextFNFScheduledMap()
+	}
+
+	return GetNextComboRandom()
+}
+
+
+void function SelectNextMap()
+{
+	file.nextMapModeCombo = Lobby_PickNextMapModeCombo()
+	printt( "Next map: " + file.nextMapModeCombo.mapName )
+	printt( "Next mode: " + file.nextMapModeCombo.modeName )
+}
+
+
+void function ClearNextMap()
+{
+	file.nextMapModeCombo.mapIdx = -1
+	file.nextMapModeCombo.modeIdx = -1
+}
+
+
+void function ClearAllNewItems( entity player )
+{
+	//array<string> persistentVarsToClear
+	//persistentVarsToClear.append( "newPilotWeapons" )
+	//persistentVarsToClear.append( "newPilotOffhands" )
+	//persistentVarsToClear.append( "newPilotPassives" )
+	//persistentVarsToClear.append( "newTitanOffhands" )
+	//persistentVarsToClear.append( "newTitanPassives" )
+	//persistentVarsToClear.append( "newTitanChassis" )
+	//persistentVarsToClear.append( "newPrimeTitans" )
+	//persistentVarsToClear.append( "newPilotSkins" )
+	//persistentVarsToClear.append( "newPrimePilotSkins" )
+	//persistentVarsToClear.append( "newPilotSuits" )
+	//persistentVarsToClear.append( "newPilotExecutions" )
+	//persistentVarsToClear.append( "newTitanExecutions" )
+	//persistentVarsToClear.append( "newFeatures" )
+	//persistentVarsToClear.append( "newBoosts" )
+	//persistentVarsToClear.append( "newFactions" )
+	//persistentVarsToClear.append( "newCallingCards" )
+	//persistentVarsToClear.append( "newCallsignIcons" )
+	//persistentVarsToClear.append( "newCommsIcons" )
+
+	//int count = PersistenceGetArrayCount( "pilotWeapons" )
+	//for ( int i = 0; i < count; i++ )
+	//{
+	//	persistentVarsToClear.append( "pilotWeapons[" + i + "].newMods" )
+	//	persistentVarsToClear.append( "pilotWeapons[" + i + "].newWeaponSkins" )
+	//	persistentVarsToClear.append( "pilotWeapons[" + i + "].newPrimeWeaponSkins" )
+	//	persistentVarsToClear.append( "pilotWeapons[" + i + "].newFeatures" )
+	//}
+	//
+	//count = PersistenceGetArrayCount( "titanWeapons" )
+	//for ( int i = 0; i < count; i++ )
+	//{
+	//	persistentVarsToClear.append( "titanWeapons[" + i + "].newMods" )
+	//	persistentVarsToClear.append( "titanWeapons[" + i + "].newWeaponSkins" )
+	//}
+	//
+	//count = PersistenceGetArrayCount( "titanChassis" )
+	//for ( int i = 0; i < count; i++ )
+	//{
+	//	//persistentVarsToClear.append( "titanChassis[" + i + "].newPassives" )
+	//	persistentVarsToClear.append( "titanChassis[" + i + "].newSkins" )
+	//	//persistentVarsToClear.append( "titanChassis[" + i + "].newPrimeSkins" ) //TODO: This is actually WarPaint, rename next game.
+	//	persistentVarsToClear.append( "titanChassis[" + i + "].newWeaponSkins" )
+	//	persistentVarsToClear.append( "titanChassis[" + i + "].newPrimeWeaponSkins" )
+	//	//persistentVarsToClear.append( "titanChassis[" + i + "].newTitanDecals" )
+	//	//persistentVarsToClear.append( "titanChassis[" + i + "].newPrimeTitanDecals" )
+	//	//persistentVarsToClear.append( "titanChassis[" + i + "].newFDUpgrades" )
+	//}
+	//
+	//foreach ( persistentVar in persistentVarsToClear )
+	//{
+	//	count = PersistenceGetArrayCount( persistentVar )
+	//	for ( int i = 0; i < count; i++ )
+	//	{
+	//		player.SetPersistentVar( persistentVar + "[" + i + "]", 0 )
+	//	}
+	//}
+}
+
+
+void function ClientCallback_CancelMatchSearch( entity player )
+{
+	if ( GetLobbyType() != "party" )
+	{
+		printt( "Wrong lobby type for cancelMatchSearch command:", GetLobbyType() )
+		return
+	}
+
+	AbortMatchSearchesForPlayer( "player canceled match search", player )
+}
+
+void function ClientCallback_SetSeasonalHubButtonClickedSeason( entity player )
+{
+	if ( !IsLobby() )
+		return
+
+	ItemFlavor currentSeason = GetLatestSeason( GetUnixTimestamp() )
+	string season = ItemFlavor_GetCalEventRef( currentSeason )
+
+	player.SetPersistentVar( "lastHubResetSeason", season )
+}
+
+void function ClientCallback_ValidateLoadout( entity player )
+{
+	// TODO - R5DEV-413775: validating loadouts has a massive server cost and should not be done lightly; should take TYPE(s) of item(s) to validate
+	if ( !(GetCurrentPlaylistVarBool( "has_sv_op_v1_loadouts", true )) )
+		ValidateGRXPlayerLoadout( player )
+	ClientCallback_lastSeenPremiumCurrency( player )
+}
+
+void function ClientCallback_lastSeenPremiumCurrency( entity player )
+{
+	if ( !IsLobby() )
+		return
+
+	player.Signal( "UpdateLastSeenPremiumCurrency" )
+	thread UpdateLastSeenPremiumCurrency( player )
+}
+
+void function ClientCallback_ViewedModes( entity player )
+{
+	player.SetPersistentVar( "newModeVersion", Playlist_GetNewModeVersion() )
+
+	string currentLTM = Playlist_GetLTMSlotPlaylist()
+
+	if ( currentLTM != "" )
+	{
+	player.SetPersistentVar( "lastSeenLobbyLTM", currentLTM )
+}
+	else
+	{
+		array<ItemFlavor> currentEvents = GetActiveBuffetEventArray( GetUnixTimestamp() )
+		foreach ( event in currentEvents )
+		{
+			var sBlock         = ItemFlavor_GetSettingsBlock( event )
+			string highlight = GetSettingsBlockString( sBlock, "highlightGamemodeSelectorSlot" )
+			if ( highlight != "" )
+			{
+				player.SetPersistentVar( "lastSeenLobbyLTM", highlight )
+				break
+			}
+		}
+	}
+}
+
+void function UpdateLastSeenPremiumCurrency( entity player )
+{
+	player.EndSignal( "UpdateLastSeenPremiumCurrency" )
+	player.EndSignal( "OnDestroy" )
+	while ( !GRX_IsInventoryReady( player ) )
+		wait 0.5
+
+	int premiumBalance = GRXCurrency_GetPlayerBalance( player, GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] )
+	player.SetPersistentVar( "lastSeenPremiumCurrency", premiumBalance )
+
+	//int exoticBalance = GRXCurrency_GetPlayerBalance( player, GRX_CURRENCIES[GRX_CURRENCY_EXOTIC] )
+	//player.SetPersistentVar( "lastSeenExoticCurrency", exoticBalance )
+}
+
+
+void function ClientCallback_ViewedGameSummary( entity player )
+{
+	SafeSetPersistentVar( player, "showGameSummary", false )
+}
+
+                            
+void function ClientCallback_ViewedOrientationMatchDialog( entity player )
+{
+	SafeSetPersistentVar( player, "showOrientationMatchGraduationDialog", false )
+}
+                                 
+
+                 
+void function ClientCallback_ViewedCupsAboutDialog( entity player )
+{
+	SafeSetPersistentVar( player, "seenCupsPopup", true )
+}
+
+void function ClientCallback_ViewedActiveCup( entity player, int cupID )
+{
+	if ( !IsValid( player ) )
+		return
+
+	/*
+	int persistenceDataIndex = Cups_GetPlayersPDataIndexForCupID( player, cupID )
+	if ( persistenceDataIndex < 0 )
+		Warning( "Unable to update cup entry persistence. Invalid cups persistence index." )
+	else
+		player.SetPersistentVar( format( "cups[%d].uiSeen", persistenceDataIndex ), true )*/
+}
+                      
+
+
+#if SERVER
+
+void function ClientCallback_SetClubIsMember( entity player, bool isMember )
+{
+	SafeSetPersistentVar( player, "clubIsMember", isMember )
+}
+
+
+void function ClientCallback_SetClubTimelineViewedTime( entity player, int lastViewedTimelineTime )
+{
+	SafeSetPersistentVar( player, "clubLastViewedTimelineTime", lastViewedTimelineTime )
+}
+
+
+void function ClientCallback_SetClubChatViewedTime( entity player, int lastViewedChatTime )
+{
+	SafeSetPersistentVar( player, "clubLastViewedChatTime", lastViewedChatTime )
+}
+
+
+void function ClientCallback_SetClubAnnouncementViewedTime( entity player, int lastViewedAnnouncementTime )
+{
+	SafeSetPersistentVar( player, "clubLastViewedAnnouncementTime", lastViewedAnnouncementTime )
+}
+
+void function ClientCallback_SetClubIsPendingApproval( entity player, bool isPendingApproval )
+{
+	SafeSetPersistentVar( player, "clubIsPendingApproval", isPendingApproval )
+}
+#endif
+
+
+void function ClientCallback_ViewingMainLobbyPage( entity player )
+{
+	if ( !IsValid( player ) )
+		return
+
+	QueueUpdateStryderWithPlayersStryderCharDataArray( player )
+}
+
+
+bool function ReadyToStart()
+{
+	if ( IsPrivateMatch() )
+		return false
+
+	if ( IsCoopMatch() )
+		return IsTeamReady( TEAM_MILITIA )
+
+	int maxTeams = GetCurrentPlaylistVarInt( "max_teams", 2 )
+	if ( maxTeams > 2 )
+	{
+		int minPlayers        = GetCurrentPlaylistVarInt( "min_players", 2 )
+		array<entity> players = GetPlayerArray()
+		if ( players.len() < minPlayers )
+			return false
+	}
+	else
+	{
+		if ( !IsTeamReady( TEAM_IMC ) )
+			return false
+		if ( !IsTeamReady( TEAM_MILITIA ) )
+			return false
+	}
+
+	return true
+}
+
+void function ClientCallback_MarkBattlePassPopupAsSeen( entity player, int markerLevel )
+{
+	if ( !IsLobby() )
+		return
+
+	string bpString = GetActiveBattlePassGUID()
+	if ( bpString.len() == 0 )
+	{
+		Warning( "ClientCallback_MarkBattlePassPopupAsSeen: current active battle pass string guid was empty." )
+		return
+	}
+
+	player.SetPersistentVar( format( "battlePasses[%s].lastPopupLevel", bpString ), markerLevel )
+}
+
+#if SERVER
+void function ClientCallback_MarkBattlePassMilestoneAsSeen( entity player, int lastMilestoneIndex )
+{
+	if ( !IsLobby() )
+		return
+
+	string bpString = GetActiveBattlePassGUID()
+	if ( bpString.len() == 0 )
+	{
+		Warning( "ClientCallback_MarkBattlePassMilestoneAsSeen: current active battle pass string guid was empty." )
+		return
+	}
+
+	player.SetPersistentVar( format( "battlePasses[%s].lastSeenMilestone", bpString ), lastMilestoneIndex )
+}
+#endif
+
+void function ClientCallback_MarkHeirloomShopPopupAsSeen( entity player )
+{
+	player.SetPersistentVar( "heirloomShopLastSeen", GetUnixTimestamp() )
+}
+
+void function ClientCallback_MarkQuestPopupAsSeen( entity player )
+{
+	player.SetPersistentVar( "questPopupLastSeen", GetUnixTimestamp() )
+}
+
+void function ClientCallback_MarkCurrencyExpirationPopupAsSeen( entity player, int popupID )
+{
+	player.SetPersistentVar( "currencyExpPopupLastExpTime", popupID )
+}
+
+void function ClientCallback_MarkLegendTokensPopupAsSeen( entity player )
+{
+	player.SetPersistentVar( "legendTokensPopupLastSeen", GetUnixTimestamp() )
+}
+
+#if SERVER
+
+void function ClientCallback_MarkStoryEventDialoguePopupAsAttempted( entity player )
+{
+	player.SetPersistentVar( "storyEventDialoguePopupLastSeen", GetUnixTimestamp() )
+}
+
+void function ClientCallback_MarkStoryEventDialoguePopupAsSeen( entity player, int itemFlavorGuid, int dialogueIndex )
+{
+	MarkStoryEventPopupAsSeen( player, itemFlavorGuid, dialogueIndex, "dialogueMessages", "dialoguePersistentVarNameHasSeen" )
+}
+
+void function ClientCallback_MarkStoryEventChallengesPopupAsSeen( entity player, int itemFlavorGuid, int challengeIndex )
+{
+	player.SetPersistentVar( "storyEventChallengesPopupLastSeen", GetUnixTimestamp() )
+	MarkStoryEventPopupAsSeen( player, itemFlavorGuid, challengeIndex, "challengeGroups", "hasSeenChallengesPersistentVarName" )
+}
+
+void function MarkStoryEventPopupAsSeen( entity player, int itemGuid, int index, string groupId, string persistenceNameId )
+{
+	if ( index < 0 )
+		return
+
+	asset itemAsset = GetSettingsAssetForUniqueId( itemGuid )
+	if( itemAsset == $"" )
+		return
+
+	array<var> blocks = IterateSettingsAssetArray( itemAsset, groupId )
+	if( blocks.len() == 0 || blocks.len() < index )
+		return
+
+	var block                        = blocks[ index ]
+	string persistenceVarNameHasSeen = GetSettingsBlockString( block, persistenceNameId )
+	if( persistenceVarNameHasSeen == "" )
+		return
+
+	player.SetPersistentVar( persistenceVarNameHasSeen, 1 )
+}
+#endif
+
+void function ClientCallback_ResetReconnectParams( entity player )
+{
+	player.SetPersistentVar( "reconnectTime", 0 )
+	player.SetPersistentVar( "reconnectParams", "" )
+}
+
+void function ClientCallback_ReconnectCheckStatus( entity player )
+{
+	player.Script_CheckRemoteConnectionStatus()
+}
+
+void function AddCallback_Lobby_OnClientConnected( void functionref( entity ) func )
+{
+	// these run following Loadout validation (runs threaded), so should *NOT* be timing-sensitive
+	Assert( !file.callbacks_lobby_onClientConnected.contains( func ) )
+	file.callbacks_lobby_onClientConnected.append( func )
 }

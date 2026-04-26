@@ -1,5 +1,9 @@
 global function Cl_CustomCTF_Init
 
+const int HIGHLIGHT_CONTEXT_NEUTRAL = 0
+const int HIGHLIGHT_FILL_VM_CUSTOM_COLOR = 101
+const int HIGHLIGHT_OUTLINE_VM_CUSTOM_COLOR = 106
+
 //Server Callbacks
 global function ServerCallback_CTF_DoAnnouncement
 global function ServerCallback_CTF_FlagCaptured
@@ -73,7 +77,7 @@ struct {
 	entity FSIntro_CameraMover
 
 	array<entity> FSIntro_localSquadEnts
-	
+
 	entity VoteTeam_Camera
 	entity VoteTeam_orchidPlayerModel
 	vector VoteTeam_orchidPlayerModel_OgOrigin
@@ -149,21 +153,21 @@ void function Cl_CustomCTF_Init()
 	RegisterSignal( "ChangeCameraToSelectedLocation" )
 	RegisterSignal( "VoteTeam_EndModelFocus" )
 	RegisterSignal( "FSIntro_CardName" )
-	
+
 	if( Flowstate_IsHaloMode() )
 		SetCommsDialogueEnabled( false )
 }
 
 void function CL_FSCTF_RegisterNetworkFunctions()
 {
-	RegisterNetworkedVariableChangeCallback_time( "FSIntro_StartTime", Flowstate_IntroTimeChanged )
-	RegisterNetworkedVariableChangeCallback_time( "FSIntro_EndTime", Flowstate_IntroEndTimeChanged )
-	// RegisterNetworkedVariableChangeCallback_time( "FSVoteTeam_StartTime", Flowstate_VoteTeamTimeChanged )
-	RegisterNetworkedVariableChangeCallback_time( "FSVoteTeam_EndTime", Flowstate_VoteTeamEndTimeChanged )
-	RegisterNetworkedVariableChangeCallback_time( "flowstate_DMStartTime", Flowstate_CTFStartTimeChanged )
-	RegisterNetworkedVariableChangeCallback_time( "flowstate_DMRoundEndTime", Flowstate_CTFRoundEndTimeChanged )
-	RegisterNetworkedVariableChangeCallback_ent( "imcFlag", CTF_FlagEntChangedImc )
-	RegisterNetworkedVariableChangeCallback_ent( "milFlag", CTF_FlagEntChangedMil )
+	RegisterNetworkedVariableChangeCallback_timeSafe( "FSIntro_StartTime", Flowstate_IntroTimeChanged )
+	RegisterNetworkedVariableChangeCallback_timeSafe( "FSIntro_EndTime", Flowstate_IntroEndTimeChanged )
+	// RegisterNetworkedVariableChangeCallback_timeSafe( "FSVoteTeam_StartTime", Flowstate_VoteTeamTimeChanged )
+	RegisterNetworkedVariableChangeCallback_timeSafe( "FSVoteTeam_EndTime", Flowstate_VoteTeamEndTimeChanged )
+	RegisterNetworkedVariableChangeCallback_timeSafe( "flowstate_DMStartTime", Flowstate_CTFStartTimeChanged )
+	RegisterNetworkedVariableChangeCallback_timeSafe( "flowstate_DMRoundEndTime", Flowstate_CTFRoundEndTimeChanged )
+	RegisterNetworkedVariableChangeCallback_entSafe( "imcFlag", CTF_FlagEntChangedImc )
+	RegisterNetworkedVariableChangeCallback_entSafe( "milFlag", CTF_FlagEntChangedMil )
 }
 
 void function CTF_FlagEntChangedImc( entity player, entity oldFlag, entity newFlag, bool actuallyChanged )
@@ -207,7 +211,7 @@ void function CTF_FlagEntChanged( int team, entity newFlag )
 	// ClientCodeCallback_MinimapEntitySpawned( newFlag )
 
 	string msg = player.GetTeam() == team ? "Defend" : "Capture"
-	
+
 	if( newFlag.IsPlayer() )
 		msg = player.GetTeam() == newFlag.GetTeam() ? "Escort" : "Attack"
 
@@ -234,14 +238,14 @@ void function CTF_FlagEntChanged( int team, entity newFlag )
 
 void function Cl_OnResolutionChanged()
 {
-	if( GetGlobalNetInt( "FSDM_GameState" ) != 0 )
+	if( GetGlobalNetIntSafe( "FSDM_GameState" ) != 0 )
 	{
 		ShowScoreRUI( false )
 		// Flowstate_ShowRoundEndTimeUI( -1 )
 		return
 	}
-	
-	// Flowstate_ShowRoundEndTimeUI( GetGlobalNetTime( "flowstate_DMRoundEndTime" ) )
+
+	// Flowstate_ShowRoundEndTimeUI( GetGlobalNetTimeSafe( "flowstate_DMRoundEndTime" ) )
 	ShowScoreRUI( true )
 }
 
@@ -298,12 +302,12 @@ void function Flowstate_VoteTeamEndTimeChanged( entity player, float old, float 
 {
 	if ( !actuallyChanged  || new == -1 )
 		return
-	
+
 	thread function () : ( new )
 	{
 		thread VoteTeamUpdateUIVoteTimer( new )
 
-		while( Time() < GetGlobalNetTime( "FSVoteTeam_EndTime" ) )
+		while( Time() < GetGlobalNetTimeSafe( "FSVoteTeam_EndTime" ) )
 			WaitFrame()
 
 		ServerCallback_FS_OpenVoteTeamMenu( false )
@@ -343,14 +347,14 @@ void function Flowstate_CTFRoundEndTimeChanged( entity player, float old, float 
 
 void function CTFNotifyRingTimer()
 {
-	// if( GetGlobalNetTime( "flowstate_DMRoundEndTime" ) < Time() || GetGlobalNetInt( "FSDM_GameState" ) != eTDMState.IN_PROGRESS || GetGlobalNetTime( "flowstate_DMRoundEndTime" ) == -1 )
+	// if( GetGlobalNetTimeSafe( "flowstate_DMRoundEndTime" ) < Time() || GetGlobalNetIntSafe( "FSDM_GameState" ) != eTDMState.IN_PROGRESS || GetGlobalNetTimeSafe( "flowstate_DMRoundEndTime" ) == -1 )
 	// {
 		// ShowScoreRUI( false )
 		// // Flowstate_ShowRoundEndTimeUI( -1 )
 		// return
 	// }
 
-	// Flowstate_ShowRoundEndTimeUI( GetGlobalNetTime( "flowstate_DMRoundEndTime" ) )
+	// Flowstate_ShowRoundEndTimeUI( GetGlobalNetTimeSafe( "flowstate_DMRoundEndTime" ) )
 	ShowScoreRUI( true )
 }
 
@@ -366,7 +370,7 @@ void function SendDropFlagToServer( entity localPlayer )
 
 void function Cl_CTF_OnResolutionChanged()
 {
-	
+
 }
 
 void function Cl_CTFRegisterLocation(LocationSettingsCTF locationSettings)
@@ -421,7 +425,7 @@ var function AddPointIconRUI( entity flag, string text, asset icon)
 {
 	if(!IsValid(flag))
 		return
-		
+
 	bool pinToEdge = true
 	asset ruiFile = $"ui/overhead_icon_generic.rpak"
 
@@ -480,7 +484,7 @@ void function ServerCallback_CTF_PickedUpFlag(entity player, bool pickedup)
 	#if DEVELOPER
 		printt( "debug, ServerCallback_CTF_PickedUpFlag:", player, pickedup )
 	#endif
-	
+
 	asset icon = $"rui/gamemodes/capture_the_flag/arrow"
 	vector emptymdlloc
 	vector color
@@ -590,7 +594,7 @@ void function ShowScoreRUI(bool show)
 {
 	Hud_SetVisible( HudElement( "FS_Oddball_YourTeam" ), show )
 	Hud_SetVisible( HudElement( "FS_Oddball_YourTeamGoalScore" ), show )
-	Hud_SetText( HudElement( "FS_Oddball_YourTeamGoalScore"), "/" + CTF_SCORE_GOAL_TO_WIN ) 
+	Hud_SetText( HudElement( "FS_Oddball_YourTeamGoalScore"), "/" + CTF_SCORE_GOAL_TO_WIN )
 	Hud_SetVisible( HudElement( "FS_Oddball_YourTeamScore" ), show )
 	Hud_SetVisible( HudElement( "FS_Oddball_AllyHas" ), show )
 	Hud_SetVisible( HudElement( "FS_Oddball_EnemyTeam" ), show )
@@ -615,12 +619,12 @@ void function ShowScoreRUI(bool show)
 	RuiSetImage( Hud_GetRui( HudElement( "FS_Oddball_EnemyHas" ) ), "basicImage", enemyteamIcon )
 	RuiSetImage( Hud_GetRui( HudElement( "FS_Oddball_AllyHas" ) ), "basicImage", localteamIcon )
 	RuiSetImage( Hud_GetRui( HudElement( "FS_Oddball_Scoreboard_Frame" ) ), "basicImage", $"rui/flowstate_custom/scoreboard_bg_oddball" )
-	
+
 	Hud_SetVisible( HudElement( "FS_Oddball_Scoreboard_Frame" ), show )
-	
+
 	if( !show )
 		return
-	
+
 	thread CTF_StartBuildingTeamsScoreOnHud()
 }
 
@@ -632,8 +636,8 @@ void function CTF_StartBuildingTeamsScoreOnHud()
 	int enemyscore = 0
 	string str_localscore = ""
 	string str_enemyscore = ""
-	
-	while( GetGlobalNetInt( "FSDM_GameState" ) == 0 )
+
+	while( GetGlobalNetIntSafe( "FSDM_GameState" ) == 0 )
 	{
 		localscore = GameRules_GetTeamScore( player.GetTeam() )
 		enemyscore = GameRules_GetTeamScore( player.GetTeam() == TEAM_IMC ? TEAM_MILITIA : TEAM_IMC )
@@ -642,9 +646,9 @@ void function CTF_StartBuildingTeamsScoreOnHud()
 
 		str_localscore = localscore.tostring()
 		str_enemyscore = enemyscore.tostring() + "/" + CTF_SCORE_GOAL_TO_WIN.tostring()
-		
-		Hud_SetText( HudElement( "FS_Oddball_YourTeamScore"), str_localscore ) 
-		Hud_SetText( HudElement( "FS_Oddball_EnemyTeamScore"), str_enemyscore ) 
+
+		Hud_SetText( HudElement( "FS_Oddball_YourTeamScore"), str_localscore )
+		Hud_SetText( HudElement( "FS_Oddball_EnemyTeamScore"), str_enemyscore )
 
 		wait 0.01
 	}
@@ -784,7 +788,7 @@ void function UI_To_Client_UpdateSelectedClass(int selectedclass)
 	RunUIScript("UpdateSelectedClass", file.ClassID, file.ctfclasses[file.ClassID].primary, file.ctfclasses[file.ClassID].secondary, file.ctfclasses[file.ClassID].tactical, file.ctfclasses[file.ClassID].ult, USE_LEGEND_ABILITYS)
 
 	entity player = GetLocalClientPlayer()
-	// why does s3 not have remote server functions..?
+	// remote server functions not available, using ClientCommand
 	player.ClientCommand("SetPlayerClass " + selectedclass)
 }
 
@@ -971,7 +975,7 @@ void function CreateVotingUI()
 void function DestroyVotingUI()
 {
 	isvoting = false
-	
+
 	FadeOutSoundOnEntity( GetLocalClientPlayer(), "Music_CharacterSelect_Wattson", 0.2 )
 
 	GetLocalClientPlayer().ClearMenuCameraEntity()
@@ -1014,7 +1018,7 @@ void function UI_To_Client_VoteForMap(int mapid)
 
 	entity player = GetLocalClientPlayer()
 
-	// why does s3 not have remote server functions..?
+	// remote server functions not available, using ClientCommand
 	player.ClientCommand("VoteForMap " + mapid)
 	RunUIScript("UpdateVotedFor", mapid + 1)
 
@@ -1127,7 +1131,7 @@ void function ShowCTFVictorySequence()
 	file.victorySequenceAngles = file.selectedLocation.victorypos.angles
 
 	asset defaultModel				= GetGlobalSettingsAsset( DEFAULT_PILOT_SETTINGS, "bodyModel" )
-	LoadoutEntry loadoutSlotCharacter = Loadout_CharacterClass()
+	LoadoutEntry loadoutSlotCharacter = Loadout_Character()
 	vector characterAngles			= < file.victorySequenceAngles.x / 2.0, file.victorySequenceAngles.y, file.victorySequenceAngles.z >
 
 	VictoryPlatformModelData victoryPlatformModelData = GetVictorySequencePlatformModel()
@@ -1296,11 +1300,11 @@ vector function GetVictorySquadFormationPosition( vector mainPosition, vector an
 	int groupOffsetIndex = index / 3
 	int internalGroupOffsetIndex = index % 3
 
-	float internalGroupOffsetSide = 34.0																						   
-	float internalGroupOffsetBack = -38.0																			  
+	float internalGroupOffsetSide = 34.0
+	float internalGroupOffsetBack = -38.0
 
-	float groupOffsetSide = 114.0																							
-	float groupOffsetBack = -64.0																			   
+	float groupOffsetSide = 114.0
+	float groupOffsetBack = -64.0
 
 	float finalOffsetSide = ( groupOffsetSide * ( groupOffsetIndex % 2 == 0 ? 1 : -1 ) * ( groupOffsetIndex == 0 ? 0 : 1 ) ) + ( internalGroupOffsetSide * ( internalGroupOffsetIndex % 2 == 0 ? 1 : -1 ) * ( internalGroupOffsetIndex == 0 ? 0 : 1 ) )
 	float finalOffsetBack = ( groupOffsetBack * ( groupOffsetIndex == 0 ? 0 : 1 ) ) + ( internalGroupOffsetBack * ( internalGroupOffsetIndex == 0 ? 0 : 1 ) )
@@ -1326,9 +1330,9 @@ void function FS_CreateIntroScreen()
 			AddIntroScreenSquadData( player )
 		}
 
-		while( Time() < GetGlobalNetTime( "FSIntro_StartTime" ) )
+		while( Time() < GetGlobalNetTimeSafe( "FSIntro_StartTime" ) )
 			WaitFrame()
-	
+
 		if( FlagRUI.IMCpointicon != null )
 		{
 			RuiSetVisible( FlagRUI.IMCpointicon, false )
@@ -1348,12 +1352,12 @@ void function FSIntro_StartIntroScreen()
 {
 	float stime = Time()
 	FSIntro_Destroy()
-	
-	if( Flowstate_IsHaloMode() && !IsValid( GetGlobalNetEnt( "imcFlag" ) ) || GetCurrentPlaylistVarBool( "is_halo_gamemode", false ) && !IsValid( GetGlobalNetEnt( "milFlag" ) ) )
+
+	if( Flowstate_IsHaloMode() && !IsValid( GetGlobalNetEntSafe( "imcFlag" ) ) || GetCurrentPlaylistVarBool( "is_halo_gamemode", false ) && !IsValid( GetGlobalNetEntSafe( "milFlag" ) ) )
 		return
 
 	entity player = GetLocalClientPlayer()
-	
+
 	file.victorySequencePosition = file.selectedLocation.victorypos.origin - < 0, 0, 52>
 	file.victorySequenceAngles = file.selectedLocation.victorypos.angles
 
@@ -1361,8 +1365,8 @@ void function FSIntro_StartIntroScreen()
 	{
 		if( player.GetTeam() == TEAM_IMC )
 		{
-			file.victorySequencePosition = GetGlobalNetEnt( "imcFlag" ).GetOrigin()
-			
+			file.victorySequencePosition = GetGlobalNetEntSafe( "imcFlag" ).GetOrigin()
+
 			// rui = FS_InWorldPic( file.victorySequencePosition + <0, 0, 15>, file.victorySequenceAngles, "rui/flowstate_custom/flowstatepresents", true, 500, 282, 1)
 
 			switch( file.selectedLocation.name )
@@ -1371,43 +1375,43 @@ void function FSIntro_StartIntroScreen()
 				file.victorySequenceAngles = <0, 180, 0>
 				file.victorySequencePosition = OffsetPointRelativeToVector( file.victorySequencePosition, <0, 115, 8>, AnglesToForward( file.victorySequenceAngles ) )
 				break
-				
+
 				case "The Pit":
 				file.victorySequenceAngles = <0, 180, 0>
 				file.victorySequencePosition = OffsetPointRelativeToVector( file.victorySequencePosition, <0, 115, 8>, AnglesToForward( file.victorySequenceAngles ) )
 				break
-				
+
 				case "Lockout":
-				
+
 				break
 			}
 		} else if( player.GetTeam() == TEAM_MILITIA )
 		{
-			file.victorySequencePosition = GetGlobalNetEnt( "milFlag" ).GetOrigin()
+			file.victorySequencePosition = GetGlobalNetEntSafe( "milFlag" ).GetOrigin()
 
 			// rui = FS_InWorldPic( file.victorySequencePosition + <0, 0, 15>, file.victorySequenceAngles, "rui/flowstate_custom/flowstatepresents", true, 500, 282, 1)
-	
+
 			switch( file.selectedLocation.name )
 			{
 				case "Narrows":
 				file.victorySequenceAngles = <0, 0, 0>
 				file.victorySequencePosition = OffsetPointRelativeToVector( file.victorySequencePosition, <0, 115, 8>, AnglesToForward( file.victorySequenceAngles ) )
 				break
-				
+
 				case "The Pit":
 				file.victorySequenceAngles = <0, 0, 0>
 				file.victorySequencePosition = OffsetPointRelativeToVector( file.victorySequencePosition, <0, 115, 8>, AnglesToForward( file.victorySequenceAngles ) )
 				break
-				
+
 				case "Lockout":
-				
+
 				break
 			}
 		}
 	}
 
 	asset defaultModel				= GetGlobalSettingsAsset( DEFAULT_PILOT_SETTINGS, "bodyModel" )
-	LoadoutEntry loadoutSlotCharacter = Loadout_CharacterClass()
+	LoadoutEntry loadoutSlotCharacter = Loadout_Character()
 	vector characterAngles			= < file.victorySequenceAngles.x / 2.0, file.victorySequenceAngles.y, file.victorySequenceAngles.z >
 
 	int maxPlayersToShow = 9
@@ -1456,7 +1460,7 @@ void function FSIntro_StartIntroScreen()
 
 	DoF_SetFarDepth( 500, 1000 )
 	DoF_LerpFarDepth( 100, 150, 0.5 )
-	
+
 	if( charactersModels.len() == 0 )
 		return
 
@@ -1478,18 +1482,18 @@ void function FSIntro_StartIntroScreen()
 	camera.SetParent( cameraMover, "", false )
 
 	player.SetMenuCameraEntityWithAudio( camera )
-	
-	vector polePos = player.GetTeam() == TEAM_IMC ? GetGlobalNetEnt( "imcFlag" ).GetOrigin() : GetGlobalNetEnt( "milFlag" ).GetOrigin()
+
+	vector polePos = player.GetTeam() == TEAM_IMC ? GetGlobalNetEntSafe( "imcFlag" ).GetOrigin() : GetGlobalNetEntSafe( "milFlag" ).GetOrigin()
 
 	cleanupEnts.append( camera )
 	cleanupEnts.append( cameraMover )
-	
+
 	charactersModels = ArrayClosest( charactersModels, charactersModels[ charactersModels.len() - 1 ].GetOrigin() )
 	charactersModels.reverse()
-	
+
 	int i = 1
 	int divide = int( ceil ( float( charactersModels.len() ) / 2 ) )
-	
+
 	foreach( entity model in charactersModels )
 	{
 		camera_start_pos = camera.GetOrigin()
@@ -1503,7 +1507,7 @@ void function FSIntro_StartIntroScreen()
 		//Move camera to end pos
 		cameraMover.NonPhysicsMoveTo( camera_end_pos, 0.5, 0.25, 0.25 )
 		cameraMover.NonPhysicsRotateTo( camera_end_angles, 0.5, 0.25, 0.25 )
-		
+
 		#if DEVELOPER
 			printt( "Moving camera" )
 		#endif
@@ -1512,7 +1516,7 @@ void function FSIntro_StartIntroScreen()
 		if( i == charactersModels.len() )
 		{
 			file.FSIntro_cleanupRui.append( FS_InWorldPic( polePos + <0, 0, 100>, VectorToAngles( polePos - ( polePos + AnglesToForward( file.victorySequenceAngles ) * 50 ) ), "rui/flowstate_custom/flowstatepresents", true, 250, 35, 1) )
-			file.FSIntro_cleanupRui.append( FS_InWorldPic( polePos + <0, 0, 18> + AnglesToForward( file.victorySequenceAngles ) * 205, VectorToAngles( polePos - ( polePos + AnglesToForward( file.victorySequenceAngles ) * 50 ) ), player.GetTeam() == TEAM_IMC ? "rui/flowstate_custom/team_orchid" : "rui/flowstate_custom/team_condor", true, 35, 35, 1) ) 
+			file.FSIntro_cleanupRui.append( FS_InWorldPic( polePos + <0, 0, 18> + AnglesToForward( file.victorySequenceAngles ) * 205, VectorToAngles( polePos - ( polePos + AnglesToForward( file.victorySequenceAngles ) * 50 ) ), player.GetTeam() == TEAM_IMC ? "rui/flowstate_custom/team_orchid" : "rui/flowstate_custom/team_condor", true, 35, 35, 1) )
 		}
 
 		i++
@@ -1533,7 +1537,7 @@ void function FSIntro_StartIntroScreen()
 	}
 
 	cameraMover.NonPhysicsMoveTo( OffsetPointRelativeToVector( file.victorySequencePosition, <0, 325, 70>, AnglesToForward( file.victorySequenceAngles ) ), 1.5, 0, 1.5 )
-	cameraMover.NonPhysicsRotateTo( VectorToAngles( (file.victorySequencePosition + AnglesToUp( file.victorySequenceAngles ) * 35) - OffsetPointRelativeToVector( file.victorySequencePosition, <0, 350, 88>, AnglesToForward( file.victorySequenceAngles ) ) ), 1.5, 0, 1.5 )	
+	cameraMover.NonPhysicsRotateTo( VectorToAngles( (file.victorySequencePosition + AnglesToUp( file.victorySequenceAngles ) * 35) - OffsetPointRelativeToVector( file.victorySequencePosition, <0, 350, 88>, AnglesToForward( file.victorySequenceAngles ) ) ), 1.5, 0, 1.5 )
 	DoF_LerpFarDepth( 700, 10000, 0.5 )
 
 	wait 1.5
@@ -1551,7 +1555,7 @@ void function FSIntro_ForceEnd()
 		entity localmodel = file.FSIntro_Localmodel
 		entity cameraMover = file.FSIntro_CameraMover
 		entity camera = file.FSIntro_Camera
-		
+
 		if( !IsValid( camera ) || !IsValid( localmodel ) || !IsValid( cameraMover ) )
 			return
 
@@ -1560,11 +1564,11 @@ void function FSIntro_ForceEnd()
 		camera.SetTargetFOV( GetLocalClientPlayer().GetFOV(), true, EASING_CUBIC_INOUT, 1.5 )
 		wait 0.75
 		ScreenFade(GetLocalClientPlayer(), 0, 0, 0, 255, 0.75, 0, FFADE_OUT | FFADE_PURGE )
-		
+
 		//destroy from server
 		//did this finish for all players before destroying from server? set this as finished from client
 		wait 0.75
-		FSIntro_Destroy()	
+		FSIntro_Destroy()
 		ScreenFade(GetLocalClientPlayer(), 0, 0, 0, 255, 0.75, 0, FFADE_IN | FFADE_PURGE )
 		#if DEVELOPER
 			printt(  "intro end lasted: ", ( Time() - stime ).tostring() )
@@ -1641,7 +1645,7 @@ void function FSIntro_StartPlayerDataSmallUI( entity player, int side, float dur
 	if( side == 0 )
 	{
 		Hud_SetText( HudElement( "FSIntro_NameText_Left"), player.GetPlayerName() )
-		
+
 		RuiSetImage( Hud_GetRui( HudElement( "FSIntro_NameBackground_Left") ), "basicImage", $"rui/flowstatecustom/strip_bg" )
 
 		Hud_ReturnToBasePos( HudElement( "FSIntro_NameBackground_Left" ) )
@@ -1655,18 +1659,18 @@ void function FSIntro_StartPlayerDataSmallUI( entity player, int side, float dur
 	} else if( side == 1 )
 	{
 		Hud_SetText( HudElement( "FSIntro_NameText_Right"), player.GetPlayerName() )
-		
+
 		RuiSetImage( Hud_GetRui( HudElement( "FSIntro_NameBackground_Right") ), "basicImage", $"rui/flowstatecustom/strip_bg" )
-		
+
 		Hud_ReturnToBasePos( HudElement( "FSIntro_NameBackground_Right" ) )
 		Hud_SetSize( HudElement( "FSIntro_NameBackground_Right" ), 0, 0 )
 
 		Hud_SetVisible( HudElement( "FSIntro_NameBackground_Right" ), true )
 		Hud_SetVisible( HudElement( "FSIntro_NameText_Right" ), true )
-		
+
 		Hud_ScaleOverTime( HudElement( "FSIntro_NameBackground_Right" ), 1.1, 1.1, 0.20, INTERPOLATOR_SIMPLESPLINE)
 	}
-		
+
 	wait 0.15
 
 	if( side == 0 )
@@ -1676,7 +1680,7 @@ void function FSIntro_StartPlayerDataSmallUI( entity player, int side, float dur
 	} else if( side == 1 )
 	{
 		Hud_ScaleOverTime( HudElement( "FSIntro_NameBackground_Right" ), 1, 1, 0.20, INTERPOLATOR_SIMPLESPLINE)
-	}		
+	}
 
 	wait duration - 0.6
 
@@ -1720,7 +1724,7 @@ void function ServerCallback_FS_OpenVoteTeamMenu( bool shouldOpen )
 		RunUIScript( "Close_FS_VoteTeam" )
 		file.VoteTeam_selectedTeam = -1
 	}
-	
+
 }
 LocPair function NewCameraPair(vector origin, vector angles)
 {
@@ -1741,19 +1745,19 @@ void function FS_VoteTeam_StartMenuModels()
 	array<var> cleanupRui
 
     if(!IsValid(player)) return
-	
+
 	switch( file.selectedLocation.name )
 	{
 		case "Narrows":
-		cutsceneSpawns.append( NewCameraPair( <1489.99255, -6570.93262, 4041.996887>, <0, 133.833832, 0> ) ) 
+		cutsceneSpawns.append( NewCameraPair( <1489.99255, -6570.93262, 4041.996887>, <0, 133.833832, 0> ) )
 		break
 
 		case "The Pit":
-		cutsceneSpawns.append( NewCameraPair( <40785.418, -10040.1396, -19775.4375>, <0, -142.61087, 0> ) )//<2.34243202, 31.4227657, 0> ) ) 
+		cutsceneSpawns.append( NewCameraPair( <40785.418, -10040.1396, -19775.4375>, <0, -142.61087, 0> ) )//<2.34243202, 31.4227657, 0> ) )
 		break
 
 		case "Lockout":
-		cutsceneSpawns.append( NewCameraPair( <1489.99255, -6570.93262, 4041.996887>, <0, 133.833832, 0> ) ) 
+		cutsceneSpawns.append( NewCameraPair( <1489.99255, -6570.93262, 4041.996887>, <0, 133.833832, 0> ) )
 		break
 	}
 
@@ -1772,7 +1776,7 @@ void function FS_VoteTeam_StartMenuModels()
 	model1.SetAngles( <0,VectorToAngles( randomcameraPos - model1.GetOrigin()).y,0> )
 	model1.Anim_SetInitialTime( RandomFloatRange( 0, model1.GetSequenceDuration( "animseq/humans/class/medium/pilot_medium_bloodhound/bloodhound_idle_UA.rseq" ) ) )
 	model1.Highlight_Enable()
-	
+
 	file.VoteTeam_orchidPlayerModel_OgOrigin = model1.GetOrigin()
 	file.VoteTeam_orchidPlayerModel = model1
 
@@ -1780,7 +1784,7 @@ void function FS_VoteTeam_StartMenuModels()
 	light1.SetLightExponent( 3.1 )
 	light1.SetParent( model1, "CHESTFOCUS", false )
 	light1.SetLocalOrigin( <30, 13, 41> )
-	
+
 	var rui1 = FS_InWorldPic( model1.GetOrigin() + <0, 0, 15> + AnglesToForward( model1.GetAngles() ) * 12, randomcameraAng, "rui/flowstate_custom/team_orchid", true, 28, 28, 1)
 	// FS_InWorldText( "Test 0 Test", model1.GetOrigin() + <0, 0, 50>, randomcameraAng )
 
@@ -1798,7 +1802,7 @@ void function FS_VoteTeam_StartMenuModels()
 	light2.SetLightExponent( 3.1 )
 	light2.SetParent( model2, "CHESTFOCUS", false )
 	light2.SetLocalOrigin( <30, 13, 41> )
-	
+
 	var rui2 = FS_InWorldPic( model2.GetOrigin() + <0, 0, 15> + AnglesToForward( model2.GetAngles() ) * 15, randomcameraAng, "rui/flowstate_custom/team_condor", true, 28, 28, 1)
 	// FS_InWorldText( "Test 2 Test", model2.GetOrigin() + <0, 0, 50>, randomcameraAng )
 
@@ -1820,7 +1824,7 @@ void function FS_VoteTeam_StartMenuModels()
 	GetLocalClientPlayer().SetMenuCameraEntity( camera )
 
 	DoF_SetFarDepth( 100, 300 )
-	
+
 	OnThreadEnd(
 		function() : ( player, camera, cleanupRui, cleanupEnts ) //cutsceneMover
 		{
@@ -1853,20 +1857,20 @@ void function FS_VoteTeam_StartMenuModels()
 }
 
 var function FS_InWorldPic(vector origin, vector angles, string imgpath, bool useImgpath, float width, float height, float opacity, vector rgb = < 0, 0, 0 >) {
-	
+
 	// origin += (AnglesToUp( angles )*-1) * (height*0.5)
 	var topo = CreateRUITopology_Worldspace( origin, angles, width, height )
-	
+
 	var rui = RuiCreate( $"ui/basic_image.rpak", topo, RUI_DRAW_WORLD, RUI_SORT_SCREENFADE + 1 )
-	
+
 	RuiSetFloat( rui, "basicImageAlpha", opacity)
-	
+
 	if(useImgpath)
 		RuiSetString( rui, "basicImage", imgpath)
-	
+
 	if(!useImgpath)
 		RuiSetFloat3( rui, "basicImageColor", SrgbToLinear( rgb / 255 ))
-	
+
 	return rui
 }
 
@@ -1879,18 +1883,18 @@ var function FS_InWorldText( string text, vector origin, vector angles )
 	origin += (AnglesToUp( angles )*-1) * (height*0.5)
 	origin.z += 165
 	origin -= AnglesToRight( angles ) * 30
-	
+
 	#if DEVELOPER
 		printt( origin )
-	#endif 
-	
+	#endif
+
 	var topo = CreateRUITopology_Worldspace( origin, angles, width, height )
-	
+
 	var rui = RuiCreate( $"ui/announcement_quick_right.rpak", topo, RUI_DRAW_WORLD, 32767 )
 	RuiSetGameTime( rui, "startTime", Time() )
 	RuiSetFloat( rui, "duration", 99999999 )
 	RuiSetString( rui, "messageText", text)
-	
+
 	return rui
 }
 
@@ -1898,8 +1902,8 @@ void function HoverTeamButton( int model, bool forceFx = false )
 {
 	#if DEVELOPER
 		printt("hover team button client call ", model, forceFx )
-	#endif 
-	
+	#endif
+
 	if( model == 0 && IsValid( file.VoteTeam_condorPlayerModel ) )
 	{
 		vector color = <128, 52, 235>
@@ -1911,11 +1915,11 @@ void function HoverTeamButton( int model, bool forceFx = false )
 
 		if( file.VoteTeam_selectedTeam != -1 && !forceFx )
 			return
-			
+
 		#if DEVELOPER
 			printt( "starting new effect for condor menu model", file.VoteTeam_selectedTeam, model )
 		#endif
-		
+
 		thread Custom_HighlightTest( file.VoteTeam_condorPlayerModel, color, fillIntensityScalar, outlineIntensityScalar, fadeInTime, fadeOutTime, lifeTime )
 	} else if( model == 1 && IsValid( file.VoteTeam_orchidPlayerModel ) )
 	{
@@ -1925,14 +1929,14 @@ void function HoverTeamButton( int model, bool forceFx = false )
 		float fadeInTime             = 0.25
 		float fadeOutTime            = 0.25
 		float lifeTime               = 0.5
-		
+
 		if( file.VoteTeam_selectedTeam != -1 && !forceFx )
 			return
-		
+
 		#if DEVELOPER
 			printt( "starting new effect for orchid menu model", file.VoteTeam_selectedTeam, model )
 		#endif
-		
+
 		thread Custom_HighlightTest( file.VoteTeam_orchidPlayerModel, color, fillIntensityScalar, outlineIntensityScalar, fadeInTime, fadeOutTime, lifeTime )
 	}
 }
@@ -1945,7 +1949,7 @@ void function Custom_HighlightTest( entity model, vector color, float fillIntens
 	const float HIGHLIGHT_RADIUS = 1
 	Signal( model, "VoteTeam_EndModelFocus" )
 	EndSignal( model, "VoteTeam_EndModelFocus" )
-	
+
 	vector ogPos
 
 	if( model == file.VoteTeam_condorPlayerModel )
@@ -1969,11 +1973,11 @@ void function Custom_HighlightTest( entity model, vector color, float fillIntens
 			}()
 		}
 	)
-	
+
 	#if DEVELOPER
 		printt("started highlight thread for model: ", model)
 	#endif
-		
+
 	while( IsValid( model ) )
 	{
 		model.Highlight_ResetFlags()
@@ -2007,7 +2011,7 @@ void function VoteTeam_EndFocusModel( int model )
 void function VoteTeam_ClientAskedForTeam( int index )
 {
 	entity player = GetLocalClientPlayer()
-	
+
 	switch(index)
 	{
 		case 0:
@@ -2017,7 +2021,7 @@ void function VoteTeam_ClientAskedForTeam( int index )
 			Signal( file.VoteTeam_orchidPlayerModel, "VoteTeam_EndModelFocus" )
 		player.ClientCommand("VoteTeam_AskForTeam 0")
 		break
-		
+
 		case 1:
 		file.VoteTeam_selectedTeam = 1
 		HoverTeamButton( 1, true )
@@ -2025,12 +2029,12 @@ void function VoteTeam_ClientAskedForTeam( int index )
 			Signal( file.VoteTeam_condorPlayerModel, "VoteTeam_EndModelFocus" )
 		player.ClientCommand("VoteTeam_AskForTeam 1")
 		break
-		
+
 		default:
 		file.VoteTeam_selectedTeam = -1
 		break
 	}
-	
+
 	#if DEVELOPER
 		printt("changed selected team for menu model: " , index, file.VoteTeam_selectedTeam)
 	#endif
@@ -2038,16 +2042,16 @@ void function VoteTeam_ClientAskedForTeam( int index )
 
 void function ServerCallback_AddClientThatVotedToTeam( int eHandle, int team )
 {
-	if ( !EHIHasValidScriptStruct( eHandle ) ) 
+	if ( !EHIHasValidScriptStruct( eHandle ) )
 		return
-	
+
 	RunUIScript( "AddPlayerNameToTeamArray", team, EHI_GetName(eHandle) )
 }
 
 void function ServerCallback_RemoveClientThatVotedFromTeam( int eHandle, int team )
 {
-	if ( !EHIHasValidScriptStruct( eHandle ) ) 
+	if ( !EHIHasValidScriptStruct( eHandle ) )
 		return
-	
+
 	RunUIScript( "RemovePlayerNameFromTeamArray", team, EHI_GetName(eHandle) )
 }

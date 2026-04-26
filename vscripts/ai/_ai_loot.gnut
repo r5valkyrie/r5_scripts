@@ -41,19 +41,6 @@ array<string> function AI_Loot_SpawnReward( entity npc, AILootSpawnParams params
 	string playlistVarPrefix = params.playlistVarPrefix
 
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
-
-	                    
-		if ( attacker.IsNPC() )
-		{
-			if ( CanNPCDoDamageOnBehalfOfPlayer( attacker ) )
-			{
-				entity boss = attacker.GetBossPlayer()
-				if ( IsValid( boss ) && boss.IsPlayer() )
-					attacker = boss
-				else //can't get loadout from a nonvalid boss
-					return lootRewards
-			}
-		}
        
 
 	if ( !IsValid( attacker ) || !attacker.IsPlayer() )
@@ -414,7 +401,7 @@ void function SpawnAndThrowItemFromNPC( entity npc, array<string> lootToSpawn )
 		vector throwDir = <sin( throwData.throwAngle ), cos( throwData.throwAngle ), 0>
 		float speed     = throwData.throwScale * sqrt( RandomFloatRange( 0.75, 1.0 ) ) * 150
 		vector vel      = throwDir * speed
-		thread FakePhysicsThrow_Retail( npc, itemEnt, <vel.x, vel.y, 200>, true )
+		thread FakePhysicsThrow( npc, itemEnt, <vel.x, vel.y, 200>, true )
 		throwData = SURVIVAL_DropLoot_IncrementThrowAngle( throwData )
 	}
 }

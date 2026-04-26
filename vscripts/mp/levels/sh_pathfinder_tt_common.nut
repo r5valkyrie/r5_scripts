@@ -9,6 +9,7 @@ global function DEV_TestRapidRingEntryAndDeath
 global function PathTT_PlayAnnouncerLineForPlayersInRing
 global function PathTT_AddCallbackOnHologramChanged
 global function GetPathfinderTTAssetsToPrecache
+global function InitPathTTRingTVSystem
 #endif
 #if CLIENT
 global function ClInitPathTTRingTVEntities
@@ -52,6 +53,7 @@ const string PLAYER_ENTER_RING_BELL = "Player_Enter_Ring_v2"
 
 #if SERVER
 const float PATH_TT_BELL_DING_DEBOUNCE = 1.0
+const int PATH_TT_DISABLED_WEAPON_TYPES = WPT_ALL_EXCEPT_VIEWHANDS_OR_INCAP & ~WPT_CONSUMABLE & ~WPT_MELEE
 #endif
 
 #if SERVER
@@ -116,20 +118,13 @@ void function PathTT_OnNetworkRegistration()
 {
 	ScriptRemote_RegisterClientFunction( "SCB_PathTT_SetMessageIdxToCustomSpeakerIdx", "int", 0, NUM_TOTAL_DIALOGUE_QUEUES )
 	ScriptRemote_RegisterClientFunction( "SCB_PathTT_PlayRingAnnouncerDialogue", "int", 0, eRingAnnouncerLines._count )
-	ScriptRegisterNetworkedVariable( "PathTT_IsCrowdActive", SNDC_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "PathTT_IsCrowdActive", SNDC_GLOBAL, SNVT_BOOL, false )
 }
 
 void function PathTT_Init()
 {
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 
-	#if SERVER
-	thread InitPathTTRingTVSystem()
-	#endif
-
-	#if CLIENT
-	thread ClInitPathTTRingTVEntities()
-	#endif
 }
 
 void function EntitiesDidLoad()
@@ -146,10 +141,6 @@ void function EntitiesDidLoad()
 	PrecacheParticleSystem( $"P_arena_hologram_gloves" )
 
 	InitPathTTBoxingRing()
-
-	#if SERVER
-		InitPathTTRingTVSystemEntities()
-	#endif
 
 	InitPathTTBoxingRingEntities()
 }
@@ -522,9 +513,6 @@ void function InitPathTTRingTVSystemEntities()
 
 void function PathTT_RingTVThink()
 {
-	if ( !GetCurrentPlaylistVarBool( "enable_apex_screens", true ) )
-		return
-
 	float stateEnterTime = Time()
 	float lockStateEndTime = 0.0
 	while ( true )
@@ -661,6 +649,7 @@ void function PathTT_OnEnterPathTTRingTrigger( entity trigger, entity ent )
 	ChargeTactical_ForceEnd( ent )
 
 	GivePathTTMeleeWeaponsToPlayer( newPlayerData )
+	ent.DisableWeaponTypes( PATH_TT_DISABLED_WEAPON_TYPES )
 
 	file.numPlayersInRing++
 	if ( file.numPlayersInRing >= 1 )
@@ -716,7 +705,7 @@ const int NUM_BOTS_TO_TEST = 30//55
 const float TEST_DURATION_RAPID_RING_ENTRY = 30
 void function DEV_TestRapidRingEntryAndDeath()
 {
-	#if DEV
+	/*#if DEVELOPER
 	ServerCommand( "kick_all_bots" )
 	int startNumPlayers = GetPlayerArray().len()
 	int numBots = NUM_BOTS_TO_TEST - startNumPlayers
@@ -792,12 +781,12 @@ void function DEV_TestRapidRingEntryAndDeath()
 		numBotsRemaining = devTestBots.len()
 		WaitFrame()
 	}
-	#endif
+	#endif*/
 }
 
 void function DEV_FinishOffBotToKill( entity botToKill )
 {
-	#if DEV
+	#if DEVELOPER
 	wait 3
 	botToKill.TakeDamage( 150, null, null, [] )
 	#endif
@@ -875,6 +864,7 @@ void function PathTT_OnExitPathTTRingTrigger( entity trigger, entity ent )
 		// Even if player is dead, undo status effects, and re-enable weapon types
 		StatusEffect_Stop( ent, playerData.immunityStatusEffectHandle )
 		StatusEffect_Stop( ent, playerData.boxingStatusEffectHandle )
+		ent.EnableWeaponTypes( PATH_TT_DISABLED_WEAPON_TYPES )
 		if ( IsAlive( ent ) )
 		{
 			// Only return weapons to player if they're alive. If they're dead, the respawn sequence will handle weapons.
@@ -1004,7 +994,7 @@ void function PathTT_SetCrowdAmbienceActive( bool active )
 		ambient.SetEnabled( active )
 	}
 
-	SetGlobalNetBool( "PathTT_IsCrowdActive", active )
+	SetGlobalNetBoolSafe( "PathTT_IsCrowdActive", active )
 }
 #endif
 
@@ -1078,7 +1068,7 @@ void function GivePathTTMeleeWeaponsToPlayer( BoxingRingPlayerData playerData )
 		player.TakeOffhandWeapon(OFFHAND_MELEE)
 		player.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
 
-		StatusEffect_AddEndless( player, eStatusEffect.silenced, 1.0 )
+		StatusEffect_AddEndless( player, eStatusEffect.is_boxing, 1.0 )
 	}
 
 	else
@@ -1141,7 +1131,7 @@ void function ReturnOriginalMeleeWeaponsToPlayer( BoxingRingPlayerData playerDat
 		player.TakeWeaponNow( "mp_weapon_melee_boxing_ring" )
 		player.TakeWeaponNow( "melee_boxing_ring" )
 
-		StatusEffect_StopAllOfType( player, eStatusEffect.silenced)
+		StatusEffect_StopAllOfType( player, eStatusEffect.is_boxing)
 
 		player.UnlockWeaponChange()
 		EnableOffhandWeapons( player )
@@ -1435,8 +1425,8 @@ void function DEV_SimulateThermiteTrace()
 	TraceResults traceResults = TraceLine( traceStart, traceEnd, ignoreArray, TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_BLOCK_WEAPONS )
 	float traceFrac = traceResults.fraction
 	vector hitPos = traceStart + ( traceVec * traceFrac )
-	//DebugDrawSphere( hitPos, 16, COLOR_YELLOW, true, 10.0 )
-	//DebugDrawLine( traceStart, traceEnd, COLOR_GREEN, true, 10.0 )
+	//DebugDrawSphere( hitPos, 16, <255, 255, 0>, true, 10.0 )
+	//DebugDrawLine( traceStart, traceEnd, <0, 255, 0>, true, 10.0 )
 }
 #endif
 
@@ -1447,14 +1437,14 @@ void function Boxing_WeaponStatusCheck( entity player, var rui, int slot )
 	{
 		case OFFHAND_LEFT:
 		case OFFHAND_INVENTORY:
-			/*if ( StatusEffect_HasSeverity( player, eStatusEffect.is_boxing ) )
+			if ( StatusEffect_HasSeverity( player, eStatusEffect.is_boxing ) )
 			{
 				RuiSetBool( rui, "isBoxing", true )
 			}
 			else
 			{
 				RuiSetBool( rui, "isBoxing", false )
-			}*/
+			}
 			break
 	}
 }

@@ -99,46 +99,7 @@ void function LoadPlaylistSettings()
 
 void function _CustomCTF_Init()
 {
-	LoadPlaylistSettings()
 
-	PrecacheParticleSystem($"P_survival_radius_CP_1x100")
-	PrecacheModel( CTF_FLAG_MODEL )
-	PrecacheModel( CTF_FLAG_MODEL_RED )
-	PrecacheModel( CTF_FLAG_BASE_MODEL )
-	PrecacheModel($"mdl/props/pathfinder_zipline/pathfinder_zipline.rmdl")
-	RegisterSignal( "FS_WaitForBlackScreen" )
-	RegisterSignal( "FlagReturnEnded" )
-	RegisterSignal( "ResetDropTimeout" )
-	RegisterSignal( "EndScriptedPropsThread" )
-	RegisterSignal( "FlagPhysicsEnd" )
-
-	// BannerAssets_Init()
-
-	AddCallback_OnClientConnected( void function(entity player) { thread _OnPlayerConnected(player) } )
-	AddCallback_OnClientDisconnected( void function(entity player) { thread _OnPlayerDisconnected(player) } )
-	AddCallback_OnPlayerKilled(void function(entity victim, entity attacker, var damageInfo) {thread _OnPlayerDied(victim, attacker, damageInfo)})
-    // AddCallback_EntitiesDidLoad( DM__OnEntitiesDidLoad )
-	AddSpawnCallback( "prop_survival", DissolveItem )
-	#if DEVELOPER
-	AddClientCommandCallback("next_round", ClientCommand_NextRound)
-	#endif
-	// Used for telling the server the player wants to drop the flag
-	AddClientCommandCallback("DropFlag", ClientCommand_DropFlag)
-
-	// if( Flowstate_IsHaloMode() )
-	// {
-		// AddClientCommandCallback("VoteTeam_AskForTeam", ClientCommand_AskForTeam)
-		// PrecacheCyberdyne()
-		// PrecacheLockout()
-		// PrecacheChill()
-	// } else
-	// {
-		AddClientCommandCallback("VoteForMap", ClientCommand_VoteForMap)
-		// Used for setting players class
-		AddClientCommandCallback("SetPlayerClass", ClientCommand_SetPlayerClass)
-	// }
-
-	thread RUNCTF()
 }
 
 void function DissolveItem( entity prop )
@@ -190,7 +151,7 @@ bool function ClientCommand_DropFlag(entity player, array<string> args)
 bool function ClientCommand_NextRound(entity player, array<string> args)
 {
 	file.ctfState = eCTFState.WINNER_DECIDED
-	SetGlobalNetInt( "FSDM_GameState", file.ctfState )
+	SetGlobalNetIntSafe( "FSDM_GameState", file.ctfState )
 	return true
 }
 #endif
@@ -293,160 +254,6 @@ void function RUNCTF()
 // purpose: handle map voting phase
 void function VotingPhase()
 {
-	SetGameState(eGameState.MapVoting)
-
-	// Reset scores
-	GameRules_SetTeamScore( TEAM_IMC, 0 )
-	GameRules_SetTeamScore( TEAM_MILITIA, 0 )
-
-	// Reset score RUI
-	foreach( player in GetPlayerArray() )
-	{
-		if( !IsValid( player ) )
-			continue
-
-		// Reset client rui score
-		// Remote_CallFunction_Replay(player, "ServerCallback_CTF_PointCaptured", CTF.IMCPoints, CTF.MILITIAPoints)
-
-		// Reset Player Stats
-		Remote_CallFunction_NonReplay(player, "ServerCallback_CTF_UpdatePlayerStats", eCTFStats.Clear)
-	}
-
-	file.selectedLocation = file.locationSettings[CTF.mappicked]
-
-	// Set the next location client side for each player
-	foreach( player in GetPlayerArray() )
-	{
-		if( !IsValid( player ) )
-			continue
-
-		Remote_CallFunction_NonReplay(player, "ServerCallback_CTF_SetSelectedLocation", CTF.mappicked)
-	}
-
-	if( file.currentRound > 1 )
-	{
-		foreach( entity player in GetPlayerArray() )
-		{
-			if(IsValid(player))
-			{
-				thread function () : ( player )
-				{
-					ScreenFade( player, 0, 0, 0, 255, 0, 0, FFADE_OUT | FFADE_STAYOUT ) //let's do this before destroy player props so it looks good in custom maps
-				}()
-			}
-		}
-
-		// thread function () : ()
-		// {
-			// wait 4
-			// Signal( svGlobal.levelEnt, "FS_WaitForBlackScreen" )
-		// }()
-	}
-
-	if( file.playerSpawnedProps.len() > 0 ) //|| GetServerPropsInDmFile().len() > 0 )
-	{
-		DestroyPlayerProps()
-		if( Flowstate_IsHaloMode()  )
-			wait 1
-	}
-
-	// switch(file.selectedLocation.name)
-	// {
-		// case "Narrows":
-		// thread SpawnChill()
-		// break
-		// case "The Pit":
-		// thread SpawnCyberdyne()
-		// break
-	// }
-
-	if( file.selectedLocation.name == "Lockout" )
-	{
-		file.playerSpawnedProps.append( AddDeathTriggerWithParams( Vector(42000, -10000, -19900) - <0,0,2800>, 5000 ) )
-	} else if( file.selectedLocation.name == "Narrows" )
-	{
-		file.playerSpawnedProps.append( AddDeathTriggerWithParams( <42099.9922, -9965.91016, -21099.1738>, 7000 ) )
-	}
-
-	//Open Vote for Team Menu ( Halo Mod Only )
-
-	if( Flowstate_IsHaloMode() && !debugging )
-	{
-		file.VoteTeamEnabled = true
-		// SetGlobalNetTime( "FSVoteTeam_StartTime", Time() )
-		SetGlobalNetTime( "FSVoteTeam_EndTime", Time() + FS_HALOMOD_VOTETEAM_TIME )
-
-		foreach( player in GetPlayerArray() )
-		{
-			Remote_CallFunction_ByRef( player, "ForceScoreboardLoseFocus" )
-			Remote_CallFunction_NonReplay( player, "FS_ForceDestroyCustomAdsOverlay" )
-			SetTeam( player, 4 ) //reset team to an unused one, make sure to set max_teams to 3 in playlist so we can use the team number 4
-			Remote_CallFunction_NonReplay(player, "ServerCallback_FS_OpenVoteTeamMenu", true )
-		}
-
-		// WaitForever()
-		while( Time() < GetGlobalNetTime( "FSVoteTeam_EndTime" ) )
-			WaitFrame()
-
-		file.VoteTeamEnabled = false
-		SetGlobalNetTime( "FSVoteTeam_EndTime", -1 )
-	} else
-	{
-		foreach( player in GetPlayerArray() )
-		{
-			ScreenFade( player, 0, 0, 0, 255, 0.3, 0.0, FFADE_IN | FFADE_PURGE )
-		}
-	}
-
-
-	int maxplayers = GetPlayerArray().len()
-	int idealMilitia = int ( ceil( float( maxplayers ) /2 ) )
-	array<entity> IMCplayers = GetPlayerArrayOfTeam(TEAM_IMC)
-	array<entity> MILITIAplayers = GetPlayerArrayOfTeam(TEAM_MILITIA)
-
-	//Assign desired team
-	foreach( player in GetPlayerArray() )
-	{
-		if( !IsValid( player ) )
-			continue
-
-		if(player.p.teamasked != -1)
-		{
-			#if DEVELOPER
-				printt( "poner jugador en equipo solicitado", player )
-			#endif
-
-			switch(player.p.teamasked)
-			{
-				case 0:
-					SetTeam(player, TEAM_MILITIA )
-					break
-				case 1:
-					SetTeam(player, TEAM_IMC )
-					break
-				default:
-					break
-			}
-		} else
-		{
-			#if DEVELOPER
-				printt( "poner jugador en equipo que tenga espacio ya que no voto", player )
-			#endif
-
-			if( GetPlayerArrayOfTeam(TEAM_MILITIA).len() < idealMilitia )
-				SetTeam(player, TEAM_MILITIA )
-			else
-				SetTeam(player, TEAM_IMC )
-		}
-
-		#if DEVELOPER
-			printt( maxplayers, idealMilitia, GetPlayerArrayOfTeam(TEAM_MILITIA).len(), GetPlayerArrayOfTeam(TEAM_IMC).len())
-		#endif
-
-		array<entity> playerTeam = GetPlayerArrayOfTeam( player.GetTeam() )
-		int teamMemberIndex = playerTeam.len() - 1
-		player.SetTeamMemberIndex( teamMemberIndex )
-	}
 }
 
 // purpose: handle the start of a new round for players and props
@@ -483,7 +290,7 @@ void function StartRound()
 	thread ResetIMCFlag()
 
 	if( Flowstate_IsHaloMode() )
-		while( !IsValid( GetGlobalNetEnt( "imcFlag" ) ) )
+		while( !IsValid( GetGlobalNetEntSafe( "imcFlag" ) ) )
 			WaitFrame()
 
 	int milCount
@@ -495,7 +302,7 @@ void function StartRound()
 
 		RemoveCinematicFlag(player, CE_FLAG_HIDE_MAIN_HUD | CE_FLAG_HIDE_PERMANENT_HUD )
 		if( !IsAlive( player ) )
-			DecideRespawnPlayer(player)
+			DecideRespawnPlayer(player, false)
 
 		MakeInvincible(player)
 		player.HolsterWeapon()
@@ -543,7 +350,7 @@ void function StartRound()
 
 					break
 				}
-				vector startingpoint = OffsetPointRelativeToVector( GetGlobalNetEnt( "imcFlag" ).GetOrigin(), <0, 115, 8>, AnglesToForward( angles ) )
+				vector startingpoint = OffsetPointRelativeToVector( GetGlobalNetEntSafe( "imcFlag" ).GetOrigin(), <0, 115, 8>, AnglesToForward( angles ) )
 				player.SetOrigin( FSIntro_GetVictorySquadFormationPosition( startingpoint, angles, imcCount ) )
 				player.SetAngles( angles )
 				imcCount++
@@ -563,7 +370,7 @@ void function StartRound()
 
 					break
 				}
-				vector startingpoint = OffsetPointRelativeToVector( GetGlobalNetEnt( "milFlag" ).GetOrigin(), <0, 115, 8>, AnglesToForward( angles ) )
+				vector startingpoint = OffsetPointRelativeToVector( GetGlobalNetEntSafe( "milFlag" ).GetOrigin(), <0, 115, 8>, AnglesToForward( angles ) )
 				player.SetOrigin( FSIntro_GetVictorySquadFormationPosition( startingpoint, angles, milCount ) )
 				player.SetAngles( angles )
 				milCount++
@@ -601,10 +408,10 @@ void function StartRound()
 
 	if( !debugging && Flowstate_IsHaloMode() )
 	{
-		SetGlobalNetTime( "FSIntro_StartTime", Time() + 3 )
-		SetGlobalNetTime( "FSIntro_EndTime", Time() + 7 + max( GetPlayerArrayOfTeam(TEAM_IMC).len(), GetPlayerArrayOfTeam(TEAM_MILITIA).len() ) * 2 )
+		SetGlobalNetTimeSafe( "FSIntro_StartTime", Time() + 3 )
+		SetGlobalNetTimeSafe( "FSIntro_EndTime", Time() + 7 + max( GetPlayerArrayOfTeam(TEAM_IMC).len(), GetPlayerArrayOfTeam(TEAM_MILITIA).len() ) * 2 )
 
-		while( Time() < GetGlobalNetTime( "FSIntro_EndTime" ) )
+		while( Time() < GetGlobalNetTimeSafe( "FSIntro_EndTime" ) )
 			WaitFrame()
 
 		foreach(player in GetPlayerArray())
@@ -619,7 +426,7 @@ void function StartRound()
 	wait 1.5
 	// set
 	SetGameState(eGameState.Playing)
-	SetGlobalNetTime( "flowstate_DMStartTime", Time() + 3 )
+	SetGlobalNetTimeSafe( "flowstate_DMStartTime", Time() + 3 )
 
 	foreach(player in GetPlayerArray())
 	{
@@ -674,9 +481,9 @@ void function StartRound()
 
 	float endTime = Time() + CTF_ROUNDTIME
 
-	SetGlobalNetTime( "flowstate_DMRoundEndTime", endTime )
+	SetGlobalNetTimeSafe( "flowstate_DMRoundEndTime", endTime )
 	file.ctfState = eCTFState.IN_PROGRESS
-	SetGlobalNetInt( "FSDM_GameState", file.ctfState )
+	SetGlobalNetIntSafe( "FSDM_GameState", file.ctfState )
 
 	array<entity> winners = []
 
@@ -685,8 +492,8 @@ void function StartRound()
 		if( Time() > endTime - 1 )
 		{
 			file.ctfState = eCTFState.WINNER_DECIDED
-			if( GetGlobalNetInt( "FSDM_GameState" ) != eCTFState.WINNER_DECIDED )
-				SetGlobalNetInt( "FSDM_GameState", file.ctfState )
+			if( GetGlobalNetIntSafe( "FSDM_GameState" ) != eCTFState.WINNER_DECIDED )
+				SetGlobalNetIntSafe( "FSDM_GameState", file.ctfState )
 		}
 
 		if( file.ctfState == eCTFState.WINNER_DECIDED )
@@ -946,11 +753,6 @@ void function StartRound()
 
 					SetGameState(eGameState.MapVoting)
 
-					if( Flowstate_IsHaloMode() )
-					{
-						Remote_CallFunction_ByRef( player, "ForceScoreboardLoseFocus" )
-						Remote_CallFunction_NonReplay( player, "FS_ForceDestroyCustomAdsOverlay" )
-					}
 
 					AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD | CE_FLAG_HIDE_PERMANENT_HUD )
 
@@ -978,9 +780,9 @@ void function StartRound()
 		WaitFrame()
 	}
 
-	SetGlobalNetTime( "flowstate_DMRoundEndTime", -1 )
+	SetGlobalNetTimeSafe( "flowstate_DMRoundEndTime", -1 )
 	file.ctfState = eCTFState.WINNER_DECIDED
-	SetGlobalNetInt( "FSDM_GameState", file.ctfState )
+	SetGlobalNetIntSafe( "FSDM_GameState", file.ctfState )
 
 	#if TRACKER //todo: Add roundend callbacks
 		if( winners.len() )
@@ -1255,7 +1057,6 @@ void function PlayerPickedUpFlag(entity ent)
 	{
 		Remote_CallFunction_NonReplay( ent, "FS_ForceDestroyCustomAdsOverlay" )
 	}
-	StorePilotWeapons( ent )
 
 	//ball carrier can't run
 	StatusEffect_AddEndless( ent, eStatusEffect.move_slow, 0.1)
@@ -1272,7 +1073,6 @@ void function PlayerPickedUpFlag(entity ent)
 
 void function PlayerDroppedFlag(entity ent)
 {
-	RetrievePilotWeapons( ent )
 
 	//restore movement
 	StatusEffect_StopAllOfType( ent, eStatusEffect.move_slow)
@@ -1401,7 +1201,7 @@ void function CaptureFlag(entity ent, int team, CTFPoint teamflagpoint)
 			thread EmitSoundOnEntityOnlyToPlayer( player, player, "diag_ap_aiNotify_winnerFound" )
 		}
 		file.ctfState = eCTFState.WINNER_DECIDED
-		SetGlobalNetInt( "FSDM_GameState", file.ctfState )
+		SetGlobalNetIntSafe( "FSDM_GameState", file.ctfState )
 		file.winnerTeam = TEAM_IMC
 	} else if( GameRules_GetTeamScore( TEAM_MILITIA ) >= CTF_SCORE_GOAL_TO_WIN )
 	{
@@ -1413,7 +1213,7 @@ void function CaptureFlag(entity ent, int team, CTFPoint teamflagpoint)
 			thread EmitSoundOnEntityOnlyToPlayer( player, player, "diag_ap_aiNotify_winnerFound" )
 		}
 		file.ctfState = eCTFState.WINNER_DECIDED
-		SetGlobalNetInt( "FSDM_GameState", file.ctfState )
+		SetGlobalNetIntSafe( "FSDM_GameState", file.ctfState )
 		file.winnerTeam = TEAM_MILITIA
 	}
 }
@@ -1534,7 +1334,7 @@ void function GiveBackWeapons(entity player)
 		}
 		else
 		{
-			ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+			ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
 			ItemFlavor ultiamteAbility = CharacterClass_GetUltimateAbility( character )
 			ItemFlavor tacticalAbility = CharacterClass_GetTacticalAbility( character )
 			player.GiveOffhandWeapon(CharacterAbility_GetWeaponClassname(tacticalAbility), OFFHAND_TACTICAL, [] )
@@ -1549,8 +1349,8 @@ void function GiveBackWeapons(entity player)
 	player.SetActiveWeaponBySlot(eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_0)
 
 	//give flowstate holo sprays
-	player.TakeOffhandWeapon( OFFHAND_EQUIPMENT )
-	player.GiveOffhandWeapon( "mp_ability_emote_projector", OFFHAND_EQUIPMENT )
+	//player.TakeOffhandWeapon( OFFHAND_EQUIPMENT )
+	//player.GiveOffhandWeapon( "mp_ability_emote_projector", OFFHAND_EQUIPMENT )
 
 	if( file.bHeals)
 	{
@@ -1608,10 +1408,10 @@ void function _OnPlayerConnected(entity player)
 
 void function _OnPlayerDisconnected(entity player)
 {
-	if( GetGlobalNetEnt( "imcFlag" ) == player )
+	if( GetGlobalNetEntSafe( "imcFlag" ) == player )
 		thread ResetIMCFlag()
 
-	if( GetGlobalNetEnt( "milFlag" ) == player )
+	if( GetGlobalNetEntSafe( "milFlag" ) == player )
 		thread ResetMILITIAFlag()
 }
 
@@ -1879,9 +1679,9 @@ void function ResetFlagForTeam( int team )
 
 void function CheckPlayerForFlag(entity victim)
 {
-	if( GetGlobalNetEnt( "imcFlag" ) == victim )
+	if( GetGlobalNetEntSafe( "imcFlag" ) == victim )
 		thread PlayerThrowFlag(victim, TEAM_IMC, IMCPoint)
-	else if( GetGlobalNetEnt( "milFlag" ) == victim )
+	else if( GetGlobalNetEntSafe( "milFlag" ) == victim )
 		thread PlayerThrowFlag(victim, TEAM_MILITIA, MILITIAPoint)
 }
 
@@ -1901,11 +1701,6 @@ void function _OnPlayerDied(entity victim, entity attacker, var damageInfo)
 			if( !IsValid( victim ) )
 				return
 
-			if( Flowstate_IsHaloMode() )
-			{
-				Remote_CallFunction_ByRef( victim, "ForceScoreboardLoseFocus" )
-				Remote_CallFunction_NonReplay( victim, "FS_ForceDestroyCustomAdsOverlay" )
-			}
 
 			if (!CTF.votingtime)
 			{
@@ -2071,7 +1866,6 @@ entity function CreateRingBoundary(LocationSettingsCTF location)
 	CTF.ringRadius = bubbleRadius
 
 	entity bubbleShield = CreateEntity( "prop_dynamic" )
-	bubbleShield.SetValueForModelKey( BUBBLE_BUNKER_SHIELD_COLLISION_MODEL )
 	bubbleShield.SetOrigin(bubbleCenter)
 	bubbleShield.SetModelScale(bubbleRadius / 235)
 	bubbleShield.kv.CollisionGroup = 0

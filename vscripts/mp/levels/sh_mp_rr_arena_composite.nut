@@ -5,7 +5,7 @@ global function CodeCallback_MapInit
 void function CodeCallback_MapInit()
 {
 	ConveyorInit($"mdl/vehicles_r5/land_med/msc_freight_tortus_mod/veh_land_msc_freight_tortus_mod_cargo_holder_v2_static.rmdl", "", 6, 80)
-	thread InitARBarriers()
+	//thread InitARBarriers()
 }
 #endif
 
@@ -22,7 +22,7 @@ void function InitARBarriers()
 {
 	AddSpawnCallback( "func_brush", void function ( entity brush )
 	{
-		brush.Destroy()//TODO: Recover this function once we get correct shaders and arenas -LorryLeKral
+		brush.Destroy()//TODO: Recover this function once we get correct shaders and arenas -Kral
 	} )
 }
 #endif

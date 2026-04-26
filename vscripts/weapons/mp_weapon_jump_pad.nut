@@ -39,7 +39,7 @@ var function OnWeaponTossReleaseAnimEvent_weapon_jump_pad( entity weapon, Weapon
 		if( !IsValid( player ) || !player.IsPlayer() )
 			return
 		
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 		string charRef = ItemFlavor_GetHumanReadableRef( character )
 
 		if( charRef == "character_octane")
@@ -55,7 +55,7 @@ void function OnWeaponTossPrep_weapon_jump_pad( entity weapon, WeaponTossPrepPar
 	weapon.EmitWeaponSound_1p3p( GetGrenadeDeploySound_1p( weapon ), GetGrenadeDeploySound_3p( weapon ) )
 }
 
-void function OnJumpPadPlanted( entity projectile )
+void function OnJumpPadPlanted( entity projectile, DeployableCollisionParams collisionParams )
 {
 	#if SERVER
 	//string gameMode = GameRules_GetGameMode()

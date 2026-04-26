@@ -66,7 +66,7 @@ void function ClSpectatorHud_Init()
 	RegisterButtonPressedCallback( KEY_LSHIFT, TryToggleGladCard )
 	RegisterButtonPressedCallback( BUTTON_Y, TryToggleGladCard )
 
-	AddCallback_GameStateEnter( eGameState.Epilogue, SetEpilogueFlag )	// setting flag hides stuff on the ui/dead_hud.rpak. We should wait until the epilogue to do so.
+	AddCallback_GameStateEnter( eGameState.Resolution, SetEpilogueFlag )	// setting flag hides stuff on the ui/dead_hud.rpak. We should wait until the epilogue to do so.
 }
 
 
@@ -75,7 +75,7 @@ void function EntitiesDidLoad()
 	if ( IsMenuLevel() )
 		return
 
-	RuiTrackInt( file.deadHud, "numSpectateTargets", GetLocalClientPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "spectatorTargetCount" ) )
+	RuiTrackInt( file.deadHud, "numSpectateTargets", GetLocalClientPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "spectatorTargetCount" ) )
 
 	if ( !IsRoundWinningKillReplayEnabled() )
 		//Need to check in EntitiesDidLoad as opposed to main() since the .nv isn't set yet in main()
@@ -97,8 +97,8 @@ void function UpdateDeathAndSpectatorHUD( entity player, entity currentTarget )
 	Assert( file.spectatorHud != null )
 	Assert( file.deadHud != null )
 
-	RuiTrackInt( file.spectatorHud, "numObserverTargets", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "spectatorTargetCount" ) )
-	RuiTrackInt( file.deadHud, "numSpectateTargets", GetLocalClientPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "spectatorTargetCount" ) )
+	RuiTrackInt( file.spectatorHud, "numObserverTargets", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "spectatorTargetCount" ) )
+	RuiTrackInt( file.deadHud, "numSpectateTargets", GetLocalClientPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "spectatorTargetCount" ) )
 
 	bool playerSpectateTarget = currentTarget != null && currentTarget.IsPlayer()
 

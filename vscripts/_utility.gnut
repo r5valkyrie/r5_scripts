@@ -16,6 +16,11 @@ global const C_PLAYFX_SINGLE	= 0
 global const C_PLAYFX_MULTIPLE	= 1
 global const C_PLAYFX_LOOP		= 2
 
+#if DEVELOPER
+const bool AvoidCrushedByPlainDoorDebug = false
+const bool SkywardLaunchPushTriggerDebug = false
+#endif
+
 global const MUTEALLFADEIN 		= 2
 global const GAMEMODE_SP 		= "solo"
 
@@ -38,8 +43,8 @@ global struct ArrayDotResultStruct
 
 global struct ShieldDamageModifier
 {
-	float permanentDamageFrac = TITAN_SHIELD_PERMAMENT_DAMAGE_FRAC
-	bool normalizeShieldDamage = false
+	float permanentDamageFrac = 0.0
+	bool  normalizeShieldDamage = false
 	float damageScale = 1.0
 }
 
@@ -82,47 +87,22 @@ void function Utility_Init()
 	RegisterSignal( "PetTitanUpdated" )
 	RegisterSignal( "WaitDeadTimeOut" )
 	RegisterSignal( "InventoryChanged" )
+	RegisterSignal( "StopCheckingForIntersectingGeo" )
 	RegisterSignal( SIGNAL_TELEPORTED )
 	
 	//AddClientCommandCallback( "OnDevnetBugScreenshot", ClientCommand_OnDevnetBugScreenshot )
 	#if DEVELOPER
 		FlagInit( "AimAssistSwitchTest_Enabled" )
-		// AddClientCommandCallback( "DoomTitan", ClientCommand_DoomTitan )
 		AddClientCommandCallback( "toggleconsole", ClientCommand_ToggleConsole )
-		AddClientCommandCallback( "GoToMapPoint", ClientCommand_GoToMapPoint )
+		AddClientCommandCallbackVoid( "+opendevmenu", ClientCommand_OpenDevMenu ) // dev
 	#endif
 }
 
-void function GiveAllTitans()
-{
-
-	array<entity> players = GetPlayerArray()
-	foreach ( player in players )
-	{
-		#if MP
-		GiveTitanToPlayer( player )
-		#endif
-
-		if ( player.IsTitan() )
-		{
-			entity soul = player.GetTitanSoul()
-			if ( soul )
-			{
-				SoulTitanCore_SetNextAvailableTime( soul, 1 )
-			}
-		}
-	}
-
-	array<entity> titans = GetNPCArrayByClass( "npc_titan" )
-	foreach ( titan in titans )
-	{
-		entity soul = titan.GetTitanSoul()
-		if ( soul )
-			SoulTitanCore_SetNextAvailableTime( soul, 1 )
-	}
-}
-
 #if DEVELOPER
+void function ClientCommand_OpenDevMenu( entity player, array<string> argList )
+{
+	Remote_CallFunction_UI( player, "ServerCallback_OpenDevMenu" )
+}
 void function KillAllBadguys()
 {
 	array<entity> npcs = GetNPCArrayOfEnemies( GetPlayerArray()[0].GetTeam() )
@@ -135,27 +115,6 @@ void function KillAllBadguys()
 			continue
 		n.Die()
 	}
-}
-
-bool function ClientCommand_GoToMapPoint( entity player, array<string> args )
-{
-	if ( GetConVarInt("sv_cheats") != 1 || !IsValid( player ) || args.len() != 3 )
-		return false
-
-	float x = float( args[0] )
-	float y = float( args[1] )
-	float z = float( args[2] )
-
-	vector origin = ClampToWorldspace(<x, y, z>)
-
-	if ( z == 0 )
-	{
-		origin = OriginToGround( <x, y, 20000> )
-	}
-
-	player.SetOrigin( origin )
-
-	return true
 }
 
 bool function ClientCommand_ToggleConsole( entity player, array<string> args )
@@ -186,17 +145,6 @@ bool function ClientCommand_ToggleConsole( entity player, array<string> args )
 // 	return true
 // }
 #endif
-
-void function PrintPlaylists()
-{
-	printt( "=== PLAYLIST NAMES: ===" )
-
-	int count = GetPlaylistCount()
-	for ( int i = 0; i < count; i++ )
-	{
-		printt( "--", GetPlaylistName( i ) )
-	}
-}
 
 entity function CreateEntity( string name )
 {
@@ -338,7 +286,7 @@ void function SetRebreatherMaskVisible( entity ent, bool visible )
 {
 	asset modelname = ent.GetModelName()
 
-	var maskIdx = ent.FindBodyGroup( "mask" )
+	int maskIdx = ent.FindBodygroup( "mask" )
 	if ( maskIdx == -1 )
 		return
 
@@ -346,7 +294,7 @@ void function SetRebreatherMaskVisible( entity ent, bool visible )
 	if ( !visible )
 		visibleIdx = 0
 
-	ent.SetBodygroup( maskIdx, visibleIdx )
+	ent.SetBodygroupModelByIndex( maskIdx, visibleIdx )
 }
 
 int function EntHasSpawnflag( entity ent, int spawnflagHexVal )
@@ -364,7 +312,7 @@ entity function CreateInfoTarget( vector origin = <0, 0, 0>, vector angles = <0,
 }
 
 
-entity function CreateScriptMover_NEW( string scriptName, vector origin = <0, 0, 0>, vector angles = <0, 0, 0>, int solidType = 0 )
+entity function CreateScriptMover_NEW( string scriptName = "", vector origin = <0, 0, 0>, vector angles = <0, 0, 0>, int solidType = 0 )
 {
 	entity script_mover = CreateScriptMover_BASE( origin, angles, solidType, EMPTY_MODEL, -1, "script_mover_lightweight" )
 	script_mover.SetScriptName( scriptName )
@@ -409,12 +357,14 @@ entity function CreateScriptMover_BASE( vector origin = <0, 0, 0>, vector angles
 }
 
 
-entity function CreateScriptMover( vector origin = <0.0, 0.0, 0.0>, vector angles = <0.0, 0.0, 0.0>, int solidType = 0 )
+entity function CreateScriptMover( string scriptName, vector origin = <0.0, 0.0, 0.0>, vector angles = <0.0, 0.0, 0.0>, int solidType = 0 )
 {
 	entity script_mover = CreateEntity( "script_mover_lightweight" )
 	script_mover.kv.solid = solidType
 	script_mover.SetValueForModelKey( $"mdl/dev/empty_model.rmdl" )
 	script_mover.kv.SpawnAsPhysicsMover = 0
+	if ( scriptName != "" )
+		script_mover.SetScriptName( scriptName )
 	script_mover.SetOrigin( origin )
 	script_mover.SetAngles( angles )
 	DispatchSpawn( script_mover )
@@ -828,9 +778,62 @@ void function TimeOut( float time )
 	delaythread( time ) Signal( Table, "OnDeath" )
 }
 
-string function GetActiveWeaponClass( entity player )
+void function SetReplayDisabled( bool disabled )
 {
-	entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
+	SetGlobalNonRewindNetBool("replayDisabled", disabled)
+}
+
+void function SetSwitchedSides( int value )
+{
+	SetGlobalNonRewindNetInt( "switchedSides", value )
+}
+
+void function SetGameStateChangeTime(float time)
+{
+	SetGlobalNonRewindNetTime( "gameStateChangeTime", time )
+}
+
+void function SetGameStartTime(float time)
+{
+	SetGlobalNonRewindNetTime( "gameStartTime", time )
+}
+
+void function SetGameEndTime( float time  )
+{
+	SetGlobalNonRewindNetTime( "gameEndTime", time )
+}
+
+void function SetRoundStartTime( float time )
+{
+	SetGlobalNonRewindNetTime( "roundStartTime", time )
+}
+
+void function SetRoundEndTime( float time )
+{
+	SetGlobalNonRewindNetTime( "roundEndTime", time )
+}
+
+void function SetRoundsPlayed( int round )
+{
+	SetGlobalNonRewindNetInt("roundsPlayed", round)
+}
+
+void function SetWinningTeam(int team)
+{
+	//
+	// Debug for series of bugs where the winning team is not a valid team - eg: R5DEV-507314
+	if( GameMode_IsActive( eGameModes.FREEDM ) && team >= TEAM_MULTITEAM_FIRST + MAX_TEAMS )
+	{
+		ForceScriptError( "Invalid TEAM was selected as winning team. team = " + team + ". MAX_TEAMS = " + MAX_TEAMS )
+	}
+	// End Debug
+
+	SetGlobalNonRewindNetInt("winningTeam", team)
+}
+
+string function GetActiveWeaponClass( entity player, int activeSlot )
+{
+	entity weapon = player.GetActiveWeapon( activeSlot )
 	Assert( weapon != null )
 
 	string weaponclass = weapon.GetWeaponClassName()
@@ -1054,7 +1057,8 @@ entity function CreateGameText( string msg, float xPos, float yPos, int channel,
 
 // pass the origin where the player's feet would be
 // tests a player sized box for any collision and returns true only if it's clear
-bool function PlayerCanTeleportHere( entity player, vector testOrg, entity ignoreEnt = null ) //TODO: This is a copy of SP's PlayerPosInSolid(). Not changing it to avoid patching SP. Merge into one function next game
+bool function PlayerCanTeleportHere( entity player, vector testOrg, entity ignoreEnt = null )
+//TODO: This is a copy of SP's PlayerPosInSolid(). Not changing it to avoid patching SP. Merge into one function next game
 {
 	int solidMask = TRACE_MASK_PLAYERSOLID
 	vector mins
@@ -1089,7 +1093,7 @@ enum eAttach
 void function LoadDiamond()
 {
 	printl( " " )
-	printl( "----------------------------" )
+	printl( " " )
 	printl( " " )
 
 	// Draw a diamond of a random size and phase (of the moon) so it is easy to separate sections of logs.
@@ -1139,43 +1143,43 @@ void function LoadDiamond()
 			}
 		}
 
-			printl( msg )
+		printl( msg )
+	}
+
+	for ( int i = random_spread - 1; i >= 0; i-- )
+	{
+		msg = ""
+
+		for ( int p = 0; p <= random_spread - i; p++ )
+		{
+			msg = msg + " "
 		}
 
-		for ( int i = random_spread - 1; i >= 0; i-- )
+
+		for ( int p = 0; p <= i * 2; p++ )
 		{
-			msg = ""
-
-			for ( int p = 0; p <= random_spread - i; p++ )
+			if ( p == i * 2 || p == 0 )
 			{
-				msg = msg + " "
+				msg = msg + "*"
 			}
-
-
-			for ( int p = 0; p <= i * 2; p++ )
+			else
 			{
-				if ( p == i * 2 || p == 0 )
+				if ( compare_func( p, int( i * random_fullness ) ) )
 				{
 					msg = msg + "*"
 				}
 				else
 				{
-					if ( compare_func( p, int( i * random_fullness ) ) )
-					{
-						msg = msg + "*"
-					}
-					else
-					{
-						msg = msg + " "
-					}
+					msg = msg + " "
 				}
 			}
-
-			printl( msg )
 		}
 
+		printl( msg )
+	}
+
 	printl( " " )
-	printl( "----------------------------" )
+	printl( " " )
 	printl( " " )
 }
 
@@ -1185,14 +1189,14 @@ void function ClearDroppedWeapons( float delayTime = 0.0 )
 	if ( delayTime > 0 )
 		wait delayTime
 
-	bool onlyNotOwnedWeapons = true // don't get the ones in guys' hands
-	array<entity> weapons = GetWeaponArray( onlyNotOwnedWeapons )
+	bool onlyNotOwnedWeapons = true  // don't get the ones in guys' hands
+	array<entity> weapons    = GetWeaponArray( onlyNotOwnedWeapons )
 
 	foreach ( weapon in weapons )
 	{
 		// don't clean up weapon pickups that were placed in leveled
-		int spawnflags = expect string( weapon.kv.spawnflags ).tointeger()
-		if ( spawnflags & SF_WEAPON_START_CONSTRAINED )
+		int spawnflags = int( expect string( weapon.kv.spawnflags ) )
+		if ( IsBitFlagSet( spawnflags, SF_WEAPON_START_CONSTRAINED ) )
 			continue
 
 		weapon.Destroy()
@@ -1239,21 +1243,21 @@ void function RestockPlayerAmmo_Silent( entity player = null )
 	RestockPlayerAmmo( player, true )
 }
 
-void function RestockPlayerAmmo( entity player = null, bool isSilent = false )
+void function RestockPlayerAmmo( entity onlyplayer = null, bool isSilent = false )
 {
 	array<entity> players
-	if ( IsAlive( player ) )
-		players.append( player )
+	if ( IsAlive( onlyplayer ) )
+		players.append( onlyplayer )
 	else
 		players = GetPlayerArray_Alive()
 
-	// foreach( player in players )
-	// {
-	// 	player.RefillAllAmmo()
+	foreach ( player in players )
+	{
+		player.RefillAllAmmo()
 
-	// 	if ( !isSilent )
-	// 		EmitSoundOnEntityOnlyToPlayer( player, player, "Coop_AmmoBox_AmmoRefill" )
-	// }
+		if ( !isSilent )
+			EmitSoundOnEntityOnlyToPlayer( player, player, "Coop_AmmoBox_AmmoRefill" )
+	}
 }
 
 entity function CreateLightSprite( vector origin, vector angles, string lightcolor = "255 0 0", float scale = 0.5 )
@@ -1330,6 +1334,30 @@ void function AddCallback_GameStateEnter( int gameState, void functionref() call
 	svGlobal.gameStateEnterCallbacks[ gameState ].append( callbackFunc )
 }
 
+
+void function AddCallback_GameStatePostEnter( int gameState, void functionref() callbackFunc )
+{
+	Assert( gameState < svGlobal.gameStateEnteredCallbacks.len() )
+
+	Assert( !svGlobal.gameStateEnteredCallbacks[ gameState ].contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_GameStatePostEnter" )
+
+	svGlobal.gameStateEnteredCallbacks[ gameState ].append( callbackFunc )
+}
+
+void function AddCallback_SetPreGameStartTimeCallback( void functionref() callbackFunc )
+{
+	Assert( !svGlobal.onSetPreGameStartTimeCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_SetPreGameStartTimeCallback" )
+
+	svGlobal.onSetPreGameStartTimeCallbacks.append( callbackFunc )
+}
+
+void function ExecuteSetPreGameStartTimeCallback()
+{
+	foreach ( void functionref() func in svGlobal.onSetPreGameStartTimeCallbacks )
+		func()
+}
+
+
 void function GM_SetObserverFunc( void functionref( entity ) callbackFunc )
 {
 	svGlobal.observerFunc = callbackFunc
@@ -1340,18 +1368,6 @@ void function GM_AddPlayingThinkFunc( void functionref() callbackFunc )
 	Assert( !svGlobal.playingThinkFuncTable.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with GM_AddPlayingThinkFunc" )
 
 	svGlobal.playingThinkFuncTable.append( callbackFunc )
-}
-
-void function GM_AddThirtySecondsLeftFunc( void functionref() callbackFunc )
-{
-	Assert( !svGlobal.thirtySecondsLeftFuncTable.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with GM_AddThirtySecondsLeftFunc" )
-
-	svGlobal.thirtySecondsLeftFuncTable.append( callbackFunc )
-}
-
-void function GM_SetMatchProgressAnnounceFunc( void functionref( int ) callbackFunc )
-{
-	svGlobal.matchProgressAnnounceFunc = callbackFunc
 }
 
 // Get an absolute offset poistion to an entity even if it's been rotated in world space
@@ -1377,10 +1393,39 @@ vector function GetEntPosPlusOffset( entity ent, float offsetX, float offsetY, f
 
 void function EmitSoundToTeamPlayers( string alias, int team )
 {
+	array< entity > players = GetPlayerArrayOfTeam( team )
+
+	foreach ( player in players )
+	{
+		EmitSoundOnEntityOnlyToPlayer( player, player, alias )
+	}
+}
+
+
+void function EmitSoundToPlayersInRealm( string alias, int realm, bool mustBeAlive = false )
+{
+	array< entity > players = GetAllPlayersByRealm( realm, mustBeAlive )
+
+	foreach ( player in players )
+	{
+		EmitSoundOnEntityOnlyToPlayer( player, player, alias )
+	}
+}
+
+
+float function EmitSoundToTeamPlayersDialogLength( string alias, int team )
+{
+	float dialogLength = 0.0
+
 	array<entity> players = GetPlayerArrayOfTeam( team )
 
 	foreach ( player in players )
-		EmitSoundOnEntityOnlyToPlayer( player, player, alias )
+	{
+		if ( IsValid( player ) )
+			dialogLength = EmitSoundOnEntityOnlyToPlayer( player, player, alias )
+	}
+
+	return dialogLength
 }
 
 void function EmitDifferentSoundsAtPositionForPlayerAndWorld( string soundForPlayer, string soundForWorld, vector position, entity player, int teamNum )
@@ -1816,6 +1861,28 @@ bool function TeleportPlayerNoInterp( entity player, vector pos, vector angles =
     return success
 }
 
+void function PropCheckDamageFromDeathfield( entity ent, float damageScaleAmount )
+{
+	Assert ( IsNewThread(), "Must be started as new thread" )
+	Assert( IsValid( ent ) )
+
+	EndSignal( ent, "OnDestroy" )
+
+	while( true )
+	{
+		wait DEATHFIELD_DAMAGE_CHECK_STEP_TIME
+
+		DeathFieldData deathFieldData = SURVIVAL_GetDeathFieldData( 0 )
+		bool insideSafeRing           = SURVIVAL_PosInsideDeathField( 0, ent.GetOrigin( ) )
+		if ( !insideSafeRing )
+		{
+			int deathfieldDamage = int( deathFieldData.percentDamagePerTick * float( ent.GetMaxHealth() ) * damageScaleAmount )
+			ent.TakeDamage( deathfieldDamage, null, null, { scriptType = DF_BYPASS_SHIELD | DF_DOOMED_HEALTH_LOSS, damageSourceId = eDamageSourceId.deathField } )
+		}
+	}
+}
+
+
 //-----------------------------------------------------------
 // CreatePropPhysics( model ) - create a generic prop_physics with default properties
 //------------------------------------------------------------
@@ -1876,7 +1943,7 @@ entity function CreateTriggerCylinderNoCylinderRadius( vector origin, int radius
 //------------------------------------------------------------
 entity function CreateTriggerCylinderNetworked( vector origin, float radius, float aboveHeight, float belowHeight, vector angles = <0,0,0> )
 {
-	entity trigger = Entities_CreateByClassname( "trigger_cylinder" )//( "trigger_cylinder_networked" )
+	entity trigger = Entities_CreateByClassname( "trigger_cylinder_networked" )
 	trigger.SetCylinderRadius( radius )
 	trigger.SetAboveHeight( aboveHeight )
 	trigger.SetBelowHeight( belowHeight )
@@ -1895,7 +1962,7 @@ entity function CreateTriggerCylinderNetworked( vector origin, float radius, flo
 //------------------------------------------------------------
 entity function CreateTriggerCylinderNetworked_OutOfBounds( vector origin, float radius, float aboveHeight, float belowHeight, vector angles = <0,0,0> )
 {
-	entity trigger = Entities_CreateByClassname( "trigger_cylinder" )//( "trigger_networked_out_of_bounds" )
+	entity trigger = Entities_CreateByClassname( "trigger_networked_out_of_bounds" )
 	trigger.SetPhaseShiftCanTouch( true )
 	trigger.SetCylinderRadius( radius )
 	trigger.SetAboveHeight( aboveHeight )
@@ -1915,7 +1982,7 @@ entity function CreateTriggerCylinderNetworked_OutOfBounds( vector origin, float
 //------------------------------------------------------------
 entity function CreateTriggerCylinderNetworked_NoObjectPlacement( vector origin, float radius, float aboveHeight, float belowHeight, vector angles = <0,0,0> )
 {
-	entity trigger = Entities_CreateByClassname( "trigger_cylinder" )//( "trigger_networked_no_op" )
+	entity trigger = Entities_CreateByClassname( "trigger_networked_no_op" )
 	trigger.SetCylinderRadius( radius )
 	trigger.SetAboveHeight( aboveHeight )
 	trigger.SetBelowHeight( belowHeight )
@@ -1934,7 +2001,7 @@ entity function CreateTriggerCylinderNetworked_NoObjectPlacement( vector origin,
 //------------------------------------------------------------
 entity function CreateTriggerCylinderNetworked_NoObjectPlacementSpecial( vector origin, float radius, float aboveHeight, float belowHeight, vector angles = <0,0,0> )
 {
-	entity trigger = Entities_CreateByClassname( "trigger_cylinder" )//( "trigger_networked_no_ops" )
+	entity trigger = Entities_CreateByClassname( "trigger_networked_no_ops" )
 	trigger.SetCylinderRadius( radius )
 	trigger.SetAboveHeight( aboveHeight )
 	trigger.SetBelowHeight( belowHeight )
@@ -1969,7 +2036,7 @@ entity function CreateTriggerCylinderNetworked_NoRadiusNoObjectPlacementSpecial(
 //------------------------------------------------------------
 entity function CreateTriggerCylinderNetworked_BlockAllObjectPlacement( vector origin, float radius, float aboveHeight, float belowHeight, vector angles = <0,0,0> )
 {
-	entity trigger = Entities_CreateByClassname( "trigger_cylinder" )//( "trigger_networked_block_all_op" )
+	entity trigger = Entities_CreateByClassname( "trigger_networked_block_all_op" )
 	trigger.SetCylinderRadius( radius )
 	trigger.SetAboveHeight( aboveHeight )
 	trigger.SetBelowHeight( belowHeight )
@@ -2005,7 +2072,7 @@ array <entity> function SpawnAndThrowItems_ReturnItems( entity itemSource, strin
 		vector throwDir = <sin( throwData.throwAngle ), cos( throwData.throwAngle ), 0>
 		float speed     = throwData.throwScale * sqrt( RandomFloatRange( 0.75, 1.0 ) ) * throwStrength
 		vector vel      = throwDir * speed
-		thread FakePhysicsThrow_Retail( itemSource, itemEnt, <vel.x, vel.y, 200>, true )
+		thread FakePhysicsThrow( itemSource, itemEnt, <vel.x, vel.y, 200>, true )
 		throwData = SURVIVAL_DropLoot_IncrementThrowAngle( throwData )
 		spawnedItems.append( itemEnt )
 	}
@@ -2031,6 +2098,7 @@ entity function SpawnBullseye( int team, entity ent = null )
 	bullseye.kv.physdamagescale = 1.0
 	bullseye.kv.WeaponProficiency = eWeaponProficiency.VERYGOOD
 	bullseye.kv.minangle = "360"
+	bullseye.SetModel( $"mdl/dev/empty_model.rmdl" )
 	DispatchSpawn( bullseye )
 
 	SetTeam( bullseye, team )
@@ -2248,7 +2316,9 @@ entity function __CreateFxInternal( asset effectName, entity ent, string optiona
 			coreAng = ent.GetAngles()
 		}
 
-		fx.Code_SetTeam( ent.GetTeam() );
+		fx.Code_SetTeam( ent.GetTeam() )
+		fx.RemoveFromAllRealms()
+		fx.AddToOtherEntitysRealms( ent )
 	}
 	else //if not we're just playing in space
 	{
@@ -2388,9 +2458,7 @@ bool function EntityInSolid( entity ent, entity ignoreEnt = null, int buffer = 0
 	vector mins
 	vector maxs
 	int collisionGroup
-	array<entity> ignoreEnts = []
-
-	ignoreEnts.append( ent )
+	array<entity> ignoreEnts = [ ent ]
 
 	if ( IsValid( ignoreEnt ) )
 	{
@@ -2428,9 +2496,9 @@ bool function EntityInSolid( entity ent, entity ignoreEnt = null, int buffer = 0
 
 	// if we got into solid, teleport back to safe place
 	vector currentOrigin = ent.GetOrigin()
-	TraceResults result = TraceHull( currentOrigin, currentOrigin + < 0, 0, 1 >, mins, maxs, ignoreEnts, solidMask, collisionGroup )
+	TraceResults result  = TraceHull( currentOrigin, currentOrigin + <0, 0, 1>, mins, maxs, ignoreEnts, solidMask, collisionGroup )
 	//PrintTable( result )
-	//DrawArrow( result.endPos, Vector(0,0,0), 5, 150 )
+	//DrawArrow( result.endPos, <0,0,0>, 5, 150 )
 	if ( result.startSolid )
 		return true
 
@@ -2647,6 +2715,29 @@ vector function RandomVecInDome( vector dir )
 	return endPos
 }
 
+// RandomVecInDome with FOV-constrained spread
+vector function RandomVecInDomeWithFOV( vector dir, float fov )
+{
+	float fovScalar = -deg_sin( fov / 2 )
+
+	vector angles  = VectorToAngles( dir )
+	vector forward = AnglesToForward( angles )
+	vector right   = AnglesToRight( angles )
+	vector up      = AnglesToUp( angles )
+
+	float offsetRight   = RandomFloatRange( -fovScalar, fovScalar )
+	float offsetUp      = RandomFloatRange( -fovScalar, fovScalar )
+	float offsetForward = RandomFloat( 1.0 )
+
+	vector endPos = <0, 0, 0>
+	endPos += forward * offsetForward
+	endPos += up * offsetUp
+	endPos += right * offsetRight
+	endPos.Norm()
+
+	return endPos
+}
+
 float function GetAnimEventTime( asset modelname, string anim, string event )
 {
 	entity dummy = CreatePropDynamic( modelname )
@@ -2683,7 +2774,7 @@ void function ClearDeathFuncName( entity npc )
 	clight.PushAngles( x, y, z )
 }
 
-function PopSunLightAngles()
+void function PopSunLightAngles()
 {
 	entity clight = GetEnt( "env_cascade_light" )
 	Assert( clight )
@@ -2962,11 +3053,11 @@ void function ToggleSkyboxView( float scale = 0.001 )
 	{
 		if ( !player.IsNoclipping() )
 		{
-			ClientCommand( player, "noclip" )
+			RunClientCommandOnPlayer( player, "noclip" )
 			wait( 0.25 )
 		}
 
-		ClientCommand( player, "sv_noclipspeed 0.1" )
+		RunClientCommandOnPlayer( player, "sv_noclipspeed 0.1" )
 		file.isSkyboxView = true
 		vector offset = player.GetOrigin()
 		offset *= scale
@@ -2975,7 +3066,7 @@ void function ToggleSkyboxView( float scale = 0.001 )
 	}
 	else
 	{
-		ClientCommand( player, "sv_noclipspeed 5" )
+		RunClientCommandOnPlayer( player, "sv_noclipspeed 5" )
 		file.isSkyboxView = false
 		vector offset = player.GetOrigin() - skyOrigin + < 0.0, 0.0, 60.0 - (60.0 * scale) >
 		offset *= 1.0 / scale
@@ -3129,30 +3220,6 @@ void function TakeAmmoFromPlayer( entity player )
 
 bool function NearFlagSpawnPoint( vector dropPoint )
 {
-	if ( "flagSpawnPoint" in level && IsValid( level.flagSpawnPoint ) )
-	{
-		vector fspOrigin = expect entity( level.flagSpawnPoint ).GetOrigin()
-		if ( Distance( fspOrigin, dropPoint ) < SAFE_TITANFALL_DISTANCE_CTF )
-			return true
-	}
-
-	if ( "flagReturnPoint" in level && IsValid( level.flagReturnPoint ) )
-	{
-		vector fspOrigin = expect entity( level.flagReturnPoint ).GetOrigin()
-		if ( Distance( fspOrigin, dropPoint ) < SAFE_TITANFALL_DISTANCE_CTF )
-			return true
-	}
-
-	if ( "flagSpawnPoints" in level )
-	{
-		foreach ( flagSpawnPoint in svGlobal.flagSpawnPoints )
-		{
-			vector fspOrigin = flagSpawnPoint.GetOrigin()
-			if ( Distance( fspOrigin, dropPoint ) < SAFE_TITANFALL_DISTANCE_CTF )
-				return true
-		}
-	}
-
 	return false
 }
 
@@ -3177,12 +3244,6 @@ void function RemoveCinematicFlag( entity player, int flag )
 	Assert( IsValid( player ) )
 	player.SetCinematicEventFlags( player.GetCinematicEventFlags() & ( ~flag ) )
 	player.Signal( "CE_FLAGS_CHANGED" )
-}
-
-void function SkyScaleDefault( entity ent, float time = 1.0 )
-{
-	if ( IsValid( ent ) )
-		ent.LerpSkyScale( SKYSCALE_DEFAULT, time )
 }
 
 void function MoveSpawn( string targetName, vector origin, vector angles )
@@ -3491,18 +3552,17 @@ void function UpdateBadRepPresent()
 {
 	array<entity> players = GetPlayerArray()
 	bool found = false
-/*	always set to false for now
-	foreach ( player in players )
-	{
-		if ( player.HasBadReputation() )
+	/*	always set to false for now
+		foreach ( player in players )
 		{
-			found = true
-			break
+			if ( player.HasBadReputation() )
+			{
+				found = true
+				break
+			}
 		}
-	}
-*/
-	level.nv.badRepPresent = found
-	level.ui.badRepPresent = found
+	*/
+	SetGlobalNonRewindNetBool("badRepPresent", found)
 }
 
 void function Dev_PrintMessage( entity player, string text, string subText = "", float duration = 7.0, string soundAlias = "" )
@@ -3739,7 +3799,7 @@ void function BunkerDoor_CreateZipline( vector startPos, vector endPos, bool pus
 	if( moveIt )
 	{
 		zip_end.SetOrigin( startPos - <0,0,1> )
-		mover = CreateScriptMover( zip_start.GetOrigin(), zip_start.GetAngles())
+		mover = CreateScriptMover( "", zip_start.GetOrigin(), zip_start.GetAngles())
 		zip_end.SetParent(mover)
 		EmitSoundOnEntity( zip_start, "Canyonlands_Scr_Bunker_Hatch_Zipline_Drop" )
 	} else
@@ -4162,7 +4222,7 @@ array<vector> function GetEvenlySpacedPointsAroundCircle( vector origin, vector 
 			{
 				vector debugAngles = VectorToAngles( pt - origin )
 				DebugDrawLine( origin, pt, 0, 255, 0, true, DEBUGDRAWTIME )
-				DebugDrawAxis( origin, debugAngles, DEBUGDRAWTIME, 64, COLOR_BLUE )
+				//DebugDrawAxis( origin, debugAngles, DEBUGDRAWTIME, 64, <0, 0, 255> )
 			}
 		}
 
@@ -4554,6 +4614,8 @@ void function DeployAndEnableWeapons( entity player )
 	{
 		player.DeployWeapon()
 		EnableOffhandWeapons( player )
+		foreach ( func in file.callbacks_OnDeployAndEnableWeapons )
+			func( player )
 	}
 }
 
@@ -4572,9 +4634,16 @@ void function DeployAndEnableWeaponsWithSlowDeploy( entity player, float time )
 	{
 		player.DelayEnableWeaponWithSlowDeploy( time )
 		EnableOffhandWeapons( player )
+		foreach ( func in file.callbacks_OnDeployAndEnableWeapons )
+			func( player )
 	}
 }
 
+void function AddCallback_OnDeployAndEnableWeapons( void functionref( entity ) func )
+{
+	Assert( !file.callbacks_OnDeployAndEnableWeapons.contains( func ) )
+	file.callbacks_OnDeployAndEnableWeapons.append( func )
+}
 void function DeployViewModelAndEnableWeapons( entity player )
 {
 	player.p.holsterAndDisableWeaponCount--
@@ -4711,15 +4780,7 @@ void function SetPlayerAnimViewEntity( entity player, entity model )
 
 void function RandomizeHead( entity model ) //Randomize head across all available heads
 {
-	var headIndex
-	if ( model.GetModelName() == "mdl/robots/spectre/imc_spectre.rmdl" )
-		return//headIndex = model.FindBodyGroup( "removableHead" )
-	if ( model.GetModelName() == "mdl/humans/pilots/pilot_medium_reaper_m.rmdl" )
-		return//headIndex = model.FindBodyGroup( "removableHead" )
-	if ( model.GetModelName() == "mdl/humans/pilots/pilot_medium_reaper_f.rmdl" )
-		return//headIndex = model.FindBodyGroup( "removableHead" )
-	else
-		headIndex = model.FindBodyGroup( "head" )
+	var headIndex = model.FindBodyGroup( "head" )
 	if ( headIndex == -1 )
 	{
 		//printt( "HeadIndex == -1, returning" )
@@ -4975,36 +5036,34 @@ string function ReloadScriptsInternal()
 		return ""
 	}
 
-	TitanEmbark_Init()
-
 	ReloadScriptCallbacks()
 
 	reloadingScripts = false
 	ReloadingScriptsEnd()
 
-	return ( "reloaded server scripts" )
+	return ("reloaded server scripts")
 }
 
 string function ReloadScripts()
 {
 	ServerCommand( "fs_report_sync_opens 0" ) // makes reload scripts slow
-	delaythread ( 0 ) ReloadScriptsInternal()
+	delaythread( 0 ) ReloadScriptsInternal()
 
-	return ( "reloaded server scripts" )
+	return ("reloaded server scripts")
 }
 
 int function GameTime_TimeLimitSeconds()
 {
 	if ( IsRoundBased() )
 	{
-		return ( GetRoundTimeLimit_ForGameMode() * 60.0 ).tointeger()
+		return int( GetRoundTimeLimit_ForGameMode() * 60.0 )
 	}
 	else
 	{
 		if ( IsSuddenDeathGameMode() && GetGameState() == eGameState.SuddenDeath )
-			return ( GetTimeLimit_ForGameMode() * 60.0 ).tointeger() + ( GetSuddenDeathTimeLimit_ForGameMode() * 60.0 ).tointeger()
+			return int( GetTimeLimit_ForGameMode() * 60.0 ) + int( GetSuddenDeathTimeLimit_ForGameMode() * 60.0 )
 		else
-			return ( GetTimeLimit_ForGameMode() * 60.0 ).tointeger()
+			return int( GetTimeLimit_ForGameMode() * 60.0 )
 	}
 	unreachable
 }
@@ -5020,9 +5079,9 @@ int function GetSuddenDeathTimeLimit_ForGameMode()
 int function GameTime_TimeLimitMinutes()
 {
 	if ( IsRoundBased() )
-		return floor( GetRoundTimeLimit_ForGameMode() ).tointeger()
+		return int( floor( GetRoundTimeLimit_ForGameMode() ) )
 	else
-		return floor( GetTimeLimit_ForGameMode() ).tointeger()
+		return int( floor( GetTimeLimit_ForGameMode() ) )
 	unreachable
 }
 
@@ -5031,22 +5090,22 @@ int function GameTime_TimeLeftMinutes()
 	if ( GetGameState() == eGameState.WaitingForPlayers )
 		return 0
 	if ( GetGameState() == eGameState.Prematch )
-		return int( ( expect float( GetServerVar( "gameStartTime" ) ) - Time()) / 60.0 )
+		return int(( GetGameStartTime() - Time() ) / 60.0)
 
-	return floor( GameTime_TimeLimitMinutes() - GameTime_PlayingTime() / 60 ).tointeger()
+	return int( floor( GameTime_TimeLimitMinutes() - GameTime_PlayingTime() / 60 ) )
 }
 
 int function GameTime_TimeLeftSeconds()
 {
 	if ( GetGameState() == eGameState.Prematch )
-		return int( expect float( GetServerVar( "gameStartTime" ) ) - Time() )
+		return int( GetGameStartTime() - Time() )
 
-	return floor( GameTime_TimeLimitSeconds() - GameTime_PlayingTime() ).tointeger()
+	return int( floor( GameTime_TimeLimitSeconds() - GameTime_PlayingTime() ) )
 }
 
 int function GameTime_Seconds()
 {
-	return floor( Time() ).tointeger()
+	return int( floor( Time() ) )
 }
 
 int function GameTime_Minutes()
@@ -5069,17 +5128,18 @@ float function GameTime_PlayingTimeSince( float sinceTime )
 	if ( IsRoundBased() )
 	{
 		if ( gameState > eGameState.SuddenDeath )
-			return (expect float( GetServerVar( "roundEndTime" ) ) - expect float( GetServerVar( "roundStartTime" ) ) )
+			return GetRoundEndTime() - GetRoundStartTime()
 		else
-			return sinceTime - expect float( GetServerVar( "roundStartTime" ) )
-
+			return sinceTime - GetRoundStartTime()
 	}
 	else
 	{
+		float gameStartTime = GetGameStartTime()
+
 		if ( gameState > eGameState.SuddenDeath )
-			return (expect float( GetServerVar( "gameEndTime" ) ) - expect float( GetServerVar( "gameStartTime" ) ) )
+			return GetGameEndTime() - gameStartTime
 		else
-			return sinceTime - expect float( GetServerVar( "gameStartTime" ) )
+			return sinceTime - gameStartTime
 	}
 
 	unreachable
@@ -5087,17 +5147,12 @@ float function GameTime_PlayingTimeSince( float sinceTime )
 
 float function GameTime_TimeSpentInCurrentState()
 {
-	return Time() - expect float( GetServerVar( "gameStateChangeTime" ) )
+	return Time() - GetGameStateChangeTime()
 }
 
 int function GameScore_GetFirstToScoreLimit()
 {
 	return expect int( level.firstToScoreLimit )
-}
-
-bool function GameScore_AllowPointsOverLimit()
-{
-	return svGlobal.allowPointsOverLimit
 }
 
 int function GameScore_GetWinningTeam()
@@ -5439,22 +5494,35 @@ void function DestroyAfterDelay( entity ent, float delay )
 	ent.Destroy()
 }
 
-void function AddToUltimateRealm( entity player, entity offhandWeapon )
+void function DestroyFXAfterDelay_Thread( entity ent, float delay )
 {
-	entity ultimateAbility = player.GetOffhandWeapon( OFFHAND_INVENTORY )
+	Assert( IsNewThread(), "Must be threaded off" )
 
-	if( !IsValid( ultimateAbility ) )
-		return
+	ent.EndSignal( "OnDestroy" )
 
-	offhandWeapon.RemoveFromAllRealms()
-	offhandWeapon.AddToOtherEntitysRealms( ultimateAbility )
+	wait(delay)
+
+	if( IsValid( ent ) )
+	{
+		EffectStop( ent )
+	}
+}
+void function SetPlayerSettings( entity player, asset settings, array<string> mods = [] )
+{
+	player.SetPlayerSettingsWithMods( settings, mods )
+	RunSettingsChangedFuncs( player, settings )
 }
 
-void function UpdateDamageState( entity ent, var damageInfo )
+void function RunSettingsChangedFuncs( entity player, asset settings )
 {
-	//stub
-}
+	if ( IsAlive( player ) && GetCurrentPlaylistVarInt( "pilot_health", 0 ) != 0 )
+	{
+		int pilotHealth = GetCurrentPlaylistVarInt( "pilot_health", 0 )
 
+		player.SetMaxHealth( pilotHealth )
+		player.SetHealth( pilotHealth )
+	}
+}
 
 array<entity> function GetLinkedEntsByClassName( entity ent, string className )
 {
@@ -5510,13 +5578,13 @@ array<entity> function GetParentLinkedEntsByEditorClass( entity ent, string edit
 
 void function PilotAbilitySelectMenu_SetEnabled( bool isEnabled )
 {
-	int currState = GetGlobalNetInt( "PilotAbilitySelectMenu_Enabled" )
+	int currState = GetGlobalNetIntSafe( "PilotAbilitySelectMenu_Enabled" )
 	if ( isEnabled )
 		currState++
 	else
 		currState--
 
-	SetGlobalNetInt( "PilotAbilitySelectMenu_Enabled", currState )
+	SetGlobalNetIntSafe( "PilotAbilitySelectMenu_Enabled", currState )
 }
 
 void function DisableMantle( entity player )
@@ -5554,7 +5622,7 @@ bool function SwapToLastEquippedPrimary( entity player )
 	return true
 }
 
-entity function CreateTraceBlockerVolume( vector fxOrigin, float radius, bool b0, int contents, int team, string scriptname )
+entity function CreateTraceBlockerVolume( vector fxOrigin, float radius, bool b0, int contents, int team, string scriptname, entity ownerEnt = null )
 {
 	entity traceBlockerVol = CreateEntity( "trace_volume" )
 	traceBlockerVol.kv.origin = fxOrigin
@@ -5596,15 +5664,10 @@ entity function CreateTraceBlockerVolume_CustomBox( vector origin, vector angles
 	return tbl
 }
 
-void function SetOutOfBoundsTimeLimit( float maxtime )
-{
-	//stub
-}
-
 // Screen cover transition functions
 void function ScreenCoverTransition_Player( entity player, float endTime )
 {
-	Remote_CallFunction_NonReplay( player, "ServerToClient_ScreenCoverTransition", endTime )
+	//Remote_CallFunction_NonReplay( player, "ServerToClient_ScreenCoverTransition", endTime )
 }
 
 void function ScreenCoverTransition_AllPlayers( float endTime )
@@ -5625,21 +5688,6 @@ array<entity> function GetAllPlayersOfLockstepIndex( int index )
 }
 
 /////////////////////////////////////////////////////////////////////////////////
-table< int, array<entity> > function GetAllPlayersSortedByTeam()
-{
-	table< int, array<entity> > groupedPlayers
-	
-	foreach ( player in GetPlayerArray() )
-	{
-		if ( !( player.GetTeam() in groupedPlayers ) )
-			groupedPlayers[player.GetTeam()] <- []
-		
-		groupedPlayers[player.GetTeam()].append( player )
-	}
-
-	return groupedPlayers
-}
-
 bool function IsMultiplayer()
 {
 	#if UI
@@ -5658,27 +5706,30 @@ bool function IsSingleplayer()
 	#endif
 }
 
-void function LockWeaponsAndMelee( entity player )
+void function LockWeaponsAndMelee( entity player, string debug_source = "" )
 {
-	#if DEVELOPER
-		// printt( FUNC_NAME( 0 ) + " from " + FUNC_NAME( 1 ) )
-		// printt( "Player = " + player.GetPlayerName() + ", current count = " + player.p.weaponsAndMeleeLockedCount )
-	#endif 
-	
+	printt( FUNC_NAME( 0 ) + " from " + FUNC_NAME( 1 ) )
+	printt( "Player = " + player.GetPlayerName() + ", current count = " + player.p.weaponsAndMeleeLockedCount )
+	if (!( debug_source in player.p.weaponsAndMeleeLockedSources ))
+	{
+		player.p.weaponsAndMeleeLockedSources[ debug_source ] <- 0
+	}
+	player.p.weaponsAndMeleeLockedSources[ debug_source ] += 1
+
 	if ( player.p.weaponsAndMeleeLockedCount == 0 )
 	{
 		player.LockWeaponChange()
-		DisableMeleeWeapons( player )
+		player.DisableWeaponTypes( WPT_MELEE )
 	}
 	player.p.weaponsAndMeleeLockedCount++
 }
 
-void function UnlockWeaponsAndMelee_Retail( entity player, string debug_source )
+void function UnlockWeaponsAndMelee( entity player, string debug_source )
 {
 	#if DEVELOPER
 		// printt( FUNC_NAME( 0 ) + " from " + FUNC_NAME( 1 ) )
 		// printt( "Player = " + player.GetPlayerName() + ", current count = " + player.p.weaponsAndMeleeLockedCount )
-	#endif 
+	#endif
 	//player.p.weaponsAndMeleeLockedSources[ debug_source ] -= 1
 	//Assert( player.p.weaponsAndMeleeLockedSources[ debug_source ] >= 0, debug_source + " is calling UnlockWeaponsAndMelee too many times" )
 
@@ -5691,21 +5742,6 @@ void function UnlockWeaponsAndMelee_Retail( entity player, string debug_source )
 	}
 }
 
-void function UnlockWeaponsAndMelee( entity player )
-{
-	#if DEVELOPER
-		// printt( FUNC_NAME( 0 ) + " from " + FUNC_NAME( 1 ) )
-		// printt( "Player = " + player.GetPlayerName() + ", current count = " + player.p.weaponsAndMeleeLockedCount )
-	#endif 
-	
-	player.p.weaponsAndMeleeLockedCount--
-	Assert( player.p.weaponsAndMeleeLockedCount >= 0, "< 0 can cause bugs" )
-	if ( player.p.weaponsAndMeleeLockedCount == 0 )
-	{
-		player.UnlockWeaponChange()
-		EnableMeleeWeapons( player )
-	}
-}
 
 //Home made version of player.DisableWeaponTypes( WPT_MELEE ) code function that is used in s21
 
@@ -5942,14 +5978,26 @@ entity function CreatePropDeathBox_NoDispatchSpawn( asset model, vector ornull o
 	return prop_death_box
 }
 
-void function RunClientCommandOnPlayer( entity player, string command )
-{
-	ClientCommand( player, command )
-}
-
 entity function CreatePropDoor( asset model, vector pos, vector ang )
 {
 	return CreatePropDynamic_NoDispatchSpawn( model, pos, ang )
+}
+
+void function SetTeam_EquipmentAndAbilities( entity player, int newTeam )
+{
+	// Crypto Drone
+	entity cameraProxy = player.p.cryptoActiveCamera
+	if ( IsValid( cameraProxy ) )
+		SetTeam( cameraProxy, newTeam )
+
+	foreach ( trap in player.e.activeTraps )
+	{
+		Assert( trap.e.trapSetTeamFunc != null, "Trap is missing a Set Team Function" )
+		trap.e.trapSetTeamFunc( trap, newTeam )
+	}
+
+	foreach ( trap in player.e.activeUltimateTraps )
+		SetTeam( trap, newTeam )
 }
 
 void function AvoidBeingPutInsideDoorFromCrush( entity door, entity pushed )
@@ -5963,18 +6011,18 @@ void function AvoidBeingPutInsideDoorFromCrush( entity door, entity pushed )
 		switch ( GetDoorType( door ) )
 		{
 			case eDoorType.PLAIN:
-				#if DEV
+				#if DEVELOPER
 				if ( AvoidCrushedByPlainDoorDebug )
 				{
-					DebugDrawMark( door.GetOrigin(), 15, COLOR_RED, true, 15.0 )
-					DebugDrawArrow( door.GetOrigin(), (door.GetOrigin() + (door.GetForwardVector() * 30)), 10, COLOR_BLUE, true, 15.0 )
+					//DebugDrawMark( door.GetOrigin(), 15, <255, 0, 0>, true, 15.0 )
+					//DebugDrawArrow( door.GetOrigin(), (door.GetOrigin() + (door.GetForwardVector() * 30)), 10, <0, 0, 255>, true, 15.0 )
 				}
 				#endif
 
 				vector doorToPushed = Normalize( pushed.GetOrigin() - door.GetOrigin() )
 				float doorToPushedDotDoorForward = DotProduct( door.GetForwardVector(), doorToPushed )
 
-				#if DEV
+				#if DEVELOPER
 				if ( AvoidCrushedByPlainDoorDebug )
 				{
 					printt( FUNC_NAME() + " entToDoorToForwardDot: " + doorToPushedDotDoorForward )
@@ -6003,9 +6051,11 @@ void function AvoidBeingPutInsideDoorFromCrush( entity door, entity pushed )
 
 				TraceResults trace = TraceHull( startPos, targetPos, mins, maxs, ignoreList, TRACE_MASK_SOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
 
-				#if DEV
+				#if DEVELOPER
 				if ( AvoidCrushedByPlainDoorDebug )
-					DebugDrawArrow( startPos, targetPos, 10, COLOR_DARK_BLUE, false, 15.0)
+				{
+					//DebugDrawArrow( startPos, targetPos, 10, COLOR_DARK_BLUE, false, 15.0)
+				}
 				#endif
 
 				int traceAttempts = 0
@@ -6015,20 +6065,22 @@ void function AvoidBeingPutInsideDoorFromCrush( entity door, entity pushed )
 					startPos = targetPos
 					targetPos = startPos + ( pushDir * maxMaxsXY )
 
-					#if DEV
+					#if DEVELOPER
 					if ( AvoidCrushedByPlainDoorDebug )
-						DebugDrawArrow( startPos, targetPos, 10, COLOR_DARK_BLUE, false, 15.0)
+					{
+						//DebugDrawArrow( startPos, targetPos, 10, COLOR_DARK_BLUE, false, 15.0)
+					}
 					#endif
 
 					//check for ground so that our hullTrace doesn't just keep getting caught on the ground as we move along pushDir.
 					trace = TraceHull( startPos + zOffSet, targetPos, mins, maxs, ignoreList, TRACE_MASK_SOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
 
-					#if DEV
+					#if DEVELOPER
 						if ( AvoidCrushedByPlainDoorDebug )
 						{
-							DebugDrawArrow( startPos, targetPos, 10, COLOR_DARK_BLUE, false, 15.0)
-							DebugDrawBoxSimple( startPos + zOffSet, mins, maxs, COLOR_LIGHT_BLUE, 25, 15.0 )
-							DebugDrawBoxSimple( targetPos, mins, maxs, COLOR_BLUE, 25, 15.0 )
+							//DebugDrawArrow( startPos, targetPos, 10, COLOR_DARK_BLUE, false, 15.0)
+							//DebugDrawBoxSimple( startPos + zOffSet, mins, maxs, COLOR_LIGHT_BLUE, 25, 15.0 )
+							//DebugDrawBoxSimple( targetPos, mins, maxs, <0, 0, 255>, 25, 15.0 )
 						}
 					#endif
 
@@ -6037,9 +6089,11 @@ void function AvoidBeingPutInsideDoorFromCrush( entity door, entity pushed )
 						startPos.z = trace.endPos.z
 						targetPos.z = trace.endPos.z
 
-						#if DEV
+						#if DEVELOPER
 						if ( AvoidCrushedByPlainDoorDebug )
-							DebugDrawMark( trace.endPos, 10, COLOR_GREEN, true, 15.0 )
+						{
+							//DebugDrawMark( trace.endPos, 10, <0, 255, 0>, true, 15.0 )
+						}
 						#endif
 					}
 
@@ -6060,29 +6114,6 @@ void function AvoidBeingPutInsideDoorFromCrush( entity door, entity pushed )
 			default:
 				break
 		}
-	}
-}
-
-void function summonplayers()
-{
-	entity player0 = GetPlayerArray()[0]
-
-	vector pos = player0.GetOrigin()
-	pos.z += 5
-
-	int i = 0
-	foreach ( player in GetPlayerArray() )
-	{
-		if ( player == player0 )
-			continue
-
-		// circle
-		float r = float(i) / float(GetPlayerArray().len()) * 2 * PI
-		player.SetOrigin( pos + 500.0 * <sin( r ), cos( r ), 0.0> )
-
-		DecideRespawnPlayer( player )
-
-		i++
 	}
 }
 
@@ -6240,35 +6271,7 @@ void function Dev_GetMapCenterBasedOnNavmesh()
 	Warning( "Map center (from NAVMESH) coordinates in console! Look for the PINK sphere" )
 	printt( "\tMap center (from NAVMESH):", navmeshCenter )
 }
-
-	void function HP( int index )
-	{
-		if( index > GetPlayerArray().len() - 1 || index < 0 )
-		{
-			printt("Player doesn't exist.")
-			return
-		}
-		
-		entity p = p( index )
-		
-		if( IsValid( p ) )
-		{
-			printt( "\n\n", p, "\n", "Health:", p.GetHealth(), "Shields:", p.GetShieldHealth() )
-		}
-		else 
-		{
-			printt("Invalid entity.")
-		}
-	}
 #endif 
-
-#if SERVER //ty cafe for remotefunc impl
-	// void function CreateClientLight( entity player, LocPair loc, int color = 0, float brightness = 255, exponent = 0.5 )
-	// {
-		// if( IsValid( player ) )
-			// Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnClientSideDynamicLight", loc.origin, loc.angles, color, brightness, exponent )
-	// }
-#endif
 
 float function GetWeaponReloadTime( entity weapon, int currentClipCount )
 {
@@ -6383,9 +6386,9 @@ void function StoreAllChargeForPlayer( entity victim, entity attacker, var attac
 void function StoreChargeForPlayer( entity victim, int type)
 {
 	if ( victim in file.playerChargeValidation )
-		file.playerChargeValidation[victim] = LoadoutSlot_GetItemFlavor( ToEHI( victim ), Loadout_CharacterClass() )
+		file.playerChargeValidation[victim] = LoadoutSlot_GetItemFlavor( ToEHI( victim ), Loadout_Character() )
 	else
-		file.playerChargeValidation[victim] <- LoadoutSlot_GetItemFlavor( ToEHI( victim ), Loadout_CharacterClass() )
+		file.playerChargeValidation[victim] <- LoadoutSlot_GetItemFlavor( ToEHI( victim ), Loadout_Character() )
 
 	if ( type & eChargeStorageType.Ultimate )
 	{
@@ -6434,7 +6437,7 @@ void function RestoreChargesForPlayer( entity player )
 	if ( !IsAlive( player ) )
 		return
 
-	if ( player in file.playerChargeValidation && LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() ) == file.playerChargeValidation[player] )
+	if ( player in file.playerChargeValidation && LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() ) == file.playerChargeValidation[player] )
 	{
 		if ( player in file.playerToStoredUltimateCharge )
 		{
@@ -6463,6 +6466,13 @@ void function RestoreChargesForPlayer( entity player )
 		}
 	}
 }
+
+void function TryGameModeRemove( entity ent )
+{
+	if ( GameModeRemove( ent ) )
+		return
+}
+
 
 void function ForceAutoSprintOn( entity player )
 {
@@ -6530,33 +6540,6 @@ entity function FindTargetNameInChildren ( entity ent, string targetName )
 	return null
 }
 
-void function ChargeTactical_ForceEnd( entity player )
-{
-	entity tactical = player.GetOffhandWeapon( OFFHAND_LEFT )
-	if ( IsValid( tactical ) )
-	{
-		if ( tactical.IsChargeWeapon() )
-		{
-			if ( tactical.IsWeaponCharging() )
-			{
-				tactical.ForceChargeEndNoAttack()
-				tactical.SetWeaponPrimaryClipCount( 0 )
-			}
-			else
-			{
-				array <entity> activeWeapons = player.GetAllActiveWeapons()
-				if ( activeWeapons.len() > 1 )
-				{
-					entity offhandWeapon = activeWeapons[1]
-					if ( offhandWeapon == tactical )
-					{
-						player.ClearOffhand( eActiveInventorySlot.altHand )
-					}
-				}
-			}
-		}
-	}
-}
 
 void function SetStatsReadyFlag( entity player, bool value )
 {
@@ -6652,18 +6635,6 @@ void function AutoGiveInfinite( entity player, entity pickup, entity weapon )
 	DEV_ToggleInfiniteAmmo_Internal( player, [ weapon ], true, false )
 }
 
-#if DEVELOPER 
-	entity function GetPrimary()
-	{
-		return p(0).GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
-	}
-	
-	entity function GetAkimbo()
-	{
-		return p(0).GetNormalWeapon( WEAPON_INVENTORY_SLOT_DUALPRIMARY_0 )
-	}
-#endif
-
 void function UnloadPak( string pak )
 {
 	__ServerCommand( format( "pak_requestunload %s", pak ) )
@@ -6755,3 +6726,642 @@ void function SetupInfiniteAmmoForWeapon( entity player, entity weapon )
 		player.AmmoPool_SetCount( ammoType, 65535 )
 	}
 }
+
+#if SERVER
+bool function IsLowCostBot( entity player )
+{
+	return false
+}
+
+void functionref( entity trigger, entity ent ) function PushOutOfTrigger( float strength = 350.0 )
+//void function PushOutOfTrigger( entity trigger, entity ent )
+{
+	return void function( entity trigger, entity ent ) : ( strength )
+	{
+		if ( ent.DoesShareRealms( trigger ) )
+			thread PushOutOfTriggerThread( trigger, ent, strength )
+	}
+}
+
+void function PushOutOfTriggerThread( entity trigger, entity ent, float strength = 350.0 )
+{
+	EndSignal( trigger, "OnDestroy" )
+	EndSignal( ent, "OnDestroy" )
+
+	bool isSkywardLaunching = false
+
+	if ( IsValid( ent ) && ent.IsPlayer() && ent.Player_IsSkywardLaunching() )
+	{
+		isSkywardLaunching = true
+	}
+
+	while( trigger.IsTouching( ent ) )
+	{
+		vector v = Normalize( ent.GetOrigin() - trigger.GetOrigin() )
+
+		v = Normalize( <v.x,v.y,0> )
+
+		if ( isSkywardLaunching && GetCurrentPlaylistVarBool( "pusher_push_out_skyward_launching_players", true ) )
+		{
+			vector rightVec               = CrossProduct( v, UP_VECTOR )
+			array<vector> dirsToTry       = [ v, -v, rightVec, -rightVec ]
+
+			//find where we are along the height of the cylinder
+			vector projectionToCylinderVertical = GetClosestPointOnLineSegment( trigger.GetOrigin() - ( trigger.GetUpVector() * trigger.GetBelowHeight() ), trigger.GetOrigin() + ( trigger.GetUpVector() * trigger.GetAboveHeight() ), ent.GetOrigin() )
+
+			#if DEVELOPER
+			if ( SkywardLaunchPushTriggerDebug )
+			{
+				DebugDrawLine( trigger.GetOrigin() - ( trigger.GetUpVector() * trigger.GetBelowHeight() ), trigger.GetOrigin() + ( trigger.GetUpVector() * trigger.GetAboveHeight() ),COLOR_BLUE, true, 15.0 )
+				DebugDrawMark( projectionToCylinderVertical, 10.0, COLOR_GREEN, true, 15.0 )
+			}
+			#endif
+
+			foreach ( vector dir in dirsToTry )
+			{
+				//5% bonus to radius to hopefully ensure we always clear the geo
+				vector traceEndPos = projectionToCylinderVertical + ( dir * ( trigger.GetRadius() * 1.05 ) )
+				array<entity> ignoreEnts = [trigger, ent, trigger.GetParent(), trigger.GetOwner()]
+
+				for ( int i = 0; i < ignoreEnts.len(); i++ )
+				{
+					if ( !IsValid( ignoreEnts[i] ) )
+					{
+						ignoreEnts.remove( i )
+						i--
+					}
+				}
+
+				TraceResults tr    = TraceHull( ent.GetOrigin(), traceEndPos, ent.GetPlayerStandingMins(), ent.GetPlayerStandingMaxs(), ignoreEnts, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER )
+
+				#if DEV
+				if ( SkywardLaunchPushTriggerDebug )
+				{
+					DebugDrawArrow( ent.GetOrigin(), traceEndPos, 5, COLOR_GREEN, true, 15.0 )
+				}
+				#endif
+
+				if ( !tr.startSolid && !tr.allSolid && tr.fraction >= 0.99 )
+				{
+					#if DEV
+					if ( SkywardLaunchPushTriggerDebug )
+					{
+						DebugDrawSphere( tr.endPos, 10.0, COLOR_GREEN, true, 15.0 )
+					}
+					#endif
+
+					ent.SetOrigin( tr.endPos )
+					break
+				}
+				else
+				{
+					#if DEV
+					if ( SkywardLaunchPushTriggerDebug )
+					{
+						DebugDrawSphere( tr.endPos, 10.0, COLOR_RED, true, 5.0 )
+					}
+					#endif
+				}
+			}
+		}
+
+		else
+		{
+			if ( Length( v ) < 0.5 )
+				v = <1,0,0>
+
+			ent.SetVelocity( v * strength )
+		}
+
+		WaitFrame()
+	}
+}
+void function PIN_GRXInventoryNotReady( ... )
+{
+}
+
+void function PIN_SendDataMismatch( ... )
+{
+}
+
+void function GRX_GiveCosmetic( entity player, int opID, int grxIndex )
+{
+}
+
+int function GRX_GetConsumableCount( int grxIndex )
+{
+	return 0
+}
+
+int function GRX_GetSequenceNumber( entity player, string seqName )
+{
+	return 0
+}
+
+void function GRX_OpenNPacks( entity player, int opID, int grxIndex, int count )
+{
+}
+
+void function GRX_ForcePackResults( entity player, array<int> results )
+{
+}
+
+void function GRX_DEV_GiveItem( entity player, int grxIndex )
+{
+}
+
+void function GRX_QueuedRewardsGiven( entity player, int opID )
+{
+}
+
+void function GRX_SetItemTier( entity player, int opID, int grxIndex, int tier )
+{
+}
+
+void function DisconnectWithMessage( entity player, string message )
+{
+	RunClientCommandOnPlayer( player, "disconnect" )
+}
+
+void function PIN_TwitchDropItemRemoved( ... )
+{
+}
+
+void function PIN_EntitlementGranted( ... )
+{
+}
+
+void function GRX_RemoveCosmetics( entity player, int opID, array<int> grxIndices )
+{
+}
+
+array<entity> function GetPlayersInParty( entity player )
+{
+	return [ player ]
+}
+
+void function PIN_XPBonus( ... )
+{
+}
+
+void function PIN_PlayerLeveledUp( ... )
+{
+}
+
+void function PIN_BattlepassPriorSeasonReward( ... )
+{
+}
+
+void function PIN_PlayerRankedPlayDivisionChange( ... )
+{
+}
+
+void function PIN_Challenge( ... )
+{
+}
+
+void function PIN_IsPlayerAdded( ... )
+{
+}
+
+void function PIN_GRXPlayerGotCollectionLogin( ... )
+{
+}
+
+void function PIN_GRXPlayerGotCollectionHeirloom( ... )
+{
+}
+
+void function PIN_DynamicDialogue( ... )
+{
+}
+
+void function PIN_GameError( ... )
+{
+}
+
+void function PIN_KillreplayFinished( ... )
+{
+}
+
+void function PIN_PlayerItemDestruction( ... )
+{
+}
+
+void function PIN_RoundStart( ... )
+{
+}
+
+void function PIN_UIInteraction_OnChallengeTracked( ... )
+{
+}
+
+int function PIN_GetSessionDuration()
+{
+	return 0
+}
+
+string function PIN_GetSessionId()
+{
+	return ""
+}
+
+void function PIN_PageView_Think( ... )
+{
+}
+
+void function GRX_LevelInit( ... )
+{
+}
+
+void function GRX_LevelShutdown( ... )
+{
+}
+
+void function GRX_OnClientConnectionCompleted( ... )
+{
+}
+
+void function GRX_UIScriptResetComplete( ... )
+{
+}
+
+void function GRX_PreviewStoreItem( ... )
+{
+}
+
+void function GRX_TestGrantRewards( ... )
+{
+}
+
+void function GRX_TestOpenPack( ... )
+{
+}
+
+void function GRX_TestPurchase( ... )
+{
+}
+
+void function GRX_PrintContainers( ... )
+{
+}
+
+void function GRX_PrintNextCurrencyExpirationInfo( ... )
+{
+}
+
+void function GRX_PrintStoreOfferLocations( ... )
+{
+}
+
+void function GRX_DescribeOffer( ... )
+{
+}
+
+float function GetSoundDuration( string soundAlias )
+{
+	return 1.0
+}
+
+void function PrecacheOnDemandLoadModel( int odlType, string pak, asset model, asset loadingModel )
+{
+}
+
+int function ODL_FindAsset( int odlType, asset model )
+{
+	return -1
+}
+
+bool function ODL_IsLoaded( int odlType, int handle )
+{
+	return true
+}
+
+bool function GenericPropCanUse( entity player )
+{
+	if ( player.Anim_IsActive() )
+		return false
+	if ( player.ContextAction_IsBusy() )
+		return false
+	if ( player.ContextAction_IsActive() )
+		return false
+	if ( !player.IsOnGround() )
+		return false
+	if ( player.IsSliding() )
+		return false
+	if ( player.IsTraversing() )
+		return false
+	if ( player.IsMantling() )
+		return false
+	if ( player.IsWallRunning() )
+		return false
+	if ( player.IsWallHanging() )
+		return false
+	if ( player.IsPhaseShifted() )
+		return false
+	if ( player.Player_IsSkywardFollowing() )
+		return false
+	if ( player.Player_IsSkywardLaunching() )
+		return false
+	if ( StatusEffect_HasSeverity( player, eStatusEffect.placing_phase_tunnel ) )
+		return false
+	if ( player.GetParent() != null )
+		return false
+	if ( player.GetPlayerNetBool( "isHealing" ) )
+		return false
+	if ( player.IsUsingOffhandWeapon( eActiveInventorySlot.mainHand ) )
+		return false
+	if ( player.IsUsingOffhandWeapon( eActiveInventorySlot.altHand ) )
+		return false
+	if ( !IsAlive( player ) )
+		return false
+	if( Bleedout_IsBleedingOut( player ) )
+		return false
+
+	return true
+}
+
+void function PrecacheSkinName( string skinName )
+{
+}
+
+void function GameRules_SetTeamName( int teamIndex, string name )
+{
+}
+
+void function LaunchPrivateMatchPlaylist( string playlist )
+{
+}
+
+void function PrivateMatchSetChatConfig( int entindex, PrivateMatchAdminChatConfigStruct adminConfig )
+{
+}
+
+void function PrivateMatchKickPlayer( entity player )
+{
+}
+
+void function FinalizePrivateMatchStats()
+{
+}
+
+void function ShowTeamNameInHud()
+{
+}
+
+bool function ForcedSpawn_UseForcedSpawning()
+{
+	return false
+}
+
+void function ForcedSpawn_TrySetTeamSpawnFromLocationIndex( int teamIndex, int locationIndex )
+{
+}
+
+void function HideTeamNameInHud()
+{
+}
+
+// Highlight_RefreshObserverHighlights — now in sh_highlight.gnut (S22)
+
+bool function IsGunGameActive()
+{
+	return false
+}
+
+bool function IsSpawnOnSquadMode()
+{
+	return false
+}
+
+bool function IsOrientationMatch()
+{
+	return false
+}
+
+bool function IsBallisticUltActive( entity player )
+{
+	return false
+}
+
+void function AddCallback_OnCodeDoorBroken( void functionref( entity, entity, vector, var ) callbackFunc )
+{
+}
+
+void function SetPlayerBotQueueGraduation( entity player, int state )
+{
+}
+bool function PrestigeBadgeIsAllowed()
+{
+	return false
+}
+
+void function Boost_ApplyBoostEnabledChallengeBoost( entity player )
+{
+}
+
+bool function Boost_IsBoostModifierTypeActive( entity player, int modifierType )
+{
+	return false
+}
+
+int function Boost_GetBonus( entity player, int baseValue, int modifierType, int category = 0 )
+{
+	return 0
+}
+
+int function Boost_GetChallengeCategory( ItemFlavor challengeFlav )
+{
+	return 0
+}
+
+void function Boost_Sv_AddToPostGameChallengeBonus( entity player, int guid, int bonus )
+{
+}
+
+void function AddBPStars( entity player, int stars )
+{
+}
+
+void function RegisterArtifactBladeControlPoints( int guid, array<vector> controlPoints )
+{
+}
+
+array<string> function GetSkinImpactTableAliases( int guid )
+{
+	array<string> empty
+	return empty
+}
+
+bool function AutoPlayer_IsAutoPlayer( entity player )
+{
+	return false
+}
+
+void function AddUICallback_InputModeChanged( void functionref( bool ) callbackFunc )
+{
+}
+
+bool function IsGoldRushMode()
+{
+	return false
+}
+
+bool function IsStormPoint()
+{
+	return false
+}
+
+void function MovementDisable( entity player )
+{
+	if ( player.p.movementDisabledCount == 0 )
+		player.MovementDisable()
+	player.p.movementDisabledCount++
+}
+
+void function MovementEnable( entity player )
+{
+	Assert( player.p.movementDisabledCount >= 0, "< 0 can cause bugs" )
+	player.p.movementDisabledCount--
+	if ( player.p.movementDisabledCount == 0 )
+		player.MovementEnable()
+}
+
+table< int, PrivateMatchStatsStruct > _privateMatchStatsStore
+
+void function SetPrivateMatchStats( int teamIndex, PrivateMatchStatsStruct stats )
+{
+	_privateMatchStatsStore[teamIndex] <- stats
+}
+
+PrivateMatchStatsStruct function GetPrivateMatchStats( int teamIndex )
+{
+	if ( teamIndex in _privateMatchStatsStore )
+		return _privateMatchStatsStore[teamIndex]
+	PrivateMatchStatsStruct empty
+	return empty
+}
+
+bool function AreWeaponsLockedOrDisabled( entity player )
+{
+	return (player.p.weaponsAndMeleeLockedCount > 0 || player.p.holsterAndDisableWeaponCount > 0)
+}
+
+void function ForceCrouchStand_1PCameraRestoreHack_Thread( entity player, int crouchFrames = 1, int standFrames = 1 )
+{
+	if( !IsValidPlayer( player ) )
+		return
+
+	ClearPlayerAnimViewEntity( player )
+
+	EndSignal( player, "OnDeath" )
+	PassByReferenceInt forceCrouchHandle
+	PassByReferenceInt forceStandHandle
+	forceCrouchHandle.value = player.PushForcedStance( FORCE_STANCE_CROUCH )
+	forceStandHandle.value = 0
+	OnThreadEnd(
+		function() : ( player, forceCrouchHandle, forceStandHandle )
+		{
+			if ( IsValidPlayer( player ) )
+			{
+				if( forceCrouchHandle.value != 0 )
+				{
+					player.RemoveForcedStance( forceCrouchHandle.value )
+				}
+
+				if( forceStandHandle.value != 0 )
+				{
+					player.RemoveForcedStance( forceStandHandle.value )
+				}
+			}
+		}
+	)
+	for( int i = 0; i < crouchFrames; i++ )
+	{
+		WaitFrame()
+	}
+	player.RemoveForcedStance( forceCrouchHandle.value )
+	forceCrouchHandle.value = 0
+	forceStandHandle.value = player.PushForcedStance( FORCE_STANCE_STAND )
+
+	for( int i = 0; i < standFrames; i++ )
+	{
+		WaitFrame()
+	}
+}
+
+// S22 utility functions for spawn point selection
+array<vector> function GetRandomPointsFromList( array<vector> availablePoints, vector origin, float radius, int numPoints, float minSpacing = 0.0 )
+{
+	Assert( availablePoints.len() >= numPoints, "Called GetRandomPointsInCircleFromList but there aren't enough points provided in the circle to return " + numPoints + " points" )
+
+	array<vector> points
+
+	for ( int i = 0 ; i < numPoints ; i++ )
+	{
+		vector p = GetRandomPointFromListWithMinDistFromPoints( availablePoints, points, origin, radius, minSpacing )
+		points.append( p )
+		availablePoints.fastremovebyvalue( p )
+	}
+
+	return points
+}
+
+vector function GetRandomPointFromListWithMinDistFromPoints( array<vector> availablePoints, array<vector> existingPoints, vector circleOrigin, float circleRadius, float minSpacing = 0.0 )
+{
+	availablePoints.randomize()
+
+	vector bestFailPoint
+	float bestFailDist = 0.0
+	int MAX_NUM_TRIES  = 32
+
+	int tryCount = 0
+	foreach ( vector point in availablePoints )
+	{
+		if ( !IsPointWithinDistanceFromAnotherPoint( point, existingPoints, minSpacing ) )
+			return point
+
+		float distScore = GetClosestDistanceFromPointToPoints( point, existingPoints )
+		if ( distScore > bestFailDist )
+		{
+			bestFailPoint = point
+			bestFailDist = distScore
+		}
+
+		tryCount++
+		if ( tryCount >= MAX_NUM_TRIES )
+			break
+	}
+
+	return bestFailPoint
+}
+
+bool function IsPointWithinDistanceFromAnotherPoint( vector p, array<vector> points, float dist )
+{
+	if ( dist <= 0.0 )
+		return false
+
+	float distSq = dist * dist
+
+	foreach ( vector point in points )
+	{
+		if ( Distance2DSqr( point, p ) <= distSq )
+			return true
+	}
+
+	return false
+}
+
+float function GetClosestDistanceFromPointToPoints( vector p, array<vector> points )
+{
+	float closestDist = -1
+	foreach ( vector point in points )
+	{
+		float d = Distance2D( point, p )
+		if ( closestDist < 0 || d < closestDist )
+			closestDist = d
+	}
+	return closestDist
+}
+
+#endif

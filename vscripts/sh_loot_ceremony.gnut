@@ -1,3 +1,11 @@
+//
+global function LootBoxCeremony_SharedInit
+
+#if SERVER
+global function Server_GrantLegendaryStickersIfCollectionCompleted
+global function ServerThread_GrantLegendaryStickersIfCollectionCompleted
+#endif // SERVER
+
 #if SERVER
 global function LootBoxCeremony_Init
 #endif
@@ -12,6 +20,7 @@ global function UIToClient_LootCeremonyExit
 global function UIToClient_RewardPlacard_Hover
 global function UIToClient_RewardInspectActivate
 global function UIToClient_RewardInspectNavBack
+global function UIToClient_TrackButtonOnClick
 global function UIToClient_RewardEquipOnClick
 global function UIToClient_RewardEquipOnClickWithIndex
 global function UIToClient_RewardEquipToWheelOnClick
@@ -25,7 +34,7 @@ global function UIToClient_SpecialItemPresentationExit
 global function IsLootCeremonyActive
 global function IsSpecialItemPresentationModeActive
 
-global function ModelIntroHighlightEffect
+global function GetLootCeremonyFlashType
 #endif
 
 
@@ -43,25 +52,34 @@ global function ClientToUI_UpdateSpecialItemPresentationPurchaseButton
 global function ClientToUI_EquipButtonShowDialog
 global function ClientToUI_EquipToWheelButtonShowDialog
 global function ClientToUI_SetLootHasBeenPresented
+global function ClientToUI_UpdateStoreButtonVisibility
 global function ClientToUI_SetInspectModeIsActive
 global function ClientToUI_ClearInspectModeIsActive
 global function ClientToUI_PlayLootCeremonySound
 global function ClientToUI_StopLootCeremonySound
 global function ClientToUI_LootCeremonyMarkItemAsNoLongerNew
+global function ClientToUI_TrackMythicChallenge
 
 global function LootCeremony_UpdateOpenAdditionalButton
 
 global function InspectItemTypePresentationSupported
 global function SetStoreItemPresentationModeActive
 global function SetBattlePassItemPresentationModeActive
-global function SetGenericItemPresentationModeActive
+global function SetTreasurePackItemPresentationModeActive
+global function SetGenericItemPresentationModeActiveWithNavBack
 global function SetCollectionEventItemPresentationModeActive
 global function SetChallengeRewardPresentationModeActive
 global function GetNextLootBox
+
+global function ForceOpenRewardPacks
+global function IsInvalidTypeForRewardCeremony
 #endif
 
-#if CLIENT || UI 
-global function TEMP_GetVoidwalkerBundle
+#if (CLIENT || UI)
+global function IsItemEquipped
+global function GetCurrentlyEquippedItemNameForItemTypeSlot
+global function GetCurrentlyEquippedItemRarityForItemTypeSlot
+global function EquipButton_GetItemLoadoutEntries
 #endif
 
 #if SERVER || CLIENT
@@ -74,21 +92,25 @@ const asset TICK_FX_HOLO_BEAM_TIER2 = $"P_loot_triad_beam_reveal_T2"
 const asset TICK_FX_HOLO_BEAM_TIER3 = $"P_loot_triad_beam_reveal_T3"
 const asset TICK_FX_HOLO_BEAM_TIER4 = $"P_loot_triad_beam_reveal_T4"
 const asset TICK_FX_HOLO_BEAM_TIER5 = $"P_loot_triad_beam_reveal_T4"
+const asset TICK_FX_HOLO_BEAM_TIER6 = $"P_loot_triad_beam_reveal_T6"
 const asset TICK_FX_RARITY_IDLE = $"P_loot_tick_beam_idle_flash"
 const asset TICK_FX_RARITY_BEAM_TIER1 = $"P_loot_tick_rarity_beam_T1"
 const asset TICK_FX_RARITY_BEAM_TIER2 = $"P_loot_tick_rarity_beam_T2"
 const asset TICK_FX_RARITY_BEAM_TIER3 = $"P_loot_tick_rarity_beam_T3"
 const asset TICK_FX_RARITY_BEAM_TIER4 = $"P_loot_tick_rarity_beam_T4"
 const asset TICK_FX_RARITY_BEAM_TIER5 = $"P_loot_tick_rarity_beam_T4"
+const asset TICK_FX_RARITY_BEAM_TIER6 = $"P_loot_tick_rarity_beam_T6"
 const asset TICK_FX_RARITY_FLASH_TIER1 = $"P_loot_tick_rarity_body_T1"
 const asset TICK_FX_RARITY_FLASH_TIER2 = $"P_loot_tick_rarity_body_T2"
 const asset TICK_FX_RARITY_FLASH_TIER3 = $"P_loot_tick_rarity_body_T3"
 const asset TICK_FX_RARITY_FLASH_TIER4 = $"P_loot_tick_rarity_body_T4"
 const asset TICK_FX_RARITY_FLASH_TIER5 = $"P_loot_tick_rarity_body_T4"
+const asset TICK_FX_RARITY_FLASH_TIER6 = $"P_loot_tick_rarity_body_T6"
+
 const asset TICK_FX_HEAD_CHARGE = $"P_loot_tick_head_charge"
 const asset TICK_FX_JUMP_JET = $"P_loot_tick_jump_jet"
 const string ATTACHNAME_LEFT = "FX_L_EYE"
-const string ATTACHNAME_CENTER = "FX_R_EYE"        //
+const string ATTACHNAME_CENTER = "FX_R_EYE"        // "right eye" on model winds up in center position
 const string ATTACHNAME_RIGHT = "FX_C_EYE"        //
 const array<string> TICK_LOOT_ATTACHMENTS = [ ATTACHNAME_LEFT, ATTACHNAME_CENTER, ATTACHNAME_RIGHT ]
 const array<string> INSPECT_BUTTONS = [ "RewardLeftButton", "RewardCenterButton", "RewardRightButton" ]
@@ -99,6 +121,8 @@ global const asset CURRENCY_MODEL_EPIC = $"mdl/currency/crafting/currency_crafti
 global const asset CURRENCY_MODEL_LEGENDARY = $"mdl/currency/crafting/currency_crafting_legendary.rmdl"
 const asset QUIP_BG_MODEL = $"mdl/menu/loot_ceremony_quip_bg.rmdl"
 const asset STAT_TRACKER_BG_MODEL = $"mdl/menu/loot_ceremony_stat_tracker_bg.rmdl"
+const asset LOADSCREEN_BG_MODEL = $"mdl/menu/generic_1920_1080_bg.rmdl"
+const asset BP_GIFTING_TEMPLATE_MODEL = $"mdl/menu/generic_1570_740_bg.rmdl"
 
 const asset FINISHER_SWAP_FX = $"P_menu_finisher_swap"
 
@@ -121,27 +145,63 @@ const string SOUND_EQUIP = "UI_Menu_Equip_Generic"
 const string SOUND_HOLOGRAM_PREAPPEAR_TIER3 = "LootCeremony_LootHologram_PreAppear_Legendary"
 const string SOUND_HOLOGRAM_PREAPPEAR_TIER4 = "LootCeremony_LootHologram_PreAppear_Legendary"
 const string SOUND_HOLOGRAM_APPEAR_RESETVIEW = "LootCeremony_LootHologram_Appear_ResetView"
+
+const int FINAL_TIER = 3
 #endif
 
+#if UI
+const array<int> INVALID_ITEM_TYPES_FOR_REWARD_CEREMONY = [ eItemType.INVALID ]
+#endif
+
+
+#if CLIENT
+const array<int> INVALID_ITEM_TYPES_FOR_LOOT_CEREMONY = [
+	eItemType.account_pack,
+	eItemType.artifact_component_activation_emote,
+	eItemType.artifact_component_power_source,
+	eItemType.artifact_component_theme,
+]
+#endif
+
+#if CLIENT
+enum eLootCeremonyPackType
+{
+	APEX_PACK,
+
+	COLLECTION_EVENT_PACK,
+	MILESTONE_EVENT_PACK,
+
+	MYTHIC_PACK,
+	HEIRLOOM_PACK,
+
+	THEMATIC_ITEM_TYPE_PACK,
+	THEMATIC_WEAPON_PACK,
+	THEMATIC_WEAPON_CATEGORY_PACK,
+	THEMATIC_CHARACTER_PACK,
+
+	COUNT
+}
+#endif
 
 #if CLIENT
 struct ItemPresentationData
 {
 	ItemFlavor& item
+	int         quantity = 1
 	string      attachment
 	int         rarity
-	int         quantity = 1
-}
-
-struct LootBoxItems
-{
-	array<ItemFlavor> common
-	array<ItemFlavor> rare
-	array<ItemFlavor> epic
-	array<ItemFlavor> legendary
 }
 #endif
 
+#if CLIENT
+struct LootCeremonySortingData
+{
+	int packType
+
+	int packThemeType					// THEMATIC PACKS
+	ItemFlavor ornull packTheme = null  // THEMATIC TYPE PACKS
+}
+#endif
 
 #if CLIENT
 struct DummyInspectButtonData
@@ -172,6 +232,8 @@ struct FileForeverStruct
 	var equipButton
 	var equipToWheelButton
 	var purchaseButton
+	var thematicShopLinkButton
+	var trackChallengeButton
 	var mouseClickElem
 	var inspectVideoPanel
 	var storeButton
@@ -181,17 +243,10 @@ struct FileForeverStruct
 	var inspectRewardButton3
 	var skipAnimButton
 	var blackFlash
+	var battlePassButton
 }
 FileForeverStruct& fileForever
 #endif
-
-
-enum eCeremonyPresentationMode
-{
-	APEX_PACK,
-	STORE_ITEM,
-	BATTLE_PASS,
-}
 
 struct FileLevelStruct
 {
@@ -204,9 +259,11 @@ struct FileLevelStruct
 		var                           menu
 		var                           inspectMenu
 		var                           equipButton
+		var							  trackChallengeButton
 		var                           equipToWheelButton
 		var                           purchaseButton
 		ItemFlavor&                   equipButtonItemFlavor
+		ItemFlavor& 				  trackButtonItemFlavor
 		var                           mouseClickElem
 		var                           inspectVideoPanel
 		array<DummyInspectButtonData> dummyInspectButtons
@@ -220,11 +277,13 @@ struct FileLevelStruct
 		entity cameraEnt
 
 		table<string, var>            rewardPlacards = { RewardLeftButton = null, RewardCenterButton = null, RewardRightButton = null }
+		array<entity>				  characterSkinModels
+		bool						  inspectModeActive
+
 		array< ItemPresentationData > itemPresentationDatas
+		LootCeremonySortingData& lootCeremonySortingData
 
 		bool specialItemPresentationModeActive = false
-
-		int presentationMode = eCeremonyPresentationMode.APEX_PACK
 
 		// grx
 		ItemFlavor& currentPackFlav
@@ -247,27 +306,40 @@ struct FileLevelStruct
 	#endif
 
 	#if UI
-		ItemFlavor ornull       forceParticularPackFlav = null
-		bool                    lootHasBeenPresented = false
-		bool                    considerFocusOpenButton = false
-		bool                    inspectModeActive = false
-		bool                    specialItemPresentationModeActive = false
-		GRXScriptOffer ornull   storeItemPresentationModeOffer
-		ItemFlavor&             specialItemPresentationModeItemFlav
-		int                     specialItemPresentationModeItemQty
-		ItemFlavor ornull       storeItemPresentationModeItemPrereq = null
-		string                  specialItemFormattedPrice = ""
-		bool ornull             specialItemOverrideOwned = null
-		bool                    specialItemHideEquipButton = false
-		bool                    specialItemHidePurchaseButton = false
-		string                  specialItemPriceHeader = ""
-		bool                    specialItemLockPurchaseButton = false
-		string ornull           specialItemPackName = null
-		asset ornull            specialItemPackImg = null
+		bool						heirloomShards = false
+
+		ItemFlavor ornull       	forceParticularPackFlav = null
+		bool                    	lootHasBeenPresented = false
+		bool                    	considerFocusOpenButton = false
+		bool                    	inspectModeActive = false
+		bool                    	specialItemPresentationModeActive = false
+		GRXScriptOffer ornull   	storeItemPresentationModeOffer
+		ItemFlavor&             	specialItemPresentationModeItemFlav
+		int                     	specialItemPresentationModeItemQty
+		int                     	specialItemPresentationModeItemBadgeTier
+		ItemFlavor ornull       	storeItemPresentationModeItemPrereq = null
+		string                  	specialItemFormattedPrice = ""
+		bool ornull             	specialItemOverrideOwned = null
+		bool                    	specialItemHideEquipButton = false
+		bool                    	specialItemHidePurchaseButton = false
+		string                  	specialItemPriceHeader = ""
+		bool                    	specialItemLockPurchaseButton = false
+		string ornull           	specialItemPackName = null
+		asset ornull            	specialItemPackImg = null
+		PurchaseDialogConfig ornull	specialPurchaseDialogConfig = null
+		void functionref()			onNavigatingBackFunc = null
+		bool						isBpRewardPremium = false
+		bool						isBpOwned = false
 	#endif
 }
 FileLevelStruct& fileLevel
 
+// shared init for client-server calls for sticker legendaries
+void function LootBoxCeremony_SharedInit()
+{
+	Remote_RegisterServerFunction( "Server_GrantLegendaryStickersIfCollectionCompleted" )
+	Remote_RegisterUIFunction( "ForceOpenRewardPacks" )
+}
 
 // ==========================================================================================================================
 // ==========================================================================================================================
@@ -292,12 +364,20 @@ FileLevelStruct& fileLevel
 void function LootBoxCeremony_Init()
 {
 	PrecacheModel( TICK_MODEL_DEFAULT )
+	AddCallback_OnItemFlavorRegistered( eItemType.account_pack, void function( ItemFlavor packFlav ) {
+		asset tickMdl = GRXPack_GetTickModel( packFlav )
+		if ( tickMdl != $"" )
+			PrecacheModel( tickMdl )
+	} )
+
 	PrecacheModel( CURRENCY_MODEL_COMMON )
 	PrecacheModel( CURRENCY_MODEL_RARE )
 	PrecacheModel( CURRENCY_MODEL_EPIC )
 	PrecacheModel( CURRENCY_MODEL_LEGENDARY )
 	PrecacheModel( QUIP_BG_MODEL )
 	PrecacheModel( STAT_TRACKER_BG_MODEL )
+	PrecacheModel( LOADSCREEN_BG_MODEL )
+	PrecacheModel( BP_GIFTING_TEMPLATE_MODEL )
 
 	PrecacheParticleSystem( TICK_FX_HOLO_BEAM_BASE )
 	PrecacheParticleSystem( TICK_FX_HOLO_BEAM_TIER1 )
@@ -305,20 +385,25 @@ void function LootBoxCeremony_Init()
 	PrecacheParticleSystem( TICK_FX_HOLO_BEAM_TIER3 )
 	PrecacheParticleSystem( TICK_FX_HOLO_BEAM_TIER4 )
 	PrecacheParticleSystem( TICK_FX_HOLO_BEAM_TIER5 )
+	PrecacheParticleSystem( TICK_FX_HOLO_BEAM_TIER6 )
 	PrecacheParticleSystem( TICK_FX_RARITY_IDLE )
 	PrecacheParticleSystem( TICK_FX_RARITY_BEAM_TIER1 )
 	PrecacheParticleSystem( TICK_FX_RARITY_BEAM_TIER2 )
 	PrecacheParticleSystem( TICK_FX_RARITY_BEAM_TIER3 )
 	PrecacheParticleSystem( TICK_FX_RARITY_BEAM_TIER4 )
 	PrecacheParticleSystem( TICK_FX_RARITY_BEAM_TIER5 )
+	PrecacheParticleSystem( TICK_FX_RARITY_BEAM_TIER6 )
 	PrecacheParticleSystem( TICK_FX_RARITY_FLASH_TIER1 )
 	PrecacheParticleSystem( TICK_FX_RARITY_FLASH_TIER2 )
 	PrecacheParticleSystem( TICK_FX_RARITY_FLASH_TIER3 )
 	PrecacheParticleSystem( TICK_FX_RARITY_FLASH_TIER4 )
 	PrecacheParticleSystem( TICK_FX_RARITY_FLASH_TIER5 )
+	PrecacheParticleSystem( TICK_FX_RARITY_FLASH_TIER6 )
 	PrecacheParticleSystem( TICK_FX_HEAD_CHARGE )
 	PrecacheParticleSystem( TICK_FX_JUMP_JET )
 	PrecacheParticleSystem( FINISHER_SWAP_FX )
+
+	AddCallback_OnClientDisconnected( OnPlayerDisconnected )
 }
 #endif
 
@@ -340,7 +425,6 @@ void function LootBoxCeremony_Init()
 // ==========================================================================================================================
 // ==========================================================================================================================
 // ==========================================================================================================================
-
 
 #if CLIENT
 void function CLLootBoxCeremony_Init()
@@ -392,7 +476,7 @@ void function EntitiesDidLoad()
 
 		Attachment attachResult = fileLevel.lootTickModel.Anim_GetAttachmentAtTime( "loot_ceremony_tick_triads_idle", attachment, 0 )
 		vector pos              = attachResult.position
-		vector angles           = VectorToAngles( FlattenVector( camResult.position - pos ) )
+		vector angles           = VectorToAngles( FlattenVec( camResult.position - pos ) )
 
 		tickAttachmentOriginsAngles[ attachment ]["origin"] <- pos
 		tickAttachmentOriginsAngles[ attachment ]["angles"] <- angles
@@ -402,6 +486,7 @@ void function EntitiesDidLoad()
 
 	fileLevel.lootTickModel.SetParent( fileLevel.lootTickMover )
 	thread PlayAnim( fileLevel.lootTickModel, "loot_ceremony_tick_entrance_normal_idle", fileLevel.lootTickMover )
+	HideEntityAndChildren( fileLevel.lootTickModel )
 
 	fileLevel.cameraMover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", targetAnimRef.GetOrigin(), targetAnimRef.GetAngles() )
 	fileLevel.cameraEnt = CreateClientSidePointCamera( targetAnimRef.GetOrigin(), targetAnimRef.GetAngles(), CAMERA_FOV )
@@ -417,6 +502,7 @@ void function UIToClient_LootCeremony_SetMenuHandles( var menu )
 	fileLevel.menu = menu
 	fileLevel.inspectMenu = Hud_GetChild( menu, "InspectBar" )
 	fileLevel.equipButton = Hud_GetChild( menu, "InspectEquipButton" )
+	fileLevel.trackChallengeButton = Hud_GetChild( menu, "TrackChallengeButton" )
 	fileLevel.equipToWheelButton = Hud_GetChild( menu, "InspectEquipToWheelButton" )
 	fileLevel.mouseClickElem = Hud_GetChild( menu, "ModelRotateMouseCapture" )
 	fileLevel.inspectVideoPanel = Hud_GetChild( menu, "InspectVideoPanel" )
@@ -460,190 +546,204 @@ void function UIToClient_LootCeremony_SetMenuHandles( var menu )
 // ==========================================================================================================================
 // ==========================================================================================================================
 // ==========================================================================================================================
-
-
 #if CLIENT
-
-table< int, array<float> > itemProbabilities = {
-    [eItemType.weapon_skin] = [0.018, 0.013, 0.004, 0.002],
-    [eItemType.weapon_charm] = [0.0, 0.0, 0.004, 0.002],
-    [eItemType.character_skin] = [0.018, 0.013, 0.004, 0.002],
-    [eItemType.gladiator_card_stance] = [0.0, 0.013, 0.004, 0.0],
-    [eItemType.gladiator_card_frame] = [0.018, 0.013, 0.004, 0.002],
-    [eItemType.gladiator_card_intro_quip] = [0.018, 0.013, 0.0, 0.0],
-    [eItemType.gladiator_card_kill_quip] = [0.018, 0.0, 0.0, 0.0],
-    [eItemType.gladiator_card_stat_tracker] = [0.018, 0.013, 0.0, 0.0],
-    [eItemType.character_execution] = [0.0, 0.0, 0.0, 0.002]
-}
-
-table< int, float > itemTypeProbabilities = {
-    [eItemType.weapon_skin] = 0.35,
-    [eItemType.character_skin] = 0.35,
-    [eItemType.gladiator_card_frame] = 0.10,
-    [eItemType.gladiator_card_stance] = 0.10,
-    [eItemType.gladiator_card_intro_quip] = 0.02,
-    [eItemType.gladiator_card_kill_quip] = 0.02,
-    [eItemType.weapon_charm] = 0.05,
-    [eItemType.character_execution] = 0.01
-};
-
-array<float> function NormalizeProbabilities(array<float> probabilities)
-{
-    float sum = 0.0;
-    foreach (float prob in probabilities)
-    {
-        sum += prob;
-    }
-
-    if (sum == 0.0)
-    {
-        // Handle edge case where all probabilities are 0
-        return [0.0, 0.0, 0.0, 0.0];
-    }
-
-    array<float> normalizedProbabilities;
-    foreach (float prob in probabilities)
-    {
-        normalizedProbabilities.append(prob / sum);
-    }
-
-    return normalizedProbabilities;
-}
-
-int function SelectRarity(array<float> probabilities)
-{
-    array<float> normalizedProbabilities = NormalizeProbabilities(probabilities);
-
-    float randomRarity = RandomFloatRange(0.0, 1.0);
-    float cumulativeProbability = 0.0;
-
-    for (int i = 0; i < normalizedProbabilities.len(); i++)
-    {
-        cumulativeProbability += normalizedProbabilities[i];
-        if (randomRarity < cumulativeProbability)
-        {
-            return i; // Return the index of the selected rarity
-        }
-    }
-
-    // Fallback: return the last rarity if no other is selected
-    return normalizedProbabilities.len();
-}
-
-int function SelectItemType()
-{
-    float randomValue = RandomFloatRange(0.0, 1.0);
-    float cumulativeProbability = 0.0;
-
-    foreach (int itemType, float probability in itemTypeProbabilities)
-    {
-        cumulativeProbability += probability;
-        if (randomValue < cumulativeProbability)
-        {
-            return itemType;
-        }
-    }
-
-    // Fallback: return the most common item type if no other is selected
-    return eItemType.weapon_skin;
-}
-
-LootBoxItems function GetLootBoxItems(int itemType)
-{
-	LootBoxItems items
-	array<ItemFlavor> allflavors = GetAllItemFlavorsOfType( itemType )
-
-	foreach(ItemFlavor flav in allflavors)
-	{
-		if(!IsItemFlavorStructValid( flav ) || !ItemFlavor_HasQuality( flav ))
-			continue
-
-		switch(ItemFlavor_GetQuality(flav, 0))
-		{
-			case eQuality.COMMON:
-				items.common.append(flav)
-			case eQuality.RARE:
-				items.rare.append(flav)
-			case eQuality.EPIC:
-				items.epic.append(flav)
-			case eQuality.LEGENDARY:
-				items.legendary.append(flav)
-		}
-	}
-
-	return items
-}
-
 void function UIToClient_OnGRXPackOpeningResultsAvailable()
 {
+	//Assert( IsLootCeremonyActive() )
 	if ( !IsLootCeremonyActive() )
 		return
 
-	ItemFlavorBag bag
+	ItemFlavorBag bag = GRX_GetMostRecentPackOpeningResults()
 
-	int foundItems = 0
+	// error checking
+	int error = GRX_INVENTORYERROR_NONE
+	if ( bag.associatedError != GRX_INVENTORYERROR_NONE )
+		error = bag.associatedError
+	GRXPackOpened_ErrorHandling( error )
 
-	LootBoxItems weapon_skin = GetLootBoxItems(eItemType.weapon_skin)
-	LootBoxItems weapon_charm = GetLootBoxItems(eItemType.weapon_charm)
-	LootBoxItems character_skin = GetLootBoxItems(eItemType.character_skin)
-	LootBoxItems gladiator_card_stance = GetLootBoxItems(eItemType.gladiator_card_stance)
-	LootBoxItems gladiator_card_frame = GetLootBoxItems(eItemType.gladiator_card_frame)
-	LootBoxItems gladiator_card_intro_quip = GetLootBoxItems(eItemType.gladiator_card_intro_quip)
-	LootBoxItems gladiator_card_kill_quip = GetLootBoxItems(eItemType.gladiator_card_kill_quip)
-	LootBoxItems gladiator_card_stat_tracker = GetLootBoxItems(eItemType.gladiator_card_stat_tracker)
-	LootBoxItems character_execution = GetLootBoxItems(eItemType.character_execution)
-
-	//ToDo: Heirloom stuff later
-	//array<ItemFlavor> allMelee = GetAllItemFlavorsOfType( eItemType.melee_skin )
-
-	while(foundItems < 3)
-	{
-		// Randomly select an item type
-		int randomItemType = SelectItemType()
-
-		// Randomly select a rarity based on the probabilities
-		array<float> probabilities = itemProbabilities[randomItemType];
-		int selectedRarity = SelectRarity(probabilities);
-
-		// Get the list of items for the selected type and rarity
-		LootBoxItems items = GetLootBoxItems(randomItemType)
-		array<ItemFlavor> selectedItems
-
-		switch(selectedRarity)
+	// populate dev item variables
+	#if DEVELOPER
+		if ( fileLevel.debugShowCustomRewards )
 		{
-			case eQuality.COMMON:
-				selectedItems = items.common
-				break
-			case eQuality.RARE:
-				selectedItems = items.rare
-				break
-			case eQuality.EPIC:
-				selectedItems = items.epic
-				break
-			case eQuality.LEGENDARY:
-				selectedItems = items.legendary
-				break
-		}
+			array< ItemFlavor > debugItems
+			foreach ( asset itemAsset in fileLevel.debugCustomRewardAssets )
+				debugItems.append( GetItemFlavorByAsset( itemAsset ) )
 
-		// Randomly select an item from the selected rarity
-		if (selectedItems.len() > 0)
-		{
-			int randomIndex = RandomIntRange(0, selectedItems.len())
-
-			//same item exists already
-			if(bag.flavors.contains(selectedItems[randomIndex]))
-				continue
-			
-			bag.flavors.append(selectedItems[randomIndex])
-			bag.quantities.append(1)
-			foundItems++
+			bag.flavors = debugItems
 		}
-	}
+	#endif
 
 	fileLevel.itemPresentationDatas.clear()
 
-	for ( int i = 0; i < bag.quantities.len(); i++ )
-			Assert( bag.quantities[i] == 1, "Quantity is not 1 for loot ceremony item flavor: " + ItemFlavor_GetHumanReadableRef( bag.flavors[i] ) )
+	bool hasCurrency                      = false
+	bool hasNonCurrency                   = false
+	table<ItemFlavor, int> currencyCounts = {}
+	foreach ( int bagEntryIdx, ItemFlavor bagEntryFlav in bag.flavors )
+	{
+		if ( ItemFlavor_GetType( bagEntryFlav ) == eItemType.account_currency )
+		{
+			hasCurrency = true
+			if ( !(bagEntryFlav in currencyCounts) )
+				currencyCounts[bagEntryFlav] <- 0
+			currencyCounts[bagEntryFlav] += bag.quantities[bagEntryIdx]
+		}
+		else
+		{
+			hasNonCurrency = true
+		}
+	}
+
+	bool hasJustCurrency = hasCurrency && hasNonCurrency == false && currencyCounts.len() == 1
+	if ( hasJustCurrency )
+	{
+		/* special case for event packs that give just currency when you open too many
+		 * we only get a single currency quantity back, so we need to divy it up evenly
+		 * this does assume that we're giving some multiple of 100, because the math is really messy if we don't
+		 */
+
+		ItemFlavor currencyFlav
+		int currencyQty
+		foreach ( ItemFlavor flav, int qty in currencyCounts )
+		{ ; currencyFlav = flav; currencyQty = qty; break; }
+
+		int middleQty = 0
+		int leftQty   = 0
+		int rightQty  = 0
+		if ( currencyQty % 3 == 0 )
+		{
+			// we've got a nice evenly divisible amount
+			middleQty = currencyQty / 3
+			leftQty   = middleQty
+			rightQty  = middleQty
+		}
+		else if ( ( currencyQty - 100 ) % 3 == 0 )
+		{
+			// if we chop off 100, we've got a nice evenly divisible amount
+			middleQty = ( currencyQty - 100 ) / 3 + 100
+			leftQty   = ( currencyQty - 100 ) / 3
+			rightQty  = leftQty
+		}
+		else
+		{
+			// we've got a really weird quantity, so just divide by 3...
+			// this could probably be improved, but it is unlikely to ever actually occur
+			middleQty = currencyQty / 3
+			leftQty   = middleQty
+			rightQty  = middleQty
+		}
+		// correct the middle quantity in case we clipped a coin or two via integer division rounding
+		middleQty += currencyQty - middleQty - leftQty - rightQty
+
+		ItemPresentationData wtfLeft
+		wtfLeft.item = currencyFlav
+		wtfLeft.rarity = ItemFlavor_GetQuality( currencyFlav )
+		wtfLeft.attachment = TICK_LOOT_ATTACHMENTS[0]
+		wtfLeft.quantity = leftQty
+		fileLevel.itemPresentationDatas.append( wtfLeft )
+
+		ItemPresentationData wtfMiddle
+		wtfMiddle.item = currencyFlav
+		wtfMiddle.rarity = ItemFlavor_GetQuality( currencyFlav )
+		wtfMiddle.attachment = TICK_LOOT_ATTACHMENTS[1]
+		wtfMiddle.quantity = middleQty
+		fileLevel.itemPresentationDatas.append( wtfMiddle )
+
+		ItemPresentationData wtfRight
+		wtfRight.item = currencyFlav
+		wtfRight.rarity = ItemFlavor_GetQuality( currencyFlav )
+		wtfRight.attachment = TICK_LOOT_ATTACHMENTS[2]
+		wtfRight.quantity = rightQty
+		fileLevel.itemPresentationDatas.append( wtfRight )
+	}
+	else if ( GRXPack_IsExpectedToContainSingleItemWithCurrency( fileLevel.currentPackFlav ) )
+	{
+		ItemFlavor ornull theSingleItemFlav = null
+		ItemFlavor ornull theCurrencyFlav   = null
+		int theCurrencyQty                  = 0
+		foreach ( int bagEntryIdx, ItemFlavor bagEntryFlav in bag.flavors )
+		{
+			int bagEntryQty = bag.quantities[bagEntryIdx]
+			if ( ItemFlavor_GetType( bagEntryFlav ) == eItemType.account_currency )
+			{
+				Assert( theCurrencyFlav == null || theCurrencyFlav == bagEntryFlav )
+				theCurrencyFlav = bagEntryFlav
+				theCurrencyQty += bagEntryQty
+			}
+			else
+			{
+				// (dw): This was just to verify season02_event01 was working right.
+				// For future events, you'll probably want to improve this assert or remove it.
+				Assert( ItemFlavor_GetType( bagEntryFlav ) == eItemType.character_skin
+				|| ItemFlavor_GetType( bagEntryFlav ) == eItemType.weapon_skin
+				|| ItemFlavor_GetType( bagEntryFlav ) == eItemType.gladiator_card_stance
+				|| ItemFlavor_GetType( bagEntryFlav ) == eItemType.music_pack )
+
+				// (dw): (this is not part of the above asserts)
+				Assert( theSingleItemFlav == null )
+				theSingleItemFlav = bagEntryFlav
+			}
+		}
+
+		Assert( theSingleItemFlav != null )
+		Assert( theCurrencyFlav != null )
+		Assert( theCurrencyQty > 0 )
+
+		if ( !IsEven( theCurrencyQty ) )
+			Warning( "Pack %s gave an odd amount of currency but we expected an even amount: %d", string(ItemFlavor_GetAsset( fileLevel.currentPackFlav )), theCurrencyQty )
+
+		int leftCurrencyAmount  = theCurrencyQty / 2
+		int rightCurrencyAmount = theCurrencyQty - leftCurrencyAmount
+
+		ItemPresentationData leftCurrencyIPD
+		leftCurrencyIPD.item = expect ItemFlavor(theCurrencyFlav)
+		leftCurrencyIPD.rarity = ItemFlavor_GetQuality( leftCurrencyIPD.item )
+		leftCurrencyIPD.attachment = TICK_LOOT_ATTACHMENTS[0]
+		leftCurrencyIPD.quantity = leftCurrencyAmount
+		fileLevel.itemPresentationDatas.append( leftCurrencyIPD )
+
+		ItemPresentationData theSingleItemIPD
+		theSingleItemIPD.item = expect ItemFlavor(theSingleItemFlav)
+		theSingleItemIPD.rarity = ItemFlavor_GetQuality( theSingleItemIPD.item )
+		theSingleItemIPD.attachment = TICK_LOOT_ATTACHMENTS[1]
+		fileLevel.itemPresentationDatas.append( theSingleItemIPD )
+
+		ItemPresentationData rightCurrencyIPD
+		rightCurrencyIPD.item = expect ItemFlavor(theCurrencyFlav)
+		rightCurrencyIPD.rarity = ItemFlavor_GetQuality( rightCurrencyIPD.item )
+		rightCurrencyIPD.attachment = TICK_LOOT_ATTACHMENTS[2]
+		rightCurrencyIPD.quantity = rightCurrencyAmount
+		fileLevel.itemPresentationDatas.append( rightCurrencyIPD )
+	}
+	else if ( bag.flavors.len() == 1 && Mythics_IsItemFlavorMythicSkin( bag.flavors[0] ) )
+	{
+		array<ItemFlavor> mythicSkins = Mythics_GetAllSkinsFromBase( bag.flavors[0] )
+
+		Assert( FINAL_TIER == mythicSkins.len() )
+
+		// make sure the Mythic tracking challenge gets assigned
+		Remote_ServerCallFunction( "ClientCallback_UpdateMythicChallenges" )
+
+		for ( int i = 0; i < mythicSkins.len(); i++ )
+		{
+			int attachmentIndex = i
+
+			if ( i == 0 )
+				attachmentIndex = 1
+			else if ( i == 1 )
+				attachmentIndex = 0
+
+			ItemPresentationData data
+			data.item = mythicSkins[i]
+			data.rarity = eRarityTier.MYTHIC // Uses heirloom colours just needed route to different text
+			data.attachment = TICK_LOOT_ATTACHMENTS[ attachmentIndex ]
+
+			fileLevel.itemPresentationDatas.append( data )
+		}
+	}
+	else
+	{
+		for ( int i = 0; i < bag.quantities.len(); i++ )
+			Assert( bag.quantities[i] == 1, "Quantity is not 1 for loot ceremony item flavor: " + string(ItemFlavor_GetAsset( bag.flavors[i] )) )
 
 		array<ItemFlavor> filteredAndSortedItemFlavors = FilterAndSortPackResults( bag.flavors )
 
@@ -658,51 +758,477 @@ void function UIToClient_OnGRXPackOpeningResultsAvailable()
 
 			fileLevel.itemPresentationDatas.append( data )
 		}
+	}
 
 	// allow animation to progress
-
-	GRX_SetMostRecentPackOpeningResults(bag)
-
 	fileLevel.grxRewardsReceived = true
 }
 #endif
 
+#if UI
+bool function IsInvalidTypeForRewardCeremony( int type )
+{
+	Assert( type < eItemType.COUNT, "Invalid eItemType : " + type )
+
+	foreach ( int target in INVALID_ITEM_TYPES_FOR_REWARD_CEREMONY )
+	{
+		if ( target == type )
+		{
+			return true
+		}
+	}
+
+	return false
+}
+#endif
+
+#if CLIENT
+bool function IsInvalidTypeForLootCeremony( int type )
+{
+	Assert( type < eItemType.COUNT, "Invalid eItemType : " + type )
+
+	foreach ( int target in INVALID_ITEM_TYPES_FOR_LOOT_CEREMONY )
+	{
+		if ( target == type )
+		{
+			return true
+		}
+	}
+
+	return false
+}
+#endif
+
+#if CLIENT
+void function UpdateLootCeremonySortingData()
+{
+	LootCeremonySortingData out
+
+	int accountPackType = ItemFlavor_GetAccountPackType( fileLevel.currentPackFlav )
+
+	switch ( accountPackType )
+	{
+		case eAccountPackType.MYTHIC:
+		{
+			// Mythic skin is already handled above, only heirlooms here
+			out.packType = eLootCeremonyPackType.HEIRLOOM_PACK
+
+			break
+		}
+		case eAccountPackType.THEMATIC:
+		{
+			asset themeAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( fileLevel.currentPackFlav ), "themeFlavor" )
+			if ( IsValidItemFlavorSettingsAsset( themeAsset ) )
+			{
+				out.packTheme = GetItemFlavorByAsset( themeAsset )
+				out.packThemeType = ItemFlavor_GetType( expect ItemFlavor( out.packTheme ) )
+
+				if ( out.packThemeType == eItemType.character )
+				{
+					out.packType = eLootCeremonyPackType.THEMATIC_CHARACTER_PACK
+				}
+				else if ( out.packThemeType == eItemType.weapon_category )
+				{
+					out.packType = eLootCeremonyPackType.THEMATIC_WEAPON_CATEGORY_PACK
+				}
+				else if ( out.packThemeType == eItemType.loot_main_weapon )
+				{
+					out.packType = eLootCeremonyPackType.THEMATIC_WEAPON_PACK
+				}
+				else
+				{
+					out.packType = eLootCeremonyPackType.THEMATIC_ITEM_TYPE_PACK // basically, for theme, just has ANY item of that type serves as the theme (for now)
+				}
+			}
+
+			break
+		}
+		case eAccountPackType.EVENT_THEMATIC:
+		{
+			if ( GetGlobalSettingsBool( ItemFlavor_GetAsset( fileLevel.currentPackFlav ), "hasHolosprays" ) )
+			{
+				out.packType = eLootCeremonyPackType.THEMATIC_ITEM_TYPE_PACK
+				out.packThemeType = eItemType.emote_icon
+			}
+			else if ( GetGlobalSettingsBool( ItemFlavor_GetAsset( fileLevel.currentPackFlav ), "hasStickers" ) )
+			{
+				out.packType = eLootCeremonyPackType.THEMATIC_ITEM_TYPE_PACK
+				// if we start including stickers in "regular" packs, we'll want to update this - and likely the whole RSON stucture in Bakery - to account for it.
+				out.packThemeType = eItemType.sticker
+			}
+
+			break
+		}
+		case eAccountPackType.EVENT:
+		{
+			out.packType = eLootCeremonyPackType.COLLECTION_EVENT_PACK
+
+			break
+		}
+		case eAccountPackType.SIRNGE:
+		{
+			out.packType = eLootCeremonyPackType.MILESTONE_EVENT_PACK
+
+			break
+		}
+		default:
+		{
+			out.packType = eLootCeremonyPackType.APEX_PACK
+		}
+	}
+
+	fileLevel.lootCeremonySortingData = out
+}
+#endif
+
+#if CLIENT
+int function SortApexPackResults( ItemFlavor a, ItemFlavor b )
+{
+	// There are now items with icons in the core pack pool
+	if ( ItemFlavor_GetSourceIcon( a ) != $"" )
+	{
+		return -1
+	}
+
+	if ( ItemFlavor_GetSourceIcon( b ) != $"" )
+	{
+		return 1
+	}
+
+	return 0
+}
+#endif
+
+#if CLIENT
+int function SortCollectionEventPackResults( ItemFlavor a, ItemFlavor b )
+{
+	ItemFlavor ornull collectionEvent = GetActiveCollectionEvent( GetUnixTimestamp() )
+
+	if ( collectionEvent != null )
+	{
+		expect ItemFlavor( collectionEvent )
+
+		if ( CollectionEvent_IsGivenItemFlavorReward( collectionEvent, a ) )
+		{
+			return -1
+		}
+		else if ( CollectionEvent_IsGivenItemFlavorReward( collectionEvent, b ) )
+		{
+			return 1
+		}
+	}
+
+	return SortApexPackResults( a, b )
+}
+#endif
+
+#if CLIENT
+int function SortMilestoneEventPackResults( ItemFlavor a, ItemFlavor b )
+{
+	if ( ItemFlavor_GetType( a ) == eItemType.artifact_component_blade )
+	{
+		return -1
+	}
+	if ( ItemFlavor_GetType( b ) == eItemType.artifact_component_blade )
+	{
+		return 1
+	}
+
+	if ( ItemFlavor_GetType( a ) == eItemType.reward_set_tracker )
+	{
+		return -1
+	}
+	if ( ItemFlavor_GetType( b ) == eItemType.reward_set_tracker )
+	{
+		return 1
+	}
+
+	ItemFlavor ornull milestoneEvent = GetActiveMilestoneEvent( GetUnixTimestamp() )
+
+	if ( milestoneEvent != null )
+	{
+		expect ItemFlavor( milestoneEvent )
+
+		if ( MilestoneEvent_IsItemEventItem( milestoneEvent, a.grxIndex ) )
+		{
+			return -1
+		}
+		else if ( MilestoneEvent_IsItemEventItem( milestoneEvent, b.grxIndex ) )
+		{
+			return 1
+		}
+	}
+
+	return SortApexPackResults( a, b )
+}
+#endif
+
+#if CLIENT
+int function SortHeirloomPackResults( ItemFlavor a, ItemFlavor b )
+{
+	if ( ItemFlavor_GetType( a ) == eItemType.melee_skin )
+	{
+		return -1
+	}
+	if ( ItemFlavor_GetType( b ) == eItemType.melee_skin )
+	{
+		return 1
+	}
+
+	return 0
+}
+#endif
+
+#if CLIENT
+int function SortThematicPackResults( ItemFlavor a, ItemFlavor b )
+{
+	int packThemeType = fileLevel.lootCeremonySortingData.packThemeType
+
+	if ( packThemeType == ItemFlavor_GetType( a ) && ItemFlavor_GetQuality( a ) >= eRarityTier.RARE )
+		return -1
+
+	if ( packThemeType == ItemFlavor_GetType( b ) && ItemFlavor_GetQuality( b ) >= eRarityTier.RARE )
+		return 1
+
+	return 0
+}
+#endif
+
+#if CLIENT
+int function SortThematicWeaponPackResults( ItemFlavor a, ItemFlavor b )
+{
+	ItemFlavor ornull packTheme = fileLevel.lootCeremonySortingData.packTheme
+
+	if ( ItemFlavor_GetType( a ) == eItemType.weapon_skin )
+	{
+		// Our Themed item's Weapon Catagory will always match our pack theme and be more than Rare
+		ItemFlavor themeCatagory     = WeaponItemFlavor_GetCategory( expect ItemFlavor( packTheme ) )
+		ItemFlavor itemAssocCatagory = WeaponItemFlavor_GetCategory( expect ItemFlavor( GetItemFlavorAssociatedCharacterOrWeapon( a ) ) )
+
+		if ( themeCatagory == itemAssocCatagory && ItemFlavor_GetQuality( a ) >= eRarityTier.RARE )
+		{
+			return -1
+		}
+	}
+
+	if ( ItemFlavor_GetType( b ) == eItemType.weapon_skin )
+	{
+		ItemFlavor themeCatagory     = WeaponItemFlavor_GetCategory( expect ItemFlavor( packTheme ) )
+		ItemFlavor itemAssocCatagory = WeaponItemFlavor_GetCategory( expect ItemFlavor( GetItemFlavorAssociatedCharacterOrWeapon( b ) ) )
+
+		if ( themeCatagory == itemAssocCatagory && ItemFlavor_GetQuality( b ) >= eRarityTier.RARE )
+		{
+			return 1
+		}
+	}
+
+	return 0
+}
+#endif
+
+#if CLIENT
+int function SortThematicWeaponCategoryPackResults( ItemFlavor a, ItemFlavor b )
+{
+	ItemFlavor ornull packTheme = fileLevel.lootCeremonySortingData.packTheme
+
+	if ( ItemFlavor_GetType( a ) == eItemType.weapon_skin )
+	{
+		if ( packTheme == WeaponItemFlavor_GetCategory( expect ItemFlavor( GetItemFlavorAssociatedCharacterOrWeapon( a ) ) ) &&
+				ItemFlavor_GetQuality( a ) >= eRarityTier.RARE )
+			return -1
+	}
+
+	if ( ItemFlavor_GetType( b ) == eItemType.weapon_skin )
+	{
+		if ( packTheme == WeaponItemFlavor_GetCategory( expect ItemFlavor( GetItemFlavorAssociatedCharacterOrWeapon( b ) ) ) &&
+				ItemFlavor_GetQuality( b ) >= eRarityTier.RARE )
+			return 1
+	}
+
+	return 0
+}
+#endif
+
+#if CLIENT
+int function SortThematicCharacterPackResults( ItemFlavor a, ItemFlavor b )
+{
+	ItemFlavor ornull packTheme = fileLevel.lootCeremonySortingData.packTheme
+
+	if ( packTheme == GetItemFlavorAssociatedCharacterOrWeapon( a ) && ItemFlavor_GetQuality( a ) >= eRarityTier.RARE )
+		return -1
+
+	if ( packTheme == GetItemFlavorAssociatedCharacterOrWeapon( b ) && ItemFlavor_GetQuality( b ) >= eRarityTier.RARE )
+		return 1
+
+	return 0
+}
+#endif
+
+#if CLIENT && DEVELOPER
+string function DEV_GetReadableLootCeremonyPackType( int type )
+{
+	switch ( type )
+	{
+		case eLootCeremonyPackType.APEX_PACK:
+		{
+			return "APEX_PACK"
+		}
+
+		case eLootCeremonyPackType.COLLECTION_EVENT_PACK:
+		{
+			return "COLLECTION_EVENT_PACK"
+		}
+
+		case eLootCeremonyPackType.MILESTONE_EVENT_PACK:
+		{
+			return "MILESTONE_EVENT_PACK"
+		}
+
+		case eLootCeremonyPackType.THEMATIC_ITEM_TYPE_PACK:
+		{
+			return "THEMATIC_ITEM_TYPE_PACK"
+		}
+
+		case eLootCeremonyPackType.THEMATIC_WEAPON_PACK:
+		{
+			return "THEMATIC_WEAPON_PACK"
+		}
+
+		case eLootCeremonyPackType.THEMATIC_WEAPON_CATEGORY_PACK:
+		{
+			return "THEMATIC_WEAPON_CATEGORY_PACK"
+		}
+
+		case eLootCeremonyPackType.THEMATIC_CHARACTER_PACK:
+		{
+			return "THEMATIC_CHARACTER_PACK"
+		}
+
+		default:
+			return "UNKNOWN LOOT CEREMONY PACK TYPE"
+
+	}
+
+	return "UNKNOWN LOOT CEREMONY PACK TYPE"
+}
+#endif
+
+#if CLIENT
+array<ItemFlavor> function SortPackResults( array<ItemFlavor> results )
+{
+	Assert( fileLevel.lootCeremonySortingData.packType < eLootCeremonyPackType.COUNT, "Invalid Loot Ceremony Pack Type" )
+
+	array<ItemFlavor> out = results
+
+	// sort melee skins, event items, and thematic items to the beginning of the list
+	switch ( fileLevel.lootCeremonySortingData.packType )
+	{
+		case eLootCeremonyPackType.APEX_PACK:
+		{
+			out.sort( SortApexPackResults )
+
+			break
+		}
+		case eLootCeremonyPackType.COLLECTION_EVENT_PACK:
+		{
+			out.sort( SortCollectionEventPackResults )
+
+			break
+		}
+		case eLootCeremonyPackType.MILESTONE_EVENT_PACK:
+		{
+			// When we have different reward items other than artifact in the future, edit the sort below
+			out.sort( SortMilestoneEventPackResults )
+
+			break
+		}
+		case eLootCeremonyPackType.HEIRLOOM_PACK:
+		{
+			out.sort( SortHeirloomPackResults )
+
+			break
+		}
+		case eLootCeremonyPackType.THEMATIC_ITEM_TYPE_PACK:
+		{
+			out.sort( SortThematicPackResults )
+
+			break
+		}
+		case eLootCeremonyPackType.THEMATIC_WEAPON_PACK:
+		{
+			out.sort( SortThematicWeaponPackResults )
+
+			break
+		}
+		case eLootCeremonyPackType.THEMATIC_WEAPON_CATEGORY_PACK:
+		{
+			out.sort( SortThematicWeaponCategoryPackResults )
+
+			break
+		}
+		case eLootCeremonyPackType.THEMATIC_CHARACTER_PACK:
+		{
+			out.sort( SortThematicCharacterPackResults )
+
+			break
+		}
+		default:
+			Assert( false, "Invalid Loot Ceremony Pack Type" )
+	}
+
+	// Put the main item in the middle slot. It should be matching with TICK_LOOT_ATTACHMENTS
+	ItemFlavor temp = out[0]
+	out[0] = out[1]
+	out[1] = temp
+
+#if DEVELOPER
+	printt( FUNC_NAME() + " : Current Loot Ceremony Pack Type - " + DEV_GetReadableLootCeremonyPackType( fileLevel.lootCeremonySortingData.packType ) )
+
+	if ( fileLevel.lootCeremonySortingData.packType >= eLootCeremonyPackType.THEMATIC_ITEM_TYPE_PACK &&
+			fileLevel.lootCeremonySortingData.packType < eLootCeremonyPackType.COUNT &&
+			fileLevel.lootCeremonySortingData.packTheme != null )
+	{
+		printt( FUNC_NAME() + " : Current Loot Ceremony Theme Item Type - " + DEV_DescItemFlavor( fileLevel.lootCeremonySortingData.packTheme ) )
+	}
+#endif
+
+	return out
+}
+#endif
 
 #if CLIENT
 array<ItemFlavor> function FilterAndSortPackResults( array<ItemFlavor> resultList )
 {
+	UpdateLootCeremonySortingData()
+
 	array<ItemFlavor> out = []
 
-	// remove loot ticks/packs since we don't show them for the presentation
+	// Filter reward set tracker for specific milestone rewards (e.g. S20ME01_EPIC_STICKER_1, S20ME01_LGND_STICKER_1, etc)
+	// Note: Current logic only supports 1 reward set tracker.
+	ItemFlavor ornull rewardSetTracker = null
+
+	// remove invalid items (e.g. loot ticks, placeholder items for artifact weapons, reward set trackers)
 	foreach ( ItemFlavor result in resultList )
 	{
-		if ( ItemFlavor_GetType( result ) == eItemType.account_pack )
+		if ( ItemFlavor_GetType( result ) == eItemType.reward_set_tracker )
+		{
+			rewardSetTracker = result
+		}
+
+		if ( IsInvalidTypeForLootCeremony( ItemFlavor_GetType( result ) ) )
+		{
 			continue
+		}
 
 		out.append( result )
 	}
 
-	out.randomize()
-
-	// sort melee skins to the beginning of the list, with the list still randomized
-	out.sort( int function( ItemFlavor a, ItemFlavor b ) {
-		bool aIsMeleeSkin = (ItemFlavor_GetType( a ) == eItemType.melee_skin)
-		bool bIsMeleeSkin = (ItemFlavor_GetType( b ) == eItemType.melee_skin)
-		if ( aIsMeleeSkin )
-			return -1
-		if ( bIsMeleeSkin )
-			return 1
-
-		return ItemFlavor_GetTags( b ).len() - ItemFlavor_GetTags( a ).len()
-	} )
-
-	// put melee skins in the middle slot
-	if ( out.len() >= 2 && (ItemFlavor_GetType( out[0] ) == eItemType.melee_skin || ItemFlavor_GetTags( out[0] ).len() > 0) )
-	{
-		ItemFlavor temp = out[0]
-		out[0] = out[1]
-		out[1] = temp
+	//if ( rewardSetTracker != null )
+	{	
+	//	out = FilterRewardSetItemsFromPackList( expect ItemFlavor( rewardSetTracker ), out ) //missing native func FilterRewardSetItemsFromPackList
 	}
+
+	out = SortPackResults( out )
 
 	// trim items to the size of tick attachments
 	if ( out.len() > TICK_LOOT_ATTACHMENTS.len() )
@@ -711,22 +1237,6 @@ array<ItemFlavor> function FilterAndSortPackResults( array<ItemFlavor> resultLis
 	return out
 }
 #endif
-
-
-#if CLIENT
-bool function BagIsHeirloom( array<ItemFlavor> flavors )
-{
-	if ( flavors.len() == 0 )
-		return false
-	if ( !ItemFlavor_HasQuality( flavors[0] ) )
-		return false
-	if ( ItemFlavor_GetQuality( flavors[0] ) != eQuality.HEIRLOOM )
-		return false
-
-	return true
-}
-#endif
-
 
 #if CLIENT
 void function GRXPackOpened_ErrorHandling( int packError )
@@ -753,7 +1263,7 @@ void function GRXPackOpened_ErrorHandling( int packError )
 		warningText = "Loot Box had an error: " + packError
 	}
 
-	RunUIScript( "OpenConfirmGrxErrorDialog", message )
+	RunUIScript( "ShowGRXErrorDialogue", message )
 
 	#if DEVELOPER
 		Warning( warningText )
@@ -817,14 +1327,14 @@ void function UIToClient_SkipAnimation()
 
 
 #if CLIENT
-void function UIToClient_SpecialItemPresentation( SettingsAssetGUID itemFlavorGUID, int itemQty )
+void function UIToClient_SpecialItemPresentation( SettingsAssetGUID itemFlavorGUID, int itemQty, int badgeDataInteger )
 {
-	thread UIToClient_SpecialItemPresentation_Threaded( itemFlavorGUID, itemQty )
+	thread UIToClient_SpecialItemPresentation_Threaded( itemFlavorGUID, itemQty, badgeDataInteger )
 }
 #endif
 
 #if CLIENT
-void function UIToClient_SpecialItemPresentation_Threaded( SettingsAssetGUID itemFlavorGUID, int itemQty )
+void function UIToClient_SpecialItemPresentation_Threaded( SettingsAssetGUID itemFlavorGUID, int itemQty, int badgeDataInteger )
 {
 	EndSignal( fileLevel.signalDummy, "LootCeremonyExit" )
 
@@ -839,8 +1349,11 @@ void function UIToClient_SpecialItemPresentation_Threaded( SettingsAssetGUID ite
 	// set up the loot ceremony room
 	LootCeremonySceneLightsUpdateShadows( true )
 
-	if ( !IsValid( fileLevel.cameraMover.GetParent() ) )
-		fileLevel.cameraMover.SetParent( fileLevel.lootTickModel, "CAMERA" )
+	if( fileLevel.cameraMover != null )
+	{
+		if ( !IsValid( fileLevel.cameraMover.GetParent() ) )
+			fileLevel.cameraMover.SetParent( fileLevel.lootTickModel, "CAMERA" )
+	}
 
 	GetLocalClientPlayer().SetMenuCameraEntityWithAudio( fileLevel.cameraEnt )
 
@@ -854,7 +1367,7 @@ void function UIToClient_SpecialItemPresentation_Threaded( SettingsAssetGUID ite
 	string attachment   = TICK_LOOT_ATTACHMENTS[1]
 	int attachIDEye     = fileLevel.lootTickModel.LookupAttachment( attachment )
 	vector attachOrigin = fileLevel.lootTickModel.GetAttachmentOrigin( attachIDEye )
-	vector attachAngles = VectorToAngles( FlattenVector( fileLevel.cameraMover.GetOrigin() - attachOrigin ) )
+	vector attachAngles = VectorToAngles( FlattenVec( fileLevel.cameraMover.GetOrigin() - attachOrigin ) )
 	int displayIndex    = TICK_LOOT_ATTACHMENTS.find( attachment )
 
 	int rarity = 0
@@ -868,6 +1381,7 @@ void function UIToClient_SpecialItemPresentation_Threaded( SettingsAssetGUID ite
 	ItemPresentationData data
 	data.item = item
 	data.quantity = itemQty
+	//data.badgeDataInteger = badgeDataInteger
 	data.attachment = attachment
 	data.rarity = rarity
 	fileLevel.itemPresentationDatas.append( data )
@@ -876,11 +1390,11 @@ void function UIToClient_SpecialItemPresentation_Threaded( SettingsAssetGUID ite
 	InspectMenu_ZoomIn( Hud_GetChild( fileLevel.menu, "RewardCenterButton" ), true )
 
 	// show the reward
-	thread ShowRewardBasedOnItemType( itemType, item, attachOrigin, attachAngles, rarity, itemQty, displayIndex, attachment )
+	thread ShowRewardBasedOnItemType( itemType, item, attachOrigin, attachAngles, rarity, itemQty, badgeDataInteger, displayIndex, attachment )
 
 	// sound
 	RunUIScript( "ClientToUI_PlayLootCeremonySound", SOUND_HOLOGRAM_FIRST_APPEAR )
-	RunUIScript( "ClientToUI_PlayLootCeremonySound", SOUND_HOLOGRAM_LOOP )
+	//RunUIScript( "ClientToUI_PlayLootCeremonySound", SOUND_HOLOGRAM_LOOP )
 	RunUIScript( "ClientToUI_UpdateSpecialItemPresentationPurchaseButton" )
 	// show the fx
 	thread ShowRewards_FX( attachIDEye, rarity, rarityColor, displayIndex )
@@ -901,7 +1415,7 @@ void function UIToClient_SpecialItemPresentationExit()
 	if ( IsValid( GetLocalClientPlayer() ) )
 		GetLocalClientPlayer().ClearMenuCameraEntity()
 
-	RunUIScript( "ClientToUI_StopLootCeremonySound", SOUND_HOLOGRAM_LOOP )
+	//RunUIScript( "ClientToUI_StopLootCeremonySound", SOUND_HOLOGRAM_LOOP )
 	ClearInspectMenuDetails()
 	LootCeremonySceneLightsUpdateShadows( false )
 }
@@ -937,6 +1451,7 @@ void function UIToClient_EnterLootCeremony( int packFlavGUID )
 
 	Chroma_LootCeremonyStart()
 
+	ShowEntityAndChildren( fileLevel.lootTickModel )
 	thread TickAnimationSequence( packFlav, true )
 }
 #endif
@@ -981,12 +1496,17 @@ void function TickAnimationSequence( ItemFlavor packFlav, bool firstTime )
 		{
 			Signal( fileLevel.lootTickModel, "LootCeremonyTickCancelAnim" )
 
-			RunUIScript( "ClientToUI_StopLootCeremonySound", SOUND_HOLOGRAM_LOOP )
+			//RunUIScript( "ClientToUI_StopLootCeremonySound", SOUND_HOLOGRAM_LOOP )
 
 			if ( !IsLootCeremonyActive() )
+			{
 				thread PlayAnim( fileLevel.lootTickModel, "loot_ceremony_tick_entrance_normal_idle", fileLevel.lootTickMover )
+				HideEntityAndChildren( fileLevel.lootTickModel )
+			}
 			else
+			{
 				RunUIScript( "PlayCustomUIMusic", "" )
+			}
 		}
 	)
 
@@ -1122,9 +1642,9 @@ void function LootCeremonyOnFullUpdate()
 	if ( !IsLootCeremonyActive() && !IsSpecialItemPresentationModeActive() )
 		return
 
-	//printt( "#################" )
-	//printf( "%s() ", FUNC_NAME() )
-	//printt( "#################" )
+	printt( "#################" )
+	printf( "%s() ", FUNC_NAME() )
+	printt( "#################" )
 
 	entity localClientPlayer = GetLocalClientPlayer()
 	if ( IsValid( localClientPlayer ) && IsValid( fileLevel.cameraEnt ) )
@@ -1299,6 +1819,11 @@ void function LootCeremony_RarityBeamFX( entity tickModel, string fxAttachment )
 			RunUIScript( "ClientToUI_PlayLootCeremonySound", SOUND_BEAM_SWEETEN_TIER4 )
 			break
 
+		case 5:
+			fxIndex = StartParticleEffectOnEntity( tickModel, GetParticleSystemIndex( TICK_FX_RARITY_BEAM_TIER6 ), FX_PATTACH_POINT_FOLLOW, attachID )
+			RunUIScript( "ClientToUI_PlayLootCeremonySound", SOUND_BEAM_SWEETEN_TIER4 )
+			break
+
 		default:
 			fxIndex = StartParticleEffectOnEntity( tickModel, GetParticleSystemIndex( TICK_FX_RARITY_BEAM_TIER1 ), FX_PATTACH_POINT_FOLLOW, attachID )
 			break
@@ -1359,6 +1884,14 @@ void function LootCeremony_RarityFlashFX( entity tickModel, string attachmentHea
 
 		case 3:
 			fxIndex = StartParticleEffectInWorldWithHandle( GetParticleSystemIndex( TICK_FX_RARITY_FLASH_TIER4 ), origin, angles )
+			break
+
+		case 4:
+			fxIndex = StartParticleEffectInWorldWithHandle( GetParticleSystemIndex( TICK_FX_RARITY_FLASH_TIER5 ), origin, angles )
+			break
+
+		case 5:
+			fxIndex = StartParticleEffectInWorldWithHandle( GetParticleSystemIndex( TICK_FX_RARITY_FLASH_TIER6 ), origin, angles )
 			break
 
 		default:
@@ -1429,17 +1962,19 @@ void function LootCeremonySequenceShowRewards()
 	EndSignal( fileLevel.signalDummy, "LootCeremonyAnimSeqStart" )
 
 	// show 3d rewards
+	bool heirloomShards = false
 	for ( int i = 0; i < fileLevel.itemPresentationDatas.len(); i++ )
 	{
 		ItemPresentationData data = fileLevel.itemPresentationDatas[i]
 		ItemFlavor item           = data.item
 		int quantity              = data.quantity
+		int badgeDataInteger      = -1
 
 		// attachment origin and angles
 		string attachment   = data.attachment
 		int attachIDEye     = fileLevel.lootTickModel.LookupAttachment( attachment )
 		vector attachOrigin = fileLevel.lootTickModel.GetAttachmentOrigin( attachIDEye )
-		vector attachAngles = VectorToAngles( FlattenVector( fileLevel.cameraMover.GetOrigin() - attachOrigin ) )
+		vector attachAngles = VectorToAngles( FlattenVec( fileLevel.cameraMover.GetOrigin() - attachOrigin ) )
 
 		int displayIndex = TICK_LOOT_ATTACHMENTS.find( attachment )
 
@@ -1472,7 +2007,7 @@ void function LootCeremonySequenceShowRewards()
 		}
 
 
-		ShowRewardBasedOnItemType( itemType, item, attachOrigin, attachAngles, rarity, quantity, displayIndex, attachment )
+		ShowRewardBasedOnItemType( itemType, item, attachOrigin, attachAngles, rarity, quantity, badgeDataInteger, displayIndex, attachment )
 
 		// Placard, FX, sound
 		thread ShowRewards_Placard( item, attachOrigin, attachAngles, rarity, displayIndex )
@@ -1481,7 +2016,7 @@ void function LootCeremonySequenceShowRewards()
 		if ( i == 0 )
 		{
 			RunUIScript( "ClientToUI_PlayLootCeremonySound", SOUND_HOLOGRAM_FIRST_APPEAR )
-			RunUIScript( "ClientToUI_PlayLootCeremonySound", SOUND_HOLOGRAM_LOOP )
+			//RunUIScript( "ClientToUI_PlayLootCeremonySound", SOUND_HOLOGRAM_LOOP )
 		}
 
 		switch ( rarity )
@@ -1506,11 +2041,16 @@ void function LootCeremonySequenceShowRewards()
 				RunUIScript( "ClientToUI_PlayLootCeremonySound", SOUND_HOLOGRAM_APPEAR_TIER4 )
 				break
 		}
+
+		if ( item == GetItemFlavorByAsset( $"settings/itemflav/currency_bundle/heirloom.rpak" ) )
+			heirloomShards = true
 	}
 
 	// update the UI
-	RunUIScript( "ClientToUI_SetLootHasBeenPresented" )
+	RunUIScript( "ClientToUI_SetLootHasBeenPresented", heirloomShards )
+	RunUIScript( "ClientToUI_UpdateStoreButtonVisibility" )
 	RunUIScript( "LootCeremony_UpdateOpenAdditionalButton" )
+	thread MythicUpdateAllEffects( true )
 
 	// enable/disable fake inspect buttons
 	for ( int i = 0; i < TICK_LOOT_ATTACHMENTS.len(); i++ )
@@ -1526,7 +2066,7 @@ void function LootCeremonySequenceShowRewards()
 
 
 #if CLIENT
-void function ShowRewardBasedOnItemType( int itemType, ItemFlavor item, vector attachOrigin, vector attachAngles, int rarity, int quantity, int displayIndex, string attachment )
+void function ShowRewardBasedOnItemType( int itemType, ItemFlavor item, vector attachOrigin, vector attachAngles, int rarity, int quantity, int badgeDataInteger, int displayIndex, string attachment )
 {
 	switch ( itemType )
 	{
@@ -1536,10 +2076,12 @@ void function ShowRewardBasedOnItemType( int itemType, ItemFlavor item, vector a
 			break
 
 		case eItemType.account_pack:
-			if ( item == TEMP_GetVoidwalkerBundle() )
-				thread ShowRewards_VoidwalkerBundle( item, attachOrigin, attachAngles, rarity, displayIndex, attachment )
-			else
-				thread ShowRewards_LootTick( item, attachOrigin, attachAngles, rarity, quantity, displayIndex, attachment )
+			thread ShowRewards_LootTick( item, attachOrigin, attachAngles, rarity, quantity, displayIndex, attachment )
+			break
+
+		case eItemType.character:
+			ItemFlavor characterSkin = CharacterClass_GetDefaultSkin( item )
+			thread ShowRewards_CharacterSkin( characterSkin, attachOrigin, attachAngles, rarity, displayIndex, attachment )
 			break
 
 		case eItemType.character_skin:
@@ -1550,8 +2092,20 @@ void function ShowRewardBasedOnItemType( int itemType, ItemFlavor item, vector a
 			thread ShowRewards_Execution( item, attachOrigin, attachAngles, rarity, displayIndex, attachment )
 			break
 
+		case eItemType.emote_icon:
+			thread ShowRewards_EmoteIcon( item, attachOrigin, attachAngles, rarity, displayIndex, attachment )
+			break
+
 		case eItemType.weapon_skin:
-			thread ShowRewards_WeaponSkin( item, attachOrigin, attachAngles, rarity, displayIndex, attachment )
+			asset video = WeaponSkin_GetVideo( item )
+			if ( video != $"" && WeaponSkin_ShouldDisplayVideoOnInspect( item ) )
+			{
+				thread ShowBattlePassItem_WeaponSkinVideo( item, attachOrigin, attachAngles, rarity, displayIndex, video )
+			}
+			else
+			{
+				thread ShowRewards_WeaponSkin( item, attachOrigin, attachAngles, rarity, displayIndex, attachment )
+			}
 			break
 
 		case eItemType.weapon_charm:
@@ -1573,9 +2127,10 @@ void function ShowRewardBasedOnItemType( int itemType, ItemFlavor item, vector a
 			break
 
 		case eItemType.gladiator_card_badge:
-			thread ShowRewards_Badge( item, attachOrigin, attachAngles, rarity, displayIndex )
+			thread ShowRewards_Badge( item, badgeDataInteger, attachOrigin, attachAngles, rarity, displayIndex )
 			break
 
+		case eItemType.artifact_component_blade:
 		case eItemType.melee_skin:
 			thread ShowRewards_MeleeSkin( item, attachOrigin, attachAngles, rarity, displayIndex, attachment )
 			break
@@ -1588,13 +2143,39 @@ void function ShowRewardBasedOnItemType( int itemType, ItemFlavor item, vector a
 			thread ShowRewards_Loadscreen( item, attachOrigin, attachAngles, rarity, displayIndex )
 			break
 
+		case eItemType.skydive_emote:
+			thread ShowRewards_SkydiveEmote( item, attachOrigin, attachAngles, rarity, displayIndex )
+			break
+
+		case eItemType.character_emote:
+			thread ShowRewards_CharacterEmote( item, attachOrigin, attachAngles, rarity, displayIndex, attachment )
+			break
+
+		case eItemType.voucher:
+			thread ShowRewards_Voucher( item, attachOrigin, attachAngles, rarity, quantity, displayIndex, attachment )
+			break
+
+		case eItemType.sticker:
+			thread ShowRewards_Sticker( item, attachOrigin, attachAngles, rarity, displayIndex )
+			break
+
+		                    
+			case eItemType.reward_set_tracker:
+				thread ShowRewards_RewardSetTracker( item, attachOrigin, attachAngles, rarity, displayIndex )
+				break
+
+			case eItemType.artifact_component_deathbox:
+				thread ShowRewards_Deathbox( item, attachOrigin, attachAngles, rarity, displayIndex )
+				break
+                            
+
 		default:
 			Warning( "Loot Ceremony reward item type not supported: " + DEV_GetEnumStringSafe( "eItemType", itemType ) )
 			thread ShowRewards_PLACEHOLDER( item, attachOrigin, attachAngles, rarity, displayIndex )
 			break
 	}
 }
-#endif
+#endif // CLIENT
 
 
 const float MODEL_ROTATE_SPEED = 15.0
@@ -1616,7 +2197,7 @@ void function ShowRewards_Currency( ItemFlavor item, vector origin, vector angle
 	bool shouldSpin  = true
 	if ( ItemFlavor_GetType( item ) == eItemType.account_currency )
 	{
-		//
+		//Assert( ItemFlavor_GetAsset( item ) != $"settings/itemflav/grx_currency/crafting.rpak" ) // (dw): Arbitrary amounts of crafting metals not handled yet.
 
 		if ( GRXCurrency_GetPreviewModel( item ) != $"" )
 			modelAsset = GRXCurrency_GetPreviewModel( item )
@@ -1626,35 +2207,41 @@ void function ShowRewards_Currency( ItemFlavor item, vector origin, vector angle
 	else
 	{
 		asset itemAsset = ItemFlavor_GetAsset( item )
-		//
+		//Assert( ItemFlavor_GetAsset( item ) == $"settings/itemflav/grx_currency/crafting.rpak" ) // (dw): Only crafting metals have bundles right now.
 		Assert( itemAsset == $"settings/itemflav/currency_bundle/crafting_common.rpak" ||
-						itemAsset == $"settings/itemflav/currency_bundle/crafting_rare.rpak" ||
-						itemAsset == $"settings/itemflav/currency_bundle/crafting_epic.rpak" ||
-						itemAsset == $"settings/itemflav/currency_bundle/crafting_legendary.rpak" )
+		itemAsset == $"settings/itemflav/currency_bundle/crafting_rare.rpak" ||
+		itemAsset == $"settings/itemflav/currency_bundle/crafting_epic.rpak" ||
+		itemAsset == $"settings/itemflav/currency_bundle/crafting_legendary.rpak" ||
+		itemAsset == $"settings/itemflav/currency_bundle/heirloom.rpak" )
 
 		switch ( rarity )
 		{
-			case 0:
+			case eRarityTier.COMMON:
 				modelAsset = CURRENCY_MODEL_COMMON
 				break
 
-			case 1:
+			case eRarityTier.RARE:
 				modelAsset = CURRENCY_MODEL_RARE
 				break
 
-			case 2:
+			case eRarityTier.EPIC:
 				modelAsset = CURRENCY_MODEL_EPIC
 				break
 
-			case 3:
+			case eRarityTier.LEGENDARY:
 				modelAsset = CURRENCY_MODEL_LEGENDARY
+				break
+
+			case eRarityTier.MYTHIC:
+				ItemFlavor currencyFlav = GRXCurrencyBundle_GetCurrencyFlav( item )
+				modelAsset = GRXCurrency_GetPreviewModel( currencyFlav )
 				break
 
 			default: Assert( false )
 		}
 	}
 
-	//
+	//angles = angles + <0, -25, 0>
 
 	entity moverEnt = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", origin, angles )
 	entity modelEnt = CreateClientSidePropDynamic( origin, angles, modelAsset )
@@ -1667,8 +2254,10 @@ void function ShowRewards_Currency( ItemFlavor item, vector origin, vector angle
 	if ( shouldSpin )
 		moverEnt.NonPhysicsRotate( <0, 0, 1>, MODEL_ROTATE_SPEED )
 
-	//
-	ModelIntroHighlightEffect( modelEnt, rarity, true )
+	// intro effect
+	int flashType     = GetLootCeremonyFlashType( item )
+	vector flashColor = ItemFlavor_GetQualityColor( item ) / 255
+	thread FlashMenuModel( modelEnt, flashType, flashColor )
 	LootCeremonyUpdateSpotLights( attachment, true, eItemType.account_currency_bundle )
 
 	OnThreadEnd(
@@ -1696,7 +2285,7 @@ void function ShowRewards_LootTick( ItemFlavor item, vector origin, vector angle
 	EndSignal( fileLevel.signalDummy, "LootCeremonyExit" )
 	EndSignal( fileLevel.signalDummy, "LootCeremonyAnimSeqStart" )
 
-	//
+	// object representation
 	origin += <0, 0, LOOT_TICK_Z_OFFSET>
 
 	asset modelAsset = GRXPack_GetTickModel( item )
@@ -1712,8 +2301,10 @@ void function ShowRewards_LootTick( ItemFlavor item, vector origin, vector angle
 
 	moverEnt.NonPhysicsRotate( <0, 0, 1>, MODEL_ROTATE_SPEED )
 
-	//
-	ModelIntroHighlightEffect( modelEnt, rarity, true )
+	// intro effect
+	int flashType     = GetLootCeremonyFlashType( item )
+	vector flashColor = ItemFlavor_GetQualityColor( item ) / 255
+	thread FlashMenuModel( modelEnt, flashType, flashColor )
 	LootCeremonyUpdateSpotLights( attachment, true, eItemType.account_currency_bundle )
 
 	OnThreadEnd(
@@ -1731,65 +2322,6 @@ void function ShowRewards_LootTick( ItemFlavor item, vector origin, vector angle
 		InspectMenuFunctionality_Model( item, displayIndex, rarity, quantity, modelEnt, moverEnt, angles, 360.0 )
 }
 #endif
-
-
-#if CLIENT
-//
-void function ShowRewards_VoidwalkerBundle( ItemFlavor item, vector origin, vector angles, int rarity, int displayIndex, string attachment )
-{
-	EndSignal( level, "EndSetPresentationType" )
-	EndSignal( fileLevel.signalDummy, "LootCeremonyExit" )
-	EndSignal( fileLevel.signalDummy, "LootCeremonyAnimSeqStart" )
-
-	//
-	origin += <0, 0, CHARACTER_SKIN_Z_OFFSET>
-
-	entity mover             = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", origin, angles )
-	ItemFlavor characterItem = GetItemFlavorByAsset( $"settings/itemflav/character_skin/wraith/season02_event02_legendary_01.rpak" )
-
-	entity characterModel = CreateClientSidePropDynamic( origin, angles, $"mdl/dev/empty_model.rmdl" )
-	CharacterSkin_Apply( characterModel, characterItem )
-	characterModel.MakeSafeForUIScriptHack()
-	mover.MakeSafeForUIScriptHack()
-	characterModel.SetParent( mover )
-
-	thread PlayAnim( characterModel, "ACT_MP_MENU_LOOT_CEREMONY_IDLE", mover )
-	characterModel.SetModelScale( CHARACTER_SKIN_SCALE )
-	ModelIntroHighlightEffect( characterModel, rarity, true )
-	LootCeremonyUpdateSpotLights( attachment, true, eItemType.character_skin )
-
-	//
-	vector forward = origin - fileLevel.cameraMover.GetOrigin()
-	forward = Normalize( forward )
-	vector bsePos      = origin + <0, 0, 2.5> + (forward * 50)
-	vector right       = CrossProduct( forward, <0, 0, 1> )
-	vector frameOrigin = bsePos + (right * 25)
-	vector poseOrigin  = bsePos - (right * 25)
-
-	ItemFlavor frameItem            = GetItemFlavorByAsset( $"settings/itemflav/gcard_frame/wraith/season02_event02_legendary_01.rpak" )
-	GladiatorCardData frameCardData = ShowRewards_GladiatorCard_Create( frameItem, ItemFlavor_GetType( frameItem ), true, ItemFlavor_GetQuality( frameItem ), frameOrigin, angles )
-
-	ItemFlavor poseItem            = GetItemFlavorByAsset( $"settings/itemflav/gcard_stance/wraith/season02_event02_rare_01.rpak" )
-	GladiatorCardData poseCardData = ShowRewards_GladiatorCard_Create( poseItem, ItemFlavor_GetType( poseItem ), true, ItemFlavor_GetQuality( poseItem ), poseOrigin, angles )
-
-	OnThreadEnd(
-		function() : ( mover, characterModel, attachment, frameCardData, poseCardData )
-		{
-			characterModel.Destroy()
-			mover.Destroy()
-			LootCeremonyUpdateSpotLights( attachment, false )
-			ShowRewards_GladiatorCard_Destroy( frameCardData )
-			ShowRewards_GladiatorCard_Destroy( poseCardData )
-		}
-	)
-
-	Assert( IsSpecialItemPresentationModeActive() )
-	//
-	//
-	PopulateInspectMenuDetails( item, rarity, 1 )
-	waitthread TurntableModelController( characterModel, mover, ItemFlavor_GetType( characterItem ) )
-}
-#endif //
 
 
 const float CHARACTER_SKIN_Z_OFFSET = 4.0
@@ -1819,8 +2351,13 @@ void function ShowRewards_CharacterSkin( ItemFlavor item, vector origin, vector 
 	characterModel.SetModelScale( CHARACTER_SKIN_SCALE )
 
 	// intro effect
-	ModelIntroHighlightEffect( characterModel, rarity, true )
+	int flashType     = GetLootCeremonyFlashType( item )
+	vector flashColor = ItemFlavor_GetQualityColor( item ) / 255
+	thread FlashMenuModel( characterModel, flashType, flashColor )
 	LootCeremonyUpdateSpotLights( attachment, true, eItemType.character_skin )
+
+	if ( Mythics_IsItemFlavorMythicSkin( item ) && displayIndex != 1 )
+		fileLevel.characterSkinModels.append( characterModel )
 
 	OnThreadEnd(
 		function() : ( mover, characterModel, attachment )
@@ -1866,7 +2403,7 @@ void function ShowRewards_Execution( ItemFlavor item, vector origin, vector angl
 	entity victimModel   = CreateClientSidePropDynamic( origin, startAngles, $"mdl/dev/empty_model.rmdl" )
 
 	CharacterSkin_Apply( attackerModel, characterSkin )
-	victimModel.SetModel( $"mdl/humans/class/medium/pilot_medium_generic.rmdl" )
+	victimModel.SetModel( $"mdl/humans/class/medium/dummy_v20_base_w.rmdl" )
 
 	// animate
 	bool attackerHasSequence = attackerModel.Anim_HasSequence( attackerAnimSeq )
@@ -1905,8 +2442,10 @@ void function ShowRewards_Execution( ItemFlavor item, vector origin, vector angl
 	victimModel.SetModelScale( EXECUTION_SCALE )
 
 	// intro effect
-	ModelIntroHighlightEffect( attackerModel, rarity, true )
-	ModelIntroHighlightEffect( victimModel, rarity, true )
+	int flashType     = GetLootCeremonyFlashType( item )
+	vector flashColor = ItemFlavor_GetQualityColor( item ) / 255
+	thread FlashMenuModel( attackerModel, flashType, flashColor )
+	thread FlashMenuModel( victimModel, flashType, flashColor )
 	LootCeremonyUpdateSpotLights( attachment, true, eItemType.character_execution )
 
 	OnThreadEnd(
@@ -1932,7 +2471,76 @@ const float WEAPON_SKIN_Z_OFFSET = 28.0
 const vector WEAPON_SKIN_LOCAL_ANGLES = <10, -90, 0>
 
 
+
+
 #if CLIENT
+
+const float HOLOSPRAY_Z_OFFSET = 16.0
+
+void function ShowRewards_EmoteIcon( ItemFlavor item, vector origin, vector angles, int rarity, int displayIndex, string attachment )
+{
+	EndSignal( level, "EndSetPresentationType" )
+	EndSignal( fileLevel.signalDummy, "LootCeremonyExit" )
+	EndSignal( fileLevel.signalDummy, "LootCeremonyAnimSeqStart" )
+
+	entity mover
+	entity spray
+	if ( !IsSpecialItemPresentationModeActive() )
+	{
+	#if NX_PROG
+		origin += <0, 0, HOLOSPRAY_Z_OFFSET + 5>
+	#else
+		origin += <0, 0, HOLOSPRAY_Z_OFFSET>
+	#endif
+
+		// create weapon
+		mover            = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", origin, angles )
+		mover.SetDoDestroyCallback( true )
+
+		spray = CreateClientSideEmoteIconModel( item, origin, angles )
+		spray.SetParent( mover )
+		spray.SetModelScale( 0.4 )
+	}
+	else
+	{
+		origin -= <0, 0, HOLOSPRAY_Z_OFFSET> * 2
+
+		asset EMOTE_ICON_BASE_MODEL = HOLO_SPRAY_BASE
+
+		mover = CreateClientsideScriptMover( EMOTE_ICON_BASE_MODEL, origin, angles )
+		mover.MakeSafeForUIScriptHack()
+		mover.SetDoDestroyCallback( true )
+
+		spray = CreateClientSidePropDynamic( origin, angles, $"mdl/dev/empty_model.rmdl" )
+
+		thread CreateClientSideEmoteIcon( mover, ItemFlavor_GetGUID( item ), Time(), true )
+	}
+
+
+	// intro effect
+	//int flashType = GetLootCeremonyFlashType( item )
+	//vector flashColor = ItemFlavor_GetQualityColor( item ) / 255
+	//thread FlashMenuModel( weaponModel, flashType, flashColor )
+	LootCeremonyUpdateSpotLights( attachment, true, eItemType.weapon_skin )
+
+	OnThreadEnd(
+		function() : ( mover, spray, attachment )
+		{
+			spray.Destroy()
+			mover.Destroy()
+			LootCeremonyUpdateSpotLights( attachment, false )
+		}
+	)
+
+	if ( IsSpecialItemPresentationModeActive() )
+		SpecialItemPresentationView_Model( item, rarity, 1, angles, mover, spray, 360.0 )
+	else
+		InspectMenuFunctionality_Model( item, displayIndex, rarity, 1, spray, mover, angles, 360.0 )
+
+	WaitForever()
+}
+
+
 void function ShowRewards_WeaponSkin( ItemFlavor item, vector origin, vector angles, int rarity, int displayIndex, string attachment )
 {
 	EndSignal( level, "EndSetPresentationType" )
@@ -1946,7 +2554,17 @@ void function ShowRewards_WeaponSkin( ItemFlavor item, vector origin, vector ang
 	entity mover            = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", origin, angles )
 	entity weaponModel      = CreateClientSidePropDynamic( origin, AnglesCompose( angles, WEAPON_SKIN_LOCAL_ANGLES ), $"mdl/dev/empty_model.rmdl" )
 	WeaponCosmetics_Apply( weaponModel, item, null )
-	ShowDefaultBodygroupsOnFakeWeapon( weaponModel, WeaponItemFlavor_GetClassname( weaponFlavor ) )
+
+	bool isReactive = WeaponSkin_DoesReactToKills( item )
+	if ( isReactive )
+		MenuWeaponModel_ApplyReactiveSkinBodyGroup( item, weaponFlavor, weaponModel )
+	else
+		ShowDefaultBodygroupsOnFakeWeapon( weaponModel, WeaponItemFlavor_GetClassname( weaponFlavor ) )
+
+	MenuWeaponModel_ClearReactiveEffects( weaponModel )
+	if ( isReactive )
+		MenuWeaponModel_StartReactiveEffects( weaponModel, item )
+
 	mover.MakeSafeForUIScriptHack()
 	weaponModel.MakeSafeForUIScriptHack()
 	weaponModel.SetVisibleForLocalPlayer( 0 )
@@ -1963,7 +2581,9 @@ void function ShowRewards_WeaponSkin( ItemFlavor item, vector origin, vector ang
 	mover.NonPhysicsRotate( <0, 0, 1>, MODEL_ROTATE_SPEED )
 
 	// intro effect
-	ModelIntroHighlightEffect( weaponModel, rarity, true )
+	int flashType     = GetLootCeremonyFlashType( item )
+	vector flashColor = ItemFlavor_GetQualityColor( item ) / 255
+	thread FlashMenuModel( weaponModel, flashType, flashColor )
 	LootCeremonyUpdateSpotLights( attachment, true, eItemType.weapon_skin )
 
 	OnThreadEnd(
@@ -1980,7 +2600,7 @@ void function ShowRewards_WeaponSkin( ItemFlavor item, vector origin, vector ang
 	else
 		InspectMenuFunctionality_Model( item, displayIndex, rarity, 1, weaponModel, mover, angles, 360.0 )
 }
-#endif
+#endif // CLIENT
 
 
 const float WEAPON_CHARM_Z_OFFSET = 32.0
@@ -2020,7 +2640,9 @@ void function ShowRewards_WeaponCharm( ItemFlavor item, vector origin, vector an
 	entity charmEnt = GetCharmForWeaponEntity( weaponModel )
 	charmEnt.SetModelScale( WEAPON_CHARM_BASE_SCALE * WEAPON_CHARM_EXTRA_SCALE )
 
-	ModelIntroHighlightEffect( weaponModel, rarity, true )
+	int flashType     = GetLootCeremonyFlashType( item )
+	vector flashColor = ItemFlavor_GetQualityColor( item ) / 255
+	thread FlashMenuModel( weaponModel, flashType, flashColor )
 	LootCeremonyUpdateSpotLights( attachment, true, eItemType.weapon_skin )
 
 	OnThreadEnd(
@@ -2041,18 +2663,21 @@ void function ShowRewards_WeaponCharm( ItemFlavor item, vector origin, vector an
 }
 #endif
 
-
-const vector MELEE_SKIN_LOCAL_ANGLES = <100, -90, 0>
-const float MELEE_SKIN_SCALE = 1.8
-
-
 #if CLIENT
 void function ShowRewards_MeleeSkin( ItemFlavor item, vector origin, vector angles, int rarity, int displayIndex, string attachment )
 {
+	EndSignal( level, "EndSetPresentationType" )
 	EndSignal( fileLevel.signalDummy, "LootCeremonyExit" )
 	EndSignal( fileLevel.signalDummy, "LootCeremonyAnimSeqStart" )
 
 	origin += <0, 0, WEAPON_SKIN_Z_OFFSET>
+
+	bool isArtifact = false
+	if ( ItemFlavor_GetType( item ) == eItemType.artifact_component_blade )
+	{
+		item = GetItemFlavorByGUID( ARTIFACT_CONFIGURATION_PTR_0_GUID )
+		isArtifact = true
+	}
 
 	vector extraRotation = MeleeSkin_GetMenuModelRotation( item )
 	entity mover         = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", origin, angles )
@@ -2065,11 +2690,31 @@ void function ShowRewards_MeleeSkin( ItemFlavor item, vector origin, vector angl
 	weaponModel.MakeSafeForUIScriptHack()
 	weaponModel.SetVisibleForLocalPlayer( 0 )
 
+	if ( isArtifact )
+	{
+		int configIdx = 0
+		LoadoutEntry bladeEntry = Artifacts_Loadouts_GetEntryForConfigIndexAndType( configIdx, eArtifactComponentType.BLADE )
+		LoadoutEntry powerSourceEntry = Artifacts_Loadouts_GetEntryForConfigIndexAndType( configIdx, eArtifactComponentType.POWER_SOURCE )
+		LoadoutEntry themeEntry = Artifacts_Loadouts_GetEntryForConfigIndexAndType( configIdx, eArtifactComponentType.THEME )
+
+		if ( bladeEntry.validItemFlavorList.len() < 2 )
+			return
+
+		ItemFlavor bladeComponent = bladeEntry.validItemFlavorList[1]
+		ItemFlavor powerSourceComponent = powerSourceEntry.validItemFlavorList[1]
+		ItemFlavor themeComponent = themeEntry.validItemFlavorList[1]
+		int setIndex = eArtifactSetIndex.MOB
+
+		Artifacts_Loadouts_ApplyModelForSet( weaponModel, setIndex )
+		Artifacts_Loadouts_PreviewBladeAndPowerSource( weaponModel, bladeComponent, powerSourceComponent )
+		Artifacts_Loadouts_PreviewTheme( weaponModel, themeComponent )
+	}
+
 	asset animSeq = MeleeSkin_GetMenuAnimSeq( item )
 	if ( animSeq != $"" )
 		weaponModel.Anim_Play( animSeq )
 
-	weaponModel.SetModelScale( MELEE_SKIN_SCALE )
+	weaponModel.SetModelScale( WeaponItemFlavor_GetLootCeremonyScale( item ) )
 	weaponModel.SetParent( mover )
 
 	// offset
@@ -2081,7 +2726,9 @@ void function ShowRewards_MeleeSkin( ItemFlavor item, vector origin, vector angl
 	mover.NonPhysicsRotate( <0, 0, 1>, MODEL_ROTATE_SPEED )
 
 	// intro effect
-	ModelIntroHighlightEffect( weaponModel, rarity, true )
+	int flashType     = GetLootCeremonyFlashType( item )
+	vector flashColor = ItemFlavor_GetQualityColor( item ) / 255
+	thread FlashMenuModel( weaponModel, flashType, flashColor )
 	LootCeremonyUpdateSpotLights( attachment, true, eItemType.weapon_skin )
 
 	OnThreadEnd(
@@ -2102,56 +2749,15 @@ void function ShowRewards_MeleeSkin( ItemFlavor item, vector origin, vector angl
 
 
 #if CLIENT
-void function ModelIntroHighlightEffect( entity model, int rarity, bool firstTime )
+int function GetLootCeremonyFlashType( ItemFlavor item )
 {
-	float intensityScalar
-	float fadeInTime
-	float fadeOutTime
-	float lifeTime
+	Assert( ItemFlavor_HasQuality( item ) )
 
-	vector color = GetFXRarityColorForUnlockable( rarity )
-	color = <color.x / 255, color.y / 255, color.z / 255>
+	int rarity = ItemFlavor_GetQuality( item )
+	if ( rarity >= eRarityTier.LEGENDARY )
+		return eMenuModelFlashType.LOOT_CEREMONY_HIGH_RARITY
 
-	if ( firstTime )
-	{
-		intensityScalar = 5000.0
-		fadeInTime = 0.2
-		fadeOutTime = 0.75
-		lifeTime = 1.0
-
-		if ( rarity > 2 )
-		{
-			fadeInTime = 0.75
-			fadeOutTime = 1.0
-			lifeTime = 2.0
-		}
-	}
-	else
-	{
-		intensityScalar = 25.0
-		fadeInTime = 0.1
-		fadeOutTime = 0.25
-		lifeTime = 0.35
-	}
-
-	if ( IsValid( model ) )
-	{
-		thread MenuModelHighlightBloomOnEntityAndChildren( model, color, intensityScalar, fadeInTime, fadeOutTime, lifeTime )
-	}
-}
-#endif
-
-
-#if CLIENT
-void function MenuModelHighlightBloomOnEntityAndChildren( entity ent, vector color, float intensityScalar, float fadeInTime, float fadeOutTime, float lifeTime )
-{
-	WaitFrame()
-
-	if ( !IsValid( ent ) )
-		return
-
-	foreach ( entity hierachyEnt in GetEntityAndImmediateChildren( ent ) )
-		MenuModelHighlightBloom( hierachyEnt, color, intensityScalar, fadeInTime, fadeOutTime, lifeTime )
+	return eMenuModelFlashType.LOOT_CEREMONY_LOW_RARITY
 }
 #endif
 
@@ -2200,7 +2806,12 @@ GladiatorCardData function ShowRewards_GladiatorCard_Create( ItemFlavor item, in
 
 	if ( itemType == eItemType.gladiator_card_frame )
 	{
-		ItemFlavor character = GladiatorCardFrame_GetCharacterFlavor( item )
+		ItemFlavor ornull character = GladiatorCardFrame_GetCharacterFlavor( item )
+		if ( character == null )
+			character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
+
+		expect ItemFlavor( character )
+
 		SetNestedGladiatorCardOverrideCharacter( nestedGCHandleFront, character )
 		SetNestedGladiatorCardOverrideFrame( nestedGCHandleFront, item )
 	}
@@ -2318,7 +2929,7 @@ void function ShowRewards_MusicPack( ItemFlavor item, vector origin, vector angl
 	EndSignal( fileLevel.signalDummy, "LootCeremonyExit" )
 	EndSignal( fileLevel.signalDummy, "LootCeremonyAnimSeqStart" )
 
-	//
+	// Create the RUI and BG/backplate model
 	vector placardOrigin = origin + <0, 0, RUI_QUIP_Z_OFFSET>
 	float width          = RUI_QUIP_WIDTH / QUIP_RUI_SCALE_DIVIDE_BY
 	float height         = RUI_QUIP_HEIGHT / QUIP_RUI_SCALE_DIVIDE_BY
@@ -2330,7 +2941,7 @@ void function ShowRewards_MusicPack( ItemFlavor item, vector origin, vector angl
 
 	var topo = CreateRUITopology_Worldspace( placardOrigin + <0, 0, (height * 0.5)>, placardAngles, width, height )
 
-	//
+	// Populate the RUI settings
 	var rui = RuiCreate( $"ui/loot_reward_intro_quip.rpak", topo, RUI_DRAW_WORLD, 0 )
 
 	RuiSetBool( rui, "isVisible", true )
@@ -2383,7 +2994,11 @@ void function ShowRewards_StatTracker( ItemFlavor item, vector origin, vector an
 	bgModel.MakeSafeForUIScriptHack()
 	bgModel.SetModelScale( 1.0 / STAT_TRACKER_SCALE_DIVIDE_BY )
 
-	ItemFlavor character = GladiatorCardStatTracker_GetCharacterFlavor( item )
+	ItemFlavor ornull character = GladiatorCardStatTracker_GetCharacterFlavor( item )
+	if ( character == null ) // item wasn't character specific
+		character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
+
+	expect ItemFlavor( character )
 
 	RuiSetBool( ruiStatTracker, "isVisible", true )
 	UpdateRuiWithStatTrackerData( ruiStatTracker, "tracker", LocalClientEHI(), character, -1, item, null, true )
@@ -2411,7 +3026,7 @@ const float BADGE_Z_OFFSET = 20.0
 
 
 #if CLIENT
-void function ShowRewards_Badge( ItemFlavor item, vector origin, vector angles, int rarity, int displayIndex )
+void function ShowRewards_Badge( ItemFlavor item, int badgeDataInteger, vector origin, vector angles, int rarity, int displayIndex )
 {
 	EndSignal( level, "EndSetPresentationType" )
 	EndSignal( fileLevel.signalDummy, "LootCeremonyExit" )
@@ -2422,7 +3037,7 @@ void function ShowRewards_Badge( ItemFlavor item, vector origin, vector angles, 
 	const float BATTLEPASS_BADGE_HEIGHT = 500.0
 	const float BATTLEPASS_BADGE_SCALE = 0.06
 
-	//
+	// Create the RUI and BG/backplate model
 	vector placardOrigin = origin + <0, 0, BADGE_Z_OFFSET>
 	vector placardAngles = VectorToAngles( AnglesToForward( angles ) * -1 )
 
@@ -2433,24 +3048,16 @@ void function ShowRewards_Badge( ItemFlavor item, vector origin, vector angles, 
 	var ruiBadge  = RuiCreate( $"ui/world_space_badge.rpak", topoBadge, RUI_DRAW_VIEW_MODEL, 0 )
 	RuiSetFloat( ruiBadge, "bloomScale", 0.2 )
 
-	entity bgModel = null//
-	//
-	//
-
-	ItemFlavor character = GladiatorCardBadge_GetCharacterFlavor( item )
+	entity bgModel = null//CreateClientSidePropDynamic( placardOrigin, angles, $"mdl/menu/loot_ceremony_stat_tracker_bg.rmdl" )
+	//bgModel.MakeSafeForUIScriptHack()
+	//bgModel.SetModelScale( 1.0 / BADGE_SCALE_DIVIDE_BY )
 
 	RuiSetBool( ruiBadge, "isVisible", true )
 
-	int ornull overrideDataIntegerOrNull      = null
-	bool TEMP_showOneTierHigherThanIsUnlocked = true
+	int ornull overrideDataIntegerOrNull      = badgeDataInteger >= 0 ? badgeDataInteger : null
+	bool showOneTierHigherThanIsUnlocked = true
 
-	//
-	if ( item == GetItemFlavorByAsset( $"settings/itemflav/gcard_badge/account/season02_bplevel.rpak" ) )
-	{
-		overrideDataIntegerOrNull = 110
-		TEMP_showOneTierHigherThanIsUnlocked = false
-	}
-	CreateNestedGladiatorCardBadge( ruiBadge, "badge", LocalClientEHI(), item, -1, null, overrideDataIntegerOrNull, TEMP_showOneTierHigherThanIsUnlocked )
+	CreateNestedGladiatorCardBadge( ruiBadge, "badge", LocalClientEHI(), item, -1, null, overrideDataIntegerOrNull, showOneTierHigherThanIsUnlocked )
 
 	OnThreadEnd(
 		function() : ( ruiBadge, topoBadge, bgModel )
@@ -2481,18 +3088,18 @@ void function ShowRewards_Loadscreen( ItemFlavor item, vector origin, vector ang
 	EndSignal( fileLevel.signalDummy, "LootCeremonyExit" )
 	EndSignal( fileLevel.signalDummy, "LootCeremonyAnimSeqStart" )
 
-	//
+	// pin from the center
 	vector placardOrigin = origin + <0, 0, RUI_LOADSCREEN_Z_OFFSET>
 	float width          = RUI_LOADSCREEN_WIDTH / 16.0
 	float height         = RUI_LOADSCREEN_HEIGHT / 16.0
 	vector placardAngles = VectorToAngles( AnglesToForward( angles ) * -1 )
 
-	//
+	//item = GetItemFlavorByAsset( $"settings/itemflav/loadscreen/010.rpak" ) // for testing
 	var topo = CreateRUITopology_Worldspace( placardOrigin, placardAngles, width, height )
 	var rui  = RuiCreate( $"ui/world_space_loadscreen.rpak", topo, RUI_DRAW_WORLD, 0 )
 
 	if ( IsSpecialItemPresentationModeActive() )
-		PopulateInspectMenuDetails( item, rarity, 1, "", "" ) //
+		PopulateInspectMenuDetails( item, rarity, 1, "", "" ) //SpecialItemPresentationView_RUI( item, rarity, rui )
 	else
 		InspectMenuFunctionality_RUI( item, displayIndex, rarity, rui )
 
@@ -2504,8 +3111,8 @@ void function ShowRewards_Loadscreen( ItemFlavor item, vector origin, vector ang
 			RuiDestroyIfAlive( rui )
 			RuiTopology_Destroy( topo )
 
-			//
-			foreach( handle in fileLevel.pakHandles )
+			// Cleanup all loaded pak handles
+			foreach ( handle in fileLevel.pakHandles )
 			{
 				if ( handle.isAvailable )
 					ReleasePakFile( handle )
@@ -2513,9 +3120,9 @@ void function ShowRewards_Loadscreen( ItemFlavor item, vector origin, vector ang
 		}
 	)
 
-	WaitFrame() //
+	WaitFrame() // wait for onthreadend to complete from previous running thread
 
-	//
+	// Load the new image
 	string rpak         = Loadscreen_GetRPakName( item )
 	PakHandle pakHandle = RequestPakFile( rpak )
 	fileLevel.pakHandles.append( pakHandle )
@@ -2529,13 +3136,343 @@ void function ShowRewards_Loadscreen( ItemFlavor item, vector origin, vector ang
 }
 #endif
 
+                    
+#if CLIENT
+const float RUI_REWARD_SET_TRACKER_WIDTH = 630.0
+const float RUI_REWARD_SET_TRACKER_HEIGHT = 820.0
+const float RUI_REWARD_SET_TRACKER_Z_OFFSET = 30.0
+const float RUI_REWARD_SET_TRACKER_SCALE = 0.0625
 
+void function ShowRewards_RewardSetTracker( ItemFlavor item, vector origin, vector angles, int rarity, int displayIndex )
+{
+	EndSignal( level, "EndSetPresentationType" )
+	EndSignal( fileLevel.signalDummy, "LootCeremonyExit" )
+	EndSignal( fileLevel.signalDummy, "LootCeremonyAnimSeqStart" )
+
+	// pin from the center
+	vector placardOrigin = origin + <0, 0, RUI_REWARD_SET_TRACKER_Z_OFFSET>
+	vector placardAngles = VectorToAngles( AnglesToForward( angles ) * -1 )
+
+	UISize screenSize = GetScreenSize()
+	var topo = CreateRUITopology_Worldspace( placardOrigin, placardAngles, 1920, 1080 )
+	var rui  = RuiCreate( $"ui/world_space_image2d.rpak", topo, RUI_DRAW_WORLD, 0 )
+
+	RuiSetBool( rui, "isVisible", true )
+	//RuiSetImage( rui, "image2d", RewardSetTracker_GetDisplayImageAsset( item ) )
+	RuiSetFloat( rui, "imageWidth", RUI_REWARD_SET_TRACKER_WIDTH )
+	RuiSetFloat( rui, "imageHeight", RUI_REWARD_SET_TRACKER_HEIGHT )
+	RuiSetFloat( rui, "imageScale", RUI_REWARD_SET_TRACKER_SCALE )
+	RuiSetBool( rui, "disableLoadIcon", true )
+
+	OnThreadEnd(
+		function() : ( rui, topo )
+		{
+			RuiDestroyIfAlive( rui )
+			RuiTopology_Destroy( topo )
+		}
+	)
+
+	if ( IsSpecialItemPresentationModeActive() )
+	{
+		PopulateInspectMenuDetails( item, rarity, 1, "", "" )
+		// OnThreadEnd, we destroy the reward set tracker rui. This WaitSignal ensures we wait until after leaving
+		// the Loot Ceremony Inspect before destroying the rui.
+		WaitSignal( fileLevel.signalDummy, "LootCeremonyInspectModeEnd" )
+	}
+	else
+	{
+		InspectMenuFunctionality_RUI( item, displayIndex, rarity, rui )
+	}
+}
+#endif
+
+#if CLIENT
+const float RUI_DEATHBOX_WIDTH = 800.0
+const float RUI_DEATHBOX_HEIGHT = 450.0
+const float RUI_DEATHBOX_Z_OFFSET = 30
+
+void function ShowRewards_Deathbox( ItemFlavor item, vector origin, vector angles, int rarity, int displayIndex )
+{
+	EndSignal( level, "EndSetPresentationType" )
+	EndSignal( fileLevel.signalDummy, "LootCeremonyExit" )
+	EndSignal( fileLevel.signalDummy, "LootCeremonyAnimSeqStart" )
+
+	// pin from the center
+	vector placardOrigin = origin + <0, 0, RUI_DEATHBOX_Z_OFFSET>
+	float width          = RUI_DEATHBOX_WIDTH / 16.0
+	float height         = RUI_DEATHBOX_HEIGHT / 16.0
+	vector placardAngles = VectorToAngles( AnglesToForward( angles ) * -1 )
+
+	var topo = CreateRUITopology_Worldspace( placardOrigin, placardAngles, width, height )
+	var rui  = RuiCreate( $"ui/finisher_video.rpak", topo, RUI_DRAW_VIEW_MODEL, 0 )
+
+	int videoChannel = ReserveVideoChannel()
+	RuiSetInt( rui, "channel", videoChannel )
+	StartVideoOnChannel( videoChannel, Deathbox_GetVideo( item ), true, 0.0 )
+
+	OnThreadEnd(
+		function() : ( rui, topo, videoChannel )
+		{
+			RuiDestroyIfAlive( rui )
+			RuiTopology_Destroy( topo )
+			ReleaseVideoChannel( videoChannel )
+		}
+	)
+
+	bool isOwned = GRX_IsItemOwnedByPlayer( item, GetLocalClientPlayer() )
+	string descString = isOwned ? "#EQUIP_IN_MELEE_MENU" : "#FINAL_MILESTONE_REWARD"
+
+	if ( IsSpecialItemPresentationModeActive() )
+		SpecialItemPresentationView_RUI( item, rarity, rui, descString )
+	else
+		InspectMenuFunctionality_RUI( item, displayIndex, rarity, rui )
+}
+#endif
+                          
+
+const float RUI_WEAPON_VIDEO_WIDTH = 800.0
+const float RUI_WEAPON_VIDEO_HEIGHT = 450.0
+const float RUI_WEAPON_VIDEO_Z_OFFSET = 30
+#if CLIENT
+void function ShowBattlePassItem_WeaponSkinVideo( ItemFlavor item, vector origin, vector angles, int rarity, int displayIndex, asset video )
+{
+	EndSignal( level, "EndSetPresentationType" )
+	EndSignal( fileLevel.signalDummy, "LootCeremonyExit" )
+	EndSignal( fileLevel.signalDummy, "LootCeremonyAnimSeqStart" )
+
+	// pin from the center
+	vector placardOrigin = origin + <0, 0, RUI_WEAPON_VIDEO_Z_OFFSET>
+	float width          = RUI_WEAPON_VIDEO_WIDTH / 16.0
+	float height         = RUI_WEAPON_VIDEO_HEIGHT / 16.0
+	vector placardAngles = VectorToAngles( AnglesToForward( angles ) * -1 )
+
+	var topo = CreateRUITopology_Worldspace( placardOrigin, placardAngles, width, height )
+	var rui  = RuiCreate( $"ui/finisher_video.rpak", topo, RUI_DRAW_VIEW_MODEL, 0 )
+
+	int videoChannel = ReserveVideoChannel()
+	RuiSetInt( rui, "channel", videoChannel )
+	StartVideoOnChannel( videoChannel, video, true, 0.0 )
+
+	OnThreadEnd(
+		function() : ( rui, topo, videoChannel )
+		{
+			RuiDestroyIfAlive( rui )
+			RuiTopology_Destroy( topo )
+			ReleaseVideoChannel( videoChannel )
+		}
+	)
+
+	if ( IsSpecialItemPresentationModeActive() )
+		SpecialItemPresentationView_RUI( item, rarity, rui )
+	else
+		InspectMenuFunctionality_RUI( item, displayIndex, rarity, rui )
+}
+#endif
+
+#if CLIENT
+const float RUI_SKYDIVE_EMOTE_WIDTH = 800.0
+const float RUI_SKYDIVE_EMOTE_HEIGHT = 450.0
+const float RUI_SKYDIVE_EMOTE_Z_OFFSET = 30
+
+void function ShowRewards_SkydiveEmote( ItemFlavor item, vector origin, vector angles, int rarity, int displayIndex )
+{
+	EndSignal( level, "EndSetPresentationType" )
+	EndSignal( fileLevel.signalDummy, "LootCeremonyExit" )
+	EndSignal( fileLevel.signalDummy, "LootCeremonyAnimSeqStart" )
+
+	// pin from the center
+	vector placardOrigin = origin + <0, 0, RUI_SKYDIVE_EMOTE_Z_OFFSET>
+	float width          = RUI_SKYDIVE_EMOTE_WIDTH / 16.0
+	float height         = RUI_SKYDIVE_EMOTE_HEIGHT / 16.0
+	vector placardAngles = VectorToAngles( AnglesToForward( angles ) * -1 )
+
+	var topo = CreateRUITopology_Worldspace( placardOrigin, placardAngles, width, height )
+	var rui  = RuiCreate( $"ui/finisher_video.rpak", topo, RUI_DRAW_VIEW_MODEL, 0 )
+
+	int videoChannel = ReserveVideoChannel()
+	RuiSetInt( rui, "channel", videoChannel )
+	StartVideoOnChannel( videoChannel, SkydiveEmote_GetVideo( item ), true, 0.0 )
+
+	OnThreadEnd(
+		function() : ( rui, topo, videoChannel )
+		{
+			RuiDestroyIfAlive( rui )
+			RuiTopology_Destroy( topo )
+			ReleaseVideoChannel( videoChannel )
+		}
+	)
+
+	if ( IsSpecialItemPresentationModeActive() )
+		SpecialItemPresentationView_RUI( item, rarity, rui )
+	else
+		InspectMenuFunctionality_RUI( item, displayIndex, rarity, rui )
+}
+#endif
+
+
+#if CLIENT
+void function ShowRewards_CharacterEmote( ItemFlavor item, vector origin, vector angles, int rarity, int displayIndex, string attachment )
+{
+	EndSignal( level, "EndSetPresentationType" )
+	EndSignal( fileLevel.signalDummy, "LootCeremonyExit" )
+	EndSignal( fileLevel.signalDummy, "LootCeremonyAnimSeqStart" )
+
+	// object representation
+	origin += <0, 0, CHARACTER_SKIN_Z_OFFSET>
+
+	ItemFlavor ornull char = CharacterQuip_GetCharacterFlavor( item )
+
+	if ( char == null )
+		char = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
+
+	expect ItemFlavor( char )
+
+	ItemFlavor skin = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterSkin( char ) )
+
+	//Exception
+	if ( string(ItemFlavor_GetAsset( item )) == CAUSTIC_SPECIAL_CASE_EMOTE_ASSET_PATH )
+	{
+		angles += < 0, 50, 0 >
+	}
+
+	entity mover          = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", origin, angles )
+	entity characterModel = CreateClientSidePropDynamic( origin, angles, $"mdl/dev/empty_model.rmdl" )
+
+	CharacterSkin_Apply( characterModel, skin )
+	characterModel.MakeSafeForUIScriptHack()
+	mover.MakeSafeForUIScriptHack()
+	characterModel.SetParent( mover )
+
+	//thread ModelPerformEmote( characterModel, item, mover, false )
+
+	//scale
+	characterModel.SetModelScale( CHARACTER_SKIN_SCALE )
+
+	// intro effect
+	int flashType     = GetLootCeremonyFlashType( item )
+	vector flashColor = ItemFlavor_GetQualityColor( item ) / 255
+	thread FlashMenuModel( characterModel, flashType, flashColor )
+	LootCeremonyUpdateSpotLights( attachment, true, eItemType.character_skin )
+
+	OnThreadEnd(
+		function() : ( mover, characterModel, attachment )
+		{
+			characterModel.Destroy()
+			mover.Destroy()
+			LootCeremonyUpdateSpotLights( attachment, false )
+		}
+	)
+
+	if ( IsSpecialItemPresentationModeActive() )
+		SpecialItemPresentationView_Model( item, rarity, 1, angles, mover, characterModel, 360.0 )
+	else
+		InspectMenuFunctionality_Model( item, displayIndex, rarity, 1, characterModel, mover, angles, 360.0 )
+}
+#endif
+
+
+#if CLIENT
+const float VOUCHER_Z_OFFSET = 31.0
+
+void function ShowRewards_Voucher( ItemFlavor item, vector origin, vector angles, int rarity, int quantity, int displayIndex, string attachment )
+{
+	EndSignal( level, "EndSetPresentationType" )
+	EndSignal( fileLevel.signalDummy, "LootCeremonyExit" )
+	EndSignal( fileLevel.signalDummy, "LootCeremonyAnimSeqStart" )
+
+	// object representation
+	origin += <0, 0, VOUCHER_Z_OFFSET>
+
+	asset modelAsset = Voucher_GetModel( item )
+	entity moverEnt = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", origin, angles )
+	entity modelEnt
+	if ( Voucher_GetEffectBattlepassStars( item ) > 0 )
+	{
+		modelEnt = CreateClientSidePropDynamic( origin, AnglesCompose( angles, <90, 32, 0> ), BATTLEPASS_STAR_REWARD_MODEL )
+		modelEnt.SetModelScale( 0.25 )
+	}
+	else
+	{
+		modelEnt = CreateClientSidePropDynamic( origin, angles, modelAsset )
+		// intro effect
+		int flashType     = GetLootCeremonyFlashType( item )
+		vector flashColor = ItemFlavor_GetQualityColor( item ) / 255
+		thread FlashMenuModel( modelEnt, flashType, flashColor )
+		LootCeremonyUpdateSpotLights( attachment, true, eItemType.voucher )
+
+		OnThreadEnd(
+			function() : ( moverEnt, modelEnt, attachment )
+			{
+				modelEnt.Destroy()
+				moverEnt.Destroy()
+				LootCeremonyUpdateSpotLights( attachment, false )
+			}
+		)
+		modelEnt.SetModelScale( 0.75 )
+	}
+
+	moverEnt.MakeSafeForUIScriptHack()
+	modelEnt.MakeSafeForUIScriptHack()
+	modelEnt.SetParent( moverEnt )
+
+	moverEnt.NonPhysicsRotate( <0, 0, 1>, MODEL_ROTATE_SPEED )
+
+	if ( IsSpecialItemPresentationModeActive() )
+		SpecialItemPresentationView_Model( item, rarity, quantity, angles, moverEnt, modelEnt, 360.0 )
+	else
+		InspectMenuFunctionality_Model( item, displayIndex, rarity, quantity, modelEnt, moverEnt, angles, 360.0 )
+}
+#endif
+
+
+#if CLIENT
+void function ShowRewards_Sticker( ItemFlavor item, vector origin, vector angles, int rarity, int displayIndex )
+{
+	EndSignal( level, "EndSetPresentationType" )
+	EndSignal( fileLevel.signalDummy, "LootCeremonyExit" )
+	EndSignal( fileLevel.signalDummy, "LootCeremonyAnimSeqStart" )
+
+	origin += <0, 0, 29>
+
+	entity mover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", origin, angles )
+	mover.MakeSafeForUIScriptHack()
+
+	entity stickerModel = CreateClientSidePropDynamic( origin, angles, UNAPPLIED_STICKER_MODEL )
+	stickerModel.MakeSafeForUIScriptHack()
+	stickerModel.SetParent( mover )
+
+	asset stickerMat = Sticker_GetReplacementMaterialAsset( item )
+	int stickerInstance = Sticker_SetMaterialModForLocalPlayer( stickerModel, stickerMat )
+
+	int flashType     = GetLootCeremonyFlashType( item )
+	vector flashColor = ItemFlavor_GetQualityColor( item ) / 255
+	Sticker_CreateFlashData( stickerInstance, stickerModel, flashType, flashColor )
+	Sticker_OnPlaced( stickerInstance, Sticker_FlashOnLoadComplete )
+
+	OnThreadEnd(
+		function() : ( mover, stickerModel )
+		{
+			stickerModel.Destroy()
+			mover.Destroy()
+		}
+	)
+
+	int quantity = 1
+	float maxYaw = 0 //150.0
+
+	if ( IsSpecialItemPresentationModeActive() )
+		SpecialItemPresentationView_Model( item, rarity, quantity, angles, mover, stickerModel, maxYaw )
+	else
+		InspectMenuFunctionality_Model( item, displayIndex, rarity, quantity, stickerModel, mover, angles, maxYaw )
+}
+#endif
+
+
+#if CLIENT
 const float RUI_PLACEHOLDER_WIDTH = 450.0
 const float RUI_PLACEHOLDER_HEIGHT = 200.0
 const float RUI_PLACEHOLDER_Z_OFFSET = 25
 
-
-#if CLIENT
 void function ShowRewards_PLACEHOLDER( ItemFlavor item, vector origin, vector angles, int rarity, int displayIndex )
 {
 	EndSignal( level, "EndSetPresentationType" )
@@ -2569,12 +3506,12 @@ void function ShowRewards_PLACEHOLDER( ItemFlavor item, vector origin, vector an
 #endif
 
 
-const float RUI_PLACARD_WIDTH = 550.0
-const float RUI_PLACARD_HEIGHT = 256.0
-const float RUI_PLACARD_Z_OFFSET = 7.0
-const float RUI_PLACARD_FORWARD_OFFSET = 32.0
-const bool RUI_PLACARD_DEBUG = false
-
+const float RUI_PLACARD_WIDTH 			= 550.0
+const float RUI_PLACARD_HEIGHT 			= 256.0
+const float RUI_PLACARD_Z_OFFSET		= 7.0
+const float RUI_PLACARD_FORWARD_OFFSET 	= 32.0
+const bool  RUI_PLACARD_DEBUG 			= false
+const int   MYTHIC_PRESTIGE_RARITY_INDEX = eRarityTier._COUNT // Adjust rarity needed for mythic localisation in rui that is done on rarity int
 
 #if CLIENT
 void function ShowRewards_Placard( ItemFlavor item, vector origin, vector angles, int rarity, int displayIndex )
@@ -2589,9 +3526,9 @@ void function ShowRewards_Placard( ItemFlavor item, vector origin, vector angles
 	vector placardAngles = VectorToAngles( AnglesToForward( angles ) * -1 )
 
 	var topoPlacard = CreateRUITopology_Worldspace( placardOrigin + <0, 0, (height * 0.5)>, placardAngles, width, height )
-	var ruiPlacard  = RuiCreate( $"ui/loot_placard.rpak", topoPlacard, RUI_DRAW_WORLD, 1 )
+	int ruiDrawMode = string(ItemFlavor_GetAsset( item )) == CAUSTIC_SPECIAL_CASE_EMOTE_ASSET_PATH ? RUI_DRAW_VIEW_MODEL : RUI_DRAW_WORLD
+	var ruiPlacard  = RuiCreate( $"ui/loot_placard.rpak", topoPlacard, ruiDrawMode, 1 )
 
-	RuiSetInt( ruiPlacard, "rarity", rarity )
 	if ( ItemFlavor_GetType( item ) == eItemType.account_currency )
 	{
 		RuiSetString( ruiPlacard, "nameText", ItemFlavor_GetShortName( item ) )
@@ -2601,10 +3538,27 @@ void function ShowRewards_Placard( ItemFlavor item, vector origin, vector angles
 		ItemFlavor currencyFlav = GRXCurrencyBundle_GetCurrencyFlav( item )
 		RuiSetString( ruiPlacard, "nameText", ItemFlavor_GetShortName( currencyFlav ) )
 	}
+	else if ( Mythics_IsItemFlavorMythicSkin( item ) )
+	{
+		int tierIndex = Mythics_GetSkinTierIntForSkin( item )
+
+		RuiSetString( ruiPlacard, "nameText", Localize( "#TIER", tierIndex ) )
+		rarity = MYTHIC_PRESTIGE_RARITY_INDEX
+
+		if ( tierIndex == 1 && Mythics_SkinHasCustomSkydivetrail( item ) )
+			RuiSetString( ruiPlacard, "additionalText", "+" + Localize( "#PRESTIGE_PLUS_SKYDIVE_TRAIL" ).toupper() )
+
+		if ( tierIndex == 3 )
+			RuiSetString( ruiPlacard, "additionalText", "+" + Localize( "#itemtype_character_execution_NAME" ).toupper() )
+
+		if ( tierIndex > 1 )
+			RuiSetBool( ruiPlacard, "isLocked", true )
+	}
 	else
 	{
 		RuiSetString( ruiPlacard, "nameText", ItemFlavor_GetTypeName( item ) )
 	}
+	RuiSetInt( ruiPlacard, "rarity", rarity )
 
 	fileLevel.rewardPlacards[ INSPECT_BUTTONS[displayIndex] ] = ruiPlacard
 
@@ -2639,9 +3593,83 @@ void function UIToClient_RewardPlacard_Hover( var menuButton, bool isHovered )
 
 	if ( IsValid( rui ) )
 		RuiSetBool( rui, "isHovered", isHovered )
+
+	MythicSetButtonModelFade( menuButton, !isHovered )
 }
 #endif
 
+#if CLIENT
+void function MythicUpdateAllEffects( bool enable )
+{
+	WaitFrame()
+	if ( fileLevel.characterSkinModels.len() < 2 )
+		return
+
+	if ( !enable )
+	{
+		thread MythicModelClear( fileLevel.characterSkinModels[0] )
+		thread MythicModelClear( fileLevel.characterSkinModels[1] )
+	}
+	else
+	{
+		thread MythicModelFade( fileLevel.characterSkinModels[0] )
+		thread MythicModelFade( fileLevel.characterSkinModels[1] )
+	}
+}
+
+void function MythicSetButtonModelFade( var menuButton, bool fade )
+{
+	if ( fileLevel.characterSkinModels.len() < 2 || Hud_GetHudName( menuButton ) == INSPECT_BUTTONS[1] )
+		return
+
+	entity model
+
+	if ( Hud_GetHudName( menuButton ) == INSPECT_BUTTONS[0] )
+		model = fileLevel.characterSkinModels[0]
+	else if ( Hud_GetHudName( menuButton ) == INSPECT_BUTTONS[2] )
+		model = fileLevel.characterSkinModels[1]
+
+	if( !IsValid( model ) )
+		return
+
+	if( fade && !fileLevel.inspectModeActive )
+		thread MythicModelFade( model )
+	else
+		thread MythicModelClear( model )
+}
+
+void function MythicModelFade( entity model )
+{
+	WaitFrame()
+
+	if( !IsValid( model ) )
+		return
+
+	array<entity> hierachy = GetEntityAndImmediateChildren( model )
+	foreach ( entity childEnt in hierachy )
+	{
+		childEnt.Highlight_ResetFlags()
+		//childEnt.Highlight_SetCurrentContext( HighlightContext_GetId( "mythic_model_fade" ) )
+		childEnt.Highlight_SetFadeInTime( 1 )
+		childEnt.Highlight_SetFadeOutTime( 999999 )
+		childEnt.Highlight_StartOn()
+		childEnt.Highlight_SetLifeTime( 99999999 )
+	}
+}
+
+void function MythicModelClear( entity model )
+{
+	WaitFrame()
+
+	if( !IsValid( model ) )
+		return
+	array<entity> hierachy = GetEntityAndImmediateChildren( model )
+	foreach ( entity childEnt in hierachy )
+	{
+		childEnt.Highlight_SetCurrentContext( -1 )
+	}
+}
+#endif
 
 #if CLIENT
 var function RewardPlacard_GetRuiFromMenuButton( var menuButton )
@@ -2660,7 +3688,7 @@ void function ShowInspect_FX( int animAttachID, int rarity, vector rarityColor )
 	EndSignal( fileLevel.signalDummy, "LootCeremonyExit" )
 	EndSignal( fileLevel.signalDummy, "LootCeremonyAnimSeqStart" )
 
-	//
+	//fx
 	asset particleAssetRarity
 	switch ( rarity )
 	{
@@ -2684,8 +3712,12 @@ void function ShowInspect_FX( int animAttachID, int rarity, vector rarityColor )
 			particleAssetRarity = TICK_FX_HOLO_BEAM_TIER5
 			break
 
+		case 5:
+			particleAssetRarity = TICK_FX_HOLO_BEAM_TIER6
+			break
+
 		default:
-			Assert( 0, "Couldn't find particle beam asset based on rarity: " + rarity )
+			Assert( false, "Couldn't find particle beam asset based on rarity: " + rarity )
 	}
 
 	int fxIndexRarity = StartParticleEffectOnEntity( fileLevel.lootTickModel, GetParticleSystemIndex( particleAssetRarity ), FX_PATTACH_POINT_FOLLOW, animAttachID )
@@ -2741,8 +3773,12 @@ void function ShowRewards_FX( int animAttachID, int rarity, vector rarityColor, 
 			particleAssetRarity = TICK_FX_HOLO_BEAM_TIER5
 			break
 
+		case 5:
+			particleAssetRarity = TICK_FX_HOLO_BEAM_TIER6
+			break
+
 		default:
-			Assert( 0, "Couldn't find particle beam asset based on rarity: " + rarity )
+			Assert( false, "Couldn't find particle beam asset based on rarity: " + rarity )
 	}
 
 	int fxIndexRarity = StartParticleEffectOnEntity( fileLevel.lootTickModel, GetParticleSystemIndex( particleAssetRarity ), FX_PATTACH_POINT_FOLLOW, animAttachID )
@@ -2794,7 +3830,14 @@ void function DEV_SetCustomLootRewardsToDisplay( string itemRef0 = "", string it
 		if ( ref == "" )
 			continue
 
-		ItemFlavor flavor = GetItemFlavorByHumanReadableRef( ref )
+		ItemFlavor flavor
+		if ( DEV_IsValidGRXRef( ref ) )
+			flavor = DEV_GetItemFlavorByGRXRef( ref )
+		else if ( DEV_IsValidItemFlavorHumanReadableRef_Slow( ref ) )
+			flavor = DEV_GetItemFlavorByHumanReadableRef_Slow( ref )
+		else
+			Assert( false, "unknown item ref " + ref )
+
 		asset flavorAsset = ItemFlavor_GetAsset( flavor )
 		flavorAssets.append( flavorAsset )
 	}
@@ -2845,8 +3888,12 @@ void function UIToClient_RewardInspectActivate_Threaded( var menuButton )
 
 	// UI buttons to Hide
 	RunUIScript( "ClientToUI_SetInspectModeIsActive" )
+	RunUIScript( "ClientToUI_UpdateStoreButtonVisibility" )
 	RunUIScript( "LootCeremony_UpdateOpenAdditionalButton" )
 	DisableFakeInspectButtons()
+
+	fileLevel.inspectModeActive = true
+	thread MythicUpdateAllEffects( false )
 
 	// hide rewards
 	string menuButtonName = Hud_GetHudName( menuButton )
@@ -2918,10 +3965,19 @@ void function UIToClient_RewardInspectNavBack()
 
 
 #if CLIENT
+void function UIToClient_TrackButtonOnClick()
+{
+	if ( Hud_IsLocked( fileLevel.trackChallengeButton ) )
+	{
+		RunUIScript( "ClientToUI_PlayLootCeremonySound", "menu_deny" )
+		return
+	}
+
+	RunUIScript( "ClientToUI_TrackMythicChallenge", ItemFlavor_GetGUID( fileLevel.trackButtonItemFlavor) )
+}
+
 void function UIToClient_RewardEquipOnClick()
 {
-	return
-
 	#if DEVELOPER
 		if ( fileLevel.debugShowCustomRewards )
 		{
@@ -2956,7 +4012,7 @@ void function UIToClient_RewardEquipOnClickWithIndex( int index )
 
 	RunUIScript( "ClientToUI_PlayLootCeremonySound", SOUND_EQUIP )
 	RequestSetItemFlavorLoadoutSlot_WithDuplicatePrevention( LocalClientEHI(), entries, fileLevel.equipButtonItemFlavor, index )
-	PIN_Customization( null, fileLevel.equipButtonItemFlavor, index )
+	PIN_Customization( null, fileLevel.equipButtonItemFlavor, "equip", index )
 
 	Hud_SetLocked( fileLevel.equipButton, true )
 	var rui = Hud_GetRui( fileLevel.equipButton )
@@ -2979,114 +4035,218 @@ void function UIToClient_RewardEquipToWheelOnClick()
 
 void function UIToClient_RewardEquipToWheelOnClickWithIndex( int index )
 {
-	array<LoadoutEntry> entries = []
+	int itemType                = ItemFlavor_GetType( fileLevel.equipButtonItemFlavor )
 	ItemFlavor character        = expect ItemFlavor( GetItemFlavorAssociatedCharacterOrWeapon( fileLevel.equipButtonItemFlavor ) )
+	array<LoadoutEntry> entries = []
+	int numSlots
+	LoadoutEntry functionref( ItemFlavor, int ) getEntryFunc
 
-	for ( int i = 0; i < MAX_QUIPS_EQUIPPED; i++ )
+	// Ideally would just call EquipButton_GetItemLoadoutEntries() below, but can't trust that function to return the correct entries
+	// for eItemType.emote_icon or eItemType.character_emote because character can't always be determined from those items.
+
+	if ( itemType == eItemType.skydive_emote )
 	{
-		LoadoutEntry entry = Loadout_CharacterQuip( character, i )
+		numSlots     = NUM_SKYDIVE_EMOTE_SLOTS
+		getEntryFunc = Loadout_SkydiveEmote
+	}
+	else
+	{
+		numSlots     = MAX_QUIPS_EQUIPPED
+		getEntryFunc = Loadout_CharacterQuip
+	}
+
+	for ( int i = 0; i < numSlots; i++ )
+	{
+		LoadoutEntry entry = getEntryFunc( character, i )
 		if ( LoadoutSlot_IsReady( LocalClientEHI(), entry ) )
-		{
 			entries.append( entry )
-		}
 	}
 
 	RunUIScript( "ClientToUI_PlayLootCeremonySound", SOUND_EQUIP )
 	RequestSetItemFlavorLoadoutSlot_WithDuplicatePrevention( LocalClientEHI(), entries, fileLevel.equipButtonItemFlavor, index )
-	PIN_Customization( null, fileLevel.equipButtonItemFlavor, index )
+	PIN_Customization( null, fileLevel.equipButtonItemFlavor, "equip", index )
 }
 #endif
 
 
-#if CLIENT || UI 
+#if CLIENT || UI
 array<LoadoutEntry> function EquipButton_GetItemLoadoutEntries( ItemFlavor item, bool statTrackerFindExistingEntry = false )
 {
 	int itemType = ItemFlavor_GetType( item )
-	array<LoadoutEntry> entry
+	array<LoadoutEntry> loadoutEntries
 
 	switch ( itemType )
 	{
 		case eItemType.character_skin:
-			entry = [ Loadout_CharacterSkin( CharacterSkin_GetCharacterFlavor( item ) ) ]
+			loadoutEntries = [ Loadout_CharacterSkin( CharacterSkin_GetCharacterFlavor( item ) ) ]
 			break
 
 		case eItemType.weapon_skin:
-			entry = [ Loadout_WeaponSkin( WeaponSkin_GetWeaponFlavor( item ) ) ]
+			loadoutEntries = [ Loadout_WeaponSkin( WeaponSkin_GetWeaponFlavor( item ) ) ]
 			break
 
 		case eItemType.gladiator_card_frame:
-			entry = [ Loadout_GladiatorCardFrame( GladiatorCardFrame_GetCharacterFlavor( item ) ) ]
+			ItemFlavor ornull character = GladiatorCardFrame_GetCharacterFlavor( item )
+			if ( character == null ) // item wasn't character specific
+				character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
+			expect ItemFlavor( character )
+
+			loadoutEntries = [ Loadout_GladiatorCardFrame( character ) ]
 			break
 
 		case eItemType.gladiator_card_stance:
-			entry = [ Loadout_GladiatorCardStance( GladiatorCardStance_GetCharacterFlavor( item ) ) ]
+			loadoutEntries = [ Loadout_GladiatorCardStance( GladiatorCardStance_GetCharacterFlavor( item ) ) ]
 			break
 
 		case eItemType.character_execution:
-			entry = [ Loadout_CharacterExecution( CharacterExecution_GetCharacterFlavor( item ) ) ]
+			loadoutEntries = [ Loadout_CharacterExecution( CharacterExecution_GetCharacterFlavor( item ) ) ]
 			break
 
 		case eItemType.gladiator_card_intro_quip:
-			entry = [ Loadout_CharacterIntroQuip( CharacterIntroQuip_GetCharacterFlavor( item ) ) ]
+			loadoutEntries = [ Loadout_CharacterIntroQuip( CharacterIntroQuip_GetCharacterFlavor( item ) ) ]
 			break
 
 		case eItemType.gladiator_card_kill_quip:
-			entry = [ Loadout_CharacterKillQuip( CharacterKillQuip_GetCharacterFlavor( item ) ) ]
+			loadoutEntries = [ Loadout_CharacterKillQuip( CharacterKillQuip_GetCharacterFlavor( item ) ) ]
 			break
 
 		case eItemType.gladiator_card_stat_tracker:
 			if ( statTrackerFindExistingEntry )
 			{
-				entry = [ PopulateInspectMenuDetails_GetStatTrackerLoadoutEntry( item, statTrackerFindExistingEntry ) ]
+				loadoutEntries = [ PopulateInspectMenuDetails_GetStatTrackerLoadoutEntry( item, statTrackerFindExistingEntry ) ]
 			}
 			else
 			{
-				ItemFlavor character = GladiatorCardStatTracker_GetCharacterFlavor( item )
+				ItemFlavor ornull character = GladiatorCardStatTracker_GetCharacterFlavor( item )
+				if ( character == null ) // item wasn't character specific
+					character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
+
+				expect ItemFlavor( character )
+
 				for ( int trackerIndex = 0; trackerIndex < GLADIATOR_CARDS_NUM_TRACKERS; trackerIndex++ )
 				{
 					LoadoutEntry trackerSlot = Loadout_GladiatorCardStatTracker( character, trackerIndex )
 					if ( LoadoutSlot_IsReady( LocalClientEHI(), trackerSlot ) )
-						entry.append( trackerSlot )
+						loadoutEntries.append( trackerSlot )
 				}
 			}
 			break
 
-		case eItemType.melee_skin:
-			entry = [ Loadout_MeleeSkin( MeleeSkin_GetCharacterFlavor( item ) ) ]
+		case eItemType.artifact_component_blade:
+			loadoutEntries = [ Loadout_MeleeSkin( LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() ) ) ]
 			break
 
+		case eItemType.melee_skin:
+			if ( !MeleeSkin_HasSpecificCharacterFlavor( item ) )
+			{
+				loadoutEntries = [ Loadout_MeleeSkin( LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() ) ) ]
+				break
+			}
+			loadoutEntries = [ Loadout_MeleeSkin( MeleeSkin_GetCharacterFlavor( item ) ) ]
+			break
+
+		                    
+		case eItemType.artifact_component_deathbox:
+			loadoutEntries = [ Loadout_Deathbox( LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() ) ) ]
+			break
+        
+
 		case eItemType.gladiator_card_badge:
-			ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterClass() )
+			ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
 
 			for ( int badgeIndex = 0; badgeIndex < GLADIATOR_CARDS_NUM_BADGES; badgeIndex++ )
 			{
 				LoadoutEntry badgeSlot = Loadout_GladiatorCardStatTracker( character, badgeIndex )
 				if ( LoadoutSlot_IsReady( LocalClientEHI(), badgeSlot ) )
-					entry.append( badgeSlot )
+					loadoutEntries.append( badgeSlot )
 			}
 			break
 
 		case eItemType.music_pack:
-			entry = [ Loadout_MusicPack() ]
+			loadoutEntries = [ Loadout_MusicPack() ]
 			break
 
 		case eItemType.loadscreen:
-			entry = [ Loadout_Loadscreen() ]
+			loadoutEntries = [ Loadout_Loadscreen() ]
+			break
+
+		case eItemType.skydive_trail:
+			loadoutEntries = [ Loadout_SkydiveTrail() ]
+			break
+
+		case eItemType.skydive_emote:
+			ItemFlavor character = SkydiveEmote_GetCharacterFlavor( item )
+
+			for ( int emoteIndex = 0; emoteIndex < NUM_SKYDIVE_EMOTE_SLOTS; emoteIndex++ )
+			{
+				LoadoutEntry emoteSlot = Loadout_SkydiveEmote( character, emoteIndex )
+				if ( LoadoutSlot_IsReady( LocalClientEHI(), emoteSlot ) )
+					loadoutEntries.append( emoteSlot )
+			}
+			break
+
+		case eItemType.emote_icon:
+		case eItemType.character_emote:
+			ItemFlavor ornull character = CharacterQuip_GetCharacterFlavor( item )
+			if ( character == null ) // item wasn't character specific
+				character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
+			expect ItemFlavor( character )
+
+			for ( int emoteIndex = 0; emoteIndex < MAX_QUIPS_EQUIPPED; emoteIndex++ )
+			{
+				LoadoutEntry emoteSlot = Loadout_CharacterQuip( character, emoteIndex )
+				if ( LoadoutSlot_IsReady( LocalClientEHI(), emoteSlot ) )
+					loadoutEntries.append( emoteSlot )
+			}
+			break
+
+		case eItemType.sticker:
+			for ( int stickerObjectType = 0; stickerObjectType < eStickerObjectType.len(); stickerObjectType++ )
+			{
+				for ( int stickerIndex = 0; stickerIndex < GetMaxStickersForObjectType( stickerObjectType ); stickerIndex++ )
+				{
+					LoadoutEntry stickerSlot = Loadout_Sticker( stickerObjectType, stickerIndex )
+					if ( LoadoutSlot_IsReady( LocalClientEHI(), stickerSlot ) )
+						loadoutEntries.append( stickerSlot )
+				}
+			}
+			break
+		                    
+			case eItemType.reward_set_tracker:
+				break
+			case eItemType.voucher:
+				break
+                            
+		case eItemType.account_currency:
+			break
+		case eItemType.account_pack:
+			break
+		case eItemType.weapon_charm:
+			break
+
+		// for characters, show their default skin with no particular pose (implemented during s18rr)
+		case eItemType.character:
+			ItemFlavor characterSkin = CharacterClass_GetDefaultSkin( item )
+			loadoutEntries = [ Loadout_CharacterSkin( CharacterSkin_GetCharacterFlavor( characterSkin ) ) ]
 			break
 
 		default:
-			Assert( 0, "Loot Ceremony equip button does not support reward type: " + DEV_GetEnumStringSafe( "eItemType", itemType ) )
+			Assert( false, "Loot Ceremony equip button does not support reward type: " + DEV_GetEnumStringSafe( "eItemType", itemType ) )
 	}
 
-	return entry
+	return loadoutEntries
 }
 #endif
 
 
-#if CLIENT || UI 
+#if CLIENT || UI
 LoadoutEntry function PopulateInspectMenuDetails_GetStatTrackerLoadoutEntry( ItemFlavor item, bool findExistingEntry )
 {
-	ItemFlavor character = GladiatorCardStatTracker_GetCharacterFlavor( item )
+	ItemFlavor ornull character = GladiatorCardStatTracker_GetCharacterFlavor( item )
+	if ( character == null ) // item wasn't character specific
+		character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
+
+	expect ItemFlavor( character )
 
 	for ( int trackerIndex = 0; trackerIndex < GLADIATOR_CARDS_NUM_TRACKERS; trackerIndex++ )
 	{
@@ -3157,9 +4317,12 @@ void function UIToClient_RewardInspectNavBack_Threaded()
 
 	fileLevel.cameraMover.SetParent( fileLevel.lootTickModel, "CAMERA" )
 	RunUIScript( "ClientToUI_ClearInspectModeIsActive" )
+	RunUIScript( "ClientToUI_UpdateStoreButtonVisibility" )
 	RunUIScript( "LootCeremony_UpdateOpenAdditionalButton" )
 	EnableFakeInspectButtons()
 	RunUIScript( "ClientToUI_PlayLootCeremonySound", SOUND_HOLOGRAM_APPEAR_RESETVIEW )
+	fileLevel.inspectModeActive = false
+	thread MythicUpdateAllEffects( true )
 
 	Signal( fileLevel.signalDummy, "LootCeremonyInspectModeEndComplete" )
 
@@ -3194,6 +4357,9 @@ void function DisableInspectMenu()
 
 	Hud_SetEnabled( fileLevel.equipButton, false )
 	Hud_SetVisible( fileLevel.equipButton, false )
+
+	Hud_SetEnabled( fileLevel.trackChallengeButton, false )
+	Hud_SetVisible( fileLevel.trackChallengeButton, false )
 
 	Hud_SetVisible( fileLevel.equipToWheelButton, false )
 
@@ -3281,7 +4447,7 @@ table<string, vector> function RewardInspect_GetCameraOrgAngles( string attachme
 
 	int attachID        = fileLevel.lootTickModel.LookupAttachment( attachment )
 	vector attachOrigin = fileLevel.lootTickModel.GetAttachmentOrigin( attachID )
-	vector attachAngles = VectorToAngles( FlattenVector( fileLevel.cameraMover.GetOrigin() - attachOrigin ) )
+	vector attachAngles = VectorToAngles( FlattenVec( fileLevel.cameraMover.GetOrigin() - attachOrigin ) )
 
 	vector offsetRight   = (AnglesToRight( attachAngles ) * rightOffset)
 	vector offsetForward = (AnglesToForward( attachAngles ) * forwardOffset)
@@ -3289,7 +4455,7 @@ table<string, vector> function RewardInspect_GetCameraOrgAngles( string attachme
 
 	table<string, vector> zoomOrgAngles = {
 		origin = zoomOrigin,
-		angles = VectorToAngles( FlattenVector( attachOrigin - fileLevel.cameraMover.GetOrigin() ) )
+		angles = VectorToAngles( FlattenVec( attachOrigin - fileLevel.cameraMover.GetOrigin() ) )
 	}
 
 	return zoomOrgAngles
@@ -3333,7 +4499,7 @@ table<string, vector> function Inspect_GetCameraOrgAngles( string attachment, in
 
 	int attachID        = fileLevel.lootTickModel.LookupAttachment( attachment )
 	vector attachOrigin = fileLevel.lootTickModel.GetAttachmentOrigin( attachID )
-	vector attachAngles = VectorToAngles( FlattenVector( fileLevel.cameraMover.GetOrigin() - attachOrigin ) )
+	vector attachAngles = VectorToAngles( FlattenVec( fileLevel.cameraMover.GetOrigin() - attachOrigin ) )
 
 	vector offsetRight   = (AnglesToRight( attachAngles ) * rightOffset)
 	vector offsetForward = (AnglesToForward( attachAngles ) * forwardOffset)
@@ -3341,7 +4507,7 @@ table<string, vector> function Inspect_GetCameraOrgAngles( string attachment, in
 
 	table<string, vector> zoomOrgAngles = {
 		origin = zoomOrigin,
-		angles = VectorToAngles( FlattenVector( attachOrigin - fileLevel.cameraMover.GetOrigin() ) )
+		angles = VectorToAngles( FlattenVec( attachOrigin - fileLevel.cameraMover.GetOrigin() ) )
 	}
 
 	return zoomOrgAngles
@@ -3359,6 +4525,7 @@ bool function ShouldShowControlHintsForItemType( int itemType )
 		case eItemType.weapon_skin:
 		case eItemType.melee_skin:
 		case eItemType.character_execution:
+		case eItemType.weapon_charm:
 			return true
 	}
 
@@ -3378,7 +4545,12 @@ void function PopulateInspectMenuDetails_WeaponSkin( ItemFlavor item, int rarity
 #if CLIENT
 void function PopulateInspectMenuDetails_MeleeSkin( ItemFlavor item, int rarity, int quantity )
 {
-	PopulateInspectMenuDetails( item, rarity, quantity, ItemFlavor_GetShortName( MeleeSkin_GetCharacterFlavor( item ) ) )
+                           
+	string miscString = MeleeSkin_HasSpecificCharacterFlavor( item ) ? ItemFlavor_GetShortName( MeleeSkin_GetCharacterFlavor( item ) ) : "#REWARD_GENERIC"
+     
+                                                                                    
+      
+	PopulateInspectMenuDetails( item, rarity, quantity, miscString )
 }
 #endif
 
@@ -3392,6 +4564,22 @@ void function PopulateInspectMenuDetails_CharacterSkin( ItemFlavor item, int rar
 
 
 #if CLIENT
+void function PopulateInspectMenuDetails_CharacterEmote( ItemFlavor item, int rarity, int quantity )
+{
+	ItemFlavor ornull char = CharacterQuip_GetCharacterFlavor( item )
+
+	if ( char == null )
+		PopulateInspectMenuDetails( item, rarity, 1 )
+	else
+	{
+		expect ItemFlavor( char )
+		PopulateInspectMenuDetails( item, rarity, quantity, ItemFlavor_GetShortName( char ) )
+	}
+}
+#endif
+
+
+#if CLIENT
 void function PopulateInspectMenuDetails( ItemFlavor item, int rarity, int quantity, string miscString = "", string descString = "" )
 {
 	int itemType = ItemFlavor_GetType( item )
@@ -3399,6 +4587,8 @@ void function PopulateInspectMenuDetails( ItemFlavor item, int rarity, int quant
 	var rui             = Hud_GetRui( fileLevel.inspectMenu )
 	string itemTypeName = ItemFlavor_GetTypeName( item )
 	string itemName     = "?"
+	RuiSetInt( rui, "mythicTier", -1 )
+
 	if ( itemType == eItemType.gladiator_card_stat_tracker )
 	{
 		itemName = Localize( ItemFlavor_GetShortName( item ) )
@@ -3420,34 +4610,40 @@ void function PopulateInspectMenuDetails( ItemFlavor item, int rarity, int quant
 		if ( quantity != 1 )
 			itemName += " x" + quantity
 	}
+	else if ( itemType == eItemType.voucher )
+	{
+		itemTypeName = ItemFlavor_GetLongName( item )
+		itemName = ""
+		descString = ItemFlavor_GetLongDescription( item )
+		if ( Voucher_GetEffectBattlepassStars( item ) > 0 )
+		{
+			int starsQuantity = Voucher_GetEffectBattlepassStars( item )
+			itemTypeName = starsQuantity > 1 ? ItemFlavor_GetLongName( item ) : ItemFlavor_GetShortName( item )
+			itemName = starsQuantity > 1 ? "x" + starsQuantity : ""
+		}
+	}
+	                    
+		else if ( itemType == eItemType.reward_set_tracker )
+		{
+			itemTypeName = Localize( ItemFlavor_GetLongName( item ) )
+			itemName = Localize( ItemFlavor_GetShortName( item ) )
+		}
+                           
+	else if ( Mythics_IsItemFlavorMythicSkin( item ) )
+	{
+		int mythicTier = Mythics_GetSkinTierIntForSkin( item )
+		RuiSetInt( rui, "mythicTier", mythicTier )
+		itemName = Localize( ItemFlavor_GetLongName( item ) )
+		itemTypeName = Localize( "#MYTHIC_SKIN" )
+	}
 	else
 	{
 		itemName = Localize( ItemFlavor_GetLongName( item ) )
 	}
 
-	if ( itemType == eItemType.gladiator_card_badge )
+	if ( itemType == eItemType.gladiator_card_badge || itemType == eItemType.gladiator_card_stat_tracker )
 	{
 		descString = ""
-	}
-
-	if ( item == TEMP_GetVoidwalkerBundle() ) //
-	{
-		miscString = "#SEASON02_EVENT02_TITLE_SHORT"
-		itemTypeName = "#BUNDLE"
-		itemName = ""
-
-		RuiSetString( rui, "bundleItemText1", "Ghostwraith Skin" )
-		RuiSetInt( rui, "bundleItemRarity1", 3 )
-		RuiSetString( rui, "bundleItemText2", "Void Shadow Banner Frame" )
-		RuiSetInt( rui, "bundleItemRarity2", 3 )
-		RuiSetString( rui, "bundleItemText3", "Guarded Banner Pose" )
-		RuiSetInt( rui, "bundleItemRarity3", 1 )
-	}
-	else
-	{
-		RuiSetString( rui, "bundleItemText1", "" )
-		RuiSetString( rui, "bundleItemText2", "" )
-		RuiSetString( rui, "bundleItemText3", "" )
 	}
 
 	RuiSetString( rui, "itemType", itemTypeName )
@@ -3456,6 +4652,8 @@ void function PopulateInspectMenuDetails( ItemFlavor item, int rarity, int quant
 	RuiSetString( rui, "miscText", miscString )
 	RuiSetString( rui, "descText", descString )
 	RuiSetBool( rui, "showControlsHints", ShouldShowControlHintsForItemType( itemType ) )
+
+	// TODO: we will need to include text fields for characters being unlocked; otherwise those will be blank
 
 	// raise the description text if we're a stat tracker
 	RuiSetFloat( rui, "descTextPositionScalar", ((itemType == eItemType.gladiator_card_stat_tracker) ? 1.0 : 0.0) )
@@ -3469,21 +4667,88 @@ void function PopulateInspectMenuDetails( ItemFlavor item, int rarity, int quant
 	fileLevel.equipButtonItemFlavor = item
 	var equipButtonRui = Hud_GetRui( fileLevel.equipButton )
 
+	//track challenge button
+	if ( Mythics_IsItemFlavorMythicSkin( item ) )
+	{
+		var trackButtonRui = Hud_GetRui( fileLevel.trackChallengeButton )
+
+		ItemFlavor challenge = Mythics_GetChallengeForSkin( item )
+		bool isChallengeTracked = IsFavoriteChallenge( challenge )
+		RuiSetString( trackButtonRui, "buttonText", isChallengeTracked ?  "#CHALLENGE_TRACKED" : "#CHALLENGE_TRACK" )
+		RuiSetBool( trackButtonRui, "isChallengeTracked", isChallengeTracked )
+		fileLevel.trackButtonItemFlavor = item
+		Hud_SetVisible( fileLevel.trackChallengeButton, true )
+		Hud_SetEnabled( fileLevel.trackChallengeButton, true )
+	}
+	else
+	{
+
+		Hud_SetVisible( fileLevel.trackChallengeButton, false )
+	}
+
 	Hud_SetVisible( fileLevel.equipToWheelButton, false )
 
-	if ( itemType == eItemType.weapon_charm || itemType == eItemType.account_currency_bundle || itemType == eItemType.account_currency || itemType == eItemType.account_pack )
+	array<int> hideItemList = [
+		eItemType.weapon_charm,
+		eItemType.skydive_emote,
+		eItemType.account_pack,
+		eItemType.account_currency,
+		eItemType.account_currency_bundle,
+		eItemType.voucher,
+		eItemType.sticker,
+		                    
+			eItemType.reward_set_tracker,
+			eItemType.artifact_component_deathbox,
+                            
+	]
+
+	bool hasValidCharacterOrWeapon = ( GetItemFlavorAssociatedCharacterOrWeapon( item ) != null ) //  most agnostic items are equipped to *currently selected* Legend
+
+	if ( hideItemList.contains(itemType) )
 	{
 		Hud_SetVisible( fileLevel.equipButton, false )
 		Hud_SetEnabled( fileLevel.equipButton, false )
+
+		if ( ItemFlavor_CanEquipToWheel( item ) )
+		{
+			bool isOwned = GRX_IsItemOwnedByPlayer( item, GetLocalClientPlayer() )
+			if ( isOwned && hasValidCharacterOrWeapon )
+			{
+				Hud_SetVisible( fileLevel.equipToWheelButton, true )
+				Hud_SetEnabled( fileLevel.equipToWheelButton, true )
+				Hud_SetLocked( fileLevel.equipToWheelButton, false )
+
+				var equipWheelButtonRui = Hud_GetRui( fileLevel.equipToWheelButton )
+				string equipTip = ItemFlavor_GetType( item ) == eItemType.skydive_emote ? "#EQUIP_SKYDIVE_WHEEL_REWARD" : "#EQUIP_WHEEL_LOOT_REWARD"
+				RuiSetString( equipWheelButtonRui, "buttonText", equipTip )
+				RuiSetString( equipWheelButtonRui, "descText", "" )
+			}
+			else if ( isOwned && ! hasValidCharacterOrWeapon )
+			{
+				Hud_SetVisible( fileLevel.equipToWheelButton, true )
+				Hud_SetEnabled( fileLevel.equipToWheelButton, false )
+				Hud_SetLocked( fileLevel.equipToWheelButton, true )
+
+				var equipWheelButtonRui = Hud_GetRui( fileLevel.equipToWheelButton )
+				RuiSetString( equipWheelButtonRui, "buttonText", "#UNLOCKED" )
+				RuiSetString( equipWheelButtonRui, "descText", "#EQUIP_IN_LEGENDS_MENU" )
+			}
+		}
 	}
 	else if ( IsItemEquipped( item ) )
 	{
 		Hud_SetVisible( fileLevel.equipButton, true )
 
-		if ( ItemFlavor_CanEquipToWheel( item ) )
+		if ( ItemFlavor_CanEquipToWheel( item ) && hasValidCharacterOrWeapon )
 		{
 			Hud_SetVisible( fileLevel.equipToWheelButton, true )
 			Hud_SetEnabled( fileLevel.equipToWheelButton, true )
+			Hud_SetLocked( fileLevel.equipToWheelButton, false )
+
+			var equipWheelButtonRui = Hud_GetRui( fileLevel.equipToWheelButton )
+			string equipTip = ItemFlavor_GetType( item ) == eItemType.skydive_emote ? "#EQUIP_SKYDIVE_WHEEL_REWARD" : "#EQUIP_WHEEL_LOOT_REWARD"
+			RuiSetString( equipWheelButtonRui, "buttonText", equipTip )
+			RuiSetString( equipWheelButtonRui, "descText", "" )
 		}
 
 		Hud_SetEnabled( fileLevel.equipButton, true )
@@ -3495,7 +4760,17 @@ void function PopulateInspectMenuDetails( ItemFlavor item, int rarity, int quant
 	}
 	else
 	{
-		RuiSetString( equipButtonRui, "buttonText", "#EQUIP_LOOT_REWARD" )
+		bool agnosticEquipToCurrentCharacter = ( itemType == eItemType.melee_skin || itemType == eItemType.character_emote || itemType == eItemType.emote_icon )
+		if ( agnosticEquipToCurrentCharacter && !hasValidCharacterOrWeapon )
+		{
+			ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
+			RuiSetString( equipButtonRui, "buttonText", Localize( "#EQUIP_LOOT_REWARD_TO", Localize( ItemFlavor_GetLongName( character ) ) ) )
+		}
+		else
+		{
+			RuiSetString( equipButtonRui, "buttonText", "#EQUIP_LOOT_REWARD" )
+		}
+
 		RuiSetString( equipButtonRui, "descText", Localize( "#CURRENTLY_EQUIPPED_ITEM", Localize( GetCurrentlyEquippedItemNameForItemTypeSlot( item ) ) ) )
 		RuiSetInt( equipButtonRui, "descTextRarity", GetCurrentlyEquippedItemRarityForItemTypeSlot( item ) )
 
@@ -3503,26 +4778,34 @@ void function PopulateInspectMenuDetails( ItemFlavor item, int rarity, int quant
 		{
 			Hud_SetVisible( fileLevel.equipButton, true )
 
-			if ( ItemFlavor_CanEquipToWheel( item ) )
+			if ( ItemFlavor_CanEquipToWheel( item ) && hasValidCharacterOrWeapon )
 			{
 				Hud_SetVisible( fileLevel.equipToWheelButton, true )
 				Hud_SetEnabled( fileLevel.equipToWheelButton, true )
+				Hud_SetLocked( fileLevel.equipToWheelButton, false )
+
+				var equipWheelButtonRui = Hud_GetRui( fileLevel.equipToWheelButton )
+				string equipTip = ItemFlavor_GetType( item ) == eItemType.skydive_emote ? "#EQUIP_SKYDIVE_WHEEL_REWARD" : "#EQUIP_WHEEL_LOOT_REWARD"
+				RuiSetString( equipWheelButtonRui, "buttonText", equipTip )
+				RuiSetString( equipWheelButtonRui, "descText", "" )
 			}
 
 			Hud_SetEnabled( fileLevel.equipButton, true )
 			Hud_SetLocked( fileLevel.equipButton, false )
+
+			if( Mythics_IsItemFlavorMythicSkin( item ) && Mythics_GetSkinTierIntForSkin( item ) > 1)
+			{
+				Hud_SetLocked( fileLevel.equipButton, true )
+				RuiSetString( equipButtonRui, "buttonText", "#EQUIP_LOCKED")
+				RuiSetString( equipButtonRui, "descText", "#CHALLENGE_MYTHIC_LOCKED_ICON")
+			}
 		}
 	}
-
-	Hud_SetVisible( fileLevel.equipButton, false )
-	Hud_SetEnabled( fileLevel.equipButton, false )
-	Hud_SetVisible( fileLevel.equipToWheelButton, false )
-	Hud_SetEnabled( fileLevel.equipToWheelButton, false )
 }
 #endif
 
 
-#if CLIENT
+#if CLIENT || UI
 bool function IsItemEquipped( ItemFlavor item )
 {
 	array<LoadoutEntry> entries = EquipButton_GetItemLoadoutEntries( item, true )
@@ -3537,7 +4820,7 @@ bool function IsItemEquipped( ItemFlavor item )
 #endif
 
 
-#if CLIENT
+#if CLIENT || UI
 string function GetCurrentlyEquippedItemNameForItemTypeSlot( ItemFlavor referenceItem )
 {
 	array<LoadoutEntry> entries = EquipButton_GetItemLoadoutEntries( referenceItem, true )
@@ -3548,7 +4831,7 @@ string function GetCurrentlyEquippedItemNameForItemTypeSlot( ItemFlavor referenc
 #endif
 
 
-#if CLIENT
+#if CLIENT || UI
 int function GetCurrentlyEquippedItemRarityForItemTypeSlot( ItemFlavor referenceItem )
 {
 	array<LoadoutEntry> entries = EquipButton_GetItemLoadoutEntries( referenceItem, true )
@@ -3614,13 +4897,15 @@ void function InspectMenuFunctionality_Model( ItemFlavor item, int displayIndex,
 				{
 					if ( itemType == eItemType.weapon_skin )
 						PopulateInspectMenuDetails_WeaponSkin( item, rarity, quantity )
-					if ( itemType == eItemType.melee_skin )
+					else if ( itemType == eItemType.melee_skin )
 						PopulateInspectMenuDetails_MeleeSkin( item, rarity, quantity )
 
 					mover.SetAngles( startAngles )
 					mover.NonPhysicsRotate( <0, 0, 1>, MODEL_ROTATE_SPEED )
 					ShowEntityAndChildren( model )
-					ModelIntroHighlightEffect( model, rarity, false )
+
+					vector flashColor = ItemFlavor_GetQualityColor( item ) / 255
+					thread FlashMenuModel( model, eMenuModelFlashType.LOOT_CEREMONY_QUICK, flashColor )
 				}
 				else if ( itemType == eItemType.character_skin )
 				{
@@ -3633,6 +4918,10 @@ void function InspectMenuFunctionality_Model( ItemFlavor item, int displayIndex,
 				else if ( itemType == eItemType.account_currency )
 				{
 					PopulateInspectMenuDetails( item, rarity, quantity, "", ItemFlavor_GetLongDescription( item ) )
+				}
+				else if ( itemType == eItemType.character_emote )
+				{
+					PopulateInspectMenuDetails_CharacterEmote( item, rarity, 1 )
 				}
 				else
 				{
@@ -3650,8 +4939,19 @@ void function InspectMenuFunctionality_Model( ItemFlavor item, int displayIndex,
 		WaitSignal( fileLevel.signalDummy, "LootCeremonyInspectModeEndComplete" )
 
 		mover.SetAngles( startAngles )
+
+		if ( itemType == eItemType.character_emote )
+		{
+			model.Anim_Stop()
+			//thread ModelPerformEmote( model, item, mover, false, true )
+		}
+
 		ShowEntityAndChildren( model )
-		ModelIntroHighlightEffect( model, rarity, false )
+
+		vector flashColor    = ItemFlavor_GetQualityColor( item ) / 255
+		bool includeChildren = true
+		bool depthDiscard = ItemFlavor_GetType( item ) == eItemType.sticker
+		thread FlashMenuModel( model, eMenuModelFlashType.LOOT_CEREMONY_QUICK, flashColor, includeChildren, depthDiscard )
 
 		if ( itemType == eItemType.weapon_skin || itemType == eItemType.melee_skin || itemType == eItemType.account_currency_bundle )
 			mover.NonPhysicsRotate( <0, 0, 1>, MODEL_ROTATE_SPEED )
@@ -3702,11 +5002,9 @@ const float EXECUTION_START_TURNTABLE_DELAY = 0.15
 #if CLIENT
 void function InspectMenuFunctionality_Execution( ItemFlavor item, int displayIndex, int rarity, entity attackerModel, entity victimModel, entity mover, vector startAngles )
 {
-	int itemType                = ItemFlavor_GetType( item )
-	var rui                     = Hud_GetRui( fileLevel.inspectVideoPanel )
-	string characterName        = ItemFlavor_GetShortName( CharacterExecution_GetCharacterFlavor( item ) )
-	asset executionVideoAsset   = CharacterExecution_GetExecutionVideo( item )
-	string executionVideoString = GetGlobalSettingsString( ItemFlavor_GetAsset( item ), "video" )
+	int itemType         = ItemFlavor_GetType( item )
+	var rui              = Hud_GetRui( fileLevel.inspectVideoPanel )
+	string characterName = ItemFlavor_GetShortName( CharacterExecution_GetCharacterFlavor( item ) )
 
 	while( true )
 	{
@@ -3768,8 +5066,11 @@ void function InspectMenuFunctionality_Execution( ItemFlavor item, int displayIn
 							ShowEntityAndChildren( attackerModel )
 							ShowEntityAndChildren( victimModel )
 
-							ModelIntroHighlightEffect( attackerModel, rarity, false )
-							ModelIntroHighlightEffect( victimModel, rarity, false )
+							int flashType     = eMenuModelFlashType.LOOT_CEREMONY_QUICK
+							vector flashColor = ItemFlavor_GetQualityColor( item ) / 255
+							thread FlashMenuModel( attackerModel, flashType, flashColor )
+							thread FlashMenuModel( victimModel, flashType, flashColor )
+
 							mover.NonPhysicsRotate( <0, 0, 1>, MODEL_ROTATE_SPEED )
 							waitthread TurntableModelController( attackerModel, mover, itemType, victimModel )
 						}
@@ -3800,8 +5101,10 @@ void function InspectMenuFunctionality_Execution( ItemFlavor item, int displayIn
 		ShowEntityAndChildren( attackerModel )
 		ShowEntityAndChildren( victimModel )
 
-		ModelIntroHighlightEffect( attackerModel, rarity, false )
-		ModelIntroHighlightEffect( victimModel, rarity, false )
+		int flashType     = eMenuModelFlashType.LOOT_CEREMONY_QUICK
+		vector flashColor = ItemFlavor_GetQualityColor( item ) / 255
+		thread FlashMenuModel( attackerModel, flashType, flashColor )
+		thread FlashMenuModel( victimModel, flashType, flashColor )
 	}
 }
 #endif
@@ -3810,11 +5113,9 @@ void function InspectMenuFunctionality_Execution( ItemFlavor item, int displayIn
 #if CLIENT
 void function SpecialItemPresentationView_Execution( ItemFlavor item, int rarity, entity attackerModel, entity victimModel, entity mover )
 {
-	int itemType                = ItemFlavor_GetType( item )
-	var rui                     = Hud_GetRui( fileLevel.inspectVideoPanel )
-	string characterName        = ItemFlavor_GetShortName( CharacterExecution_GetCharacterFlavor( item ) )
-	asset executionVideoAsset   = CharacterExecution_GetExecutionVideo( item )
-	string executionVideoString = GetGlobalSettingsString( ItemFlavor_GetAsset( item ), "video" )
+	int itemType         = ItemFlavor_GetType( item )
+	var rui              = Hud_GetRui( fileLevel.inspectVideoPanel )
+	string characterName = ItemFlavor_GetShortName( CharacterExecution_GetCharacterFlavor( item ) )
 
 	PopulateInspectMenuDetails( item, rarity, 1, characterName )
 
@@ -3849,8 +5150,11 @@ void function SpecialItemPresentationView_Execution( ItemFlavor item, int rarity
 	ShowEntityAndChildren( attackerModel )
 	ShowEntityAndChildren( victimModel )
 
-	ModelIntroHighlightEffect( attackerModel, rarity, false )
-	ModelIntroHighlightEffect( victimModel, rarity, false )
+	int flashType     = eMenuModelFlashType.LOOT_CEREMONY_QUICK
+	vector flashColor = ItemFlavor_GetQualityColor( item ) / 255
+	thread FlashMenuModel( attackerModel, flashType, flashColor )
+	thread FlashMenuModel( victimModel, flashType, flashColor )
+
 	mover.NonPhysicsRotate( <0, 0, 1>, MODEL_ROTATE_SPEED )
 
 	waitthread TurntableModelController( attackerModel, mover, itemType, victimModel )
@@ -3875,7 +5179,10 @@ void function InspectMenuFunctionality_RUI( ItemFlavor item, int displayIndex, i
 	switch ( itemType )
 	{
 		case eItemType.gladiator_card_stat_tracker:
-			nameText = ItemFlavor_GetShortName( GladiatorCardStatTracker_GetCharacterFlavor( item ) )
+			if ( GladiatorCardStatTracker_GetCharacterFlavor( item ) != null )
+			{
+				nameText = ItemFlavor_GetShortName( expect ItemFlavor(GladiatorCardStatTracker_GetCharacterFlavor( item )))
+			}
 			break
 	}
 
@@ -3946,7 +5253,12 @@ void function SpecialItemPresentationView_RUI( ItemFlavor item, int rarity, var 
 	switch ( itemType )
 	{
 		case eItemType.gladiator_card_stat_tracker:
-			nameText = ItemFlavor_GetShortName( GladiatorCardStatTracker_GetCharacterFlavor( item ) )
+			if ( GladiatorCardStatTracker_GetCharacterFlavor( item ) == null )
+			{
+				break
+			}
+
+			nameText = ItemFlavor_GetShortName( expect ItemFlavor( GladiatorCardStatTracker_GetCharacterFlavor( item ) ) )
 			break
 	}
 
@@ -4089,15 +5401,13 @@ void function SpecialItemPresentationView_Quip( ItemFlavor item, int rarity, var
 #if CLIENT
 void function InspectMenuFunctionality_MusicPack( ItemFlavor item, int displayIndex, int rarity, var rui, entity bgModel )
 {
-	int itemType = ItemFlavor_GetType( item )
-
-	string nameText     = ItemFlavor_GetShortName( expect ItemFlavor( MusicPack_GetCharacterOrNull( item ) ) )
+	string nameText = ItemFlavor_GetShortName( item )
 	string previewAlias = MusicPack_GetPreviewMusic( item )
 
 	if ( previewAlias == "" )
 		Warning( "Music pack sound alias came back empty. It probably hasn't been authored yet: " + ItemFlavor_GetLongName( item ) )
 
-	while( true )
+	while ( true )
 	{
 		table results = WaitSignal( fileLevel.signalDummy, "LootCeremonyInspectModeStart" )
 
@@ -4164,11 +5474,7 @@ void function InspectMenuFunctionality_MusicPack( ItemFlavor item, int displayIn
 #if CLIENT
 void function SpecialItemPresentationView_MusicPack( ItemFlavor item, int rarity, var rui )
 {
-	int itemType = ItemFlavor_GetType( item )
-
 	string nameText = ItemFlavor_GetShortName( item )
-	if ( MusicPack_GetCharacterOrNull( item ) != null )
-		nameText = ItemFlavor_GetShortName( expect ItemFlavor( MusicPack_GetCharacterOrNull( item ) ) )
 	string previewAlias = MusicPack_GetPreviewMusic( item )
 
 	if ( previewAlias == "" )
@@ -4207,9 +5513,22 @@ void function InspectMenuFunctionality_GladiatorCard( ItemFlavor item, int itemT
 
 	string characterName
 	if ( itemType == eItemType.gladiator_card_frame )
-		characterName = ItemFlavor_GetShortName( GladiatorCardFrame_GetCharacterFlavor( item ) )
+	{
+		ItemFlavor ornull character = GladiatorCardFrame_GetCharacterFlavor( item )
+		if ( character == null )
+		{
+			characterName = "#REWARD_GENERIC"
+		}
+		else
+		{
+			expect ItemFlavor( character )
+			characterName = ItemFlavor_GetShortName( character )
+		}
+	}
 	else
+	{
 		characterName = ItemFlavor_GetShortName( GladiatorCardStance_GetCharacterFlavor( item ) )
+	}
 
 	while( true )
 	{
@@ -4269,9 +5588,22 @@ void function SpecialItemPresentationView_GladiatorCard( ItemFlavor item, int it
 
 	string characterName
 	if ( itemType == eItemType.gladiator_card_frame )
-		characterName = ItemFlavor_GetShortName( GladiatorCardFrame_GetCharacterFlavor( item ) )
+	{
+		ItemFlavor ornull character = GladiatorCardFrame_GetCharacterFlavor( item )
+		if ( character == null )
+		{
+			characterName = "#REWARD_GENERIC"
+		}
+		else
+		{
+			expect ItemFlavor( character )
+			characterName = ItemFlavor_GetShortName( character )
+		}
+	}
 	else
+	{
 		characterName = ItemFlavor_GetShortName( GladiatorCardStance_GetCharacterFlavor( item ) )
+	}
 
 	PopulateInspectMenuDetails( item, rarity, 1, characterName )
 
@@ -4382,10 +5714,19 @@ void function TurntableModelController( entity model, entity mover, int itemType
 		focalPoint = model.GetAttachmentOrigin( model.LookupAttachment( "HEADFOCUS" ) )
 		zoomMaxDist = 52.0
 	}
+	else if ( itemType == eItemType.account_pack )
+	{
+		focalPoint = model.GetAttachmentOrigin( model.LookupAttachment( "HEADFOCUS" ) )
+		zoomMaxDist = 52.0
+	}
 	else if ( itemType == eItemType.account_currency_bundle )
 	{
 		focalPoint = model.GetOrigin()
 		zoomMaxDist = 38.0
+	}
+	else if ( itemType == eItemType.emote_icon )
+	{
+		zoomMaxDist = 0.0
 	}
 
 	CameraZoomData cameraData
@@ -4421,7 +5762,6 @@ void function TurntableModelController( entity model, entity mover, int itemType
 	while( true )
 	{
 		bool hasPlayerTurned = TurntableUpdateAnglesFromInput( modelData, maxYaw, maxPitchDegrees, !hasStopped )
-
 
 		if ( !hasStopped && hasPlayerTurned )
 		{
@@ -4515,6 +5855,7 @@ void function WaitForTimeComplete( float timeToWait )
 
 #if UI
 void function InitLootBoxMenu( var newMenuArg )
+// todo(dw): use newMenuArg instead of GetMenu
 {
 	var menu = GetMenu( "LootBoxOpen" )
 	fileForever.menu = menu
@@ -4547,6 +5888,9 @@ void function InitLootBoxMenu( var newMenuArg )
 	HudElem_SetRuiArg( fileForever.equipButton, "buttonText", Localize( "#EQUIP_LOOT_REWARD" ) )
 	AddButtonEventHandler( fileForever.equipButton, UIE_CLICK, EquipButtonOnClick )
 
+	fileForever.trackChallengeButton = Hud_GetChild( fileForever.menu, "TrackChallengeButton" )
+	AddButtonEventHandler( fileForever.trackChallengeButton, UIE_CLICK, TrackButtonOnClick )
+
 	fileForever.equipToWheelButton = Hud_GetChild( fileForever.menu, "InspectEquipToWheelButton" )
 	HudElem_SetRuiArg( fileForever.equipToWheelButton, "buttonText", Localize( "#EQUIP_WHEEL_LOOT_REWARD" ) )
 	HudElem_SetRuiArg( fileForever.equipToWheelButton, "descText", "" )
@@ -4555,6 +5899,16 @@ void function InitLootBoxMenu( var newMenuArg )
 	fileForever.purchaseButton = Hud_GetChild( fileForever.menu, "InspectPurchaseButton" )
 	HudElem_SetRuiArg( fileForever.purchaseButton, "buttonText", "" )
 	AddButtonEventHandler( fileForever.purchaseButton, UIE_CLICK, PurchaseButtonOnClick )
+
+	fileForever.battlePassButton = Hud_GetChild( fileForever.menu, "InspectBattlePassPurchaseButton" )
+	HudElem_SetRuiArg( fileForever.battlePassButton, "buttonText", Localize( "#STORE_BATTLEPASS_UNLOCK" ) )
+	HudElem_SetRuiArg( fileForever.battlePassButton, "descText", Localize( "#STORE_WITH_PREMIUM" ) )
+	AddButtonEventHandler( fileForever.battlePassButton, UIE_CLICK, BattlePassButtonOnClick )
+
+	//fileForever.thematicShopLinkButton = Hud_GetChild( fileForever.menu, "InspectMilestoneEventStoreButton" )
+	//HudElem_SetRuiArg( fileForever.thematicShopLinkButton, "buttonText", "#MILESTONE_STORE_PURCHASE" )
+	//HudElem_SetRuiArg( fileForever.thematicShopLinkButton, "descText", "#MILESTONE_STORE_PURCHASE_DESC" )
+	//AddButtonEventHandler( fileForever.thematicShopLinkButton, UIE_CLICK, InspectMilestoneEventStoreButtonOnClick )
 
 	fileForever.mouseClickElem = Hud_GetChild( fileForever.menu, "ModelRotateMouseCapture" )
 	fileForever.inspectVideoPanel = Hud_GetChild( fileForever.menu, "InspectVideoPanel" )
@@ -4590,21 +5944,39 @@ void function InitLootBoxMenu( var newMenuArg )
 void function LootCeremony_UpdateOpenAdditionalButton()
 {
 	bool showButton = false
+	//bool buttonLocked = true
 
 	if ( HasLootBeenPresented() && !IsInspectModeActive() && !IsSpecialItemPresentationModeActive() )
 	{
-		//if ( GRX_IsInventoryReady() )
+		// TODO(R5DEV-546417): Look into adding logic here to let us open other types of packs. Could retrieve NextPack and add it to flavs list.
+		if ( GRX_IsInventoryReady() )
 		{
-			//
+			//buttonLocked = GRX_GetTotalPackCount() <= 0
 			showButton = true
 			array<ItemFlavor> specificPackFlavs = []
 			if ( fileLevel.forceParticularPackFlav != null )
 				specificPackFlavs.append( expect ItemFlavor( fileLevel.forceParticularPackFlav ) )
 			UpdateLootBoxButton( fileForever.lootBoxOpenButton, specificPackFlavs )
+
+			Hud_ClearToolTipData( fileForever.lootBoxOpenButton )
+			int ownedPacks = GRX_GetTotalPackCount()
+			if ( ownedPacks > 0 )
+			{
+				ItemFlavor ornull pack = GetNextLootBox()
+				expect ItemFlavor( pack )
+				int nextPacks = GRX_GetPackCount( ItemFlavor_GetGRXIndex( pack ) )
+				if ( nextPacks < ownedPacks )
+				{
+					ToolTipData toolTipData = GetPackInfoToolTip( ownedPacks )
+					Hud_SetToolTipData( fileForever.lootBoxOpenButton, toolTipData )
+				}
+			}
 		}
 	}
 
 	Hud_SetVisible( fileForever.lootBoxOpenButton, showButton )
+	//Hud_SetEnabled( fileForever.lootBoxOpenButton, !buttonLocked )
+	//Hud_SetLocked( fileForever.lootBoxOpenButton, buttonLocked )
 	if ( fileLevel.considerFocusOpenButton )
 	{
 		fileLevel.considerFocusOpenButton = false
@@ -4626,20 +5998,46 @@ bool function HasLootBeenPresented()
 #if UI
 void function OnLevelInit()
 {
-	if( CanRunClientScript() )
-		RunClientScript( "UIToClient_LootCeremony_SetMenuHandles", fileForever.menu )
+	RunClientScript( "UIToClient_LootCeremony_SetMenuHandles", fileForever.menu )
 }
 #endif
 
 
 #if UI
-void function ClientToUI_SetLootHasBeenPresented()
+void function ClientToUI_SetLootHasBeenPresented( bool heirloomShards = false )
 {
 	fileLevel.lootHasBeenPresented = true
 	fileLevel.considerFocusOpenButton = true
+	fileLevel.heirloomShards = heirloomShards
 	UpdateFooterOptions()
-	Hud_SetVisible( fileForever.storeButton, false )
-	Hud_SetEnabled( fileForever.storeButton, false )
+
+	if ( !heirloomShards )
+	{
+		HudElem_SetRuiArg( fileForever.storeButton, "buttonText", Localize( "#APEX_PACKS" ) )
+		HudElem_SetRuiArg( fileForever.storeButton, "icon", ItemFlavor_GetIcon( GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] ) )
+	}
+	else
+	{
+		HudElem_SetRuiArg( fileForever.storeButton, "buttonText", Localize( "#HEIRLOOM_SHOP" ) )
+		HudElem_SetRuiArg( fileForever.storeButton, "icon", ItemFlavor_GetIcon( GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] ) )
+	}
+}
+#endif
+
+
+#if UI
+void function ClientToUI_UpdateStoreButtonVisibility()
+{
+	bool visible = HasLootBeenPresented() && !IsInspectModeActive() && !IsSpecialItemPresentationModeActive()
+
+	Hud_SetVisible( fileForever.storeButton, visible )
+	Hud_SetEnabled( fileForever.storeButton, visible )
+
+	entity player = GetLocalClientPlayer()
+	if ( GRX_IsOfferRestricted( player ) && !fileLevel.heirloomShards )
+	{
+		Hud_SetEnabled( fileForever.storeButton, false )
+	}
 }
 #endif
 
@@ -4685,6 +6083,7 @@ void function SetStoreItemPresentationModeActive( GRXScriptOffer grxOffer )
 	fileLevel.storeItemPresentationModeOffer = grxOffer
 	fileLevel.specialItemPresentationModeItemFlav = grxOffer.output.flavors[0]
 	fileLevel.specialItemPresentationModeItemQty = grxOffer.output.quantities[0]
+	fileLevel.specialItemPresentationModeItemBadgeTier = -1
 	fileLevel.storeItemPresentationModeItemPrereq = grxOffer.prereq
 	fileLevel.specialItemFormattedPrice = GRX_GetFormattedPrice( grxOffer.prices[0], 1 )
 	fileLevel.specialItemOverrideOwned = null
@@ -4694,7 +6093,10 @@ void function SetStoreItemPresentationModeActive( GRXScriptOffer grxOffer )
 	fileLevel.specialItemLockPurchaseButton = false
 	fileLevel.specialItemPackName = null
 	fileLevel.specialItemPackImg = null
-
+	fileLevel.specialPurchaseDialogConfig = null
+	fileLevel.onNavigatingBackFunc = null
+	fileLevel.isBpOwned = false
+	fileLevel.isBpRewardPremium = false
 	AdvanceMenu( GetMenu( "LootBoxOpen" ) )
 }
 
@@ -4704,25 +6106,71 @@ void function SetBattlePassItemPresentationModeActive( BattlePassReward bpReward
 	fileLevel.storeItemPresentationModeOffer = null
 	fileLevel.specialItemPresentationModeItemFlav = bpReward.flav
 	fileLevel.specialItemPresentationModeItemQty = bpReward.quantity
+	fileLevel.specialItemPresentationModeItemBadgeTier = (  ItemFlavor_GetQuality(bpReward.flav) > 2 && ItemFlavor_GetType( bpReward.flav ) == eItemType.gladiator_card_badge)? BATTLEPASS_MAX_LEVEL : -1 //Only battlepass badges are legendary
 	fileLevel.storeItemPresentationModeItemPrereq = null
 	fileLevel.specialItemFormattedPrice = bpReward.isPremium ? "#BATTLE_PASS_PREMIUM_REWARD" : "#BATTLE_PASS_FREE_REWARD"
 	fileLevel.specialItemOverrideOwned = null
-	fileLevel.specialItemHideEquipButton = !(ItemFlavor_GetType( bpReward.flav ) != eItemType.gladiator_card_badge && IsItemFlavorEquippable( bpReward.flav ))
+	fileLevel.specialItemHideEquipButton = !(IsItemFlavorEquippable( bpReward.flav ))
 	fileLevel.specialItemHidePurchaseButton = false
+
+	if( bpReward.isRumble )
+	{
+		fileLevel.specialItemPriceHeader = Localize( "#TIER_REQUIRED", bpReward.level )
+	}
+	else
+	{
+		fileLevel.specialItemPriceHeader = Localize( "#BATTLE_PASS_LEVEL_REQUIRED", bpReward.level + 1 )
+	}
+
+	fileLevel.specialItemLockPurchaseButton = true
+	fileLevel.specialItemPackName = null
+	fileLevel.specialItemPackImg = null
+	fileLevel.specialPurchaseDialogConfig = null
+	fileLevel.onNavigatingBackFunc = null
+
+	ItemFlavor ornull activeBattlePass = GetPlayerLastActiveBattlePass( ToEHI( GetLocalClientPlayer() ) )
+	bool hasActiveBattlePass = activeBattlePass != null && GRX_IsInventoryReady()
+	if ( hasActiveBattlePass )
+	{
+		expect ItemFlavor( activeBattlePass )
+		fileLevel.isBpOwned = DoesPlayerOwnBattlePass( GetLocalClientPlayer(), activeBattlePass )
+	}
+
+	fileLevel.isBpRewardPremium = bpReward.isPremium
+	AdvanceMenu( GetMenu( "LootBoxOpen" ) )
+}
+
+void function SetTreasurePackItemPresentationModeActive( BattlePassReward bpReward )
+{
+	fileLevel.specialItemPresentationModeActive = true
+	fileLevel.storeItemPresentationModeOffer = null
+	fileLevel.specialItemPresentationModeItemFlav = bpReward.flav
+	fileLevel.specialItemPresentationModeItemQty = bpReward.quantity
+	fileLevel.specialItemPresentationModeItemBadgeTier = -1
+	fileLevel.storeItemPresentationModeItemPrereq = null
+	fileLevel.specialItemFormattedPrice = bpReward.isPremium ? "#BATTLE_PASS_PREMIUM_REWARD" : "#BATTLE_PASS_FREE_REWARD"
+	fileLevel.specialItemOverrideOwned = null
+	fileLevel.specialItemHideEquipButton = !(IsItemFlavorEquippable( bpReward.flav ))
+	fileLevel.specialItemHidePurchaseButton = true
 	fileLevel.specialItemPriceHeader = Localize( "#BATTLE_PASS_LEVEL_REQUIRED", bpReward.level + 1 )
 	fileLevel.specialItemLockPurchaseButton = true
 	fileLevel.specialItemPackName = null
 	fileLevel.specialItemPackImg = null
+	fileLevel.specialPurchaseDialogConfig = null
+	fileLevel.onNavigatingBackFunc = null
+	fileLevel.isBpOwned = false
+	fileLevel.isBpRewardPremium = false
 
 	AdvanceMenu( GetMenu( "LootBoxOpen" ) )
 }
 
-void function SetGenericItemPresentationModeActive( ItemFlavor itemFlav, string priceHeader, string subHeader )
+void function SetGenericItemPresentationModeActiveWithNavBack( ItemFlavor itemFlav, string priceHeader, string subHeader, void functionref() onNavigatingBackFunc )
 {
 	fileLevel.specialItemPresentationModeActive = true
 	fileLevel.storeItemPresentationModeOffer = null
 	fileLevel.specialItemPresentationModeItemFlav = itemFlav
 	fileLevel.specialItemPresentationModeItemQty = 1
+	fileLevel.specialItemPresentationModeItemBadgeTier = -1
 	fileLevel.storeItemPresentationModeItemPrereq = null
 	fileLevel.specialItemFormattedPrice = subHeader
 	fileLevel.specialItemOverrideOwned = null
@@ -4732,6 +6180,10 @@ void function SetGenericItemPresentationModeActive( ItemFlavor itemFlav, string 
 	fileLevel.specialItemLockPurchaseButton = true
 	fileLevel.specialItemPackName = null
 	fileLevel.specialItemPackImg = null
+	fileLevel.specialPurchaseDialogConfig = null
+	fileLevel.onNavigatingBackFunc = onNavigatingBackFunc
+	fileLevel.isBpOwned = false
+	fileLevel.isBpRewardPremium = false
 
 	AdvanceMenu( GetMenu( "LootBoxOpen" ) )
 }
@@ -4743,7 +6195,8 @@ void function SetCollectionEventItemPresentationModeActive( ItemFlavor flav, GRX
 	{
 		expect GRXScriptOffer(grxOffer)
 		array<string> formattedPrices
-		foreach ( ItemFlavorBag price in grxOffer.prices )
+		array<ItemFlavorBag> orderedPricesList = GRXOffer_GetPricesInPriorityOrder( grxOffer )
+		foreach ( ItemFlavorBag price in orderedPricesList )
 			formattedPrices.append( GRX_GetFormattedPrice( price, 1 ) )
 
 		if ( formattedPrices.len() == 1 )
@@ -4756,6 +6209,7 @@ void function SetCollectionEventItemPresentationModeActive( ItemFlavor flav, GRX
 	fileLevel.storeItemPresentationModeOffer = grxOffer
 	fileLevel.specialItemPresentationModeItemFlav = flav
 	fileLevel.specialItemPresentationModeItemQty = 1
+	fileLevel.specialItemPresentationModeItemBadgeTier = -1
 	fileLevel.storeItemPresentationModeItemPrereq = null
 	fileLevel.specialItemFormattedPrice = priceText
 	fileLevel.specialItemOverrideOwned = null
@@ -4765,25 +6219,43 @@ void function SetCollectionEventItemPresentationModeActive( ItemFlavor flav, GRX
 	fileLevel.specialItemLockPurchaseButton = (grxOffer == null)
 	fileLevel.specialItemPackName = packName
 	fileLevel.specialItemPackImg = packImg
+	fileLevel.specialPurchaseDialogConfig = null
+	fileLevel.onNavigatingBackFunc = null
+	fileLevel.isBpOwned = false
+	fileLevel.isBpRewardPremium = false
 
 	AdvanceMenu( GetMenu( "LootBoxOpen" ) )
 }
 
-void function SetChallengeRewardPresentationModeActive( ItemFlavor itemFlav, int itemQty, string priceHeader, string subHeader, bool isComplete )
+void function SetChallengeRewardPresentationModeActive( ItemFlavor itemFlav, int itemQty, int badgeDataInteger, string priceHeader, string subHeader, bool isComplete, bool specialItemHidePurchaseButton = false )
 {
 	fileLevel.specialItemPresentationModeActive = true
 	fileLevel.storeItemPresentationModeOffer = null
 	fileLevel.specialItemPresentationModeItemFlav = itemFlav
 	fileLevel.specialItemPresentationModeItemQty = itemQty
+	fileLevel.specialItemPresentationModeItemBadgeTier = badgeDataInteger
 	fileLevel.storeItemPresentationModeItemPrereq = null
-	fileLevel.specialItemFormattedPrice = subHeader
 	fileLevel.specialItemOverrideOwned = isComplete
-	fileLevel.specialItemHideEquipButton = !(ItemFlavor_GetType( itemFlav ) != eItemType.gladiator_card_badge && IsItemFlavorEquippable( itemFlav ))
-	fileLevel.specialItemHidePurchaseButton = false
-	fileLevel.specialItemPriceHeader = priceHeader
+	fileLevel.specialItemHideEquipButton = !(IsItemFlavorEquippable( itemFlav ))
+	fileLevel.specialItemHidePurchaseButton = specialItemHidePurchaseButton
 	fileLevel.specialItemLockPurchaseButton = true
 	fileLevel.specialItemPackName = null
 	fileLevel.specialItemPackImg = null
+	fileLevel.specialPurchaseDialogConfig = null
+	fileLevel.onNavigatingBackFunc = null
+	fileLevel.isBpOwned = false
+	fileLevel.isBpRewardPremium = false
+
+	if( Mythics_IsItemFlavorMythicSkin( itemFlav ) )
+	{
+		fileLevel.specialItemPriceHeader = "#EQUIP_LOCKED"
+		fileLevel.specialItemFormattedPrice = "#CHALLENGE_MYTHIC_LOCKED_ICON"
+	}
+	else
+	{
+		fileLevel.specialItemPriceHeader = priceHeader
+		fileLevel.specialItemFormattedPrice = subHeader
+	}
 
 	AdvanceMenu( GetMenu( "LootBoxOpen" ) )
 }
@@ -4798,6 +6270,7 @@ bool function InspectItemTypePresentationSupported( ItemFlavor item )
 	{
 		case eItemType.account_currency_bundle:
 		case eItemType.account_pack:
+		case eItemType.character:
 		case eItemType.character_skin:
 		case eItemType.character_execution:
 		case eItemType.weapon_skin:
@@ -4811,15 +6284,32 @@ bool function InspectItemTypePresentationSupported( ItemFlavor item )
 		case eItemType.gladiator_card_badge:
 		case eItemType.music_pack:
 		case eItemType.loadscreen:
+		case eItemType.skydive_emote:
+		case eItemType.emote_icon:
+		case eItemType.character_emote:
+		case eItemType.sticker:
+
+		                    
+		case eItemType.artifact_component_deathbox:
+        
+
 			return true
 
 		case eItemType.account_currency:
-			return ItemFlavor_GetAsset( item ) != $"settings/itemflav/grx_currency/crafting.rpak" //
+		{
+			asset currencyAsset = ItemFlavor_GetAsset( item )
+			return currencyAsset != $"settings/itemflav/grx_currency/crafting.rpak" && currencyAsset != $"settings/itemflav/grx_currency/credits.rpak"
+		}
+
+		case eItemType.voucher:
+			return Voucher_GetModel( item ) != $""
 	}
 
 	return false
 }
 #endif
+
+
 
 // ==========================================================================================================================
 // ==========================================================================================================================
@@ -4852,7 +6342,11 @@ void function OnLobbyOpenLootBoxMenu_ButtonPress( ItemFlavor ornull forceParticu
 #if UI
 void function OnLootBoxMenu_Open()
 {
+	GRX_SetOfferRefreshSuppressed( true )
+
 	UI_SetPresentationType( ePresentationType.INACTIVE )
+	Lobby_AdjustScreenFrameToMaxSize( Hud_GetChild( fileForever.menu, "ScreenFrame" ), true )
+
 	thread LootCeremonyFlashScreenBlack_Internal()
 
 	HudElem_SetRuiArg( fileForever.inspectMenu, "moveDescDown", false )
@@ -4873,6 +6367,12 @@ void function OnLootBoxMenu_Open()
 		Hud_SetVisible( fileForever.purchaseButton, false )
 		Hud_SetEnabled( fileForever.purchaseButton, false )
 
+		Hud_SetVisible( fileForever.thematicShopLinkButton, false )
+		Hud_SetEnabled( fileForever.thematicShopLinkButton, false )
+
+		Hud_SetVisible( fileForever.battlePassButton, false )
+		Hud_SetEnabled( fileForever.battlePassButton, false )
+
 		AddCallbackAndCallNow_OnGRXInventoryStateChanged( LootCeremony_UpdateOpenAdditionalButton )
 		thread LootBoxOpenSequenceUI( true )
 	}
@@ -4883,7 +6383,13 @@ void function OnLootBoxMenu_Open()
 #if UI
 void function OnLootBoxMenu_Close()
 {
+	GRX_SetOfferRefreshSuppressed( false )
+
 	fileLevel.forceParticularPackFlav = null
+
+	//if ( MilestoneEvent_UseOriginalEventTabLayout() )
+		//MilestoneEvent_LootBoxMenuOnClose()
+
 	if ( IsSpecialItemPresentationModeActive() )
 	{
 		fileLevel.specialItemPresentationModeActive = false
@@ -4894,8 +6400,9 @@ void function OnLootBoxMenu_Close()
 
 		fileLevel.specialItemPresentationModeActive = false
 		fileLevel.storeItemPresentationModeOffer = null
-		//
+		//fileLevel.specialItemPresentationModeItem = null
 		fileLevel.specialItemPresentationModeItemQty = -1
+		fileLevel.specialItemPresentationModeItemBadgeTier = -1
 		fileLevel.storeItemPresentationModeItemPrereq = null
 		fileLevel.specialItemFormattedPrice = ""
 		fileLevel.specialItemOverrideOwned = null
@@ -4903,11 +6410,15 @@ void function OnLootBoxMenu_Close()
 		fileLevel.specialItemHidePurchaseButton = false
 		fileLevel.specialItemPriceHeader = ""
 		fileLevel.specialItemLockPurchaseButton = false
+		fileLevel.onNavigatingBackFunc = null
+		fileLevel.isBpOwned = false
+		fileLevel.isBpRewardPremium = false
 	}
 	else
 	{
 		RunClientScript( "UIToClient_LootCeremonyExit" )
 		RemoveCallback_OnGRXInventoryStateChanged( LootCeremony_UpdateOpenAdditionalButton )
+		Remote_ServerCallFunction( "Server_GrantLegendaryStickersIfCollectionCompleted" )
 	}
 }
 #endif
@@ -4927,12 +6438,10 @@ bool function ShouldShowBackButton()
 #if UI
 void function OnClickStoreButton( var button )
 {
-	var lobbyMenu = GetMenu( "LobbyMenu" )
-
-	CloseActiveMenu()
-	AdvanceMenu( lobbyMenu )
-	TabData tabData = GetTabDataForPanel( lobbyMenu )
-	//ActivateTab( tabData, Tab_GetTabIndexByBodyName( tabData, "StorePanel" ) )
+	if ( fileLevel.heirloomShards )
+		JumpToHeirloomShop()
+	else
+		JumpToStorePacks()
 }
 #endif
 
@@ -4948,6 +6457,9 @@ void function OnLootBoxMenu_NavBack()
 		RunClientScript( "UIToClient_RewardInspectNavBack" )
 		return
 	}
+
+	if ( IsSpecialItemPresentationModeActive() && (fileLevel.onNavigatingBackFunc != null) )
+		fileLevel.onNavigatingBackFunc()
 
 	CloseActiveMenu()
 }
@@ -4968,19 +6480,33 @@ void function EquipButtonOnClick( var button )
 	RunClientScript( "UIToClient_RewardEquipOnClick" )
 }
 
+void function TrackButtonOnClick( var button )
+{
+	RunClientScript( "UIToClient_TrackButtonOnClick" )
+}
+
 void function ClientToUI_EquipButtonShowDialog( SettingsAssetGUID itemGUID )
 {
 	ItemFlavor item             = GetItemFlavorByGUID( itemGUID )
 	array<LoadoutEntry> entries = EquipButton_GetItemLoadoutEntries( item )
 
-	//
+	// show dialog
 	OpenSelectSlotDialog( entries, item, GetItemFlavorAssociatedCharacterOrWeapon( item ),
-				(void function( int index ) : ()
+		(void function( int index ) : ()
 		{
 			RunClientScript( "UIToClient_RewardEquipOnClickWithIndex", index )
 		})
 	)
 }
+
+
+void function ClientToUI_TrackMythicChallenge( SettingsAssetGUID skinGUID )
+{
+	SettingsAssetGUID challengeGUID = Mythics_GetChallengeGUIDForSkinGUID( skinGUID )
+	ItemFlavor challenge = GetItemFlavorByGUID( challengeGUID )
+	Mythics_ToggleTrackChallenge( challenge, fileForever.trackChallengeButton )
+}
+
 
 void function EquipToWheelButtonOnClick( var button )
 {
@@ -4990,22 +6516,37 @@ void function EquipToWheelButtonOnClick( var button )
 void function ClientToUI_EquipToWheelButtonShowDialog( SettingsAssetGUID itemGUID )
 {
 	ItemFlavor item             = GetItemFlavorByGUID( itemGUID )
+	int itemType                = ItemFlavor_GetType( item )
+	// this "expect" is NOT safe if you don't block generic assets further up the callstack
+	ItemFlavor character        = expect ItemFlavor( GetItemFlavorAssociatedCharacterOrWeapon( item ) )
 	array<LoadoutEntry> entries = []
+	int numSlots
+	LoadoutEntry functionref( ItemFlavor, int ) getEntryFunc
 
-	ItemFlavor character = expect ItemFlavor( GetItemFlavorAssociatedCharacterOrWeapon( item ) )
+	// Ideally would just call EquipButton_GetItemLoadoutEntries() below, but can't trust that function to return the correct entries
+	// for eItemType.emote_icon or eItemType.character_emote because character can't always be determined from those items.
 
-	for ( int i = 0; i < MAX_QUIPS_EQUIPPED; i++ )
+	if ( itemType == eItemType.skydive_emote )
 	{
-		LoadoutEntry entry = Loadout_CharacterQuip( character, i )
-		if ( LoadoutSlot_IsReady( LocalClientEHI(), entry ) )
-		{
-			entries.append( entry )
-		}
+		numSlots     = NUM_SKYDIVE_EMOTE_SLOTS
+		getEntryFunc = Loadout_SkydiveEmote
+	}
+	else
+	{
+		numSlots     = MAX_QUIPS_EQUIPPED
+		getEntryFunc = Loadout_CharacterQuip
 	}
 
-	//
+	for ( int i = 0; i < numSlots; i++ )
+	{
+		LoadoutEntry entry = getEntryFunc( character, i )
+		if ( LoadoutSlot_IsReady( LocalClientEHI(), entry ) )
+			entries.append( entry )
+	}
+
+	// show dialog
 	OpenSelectSlotDialog( entries, item, character,
-				(void function( int index ) : ()
+		(void function( int index ) : ()
 		{
 			RunClientScript( "UIToClient_RewardEquipToWheelOnClickWithIndex", index )
 		})
@@ -5017,6 +6558,30 @@ void function ClientToUI_EquipToWheelButtonShowDialog( SettingsAssetGUID itemGUI
 #if UI
 void function PurchaseButtonOnClick( var button )
 {
+	// TODO - Does this need any fixing for multiple events?
+	ItemFlavor ornull milestoneEvent = GetActiveMilestoneEvent( GetUnixTimestamp() )
+	if ( milestoneEvent != null )
+	{
+		expect ItemFlavor( milestoneEvent )
+		bool isEventItem = MilestoneEvent_IsItemEventItem( milestoneEvent, fileLevel.specialItemPresentationModeItemFlav.grxIndex ) || MilestoneEvent_IsMilestoneGrantReward(  milestoneEvent, fileLevel.specialItemPresentationModeItemFlav.grxIndex )
+		if ( isEventItem )
+		{
+			// Determine whether we need to go to the Event Tab or to the Milestone Store
+			if ( IsMilestoneEventStoreOnly( milestoneEvent ) )
+			{
+				string milestoneId = MilestoneEvent_GetEventId( milestoneEvent )
+				//JumpToStoreMilestoneEventsMenu( milestoneId )
+			}
+			else
+			{
+				EventsPanel_SetOpenPageIndex( eEventsPanelPage.MILESTONES ) //Packs Page
+				JumpToEventTab( "RTKEventsPanel" )
+			}
+
+			return
+		}
+	}
+
 	if ( fileLevel.storeItemPresentationModeItemPrereq != null )
 	{
 		ItemFlavor prereqFlav = expect ItemFlavor( fileLevel.storeItemPresentationModeItemPrereq )
@@ -5034,7 +6599,11 @@ void function PurchaseButtonOnClick( var button )
 		}
 	}
 
-	if ( fileLevel.storeItemPresentationModeOffer != null )
+	if ( fileLevel.specialPurchaseDialogConfig != null )
+	{
+		PurchaseDialog( expect PurchaseDialogConfig( fileLevel.specialPurchaseDialogConfig ) )
+	}
+	else if ( fileLevel.storeItemPresentationModeOffer != null )
 	{
 		PurchaseDialogConfig pdc
 		pdc.offer = fileLevel.storeItemPresentationModeOffer
@@ -5049,6 +6618,30 @@ void function PurchaseButtonOnClick( var button )
 }
 #endif
 
+#if UI
+void function InspectMilestoneEventStoreButtonOnClick( var button )
+{
+	ItemFlavor ornull activeThemedShopEvent = GetActiveThemedShopEvent( GetUnixTimestamp() )
+	if ( activeThemedShopEvent != null )
+	{
+		expect ItemFlavor( activeThemedShopEvent )
+		array<GRXScriptOffer> offers = GRX_GetItemDedicatedStoreOffers( fileLevel.specialItemPresentationModeItemFlav, ThemedShopEvent_GetGRXOfferLocation( activeThemedShopEvent ) )
+		if ( offers.len() == 1 )
+		{
+			JumpToEventTab( "ThemedShopPanel" )
+			StoreInspectMenu_AttemptOpenWithOffer( offers[0] )
+		}
+	}
+}
+#endif
+
+#if UI
+void function BattlePassButtonOnClick( var button )
+{
+	CloseActiveMenu()
+	BattlePass_PurchaseButton_OnActivate( button )
+}
+#endif
 
 #if UI
 void function PreviewButtonOnClick( var button )
@@ -5086,31 +6679,35 @@ void function PreviewButtonOnLeaveHover( var button )
 #if UI
 void function LootBoxOpenSequenceUI( bool firstTime )
 {
+	int ownedPacks = GRX_IsInventoryReady() ? GRX_GetTotalPackCount() : 0
+
+	if ( ownedPacks == 0 )
+	{
+		CloseActiveMenu()
+		return
+	}
+
 	fileLevel.lootHasBeenPresented = false
 	UpdateFooterOptions()
 	Hud_SetVisible( fileForever.storeButton, false )
 	Hud_SetEnabled( fileForever.storeButton, false )
-	Hud_SetVisible( fileForever.lootBoxOpenButton, false )
 
 	// Get the actual rewards
-	ItemFlavor ornull pack
+	ItemFlavor ornull pack = GetNextLootBox()
 	if ( fileLevel.forceParticularPackFlav )
 	{
-		pack = fileLevel.forceParticularPackFlav
-	}
-	else
-	{
-		pack = GetNextLootBox()
+		ItemFlavor ornull forcePack = fileLevel.forceParticularPackFlav
+		expect ItemFlavor( forcePack )
+		if ( GRX_GetPackCount( ItemFlavor_GetGRXIndex( forcePack ) ) > 0 )
+		{
+			pack = fileLevel.forceParticularPackFlav
+		}
 	}
 	Assert( pack != null )
 	expect ItemFlavor( pack )
 	int quality = ItemFlavor_GetQuality( pack )
 
 	RunClientScript( "UIToClient_LootCeremony_SetMenuHandles", fileForever.menu )
-	
-	//Random pack flavor
-	array<ItemFlavor> allpacks = GRX_GetAllPackFlavors()
-	pack = allpacks[RandomIntRange(0, 2)]
 
 	if ( firstTime )
 	{
@@ -5121,7 +6718,19 @@ void function LootBoxOpenSequenceUI( bool firstTime )
 		RunClientScript( "UIToClient_AdditionalLootTick_Sequence", ItemFlavor_GetGUID( pack ) )
 	}
 
-	RunClientScript( "UIToClient_OnGRXPackOpeningResultsAvailable" )
+	ScriptGRXOperationInfo operation
+	operation.expectedQueryGoal = GRX_HTTPQUERYGOAL_OPEN_PACK
+	operation.doOperationFunc = (void function( int opID ) : ( pack ) {
+		printt( "GRX_OpenPack", opID, ItemFlavor_GetGRXIndex( pack ) )
+		GRX_OpenPack( opID, ItemFlavor_GetGRXIndex( pack ) )
+	})
+	operation.onDoneCallback = (void function( int status ) : ( operation ) {
+		if ( status == eScriptGRXOperationStatus.DONE_SUCCESS )
+			RunClientScript( "UIToClient_OnGRXPackOpeningResultsAvailable" )
+		else
+			CloseActiveMenu()
+	})
+	QueueGRXOperation( GetLocalClientPlayer(), operation )
 }
 #endif
 
@@ -5134,8 +6743,8 @@ void function SpecialItemPresentationSequenceUI()
 	Hud_SetEnabled( fileForever.storeButton, false )
 
 	RunClientScript( "UIToClient_LootCeremony_SetMenuHandles", fileForever.menu )
-	RunClientScript( "UIToClient_SpecialItemPresentation", ItemFlavor_GetGUID( fileLevel.specialItemPresentationModeItemFlav ), fileLevel.specialItemPresentationModeItemQty )
-	//
+	RunClientScript( "UIToClient_SpecialItemPresentation", ItemFlavor_GetGUID( fileLevel.specialItemPresentationModeItemFlav ), fileLevel.specialItemPresentationModeItemQty, fileLevel.specialItemPresentationModeItemBadgeTier )
+	//484378347
 
 	UpdateSpecialItemPresentationPurchaseButton()
 }
@@ -5170,36 +6779,47 @@ void function UpdateSpecialItemPresentationPurchaseButton()
 		if ( !GRX_IsItemOwnedByPlayer_AllowOutOfDateData( prereqFlav, null ) )
 			HudElem_SetRuiArg( fileForever.purchaseButton, "descText", Localize( "#STORE_REQUIRES_LOCKED", Localize( ItemFlavor_GetLongName( prereqFlav ) ) ) )
 	}
+	else if ( fileLevel.storeItemPresentationModeOffer != null && !GRXOffer_IsEligibleForPurchase( expect GRXScriptOffer( fileLevel.storeItemPresentationModeOffer ) ))
+	{
+		isOfferUnavailable = true
+		HudElem_SetRuiArg( fileForever.purchaseButton, "buttonText", "#UNAVAILABLE" )
+		HudElem_SetRuiArg( fileForever.purchaseButton, "descText", "" )
+	}
 
 	ItemFlavor itemFlav = fileLevel.specialItemPresentationModeItemFlav
 
+	if ( ItemFlavor_GetType( itemFlav ) == eItemType.artifact_component_blade )
+		itemFlav = GetItemFlavorByGUID( ARTIFACT_CONFIGURATION_PTR_0_GUID )
+
+	int itemType = ItemFlavor_GetType( itemFlav )
+
 	bool showPurchase = false
 	bool showEquip    = false
+	bool isOwned      = false
 
-	//if ( GRX_IsInventoryReady() )
+	if ( GRX_IsInventoryReady() )
 	{
-		if ( TEMP_IsItemFlavorEquippable( itemFlav ) )
+		if ( fileLevel.specialItemOverrideOwned != null )
+			isOwned = expect bool(fileLevel.specialItemOverrideOwned)
+		else if ( itemType == eItemType.gladiator_card_badge )
+			isOwned = GladiatorCardBadge_DoesStatSatisfyValue( itemFlav, float(fileLevel.specialItemPresentationModeItemBadgeTier) )
+		else if ( ItemFlavor_GetGRXMode( itemFlav ) == eItemFlavorGRXMode.REGULAR )
+			isOwned = GRX_IsItemOwnedByPlayer( itemFlav, null )
+		else if ( ItemFlavor_GetType( itemFlav ) == eItemType.melee_skin && Artifacts_Loadouts_IsConfigPointerItemFlavor( itemFlav ) )
+			isOwned = Artifacts_Loadouts_IsAnyArtifactUnlocked( LocalClientEHI(), false )
+
+		if ( IsItemFlavorTypeEquippable( itemFlav ) )
 		{
-			bool isOwned = false
-			if ( fileLevel.specialItemOverrideOwned != null )
-				isOwned = expect bool(fileLevel.specialItemOverrideOwned)
-			else if ( ItemFlavor_GetGRXMode( itemFlav ) == eItemFlavorGRXMode.REGULAR )
-				isOwned = GRX_IsItemOwnedByPlayer( itemFlav, null )
-
-			//
-			if ( itemFlav == GetItemFlavorByAsset( $"settings/itemflav/gcard_badge/account/season02_bplevel.rpak" ) )
-				isOwned = GladiatorCardBadge_DoesStatSatisfyValue( itemFlav, 110 )
-
 			if ( !fileLevel.specialItemHidePurchaseButton )
 				showPurchase = !isOwned
 
 			if ( !fileLevel.specialItemHideEquipButton )
 				showEquip = isOwned
 		}
-		//
-		//
-		//
-		//
+		else if ( itemType == eItemType.reward_set_tracker )
+		{
+			showPurchase = !isOwned
+		}
 		else if ( fileLevel.storeItemPresentationModeOffer != null )
 		{
 			showPurchase = !GRXOffer_IsFullyClaimed( expect GRXScriptOffer(fileLevel.storeItemPresentationModeOffer) )
@@ -5210,9 +6830,32 @@ void function UpdateSpecialItemPresentationPurchaseButton()
 	Hud_SetEnabled( fileForever.purchaseButton, !fileLevel.specialItemLockPurchaseButton && !isOfferUnavailable )
 	Hud_SetLocked( fileForever.purchaseButton, fileLevel.specialItemLockPurchaseButton || isOfferUnavailable )
 
+	// TODO - Does this need any fixing for multiple events?
+	ItemFlavor ornull milestoneEvent = GetActiveMilestoneEvent( GetUnixTimestamp() )
+	if ( milestoneEvent != null )
+	{
+		expect ItemFlavor( milestoneEvent )
+		bool isEventItem = MilestoneEvent_IsItemEventItem( milestoneEvent, fileLevel.specialItemPresentationModeItemFlav.grxIndex ) || MilestoneEvent_IsMilestoneGrantReward( milestoneEvent, fileLevel.specialItemPresentationModeItemFlav.grxIndex )
+		Hud_SetEnabled( fileForever.purchaseButton, isEventItem )
+		Hud_SetLocked( fileForever.purchaseButton, !isEventItem )
+
+		ItemFlavor ornull activeThemedShopEvent = GetActiveThemedShopEvent( GetUnixTimestamp() )
+		if ( activeThemedShopEvent != null )
+		{
+			expect ItemFlavor( activeThemedShopEvent )
+			bool isInStore = ThemedShopEvent_IsItemInStore( activeThemedShopEvent, fileLevel.specialItemPresentationModeItemFlav )
+			Hud_SetVisible( fileForever.thematicShopLinkButton, isInStore && !isOwned )
+			Hud_SetEnabled( fileForever.thematicShopLinkButton, true )
+			Hud_SetLocked( fileForever.thematicShopLinkButton, false )
+		}
+	}
+
 	Hud_SetVisible( fileForever.equipButton, showEquip )
 	Hud_SetEnabled( fileForever.equipButton, true )
 	Hud_SetLocked( fileForever.equipButton, false )
+
+	Hud_SetVisible( fileForever.battlePassButton, !fileLevel.isBpOwned && fileLevel.isBpRewardPremium )
+	Hud_SetEnabled( fileForever.battlePassButton, !fileLevel.isBpOwned && fileLevel.isBpRewardPremium )
 
 	if ( showPurchase || showEquip )
 	{
@@ -5225,18 +6868,40 @@ void function UpdateSpecialItemPresentationPurchaseButton()
 		HudElem_SetRuiArg( fileForever.inspectMenu, "packName", expect string(fileLevel.specialItemPackName) )
 		HudElem_SetRuiArg( fileForever.inspectMenu, "packImg", expect asset(fileLevel.specialItemPackImg), eRuiArgType.IMAGE )
 	}
-
-	if ( ItemFlavor_GetType( itemFlav ) == eItemType.weapon_charm && showEquip )
+	else
 	{
+		HudElem_SetRuiArg( fileForever.inspectMenu, "showPackDetails", false )
+	}
+
+	bool showUnlockedWithoutEquip = isOwned && ( itemType == eItemType.gladiator_card_badge ||
+											  itemType == eItemType.sticker ||
+											  itemType == eItemType.weapon_charm ||
+										      itemType == eItemType.music_pack )
+
+	if ( showUnlockedWithoutEquip )
+	{
+		Hud_SetVisible( fileForever.equipButton, true )
 		Hud_SetEnabled( fileForever.equipButton, false )
 		Hud_SetLocked( fileForever.equipButton, true )
 
 		HudElem_SetRuiArg( fileForever.equipButton, "buttonText", "#UNLOCKED" )
-		HudElem_SetRuiArg( fileForever.equipButton, "descText", "#CHARM_EQUIP_INSTRUCTIONS" )
-		HudElem_SetRuiArg( fileForever.equipButton, "descTextRarity", eQuality.COMMON )
+
+		string descText = ""
+		if ( itemType == eItemType.gladiator_card_badge )
+			descText = "#EQUIP_IN_LEGENDS_MENU"
+		else if ( itemType == eItemType.weapon_charm || itemType == eItemType.music_pack || itemType == eItemType.sticker )
+			descText = "#EQUIP_IN_LOADOUT_MENU"
+
+		HudElem_SetRuiArg( fileForever.equipButton, "descText", descText )
+	}
+	else if ( IsItemEquipped( itemFlav ) )
+	{
+		Hud_SetVisible( fileForever.equipButton, true )
+		Hud_SetEnabled( fileForever.equipButton, false )
+		Hud_SetLocked( fileForever.equipButton, true )
 	}
 }
-#endif
+#endif // UI
 
 const float BLACK_FADE_TIME = 0.25
 const float BLACK_FADE_TIME_HOLD = 0.25
@@ -5317,8 +6982,9 @@ ItemFlavor ornull function GetNextLootBox()
 	int highestQuality = 0
 	foreach ( ItemFlavor pack, int count in packCountMap )
 	{
-		int quality = ItemFlavor_GetQuality( pack )
-		if ( count == 0 || quality <= highestQuality )
+		asset packIcon = GRXPack_GetOpenButtonIcon( pack )
+		int quality    = ItemFlavor_GetQuality( pack )
+		if ( count == 0 || quality < highestQuality || ( quality == highestQuality && packIcon == "" ) )
 			continue
 
 		highestQuality = quality
@@ -5328,13 +6994,118 @@ ItemFlavor ornull function GetNextLootBox()
 	return nextPack
 
 }
-#endif
 
-
-#if CLIENT || UI 
-//Voidwalker Event Bundle
-ItemFlavor function TEMP_GetVoidwalkerBundle()
+void function ForceOpenRewardPacks()
 {
-	return GetItemFlavorByAsset( $"settings/itemflav/pack/cosmetic_event_season02_event02_wraith.rpak" )
+	foreach ( basePack in GRX_GetStickerPacksWithRewards() )
+	{
+		ItemFlavor rewardPack = GetItemFlavorByAsset( GRXPack_GetStickerCompletionRewardPack( basePack ) )
+		thread TryForceOpenRewardPackThread( rewardPack )
+	}
 }
-#endif
+
+void function TryForceOpenRewardPackThread( ItemFlavor pack )
+{
+	bool grxReady = GRX_IsInventoryReady() && GRX_AreOffersReady()
+	if ( !grxReady )
+	{
+		WaitFrame()
+	}
+
+	int packCount = GRX_GetPackCount( ItemFlavor_GetGRXIndex( pack ) )
+	if ( packCount > 0 )
+	{
+		OnLobbyOpenLootBoxMenu_ButtonPress( pack )
+	}
+}
+
+#endif // UI
+
+#if SERVER
+table< entity, bool > tbl_stickerCollectionCompletionGrants = {}
+void function OnPlayerDisconnected( entity player )
+{
+	if ( player in tbl_stickerCollectionCompletionGrants )
+	{
+		delete tbl_stickerCollectionCompletionGrants[ player ]
+	}
+}
+
+void function Server_GrantLegendaryStickersIfCollectionCompleted( entity player )
+{
+	thread ServerThread_GrantLegendaryStickersIfCollectionCompleted( player )
+}
+
+void function ServerThread_GrantLegendaryStickersIfCollectionCompleted( entity player )
+{
+	EndSignal( player, "OnDestroy" )
+	EndSignal( player, "OnDisconnecting" )
+
+	if ( player in tbl_stickerCollectionCompletionGrants && tbl_stickerCollectionCompletionGrants[player] )
+	{
+		return
+	}
+
+	OnThreadEnd(
+		function(): ( player )
+		{
+			tbl_stickerCollectionCompletionGrants[player] <- false
+		}
+	)
+
+	tbl_stickerCollectionCompletionGrants[player] <- true
+
+	while ( !GRX_IsInventoryReady( player ) )
+	{
+		WaitFrame()
+	}
+
+	foreach ( stickerPack in GRX_GetStickerPacksWithRewards() )
+	{
+		if ( !GRXPack_PlayerOwnsAllItemsInPack( player, stickerPack ) )
+		{
+			continue
+		}
+
+		ItemFlavor rewardPack = GetItemFlavorByAsset( GRXPack_GetStickerCompletionRewardPack( stickerPack ) )
+		string rewardSequence = GRXPack_GetStickerCompletionRewardSequence( stickerPack )
+
+		if ( GRX_GetSequenceNumber( player, rewardSequence ) != 0 )
+		{
+			continue
+		}
+
+		ItemFlavorBag rewards = MakeItemFlavorBag( { [ rewardPack ] = 1, } )
+		ScriptGRXOperationInfo op
+
+		op.expectedQueryGoal = GRX_HTTPQUERYGOAL_GIVE_EVENT_SEQUENCE_REWARD
+		op.doOperationFunc = ( void function ( int opID ) : ( player, rewards, rewardSequence ) {
+			GRX_GiveSequenceRewardEasy(
+				player,
+				opID,
+				GRX_HTTPQUERYGOAL_GIVE_EVENT_SEQUENCE_REWARD,
+				rewardSequence,
+				0,
+				1,
+				rewards
+			)
+		} )
+
+		// TODO: if we run MORE THAN ONE "sticker collection" event at a time, we should refactor this - https://jiratf.rspn.ad.ea.com/browse/R5DEV-542154
+		op.onDoneCallback = ( void function ( int opID ) : ( player ) {
+			Remote_CallFunction_UI( player, "ForceOpenRewardPacks" )
+		} )
+
+		QueueGRXOperation( player, op )
+		while ( !IsGRXOperationDone( op ) )
+		{
+			WaitFrame()
+		}
+
+		if ( op.status != eScriptGRXOperationStatus.DONE_SUCCESS )
+		{
+			Warning( "Failed to grant sticker collection completion pack!" )
+		}
+	}
+}
+#endif // SERVER

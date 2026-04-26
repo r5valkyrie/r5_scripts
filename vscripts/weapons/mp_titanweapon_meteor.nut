@@ -50,7 +50,7 @@ const FLAME_WALL_DAMAGE_RADIUS_DEF = 60
 
 const METEOR_SHELL_EJECT		= $"mdl/Weapons/shellejects/shelleject_40mm.rmdl"
 const METEOR_FX_LOOP		= "Weapon_Sidwinder_Projectile"
-const int METEOR_DAMAGE_FLAGS = damageTypes.gibBullet | DF_IMPACT | DF_EXPLOSION
+const int METEOR_DAMAGE_FLAGS = damageTypes.gibBullet | DF_SHIELD_SYPHON | DF_EXPLOSION
 
 function MpTitanweaponMeteor_Init()
 {
@@ -427,7 +427,7 @@ entity function CreateThermiteTrailOnMovingGeo( entity movingGeo, vector origin,
 {
 	Assert( IsValid( owner ) )
 
-	entity script_mover = CreateScriptMover( origin, angles )
+	entity script_mover = CreateScriptMover( "", origin, angles )
 	script_mover.SetParent( movingGeo, "", true, 0 )
 
 	int attachIdx 		= script_mover.LookupAttachment( "REF" )
@@ -456,7 +456,7 @@ void function OnProjectileCollision_Meteor( entity projectile, vector pos, vecto
 	if ( projectile.proj.projectileBounceCount > 0 )
 		return
 
-	projectile.proj.projectileBounceCount++
+projectile.proj.projectileBounceCount++
 
 	entity owner = projectile.GetOwner()
 	if ( !IsValid( owner ) )
@@ -483,19 +483,19 @@ function PlayerOrNPCFire_Meteor( WeaponPrimaryAttackParams attackParams, bool pl
 		float speed	= 1.0 // 2200.0
 
  		//TODO:: Calculate better attackParams.dir if auto-titan using mortarShots
-		WeaponFireBoltParams fireBoltParams
+	WeaponFireBoltParams fireBoltParams
 		fireBoltParams.pos = attackParams.pos
 		fireBoltParams.dir = attackParams.dir
-		fireBoltParams.speed = speed
+	fireBoltParams.speed = speed
 		fireBoltParams.scriptTouchDamageType = METEOR_DAMAGE_FLAGS
 		fireBoltParams.scriptExplosionDamageType = METEOR_DAMAGE_FLAGS
 		fireBoltParams.clientPredicted = playerFired
 		fireBoltParams.additionalRandomSeed = 0
-		entity bolt = weapon.FireWeaponBolt( fireBoltParams )
+	entity bolt = weapon.FireWeaponBolt( fireBoltParams )
 		//entity bolt = weapon.FireWeaponBolt( attackParams.pos, attackParams.dir, speed, METEOR_DAMAGE_FLAGS, METEOR_DAMAGE_FLAGS, playerFired , 0 )
-		if ( bolt != null )
+	if ( bolt != null )
 			EmitSoundOnEntity( bolt, "weapon_thermitelauncher_projectile_3p" )
-	}
+}
 
 	return 1
 }

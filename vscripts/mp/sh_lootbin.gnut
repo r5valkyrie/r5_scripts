@@ -1,41 +1,99 @@
+//
+
+#if SERVER || CLIENT
 global function ShLootBin_Init
+
+//global function LootBin_GetLoot
+//global function LootBin_IsEmpty
+global function CanAccessSecretCompartments
+global function LootBin_IsOpenAtAll
+global function LootBin_IsFullyOpenedForPlayer
+global function LootBin_IsBusy
+global function LootBin_HasSecretCompartment
+global function LootBin_HasUnopenedSecretCompartment
+global function LootBin_GetSpawnedLoot
+global function GetLootBinForHitEnt
 global function GetAllLootBins
+global function AddCallback_OnLootBinOpening
+global function AddCallback_CanOpenLootBin
+#endif
 
 #if SERVER
-global function Survival_AddCallback_OnLootbinOpened
-global function SURVIVAL_DebugLootBins
-global function TriggerLootSpawnForLootBinsInRadius
-global function LootBin_RegisterRadiusSpawnFilter
+                   
+global struct RandomizeResult
+{
+	array<entity> chosenBins
+	array<entity> unchosenBins
+}
 
-global function AddLootToLootBin
-global function AddMultipleLootItemsToLootBin
-global function GetLootBinContents
-global function GetLootBinSpawnLocation
+global function LootBin_RandomizePerkBinsFromExistingBins
+global function RandomizeLootBins
+      
+
+global function LootBin_RotatingLoot_RefilledInPerkBins_Enabled
+
+global function GetAllLootBinsSMEA
+global function DestroyAllLootBins
+
 global function CreateLootBin
 global function CreateCustomLootBin
 global function InitLootBin
-global function SpawnLootInLootBin
-global function HandleLootbinUse
-global function RemoveLootBinReferences_Preprocess
-global function DestroyLootBin
-global function DestroyMovableLootBin
-global function DissolveLootBin
-global function Thread_DissolveMovableLootBin
-global function RefreshLootBin
-global function ClearLootBinContents
-global function LootBin_PlayCloseSequence
-global function FS_Scenarios_InitLootBin
+global function LootBin_IsEmpty
+global function LootBin_GetLootRefs
+global function LootBin_PutLootItemInside
+global function LootBin_PutMultipleLootItemsInside
+global function LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary
+global function TriggerLootSpawnForLootBinsInRadius
+global function LootBin_RegisterRadiusSpawnFilter
+
+global function LootBin_SetAddItemsToBinOnOpenCallback
 global function LootBin_OnUse
-#elseif CLIENT
-global function ServerCallback_RefreshLootbinHighlight
+global function LootBin_ForceOpen_Thread
+global function LootBin_ForceClose_Thread
+global function LootBin_EmptyBinOfLoot
+global function LootBin_RemoveLootFromInside
+global function Lootbin_RemoveSpecificLootFromInside
+
+global function LootBin_TransferLootBinServerData
+global function LootBin_DeleteLootBin
 #endif
 
-global function LootBin_IsBusy
-global function GetLootBinForHitEnt
+#if SERVER && DEVELOPER
+global function DEV_TakeMeToAnUnopenedLootBin
+global function DEV_TakeMeToAnUnopenedCrowdedLootBin
+global function DEV_GetLootBinItemCounts
+global function DEV_ShowLootBinsOpenedCount
+global function DEV_CloseAllLootBins
+#endif
 
-global function LootBin_IsOpen
+#if CLIENT
+global function CL_LootBinOpening
+#endif
 
-// Loot bin compartment types
+
+#if SERVER
+const bool IS_R5DEV_137998_FIXED = false
+#endif
+
+global const string SUPPORT_LOOT_BIN_SKIN_NAME = "SecretLoot"
+
+global const string LOOT_BIN_DELAY_LOOT_SPAWNING_PLAYLIST_VAR = "survival_lootbin_delay_loot_spawning"
+
+#if SERVER || CLIENT
+global const string LOOT_BIN_MARKER_SCRIPTNAME = "survival_lootbin"
+global const string LOOT_BIN_SCRIPTNAME = "survival_lootbin_spawned"
+
+global const asset LOOT_BIN_MODEL = $"mdl/props/loot_bin/loot_bin_01_animated.rmdl"
+
+global const asset LOOT_BIN_OPEN_REGULAR_FX = $"P_LootBin_open"
+global const asset LOOT_BIN_OPEN_SECRET_FX = $"P_LootBin_open_lower"
+//global const string SOUND_LOOT_BIN_IDLE = "Door_Lootbin_Presence_Loop"
+
+const bool SURVIVAL_DEBUG_LOOT_BINS = false
+#endif
+
+
+#if SERVER || CLIENT
 global enum eLootBinCompartment
 {
 	REGULAR,
@@ -52,34 +110,26 @@ global enum lootBinType
       
 }
 
-const bool IS_R5DEV_137998_FIXED = false
-
-global const string MYSTERY_BOX_SCRIPT_NAME            = "MysteryBoxScriptName"
-global const string LOOT_BIN_DELAY_LOOT_SPAWNING_PLAYLIST_VAR = "survival_lootbin_delay_loot_spawning"
-global const string LOOT_BIN_MARKER_SCRIPTNAME = "survival_lootbin"
-global const string LOOT_BIN_SCRIPTNAME = "survival_lootbin_spawned"
-global const string LOOT_BIN_SCRIPTNAME_CUSTOM_REALMS = "survival_lootbin_custom_realms"
-
-global const asset LOOT_BIN_MODEL = $"mdl/props/loot_bin/loot_bin_01_animated.rmdl"
-global const bool LOOT_BIN_CLOSABLE = false // note that they will always be closable if playlist var lootbins_infinite is set to 1
-
-global const string SOUND_LOOT_BIN_OPEN = "Door_Lootbin_Open"
-global const string SOUND_LOOT_BIN_IDLE = "Door_Lootbin_Presence_Loop"
-const float NUM_LOOT_BIN_SOUND_INITS_PER_SEC = 50.0        // If not a float, script lang converts result to an int
-const float LOOT_BIN_SOUND_INIT_MIN_WAIT = 5.0
-
-const bool SURVIVAL_DEBUG_LOOT_BINS = false
-
-global typedef OnLootBinOpenedCallbackType void functionref( entity, entity, array<string> )
-
-//
-struct LootBinLocationBackupData
+global enum eLootBinSequenceKind
 {
-	vector origin
-	vector angles
-	bool   onMovingGeo
+	OPEN_REGULAR,
+	OPEN_SECRET,
+	OPEN_BOTH,
+	CLOSE_REGULAR,
+	//CLOSE_SECRET,
+	CLOSE_BOTH,
 }
+#endif
 
+
+#if SERVER
+global typedef OnLootBinOpeningCallbackType void functionref( entity, entity, array<entity>, array<entity>, void functionref( bool, bool ) )
+#elseif CLIENT
+global typedef OnLootBinOpeningCallbackType void functionref( entity )
+#endif
+
+
+#if SERVER
 struct LootBinServerData
 {
 	entity openRegularFX
@@ -90,103 +140,514 @@ struct LootBinServerData
 	array<entity> spawnedLootIndexes
 	int numberOfPiecesOfSpawnedLoot
 
+	array<entity> spawnedRegularLootEnts
+	array<entity> spawnedSecretLootEnts
+
 	void functionref( entity, entity ) addItemsToBinOnOpenCallback
 }
+#endif
 
+#if SERVER
+void function LootBin_Opening_PlaySFX( entity lootBin, int lootBinSequenceKind )
+{
+	int binType
+
+	//Smart Loot bins for Armories will be read as Regular bin type via this check. All non perk bins will be read as regular bins.
+	binType = lootBinType.REGULAR
+
+                   
+	if( Perk_MunitionsBox_IsEntMunitionsBox( lootBin ) )
+	{
+		binType = lootBinType.MUNITIONS
+	}
+
+	if( SupportBin_EntityIsSupportBin( lootBin ) )
+	{
+		binType = lootBinType.SUPPORT
+	}
+      
+
+	switch ( binType )
+	{
+		case lootBinType.REGULAR:
+			switch( lootBinSequenceKind )
+			{
+				case eLootBinSequenceKind.OPEN_REGULAR:
+					EmitSoundOnEntity( lootBin , "Door_Lootbin_Open" )
+					break
+				case eLootBinSequenceKind.OPEN_SECRET:
+					EmitSoundOnEntity( lootBin , "Door_Lootbin_Support_Drawer" )
+					break
+				case eLootBinSequenceKind.OPEN_BOTH:
+					EmitSoundOnEntity( lootBin , "Door_Lootbin_Support_Open" )
+					break
+				default:
+					EmitSoundOnEntity( lootBin , "Door_Lootbin_Open" )
+					break
+			}
+			break
+                   
+		case lootBinType.SUPPORT:
+			switch( lootBinSequenceKind )
+			{
+				case eLootBinSequenceKind.OPEN_REGULAR:
+					EmitSoundOnEntity( lootBin , "Door_Lootbin_Open" )
+					break
+				case eLootBinSequenceKind.OPEN_SECRET:
+					EmitSoundOnEntity( lootBin , "Door_Lootbin_Support_Drawer" )
+					break
+				case eLootBinSequenceKind.OPEN_BOTH:
+					EmitSoundOnEntity( lootBin , "Door_Lootbin_Support_Open" )
+					break
+			}
+			break
+		case lootBinType.MUNITIONS:
+			switch( lootBinSequenceKind )
+			{
+				case eLootBinSequenceKind.OPEN_REGULAR:
+					EmitSoundOnEntity( lootBin , "Door_Lootbin_Assault_Open" )
+					break
+				case eLootBinSequenceKind.OPEN_SECRET:
+					EmitSoundOnEntity( lootBin , "Door_Lootbin_Assault_Drawer" )
+					break
+				case eLootBinSequenceKind.OPEN_BOTH:
+					EmitSoundOnEntity( lootBin , "Door_Lootbin_Assault_Open_All" )
+					break
+			}
+			break
+      
+	}
+}
+
+void function LootBin_Opened_CountForPIN( entity player, entity lootbin, array<entity> regularLootEnts, array<entity> secretLootEnts, void functionref( bool, bool ) preventLootRevealFunc )
+{
+	if ( IsValidPlayer( player ) )
+	{
+		player.p.lootBinsOpenedCount++
+		#if DEVELOPER
+			printt( "***** lootbin entity name == " + lootbin.GetScriptName() )
+			printt( "***** lootbins opened is now " + ( player.p.lootBinsOpenedCount + 1 ))
+		#endif
+	}
+}
+#endif
+
+#if SERVER || CLIENT
 struct
 {
-	int                           lootBinSMEA
-	bool                          lootBinsInfinite = false
-	table<entity, array<entity> > lootBinsSpawnedLootMap
-	table<entity, array<string> > lootBinsLootInside
-	array<entity>                    lootBinList
-	array<LootBinLocationBackupData> lootBinBackupLocations
-	int                              numLootBins
-	
-	array<OnLootBinOpenedCallbackType> onLootBinOpenedCallbacks
-	table<entity, LootBinServerData> lootBinServerDataMap
-	
-	table<int, bool functionref( LootData )> binSpawnFilters
-	
-	bool returnFromModesForRefreshBinBool
+	#if SERVER || CLIENT
+		array<OnLootBinOpeningCallbackType> onLootBinOpeningCallbacks
+		table<entity, bool functionref(entity,entity)> canOpenLootBinCallback
+	#endif
+
+	#if SERVER
+		int                                     lootBinSMEA
+
+		table<entity, LootBinServerData> lootBinServerDataMap
+
+		table<int, bool functionref( LootData )> binSpawnFilters
+	#endif
 } file
+#endif
 
-const array<int> returnFromModesForRefreshBin = 
-[
-	eGamemodes.fs_snd,
-	eGamemodes.fs_prophunt,
-	eGamemodes.fs_duckhunt,
-	eGamemodes.flowstate_pkknockback
-]
 
+#if SERVER || CLIENT
 void function ShLootBin_Init()
 {
 	PrecacheModel( LOOT_BIN_MODEL )
+	PrecacheScriptString( LOOT_BIN_SCRIPTNAME )
+	PrecacheParticleSystem( LOOT_BIN_OPEN_REGULAR_FX )
+	PrecacheParticleSystem( LOOT_BIN_OPEN_SECRET_FX )
 
-	RegisterSignal( "TryRefreshLootbinHighlights_Internal" )
 	#if SERVER
 		AddSpawnCallback_ScriptName( LOOT_BIN_MARKER_SCRIPTNAME, InitLootBinFromMap )
-
-		//AddClientCommandCallback( "dev_spawn_lootbin", ClientCommand_spawn_lootbin )
-
+		AddSpawnCallback_ScriptName( LOOT_BIN_SCRIPTNAME, InitLootBin )
+		AddCallback_OnSurvivalPreprocessFinished( InitLootBinEnts )
 		AddCallback_EntitiesDidLoad( EntitiesDidLoad )
-		PrecacheParticleSystem( $"P_impact_exp_artillery" )
-		SetupLootbinPlaylistSettings()
+		AddCallback_OnLootBinOpening( LootBin_Opened_CountForPIN )
+		file.lootBinSMEA = CreateScriptManagedEntArray()
+
+		#if DEVELOPER
+			AddClientCommandCallback( "dev_spawn_lootbin", ClientCommand_dev_spawn_lootbin ) // dev
+		#endif
 	#endif
+
 	#if CLIENT
-		AddCreateCallback( "prop_dynamic", OnPropDynamicCreated )
-		AddDestroyCallback( "prop_dynamic", OnPropDynamicDestroyed )
+		AddCreateCallback( "prop_dynamic", OnPropCreated )
+		AddDestroyCallback( "prop_dynamic", OnPropDestroyed )
+		AddCreateCallback( "prop_script", OnPropCreated )
+		AddDestroyCallback( "prop_script", OnPropDestroyed )
 	#endif
 }
+#endif
+
+
+#if SERVER || CLIENT
+array<entity> function GetAllLootBins()
+{
+	#if SERVER
+		return GetScriptManagedEntArray( file.lootBinSMEA )
+	#elseif CLIENT
+		return GetEntArrayByScriptName( LOOT_BIN_SCRIPTNAME )
+	#endif
+}
+#endif
+
 
 #if SERVER
-	void function SetupLootbinPlaylistSettings()
+int function GetAllLootBinsSMEA()
+{
+	return file.lootBinSMEA
+}
+#endif
+
+
+#if SERVER || CLIENT
+void function AddCallback_OnLootBinOpening( OnLootBinOpeningCallbackType callbackFunc )
+{
+	Assert( !file.onLootBinOpeningCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with Survival_AddCallback_OnLootbinOpened" )
+	file.onLootBinOpeningCallbacks.append( callbackFunc )
+}
+#endif
+
+
+#if SERVER
+void function InitLootBinEnts()
+{
+	// The preprocess step seems to happen before ShLootBin_Init() is called, so delay loot bin inits.
+	foreach ( entity lootBin in GetEntArrayByScriptName( LOOT_BIN_SCRIPTNAME ) )
+		InitLootBin( lootBin )
+}
+
+void function EntitiesDidLoad()
+{
+	thread InitPerkBins()
+}
+
+void function InitPerkBins()
+{
+	FlagWait("Survival_LootSpawned")
+
+	                       
+		                   
+			if(!SupportBin_ShouldUseDiscreteSupportBins()) //if using the support loot bin perk, don't randomize support loot bins into normal bin distribution
+        
+				Randomize_SupportLootBins()
+       
+
+	                   
+	if( LootBin_RandomizePerkBinsFromExistingBins() )
+		Randomize_SupportAndAssaultBins()
+       
+}
+#endif
+
+
+#if SERVER
+void function InitLootBinFromMap( entity lootBinMarker )
+{
+	SURVIVAL_AddLootBin( lootBinMarker, lootBinMarker.GetLinkParentArray() )
+
+	// SURVIVAL_AddLootBin may delete the bin
+
+	if ( IsValid( lootBinMarker ) )
 	{
-		if( returnFromModesForRefreshBin.contains( Gamemode() ) 
-		|| GetCurrentPlaylistVarBool( "flowstate_hackersVsPros", false ) )
+		lootBinMarker.SetScriptName( LOOT_BIN_SCRIPTNAME )
+		InitLootBin( lootBinMarker )
+	}
+}
+#endif
+
+
+#if SERVER && DEVELOPER
+bool function ClientCommand_dev_spawn_lootbin( entity player, array<string> args )
+{
+	TraceResults tr = TraceLine(
+		player.EyePosition(),
+		player.EyePosition() + 900.0 * player.GetViewVector(),
+		player, TRACE_MASK_NPCWORLDSTATIC, TRACE_COLLISION_GROUP_NONE )
+	CreateLootBin( tr.endPos, VectorToAngles( FlattenNormalizeVec( player.EyePosition() - tr.endPos ) ) )
+	return true
+}
+#endif
+
+
+#if SERVER
+entity function CreateLootBin( vector origin, vector angles, bool doMovingGeoDownTrace = false, bool DEV_preventPlaytestSpecial = false, bool supportMinimapIcons = false )
+{
+	entity lootBin
+	if( supportMinimapIcons )
+	{
+		lootBin = CreateEntity( "prop_script" )
+	}
+	else
+	{
+		lootBin = CreateEntity( "prop_dynamic" )
+	}
+
+	lootBin.SetScriptName( LOOT_BIN_SCRIPTNAME )
+	lootBin.SetValueForModelKey( LOOT_BIN_MODEL )
+	lootBin.kv.solid = SOLID_VPHYSICS
+
+	//#if HAS_DEVSCRIPTS
+	//	if ( !DEV_preventPlaytestSpecial && RandomFloat( 1.0 ) < GetCurrentPlaylistVarFloat( "playtest_lootbin_override_chance", 0.0 ) )
+	//	{
+	//		lootBin.e.isPlaytestLootbin = true
+	//		lootBin.SetSkin( LOOT_BIN_SKIN_PLAYTEST_BLUE )
+	//	}
+	//#endif
+
+	lootBin.SetOrigin( origin )
+	lootBin.SetAngles( angles )
+	DispatchSpawn( lootBin )
+	lootBin.SetOrigin( origin )
+	lootBin.SetAngles( angles )
+	SetIsPermanentEntity( lootBin, true )
+
+                    
+	//Forces m_lastPusherAbsOrigin and others variables to update so we don't get "pusher moved outside of think function" warnings
+	lootBin.SetPusher( false )
+	lootBin.SetPusher( true )
+      
+
+	// the loot bin's children actually do the pushing. prevent them from crushing players and close the bin if they were to crush a player
+	array<entity> children = lootBin.GetChildren()
+	foreach( entity child in children )
+	{
+		//child.SetDoOnWouldOtherwiseCrushEntityCallback( true )
+		AddCallback_OnWouldOtherwiseCrushEntity( child, OnWouldCrushCallback )
+	}
+
+
+	thread Thread_AttachMovingLootBinToGeo( lootBin, doMovingGeoDownTrace )
+
+	// InitLootBin will be called automatically
+
+	return lootBin
+}
+
+void function OnWouldCrushCallback( entity pusher, entity pushed )
+{
+	if( !pushed.IsPlayer() )
+		return;
+	entity pusherParent = pusher.GetParent()
+	if( GradeFlagsHas( pusherParent, eGradeFlags.IS_BUSY ) )
+		return
+	bool isRegularCompOpen = GradeFlagsHas( pusherParent, eGradeFlags.IS_OPEN )
+	bool isSecretCompOpen  = GradeFlagsHas( pusherParent, eGradeFlags.IS_OPEN_SECRET )
+	if( !isRegularCompOpen && !isSecretCompOpen )
+		return
+	thread LootBin_ForceClose_Thread( pusherParent, true, true, false )
+}
+#endif
+
+
+#if SERVER
+entity function CreateCustomLootBin( vector origin, vector angles, array<string> lootRefs = [], bool doMovingGeoDownTrace = false )
+{
+	entity lootBin = CreateLootBin( origin, angles, doMovingGeoDownTrace, true )
+
+	LootBin_PutMultipleLootItemsInside( lootBin, eLootBinCompartment.REGULAR, lootRefs )
+
+	return lootBin
+}
+#endif
+
+
+#if SERVER
+void function Thread_AttachMovingLootBinToGeo( entity lootBin, bool doTrace )
+{
+	EndSignal( lootBin, "OnDestroy" )
+
+	vector binOriginParentLinkEntsGroupsKey = RoundVectorInLocalSpace( lootBin.GetOrigin(), 1.0, <0, 0, 0>, <0, 0, 0> )
+
+	bool entitiesLoaded = Flag( "EntitiesDidLoad" )
+	if ( !entitiesLoaded )
+	{
+		FlagWait( "EntitiesDidLoad" )
+		// HACK - Lets other things, like DLands train, take a frame to init after entities loaded
+		WaitFrame()
+	}
+
+	// was there a mover linked to the bin in LevelEd?
+	table< vector, array<entity> > binOriginParentLinkEntsGroups = Loot_GetParentLinkEntsTable()
+	if ( binOriginParentLinkEntsGroupsKey in binOriginParentLinkEntsGroups )
+	{
+		array<entity> parentLinkEnts = binOriginParentLinkEntsGroups[ binOriginParentLinkEntsGroupsKey ]
+
+		foreach ( entity parentLinkEnt in parentLinkEnts )
 		{
-			file.returnFromModesForRefreshBinBool = true
+			if ( !IsValid( parentLinkEnt ) )
+				continue
+
+			if ( parentLinkEnt.GetClassName() == "script_mover" || parentLinkEnt.GetClassName() == "script_mover_lightweight" )
+			{
+				lootBin.SetParent( parentLinkEnt )
+				parentLinkEnt.LinkToEnt( lootBin )
+				return
+			}
 		}
 	}
-#endif 
+	if ( doTrace )
+	{
+		TraceResults trace = TraceLineHighDetail(
+			lootBin.GetOrigin() + < 0, 0, 32 >,
+			lootBin.GetOrigin() - <0, 0, 88>,
+			lootBin, LOOT_TRACE, LOOT_COLLISION_GROUP, lootBin )
 
-// These callbacks are called before loot is spawned in a lootbin
+		if ( IsValid( trace.hitEnt ) && trace.hitEnt.HasPusherAncestor() )
+		{
+			lootBin.SetParent( trace.hitEnt )
+			return
+		}
+
+		Warning( "Moving loot bin trace unable to attach to geo! " + lootBin.GetOrigin() )
+		//DebugDrawSphere( lootBin.GetOrigin(), 64, <255, 0, 0>, true, 100 )
+	}
+}
+#endif
+
 #if SERVER
-void function LootBin_RegisterRadiusSpawnFilter( int index, bool functionref( LootData ) filter )
+EntitySet lootBinDoubleInitCheck
+void function InitLootBin( entity lootBin )
 {
-	file.binSpawnFilters[index] <- filter
-}
-
-void function TriggerLootSpawnForLootBinsInRadius( vector pos, float radius, int lootTier, int spawnLimitPerFrame = -1, int spawnFilter = -1 )
-{
-	if ( spawnLimitPerFrame != -1 && GetCurrentPlaylistVarBool( LOOT_BIN_DELAY_LOOT_SPAWNING_PLAYLIST_VAR, true ) )
-	{
-		thread TriggerLootSpawnForLootBinsInRadius_Thread( pos, radius, lootTier, spawnLimitPerFrame, spawnFilter )
+	if ( lootBin in lootBinDoubleInitCheck )
 		return
-	}
+	lootBinDoubleInitCheck[lootBin] <- IN_SET
+	AddEntityDestroyedCallback( lootBin, void function( entity lootBin ) {
+		delete lootBinDoubleInitCheck[lootBin]
+	} )
 
-	foreach ( entity lootBin in file.lootBinList )
-	{
-		if ( !IsValid( lootBin ) )
-			continue
-			
-		if ( Distance( lootBin.GetOrigin(), pos ) > radius )
-			continue
-		
-		if( spawnFilter != -1  && spawnFilter in lootBin.e.spawnedFilters )
-			continue
-
-		if ( lootBin.e.lootOfRarityHasBeenSpawned <= lootTier ) // Set to true by LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary
-			continue
+	lootBin.SetModel( LOOT_BIN_MODEL )
+	lootBin.e.isOpen = false
+	lootBin.e.isBusy = false
+	lootBin.e.hasBeenOpened = false
+	lootBin.e.hasSecretBeenOpened = false
+	lootBin.AllowMantle()
+	lootBin.SetForceVisibleInPhaseShift( true )
+	lootBin.SetFadeDistance( 15000 )
+	lootBin.SetIgnorePredictedTriggerTypes( TT_JUMP_PAD | TT_GRAVITY_LIFT | TT_BLACKHOLE  )
 
 
-		if ( !GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN ) )
-			LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( lootBin, eLootBinCompartment.REGULAR, false, lootTier, spawnFilter )
-		//if ( !GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN_SECRET ) )
-		//	LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( lootBin, eLootBinCompartment.SECRET, false )
-	}
+
+	thread LootBin_Enable( lootBin )
+
+	lootBin.Highlight_Enable()
+	AddNeurolinkDetectionForPropScript( lootBin )
+	AddToScriptManagedEntArray( file.lootBinSMEA, lootBin )
+
+	#if SURVIVAL_DEBUG_LOOT_BINS
+		//DebugDrawLine( lootBin.GetOrigin(), lootBin.GetOrigin() + <0, 0, 1000>, <255, 255, 255>, true, 100.0 )
+	#endif
+
+	LootBinServerData lbsd
+	lbsd.addItemsToBinOnOpenCallback = MaybeAddWeaponToLootBinOnOpen
+	file.lootBinServerDataMap[lootBin] <- lbsd
 }
 
+void function LootBin_SetAddItemsToBinOnOpenCallback( entity lootBin, void functionref( entity, entity ) callback )
+{
+	file.lootBinServerDataMap[lootBin].addItemsToBinOnOpenCallback = callback
+}
+
+void function LootBin_Enable( entity lootBin )
+{
+	#if DEVELOPER
+		lootBin.EndSignal( "OnDestroy" )
+		FlagWait( "Survival_LootSpawned" )
+	#endif
+
+	lootBin.SetUsable()
+	lootBin.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
+	lootBin.SetUsablePriority( USABLE_PRIORITY_LOW )
+	SetCallback_CanUseEntityCallback( lootBin, CanUseLootBin )
+	AddCallback_OnUseEntity_ServerOnly( lootBin, void function( entity lootBin, entity player, int useInputFlags ) {
+		LootBin_OnUse( lootBin, player, useInputFlags )
+	} )
+}
+#endif
+
+//#if SERVER && HAS_DEVSCRIPTS
+//array<string> function DEV_SubstituteLootbinLoot( entity lootBin, array<string> originalLootToSpawn )
+//{
+//	if ( !lootBin.e.isPlaytestLootbin )
+//		return originalLootToSpawn
+//
+//	if ( !SURVIVAL_IsValidLootGroup( "PlaytestSpecial".tolower() ) )
+//	{
+//		Warning( "PlaytestSpecial loot group is empty." )
+//		return []
+//	}
+//
+//	int lootCount                = GetCurrentPlaylistVarInt( "playtest_lootbin_override_loot_count", 4 )
+//	array<string> substituteLoot = SURVIVAL_GetMultipleWeightedItemsFromGroup( "PlaytestSpecial".tolower(), lootCount )
+//	return substituteLoot
+//}
+//#endif
+
+
+#if SERVER
+void function DestroyAllLootBins()
+{
+	foreach ( entity lootBin in GetAllLootBins() )
+		lootBin.Destroy()
+}
+#endif
+
+
+#if SERVER
+void function LootBin_PutMultipleLootItemsInside( entity lootBin, int compartment, array<string> refs )
+{
+	foreach ( string ref in refs )
+		LootBin_PutLootItemInside( lootBin, compartment, ref, null )
+}
+#endif
+
+
+#if SERVER
+void function LootBin_PutLootItemInside( entity lootBin, int compartment, string ref, int ornull count )
+{
+	Assert( compartment != eLootBinCompartment.SECRET || LootBin_HasSecretCompartment( lootBin ), "Tried to put loot into the secret compartment of a regular loot bin" )
+	Assert( ( compartment == eLootBinCompartment.SECRET && !GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN_SECRET ) )
+		|| ( compartment == eLootBinCompartment.REGULAR && !GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN ) ),
+		"Tried to put loot into loot bin that is already open" )
+
+	if ( ref == "blank" )
+		return
+
+	LootData lootData = SURVIVAL_Loot_GetLootDataByRef( ref )
+
+	LootRef lootRef
+	lootRef.lootData = lootData
+	lootRef.count = (count != null ? expect int(count) : lootRef.lootData.countPerDrop)
+
+	LootBinServerData lbsd = file.lootBinServerDataMap[lootBin]
+	if ( compartment == eLootBinCompartment.REGULAR )
+		lbsd.delayedRegularLoot.append( lootRef )
+	else if ( compartment == eLootBinCompartment.SECRET )
+		lbsd.delayedSecretLoot.append( lootRef )
+
+	lootBin.e.lootOfRarityHasBeenSpawned = eLootTier._count
+	bool shouldSpawnAmmo = !SURVIVAL_Loot_IsAmmoSpawningDisabled()
+
+	if ( lootData.lootType == eLootType.MAINWEAPON && shouldSpawnAmmo )
+	{
+		string ammoRef = lootData.ammoType
+		if ( SURVIVAL_Loot_IsRefValid( ammoRef ) )
+		{
+			LootData ammoData = SURVIVAL_Loot_GetLootDataByRef( ammoRef )
+                         
+                                                                                                        
+			     
+				LootBin_PutLootItemInside( lootBin, compartment, ammoRef, ammoData.countPerDrop * 2 )
+         
+		}
+	}
+}
+#endif
+
+
+#if SERVER
 int function LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( entity lootBin, int compartment, bool isCompartmentOpen, int onlySpawnLootOfTierOrHigher = eLootTier.NONE, int spawnFilter = -1 )
 {
 	LootBinServerData lbsd = file.lootBinServerDataMap[lootBin]
@@ -221,12 +682,16 @@ int function LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( entity lootB
 			continue
 
 		entity lootEnt = SpawnGenericLoot( lootToSpawn.lootData.ref, lootBin.GetWorldSpaceCenter(), lootBin.GetAngles(), lootToSpawn.count )
-		//DebugDrawLine( lootEnt.GetOrigin(), lootEnt.GetOrigin() + <0, 0, 9000>, COLOR_RED, true, 10.0 )
+		//DebugDrawLine( lootEnt.GetOrigin(), lootEnt.GetOrigin() + <0, 0, 9000>, <255, 0, 0>, true, 10.0 )
 		CopyRealmsFromTo( lootBin, lootEnt )
 		lootEnt.SetParent( lootBin )
 		CopyRealmsFromTo( lootBin, lootEnt )
 		amountOfLootSpawned++
 		spawnedLoot.append( lootEnt )
+		if ( isSecretCompartment )
+			lbsd.spawnedSecretLootEnts.append( lootEnt )
+		else
+			lbsd.spawnedRegularLootEnts.append( lootEnt )
 
 		SetItemSpawnSource( lootEnt, eSpawnSource.LOOTBIN, lootBin )
 		lootEnt.e.isSecretLoot = isSecretCompartment
@@ -256,8 +721,21 @@ int function LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( entity lootB
 		}
 	}
 
-	array<entity> lootEnts = LootBin_GetSpawnedLoot( lootBin, (compartment == eLootBinCompartment.REGULAR), (compartment == eLootBinCompartment.SECRET) )
-	int numberOfLootItems = lootEnts.len() + delayedLoot.len()
+	array<entity> existingLootEnts = LootBin_GetSpawnedLoot( lootBin, (compartment == eLootBinCompartment.REGULAR), (compartment == eLootBinCompartment.SECRET) )
+
+	// Merge: use existingLootEnts for items GetChildren() can see, plus the tracked array for items it may miss
+	// (GetChildren() may not reflect newly SetParent'd entities in the same frame)
+	// Use compartment-specific arrays so regular loot doesn't shift into secret compartment positions and vice versa
+	array<entity> trackedLootEnts = isSecretCompartment ? lbsd.spawnedSecretLootEnts : lbsd.spawnedRegularLootEnts
+	array<entity> lootEnts = []
+	foreach ( entity ent in existingLootEnts )
+	{
+		if ( !trackedLootEnts.contains( ent ) )
+			lootEnts.append( ent )
+	}
+	lootEnts.extend( trackedLootEnts )
+
+	int numberOfLootItems = lootEnts.len()
 	foreach ( int lootIdx, entity lootEnt in lootEnts )
 	{
 		if ( delayLootSpawning && !isSecretCompartment )
@@ -367,6 +845,38 @@ int function LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( entity lootB
 
 	return amountOfLootSpawned
 }
+#endif
+
+
+#if SERVER
+void function LootBin_RegisterRadiusSpawnFilter( int index, bool functionref( LootData ) filter )
+{
+	file.binSpawnFilters[index] <- filter
+}
+
+void function TriggerLootSpawnForLootBinsInRadius( vector pos, float radius, int lootTier, int spawnLimitPerFrame = -1, int spawnFilter = -1 )
+{
+	if ( spawnLimitPerFrame != -1 && GetCurrentPlaylistVarBool( LOOT_BIN_DELAY_LOOT_SPAWNING_PLAYLIST_VAR, true ) )
+	{
+		thread TriggerLootSpawnForLootBinsInRadius_Thread( pos, radius, lootTier, spawnLimitPerFrame, spawnFilter )
+		return
+	}
+
+	foreach ( entity lootBin in GetScriptManagedEntArrayWithinCenter( file.lootBinSMEA, TEAM_ANY, pos, radius ) )
+	{
+		if( spawnFilter != -1  && spawnFilter in lootBin.e.spawnedFilters )
+			continue
+
+		if ( lootBin.e.lootOfRarityHasBeenSpawned <= lootTier ) // Set to true by LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary
+			continue
+
+
+		if ( !GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN ) )
+			LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( lootBin, eLootBinCompartment.REGULAR, false, lootTier, spawnFilter )
+		//if ( !GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN_SECRET ) )
+		//	LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( lootBin, eLootBinCompartment.SECRET, false )
+	}
+}
 
 void function TriggerLootSpawnForLootBinsInRadius_Thread( vector pos, float radius, int lootTier, int spawnLimitPerFrame, int spawnFilter )
 {
@@ -391,10 +901,63 @@ void function TriggerLootSpawnForLootBinsInRadius_Thread( vector pos, float radi
 	}
 }
 
-void function Survival_AddCallback_OnLootbinOpened( OnLootBinOpenedCallbackType callbackFunc )
+#endif
+
+
+#if SERVER || CLIENT
+bool function LootBin_HasSecretCompartment( entity lootBin )
 {
-	Assert( !file.onLootBinOpenedCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with Survival_AddCallback_OnLootbinOpened" )
-	file.onLootBinOpenedCallbacks.append( callbackFunc )
+                 
+                                                                                                                                                        
+	     
+		Assert( lootBin.GetScriptName() == LOOT_BIN_SCRIPTNAME || lootBin.GetScriptName() == LOOT_BIN_MARKER_SCRIPTNAME )
+       
+
+                       
+             
+       
+
+	bool isSupportBin = lootBin.GetSkin() == lootBin.GetSkinIndexByName( LOOT_BIN_SUPPORT_SKIN )
+	bool isMunitionsBin = lootBin.GetSkin() == lootBin.GetSkinIndexByName( MUNITIONS_BOX_LOOT_BIN_SKIN_NAME )
+
+	
+	if( lootBin.GetSkin() == lootBin.GetSkinIndexByName( SUPPORT_LOOT_BIN_SKIN_NAME ) )
+		return true
+
+	                   
+	if( isMunitionsBin )
+		return true
+       
+
+                 
+                                        
+             
+       
+
+                 
+                                                              
+             
+       
+
+	return false
+}
+#endif
+
+#if SERVER || CLIENT
+bool function LootBin_HasUnopenedSecretCompartment( entity lootBin )
+{
+	Assert( lootBin.GetScriptName() == LOOT_BIN_SCRIPTNAME || lootBin.GetScriptName() == LOOT_BIN_MARKER_SCRIPTNAME )
+
+	if ( lootBin.GetNetworkedClassName() != "prop_dynamic" )
+		return false
+
+	if (LootBin_HasSecretCompartment( lootBin ) == false)
+		return false
+
+	if (GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN_SECRET ) == true)
+		return false
+
+	return true
 }
 #endif
 
@@ -406,7 +969,7 @@ array<entity> function LootBin_GetSpawnedLoot( entity lootBin, bool includeRegul
 	#endif
 
 	array<entity> out = []
-	foreach ( entity child in lootBin.GetLinkEntArray() )
+	foreach ( entity child in lootBin.GetChildren() )
 	{
 		if ( child.GetNetworkedClassName() != "prop_survival" )
 			continue
@@ -426,745 +989,808 @@ array<entity> function LootBin_GetSpawnedLoot( entity lootBin, bool includeRegul
 #endif
 
 
-
 #if SERVER
-void function EntitiesDidLoad()
+bool function LootBin_IsEmpty( entity lootBin )
 {
-	// make sure all the bins that were spawned since the preprocess step seems to happen before ShLootBin_Init() is called
-	array<entity> bins = GetEntArrayByScriptName( LOOT_BIN_SCRIPTNAME )
-	foreach ( bin in bins )
-	{
-		InitLootBin( bin )
-	}
+	LootBinServerData lbsd = file.lootBinServerDataMap[lootBin]
 
-	AddSpawnCallback_ScriptName( LOOT_BIN_SCRIPTNAME, InitLootBin )
-}
+	if ( lbsd.delayedRegularLoot.len() > 0 )
+		return false
 
-void function InitLootBinFromMap( entity lootbin )
-{
-	if( Safe_isScenariosMode() )
-	{
-		Safe_FS_Scenarios_SaveLootbinData( lootbin )
-		return
-	}
+	if ( lbsd.delayedSecretLoot.len() > 0 )
+		return false
 
-	if( Gamemode() == eGamemodes.fs_infected )
-	{
-		if ( file.lootBinList.contains( lootbin ) )
-			return
-		
-		array<CallbackParam> params = ModCallbacks_CreateParams()
-		ModCallbacks_AddEntityParam( params, lootbin )
-		ModCallbacks_CallVoidCallbackWithParams( "InitMysteryBoxFromLootbin", params )
+	array<entity> loot = LootBin_GetSpawnedLoot( lootBin, true, true )
+	if ( loot.len() > 0 )
+		return false
 
-		file.numLootBins++
-		file.lootBinList.append( lootbin )
-		return
-	}
-	
-	SURVIVAL_AddLootBin( lootbin )
-
-	//Check for moving geo such as train
-	TraceResults trace = TraceLineHighDetail( lootbin.GetOrigin(), lootbin.GetOrigin() - <0, 0, 88>, lootbin, LOOT_TRACE, LOOT_COLLISION_GROUP )
-	if ( IsValid( trace.hitEnt ) && trace.hitEnt.HasPusherAncestor() )
-	{
-		if( Gamemode() == eGamemodes.WINTEREXPRESS ) //removes train lootbins in winter express mode
-		{
-			lootbin.Destroy()
-			return
-		}
-
-		entity parentPoint = CreateEntity( "script_mover_lightweight" )
-		{
-			parentPoint.kv.solid = 0
-			parentPoint.SetValueForModelKey( $"mdl/dev/editor_ref.rmdl" )
-			parentPoint.kv.SpawnAsPhysicsMover = 0
-			parentPoint.SetOrigin( lootbin.GetOrigin() )
-			parentPoint.SetAngles( lootbin.GetAngles() )
-			DispatchSpawn( parentPoint )
-			parentPoint.Hide()
-			parentPoint.SetParent( trace.hitEnt, "", true, 0 )
-			lootbin.SetParent( parentPoint )
-		}
-		
-		if( IsValid( parentPoint ) && trace.hitEnt.GetScriptName() == "train_brush" )
-			SetTargetName( lootbin, "train_bin" )
-	}
-
-	if ( IsValid( lootbin ) )
-	{
-		lootbin.SetScriptName( LOOT_BIN_SCRIPTNAME )
-		InitLootBin( lootbin )
-	}
-
-}
-
-bool function SURVIVAL_ShouldBinOrSpawnPointMoveWithGeo( entity binOrSpawnPoint )
-{
-	if ( binOrSpawnPoint.HasKey( "onMovingGeo" ) )
-		return true
-
-	if ( binOrSpawnPoint.e.isOnMovingGeo )
-		return true
-
-	return false
-}
-#endif
-
-#if SERVER
-bool function ClientCommand_spawn_lootbin( entity player, array<string> args )
-{
-	TraceResults tr = TraceLine( player.EyePosition(), player.EyePosition() + 900.0 * player.GetViewVector(), player, TRACE_MASK_NPCWORLDSTATIC, TRACE_COLLISION_GROUP_NONE )
-	entity lootbin  = CreateLootBin( tr.endPos, VectorToAngles( FlattenNormalizeVec( player.EyePosition() - tr.endPos ) ) )
-
-	//if ( !tr.hitEnt.IsWorld() )
-	//	lootbin.SetParent( tr.hitEnt )
+	                   
+	// munitions boxes get loot inserted into the secret compartment on open, so never consider them empty
+	if( lootBin.GetSkin() == lootBin.GetSkinIndexByName( MUNITIONS_BOX_LOOT_BIN_SKIN_NAME ) )
+		return false
+       
 
 	return true
 }
 #endif
 
+
 #if SERVER
-entity function CreateLootBin( vector origin, vector angles, bool onMovingGeo = false )
+array<LootRef> function LootBin_GetLootRefs( entity lootBin, bool includeRegular, bool includeSecret )
 {
-	entity lootbin = CreateEntity( "prop_dynamic" )
-	lootbin.SetScriptName( LOOT_BIN_SCRIPTNAME )
-	lootbin.SetValueForModelKey( LOOT_BIN_MODEL )
-	lootbin.SetOrigin( origin )
-	lootbin.SetAngles( angles )
-	lootbin.kv.solid = SOLID_VPHYSICS
+	array<LootRef> refs = []
 
-	DispatchSpawn( lootbin )
+	foreach ( entity spawnedLoot in LootBin_GetSpawnedLoot( lootBin, includeRegular, includeSecret ) )
+		refs.append( SURVIVAL_CreateLootRefFromLootEnt( spawnedLoot ) )
 
-	if ( onMovingGeo )
-		thread Thread_AttachMovingLootBinToGeo( lootbin )
+	LootBinServerData lbsd = file.lootBinServerDataMap[lootBin]
+	if ( includeRegular )
+		refs.extend( lbsd.delayedRegularLoot )
+	if ( includeSecret )
+		refs.extend( lbsd.delayedSecretLoot )
 
-	return lootbin
+	return refs
 }
+#endif
 
-entity function CreateCustomLootBin( vector origin, vector angles, array<string> lootRefs = [], bool onMovingGeo = false )
+
+#if SERVER
+bool function LootBin_OnUse( entity lootBin, entity player, int useInputFlags )
 {
-	entity lootbin = CreateEntity( "prop_dynamic" )
-	lootbin.SetScriptName( LOOT_BIN_SCRIPTNAME )
-	lootbin.SetValueForModelKey( LOOT_BIN_MODEL )
-	lootbin.SetOrigin( origin )
-	lootbin.SetAngles( angles )
-	lootbin.kv.solid = SOLID_VPHYSICS
+	if ( !IsBitFlagSet( useInputFlags, USE_INPUT_DEFAULT ) )
+		return false
 
-	DispatchSpawn( lootbin )
+	if ( lootBin.Anim_IsActive() )
+		return false
 
-	if ( onMovingGeo )
-		thread Thread_AttachMovingLootBinToGeo( lootbin )
+	if ( GradeFlagsHas( lootBin, eGradeFlags.IS_BUSY ) )
+		return false
 
-	AddMultipleLootItemsToLootBin( lootbin, lootRefs )
+                                 
+                                                                               
+              
+        
 
-	return lootbin
-}
+	bool isLocked             = GradeFlagsHas( lootBin, eGradeFlags.IS_LOCKED )
+	bool isRegularCompOpen    = GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN )
+	bool isSecretCompOpen     = GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN_SECRET )
+	bool canAccessSecretComps = IsValid( player )
+	bool canBeClosed          = LootBin_CanBeClosed( lootBin )
 
-// Close bin, refresh contents
-void function RefreshLootBin( entity lootBin, string lootGroup, int numLootItems )
-{
-	// Check if loot bin is open
-	if ( LootBin_IsOpen( lootBin ) )
-		waitthread LootBin_PlayCloseSequence( lootBin )
+	int sequenceKind = -1
 
-	if( file.returnFromModesForRefreshBinBool ) 
-		return
-	
-	// New refs
-	file.lootBinsLootInside[ lootBin ] = []
-	array<string> newRefs = SURVIVAL_GetMultipleWeightedItemsFromGroup( lootGroup, numLootItems )
-	AddMultipleLootItemsToLootBin( lootBin, newRefs )
-	lootBin.e.hasBeenOpened = false
-}
+	// Is this needed?
+	bool isValidGameMode = true
+                        
+                                                                      
+       
 
-void function Thread_AttachMovingLootBinToGeo( entity lootbin )
-{
-	bool entitiesLoaded = Flag( "EntitiesDidLoad" )
-	if ( !entitiesLoaded )
+	LootBinServerData lbsd = file.lootBinServerDataMap[lootBin]
+	if( IsValid( player ) && player.IsPlayer() && isValidGameMode && lbsd.addItemsToBinOnOpenCallback != null )
 	{
-		FlagWait( "EntitiesDidLoad" )
-		//
-		WaitFrame()
+		lbsd.addItemsToBinOnOpenCallback( lootBin, player )
 	}
 
-	TraceResults trace = TraceLineHighDetail( lootbin.GetOrigin() + < 0, 0, 32 >, lootbin.GetOrigin() - <0, 0, 88>, lootbin, LOOT_TRACE, LOOT_COLLISION_GROUP )
+               
+                                          
+       
 
-	if ( IsValid( trace.hitEnt ) && trace.hitEnt.HasPusherAncestor() )
+                      
+                          
+  
+                                                                       
+                                                
+      
+                                                   
+  
+     
+	canAccessSecretComps = canAccessSecretComps && CanAccessSecretCompartments( lootBin, player )
+	if ( isLocked )
 	{
-		entity mover = CreateScriptMover( lootbin.GetOrigin(), lootbin.GetAngles() )
-		lootbin.SetParent( mover )
-		mover.SetParent( trace.hitEnt )
-	}
-}
-
-void function ClearLootBinContents( entity lootbin )
-{
-    if (!(lootbin in file.lootBinsSpawnedLootMap) || !(lootbin in file.lootBinsLootInside))
-        return
-    
-    array<entity> loot = file.lootBinsSpawnedLootMap[ lootbin ]
-
-	foreach( ent in loot)
-	{
-		if ( IsValid( ent ) )
-			ent.Destroy()
-	}
-    
-    file.lootBinsSpawnedLootMap[lootbin] <- []
-	file.lootBinsLootInside[lootbin] <- []
-}
-
-void function InitLootBin( entity lootbin )
-{
-	if ( file.lootBinList.contains( lootbin ) )
-		return
-
-	var dataTable = GetDataTable( $"datatable/survival_loot.rpak" )
-	int numRows = GetDatatableRowCount( dataTable )
-	lootbin.e.isOpen = false
-	lootbin.e.isBusy = false
-	lootbin.e.hasBeenOpened = false
-	lootbin.AllowMantle()
-	lootbin.SetForceVisibleInPhaseShift( true )
-	lootbin.SetUsable()
-	lootbin.SetFadeDistance( 100000 )
-	lootbin.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
-	//lootbin.AddUsableValue( USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
-	lootbin.SetUsablePriority( USABLE_PRIORITY_LOW )
-	AddCallback_OnUseEntity( lootbin, OnLootBinUse )
-	file.lootBinsSpawnedLootMap[lootbin] <- []
-	file.lootBinsLootInside[lootbin] <- []
-	file.numLootBins++
-	float waitTime = file.numLootBins / NUM_LOOT_BIN_SOUND_INITS_PER_SEC
-	file.lootBinList.append( lootbin )
-
-	//thread DelayedLootBinLoop( lootbin, waitTime )
-
-	SetCallback_CanUseEntityCallback( lootbin, LootBin_CanUse )
-
-	if (Playlist() == ePlaylists.survival_firingrange || Playlist() == ePlaylists.survival_training)
-		return
-	
-	if ( SURVIVAL_DEBUG_LOOT_BINS )
-	{
-		DebugDrawLine( lootbin.GetOrigin(), lootbin.GetOrigin() + <0, 0, 1000>, 255, 255, 255, true, 100.0 )
-	}
-	if( GameRules_GetGameMode() == "fs_snd" )
-	{
-		//lootbin.SetSkin(2)
-		return
-	}
-	array<string> Refs
-
-	if( lootbin.GetTargetName() == "train_bin" )
-	{
-		Refs = SURVIVAL_GetMultipleWeightedItemsFromGroup( "POI_Ultra", 4 )
-	} else if( GetCurrentPlaylistVarBool( "ketchup_mod7", false ) )
-	{
-		int amount = RandomIntRangeInclusive(3,5)
-		string itemRef
-		for(int j = 0; j < amount; j++)
+		entity owner = lootBin.GetOwner()
+		if( owner == player  || GetCurrentPlaylistVarBool( "lootbin_locking_disabled", false ) )
 		{
-			for(int i = 0; i < 1; i++)
-			{
-				itemRef = SURVIVAL_GetWeightedItemFromGroup( LootZones_GetRefForOrigin(lootbin.GetOrigin()) )
-				LootData lootData = SURVIVAL_Loot_GetLootDataByRef( itemRef )
-				
-				if( itemRef == "blank" || itemRef == "" ) //todo add more restricted loot
-				{
-					i--
-					continue
-				}
-				if ( lootData.tier >= 2 )
-				{
-					i--
-					continue
-				}
-				
-				if ( lootData.lootType == eLootType.MAINWEAPON )
-				{
-					i--
-					continue
-				}
-
-				Refs.append( itemRef )
-			}
-		}
-	} else
-	{
-		Refs = SURVIVAL_GetMultipleWeightedItemsFromGroup( LootZones_GetRefForOrigin(lootbin.GetOrigin()), RandomIntRangeInclusive(3,5) )
-	}
-	
-	if( GetCurrentPlaylistVarBool( "lsm_mod9", false ) )
-	{
-		Refs = ["mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol","mp_weapon_shotgun_pistol"]
-		if(RandomInt(4) == 3)
-			Refs = ["mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol"]
-		else if(RandomInt(4) == 2)
-			Refs = ["mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol"]
-		else if(RandomInt(4) == 1)
-			Refs = ["mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol"]
-	}
-	
-	if( GetCurrentPlaylistVarBool("lootbin_loot_enable", true) == true && Gamemode() != eGamemodes.fs_snd )
-	{
-		AddMultipleLootItemsToLootBin( lootbin, Refs )
-	}
-	
-	// lootbin.SetSkin( RandomInt( 4 ) )
-}
-
-void function FS_Scenarios_InitLootBin( entity lootbin )
-{
-	if ( file.lootBinList.contains( lootbin ) )
-		return
-
-	lootbin.e.isOpen = false
-	lootbin.e.isBusy = false
-	lootbin.e.hasBeenOpened = false
-	lootbin.e.shouldSpawnLoot = true
-
-	lootbin.AllowMantle()
-	lootbin.SetForceVisibleInPhaseShift( true )
-	lootbin.SetUsable()
-	lootbin.SetFadeDistance( 100000 )
-	lootbin.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
-	lootbin.SetUsablePriority( USABLE_PRIORITY_LOW )
-	AddCallback_OnUseEntity( lootbin, OnLootBinUse )
-
-	file.lootBinsSpawnedLootMap[lootbin] <- []
-	file.lootBinsLootInside[lootbin] <- []
-
-	file.lootBinList.append( lootbin )
-
-	SetCallback_CanUseEntityCallback( lootbin, LootBin_CanUse )
-}
-
-// the loop doesn't play without a delay involved for some reason
-void function DelayedLootBinLoop( entity lootbin, float waitTime )
-{
-	if ( !IsValid( lootbin ) )
-	{
-		printt( "!!! WARNING !!! Tried to play delayed loot bin loop on a bin marked for delete!" )
-		return
-	}
-
-	lootbin.EndSignal( "OnDestroy" )
-
-	float totalWaitTime = LOOT_BIN_SOUND_INIT_MIN_WAIT + waitTime
-
-	// Only wait if the loot bin is spawning in early (at map spawn)
-	if ( Time() < totalWaitTime )
-	{
-		wait totalWaitTime
-	}
-
-
-	EmitSoundOnEntity( lootbin, SOUND_LOOT_BIN_IDLE )
-}
-
-#endif
-
-array<entity> function GetAllLootBins()
-{
-	return file.lootBinList
-}
-
-#if SERVER
-array<string> function GetLootBinContents( entity bin )
-{
-	return file.lootBinsLootInside[ bin ]
-}
-#endif
-
-#if SERVER
-void function RemoveLootBinReferences_Preprocess( entity lootBin )
-{
-	if ( IsValid( lootBin ) )
-		lootBin.UnsetUsable()
-
-	delete file.lootBinsSpawnedLootMap[lootBin]
-
-	delete file.lootBinsLootInside[lootBin]
-
-	file.lootBinList.removebyvalue( lootBin )
-	file.numLootBins--
-}
-#endif
-
-#if SERVER
-void function DestroyMovableLootBin( entity mover )
-{
-	entity lootBin = mover.FirstMoveChild()
-	DestroyLootBin( lootBin )
-
-	mover.Destroy()
-}
-
-void function DestroyLootBin( entity lootBin )
-{
-	if ( !IsValid( lootBin ) )
-	{
-		printt( "!!! WARNING !!! Attempting to destroy lootbin:", lootBin, "that doesn't exist!" )
-		return
-	}
-
-	array<entity> loot = file.lootBinsSpawnedLootMap[ lootBin ]
-
-	foreach( ent in loot)
-	{
-		if ( IsValid( ent ) )
-			ent.Destroy()
-	}
-
-	RemoveLootBinReferences_Preprocess( lootBin )
-	lootBin.Destroy()
-}
-
-void function Thread_DissolveMovableLootBin( entity mover )
-{
-	entity lootBin = mover.FirstMoveChild()
-	DissolveLootBin( lootBin )
-
-	wait 0.6
-	mover.Destroy()
-}
-
-void function DissolveLootBin( entity lootBin )
-{
-	if ( !IsValid( lootBin ) )
-	{
-		printt( "!!! WARNING !!! Attempting to dissolve lootbin:", lootBin, "that doesn't exist!" )
-		return
-	}
-
-	array<entity> loot = file.lootBinsSpawnedLootMap[ lootBin ]
-	foreach( ent in loot)
-	{
-		if ( IsValid( ent ) )
-		{
-			ent.UnsetUsable()
-			ent.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 500 )
+			isLocked = false
+			GradeFlagsClear( lootBin, eGradeFlags.IS_LOCKED )
 		}
 	}
 
-	RemoveLootBinReferences_Preprocess( lootBin )
-	lootBin.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 500 )
-}
-#endif
+                      
+                                         
+  
+              
+  
+       
 
-#if SERVER
-void function AddMultipleLootItemsToLootBin( entity lootBin, array<string> refs )
-{
-    array<string> lootToSpawn = GetLootBinContents( lootBin )
-    if(lootToSpawn.len() > 0)
-    {
-        ClearLootBinContents(lootBin)
-    }
-	int numRefs = refs.len()
-	for ( int i; i < numRefs; i++ )
-		AddLootToLootBin( lootBin, refs[ i ] )
-}
+                
+                                                                                                                                  
+  
+                                                      
+                                                
+      
+                                           
+  
+      
+                
+                                                             
+                                                                     
 
-void function AddLootToLootBin( entity lootBin, string ref )
-{
-	file.lootBinsLootInside[ lootBin ].append( ref )
-	
-	LootData data = SURVIVAL_Loot_GetLootDataByRef( ref )
-	
-	if ( data.lootType == eLootType.MAINWEAPON )
-		file.lootBinsLootInside[ lootBin ].append( data.ammoType )
-}
-#endif
+                                                                                                                          
+  
+                                                               
+                                                               
+                                            
+   
 
-#if SERVER
-Point function GetLootBinSpawnLocation( entity lootbin, int lootI, int lootCount )
-{
-	float y    = Graph( lootI + 1, 0, lootCount + 1, -51, 51 )
-	vector pos = lootbin.GetOrigin() + RotateVector( <14, y, 33>, lootbin.GetAngles() )
-	vector ang = AnglesCompose( lootbin.GetAngles(), <10, 0, 0> )
+                             
+                                                          
+                                                
+                                                                                                                                                
+                                                          
+        
+                                                                                   
+         
+                                       
+   
+  
+      
 
-	Point p
-	p.origin = pos
-	p.angles = ang
-	return p
-}
-
-void function SpawnLootInLootBin( entity lootbin, string ref, int lootI, int lootCount, string previousRef = "")
-{
-	Point p       = GetLootBinSpawnLocation( lootbin, lootI, lootCount )
-	if( ref == "" )
-		return
-	LootData data = SURVIVAL_Loot_GetLootDataByRef( ref )
-
-	int countPerDrop = data.countPerDrop
-	
-	vector angles = p.angles
-	
-	if( previousRef != "" )
+	if( isLocked )
 	{
-		LootData previousRefData = SURVIVAL_Loot_GetLootDataByRef( previousRef )
-		
-		if( previousRefData.lootType == eLootType.MAINWEAPON )
-			countPerDrop *= 2
+		//do nothing
 	}
-	
-	if ( data.lootType == eLootType.AMMO )
-		angles = AnglesCompose( p.angles, <0, 90, 0> )
-
-	entity loot = SpawnGenericLoot( ref, p.origin, angles, countPerDrop )
-	loot.RemoveFromAllRealms()
-	loot.AddToOtherEntitysRealms( lootbin )
-	SetItemSpawnSource( loot, eSpawnSource.DROPPOD, lootbin )
-	loot.SetParent( lootbin )
-	file.lootBinsSpawnedLootMap[lootbin].append( loot )
-}
-
-void function SURVIVAL_DebugLootBins()
-{
-	foreach ( bin in file.lootBinList )
+	else if ( !isRegularCompOpen || (!isSecretCompOpen && canAccessSecretComps) )
 	{
-		DebugLootInLootBin( bin )
+		if ( !isRegularCompOpen && (!isSecretCompOpen && canAccessSecretComps) )
+			sequenceKind = eLootBinSequenceKind.OPEN_BOTH
+		else if ( !isRegularCompOpen )
+			sequenceKind = eLootBinSequenceKind.OPEN_REGULAR
+		else if ( !isSecretCompOpen && canAccessSecretComps )
+			sequenceKind = eLootBinSequenceKind.OPEN_SECRET
 	}
-}
-
-void function DebugLootInLootBin( entity lootBin )
-{
-	for ( int i = 0; i < file.lootBinsLootInside[ lootBin ].len(); i++ )
+	else if ( canBeClosed )
 	{
-		Point p = GetLootBinSpawnLocation( lootBin, i, file.lootBinsLootInside[ lootBin ].len() )
-		SURVIVAL_DebugLoot( file.lootBinsLootInside[ lootBin ][i], p.origin + <0, 0, i * 10> )
+		if ( isRegularCompOpen && isSecretCompOpen )
+			sequenceKind = eLootBinSequenceKind.CLOSE_BOTH
+		else if ( isRegularCompOpen )
+			sequenceKind = eLootBinSequenceKind.CLOSE_REGULAR
+		else if ( isSecretCompOpen )
+			Assert( false )
 	}
-}
-#endif
+      
 
-
-#if SERVER
-void function OnLootBinUse( entity lootbin, entity player, int useInputFlags )
-{
-	if ( (useInputFlags & USE_INPUT_DEFAULT) == 0 )
-		return
-
-	thread HandleLootbinUse( lootbin, player )
-}
-
-bool function LootBin_OnUse( entity lootbin, entity player, int useInputFlags )
-{
-	if ( (useInputFlags & USE_INPUT_DEFAULT) == 0 )
+	if ( sequenceKind == -1 )
 		return false
 
-	if ( lootbin.Anim_IsActive() || LootBin_IsOpen( lootbin ) )
-		return false
+	thread DoLootBinSequenceThread( lootBin, player, sequenceKind )
 
-	thread HandleLootbinUse( lootbin, player )
-	
-	return true
-}
-
-void function HandleLootbinUse( entity lootbin, entity player )
-{
-	lootbin.EndSignal( "OnDestroy" )
-
-	if ( lootbin.Anim_IsActive() )
-		return
-
-	EmitSoundOnEntity( lootbin, SOUND_LOOT_BIN_OPEN )
-
-	if ( ( LOOT_BIN_CLOSABLE || GetCurrentPlaylistVarBool( "lootbins_infinite", false ) ) && LootBin_IsOpen( lootbin ) )
-		thread LootBin_PlayCloseSequence( lootbin )
-	else
-		thread LootBin_PlayOpenSequence( lootbin, player )
 	if ( IsValid( player ) )
-		TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_LOOTBIN_USED, lootbin, lootbin.GetWorldSpaceCenter(), player.GetTeam(), player )
+		TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_LOOTBIN_USED, lootBin, lootBin.GetWorldSpaceCenter(), player.GetTeam(), player )
+
+	return true
 }
+#endif
 
-int opened = 0
 
-void function LootBin_PlayOpenSequence( entity lootbin, entity player )
+#if SERVER
+void function LootBin_ForceOpen_Thread( entity lootBin, bool doRegular, bool doSecret )
 {
-	lootbin.EndSignal( "OnDestroy" )
+	Assert( doRegular || !doSecret, "Cannot open only secret compartment -- must do only regular or both" )
 
-	CleanUpPermanentsParentedToLootbin( lootbin )
+	while ( GradeFlagsHas( lootBin, eGradeFlags.IS_BUSY ) )
+		WaitFrame()
 
-	GradeFlagsSet( lootbin, eGradeFlags.IS_BUSY )
+	bool isRegularCompOpen = GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN )
+	bool isSecretCompOpen  = GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN_SECRET )
 
-	if ( !lootbin.e.hasBeenOpened )
-	{
-		lootbin.e.hasBeenOpened = true
+	int sequenceKind = -1
 
-		StopSoundOnEntity( lootbin, SOUND_LOOT_BIN_IDLE )
+                      
+                          
+  
+                                                                       
+                                                
+      
+                                                   
+  
+     
+	if ( (!isRegularCompOpen && doRegular) && (!isSecretCompOpen && doSecret) )
+		sequenceKind = eLootBinSequenceKind.OPEN_BOTH
+	else if ( !isRegularCompOpen && doRegular )
+		sequenceKind = eLootBinSequenceKind.OPEN_REGULAR
+	else if ( !isSecretCompOpen && doSecret )
+		sequenceKind = eLootBinSequenceKind.OPEN_SECRET
+      
 
-		int lootIndex             = 0
-		array<string> finalLoot = GetLootBinContents( lootbin )
-
-		foreach( callbackFunc in file.onLootBinOpenedCallbacks )
-			callbackFunc( player, lootbin, finalLoot )
-
-		if( lootbin.e.shouldSpawnLoot )
-		{
-			for( int i = 0; i < finalLoot.len(); i++ )
-			{
-				string ref = finalLoot[i]
-				if( i == 0 )
-					SpawnLootInLootBin( lootbin, ref, lootIndex, finalLoot.len() )
-				else
-					SpawnLootInLootBin( lootbin, ref, lootIndex, finalLoot.len(), finalLoot[ i - 1 ]) 
-				lootIndex++
-			}
-		}
-	}
-
-	GradeFlagsSet( lootbin, eGradeFlags.IS_OPEN )
-
-	if( GetCurrentPlaylistVarBool( "lsm_mod1", false ) && Gamemode() == eGamemodes.SURVIVAL )
-	{
-		printt( "Lootbin opened ", opened )
-		opened++
-		
-		if( opened == 25 )
-			thread function () : ( lootbin, player )
-			{
-				wait 1
-
-				entity hotZoneBeam = StartParticleEffectInWorld_ReturnEntity(GetParticleSystemIndex( $"P_impact_exp_artillery" ), lootbin.GetOrigin(), <0,90,0> )
-				EmitSoundAtPosition( 99, lootbin.GetOrigin(), "weapon_explosion_med" )
-				lootbin.Destroy()
-				player.TakeDamage( player.GetHealth() + 1 , null, null, { damageSourceId = eDamageSourceId.titan_explosion, damageType = DMG_BURN } )
-			}()
-	}
-
-	entity lootbinParent = lootbin.GetParent()
-	if ( IsValid( lootbinParent ) )
-		waitthread PlayAnim( lootbin, "loot_bin_01_open", lootbinParent, "ref" )
-	else
-		waitthread PlayAnim( lootbin, "loot_bin_01_open" )
-	
-	if( !IsValid( lootbin ) )
+	if ( sequenceKind == -1 )
 		return
 
-	GradeFlagsClear( lootbin, eGradeFlags.IS_BUSY )
+	waitthread DoLootBinSequenceThread( lootBin, null, sequenceKind )
 }
+#endif
 
-void function LootBin_PlayCloseSequence( entity lootbin )
+
+#if SERVER
+void function LootBin_EmptyBinOfLoot (entity lootBin, bool doRegular, bool doSecret)
 {
-	lootbin.EndSignal( "OnDestroy" )
+	LootBinServerData lbsd = file.lootBinServerDataMap[lootBin]
 
-	CleanUpPermanentsParentedToLootbin( lootbin )
-
-	GradeFlagsSet( lootbin, eGradeFlags.IS_BUSY )
-
-	GradeFlagsClear( lootbin, eGradeFlags.IS_OPEN )
-
-	entity lootbinParent = lootbin.GetParent()
-	if ( IsValid( lootbinParent ) )
-		waitthread PlayAnim( lootbin, "loot_bin_01_close", lootbinParent, "ref" )
-	else
-		waitthread PlayAnim( lootbin, "loot_bin_01_close" )
-
-	GradeFlagsClear( lootbin, eGradeFlags.IS_BUSY )
-
-	// This loot will be re-created based on lootbins loot refs when bin is re-opened
-	if ( GetCurrentPlaylistVarBool( "lootbins_infinite", false ) )
+	if(doRegular)
 	{
-		foreach( entity existingLoot in file.lootBinsSpawnedLootMap[lootbin] )
-		{
-			if ( IsValid( existingLoot ) )
-				existingLoot.Destroy()
-		}
-		file.lootBinsSpawnedLootMap[lootbin].clear()
+		foreach ( entity lootEnt in LootBin_GetSpawnedLoot( lootBin, true, false ) )
+			lootEnt.Destroy()
+
+		lbsd.delayedRegularLoot.clear()
 	}
+
+	if(doSecret)
+	{
+		foreach ( entity lootEnt in LootBin_GetSpawnedLoot( lootBin, false, true ) )
+			lootEnt.Destroy()
+
+		lbsd.delayedSecretLoot.clear()
+	}
+
+                     
+                                                                                                                                                                                                                   
+                                
+                                     
+      
+
 }
 
-void function CleanUpPermanentsParentedToLootbin( entity lootBin )
+void function Lootbin_RemoveSpecificLootFromInside( entity lootBin, int compartmentToRemoveFrom, string lootRefToRemove )
 {
-	entity curChild = lootBin.FirstMoveChild()
+	LootBinServerData lbsd = file.lootBinServerDataMap[lootBin]
+	array<entity> consideredLootEnts
 
-	while ( IsValid( curChild ) )
+	array<LootRef> consideredDelayedLoot
+
+	switch( compartmentToRemoveFrom )
 	{
-		entity entToCheck = curChild
-		while( IsValid( entToCheck ) )
+		case eLootBinCompartment.REGULAR:
+			consideredLootEnts = LootBin_GetSpawnedLoot( lootBin, true, false )
+			consideredDelayedLoot = lbsd.delayedRegularLoot
+			break
+		case eLootBinCompartment.SECRET:
+			consideredLootEnts = LootBin_GetSpawnedLoot( lootBin, false, true )
+			consideredDelayedLoot = lbsd.delayedSecretLoot
+			break
+	}
+
+	if( consideredLootEnts.len() > 0 )
+	{
+		for( int i = 0; i < consideredLootEnts.len(); i++ )
 		{
-			if ( entToCheck.GetTargetName() == DIRTY_BOMB_TARGETNAME )
+			LootRef lootRef = SURVIVAL_CreateLootRefFromLootEnt( consideredLootEnts[i] )
+			if( lootRef.lootData.ref == lootRefToRemove )
 			{
-				RemoveCausticDirtyBomb( entToCheck, entToCheck.GetParent() )
+				consideredLootEnts[i].Destroy()
 				break
 			}
-
-			entToCheck = entToCheck.FirstMoveChild()
 		}
+	}
 
-		curChild = curChild.NextMovePeer()
+	if( consideredDelayedLoot.len() > 0 )
+	{
+		for( int i = 0; i < consideredDelayedLoot.len(); i++ )
+		{
+			if( consideredDelayedLoot[i].lootData.ref == lootRefToRemove )
+			{
+				consideredDelayedLoot.fastremove( i )
+				break
+			}
+		}
 	}
 }
 
+void function LootBin_RemoveLootFromInside (entity lootBin,  int compartmentToRemoveFrom, int numberOfItemsToRemove )
+{
+	LootBinServerData lbsd = file.lootBinServerDataMap[lootBin]
+	array<entity> regularLootEnts = LootBin_GetSpawnedLoot( lootBin, true, false )
+	array<entity> secretLootEnts = LootBin_GetSpawnedLoot( lootBin, false, true )
 
+	for( int i = 0; i < numberOfItemsToRemove; i++ )
+	{
+		switch( compartmentToRemoveFrom )
+		{
+			case eLootBinCompartment.REGULAR:
+				if( regularLootEnts.len() > 0 )
+				{
+					entity lootEnt = regularLootEnts[ regularLootEnts.len() - 1 ]
+					lootEnt.Destroy()
+				}
+				if( lbsd.delayedRegularLoot.len() > 0 )
+				{
+					lbsd.delayedRegularLoot.fastremove( lbsd.delayedRegularLoot.len() - 1 )
+				}
+				break
+			case eLootBinCompartment.SECRET:
+				if( secretLootEnts.len() > 0 )
+				{
+					entity lootEnt = secretLootEnts[ secretLootEnts.len() - 1 ]
+					lootEnt.Destroy()
+				}
+				if( lbsd.delayedSecretLoot.len() > 0 )
+				{
+					lbsd.delayedSecretLoot.fastremove( lbsd.delayedSecretLoot.len() - 1 )
+				}
+				break
+		}
+	}
+}
+#endif
+
+#if SERVER
+void function LootBin_ForceClose_Thread( entity lootBin, bool doRegular, bool doSecret, bool deleteLoot )
+{
+	Assert( doRegular || !doSecret, "Cannot close only secret compartment -- must do only regular or both" )
+
+	EndSignal( lootBin, "OnDestroy" )
+
+	if ( deleteLoot )
+	{
+		LootBinServerData lbsd = file.lootBinServerDataMap[lootBin]
+		OnThreadEnd(
+			function( ) : ( lootBin, lbsd )
+			{
+				foreach ( entity lootEnt in LootBin_GetSpawnedLoot( lootBin, true, true ) )
+					lootEnt.Destroy()
+
+				lbsd.delayedRegularLoot.clear()
+				lbsd.delayedSecretLoot.clear()
+			}
+		)
+	}
+
+	while ( GradeFlagsHas( lootBin, eGradeFlags.IS_BUSY ) )
+		WaitFrame()
+
+	bool isRegularCompOpen = GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN )
+	bool isSecretCompOpen  = GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN_SECRET )
+
+	int sequenceKind = -1
+	if ( (isRegularCompOpen && doRegular) && (isSecretCompOpen && doSecret) )
+		sequenceKind = eLootBinSequenceKind.CLOSE_BOTH
+	else if ( isRegularCompOpen && doRegular )
+		sequenceKind = eLootBinSequenceKind.CLOSE_REGULAR
+
+	if ( sequenceKind != -1 )
+	{
+		waitthread DoLootBinSequenceThread( lootBin, null, sequenceKind )
+	}
+
+	// find all the players along the bin
+	float radius = 50
+	array<entity> allPlayers
+	vector origin = lootBin.GetOrigin()
+	vector right = lootBin.GetRightVector()
+	float rightDist = 60
+	vector up = lootBin.GetUpVector()
+	float upDist = 40
+	vector forward = lootBin.GetForwardVector()
+	for( int i = -1; i <= 1; i++ )
+	{
+		array<entity> players = GetPlayerArrayEx( "any", TEAM_ANY, TEAM_ANY, origin + right * i * rightDist + up * upDist, radius )
+		foreach( player in players )
+		{
+			if( !allPlayers.contains( player ) )
+				allPlayers.append( player )
+		}
+	}
+
+	// force the player out of the bin
+	vector angledOut = VectorRotateAxis( forward, right, 45 )
+	float safeSpotDist = 150
+	vector safeSpot = origin + angledOut * safeSpotDist
+	foreach( entity player in allPlayers )
+	{
+		StopPlayingAnimation(player) // R5DEV-601556
+		PutPlayerInSafeSpot( player, null, null, safeSpot, safeSpot )
+	}
+}
 #endif
 
 
-bool function LootBin_IsOpen( entity lootbin )
+#if SERVER
+void function DoLootBinSequenceThread( entity lootBin, entity userOrNull, int sequenceKind )
 {
-	if ( GradeFlagsHas( lootbin, eGradeFlags.IS_OPEN ) )
-		return true
-	return false
-}
+	EndSignal( lootBin, "OnDestroy" )
 
+	Assert( !GradeFlagsHas( lootBin, eGradeFlags.IS_BUSY ) )
 
+	OnThreadEnd( void function() : ( lootBin ) {
+		if ( IsValid( lootBin ) )
+		{
+			GradeFlagsClear( lootBin, eGradeFlags.IS_BUSY )
+		}
+	} )
 
-bool function LootBin_IsBusy( entity lootbin )
-{
-	if ( GradeFlagsHas( lootbin, eGradeFlags.IS_BUSY ) )
-		return true
-	return false
-}
+	GradeFlagsSet( lootBin, eGradeFlags.IS_BUSY )
 
+	CleanUpPermanentsParentedToDynamicEnt( lootBin )
 
-#if CLIENT
-void function OnPropDynamicCreated( entity lootbin )
-{
-	if( lootbin.GetScriptName() == "smartbin" && Gamemode() == eGamemodes.fs_infected )
+	LootBinServerData lbsd = file.lootBinServerDataMap[lootBin]
+
+	bool wasRegularOpen = GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN )
+	bool wasSecretOpen  = GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN_SECRET )
+
+	//
+	// Play the animation
+	//
+
+	bool willRegularBeOpen = wasRegularOpen
+	bool willSecretBeOpen  = wasSecretOpen
+
+	string animSeq
+	if ( sequenceKind == eLootBinSequenceKind.OPEN_REGULAR )
 	{
-		array<CallbackParam> params = ModCallbacks_CreateParams()
-		ModCallbacks_AddEntityParam( params, lootbin )
-		ModCallbacks_CallVoidCallbackWithParams( "InitMysteryBoxFromLootbin", params )
-
-		file.lootBinList.append( lootbin )
-		return
+		Assert( !wasRegularOpen )
+		animSeq = "loot_bin_01_loba_open_top"
+		willRegularBeOpen = true
+	}
+	else if ( sequenceKind == eLootBinSequenceKind.OPEN_SECRET )
+	{
+		Assert( !wasSecretOpen )
+		animSeq = "loot_bin_01_loba_open_bottom"
+		willSecretBeOpen = true
+	}
+	else if ( sequenceKind == eLootBinSequenceKind.OPEN_BOTH )
+	{
+		Assert( !wasRegularOpen && !wasSecretOpen )
+		animSeq = "loot_bin_01_loba_open_all"
+		willRegularBeOpen = true
+		willSecretBeOpen = true
+	}
+	else if ( sequenceKind == eLootBinSequenceKind.CLOSE_REGULAR )
+	{
+		Assert( wasRegularOpen )
+		animSeq = "loot_bin_01_loba_close_top"
+		willRegularBeOpen = false
+	}
+	else if ( sequenceKind == eLootBinSequenceKind.CLOSE_BOTH )
+	{
+		Assert( wasRegularOpen && wasSecretOpen )
+		animSeq = "loot_bin_01_loba_close_all"
+		willRegularBeOpen = false
+		willSecretBeOpen = false
 	}
 
-	if ( lootbin.GetScriptName() != LOOT_BIN_SCRIPTNAME && lootbin.GetScriptName() != LOOT_BIN_SCRIPTNAME_CUSTOM_REALMS )
-		return
+	lootBin.Anim_SetSafePushMode( false )
 
-	AddEntityCallback_GetUseEntOverrideText( lootbin, GetLootBinUseTextOverride )
+	float duration = 0.0
+	if ( animSeq != "" )
+	{
+		duration = lootBin.GetSequenceDuration( animSeq )
+		thread PlayAnimOnly( lootBin, animSeq )
 
-	SetCallback_CanUseEntityCallback( lootbin, LootBin_CanUse )
+		LootBin_Opening_PlaySFX( lootBin, sequenceKind )
+	}
 
-	file.lootBinList.append( lootbin )
+	if ( !wasRegularOpen && willRegularBeOpen )
+	{
+		lbsd.openRegularFX = StartParticleEffectOnEntity_ReturnEntity( lootBin, GetParticleSystemIndex( LOOT_BIN_OPEN_REGULAR_FX ), FX_PATTACH_POINT_FOLLOW, lootBin.LookupAttachment( "FX_LIGHT" ) )
+	}
+	if ( !wasSecretOpen && willSecretBeOpen )
+	{
+		//lbsd.openSecretFX = StartParticleEffectOnEntity_ReturnEntity( lootBin, GetParticleSystemIndex( LOOT_BIN_OPEN_SECRET_FX ), FX_PATTACH_POINT_FOLLOW, lootBin.LookupAttachment( "FX_LIGHT" ) )
+		//thread DestroyServerFXAfterDelayThread( lbsd.openSecretFX, 6.0 )
+		                       
+		if ( IsAlive( userOrNull ) && userOrNull.IsPlayer() )
+		{
+                      
+			if( Perk_MunitionsBox_IsEntMunitionsBox( lootBin ) )
+			{
+				PlayBattleChatterLineToSpeakerAndTeam( userOrNull, "bc_supplyBinWeaponOpened" )
+			}
+
+			if( SupportBin_EntityIsSupportBin( lootBin ) )
+			{
+				PlayBattleChatterLineToSpeakerAndTeam( userOrNull, "bc_supplyBinExtendedOpened" )
+			}
+        
+                                                                      
+         
+		}
+        
+		                   
+		//StartParticleEffectOnEntity( lootBin, GetParticleSystemIndex( LOOT_BIN_OPEN_SECRET_FX ), FX_PATTACH_POINT_FOLLOW, lootBin.LookupAttachment( "SECRET" ) )
+		entity fx = StartParticleEffectOnEntity_ReturnEntity( lootBin, GetParticleSystemIndex( LOOT_BIN_OPEN_SECRET_FX ), FX_PATTACH_POINT_FOLLOW, lootBin.LookupAttachment( "SECRET" ) )
+		if (SupportBin_EntityIsSupportBin(lootBin))
+		{
+			//set support bin color
+			EffectSetControlPointVector( fx, 2, <32, 180, 255> )
+		}
+		if (Perk_MunitionsBox_IsEntMunitionsBox(lootBin))
+		{
+			//set munition bin color
+			EffectSetControlPointVector( fx, 2, <255, 80, 105> )
+		}
+        
+
+	}
+
+	// Let the loot bin open about halfway before turning on safe push mode.
+	// This both gives feedback to the user, and also works around an issue where a player standing right up against it would stop it from opening at all.
+	// It still seems to be early enough to fix the cases of crush death that we've seen in practice.
+	thread (void function() : ( lootBin ) {
+		EndSignal( lootBin, "OnDestroy" )
+
+		wait 0.6
+		lootBin.Anim_SetSafePushMode( true )
+	})()
+
+	//
+	// Update the flags and child loot visibility
+	//
+
+	if ( sequenceKind == eLootBinSequenceKind.OPEN_BOTH || sequenceKind == eLootBinSequenceKind.OPEN_REGULAR )
+		GradeFlagsSet( lootBin, eGradeFlags.IS_OPEN )
+
+	if ( sequenceKind == eLootBinSequenceKind.OPEN_BOTH || sequenceKind == eLootBinSequenceKind.OPEN_SECRET )
+		GradeFlagsSet( lootBin, eGradeFlags.IS_OPEN_SECRET )
+
+	if ( sequenceKind == eLootBinSequenceKind.CLOSE_BOTH || sequenceKind == eLootBinSequenceKind.CLOSE_REGULAR )
+		GradeFlagsClear( lootBin, eGradeFlags.IS_OPEN )
+
+	if ( sequenceKind == eLootBinSequenceKind.CLOSE_BOTH )
+		GradeFlagsClear( lootBin, eGradeFlags.IS_OPEN_SECRET )
+
+	bool isRegularOpen = GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN )
+	bool isSecretOpen  = GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN_SECRET )
+
+	if ( !wasRegularOpen && isRegularOpen )
+		LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( lootBin, eLootBinCompartment.REGULAR, false )
+	if ( !wasSecretOpen && isSecretOpen )
+		LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( lootBin, eLootBinCompartment.SECRET, false )
+
+	array<entity> regularLoot = LootBin_GetSpawnedLoot( lootBin, true, false )
+	array<entity> secretLoot  = LootBin_GetSpawnedLoot( lootBin, false, true )
+
+	bool revealRegular = false
+	bool revealSecret  = false
+
+	// Opening
+	if ( (!wasRegularOpen && isRegularOpen) || (!wasSecretOpen && isSecretOpen) )
+	{
+		bool[1] preventRevealRegular                     = [false]
+		bool[1] preventRevealSecret                      = [false]
+		void functionref( bool, bool ) preventLootReveal = void function( bool regularArg, bool secretArg ) : ( preventRevealRegular, preventRevealSecret ) {
+			preventRevealRegular[0] = preventRevealRegular[0] || regularArg
+			preventRevealSecret[0] = preventRevealSecret[0] || secretArg
+		}
+
+		foreach ( OnLootBinOpeningCallbackType cb in file.onLootBinOpeningCallbacks )
+			cb( userOrNull, lootBin, regularLoot, secretLoot, preventLootReveal )
+
+		if ( !wasRegularOpen && isRegularOpen && !preventRevealRegular[0] )
+		{
+			if ( !lootBin.e.hasBeenOpened )
+			{
+				lootBin.e.hasBeenOpened = true
+				if ( IsValid( userOrNull ) && userOrNull.IsPlayer() )
+					StatsHook_OnPlayerOpenedLootBin( userOrNull, lootBin )
+			}
+			revealRegular = true
+		}
+
+		if ( !wasSecretOpen && isSecretOpen && !preventRevealSecret[0] )
+		{
+			if( !lootBin.e.hasSecretBeenOpened )
+			{
+				lootBin.e.hasSecretBeenOpened = true
+			}
+			revealSecret = true
+		}
+	}
+
+	// Closing
+	if ( (wasRegularOpen && !isRegularOpen) || (wasSecretOpen && !isSecretOpen) )
+	{
+		if ( (wasRegularOpen && !isRegularOpen) && IsValid( lbsd.openRegularFX ) )
+		{
+			lbsd.openRegularFX.Destroy()
+			lbsd.openRegularFX = null
+		}
+
+		//if ( (wasSecretOpen && !isSecretOpen) && IsValid( lbsd.openSecretFX ) )
+		//{
+		//	lbsd.openSecretFX.Destroy()
+		//	lbsd.openSecretFX = null
+		//}
+
+		bool shouldDelete = IsInfiniteLootBinsEnabled()
+
+		if ( wasRegularOpen && !isRegularOpen )
+		{
+			if ( shouldDelete )
+				DestroyEntities( regularLoot )
+			else
+				LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( lootBin, eLootBinCompartment.REGULAR, false ) // put into closed positions
+		}
+
+		if ( wasSecretOpen && !isSecretOpen )
+		{
+			if ( shouldDelete )
+				DestroyEntities( secretLoot )
+			else
+				LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( lootBin, eLootBinCompartment.SECRET, false ) // put into closed positions
+		}
+	}
+
+	void functionref( int ) revealLootThread = void function( int compartment ) : ( lootBin ) {
+		if ( !IsValid( lootBin ) )
+			return
+
+		LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( lootBin, compartment, true )
+	}
+
+	if ( revealRegular )
+		delaythread( 0.44 ) revealLootThread( eLootBinCompartment.REGULAR )
+	if ( revealSecret )
+		delaythread( 0.74 ) revealLootThread( eLootBinCompartment.SECRET )
+
+	//
+	// Wait for the animation
+	//
+	float animTimeLeft = duration
+	wait animTimeLeft
 }
-#endif // CLIENT
+#endif
 
 #if CLIENT
-void function OnPropDynamicDestroyed( entity lootbin )
+void function CL_LootBinOpening( entity lootBin, int sequenceType )
 {
-	if ( file.lootBinList.contains( lootbin ) )
-		file.lootBinList.removebyvalue( lootbin )
+	foreach ( OnLootBinOpeningCallbackType cb in file.onLootBinOpeningCallbacks )
+		cb( lootBin )
 }
-#endif // CLIENT
+#endif
+
+
+#if SERVER || CLIENT
+bool function CanAccessSecretCompartments( entity lootBin, entity player )
+{
+	// todo(dw): move this common role logic to a helper function
+	if (!LootBin_HasSecretCompartment( lootBin ))
+        return false
+
+	if ( !IsValid( player ) )
+		return false
+
+                     
+                                                                           
+	     
+		//change to the perk system has it so that all can access the special bins, but not the secret compartments
+		bool canOpenCompartment = false
+
+		bool isSupportBin = SupportBin_EntityIsSupportBin( lootBin )//lootBin.GetSkin() == lootBin.GetSkinIndexByName( LOOT_BIN_SUPPORT_SKIN )
+		bool isMunitionsBin = Perk_MunitionsBox_IsEntMunitionsBox( lootBin ) //lootBin.GetSkin() == lootBin.GetSkinIndexByName( MUNITIONS_BOX_LOOT_BIN_SKIN_NAME )
+
+		if( isMunitionsBin && Perks_DoesPlayerHavePerk( player, ePerkIndex.MUNITIONS_BOX ) )
+			canOpenCompartment = true
+		else if( isSupportBin && Perks_DoesPlayerHavePerk( player, ePerkIndex.EXTRA_BIN_LOOT ) )
+			canOpenCompartment = true
+                 
+                                                                                                 
+                            
+       
+                 
+                                                                                                                          
+                            
+       
+
+       
+
+	return canOpenCompartment
+}
+#endif
+
+
+#if SERVER || CLIENT
+bool function LootBin_IsOpenAtAll( entity lootBin )
+{
+	return GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN ) || GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN_SECRET )
+}
+#endif
+
+
+#if SERVER || CLIENT
+bool function LootBin_IsFullyOpenedForPlayer( entity lootBin, entity player )
+{
+	if ( !GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN ) )
+		return false
+
+	if ( CanAccessSecretCompartments( lootBin, player ) && !GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN_SECRET ) )
+		return false
+
+	return true
+}
+#endif
+
+
+#if SERVER || CLIENT
+bool function LootBin_CanBeClosed( entity lootBin )
+{
+	if ( IsInfiniteLootBinsEnabled() )
+		return true
+
+	return false
+}
+#endif
+
+
+#if SERVER || CLIENT
+bool function IsInfiniteLootBinsEnabled()
+{
+	#if DEVELOPER
+		if ( GetBugReproNum() == 50 )
+			return true
+	#endif
+
+	return GetCurrentPlaylistVarBool( "lootbins_infinite", false )
+}
+#endif
+
+
+#if SERVER || CLIENT
+bool function LootBin_IsBusy( entity lootBin )
+{
+	return GradeFlagsHas( lootBin, eGradeFlags.IS_BUSY )
+}
+#endif
+
+
+#if CLIENT
+void function OnPropCreated( entity lootBin )
+{
+	if ( lootBin.GetScriptName() != LOOT_BIN_SCRIPTNAME )
+		return
+
+	AddEntityCallback_GetUseEntOverrideText( lootBin, GetLootBinUseTextOverride )
+	SetCallback_CanUseEntityCallback( lootBin, CanUseLootBin )
+}
+#endif
+
+
+#if CLIENT
+void function OnPropDestroyed( entity lootBin )
+{
+	//
+}
+#endif
+
+
+#if SERVER || CLIENT
 entity function GetLootBinForHitEnt( entity hitEnt )
 {
 	if ( hitEnt.GetScriptName() == LOOT_BIN_SCRIPTNAME )
 		return hitEnt
 
 	entity parentEnt = hitEnt.GetParent()
-	if ( IsValid( parentEnt ) && (parentEnt.GetScriptName() == LOOT_BIN_SCRIPTNAME) )
+	if ( IsValid( parentEnt ) && parentEnt.GetScriptName() == LOOT_BIN_SCRIPTNAME )
 		return parentEnt
 
 	return null
 }
+#endif
 
 
-bool function LootBin_CanUse( entity player, entity lootBin )
+#if SERVER || CLIENT
+void function AddCallback_CanOpenLootBin( entity lootBin, bool functionref( entity,entity ) callback )
 {
+	file.canOpenLootBinCallback[lootBin] <- callback
+}
+
+bool function CanUseLootBin( entity player, entity lootBin, int useFlags )
+{
+                   
+	if( lootBin in file.canOpenLootBinCallback )
+	{
+		if( !file.canOpenLootBinCallback[lootBin]( player, lootBin ) )
+			return false
+	}
+      
+
 	if ( player.GetWeaponDisableFlags() == WEAPON_DISABLE_FLAGS_ALL )
 		return false
 
@@ -1174,39 +1800,485 @@ bool function LootBin_CanUse( entity player, entity lootBin )
 	if ( LootBin_IsBusy( lootBin ) )
 		return false
 
-	bool anythingToOpen = false
-	if ( !LootBin_IsOpen( lootBin ) )
-		anythingToOpen = true
+                       
+	if ( LootBin_IsFullyOpenedForPlayer( lootBin, player ) )
+		return false
+      
 
-	return anythingToOpen
+	return true
 }
+#endif
+
 
 #if CLIENT
-string function GetLootBinUseTextOverride( entity lootbin )
+string function GetLootBinUseTextOverride( entity lootBin )
 {
-	if ( !LootBin_IsOpen( lootbin ) )
+	entity player = GetLocalViewPlayer()
+
+                                 
+                                                                               
+  
+                                
+  
+     
+       
+	if ( !LootBin_IsFullyOpenedForPlayer( lootBin, player ) )
 	{
-		if ( GradeFlagsHas( lootbin, eGradeFlags.IS_LOCKED ) )
+		if ( GradeFlagsHas( lootBin, eGradeFlags.IS_LOCKED ) )
+		{
+			if ( IsValid( lootBin.GetOwner() ) )
+			{
+				entity lootBinOwner = lootBin.GetOwner()
+
+				EHI ornull ehi = ToEHI( lootBinOwner )
+				if ( ehi == null )
+					return ""
+				expect EHI( ehi )
+				if ( !EHIHasValidScriptStruct( ehi ) )
+					return ""
+
+				int team          = EHI_GetTeam( ehi )
+				string playerName = GetDisplayablePlayerNameFromEHI( ehi )
+
+				string hint = "#SURVIVAL_LOOTBIN_LOCKED_FRIENDLY"
+
+				if ( lootBinOwner == player || GetCurrentPlaylistVarBool( "lootbin_locking_disabled", false ) )
+					hint = "#SURVIVAL_LOOTBIN_LOCKED_SELF"
+				else if ( IsEnemyTeam( team, player.GetTeam() ) )
+					hint = "#SURVIVAL_LOOTBIN_LOCKED_ENEMY"
+
+				return Localize( hint, playerName )
+			}
 			return "#SURVIVAL_LOOTBIN_LOCKED"
-		return "#SURVIVAL_LOOTBIN_OPEN"
+		}
+		else if ( !GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN ) )
+			return "#SURVIVAL_LOOTBIN_OPEN"
+	                       
+		else if ( !GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN_SECRET ) )
+			return "#SURVIVAL_LOOTBIN_OPEN_SECRET"
+       
 	}
-	else if ( ( LOOT_BIN_CLOSABLE || GetCurrentPlaylistVarBool( "lootbins_infinite", false ) ) )
-		return "#SURVIVAL_LOOTBIN_CLOSE"
-	else
-		return ""
-
-	unreachable
-}
-#endif
-
-#if CLIENT
-void function ServerCallback_RefreshLootbinHighlight()
-{
-	array<entity> lootbins = GetAllLootBins()
-	//
-	foreach ( lootbin in lootbins )
+	else if ( LootBin_CanBeClosed( lootBin ) )
 	{
-		ManageHighlightEntity( lootbin )
+		return "#SURVIVAL_LOOTBIN_CLOSE"
 	}
+	return ""
 }
 #endif
+
+#if SERVER
+
+void function Randomize_SupportLootBins()
+{
+	int lootBinCount = GetScriptManagedEntArrayLen( file.lootBinSMEA )
+	if ( lootBinCount == 0 )
+		return
+	array<entity> allLootBins = GetScriptManagedEntArray( file.lootBinSMEA )
+	allLootBins.randomize()
+	array<entity> distributedBins
+	array<entity> nonDistributedBins
+
+	int goal = int( lootBinCount * GetCurrentPlaylistVarFloat( "supportBinRatio", 0.2 ) )
+	if ( GetCurrentPlaylistVarBool( "lootbins_all_support", false ) )
+	{
+		distributedBins = allLootBins
+	}
+	else if ( lootBinCount >= goal )
+	{
+		distributedBins.append( allLootBins[0] )
+		for ( int i = 0; i < goal - 1; i++ )
+		{
+			for ( int j = 0; j < allLootBins.len(); j++ )
+			{
+				int count = 0
+				foreach ( distributedBin in distributedBins )
+				{
+					if ( DistanceSqr( allLootBins[j].GetOrigin(), distributedBin.GetOrigin() ) > 4000 * 4000 )
+					{
+						count++
+					}
+				}
+				if ( count == distributedBins.len() )
+				{
+					distributedBins.append( allLootBins[j] )
+					allLootBins.remove( j )
+					j--
+					break
+				}
+				else
+				{
+					nonDistributedBins.append( allLootBins[j] )
+					allLootBins.remove( j )
+					j--
+				}
+			}
+		}
+
+		int validSpotsFound = distributedBins.len()
+		if ( validSpotsFound < goal )
+		{
+			for ( int i = 0; i < goal - validSpotsFound; i++ )
+			{
+				distributedBins.append( nonDistributedBins[i] )
+			}
+		}
+	}
+
+	foreach ( entity supportBin in distributedBins )
+	{
+		supportBin.SetSkin( supportBin.GetSkinIndexByName( SUPPORT_LOOT_BIN_SKIN_NAME ) )
+	}
+}
+                   
+bool function LootBin_RandomizePerkBinsFromExistingBins()
+{
+	return ( GetCurrentPlaylistVarBool( "randomize_perk_bins_from_existing_bins", true ) ) && !ShouldPreprocessData()
+}
+
+float function LootBin_Randomization_ExclusionDistance()
+{
+	return ( GetCurrentPlaylistVarFloat( "perk_bin_randomization_exclusion_distance", 13000 ) )
+}
+
+float function LootBin_Randomization_RespawnBeaconExclusionDistance()
+{
+	return ( GetCurrentPlaylistVarFloat( "perk_bin_randomization_respawn_beacon_exclusion_distance", 3500 ) )
+}
+
+float function LootBin_Randomization_FallBackExclusionDistance()
+{
+	return ( GetCurrentPlaylistVarFloat( "perk_bin_randomization_fallback_exclusion_distance", 7000 ) )
+}
+
+int function LootBin_Randomization_Count()
+{
+	return ( GetCurrentPlaylistVarInt( "perk_bin_randomization_spawn_count", 20 ) )
+
+}
+
+bool function LootBin_RotatingLoot_RefilledInPerkBins_Enabled()
+{
+	if( Crafting_IsDispenserCraftingEnabled() )
+	{
+		if( GetCurrentPlaylistVarBool( "lootbin_rotatingloot_refilled_perkbins_enabled", false ) )
+			return true
+	}
+
+	return false
+}
+
+void function Randomize_SupportAndAssaultBins()
+{
+	int lootBinCount = GetScriptManagedEntArrayLen( file.lootBinSMEA )
+	if ( lootBinCount == 0 )
+		return
+
+	array<entity> allLootBins = GetScriptManagedEntArray( file.lootBinSMEA )
+	array<entity> unchosenBins
+	array<entity> supportBins
+
+	int spawnCount = LootBin_Randomization_Count()
+	if ( GetCurrentPlaylistVarBool( "lootbins_all_support", false ) )
+	{
+		supportBins = allLootBins
+	}
+	else
+	{
+		RandomizeResult result = RandomizeLootBins( allLootBins, spawnCount )
+		supportBins = result.chosenBins
+		unchosenBins = result.unchosenBins
+	}
+
+	array<entity> assaultBins = RandomizeLootBins( unchosenBins, spawnCount ).chosenBins
+
+	foreach( entity bin in supportBins )
+	{
+		entity newBin = SupportBin_SpawnSupportBinFromExistingBin( bin )
+		if( !IsValid( newBin ) )
+			continue
+		LootBin_AddOldBinToPerkBinMapping( bin, newBin )
+		RemoveFromScriptManagedEntArray( file.lootBinSMEA, bin )
+		LootBin_DeleteLootBin(bin)
+		PIN_Perks_ExtendedSupplyBinCreated( newBin, newBin.GetOrigin() )
+	}
+
+	foreach( entity bin in assaultBins )
+	{
+		entity newBin = MunitionsBox_SpawnMunitionsBoxPropFromExistingBin( bin )
+		if( !IsValid( newBin ) )
+			continue
+		LootBin_AddOldBinToPerkBinMapping( bin, newBin )
+		RemoveFromScriptManagedEntArray( file.lootBinSMEA, bin )
+		LootBin_DeleteLootBin(bin)
+		PIN_Perks_WeaponSupplyBinCreated( newBin, newBin.GetOrigin() )
+	}
+
+	LootBin_RotatingLoot_RefilledInPerkBins_Enabled()
+	{
+		SupportBin_RotatingLoot_RefillBins_BothCompartments()
+	}
+}
+
+RandomizeResult function RandomizeLootBins( array<entity> allLootBins, int goal )
+{
+	RandomizeResult result
+	array<entity> distributedBins
+	int lootBinCount = allLootBins.len()
+	if ( lootBinCount == 0 )
+		return result
+
+	allLootBins.randomize()
+	array<entity> nonDistributedBins
+
+	array<vector> respawnBeaconLocations = GetRespawnBeaconLocations()
+
+	float exclusionDistance = LootBin_Randomization_ExclusionDistance()
+	float respawnBeaconExclusionDistance = LootBin_Randomization_RespawnBeaconExclusionDistance()
+
+	float fallBackExclusionDistance = LootBin_Randomization_FallBackExclusionDistance()
+
+	if ( lootBinCount >= goal )
+	{
+		distributedBins.append( allLootBins[0] )
+		allLootBins.fastremove( 0 )
+		for ( int i = 0; i < goal - 1; i++ )
+		{
+			for ( int j = 0; j < allLootBins.len(); j++ )
+			{
+				vector binPos = allLootBins[j].GetOrigin()
+				bool isDistributed = true
+				foreach ( distributedBin in distributedBins )
+				{
+					if ( DistanceSqr( binPos, distributedBin.GetOrigin() ) < ( exclusionDistance  * exclusionDistance ) )
+					{
+						isDistributed = false
+						break
+					}
+				}
+
+				if( isDistributed )
+				{
+					foreach( respawnBeaconPos in respawnBeaconLocations )
+					{
+						if( DistanceSqr( respawnBeaconPos, binPos ) < ( respawnBeaconExclusionDistance  * respawnBeaconExclusionDistance ) )
+						{
+							isDistributed = false
+							break
+						}
+					}
+				}
+
+				if ( isDistributed )
+				{
+					distributedBins.append( allLootBins[j] )
+					allLootBins.fastremove( j )
+					j--
+					break
+				}
+				else
+				{
+					nonDistributedBins.append( allLootBins[j] )
+					allLootBins.fastremove( j )
+					j--
+				}
+			}
+		}
+
+		int validSpotsFound = distributedBins.len()
+		if ( validSpotsFound < goal )
+		{
+			//do another exclusion distance pass, but this time with a exclusion distance half the size.
+			for ( int i = 0; i < nonDistributedBins.len(); i++ )
+			{
+				entity currentBin =  nonDistributedBins[i]
+				vector binPos = currentBin.GetOrigin()
+
+				bool canBeDistributed = true
+
+				foreach ( distributedBin in distributedBins )
+				{
+					if ( DistanceSqr( binPos, distributedBin.GetOrigin() ) < ( fallBackExclusionDistance  * fallBackExclusionDistance ) )
+					{
+						canBeDistributed = false
+						break
+					}
+				}
+
+				if( canBeDistributed )
+				{
+					distributedBins.append( nonDistributedBins[i] )
+					nonDistributedBins.fastremove( i )
+					validSpotsFound++
+				}
+
+				if( validSpotsFound == goal )
+					break
+			}
+
+			//if you are STILL short of the valid spots after loosing the exclsuion rules, then add bins that are left over in a random way.
+			//this is a hard fail over to find good spots for special bins.
+			if( validSpotsFound < goal )
+			{
+				for ( int i = 0; i < goal - validSpotsFound; i++ )
+				{
+					int currentBinIndex = RandomInt( nonDistributedBins.len() )
+
+					distributedBins.append( nonDistributedBins[currentBinIndex] )
+					nonDistributedBins.fastremove( currentBinIndex )
+				}
+			}
+		}
+	}
+	result.chosenBins = distributedBins
+	result.unchosenBins = allLootBins
+	result.unchosenBins.extend( nonDistributedBins )
+	return result
+}
+
+      
+
+void function LootBin_TransferLootBinServerData( entity oldBin, entity newBin, int compartment )
+{
+	LootBinServerData lbsd = file.lootBinServerDataMap[oldBin]
+	if ( newBin in file.lootBinServerDataMap )
+	{
+		if ( compartment == eLootBinCompartment.REGULAR )
+		{
+			file.lootBinServerDataMap[newBin].delayedRegularLoot = lbsd.delayedRegularLoot
+		}
+		else if ( compartment == eLootBinCompartment.SECRET )
+		{
+			file.lootBinServerDataMap[newBin].delayedSecretLoot = lbsd.delayedSecretLoot
+		}
+		else if ( compartment == eLootBinCompartment.BOTH )
+		{
+			file.lootBinServerDataMap[newBin] <- lbsd
+		}
+	}
+	else
+	{
+		file.lootBinServerDataMap[newBin] <- lbsd
+	}
+}
+void function LootBin_DeleteLootBin ( entity bin )
+{
+	delete (file.lootBinServerDataMap[bin])
+	bin.Destroy()
+}
+#endif
+
+
+#if SERVER && DEVELOPER
+void function DEV_TakeMeToAnUnopenedLootBin( bool withSecretCompartment, string withLoot = "" )
+{
+	foreach ( entity lootBin in GetAllLootBins() )
+	{
+		if ( GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN ) )
+			continue
+
+		if ( withSecretCompartment && (!CanAccessSecretCompartments( lootBin, null ) || GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN_SECRET )) )
+			continue
+
+		if ( withLoot != "" )
+		{
+			LootBinServerData lbsd = file.lootBinServerDataMap[lootBin]
+			array<LootRef> lootRefs
+			lootRefs.extend( lbsd.delayedRegularLoot )
+			lootRefs.extend( lbsd.delayedSecretLoot )
+			foreach ( entity lootEnt in LootBin_GetSpawnedLoot( lootBin, true, true ) )
+				lootRefs.append( SURVIVAL_CreateLootRef( SURVIVAL_Loot_GetLootDataByIndex( lootEnt.GetSurvivalInt() ), lootEnt ) )
+
+			bool found = false
+			foreach ( LootRef ref in lootRefs )
+			{
+				if ( ref.lootData.ref.find( withLoot ) != -1 )
+				{
+					found = true
+					break
+				}
+			}
+			if ( !found )
+				continue
+		}
+
+		GP().SetOrigin( OriginToGround( lootBin.GetOrigin() + 100.0 * lootBin.GetForwardVector() + 50.0 * lootBin.GetUpVector() ) + <0, 0, 8> )
+		GP().SetAngles( VectorToAngles( lootBin.GetWorldSpaceCenter() - GP().EyePosition() ) )
+		printt( "Lootbin pos:", lootBin.GetOrigin() )
+		break
+	}
+}
+
+void function DEV_TakeMeToAnUnopenedCrowdedLootBin( bool withSecretCompartment )
+{
+	foreach ( entity lootBin in GetAllLootBins() )
+	{
+		if ( GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN ) )
+			continue
+
+		if ( withSecretCompartment && (!CanAccessSecretCompartments( lootBin, null ) || GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN_SECRET )) )
+			continue
+
+		if ( DEV_GetItemCountForLootBin( lootBin, false ) <= 5 )
+			continue
+
+		GP().SetOrigin( OriginToGround( lootBin.GetOrigin() + 100.0 * lootBin.GetForwardVector() + 50.0 * lootBin.GetUpVector() ) + <0, 0, 8> )
+		GP().SetAngles( VectorToAngles( lootBin.GetWorldSpaceCenter() - GP().EyePosition() ) )
+		printt( "Lootbin pos:", lootBin.GetOrigin() )
+		break
+	}
+}
+void function DEV_GetLootBinItemCounts()
+{
+	int binCount = 0
+	foreach ( entity lootBin in GetAllLootBins() )
+	{
+		binCount++
+		int lootCount = DEV_GetItemCountForLootBin( lootBin, false )
+		printt("Bin " + binCount + " contains: " + lootCount )
+	}
+}
+
+int function DEV_GetItemCountForLootBin( entity lootBin, bool includeSecret, bool printResults = false)
+{
+	LootBinServerData lbsd = file.lootBinServerDataMap[lootBin]
+	array<LootRef> lootRefs
+	array<LootRef> refObjectsToRemove
+	lootRefs.extend( lbsd.delayedRegularLoot )
+	if( includeSecret )
+		lootRefs.extend( lbsd.delayedSecretLoot )
+
+	foreach ( lRef in lootRefs )
+	{
+		if ( lRef.lootData.index <= 0 )
+			refObjectsToRemove.append( lRef )
+	}
+
+	foreach ( removeCandidate in refObjectsToRemove )
+		lootRefs.fastremovebyvalue( removeCandidate )
+
+	if ( printResults )
+	{
+		foreach ( lRef in lootRefs )
+			printt( lRef.lootData.ref )
+	}
+
+	return lootRefs.len()
+}
+
+#if DEVELOPER
+void function DEV_ShowLootBinsOpenedCount( entity player )
+{
+	printt( "DEV: Player's Loot Bins Opened Count == " + player.p.lootBinsOpenedCount )
+}
+
+void function DEV_CloseAllLootBins()
+{
+	array< entity > lootbins = GetAllLootBins()
+
+	foreach ( entity bin in lootbins )
+		thread LootBin_ForceClose_Thread( bin, true, true, true )
+}
+#endif
+#endif
+
+

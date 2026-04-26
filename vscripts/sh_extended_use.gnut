@@ -5,25 +5,36 @@ global function DefaultExtendedUseRui
 global function ExtendedUseTextOverride
 #endif
 
+global enum eExtendedUseRuiType
+{
+	COCKPIT,
+	FULLSCREEN,
+	NONE
+}
 global struct ExtendedUseSettings
 {
 	void functionref( entity ent, entity player, ExtendedUseSettings settings ) successFunc
 	void functionref( entity ent, entity player, ExtendedUseSettings settings ) failureFunc
 	void functionref( entity ent, entity player, ExtendedUseSettings settings ) startFunc
 	void functionref( entity ent, entity player, ExtendedUseSettings settings ) endFunc
+	int    useInputFlag = IN_USE_LONG
 	string loopSound
 	string successSound
 	float duration = 1.0
+	float jumpstartTime = 0.0
 	entity entityArg = null
 	bool requireMatchingUseEnt = false
 	int    disableWeaponTypes = 0 // WPT_*
+	float serverStartTime = 0.0
 	#if CLIENT
-		string hint
-		string holdHint = "%use_long%"
-		asset displayRui
+		string                                                                               hint
+		string                                                                               holdHint = "%use_long%"
+		int                                                                                  displayRuiType = eExtendedUseRuiType.COCKPIT
+		asset                                                                                displayRui
 		void functionref( entity ent, entity player, var rui, ExtendedUseSettings settings ) displayRuiFunc
-		asset icon
-		bool successPlayPickupEffect = false
+		asset                                                                                icon
+		bool                                                                                 successPlayPickupEffect = false
+
 	#endif
 	#if SERVER
 		bool holsterWeapon
@@ -32,7 +43,6 @@ global struct ExtendedUseSettings
 		bool exclusiveUse
 		bool setUsableOnSuccess = true
 	#endif
-	int useInputFlag = IN_USE_LONG
 }
 
 struct

@@ -110,7 +110,7 @@ PIPSlotState function BeginMovingPIP( entity camera, int colorCorrectionLayer = 
 }
 
 
-void function CaptureStillPIPThenEndMovingPIPThread( PIPSlotState movingSlotState, PIPSlotState ornull[1] outArray_stillSlotState, bool allowWaitForStillSlot = false )
+void function CaptureStillPIPThenEndMovingPIPThread( PIPSlotState movingSlotState, PIPSlotState ornull[1] outArray_stillSlotState, string ornull cacheName = null, string ornull characterRef = null, bool allowWaitForStillSlot = false )
 {
 	Assert( movingSlotState.slotIndex != -1 ) // bad struct
 	Assert( movingSlotState.isUsableForMoving ) // tried to capture a non-moving slot

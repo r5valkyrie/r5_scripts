@@ -365,7 +365,7 @@ bool function ShouldGarbageCollectCreep( entity creep )
 {
 	vector origin = creep.GetOrigin()
 
-	if ( !SURVIVAL_PosInsideDeathField( origin ) )
+	if ( !SURVIVAL_PosInsideDeathField( 0, origin ) )
 		return true
 
 	//no players nearby?
@@ -585,7 +585,7 @@ void function DropShipZombieJumpAndDie( entity zombie, entity dropship, int zomb
 	dropship.EndSignal( "OnDestroy" )
 	zombie.EndSignal( "OnDestroy" )
 
-	entity mover = CreateScriptMover( zombie.GetOrigin() )
+	entity mover = CreateScriptMover( "", zombie.GetOrigin() )
 
 	string idleAnim
 	string jumpAnim

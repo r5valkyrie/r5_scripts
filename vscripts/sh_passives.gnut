@@ -10,6 +10,7 @@ global function ShPassives_Init
 global function PlayerHasPassive
 global function AddCallback_OnPassiveChanged
 global function RemoveCallback_OnPassiveChanged
+global function Pas_GetWattsonUltAccelExtraCount
 #endif
 
 #if SERVER
@@ -17,7 +18,11 @@ global function GivePassive
 global function TakePassive
 global function TakeAllPassives
 
-global function GetAllPassivesForPlayer
+global function PassiveConsumed
+global function AddCallback_OnPassiveConsumed
+
+global function EnableQuickHeal
+global function DisableQuickHeal
 #endif
 
 #if SERVER || CLIENT && DEVELOPER
@@ -30,16 +35,25 @@ global function DEV_PrintAllPassives
 global function PlayerHasStealthMovement
 #endif
 
+global const string MIRAGE_DECOY_DROP_SCRIPTNAME 		= "mirage_decoy_drop"
+const string MIRAGE_DECOY_DROP_MOVER_SCRIPTNAME 		= "mirage_decoy_drop_mover"
+const float UPGRADE_MIRAGE_CLOAK_SPEED_BOOST_AMNT 		= 0.5
+const float MIRAGE_DOWNED_CLOAK_DURATION 				= 5.0
+const float MIRAGE_REVIVE_CLOAK_DURATION 				= 3.0
+
 #if SERVER
 global function AttemptDecoyDrop
-global function EnableQuickHeal
-global function DisableQuickHeal
 #endif
 
+#if CLIENT
+                     
+global function ServerToClient_ShowCloakHintText
+                           
+#endif //
 
 // internals
-#if CLIENT
-global function ClientCodeCallback_OnPassiveChanged
+#if SERVER || CLIENT
+global function CodeCallback_OnPassiveChanged
 #endif
 
 
@@ -54,10 +68,12 @@ global enum ePassives
 {
 	INVALID = -1,
 
-	// (dw): If you change this enum, it would be nice if you also updated itemtype_ability.rson
+	// (dw): If you change this enum, it would be nice if you also updated itemtype_ability.rson & itemtype_event_ability.rson
+	PAS_NONE,
 	PAS_ADRENALINE,
 	PAS_ADS_SHIELD,
 	PAS_FAST_HEAL,
+	PAS_BONUS_SMALL_HEAL,
 	PAS_GAS_GEAR,
 	PAS_GAS_PROTECTION,
 	PAS_MEDIC,
@@ -70,8 +86,126 @@ global enum ePassives
 	PAS_CRYPTO,
 	PAS_GUARDIAN_ANGEL,
 	PAS_DEATHSTALKER,
+	PAS_WARLORDS_IRE,
+	PAS_GUNNER,
+	PAS_LOBA_EYE_FOR_QUALITY,
 	PAS_BATTERY_POWERED,
 	PAS_WATTSON_CIRCLE_REFUND,
+	PAS_VALK,
+		PAS_CONDUIT,
+		PAS_WEAPON_SLING,
+	PAS_BATTLE_SENSE,
+	PAS_DUMMIE,
+	                    
+	//PAS_ULT_UNLOCK,
+	PAS_TAC_COOLDOWN_REDUCTION,
+	PAS_AMMUVISION,
+	PAS_ULTACCEL_HIGHLIGHT,
+	//PAS_EXPLOSIVE_EVO_BONUS,
+	PAS_HEALING_ITEM_VISION,
+	PAS_LARGE_AMMO_STACKS,
+	PAS_EXTRA_ULT_CHARGE,
+	PAS_DEATHBOX_BATTERY_COUNT,
+	PAS_BATTERY_STACK,
+
+	// generic upgrade passives
+	PAS_UPGRADE_CAREPACKAGE_INSIGHT,
+	PAS_UPGRADE_BEACON_SCAN,
+	PAS_UPGRADE_CONSOLE_SCAN,
+	PAS_MOD_UPGRADE_ONLY,
+
+	PAS_PAS_UPGRADE_ONE,
+	PAS_PAS_UPGRADE_TWO,
+	PAS_PAS_UPGRADE_THREE,
+
+	PAS_TAC_UPGRADE_ONE,
+	PAS_TAC_UPGRADE_TWO,
+	PAS_TAC_UPGRADE_THREE,
+
+	PAS_ULT_UPGRADE_ONE,
+	PAS_ULT_UPGRADE_TWO,
+	PAS_ULT_UPGRADE_THREE,
+
+	// loba upgrades
+	PAS_TAC_COOLDOWN_REDUCTION_EXTRA,
+
+	// fuse upgrade
+	PAS_EXPLOSIVE_DAMAGE_RESIST,
+	PAS_EXPLOSIVE_DAMAGE_SPEED_BOOST,
+	PAS_EXTRA_ARC_STARS,
+	PAS_MOTHERLODE_RESISTANCE,
+
+	// octane upgrades
+	PAS_INCREASED_HEALTH_REGEN,
+
+	// valk upgrades
+	PAS_BOOSTED_JETPACK,
+	PAS_EXTRA_SWARM_MISSILE,
+	PAS_SKYWARD_LAUNCH_JETPACKS,
+	PAS_EXTRA_JETPACK_FUEL,
+
+	// newcastle upgrades
+	PAS_REVIVE_HEAL,
+
+	// caustic upgrades
+	PAS_GAS_HP_REGEN,
+	PAS_GAS_HIGHLIGHT,
+
+	// bloodhound upgrades
+	PAS_AUTO_WHITE_RAVEN_SPAWN,
+
+	//crypto upgrades
+	PAS_STOWED_DRONE_SCAN,
+
+	//maggie upgrades
+	PAS_SHOTGUN_KNOCK_AUTO_RELOAD,
+
+	// wraith
+	PAS_TEAM_VOICES,
+	PAS_NEARBY_TEAMS,
+	PAS_FASTER_TAC_WINDUP,
+
+	// pathfinder
+
+	// Ash
+	PAS_SQUADWIPE_SQUAD_COUNT,
+
+	// Lifeline
+	PAS_FASTER_REVIVES,
+	PAS_SELF_RES,
+
+	// Revenant
+	PAS_KNOCK_TAC_RESET,
+
+	// Vantage
+	PAS_ULT_ACCEL_DOUBLE_CHARGE,
+	PAS_OPTIC_HIGHLIGHT,
+	PAS_ULT_ACCEL_CHARGE,
+
+
+	PAS_ABTEST_UPGRADE_EMPTY1,
+	PAS_ABTEST_UPGRADE_EMPTY2,
+	PAS_ABTEST_UPGRADE_EMPTY3,
+	// shelved upgrades
+	//PAS_ONLY_ARC_STARS,
+	//PAS_REDUCED_STIM_DAMAGE,
+	//PAS_FREE_GRENADE_ON_ULT_CHARGE,
+	//PAS_BLACK_MARKET_SCAN,
+	//PAS_CLEANSING_JETPACKS,
+
+	//PAS_UPGRADED_REVIVE_SHIELD_HEALTH,
+       
+                 
+                       
+                        
+                          
+       
+	//PAS_DASH,
+	//PAS_EMERGENCY_SMOKE,
+	//PAS_STEALTH_MOVEMENT,
+
+	PAS_ASH,
+
 	PAS_DOWN_HEALTH,
 	PAS_DOWN_REGEN,
 	PAS_EXEC_BONUS_AMMO,
@@ -87,35 +221,30 @@ global enum ePassives
 	PAS_SYRINGE_BONUS,
 	PAS_FORTIFIED,
 	PAS_LOWPROFILE,
-	PAS_PILOT_BLOOD,
-	PAS_DUMMIE,
-	PAS_LOBA_EYE_FOR_QUALITY,
-	PAS_ORDNANCE_HIGHLIGHT,
-	PAS_HEALING_ITEM_HIGHLIGHT,
-	PAS_ULTACCEL_HIGHLIGHT,
-	PAS_OPTIC_HIGHLIGHT,
-	PAS_GUNNER,
-	PAS_VALK,
-	PAS_NOVA,
-	PAS_FUSE,
-	PAS_ASH,
-	PAS_TAC_UPGRADE_ONE,
-	//new
-	PAS_BONUS_SMALL_HEAL,
-	PAS_EXTRA_MED_INV,
 	PAS_INFINITE_HEAL,
-	PAS_ULT_UPGRADE_THREE,
-	//custom
-	PAS_ARMOR_5,
-	PAS_ARMOR_6,
-	PAS_ARMOR_7,
-	PAS_SLIPSTREAM,
-	PAS_SUPPORT,
-	PAS_SHOTGUN_KICK, //husaria
-	PAS_LIGHT_STEP, //skunner
-	PAS_ULT_UPGRADE_ONE,
-	PAS_ULT_UPGRADE_TWO,
-	
+	PAS_EXTRA_MED_INV
+
+	PAS_NOVA,
+	PAS_PARIAH,
+	PAS_FUSE,
+	PAS_AXIOM,
+	PAS_VANTAGE,
+	PAS_LOCKDOWN,
+	PAS_REVENANT_REWORK,
+		PAS_ALTER,
+		PAS_ALTER_UPGRADE_ULT_DURATION,
+		PAS_ALTER_UPGRADE_TAC_SCAN,
+		PAS_REMOTE_DEATHBOX_INTERACT,
+		PAS_EXTRA_ORDINANCE_SLOT,
+		PAS_HEALING_ITEM_HIGHLIGHT,
+		PAS_EXTRA_ALL_MED_INV,
+		PAS_KNOCK_ADRENALINE,
+		PAS_SQUADWIPE,
+		PAS_ORDNANCE_HIGHLIGHT,
+
+	//Modded passives
+	PAS_SHOTGUN_KICK,
+
 	_count,
 }
 #endif
@@ -127,39 +256,27 @@ global const table<int, string> PASSIVE_NAME_MAP = {
 	[ePassives.PAS_EXEC_BONUS_ARMOR] = "#PAS_EXEC_BONUS_ARMOR",
 	[ePassives.PAS_SELF_REVIVE] = "#PAS_AVAT",
 	[ePassives.PAS_FAST_HEAL] = "#PAS_FAST_HEAL",
+	[ePassives.PAS_BONUS_SMALL_HEAL ] = "#PAS_BONUS_SMALL_HEAL",
 	[ePassives.PAS_GUARDIAN_ANGEL] = "#PAS_GUARDIAN_ANGEL",
 	[ePassives.PAS_FORTIFIED] = "#PAS_FORTIFIED",
 	[ePassives.PAS_LOWPROFILE] = "#PAS_LOW_PROFILE",
-	[ePassives.PAS_PILOT_BLOOD] = "#PAS_PILOT_BLOOD",
-	//new
-	[ePassives.PAS_BONUS_SMALL_HEAL] = "#PAS_BONUS_SMALL_HEAL",
 	[ePassives.PAS_EXTRA_MED_INV] = "#PAS_EXTRA_MED_INV",
-
-	[ePassives.PAS_ARMOR_5] = "",
-	[ePassives.PAS_ARMOR_6] = "",
-	[ePassives.PAS_ARMOR_7] = ""
-
 }
+
 global const table<int, string> PASSIVE_DESCRIPTION_SHORT_MAP = {
 	[ePassives.PAS_REDUCED_COOLDOWNS_TAC_ULT] = "#PAS_COMBINED_COOLDOWN_DESC",
 	[ePassives.PAS_EXEC_BONUS_ARMOR] = "#PAS_EXEC_BONUS_ARMOR_DESC",
 	[ePassives.PAS_SELF_REVIVE] = "#PAS_AVAT_DESC",
 	[ePassives.PAS_FAST_HEAL] = "#PAS_FAST_HEAL_DESC",
+	[ePassives.PAS_BONUS_SMALL_HEAL] = "#PAS_BONUS_SMALL_HEAL_DESC",
 	[ePassives.PAS_GUARDIAN_ANGEL] = "#PAS_GUARDIAN_ANGEL_DESC",
 	[ePassives.PAS_FORTIFIED] = "#PAS_FORTIFIED_DESC",
 	[ePassives.PAS_LOWPROFILE] = "#PAS_LOW_PROFILE_DESC",
-	[ePassives.PAS_PILOT_BLOOD] = "#PAS_PILOT_BLOOD_DESC",
-	//new
-	[ePassives.PAS_BONUS_SMALL_HEAL] = "#PAS_BONUS_SMALL_HEAL_DESC",
 	[ePassives.PAS_EXTRA_MED_INV] = "#PAS_EXTRA_MED_INV_DESC",
-
-	[ePassives.PAS_ARMOR_5] = "",
-	[ePassives.PAS_ARMOR_6] = "",
-	[ePassives.PAS_ARMOR_7] = ""
 }
-#endif
+#endif	//CLIENT || UI
 
-
+global const string PASSIVE_MOVER_SCRIPTNAME = "passive_mover"
 
 ///////////////////////
 ///////////////////////
@@ -168,8 +285,14 @@ global const table<int, string> PASSIVE_DESCRIPTION_SHORT_MAP = {
 ///////////////////////
 struct
 {
+	#if SERVER
+		array<void functionref(entity,int)> onPassiveConsumedCallbacks
+	#endif
+
 	#if SERVER || CLIENT
 		table<int, array<void functionref( entity, int, bool, bool )> > passiveChangedCallbackListMap
+
+		int wattson_ult_accel_extra
 	#endif
 } file
 
@@ -185,36 +308,45 @@ global ItemFlavor& PAS_LOW_PROFILE_FLAV
 void function PassivesShared_Init()
 {
 	#if SERVER || CLIENT
+		PrecacheScriptString( MIRAGE_DECOY_DROP_SCRIPTNAME )
+		file.wattson_ult_accel_extra = GetCurrentPlaylistVarInt( "wattson_ult_accel_extra", 1 )
+
 		for ( int passiveIdx = 0; passiveIdx < ePassives._count; passiveIdx++ )
 			file.passiveChangedCallbackListMap[ passiveIdx ] <- []
 	#endif
 
 	#if SERVER
-		// specific passive stuff (should perhaps be moved out of this generic passive file)
-		RegisterSignal( "EndPilotBloodThread" )
-		RegisterSignal( "EndSparkOfGeniusThread" )
-		//AddCallback_OnPlayerKilled( Passives_OnPlayerKilled ) //(mk): not used yet?
-		AddCallback_OnPlayerAssist( Passives_OnPlayerAssist )
-		Bleedout_AddCallback_OnPlayerStartBleedout( Passives_OnPlayerStartBleedout )
-		AddCallback_OnPassiveChanged( ePassives.PAS_FAST_HEAL, PassiveToggleFastHeal )
-		AddCallback_OnPassiveChanged( ePassives.PAS_FORTIFIED, PassiveToggleFortified )
-		AddCallback_OnPassiveChanged( ePassives.PAS_MEDIC, Lifeline_PassiveToggle )
-		AddCallback_OnPassiveChanged( ePassives.PAS_PILOT_BLOOD, PilotBlood_Passive )
-		AddCallback_OnPassiveChanged( ePassives.PAS_SLIPSTREAM, ThreadSlipstream_Passive )
-		AddCallback_OnPassiveChanged( ePassives.PAS_PATHFINDER, Pathfinder_PassiveToggle )
-		AddCallback_OnPassiveChanged( ePassives.PAS_TRACKING_VISION, Bloodhound_PassiveToggle )
-		AddCallback_OnPassiveChanged( ePassives.PAS_BATTERY_POWERED, Wattson_PassiveToggle )
-		AddCallback_OnPassiveChanged( ePassives.PAS_DEATHSTALKER, Revenant_PassiveToggle )
-		AddCallback_OnPassiveChanged( ePassives.PAS_DUMMIE, Dummie_PassiveToggle )
-		AddCallback_OnPassiveChanged( ePassives.PAS_VALK, Dummie_PassiveToggle )
-		AddCallback_OnPassiveChanged( ePassives.PAS_NOVA, Dummie_PassiveToggle )
-		AddCallback_OnPassiveChanged( ePassives.PAS_LOBA_EYE_FOR_QUALITY, Loba_PassiveToggle )
-		AddCallback_OnPassiveChanged( ePassives.PAS_GUNNER, Loba_PassiveToggle )
-		AddCallback_OnPassiveChanged( ePassives.PAS_ASH, Loba_PassiveToggle )
-		
+	// specific passive stuff (should perhaps be moved out of this generic passive file)
+	//AddCallback_OnPlayerKilled( Passives_OnPlayerKilled )
+	//AddCallback_OnPlayerAssist( Passives_OnPlayerAssist )
+	Bleedout_AddCallback_OnPlayerStartBleedout( Passives_OnPlayerStartBleedout )
+
+	if ( GetCurrentPlaylistVarBool( "mirage_passive_on_deathbox", false ) )
+	{
+		SurvivalLoot_AddCallback_OnPlayerDeathboxOpened( Passives_OnPlayerDeathboxOpened )
+	}
+	if ( GetCurrentPlaylistVarBool( "mirage_passive_on_revive", true ) )
+	{
 		RegisterSignal( "PassiveMirage_StartRes" )
-		Bleedout_AddCallback_OnPlayerStartGiveFirstAid( Passives_OnPlayerStartRes )		
-		Bleedout_AddCallback_OnPlayerFinishGiveFirstAid( ReviveCloak  )
+		Bleedout_AddCallback_OnPlayerStartGiveFirstAid( Passives_OnPlayerStartRes )
+		                     
+			if ( GetCurrentPlaylistVarBool( "mirage_rework_enabled", true ) )
+			{
+				Bleedout_AddCallback_OnPlayerFinishGiveFirstAid( ReviveCloak  )
+			}
+                             
+	}
+	if ( GetCurrentPlaylistVarBool( "mirage_passive_on_respawn_beacon", true ) )
+	{
+		RegisterSignal( "PassiveMirage_StopCloakFromBeacon" )
+		AddCallback_OnRespawnBeaconStartUse( Passives_OnRespawnBeaconStartUse )
+		AddCallback_OnRespawnBeaconStopUse( Passives_OnRespawnBeaconStopUse )
+	}
+		AddCallback_OnPassiveChanged( ePassives.PAS_FAST_HEAL, PassiveToggleFastHeal )
+			RegisterSignal( "ConduitStopShieldRegen" )
+		AddCallback_OnPassiveChanged( ePassives.PAS_DEATHSTALKER, Revenant_PassiveToggle )
+		Bleedout_AddCallback_OnPlayerStartBleedout( Revenant_BleedoutBegin )
+		Bleedout_AddCallback_OnPlayerStopBleedout( Revenant_BleedoutEnd )
 	#endif
 
 	#if CLIENT
@@ -243,53 +375,14 @@ void function OnRegisterRootItemFlavors()
 //////////////////////////
 //////////////////////////
 #if SERVER
-string function GetPassiveName( int enumIndex )
-{
-	foreach( string name, int index in ePassives )
-	{
-		if( index == enumIndex )
-			return name
-	}
-	
-	return "unknown"
-}
-
 void function GivePassive( entity player, int passive )
 {
-    if(!IsValid(player))
-        return
-    
-	bool didHavePassive = player.HasPassive( passive )
-
-	#if DEVELOPER
-		// DumpStack()
-		printt( "[+] Give passive: ", passive, GetPassiveName( passive ) )
-	#endif
-		
 	player.GivePassive( passive )
-
-	if ( didHavePassive )
-		return
-
-	foreach( void functionref( entity, int, bool, bool ) callback in file.passiveChangedCallbackListMap[passive] )
-		callback( player, passive, didHavePassive, true )
 }
 
 void function TakePassive( entity player, int passive )
 {
-	bool didHavePassive = player.HasPassive( passive )
-
-	#if DEVELOPER
-		printt( "[+] Take passive: ", passive, GetPassiveName( passive )  )
-	#endif
-		
 	player.RemovePassive( passive )
-
-	if ( !didHavePassive )
-		return
-
-	foreach( void functionref( entity, int, bool, bool ) callback in file.passiveChangedCallbackListMap[passive] )
-		callback( player, passive, didHavePassive, false )
 }
 
 void function TakeAllPassives( entity player )
@@ -300,19 +393,21 @@ void function TakeAllPassives( entity player )
 			TakePassive( player, passiveIdx )
 	}
 }
+#endif
 
-array<int> function GetAllPassivesForPlayer( entity player )
+#if SERVER
+void function PassiveConsumed( entity player, int passive )
 {
-	array<int> passives
-	for( int i = 0; i < ePassives._count; i++ )
+	foreach ( func in file.onPassiveConsumedCallbacks )
 	{
-		if( player.HasPassive( i ) )
-		{
-			// printt(" player has passive ", i )
-			passives.append( i )
-		}
+		func( player, passive )
 	}
-	return passives
+}
+
+void function AddCallback_OnPassiveConsumed( void functionref( entity, int ) func )
+{
+	Assert( !file.onPassiveConsumedCallbacks.contains( func ) )
+	file.onPassiveConsumedCallbacks.append( func )
 }
 #endif
 
@@ -320,7 +415,7 @@ array<int> function GetAllPassivesForPlayer( entity player )
 #if SERVER || CLIENT
 bool function PlayerHasPassive( entity player, int passive )
 {
-	if( !IsValid( player ) )
+	if( !IsValid( player ) || !player.IsPlayer() )
 		return false
 	
 	return player.HasPassive( passive )
@@ -368,8 +463,8 @@ void function DEV_PrintAllPassives( entity player )
 //// Internals ////
 ///////////////////
 ///////////////////
-#if CLIENT
-void function ClientCodeCallback_OnPassiveChanged( entity player, int passiveIdx )
+#if SERVER || CLIENT
+void function CodeCallback_OnPassiveChanged( entity player, int passiveIdx )
 {
 	if ( !IsValid( player ) )
 		return
@@ -408,7 +503,6 @@ void function Passives_OnPlayerAssist( entity assister, entity victim )
 
 	if ( assister == victim )
 		return
-
 }
 
 void function Passives_OnPlayerStartBleedout( entity player, entity attacker, var damageInfo )
@@ -421,445 +515,53 @@ void function Passives_OnPlayerStartBleedout( entity player, entity attacker, va
 			CreateHoloPilotDecoys( player, 1, deathAnims[RandomIntRange( 0, deathAnims.len() )] )
 		}
 
-		EnableCloak( player, 5.0 )
+		EnableCloak( player, GetMirageCloakDuration( player, MIRAGE_DOWNED_CLOAK_DURATION ) )
+		                    
+		if( player.HasPassive( ePassives.PAS_PAS_UPGRADE_ONE ) )
+		{
+			thread PassiveUpgrade_CloakedSpeedBoost_Thread( player )
+		}
+        
 	}
 }
+#endif
 
-void function AttemptDecoyDrop( entity player )
+#if SERVER
+void function Passives_OnRespawnBeaconStartUse( entity beacon, entity player )
 {
-	if ( player.p.skydiveDecoysFired < 2 )
+	if ( PlayerHasPassive( player, ePassives.PAS_MIRAGE ) && !AreAbilitiesSilenced( player ) )
 	{
-		thread DecoyDropThink( player )
-		player.p.skydiveDecoysFired++
-		if ( player.p.skydiveDecoysFired == 2 )
-			Remote_CallFunction_NonReplay( player, "ServerCallback_Mirage_DecoysDeployed", true )
+		thread MirageCloakThread( player )
 	}
 }
 
-void function DecoyDropThink( entity player )
+void function MirageCloakThread( entity player )
 {
-	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnDeath" )
-
-	vector playerOrigin = player.GetOrigin()
-	float startingYaw   = FlattenAngles( VectorToAngles( player.GetViewVector() ) ).y
-	entity mover        = CreateScriptMover( playerOrigin, <0, startingYaw, 0> )
-	mover.SetAbsAngles( <0, startingYaw, 0> )
-
-	entity characterModel = CreatePropDynamic( player.GetModelName(), mover.GetOrigin(), mover.GetAngles() )
-	characterModel.SetParent( mover, "", false )
-	characterModel.NotSolid()
-	SetTeam( characterModel, player.GetTeam() )
-	Survival_SetFriendlyOwnerHighlight( player, characterModel )
-	thread PlayAnim( characterModel, "mp_pilot_freefall", mover, "" )
-	int forwardPoseID = characterModel.LookupPoseParameterIndex( "freefall_pitch" )
-	//int sidePoseID = characterModel.LookupPoseParameterIndex( "freefall_yaw" )
-	characterModel.SetPoseParameterOverTime( forwardPoseID, 100, 0.5 )
-	//characterModel.SetPoseParameterOverTime( sidePoseID, 50, 0.3 )
-
-	int friendlyTeam = characterModel.GetTeam()
-	EmitSoundOnEntityToTeam( characterModel, "holopilot_loop", friendlyTeam ) //loopingSound
-	EmitSoundOnEntityToEnemies( characterModel, "holopilot_loop_enemy", friendlyTeam ) ///loopingSound
-	Highlight_SetFriendlyHighlight( characterModel, "friendly_player_decoy" )
-	Highlight_SetOwnedHighlight( characterModel, "friendly_player_decoy" )
-	SetDefaultMPEnemyHighlight( characterModel )
-
-	array<entity> fxArray
-	int attachID            = characterModel.LookupAttachment( "CHESTFOCUS" )
-	entity holoPilotTrailFX = StartParticleEffectOnEntity_ReturnEntity( characterModel, HOLO_PILOT_TRAIL_FX, FX_PATTACH_POINT_FOLLOW, attachID )
-	SetTeam( holoPilotTrailFX, friendlyTeam )
-	holoPilotTrailFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
-	fxArray.append( holoPilotTrailFX )
-
-	attachID = characterModel.LookupAttachment( "foot_R_sole" )
-	vector smokeColor = GetSkydiveSmokeColorForTeam( player.GetTeam() )
-
-	entity smokeFX_enemy = StartParticleEffectOnEntityWithPos_ReturnEntity( characterModel, GetParticleSystemIndex( SKYDIVE_SMOKE_COLOR_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, attachID, <0, 0, 0>, VectorToAngles( <0, 0, -1> ) )
-	EffectSetControlPointVector( smokeFX_enemy, 1, smokeColor * 0.7 )
-	SetTeam( smokeFX_enemy, player.GetTeam() )
-	smokeFX_enemy.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
-	fxArray.append( smokeFX_enemy )
-
-	entity smokeFX_friendly = StartParticleEffectOnEntityWithPos_ReturnEntity( characterModel, GetParticleSystemIndex( SKYDIVE_SMOKE_COLOR_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, attachID, <0, 0, 0>, VectorToAngles( <0, 0, -1> ) )
-	EffectSetControlPointVector( smokeFX_friendly, 1, smokeColor )
-	SetTeam( smokeFX_friendly, player.GetTeam() )
-	smokeFX_friendly.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
-	fxArray.append( smokeFX_friendly )
-
-	//#################
-	EmitSoundOnEntity( characterModel, "Survival_DropSequence_Travel_3P" )
+	player.EndSignal( "PassiveMirage_StopCloakFromBeacon" )
+	string id = EnableCloakForever( player )
 
 	OnThreadEnd(
-		function() : ( characterModel, mover, fxArray )
+		function() : ( player, id )
 		{
-			foreach( fx in fxArray )
-			{
-				if ( IsValid( fx ) )
-					fx.Destroy()
-				if ( IsValid( characterModel ) )
-					characterModel.Destroy()
-				if ( IsValid( mover ) )
-					mover.Destroy()
-			}
+			DisableCloakForever( player, id )
 		}
 	)
 
-	vector dir               = player.GetViewVector() * player.GetVelocity().Length()
-	vector oldVelocity       = <dir.x, dir.y, player.GetVelocity().z >
-	array<entity> ignoreEnts = [ characterModel, mover ]
-	ignoreEnts.extend( GetPlayerArray() )
-	vector mins     = <-64, -64, -64>
-	vector maxs     = <64, 64, 64>
-	vector traceEnd = mover.GetOrigin() + (Normalize( oldVelocity ) * 64000)
-
-	TraceResults result         = TraceHull( mover.GetOrigin(), traceEnd, mins, maxs, ignoreEnts, TRACE_MASK_PLAYERSOLID_BRUSHONLY, TRACE_COLLISION_GROUP_PLAYER )
-	float distanceFromCollision = Distance( mover.GetOrigin(), result.endPos )
-	float waitTime              = distanceFromCollision / sqrt( oldVelocity.x * oldVelocity.x + oldVelocity.y * oldVelocity.y + oldVelocity.z * oldVelocity.z )
-	waitTime = min( waitTime, 25.0 )
-	mover.NonPhysicsMoveTo( result.endPos, waitTime + 0.5, 0, min( waitTime + 0.49, 2.0 ) ) //Adding time so the holopilot is killed before colliding with the ground.
-	vector tranceAngles = VectorToAngles( result.endPos - mover.GetOrigin() )
-	mover.NonPhysicsRotate( <0, FlattenAngles( tranceAngles ).y, 0>, 0.0 ) //Yaw instant
-	mover.NonPhysicsRotateTo( tranceAngles, 0.5, 0.1, 0.1 ) //Pitch over time
-
-	float endTime          = Time() + waitTime
-	bool anticipateLanding = false
-	while ( !anticipateLanding && Time() < endTime )
-	{
-		distanceFromCollision = Distance( mover.GetOrigin(), result.endPos )
-		if ( distanceFromCollision <= SKYDIVE_SLOWDOWN_DIST_FROM_GROUND )
-		{
-			thread PlayAnim( characterModel, "mp_pilot_freefall_anticipate", mover, "", 1.0 )
-			anticipateLanding = true
-		}
-		wait 0.1
-	}
-
-	wait endTime - Time()
+	WaitForever()
 }
 
-void function Lifeline_PassiveToggle( entity player, int passive, bool didHave, bool nowHas )
+void function Passives_OnRespawnBeaconStopUse( entity beacon, entity player )
 {
-	//We only want to update during character selection. Death or disconnect shouldn't impact teammate's backpack space.
-	if ( !IsAlive( player ) )
-		return
-
-	if ( didHave )
+	if ( PlayerHasPassive( player, ePassives.PAS_MIRAGE ) )
 	{
-		TakeExtraWeaponMod( player, "lifeline_heal" )
-	}
-
-	if ( nowHas )
-	{
-		GiveExtraWeaponMod( player, "lifeline_heal" )
+		player.Signal( "PassiveMirage_StopCloakFromBeacon" )
 	}
 }
-
-void function PassiveToggleFastHeal( entity player, int passive, bool didHave, bool nowHas )
-{
-	if ( !IsAlive( player ) )
-		return
-
-	if ( didHave )
-	{
-		TakeExtraWeaponMod( player, "quick_heal" )
-		// if ( InDomeShield( player ) )
-			// GiveExtraWeaponMod( player, "quick_heal" )
-	}
-
-	if ( nowHas )
-	{
-		if ( player.GetExtraWeaponMods().contains( "quick_heal" ) )
-			TakeExtraWeaponMod( player, "quick_heal" )
-		// GiveExtraWeaponMod( player, "fast_heal" )
-		GiveExtraWeaponMod( player, "quick_heal" )
-	}
-}
-
-void function EnableQuickHeal( entity player )
-{
-	if ( player.p.quickHealEnableCount == 0 )
-	{
-		GiveExtraWeaponMod( player, "quick_heal" )
-	}
-
-	player.p.quickHealEnableCount++
-}
-
-void function DisableQuickHeal( entity player )
-{
-	player.p.quickHealEnableCount--
-	Assert( player.p.quickHealEnableCount >= 0, "< 0 can cause bugs" )
-	if ( player.p.quickHealEnableCount == 0 )
-		TakeExtraWeaponMod( player, "quick_heal" )
-}
-
-
-void function ThreadSlipstream_Passive( entity player, int passive, bool didHave, bool nowHas )
-{
-	thread Slipstream_Passive(player, passive, didHave, nowHas)
-}
-
-void function Slipstream_Passive(entity player, int passive, bool didHave, bool nowHas)
-{
-	bool onetime = false
-	float duration = 1.0
-	while ( IsValid( player ) )
-	{
-		if(player.IsSliding())
-		{
-			WaitFrame()
-			onetime = false
-			continue	
-		} else {
-			if(onetime == false)
-			{
-				//printt("out of sliding? boost here")
-				StatusEffect_AddTimed( player, eStatusEffect.anti_slow, 0.5, duration + 0.5, 0.5 ) //
-				StatusEffect_AddTimed( player, eStatusEffect.speed_boost, 0.3, duration + 0.5, 0.5 ) //
-				StatusEffect_AddTimed( player, eStatusEffect.adrenaline_visuals, 1.0, duration, duration )
-				EmitSoundOnEntity(player, "pilot_stimpack_activate_3p_enemy")
-			}
-			onetime = true
-		}
-		WaitFrame()
-	}
-}
-
-void function Revenant_PassiveToggle(  entity player, int passive, bool didHave, bool nowHas )
-{
-	if ( !IsAlive( player ) )
-		return
-}
-
-void function Loba_PassiveToggle(  entity player, int passive, bool didHave, bool nowHas )
-{
-	if ( !IsAlive( player ) )
-		return
-}
-
-void function Dummie_PassiveToggle(  entity player, int passive, bool didHave, bool nowHas )
-{
-	if ( !IsAlive( player ) )
-		return
-}
-
-void function Wattson_PassiveToggle(  entity player, int passive, bool didHave, bool nowHas )
-{
-	if ( !IsAlive( player ) )
-		return
-
-	if ( didHave )
-	{	
-		Signal( player, "EndSparkOfGeniusThread" )
-	}
-
-	if ( nowHas )
-	{
-		thread SparkOfGenius_Passive_Body( player )
-	}
-}
-
-void function SparkOfGenius_Passive_Body( entity player )
-{
-	float healthRegenStartDelay = 6.0
-	float healthRegenRate = 1.0
-	float healthWait = 2.0
-	
-	if( Flowstate_IsHaloMode() )
-	{
-		healthRegenStartDelay = 5.0
-		healthRegenRate = 1.0
-		healthWait = 0.5
-	}
-	
-	EndSignal( player, "EndSparkOfGeniusThread" )
-	
-	while ( IsValid( player ) && PlayerHasPassive( player, ePassives.PAS_BATTERY_POWERED ) )
-	{
-		wait healthWait
-		
-		if ( !IsAlive( player ) || Bleedout_IsBleedingOut(player) || Time() - player.p.lastDamageTime < healthRegenStartDelay || player.IsPhaseShifted())
-		{
-			WaitFrame()
-			continue
-		}
-		
-		if(player.GetShieldHealth() != player.GetShieldHealthMax())
-		{
-			player.SetShieldHealth( min( player.GetShieldHealthMax(), player.GetShieldHealth() + healthRegenRate ) )
-		}
-	}
-}
-
-void function PilotBlood_Passive( entity player, int passive, bool didHave, bool nowHas )
-{
-	if ( !IsAlive( player ) )
-		return
-
-	if ( didHave )
-	{
-		Signal( player, "EndPilotBloodThread" )
-	}
-
-	if ( nowHas )
-	{
-		thread PilotBlood_Passive_Body( player )
-	}
-}
-
-//spawns threads to heal after regen delay
-void function PilotBlood_Passive_Body( entity player ) //monitor for passive ability
-{
-	float healthRegenStartDelay = 5.0
-	float healthRegenRate = 1.0
-	float tickTime = HEALTH_REGEN_TICK_TIME
-
-	EndSignal( player, "EndPilotBloodThread", "OnDestroy", "OnDeath" )
-	
-	if( Gamemode() == eGamemodes.fs_duckhunt || Gamemode() == eGamemodes.fs_infected || Flowstate_IsHaloMode() || Playlist() == ePlaylists.fs_movementgym )//|| Gamemode() == eGamemodes.WINTEREXPRESS )
-		tickTime = 0.05
-	
-	if( Gamemode() == eGamemodes.fs_duckhunt || Gamemode() == eGamemodes.fs_infected || Playlist() == ePlaylists.fs_movementgym )
-		healthRegenRate = 2.0
-
-	if (Flowstate_Is4DMode())
-	{
-		tickTime = 0.05
-	}
-	
-	//(mk):
-	// when a player's passive is removed with the global function TakePassive,
-	// it leads to callback PilotBlood_Passive firing which ends this thread if player had passive. (we want this)
-	// if a scripter is manually removing the passive with a native function,
-	// they are now responsible for cleanup/callbacks, as these threads will leak.
-	
-	// Notice: During damage rework, "OnDamaged" was setup to fire for client, 
-	// however "TookDamage" was never setup for server. Now this is done.
-	
-	for( ; ; )//while ( IsValid( player ) && PlayerHasPassive( player, ePassives.PAS_PILOT_BLOOD ) )
-	{
-		player.WaitSignal( "TookDamage" ) //sleep until damaged
-		
-		for( ; ; )
-		{
-			if( Time() - player.p.lastDamageTime < healthRegenStartDelay )
-			{
-				WaitFrame()
-				continue //wait until player has not been damaged in some time before spawning heal thread
-			}
-			
-			break
-		}
-		
-		waitthread DispatchHeal( player, tickTime, healthRegenStartDelay, healthRegenRate )
-	}
-}
-
-void function DispatchHeal( entity player, float tickTime, float healthRegenStartDelay, float healthRegenRate )
-{
-	player.EndSignal( "TookDamage", "OnDestroy", "OnDeath" )
-	
-	bool bHealthFull = false 
-	bool bShieldsFull = false
-	
-	while( !bHealthFull || !bShieldsFull )
-	{
-		wait tickTime
-		
-		if ( Bleedout_IsBleedingOut( player ) || player.IsPhaseShifted() )
-		{
-			WaitFrame()
-			continue
-		}
-
-		if ( player.GetHealth() != player.GetMaxHealth() )
-			player.SetHealth( min( player.GetMaxHealth(), player.GetHealth() + healthRegenRate ) )	
-		else 
-			bHealthFull = true
-		
-		if( player.GetShieldHealth() != player.GetShieldHealthMax() )
-			player.SetShieldHealth( min( player.GetShieldHealthMax(), player.GetShieldHealth() + healthRegenRate * 5 ) )
-		else 
-			bShieldsFull = true
-	}
-}
-
-void function PassiveToggleFortified( entity player, int passive, bool didHave, bool nowHas )
-{
-	if ( !IsValid( player ) )
-		return
-
-	if ( didHave )
-	{
-		RemoveEntityCallback_OnDamaged( player, OnFortifiedPlayerDamaged )
-	}
-
-	if ( nowHas )
-	{
-		AddEntityCallback_OnDamaged( player, OnFortifiedPlayerDamaged )
-	}
-}
-
-void function OnFortifiedPlayerDamaged( entity victim, var damageInfo )
-{
-	if ( !IsValid( victim ) || !victim.IsPlayer() ) //|| Bleedout_IsBleedingOut( victim ) )
-		return
-	
-	entity attacker = InflictorOwner( DamageInfo_GetAttacker( damageInfo ) )
-	
-	int sourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-	if ( sourceId == eDamageSourceId.bleedout || sourceId == eDamageSourceId.human_execution )
-		return
-	
-	float damage = DamageInfo_GetDamage( damageInfo )
-
-	if( !IsValidHeadShot( damageInfo, victim ) )
-		DamageInfo_SetDamage( damageInfo, damage - damage*0.15)
-}
-
-void function Pathfinder_PassiveToggle( entity player, int passive, bool didHave, bool nowHas )
-{
-	if ( !IsValid( player ) )
-		return
-	
-	array<entity> teamPlayers = GetPlayerArrayOfTeam( player.GetTeam() )
-	
-	if ( didHave )
-	{
-		foreach( p in teamPlayers )
-			thread SetSurveyBaconMinimapVisibility( player, false )
-	}
-
-	if ( nowHas )
-	{
-		foreach( p in teamPlayers )
-			thread SetSurveyBaconMinimapVisibility( player, true )
-	}
-}
-
-void function Bloodhound_PassiveToggle( entity player, int passive, bool didHave, bool nowHas )
-{
-	if ( !IsValid( player ) )
-		return
-
-	if ( didHave )
-	{
-		StatusEffect_StopAllOfType( player, eStatusEffect.tracking_vision)
-	}
-
-	if ( nowHas )
-	{
-		StatusEffect_AddEndless( player, eStatusEffect.tracking_vision, 1 )
-	}
-}
-
-const float UPGRADE_MIRAGE_CLOAK_SPEED_BOOST_AMNT 		= 0.5
-const float MIRAGE_DOWNED_CLOAK_DURATION 				= 5.0
-const float MIRAGE_REVIVE_CLOAK_DURATION 				= 3.0
 
 void function Passives_OnPlayerStartRes( entity medicPlayer, entity patientPlayer, vector animRefAngles, bool endCrouched )
 {
-	if ( PlayerHasPassive( medicPlayer, ePassives.PAS_MIRAGE ) )
+	if ( PlayerHasPassive( medicPlayer, ePassives.PAS_MIRAGE ) && !AreAbilitiesSilenced( medicPlayer ) )
 	{
 		patientPlayer.Signal( "PassiveMirage_StartRes" )
 
@@ -898,28 +600,47 @@ void function CloakBothPlayers( entity medicPlayer, entity patientPlayer, float 
 	WaitSignal( patientPlayer, "BleedOut_OnRevive", "BleedOut_OnReviveStop" )
 }
 
+                     
 void function ReviveCloak( entity medicPlayer, entity patientPlayer )
 {
 	if( !IsValid( medicPlayer ) || !IsValid( patientPlayer ) )
 		return
 
-	bool patientIsMirage = patientPlayer.HasPassive( ePassives.PAS_MIRAGE )
-
-	if ( PlayerHasPassive( medicPlayer, ePassives.PAS_MIRAGE ) || patientIsMirage )
+                     
+	bool patientIsMirage = PlayerHasPassive( patientPlayer, ePassives.PAS_MIRAGE )
+	if ( ( PlayerHasPassive( medicPlayer, ePassives.PAS_MIRAGE ) && !AreAbilitiesSilenced( medicPlayer ) ) || patientIsMirage )
+      
+                                                                                                     
+       
 	{
+		                    
 		if( !patientIsMirage )
+        
 			EnableCloak( medicPlayer, GetMirageCloakDuration( medicPlayer, MIRAGE_REVIVE_CLOAK_DURATION ), 0.0 )
-		
-		EnableCloak( patientPlayer, GetMirageCloakDuration( patientPlayer, MIRAGE_REVIVE_CLOAK_DURATION ), 0.0 )
+			EnableCloak( patientPlayer, GetMirageCloakDuration( patientPlayer, MIRAGE_REVIVE_CLOAK_DURATION ), 0.0 )
 
-		thread PassiveUpgrade_CloakedSpeedBoost_Thread( medicPlayer )
+		                    
+			if( medicPlayer.HasPassive( ePassives.PAS_PAS_UPGRADE_ONE ) )
+			{
+				thread PassiveUpgrade_CloakedSpeedBoost_Thread( medicPlayer )
+			}
+			if( patientIsMirage && patientPlayer.HasPassive( ePassives.PAS_PAS_UPGRADE_ONE ) )
+			{
+				thread PassiveUpgrade_CloakedSpeedBoost_Thread( patientPlayer )
+			}
+        
 
-		if( patientIsMirage )
-		{
-			thread PassiveUpgrade_CloakedSpeedBoost_Thread( patientPlayer )
-		}
-
+		                    
 		if( !patientIsMirage )
+        
+			Remote_CallFunction_Replay( medicPlayer, "ServerToClient_ShowCloakHintText" )
+
+		if( patientPlayer.IsPlayer() )
+			Remote_CallFunction_Replay( patientPlayer, "ServerToClient_ShowCloakHintText" )
+
+		                    
+		if( !patientIsMirage )
+        
 			thread DisarmOnCloak( medicPlayer )
 
 		if( patientPlayer.IsPlayer() )
@@ -927,26 +648,7 @@ void function ReviveCloak( entity medicPlayer, entity patientPlayer )
 	}
 }
 
-float function GetMirageCloakDuration( entity player, float duration )
-{
-	if( PlayerHasPassive( player, ePassives.PAS_MIRAGE ) && GetCurrentPlaylistVarBool( "enable_mirage_revive_cloak_upgrade", false ) )
-	{
-		duration += GetCurrentPlaylistVarFloat( "upgrade_mirage_extra_cloak_duration", 1.0 )
-	}
-
-	return duration
-}
-
-void function DisarmOnCloak( entity player )
-{
-	if( !IsValid( player ) )
-		return
-
-	// Swap to unarmed
-	if( IsValid( player ) )
-		player.SetActiveWeaponBySlot(eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_2 )
-}
-
+                    
 void function PassiveUpgrade_CloakedSpeedBoost_Thread( entity player )
 {
 	int speedHandle = StatusEffect_AddEndless( player, eStatusEffect.speed_boost, UPGRADE_MIRAGE_CLOAK_SPEED_BOOST_AMNT )
@@ -969,5 +671,397 @@ void function PassiveUpgrade_CloakedSpeedBoost_Thread( entity player )
 		WaitFrame()
 	}
 }
+      
 
+void function DisarmOnCloak( entity player )
+{
+	if( !IsValid( player ) )
+		return
+
+	entity playerWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
+	if( IsValid(  playerWeapon ) )
+		Warning("Native func FastHolster() missing")
+		//playerWeapon.FastHolster()
+
+	// Swap to unarmed
+	if( IsValid( player ) )
+		player.SetActiveWeaponBySlot(eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_2 )
+}
+                           
+
+void function Passives_OnPlayerDeathboxOpened( entity player )
+{
+	if ( PlayerHasPassive( player, ePassives.PAS_MIRAGE ) && !AreAbilitiesSilenced( player ) )
+	{
+		thread CloakWhileInDeathbox( player )
+	}
+}
+
+void function CloakWhileInDeathbox( entity player )
+{
+	player.EndSignal( "OnDeath" )
+
+	string id = EnableCloakForever( player )
+
+	OnThreadEnd(
+		function() : ( player, id )
+		{
+			if ( IsValid( player ) )
+			{
+				DisableCloakForever( player, id, 0.5 )
+			}
+		}
+	)
+
+	WaitFrame()
+
+	while ( player.IsInventoryOpen() )
+		WaitFrame()
+}
+#endif
+
+#if CLIENT
+                     
+void function ServerToClient_ShowCloakHintText()
+{
+	entity player = GetLocalViewPlayer()
+
+	if (IsValid(player))
+	{
+		AnnouncementMessageRight( player, "#CLOAK_UNARMED_WARNING" )
+	}
+}
+                           
+#endif // CLIENT
+
+#if SERVER
+bool function IsDroppingWithSquad( entity player )
+{
+	if( player.GetPlayerNetBool( "isJumpingWithSquad" ) )
+		return ( player.GetPlayerNetEnt( "skydiveFollowPlayer" ) != null || player.GetPlayerNetBool( "isJumpmaster" ) )
+
+	if( player.GetPlayerNetEnt( "skydiveFollowPlayer" ) != null )
+		return true
+
+	return false
+}
+
+void function AttemptDecoyDrop( entity player )
+{
+	//Some small timing issues with the start of skydive.
+	//if ( player.GetVelocity().z > 0 ) //Some small timing issues with the start of skydive.
+	//	return
+	//
+	//float absVelocity = fabs( player.GetVelocity().z )
+	//if ( absVelocity > 1000 )
+	//	return
+
+	if ( !player.Player_IsSkydiving() )
+		return
+
+	if ( player.p.skydiveDecoysFired < 2 )
+	{
+		if ( GetCurrentPlaylistVarBool( "mirage_skydive_decoy_full_team", true ) && IsDroppingWithSquad( player ) )
+		{
+			foreach ( teammate in GetPlayerArrayOfTeam( player.GetTeam() ) )
+			{
+				if ( teammate.Player_IsSkydiving() && ( IsDroppingWithSquad( teammate ) || player.GetPlayerNetEnt( "skydiveFollowPlayer" ) == teammate ) )
+				{
+					thread DecoyDropThink( player, teammate )
+					thread DecoyDropThink( player, teammate, true )
+				}
+			}
+		}
+		else
+		{
+			thread DecoyDropThink( player, player )
+			thread DecoyDropThink( player, player, true )
+		}
+
+		player.p.skydiveDecoysFired++
+		if ( player.p.skydiveDecoysFired == 2 )
+			Remote_CallFunction_NonReplay( player, "ServerCallback_Mirage_DecoysDeployed", true )
+	}
+}
+#endif
+
+
+#if SERVER
+void function DecoyDropThink( entity sender, entity player, bool usePredictedPos = false )
+{
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "OnDeath" )
+
+	vector playerOrigin      = player.GetOrigin()
+	vector viewVector        = AnglesToForward( sender.CameraAngles() )
+	vector predictedPosition = ClampToWorldspace( playerOrigin + player.GetVelocity() * Clamp( player.GetGameAverageLatency(), 0.0, 1.0 ) )
+	if ( usePredictedPos )
+	{
+		TraceResults traceResults = TraceLine( playerOrigin, predictedPosition, [player], TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_NONE )
+		predictedPosition = traceResults.endPos
+	}
+	float startingYaw = FlattenAngles( VectorToAngles( viewVector ) ).y
+	vector moverPos   = usePredictedPos ? predictedPosition : playerOrigin
+	entity mover      = CreateScriptMover( MIRAGE_DECOY_DROP_MOVER_SCRIPTNAME, moverPos, <0, startingYaw, 0> )
+	mover.SetAbsAngles( <0, startingYaw, 0> )
+
+	entity characterModel = CreatePropDynamic( player.GetModelName(), mover.GetOrigin(), mover.GetAngles() )
+	characterModel.SetScriptName( MIRAGE_DECOY_DROP_SCRIPTNAME )
+	characterModel.SetParent( mover, "", false )
+	characterModel.NotSolid()
+	SetTeam( characterModel, player.GetTeam() )
+	Survival_SetFriendlyOwnerHighlight( player, characterModel )
+	characterModel.Anim_PlayOnly( "ACT_MP_FREEFALL" )
+	int forwardPoseID = characterModel.LookupPoseParameterIndex( "freefall_pitch" )
+	//int sidePoseID = characterModel.LookupPoseParameterIndex( "freefall_yaw" )
+	characterModel.SetPoseParameterOverTime( forwardPoseID, 100, 0.5 )
+	characterModel.SetOwner( player )
+	characterModel.kv.fadeDist = 20000
+	//characterModel.SetPoseParameterOverTime( sidePoseID, 50, 0.3 )
+	if ( usePredictedPos )
+	{
+		characterModel.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
+	}
+	else
+	{
+		characterModel.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY
+	}
+
+	int friendlyTeam = characterModel.GetTeam()
+	//EmitSoundOnEntityToTeam( characterModel, "holopilot_loop", friendlyTeam ) //loopingSound
+	//EmitSoundOnEntityToEnemies( characterModel, "holopilot_loop_enemy", friendlyTeam ) ///loopingSound
+	Highlight_SetFriendlyHighlight( characterModel, HIGHLIGHT_FRIENDLY_PLAYER_DECOY )
+	Highlight_SetOwnedHighlight( characterModel, HIGHLIGHT_FRIENDLY_PLAYER_DECOY )
+	Highlight_SetEnemyHighlight( characterModel, "survival_enemy_skydiving" )
+	SetDefaultMPEnemyHighlight( characterModel )
+
+	array<entity> fxArray
+	int attachID            = characterModel.LookupAttachment( "CHESTFOCUS" )
+	entity holoPilotTrailFX = StartParticleEffectOnEntity_ReturnEntity( characterModel, HOLO_PILOT_TRAIL_FX, FX_PATTACH_POINT_FOLLOW, attachID )
+	SetTeam( holoPilotTrailFX, friendlyTeam )
+	holoPilotTrailFX.SetOwner( player )
+	if ( usePredictedPos )
+	{
+		holoPilotTrailFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
+	}
+	else
+	{
+		holoPilotTrailFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+	}
+
+	fxArray.append( holoPilotTrailFX )
+
+
+	SkyDiveTrailPackage diveTrailPackage         = GetSkyDiveTrailPackageForPlayerWithOverrides( player )
+	array<SkyDiveTrailFXStruct> smokeColorTrails = diveTrailPackage.smokeColorFX
+	vector smokeColor
+
+	if ( !usePredictedPos )
+	{
+		foreach ( fxStruct in smokeColorTrails )
+		{
+			entity smokeFX_enemy = StartParticleEffectOnEntityWithPos_ReturnEntity( characterModel, GetParticleSystemIndex( fxStruct.fx ), fxStruct.attachType, attachID, <0, 0, 0>, VectorToAngles( <0, 0, -1> ) )
+
+			if ( fxStruct.useSkyDiveSmokeColorForTeam )
+				smokeColor = GetSkydiveSmokeColorForTeam( player.GetTeam() )
+			else
+				smokeColor = fxStruct.controlPoint
+
+			EffectSetControlPointVector( smokeFX_enemy, 1, smokeColor * 0.7 )
+			SetTeam( smokeFX_enemy, player.GetTeam() )
+			smokeFX_enemy.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
+			fxArray.append( smokeFX_enemy )
+		}
+	}
+
+	foreach ( fxStruct in smokeColorTrails )
+	{
+		entity smokeFX_friendly = StartParticleEffectOnEntityWithPos_ReturnEntity( characterModel, GetParticleSystemIndex( fxStruct.fx ), fxStruct.attachType, attachID, <0, 0, 0>, VectorToAngles( <0, 0, -1> ) )
+
+		if ( fxStruct.useSkyDiveSmokeColorForTeam )
+			smokeColor = GetSkydiveSmokeColorForTeam( player.GetTeam() )
+		else
+			smokeColor = fxStruct.controlPoint
+
+		EffectSetControlPointVector( smokeFX_friendly, 1, smokeColor )
+		SetTeam( smokeFX_friendly, player.GetTeam() )
+		smokeFX_friendly.SetOwner( player )
+		if ( usePredictedPos )
+		{
+			smokeFX_friendly.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
+		}
+		else
+		{
+			smokeFX_friendly.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+		}
+		fxArray.append( smokeFX_friendly )
+	}
+
+	//#################
+	//EmitSoundOnEntity( characterModel, "Survival_DropSequence_Travel_3P" )
+
+	OnThreadEnd(
+		function() : ( characterModel, mover, fxArray )
+		{
+			foreach( fx in fxArray )
+			{
+				if ( IsValid( fx ) )
+					fx.Destroy()
+				if ( IsValid( characterModel ) )
+					characterModel.Destroy()
+				if ( IsValid( mover ) )
+					mover.Destroy()
+			}
+		}
+	)
+
+	vector dir               = viewVector * player.GetVelocity().Length()
+	vector oldVelocity       = <dir.x, dir.y, player.GetVelocity().z >
+	array<entity> ignoreEnts = [ characterModel, mover ]
+	ignoreEnts.extend( GetPlayerArray() )
+	vector mins     = <-64, -64, -64>
+	vector maxs     = <64, 64, 64>
+	vector traceEnd = mover.GetOrigin() + (Normalize( oldVelocity ) * 64000)
+
+	TraceResults result         = TraceHull( mover.GetOrigin(), traceEnd, mins, maxs, ignoreEnts, TRACE_MASK_PLAYERSOLID_BRUSHONLY, TRACE_COLLISION_GROUP_PLAYER )
+	float distanceFromCollision = Distance( mover.GetOrigin(), result.endPos )
+	float waitTime = 25.0
+	float velocityMag = sqrt( oldVelocity.x * oldVelocity.x + oldVelocity.y * oldVelocity.y + oldVelocity.z * oldVelocity.z )
+	if ( velocityMag > 0 )
+		waitTime = distanceFromCollision / velocityMag
+
+	waitTime = min( waitTime, 25.0 )
+	mover.NonPhysicsMoveTo( result.endPos, waitTime + 0.5, 0, min( waitTime + 0.49, 2.0 ) ) //Adding time so the holopilot is killed before colliding with the ground.
+	vector tranceAngles = VectorToAngles( result.endPos - mover.GetOrigin() )
+	mover.NonPhysicsRotate( <0, FlattenAngles( tranceAngles ).y, 0>, 0.0 ) //Yaw instant
+	mover.NonPhysicsRotateTo( tranceAngles, 0.5, 0.1, 0.1 ) //Pitch over time
+
+	float endTime          = Time() + waitTime
+	bool anticipateLanding = false
+	while ( !anticipateLanding && Time() < endTime )
+	{
+		distanceFromCollision = Distance( mover.GetOrigin(), result.endPos )
+		if ( distanceFromCollision <= SKYDIVE_SLOWDOWN_DIST_FROM_GROUND )
+		{
+			characterModel.Anim_PlayOnly( "ACT_MP_FREEFALL_ANTICIPATE" )
+			anticipateLanding = true
+		}
+		wait 0.1
+	}
+
+	wait endTime - Time()
+}
+
+void function Lifeline_PassiveToggle( entity player, int passive, bool didHave, bool nowHas )
+{
+	//We only want to update during character selection. Death or disconnect shouldn't impact teammate's backpack space.
+	if ( !IsAlive( player ) )
+		return
+
+	if ( didHave )
+	{
+		TakeExtraWeaponMod( player, "quick_heal" )
+	}
+
+	if ( nowHas )
+	{
+		GiveExtraWeaponMod( player, "quick_heal" )
+	}
+}
+
+void function PassiveToggleFastHeal( entity player, int passive, bool didHave, bool nowHas )
+{
+	if ( !IsAlive( player ) )
+		return
+
+	if ( didHave )
+	{
+		TakeExtraWeaponMod( player, "fast_heal" )
+		if ( InDomeShield( player ) )
+			GiveExtraWeaponMod( player, "quick_heal" )
+	}
+
+	if ( nowHas )
+	{
+		if ( player.GetExtraWeaponMods().contains( "quick_heal" ) )
+			TakeExtraWeaponMod( player, "quick_heal" )
+		GiveExtraWeaponMod( player, "fast_heal" )
+	}
+}
+
+void function EnableQuickHeal( entity player )
+{
+	if ( player.p.quickHealEnableCount == 0 )
+	{
+		GiveExtraWeaponMod( player, "quick_heal" )
+	}
+
+	player.p.quickHealEnableCount++
+}
+
+void function DisableQuickHeal( entity player )
+{
+	player.p.quickHealEnableCount--
+	Assert( player.p.quickHealEnableCount >= 0, "< 0 can cause bugs" )
+	if ( player.p.quickHealEnableCount == 0 )
+		TakeExtraWeaponMod( player, "quick_heal" )
+}
+
+
+#endif
+
+              
+          
+                                                                                           
+ 
+                
+    
+                                                                        
+    
+ 
+      
+      
+
+#if SERVER
+void function Revenant_PassiveToggle( entity player, int passive, bool didHave, bool nowHas )
+{
+	if ( !IsValid( player ) )
+		return
+
+	if ( !Bleedout_IsBleedingOut( player ) )
+		return
+
+	if ( nowHas )
+	{
+		GivePlayerSettingsMods( player, [ "revenant_bleedout" ] )
+	}
+
+	else if ( didHave )
+	{
+		TakePlayerSettingsMods( player, [ "revenant_bleedout" ] )
+	}
+}
+
+void function Revenant_BleedoutBegin( entity player, entity attacker, var damageInfo )
+{
+	if ( !PlayerHasPassive( player, ePassives.PAS_DEATHSTALKER ) )
+		return
+
+	GivePlayerSettingsMods( player, [ "revenant_bleedout" ] )
+}
+
+void function Revenant_BleedoutEnd( entity player )
+{
+	if ( !PlayerHasPassive( player, ePassives.PAS_DEATHSTALKER ) )
+		return
+
+	TakePlayerSettingsMods( player, [ "revenant_bleedout" ] )
+}
+#endif //HAS_SERVER
+
+#if SERVER || CLIENT
+int function Pas_GetWattsonUltAccelExtraCount()
+{
+	return file.wattson_ult_accel_extra
+}
 #endif

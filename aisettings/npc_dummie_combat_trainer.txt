@@ -32,7 +32,7 @@ npc_dummie_combat_trainer
 	traverseCostFactor				2.0
 	minGoalRadius					2000
 
-	DefaultModelName				"mdl/Humans/class/medium/combat_dummie_medium.rmdl"
+	DefaultModelName				"mdl/Humans/class/medium/dummy_v20_base_w.rmdl"
 
 	DefaultWeapon					"mp_weapon_hemlok"
 	WeaponCapacity					"FromLoadout"

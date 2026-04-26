@@ -5,11 +5,10 @@ global function VendingMachine_LevelInit
 
 #if SERVER
 global function DoVendingMachinePostPickupLogic
-global function ClientCommand_OpenVendingMachine
-global function ClientCommand_CloseVendingMachine
+global function ClientCallback_OpenVendingMachine
+global function ClientCallback_CloseVendingMachine
 global function GetVendingMachineInUseByPlayer
 global function VendingMachine_CreateSimple
-global function WarpBeamFXThread
 
 const string SUPPLYBOX_SOUND_OPEN 	= "UI_Survival_SupplyBoxOpen"
 const string SUPPLYBOX_SOUND_CLOSE 	= "UI_Survival_SupplyBoxClose"
@@ -58,23 +57,24 @@ struct {
 #if SERVER || CLIENT || UI
 void function VendingMachine_LevelInit()
 {
-	if ( !IsFiringRangeGameMode() )
-		return
+
+	#if SERVER || CLIENT
+		PrecacheScriptString( VENDING_MACHINE_SCRIPTNAME )
+		// S3: Remote_RegisterServerFunction doesn't support "entity" or "typed_entity" param types
+		// Vending machine callbacks registered without entity param validation
+		Remote_RegisterServerFunction( VENDING_MACHINE_OPEN_CMD )
+		Remote_RegisterServerFunction( VENDING_MACHINE_CLOSE_CMD )
+	#endif // SERVER || CLIENT
 
 	#if SERVER
-		AddClientCommandCallback( VENDING_MACHINE_OPEN_CMD, ClientCommand_OpenVendingMachine )
-		AddClientCommandCallback( VENDING_MACHINE_CLOSE_CMD, ClientCommand_CloseVendingMachine )
-		Loot_AddCallback_OnPlayerLootPickupRetail( OnPlayerLootPickup )
+		Loot_AddCallback_OnPlayerLootPickup( OnPlayerLootPickup )
 
 	#endif // SERVER
 
 	#if CLIENT
 		AddCreateCallback( "prop_death_box", OnPropScriptCreated )
+		AddCallback_ClientOnPlayerConnectionStateChanged( CL_VendingMachineHighlight_Init )
 	#endif //CLIENT
-
-	#if !UI
-		PrecacheParticleSystem( BLACK_MARKET_WARP_BEAM_FX )
-	#endif
 
 	//Remote_RegisterClientFunction( "CL_VendingMachineHighlight_Init" )
 
@@ -94,7 +94,7 @@ void function VendingMachineDeployThread( vector origin, vector angles, entity s
 	entity vendingMachine
 	{
 		vendingMachine = CreateEntity( "prop_death_box" )
-		//vendingMachine.SetIsVendingMachine()
+		// vendingMachine.SetIsVendingMachine() // S22 entity method, not in S3
 		vendingMachine.SetScriptName( VENDING_MACHINE_SCRIPTNAME )
 		SetTargetName( vendingMachine, VENDING_MACHINE_SCRIPTNAME )
 
@@ -108,9 +108,9 @@ void function VendingMachineDeployThread( vector origin, vector angles, entity s
 		vendingMachine.SetOrigin( origin )
 		vendingMachine.SetAngles( angles )
 
-		//vendingMachine.SetLootGrabDist( lootGrabDist )
+		// vendingMachine.SetLootGrabDist( lootGrabDist ) // S22 entity method, not in S3
 		#if VENDING_MACHINE_DEBUG
-			DebugDrawCircle( origin, <0, 0, 0>, lootGrabDist, COLOR_RED, true, 20.0 )
+			//DebugDrawCircle( origin, <0, 0, 0>, lootGrabDist, <255, 0, 0>, true, 20.0 )
 		#endif // VENDING_MACHINE_DEBUG
 
 		vendingMachine.SetAbsOrigin( origin )
@@ -123,7 +123,7 @@ void function VendingMachineDeployThread( vector origin, vector angles, entity s
 		vendingMachine.SetSkin( vendingMachine.GetSkinIndexByName( "firing_range_mu1" ))
 
 		vendingMachine.kv.impacteffectcolorid = COLORID_FX_LOOT_TIER1
-		vendingMachine.SetIgnorePredictedTriggerTypes( TT_JUMP_PAD  )
+		vendingMachine.SetIgnorePredictedTriggerTypes( TT_JUMP_PAD )
 		vendingMachine.SetPhysics( MOVETYPE_FLY ) // doesn't actually make it move, but allows pushers to interact with it
 
 		vendingMachine.RemoveFromAllRealms()
@@ -144,21 +144,20 @@ void function VendingMachineDeployThread( vector origin, vector angles, entity s
 		{
 			if ( IsValid (spawnTarget.GetParent()) )
 			{
-				entity mover = CreateScriptMover( origin, angles )
-				mover.SetScriptName( VENDING_MACHINE_MOVER_SCRIPTNAME )
+				entity mover = CreateScriptMover_NEW( VENDING_MACHINE_MOVER_SCRIPTNAME, origin, angles )
 				mover.SetParent( spawnTarget.GetParent() )
 				vendingMachine.SetParent( mover )
 			}
 		}
 
-		SetCallback_CanUseEntityCallback_Retail( vendingMachine, CanUseVendingMachine )
+		SetCallback_CanUseEntityCallback( vendingMachine, CanUseVendingMachine )
 		AddCallback_OnUseEntity_ClientServer( vendingMachine, OnVendingMachineUsed )
 		SetCallback_ShouldUseBlockReloadCallback( vendingMachine, SimpleShouldNotBlockReloadCallback )
 	}
 
 	vendingMachine.SetUsable()
 	vendingMachine.SetUsableByGroup( "pilot" )
-	vendingMachine.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
+	vendingMachine.AddUsableValue( USABLE_CUSTOM_HINTS )
 	vendingMachine.SetUsablePriority( USABLE_PRIORITY_LOW )
 
 	EndSignal( vendingMachine, "OnDestroy" )
@@ -180,7 +179,7 @@ void function OnPropScriptCreated( entity ent )
 	if ( ent.GetScriptName() == VENDING_MACHINE_SCRIPTNAME )
 	{
 		AddEntityCallback_GetUseEntOverrideText( ent, GetVendingMachineUsePromptText )
-		SetCallback_CanUseEntityCallback_Retail( ent, CanUseVendingMachine )
+		SetCallback_CanUseEntityCallback( ent, CanUseVendingMachine )
 		AddCallback_OnUseEntity_ClientServer( ent, OnVendingMachineUsed )
 		SetCallback_ShouldUseBlockReloadCallback( ent, SimpleShouldNotBlockReloadCallback )
 
@@ -198,9 +197,6 @@ void function CL_VendingMachineFake_Create( vector pos, vector angles )
 	fakeBox.SetModelScale( 0.99 )
 
 	file.vendingMachinesFake.append( fakeBox )
-
-	// Start highlight thread immediately
-	thread Do_Highlight_Thread( fakeBox )
 }
 
 void function CL_VendingMachineHighlight_Init( entity player )
@@ -238,21 +234,9 @@ void function Do_Highlight_Thread( entity fakeBox )
 #if SERVER
 void function DoVendingMachinePostPickupLogic( entity player, entity vendingMachine, entity lootEnt, LootData lootFlav, int unitsPickedUp, int pickupFlags )
 {
-	entity lootEntParent = lootEnt.GetParent()
-	if ( IsValid( lootEntParent ) )
-	{
-		if ( lootEntParent.GetScriptName() == LOOT_BIN_SCRIPTNAME )
-		{
-			bool shouldOpenRegularCompartment = true
-			bool shouldOpenSecretCompartment  = lootEnt.e.isSecretLoot
-			//thread LootBin_ForceOpen_Thread( lootEntParent, shouldOpenRegularCompartment, shouldOpenSecretCompartment )
-		}
-		else if ( lootEntParent.GetScriptName() == CARE_PACKAGE_SCRIPTNAME )
-		{
-			//if ( lootEntParent.DoesShareRealms( player ) ) // suspect fix for http://jiratf.respawn.net:8080/browse/R5DEV-230699
-				//thread RemoteOpenAirdrop( lootEntParent, null )
-		}
-	}
+	// S22 loot bin/airdrop remote open — not available in S3
+	// entity lootEntParent = lootEnt.GetParent()
+	// if ( IsValid( lootEntParent ) ) { ... }
 
 	if ( lootFlav.lootType == eLootType.MAINWEAPON && GetWeaponInfoFileKeyField_GlobalBool( lootFlav.baseWeapon, "uses_ammo_pool" ) )
 	{
@@ -271,36 +255,16 @@ void function DoVendingMachinePostPickupLogic( entity player, entity vendingMach
 #if SERVER
 void function OnPlayerLootPickup( entity player, entity lootEnt, string ref, int unitsPickedUp, bool willDestroy, entity vendingMachine, int pickupFlags )
 {
-	printt("OnPlayerLootPickup called!")
-
 	LootData lootFlav = SURVIVAL_Loot_GetLootDataByRef( ref )
 
 	if ( !IsValid( vendingMachine ) )
-	{
-		printt("vendingMachine invalid")
 		return
-	}
 
 	if ( !IsValid( lootEnt ) )
-	{
-		printt("lootEnt invalid")
 		return
-	}
 
 	if ( vendingMachine.GetScriptName() != VENDING_MACHINE_SCRIPTNAME )
-	{
-		printt("Not a vending machine, scriptname:", vendingMachine.GetScriptName())
 		return
-	}
-
-	/*printt("Playing black market effects")
-	// Play black market effects
-	if ( IsValid( lootEnt ) )
-	{
-		EmitSoundOnEntity( vendingMachine, "Loba_Ultimate_BlackMarket_WarpOut" )
-		EmitSoundAtPosition( TEAM_UNASSIGNED, lootEnt.GetOrigin(), "Loba_Ultimate_BlackMarket_WarpIn", vendingMachine )
-		thread WarpBeamFXThread( player, vendingMachine.GetOrigin() + (vendingMachine.GetUpVector() * 48.0), lootEnt.GetOrigin() )
-	}*/
 
 	Assert( unitsPickedUp > 0, "In OnPlayerLootPickup with unitsPickedUp: " + unitsPickedUp + ". player: " + player + " lootRef: " + ref )
 
@@ -315,7 +279,7 @@ void function WarpBeamFXThread( entity player, vector startPos, vector endPos )
 	entity controlPoint = CreateEntity( "info_placement_helper" )
 	SetTargetName( controlPoint, UniqueString( "translocation_endPos" ) )
 	controlPoint.SetOrigin( endPos )
-	//CopyRealmsFromTo( player, controlPoint )
+	CopyRealmsFromTo( player, controlPoint )
 	DispatchSpawn( controlPoint )
 
 	entity beamFX = CreateEntity( "info_particle_system" )
@@ -324,7 +288,7 @@ void function WarpBeamFXThread( entity player, vector startPos, vector endPos )
 	beamFX.kv.cpoint1 = controlPoint.GetTargetName()
 	beamFX.kv.start_active = 1
 	beamFX.SetOrigin( startPos )
-	//CopyRealmsFromTo( player, beamFX )
+	CopyRealmsFromTo( player, beamFX )
 	DispatchSpawn( beamFX )
 
 	OnThreadEnd( function () : ( beamFX, controlPoint ) {
@@ -340,43 +304,32 @@ void function WarpBeamFXThread( entity player, vector startPos, vector endPos )
 #endif // SERVER
 
 #if SERVER
-bool function ClientCommand_OpenVendingMachine( entity player, array<string> args )
+void function ClientCallback_OpenVendingMachine( entity player, entity grabber )
 {
-	if ( args.len() < 1 )
-		return true
-
-	entity grabber = GetEntByIndex( args[0].tointeger() )
-
 	if ( !IsValid( grabber ) || grabber.GetNetworkedClassName() != "prop_death_box" || !IsValid( player ) || !player.IsPlayer() )
-		return true
+		return
 
-	//grabber.IncrementPlayersGrabbingLoot()
+	// grabber.IncrementPlayersGrabbingLoot() // S22 entity method
 	EmitSoundOnEntityOnlyToPlayer( grabber, player, SUPPLYBOX_SOUND_OPEN )
 
-	return true
+	// FR_Nessie_OnUseVendingMachine — S22 easter egg, not in S3
+
 }
 #endif // SERVER
 
 
 #if SERVER
-bool function ClientCommand_CloseVendingMachine( entity player, array<string> args )
+void function ClientCallback_CloseVendingMachine( entity player, entity grabber )
 {
-	if ( args.len() < 1 )
-		return true
-
-	entity grabber = GetEntByIndex( args[0].tointeger() )
-
 	if ( !IsValid( grabber ) || grabber.GetNetworkedClassName() != "prop_death_box" || !IsValid( player ) || !player.IsPlayer() )
-		return true
+		return
 
-	//grabber.DecrementPlayersGrabbingLoot()
+	// grabber.DecrementPlayersGrabbingLoot() // S22 entity method
 	EmitSoundOnEntityOnlyToPlayer( grabber, player, SUPPLYBOX_SOUND_CLOSE )
 
 	// do not trust the integrity of tables-as-maps; too many errors so checking for existence based on live game issues
 	if ( player in file.playersToVendingMachineMap )
 		delete file.playersToVendingMachineMap[ player ]
-
-	return true
 }
 #endif // SERVER
 
@@ -416,16 +369,18 @@ bool function IsVendingMachine( entity ent )
 {
 	if ( IsValid(ent) && ent.GetNetworkedClassName() == "prop_death_box" )
 	{
-		return true//ent.IsVendingMachine()
+		// ent.IsVendingMachine() // S22 entity method, not in S3
+		return ent.GetScriptName() == VENDING_MACHINE_SCRIPTNAME
 	}
 
 	return false
 }
 
-//faster if you already know that the ent is valid and is a prop_loot_grabber
+//faster if you already know that the ent is valid and is a prop_death_box
 bool function IsVendingMachineUnsafe( entity ent )
 {
-	return false//ent.IsVendingMachine()
+	// ent.IsVendingMachine() // S22 entity method, not in S3
+	return ent.GetScriptName() == VENDING_MACHINE_SCRIPTNAME
 }
 #endif // SERVER || CLIENT
 
@@ -464,7 +419,7 @@ void function OnVendingMachineUsed( entity vendingMachine, entity player, int us
 			settings.successFunc = void function( entity vendingMachine, entity player, ExtendedUseSettings settings )
 			{
 				OpenSurvivalGroundListRetail( player, vendingMachine, eGroundListBehavior.NEARBY, eGroundListType.VENDINGMACHINE )
-				player.ClientCommand( VENDING_MACHINE_OPEN_CMD + " " + vendingMachine.GetEntIndex() )
+				Remote_ServerCallFunction( VENDING_MACHINE_OPEN_CMD, vendingMachine )
 			}
 		#endif
 
@@ -491,3 +446,5 @@ void function DEV_VendingMachine_Create( entity player )
 	}
 }
 #endif // SERVER
+
+

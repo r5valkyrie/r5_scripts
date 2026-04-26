@@ -1,6 +1,6 @@
 global function InitCharacterSkinsPanel
 
-//global function PROTO_TogglePIPThumbnails
+                                           
 
 struct
 {
@@ -8,9 +8,40 @@ struct
 	var               headerRui
 	var               listPanel
 	array<ItemFlavor> characterSkinList
+
+	var equipButton
 	var blurbPanel
-	var heirloomButton
+                          
+                   
+                                
+
+	var mythicPanel
+	var mythicSelection
+	var mythicLeftButton
+	var mythicRightButton
+	var mythicTrackingButton
+	var mythicEquipButton
+	var mythicGridButton
+
+	int activeMythicSkinTier = 0
 } file
+
+                         
+struct
+{
+	ItemFlavor&       character
+	LoadoutEntry&     loadoutSlot
+	var               button
+	array<ItemFlavor> selectableMeleeSkins
+	int               selectedIndex = -1
+
+	bool  onShowCallbacksRegistered = false
+	bool  onFocusCallbacksRegistered = false
+	float stickDeflection = 0
+	int   lastStickState = eStickState.NEUTRAL
+
+} meleeSkinData
+                               
 
 void function InitCharacterSkinsPanel( var panel )
 {
@@ -27,41 +58,75 @@ void function InitCharacterSkinsPanel( var panel )
 
 	AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
 	AddPanelFooterOption( panel, LEFT, BUTTON_A, false, "#A_BUTTON_SELECT", "", null, CustomizeMenus_IsFocusedItem )
-	//AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK_LEGEND", "#X_BUTTON_UNLOCK_LEGEND", null, CustomizeMenus_IsFocusedItemParentItemLocked )
-	//AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_EQUIP", "#X_BUTTON_EQUIP", null, CustomizeMenus_IsFocusedItemEquippable )
-	//AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK", "#X_BUTTON_UNLOCK", null, CustomizeMenus_IsFocusedItemLocked )
-	AddPanelFooterOption( panel, LEFT, BUTTON_STICK_LEFT, false, "#MENU_ZOOM_CONTROLS_GAMEPAD", "#MENU_ZOOM_CONTROLS" )
-	//AddPanelFooterOption( panel, LEFT, BUTTON_DPAD_LEFT, false, "#TRIGGERS_CHANGE_LEGEND", "", CustomizeCharacterMenu_PrevButton_OnActivate )
-	//AddPanelFooterOption( panel, LEFT, BUTTON_DPAD_RIGHT, false, "", "", CustomizeCharacterMenu_NextButton_OnActivate )
-	//AddPanelFooterOption( panel, LEFT, BUTTON_TRIGGER_LEFT, false, "", "", CustomizeCharacterMenu_PrevButton_OnActivate )
-	//AddPanelFooterOption( panel, LEFT, BUTTON_TRIGGER_RIGHT, false, "", "", CustomizeCharacterMenu_NextButton_OnActivate )
+	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK_LEGEND", "#X_BUTTON_UNLOCK_LEGEND", null, CustomizeMenus_IsFocusedItemParentItemLocked )
+	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_EQUIP", "#X_BUTTON_EQUIP", null, CustomizeMenus_IsFocusedItemEquippable )
+	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK", "#X_BUTTON_UNLOCK", null, CustomizeMenus_IsFocusedItemLocked )
+	#if NX_PROG || PC_PROG_NX_UI
+		AddPanelFooterOption( panel, LEFT, BUTTON_STICK_LEFT, false, "#MENU_ZOOM_CONTROLS_GAMEPAD", "#MENU_ZOOM_CONTROLS" )
+	#else
+		AddPanelFooterOption( panel, RIGHT, BUTTON_STICK_LEFT, false, "#MENU_ZOOM_CONTROLS_GAMEPAD", "#MENU_ZOOM_CONTROLS" )
+	#endif
+	var listPanel = file.listPanel
+	void functionref( var ) func = (
+		void function( var button ) : ( listPanel )
+		{
+			SetOrClearFavoriteFromFocus( listPanel )
+		}
+	)
 
-	file.heirloomButton = Hud_GetChild( panel, "EquipHeirloomButton" )
-	HudElem_SetRuiArg( file.heirloomButton, "bigText", "" )
-	HudElem_SetRuiArg( file.heirloomButton, "buttonText", "" )
-	HudElem_SetRuiArg( file.heirloomButton, "descText", "" )
-	Hud_AddEventHandler( file.heirloomButton, UIE_CLICK, CustomizeCharacterMenu_HeirloomButton_OnActivate )
+	#if NX_PROG || PC_PROG_NX_UI
+		AddPanelFooterOption( panel, LEFT, BUTTON_Y, false, "#Y_BUTTON_SET_FAVORITE", "#Y_BUTTON_SET_FAVORITE", func, CustomizeMenus_IsFocusedItemFavoriteable )
+		AddPanelFooterOption( panel, LEFT, BUTTON_Y, false, "#Y_BUTTON_CLEAR_FAVORITE", "#Y_BUTTON_CLEAR_FAVORITE", func, CustomizeMenus_IsFocusedItemFavorite )
+	#else
+		AddPanelFooterOption( panel, RIGHT, BUTTON_Y, false, "#Y_BUTTON_SET_FAVORITE", "#Y_BUTTON_SET_FAVORITE", func, CustomizeMenus_IsFocusedItemFavoriteable )
+		AddPanelFooterOption( panel, RIGHT, BUTTON_Y, false, "#Y_BUTTON_CLEAR_FAVORITE", "#Y_BUTTON_CLEAR_FAVORITE", func, CustomizeMenus_IsFocusedItemFavorite )
+	#endif
 
-	Hud_SetVisible(file.heirloomButton, false)
-	//Hud_SetVisible(Hud_GetChild( panel, "ActionButton" ), false)
+                                                         
+                                                                                                        
+      
+
+	file.mythicEquipButton =  Hud_GetChild( panel, "EquipMythicButton" )
+	HudElem_SetRuiArg( file.mythicEquipButton, "centerText", "EQUIP" )
+	Hud_AddEventHandler( file.mythicEquipButton, UIE_CLICK, MythicEquipButton_OnActivate )
+
+	file.mythicPanel = Hud_GetChild( panel, "MythicSkinInfo" )
+	file.mythicSelection = Hud_GetChild( panel, "MythicSkinSelection" )
+	file.mythicTrackingButton = Hud_GetChild( panel, "TrackMythicButton" )
+	Hud_AddEventHandler( file.mythicTrackingButton, UIE_CLICK, MythicTrackingButton_OnClick )
+
+	file.mythicLeftButton = Hud_GetChild( panel, "MythicSkinLeftButton" )
+	Hud_AddEventHandler( file.mythicLeftButton, UIE_CLICK, LeftMythicSkinButton_OnActivate )
+	file.mythicRightButton = Hud_GetChild( panel, "MythicSkinRightButton" )
+	Hud_AddEventHandler( file.mythicRightButton, UIE_CLICK, RightMythicSkinButton_OnActivate )
+
+	Hud_SetVisible( file.mythicSelection, false )
+	Hud_SetVisible( file.mythicLeftButton, false )
+	Hud_SetVisible( file.mythicRightButton, false )
+	Hud_SetVisible( file.mythicTrackingButton, false )
+	Hud_SetVisible( file.mythicPanel, false )
+
+	file.equipButton = Hud_GetChild( panel, "ActionButton" )
 	file.blurbPanel = Hud_GetChild( panel, "SkinBlurb" )
-	//RegisterSignal( "PROTO_StopButtonThumbnailsThink" )
+
 	Hud_SetVisible( file.blurbPanel, false )
 }
 
 
 void function CharacterSkinsPanel_OnShow( var panel )
 {
+	SetCurrentTabForPIN( Hud_GetHudName( panel ) )
 	UI_SetPresentationType( ePresentationType.CHARACTER_SKIN )
 
 	AddCallback_OnTopLevelCustomizeContextChanged( panel, CharacterSkinsPanel_Update )
 	RunClientScript( "EnableModelTurn" )
 	thread TrackIsOverScrollBar( file.listPanel )
 	CharacterSkinsPanel_Update( panel )
+              
+                                
 
-	//
-	AddCallback_ItemFlavorLoadoutSlotDidChange_SpecificPlayer( LocalClientEHI(), Loadout_MeleeSkin( GetTopLevelCustomizeContext() ), OnMeleeSkinChanged )
-	CustomizeCharacterMenu_UpdateHeirloomButton()
+	UpdateMythicTrackingButton()
+	FocusOnMythicSkinIfAnyTierEquiped()
 }
 
 
@@ -72,8 +137,6 @@ void function CharacterSkinsPanel_OnHide( var panel )
 	RunClientScript( "EnableModelTurn" )
 	CharacterSkinsPanel_Update( panel )
 
-	//Signal( panel, "PROTO_StopButtonThumbnailsThink" )
-	//RemoveCallback_ItemFlavorLoadoutSlotDidChange_SpecificPlayer( LocalClientEHI(), Loadout_MeleeSkin( GetTopLevelCustomizeContext() ), OnMeleeSkinChanged )
 }
 
 
@@ -81,7 +144,7 @@ void function CharacterSkinsPanel_Update( var panel )
 {
 	var scrollPanel = Hud_GetChild( file.listPanel, "ScrollPanel" )
 
-	// cleanup
+	          
 	foreach ( int flavIdx, ItemFlavor unused in file.characterSkinList )
 	{
 		var button = Hud_GetChild( scrollPanel, "GridButton" + flavIdx )
@@ -93,31 +156,60 @@ void function CharacterSkinsPanel_Update( var panel )
 
 	RunMenuClientFunction( "ClearAllCharacterPreview" )
 
-	// setup, but only if we're active
 	Hud_SetVisible( file.blurbPanel, false )
+	Hud_SetVisible( file.mythicPanel, false )
+	Hud_SetVisible( file.mythicSelection, false )
+	Hud_SetVisible( file.mythicLeftButton, false )
+	Hud_SetVisible( file.mythicRightButton, false )
+	Hud_SetVisible( file.mythicTrackingButton, false )
+
+	void functionref( ItemFlavor, var ) customButtonUpdateFunc
+
+	customButtonUpdateFunc = (void function( ItemFlavor itemFlav, var rui )
+	{
+		bool isMythic = Mythics_IsItemFlavorMythicSkin( itemFlav )
+		if ( isMythic )
+		{
+			RuiSetInt( rui, "highestMythicTier", Mythics_GetNumTiersUnlockedForSkin( GetLocalClientPlayer(), itemFlav ) )
+		}
+		else
+		{
+			RuiSetInt( rui, "highestMythicTier", 0 )
+		}
+		RuiSetBool( rui, "showMythicIcons", isMythic )
+	})
+
+	                                  
 	if ( IsPanelActive( file.panel ) && IsTopLevelCustomizeContextValid() )
 	{
 		LoadoutEntry entry = Loadout_CharacterSkin( GetTopLevelCustomizeContext() )
 		file.characterSkinList = GetLoadoutItemsSortedForMenu( entry, CharacterSkin_GetSortOrdinal )
-		//FilterCharacterSkinList( file.characterSkinList )
+		FilterCharacterSkinList( file.characterSkinList )
 
 		Hud_InitGridButtons( file.listPanel, file.characterSkinList.len() )
 		foreach ( int flavIdx, ItemFlavor flav in file.characterSkinList )
 		{
 			var button = Hud_GetChild( scrollPanel, "GridButton" + flavIdx )
-			CustomizeButton_UpdateAndMarkForUpdating( button, [entry], flav, PreviewCharacterSkin, CanEquipCanBuyCharacterItemCheck )
+			if( Mythics_IsItemFlavorMythicSkin( flav ) )
+			{
+				int maxUnlockedTier = Mythics_GetNumTiersUnlockedForSkin( GetLocalClientPlayer(), flav ) - 1                                                                                
+				int tierToDisplay = ClampInt( file.activeMythicSkinTier, 0, maxUnlockedTier )
+				flav = expect ItemFlavor( Mythics_GetSkinTierForCharacter( GetTopLevelCustomizeContext(), tierToDisplay ) )
+				file.mythicGridButton = button
+			}
+
+			CustomizeButton_UpdateAndMarkForUpdating( button, [entry], flav, PreviewCharacterSkin, CanEquipCanBuyCharacterItemCheck,false, customButtonUpdateFunc )
 		}
 
 		CustomizeMenus_SetActionButton( Hud_GetChild( panel, "ActionButton" ) )
-
-		RuiSetString( file.headerRui, "collected", CustomizeMenus_GetCollectedString( entry, file.characterSkinList , false ) )
+		RuiSetString( file.headerRui, "collected", GetCollectedString( entry, false, false ) )
 	}
 }
 
 
 void function CharacterSkinsPanel_OnFocusChanged( var panel, var oldFocus, var newFocus )
 {
-	if ( !IsValid( panel ) ) // uiscript_reset
+	if ( !IsValid( panel ) )                  
 		return
 	if ( GetParentMenu( panel ) != GetActiveMenu() )
 		return
@@ -131,7 +223,17 @@ void function CharacterSkinsPanel_OnFocusChanged( var panel, var oldFocus, var n
 
 void function PreviewCharacterSkin( ItemFlavor flav )
 {
-	RunClientScript( "UIToClient_PreviewCharacterSkinFromCharacterSkinPanel", ItemFlavor_GetGUID( flav ), ItemFlavor_GetGUID( GetTopLevelCustomizeContext() ) )
+	#if DEVELOPER
+		if ( InputIsButtonDown( KEY_LSHIFT ) )
+		{
+			string locedName = Localize( ItemFlavor_GetLongName( flav ) )
+			printt( "\"" + locedName + "\" grx ref is: " + GetGlobalSettingsString( ItemFlavor_GetAsset( flav ), "grxRef" ) )
+			printt( "\"" + locedName + "\" body model is: " +  CharacterSkin_GetBodyModel( flav ) )
+
+		}
+	#endif       
+
+	                   
 	if ( CharacterSkin_HasStoryBlurb( flav ) )
 	{
 		Hud_SetVisible( file.blurbPanel, true )
@@ -141,174 +243,102 @@ void function PreviewCharacterSkin( ItemFlavor flav )
 		CharacterHudUltimateColorData colorData = CharacterClass_GetHudUltimateColorData( characterFlav )
 
 		var rui = Hud_GetRui( file.blurbPanel )
-		RuiSetString( rui, "buttonText", CharacterSkin_GetStoryBlurbBodyText( flav ) )
-		//RuiSetString( rui, "skinNameText", ItemFlavor_GetLongName( flav ) )
-		//RuiSetString( rui, "bodyText", CharacterSkin_GetStoryBlurbBodyText( flav ) )
-		//RuiSetImage( rui, "portraitIcon", portraitImage )
-		//RuiSetFloat3( rui, "characterColor", SrgbToLinear( colorData.ultimateColor ) )
-		//RuiSetGameTime( rui, "startTime", ClientTime() )
+		RuiSetString( rui, "characterName", ItemFlavor_GetShortName( characterFlav ) )
+		RuiSetString( rui, "skinNameText", ItemFlavor_GetLongName( flav ) )
+		RuiSetString( rui, "bodyText", CharacterSkin_GetStoryBlurbBodyText( flav ) )
+		RuiSetImage( rui, "portraitIcon", portraitImage )
+		RuiSetFloat3( rui, "characterColor", SrgbToLinear( colorData.ultimateColor ) )
+		RuiSetGameTime( rui, "startTime", ClientTime() )
 	}
 	else
 	{
 		Hud_SetVisible( file.blurbPanel, false )
 	}
-}
 
-
-//bool doPIPThumbnails = false
-//bool isPanelShown = false
-//void function PROTO_TogglePIPThumbnails()
-//{
-//	doPIPThumbnails = !doPIPThumbnails
-//}
-//
-//void function PROTO_ButtonThumbnailsThink( var panel )
-//{
-//	EndSignal( panel, "PROTO_StopButtonThumbnailsThink" )
-//
-//	ItemFlavor customizeContext = GetCustomizeContext()
-//
-//	table<ItemFlavor, bool> activeFlavorSet = {}
-//
-//	OnThreadEnd( void function() : ( activeFlavorSet ) {
-//		foreach( ItemFlavor flav, bool unused in activeFlavorSet )
-//			RunClientScript( "UIToClient_PROTO_StopButtonThumbnail", ItemFlavor_GetRef( flav ) )
-//	} )
-//
-//	var scrollPanel = Hud_GetChild( file.listPanel, "ScrollPanel" )
-//
-//	WaitFrame()
-//
-//	while ( true )
-//	{
-//		if ( customizeContext != GetCustomizeContext() )
-//		{
-//			customizeContext = GetCustomizeContext()
-//			foreach( ItemFlavor flav, bool unused in activeFlavorSet )
-//				RunClientScript( "UIToClient_PROTO_StopButtonThumbnail", ItemFlavor_GetRef( flav ) )
-//			activeFlavorSet.clear()
-//		}
-//
-//		for ( int buttonIndex = 0; buttonIndex < file.characterSkinList.len(); buttonIndex++ )
-//		{
-//			var button            = Hud_GetChild( scrollPanel, "GridButton" + buttonIndex )
-//			ItemFlavor itemFlavor = file.characterSkinList[buttonIndex]
-//			bool isActive         = (itemFlavor in activeFlavorSet)
-//			bool shouldBeActive   = doPIPThumbnails && Hud_IsVisible( button )
-//
-//			if ( shouldBeActive )
-//			{
-//				if ( !isActive )
-//				{
-//					activeFlavorSet[itemFlavor] <- true
-//					RunClientScript( "UIToClient_PROTO_StartButtonThumbnail", button, ItemFlavor_GetRef( itemFlavor ) )
-//				}
-//			}
-//			else if ( isActive )
-//			{
-//				delete activeFlavorSet[itemFlavor]
-//				RunClientScript( "UIToClient_PROTO_StopButtonThumbnail", ItemFlavor_GetRef( itemFlavor ) )
-//			}
-//		}
-//
-//		WaitFrame()
-//	}
-//}
-
-void function OnMeleeSkinChanged( EHI playerEHI, ItemFlavor flavor )
-{
-	CustomizeCharacterMenu_UpdateHeirloomButton()
-}
-
-ItemFlavor ornull function GetMeleeHeirloom( ItemFlavor character )
-{
-	LoadoutEntry entry = Loadout_MeleeSkin( GetTopLevelCustomizeContext() )
-	array<ItemFlavor> melees = GetValidItemFlavorsForLoadoutSlot( LocalClientEHI(), entry )
-
-	foreach ( meleeFlav in melees )
+	if( Mythics_IsItemFlavorMythicSkin( flav ) )
 	{
-		if ( ItemFlavor_GetQuality( meleeFlav ) == eQuality.HEIRLOOM )
-		{
-			return meleeFlav
-		}
-	}
-
-	return null
-}
-
-void function CustomizeCharacterMenu_UpdateHeirloomButton()
-{
-	Hud_Hide( file.heirloomButton )
-	return
-	
-	LoadoutEntry entry = Loadout_MeleeSkin( GetTopLevelCustomizeContext() )
-	ItemFlavor ornull meleeHeirloom = GetMeleeHeirloom( GetTopLevelCustomizeContext() )
-	if ( meleeHeirloom != null )
-	{
-		expect ItemFlavor( meleeHeirloom )
-
-		Hud_Show( file.heirloomButton )
-
-		bool isEquipped = (LoadoutSlot_GetItemFlavor( LocalClientEHI(), entry ) == meleeHeirloom)
-		bool isEquippable = IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), entry, meleeHeirloom )
-		string meleeName = ItemFlavor_GetLongName( meleeHeirloom )
-
-		Hud_SetLocked( file.heirloomButton, !isEquippable )
-		Hud_ClearToolTipData( file.heirloomButton )
-
-		HudElem_SetRuiArg( file.heirloomButton, "buttonText", Localize( meleeName ) )
-		if ( !isEquippable )
-		{
-			HudElem_SetRuiArg( file.heirloomButton, "descText", Localize( "#MENU_ITEM_LOCKED" ) )
-			HudElem_SetRuiArg( file.heirloomButton, "bigText", "`1%$rui/menu/store/reqs_locked%" )
-			Hud_Hide( file.heirloomButton )
-		}
-		else if ( isEquipped )
-		{
-			HudElem_SetRuiArg( file.heirloomButton, "descText", Localize( "#EQUIPPED_LOOT_REWARD" ) )
-			HudElem_SetRuiArg( file.heirloomButton, "bigText", "`1%$rui/hud/check_selected%" )
-		}
-		else
-		{
-			HudElem_SetRuiArg( file.heirloomButton, "descText", Localize( "#EQUIP_LOOT_REWARD" ) )
-			HudElem_SetRuiArg( file.heirloomButton, "bigText", "`1%$rui/borders/key_border%" )
-		}
+		Hud_SetVisible( file.mythicPanel, true )
+		Hud_SetVisible( file.mythicSelection, true )
+		Hud_SetVisible( file.mythicLeftButton, true )
+		Hud_SetVisible( file.mythicRightButton, true )
+		UpdateMythicSkinInfo()
+		flav = expect ItemFlavor( Mythics_GetItemTierForSkin( flav, file.activeMythicSkinTier ) )
 	}
 	else
 	{
-		Hud_Hide( file.heirloomButton )
+		Hud_SetVisible( file.mythicPanel, false )
+		Hud_SetVisible( file.mythicSelection, false )
+		Hud_SetVisible( file.mythicLeftButton, false )
+		Hud_SetVisible( file.mythicRightButton, false )
+		Hud_SetVisible( file.mythicTrackingButton, false )
 	}
+
+	RunClientScript( "UIToClient_PreviewCharacterSkinFromCharacterSkinPanel", ItemFlavor_GetGUID( flav ), ItemFlavor_GetGUID( GetTopLevelCustomizeContext() ) )
 }
 
-void function CustomizeCharacterMenu_HeirloomButton_OnActivate( var button )
+
+void function UpdateMythicSkinInfo()
 {
-	if ( Hud_IsLocked( button ) )
-		return
+	ItemFlavor characterFlav = GetTopLevelCustomizeContext()
+	asset portraitImage = ItemFlavor_GetIcon( characterFlav )
+	ItemFlavor challenge = Mythics_GetChallengeForCharacter( characterFlav )
 
-	LoadoutEntry entry = Loadout_MeleeSkin( GetTopLevelCustomizeContext() )
-	ItemFlavor ornull meleeHeirloom = GetMeleeHeirloom( GetTopLevelCustomizeContext() )
+	var rui = Hud_GetRui( file.mythicPanel )
+	RuiSetInt( rui, "activeTierIndex", file.activeMythicSkinTier + 1 )
 
-	if ( meleeHeirloom == null )
-		return
+	if(  file.activeMythicSkinTier - 1 < 0 )
+		RuiSetString( rui, "challengeTierDesc", "#MYTHIC_SKIN_UNLOCK_DESC" )
+	else
+		RuiSetString( rui, "challengeTierDesc", Challenge_GetDescription( challenge, file.activeMythicSkinTier - 1 ) )
 
-	array<ItemFlavor> meleeSkinList = RegisterReferencedItemFlavorsFromArray( GetTopLevelCustomizeContext(), "meleeSkins", "flavor", "featureFlag" )
-	Assert( meleeSkinList.len() == 2 )
+	entity player = GetLocalClientPlayer()
 
-	ItemFlavor context = GetTopLevelCustomizeContext()
-	ItemFlavor meleeToEquip
+	int currentTier = -1
+	int currentProgress = -1
+	int goalProgress = -1
 
-	foreach ( meleeFlav in meleeSkinList )
+	int challengeTierCount = Challenge_GetTierCount( challenge )
+	int ownedEvolvedSkinCount = 0
+	for ( int skinTier = 1; skinTier <= challengeTierCount; skinTier++ )
 	{
-		bool isEquipped = (LoadoutSlot_GetItemFlavor( LocalClientEHI(), entry ) == meleeFlav )
-		if ( !isEquipped )
+		                                                                                                                   
+		ItemFlavor skin = expect ItemFlavor( Mythics_GetSkinTierForCharacter( characterFlav, skinTier ) )
+		if ( GRX_IsItemOwnedByPlayer( skin ) )
+			ownedEvolvedSkinCount++
+	}
+
+	if ( DoesPlayerHaveChallenge( player, challenge ) && ownedEvolvedSkinCount != challengeTierCount )
+	{
+		currentTier = Challenge_GetCurrentTier( player, challenge )
+
+		if( !Challenge_IsComplete( player, challenge ) )
 		{
-			meleeToEquip = meleeFlav
-			break
+			currentProgress = Challenge_GetProgressValue( player, challenge, currentTier )
+			goalProgress    = Challenge_GetGoalVal( challenge, currentTier )
 		}
 	}
 
-	PIN_Customization( context, meleeToEquip )
-	RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), entry, meleeToEquip )
+
+
+}
+
+       
+
+void function MythicEquipButton_OnActivate( var button )
+{
+	EHI playerEHI = LocalClientEHI()
+	ItemFlavor character = GetTopLevelCustomizeContext()
+	LoadoutEntry entry = Loadout_CharacterSkin( character )
+
+	ItemFlavor characterSkin = LoadoutSlot_GetItemFlavor( playerEHI, entry )
+	ItemFlavor previewSkin = expect ItemFlavor( Mythics_GetSkinTierForCharacter( character, file.activeMythicSkinTier ) )
+	bool isEquiped = ( characterSkin == previewSkin )
+
+	if( isEquiped )
+		return
+
+	PIN_Customization( character, previewSkin, "equip" )
+	RequestSetItemFlavorLoadoutSlot( playerEHI, entry, previewSkin )
 }
 
 void function FilterCharacterSkinList( array<ItemFlavor> characterSkinList )
@@ -322,11 +352,115 @@ void function FilterCharacterSkinList( array<ItemFlavor> characterSkinList )
 
 bool function ShouldDisplayCharacterSkin( ItemFlavor characterSkin )
 {
-	if ( GladiatorCardCharacterSkin_ShouldHideIfLocked( characterSkin ) )
+	if ( CharacterSkin_ShouldHideIfLocked( characterSkin ) )
 	{
-		if ( ItemFlavor_GetQuality( characterSkin ) != eQuality.FANMADE )
+		LoadoutEntry entry = Loadout_CharacterSkin( CharacterSkin_GetCharacterFlavor( characterSkin ) )
+		if ( !IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), entry, characterSkin ) )
+			return false
+	}
+
+	if ( Mythics_IsItemFlavorMythicSkin( characterSkin ) )
+	{
+		if ( Mythics_GetSkinTierIntForSkin( characterSkin ) > 1 )
 			return false
 	}
 
 	return true
+}
+
+
+void function LeftMythicSkinButton_OnActivate( var button )
+{
+	if( file.activeMythicSkinTier <= 0 )
+		return
+
+	file.activeMythicSkinTier--
+
+	ItemFlavor character = GetTopLevelCustomizeContext()
+
+	CharacterSkinsPanel_Update( file.panel )
+	CustomizeButton_OnClick( file.mythicGridButton )
+	Mythics_PreviewSkinForCharacter( character, file.activeMythicSkinTier )
+	UpdateMythicSkinInfo()
+
+}
+
+void function RightMythicSkinButton_OnActivate( var button )
+{
+	if( file.activeMythicSkinTier >= 2 )
+		return
+
+	file.activeMythicSkinTier++
+
+	ItemFlavor character = GetTopLevelCustomizeContext()
+
+	CharacterSkinsPanel_Update( file.panel )
+	CustomizeButton_OnClick( file.mythicGridButton )
+	Mythics_PreviewSkinForCharacter( character, file.activeMythicSkinTier )
+	UpdateMythicSkinInfo()
+
+}
+
+void function MythicTrackingButton_OnClick( var button )
+{
+	ItemFlavor challenge = Mythics_GetChallengeForCharacter( GetTopLevelCustomizeContext() )
+	Mythics_ToggleTrackChallenge( challenge, file.mythicTrackingButton, true )
+}
+
+void function Mythics_PreviewSkinForCharacter( ItemFlavor character, int tier )
+{
+	ItemFlavor flav = expect ItemFlavor( Mythics_GetSkinTierForCharacter( character, tier ) )
+	RunClientScript( "UIToClient_PreviewStoreItem", ItemFlavor_GetGUID( flav ) )
+}
+
+void function UpdateMythicTrackingButton()
+{
+	ItemFlavor character = GetTopLevelCustomizeContext()
+	if ( !Mythics_CharacterHasMythic( character ) )
+		return
+
+	ItemFlavor challenge = Mythics_GetChallengeForCharacter( character )
+	var rui = Hud_GetRui( file.mythicTrackingButton )
+	bool isChallengeTracked = IsFavoriteChallenge( challenge )
+
+	RuiSetString( rui, "buttonText", "#CHALLENGE" )
+	RuiSetString( rui, "descText", isChallengeTracked ? "#CHALLENGE_TRACKED" : "#CHALLENGE_TRACK" )
+	RuiSetString( rui, "bigText", isChallengeTracked ? "`1%$rui/hud/check_selected%" : "`1%$rui/borders/key_border%" )
+}
+
+void function FocusOnMythicSkinIfAnyTierEquiped()
+{
+	ItemFlavor equippedSkin = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterSkin( GetTopLevelCustomizeContext() ) )
+	if( Mythics_IsItemFlavorMythicSkin( equippedSkin ) )
+		CustomizeButton_OnClick( file.mythicGridButton )
+}
+
+string function GetCollectedString( LoadoutEntry entry, bool ignoreDefaultItemForCount, bool shouldIgnoreOtherSlots )
+{
+	array< ItemFlavor > unlockedSkins = GetUnlockedItemFlavorsForLoadoutSlot( LocalClientEHI(), entry, shouldIgnoreOtherSlots )
+	int owned = unlockedSkins.len()
+	int total = file.characterSkinList.len()
+
+	if ( Mythics_CharacterHasMythic( GetTopLevelCustomizeContext() ) )
+	{
+		foreach ( ItemFlavor skin in unlockedSkins )
+		{
+			if ( Mythics_IsItemFlavorMythicSkin( skin ) && Mythics_GetSkinTierIntForSkin( skin ) > 1 && GRX_IsItemOwnedByPlayer_AllowOutOfDateData( skin, GetLocalClientPlayer() ) )
+				owned--
+		}
+	}
+
+	if ( ignoreDefaultItemForCount )
+	{
+		owned--
+		total--
+	}
+
+	if ( file.characterSkinList.contains( entry.favoriteItemFlavor ) )
+	{
+		owned--
+		total--
+	}
+
+	return Localize( "#COLLECTED_ITEMS", owned, total )
 }

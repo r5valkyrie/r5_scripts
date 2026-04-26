@@ -2,8 +2,6 @@ global function ShCommsMenu_Init
 
 #if CLIENT
 global function CommsMenu_HandleKeyInput
-global function CommsMenu_HandleViewInput
-
 global function ClientCodeCallback_OpenChatWheel
 global function SetHintTextOnHudElem
 
@@ -11,18 +9,32 @@ global function PingSecondPageIsEnabled
 global function AddCallback_OnCommsMenuStateChanged
 global function IsCommsMenuActive
 
+global function CommsMenu_GetMenuForNewPing
 global function CommsMenu_ExecuteSelectionIfValid
 global function CommsMenu_CanUseMenu
 global function CommsMenu_OpenMenuTo
 global function CommsMenu_Shutdown
 global function CommsMenu_OpenMenuForNewPing
 global function CommsMenu_OpenMenuForPingReply
+             
+global function CommsMenu_OpenMenuForTransportPortal
+      
 global function CommsMenu_HasValidSelection
 global function CommsMenu_ExecuteSelection
 global function CommsMenu_GetCurrentCommsMenu
-global function SetRuiOptionsForChatPage
+global function CommsMenu_GetMenuRui
+global function CommsMenu_RefreshData
+global function CommsMenu_SetCurrentChoiceForCrafting
+                        
+                                           
+      
 
-global function AddCallback_OnBuildMenuOptions
+global function PerformQuipAtSlot
+global function PerformFavoredQuipAtSlot
+#endif
+
+#if SERVER
+global function ClientCallback_SetSelectedHealthPickupType
 #endif
 
 #if CLIENT
@@ -31,7 +43,12 @@ global enum eWheelInputType
 	NONE,
 	USE,
 	EQUIP,
-	REQUEST
+	REQUEST,
+                
+	CRAFT,
+      
+
+	_count
 }
 
 global enum eCommsMenuStyle
@@ -43,27 +60,22 @@ global enum eCommsMenuStyle
 	ORDNANCE_MENU,
 	SKYDIVE_EMOTE_MENU,
 
+                
+	CRAFTING,
+      
+
 	_assertion_marker,
 
 	_count
 }
 
-global enum eOptionType
-{
-	DO_NOTHING,
+                
+Assert( eCommsMenuStyle._assertion_marker == 7 )    // update comms_menu.rui
+      
 
-	COMMSACTION,
-	NEW_PING,
-	PING_REPLY,
-
-	QUIP,
-	SKYDIVE_EMOTE,
-	HEALTHITEM_USE,
-	ORDNANCE_EQUIP,
-	HOLOSPRAY
-}
-
-Assert( eCommsMenuStyle._assertion_marker == 6 )    //
+                 
+                                                                            
+      
 
 global enum eChatPage
 {
@@ -85,28 +97,31 @@ global enum eChatPage
 	//
 	INVENTORY_HEALTH,
 	ORDNANCE_LIST,
+                                  
+                       
+      
 
 	SKYDIVE_EMOTES,
 
-	SND_BUY_MENU,
+                
+	CRAFTING,
+/*%if HAS_SHELVED_LEGEND_ABILITIES
+	CRAFTING_PAGE2,
+%endif*/
+      
+                      
+           
+      
+
+	                    
+	UPGRADE_CORE,
+       
+
+                         
+                  
+                               
 
 	_count
-}
-
-global struct CommsMenuOptionData
-{
-	int optionType
-
-	int chatPage
-	int commsAction
-
-	int pingType
-
-	int pingReply
-
-	int healType
-	ItemFlavor ornull emote
-	asset Asset
 }
 
 const string WHEEL_SOUND_ON_OPEN = "UI_MapPing_Menu_Open_1P"
@@ -114,6 +129,11 @@ const string WHEEL_SOUND_ON_CLOSE = "menu_back"
 const string WHEEL_SOUND_ON_FOCUS = "menu_focus"
 const string WHEEL_SOUND_ON_EXECUTE = "menu_accept"
 const string WHEEL_SOUND_ON_DENIED = "menu_deny"
+
+                
+	global const string WHEEL_SOUND_ON_FOCUS_CRAFTING = "Crafting_Replicator_Menu_Hover"
+	global const string WHEEL_SOUND_ON_DENIED_CRAFTING = "Crafting_Replicator_Menu_Deny"
+      
 
 #endif //
 
@@ -129,8 +149,6 @@ struct
 		int commsMenuStyle    // eCommsMenuStyle
 
 		array< void functionref(bool menuOpen) > onCommsMenuStateChangedCallbacks
-
-		array<void functionref(array<CommsMenuOptionData> results, int quipsInWheel)> OnBuildMenuOptions
 	#endif // CLIENT
 } file
 
@@ -142,10 +160,7 @@ const string CHAT_MENU_BIND_COMMAND = "+scriptCommand1"
 
 void function ShCommsMenu_Init()
 {
-	#if SERVER
-		AddClientCommandCallbackVoid( "SetSelectedHealthPickupType", ClientCommand_SetSelectedHealthPickupType )
-		AddClientCommandCallbackVoid( "ClientCommand_Quip", ClientCommand_Quip )
-	#endif // SERVER
+	Remote_RegisterServerFunction( "ClientCallback_SetSelectedHealthPickupType", "int", INT_MIN, INT_MAX )
 
 	#if CLIENT
 		AddOnDeathCallback( "player", OnDeathCallback )
@@ -153,25 +168,31 @@ void function ShCommsMenu_Init()
 		AddCallback_KillReplayStarted( DestroyCommsMenu )
 		AddCallback_GameStateEnter( eGameState.WinnerDetermined, DestroyCommsMenu )
 		AddCallback_GameStateEnter( eGameState.Prematch, DestroyCommsMenu )
+		AddCallback_ClientOnPlayerConnectionStateChanged( OnPlayerConnectionStateChanged )
+		AddCallback_OnPlayerDisconnected( OnPlayerDisconnected )
+
 
 		AddCallback_OnBleedoutStarted( OnBleedoutStarted )
 		AddCallback_OnBleedoutEnded( OnBleedoutEnded )
 
 		AddCallback_OnPlayerMatchStateChanged( OnPlayerMatchStateChanged )
 
-		if( Gamemode() != eGamemodes.fs_snd )
-		{
-			RegisterConCommandTriggeredCallback( CHAT_MENU_BIND_COMMAND, ChatMenuButton_Down )
-			RegisterConCommandTriggeredCallback( "-" + CHAT_MENU_BIND_COMMAND.slice( 1 ), ChatMenuButton_Up )
-		}
+		RegisterConCommandTriggeredCallback( CHAT_MENU_BIND_COMMAND, ChatMenuButton_Down )
+		RegisterConCommandTriggeredCallback( "-" + CHAT_MENU_BIND_COMMAND.slice( 1 ), ChatMenuButton_Up )
 	#endif // CLIENT
 }
 
 #if CLIENT
 bool function PingSecondPageIsEnabled()
 {
-	return GetCurrentPlaylistVarBool( "ping_second_page_enabled", false )
+	return GetCurrentPlaylistVarBool( "ping_second_page_enabled", true )
 }
+
+bool function WeaponInspectFromChatPageEnabled()
+{
+	return GetCurrentPlaylistVarBool( "weapon_inspect_from_page_enabled", true )
+}
+
 
 void function AddCallback_OnCommsMenuStateChanged( void functionref(bool) func )
 {
@@ -212,28 +233,34 @@ void function ChatMenuButton_Down( entity player )
 		return
 	}
 
-	if ( TryPingBlockingFunction( player, "quickchat" ) )
+                    
+	if( UpgradeCore_IsEnabled() && UpgradeCore_GetUnspentUpgradePoints( player ) > 0 && GetGameState() < eGameState.WinnerDetermined )
+	{
+		UpgradeSelectionMenu_Open()
+		return
+	}
+      
+
+	if ( TryOnscreenPromptFunction( player, "quickchat" ) )
 		return
 
 	int ms = PlayerMatchState_GetFor( player )
 
-	if ( !IsFiringRangeGameMode() )
+	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
 	{
 		if ( ms < ePlayerMatchState.SKYDIVE_PRELAUNCH )
 			return
 	}
-
-	if ( PlayerIsInADS( player ) )
+	else if ( IsEventFinale() )
+	{
 		return
+	}
 
 	int chatPage = eChatPage.DEFAULT
-	if ( Bleedout_IsBleedingOut( player ) )
-		chatPage = eChatPage.BLEEDING_OUT
 
 	if ( GetCurrentPlaylistVarBool( "survival_quick_chat_enabled", true ) )
 	{
-		//
-			CommsMenu_OpenMenuTo( player, chatPage, eCommsMenuStyle.CHAT_MENU )
+		CommsMenu_OpenMenuTo( player, chatPage, eCommsMenuStyle.CHAT_MENU )
 	}
 }
 
@@ -259,6 +286,24 @@ void function CommsMenu_ExecuteSelectionIfValid( entity player, int requiredComm
 	}
 
 	player.SetLookStickDebounce()
+}
+
+int function CommsMenu_GetMenuForNewPing( entity player )
+{
+	int chatPage = pingWheelIndex.PING_MAIN_1
+
+	int ms = PlayerMatchState_GetFor( player )
+
+	if ( (ms == ePlayerMatchState.SKYDIVE_PRELAUNCH) || (ms == ePlayerMatchState.SKYDIVE_FALLING) )
+	{
+		chatPage = pingWheelIndex.PING_SKYDIVE
+	}
+	else if ( Bleedout_IsBleedingOut( player ) )
+	{
+		chatPage = pingWheelIndex.BLEEDING_OUT
+	}
+
+	return chatPage
 }
 
 void function CommsMenu_OpenMenuForNewPing( entity player, vector targetPos )
@@ -304,16 +349,50 @@ void function CommsMenu_OpenMenuForPingReply( entity player, entity wp )
 		}
 
 		SetFocusedWaypointForced( wp )
-		RuiSetBool( wp.wp.ruiHud, "hasWheelFocus", true )
+		if( wp.wp.ruiHud != null )
+			RuiSetBool( wp.wp.ruiHud, "hasWheelFocus", true )
+
 		s_focusWaypoint = wp
 	}
 }
+
+             
+void function CommsMenu_OpenMenuForTransportPortal( entity player, entity wp )
+{
+	entity receiver = wp.GetParent()
+	if ( !IsValid( receiver ) )
+		return
+
+	CommsMenu_OpenMenuTo( player, eChatPage.PINGREPLY_DEFAULT, eCommsMenuStyle.PINGREPLY_MENU )
+
+	if ( IsValid( wp ) )
+	{
+		if ( file.menuRui != null )
+		{
+			int wpt = wp.GetWaypointType()
+			if ( wpt == eWaypoint.PING_LOCATION )
+			{
+				RuiTrackFloat3( file.menuRui, "targetPos", wp, RUI_TRACK_ABSORIGIN_FOLLOW )
+			}
+		}
+
+		SetFocusedWaypointForced( wp )
+		if( wp.wp.ruiHud != null )
+			RuiSetBool( wp.wp.ruiHud, "hasWheelFocus", true )
+
+		s_focusWaypoint = wp
+	}
+}
+      
 
 void function CommsMenu_OpenMenuTo( entity player, int chatPage, int commsMenuStyle, bool debounce = true )
 {
 	// Kill any running instance:
 	CommsMenu_Shutdown( true )
 
+	if( GetGameState() < eGameState.Playing && !( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) || GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_TRAINING ) ) )
+		return
+	
 	file.commsMenuStyle = commsMenuStyle
 
 	ResetViewInput()
@@ -330,7 +409,13 @@ void function CommsMenu_OpenMenuTo( entity player, int chatPage, int commsMenuSt
 	HudInputContext inputContext
 	inputContext.keyInputCallback = CommsMenu_HandleKeyInput
 
-	if ( chatPage == eChatPage.SKYDIVE_EMOTES )
+                
+	bool shouldChangeMoveInputCallback = chatPage == eChatPage.SKYDIVE_EMOTES || chatPage == eChatPage.CRAFTING
+     
+                                                                          
+      
+
+	if ( shouldChangeMoveInputCallback )
 	{
 		inputContext.moveInputCallback = CommsMenu_HandleMoveInputControllerOnly
 	}
@@ -381,10 +466,6 @@ bool function CommsMenu_HasValidSelection()
 	if ( (choice < 0) || (choice >= s_currentMenuOptions.len()) )
 		return false
 
-	//CommsMenuOptionData op = s_currentMenuOptions[choice]
-	//if ( op.optionType == eOptionType.DO_NOTHING )
-	//	return false
-
 	return true
 }
 
@@ -396,6 +477,59 @@ bool function CommsMenu_ExecuteSelection( int wheelInputType )
 	int choice       = GetEffectiveChoice()
 	bool didAnything = MakeCommMenuSelection( choice, wheelInputType )
 	return didAnything
+}
+
+enum eOptionType
+{
+	DO_NOTHING,
+
+	COMMSACTION,
+	NEW_PING,
+	PING_REPLY,
+
+	QUIP,
+	SKYDIVE_EMOTE,
+	HEALTHITEM_USE,
+	ORDNANCE_EQUIP,
+                
+	CRAFT,
+      
+	WEAPON_INSPECT,
+                      
+           
+      
+                    
+	UPGRADE_CORE,
+      
+                        
+                 
+                              
+	ARTIFACT_ACTIVATION_EMOTE,
+
+	_count
+}
+
+struct CommsMenuOptionData
+{
+	int optionType
+
+	int chatPage
+	int commsAction
+
+	int pingType
+
+	int pingReply
+
+	int healType
+
+	int craftingIndex = -1
+                      
+                  
+      
+                         
+               
+                               
+	ItemFlavor    ornull    emote
 }
 
 CommsMenuOptionData function MakeOption_NoOp()
@@ -410,6 +544,22 @@ CommsMenuOptionData function MakeOption_CommsAction( int commsAction )
 	CommsMenuOptionData op
 	op.optionType = eOptionType.COMMSACTION
 	op.commsAction = commsAction
+	return op
+}
+
+//Adding Weapon Inspect CommsOption
+CommsMenuOptionData function MakeOption_WeaponInspect()
+{
+	CommsMenuOptionData op
+	op.optionType = eOptionType.WEAPON_INSPECT
+	return op
+}
+
+CommsMenuOptionData function MakeOption_ArtifactActivationEmote( ItemFlavor quip )
+{
+	CommsMenuOptionData op
+	op.emote = quip
+	op.optionType = eOptionType.ARTIFACT_ACTIVATION_EMOTE
 	return op
 }
 
@@ -463,18 +613,40 @@ CommsMenuOptionData function MakeOption_Ping( int pingType )
 	return op
 }
 
-void function AddCallback_OnBuildMenuOptions( void functionref( array<CommsMenuOptionData>, int ) callback )
+                
+CommsMenuOptionData function MakeOption_CraftItem( int itemIndex )
 {
-	if(file.OnBuildMenuOptions.contains(callback))
-		return
-
-	file.OnBuildMenuOptions.append( callback )
+	CommsMenuOptionData op
+	op.optionType = eOptionType.CRAFT
+	op.craftingIndex = itemIndex
+	return op
 }
+      
+
+                      
+                                                                 
+ 
+                       
+                                      
+                             
+          
+ 
+      
+
+                        
+                                                                               
+ 
+                       
+                                            
+                         
+          
+ 
+                              
 
 array<CommsMenuOptionData> function BuildMenuOptions( int chatPage )
 {
 	array<CommsMenuOptionData> results
-	entity player                       = GetLocalViewPlayer()
+	entity player = GetLocalViewPlayer()
 	switch ( chatPage )
 	{
 		case eChatPage.DEFAULT:
@@ -482,22 +654,47 @@ array<CommsMenuOptionData> function BuildMenuOptions( int chatPage )
 		{
 			EHI playerEHI = ToEHI( player )
 
-			results.append( MakeOption_CommsAction( eCommsAction.QUICKCHAT_CELEBRATE ) )
+			if ( !IsEmoteEnabledForPodiumScreen() )
+				results.append( MakeOption_CommsAction( eCommsAction.QUICKCHAT_CELEBRATE ) )
 
-			if ( !LoadoutSlot_IsReady( playerEHI, Loadout_CharacterClass() ) )
+			if ( IsControllerModeActive() )
+			{
+				results.append( MakeOption_WeaponInspect() )
+			}
+
+			if ( !LoadoutSlot_IsReady( playerEHI, Loadout_Character() ) )
 			{
 				break
 			}
 
-			ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_CharacterClass() )
+			ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_Character() )
+
+			if ( !player.Player_IsSkydiving() && Artifacts_PlayerHasArtifactActive( player ) )
+			{
+				ItemFlavor meleeWeapon = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_MeleeSkin( character ) )
+				if ( Artifacts_Loadouts_IsConfigPointerItemFlavor( meleeWeapon ) ) // might be the Buster sword
+				{
+					int configIdx                     = Artifacts_Loadouts_GetConfigIndex( meleeWeapon )
+					LoadoutEntry activationEmoteEntry = Artifacts_Loadouts_GetEntryForConfigIndexAndType( configIdx, eArtifactComponentType.ACTIVATION_EMOTE )
+					ItemFlavor activationEmoteFlavour = LoadoutSlot_GetItemFlavor( playerEHI, activationEmoteEntry )
+					//asset setAsset = GetSettingsAssetForUniqueId( activationEmoteFlavour.guid )
+
+					if ( !GetGlobalSettingsBool( ItemFlavor_GetAsset( activationEmoteFlavour ), "isEmpty" ) )
+						results.append( MakeOption_ArtifactActivationEmote( activationEmoteFlavour ) )
+				}
+			}
+
 			ItemFlavor ornull emptyQuip
 			int quipsInWheel
-			for ( int i=0; i<MAX_QUIPS_EQUIPPED; i++ )
+			for ( int i = 0; i < MAX_QUIPS_EQUIPPED; i++ )
 			{
 				LoadoutEntry entry = Loadout_CharacterQuip( character, i )
-				ItemFlavor quip = LoadoutSlot_GetItemFlavor( playerEHI, entry )
+				ItemFlavor quip    = LoadoutSlot_GetItemFlavor( playerEHI, entry )
 				if ( !CharacterQuip_IsTheEmpty( quip ) )
 				{
+					if ( IsEmoteEnabledForPodiumScreen() && ItemFlavor_GetType( quip ) != eItemType.character_emote )
+						continue
+
 					quipsInWheel++
 					results.append( MakeOption_Quip( quip, i ) )
 				}
@@ -507,68 +704,160 @@ array<CommsMenuOptionData> function BuildMenuOptions( int chatPage )
 				}
 			}
 
-			foreach ( callback in file.OnBuildMenuOptions )
-				callback( results, quipsInWheel )
-
 			if ( quipsInWheel == 0 && emptyQuip != null )
 			{
 				expect ItemFlavor( emptyQuip )
 				results.append( MakeOption_Quip( emptyQuip, quipsInWheel ) )
 			}
 		}
-		break
+			break
 
 		case eChatPage.SKYDIVE_EMOTES:
-			table<int,ItemFlavor> emotes = GetValidPlayerSkydiveEmotes( player )
-			foreach ( index,emote in emotes )
+			table<int, ItemFlavor> emotes = GetValidPlayerSkydiveEmotes( player )
+			foreach ( index, emote in emotes )
 			{
-				if ( !CharacterSkydiveEmote_IsTheEmpty( emote ) )
+				if ( !SkydiveEmote_IsTheEmpty( emote ) )
 					results.append( MakeOption_SkydiveEmote( emote, index ) )
 			}
 			break
 
 		case eChatPage.PREMATCH:
-			{
-				results.append( MakeOption_NoOp() )
-				results.append( MakeOption_NoOp() )
-			}
+		{
+			results.append( MakeOption_NoOp() )
+			results.append( MakeOption_NoOp() )
+		}
 			break
 
 		case eChatPage.BLEEDING_OUT:
 		{
-			results.append( MakeOption_CommsAction( eCommsAction.QUICKCHAT_BLEEDOUT_HELP ) )
-			results.append( MakeOption_Ping( ePingType.I_GO ) )
-			results.append( MakeOption_Ping( ePingType.ENEMY_GENERAL ) )
-			//results.append( MakeOption_CommsAction( eCommsAction.QUICKCHAT_BLEEDOUT_ITS_OVER ) )
+                               
+				if( GetUpdatedCommsMenuRevision() != pingWheelRevision.UPDATED_REVISION_4 && GetUpdatedCommsMenuRevision() != pingWheelRevision.UPDATED_REVISION_5 )
+				{
+					results.append( MakeOption_CommsAction( eCommsAction.QUICKCHAT_BLEEDOUT_HELP ) )
+					results.append( MakeOption_Ping( ePingType.ENEMY_GENERAL ) )
+					results.append( MakeOption_Ping( ePingType.ENEMY_HEALING_HEALTH ) )
+					results.append( MakeOption_Ping( ePingType.ENEMY_REVIVING ) )
+					results.append( MakeOption_Ping( ePingType.WE_AVOID ) )
+				}
+				if( GetUpdatedCommsMenuRevision() == pingWheelRevision.UPDATED_REVISION_4 || GetUpdatedCommsMenuRevision() == pingWheelRevision.UPDATED_REVISION_5 )
+				{
+					results.append( MakeOption_CommsAction( eCommsAction.QUICKCHAT_BLEEDOUT_HELP ) )
+					results.append( MakeOption_Ping( ePingType.ENEMY_GENERAL ) )
+					results.append( MakeOption_Ping( ePingType.ENEMY_HEALING_HEALTH ) )
+					results.append( MakeOption_Ping( ePingType.ENEMY_REVIVING ) )
+					results.append( MakeOption_Ping( ePingType.DONT_REVIVE ) ) //results.append( MakeOption_Ping( ePingType.WE_AVOID ) )
+				}
+        
+                                                                                    
+                                                       
+                                                                
+         
 		}
 			break
 
 		case eChatPage.PING_MAIN_1:
 		{
-			results.append( MakeOption_Ping( ePingType.WE_GO ) )
-			results.append( MakeOption_Ping( ePingType.ENEMY_GENERAL ) )
-			results.append( MakeOption_Ping( ePingType.I_LOOTING ) )
-			results.append( MakeOption_Ping( ePingType.I_ATTACKING ) )
-			results.append( MakeOption_Ping( ePingType.I_GO ) )
-			results.append( MakeOption_Ping( ePingType.I_DEFENDING ) )
-			results.append( MakeOption_Ping( ePingType.I_WATCHING ) )
-			results.append( MakeOption_Ping( ePingType.AREA_VISITED ) )
-		}
-			break
-
-		case eChatPage.PING_MAIN_2:
-		{
-			results.append( MakeOption_CommsAction( eCommsAction.QUICKCHAT_THANKS ) )
-			results.append( MakeOption_Ping( ePingType.NEED_HEALTH ) )
-			results.append( MakeOption_Ping( ePingType.HOLD_ON ) )
+                               
+				if( GetUpdatedCommsMenuRevision() == pingWheelRevision.UPDATED_REVISION_1 )
+				{
+					results.append( MakeOption_Ping( ePingType.WE_ATTACK ) )
+					results.append( MakeOption_Ping( ePingType.ENEMY_FIGHTING ) ) //2
+					results.append( MakeOption_Ping( ePingType.I_ULTIMATE ) ) //3
+					results.append( MakeOption_Ping( ePingType.I_WATCHING ) )//4
+					results.append( MakeOption_Ping( ePingType.WE_FALLBACK ) ) //5
+					results.append( MakeOption_Ping( ePingType.I_LOOTING ) ) //6
+					results.append( MakeOption_Ping( ePingType.AREA_VISITED ) ) //7
+					results.append( MakeOption_Ping( ePingType.ENEMY_AUDIO ) ) //8
+				}
+				else if( GetUpdatedCommsMenuRevision() == pingWheelRevision.UPDATED_REVISION_2 ) //supporting the case where the feature HAS_UPDATED_COMM_OPTIONS is flagged ON, but the playlist var to disable them is TRUE
+				{
+					results.append( MakeOption_Ping( ePingType.WE_ATTACK ) ) //1
+					results.append( MakeOption_Ping( ePingType.WE_DEFEND ) )  //2
+					results.append( MakeOption_Ping( ePingType.WE_ABILITY ) ) //3
+					results.append( MakeOption_Ping( ePingType.WE_REGROUP ) ) //4
+					results.append( MakeOption_Ping( ePingType.I_LOOTING ) )  //5
+					results.append( MakeOption_Ping( ePingType.WE_AVOID) ) //6
+					results.append( MakeOption_Ping( ePingType.I_WATCHING ) ) //7
+					results.append( MakeOption_Ping( ePingType.ENEMY_AUDIO ) )  //8
+				}
+				else if( GetUpdatedCommsMenuRevision() == pingWheelRevision.UPDATED_REVISION_3 ) //supporting the case where the feature HAS_UPDATED_COMM_OPTIONS is flagged ON, but the playlist var to disable them is TRUE
+				{
+					results.append( MakeOption_Ping( ePingType.WE_ATTACK ) ) //1
+					results.append( MakeOption_Ping( ePingType.WE_DEFEND ) )  //2
+					results.append( MakeOption_Ping( ePingType.I_LOOTING ) ) //3
+					results.append( MakeOption_Ping( ePingType.WE_REGROUP ) ) //4
+					results.append( MakeOption_Ping( ePingType.WE_AVOID) ) //5
+					results.append( MakeOption_Ping( ePingType.ENEMY_AUDIO ) ) //6
+					results.append( MakeOption_Ping( ePingType.I_WATCHING ) ) //7
+					results.append( MakeOption_Ping( ePingType.AREA_VISITED ) ) //8
+				}
+				else if( GetUpdatedCommsMenuRevision() == pingWheelRevision.UPDATED_REVISION_4 ) //supporting the case where the feature HAS_UPDATED_COMM_OPTIONS is flagged ON, but the playlist var to disable them is TRUE
+				{
+					results.append( MakeOption_Ping( ePingType.WE_AVOID ) ) //1
+					results.append( MakeOption_Ping( ePingType.ENEMY_AUDIO ) )  //2
+					results.append( MakeOption_Ping( ePingType.I_LOOTING ) ) //3
+					results.append( MakeOption_Ping( ePingType.WE_ATTACK  ) ) //4
+					results.append( MakeOption_Ping( ePingType.WE_REGROUP ) ) //5
+					results.append( MakeOption_Ping( ePingType.WE_DEFEND ) ) //6
+					results.append( MakeOption_Ping( ePingType.I_WATCHING ) ) //7
+					results.append( MakeOption_Ping( ePingType.AREA_VISITED ) ) //8
+				}
+				else if( GetUpdatedCommsMenuRevision() == pingWheelRevision.UPDATED_REVISION_5 )
+				{
+					results.append( MakeOption_Ping( ePingType.WE_ATTACK  ) ) //1
+					results.append( MakeOption_Ping( ePingType.WE_AVOID ) )  //2
+					results.append( MakeOption_Ping( ePingType.ENEMY_AUDIO ) ) //3
+					results.append( MakeOption_Ping( ePingType.I_LOOTING ) ) //4
+					results.append( MakeOption_Ping( ePingType.WE_DEFEND ) )  //5
+					results.append( MakeOption_Ping( ePingType.WE_REGROUP ) ) //6
+					results.append( MakeOption_Ping( ePingType.I_WATCHING ) ) //7
+					results.append( MakeOption_Ping( ePingType.AREA_VISITED ) ) //8
+				}
+				else if( GetUpdatedCommsMenuRevision() == pingWheelRevision.ORIGINAL ) //supporting the case where the feature HAS_UPDATED_COMM_OPTIONS is flagged ON, but the playlist var to disable them is TRUE
+				{
+					results.append( MakeOption_Ping( ePingType.WE_GO ) ) //1
+					results.append( MakeOption_Ping( ePingType.ENEMY_GENERAL ) ) //2
+					results.append( MakeOption_Ping( ePingType.I_LOOTING ) ) //3
+					results.append( MakeOption_Ping( ePingType.I_ATTACKING ) ) //4
+					results.append( MakeOption_Ping( ePingType.I_GO ) ) //5
+					results.append( MakeOption_Ping( ePingType.I_DEFENDING ) ) //6
+					results.append( MakeOption_Ping( ePingType.I_WATCHING ) ) //7
+					results.append( MakeOption_Ping( ePingType.AREA_VISITED ) ) //8
+				}
+        
+                                                            
+                                                                    
+                                                                
+                                                                  
+                                                           
+                                                                  
+                                                                 
+                                                                   
+         
 		}
 			break
 
 		case eChatPage.PING_SKYDIVE:
 		{
-			results.append( MakeOption_Ping( ePingType.ENEMY_GENERAL ) )
-			results.append( MakeOption_Ping( ePingType.I_GO ) )
-			//			results.append( MakeOption_Ping( ePingType.WE_GO ) )
+                               
+				if( GetUpdatedCommsMenuRevision() != pingWheelRevision.UPDATED_REVISION_4 )
+				{
+					results.append( MakeOption_Ping( ePingType.ENEMY_GENERAL ) )
+					results.append( MakeOption_Ping( ePingType.I_GO ) )
+					results.append( MakeOption_Ping( ePingType.I_LOOTING  ) )
+					results.append( MakeOption_Ping( ePingType.WE_AVOID ) )
+				}
+				else if( GetUpdatedCommsMenuRevision() == pingWheelRevision.UPDATED_REVISION_4 || GetUpdatedCommsMenuRevision() == pingWheelRevision.UPDATED_REVISION_5  )
+				{
+					results.append( MakeOption_Ping( ePingType.WE_AVOID ) )
+					results.append( MakeOption_Ping( ePingType.I_LOOTING  ) )
+					results.append( MakeOption_Ping( ePingType.I_GO ) )
+					results.append( MakeOption_Ping( ePingType.ENEMY_GENERAL ) )
+				}
+        
+                                                                
+                                                       
+         
 		}
 			break
 
@@ -577,12 +866,24 @@ array<CommsMenuOptionData> function BuildMenuOptions( int chatPage )
 			if ( GetCurrentPlaylistVarBool( "auto_heal_option", false ) )
 				results.append( MakeOption_UseHealItem( WHEEL_HEAL_AUTO ) )
 			{
-				if(player.GetTeam() == Safe_GetAttackerTeam() && Gamemode() == eGamemodes.fs_snd )
-					results.append( MakeOption_UseHealItem( eHealthPickupType.SND_BOMB ) )
-
 				results.append( MakeOption_UseHealItem( eHealthPickupType.COMBO_FULL ) )
 				results.append( MakeOption_UseHealItem( eHealthPickupType.SHIELD_SMALL ) )
 				results.append( MakeOption_UseHealItem( eHealthPickupType.SHIELD_LARGE ) )
+                         
+                                                                                
+          
+
+                            
+                                                                                              
+
+                                                        
+                                                                                         
+                                                             
+                                                                                          
+        
+                                                                                         
+          
+
 				results.append( MakeOption_UseHealItem( eHealthPickupType.HEALTH_SMALL ) )
 				results.append( MakeOption_UseHealItem( eHealthPickupType.HEALTH_LARGE ) )
 			}
@@ -604,7 +905,7 @@ array<CommsMenuOptionData> function BuildMenuOptions( int chatPage )
 				if ( data.lootType != eLootType.ORDNANCE )
 					continue
 
-				//
+				//If this ordnance type has a display conditional, check to see if the condition is true before displaying it in the wheel.
 				if ( data.conditional )
 				{
 					if ( !SURVIVAL_Loot_RunConditionalCheck( data.ref, player ) )
@@ -619,12 +920,19 @@ array<CommsMenuOptionData> function BuildMenuOptions( int chatPage )
 		}
 			break
 
+                                  
+                                       
+                                                                                    
+                                            
+    
+                                                      
+    
+        
+      
 		case eChatPage.PINGREPLY_DEFAULT:
 		{
-			// entity player = GetLocalViewPlayer()
-
 			array<int> pingReplies = Ping_GetOptionsForPendingReply( player )
-			foreach( int pingReply in pingReplies )
+			foreach ( int pingReply in pingReplies )
 			{
 				if ( (pingReply == ePingReply.BLANK) && (results.len() == 0) )
 					continue
@@ -632,8 +940,101 @@ array<CommsMenuOptionData> function BuildMenuOptions( int chatPage )
 				results.append( MakeOption_PingReply( pingReply ) )
 			}
 		}
+			break
 
-		break
+		                
+		case eChatPage.CRAFTING:
+		{
+			int counter = 0
+			foreach( data in Crafting_GetCraftingDataArray() )
+			{
+				/*%if HAS_SHELVED_LEGEND_ABILITIES
+				if( data.rotationStyle != eCraftingRotationStyle.CALIBER_PASSIVE )
+				{
+					for ( int i = 0; i < data.numSlots; i++ )
+					{
+						results.append( MakeOption_CraftItem( counter ) )
+						counter++
+					}
+				}
+				%else*/
+				for ( int i = 0; i < data.numSlots; i++ )
+				{
+					                   
+					if( data.category == "banner" )
+					{
+						if ( Crafting_IsDispenserCraftingEnabled() && ( GetRespawnStyle() == eRespawnStyle.RESPAWN_CHAMBERS ) && Player_Banners_Enabled() )
+						{
+							results.append( MakeOption_CraftItem( counter ) )
+						}
+						else
+						{
+							if ( ( Perk_CanBuyBanners( player ) || Perks_DoesPlayerHavePerk( player, ePerkIndex.BANNER_CRAFTING ) ) && ( GetRespawnStyle() == eRespawnStyle.RESPAWN_CHAMBERS )  && Player_Banners_Enabled() )
+							{
+								results.append( MakeOption_CraftItem( counter ) )
+							}
+						}
+					}
+					else
+           
+                                       
+                                  
+      
+                                     
+       
+                                                        
+       
+      
+         
+           
+					results.append( MakeOption_CraftItem( counter ) )
+					counter++
+				}
+			}
+			break
+		}
+		/*%if HAS_SHELVED_LEGEND_ABILITIES
+		case eChatPage.CRAFTING_PAGE2:
+		{
+			int counter = 11
+			foreach( data in Crafting_GetCraftingDataArray() )
+			{
+				if( data.rotationStyle == eCraftingRotationStyle.CALIBER_PASSIVE )
+				{
+					for ( int i = 0; i < data.numSlots; i++ )
+					{
+						results.append( MakeOption_CraftItem( counter ) )
+						counter++
+					}
+				}
+			}
+			break
+		}
+		%endif*/
+        
+                        
+                           
+   
+                                   
+    
+                                                     
+    
+        
+   
+        
+                          
+                                 
+   
+                                                                             
+
+                                           
+    
+                                                                 
+    
+        
+   
+                                
+
 	}
 
 	return results
@@ -660,6 +1061,7 @@ string[2] function GetPromptsForMenuOption( int index )
 			promptTexts[0] = GetMenuOptionTextForCommsAction( op.commsAction )
 			break
 
+		case eOptionType.ARTIFACT_ACTIVATION_EMOTE:
 		case eOptionType.QUIP:
 		case eOptionType.SKYDIVE_EMOTE:
 			promptTexts[0] = Localize( ItemFlavor_GetLongName( expect ItemFlavor( op.emote ) ) )
@@ -690,14 +1092,154 @@ string[2] function GetPromptsForMenuOption( int index )
 			{
 				LootData data = SURVIVAL_Loot_GetLootDataByIndex( op.healType )
 				int count     = SURVIVAL_CountItemsInInventory( player, data.ref )
-				promptTexts[0] = data.pickupString
-				promptTexts[1] = data.desc
+				promptTexts[0] = Localize( data.pickupString )
+				promptTexts[1] = SURVIVAL_Loot_GetDesc( data, player )
 			}
 			break
 		}
+
+		case eOptionType.WEAPON_INSPECT:
+		{
+			entity weapon 		= player.GetActiveWeapon( eActiveInventorySlot.mainHand )
+			string wpnText 		= Localize("#INSPECT_WEAPON")
+			LootData weaponData = SURVIVAL_GetLootDataFromWeapon( weapon )
+
+			if ( IsValid( weapon ) )
+			{
+				int wpnType = weapon.GetWeaponType()
+				if ( ( weapon.GetWeaponClassName() == "mp_weapon_melee_survival" ) || ( wpnType == WT_GADGET ) )
+				{
+					//Unarmed // Gadget Equipped
+					promptTexts[0] = wpnText
+				}
+				else
+				{
+					promptTexts[0] = wpnText
+					promptTexts[1] = weaponData.pickupString
+				}
+
+			}
+			break
+		}
+
+		                
+		case eOptionType.CRAFT:
+		{
+			array<string> validItems = Crafting_GetLootDataFromIndex( op.craftingIndex, player )
+			if ( validItems.len() > 0 )
+			{
+				if ( validItems[0] == "evo_points" )
+				{
+					promptTexts[0] = Localize( "#CRAFTING_EVO_POINTS" )
+					promptTexts[1] = Localize( "#CRAFTING_EVO_POINTS_DESC", GetCurrentPlaylistVarInt( "crafting_override_evo_grant", CRAFTING_EVO_GRANT ) )
+
+					LootData existingArmorData = EquipmentSlot_GetEquippedLootDataForSlot( GetLocalClientPlayer(), "armor" )
+					if ( existingArmorData.ref.find( "evolving" ) == -1 )
+					{
+						promptTexts[1] = Localize( "#CRAFTING_EVO_POINTS_FAIL_DESC" )
+					}
+					else
+					{
+						if ( existingArmorData.tier >= 5 )
+							promptTexts[1] = Localize( "#CRAFTING_EVO_POINTS_FAIL_DESC" )
+					}
+				}
+				                   
+				else if ( validItems[0] == "expired_banners" )
+				{
+					promptTexts[0] = Localize( "#BANNER" )
+					if ( Crafting_IsDispenserCraftingEnabled() && !DoesTeammateHaveBannerCraftingPerk( player ))
+					{
+						promptTexts[1] = Localize( "#DISPENSER_BANNER_NOSUPPORT_DESC" )
+					}
+					else if ( Crafting_IsDispenserCraftingEnabled() && !Perk_CanBuyBanners( player ))
+					{
+						promptTexts[1] = Localize( "#DISPENSER_BANNER_NOBANNER_DESC" )
+					}
+					else
+					{
+						promptTexts[1] = Localize( "#REPLICATER_CRAFT_BANNER_DESCRIPTION" )
+					}
+				}
+				else if( validItems[0] == "next_care_package_drop_location" )
+				{
+					promptTexts[0] = "Future Care Packages"
+					promptTexts[1] = "Reveals the drop locations of the next available round of care packages on the map"
+				}
+          
+				else
+				{
+					LootData data = SURVIVAL_Loot_GetLootDataByRef( validItems[0] )
+					promptTexts[0] = Localize( data.pickupString )
+					if ( data.passive == ePassives.INVALID )
+					{
+						promptTexts[1] = SURVIVAL_Loot_GetDesc( data, player )
+					} else {
+						promptTexts[1] = Localize( PASSIVE_DESCRIPTION_SHORT_MAP[data.passive] )
+					}
+
+					if ( validItems.len() > 1 && validItems[1] != "")
+					{
+						LootData altData = SURVIVAL_Loot_GetLootDataByRef( validItems[1] )
+						promptTexts[1] = promptTexts[0] + " + " + Localize( altData.pickupString )
+						promptTexts[0] = Localize( "#LOOT_CAT_AMMO" )
+					}
+				}
+			}
+			break
+		}
+        
+                        
+                             
+                                               
+                      
+        
+        
+                          
+                                   
+                                                                       
+                                                                      
+        
+                                
 	}
 
 	return promptTexts
+}
+
+LootData function GetLootdataForMenuOption( int index )
+{
+	LootData toReturn
+	if ( (index < 0) || (index >= s_currentMenuOptions.len()) )
+		return toReturn
+
+	entity player = GetLocalViewPlayer()
+	if ( !IsValid( player ) )
+		return toReturn
+
+	CommsMenuOptionData op = s_currentMenuOptions[index]
+
+	                
+	if (op.optionType == eOptionType.CRAFT )
+	{
+		array<string> validItems = Crafting_GetLootDataFromIndex( op.craftingIndex, player )
+
+		if ( validItems.len() > 0 )
+		{
+			if ( validItems[0] != "evo_points" )
+			{
+                   
+				if ( validItems[0] != "expired_banners" &&  validItems[0] != "next_care_package_drop_location" )
+       
+				 {
+
+					 toReturn = SURVIVAL_Loot_GetLootDataByRef( validItems[0] )
+				 }
+			}
+		}
+	}
+       
+
+	return toReturn
 }
 
 bool function ShouldPopulateRuiForIndex( int index )
@@ -705,9 +1247,16 @@ bool function ShouldPopulateRuiForIndex( int index )
 	CommsMenuOptionData op = s_currentMenuOptions[index]
 	switch( op.optionType )
 	{
+		case eOptionType.ARTIFACT_ACTIVATION_EMOTE:
 		case eOptionType.QUIP:
 			ItemFlavor data = expect ItemFlavor( op.emote )
 			int type = ItemFlavor_GetType( data )
+			switch ( type )
+			{
+				case eItemType.emote_icon:
+					return false
+			}
+			return false
 	}
 
 	return true
@@ -715,19 +1264,39 @@ bool function ShouldPopulateRuiForIndex( int index )
 
 var function GetRuiForMenuOption( var mainRui, int index )
 {
-	asset ruiAsset = $"ui/comms_menu_icon_default.rpak"
-
 	CommsMenuOptionData op = s_currentMenuOptions[index]
-	switch( op.optionType )
+
+	switch ( op.optionType )
 	{
+		case eOptionType.ARTIFACT_ACTIVATION_EMOTE:
 		case eOptionType.QUIP:
 			ItemFlavor data = expect ItemFlavor( op.emote )
-			LoadoutEntry characterSlot = Loadout_CharacterClass()
-			ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), characterSlot )
-			return CreateNestedRuiForQuip( mainRui, "iconHandle"+index, LocalClientEHI(), data, character )
+			return CreateNestedRuiForQuip( mainRui, "iconHandle" + index, data )
+
+		                
+		case eOptionType.CRAFT:
+			//todo: make custom RUI for crafting data
+			asset craftingAsset = $"ui/comms_menu_icon_crafting.rpak"
+			if ( Crafting_IsDispenserCraftingEnabled() )
+			{
+				craftingAsset = $"ui/crafting_dispensers.rpak"
+			}
+			return RuiCreateNested( mainRui, "iconHandle" + index, craftingAsset )
+        
+
+		case eOptionType.WEAPON_INSPECT:
+			//todo: make custom RUI for weapon data
+			asset weaponAsset = $"ui/comms_menu_icon_weapon_inspect.rpak"
+			return RuiCreateNested( mainRui, "iconHandle" + index, weaponAsset )
+
+                          
+                                                                              
+                                                                         
+                                                                               
+                                
 	}
 
-	return RuiCreateNested( mainRui, "iconHandle"+index, ruiAsset )
+	return RuiCreateNested( mainRui, "iconHandle" + index, $"ui/comms_menu_icon_default.rpak" )
 }
 
 asset function GetIconForMenuOption( int index )
@@ -745,6 +1314,7 @@ asset function GetIconForMenuOption( int index )
 		case eOptionType.COMMSACTION:
 			return GetDefaultIconForCommsAction( op.commsAction )
 
+		case eOptionType.ARTIFACT_ACTIVATION_EMOTE:
 		case eOptionType.SKYDIVE_EMOTE:
 			ItemFlavor data = expect ItemFlavor( op.emote )
 			return ItemFlavor_GetIcon( data )
@@ -790,6 +1360,24 @@ asset function GetIconForMenuOption( int index )
 			LootData data = SURVIVAL_Loot_GetLootDataByIndex( op.healType )
 			return data.hudIcon
 		}
+
+		case eOptionType.WEAPON_INSPECT:
+		{
+			return $"rui/weapon_icons/r5/weapon_inspect"
+		}
+                        
+                             
+   
+                                               
+   
+        
+                          
+                                   
+   
+                                                             
+              
+   
+                                
 	}
 
 	return $""
@@ -890,6 +1478,15 @@ int function GetCountForHealthItem( entity player, int itemType )
 	{
 		itemRef = SURVIVAL_Loot_GetHealthKitDataFromStruct( itemType ).lootData.ref
 	}
+                         
+                                                        
+   
+                                                         
+            
+       
+            
+   
+       
 	return SURVIVAL_CountItemsInInventory( player, itemRef )
 }
 
@@ -921,12 +1518,12 @@ string function GetDescForHealthItem( int itemType )
 	if ( WeaponDrivenConsumablesEnabled() )
 	{
 		ConsumableInfo info = Consumable_GetConsumableInfo( itemType )
-		desc = Localize( info.lootData.desc )
+		desc = SURVIVAL_Loot_GetDesc( info.lootData, GetLocalViewPlayer() )
 	}
 	else
 	{
 		HealthPickup kit = SURVIVAL_Loot_GetHealthKitDataFromStruct( itemType )
-		desc = Localize( kit.lootData.desc )
+		desc = SURVIVAL_Loot_GetDesc( kit.lootData, GetLocalViewPlayer() )
 	}
 
 	return desc
@@ -939,7 +1536,24 @@ bool function MenuStyleIsFastFadeIn( int menuStyle )
 	{
 		case eCommsMenuStyle.CHAT_MENU:
 		case eCommsMenuStyle.INVENTORY_HEALTH_MENU:
+		                
+		case eCommsMenuStyle.CRAFTING:
+        
 			return true
+	}
+	return false
+}
+
+bool function MenuStyleHasBlurredBackground( int menuStyle )
+{
+	switch( file.commsMenuStyle )
+	{
+		                
+		case eCommsMenuStyle.CRAFTING:
+			return true
+        
+		default:
+			return false
 	}
 	return false
 }
@@ -947,10 +1561,14 @@ bool function MenuStyleIsFastFadeIn( int menuStyle )
 void function SetRuiOptionsForChatPage( var rui, int chatPage )
 {
 	string labelText        = ""
-	string backText         = "#BUTTON_WHEEL_CANCEL"
+                          
+	string backText         = "#BUTTON_WHEEL_CANCEL_TRIGGER"
+     
+                                                 
+      
 	string promptText       = "#A_BUTTON_ACCEPT"
-	string nextPageText = ""
-	bool showNextPageText = false
+	string nextPageText     = ""
+	bool showNextPageText   = false
 	bool shouldShowLine     = false
 	vector outerCircleColor = <0.0, 0.0, 0.0>
 
@@ -1005,20 +1623,120 @@ void function SetRuiOptionsForChatPage( var rui, int chatPage )
 			//if ( HealthWheelUseOnRelease() )
 			//	promptText = "#LOOT_EQUIP"
 			//else
-			promptText = "#LOOT_USE"
+                           
+			promptText = "#LOOT_USE_TRIGGER"
+      
+                           
+       
 			outerCircleColor = <25, 0, 15>
 			break
 
 		case eChatPage.ORDNANCE_LIST:
 			labelText = "#COMMS_ORDNANCE"
-			promptText = "#LOOT_EQUIP"
+                          
+			promptText = "#LOOT_EQUIP_TRIGGER"
+     
+                             
+      
+                                  
+                                                                
+    
+                           
+                                   
+    
+      
 			break
+                                  
+                                       
+                                        
+                            
+                                     
+       
+                             
+        
+                                                                
+    
+                           
+                                   
+    
+        
+      
+
 
 		case eChatPage.SKYDIVE_EMOTES:
 			labelText = "#COMMS_SKYDIVE_EMOTES"
 			promptText = "#LOOT_USE"
 			break
+		                
+		case eChatPage.CRAFTING:
+			RuiSetString( file.menuRui, "lowerHeader", Localize( "#CRAFTING_BALANCE", Crafting_GetPlayerCraftingMaterials( GetLocalClientPlayer() ) ) )
+			RuiSetString( file.menuRui, "headerText", Crafting_GetWorkbenchTitleString() )
+			RuiSetString( file.menuRui, "descText", Crafting_GetWorkbenchDescString() )
+			labelText = "#CRAFTING_WORKBENCH"
+			promptText = "#CRAFTING_USE"
 
+			nextPageText  = "#INVENTORY_USE"
+			showNextPageText = true
+			if ( Crafting_IsDispenserCraftingEnabled() )
+			{
+				entity player = GetLocalViewPlayer()
+				if ( Crafting_DispenserFreeSupportBanner() && ( Perks_GetRoleForPlayer( player ) == eCharacterClassRole.SUPPORT ) )
+				{
+					RuiSetString( file.menuRui, "lowerHeader", Localize("#DISPENSER_SUPPORT_BANNER_LOWER_DESC") )
+				}
+				else if ( Crafting_DispenserSupportMRB() && ( Perks_GetRoleForPlayer( player ) == eCharacterClassRole.SUPPORT ) )
+				{
+					RuiSetString( file.menuRui, "lowerHeader", Localize("#DISPENSER_SUPPORT_BANNER_MRB_LOWER_DESC") )
+				}
+				else
+				{
+					RuiSetString( file.menuRui, "lowerHeader", Localize("#DISPENSER_LOWER_DESC") )
+				}
+			}
+
+			/*%if HAS_SHELVED_LEGEND_ABILITIES
+			foreach ( entity teammate in GetPlayerArrayOfTeam( GetLocalClientPlayer().GetTeam() ) )
+			{
+				if ( !teammate.HasPassive( ePassives.PAS_WEAPON_CALIBER ) )
+					continue
+
+				showNextPageText = true
+				nextPageText = "#CRAFTING_NEXT"
+			}
+			%endif*/
+
+			outerCircleColor = <25, 0, 15>
+			break
+
+			/*%if HAS_SHELVED_LEGEND_ABILITIES
+		case eChatPage.CRAFTING_PAGE2:
+			RuiSetString( file.menuRui, "lowerHeader", Localize( "#CRAFTING_BALANCE", Crafting_GetPlayerCraftingMaterials( GetLocalClientPlayer() ) ) )
+			RuiSetString( file.menuRui, "headerText", Localize( "#CRAFTING_PASSIVE" ) )
+			RuiSetString( file.menuRui, "descText", Crafting_GetWorkbenchDescString() )
+			labelText = "#CRAFTING_WORKBENCH"
+			promptText = "#CRAFTING_USE"
+
+			foreach ( entity teammate in GetPlayerArrayOfTeam( GetLocalClientPlayer().GetTeam() ) )
+			{
+				if ( !teammate.HasPassive( ePassives.PAS_WEAPON_CALIBER ) )
+					continue
+
+				showNextPageText = true
+				nextPageText = "#CRAFTING_PREV"
+			}
+
+
+			outerCircleColor = <25, 0, 15>
+			break
+			%endif*/
+        
+
+                        
+                           
+                             
+                              
+        
+        
 	}
 
 	RuiSetString( rui, "labelText", labelText )
@@ -1030,7 +1748,7 @@ void function SetRuiOptionsForChatPage( var rui, int chatPage )
 	RuiSetFloat3( rui, "outerCircleColor", SrgbToLinear( outerCircleColor / 255.0 ) ) // the rui isn't actually using this color. It's just black with alpha 0.5
 }
 
-const int MAX_COMMS_MENU_OPTIONS = 9
+const int MAX_COMMS_MENU_OPTIONS = 13
 void function ShowCommsMenu( int chatPage )
 {
 	RunUIScript( "ClientToUI_SetCommsMenuOpen", true )
@@ -1045,9 +1763,16 @@ void function ShowCommsMenu( int chatPage )
 	SetRuiOptionsForChatPage( rui, chatPage )
 
 	int optionCount = options.len()
+
+	if ( optionCount <= 0 )
+	{
+		Warning( "Tried to open a comms menu with no options." )
+		return
+	}
+
 	for ( int idx = 0; idx < MAX_COMMS_MENU_OPTIONS; ++idx )
 	{
-		RuiDestroyNestedIfAlive( rui, "iconHandle"+idx )
+		RuiDestroyNestedIfAlive( rui, "iconHandle" + idx )
 
 		if ( idx >= s_currentMenuOptions.len() )
 			continue
@@ -1057,7 +1782,6 @@ void function ShowCommsMenu( int chatPage )
 		bool shouldPopulate = ShouldPopulateRuiForIndex( idx )
 		if ( !shouldPopulate )
 			continue
-
 		asset icon       = GetIconForMenuOption( idx )
 		vector iconColor = SrgbToLinear( GetIconColorForMenuOption( idx ) )
 		RuiSetImage( nestedRui, "icon", icon )
@@ -1065,57 +1789,91 @@ void function ShowCommsMenu( int chatPage )
 		RuiSetFloat3( nestedRui, "iconColor", iconColor )
 		RuiSetString( nestedRui, "centerText", "" )
 
-			CommsMenuOptionData op = s_currentMenuOptions[idx]
-			if ( op.emote != null )
-			{
-				ItemFlavor flav = expect ItemFlavor( op.emote )
-			string txt = CharacterQuip_ShortenTextForCommsMenu( flav )
+		CommsMenuOptionData op = s_currentMenuOptions[idx]
+		if ( op.emote != null )
+		{
+			ItemFlavor flav = expect ItemFlavor( op.emote )
+			string txt      = CharacterQuip_ShortenTextForCommsMenu( flav )
 			RuiSetString( nestedRui, "centerText", txt )
-					}
+		}
 
 		if ( chatPage == eChatPage.INVENTORY_HEALTH )
 		{
-				string countText = GetCountStringForHealthItem( options[idx].healType )
-			RuiSetString( nestedRui, "text", countText )
-				int tier      = -1
-				int itemCount = GetCountForHealthItem( GetLocalViewPlayer(), options[idx].healType )
-				if ( itemCount > 0 )
+			string countText = GetCountStringForHealthItem( options[idx].healType )
+			if ( PlayerHasPassive( GetLocalViewPlayer(), ePassives.PAS_INFINITE_HEAL ) && countText != "0" )
+				countText = "%$models/weapons/attachments/infinity_symbol%"
+
+			                       
+				if ( StatusEffect_HasSeverity( GetLocalViewPlayer(), eStatusEffect.healing_denied ) )
 				{
-					//if ( options[idx].healType != -1 )
-					//	tier = SURVIVAL_Loot_GetHealthKitDataFromStruct( options[idx].healType ).lootData.tier
-					//else
-					tier = 0
+					bool isBlocked = Consumable_IsShieldItem( options[idx].healType )
+					RuiSetBool( nestedRui, "isBlocked", isBlocked )
 				}
+         
+
+			RuiSetString( nestedRui, "text", countText )
+			int tier      = -1
+			int itemCount = GetCountForHealthItem( GetLocalViewPlayer(), options[idx].healType )
+			if ( itemCount > 0 )
+			{
+				//if ( options[idx].healType != -1 )
+				//	tier = SURVIVAL_Loot_GetHealthKitDataFromStruct( options[idx].healType ).lootData.tier
+				//else
+				tier = 0
+			}
 
 			RuiSetInt( nestedRui, "tier", tier )
 			RuiSetBool( nestedRui, "isEnabled", itemCount > 0 )
 		}
-		else if ( chatPage == eChatPage.ORDNANCE_LIST )
+		else if ( chatPage == eChatPage.ORDNANCE_LIST
+                                    
+                                                 
+        
+		)
 		{
-				int index = options[idx].healType
+			int index = options[idx].healType
 
-				if ( index != -1 )
-				{
-					LootData data    = SURVIVAL_Loot_GetLootDataByIndex( index )
-					int itemCount    = SURVIVAL_CountItemsInInventory( GetLocalViewPlayer(), data.ref )
-					string countText = string( itemCount )
+			if ( index != -1 )
+			{
+				LootData data    = SURVIVAL_Loot_GetLootDataByIndex( index )
+				int itemCount    = SURVIVAL_CountItemsInInventory( GetLocalViewPlayer(), data.ref )
+				string countText = string( itemCount )
 				RuiSetString( nestedRui, "text", countText )
 
-					int tier = -1
-					if ( itemCount > 0 )
-						tier = 0
+				int tier = -1
+				if ( itemCount > 0 )
+					tier = 0
 				RuiSetInt( nestedRui, "tier", tier )
 				RuiSetBool( nestedRui, "isEnabled", itemCount > 0 )
 			}
 		}
+		                
+		else if ( chatPage == eChatPage.CRAFTING )
+		{
+			int index = options[idx].craftingIndex
+			Crafting_PopulateItemRuiAtIndex( nestedRui, index )
+
+			if ( Crafting_IsDispenserCraftingEnabled() )
+				RuiSetBool( rui, "isCrafting2pt0", true )
+		}
+		/*%if HAS_SHELVED_LEGEND_ABILITIES
+		else if ( chatPage == eChatPage.CRAFTING_PAGE2 )
+		{
+			int index = options[idx].craftingIndex
+			Crafting_PopulateItemRuiAtIndex( nestedRui, index )
+		}
+		%endif*/
+        
 	}
 
 	RuiSetInt( rui, "optionCount", options.len() )
+	RuiSetInt( rui, "commMenuType", chatPage )
 
 	foreach ( func in file.onCommsMenuStateChangedCallbacks )
 		func( true )
 
 	RuiSetBool( rui, "doFastFadeIn", MenuStyleIsFastFadeIn( file.commsMenuStyle ) )
+	RuiSetBool( rui, "shouldBlurBackground", MenuStyleHasBlurredBackground( file.commsMenuStyle ) )
 
 	if ( (chatPage == eChatPage.INVENTORY_HEALTH) )
 	{
@@ -1134,10 +1892,14 @@ void function ShowCommsMenu( int chatPage )
 			break
 		}
 	}
-	else if ( (chatPage == eChatPage.ORDNANCE_LIST) )
+	else if ( (chatPage == eChatPage.ORDNANCE_LIST
+                                     
+                                                 
+         
+			) )
 	{
-		entity player = GetLocalViewPlayer()
-		entity weapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
+		entity player      = GetLocalViewPlayer()
+		entity weapon      = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
 		string equippedRef = IsValid( weapon ) ? weapon.GetWeaponClassName() : ""
 
 		int healthPickupType = Survival_Health_GetSelectedHealthPickupType()
@@ -1162,6 +1924,25 @@ void function ShowCommsMenu( int chatPage )
 	}
 }
 
+void function CommsMenu_RefreshData()
+{
+	if ( file.menuRui == null )
+		return
+
+	switch ( file.commsMenuStyle )
+	{
+                
+		case eCommsMenuStyle.CRAFTING:
+			RuiSetString( file.menuRui, "lowerHeader", Localize( "#CRAFTING_BALANCE", Crafting_GetPlayerCraftingMaterials( GetLocalClientPlayer() ) ) )
+			RuiSetString( file.menuRui, "descText", Crafting_GetWorkbenchDescString() )
+			break
+                          
+		case eCommsMenuStyle.INVENTORY_HEALTH_MENU:
+			ShowCommsMenu(eChatPage.INVENTORY_HEALTH)
+			break
+	}
+}
+
 void function ClientCodeCallback_OpenChatWheel()
 {
 	ChatMenuButton_Down( GetLocalClientPlayer() )
@@ -1173,6 +1954,8 @@ bool function CommsMenu_HandleKeyInput( int key )
 {
 	Assert( IsCommsMenuActive() )
 
+	if ( GetLocalClientPlayer() != GetLocalViewPlayer() )
+		return false
 
 	if ( PingSecondPageIsEnabled() )
 	{
@@ -1190,7 +1973,7 @@ bool function CommsMenu_HandleKeyInput( int key )
 			if ( (timeSinceLastPageSwitch > 0.1) && (file.commsMenuStyle == eCommsMenuStyle.PING_MENU) )
 			{
 				entity player = GetLocalViewPlayer()
-				int nextPage = eChatPage.INVALID
+				int nextPage  = eChatPage.INVALID
 
 				if ( pagesAllowedToGoToChat.contains( s_currentChatPage ) )
 				{
@@ -1211,64 +1994,164 @@ bool function CommsMenu_HandleKeyInput( int key )
 				}
 			}
 		}
+
+                                    
+                                           
+                                                                      
+   
+                                                              
+                                                                                                   
+    
+                                        
+                                     
+
+                                                       
+     
+                                               
+     
+                                                                    
+     
+                                       
+     
+
+                                        
+     
+                     
+                                                      
+                              
+                              
+                
+     
+    
+   
+        
+		/*%if HAS_SHELVED_LEGEND_ABILITIES
+		foreach ( entity teammate in GetPlayerArrayOfTeam( GetLocalClientPlayer().GetTeam() ) )
+		{
+			if ( !teammate.HasPassive( ePassives.PAS_WEAPON_CALIBER ) )
+				continue
+
+			array<int> craftingPagesAllowedToGoToChat =
+			[
+				eChatPage.CRAFTING,
+			]
+
+			if ( isPageButton )
+			{
+				float timeSinceLastPageSwitch = (Time() - s_pageSwitchTime)
+				if ( (timeSinceLastPageSwitch > 0.1) && (file.commsMenuStyle == eCommsMenuStyle.CRAFTING) )
+				{
+					entity player = GetLocalViewPlayer()
+					int nextPage  = eChatPage.INVALID
+
+					if ( craftingPagesAllowedToGoToChat.contains( s_currentChatPage ) )
+					{
+						nextPage = eChatPage.CRAFTING_PAGE2
+					}
+					else if ( s_currentChatPage == eChatPage.CRAFTING_PAGE2 )
+					{
+						nextPage = s_previousChatPage
+					}
+
+					if ( nextPage != eChatPage.INVALID )
+					{
+						ResetViewInput()
+						EmitSoundOnEntity( player, WHEEL_SOUND_ON_CLOSE )
+						ShowCommsMenu( nextPage )
+						s_pageSwitchTime = Time()
+						return true
+					}
+				}
+			}
+		}
+		%endif*/
 	}
+
+
+
 
 	bool shouldExecute    = false
 	bool shouldCancelMenu = false
 	int choice            = -1
 
 	int executeType = eWheelInputType.NONE
-	switch ( key )
+
+	if ( file.commsMenuStyle == eCommsMenuStyle.CRAFTING )
 	{
-		case KEY_1:
-			choice = 0
-			break
+		switch ( key )
+		{
+			case BUTTON_A:
+			case MOUSE_LEFT:
+				executeType = eWheelInputType.USE
+				break
 
-		case KEY_2:
-			choice = 1
-			break
+			case BUTTON_B:
+			case KEY_ESCAPE:
+			case MOUSE_RIGHT:
+				shouldCancelMenu = true
+				break
+		}
+	}
+	else
+	{
+		switch ( key )
+		{
+			case KEY_1:
+				choice = 0
+				break
 
-		case KEY_3:
-			choice = 2
-			break
+			case KEY_2:
+				choice = 1
+				break
 
-		case KEY_4:
-			choice = 3
-			break
+			case KEY_3:
+				choice = 2
+				break
 
-		case KEY_5:
-			choice = 4
-			break
+			case KEY_4:
+				choice = 3
+				break
 
-		case KEY_6:
-			choice = 5
-			break
+			case KEY_5:
+				choice = 4
+				break
 
-		case KEY_7:
-			choice = 6
-			break
+			case KEY_6:
+				choice = 5
+				break
 
-		case KEY_8:
-			choice = 7
-			break
+			case KEY_7:
+				choice = 6
+				break
 
-		case BUTTON_A:
-		case MOUSE_LEFT:
-			executeType = eWheelInputType.USE
-			break
+			case KEY_8:
+				choice = 7
+				break
 
-		case BUTTON_X:
-			executeType = eWheelInputType.EQUIP
-			break
+		                          
+			case BUTTON_TRIGGER_RIGHT:
+        
+			case BUTTON_A:
+			case MOUSE_LEFT:
+				executeType = eWheelInputType.USE
+				break
 
-		case BUTTON_B:
-		case KEY_ESCAPE:
-		case MOUSE_RIGHT:
-			shouldCancelMenu = true
-			break
+			case BUTTON_X:
+				executeType = eWheelInputType.EQUIP
+				break
+
+		                          
+			case BUTTON_TRIGGER_LEFT:
+        
+			case BUTTON_B:
+			case KEY_ESCAPE:
+			case MOUSE_RIGHT:
+				shouldCancelMenu = true
+				break
+		}
 	}
 
-	if ( ButtonIsBoundToPing( key ) )
+	if ( ButtonIsBoundToPing( key ) && file.commsMenuStyle != eCommsMenuStyle.CRAFTING )
 	{
 		executeType = eWheelInputType.REQUEST
 	}
@@ -1279,13 +2162,21 @@ bool function CommsMenu_HandleKeyInput( int key )
 		executeType = eWheelInputType.USE
 	}
 
-	shouldExecute = executeType != eWheelInputType.NONE
-
-	shouldExecute = shouldExecute || ((file.commsMenuStyle == eCommsMenuStyle.CHAT_MENU) && ButtonIsBoundToAction( key, CHAT_MENU_BIND_COMMAND ))
-	shouldExecute = shouldExecute || ((file.commsMenuStyle == eCommsMenuStyle.PING_MENU) && ButtonIsBoundToAction( key, "+ping" ))
-	shouldExecute = shouldExecute || ((file.commsMenuStyle == eCommsMenuStyle.PINGREPLY_MENU) && ButtonIsBoundToAction( key, "+ping" ))
-	shouldExecute = shouldExecute || ((file.commsMenuStyle == eCommsMenuStyle.INVENTORY_HEALTH_MENU) && ButtonIsBoundToAction( key, HEALTHKIT_BIND_COMMAND ))
-	shouldExecute = shouldExecute || ((file.commsMenuStyle == eCommsMenuStyle.SKYDIVE_EMOTE_MENU) && executeType == eWheelInputType.USE )
+                
+	if ( file.commsMenuStyle == eCommsMenuStyle.CRAFTING )
+	{
+		shouldExecute = ((file.commsMenuStyle == eCommsMenuStyle.CRAFTING) && executeType == eWheelInputType.USE)
+	} else {
+      
+		shouldExecute = executeType != eWheelInputType.NONE
+		shouldExecute = shouldExecute || ((file.commsMenuStyle == eCommsMenuStyle.CHAT_MENU) && ButtonIsBoundToAction( key, CHAT_MENU_BIND_COMMAND ))
+		shouldExecute = shouldExecute || ((file.commsMenuStyle == eCommsMenuStyle.PING_MENU) && ButtonIsBoundToAction( key, "+ping" ))
+		shouldExecute = shouldExecute || ((file.commsMenuStyle == eCommsMenuStyle.PINGREPLY_MENU) && ButtonIsBoundToAction( key, "+ping" ))
+		shouldExecute = shouldExecute || ((file.commsMenuStyle == eCommsMenuStyle.INVENTORY_HEALTH_MENU) && ButtonIsBoundToAction( key, HEALTHKIT_BIND_COMMAND ))
+		shouldExecute = shouldExecute || ((file.commsMenuStyle == eCommsMenuStyle.SKYDIVE_EMOTE_MENU) && executeType == eWheelInputType.USE)
+                
+	}
+      
 
 	shouldCancelMenu = shouldCancelMenu || ((file.commsMenuStyle == eCommsMenuStyle.CHAT_MENU) && ButtonIsBoundToAction( key, CHAT_MENU_BIND_COMMAND ))
 
@@ -1312,8 +2203,8 @@ bool function CommsMenu_HandleKeyInput( int key )
 		if ( IsValid( player ) )
 			EmitSoundOnEntity( player, WHEEL_SOUND_ON_CLOSE )
 
-		if ( ( file.commsMenuStyle == eCommsMenuStyle.PING_MENU || file.commsMenuStyle == eCommsMenuStyle.PINGREPLY_MENU )
-			&& ButtonIsBoundToAction( key, "+offhand1" ) && Time() - s_latestViewInputResetTime < BUTTON_PAIR_ACTIVITION_TIME )
+		if ( (file.commsMenuStyle == eCommsMenuStyle.PING_MENU || file.commsMenuStyle == eCommsMenuStyle.PINGREPLY_MENU)
+		&& ButtonIsBoundToAction( key, "+offhand1" ) && Time() - s_latestViewInputResetTime < BUTTON_PAIR_ACTIVITION_TIME )
 			return false
 
 		return true
@@ -1336,6 +2227,14 @@ void function ResetViewInput()
 
 	ResetMouseInput()
 }
+void function CommsMenu_SetCurrentChoiceForCrafting( int choice )
+{
+	if ( s_currentChatPage == eChatPage.CRAFTING )
+	{
+		SetCurrentChoice( choice )
+	}
+}
+
 void function SetCurrentChoice( int choice )
 {
 	if ( file.menuRui != null )
@@ -1384,13 +2283,118 @@ void function SetCurrentChoice( int choice )
 
 			int count = SURVIVAL_CountItemsInInventory( GetLocalViewPlayer(), lootRef )
 			if ( count == 0 )
-				RuiSetString( file.menuRui, "promptText", "#PING_PROMPT_REQUEST" )
+			{
+				// We disable pinging healing items in modes with infinite healing items
+				if ( GetCurrentPlaylistVarBool( "infinite_heal_items", false ) )
+				{
+					RuiSetString( file.menuRui, "promptText", "" )
+				}
+				else
+				{
+					RuiSetString( file.menuRui, "promptText", "#PING_PROMPT_REQUEST" )
+				}
+			}
 		}
 	}
+
+	if ( s_currentChatPage == eChatPage.ORDNANCE_LIST )
+	{
+		SetRuiOptionsForChatPage( file.menuRui, s_currentChatPage )
+
+		if ( s_currentChoice >= 0 )
+		{
+			CommsMenuOptionData op = s_currentMenuOptions[s_currentChoice]
+
+			int optionType = op.healType
+			LootData data = SURVIVAL_Loot_GetLootDataByIndex( optionType )
+
+			int count = SURVIVAL_CountItemsInInventory( GetLocalViewPlayer(), data.ref )
+			if ( count == 0 )
+			{
+				RuiSetString( file.menuRui, "promptText", "#PING_PROMPT_REQUEST" )
+			}
+		}
+	}
+
+	RuiDestroyNestedIfAlive( file.menuRui, "compatibleWeaponsHandle" )
+	var nestedCompatibleWeaponsRui = RuiCreateNested( file.menuRui, "compatibleWeaponsHandle", $"ui/loot_pickup_tag_text_crafting.rpak" )
+
+	const int MAX_ATTACHMENT_TAGS = 6
+	const int NUM_OF_CATEGORIES_TO_BE_CONSIDERED_UNIVERSAL = 5 // even though there are 7 categories, there are no weapons that work with 5 or more that don't work with everything
+	for ( int index = 0; index < MAX_ATTACHMENT_TAGS; index++ )
+	{
+		RuiSetString( nestedCompatibleWeaponsRui, "tagText" + (index + 1), "" )
+	}
+	RuiSetInt( nestedCompatibleWeaponsRui, "numTags", 0 )
+
+	LootData focusedItem = GetLootdataForMenuOption(choice)
+
+	if (focusedItem.index != -1 && focusedItem.lootType == eLootType.ATTACHMENT )
+	{
+		AttachmentTagData attachmentTagData = AttachmentTags( focusedItem.ref )
+		RuiSetInt( nestedCompatibleWeaponsRui, "numTags", attachmentTagData.attachmentTags.len() )
+
+		int tagIndex = 0
+		foreach ( int tagId in attachmentTagData.attachmentTags )
+		{
+			if ( tagIndex < MAX_ATTACHMENT_TAGS  )
+			{
+				if ( tagId in attachmentTagData.exceptionToTheRuleForThisWeaponClass )
+					RuiSetString( nestedCompatibleWeaponsRui, "tagText" + (tagIndex + 1), Localize( "#WEAPON_CLASS_HAS_EXCEPTION", Localize( GetStringForTagId( tagId ) ) ) ) // double localize is messy but necessary because weapon_tag is a tag in and of itself
+				else
+					RuiSetString( nestedCompatibleWeaponsRui, "tagText" + (tagIndex + 1), GetStringForTagId( tagId ) )
+
+				tagIndex++
+			}
+		}
+
+		array<string> uniqueNames = SURVIVAL_Loot_GetUniqueWeaponNames( attachmentTagData.weaponRefs )
+
+		for ( int i = 0; i < uniqueNames.len(); ++i )
+		{
+			if ( tagIndex < MAX_ATTACHMENT_TAGS )
+			{
+				string weaponName = uniqueNames[i]
+				if ( i < uniqueNames.len() - 1 && tagIndex < MAX_ATTACHMENT_TAGS - 1 )
+					weaponName += ","
+
+				RuiSetString( nestedCompatibleWeaponsRui, "tagText" + (tagIndex + 1), weaponName )
+
+				tagIndex++
+			}
+		}
+
+		int exceptionIndex = 0
+		foreach ( int tagId in attachmentTagData.attachmentTags )
+		{
+			if ( tagIndex < MAX_ATTACHMENT_TAGS )
+			{
+				if ( tagId in attachmentTagData.exceptionToTheRuleForThisWeaponClass )
+				{
+					string exceptionName = GetWeaponInfoFileKeyField_GlobalString( attachmentTagData.exceptionToTheRuleForThisWeaponClass[tagId], "shortprintname" )
+					if ( exceptionIndex < attachmentTagData.exceptionToTheRuleForThisWeaponClass.len() - 1 && tagIndex < MAX_ATTACHMENT_TAGS - 1 )
+						exceptionName += ","
+
+					// because compatible weapons list is a NESTED rui - by necessity; otherwise the RUI gets too complex - it doesn't force the parent RUI to be wider
+					// as a result, in certain cases, we need to force a linebreak, because certain strings combos are too long. This will force the exception onto the second row
+					//if ( tagIndex == 2 )
+					//	tagIndex = 3
+
+					RuiSetString( nestedCompatibleWeaponsRui, "tagText" + ( tagIndex + 1 ), Localize( "#EXCEPT_WEAPON", exceptionName ) )
+
+					tagIndex++
+					exceptionIndex++
+				}
+			}
+		}
+	}
+
+
 }
+
 bool function IsValidChoice( int choice )
 {
-	//
+	// greater then 0 and no higher then the number of menu options
 	return choice >= 0 && choice < s_currentMenuOptions.len()
 }
 
@@ -1416,12 +2420,12 @@ vector function ProcessMouseInput( float deltaX, float deltaY )
 	float lenNow = Length( s_mousePad )
 	if ( lenNow < 25.0 )
 	{
-		//DebugScreenText( 0.25, 0.25, format( "lenNow:%.2f", lenNow ) )
+		//DebugDrawScreenText( 0.25, 0.25, format( "lenNow:%.2f", lenNow ) )
 		return <0, 0, 0>
 	}
 
 	vector result = (s_mousePad / Length( s_mousePad ))
-	//DebugScreenText( 0.25, 0.25, format( "result:(%.1f, %.1f)  posNow:(%.1f, %.1f)  lenNow:%.2f", result.x, result.y, s_mousePad.x, s_mousePad.y, lenNow ) )
+	//DebugDrawScreenText( 0.25, 0.25, format( "result:(%.1f, %.1f)  posNow:(%.1f, %.1f)  lenNow:%.2f", result.x, result.y, s_mousePad.x, s_mousePad.y, lenNow ) )
 	return result
 }
 
@@ -1436,6 +2440,9 @@ bool function CommsMenu_HandleMoveInputControllerOnly( float x, float y )
 
 bool function CommsMenu_HandleViewInput( float x, float y )
 {
+	if ( GetLocalClientPlayer() != GetLocalViewPlayer() )
+		return false
+
 	//printt( format( "x: %.1f  y: %.1f", x, y ) )
 	{
 		float lockoutTime            = IsControllerModeActive() ? 0.0 : 0.01
@@ -1469,7 +2476,7 @@ bool function CommsMenu_HandleViewInput( float x, float y )
 
 		choice = (int( (angle / circle) * optionCount ) % optionCount)
 
-		//DebugScreenText( 0.25, 0.30, format( "inputVec:%s", string( inputVec ) ) )
+		//DebugDrawScreenText( 0.25, 0.30, format( "inputVec:%s", string( inputVec ) ) )
 
 		vector ruiInputVec = IsControllerModeActive() ? Normalize( inputVec ) : inputVec
 		RuiSetFloat2( file.menuRui, "inputVec", Normalize( inputVec ) )
@@ -1485,7 +2492,12 @@ bool function CommsMenu_HandleViewInput( float x, float y )
 	if ( (choice >= 0) && (choice != s_currentChoice) )
 	{
 		entity player = GetLocalViewPlayer()
-		EmitSoundOnEntity( player, WHEEL_SOUND_ON_FOCUS )
+		                
+		if ( CommsMenu_GetCurrentCommsMenu() == eCommsMenuStyle.CRAFTING )
+			EmitSoundOnEntity( player, WHEEL_SOUND_ON_FOCUS_CRAFTING )
+		else
+        
+			EmitSoundOnEntity( player, WHEEL_SOUND_ON_FOCUS )
 	}
 
 	SetCurrentChoice( choice )
@@ -1503,15 +2515,24 @@ bool function MakeCommMenuSelection( int choice, int wheelInputType )
 			return true
 		}
 
-		case eOptionType.QUIP:
+		case eOptionType.WEAPON_INSPECT:
 		{
-			HandleQuipPick( expect ItemFlavor( op.emote ), op.healType )
+			HandleWeaponInspectSelection()
 			return true
 		}
 
-		case eOptionType.HOLOSPRAY:
+		case eOptionType.ARTIFACT_ACTIVATION_EMOTE:
 		{
-			HoloSpray_OnUse( choice )
+			if ( GetLocalViewPlayer().IsZiplining() )
+				return false
+
+			Remote_ServerCallFunction( "ClientCallback_ActivationEmote", true )
+			return true
+		}
+
+		case eOptionType.QUIP:
+		{
+			HandleQuipPick( expect ItemFlavor( op.emote ), op.healType )
 			return true
 		}
 
@@ -1521,13 +2542,13 @@ bool function MakeCommMenuSelection( int choice, int wheelInputType )
 
 			EmitSoundOnEntity( player, WHEEL_SOUND_ON_EXECUTE )
 
-			player.ClientCommand( "SkydiveEmote " + op.healType )
+			Remote_ServerCallFunction( "ClientCallback_SkydiveEmote", op.healType )
 			return true
 		}
 
 		case eOptionType.NEW_PING:
 		{
-			Ping_ExecutePendingNewPingWithOverride( op.pingType )
+			Ping_ExecutePendingNewPingWithOverride( op.pingType , CommsMenu_GetMenuForNewPing(GetLocalClientPlayer()))
 			return true
 		}
 
@@ -1545,8 +2566,12 @@ bool function MakeCommMenuSelection( int choice, int wheelInputType )
 			}
 			else if ( wheelInputType == eWheelInputType.REQUEST )
 			{
-				HealthPickup pickup = SURVIVAL_Loot_GetHealthKitDataFromStruct( op.healType )
-				int kitCat          = SURVIVAL_Loot_GetHealthPickupCategoryFromData( pickup )
+				// In modes with infinite healing we disable pinging requests for healing items
+				if ( GetCurrentPlaylistVarBool( "infinite_heal_items", false ) )
+					return false
+
+				HealthPickup pickup   = SURVIVAL_Loot_GetHealthKitDataFromStruct( op.healType )
+				int kitCat            = SURVIVAL_Loot_GetHealthPickupCategoryFromData( pickup )
 				bool useShieldRequest = (kitCat == eHealthPickupCategory.SHIELD)
 
 				if ( WeaponDrivenConsumablesEnabled() )
@@ -1556,9 +2581,9 @@ bool function MakeCommMenuSelection( int choice, int wheelInputType )
 				}
 
 				if ( useShieldRequest )
-					Quickchat( GetLocalViewPlayer(), eCommsAction.INVENTORY_NEED_SHIELDS )
+					Quickchat( eCommsAction.INVENTORY_NEED_SHIELDS, null )
 				else
-					Quickchat( GetLocalViewPlayer(), eCommsAction.INVENTORY_NEED_HEALTH )
+					Quickchat( eCommsAction.INVENTORY_NEED_HEALTH, null )
 
 				return false // don't close the menu
 			}
@@ -1573,57 +2598,170 @@ bool function MakeCommMenuSelection( int choice, int wheelInputType )
 
 		case eOptionType.ORDNANCE_EQUIP:
 		{
+			int optionType = op.healType
+			LootData data = SURVIVAL_Loot_GetLootDataByIndex( optionType )
+
+			if ( wheelInputType == eWheelInputType.REQUEST )
+			{
+				//figure out which grenade type is being requested
+				switch( data.ref )
+				{
+					case "mp_weapon_thermite_grenade":
+						Quickchat( eCommsAction.INVENTORY_NEED_THERMITE, null )
+						break
+					case "mp_weapon_frag_grenade":
+						Quickchat( eCommsAction.INVENTORY_NEED_FRAG, null )
+						break
+					case GRENADE_EMP_WEAPON_NAME:
+						Quickchat( eCommsAction.INVENTORY_NEED_ARCSTAR, null )
+						break
+					default:
+						break
+				}
+				HandleOrdnanceSelection( optionType )
+				return false // don't close the menu
+			}
+
+			// Pre-Existing
 			HandleOrdnanceSelection( op.healType )
 			return true
 		}
+
+	                
+		case eOptionType.CRAFT:
+		{
+			bool retVal = Crafting_OnMenuItemSelected( op.craftingIndex, file.menuRui )
+			if ( !retVal )
+				EmitSoundOnEntity( GetLocalViewPlayer(), WHEEL_SOUND_ON_DENIED_CRAFTING )
+			return retVal
+		}
+       
+                       
+                             
+   
+                                                                                  
+                                                                      
+              
+   
+       
+                         
+                                   
+   
+                                                                                                
+              
+   
+                               
 	}
 
 	return false
+}
+
+void function PerformQuipAtSlot( int index )
+{
+	EHI playerEHI = LocalClientEHI()
+
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_Character() )
+
+	LoadoutEntry entry = Loadout_CharacterQuip( character, index )
+	ItemFlavor quip    = LoadoutSlot_GetItemFlavor( playerEHI, entry )
+	if ( !CharacterQuip_IsTheEmpty( quip ) )
+	{
+		HandleQuipPick( quip, index )
+	}
+}
+
+void function PerformFavoredQuipAtSlot( int index )
+{
+	EHI playerEHI = LocalClientEHI()
+
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_Character() )
+
+	LoadoutEntry entry = Loadout_FavoredQuip( character, index )
+	ItemFlavor quip    = LoadoutSlot_GetItemFlavor( playerEHI, entry )
+	if ( !CharacterQuip_IsTheEmpty( quip ) )
+	{
+		HandleFavoredQuipPick( quip, index )
+	}
 }
 
 void function HandleQuipPick( ItemFlavor quip, int choice )
 {
 	entity player = GetLocalViewPlayer()
 
+	if ( ItemFlavor_GetType( quip ) == eItemType.character_emote )
+	{
+		if ( CheckPlayerCanEmoteAndGiveFeedback( player ) )
+			return
+	}
+
 	EmitSoundOnEntity( player, WHEEL_SOUND_ON_EXECUTE )
 
-	player.ClientCommand( "BroadcastQuip " + choice )
+	Remote_ServerCallFunction( "ClientCallback_BroadcastQuip", choice )
 
-	#if(false)
-
-
-#endif
-
-	#if(false)
-
-
-#endif
+	if ( CharacterQuip_UseHoloProjector( quip ) )
+	{
+		                         
+		if ( player.Player_IsSkydiving() && !player.Player_IsSkydiveAnticipating())
+			SkydiveEmoteProjector_ActivateEmoteProjector( player, quip )
+		else
+        
+			ActivateEmoteProjector( player, quip )
+	}
 }
 
-void function HoloSpray_OnUse( int choice )
+bool function CheckPlayerCanEmoteAndGiveFeedback( entity player )
 {
-	entity player = GetLocalClientPlayer()
-	EmitSoundOnEntity( player, WHEEL_SOUND_ON_EXECUTE )
-	int actualChoice = maxint(0,choice - 1)
-	player.ClientCommand( "HoloSpray_OnUse " + actualChoice )
+	int result = CheckPlayerCanEmote( player )
+	if ( result == eCanEmoteCheckReults.FAIL_TOO_CLOSE_TO_WALL )
+		AnnouncementMessageRight( player, Localize( "#EMOTE_HINT_FAILED_WALL" ) )
 
-	ActivateOffhandWeaponByIndex( OFFHAND_EQUIPMENT )
+	return ( result != eCanEmoteCheckReults.SUCCESS )
 }
+
+void function HandleFavoredQuipPick( ItemFlavor quip, int choice )
+{
+	entity player = GetLocalViewPlayer()
+
+	if ( ItemFlavor_GetType( quip ) == eItemType.character_emote )
+	{
+		if ( CheckPlayerCanEmoteAndGiveFeedback( player ) )
+			return
+	}
+
+	EmitSoundOnEntity( player, WHEEL_SOUND_ON_EXECUTE )
+
+	Remote_ServerCallFunction( "ClientCallback_BroadcastFavoredQuip", choice )
+
+	if ( CharacterQuip_UseHoloProjector( quip ) )
+		ActivateEmoteProjector( player, quip )
+}
+
 void function HandleCommsActionPick( int commsAction, int directionIndex )
 {
 	Assert( (commsAction >= 0) && (commsAction < eCommsAction._count) )
 
 	EmitSoundOnEntity( GetLocalViewPlayer(), WHEEL_SOUND_ON_EXECUTE )
-	Quickchat( GetLocalViewPlayer(), commsAction )
+	Quickchat( commsAction, null )
 }
 
 void function HandleHealthItemSelection( int healthPickupType )
 {
 	entity player = GetLocalViewPlayer()
-
+                         
+                                                                                                                 
+  
+                                         
+   
+                                                           
+   
+      
+                                                                  
+  
+     
+       
 	if ( healthPickupType != -1 )
 	{
-		string kitRef    = SURVIVAL_Loot_GetHealthPickupRefFromType( healthPickupType )
+		string kitRef = SURVIVAL_Loot_GetHealthPickupRefFromType( healthPickupType )
 		if ( SURVIVAL_CountItemsInInventory( player, kitRef ) == 0 )
 			return
 	}
@@ -1671,16 +2809,29 @@ void function HandleOrdnanceSelection( int ordnanceIndex )
 
 	EmitSoundOnEntity( player, WHEEL_SOUND_ON_EXECUTE )
 
-	if ( !OrdnanceWheelUseOnRelease() )
-		player.ClientCommand( "Sur_SwitchToOrdnance " + ordnanceIndex + " 1" )
-	else
-		player.ClientCommand( "Sur_SwitchToOrdnance " + ordnanceIndex + " 0" )
+	Remote_ServerCallFunction( "ClientCallback_Sur_SwitchToOrdnance", ordnanceIndex, !OrdnanceWheelUseOnRelease() )
 }
 
-void function HandleEditorModeSelection( int editorIndex )
+void function HandleWeaponInspectSelection( )
 {
-	entity player = GetLocalViewPlayer()
-	player.ClientCommand("SetEditorMode "+ editorIndex.tostring())
+	if ( WeaponInspectFromChatPageEnabled() )
+	{
+		array<int> pagesAllowedToGoToInspect =
+		[
+			eChatPage.DEFAULT,
+			eChatPage.PING_MAIN_2,
+		]
+
+		if ( pagesAllowedToGoToInspect.contains( s_currentChatPage )  )
+		{
+			entity player = GetLocalViewPlayer()
+			if( IsValid( player ) )
+			{
+				CommsMenu_Shutdown( true )
+				player.ClientCommand( "weapon_inspect" )
+			}
+		}
+	}
 }
 
 void function OnDeathCallback( entity player )
@@ -1713,6 +2864,22 @@ void function OnPlayerMatchStateChanged( entity player, int oldValue, int newVal
 	DestroyCommsMenu()
 }
 
+void function OnPlayerConnectionStateChanged( entity player )
+{
+	if ( player != GetLocalClientPlayer() )
+		return
+
+	DestroyCommsMenu()
+}
+
+void function OnPlayerDisconnected( entity player )
+{
+	if ( player != GetLocalClientPlayer() )
+		return
+
+	DestroyCommsMenu()
+}
+
 void function DestroyCommsMenu()
 {
 	DestroyCommsMenu_( true )
@@ -1724,6 +2891,13 @@ void function DestroyCommsMenu_( bool instant )
 
 	if ( !IsCommsMenuActive() )
 		return
+
+	                
+		if ( CommsMenu_GetCurrentCommsMenu() == eCommsMenuStyle.CRAFTING )
+		{
+			Crafting_OnWorkbenchMenuClosed( instant )
+		}
+       
 
 	if ( file.commsMenuStyle == eCommsMenuStyle.PINGREPLY_MENU )
 		SetFocusedWaypointForcedClear()
@@ -1745,7 +2919,6 @@ void function DestroyCommsMenu_( bool instant )
 	if ( instant )
 	{
 		RuiDestroy( file.menuRui )
-		ReleaseHUDRui( file.menuRui )
 	}
 	else
 		file.menuRuiLastShutdown = file.menuRui
@@ -1754,7 +2927,7 @@ void function DestroyCommsMenu_( bool instant )
 	entity player = GetLocalViewPlayer()
 
 	float deltaSinceInputStarted = (Time() - s_latestViewInputResetTime)
-	if ( (s_latestValidChoice < 0) && (deltaSinceInputStarted < 0.35) )
+	if ( (s_latestValidChoice < 0) && (deltaSinceInputStarted < 0.35) && IsValid( player ) )
 		player.ClearLookStickDebounce()
 
 	HudInput_PopContext()
@@ -1768,34 +2941,60 @@ bool function IsCommsMenuActive()
 	return (s_currentChatPage != eChatPage.INVALID)
 }
 
-bool function CommsMenu_CanUseMenu( entity player )
+bool function CommsMenu_CanUseMenu( entity player, int menuType = eChatPage.DEFAULT)
 {
-	if ( IsWatchingReplay() )
-		return false
+	                
+	if ( menuType == eChatPage.CRAFTING && GetLocalClientPlayer() != GetLocalViewPlayer() )
+	{
+		//run the other checks
+	}
+	else
+       
+	{
+		if ( IsWatchingReplay() )
+			return false
 
-	if ( !IsAlive( player ) )
-		return false
+		if ( !IsAlive( player ) )
+			return false
+	}
 
 	if ( IsScoreboardShown() )
 		return false
 
+	if ( GetPlayerIs3pEmoting( player ) )
+		return false
+
+	                
+		if ( Crafting_IsPlayerAtWorkbench( player ) && menuType != eChatPage.CRAFTING )
+			return false
+       
+
+	                            
+		if ( ExplosiveHold_IsPlayerPlantingGrenade( player ) )
+			return false
+       
 
 	if ( IsCommsMenuActive() )
 		return false
 
-	#if(true)
-		if ( IsFallLTM() && IsPlayerShadowSquad( player ) )
-			return false
-	#endif
+                                               
+                                                                                                              
+               
+       
 
-	if( StatusEffect_GetSeverity( player, eStatusEffect.camera_view) > 0 )
+	                    
+	if( UpgradeSelectionMenu_IsActive() )
+		return false
+       
+
+	if ( GetGameState() > eGameState.Resolution )
 		return false
 
-	if( Playlist() == ePlaylists.fs_1v1 || Playlist() == ePlaylists.fs_vamp_1v1 || Playlist() == ePlaylists.fs_1v1_headshots_only || Playlist() == ePlaylists.fs_lgduels_1v1 )
-	{
-		if( player.GetPlayerNetInt( "FS_1v1_PlayerState" ) == e1v1State.WAITING || player.GetPlayerNetInt( "FS_1v1_PlayerState" ) == e1v1State.RESTING )
-			return false
-	}
+	if ( IsPlayerInCryptoDroneCameraView( player ) )
+		return false
+
+	if ( IsEventFinale() )
+		return false
 
 	return true
 }
@@ -1804,19 +3003,44 @@ int function CommsMenu_GetCurrentCommsMenu()
 {
 	return file.commsMenuStyle
 }
-#endif // CLIENT
-#if SERVER
-void function ClientCommand_SetSelectedHealthPickupType( entity player, array<string> args )
+
+var function CommsMenu_GetMenuRui()
 {
-	if ( args.len() == 0 )
-		return
+	return file.menuRui
+}
+                        
+                                                                        
+ 
+                                                                                           
+                                                                                                   
+             
 
-	int healthPickupType = int( args[0] )
+                                                                                                    
+             
 
+                                                                                                   
+             
+
+             
+ 
+      
+#endif // CLIENT
+
+#if SERVER
+void function ClientCallback_SetSelectedHealthPickupType( entity player, int healthPickupType )
+{
 	switch( healthPickupType )
 	{
 		case eHealthPickupType.COMBO_FULL:
 		case eHealthPickupType.SHIELD_LARGE:
+                          
+                                                
+                                                 
+                                                
+        
+                       
+                                        
+        
 		case eHealthPickupType.SHIELD_SMALL:
 		case eHealthPickupType.HEALTH_LARGE:
 		case eHealthPickupType.HEALTH_SMALL:
@@ -1828,39 +3052,17 @@ void function ClientCommand_SetSelectedHealthPickupType( entity player, array<st
 			return
 
 		default:
-			Assert( 0, "tried to set an unsupported Health Pickup Type" )
+			Assert( false, "tried to set an unsupported Health Pickup Type" )
 			return
 	}
 
 	unreachable
 }
-
-void function ClientCommand_Quip( entity player, array<string> args )
-{
-	if ( args.len() == 0 )
-		return
-
-	int commsAction = int( args[0] )
-
-	PlayQuip( player, commsAction )
-}
 #endif
+
 #if CLIENT
-void function SetHintTextOnHudElem( var hudElem, string text )
+void function SetHintTextOnHudElem( var hudElem, string text, string subtext )
 {
-	RuiSetString( Hud_GetRui( hudElem ), "buttonText", Localize( text ) )
+	RuiSetString( Hud_GetRui( hudElem ), "buttonText", Localize( text, Localize( subtext ) ) )
 }
 #endif
-void function PlayQuip( entity player, int commsAction )
-{
-	switch ( commsAction )
-	{
-		case eCommsAction.QUICKCHAT_INTRO_QUIP:
-			thread PlayIntroQuipThread( player, ToEHI( player ) )
-			break
-
-		case eCommsAction.QUICKCHAT_KILL_QUIP:
-			thread PlayKillQuipThread( player, ToEHI( player ) )
-			break
-	}
-}

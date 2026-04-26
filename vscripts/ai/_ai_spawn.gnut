@@ -680,60 +680,10 @@ asset function __GetWeaponModel( weapon )
 
 void function AutoSquadnameAssignment( entity npc )
 {
-	int team = npc.GetTeam()
-	switch ( npc.GetClassName() )
-	{
-		case "npc_turret_sentry":
-		case "npc_turret_mega":
-		case "npc_dropship":
-		case "npc_dropship_hero":
-			return
-	}
 
-	switch ( npc.GetTeam() )
-	{
-		case TEAM_IMC:
-		case TEAM_MILITIA:
-			int index = svGlobal.npcsSpawnedThisFrame_scriptManagedArray[ team ]
-			if ( GetScriptManagedEntArrayLen( index ) == 0 )
-			{
-				thread AutosquadnameAssignment_Thread( index, npc, team )
-			}
-
-			AddToScriptManagedEntArray( index, npc )
-			break
-
-		default:
-			break
-	}
 }
 
 void function AutosquadnameAssignment_Thread( int scriptManagedArrayIndex, entity npc, int team )
 {
-	WaitEndFrame() // wait for everybody to spawn this frame
 
-	array<entity> entities = GetScriptManagedEntArray( scriptManagedArrayIndex )
-	if ( entities.len() <=  1 )
-	{
-		foreach ( npc0 in entities )
-		{
-			RemoveFromScriptManagedEntArray( scriptManagedArrayIndex, npc )
-		}
-		return
-	}
-
-	string squadName = UniqueString( "autosquad_team_" + team )
-
-	foreach ( npc1 in entities )
-	{
-		RemoveFromScriptManagedEntArray( scriptManagedArrayIndex, npc )
-		if ( !IsValid( npc ) )
-			continue
-		if ( npc.kv.squadname != "" )
-			continue
-		if ( !IsAlive( npc ) )
-			continue
-		SetSquad( npc, squadName )
-	}
-	Assert( GetScriptManagedEntArrayLen( scriptManagedArrayIndex ) == 0 )
 }

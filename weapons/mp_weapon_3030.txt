@@ -6,10 +6,10 @@
 
 	// General
 	//
-	"printname"                                "30-30 Repeater"
-	"shortprintname"                           "30-30 Repeater"
-	"description"                              "Semi-auto heavy repeater."
-	"longdesc"                                 "Semi-auto heavy repeater."
+	"printname"                                "#WPN_3030"
+	"shortprintname"                           "#WPN_3030_SHORT"
+	"description"                              "#WPN_3030_DESC"
+	"longdesc"                                 "#WPN_3030_LONGDESC"
 
 	// UI - HUD
 	"hud_icon"                                 "rui/weapon_icons/r5/weapon_3030repeater"
@@ -23,7 +23,7 @@
 	// Models
 	"viewmodel"   								"mdl/weapons/3030repeater/ptpov_3030repeater.rmdl"
 	"playermodel" 								"mdl/weapons/3030repeater/w_3030repeater.rmdl"
-	//"holster_offset"						    "8 0 2"
+	"holster_offset"						    "8 0 2"
 
 	"chroma_color"								"1 .6 .2"
 
@@ -473,6 +473,72 @@
 			"reloadempty_time_late5" "*0.9"
 			"move_speed_modifier" "1.150000"
 		}
+
+		// child unk: 9
+		"auto_loader"
+		{
+			// val unk: 8
+			"reload_time" "*0.60"
+			// val unk: 9
+			"reload_time_late1" "*0.60"
+			// val unk: 10
+			"reload_time_late2" "*0.60"
+			// val unk: 11
+			"reload_time_late3" "*0.60"
+			// val unk: 1
+			"reload_time_late4" "*0.60"
+			// val unk: 2
+			"reload_time_late5" "*0.60"
+			// val unk: 3
+			"reloadempty_time" "*0.60"
+			// val unk: 4
+			"reloadempty_time_late1" "*0.60"
+			// val unk: 5
+			"reloadempty_time_late2" "*0.60"
+			// val unk: 6
+			"reloadempty_time_late3" "*0.60"
+			// val unk: 0
+			"reloadempty_time_late4" "*0.60"
+			// val unk: 7
+			"reloadempty_time_late5" "*0.60"
+
+		}
+
+		// child unk: 11
+		"paintball"
+		{
+			// val unk: 11
+			"impact_effect_table" "bullet_pb_Random"
+			// val unk: 0
+			"projectile_trail_effect_0" "P_tracer_projectile_pb"
+			// val unk: 12
+			"projectile_trail_effect_1" "P_tracer_projectile_pb"
+			// val unk: 13
+			"reload_time" "*0.75"
+			// val unk: 14
+			"reload_time_late1" "*0.75"
+			// val unk: 4
+			"reload_time_late2" "*0.75"
+			// val unk: 5
+			"reload_time_late3" "*0.75"
+			// val unk: 6
+			"reload_time_late4" "*0.75"
+			// val unk: 7
+			"reload_time_late5" "*0.75"
+			// val unk: 8
+			"reloadempty_time" "*0.75"
+			// val unk: 2
+			"reloadempty_time_late1" "*0.75"
+			// val unk: 1
+			"reloadempty_time_late2" "*0.75"
+			// val unk: 9
+			"reloadempty_time_late3" "*0.75"
+			// val unk: 3
+			"reloadempty_time_late4" "*0.75"
+			// val unk: 10
+			"reloadempty_time_late5" "*0.75"
+
+		}
 }
 
     // RUI
@@ -480,7 +546,7 @@
 	"ui1_draw_cloaked"	"1"
 	UiData1
 	{
-		"ui"							"ui/rspn101_dmr_reticle"
+		"ui"							"ui/weapon_3030_reticle"
 		"mesh"							"models/weapons/attachments/3030repeater_rui_upper"
 		Args
 		{
@@ -493,7 +559,7 @@
 	"ui2_enable"		"1"
 	UiData2
 	{
-		"ui"							"ui/rspn101_dmr_ammo_counter"
+		"ui"							"ui/weapon_3030_ammo_counter"
 		"mesh"							"models/weapons/attachments/3030repeater_rui_lower"
 		Args
 		{
@@ -507,7 +573,7 @@
 	"ui3_draw_cloaked"	"1"
 	UiData3
 	{
-		"ui"							"ui/charge_rifle_screen"
+		"ui"							"ui/weapon_3030_charge_bars"
 		"mesh"							"models/weapons/attachments/3030repeater_rui_lower"
 		Args
 		{
@@ -522,7 +588,7 @@
 	"ui10_enable"		"0"
 	UiData10
 	{
-		"ui"					"ui/hcog_classic_sights"
+		"ui"					"ui/hopup_sights_3030_hcog_classic"
 		"mesh"					"models/weapons/attachments/hopup_sights_hcog_classic"
 		Args
 		{
@@ -536,7 +602,7 @@
 	"ui11_enable"		"0"
 	UiData11
 	{
-		"ui"					"ui/hcog_upper"
+		"ui"					"ui/hopup_sights_3030_hcog_bruiser"
 		"mesh"					"models/weapons/attachments/hopup_sights_hcog_bruiser"
 		Args
 		{
@@ -550,7 +616,7 @@
 	"ui12_enable"		"0"
 	UiData12
 	{
-		"ui"					"ui/holo_sights"
+		"ui"					"ui/hopup_sights_3030_holo"
 		"mesh"					"models/weapons/attachments/hopup_sights_holosight"
 		Args
 		{
@@ -564,7 +630,7 @@
 	"ui13_enable"		"0"
 	UiData13
 	{
-		"ui"					"ui/holo_variable_sights"
+		"ui"					"ui/hopup_sights_3030_holo_variable"
 		"mesh"					"models/weapons/attachments/hopup_sights_holosight_variable"
 		Args
 		{
@@ -578,7 +644,7 @@
 	"ui14_enable"		"0"
 	UiData14
 	{
-		"ui"					"ui/hcog_ranged_sights"
+		"ui"					"ui/hopup_sights_3030_hcog_ranged"
 		"mesh"					"models/weapons/attachments/hopup_sights_hcog_ranged"
 		Args
 		{
@@ -592,7 +658,7 @@
 	"ui15_enable"		"0"
 	UiData15
 	{
-		"ui"					"ui/aog_variable_sights"
+		"ui"					"ui/hopup_sights_3030_aog_variable"
 		"mesh"					"models/weapons/attachments/hopup_sights_aog_variable"
 		Args
 		{

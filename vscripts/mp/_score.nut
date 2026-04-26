@@ -47,16 +47,16 @@ void function AddCallback_OnPlayerScored( void functionref( entity, ScoreEvent )
 }
 
 
-void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity associatedEnt = null, string noideawhatthisis = "", int ownValueOverride = -1 )
+void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity associatedEnt = null, string noideawhatthisis = "", int ownValueOverride = -1, string extraParam = "", bool teamAward = false )
 {
 	if ( !IsValid_ThisFrame( targetPlayer ) || !targetPlayer.IsPlayer() )
 		return
 
 	if ( !targetPlayer.hasConnected || targetPlayer.GetTeam() == TEAM_SPECTATOR )
 		return
-	
+
 	ScoreEvent event = GetScoreEvent( scoreEventName )
-	
+
 	if ( !event.enabled )
 		return
 
@@ -64,7 +64,7 @@ void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity
 	if ( associatedEnt != null )
 		associatedHandle = associatedEnt.GetEncodedEHandle()
 
-	float scale = targetPlayer.IsTitan() ? event.coreMeterScalar : 1.0	
+	float scale = targetPlayer.IsTitan() ? event.coreMeterScalar : 1.0
 	float earnValue = event.earnMeterEarnValue * scale
 	float ownValue = event.earnMeterOwnValue * scale
 
@@ -75,20 +75,20 @@ void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity
 		ownValue = float( ownValueOverride )
 
 	//PlayerEarnMeter_AddEarnedAndOwned( targetPlayer, earnValue * scale, ownValue * scale )
-	
+
 	Remote_CallFunction_NonReplay( targetPlayer, "ServerCallback_ScoreEvent", event.eventId, event.pointValue, event.displayType, associatedHandle, ownValue, earnValue )
-	
+
 	if ( event.displayType & eEventDisplayType.CALLINGCARD ) // callingcardevents are shown to all players
 	{
 		foreach ( entity player in GetPlayerArray() )
 		{
 			if ( player == targetPlayer ) // targetplayer already gets this in the scorevent callback
 				continue
-				
+
 			//Remote_CallFunction_NonReplay( player, "ServerCallback_CallingCardEvent", event.eventId, associatedHandle )
 		}
 	}
-	
+
 	if ( ScoreEvent_HasConversation( event ) )
 	{
 		printt( FUNC_NAME(), "conversation:", event.conversation, "player:", targetPlayer.GetPlayerName(), "delay:", event.conversationDelay )
@@ -105,7 +105,7 @@ bool function IsPlaylistAllowedForDefaultKillNotifications()
 	{
 		case ePlaylists.fs_scenarios:
 		return false
-		
+
 	}
 
 	switch( Gamemode() )
@@ -226,11 +226,11 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 	if( Safe_is1v1EnabledAndAllowed() )
 	{
 		int sourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-		
+
 		if ( sourceId == eDamageSourceId.damagedef_suicide )
 			return
 	}
-	
+
 	if( Safe_isScenariosMode() || Gamemode() == eGamemodes.fs_snd )
 		return
 
@@ -245,7 +245,7 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 void function ScoreEvent_TitanDoomed( entity titan, entity attacker, var damageInfo )
 {
 	// will this handle npc titans with no owners well? i have literally no idea
-	
+
 	if ( titan.IsNPC() )
 		AddPlayerScore( attacker, "DoomAutoTitan", titan )
 	else
@@ -264,9 +264,6 @@ void function ScoreEvent_TitanKilled( entity victim, entity attacker, var damage
 
 void function ScoreEvent_NPCKilled( entity victim, entity attacker, var damageInfo )
 {
-	#if HAS_NPC_SCORE_EVENTS
-	AddPlayerScore( attacker, ScoreEventForNPCKilled( victim, damageInfo ), victim )
-	#endif
 }
 
 
@@ -287,7 +284,7 @@ void function ScoreEvent_SetupEarnMeterValuesForMixedModes() // mixed modes in t
 	ScoreEvent_SetEarnMeterValues( "KillTitan", 0.0, 0.15 )
 	ScoreEvent_SetEarnMeterValues( "TitanKillTitan", 0.0, 0.0 ) // unsure
 	ScoreEvent_SetEarnMeterValues( "PilotBatteryStolen", 0.0, 0.35 )
-	
+
 	// ai
 	ScoreEvent_SetEarnMeterValues( "KillGrunt", 0.0, 0.02, 0.5 )
 	ScoreEvent_SetEarnMeterValues( "KillSpectre", 0.0, 0.02, 0.5 )
@@ -299,5 +296,5 @@ void function ScoreEvent_SetupEarnMeterValuesForMixedModes() // mixed modes in t
 void function ScoreEvent_SetupEarnMeterValuesForTitanModes()
 {
 	// todo needs earn/overdrive values
-	
+
 }

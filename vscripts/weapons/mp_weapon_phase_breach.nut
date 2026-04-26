@@ -4,7 +4,7 @@ global function OnWeaponDeactivate_weapon_phase_breach
 global function OnWeaponPrimaryAttack_ability_phase_breach
 global function OnWeaponPrimaryAttackAnimEvent_ability_phase_breach
 global function OnWeaponAttemptOffhandSwitch_weapon_phase_breach
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 global function DEV_PhaseBreach_DestroyAll
 #endif
 #if CLIENT
@@ -13,7 +13,7 @@ global function ServerToClient_PhaseBreachPortalCancelled
     global function ServerToClient_NotifyAshCooldownReduction
 
 
-#if DEV
+#if DEVELOPER
 global function DEV_ClearTargetingData
 global function DEV_ToggleAshValidation
 #endif
@@ -131,7 +131,7 @@ struct
 
 	bool breachPersistsWhenAshDies
 
-	#if DEV
+	#if DEVELOPER
 		int numTargetingRuns
 		int newTargetingHits
 		int oldTargetingHits
@@ -367,11 +367,11 @@ void function MoveEntAndCreateTunnel( entity player, PhaseTunnelPathData data, v
 
 	PhaseTunnelData tunnelData
 	tunnelData.startPortal = startPortal
-	tunnelData.shiftStyle  = eShiftStyle.PHASETYPE_BREACH
+	tunnelData.shiftStyle  = PHASETYPE_BREACH
 	tunnelData.tunnelEnt = CreatePropScript( $"mdl/dev/empty_model.rmdl", tunnelData.startPortal.startOrigin )
 
 	PhaseTunnelTravelState travelState
-	travelState.shiftStyle               = eShiftStyle.PHASETYPE_BREACH
+	travelState.shiftStyle               = PHASETYPE_BREACH
 	travelState.holsterRemoveDelay       = 0.4
 	travelState.endSeekCheckOverrideFunc = PhaseBreach_PathNodeCheck
 
@@ -601,7 +601,7 @@ void function CreateTunnelAndWaitForExpiration( entity player, PhaseTunnelData t
 	waitthread PhaseTunnel_WaitForPhaseTunnelExpiration( player, tunnelData, PHASE_BREACH_PORTAL_LIFETIME )
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_PhaseBreach_DestroyAll()
 {
 	foreach ( ent, portal in file.tunnelData )
@@ -693,7 +693,7 @@ void function OnPhaseTunnelTriggerEnter_Internal( entity trigger, entity player 
 		return
 
 	PhaseTunnelTravelState travelState	// Intentionally leaving out the holster time
-	travelState.shiftStyle               = eShiftStyle.PHASETYPE_BREACH
+	travelState.shiftStyle               = PHASETYPE_BREACH
 	travelState.endSeekCheckOverrideFunc = PhaseBreach_PathNodeCheck
 	thread PhaseBreach_PhaseEntity( player, tunnelEnt, file.tunnelData[ tunnelEnt ], file.triggerStartpoint[ trigger ], travelState )
 }
@@ -784,13 +784,13 @@ PhaseBreachTargetInfo function GetPhaseBreachTargetInfo( entity player )
 	// Step 1: Basic eye trace looking forward for solid ground
 	PhaseBreachTraceResults eyeTrace = DoEyeTrace( eyePos, eyeDir, rangeEffective, ignoredEnts, mins, maxs )
 
-	#if DEV
+	#if DEVELOPER
 	if ( DEBUG_DRAW_TARGETING )
 	{
-		vector debugColor = eyeTrace.results.fraction < 1.0 ? COLOR_GREEN : COLOR_RED
+		vector debugColor = eyeTrace.results.fraction < 1.0 ? <0, 255, 0> : <255, 0, 0>
 		DebugDrawSphere(  eyeTrace.results.endPos, 10,debugColor, false,0.1 )
 
-		vector adjustedColor = eyeTrace.foundValidEnd ? COLOR_GREEN : COLOR_ORANGE
+		vector adjustedColor = eyeTrace.foundValidEnd ? <0, 255, 0> : COLOR_ORANGE
 		DebugDrawSphere(  eyeTrace.adjustedEndPos,5, adjustedColor, false,0.1 )
 
 		float distMeters = Distance( eyeTrace.results.endPos, player.GetOrigin() ) * INCHES_TO_METERS
@@ -819,14 +819,14 @@ PhaseBreachTargetInfo function GetPhaseBreachTargetInfo( entity player )
 	{
 		vector lowerEyeDir = VectorRotateAxis( eyeDir, player.GetRightVector(), -1 )
 		PhaseBreachTraceResults lowerEyeTrace = DoEyeTrace( eyePos, lowerEyeDir, rangeEffective, ignoredEnts, mins, maxs )
-		#if DEV
+		#if DEVELOPER
 			if ( DEBUG_DRAW_TARGETING )
 			{
 				DebugDrawText( eyeTrace.results.endPos, "Lower", false, 0.1 )
-				vector debugColor = eyeTrace.results.fraction < 1.0 ? COLOR_GREEN : COLOR_RED
+				vector debugColor = eyeTrace.results.fraction < 1.0 ? <0, 255, 0> : <255, 0, 0>
 				DebugDrawSphere(  eyeTrace.results.endPos, 10,debugColor, false,0.1 )
 
-				vector adjustedColor = eyeTrace.foundValidEnd ? COLOR_GREEN : COLOR_ORANGE
+				vector adjustedColor = eyeTrace.foundValidEnd ? <0, 255, 0> : COLOR_ORANGE
 				DebugDrawSphere(  eyeTrace.adjustedEndPos,5, adjustedColor, false,0.1 )
 			}
 		#endif
@@ -1369,7 +1369,7 @@ void function PhaseBreachCrosshair_Thread( entity weapon )
 
 void function DrawDebugSphereIfDebugging( vector origin, int r, int g, int b )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( DEBUG_DRAW_PLACEMENT_TRACES )
 			DebugDrawSphere( origin, 5.0, <r, g, b>, false, 0.1 )
 	#endif
@@ -1534,7 +1534,7 @@ void function PhaseBreachPlacement_Thread( entity weapon )
 
 
 
-#if DEV
+#if DEVELOPER
 #if CLIENT
 void function DEV_ValidateAgainstOldTargeting( entity player, PhaseBreachTargetInfo info )
 {
@@ -1558,7 +1558,7 @@ void function DEV_ValidateAgainstOldTargeting( entity player, PhaseBreachTargetI
 			if ( DEBUG_DRAW_VALIDATION )
 			{
 				Warning("Ash Ult: Old algorithm found a point and the new one failed to at all.")
-				DebugDrawSphere( oldInfo.finalPos, 20, COLOR_RED, false, 0.1 )
+				//DebugDrawSphere( oldInfo.finalPos, 20, <255, 0, 0>, false, 0.1 )
 			}
 			if ( DEV_LogValidationCase( player, file.oldTargetingWins ) )
 			{
@@ -1597,7 +1597,7 @@ void function DEV_ValidateAgainstOldTargeting( entity player, PhaseBreachTargetI
 					if ( DEBUG_DRAW_VALIDATION )
 					{
 						Warning( "Ash Ult: Old algorithm found a point which scored better than the new one. Distance between them is " + newOldDistance + ". Dot between " + newOldDot + ". newDotScore: " + newScore + " oldDotScore: " + oldScore )
-						DebugDrawSphere( oldInfo.finalPos, 20, COLOR_RED, false, 0.1 )
+						//DebugDrawSphere( oldInfo.finalPos, 20, <255, 0, 0>, false, 0.1 )
 					}
 					DEV_LogValidationCase( player, file.oldTargetingBetter )
 				}
@@ -1624,7 +1624,7 @@ void function DEV_ValidateAgainstOldTargeting( entity player, PhaseBreachTargetI
 
 
 			DebugDrawScreenText( 0.1, 0.3, debugText )
-			DebugDrawScreenTextWithColor( 0.1, 0.28, "ASH VALIDATION ON", COLOR_LIGHT_RED )
+			//DebugDrawScreenTextWithColor( 0.1, 0.28, "ASH VALIDATION ON", COLOR_LIGHT_RED )
 		}
 	}
 }
@@ -1668,4 +1668,4 @@ void function DEV_ClearTargetingData()
 }
 #endif
 
-#endif 
+#endif

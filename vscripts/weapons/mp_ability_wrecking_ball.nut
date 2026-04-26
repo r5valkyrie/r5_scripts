@@ -856,7 +856,7 @@ void function WreckingBall_GetTheBallRolling( entity ball, vector dir )
 			#if DEVELOPER
 			if ( DEBUG_EMP_DAMAGE_DESTRUCTION )
 			{
-				vector debugLineColor = ( distanceToProjection > WRECKING_BALL_DAMAGE_DEVICE_RANGE ) ? <255, 165, 0> : <0, 255, 0>
+				vector debugLineColor = ( distanceToProjection > WRECKING_BALL_DAMAGE_DEVICE_RANGE ) ? COLOR_ORANGE : <0, 255, 0>
 				DebugDrawLine( device.GetOrigin(), deviceProjectedPosition, debugLineColor.x, debugLineColor.y, debugLineColor.z, true, 0.1 )
 				DebugDrawText( device.GetOrigin(), "DistToBall: " + distanceToProjection, true, 0.1 )
 			}
@@ -894,7 +894,7 @@ void function WreckingBall_GetTheBallRolling( entity ball, vector dir )
 			#if DEVELOPER
 			if ( DEBUG_EMP_DAMAGE_DESTRUCTION )
 			{
-				vector debugLineColor = ( distanceToProjection > WRECKING_BALL_DAMAGE_DEVICE_RANGE ) ? <255, 165, 0> : <0, 255, 0>
+				vector debugLineColor = ( distanceToProjection > WRECKING_BALL_DAMAGE_DEVICE_RANGE ) ? COLOR_ORANGE : <0, 255, 0>
 				DebugDrawLine( device.GetOrigin(), deviceProjectedPosition, debugLineColor.x, debugLineColor.y, debugLineColor.z, true, 0.1 )
 				DebugDrawText( device.GetOrigin(), "DistToBall: " + distanceToProjection, true, 0.1 )
 			}
@@ -1019,19 +1019,7 @@ void function WreckingBall_GetTheBallRolling( entity ball, vector dir )
 
 void function BeginProjectileFire( entity projectile, entity owner, entity inflictor, entity hitEnt, vector pos, vector dir, int numSegments, bool skipFirstStep, BurnDamageSettings burnSettings )
 {
-	Assert( IsValid( owner ) )
-	Assert( IsValid( inflictor ) )
 
-	owner.EndSignal( "OnDestroy" )
-
-	array<SegmentData> segmentsArray = CreateSpreadPattern( owner, inflictor, pos, dir, numSegments, burnSettings )
-	// don't try to use an empty array
-	if ( segmentsArray.len() == 0 )
-		return
-
-	if ( skipFirstStep )
-		segmentsArray.remove( 0 )
-	waitthread BurnSequence( owner, inflictor, segmentsArray, burnSettings )
 }
 
 

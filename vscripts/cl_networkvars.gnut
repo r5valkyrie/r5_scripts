@@ -45,7 +45,6 @@ void function ServerCallback_SetEntityVar( int eHandle, varHandle, value )
 	ent._entityVars[varName] = value
 
 	Warning( "Set entityVar " + varName + " to " + value )
-	CodeCallback_EntityVarChanged( ent, varName, value, oldValue )
 }
 
 void function ServerCallback_SetServerVar( varHandle, value )

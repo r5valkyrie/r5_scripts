@@ -65,7 +65,7 @@ void function EntitiesDidLoad()
 		data.panel.SetSkin( 0 )
 
 		AddCallback_OnUseEntity_ClientServer( data.panel, SniperTower_OnUse )
-		SetCallback_CanUseEntityCallback_Retail( data.panel, SniperTower_CanUse )
+		SetCallback_CanUseEntityCallback( data.panel, SniperTower_CanUse )
 
 		foreach ( entity linkEnt in panel.GetLinkEntArray() )
 		{
@@ -111,7 +111,7 @@ void function OnPanelCreated( entity panel )
 		return
 
 	AddCallback_OnUseEntity_ClientServer( panel, SniperTower_OnUse )
-	SetCallback_CanUseEntityCallback_Retail( panel, SniperTower_CanUse )
+	SetCallback_CanUseEntityCallback( panel, SniperTower_CanUse )
 	AddEntityCallback_GetUseEntOverrideText( panel, SniperTowerUseTextOverride )
 }
 

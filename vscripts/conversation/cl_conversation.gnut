@@ -4,7 +4,6 @@ global function ClDialogue_Init
 
 // call to attempt to start playing a conversation. will return false if it doesn't play, not that we can do anything about it.
 global function ServerCallback_PlayConversation
-global function ServerCallback_PlayTitanConversation
 global function ServerCallback_PlaySquadConversation
 global function SetDialogueDebugLevel
 global function GetDialogueDebugLevel
@@ -68,7 +67,7 @@ void function ClDialogue_Init()
 	file.aiTalkers = {
 		[ TEAM_IMC ] = {},
 		[ TEAM_MILITIA ] = {},
-		[ TEAM_BOTH ] = {},
+		[ TEAM_NPC_FRIENDLY_TO_PLAYERS ] = {},
 	}
 
 	InitGlobals()
@@ -196,13 +195,6 @@ void function PlayConversationToLocalClient( string convAlias )
 		thread ClRunConversation( player, convAlias )
 	else
 		thread ClAttemptConversation( convAlias, player, priority )
-}
-
-void function ServerCallback_PlayTitanConversation( int conversationIndex )
-{
-	entity player = GetLocalClientPlayer()
-	string conversationType = GetConversationName( conversationIndex )
-	TitanCockpit_PlayDialog( GetLocalViewPlayer(), conversationType )
 }
 
 void function ServerCallback_PlayConversation( int conversationIndex )
@@ -584,7 +576,7 @@ function ClSelectRandomConversation( string conversationType, int team )
 
 	if ( conversationArray.len() == 0 )
 	{
-		conversationArray = convStruct.conversationTable[ TEAM_BOTH ]
+		conversationArray = convStruct.conversationTable[ TEAM_NPC_FRIENDLY_TO_PLAYERS ]
 		Assert( conversationArray.len() > 0, "Conversation " + conversationType + " isn't available for team ID: " + team )
 	}
 

@@ -40,6 +40,18 @@ struct SelectedServerInfo
 	bool svHasPassword = false
 }
 
+global struct ServerListing
+{
+	int svServerID = -1
+	string svServerName = ""
+	string svPlaylist = ""
+	string svMapName = ""
+	string svDescription = ""
+	int svMaxPlayers = 0
+	int svCurrentPlayers = 0
+	bool svHasPassword = false
+}
+
 struct {
 	bool hideEmpty = false
 	bool useSearch = false
@@ -72,7 +84,7 @@ void function InitServerBrowserPanel( var panel )
 	file.panel = panel
 	file.menu = GetParentMenu( file.panel )
 
-	AddMouseMovementCaptureHandler( Hud_GetChild(file.panel, "MouseMovementCapture"), UpdateMouseDeltaBuffer )
+	//AddMouseMovementCaptureHandler( Hud_GetChild(file.panel, "MouseMovementCapture"), UpdateMouseDeltaBuffer )
 	Hud_AddEventHandler( Hud_GetChild( file.panel, "ConnectButton" ), UIE_CLICK, ServerBrowser_ConnectBtnClicked )
 	Hud_AddEventHandler( Hud_GetChild( file.panel, "RefreshServers" ), UIE_CLICK, ServerBrowser_RefreshBtnClicked )
 	Hud_AddEventHandler( Hud_GetChild( file.panel, "ClearFliters" ), UIE_CLICK, ClearFilterServer_Activate )
@@ -95,7 +107,7 @@ void function InitServerBrowserPanel( var panel )
 		Hud_AddEventHandler( elem, UIE_CLICK, ServerBrowser_ServerBtnClicked )
 		Hud_AddEventHandler( elem, UIE_DOUBLECLICK, ServerBrowser_ServerBtnDoubleClicked )
 	}
-	
+
 	ServerBrowser_UpdateSelectedServerUI()
 	ServerBrowser_UpdateServerPlayerCount()
 	ServerBrowser_NoServersFound(false)
@@ -105,7 +117,7 @@ void function InitServerBrowserPanel( var panel )
 
 void function ServerBrowser_OnShow( var panel )
 {
-	UI_SetPresentationType( ePresentationType.SERVER_BROWSER )
+	UI_SetPresentationType( ePresentationType.CLUB_DISCOVERY )
 	RegisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
 	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
 }
@@ -336,7 +348,7 @@ void function ServerBrowser_FilterServerList()
 
 	if(GetConVarInt( "serverbrowser_mapFilter" ) > (filterArguments.filterMaps.len() - 1) || GetConVarInt( "serverbrowser_gameModeFilter" ) > (filterArguments.filterGamemodes.len() - 1))
 		OnBtnFiltersClear()
-	
+
 	//Must wait for convars to actually set
 	wait 0.1
 
@@ -363,10 +375,10 @@ void function ServerBrowser_FilterServerList()
 
 		if ( filterArguments.filterGamemode != "Any" && filterArguments.filterGamemode != file.m_vServerList[i].svPlaylist )
 			continue;
-		
+
 		// Search
 		if ( filterArguments.useSearch )
-		{	
+		{
 			array<string> sName
 			sName.append( file.m_vServerList[i].svServerName.tolower() )
 			sName.append( file.m_vServerList[i].svMapName.tolower() )
@@ -375,20 +387,20 @@ void function ServerBrowser_FilterServerList()
 			sName.append( GetUIPlaylistName(file.m_vServerList[i].svPlaylist).tolower() )
 
 			string sTerm = filterArguments.searchTerm.tolower()
-			
+
 			bool found = false
 			for( int l = 0, k = sName.len(); l < k; l++ )
 				if ( sName[l].find( sTerm ) >= 0 )
 					found = true
-			
+
 			if ( !found )
 				continue;
 		}
-		
+
 		// Server fits our requirements, add it to the list
 		file.m_vFilteredServerList.append(file.m_vServerList[i])
 	}
-	
+
 	// Get Server Count
 	file.m_vAllServers = file.m_vFilteredServerList.len()
 

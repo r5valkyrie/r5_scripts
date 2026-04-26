@@ -418,7 +418,7 @@ bool function PlantBolt( DeployableCollisionParams collisionParams, entity owner
 	if ( newBolt == null )
 		return false
 
-	if ( !PlantStickyEntity_Retail( newBolt, collisionParams, <0, 0, 0>, true ) )
+	if ( !PlantStickyEntity( newBolt, collisionParams, <0, 0, 0>, true ) )
 	{
 		CleanUpBolt( newBolt )
 		return false
@@ -694,9 +694,13 @@ vector ornull function GetArcConnectPoint( entity bolt, vector dir, vector maxAn
 	if ( DEBUG_CONNECT_POINT )
 	{
 		if ( arcTrace.fraction == 1.0 )
-			DebugDrawSphere( arcTrace.endPos, 10, COLOR_RED, false, 5.0 )
+		{
+			//DebugDrawSphere( arcTrace.endPos, 10, <255, 0, 0>, false, 5.0 )
+		}
 		else
-			DebugDrawSphere( arcTrace.endPos, 10, COLOR_YELLOW, false, 5.0 )
+		{
+			//DebugDrawSphere( arcTrace.endPos, 10, <255, 255, 0>, false, 5.0 )
+		}
 	}
 
 	return arcTrace.fraction == 1.0 ? null : arcTrace.endPos
@@ -1031,7 +1035,7 @@ void function TetherAnchor_PlantOnFirstCollision( entity physicsEnt )
 		cp.hitEnt = lineTrace.hitEnt
 		cp.pos    = lineTrace.endPos
 
-		plantSuccessful = PlantStickyEntity_Retail( physicsEnt, cp, ZERO_VECTOR, true )
+		plantSuccessful = PlantStickyEntity( physicsEnt, cp, ZERO_VECTOR, true )
 	}
 	if ( plantSuccessful )
 	{
@@ -1050,7 +1054,7 @@ void function TetherAnchor_PlantOnFirstCollision( entity physicsEnt )
 			cp.hitEnt = hullTrace.hitEnt
 			cp.pos    = hullTrace.endPos
 
-			PlantStickyEntity_Retail( physicsEnt, cp, ZERO_VECTOR, true )
+			PlantStickyEntity( physicsEnt, cp, ZERO_VECTOR, true )
 		}
 		physicsEnt.DisablePhysics()
 	}
@@ -1305,4 +1309,4 @@ bool function ArcBolt_IsBoltPlanted( entity bolt )
 
 	return file.boltStateTable[bolt].type == eBoltType.PLANTED
 }
-#endif 
+#endif

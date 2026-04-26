@@ -7,7 +7,8 @@ global function RumbleForTitanDamage
 global function DamageIndicators
 
 global function ServerCallback_PlayerTookDamage
-//global function ClientCodeCallback_OnMissileCreation
+global function ServerCallback_PlayerTookDamage_NoAttacker
+
 global function ClientCodeCallback_CreateGrenadeIndicator
 
 global function ShowGrenadeArrow
@@ -158,6 +159,10 @@ bool function ShouldShowMeleeFlashForDamage( float damage, int damageType, int d
 	if ( damageSourceId == eDamageSourceId.prowler_melee )
 		return false
 
+	// Spider melee doesn't show flash
+	if ( damageSourceId == eDamageSourceId.spider_melee )
+		return false
+
 	return true
 }
 
@@ -187,13 +192,16 @@ void function DoDamageFlashForDamageRecieved( entity player, float damage, int d
 	float holdTime = GraphCapped( min( damage / 100.0, 1.0 ), 0.0, 1.0, 0.0, 0.25 )
 	ScreenFlash( 2, 2, 2, holdTime, 0.2 )
 }
+void function ServerCallback_PlayerTookDamage_NoAttacker( float damage, vector damageOrigin, int damageType, int damageSourceId )
+{
+	ServerCallback_PlayerTookDamage( damage, damageOrigin, damageType, damageSourceId, null )
+}
 
-void function ServerCallback_PlayerTookDamage( float damage, vector damageOrigin, int damageType, int damageSourceId, int attackerEHandle )
+void function ServerCallback_PlayerTookDamage( float damage, vector damageOrigin, int damageType, int damageSourceId, entity attacker )
 {
 	if ( IsWatchingThirdPersonKillReplay() )
 		return
 
-	entity attacker = attackerEHandle != 0 ? GetHeavyWeightEntityFromEncodedEHandle( attackerEHandle ) : null
 	entity localViewPlayer = GetLocalViewPlayer()
 
 	bool isHeadShot = (damageType & DF_HEADSHOT) ? true : false
@@ -232,6 +240,9 @@ void function ServerCallback_PlayerTookDamage( float damage, vector damageOrigin
 			break
 		case eDamageSourceId.burn:
 			EmitSoundOnEntity( localViewPlayer, "flesh_fire_damage_1p" )
+			break
+		case eDamageSourceId.caustic_toxin:
+			EmitSoundOnEntity( localViewPlayer, "flesh_causticgas_damage_1p" )
 			break
 	}
 
@@ -325,16 +336,19 @@ void function DamageIndicators( vector origin, entity attacker, int damageSource
 
 bool function ShouldShowDamageArrows( int damageSourceId )
 {
+	// R5 Custom: Flowstate playlist indicator disable
 	if( file.bIndicatorsDisabled )
 		return false
-		
+
 	switch ( damageSourceId )
 	{
 		case eDamageSourceId.outOfBounds:
 		case eDamageSourceId.deathField:
 		case eDamageSourceId.damagedef_grenade_gas:
 		case eDamageSourceId.mp_weapon_tesla_trap:
+		case eDamageSourceId.damagedef_ability_silence:
 		case eDamageSourceId.burn:
+		case eDamageSourceId.caustic_toxin:
 			return false
 	}
 
@@ -383,17 +397,19 @@ void function DamageIndicatorRui( vector damageOrigin, int arrowType )
 	}
 }
 
-void function ShowGrenadeArrow( entity player, entity grenade, float damageRadius, float startDelay, bool requireLos = true )
+void function ShowGrenadeArrow( entity player, entity grenade, float damageRadius, float startDelay, bool requireLos = true, int threatIndicatorVisbilityType = eThreatIndicatorVisibility.INDICATOR_SHOW_TO_ALL, vector offset = <0,0,0>, bool grenadeControlsVisiblity = false )
 {
-	thread GrenadeArrowThink( player, grenade, damageRadius, startDelay, requireLos )
+	thread GrenadeArrowThink( player, grenade, damageRadius, startDelay, requireLos, threatIndicatorVisbilityType, offset, grenadeControlsVisiblity )
 }
 
 void function AddThreatIndicator( entity waypoint )
 {
 	float radius = waypoint.GetWaypointFloat( 0 )
+	int visibilityType = waypoint.GetWaypointInt( DAMAGEARROW_WP_INT_INDEX_VISIBILITY_TYPE )
+	vector offset = waypoint.GetWaypointVector( 0 )
 
 	entity player = GetLocalViewPlayer()
-	ShowGrenadeArrow( player, waypoint, radius, 0, false )
+	ShowGrenadeArrow( player, waypoint, radius, 0, false, visibilityType, offset )
 }
 
 vector function GetRandomOriginWithinBounds( entity ent )
@@ -406,7 +422,7 @@ vector function GetRandomOriginWithinBounds( entity ent )
 	return ent.GetOrigin() + randomOffset
 }
 
-void function GrenadeArrowThink( entity player, entity grenade, float damageRadius, float startDelay, bool requireLos, string requiredPlayerState = "any" )
+void function GrenadeArrowThink( entity player, entity grenade, float damageRadius, float startDelay, bool requireLos, int visibilityType = eThreatIndicatorVisibility.INDICATOR_SHOW_TO_ALL, vector visualOffset = <0,0,0>, bool grenadeControlsVisibility = false )
 {
 	EndSignal( grenade, "OnDeath" ) //On death added primarily for frag_drones
 	EndSignal( grenade, "OnDestroy" )
@@ -452,6 +468,9 @@ void function GrenadeArrowThink( entity player, entity grenade, float damageRadi
 
 	mdl.SetParent( arrow, "BACK" )
 	mdl.SetAttachOffsetOrigin( grenadeOffset )
+	// Angle adjustment for EMP indicator
+	if ( grenadeModel == GRENADE_INDICATOR_EMP_MODEL )
+		mdl.SetAngles( <45, 0, 0> )
 
 	float lastVisibleTime = 0
 	bool shouldBeVisible = true
@@ -460,19 +479,53 @@ void function GrenadeArrowThink( entity player, entity grenade, float damageRadi
 	{
 		cockpit = player.GetCockpit()
 
-		switch ( requiredPlayerState )
+		// Visibility type handling
+		switch ( visibilityType )
 		{
-			case "any":
+			case eThreatIndicatorVisibility.INDICATOR_SHOW_TO_ALL:
 				shouldBeVisible = true
 				break
-			case "pilot":
-				shouldBeVisible = !player.IsTitan()
+
+			case eThreatIndicatorVisibility.INDICATOR_SHOW_TO_ENEMIES:
+			case eThreatIndicatorVisibility.INDICATOR_SHOW_TO_SELF:
+			case eThreatIndicatorVisibility.INDICATOR_SHOW_TO_SELF_AND_ENEMIES:
+				if ( grenade instanceof C_PlayerWaypoint )
+				{
+					entity grenadeOwner = grenade.GetWaypointEntity( DAMAGEARROW_WP_ENT_OWNER )
+					int grenadeTeam = grenade.GetWaypointInt( DAMAGEARROW_WP_INT_INDEX_TEAM )
+
+					bool isEnemy = IsEnemyTeam( player.GetTeam(), grenadeTeam )
+					bool isSelf = IsValid( grenadeOwner ) ? grenadeOwner == player : false
+
+					if ( visibilityType == eThreatIndicatorVisibility.INDICATOR_SHOW_TO_ENEMIES )
+						shouldBeVisible = isEnemy
+					else if ( visibilityType == eThreatIndicatorVisibility.INDICATOR_SHOW_TO_SELF_AND_ENEMIES )
+						shouldBeVisible = isSelf || isEnemy
+					else if ( visibilityType == eThreatIndicatorVisibility.INDICATOR_SHOW_TO_SELF )
+						shouldBeVisible = isSelf
+				}
+				else
+				{
+					entity grenadeOwner = grenade.GetOwner()
+					int grenadeTeam = grenade.GetTeam()
+
+					bool isEnemy = IsEnemyTeam( player.GetTeam(), grenadeTeam )
+					bool isSelf = IsValid( grenadeOwner ) ? grenadeOwner == player : false
+
+					if ( visibilityType == eThreatIndicatorVisibility.INDICATOR_SHOW_TO_ENEMIES )
+						shouldBeVisible = isEnemy
+					else if ( visibilityType == eThreatIndicatorVisibility.INDICATOR_SHOW_TO_SELF_AND_ENEMIES )
+						shouldBeVisible = isSelf || isEnemy
+					else if ( visibilityType == eThreatIndicatorVisibility.INDICATOR_SHOW_TO_SELF )
+						shouldBeVisible = isSelf
+				}
 				break
-			case "titan":
-				shouldBeVisible = player.IsTitan()
-				break
-			default:
-				Assert( false, "Invalid player state! Allower states: 'any' 'pilot' 'titan'" )
+		}
+
+		// Grenade controls its own visibility
+		if ( grenadeControlsVisibility )
+		{
+			shouldBeVisible = !grenade.IsHidden()
 		}
 
 		if ( shouldBeVisible )
@@ -480,7 +533,9 @@ void function GrenadeArrowThink( entity player, entity grenade, float damageRadi
 			if ( grenade instanceof C_PlayerWaypoint )
 				damageRadius = grenade.GetWaypointFloat( 0 )
 
-			if ( Distance( player.GetOrigin(), grenade.GetOrigin() ) > damageRadius || !cockpit )
+			float dist = Distance( player.GetOrigin(), grenade.GetOrigin() )
+
+			if ( dist > damageRadius || !cockpit || player.IsPhaseShifted() )
 			{
 				shouldBeVisible = false
 			}
@@ -491,7 +546,8 @@ void function GrenadeArrowThink( entity player, entity grenade, float damageRadi
 				if ( requireLos )
 				{
 					vector traceOffset = GetIndicatorTraceOffset( grenade )
-					TraceResults result = TraceLine( grenade.GetOrigin() + traceOffset, GetRandomOriginWithinBounds( player ), grenade, TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_NONE )
+					array<entity> ignoreEntities = GetGrenadeIndicactorTraceIgnoreEntities( grenade )
+					TraceResults result = TraceLineHighDetail( grenade.GetOrigin() + traceOffset, GetRandomOriginWithinBounds( player ), ignoreEntities, TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_NONE )
 
 					if ( result.fraction == 1.0 )
 						tracePassed = true
@@ -514,6 +570,10 @@ void function GrenadeArrowThink( entity player, entity grenade, float damageRadi
 			arrow.EnableDraw()
 			mdl.EnableDraw()
 
+			// TODO: indicator colors (COLORID_HUD_INDICATOR_* constants not available)
+			// arrow.kv.rendercolor = GetKeyColor( COLORID_HUD_INDICATOR_ARROW )
+			// mdl.kv.rendercolor = GetKeyColor( COLORID_HUD_INDICATOR_GRENADE_MODEL )
+
 			arrow.DisableRenderWithViewModelsNoZoom()
 			arrow.EnableRenderWithCockpit()
 			arrow.EnableRenderWithHud()
@@ -522,7 +582,8 @@ void function GrenadeArrowThink( entity player, entity grenade, float damageRadi
 			mdl.EnableRenderWithHud()
 
 			vector damageArrowAngles = AnglesInverse( player.EyeAngles() )
-			vector vecToDamage = grenade.GetOrigin() - (player.EyePosition() + (player.GetViewVector() * 20.0))
+			// Apply visual offset to grenade position
+			vector vecToDamage = ( grenade.GetOrigin() + visualOffset ) - (player.EyePosition() + (player.GetViewVector() * 20.0))
 
 			// reparent for embark/disembark
 			if ( arrow.GetParent() == null )
@@ -540,6 +601,13 @@ void function GrenadeArrowThink( entity player, entity grenade, float damageRadi
 	}
 }
 
+array<entity> function GetGrenadeIndicactorTraceIgnoreEntities( entity grenade )
+{
+	array<entity> ignoreEntities = [ grenade ]
+	ignoreEntities.extend( GetAllResinShards() )
+	return ignoreEntities
+}
+
 asset function GetIndicatorModel( entity grenade )
 {
 	if ( grenade.IsNPC() )
@@ -553,15 +621,49 @@ asset function GetIndicatorModel( entity grenade )
 				return GRENADE_INDICATOR_TICK_MODEL
 		}
 	}
-	else if ( grenade.GetTargetName() == "creeping_bombardment_projectile" )
+
+	// Check weapon info field for indicator model
+	if ( grenade.IsProjectile() )
+	{
+		var keyString = grenade.ProjectileGetWeaponInfoFileKeyField( "damage_indicator_model" )
+		if ( keyString in eThreatIndicatorID )
+		{
+			switch( eThreatIndicatorID[keyString] )
+			{
+				case eThreatIndicatorID.GRENADE_INDICATOR_FRAG_MODEL:
+					return GRENADE_INDICATOR_FRAG_MODEL
+					break
+				case eThreatIndicatorID.GRENADE_INDICATOR_EMP_MODEL:
+					return GRENADE_INDICATOR_EMP_MODEL
+					break
+
+				case eThreatIndicatorID.GRENADE_INDICATOR_CLUSTER_BOMB_MODEL:
+					return GRENADE_INDICATOR_CLUSTER_BOMB_MODEL
+					break
+			}
+		}
+	}
+
+	if ( grenade.GetTargetName() == CREEPING_BOMBARDMENT_TARGETNAME )
 		return GRENADE_INDICATOR_BOMB
 
-    else if ( grenade.GetTargetName() == CARE_PACKAGE_PROXY )
-        return GRENADE_INDICATOR_GENERIC
-	
-	else if ( grenade.GetModelName() == $"mdl/weapons/shuriken/w_shuriken.rmdl" )
+	if ( grenade.GetScriptName() == SONIC_BLAST_THREAT_TARGETNAME )
+		return GRENADE_INDICATOR_GENERIC
+
+	if ( grenade.GetTargetName() == RIOT_DRILL_DANGERZONE_TARGETNAME )
+		return GRENADE_INDICATOR_GENERIC
+
+	// Horizon black hole
+	if ( grenade.GetTargetName() == BLACKHOLE_THREAT_TARGETNAME )
+		return GRENADE_INDICATOR_GENERIC
+
+	// Maggie riot drill
+	if ( grenade.GetTargetName() == RIOT_DRILL_DANGERZONE_TARGETNAME )
+		return GRENADE_INDICATOR_GENERIC
+
+	if ( grenade.GetModelName() == $"mdl/weapons/shuriken/w_shuriken.rmdl" )
 		return GRENADE_INDICATOR_EMP_MODEL
-	
+
 	if ( grenade instanceof C_PlayerWaypoint )
 	{
 		switch( grenade.GetWaypointInt( 0 ) )
@@ -582,8 +684,14 @@ asset function GetIndicatorModel( entity grenade )
 				return GRENADE_INDICATOR_GENERIC
 				break
 
+			// Arrow only, no model
+			case eThreatIndicatorID.GRENADE_INDICATOR_ONLY_ARROW:
+				return EMPTY_MODEL
+				break
+
 			default:
 				return GRENADE_INDICATOR_FRAG_MODEL
+				break
 		}
 	}
 
@@ -740,37 +848,31 @@ void function DamageArrow_CockpitInit( entity cockpit )
 
 void function ShowDamageArrow( entity player, vector damageOrigin, int arrowType, entity attacker )
 {
-	if ( file.damageArrows.len() == 0 ) // not yet initialized
+	if ( file.damageArrows.len() == 0 ) 
 		return
 
-	table arrowData = file.damageArrows[file.currentDamageArrow]
-	entity arrow = expect entity( arrowData.arrow )
+	table arrowData
 
-	file.currentDamageArrow++
-	if ( file.currentDamageArrow >= file.numDamageArrows )
-		file.currentDamageArrow = 0
 
-	float time = Time()
 
-	if (Flowstate_Is4DMode())
+
+
+
+
+
 	{
-		vector victimOrigin = player.GetOrigin()
-		
-		int playerDimension = ((victimOrigin.x) > 0 ? 1 : 0)
-		int victimDimension = ((damageOrigin.x) > 0 ? 1 : 0)
-		if (playerDimension != victimDimension)
+		arrowData = file.damageArrows[file.currentDamageArrow]
+
+		file.currentDamageArrow++
+		if ( file.currentDamageArrow >= file.numDamageArrows )
 		{
-			if (victimDimension == 01)
-			{
-				damageOrigin -= <30000,0,0>
-			}
-			else
-			{
-				damageOrigin += <30000,0,0>
-			}
+			file.currentDamageArrow = 0
 		}
 	}
 
+	entity arrow = expect entity( arrowData.arrow )
+
+	float time = Time()
 	arrow.s.arrowData.damageOrigin = damageOrigin
 	arrow.s.arrowData.grenade = null
 	arrow.s.arrowData.grenadeRadius = 0.0
@@ -864,6 +966,7 @@ void function UpdateDamageArrows( entity localViewPlayer, entity cockpit )
 
 		varsUpdated = false
 		bool inPhaseShift = localViewPlayer.IsPhaseShifted()
+		bool isDead = !IsAlive( localViewPlayer )
 
 		foreach ( arrowData in file.damageArrows )
 		{
@@ -878,7 +981,7 @@ void function UpdateDamageArrows( entity localViewPlayer, entity cockpit )
 					arrowData.endTime = 0.0
 			}
 
-			if ( (file.damageArrowTime >= arrowData.endTime) || inPhaseShift )
+			if ( (file.damageArrowTime >= arrowData.endTime) || inPhaseShift || isDead )
 			{
 				arrowData.arrow.DisableDraw()
 				arrowData.arrow.ClearParent()

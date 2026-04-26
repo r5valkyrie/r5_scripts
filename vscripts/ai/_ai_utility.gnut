@@ -61,15 +61,15 @@ void function SpawnBots( int amount = 1 )
 	
 	for( int i = 0; i<amount; i++)
 	{
-		ClientCommand( gp()[0], "sv_addbot " + botName + i.tostring() + " -1" )
+		RunClientCommandOnPlayer( gp()[0], "sv_addbot " + botName + i.tostring() + " -1" )
 	}
 
 	wait 2
 	
 	foreach( int j, entity bot in GetPlayerArray() )
 	{
-		if( bot.GetPlatformUID().slice( 0, 4 ) != "9999" )
-			continue
+		//if( bot.GetPlatformUID().slice( 0, 4 ) != "9999" )
+		//	continue
 			
 		// printt( "Player marked as bot", bot, bot.GetPlatformUID() )
 		bot.p.IsBot = true
@@ -80,7 +80,7 @@ void function SpawnAllyBots( int amount = 1 )
 {
 	for( int i = 0; i<amount; i++)
 	{
-		ClientCommand( gp()[0], "sv_addbot bot -1" )
+		RunClientCommandOnPlayer( gp()[0], "sv_addbot bot -1" )
 		wait 0.1
 	}
 
@@ -100,7 +100,7 @@ void function DEV_SpawnDownedBots( int amount = 1 )
 {
 	for( int i = 0; i<amount; i++)
 	{
-		ClientCommand( gp()[0], "sv_addbot flowstate -1" )
+		RunClientCommandOnPlayer( gp()[0], "sv_addbot flowstate -1" )
 		wait 0.1
 	}
 
@@ -122,7 +122,7 @@ void function DEV_SpawnSkydivingBots( int amount = 1 )
 {
 	for( int i = 0; i<amount; i++)
 	{
-		ClientCommand( gp()[0], "sv_addbot flowstate -1" )
+		RunClientCommandOnPlayer( gp()[0], "sv_addbot flowstate -1" )
 		wait 0.1
 	}
 	
@@ -164,7 +164,7 @@ void function DEV_SpawnSkydivingBots( int amount = 1 )
 
 void function SpawnBot( bool customModel = false, bool startSkydive = false, bool makeAlly = false )
 {
-	ClientCommand( gp()[0], "sv_addbot flowstate -1" )
+	RunClientCommandOnPlayer( gp()[0], "sv_addbot flowstate -1" )
 	
 	thread function () : ( customModel, startSkydive, makeAlly )
 	{
@@ -194,7 +194,7 @@ void function SpawnBot( bool customModel = false, bool startSkydive = false, boo
 
 		entity player = newBot
 		CharacterSelect_AssignCharacter( ToEHI( player ), GetAllCharacters()[5] )
-		ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+		ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 		asset characterSetFile = CharacterClass_GetSetFile( playerCharacter )
 		player.SetPlayerSettingsWithMods( characterSetFile, [] )
 
@@ -464,15 +464,15 @@ void function StartRunningForward(entity player)
 	OnThreadEnd(
 		function() : ( player )
 		{
-			ClientCommand(player, "-speed")
-			ClientCommand(player, "-forward")
+			RunClientCommandOnPlayer(player, "-speed")
+			RunClientCommandOnPlayer(player, "-forward")
 		}
 	)
 	
 	while(IsAlive(player))
 	{
-		ClientCommand(player, "+speed")
-		ClientCommand(player, "+forward")
+		RunClientCommandOnPlayer(player, "+speed")
+		RunClientCommandOnPlayer(player, "+forward")
 		WaitFrame()
 	}
 }
@@ -895,29 +895,6 @@ void function DEV_MoveToAllAINodes( float delay = 0.0, int loglevel = 0 )
         ent_lootbin.SetOrigin( pos )
         ent_lootbin.SetAngles( ang )
     	result = ent_lootbin
-        break
-
-        case "ent_singleDoor": // single door
-    	entity singleDoor = CreateEntity("prop_door")
-    	singleDoor.SetValueForModelKey(FIRINGRANGE_DOOR_ASSET)
-    	singleDoor.SetOrigin( pos )
-    	singleDoor.SetAngles( ang - <0,90,0>)
-    	DispatchSpawn(singleDoor)
-        break
-
-        case "ent_doubledoor": // double door
-        entity DoorLeft = CreateEntity("prop_door")
-    	DoorLeft.SetValueForModelKey(FIRINGRANGE_DOOR_ASSET)
-    	DoorLeft.SetAngles(ang - <0,90,0>)
-    	DoorLeft.SetOrigin(pos + DoorLeft.GetRightVector() * 60)
-    	DispatchSpawn(DoorLeft)
-
-    	entity DoorRight = CreateEntity("prop_door")
-    	DoorRight.SetValueForModelKey(FIRINGRANGE_DOOR_ASSET)
-    	DoorRight.SetAngles(ang + <0,90,0>)
-    	DoorRight.SetOrigin(pos + DoorRight.GetRightVector() * 60)
-    	DoorRight.LinkToEnt( DoorRight )
-    	DispatchSpawn(DoorRight)
         break
 
         default:
@@ -1800,38 +1777,10 @@ void function DEV_SpawnSpiderAtCrosshair(int team = 99)
 
 void function DEV_SpawnBTAtCrosshair( int team = 99 )
 {
-	entity player = GetPlayerArray()[ 0 ]
-
-	vector origin = GetPlayerCrosshairOrigin( player )
-	vector angles = Vector( 0, 0, 0 )
-
-	entity npc = CreateNPCTitanFromSettings($"settings/player/mp/titan_survival_buddy.rpak",team,origin, angles)
-
-	SetSpawnOption_AISettings( npc, "npc_titan_buddy" )
-	npc.SetCollisionAllowed( false )//TODO: Get rid of this when collision is fixed, it causes crash. - Kral
-
-	//DispatchSpawn( npc )
-	
-	npc.kv.solid = 8
-
-	npc.GiveWeapon("mp_titanweapon_xo16_shorty", WEAPON_INVENTORY_SLOT_ANY)
 }
 
 void function DEV_SpawnTitanAtCrosshair(int team = 99)
 {
-	entity player = GetPlayerArray()[ 0 ]
-
-	vector origin = GetPlayerCrosshairOrigin( player )
-	vector angles = Vector( 0, 0, 0 )
-
-	entity npc = CreateNPCTitan( "", team, origin, angles )
-	SetSpawnOption_AISettings( npc, "npc_titan_buddy" )
-	npc.SetCollisionAllowed( false )
-	DispatchSpawn( npc )
-	
-	array<string> weapons = ["mp_titanweapon_leadwall", "mp_titanweapon_meteor", "mp_titanweapon_particle_accelerator", "mp_titanweapon_predator_cannon", "mp_titanweapon_sniper","mp_titanweapon_xo16"]
-	string randomWeapon = weapons[RandomInt(weapons.len())]
-	npc.GiveWeapon( randomWeapon, WEAPON_INVENTORY_SLOT_PRIMARY_0, [])
 }
 
 void function DEV_SpawnInfectedSoldierAtCrosshair(int team = 99)

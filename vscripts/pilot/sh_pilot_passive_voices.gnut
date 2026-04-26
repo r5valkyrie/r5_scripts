@@ -31,18 +31,6 @@ struct
 const float WARN_TEAMMATES_DELAY = 6.0
 const string AUDIO_WARN_TEAMMATES_BEEP = "diag_mp_wraithvoid_comms_in"
 
-global enum eThreatDetectionZoneType
-{
-	VIEW, //From original internal enum, moved here so it makes more sense for me
-	PROXIMITY, //From original internal enum, moved here so it makes more sense for me
-	TRAP, //TDT_FIRST_ZONE is the first valid to create threat zones according to internal error
-	AMBUSH,
-	PING,
-	KILLZONE,
-	BOMBARDMENT,
-	GRENADE
-} // don't add more than TDT_MAX (30) detection zones!
-
 enum ePassiveVoiceCategories
 {
 	NEAR,
@@ -192,32 +180,17 @@ void function PassiveVoices_WaitForPlaneJump( entity player )
 		WaitFrame()
 	}
 	
-	// Starts threat detection for player
 	ThreatDetection_StartForPlayer( player )
-	
-	// TDT_HOSTILE_ENTITY_VIEW = 0  :  changed with eThreatDetectionZoneType.VIEW so the whole shit makes more sense
-	// TDT_HOSTILE_ENTITY_PROXIMITY = 1 :  changed with eThreatDetectionZoneType.PROXIMITY so the whole shit makes more sense
-	// TDT_FIRST_ZONE = 2 up to TDT_MAX
-	// TDT_MAX = 30
-	// TDT_INVALID = -1
-	
-	// TDS_NONE = 0
-	// TDS_VIEW_WATCH = 1
-	// TDS_VIEW_AIM = 2
-	// TDS_VIEW_SNIPE = 3
-	// TDS_PROXIMITY_FAR = 4
-	// TDS_PROXIMITY_MED = 5
-	// TDS_PROXIMITY_NEAR = 6
 	
 	//HOSTILE PLAYER VIEW
 	AddCallback_OnThreatEventActivation( player, eThreatDetectionZoneType.VIEW, PassiveVoices_OnThreatActivationHostileView )
 	AddCallback_OnThreatEventStateChange( player, eThreatDetectionZoneType.VIEW, TDS_VIEW_WATCH, TDS_VIEW_AIM, PassiveVoices_OnThreatStateChangeFromHostileWatchingToAiming )
 	AddCallback_OnThreatEventStateChange( player, eThreatDetectionZoneType.VIEW, TDS_VIEW_WATCH, TDS_VIEW_SNIPE, PassiveVoices_OnThreatStateChangeFromHostileWatchingToSniping )
 	
-	// HOSTILE PLAYER PROXIMITY
-	AddCallback_OnThreatEventActivation( player, eThreatDetectionZoneType.PROXIMITY, PassiveVoices_OnThreatActivationHostileProximity )
-	AddCallback_OnThreatEventStateChange( player, eThreatDetectionZoneType.PROXIMITY, TDS_PROXIMITY_FAR, TDS_PROXIMITY_MED, PassiveVoices_OnThreatStateChangeFromHostileFarToMid )
-	AddCallback_OnThreatEventStateChange( player, eThreatDetectionZoneType.PROXIMITY, TDS_PROXIMITY_MED, TDS_PROXIMITY_NEAR, PassiveVoices_OnThreatStateChangeFromHostileMidToNear )
+	//HOSTILE PLAYER PROXIMITY
+	//AddCallback_OnThreatEventActivation( player,TDT_HOSTILE_ENTITY_PROXIMITY, PassiveVoices_OnThreatActivationHostileProximity )
+	//AddCallback_OnThreatEventStateChange( player, TDT_HOSTILE_ENTITY_PROXIMITY, TDS_PROXIMITY_FAR, TDS_PROXIMITY_MED, PassiveVoices_OnThreatStateChangeFromHostileFarToMid )
+	//AddCallback_OnThreatEventStateChange( player, TDT_HOSTILE_ENTITY_PROXIMITY, TDS_PROXIMITY_MED, TDS_PROXIMITY_NEAR, PassiveVoices_OnThreatStateChangeFromHostileMidToNear )
 	
 	//TRAPS 
 	AddCallback_OnThreatEventActivation( player, eThreatDetectionZoneType.TRAP, PassiveVoices_OnThreatActivationForTrap )
@@ -475,7 +448,7 @@ void function ServerCallback_PlayPassiveVoice( int catId )
 		return
 
 	file.warnTeammatesCatId = catId
-	AddPingBlockingFunction( "quickchat", TryWraithWarnTeammates, WARN_TEAMMATES_DELAY,"#WRAITH_WARN_TEAMMATES", 100 )
+	AddOnscreenPromptFunction( "quickchat", TryWraithWarnTeammates, WARN_TEAMMATES_DELAY, "#WRAITH_WARN_TEAMMATES", 100 )
 }
 
 void function TryWraithWarnTeammates( entity player )
@@ -483,7 +456,7 @@ void function TryWraithWarnTeammates( entity player )
 	string category = passiveEnumToStringMap[ file.warnTeammatesCatId ]
 	VoiceData data = file.voiceData[ category ]
 	int quickChatId = data.responseId
-	Quickchat( player, quickChatId )
+	Quickchat( quickChatId, null )
 	EmitSoundOnEntity( player, AUDIO_WARN_TEAMMATES_BEEP )
 }
 #endif

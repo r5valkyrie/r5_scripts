@@ -9,10 +9,31 @@ global const float FLOAT_NAN = -FLOAT_INDETERMINATE
 global const float DEG_TO_RAD = 0.01745329251994  // PI / 180.0
 global const float RAD_TO_DEG = 57.29577951308232 // 180.0 / PI
 
+global const float DOT_1DEGREE =	0.9998476951564
+global const float DOT_2DEGREE =	0.9993908270191
+global const float DOT_3DEGREE =	0.9986295347546
+global const float DOT_4DEGREE =	0.9975640502598
+global const float DOT_5DEGREE =	0.9961946980917
+global const float DOT_6DEGREE =	0.9945218953683
+global const float DOT_7DEGREE =	0.9925461516413
+global const float DOT_8DEGREE =	0.9902680687416
+global const float DOT_9DEGREE =	0.9876883405951
+global const float DOT_10DEGREE =	0.9848077530122
+global const float DOT_15DEGREE =	0.9659258262891
+global const float DOT_20DEGREE =	0.9396926207859
+global const float DOT_25DEGREE =	0.9063077870367
+global const float DOT_30DEGREE =	0.866025403784
+global const float DOT_45DEGREE =	0.707106781187
+global const float DOT_50DEGREE =	0.64278760968
+global const float DOT_60DEGREE =	0.5
+global const float DOT_80DEGREE =	0.17364817766
+global const float DOT_85DEGREE =	0.0871557427477
+
+// SHOW_UNKNOWN_ARTIFACTS + eQuestMissionStatus moved to sh_season_quest.gnut
+
 global array<asset> LEGAL_PLAYER_TITAN_SETTINGS
 
 //
-global const PST_TIME_ZONE_OFFSET = -7
 
 global enum e1v1State
 {
@@ -22,7 +43,7 @@ global enum e1v1State
 	MATCH_START,
 	WAITING,
 	SEQUENCE,
-	MATCHING,
+	IN_MATCH,
 	RESTING,
 	RECAP,
 	SPECTATING,
@@ -31,6 +52,9 @@ global enum e1v1State
 	WATCHING_FIGHT_REPLAY
 }
 
+// Global Unix Time Util
+global const PST_TIME_ZONE_OFFSET = -8        // PST is -8, PDT is -7
+global const PDT_TIME_ZONE_OFFSET = -7
 global enum eDaysOfWeek
 {
 	SUNDAY,
@@ -50,6 +74,21 @@ global typedef FXHandle entity
 #elseif CLIENT
 global typedef FXHandle int
 #endif
+
+global const array<string> MONTH_NAMES = [
+	"#MONTH_JAN",
+	"#MONTH_FEB",
+	"#MONTH_MAR",
+	"#MONTH_APR",
+	"#MONTH_MAY",
+	"#MONTH_JUN",
+	"#MONTH_JUL",
+	"#MONTH_AUG",
+	"#MONTH_SEP",
+	"#MONTH_OCT",
+	"#MONTH_NOV",
+	"#MONTH_DEC",
+]
 
 global struct TimeParts
 {
@@ -165,8 +204,6 @@ struct
 	int hud_setting_accessibleChatCache
 } file
 
-global vector UP_VECTOR = <0,0,1>
-
 void function ShUtilityAll_Init()
 {
 	#document("DistanceAlongVector","")
@@ -179,18 +216,6 @@ void function ShUtilityAll_Init()
 	RegisterSignal( "Timeout" )
 	RegisterSignal( "CancelTimeout" )
 
-	//
-	#if !UI
-		PrecacheModel( $"mdl/fx/fire_cylinder_sm1.rmdl" )
-		PrecacheModel( $"mdl/fx/r301_leg07_fire_horns.rmdl" )
-		PrecacheModel( $"mdl/fx/r301_leg07_fire_body.rmdl" )
-
-		PrecacheModel( $"mdl/fx/peacekeeper_legendary_ice_stock.rmdl" )
-		PrecacheModel( $"mdl/fx/peacekeeper_legendary_ice_lvl2_add.rmdl" )
-		PrecacheModel( $"mdl/fx/peacekeeper_legendary_ice_lvl2_add_b.rmdl" )
-		PrecacheModel( $"mdl/fx/peacekeeper_legendary_ice_lvl3_add.rmdl" )
-		PrecacheModel( $"mdl/fx/peacekeeper_legendary_ice_lvl3_add_b.rmdl" )
-	#endif
 }
 
 Timeout function BeginTimeout( float duration )
@@ -429,6 +454,12 @@ float function CalcFOVScale( float baseFOV, float zoomScale )
 	return RadToDeg( atan( tan( DegToRad( baseFOV / 2.0 ) ) / zoomScale ) ) * 2
 }
 
+int function CalcZoomMag( float baseFOV, float fov )
+{
+	float magf = tan( DegToRad( baseFOV/2 ) ) / tan( DegToRad( fov/2 ) )
+	return int ( floor( magf + 0.5) )
+}
+
 
 vector function RotateAroundOrigin2D( vector originToRotate, vector origin, float angRadians )
 {
@@ -548,11 +579,11 @@ array<vector> function GetCircleToCircleIntersectionPoints( vector org1, float r
 	{
 		#if SERVER || CLIENT
 		// Circle origins
-		//DebugDrawLine( org1, org1 + < 0, 0, 32 >, COLOR_RED, true, 1.0 )
-		//DebugDrawLine( org2, org2 + < 0, 0, 32 >, COLOR_GREEN, true, 1.0 )
+		//DebugDrawLine( org1, org1 + < 0, 0, 32 >, <255, 0, 0>, true, 1.0 )
+		//DebugDrawLine( org2, org2 + < 0, 0, 32 >, <0, 255, 0>, true, 1.0 )
 
 		// Lines to intersection points
-		//DebugDrawLine( org2, intersectionPoints[ 0 ] + org1, COLOR_WHITE, true, 1.0 )
+		//DebugDrawLine( org2, intersectionPoints[ 0 ] + org1, <255, 255, 255>, true, 1.0 )
 		//DebugDrawLine( org2, intersectionPoints[ 1 ] + org1, COLOR_BLACK, true, 1.0 )
 		#endif
 	}
@@ -585,7 +616,6 @@ bool function IsLobby()
 	return IsLobbyMapName( mapName )
 }
 
-#if UI || MP_PVEMODE 
 bool function Freelance_IsHubLevel()
 {
 #if UI
@@ -601,7 +631,6 @@ bool function Freelance_IsHubLevel()
 	}
 	return false
 }
-#endif
 
 bool function Is2TeamPvPGame() //Technically this checks if its' 2 teams. Will we have 2 team non-PvP games? Probably not...
 {
@@ -633,7 +662,7 @@ bool function IsShotgunsAndSnipersMode()
 	return GetCurrentPlaylistVarBool( "shotguns_and_snipers_mode", false )
 }
 
-int function GetExpectedSquadSize( entity player )
+int function GetExpectedSquadSize( entity player = null )
 {
 	return GetCurrentPlaylistVarInt( "max_team_size", 1 )
 }
@@ -691,6 +720,22 @@ bool function UseSoloModePostGamePresentation()
 {
 	return GetCurrentPlaylistVarInt( "solo_mode_postgame_presentation", 0 ) ? true : false
 }
+#if SERVER
+void function SetupDecorativeBalloon( entity balloon )
+{
+	bool balloonBounce = GetCurrentPlaylistVarBool( "balloon_bounce", true )
+
+	if ( balloonBounce )
+	{
+		//DisableSkydiveEndOnEntity( balloon, true )
+		//DisableSkydiveAnticipateOnEntity( balloon, true )
+	}
+
+	balloon.SetForceVisibleInPhaseShift( true )
+	balloon.DisallowZiplines()
+	balloon.kv.CollisionGroup = ( TRACE_COLLISION_GROUP_NONE | TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+}
+#endif
 
 int function GetEnemyTeam( int team )
 {
@@ -995,6 +1040,7 @@ float function RoundToNearestInt( float value )
 	return floor( value + 0.5 )
 }
 
+
 float function RoundToNearestMultiplier( float value, float multiplier )
 {
 	Assert( multiplier > 0 )
@@ -1031,11 +1077,11 @@ int function HIWORD( int value )
 	return (value >> 16) & 0xFFFF
 }
 
+
 int function LOWORD( int value )
 {
 	return value
 }
-
 
 bool function IsWeaponKeyFieldDefined( string ref, string variable )
 {
@@ -1051,7 +1097,13 @@ string function GetWeaponInfoFileKeyField_GlobalString( string ref, string varia
 {
 	var val = GetWeaponInfoFileKeyField_Global( ref, variable )
 	Assert( val != null, "Weapon key \"" + variable + "\" does not exist in weapon \"" + ref + "\" !" )
-	if(val == null) return ""
+	return expect string( val )
+}
+
+string function GetWeaponInfoFileKeyField_WithMods_GlobalString( string ref, array<string> mods, string variable )
+{
+	var val = GetWeaponInfoFileKeyField_WithMods_Global( ref, mods, variable )
+	Assert( val != null, "Weapon key \"" + variable + "\" does not exist in weapon \"" + ref + "\" with mods [" + string( mods ) + "] !" )
 	return expect string( val )
 }
 
@@ -1146,7 +1198,7 @@ void function GiveExtraWeaponMod( entity player, string mod )
 	array mods = player.GetExtraWeaponMods()
 	
 	if(mods.len() > 8) //Code limit is 8
-		return
+		Warning( "Not enough room to add more mods" )
 	
 	mods.append( mod )
 
@@ -1760,16 +1812,14 @@ UISize function GetScreenSize()
 UIScaleFactor function GetContentScaleFactor( var panel )
 {
 	UISize size
-	float heightBasis
+	float heightBasis = 1080.0
 
 	#if UI
 		size = REPLACEHud_GetSize( panel )
-		heightBasis = 1080.0
 	#elseif CLIENT
 		array screenSize = expect array( panel.GetScreenSize() )
 		size.width = expect int( screenSize[0] )
 		size.height = expect int( screenSize[1] )
-		heightBasis = 480.0
 	#endif
 
 	float aspectRatio = size.width / float( size.height )
@@ -1781,6 +1831,37 @@ UIScaleFactor function GetContentScaleFactor( var panel )
 	return scaleFactor
 }
 
+UIScaleFactor function GetContentFixedScaleFactor( var panel )
+{
+	UISize size
+	float vwidth  = 1920
+	float vheight = 1080
+
+	#if UI
+		size = REPLACEHud_GetSize( panel )
+	#elseif CLIENT
+		array screenSize = expect array( panel.GetScreenSize() )
+		size.width = expect int( screenSize[0] )
+		size.height = expect int ( screenSize[1] )
+	#endif
+
+	float rx = size.width / vwidth
+	float ry = size.height / vheight
+
+	UIScaleFactor scaleFactor
+	if ( rx < ry )
+	{
+		scaleFactor.x = rx
+		scaleFactor.y = rx
+	}
+	else
+	{
+		scaleFactor.x = ry
+		scaleFactor.y = ry
+	}
+
+	return scaleFactor
+}
 bool function ButtonIsBoundToAction( int buttonID, string actionSubString )
 {
 	string binding = GetEffectiveButtonBinding( buttonID )
@@ -1876,17 +1957,6 @@ int function SortByTeamMemberIndex( entity a, entity b )
 	if ( a.GetTeamMemberIndex() > b.GetTeamMemberIndex() )
 		return 1
 	else if ( a.GetTeamMemberIndex() < b.GetTeamMemberIndex() )
-		return -1
-
-	return 0
-}
-
-int function SortPlayersByName( entity a, entity b )
-{
-	if( a.GetPlayerName() > b.GetPlayerName() )
-		return 1
-
-	if( a.GetPlayerName() < b.GetPlayerName() )
 		return -1
 
 	return 0
@@ -2246,6 +2316,14 @@ int function Shuffle_GetCount( ShuffleData sd )
 	return sd._indices.len()
 }
 //////
+#if CLIENT || UI
+string function PlatformIDToIconString( ... )
+{
+	// Accepts int/string hardware ID
+	return "#CROSSPLAY_ICON_PC"
+}
+#endif
+
 
 #if SERVER || CLIENT
 void function DestroyEntities( array<entity> ents )
@@ -2328,9 +2406,92 @@ bool function IsFiringRangeGameMode()
 	return Playlist() == ePlaylists.survival_firingrange
 }
 
+bool function IsMTXEvent1Active()
+{
+	ItemFlavor event = GetItemFlavorByAsset( $"settings/itemflav/calevent/s21ce01/collection.rpak" )
+	return CalEvent_IsActive( event, GetUnixTimestamp() )
+}
+
+bool function IsMTXEvent2Active()
+{
+	ItemFlavor event = GetItemFlavorByAsset( $"settings/itemflav/calevent/s21me02/milestone.rpak" )
+	return CalEvent_IsActive( event, GetUnixTimestamp() )
+}
+
+bool function IsT1Active()
+{
+	int unixTimeNow = GetUnixTimestamp()
+	if ( unixTimeNow > expect int( GetCurrentPlaylistVarTimestamp( "t1_active", UNIX_TIME_FALLBACK_2038 ) ) )
+	{
+		return true
+	}
+
+	return false
+}
+bool function IsMatchmakingFromMatchEnabled()
+{
+	return GetConVarBool( "matchmake_from_match_enabled" ) && GetCurrentPlaylistVarBool( "matchmake_from_match", false ) && ( GetCurrentPlaylistVarBool( "private_match", false ) == false )
+}
+
+bool function IsMatchmakingFromMatchAllowed( entity player )
+{
+	bool isAllowed = IsMatchmakingFromMatchEnabled()
+	isAllowed = isAllowed && !Playlist_ShouldBeHiddenForScheduleBlocks( GetCurrentPlaylistName() )
+#if SERVER
+	if ( isAllowed )
+	{
+		bool isMatchActuallyOver
+		if ( IsRoundBased() )
+			isMatchActuallyOver = IsRoundBasedGameOver()
+		else
+			isMatchActuallyOver = GetGameState() >= eGameState.WinnerDetermined
+		isAllowed = Survival_IsPlayerSquadEliminated( player ) || isMatchActuallyOver
+	}
+#endif
+
+	return isAllowed
+}
+
+#if UI
+void function StartMatchmakingFromMatch()
+{
+	if ( !UI_IsReadyForRequeue() )
+		return
+
+	if ( !UI_IsFullPartyConnectedForRequeue() )
+		return
+
+	if( !AreWeMatchmaking() && !LeaveMatch_WasInitiated() )
+		EmitUISound( "UI_Menu_ReadyUp_1P" )
+
+	if ( AmIPartyLeader() && !AreWeMatchmaking() && !LeaveMatch_WasInitiated() )
+		thread UpdateMatchmakeFromMatchPlaylist_Thread()
+}
+#endif
+      
+
+bool function IsVDUDialogueEnabled()
+{
+	return GetCurrentPlaylistVarBool( "enable_vdu_dialogue", false )
+}
+
+bool function IsEventFinale()
+{
+	return GetCurrentPlaylistVarBool( "is_event_finale", false )
+}
+
 bool function FiringRangeHasFriendlyFire()
 {
 	return GetCurrentPlaylistVarBool( "firingrange_has_friendlyfire", true )
+}
+
+bool function FiringRangeHasInfiniteClips()
+{
+	return GetCurrentPlaylistVarBool( "has_infinite_clips", false )
+}
+bool function FiringRangeHasHitIndictators()
+{
+	return GetCurrentPlaylistVarBool( "hud_training_hit_dots", true )
 }
 
 string function GetTitanCharacterNameFromSetFile( string setFile )
@@ -2415,6 +2576,10 @@ bool function IsAccessibilityChatHintEnabled()
 }
 #endif
 
+bool function IsCurrentModeMixtape()
+{
+	return GameMode_IsActive( eGameModes.CONTROL ) || GameMode_IsActive( eGameModes.FREEDM )
+}
 
 #if CLIENT || UI && PC_PROG
 bool function IsAccessibilitySpeechToChat()
@@ -2423,14 +2588,6 @@ bool function IsAccessibilitySpeechToChat()
 		return false
 
 	return GetConVarInt( "hudchat_play_text_to_speech" ) > 0
-}
-#endif
-
-#if SERVER || CLIENT
-void function CopyRealmsFromTo( entity source, entity target )
-{
-	target.RemoveFromAllRealms()
-	target.AddToOtherEntitysRealms( source )
 }
 #endif
 
@@ -2480,12 +2637,34 @@ bool function DisplayObituaryName()
 }
 #endif
 
-#if CLIENT || UI
+#if CLIENT || UI 
+bool function DisplayHopupPopup()
+{
+	return GetConVarBool( "hud_setting_showHopUpPopUp" )
+}
+#endif
+
+#if CLIENT || UI 
+bool function IsNetGraphEnabled()
+{
+	if ( GetCurrentPlaylistVarInt( "ngOverride", 0 ) == 1 )
+		return false
+
+	return GetConVarInt( "net_netGraph2" ) > 0
+}
+#endif
+
+#if CLIENT || UI 
+bool function IsAnonymousModeEnabled()
+{
+	return GetConVarInt( "hud_setting_anonymousMode" ) > 0
+}
+#endif
+
+#if CLIENT || UI 
 vector function GetKeyColor( int colorID, int optionalParam = 0 )
 {
 	Assert( optionalParam >= 0, "optionalParam must not be negative" )
-	
-	//return Vector( 22, 163, 0 )
 	return ColorPalette_GetColorFromID( colorID + optionalParam )
 }
 #endif
@@ -2582,8 +2761,51 @@ int function GetUnixTimePST()
 	return unixTime
 }
 
-TimeParts function GetUnixTimeParts( int unixtime )
+
+int function GetUnixTimePDT()
 {
+	int unixTime = GetUnixTimestamp()
+	unixTime += (PDT_TIME_ZONE_OFFSET * SECONDS_PER_HOUR)
+	return unixTime
+}
+
+
+string function GetDebugTimeString()
+{
+	// Returns the current time in the Pacific Time Zone
+
+	if ( GetDeveloperLevel() == 0 )
+		return ""
+
+	bool dst 		  = false//GetIsDSTActive()
+	int utTime        = dst ? GetUnixTimePDT() : GetUnixTimePST()
+	string timeString = GetDateTimeString( utTime, 0 )
+	string dayName    = GetDayOfWeekName( GetDayOfWeek( utTime ) )
+
+#if SERVER
+	string localDayName = dayName
+#else
+	string localDayName = Localize( dayName )
+#endif
+
+	return format( "%s, %s %s", localDayName, timeString, dst ? "PDT" : "PST" )
+}
+
+
+void function PrintDebugTimeDetails()
+{
+	printt( FUNC_NAME() )
+
+	string debugTime = GetDebugTimeString()
+	printt( "DebugTime =", debugTime )
+	//PrintFakeTime()
+}
+
+
+TimeParts function GetUnixTimeParts( int unixtime, int timezoneOffsetHours = -7 )
+{
+	unixtime += SECONDS_PER_HOUR * timezoneOffsetHours
+
 	// Chad's function to convert unix time to month, day, year, hours, minutes, seconds. Used for ranked play seasons
 	TimeParts parts
 
@@ -2702,6 +2924,13 @@ DisplayTime function SecondsToDHMSM(float total_seconds)
     return dt
 }
 
+string function GetDaysHoursMinutesSecondsString( int seconds )
+{
+	// Converts the seconds into Days:Hours:Minutes.Seconds
+	DisplayTime dt = SecondsToDHMS( seconds )
+	return format( "%i:%02i:%02i.%02i", dt.days, dt.hours, dt.minutes, dt.seconds )
+}
+
 int function GetDayOfWeek( int unixTime )
 {
 	return int( (floor(unixTime / SECONDS_PER_DAY) + 4) % 7 )
@@ -2710,27 +2939,35 @@ int function GetDayOfWeek( int unixTime )
 string function GetDayOfWeekName( int dayOfWeek )
 {
 	array<string> days = ["#SUNDAY", "#MONDAY", "#TUESDAY", "#WEDNESDAY", "#THURSDAY", "#FRIDAY", "#SATURDAY"]
-	Assert( dayOfWeek >= 0 && dayOfWeek <= days.len() )
+	Assert( dayOfWeek >= 0 && dayOfWeek < days.len() )
 	return days[dayOfWeek]
 }
 
-string function GetDateTimeString( int unixTime )
+
+string function GetDateTimeString( int unixTime, int timezoneOffsetHours = -7 )
 {
-	TimeParts timeParts = GetUnixTimeParts( unixTime )
-	string minutesString = string(timeParts.minute).len() == 1 ? "0" + timeParts.minute : string(timeParts.minute)
-	return format( "%i/%i/%i %i:%s.%i", timeParts.month, timeParts.day, timeParts.year, timeParts.hour, minutesString, timeParts.second )
+	TimeParts timeParts = GetUnixTimeParts( unixTime, timezoneOffsetHours )
+	return format( "%04i-%02i-%02i %02i:%02i:%02i", timeParts.year, timeParts.month, timeParts.day, timeParts.hour, timeParts.minute, timeParts.second )
+}
+
+
+string function GetDateTimeStringNoYearNoSeconds( int unixTime, int timezoneOffsetHours = 0 )
+{
+	TimeParts timeParts = GetUnixTimeParts( unixTime, timezoneOffsetHours )
+	return format( "%02i/%02i %02i:%02i", timeParts.month, timeParts.day, timeParts.hour, timeParts.minute )
 }
 
 string function GetTimeString( int unixTime )
 {
 	TimeParts timeParts = GetUnixTimeParts( unixTime )
-	return format( "%i:%2i.%i", timeParts.hour, timeParts.minute, timeParts.second )
+	return format( "%02i:%02i:%02i", timeParts.hour, timeParts.minute, timeParts.second )
 }
 
-string function GetDaysHoursMinutesSecondsString( int unixTime )
+
+string function GetDateTimeStringDayMonthYear( int unixTime, int timezoneOffsetHours = 0 )
 {
-	TimeParts timeParts = GetUnixTimeParts( unixTime )
-	return format( "%i:%i:%2i.%i", timeParts.day, timeParts.hour, timeParts.minute, timeParts.second )
+	TimeParts timeParts = GetUnixTimeParts( unixTime, timezoneOffsetHours )
+	return format( "%02i-%02i-%04i",  timeParts.day, timeParts.month, timeParts.year )
 }
 
 int function GetStartOfDay( int unixTime )
@@ -2752,6 +2989,24 @@ int function SecondsRemainingInDay( int unixTime )
 	return endOfDay - unixTime
 }
 
+
+void function WaitForUnixTime( int unixTime )
+{
+	while ( true )
+	{
+		float delay = float(unixTime - GetUnixTimestamp())
+		if ( delay <= 0.0 )
+			break
+
+		#if DEV
+			wait min( 1.0, delay )
+		#else
+			wait delay
+		#endif
+	}
+}
+
+
 int function GetCurrentEliteStreak( entity player )
 {
 	int currentStreak = 0
@@ -2769,16 +3024,6 @@ int function GetCurrentEliteStreak( entity player )
 int function GetMaxEliteStreak( entity player )
 {
 	int maxStreak = 0
-
-	#if UI
-		if ( !IsFullyConnected() )
-			return 0
-	#endif
-
-	if ( !IsValid( player ) )
-		return 0
-
-	maxStreak = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.season_elite_max_streak, "SAID01769158912" ) )
 
 	return maxStreak
 }
@@ -2858,10 +3103,69 @@ entity function AssertLocalOrServerValidPlayer( entity player )
 	return player
 }
 
-bool function IsFlowstateActive()
+#if SERVER || CLIENT
+void function CleanupFXArray( array<FXHandle> fxHandleArray, bool doRemoveAllParticlesNow, bool doPlayEndCap )
 {
-	return HAS_FLOWSTATE_MOD
+	string stopType
+	if ( doRemoveAllParticlesNow )
+	{
+		Assert( !doPlayEndCap )
+		stopType = "destroyImmediately"
+	}
+	else if ( doPlayEndCap )
+		stopType = "playEndcap"
+	else
+		stopType = "normal"
+
+	foreach ( FXHandle fxHandle in fxHandleArray )
+	{
+		#if SERVER
+			if ( IsValid( fxHandle ) )
+			{
+				fxHandle.SetStopType( stopType )
+
+				fxHandle.Destroy()
+			}
+		#elseif CLIENT
+			if ( EffectDoesExist( fxHandle ) )
+				EffectStop( fxHandle, doRemoveAllParticlesNow, doPlayEndCap )
+		#endif
+	}
+	fxHandleArray.clear()
 }
+#endif
+
+#if SERVER || CLIENT
+int function GetSkinIndexByName_Safe( entity ent, string skinName )
+{
+	if ( ent.GetSkinCount() == 0 )
+	{
+		// avoid R5DEV-107879
+		Warning( "GetSkinIndexByName_Safe called on ent with bad model. Callstack:\n%s", GetStack() )
+		return -1
+	}
+	return ent.GetSkinIndexByName( skinName )
+}
+#endif
+
+#if SERVER || CLIENT
+void function SetSkinByName_Safe( entity ent, string skinName )
+{
+	if ( ent.GetSkinCount() == 0 )
+	{
+		// avoid R5DEV-107879
+		Warning( "SetSkinByName_Safe called on ent with bad model. Callstack:\n%s", GetStack() )
+		return
+	}
+	int skinIdx = ent.GetSkinIndexByName( skinName )
+	if ( skinIdx == -1 )
+	{
+		Warning( "SetSkinByName_Safe called with bad skin name (\"%s\"). Callstack:\n%s", skinName, GetStack() )
+		return
+	}
+	ent.SetSkin( skinIdx )
+}
+#endif
 
 bool function SafeCallFunction( string functionName, array<string> paramStrings = [], string fallbackMessage = "", string errorPrefix = "[SAFE_CALL]" )
 {
@@ -3017,6 +3321,11 @@ entity function SafeCallFunctionEntity( string functionName, entity defaultValue
 	}
 }
 
+bool function IsArenaMode()
+{
+	return Playlist() == ePlaylists.survival_arenas
+}
+
 #if SERVER || CLIENT
 // Safe wrappers for Flowstate team functions
 int function Safe_GetAttackerTeam()
@@ -3029,6 +3338,31 @@ int function Safe_GetDefenderTeam()
 {
 	// Default to Militia team (typically team 3) when Flowstate mod not available  
 	return ModCallbacks_CallIntCallback( "GetDefenderTeam", TEAM_MILITIA )
+}
+
+bool function CanScriptPlaceableBePlacedOn( entity hitEnt )
+{
+	//
+
+	if ( hitEnt.IsWorld() )
+		return true
+
+	var hitEntClassname = hitEnt.GetNetworkedClassName()
+
+	if ( hitEntClassname == "func_brush" || hitEntClassname == "script_mover" )
+		return true
+
+	return false
+}
+
+bool function ShouldScriptedPlaceableParentTo( entity hitEnt )
+{
+	var hitEntClassname = hitEnt.GetNetworkedClassName()
+
+	if ( hitEntClassname == "func_brush" || hitEntClassname == "script_mover" )
+		return true
+
+	return false
 }
 
 // Safe wrapper for Flowstate ball carrier function
@@ -3262,6 +3596,119 @@ FXHandle function CleanupFXHandle( FXHandle fxHandle, bool doRemoveAllParticlesN
 }
 #endif // SERVER || CLIENT
 
+#if CLIENT || UI 
+void functionref( bool success ) MenuExtendedUse_callback = null
+void function StartMenuExtendedUse( var focusElem, var holdToUseElem, float duration, bool requireControllerFocus, void functionref( bool success ) callback,
+string loopSound = "survival_titan_linking_loop", string successSound = "ui_menu_store_purchase_success" )
+{
+	//
+	if ( MenuExtendedUse_callback != null )
+		return
+
+	MenuExtendedUse_callback = callback
+	#if UI
+		thread _MenuExtendedUse_InternalThread( focusElem, holdToUseElem, duration, loopSound, successSound, requireControllerFocus )
+	#elseif CLIENT
+		RunUIScript( "_ClientToUI_MenuExtendedUseBegin", focusElem, holdToUseElem, duration, loopSound, successSound )
+	#endif
+}
+#endif
+
+#if UI
+void function _ClientToUI_MenuExtendedUseBegin( var focusElem, var holdToUseElem, float duration, string loopSound, string successSound )
+{
+	thread _MenuExtendedUse_InternalThread( focusElem, holdToUseElem, duration, loopSound, successSound, true )
+}
+#elseif CLIENT
+void function _UIToClient_MenuExtendedUseEnded( bool success )
+{
+	Assert( MenuExtendedUse_callback != null )
+	MenuExtendedUse_callback( success )
+	MenuExtendedUse_callback = null
+}
+#endif
+
+#if UI
+bool _MenuExtendedUse_InternalThread_isActive = false
+void function _MenuExtendedUse_InternalThread( var focusElem, var holdToUseElem, float duration, string loopSound, string successSound, bool isForClientVM )
+{
+	//
+	if ( _MenuExtendedUse_InternalThread_isActive )
+		return
+	_MenuExtendedUse_InternalThread_isActive = true
+
+	Hud_Show( holdToUseElem )
+	HideGameCursor()
+
+	var rui = Hud_GetRui( holdToUseElem )
+	RuiSetBool( rui, "isVisible", true )
+	RuiSetGameTime( rui, "startTime", Time() )
+	RuiSetFloat( rui, "duration", duration )
+
+	float uiEndTime = Time() + duration
+
+	if ( loopSound != "" )
+		EmitUISound( loopSound )
+
+	bool[1] success = [false]
+
+	OnThreadEnd( void function() : ( loopSound, rui, holdToUseElem, isForClientVM, success ) {
+		ShowGameCursor()
+		Hud_Hide( holdToUseElem )
+		RuiSetBool( rui, "isVisible", false )
+		if ( loopSound != "" )
+			StopUISound( loopSound )
+
+		if ( isForClientVM )
+		{
+			RunClientScript( "_UIToClient_MenuExtendedUseEnded", success[0] )
+		}
+		else
+		{
+			Assert( MenuExtendedUse_callback != null )
+			MenuExtendedUse_callback( success[0] )
+			MenuExtendedUse_callback = null
+		}
+
+		_MenuExtendedUse_InternalThread_isActive = false
+	} )
+
+	while ( true )
+	{
+		bool isButtonHeld = false
+		if ( InputIsButtonDown( MOUSE_LEFT ) || InputIsButtonDown( BUTTON_A ) )
+			isButtonHeld = true
+
+		bool allowRightClick = true
+		if ( allowRightClick && (InputIsButtonDown( MOUSE_RIGHT ) || InputIsButtonDown( BUTTON_X )) )
+			isButtonHeld = true
+
+		if ( !isButtonHeld )
+			break
+
+		if ( Time() >= uiEndTime )
+			break
+
+		if ( GetMouseFocus() != focusElem && !GetDpadNavigationActive() )
+			break
+
+		vector screenPos = ConvertCursorToScreenPos()
+		Hud_SetPos( holdToUseElem, screenPos.x - Hud_GetWidth( holdToUseElem ) * 0.5, screenPos.y - Hud_GetHeight( holdToUseElem ) * 0.5 )
+		WaitFrame()
+	}
+
+	if ( Time() < uiEndTime )
+		return
+
+	if ( IsLobby() )
+		return
+
+	if ( successSound != "" )
+		EmitUISound( successSound )
+	success[0] = true
+}
+#endif
+
 //more mkos func
 const string E = ""
 bool function empty( string a )
@@ -3376,6 +3823,22 @@ string function truncate( string str, int limit )
     return str
 }
 
+#if SERVER || CLIENT || UI 
+bool function IsInfiniteAmmoEnabled()
+{
+	#if(DEVELOPER)
+		if ( GetConVarBool( "sv_infinite_ammo" ) )
+			return true
+	#endif
+	return false
+}
+
+bool function InfiniteAmmoEnabled()
+{
+	return IsInfiniteAmmoEnabled()
+}
+#endif
+
 bool function IsSpectator( entity player )
 {
 	if ( !IsValid( player ) )
@@ -3463,6 +3926,21 @@ void function DEV_SetBreakPoint( bool bPrintLocals = true )
 		if( CanRunClientScript() )
 			RunClientScript( "DEV_SetBreakPoint", bPrintLocals )
 	#endif
+}
+
+bool function CrossplayUserOptIn()
+{
+	return IsUserOptedInToCrossPlay() && CrossplayEnabled()
+}
+
+bool function CrossplayEnabled()
+{
+	return GetConVarInt( "crossPlay_enabled" ) != 0
+}
+
+bool function IsUserOptedInToCrossPlay()
+{
+	return GetConVarInt( "crossPlay_enabled" ) != 0
 }
 
 vector function GetCenterOfCircle( array<LocPair> spawns )
@@ -3890,4 +4368,176 @@ bool function IsTitanfall2Map()
 	#endif
 	return false
 
+}
+
+// TEMP workaround: native not available, using admin playlist vars
+#if CLIENT
+bool function HasMatchAdminRole()
+{
+	string playerName = GetLocalClientPlayer().GetPlayerName()
+	return ( playerName == GetCurrentPlaylistVarString( "flowstateAdmin1", "" )
+		|| playerName == GetCurrentPlaylistVarString( "flowstateAdmin2", "" )
+		|| playerName == GetCurrentPlaylistVarString( "flowstateAdmin3", "" )
+		|| playerName == GetCurrentPlaylistVarString( "flowstateAdmin4", "" ) )
+}
+#elseif UI
+bool function HasMatchAdminRole()
+{
+	return false  // stub
+}
+#elseif SERVER
+bool function HasMatchAdminRole()
+{
+	return false
+}
+#endif
+
+// Stub — no active season system
+int function GetActiveSeasonNumber()
+{
+	return 16
+}
+
+// Stub — themed shop panel not fully ported yet
+bool function IsFeatureSuppressed( int flag )
+{
+	return false
+}
+
+void function SetFeatureSuppressed( int flag, bool suppressed )
+{
+}
+
+// Stubs — gifting/inbox natives (moved to sh_grx.gnut for typed scope)
+
+
+#if CLIENT || UI
+void function Hud_SetTextEntryTitle( var elem, string title )
+{
+	// stub
+}
+#endif // CLIENT || UI
+
+#if UI
+ToolTipData function CreateSimpleToolTip( string titleText, string descText, string actionHint1 = "", string actionHint2 = "", string actionHint3 = "" )
+{
+	ToolTipData toolTipData
+	toolTipData.titleText = titleText
+	toolTipData.descText = descText
+	toolTipData.actionHint1 = actionHint1
+	toolTipData.actionHint2 = actionHint2
+	toolTipData.actionHint3 = actionHint3
+
+	return toolTipData
+}
+#endif // UI
+
+// Playlist rotation stubs
+bool function IsPlaylistInActiveRotation( string playlistName )
+{
+	return true
+}
+
+#if SERVER || CLIENT
+bool function PlayerIsLinkedToDeathbox( entity player, entity deathbox )
+{
+	array<entity> linkedEntArray = player.GetLinkEntArray()
+	foreach ( entity linkedEnt in linkedEntArray )
+	{
+		if ( linkedEnt.GetNetworkedClassName() != "prop_death_box" )
+			continue
+
+		if ( linkedEnt == deathbox )
+			return true
+	}
+
+	return false
+}
+#endif // SERVER || CLIENT
+
+
+#if SERVER
+array<entity> function GetEntitiesFromArrayNearPos( array<entity> ents, vector pos, float maxDist )
+{
+	Warning("custom written native GetEntitiesFromArrayNearPos, port properly later! - kral")
+	float maxDistSqr = maxDist * maxDist
+	array<entity> result
+	foreach( entity ent in ents )
+	{
+		if( DistanceSqr( ent.GetOrigin(), pos ) <= maxDistSqr )
+			result.append( ent )
+	}
+	return result
+}
+#endif // SERVER
+
+bool function IsPlaylistBeingRotated( string playlistName )
+{
+	return false
+}
+
+string function GetDefaultPlaylistRotationGroup()
+{
+	return ""
+}
+
+int function GetNamedPlaylistRotationNextTime( string rotationName = "" )
+{
+	return 0
+}
+
+string function GetCurrentPlaylistFromRotationAndUISlot( string rotationGroup, string uiSlot )
+{
+	return ""
+}
+
+int function GetPlaylistActiveMapRotationIndex( string playlistName )
+{
+	return 0
+}
+
+string function GetPlaylistMapVarString( string playlistName, int mapIdx, string varName, string defaultVal )
+{
+	return defaultVal
+}
+#if UI || CLIENT
+float function GetNearestAspectRatio( int width, int height )
+{
+	float aspectRatio = width / float( height )
+
+	if ( fabs( ASPECT_RATIO_16_BY_10 - aspectRatio ) < 0.1 )
+		return aspectRatio
+	else if ( fabs( ASPECT_RATIO_16_BY_9 - aspectRatio ) < 0.1 )
+		return aspectRatio
+	else if ( fabs( ASPECT_RATIO_21_BY_9 - aspectRatio ) < 0.1 )
+		return aspectRatio // since 21:9 could be a few different resolutions, lets use the one that we passed in since it will perfectly match the screen
+	else if ( fabs( (16.0 * 3 / 9.0) - aspectRatio ) < 0.1 )
+		return ASPECT_RATIO_16_BY_9
+	else if ( fabs( (16.0 * 3 / 10.0) - aspectRatio ) < 0.1 )
+		return ASPECT_RATIO_16_BY_10
+
+	return aspectRatio
+}
+#endif
+
+
+int function GetSoonestPlaylistRotationTime()
+{
+	return 0
+}
+
+bool function UpgradeCore_IsCorrectGameState()
+{
+	bool isGameStateCorrect =
+			(
+					( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) && ( GetGameState() == eGameState.Playing ) ) ||
+					( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) && ( GetGameState() == eGameState.WaitingForPlayers ))
+			)
+
+	return isGameStateCorrect
+}
+
+bool function BigTDM_IsModeEnabled()
+{
+	return GetCurrentPlaylistVarBool( "freedm_big_tdm_active", false )
 }

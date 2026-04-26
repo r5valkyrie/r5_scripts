@@ -240,6 +240,10 @@ var function OnWeaponPrimaryAttack_weapon_bow( entity weapon, WeaponPrimaryAttac
 	if ( !IsValid( player ) || !player.IsPlayer() )
 		return 0
 
+	// Minimum charge threshold (replaces engine's charge_attack_min_charge_required)
+	if ( weapon.GetWeaponChargeFractionCurved() < 0.15 )
+		return 0
+
 	#if CLIENT
 		if ( !(InPrediction() && weapon.ShouldPredictProjectiles()) )
 			return 0
@@ -247,8 +251,7 @@ var function OnWeaponPrimaryAttack_weapon_bow( entity weapon, WeaponPrimaryAttac
 
 	ApplyModsForChargeLevel( weapon, weapon.GetWeaponChargeLevel() )
 
-	//charge varying vals
-	float adjustedChargeFrac = max( 0.0, min( 1.0, 1.0 ) )
+	float adjustedChargeFrac = max( 0.0, min( weapon.GetWeaponChargeFractionCurved(), 1.0 ) )
 
 	float baseSpeed       = weapon.GetWeaponSettingFloat( eWeaponVar.projectile_launch_speed )
 	float speedMultiplier = 0.0
@@ -746,4 +749,4 @@ void function OnWeaponModChanged_WeaponBow( entity weapon, string mod, bool modA
 {
 
 }
-#endif 
+#endif

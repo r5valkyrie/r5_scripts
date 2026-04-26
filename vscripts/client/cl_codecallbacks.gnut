@@ -7,14 +7,14 @@ global function ClientCodeCallback_GetUseEntOverrideText
 global function AddCallback_OnPlayerConsumableInventoryChanged
 global function ClientCodeCallback_OnPlayerConsumableInventoryChanged
 
+global function ClientCodeCallback_OnPlayerConnectionStateChanged
+
 global function AddEntityCallback_GetUseEntOverrideText
 
-global function AddCallback_OnPetTitanChanged
 global function ClientCodeCallback_OnPetTitanModeChanged
-global function AddCallback_OnPetTitanModeChanged
 global function ClientCodeCallback_OnPetTitanChanged
 
-global function IsCurrentlyFocusedWeapon
+global function IsCurrentlyFocusedUseEnt
 
 global function ClientCodeCallback_PingSpecificType
 global function SetCallback_PingSpecificType
@@ -24,13 +24,14 @@ global function ClientCodeCallback_UseConsumable
 global function SetCallback_UseConsumable
 global function RemoveCallback_UseConsumable
 
+global function AddCallback_ClientOnPlayerConnectionStateChanged
+
 global function NvidiaReflex_SetValues
 global function NvidiaReflex_SetSettingsValue
 
 global function AmdAntiLag_SetValues
 global function AmdAntiLag_SetSettingsValue
 
-global function ServerCallback_RefreshWeaponHighlights
 global function Promo_SetVersion
 
 struct
@@ -41,6 +42,8 @@ struct
 	table<string, asset>               modImages
 	void functionref( entity, string ) pingCallback = null
 	void functionref( entity, string ) useConsumableCallback = null
+
+	array< void functionref( entity ) > onConnectionStateChanged_Callbacks
 } file
 
 void function ClientCodeCallback_PingSpecificType( entity player, string pingType )
@@ -106,6 +109,8 @@ void function ClientCodeCallback_BodyGroupChanged( entity ent, int bodyGroupInde
 
 void function ClientCodeCallback_UseEntGainedFocus( entity ent )
 {
+	file.focusedEnt = ent
+
 	foreach ( callbackFunc in clGlobal.onUseEntGainFocusCallbacks )
 	{
 		callbackFunc( ent )
@@ -121,14 +126,17 @@ void function ClientCodeCallback_UseEntGainedFocus( entity ent )
 		}
 	}
 
-	file.focusedEnt = ent
-
 	ManageHighlightEntity( ent )
 }
 
 
 void function ClientCodeCallback_UseEntLostFocus( entity ent )
 {
+	if ( file.focusedEnt == ent )
+	{
+		file.focusedEnt = null
+	}
+
 	foreach ( callbackFunc in clGlobal.onUseEntLoseFocusCallbacks )
 	{
 		callbackFunc( ent )
@@ -138,11 +146,6 @@ void function ClientCodeCallback_UseEntLostFocus( entity ent )
 	{
 		RuiSetBool( file.lastWeaponRuiSet, "isHighlighted", false )
 		file.lastWeaponRuiSet = null
-	}
-
-	if ( file.focusedEnt == ent )
-	{
-		file.focusedEnt = null
 	}
 
 	if ( IsValid( ent ) )
@@ -169,23 +172,9 @@ void function AddEntityCallback_GetUseEntOverrideText( entity ent, string functi
 }
 
 
-bool function IsCurrentlyFocusedWeapon( entity ent )
+bool function IsCurrentlyFocusedUseEnt( entity ent )
 {
 	return file.focusedEnt == ent
-}
-
-
-void function ServerCallback_RefreshWeaponHighlights( int eHandle )
-{
-	entity weapon = GetEntityFromEncodedEHandle( eHandle )
-	if ( weapon != null )
-		ManageHighlightEntity( weapon )
-}
-
-
-void function AddCallback_OnPetTitanChanged( void functionref( entity ) callbackFunc )
-{
-	clGlobal.onPetTitanChangedCallbacks.append( callbackFunc )
 }
 
 
@@ -196,25 +185,6 @@ void function ClientCodeCallback_OnPetTitanChanged( entity player )
 
 void function ClientCodeCallback_OnPetTitanModeChanged( entity player )
 {
-	if ( !IsValid( player ) || player != GetLocalViewPlayer() )
-		return
-
-	if ( !IsValid( player.GetPetTitan() ) ) // should be an assert...
-		return
-
-	player.Signal( "PetTitanModeChanged" )
-
-	// Added via AddCallback_OnPetTitanModeChanged
-	foreach ( callbackFunc in clGlobal.onPetTitanModeChangedCallbacks )
-	{
-		callbackFunc( player )
-	}
-}
-
-
-void function AddCallback_OnPetTitanModeChanged( void functionref( entity ) callbackFunc )
-{
-	clGlobal.onPetTitanModeChangedCallbacks.append( callbackFunc )
 }
 
 
@@ -293,4 +263,28 @@ void function AmdAntiLag_SetValues()
 void function AmdAntiLag_SetSettingsValue()
 {
 	SetConVarInt( "settings_antilag", GetConVarBool( "gfx_ffxUseLowLatency" ) ? 1 : 0 )
+}
+
+
+// ============================================================================
+// Player Connection State Changed Callbacks
+// ============================================================================
+
+void function ClientCodeCallback_OnPlayerConnectionStateChanged( entity player )
+{
+	entity localViewPlayer = GetLocalViewPlayer()
+
+	if ( player.GetTeam() == localViewPlayer.GetTeam() && !IsLobby() )
+	{
+		UpdateFullmapRuiTracks()
+		RefreshUnitframesForPlayer( localViewPlayer )
+	}
+
+	foreach( func in file.onConnectionStateChanged_Callbacks )
+		func( player )
+}
+
+void function AddCallback_ClientOnPlayerConnectionStateChanged( void functionref( entity ) ref )
+{
+	file.onConnectionStateChanged_Callbacks.append( ref )
 }

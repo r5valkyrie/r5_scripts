@@ -6,15 +6,7 @@ global function PlayMusicToCompletion
 global function PlayMusicToAll
 global function CreateLevelWinnerDeterminedMusicEvent
 
-// r5 stuff
-global function StopMusicOnPlayer
-
 const int MUSIC_EVENT_UNINITIALIZED = -1
-
-void function StopMusicOnPlayer( entity player, string music )
-{
-	StopSoundOnEntity( player, music )
-}
 
 struct MusicEvent
 {

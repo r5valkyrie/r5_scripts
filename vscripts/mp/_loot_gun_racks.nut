@@ -38,7 +38,7 @@ void function GunRacks_Init()
 		AddSpawnCallbackEditorClass( "prop_dynamic", TF2_GUN_RACK, OnGunRackSpawned )
 
 	AddCallback_EntitiesDidLoad( OnEntitiesDidLoad )
-	Loot_AddCallback_OnPlayerLootPickupRetail( GunRack_OnPlayerLootPickedUp )
+	Loot_AddCallback_OnPlayerLootPickup( GunRack_OnPlayerLootPickedUp )
 }
 
 void function OnEntitiesDidLoad()
@@ -150,7 +150,7 @@ array<entity> function GetAllGunRacks()
 
 void function GunRack_OnPlayerLootPickedUp( entity player, entity lootEnt, string ref, int unitsPickedUp, bool willDestroy, entity deathBox, int pickupFlags )
 {
-	//if ( lootEnt in file.lootToRackTable )
+	if ( lootEnt in file.lootToRackTable )
 	{
 		entity gunRack = file.lootToRackTable[ lootEnt ]
 		gunRack.SetModel( GUNRACK_MODEL_OFF )

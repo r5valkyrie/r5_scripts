@@ -60,6 +60,52 @@ WeaponData
     "OnClientAnimEvent"                        		"OnClientAnimEvent_weapon_basic_bolt"
 	"OnWeaponTryEnergize" 							"OnWeaponTryEnergize"
 
+	"has_energized" "1"
+	// val unk: 271
+	"energized_consumable" "mp_weapon_thermite_grenade"
+	// val unk: 34
+	"energized_consumable_needed_amount" "1"
+	// val unk: 120
+	"energized_consumable_name_singular" "#WPN_THERMITE_GRENADE"
+	// val unk: 203
+	"energized_consumable_name_plural" "#WPN_THERMITE_GRENADE"
+	// val unk: 318
+	"energized_ping_string" "#PING_THERMITE"
+	// val unk: 346
+	"energized_comms" "INVENTORY_NEED_THERMITE"
+	// val unk: 159
+	"energized_consumable_hint" "#WPN_DRAGON_LMG_THERMITE_HINT"
+	// val unk: 327
+	"energized_consumable_required_hint" "#WPN_DRAGON_LMG_ENERGIZE_CONSUMABLE_REQUIRED"
+	// val unk: 344
+	"energized_state_text" "#WPN_DRAGON_LMG_ENERGIZE_LABEL"
+	// val unk: 351
+	"energizing_state_text" "#WPN_DRAGON_LMG_ENERGIZING_LABEL"
+	// val unk: 111
+	"energized_full_text" "#WPN_DRAGON_LMG_ENERGIZE_FULL"
+	// val unk: 371
+	"can_energize_when_energized" "1"
+	// val unk: 213
+	"energized_reenergize_prompt_frac" "0.250000"
+	// val unk: 188
+	"energized_max_reenergize_frac" "0.980000"
+	// val unk: 325
+	"energized_ui_color" "255 0 4"
+	// val unk: 243
+	"energized_ui_left_bar_color" "255 157 30"
+	// val unk: 208
+	"energized_ui_bg_color" "130 130 130"
+	// val unk: 300
+	"energizing_ui_left_bar_color" "255 157 30"
+	// val unk: 194
+	"energizing_ui_right_bar_color" "255 0 4"
+	// val unk: 388
+	"energize_activity_time" "3.700000"
+	// val unk: 86
+	"energized_duration" "147.000000"
+	// val unk: 137
+	"energized_time_consumed_per_shot" "3.500000"
+
     // Bolt info
 	"bolt_hitsize"									"0.0"
 	"bolt_hitsize_grow1_time"						"0.005"
@@ -431,6 +477,37 @@ WeaponData
 	Mods
 	{
 		crate	    {}
+		// child unk: 24
+		"paintball"
+		{
+			// val unk: 9
+			"impact_effect_table" "bullet_pb_Random"
+			// val unk: 0
+			"reload_time" "*0.75"
+			// val unk: 10
+			"reload_time_late1" "*0.75"
+			// val unk: 11
+			"reload_time_late2" "*0.75"
+			// val unk: 12
+			"reload_time_late3" "*0.75"
+			// val unk: 2
+			"reload_time_late4" "*0.75"
+			// val unk: 3
+			"reload_time_late5" "*0.75"
+			// val unk: 4
+			"reloadempty_time" "*0.75"
+			// val unk: 5
+			"reloadempty_time_late1" "*0.75"
+			// val unk: 6
+			"reloadempty_time_late2" "*0.75"
+			// val unk: 7
+			"reloadempty_time_late3" "*0.75"
+			// val unk: 1
+			"reloadempty_time_late4" "*0.75"
+			// val unk: 8
+			"reloadempty_time_late5" "*0.75"
+
+		}
 		has_been_energized
 		{
 	        //"activitymodifier1p"                            "has_been_energized"
@@ -563,16 +640,290 @@ WeaponData
 			"ammo_clip_size"   							"50"
 		}
 
+		// child unk: 8
+		"barrel_stabilizer_l1"
+		{
+			// val unk: 1
+			"fx_muzzle_flash_attach" "muzzle_flash_suppressor_large"
+			// val unk: 4
+			"bodygroup27_set" "1"
+			// val unk: 5
+			"viewkick_pitch_base" "*0.95"
+			// val unk: 2
+			"viewkick_pitch_random" "*0.8"
+			// val unk: 0
+			"viewkick_yaw_base" "*0.95"
+			// val unk: 3
+			"viewkick_yaw_random" "*0.9"
+
+		}
+
+		// child unk: 2
+		"barrel_stabilizer_l2"
+		{
+			// val unk: 1
+			"fx_muzzle_flash_attach" "muzzle_flash_suppressor_large"
+			// val unk: 4
+			"bodygroup27_set" "1"
+			// val unk: 5
+			"viewkick_pitch_base" "*0.9"
+			// val unk: 2
+			"viewkick_pitch_random" "*0.75"
+			// val unk: 0
+			"viewkick_yaw_base" "*0.9"
+			// val unk: 3
+			"viewkick_yaw_random" "*0.85"
+
+		}
+
+		// child unk: 13
+		"barrel_stabilizer_l3"
+		{
+			// val unk: 1
+			"fx_muzzle_flash_attach" "muzzle_flash_suppressor_large"
+			// val unk: 4
+			"bodygroup27_set" "1"
+			// val unk: 5
+			"viewkick_pitch_base" "*0.85"
+			// val unk: 2
+			"viewkick_pitch_random" "*0.7"
+			// val unk: 0
+			"viewkick_yaw_base" "*0.85"
+			// val unk: 3
+			"viewkick_yaw_random" "*0.8"
+
+		}
+
+		// child unk: 14
 		"barrel_stabilizer_l4_flash_hider"
 		{
-			"fx_muzzle_flash_view"							""
-			"fx_muzzle_flash_world"							""
-			"fx_muzzle_flash_attach"						""
+			// val unk: 1
+			"fx_muzzle_flash_attach" "muzzle_flash_suppressor_large"
+			// val unk: 4
+			"bodygroup26_set" "1"
+			// val unk: 5
+			"viewkick_pitch_base" "*0.85"
+			// val unk: 2
+			"viewkick_pitch_random" "*0.7"
+			// val unk: 0
+			"viewkick_yaw_base" "*0.85"
+			// val unk: 3
+			"viewkick_yaw_random" "*0.8"
+
 		}
         highcal_mag_l4
         {
             "ammo_clip_size"   							"50"
         }
+
+		// child unk: 23
+		"stock_tactical_l1"
+		{
+			// val unk: 9
+			"zoom_time_in" "*0.85"
+			// val unk: 20
+			"zoom_time_out" "*0.85"
+			// val unk: 21
+			"deploy_time" "*0.85"
+			// val unk: 22
+			"holster_time" "*0.85"
+			// val unk: 8
+			"raise_time" "*0.9"
+			// val unk: 5
+			"lower_time" "*0.9"
+			// val unk: 23
+			"viewdrift_ads_stand_scale_pitch" "*0.85"
+			// val unk: 24
+			"viewdrift_ads_stand_scale_yaw" "*0.85"
+			// val unk: 13
+			"viewdrift_ads_crouch_scale_pitch" "*0.85"
+			// val unk: 14
+			"viewdrift_ads_crouch_scale_yaw" "*0.85"
+			// val unk: 15
+			"viewdrift_ads_air_scale_pitch" "*0.85"
+			// val unk: 16
+			"viewdrift_ads_air_scale_yaw" "*0.85"
+			// val unk: 17
+			"reload_time" "*0.967"
+			// val unk: 1
+			"reload_time_late1" "*0.967"
+			// val unk: 3
+			"reload_time_late2" "*0.967"
+			// val unk: 25
+			"reload_time_late3" "*0.967"
+			// val unk: 6
+			"reload_time_late4" "*0.967"
+			// val unk: 7
+			"reload_time_late5" "*0.967"
+			// val unk: 4
+			"reloadempty_time" "*0.967"
+			// val unk: 10
+			"reloadempty_time_late1" "*0.967"
+			// val unk: 2
+			"reloadempty_time_late2" "*0.967"
+			// val unk: 11
+			"reloadempty_time_late3" "*0.967"
+			// val unk: 18
+			"reloadempty_time_late4" "*0.967"
+			// val unk: 0
+			"reloadempty_time_late5" "*0.967"
+			// val unk: 12
+			"reloadsegment_time_loop" "*0.967"
+			// val unk: 26
+			"reloadsegment_time_end" "*0.967"
+			// val unk: 19
+			"reloadsegmentempty_time_end" "*0.967"
+
+		}
+
+		// child unk: 12
+		"stock_tactical_l2"
+		{
+			// val unk: 9
+			"zoom_time_in" "*0.8"
+			// val unk: 20
+			"zoom_time_out" "*0.8"
+			// val unk: 21
+			"deploy_time" "*0.8"
+			// val unk: 22
+			"holster_time" "*0.8"
+			// val unk: 8
+			"raise_time" "*0.85"
+			// val unk: 5
+			"lower_time" "*0.85"
+			// val unk: 23
+			"viewdrift_ads_stand_scale_pitch" "*0.75"
+			// val unk: 24
+			"viewdrift_ads_stand_scale_yaw" "*0.75"
+			// val unk: 13
+			"viewdrift_ads_crouch_scale_pitch" "*0.75"
+			// val unk: 14
+			"viewdrift_ads_crouch_scale_yaw" "*0.75"
+			// val unk: 15
+			"viewdrift_ads_air_scale_pitch" "*0.75"
+			// val unk: 16
+			"viewdrift_ads_air_scale_yaw" "*0.75"
+			// val unk: 17
+			"reload_time" "*0.933"
+			// val unk: 1
+			"reload_time_late1" "*0.933"
+			// val unk: 3
+			"reload_time_late2" "*0.933"
+			// val unk: 25
+			"reload_time_late3" "*0.933"
+			// val unk: 6
+			"reload_time_late4" "*0.933"
+			// val unk: 7
+			"reload_time_late5" "*0.933"
+			// val unk: 4
+			"reloadempty_time" "*0.933"
+			// val unk: 10
+			"reloadempty_time_late1" "*0.933"
+			// val unk: 2
+			"reloadempty_time_late2" "*0.933"
+			// val unk: 11
+			"reloadempty_time_late3" "*0.933"
+			// val unk: 18
+			"reloadempty_time_late4" "*0.933"
+			// val unk: 0
+			"reloadempty_time_late5" "*0.933"
+			// val unk: 12
+			"reloadsegment_time_loop" "*0.933"
+			// val unk: 26
+			"reloadsegment_time_end" "*0.933"
+			// val unk: 19
+			"reloadsegmentempty_time_end" "*0.933"
+
+		}
+
+		// child unk: 18
+		"stock_tactical_l3"
+		{
+			// val unk: 9
+			"zoom_time_in" "*0.75"
+			// val unk: 20
+			"zoom_time_out" "*0.75"
+			// val unk: 21
+			"deploy_time" "*0.75"
+			// val unk: 22
+			"holster_time" "*0.75"
+			// val unk: 8
+			"raise_time" "*0.8"
+			// val unk: 5
+			"lower_time" "*0.8"
+			// val unk: 23
+			"viewdrift_ads_stand_scale_pitch" "*0.55"
+			// val unk: 24
+			"viewdrift_ads_stand_scale_yaw" "*0.55"
+			// val unk: 13
+			"viewdrift_ads_crouch_scale_pitch" "*0.55"
+			// val unk: 14
+			"viewdrift_ads_crouch_scale_yaw" "*0.55"
+			// val unk: 15
+			"viewdrift_ads_air_scale_pitch" "*0.55"
+			// val unk: 16
+			"viewdrift_ads_air_scale_yaw" "*0.55"
+			// val unk: 17
+			"reload_time" "*0.9"
+			// val unk: 1
+			"reload_time_late1" "*0.9"
+			// val unk: 3
+			"reload_time_late2" "*0.9"
+			// val unk: 25
+			"reload_time_late3" "*0.9"
+			// val unk: 6
+			"reload_time_late4" "*0.9"
+			// val unk: 7
+			"reload_time_late5" "*0.9"
+			// val unk: 4
+			"reloadempty_time" "*0.9"
+			// val unk: 10
+			"reloadempty_time_late1" "*0.9"
+			// val unk: 2
+			"reloadempty_time_late2" "*0.9"
+			// val unk: 11
+			"reloadempty_time_late3" "*0.9"
+			// val unk: 18
+			"reloadempty_time_late4" "*0.9"
+			// val unk: 0
+			"reloadempty_time_late5" "*0.9"
+			// val unk: 12
+			"reloadsegment_time_loop" "*0.9"
+			// val unk: 26
+			"reloadsegment_time_end" "*0.9"
+			// val unk: 19
+			"reloadsegmentempty_time_end" "*0.9"
+
+		}
+
+		"auto_loader"
+		{
+			// val unk: 8
+			"reload_time" "*0.60"
+			// val unk: 9
+			"reload_time_late1" "*0.60"
+			// val unk: 10
+			"reload_time_late2" "*0.60"
+			// val unk: 11
+			"reload_time_late3" "*0.60"
+			// val unk: 1
+			"reload_time_late4" "*0.60"
+			// val unk: 2
+			"reload_time_late5" "*0.60"
+			// val unk: 3
+			"reloadempty_time" "*0.60"
+			// val unk: 4
+			"reloadempty_time_late1" "*0.60"
+			// val unk: 5
+			"reloadempty_time_late2" "*0.60"
+			// val unk: 6
+			"reloadempty_time_late3" "*0.60"
+			// val unk: 0
+			"reloadempty_time_late4" "*0.60"
+			// val unk: 7
+			"reloadempty_time_late5" "*0.60"
+
+		}
 
 		npc_stalker
 		{
@@ -631,8 +982,8 @@ WeaponData
 	"ui1_draw_cloaked"	"1"
 	UiData1
 	{
-		"ui"								"ui/spitfire_crosshair"
-		"mesh"							"models/weapons/attachments/dragon_rui_upper"
+		"ui"						"ui/dragon_reticle"
+		"mesh"						"models/weapons/attachments/dragon_rui_upper"
 		Args
 		{
 			vis							player_zoomfrac
@@ -645,17 +996,41 @@ WeaponData
 	"ui2_enable"		"1"
 	UiData2
 	{
-		"ui"								"ui/peacekeeper_rui_lower"
-		"mesh"							"models/weapons/attachments/dragon_rui_lower"
+		"ui"						"ui/dragon_reticle"
+		"mesh"						"models/weapons/attachments/dragon_rui_lower"
 		Args
 		{
 			vis							player_zoomfrac
 			ammo						weapon_ammo
 			clipSize					weapon_clipSize
-			clipCount					weapon_ammoClipCount
 		}
 	}
 
+		"ui3_enable"		"1"
+    	UiData3
+    	{
+    		"ui"						"ui/dragon_normal_bullet"
+    		"mesh"						"models/weapons/attachments/dragon_rui_lower"
+    		Args
+    		{
+    			vis							player_zoomfrac
+    			ammo						weapon_ammo
+    			clipSize					weapon_clipSize
+    		}
+    	}
+
+        "ui4_enable"		"0"
+        UiData4
+        {
+            "ui"						"ui/dragon_energized_bullet"
+            "mesh"						"models/weapons/attachments/dragon_rui_lower"
+            Args
+            {
+                vis							player_zoomfrac
+                ammo						weapon_ammo
+                clipSize					weapon_clipSize
+            }
+        }
 
 	active_crosshair_count				"1"
 	rui_crosshair_index					"0"

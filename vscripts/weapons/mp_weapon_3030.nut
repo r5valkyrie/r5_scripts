@@ -168,7 +168,7 @@ void function CloseHammerThread( entity weapon, bool skipLerp )
 	{
 		float poseParam = GraphCapped( Time(), startTime, endTime, 0.0, 1.0 )
 		poseParam = (skipLerp) ? 1.0 : poseParam
-		//weapon.LookupPoseParameterIndex( poseParam )
+		weapon.SetScriptPoseParam0( poseParam )
 		WaitFrame()
 	}
 }
@@ -192,7 +192,7 @@ void function OpenHammerThread( entity weapon, bool skipLerp )
 	{
 		float poseParam = GraphCapped( Time(), startTime, endTime, 1.0, 0.0 )
 		poseParam = (skipLerp) ? 0.0 : poseParam
-		//weapon.SetScriptPoseParam0( poseParam )
+		weapon.SetScriptPoseParam0( poseParam )
 		WaitFrame()
 	}
 }
@@ -229,7 +229,7 @@ var function OnWeaponPrimaryAttack_weapon_3030( entity weapon, WeaponPrimaryAtta
 	return weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
 }
 
-void function OnProjectileCollision_weapon_3030( entity projectile, vector pos, vector normal, entity hitEnt, int hitBox, bool isCritical, bool isPassthrough )
+void function OnProjectileCollision_weapon_3030( entity projectile, vector pos, vector normal, entity hitEnt, int hitBox, bool isCritical )
 {
 
 

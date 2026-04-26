@@ -2,8 +2,6 @@ global function Desertlands_MapInit_Common
 
 global function CodeCallback_PreMapInit
 
-const string HARVESTER_BEAM_MDL = $"mdl/fx/harvester_beam_mu1.rmdl"
-
 const string SILO_PANEL_SCRIPTNAME = "silo_doors_panel"
 const string SILO_PANEL_MDL = $"mdl/beacon/crane_room_monitor_console.rmdl"
 const string SILO_MOVER_SCRIPTNAME = "silo_platform_mover"
@@ -20,53 +18,6 @@ const string SILO_PANEL_ACTIVATE_SFX = "Desertlands_MU2_Silo_Open"
 const string SILO_DOORS_OPEN_SFX = "Desertlands_Fortress_Interactive_Panel"
 const string SILO_ELEVATOR_LOOP_SFX = "Desertlands_MU2_Silo_Ascend_LP"
 const string SILO_ELEVATOR_STOP_SFX = "Desertlands_MU2_Silo_Ascend_End"
-
-//harevster assets
-const float HARVESTER_USE_DURATION = 0.5
-const asset HARVESTER_MODEL = $"mdl/props/crafting_siphon/crafting_siphon.rmdl"
-const string HARVESTER_FULL_IDLE_ANIM = "source_full_idle"
-const string HARVESTER_EMPTY_IDLE_ANIM = "source_empty_idle"
-const string HARVESTER_FULL_TO_EMPTY_ANIM = "source_full_to_empty"
-const string HARVESTER_MINIMAP_SCRIPTNAME = "crafting_harvester_minimap"
-
-//workbench assets
-const asset WORKBENCH_CLUSTER_AIRDROP_MODEL = $"mdl/props/crafting_replicator/crafting_replicator.rmdl"
-
-//audio assets
-const string HARVESTER_AMBIENT_LOOP = "Crafting_Extractor_AmbientLoop"
-const string WORKBENCH_AMBIENT_LOOP = "Crafting_V2_0_Replicator_AmbientLoop"
-const string HARVESTER_COLLECT_1P = "Crafting_Extractor_Collect_1P"
-const string HARVESTER_COLLECT_3P = "Crafting_Extractor_Collect_3P"
-const string HARVESTER_COLLECT_TEAM = "UI_InGame_Crafting_Extractor_Collect_Squad"
-const string WORKBENCH_MENU_OPEN_START = "Crafting_ReplicateMenu_OpenStart"
-const string WORKBENCH_MENU_OPEN_FAIL = "Crafting_ReplicateMenu_OpenFail"
-const string WORKBENCH_MENU_OPEN_SUCCESS = "Crafting_ReplicateMenu_OpenSuccess"
-const string WORKBENCH_CRAFTING_START_1P = "Crafting_V2_0_Replicator_Crafting_Start_1P"
-const string WORKBENCH_CRAFTING_START_3P = "Crafting_V2_0_Replicator_Crafting_Start_3P"
-const string WORKBENCH_CRAFTING_FINISH = "Crafting_Replicator_CraftingFinish"
-const string WORKBENCH_CRAFTING_FINISH_WARNING = "Crafting_Replicater_WarningToEnd"
-const string WORKBENCH_CRAFTING_LOOP = "Crafting_Replicator_CraftingLoop"
-const string WORKBENCH_CRAFTING_DOOR_OPEN = "Crafting_V2_0_Replicator_Crafting_Finish_Eject"
-const string WORKBENCH_CRAFTING_DOOR_CLOSE = "Crafting_V2_0_Replicator_Crafting_Close"
-
-//minimap assets
-const asset WORKBENCH_ICON_ASSET = $"rui/hud/gametype_icons/survival/crafting_workbench"
-const asset WORKBENCH_ICON_LIMITED_ASSET = $"rui/hud/gametype_icons/survival/crafting_workbench_limited"
-const asset WORKBENCH_ICON_AIRDROP_ASSET = $"rui/hud/gametype_icons/survival/crafting_workbench_airdrop"
-
-const asset DISPENSER_WORKBENCH_ICON_ASSET = $"rui/hud/gametype_icons/survival/crafting_workbench_2"
-const asset DISPENSER_WORKBENCH_ICON_AIRDROP_ASSET = $"rui/hud/gametype_icons/survival/crafting_workbench_airdrop_2"
-const asset DISPENSER_CRAFTING_SMALL_WORKBENCH_ASSET = $"rui/hud/ping/icon_ping_crafting_2_hexagon"
-global const asset CRAFTING_2_ZONE_ASSET = $"rui/hud/gametype_icons/survival/crafting_2_zone"
-
-const asset HARVESTER_ICON_ASSET = $"rui/hud/gametype_icons/survival/crafting_harvester"
-const asset CRAFTING_SMALL_HARVESTER_ASSET = $"rui/hud/gametype_icons/survival/crafting_small_harvester"
-const asset CRAFTING_SMALL_WORKBENCH_ASSET = $"rui/hud/ping/icon_ping_crafting_hexagon"
-global const asset CRAFTING_ZONE_ASSET = $"rui/hud/gametype_icons/survival/crafting_zone"
-const asset CRAFTING_CURRENCY_ASSET = $"rui/hud/gametype_icons/survival/crafting_currency"
-
-//initialization scriptnames
-global const string HARVESTER_SCRIPTNAME = "crafting_harvester"
 
 #if SERVER
 global function Desertlands_MU1_MapInit_Common
@@ -134,7 +85,7 @@ void function Desertlands_MapInit_Common()
 {
 	printt( "Desertlands_MapInit_Common" )
 
-	MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_desertlands_mu3.rpak" )
+	//MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_desertlands_mu3.rpak" )
 
 	FlagInit( "PlayConveyerStartFX", true )
 	FlagInit( "PlayConveyerEndFX", true )
@@ -153,8 +104,6 @@ void function Desertlands_MapInit_Common()
 
 		RegisterSignal( "ReachedPathEnd" )
 		AddSpawnCallback_ScriptName( "conveyor_rotator_mover", OnSpawnConveyorRotatorMover )
-		AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_crafting_harvester", SetupFakeCraftingSiphon )
-		AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_crafting_workbench_cluster", SetupFakeReplicator )
 	#endif
 
 	#if CLIENT
@@ -344,204 +293,6 @@ void function EntitiesDidLoad()
 }
 #endif
 
-#if SERVER
-void function SetupFakeReplicator( entity ent)
-{
-	ent.Hide()
-
-	vector origin = ent.GetOrigin()
-	vector angles = ent.GetAngles()
-	array<entity> links = ent.GetLinkEntArray()
-	array<entity> parentLinks = ent.GetLinkParentArray()
-	entity par = ent.GetParent()
-
-	entity replicator = CreateMaterialHarvester( WORKBENCH_CLUSTER_AIRDROP_MODEL, origin, angles, 6, 15000, false )
-	replicator.SetCanBeMeleed( false )
-
-	//entity ambGenericPassive = CraftingSiphon_CreateAmbientGeneric( replicator.GetOrigin(), HARVESTER_AMBIENT_LOOP, true )
-
-	DispatchSpawn( replicator )
-	replicator.SetFadeDistance( 15000 )
-	//replicator.SetScriptName( replicator_SCRIPTNAME )
-
-	replicator.SetUsable()
-	replicator.SetUsableByGroup("pilot")
-	replicator.AddUsableValue( USABLE_CUSTOM_HINTS )
-	replicator.SetUsePrompts( "%use% Replicate", "%use% Replicate" )
-
-
-	thread PlayAnim( replicator, "crafting_replicator_ready_groundidle" )
-	AddCallback_OnUseEntity( replicator, OnRepUse )
-	#if CLIENT
-	AddEntityCallback_GetUseEntOverrideText( replicator, Crafting_Harvester_UseTextOverride )
-	#endif
-}
-
-
-void function OnRepUse( entity replicator, entity playerUser, int useInputFlags )
-{
-	replicator.UnsetUsable()
-
-	thread PlayBattleChatterLineDelayedToSpeakerAndTeam( playerUser, "bc_MatsPickedUp", 0.80 )
-
-	EmitSoundOnEntityOnlyToPlayer( replicator, playerUser, "Crafting_Replicator_Start_1P" )
-	EmitSoundOnEntityExceptToPlayer( replicator, playerUser, "Crafting_Replicator_Start_3P" )
-	//entity ambGenericPassive = CraftingSiphon_CreateAmbientGeneric( replicator.GetOrigin(), HARVESTER_AMBIENT_LOOP, false )
-
-	thread RepAnims( replicator, playerUser )
-}
-
-void function RepAnims( entity replicator, entity playerUser )
-{
-	EmitSoundOnEntityOnlyToPlayer( replicator, playerUser, "Crafting_Replicator_DoorOpen" )
-	waitthread PlayAnim( replicator, "crafting_replicator_open" )
-	wait 1
-	EmitSoundOnEntityOnlyToPlayer( replicator, playerUser, "Crafting_Replicater_WarningToEnd" )
-	wait 2
-	thread PlayAnim( replicator, "crafting_replicator_close" )
-	wait 0.7
-	EmitSoundOnEntityOnlyToPlayer( replicator, playerUser, "Crafting_Replicator_DoorClose" )
-	wait 1
-	EmitSoundOnEntityOnlyToPlayer( replicator, playerUser, "Crafting_Replicator_Menu_Deny" )
-	wait 1
-	EmitSoundOnEntityOnlyToPlayer( replicator, playerUser, "Crafting_Replicator_Menu_Deny" )
-	wait 1
-	EmitSoundOnEntityOnlyToPlayer( replicator, playerUser, "Crafting_Replicator_Menu_Deny" )
-	wait 1
-	EmitSoundOnEntityOnlyToPlayer( replicator, playerUser, "weapon_vortex_gun_explosivewarningbeep" )
-	wait 1
-	StartParticleEffectOnEntityWithPos( replicator, GetParticleSystemIndex( $"P_trophy_sys_dmg" ), FX_PATTACH_CUSTOMORIGIN_FOLLOW, -1, <0, 0, 60>, <0, 0, 0> )
-	EmitSoundOnEntityOnlyToPlayer( replicator, playerUser, "Pilot_Mvmt_Execution_Cloak_AndroidSparks" )
-	Dev_PrintMessage( playerUser, "CRAFTING SYSTEM IS STILL WIP", "We are working hard to bring new content into Valkyrie, Crafting is one of them!", 5, "UI_CraftingTable_Purchase_Accept_1P" )
-	wait 5
-	replicator.SetUsable()
-}
-
-
-void function SetupFakeCraftingSiphon( entity ent)
-{
-	ent.Hide()
-
-	vector origin = ent.GetOrigin()
-	vector angles = ent.GetAngles()
-	array<entity> links = ent.GetLinkEntArray()
-	array<entity> parentLinks = ent.GetLinkParentArray()
-	entity par = ent.GetParent()
-
-	entity harvester = CreateMaterialHarvester( HARVESTER_MODEL, origin, angles, 6, 15000, false )
-	harvester.SetCanBeMeleed( false )
-
-	entity ambGenericPassive = CraftingSiphon_CreateAmbientGeneric( harvester.GetOrigin(), HARVESTER_AMBIENT_LOOP, true )
-
-	DispatchSpawn( harvester )
-	harvester.SetFadeDistance( 15000 )
-	harvester.SetScriptName( HARVESTER_SCRIPTNAME )
-
-	harvester.SetUsable()
-	harvester.SetUsableByGroup("pilot")
-	harvester.AddUsableValue( USABLE_CUSTOM_HINTS )
-	harvester.SetUsePrompts( "%use% Extract", "%use% Extract" )
-
-
-	thread PlayAnim( harvester, "source_full_idle" )
-	AddCallback_OnUseEntity( harvester, OnCraftUse )
-	#if CLIENT
-	AddEntityCallback_GetUseEntOverrideText( harvester, Crafting_Harvester_UseTextOverride )
-	#endif
-}
-
-void function OnCraftUse( entity harvester, entity playerUser, int useInputFlags )
-{
-	harvester.UnsetUsable()
-
-	thread PlayBattleChatterLineDelayedToSpeakerAndTeam( playerUser, "bc_MatsPickedUp", 0.80 )
-
-	EmitSoundOnEntityOnlyToPlayer( harvester, playerUser, HARVESTER_COLLECT_1P )
-	EmitSoundOnEntityExceptToPlayer( harvester, playerUser, HARVESTER_COLLECT_3P )
-	entity ambGenericPassive = CraftingSiphon_CreateAmbientGeneric( harvester.GetOrigin(), HARVESTER_AMBIENT_LOOP, false )
-
-	thread CraftAnims( harvester, playerUser )
-}
-
-void function CraftAnims( entity harvester, entity playerUser )
-{
-	waitthread PlayAnim( harvester, "source_full_to_empty" )
-	thread PlayAnim( harvester, "source_empty_idle" )
-	wait 2
-	Dev_PrintMessage( playerUser, "CRAFTING SYSTEM IS STILL WIP", "We are working hard to bring new content into Valkyrie, Crafting is one of them!", 2, "UI_CraftingTable_Purchase_Accept_1P" )
-}
-
-entity function CraftingSiphon_CreateAmbientGeneric( vector origin, string alias, bool active )
-{
-	entity ambGeneric = CreateEntity( "ambient_generic" )
-	ambGeneric.SetOrigin( origin )
-	ambGeneric.SetSoundName( alias )
-	ambGeneric.SetEnabled( active )
-	DispatchSpawn( ambGeneric )
-	return ambGeneric
-}
-
-entity function CreateMaterialHarvester( asset model, vector ornull origin = null, vector ornull angles = null, int solidType = 0, float fadeDist = -1, bool dispatchSpawn = true )
-{
-	entity materialHarvester = CreateEntity( "prop_dynamic" )
-	materialHarvester.SetValueForModelKey( model )
-	materialHarvester.kv.fadedist = fadeDist
-	materialHarvester.kv.renderamt = 255
-	materialHarvester.kv.rendercolor = "255 255 255"
-	materialHarvester.kv.solid = solidType // 0 = no collision, 2 = bounding box, 6 = use vPhysics, 8 = hitboxes only
-	if ( origin )
-	{
-		// hack: Setting origin twice. SetOrigin needs to happen before DispatchSpawn, otherwise the prop may not touch triggers
-		materialHarvester.SetOrigin( expect vector( origin ) )
-		if ( angles )
-			materialHarvester.SetAngles( expect vector( angles ) )
-	}
-
-	if ( dispatchSpawn )
-		DispatchSpawn( materialHarvester )
-
-	if ( origin )
-	{
-		// hack: Setting origin twice. SetOrigin needs to happen after DispatchSpawn, otherwise origin is snapped to nearest whole unit
-		materialHarvester.SetOrigin( expect vector( origin ) )
-		if ( angles )
-			materialHarvester.SetAngles( expect vector( angles ) )
-	}
-
-	materialHarvester.SetFadeDistance( fadeDist )
-
-	return materialHarvester
-}
-#endif
-
-#if CLIENT
-string function Crafting_Harvester_UseTextOverride( entity ent )
-{
-	entity player = GetLocalViewPlayer()
-
-	CustomUsePrompt_Show( ent )
-	CustomUsePrompt_SetSourcePos( ent.GetOrigin() + < 0, 0, 30 > )
-
-	CustomUsePrompt_SetAdditionalText( "%ping% " + Localize( "#COMMS_PING" ) ) //removing for 14.1 due to shared crafting materials removing the need for pinging harvestors for teammates
-	CustomUsePrompt_SetText( Localize("#CRAFTING_HARVESTER_USE_PROMPT") )
-	CustomUsePrompt_SetLineColor( GetCraftingColor() )
-	CustomUsePrompt_SetHintImage( CRAFTING_CURRENCY_ASSET )
-	CustomUsePrompt_SetShouldCenterImage( true )
-
-	if ( PlayerIsInADS( player ) )
-		CustomUsePrompt_ShowSourcePos( false )
-	else
-		CustomUsePrompt_ShowSourcePos( true )
-
-	return ""
-}
-
-vector function GetCraftingColor()
-{
-	return SrgbToLinear( <0, 255, 240> / 255.0 )
-}
-#endif
-
 //=================================================================================================
 //=================================================================================================
 //
@@ -571,7 +322,7 @@ void function Desertlands_MU1_MapInit_Common()
 
 	AddDamageCallbackSourceID( eDamageSourceId.burn, OnBurnDamage )
 
-	svGlobal.evacEnabled = false //Need to disable this on a map level if it doesn't support it at all
+
 }
 
 void function OnBurnDamage( entity player, var damageInfo )

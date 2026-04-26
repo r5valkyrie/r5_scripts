@@ -1,7 +1,12 @@
 untyped
 
-global function InitDevMenu
+global function InitDevMenu // 🐴
 global function DEV_InitLoadoutDevSubMenu
+
+#if !DEVELOPER
+void function InitDevMenu( var newMenuArg ) {}
+void function DEV_InitLoadoutDevSubMenu( var panel ) {}
+#else // DEVELOPER
 
 global function SetupDevCommand // for dev
 global function SetupDevFunc // for dev
@@ -14,6 +19,7 @@ global function RunCodeDevCommandByAlias
 
 global function DEV_ExecBoundDevMenuCommand
 global function DEV_InitCodeDevMenu
+global function DevMenu_ToggleBG
 
 global function UpdateCheatsState
 global function AddLevelDevCommand
@@ -86,6 +92,9 @@ struct
 
 	array<DevCommand> levelSpecificCommands = []
 	bool cheatsState
+
+	var menu
+	var bg
 } file
 
 void function AddUICallback_OnDevMenuLoaded( void functionref() callback ) //(cafe) New callback to add dev menu entries from mods
@@ -139,7 +148,8 @@ void function InitDevMenu( var newMenuArg )
 		RegisterSignal( "DEV_InitCodeDevMenu" )
 		AddUICallback_LevelLoadingFinished( DEV_InitCodeDevMenu )
 		AddUICallback_LevelShutdown( ClearCodeDevMenu )
-		//OnOpenDevMenu()
+		file.menu = menu
+		file.bg = Hud_GetChild( menu, "BlackBackground" )
 }
 
 
@@ -291,6 +301,7 @@ void function SetupDefaultDevCommandsMP()
 
 	if( GetCheatsState() )
 	{
+		SetupDevMenu( "Alter Loadout", SetDevMenu_AlterLoadout )
 		SetupDevMenu( "Equip Legend Abilities", SetDevMenu_Abilities )
 		SetupDevMenu( "Equip Apex Weapons", SetDevMenu_Weapons )
 		SetupDevMenu( "Equip Titanfall Weapons", SetDevMenu_R2Weapons )
@@ -427,7 +438,6 @@ void function SetDevMenu_AlterLoadout( var _ )
 {
 	if ( file.initializingCodeDevMenu )
 	{
-		//return
 		DevMenu_Alias_DEV( file.codeDevMenuPrefix + "(Click to load this menu..)", "script_ui DEV_InitLoadoutDevSubMenu()" )
 	}
 	else
@@ -441,8 +451,11 @@ void function SetupAlterLoadout()
 	array<string> categories = []
 	foreach( LoadoutEntry entry in GetAllLoadoutSlots() )
 	{
-		if ( !categories.contains( entry.DEV_category ) )
-			categories.append( entry.DEV_category )
+		if ( entry.category == eLoadoutCategory.ARTIFACT_CONFIGURATIONS )
+			continue
+
+		if ( !categories.contains( LOADOUT_CATEGORIES_TO_NAMES_MAP[entry.category] ) )
+			categories.append( LOADOUT_CATEGORIES_TO_NAMES_MAP[entry.category] )
 	}
 	categories.sort()
 	foreach( string category in categories )
@@ -468,9 +481,12 @@ void function SetupAlterLoadout_CategoryScreen( string category )
 
 	array<string> charactersUsed = []
 
-	foreach( LoadoutEntry entry in  entries)
+	foreach ( LoadoutEntry entry in  entries )
 	{
-		if ( entry.DEV_category != category )
+		if ( entry.category == eLoadoutCategory.ARTIFACT_CONFIGURATIONS )
+			continue
+
+		if ( LOADOUT_CATEGORIES_TO_NAMES_MAP[entry.category] != category )
 			continue
 
 		string prefix = "character_"
@@ -493,7 +509,7 @@ void function SetupAlterLoadout_CategoryScreen( string category )
 		{
 			SetupDevMenu( entry.DEV_name, void function( var unused ) : ( entry ) {
 				thread ChangeToThisMenu( void function() : ( entry ) {
-					SetupAlterLoadout_SlotScreen( entry )
+					SetupAlterLoadout_SlotScreen_ByTier( entry )
 				} )
 			} )
 		}
@@ -513,9 +529,12 @@ void function SetupAlterLoadout_CategoryScreenForCharacter( string category, str
 
 	array< LoadoutEntry > entriesToUse
 
-	foreach( LoadoutEntry entry in entries )
+	foreach ( LoadoutEntry entry in entries )
 	{
-		if ( entry.DEV_category != category )
+		if ( entry.category == eLoadoutCategory.ARTIFACT_CONFIGURATIONS )
+			continue
+
+		if ( LOADOUT_CATEGORIES_TO_NAMES_MAP[entry.category] != category )
 			continue
 
 		string entryCharacter = GetCharacterNameFromDEV_name( entry.DEV_name )
@@ -547,25 +566,50 @@ void function SetupAlterLoadout_CategoryScreenForCharacter( string category, str
 string function GetCharacterNameFromDEV_name( string DEV_name )
 {
 	string prefix = "character_"
+	if ( DEV_name.len() <= prefix.len() || DEV_name.find( prefix ) != 0 )
+		return DEV_name
 	return split( DEV_name.slice( prefix.len() ), " " )[ 0 ]
 }
 
-void function SetupAlterLoadout_SlotScreen( LoadoutEntry entry )
+void function SetupAlterLoadout_SlotScreen_ByTier( LoadoutEntry entry )
 {
-	// todo(dw): 368482
-	//if ( entry.canBeEmpty )
-	//{
-	//	SetupDevFunc( "(empty)", void function( var unused ) : ( entry ) {
-	//		DEV_RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), entry, null )
-	//	} )
-	//}
+	foreach ( int tier in eLootTier )
+	{
+		if ( tier == eLootTier._count )
+			continue
+
+		int rarity = tier - 1
+
+		string name = DEV_GetEnumStringSafe( "eRarityTier", rarity )
+		SetupDevMenu( name, void function( var unused ) : ( entry, rarity ) {
+			thread ChangeToThisMenu( void function() : ( entry, rarity ) {
+				SetupAlterLoadout_SlotScreen( entry, rarity )
+			} )
+		} )
+	}
+}
+
+void function SetupAlterLoadout_SlotScreen( LoadoutEntry entry, int qualityFilter = -99 )
+{
 
 	array<ItemFlavor> flavors = clone DEV_GetValidItemFlavorsForLoadoutSlotForDev( LocalClientEHI(), entry )
 	flavors.sort( int function( ItemFlavor a, ItemFlavor b ) {
 		string textA = Localize( ItemFlavor_GetLongName( a ) )
 		string textB = Localize( ItemFlavor_GetLongName( b ) )
 
-		//
+		if ( ItemFlavor_GetType( a ) > ItemFlavor_GetType( b ) )
+			return 1
+
+		if ( ItemFlavor_GetType( a ) < ItemFlavor_GetType( b ) )
+			return -1
+
+		if ( textA == "" )
+			return -1
+
+		if ( textB == "" )
+			return 1
+
+		
 		if ( textA.slice( 0, 1 ) == "[" && textB.slice( 0, 1 ) != "[" )
 			return -1
 
@@ -581,14 +625,59 @@ void function SetupAlterLoadout_SlotScreen( LoadoutEntry entry )
 		return 0
 	} )
 
-	foreach( ItemFlavor flav in flavors )
+	foreach ( ItemFlavor flav in flavors )
 	{
-		SetupDevFunc( Localize( ItemFlavor_GetLongName( flav ) ), void function( var unused ) : ( entry, flav ) {
+		if ( qualityFilter != -99 )
+		{
+			if ( !ItemFlavor_HasQuality( flav ) )
+			{
+				if ( qualityFilter != -1 )
+					continue
+			}
+			else
+			{
+				if ( ItemFlavor_GetQuality( flav ) != qualityFilter )
+					continue
+			}
+		}
+
+		{
+			if ( ItemFlavor_GetType( flav ) == eItemType.melee_skin && Artifacts_Loadouts_IsConfigPointerItemFlavor( flav ) )
+			{
+				if ( Artifacts_Loadouts_GetConfigIndex( flav ) > 0 )
+					continue 
+
+				foreach ( string setKey, int themeIndex in eArtifactSetIndex )
+				{
+					if ( themeIndex == eArtifactSetIndex._EMPTY || themeIndex == eArtifactSetIndex.COUNT )
+						continue
+
+					SetupDevFunc( "[" + Localize( ItemFlavor_GetTypeName( flav ) ) + "]  Artifact Dagger: " + setKey + " (Complete Set)", void function( var unused ) : ( entry, flav, themeIndex ) {
+						Artifacts_DEV_RequestEquipSetByIndex( entry, flav, themeIndex )
+					} )
+				}
+
+				continue
+			}
+		}
+
+		SetupDevFunc( "[" + Localize( ItemFlavor_GetTypeName( flav ) ) + "]  " + Localize( ItemFlavor_GetLongName( flav ) ), void function( var unused ) : ( entry, flav ) {
 			DEV_RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), entry, flav )
 		} )
 	}
 }
 
+void function DevMenu_ToggleBG()
+{
+	if ( Hud_IsVisible( file.bg ) )
+	{
+		Hud_Hide( file.bg )
+	}
+	else
+	{
+		Hud_Show( file.bg )
+	}
+}
 void function SetDevMenu_OverrideSpawnSurvivalCharacter( var _ )
 {
 	thread ChangeToThisMenu( SetupOverrideSpawnSurvivalCharacter )
@@ -693,14 +782,6 @@ void function SetDevMenu_CustomHeirlooms( var _ )
 void function SetupHeirloomsDevMenu()
 {
 	SetupDevCommand( "Default Melee", "giveheirloom -1" )
-	if ( IsKralStuffActive() )
-	{
-		SetupDevCommand( "Bolo Sword", "giveheirloom 0" )
-		SetupDevCommand( "Diamond Sword", "giveheirloom 2" )
-		SetupDevCommand( "Mjolnir", "giveheirloom 3" )
-		SetupDevCommand( "Le Karambit", "giveheirloom 4" )
-	}
-
 	SetupDevCommand( "Dragonfly Knife", "giveheirloom 1" )
 }
 
@@ -1121,7 +1202,7 @@ void function SetupChangeSurvivalCharacterClass()
 		foreach( ItemFlavor character in characters )
 		{
 			SetupDevFunc( Localize( ItemFlavor_GetLongName( character ) ), void function( var unused ) : ( character ) {
-				DEV_RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), Loadout_CharacterClass(), character )
+				DEV_RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), Loadout_Character(), character )
 			} )
 		}
 	#endif
@@ -1386,9 +1467,10 @@ void function SetupSurvival()
 		SetupDevCommand( "Enable Survival Dev Mode", "playlist survival_dev" )
 		SetupDevCommand( "Disable Match Ending", "mp_enablematchending 0" )
 		SetupDevCommand( "Enable Match Ending", "mp_enablematchending 1" )
-		SetupDevCommand( "Drop Care Package R1", "script thread AirdropForRound( gp()[0].GetOrigin(), gp()[0].GetAngles(), 0, null )" )
-		SetupDevCommand( "Drop Care Package R2", "script thread AirdropForRound( gp()[0].GetOrigin(), gp()[0].GetAngles(), 1, null )" )
-		SetupDevCommand( "Drop Care Package R3", "script thread AirdropForRound( gp()[0].GetOrigin(), gp()[0].GetAngles(), 2, null )" )
+		SetupDevCommand( "[CRAFTING] Airdrop Replicator at Player", "script Crafting_AirdropWorkbenchAtPlayer(gp()[0])" )
+		SetupDevCommand( "Drop Care Package R1", "script thread AirdropForRound( gp()[0].GetOrigin(), gp()[0].GetAngles(), 0 )" )
+		SetupDevCommand( "Drop Care Package R2", "script thread AirdropForRound( gp()[0].GetOrigin(), gp()[0].GetAngles(), 1 )" )
+		SetupDevCommand( "Drop Care Package R3", "script thread AirdropForRound( gp()[0].GetOrigin(), gp()[0].GetAngles(), 2 )" )
 		SetupDevCommand( "Force Circle Movement", "script thread FlagWait( \"DeathCircleActive\" );script svGlobal.levelEnt.Signal( \"DeathField_ShrinkNow\" );script FlagClear( \"DeathFieldPaused\" )" )
 		SetupDevCommand( "Pause Circle Movement", "script FlagSet( \"DeathFieldPaused\" )" )
 		SetupDevCommand( "Unpause Circle Movement", "script FlagClear( \"DeathFieldPaused\" )" )
@@ -1540,7 +1622,7 @@ void function SetupEnemyNPC()
 	SetupDevCommand( "Enemy NPC: Rocket Drone", "script DEV_SpawnRocketDroneAtCrosshair()" )
 	SetupDevCommand( "Enemy NPC: Prowler", "script DEV_SpawnProwlerAtCrosshair()" )
 	//SetupDevCommand( "Enemy NPC: Marvin", "script DEV_SpawnMarvinAtCrosshair()" )
-	SetupDevCommand( "Enemy NPC: Soldier", "script DEV_SpawnSoldierAtCrosshair()" )//Come back to this NPC later, we have animations and models but they are unstable -lorrylekral
+	SetupDevCommand( "Enemy NPC: Soldier", "script DEV_SpawnSoldierAtCrosshair()" )//Come back to this NPC later, we have animations and models but they are unstable -kral
 	SetupDevCommand( "Enemy NPC: Spider", "script DEV_SpawnSpiderAtCrosshair()" )
 	SetupDevCommand( "Enemy NPC: Infected Pilot", "script DEV_SpawnInfectedSoldierAtCrosshair()" )
 	SetupDevCommand( "Enemy NPC: Explosive Tick", "script DEV_SpawnExplosiveTickAtCrosshair()" )
@@ -1793,10 +1875,12 @@ void function SetupCustomCosmetics_SlotScreen( LoadoutEntry entry )
 		string textB = Localize( ItemFlavor_GetLongName( b ) )
 
 		//
-		if ( textA.slice( 0, 1 ) == "[" && textB.slice( 0, 1 ) != "[" )
+		bool aStartsBracket = textA.len() > 0 && textA.slice( 0, 1 ) == "["
+		bool bStartsBracket = textB.len() > 0 && textB.slice( 0, 1 ) == "["
+		if ( aStartsBracket && !bStartsBracket )
 			return -1
 
-		if ( textA.slice( 0, 1 ) != "[" && textB.slice( 0, 1 ) == "[" )
+		if ( !aStartsBracket && bStartsBracket )
 			return 1
 
 		if ( textA < textB )
@@ -1827,3 +1911,4 @@ void function UI_OpenSurvivalLootGroupPage( var groupName )
 		RunClientScript( "PopulateSurvivalLootGroup", gName )
 	}, groupName )
 }
+#endif // DEVELOPER

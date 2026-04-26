@@ -6,7 +6,6 @@ void function CodeCallback_MapInit()
 	SURVIVAL_SetPlaneHeight( 24000 )
 	SURVIVAL_SetAirburstHeight( 8000 )
 	SURVIVAL_SetMapCenter( <0, 0, 0> )
-    SURVIVAL_SetMapDelta( 4900 )
 
 	PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_01_mu3.rmdl")
 	PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_03_mu3.rmdl")
@@ -17,7 +16,6 @@ void function CodeCallback_MapInit()
 	//Clean up unused ents
 	AddCallback_EntitiesDidLoad( KCMU3_OnEntitiesDidLoad )
 
-	AddSpawnCallback( "info_spawnpoint_human", CleanupEnt )
 	AddCallback_OnPlayerRespawned( OnPlayerCreated )
 	Canyonlands_MapInit_Common()
 }

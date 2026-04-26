@@ -3,11 +3,12 @@ global function GetCarePackagePlacementInfo
 //global function OnWeaponPrimaryAttack_care_package
 global function OnWeaponActivate_care_package
 global function OnWeaponDeactivate_care_package
-global function PlacementEasing
 global function GetSkinForCarePackageModel
 
 #if CLIENT
 global function SetCarePackageDeployed
+global function OnBeginPlacingCarePackage
+global function OnEndPlacingCarePackage
 #endif //CLIENT
 #if SERVER
 global function CreateCarePackageAirdrop
@@ -27,9 +28,9 @@ global struct CarePackagePlacementInfo
 
 struct
 {
-#if CLIENT
+	#if CLIENT
 	bool carePackageDeployed
-#endif
+	#endif
 } file
 
 /* USE THIS AS A TEMPLATE FOR FUTURE WEAPONS
@@ -47,7 +48,13 @@ var function OnWeaponPrimaryAttack_care_package( entity weapon, WeaponPrimaryAtt
 		vector origin = placementInfo.origin
 		vector angles = placementInfo.angles
 
-		thread CreateCarePackageAirdrop( origin, angles, ["medic_super", "medic_super_side", "top_tier_inventory" ], null, "droppod_loot_drop_lifeline", ownerPlayer )
+		AirdropItemsOptionalInfo optionInfo
+		optionInfo.animationName = "droppod_loot_drop_lifeline"
+		optionInfo.owner = ownerPlayer
+		optionInfo.skin = GetSkinForCarePackageModel( optionInfo.owner )
+		optionInfo.sourceWeaponClassname = weapon.GetWeaponClassName()
+
+		thread CreateCarePackageAirdrop( origin, angles, ["medic_super", "medic_super_side", "top_tier_inventory" ], optionInfo )
 	#else
 		SetCarePackageDeployed( true )
 		ownerPlayer.Signal( "DeployableCarePackagePlacement" )
@@ -64,9 +71,6 @@ void function ShCarePackage_Init()
 
 	#if CLIENT
 		RegisterSignal( "DeployableCarePackagePlacement" )
-
-		StatusEffect_RegisterEnabledCallback( eStatusEffect.placing_care_package, OnBeginPlacingCarePackage )
-		StatusEffect_RegisterDisabledCallback( eStatusEffect.placing_care_package, OnEndPlacingCarePackage )
 	#endif
 
 	#if SERVER
@@ -81,12 +85,13 @@ void function MpAbilityCarePackage_ClientConnected( entity player )
 {
 }
 
-void function CreateCarePackageAirdrop( vector origin, vector angles, array<string> contents, entity fxToStop = null, string animationName = "droppod_loot_drop", entity owner = null, string sourceWeaponClassName = "" )
+// Wrapper function in case we want to do something special with "care package" airdrops
+// Care Package airdrops are defined as player-created airdrops (not directly associated with the airdrop system that generates drops during the game)
+void function CreateCarePackageAirdrop( vector origin, vector angles, array< array<string> > contents, AirdropItemsOptionalInfo optionInfo )
 {
-	if( animationName == "droppod_loot_drop_lifeline" )
-		thread AirdropItems_Lifeline( origin, angles, contents, fxToStop, animationName, owner, 1, sourceWeaponClassName )
-	else
-		thread AirdropItems( origin, angles, contents, fxToStop, animationName, owner, GetSkinForCarePackageModel( owner ), sourceWeaponClassName )
+	array< array<string> > podContents = DetermineAirdropContents ( contents )
+
+	thread AirdropItems( origin, angles, podContents, optionInfo )
 }
 #endif // SERVER
 
@@ -95,17 +100,11 @@ void function OnWeaponActivate_care_package( entity weapon )
 	entity ownerPlayer = weapon.GetWeaponOwner()
 	Assert( ownerPlayer.IsPlayer() )
 
-	#if CLIENT
+#if CLIENT
 		SetCarePackageDeployed( false )
-		if ( !InPrediction() ) //Stopgap fix for Bug 146443
-			return
-	#endif
 
-
-	#if SERVER
-		StatusEffect_AddEndless( ownerPlayer, eStatusEffect.placing_care_package, 1.0 )
-		//ownerPlayer.Server_TurnOffhandWeaponsDisabledOn()
-	#endif
+		OnBeginPlacingCarePackage( weapon, ownerPlayer )
+#endif
 }
 
 
@@ -114,43 +113,56 @@ void function OnWeaponDeactivate_care_package( entity weapon )
 	entity ownerPlayer = weapon.GetWeaponOwner()
 	Assert( ownerPlayer.IsPlayer() )
 
-	#if CLIENT
-		if ( !InPrediction() ) //Stopgap fix for Bug 146443
+#if CLIENT
+	OnEndPlacingCarePackage( ownerPlayer )
+	if ( !InPrediction() ) //Stopgap fix for Bug 146443
 			return
-	#endif
-
-	#if SERVER
-		StatusEffect_StopAllOfType( ownerPlayer, eStatusEffect.placing_care_package )
-		//ownerPlayer.Server_TurnOffhandWeaponsDisabledOff()
-	#endif
+#endif
 }
+
 
 CarePackagePlacementInfo function GetCarePackagePlacementInfo( entity player )
 {
 	const MAX_UP_ANGLE = -20
 	const MAX_DOWN_ANGLE = 75
 	const VELOCITY_MULTIPLIER = 800
-
+	                            
 		const MAX_UP_ANGLE_FAST = -10
 		const MAX_DOWN_ANGLE_FAST = 70
 		const VELOCITY_MULTIPLIER_FAST = 1600
 		const TRACE_TIME_FAST = 1.6
-
+       
 	const TRACE_TIME = 1.25
 	const MIN_DIST_SQR = 72 * 72
-	const PARENT_VELOCITY = <0,0,0>
-	const SIGHT_TRACE_OFFSET = <0,0,48>
+	const PARENT_VELOCITY = <0, 0, 0>
+	const SIGHT_TRACE_OFFSET = <0, 0, 48>
 
 	bool failed = false
 	bool hide = false
 
 	CarePackagePlacementInfo placementInfo
 	vector startPos    = player.EyePosition()
-	vector flatForward = FlattenVector( player.GetViewVector() )
-	vector placementAngles = ClampAngles( VectorToAngles( flatForward ) + <0,180,0> )
+	vector flatForward = FlattenVec( player.GetViewVector() )
+	vector placementAngles = ClampAngles( VectorToAngles( flatForward ) + <0, 180, 0> )
 
 	vector eyeAngles = player.EyeAngles()
+
 	GravityLandData landData
+	                            
+		if ( GetCurrentPlaylistVarBool( "lifeline_res_slow_disabled", true ) )
+		{
+			float pitch = GraphCapped( eyeAngles.x, MAX_UP_ANGLE_FAST, MAX_DOWN_ANGLE_FAST, 0, 1 )
+			pitch = PlacementEasing( pitch )
+
+			float clampedPitch = GraphCapped( pitch, 0, 1, MAX_UP_ANGLE_FAST, MAX_DOWN_ANGLE_FAST )
+			vector clampedEyeAngles = < clampedPitch, eyeAngles.y, eyeAngles.z >
+			vector objectVelocity = AnglesToForward( clampedEyeAngles ) * VELOCITY_MULTIPLIER_FAST
+
+			landData = GetGravityLandData( startPos, PARENT_VELOCITY, objectVelocity, TRACE_TIME_FAST, false )
+		}
+		else
+       
+		{
 			float pitch = GraphCapped( eyeAngles.x, MAX_UP_ANGLE, MAX_DOWN_ANGLE, 0, 1 )
 			pitch = PlacementEasing( pitch )
 
@@ -159,7 +171,7 @@ CarePackagePlacementInfo function GetCarePackagePlacementInfo( entity player )
 			vector objectVelocity = AnglesToForward( clampedEyeAngles ) * VELOCITY_MULTIPLIER
 
 			landData = GetGravityLandData( startPos, PARENT_VELOCITY, objectVelocity, TRACE_TIME, false )
-
+		}
 	TraceResults traceResults = landData.traceResults
 
 	vector origin = traceResults.endPos
@@ -190,6 +202,7 @@ CarePackagePlacementInfo function GetCarePackagePlacementInfo( entity player )
 	return placementInfo
 }
 
+
 float function PlacementEasing( float frac )
 {
 	// used to manipulate the placement throw vector such that the destination is fairly stable infront of the player,
@@ -204,46 +217,25 @@ float function PlacementEasing( float frac )
 	frac *= DIVISIONS
 	if ( frac < CUT_POINT )
 		return Tween_QuadEaseOut( frac / CUT_POINT ) * MID_VALUE
-	return MID_VALUE + Tween_QuadEaseIn( ( frac - CUT_POINT ) / ( DIVISIONS - CUT_POINT ) ) * ( 1 - MID_VALUE )
+	return MID_VALUE + Tween_QuadEaseIn( (frac - CUT_POINT) / (DIVISIONS - CUT_POINT) ) * (1 - MID_VALUE)
 }
+
 
 int function GetSkinForCarePackageModel( entity player )
 {
-	LoadoutEntry characterSlot = Loadout_CharacterClass()
-
-	#if DEVELOPER
-		if ( !LoadoutSlot_IsReady( ToEHI( player ), characterSlot ) )
-			printt( "Need to get character for player, but the data is not available" )
-	#endif
-
-	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), characterSlot ) // this sometimes waits forever
-	string characterRef = ItemFlavor_GetHumanReadableRef( character )
-
-	#if DEVELOPER
-		printt( "got character", characterRef )
-	#endif
-
-	switch( characterRef )
-	{
-		case "character_lifeline":
-		default:
-			return 1
-	}
-	//Assert( false, "Tried to get skin for CarePackage with unsupported character" )
-
-	unreachable
+	return 1
 }
 
 #if CLIENT
-void function OnBeginPlacingCarePackage( entity player, int statusEffect, bool actuallyChanged )
+void function OnBeginPlacingCarePackage( entity weapon, entity player )
 {
 	if ( player != GetLocalViewPlayer() )
 		return
 
-	thread DeployableCarePackagePlacement( player, CARE_PACKAGE_AIRDROP_MODEL )
+	thread DeployableCarePackagePlacement( weapon, player, CARE_PACKAGE_AIRDROP_MODEL )
 }
 
-void function OnEndPlacingCarePackage( entity player, int statusEffect, bool actuallyChanged )
+void function OnEndPlacingCarePackage( entity player )
 {
 	if ( player != GetLocalViewPlayer() )
 		return
@@ -251,8 +243,10 @@ void function OnEndPlacingCarePackage( entity player, int statusEffect, bool act
 	player.Signal( "DeployableCarePackagePlacement" )
 }
 
-void function DeployableCarePackagePlacement( entity player, asset carePackageModel )
+void function DeployableCarePackagePlacement( entity weapon, entity player, asset carePackageModel )
 {
+	weapon.EndSignal( "OnDestroy" )
+	player.EndSignal( "OnDeath" )
 	player.EndSignal( "DeployableCarePackagePlacement" )
 
 	entity carePackage = CreateCarePackageProxy( carePackageModel )
@@ -269,10 +263,31 @@ void function DeployableCarePackagePlacement( entity player, asset carePackageMo
 				thread DestroyCarePackageProxy( carePackage )
 
 			HidePlayerHint( "#WPN_CARE_PACKAGE_PLAYER_HINT" )
+                                  
+                                               
+         
 		}
 	)
 
-	AddPlayerHint( 3.0, 0.25, $"", "#WPN_CARE_PACKAGE_PLAYER_HINT" )
+                                 
+                                           
+                               
+                                      
+  
+                                                                       
+                                                              
+      
+      
+                                                                   
+  
+	     
+                               
+                                                                      
+                                                             
+     
+      
+		AddPlayerHint( 3.0, 0.25, $"", "#WPN_CARE_PACKAGE_PLAYER_HINT" )
+       
 
 	while ( true )
 	{
@@ -295,9 +310,10 @@ void function DeployableCarePackagePlacement( entity player, asset carePackageMo
 	}
 }
 
-entity function CreateCarePackageProxy( asset modelName ) //TODO: Needs work if we do different turret models
+entity function CreateCarePackageProxy( asset modelName )
+//TODO: Needs work if we do different turret models
 {
-	entity carePackage = CreateClientSidePropDynamic( <0,0,0>, <0,0,0>, modelName )
+	entity carePackage = CreateClientSidePropDynamic( <0, 0, 0>, <0, 0, 0>, modelName )
 	carePackage.kv.renderamt = 255
 	carePackage.kv.rendermode = 3
 	carePackage.kv.rendercolor = "255 255 255 255"

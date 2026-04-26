@@ -1,937 +1,871 @@
-untyped //Required for string to functionref convertion to work
 
 global function GameModes_Init
 
-global function GameMode_Create
-global function GameMode_SetName
-global function GameMode_SetGameModeAttackAnnouncement
-global function GameMode_SetGameModeDefendAnnouncement
-global function GameMode_SetAttackDesc
-global function GameMode_SetDefendDesc
-global function GameMode_SetIcon
-global function GameMode_SetDefaultScoreLimits
-global function GameMode_AddScoreboardColumnData
-global function GameMode_SetGameModeAnnouncement
-global function GameMode_SetDefaultTimeLimits
-global function GameMode_SetDesc
-global function GameMode_SetColor
-global function GameMode_SetSuddenDeath
+#if UI
+	global function GameMode_NotifyUIOfModeChange
+#endif
 
-global function GameMode_GetScoreLimit
-global function GameMode_GetRoundScoreLimit
-global function GameMode_GetTimeLimit
-global function GameMode_GetRoundTimeLimit
-global function GameMode_GetGameModeAnnouncement
-global function GameMode_GetGameModeAttackAnnouncement
-global function GameMode_GetGameModeDefendAnnouncement
-global function GameMode_GetDesc
-global function GameMode_GetName
-global function GameMode_GetIcon
-global function GameMode_GetColor
-global function GameMode_GetAttackDesc
-global function GameMode_GetDefendDesc
-global function GameMode_GetPilotSpawnpointsRatingFunc
-global function GameMode_GetTitanSpawnpointsRatingFunc
-global function GameMode_GetScoreCompareFunc
-global function GameMode_GetSuddenDeathEnabled
-global function GameMode_GetEvacEnabled
-global function GameMode_GetGameEndingWarning
-global function GameMode_GetGameEndingConversation
-global function GameMode_GetScoreboardColumnTitles
-global function GameMode_GetScoreboardColumnScoreTypes
-global function GameMode_GetScoreboardColumnNumDigits
-global function GameMode_GetCustomIntroAnnouncement
+global function GameMode_FindByDevName
+
+// TODO okirkham: swap all of these over to mode ids
+global function GameMode_Rounds_IsWinBy2
+global function GameMode_GetWinBy2MaxTies
+global function GameMode_GetWinBy2MinScore
 global function GameMode_RunServerInits
 global function GameMode_RunClientInits
 global function GameMode_RunSharedInits
-global function GameMode_IsDefined
+global function GameMode_AreRoundsEnabled
+global function GameMode_IsActive
+global function GameMode_IsActiveForPlaylist
+global function GameMode_VerifyActiveMode
 
-global function GameMode_AddServerInit
-global function GameMode_AddClientInit
-global function GameMode_AddSharedInit
-global function GameMode_SetScoreCompareFunc
-global function GameMode_SetPilotSpawnpointsRatingFunc
-global function GameMode_SetTitanSpawnpointsRatingFunc
-global function GameMode_SetCustomIntroAnnouncement
+global function GameModeVariant_GetByDevName
+global function GameModeVariant_GetName
+global function GameModeVariant_GetIcon
+global function GameModeVariant_GetPlaylistFlag
+global function GameModeVariant_IsDefined
+global function GameModeVariant_IsActive
+global function GameModeVariant_IsActiveForPlaylist
 
-global function GameMode_GetGameModeId
+#if CLIENT
+global function GameMode_DoesModeDisplayIconsForAllFriendlyTeams
+global function GameMode_DoesModeDisplayIconsForAllTeams
+#endif
 
-global function GameMode_SetEvacEnabled
-
-global function GameMode_GetLoadoutSelectTime
-
-global function GameMode_VerifyModes
-
-// External gamemodes ( registered from mods )
-global function RegisterExternalGamemode
-global function RegisterGamemodeTemplate
-global function CreateGamemodeFromTemplate
-global function RegisterGamemodeServerInit
-global function RegisterGamemodeClientInit
-global function RegisterGamemodeSharedInit
-global function RegisterGamemodeSpawnFunc
-global function RegisterGamemodeScoreFunc
-global function GetRegisteredGamemodes
-global function IsExternalGamemode
-global function GetGamemodeModSource
-
-// Direct gamemode registration
-global function RegisterGamemode
+#if UI
+global function GameMode_AboutDialog_AppendRequeueTab
+#endif
 
 global struct GamemodeSettings
 {
-	string name = ""
-	string name_localized = "Undefined Game Mode"
-	string desc_localized = "Undefined Game Mode Description"
-	string desc_attack = ""
-	string desc_defend = ""
-	string gameModeAnnoucement = ""
-	string gameModeAttackAnnoucement = ""
-	string gameModeDefendAnnoucement = ""
-	asset icon = $"ui/menu/playlist/classic"
-	array<int> color = [127, 127, 127, 255]
+	string devName = ""
 	array<void functionref()> serverInits
 	array<void functionref()> clientInits
 	array<void functionref()> sharedInits
-	void functionref( int, array<entity>, int, entity ) pilotSpawnpointRatingFunc
-	void functionref( int, array<entity>, int, entity ) titanSpawnpointRatingFunc
 	IntFromEntityCompare scoreCompareFunc
-	int defaultScoreLimit = 100
-	int defaultTimeLimit = 30
-	int defaultRoundScoreLimit = 5
-	float defaultRoundTimeLimit = 5.0
-	bool evacEnabled = true
-	string gameModeEndingWarning = "#GAMEMODE_END_IN_N_SECONDS"
-	string gameModeEndingConversation = ""
-	bool suddenDeathEnabled = false
 	array<string> scoreboardColumnTitles
 	array<int> scoreboardColumnScoreTypes
 	array<int> scoreboardColumnNumDigits
+	string gameModeEndingConversation = ""
 	void functionref(entity) customIntroAnnouncementFunc
-	
-	// Enhanced registration system properties
-	string modSource = "core"
-	bool dynamicallyRegistered = false
-	int dynamicId = -1
-	string templateBase = ""
 }
 
-// Gamemode template for reusable configurations
-global struct GamemodeTemplate
+global struct GameModeVariantSettings
 {
-	string templateName = ""
-	GamemodeSettings &baseSettings
-	array<string> requiredMods = []
-	string description = ""
+	string devName = ""
+	string name_localized = ""
+	asset icon = $""
+	int /*eGameModes*/ baseMode
+	string playlist_flag = ""
+	array<void functionref()> serverInits
+	array<void functionref()> clientInits
+	array<void functionref()> sharedInits
 }
-
-// Scoreboard column definition
-global struct ScoreboardColumn
-{
-	string title = ""
-	int scoreType = 0
-	int numDigits = 2
-}
-
-
 
 // Don't remove items from this list once the game is in production
 // Durango online analytics needs the numbers for each mode to stay the same
 // DO NOT CHANGE THESE VALUES AFTER THEY HAVE GONE LIVE
 global enum eGameModes
 {
-invalid =             -1,
-
-	SURVIVAL_ID =          0,
-	TEAM_DEATHMATCH_ID =   1,
-	GAMEMODE_SP_ID =       2,
-
-	MENUFALL_ID =          3,
-	CUSTOM_CTF_ID =        4,
-
-	FS_DM_ID =             5,
-	FS_AIMTRAINER_ID =     6,
-	FS_PROPHUNT_ID =       7,
-	FS_DUCKHUNT_ID =       8,
-	FS_INFECTED_ID =       9,
-	FS_SND_ID =            10,
-	FS_APEXKART_ID =       11,
-	WINTEREXPRESS_ID =	   12
+	invalid				= -1,
+	SURVIVAL 			= 0,
+	//TEAM_DEATHMATCH 	= 1,
+	//GAMEMODE_SP	 	= 2,
+	FREELANCE 			= 3,
+	CONTROL				= 5,
+	FREEDM		 		= 6,
+	_count
 }
 
-const table<string, int> gameModesStringToIdMap = {
-    [ TEAM_DEATHMATCH ]   = eGameModes.TEAM_DEATHMATCH_ID,
-	[ SURVIVAL ]          = eGameModes.SURVIVAL_ID,
-	[ FREELANCE ]         = eGameModes.GAMEMODE_SP_ID,
+global enum eGameModeVariants
+{
+	invalid = -1,
+	SURVIVAL_FIRING_RANGE,
+	SURVIVAL_TRAINING,
+	SURVIVAL_RANKED,
+	SURVIVAL_AIRDROPEXTRA,
+	SURVIVAL_CAMPFIRE,
+	SURVIVAL_EXPLORE,
+	SURVIVAL_FRAGNCLEAR,
+	SURVIVAL_GOLDEN_HORSE,
+	SURVIVAL_RECRUIT,
+	SURVIVAL_SHADOW_ARMY,
+	SURVIVAL_SHADOW_ROYALE,
+	SURVIVAL_HARDCORE,
+	SURVIVAL_HEATWAVE, 
+	SURVIVAL_BATTLE_RUSH, 
+	SURVIVAL_VALENTINES_S15,
+	SURVIVAL_WINTEREXPRESS,
+	SURVIVAL_THE_HUNT,
+	SURVIVAL_HALLOWEEN_18_1, 
+	SURVIVAL_STRIKEOUT,             
+	SURVIVAL_SOLOS,          
+	SURVIVAL_QUADS,     
+	FREEDM_TDM,
+	FREEDM_GUNGAME,     
+	FREEDM_LOCKDOWN,
+	FREEDM_SCROUNGE,
+	_count
+}
 
-	[ MENUFALL ]          = eGameModes.MENUFALL_ID,
-	[ CUSTOM_CTF ]        = eGameModes.CUSTOM_CTF_ID,
-
-	[ fs_dm ]             = eGameModes.FS_DM_ID,
-	[ fs_aimtrainer ]     = eGameModes.FS_AIMTRAINER_ID,
-	[ fs_prophunt ]       = eGameModes.FS_PROPHUNT_ID,
-	[ fs_duckhunt ]       = eGameModes.FS_DUCKHUNT_ID,
-	[ fs_infected ]       = eGameModes.FS_INFECTED_ID,
-	[ fs_snd ]            = eGameModes.FS_SND_ID,
-	[ fs_apexkart ]            = eGameModes.FS_APEXKART_ID,
-	[ WINTEREXPRESS ]            = eGameModes.WINTEREXPRESS_ID
+// Taken from _gamestate.nut so that is would be available on all VMs
+global enum eWinReason
+{
+	DEFAULT,
+	SCORE_LIMIT,
+	TIME_LIMIT,
+	ELIMINATION,
+	LOCKOUT, // Special early end state in Control Mode when 1 team holds all the objectives
+	TEAM_FORFEIT, // Special early end state when the enemy team quits or forfeits if that is an option
+	OBJECTIVE_COMPLETED, // Used by gamemodes that have a specific objective win condition
+	_count
 }
 
 struct
 {
-	table<string, GamemodeSettings> gameModeDefs
-	
-	// Enhanced registration system
-	int nextAvailableId = 1000  // Start external IDs at 1000
-	table<string, int> externalGamemodeIds
-	table<string, string> modOwnership
-	table<string, GamemodeTemplate> gamemodeTemplates
-	array<string> registeredExternalGamemodes = []
+	table<int /*eGameModes*/, GamemodeSettings> gameModeDefs
+	table<int /*eGameModeVariants*/, GameModeVariantSettings> variantDefs
+
+	table<string, int> gameModesStringToIdMap
 } file
 
 void function GameModes_Init()
 {
-	string gameMode
+	// okirkham: the intention here is basically to convert these defs from what they are currently (lots of random settings, lots of which could just be set from gamemode scripts)
+	// to essentially the bare minimum to setup the mode, so tell the game essentially "how do i know this mode/variant is enabled?" "what should i do if it is enabled?"
+	// having stuff tied to gamemode init here generally feels like r1/r2 cruft at this point, things like gamemode names, icons etc are very much all playlist-driven now
 
-	gameMode = MENUFALL
-	GameMode_Create( gameMode )
-	GameMode_SetName( gameMode, "menufall" )
-	GameMode_SetGameModeAnnouncement( gameMode, "phunt_modeDesc" )
-	GameMode_SetDesc( gameMode, "#PL_pilot_hunter_hint" )
-	GameMode_SetIcon( gameMode, $"ui/menu/playlist/tdm" )
-	GameMode_SetColor( gameMode, [212, 83, 152, 255] )
-	
-	gameMode = SURVIVAL
-	GameMode_Create( gameMode )
-	GameMode_SetName( gameMode, "#GAMEMODE_SURVIVAL" )
-	GameMode_SetGameModeAnnouncement( gameMode, "ffa_modeDesc" )
-	GameMode_SetDesc( gameMode, "#PL_survival_hint" )
-	GameMode_SetIcon( gameMode, $"vgui/burncards/burncard_group_icon_weapons" )
-	GameMode_SetDefaultScoreLimits( gameMode, 50, 0 )
-	GameMode_SetDefaultTimeLimits( gameMode, 30, 0.0 )
-	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_PILOT_KILLS", PGS_PILOT_KILLS, 2 )
-	GameMode_SetColor( gameMode, [147, 204, 57, 255] )
+	// we register gamemodes (core stuff, like survival, freedm, modes that our other modes are based off) using GameMode_Create and the other GameMode_* functions
+	// modes that are based on other modes (so BR ltms, freedm-based modes, and other weird cases like winter express) are registered using GameModeVariant_Create and the other GameModeVariant_* functions
 
-	#if FREELANCE_ENABLED
-	gameMode = FREELANCE
-	GameMode_Create( gameMode )
-	GameMode_SetName( gameMode, "#GAMEMODE_FREELANCE" )
-	GameMode_SetGameModeAnnouncement( gameMode, "ffa_modeDesc" )
-	GameMode_SetDesc( gameMode, "#PL_freelance_hint" )
-	GameMode_SetIcon( gameMode, $"vgui/burncards/burncard_group_icon_weapons" )
-	GameMode_SetDefaultScoreLimits( gameMode, 50, 0 )
-	GameMode_SetDefaultTimeLimits( gameMode, 30, 0.0 )
-	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_PILOT_KILLS", PGS_PILOT_KILLS, 2 )
-	GameMode_SetColor( gameMode, [147, 204, 57, 255] )
+	GameMode_Create( eGameModes.SURVIVAL, SURVIVAL )
+	#if SERVER
+		GameMode_AddServerInit( eGameModes.SURVIVAL, GamemodeSurvival_Init )
+	#elseif CLIENT
+		GameMode_AddClientInit( eGameModes.SURVIVAL, ClGamemodeSurvival_Init )
 	#endif
-	
-	gameMode = CUSTOM_CTF
-	GameMode_Create( gameMode )
-	GameMode_SetName( gameMode, "custom_ctf" )
-	GameMode_SetGameModeAnnouncement( gameMode, "phunt_modeDesc" )
-	GameMode_SetDesc( gameMode, "#PL_pilot_hunter_hint" )
-	GameMode_SetIcon( gameMode, $"ui/menu/playlist/tdm" )
-	GameMode_SetDefaultScoreLimits( gameMode, 50, 0 )
-	GameMode_SetDefaultTimeLimits( gameMode, 15, 0.0 )
-	GameMode_AddScoreboardColumnData( gameMode, "Captures", PGS_PILOT_KILLS, 2 )
-	GameMode_AddScoreboardColumnData( gameMode, "Returns", PGS_DEATHS, 2 )
-	//GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_ASSISTS", PGS_ASSISTS, 2 )
 	#if !UI
-		GameMode_AddScoreboardColumnData( gameMode, "Damage", PGS_ASSISTS, 5 )
-		GameMode_AddScoreboardColumnData( gameMode, "Latency", PGS_ASSISTS, 3 )
-	#endif
-	GameMode_SetColor( gameMode, [212, 83, 152, 255] )
-	
-	gameMode = WINTEREXPRESS
-	GameMode_Create( gameMode )
-	GameMode_SetName( gameMode, "winterexpress" )
-	GameMode_SetGameModeAnnouncement( gameMode, "phunt_modeDesc" )
-	GameMode_SetDesc( gameMode, "#PL_pilot_hunter_hint" )
-	GameMode_SetIcon( gameMode, $"ui/menu/playlist/tdm" )
-	GameMode_SetDefaultScoreLimits( gameMode, 50, 0 )
-	GameMode_SetDefaultTimeLimits( gameMode, 15, 0.0 )
-	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_KILLS", PGS_PILOT_KILLS, 2 )
-	GameMode_AddScoreboardColumnData( gameMode, "Planted", PGS_DEATHS, 2 )
-	//GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_ASSISTS", PGS_ASSISTS, 2 )
-	GameMode_SetColor( gameMode, [212, 83, 152, 255] )
-	
-	#if DEVSCRIPTS
-	DevGameModes_Init()
+		GameMode_AddSharedInit( eGameModes.SURVIVAL, GamemodeSurvivalShared_Init )
 	#endif
 
-	#if SERVER || CLIENT
-	GameModes_Init_SV_CL()
+	GameModeVariant_Create( eGameModeVariants.SURVIVAL_FIRING_RANGE, eGameModes.SURVIVAL )
+	GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_FIRING_RANGE, "survival_firingrange" )
+	#if CLIENT || SERVER
+		GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_FIRING_RANGE, FiringRangeGameMode_Init )
 	#endif
+
+	                                           
+		#if CLIENT || SERVER
+			GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_FIRING_RANGE, CombatRange_Init )
+		#endif
+
+		#if UI
+			//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( CombatRange_PopulateAboutText, COMBATRANGE )
+			//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, COMBATRANGE )
+		#endif // UI
+       
+
+	GameModeVariant_Create( eGameModeVariants.SURVIVAL_TRAINING, eGameModes.SURVIVAL )
+	GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_TRAINING, "survival_training" )
+	#if CLIENT || SERVER
+		GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_TRAINING, ShSurvivalTraining_Init )
+		GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_TRAINING, ShTutorial_Init )
+	#endif
+
+	GameModeVariant_Create( eGameModeVariants.SURVIVAL_RANKED, eGameModes.SURVIVAL )
+	GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_RANKED, GAMEMODE_SURVIVAL_RANKED )
+	GameModeVariant_SetName( eGameModeVariants.SURVIVAL_RANKED, "#PL_TRIO_RANKED" )
+	GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_RANKED, "is_ranked_game" )
+
+                       
+                                                                                          
+                                                                                                        
+
+                      
+                                                                                                 
+        
+       
+
+                              
+                                                                                        
+                                                                                               
+                      
+                                                                                                            
+        
+       
+
+	GameModeVariant_Create( eGameModeVariants.SURVIVAL_AIRDROPEXTRA, eGameModes.SURVIVAL )
+	GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_AIRDROPEXTRA, "airdrop_ltm_enabled" )
+	#if CLIENT || SERVER
+		//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_AIRDROPEXTRA, AirdropExtra_Init )
+	#endif
+	                         
+		GameModeVariant_Create( eGameModeVariants.SURVIVAL_CAMPFIRE, eGameModes.SURVIVAL )
+		GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_CAMPFIRE, "is_campfire_mode" )
+		#if CLIENT || SERVER
+			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_CAMPFIRE, Campfire_Init )
+		#endif
+
+		GameModeVariant_Create( eGameModeVariants.SURVIVAL_EXPLORE, eGameModes.SURVIVAL )
+		GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_EXPLORE, "survival_explore_mode" )
+		#if CLIENT || SERVER
+			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_EXPLORE, ShGameModeExplore_Init )
+		#endif
+       
+
+
+	// okirkham: script doesn't seem to be compiled in?
+	/*
+	GameModeVariant_Create( eGameModeVariants.SURVIVAL_FRAGNCLEAR, eGameModes.SURVIVAL )
+	GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_FRAGNCLEAR, "is_frag_and_clear_mode" )
+	#if CLIENT || SERVER
+		GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_FRAGNCLEAR, ShGameMode_FragNClear_Init )
+	#endif
+	*/
+
+	                    
+		GameModeVariant_Create( eGameModeVariants.SURVIVAL_GOLDEN_HORSE, eGameModes.SURVIVAL )
+		GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_GOLDEN_HORSE, "is_golden_horse" )
+		GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_GOLDEN_HORSE, GAMEMODE_GOLDEN_HORSE )
+		#if CLIENT || SERVER
+			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_GOLDEN_HORSE, GoldenHorse_Init )
+		#endif
+
+		#if UI
+			//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( GoldenHorse_PopulateAboutText, GAMEMODE_GOLDEN_HORSE )
+			//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_GOLDEN_HORSE )
+		#endif
+
+
+	GameModeVariant_Create( eGameModeVariants.SURVIVAL_RECRUIT, eGameModes.SURVIVAL )
+	GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_RECRUIT, "recruit_mode" )
+	#if SERVER
+		//GameModeVariant_AddServerInit( eGameModeVariants.SURVIVAL_RECRUIT, RecruitMode_Init )
+	#endif
+
+	                            
+		GameModeVariant_Create( eGameModeVariants.SURVIVAL_SHADOW_ARMY, eGameModes.SURVIVAL )
+		GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_SHADOW_ARMY, "is_shadow_army_gamemode" )
+		GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_SHADOW_ARMY, GAMEMODE_SHADOW_ARMY )
+		#if CLIENT || SERVER
+			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_SHADOW_ARMY, ShadowArmy_Init )
+			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_SHADOW_ARMY, ShadowArmy_RespawnBeacon_Init )
+		#endif
+
+		#if UI
+			//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( ShadowArmy_PopulateAboutText, GAMEMODE_SHADOW_ARMY )
+			//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_SHADOW_ARMY )
+		#endif
+       
+
+	                             
+		                              
+			GameModeVariant_Create( eGameModeVariants.SURVIVAL_SHADOW_ROYALE, eGameModes.SURVIVAL )
+			GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_SHADOW_ROYALE, "shadow_royale_mode" )
+			GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_SHADOW_ROYALE, GAMEMODE_SHADOW_ROYALE )
+			#if CLIENT || SERVER
+				//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_SHADOW_ROYALE, ShGameModeShadowRoyale_Init )
+				//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_SHADOW_ROYALE, ShPlayerPet_Init )
+			#endif
+
+			#if UI
+				//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( ShadowRoyale_PopulateAboutText, GAMEMODE_SHADOW_ROYALE )
+				//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_SHADOW_ROYALE )
+			#endif
+
+
+	GameModeVariant_Create( eGameModeVariants.SURVIVAL_HARDCORE, eGameModes.SURVIVAL )
+	GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_HARDCORE, "is_hardcore_mode" )
+	GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_HARDCORE, GAMEMODE_SURVIVAL_HARDCORE )
+	#if CLIENT || SERVER
+		//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_HARDCORE, Sh_Survival_Hardcore_Init )
+	#endif
+
+	#if UI
+		//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Survival_Hardcore_PopulateAboutText, GAMEMODE_SURVIVAL_HARDCORE )
+		//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_SURVIVAL_HARDCORE )
+	#endif
+
+	                         
+		GameModeVariant_Create( eGameModeVariants.SURVIVAL_HEATWAVE, eGameModes.SURVIVAL )
+		GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_HEATWAVE, "is_heatwave_mode" )
+		GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_HEATWAVE, GAMEMODE_HEATWAVE )
+		#if CLIENT || SERVER
+			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_HARDCORE, Sh_Survival_Heatwave_Init )
+		#endif
+
+		#if UI
+			//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Survival_Heatwave_PopulateAboutText, GAMEMODE_HEATWAVE )
+			//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_HEATWAVE )
+		#endif
+       
+
+
+	                            
+		GameModeVariant_Create( eGameModeVariants.SURVIVAL_BATTLE_RUSH, eGameModes.SURVIVAL )
+		GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_BATTLE_RUSH, "is_gamemode_battle_rush" )
+		GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_BATTLE_RUSH, GAMEMODE_QUICK_MATCH )
+		#if CLIENT || SERVER
+			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_BATTLE_RUSH, Sh_Survival_BattleRush_Init )
+		#endif
+
+		#if UI
+			//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Survival_Quickmatch_PopulateAboutText, GAMEMODE_QUICK_MATCH )
+			//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_QUICK_MATCH )
+		#endif
+                                   
+
+	                               
+		GameModeVariant_Create( eGameModeVariants.SURVIVAL_VALENTINES_S15, eGameModes.SURVIVAL )
+		GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_VALENTINES_S15, "is_valentines_s15" )
+		GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_VALENTINES_S15, GAMEMODE_DATE_NIGHT )
+		#if CLIENT || SERVER
+			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_VALENTINES_S15, Valentines_S15_Mode_Init )
+		#endif
+		#if CLIENT
+			//GameModeVariant_AddClientInit( eGameModeVariants.SURVIVAL_VALENTINES_S15, ClValentines_Init )
+		#endif
+
+		#if UI
+			//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Date_Night_PopulateAboutText, GAMEMODE_DATE_NIGHT )
+			//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_DATE_NIGHT )
+		#endif
+
+	                      
+		GameModeVariant_Create( eGameModeVariants.SURVIVAL_WINTEREXPRESS, eGameModes.SURVIVAL )
+		GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_WINTEREXPRESS, "is_winter_express_game" )
+		GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_WINTEREXPRESS, GAMEMODE_WINTER_EXPRESS )
+		#if CLIENT || SERVER
+			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_WINTEREXPRESS, WinterExpress_Init )
+		#endif
+		#if UI
+			//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( WinterExpress_PopulateAboutText, GAMEMODE_WINTER_EXPRESS )
+			//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_WINTER_EXPRESS )
+		#endif
+       
+
+	                  
+		GameModeVariant_Create( eGameModeVariants.SURVIVAL_THE_HUNT, eGameModes.SURVIVAL )
+		GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_THE_HUNT, "bounty_hunt_enabled" )
+		GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_THE_HUNT, GAMEMODE_THE_HUNT_20 )
+		#if CLIENT || SERVER
+			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_THE_HUNT, BountyHunt_Init )
+		#endif
+		#if UI
+			//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( BeastWithIn_20_0_The_Hunt_PopulateAboutText, GAMEMODE_THE_HUNT_20 )
+			//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_THE_HUNT_20 )
+		#endif
+       
+
+#if UI
+	//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Ranked_PopulateAboutText, GAMEMODE_SURVIVAL_RANKED )
+	//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_SURVIVAL_RANKED )
+#endif
+
+
+                      
+	GameModeVariant_Create( eGameModeVariants.SURVIVAL_HALLOWEEN_18_1, eGameModes.SURVIVAL )
+	GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_HALLOWEEN_18_1, "halloween_18_active" )
+	GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_HALLOWEEN_18_1, GAMEMODE_HALLOWEEN_18_1 )
+
+	#if UI
+		//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Halloween_18_1_PopulateAboutText, GAMEMODE_HALLOWEEN_18_1 )
+		//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_HALLOWEEN_18_1 )
+		//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Halloween_18_1_Harbinger_PopulateAboutText, GAMEMODE_HALLOWEEN_18_1_HARBINGER )
+		//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_HALLOWEEN_18_1_HARBINGER )
+	#endif
+      
+
+                          
+	// These are used to set the mode up to be usable by Apex Rumbles
+	GameModeVariant_Create( eGameModeVariants.SURVIVAL_STRIKEOUT, eGameModes.SURVIVAL )
+	GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_STRIKEOUT, GAMEMODE_STRIKEOUT )
+	GameModeVariant_SetName( eGameModeVariants.SURVIVAL_STRIKEOUT, "#STRIKEOUT_NAME" )
+	GameModeVariant_SetIcon( eGameModeVariants.SURVIVAL_STRIKEOUT, $"rui/menu/gamemode_emblem/emblem_three_strikes" )
+	GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_STRIKEOUT, "is_gamemode_strikeout" )
+	#if CLIENT || SERVER
+		//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_STRIKEOUT, Sh_Survival_Strikeout_Init )
+	#endif
+
+	// These are used for the About Screen
+	#if UI
+		//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Survival_Strikeout_PopulateAboutText, GAMEMODE_STRIKEOUT )
+		//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_STRIKEOUT )
+	#endif
+      
+                                           
+      
+
+	#if UI
+		//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Armed_And_Dangerous_PopulateAboutText, GAMEMODE_ARMED_AND_DANGEROUS )
+		//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_ARMED_AND_DANGEROUS )
+	#endif
+
+
+	#if UI
+		//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( EventAbilities_PopulateAboutText, EVENT_ABILITIES )
+		//AddCallback_UI_FeatureTutorialDialog_SetTitle( EventAbilities_GetAboutHeader, EVENT_ABILITIES )
+	#endif
+                             
+
+                               
+	// These are used to set the mode up to be usable by Apex Rumbles
+	GameModeVariant_Create( eGameModeVariants.SURVIVAL_SOLOS, eGameModes.SURVIVAL )
+	GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_SOLOS, GAMEMODE_SURVIVAL_SOLOS )
+	GameModeVariant_SetName( eGameModeVariants.SURVIVAL_SOLOS, "#SURVIVAL_MODE_SOLOS" )
+	GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_SOLOS, "is_gamemode_solos" )
+	#if CLIENT || SERVER
+		//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_SOLOS, Sh_Survival_Solos_Init )
+	#endif
+
+	// These are used for the About Screen
+	#if UI
+		//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Survival_Solos_PopulateAboutText, GAMEMODE_SURVIVAL_SOLOS )
+		//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_SURVIVAL_SOLOS )
+	#endif
+
+                               
+	GameModeVariant_Create( eGameModeVariants.SURVIVAL_QUADS, eGameModes.SURVIVAL )
+	GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_QUADS, GAMEMODE_SURVIVAL_QUADS )
+	GameModeVariant_SetName( eGameModeVariants.SURVIVAL_QUADS, "#SURVIVAL_MODE_QUADS" )
+	GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_QUADS, "gamemode_survival_quads_active" )
+
+	#if UI
+		//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Survival_Quads_PopulateAboutText, GAMEMODE_SURVIVAL_QUADS )
+		//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_SURVIVAL_QUADS )
+	#endif
+    
+	GameMode_Create( eGameModes.CONTROL, GAMEMODE_CONTROL )
+	// TODO okirkham: i tried reworking this to make the init function just Control_Init, similar to what we have for freedm
+	// unfortunately, doing this causes us to run into a bunch of race conditions driven by init order changing, so doesn't really work
+	// maybe something we could do in future, probably not worth it though
+	#if SERVER
+		GameMode_AddServerInit( eGameModes.CONTROL, GamemodeSurvival_Init )
+	#elseif CLIENT
+		GameMode_AddClientInit( eGameModes.CONTROL, ClGamemodeSurvival_Init )
+	#endif
+	#if !UI
+		GameMode_AddSharedInit( eGameModes.CONTROL, GamemodeSurvivalShared_Init )
+	#endif
+
+	#if UI
+		//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Control_PopulateAboutText, GAMEMODE_CONTROL )
+		//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_CONTROL )
+	#endif // UI
+      
+
+	GameMode_Create( eGameModes.FREELANCE, GAMEMODE_FREELANCE )
+	#if SERVER
+		//GameMode_AddServerInit( eGameModes.FREELANCE, ServerInit_Freelance )
+		//GameMode_SetPilotSpawnpointsRatingFunc( gameMode, Freelance_RateSpawnpoints )
+	#endif
+	#if CLIENT
+		//GameMode_AddClientInit( eGameModes.FREELANCE, ClientInit_Freelance )
+		//GameMode_SetScoreboardSetupFunc( gameMode, Fullmap_SetupScoreboard )
+	#endif
+	#if !UI
+		//GameMode_AddSharedInit( eGameModes.FREELANCE, SharedInit_Freelance )
+	#endif
+
+                       
+	GameMode_Create( eGameModes.FREEDM, GAMEMODE_FREEDM )
+	#if SERVER
+		//GameMode_AddServerInit( eGameModes.FREEDM, FreeDM_GamemodeInitServer )
+	#elseif CLIENT
+		//GameMode_AddClientInit( eGameModes.FREEDM, FreeDM_GamemodeInitClient )
+	#endif
+	#if !UI
+		//GameMode_AddSharedInit( eGameModes.FREEDM, FreeDM_GamemodeInitShared )
+	#endif
+
+	// not a fan of this setup, can we have this playlist-driven? or at least handled by GameModeVariant_* stuff
+	// i guess playlist-driven is problematic, since repak won't find assets in playlist automatically, uggh
+	#if UI
+		//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( FreeDM_PopulateAboutText, GAMEMODE_FREEDM )
+		//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_FREEDM )
+	#endif // UI
+
+	                    
+		GameModeVariant_Create( eGameModeVariants.FREEDM_TDM, eGameModes.FREEDM )
+		GameModeVariant_SetPlaylistFlag( eGameModeVariants.FREEDM_TDM, "freedm_tdm_active" )
+		GameModeVariant_SetDevName( eGameModeVariants.FREEDM_TDM, TEAM_DEATHMATCH )
+		#if CLIENT || SERVER
+			GameModeVariant_AddSharedInit( eGameModeVariants.FREEDM_TDM, TDM_Init )
+		#endif
+
+		#if UI
+			//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( TDM_PopulateAboutText, TEAM_DEATHMATCH )
+			//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, TEAM_DEATHMATCH )
+
+			//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( SWAT_PopulateAboutText, TDM_SWAT )
+			//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, TDM_SWAT )
+
+			                       
+				//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( BigTDM_PopulateAboutText, GAMEMODE_BIGTEAM_DEATHMATCH )
+				//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_BIGTEAM_DEATHMATCH )
+                                
+		#endif // UI
+       
+
+	                        
+		GameModeVariant_Create( eGameModeVariants.FREEDM_GUNGAME, eGameModes.FREEDM )
+		GameModeVariant_SetPlaylistFlag( eGameModeVariants.FREEDM_GUNGAME, "freedm_gun_game_active" )
+		#if CLIENT || SERVER
+			GameModeVariant_AddSharedInit( eGameModeVariants.FREEDM_GUNGAME, GunGame_Init )
+		#endif
+       
+
+	                             
+		GameModeVariant_Create( eGameModeVariants.FREEDM_LOCKDOWN, eGameModes.FREEDM )
+		GameModeVariant_SetPlaylistFlag( eGameModeVariants.FREEDM_LOCKDOWN, "freedm_treasure_hunt_active" )
+		GameModeVariant_SetDevName( eGameModeVariants.FREEDM_TDM, GAMEMODE_TREASURE_HUNT )
+		#if CLIENT || SERVER
+			//GameModeVariant_AddSharedInit( eGameModeVariants.FREEDM_LOCKDOWN, TreasureHunt_Init )
+		#endif
+
+		#if UI
+			//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( TreasureHunt_PopulateAboutText, GAMEMODE_TREASURE_HUNT )
+			//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_TREASURE_HUNT )
+		#endif
+
+	// okirkham: no feature flag?
+                          
+
+
+	////
+	GameMode_VerifyModes()
 }
 
-// TODO: scoreboards
+void function GameMode_NotifyUIOfModeChange( string gametypeStr, int gametypeID )
+{
+	GAMETYPE = gametypeStr
+	GAMETYPE_ID = gametypeID
+}
 
 /*************************************************************
 	Setters
 *************************************************************/
 
-GamemodeSettings function GameMode_Create( string gameModeName )
+void function GameMode_Create( int modeId, string stringModeName )
 {
-	Assert( !(gameModeName in file.gameModeDefs), "Gametype already defined!" )
+	Assert( !(modeId in file.gameModeDefs), "Gametype already defined!" )
 
 	GamemodeSettings settings
-	file.gameModeDefs[gameModeName] <- settings
+	settings.devName = stringModeName
 
-	return file.gameModeDefs[gameModeName]
+	file.gameModeDefs[ modeId ] <- settings
+	file.gameModesStringToIdMap[ stringModeName ] <- modeId
 }
 
-void function GameMode_SetName( string gameModeName, string nameText )
+void function GameMode_AddServerInit( int modeId, void functionref() func )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut (" + gameModeName + ")" )
-	file.gameModeDefs[gameModeName].name_localized = nameText
+	Assert( modeId in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
+	file.gameModeDefs[ modeId ].serverInits.append( func )
 }
 
-void function GameMode_SetGameModeAnnouncement( string gameModeName, string gameModeAnnoucement ) //Note: Still need to register the conversation
+void function GameMode_AddClientInit( int modeId, void functionref() func )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].gameModeAnnoucement = gameModeAnnoucement
+	Assert( modeId in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
+	file.gameModeDefs[ modeId ].clientInits.append( func )
 }
 
-void function GameMode_SetGameModeAttackAnnouncement( string gameModeName, string gameModeAttackAnnoucement ) //Note: Still need to register the conversation
+void function GameMode_AddSharedInit( int modeId, void functionref() func )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].gameModeAttackAnnoucement = gameModeAttackAnnoucement
+	Assert( modeId in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
+	file.gameModeDefs[ modeId ].sharedInits.append( func )
 }
 
-void function GameMode_SetGameModeDefendAnnouncement( string gameModeName, string gameModeDefendAnnoucement )
+// GameModeVariant stuff
+
+void function GameModeVariant_Create( int variantId, int baseMode )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" ) //Note: Still need to register the conversation
-	file.gameModeDefs[gameModeName].gameModeDefendAnnoucement = gameModeDefendAnnoucement
+	Assert( !(variantId in file.variantDefs), "Variant already defined!" )
+
+	GameModeVariantSettings settings
+	settings.baseMode = baseMode
+	file.variantDefs[ variantId ] <- settings
 }
 
-void function GameMode_SetDesc( string gameModeName, string descText )
+void function GameModeVariant_SetDevName( int variantId, string devName )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].desc_localized = descText
+	Assert( variantId in file.variantDefs, "No variant Gametype specified in _settings.nut" )
+	file.variantDefs[ variantId ].devName = devName
 }
 
-void function GameMode_SetAttackDesc( string gameModeName, string descText )
+void function GameModeVariant_SetName( int variantId, string nameText )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].desc_attack = descText
+	Assert( variantId in file.variantDefs, "No variant Gametype specified in _settings.nut" )
+	file.variantDefs[ variantId ].name_localized = nameText
 }
 
-void function GameMode_SetDefendDesc( string gameModeName, string descText )
+void function GameModeVariant_SetIcon( int variantId, asset icon )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].desc_defend = descText
+	Assert( variantId in file.variantDefs, "No variant Gametype specified in _settings.nut" )
+	file.variantDefs[ variantId ].icon = icon
 }
 
-void function GameMode_SetIcon( string gameModeName, asset icon )
+void function GameModeVariant_SetPlaylistFlag( int variantId, string playlistFlag )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].icon = icon
+	Assert( variantId in file.variantDefs, "No variant Gametype specified in _settings.nut" )
+	file.variantDefs[ variantId ].playlist_flag = playlistFlag
 }
 
-void function GameMode_SetColor( string gameModeName, array<int> color )
+void function GameModeVariant_AddServerInit( int variantId, void functionref() initFunc )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].color = color
+	file.variantDefs[ variantId ].serverInits.append( initFunc )
 }
 
-void function GameMode_SetSuddenDeath( string gameModeName, bool state )
+void function GameModeVariant_AddClientInit( int variantId, void functionref() initFunc )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].suddenDeathEnabled = state
+	file.variantDefs[ variantId ].clientInits.append( initFunc )
 }
 
-void function GameMode_AddServerInit( string gameModeName, void functionref() func )
+void function GameModeVariant_AddSharedInit( int variantId, void functionref() initFunc )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].serverInits.append( func )
-}
-
-void function GameMode_AddClientInit( string gameModeName, void functionref() func )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].clientInits.append( func )
-}
-
-void function GameMode_AddSharedInit( string gameModeName, void functionref() func )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].sharedInits.append( func )
-}
-
-void function GameMode_SetPilotSpawnpointsRatingFunc( string gameModeName, void functionref( int, array<entity>, int, entity ) func )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].pilotSpawnpointRatingFunc = func
-}
-
-void function GameMode_SetTitanSpawnpointsRatingFunc( string gameModeName, void functionref( int, array<entity>, int, entity ) func )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].titanSpawnpointRatingFunc = func
-}
-
-void function GameMode_SetScoreCompareFunc( string gameModeName, int functionref( entity, entity ) func )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].scoreCompareFunc = func
-}
-
-void function GameMode_SetDefaultScoreLimits( string gameModeName, int scoreLimit, int roundScoreLimit )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].defaultScoreLimit = scoreLimit
-	file.gameModeDefs[gameModeName].defaultRoundScoreLimit = roundScoreLimit
-}
-
-void function GameMode_SetDefaultTimeLimits( string gameModeName, int timeLimit, float roundTimeLimit )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].defaultTimeLimit = timeLimit
-	file.gameModeDefs[gameModeName].defaultRoundTimeLimit = roundTimeLimit
-}
-
-void function GameMode_AddScoreboardColumnData( string gameModeName, string title, int scoreType, int numDigits )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].scoreboardColumnTitles.append( title )
-	file.gameModeDefs[gameModeName].scoreboardColumnScoreTypes.append( scoreType )
-	file.gameModeDefs[gameModeName].scoreboardColumnNumDigits.append( numDigits )
-}
-
-void function GameMode_SetEvacEnabled( string gameModeName, bool value )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].evacEnabled = value
-}
-
-void function GameMode_SetGameEndingWarning( string gameModeName, string warning )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].gameModeEndingWarning = warning
-}
-
-void function GameMode_SetGameEndingConversation( string gameModeName, string conversation )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].gameModeEndingConversation = conversation
-}
-
-void function GameMode_SetCustomIntroAnnouncement( string gameModeName, void functionref(entity) func )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	file.gameModeDefs[gameModeName].customIntroAnnouncementFunc = func
+	file.variantDefs[ variantId ].sharedInits.append( initFunc )
 }
 
 /*************************************************************
 	Getters
 *************************************************************/
 
-int function GameMode_GetScoreLimit( string gameModeName )
+// TODO: fold most of these playlist ones into GamemodeUtility_* stuff
+
+int function GameMode_FindByDevName( string gamemodeDevName )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return GetCurrentPlaylistVarInt( "scorelimit", file.gameModeDefs[gameModeName].defaultScoreLimit )
+	if ( !( gamemodeDevName in file.gameModesStringToIdMap ) )
+	{
+		return eGameModes.invalid
+	}
+
+	return file.gameModesStringToIdMap[ gamemodeDevName ]
 }
 
-int function GameMode_GetRoundScoreLimit( string gameModeName )
+bool function GameMode_IsActive( int modeId )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return GetCurrentPlaylistVarInt( "roundscorelimit", file.gameModeDefs[gameModeName].defaultRoundScoreLimit )
+	return GAMETYPE_ID == modeId
 }
 
-int function GameMode_GetTimeLimit( string gameModeName )
+bool function GameMode_IsActiveForPlaylist( string playlist, int modeId )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return GetCurrentPlaylistVarInt( "timelimit", file.gameModeDefs[gameModeName].defaultTimeLimit )
+	for ( int i = 0; i < GetPlaylistGamemodesCount( playlist ); i++ )
+	{
+		if ( GameMode_FindByDevName( GetPlaylistGamemodeByIndex( playlist, i ) ) == modeId )
+		{
+			return true
+		}
+	}
+
+	return false
 }
 
-float function GameMode_GetRoundTimeLimit( string gameModeName )
+// GameModeVariant stuff
+
+int function GameModeVariant_GetByDevName( string variantDevName )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return GetCurrentPlaylistVarFloat( "roundtimelimit", file.gameModeDefs[gameModeName].defaultRoundTimeLimit )
+	foreach ( variantId, variantDef in file.variantDefs )
+	{
+		if ( variantDef.devName == variantDevName )
+		{
+			return variantId
+		}
+	}
+
+	return eGameModeVariants.invalid
 }
 
-string function GameMode_GetGameModeAnnouncement( string gameModeName )
+string function GameModeVariant_GetName( int variantId )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return file.gameModeDefs[gameModeName].gameModeAnnoucement
+	Assert( variantId in file.variantDefs, "No variant gametype specified in _settings.nut" )
+	return file.variantDefs[ variantId ].name_localized
 }
 
-string function GameMode_GetGameModeAttackAnnouncement( string gameModeName )
+asset function GameModeVariant_GetIcon( int variantId )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return file.gameModeDefs[gameModeName].gameModeAttackAnnoucement
+	Assert( variantId in file.variantDefs, "No variant gametype specified in _settings.nut" )
+	return file.variantDefs[ variantId ].icon
 }
 
-string function GameMode_GetGameModeDefendAnnouncement( string gameModeName )
+string function GameModeVariant_GetPlaylistFlag( int variantId )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return file.gameModeDefs[gameModeName].gameModeDefendAnnoucement
+	Assert( variantId in file.variantDefs, "No variant gametype specified in _settings.nut" )
+	return file.variantDefs[ variantId ].playlist_flag
 }
 
-string function GameMode_GetDesc( string gameModeName )
+bool function GameModeVariant_IsDefined( int variantId )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return file.gameModeDefs[gameModeName].desc_localized
+	return ( variantId in file.variantDefs )
 }
 
-string function GameMode_GetName( string gameModeName )
+bool function GameModeVariant_IsActiveForPlaylist( string playlist, int variantId )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return file.gameModeDefs[gameModeName].name_localized
+	// okirkham: this checks *both* the playlist flag and "variant" playlist var, ideally i would like to support just the variant var, but don't want to immediately break everything
+	if ( file.variantDefs[ variantId ].devName.len() != 0 && GetPlaylistVarString( playlist, "variant", "" ) == file.variantDefs[ variantId ].devName )
+	{
+		return true
+	}
+
+	return GetPlaylistVarBool( playlist, file.variantDefs[ variantId ].playlist_flag, false )
 }
 
-asset function GameMode_GetIcon( string gameModeName )
+bool function GameModeVariant_IsActive( int variantId )
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return file.gameModeDefs[gameModeName].icon
+	return GameModeVariant_IsActiveForPlaylist( GetCurrentPlaylistName(), variantId )
 }
 
-array<int> function GameMode_GetColor( string gameModeName )
+int function GameModeVariant_GetActiveMode()
 {
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return file.gameModeDefs[gameModeName].color
-}
+	foreach( variantId, modeSettings in file.variantDefs )
+	{
+		if ( GetCurrentPlaylistVarBool( file.variantDefs[ variantId ].playlist_flag, false ) )
+		{
+			return variantId
+		}
+	}
 
-string function GameMode_GetAttackDesc( string gameModeName )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return file.gameModeDefs[gameModeName].desc_attack
-}
-
-string function GameMode_GetDefendDesc( string gameModeName )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return file.gameModeDefs[gameModeName].desc_defend
-}
-
-void functionref( int, array<entity>, int, entity ) function GameMode_GetPilotSpawnpointsRatingFunc( string gameModeName )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	Assert( file.gameModeDefs[gameModeName].pilotSpawnpointRatingFunc != null, "No respawn func set for " + gameModeName )
-	return file.gameModeDefs[gameModeName].pilotSpawnpointRatingFunc
-}
-
-void functionref( int, array<entity>, int, entity ) function GameMode_GetTitanSpawnpointsRatingFunc( string gameModeName )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	Assert( file.gameModeDefs[gameModeName].titanSpawnpointRatingFunc != null, "No respawn func set for " + gameModeName )
-	return file.gameModeDefs[gameModeName].titanSpawnpointRatingFunc
-}
-
-IntFromEntityCompare function GameMode_GetScoreCompareFunc( string gameModeName )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return file.gameModeDefs[gameModeName].scoreCompareFunc
-}
-
-bool function GameMode_GetSuddenDeathEnabled( string gameModeName )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return file.gameModeDefs[gameModeName].suddenDeathEnabled
-}
-
-bool function GameMode_GetEvacEnabled( string gameModeName ) //TODO: get rid of this or fold into EvacEnabled() function
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return file.gameModeDefs[gameModeName].evacEnabled
-}
-
-string function GameMode_GetGameEndingWarning( string gameModeName )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return file.gameModeDefs[gameModeName].gameModeEndingWarning
-}
-
-string function GameMode_GetGameEndingConversation( string gameModeName )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return file.gameModeDefs[gameModeName].gameModeEndingConversation
-}
-
-array<string> function GameMode_GetScoreboardColumnTitles( string gameModeName )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return file.gameModeDefs[gameModeName].scoreboardColumnTitles
-}
-
-array<int> function GameMode_GetScoreboardColumnScoreTypes( string gameModeName )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return file.gameModeDefs[gameModeName].scoreboardColumnScoreTypes
-}
-
-array<int> function GameMode_GetScoreboardColumnNumDigits( string gameModeName )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return file.gameModeDefs[gameModeName].scoreboardColumnNumDigits
-}
-
-void functionref(entity) function GameMode_GetCustomIntroAnnouncement( string gameModeName )
-{
-	Assert( gameModeName in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-	return file.gameModeDefs[gameModeName].customIntroAnnouncementFunc
+	return eGameModeVariants.invalid
 }
 
 /*************************************************************
 
 *************************************************************/
+
+
 void function GameMode_RunServerInits()
 {
-	Assert( GAMETYPE in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-
-	foreach ( initFunc in file.gameModeDefs[GAMETYPE].serverInits )
+	Assert( GAMETYPE_ID in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
+	foreach ( initFunc in file.gameModeDefs[ GAMETYPE_ID ].serverInits )
 	{
 		initFunc()
+	}
+
+	int variantId = GameModeVariant_GetActiveMode()
+	if ( variantId != eGameModeVariants.invalid )
+	{
+		foreach( initFunc in file.variantDefs[ variantId ].serverInits )
+		{
+			initFunc()
+		}
 	}
 }
 
 void function GameMode_RunClientInits()
 {
-	Assert( GAMETYPE in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-
-	foreach ( initFunc in file.gameModeDefs[GAMETYPE].clientInits )
+	Assert( GAMETYPE_ID in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
+	foreach ( initFunc in file.gameModeDefs[ GAMETYPE_ID ].clientInits )
 	{
 		initFunc()
+	}
+
+	int variantId = GameModeVariant_GetActiveMode()
+	if ( variantId != eGameModeVariants.invalid )
+	{
+		foreach( initFunc in file.variantDefs[ variantId ].clientInits )
+		{
+			initFunc()
+		}
 	}
 }
 
 void function GameMode_RunSharedInits()
 {
-	Assert( GAMETYPE in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
-
-	foreach ( initFunc in file.gameModeDefs[GAMETYPE].sharedInits )
+	Assert( GAMETYPE_ID in file.gameModeDefs, "No MP Gametype specified in _settings.nut" )
+	foreach ( initFunc in file.gameModeDefs[ GAMETYPE_ID ].sharedInits )
 	{
 		initFunc()
+	}
+
+	int variantId = GameModeVariant_GetActiveMode()
+	if ( variantId != eGameModeVariants.invalid )
+	{
+		foreach( initFunc in file.variantDefs[ variantId ].sharedInits )
+		{
+			initFunc()
+		}
 	}
 }
 
 void function GameMode_VerifyModes()
 {
-	foreach ( gameModeName, gameModeData in file.gameModeDefs )
+	foreach ( gameModeId, gameModeData in file.gameModeDefs )
 	{
-		int gameModeId = GameMode_GetGameModeId( gameModeName )
-		bool foundGameModeIdString = false
-		
-		// For external gamemodes, skip enum verification since they use dynamic IDs
-		if ( gameModeData.dynamicallyRegistered )
+		Assert( gameModeId > eGameModes.invalid && gameModeId < eGameModes._count, "GAMEMODE not defined properly in eGameModes!" )
+	}
+
+	foreach ( variantId, variantDef in file.variantDefs )
+	{
+		Assert( variantId > eGameModeVariants.invalid && variantId < eGameModeVariants._count, "Variant not defined properly in eGameModeVariants" )
+	}
+}
+
+void function GameMode_VerifyActiveMode()
+{
+	Assert( GAMETYPE_ID in file.gameModeDefs, "Active gamemode is invalid" )
+
+	bool hasDef = false
+	foreach( variantId, variantDef in file.variantDefs )
+	{
+		if ( GameModeVariant_IsActive( variantId ) )
 		{
-			foundGameModeIdString = true
-			printt( "[GAMEMODE] Verified external gamemode: " + gameModeName + " (ID: " + gameModeId + ", Mod: " + gameModeData.modSource + ")" )
-		}
-		else
-		{
-			// Verify core gamemodes against enum
-			foreach ( idString, gameModeEnumId in eGameModes )
-			{
-				if ( gameModeEnumId != gameModeId )
-					continue
-
-				foundGameModeIdString = true
-				break
-			}
-			Assert( foundGameModeIdString, "GAMEMODE " + gameModeName + " not defined properly in eGameModes!" )
-		}
-
-		GAMETYPE_TEXT[gameModeName] <- gameModeData.name_localized
-		GAMETYPE_DESC[gameModeName] <- gameModeData.desc_localized
-		//GAMETYPE_ICON[gameModeName] <- gameModeData.icon
-		GAMETYPE_COLOR[gameModeName] <- gameModeData.color
-		//#if CLIENT
-		//	PrecacheHUDMaterial( GAMETYPE_ICON[gameModeName] )
-		//#endif
-	}
-}
-
-int function GameMode_GetGameModeId( string gameModeName )
-{
-	// Check core gamemodes first
-	if ( gameModeName in gameModesStringToIdMap )
-		return gameModesStringToIdMap[gameModeName]
-	
-	// Check external gamemodes
-	if ( gameModeName in file.externalGamemodeIds )
-		return file.externalGamemodeIds[gameModeName]
-
-	Assert( false, "GAMEMODE " + gameModeName + " not defined in gameModesStringToIdMap or external gamemodes" )
-
-	return 0
-}
-
-bool function GameMode_IsDefined( string gameModeName )
-{
-	return (gameModeName in file.gameModeDefs)
-}
-
-float function GameMode_GetLoadoutSelectTime()
-{
-	return GetCurrentPlaylistVarFloat( "pick_loadout_time", 5.0 )
-}
-
-// Enhanced gamemode registration system implementation
-void function RegisterExternalGamemode( string gameModeName, string modSource )
-{
-	// Check if the gamemode already exists and skip registration if it does
-	if ( gameModeName in file.gameModeDefs )
-	{
-		printw( "[GAMEMODE] Warning: Gamemode " + gameModeName + " already exists, skipping registration" )
-		return
-	}
-	
-	if ( modSource == "" )
-	{
-		printw( "[GAMEMODE] Error: Mod source cannot be empty for gamemode " + gameModeName )
-		return
-	}
-	
-	// Generate a dynamic ID for this external gamemode
-	int dynamicId = file.nextAvailableId
-	file.nextAvailableId++
-	
-	// Create the gamemode with enhanced properties
-	GameMode_Create( gameModeName )
-	file.gameModeDefs[gameModeName].modSource = modSource
-	file.gameModeDefs[gameModeName].dynamicallyRegistered = true
-	file.gameModeDefs[gameModeName].dynamicId = dynamicId
-	
-	// Track the external gamemode
-	file.externalGamemodeIds[gameModeName] <- dynamicId
-	file.modOwnership[gameModeName] <- modSource
-	file.registeredExternalGamemodes.append( gameModeName )
-	
-	// Register with enum system for Gamemode() function support
-	RegisterExternalGamemodeEnum( gameModeName, modSource, dynamicId )
-	
-	printt( "[GAMEMODE] Registered external gamemode: " + gameModeName + " from mod: " + modSource + " with ID: " + dynamicId )
-}
-
-void function RegisterGamemodeTemplate( string templateName, GamemodeSettings baseSettings, array<string> requiredMods = [], string description = "" )
-{
-	if ( templateName in file.gamemodeTemplates )
-	{
-		printw( "[GAMEMODE] Warning: Template " + templateName + " already exists, skipping registration" )
-		return
-	}
-	
-	GamemodeTemplate template
-	template.templateName = templateName
-	template.baseSettings = baseSettings
-	template.requiredMods = requiredMods
-	template.description = description
-	
-	file.gamemodeTemplates[templateName] <- template
-	
-	printt( "[GAMEMODE] Registered template: " + templateName )
-}
-
-void function CreateGamemodeFromTemplate( string gameModeName, string templateName, string modSource )
-{
-	if ( !(templateName in file.gamemodeTemplates) )
-	{
-		printw( "[GAMEMODE] Error: Template " + templateName + " does not exist" )
-		return
-	}
-	
-	if ( gameModeName in file.gameModeDefs )
-	{
-		printw( "[GAMEMODE] Warning: Gamemode " + gameModeName + " already exists, skipping creation from template" )
-		return
-	}
-	
-	GamemodeTemplate template = file.gamemodeTemplates[templateName]
-	
-	// Check if required mods are available (basic check - could be enhanced)
-	foreach ( requiredMod in template.requiredMods )
-	{
-		// This is a basic check - in a real implementation you'd check loaded mods
-		printt( "[GAMEMODE] Warning: Template requires mod: " + requiredMod )
-	}
-	
-	// Register the external gamemode first
-	RegisterExternalGamemode( gameModeName, modSource )
-	
-	// Copy template settings
-	GamemodeSettings templateSettings = template.baseSettings
-	templateSettings.modSource = modSource
-	templateSettings.dynamicallyRegistered = true
-	templateSettings.templateBase = templateName
-	
-	// Apply the template to the gamemode
-	file.gameModeDefs[gameModeName] = templateSettings
-	
-	printt( "[GAMEMODE] Created gamemode " + gameModeName + " from template " + templateName )
-}
-
-void function RegisterGamemodeServerInit( string gameModeName, void functionref() initFunc )
-{
-	Assert( gameModeName in file.gameModeDefs, "Gamemode " + gameModeName + " does not exist" )
-	file.gameModeDefs[gameModeName].serverInits.append( initFunc )
-}
-
-void function RegisterGamemodeClientInit( string gameModeName, void functionref() initFunc )
-{
-	Assert( gameModeName in file.gameModeDefs, "Gamemode " + gameModeName + " does not exist" )
-	file.gameModeDefs[gameModeName].clientInits.append( initFunc )
-}
-
-void function RegisterGamemodeSharedInit( string gameModeName, void functionref() initFunc )
-{
-	Assert( gameModeName in file.gameModeDefs, "Gamemode " + gameModeName + " does not exist" )
-	file.gameModeDefs[gameModeName].sharedInits.append( initFunc )
-}
-
-void function RegisterGamemodeSpawnFunc( string gameModeName, void functionref( int, array<entity>, int, entity ) spawnFunc, bool isPilotSpawn = true )
-{
-	Assert( gameModeName in file.gameModeDefs, "Gamemode " + gameModeName + " does not exist" )
-	
-	if ( isPilotSpawn )
-		file.gameModeDefs[gameModeName].pilotSpawnpointRatingFunc = spawnFunc
-	else
-		file.gameModeDefs[gameModeName].titanSpawnpointRatingFunc = spawnFunc
-}
-
-void function RegisterGamemodeScoreFunc( string gameModeName, IntFromEntityCompare scoreFunc )
-{
-	Assert( gameModeName in file.gameModeDefs, "Gamemode " + gameModeName + " does not exist" )
-	file.gameModeDefs[gameModeName].scoreCompareFunc = scoreFunc
-}
-
-array<string> function GetRegisteredGamemodes()
-{
-	array<string> allGamemodes = []
-	foreach ( gameModeName, gameModeData in file.gameModeDefs )
-	{
-		allGamemodes.append( gameModeName )
-	}
-	return allGamemodes
-}
-
-bool function IsExternalGamemode( string gameModeName )
-{
-	if ( !(gameModeName in file.gameModeDefs) )
-		return false
-		
-	return file.gameModeDefs[gameModeName].dynamicallyRegistered
-}
-
-string function GetGamemodeModSource( string gameModeName )
-{
-	if ( !(gameModeName in file.gameModeDefs) )
-	{
-		printw( "[GAMEMODE] Error: Gamemode " + gameModeName + " does not exist" )
-		return ""
-	}
-	return file.gameModeDefs[gameModeName].modSource
-}
-
-void function RegisterGamemode( string gamemodeName, string modName, string displayName, string description, bool useCustomScoreboardColumns = false, string sharedInitFuncName = "",string serverInitFuncName = "", string clientInitFuncName = "")
-{
-	if ( gamemodeName == "" )
-	{
-		printw( "[GAMEMODE] Error: Gamemode name cannot be empty" )
-		return
-	}
-	if ( modName == "" )
-	{
-		printw( "[GAMEMODE] Error: Mod name cannot be empty" )
-		return
-	}
-	if ( displayName == "" )
-	{
-		printw( "[GAMEMODE] Error: Display name cannot be empty" )
-		return
-	}
-	if ( description == "" )
-	{
-		printw( "[GAMEMODE] Error: Description cannot be empty" )
-		return
-	}
-	
-	// Register
-	RegisterExternalGamemode( gamemodeName, modName )
-	RegisterExternalPlaylist( gamemodeName, modName )
-	
-	// Configure basic gamemode properties
-	GameMode_SetName( gamemodeName, displayName )
-	GameMode_SetDesc( gamemodeName, description )
-	// GameMode_SetIcon( gamemodeName, $"ui/menu/playlist/tdm" ) // Not used currently by any script
-	GameMode_SetColor( gamemodeName, [255, 128, 0, 255] ) // Orange color
-	GameMode_SetDefaultScoreLimits( gamemodeName, 25, 0 )
-	GameMode_SetDefaultTimeLimits( gamemodeName, 10, 0.0 )
-	GameMode_SetEvacEnabled( gamemodeName, false )
-	
-	if( !useCustomScoreboardColumns )
-	{
-		GameMode_AddScoreboardColumnData( gamemodeName, "#SCOREBOARD_KILLS", PGS_PILOT_KILLS, 2 )
-		GameMode_AddScoreboardColumnData( gamemodeName, "#SCOREBOARD_DEATHS", PGS_DEATHS, 2 )
-	}
-	
-	#if !UI
-	GameMode_SetScoreCompareFunc( gamemodeName, CompareKills )
-	#endif
-	
-	// Register initialization functions
-	// Always register the required shared survival init
-	#if SERVER || CLIENT
-	RegisterGamemodeSharedInit( gamemodeName, GamemodeSurvivalShared_Init )
-	
-	if( sharedInitFuncName != "" )
-		RegisterGamemodeSharedInitByName( gamemodeName, sharedInitFuncName )
-	#endif
-	
-	#if SERVER
-	if( serverInitFuncName != "" )
-		RegisterGamemodeServerInitByName( gamemodeName, serverInitFuncName )
-	#endif
-	
-	#if CLIENT
-	if( clientInitFuncName != "" )
-		RegisterGamemodeClientInitByName( gamemodeName, clientInitFuncName )
-	#endif
-	
-	printw( "[" + modName + "] Custom gamemode registered successfully: " + gamemodeName + " (" + displayName + ")" )
-}
-
-////////////////////////////////////////
-// String-Based Function Registration //
-////////////////////////////////////////
-// Cool string to functionref convertion
-
-void function RegisterGamemodeServerInitByName( string gameModeName, string functionName )
-{
-	void functionref() wrapperFunc = void function() : (functionName) {
-		try {
-			compilestring(functionName + "()", "RegisterGamemode")()
-		} catch( error ) {
-			printw( "[GAMEMODE] Warning: Could not execute server function '" + functionName + "': " + error )
+			Assert( !hasDef, "Multiple variants are set active!" )
+			Assert( variantDef.baseMode == GAMETYPE_ID, "Active variant is based on a different gamemode from the active mode!" )
+			hasDef = true
 		}
 	}
-	
-	RegisterGamemodeServerInit( gameModeName, wrapperFunc )
 }
 
-void function RegisterGamemodeClientInitByName( string gameModeName, string functionName )
+// TODO: move out of this file
+bool function GameMode_AreRoundsEnabled()
 {
-	void functionref() wrapperFunc = void function() : (functionName) {
-		try {
-			compilestring(functionName + "()", "RegisterGamemode")()
-		} catch( error ) {
-			printw( "[GAMEMODE] Warning: Could not execute client function '" + functionName + "': " + error )
-		}
-	}
-	
-	RegisterGamemodeClientInit( gameModeName, wrapperFunc )
+	return GetCurrentPlaylistVarBool( "survival_rounds_enabled", false )
 }
 
-void function RegisterGamemodeSharedInitByName( string gameModeName, string functionName )
+bool function GameMode_Rounds_IsWinBy2( string gameModeName )
 {
-	void functionref() wrapperFunc = void function() : (functionName) {
-		try {
-			compilestring(functionName + "()", "RegisterGamemode")()
-		} catch( error ) {
-			printw( "[GAMEMODE] Warning: Could not execute shared function '" + functionName + "': " + error )
-		}
-	}
-	
-	RegisterGamemodeSharedInit( gameModeName, wrapperFunc )
+	return GetCurrentPlaylistVarBool( "rounds_win_by_2_enabled", false )
 }
 
+int function GameMode_GetWinBy2MinScore( string gameModeName )
+{
+	return GetCurrentPlaylistVarInt( "rounds_win_by_2_enabled", 0 )
+}
+
+int function GameMode_GetWinBy2MaxTies( string gameModeName )
+{
+	return GetCurrentPlaylistVarInt( "rounds_win_by_2_enabled", 0 )
+}
+
+#if CLIENT
+bool function GameMode_DoesModeDisplayIconsForAllFriendlyTeams( string mode )
+{
+	return AllianceProximity_IsUsingAlliances()
+}
+#endif // Client
+
+#if CLIENT
+bool function GameMode_DoesModeDisplayIconsForAllTeams( string mode )
+{
+	return false
+}
+#endif // Client
+
+// okirkham: this should probably be in a ui-specific file
+#if UI
+void function GameMode_AboutDialog_AppendRequeueTab(array<featureTutorialTab> tabs)
+{
+	if ( GetPlaylistVarBool( GamemodeUtility_GetPlaylist(), "matchmake_from_match", false ) )
+	{
+		featureTutorialTab tab
+		array< featureTutorialData > tabRules
+		tab.tabName = "#ABOUT_REQUEUE_TITLE"
+		tabRules.append( UI_FeatureTutorialDialog_BuildDetailsData( "#ABOUT_REQUEUE_1_HEADER", "#ABOUT_REQUEUE_1_BODY", $"rui/hud/gametype_icons/ltm/about_quickmatch_no_dull_moment" ) )
+
+		if ( GetConVarBool( "matchSquadRequeue_enabled" ) )
+			tabRules.append( UI_FeatureTutorialDialog_BuildDetailsData( "#ABOUT_REQUEUE_2_HEADER", "#ABOUT_REQUEUE_2_BODY", $"rui/hud/gametype_icons/ltm/about_quickmatch_band_together" ) )
+
+		tabRules.append( UI_FeatureTutorialDialog_BuildDetailsData( "#ABOUT_REQUEUE_3_HEADER", "#ABOUT_REQUEUE_3_BODY", $"rui/hud/gametype_icons/ltm/about_quickmatch_lobby_friends" ) )
+		tab.rules = tabRules
+		tabs.append( tab )
+	}
+}
+#endif // UI

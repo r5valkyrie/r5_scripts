@@ -1,4 +1,5 @@
 global function CodeCallback_MapInit
+global function CodeCallback_PreMapInit
 
 const asset BUNKER_MODEL_SCALE_DOWN = $"mdl/props/bunker_hatch/bunker_hatch_scale_down.rmdl"
 const asset BUNKER_BUTTON_MODEL = $"mdl/props/global_access_panel_button/global_access_panel_button_console.rmdl"
@@ -9,32 +10,27 @@ struct {
 	array<entity> bunkerDoors
 } file
 
+void function CodeCallback_PreMapInit()
+{
+	if (GetMapName() == "mp_rr_canyonlands_mu2_tt" )
+		CryptoTT_PreMapInit()
+}
+
 void function CodeCallback_MapInit()
 {
 	SetVictorySequencePlatformModel( $"mdl/rocks/victory_platform.rmdl", < 0, 0, -10 >, < 0, 0, 0 > )
 	SURVIVAL_SetPlaneHeight( 24000 )
 	SURVIVAL_SetAirburstHeight( 8000 )
 	SURVIVAL_SetMapCenter( <0, 0, 0> )
-    SURVIVAL_SetMapDelta( 4900 )
 
 	if (GetMapName() == "mp_rr_canyonlands_mu2_mv" )
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_canyonlands_mu2_mv.rpak" )
 	else if (GetMapName() == "mp_rr_canyonlands_mu2_tt" )
 	{
-		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_01.rmdl")
-		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_02.rmdl")
-		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_03.rmdl")
-		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_04.rmdl")
-		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_05.rmdl")
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_canyonlands_mu2_tt.rpak" )
 	}
 	else if (GetMapName() == "mp_rr_canyonlands_mu3" )
 	{
-		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_01.rmdl")
-		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_02.rmdl")//replace these models with s8 variant - kral
-		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_03.rmdl")
-		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_04.rmdl")
-		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_05.rmdl")
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_canyonlands_mu3.rpak" )
 	}
 	else
@@ -42,82 +38,20 @@ void function CodeCallback_MapInit()
 
 	//Clean up unused ents
 	AddCallback_EntitiesDidLoad( KCMU2_OnEntitiesDidLoad )
-
-	AddSpawnCallback( "info_spawnpoint_human", CleanupEnt )
 	Canyonlands_MapInit_Common()
-}
-
-
-void function CleanupEnt( entity ent )
-{
-	if( !IsValid( ent ) )
-		return
-
-	ent.Destroy()
-}
-
-void function InitInfoTarget( entity infotarget )
-{
-	if( GetEditorClass( infotarget ) == "info_warp_gate_path_node" || infotarget.GetScriptName() == "apex_screen" )
-		return
-
-	if( ShouldDestroyInfoTarget( infotarget ) )
-	{
-		// printt( "Destroyed useless info target ent leftover" )
-		infotarget.Destroy()
-	}
-}
-
-bool function ShouldDestroyInfoTarget( entity infotarget )
-{
-	if( GetEditorClass( infotarget ) == "" && infotarget.GetScriptName() == "" && infotarget.GetTargetName() == "" )
-		return true
-
-	if( GetEditorClass( infotarget ) == "info_warp_gate_path_node" || infotarget.GetScriptName() == "apex_screen" )
-		return false
-
-	if( infotarget.GetModelName() == $"mdl/test/loot_box_half_01.rmdl" || infotarget.GetModelName() == $"mdl/vehicle/droppod_fireteam/droppod_fireteam.rmdl" )
-		return true
-
-	return false
-}
-
-void function InitScriptRef( entity scriptref )
-{
-	array<string> stringCats
-
-	if( GetEditorClass( scriptref ) != "" )
-	{
-		stringCats = split( GetEditorClass( scriptref ), "_" )
-
-		if( stringCats[1] != "survival" )
-		{
-			// printt( "Removed Unused Script Ref Ent. Editor: ", GetEditorClass( scriptref ), " ScriptRef: ", scriptref.GetScriptName()," Target: ", scriptref.GetTargetName() )
-			scriptref.Destroy()
-			return
-		}
-	}
-
-	if( GetEditorClass( scriptref ) == "" && scriptref.GetScriptName() == "" && scriptref.GetTargetName() == "" || GetEditorClass( scriptref ) == "info_survival_circle_end_location" || scriptref.GetModelName() == $"mdl/dev/editor_ref.rmdl" )
-	{
-		// printt( "Destroyed useless script ref ent leftover" )
-		scriptref.Destroy()
-	}
 }
 
 void function KCMU2_OnEntitiesDidLoad()
 {
-	printt( "KCMU2_OnEntitiesDidLoad" )
-
-	array<entity> scriptRefs = GetEntArrayByClass_Expensive( "script_ref" )
-	foreach( ref in scriptRefs )
-		InitScriptRef( ref )
-
-	array<entity> infoTargets = GetEntArrayByClass_Expensive( "info_target" )
-	foreach( target in infoTargets )
-		InitInfoTarget( target )
+	if ( GetMapName() == "mp_rr_canyonlands_mu2_tt" )
+	{
+		PrecacheCryptoMapAssets()
+		InitCryptoMap()
+		InitCryptoSquadTVs()
+	}
 
 	array<entity> props = GetEntArrayByClass_Expensive( "prop_dynamic" )
+	printt( "Processing " + props.len() + " prop_dynamic entities" )
 	foreach( prop in props )
 		InitPropDynamic( prop )
 
@@ -132,10 +66,11 @@ void function InitPropDynamic( entity prop )
 	if( prop.GetModelName() == BUNKER_MODEL_SCALE_DOWN )
 		file.bunkerDoorsScaleDown.append( prop )
 
-	// printt( "prop spawned", prop.GetModelName(), prop.GetOrigin() )
-
 	if( ShouldDestroyPropDynamic( prop.GetModelName() ) )
+	{
+		printt( "Destroying prop: " + prop.GetModelName() + " at " + prop.GetOrigin() )
 		prop.Destroy()
+	}
 }
 
 bool function ShouldDestroyPropDynamic( string model )
@@ -320,7 +255,7 @@ array<vector> function Flowstate_GenerateSmoothPathForBasePath( array<vector> pa
     for (int i = 0; i < points.len() - 3; i++)
     {
         for (int j = 0; j < numPoints; j++)
-        {
+       {
             float t = float( j ) / float( numPoints )
             smoothPath.append( Flowstate_CatmullRom( points[i], points[i+1], points[i+2], points[i+3], t) )
         }

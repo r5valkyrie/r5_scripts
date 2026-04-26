@@ -634,14 +634,6 @@ void function ServerCallback_ShouldExitDrone()
 
 	if( !PlayerHasPassive( player, ePassives.PAS_CRYPTO ) )
 		return
-
-	if( IsValid( player ) )
-	{
-		if( PlayerSetting_DamageClosesMenu() )
-		{
-			player.ClientCommand("ShouldExitDrone")
-		}
-	}
 }
 #endif // CLIENT
 
@@ -720,7 +712,7 @@ entity function CryptoDrone_ReleaseCamera( entity weapon, WeaponPrimaryAttackPar
 
 	entity player = weapon.GetWeaponOwner()
 	vector angles   = VectorToAngles( attackParams.dir )
-	entity deployable = ThrowDeployable_Retail( weapon, attackParams, throwPower, CryptoDrone_CameraImpact, CryptoDrone_CameraImpact, <0,0,0> )
+	entity deployable = ThrowDeployable( weapon, attackParams, throwPower, CryptoDrone_CameraImpact, CryptoDrone_CameraImpact )
 
 	if ( deployable )
 	{
@@ -1009,8 +1001,8 @@ void function Drone_AttemptUseLong( entity player )
 
 		if ( IsRespawnBeacon( trace.hitEnt ) && CountTeammatesWaitingToBeRespawned( player.GetTeam() ) > 0 && trace.hitEnt.e.isBusy == false )
 		{
-			ExtendedUseSettings settings
-			thread RespawnUserTeam( trace.hitEnt, player, settings )
+			ExtendedUseSettings settings // doesn't seem to do anything
+			thread RespawnBeacon_GetSuccessFunc( trace.hitEnt )( trace.hitEnt, player, settings )
 		}
 	}
 }
@@ -3332,8 +3324,8 @@ void function UpdateCryptoAnimatedTacticalRui()
 		RuiTrackFloat( file.cryptoAnimatedTacticalRui, "recallFrac", localViewPlayer, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.crypto_camera_is_recalling )
 		RuiTrackFloat( file.cryptoAnimatedTacticalRui, "hasCamera", localViewPlayer, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.crypto_has_camera )
 		RuiSetFloat( file.cryptoAnimatedTacticalRui, "maxFlightRange", MAX_FLIGHT_RANGE )
-		RuiTrackFloat( file.cryptoAnimatedTacticalRui, "bleedoutEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
-		RuiTrackFloat( file.cryptoAnimatedTacticalRui, "reviveEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
+		RuiTrackFloat( file.cryptoAnimatedTacticalRui, "bleedoutEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
+		RuiTrackFloat( file.cryptoAnimatedTacticalRui, "reviveEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "reviveEndTime" ) )
 
 		entity offhandWeapon = localViewPlayer.GetOffhandWeapon( OFFHAND_LEFT )
 		if ( IsValid( offhandWeapon ) )

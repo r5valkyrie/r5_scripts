@@ -9,23 +9,78 @@ global function SkydiveTrail_GetVideo
 global function SkydiveTrail_GetIndexForPackage
 global function SkydiveTrail_GetPackageForIndex
 
-//////////////////////
-//////////////////////
-//// Global Types ////
-//////////////////////
-//////////////////////
-global const asset DEFAULT_SKYDIVE_TRAIL                  = $"settings/itemflav/skydive_trail/default.rpak"
-global const asset SHADOW_SKYDIVE_TRAIL                   = $"settings/itemflav/skydive_trail/shadow_default.rpak"
-global const asset RANKEDPERIOD_02_SKYDIVE_TRAIL_APEX     = $"settings/itemflav/skydive_trail/ranked02_apex.rpak"
-global const asset RANKEDPERIOD_02_SKYDIVE_TRAIL_DIAMOND  = $"settings/itemflav/skydive_trail/ranked02_diamond.rpak"
+#if SERVER
+global function StopAllSkydiveSounds
+global function SkydiveTrail_RevokeExpiredSeasonTrails
+#endif
+
+#if CLIENT
+global function ClientCodeCallback_OnSkydiveStateChanged
+global function SkydiveTrail_AddOnSkydiveStateChangedClientCallback
+global function UpdatePlayerSkydiveTrailFriendlyEnemyFX
+global function StartFriendlyEnemySkydiveTrailFXForPlayer
+global function CleanupFriendlyEnemySkydiveTrailFXForPlayer
+#endif
+
+global const asset SKYDIVE_TRAIL_S02_APEX_PREDATOR = $"settings/itemflav/skydive_trail/s02_apex_predator.rpak"
+global const asset SKYDIVE_TRAIL_S02_DIAMOND = $"settings/itemflav/skydive_trail/s02_diamond.rpak"
+global const asset SKYDIVE_TRAIL_DEFAULT = $"settings/itemflav/skydive_trail/default.rpak"
+global const asset SKYDIVE_TRAIL_SHADOW = $"settings/itemflav/skydive_trail/shadow_default.rpak"
+global const asset SKYDIVE_TRAIL_S03_APEX_PREDATOR = $"settings/itemflav/skydive_trail/s03_apex_predator.rpak"
+global const asset SKYDIVE_TRAIL_S03_DIAMOND = $"settings/itemflav/skydive_trail/s03_diamond.rpak"
+                        
+global const asset SKYDIVE_TRAIL_S04_APEX_PREDATOR = $"settings/itemflav/skydive_trail/s04_apex_predator.rpak"
+global const asset SKYDIVE_TRAIL_S04_MASTER = $"settings/itemflav/skydive_trail/s04_master.rpak"
+      
+
+//%if HAS_RANKED_SERIES_05
+global const asset SKYDIVE_TRAIL_S05_APEX_PREDATOR = $"settings/itemflav/skydive_trail/s05_apex_predator.rpak"
+global const asset SKYDIVE_TRAIL_S05_MASTER = $"settings/itemflav/skydive_trail/s05_master.rpak"
+//%endif
+
+//%if HAS_RANKED_SERIES_06
+global const asset SKYDIVE_TRAIL_S06_APEX_PREDATOR = $"settings/itemflav/skydive_trail/s06_apex_predator.rpak"
+global const asset SKYDIVE_TRAIL_S06_MASTER = $"settings/itemflav/skydive_trail/s06_master.rpak"
+//%endif
+
+//%if HAS_RANKED_SERIES_07
+global const asset SKYDIVE_TRAIL_S07_APEX_PREDATOR = $"settings/itemflav/skydive_trail/s07_apex_predator.rpak"
+global const asset SKYDIVE_TRAIL_S07_MASTER = $"settings/itemflav/skydive_trail/s07_master.rpak"
+//%endif
+
+global const asset SKYDIVE_TRAIL_S04_DIAMOND = $"settings/itemflav/skydive_trail/s04_diamond.rpak"
+global const asset SKYDIVE_TRAIL_S05_DIAMOND = $"settings/itemflav/skydive_trail/s05_diamond.rpak"
+global const asset SKYDIVE_TRAIL_S06_DIAMOND = $"settings/itemflav/skydive_trail/s06_diamond.rpak"
+global const asset SKYDIVE_TRAIL_S07_DIAMOND = $"settings/itemflav/skydive_trail/s07_diamond.rpak"
+
+                            
+global const asset SKYDIVE_TRAIL_SHADOWARMY_REV = $"settings/itemflav/skydive_trail/shadow_default.rpak"
+global const asset SKYDIVE_TRAIL_SHADOWARMY_FULLREV = $"settings/itemflav/skydive_trail/shadow_special.rpak"
+      
+
+#if SERVER && DEVELOPER
+global function SkydiveTrail_SetForAllPlayers
+global function SkydiveTrail_SetForPlayer
+#endif
 
 global struct SkyDiveTrailFXStruct
 {
-	asset fx                          = $""
-	string attachName                 = ""
-	bool useSkyDiveSmokeColorForTeam  = false
+	asset fx = $""
+	string attachName = ""
+	bool useSkyDiveSmokeColorForTeam = false
 	vector controlPoint //Assume only 1 vector control point for now? Otherwise it should be an array of vectors
-	int attachType                    = 7 //FX_PATTACH_POINT_FOLLOW
+	int attachType = 7 //FX_PATTACH_POINT_FOLLOW
+}
+
+global struct SkyDiveTrailPropStruct
+{
+	float createTime = 0
+	float destroyTime = -1
+	asset model = $""
+	string attachName = ""
+	vector offset = <0, 0, 0>
+	vector angle = <0, 0, 0>
+	asset animSeq = $""
 }
 
 global struct SkyDiveTrailPackage
@@ -34,6 +89,7 @@ global struct SkyDiveTrailPackage
 	array<SkyDiveTrailFXStruct> friendlyJumpJet
 	array<SkyDiveTrailFXStruct> enemyJumpJet
 	array<SkyDiveTrailFXStruct> jumpJetLandFX
+	array<SkyDiveTrailPropStruct> props
 	string DropSequenceLaunch1P
 	string DropSequenceLaunch3P
 	string DropSequenceTravel1P
@@ -85,18 +141,22 @@ struct FileStruct_LifetimeLevel //TODO(chin): Find out if there is a reason why 
 }
 FileStruct_LifetimeLevel& fileLevel
 
+const asset SKYDIVE_REVOCATION_LIST = $"settings/itemflav/list/skydive_trails_to_revoke.rpak"
 
-/////////////////////////
-/////////////////////////
-//// Initialiszation ////
-/////////////////////////
-/////////////////////////
+////////////////////////
+////////////////////////
+//// Initialization ////
+////////////////////////
+////////////////////////
 void function ShSkydiveTrails_LevelInit()
 {
 	FileStruct_LifetimeLevel newFileLevel
 	fileLevel = newFileLevel
 
 	AddCallback_RegisterRootItemFlavors( RegisterSkydiveTrails )
+	#if SERVER
+		AddCallback_FirstTimeInventoryClean( SkydiveTrail_RevokeExpiredSeasonTrails )
+	#endif
 
 	#if CLIENT
 		RegisterScriptAnimWindowCallbacks( "SkydiveTrailFX", CleanupFriendlyEnemySkydiveTrailFXForPlayer, StartFriendlyEnemySkydiveTrailFXForPlayer )
@@ -202,6 +262,25 @@ void function RegisterSkydiveTrails()
 
 		trailPackage.jumpJetLandFX = jumpJetLandFX
 
+		array< SkyDiveTrailPropStruct > props
+
+		foreach ( var propBlock in IterateSettingsAssetArray( trailAsset, "props" ) )
+		{
+			SkyDiveTrailPropStruct prop
+			prop.createTime = GetSettingsBlockFloat( propBlock, "createTime" )
+			prop.destroyTime = GetSettingsBlockFloat( propBlock, "destroyTime" )
+			prop.model = GetSettingsBlockAsset( propBlock, "modelName" )
+			prop.attachName = GetSettingsBlockString( propBlock, "attachName" )
+			prop.offset = GetSettingsBlockVector( propBlock, "offset" )
+			prop.angle = GetSettingsBlockVector( propBlock, "angle" )
+			prop.animSeq = GetSettingsBlockAsset( propBlock, "animSequence" )
+			#if SERVER
+				PrecacheModel( prop.model )
+			#endif
+			props.append( prop )
+		}
+
+		trailPackage.props = props
 
 		trailPackage.DropSequenceLaunch1P = GetGlobalSettingsString( ItemFlavor_GetAsset( flav ), "DropSequenceLaunch1P" )
 		trailPackage.DropSequenceLaunch3P = GetGlobalSettingsString( ItemFlavor_GetAsset( flav ), "DropSequenceLaunch3P" )
@@ -228,17 +307,20 @@ void function RegisterSkydiveTrails()
 		fileLevel.skyDiveTrailPackageIndexTable[ skyDiveTrailPackageIndex++ ] <- trailPackage
 	}
 
-	MakeItemFlavorSet( trailFlavs, fileLevel.skyDiveTrailsSortOrdinalMap )
+	MakeItemFlavorSet( trailFlavs, fileLevel.skyDiveTrailsSortOrdinalMap, true )
 
-	LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "skydive_trail" )
-	entry.DEV_name = "SkydiveTrail"
-	entry.defaultItemFlavor = trailFlavs[0]
+	LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "skydive_trail", eLoadoutEntryClass.ACCOUNT )
+	entry.category     = eLoadoutCategory.SKYDIVE_TRAIL
+	#if DEVELOPER
+		entry.DEV_name       = "Skydive Trail"
+	#endif
+	entry.defaultItemFlavor   = trailFlavs[0]
 	entry.validItemFlavorList = trailFlavs
-	entry.isSlotLocked = bool function( EHI playerEHI ) {
+	entry.isSlotLocked        = bool function( EHI playerEHI ) {
 		return !IsLobby()
 	}
-	entry.networkTo = eLoadoutNetworking.PLAYER_GLOBAL
-	entry.networkVarName = "SkydiveTrail"
+	entry.networkTo           = eLoadoutNetworking.PLAYER_GLOBAL
+	entry.networkVarName      = "SkydiveTrail"
 
 	fileLevel.loadoutSkydiveTrailSlot = entry
 }
@@ -248,6 +330,67 @@ void function RegisterSkydiveTrails()
 //// Global functions ////
 //////////////////////////
 //////////////////////////
+#if SERVER
+void function SkydiveTrail_RevokeExpiredSeasonTrails( entity player )
+{
+	asset revocationList = SKYDIVE_REVOCATION_LIST
+	var assetBlock = GetSettingsBlockForAsset( revocationList )
+	array<ItemFlavor> itemsToRemove = []
+
+	foreach ( var block in IterateSettingsArray( GetSettingsBlockArray( assetBlock, "list" ) ) )
+	{
+		asset diveAsset = GetSettingsBlockAsset( block, "flavor" )
+		ItemFlavor diveFlavor = GetItemFlavorByAsset( diveAsset )
+
+		Assert( ItemFlavor_GetType( diveFlavor ) == eItemType.skydive_trail )
+		Assert( ItemFlavor_GetGRXMode( diveFlavor ) == eItemFlavorGRXMode.REGULAR  )
+
+		if ( GRX_HasItem( player, ItemFlavor_GetGRXIndex( diveFlavor ) ) )
+			itemsToRemove.append( diveFlavor )
+	}
+
+	if ( itemsToRemove.len() > 0 )
+	{
+		ScriptGRXOperationInfo operation
+		operation.expectedQueryGoal = GRX_HTTPQUERYGOAL_DELETE_ITEMS
+		operation.doOperationFunc = ( void function( int opID ) : ( player, itemsToRemove )
+		{
+			RemoveExpiredTrails( player, opID, itemsToRemove )
+		})
+
+		operation.onDoneCallback = (void function( int status ) : ( player, itemsToRemove )
+		{
+			if ( status != eScriptGRXOperationStatus.DONE_SUCCESS )
+				return
+
+			if ( IsValid( player ) )
+				ValidateGRXSpecificLoadoutSlotsForItemFlavors( player, itemsToRemove )
+		})
+
+		QueueGRXOperation( player, operation, false )
+	}
+}
+
+void function RemoveExpiredTrails( entity player, int opID, array<ItemFlavor> itemsToRemove )
+{
+	array<int> idxsToRemove = []
+	foreach ( ItemFlavor flavor in itemsToRemove )
+	{
+		idxsToRemove.append( ItemFlavor_GetGRXIndex( flavor ) )
+	}
+
+	GRX_RemoveCosmetics( player, opID, idxsToRemove )
+
+	// Reset the persistence state for each item we removed
+	// This is done before we affirm the delete, to err on the side of not showing a popup for deleted items if the response arrives late.
+	foreach ( ItemFlavor flavor in itemsToRemove )
+	{
+		// "new" red dot in menu titles
+		SettingsAssetGUID GUID = ItemFlavor_GetGUID( flavor )
+		Newness_MarkItemFlavorGUIDAsNotNewForPlayer( player, GUID )
+	}
+}
+#endif
 
 LoadoutEntry function Loadout_SkydiveTrail()
 {
@@ -311,3 +454,220 @@ SkyDiveTrailPackage function SkydiveTrail_GetPackageForIndex( int skydiveTrailIn
 	return fileLevel.skyDiveTrailPackageIndexTable[ skydiveTrailIndex ]
 
 }
+
+#if SERVER
+void function StopAllSkydiveSounds( entity player )
+{
+	SkyDiveTrailPackage package = GetSkyDiveTrailPackageForPlayerWithOverrides( player )
+	StopSoundOnEntity( player, package.DropSequenceLaunch1P )
+	StopSoundOnEntity( player, package.DropSequenceLaunch3P  )
+	StopSoundOnEntity( player, package.DropSequenceTravel1P )
+	StopSoundOnEntity( player, package.DropSequenceTravel3P )
+	StopSoundOnEntity( player, package.DropSequenceLandStart1P )
+	StopSoundOnEntity( player, package.DropSequenceLandStart3P )
+	StopSoundOnEntity( player, package.InGameFlightLaunch1P )
+	StopSoundOnEntity( player, package.InGameFlightLaunch3P )
+	StopSoundOnEntity( player, package.InGameFlightTravel1P )
+	StopSoundOnEntity( player, package.InGameFlightTravel3P )
+	StopSoundOnEntity( player, package.InGameFlightLandStart1P )
+	StopSoundOnEntity( player, package.InGameFlightLandStart3P )
+}
+#endif //if server
+
+#if CLIENT
+
+void function ClientCodeCallback_OnSkydiveStateChanged( entity skyDivingPlayer )
+{
+	UpdatePlayerSkydiveTrailFriendlyEnemyFX( skyDivingPlayer )
+
+	foreach ( callbackFunc in file.OnSkydiveStateChangedClientCallbacks )
+	{
+		callbackFunc( skyDivingPlayer )
+	}
+}
+
+void function UpdatePlayerSkydiveTrailFriendlyEnemyFX( entity player )
+{
+	if ( !IsValid( player ) )
+		return
+
+	CleanupFriendlyEnemySkydiveTrailFXForPlayer( player, "" )
+
+	StartFriendlyEnemySkydiveTrailFXForPlayer( player, "" )
+}
+
+void function StartFriendlyEnemySkydiveTrailFXForPlayer( entity skyDivingPlayer, string parameter )
+{
+	Assert( parameter == "", "allows only empty parameter" )
+
+	if ( !skyDivingPlayer.Player_IsSkydiving()  )
+		return
+
+	if ( skyDivingPlayer.Player_IsSkydiveAnticipating() )
+		return
+
+	thread StartFriendlyEnemySkydiveTrailFXForPlayer_threaded (skyDivingPlayer )
+}
+
+void function StartFriendlyEnemySkydiveTrailFXForPlayer_threaded( entity skyDivingPlayer )
+{
+	//PrintFunc()
+
+	EHI skyDivingPlayerEHI = ToEHI( skyDivingPlayer  )
+	if ( !( skyDivingPlayerEHI in fileLevel.EHIToFriendlyJumpJetFXHandlesTable  )  )
+		fileLevel.EHIToFriendlyJumpJetFXHandlesTable[ skyDivingPlayerEHI ] <- []
+
+	if ( !( skyDivingPlayerEHI in fileLevel.EHIToEnemyJumpJetFXHandlesTable  )  )
+		fileLevel.EHIToEnemyJumpJetFXHandlesTable[ skyDivingPlayerEHI ] <- []
+
+	LoadoutEntry entry = Loadout_SkydiveTrail()
+
+	#if CLIENT
+	while( !IsLocalClientEHIValid() )
+	{
+		WaitFrame()
+	}
+	#endif
+
+	while ( !LoadoutSlot_IsReady( ToEHI( skyDivingPlayer ), entry ) )
+	{
+		WaitFrame()
+	}
+
+	SkyDiveTrailPackage package = GetSkyDiveTrailPackageForPlayerWithOverrides( skyDivingPlayer )
+
+	entity localViewPlayer = GetLocalViewPlayer()
+	if ( IsValid( localViewPlayer ) && skyDivingPlayer.GetTeam() == localViewPlayer.GetTeam() )
+	{
+		array<SkyDiveTrailFXStruct> friendlyJumpJetFX = package.friendlyJumpJet
+		foreach( fxStruct in friendlyJumpJetFX )
+		{
+			string attachment = fxStruct.attachName
+			int friendlyID = GetParticleSystemIndex( fxStruct.fx )
+			int attachmentID = skyDivingPlayer.LookupAttachment( attachment )
+
+			// There is a rare bug where this attachment doesn't exist. Instead of crashing, just don't play the vfx if the attachment point is missing
+			if ( attachmentID == 0 )
+				continue
+
+			int friendlyFXHandle = StartParticleEffectOnEntity( skyDivingPlayer, friendlyID, fxStruct.attachType, attachmentID )
+
+			vector smokeColor
+			if ( fxStruct.useSkyDiveSmokeColorForTeam  )
+				smokeColor = GetSkydiveSmokeColorForTeam( skyDivingPlayer.GetTeam() )
+			else
+				smokeColor = fxStruct.controlPoint
+
+			EffectSetControlPointVector( friendlyFXHandle, 1, smokeColor )
+			fileLevel.EHIToFriendlyJumpJetFXHandlesTable[ skyDivingPlayerEHI ].append( friendlyFXHandle  )
+		}
+	}
+	else
+	{
+		array<SkyDiveTrailFXStruct> enemyJumpJetFX =  package.enemyJumpJet
+		foreach( fxStruct in enemyJumpJetFX )
+		{
+			string attachment = fxStruct.attachName
+			int enemyID = GetParticleSystemIndex( fxStruct.fx )
+			int attachmentID = skyDivingPlayer.LookupAttachment( attachment )
+
+			// There is a rare bug where this attachment doesn't exist. Instead of crashing, just don't play the vfx if the attachment point is missing
+			if ( attachmentID == 0 )
+				continue
+
+			int enemyFXHandle = StartParticleEffectOnEntity( skyDivingPlayer, enemyID, fxStruct.attachType, attachmentID )
+
+			vector smokeColor
+			if ( fxStruct.useSkyDiveSmokeColorForTeam  )
+				smokeColor = GetSkydiveSmokeColorForTeam( skyDivingPlayer.GetTeam()  )
+			else
+				smokeColor = fxStruct.controlPoint
+
+			EffectSetControlPointVector( enemyFXHandle, 1, smokeColor )
+			fileLevel.EHIToEnemyJumpJetFXHandlesTable[ skyDivingPlayerEHI ].append( enemyFXHandle  )
+		}
+	}
+
+	array<SkyDiveTrailPropStruct> skydiveProps = package.props
+	foreach ( prop in skydiveProps )
+	{
+		thread CreateSkydiveTrailProp_Thread( skyDivingPlayer, prop )
+	}
+}
+
+void function CreateSkydiveTrailProp_Thread( entity skyDivingPlayer, SkyDiveTrailPropStruct propStruct )
+{
+	wait propStruct.createTime
+
+	entity prop = CreateClientSidePropDynamic( skyDivingPlayer.GetOrigin() , skyDivingPlayer.GetAngles(), propStruct.model )
+	prop.SetParent( skyDivingPlayer, propStruct.attachName )
+	prop.SetLocalOrigin( propStruct.offset )
+	prop.SetLocalAngles( propStruct.angle )
+	prop.EndSignal( "OnDestroy" )
+	if ( propStruct.animSeq != $""  )
+		prop.Anim_PlayOnly( propStruct.animSeq )
+
+	OnThreadEnd(
+		function() : ( prop )
+		{
+			if ( IsValid( prop ) )
+				prop.Destroy()
+		}
+	)
+
+	if ( propStruct.destroyTime > 0 )
+	{
+		wait propStruct.destroyTime
+
+		return
+	}
+
+	WaitSignal( skyDivingPlayer, "Skydivetrail_DestroyProp" )
+}
+
+void function CleanupFriendlyEnemySkydiveTrailFXForPlayer( entity skyDivingPlayer, string parameter )
+{
+	Assert( parameter == "", "allows only empty parameter" )
+
+	//PrintFunc()
+	EHI skyDivingPlayerEHI = ToEHI( skyDivingPlayer  )
+
+	if ( skyDivingPlayerEHI in fileLevel.EHIToFriendlyJumpJetFXHandlesTable )
+	{
+		foreach( int friendlyFXHandle in fileLevel.EHIToFriendlyJumpJetFXHandlesTable[ skyDivingPlayerEHI ] )
+			EffectStop(  friendlyFXHandle, true, false ) //do removeAllParticlesNow, don'tPlayEndCap
+
+		fileLevel.EHIToFriendlyJumpJetFXHandlesTable[ skyDivingPlayerEHI ].clear()
+	}
+
+	if (  skyDivingPlayerEHI in fileLevel.EHIToEnemyJumpJetFXHandlesTable )
+	{
+		foreach( int enemyFXHandle in fileLevel.EHIToEnemyJumpJetFXHandlesTable[ skyDivingPlayerEHI ] )
+			EffectStop(  enemyFXHandle, true, false ) //do removeAllParticlesNow, don'tPlayEndCap
+
+		fileLevel.EHIToEnemyJumpJetFXHandlesTable[ skyDivingPlayerEHI ].clear()
+	}
+
+	Signal( skyDivingPlayer, "Skydivetrail_DestroyProp" )
+}
+
+void function SkydiveTrail_AddOnSkydiveStateChangedClientCallback( void functionref( entity ) callbackFunc )
+{
+	Assert( !file.OnSkydiveStateChangedClientCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with " + FUNC_NAME() )
+	file.OnSkydiveStateChangedClientCallbacks.append( callbackFunc )
+}
+#endif // CLIENT
+
+#if SERVER && DEVELOPER
+void function SkydiveTrail_SetForPlayer( entity player, asset skyDiveTrailAsset  )
+{
+	ItemFlavor flavor = GetItemFlavorByAsset( skyDiveTrailAsset )
+	SetOverrideSkydiveTrailPackageForPlayer( SkydiveTrail_GetSkyDiveTrailPackageFromItemFlavor( flavor ), player  )
+}
+
+void function SkydiveTrail_SetForAllPlayers( void functionref( entity player ) funcref  )
+{
+	SetOnPlayerSkydiveCustomTrailsCallback( funcref  )
+}
+
+#endif //SERVER && DEV

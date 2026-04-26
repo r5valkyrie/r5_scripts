@@ -7,18 +7,26 @@ global function GetUIVar
 	global function SetUIVar
 #endif
 
-global function ServerCallback_SetUIVar
+global function UICallback_SetUIVar
 global function RegisterUIVarChangeCallback
-
-#if SERVER
-	global function SyncUIVars
-#endif
-
+table<string, void functionref(string, var)> _uiVarsSetters = {}
+table _uiVarChangeCallbacks = {}
 table _uiVars = {}
 table _uiEntityVars = {}
 table _uiVarHandles = {}
 int _nextUIVarIndex = 0
-table _uiVarChangeCallbacks = {}
+#if SERVER
+	global function SyncUIVars
+void function UIVars_SetterTime(string varName, value)
+{
+	SetGlobalNonRewindNetTime(varName, expect float( value ) )
+}
+void function UIVars_SetterBool(string varName, value)
+{
+	SetGlobalNonRewindNetBool(varName, expect bool( value ) )
+}
+#endif
+
 
 void function UIVars_Init()
 {
@@ -39,20 +47,34 @@ void function UIVars_Init()
 	RegisterUIVar( "gameState", -1 )
 	RegisterUIVar( "forceLoadoutEnabled", false )
 	RegisterUIVar( "survivorTitanfallTime", 0 )
-	RegisterUIVar( "putPlayerInMatchmakingAfterDelay", false )
+	// we need to init on server, client and UI VM.
+	// UI needs to keep duplication of states because they do not respect a strict replication model
+	// callback for var change will be triggered from net script on client VM and updated on UI VM
+	// register vars in _remote_functions_mp.gnut at the // UI marker
+
+	RegisterUIVarTime( "uiGameStartTime", -1.0 )
+	RegisterUIVarBool( "uiDisableDev", true )
+}
+
+void function RegisterUIVarTime(string varName, float value)
+{
+	RegisterUIVar(varName, value)
+
+#if SERVER
+	_uiVarsSetters[varName] <- UIVars_SetterTime
+#endif
+}
+void function RegisterUIVarBool(string varName, bool value)
+{
+	RegisterUIVar(varName, value)
+
+#if SERVER
+	_uiVarsSetters[varName] <- UIVars_SetterBool
+#endif
 }
 
 void function RegisterUIVar( string varName, value )
 {
-	Assert( !(varName in _uiVars ) )
-
-	if ( IsServer() )
-		_uiVarHandles[varName] <- _nextUIVarIndex
-	else
-		_uiVarHandles[_nextUIVarIndex] <- varName
-
-	_nextUIVarIndex++
-
 	_uiVars[varName] <- value
 }
 
@@ -69,39 +91,23 @@ function GetUIVar( obj, string varName )
 void function SetUIVar( table<string,var> obj, string varName, value )
 {
 	Assert( varName in _uiVars )
+	Assert( varName in _uiVarsSetters )
 	Assert( typeof value != "string" )
 
-	if ( _uiVars[varName] == value )
-		return
-
 	_uiVars[varName] = value
+	_uiVarsSetters[varName](varName, value)
 
 	// Run change callback if one exists
 	thread UIVarChangedCallbacks( varName )
-
-	// Update the var on all clients
-	array<entity> players = GetPlayerArray()
-	foreach ( player in players )
-	{
-		if ( !player.p.clientScriptInitialized )
-			continue
-
-		Remote_CallFunction_UI( player, "ServerCallback_SetUIVar", _uiVarHandles[varName], value )
-	}
 }
 #endif // SERVER
 
-function ServerCallback_SetUIVar( varHandle, value )
+// called from client VM
+function UICallback_SetUIVar( string varName, value )
 {
-	local varName = _uiVarHandles[varHandle]
-
 	_uiVars[varName] = value
 
-	if ( !(varName in _uiVarChangeCallbacks) )
-		return
-
-	foreach ( callbackFunc in _uiVarChangeCallbacks[varName] )
-		callbackFunc()
+	UIVarChangedCallbacks(varName)
 }
 
 void function RegisterUIVarChangeCallback( string varName, callbackFunc )
@@ -127,7 +133,6 @@ void function SyncUIVars( entity player )
 {
 	foreach ( varName, value in _uiVars )
 	{
-		Remote_CallFunction_UI( player, "ServerCallback_SetUIVar", _uiVarHandles[varName], value )
 	}
 }
 #endif

@@ -4,6 +4,7 @@ global function MpWeaponSniper_Init
 global function OnWeaponActivate_weapon_sniper
 global function OnWeaponPrimaryAttack_weapon_sniper
 global function OnProjectileCollision_weapon_sniper
+global const string KRABER_WEAPON_NAME = "mp_weapon_sniper"
 
 #if CLIENT
 global function OnClientAnimEvent_weapon_sniper

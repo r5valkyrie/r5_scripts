@@ -278,7 +278,7 @@ void function Chroma_SkyDiveUpdate()
 			Chroma_RemovePersistentOverlay( overlay, CHROMATRANS_CONELEFT + idx, SkyDiveLayerTransitionTime )
 	})
 
-	LoadoutEntry characterSlot = Loadout_CharacterClass()
+	LoadoutEntry characterSlot = Loadout_Character()
 
 	Chroma_SetBaseLayer( CHROMALOOP_SMOOTHNOISE, CHROMATRANS_FLAGS, {[0.0] = <0,0,0>}, 2.0 )
 
@@ -580,7 +580,7 @@ Assert( CHROMAWAVE_VERTICALONE + 2 == CHROMAWAVE_VERTICALTHREE )
 
 vector function GetAmmoChromaColor( string ref )
 {
-	vector color = ammoColors[ref]
+	vector color = GetAmmoColorByType( ref )
 	float maxComp = max( max( max( color.x, color.y ), color.z ), 0.1 )
 	return color / maxComp
 }
@@ -710,7 +710,7 @@ void function Chroma_ViewPlayerChanged( entity player )
 void function Chroma_UltimateReady()
 {
 	entity player              = GetLocalViewPlayer()
-	LoadoutEntry characterSlot = Loadout_CharacterClass()
+	LoadoutEntry characterSlot = Loadout_Character()
 
 	if ( !LoadoutSlot_IsReady( ToEHI( player ), characterSlot ) )
 		return
@@ -852,7 +852,7 @@ void function Chroma_PlayerUsedAbility( entity player, entity offhandWeapon )
 		return
 	}
 
-	LoadoutEntry characterSlot = Loadout_CharacterClass()
+	LoadoutEntry characterSlot = Loadout_Character()
 	if ( !LoadoutSlot_IsReady( ToEHI( player ), characterSlot ) )
 		return
 	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), characterSlot )

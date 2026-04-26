@@ -684,34 +684,7 @@ WeaponData
 		}
 }
 
-	"ui1_enable"		"1"
-	"ui1_draw_cloaked"	"1"
-	UiData1
-	{
-		"ui"							"ui/car_smg_ammo_counter_small"
-		"mesh"							"models/weapons/attachments/car_smg_rui_upper"
-		Args
-		{
-			vis							player_zoomfrac
-			ammo						weapon_ammo
-			clipSize					weapon_clipSize
-			clipCount					weapon_ammoClipCount
-		}
-	}
 
-	"ui2_enable"		"1"
-	UiData2
-	{
-		"ui"							"ui/car_smg_ammo_counter"
-		"mesh"							"models/weapons/attachments/car_smg_rui_lower"
-		Args
-		{
-			vis							player_zoomfrac
-			ammo						weapon_ammo
-			clipSize					weapon_clipSize
-			clipCount					weapon_ammoClipCount
-		}
-	}
 
 	"ui3_enable"		"0"
 	"ui3_draw_cloaked"	"1"

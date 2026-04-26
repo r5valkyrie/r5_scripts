@@ -7,8 +7,6 @@ global function CustomizeCharacterMenu_SetCharacter
 struct
 {
 	var menu
-	var titleRui
-	var decorationRui
 
 	var prevButton
 	var nextButton
@@ -21,16 +19,13 @@ struct
 const bool NEXT = true
 const bool PREV = false
 
-void function InitCustomizeCharacterMenu( var newMenuArg )
+void function InitCustomizeCharacterMenu( var newMenuArg )                                               
 {
 	var menu = GetMenu( "CustomizeCharacterMenu" )
 	file.menu = menu
 
 	SetTabRightSound( menu, "UI_Menu_LegendTab_Select" )
 	SetTabLeftSound( menu, "UI_Menu_LegendTab_Select" )
-
-	file.titleRui = Hud_GetRui( Hud_GetChild( menu, "Title" ) )
-	file.decorationRui = Hud_GetRui( Hud_GetChild( menu, "Decoration" ) )
 
 	file.prevButton = Hud_GetChild( menu, "PrevButton" )
 	HudElem_SetRuiArg( file.prevButton, "flipHorizontal", true )
@@ -53,32 +48,58 @@ void function CustomizeCharacterMenu_SetCharacter( ItemFlavor character )
 
 void function CustomizeCharacterMenu_OnOpen()
 {
+	SetCurrentHubForPIN( "menu_CustomizeCharacterMenu" )                                                
+
 	if ( !file.tabsInitialized )
 	{
-		array<var> panels = GetMenuTabBodyPanels( file.menu )
-		foreach ( panel in panels )
-			AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
-
+		{
+			var panel = Hud_GetChild( file.menu, "CharacterSkinsPanel" )
+			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
+			tab.isBannerLogoSmall = true
+			SetTabBaseWidth( tab, 160 )
+		}
+		{
+			var panel = Hud_GetChild( file.menu, "CharacterCardsPanelV2" )
+			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
+			tab.isBannerLogoSmall = true
+			SetTabBaseWidth( tab, 210 )
+		}
+		{
+			var panel = Hud_GetChild( file.menu, "CharacterEmotesPanel" )
+			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
+			tab.isBannerLogoSmall = true
+			SetTabBaseWidth( tab, 220 )
+		}
+		{
+			var panel = Hud_GetChild( file.menu, "CharacterExecutionsPanel" )
+			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
+			tab.isBannerLogoSmall = true
+			SetTabBaseWidth( tab, 200 )
+		}
 		file.tabsInitialized = true
 	}
 
 	Assert( file.characterOrNull != null, "CustomizeCharacterMenu_SetCharacter must be called before advancing to " + Hud_GetHudName( file.menu ) )
 	ItemFlavor character = expect ItemFlavor( file.characterOrNull )
+
 	SetTopLevelCustomizeContext( character )
 
-	if ( uiGlobal.lastMenuNavDirection == MENU_NAV_FORWARD )
+	if ( GetLastMenuNavDirection() == MENU_NAV_FORWARD )
 	{
 		TabData tabData = GetTabDataForPanel( file.menu )
+		tabData.centerTabs = true
+		tabData.bannerTitle = Localize( ItemFlavor_GetLongName( character ) ).toupper()
+		tabData.bannerLogoImage = ItemFlavor_GetIcon( character )
+		tabData.bannerLogoScale = 0.7
+		SetTabBackground( tabData, Hud_GetChild( file.menu, "TabsBackground" ), eTabBackground.CAPSTONE )
+
+		SetTabDefsToSeasonal(tabData)
 		ActivateTab( tabData, 0 )
 	}
-	//else
-	//	ActivateTab( file.menu, GetMenuActiveTabIndex( file.menu ) )
-
-	RuiSetString( file.titleRui, "title", Localize( ItemFlavor_GetLongName( character ) ).toupper() )
-	RuiSetGameTime( file.decorationRui, "initTime", Time() )
 
 	RegisterNewnessCallbacks( character )
-
+	EmotesPanel_CreateTabs()
+	CharacterCardsPanel_CreateTabs()
 }
 
 
@@ -86,6 +107,9 @@ void function CustomizeCharacterMenu_OnClose()
 {
 	ItemFlavor character = expect ItemFlavor( file.characterOrNull )
 	DeregisterNewnessCallbacks( character )
+
+	EmotesPanel_DestroyTabs()
+	CharacterCardsPanel_DestroyTabs()
 
 	file.characterOrNull = null
 	SetTopLevelCustomizeContext( null )
@@ -96,20 +120,18 @@ void function CustomizeCharacterMenu_OnClose()
 
 void function RegisterNewnessCallbacks( ItemFlavor character )
 {
-	string cardPanelString = "CharacterCardsPanelV2"
 	Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterSkinsTab[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( "CharacterSkinsPanel" ) )
-	Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterCardTab[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( cardPanelString ) )
-	//Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterQuipsTab[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( "CharacterQuipsPanel" ) )
+	Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterCardTab[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( "CharacterCardsPanelV2" ) )
+	Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterQuipsTab[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( "CharacterEmotesPanel" ) )
 	Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterFinishersTab[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( "CharacterExecutionsPanel" ) )
 }
 
 
 void function DeregisterNewnessCallbacks( ItemFlavor character )
 {
-	string cardPanelString = "CharacterCardsPanelV2"
 	Newness_RemoveCallback_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterSkinsTab[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( "CharacterSkinsPanel" ) )
-	Newness_RemoveCallback_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterCardTab[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( cardPanelString ) )
-	//Newness_RemoveCallback_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterQuipsTab[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( "CharacterQuipsPanel" ) )
+	Newness_RemoveCallback_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterCardTab[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( "CharacterCardsPanelV2" ) )
+	Newness_RemoveCallback_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterQuipsTab[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( "CharacterEmotesPanel" ) )
 	Newness_RemoveCallback_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterFinishersTab[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( "CharacterExecutionsPanel" ) )
 }
 
@@ -117,8 +139,6 @@ void function DeregisterNewnessCallbacks( ItemFlavor character )
 void function CustomizeCharacterMenu_OnNavigateBack()
 {
 	Assert( GetActiveMenu() == file.menu )
-
-	UI_SetPresentationType( ePresentationType.CHARACTER_SELECT )
 
 	CloseActiveMenu()
 }
@@ -165,7 +185,8 @@ void function SwitchCharacters( bool direction )
 	RegisterNewnessCallbacks( nextCharacter )
 	file.characterOrNull = nextCharacter
 	SetTopLevelCustomizeContext( nextCharacter )
-	RuiSetString( file.titleRui, "title", Localize( ItemFlavor_GetLongName( nextCharacter ) ).toupper() )
+	TabData tabData = GetTabDataForPanel( file.menu )
+	tabData.bannerTitle = Localize( ItemFlavor_GetLongName( nextCharacter ) ).toupper()
 }
 
 

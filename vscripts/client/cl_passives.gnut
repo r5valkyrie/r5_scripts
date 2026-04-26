@@ -51,7 +51,6 @@ void function OnPlayerClassChanged_CLPassives( entity player )
 		callbackFunc( player )
 	}
 }
-
 void function OnSpectatorTargetChanged( entity observer, entity prevTarget, entity newTarget )
 {
 	if ( !IsPrivateMatch() )

@@ -48,7 +48,7 @@ const int SONIC_BLAST_RADIUS_FX_SPACING = 200
 //const int ORIGINAL_SONIC_BLAST_TUBE_LENGTH = 850 //Best estimate at how long the tube VFX is by using debug draws.  No easy way to get a length from maya and convert to in game units?
 //const int SONIC_BLAST_DETONATION_AUDIO_CHECK_SEGMENTS = 5
 
-#if DEV
+#if DEVELOPER
 const bool SONIC_BLAST_DEBUG = false
 #endif
 
@@ -64,11 +64,6 @@ const string SONIC_BLAST_SECOND_CHARGE_1P = "Seer_Tac_Shot_1p"  //player shootin
 const string SONIC_BLAST_SECOND_CHARGE_3P = "Seer_Tac_Shot_3p"  //3p char shooting Tac - AK
 const string SONIC_BLAST_CYLINDER_FORM_3P = "Seer_Tac_Cylinder_Form_3p"  //3p Tac Cylinder creation before explode. -AK
 const string SONIC_BLAST_TARGET_ACQUIRED_SOUND = "Seer_AcquireTarget_1P"
-
-// Heartbeat sensor constants (from Seer passive)
-global const float HEARTBEAT_SENSOR_NATURAL_RANGE = 50
-global const float HEARTBEAT_SENSOR_NATURAL_RANGE_UPGRADE = 75
-global const float HEARTBEAT_SENSOR_INITIAL_ACTIVATION_DELAY_DEFAULT = 0.4
 
 struct
 {
@@ -650,7 +645,7 @@ void function SonicBlast_Highlight_Thread( entity victim, int team, float durati
 		{
 			if ( IsValid( victim ) )
 			{
-				DecrementHighlightEnableForTeam( victim, team )
+				DecrementHighlightEnableForTeam( victim, GetHighlightId( HIGHLIGHT_NOVA_BLACKHOLE_THREAT ), team )
 			}
 		}
 	)
@@ -658,7 +653,7 @@ void function SonicBlast_Highlight_Thread( entity victim, int team, float durati
 	if( IsValid( victim ) )
 	{
 		StatusEffect_AddTimed( victim, eStatusEffect.seer_highlight_target, 1.0, duration, 0.5 )
-		IncrementHighlightEnableForTeam( victim, team )
+		IncrementHighlightEnableForTeam( victim, GetHighlightId( HIGHLIGHT_NOVA_BLACKHOLE_THREAT ), team )
 	}
 
 	wait duration
@@ -917,7 +912,7 @@ void function ServerToClient_ShowHealthRUI_Thread( entity owner, entity victim, 
 	float endTime = Time() + duration
 	bool visible = true
 
-	#if DEV
+	#if DEVELOPER
 	if ( SONIC_BLAST_DEBUG )
 	{
 		printt("ServerToClient_ShowHealthRUI_Thread - Showing HP Bars for " + victim.GetPlayerName())
@@ -985,7 +980,7 @@ void function DoClientSideDetonationSound_Thread( float detonationTime, vector s
 		deltaTime = detonationTime - Time()
 	}
 
-	#if DEV
+	#if DEVELOPER
 	if ( SONIC_BLAST_DEBUG )
 	{
 		printt(FUNC_NAME() + " deltaTime for blast: " + deltaTime )
@@ -994,7 +989,7 @@ void function DoClientSideDetonationSound_Thread( float detonationTime, vector s
 
 	wait deltaTime
 
-	#if DEV
+	#if DEVELOPER
 	if ( SONIC_BLAST_DEBUG )
 	{
 		printt( FUNC_NAME() + " Sonic Blast Detonation at: " + Time() )

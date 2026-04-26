@@ -39,9 +39,8 @@ const asset DEATH_TOTEM_SHADOW_DEATH_FX = $"P_BShadow_death"
 const asset DEATH_TOTEM_SHADOW_TIMER_FX = $"P_Bshadow_timer"
 const asset DEATH_TOTEM_FX = $"P_death_totem"
 const asset DEATH_TOTEM_FLASH_FX = $"P_death_totem_flash"
-const string ULTIMATE_ACTIVE_MOD_STRING = "ultimate_active"
 const string SIGNAL_TELEPORTED = "Teleported"
-const string HIGHLIGHT_FRIENDLY_PLAYER_DECOY = "friendly_player_decoy"
+// HIGHLIGHT_FRIENDLY_PLAYER_DECOY — now in sh_highlight.gnut (S22)
 const asset DEATH_TOTEM_GROUND_FX = $"P_death_totem_ground"
 
 //Markers
@@ -425,7 +424,7 @@ void function DeathTotem_DeployTotem( entity owner, vector origin, vector angles
 	totemProxy.SetUsable()
 	totemProxy.AddUsableValue( USABLE_BY_TEAMMATES | USABLE_BY_ENEMIES | USABLE_BLOCK_CONTINUOUS_USE | USABLE_CUSTOM_HINTS ) //Update hint text every server frame so that we can keep unique client texts up to date.
 	totemProxy.SetUsePrompts( "#DEATH_TOTEM_TOTEM_USE", "#DEATH_TOTEM_TOTEM_USE" )
-	//SetCallback_CanUseEntityCallback_Retail( totemProxy, DeathTotem_CanUseTotem )
+	//SetCallback_CanUseEntityCallback( totemProxy, DeathTotem_CanUseTotem )
 	AddCallback_OnUseEntity_ClientServer( totemProxy, DeathTotem_OnTotemUse )
 
 	totemProxy.e.isBusy = false
@@ -453,7 +452,7 @@ void function DeathTotem_CleanupWeaponOnBleedout( entity player )
 	entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
 	if( IsValid( weapon ) && weapon.GetWeaponClassName() == DEATH_TOTEM_WEAPON_NAME && weapon.w.wasFired )
 	{
-		UnlockWeaponsAndMelee_Retail( player, DEATH_TOTEM_WEAPON_NAME )
+		UnlockWeaponsAndMelee( player, DEATH_TOTEM_WEAPON_NAME )
 		weapon.w.wasFired = false
 	}
 }
@@ -1143,7 +1142,7 @@ void function ShadowSquadApplyCharacterSkin( entity player )
 	//////////////////////////////////////////////
 	// Switch to base character model for Legend
 	/////////////////////////////////////////////
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ),  Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ),  Loadout_Character() )
 	ItemFlavor skin = GetDefaultItemFlavorForLoadoutSlot( ToEHI( player ), Loadout_CharacterSkin( character ) )
 	CharacterSkin_Apply( player, skin )
 
@@ -1177,7 +1176,7 @@ void function SetShadowAbilitiesSkin( entity player )
 #if SERVER
 void function ShadowSquadCancelCharacterSkin( entity player )
 {
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ),  Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ),  Loadout_Character() )
 	LoadoutEntry skinSlot = Loadout_CharacterSkin( character )
 	ItemFlavor skin = LoadoutSlot_GetItemFlavor( ToEHI( player ), skinSlot )
 
@@ -1513,7 +1512,7 @@ void function DeathTotem_StartVisualEffect( entity ent, int statusEffect, bool a
 
 	//RuiSetFloat( file.deathProtectionStatusRui, "maxDuration", file.deathTotemBuffDuration )
 	RuiTrackFloat( file.deathProtectionStatusRui, "timeRemaining", ent, RUI_TRACK_STATUS_EFFECT_TIME_REMAINING, eStatusEffect.death_totem_visual_effect )
-	//RuiTrackInt( file.deathProtectionStatusRui, "gameState", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "gameState" ) )
+	//RuiTrackInt( file.deathProtectionStatusRui, "gameState", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndexSafe( "gameState" ) )
 
 
 	entity cockpit = ent.GetCockpit()
@@ -1775,7 +1774,7 @@ void function OnWeaponDeactivate_ability_revenant_death_totem( entity weapon )
 	#if SERVER
 		if( weapon.w.wasFired )
 		{
-			UnlockWeaponsAndMelee_Retail( ownerPlayer, DEATH_TOTEM_WEAPON_NAME )
+			UnlockWeaponsAndMelee( ownerPlayer, DEATH_TOTEM_WEAPON_NAME )
 			weapon.w.wasFired = false
 		}
 	#endif
@@ -1879,4 +1878,4 @@ vector function ClampViewVectorToMaxAngle( vector vec1, vector vec2, float angle
 	perpendicularVector.Normalize()
 	vector newVector = vec1 * deg_cos( angle ) + perpendicularVector * deg_sin( angle )
 	return newVector
-} 
+}

@@ -85,7 +85,7 @@ void function ClientCodeCallback_MapInit()
 	DesertlandsTrainAnnouncer_Init()
 	ClLaserMesh_Init()
 	Desertlands_MapInit_Common()
-	
+
 	//Story event func
 	//ClDesertlandsStoryEvents_Init()
 	//ClCommonStoryEvents_Init()
@@ -93,7 +93,7 @@ void function ClientCodeCallback_MapInit()
 	//ShPrecacheBreachAndClearAssets()
 	//ShPrecacheTreasureExtractionAssets()
 
-	MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_desertlands_mu3.rpak" )
+	//MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_desertlands_mu3.rpak" )
 
 	AddCreateCallback( "trigger_cylinder_heavy", Geyser_OnJumpPadCreated )
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
@@ -107,7 +107,7 @@ void function ClientCodeCallback_MapInit()
 	SURVIVAL_AddMinimapLevelLabel( "#DES_ZONE_13_LAVA_SIPHON", 0.58, 0.74, 0.5 )
 	SURVIVAL_AddMinimapLevelLabel( "#DES_ZONE_4_CLIMATIZER", 0.72, 0.19, 0.5 )
 	SURVIVAL_AddMinimapLevelLabel( "#DES_ZONE_5_LANDSLIDE", 0.36, 0.47, 0.5 )
-	
+
 	//Mu2 Zones
 	SURVIVAL_AddMinimapLevelLabel( "DES_ZONE_8_STAGING", 0.31, 0.59, 0.5 )
 	SURVIVAL_AddMinimapLevelLabel( "#DES_ZONE_16_LAUNCH_SITE", 0.56, 0.90, 0.5 )
@@ -118,7 +118,7 @@ void function ClientCodeCallback_MapInit()
 	SURVIVAL_AddMinimapLevelLabel( "#DES_ZONE_6_FRAGMENT_EAST", 0.66, 0.44, 0.5 )
 	SURVIVAL_AddMinimapLevelLabel( "#DES_ZONE_3_SURVEY", 0.59, 0.20, 0.5 )
 	SURVIVAL_AddMinimapLevelLabel( "#DES_ZONE_9_HARVESTER", 0.47, 0.60, 0.5 )
-	
+
 	//Old Zones
 	SURVIVAL_AddMinimapLevelLabel( "#DES_ZONE_11_THERMAL_STATION", 0.28, 0.73, 0.5 )
 	SURVIVAL_AddMinimapLevelLabel( "#DES_ZONE_7_SNOW_FIELD", 0.85, 0.40, 0.5 )
@@ -247,7 +247,7 @@ void function LavaSiphon_Cleanup_Thread( int fx, entity sfx )
 {
 	// Wait max duration of fx so we don't destroy it before it finishes
 	wait LAVA_SIPHON_FLOAT_CLEANUP
-	
+
 	if ( IsValid( fx ) )
 		EffectStop( fx, true, true )
 

@@ -484,7 +484,7 @@ void function DeathBoxFlyer_TookDamageThread( entity flyer, var damageInfo )
 
 			vector deathBoxDropVelocity = <0, 0, 300> + flyer.GetForwardVector() * 150
 
-			thread FakePhysicsThrow_Retail( null, deathBox, deathBoxDropVelocity, false )
+			thread FakePhysicsThrow( null, deathBox, deathBoxDropVelocity, false )
 
 			// AddFlyerDeathboxToSurvivalList( deathBox )
 

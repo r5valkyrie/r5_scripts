@@ -2,7 +2,7 @@ global function ShInit_PhaseRunner
 global function CodeCallback_MapInit
 
 void function CodeCallback_MapInit()
-{	
+{
 	#if SERVER
 	thread InitARBarriers()
 	#endif
@@ -24,7 +24,7 @@ void function InitARBarriers()
 {
 	AddSpawnCallback( "func_brush", void function ( entity brush )
 	{
-		brush.Destroy()//TODO: Recover this function once we get correct shaders and arenas -LorryLeKral
+		brush.Destroy()//TODO: Recover this function once we get correct shaders and arenas -Kral
 	} )
 }
 #endif

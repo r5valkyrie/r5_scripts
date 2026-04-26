@@ -39,8 +39,8 @@ const float JUMP_PAD_ACTIVATION_TIME = 0.5
 const bool JUMP_PAD_USES_VORTEX_SPHERE = false
 
 const float GRAVITY_CANNON_LAUNCH_DELAY = 1.0
-float GRAVITY_CANNON_LAUNCH_VELOCITY = 1600.0
-float GRAVITY_CANNON_VERTICAL_MULTIPLIER = 1.5
+float GRAVITY_CANNON_LAUNCH_VELOCITY = 1350.0
+float GRAVITY_CANNON_VERTICAL_MULTIPLIER = 1.1
 const vector GRAVITY_CANNON_LAUNCH_OFFSET = <0, 0, 50>
 asset GRAVITY_CANNON_LAUNCH_SEQUENCE = $"animseq/props/gravity_cannon/gravity_cannon/gravity_cannon_fireA.rseq"
 
@@ -378,7 +378,7 @@ void function JumpPad_CreateTriggerEntity( entity jumpPad, entity owner )
 
 void function JumpPad_OnTouchTrigger_Server( entity trigger, entity ent )
 {
-	#if !DEV
+	#if !DEVELOPER
 	if ( !IsValid( trigger ) )
 		return
 	#endif

@@ -15,7 +15,7 @@ global function DEV_TropicsWildlife_DestroyAllSkits
 global function DEV_TropicsWildlife_CreateAllSkits
 global function DEV_TropicsWildlife_HardResetAllSkits
 global function DEV_TropicsWildlife_GetCampDetailsAllString
-#endif // DEV && SERVER
+#endif // DEVELOPER && SERVER
 
 #if SERVER
 global function Wildlife_ClientToServer_PingWildlifeFromMap
@@ -28,7 +28,7 @@ global function ServerCallback_CL_CampClearedNoMaterialRewards
 
 #if DEVELOPER
 const bool TROPICS_WILDLIFE_AI_DEBUG = false
-#endif // DEV
+#endif // DEVELOPER
 
 #if CLIENT
 const asset PROWLER_PIT_CAMP_ICON = $"rui/hud/gametype_icons/survival/prowler_pit_icon"
@@ -551,8 +551,8 @@ void function TropicsWildlife_OnDeathFieldStartShrink( table<int,DeathFieldData>
 
 	s_externalWildlifeCampDatas.clear()
 	array<WildlifeCampData> campDatas = clone s_activeWildlifeCampDatas
-	vector nextCircleCenter = SURVIVAL_GetDeathFieldCenter()
-	float roundEndRadius = SURVIVAL_Server_GetNextDeathFieldEndRadius()
+	vector nextCircleCenter = SURVIVAL_GetDeathFieldCenter( Survival_Loot_GetDefaultRealm() )
+	float roundEndRadius = SURVIVAL_Server_GetNextDeathFieldEndRadius( Survival_Loot_GetDefaultRealm() )
 	foreach ( WildlifeCampData campData in s_activeWildlifeCampDatas )
 	{
 		float distance = Distance2D( campData.assaultPoint.origin, nextCircleCenter )
@@ -642,7 +642,7 @@ void function TropicsWildlife_OnSurvivalDeathFieldStageChanged(int stage, float 
 	}
 
 	array<WildlifeCampData> campDatas = clone s_activeWildlifeCampDatas
-	vector nextCircleCenter = SURVIVAL_GetDeathFieldCenter()
+	vector nextCircleCenter = SURVIVAL_GetDeathFieldCenter( 0 )
 	float roundRadius = SURVIVAL_GetDeathFieldCurrentRadius()
 	foreach ( WildlifeCampData campData in s_activeWildlifeCampDatas )
 	{
@@ -1088,7 +1088,7 @@ int function ProwlerDenOnAdditionalSpawnCheckCallback( ProwlerDenData denData, b
 			// if the Prowler Den is covered by the ring and its not "red" i.e.: has an extended assault radius
 			if ( !isForced && campData.limitProwlerAssaultRadius )
 			{
-				vector nextCircleCenter = SURVIVAL_GetDeathFieldCenter()
+				vector nextCircleCenter = SURVIVAL_GetDeathFieldCenter( 0 )
 				float curDeathFieldRadius = SURVIVAL_GetDeathFieldCurrentRadius()
 				float distance = Distance2D( denData.denEntity.GetOrigin(), nextCircleCenter )
 				if ( distance > curDeathFieldRadius )
@@ -2320,7 +2320,7 @@ void function BroadcastTestMsg( string messageText, string subText )
 {
 	BroadcastHudSplashToRadius( messageText, subText, <0,0,0>, -1.0, 4.0 )
 }
-#endif // DEV && SERVER
+#endif // DEVELOPER && SERVER
 
 #if CLIENT
 void function Wildlife_ServerToClient_SetWildlifeClientEnt( entity targetEnt, bool active, int campType )

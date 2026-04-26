@@ -24,6 +24,7 @@ global function SCB_BloodTT_SetCustomSpeakerIdx
 global function Bloodhound_TT_RegisterNetworking
 global function GetBloodTTRewardPanelForLoot
 global function IsBloodhoundTTEnabled
+global function IsBloodTTRewardPanelLocked
 
 global const string HATCH_MDL_SCRIPTNAME = "prowler_hatch_model"
 #endif
@@ -1620,7 +1621,7 @@ void function LoudSpeaker_PlaySingle( string dialogueAlias, float delay = 0.0 )
 
 	foreach ( entity player in GetPlayerArray() )
 	{
-		thread PlayDialogueForPlayer_Retail( dialogueAlias, player, null, delay, dialogueFlags, "", null, file.customDialogueQueue )
+		thread PlayDialogueForPlayer( dialogueAlias, player, null, delay, dialogueFlags, "", null, file.customDialogueQueue )
 	}
 }
 #endif
@@ -1877,7 +1878,7 @@ bool function StoryProp_CanUse( entity playerUser, entity storyProp, int useFlag
 #if SERVER || CLIENT
 bool function IsPlayerBloodhound( entity player )
 {
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	string characterRef  = ItemFlavor_GetHumanReadableRef( character ).tolower()
 
 	if ( characterRef != "character_bloodhound" )

@@ -38,6 +38,7 @@
 //fix persistent speed when getting out and in ?
 
 global function ShHoverVehicle_Init
+global function EntIsHoverVehicle
 
 #if SERVER
 global function DEV_TpToTestArea1
@@ -209,13 +210,14 @@ void function ShHoverVehicle_Init()
 	#endif // SERVER
 	
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
-	ScriptRegisterNetworkedVariable( "Flowstate_HoverVehicle_IsPlayerDriving", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
-	RegisterNetworkedVariable( "Flowstate_HoverVehicle_LastSpeed", SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, -1.0 )
+	RegisterNetworkedVariableSafe( "Flowstate_HoverVehicle_IsPlayerDriving", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "Flowstate_HoverVehicle_LastSpeed", SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, -1.0 )
 	
 	#if CLIENT
 		RegisterSignal("StopSpeedometer")
 		RegisterSignal("DestroyHoverVehicleHint")
-		RegisterNetworkedVariableChangeCallback_bool( "Flowstate_HoverVehicle_IsPlayerDriving", OnPlayerDrivingBoolChanged )
+		RegisterNetworkedVariableChangeCallback_boolSafe( "Flowstate_HoverVehicle_IsPlayerDriving", OnPlayerDrivingBoolChanged )
+	// DISABLED: incomplete callback call
 	#endif // CLIENT
 	
 	#if DEVELOPER
@@ -2746,7 +2748,11 @@ void function DEV_TpToTestArea1( int i )
 		player.SetOrigin( <22348.1895, -9818.97852, -5591.80225> ) //cliff
 	else if( i == 1 )
 		player.SetOrigin( <8981.44727, 27836.498, -5047.1792> ) //climb angle
-
-
 }
+
 #endif
+
+bool function EntIsHoverVehicle( entity ent )
+{
+	return false
+}

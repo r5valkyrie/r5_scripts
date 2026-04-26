@@ -49,6 +49,9 @@ var function OnWeaponNpcPrimaryAttack_weapon_mgl( entity weapon, WeaponPrimaryAt
 }
 #endif // #if SERVER
 
+const MGL_MAGNETIC_FORCE = 1600
+const TT_MAGNETIC_FORCE = 1600.0
+
 void function FireGrenade( entity weapon, WeaponPrimaryAttackParams attackParams, bool isNPCFiring = false )
 {
 	vector angularVelocity = Vector( RandomFloatRange( -1200, 1200 ), 100, 0 )

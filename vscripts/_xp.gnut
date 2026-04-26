@@ -3,6 +3,8 @@
 global function SvXP_Init
 global function AddXP
 
+global bool g_trackXP = true
+
 void function SvXP_Init()
 {
     

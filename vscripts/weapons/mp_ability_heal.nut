@@ -28,7 +28,7 @@ bool function OnWeaponChargeBegin_ability_heal( entity weapon )
 	player.SetHealth( newHealth )
 	
 	// store damage taken to damage histroy so that it shows up in the death recap.
-	int scriptDamageType = DF_INSTANT | DF_BYPASS_SHIELD //| DF_NO_HITBEEP | DF_NO_INDICATOR
+	int scriptDamageType = DF_INSTANT | DF_BYPASS_SHIELD //| DF_NO_HITBEEP | DF_STUN_AI
 	StoreDamageHistoryAndUpdate( player, GetCurrentPlaylistVarFloat( "max_damage_history_time", MAX_DAMAGE_HISTORY_TIME  ), damage, player.GetCenter(), scriptDamageType, eDamageSourceId.mp_ability_heal, player )
 
 	if( Time() > player.p.lastStimChatterTime )

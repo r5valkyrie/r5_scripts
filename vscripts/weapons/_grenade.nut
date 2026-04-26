@@ -41,6 +41,8 @@ global function Grenade_Launch
 const EMP_MAGNETIC_FORCE = 1600
 const MAG_FLIGHT_SFX_LOOP = "Explo_MGL_MagneticAttract"
 const float HALO_GRENADE_COOLDOWN = 0.85
+global const vector GRENADE_ANG_VEL_DEFAULT = <10, -1600, 10>
+global const vector GRENADE_ANG_VEL_DISC = <0, 30, -2200>
 
 //Proximity Mine Settings
 global const PROXIMITY_MINE_EXPLOSION_DELAY = 1.2
@@ -104,7 +106,6 @@ void function Grenade_FileInit()
 	    //AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_proximity_mine, ProxMine_Triggered )
 		AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_thermite_grenade, Thermite_DamagedPlayerOrNPC )
 		AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_frag_grenade, Frag_DamagedPlayerOrNPC )
-		AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_frag_grenade_halomod, Frag_DamagedPlayerOrNPC )
 
 		level._empForcedCallbacks[eDamageSourceId.mp_weapon_grenade_emp] <- true
 		//level._empForcedCallbacks[eDamageSourceId.mp_weapon_arc_blade] <- true
@@ -307,7 +308,6 @@ int function Grenade_OnWeaponToss( entity weapon, WeaponPrimaryAttackParams atta
 		grenade.proj.savedDir = weaponOwner.GetViewForward()
 
 #if SERVER
-	LiveAPI_GrenadeThrown( weaponOwner, weapon )
 
 	#if BATTLECHATTER_ENABLED
 		TryPlayWeaponBattleChatterLine( weaponOwner, weapon )
@@ -340,7 +340,6 @@ int function Grenade_OnWeaponToss_Halo( entity weapon, WeaponPrimaryAttackParams
 		grenade.proj.savedDir = weaponOwner.GetViewForward()
 
 #if SERVER
-	LiveAPI_GrenadeThrown( weaponOwner, weapon )
 
 	// #if BATTLECHATTER_ENABLED
 		// TryPlayWeaponBattleChatterLine( weaponOwner, weapon )
@@ -456,13 +455,20 @@ void function OnProjectileCollision_weapon_impulse_grenade( entity projectile, v
 	if ( IsValid( hitEnt ) && hitEnt.IsPlayer() )
 		return
 
-	table collisionParams =
-	{
-		pos = pos,
-		normal = normal,
-		hitEnt = hitEnt,
-		hitbox = hitbox
-	}
+	DeployableCollisionParams collisionParams
+
+
+	collisionParams.pos = pos
+
+
+	collisionParams.normal = normal
+
+
+	collisionParams.hitEnt = hitEnt
+
+
+	collisionParams.hitBox = hitbox
+
 
 	bool result = PlantStickyEntityOnWorldThatBouncesOffWalls( projectile, collisionParams, 0.7 )
 
@@ -567,7 +573,7 @@ var function Grenade_OnWeaponTossCancelDrop( entity weapon, WeaponPrimaryAttackP
 }
 
 // Can return entity or nothing
-entity function Grenade_Launch( entity weapon, vector attackPos, vector throwVelocity, bool isPredicted, bool isLagCompensated )
+entity function Grenade_Launch( entity weapon, vector attackPos, vector throwVelocity, bool isPredicted, bool isLagCompensated, vector angularVelocity = GRENADE_ANG_VEL_DEFAULT )
 {
 	#if CLIENT
 		if ( !weapon.ShouldPredictProjectiles() || !isPredicted )
@@ -594,9 +600,9 @@ entity function Grenade_Launch( entity weapon, vector attackPos, vector throwVel
 
 	// NOTE: DO NOT apply randomness to angularVelocity, it messes up lag compensation
 	// KNOWN ISSUE: angularVelocity is applied relative to the world, so currently the projectile spins differently based on facing angle
-	vector angularVelocity = <10, -1600, 10>
-	if ( discThrow == 1 )
-		angularVelocity = <0, 30, -2200>
+
+	if ( discThrow == 1 && angularVelocity == GRENADE_ANG_VEL_DEFAULT )
+		angularVelocity = GRENADE_ANG_VEL_DISC
 
 	int damageFlags = weapon.GetWeaponDamageFlags()
 	WeaponFireGrenadeParams fireGrenadeParams
@@ -643,6 +649,7 @@ entity function Grenade_Launch( entity weapon, vector attackPos, vector throwVel
 		}
 	}
 
+	frag.proj.savedOrigin = attackPos
 	Grenade_OnPlayerNPCTossGrenade_Common( weapon, frag )
 
 	return frag
@@ -818,7 +825,7 @@ void function ClientDestroyCallback_GrenadeDestroyed( entity grenade )
 #endif // CLIENT
 
 #if SERVER
-void function EnableTrapWarningSound( entity trap, float delay = 0, string warningSound = DEFAULT_WARNING_SFX )
+void function EnableTrapWarningSound( entity trap, float delay = 0, string warningSound = "" )
 {
 	trap.EndSignal( "OnDestroy" )
 	trap.EndSignal( "DisableTrapWarningSound" )

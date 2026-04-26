@@ -10,11 +10,9 @@ const asset BURN_EFFECT_ASSET = $"P_wpn_meteor_wall"
 
 #if SERVER
 	const bool DEBUG_THERMITE_GRENADE_TRACES = false
-	global function CreateSpreadPattern
-	global function BurnSequence
 #endif // SERVER
 
-global struct SegmentData
+struct SegmentData
 {
 	//int index
 	vector startPos
@@ -73,13 +71,20 @@ void function OnProjectileCollision_weapon_thermite_grenade( entity projectile, 
 	//if ( !forceExplode )
 	//	printt( "projectileIsOnGround with Dot:", normal.Dot( <0,0,1> ) )
 
-	table collisionParams =
-	{
-		pos = pos,
-		normal = normal,
-		hitEnt = hitEnt,
-		hitbox = hitbox
-	}
+	DeployableCollisionParams collisionParams
+
+
+	collisionParams.pos = pos
+
+
+	collisionParams.normal = normal
+
+
+	collisionParams.hitEnt = hitEnt
+
+
+	collisionParams.hitBox = hitbox
+
 
 	vector dir = projectile.proj.savedDir
 	dir.z = 0
@@ -170,13 +175,20 @@ void function OnProjectileCollision_weapon_thermite_gun( entity projectile, vect
 	//if ( !forceExplode )
 	//	printt( "projectileIsOnGround with Dot:", normal.Dot( <0,0,1> ) )
 
-	table collisionParams =
-	{
-		pos = pos,
-		normal = normal,
-		hitEnt = hitEnt,
-		hitbox = hitbox
-	}
+	DeployableCollisionParams collisionParams
+
+
+	collisionParams.pos = pos
+
+
+	collisionParams.normal = normal
+
+
+	collisionParams.hitEnt = hitEnt
+
+
+	collisionParams.hitBox = hitbox
+
 
 	vector dir = normal
 	dir.z = 0
@@ -445,44 +457,6 @@ entity function CreateSegmentEffect( asset effectAsset, entity owner, vector sta
 		EntFireByHandle( effect, "Kill", "", duration, null, null )
 
 	return effect
-}
-
-void function FireSegment_DamageThink( entity effect, entity owner, entity inflictor, BurnDamageSettings burnSettings )
-{
-	Assert( IsValid( owner ) )
-
-	float topDelta = burnSettings.burnDamageHeight
-	float bottomDelta = 0
-	entity trig = CreateTriggerCylinderMultiple_Deprecated( effect.GetOrigin(), burnSettings.burnDamageRadius, topDelta, bottomDelta, [], TRIG_FLAG_NONE )
-	trig.RemoveFromAllRealms()
-	trig.AddToOtherEntitysRealms( owner )
-	AddToTrackedEnts( owner, trig )
-	ScriptTriggerSetEnabled_Deprecated( trig, true )
-
-	effect.EndSignal( "OnDestroy" )
-	trig.EndSignal( "OnDestroy" )
-	inflictor.EndSignal( "OnDestroy" )
-
-	OnThreadEnd(
-		function() : ( effect, trig )
-		{
-			EffectStop( effect )
-
-			if ( IsValid( trig ) )
-				trig.Destroy()
-		}
-	)
-
-	while ( 1 )
-	{
-		array<entity> touchingEnts = GetAllEntitiesInTrigger_Deprecated( trig )
-		ArrayRemoveDead( touchingEnts )
-
-		foreach ( ent in touchingEnts )
-			TryApplyingBurnDamage( ent, owner, inflictor, burnSettings )
-
-		WaitFrame()
-	}
 }
 
 string function GetSoundForSegment( int index, int max, BurnDamageSettings burnSettings )

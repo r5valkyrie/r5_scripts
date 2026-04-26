@@ -576,7 +576,7 @@ WeaponData
 
 		Crosshair_1
 		{
-			"ui"						"ui/crosshair_lstar"
+			"ui"						"ui/crosshair_plus"
 			"base_spread"				"0.0"
 			Args
 			{

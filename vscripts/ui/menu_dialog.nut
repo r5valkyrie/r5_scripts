@@ -17,6 +17,8 @@ global function ShowMatchConnectDialog
 global function LeaveDialog
 global function LeavePartyDialog
 global function Disconnect
+global function EndMatchDialog
+global function LeaveCustomMatchDialog
 
 global function AddDialogButton
 global function AddDialogButtonEx
@@ -502,8 +504,7 @@ void function LeaveDialog()
 	dialogData.darkenBackground = true
 
 	{
-		//int lobbyType = GetLobbyTypeScript()
-		if ( IsLobby() ) // && (lobbyType != eLobbyType.MATCH) ) // SOLO, PARTY_LEADER, PARTY_MEMBER, PRIVATE_MATCH
+		if ( IsLobby() )
 		{
 			AddDialogButton( dialogData, "#CANCEL_NO" )
 
@@ -557,6 +558,32 @@ void function OnLeavePartyDialogResult( int result )
 	LeaveParty()
 }
 
+
+void function LeaveCustomMatchDialog()
+{
+	if ( !IsFullyConnected() )
+		return
+
+	if ( !MenuStack_Contains( GetMenu( "CustomMatchLobbyMenu" ) ) )
+		return
+
+	ConfirmDialogData data
+	data.headerText = "#CUSTOMMATCH_LEAVE"
+	data.messageText = "#CUSTOMMATCH_LEAVE_DESC"
+	data.resultCallback = OnLeaveCustomMatchDialogResult
+
+	OpenConfirmDialogFromData( data )
+	AdvanceMenu( GetMenu( "ConfirmDialog" ) )
+}
+
+void function OnLeaveCustomMatchDialogResult( int result )
+{
+	if ( result != eDialogResult.YES )
+		return
+
+	CustomMatch_LeaveLobby()
+	CustomMatch_CloseLobbyMenu()
+}
 
 void function CancelRestartingMatchmaking()
 {
@@ -632,4 +659,25 @@ void function OpenDataCenterDialog( var button )
 void function OnBtnBackPressed( var button )
 {
 	CloseActiveMenu()
+}
+
+void function EndMatchDialog()
+{
+	ConfirmDialogData data
+	data.headerText = "#TOURNAMENT_END_MATCH_DIALOG_HEADER"
+	data.messageText = "#TOURNAMENT_END_MATCH_DIALOG_MSG"
+	data.dialogConfirmDelay = 3.0
+	data.resultCallback = void function( int dialogResult )
+	{
+		switch ( dialogResult )
+		{
+			case eDialogResult.YES:
+			{
+				if ( HasMatchAdminRole() )
+					Remote_ServerCallFunction( "ClientCallback_PrivateMatchEndMatchEarly" )
+			}
+		}
+	}
+
+	OpenConfirmDialogFromData( data )
 }

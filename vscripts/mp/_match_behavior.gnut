@@ -1,0 +1,502 @@
+global function MatchBehavior_Init
+global function MatchBehavior_Enabled
+global function MatchBehaviorPlayer_Started
+global function MatchBehaviorPlayer_Ended
+global function MatchBehaviorPlayer_HasEnded
+global function MatchBehaviorPlayer_HasStarted
+global function MatchBehaviorPlayer_CanBeFirst
+global function MatchBehaviorPlayer_CanBeJumpMaster
+global function MatchBehaviorPlayer_GetHistory
+global function MatchBehaviorPlayer_GetPlayedCharacterCounts
+global function MatchBehaviorPlayer_RecordPickInfo
+global function MatchBehaviorPlayer_RecordDropInfo
+global function MatchBehaviorPlayer_DidAbandonThisMatch
+global function MatchBehaviorPlayer_DidAbandonLastMatch
+global function MatchBehaviorPlayer_DumpHistory
+global function MatchBehaviorPlayer_OnClientConnected
+global function MatchBehaviorPlayer_OnPlayerDisconnected
+
+global function MatchBehaviorPlayer_AddEndedCallback
+
+global struct MatchBehavior
+{
+	bool        isValid
+	ItemFlavor& character
+	int         behaviorFlags
+}
+
+
+global enum eMatchBehaviorFlags
+{
+	FIRST_PICK 				= (1 << 0),
+	LAST_PICK 				= (1 << 1),
+	FAVORITE_TAKEN 			= (1 << 2),
+	JUMPMASTER 				= (1 << 3),
+	SOLO_LAUNCH 			= (1 << 4),
+	SQUADREVEAL_DISCONNECT 	= (1 << 5),
+	SKYDIVE_DISCONNECT 	    = (1 << 6),
+	RESPAWNABLE_DISCONNECT 	= (1 << 7),
+	UNEXPECTED_DISCONNECT 	= (1 << 8),
+	DEATH_SUICIDE			= (1 << 9),
+	ABANDONED_MATCH			= (1 << 10),
+}
+
+struct PlayerMatchBehaviorState
+{
+	bool hasTrackingStarted = false
+	bool hasTrackingEnded = false
+
+	MatchBehavior currentBehavior
+	array< MatchBehavior > behaviorHistory
+}
+
+
+struct
+{
+	table< entity, PlayerMatchBehaviorState > playerMatchBehaviorStateMap
+	array< void functionref( entity, bool ) > onMatchBehaviorEndedCallbacks
+} file
+
+void function MatchBehavior_Init()
+{
+	AddCallback_OnClientDisconnected( MatchBehaviorPlayer_OnPlayerDisconnected )
+
+	if ( IsLobby() )
+		return
+
+	if ( !MatchBehavior_Enabled() )
+		return
+
+	AddCallback_OnClientConnected( MatchBehaviorPlayer_OnClientConnected )
+	AddCallback_GameStateEnter( eGameState.PickLoadout, MatchBehavior_OnGameStateChanged )
+	AddCallback_GameStateEnter( eGameState.Playing, MatchBehavior_OnGameStateChanged )
+	AddCallback_OnPlayerKilled( MatchBehavior_OnPlayerKilled )
+}
+
+
+bool function MatchBehavior_Enabled()
+{
+	return GetCurrentPlaylistVarBool( "match_behavior_enable", true )
+}
+
+
+void function MatchBehaviorPlayer_OnPlayerDisconnected( entity player )
+{
+	if ( IsLobby() )
+	{
+		if ( player in file.playerMatchBehaviorStateMap )
+			delete file.playerMatchBehaviorStateMap[ player ]
+	}
+}
+
+
+void function MatchBehaviorPlayer_OnClientConnected( entity player )
+{
+	Assert( MatchBehavior_Enabled() )
+
+	if ( player in file.playerMatchBehaviorStateMap && file.playerMatchBehaviorStateMap[ player ].hasTrackingStarted )
+		return
+
+	PlayerMatchBehaviorState pmbs
+	pmbs.hasTrackingStarted = false
+	pmbs.hasTrackingEnded = false
+
+	int matchBehaviorIndex = MatchBehaviorPlayer_GetCurrentIndex( player )
+
+	int maxHistory = PersistenceGetArrayCount( "behaviorHistory" )
+	int historyAppendedCount = 0
+	while ( true )
+	{
+		if ( historyAppendedCount ==  maxHistory ) //Sanity check, don't loop forever
+			break
+
+		if ( matchBehaviorIndex == 0 )
+			matchBehaviorIndex = maxHistory - 1
+		else
+			matchBehaviorIndex = modint( matchBehaviorIndex - 1, maxHistory )
+
+		MatchBehavior behaviorData
+		behaviorData.behaviorFlags = player.GetPersistentVarAsInt( format( "behaviorHistory[%d].behaviorFlags", matchBehaviorIndex ) )
+		behaviorData.isValid = (behaviorData.behaviorFlags != 0)
+
+		if ( !behaviorData.isValid )
+			break
+
+		int characterGUID = player.GetPersistentVarAsInt( format( "behaviorHistory[%d].character", matchBehaviorIndex ) )
+		if ( IsValidItemFlavorGUID( characterGUID ) )
+			behaviorData.character = GetItemFlavorByGUID( characterGUID )
+
+		pmbs.behaviorHistory.append( behaviorData )
+
+		++historyAppendedCount
+	}
+
+	file.playerMatchBehaviorStateMap[player] <- pmbs
+
+	int gameState = GetGameState()
+	if ( !MatchBehaviorPlayer_HasStarted( player ) && eGameState.WaitingForPlayers <= gameState && gameState < eGameState.WinnerDetermined )
+		MatchBehaviorPlayer_Started( player )
+}
+
+
+void function MatchBehavior_OnGameStateChanged()
+{
+	Assert( MatchBehavior_Enabled() )
+
+	foreach ( player in GetPlayerArray() )
+	{
+		if ( !MatchBehaviorPlayer_HasStarted( player ) )
+			MatchBehaviorPlayer_Started( player )
+	}
+}
+
+
+void function MatchBehavior_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
+{
+	Assert( MatchBehavior_Enabled() )
+
+	int damageSource = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	if ( victim == attacker || IsDamageFromDamageTrigger( damageSource ) )
+		MatchBehaviorPlayer_SetFlag( victim, eMatchBehaviorFlags.DEATH_SUICIDE )
+}
+
+
+int function MatchBehaviorPlayer_GetCurrentIndex( entity player )
+{
+	return modint( player.GetPersistentVarAsInt( "behaviorHistory_nextIndex" ), PersistenceGetArrayCount( "behaviorHistory" ) ) // need to mod in case the size of the array changes
+}
+
+
+void function MatchBehaviorPlayer_Started( entity player )
+{
+	Assert( MatchBehavior_Enabled() )
+	Assert( player in file.playerMatchBehaviorStateMap )
+	Assert( !file.playerMatchBehaviorStateMap[player].hasTrackingEnded )
+
+	file.playerMatchBehaviorStateMap[player].hasTrackingStarted = true
+	file.playerMatchBehaviorStateMap[player].currentBehavior.isValid = true
+}
+
+
+bool function MatchBehaviorPlayer_CanBeFirst( entity player )
+{
+	if ( !MatchBehavior_Enabled() )
+		return true
+
+	if ( Player_DidAbandonLastMatch( player ) )
+		return false
+
+	return true
+}
+
+
+bool function MatchBehaviorPlayer_CanBeJumpMaster( entity player )
+{
+	if ( !MatchBehavior_Enabled() )
+		return true
+
+	return true
+}
+
+
+void function MatchBehaviorPlayer_SetFlag( entity player, int flag )
+{
+	int behaviorFlags          = file.playerMatchBehaviorStateMap[player].currentBehavior.behaviorFlags
+	file.playerMatchBehaviorStateMap[player].currentBehavior.behaviorFlags = behaviorFlags | flag
+}
+
+
+void function MatchBehaviorPlayer_ClearFlag( entity player, int flag )
+{
+	int behaviorFlags          = file.playerMatchBehaviorStateMap[player].currentBehavior.behaviorFlags
+	file.playerMatchBehaviorStateMap[player].currentBehavior.behaviorFlags = behaviorFlags & ~flag
+}
+
+
+array<MatchBehavior> function MatchBehaviorPlayer_GetHistory( entity player )
+{
+	return file.playerMatchBehaviorStateMap[player].behaviorHistory
+}
+
+table<ItemFlavor, int> function MatchBehaviorPlayer_GetPlayedCharacterCounts( entity player )
+{
+	array<MatchBehavior> behaviorHistory = MatchBehaviorPlayer_GetHistory( player )
+
+	table<ItemFlavor, int> playedCharacterCounts
+	foreach ( behaviorData in behaviorHistory )
+	{
+		Assert( behaviorData.isValid )
+
+		// super early disconnects won't have a valid character
+		if ( !IsItemFlavorStructValid( ItemFlavor_GetGUID( behaviorData.character ), eValidation.DONT_ASSERT ) )
+			continue
+
+		if ( !(behaviorData.character in playedCharacterCounts) )
+			playedCharacterCounts[behaviorData.character] <- 0
+
+		playedCharacterCounts[behaviorData.character]++
+	}
+
+	return playedCharacterCounts
+}
+
+ItemFlavor ornull function MatchBehavior_GetFavoriteCharacter( entity player, int threshold = 0 )
+{
+	array<MatchBehavior> behaviorHistory = MatchBehaviorPlayer_GetHistory( player )
+
+	table<ItemFlavor, int> playedCharacterCounts
+	foreach ( behaviorData in behaviorHistory )
+	{
+		Assert( behaviorData.isValid )
+
+		// super early disconnects won't have a valid character
+		if ( !IsItemFlavorStructValid( ItemFlavor_GetGUID( behaviorData.character ), eValidation.DONT_ASSERT ) )
+			continue
+
+		if ( !(behaviorData.character in playedCharacterCounts) )
+			playedCharacterCounts[behaviorData.character] <- 0
+
+		// todo: consider bias when we had first pick?
+
+		playedCharacterCounts[behaviorData.character]++
+	}
+
+	ItemFlavor ornull favorite = null
+	foreach ( character, count in playedCharacterCounts )
+	{
+		if ( favorite == null )
+		{
+			favorite = character
+			continue
+		}
+		else
+		{
+			expect ItemFlavor( favorite )
+			if ( count > playedCharacterCounts[favorite] )
+				favorite = character
+		}
+	}
+
+	if ( favorite == null )
+		return null
+
+	expect ItemFlavor( favorite )
+	if ( playedCharacterCounts[favorite] < threshold )
+		return null
+
+	return favorite
+}
+
+
+void function MatchBehaviorPlayer_RecordDropInfo( entity player )
+{
+	if ( !MatchBehavior_Enabled() )
+		return
+
+	bool isJumpingWithSquad = player.GetPlayerNetBool( "isJumpingWithSquad" )
+	bool isJumpmaster = player.GetPlayerNetBool( "isJumpmaster" )
+
+	if ( isJumpmaster )
+		MatchBehaviorPlayer_SetFlag( player, eMatchBehaviorFlags.JUMPMASTER )
+	else if ( !isJumpingWithSquad )
+		MatchBehaviorPlayer_SetFlag( player, eMatchBehaviorFlags.SOLO_LAUNCH )
+}
+
+
+void function MatchBehaviorPlayer_RecordPickInfo( entity player, ItemFlavor character )
+{
+	if ( !MatchBehavior_Enabled() )
+		return
+
+	file.playerMatchBehaviorStateMap[player].currentBehavior.character = character
+
+	int pickIndex = player.GetPlayerNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX )
+	if ( pickIndex == 0 )
+	{
+		MatchBehaviorPlayer_SetFlag( player, eMatchBehaviorFlags.FIRST_PICK )
+	}
+	else
+	{
+		for ( int i = MAX_TEAM_PLAYERS - 1 ; i >= 0 ; i-- )
+		{
+			entity ornull teamPlayer = GetTeamPlayerForLockstepIndex( player.GetTeam(), i )
+			if ( !IsValid( teamPlayer ) )
+				continue
+
+			if ( teamPlayer != player )
+				continue
+
+			if ( i == (MAX_TEAM_PLAYERS - 1) )
+				MatchBehaviorPlayer_SetFlag( player, eMatchBehaviorFlags.LAST_PICK )
+
+			break
+		}
+
+		if ( WasFavoriteTaken( player ) )
+			MatchBehaviorPlayer_SetFlag( player, eMatchBehaviorFlags.FAVORITE_TAKEN )
+	}
+}
+
+
+bool function WasFavoriteTaken( entity player )
+{
+	ItemFlavor ornull favorite = MatchBehavior_GetFavoriteCharacter( player )
+	if ( favorite == null )
+		return false
+
+	expect ItemFlavor( favorite )
+	foreach ( teamPlayer in GetPlayerArrayOfTeam( player.GetTeam() ) )
+	{
+		if ( teamPlayer == player )
+			continue
+
+		ItemFlavor teamPlayerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( teamPlayer ), Loadout_Character() )
+		if ( teamPlayerCharacter != favorite )
+			continue
+
+		return true
+	}
+
+	return false
+}
+
+
+bool function MatchBehaviorPlayer_HasEnded( entity player )
+{
+	if ( !MatchBehavior_Enabled() )
+		return false
+
+	return file.playerMatchBehaviorStateMap[player].hasTrackingEnded
+}
+
+
+bool function MatchBehaviorPlayer_HasStarted( entity player )
+{
+	if ( !MatchBehavior_Enabled() )
+		return false
+
+	return file.playerMatchBehaviorStateMap[player].hasTrackingStarted
+}
+
+
+void function MatchBehaviorPlayer_Ended( entity player, bool wasUnexpectedDisconnect )
+{
+	Assert( MatchBehavior_Enabled() )
+	Assert( player in file.playerMatchBehaviorStateMap )
+	Assert( !file.playerMatchBehaviorStateMap[player].hasTrackingEnded )
+	Assert( file.playerMatchBehaviorStateMap[player].hasTrackingStarted )
+
+	file.playerMatchBehaviorStateMap[player].hasTrackingEnded = true
+
+	if ( !file.playerMatchBehaviorStateMap[player].currentBehavior.isValid )
+		return
+
+	if ( GetGameState() == eGameState.PickLoadout )
+	{
+		// player disconnected during character selection; check if someone picked their favorite already
+		if ( Time() < GetGlobalNetTimeSafe( "allSquadsPresentationStartTime" ) )
+		{
+			int pickIndex = player.GetPlayerNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX )
+			if ( pickIndex > 0 && GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) > 0 && WasFavoriteTaken( player ) )
+				MatchBehaviorPlayer_SetFlag( player, eMatchBehaviorFlags.FAVORITE_TAKEN )
+		}
+		else
+		{
+			MatchBehaviorPlayer_SetFlag( player, eMatchBehaviorFlags.SQUADREVEAL_DISCONNECT )
+		}
+	}
+	else
+	{
+		if ( PlayerMatchState_GetFor( player ) == ePlayerMatchState.SKYDIVE_FALLING || PlayerMatchState_GetFor( player ) == ePlayerMatchState.SKYDIVE_PRELAUNCH )
+			MatchBehaviorPlayer_SetFlag( player, eMatchBehaviorFlags.SKYDIVE_DISCONNECT )
+	}
+
+	if ( PlayerIsMarkedAsCanBeRespawned( player ) && (GetGameState() == eGameState.Playing) )
+		MatchBehaviorPlayer_SetFlag( player, eMatchBehaviorFlags.RESPAWNABLE_DISCONNECT )
+
+	if ( wasUnexpectedDisconnect )
+		MatchBehaviorPlayer_SetFlag( player, eMatchBehaviorFlags.UNEXPECTED_DISCONNECT )
+
+	if ( Player_WouldAbandonMatch( player ) )
+		MatchBehaviorPlayer_SetFlag( player, eMatchBehaviorFlags.ABANDONED_MATCH )
+
+	foreach( callbackFunc in file.onMatchBehaviorEndedCallbacks )
+		callbackFunc( player, wasUnexpectedDisconnect )
+
+	MatchBehaviorPlayer_Save( player )
+}
+
+
+void function MatchBehaviorPlayer_Save( entity player )
+{
+	int matchBehaviorCurrIndex = MatchBehaviorPlayer_GetCurrentIndex( player )
+	int matchBehaviorNextIndex = modint( matchBehaviorCurrIndex + 1, PersistenceGetArrayCount( "behaviorHistory" ) )
+
+	ItemFlavor char = file.playerMatchBehaviorStateMap[player].currentBehavior.character
+
+	if ( !IsItemFlavorStructValid( ItemFlavor_GetGUID( char ), eValidation.DONT_ASSERT  ) )
+	{
+		char = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
+		Assert( IsItemFlavorStructValid( ItemFlavor_GetGUID( char ), eValidation.DONT_ASSERT ) )
+		file.playerMatchBehaviorStateMap[player].currentBehavior.character = char
+	}
+
+	player.SetPersistentVar( format( "behaviorHistory[%d].character", matchBehaviorCurrIndex ), ItemFlavor_GetGUID( file.playerMatchBehaviorStateMap[player].currentBehavior.character ) )
+	player.SetPersistentVar( format( "behaviorHistory[%d].behaviorFlags", matchBehaviorCurrIndex ), file.playerMatchBehaviorStateMap[player].currentBehavior.behaviorFlags )
+
+	player.SetPersistentVar( "behaviorHistory_nextIndex", matchBehaviorNextIndex )
+}
+
+bool function MatchBehaviorPlayer_DidAbandonThisMatch( entity player )
+{
+	if ( !MatchBehavior_Enabled() )
+		return false
+
+	return (file.playerMatchBehaviorStateMap[player].currentBehavior.behaviorFlags & eMatchBehaviorFlags.ABANDONED_MATCH) != 0
+
+}
+
+
+bool function MatchBehaviorPlayer_DidAbandonLastMatch( entity player )
+{
+	if ( !MatchBehavior_Enabled() )
+		return false
+
+	array<MatchBehavior> behaviorHistory = MatchBehaviorPlayer_GetHistory( player )
+
+	if ( behaviorHistory.len() == 0 )
+		return false
+
+	return (behaviorHistory[0].behaviorFlags & eMatchBehaviorFlags.ABANDONED_MATCH) != 0
+
+}
+
+
+void function MatchBehaviorPlayer_DumpHistory( entity player )
+{
+	array<MatchBehavior> behaviorHistory = MatchBehaviorPlayer_GetHistory( player )
+
+	foreach ( index, behaviorData in behaviorHistory )
+	{
+		printt( "Match", index )
+		printt( "\t" + ItemFlavor_GetCharacterRef( behaviorData.character ) )
+		printt( "\tFIRST_PICK             ", (behaviorData.behaviorFlags & eMatchBehaviorFlags.FIRST_PICK) != 0 )
+		printt( "\tLAST_PICK              ", (behaviorData.behaviorFlags & eMatchBehaviorFlags.LAST_PICK) != 0 )
+		printt( "\tFAVORITE_TAKEN         ", (behaviorData.behaviorFlags & eMatchBehaviorFlags.FAVORITE_TAKEN) != 0 )
+		printt( "\tJUMPMASTER             ", (behaviorData.behaviorFlags & eMatchBehaviorFlags.JUMPMASTER) != 0 )
+		printt( "\tSOLO_LAUNCH            ", (behaviorData.behaviorFlags & eMatchBehaviorFlags.SOLO_LAUNCH) != 0 )
+		printt( "\tSQUADREVEAL_DISCONNECT ", (behaviorData.behaviorFlags & eMatchBehaviorFlags.SQUADREVEAL_DISCONNECT) != 0 )
+		printt( "\tSKYDIVE_DISCONNECT     ", (behaviorData.behaviorFlags & eMatchBehaviorFlags.SKYDIVE_DISCONNECT) != 0 )
+		printt( "\tRESPAWNABLE_DISCONNECT ", (behaviorData.behaviorFlags & eMatchBehaviorFlags.RESPAWNABLE_DISCONNECT) != 0 )
+		printt( "\tUNEXPECTED_DISCONNECT  ", (behaviorData.behaviorFlags & eMatchBehaviorFlags.UNEXPECTED_DISCONNECT) != 0 )
+		printt( "\tDEATH_SUICIDE          ", (behaviorData.behaviorFlags & eMatchBehaviorFlags.DEATH_SUICIDE) != 0 )
+		printt( "\tABANDONED_MATCH        ", (behaviorData.behaviorFlags & eMatchBehaviorFlags.ABANDONED_MATCH) != 0 )
+	}
+}
+
+
+void function MatchBehaviorPlayer_AddEndedCallback( void functionref( entity, bool ) callbackFunc )
+{
+	Assert( !file.onMatchBehaviorEndedCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with MatchBehaviorPlayer_AddEndedCallback" )
+	file.onMatchBehaviorEndedCallbacks.append( callbackFunc )
+} 

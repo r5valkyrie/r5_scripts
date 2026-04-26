@@ -40,6 +40,9 @@ global function DEV_PDefGen_AddField_StructArray_IntKey
 global function DEV_PDefGen_AddField_IntArray_EnumKey
 global function DEV_PDefGen_AddField_BoolArray_EnumKey
 global function DEV_PDefGen_AddField_StructArray_EnumKey
+global function DEV_PDefGen_AddFieldSection
+global function DEV_PDefGen_AddField_GUID
+global function DEV_PDefGen_AddField_GUIDArray_IntKey
 #endif
 
 #if CLIENT
@@ -452,9 +455,20 @@ void function DEV_PDefGen_AddField_Internal( string typePart, string namePart, s
 	DEF_PDefGen_currentFieldGroupOrStruct.fieldList.append( f )
 	DEF_PDefGen_currentFieldGroupOrStruct.fieldMap[namePart] <- f
 }
+void function DEV_PDefGen_AddFieldSection( string sectionKey )
+{
+}
 void function DEV_PDefGen_AddField_Int( string name, string comment = "" )
 {
 	DEV_PDefGen_AddField_Internal( "int", name, "", comment )
+}
+void function DEV_PDefGen_AddField_GUID( string name, string comment = "" )
+{
+	DEV_PDefGen_AddField_Int( name, comment )
+}
+void function DEV_PDefGen_AddField_GUIDArray_IntKey( string name, int length, string comment = "" )
+{
+	DEV_PDefGen_AddField_IntArray_IntKey( name, length, comment )
 }
 void function DEV_PDefGen_AddField_Float( string name, string comment = "" )
 {

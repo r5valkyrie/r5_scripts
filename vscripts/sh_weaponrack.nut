@@ -18,6 +18,7 @@ void function ShWeaponRack_Init()
 #if SERVER
 //	AddCallback_EntitiesDidLoad( testRack )
 #endif
+	RegisterSignal( "OnItemPickup" )
 }
 
 #if SERVER
@@ -80,7 +81,7 @@ entity function SpawnWeaponOnRack(entity rack, string weaponName)
 	if(rack.e.cpoint1 != null && IsValid(rack.e.cpoint1) && rack.e.cpoint1.GetParent() == rack)
 		return null
 	
-	entity loot = SpawnGenericLoot( weaponName, rack.GetOrigin()+WEAPONRACK_ORIGIN_OFFSET, rack.GetAngles()+WEAPONRACK_ANGLES_OFFSET, 1, TRACE_COLLISION_GROUP_NONE, false, 0, true )
+	entity loot = SpawnGenericLoot( weaponName, rack.GetOrigin()+WEAPONRACK_ORIGIN_OFFSET, rack.GetAngles()+WEAPONRACK_ANGLES_OFFSET, 1, TRACE_COLLISION_GROUP_NONE, false, 0 )
 	loot.SetParent( rack )
 	rack.e.cpoint1 = loot
 

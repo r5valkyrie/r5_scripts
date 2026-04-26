@@ -4,6 +4,7 @@ global function SettingsPanel_GetDefaultImageForIndex
 
 global function SetupSettingsButton
 global function SetupSettingsSlider
+global function SettingsPanel_SetContentPanelHeight
 
 global function CreateSettingsConVarData
 global function SaveSettingsConVars
@@ -56,23 +57,26 @@ void function InitSettingsPanel( var panel )
 	AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_CLOSE", "#CLOSE" )
 
 	{
-		AddTab( panel, Hud_GetChild( panel, "HudOptionsPanel" ), "#HUD" )
+		TabDef tabDef = AddTab( panel, Hud_GetChild( panel, "HudOptionsPanel" ), "#HUD" )
 		AddPanelEventHandler( Hud_GetChild( panel, "HudOptionsPanel" ), eUIEvent.PANEL_SHOW, OnSettingsTab_Show )
 		file.panelDefaultImages.append( $"rui/menu/settings/settings_hud" )
+		SetTabBaseWidth( tabDef, 214 )
 	}
 
 	#if PC_PROG
 		{
-			AddTab( panel, Hud_GetChild( panel, "ControlsPCPanelContainer" ), "#MOUSE_KEYBOARD" )
+			TabDef tabDef = AddTab( panel, Hud_GetChild( panel, "ControlsPCPanelContainer" ), "#MOUSE_KEYBOARD" )
 			AddPanelEventHandler( Hud_GetChild( panel, "ControlsPCPanelContainer" ), eUIEvent.PANEL_SHOW, OnSettingsTab_Show )
 			file.panelDefaultImages.append( $"rui/menu/settings/settings_pc" )
+			SetTabBaseWidth( tabDef, 330 )
 		}
 	#endif
 
 	{
-		AddTab( panel, Hud_GetChild( panel, "ControlsGamepadPanel" ), "#CONTROLLER" )
+		TabDef tabDef = AddTab( panel, Hud_GetChild( panel, "ControlsGamepadPanel" ), "#CONTROLLER" )
 		AddPanelEventHandler( Hud_GetChild( panel, "ControlsGamepadPanel" ), eUIEvent.PANEL_SHOW, OnSettingsTab_Show )
 		file.panelDefaultImages.append( $"rui/menu/settings/settings_gamepad" )
+		SetTabBaseWidth( tabDef, 250 )
 	}
 
 	{
@@ -81,18 +85,37 @@ void function InitSettingsPanel( var panel )
 		{
 			return OnVideoMenu_CanNavigateAway( panel, desiredTabIndex )
 		}
-
+		SetTabBaseWidth( tabDef, 160 )
 		AddPanelEventHandler( Hud_GetChild( panel, "VideoPanelContainer" ), eUIEvent.PANEL_SHOW, OnSettingsTab_Show )
 		file.panelDefaultImages.append( $"rui/menu/settings/settings_video" )
 	}
 
 	{
-		AddTab( panel, Hud_GetChild( panel, "SoundPanel" ), "#AUDIO" )
+		TabDef tabDef = AddTab( panel, Hud_GetChild( panel, "SoundPanel" ), "#AUDIO" )
 		AddPanelEventHandler( Hud_GetChild( panel, "SoundPanel" ), eUIEvent.PANEL_SHOW, OnSettingsTab_Show )
+		SetTabBaseWidth( tabDef, 160 )
 		file.panelDefaultImages.append( $"rui/menu/settings/settings_audio" )
 	}
+
+	TabData tabData = GetTabDataForPanel( file.panel )
+	tabData.forcePrimaryNav = true
+	tabData.bannerTitle = "#SETTINGS"
+	SetTabDefsToSeasonal(tabData)
+	SetTabBackground( tabData, Hud_GetChild( file.panel, "TabsBackground" ), eTabBackground.STANDARD )
 }
 
+void function SettingsPanel_SetContentPanelHeight( var contentPanel )
+{
+	array<var> rewardButtonArray = GetPanelElementsByClassname( contentPanel, "SettingScrollSizer" )
+	int height = 0
+	foreach( var b in rewardButtonArray )
+	{
+		if( Hud_IsVisible( b ) )
+			height += Hud_GetHeight(b) + Hud_GetBaseY( b )
+	}
+
+	Hud_SetHeight(contentPanel, height)
+}
 
 asset function SettingsPanel_GetDefaultImageForIndex( int index )
 {
@@ -103,6 +126,7 @@ asset function SettingsPanel_GetDefaultImageForIndex( int index )
 void function OnSettingsPanel_Show( var panel )
 {
 	TabData tabData = GetTabDataForPanel( panel )
+	tabData.centerTabs = true
 	ActivateTab( tabData, tabData.activeTabIdx )
 
 	file.anyChanged = false
@@ -127,7 +151,7 @@ void function OnSettingsPanel_Hide( var panel )
 
 	if ( file.anyChanged )
 	{
-		// synchronize convars that appear in multiple tabs
+		                                                   
 		SaveSettingsConVars( SoundPanel_GetConVarData() )
 		SaveSettingsConVars( GameplayPanel_GetConVarData() )
 		SaveSettingsConVars( ControlsPCPanel_GetConVarData() )
@@ -138,6 +162,7 @@ void function OnSettingsPanel_Hide( var panel )
 			Gameplay = SettingsConVarsToTable( GameplayPanel_GetConVarData() ),
 			ControlsPC = SettingsConVarsToTable( ControlsPCPanel_GetConVarData() ),
 			ControlsGamepad = SettingsConVarsToTable( ControlsGamepadPanel_GetConVarData() ),
+			opt_out_crossplay_flag = !CrossplayUserOptIn(),
 		}
 
 		PIN_Settings( settingsTable )
@@ -167,7 +192,7 @@ void function SettingsPanel_NavigateToSavedSelection()
 }
 
 
-var function SetupSettingsButton( var button, string buttonText, string description, asset image, bool showAdditional = false )
+var function SetupSettingsButton( var button, string buttonText, string description, asset image, bool showAdditional = false, bool isOnlyLeader = false )
 {
 	SetButtonRuiText( button, buttonText )
 	file.buttonTitles[ button ] <- buttonText
@@ -175,6 +200,7 @@ var function SetupSettingsButton( var button, string buttonText, string descript
 	file.buttonImages[ button ] <- image
 	file.additionalWidget[ button ] <- showAdditional
 
+	RuiSetBool(  Hud_GetRui( button ), "isOnlyLeader", isOnlyLeader )
 	if ( Hud_HasChild( button, "RightButton" ) )
 	{
 		var childButton = Hud_GetChild( button, "RightButton" )
@@ -199,10 +225,10 @@ var function SetupSettingsButton( var button, string buttonText, string descript
 	AddButtonEventHandler( button, UIE_GET_FOCUS, SettingsButton_GetFocus )
 	AddButtonEventHandler( button, UIE_LOSE_FOCUS, SettingsButton_LoseFocus )
 
-	//ToolTipData toolTipData
-	//toolTipData.titleText = buttonText
-	//toolTipData.descText = description
-	//Hud_SetToolTipData( button, toolTipData )
+	                         
+	                                    
+	                                    
+	                                           
 
 	return button
 }

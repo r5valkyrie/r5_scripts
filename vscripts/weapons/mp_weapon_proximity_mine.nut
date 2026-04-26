@@ -17,7 +17,7 @@ struct {
 	int iconCount = 0
 	int totalIcons = 10
 	var[10] icons
-	
+
 	#if SERVER
 	array<entity> allTraps
 	#endif
@@ -36,7 +36,7 @@ void function ShowProxMineTriggeredIcon( entity triggeredEnt )
 	triggeredEnt.EndSignal( "OnDeath" )
 	triggeredEnt.EndSignal( "ProxMineTriggered" )
 
-	wait PROX_MINE_MARKER_TIME
+	wait 3
 }
 #endif
 
@@ -75,10 +75,10 @@ var function OnWeaponTossReleaseAnimEvent_weapon_proximity_mine( entity weapon, 
 
 	if ( proximityMine == null )
 		return weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
-	
+
 	Grenade_Init( proximityMine, weapon )
 	proximityMine.SetScriptName( "proximityMine" )
-	
+
 	PlayerUsedOffhand( player, weapon )
 	#if SERVER
 		proximityMine.SetOwner( player )
@@ -101,7 +101,7 @@ void function CleanUpOldestTrap(entity player)
 
 	foreach(trap in file.allTraps)
 	{
-		if( !IsValid(trap) ) 
+		if( !IsValid(trap) )
 			continue
 
 		if( trap.GetOwner() == player )
@@ -116,7 +116,7 @@ void function CleanUpOldestTrap(entity player)
 
 		if( !IsValid( trapToDestroy ) )
 			return
-	
+
 		trapToDestroy.Destroy()
 	}
 }
@@ -141,13 +141,16 @@ void function OnProjectileCollision_weapon_proximity_mine( entity projectile, ve
 {
 	// Old version, but that rotation/position offset stuff is bunk and if this weapon comes back, we fix the asset.
 	//bool result = PlantStickyEntity( projectile, collisionParams, Vector( 90, 0, 0 ), false, Vector( 0, 0, -3.9 ) )
-	table collisionParams =
-	{
-		pos = pos,
-		normal = normal,
-		hitEnt = hitEnt,
-		hitbox = hitbox
-	}
+	DeployableCollisionParams collisionParams
+
+	collisionParams.pos = pos
+
+	collisionParams.normal = normal
+
+	collisionParams.hitEnt = hitEnt
+
+	collisionParams.hitBox = hitbox
+
 	bool result = PlantStickyEntity( projectile, collisionParams, Vector( 90, 0, 0 ) )
 
 	#if SERVER

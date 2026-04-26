@@ -125,11 +125,12 @@ void function Ability_Shadow_Zombie_RegisterNetworking()
 	if ( !ShadowZombie_IsEnabled() )
 		return
 
-	ScriptRegisterNetworkedVariable( "isPlayerShadowZombie", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "isPlayerShadowZombie", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_ShadowAbilitiesClientEffectsEnable", "entity", "bool" )
 
 	#if CLIENT
-	//	RegisterNetworkedVariableChangeCallback_bool( "isPlayerShadowZombie", OnServerVarChanged_IsPlayerShadowZombie )
+	//	RegisterNetworkedVariableChangeCallback_boolSafe( "isPlayerShadowZombie", OnServerVarChanged_IsPlayerShadowZombie )
+	//RegisterNetworkedVariableChangeCallback_boolSafe(  // incomplete call - disabled
 	#endif
 }
 //END SHARED
@@ -322,7 +323,7 @@ void function ShadowSquadApplyCharacterSkin( entity player )
 	//////////////////////////////////////////////
 	// Switch to base character model for Legend
 	/////////////////////////////////////////////
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	ItemFlavor skin = GetDefaultItemFlavorForLoadoutSlot( ToEHI( player ), Loadout_CharacterSkin( character ) )
 	CharacterSkin_Apply( player, skin )
 
@@ -620,7 +621,7 @@ void function RemoveShadowZombieAbilities( entity player )
 	if ( IsAlive( player ) )
 		player.SetHealth( player.GetMaxHealth() )
 		
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 		
 	player.TakeOffhandWeapon( OFFHAND_MELEE )
 	player.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
@@ -641,7 +642,7 @@ void function RemoveShadowZombieAbilities( entity player )
 #if SERVER
 void function ResetCharacterSkin( entity player )
 {
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	LoadoutEntry skinSlot = Loadout_CharacterSkin( character )
 	ItemFlavor skin = LoadoutSlot_GetItemFlavor( ToEHI( player ), skinSlot )
 
@@ -759,7 +760,7 @@ void function ShadowAbilitiesApplyCharacterSkin( entity player )
 {
 	//Called from ApplyAppropriateCharacterSkin() on player spawn or on mod setting change
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	//Temporary set up until shadow form is applied via modifier - to delete with .p variables
 	{
 		LoadoutEntry skinSlot = Loadout_CharacterSkin( character )

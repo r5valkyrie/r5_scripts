@@ -105,7 +105,7 @@ void function Tracker_ResyncStatForPlayer( entity playerToSync, string statKey )
 //////////////////////////////////////////////////
 void function Script_RegisterAllStats()
 {
-	// It is not necessary to add stats for core stats to a gamemode (kills,deaths,etc), as r5r.dev is capable
+	// It is not necessary to add stats for core stats to a gamemode (kills,deaths,etc), as the tracker is capable
 	// of sorting by various factors(todo). However, it is usful if you want to do it for display purposes.
 	// Generally, stats are registered here to add new stats specific to that gamemode.
 

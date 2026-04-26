@@ -133,7 +133,6 @@ bool function ClientCommand_ToggleLegend( entity commandPlayer, array<string> ar
 	if ( GetConVarInt( "sv_cheats" ) != 1 || !IsValid( commandPlayer ) )
 		return true
 
-	Remote_CallFunction_NonReplay( commandPlayer, "ServerCallback_ToggleLegend" )
 	return true
 }
 #endif
@@ -198,7 +197,7 @@ void function UnEquipMelee( bool allplayers = false)
 	player.TakeOffhandWeapon(OFFHAND_MELEE)
 	player.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	ItemFlavor meleeSkin = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_MeleeSkin( character ) )
 	string meleePrimary = MeleeSkin_GetMainWeaponClassname( meleeSkin )
 	string meleeOffhand = MeleeSkin_GetOffhandWeaponClassname( meleeSkin )
@@ -361,7 +360,7 @@ void function BatchClientsideExecutionTest( vector refPoint, vector ang, array<I
 }
 void function ClientsideExecutionTestInspiration( vector refPoint, entity attackerInspiration, entity victimInspiration, string whichCamera = "none" )
 {
-	ItemFlavor attackerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( attackerInspiration ), Loadout_CharacterClass() )
+	ItemFlavor attackerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( attackerInspiration ), Loadout_Character() )
 	ItemFlavor attackerSkin      = LoadoutSlot_GetItemFlavor( ToEHI( attackerInspiration ), Loadout_CharacterSkin( attackerCharacter ) )
 	ItemFlavor victimCharacter, victimSkin
 	if ( victimInspiration == null )
@@ -375,12 +374,12 @@ void function ClientsideExecutionTestInspiration( vector refPoint, entity attack
 	}
 	if ( victimInspiration == null )
 	{
-		victimCharacter = GetLaunchCharacters().getrandom()
+		victimCharacter = GetAllCharacters().getrandom()
 		victimSkin = GetValidItemFlavorsForLoadoutSlot( EHI_null, Loadout_CharacterSkin( victimCharacter ) ).getrandom()
 	}
 	else
 	{
-		victimCharacter = LoadoutSlot_GetItemFlavor( ToEHI( victimInspiration ), Loadout_CharacterClass() )
+		victimCharacter = LoadoutSlot_GetItemFlavor( ToEHI( victimInspiration ), Loadout_Character() )
 		victimSkin = LoadoutSlot_GetItemFlavor( ToEHI( victimInspiration ), Loadout_CharacterSkin( victimCharacter ) )
 	}
 	ItemFlavor attackerExecution = LoadoutSlot_GetItemFlavor( ToEHI( attackerInspiration ), Loadout_CharacterExecution( attackerCharacter ) )
@@ -443,7 +442,7 @@ void function ClientsideExecutionTest(
 	string victimRigWeight       = GetGlobalSettingsString( victimPlayerSettings, "bodyModelRigWeight" )
 
 	string attackerAnimSeq = string(CharacterExecution_GetAttackerAnimSeq( attackerExecution ))
-	string victimAnimSeq   = string(CharacterExecution_GetVictimAnimSeq( attackerExecution, victimRigWeight ))
+	string victimAnimSeq   = string(CharacterExecution_GetVictimAnimSeq( attackerExecution, victimCharacter, victimRigWeight ))
 
 	float attackerAnimDuration = attacker.GetSequenceDuration( attackerAnimSeq )
 	float victimAnimDuration   = victim.GetSequenceDuration( victimAnimSeq )
@@ -600,7 +599,7 @@ void function DevRespawnPlayer( entity player, bool shouldForce, void functionre
 		//player.p.hasMatchParticipationEnded = false // they're still going!
 		//player.p.lastDeathTime = -1.0
 		ClearPlayerEliminated( player )
-		DecideRespawnPlayer( player )
+		DecideRespawnPlayer( player, false )
 	}
 	if ( devCallbackFunc != null )
 	{

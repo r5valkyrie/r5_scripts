@@ -173,7 +173,7 @@ function FireWeaponPlayerAndNPC( entity weapon, WeaponPrimaryAttackParams attack
 		for ( int index = 0; index < shotCount; index++ )
 		{
 			vector attackVec = attackParams.dir + baseRightVec * file.boltOffsets[index]
-			int damageType = damageTypes.largeCaliber | DF_STOPS_TITAN_REGEN
+			int damageType = damageTypes.largeCaliber | DF_SOUR
 
 			float speed = TPAC_PROJECTILE_SPEED
 			if ( owner.IsNPC() )

@@ -38,8 +38,8 @@ void function CreateCallback_Spectre( entity spectre )
 	//----------------------
 	ModelFX_BeginData( "foe_lights", model, "foe", true )
 		ModelFX_HideFromLocalPlayer()
-		ModelFX_AddTagSpawnFX( "EYEGLOW",		$"P_spectre_eye_foe" )
-		//ModelFX_AddTagSpawnFX( "EYEGLOW",		$"P_spectre_eye_friend" )
+		//ModelFX_AddTagSpawnFX( "EYEGLOW",		$"P_spectre_eye_foe" )
+		ModelFX_AddTagSpawnFX( "EYEGLOW",		$"P_spectre_eye_friend" )
 	ModelFX_EndData()
 }
 

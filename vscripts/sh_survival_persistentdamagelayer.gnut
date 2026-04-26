@@ -18,15 +18,41 @@ struct {
 	float                     damageHintReset
 } file
 
+
+//// USAGE ////
+
+/*	This is a persistent damage layer that allows you to apply damage every tick based on boolean checks.
+*	To extend this system:
+*	1) Modify InitFlags() to check for your boolean condition in playlist vars
+*	2) Modify ShouldApplyDamage() to check your flag and add your boolean condition
+*	3) (OPTIONAL) Modify RoundThresholdAdjustment to change damage based on your flag and game state
+*
+*	The persistent damage layer does not stack damage from multiple conditions, it applies a single damage tick if any flagged condition is met
+*	Note: General Check makes the Damage Layer behave as if the condition is always set to TRUE
+*/
+
+
+
+
+
+
+///// INIT PERSISTENT DEATH LAYER /////
+
 void function Sh_PersistentDamageLayer_Init()
 {
-	ScriptRemote_RegisterClientFunction( "HandlePersistentDamageLayerThresholdNotification", "int", -1, 126 )
+	//For Deadline/Flag Survival LTM
+	Remote_RegisterClientFunction( "HandlePersistentDamageLayerThresholdNotification", "int", -1, 126 )
 
 	if (!GetCurrentPlaylistVarBool( "persistentdamagelayer_enabled", false ))
 		return
 
 	#if SERVER
-    #endif
+		AddCallback_GameStateEnter( eGameState.Playing, HandlePersistentDamageLayer )
+		AddCallback_OnPlayerKilled( Callback_OnPlayerKilled )
+		AddCallback_OnSurvivalDeathFieldStageChanged( Callback_OnCircleStateChanged )
+
+		InitFlags()
+	#endif
 
 	#if CLIENT
 		AddLocalPlayerTookDamageTypeCallback( eDamageSourceId.persistent_damage_layer, Callback_OnPlayerTakeDeathFieldDamage )
@@ -34,8 +60,126 @@ void function Sh_PersistentDamageLayer_Init()
 }
 
 #if SERVER
+void function InitFlags()
+{
+	//check flags for kill, flag, and general damage parameters
+	FlagInit( "KillCountCheck", GetCurrentPlaylistVarBool( "persistentdamagelayer_killcount", false ) )
+	FlagInit( "FlagOwnershipCheck", GetCurrentPlaylistVarBool( "persistentdamagelayer_flagownership", false ) )
+	FlagInit( "GeneralCheck", GetCurrentPlaylistVarBool( "persistentdamagelayer_general", false ) )
+}
+
+void function HandlePersistentDamageLayer()
+{
+	thread PersistentDamage()
+	thread RoundThresholdAdjustment()
+}
+
+
+
+
+///// STATE MANAGEMENT
+
+void function PersistentDamage()
+{
+	const float DAMAGE_CHECK_STEP_TIME = 1.5
+
+	while ( GamePlaying() )
+	{
+		foreach ( player in GetPlayerArray_Alive() )
+		{
+			if ( player.IsPhaseShifted() )
+				continue
+
+			bool shouldDamage = ShouldApplyDamage( player )
+			if ( shouldDamage )
+			{
+				player.TakeDamage( int( file.layerData.damagePercentPerTick * float( player.GetMaxHealth() ) ),
+					null, null,
+					{
+						scriptType = DF_BYPASS_SHIELD | DF_DOOMED_HEALTH_LOSS,
+						damageSourceId = eDamageSourceId.persistent_damage_layer
+					}
+				)
+			}
+		}
+
+		wait DAMAGE_CHECK_STEP_TIME
+	}
+}
+
+void function RoundThresholdAdjustment()
+{
+	while ( GamePlaying() )
+	{
+		FlagWait( "SUR_DeathFieldShrinking" )
+
+		foreach(player in GetPlayerArray_Alive())
+		{
+			GameSummarySquadData gameSummaryData = GameSummary_GetPlayerData( player )
+			HandleThresholdNotifServer( player, gameSummaryData.kills )
+		}
+
+		//ADJUST ROUND VALUES HERE
+		if ( GetCurrentPlaylistVarBool( "persistentdamagelayer_roundbased", false ) )
+		{
+			int roundValue   = SURVIVAL_GetCurrentDeathFieldStage()
+			int newThreshold = GetCurrentPlaylistVarInt( "persistentdamagelayer_round" + roundValue + "threshold", -1 )
+			file.layerData.killThreshold = newThreshold
+		}
+
+		FlagWaitClear( "SUR_DeathFieldShrinking" )
+		WaitFrame()
+	}
+}
+
+bool function ShouldApplyDamage( entity player )
+{
+	//check against kill flag
+	GameSummarySquadData gameSummaryData = GameSummary_GetPlayerData( player )
+
+	if ( Flag( "KillCountCheck" ) && gameSummaryData.kills < file.layerData.killThreshold )
+	{
+		return true
+	}
+
+	//check against flag flag
+	if ( Flag( "FlagOwnershipCheck" ) )
+	{
+		//TODO: store flag data somewhere and include it in the check
+		return true
+	}
+
+	//return always on flag if available
+	return Flag( "GeneralCheck" )
+}
+
 #endif
+
+
+
+
+
+///// CALLBACKS /////
+
 #if SERVER
+void function Callback_OnCircleStateChanged( int stage, float nextCircleStartTime )
+{
+	foreach(player in GetPlayerArray_Alive())
+	{
+		GameSummarySquadData gameSummaryData = GameSummary_GetPlayerData( player )
+		HandleThresholdNotifServer( player, gameSummaryData.kills )
+	}
+}
+
+void function Callback_OnPlayerKilled( entity victim, entity attacker, var attackerDamageInfo )
+{
+	if ( attacker.IsPlayer() )
+	{
+		GameSummarySquadData gameSummaryData = GameSummary_GetPlayerData( attacker )
+		HandleThresholdNotifServer( attacker, gameSummaryData.kills + 1 )
+	}
+}
+
 #endif
 
 #if CLIENT
@@ -46,7 +190,18 @@ void function Callback_OnPlayerTakeDeathFieldDamage( float damage, vector damage
 
 #endif
 
+
+
+
+
+///// NOTIFICATION HANDLERS
+
 #if SERVER
+void function HandleThresholdNotifServer( entity player, int killCount )
+{
+	Remote_CallFunction_NonReplay( player, "HandlePersistentDamageLayerThresholdNotification", killCount )
+}
+
 #endif
 
 #if CLIENT
@@ -54,7 +209,7 @@ void function HandleThresholdNotifWarnings()
 {
 	string thresholdType = GenerateThresholdType()
 	int threshold = GetCurrentPlaylistVarInt( "persistentdamagelayer_round" + SURVIVAL_GetCurrentDeathFieldStage() + "threshold", -1 )
-	RuiSetString( GetCompassRui(), "deadlineTextArg", thresholdType + " Quota `1Failed.     `0Reach the threshold of `1" + threshold + " " + thresholdType + "(s) `0to stop the damage." )
+	//RuiSetString( GetCompassRui(), "deadlineTextArg", thresholdType + " Quota `1Failed.     `0Reach the threshold of `1" + threshold + " " + thresholdType + "(s) `0to stop the damage." )
 }
 
 void function HandlePersistentDamageLayerThresholdNotification( int killCount )
@@ -67,7 +222,7 @@ void function HandlePersistentDamageLayerThresholdNotification( int killCount )
 	else
 	{
 		string thresholdType = GenerateThresholdType()
-		RuiSetString( GetCompassRui(), "deadlineTextArg", "Incoming " + thresholdType + " Quota.     Score `2" + threshold + " `0" + thresholdType + "(s) for protection." )
+		//RuiSetString( GetCompassRui(), "deadlineTextArg", "Incoming " + thresholdType + " Quota.     Score `2" + threshold + " `0" + thresholdType + "(s) for protection." )
 	}
 }
 
@@ -82,17 +237,25 @@ void function HandleThresholdNotifReached()
 	}
 
 	string thresholdType = GenerateThresholdType()
-	RuiSetString( GetCompassRui(), "deadlineTextArg", thresholdType + " Quota `3Reached.     `0Next " + thresholdType +" quota is `3" + threshold + " " + thresholdType + "(s)."  )
+	//RuiSetString( GetCompassRui(), "deadlineTextArg", thresholdType + " Quota `3Reached.     `0Next " + thresholdType +" quota is `3" + threshold + " " + thresholdType + "(s)."  )
 }
 #endif
+
+
+
+
+
+
+
+///// UTILITY FUNCTIONS /////
 
 PersistentDamageLayerData function SURVIVAL_GetPersistentDamageLayer()
 {
 	return file.layerData
 }
 
-string function GenerateThresholdType()
-{
+string function GenerateThresholdType() {
+	//TODO: Will extend later to accomodate different threshold types
 	string retVal = "Kill"
 	return retVal
 }

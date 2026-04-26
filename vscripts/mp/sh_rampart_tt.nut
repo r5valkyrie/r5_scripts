@@ -180,7 +180,7 @@ void function Rampart_TT_Init()
 {
 	if ( !IsRampartTTEnabled() )
 		return
-	
+
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 	#if SERVER
 		AddCallback_OnPlayerRespawned( Rampart_TT_OnPlayerStateChanged )
@@ -287,7 +287,7 @@ void function SetupVendPanels()
 			panel.SetSkin( 2 )
 			Vend_DestroyBlocker( panel )
 		}
-		
+
 	}
 }
 #endif //SERVER
@@ -299,7 +299,7 @@ void function OnPanelCreated( entity panel )
 		return
 
 	AddCallback_OnUseEntity_ClientServer( panel, Vend_OnUse )
-	SetCallback_CanUseEntityCallback_Retail( panel, Vend_CanUse )
+	SetCallback_CanUseEntityCallback( panel, Vend_CanUse )
 	AddEntityCallback_GetUseEntOverrideText( panel, Vend_UseTextOverride )
 }
 #endif // CLIENT
@@ -770,7 +770,7 @@ void function SetupLoreEvents()
 	{
 		DataPad_SetUse( datapad )
 		AddCallback_OnUseEntity_ServerOnly( datapad, DataPad_OnUse )
-		SetCallback_CanUseEntityCallback_Retail( datapad, DataPad_CanUse )
+		SetCallback_CanUseEntityCallback( datapad, DataPad_CanUse )
 	}
 
 	//APPEND DATAPAD VO TO ARRAY`
@@ -788,7 +788,7 @@ void function SetupLoreEvents()
 	{
 		LoreEnt_SetUse( menSign )
 		AddCallback_OnUseEntity_ClientServer( menSign, Lore_OnUse )
-		SetCallback_CanUseEntityCallback_Retail( menSign, Lore_CanUse )
+		SetCallback_CanUseEntityCallback( menSign, Lore_CanUse )
 	}
 
 	//PORTRAIT RAMPART ONLY-----//
@@ -796,7 +796,7 @@ void function SetupLoreEvents()
 	{
 		LoreEnt_SetUse( portrait )
 		AddCallback_OnUseEntity_ClientServer( portrait, Lore_OnUse )
-		SetCallback_CanUseEntityCallback_Retail( portrait, Lore_CanUse )
+		SetCallback_CanUseEntityCallback( portrait, Lore_CanUse )
 	}
 
 	//SISTER TARGET RAMPART ONLY-----//
@@ -804,14 +804,14 @@ void function SetupLoreEvents()
 	{
 		LoreEnt_SetUse( sister )
 		AddCallback_OnUseEntity_ClientServer( sister, Lore_OnUse )
-		SetCallback_CanUseEntityCallback_Retail( sister, Lore_CanUse )
+		SetCallback_CanUseEntityCallback( sister, Lore_CanUse )
 	}
 	//SHOP SIGN RAMPART ONLY-----//
 	foreach ( entity shopSign in GetEntArrayByScriptName( RAMPART_LORE_SHOPSIGN ) )
 	{
 		LoreEnt_SetUse( shopSign )
 		AddCallback_OnUseEntity_ClientServer( shopSign, Lore_OnUse )
-		SetCallback_CanUseEntityCallback_Retail( shopSign, Lore_CanUse )
+		SetCallback_CanUseEntityCallback( shopSign, Lore_CanUse )
 	}
 
 }
@@ -946,7 +946,7 @@ string function MirageOnly_UseTextOverride( entity loreEnt )
 		return ""
 	}
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	string characterRef  = ItemFlavor_GetHumanReadableRef( character ).tolower()
 	if ( characterRef != "character_mirage" )
 	{
@@ -966,7 +966,7 @@ string function RampartOnly_UseTextOverride( entity loreEnt )
 		return ""
 	}
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	string characterRef  = ItemFlavor_GetHumanReadableRef( character ).tolower()
 	if ( characterRef != "character_rampart" )
 	{
@@ -980,7 +980,7 @@ string function RampartOnly_UseTextOverride( entity loreEnt )
 #if SERVER
 void function Lore_OnUse( entity loreEnt, entity playerUser, int useInputFlags )
 {
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( playerUser ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( playerUser ), Loadout_Character() )
 	string characterRef  = ItemFlavor_GetHumanReadableRef( character ).tolower()
 	string dialogueLine
 
@@ -1038,7 +1038,7 @@ entity function CreateVendShieldWall( entity shieldTarget )
 bool function CheckRampartTTMuralLegends( entity player )
 {
 	//CHECK YOUR CHARACTER AGAINST VALID S10 LEGENDS
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	string playerChar  = ItemFlavor_GetHumanReadableRef( character ).tolower()
 	foreach ( validChar in RAMPART_TT_S10_MURAL_LEGENDS )
 	{
@@ -1310,7 +1310,7 @@ void function Thread_SetupVendWaypoint_Internal( entity waypoint )
 	RuiSetFloat( waypoint.wp.ruiHud, "iconSizePinned", 72.0 )
 	RuiSetImage( waypoint.wp.ruiHud, "outerIcon", BIGMAUDE_DISPENSER_CRAFTING_ICON_ASSET )
 	RuiSetImage( waypoint.wp.ruiHud, "innerIcon", BIGMAUDE_DISPENSER_CRAFTING_ICON_ASSET )
-	RuiSetImage( waypoint.wp.ruiHud, "fillBackgroundImage", BIGMAUDE_DISPENSER_FILL_BG_ICON_ASSET )
+	//RuiSetImage( waypoint.wp.ruiHud, "fillBackgroundImage", BIGMAUDE_DISPENSER_FILL_BG_ICON_ASSET )
 	RuiSetImage( waypoint.wp.ruiHud, "fillImage", BIGMAUDE_DISPENSER_FILL_ICON_ASSET )
 
 	RuiSetInt( waypoint.wp.ruiHud, "yourObjectiveStatus", 2 )

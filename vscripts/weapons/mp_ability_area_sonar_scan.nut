@@ -109,7 +109,10 @@ float function AreaSonarScan_GetConeFOV()
 float function GetScanHighlightDuration( entity player )
 {
 	float dur = AREA_SONAR_SCAN_HIGHLIGHT_DURATION
-
+	                    
+		if( IsValid( player ) && player.HasPassive( ePassives.PAS_TAC_UPGRADE_ONE ) ) // upgrade_increased_scan_duration
+			dur = 3.0
+       
 	return dur
 }
 
@@ -460,7 +463,7 @@ void function AreaSonarScan_CheckandScanValidTarget( entity owner, entity ent )
 	file.areaScanTargets[owner][file.areaScanIndex[owner]].push( ent )
 
 	//printt( "Sonar Start: " + ent )
-	//DebugDrawSphere( ent.GetOrigin(), 30, COLOR_YELLOW,false, AreaSonarScan_GetDuration() )
+	//DebugDrawSphere( ent.GetOrigin(), 30, <255, 255, 0>,false, AreaSonarScan_GetDuration() )
 	//DebugDrawText( ent.GetOrigin(), "sonar count: " + ent.e.inSonarTriggerCount, false, AreaSonarScan_GetDuration() )
 }
 

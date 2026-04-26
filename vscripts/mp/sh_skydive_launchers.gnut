@@ -9,8 +9,6 @@ global function Sh_SkydiveLaunchers_Init
 
 	const float SKYDIVE_TRIGGER_RADIUS = 36
 #endif //SERVER
-//TODO: FIND THE ORIGINAL PARTICLES!
-global const string SKYDIVE_LAUNCHER_TARGETNAME = "skydive_launcher"
 
 //SHARED
 global enum eSkydiveLauncherType
@@ -102,12 +100,12 @@ struct
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Assets are blank unless we actually include the precache script in the specific level rson
 /////////////////////////////////////////////////////////////////////////////////////////////
-global asset FX_SKYDIVE_LAUNCHER_LOOP_DEFAULT = $""
-global asset FX_SKYDIVE_LAUNCHER_LOOP_NO_SNOW = $""
+global asset FX_SKYDIVE_LAUNCHER_LOOP_DEFAULT = $"P_launchpad_winter"
+global asset FX_SKYDIVE_LAUNCHER_LOOP_NO_SNOW = $"P_launchpad_winter_AR"
 global asset FX_SKYDIVE_LAUNCHER_GRAVITY_MINI_IDLE = $""
 #if SERVER
-	global asset MODEL_SKYDIVE_LAUNCHER_DEFAULT = $""
-	global asset FX_SKYDIVE_LAUNCHER_LAUNCH = $""
+	global asset MODEL_SKYDIVE_LAUNCHER_DEFAULT = $"mdl/s2s/s2s_hullhatch_tube_lift.rmdl"
+	global asset FX_SKYDIVE_LAUNCHER_LAUNCH = $"P_launchpad_winter_engage"
 	global asset MODEL_SKYDIVE_LAUNCHER_GRAVITY_MINI = $""
 	global asset FX_SKYDIVE_LAUNCHER_GRAVITY_MINI_LAUNCH = $""
 	global asset FX_SKYDIVE_LAUNCHER_GRAVITY_ZIPRAIL_LAUNCH = $""
@@ -287,12 +285,12 @@ void function CreateSkydiveLauncherFromEditorClass_Thread( entity ent )
 
 	// if ( ziplinePos ==  <0,0,0> )
 	// {
-		// ////DebugDrawCylinder( startPoint, <-90, 0, 0 >, 5*METERS_TO_INCHES, 30*METERS_TO_INCHES, COLOR_RED, true, 200.0 )
+		// ////DebugDrawCylinder( startPoint, <-90, 0, 0 >, 5*METERS_TO_INCHES, 30*METERS_TO_INCHES, <255, 0, 0>, true, 200.0 )
 		// ziplinePos = < origin.x, origin.y, origin.z + 10*METERS_TO_INCHES >
 	// }
 	// else
 	// {
-		// //DebugDrawLine( origin, < origin.x, origin.y, ziplinePos.z >, COLOR_GREEN, true, 20.0 )
+		// //DebugDrawLine( origin, < origin.x, origin.y, ziplinePos.z >, <0, 255, 0>, true, 20.0 )
 		// height = ziplinePos.z - origin.z - GetBoundsMax( HULL_HUMAN ).z + 3.0
 		// launchVelocityScale = sqrt(2 * GRAVITY * height)
 	// }
@@ -568,9 +566,9 @@ entity function CreateSkydiveLauncher( vector origin, vector angles, int skydive
 	{
 		launcherModel.SetScriptName( launcherScriptName )
 		//if ( launcherScriptName == "district_launcher_vertical" )
-		//	DebugDrawSphere( launcherModel.GetOrigin(), 40, COLOR_RED, true, 150 )
+		//	DebugDrawSphere( launcherModel.GetOrigin(), 40, <255, 0, 0>, true, 150 )
 		//if ( launcherScriptName == "district_launcher_horizontal" )
-		//	DebugDrawSphere( launcherModel.GetOrigin(), 40, COLOR_YELLOW, true, 150 )
+		//	DebugDrawSphere( launcherModel.GetOrigin(), 40, <255, 255, 0>, true, 150 )
 	}
 
 	AddSonarDetectionForPropScript( launcherModel )
@@ -721,7 +719,7 @@ void function DrawTriggerCylinder( vector origin, entity trigger )
 {
 	while ( true )
 	{
-		 //DebugDrawCylinder( origin, AnglesCompose( trigger.GetAngles(), < -90, 0, 0 > ), trigger.GetRadius(), trigger.GetAboveHeight(), COLOR_RED, true, FrameTime() * 1.5 )
+		 //DebugDrawCylinder( origin, AnglesCompose( trigger.GetAngles(), < -90, 0, 0 > ), trigger.GetRadius(), trigger.GetAboveHeight(), <255, 0, 0>, true, FrameTime() * 1.5 )
 		WaitFrame()
 	}
 }
@@ -730,7 +728,7 @@ void function DrawVortexSphere( entity trigger )
 {
 	while ( true )
 	{
-		//DebugDrawSphere( trigger.GetOrigin(), float(trigger.kv.radius), COLOR_RED, true, FrameTime() * 1.5 )
+		//DebugDrawSphere( trigger.GetOrigin(), float(trigger.kv.radius), <255, 0, 0>, true, FrameTime() * 1.5 )
 		WaitFrame()
 	}
 }
@@ -1328,8 +1326,8 @@ void function SkydiveLauncher_OnProjectileHitVortexTrigger( entity weapon, entit
 
 	//printt( projectile )
 
-	//DebugDrawLine( origin, origin + ( posToTarget * JUMP_PAD_PUSH_PROJECTILE_RADIUS ), COLOR_RED, true, 5.0 )
-	//DebugDrawLine( origin, origin + ( surfaceNormal * JUMP_PAD_PUSH_PROJECTILE_RADIUS ), COLOR_GREEN, true, 5.0 )
+	//DebugDrawLine( origin, origin + ( posToTarget * JUMP_PAD_PUSH_PROJECTILE_RADIUS ), <255, 0, 0>, true, 5.0 )
+	//DebugDrawLine( origin, origin + ( surfaceNormal * JUMP_PAD_PUSH_PROJECTILE_RADIUS ), <0, 255, 0>, true, 5.0 )
 
 	//printt( dot )
 	//printt( accuracyScalar )
@@ -1370,7 +1368,7 @@ void function Launcher_PushProjectileAway( entity projectile, vector velocity )
 	vector result = velocity // + projectile.GetVelocity()
 	//result.z = max( 200, fabs( velocity.z ) )
 	projectile.SetVelocity( result )
-	//DebugDrawLine( projectile.GetOrigin(), projectile.GetOrigin() + result * 5, COLOR_RED, true, 5.0 )
+	//DebugDrawLine( projectile.GetOrigin(), projectile.GetOrigin() + result * 5, <255, 0, 0>, true, 5.0 )
 }
       
 

@@ -30,6 +30,8 @@ global struct ClientEntityStruct
 	// for cockpit
 	entity mainVGUI
 	entity body
+
+	bool hudVisible = false
 	
 	bool isOpen
 
@@ -67,14 +69,14 @@ global struct ClientEntityStruct
 
 	string functionref( entity ent ) entTextOverrideCallback
 
-	bool functionref( entity player, entity ent ) canUseEntityCallback = null
-	bool functionref( entity player, entity ent, int useFlags ) canUseEntityCallbackNew = null
+	bool functionref( entity player, entity ent, int useFlags ) canUseEntityCallback = null
 
 	array<void functionref( entity ent, entity player, int useInputType )> onUseEntityCallbacks
 	array<void functionref( entity vehicle )> onVehicleLaunchCallbacks
 	array<void functionref( entity vehicle )> onVehicleCollideCallbacks
 	array<void functionref( entity vehicle )> onPlayerUseButtonPressed
 	array<void functionref( entity vehicle )> onPlayerUseButtonReleased
+	array<void functionref( entity player )> onPlayerLandedCallbacks
 	array<void functionref( entity )> onEntityDestroyedCallbacks
 
 	string enemyHighlight = ""
@@ -104,6 +106,8 @@ global struct ClientEntityStruct
 	float lastGrappleTime
 	bool firsttime = true
 	int shieldTier
+
+	bool munitionsDropSpawned = false
 	
 	//extra survival int property ( max shield for infinite shield )
 	int extraSurvivalProperty = -1
@@ -113,9 +117,16 @@ global struct ClientEntityStruct
 	int    clientEntMinimapCustomState
 	int    clientEntMinimapFlags
 	float  clientEntMinimapScale = 1.0
+	int    clientEntMinimapZOrder
+
+	bool                       ignorePingTrace = false
+	bool   blackMarket_haveSeenReady
+                           
+	int deathBoxMenu_lastSeenClipCount
 	EncodedEHandle ornull gladCardPropOwnerPlayerEEH = null
 	ItemFlavor ornull     animWindowCosmeticItemFlavor = null
 	ItemFlavor ornull     animWindowSkinItemFlavor = null
+	ItemFlavor ornull     animWindowMeleeSkinItemFlavor = null
 }
 
 
@@ -161,6 +172,7 @@ global struct ClientPlayerStruct
 	int lastSaidCommsAction
 	int lastCanceledCommsAction
 	table<int,float> commActionFlavorDebounceTimes
+	float nextTraceCheckTime = 0.0
 	float commActionFlavorGlobalDebounceTime = -30.0
 	bool inSkydiveAfterUlt
 	float  nextAllowUseValkUltTime
@@ -176,6 +188,7 @@ global struct ClientPlayerStruct
 	entity TEMP_lastMeleeInputWeapon = null
 
 	int mapPingTicketID = -1
+	array<int> activePerks
 
 	array<int> freefallContrailFXHandles
 	int freefallWindEffectHandle = -1
@@ -194,7 +207,7 @@ global struct ClientPlayerStruct
 	
 	bool onetimetimer = false
 	float lasttime
-
+	bool classActuallyChanged
 	bool isSkydiving
 	//prophunt
 	asset PROPHUNT_LastModel
@@ -220,7 +233,6 @@ global struct ClientPlayerStruct
 	string snd_knifecolor = "255, 255, 255"
 	int holosprayChoice
 
-	//R5R Sword
 	array<VisibleEntityInCone> targetsForAoeDamage
 	bool isSecondaryMeleeAttack = false
 
@@ -240,6 +252,19 @@ global struct ClientPlayerStruct
 	bool isInAdsCustom
 
 	float  lastTimeDeactivatedJetpack
+
+	// Artifact configuration
+	ArtifactConfig ornull artifactConfig = null
+
+	// Firing Range S22 settings
+	string frSettings_AllStrs = ""
+	table< int, int > FRSettings_Ints
+	table< int, bool > FRSettings_Bools
+	table< int, string > FRSettings_Strs
+
+	// Highlight recon scan tracking
+	table<entity, int> reconScannedByThisPlayerRefCount
+	table<entity, var> reconScanRUIs
 }
 
 
@@ -252,6 +277,7 @@ global struct ClientAIStruct
 	bool ongoingneedlesexplode = false
 	bool firsttime = true
 	int shieldTier
+	entity primaryWaypoint
 	entity secondaryWaypoint
 }
 
@@ -292,6 +318,9 @@ global struct ClientWeaponStruct
 	
 	bool isInAdsCustom = false
 	bool toggleShot = true
+
+	var    sentinelEnergizeHintRui = null
+	var    dragonLMGEnergizeHintRui = null
 }
 
 
@@ -339,11 +368,19 @@ global struct ClientPlayerWaypoint
 	var ruiFullmap
 	var ruiHud
 
+	bool isHiddenOnLocalHUD = false
+
 	array<int> fxHandles
 
 	bool haveConfirmed
 
 	entity highlightEnt
+
+	int                           objectiveGroupIndex = -1
+	string                        objectiveGroupName
+	bool                          objectiveGroup_thisWasVisible = false
+	void functionref( entity wp ) objectiveGroupOnVisibleTrueFunc = null
+	void functionref( entity wp ) objectiveGroupOnVisibleFalseFunc = null
 
 #if(false)
 

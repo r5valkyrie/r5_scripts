@@ -72,7 +72,7 @@ WeaponData
 	"battle_chatter_event"							"bc_thermite"
 
 	"damage_type"									"burn"
-	"damage_flags"									"DF_RAGDOLL | DF_EXPLOSION | DF_STOPS_TITAN_REGEN"
+	"damage_flags"									"DF_RAGDOLL | DF_EXPLOSION | DF_SOUR"
 
 
 	"show_grenade_indicator"						"1"

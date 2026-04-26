@@ -208,7 +208,7 @@ void function OnEquipClick( var button )
 
 	foreach ( character in GetAllCharacters() )
 	{
-		bool isUnlocked = IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), Loadout_CharacterClass(), character, false )
+		bool isUnlocked = IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), Loadout_Character(), character, false )
 
 		if ( isUnlocked )
 		{

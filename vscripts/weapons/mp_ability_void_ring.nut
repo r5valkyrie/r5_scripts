@@ -21,7 +21,6 @@ global function ServerToClient_VoidRingStateToClient
 global const string VOID_RING_PROP_SCRIPTNAME = "void_ring"
 global const string VOID_RING_WEAPON_REF = "mp_ability_void_ring"
 const string VOID_RING_MOVER_SCRIPTNAME = "void_ring_mover"
-global const float DEATHFIELD_DAMAGE_CHECK_STEP_TIME = 1.5
 
 const bool DEBUG_ACTIVE_RING_TEST = false 			//Use to allow Debug Variables AND sets VR Active when inside
 const int DEBUG_RING_STAGE = 3
@@ -146,7 +145,7 @@ struct
 void function VOID_RING_Init()
 {
 	SURVIVAL_Loot_RegisterConditionalCheck( VOID_RING_WEAPON_REF, VoidRing_ConditionalCheck )
-	
+
 	PrecacheModel( VOID_RING_PROJECTILE )
 	//PrecacheParticleSystem( VOID_RING_BEAM_END_FX )
 	PrecacheParticleSystem( VOID_RING_BEAM_FX )
@@ -271,7 +270,7 @@ var function OnWeaponTossReleaseAnimEvent_void_ring( entity weapon, WeaponPrimar
 
 	weapon.EmitWeaponSound_1p3p( GetGrenadeThrowSound_1p( weapon ), GetGrenadeThrowSound_3p( weapon ) )
 
-	entity deployable = ThrowDeployable_Retail( weapon, attackParams, 1.0, OnVoidRingPlanted, null,  <0,VOID_RING_THROW_BACKSPIN,0> )
+	entity deployable = ThrowDeployable( weapon, attackParams, 1.0, OnVoidRingPlanted, null )
 	if ( deployable )
 	{
 		PlayerUsedOffhand( player, weapon, true, deployable )
@@ -452,7 +451,7 @@ void function DeployVoidRing( entity projectile, float duration )
 	vector pingOrigin = projectile.GetOrigin() + <0,0,25>
 	entity traceBlocker = CreateTraceBlockerVolume( pingOrigin, 64.0, false, CONTENTS_BLOCK_PING, team, VOID_RING_PROP_SCRIPTNAME )
 	traceBlocker.SetParent( projectile )
-	//DebugDrawSphere( pingOrigin, 64, COLOR_BLUE, true, 10 )
+	//DebugDrawSphere( pingOrigin, 64, <0, 0, 255>, true, 10 )
 
 	AddEMPDestroyDeviceNoDissolve( projectile )
 	AddEntToInvalidEntsForPlacingPermanentsOnto( projectile )
@@ -586,28 +585,28 @@ void function VoidRing_TrackState_Thread( entity projectile )
 	while ( IsValid( projectile ) && projectile in file.voidRingInActiveState )
 	{
 		vector origin 			= projectile.GetOrigin()
-		vector center 			= SURVIVAL_GetDeathFieldCenter( )
+		vector center 			= SURVIVAL_GetDeathFieldCenter( 0 )
 		vector flatCenter 		= <center.x, center.y, origin.z>
 		vector dirToRingEdge 	= Normalize(origin - flatCenter)
 		vector vrEdgePos 		= origin + ( dirToRingEdge * file.voidRingRadius[projectile] )
 
-		DeathFieldData deathFieldData = SURVIVAL_GetDeathFieldData( )
+		DeathFieldData deathFieldData = SURVIVAL_GetDeathFieldData( 0 )
 
-		bool isInRing 		= SURVIVAL_PosInsideDeathField( origin )
+		bool isInRing 		= SURVIVAL_PosInsideDeathField( 0, origin )
 		bool isInFissure	= VoidRing_IsInRingFissure( projectile, origin )
 		bool isAlwaysActive = false
 
 		isAlwaysActive	= VoidRing_IsInHeatwave( projectile, origin )
 
 
-		bool isEdgeInRing 	= SURVIVAL_PosInsideDeathField( vrEdgePos )
+		bool isEdgeInRing 	= SURVIVAL_PosInsideDeathField( 0, vrEdgePos )
 
 		if ( projectile in file.voidRingInRingFissure )
 		{
 			file.voidRingInRingFissure[projectile] <- isInFissure
 		}
 		//DebugDrawSphere( vrEdgePos, 20, <0, 0, 150>, true, 0.1 )
-		// DebugDrawArrow( flatCenter, origin, 8, COLOR_GREEN, true, 0.1 )
+		// DebugDrawArrow( flatCenter, origin, 8, <0, 255, 0>, true, 0.1 )
 		//DebugDrawArrow( origin, vrEdgePos, 8, COLOR_CYAN, true, 0.1 )
 
 		bool voidRingActiveState =   !isInRing || isInFissure || isAlwaysActive || file.playerInVoidRing[projectile].len() > 0  || !isEdgeInRing
@@ -835,9 +834,9 @@ void function VoidRingActiveThread( entity projectile, int team, float duration 
 
 	while( IsValid( projectile ) && ( Time() < file.voidRingEndTime[projectile] || warnCount > 0 ) )
 	{
-		DeathFieldData deathFieldData = SURVIVAL_GetDeathFieldData()
+		DeathFieldData deathFieldData = SURVIVAL_GetDeathFieldData( 0 )
 
-		bool isInRing 		= SURVIVAL_PosInsideDeathField(  origin )
+		bool isInRing 		= SURVIVAL_PosInsideDeathField( 0, origin )
 		bool isInFissure	= VoidRing_IsInRingFissure( projectile, origin )
 		int curStage 		= SURVIVAL_GetCurrentDeathFieldStage()
 		int numStages 		= Survival_GetNumDeathfieldStages()
@@ -848,14 +847,14 @@ void function VoidRingActiveThread( entity projectile, int team, float duration 
 		if( curStage >= ringStageVRDamageTable.len() )
 			curStage 	= ringStageVRDamageTable.len()
 
-		DeathFieldStageData deathFieldStageData = GetDeathFieldStage( curStage )
+		DeathFieldStageData deathFieldStageData = GetDeathFieldStage( 0, curStage )
 		float shrinkDuration = deathFieldStageData.shrinkDuration
 
 		//Final Circle - Treat the final closing circle as the final round
 		if ( SURVIVAL_IsFinalDeathFieldStage( ))
 		{
 			float now                 = Time()
-			float nextCircleStartTime = GetGlobalNetTime( "nextCircleStartTime" )
+			float nextCircleStartTime = GetGlobalNetTimeSafe( "nextCircleStartTime" )
 
 			if ( (nextCircleStartTime - now) <= 0.0 )
 			{
@@ -1151,7 +1150,7 @@ void function VoidRing_UpdateVisibleFXDome_Thread( entity projectile, entity shi
 				}
 			}
 
-			//#if DEV
+			//#if DEVELOPER
 			//if( isInFissure )
 			//{
 			//	DebugDrawSphere( projectile.GetOrigin(), vRadius-20, <150, 0, 0>, true, 0.1 )
@@ -1674,8 +1673,8 @@ void function VoidRing_TrackPlayerInside( entity trigger, entity ent, entity pro
 	//We've currently simplified to allow the Void Ring to become ACTIVE if ANY PART of it is touching the Deathfield
 	//Now I use this simply for debugging in box with actual Deathfield. - May be useful for Telemetry
 
-	//DeathFieldData deathFieldData = SURVIVAL_GetDeathFieldData()
-	//bool isInRing                 = SURVIVAL_PosInsideDeathField( ent.GetOrigin() )
+	//DeathFieldData deathFieldData = SURVIVAL_GetDeathFieldData( 0 )
+	//bool isInRing                 = SURVIVAL_PosInsideDeathField( 0, ent.GetOrigin( ) )
 	//bool isInFissure              = VoidRing_IsInRingFissure( projectile, ent.GetOrigin() )
 
 	if ( DEBUG_ACTIVE_RING_TEST ) //if ( !isInRing || isInFissure || DEBUG_ACTIVE_RING_TEST )
@@ -1747,7 +1746,7 @@ void function InVoidRing_OnDamaged( entity ent , var damageInfo )
 //Runs when AddCallback_OnPlayerInventoryChanged() is called to initiate checks to announce VoidRing Usage Hints on the Client
 void function VoidRing_HintCheck( entity player )
 {
-	string equipRef = EquipmentSlot_GetLootRefForSlot( player, "gadget" )
+	string equipRef = EquipmentSlot_GetLootRefForSlot( player, "gadgetslot" )
 	if( equipRef == VOID_RING_WEAPON_REF )
 	{
 		Remote_CallFunction_Replay( player, "ServerToClient_VoidRingHintDetection", player )
@@ -1863,7 +1862,7 @@ void function CL_VoidRingHintThread( entity player )
 		//	break
 
 		vector eyePos      = player.EyePosition()
-		float frontierDist = DeathField_PointDistanceFromFrontier( player.EyePosition() )
+		float frontierDist = DeathField_PointDistanceFromFrontierForIndex( player.EyePosition(), player.DeathFieldIndex() )
 		entity heldGadget = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
 		entity activeWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
 		int hasDownedState = BleedoutState_GetPlayerBleedoutState( player )
@@ -2060,4 +2059,3 @@ void function VoidRing_WaypointUI_Thread( entity wp )
 }
 
 #endif //client
- 

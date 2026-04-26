@@ -1,12 +1,8 @@
-//=========================================================
-//	sh_loadscreen.gnut
-//=========================================================
-
+global function ShLoadscreen_Init
 global function ShLoadscreen_LevelInit
 
 global function Loadout_Loadscreen
 global function Loadscreen_GetSortOrdinal
-global function Loadscreen_GetPreviewImageAsset
 global function Loadscreen_GetLoadscreenImageAsset
 global function Loadscreen_GetRPakName
 global function Loadscreen_GetImageOverlayText
@@ -16,12 +12,6 @@ global function Loadscreen_SetEquppedLoadscreenAsActive
 global function Loadscreen_SetCustomLoadscreen
 #endif
 
-
-///////////////////////
-///////////////////////
-//// Private Types ////
-///////////////////////
-///////////////////////
 struct FileStruct_LifetimeLevel
 {
 	LoadoutEntry&          loadoutSelectionSlot
@@ -37,33 +27,36 @@ FileStruct_LifetimeLevel& fileLevel
 /////////////////////////
 /////////////////////////
 #if SERVER || CLIENT || UI
-void function ShLoadscreen_LevelInit()
+void function ShLoadscreen_Init()
 {
-	FileStruct_LifetimeLevel newFileGame
-	fileLevel = newFileGame
-
-	AddCallback_RegisterRootItemFlavors( OnRegisterRootItemFlavors )
-
 	RegisterSignal( "Loadscreen_SetCustomLoadscreen" )
 
 	#if UI
 		RegisterSignal( "SetEquppedLoadscreenAsActive" )
 	#endif
 }
+
+void function ShLoadscreen_LevelInit()
+{
+	FileStruct_LifetimeLevel newFileGame
+	fileLevel = newFileGame
+
+	AddCallback_RegisterRootItemFlavors( OnRegisterRootItemFlavors )
+}
 #endif
 
 #if SERVER || CLIENT || UI
 void function OnRegisterRootItemFlavors()
 {
-	LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "loadscreen_selection" )
+	LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "loadscreen_selection", eLoadoutEntryClass.ACCOUNT )
 	entry.networkTo = eLoadoutNetworking.PLAYER_EXCLUSIVE
-	//
-	entry.DEV_name = "Loadscreen"
+	#if DEVELOPER
+		entry.DEV_name       = "Loadscreen"
+	#endif
 	fileLevel.loadoutSelectionSlot = entry
 
-
 	array<ItemFlavor> loadscreenList = []
-	foreach( asset loadscreenAsset in LOADSCREEN_ASSET_LIST )
+	foreach ( asset loadscreenAsset in GetBaseItemFlavorsFromArray( "loadscreens" ) )
 	{
 		if ( loadscreenAsset == $"" )
 			continue
@@ -74,13 +67,14 @@ void function OnRegisterRootItemFlavors()
 		loadscreenList.append( expect ItemFlavor( loadscreenOrNull ) )
 	}
 
-	MakeItemFlavorSet( loadscreenList, fileLevel.loadscreenFlavorSortOrdinalMap )
+	MakeItemFlavorSet( loadscreenList, fileLevel.loadscreenFlavorSortOrdinalMap, true )
 
 	entry.validItemFlavorList = loadscreenList
-	entry.defaultItemFlavor = loadscreenList[0]
+	entry.defaultItemFlavor = loadscreenList[1]
+	entry.favoriteItemFlavor = loadscreenList[0]
+	entry.maxFavoriteCount = 8
 }
 #endif
-
 
 //////////////////////////
 //////////////////////////
@@ -99,13 +93,6 @@ int function Loadscreen_GetSortOrdinal( ItemFlavor flavor )
 	return fileLevel.loadscreenFlavorSortOrdinalMap[flavor]
 }
 
-asset function Loadscreen_GetPreviewImageAsset( ItemFlavor flavor )
-{
-	Assert( ItemFlavor_GetType( flavor ) == eItemType.loadscreen )
-
-	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "loadscreenImage" )
-}
-
 asset function Loadscreen_GetLoadscreenImageAsset( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.loadscreen )
@@ -119,10 +106,11 @@ string function Loadscreen_GetRPakName( ItemFlavor flavor )
 
 	asset imageAsset         = Loadscreen_GetLoadscreenImageAsset( flavor )
 	array<string> assetStrParts = split( string(imageAsset), "/" )
-	Assert( assetStrParts.len() == 3 ) //
+	Assert( assetStrParts.len() == 3 ) // $"loadscreens/custom/loadscreen_custom_03"
 	Assert( assetStrParts[0] == "loadscreens" )
 	Assert( assetStrParts[1] == "custom" )
-	return assetStrParts[2] //
+	Assert( assetStrParts[2].find( "loadscreen_" ) == 0 )
+	return assetStrParts[2] // todo(dw): code hard-codes things this way, is it OK for script to do the same?
 }
 
 string function Loadscreen_GetImageOverlayText( ItemFlavor flavor )
@@ -161,7 +149,7 @@ void function Loadscreen_SetCustomLoadscreen( ItemFlavor flavor )
 
 	if ( ItemFlavor_IsTheRandom( flavor ) )
 	{
-		entity player = GetUIPlayer()
+		entity player = GetLocalClientPlayer()
 
 		EndSignal( player, "OnDestroy" )
 

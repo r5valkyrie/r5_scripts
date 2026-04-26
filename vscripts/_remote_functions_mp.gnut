@@ -7,6 +7,12 @@ global function AddCallback_OnNetworkRegistration
 global function GetNV_PreGameStartTime
 global function GetNV_FreefallIsFromPlane
 
+#if SERVER
+global function SetNV_PreGameStartTime
+global function SetNV_FreefallIsFromPlane
+#endif // SERVER
+
+
 global function FindFuncName_ByID
 global function FindFuncID_ByRef
 
@@ -68,12 +74,9 @@ int function SetupRemoteFuncAliases()
 	[
 		"Minimap_EnableDraw_Internal",
 		"Minimap_DisableDraw_Internal",
-		"ServerCallback_DeleteSpawnedClientSideDynamicLights",
-		"UpdateRUITest",
 		"ServerCallback_KillReplayHud_Activate",
 		"ServerCallback_KillReplayHud_Deactivate",
 		"TridentBoost_Visuals",
-		"RefreshImageAndScaleOnMinimapAndFullmap",
 		"ServerCallback_UpdateHeroStats",
 		"SCB_WeaponInspectHint",
 		"ServerCallback_PlayMatchEndMusic",
@@ -88,7 +91,6 @@ int function SetupRemoteFuncAliases()
 		"ServerCallback_ClearHints",
 		"ServerCallback_AnnounceCircleClosing",
 		"ServerCallback_PlayScreenFXWarpJump",
-		"ServerCallback_GameModeAnnouncement",
 		"SCB_AbortCurrentDialogue", /* sh_sp_dialogue.gnut */
 		"ServerCallback_CTF_HideCustomUI",
 		"ServerToClient_DisplayCancelReviveHintForPlayer",
@@ -98,8 +100,6 @@ int function SetupRemoteFuncAliases()
 		"FS_CreateIntroScreen",
 		"FSIntro_ForceEnd",
 		"ServerCallback_CTF_CheckUpdatePlayerLegend",
-		"ForceScoreboardLoseFocus",
-		"ForceScoreboardFocus",
 		"UpdateDpadHud_Copy",
 		"ServerCallback_Scenarios_MatchEndAnnouncement",
 		"Tracker_StatRequestFailed",
@@ -107,9 +107,7 @@ int function SetupRemoteFuncAliases()
 		"FS_DestroyCompass",
 		"ServerCallback_ShowWinningSquadSequence",
 		"ServerCallback_Ash_OnPlayerDash",
-		"ServerCallback_Ash_OnPlayerLanded",
-		"ServerCallback_TitanCockpitBoot"
-		// ServerCallback_ShotgunKickNoAmmoMessage
+		"ServerCallback_Ash_OnPlayerLanded"
 	]
 	
 	int iter = 1
@@ -323,22 +321,51 @@ void function RemoteFunctions_Init_Begin()
 	if ( GetMapName() == "mp_rr_olympus_tt" || GetMapName() == "mp_rr_olympus_mu1" )
 		PathTT_OnNetworkRegistration()
 
-	//Sentinel
-	ScriptRemote_RegisterClientFunction( "SentinelChargeHUD", "float", 0.0, 4000.0, 16 ) //Audit 2-22-2025 (mk): 66 mins server time, charge end max
-	ScriptRemote_RegisterClientFunction( "Sentinel_UpdateChargeEndTime", "float", 0.0, 4000.0, 16 ) //Sentinel update timer on shot
-	ScriptRemote_RegisterClientFunction( "Sentinel_NoShieldCellHint" ) //Sentinel no shield cell hint
-	ScriptRemote_RegisterClientFunction( "DragonLMG_ChargeHUD", "float", 0.0, 4000.0, 16 ) //Dragon LMG energized timer
-	ScriptRemote_RegisterClientFunction( "DragonLMG_UpdateChargeEndTime", "float", 0.0, 4000.0, 16 ) //Dragon LMG update timer on shot
-	ScriptRemote_RegisterClientFunction( "DragonLMG_NoThermiteHint" ) //Dragon LMG no thermite hint
 	ScriptRemote_RegisterClientFunction( "ServerCallback_ShouldExitDrone" )
 	
-	RegisterNetworkedVariable( "coreAvailableFrac", SNDC_TITAN_SOUL, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )
-	RegisterNetworkedVariable( "coreExpireFrac", SNDC_TITAN_SOUL, SNVT_FLOAT_RANGE_OVER_TIME, 0.0, 0.0, 1.0 )
-	RegisterNetworkedVariable( "upgradeCount", SNDC_TITAN_SOUL, SNVT_INT, 0 )
+	RegisterNetworkedVariableSafe( "coreAvailableFrac", SNDC_TITAN_SOUL, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )
+	RegisterNetworkedVariableSafe( "coreExpireFrac", SNDC_TITAN_SOUL, SNVT_FLOAT_RANGE_OVER_TIME, 0.0, 0.0, 1.0 )
+	RegisterNetworkedVariableSafe( "upgradeCount", SNDC_TITAN_SOUL, SNVT_INT, 0 )
+
+	Remote_RegisterServerFunction( "ClientCallback_ViewedModes" )
 
 	//Custom gamemodes
 	switch ( Gamemode() )
 	{
+		case eGamemodes.ARENAS:
+			// Arenas: Server to Client
+			ScriptRemote_RegisterClientFunction( "ServerCallback_ShowWinningSquadSequence" )
+			ScriptRemote_RegisterClientFunction( "ServerCallback_EnableDeathScreenBanner" )
+			ScriptRemote_RegisterClientFunction( "ServerCallback_DisplayArenasPrematch", "int", 0, 30, "int", 0, 30, "int", 0, 5000, "int", 0, 100, "int", 0, 100 )
+			ScriptRemote_RegisterClientFunction( "ServerCallback_DisplayRoundLost" )
+			ScriptRemote_RegisterClientFunction( "ServerCallback_DisplayRoundWon", "int", 0, 4 ) // eArenasRoundWonDescriptor.MAX_COUNT
+			ScriptRemote_RegisterClientFunction( "ServerCallback_Arenas_AnnounceResourcesCollected", "int", 0, 255 )
+			ScriptRemote_RegisterClientFunction( "ServerCallback_Arenas_UpdateAirdropPreview", "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX )
+			ScriptRemote_RegisterClientFunction( "ServerCallback_Arenas_AnnounceRoundStart", "int", 0, 255 )
+
+			// Arenas Buy System: Server to Client
+			ScriptRemote_RegisterClientFunction( "ServerCallback_RefreshMenu" )
+			ScriptRemote_RegisterClientFunction( "OnCurrentCashChanged", "entity" )
+			ScriptRemote_RegisterClientFunction( "ServerCallback_FinishedProcessingClickEvent" )
+
+			// Arenas Cash Station: Server to Client
+			ScriptRemote_RegisterClientFunction( "ServerToClient_CashStationStartUse", "entity", "int", TEAM_ANY, INT_MAX )
+			ScriptRemote_RegisterClientFunction( "ServerToClient_CashStationStopUse", "entity" )
+			ScriptRemote_RegisterClientFunction( "ServerToClient_OnUseCashStationSmall", "entity", "int", 0, 500 )
+
+			// Arenas Networked Variables
+			RegisterNetworkedVariableSafe( "arenas_numties", SNDC_GLOBAL, SNVT_INT, 0 )
+			RegisterNetworkedVariableSafe( "arenas_lastWonTeam", SNDC_GLOBAL, SNVT_INT, 0 )
+			RegisterNetworkedVariableSafe( "arenas_buyMenuStartTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
+			break
+
+		case eGamemodes.freedm:
+		case eGamemodes.freedm_tdm:
+		case eGamemodes.freedm_gungame:
+			// FreeDM network vars
+			RegisterNetworkedVariableSafe( "isMapZoneDisplayTextDisabled", SNDC_GLOBAL, SNVT_BOOL, false )
+			break
+
 		case eGamemodes.CUSTOM_CTF:
 			// CTF: Server to Client
 			
@@ -359,21 +386,21 @@ void function RemoteFunctions_Init_Begin()
 			ScriptRemote_RegisterClientFunction("ServerCallback_CTF_UpdateMapVotesClient", "int", 0, 255, "int", 0, 255, "int", 0, 255, "int", 0, 255)
 			ScriptRemote_RegisterClientFunction("FSDM_CustomWinnerScreen_Start", "int", INT_MIN, INT_MAX, "int", 0, 10)
 			
-			ScriptRegisterNetworkedVariable( "FSDM_GameState", SNDC_GLOBAL, SNVT_INT, -1 )
-			ScriptRegisterNetworkedVariable( "flowstate_DMStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-			ScriptRegisterNetworkedVariable( "flowstate_DMRoundEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-			ScriptRegisterNetworkedVariable( "imcFlag", SNDC_GLOBAL, SNVT_ENTITY )
-			ScriptRegisterNetworkedVariable( "milFlag", SNDC_GLOBAL, SNVT_ENTITY )
-			ScriptRegisterNetworkedVariable( "FSIntro_StartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-			ScriptRegisterNetworkedVariable( "FSIntro_EndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-			ScriptRegisterNetworkedVariable( "FSVoteTeam_EndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+			RegisterNetworkedVariableSafe( "FSDM_GameState", SNDC_GLOBAL, SNVT_INT, -1 )
+			RegisterNetworkedVariableSafe( "flowstate_DMStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+			RegisterNetworkedVariableSafe( "flowstate_DMRoundEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+			RegisterNetworkedVariableSafe( "imcFlag", SNDC_GLOBAL, SNVT_ENTITY )
+			RegisterNetworkedVariableSafe( "milFlag", SNDC_GLOBAL, SNVT_ENTITY )
+			RegisterNetworkedVariableSafe( "FSIntro_StartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+			RegisterNetworkedVariableSafe( "FSIntro_EndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+			RegisterNetworkedVariableSafe( "FSVoteTeam_EndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
 			
 			ScriptRemote_RegisterClientFunction("ServerCallback_FS_OpenVoteTeamMenu", "bool")
 			ScriptRemote_RegisterClientFunction("ServerCallback_AddClientThatVotedToTeam", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
 			ScriptRemote_RegisterClientFunction("ServerCallback_RemoveClientThatVotedFromTeam", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
 
-			ScriptRegisterNetworkedVariable( "captures", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
-			ScriptRegisterNetworkedVariable( "returns", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
+			RegisterNetworkedVariableSafe( "captures", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
+			RegisterNetworkedVariableSafe( "returns", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
 			break					
 	}
 	
@@ -383,9 +410,12 @@ void function RemoteFunctions_Init_Begin()
 	
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SkydiveTrailStart", "entity" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SkydiveTrailEnd", "entity" )
-	// ScriptRegisterNetworkedVariable( "skyDiveTrailOverrideIndex", SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
+	// RegisterNetworkedVariableSafe( "skyDiveTrailOverrideIndex", SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
 	ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_EventNotification" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_UpdateHudWeaponData", "entity" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_UpdateHudWeaponDataNoEntity" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayMatchEndMusic" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_UpdateOffhandRuis" )
 	
 	//ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_BLEEDOUT_ShowWoundedMarker" ) //Audit 2-22-2025 unused
 	//ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_BLEEDOUT_HideWoundedMarker" ) //Audit 2-22-2025 unused
@@ -402,12 +432,9 @@ void function RemoteFunctions_Init_Begin()
 
 	ScriptRemote_RegisterClientFunction( "ServerToClient_DoPresentation" )
 
-	ScriptRegisterNetworkedVariable( "playerAllowedToLeech", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
+	RegisterNetworkedVariableSafe( "playerAllowedToLeech", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
 
 	RegisterEntityVar_AllSyncedEntity( "weaponx", "weaponLockedSet", 0 )
-	
-	RegisterEntityVar( "player", "nextRespawnTime", 0 )
-	RegisterEntityVar( "player", "musicPackAssigned", 0 )
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_UpdateMarker", "int", 0, 31 )//Audit 2-22-2025
 	ScriptRemote_RegisterClientFunction( "ServerToClient_DisplayToggleThrowPowerHintForPlayer" )
@@ -416,104 +443,121 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterUIFunction( "RestorePrecacheErrors" )
 
 	bool isOptInServer = Dev_CommandLineHasParm( "-optinserver" )
-	ScriptRegisterNetworkedVariable( "isOptInServer", SNDC_GLOBAL, SNVT_BOOL, isOptInServer )
+	RegisterNetworkedVariableSafe( "isOptInServer", SNDC_GLOBAL, SNVT_BOOL, isOptInServer )
+
+	// Attack/Defend based game modes
+	RegisterNetworkedVariableSafe( "attackingTeam", SNDC_GLOBAL, SNVT_INT, TEAM_UNASSIGNED )
+
+	//Deathboxes; crosses gamemodes so kept here
+	                         
+		RegisterNetworkedVariableSafe( "characterIndex", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+		RegisterNetworkedVariableSafe( "overrideRUIType", SNDC_DEATH_BOX, SNVT_BIG_INT, 0 )
+		RegisterNetworkedVariableSafe( "skinIndex", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+		RegisterNetworkedVariableSafe( "frameIndex", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+		RegisterNetworkedVariableSafe( "stanceIndex", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+		RegisterNetworkedVariableSafe( "firstBadgeIndex", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+		RegisterNetworkedVariableSafe( "firstBadgeDataInt", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+		RegisterNetworkedVariableSafe( "secondBadgeIndex", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+		RegisterNetworkedVariableSafe( "secondBadgeDataInt", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+		RegisterNetworkedVariableSafe( "thirdBadgeIndex", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+		RegisterNetworkedVariableSafe( "thirdBadgeDataInt", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+
+		RegisterNetworkedVariableSafe( "highlightFar", SNDC_DEATH_BOX, SNVT_BOOL, false )
+		RegisterNetworkedVariableSafe( "maxLootTier", SNDC_DEATH_BOX, SNVT_INT, 0 )
+
+		ScriptRemote_RegisterClientFunction( "ServerToClient_PlayLootRarityFXOnDeathboxDrop", "entity" )
 
 	// GAME STATE
-	RegisterServerVar( "gameStateChangeTime", null )
-	RegisterServerVar( "gameState", -1 )
-	RegisterServerVar( "gameStartTime", null )
-	RegisterServerVar( "coopStartTime", null )
-	RegisterServerVar( "gameEndTime", 0.0 )
-	RegisterServerVar( "switchedSides", null )
-	RegisterServerVar( "replayDisabled", false )
+	RegisterNetworkedVariableSafe( "gameStateChangeTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
+	RegisterNetworkedVariableSafe( "gameStartTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
+	RegisterNetworkedVariableSafe( "gameEndTime", SNDC_GLOBAL, SNVT_TIME, 0.0 )
+	RegisterNetworkedVariableSafe( "switchedSides", SNDC_GLOBAL, SNVT_INT, -1 ) // waste of bits, should really be a bool but the null state is used
+	RegisterNetworkedVariableSafe( "replayDisabled", SNDC_GLOBAL, SNVT_BOOL, false )
+	//Round Winning Kill replay related
+	RegisterNetworkedVariableSafe( "roundWinningKillReplayEnabled", SNDC_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "roundWinningKillReplayPlaying", SNDC_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "roundScoreLimitComplete", SNDC_GLOBAL, SNVT_BOOL, false )
 
-	// KILL REPLAY
-	RegisterServerVar( "roundWinningKillReplayEnabled", false )
-	RegisterServerVar( "roundWinningKillReplayPlaying", false )
-	RegisterServerVar( "roundScoreLimitComplete", false )
 	RegisterServerVar( "roundWinningKillReplayEntHealthFrac", 0.0 )
 
-	RegisterServerVar( "badRepPresent", false )
-	RegisterServerVar( "roundBased", false )
-	RegisterServerVar( "roundStartTime", null )
-	RegisterServerVar( "roundEndTime", 0.0 )
-	RegisterServerVar( "roundsPlayed", 0 )
+	RegisterNetworkedVariableSafe( "badRepPresent", SNDC_GLOBAL, SNVT_BOOL, false )
 
-	ScriptRegisterNetworkedVariable( "PreGameStartTime", SNDC_GLOBAL, SNVT_TIME, 0.0 )
-	RegisterServerVar( "winningTeam", null )
-	
-	// Attack/Defend based game modes
-	ScriptRegisterNetworkedVariable( "attackingTeam", SNDC_GLOBAL, SNVT_INT, TEAM_UNASSIGNED )
+	RegisterNetworkedVariableSafe( "roundBased", SNDC_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "roundStartTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
+	RegisterNetworkedVariableSafe( "roundEndTime", SNDC_GLOBAL, SNVT_TIME, 0.0 )
+	RegisterNetworkedVariableSafe( "roundsPlayed", SNDC_GLOBAL, SNVT_INT, 0 )
+
+	RegisterNetworkedVariableSafe( "PreGameStartTime", SNDC_GLOBAL, SNVT_TIME, 0.0 )
+	RegisterNetworkedVariableSafe( "winningTeam", SNDC_GLOBAL, SNVT_INT, -1 )
 	
 	// Riffs
 	RegisterServerVar( "minimapState", -1 )
-	ScriptRegisterNetworkedVariable( "indicatorId", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, 0 )
+	RegisterNetworkedVariableSafe( "indicatorId", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, 0 )
 
 	// DEATHBOX: gcard character vars
-	ScriptRegisterNetworkedVariable( "characterIndex", SNDC_DEATH_BOX, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "overrideRUI", SNDC_DEATH_BOX, SNVT_BOOL, false )
-	ScriptRegisterNetworkedVariable( "skinIndex", SNDC_DEATH_BOX, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "frameIndex", SNDC_DEATH_BOX, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "stanceIndex", SNDC_DEATH_BOX, SNVT_INT, -1 )
-
-	// DEATHBOX: gcard badge vars
-	ScriptRegisterNetworkedVariable( "firstBadgeIndex", SNDC_DEATH_BOX, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "firstBadgeDataInt", SNDC_DEATH_BOX, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "secondBadgeIndex", SNDC_DEATH_BOX, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "secondBadgeDataInt", SNDC_DEATH_BOX, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "thirdBadgeIndex", SNDC_DEATH_BOX, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "thirdBadgeDataInt", SNDC_DEATH_BOX, SNVT_INT, -1 )
+	RegisterNetworkedVariableSafe( "overrideRUI", SNDC_DEATH_BOX, SNVT_BOOL, false )
 	
-	ScriptRegisterNetworkedVariable( "lootRarity", SNDC_DEATH_BOX, SNVT_INT, -1 )
+	RegisterNetworkedVariableSafe( "lootRarity", SNDC_DEATH_BOX, SNVT_INT, -1 )
 
-	ScriptRemote_RegisterClientFunction( "ServerToClient_PlayLootRarityFXOnDeathboxDrop", "entity" )
 	ScriptRemote_RegisterClientFunction( "Flyer_ServerToClient_DisplayFlyerDeathboxPrompt" )
 
-	ScriptRegisterNetworkedVariable( "ownerEHI", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+	RegisterNetworkedVariableSafe( "ownerEHI", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
 
-	ScriptRegisterNetworkedVariable( "hasDeathFieldImmunity", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
-	ScriptRegisterNetworkedVariable( "displayMapzoneText", SNDC_GLOBAL, SNVT_BOOL, true )
+	RegisterNetworkedVariableSafe( "hasDeathFieldImmunity", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "displayMapzoneText", SNDC_GLOBAL, SNVT_BOOL, true )
 
-	ScriptRegisterNetworkedVariable( "hasLockedInCharacter", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
-	ScriptRegisterNetworkedVariable( "characterSelectLockstepPlayerIndex", SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "characterSelectFocusIndex", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, -1 )
+	RegisterNetworkedVariableSafe( "hasLockedInCharacter", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "lockedInCharacterTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "characterSelectLockstepPlayerIndex", SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
+	RegisterNetworkedVariableSafe( "characterSelectFocusCharacterGUID", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, -1 )
+	RegisterNetworkedVariableSafe( "characterSelectFocusSkinGUID", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, -1 )
 	
 
-	if( Playlist() != ePlaylists.fs_scenarios )
-	{
-		ScriptRegisterNetworkedVariable( "characterSelectionReady", SNDC_GLOBAL, SNVT_BOOL, false )
-		ScriptRegisterNetworkedVariable( "characterSelectLockstepIndex", SNDC_GLOBAL, SNVT_INT, -1 )
-		ScriptRegisterNetworkedVariable( "characterSelectLockstepStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-		ScriptRegisterNetworkedVariable( "characterSelectLockstepEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-		ScriptRegisterNetworkedVariable( "squadPresentationStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-		ScriptRegisterNetworkedVariable( "championSquadPresentationStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-		ScriptRegisterNetworkedVariable( "pickLoadoutGamestateEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-		ScriptRegisterNetworkedVariable( "pickLoadoutGamestateStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-	}
 
-	ScriptRegisterNetworkedVariable( "championEEH", SNDC_GLOBAL, SNVT_BIG_INT, EncodedEHandle_null )
-	ScriptRegisterNetworkedVariable( "championSquad1EEH", SNDC_GLOBAL, SNVT_BIG_INT, EncodedEHandle_null )
-	ScriptRegisterNetworkedVariable( "championSquad2EEH", SNDC_GLOBAL, SNVT_BIG_INT, EncodedEHandle_null )
 
-	//ScriptRegisterNetworkedVariable( "ultimateCredits", SNDC_PLAYER_GLOBAL, SNVT_UNSIGNED_INT, 0 )
+	RegisterNetworkedVariableSafe( "championEEH", SNDC_GLOBAL, SNVT_BIG_INT, EncodedEHandle_null )
+	RegisterNetworkedVariableSafe( "championSquad1EEH", SNDC_GLOBAL, SNVT_BIG_INT, EncodedEHandle_null )
+	RegisterNetworkedVariableSafe( "championSquad2EEH", SNDC_GLOBAL, SNVT_BIG_INT, EncodedEHandle_null )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_CharacterLockRejected" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_ForceCharacterLockFeedback", "entity", "bool" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_Mirage_DecoysDeployed", "bool" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_MatchEndAnnouncement", "bool", "int", TEAM_INVALID, 127 ) //Audit 2-22-2025
 	
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SquadEliminated", "int", TEAM_INVALID, 127 )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_ShowDeathScreen" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_DeathScreenSwitchTab" )
 
-	ScriptRemote_RegisterClientFunction( "ServerCallback_SendDeathRecapData", "int", EHANDLE_MIN, EHANDLE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX, "int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX, "int", DAMAGE_TYPE_MIN, INT_MAX, "int", -1, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "float", 0.0, 1.0, 32, "float", 0.0, 1.0, 32, "float", 0.0, 86400.0, 32, "int", -1, INT_MAX, "int", -1, 16 ) //Audit 2-22-2025
+	// S3 engine limit: max 10 params. Split 12-param SendDeathRecapData into two calls.
+	ScriptRemote_RegisterClientFunction( "ServerCallback_SendDeathRecapData_Base",
+		"int", EHANDLE_MIN, EHANDLE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX,
+		"int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX, "int", DAMAGE_TYPE_MIN, INT_MAX,
+		"int", -1, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX,
+		"float", 0.0, 1.0, 32 )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_SendDeathRecapData_Extra",
+		"float", 0.0, 1.0, 32, "float", 0.0, 86400.0, 32,
+		"int", -1, INT_MAX, "int", -1, 16 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DeathRecapDataUpdated", "bool", "int", EHANDLE_MIN, EHANDLE_MAX ) //Audit 2-22-2025
-	RegisterNetworkedVariable( "titanEjectEnabled", SNDC_GLOBAL, SNVT_BOOL, true )
+	RegisterNetworkedVariableSafe( "titanEjectEnabled", SNDC_GLOBAL, SNVT_BOOL, true )
 
-	if( Gamemode() == eGamemodes.SURVIVAL )
-		ScriptRemote_RegisterClientFunction( "ServerCallback_AddWinningSquadData", "int", -1, 127, "int", EHANDLE_MIN, EHANDLE_MAX, "int", 0, 5001, "int", 0, INT_MAX, "int", -1, 5001, "int", 0, 9999, "int", 0, 9999 )
+			// S3 engine limit: max 10 params per Remote_CallFunction. Split 16-param
+			// AddWinningSquadData into two 8-param calls (Base + Extra).
+			Remote_RegisterClientFunction( "ServerCallback_AddWinningSquadData_Base",
+				"int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
+				"int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
+				"int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
+				"int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
+			Remote_RegisterClientFunction( "ServerCallback_AddWinningSquadData_Extra",
+				"int", INT_MIN, INT_MAX, "bool",
+				"int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
+				"int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
+				"int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
 
 	if ( IsCausticTTEnabled() == true )
 		ScriptRemote_RegisterClientFunction( "ServerToClient_UpdateItem", "entity" )
 
-	ScriptRegisterNetworkedVariable( "focalTrap", SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
+	RegisterNetworkedVariableSafe( "focalTrap", SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
 
-	ScriptRegisterNetworkedVariable( "gladCardPlayer", SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
+	RegisterNetworkedVariableSafe( "gladCardPlayer", SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
 
 	if( Playlist() == ePlaylists.Movement_Recorder ){
 		ScriptRemote_RegisterClientFunction( "FS_MovementRecorder_UpdateHints", "int", 0, 21, "bool", "float", -1.0, FLT_MAX, 16 )
@@ -524,43 +568,58 @@ void function RemoteFunctions_Init_Begin()
 	
 	Ability_Shadow_Zombie_RegisterNetworking()//Todo(mk): revisit conditional disables.
 
-	//ScriptRegisterNetworkedVariable( "hasDataKnife", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	//RegisterNetworkedVariableSafe( "hasDataKnife", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 
-	ScriptRegisterNetworkedVariable( "isJumpmaster", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
-	ScriptRegisterNetworkedVariable( "isJumpingWithSquad", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
-	ScriptRegisterNetworkedVariable( "playerInPlane", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
-	
-	CryptoTT_OnNetworkRegistration()
+	RegisterNetworkedVariableSafe( "isEliminated", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "isJumpmaster", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "isJumpingWithSquad", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "playerInPlane", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 
-	ScriptRegisterNetworkedVariable( "freefallActive", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
-	ScriptRegisterNetworkedVariable( "freefallEmoteAvailable", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
-	ScriptRegisterNetworkedVariable( "freefallIsFromPlane", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
-	ScriptRegisterNetworkedVariable( "healingKitEndTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, 0.0 )
+	RegisterNetworkedVariableSafe( "freefallActive", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "freefallEmoteAvailable", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "freefallIsFromPlane", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "healingKitEndTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, 0.0 )
 	ScriptRemote_RegisterClientFunction( "ServerToClient_DoUltAccelScreenFx" )
 	ScriptRemote_RegisterClientFunction( "ServerToClient_SetClientChargeTime", "int", 0, 64, "float", 0.0 , 100.0, 32)
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayerBootsOnGround" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_AutoReloadComplete", "entity" )
+	RegisterNetworkedVariableSafe( "inventoryEnabled", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
 
-	ScriptRegisterNetworkedVariable( "inventoryEnabled", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
+	RegisterNetworkedVariableSafe( "pingEnabled", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_UpdateSurveyBeaconHUDVisibility" )
 
-	ScriptRegisterNetworkedVariable( "pingEnabled", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
 
-	ScriptRegisterNetworkedVariable( "kills", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
-	ScriptRegisterNetworkedVariable( "latency", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
-	ScriptRegisterNetworkedVariable( "damage", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
+	ScriptRemote_RegisterClientFunction( "ServerToClient_OnStartedUsingHealthPack", "int", 0, 127 )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptSayThanks", "entity" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptSayThanksRevive", "entity" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptTaunt" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptSayGetOnTheDropship" )
+                     
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptMarkMyLastDeathbox" )
+    
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptRespawnThanks" )
 
-	ScriptRegisterNetworkedVariable( "deaths", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
-	ScriptRegisterNetworkedVariable( "assists", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_AnnouncePlayerBreaksEnemyShield", "entity" )
 
-	ScriptRegisterNetworkedVariable( "isHealing", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
-	ScriptRegisterNetworkedVariable( "healingKitTypeCurrentlyBeingUsed", SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "isReceivingFirstAid", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_AnnounceDevRespawn" )
+
+	RegisterNetworkedVariableSafe( "kills", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
+	RegisterNetworkedVariableSafe( "latency", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
+	RegisterNetworkedVariableSafe( "damage", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
+
+	RegisterNetworkedVariableSafe( "assists", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
+
+	RegisterNetworkedVariableSafe( "isHealing", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "healingKitTypeCurrentlyBeingUsed", SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
+	RegisterNetworkedVariableSafe( "isReceivingFirstAid", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
 
 	int defaultHealOption = GetCurrentPlaylistVarBool( "auto_heal_option", false ) ? -1 : 0
-	ScriptRegisterNetworkedVariable( "selectedHealthPickupType", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, defaultHealOption )
-	// ScriptRegisterNetworkedVariable( "TrainingEndTime", SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, -1 )
-	ScriptRegisterNetworkedVariable( "usedSelfRevive", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
-
-	ScriptRegisterNetworkedVariable( "playerPrimaryWeapon0", SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "playerPrimaryWeapon1", SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
+	RegisterNetworkedVariableSafe( "selectedHealthPickupType", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, defaultHealOption )
+	// RegisterNetworkedVariableSafe( "TrainingEndTime", SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "usedSelfRevive", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_TryUseConsumable", "entity", "int", 0, 128 )
+	RegisterNetworkedVariableSafe( "playerPrimaryWeapon0", SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
+	RegisterNetworkedVariableSafe( "playerPrimaryWeapon1", SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
 
 	if( Playlist() == ePlaylists.survival_training )
 	{
@@ -574,23 +633,26 @@ void function RemoteFunctions_Init_Begin()
 	RespawnBeacons_RegisterNetworking()
 
 	Gamemode_ShadowSquad_RegisterNetworking()
+	ShArenas_RegisterNetworking()
 
 	MapZones_RegisterNetworking() //1 func
 	Ultimates_RegisterNetworking() //1 func
-	ClientMusic_RegisterNetworking() ////Audit 2-22-2025 3 funcs, was 4, 1 is now a toggle.
+	ClientMusic_RegisterNetworking() 
+	//LiveAPI_RegisterNetworking()
+	SeasonQuest_RegisterNetworking()//quest
 
-	ScriptRegisterNetworkedVariable( "currentDeathFieldStage", SNDC_GLOBAL, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "nextCircleStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-	ScriptRegisterNetworkedVariable( "circleCloseTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-	ScriptRegisterNetworkedVariable( "PlaneDoorsOpenTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-	ScriptRegisterNetworkedVariable( "PlaneDoorsCloseTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-	ScriptRegisterNetworkedVariable( "connectedPlayerCount", SNDC_GLOBAL, SNVT_INT )
-	ScriptRegisterNetworkedVariable( "livingPlayerCount", SNDC_GLOBAL, SNVT_INT )
-	ScriptRegisterNetworkedVariable( "squadsRemainingCount", SNDC_GLOBAL, SNVT_INT )
-	ScriptRegisterNetworkedVariable( "gameState", SNDC_GLOBAL, SNVT_INT, -1 )
+	RegisterNetworkedVariableSafe( "currentDeathFieldStage", SNDC_GLOBAL, SNVT_INT, -1 )
+	RegisterNetworkedVariableSafe( "nextCircleStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "circleCloseTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "PlaneDoorsOpenTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "PlaneDoorsCloseTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "connectedPlayerCount", SNDC_GLOBAL, SNVT_INT )
+	RegisterNetworkedVariableSafe( "livingPlayerCount", SNDC_GLOBAL, SNVT_INT )
+	RegisterNetworkedVariableSafe( "squadsRemainingCount", SNDC_GLOBAL, SNVT_INT )
+	RegisterNetworkedVariableSafe( "gameState", SNDC_GLOBAL, SNVT_INT, -1 )
 
-	ScriptRegisterNetworkedVariable( "skydiveFreelookActive", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
-	ScriptRegisterNetworkedVariable( "skydiveFollowPlayer", SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
+	RegisterNetworkedVariableSafe( "skydiveFreelookActive", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "skydiveFollowPlayer", SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
 
 	ScriptRemote_RegisterUIFunction( "ServerCallback_OpenSurvivalExitMenu", "bool" )
 	ScriptRemote_RegisterUIFunction( "ServerToUI_CharacterLockRejected" )
@@ -602,17 +664,20 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_RefreshInventory" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_RefreshInventoryAndWeaponInfo" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_TryCloseInventory" )
-	ScriptRemote_RegisterClientFunction( "ServerCallback_ToggleLegend" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_ClearHints" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_AnnounceCircleClosing" )
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SurvivalHint", "int", 0, 11 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_Survival_NewKillLeader", "entity", "int", 0, 999 )
+	RegisterNetworkedVariableSafe( "killLeader", SNDC_GLOBAL, SNVT_ENTITY )
+	RegisterNetworkedVariableSafe( "anonymizePlayerName", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_Survival_HighlightedPlayerKilled", "entity", "entity", "int", 0, 17 )
 	
-	if( Gamemode() == eGamemodes.SURVIVAL )
+	if( Gamemode() == eGamemodes.SURVIVAL || Gamemode() == eGamemodes.ARENAS )
 	{
 		ScriptRemote_RegisterClientFunction( "ServerCallback_Survival_PathfinderSurveyNotifications", "entity", "int", 0, 9 )
 		ScriptRemote_RegisterClientFunction( "ServerCallback_Survival_CreateBeaconWorldIcon", "entity", "entity" )
-		ScriptRemote_RegisterClientFunction( "ServerCallback_SUR_PingMinimap", "vector", -1.0, 1.0, 32, "float", 0.0, 300.0, 8, "float", 1.0, 5000.0, 8, "float", 1.0, 5000.0, 8, "int", 0, 2047 )
+		ScriptRemote_RegisterClientFunction( "ServerCallback_SUR_PingMinimap", "vector", -1.0, 1.0, 32, "float", 0.0, 300.0, 8, "float", 1.0, 5000.0, 8, "float", 1.0, 5000.0, 8, "int", 0, 2047, "float", 0.0, 10.0, 8, "float", 0.0, 10.0, 8, "int", 0, 15 )
 	}
 
 	//Seer
@@ -620,16 +685,10 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DoDamageIndicator", "entity", "entity" )
 	ScriptRemote_RegisterClientFunction( "ServerToClient_ShowHealthRUI", "entity", "entity", "float", 0.0, 99.0, 8 )
 	ScriptRemote_RegisterClientFunction( "ServerToClient_SpawnedSonicBlast", "entity", "int", 0, 9999, "vector", -32000.0, 32000.0, 32, "vector", -32000.0, 32000.0, 32, "float", 0.0, 32000.0, 32 )
-	
-	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptSayThanks", "entity" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptWelcome" )
 	
-	ScriptRegisterNetworkedVariable( "playerObservedCount", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
-
-	ScriptRemote_RegisterClientFunction( "ServerCallback_EjectConfirmed" )
-
-	ScriptRemote_RegisterClientFunction( "Sentinel_PlayEnergizeEffect" )
-	ScriptRemote_RegisterClientFunction( "Sentinel_StopEnergizeEffect" )
+	RegisterNetworkedVariableSafe( "damageDealt", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
+	RegisterNetworkedVariableSafe( "assistCount", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
 
 	#if CLIENT
 		ShRanked_RegisterNetworkFunctions()
@@ -642,25 +701,29 @@ void function RemoteFunctions_Init_Begin()
 		if ( Gamemode() == eGamemodes.CUSTOM_CTF )
 		{
 			CL_FSCTF_RegisterNetworkFunctions()
-			RegisterNetworkedVariableChangeCallback_int( "FSDM_GameState", FSCTF_GameStateChanged )
+			RegisterNetworkedVariableChangeCallback_intSafe( "FSDM_GameState", FSCTF_GameStateChanged )
 		}
 
-		RegisterNetworkedVariableChangeCallback_bool( "playerInPlane", PlayerPlaneStatusChanged )
-		RegisterNetworkedVariableChangeCallback_bool( "isJumpmaster", JumpmasterStatusChanged )
-		RegisterNetworkedVariableChangeCallback_bool( "isJumpingWithSquad", PlayerPlaneStatusChanged )
-		RegisterNetworkedVariableChangeCallback_bool( "freefallActive", PlayerFreefallActiveChanged )
-		RegisterNetworkedVariableChangeCallback_bool( "freefallEmoteAvailable", PlayerFreefallEmoteAvailableChanged )
-		RegisterNetworkedVariableChangeCallback_bool( "skydiveFreelookActive", SkydiveFreelookActiveChanged )
-		RegisterNetworkedVariableChangeCallback_ent( "skydiveFollowPlayer", SkydiveFollowPlayerChanged )
-		RegisterNetworkedVariableChangeCallback_int( "healingKitTypeCurrentlyBeingUsed", OnInUseHealingKitTypeChanged )
-		RegisterNetworkedVariableChangeCallback_int( "selectedHealthPickupType", OnHealthPickupTypeChanged )
-		RegisterNetworkedVariableChangeCallback_int( "playerPrimaryWeapon0", OnPlayerEquippedWeaponChanged )
-		RegisterNetworkedVariableChangeCallback_int( "playerPrimaryWeapon1", OnPlayerEquippedWeaponChanged )
+		RegisterNetVarBoolChangeCallback( "playerInPlane", PlayerPlaneStatusChanged )
+		RegisterNetVarBoolChangeCallback( "isJumpmaster", JumpmasterStatusChanged )
+		RegisterNetVarBoolChangeCallback( "isJumpingWithSquad", PlayerPlaneStatusChanged )
+		RegisterNetVarBoolChangeCallback( "freefallActive", PlayerFreefallActiveChanged )
+		RegisterNetVarBoolChangeCallback( "freefallEmoteAvailable", PlayerFreefallEmoteAvailableChanged )
+		RegisterNetVarBoolChangeCallback( "skydiveFreelookActive", SkydiveFreelookActiveChanged )
+		RegisterNetVarEntChangeCallback( "skydiveFollowPlayer", SkydiveFollowPlayerChanged )
+		RegisterNetworkedVariableChangeCallback_intSafe( "healingKitTypeCurrentlyBeingUsed", OnInUseHealingKitTypeChanged )
+		RegisterNetVarIntChangeCallback( "selectedHealthPickupType", OnHealthPickupTypeChanged )
+		RegisterNetworkedVariableChangeCallback_intSafe( "playerPrimaryWeapon0", OnPlayerEquippedWeaponChanged )
+		RegisterNetworkedVariableChangeCallback_intSafe( "playerPrimaryWeapon1", OnPlayerEquippedWeaponChanged )
 	#endif
+
+	LoadoutSelection_RegisterNetworking()
+	GamemodeUtility_RegisterNetworking()
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_NessyMessage", "int", 0, 51 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayPassiveVoice", "int", 0, 51 )
-	ScriptRemote_RegisterClientFunction( "ServerCallback_YouDied", "entity", "float", -1.0, 1.0, 10, "int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX, "float", 0.0, 16000.0, 16 ) //Audit 2-22-2025
+	ScriptRemote_RegisterClientFunction( "ServerCallback_YouDiedNoAttacker", "float", -1.0, 1.0, 10, "int", -1, eDamageSourceId.len(), "float", 0.0, 200.0, 32 )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_YouDied", "entity", "float", -1.0, 1.0, 10, "int", -1, eDamageSourceId.len(), "float", 0.0, 200.0, 32 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_YouRespawned" )
 
 	if ( !IsLobby() )
@@ -675,23 +738,26 @@ void function RemoteFunctions_Init_Begin()
 	if ( IsRampartTTEnabled() )
 		Rampart_TT_RegisterNetworking() // Caustic Town Takeover
 
-	ScriptRemote_RegisterClientFunction( "ServerCallback_SetAssistInformation", "int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX, "float", -1.0, 4000.0, 16 )//Audit 2-22-2025
-	ScriptRemote_RegisterClientFunction( "ServerCallback_DataKnifeStartLeech", "float", -1.0, 4000.0, 16 )//Audit 2-22-2025
+	Crafting_RegisterNetworking()
+	CrowdNoiseMeter_RegisterNetworking()
+
+	ScriptRemote_RegisterClientFunction( "ServerCallback_SetAssistInformation", "int", eDamageSourceId.invalid, eDamageSourceId.len(), "entity", "entity", "float", 0.0, FLT_MAX, 32 )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_DataKnifeStartLeech", "float", -1.0, FLT_MAX, 32 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DataKnifeCancelLeech" )
-	ScriptRemote_RegisterClientFunction( "ServerCallback_ControlPanelRefresh", "int", EHANDLE_MIN, EHANDLE_MAX )//Audit 2-22-2025 currently not called.
-	//ScriptRemote_RegisterClientFunction( "ServerCallback_TurretRefresh", "int", EHANDLE_MIN, EHANDLE_MAX )//Audit 2-22-2025 not currently used
+	ScriptRemote_RegisterClientFunction( "ServerCallback_ControlPanelRefresh", "entity" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_OnPlayerOrNpcKilled", "entity", "entity", "int", INT_MIN, INT_MAX, "int", eDamageSourceId.invalid, eDamageSourceId.len() ) // handles obit and death recap
+	ScriptRemote_RegisterClientFunction( "ServerCallback_OnEnemyDowned", "entity", "entity", "int", INT_MIN, INT_MAX, "int", eDamageSourceId.invalid, eDamageSourceId.len(), "int", INT_MIN, INT_MAX ) // handles obit
+	ScriptRemote_RegisterClientFunction( "ServerCallback_ResetReconnectParametersAsync" )
+	ScriptRemote_RegisterUIFunction( "SCBUI_PlayerConnectedOrDisconnected", "bool" )
 	
-	
-	ScriptRemote_RegisterClientFunction( "ServerCallback_OnEntityKilled", "entity", "entity", "int", INT_MIN, INT_MAX, "int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX )
-	ScriptRemote_RegisterClientFunction( "ServerCallback_OnEnemyDowned", "entity", "entity", "int", INT_MIN, INT_MAX, "int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX )
-	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayerConnectedOrDisconnected", "int", EHANDLE_MIN, EHANDLE_MAX, "int", 0, 20 ) //Audit 2-22-2025
-	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayerChangedTeams", "entity", "int", TEAM_INVALID, 127, "int", TEAM_INVALID, 127 ) 
-	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayerTookDamage", "float", 0.0, 50000.0, 16, "vector", -32000.0, 32000.0, 32, "int", DAMAGE_TYPE_MIN, INT_MAX, "int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX ) //Audit 2-22-2025; Todo(mk): damage does not need to be allocated for 50000.0, however many mods call an arbituary number and these need audited in order to lower this value to a reasonable number. Note: Damage gets normalized, which used to be int. Therefore we can get away with using 16 bits on the float which should return n.xyz 
+	// IMPORTANT BUT MAYBE FINE AS A REMOTE CALL
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayerTookDamage_NoAttacker", "float", 0.0, 99999.0, 32, "vector", -MAX_MAP_BOUNDS, MAX_MAP_BOUNDS, 32, "int", INT_MIN, INT_MAX, "int", eDamageSourceId.invalid, eDamageSourceId.len() )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayerTookDamage", "float", 0.0, 99999.0, 32, "vector", -MAX_MAP_BOUNDS, MAX_MAP_BOUNDS, 32, "int", INT_MIN, INT_MAX, "int", eDamageSourceId.invalid, eDamageSourceId.len(), "entity" )
+	 // should be converted into a code callback... similar to NotifyDidDamage
 	
 	//ScriptRemote_RegisterClientFunction( "ServerCallback_ScreenShake", "float", 0.0, 20.0, "float", 0.001, 255.0, 16, "vector", -32000.0, 32000, 32 )  //Audit 2-22-2025 , not currently called.
 	//ScriptRemote_RegisterClientFunction( "ServerCallback_UpdateOverheadIconForNPC", "int", EHANDLE_MIN, EHANDLE_MAX )//Audit 2-22-2025 not currently used
 	
-	ScriptRemote_RegisterClientFunction( "HandleBroadcastCommsAction", "entity", "int", 0, eCommsAction._count, "entity", "vector", -32000.0, 32000.0, 32, "int", 0, (1 << eCommsFlags._flagCount) )
 	ScriptRemote_RegisterClientFunction( "PerformQuip", "entity", "int", 0, INT_MAX ) //Audit 2-22-2025 todo, revisit max quip
 
 	ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_TitanEmbark" ) // used purely to play a single line of dialog
@@ -702,15 +768,10 @@ void function RemoteFunctions_Init_Begin()
 		ScriptRemote_RegisterClientFunction( "Bleedout_StopTrainingFirstAidProgressBar" )
 	}
 
-	RegisterEntityVar( "player", "permanentEventNotification", -1 )
-	RegisterEntityVar( "player", "drawFastballHud", false )
-	
-	RegisterServerVar( "titanAvailableBits", 0 ) // HACK; we need this information to be 100% accurate, even during kill replay
-	RegisterServerVar( "respawnAvailableBits", 0 ) // HACK; we need this information to be 100% accurate, even during kill replay
-
 	//ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_IncomingAirdrop" ) //Audit 2-22-2025 not currently called.
-	ScriptRemote_RegisterClientFunction( "ServerCallback_CreateAirdropBadPlace", "int", -1, 9999, "vector", -32000.0, 32000.0, 32, "int", 0, 9999, "entity" ) //Audit 2-22-2025
-	ScriptRemote_RegisterClientFunction( "ServerCallback_DestroyAirdropBadPlace", "int", -1, 9999 ) //Audit 2-22-2025
+	ScriptRemote_RegisterClientFunction( "ServerCallback_CreateAirdropBadPlace", "int", INT_MIN, INT_MAX, "vector", -32000.0, 32000.0, 32, "int", INT_MIN, INT_MAX, "entity" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_CreateAirdropBadPlaceNoEnt", "int", INT_MIN, INT_MAX, "vector", -32000.0, 32000.0, 32, "int", INT_MIN, INT_MAX )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_DestroyAirdropBadPlace", "int", INT_MIN, INT_MAX )
 
 	//ScriptRemote_RegisterClientFunction( "ServerCallback_AddDroneClientData", "entity" ) //Audit 2-22-2025, not currently called.
 	//ScriptRemote_RegisterClientFunction( "ServerCallback_SetLootDroneTrailFXType", "entity", "int", 0, INT_MAX ) //Audit 2-22-2025, not currently called.
@@ -728,22 +789,18 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayConversation", "int", 0, 2000 ) //Audit 2-22-2025
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PlaySquadConversation", "int", 0, 2000, "int", EHANDLE_MIN, EHANDLE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX ) //Audit 2-22-2025
 
-	#if MODEL_VIEWER_ENABLED //todo revisit.
-		// Model Viewer
-		ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_MVUpdateModelBounds" )
-		Remote_RegisterClientFunction_Optional( "ServerCallback_MVEnable" )
-		Remote_RegisterClientFunction_Optional( "ServerCallback_MVDisable" )
-	#endif
+	ScriptRemote_RegisterClientFunction( "ServerCallback_GiveMatchLossProtection" )
+
+	Remote_RegisterClientFunction( "SCB_FiringRange_EnableCharacterChange", "bool" )
+	Remote_RegisterClientFunction( "SCB_FiringRange_SetPlayerInFinale", "bool" )
 	
 	//ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_SetClassicSkyScale" ) //Audit 2-22-2025 not currently called
 	//ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_ResetClassicSkyScale" ) //Audit 2-22-2025 not currently called
-	ScriptRemote_RegisterClientFunction( "ServerCallback_ClientInitComplete" )
 	RegisterServerVar( "forcedDialogueOnly", false )
 	ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_SetEntityVar" )
 	ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_SetServerVar" )
 	//ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_PlayMusic" ) //Audit 2-22-2025 not currently called
 	//ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_OpenDevMenu" ) //Audit 2-22-2025 not currently called
-	ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_SetUIVar" )
 	ScriptRemote_RegisterUIFunction( "ServerCallback_OpenPilotLoadoutMenu" )
 	ScriptRemote_RegisterUntypedFunction_deprecated( "Dev_PrintClientMessage" )
 	ScriptRemote_RegisterUntypedFunction_deprecated( "Dev_BuildClientMessage" )
@@ -751,32 +808,48 @@ void function RemoteFunctions_Init_Begin()
 
 	Dialog_RegisterNetworking()
 
-	ScriptRegisterNetworkedVariable( "PilotAbilitySelectMenu_Enabled", SNDC_GLOBAL, SNVT_INT, 1 )
+	RegisterNetworkedVariableSafe( "PilotAbilitySelectMenu_Enabled", SNDC_GLOBAL, SNVT_INT, 1 )
 	ScriptRemote_RegisterUIFunction( "SurvivalMenu_AckAction" )
 
-	RegisterServerVar( "respawnAvailableBits0", 0 )
-	RegisterServerVar( "respawnAvailableBits1", 0 )
-	RegisterServerVar( "respawnAvailableBits2", 0 )
-	RegisterServerVar( "respawnAvailableBits3", 0 )
 
-	ScriptRegisterNetworkedVariable( "bleedoutEndTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, 0.0 )
-	ScriptRegisterNetworkedVariable( "bleedoutType", SNDC_PLAYER_GLOBAL, SNVT_UNSIGNED_INT, 0 )
-	ScriptRegisterNetworkedVariable( "reviveEndTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, 0.0 )
-	ScriptRegisterNetworkedVariable( "reviveType", SNDC_PLAYER_GLOBAL, SNVT_UNSIGNED_INT, 0 )
-	ScriptRegisterNetworkedVariable( "revivePlayerHealer", SNDC_PLAYER_GLOBAL, SNVT_ENTITY )
-	ScriptRegisterNetworkedVariable( "tutorialContext", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "spectatorTargetCount", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
+	RegisterNetworkedVariableSafe( "respawnAvailableBits0", SNDC_GLOBAL, SNVT_BIG_INT, 0 )
+	RegisterNetworkedVariableSafe( "respawnAvailableBits1", SNDC_GLOBAL, SNVT_BIG_INT, 0 )
+	RegisterNetworkedVariableSafe( "respawnAvailableBits2", SNDC_GLOBAL, SNVT_BIG_INT, 0 )
+	RegisterNetworkedVariableSafe( "respawnAvailableBits3", SNDC_GLOBAL, SNVT_BIG_INT, 0 )
+
+	// SNDC extension test: overflow GLOBAL BigInt — using unified wrapper
+	// RegisterNetworkedVariableSafe( "sndcTestExt0", SNDC_GLOBAL, SNVT_BIG_INT, 0 )
+	// RegisterNetworkedVariableSafe( "sndcTestExt1", SNDC_GLOBAL, SNVT_BIG_INT, 0 )
+	// RegisterNetworkedVariableSafe( "sndcTestExt2", SNDC_GLOBAL, SNVT_BIG_INT, 0 )
+	// RegisterNetworkedVariableSafe( "sndcTestExt3", SNDC_GLOBAL, SNVT_BIG_INT, 0 )
+
+	// // Test overflow callback (event-driven via NET_ScriptMessage)
+	// #if CLIENT
+	// RegisterNetworkedVariableChangeCallback_intSafe( "sndcTestExt1", void function( entity ent, int oldVal, int newVal, bool changed ) {
+		// print( "[SNDC_CALLBACK_OVF] sndcTestExt1: " + oldVal + " -> " + newVal + "\n" )
+	// } )
+	// #endif
+
+	RegisterNetworkedVariableSafe( "hackStartTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, 0.0 )
+	RegisterNetworkedVariableSafe( "bleedoutEndTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, 0.0 )
+	RegisterNetworkedVariableSafe( "bleedoutType", SNDC_PLAYER_GLOBAL, SNVT_UNSIGNED_INT, 0 )
+	RegisterNetworkedVariableSafe( "reviveEndTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, 0.0 )
+	RegisterNetworkedVariableSafe( "reviveType", SNDC_PLAYER_GLOBAL, SNVT_UNSIGNED_INT, 0 )
+	RegisterNetworkedVariableSafe( "revivePlayerHealer", SNDC_PLAYER_GLOBAL, SNVT_ENTITY )
+	RegisterNetworkedVariableSafe( "tutorialContext", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, -1 )
+	RegisterNetworkedVariableSafe( "spectatorTargetCount", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
+
+	// survival_ship.gnut
+	Remote_RegisterServerFunction( "ClientCommand_Sur_MakeEligibleForJumpMaster" )
+	Remote_RegisterServerFunction( "ClientCommand_Sur_RelinquishJumpMaster" )
+	Remote_RegisterServerFunction( "ClientCommand_Sur_RemoveFromSquad" )
+	Remote_RegisterServerFunction( "ClientCommand_Sur_ReturnToSquad" )
 
 	if( Playlist() == ePlaylists.survival_training )
 		ScriptRemote_RegisterClientFunction( "ServerCallback_ActionCountUpdated", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
 
-	// Text Info Panels
-	ScriptRemote_RegisterUntypedFunction_deprecated( "Dev_BuildTextInfoPanel" )
-	ScriptRemote_RegisterUntypedFunction_deprecated( "Dev_CreateTextInfoPanel" )
-	ScriptRemote_RegisterUntypedFunction_deprecated( "Dev_CreateTextInfoPanelWithID" )
-	ScriptRemote_RegisterUntypedFunction_deprecated( "Dev_DestroyTextInfoPanelWithID" )
 
-	ScriptRemote_RegisterClientFunction( "ServerToClient_ScreenCoverTransition", "float", 0.0, 5000.0, 32 )
+	ScriptRemote_RegisterClientFunction( "ServerToClient_ScreenCoverTransition", "float", 0.0, 5000.0, 32, "bool" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_WatchForSyncedMeleeCancelPeriod", "float", 0.0, 10.0, 24 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SyncedMeleeDone" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SetWeaponPreviewState", "bool" )
@@ -786,23 +859,12 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptPingLootMarvin", "entity" )
 	
 	// Client-side helper (not permissive)
-	ScriptRegisterNetworkedVariable( "IsAdmin", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "IsAdmin", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
 	ScriptRemote_RegisterUIFunction( "UICallback_AdminStatus", "bool" )
-	
-	//r5r.dev player stats
-	ScriptRemote_RegisterClientFunction( "Tracker_SetPlayerStatBool", "entity", "bool" )
-	ScriptRemote_RegisterClientFunction( "Tracker_SetPlayerStatInt", "entity", "int", INT_MIN, INT_MAX )
-	ScriptRemote_RegisterClientFunction( "Tracker_SetPlayerStatFloat", "entity", "float", -999999.0, 999999.0, 32 )
-	ScriptRemote_RegisterClientFunction( "Tracker_ResyncAllForPlayer", "entity" )
-	ScriptRemote_RegisterUntypedFunction_deprecated( "Tracker_ResyncStatForPlayer" )	
 		
-	//Todo(mk): Move to client fetch( for cards ), remove networked vars
-	ScriptRegisterNetworkedVariable( "SeasonScore", SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, 0 )
-	ScriptRegisterNetworkedVariable( "SeasonKills", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0, 0.0, FLT_MAX )
-	ScriptRegisterNetworkedVariable( "SeasonDeaths", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0, 0.0, FLT_MAX )
-	ScriptRegisterNetworkedVariable( "SeasonPlaytime", SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, 0, 0.0, FLT_MAX )
-	ScriptRegisterNetworkedVariable( "SeasonGamesplayed", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0, 0.0, FLT_MAX )
-	ScriptRegisterNetworkedVariable( "stats_loaded", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	//Lobby
+	Remote_RegisterServerFunction( "ClientCallback_SetSeasonalHubButtonClickedSeason" )
+	Remote_RegisterServerFunction( "ClientCallback_ViewingMainLobbyPage" )
 	
 	
 	if( Gamemode() == eGamemodes.WINTEREXPRESS )
@@ -820,32 +882,16 @@ void function RemoteFunctions_Init_Begin()
 	// _deprecated untyped variants are parsed differently and do not effect the typed buffer, however should be used sparingly(for now) to improve net throughput. The end goal is to not use untyped at all if possible.
 	
 	//Tracker stuff
-	if ( !IsLobby() )
-	{
-		// Localized Msg functions
-		int localizedStringsMax = GetLocalizedStringsCount() + 1
-		ScriptRemote_RegisterUntypedFunction_deprecated( "FS_BuildLocalizedMultiVarString" )
-		ScriptRemote_RegisterClientFunction( "FS_ShowLocalizedMultiVarMessage", "int", 0, localizedStringsMax, "int", 0, eMsgUI.len() + 1, "float", 0.0, 5000.0, 16 ) //Audit 2-22-2025
-		ScriptRemote_RegisterUntypedFunction_deprecated( "FS_BuildLocalizedTokenWithVariableString" ) //only for variable string
-		ScriptRemote_RegisterClientFunction( "FS_DisplayLocalizedToken", "int", 0, localizedStringsMax, "int", 0, localizedStringsMax, "int", 0, eMsgUI.len() + 1, "float", 0.0, FLT_MAX, 32 )
 
-		// Localized TextPanel
-		ScriptRemote_RegisterUntypedFunction_deprecated( "FS_BuildLocalizedVariable_InfoPanel" )
-		ScriptRemote_RegisterClientFunction( "FS_CreateTextInfoPanelWithID_Localized", "int", 0, localizedStringsMax, "int", 0, localizedStringsMax, "vector", -32000.0, 32000.0, 32, "vector", -32000.0, 32000.0, 32, "float", 0.0, 100.0, 16, "int", -1, 999 ) //Audit 2-22-2025
-	
-		// This will be moved to code. ( server issued muting )
-		ScriptRemote_RegisterClientFunction( "FS_Toggle_Mute", "bool" )
-		ScriptRemote_RegisterClientFunction( "FS_Silence", "bool", "int", EHANDLE_MIN, EHANDLE_MAX ) //Audit 2-22-2025	
-	}
-		
-	RegisterServerVar( "tracker_enabled", false )
-	RegisterServerVar( "batch_fetch_complete", false )
-	ScriptRemote_RegisterUIFunction( "UI_Callback_MOTD" )
 
-	if ( IsLobby() )
-	{
-		//Register networked variables for the lobby
-	}
+	// BaseGametype_Init_MP
+	Remote_RegisterServerFunction( "ClientCallback_ClientStatus", "bool" )
+	Remote_RegisterServerFunction( "ClientCallback_SkipDeathCam" )
+
+	// MenuCallbacks_Init
+	Remote_RegisterServerFunction( "ClientCallback_LeaveMatch" )
+	Remote_RegisterServerFunction( "ClientCallback_SetPromoVersionSeen", "int", INT_MIN, INT_MAX )
+
 
 	#if CLIENT
 		if ( !IsLobby() )
@@ -854,9 +900,15 @@ void function RemoteFunctions_Init_Begin()
 		}
 	#endif
 
-	ScriptRegisterNetworkedVariable( "cameraNearbyEnemySquads", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, 0 )
+	RegisterNetworkedVariableSafe( "cameraNearbyEnemySquads", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, 0 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_ToggleDisabledWeaponType", "int", INT_MIN, INT_MAX, "bool" )
+	RegisterNetworkedVariableSafe( "uiDisableDev", SNDC_GLOBAL, SNVT_BOOL, true )
 
+	// register callbacks, could be wrapped in a neat framework but it is not worth the effort yet
+	#if CLIENT
+
+
+	#endif
 	s_callbackRegistrationIsClosed = true
 	ExecuteSetupCallbacks()
 }
@@ -906,13 +958,25 @@ void function RemoteFunctions_Init_Finish()
 
 float function GetNV_PreGameStartTime()
 {
-	return GetGlobalNetTime( "PreGameStartTime" )
+	return GetGlobalNetTimeSafe( "PreGameStartTime" )
 }
 
 bool function GetNV_FreefallIsFromPlane( entity player )
 {
 	return player.GetPlayerNetBool( "freefallIsFromPlane" )
 }
+
+#if SERVER
+void function SetNV_PreGameStartTime( float newVal )
+{
+	SetGlobalNetTimeSafe( "PreGameStartTime", newVal )
+}
+
+void function SetNV_FreefallIsFromPlane( entity player, bool newVal )
+{
+	return player.SetPlayerNetBool( "freefallIsFromPlane", newVal )
+}
+#endif // SERVER
 
 void function ByRef_ConsistencyCheck()
 {

@@ -54,10 +54,10 @@ const string CANISTER_TRAP_DEACTIVATED_VO = "diag_mp_caustic_tt_gasDeactivate_3p
 const string CANISTER_TRAP_WARNING_VO = "diag_mp_caustic_tt_timer10sec_3p"
 const string CANISTER_TRAP_ACTIVATED_VO = "diag_mp_caustic_tt_timer00sec_3p"
 
-                        
+
 const string CAUSTIC_TT_GAS_ALARM_SFX_CONTROL_MODE = "Canyonlands_Mu3_CausticTT_GasAlarm_Control"
 const string CAUSTIC_TT_GAS_TIMER_SFX_CONTROL_MODE = "Canyonlands_Mu3_CausticTT_GasTimer_Control"
-                              
+
 
 const float CAUSTIC_TT_CANISTER_MOVE_TO_DURATION_OPEN = 3.0
 const float CAUSTIC_TT_CANISTER_MOVE_TO_DURATION_CLOSE = 2.0
@@ -179,13 +179,13 @@ void function Caustic_TT_SetButtonUsable( entity canisterSwitch )
 	#endif // SERVER
 	#if CLIENT
 		//need a way to prevent from adding callbacks on existing canisters on client side
-		//this is mostly a hack for console as this dynamic prop spawns after the entitiesloaded callback 
+		//this is mostly a hack for console as this dynamic prop spawns after the entitiesloaded callback
 		//and therefore need to map the buttons properly for the UI prompts to pop up
-		//similar fix to sh_crypto_tt_common for the crypto map podium 
+		//similar fix to sh_crypto_tt_common for the crypto map podium
 		if( canisterSwitch.e.canUseEntityCallback != null )
 			return
 	#endif // CLIENT
-	SetCallback_CanUseEntityCallback_Retail( canisterSwitch, CanisterSwitch_CanUse )
+	SetCallback_CanUseEntityCallback( canisterSwitch, CanisterSwitch_CanUse )
 	AddCallback_OnUseEntity_ClientServer( canisterSwitch, CanisterSwitch_OnUse )
 	#if CLIENT
 		AddEntityCallback_GetUseEntOverrideText( canisterSwitch, GetCanisterSwitchUseTextOverride )
@@ -580,10 +580,10 @@ void function CanisterSwitch_TrapActivate_Inverted_Thread( entity player )
 {
 	bool useDefaultSFX = true
 
-	                        
+
 		//if ( GameMode_IsActive( eGameModes.CONTROL ) )
 			//useDefaultSFX = false
-                               
+
 
 	#if SERVER
 
@@ -593,14 +593,14 @@ void function CanisterSwitch_TrapActivate_Inverted_Thread( entity player )
 			// Need EmitSoundOnEntity() to play "timer" sfx in predetermined space (interior of building), EmitSoundAtPosition() plays automatically in a radius
 			EmitSoundOnEntity( file.audioSpeaker, CAUSTIC_TT_GAS_TIMER_SFX )
 		}
-		                        
+
 		else
 		{
 			EmitSoundAtPosition( TEAM_UNASSIGNED, file.audioSpeaker.GetOrigin(), CAUSTIC_TT_GAS_ALARM_SFX_CONTROL_MODE, file.audioSpeaker )
 			// Need EmitSoundOnEntity() to play "timer" sfx in predetermined space (interior of building), EmitSoundAtPosition() plays automatically in a radius
 			EmitSoundOnEntity( file.audioSpeaker, CAUSTIC_TT_GAS_TIMER_SFX_CONTROL_MODE )
 		}
-                                
+
 
 		foreach ( windowHighlight in file.windowHighlights )
 			windowHighlight.SetSkin( 1 )
@@ -1048,8 +1048,8 @@ void function Caustic_TT_SetLootUsability_Single( entity loot, bool isUsable )
 		loot.SetUsableDistanceOverride( 85 )
 		// *** DEV: Uncomment to debug trigger size.
 		/*
-		#if DEV
-			 DebugDrawCylinder( loot.GetOrigin() - < 0, 0, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT / 2 >, < 270 ,0 , 0 >, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_RADIUS, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT, COLOR_GREEN, false, 16  )
+		#if DEVELOPER
+			 //DebugDrawCylinder( loot.GetOrigin() - < 0, 0, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT / 2 >, < 270 ,0 , 0 >, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_RADIUS, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT, <0, 255, 0>, false, 16  )
 		#endif
 		*/
 		if( IsValid( data.playerPushOutTrigger ) )
@@ -1061,8 +1061,8 @@ void function Caustic_TT_SetLootUsability_Single( entity loot, bool isUsable )
 		loot.SetUsableDistanceOverride( 0 )
 		// *** DEV: Uncomment to debug trigger size.
 		/*
-		#if DEV
-			 DebugDrawCylinder( loot.GetOrigin() - < 0, 0, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT / 2 >, < 270 ,0 , 0 >, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_RADIUS, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT, COLOR_RED, false, 16  )
+		#if DEVELOPER
+			 //DebugDrawCylinder( loot.GetOrigin() - < 0, 0, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT / 2 >, < 270 ,0 , 0 >, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_RADIUS, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT, <255, 0, 0>, false, 16  )
 		#endif
 		*/
 			if ( IsValid( data.playerPushOutTrigger ) )
@@ -1121,7 +1121,7 @@ entity function GetCausticTTCanisterFrameForLoot( entity lootEnt )
 	return null
 }
 
-bool function AreCausticTTCanistersClosed( entity canisterPanel )
+bool function AreCausticTTCanistersClosed( entity player )
 {
 	return file.canistersClosed
 }
@@ -1132,7 +1132,7 @@ bool function IsPlayerCaustic( entity player )
 	if ( !IsValidPlayer( player ) )
 		return false
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	string characterRef  = ItemFlavor_GetHumanReadableRef( character ).tolower()
 
 	if ( characterRef != "character_caustic" )

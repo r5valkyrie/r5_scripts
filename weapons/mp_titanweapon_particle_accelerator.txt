@@ -18,7 +18,7 @@ WeaponData
 	"pickup_press_prompt" 							"[USE] [WEAPONNAME]"
 	"minimap_reveal_distance"						"32000"
 
-	"damage_flags"									"DF_STOPS_TITAN_REGEN"
+	"damage_flags"									"DF_SOUR"
 
 	"OnWeaponActivate"								"OnWeaponActivate_titanweapon_particle_accelerator"
 	"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_titanweapon_particle_accelerator"

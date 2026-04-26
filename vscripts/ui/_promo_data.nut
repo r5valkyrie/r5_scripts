@@ -1,126 +1,160 @@
 global function InitPromoData
-global function UpdatePromoData
-global function TEMP_UpdatePromoData
-global function IsPromoDataProtocolValid
-global function GetPromoDataVersion
-global function GetPromoDataLayout
 global function GetPromoImage
-
-global function GetPromoRpakName
-global function GetMiniPromoRpakName
-
-global function UICodeCallback_MainMenuPromosUpdated
+global function OpenPromoLink
 
 #if DEVELOPER
-global function DEV_PrintPromoData
-#endif //
+global function DEV_PrintUMPromoData
+#endif
 
-//
-//
-const int PROMO_PROTOCOL = 2
 
 struct
 {
-	MainMenuPromos&      promoData
 	table<string, asset> imageMap
 } file
 
-string function GetPromoRpakName()
-{
-	return file.promoData.promoRpak
-}
-
-string function GetMiniPromoRpakName()
-{
-	return file.promoData.miniPromoRpak
-}
 
 void function InitPromoData()
 {
-	RequestMainMenuPromos() //
-
 	var dataTable = GetDataTable( $"datatable/promo_images.rpak" )
-	for ( int i = 0; i < GetDatatableRowCount( dataTable ); i++ )
+	for ( int i = 0; i < GetDataTableRowCount( dataTable ); i++ )
 	{
 		string name = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "name" ) ).tolower()
 		asset image = GetDataTableAsset( dataTable, i, GetDataTableColumnByName( dataTable, "image" ) )
-
-		//printf(image)
-
 		if ( name != "" )
 			file.imageMap[name] <- image
 	}
 }
 
 
-void function UpdatePromoData()
+asset function GetPromoImage( string identifier )
 {
-	#if DEVELOPER
-		//if ( GetConVarBool( "mainMenuPromos_scriptUpdateDisabled" ) || GetCurrentPlaylistVarBool( "mainMenuPromos_scriptUpdateDisabled", false ) )
-		//	return
-	#endif //
-	file.promoData = GetMainMenuPromos()
-}
-
-void function TEMP_UpdatePromoData()
-{
-	MainMenuPromos skypad
-	skypad.prot = PROMO_PROTOCOL
-	skypad.version = 1
-	skypad.layout = "This should be a string that contains image title and desc, InitPages funct cleans it using regex"
-	skypad.promoRpak = $""
-	skypad.miniPromoRpak = $""
-
-	file.promoData = skypad
-}
-
-void function UICodeCallback_MainMenuPromosUpdated()
-{
-	TEMP_UpdatePromoData()
-}
-
-
-bool function IsPromoDataProtocolValid()
-{
-	return file.promoData.prot == PROMO_PROTOCOL
-}
-
-
-int function GetPromoDataVersion()
-{
-	return file.promoData.version
-}
-
-
-string function GetPromoDataLayout()
-{
-	return file.promoData.layout
-}
-
-
-asset function GetPromoImage( string identifier, bool custom = false )
-{
-	if(custom)
-		return GetAssetFromString(identifier)
-
 	identifier = identifier.tolower()
 
 	asset image
 	if ( identifier in file.imageMap )
 		image = file.imageMap[identifier]
 	else
-		image = $"rui/promo/apex_title"
+		image = $"rui/promo/apex_title_blue"
 
 	return image
 }
 
-#if DEVELOPER
-void function DEV_PrintPromoData()
+void function OpenPromoLink( string linkType, string link )
 {
-	printt( "protocol:      ", file.promoData.prot )
-	printt( "version:       ", file.promoData.version )
-	printt( "promoRpak:     ", file.promoData.promoRpak )
-	printt( "miniPromoRpak: ", file.promoData.miniPromoRpak )
-	printt( "layout:        ", file.promoData.layout )
+
+	if ( linkType == "battlepass" )
+	{
+		EmitUISound( "UI_Menu_Accept" )
+		JumpToSeasonTab( "PassPanel" )
+	}
+	else if ( linkType == "challenges" )
+	{
+		EmitUISound( "UI_Menu_Accept" )
+		JumpToChallenges( link );
+	}
+	else if ( linkType == "playapex" )
+	{
+		EmitUISound( "UI_Menu_Accept" )
+		OpenGameModeSelectDialog()
+	}
+	else if ( linkType == "heirloom" )
+	{
+		EmitUISound( "UI_Menu_Accept" )
+		JumpToMythicOfferScreen( link, eMythicType.HEIRLOOM )
+	}
+	else if ( linkType == "prestigeskin" )
+	{
+		EmitUISound( "UI_Menu_Accept" )
+		JumpToMythicOfferScreen( link, eMythicType.PRESTIGE_SKIN )
+	}
+	else if ( linkType == "storecharacter" )
+	{
+		EmitUISound( "UI_Menu_Accept" )
+		if ( IsValidItemFlavorCharacterRef( link ) )
+		{
+			ItemFlavor character = GetItemFlavorByCharacterRef( link )
+			if ( GRX_IsItemOwnedByPlayer( character ) )
+				JumpToCharactersTab()
+			else
+				JumpToCharacterCustomize( character )
+		}
+		else if ( IsValidItemFlavorGUID( ConvertItemFlavorGUIDStringToGUID( link ) ) )
+		{
+			ItemFlavor character = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( link ) )
+			if ( GRX_IsItemOwnedByPlayer( character ) )
+				JumpToCharactersTab()
+			else
+				JumpToCharacterCustomize( character )
+		}
+		else
+		{
+			JumpToCharactersTab()
+		}
+	}
+	else if ( linkType == "themedstoreskin" )
+	{
+		EmitUISound( "UI_Menu_Accept" )
+		ItemFlavor ornull activeThemedShopEvent = GetActiveThemedShopEvent( GetUnixTimestamp() )
+		if ( activeThemedShopEvent != null )
+		{
+			if( link != "" )
+				JumpToThemeShopOffer( link )
+			else
+				JumpToSeasonTab( "ThemedShopPanel" )
+		}
+		else
+			JumpToStoreTab()
+	}
+	else if ( linkType == "collectionevent" )
+	{
+		EmitUISound( "UI_Menu_Accept" )
+		ItemFlavor ornull activeCollectionEvent = GetActiveCollectionEvent( GetUnixTimestamp() )
+		if ( activeCollectionEvent != null )
+			JumpToSeasonTab( "CollectionEventPanel" )
+		else
+			JumpToStoreTab()
+	}
+	else if ( linkType == "url" )
+	{
+		EmitUISound( "UI_Menu_Accept" )
+		LaunchExternalWebBrowser( link, WEBBROWSER_FLAG_NONE )
+	}
+	else if ( linkType == "storeoffer" )
+	{
+		EmitUISound( "UI_Menu_Accept" )
+		JumpToStoreOffer( FEATURED_STORE_PANEL, link )
+	}
+	else if ( linkType == "monthlystoreoffer" )
+	{
+		EmitUISound( "UI_Menu_Accept" )
+		JumpToStoreOffer( SEASONAL_STORE_PANEL, link )
+	}
+	else if ( linkType == "whatsnew" )
+	{
+		EmitUISound( "UI_Menu_Accept" )
+		JumpToSeasonTab( "WhatsNewPanel" )
+	}
+	else if ( linkType == "storyevent" )
+	{
+		EmitUISound( "UI_Menu_Accept" )
+
+		array<ItemFlavor> storyChallengeEvents  = GetActiveStoryChallengeEvents( GetUnixTimestamp() )
+		if ( storyChallengeEvents.len() <= 0 )
+			return
+
+		StoryEventAboutDialog_SetEvent( storyChallengeEvents[0] )
+		AdvanceMenu( GetMenu( "StoryEventAboutDialog" ) )
+	}
+	else if ( linkType == "storespecials" )
+	{
+		EmitUISound( "UI_Menu_Accept" )
+		JumpToStoreOffer( SPECIALS_STORE_PANEL, link)
+	}
 }
-#endif //
+
+#if DEVELOPER
+void function DEV_PrintUMPromoData()
+{
+	return
+}
+#endif

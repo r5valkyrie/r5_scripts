@@ -1,0 +1,70 @@
+#if SERVER
+global function ArmorData_Get
+global function ArmorData_Set
+
+#if DEVELOPER
+global function DEV_GiveEvoPoints
+#endif // DEVELOPER
+
+#endif // SERVER
+
+global struct ArmorData
+{
+	string armorLevel
+	int evoProgress
+}
+
+#if SERVER
+
+ArmorData function ArmorData_Get(entity player)
+{
+	string itemRef = EquipmentSlot_GetLootRefForSlot( player, "armor" )
+	string armorLevel = ""
+	int evoProgress = 0
+	ArmorData armorData
+
+	// Give white armor if no proper armor ref was found or armor was level 0 at death ( placed in crafter )
+	if(( itemRef == "armor_pickup_lv0_evolving" ) || ( itemRef.find( "armor_", 0 ) == -1 ))
+	{
+		itemRef = "armor_pickup_lv1_evolving"
+	}
+
+	if ( SURVIVAL_Loot_IsRefValid( itemRef ))
+	{
+		armorData.armorLevel =  SURVIVAL_Loot_GetLootDataByRef( itemRef ).ref
+		armorData.evoProgress = EvolvingArmor_GetEvolutionProgress(player)
+	}
+	else
+	{
+		itemRef = "armor_pickup_lv1_evolving"
+	}
+
+	return armorData
+}
+
+void function ArmorData_Set( entity player, ArmorData armorData, bool resetEvo = false, bool rechargeArmor = true )
+{
+	string armorRef = armorData.armorLevel
+	LootData data = SURVIVAL_Loot_GetLootDataByRef( armorRef )
+
+	Inventory_SetPlayerEquipment( player, armorRef, "armor" )
+	if( rechargeArmor )
+	{
+		player.SetShieldHealthMax( SURVIVAL_GetCharacterShieldHealthMaxForArmor( player, data ) )
+		player.SetShieldHealth( SURVIVAL_GetCharacterShieldHealthMaxForArmor( player, data ) )
+	}
+
+	int evoPointsToGive = resetEvo ? EvolvingArmor_GetRequirementForEvolution( data.tier ) : armorData.evoProgress
+	EvolvingArmor_SetEvolutionProgress( player, evoPointsToGive )
+}
+
+#if DEVELOPER
+
+void function DEV_GiveEvoPoints( entity player, int evoToGive = 10 )
+{
+	EvolvingArmor_ApplyEvoPoints( player, evoToGive )
+}
+
+#endif //DEV
+
+#endif // SERVER

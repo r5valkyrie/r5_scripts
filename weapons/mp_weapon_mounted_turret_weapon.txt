@@ -67,6 +67,7 @@ WeaponData
 
 	//"OnWeaponNpcPrimaryAttack"					"OnWeaponNpcPrimaryAttack_LMG"
 
+	"enable_highlight_networking_on_creation"		1
 
 	// Bolt Info
 	"bolt_hitsize"									"0.0"
@@ -94,8 +95,8 @@ WeaponData
 	"vortex_absorb_sound_1P_VS_3P"					"Vortex_Shield_AbsorbBulletSmall_1P_VS_3P"
 	"projectile_adjust_to_gun_barrel"				"1"
 
-	"fx_muzzle_flash_view"							"wpn_muzzleflash_snp_hmn_FP"
-	"fx_muzzle_flash_world"							"wpn_muzzleflash_snp_hmn"
+	"fx_muzzle_flash_view"							"wpn_muzzleflash_rampart_turret_FP"
+	"fx_muzzle_flash_world"							"wpn_muzzleflash_rampart_turret"
 	"fx_muzzle_flash_attach"						"muzzle_flash_01"
 
     "fx_muzzle_flash2_view"							"wpn_muzzleflash_rampart_turret_FP"
@@ -103,11 +104,11 @@ WeaponData
     "fx_muzzle_flash2_attach"						"muzzle_flash_03"
 
 	// FX - Shells
-	"fx_shell_eject_view"                      		"wpn_shelleject_rifle_large_FP"
-	"fx_shell_eject_world"                     		"wpn_shelleject_rifle_large"
+	"fx_shell_eject_view"                      		"wpn_shelleject_ramp_turret_FP"
+	"fx_shell_eject_world"                     		"wpn_shelleject_ramp_turret"
 	"fx_shell_eject_attach"							"shell"
 
-	"fx_shell_eject2_view"							"wpn_shelleject_rifle_large_FP"
+	"fx_shell_eject2_view"							"wpn_shelleject_ramp_turret_empty_FP"
 	"fx_shell_eject2_world"							"wpn_shelleject_ramp_turret"
 	"fx_shell_eject2_attach"						"shell"
 
@@ -651,7 +652,54 @@ WeaponData
             "reloadempty_time_late3"			"2.333"
             "reloadempty_time_late4"			"1.567"
         }
-      
+	}
+
+	"ui1_enable"		"1"
+	"ui1_draw_cloaked"	"1"
+	UiData1
+	{
+		"ui"							"ui/rampart_turret_screen"
+		"mesh"							"models/weapons/attachments/rampart_turret_screen"
+		Args
+		{
+			vis							player_zoomfrac
+			ammo						weapon_ammo
+			clipSize					weapon_clipSize
+			centerOffset				weapon_ads_center_offset
+			eyeAngles					player_eye_angles
+			crossDist					distance_to_crosshair_target
+		}
+	}
+
+	"ui2_enable"		"1"
+	"ui2_draw_cloaked"	"1"
+	UiData2
+	{
+		"ui"							"ui/rampart_turret_reticle"
+		"mesh"							"models/weapons/attachments/rampart_turret_reticle"
+		Args
+		{
+			isFiring					weapon_is_firing
+			clipAmmo					weapon_ammo
+			clipSize					weapon_clipSize
+		}
+	}
+
+	"ui3_enable"		"1"
+	"ui3_draw_cloaked"	"1"
+	UiData3
+	{
+		"ui"							"ui/rampart_turret_ammo_counter"
+		"mesh"							"models/weapons/attachments/rampart_turret_ammo_counter"
+		Args
+		{
+			vis							player_zoomfrac
+			ammo						weapon_ammo
+			clipSize					weapon_clipSize
+			isReloading					weapon_is_reloading
+			isAmped						weapon_is_amped
+			spreadAmount				weapon_spread
+		}
 	}
 
 	active_crosshair_count				"1"
@@ -671,5 +719,14 @@ WeaponData
 		    crosshairMovementY          crosshair_movement_y
 		}
 
+		Crosshair_1
+		{
+			"ui"						"ui/rampart_turret_crosshair"
+			"base_spread"				"0"
+			Args
+			{
+				//isFiring				weapon_is_firing
+			}
+		}
 	}
 }

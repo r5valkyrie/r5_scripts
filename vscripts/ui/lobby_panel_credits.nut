@@ -39,7 +39,7 @@ void function InitCreditPanel( var panel )
 
 void function CreditsPanel_OnShow( var panel )
 {
-	UI_SetPresentationType( ePresentationType.CREDITS )
+	UI_SetPresentationType( ePresentationType.POSTGAME )
 
 	if(IsLobby() && !file.hasLoaded)
 	{

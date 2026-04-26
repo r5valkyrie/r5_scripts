@@ -153,7 +153,7 @@ entity function ActivatePersonalShield_Recreate( entity owner )
 	SetTargetName( cpoint, UniqueString( "shield_wall_controlpoint" ) )
 	DispatchSpawn( cpoint )
 
-	entity mover = CreateScriptMover()
+	entity mover = CreateScriptMover("")
 	mover.SetOrigin( owner.GetOrigin() )
 	vector moverAngles = owner.GetAngles()
 	mover.SetAngles( AnglesCompose( moverAngles, <0,0,180> ) )

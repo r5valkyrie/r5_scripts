@@ -25,8 +25,6 @@ struct
 	var titanEditButton
 	bool playerRunningGauntlet
 
-	ComboStruct &comboStruct
-
 	var loadoutHeaderPilot
 	array<var> loadoutButtonsPilot
 	var loadoutHeaderTitan
@@ -46,76 +44,6 @@ void function InitInGameMPMenu( var newMenuArg )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, OnInGameMPMenu_Close )
 
 	AddUICallback_OnLevelInit( OnInGameLevelInit )
-
-	ComboStruct comboStruct = ComboButtons_Create( menu )
-
-	int headerIndex = 0
-	int buttonIndex = 0
-	var pilotHeader = AddComboButtonHeader( comboStruct, headerIndex, "#MENU_HEADER_PILOT" )
-	file.loadoutHeaderPilot = pilotHeader
-	var pilotSelectButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#SELECT" )
-	Hud_AddEventHandler( pilotSelectButton, UIE_CLICK, PilotLoadoutsSelectOnClick )
-	file.loadoutButtonsPilot.append( pilotSelectButton )
-	//file.pilotEditButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#EDIT" )
-	//Hud_AddEventHandler( file.pilotEditButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "EditPilotLoadoutsMenu" ) ) )
-	//file.loadoutButtonsPilot.append( file.pilotEditButton )
-
-	headerIndex++
-	buttonIndex = 0
-	var titanHeader = AddComboButtonHeader( comboStruct, headerIndex, "#MENU_HEADER_TITAN" )
-	file.titanHeader = titanHeader
-	file.titanHeaderIndex = headerIndex
-	file.loadoutHeaderTitan = titanHeader
-	var titanSelectButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#SELECT" )
-	file.titanSelectButton = titanSelectButton
-	file.loadoutButtonsTitan.append( titanSelectButton )
-	Hud_AddEventHandler( titanSelectButton, UIE_CLICK, TitanSelectButtonHandler )
-	var titanEditButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#EDIT" )
-	file.titanEditButton = titanEditButton
-	file.loadoutButtonsTitan.append( titanEditButton )
-	Hud_Hide( titanEditButton )
-
-	headerIndex++
-	buttonIndex = 0
-	var gameHeader = AddComboButtonHeader( comboStruct, headerIndex, "#MENU_HEADER_GAME" )
-	var leaveButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#LEAVE_MATCH" )
-	Hud_AddEventHandler( leaveButton, UIE_CLICK, OnLeaveButton_Activate )
-	var devButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "Dev" )
-	Hud_AddEventHandler( devButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "DevMenu" ) ) )
-
-	headerIndex++
-	buttonIndex = 0
-	var dummyHeader = AddComboButtonHeader( comboStruct, headerIndex, "" )
-	var dummyButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "" )
-	Hud_SetVisible( dummyHeader, false )
-	Hud_SetVisible( dummyButton, false )
-
-	headerIndex++
-	buttonIndex = 0
-	file.settingsHeader = AddComboButtonHeader( comboStruct, headerIndex, "#MENU_HEADER_SETTINGS" )
-
-	//var controlsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#CONTROLS" )
-	//Hud_AddEventHandler( controlsButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "ControlsMenu" ) ) )
-	#if CONSOLE_PROG
-		//var avButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#AUDIO_VIDEO" )
-		//Hud_AddEventHandler( avButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "AudioVideoMenu" ) ) )
-	#elseif PC_PROG
-		//var videoButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#AUDIO" )
-		//Hud_AddEventHandler( videoButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "AudioMenu" ) ) )
-		//var soundButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#VIDEO" )
-		//Hud_AddEventHandler( soundButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "VideoMenu" ) ) )
-	#endif
-
-	file.faqButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#KNB_MENU_HEADER" )
-	//Hud_AddEventHandler( file.faqButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "KnowledgeBaseMenu" ) ) )
-
-	//var dataCenterButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#DATA_CENTER" )
-	//Hud_AddEventHandler( dataCenterButton, UIE_CLICK, OpenDataCenterDialog )
-
-	ComboButtons_Finalize( comboStruct )
-
-	file.comboStruct = comboStruct
-
 	AddMenuFooterOption( menu, LEFT, BUTTON_A, true, "#A_BUTTON_SELECT" )
 	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_CLOSE", "#CLOSE" )
 }
@@ -131,8 +59,6 @@ void function OnInGameMPMenu_Open()
 
 	bool faqIsNew = !GetConVarBool( "menu_faq_viewed" ) || HaveNewPatchNotes() || HaveNewCommunityNotes()
 	RuiSetBool( Hud_GetRui( file.settingsHeader ), "isNew", faqIsNew )
-	ComboButton_SetNew( file.faqButton, faqIsNew )
-
 	UpdateLoadoutButtons()
 }
 
@@ -321,7 +247,6 @@ void function SetTitanSelectButtonVisibleState( bool state )
 	}
 	else
 	{
-		ComboButtons_ResetColumnFocus( file.comboStruct )
 		Hud_Hide( file.titanHeader )
 		Hud_Hide( file.titanEditButton )
 		Hud_Hide( file.titanSelectButton )

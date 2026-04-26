@@ -1,19 +1,18 @@
-
 /*
 Expression values:
 SERVER				Server per-level script VM
 CLIENT				Client per-level script VM
-UI						UI script VM
-SP						Singleplayer (returns true for sp maps)
-MP						Multiplayer (returns true for mp maps)
-DEV						Value of developer convar
-CONSOLE_PROG	True if a Durango or PS4 program
-DURANGO_PROG	True if a Durango program
+UI					UI script VM
+SP					Singleplayer (returns true for sp maps)
+MP					Multiplayer (returns true for mp maps)
+DEVELOPER			Value of developer convar
+CONSOLE_PROG		True if a Durango or PS4 program
+DURANGO_PROG		True if a Durango program
 PS4_PROG			True if a PS4 program
 PC_PROG				True if a PC program
-LOBBY					True in mp_lobby. (Server and client VMs only)
-MAP_mp_box		True if the given map name is being loaded
-GAMEMODE_at		True of the given game mode is being loaded
+LOBBY				True in mp_lobby. (Server and client VMs only)
+MAP_mp_box			True if the given map name is being loaded
+GAMEMODE_at			True of the given game mode is being loaded
 */
 
 When: " SERVER || CLIENT || UI "
@@ -22,7 +21,12 @@ Scripts:
 	sh_mapname_playlist_gamemode_enums.gnut //(mk): init this early
 	sh_assert.nut
 	feature_flags_script.gnut
-	root_asset_lists.gnut
+]
+
+When: "CLIENT || UI "
+Scripts:
+[
+	new_script_init.gnut
 ]
 
 When: "SP || MP_CAMPAIGNCOOP"
@@ -34,6 +38,7 @@ Scripts:
 When: "SERVER || CLIENT"
 Scripts:
 [
+	sh_dev_tests.gnut
 	flowstate_globals.gnut
 	sh_damage_history.gnut // needs to come before _entitystructs
 	sh_mod_callbacks.gnut
@@ -57,6 +62,9 @@ Scripts:
 	sh_assets.nut
 	sh_playlists.gnut
 	sh_networkvars.gnut
+	sh_netvar_callbacks.gnut
+	sh_sndc_extension.gnut
+	sh_sndc_callbacks.gnut
 	sh_items.gnut
 	sh_passives.gnut
 	sh_entitystructs.gnut
@@ -65,12 +73,17 @@ Scripts:
 	sh_gamepad_utility.gnut
 	sh_thirdperson.gnut
 	sh_pak_requests.gnut
+	mp/sh_alliance_proximity.gnut
 	sh_ehi.gnut
+	realms.gnut
 ]
 
 When: "SERVER || CLIENT || UI"
 Scripts:
 [
+	perk_support_lootbin.nut
+	pilot/sh_pilot_passive_upgrade_core.gnut
+	extra_shields.nut
 	sh_survival_loot_all.gnut
 ]
 
@@ -78,19 +91,23 @@ When: "SERVER || CLIENT"
 Scripts:
 [
 	gamemodes/sh_dev_gamemodes_mp.gnut // DEVSCRIPTS REMOVE
-	gamemodes/sh_gamemodes_mp.gnut
 	sh_ability_shadow_zombie.nut
 
 	pilot/sh_pilot_tracking_vision.gnut
+	pilot/sh_pilot_passive_gunner.gnut
 	pilot/sh_pilot_passive_loot_highlight.gnut
 	sh_bird_cluster.nut
 
 	sh_extended_use.gnut
+	sh_companion_pathfinding.gnut
+	pilot/sh_pilot_passive_remote_deathbox_interact.gnut
+	pilot/sh_pilot_passive_sling.gnut
 	sh_survival_loot.gnut
 	sh_survival_loot_actions.gnut
 	sh_survival_loot_types.gnut
 	sh_survival_equipment_slot.gnut
 	sh_survival_loot_distribution.gnut
+	sh_live_api.gnut
 ]
 
 When: "SERVER || CLIENT || UI"
@@ -99,12 +116,20 @@ Scripts:
 	sh_consts_mp.gnut
 	sh_loadouts.gnut
 	sh_grx.gnut
+	sh_gifting.gnut
 	entitlements.gnut
 	sh_cal_events.gnut
 	sh_battlepass.gnut
 	time_gated_login_rewards.nut
 	collection_events.nut
 	themed_shop_events.nut
+	milestone_events.gnut
+	buffet_events.nut
+	sh_challenge_sets.gnut
+	sh_temp_unlock.gnut
+	reward_campaign.gnut
+	event_shop.nut
+	story_challenge_events.nut
 	sh_characters.gnut
 	sh_character_abilities.gnut
 	sh_character_cosmetics.nut
@@ -116,6 +141,12 @@ Scripts:
 	sh_dev_weapons.nut
 	sh_dev_menu.nut
 	sh_weapon_cosmetics.nut
+	sh_ability_cosmetics.nut
+	sh_perks.gnut
+	private_matches.nut
+	sh_image_2d.gnut
+	sh_battlepass_presale_voucher.gnut
+	clubs.nut
 	sh_movement_rc.nut
 ]
 
@@ -125,25 +156,68 @@ Scripts:
 	client/cl_pip.gnut
 ]
 
+When: "UI"
+Scripts:
+[
+	ui/dialogs/feature_tutorial.nut
+]
+
 When: "SERVER || CLIENT || UI"
 Scripts:
 [
 	sh_scene_capture.gnut
-
+	workarounds.gnut
 	sh_persistent_data.gnut
 	gamemodes/sh_gamemodes.gnut
 	gamemodes/sh_dev_gamemodes.gnut // DEVSCRIPTS REMOVE
 	sh_mp_utility_all.gnut
 	sh_stats_internals.gnut
+	sh_stats_defs.gnut
+	sh_stats_autogen.gnut
+	sh_stats_utility.gnut
+	sh_stats_characters.gnut
+	sh_stats_gameplay.gnut
+	sh_stats_eventshop.gnut
+	sh_stats_legacy.gnut
+	sh_stats_beginner.gnut
+	sh_stats_ranked.gnut
+	sh_stats_gamemode_cups.gnut
+	sh_stats_gamemode_control.gnut
+	sh_stats_gamemode_arenas.gnut
+	sh_stats_metachallenge.gnut
+	sh_stats_s21.gnut
+
+	sh_stats_npp.gnut
 	sh_stats.gnut
 	sh_challenges.gnut
+	sh_beginner_challenges.gnut
 	mp/sh_quips.nut
+	mp/sh_skydive_emotes.nut
+	mp/sh_stickers.nut
 	mp/sh_gladiator_cards.nut
 	mp/sh_player_stats_cards.nut
+	mp/sh_mythics.nut
+	sh_treasure_box.gnut
+	customize_common.gnut
+]
+
+When: "CLIENT || UI"
+Scripts:
+[
+]
+
+When: "SERVER || CLIENT || UI"
+Scripts:
+[
 	sh_loot_ceremony.gnut
+	sh_season_quest.gnut
+	vouchers.gnut
 
 	sh_xp.gnut
+	mp/sh_artifacts.gnut
 	sh_ranked.gnut
+	sh_ranked_scoring.nut
+	sh_ranked_trials.nut
 ]
 
 When: "CLIENT"
@@ -155,6 +229,7 @@ Scripts:
 When: "SERVER"
 Scripts:
 [
+	_anti_cheat.nut
 	dev/_devstats.gnut
 ]
 
@@ -176,7 +251,6 @@ Scripts:
 	sh_anim_events.gnut
 	_entitystructs.gnut
 	class/CBaseEntity.nut
-	class/CTitanSoul.nut
 	class/CAI_BaseNPC.nut
 	// Put new server-specific scripts in the later SERVER section, not here.
 ]
@@ -228,6 +302,7 @@ Scripts:
 When: "SERVER || CLIENT"
 Scripts:
 [
+	weapons/weapon_cubemap.nut
 	sh_debug_draw.gnut
 	sh_flag.gnut
 	_utility_shared.nut
@@ -237,7 +312,6 @@ Scripts:
 	mp/sh_teams.gnut
 	pilot/sh_pilot_gun_shield.gnut
 	pilot/sh_pilot_leeching.gnut
-	rodeo/sh_rodeo_titan_anim.nut
 	sentry_turrets/sh_sentry_turrets.gnut
 	sh_anim_aliases.gnut
 	sh_codecallbacks.gnut
@@ -255,16 +329,9 @@ Scripts:
 	sh_timer.gnut
 	sh_doors.nut
 	sh_capturemode.gnut
-	
+	sh_timed_event_utility.nut
 	sh_weaponrack.nut
 	sh_player_objects.gnut
-	sh_clientsidepickups.gnut
-	titan/sh_titan.gnut
-	titan/sh_titan_embark.gnut
-	titan/sh_titan_soul.gnut
-	titan/sh_titan_triple_health.gnut
-	titan/sh_ion_energy.gnut
-	titan/sh_titan_fastball.nut
 	weapons/_arc_cannon.nut
 	weapons/_grenade.nut
 	weapons/_vortex.nut
@@ -274,17 +341,20 @@ Scripts:
 	weapons/mp_ability_cloak.nut
 	weapons/mp_ability_grapple.nut
 	weapons/mp_ability_holopilot.nut
+	weapons/hopup_golden_horse.nut
 	weapons/mp_ability_silence.nut
 	weapons/mp_ability_revenant_death_totem.nut
 	weapons/mp_ability_item_spawner.nut
 	weapons/mp_ability_panic_button.nut
-	weapons/mp_ability_mobile_respawn_beacon.nut
+
 	weapons/mp_ability_void_ring.nut
+	weapons/mp_ability_emote_projector.nut
 	weapons/mp_ability_valk_cluster_missile.nut
 	weapons/mp_ability_valk_jets.nut
 	weapons/mp_ability_valk_skyward.nut
 	weapons/mp_weapon_maggie_common.nut
 	weapons/mp_ability_wrecking_ball.nut
+	weapons/mp_weapon_riot_drill.nut
 	weapons/sh_silence.gnut
 	weapons/sp_weapon_arc_tool.nut
 	weapons/mp_weapon_dragon_lmg.nut
@@ -298,21 +368,6 @@ Scripts:
 	weapons/mp_weapon_satchel.nut
 	weapons/mp_weapon_car.nut
 	weapons/mp_weapon_mobile_hmg.nut
-	weapons/mp_titanweapon_flightcore_rockets.nut
-	weapons/mp_titanweapon_predator_cannon.nut
-	weapons/mp_titanweapon_particle_accelerator.nut
-	weapons/mp_titanweapon_rocketeer_rocketstream.nut
-	weapons/mp_projectile_titanweapon_rocket_launcher.nut
-	weapons/mp_titanweapon_leadwall.nut
-	weapons/mp_titanweapon_meteor.nut
-	weapons/mp_titanweapon_flame_wall.nut
-	weapons/mp_titanweapon_sniper.nut
-	weapons/mp_titanweapon_xo16.nut
-	weapons/mp_projectile_titanweapon_sniper.nut
-	weapons/mp_titancore_flight_core.nut
-	weapons/mp_titanability_hover.nut
-
-	weapons/mp_titancore_lasercannon.nut
 
 	weapons/mp_ability_heal.nut
 	weapons/mp_ability_sonar.nut
@@ -358,8 +413,10 @@ Scripts:
 	weapons/mp_weapon_smr.nut
 	weapons/mp_weapon_rocket_launcher.nut
 	weapons/mp_weapon_mgl.nut
+	weapons/mp_weapon_hemlok.nut
 	weapons/mp_weapon_arc_launcher.nut
 	weapons/mp_weapon_proximity_mine.nut
+	weapons/mp_ability_generic_offhand.nut
 
 	weapons/sh_deployable.gnut
 	weapons/sh_deployable_wall.gnut
@@ -380,133 +437,55 @@ Scripts:
 
 	weapons/mp_ability_horizon_black_hole.nut
 	weapons/mp_ability_sonic_blast.nut
-
-	//S0 Dev Protos
-	//Husaria
-	//Plant a breaching charge that fires a sonic wave through walls to destroy traps, force open doors, and disorient enemies.
-	weapons/s0_dev_protos/mp_weapon_concussive_breach.nut
-	//Throw a grenade that briefly blinds and deafens opponents.
-	weapons/s0_dev_protos/mp_weapon_grenade_flashbang.nut
-	//You have a shotgun on your leg that fires when you melee doors or enemies. Requires shotgun ammo. Using your abilities grants you a brief speed boost.
-	weapons/s0_dev_protos/sh_pilot_passive_shotgun_kick.gnut
-	weapons/s0_dev_protos/mp_weapon_shotgun_kick.nut
-	
-	//Jericho
-	//Throw two electrically-charged javelins that burn through enemy body shields.
-	weapons/s0_dev_protos/mp_ability_maelstrom_javelin.nut
-	//A full-body shield that protects you from incoming fire.
-	weapons/s0_dev_protos/mp_ability_riot_shield.nut
-
-	//Prophet
-	//Scans the environment for enemies and gathers information on targets found.
-	weapons/s0_dev_protos/mp_ability_spotter_sight.nut
-	
-	//Nomad
-	//Follow the Loot Compass to the nearest item.
-	weapons/s0_dev_protos/mp_ability_loot_compass.nut
-
-	//Forge
-	//Ground Slam
-	//Reverse your jump jets to slam down into the ground.
-	weapons/s0_dev_protos/mp_ability_ground_slam.nut
-	
-	//Rampart (OG)
-	//Build cover with an upper barrier that blocks incoming shots.
-	//weapons/s0_dev_protos/mp_weapon_cover_wall.nut
-
-	//PROTOS - NOT ASSIGNED TO A CHARACTER YET
-	//Stryder Dodge Roll (Proto)
-	weapons/s0_dev_protos/mp_ability_dodge_roll.nut
-	// weapons/s0_dev_protos/mp_ability_dodge_roll_cafe.nut
-	// weapons/s0_dev_protos/mp_ability_phase_dash.nut
-
-	//Sonic Shriek (Proto)
-	//A charged short-range blast of force that pushes pilots and projectiles.
-	weapons/s0_dev_protos/mp_ability_sonic_shout.nut	
-	
-	//Split Timeline
-	//Weirdest ability in the game -> Proto changed to mp_ability_mark_recall which wasn't commented and doesn't have the weapon handling stuff
-	//You can split time in two, carry different weapons, you can have different health / shield and ammo in each timeline
-	weapons/s0_dev_protos/mp_ability_split_timeline.nut
-	
-	
-	//------------------------ Second part of dev protos. Cafe
-	
-	//Skunner
-	//Drop a pile of debris that slows and damages enemies when they move through it.
-	weapons/s0_dev_protos/mp_weapon_debris_trap.nut
-	//Instantly create a spiked barrier made from rapid hardening resin.
-	weapons/s0_dev_protos/mp_weapon_grenade_barrier.nut
-	
-	//Unreleased Mirage Ultimate (Proto)
-	weapons/s0_dev_protos/mp_ability_haunt.nut
-	
-	//Proximity Mine
-	
-	//Downfall (Fuse grandfather)
-	//sh_fire
-	//mp_ability_rocket_ribault (Fire a rocket propelled fire bomb. Press %offhand4% to air burst the bomb and drop fire mines.)
-	//grenade_molotov (Throw a fire bomb that sets enemies on fire.)
-	//deployable_molotov (Drop a box of 4 molotovs anyone in your squad can pickup and throw.)
-	//Passive Fire Walker (You automatically extinguish fire by walking through it. Burning teammates will be extinguished when they move close to you.)
-	
-	//Inmortal
-	//Shield carger (Unleash a cloud of nanites to charge your teams shields.)
-	//Protection (Restores your health and shields to full and gives nearby teammates 30 seconds of self revive. Takes 8 seconds to charge.)
-
-	//Rosie (Loba)
-	//Arms Market
-	//Area loot scan
-	//Teleport Proto
-	
-	//Nomad
-	//Crafting Table Placeholder
-	
-	//Sentry Turret (OG Rampart turret)
-
-	//Gladiator Disc (Scraped, similar to deathbox, killer can grab something that a dead player leaves)
-	
-	//MORE PROTOS
-	
-	//Black Sand Trap
-	//ShuffleAbility_Init (Teleport with objects?)
-	//Shockwave
-	//Cluster Rocket
-	//Shotgun Double Barrel
-	//Deployable Wallrun (Ice Wall)
-	//Hover Wall (HoverWall_Init)
-	//Gravity Toggle
-	//Antman
+	weapons/mp_ability_echo_locator.nut
+	weapons/mp_ability_heartbeat_sensor.nut
 ]
 
 When: "SERVER || CLIENT"
 Scripts:
 [
-	sh_init.gnut
+	_sh_init.gnut
 	sh_sp_dialogue.gnut
 
 	sh_info_cords.gnut
-	weapons/sh_titancore_utility.gnut
 ]
 
+When: "SERVER"
+Scripts:
+[
+	_streaks_tracker.nut
+	mp/sv_prop_placement_utilities.nut
+]
 
 When: "SERVER || CLIENT"
 Scripts:
 [
+	sh_character_loadouts.nut
 	conversation/sh_grunt_chatter_mp.gnut
 	conversation/sh_spectre_chatter_mp.gnut
 	conversation/sh_survival_commentary.gnut
-
+	sh_crowd_noise_meter.nut
 	mp/levels/sh_pathfinder_tt_common.nut
 	npc/npc_assets.nut
+	npc/npc_precache_all.nut
 	npc/npc_precache_prowler.nut
+	npc/npc_precache_marvin.nut
+	npc/npc_precache_nessie.nut
+	npc/npc_precache_spectre.nut
 	npc/npc_precache_spider_jungle.nut
 	weapons/npc_weapon_spider_jungle.nut
+	weapons/npc_weapon_thermite_grenade.nut
+	mp/sh_prop_override.nut
 	mp/sh_game_state_dialog.nut
+	mp/sh_emotes.nut
 	mp/sh_comms_menu.nut
 	mp/sh_loot_marvin.nut
 	mp/sh_space_elevator.gnut
-	
+	mp/sh_airdrops.gnut
+	weapons/sh_care_package.nut
+	weapons/mp_ability_mobile_respawn_beacon.nut
+	mp/sh_control_gun_rack_panels.nut
+	mp/sh_control_gun_racks.nut
 	mp/sh_warp_gates.gnut
 	mp/sh_rising_walls.nut  //World's Edge MU2/MU3
 	mp/sh_bloodhound_tt.nut  //World's Edge MU2/MU3
@@ -517,6 +496,7 @@ Scripts:
 	mp/sh_canyonlands_caustic_lore.nut
 	mp/sh_sniper_tower.nut
 	sh_mp_utility.gnut
+	mp/sh_crafting.nut
 	sh_score.gnut
 	sh_elite_streak.gnut
 	worldsystems/sh_explosive_loot_hold.nut
@@ -525,17 +505,27 @@ Scripts:
 	gamemodes/sh_gamemode_recruit.nut
 ]
 
+When: "CLIENT"
+Scripts:
+[
+	gamemodes/cl_gamemode_survival.nut
+	cl_teams_scoreboard.gnut
+]
+
 When: "SERVER || CLIENT || UI"
 Scripts:
 [
 	mp/sh_quickchat.gnut
-	
+
 	melee/sh_melee.gnut
 	melee/sh_melee_synced.gnut
-	gamemodes/survival/sh_gamemode_survival.nut
+	gamemodes/sh_gamemode_survival.nut
+	gamemodes/sh_gamemode_survival_solos.nut
+	gamemodes/sh_gamemode_control.nut
 	mp/sh_firing_range_vending_machine.nut
 
 	sh_ping.gnut
+	mp/sh_upgrade_selection_menu.nut
 ]
 
 When: "SERVER || CLIENT"
@@ -545,25 +535,26 @@ Scripts:
 	weapons/mp_ability_gibraltar_shield.nut
 	weapons/mp_ability_space_elevator_tac.nut
 	weapons/mp_ability_consumable.nut
+	weapons/mp_ability_copycat_kit.nut
 
 	mp/sh_bleedout.gnut
+	sh_armordata.gnut
 	mp/sh_respawn_beacon.gnut
 	sh_evac_ship.nut
 
 	sh_apex_screens.nut
 	sh_survival_deathfield.gnut
+	sh_survival_deathfield_enforcedringlethality.gnut
 	sh_survival_freefall.gnut
-	
-	mp/levels/sh_crypto_tt_common.nut
 
 	mp/sh_lootbin.gnut
 	mp/_sh_tutorial.gnut
 	mp/sh_survival_training.gnut
 	mp/firing_range.gnut
-	mp/sh_airdrops.gnut
-  mp/sh_supply_ship.gnut
+	mp/sh_combatrange_spawning.nut
+	mp/sh_firing_range_story_events.nut
 
-	sh_onboarding.gnut
+  	mp/sh_supply_ship.gnut
 
 	mp/sh_jump_pads.gnut
 
@@ -574,8 +565,12 @@ Scripts:
 
 	_ultimates.gnut
 	sh_survival_persistentdamagelayer.gnut
+	gamemodes/sh_gamemode_survival_heatwave.gnut
+	gamemodes/sh_gamemode_survival_hardcore.gnut
+	survival_locked_rng.nut
 	gamemodes/shadowfall/sh_gamemode_shadow_squad.nut
 	gamemodes/shadowfall/sh_gamemode_shadow_squad_precache.nut
+	_trigger_functions.gnut
 ]
 
 When: "SERVER"
@@ -597,20 +592,46 @@ Scripts:
 	_clientcommands.gnut
 	_codecallbacks_player_input.gnut
 	_control_panel.gnut
+	sv_live_api.gnut
+]
+
+When: "CLIENT"
+Scripts:
+[
+	client/cl_live_api.gnut
+]
+
+When: "SERVER || CLIENT || UI"
+Scripts:
+[
+	perk_banner_crafting.nut
+	perk_beacon_scan.nut
+	perk_care_package_insight.nut
+	perk_death_box_insight.nut
+	perk_next_zone_beacon_scan.nut
+	perk_extra_firepower.nut
+	perk_kill_boost_ult.nut
+	perk_enemies_beacon_scan.nut
+	perk_weapon_infusion.nut
+	perk_munitions_box.nut
+]
+
+When: "SERVER"
+Scripts:
+[
 	_script_movers.gnut
 	_script_toys.gnut
 	_global_entities.gnut
 	_objective.gnut
 	_on_spawned.gnut
 	_script_triggers.gnut
-	_trigger_functions.gnut
 	_viewcone.gnut
 	_pain_death_sounds.gnut
 	_threat_tracker.gnut
-	_live_api.gnut
 	ai/_ai_chatter.gnut
 	ai/_ai_goliath.gnut
 	ai/_ai_stationary_firing_positions.gnut // DEVSCRIPTS remove
+	ai/_ai_dummie.gnut
 	ai/_ai_drone.gnut
 	ai/_ai_personal_shield.gnut
 	ai/_ai_gunship.gnut
@@ -618,7 +639,6 @@ Scripts:
 	ai/_ai_marvin_faces.gnut
 	ai/_ai_marvin_jobs.gnut
 	ai/_ai_marvins.gnut
-	ai/_ai_mortar_titans.gnut
 	ai/_ai_soldiers.gnut
 	ai/_ai_pilot.gnut
 	ai/_ai_spawn.gnut
@@ -626,11 +646,9 @@ Scripts:
 	ai/_ai_spectre.gnut
 	ai/_ai_stalker.gnut
 	ai/_ai_spider.gnut
-	ai/_ai_suicide_spectres.gnut
 	ai/_ai_utility.gnut
 	ai/_droppod.gnut
 	ai/_squad_spawn.gnut
-	ai/_titan_npc_behavior.gnut
 	ai/_ai_loot.gnut
 	conversation/_conversation_schedule.gnut
 	mp/_ai_superspectre.nut
@@ -646,14 +664,10 @@ Scripts:
 	mp/_sniper_spectres.nut
 	mp/_spawn_functions.nut
 	mp/_spectre_rack.nut
-	mp/_titan_npc.nut
-	mp/_titan_transfer.nut
 	mp/_loot_drones.nut
 	mp/_loot_rollers.nut
 	mp/_vr.nut
-	mp/_motd.gnut
 	mp/player_cloak.nut
-	mp/_titan_tether.gnut
 	_hovertank.gnut
 	_health_regen.gnut
 
@@ -663,11 +677,11 @@ Scripts:
 	pilot/class_wallrun.gnut
 	superbar/smokescreen.nut
 
-	titan/_replacement_titans_drop.gnut
-	titan/_titan_commands.gnut
-	titan/_titan_health.gnut
-	titan/_titan_hotdrop.gnut
-	titan/_titan_triple_health.gnut
+	mp/sh_firing_range_challenges.nut
+	mp/sh_firing_range_g7scout_challenge.nut
+	mp/sh_firing_range_bow_challenge.nut
+	mp/sh_firing_range_p2020_challenge.nut
+
 	vehicle/_vehicle_behavior.gnut
 	vehicle/_vehicle_dropship_new.nut
 	weapons/_at_turrets.gnut
@@ -681,11 +695,15 @@ Scripts:
 	mp/_base_cmds.gnut
 ]
 
+When: "SERVER || CLIENT"
+Scripts:
+[
+	ai/_ai_suicide_spectres.gnut
+]
 When: "SERVER"
 Scripts:
 [
 	lobby/_lobby.gnut
-	lobby/_private_lobby.gnut
 	lobby/sh_lobby.gnut
 	mp/_ai_mp.gnut
 	_xp.gnut
@@ -702,12 +720,13 @@ Scripts:
 	conversation/_survival_commentary.gnut
 
 	gamemodes/_gamemode_tdm.nut
-	gamemodes/survival/_gamemode_survival.nut
+	gamemodes/_gamemode_survival.nut
 	mp/_base_gametype_mp.gnut
 	mp/_playlist.gnut
 	mp/_bombardment_utility.gnut
 	mp/_bleedout.gnut
 	mp/_staging_area.gnut
+	mp/_staging_area_ee.gnut
 	_sneak_peek.gnut
 
 	ai/_ai_mortar_spectres.gnut
@@ -721,19 +740,27 @@ Scripts:
 	mp/_jump_pads.gnut
 ]
 
+When: "CLIENT"
+Scripts:
+[
+	mp/cl_staging_area_ee.gnut
+]
 When: "SERVER || CLIENT"
 Scripts:
 [
+	mp_pickup_xp_cache.nut
 	sh_sneak_peek.gnut
 	
 	pilot/_pilot_passive_medic.gnut //Should be shared. Cafe
 	pilot/sh_pilot_passive_voices.gnut
+
+	pilot/sh_pilot_passive_warlords_ire.gnut
+	pilot/_pilot_passive_sniper.gnut
 	pilot/sh_pilot_passive_adrenaline.gnut
 	pilot/sh_pilot_passive_dash.gnut
 	pilot/_pilot_passive_grenadier.gnut
 	ai/_ai_spider_egg.gnut
 	ai/_ai_prowler_den.gnut
-	
 	mp/sh_desertlands_train.nut
 	mp/sh_desertlands_story_events.nut
 	sh_scoreboard.gnut
@@ -746,12 +773,17 @@ Scripts:
 	mp/_match_preferences.gnut
 ]
 
+When: "SERVER"
+Scripts:
+[
+	mp/_match_behavior.gnut
+]
+
+
 When: "CLIENT || UI"
 Scripts:
 [
 	class/CClientScriptHudElement.nut
-	sh_menu_models.gnut
-	sh_matchmaking_status.gnut
 	mp/cl_pintelemetry.gnut
 	clui_video.gnut
 ]
@@ -759,9 +791,15 @@ Scripts:
 When: "SERVER || CLIENT || UI"
 Scripts:
 [
+	sh_menu_models.gnut
+	menu_camera.gnut
+	menu_scene.gnut
 	sh_matchmaking_util.gnut
 	sh_character_select.gnut
-	sh_character_select_new.gnut
+	//sh_character_select_new.gnut // Merged into sh_character_select.gnut (S22)
+
+	abilities/loba_ultimate_black_market.nut
+
 	sh_social.gnut
 ]
 
@@ -777,10 +815,12 @@ Scripts:
 	client/cl_codecallbacks.gnut
 	client/cl_codecallbacks_mp.gnut
 	client/rui/cl_hud.gnut
+	client/cl_hit_markers.nut
 	client/cl_obituary.gnut
 	client/cl_announcement.gnut
 	client/cl_gamestate.gnut
 	client/cl_kill_replay_hud.gnut
+	client/cl_ring_warning.gnut
 	client/cl_player.gnut
 	client/cl_respawnselect.gnut
 	client/cl_scoresplash.gnut
@@ -788,6 +828,7 @@ Scripts:
 	client/cl_radial_menu.gnut
 	client/cl_spectator_hud.gnut
 	client/cl_minimap.gnut
+	client/cl_fullmap.gnut
 	client/cl_pilot_speedometer.gnut
 	client/cl_squad_display.gnut
 	client/cl_death_screen.gnut
@@ -799,7 +840,6 @@ Scripts:
 
 	//cinematic_mp/_ai_skits_clientdebugging.nut
 	//cinematic_mp/_cinematic_mp_client.nut
-	gamemodes/survival/cl_gamemode_survival.nut
 
 	cl_survival_loot.nut
 	cl_survival_inventory.nut
@@ -817,7 +857,6 @@ Scripts:
 [
 	client/cl_player_common.gnut
 	client/cl_utility.gnut
-	ai/cl_ai_suicide_spectres.gnut
 	cl_networkvars.gnut
 	client/cl_anim.gnut
 	client/cl_carrier_torpedo_points.nut
@@ -835,8 +874,6 @@ Scripts:
 	client/cl_main_hud.nut
 	client/cl_rumble.gnut
 	client/cl_screenfade.gnut
-	client/cl_titan_cockpit.nut
-	client/cl_titan_cockpit_sounds.gnut
 	client/cl_spectator_mode_audio.gnut
 	client/cl_utility_menu.gnut
 	client/cl_utility_splash.gnut
@@ -851,24 +888,18 @@ Scripts:
 	conversation/cl_conversation_schedule.gnut
 	pilot/cl_pilot_health_hud.gnut
 	pilot/cl_pilot_jumpjet.gnut
-	spawnslot/cl_spawnslot_system.gnut
-	titan/cl_titan_dialogue.gnut
-	titan/cl_titan_enemy_tracker.gnut
-	titan/cl_titan_hud.gnut
-	titan/cl_titan_soul.gnut
-	titan/cl_tone_hud.gnut
 	weapons/cl_smart_ammo.gnut
 	client/objects/cl_drone_medic.nut
 	client/objects/cl_draconis_flyin.nut
 	client/objects/cl_drone.nut
 	client/objects/cl_drone_crypto.nut
-	client/objects/cl_titan_buddy.nut
 
 	client/rui/cl_weapon_status.gnut
 	client/rui/cl_custom_use_prompt.gnut
 
 	client/_cl_model_viewer.nut
 	client/cl_passives.gnut
+	client/cl_snake.nut
 
 	// leave this last so it can contain any struct
 	cl_globals.gnut
@@ -877,77 +908,153 @@ Scripts:
 When: "CLIENT || UI"
 Scripts:
 [
+	sh_matchmaking_status.gnut
 	ui/sh_tooltips.nut
 	ui/clui_menus.nut
 	ui/clui_lobby_panel_pass.nut
 	client/cl_chroma.gnut
-	ui/image_pak_load.nut
+	ui/_death_box_list_panel.gnut
+	ui/survival_ground_list.nut
+	image_pak_load.nut
 	ui/panel_loadscreens.nut
+	ui/clui_minimap_coords.nut
+	ui/panel_private_match_team_rosters.nut
+	ui/menu_postgame_private_match.nut
+	ui/menu_gamestatus_private_match.nut
+	ui/menu_private_match_spec_char_select.nut
+	ui/menu_comic_reader.nut
 ]
 
 When: "UI"
 Scripts:
 [
+	ui/customize_model.nut
 	ui/ui_vscript.gnut
 	ui/ui_utility.gnut
-	ui/combo_buttons.nut
+	ui/_season_style.gnut
 	ui/_tabs.nut
 	ui/_footer.nut
 	ui/_grid_menu.gnut
 	ui/_scroll_panel.gnut
 	ui/_list_panel.gnut
 	ui/_grid_panel.gnut
+	ui/_sectioned_list_panel.gnut
+	ui/ui_lobby_playlist_utility.nut
 	ui/_menu_utility.nut
 	ui/_menus.nut
 	ui/_matchmaking_overlay.nut
+	ui/_respawn_overlay.nut
 	ui/_embedded_text.nut
 	ui/_promo_data.nut
 	ui/_surveys.nut
 	ui/notifications.nut
 	ui/userinfo.nut
 	ui/newness.gnut
-	ui/customize_common.gnut
-	ui/customize_model.nut
 	ui/mini_promo.nut
 	ui/menu_action_blocks.nut
 	ui/menu_dev.nut
 	ui/menu_test.nut
 	ui/menu_dialog.nut
-	ui/dialogs/promo.nut
+	ui/dialogs/promoUM.nut
 	ui/dialogs/character_skills.nut
+	ui/panel_character_abilities.nut
+	ui/panel_character_roles.nut
+	ui/dialogs/launch_mission_dialog.nut
 	ui/dialogs/confirm_dialog.nut
-	ui/dialogs/confirm_rest.nut
 	ui/dialogs/confirm_exit_to_desktop.nut
 	ui/dialogs/confirm_leave_match.nut
 	ui/dialogs/confirm_keep_video_changes.nut
 	ui/dialogs/confirm_purchase.nut
-	ui/dialogs/confirm_grx_error.nut
+	ui/dialogs/reroll_dialog.nut
 	ui/dialogs/error.nut
-	ui/dialogs/low_pop.nut
+	ui/dialogs/buffet_event_about.nut
+	ui/dialogs/story_event_about.nut
 	ui/dialogs/select_slot.nut
+	ui/dialogs/panel_select_slot_default.nut
+	ui/dialogs/panel_select_slot_quips.nut
 	ui/dialogs/mode_select.nut
-	ui/dialogs/gamemode_select_v2.nut
+	ui/dialogs/gamemode_select.nut
+	ui/dialogs/panel_gamemode_select_public.nut
+	ui/dialogs/panel_gamemode_select_private.nut
+	ui/dialogs/private_match_map_select.nut
+	ui/dialogs/gamemode_select_private_match.nut
 	ui/dialogs/report_player.nut
+	ui/dialogs/find_friend.nut
+	ui/dialogs/code_redemption.nut
+	ui/dialogs/confirm_leave_club.nut
+	ui/dialogs/confirm_edit_club.nut
+	ui/dialogs/confirm_club_member_rank.nut
+	ui/dialogs/confirm_kick_club_member.nut
+	ui/dialogs/find_club_member.nut
+	ui/dialogs/report_clubmate.nut
+	ui/dialogs/gift_information_dialog.nut
+	ui/dialogs/gift_friend_dialog.nut
+	ui/dialogs/loadoutselection_select_optic.nut
+	// r5sdk custom dialogs
 	ui/dialogs/server_motd.nut
+	ui/dialogs/arenas_select_optic.nut
+	ui/menu_arenas_buy.nut
+	ui/menu_arenas_post_round_summary.nut
 	ui/menu_eula_dialog.nut
 	ui/menu_accessibility_dialog.nut
 	ui/menu_postgame.nut
-	
+	ui/reward_purchase_dialog.nut
+
 	ui/menu_knowledgebase.nut
 	ui/menu_knowledgebase_submenu.nut
 	ui/panel_scoreboard.nut
-	ui/menu_elite_intro.nut
 	ui/menu_gamepad_layout.nut
-	ui/menu_ingame.nut
+	ui/options_color_helpers.nut
+	ui/menu_firstperson_reticle_options.nut
+	ui/menu_firstperson_reticle_options_color.nut
+	ui/menu_laser_sight_options.nut
+	ui/menu_laser_sight_options_color.nut
+	ui/menu_lobby_theme_color.nut
 	ui/menu_play_video.nut
+
+	// r5sdk custom: R5R Lobby panels (must load before menu_lobby.nut for eServerVisibility enum)
+	ui/create_panel_map.nut
+	ui/create_panel_playlist.nut
+	ui/create_panel_visibility.nut
+	ui/lobby_panel_create.nut
+	ui/lobby_panel_serverbrowser.nut
+	ui/lobby_panel_create_join.nut
+	ui/lobby_panel_credits.nut
+
 	ui/menu_lobby.nut
 	ui/menu_system.nut
 	ui/menu_misc.nut
-	ui/menu_invite_friends.nut
-
 	ui/menu_social.nut
+	ui/social_event_popup.nut
 	ui/panel_stats_summary.nut
 	ui/panel_stats_performance.nut
+
+	// Private match / custom match
+	ui/menu_lobby_private_match.nut
+	ui/dialogs/gamemode_select_custom_match.nut
+	ui/panel_custom_match_lobby.nut
+	ui/panel_custom_match_lobby_roster.nut
+	ui/panel_custom_match_summary.nut
+	ui/panel_custom_match_token_share.nut
+	ui/menu_custom_match_dashboard.nut
+	ui/dialog_custom_match_kick_players.nut
+	ui/dialog_custom_match_settings.nut
+	ui/panel_custom_match_mode_select.nut
+	ui/panel_custom_match_map_select.nut
+	ui/panel_custom_match_options_select.nut
+
+	// Clubs
+	ui/menu_clubs_creation.nut
+	ui/menu_clubs_search.nut
+	ui/menu_clubs_search_tag_selection_dialog.nut
+	ui/menu_clubs_participation_dialog.nut
+	ui/menu_clubs_user_management.nut
+	ui/menu_clubs_join_requests_dialog.nut
+	ui/menu_clubs_logo_editor.nut
+	ui/panel_clubs_logo_editor_canvas.nut
+	ui/menu_clubs_logo_editor_element_selection.nut
+	ui/menu_clubs_logo_editor_color_selection.nut
+	ui/menu_clubs_announcement_dialog.nut
 
 	ui/menu_death_screen.nut
 	ui/panel_death_screen_recap.nut
@@ -955,15 +1062,24 @@ Scripts:
 	ui/panel_death_screen_squad_summary.nut
 	ui/menu_eog_squad_summary.nut
 
+	// Lobby panels
+	ui/lobby_panel_season.nut
 	ui/lobby_panel_play.nut
+	ui/lobby_panel_club_landing.nut
 	ui/lobby_panel_characters.nut
 	ui/lobby_panel_armory.nut
-	
+	ui/lobby_panel_armory_weapons.nut
+	ui/lobby_panel_armory_more.nut
+	ui/lobby_panel_quest.nut
 	ui/lobby_panel_store.nut
+	ui/menu_store_inspect.nut
+	ui/menu_store_mythic_inspect.nut
 	ui/store_panel_collection_event.nut
 	ui/menu_collection_event_about.nut
-	ui/store_panel_special_currency_shop.nut
+	ui/menu_thematic_event_about.nut
+	ui/store_panel_heirloom_shop.nut
 	ui/store_panel_themed_shop_event.nut
+	ui/store_panel_whats_new.nut
 	ui/lobby_panel_settings.nut
 	ui/menu_controls_advanced_look.nut
 	ui/menu_controls_ads_pc.nut
@@ -976,30 +1092,32 @@ Scripts:
 	ui/panel_hud_options.nut
 	ui/menu_challenges.nut
 
+	// Character customization
 	ui/menu_customize_character.nut
 	ui/panel_character_skins.nut
-	ui/panel_character_banners.nut
 	ui/panel_character_banners_v2.nut
 	ui/panel_character_executions.nut
 	ui/panel_music_pack.nut
 	ui/panel_skydive_trail.nut
 	ui/panel_character_quips.nut
 	ui/panel_character_emotes.nut
-	ui/panel_equippable_quips.nut
-	ui/panel_banner_badges.nut
+	ui/panel_equippable_quips_v2.nut
+	ui/panel_skydive_emotes.nut
 	ui/panel_banner_frames.nut
 	ui/panel_banner_poses.nut
-	ui/panel_banner_trackers.nut
 	ui/panel_banner_badges_v2.nut
 	ui/panel_banner_trackers_v2.nut
 	ui/panel_quip_intro.nut
 	ui/panel_quip_kill.nut
 
+	// Weapon customization
 	ui/menu_customize_weapon.nut
-	ui/menu_customize_model.nut
-	ui/menu_misc_customize.nut
+	ui/panel_category_weapon.nut
 	ui/panel_weapon_skins.nut
-	ui/panel_models.nut
+	ui/panel_weapon_charms.nut
+	ui/menu_customize_consumables.nut
+	ui/panel_consumable_stickers.nut
+	ui/menu_misc_customize.nut
 
 	ui/menu_main.nut
 	ui/panel_mainmenu.nut
@@ -1009,46 +1127,49 @@ Scripts:
 	ui/menu_survival_exit.nut
 	ui/menu_survival_inventory.nut
 	ui/panel_survival_quick_inventory_v2.nut
+	ui/panel_firing_range_settings.nut
+	ui/panel_firing_range_settings_general.nut
+	ui/panel_teams_scoreboard.nut
 	ui/panel_squad.nut
-	ui/panel_legend.nut
-	ui/menu_survival_ground_list.nut
 	ui/menu_survival_quick_swap.nut
-	
-	
+	ui/menu_lore_reader.nut
+
 	lobby/sh_lobby.gnut
 	ui/menu_post_game_ranked.nut
+	ui/menu_control_respawn_menu.nut
 	ui/menu_post_game_battlepass.nut
 	ui/menu_ranked_info.nut
+	ui/menu_ranked_info_more.nut
 	ui/menu_about_game_mode.nut
 	ui/menu_reward_ceremony.nut
 	ui/menu_loadscreen_preview.nut
-	
-	//CTF
-	ui/CTFMenus/menu_ctf_respawn.nut
-	
-	//KillReplay
-	ui/KillReplay/menu_killreplay.nut
-	
-	//R5R Main Menu
-	ui/menu_main_v2.nut
+	ui/freedm_about.nut
+	ui/menu_battlepass_milestone.nut
+	ui/shadow_royale_about.nut
+	ui/mode_TDM_about.nut
+	ui/menu_tdm_round_transition.nut
+	ui/winter_express_about.nut
+	ui/survival_hardcore_about.nut
+	ui/date_night_about.nut
+	ui/menu_loadout_selection.nut
+
+	// r5sdk custom: CTF (disabled for S16 migration)
+	//ui/CTFMenus/menu_ctf_respawn.nut
+	//ui/CTFMenus/menu_ctf_vote.nut
+
+	// r5sdk custom: KillReplay (disabled for S16 migration)
+	//ui/KillReplay/menu_killreplay.nut
+
+	// r5sdk custom: R5R Main Menu
+	//ui/menu_main_v2.nut
 	ui/panel_mainmenu_v2.nut
 
-	//R5R Lobby
-	ui/lobby_panel_create.nut
-	ui/lobby_panel_serverbrowser.nut
-	ui/lobby_panel_credits.nut
-	ui/create_panel_map.nut
-	ui/create_panel_playlist.nut
-	ui/create_panel_visibility.nut
-	ui/dialogs/gamemode_select_v3.nut
-	ui/dialogs/gamemode_select_v4.nut
-	ui/panel_freeroam_maps.nut
-	ui/menu_news.nut
-
-	//R5R Extra
-	ui/CTFMenus/menu_ctf_vote.nut
-
-	ui/menu_weaponmods.nut
+	// r5sdk custom: R5R Lobby (additional panels)
+	//ui/dialogs/gamemode_select_v3.nut
+	//ui/dialogs/gamemode_select_v4.nut
+	//ui/panel_freeroam_maps.nut
+	//ui/menu_news.nut
+	//ui/menu_weaponmods.nut
 ]
 
 When: "SERVER || UI "
@@ -1070,8 +1191,11 @@ Scripts:
 	weapons/mp_ability_care_package.nut
 	weapons/mp_ability_crypto_drone.nut
 	weapons/mp_ability_crypto_drone_emp.nut
-	weapons/mp_ability_titanfall.nut
-	weapons/sh_care_package.nut
+	weapons/sh_vantage_companion.nut
+	weapons/mp_ability_redeploy_balloon.nut
+	weapons/sniper_range_auto_set.nut
+	weapons/sniper_recon_info.nut
+
 	
 	// abilities/loba_tactical_translocation.nut
 	abilities/loba_passive_eye_for_quality.nut
@@ -1120,11 +1244,13 @@ Scripts:
 [
 	sh_map_zones.nut
 	weapons/sh_incap_shield.nut
+	pilot/sh_pilot_passive_void_vision.gnut
 ]
 
 When: "SERVER"
 Scripts:
 [
+	gamemodes/_gamemode_map_cleanup.nut
 	sv_pilots_passage.gnut
 ]
 
@@ -1147,7 +1273,6 @@ Scripts:
 	gamemodes/custom_ctf/sh_gamemode_custom_ctf.nut
 	gamemodes/custom_ctf/custom_ctf_settings.nut
 	
-	lobby/lobbyvm/sh_lobbyvm.nut
 	sh_hover_vehicle.gnut
 	
 	mp/sh_skydive_launchers.gnut
@@ -1160,16 +1285,12 @@ Scripts:
 	mp/levels/mp_rr_remap.nut
 	  _mapeditor.gnut
 	
-	lobby/lobbyvm/_lobbyvm.nut
-	
 	gamemodes/custom_ctf/_gamemode_custom_ctf.nut
 ]
 
 When: "CLIENT"
 Scripts:
 [
-	lobby/lobbyvm/cl_lobbyvm.nut
-
 	gamemodes/custom_ctf/cl_gamemode_custom_ctf.nut
 ]
 
@@ -1205,4 +1326,46 @@ When: "SERVER || CLIENT || UI"
 Scripts:
 [
 	gamemodes/sh_gamemode_winterexpress.nut
+]
+
+// Arenas
+When: "SERVER || CLIENT"
+Scripts:
+[
+	gamemodes/sh_gamemode_arenas.nut
+	gamemodes/sh_arenas_buy_system.nut
+	gamemodes/sh_arenas_common.nut
+	gamemodes/sh_arenas_post_round_summary.nut
+	mp/sh_cash_station.gnut
+]
+
+When: "SERVER"
+Scripts:
+[
+	gamemodes/arenas/_gamemode_arenas.nut
+]
+
+When: "CLIENT"
+Scripts:
+[
+	gamemodes/arenas/cl_gamemode_arenas.nut
+]
+
+// FreeDM Gamemodes (DM, Gun Game, TDM)
+// Load stubs + utility for all VMs so UI VM has access to shared functions
+// so UI VM has access to GamemodeUtility_GetIsTeamIndexValidPlayerTeam etc.
+When: "SERVER || CLIENT || UI"
+Scripts:
+[
+	gamemodes/freedm/sh_freedm_stubs.nut
+	gamemodes/sh_gamemode_utility.gnut
+	gamemodes/sh_loadout_selection_system.nut
+]
+
+When: "SERVER || CLIENT"
+Scripts:
+[
+	gamemodes/freedm/sh_gamemode_freedm.nut
+	gamemodes/freedm/sh_freedm_gun_game.nut
+	gamemodes/freedm/sh_freedm_tdm.nut
 ]

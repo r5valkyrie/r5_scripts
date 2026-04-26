@@ -15,7 +15,6 @@ global function OnAnimEvent_weapon_car_ammo_swap_complete
 
 #if CLIENT
 global function Weapon_CAR_TryApplyAmmoSwap
-global function OnClientAnimEvent_weapon_Car
 #endif
 
 const string CAR_ALT_AMMO_MOD = "alt_ammo"
@@ -33,59 +32,9 @@ void function MpWeaponCar_Init()
 #if SERVER
 	AddWeaponModChangedCallback( "mp_weapon_car", OnWeaponModChange_Car )
 #endif
-	//Remote_RegisterServerFunction( CMDNAME_CAR_AMMO_SWAP )
-	#if SERVER
-	AddClientCommandCallback( "Car_SwapAmmo", ClientCommand_SwapAmmo )
-	#endif
-
-	#if CLIENT
-	RegisterConCommandTriggeredCallback( "+scriptCommand3", SwapAmmo )
-	#endif
+	Remote_RegisterServerFunction( CMDNAME_CAR_AMMO_SWAP )
 }
 
-#if SERVER
-bool function ClientCommand_SwapAmmo( entity player, array<string> args )
-{
-	if ( !IsValid( player ) )
-		return false
-
-	entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
-
-	if ( !IsValid( weapon ) )
-		return false
-
-	if ( weapon.GetWeaponClassName() != "mp_weapon_car" )
-		return false
-
-	if( weapon.IsInCustomActivity() )
-		return false
-
-    //weapon.AddMod( CAR_AMMO_SWAP_MOD_FOR_RELOAD )
-    weapon.StartCustomActivity("ACT_VM_RELOADEMPTY", 0)
-    return true
-}
-#endif
-
-#if CLIENT
-void function SwapAmmo( entity player )
-{
-	if( !IsValid(player) )
-		return
-
-	if ( player != GetLocalViewPlayer() )
-		return
-
-	entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
-
-	if ( !IsValid( weapon ) )
-		return
-
-	if ( weapon.GetWeaponClassName() != "mp_weapon_car" )
-		return
-
-	player.ClientCommand( "Car_SwapAmmo" )
-}
-#endif
 
 void function OnWeaponActivate_Car( entity weapon )
 {
@@ -137,14 +86,17 @@ void function OnWeaponReadyToFire_Car( entity weapon )
 		return
 
 #if SERVER
-	if ( weapon.HasMod( CAR_AMMO_SWAP_MOD_FOR_RELOAD ) )
-		weapon.RemoveMod( CAR_AMMO_SWAP_MOD_FOR_RELOAD )
+	//if ( weapon.HasMod( CAR_AMMO_SWAP_MOD_FOR_RELOAD ) )
+	//	weapon.RemoveMod( CAR_AMMO_SWAP_MOD_FOR_RELOAD )
 #endif
 }
 
 var function OnWeaponPrimaryAttack_weapon_Car( entity weapon, WeaponPrimaryAttackParams attackParams )
 {
 	if ( !IsValid( weapon ) )
+		return 0
+
+	if ( !weapon.IsWeaponX() )
 		return 0
 
 	int clipCount = weapon.GetWeaponPrimaryClipCount()
@@ -192,12 +144,7 @@ void function Weapon_CAR_TryApplyAmmoSwap( entity player, entity weapon )
 	if ( weapon.HasMod( CAR_AMMO_SWAP_MOD_FOR_RELOAD ) || weapon.IsReloading() )
 		return
 
-	//Remote_ServerCallFunction( CMDNAME_CAR_AMMO_SWAP )
-}
-
-void function OnClientAnimEvent_weapon_Car( entity weapon, string name )
-{
-	GlobalClientEventHandler( weapon, name )
+	Remote_ServerCallFunction( CMDNAME_CAR_AMMO_SWAP )
 }
 #endif
 
@@ -225,8 +172,8 @@ void function ClientCallback_CarHandleAmmoSwap( entity player )
 
 	if ( !weapon.HasMod( CAR_AMMO_SWAP_MOD_FOR_RELOAD ) && !weapon.IsReloading() )
 	{
-		//if ( weapon.IsInCustomActivity() && weapon.IsInCustomActivity() == ACT_VM_WEAPON_INSPECT )
-			//weapon.StopCustomActivity()
+		if ( weapon.IsInCustomActivity())
+			weapon.StopCustomActivity()
 
 		HandleAmmoSwap( player, weapon )
 	}
@@ -270,6 +217,9 @@ void function HandleOutOfAmmoSwap( entity player, entity weapon )
 	if ( !IsValid( weapon ) || !IsValid( player) )
 		return
 
+	if ( !weapon.IsWeaponX() )
+		return
+
 	int currentHighcalStockPile 		= player.AmmoPool_GetCount( eAmmoPoolType.highcal )
 	int currentLightStockPile   		= player.AmmoPool_GetCount( eAmmoPoolType.bullet )
 
@@ -285,6 +235,21 @@ void function HandleOutOfAmmoSwap( entity player, entity weapon )
 	int maxPoolCount            		= player.AmmoPool_GetCapacity()
 
 	bool inLightAmmoMode				= weapon.HasMod(CAR_ALT_AMMO_MOD)
+
+
+                        
+	if ( GameMode_IsActive( eGameModes.CONTROL ) && GetCurrentPlaylistVarBool( "control_infinite_ammo", false ) )
+	{
+		player.ForceWeaponReload()
+		return
+	}
+                              
+
+	if ( GetInfiniteAmmo( weapon ) )
+	{
+		player.ForceWeaponReload()
+		return
+	}
 
 	if ( clipCount <= 0 && currentHighcalStockPile <= 0 && currentLightStockPile <= 0 )
 	{
@@ -326,6 +291,10 @@ void function OnWeaponModChange_Car( entity weapon, string mod, bool modAdded )
 	{
 		if ( !IsValid( weapon ) )
 			return
+
+		if ( !weapon.IsWeaponX() )
+			return
+
 		entity player = weapon.GetWeaponOwner()
 		if ( !IsValid(player) )
 			return
@@ -352,7 +321,8 @@ void function OnWeaponModChange_Car( entity weapon, string mod, bool modAdded )
 		if ( poolCountToGive > maxPoolCount )
 			poolCountToGive = maxPoolCount
 
-		player.AmmoPool_SetCount( oldAmmoPoolType, poolCountToGive )
+		if( !GetInfiniteAmmo( weapon ) )
+			player.AmmoPool_SetCount( oldAmmoPoolType, poolCountToGive )
 
 		if ( weapon.UsesClipsForAmmo() )
 		{
@@ -367,7 +337,7 @@ void function OnWeaponModChange_Car( entity weapon, string mod, bool modAdded )
 			SetItemSpawnSource( ammoDrop, eSpawnSource.PLAYER_DROP, player )
 
 			vector vel = AnglesToForward( player.EyeAngles() ) * 100
-			FakePhysicsThrow_Retail( player, ammoDrop, vel, true )
+			FakePhysicsThrow( player, ammoDrop, vel, true )
 		}
 
 		if ( modAdded )
@@ -452,6 +422,7 @@ void function UpdatePoseParameter( entity weapon )
 	bool inLightAmmoModeLastFrame = weapon.HasMod( CAR_ALT_AMMO_MOD )
 	float swapAmmoTime = 0.0
 	float swapAnimDuration = 0.25
+	weapon.SetScriptPoseParam0( 0.0 )
 
 	while( true )
 	{
@@ -467,6 +438,7 @@ void function UpdatePoseParameter( entity weapon )
 		{
 			float swapAnimFrac = Clamp( Time() - swapAmmoTime, 0.0, swapAnimDuration ) / swapAnimDuration
 			float poseParam = inLightAmmoMode ? swapAnimFrac : 1.0 - swapAnimFrac
+			weapon.SetScriptPoseParam0( poseParam )
 		}
 
 		WaitFrame()

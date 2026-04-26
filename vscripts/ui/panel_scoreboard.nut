@@ -122,20 +122,7 @@ void function OnShowScoreboardPanel( var panel )
 
 void function UpdateColumnTitles( postGameDataDef matchData )
 {
-	string gameModeString = PersistenceGetEnumItemNameForIndex( "gameModes", matchData.gameMode )
-	array<string> columnTitles = GameMode_GetScoreboardColumnTitles( gameModeString )
 
-	var rui = Hud_GetRui( file.columnTitles )
-	RuiSetInt( rui, "numColumns", columnTitles.len() )
-
-	array<string> titleArgs = [ "title1", "title2", "title3", "title4" ]
-
-	int i = 0
-	foreach ( columnTitle in columnTitles )
-	{
-		RuiSetString( rui, titleArgs[i], columnTitle )
-		i++
-	}
 }
 
 void function UpdateRowsForTeam( postGameDataDef matchData, postGameTeamDef teamData, int relationship, bool won = false )

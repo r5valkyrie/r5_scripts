@@ -80,7 +80,7 @@ bool function OnWeaponChargeBegin_ability_gibraltar_shield( entity weapon )
 				weapon.EmitWeaponSound_1p3p( SOUND_PILOT_GUN_SHIELD_1P, SOUND_PILOT_GUN_SHIELD_3P )
 			}
 		}
-		
+
 		//TrackFirstPersonGunShield( weapon, FX_GUN_SHIELD_WALL_FP , "muzzle_flash" )
 		#endif
 
@@ -144,11 +144,11 @@ void function TrackPrimaryWeapon()
 			if ( oldPlayerUsePrompts != newPlayerUsePrompts )
 			{
 				oldPlayerUsePrompts = newPlayerUsePrompts
-				
+
 				#if DEVELOPER
 					printt( newPlayerUsePrompts )
 				#endif
-					
+
 				RuiSetBool( file.shieldRegenRui, "showPlayerHints", !newPlayerUsePrompts )
 			}
 		}
@@ -321,14 +321,6 @@ void function GibraltarShield_OnDamaged( entity ent, var damageInfo )
 		{
 			attacker.NotifyDidDamage( ent, 0, damageOrigin, 0, damage, DF_NO_HITBEEP | DAMAGEFLAG_VICTIM_HAS_VORTEX, 0, null, 0 )
 			StatsHook_GibraltarGunShield_OnDamageAbsorbed( owner, attacker, int( damage ) ) // todo(dw): should damage be treated as a float or int?
-
-			if ( IsValid( owner ) )
-			{
-				LiveAPI_WriteLogUsingDefinedFields( eLiveAPI_EventTypes.gibraltarShieldAbsorbed,
-					[ LiveAPI_GetPlayerIdentityTable( attacker ), LiveAPI_GetPlayerIdentityTable( owner ), int( damage ) ],
-					[ 3/*attacker*/,                              4/*victim*/,                             5/*damageInflicted*/ ]
-				)
-			}
 		}
 
 		if ( IsValid( owner ) )
@@ -419,10 +411,10 @@ void function PilotShield_OnPassiveChanged( entity player, int passive, bool did
 	if ( nowHas )
 	{
 		entity weapon = player.GetOffhandWeapon( PILOT_SHIELD_OFFHAND_INDEX )
-		
+
 		if( IsValid( weapon ) )
 			player.TakeOffhandWeapon( PILOT_SHIELD_OFFHAND_INDEX )
-		
+
 		player.GiveOffhandWeapon( "mp_ability_gibraltar_shield", PILOT_SHIELD_OFFHAND_INDEX, [] )
 	}
 }

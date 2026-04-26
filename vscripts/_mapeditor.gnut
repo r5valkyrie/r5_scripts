@@ -186,9 +186,7 @@ void function WallTriggerEnter( entity trigger , entity ent )
                 ent.TakeDamage(ent.GetMaxHealth() + 1, null, null, { damageSourceId=damagedef_suicide, scriptType=DF_BYPASS_SHIELD })
             break
 
-            case "WallTrigger_oob_timer":
-                EntityOutOfBounds( trigger, ent, null, null )
-            break
+
 
             default: //if (GetCurrentPlaylistVarBool( "patch_for_dropoff", false )) return; //(mk): this shouldn't have been here anyway
                 vector lookDir = ent.GetSmoothedVelocity()
@@ -219,7 +217,7 @@ void function WallTriggerEnter( entity trigger , entity ent )
 
             if( IsValid(ent) )
             {
-                EntityBackInBounds( trigger, ent, null, null )
+
                 ent.EnableWeapon()
 
                 StatusEffect_StopAllOfType( ent, eStatusEffect.hunt_mode_visuals)
@@ -487,26 +485,14 @@ void function MapEditor_CreateRespawnableWeaponRack(vector pos, vector ang, stri
 // When the weapon is grabbed from the rack -> respawn it
 void function OnPickupFromRackThread(entity item, string ref, float spawnTime, bool addToArray = false)
 {
-    entity rack = item.GetParent()
-    item.WaitSignal("OnItemPickup")
-
-    wait spawnTime
-
-    entity newWeapon = SpawnWeaponOnRack(rack, ref)
-    StartParticleEffectInWorld( GetParticleSystemIndex( FIRINGRANGE_ITEM_RESPAWN_PARTICLE ), newWeapon.GetOrigin(), newWeapon.GetAngles() )
-    thread OnPickupFromRackThread(newWeapon, ref, spawnTime)
 }
 
 entity function MapEditor_CreateLootBin( vector origin, vector angles, int skin = 0, bool addToArray = false )
 {
     entity lootbin = CreateEntity( "prop_dynamic" )
+	lootbin.SetScriptName( LOOT_BIN_SCRIPTNAME )
 
-	if( Gamemode() == eGamemodes.fs_infected )
-		lootbin.SetScriptName( MYSTERY_BOX_SCRIPT_NAME )
-	else
-		lootbin.SetScriptName( LOOT_BIN_SCRIPTNAME )
-
-    lootbin.SetValueForModelKey( LOOT_BIN_MODEL )
+   // lootbin.SetValueForModelKey( LOOT_BIN_MODEL )
     lootbin.SetOrigin( origin )
     lootbin.SetAngles( angles )
     lootbin.kv.solid = SOLID_VPHYSICS
@@ -1185,7 +1171,7 @@ void function ReMapCreateSpeedBoost( vector spawnPos, vector color, float respaw
     instance.boostDuration = duration
     instance.fadeTime = fadeTime
 
-    instance.boost = CreateScriptMover( instance.spawnPos, ZERO_VECTOR )
+    instance.boost = CreateScriptMover( "", instance.spawnPos, ZERO_VECTOR )
 
     // Boost
     for ( int j = 0; j < 5; j++ )
@@ -1279,7 +1265,7 @@ void function PlayFxOnPlayer( entity player, float time )
 // Animated Camera
 entity function ReMapCreateCamera( vector origin, vector angles, float angleOffset, float maxLeft, float maxRight, float rotationTime, float transitionTime, bool addToArray = false )
 {
-    entity script_mover = CreateScriptMover( origin, ZERO_VECTOR )
+    entity script_mover = CreateScriptMover( "", origin, ZERO_VECTOR )
     entity camera_base = MapEditor_CreateProp( CAMERA_BASE_MDL, origin, ZERO_VECTOR )
     entity camera_mover = CreateScriptMoverModel( CAMERA_MDL, origin + < 16, 0, 8 >, ZERO_VECTOR + < angleOffset, 0, 0 >, 6 )
 

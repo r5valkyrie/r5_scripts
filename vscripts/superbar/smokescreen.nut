@@ -4,8 +4,11 @@ global function Smokescreen
 global function IsOriginTouchingSmokescreen
 global function IsRayTouchingSmokescreen
 global function GetFXCenterFromSmokescreen
+                                    
+global function SmokeBlockThreatVision_IsEnabled
+      
 
-#if DEVELOPER
+#if DEV
 const bool SMOKESCREEN_DEBUG = false
 #endif
 
@@ -14,6 +17,7 @@ global struct SmokescreenStruct
 	vector origin
 	vector angles
 	bool fxUseWeaponOrProjectileAngles = false
+	bool fxPointCP1toCenter = false
 
 	float lifetime = 5.0
 	int ownerTeam = TEAM_ANY
@@ -25,7 +29,9 @@ global struct SmokescreenStruct
 	string deploySound3p = SFX_SMOKE_DEPLOY_3P
 	string stopSound1p = ""
 	string stopSound3p = ""
-	int damageSource = 0//eDamageSourceId.mp_titanability_smoke
+	int damageSource = eDamageSourceId.damagedef_grenade_gas
+	int damageFlags = DF_ELECTRICAL | DF_NO_HITBEEP
+	float damageTickRate = 0.1
 
 	bool blockLOS = true
 	bool shouldHibernate = true
@@ -34,6 +40,7 @@ global struct SmokescreenStruct
 	entity attacker
 	entity inflictor
 	entity weaponOrProjectile
+	entity smokeSource
 	float damageDelay = 2.0
 	float damageInnerRadius = 320.0
 	float damageOuterRadius = 350.0
@@ -41,20 +48,12 @@ global struct SmokescreenStruct
 	int dpsPilot = 30
 	int dpsTitan = 2200
 
-	array<vector> fxOffsets
-
-	// r5 stuff
 	int traceBlockerTeam = TEAM_ANY
 	string traceBlockerScriptName
-	int damageFlags
-	float damageTickRate
-	bool fxPointCP1toCenter
-	entity smokeSource
-}
 
-vector function GetFXCenterFromSmokescreen( SmokescreenStruct smokescreen )
-{
-	return smokescreen.origin
+	entity smokeTrigger
+
+	array<vector> fxOffsets
 }
 
 struct SmokescreenFXStruct
@@ -77,68 +76,46 @@ void function Smokescreen_Init()
 {
     PrecacheParticleSystem( FX_ELECTRIC_SMOKESCREEN )
     PrecacheParticleSystem( FX_ELECTRIC_SMOKESCREEN_BURN )
-    #if MP
-    	PrecacheParticleSystem( FX_ELECTRIC_SMOKESCREEN_HEAL )
-    #endif
+	PrecacheParticleSystem( FX_ELECTRIC_SMOKESCREEN_HEAL )
 	PrecacheParticleSystem( FX_GRENADE_SMOKESCREEN )
-
-    PrecacheSprite( $"sprites/physbeam.vmt" )
-	PrecacheSprite( $"sprites/glow01.vmt" )
-
-#if SERVER
-	AddDamageCallbackSourceID( eDamageSourceId.mp_titanability_smoke, TitanElectricSmoke_DamagedPlayerOrNPC )
-	AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_grenade_electric_smoke, GrenadeElectricSmoke_DamagedPlayerOrNPC )
-#endif
 }
 
-void function Smokescreen( SmokescreenStruct smokescreen, entity player )
+void function Smokescreen( SmokescreenStruct smokescreen, entity ownerEnt )
 {
 	SmokescreenFXStruct fxInfo = Smokescreen_CalculateFXStruct( smokescreen )
 	file.allSmokescreenFX.append( fxInfo )
 
-	//removed in s21
-	//array<entity> thermiteBurns = GetActiveThermiteBurnsWithinRadius( fxInfo.center, fxInfo.radius )
-	//foreach ( thermiteBurn in thermiteBurns )
-	//{
-	//	entity owner = thermiteBurn.GetOwner()
-
-		//if ( IsValid( owner ) && owner.GetTeam() != smokescreen.ownerTeam )
-			//thermiteBurn.Destroy()
-	//}
-
 	entity traceBlocker
 
 	if ( smokescreen.blockLOS )
-	{
-		traceBlocker = Smokescreen_CreateTraceBlockerVol( smokescreen, fxInfo, player )
-	}
+		traceBlocker = Smokescreen_CreateTraceBlockerVol( smokescreen, fxInfo, ownerEnt )
 
-#if DEVELOPER
+#if DEV
 	if ( SMOKESCREEN_DEBUG )
-		DebugDrawCircle( fxInfo.center, <0,0,0>, fxInfo.radius + 240.0, 255, 255, 0, true, smokescreen.lifetime )
+		DebugDrawCircle( fxInfo.center, <0,0,0>, fxInfo.radius + 240.0, COLOR_YELLOW, true, smokescreen.lifetime )
 #endif
 	CreateNoSpawnArea( TEAM_ANY, TEAM_ANY, fxInfo.center, smokescreen.lifetime, fxInfo.radius + 240.0 )
 
 	if ( IsValid( smokescreen.attacker ) && smokescreen.attacker.IsPlayer() )
 	{
-		EmitSoundAtPositionExceptToPlayer( TEAM_ANY, fxInfo.center, smokescreen.attacker, smokescreen.deploySound3p )
-		EmitSoundAtPositionOnlyToPlayer( TEAM_ANY, fxInfo.center, smokescreen.attacker, smokescreen.deploySound1p)
+		if ( smokescreen.deploySound3p != "" )
+			EmitSoundAtPositionExceptToPlayer( TEAM_ANY, fxInfo.center, smokescreen.attacker, smokescreen.deploySound3p )
+
+		if ( smokescreen.deploySound1p != "" )
+			EmitSoundAtPositionOnlyToPlayer( TEAM_ANY, fxInfo.center, smokescreen.attacker, smokescreen.deploySound1p)
 	}
 	else
 	{
-		EmitSoundAtPosition( TEAM_ANY, fxInfo.center, smokescreen.deploySound3p )
+		if ( smokescreen.deploySound3p != "" )
+			EmitSoundAtPosition( TEAM_ANY, fxInfo.center, smokescreen.deploySound3p, ownerEnt )
 	}
 
-	array<entity> fxEntities
-	
-	if( Gamemode() != eGamemodes.fs_spieslegends || Gamemode() == eGamemodes.fs_spieslegends && player.GetTeam() == gCurrentSpyTeam ) //(cafe) Hide electric grenade smoke for mercs, but don't hide it for spies which have smoke single
-		fxEntities = SmokescreenFX( smokescreen, fxInfo )
-	
+	array<entity> fxEntities = SmokescreenFX( smokescreen, fxInfo )
 	if ( smokescreen.isElectric )
-		thread SmokescreenAffectsEntitiesInArea( smokescreen, fxInfo, player )
+		thread SmokescreenAffectsEntitiesInArea( smokescreen, fxInfo )
 	//thread CreateSmokeSightTrigger( fxInfo.center, smokescreen.ownerTeam, smokescreen.lifetime ) // disabling for now, this should use the calculated radius if reenabled
 
-	thread DestroySmokescreen( smokescreen, smokescreen.lifetime, fxInfo, traceBlocker, fxEntities, player )
+	thread DestroySmokescreen( smokescreen, smokescreen.lifetime, fxInfo, traceBlocker, fxEntities )
 }
 
 SmokescreenFXStruct function Smokescreen_CalculateFXStruct( SmokescreenStruct smokescreen )
@@ -183,6 +160,15 @@ SmokescreenFXStruct function Smokescreen_CalculateFXStruct( SmokescreenStruct sm
 	vector right = AnglesToRight( smokescreen.angles )
 	vector up = AnglesToUp( smokescreen.angles )
 
+	vector originToUse = smokescreen.origin
+
+	if ( IsValid( smokescreen.smokeSource ) )
+	{
+		originToUse = smokescreen.smokeSource.GetOrigin()
+		forward = AnglesToForward( smokescreen.smokeSource.GetAngles() )
+		right = AnglesToRight( smokescreen.smokeSource.GetAngles() )
+	}
+
 	foreach ( i, position in smokescreen.fxOffsets )
 	{
 		float distanceSqr = DistanceSqr( position, offsetCenter )
@@ -190,52 +176,36 @@ SmokescreenFXStruct function Smokescreen_CalculateFXStruct( SmokescreenStruct sm
 		if ( radiusSqr < distanceSqr )
 			radiusSqr = distanceSqr
 
-		fxInfo.fxWorldPositions.append( smokescreen.origin + ( position.x * forward ) + ( position.y * right ) + ( position.z * up ) )
+		fxInfo.fxWorldPositions.append( originToUse + ( position.x * forward ) + ( position.y * right ) + ( position.z * up ) )
 	}
 
-	fxInfo.center = smokescreen.origin + ( offsetCenter.x * forward ) + ( offsetCenter.y * right ) + ( offsetCenter.z * up )
+	fxInfo.center = originToUse + ( offsetCenter.x * forward ) + ( offsetCenter.y * right ) + ( offsetCenter.z * up )
 	fxInfo.radius = sqrt( radiusSqr ) + singleFXRadius
 	fxInfo.ownerTeam = smokescreen.ownerTeam
 
 	return fxInfo
 }
 
-void function SmokescreenAffectsEntitiesInArea( SmokescreenStruct smokescreen, SmokescreenFXStruct fxInfo, entity owner )
+vector function GetFXCenterFromSmokescreen( SmokescreenStruct smokescreen )
 {
-	owner.EndSignal( "CleanUpPlayerAbilities" )
-	
+	SmokescreenFXStruct fxInfo = Smokescreen_CalculateFXStruct( smokescreen )
+	return fxInfo.center
+}
+
+void function SmokescreenAffectsEntitiesInArea( SmokescreenStruct smokescreen, SmokescreenFXStruct fxInfo )
+{
 	float startTime = Time()
-	float tickRate = 0.1
+	float tickRate 	= smokescreen.damageTickRate
 
 	float dpsPilot = smokescreen.dpsPilot * tickRate
 	float dpsTitan = smokescreen.dpsTitan * tickRate
-	Assert( dpsPilot || dpsTitan > 0, "Electric smokescreen with 0 damage created" )
+	Assert( dpsPilot > 0 || dpsTitan > 0, "Electric smokescreen with 0 damage created" )
 
 	entity aiDangerTarget = CreateEntity( "info_target" )
 	DispatchSpawn( aiDangerTarget )
 	aiDangerTarget.SetOrigin( fxInfo.center )
 	SetTeam( aiDangerTarget, smokescreen.ownerTeam )
-	aiDangerTarget.SetScriptName( "smokeScreenInfoTarget" )
-	AddToTrackedEnts_Level( aiDangerTarget )
-	aiDangerTarget.EndSignal( "OnDestroy" )
-	
-	//(cafe) new fx logic
-	thread function () : (fxInfo, aiDangerTarget, smokescreen, owner)
-	{
-		float endtime = Time() + smokescreen.lifetime
-		aiDangerTarget.EndSignal( "OnDestroy" )
-		
-		while( Time() <= endtime )
-		{
-			entity effect = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( $"P_impact_exp_emp_med_default" ), fxInfo.center+<0,0,32>, <0,0,0> )
-	
-			effect.SetOwner( owner )
-			AddToUltimateRealm( owner, effect )
-			
-			wait 0.5
-		}
-	}()
-	
+
 	float dangerousAreaRadius = smokescreen.damageOuterRadius
 	if ( smokescreen.dangerousAreaRadius != -1.0 )
 		dangerousAreaRadius = smokescreen.dangerousAreaRadius
@@ -253,15 +223,15 @@ void function SmokescreenAffectsEntitiesInArea( SmokescreenStruct smokescreen, S
 
 	while ( Time() - startTime <= smokescreen.lifetime )
 	{
-#if DEVELOPER
+#if DEV
 		if ( SMOKESCREEN_DEBUG )
 		{
-			DebugDrawCircle( fxInfo.center, <0,0,0>, smokescreen.damageInnerRadius, 255, 0, 0, true, tickRate )
-			DebugDrawCircle( fxInfo.center, <0,0,0>, smokescreen.damageOuterRadius, 255, 0, 0, true, tickRate )
+			DebugDrawCircle( fxInfo.center, <0,0,0>, smokescreen.damageInnerRadius, COLOR_RED, true, tickRate )
+			DebugDrawCircle( fxInfo.center, <0,0,0>, smokescreen.damageOuterRadius, COLOR_RED, true, tickRate )
+			DebugDrawLine( fxInfo.center, smokescreen.origin, COLOR_RED, true, tickRate )
 		}
 #endif
-	// printw( "damaging", DEV_GetEnumStringSafe( "eDamageSourceId", smokescreen.damageSource ) )
-	
+
 		RadiusDamage(
 			fxInfo.center,															// center
 			smokescreen.attacker,													// attacker
@@ -273,12 +243,19 @@ void function SmokescreenAffectsEntitiesInArea( SmokescreenStruct smokescreen, S
 			SF_ENVEXPLOSION_MASK_BRUSHONLY,	// flags
 			0.0,																	// distanceFromAttacker
 			0.0,																	// explosionForce
-			DF_ELECTRICAL | DF_NO_HITBEEP,											// scriptDamageFlags
+			smokescreen.damageFlags,												// scriptDamageFlags
 			smokescreen.damageSource )												// scriptDamageSourceIdentifier
 
 			wait tickRate
 	}
 }
+
+                                    
+bool function SmokeBlockThreatVision_IsEnabled()
+{
+	return GetCurrentPlaylistVarBool( "smoke_blocks_threat_vision", true )
+}
+      
 
 entity function Smokescreen_CreateTraceBlockerVol( SmokescreenStruct smokescreen, SmokescreenFXStruct fxInfo, entity ownerEnt )
 {
@@ -289,17 +266,30 @@ entity function Smokescreen_CreateTraceBlockerVol( SmokescreenStruct smokescreen
 	DispatchSpawn( tbl )
 	tbl.SetBox( fxInfo.mins * 0.9, fxInfo.maxs * 1.1 )
 	tbl.kv.contents = int( tbl.kv.contents ) | CONTENTS_OPAQUE
+	                                    
+	if( SmokeBlockThreatVision_IsEnabled() )
+	{
+		tbl.kv.contents = int( tbl.kv.contents )
+	}
+       
 
 	if ( smokescreen.traceBlockerTeam >= 0 )
 		SetTeam( tbl, smokescreen.traceBlockerTeam )
 	tbl.SetScriptName( smokescreen.traceBlockerScriptName )
-	tbl.SetIgnorePredictedTriggerTypes( TT_JUMP_PAD )
+	tbl.SetIgnorePredictedTriggerTypes( TT_JUMP_PAD | TT_GRAVITY_LIFT | TT_BLACKHOLE  )
 
 	if ( IsValid( ownerEnt ) )
 	{
 		tbl.RemoveFromAllRealms()
 		tbl.AddToOtherEntitysRealms( ownerEnt )
 	}
+
+	AI_CreateDangerousArea_Static(tbl, null, fxInfo.radius, TEAM_INVALID, true, true, fxInfo.center);
+
+	#if DEV
+	if ( SMOKESCREEN_DEBUG )
+		DrawAngledBox( tbl.GetOrigin(), smokescreen.angles, tbl.GetBoundingMins(), tbl.GetBoundingMaxs(), COLOR_RED, true, smokescreen.lifetime - 0.6 )
+#endif
 
 	return tbl
 }
@@ -310,24 +300,23 @@ array<entity> function SmokescreenFX( SmokescreenStruct smokescreen, Smokescreen
 
 	foreach ( position in fxInfo.fxWorldPositions )
 	{
-#if DEVELOPER
+#if DEV
 		if ( SMOKESCREEN_DEBUG )
-			DebugDrawCircle( position, <0.0, 0.0, 0.0>, smokescreen.fxXYRadius, 0, 0, 255, true, smokescreen.lifetime )
+			DebugDrawCircle( position, <0,0,0>, smokescreen.fxXYRadius, COLOR_BLUE, true, smokescreen.lifetime )
 #endif
 		int fxID = GetParticleSystemIndex( smokescreen.smokescreenFX )
-		vector angles = smokescreen.fxUseWeaponOrProjectileAngles ? smokescreen.weaponOrProjectile.GetAngles() : <0.0, 0.0, 0.0>
+		vector angles = smokescreen.fxUseWeaponOrProjectileAngles ? smokescreen.weaponOrProjectile.GetAngles() : <0,0,0>
 		entity fxEnt = StartParticleEffectInWorld_ReturnEntity( fxID, position, angles )
-		AddToTrackedEnts_Level( fxEnt )
-		
 		entity ownerEnt = smokescreen.attacker
 		if ( ownerEnt != null )
 		{
 			fxEnt.RemoveFromAllRealms()
 			fxEnt.AddToOtherEntitysRealms( ownerEnt )
 		}
+
 		float fxLife = smokescreen.lifetime
 
-		EffectSetControlPointVector( fxEnt, 1, <fxLife, 0.0, 0.0> )
+		EffectSetControlPointVector( fxEnt, 1, <fxLife,0,0> )
 
 		if ( !smokescreen.shouldHibernate )
 			fxEnt.DisableHibernation()
@@ -338,63 +327,57 @@ array<entity> function SmokescreenFX( SmokescreenStruct smokescreen, Smokescreen
 	return fxEntities
 }
 
-void function DestroySmokescreen( SmokescreenStruct smokescreen, float lifetime, SmokescreenFXStruct fxInfo, entity traceBlocker, array<entity> fxEntities, entity player )
+void function DestroySmokescreen( SmokescreenStruct smokescreen, float lifetime, SmokescreenFXStruct fxInfo, entity traceBlocker, array<entity> fxEntities )
 {
-	// printw( "DestroySmokescreen" )
-	player.EndSignal( "CleanUpPlayerAbilities" )
-	EndThreadOn_PlayerChangedClass( smokescreen.attacker )
-	
-	OnThreadEnd( function() : ( fxEntities, fxInfo, traceBlocker, smokescreen )
-		{
-			// printw("smoke end" )
-			smokescreen.lifetime = 0
-			
-			if ( IsValid( traceBlocker ) )
-			{
-				traceBlocker.Destroy()
-			}
-			
-			file.allSmokescreenFX.fastremovebyvalue( fxInfo )
-			
-			StopSoundAtPosition( fxInfo.center, smokescreen.deploySound1p )
-			StopSoundAtPosition( fxInfo.center, smokescreen.deploySound3p )
-			
-			if ( IsValid( smokescreen.attacker ) && smokescreen.attacker.IsPlayer() )
-			{
-				if ( smokescreen.stopSound3p != "" )
-					EmitSoundAtPositionExceptToPlayer( TEAM_ANY, fxInfo.center, smokescreen.attacker, smokescreen.stopSound3p )
+	if ( IsValid( smokescreen.attacker ) )
+	{
+		EndThreadOn_PlayerCleanupPermanents( smokescreen.attacker )
+		EndThreadOn_PlayerChangedClass( smokescreen.attacker )
+	}
 
-				if ( smokescreen.stopSound1p != "" )
-					EmitSoundAtPositionOnlyToPlayer( TEAM_ANY, fxInfo.center, smokescreen.attacker, smokescreen.stopSound1p)
-			}
-			else
-			{
-				if ( smokescreen.stopSound3p != "" )
-					EmitSoundAtPosition( TEAM_ANY, fxInfo.center, smokescreen.stopSound3p )
-			}
-				
+               
+                                       
+      
+
+	OnThreadEnd(
+		function () : ( fxEntities, traceBlocker, fxInfo, smokescreen )
+		{
+			if ( IsValid( traceBlocker ) )
+				traceBlocker.Destroy()
+
+			// stop sound if it has not been stoped before
+			if ( smokescreen.deploySound1p != "" )
+				StopSoundAtPosition( fxInfo.center, smokescreen.deploySound1p )
+
+			if ( smokescreen.deploySound3p != "" )
+				StopSoundAtPosition( fxInfo.center, smokescreen.deploySound3p )
+
 			foreach ( fxEnt in fxEntities )
 			{
 				if ( IsValid( fxEnt ) )
-				{
 					EffectStop( fxEnt )
-					fxEnt.Destroy()
-				}
 			}
+
+			if ( IsValid( smokescreen.smokeTrigger ) )
+				smokescreen.smokeTrigger.Destroy()
 		}
 	)
-	
+
 	float timeToWait = 0.0
 
 	timeToWait = max( lifetime - 0.5, 0.0 )
 
 	wait( timeToWait )
+
 	if ( IsValid( traceBlocker ) )
 		traceBlocker.Destroy()
 	file.allSmokescreenFX.fastremovebyvalue( fxInfo )
 
-	StopSoundAtPosition( fxInfo.center, smokescreen.deploySound1p )
-	StopSoundAtPosition( fxInfo.center, smokescreen.deploySound3p )
+	if ( smokescreen.deploySound1p != "" )
+		StopSoundAtPosition( fxInfo.center, smokescreen.deploySound1p )
+
+	if ( smokescreen.deploySound3p != "" )
+		StopSoundAtPosition( fxInfo.center, smokescreen.deploySound3p )
 
 	if ( IsValid( smokescreen.attacker ) && smokescreen.attacker.IsPlayer() )
 	{
@@ -402,15 +385,16 @@ void function DestroySmokescreen( SmokescreenStruct smokescreen, float lifetime,
 			EmitSoundAtPositionExceptToPlayer( TEAM_ANY, fxInfo.center, smokescreen.attacker, smokescreen.stopSound3p )
 
 		if ( smokescreen.stopSound1p != "" )
-			EmitSoundAtPositionOnlyToPlayer( TEAM_ANY, fxInfo.center, smokescreen.attacker, smokescreen.stopSound1p)
+			EmitSoundAtPositionOnlyToPlayer( TEAM_ANY, fxInfo.center, smokescreen.attacker, smokescreen.stopSound1p )
 	}
 	else
 	{
 		if ( smokescreen.stopSound3p != "" )
-			EmitSoundAtPosition( TEAM_ANY, fxInfo.center, smokescreen.stopSound3p )
+			EmitSoundAtPosition( TEAM_ANY, fxInfo.center, smokescreen.stopSound3p, fxEntities[0] )
 	}
 
 	timeToWait = max( ( lifetime + 0.1 ) - timeToWait, 0.0 )
+
 	wait( timeToWait )
 }
 
@@ -450,7 +434,7 @@ void function TitanElectricSmoke_DamagedPlayerOrNPC( entity ent, var damageInfo 
 
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 
-	if ( ent.GetTeam() == attacker.GetTeam() )
+	if ( IsFriendlyTeam( ent.GetTeam(), attacker.GetTeam() ) )
 	{
 		DamageInfo_SetDamage( damageInfo, 0 )
 		return

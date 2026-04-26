@@ -103,17 +103,17 @@ struct FireSegmentData
 	entity moveParent
 }
 
-vector function CalcWorldToLocalOrigin_Entity( entity moveParent, vector worldPos )
-{
-	if ( !IsValid( moveParent ) )
-		return worldPos
-
-	vector offset = worldPos - moveParent.GetOrigin()
-	vector forward = AnglesToForward( moveParent.GetAngles() )
-	vector right = AnglesToRight( moveParent.GetAngles() )
-	vector up = AnglesToUp( moveParent.GetAngles() )
-	return < offset.Dot( forward ), offset.Dot( right ), offset.Dot( up ) >
-}
+// Moved to workarounds.gnut for load order
+//vector function CalcWorldToLocalOrigin_Entity( entity moveParent, vector worldPos )
+//{
+//	if ( !IsValid( moveParent ) )
+//		return worldPos
+//	vector offset = worldPos - moveParent.GetOrigin()
+//	vector forward = AnglesToForward( moveParent.GetAngles() )
+//	vector right = AnglesToRight( moveParent.GetAngles() )
+//	vector up = AnglesToUp( moveParent.GetAngles() )
+//	return < offset.Dot( forward ), offset.Dot( right ), offset.Dot( up ) >
+//}
 
 vector function CalcLocalToWorldOrigin_Entity( entity moveParent, vector localPos )
 {
@@ -241,13 +241,20 @@ void function OnProjectileCollision_ability_mortar_ring_missile( entity projecti
 
 			//cp.deployableFlags = eDeployableFlags.VEHICLES_NO_STICK
 
-		table collisionParams =
-		{
-			pos = cp.pos,
-			normal = cp.normal,
-			hitEnt = cp.hitEnt,
-			hitbox = cp.hitBox
-		}
+		DeployableCollisionParams collisionParams
+
+
+		collisionParams.pos = cp.pos
+
+
+		collisionParams.normal = cp.normal
+
+
+		collisionParams.hitEnt = cp.hitEnt
+
+
+		collisionParams.hitBox = cp.hitBox
+
 
 		if( !forceExplode )
 		{
@@ -437,10 +444,10 @@ void function BeginBombletFire( entity owner, entity projectile, entity projecti
 
 	foreach ( segment in segmentsArray )
 	{
-		#if DEV && MORTAR_RING_MISSILE_DEBUG
-			DebugDrawSphere( segment.startPos + <0, 0, 10> , 10, COLOR_RED, true, 25.0 )
-			DebugDrawArrow( segment.startPos, segment.endPos, 25, COLOR_BLUE, true, 25.0)
-			DebugDrawSphere( segment.endPos, 10, COLOR_GREEN, true, 25.0 )
+		#if DEVELOPER && MORTAR_RING_MISSILE_DEBUG
+			//DebugDrawSphere( segment.startPos + <0, 0, 10> , 10, <255, 0, 0>, true, 25.0 )
+			//DebugDrawArrow( segment.startPos, segment.endPos, 25, <0, 0, 255>, true, 25.0)
+			//DebugDrawSphere( segment.endPos, 10, <0, 255, 0>, true, 25.0 )
 		#endif
 	}
 
@@ -496,8 +503,8 @@ vector function FindValidEndPosForFireSegment( vector startPos, vector dir, floa
 		{
 			endTraces = true
 		}
-		#if DEV && MORTAR_RING_MISSILE_DEBUG
-			DebugDrawLine( traceStart, forwardTrace.endPos, COLOR_GREEN, true, 25.0 )
+		#if DEVELOPER && MORTAR_RING_MISSILE_DEBUG
+			//DebugDrawLine( traceStart, forwardTrace.endPos, <0, 255, 0>, true, 25.0 )
 		#endif
 
 		vector traceDownEnd = forwardTrace.endPos + < 0, 0, -MORTAR_RING_MISSILE_FIRE_DOWN_TRACE_LENGTH >
@@ -513,8 +520,8 @@ vector function FindValidEndPosForFireSegment( vector startPos, vector dir, floa
 			lastGoodEndPos = downTrace.endPos
 			traceStart = downTrace.endPos + < 0, 0, MORTAR_RING_MISSILE_FIRE_FWD_TRACE_HEIGHT >
 		}
-		#if DEV && MORTAR_RING_MISSILE_DEBUG
-			DebugDrawLine( forwardTrace.endPos, downTrace.endPos, COLOR_BLUE, true, 25.0 )
+		#if DEVELOPER && MORTAR_RING_MISSILE_DEBUG
+			//DebugDrawLine( forwardTrace.endPos, downTrace.endPos, <0, 0, 255>, true, 25.0 )
 		#endif
 
 		if( Distance( FlattenVec( startPos ), FlattenVec( downTrace.endPos ) ) >= maxFlattnedDistance )
@@ -649,13 +656,13 @@ void function MortarRingFireSegmentTriggerThread( entity effect, entity controlP
 
 	while ( true )
 	{
-		#if DEV && MORTAR_RING_MISSILE_DEBUG
-			DebugDrawCylinder( trigger.GetOrigin(), <270,0,0>, radius, height + MORTAR_RING_FIRE_SEGMENT_HEIGHT, COLOR_WHITE, true, 0.1 )
-			DebugDrawCylinder( trigger.GetOrigin(), <270,0,0>, radius, -height, COLOR_WHITE, true, 0.1 )
-			DebugDrawSphere( effect.GetOrigin(), 10, COLOR_GREEN, true, 0.1 )
-			DebugDrawSphere( controlPoint.GetOrigin() + <0, 0, 10> , 10, COLOR_RED, true, 0.1 )
-			DebugDrawArrow( controlPoint.GetOrigin(), effect.GetOrigin(), 25, COLOR_BLUE, true, 0.1)
-			DebugDrawLine( effect.GetOrigin(), controlPoint.GetOrigin(), COLOR_GREEN, true, 0.1 )
+		#if DEVELOPER && MORTAR_RING_MISSILE_DEBUG
+			//DebugDrawCylinder( trigger.GetOrigin(), <270,0,0>, radius, height + MORTAR_RING_FIRE_SEGMENT_HEIGHT, <255, 255, 255>, true, 0.1 )
+			//DebugDrawCylinder( trigger.GetOrigin(), <270,0,0>, radius, -height, <255, 255, 255>, true, 0.1 )
+			//DebugDrawSphere( effect.GetOrigin(), 10, <0, 255, 0>, true, 0.1 )
+			//DebugDrawSphere( controlPoint.GetOrigin() + <0, 0, 10> , 10, <255, 0, 0>, true, 0.1 )
+			//DebugDrawArrow( controlPoint.GetOrigin(), effect.GetOrigin(), 25, <0, 0, 255>, true, 0.1)
+			//DebugDrawLine( effect.GetOrigin(), controlPoint.GetOrigin(), <0, 255, 0>, true, 0.1 )
 		#endif
 		WaitFrame()
 	}
@@ -964,8 +971,8 @@ void function MortarRingAirburst( entity player, entity projectile, int numBombs
 
 
 	array<vector> orderedTargetPoints = GetTargetPointsAroundOrigin( projectileOrigin, numBombs, 420.0, -750.0, radiusModMin, radiusModMax )
-	#if DEV && MORTAR_RING_MISSILE_DEBUG
-		DebugDrawSphere( projectileOrigin, 10, COLOR_BLUE, true, 10.0 )
+	#if DEVELOPER && MORTAR_RING_MISSILE_DEBUG
+		//DebugDrawSphere( projectileOrigin, 10, <0, 0, 255>, true, 10.0 )
 	#endif
 
 	int currentIndex = 0
@@ -1017,11 +1024,11 @@ void function LaunchBomblet( entity player, entity weapon, vector origin, vector
 	vector dirFromCenter = FlattenNormalizeVec( target - origin )
 	ArcSolution as = SolveBallisticArc( origin, launchSpeed, target, GetConVarFloat( "sv_gravity" ) )
 	vector velocity = ( as.valid ) ? as.fire_velocity : dirFromCenter * launchSpeed
-#if DEV && MORTAR_RING_MISSILE_DEBUG
+#if DEVELOPER && MORTAR_RING_MISSILE_DEBUG
 	if( !as.valid )
-		DebugDrawSphere( target, 10, COLOR_RED, true, 10.0 )
+		//DebugDrawSphere( target, 10, <255, 0, 0>, true, 10.0 )
 	else
-		DebugDrawSphere( target, 10, COLOR_BLUE, true, 10.0 )
+		//DebugDrawSphere( target, 10, <0, 0, 255>, true, 10.0 )
 #endif
 
 
@@ -1560,4 +1567,3 @@ void function ThreatIndicatorThink( entity player, float damageRadius )
 	}
 }
 #endif //CLIENT
- 

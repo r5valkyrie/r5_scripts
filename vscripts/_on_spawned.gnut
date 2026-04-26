@@ -5,13 +5,13 @@ global function CodeCallback_OnSpawned
 global function RunMySpawnFunctions
 global function AddScriptNoteworthySpawnCallback
 global function SpawnFromSpawnerArray
+global function AddNPCSpawnCallback
 global function AddSpawnCallback
 global function AddSpawnCallbackEditorClass
 global function AddSpawnCallback_ScriptName
 global function GetLeveledAISettings
 global function GetSpawnAISettings
 global function GetDefaultAISetting
-global function RunSpawnCallbacks
 
 void function CodeCallback_PreSpawn( entity npc )
 {
@@ -35,75 +35,7 @@ void function CodeCallback_PreSpawn( entity npc )
 		SetAISettingsWrapper( npc, aisettings )
 	}
 
-	if ( npc.IsTitan() )
-	{
-		if ( npc.ai.titanSettings.titanSetFile == "" )
-		{
-			if ( npc.HasKey( "leveled_titan_settings" ) )
-			{
-				SetTitanSettings( npc.ai.titanSettings, expect string( npc.kv.leveled_titan_settings ) )
-			}
-		}
-
-		var builtInLoadout
-
-		if ( npc.HasKey( "leveled_titan_loadout" ) )
-		{
-			builtInLoadout = npc.GetValueForKey( "leveled_titan_loadout" )
-		}
-		else
-		{
-			if ( npc.Dev_GetAISettingByKeyField( "WeaponCapacity" ) == "FromLoadout" )
-				builtInLoadout = npc.Dev_GetAISettingByKeyField( "npc_titan_player_settings" )
-		}
-
-		if ( builtInLoadout != null )
-		{
-			// derive loadout from built in loadout in this case
-			expect string( builtInLoadout )
-			if ( npc.ai.titanSettings.titanSetFile != builtInLoadout )
-				SetTitanSettings( npc.ai.titanSettings, builtInLoadout )
-
-			// npc.ai.titanSpawnLoadout.setFile = builtInLoadout
-			// OverwriteLoadoutWithDefaultsForSetFile_ExceptSpecialAndAntiRodeo( npc.ai.titanSpawnLoadout )
-			// OverwriteLoadoutWithDefaultsForSetFile( npc.ai.titanSpawnLoadout ) // get the entire loadout, including defensive and tactical
-
-			//Set camo, decal, and skin indices from npc settings.
-			//Using Dev_GetAISettingsByKeyField_Global because titan has not spawned yet, so the non-global version of this function does not work.
-			var camoIndex 	= Dev_GetAISettingByKeyField_Global( npc.GetAISettingsName(), "titanCamoIndex" )
-			var decalIndex 	= Dev_GetAISettingByKeyField_Global( npc.GetAISettingsName(), "titanDecalIndex" )
-			var skinIndex	= Dev_GetAISettingByKeyField_Global( npc.GetAISettingsName(), "titanSkinIndex" )
-			if ( camoIndex != null )
-				npc.ai.titanSpawnLoadout.camoIndex = expect int ( camoIndex )
-			if ( decalIndex != null )
-				npc.ai.titanSpawnLoadout.decalIndex = expect int ( decalIndex )
-			if ( skinIndex != null )
-				npc.ai.titanSpawnLoadout.skinIndex = expect int ( skinIndex )
-		}
-
-		AssignSpawnOptionsFromLeveled( npc, SetSpawnOption_Weapon, "additionalequipment", "primaryWeapon_mods" )
-		npc.kv.additionalequipment = ""
-		AssignSpawnOptionsFromLeveled( npc, SetSpawnOption_Ordnance, "titanOrdnance", "titanOrdnance_mods" )
-		AssignSpawnOptionsFromLeveled( npc, SetSpawnOption_Special, "titanSpecial", "titanSpecial_mods" )
-		AssignSpawnOptionsFromLeveled( npc, SetSpawnOption_Antirodeo, "titanAntiRodeo", "titanAntiRodeo_mods" )
-
-		// temp fix for npc_create npc_titan, probably should refactor away npc.ai.titanSettings
-		if ( npc.ai.titanSettings.titanSetFile == "" )
-			SetTitanSettings( npc.ai.titanSettings, expect string( npc.Dev_GetAISettingByKeyField( "npc_titan_player_settings" ) ) )
-
-		//CreateTitanModelAndSkinSetup( npc )
-
-		if ( npc.GetAIClass() == AIC_TITAN_BUDDY )
-			npc.kv.squadname = "bt"
-	}
-	else
-	{
-		npc.SetValueForModelKey( npc.GetSettingModelName() )
-	}
-
-	// if ( !IsTurret( npc ) && IsSingleplayer() && npc.kv.squadname == "" && npc.GetTeam() >= FIRST_GAME_TEAM )
-	// 	npc.SetAutoSquad()
-	// 	//AutoSquadnameAssignment( npc )
+	npc.SetValueForModelKey( npc.GetSettingModelName() )
 
 	if ( !npc.IsTitan() )
 	{
@@ -116,13 +48,13 @@ void function CodeCallback_PreSpawn( entity npc )
 			if ( !IsTurret( npc ) )
 			{
 				//NPCDefaultWeapon ornull defaultWeapon = GetNPCDefaultWeaponForLevel( npc )
-				// if ( defaultWeapon != null )
-				// {
-				// 	expect NPCDefaultWeapon( defaultWeapon )
-				// 	SetSpawnOption_Weapon( npc, defaultWeapon.wep, defaultWeapon.mods )
-				// 	npc.kv.additionalequipment = ""
-				// 	return
-				// }
+				//if ( defaultWeapon != null )
+				//{
+				//	expect NPCDefaultWeapon( defaultWeapon )
+				//	SetSpawnOption_Weapon( npc, defaultWeapon.wep, defaultWeapon.mods )
+				//	npc.kv.additionalequipment = ""
+				//	return
+				//}
 			}
 
 			switch ( npc.kv.additionalequipment )
@@ -175,7 +107,7 @@ void function AssignDroneSpawnAISettings( entity npc )
 
 void function AssignGrenadeWeaponFromAISettings( entity npc )
 {
-	if( npc.kv.grenadeWeaponName == "none" )
+	if ( npc.kv.grenadeWeaponName == "none" )
 	{
 		npc.kv.grenadeWeaponName = ""
 		return
@@ -202,7 +134,7 @@ void function AssignSpawnOptionsFromLeveled( entity npc, void functionref( entit
 	array<string> mods
 	if ( npc.HasKey( kvWeaponMods ) )
 	{
-		mods = split( npc.GetValueForKey( kvWeaponMods ), " " )
+		mods = split( npc.GetValueForKey( kvWeaponMods ), WHITESPACE_CHARACTERS )
 	}
 
 	spawnSettingsFunc( npc, weapon, mods )
@@ -225,14 +157,13 @@ string function GetDefaultAISetting( entity npc )
 		return GetLeveledAISettings( npc )
 	}
 
-	if ( npc.IsTitan() && npc.ai.titanSettings.titanSetFile != "" )
+	if ( npc.IsTitan() && npc.ai.titanSettings.titanSetFile != $"" )
 	{
-	/*	// from titan player set file
+		// from titan player set file
 		string settingsKey = GetAISettingsStringForMode()
-
-		var aiSettings = Dev_GetAISettingByKeyField_Global( npc.ai.titanSettings.titanSetFile, settingsKey )
-		if ( aiSettings != null )
-			return expect string( aiSettings )*/
+		string aiSettings = GetGlobalSettingsString( npc.ai.titanSettings.titanSetFile, settingsKey )
+		Assert( aiSettings != "", "Key " + settingsKey + " is \"\" in set file " + npc.ai.titanSettings.titanSetFile + "." )
+		return aiSettings;
 	}
 
 	return npc.GetClassName()
@@ -274,30 +205,8 @@ void function CodeCallback_OnSpawned( entity ent )
 
 	string classname = ent.GetClassName()
 
-	if ( classname in _entityClassVars )
-	{
-		if ( !ent._entityVars )
-			InitEntityVars( ent )
-
-		//ent.ConnectOutput( "OnDestroy", "_RemoveFromEntityList" ) //(mk): I hope this is handled already..
-	}
-
-	if( ent.kv.teamnumber == null )
-	{
-		if( IsValid( ent ) && ent.IsPlayer() )
-		{
-			KickPlayerById( ent.GetPlatformUID(), "Connection error, please try again." )
-		}
-		
-		ent.Destroy()
-		
-		return
-	}
-		
-	
-	int teamNum = int( expect string( ent.kv.teamnumber ) )
-	
-	if ( teamNum != 0 && !ent.IsPlayer() )
+	int teamNum = ent.GetTeam()
+	if ( teamNum != 0 )
 		SetTeam( ent, teamNum )
 
 	SetModelSkinFromLeveled( ent )
@@ -336,10 +245,11 @@ void function CodeCallback_OnSpawned( entity ent )
 	*/
 
 	RegisterForDamageDeathCallbacks( ent )
+
 	RunMySpawnFunctions( ent )
 }
 
-function RunMySpawnFunctions( entity self )
+void function RunMySpawnFunctions( entity self )
 {
 	if ( !IsValid( self ) )
 	{
@@ -347,10 +257,22 @@ function RunMySpawnFunctions( entity self )
 		return
 	}
 
+	if ( self.IsNPC() )
+		RunNPCSpawnCallbacks( self )
+
 	RunSpawnCallbacks( self )
 	RunEditorClassCallbacks( self )
 	RunScriptNoteworthyCallbacks( self )
 	RunScriptNameCallbacks( self )
+}
+
+// use when you want all NPCs to get the callback, not just ones of a certain classname
+void function AddNPCSpawnCallback( void functionref( entity ) callbackFunc )
+{
+	foreach ( func in svGlobal.npcSpawnCallbackFuncs )
+		Assert( callbackFunc != func, "NPC spawn callback already added: " + callbackFunc.getinfos().name )
+
+	svGlobal.npcSpawnCallbackFuncs.append( callbackFunc )
 }
 
 void function AddSpawnCallback( string classname, void functionref( entity ) func )
@@ -388,7 +310,20 @@ void function AddSpawnCallbackEditorClass( string classname, string editorClassn
 	svGlobal.spawnCallbackEditorClassFuncs.append( funcArray )
 }
 
-function RunSpawnCallbacks( entity self )
+void function RunNPCSpawnCallbacks( entity npc )
+{
+	Assert( npc.IsNPC() )
+
+	foreach ( callbackFunc in svGlobal.npcSpawnCallbackFuncs )
+	{
+		callbackFunc( npc )
+
+		if ( !IsValid( npc ) )
+			break // one of the spawn callbacks may have decided to destroy the entity. If so, it's no longer valid so stop calling spawn callbacks.
+	}
+}
+
+void function RunSpawnCallbacks( entity self )
 {
 	string classname = self.GetClassName()
 
@@ -399,12 +334,15 @@ function RunSpawnCallbacks( entity self )
 			foreach ( func in funcArray.callbackArray )
 			{
 				func( self )
+
+				if ( !IsValid( self ) )
+					break // one of the spawn callbacks may have decided to destroy the entity. If so, it's no longer valid so stop calling spawn callbacks.
 			}
 		}
 	}
 }
 
-function RunEditorClassCallbacks( entity self )
+void function RunEditorClassCallbacks( entity self )
 {
 	string editorClassname = GetEditorClass( self )
 	if ( editorClassname == "" )
@@ -416,13 +354,15 @@ function RunEditorClassCallbacks( entity self )
 	{
 		if ( funcArray.entityEditorClassname == editorClassname )
 		{
-			//Assert( funcArray.entityClassname == classname, "Editor classname callback was set on entity with wrong base classname type" )
-			if ( funcArray.entityClassname != classname )
-				Warning( "Entity " + editorClassname + " is expecting alias of " + funcArray.entityClassname + " but found a " + classname + ". You may just need to reexport from LevelEd and recompile the map to fix this." )
-
-			foreach ( func in funcArray.callbackArray )
+			if ( funcArray.entityClassname == classname )
 			{
-				thread func( self )
+				foreach ( func in funcArray.callbackArray )
+				{
+					thread func( self )
+
+					if ( !IsValid( self ) )
+						break // one of the spawn callbacks may have decided to destroy the entity. If so, it's no longer valid so stop calling spawn callbacks.
+				}
 			}
 		}
 	}
@@ -464,6 +404,9 @@ void function RunScriptNameCallbacks( entity ent )
 	foreach ( callback in svGlobal.spawnCallbacks_scriptName[ name ] )
 	{
 		thread callback( ent )
+
+		if ( !IsValid( ent ) )
+			break // one of the spawn callbacks may have decided to destroy the entity. If so, it's no longer valid so stop calling spawn callbacks.
 	}
 }
 
@@ -487,9 +430,12 @@ void function RunScriptNoteworthyCallbacks( entity ent )
 		foreach ( func in noteworthyCallback.callbackArray )
 		{
 			func( ent )
+
+			if ( !IsValid( ent ) )
+				break // one of the spawn callbacks may have decided to destroy the entity. If so, it's no longer valid so stop calling spawn callbacks.
 		}
 
-		break
+		break // ??? break?
 	}
 }
 

@@ -146,7 +146,7 @@ var function OnWeaponPrimaryAttack_weapon_rocket_launcher( entity weapon, Weapon
 		fireMissileParams.pos = attackParams.pos
 		fireMissileParams.dir = attackParams.dir
 		fireMissileParams.speed = speed
-		fireMissileParams.scriptTouchDamageType = damageTypes.projectileImpact | DF_IMPACT
+		fireMissileParams.scriptTouchDamageType = damageTypes.projectileImpact | DF_SHIELD_SYPHON
 		fireMissileParams.scriptExplosionDamageType = damageTypes.explosive
 		fireMissileParams.doRandomVelocAndThinkVars = false
 		fireMissileParams.clientPredicted = shouldPredict

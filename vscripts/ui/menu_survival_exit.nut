@@ -12,6 +12,7 @@ void function ServerCallback_OpenSurvivalExitMenu( bool showSummary )
 	AdvanceMenu( GetMenu( "SystemMenu" ) )
 }
 
+
 void function OpenLeaveDialogFromSpectate()
 {
 	if ( GetActiveMenu() != null )

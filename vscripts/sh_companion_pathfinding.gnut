@@ -1,0 +1,524 @@
+#if SERVER
+global function GetCompanionPathData
+global function GetDefaultFlightParams
+global function GetGroundHeightArrayForPath
+global function Companion_AdjustHeight_Thread
+global function AdjustCompanionPathPointForHeight
+global function DoCompanionPathfinding
+#endif
+
+const bool 	COMPANION_PATHFINDING_DEBUG_DRAW 				= false
+const float	COMPANION_PATHFINDING_GROUND_DOWNTEST_RANGE		= 1000
+const float COMPANION_PATHFINDING_NODE_COMPLETION_DIST		= 16
+
+global enum ePathfindingBailCondition
+{
+	NONE,
+	TIME_ONLY,
+	RATIO_ONLY,
+	TIME_AND_RATIO,
+	TIME_OR_RATIO,
+}
+
+//Flight Data - Default Params//
+const vector 	COMPANION_PATHFINDING_DEFAULT_BOUNDS_MINS 			= 	<10,10,-10>
+const vector 	COMPANION_PATHFINDING_DEFAULT_BOUNDS_MAXS 			= 	<10,10,15>
+const float 	COMPANION_PATHFINDING_DEFAULT_SPEED 				= 	800
+const int		COMPANION_PATHFINDING_DEFAULT_MAX_PATH_LENGTH		=	30
+const float 	COMPANION_PATHFINDING_DEFAULT_MAX_LENGTH_RATIO		= 	1.6
+const float 	COMPANION_PATHFINDING_DEFAULT_MAX_TIME_DIFF			=	1.8
+const float 	COMPANION_PATHFINDING_DEFAULT_INIT_HEIGHT_OFFSET 	= 	50
+const float 	COMPANION_PATHFINDING_DEFAULT_ENTER_DOOR_HEIGHT 	= 	70
+const float 	COMPANION_PATHFINDING_DEFAULT_DOOR_ERROR_RADIUS 	= 	12
+const float 	COMPANION_PATHFINDING_DEFAULT_MIN_HEIGHT_OFFSET		= 	1
+const float 	COMPANION_PATHFINDING_DEFAULT_FINAL_HEIGHT_OFFSET	= 	-20
+const int		COMPANION_PATHFINDING_DEFAULT_BAIL_CONDITION		= 	ePathfindingBailCondition.TIME_OR_RATIO
+
+global struct CompanionPathData
+{
+	bool 			isValidSimplePath
+	bool			isValidFullPath
+	array<vector>	pathPoints
+	float			pathLength
+}
+
+global struct CompanionData
+{
+	array<vector> orderRoute
+	array<bool> indexHeightAdjusted
+	int currentPathNode
+	int remainingPathNodes
+	float distanceToNextPoint
+	vector dirToNextPoint
+	bool startedMovingCloser
+	bool orderDidPathfinding
+	float ceilingHeightAtDestination
+	#if DEVELOPER
+		vector prevPos //for debugging
+	#endif
+}
+
+global struct CompanionFlightParams
+{
+	vector			boundsMin
+	vector			boundsMax
+	float 			entSpeed
+	float			initHeightOffset	// Desired offset of the path point
+	float			minHeightOffset		// Minimum Height above the point to test for Adjusted Height ( pushes the init point up )
+	float			finalOffset			// Final Offset - Make NEGATIVE to use for ceiling clearance
+	int 			maxPathLength 		// Max Number of Path Nodes Allowed
+	float 			maxLengthRatio 		// Disallow paths if length exceeds this ratio in relation to a straight line to the destination
+	float 			maxTimeDiff 		// Disallow paths that take longer than this ratio in relation to the time a straight path would take
+	float			doorErrorRadius		// Limits the z height adjustment between two points within this range
+	float			doorEnterHeight		// Min Height off the ground used for door entry with an offset point
+	int				eBailCondition
+}
+
+
+#if SERVER
+CompanionPathData function GetCompanionPathData( entity pathEnt, vector entPosition, vector destination, float lastHeight, CompanionFlightParams flightData )
+{
+
+	CompanionPathData pathData
+	pathData.isValidSimplePath	= false
+	pathData.isValidFullPath	= false
+
+	array<entity> ignoreArray = GetPlayerArray()
+
+	///////////// Simplified Pathfinding ///////////////////
+
+	float entHeight = entPosition.z
+	float destinationHeight = destination.z
+	float heightDifferenceAbs = fabs(entHeight - destinationHeight)
+
+	vector pathNode
+
+	// Vantage already does this initial test before calling this function, as she has a perch test to do in between.
+	// This initial test is needed as a baseline for the simplified logic however
+
+	TraceResults trLoS = TraceLine( entPosition, destination, ignoreArray, TRACE_MASK_PLAYERSOLID , TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+	//We only need to pathfind if we don't have a clear path to our new position
+	if ( trLoS.fraction > .99 )
+	{
+		pathData.isValidSimplePath = true
+	}
+
+	if( !pathData.isValidSimplePath )
+	{
+		if ( heightDifferenceAbs < ( .5 * METERS_TO_INCHES ) )
+		{
+			//the hight difference is small enough, we're unlikely to have a clear path
+		}
+		else if ( entHeight < destinationHeight )
+		{
+			if ( ( lastHeight != -1 ) && ( ( entHeight + lastHeight ) > destinationHeight ) )
+			{
+				pathNode = entPosition
+				pathNode.z = destinationHeight
+				//we might have a clear route, check
+				TraceResults trRaisedLoS = TraceLine( pathNode, destination, ignoreArray, TRACE_MASK_PLAYERSOLID , TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+
+				if ( trRaisedLoS.fraction > 0.99 )
+				{
+					//we have a clean path! Let's not pathfind and build the route ourselves
+					pathData.isValidSimplePath 	= true
+
+				}
+			}
+		}
+		else
+		{
+			//the destination is below our current pos, we're going to need to trace up to check for a ceiling, but we'll do that second, as the LoS check is more likely to fail
+			pathNode = destination
+			pathNode.z = entHeight
+			//we might have a clear route, check
+			TraceResults trRaisedLoS = TraceLine( entPosition, pathNode, ignoreArray, TRACE_MASK_PLAYERSOLID , TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+
+
+			if ( trRaisedLoS.fraction > 0.99 )
+			{
+				//we MIGHT have a clear path, lets trace up for a ceiling now
+				TraceResults trCeiling = TraceLine( destination, pathNode, ignoreArray, TRACE_MASK_PLAYERSOLID , TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+				if ( trCeiling.fraction > 0.99 )
+				{
+					pathData.isValidSimplePath 	= true
+					//we have a clean path! since we're not going to pathfind, we can afford to do extra work, let's find a better height for the point
+					vector pointToCheck = pathNode
+
+					pointToCheck.z = trLoS.endPos.z + 12//shift it up a bit to improve the odds that we'll have LoS
+
+					TraceResults trAdjustedLoS = TraceLine( entPosition, pointToCheck, ignoreArray, TRACE_MASK_PLAYERSOLID , TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+					if ( trAdjustedLoS.fraction > .99 )
+					{
+						pathNode = pointToCheck
+					}
+				}
+			}
+		}
+	}
+
+	// We have a valid Simplified Path - Set the points for the pathData
+	if( pathData.isValidSimplePath )
+	{
+		//We append any of the offset pathnodes created.
+		//Then we need to add the actual destination to create the simple path.
+		pathData.pathPoints.append( pathNode )
+		pathData.pathPoints.append( destination )
+
+		#if DEVELOPER
+			if ( COMPANION_PATHFINDING_DEBUG_DRAW )
+			{
+				printt( " PATH DATA REPORT: SUCCESS - SIMPLIFIED " )
+			}
+		#endif
+		return pathData
+	}
+	/////////////// End Simple Pathfinding ///////////////////////////////
+
+
+	////////////// Advanced Pathfinding - Uses Navmesh (not available in S3) ///////////////////
+	return pathData
+}
+
+CompanionFlightParams function GetDefaultFlightParams()
+{
+	CompanionFlightParams flightData
+	flightData.boundsMin			= COMPANION_PATHFINDING_DEFAULT_BOUNDS_MINS
+	flightData.boundsMax			= COMPANION_PATHFINDING_DEFAULT_BOUNDS_MAXS
+	flightData.entSpeed				= COMPANION_PATHFINDING_DEFAULT_SPEED
+	flightData.initHeightOffset		= COMPANION_PATHFINDING_DEFAULT_INIT_HEIGHT_OFFSET	// Desired offset of the path point
+	flightData.minHeightOffset		= COMPANION_PATHFINDING_DEFAULT_MIN_HEIGHT_OFFSET	// Minimum Height above the point to test for Adjusted Height ( pushes the init point up )
+	flightData.finalOffset			= COMPANION_PATHFINDING_DEFAULT_FINAL_HEIGHT_OFFSET	// Final Offset - Make NEGATIVE to use for ceiling clearance
+	flightData.maxPathLength 		= COMPANION_PATHFINDING_DEFAULT_MAX_PATH_LENGTH		// Max Number of Path Nodes Allowed
+	flightData.maxLengthRatio 		= COMPANION_PATHFINDING_DEFAULT_MAX_LENGTH_RATIO	// Disallow paths if length exceeds this ratio in relation to a straight line to the destination
+	flightData.maxTimeDiff 			= COMPANION_PATHFINDING_DEFAULT_MAX_TIME_DIFF		// Disallow paths that take longer than this ratio in relation to the time a straight path would take
+	flightData.doorErrorRadius		= COMPANION_PATHFINDING_DEFAULT_DOOR_ERROR_RADIUS	// Limits the z height adjustment between two points within this range
+	flightData.doorEnterHeight		= COMPANION_PATHFINDING_DEFAULT_ENTER_DOOR_HEIGHT	// Min Height off the ground used for door entry with an offset point
+	flightData.eBailCondition		= COMPANION_PATHFINDING_DEFAULT_BAIL_CONDITION		// Decides what condition settings will bail on Pathfinding (in favour of straight path)
+	return flightData
+}
+
+array<float> function GetGroundHeightArrayForPath( array<vector> pathPoints, int arrayLength )
+{
+	array< float > groundHeightArray
+	groundHeightArray.resize( pathPoints.len(), 0 )
+
+	for ( int i = 0; i < arrayLength; ++i )
+	{
+		groundHeightArray[i] = pathPoints[i].z
+	}
+
+	return groundHeightArray
+}
+
+
+#endif
+
+#if SERVER
+void function Companion_AdjustHeight_Thread( entity player, entity pathEnt, vector destination, CompanionData companionData, array< float > groundHeight, CompanionFlightParams flightData, bool offsetEndPoint = false )
+{
+	if( !IsValid( player ) )
+		return
+	if( !IsValid( pathEnt ) )
+		return
+
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+	pathEnt.EndSignal( "OnDestroy" )
+
+	//Legend-Specific Signals//
+	if ( player.HasPassive( ePassives.PAS_VANTAGE ) )
+	{
+		player.EndSignal( "EndCompanionLifetime_Signal" )
+		player.EndSignal( VANTAGE_COMPANION_PATHFINDING_ROUTE_CLEARED_SIGNAL )
+	}
+
+	//The pathPoints themselves seem to be the only part of CompanionData that needs to be modified
+	//As such, I've internalized the indexHeightAdjusted locally within this function - There are array resizes external that may not be necessary anymore? //Devan M.
+	//array<bool> indexHeightAdjusted
+	companionData.indexHeightAdjusted.resize( companionData.orderRoute.len(), false )
+
+	//Assume the final point is already placed correctly
+	if( !offsetEndPoint )
+		companionData.indexHeightAdjusted[companionData.orderRoute.len() - 1] = true
+
+	//interpolate between heights; have to do after first for loop because nodes at i+1 aren't at initialized height
+	//issue is going in and out of building. Node right outside building before going in/out should be same height as
+	//indoor height.
+
+	float thisHeight
+	float nextHeight
+	TraceResults lookFwdTrace
+	vector thisNewVecPos
+	vector nextNewVecPos
+	bool adjustHeight
+
+	//Flight Data params
+	float initialHeightOffset 	= flightData.initHeightOffset
+	float doorErrorRadius		= flightData.doorErrorRadius
+	float doorErrorHeight		= flightData.doorEnterHeight
+
+
+	for ( int i = 0; i < companionData.orderRoute.len() - 1; ++i )
+	{
+		vector point = companionData.orderRoute[i]
+		vector nextPoint = companionData.orderRoute[i + 1]
+		point.z += initialHeightOffset
+		nextPoint.z += initialHeightOffset
+
+
+		if ( !companionData.indexHeightAdjusted[i] )
+		{
+			companionData.orderRoute[i] = AdjustCompanionPathPointForHeight( point, flightData )
+			companionData.indexHeightAdjusted[i] = true
+		}
+		if ( !companionData.indexHeightAdjusted[i + 1] )
+		{
+			companionData.orderRoute[i + 1] = AdjustCompanionPathPointForHeight( nextPoint, flightData )
+			companionData.indexHeightAdjusted[i + 1] = true
+		}
+
+		#if DEVELOPER
+			if ( COMPANION_PATHFINDING_DEBUG_DRAW )
+			{
+				float drawTime = 5.0
+				DebugDrawText( companionData.orderRoute[i], string(i), false, drawTime )
+			}
+		#endif //#if DEVELOPER
+
+		//
+		thisHeight = companionData.orderRoute[i].z
+		nextHeight = companionData.orderRoute[i + 1].z
+		adjustHeight = false
+		if ( fabs( thisHeight - nextHeight ) > FLT_EPSILON )
+		{
+			//error radius is so that we aren't adjusting height just because the difference is (for example) 1 inch
+			//a good error radius provides same expected behavior when entering and exiting buildings, and lowers the number of traces we make
+			if ( ( thisHeight + doorErrorRadius ) > nextHeight )
+			{
+				thisNewVecPos = companionData.orderRoute[i]
+				thisNewVecPos.z = groundHeight[i + 1] + doorErrorHeight
+				nextNewVecPos = companionData.orderRoute[i + 1]
+				nextNewVecPos.z = thisNewVecPos.z
+				adjustHeight = true
+			}
+			else if ( thisHeight < ( nextHeight + doorErrorRadius ) )
+			{
+				nextNewVecPos = companionData.orderRoute[i + 1]
+				nextNewVecPos.z = groundHeight[i] + doorErrorHeight
+				thisNewVecPos = companionData.orderRoute[i]
+				thisNewVecPos.z = nextNewVecPos.z
+				adjustHeight = true
+			}
+			if ( adjustHeight )
+			{
+				array<entity> ignoreArray = GetPlayerArray()
+				lookFwdTrace = TraceLine( companionData.orderRoute[i], companionData.orderRoute[i + 1], ignoreArray, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT, player )
+
+				if ( lookFwdTrace.fraction < 0.99 )
+				{
+					companionData.orderRoute[i] = thisNewVecPos
+					companionData.orderRoute[i + 1] = nextNewVecPos
+					++i //we skip next node as we just adjusted height for this/next node.
+					//no need to look at next node again, especially since we possibly just lowered/raised the height of the next node
+				}
+			}
+			#if DEVELOPER
+				if ( COMPANION_PATHFINDING_DEBUG_DRAW )
+				{
+					//Magenta are the actual points that we're trying to move to
+					//DebugDrawSphere( companionData.orderRoute[i], 10, COLOR_MAGENTA, false, 5 )
+					DebugDrawText( companionData.orderRoute[i], string(i), false, 5 )
+				}
+			#endif //#if DEVELOPER
+		}
+
+			WaitFrame()
+	}
+}
+#endif //#if SERVER
+
+#if SERVER
+#endif // SERVER
+
+
+#if SERVER
+void function DoCompanionPathfinding( entity player, entity pathEnt, vector goalPos, CompanionData currentCompanionData )
+{
+
+	/////////////////////////////////////////////////////////////////////////
+	vector entCurrentPos = pathEnt.GetOrigin()
+	// Pathfinding
+	if ( currentCompanionData.remainingPathNodes > 0 )
+	{
+		vector toGoalPos = goalPos - entCurrentPos
+		bool newDestinationJustSet = false
+		TraceResults trHull
+
+		//if we ever have LOS on the final position, just go there
+		trHull = TraceLine( entCurrentPos, currentCompanionData.orderRoute[currentCompanionData.orderRoute.len() - 1], [ player ], TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+		if (trHull.fraction >= .99)
+		{
+			#if DEVELOPER
+				if ( COMPANION_PATHFINDING_DEBUG_DRAW )
+				{
+					//DebugDrawArrow( entCurrentPos, trHull.endPos, 2, <0, 255, 0>, false, 6 )
+					//DebugDrawSphere( trHull.endPos, 2, <0, 255, 0>, false, 6 )
+
+					for( int i = currentCompanionData.currentPathNode; i < currentCompanionData.orderRoute.len(); i++ )
+					{
+						//DebugDrawSphere( currentCompanionData.orderRoute[i], 11, <255, 0, 0>, false, 4.5 )
+					}
+				}
+			#endif //#if DEVELOPER
+
+			newDestinationJustSet = true
+			currentCompanionData.orderRoute.clear()
+			currentCompanionData.remainingPathNodes = 0
+
+			//Legend-Specific Signals//
+			if ( player.HasPassive( ePassives.PAS_VANTAGE ) )
+				Signal(player, VANTAGE_COMPANION_PATHFINDING_ROUTE_CLEARED_SIGNAL)
+		}
+
+		int numberOfLoops = 0
+		//This loop checks to see if we can skip the current point and go to the next point if we already have a clear path to it
+		while ( currentCompanionData.remainingPathNodes > 0 )
+		{
+			//this reduces our accuracy a bit, but limits the max number of traces in a frame
+			if ( numberOfLoops > 8 )
+				break
+			numberOfLoops++
+			int currentNode = currentCompanionData.currentPathNode
+			int nextNode = currentNode + 1
+			Assert( (nextNode) < currentCompanionData.orderRoute.len() )
+			//if adjustment of height thread hasn't gotten to next we shouldn't try going there
+			if ( !currentCompanionData.indexHeightAdjusted[nextNode] )
+			{
+				break
+			}
+
+			//try changing this to a line trace? could be that part of the hull is somehow clipping something
+			//and therefore not correctly setting distancetonextpoint
+			trHull = TraceLine( entCurrentPos, currentCompanionData.orderRoute[nextNode], [ player ], TRACE_MASK_PLAYERSOLID , TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+			if (trHull.fraction < .99)
+			{
+				#if DEVELOPER
+					if ( COMPANION_PATHFINDING_DEBUG_DRAW )
+					{
+						//DebugDrawArrow( entCurrentPos, currentCompanionData.orderRoute[nextNode], 2, COLOR_PURPLE, false, 1 )
+						//DebugDrawSphere( trHull.endPos, 2, <255, 0, 0>, false, 1 )
+					}
+				#endif //#if DEVELOPER
+				break
+			}
+
+			#if DEVELOPER
+				if ( COMPANION_PATHFINDING_DEBUG_DRAW )
+				{
+					//DebugDrawArrow( entCurrentPos, currentCompanionData.orderRoute[nextNode], 2, <0, 255, 0>, false, 1 )
+					//DebugDrawSphere( trHull.endPos, 2, <0, 255, 0>, false, 1 )
+					//a red sphere is added around points we skip because we have LoS on the NEXT point, so we can skip the current one
+					//DebugDrawSphere( currentCompanionData.orderRoute[currentNode], 11, <255, 0, 0>, false, 3.5 )
+					//DebugDrawSphere( entCurrentPos, 2, <255, 0, 0>, false, 3.5 )
+					DebugDrawText( entCurrentPos, "" + currentNode, false, 3.5 )
+				}
+			#endif //#if DEVELOPER
+
+			currentCompanionData.currentPathNode++
+			currentCompanionData.remainingPathNodes--
+			currentCompanionData.startedMovingCloser = false
+
+			currentCompanionData.distanceToNextPoint = Length(currentCompanionData.orderRoute[nextNode] - entCurrentPos)
+			currentCompanionData.dirToNextPoint = Normalize( currentCompanionData.orderRoute[nextNode] - currentCompanionData.orderRoute[currentNode] )
+			newDestinationJustSet = true
+		}
+
+		//this checks if we're at the 'next' position, we can skip this if we just set a new position
+		if ( !newDestinationJustSet )
+		{
+			//we check if we're at the new position by seeing if we've been moving towards the position and we're either close enough OR have stopped getting closer.
+
+			vector newToGoalPos = currentCompanionData.orderRoute[currentCompanionData.currentPathNode] - entCurrentPos
+			float currentLengthToGoal = Length(newToGoalPos)
+			float currentDotToGoal = 1
+			if ( currentLengthToGoal > FLT_EPSILON )
+			{
+				currentDotToGoal = DotProduct( ( newToGoalPos / currentLengthToGoal ), currentCompanionData.dirToNextPoint )
+			}
+			if (  currentLengthToGoal < currentCompanionData.distanceToNextPoint )
+			{
+				currentCompanionData.startedMovingCloser = true
+			}
+
+			//if we're already close enough OR we're going away from the goal OR we've stopped getting closer, we're there.
+			if ( currentLengthToGoal < COMPANION_PATHFINDING_NODE_COMPLETION_DIST ||
+			currentDotToGoal < 0 ||
+			( currentCompanionData.startedMovingCloser && currentLengthToGoal >= currentCompanionData.distanceToNextPoint ))
+			{
+				#if DEVELOPER
+					if ( COMPANION_PATHFINDING_DEBUG_DRAW )
+					{
+						//A green sphere is added around points we've successfully moved to
+						//DebugDrawSphere( currentCompanionData.orderRoute[currentCompanionData.currentPathNode], 11, <0, 255, 0>, false, 3.5 )
+					}
+				#endif //#if DEVELOPER
+
+				currentCompanionData.currentPathNode++
+				currentCompanionData.remainingPathNodes--
+				currentCompanionData.startedMovingCloser = false
+				if ( currentCompanionData.remainingPathNodes > 0 )
+				{
+					int currentPathNode = currentCompanionData.currentPathNode
+
+					currentCompanionData.distanceToNextPoint = Length(currentCompanionData.orderRoute[currentPathNode] - entCurrentPos)
+					currentCompanionData.dirToNextPoint = Normalize( currentCompanionData.orderRoute[currentPathNode] - currentCompanionData.orderRoute[currentPathNode - 1] )
+				}
+			}
+		}
+
+		if ( currentCompanionData.remainingPathNodes <= 0 )
+		{
+			currentCompanionData.orderRoute.clear()
+
+			#if DEVELOPER
+				if ( COMPANION_PATHFINDING_DEBUG_DRAW )
+				{
+					//Orange sphere is drawn when echo stops pathfinding and transitions to just going straight to the
+					//DebugDrawSphere( entCurrentPos, 12, COLOR_ORANGE, false, 6 )
+				}
+			#endif //#if DEVELOPER
+		}
+	}
+
+}
+#endif // SERVER
+
+#if SERVER
+vector function AdjustCompanionPathPointForHeight( vector proposedCompanionPos, CompanionFlightParams flightData )
+{
+	vector adjustedPos = proposedCompanionPos
+
+	vector endTracePoint    = proposedCompanionPos + UP_VECTOR * flightData.minHeightOffset
+
+	TraceResults trHullUp = TraceHull( adjustedPos , endTracePoint , flightData.boundsMin, flightData.boundsMax, [  ], TRACE_MASK_PLAYERSOLID , TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+
+	adjustedPos = trHullUp.endPos + ( UP_VECTOR * flightData.finalOffset )
+
+	#if DEVELOPER
+		if ( COMPANION_PATHFINDING_DEBUG_DRAW )
+		{
+			float drawTime = 5.0
+			vector drawColor = (trHullUp.fraction >= 1.0) ? <0.5, 1, 0.5> : <1, 0.65, 0>
+
+			//DebugDrawText( adjustedPoint, "Adjusted pos", false, drawTime )
+			//DebugDrawMark( adjustedPos, 5, <0.5, 1, 0.5>, false, drawTime )
+			//DebugDrawBox( adjustedPos, flightData.boundsMin, flightData.boundsMax, drawColor, 1, drawTime )
+		}
+	#endif
+
+	return adjustedPos
+}
+
+
+#endif //SERVER

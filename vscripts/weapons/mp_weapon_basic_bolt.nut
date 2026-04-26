@@ -19,13 +19,16 @@ void function MpWeaponBasicBolt_Init()
 	BasicBoltPrecache()
 
 	#if SERVER && DEVELOPER
-	AddClientCommandCallback( "fs_setweaponitem", ClientCommand_dev_set_weapon_item )
+		AddClientCommandCallback( "fs_setweaponitem", ClientCommand_dev_set_weapon_item )
 	#endif
 }
 
 #if SERVER && DEVELOPER
 bool function ClientCommand_dev_set_weapon_item( entity player, array<string> args )
 {
+	if( !args.len() )
+		return false
+
 	itemFromWeapon = args[0].tointeger()
 	return true
 }
@@ -134,7 +137,7 @@ void function OnProjectileCollision_weapon_basic_bolt( entity projectile, vector
 			break
 		}
 		entity loot = SpawnGenericLoot( item, pos, normal, 1 )
-		FakePhysicsThrow( null, loot, <0,0,150> )
+		FakePhysicsThrow( null, loot, <0,0,150>, false )
 	}
 	#endif
 

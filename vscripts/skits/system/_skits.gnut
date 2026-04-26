@@ -29,9 +29,9 @@ global function HighlightEntsForDuration
 global function BroadcastTestMsg
 global function BroadcastHudSplashToRadius
 
-#if DEV
+#if DEVELOPER
 global function DEV_Skits_ToggleOverlay
-#endif // DEV
+#endif // DEVELOPER
 
 
 ////////////////////
@@ -110,7 +110,7 @@ void function SkitSystem_Init()
 {
 	if ( isInitialized )
 	{
-		#if DEV
+		#if DEVELOPER
 			printf( "Skit System is already initialized" )
 		#endif
 		return
@@ -277,9 +277,9 @@ void function Skit_LaunchInstance( SkitInstance si )
 
 void function OnGameStateEnterPlaying()
 {
-#if DEV
+#if DEVELOPER
 	thread DebugFrameThread()
-#endif // DEV
+#endif // DEVELOPER
 }
 
 /////
@@ -346,7 +346,7 @@ void function DEV_PrintAllSkits()
 /////
 //
 
-#if DEV
+#if DEVELOPER
 bool s_debugDrawFrame = false
 void function DEV_Skits_ToggleOverlay()
 {
@@ -391,7 +391,7 @@ void function DebugDrawFrame()
 		DebugDrawScreenText( 0.01, 0.55, promptText )
 	}
 }
-#endif // DEV
+#endif // DEVELOPER
 
 
 /////
@@ -674,4 +674,3 @@ void function Instance_BroadcastHudSplashToRadius( entity wp )
 	AnnouncementMessageSweep( GetLocalClientPlayer(), messageText, subText, <220,220,220>, $"", SFX_HUD_ANNOUNCE_QUICK, duration )
 }
 #endif // CLIENT
- 

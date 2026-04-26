@@ -135,12 +135,12 @@ void function OnSpectatorTargetChanged( entity player, entity prevTarget, entity
 
 	if ( IsValid( newTarget ) && PlayerHasPassive( newTarget, ePassives.PAS_VALK ) )
 	{
-		//bool isPlayerInAir = StatusEffect_HasSeverity( newTarget, eStatusEffect.skyward_embark )
-		//UpdateValkFlightRui( newTarget, isPlayerInAir )
+		bool isPlayerInAir = StatusEffect_HasSeverity( newTarget, eStatusEffect.skyward_embark )
+		UpdateValkFlightRui( newTarget, isPlayerInAir )
 	}
 	else if ( IsValid( prevTarget ) && PlayerHasPassive( prevTarget, ePassives.PAS_VALK ) )
 	{
-		//UpdateValkFlightRui( newTarget, false );
+		UpdateValkFlightRui( newTarget, false );
 	}
 }
 
@@ -436,12 +436,6 @@ void function ValkUlt_DeployToPeakStateForValk( entity valk, entity weapon )
 	// --- status effect initializes RUI, redirects pings to self, disables tactical ---
 	StatusEffect_AddEndless( valk, eStatusEffect.skyward_embark, 1.0 )
 
-	// Play hover animation - Anim_DisableUpdatePosition() allows visual playback without locking movement
-	if ( valk.Anim_HasSequence( "valkyrie_ultimate_hover" ) )
-	{
-		valk.Anim_Play( "valkyrie_ultimate_hover" )
-		valk.SetUseDoomedAnims(true )
-	}
 
 	// ==================== Set 3rd person settings ================//
 	{
@@ -480,7 +474,7 @@ void function ValkUlt_DeployToPeakStateForValk( entity valk, entity weapon )
 		ultProxy.AddUsableValue( USABLE_BY_TEAMMATES | USABLE_BLOCK_CONTINUOUS_USE | USABLE_NO_FOV_REQUIREMENTS | USABLE_CUSTOM_HINTS )
 		valk.p.valkUltProxyEnt = ultProxy
 
-		SetCallback_CanUseEntityCallback_Retail( ultProxy, ValkUlt_CanUseAlly )
+		SetCallback_CanUseEntityCallback( ultProxy, ValkUlt_CanUseAlly )
 		AddCallback_OnUseEntity_ClientServer( ultProxy, ValkUlt_AllyUse )
 	}
 
@@ -959,8 +953,8 @@ void function ValkUlt_ShowEmbarkUI( entity player, int statusEffect, bool actual
 	thread ValkUlt_ChargeBarSounds( player, SKYWARD_WAIT_TIME_BEFORE_LAUNCH )
 
 	entity weapon = player.GetOffhandWeapon ( OFFHAND_ULTIMATE )
-	//RuiSetGameTime( file.countdownRui, "startTime", weapon.w.valkUltStartTime )
-	//RuiSetGameTime( file.countdownRui, "endTime", weapon.w.valkUltStartTime + SKYWARD_WAIT_TIME_BEFORE_LAUNCH + 0.1 )
+	RuiSetGameTime( file.countdownRui, "startTime", weapon.w.valkUltStartTime )
+	RuiSetGameTime( file.countdownRui, "endTime", weapon.w.valkUltStartTime + SKYWARD_WAIT_TIME_BEFORE_LAUNCH + 0.1 )
 }
 #endif // CLIENT
 
@@ -1114,7 +1108,7 @@ void function OnPropScriptCreated( entity proxy )
 	if ( proxy.GetScriptName() != SKYWARD_PROXY_SCRIPT_NAME )
 		return
 
-	SetCallback_CanUseEntityCallback_Retail( proxy, ValkUlt_CanUseAlly )
+	SetCallback_CanUseEntityCallback( proxy, ValkUlt_CanUseAlly )
 	AddEntityCallback_GetUseEntOverrideText( proxy, ValkUlt_UseOverrideText )
 }
 #endif
@@ -1158,7 +1152,7 @@ bool function ValkUlt_CanUseAlly( entity ally, entity proxy, int useFlags )
 
 	/*if ( !ally.Player_IsSkywardLaunching() )
 	{
-		if ( ally.Player_IsSkydiving() )
+		if ( ally.IsSkydiving() )
 			return false
 
 		if ( !ally.IsOnGround() )
@@ -1596,16 +1590,15 @@ void function ValkUlt_DoClientSoundsForLaunch( entity owner, float slowUpTime, f
  */
 void function UpdateLaunchRui( entity owner, float totalUpDistance )
 {
-	return
 	owner.EndSignal( "OnDeath" )
 	owner.EndSignal( "BleedOut_OnStartDying" )
 	owner.EndSignal( "OnSkywardInterrupted" )
 
 	file.launchRui = CreateFullscreenRui( $"ui/skyward_launch.rpak" )
 	thread Valk_EnableHudColorCorrection()
-	//RuiSetFloat( file.launchRui, "seaHeight", GetSeaHeightForDisplay() )
-	//RuiTrackFloat3( file.launchRui, "playerPos", owner, RUI_TRACK_ABSORIGIN_FOLLOW )
-	//RuiSetFloat( file.launchRui, "maxHeight", totalUpDistance )
+	RuiSetFloat( file.launchRui, "seaHeight", GetSeaHeightForDisplay() )
+	RuiTrackFloat3( file.launchRui, "playerPos", owner, RUI_TRACK_ABSORIGIN_FOLLOW )
+	RuiSetFloat( file.launchRui, "maxHeight", totalUpDistance )
 
 	OnThreadEnd ( function() : ( owner )
 	{
@@ -1617,9 +1610,9 @@ void function UpdateLaunchRui( entity owner, float totalUpDistance )
 	{
 		if ( file.launchRui )
 		{
-			//RuiSetFloat3( file.launchRui, "cameraAngle", owner.CameraAngles() )
-			//RuiSetFloat( file.launchRui, "seaHeight", GetSeaHeightForDisplay() )
-			//RuiSetBool( file.launchRui, "isFullmapOpen", Fullmap_IsVisible() || IsScoreboardShown())
+			RuiSetFloat3( file.launchRui, "cameraAngle", owner.CameraAngles() )
+			RuiSetFloat( file.launchRui, "seaHeight", GetSeaHeightForDisplay() )
+			RuiSetBool( file.launchRui, "isFullmapOpen", Fullmap_IsVisible() || IsScoreboardShown())
 		}
 		WaitFrame()
 	}
@@ -1642,19 +1635,25 @@ bool function DestroyValkLaunchRui()
 
 void function UpdateValkFlightRui( entity player, bool isInAir )
 {
-	/*#if CLIENT
+	#if CLIENT
 		bool isValk = false
-		if ( LoadoutSlot_IsReady( ToEHI( player ), Loadout_CharacterClass() ) )
-			isValk = ItemFlavor_GetAsset( LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() ) ) == $"settings/itemflav/character/valkyrie.rpak"
+		if ( LoadoutSlot_IsReady( ToEHI( player ), Loadout_Character() ) )
+			isValk = ItemFlavor_GetAsset( LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() ) ) == $"settings/itemflav/character/valkyrie.rpak"
 
 		bool showValkRui = isInAir && isValk
 
-		RuiSetBool( GetDpadMenuRui(), "isValkAirborn", showValkRui )
-		RuiSetBool( GetWeaponRui(), "isValkAirborn", showValkRui )
-		RuiSetBool( GetTacticalRui(), "isValkAirborn", showValkRui )
-		RuiSetBool( GetUltimateRui(), "isValkAirborn", showValkRui )
-		RuiSetBool( GetMinimapFrameRui(), "isValkAirborn", showValkRui )
-		RuiSetBool( GetMinimapYouRui(), "isValkAirborn", showValkRui )
+		if ( GetDpadMenuRui() != null )
+			RuiSetBool( GetDpadMenuRui(), "isValkAirborn", showValkRui )
+		if ( GetWeaponRui() != null )
+			RuiSetBool( GetWeaponRui(), "isValkAirborn", showValkRui )
+		if ( GetTacticalRui() != null )
+			RuiSetBool( GetTacticalRui(), "isValkAirborn", showValkRui )
+		if ( GetUltimateRui() != null )
+			RuiSetBool( GetUltimateRui(), "isValkAirborn", showValkRui )
+		if ( GetMinimapFrameRui() != null )
+			RuiSetBool( GetMinimapFrameRui(), "isValkAirborn", showValkRui )
+		if ( GetMinimapYouRui() != null )
+			RuiSetBool( GetMinimapYouRui(), "isValkAirborn", showValkRui )
 		if ( Valk_GetJetPackRui() != null )
 			RuiSetBool( Valk_GetJetPackRui(), "isValkAirborn", showValkRui )
 
@@ -1689,13 +1688,13 @@ void function UpdateValkFlightRui( entity player, bool isInAir )
 		{
 			DestroyAllValkRui()
 		}
-	#endif*/
+	#endif
 }
 
 #if CLIENT
 void function DestroyAllValkRui()
 {
-	/*if ( GetDpadMenuRui() != null )
+	if ( GetDpadMenuRui() != null )
 		RuiSetBool( GetDpadMenuRui(), "isValkAirborn", false )
 	if ( GetWeaponRui() != null )
 		RuiSetBool( GetWeaponRui(), "isValkAirborn", false )
@@ -1720,7 +1719,7 @@ void function DestroyAllValkRui()
 	thread Valk_DisableHudColorCorrection()
 	file.flightRui    = null
 	file.launchRui    = null
-	file.countdownRui = null*/
+	file.countdownRui = null
 }
 
 #endif
@@ -1879,4 +1878,3 @@ void function ValkUlt_EnterGameStateResolution()
 		}
 	#endif
 }
- 

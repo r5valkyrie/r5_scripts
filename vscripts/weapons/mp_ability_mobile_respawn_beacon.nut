@@ -9,7 +9,7 @@ global function OnWeaponDeactivate_mobile_respawn
 global function OnWeaponPrimaryAttack_mobile_respawn
 global function OnWeaponPrimaryAttackAnimEvent_mobile_respawn
 global function GetRespawnStationUseTime_Mobile
-//global function MobileRespawn_SetDeployPositionValidationFunc
+global function MobileRespawn_SetDeployPositionValidationFunc
 
 #if SERVER
 global function RespawnBeaconStartUse_Mobile
@@ -22,7 +22,15 @@ global function RespawnBeacon_AddCallback_OnMobileRespawnBeaconDeployTriggered
 #if SERVER && DEVELOPER
 global function DEV_Spawn_MobileRespawnBeacon
 #endif // SERVER && DEVELOPER
-const string VOID_RING_PROP_SCRIPTNAME = "void_ring"
+
+
+
+
+
+
+
+
+
 
 //-----------------------------------------------------------------------------
 // Variables
@@ -47,6 +55,19 @@ const float MOBILE_RESPAWN_BEACON_SLOPED_LANDING_LIMIT = 0.3 	// Slope > this va
 
 const string MOBILE_RESPAWN_BEACON_MOVER_SCRIPTNAME = "mobile_respawn_beacon_mover"
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 struct
 {
 	bool mobileRespawnDeployed
@@ -57,7 +78,11 @@ struct
 		array< void functionref(entity) > Callbacks_OnMobileRespawnBeaconDeployTriggered
 	#endif
 
-	//CarePackagePlacementInfo functionref( entity ) deployPositionValidationFunc
+
+
+
+
+	CarePackagePlacementInfo functionref( entity ) deployPositionValidationFunc
 } file
 
 //-----------------------------------------------------------------------------
@@ -65,7 +90,7 @@ struct
 //-----------------------------------------------------------------------------
 void function MobileRespawnBeacon_Init()
 {
-	//PrecacheScriptString( MOBILE_RESPAWN_BEACON_SCRIPTNAME )
+	PrecacheScriptString( MOBILE_RESPAWN_BEACON_SCRIPTNAME )
 
 	SURVIVAL_Loot_RegisterConditionalCheck( MOBILE_RESPAWN_BEACON_WEAPON_REF, MobileRespawn_ConditionalCheck )
 	PrecacheModel( MOBILE_RESPAWN_BEACON_MODEL )
@@ -78,17 +103,24 @@ void function MobileRespawnBeacon_Init()
 	PrecacheImpactEffectTable( MOBILE_RESPAWN_BEACON_IMPACT_TABLE )
 	PrecacheImpactEffectTable( "mobile_respawn_dust" )
 	RegisterSignal( "MobileBeaconLanded" )
-	//MobileRespawn_SetDeployPositionValidationFunc( GetCarePackagePlacementInfo )
+	MobileRespawn_SetDeployPositionValidationFunc( GetCarePackagePlacementInfo )
+
+
+
+
+
+
+
 
 	#if CLIENT
 		RegisterSignal( "MobileRespawnPlacement" )
 	#endif
 }
 
-//void function MobileRespawn_SetDeployPositionValidationFunc( CarePackagePlacementInfo functionref( entity ) validationFunc )
-//{
-//	file.deployPositionValidationFunc = validationFunc
-//}
+void function MobileRespawn_SetDeployPositionValidationFunc( CarePackagePlacementInfo functionref( entity ) validationFunc )
+{
+	file.deployPositionValidationFunc = validationFunc
+}
 
 void function OnWeaponActivate_mobile_respawn( entity weapon )
 {
@@ -103,6 +135,13 @@ void function OnWeaponActivate_mobile_respawn( entity weapon )
 		}
 
 		string name = weapon.GetWeaponClassName()
+
+
+
+
+
+
+
 
 			{
 				OnBeginPlacingMobileRespawn( weapon, ownerPlayer )
@@ -133,13 +172,11 @@ void function OnWeaponDeactivate_mobile_respawn( entity weapon )
 #if SERVER
 void function AutoEquipInventoryItem( entity takeWeapon, entity ownerPlayer )
 {
-	wait 0.2
 	ownerPlayer.TakeWeaponByEnt( takeWeapon )
 
 	// We need to call this so the mobile respawn beacon can be taken out of the slot (it stays linked to the hotkey otherwise)
 	// It also re-populates the slot with an ordnance.
 	waitthread SURVIVAL_AutoEquipOrdnanceFromInventory( ownerPlayer, false )
-	ownerPlayer.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_2 )
 	Remote_CallFunction_Replay( ownerPlayer, "ServerCallback_RefreshInventoryAndWeaponInfo" )
 }
 #endif
@@ -149,7 +186,7 @@ var function OnWeaponPrimaryAttack_mobile_respawn( entity weapon, WeaponPrimaryA
 	entity ownerPlayer = weapon.GetWeaponOwner()
 	Assert( ownerPlayer.IsPlayer() )
 
-	CarePackagePlacementInfo placementInfo = GetCarePackagePlacementInfo( ownerPlayer )
+	CarePackagePlacementInfo placementInfo = file.deployPositionValidationFunc( ownerPlayer )
 
 	if ( placementInfo.failed )
 		return 0
@@ -160,7 +197,21 @@ var function OnWeaponPrimaryAttack_mobile_respawn( entity weapon, WeaponPrimaryA
 
 		string name = weapon.GetWeaponClassName()
 
+
+
+
+
+
+
+
 		{
+			LootData lootData = EquipmentSlot_GetEquippedLootDataForSlot( ownerPlayer, "gadgetslot" )
+			if( lootData.ref != MOBILE_RESPAWN_BEACON_WEAPON_REF )
+			{
+				SwapToLastEquippedPrimary( ownerPlayer )
+				return 0
+			}
+
 			thread RespawnBeacon_SpawnMobileBeacon( origin, angles, placementInfo.surfaceNormal, ownerPlayer )
 		}
 		foreach ( callbackFunc in file.Callbacks_OnMobileRespawnBeaconDeployTriggered )
@@ -180,8 +231,7 @@ var function OnWeaponPrimaryAttack_mobile_respawn( entity weapon, WeaponPrimaryA
 	#if SERVER
 		TryPlayWeaponBattleChatterLine( ownerPlayer, weapon )
 
-		//LiveAPI_SendInventoryActionWeapon( eLiveAPI_EventTypes.inventoryUse, ownerPlayer, weapon )
-		thread AutoEquipInventoryItem( weapon, ownerPlayer )
+		LiveAPI_SendInventoryActionWeapon( eLiveAPI_EventTypes.inventoryUse, ownerPlayer, weapon )
 	#endif
 
 	int ammoReq = weapon.GetAmmoPerShot()
@@ -314,6 +364,13 @@ string function MobileRespawnBeacon_PLV_FastMRB_SpawnInType()
 
 	string spawnType = "default"
 
+
+
+
+
+
+
+
 	return( spawnType )
 }
 
@@ -335,7 +392,7 @@ void function SpawnMobileBeacon_Sequence( vector origin, vector angles, vector s
 
 	array<int> realmsToAdd = IsValid( owner ) ? owner.GetRealms() : [ eRealms.DEFAULT ]
 
-	#if DEVELOPER
+	#if DEV
 		if ( MOBILE_RESPAWN_BEACON_DEBUG_DRAW )
 		{
 			vector anglesOnSurface = AnglesOnSurface( surfaceNormal, AnglesToForward( angles ) )
@@ -348,7 +405,7 @@ void function SpawnMobileBeacon_Sequence( vector origin, vector angles, vector s
 
 	// Setup dynamic and static then attach
 	entity respawnBeacon = CreatePropDynamic( MOBILE_RESPAWN_BEACON_MODEL, origin + <0, 0, 20000>, angles, 6 )
-	entity beaconMover = CreateScriptMover_NEW( MOBILE_RESPAWN_BEACON_MOVER_SCRIPTNAME, respawnBeacon.GetOrigin(), respawnBeacon.GetAngles() )
+	entity beaconMover = CreateScriptMover( MOBILE_RESPAWN_BEACON_MOVER_SCRIPTNAME, respawnBeacon.GetOrigin(), respawnBeacon.GetAngles() )
 	respawnBeacon.SetParent( beaconMover )
 	respawnBeacon.Anim_PlayOnly( "mobile_respawn_beacon_closed" ) // Set it up to be the closed position
 	respawnBeacon.SetCollisionAllowed( false ) // Don't allow collision while it's falling.
@@ -365,7 +422,7 @@ void function SpawnMobileBeacon_Sequence( vector origin, vector angles, vector s
 		beaconMover.AddToRealm( realm )
 	}
 
-	//beaconMover.Hide()
+	beaconMover.Hide()
 
 	// Setup all FX that exist for the lifetime of the respawnBeacon
 	entity threatIndicator = CreateThreatIndicator( origin + <0, 0, 48>, eThreatIndicatorID.GRENADE_INDICATOR_GENERIC, 160.0 )
@@ -391,10 +448,10 @@ void function SpawnMobileBeacon_Sequence( vector origin, vector angles, vector s
 	float LandingAnim_StartTime = TotalTimeToLand - LandingAnim_Duration // We subtract the landing animation so the total time the player sees visually is our total desired time (TotalTimeToLand)
 	Assert( LandingAnim_StartTime > 0.0 )
 	CreateAirdropBadPlace( respawnBeacon, origin, MOBILE_RESPAWN_BEACON_BAD_AIRSPACE_RADIUS )  // Prevent placement of beacons too close together while it's coming down
-	#if DEVELOPER
+	#if DEV
 		if ( MOBILE_RESPAWN_BEACON_DEBUG_DRAW )
 		{
-			 DebugDrawCylinder( origin, <270.0, 0.0, 0.0>, MOBILE_RESPAWN_BEACON_BAD_AIRSPACE_RADIUS, 2.0, 255,0,0, true, TotalTimeToLand )
+			 DebugDrawCylinder( origin, <270.0, 0.0, 0.0>, MOBILE_RESPAWN_BEACON_BAD_AIRSPACE_RADIUS, 2.0, COLOR_RED, true, TotalTimeToLand )
 			DebugDrawAngles( origin, angles, TotalTimeToLand )
 			//DebugDrawText( origin, format( "Angle: %1.2f|Slope: %1.2f", DotProduct( AnglesToUp(origin), <1, 0 ,0> ), fabs(angles.x) + fabs(angles.y) ), true, TotalTimeToLand )
 		}
@@ -435,7 +492,7 @@ void function SpawnMobileBeacon_Sequence( vector origin, vector angles, vector s
 	if ( IsValid( owner ) )
 		SetTeam( respawnChamber, owner.GetTeam() )
 
-	/*if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
 	{
 		if ( IsValid(owner) )
 		{
@@ -445,7 +502,7 @@ void function SpawnMobileBeacon_Sequence( vector origin, vector angles, vector s
 		{
 			AddStagingCleanupEnt ( respawnChamber )
 		}
-	}*/
+	}
 
 	CreateAirdropBadPlace( respawnChamber, origin, MOBILE_RESPAWN_BEACON_BAD_AIRSPACE_RADIUS ) // Prevent two respawn beacons from being placed too close to each other
 	if ( isSlopeLanding )
@@ -473,6 +530,12 @@ void function SpawnMobileBeacon_Sequence( vector origin, vector angles, vector s
 		{
 
 
+
+
+
+
+
+
 			case "default":
 			default:
 				void functionref( entity ent, entity player, ExtendedUseSettings settings ) successFunc = RespawnBeacon_GetSuccessFunc( respawnChamber )
@@ -482,6 +545,34 @@ void function SpawnMobileBeacon_Sequence( vector origin, vector angles, vector s
 		}
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #endif // SERVER
 
@@ -576,7 +667,7 @@ void function SpawnMobileBeacon_SetupPushAway_Thread( entity beaconPod, vector l
 	entity pushAwayTrigger = CreateEntity( "trigger_cylinder" )
 	pushAwayTrigger.RemoveFromAllRealms()
 	pushAwayTrigger.AddToOtherEntitysRealms( beaconPod )
-	pushAwayTrigger.SetRadius( 100 )
+	pushAwayTrigger.SetCylinderRadius( 100 )
 	pushAwayTrigger.SetAboveHeight( 256 )
 	pushAwayTrigger.SetBelowHeight( 16 ) // Need this because the player or entity can sink into the ground a tiny bit and we check player feet not half height
 	pushAwayTrigger.SetOrigin( landingPos)
@@ -584,10 +675,10 @@ void function SpawnMobileBeacon_SetupPushAway_Thread( entity beaconPod, vector l
 	DispatchSpawn( pushAwayTrigger )
 
 	// Re-enable this to see the cylinder of prop destruction
-	#if DEVELOPER
+	#if DEV
 		if ( MOBILE_RESPAWN_BEACON_DEBUG_DRAW )
 		{
-			DebugDrawCylinder( pushAwayTrigger.GetOrigin() - <0.0, 0.0, pushAwayTrigger.GetBelowHeight()>, <270.0, 0.0, 0.0>, pushAwayTrigger.GetRadius(), pushAwayTrigger.GetAboveHeight() + pushAwayTrigger.GetBelowHeight(), 255,255,255, true, 3.0 )
+			DebugDrawCylinder( pushAwayTrigger.GetOrigin() - <0.0, 0.0, pushAwayTrigger.GetBelowHeight()>, <270.0, 0.0, 0.0>, pushAwayTrigger.GetCylinderRadius(), pushAwayTrigger.GetAboveHeight() + pushAwayTrigger.GetBelowHeight(), COLOR_WHITE, true, 3.0 )
 		}
 	#endif
 
@@ -616,10 +707,13 @@ void function SpawnMobileBeacon_PushAway_Callback( entity trigger, entity ent )
 	{
 		// Push players away
 
-		/*if ( ent.IsPlayer() || EntIsHoverVehicle( ent ) )
+		if ( ent.IsPlayer() || EntIsHoverVehicle( ent ) )
+
+
+
 		{
 			thread SpawnMobileBeacon_PushAway_Thread( trigger, ent )
-		}*/
+		}
 	}
 }
 #endif // SERVER
@@ -714,13 +808,13 @@ void function RespawnUserTeam_Mobile( entity ent, entity playerUser, ExtendedUse
 		vector slopeFwd = Normalize( surfaceNormal - <0, 0, 1> )
 		vector rotatedBeaconAngles = AnglesOnSurface( surfaceNormal, slopeFwd ) // This changes the yaw of the mrb to be in the direction of the slope
 
-		beaconMover = CreateScriptMover_NEW( MOBILE_RESPAWN_BEACON_MOVER_SCRIPTNAME, beaconPlaceholder.GetOrigin(), ent.GetAngles() )
+		beaconMover = CreateScriptMover( MOBILE_RESPAWN_BEACON_MOVER_SCRIPTNAME, beaconPlaceholder.GetOrigin(), ent.GetAngles() )
 		beaconPlaceholder.SetParent( beaconMover )
 		beaconMover.Hide()
 		beaconMover.NonPhysicsRotateTo( rotatedBeaconAngles, 0.25, 0, 0 )
 	}
 
-	array<entity> childrenOfOldEntity = GetChildren( ent )
+	array<entity> childrenOfOldEntity = ent.GetChildren()
 	array< entity > childrenToDrop
 
 	foreach (entity child in childrenOfOldEntity)
@@ -752,7 +846,7 @@ void function RespawnUserTeam_Mobile( entity ent, entity playerUser, ExtendedUse
 	if ( IsValid( beaconPlaceholder ) )
 	{
 		beaconPlaceholder.ClearParent() // So we can play dissolve without the beaconMover destroying us prematurely
-		beaconPlaceholder.Dissolve( ENTITY_DISSOLVE_NONE, <0,0,0>, 1000 )
+		beaconPlaceholder.Dissolve( ENTITY_DISSOLVE_NONE, <0,0,0>, 200 )
 	}
 
 	if ( beaconMover != null )
@@ -764,7 +858,7 @@ void function RespawnUserTeam_Mobile( entity ent, entity playerUser, ExtendedUse
 	foreach ( child in childrenToDrop )
 	{
 		if ( IsValid( child ) )
-			FakePhysicsThrow_Retail( child.GetOwner(), child, <0, 0, 0>, false )
+			FakePhysicsThrow( child.GetOwner(), child, <0, 0, 0>, false )
 	}
 
 
@@ -797,7 +891,7 @@ void function MobileRespawnPlacement( entity weapon, entity player, asset modelN
 
 	while ( true )
 	{
-		CarePackagePlacementInfo placementInfo = GetCarePackagePlacementInfo( player )
+		CarePackagePlacementInfo placementInfo = file.deployPositionValidationFunc( player )
 
 		beacon.SetOrigin( placementInfo.origin )
 		beacon.SetAngles( placementInfo.angles )
@@ -827,10 +921,430 @@ void function OnBeginPlacingMobileRespawn( entity weapon, entity player )
 }
 #endif // CLIENT
 
+#if SERVER
+
+
+
+
+
+
+
+
+
+#endif // SERVER
+
+#if SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif // SERVER
+
+#if SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif // SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif // SERVER
+
+#if SERVER
+
+
+
+
+
+
+
+#endif // SERVER
+
+#if SERVER
+
+
+
+
+
+
+#endif // SERVER
+
+#if SERVER
+
+
+
+
+
+
+
+#endif // SERVER
+
+#if SERVER
+
+
+
+
+
+
+#endif
+
+#if SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif // SERVER
+
+#if SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif // SERVER
+
+#if SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif // SERVER
+
+#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+#endif // CLIENT
+
+#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif // CLIENT
+
 #if SERVER && DEVELOPER
 void function DEV_Spawn_MobileRespawnBeacon( entity player )
 {
-	CarePackagePlacementInfo placementInfo = GetCarePackagePlacementInfo( player )
+	CarePackagePlacementInfo placementInfo = file.deployPositionValidationFunc( player )
 
 	vector origin = placementInfo.origin
 	vector angles = placementInfo.angles
@@ -838,4 +1352,4 @@ void function DEV_Spawn_MobileRespawnBeacon( entity player )
 
 	RespawnBeacon_SpawnMobileBeacon( origin, angles, surfNormal, player )
 }
-#endif // SERVER && DEVELOPER
+#endif // SERVER && DEV

@@ -33,7 +33,6 @@ global const bool HAS_HIT_INDICATOR = false
 global const bool HAS_CAPITAL_SHIP_SKYSHOW = false
 
 global const bool HAS_PANEL_HIGHLIGHT = false //TODO: Make conditional for Pathfinder
-global const bool GRUNT_CHATTER_MP_ENABLED = false
 
 
 global enum ePlayerStatType
@@ -84,6 +83,3 @@ global const asset FFA_MODE_ICON = $"vgui/burncards/burncard_group_icon_weapons"
 //global const ATCOOP_WEAPON_LOCKER_OPEN = $"mdl/containers/pelican_case_IMC_open.rmdl"
 //global const ATCOOP_GRENADE_LOCKER = $"mdl/containers/pelican_case_large.rmdl"
 //global const ATCOOP_GRENADE_LOCKER_OPEN = $"mdl/containers/pelican_case_large_open.rmdl"
-
-
-global const DEFAULT_PILOT_SETTINGS = $"settings/player/mp/pilot_survival_gunner.rpak"

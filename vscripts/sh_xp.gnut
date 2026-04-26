@@ -2,43 +2,61 @@ global function ShXP_Init
 global function GetAccountLevelForXP
 global function GetTotalXPToCompleteAccountLevel
 global function GetRewardsForAccountLevel
+global function GetRewardsFromDataTable
 global function GetPlayerAccountLevel
 global function GetPlayerAccountDisplayLevel
 global function GetAccountDisplayLevel
 global function GetAccountDisplayBadge
+global function GetHighestAccountDisplaylevel
 
 global function XpEventTypeData_GetAmount
 global function XpEventTypeData_GetFrac
-global function XpEventTypeData_IsMultiplyer
+global function XpEventTypeData_IsMultiplier
 
 global function GetPlayerAccountXPProgress
 global function GetPlayerAccountXPPreviousProgress
 
+global function CapPlayerXPToLevel
+
 global function GetXPEventValue
 global function GetXPEventCount
+
 #if UI
 global function GetXPEventNameDisplay
 global function GetXPEventValueDisplay
 global function XpEventTypeData_DisplayEmpty
 
 global function GetImageForReward
+global function GetImageForRewardItemFlavor
 global function GetStringForReward
 global function InitXPData
 global function UpdateXPEvents
+
 global function CreateNestedAccountDisplayBadge
+global function GetAccountBadgeRuiAssetAsString
+global function GetAccountBadgeRuiAssetAsAsset
 #endif
 
+global function GetCurrentAccountLevel
 global function GetNextAccountLevel
+global function GetTotalXPToReachAccountLevel
 
 #if SERVER
 global function InitXP
 global function XP_GameStartedPlaying
 #if DEVELOPER
-global function DEV_PopulatePostGame
-#endif //DEVELOPER
+global function CodeCallback_GetTotalXPToReachAccountLevel
+global function DEV_SetPlayerAccountLevel
+global function DEV_XpEvent_PrintTable
+#endif //DEV
 #else
 global const asset PLAYER_LEVELUP_FX = $"P_levelup_screen"
 #endif
+
+global const int ACCOUNT_LEVEL_RUI_SWITCH_0_BASE = 499
+global const int ACCOUNT_LEVEL_MAX_0_BASE = 1999
+global const string ACCOUNT_BADGE_ASSET_PATH_STRING = "settings/itemflav/gcard_badge/account/account_level.rpak"
+global const string ACCOUNT_BADGE_STAT = "stats.account_level"
 
 global struct XPEventData
 {
@@ -47,42 +65,46 @@ global struct XPEventData
 	float xpAmount = -1
 	float xpFrac = 0.0
 
-	bool isMultiplyer = false
+	bool isMultiplier = false
 
 	string displayString
 
 	int countDisplayType = eNumericDisplayType.INT
-	int awardDisplayType = eNumericDisplayType.INT
 
-	bool characterSpecific = false
 	bool displayEmpty = false
 }
 
-global enum XP_TYPE
+global enum eXPType
 {
 	// CANT ADD TO THIS ENUM WITHOUT UPDATING PERSISTENT DATA AND ALSO THE MENUS
-	SURVIVAL_DURATION,
-	KILL,
-	DAMAGE_DEALT,
-	REVIVE_ALLY,
-	RESPAWN_ALLY,
-	DOWN,
-	KILL_LEADER,
-	TOP_THREE,
-	WIN_MATCH,
-	KILL_CHAMPION_MEMBER,
-	BONUS_FRIEND,
-	BONUS_FRIEND_BOOST,
-	ACCOUNT_BOOST,
-	BONUS_FIRST_KILL,
-	BONUS_FIRST_KILL_AS,
-	BONUS_CHAMPION,
-	BONUS_FIRST_GAME,
-	TOTAL_MATCH,
-	TOP_FIVE,
-	BONUS_FIRST_TOP_FIVE,
-	CHALLENGE_COMPLETED,
-	_NUM_TYPES,
+	SURVIVAL_DURATION = 0,
+	KILL = 1,
+	DAMAGE_DEALT = 2,
+	REVIVE_ALLY = 3,
+	RESPAWN_ALLY = 4,
+	MATCH_COMPLETED = 5,
+	KILL_LEADER = 6,
+	MATCH_COMPLETED_JOINED_IN_PROGRESS = 7,
+	WIN_MATCH = 8,
+	KILL_CHAMPION_MEMBER = 9,
+	BONUS_FRIEND = 10,
+	ROUNDS_WON = 11,
+	ACCOUNT_BOOST = 12,		// Unused
+	BONUS_FIRST_KILL = 13,
+	BONUS_FINAL_KILL = 14,
+	BONUS_CHAMPION = 15,
+	BONUS_FIRST_GAME = 16,
+	TOTAL_MATCH = 17,
+	TOP_FIVE = 18,
+	BONUS_FIRST_TOP_FIVE = 19,
+	CHALLENGE_COMPLETED = 20,
+                        
+	RATINGS_LEADER = 21,
+	OBJECTIVE_CAPTURE_DURATION = 22,
+	BONUS_OBJECTIVES_COMPLETED = 23,
+                              
+	CHALLENGE_REWARD = 24,
+	_count_,
 }
 
 global struct RewardData
@@ -97,22 +119,13 @@ struct
 	int        maxAccountLevel
 	int        xpForBonusLevels
 
-	array<int> oldTotalXPToCompleteLevel
-	int        oldMaxAccountLevel
-	int        oldXPForBonusLevels
-
-	XPEventData[XP_TYPE._NUM_TYPES] xpEventTypeData
+	XPEventData[eXPType._count_] xpEventTypeData
 
 	array<int> badgeDisplayLevels
 } file
 
 
-string[XP_TYPE._NUM_TYPES] xpDisplayNames = ["Unhandled", ...]
-
-bool function DEV_ShouldIgnorePersistence_Local()
-{
-	return false
-}
+string[eXPType._count_] xpDisplayNames = ["Unhandled", ...]
 
 void function ShXP_Init()
 {
@@ -127,7 +140,7 @@ void function ShXP_Init()
 	#endif
 
 	#if !UI
-	InitXPData() // (dw): Can't do this here in UI because playlists are not ready
+		InitXPData() // (dw): Can't do this here in UI because playlists are not ready
 	#endif
 
 	//#if CLIENT || UI
@@ -149,11 +162,11 @@ int function GetPlayerAccountXPProgress( EHI playerEHI )
 	#endif
 
 	#if DEVELOPER
-		if ( DEV_ShouldIgnorePersistence_Local() )
+		if ( DEV_ShouldIgnorePersistence() )
 			return 0
 	#endif
 
-	return 5000//FromEHI( playerEHI ).GetPersistentVarAsInt( "xp" )
+	return FromEHI( playerEHI ).GetPersistentVarAsInt( "xp" )
 }
 
 int function GetPlayerAccountXPPreviousProgress( EHI playerEHI )
@@ -163,7 +176,7 @@ int function GetPlayerAccountXPPreviousProgress( EHI playerEHI )
 	#endif
 
 	#if DEVELOPER
-		if ( DEV_ShouldIgnorePersistence_Local() )
+		if ( DEV_ShouldIgnorePersistence() )
 			return 0
 	#endif
 
@@ -191,33 +204,35 @@ void function InitXP( entity player )
 	// Clear how much XP we earned in the previous match
 	player.SetPersistentVar( "previousXP", player.GetXP() )
 
-	for ( int i = 0; i < XP_TYPE._NUM_TYPES; i++ )
+	for ( int i = 0; i < eXPType._count_; i++ )
 	{
 		player.SetPersistentVar( "xp_match[" + i + "]", 0 )
 		player.SetPersistentVar( "xp_count[" + i + "]", 0 )
+		player.SetPersistentVar( "xp_bonus[" + i + "]", 0 )
 	}
 }
 
 void function XP_GameStartedPlaying()
 {
 	#if DEVELOPER
-		if ( DEV_ShouldIgnorePersistence_Local() )
+		if ( DEV_ShouldIgnorePersistence() )
 			return
 	#endif
 
-	// Current character class being used (so XP gets added to this character, and EOG knows what you used)
-	foreach( entity player in GetPlayerArray() )
+	// Current character class being used (for post-game UI)
+	foreach ( entity player in GetPlayerArray() )
 	{
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
-		player.SetPersistentVar( "characterForXP", ItemFlavor_GetGUIDString( character ) )
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
+		player.SetPersistentVar( "lastGameCharacter", ItemFlavor_GetGUID( character ) )
 	}
 }
 #endif
 
+
 int function GetCurrentAccountLevel( entity player )
 {
 	int currentXP    = GetPlayerAccountXPProgress( ToEHI( player ) )
-	return 5000//GetAccountLevelForXP( currentXP )
+	return GetAccountLevelForXP( currentXP )
 }
 
 
@@ -227,14 +242,14 @@ int function GetNextAccountLevel( entity player )
 }
 
 
-int function GetTotalXPToCompleteAccountLevel( int levelIndex, bool useOldProgression = false  )
+int function GetTotalXPToCompleteAccountLevel( int levelIndex )
 {
 	Assert( levelIndex >= -1 )
 	if ( levelIndex == -1 )
 		return 0
 
 	array<int> totalXPToCompleteLevel = file.totalXPToCompleteLevel
-	int xpForBonusLevels = file.xpForBonusLevels
+	int xpForBonusLevels              = file.xpForBonusLevels
 
 	if ( levelIndex < totalXPToCompleteLevel.len() )
 		return totalXPToCompleteLevel[levelIndex]
@@ -243,24 +258,25 @@ int function GetTotalXPToCompleteAccountLevel( int levelIndex, bool useOldProgre
 	return totalXPToCompleteLevel[totalXPToCompleteLevel.len() - 1] + (numBonusLevels * xpForBonusLevels)
 }
 
-int function GetTotalXPToReachAccountLevel( int levelIndex, bool useOldProgression = false )
+
+int function GetTotalXPToReachAccountLevel( int levelIndex )
 {
 	Assert( levelIndex > 0, "level " + levelIndex + " too low" )
-	array<int> xpToCompleteLevel = useOldProgression ? file.oldTotalXPToCompleteLevel : file.totalXPToCompleteLevel
-	int xpForBonusLevels = useOldProgression ? file.oldXPForBonusLevels : file.xpForBonusLevels
+	array<int> xpToCompleteLevel = file.totalXPToCompleteLevel
+	int xpForBonusLevels         = file.xpForBonusLevels
 
 	if ( levelIndex >= xpToCompleteLevel.len() )
 	{
-		int bonusLevels = levelIndex - xpToCompleteLevel.len()
+		int bonusLevels         = levelIndex - xpToCompleteLevel.len()
 		int xpToReachBonusLevel = xpToCompleteLevel[ xpToCompleteLevel.len() - 1 ] + (bonusLevels * xpForBonusLevels)
 		return xpToReachBonusLevel
 	}
 
-	return xpToCompleteLevel[ maxint( 0, (levelIndex - 1)) ]
+	return xpToCompleteLevel[ maxint( 0, (levelIndex - 1) ) ]
 }
 
 
-int function GetAccountLevelForXP( int xp, bool useOldProgression = false  )
+int function GetAccountLevelForXP( int xp )
 {
 	Assert( xp >= 0, "XP " + xp + " too low" )
 	int levelIndex               = 0
@@ -271,18 +287,17 @@ int function GetAccountLevelForXP( int xp, bool useOldProgression = false  )
 			return levelIndex
 	}
 
-	int bonusXP = xp
+	int bonusXP = xp - xpToCompleteLevel[xpToCompleteLevel.len() - 1]
 
 	int xpForBonusLevels = file.xpForBonusLevels
 	//printf( "AccountProgressionDebug: AccountLevelForXP: levelIndex: %i, XP: %i, bonusXP Modifier: %i, bonusXP: %i, xpForBonusLevels: %i return value: %i", levelIndex, xp, (xpToCompleteLevel[xpToCompleteLevel.len() - 1]), bonusXP, xpForBonusLevels, int( levelIndex + ceil( bonusXP / xpForBonusLevels ) ) )
-
-	return 5000000//bonusXP//check later
+	return int( levelIndex + ceil( bonusXP / xpForBonusLevels ) )
 }
 
 
-int function GetPlayerAccountLevel( entity player, bool useOldProgression = false )
+int function GetPlayerAccountLevel( entity player )
 {
-	return 500//GetAccountLevelForXP( GetPlayerAccountXPProgress( ToEHI( player ) ), useOldProgression )
+	return GetAccountLevelForXP( GetPlayerAccountXPProgress( ToEHI( player ) ) )
 }
 
 
@@ -296,8 +311,8 @@ string function GetPlayerAccountDisplayLevel( entity player )
 
 string function GetAccountDisplayLevel( int levelIndex )
 {
-	int progressionVersion = GetCurrentPlaylistVarInt( "account_progression_version", 2 )
-	int displayLevel = levelIndex + 1
+	int progressionVersion = GetCurrentPlaylistVarInt( "account_progression_version", 3 )
+	int displayLevel       = levelIndex + 1
 
 	if ( progressionVersion < 3 && (levelIndex > 498) )
 		return ""
@@ -313,107 +328,95 @@ int function GetHighestAccountDisplaylevel()
 {
 	array<int> xpToCompleteLevel = file.totalXPToCompleteLevel
 
-	return 500//xpToCompleteLevel[ xpToCompleteLevel.len() - 1 ]
+	return xpToCompleteLevel[ xpToCompleteLevel.len() - 1 ]
 }
+
 
 asset function GetAccountDisplayBadge( int levelIndex )
 {
 	return $"white"
+
+	//asset badgeImage = $"rui/gladiator_cards/badges/account_t1"
+	//int progressVersion = GetCurrentPlaylistVarInt( "account_progression_version", 2 )
+	//int adjustedLevel = progressVersion > 1 ? minint( (levelIndex + 1), 500) : minint( (levelIndex + 1), 100 )
+	//
+	//int nearestLevel = 0
+	//for ( int i = 0; i < file.badgeDisplayLevels.len(); i++ )
+	//{
+	//	int badgeLevel = file.badgeDisplayLevels[ i ]
+	//	nearestLevel = badgeLevel
+	//
+	//	if ( adjustedLevel < badgeLevel )
+	//		break
+	//}
+	//badgeImage = ACCOUNT_LEVEL_TO_DISPLAY_BADGE[ nearestLevel ]
+	////printf( "AccountDisplayBadgeDebug: Player level = %i, adjusted level = %i, nearest badge level = %i, badge = %s", levelIndex, adjustedLevel, nearestLevel, string( badgeImage ) )
+	//return badgeImage
 }
 
 #if UI
 var function CreateNestedAccountDisplayBadge( var parentRui, string arg, int levelIndex )
 {
+	//var nestedRui = RuiCreateNested( parentRui, argName, $"ui/xp_progress_bars_stats_card.rpak" )
 	RuiDestroyNestedIfAlive( parentRui, arg )
-	var nestedAccountRui = RuiCreateNested( parentRui, arg, $"ui/gcard_badge_account_t1.rpak" )
+	var nestedAccountRui
+	if ( levelIndex <= ACCOUNT_LEVEL_RUI_SWITCH_0_BASE || GetCurrentPlaylistVarInt( "account_progression_version", 3 ) == 2 )
+		nestedAccountRui = RuiCreateNested( parentRui, arg, $"ui/gcard_badge_account_t1.rpak" )
+	else
+		nestedAccountRui = RuiCreateNested( parentRui, arg, $"ui/gcard_badge_account_p1.rpak" )
 
 	RuiSetInt( nestedAccountRui, "tier", levelIndex )
+
+	return nestedAccountRui
 }
 #endif //UI
 
-#if SERVER && DEVELOPER
-void function AddXP( entity player, int xpType, ... )
+#if UI
+string function GetAccountBadgeRuiAssetAsString( int levelIndex )
 {
-	//
+	string badgeRuiAsset
+	if ( levelIndex <= ACCOUNT_LEVEL_RUI_SWITCH_0_BASE )
+		badgeRuiAsset = "ui/gcard_badge_account_t1.rpak"
+	else
+		badgeRuiAsset = "ui/gcard_badge_account_p1.rpak"
+
+	return badgeRuiAsset
 }
 
-void function DEV_PopulatePostGame( entity player, int level = -1 )
+asset function GetAccountBadgeRuiAssetAsAsset( int levelIndex )
 {
-	bool g_trackXP = false
+	asset badgeRuiAsset
+	if ( levelIndex <= ACCOUNT_LEVEL_RUI_SWITCH_0_BASE )
+		badgeRuiAsset = $"ui/gcard_badge_account_t1.rpak"
+	else
+		badgeRuiAsset = $"ui/gcard_badge_account_p1.rpak"
 
-	int startXP = level >= 0 ? GetTotalXPToCompleteAccountLevel( level ) + RandomInt( GetTotalXPToCompleteAccountLevel( 0 ) ) : RandomInt( GetTotalXPToCompleteAccountLevel( 500 ) )
-
-	player.SetPersistentVar( "xp", startXP )
-	player.SetPersistentVar( "previousXP", player.GetPersistentVarAsInt( "xp" ) )
-	for ( int i = 0; i < XP_TYPE._NUM_TYPES; i++ )
-	{
-		player.SetPersistentVar( "xp_match[" + i + "]", 0 )
-		player.SetPersistentVar( "xp_count[" + i + "]", 0 )
-	}
-
-	int numKills     = RandomInt( 4 )
-	int secondsAlive = RandomInt( 600 ) + 60
-	int numFriends   = RandomInt( 3 )
-	int damageDealt  = 15 + RandomInt( 80 ) + (numKills * 150)
-	int randomPlace  = RandomInt( 3 )
-	int randomChamp  = RandomInt( 2 )
-
-	for ( int i = 0; i < numKills; i++ )
-	{
-		AddXP( player, XP_TYPE.KILL, 1 )
-	}
-
-	AddXP( player, XP_TYPE.KILL_CHAMPION_MEMBER )
-	AddXP( player, XP_TYPE.BONUS_FIRST_KILL )
-	AddXP( player, XP_TYPE.BONUS_FIRST_KILL_AS )
-	//	AddXP( player, XP_TYPE.BONUS_RESTED_AS, secondsAlive )
-
-	if ( CoinFlip() )
-		AddXP( player, XP_TYPE.RESPAWN_ALLY, 1 )
-
-	AddXP( player, XP_TYPE.SURVIVAL_DURATION, secondsAlive )
-
-	for ( int i = 0; i < numFriends; i++ )
-	{
-		AddXP( player, XP_TYPE.BONUS_FRIEND, secondsAlive )
-		AddXP( player, XP_TYPE.BONUS_FRIEND_BOOST, secondsAlive )
-	}
-
-	AddXP( player, XP_TYPE.DAMAGE_DEALT, damageDealt )
-
-	if ( randomPlace == 2 )
-		AddXP( player, XP_TYPE.WIN_MATCH )
-	else if ( randomPlace == 1 )
-		AddXP( player, XP_TYPE.TOP_THREE )
-
-	AddXP( player, XP_TYPE.BONUS_FIRST_GAME )
-
-	if ( CoinFlip() )
-		AddXP( player, XP_TYPE.REVIVE_ALLY )
-	if ( randomChamp == 1 )
-		AddXP( player, XP_TYPE.BONUS_CHAMPION )
-
-	player.SetPersistentVar( "showGameSummary", true )
-	player.SetPersistentVar( "lastGameTime", GetUnixTimestamp() )
-
-	g_trackXP = true
+	return badgeRuiAsset
 }
-#endif //DEVELOPER
 
-array<RewardData> function GetRewardsForAccountLevel( int levelIndex, bool useOldProgression = false  )
+#endif //UI
+
+array<RewardData> function GetRewardsForAccountLevel( int levelIndex )
 {
-	var accountXPDataTable = useOldProgression ? GetDataTable( $"datatable/progression_account_v1.rpak" ) : GetDataTable( $"datatable/progression_account.rpak" )
+	// the first 500 levels of V3 are identical to V2; V3 just adds 501 - 2000
+	var accountXPDataTable
+	if ( GetCurrentPlaylistVarInt( "account_progression_version", 3 ) == 3 )
+		accountXPDataTable = GetDataTable( $"datatable/progression_account_v3.rpak" )
+	else
+		accountXPDataTable = GetDataTable( $"datatable/progression_account_v2.rpak" )
+
 	return GetRewardsFromDataTable( accountXPDataTable, levelIndex )
 }
 
 
 array<RewardData> function GetRewardsFromDataTable( var dataTable, int levelIndex )
 {
-	int rowCount       = GetDatatableRowCount( dataTable )
+	printf( "AccountProgressionDebug: RewardDataTable: Rewards for level index %i requested", levelIndex )
+	int rowCount       = GetDataTableRowCount( dataTable )
 	int col_levelIndex = GetDataTableColumnByName( dataTable, "levelIndex" )
 
-	int startRow = -1
-	int endRow = rowCount - 1
+	int startRow          = -1
+	int endRow            = rowCount - 1
 	int highestLevelIndex = GetDataTableInt( dataTable, endRow, col_levelIndex )
 	for ( int i; i < rowCount; i++ )
 	{
@@ -422,29 +425,38 @@ array<RewardData> function GetRewardsFromDataTable( var dataTable, int levelInde
 		if ( lvlIdx == levelIndex && startRow == -1 )
 		{
 			startRow = i
-			//printf( "AccountProgressionDebug: RewardDataTable: Start row set to %i", startRow )
+			printf( "AccountProgressionDebug: RewardDataTable: Start row set to %i", startRow )
 		}
 
 		if ( lvlIdx == levelIndex + 1 )
 		{
 			endRow = i
-			//printf( "AccountProgressionDebug: RewardDataTable: End row set to %i", endRow )
+			printf( "AccountProgressionDebug: RewardDataTable: End row set to %i", endRow )
 			break
 		}
 	}
 
 	if ( startRow == -1 )
 	{
-		startRow = highestLevelIndex
-		//
+		for ( int i = 0; i < rowCount; i++ )
+		{
+			int lvlIdx = GetDataTableInt( dataTable, i, col_levelIndex )
+			if ( lvlIdx == highestLevelIndex )
+			{
+				startRow = i
+			}
+		}
+
+		Assert( startRow != -1, "Account Reward Progression unable to locate valid start index" )
+		printf( "AccountProgressionDebug: RewardDataTable: Start Row for level index %i set to %i (levelIndex not found in Data Table)", levelIndex, startRow )
 	}
 
 	printf( "AccountProgressionDebug: RewardDataTable: Start Row set to %i, End Row set to %i", startRow, endRow )
 
-	int col_reward = GetDataTableColumnByName( dataTable, "reward" )
+	int col_reward    = GetDataTableColumnByName( dataTable, "reward" )
 	int col_rewardQty = GetDataTableColumnByName( dataTable, "rewardQty" )
 
-	Assert( endRow >= startRow, format("Account Rewards: Collecting account rewards from negative range (start: %i, end: %i)", startRow, endRow) )
+	Assert( endRow >= startRow, format( "Account Rewards: Collecting account rewards from negative range (start: %i, end: %i)", startRow, endRow ) )
 	array<RewardData> rewards = []
 
 	if ( startRow == endRow )
@@ -476,106 +488,111 @@ array<RewardData> function GetRewardsFromDataTable( var dataTable, int levelInde
 #if SERVER
 void function OnUpdatingPlayerStryderCharDataArray( entity player )
 {
-	int xpProgress   = 50000//GetPlayerAccountXPProgress( player )
-	int accountLevel = 500//GetAccountLevelForXP( xpProgress )
+	int xpProgress   = GetPlayerAccountXPProgress( player )
+	int accountLevel = GetAccountLevelForXP( xpProgress )
 
-	int xpForAccountLevel     = 2147483647//GetTotalXPToCompleteAccountLevel( accountLevel - 1 )
+	int xpForAccountLevel     = GetTotalXPToCompleteAccountLevel( accountLevel - 1 )
 	int xpForNextAccountLevel = GetTotalXPToCompleteAccountLevel( accountLevel )
 	float accountFrac         = GraphCapped( xpProgress, xpForAccountLevel, xpForNextAccountLevel, 0.0, 1.0 )
 
 	player.p.stryderArrayData[ePlayerStryderCharDataArraySlots.ACCOUNT_LEVEL] = accountLevel
 	player.p.stryderArrayData[ePlayerStryderCharDataArraySlots.ACCOUNT_PROGRESS_INT] = int( accountFrac * 100.0 )
 }
-#endif
+
+#endif //#if SERVER
 
 
 void function InitXPData()
 {
-	// Read account progression datatable
-	// the first 500 levels of V3 are identical to V2; V3 just adds 501 - 2000
+	// Progression datatables not available — use hardcoded defaults
 	file.totalXPToCompleteLevel.clear()
-	var accountXPDataTable
 
-	accountXPDataTable = GetDataTable( $"datatable/progression_account_v1.rpak" )
-	int numRows            = GetDatatableRowCount( accountXPDataTable )
-	int col_levelIndex     = GetDataTableColumnByName( accountXPDataTable, "levelIndex" )
-	int col_xpPerLevel     = GetDataTableColumnByName( accountXPDataTable, "xpPerLevel" )
-	int prevLvlIdx         = -1
-	int cumulativeXP       = 0
-	for ( int rowIndex = 0; rowIndex < numRows; rowIndex++ )
+	// Hardcode XP progression (18000 XP per level, 500 levels)
+	int xpPerLevel = 18000
+	int cumulativeXP = 0
+	for ( int lvlIdx = 0; lvlIdx < 500; lvlIdx++ )
 	{
-		int lvlIdx = GetDataTableInt( accountXPDataTable, rowIndex, col_levelIndex )
-
-		if ( lvlIdx > prevLvlIdx )
-		{
-			int xpToCompleteLevel = GetDataTableInt( accountXPDataTable, rowIndex, col_xpPerLevel )
-			SetXPForLevel( lvlIdx + 1, cumulativeXP )
-			cumulativeXP += xpToCompleteLevel
-			file.totalXPToCompleteLevel.append( cumulativeXP )
-			file.xpForBonusLevels = xpToCompleteLevel
-
-			prevLvlIdx = lvlIdx
-		}
+		SetXPForLevel( lvlIdx + 1, cumulativeXP )
+		cumulativeXP += xpPerLevel
+		file.totalXPToCompleteLevel.append( cumulativeXP )
 	}
+	file.xpForBonusLevels = xpPerLevel
 
 	// Init XP events
-	InitXpEventTypeData( XP_TYPE.SURVIVAL_DURATION, "xp_survival_duration", "#EOG_XP_SURVIVED" )
-	XpEventTypeData_SetCountDisplay( XP_TYPE.SURVIVAL_DURATION, eNumericDisplayType.TIME_SECONDS_SHORT )
-	XpEventTypeData_SetDisplayEmpty( XP_TYPE.SURVIVAL_DURATION, true )
+	printt( "InitXPEvents" )
+	InitXpEventTypeData( eXPType.SURVIVAL_DURATION, "xp_survival_duration", "#EOG_XP_SURVIVED" )
+	XpEventTypeData_SetCountDisplay( eXPType.SURVIVAL_DURATION, eNumericDisplayType.TIME_SECONDS_SHORT )
+	XpEventTypeData_SetDisplayEmpty( eXPType.SURVIVAL_DURATION, true )
 
-	InitXpEventTypeData( XP_TYPE.KILL, "xp_kill", "#EOG_XP_KILLS" )
-	XpEventTypeData_SetDisplayEmpty( XP_TYPE.KILL, true )
+	InitXpEventTypeData( eXPType.KILL, "xp_kill", "#EOG_XP_KILLS" )
+	XpEventTypeData_SetDisplayEmpty( eXPType.KILL, true )
 
-	InitXpEventTypeData( XP_TYPE.DAMAGE_DEALT, "xp_damage_dealt", "#EOG_XP_DAMAGE_DONE" )
-	XpEventTypeData_SetCountDisplay( XP_TYPE.DAMAGE_DEALT, eNumericDisplayType.SHORT_INT )
-	XpEventTypeData_SetDisplayEmpty( XP_TYPE.DAMAGE_DEALT, true )
+	InitXpEventTypeData( eXPType.DAMAGE_DEALT, "xp_damage_dealt", "#EOG_XP_DAMAGE_DONE" )
+	XpEventTypeData_SetCountDisplay( eXPType.DAMAGE_DEALT, eNumericDisplayType.SHORT_INT )
+	XpEventTypeData_SetDisplayEmpty( eXPType.DAMAGE_DEALT, true )
 
-	InitXpEventTypeData( XP_TYPE.DOWN, "xp_down", "#EOG_XP_DOWN_ENEMY" )
-	//XpEventTypeData_SetDisplayEmpty( XP_TYPE.DOWN, true )
+	InitXpEventTypeData( eXPType.RESPAWN_ALLY, "xp_respawn_ally", "#EOG_XP_RESPAWN_ALLY" )
+	XpEventTypeData_SetDisplayEmpty( eXPType.RESPAWN_ALLY, true )
 
-	InitXpEventTypeData( XP_TYPE.RESPAWN_ALLY, "xp_respawn_ally", "#EOG_XP_RESPAWN_ALLY" )
-	XpEventTypeData_SetDisplayEmpty( XP_TYPE.RESPAWN_ALLY, true )
+	InitXpEventTypeData( eXPType.REVIVE_ALLY, "xp_revive_ally", "#EOG_XP_REVIVE_ALLY" )
+	XpEventTypeData_SetDisplayEmpty( eXPType.REVIVE_ALLY, true )
 
-	InitXpEventTypeData( XP_TYPE.REVIVE_ALLY, "xp_revive_ally", "#EOG_XP_REVIVE_ALLY" )
-	XpEventTypeData_SetDisplayEmpty( XP_TYPE.REVIVE_ALLY, true )
+	InitXpEventTypeData( eXPType.BONUS_CHAMPION, "xp_champion", "#EOG_XP_CHAMPION" )
 
-	InitXpEventTypeData( XP_TYPE.BONUS_CHAMPION, "xp_champion", "#EOG_XP_CHAMPION" )
+	InitXpEventTypeData( eXPType.KILL_CHAMPION_MEMBER, "xp_kill_champion", "#EOG_XP_KILLED_CHAMPION" )
+	XpEventTypeData_SetDisplayEmpty( eXPType.KILL_CHAMPION_MEMBER, true )
 
-	InitXpEventTypeData( XP_TYPE.KILL_CHAMPION_MEMBER, "xp_kill_champion", "#EOG_XP_KILLED_CHAMPION" )
-	XpEventTypeData_SetDisplayEmpty( XP_TYPE.KILL_CHAMPION_MEMBER, true )
+	InitXpEventTypeData( eXPType.KILL_LEADER, "xp_kill_leader", "#EOG_XP_KILL_LEADER" )
+	XpEventTypeData_SetDisplayEmpty( eXPType.KILL_LEADER, true )
 
-	InitXpEventTypeData( XP_TYPE.KILL_LEADER, "xp_kill_leader", "#EOG_XP_KILL_LEADER" )
-	XpEventTypeData_SetDisplayEmpty( XP_TYPE.KILL_LEADER, true )
+	InitXpEventTypeData( eXPType.BONUS_FIRST_KILL, "xp_first_kill", "#EOG_XP_FIRST_KILL" )
 
-	InitXpEventTypeData( XP_TYPE.BONUS_FIRST_KILL, "xp_first_kill", "#EOG_XP_FIRST_KILL" )
+	InitXpEventTypeData( eXPType.BONUS_FIRST_GAME, "xp_first_game", "#EOG_XP_FIRST_GAME" )
 
-	InitXpEventTypeData( XP_TYPE.BONUS_FIRST_KILL_AS, "xp_first_kill_as", "#EOG_XP_FIRST_KILL_AS" )
-	XpEventTypeData_SetCharacterSpecific( XP_TYPE.BONUS_FIRST_KILL_AS, true )
+	InitXpEventTypeData( eXPType.BONUS_FRIEND, "xp_friend", "#EOG_XP_PREMADE_SQUAD" )
 
-	InitXpEventTypeData( XP_TYPE.BONUS_FIRST_GAME, "xp_first_game", "#EOG_XP_FIRST_GAME" )
+	InitXpEventTypeData( eXPType.CHALLENGE_COMPLETED, "xp_challenge_completed", "#EOG_XP_CHALLENGES_COMPLETED" )
 
-	InitXpEventTypeData( XP_TYPE.BONUS_FRIEND, "xp_friend", "#EOG_XP_PREMADE_SQUAD" )
+	InitXpEventTypeData( eXPType.WIN_MATCH, "xp_win_match", "#EOG_XP_WON" )
 
-	InitXpEventTypeData( XP_TYPE.BONUS_FRIEND_BOOST, "xp_friend_boost", "#EOG_XP_PREMADE_SQUAD" )
-	InitXpEventTypeData( XP_TYPE.CHALLENGE_COMPLETED, "xp_challenge_completed", "#EOG_XP_CHALLENGES_COMPLETED" )
+	InitXpEventTypeData( eXPType.TOP_FIVE, "xp_top_five", "#EOG_XP_TOP5" )
 
+	InitXpEventTypeData( eXPType.BONUS_FIRST_TOP_FIVE, "xp_first_top_five", "#EOG_XP_FIRST_TOP5" )
 
-	InitXpEventTypeData( XP_TYPE.WIN_MATCH, "xp_win_match", "#EOG_XP_WON" )
+	InitXpEventTypeData( eXPType.TOTAL_MATCH, "xp_total_match", "#EOG_XP_TOTAL_MATCH" )
 
-	InitXpEventTypeData( XP_TYPE.TOP_THREE, "xp_top_three", "#EOG_XP_TOP3" )
+	InitXpEventTypeData( eXPType.ROUNDS_WON, "xp_round_won", "#EOG_XP_ROUNDS_WON" )
 
-	InitXpEventTypeData( XP_TYPE.TOP_FIVE, "xp_top_five", "#EOG_XP_TOP5" )
+	                        
+		InitXpEventTypeData( eXPType.RATINGS_LEADER, "xp_ratings_leader", "#EOG_XP_RATINGS_LEADER" )
+		XpEventTypeData_SetDisplayEmpty( eXPType.RATINGS_LEADER, true )
 
-	InitXpEventTypeData( XP_TYPE.BONUS_FIRST_TOP_FIVE, "xp_first_top_five", "#EOG_XP_FIRST_TOP5" )
+		InitXpEventTypeData( eXPType.BONUS_OBJECTIVES_COMPLETED, "xp_bonus_objectives_completed", "#EOG_XP_BONUS_OBJECTIVES_COMPLETED" )
+		XpEventTypeData_SetDisplayEmpty( eXPType.BONUS_OBJECTIVES_COMPLETED, true )
+                               
 
-	InitXpEventTypeData( XP_TYPE.TOTAL_MATCH, "xp_total_match", "#EOG_XP_TOTAL_MATCH" )
+	InitXpEventTypeData( eXPType.OBJECTIVE_CAPTURE_DURATION, "xp_objective_capture_duration", "#EOG_XP_OBJECTIVE_CAPTURE_TIME" )
+	XpEventTypeData_SetDisplayEmpty( eXPType.OBJECTIVE_CAPTURE_DURATION, false )
+	XpEventTypeData_SetCountDisplay( eXPType.OBJECTIVE_CAPTURE_DURATION, eNumericDisplayType.TIME_SECONDS_SHORT )
+
+	InitXpEventTypeData( eXPType.MATCH_COMPLETED, "xp_match_completed", "#EOG_XP_MATCH_COMPLETED" )
+	XpEventTypeData_SetDisplayEmpty( eXPType.MATCH_COMPLETED, true )
+
+	InitXpEventTypeData( eXPType.MATCH_COMPLETED_JOINED_IN_PROGRESS, "xp_match_completed_joined_in_progress", "#EOG_XP_MATCH_COMPLETED_JOINED_IN_PROGRESS" )
+	XpEventTypeData_SetDisplayEmpty( eXPType.MATCH_COMPLETED_JOINED_IN_PROGRESS, false )
+
+	InitXpEventTypeData( eXPType.BONUS_FINAL_KILL, "xp_bonus_final_kill", "#EOG_XP_BONUS_FINAL_KILL" )
+	XpEventTypeData_SetDisplayEmpty( eXPType.BONUS_FINAL_KILL, false )
+
+	InitXpEventTypeData( eXPType.CHALLENGE_REWARD, "xp_challenge_reward", "#EOG_XP_CHALLENGES_REWARD" )
+	XpEventTypeData_SetDisplayEmpty( eXPType.CHALLENGE_REWARD, false )
 }
 
 #if UI
 void function UpdateXPEvents()
 {
 	Assert( IsPersistenceAvailable(), "Cannot call UpdateXPEvents when persistence is not available" )
-	XpEventTypeData_SetDisplayEmpty( XP_TYPE.BONUS_FRIEND, !IsLastPlaylistSolo( GetUIPlayer() ) ) //
+	XpEventTypeData_SetDisplayEmpty( eXPType.BONUS_FRIEND, !IsLastPlaylistSolo( GetLocalClientPlayer() ) ) // if your last game was solo, don't show friends bonus
 }
 #endif
 
@@ -603,12 +620,6 @@ void function XpEventTypeData_SetCountDisplay( int xpType, int displayType )
 }
 
 
-void function XpEventTypeData_SetCharacterSpecific( int xpType, bool state )
-{
-	file.xpEventTypeData[xpType].characterSpecific = state
-}
-
-
 float function XpEventTypeData_GetAmount( int xpType )
 {
 	return file.xpEventTypeData[xpType].xpAmount
@@ -621,10 +632,9 @@ float function XpEventTypeData_GetFrac( int xpType )
 }
 
 
-bool function XpEventTypeData_IsMultiplyer( int xpType )
+bool function XpEventTypeData_IsMultiplier( int xpType )
 {
-	return xpType == XP_TYPE.BONUS_FRIEND || xpType == XP_TYPE.BONUS_FRIEND_BOOST
-	///	return file.xpEventTypeData[xpType].isMultiplyer
+	return xpType == eXPType.BONUS_FRIEND
 }
 
 
@@ -640,40 +650,19 @@ int function GetXPEventValue( entity player, int xpType )
 }
 
 #if UI
+
 string function GetXPEventNameDisplay( entity player, int xpType )
 {
 	int count = GetXPEventCount( player, xpType )
 
 	XPEventData eventData = file.xpEventTypeData[xpType]
-	if ( eventData.characterSpecific )
-	{
-		int characterPDefEnumIndex = player.GetPersistentVarAsInt( "characterForXP" ) //
-		Assert( characterPDefEnumIndex >= 0 && characterPDefEnumIndex < PersistenceGetEnumCount( "eCharacterFlavor" ) )
-		SettingsAssetGUID characterGUID = ConvertItemFlavorGUIDStringToGUID( PersistenceGetEnumItemNameForIndex( "eCharacterFlavor", characterPDefEnumIndex ) )
-		string characterName
-		if ( !IsValidItemFlavorGUID( characterGUID ) )
-		{
-			Warning( "Cannot display post-game summary because character \"" + characterGUID + "\" is not registered right now." )
-			characterName = characterGUID + " not registered"
-		}
-		else
-		{
-			ItemFlavor character = GetItemFlavorByGUID( characterGUID )
-			characterName = ItemFlavor_GetLongName( character )
-		}
 
-		return Localize( eventData.displayString, Localize( characterName ), GetFormattedIntByType( count, eventData.countDisplayType ) )
-	}
-	else
-	{
-		float boost = expect float( player.GetPersistentVar( "lastGameBattlePassBoost" ) )
-		if ( boost > 1.0 && (xpType == XP_TYPE.WIN_MATCH || xpType == XP_TYPE.TOP_FIVE ) )
-			return Localize( eventData.displayString + "_WITH_BOOST", int( RoundToNearestMultiplier( (boost - 1.0) * 100, 1.0 ) ) )
+	float boost = expect float( player.GetPersistentVar( "lastGameBattlePassBoost" ) )
+	//eventData.displayString
+	if ( boost > 1.0 && (xpType == eXPType.WIN_MATCH || xpType == eXPType.TOP_FIVE) )
+		return Localize( eventData.displayString + "_WITH_BOOST", int( RoundToNearestMultiplier( (boost - 1.0) * 100, 1.0 ) ) )
 
-		return Localize( eventData.displayString, GetFormattedIntByType( count, eventData.countDisplayType ) )
-	}
-
-	unreachable
+	return Localize( eventData.displayString, GetFormattedIntByType( count, eventData.countDisplayType ) )
 }
 
 
@@ -692,13 +681,11 @@ string function GetXPEventValueDisplay( entity player, int xpType )
 
 	unreachable
 }
-#endif
 
-#if UI
 asset function GetImageForReward( RewardData reward )
 {
 	asset icon = $""
-	if ( ItemFlavor_GetNetworkIndex_DEPRECATED( reward.item ) > 0 )
+	if ( IsItemFlavorStructValid( reward.item.guid, eValidation.DONT_ASSERT ) )
 	{
 		if ( ItemFlavor_GetType( reward.item ) == eItemType.account_currency )
 			icon = GRXCurrency_GetRewardIcon( reward.item )
@@ -708,14 +695,96 @@ asset function GetImageForReward( RewardData reward )
 
 	return icon
 }
-#endif
 
-#if UI
+asset function GetImageForRewardItemFlavor( ItemFlavor flav )
+{
+	asset icon = $""
+	if ( IsItemFlavorStructValid( flav.guid, eValidation.DONT_ASSERT ) )
+	{
+		if ( ItemFlavor_GetType( flav ) == eItemType.account_currency )
+			icon = GRXCurrency_GetRewardIcon( flav )
+		else
+			icon = ItemFlavor_GetIcon( flav )
+	}
+
+	return icon
+}
+
 string function GetStringForReward( RewardData reward )
 {
 	if ( reward.quantity > 1 )
-		return ShortenNumber( string( reward.quantity ) )
+		return FormatAndLocalizeNumber( "1", float( reward.quantity ), ItemFlavor_IsCurrency( reward.item ) || IsTenThousandOrMore( reward.quantity ) )
 
 	return ItemFlavor_GetShortName( reward.item )
 }
-#endif
+
+#endif //#if UI
+
+void function CapPlayerXPToLevel( entity player, int levelCap )
+{
+	printf( "AccountProgressionDebug: Capping player's XP to %i", levelCap )
+
+	if ( !IsValid( player ) )
+		return
+
+	int playerXP      = GetPlayerAccountXPProgress( ToEHI( player ) )
+	int previousXP    = player.GetPersistentVarAsInt( "previousXP" )
+	int currentXP     = playerXP - previousXP
+	int xpForLevelCap = GetTotalXPToCompleteAccountLevel( levelCap - 1 )
+
+	printf( "AccountProgressionDebug: Level Cap Check: playerXP = %i, xpForLevelCap = %i", playerXP, xpForLevelCap )
+	#if SERVER
+		if ( playerXP > xpForLevelCap )
+		{
+			printf( "AccountProgressionDebug: player's Level capped to %i (%i XP)", levelCap, xpForLevelCap )
+			player.SetPersistentVar( "xp", xpForLevelCap )
+		}
+
+		if ( previousXP > xpForLevelCap )
+		{
+			int newPreviousXP = xpForLevelCap - currentXP
+			player.SetPersistentVar( "previousXP", newPreviousXP )
+		}
+	#endif
+}
+
+#if SERVER && DEVELOPER
+int function CodeCallback_GetTotalXPToReachAccountLevel( int displayLevel )
+{
+	int levelIndex = displayLevel - 1
+
+	int xp = GetTotalXPToReachAccountLevel( levelIndex )
+
+	return xp
+}
+
+void function DEV_SetPlayerAccountLevel( entity player, int displayLevel )
+{
+	int levelIndex = displayLevel - 1
+
+	int xp = GetTotalXPToReachAccountLevel( levelIndex )
+
+	player.SetPersistentVar( "xp", xp )
+}
+
+void function DEV_XpEvent_PrintTable()
+{
+	printt( format( "%s - There are %d XP Event Types", FUNC_NAME(), eXPType._count_ ) )
+
+	// foreach ( XPEventData xpData in file.xpEventTypeData )
+	for ( int typeIndex = 0; typeIndex < eXPType._count_; typeIndex++ )
+	{
+		string xpName = GetEnumString( "eXPType", typeIndex ) // eXPType[typeIndex]
+		XPEventData xpData = file.xpEventTypeData[typeIndex]
+
+		string msgText = format( "\t%40s - playlistVar %40s, xpAmount %.2f, xpFrac %.2f", 
+			xpName, // xpData.displayString,
+			xpData._playlistVarName,
+			xpData.xpAmount,
+			xpData.xpFrac
+		)
+
+		printt( msgText )
+	}
+}
+#endif // #if SERVER && DEVELOPER

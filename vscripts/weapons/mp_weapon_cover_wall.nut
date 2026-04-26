@@ -808,7 +808,7 @@ void function Wall_CheckForGeoIntersection( entity wallProxy )
 		vector endPos   = wallProxy.GetOrigin() + up * heightOffGround + right * wallFullWidth * 0.8
 
 		TraceResults results = TraceHull( startPos, endPos, <-hullWidth, -hullDepth, 0>, <hullWidth, hullDepth, hullHeight>, ignoreEnts, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER )
-		//DebugDrawBox( startPos, <-hullWidth,-hullDepth,0>, <hullWidth,hullDepth,hullHeight>, COLOR_GREEN, 1, 1.0 )
+		//DebugDrawBox( startPos, <-hullWidth,-hullDepth,0>, <hullWidth,hullDepth,hullHeight>, <0, 255, 0>, 1, 1.0 )
 		//DebugDrawBox( endPos, <-hullWidth,-hullDepth,0>, <hullWidth,hullDepth,hullHeight>, <0, 128, 0>, 1, 1.0 )
 		//PrintTraceResults( results )
 		if ( results.startSolid || results.fraction != 1 )
@@ -1305,7 +1305,7 @@ void function CoverWall_OnPostDamaged( entity wallProxy, var damageInfo )
 			if ( IsValid ( deathBox ) )
 			{
 				child.ClearParent()
-				FakePhysicsThrow( null, child, <0,0,50>, -1, true )
+				FakePhysicsThrow( null, child, <0,0,50>, true )
 			}
 		}
 	}
@@ -1478,7 +1478,7 @@ void function HealthTick_OnDamaged( entity ampedWall, float damage )
 }
 #endif
 
-bool function CoverWall_CanUse( entity player, entity ent )
+bool function CoverWall_CanUse( entity player, entity ent, int useFlags )
 {
 	if ( !IsValid( player ) || !IsValid( ent ) )
 		return false

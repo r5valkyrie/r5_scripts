@@ -4,11 +4,11 @@ global function Survival_SwapPrimary
 global function Survival_SwapToMelee
 global function Survival_SwapToOrdnance
 
+global function ServerCallback_TryCloseInventory
 global function ServerCallback_RefreshInventory
 global function ResetInventoryMenu
 global function OpenSurvivalInventory
 global function OpenSurvivalGroundList
-global function OpenSurvivalGroundListRetail
 
 global function Survival_IsInventoryOpen
 global function Survival_IsGroundlistOpen
@@ -18,33 +18,40 @@ global function Survival_GetGroundListBehavior
 
 global function BackpackAction
 global function EquipmentAction
-global function GroundAction
+global function DispatchLootAction
 
 global function GroundItemUpdate
 global function OpenSwapForItem
-global function UpdateDpadTooltipText
+global function UIToClient_UpdateInventoryDpadTooltipText
 
 global function UICallback_BackpackOpened
 global function UICallback_BackpackClosed
 
-global function UICallback_GroundlistOpened
-global function UICallback_GroundlistClosed
+global function UIToClient_GroundlistOpened
+global function UIToClient_GroundlistClosed
+
+
+global function UIToClient_PingUpgrade
+global function UICallback_UpdateUpgradeButton
+global function UICallback_UpdateUpgradeInfo
+global function UICallback_OnUpgradeButtonAction
+global function UICallback_PingUpgrade
+
 
 global function UICallback_UpdateInventoryButton
 global function UICallback_OnInventoryButtonAction
-global function UICallback_OnInventoryButtonAltAction
 global function UICallback_PingInventoryItem
 
 global function UICallback_UpdateEquipmentButton
 global function UICallback_OnEquipmentButtonAction
-global function UICallback_OnEquipmentButtonAltAction
 global function UICallback_PingEquipmentItem
 
-global function UICallback_SetGroundMenuHeaderToPlayerName
-global function UICallback_UpdateGroundItem
-global function UICallback_GroundItemAction
-global function UICallback_GroundItemAltAction
-global function UICallback_PingGroundListItem
+global function UICallback_PingRequestButton
+global function UICallback_UpdateRequestButton
+
+
+global function UICallback_PingIsMyUltimateReady
+
 
 global function UICallback_UpdateQuickSwapItem
 global function UICallback_OnQuickSwapItemClick
@@ -56,10 +63,14 @@ global function UICallback_GetLootDataFromButton
 global function UICallback_GetMouseDragAllowedFromButton
 global function UICallback_OnInventoryMouseDrop
 
-global function UICallback_WeaponSwap
+global function UIToClient_WeaponSwap
 global function UICallback_UpdatePlayerInfo
 global function UICallback_UpdateTeammateInfo
 global function UICallback_UpdateUltimateInfo
+
+
+global function UICallback_UpdateTeammateUpgrades
+
 
 global function UICallback_BlockPingForDuration
 
@@ -69,12 +80,14 @@ global function UICallback_DisableTriggerStrafing
 global function UpdateHealHint
 global function GroundListResetNextFrame
 global function GetCountForLootType
-global function RegisterUseFunctionForItem
+global function TryUpdateGroundList
+global function TryResetGroundList
 global function OnLocalPlayerPickedUpItem
 
-global function ServerCallback_TryCloseInventory
-
-global function TryUpdateGroundList
+global function IsOrdnanceEquipped
+global function SetShowUnitFrameAmmoTypeIcons
+global function GetShowUnitFrameAmmoTypeIcons
+global function EquipmentButton_SlingWarningMessage
 
 global enum eGroundListBehavior
 {
@@ -87,6 +100,9 @@ global enum eGroundListType
 	DEATH_BOX,
 	GRABBER,
 	VENDINGMACHINE,
+
+
+
 	_COUNT
 }
 
@@ -102,11 +118,12 @@ struct GroundLootData
 	LootData&         lootData
 	array<int>        guids
 	int               count
-	bool              TEMP_hasMods
 	bool              isUpgrade
 	bool              isRelevant
 	bool              isHeader
 }
+
+const float ULT_HINT_COOLDOWN = 90.0
 
 struct {
 	table<string, void functionref( entity, string )>         itemUseFunctions
@@ -117,30 +134,43 @@ struct {
 	array<GroundLootData> allGroundItems = []
 	array<GroundLootData> filteredGroundItems = []
 
+
 	bool backpackOpened = false
 	bool groundlistOpened = false
 	bool shouldResetGroundItems = true
 	bool shouldUpdateGroundItems = false
+	bool shouldShowUnitFrameAmmoTypeIcons = true
 
 	string                swapString
 	CurrentGroundListData currentGroundListData
 
-	float lastHealHintDisplayTime
-	array<entity> lastLoot
+	float                 lastHealHintDisplayTime
+	float				  lastUltHintDisplayTime
 	table<string, string> triggerBinds
+	var 				  slingButtonRui
+	array<entity> lastLoot
+	array<int>    visibleItemIndices
 } file
 
 
 void function Cl_Survival_InventoryInit()
 {
+
+
+
+
+
 	file.itemTypeUseFunctions[ eLootType.HEALTH ] <- UseHealthPickupRefFromInventory
 	file.itemTypeUseFunctions[ eLootType.ORDNANCE ] <- EquipOrdnance
-	file.itemTypeUseFunctions[ eLootType.SURVIVAL ] <- EquipOrdnance  // we don't have gadget slot in our ui.dll so using grenade functions for now - kral
+	file.itemTypeUseFunctions[ eLootType.GADGET ] <- EquipGadget
 	file.specialItemTypeUseFunctions[ eLootType.ATTACHMENT ] <- EquipAttachment
+
+	file.lastUltHintDisplayTime = Time() - ULT_HINT_COOLDOWN
 
 	RegisterSignal( "OpenSwapForItem" )
 	RegisterSignal( "ResetInventoryMenu" )
 	RegisterSignal( "BackpackClosed" )
+	RegisterSignal( "GroundListClosed" )
 
 	AddCallback_OnUpdateTooltip( eTooltipStyle.LOOT_PROMPT, OnUpdateLootPrompt )
 	AddCallback_OnUpdateTooltip( eTooltipStyle.WEAPON_LOOT_PROMPT, OnUpdateLootPrompt )
@@ -149,9 +179,10 @@ void function Cl_Survival_InventoryInit()
 
 	AddLocalPlayerTookDamageCallback( TryCloseSurvivalInventoryFromDamage )
 	AddLocalPlayerTookDamageCallback( ShowHealHint )
+	AddCallback_OnPlayerConsumableInventoryChanged( ResetInventoryMenu )
 }
 
-void function ServerCallback_TryCloseInventory()
+void function ServerCallback_TryCloseInventory( )
 {
 	RunUIScript( "TryCloseSurvivalInventory", null )
 }
@@ -193,7 +224,6 @@ void function ResetInventoryMenuInternal( entity player )
 	PerfEnd( PerfIndexClient.InventoryRefreshStart )
 	RunUIScript( "SurvivalInventoryMenu_SetInventoryLimit", SURVIVAL_GetInventoryLimit( player ) )
 	RunUIScript( "SurvivalInventoryMenu_SetInventoryLimitMax", SURVIVAL_GetMaxInventoryLimit( player ) )
-	RunUIScript( "Survival_SetPlayerIsTitan", player.IsTitan() )
 	PerfStart( PerfIndexClient.InventoryRefreshEnd )
 	RunUIScript( "SurvivalInventoryMenu_EndUpdate" )
 	PerfEnd( PerfIndexClient.InventoryRefreshEnd )
@@ -201,90 +231,86 @@ void function ResetInventoryMenuInternal( entity player )
 	if ( player == GetLocalClientPlayer() && player == GetLocalViewPlayer() )
 		UpdateHealHint( player )
 
+
 	PerfEnd( PerfIndexClient.InventoryRefreshTotal )
 }
 
 
 void function Survival_UseInventoryItem( string ref, string secondRef )
 {
-	printt( "CLIENT DEBUG: Survival_UseInventoryItem called for:", ref )
-	
 	if ( GetLocalViewPlayer() != GetLocalClientPlayer() )
-	{
-		printt( "CLIENT DEBUG: LocalViewPlayer != LocalClientPlayer" )
 		return
-	}
 
 	LootData data = SURVIVAL_Loot_GetLootDataByRef( ref )
 	int type      = data.lootType
-	
-	printt( "CLIENT DEBUG: Loot type:", type, "GADGET enum:", eLootType.SURVIVAL, "ORDNANCE enum:", eLootType.ORDNANCE )
 
 	if ( ref in file.itemUseFunctions )
 	{
-		printt( "CLIENT DEBUG: Using itemUseFunctions for:", ref )
 		file.itemUseFunctions[ ref ]( GetLocalViewPlayer(), ref )
 	}
 	else if ( ref in file.specialItemUseFunctions )
 	{
-		printt( "CLIENT DEBUG: Using specialItemUseFunctions for:", ref )
 		file.specialItemTypeUseFunctions[ type ]( GetLocalViewPlayer(), ref, secondRef )
 	}
 	else if ( type in file.itemTypeUseFunctions )
 	{
-		printt( "CLIENT DEBUG: Using itemTypeUseFunctions for type:", type )
 		file.itemTypeUseFunctions[ type ]( GetLocalViewPlayer(), ref )
 	}
 	else if ( type in file.specialItemTypeUseFunctions )
 	{
-		printt( "CLIENT DEBUG: Using specialItemTypeUseFunctions for type:", type )
 		file.specialItemTypeUseFunctions[ type ]( GetLocalViewPlayer(), ref, secondRef )
-	}
-	else
-	{
-		printt( "CLIENT DEBUG: No handler found for:", ref, "type:", type )
 	}
 
 	ResetInventoryMenu( GetLocalViewPlayer() )
 }
 
 
-void function Survival_DropInventoryItem( string ref, int num )
+bool function Survival_DropInventoryItem( string ref, int num )
 {
 	entity player = GetLocalViewPlayer()
 
 	if ( !Survival_PlayerCanDrop( player ) )
-		return
+		return false
 
-	string boxString
-
+	entity deathbox = null
 	if ( IsValid( file.currentGroundListData.deathBox ) && file.currentGroundListData.behavior == eGroundListBehavior.CONTENTS )
 	{
-		boxString = " " + file.currentGroundListData.deathBox.GetEncodedEHandle()
+		deathbox = file.currentGroundListData.deathBox
 	}
 
-	player.ClientCommand( "Sur_DropBackpackItem " + ref + " " + num + boxString )
+	LootData data = SURVIVAL_Loot_GetLootDataByRef( ref )
+
+	if ( IsValid( deathbox ) )
+	{
+		Remote_ServerCallFunction( "ClientCallback_Sur_DropBackpackItem_Box", data.index, num, deathbox.GetEncodedEHandle() )
+	}
+	else
+	{
+		Remote_ServerCallFunction( "ClientCallback_Sur_DropBackpackItem", data.index, num )
+	}
+
 	ResetInventoryMenu( player )
+
+	return true
 }
 
-void function RegisterUseFunctionForItem( string ref, void functionref(entity, string) func )
-{
-	file.itemUseFunctions[ ref ] <- func
-}
 
-void function Survival_DropEquipment( string ref )
+bool function Survival_DropEquipment( string ref )
 {
 	entity player = GetLocalViewPlayer()
 
 	if ( !Survival_PlayerCanDrop( player ) )
-		return
+		return false
 
-	player.ClientCommand( "Sur_DropEquipment " + ref )
+	EquipmentSlot e = Survival_GetEquipmentSlotDataByRef( ref )
+	Remote_ServerCallFunction( "ClientCallback_Sur_DropEquipment", e.type )
 	ResetInventoryMenu( player )
+
+	return true
 }
 
 
-void function BackpackAction( int lootAction, string slotIndexString )
+bool function BackpackAction( int lootAction, string slotIndexString )
 {
 	int slotIndex = int( slotIndexString )
 
@@ -304,7 +330,7 @@ void function BackpackAction( int lootAction, string slotIndexString )
 	if ( foundIndex < 0 )
 	{
 		RunUIScript( "SurvivalMenu_AckAction" )
-		return
+		return false
 	}
 
 	LootData lootData = SURVIVAL_Loot_GetLootDataByIndex( playerInventory[foundIndex].type )
@@ -315,22 +341,22 @@ void function BackpackAction( int lootAction, string slotIndexString )
 			int numToDrop = 1
 			if ( lootData.lootType == eLootType.AMMO )
 				numToDrop = minint( lootData.countPerDrop, playerInventory[foundIndex].count )
-			Survival_DropInventoryItem( lootData.ref, numToDrop )
+			return Survival_DropInventoryItem( lootData.ref, numToDrop )
 			break
 
 		case eLootAction.DROP_ALL:
-			Survival_DropInventoryItem( lootData.ref, playerInventory[foundIndex].count )
+			return Survival_DropInventoryItem( lootData.ref, playerInventory[foundIndex].count )
 			break
 
-			//
+
 
 		case eLootAction.ATTACH_TO_ACTIVE:
 		case eLootAction.ATTACH_TO_STOWED:
-			//
-			//
-			//
-			player.ClientCommand( "Sur_EquipAttachment " + lootData.ref )
-			//
+
+
+
+			Remote_ServerCallFunction( "ClientCallback_Sur_EquipAttachment", lootData.index, -1 )
+
 			break
 
 		case eLootAction.EQUIP:
@@ -342,11 +368,22 @@ void function BackpackAction( int lootAction, string slotIndexString )
 			Survival_UseInventoryItem( lootData.ref, "" )
 			RunUIScript( "SurvivalMenu_AckAction" )
 			break
+
+
+
+
+
+
+
+
+
+
 	}
+
+	return true
 }
 
-
-void function EquipmentAction( int lootAction, string equipmentSlot )
+bool function EquipmentAction( int lootAction, string equipmentSlot )
 {
 	switch ( lootAction )
 	{
@@ -354,17 +391,43 @@ void function EquipmentAction( int lootAction, string equipmentSlot )
 			entity player = GetLocalClientPlayer()
 			if ( player == GetLocalViewPlayer() )
 			{
+				string equipRef = EquipmentSlot_GetLootRefForSlot( player, equipmentSlot )
+				if( SURVIVAL_Loot_GetLootDataByRef( equipRef ).lootType == eLootType.GADGET )
+				{
+					EquipGadget(player, equipRef)
+					RunUIScript( "SurvivalMenu_AckAction" )
+				}
+
 				if ( EquipmentSlot_IsMainWeaponSlot( equipmentSlot ) )
 				{
 					EquipmentSlot es = Survival_GetEquipmentSlotDataByRef( equipmentSlot )
 					int slot         = es.weaponSlot
 					player.ClientCommand( "weaponSelectPrimary" + slot )
+					return true
+				}
+
+				if( equipmentSlot == SLING_EQUIPMENT_SLOT_NAME )
+				{
+					if( !IsPlayerWeaponSlingEmpty( player ) && !IsPlayerHoldingSlingWeapon( player ) )
+					{
+						player.ClientCommand( "weaponSelectSlingWeapon" )
+						return true
+					}
 				}
 			}
 			break
 
 		case eLootAction.DROP:
-			Survival_DropEquipment( equipmentSlot )
+			entity player = GetLocalClientPlayer()
+			if( player != GetLocalViewPlayer())
+				return false
+
+			if( equipmentSlot == SLING_EQUIPMENT_SLOT_NAME && IsBallisticUltActive( player ) )
+			{
+				return false
+			}
+
+			return Survival_DropEquipment( equipmentSlot )
 			break
 
 		case eLootAction.REMOVE_TO_GROUND:
@@ -374,7 +437,7 @@ void function EquipmentAction( int lootAction, string equipmentSlot )
 			if ( IsValid( weaponEnt ) )
 			{
 				EquipmentSlot es = Survival_GetEquipmentSlotDataByRef( equipmentSlot )
-				Survival_UnequipAttachment( SURVIVAL_GetWeaponAttachmentForPoint( GetLocalViewPlayer(), weaponSlot, es.attachmentPoint ), weaponSlot, lootAction == eLootAction.REMOVE_TO_GROUND )
+				return Survival_UnequipAttachment( SURVIVAL_GetWeaponAttachmentForPoint( GetLocalViewPlayer(), weaponSlot, es.attachmentPoint ), weaponSlot, lootAction == eLootAction.REMOVE_TO_GROUND )
 			}
 			break
 
@@ -384,90 +447,69 @@ void function EquipmentAction( int lootAction, string equipmentSlot )
 			if ( IsValid( weaponEnt ) )
 			{
 				EquipmentSlot es = Survival_GetEquipmentSlotDataByRef( equipmentSlot )
-				Survival_TransferAttachment( SURVIVAL_GetWeaponAttachmentForPoint( GetLocalViewPlayer(), weaponSlot, es.attachmentPoint ), weaponSlot )
+				return Survival_TransferAttachment( SURVIVAL_GetWeaponAttachmentForPoint( GetLocalViewPlayer(), weaponSlot, es.attachmentPoint ), weaponSlot )
 			}
 			break
-	}
-}
 
-
-void function GroundAction( int lootAction, string guid, bool isAltAction, bool actionFromMenu )
-{
-	int extraFlags = actionFromMenu ? PICKUP_FLAG_FROM_MENU : 0
-	if ( isAltAction )
-		extraFlags = extraFlags | PICKUP_FLAG_ALT
-
-	int deathBoxEntIndex = -1
-	if ( IsValid( file.currentGroundListData.deathBox ) )
-	{
-		deathBoxEntIndex = file.currentGroundListData.deathBox.GetEncodedEHandle()
-	}
-
-	string boxString = ""
-	if ( deathBoxEntIndex > -1 )
-	{
-		boxString = " " + deathBoxEntIndex
-	}
-
-	entity lootEnt = GetEntityFromEncodedEHandle( int( guid ) )
-	if ( !IsValid( lootEnt ) )
-		return
-
-	if ( lootEnt.GetNetworkedClassName() != "prop_survival" )
-		return
-
-	if( Gamemode() == eGamemodes.fs_aimtrainer ) //&&
-	{
-		LootData lootData = SURVIVAL_Loot_GetLootDataByIndex( lootEnt.GetSurvivalInt() )
-
-		if(lootData.ref != "armor_pickup_lv4_all_fast" && lootData.ref != "armor_pickup_lv3" && lootData.ref != "armor_pickup_lv2" ) return
-
-		RunUIScript( "SurvivalMenu_AckAction" )
-		GetLocalClientPlayer().ClientCommand( "PickupSurvivalItem " + guid + " " + extraFlags + " " + boxString )
-		RunUIScript( "TryCloseSurvivalInventory", null )
-
-		return
-	}
-
-	switch ( lootAction )
-	{
-		case eLootAction.PICKUP:
-		case eLootAction.EQUIP:
-		case eLootAction.SWAP:
-			RunUIScript( "SurvivalMenu_AckAction" )
-			GetLocalClientPlayer().ClientCommand( "PickupSurvivalItem " + guid + " " + extraFlags + " " + boxString )
+		case eLootAction.PRIMARY_SWAP:
+			if( equipmentSlot != SLING_EQUIPMENT_SLOT_NAME )
+				Remote_ServerCallFunction( "ClientCallback_Sur_SwapPrimaryPositions" )
 			break
 
-		case eLootAction.PICKUP_ALL:
-			if ( IsValid( lootEnt ) )
+		case eLootAction.TRANSFER_SLING_MAIN:
+			entity player = GetLocalClientPlayer()
+			if ( player != GetLocalViewPlayer() )
+				break
+
+			int slot
+			if( equipmentSlot == SLING_EQUIPMENT_SLOT_NAME )
 			{
-				GetLocalClientPlayer().ClientCommand( "PickupAllSurvivalItem " + lootEnt.GetSurvivalInt() )
+				if( IsBallisticUltActive( player ) )
+					break
+
+				entity weapon0 = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+				if ( IsValid( weapon0 ) && !CanPlayerEquipWeaponRefToSling( player, GetWeaponClassNameWithLockedSet( weapon0 ), false ) )
+					break
+
+				slot = WEAPON_INVENTORY_SLOT_PRIMARY_0
+			}
+			else
+			{
+				string weaponRef = EquipmentSlot_GetLootRefForSlot( player, equipmentSlot )
+				if( weaponRef != "" && !CanPlayerEquipWeaponRefToSling( player, weaponRef ) )
+					break
+
+				slot = Survival_GetEquipmentSlotDataByRef( equipmentSlot ).weaponSlot
 			}
 
-			GetLocalClientPlayer().ClientCommand( "PickupSurvivalItem " + guid + " 0 " + boxString )
+			Remote_ServerCallFunction( "ClientCallback_Sur_SlingToMainWeaponSlot", slot )
+			return true
+
 			break
 
-		case eLootAction.ATTACH_TO_ACTIVE:
-			GetLocalClientPlayer().ClientCommand( "PickupSurvivalItem " + guid + " " + (PICKUP_FLAG_ATTACH_ACTIVE_ONLY | extraFlags) + " " + boxString )
-			break
+		case eLootAction.TRANSFER_SLING_ALT:
+			entity player = GetLocalClientPlayer()
+			if ( player != GetLocalViewPlayer() )
+				break
 
-		case eLootAction.ATTACH_TO_STOWED:
-			GetLocalClientPlayer().ClientCommand( "PickupSurvivalItem " + guid + " " + (PICKUP_FLAG_ATTACH_STOWED_ONLY | extraFlags) + " " + boxString )
-			break
+			if( IsBallisticUltActive( player ) )
+				break
 
-		case eLootAction.CARRY:
-			RunUIScript( "SurvivalMenu_AckAction" )
-			break
+			if( equipmentSlot == SLING_EQUIPMENT_SLOT_NAME )
+			{
+				entity weapon1 = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_1 )
+				if ( IsValid( weapon1 ) && !CanPlayerEquipWeaponRefToSling( player, GetWeaponClassNameWithLockedSet( weapon1 ), false ) )
+					break
 
-		case eLootAction.USE:
-			GetLocalClientPlayer().ClientCommand( "UseSurvivalItem " + guid )
-			break
+				Remote_ServerCallFunction( "ClientCallback_Sur_SlingToMainWeaponSlot", WEAPON_INVENTORY_SLOT_PRIMARY_1 )
+				return true
+			}
 
-		case eLootAction.DISMANTLE:
-			GetLocalClientPlayer().ClientCommand( "PickupSurvivalItem " + guid + " " + PICKUP_FLAG_ALT + " " + boxString )
+			break
 	}
-}
 
+	return false
+}
 
 void function UICallback_BackpackOpened()
 {
@@ -478,17 +520,16 @@ void function UICallback_BackpackOpened()
 		return
 
 	if ( IsAlive( player ) )
-		player.ClientCommand( "BackpackOpened" )
+		Remote_ServerCallFunction( "ClientCallback_BackpackOpened" )
 }
 
 
 void function UICallback_BackpackClosed()
 {
-	#if DEVELOPER
-		if ( !IsValidSignal( "BackpackClosed" ) ) //
+	if ( !IsValidSignal( "BackpackClosed" ) )
 			return
-	#endif
 
+	entity oldDeathBoxEnt = file.currentGroundListData.deathBox
 	file.currentGroundListData.deathBox = null
 	file.backpackOpened = false
 	file.groundlistOpened = false
@@ -501,11 +542,28 @@ void function UICallback_BackpackClosed()
 		return
 
 	if ( IsAlive( player ) )
-		player.ClientCommand( "BackpackClosed" )
+		Remote_ServerCallFunction( "ClientCallback_BackpackClosed" )
+
+	if ( file.currentGroundListData.listType == eGroundListType.GRABBER && IsValid( oldDeathBoxEnt ) )
+	{
+		Remote_ServerCallFunction( BLACK_MARKET_CLOSE_CMD, oldDeathBoxEnt )
+	}
+
+		else if ( file.currentGroundListData.listType == eGroundListType.VENDINGMACHINE && IsValid( oldDeathBoxEnt ) )
+		{
+			Remote_ServerCallFunction( VENDING_MACHINE_CLOSE_CMD, oldDeathBoxEnt )
+		}
+
+
+
+
+
+
+
 }
 
 
-void function UICallback_GroundlistOpened()
+void function UIToClient_GroundlistOpened()
 {
 	file.shouldResetGroundItems = true
 	file.groundlistOpened = true
@@ -515,12 +573,27 @@ void function UICallback_GroundlistOpened()
 		return
 
 	if ( IsAlive( player ) && GetGameState() >= eGameState.Prematch )
-		player.ClientCommand( "BackpackOpened" )
+	{
+
+		entity deathbox = Survival_GetDeathBox()
+		if ( IsValid( deathbox ) && deathbox.GetNetworkedClassName() == "prop_death_box" && !IsPlayerWithinStandardDeathBoxUseDistance( player, deathbox ) )
+		{
+			Remote_ServerCallFunction( "ClientCallback_DeathboxOpenedRemotely", deathbox )
+		}
+		else
+
+		{
+			Remote_ServerCallFunction( "ClientCallback_DeathboxOpened" )
+		}
+	}
 }
 
 
-void function UICallback_GroundlistClosed()
+void function UIToClient_GroundlistClosed()
 {
+	entity oldDeathBoxEnt = file.currentGroundListData.deathBox
+	clGlobal.levelEnt.Signal( "GroundListClosed" )
+
 	file.shouldResetGroundItems = true
 	file.currentGroundListData.deathBox = null
 	file.backpackOpened = false
@@ -530,33 +603,53 @@ void function UICallback_GroundlistClosed()
 		return
 
 	if ( IsAlive( player ) && GetGameState() >= eGameState.Prematch )
-		player.ClientCommand( "BackpackClosed" )
+		Remote_ServerCallFunction( "ClientCallback_BackpackClosed" )
+
+	if ( file.currentGroundListData.listType == eGroundListType.GRABBER && IsValid( oldDeathBoxEnt ) )
+	{
+		Remote_ServerCallFunction( BLACK_MARKET_CLOSE_CMD, oldDeathBoxEnt )
+	}
+
+		else if ( file.currentGroundListData.listType == eGroundListType.VENDINGMACHINE && IsValid( oldDeathBoxEnt ) )
+		{
+			Remote_ServerCallFunction( VENDING_MACHINE_CLOSE_CMD, oldDeathBoxEnt )
+		}
+
+
+
+
+
+
+
 }
 
 
-void function Survival_UnequipAttachment( string ref, int weaponSlot, bool removeToGround )
+bool function Survival_UnequipAttachment( string ref, int weaponSlot, bool removeToGround )
 {
 	if ( GetLocalViewPlayer() != GetLocalClientPlayer() )
-		return
+		return false
 
 	if ( !SURVIVAL_Loot_IsRefValid( ref ) )
-		return
+		return false
 
 	LootData data = SURVIVAL_Loot_GetLootDataByRef( ref )
-	GetLocalViewPlayer().ClientCommand( "Sur_UnequipAttachment " + ref + " " + weaponSlot + " " + removeToGround )
+
+	Remote_ServerCallFunction( "ClientCallback_Sur_UnequipAttachment", data.index, weaponSlot, removeToGround )
+	return true
 }
 
 
-void function Survival_TransferAttachment( string ref, int weaponSlot )
+bool function Survival_TransferAttachment( string ref, int weaponSlot )
 {
 	if ( GetLocalViewPlayer() != GetLocalClientPlayer() )
-		return
+		return false
 
 	if ( !SURVIVAL_Loot_IsRefValid( ref ) )
-		return
+		return false
 
 	LootData data = SURVIVAL_Loot_GetLootDataByRef( ref )
-	GetLocalViewPlayer().ClientCommand( "Sur_TransferAttachment " + ref + " " + weaponSlot )
+	Remote_ServerCallFunction( "ClientCallback_Sur_TransferAttachment", data.index, weaponSlot )
+	return true
 }
 
 
@@ -609,7 +702,7 @@ bool function CanSwapWeapons( entity player )
 	if ( !IsAlive( player ) )
 		return false
 
-	if ( !GamePlaying() )
+	if ( !CanOpenInventoryInCurrentGameState() )
 		return false
 
 	if ( player.ContextAction_IsActive() && !player.ContextAction_IsRodeo() )
@@ -624,46 +717,29 @@ bool function CanSwapWeapons( entity player )
 
 void function OpenSurvivalInventory( entity player, entity deathBox = null )
 {
-	if ( !player.GetPlayerNetBool( "inventoryEnabled" )	)
+	if ( !player.GetPlayerNetBool( "inventoryEnabled" ) )
 		return
-
 	SurvivalMenu_Internal( player, "OpenSurvivalInventoryMenu", deathBox )
 }
 
-void function SurvivalMenu_Internal( entity player, string uiScript, entity deathBox = null, int groundListBehavior = eGroundListBehavior.CONTENTS )
+
+void function SurvivalMenu_Internal( entity player, string uiScriptFuncName, entity deathBox = null, int groundListBehavior = eGroundListBehavior.CONTENTS, int groundListType = eGroundListType.DEATH_BOX )
 {
 	if ( !CanOpenInventory( player ) )
+		return
+
+	if ( IsEventFinale() && !IsValid(deathBox) ) // IsWeaponTypeEnabled not in S3
 		return
 
 	ResetInventoryMenu( player )
 
 	ServerCallback_ClearHints()
 	player.ClientCommand( "-zoom" )
-	CommsMenu_Shutdown( false )
 
-	file.currentGroundListData.deathBox = deathBox
-	file.currentGroundListData.behavior = groundListBehavior
-
-	RunUIScript( uiScript, player.IsTitan() )
-
-	if ( IsValid( deathBox ) )
+	if ( !Crafting_IsPlayerCrafting() && !Crafting_Access_Inventory_Enabled() )
 	{
-		if( Gamemode() == eGamemodes.fs_aimtrainer )
-			thread Safe_StartUpdatingArmorSwapLastTime()
-
-		thread TrackDistanceFromDeathBox( player, deathBox )
+		CommsMenu_Shutdown( false )
 	}
-}
-
-void function SurvivalMenu_Internal_Retail( entity player, string uiScriptFuncName, entity deathBox = null, int groundListBehavior = eGroundListBehavior.CONTENTS, int groundListType = eGroundListType.DEATH_BOX )
-{
-	if ( !CanOpenInventory( player ) )
-		return
-
-	ResetInventoryMenu( player )
-
-	ServerCallback_ClearHints()
-	player.ClientCommand( "-zoom" )
 
 	file.currentGroundListData.deathBox = deathBox
 	file.currentGroundListData.behavior = groundListBehavior
@@ -680,6 +756,41 @@ void function SurvivalMenu_Internal_Retail( entity player, string uiScriptFuncNa
 		}
 	}
 }
+
+bool function CanOpenInventoryInCurrentGameState( )
+{
+	if( GamePlaying() || GetGameState() == eGameState.Epilogue )
+		return true
+
+	if( GetGameState() == eGameState.WaitingForPlayers )
+		return true
+
+	if(	GetGameState() == eGameState.Prematch && GetCurrentPlaylistVarBool( "allow_inventory_in_prematch", false ) )
+		return true
+
+	return false
+}
+
+bool function CanOpenInventory( entity player )
+{
+	if ( IsWatchingReplay() )
+		return false
+
+	if ( !IsAlive( player ) )
+		return false
+
+	if ( CharacterSelect_MenuIsOpen() )
+		return false
+
+	if ( !CanOpenInventoryInCurrentGameState() )
+		return false
+
+	if ( Bleedout_IsBleedingOut( player ) )
+		return false
+
+	return true
+}
+
 
 void function TrackCloseDeathBoxConditions( entity player, entity deathBox )
 {
@@ -706,72 +817,129 @@ void function TrackCloseDeathBoxConditions( entity player, entity deathBox )
 		if ( file.currentGroundListData.behavior != eGroundListBehavior.NEARBY && file.filteredGroundItems.len() == 0 )
 			return
 
-		WaitFrame()
-	}
-}
 
-bool function CanOpenInventory( entity player )
-{
-	if ( IsWatchingReplay() )
-		return false
 
-	if ( !IsAlive( player ) )
-		return false
 
-	if ( !GamePlaying() && GetGameState() != eGameState.WaitingForPlayers )
-		return false
 
-	if ( Bleedout_IsBleedingOut( player ) )
-		return false
-
-	return true
-}
-
-void function TrackDistanceFromDeathBox( entity player, entity deathBox )
-{
-	player.EndSignal( "OnDeath" )
-	deathBox.EndSignal( "OnDestroy" )
-
-	// if( PlayerSetting_DamageClosesMenu() )
-	// {
-		// player.EndSignal( "OnDamaged" )
-	// }
-
-	OnThreadEnd
-	(
-		function() : ( player )
-		{
-			if( Gamemode() == eGamemodes.fs_aimtrainer )
-				Signal( player, "StopArmorSwapStopwatch" )
-
-			if ( Survival_IsGroundlistOpen() )
-			{
-				RunUIScript( "TryCloseSurvivalInventory", null )
-			}
-		}
-	)
-
-	WaitFrame()
-
-	while ( Survival_IsGroundlistOpen() )
-	{
-		if ( Distance( player.GetOrigin(), deathBox.GetOrigin() ) > DEATH_BOX_MAX_DIST || file.filteredGroundItems.len() == 0 )
-			return
 
 		WaitFrame()
 	}
 }
 
-void function OpenSurvivalGroundList( entity player, entity deathBox = null, int groundListBehavior = eGroundListBehavior.CONTENTS )
-{
-	SurvivalMenu_Internal( player, "OpenSurvivalGroundListMenu", deathBox, groundListBehavior )
-}
-
-void function OpenSurvivalGroundListRetail( entity player, entity deathBox = null, int groundListBehavior = eGroundListBehavior.CONTENTS, int groundListType = eGroundListType.DEATH_BOX )
+void function OpenSurvivalGroundList( entity player, entity deathBox = null, int groundListBehavior = eGroundListBehavior.CONTENTS, int groundListType = eGroundListType.DEATH_BOX )
 {
 	string funcName = "OpenSurvivalGroundListMenu"
-	SurvivalMenu_Internal_Retail( player, funcName, deathBox, groundListBehavior, groundListType )
+	SurvivalMenu_Internal( player, funcName, deathBox, groundListBehavior, groundListType )
 }
+
+
+void function UICallback_UpdateUpgradeButton( var button, int position )
+{
+	if( !UpgradeCore_IsEnabled() )
+		return
+
+	entity player = GetLocalClientPlayer()
+
+	var rui = Hud_GetRui( button )
+
+	Hud_SetEnabled( button, true )
+	Hud_SetSelected( button, false )
+	RuiSetImage( rui, "iconImage", $"" )
+	RuiSetInt( rui, "lootTier", 0 )
+	RuiSetInt( rui, "count", 0 )
+	Hud_ClearToolTipData( button )
+	Hud_SetLocked( button, false )
+
+	if ( IsLobby() )
+		return
+
+	UpgradeCoreChoice upgrade = UpgradeCore_GetUpgradeChoiceStructByIndex( player, position )
+
+	int tier = position / 2 + 1
+	string actionStr
+	if( UpgradeCore_IsUpgradeSelected( player, position ) || UpgradeCore_IsUpgradeSelectable( player, position ) )
+	{
+
+		RuiSetInt( rui, "lootTier", tier + 1 )
+		RuiSetImage( rui, "iconImage", upgrade.icon )
+		RuiSetBool( rui, "isInactive", false )
+		actionStr = "HOLD %[A_BUTTON|MOUSE1]% SELECT UPGRADE"
+	}
+	else
+	{
+		RuiSetInt( rui, "lootTier", 0 )
+		RuiSetImage( rui, "iconImage", UPGRADE_CORE_ICON )
+		RuiSetBool( rui, "isInactive", true )
+		actionStr = "UPGRADE LOCKED"
+	}
+
+	RuiSetInt( rui, "count", 1 )
+	RuiSetInt( rui, "maxCount", 1 )
+
+	RuiSetBool( rui, "isInfinite", true )
+	RuiSetInt( rui, "numPerPip", 1 )
+
+	RunUIScript( "ClientToUI_Tooltip_MarkForClientUpdate", button, eTooltipStyle.DEFAULT )
+
+	ToolTipData dt
+	dt.tooltipStyle = eTooltipStyle.DEFAULT
+	dt.descText = upgrade.desc
+	dt.titleText = "`1" + upgrade.title
+	dt.actionHint1 = actionStr
+	dt.rarity = tier - 1
+	dt.image = upgrade.icon
+
+	dt.tooltipFlags = dt.tooltipFlags | eToolTipFlag.PING_DISSABLED
+
+	Hud_SetToolTipData( button, dt )
+}
+
+void function UICallback_UpdateUpgradeInfo()
+{
+	if( !UpgradeCore_ShowUpgradeTreeInventory() )
+		return
+
+	if ( !IsLocalClientEHIValid() )
+		return
+
+	RunUIScript( "RTKLegendUpgradeTree_SetCharacterByGUID", LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() ).guid, true )
+	RunUIScript( "RTKLegendUpgradeTree_IsInteractable", true )
+	RunUIScript( "RTKLegendUpgradeTree_SetTitleVisibility", false )
+	RunUIScript( "RTKLegendUpgradeTree_SetDescriptionVisibility", false )
+}
+
+void function UICallback_OnUpgradeButtonAction( var button, int position )
+{
+	entity player = GetLocalClientPlayer()
+	if( !UpgradeCore_IsUpgradeSelectable( player, position ) )
+	{
+		EmitSoundOnEntity( player, "UI_Survival_LootPickupDeny" )
+		return
+	}
+
+	UpgradeCore_SelectOption( position )
+}
+
+void function UICallback_PingUpgrade( var button )
+{
+	if ( IsLobby() )
+		return
+
+	entity player    = GetLocalClientPlayer()
+	int level = UpgradeCore_GetPlayerLevel( player )
+	if( level >= 4 )
+		return
+
+	EmitSoundOnEntity( player, PING_SOUND_DEFAULT )
+	RunUIScript( "ClientToUI_SurvivalQuickInventory_MarkInventoryButtonPinged", button )
+	Remote_ServerCallFunction( "ClientCallback_QuickchatSubject_Player", eCommsAction.PING_XP_LEVEL_UP_ABILITY, eCommsFlags.NONE, player )
+}
+void function UIToClient_PingUpgrade()
+{
+	Remote_ServerCallFunction( "ClientCallback_QuickchatSubject_Player", eCommsAction.PING_XP_LEVEL_UP_ABILITY, eCommsFlags.NONE, GetLocalClientPlayer() )
+}
+
+
 
 void function UICallback_UpdateInventoryButton( var button, int position )
 {
@@ -799,7 +967,7 @@ void function UICallback_UpdateInventoryButton( var button, int position )
 	array<ConsumableInventoryItem> playerInventory = SURVIVAL_GetPlayerInventory( player )
 	if ( playerInventory.len() <= position )
 	{
-		RunUIScript( "SurvivalQuickInventory_ClearTooltipForSlot", button )
+		RunUIScript( "ClientToUI_Tooltip_Clear", button )
 		return
 	}
 
@@ -807,19 +975,23 @@ void function UICallback_UpdateInventoryButton( var button, int position )
 
 	if ( !SURVIVAL_Loot_IsLootIndexValid( item.type ) )
 	{
-		RunUIScript( "SurvivalQuickInventory_ClearTooltipForSlot", button )
+		RunUIScript( "ClientToUI_Tooltip_Clear", button )
 		return
 	}
 
 	LootData lootData = SURVIVAL_Loot_GetLootDataByIndex( item.type )
 	RuiSetImage( rui, "iconImage", lootData.hudIcon )
 	RuiSetInt( rui, "lootTier", lootData.tier )
-
-	// if( lootData.tier > 5 )
-		// RuiSetInt( rui, "lootTier", 5 )
-
 	RuiSetInt( rui, "count", item.count )
-	RuiSetInt( rui, "maxCount", SURVIVAL_GetInventorySlotCountForPlayer( player, lootData ) )
+	int maxCount = SURVIVAL_GetInventorySlotCountForPlayer( player, lootData )
+	RuiSetInt( rui, "maxCount", maxCount )
+	RuiSetInt( rui, "ordinaryMaxCount", lootData.lootType == eLootType.AMMO ? lootData.inventorySlotCount : maxCount )
+
+	RuiSetBool( rui, "isInfinite", false )
+	if ( PlayerHasPassive( player, ePassives.PAS_INFINITE_HEAL ) && lootData.lootType == eLootType.HEALTH )
+	{
+		RuiSetBool( rui, "isInfinite", true )
+	}
 
 	if ( lootData.lootType == eLootType.AMMO )
 		RuiSetInt( rui, "numPerPip", lootData.countPerDrop )
@@ -828,9 +1000,9 @@ void function UICallback_UpdateInventoryButton( var button, int position )
 
 	UpdateLockStatusForBackpackItem( button, player, lootData )
 
-	Hud_SetSelected( button, IsItemEquipped( player, lootData.ref ) )
+	Hud_SetSelected( button, IsOrdnanceEquipped( player, lootData.ref ) )
 
-	RunUIScript( "SurvivalQuickInventory_SetClientUpdateLootTooltipData", button, false )
+	RunUIScript( "ClientToUI_Tooltip_MarkForClientUpdate", button, eTooltipStyle.LOOT_PROMPT )
 
 	ToolTipData dt
 	dt.tooltipStyle = eTooltipStyle.LOOT_PROMPT
@@ -842,9 +1014,14 @@ void function UICallback_UpdateInventoryButton( var button, int position )
 	Hud_SetToolTipData( button, dt )
 }
 
+
 void function UICallback_PingInventoryItem( var button, int position )
 {
 	entity player = GetLocalClientPlayer()
+	array<ConsumableInventoryItem> playerInventory = SURVIVAL_GetPlayerInventory( player )
+
+	if ( playerInventory.len() <= position )
+		return
 
 	if ( IsLobby() )
 		return
@@ -853,32 +1030,17 @@ void function UICallback_PingInventoryItem( var button, int position )
 	if ( commsAction != eCommsAction.BLANK )
 	{
 		EmitSoundOnEntity( player, PING_SOUND_DEFAULT )
-		RunUIScript( "SurvivalQuickInventory_MarkInventoryButtonPinged", button )
-		player.ClientCommand( "ClientCommand_Quickchat " + commsAction )
+		RunUIScript( "ClientToUI_SurvivalQuickInventory_MarkInventoryButtonPinged", button )
+		Remote_ServerCallFunction( "ClientCallback_Quickchat", commsAction, eCommsFlags.NONE )
 	}
 }
 
 
-void function UICallback_OnInventoryButtonAction( var button, int position )
+void function UICallback_OnInventoryButtonAction( var button, int position, int actionType, bool fromExtendedUse = false )
 {
 	if ( IsLobby() )
 		return
 
-	OnInventoryButtonAction( button, position, false )
-}
-
-
-void function UICallback_OnInventoryButtonAltAction( var button, int position )
-{
-	if ( IsLobby() )
-		return
-
-	OnInventoryButtonAction( button, position, true )
-}
-
-
-void function OnInventoryButtonAction( var button, int position, bool isAltAction )
-{
 	entity player = GetLocalClientPlayer()
 
 	array<ConsumableInventoryItem> playerInventory = SURVIVAL_GetPlayerInventory( player )
@@ -891,11 +1053,10 @@ void function OnInventoryButtonAction( var button, int position, bool isAltActio
 		return
 
 	LootData lootData = SURVIVAL_Loot_GetLootDataByIndex( item.type )
-	bool didSomething = DispatchLootAction( eLootContext.BACKPACK, SURVIVAL_GetActionForBackpackItem( player, lootData, isAltAction ).action, position )
+	bool didSomething = DispatchLootAction( eLootContext.BACKPACK, SURVIVAL_GetActionForBackpackItem( player, lootData, actionType ).action, position )
 	if ( didSomething )
-		RunUIScript( "SurvivalQuickInventory_MarkInventoryButtonUsed", button )
+		RunUIScript( "ClientToUI_SurvivalQuickInventory_MarkInventoryButtonUsed", button )
 }
-
 
 void function UpdateLockStatusForBackpackItem( var button, entity player, LootData lootData )
 {
@@ -905,8 +1066,23 @@ void function UpdateLockStatusForBackpackItem( var button, entity player, LootDa
 	Hud_SetLocked( button, SURVIVAL_IsLootIrrelevant( player, null, lootData, eLootContext.BACKPACK ) )
 }
 
+bool function IsItemEquipped_Gadget( entity player, string ref )
+{
+	if ( !player.IsTitan() )
+	{
+		entity ordnance = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
+		if( IsValid( ordnance ) && ordnance.GetWeaponClassName() == ref )
+			return true
 
-bool function IsItemEquipped( entity player, string ref )
+		entity gadget = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_GADGET )
+		if( IsValid( gadget ) && gadget.GetWeaponClassName() == ref )
+			return true
+	}
+
+	return false
+}
+
+bool function IsOrdnanceEquipped( entity player, string ref )
 {
 	if ( !player.IsTitan() && IsValid( player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN ) ) )
 	{
@@ -925,16 +1101,10 @@ bool function DispatchLootAction( int lootContext, int lootAction, var param, bo
 	switch ( lootContext )
 	{
 		case eLootContext.BACKPACK:
-			BackpackAction( lootAction, string( param ) )
-			return true
+			return BackpackAction( lootAction, string( param ) )
 
 		case eLootContext.EQUIPMENT:
-			EquipmentAction( lootAction, string( param ) )
-			return true
-
-		case eLootContext.GROUND:
-			GroundAction( lootAction, string( param ), isAltAction, actionFromMenu )
-			return true
+			return EquipmentAction( lootAction, string( param ) )
 	}
 
 	return false
@@ -968,8 +1138,7 @@ int function GetCommsActionForBackpackItem( var button, int position )
 
 				case eAmmoPoolType.sniper:
 					return eCommsAction.INVENTORY_NEED_AMMO_SNIPER
-
-				case eAmmoPoolType.arrow:
+				case eAmmoPoolType.arrows:
 					return eCommsAction.INVENTORY_NEED_AMMO_ARROWS
 			}
 		}
@@ -978,6 +1147,112 @@ int function GetCommsActionForBackpackItem( var button, int position )
 	return eCommsAction.BLANK
 }
 
+void function UICallback_UpdateRequestButton( var button )
+{
+	if ( IsLobby() )
+		return
+
+	entity player        = GetLocalClientPlayer()
+	var rui              = Hud_GetRui( button )
+	string requestButton = Hud_GetScriptID( button )
+
+	LootData loot = EquipmentSlot_GetEquippedLootDataForSlot ( player, requestButton )
+
+
+	Hud_Hide( button )
+	Hud_ClearToolTipData( button )
+
+	if ( !SURVIVAL_Loot_IsRefValid( loot.ref ) )
+		return
+
+	string weaponName = loot.baseWeapon
+
+
+
+
+
+
+
+	if ( GetWeaponInfoFileKeyField_GlobalInt_WithDefault ( weaponName, "has_energized", 0 ) == 1 )
+	{
+		string energizedConsumableData = GetWeaponInfoFileKeyField_GlobalString ( weaponName, "energized_consumable" )
+		string pingStringData = GetWeaponInfoFileKeyField_GlobalString ( weaponName, "energized_ping_string" )
+		string commsData = GetWeaponInfoFileKeyField_GlobalString ( weaponName, "energized_comms" )
+
+		LootData ordanenceData = SURVIVAL_Loot_GetLootDataByRef ( energizedConsumableData )
+
+		RuiSetImage( rui, "iconImage", ordanenceData.hudIcon )
+		RuiSetString( rui, "iconName", Localize ( pingStringData ) )
+		Hud_Show( button )
+
+		ToolTipData dt
+		PopulateTooltipWithTitleAndDesc( ordanenceData, dt )
+
+		dt.commsAction = eCommsAction[ commsData ]
+
+		dt.tooltipFlags = IsPingEnabledForPlayer( player ) ? dt.tooltipFlags : dt.tooltipFlags | eToolTipFlag.PING_DISSABLED
+
+		Hud_SetToolTipData( button, dt )
+		RunUIScript( "ClientToUI_Tooltip_MarkForClientUpdate", button, eTooltipStyle.DEFAULT )
+
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+
+int function GetWeaponCurrentAmmo( entity weapon )
+{
+	int ammoCount = 0
+
+	if ( IsValid( weapon ) )
+	{
+		if(  weapon.UsesClipsForAmmo() )
+		{
+
+
+
+
+
+
+
+			ammoCount = weapon.GetWeaponPrimaryClipCount()
+
+
+		}
+		else
+		{
+			ammoCount = weapon.GetWeaponPrimaryAmmoCount( weapon.GetActiveAmmoSource() )
+		}
+	}
+
+	return ammoCount
+}
 
 void function UICallback_UpdateEquipmentButton( var button )
 {
@@ -985,12 +1260,13 @@ void function UICallback_UpdateEquipmentButton( var button )
 	var rui              = Hud_GetRui( button )
 	string equipmentSlot = Hud_GetScriptID( button )
 
-	if ( !EquipmentSlot_IsValidEquipmentSlot( equipmentSlot ) )
+	if ( !EquipmentSlot_IsValidForPlayer( equipmentSlot, player ) )
 	{
 		Hud_Hide( button )
 		return
 	}
 
+	Hud_Show( button )
 	LootData data    = EquipmentSlot_GetEquippedLootDataForSlot( player, equipmentSlot )
 	string equipment = data.ref
 
@@ -1000,7 +1276,9 @@ void function UICallback_UpdateEquipmentButton( var button )
 	RuiSetString( rui, "passiveText", "" )
 	RuiSetImage( rui, "ammoTypeImage", $"" )
 	Hud_ClearToolTipData( button )
-
+	RuiSetBool( rui, "hasAltAmmo", false )
+	RuiSetImage( rui, "altAmmoIcon", $"" )
+	RuiSetInt( rui, "altMaxAmmo", 0 )
 	if ( IsLobby() )
 		return
 
@@ -1011,7 +1289,7 @@ void function UICallback_UpdateEquipmentButton( var button )
 
 	if ( equipment == "" )
 	{
-		int tooltipFlags = IsPingEnabledForPlayer( player ) ? 0 : eToolTipFlag.PING_DISSABLED
+		int tooltipFlags = IsPingEnabledForPlayer( player ) && !GetCurrentPlaylistVarBool( "disable_empty_slot_ping", false ) ? 0 : eToolTipFlag.PING_DISSABLED
 		RunUIScript( "SurvivalQuickInventory_SetEmptyTooltipForSlot", button, Localize( "#TOOLTIP_EMPTY_PROMPT", Localize( es.title ) ), eCommsAction.BLANK, tooltipFlags )
 	}
 	else
@@ -1019,6 +1297,21 @@ void function UICallback_UpdateEquipmentButton( var button )
 		EquipmentButtonInit( button, equipmentSlot, data, 0 )
 	}
 
+	LootData gadgetLootData = EquipmentSlot_GetEquippedLootDataForSlot( player, "gadgetslot" )
+	string equipRef         = EquipmentSlot_GetLootRefForSlot( player, "gadgetslot" )
+	if( equipment == equipRef )
+	{
+		entity gadgetWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_GADGET )
+		if( IsValid( gadgetWeapon ) && SURVIVAL_Loot_IsRefValid( gadgetLootData.ref ) )
+		{
+			if ( gadgetWeapon.GetWeaponPrimaryClipCount() > 0 && gadgetWeapon.GetWeaponPrimaryClipCountMax() > 1 )
+			{
+				RuiSetInt( rui, "maxCount", gadgetWeapon.GetWeaponPrimaryClipCountMax() )
+				RuiSetInt( rui, "count", gadgetWeapon.GetWeaponPrimaryClipCount() )
+				RuiSetInt( rui, "numPerPip", 1 )
+			}
+		}
+	}
 
 	if ( EquipmentSlot_IsAttachmentSlot( equipmentSlot ) )
 	{
@@ -1044,7 +1337,7 @@ void function UICallback_UpdateEquipmentButton( var button )
 			{
 				RuiSetInt( rui, "count", 1 )
 
-				if ( SURVIVAL_Weapon_IsAttachmentLocked( wData.ref ) && attachmentPoint != "sight" )
+				if ( SURVIVAL_IsAttachmentPointLocked( wData.ref, attachmentPoint ) )
 				{
 					RuiSetInt( rui, "lootTier", wData.tier )
 				}
@@ -1056,15 +1349,17 @@ void function UICallback_UpdateEquipmentButton( var button )
 			RuiSetInt( rui, "lootTier", 0 )
 			Hud_SetWidth( button, 0 )
 			Hud_SetEnabled( button, false )
-			RunUIScript( "SurvivalQuickInventory_ClearTooltipForSlot", button )
+			RunUIScript( "ClientToUI_Tooltip_Clear", button )
 		}
 	}
 
 	if ( es.weaponSlot >= 0 )
 	{
-		int slot = SURVIVAL_GetActiveWeaponSlot( player )
-		if ( slot < 0 )
-			slot = 0
+		int slot = SURVIVAL_GetActiveWeaponSlot( player, true )
+		if ( slot < WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+			slot = WEAPON_INVENTORY_SLOT_PRIMARY_0
+		else if( slot > WEAPON_INVENTORY_SLOT_PRIMARY_1 )
+			slot = player.GetLastCycleSlot()
 
 		RuiSetString( rui, "weaponSlotString", "#MENU_WEAPON_SLOT" + es.weaponSlot )
 		RuiSetString( rui, "weaponSlotStringConsole", "#MENU_WEAPON_SLOT_CONSOLE" + es.weaponSlot )
@@ -1074,31 +1369,48 @@ void function UICallback_UpdateEquipmentButton( var button )
 		RuiSetInt( rui, "skinTier", 0 )
 		RuiSetInt( rui, "count", 0 )
 
+
+			RuiSetBool( rui, "isPaintballWeapon", false )
+
+
 		entity weapon = player.GetNormalWeapon( es.weaponSlot )
 
-		int skinTier = 0
+		int skinTier    = 0
 		string skinName = ""
 
 		string charmName = ""
 
 		if ( IsValid( weapon ) )
 		{
-			RuiSetInt( rui, "count", weapon.GetWeaponPrimaryClipCount() )
+			int ammountCount = GetWeaponCurrentAmmo( weapon )
+
+
+				if ( TitanSword_WeaponIsTitanSword( weapon ) )
+					ammountCount = 0
+
+
+			RuiSetInt( rui, "count", ammountCount )
 
 			RuiSetString( rui, "weaponName", data.pickupString )
 
-			if ( IsValidItemFlavorNetworkIndex_DEPRECATED( weapon.GetGrade(), eValidation.DONT_ASSERT ) )
-			{
-				ItemFlavor weaponSkin = GetItemFlavorByNetworkIndex_DEPRECATED( weapon.GetGrade() )
-				ItemFlavor weaponCharm = GetItemFlavorByNetworkIndex_DEPRECATED( weapon.GetGrade() )//TODO: FIX THIS!!!! weapon.GetWeaponCharmIndex()
-				RuiSetString( rui, "skinName", ItemFlavor_GetLongName( weaponSkin ) )
-				if ( ItemFlavor_HasQuality( weaponSkin ) )
-					RuiSetInt( rui, "skinTier", ItemFlavor_GetQuality( weaponSkin ) + 1 )
 
-				ItemFlavor ornull weaponItemOrNull = GetWeaponItemFlavorByClass( weapon.GetWeaponClassName() )
-				if ( weaponItemOrNull != null )
+				if ( weapon.HasMod( WEAPON_LOCKEDSET_MOD_PAINTBALL ) )
+					RuiSetBool( rui, "isPaintballWeapon", true )
+
+
+			ItemFlavor ornull weaponItemOrNull = GetWeaponItemFlavorByClass( weapon.GetWeaponClassName() )
+			if ( weaponItemOrNull != null )
+			{
+				expect ItemFlavor(weaponItemOrNull)
+
+				if ( IsValidItemFlavorGUID( weapon.GetItemFlavorGUID(), eValidation.DONT_ASSERT ) )
 				{
-					ItemFlavor ornull weaponSkinOrNull = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_WeaponSkin( expect ItemFlavor(weaponItemOrNull) ) )
+					ItemFlavor weaponSkin = GetItemFlavorByGUID( weapon.GetItemFlavorGUID() )
+					RuiSetString( rui, "skinName", ItemFlavor_GetLongName( weaponSkin ) )
+					if ( ItemFlavor_HasQuality( weaponSkin ) )
+						RuiSetInt( rui, "skinTier", ItemFlavor_GetQuality( weaponSkin ) + 1 )
+
+					ItemFlavor ornull weaponSkinOrNull = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_WeaponSkin( weaponItemOrNull ) )
 					if ( weaponSkinOrNull != null && weaponSkinOrNull != weaponSkin )
 					{
 						expect ItemFlavor( weaponSkinOrNull )
@@ -1108,22 +1420,57 @@ void function UICallback_UpdateEquipmentButton( var button )
 							skinName = ItemFlavor_GetLongName( weaponSkinOrNull )
 						}
 					}
-
-					ItemFlavor ornull weaponCharmOrNull = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_WeaponCharm( expect ItemFlavor(weaponItemOrNull) ) )
-					if ( weaponCharmOrNull != null && weaponCharmOrNull != weaponCharm )
-					{
-						expect ItemFlavor( weaponCharmOrNull )
-						charmName = ItemFlavor_GetLongName( weaponCharmOrNull )
-					}
 				}
+
+				// GetWeaponCharmOrArtifactBladeGUID not in S3
 			}
 
 			RunUIScript( "SurvivalQuickInventory_UpdateEquipmentForActiveWeapon", slot )
 			RunUIScript( "SurvivalQuickInventory_UpdateWeaponSlot", es.weaponSlot, skinTier, skinName, charmName )
 		}
 	}
+
+	if ( equipmentSlot == "sling_weapon" )
+	{
+		file.slingButtonRui = rui
+		entity weapon = player.GetNormalWeapon( SLING_WEAPON_SLOT )
+		LootData wData = SURVIVAL_GetLootDataFromWeapon( weapon )
+
+		RuiSetString( rui, "weaponSlotString", "#SLING_WEAPON_TITLE" )
+		RuiSetString( rui, "weaponSlotStringConsole", "#SLING_WEAPON_TITLE_CONSOLE" )
+		RuiSetString( rui, "weaponName", "" )
+		RuiSetString( rui, "skinName", "" )
+		RuiSetInt( rui, "lootTier", wData.tier )
+		RuiSetBool( rui, "isAltWeaponSlot", true )
+		RuiSetInt( rui, "count", 0 )
+		RuiSetBool( rui, "isAltWeapon", true )
+
+		if ( IsValid( weapon ) )
+		{
+			RuiSetInt( rui, "count", GetWeaponCurrentAmmo( weapon ) )
+		}
+	}
+
+
+	if( equipmentSlot == "armor" && UpgradeCore_IsEquipmentArmorCore( data.ref ) )
+	{
+		int shieldHealth = player.GetShieldHealth() + GetPlayerExtraShields( player )
+		int shieldTier = GetShieldTierFromShieldAmount( shieldHealth )
+		RuiSetInt( rui, "lootTier", shieldTier )
+
+		asset shieldCoreImage = GetShieldCoreIconFromShieldAmount( shieldHealth )
+		RuiSetImage( rui, "iconImage", shieldCoreImage )
+	}
+
 }
 
+void function EquipmentButton_SlingWarningMessage( bool show )
+{
+	if (file.slingButtonRui != null)
+	{
+		RuiSetBool( file.slingButtonRui, "isTryingToAttachNonSlingWeapon", show )
+	}
+}
 
 void function EquipmentButtonInit( var button, string equipmentSlot, LootData lootData, int count )
 {
@@ -1131,11 +1478,8 @@ void function EquipmentButtonInit( var button, string equipmentSlot, LootData lo
 	var rui       = Hud_GetRui( button )
 	RuiSetImage( rui, "iconImage", lootData.hudIcon )
 	RuiSetInt( rui, "lootTier", lootData.tier )
-
-	// if( lootData.tier > 5 )
-		// RuiSetInt( rui, "lootTier", 5 )
-
 	RuiSetInt( rui, "count", count )
+	RuiSetBool( rui, "dimIcon", SURVIVAL_EquipmentPretendsToBeBlank( lootData.ref ) )
 
 
 
@@ -1143,106 +1487,226 @@ void function EquipmentButtonInit( var button, string equipmentSlot, LootData lo
 	RuiSetString( rui, "passiveText", "" )
 
 	bool isMainWeapon = EquipmentSlot_IsMainWeaponSlot( equipmentSlot )
-
-	if ( isMainWeapon )
+	if ( isMainWeapon || equipmentSlot == SLING_EQUIPMENT_SLOT_NAME )
 	{
-		string ammoType = lootData.ammoType
-		asset icon      = lootData.fakeAmmoIcon
-		if ( SURVIVAL_Loot_IsRefValid( ammoType ) )
+		asset icon      = lootData.fakeAmmoIcon == $"" ? $"rui/hud/gametype_icons/survival/sur_ammo_unique" : lootData.fakeAmmoIcon
+		int slot 		= isMainWeapon ? Survival_GetEquipmentSlotDataByRef( equipmentSlot ).weaponSlot : SLING_WEAPON_SLOT
+		entity weapon   = player.GetNormalWeapon( slot )
+
+		bool weaponEntIsValid = IsValid( weapon )
+		Assert( weaponEntIsValid, "Weapon entity must be valid if the equipment slot data is valid as well" )
+
+		string ammoTypeRef = AmmoType_GetRefFromIndex( weapon.GetWeaponAmmoPoolType() )
+		if ( GetWeaponInfoFileKeyField_GlobalBool( lootData.baseWeapon, "uses_ammo_pool" ) )
 		{
-			LootData ammoData = SURVIVAL_Loot_GetLootDataByRef( ammoType )
+			LootData ammoData = SURVIVAL_Loot_GetLootDataByRef( ammoTypeRef )
 			icon = ammoData.hudIcon
 		}
-		RuiSetImage( rui, "ammoTypeImage", icon )
-	}
 
+		RuiSetImage( rui, "ammoTypeImage", icon )
+		if( weaponEntIsValid )
+			Weapon_UpdateAltAmmoRui( rui, player, weapon, false )
+	}
 	ToolTipData dt
 	PopulateTooltipWithTitleAndDesc( lootData, dt )
 	LootRef lootRef = SURVIVAL_CreateLootRef( lootData, null )
 
-	LootActionStruct asMain = SURVIVAL_BuildStringForAction( player, eLootContext.EQUIPMENT, lootRef, false, true )
+	LootActionStruct asMain = SURVIVAL_BuildStringForAction( player, eLootContext.EQUIPMENT, lootRef, eLootActionType.PRIMARY_ACTION, true, equipmentSlot )
 	SURVIVAL_UpdateStringForEquipmentAction( player, equipmentSlot, asMain, lootRef )
-	LootActionStruct asAlt = SURVIVAL_BuildStringForAction( player, eLootContext.EQUIPMENT, lootRef, true, true )
+	LootActionStruct asAlt = SURVIVAL_BuildStringForAction( player, eLootContext.EQUIPMENT, lootRef, eLootActionType.ALT_ACTION, true, equipmentSlot )
 	SURVIVAL_UpdateStringForEquipmentAction( player, equipmentSlot, asAlt, lootRef )
+	LootActionStruct asPrimarySwap = SURVIVAL_BuildStringForAction( player, eLootContext.EQUIPMENT, lootRef, eLootActionType.PRIMARY_SWAP, true, equipmentSlot )
+	SURVIVAL_UpdateStringForEquipmentAction( player, equipmentSlot, asPrimarySwap, lootRef )
+	LootActionStruct asCharacter1 = SURVIVAL_BuildStringForAction( player, eLootContext.EQUIPMENT, lootRef, eLootActionType.CHARACTER_ACTION1, true, equipmentSlot )
+	SURVIVAL_UpdateStringForEquipmentAction( player, equipmentSlot, asCharacter1, lootRef )
+	LootActionStruct asCharacter2 = SURVIVAL_BuildStringForAction( player, eLootContext.EQUIPMENT, lootRef, eLootActionType.CHARACTER_ACTION2, true, equipmentSlot )
+	SURVIVAL_UpdateStringForEquipmentAction( player, equipmentSlot, asCharacter2, lootRef )
 
-	dt.actionHint1 = Localize( asMain.displayString ).toupper()
-	dt.actionHint2 = Localize( asAlt.displayString ).toupper()
+	dt.actionHint1 = Localize( asMain.displayString )
+	dt.actionHint2 = Localize( asAlt.displayString )
+	dt.actionHint3 = Localize( asCharacter1.displayString )
+	if ( equipmentSlot == SLING_EQUIPMENT_SLOT_NAME )
+	{
+		dt.actionHint4 = Localize( asCharacter2.displayString )
+	}
+	else
+	{
+		dt.actionHint4 = Localize( asPrimarySwap.displayString )
+	}
 
 	dt.commsAction = GetCommsActionForEquipmentSlot( equipmentSlot )
 
 	dt.tooltipFlags = IsPingEnabledForPlayer( player ) ? dt.tooltipFlags : dt.tooltipFlags | eToolTipFlag.PING_DISSABLED
 
 	Hud_SetToolTipData( button, dt )
-	RunUIScript( "SurvivalQuickInventory_SetClientUpdateDefaultTooltipData", button )
+	RunUIScript( "ClientToUI_Tooltip_MarkForClientUpdate", button, eTooltipStyle.DEFAULT )
 }
 
 
 void function PopulateTooltipWithTitleAndDesc( LootData lootData, ToolTipData dt )
 {
-	string combinedTitle = lootData.pickupString
-	string combinedDesc  = lootData.desc
-
-	string passiveName
-	string passiveDesc
-
-	if ( lootData.passive != ePassives.INVALID )
-	{
-		passiveName = PASSIVE_NAME_MAP[lootData.passive]
-		passiveDesc = PASSIVE_DESCRIPTION_SHORT_MAP[lootData.passive]
-		//
-		combinedDesc = Localize( "#HUD_LOOT_WITH_PASSIVE_DESC", Localize( lootData.desc ), Localize( passiveName ).toupper(), Localize( passiveDesc ) )
-	}
+	entity localPlayer = GetLocalViewPlayer()
 	dt.tooltipFlags = dt.tooltipFlags | eToolTipFlag.SOLID
-	dt.titleText = combinedTitle
-	dt.descText = combinedDesc
+	dt.titleText = SURVIVAL_Loot_GetPickupString( lootData, GetLocalViewPlayer() )
+	dt.descText = SURVIVAL_Loot_GetDesc( lootData, localPlayer )
+
+
+	if( UpgradeCore_IsEquipmentArmorCore( lootData.ref ) && IsValid( localPlayer ) )
+	{
+		dt.descText = Localize( lootData.desc, localPlayer.GetShieldHealth() + GetPlayerExtraShields( localPlayer ) )
+	}
+
 }
 
-
-void function UICallback_OnEquipmentButtonAction( var button )
+void function UICallback_OnEquipmentButtonAction( var button, int actionType, bool fromExtendedUse = false )
 {
-	if ( IsLobby() )
+	if( IsLobby() )
 		return
 
-	OnEquipmentButtonAction( button, false )
-}
-
-
-void function UICallback_OnEquipmentButtonAltAction( var button, bool fromExtendedUse )
-{
-	if ( IsLobby() )
-		return
-
-	OnEquipmentButtonAction( button, true, fromExtendedUse )
-}
-
-
-void function OnEquipmentButtonAction( var button, bool isAltAction, bool fromExtendedUse = false )
-{
 	entity player = GetLocalClientPlayer()
 
 	string equipmentType = Hud_GetScriptID( button )
 	LootData data        = EquipmentSlot_GetEquippedLootDataForSlot( player, equipmentType )
 	string equipmentRef  = data.ref
-	if ( equipmentRef == "" )
+	if ( equipmentRef == "" || SURVIVAL_EquipmentPretendsToBeBlank( equipmentRef ) )
 		return
 
 	LootData lootData   = SURVIVAL_Loot_GetLootDataByRef( equipmentRef )
-	LootActionStruct as = SURVIVAL_GetActionForEquipment( player, lootData, isAltAction )
+	LootActionStruct as = SURVIVAL_GetActionForEquipment( player, lootData, actionType )
 	LootRef lootRef     = SURVIVAL_CreateLootRef( lootData, null )
 
 	SURVIVAL_UpdateStringForEquipmentAction( player, equipmentType, as, lootRef )
-	if ( as.action == eLootAction.DROP && lootData.lootType == eLootType.MAINWEAPON && !fromExtendedUse )
+	if ( ShouldStartExtendedUseForEquipmentAction( player, as.action, lootData.lootType, fromExtendedUse, equipmentType, equipmentRef ) )
 	{
-		RunUIScript( "ClientCallback_StartEquipmentExtendedUse", button, 0.4 )
+		RunUIScript( "ClientCallback_StartEquipmentExtendedUse", button, 0.4, actionType)
 	}
 	else
 	{
+		RunUIScript( "ClientCallback_StartEquipmentExtendedUse", button, 0.4, actionType )
 		bool didSomething = DispatchLootAction( eLootContext.EQUIPMENT, as.action, equipmentType )
 		if ( didSomething )
-			RunUIScript( "SurvivalQuickInventory_MarkInventoryButtonUsed", button )
+			RunUIScript( "ClientToUI_SurvivalQuickInventory_MarkInventoryButtonUsed", button )
 	}
 }
 
+bool function ShouldStartExtendedUseForEquipmentAction( entity player, int action, int lootType, bool fromExtendedUse, string equipmentType, string equipmentRef )
+{
+	if( fromExtendedUse )
+		return false
+
+	if( lootType == eLootType.MAINWEAPON )
+	{
+		if( action == eLootAction.DROP && Survival_PlayerCanDrop( player ) )
+		{
+			if( equipmentType == SLING_EQUIPMENT_SLOT_NAME && IsBallisticUltActive( player ) )
+				return false
+
+			return true
+		}
+		else if( action == eLootAction.TRANSFER_SLING_MAIN )
+		{
+			if ( IsBallisticUltActive( player ) && !IsPlayerWeaponSlingEmpty( player ) )
+				return false
+
+			if ( equipmentType == SLING_EQUIPMENT_SLOT_NAME )
+			{
+				entity weapon0 = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+				if( IsValid( weapon0 ) && !CanPlayerEquipWeaponRefToSling( player, GetWeaponClassNameWithLockedSet( weapon0 ), false ) )
+					return false
+			}
+			else
+			{
+				if( !CanPlayerEquipWeaponRefToSling( player, equipmentRef, false ) )
+					return false
+			}
+
+			return true
+		}
+		else if( action == eLootAction.TRANSFER_SLING_ALT )
+		{
+			if( equipmentType != SLING_EQUIPMENT_SLOT_NAME || ( IsBallisticUltActive( player ) ) )
+				return false
+
+			entity weapon1 = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_1 )
+			if( IsValid( weapon1 ) && !CanPlayerEquipWeaponRefToSling( player, GetWeaponClassNameWithLockedSet( weapon1 ), false ) )
+				return false
+
+			return true
+		}
+
+
+
+
+
+
+
+
+
+	}
+
+	return false
+}
+
+
+void function UICallback_PingIsMyUltimateReady( var button )
+{
+	if ( IsLobby() )
+		return
+
+	entity player = GetLocalClientPlayer()
+	if ( !IsValid( player ) )
+		return
+
+	int commsAction = GetCommsActionForUltReady( player )
+	if ( commsAction == eCommsAction.BLANK )
+		return
+
+	EmitSoundOnEntity( player, PING_SOUND_DEFAULT )
+	RunUIScript( "ClientToUI_SurvivalQuickInventory_MarkInventoryButtonPinged", button )
+
+	PIN_UltimateReadyPing( player, GetEnumString( "eCommsAction", commsAction ).tolower(), IsValid( player.GetOffhandWeapon( OFFHAND_ULTIMATE ) ) )
+
+
+	Quickchat( commsAction, null )
+}
+
+
+void function UICallback_PingRequestButton ( var button )
+{
+	if ( IsLobby() )
+		return
+
+	entity player    = GetLocalClientPlayer()
+	string requestButton = Hud_GetScriptID( button )
+
+	LootData loot = EquipmentSlot_GetEquippedLootDataForSlot ( player, requestButton )
+
+
+	if ( !SURVIVAL_Loot_IsRefValid( loot.ref ) )
+		return
+
+	string weaponName = loot.baseWeapon
+
+	if ( GetWeaponInfoFileKeyField_GlobalInt_WithDefault ( weaponName, "has_energized", 0 ) == 1 )
+	{
+		EmitSoundOnEntity( player, PING_SOUND_DEFAULT )
+		string commsData = GetWeaponInfoFileKeyField_GlobalString ( weaponName, "energized_comms" )
+
+		Quickchat( eCommsAction [ commsData ], null )
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+}
 
 void function UICallback_PingEquipmentItem( var button )
 {
@@ -1256,9 +1720,10 @@ void function UICallback_PingEquipmentItem( var button )
 		return
 
 	EmitSoundOnEntity( player, PING_SOUND_DEFAULT )
-	RunUIScript( "SurvivalQuickInventory_MarkInventoryButtonPinged", button )
+	RunUIScript( "ClientToUI_SurvivalQuickInventory_MarkInventoryButtonPinged", button )
 
-	player.ClientCommand( "ClientCommand_Quickchat " + commsAction + " 0 " + equipSlot )
+	EquipmentSlot e = Survival_GetEquipmentSlotDataByRef( equipSlot )
+	Remote_ServerCallFunction( "ClientCallback_Quickchat_UI", commsAction, eCommsFlags.NONE, e.type )
 }
 
 
@@ -1267,7 +1732,7 @@ int function GetCommsActionForEquipmentSlot( string equipSlot )
 	entity player       = GetLocalClientPlayer()
 	LootData data       = EquipmentSlot_GetEquippedLootDataForSlot( player, equipSlot )
 	string equipmentRef = data.ref
-	bool isEmpty        = (equipmentRef == "")
+	bool isEmpty        = (equipmentRef == "" || SURVIVAL_EquipmentPretendsToBeBlank( equipmentRef ) )
 
 	return Survival_GetCommsActionForEquipmentSlot( equipSlot, equipmentRef, isEmpty )
 }
@@ -1317,15 +1782,6 @@ int function SortByTierThenPriority( GroundLootData a, GroundLootData b )
 	return 0
 }
 
-int function SortByTier( GroundLootData a, GroundLootData b )
-{
-	if ( a.lootData.tier > b.lootData.tier )
-		return -1
-	if ( a.lootData.tier < b.lootData.tier )
-		return 1
-
-	return 0
-}
 
 int function SortByPriorityThenTierForGroundLoot( GroundLootData a, GroundLootData b )
 {
@@ -1337,211 +1793,39 @@ int function SortByPriorityThenTierForGroundLoot( GroundLootData a, GroundLootDa
 	else if ( aPriority > bPriority )
 		return 1
 
+	if ( a.lootData.lootType < b.lootData.lootType )
+		return -1
+	if ( a.lootData.lootType > b.lootData.lootType )
+		return 1
+
 	if ( a.lootData.tier > b.lootData.tier )
 		return -1
 	if ( a.lootData.tier < b.lootData.tier )
 		return 1
 
 
-	if ( a.lootData.lootType < b.lootData.lootType )
-		return -1
-	if ( a.lootData.lootType > b.lootData.lootType )
-		return 1
-
 	return 0
 }
 
-int function SortAmmoByEnum( GroundLootData a, GroundLootData b )
-{
-	LootData A = a.lootData
-	LootData B = b.lootData
-
-	if( A.ammoType == "" || B.ammoType == "" )
-		return 0
-
-	int ammoIndex1 = AmmoType_GetTypeFromRef( A.ammoType )
-	int ammoIndex2 = AmmoType_GetTypeFromRef( B.ammoType )
-
-	if ( ammoIndex1 < ammoIndex2 )
-		return -1
-	else if ( ammoIndex1 > ammoIndex2 )
-		return 1
-
-	return 0
-}
 
 void function UICallback_EnableTriggerStrafing()
 {
-	//
-	//
-	//
-	//
-	//
+
+
+
+
+
 }
+
 
 void function UICallback_DisableTriggerStrafing()
 {
-	//
-	//
-	//
-	//
-	//
+
+
+
+
+
 }
-
-
-void function UICallback_SetGroundMenuHeaderToPlayerName( void elem )
-{
-	var rui     = Hud_GetRui( elem )
-	string text = "#PLAYER_ITEMS"
-
-	if ( IsValid( file.currentGroundListData.deathBox ) && file.currentGroundListData.behavior == eGroundListBehavior.CONTENTS )
-	{
-		string overrideName = file.currentGroundListData.deathBox.GetCustomOwnerName()
-		if ( overrideName != "" )
-		{
-			text = Localize( "#PLAYERS_ITEMS", overrideName )
-		}
-		else
-		{
-			EHI ornull ehi = GetEHIForDeathBox( file.currentGroundListData.deathBox )
-			if ( ehi != null )
-			{
-				expect EHI( ehi )
-				if ( EHIHasValidScriptStruct( ehi ) )
-				{
-					string playerName = GetPlayerName( ehi )
-					text = Localize( "#PLAYERS_ITEMS", playerName )
-				}
-			}
-		}
-	}
-
-	RuiSetString( rui, "headerText", text )
-}
-
-
-void function UICallback_UpdateGroundItem( var button, int position )
-{
-	entity player = GetLocalClientPlayer()
-	var rui       = Hud_GetRui( button )
-	Hud_ClearToolTipData( button )
-
-	if ( IsLobby() )
-		return
-
-	if ( position >= file.filteredGroundItems.len() )
-		return
-
-	GroundLootData groundLootData = file.filteredGroundItems[position]
-
-	Hud_SetEnabled( button, !groundLootData.isHeader )
-
-	RuiSetImage( rui, "iconImage", $"" )
-	RuiSetInt( rui, "lootTier", 0 )
-	RuiSetInt( rui, "count", 0 )
-	RuiSetInt( rui, "lootType", 0 )
-	RuiSetBool( rui, "isPinged", false )
-	RuiSetBool( rui, "showWhenEmpty", false )
-	RuiSetImage( rui, "ammoTypeImage", $"" )
-	RuiSetBool( rui, "isUpgrade", false )
-
-	RuiSetBool( rui, "isHeader", groundLootData.isHeader )
-
-	if ( groundLootData.isHeader )
-	{
-		RuiSetImage( rui, "iconImage", $"" )
-		RuiSetString( rui, "buttonText", groundLootData.lootData.pickupString )
-		RuiSetInt( rui, "count", 0 )
-		Hud_SetLocked( button, false )
-		return
-	}
-
-	entity ent = GetEntFromGroundLootData( groundLootData )
-
-	if ( !IsValid( ent ) )
-	{
-		Hud_SetEnabled( button, false )
-
-		if( groundLootData.lootData.lootType != eLootType.AMMO )
-			return
-	}
-
-	string combinedTitle = groundLootData.lootData.pickupString
-	string combinedDesc  = groundLootData.lootData.desc
-
-	string passiveName
-	string passiveDesc
-
-	if ( groundLootData.lootData.passive != ePassives.INVALID )
-	{
-		passiveName = PASSIVE_NAME_MAP[groundLootData.lootData.passive]
-		passiveDesc = PASSIVE_DESCRIPTION_SHORT_MAP[groundLootData.lootData.passive]
-		combinedTitle = Localize( "#HUD_LOOT_WITH_PASSIVE", Localize( groundLootData.lootData.pickupString ), Localize( passiveName ) )
-		combinedDesc = Localize( "#HUD_LOOT_WITH_PASSIVE_DESC", Localize( groundLootData.lootData.desc ), Localize( passiveName ), Localize( passiveDesc ) )
-	}
-
-	bool isMainWeapon = (groundLootData.lootData.lootType == eLootType.MAINWEAPON)
-	bool isAmmo = (groundLootData.lootData.lootType == eLootType.AMMO)
-
-	bool isPinged     = IsGroundLootPinged( groundLootData )
-	bool isPingedByUs = IsGroundLootPinged( groundLootData, player )
-
-	RuiSetString( rui, "buttonText", combinedTitle )
-	RuiSetImage( rui, "iconImage", groundLootData.lootData.hudIcon )
-	RuiSetInt( rui, "lootTier", groundLootData.lootData.tier )
-	RuiSetInt( rui, "count", groundLootData.count )
-	RuiSetInt( rui, "lootType", isMainWeapon ? 1 : 0 )
-	RuiSetInt( rui, "count", isMainWeapon ? 0 : groundLootData.count )
-	RuiSetBool( rui, "isPinged", isPinged )
-	RuiSetImage( rui, "ammoTypeImage", $"" )
-
-	if ( isMainWeapon )
-	{
-		string ammoType = groundLootData.lootData.ammoType
-		asset icon      = $""
-		if ( SURVIVAL_Loot_IsRefValid( ammoType ) )
-		{
-			LootData ammoData = SURVIVAL_Loot_GetLootDataByRef( ammoType )
-			icon = ammoData.hudIcon
-		}
-		RuiSetImage( rui, "ammoTypeImage", icon )
-	}
-
-	Hud_SetLocked( button, !groundLootData.isRelevant )
-
-	RuiSetBool( rui, "isUpgrade", groundLootData.isUpgrade )
-
-	if( isAmmo )
-	{
-		RuiSetString( rui, "buttonText", "" )
-
-		if( !IsValid( ent ) ) // si es un fake slot, no mostrar tooltip data
-			return
-	}
-
-	ToolTipData dt
-	dt.tooltipStyle = isMainWeapon ? eTooltipStyle.WEAPON_LOOT_PROMPT : eTooltipStyle.LOOT_PROMPT
-
-	if ( groundLootData.guids.len() > 0 )
-		dt.lootPromptData.guid = groundLootData.guids[0]
-
-	dt.lootPromptData.count = groundLootData.count
-	dt.lootPromptData.index = groundLootData.lootData.index
-	dt.lootPromptData.lootContext = eLootContext.GROUND
-	dt.lootPromptData.isPinged = isPinged
-	dt.lootPromptData.isPingedByUs = isPingedByUs
-	if( IsValid( ent ) )
-		dt.lootPromptData.property = ent.GetSurvivalProperty()
-	dt.tooltipFlags = IsPingEnabledForPlayer( player ) ? dt.tooltipFlags : dt.tooltipFlags | eToolTipFlag.PING_DISSABLED
-
-	if ( isMainWeapon && IsValid( ent ) )
-		dt.lootPromptData.mods = ent.GetWeaponMods()
-
-	Hud_SetToolTipData( button, dt )
-
-	RunUIScript( "SurvivalQuickInventory_SetClientUpdateLootTooltipData", button, groundLootData.lootData.lootType == eLootType.MAINWEAPON )
-}
-
 
 bool function IsGroundLootPinged( GroundLootData grounLootData, entity player = null )
 {
@@ -1557,7 +1841,7 @@ bool function IsGroundLootPinged( GroundLootData grounLootData, entity player = 
 			}
 			else
 			{
-				entity pingWaypoint = Waypoint_GetWaypointForLootItemPingedBy( ent, player )
+				entity pingWaypoint = Waypoint_GetWaypointForLootItemPingedByPlayer( ent, player )
 				if ( IsValid( pingWaypoint ) )
 					return true
 			}
@@ -1566,102 +1850,6 @@ bool function IsGroundLootPinged( GroundLootData grounLootData, entity player = 
 
 	return false
 }
-
-
-void function UICallback_GroundItemAction( var button, int position, bool fromExtendedUse )
-{
-	entity player = GetLocalClientPlayer()
-
-	if ( IsLobby() )
-		return
-
-	if ( position >= file.filteredGroundItems.len() )
-		return
-
-	GroundLootData groundLootData = file.filteredGroundItems[position]
-
-	if ( groundLootData.guids.len() == 0 )
-		return
-
-	bool isInventoryFull = SURVIVAL_AddToPlayerInventory( player, groundLootData.lootData.ref ) == 0
-
-	entity ent = GetEntFromGroundLootData( groundLootData )
-
-	LootRef lootRef  = SURVIVAL_CreateLootRef( groundLootData.lootData, ent )
-	int groundAction = SURVIVAL_GetActionForGroundItem( player, lootRef, false ).action
-
-	if ( groundAction == eLootAction.SWAP && !fromExtendedUse )
-	{
-		RunUIScript( "ClientCallback_StartGroundItemExtendedUse", button, position, 0.4 )
-	}
-	else if ( isInventoryFull && groundAction == eLootAction.PICKUP )
-	{
-		file.swapString = Localize( groundLootData.lootData.pickupString )
-		RunUIScript( "GroundItem_OpenQuickSwap", button, position, groundLootData.guids[0] )
-	}
-	else
-	{
-		bool didSomething = DispatchLootAction( eLootContext.GROUND, groundAction, groundLootData.guids.top() )
-		if ( didSomething )
-			RunUIScript( "SurvivalQuickInventory_MarkInventoryButtonUsed", button )
-	}
-}
-
-
-void function UICallback_GroundItemAltAction( var button, int position )
-{
-	if ( IsLobby() )
-		return
-
-	if ( position >= file.filteredGroundItems.len() )
-		return
-
-	entity player                 = GetLocalClientPlayer()
-	GroundLootData groundLootData = file.filteredGroundItems[position]
-
-	if ( groundLootData.guids.len() == 0 )
-		return
-
-	entity ent = GetEntFromGroundLootData( groundLootData )
-
-	LootRef lootRef = SURVIVAL_CreateLootRef( groundLootData.lootData, ent )
-
-	bool isInventoryFull = SURVIVAL_AddToPlayerInventory( player, groundLootData.lootData.ref ) == 0
-
-	int groundAction = SURVIVAL_GetActionForGroundItem( player, lootRef, true ).action
-
-	if ( isInventoryFull && groundAction == eLootAction.PICKUP )
-	{
-		file.swapString = Localize( groundLootData.lootData.pickupString )
-		RunUIScript( "GroundItem_OpenQuickSwap", button, position, groundLootData.guids[0] )
-	}
-	else
-	{
-		bool didSomething = DispatchLootAction( eLootContext.GROUND, SURVIVAL_GetActionForGroundItem( player, lootRef, true ).action, groundLootData.guids.top(), true, false )
-		if ( didSomething )
-			RunUIScript( "SurvivalQuickInventory_MarkInventoryButtonUsed", button )
-	}
-}
-
-
-void function UICallback_PingGroundListItem( var button, int position )
-{
-	entity player = GetLocalClientPlayer()
-
-	if ( IsLobby() )
-		return
-
-	if ( position >= file.filteredGroundItems.len() )
-		return
-
-	GroundLootData groundLootData = file.filteredGroundItems[position]
-
-	if ( groundLootData.guids.len() == 0 )
-		return
-
-	UIFunc_PingGroundLoot( groundLootData.guids.top() )
-}
-
 
 void function UICallback_UpdateQuickSwapItem( var button, int position )
 {
@@ -1689,8 +1877,7 @@ void function UICallback_UpdateQuickSwapItem( var button, int position )
 	array<ConsumableInventoryItem> playerInventory = SURVIVAL_GetPlayerInventory( player )
 	if ( playerInventory.len() <= position )
 	{
-		int commsAction = GetCommsActionForBackpackItem( button, position )
-		RunUIScript( "SurvivalQuickInventory_ClearTooltipForSlot", button )
+		RunUIScript( "ClientToUI_Tooltip_Clear", button )
 		return
 	}
 
@@ -1699,12 +1886,16 @@ void function UICallback_UpdateQuickSwapItem( var button, int position )
 	LootData lootData = SURVIVAL_Loot_GetLootDataByIndex( item.type )
 	RuiSetImage( rui, "iconImage", lootData.hudIcon )
 	RuiSetInt( rui, "lootTier", lootData.tier )
-
-	// if( lootData.tier > 5 )
-		// RuiSetInt( rui, "lootTier", 5 )
-
 	RuiSetInt( rui, "count", item.count )
-	RuiSetInt( rui, "maxCount", SURVIVAL_GetInventorySlotCountForPlayer( player, lootData ) )
+	int maxCount = SURVIVAL_GetInventorySlotCountForPlayer( player, lootData )
+	RuiSetInt( rui, "maxCount", maxCount )
+	RuiSetInt( rui, "ordinaryMaxCount", lootData.lootType == eLootType.AMMO ? lootData.inventorySlotCount : maxCount )
+
+	RuiSetBool( rui, "isInfinite", false )
+	if ( PlayerHasPassive( player, ePassives.PAS_INFINITE_HEAL ) && lootData.lootType == eLootType.HEALTH )
+	{
+		RuiSetBool( rui, "isInfinite", true )
+	}
 
 	if ( lootData.lootType == eLootType.AMMO )
 		RuiSetInt( rui, "numPerPip", lootData.countPerDrop )
@@ -1713,17 +1904,16 @@ void function UICallback_UpdateQuickSwapItem( var button, int position )
 
 	ToolTipData toolTipData
 	toolTipData.titleText = lootData.pickupString
-	toolTipData.descText = lootData.desc
-	toolTipData.actionHint1 = Localize( "#LOOT_SWAP", file.swapString ).toupper()
+	toolTipData.descText = SURVIVAL_Loot_GetDesc( lootData, player )
+	toolTipData.actionHint1 = Localize( "#LOOT_SWAP", file.swapString )
 	toolTipData.tooltipFlags = IsPingEnabledForPlayer( player ) ? toolTipData.tooltipFlags : toolTipData.tooltipFlags | eToolTipFlag.PING_DISSABLED
 
 	if ( Survival_PlayerCanDrop( player ) )
-		toolTipData.actionHint2 = Localize( "#LOOT_ALT_DROP" ).toupper()
-
+		toolTipData.actionHint2 = Localize( "#LOOT_ALT_DROP" )
 	Hud_SetToolTipData( button, toolTipData )
-	RunUIScript( "SurvivalQuickInventory_SetClientUpdateDefaultTooltipData", button )
+	RunUIScript( "ClientToUI_Tooltip_MarkForClientUpdate", button, eTooltipStyle.DEFAULT )
 
-	Hud_SetSelected( button, IsItemEquipped( player, lootData.ref ) )
+	Hud_SetSelected( button, IsOrdnanceEquipped( player, lootData.ref ) )
 	Hud_SetLocked( button, SURVIVAL_IsLootIrrelevant( player, null, lootData, eLootContext.BACKPACK ) )
 }
 
@@ -1748,7 +1938,7 @@ void function UICallback_OnQuickSwapItemClick( var button, int position )
 		deathBoxEntIndex = file.currentGroundListData.deathBox.GetEncodedEHandle()
 	}
 
-	RunUIScript( "SurvivalQuickInventory_DoQuickSwap", slot, deathBoxEntIndex )
+	RunUIScript( "SurvivalQuickSwapMenu_DoQuickSwap", slot, deathBoxEntIndex )
 }
 
 
@@ -1795,35 +1985,26 @@ void function UICallback_UpdateQuickSwapItemButton( var button, int guid )
 	if ( IsLobby() )
 		return
 
-	string combinedTitle = lootData.pickupString
-	string combinedDesc  = lootData.desc
-
 	string passiveName
 	string passiveDesc
 
 	int count = loot.GetClipCount()
 
-	if ( lootData.passive != ePassives.INVALID )
-	{
-		passiveName = PASSIVE_NAME_MAP[lootData.passive]
-		passiveDesc = PASSIVE_DESCRIPTION_SHORT_MAP[lootData.passive]
-		combinedTitle = Localize( "#HUD_LOOT_WITH_PASSIVE", Localize( lootData.pickupString ), Localize( passiveName ) )
-		combinedDesc = Localize( "#HUD_LOOT_WITH_PASSIVE_DESC", Localize( lootData.desc ), Localize( passiveName ), Localize( passiveDesc ) )
-	}
-
 	file.swapString = Localize( lootData.pickupString )
 
 	bool isMainWeapon = (lootData.lootType == eLootType.MAINWEAPON)
 
-	RuiSetString( rui, "buttonText", combinedTitle )
+	RuiSetString( rui, "buttonText", SURVIVAL_Loot_GetDesc( lootData, player ) )
 	RuiSetImage( rui, "iconImage", lootData.hudIcon )
 	RuiSetInt( rui, "lootTier", lootData.tier )
-
-	// if( lootData.tier > 5 )
-		// RuiSetInt( rui, "lootTier", 5 )
-
 	RuiSetInt( rui, "count", count )
-	RuiSetInt( rui, "lootType", isMainWeapon ? 1 : 0 )
+	RuiSetInt( rui, "lootType", lootData.lootType )
+
+	RuiSetBool( rui, "isInfinite", false )
+	if ( PlayerHasPassive( player, ePassives.PAS_INFINITE_HEAL ) && lootData.lootType == eLootType.HEALTH )
+	{
+		RuiSetBool( rui, "isInfinite", true )
+	}
 
 	LootRef lootRef = SURVIVAL_CreateLootRef( lootData, null )
 
@@ -1833,7 +2014,7 @@ void function UICallback_UpdateQuickSwapItemButton( var button, int guid )
 	{
 		string ammoType = lootData.ammoType
 		asset icon      = lootData.fakeAmmoIcon
-		if ( SURVIVAL_Loot_IsRefValid( ammoType ) )
+		if ( SURVIVAL_Loot_IsRefValid( ammoType ) && loot.GetWeaponSettingBool( eWeaponVar.uses_ammo_pool ) )
 		{
 			LootData ammoData = SURVIVAL_Loot_GetLootDataByRef( ammoType )
 			icon = ammoData.hudIcon
@@ -1853,7 +2034,6 @@ void function OpenSwapForItem( string ref, string guid )
 
 	RunUIScript( "SurvivalQuickInventory_OpenSwapForItem", guid )
 }
-
 
 bool function FilteredGroundItemsContains( string ref )
 {
@@ -1893,20 +2073,20 @@ void function UpdateLootTooltip( ToolTipData dt )
 
 	entity player = GetLocalViewPlayer()
 
-	LootActionStruct asMain = SURVIVAL_BuildStringForAction( player, lootContext, lootRef, false, true )
-
 	var rui = GetTooltipRui()
-	RuiSetBool( rui, "canPing", lootContext == eLootContext.GROUND && IsPingEnabledForPlayer( player ) )
+	RuiSetBool( rui, "isInDeathBox", dt.lootPromptData.isInDeathBox )
 	RuiSetBool( rui, "isTooltip", true )
-	RuiSetBool( rui, "isVisible", true )
 	RuiSetBool( rui, "isPinged", dt.lootPromptData.isPinged )
 	RuiSetBool( rui, "isPingedByUs", dt.lootPromptData.isPingedByUs )
 
 	UpdateLootRuiWithData( player, rui, data, lootContext, lootRef, true )
+
+	RuiSetBool( rui, "canPing", ( lootContext == eLootContext.GROUND ) || ( data.lootType == eLootType.AMMO ) && IsPingEnabledForPlayer( player ) )
+	RuiSetBool( rui, "isVisible", (dt.tooltipFlags & eToolTipFlag.HIDDEN) == 0 )
 }
 
 
-void function UpdateDpadTooltipText( string ref, string emptySlotText, string equipmentSlot )
+void function UIToClient_UpdateInventoryDpadTooltipText( string ref, string emptySlotText, string equipmentSlot )
 {
 	entity player = GetLocalViewPlayer()
 
@@ -1914,22 +2094,34 @@ void function UpdateDpadTooltipText( string ref, string emptySlotText, string eq
 	{
 		LootActionStruct asMain
 		LootActionStruct asAlt
+		LootActionStruct asPrimarySwap
+		LootActionStruct asCharacter1
+		LootActionStruct asCharacter2
 		LootData lootData = SURVIVAL_Loot_GetLootDataByRef( ref )
 		LootRef lootRef   = SURVIVAL_CreateLootRef( lootData, null )
 		LootTypeData lt   = GetLootTypeData( lootData.lootType )
 
-		string itemTitle         = ""
-		string backpackAction    = ""
-		string backpackAltAction = ""
-		string specialPrompt     = ""
-		string commsPrompt       = ""
+		string itemTitle                = ""
+		string backpackAction           = ""
+		string backpackAltAction	    = ""
+		string backpackPrimarySwapAction= ""
+		string backpackCharacterAction1 = ""
+		string backpackCharacterAction2 = ""
+		string specialPrompt            = ""
+		string commsPrompt              = ""
 
 		if ( EquipmentSlot_IsValidEquipmentSlot( equipmentSlot ) )
 		{
-			asMain = SURVIVAL_BuildStringForAction( player, eLootContext.EQUIPMENT, lootRef, false, true )
+			asMain = SURVIVAL_BuildStringForAction( player, eLootContext.EQUIPMENT, lootRef, eLootActionType.PRIMARY_ACTION, true )
 			SURVIVAL_UpdateStringForEquipmentAction( player, equipmentSlot, asMain, lootRef )
-			asAlt = SURVIVAL_BuildStringForAction( player, eLootContext.EQUIPMENT, lootRef, true, true )
+			asAlt = SURVIVAL_BuildStringForAction( player, eLootContext.EQUIPMENT, lootRef, eLootActionType.ALT_ACTION, true )
 			SURVIVAL_UpdateStringForEquipmentAction( player, equipmentSlot, asAlt, lootRef )
+			asPrimarySwap = SURVIVAL_BuildStringForAction( player, eLootContext.EQUIPMENT, lootRef, eLootActionType.PRIMARY_SWAP, true, equipmentSlot )
+			SURVIVAL_UpdateStringForEquipmentAction( player, equipmentSlot, asPrimarySwap, lootRef )
+			asCharacter1 = SURVIVAL_BuildStringForAction( player, eLootContext.EQUIPMENT, lootRef, eLootActionType.CHARACTER_ACTION1, true, equipmentSlot )
+			SURVIVAL_UpdateStringForEquipmentAction( player, equipmentSlot, asCharacter1, lootRef )
+			asCharacter2 = SURVIVAL_BuildStringForAction( player, eLootContext.EQUIPMENT, lootRef, eLootActionType.CHARACTER_ACTION2, true, equipmentSlot )
+			SURVIVAL_UpdateStringForEquipmentAction( player, equipmentSlot, asCharacter2, lootRef )
 
 			EquipmentSlot es = Survival_GetEquipmentSlotDataByRef( equipmentSlot )
 
@@ -1943,12 +2135,18 @@ void function UpdateDpadTooltipText( string ref, string emptySlotText, string eq
 		}
 		else
 		{
-			asMain = SURVIVAL_BuildStringForAction( player, eLootContext.BACKPACK, lootRef, false, true )
-			asAlt = SURVIVAL_BuildStringForAction( player, eLootContext.BACKPACK, lootRef, true, true )
+			asMain = SURVIVAL_BuildStringForAction( player, eLootContext.BACKPACK, lootRef, eLootActionType.PRIMARY_ACTION, true )
+			asAlt = SURVIVAL_BuildStringForAction( player, eLootContext.BACKPACK, lootRef, eLootActionType.ALT_ACTION, true )
+			asPrimarySwap = SURVIVAL_BuildStringForAction( player, eLootContext.EQUIPMENT, lootRef, eLootActionType.PRIMARY_SWAP, true, equipmentSlot )
+			asCharacter1 = SURVIVAL_BuildStringForAction( player, eLootContext.BACKPACK, lootRef, eLootActionType.CHARACTER_ACTION1, true, equipmentSlot )
+			asCharacter2 = SURVIVAL_BuildStringForAction( player, eLootContext.BACKPACK, lootRef, eLootActionType.CHARACTER_ACTION2, true, equipmentSlot )
 		}
 
 		backpackAction = asMain.displayString
 		backpackAltAction = asAlt.displayString
+		backpackPrimarySwapAction = asPrimarySwap.displayString
+		backpackCharacterAction1 = asCharacter1.displayString
+		backpackCharacterAction2 = asCharacter2.displayString
 		itemTitle += lootData.pickupString
 
 		if ( lootData.lootType == eLootType.MAINWEAPON )
@@ -1958,9 +2156,9 @@ void function UpdateDpadTooltipText( string ref, string emptySlotText, string eq
 			commsPrompt = Localize( commsPrompt )
 		}
 
-		RunUIScript( "UpdateInventoryDpadTooltip", itemTitle, backpackAction, backpackAltAction, commsPrompt, specialPrompt )
+		RunUIScript( "ClientToUI_UpdateInventoryDpadTooltip", itemTitle, backpackAction, backpackAltAction, commsPrompt, specialPrompt, backpackPrimarySwapAction, backpackCharacterAction1, backpackCharacterAction2 )
 	}
-	else //
+	else
 	{
 		string specialPrompt = ""
 		if ( EquipmentSlot_IsValidEquipmentSlot( equipmentSlot ) && EquipmentSlot_IsAttachmentSlot( equipmentSlot ) )
@@ -1968,7 +2166,7 @@ void function UpdateDpadTooltipText( string ref, string emptySlotText, string eq
 
 		string commsPrompt = IsControllerModeActive() ? "#PING_PROMPT_REQUEST_GAMEPAD" : "#PING_PROMPT_REQUEST"
 		commsPrompt = Localize( commsPrompt )
-		RunUIScript( "UpdateInventoryDpadTooltip", emptySlotText, "", "", commsPrompt, specialPrompt )
+		RunUIScript( "ClientToUI_UpdateInventoryDpadTooltip", emptySlotText, "", "", commsPrompt, specialPrompt )
 	}
 }
 
@@ -1976,7 +2174,6 @@ void function UpdateDpadTooltipText( string ref, string emptySlotText, string eq
 void function GroundItemUpdate( entity player, array<entity> loot )
 {
 	loot.sort()
-	RunUIScript( "SurvivalGroundItem_BeginUpdate" )
 	if ( file.shouldResetGroundItems )
 	{
 		GroundItemsInit( player, loot )
@@ -2022,14 +2219,11 @@ void function GroundItemUpdate( entity player, array<entity> loot )
 		foreach ( index, item in file.filteredGroundItems )
 		{
 			RunUIScript( "SurvivalGroundItem_SetGroundItemHeader", index, item.isHeader )
-			RunUIScript( "SurvivalGroundItem_SetGroundItemWeapon", index, item.lootData.lootType == eLootType.MAINWEAPON )
-			RunUIScript( "SurvivalGroundItem_SetGroundItemAmmo", index, item.lootData.lootType == eLootType.AMMO )
-			RunUIScript( "SurvivalGroundItem_SetGroundHeaderIndex", index, item.isHeader ? item.lootData.index : -1 )
 		}
 	}
 
+	file.visibleItemIndices.clear()
 	file.shouldUpdateGroundItems = false
-	RunUIScript( "SurvivalGroundItem_EndUpdate" )
 }
 
 
@@ -2061,6 +2255,7 @@ void function GroundItemsDiff( entity player, array<entity> loot )
 	}
 
 	table<string, GroundLootData> extras
+	bool showUpgrades = GetCurrentPlaylistVarBool( "deathbox_show_upgrades", false )
 
 	foreach ( item in loot )
 	{
@@ -2079,7 +2274,12 @@ void function GroundItemsDiff( entity player, array<entity> loot )
 			{
 				extras[ data.ref ] <- gd
 
-				if ( SURVIVAL_IsLootIrrelevant( player, item, gd.lootData, eLootContext.GROUND ) && gd.lootData.lootType != eLootType.MAINWEAPON )
+				if ( showUpgrades && SURVIVAL_IsLootAnUpgrade( player, item, gd.lootData, eLootContext.GROUND ) )
+				{
+					gd.isRelevant = true
+					gd.isUpgrade = true
+				}
+				else if ( SURVIVAL_IsLootIrrelevant( player, item, gd.lootData, eLootContext.GROUND ) )
 				{
 					gd.isRelevant = false
 					gd.isUpgrade = false
@@ -2090,6 +2290,7 @@ void function GroundItemsDiff( entity player, array<entity> loot )
 					gd.isUpgrade = false
 				}
 			}
+
 
 			gd.count += item.GetClipCount()
 			gd.guids.append( item.GetEncodedEHandle() )
@@ -2105,67 +2306,10 @@ void function GroundItemsInit( entity player, array<entity> loot )
 {
 	file.filteredGroundItems.clear()
 
-	//new filteredGroundItems
-	array<GroundLootData> weapons
-	array<GroundLootData> ammo
-	array<GroundLootData> helmet
-	array<GroundLootData> backpack
-	array<GroundLootData> knockdownshield
-	array<GroundLootData> armor
-	array<GroundLootData> grenades
-	array<GroundLootData> healings
-	array<GroundLootData> attachments
-
+	array<GroundLootData> upgradeItems
+	array<GroundLootData> unusableItems
+	array<GroundLootData> relevantItems
 	table<string, GroundLootData> allItems
-
-	//add empty ammos
-	GroundLootData light
-	allItems[ "bullet" ] <- light
-	light.lootData = SURVIVAL_Loot_GetLootDataByRef( "bullet" )
-	light.count = 1
-	light.guids.append( 0 )
-	light.isRelevant = true
-	light.isUpgrade = false
-
-	GroundLootData heavy
-	allItems[ "highcal" ] <- heavy
-	heavy.lootData = SURVIVAL_Loot_GetLootDataByRef( "highcal" )
-	heavy.count = 1
-	heavy.guids.append( 0 )
-	heavy.isRelevant = true
-	heavy.isUpgrade = false
-
-	GroundLootData energy
-	allItems[ "special" ] <- energy
-	energy.lootData = SURVIVAL_Loot_GetLootDataByRef( "special" )
-	energy.count = 1
-	energy.guids.append( 0 )
-	energy.isRelevant = true
-	energy.isUpgrade = false
-
-	GroundLootData shotgun
-	allItems[ "shotgun" ] <- shotgun
-	shotgun.lootData = SURVIVAL_Loot_GetLootDataByRef( "shotgun" )
-	shotgun.count = 1
-	shotgun.guids.append( 0 )
-	shotgun.isRelevant = true
-	shotgun.isUpgrade = false
-
-	GroundLootData sniper
-	allItems[ "sniper" ] <- sniper
-	sniper.lootData = SURVIVAL_Loot_GetLootDataByRef( "sniper" )
-	sniper.count = 1
-	sniper.guids.append( 0 )
-	sniper.isRelevant = true
-	sniper.isUpgrade = false
-
-	GroundLootData arrows
-	allItems[ "arrows" ] <- arrows
-	arrows.lootData = SURVIVAL_Loot_GetLootDataByRef( "arrows" )
-	arrows.count = 1
-	arrows.guids.append( 0 )
-	arrows.isRelevant = true
-	arrows.isUpgrade = false
 
 	for ( int groundIndex = 0; groundIndex < loot.len(); groundIndex++ )
 	{
@@ -2186,94 +2330,71 @@ void function GroundItemsInit( entity player, array<entity> loot )
 		gd.lootData = data
 		gd.count += item.GetClipCount()
 		gd.guids.append( item.GetEncodedEHandle() )
-
-		if ( SURVIVAL_IsLootIrrelevant( player, item, gd.lootData, eLootContext.GROUND ) && gd.lootData.lootType != eLootType.MAINWEAPON )
-		{
-			gd.isRelevant = false
-			gd.isUpgrade = false
-		}
-		else
-		{
-			gd.isRelevant = true
-			gd.isUpgrade = false
-		}
 	}
+
+	bool sortByType    = GetCurrentPlaylistVarBool( "deathbox_sort_by_type", true )
+	bool showUpgrades  = !sortByType && GetCurrentPlaylistVarBool( "deathbox_show_upgrades", true )
+	bool splitUnusable = !sortByType && GetCurrentPlaylistVarBool( "deathbox_split_unusable", true )
 
 	foreach ( gd in allItems )
 	{
 		entity ent = GetEntFromGroundLootData( gd )
 
-		LootData data = gd.lootData
-
-		switch( data.lootType )
+		if ( showUpgrades && SURVIVAL_IsLootAnUpgrade( player, ent, gd.lootData, eLootContext.GROUND ) )
 		{
-			case eLootType.MAINWEAPON:
-			weapons.append( gd )
-			break
-
-			case eLootType.AMMO:
-			ammo.append( gd )
-			break
-
-			case eLootType.HELMET:
-			helmet.append( gd )
-			break
-
-			case eLootType.BACKPACK:
-			backpack.append( gd )
-			break
-
-			case eLootType.INCAPSHIELD:
-			knockdownshield.append( gd )
-			break
-
-			case eLootType.ARMOR:
-			armor.append( gd )
-			break
-
-			case eLootType.ORDNANCE:
-			grenades.append( gd )
-			break
-
-			case eLootType.HEALTH:
-			healings.append( gd )
-			break
-
-			case eLootType.ATTACHMENT:
-			case eLootType.JUMPKIT:
-			case eLootType.CUSTOMPICKUP:
-			case eLootType.BLANK:
-			case eLootType.DATAKNIFE:
-			case eLootType.MARVIN_ARM:
-			case eLootType.SHIPKEYCARD:
-			case eLootType.RESOURCE:
-			case eLootType.SURVIVAL:
-			attachments.append( gd )
-			break
+			gd.isRelevant = true
+			gd.isUpgrade = true
+			upgradeItems.append( gd )
 		}
-
+		else if ( SURVIVAL_IsLootIrrelevant( player, ent, gd.lootData, eLootContext.GROUND ) )
+		{
+			gd.isRelevant = false
+			gd.isUpgrade = false
+			if ( splitUnusable )
+				unusableItems.append( gd )
+			else
+				relevantItems.append( gd )
+		}
+		else
+		{
+			gd.isRelevant = true
+			gd.isUpgrade = false
+			relevantItems.append( gd )
+		}
 	}
 
-	weapons.sort( SortByTier )
-	helmet.sort( SortByTier )
-	backpack.sort( SortByTier )
-	knockdownshield.sort( SortByTier )
-	armor.sort( SortByTier )
-	grenades.sort( SortByTier )
-	healings.sort( SortByTier )
-	attachments.sort( SortByTier )
+	if ( sortByType )
+	{
+		upgradeItems.sort( SortByPriorityThenTierForGroundLoot )
+		relevantItems.sort( SortByPriorityThenTierForGroundLoot )
+		unusableItems.sort( SortByPriorityThenTierForGroundLoot )
+	}
+	else
+	{
+		upgradeItems.sort( SortByAmmoThenTierThenPriority )
+		relevantItems.sort( SortByAmmoThenTierThenPriority )
+		unusableItems.sort( SortByAmmoThenTierThenPriority )
+	}
 
-	file.filteredGroundItems.extend( weapons )
-	file.filteredGroundItems.extend( ammo )
-	file.filteredGroundItems.extend( helmet )
-	file.filteredGroundItems.extend( backpack )
-	file.filteredGroundItems.extend( knockdownshield )
-	file.filteredGroundItems.extend( armor )
-	file.filteredGroundItems.extend( grenades )
-	file.filteredGroundItems.extend( healings )
-	file.filteredGroundItems.extend( attachments )
+	if ( upgradeItems.len() > 0 )
+	{
+		file.filteredGroundItems.append( CreateHeaderData( "#HEADER_UPGRADES", $"rui/pilot_loadout/kit/titan_cowboy_filled" ) )
+	}
+	file.filteredGroundItems.extend( upgradeItems )
 
-	if ( file.filteredGroundItems.len() > 1 )
+	if ( splitUnusable && relevantItems.len() > 0 )
+	{
+		file.filteredGroundItems.append( CreateHeaderData( "#HEADER_USEABLE", $"" ) )
+	}
+	file.filteredGroundItems.extend( relevantItems )
+
+	if ( splitUnusable && unusableItems.len() > 0 )
+	{
+		file.filteredGroundItems.append( CreateHeaderData( "#HEADER_UNUSEABLE", $"rui/menu/common/button_unbuyable" ) )
+	}
+	file.filteredGroundItems.extend( unusableItems )
+
+	if ( !splitUnusable && sortByType && file.filteredGroundItems.len() > 1 )
 	{
 		int lastLootCat = -1
 		for ( int i = file.filteredGroundItems.len() - 1; i >= -1; i-- )
@@ -2291,7 +2412,7 @@ void function GroundItemsInit( entity player, array<entity> loot )
 			{
 				if ( lastLootCat != -1 )
 				{
-					file.filteredGroundItems.insert( i + 1, CreateHeaderData( GetCategoryTitleFromPriority( lastLootCat ), $"", lastLootCat ) )
+					file.filteredGroundItems.insert( i + 1, CreateHeaderData( GetCategoryTitleFromPriority( lastLootCat ), $"" ) )
 				}
 
 				lastLootCat = cat
@@ -2300,33 +2421,16 @@ void function GroundItemsInit( entity player, array<entity> loot )
 	}
 }
 
-GroundLootData function CreateHeaderData( string title, asset icon, int indexCat = -1 )
+
+GroundLootData function CreateHeaderData( string title, asset icon )
 {
 	GroundLootData gd
 	gd.isHeader = true
 	LootData data
 	data.pickupString = title
 	data.hudIcon = icon
-	data.lootType = eLootType.BLANK
-	data.index = indexCat
 	gd.lootData = data
-
-	//printt( "created header " + title + " with index " + indexCat )
 	return gd
-}
-
-bool function IsGearItem( LootData data )
-{
-	switch( data.lootType )
-	{
-		case eLootType.HELMET:
-		case eLootType.BACKPACK:
-		case eLootType.INCAPSHIELD:
-		case eLootType.ARMOR:
-		return true
-	}
-
-	return false
 }
 
 
@@ -2359,7 +2463,7 @@ void function UpdateHealHint( entity player )
 		if ( Time() - file.lastHealHintDisplayTime < 10.0 )
 			return
 
-		if ( CanDeployHealDrone( player ) && player.GetHealth() < player.GetMaxHealth() )
+		if ( CanDeployHealDrone( player ) && player.GetHealth() < player.GetMaxHealth() && !StatusEffect_HasSeverity( player, eStatusEffect.silenced ) )
 		{
 			AddPlayerHint( HINT_DURATION, 0.25, $"", "#SURVIVAL_MEDIC_HEAL_HINT" )
 			file.lastHealHintDisplayTime = Time()
@@ -2367,91 +2471,114 @@ void function UpdateHealHint( entity player )
 		}
 
 		int kitType
-		if ( WeaponDrivenConsumablesEnabled() )
-		{
-			kitType = Consumable_GetLocalViewPlayerSelectedConsumableType()
-			ConsumableInfo kitInfo = Consumable_GetConsumableInfo( kitType )
 
-			if ( Consumable_IsCurrentSelectedConsumableTypeUseful() )
+		kitType = Consumable_GetLocalViewPlayerSelectedConsumableType()
+		ConsumableInfo kitInfo = Consumable_GetConsumableInfo( kitType )
+
+		if ( Consumable_IsCurrentSelectedConsumableTypeUseful() && SURVIVAL_CountItemsInInventory( player, kitInfo.lootData.ref ) > 0 )
+		{
+			AddPlayerHint( HINT_DURATION, 0.25, $"", "#SURVIVAL_HEAL_HINT_CROSSHAIR", Localize( kitInfo.lootData.pickupString ) )
+			file.lastHealHintDisplayTime = Time()
+		}
+	}
+	else if ( ShouldShowUltHint( player ) )
+	{
+		float timeSinceUltHint = Time() - file.lastUltHintDisplayTime
+		if ( timeSinceUltHint < ULT_HINT_COOLDOWN )
+			return
+
+		entity ultWeapon = GetLocalClientPlayer().GetOffhandWeapon( OFFHAND_ULTIMATE )
+
+		ConsumableInfo kitInfo = Consumable_GetConsumableInfo( eConsumableType.ULTIMATE )
+
+		float maxUltChargeFracForHint = 1.0 - ( kitInfo.ultimateAmount / 100.0 )
+
+
+		if ( Consumable_CanUseUltAccel( GetLocalClientPlayer() ) )
+		{
+			float ultChargeFrac = ultWeapon.GetWeaponPrimaryClipCount() / float( ultWeapon.GetWeaponPrimaryClipCountMax() )
+
+			//if ( ultChargeFrac < maxUltChargeFracForHint && !GetLocalClientPlayer().Player_IsSkywardLaunching() && ( GetUltimateWeaponState() != eUltimateState.ACTIVE ) && SURVIVAL_CountItemsInInventory( GetLocalClientPlayer(), kitInfo.lootData.ref ) > 0 )
 			{
-				AddPlayerHint( HINT_DURATION, 0.25, $"", "#SURVIVAL_HEAL_HINT_CROSSHAIR", Localize( kitInfo.lootData.pickupString ) )
+				if ( IsControllerModeActive() )
+					AddPlayerHint( HINT_DURATION, 0.25, $"", "#SURVIVAL_ULT_ACCEL_HINT_CONTROLLER", Localize( kitInfo.lootData.pickupString ) )
+				else
+					AddPlayerHint( HINT_DURATION, 0.25, $"", "#SURVIVAL_ULT_ACCEL_HINT_PC", Localize( kitInfo.lootData.pickupString ) )
+
+				file.lastUltHintDisplayTime = Time()
 			}
 		}
-		else
-		{
-			kitType = Survival_Health_GetSelectedHealthPickupType()
 
-			if ( kitType == -1 )
-				kitType = SURVIVAL_GetBestHealthPickupType( player )
-
-			HealthPickup pickup = SURVIVAL_Loot_GetHealthKitDataFromStruct( kitType )
-
-			AddPlayerHint( HINT_DURATION, 0.25, $"", "#SURVIVAL_HEAL_HINT_CROSSHAIR", Localize( pickup.lootData.pickupString ) )
-		}
 	}
 	else
 	{
 		HidePlayerHint( "#SURVIVAL_HEAL_HINT_CROSSHAIR" )
 		HidePlayerHint( "#SURVIVAL_MEDIC_HEAL_HINT" )
+		HidePlayerHint( "#SURVIVAL_ULT_ACCEL_HINT_CONTROLLER" )
+		HidePlayerHint( "#SURVIVAL_ULT_ACCEL_HINT_PC" )
 	}
 }
 
 
 bool function ShouldShowHealHint( entity player )
 {
-	if( Flowstate_IsHaloMode() && Playlist() != ePlaylists.fs_haloMod_survival )
+	if ( !IsLocalPlayerAlive_NonReplay() )
 		return false
 
+	if ( Bleedout_IsBleedingOut( player ) )
+		return false
+
+	if ( GetGameState() == eGameState.WinnerDetermined || GetGameState() > eGameState.Epilogue )
+		return false
+
+	float shieldHealthFrac = GetShieldHealthFrac( player )
+	float healthFrac       = GetHealthFrac( player )
+	if ( (player.GetShieldHealthMax() == 0 || shieldHealthFrac > 0.25) && healthFrac > 0.5 )
+		return false
+
+
+	int kitType = Consumable_GetLocalViewPlayerSelectedConsumableType()
+	if ( kitType == -1 )
+		kitType = Consumable_GetBestConsumableTypeForPlayer( player, 0, 0 )
+
+	if ( !Consumable_CanUseConsumable( player, kitType, false ) && !CanDeployHealDrone( player ) )
+		return false
+
+
+
+
+
+
+
+
+
+	return false
+
+
+	unreachable
+}
+
+bool function ShouldShowUltHint( entity player )
+{
 	if ( !IsAlive( player ) )
 		return false
 
 	if ( Bleedout_IsBleedingOut( player ) )
 		return false
 
-	if ( GetGameState() >= eGameState.WinnerDetermined )
+	if ( GetGameState() == eGameState.WinnerDetermined || GetGameState() > eGameState.Epilogue )
 		return false
 
-	float shieldHealthFrac = GetShieldHealthFrac( player )
-	float healthFrac       = GetHealthFrac( player )
-	if ( (!player.GetShieldHealthMax() || shieldHealthFrac > 0.25) && healthFrac > 0.5 )
+	int kitType = eConsumableType.ULTIMATE
+
+	if ( !Consumable_CanUseConsumable( player, kitType, false ) )
 		return false
 
-	if ( WeaponDrivenConsumablesEnabled() )
-	{
-		int kitType = Consumable_GetLocalViewPlayerSelectedConsumableType()
-		if ( kitType == -1 )
-			kitType = Consumable_GetBestConsumableTypeForPlayer( player, 0, 0 )
+	if ( player.GetPlayerNetBool( "isHealing" ) )
+		return false
 
-		if ( !Consumable_CanUseConsumable( player, kitType, false ) && !CanDeployHealDrone( player ) )
-			return false
+	return true
 
-		PotentialHealData healData = Consumable_CreatePotentialHealData( player, kitType )
-		if ( healData.totalAppliedHeal < 75 && (healData.totalAppliedHeal > 25 && healData.overHeal >= 100) )
-			return false
-
-		if ( player.GetPlayerNetBool( "isHealing" ) )
-			return false
-
-		return true
-	}
-	else
-	{
-		int kitType = Survival_Health_GetSelectedHealthPickupType()
-		if ( kitType == -1 )
-			kitType = SURVIVAL_GetBestHealthPickupType( player )
-
-		if ( !Survival_CanUseHealthPack( player, kitType, true, false ) && !CanDeployHealDrone( player ) )
-			return false
-
-		KitHealData healData = SURVIVAL_CreateKitHealData( player, kitType )
-		if ( healData.totalAppliedHeal < 75 && (healData.totalAppliedHeal > 25 && healData.overHeal >= 100) )
-			return false
-
-		if ( player.GetPlayerNetBool( "isHealing" ) )
-			return false
-
-		return true
-	}
 
 	unreachable
 }
@@ -2474,40 +2601,84 @@ void function UseHealthPickupRefFromInventory( entity player, string ref )
 	}
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function EquipOrdnance( entity player, string ref )
 {
-	printt( "CLIENT DEBUG: EquipOrdnance called for:", ref )
-	
 	if ( player.IsTitan() )
-	{
-		printt( "CLIENT DEBUG: Player is titan" )
 		return
-	}
 
 	if ( !IsAlive( player ) )
-	{
-		printt( "CLIENT DEBUG: Player not alive" )
 		return
-	}
 
-	if ( !GamePlaying() )
-	{
-		printt( "CLIENT DEBUG: Game not playing" )
+	if ( !CanOpenInventoryInCurrentGameState() )
 		return
-	}
 
 	if ( Bleedout_IsBleedingOut( player ) )
-	{
-		printt( "CLIENT DEBUG: Player bleeding out" )
 		return
-	}
 
-	printt( "CLIENT DEBUG: Sending Sur_EquipOrdnance command for:", ref )
-	player.ClientCommand( "Sur_EquipOrdnance " + ref )
+	LootData data = SURVIVAL_Loot_GetLootDataByRef( ref )
+	Remote_ServerCallFunction( "ClientCallback_Sur_EquipOrdnance", data.index )
 
 	ServerCallback_ClearHints()
 }
 
+void function EquipGadget( entity player, string ref )
+{
+	if ( player.IsTitan() )
+		return
+
+	if ( !IsAlive( player ) )
+		return
+
+	if ( !CanOpenInventoryInCurrentGameState() )
+		return
+
+	if ( Bleedout_IsBleedingOut( player ) )
+		return
+
+	LootData data = SURVIVAL_Loot_GetLootDataByRef( ref )
+	Remote_ServerCallFunction( "ClientCallback_Sur_EquipGadget", data.index )
+
+	ServerCallback_ClearHints()
+}
 
 void function EquipAttachment( entity player, string item, string weaponName )
 {
@@ -2517,7 +2688,7 @@ void function EquipAttachment( entity player, string item, string weaponName )
 	if ( !IsAlive( player ) )
 		return
 
-	if ( !GamePlaying() )
+	if ( !CanOpenInventoryInCurrentGameState() )
 		return
 
 	if ( player.ContextAction_IsActive() && !player.ContextAction_IsRodeo() )
@@ -2526,11 +2697,12 @@ void function EquipAttachment( entity player, string item, string weaponName )
 	if ( Bleedout_IsBleedingOut( player ) )
 		return
 
-	//
-	//
-	//
-	player.ClientCommand( "Sur_EquipAttachment " + item )
-	//
+
+
+
+	LootData data = SURVIVAL_Loot_GetLootDataByRef( item )
+	Remote_ServerCallFunction( "ClientCallback_Sur_EquipAttachment", 	data.index, -1)
+
 
 	ServerCallback_ClearHints()
 }
@@ -2572,14 +2744,15 @@ void function TryCloseSurvivalInventoryFromDamage( float damage, vector damageOr
 {
 	if ( GetLocalClientPlayer() == GetLocalViewPlayer() )
 	{
-		if ( GetConVarBool( "player_setting_damage_closes_deathbox_menu" ) )
+		if ( GetConVarBool( "player_setting_damage_closes_deathbox_menu" ) && !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
 		{
-			if ( IsValid( attacker ) && (attacker.IsNPC() || attacker.IsPlayer()) && damageSourceId != eDamageSourceId.deathField )
+			if ( IsValid( attacker ) && ( attacker.IsPlayer() || attacker.IsNPC()) )
+			{
 				RunUIScript( "TryCloseSurvivalInventoryFromDamage", null )
+			}
 		}
 	}
 }
-
 
 entity function GetEntFromGroundLootData( GroundLootData groundLootData )
 {
@@ -2647,13 +2820,13 @@ void function UICallback_GetMouseDragAllowedFromButton( var button, int position
 	else
 	{
 		string equipmentSlot = Hud_GetScriptID( button )
-		if ( EquipmentSlot_IsAttachmentSlot( equipmentSlot ) )
+		if ( EquipmentSlot_IsValidEquipmentSlot( equipmentSlot ) && EquipmentSlot_IsAttachmentSlot( equipmentSlot ) )
 		{
 			EquipmentSlot es = Survival_GetEquipmentSlotDataByRef( equipmentSlot )
 			EquipmentSlot ws = Survival_GetEquipmentSlotDataByRef( es.attachmentWeaponSlot )
 
 			LootData wData = EquipmentSlot_GetEquippedLootDataForSlot( player, ws.ref )
-			if ( !SURVIVAL_Loot_IsRefValid( wData.ref ) || SURVIVAL_Weapon_IsAttachmentLocked( wData.ref ) )
+			if ( !SURVIVAL_Loot_IsRefValid( wData.ref ) || SURVIVAL_IsAttachmentPointLocked( wData.ref, es.attachmentPoint ) )
 			{
 				allowed = false
 			}
@@ -2663,7 +2836,7 @@ void function UICallback_GetMouseDragAllowedFromButton( var button, int position
 	RunUIScript( "ClientCallback_SetTempBoolMouseDragAllowed", allowed )
 }
 
-//
+
 void function UICallback_OnInventoryMouseDrop( var dropButton, var sourcePanel, var sourceButton, int sourceIndex, bool initOnly )
 {
 	if ( initOnly )
@@ -2687,15 +2860,24 @@ void function UICallback_OnInventoryMouseDrop( var dropButton, var sourcePanel, 
 			sourceEquipmentWeaponSlot = es.attachmentWeaponSlot
 		}
 	}
+	entity player = GetLocalClientPlayer()
 
-	//
+	if ( EquipmentSlot_IsValidEquipmentSlot( dropEquipmentSlot ) )
+	{
+		EquipmentSlot des = Survival_GetEquipmentSlotDataByRef( dropEquipmentSlot )
+
+		if ( des.passiveRequired != -1 )
+			Hud_SetVisible( dropButton, PlayerHasPassive( player, des.passiveRequired ) )
+	}
+
+
 	if ( dropEquipmentSlot == sourceEquipmentSlot || dropEquipmentSlot == sourceEquipmentWeaponSlot )
 		return
 
 	if ( initOnly )
 		Hud_SetLocked( dropButton, true )
 
-	entity player = GetLocalClientPlayer()
+
 	LootData data
 
 	if ( sourceIndex > -1 )
@@ -2717,7 +2899,7 @@ void function UICallback_OnInventoryMouseDrop( var dropButton, var sourcePanel, 
 		data = EquipmentSlot_GetEquippedLootDataForSlot( player, equipmentSlot )
 	}
 
-	//
+
 	if ( EquipmentSlot_IsValidEquipmentSlot( dropEquipmentSlot ) )
 	{
 		if ( EquipmentSlot_IsMainWeaponSlot( dropEquipmentSlot ) )
@@ -2747,7 +2929,7 @@ void function UICallback_OnInventoryMouseDrop( var dropButton, var sourcePanel, 
 						if ( initOnly )
 							Hud_SetLocked( dropButton, false )
 						else
-							player.ClientCommand( "Sur_EquipAttachment " + data.ref + " " + es.weaponSlot )
+							Remote_ServerCallFunction( "ClientCallback_Sur_EquipAttachment", data.index, es.weaponSlot )
 					}
 				}
 			}
@@ -2758,7 +2940,36 @@ void function UICallback_OnInventoryMouseDrop( var dropButton, var sourcePanel, 
 					if ( initOnly )
 						Hud_SetLocked( dropButton, false )
 					else
-						player.ClientCommand( "Sur_SwapPrimaryPositions" )
+						Remote_ServerCallFunction( "ClientCallback_Sur_SwapPrimaryPositions" )
+				}
+				else if ( sourceEquipmentSlot == SLING_EQUIPMENT_SLOT_NAME )
+				{
+					if ( initOnly )
+						Hud_SetLocked( dropButton, false )
+					else
+					{
+						if( !IsBallisticUltActive( player ) )
+							Remote_ServerCallFunction( "ClientCallback_Sur_SlingToMainWeaponSlot", es.weaponSlot )
+					}
+				}
+			}
+		}
+		else if ( dropEquipmentSlot == SLING_EQUIPMENT_SLOT_NAME )
+		{
+			EquipmentSlot des 	= Survival_GetEquipmentSlotDataByRef( dropEquipmentSlot )
+
+			if ( EquipmentSlot_IsValidEquipmentSlot( sourceEquipmentSlot ) )
+			{
+				EquipmentSlot es 	= Survival_GetEquipmentSlotDataByRef( sourceEquipmentSlot )
+				if ( EquipmentSlot_IsMainWeaponSlot( sourceEquipmentSlot ) )
+				{
+					if ( initOnly )
+						Hud_SetLocked( dropButton, false )
+					else
+					{
+						if( CanPlayerEquipWeaponRefToSling( player, EquipmentSlot_GetLootRefForSlot( player, es.ref ) ) )
+							Remote_ServerCallFunction( "ClientCallback_Sur_SlingToMainWeaponSlot", es.weaponSlot )
+					}
 				}
 			}
 		}
@@ -2798,7 +3009,7 @@ void function UICallback_OnInventoryMouseDrop( var dropButton, var sourcePanel, 
 }
 
 
-void function UICallback_WeaponSwap()
+void function UIToClient_WeaponSwap()
 {
 	entity player = GetLocalViewPlayer()
 
@@ -2831,6 +3042,7 @@ void function TryResetGroundList( entity player, LootData data, int lootAction )
 		GroundListResetNextFrame()
 }
 
+
 void function TryUpdateGroundList()
 {
 	if ( file.groundlistOpened )
@@ -2851,15 +3063,61 @@ void function UICallback_UpdatePlayerInfo( var elem )
 	entity player = GetLocalClientPlayer()
 
 	if ( GetBugReproNum() == 54268 )
-		thread SURVIVAL_PopulatePlayerInfoRui( player, rui )
+		SURVIVAL_PopulatePlayerInfoRui( player, rui )
 	else
 		thread TEMP_UpdatePlayerRui( rui, player )
 }
 
 
-void function UICallback_UpdateTeammateInfo( var elem )
+void function UICallback_UpdateTeammateInfo( var elem, bool isCompact )
 {
-	var rui           = Hud_GetRui( elem )
+	if ( GetBugReproNum() == 54268 )
+	{
+		var rui           = Hud_GetRui( elem )
+		int teammateIndex = int( Hud_GetScriptID( elem ) )
+
+		entity player = GetLocalClientPlayer()
+
+		array<entity> team = GetPlayerArrayOfTeam( player.GetTeam() )
+		team.fastremovebyvalue( player )
+
+
+
+
+
+
+
+
+		team.sort( SquadMemberIndexSort )
+
+		if ( teammateIndex < team.len() )
+		{
+			Hud_SetHeight( elem, Hud_GetBaseHeight( elem ) )
+			Hud_Show( elem )
+		}
+		else
+		{
+			Hud_SetHeight( elem, 0 )
+			Hud_Hide( elem )
+			return
+		}
+
+		entity ent = ( teammateIndex < 0 )? player: team[ teammateIndex ]
+
+		thread SetUnitFrameDataFromOwner( rui, ent, player )
+	}
+
+	else
+		thread TEMP_UpdateTeammateRui( elem, isCompact )
+}
+
+
+void function UICallback_UpdateTeammateUpgrades( var elem, int upgradeIndex )
+{
+	if( !UpgradeCore_IsEnabled() || IsLobby() )
+		return
+
+	var rui = Hud_GetRui( elem )
 	int teammateIndex = int( Hud_GetScriptID( elem ) )
 
 	entity player = GetLocalClientPlayer()
@@ -2867,31 +3125,32 @@ void function UICallback_UpdateTeammateInfo( var elem )
 	array<entity> team = GetPlayerArrayOfTeam( player.GetTeam() )
 	team.fastremovebyvalue( player )
 
-	#if(true)
-		//
-		if ( IsFallLTM() )
-			team.clear()
-	#endif
 
-	if ( teammateIndex < team.len() )
-	{
-		Hud_SetHeight( elem, Hud_GetBaseHeight( elem ) )
-		Hud_Show( elem )
-	}
-	else
-	{
-		Hud_SetHeight( elem, 0 )
-		Hud_Hide( elem )
+
+
+
+
+
+
+	team.sort( SquadMemberIndexSort )
+
+	if ( teammateIndex >= team.len() )
 		return
+
+	entity teammate = ( teammateIndex < 0 )? player: team[ teammateIndex ]
+	array<UpgradeCoreChoice> selectedUpgrades = UpgradeCore_GetSelectedUpgrades( teammate )
+
+	if ( upgradeIndex < selectedUpgrades.len() )
+	{
+		UpgradeCoreChoice upgrade = selectedUpgrades[upgradeIndex]
+		RuiSetImage( rui, "slotImage" + (upgradeIndex + 1), upgrade.icon )
 	}
-
-	entity ent = team[teammateIndex]
-
-	if ( GetBugReproNum() == 54268 )
-		thread SetUnitFrameDataFromOwner( rui, ent )
 	else
-		thread TEMP_UpdateTeammateRui( rui, ent )
+	{
+		RuiSetImage( rui, "slotImage" + (upgradeIndex + 1), $"" )
+	}
 }
+
 
 
 void function UICallback_UpdateUltimateInfo( var elem )
@@ -2901,6 +3160,14 @@ void function UICallback_UpdateUltimateInfo( var elem )
 	entity player = GetLocalClientPlayer()
 
 	thread TEMP_UpdateUltimateInfo( rui, player )
+
+
+	{
+		entity ultWeapon = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
+		string ultName = (IsValid( ultWeapon ) ? string( ultWeapon.GetWeaponPrintName() ) : "")
+		RunUIScript( "ClientToUI_UpdateInventoryUltimateTooltip", elem, ultName )
+	}
+
 }
 
 
@@ -2913,7 +3180,7 @@ void function TEMP_UpdateUltimateInfo( var rui, entity player )
 
 	float PROTO_storedAmmoRegenRate = -1.0
 
-	while ( 1 )
+	while ( true )
 	{
 		if ( IsAlive( player ) )
 		{
@@ -2921,16 +3188,17 @@ void function TEMP_UpdateUltimateInfo( var rui, entity player )
 			if ( IsValid( weapon ) )
 			{
 				thread UpdateInventoryUltimateRui( rui, player, weapon )
-			}
 
-			if ( IsValid( weapon ) )
-			{
 				float currentAmmoRegenRate = weapon.GetWeaponSettingFloat( eWeaponVar.regen_ammo_refill_rate )
 				if ( currentAmmoRegenRate != PROTO_storedAmmoRegenRate )
 				{
 					RuiSetFloat( rui, "refillRate", currentAmmoRegenRate )
 					PROTO_storedAmmoRegenRate = currentAmmoRegenRate
 				}
+			}
+			else
+			{
+				RuiSetBool( rui, "isVisible", false )
 			}
 		}
 		WaitFrame()
@@ -2940,92 +3208,26 @@ void function TEMP_UpdateUltimateInfo( var rui, entity player )
 
 void function UpdateInventoryUltimateRui( var rui, entity player, entity weapon )
 {
-	//
+
 	Assert ( IsNewThread(), "Must be threaded off." )
 
-	RuiSetGameTime( rui, "hintTime", Time() )
-
-	RuiSetBool( rui, "isTitan", player.IsTitan() )
-	RuiSetBool( rui, "isReverseCharge", false )
-	bool isPaused = weapon.HasMod( "survival_ammo_regen_paused" )
-	RuiSetBool( rui, "isPaused", isPaused )
-
-	RuiSetFloat( rui, "chargeFrac", 0.0 )
-	RuiSetFloat( rui, "useFrac", 0.0 )
-	RuiSetFloat( rui, "chargeMaxFrac", 1.0 )
-	RuiSetFloat( rui, "minFireFrac", 1.0 )
-	RuiSetInt( rui, "segments", 1 )
-	RuiSetFloat( rui, "refillRate", 1 ) //
-
-	RuiSetImage( rui, "hudIcon", weapon.GetWeaponSettingAsset( eWeaponVar.hud_icon ) )
-
-	RuiSetFloat( rui, "readyFrac", weapon.GetWeaponReadyToFireProgress() )
-	//
-
-	RuiSetFloat( rui, "chargeFracCaution", 0.0 )
-	RuiSetFloat( rui, "chargeFracAlert", 0.0 )
-	RuiSetFloat( rui, "chargeFracAlertSpeed", 16.0 )
-	RuiSetFloat( rui, "chargeFracAlertScale", 1.0 )
-
-	RuiSetInt( rui, "ammoMinToFire", weapon.GetWeaponSettingInt( eWeaponVar.ammo_min_to_fire ) )
-
-	ItemFlavor character                    = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
-	CharacterHudUltimateColorData colorData = CharacterClass_GetHudUltimateColorData( character )
-
-	RuiSetColorAlpha( rui, "ultimateColor", SrgbToLinear( colorData.ultimateColor ), 1 )
-	RuiSetColorAlpha( rui, "ultimateColorHighlight", SrgbToLinear( colorData.ultimateColorHighlight ), 1 )
-
-	switch ( weapon.GetWeaponSettingEnum( eWeaponVar.cooldown_type, eWeaponCooldownType ) )
-	{
-		case eWeaponCooldownType.ammo_timed:
-		case eWeaponCooldownType.ammo_instant:
-		case eWeaponCooldownType.ammo_deployed:
-			RuiSetFloat( rui, "readyFrac", 0.0 )
-
-		case eWeaponCooldownType.ammo:
-			int maxAmmoReady = weapon.UsesClipsForAmmo() ? weapon.GetWeaponSettingInt( eWeaponVar.ammo_clip_size ) : weapon.GetWeaponPrimaryAmmoCountMax( weapon.GetActiveAmmoSource() )
-			int ammoPerShot = weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
-			int ammoMinToFire = weapon.GetWeaponSettingInt( eWeaponVar.ammo_min_to_fire )
-
-			if ( maxAmmoReady == 0 )
-				maxAmmoReady = 1
-			RuiSetFloat( rui, "minFireFrac", float( ammoMinToFire ) / float( maxAmmoReady ) )
-			if ( ammoPerShot == 0 )
-				ammoPerShot = 1
-			RuiSetInt( rui, "segments", maxAmmoReady / ammoPerShot )
-
-			RuiSetFloat( rui, "chargeFrac", float( weapon.GetWeaponPrimaryClipCount() ) / float( weapon.GetWeaponPrimaryClipCountMax() ) )
-
-			RuiSetFloat( rui, "useFrac", StatusEffect_GetSeverity( weapon, eStatusEffect.simple_timer ) )
-			break
-
-		case eWeaponCooldownType.vortex_drain:
-			RuiSetBool( rui, "isReverseCharge", true )
-			RuiSetFloat( rui, "chargeFrac", 1.0 )
-			RuiSetFloat( rui, "readyFrac", 0.0 )
-			RuiSetFloat( rui, "minFireFrac", 0.0 )
-
-			RuiSetFloat( rui, "chargeFrac", weapon.GetWeaponChargeFraction() )
-			break
-
-		default:
-			mAssert( false, "Unsupported cooldown_type: " + weapon.GetWeaponSettingEnum( eWeaponVar.cooldown_type, eWeaponCooldownType ) )
-	}
+	// UpdateOffhandRuiCommon( rui, player, weapon, OFFHAND_ULTIMATE, false ) // not in S3 cl_weapon_status
 }
 
 
 void function TEMP_UpdatePlayerRui( var rui, entity player )
 {
+	printf( "EvoShieldDebug: Temp_UpdatePlayerRui called" )
+
 	player.EndSignal( "OnDestroy" )
 	clGlobal.levelEnt.EndSignal( "BackpackClosed" )
 
-	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
-	asset classIcon      = CharacterClass_GetGalleryPortrait( character )
-	RuiSetImage( rui, "playerIcon", classIcon )
+	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
+	asset legendIcon      = CharacterClass_GetGalleryPortrait( character )
+	RuiSetImage( rui, "playerIcon", legendIcon )
+	RuiSetInt( rui, "micStatus", player.HasMic() ? 3 : -1 )
 
-	RuiSetInt( rui, "micStatus", player.HasMic() ? 3 : -1 ) //
-
-	while ( 1 )
+	while ( true )
 	{
 		foreach ( equipSlot, es in EquipmentSlot_GetAllEquipmentSlots() )
 		{
@@ -3035,11 +3237,26 @@ void function TEMP_UpdatePlayerRui( var rui, entity player )
 				int tier      = data.tier
 				asset hudIcon = data.hudIcon
 
+				if ( data.lootType == eLootType.ARMOR )
+				{
+					bool isEvolving = EvolvingArmor_IsEquipmentEvolvingArmor( data.ref )
+
+					RuiSetBool( rui, "isEvolvingShield", isEvolving )
+					RuiSetInt( rui, "evolvingShieldKillCounter", EvolvingArmor_GetEvolutionProgress( player ) )
+
+
+
+						RuiSetBool( rui, "hasReducedShieldValues", false )
+
+				}
+				else if ( equipSlot == "armor" && data.ref == "" )
+				{
+					RuiSetBool( rui, "isEvolvingShield", false )
+				}
+
+				if ( es.unitFrameTierVar != "" )
 				RuiSetInt( rui, es.unitFrameTierVar, tier )
-
-				// if( tier > 5 )
-					// RuiSetInt( rui, es.unitFrameTierVar, 5 )
-
+				if ( es.unitFrameImageVar != "" )
 				RuiSetImage( rui, es.unitFrameImageVar, hudIcon )
 			}
 		}
@@ -3048,112 +3265,286 @@ void function TEMP_UpdatePlayerRui( var rui, entity player )
 		RuiSetFloat( rui, "playerHealthFrac", GetHealthFrac( player ) )
 		RuiSetFloat( rui, "playerShieldFrac", GetShieldHealthFrac( player ) )
 		RuiSetInt( rui, "teamMemberIndex", player.GetTeamMemberIndex() )
+		RuiSetInt( rui, "squadID", player.GetSquadID() )
 
 		vector shieldFrac = < SURVIVAL_GetArmorShieldCapacity( 0 ) / 100.0,
-				SURVIVAL_GetArmorShieldCapacity( 1 ) / 100.0,
-				SURVIVAL_GetArmorShieldCapacity( 2 ) / 100.0 >
+		SURVIVAL_GetArmorShieldCapacity( 1 ) / 100.0,
+		SURVIVAL_GetArmorShieldCapacity( 2 ) / 100.0 >
 
 		RuiSetColorAlpha( rui, "shieldFrac", shieldFrac, float( SURVIVAL_GetArmorShieldCapacity( 3 ) ) )
 
-		RuiSetFloat( rui, "playerTargetShieldFrac", StatusEffect_GetSeverity( player, eStatusEffect.target_shields ) )
-		RuiSetFloat( rui, "playerTargetHealthFrac", StatusEffect_GetSeverity( player, eStatusEffect.target_health ) )
+		RuiSetFloat( rui, "playerTargetShieldFrac", StatusEffect_GetTotalSeverity( player, eStatusEffect.target_shields ) )
+		RuiSetFloat( rui, "playerTargetHealthFrac", StatusEffect_GetTotalSeverity( player, eStatusEffect.target_health ) )
 		RuiSetFloat( rui, "cameraViewFrac", StatusEffect_GetSeverity( player, eStatusEffect.camera_view ) )
+		RuiSetBool( rui, "useShadowFormFrame", StatusEffect_HasSeverity( player, eStatusEffect.death_totem_visual_effect ) )
 
-		//
+
+			// Overshield not in S3
+			// RuiSetInt( rui, "playerOvershield", player.GetTempshieldHealth() )
+			// RuiSetBool( rui, "playerOvershieldCharging", false )
+
+
+		RuiSetInt( rui, "micStatus", GetPlayerMicStatus( player ) )
+
+
+			asset classIcon = CharacterClass_GetCharacterRoleImage( character )
+			RuiSetAsset( rui, "customSmallIcon", classIcon )
+
+
+
+		SquadLeader_UpdateUnitFrameRui( player, rui )
+		Status_UpdatePlayerUnitFrameRui( player, rui )
+
+
 		OverwriteWithCustomPlayerInfoTreatment( player, rui )
+
+		PlayerInfo_UpdatePossibleHealTo( player, rui )
 
 		WaitFrame()
 	}
 }
 
 
-void function TEMP_UpdateTeammateRui( var rui, entity ent )
+void function TEMP_UpdateTeammateRui( var elem, bool isCompact )
 {
-	ent.EndSignal( "OnDestroy" )
 	clGlobal.levelEnt.EndSignal( "BackpackClosed" )
+	clGlobal.levelEnt.EndSignal( "GroundListClosed" )
 
-	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( ent ), Loadout_CharacterClass() )
-	asset classIcon      = CharacterClass_GetGalleryPortrait( character )
-	RuiSetImage( rui, "icon", classIcon )
+	var rui           = Hud_GetRui( elem )
+	int teammateIndex = int( Hud_GetScriptID( elem ) )
+	entity player = GetLocalClientPlayer()
 
-	RuiSetInt( rui, "micStatus", ent.HasMic() ? 3 : -1 ) //
+	if ( !IsValid( player ) )
+		return
+
+
+		if ( GameMode_IsActive( eGameModes.CONTROL ) )
+		{
+			player.EndSignal( "Control_PlayerHasChosenRespawn" )
+		}
+
 
 	bool weaponDrivenConsumables = WeaponDrivenConsumablesEnabled()
 
-	while ( 1 )
+	while ( true )
 	{
-		foreach ( equipSlot, es in EquipmentSlot_GetAllEquipmentSlots() )
+		array<entity> team
+
+		if ( IsValid( player ) )
 		{
-			if ( es.trackingNetInt != "" )
-			{
-				LootData data = EquipmentSlot_GetEquippedLootDataForSlot( ent, equipSlot )
-				int tier      = data.tier
-				asset hudIcon = tier > 0 ? data.hudIcon : es.emptyImage
+			team = GetPlayerArrayOfTeam( player.GetTeam() )
 
-				RuiSetInt( rui, es.unitFrameTierVar, tier )
+			team.fastremovebyvalue( player )
 
-				// if( tier > 5 )
-					// RuiSetInt( rui, es.unitFrameTierVar, 5 )
 
-				RuiSetImage( rui, es.unitFrameImageVar, hudIcon )
-			}
+
+
+
+
 		}
 
-		RuiSetString( rui, "name", ent.GetPlayerName() )
-		RuiSetFloat( rui, "healthFrac", GetHealthFrac( ent ) )
-		RuiSetFloat( rui, "shieldFrac", GetShieldHealthFrac( ent ) )
-		RuiSetFloat( rui, "targetHealthFrac", StatusEffect_GetSeverity( ent, eStatusEffect.target_health ) )
-		RuiSetFloat( rui, "targetShieldFrac", StatusEffect_GetSeverity( ent, eStatusEffect.target_shields ) )
-		RuiSetFloat( rui, "cameraViewFrac", StatusEffect_GetSeverity( ent, eStatusEffect.camera_view ) )
-		RuiSetInt( rui, "teamMemberIndex", ent.GetTeamMemberIndex() )
-		#if(false)
 
-#endif //
+		team.sort( SquadMemberIndexSort )
 
-		asset hudIcon = $""
-		int kitType   = ent.GetPlayerNetInt( "healingKitTypeCurrentlyBeingUsed" )
-		if ( kitType != -1 )
+		RuiSetBool( rui, "isJIP", false )
+
+		if ( teammateIndex < team.len() )
 		{
-			if ( weaponDrivenConsumables )
+			Hud_SetHeight( elem, Hud_GetBaseHeight( elem ) )
+			Hud_Show( elem )
+
+			entity ent = ( teammateIndex < 0 )? player: team[ teammateIndex ]
+			ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( ent ), Loadout_Character() )
+			asset legendIcon      = CharacterClass_GetGalleryPortrait( character )
+			RuiSetImage( rui, "icon", legendIcon )
+			RuiSetInt( rui, "micStatus", ent.HasMic() ? 3 : -1 )
+			RuiSetBool( rui, "compactMode", isCompact )
+
+			if( UpgradeCore_IsEnabled() )
 			{
-				ConsumableInfo info = Consumable_GetConsumableInfo( kitType )
-				LootData lootData   = info.lootData
-				hudIcon = lootData.hudIcon
+				int numUpgradeSlots = UPGRADE_CORE_NUM_EXPECTED_UPGRADES / UPGRADE_CORE_NUM_EXPECTED_UPGRADES_PER_LEVEL
+				for( int upgradeIndex = 0; upgradeIndex < numUpgradeSlots; upgradeIndex++ )
+				{
+					array<UpgradeCoreChoice> selectedUpgrades = UpgradeCore_GetSelectedUpgrades( ent )
+
+					if ( upgradeIndex < selectedUpgrades.len() )
+					{
+						UpgradeCoreChoice upgrade = selectedUpgrades[upgradeIndex]
+						RuiSetImage( rui, "slotImage" + (upgradeIndex + 1), upgrade.icon )
+					}
+					else
+					{
+						RuiSetImage( rui, "slotImage" + (upgradeIndex + 1), $"" )
+					}
+				}
+			}
+
+
+			foreach ( equipSlot, es in EquipmentSlot_GetAllEquipmentSlots() )
+			{
+				if ( es.trackingNetInt != "" )
+				{
+					LootData data = EquipmentSlot_GetEquippedLootDataForSlot( ent, equipSlot )
+					int tier      = data.tier
+					asset hudIcon = tier > 0 ? data.hudIcon : es.emptyImage
+
+					if ( data.lootType == eLootType.ARMOR )
+					{
+						bool isEvolving = EvolvingArmor_IsEquipmentEvolvingArmor( data.ref )
+
+						if( UpgradeCore_IsEquipmentArmorCore( data.ref ) )
+						{
+							isEvolving = true
+							int playerArmorTier = UpgradeCore_GetPlayerArmorTier( ent, false )
+							RuiSetInt( rui, "armorTierBarOverride", playerArmorTier )
+							tier = maxint( playerArmorTier, tier )
+						}
+						else
+						{
+							RuiSetInt( rui, "armorTierBarOverride", -1 )
+						}
+
+						RuiSetBool( rui, "isEvolvingShield", isEvolving )
+					}
+
+
+
+						RuiSetBool( rui, "hasReducedShieldValues", false )
+
+
+					if ( es.unitFrameTierVar != "" )
+					RuiSetInt( rui, es.unitFrameTierVar, tier )
+					if ( es.unitFrameImageVar != "" )
+					RuiSetImage( rui, es.unitFrameImageVar, hudIcon )
+				}
+			}
+
+			RuiSetString( rui, "name", ent.GetPlayerName() )
+			RuiSetFloat( rui, "healthFrac", GetHealthFrac( ent ) )
+			RuiSetFloat( rui, "shieldFrac", GetShieldHealthFrac( ent ) )
+			RuiSetFloat( rui, "targetHealthFrac", StatusEffect_GetTotalSeverity( ent, eStatusEffect.target_health ) )
+			RuiSetFloat( rui, "targetShieldFrac", StatusEffect_GetTotalSeverity( ent, eStatusEffect.target_shields ) )
+			RuiSetFloat( rui, "cameraViewFrac", StatusEffect_GetSeverity( ent, eStatusEffect.camera_view ) )
+			RuiSetInt( rui, "teamMemberIndex", ent.GetTeamMemberIndex() )
+			RuiSetInt( rui, "squadID", ent.GetSquadID() )
+			RuiSetBool( rui, "disconnected", !ent.IsConnectionActive() )
+
+
+				RuiSetBool( rui, "isDriving", HoverVehicle_PlayerIsDriving( ent ) )
+
+
+			SetUnitFrameConsumableData(rui, ent)
+
+			RuiSetFloat( rui, "reviveEndTime", ent.GetPlayerNetTime( "reviveEndTime" ) )
+			RuiSetInt( rui, "reviveType", ent.GetPlayerNetInt( "reviveType" ) )
+			RuiSetFloat( rui, "bleedoutEndTime", ent.GetPlayerNetTime( "bleedoutEndTime" ) )
+			RuiSetInt( rui, "respawnStatus", ent.GetPlayerNetInt( "respawnStatus" ) )
+			RuiSetFloat( rui, "respawnStatusEndTime", ent.GetPlayerNetTime( "respawnStatusEndTime" ) )
+
+
+				RuiSetBool( rui, "useShadowFormFrame", false ) // IsShadowForm not in S3
+
+
+			RuiSetInt( rui, "micStatus", GetPlayerMicStatus( ent ) )
+
+
+			RuiSetGameTime( rui, "realGameTime", Time() )
+			RuiSetFloat( rui, "hackStartTime", ent.GetPlayerNetTime( "hackStartTime" ) )
+
+			SetUnitFrameAmmoTypeIcons( rui, ent )
+			OverwriteWithCustomUnitFrameInfo( ent, rui )
+
+
+				bool localPlayerCanCraftBanners = Perk_CanBuyBanners( player )
+				RuiSetBool( rui, "bannerCraftable", localPlayerCanCraftBanners )
+
+				asset classIcon = CharacterClass_GetCharacterRoleImage( character )
+				RuiSetAsset( rui, "customSmallIcon", classIcon )
+				// EXPIRED_BANNER_RECOVERY_NETVAR not in S3
+
+
+
+			if( UpgradeCore_IsEnabled() )
+			{
+				RuiSetBool( rui, "showProgressMeter",  UpgradeCore_ArmorTiedToUpgrades() && UpgradeCore_ShowUpgradesUnitframe() )
+
+
+
+
+
+
+
+				RuiSetBool( rui, "showProgressBar", true )
+				UpgradeCore_UpdateXpRui( rui, ent )
+
+				RuiSetInt( rui, "armorShieldCapacity", ent.GetShieldHealthMax() )
+				RuiSetInt( rui, "playerExtraShield", GetPlayerExtraShields( ent ) )
+				RuiSetInt( rui, "playerExtraShieldTier", GetPlayerExtraShieldsTier( ent ) )
+
+				vector shieldTierColor = GetKeyColor( COLORID_TEXT_LOOT_TIER0, GetPlayerExtraShieldsTier( player ) ) / 255.0
+				RuiSetFloat3( rui, "playerShieldTierColor", shieldTierColor )
+			}
+
+
+			bool showBleedoutTimer = true
+
+				showBleedoutTimer = !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_STRIKEOUT )
+
+			RuiSetBool( rui, "showBleedoutTimer", showBleedoutTimer )
+
+
+		}
+		else
+		{
+			if( GamemodeUtility_IsJIPEnabled() && !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) && !IsPrivateMatch() && !IsEventFinale() && GetMaxTeamSizeForPlaylist( GetCurrentPlaylistName() ) - 1 > teammateIndex )
+			{
+				Hud_SetHeight( elem, Hud_GetBaseHeight( elem ) )
+				Hud_Show( elem )
+
+				if ( IsValid( player ) )
+				{
+					vector playerColor = Teams_GetTeamColor( player.GetTeam() )
+
+					RuiSetBool( rui, "useCustomCharacterColor", true )
+					RuiSetColorAlpha( rui, "customCharacterColor", playerColor, 1.0 )
+				}
+
+				RuiSetBool( rui, "isJIP", true )
+				RuiSetString( rui, "name", Localize( "#JIP_SEARCHING_FOR_SHORT" ))
 			}
 			else
 			{
-				HealthPickup kitData = SURVIVAL_Loot_GetHealthKitDataFromStruct( kitType )
-				LootData lootData    = kitData.lootData
-				hudIcon = lootData.hudIcon
+				Hud_SetHeight( elem, 0 )
+				Hud_Hide( elem )
 			}
 		}
-		RuiSetImage( rui, "healTypeIcon", hudIcon )
-		RuiSetBool( rui, "consumablePanelVisible", hudIcon != $"" )
-
-
-		RuiSetFloat( rui, "reviveEndTime", ent.GetPlayerNetTime( "reviveEndTime" ) )
-		RuiSetInt( rui, "reviveType", ent.GetPlayerNetInt( "reviveType" ) )
-		RuiSetFloat( rui, "bleedoutEndTime", ent.GetPlayerNetTime( "bleedoutEndTime" ) )
-		RuiSetInt( rui, "respawnStatus", ent.GetPlayerNetInt( "respawnStatus" ) )
-
-		SetUnitFrameAmmoTypeIcons( rui, ent )
 
 		WaitFrame()
 	}
 }
 
+bool function GetShowUnitFrameAmmoTypeIcons()
+{
+	return file.shouldShowUnitFrameAmmoTypeIcons
+}
+
+void function SetShowUnitFrameAmmoTypeIcons( bool show = true )
+{
+	file.shouldShowUnitFrameAmmoTypeIcons = show
+}
 
 void function SetUnitFrameAmmoTypeIcons( var rui, entity player )
 {
 	for ( int i = 0; i < 2; i++ )
 	{
 		string ammoTypeIconBool = "showAmmoIcon0" + string( i )
-		string ammoTypeIcon = "ammoTypeIcon0" + string( i )
+		string ammoTypeIcon     = "ammoTypeIcon0" + string( i )
 
 		asset hudIcon = $"white"
 
-		entity weapon = player.GetNormalWeapon( i )
-		if ( !IsValid( weapon ) )
+		string weaponIndexNetIntName 	= "playerPrimaryWeapon" + string( i )
+		int weaponIndex   				= player.GetPlayerNetInt( weaponIndexNetIntName )
+		if ( !SURVIVAL_Loot_IsLootIndexValid( weaponIndex ) )
 		{
 			hudIcon = $"white"
 
@@ -3162,10 +3553,9 @@ void function SetUnitFrameAmmoTypeIcons( var rui, entity player )
 		}
 		else
 		{
-			string weaponRef    = weapon.GetWeaponClassName()
-			LootData weaponData = SURVIVAL_Loot_GetLootDataByRef( weaponRef )
+			LootData weaponData = SURVIVAL_Loot_GetLootDataByIndex( weaponIndex )
 			string ammoType     = weaponData.ammoType
-			if ( ammoType != "" )
+			if ( GetWeaponInfoFileKeyField_GlobalBool( weaponData.baseWeapon, "uses_ammo_pool" ) )
 			{
 				LootData ammoData = SURVIVAL_Loot_GetLootDataByRef( ammoType )
 				hudIcon = ammoData.hudIcon
@@ -3174,7 +3564,7 @@ void function SetUnitFrameAmmoTypeIcons( var rui, entity player )
 				hudIcon = weaponData.fakeAmmoIcon
 
 			RuiSetImage( rui, ammoTypeIcon, hudIcon )
-			RuiSetBool( rui, ammoTypeIconBool, true )
+			RuiSetBool( rui, ammoTypeIconBool, GetShowUnitFrameAmmoTypeIcons() )
 		}
 	}
 }
@@ -3182,11 +3572,11 @@ void function SetUnitFrameAmmoTypeIcons( var rui, entity player )
 
 void function UICallback_BlockPingForDuration( float duration )
 {
-	AddPingBlockingFunction( "ping", PingBlocker_DoNothing, 0.5, "" )
+	AddOnscreenPromptFunction( "ping", OnscreenPrompt_DoNothing, 0.5, "" )
 }
 
 
-void function PingBlocker_DoNothing( entity player )
+void function OnscreenPrompt_DoNothing( entity player )
 {
 
 }

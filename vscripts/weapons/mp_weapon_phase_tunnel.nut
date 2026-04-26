@@ -48,10 +48,10 @@ const string SOUND_PORTAL_TRAVEL_1P = "Wraith_phasegate_Travel_1p"
 const string SOUND_PORTAL_TRAVEL_3P = "Wraith_phasegate_Travel_3p"
 const string SOUND_PORTAL_TRAVEL_1P_BREACH = "Ash_PhaseBreach_Travel_1p"
 const string SOUND_PORTAL_TRAVEL_3P_BREACH = "Ash_PhaseBreach_Travel_3p"
-             
+
 const string SOUND_PORTAL_TRAVEL_1P_TRANSPORT = "Alter_Ult_Teleport_VoidEnter_1p"
 const string SOUND_PORTAL_TRAVEL_3P_TRANSPORT = "Alter_Ult_Teleport_VoidEnter_3p"
-      
+
 
 #if SERVER
 const asset TILE_MODEL =  $"mdl/props/mahjong_tile_01/mahjong_tile_01.rmdl"
@@ -163,13 +163,6 @@ enum eTunnelExpirationType
 	INVALID_END_POS,
 	INVALID_TUNNEL
 }
-
-enum eDirection
-{
-	NONE = -1,
-	ENDTOSTART,
-	STARTTOEND
-}
 #endif
 
 global struct PhaseTunnelData
@@ -182,14 +175,13 @@ global struct PhaseTunnelData
 	PhaseTunnelPortalData&     startPortal
 	PhaseTunnelPortalData&     endPortal
 	bool                       expired
-	entity 					   owner
 
 	#if SERVER
 		int expirationType
 
-		                    
+
 			array<entity> shieldedPlayers
-        
+
 	#endif
 }
 
@@ -221,8 +213,14 @@ void function MpWeaponPhaseTunnel_Init()
 	PrecacheParticleSystem( PHASE_TUNNEL_ABILITY_ACTIVE_FX )
 	PrecacheParticleSystem( PHASE_TUNNEL_1P_FX )
 	PrecacheParticleSystem( PHASE_TUNNEL_3P_FX )
+	PrecacheScriptString( "portal_marker" )
 
 	AddCallback_PlayerCanUseZipline( PhaseTunnel_CanUseZipline )
+
+	PrecacheScriptString( PHASETUNNEL_MOVER_SCRIPTNAME )
+	PrecacheScriptString( PHASETUNNEL_BLOCKER_SCRIPTNAME )
+	PrecacheScriptString( PHASETUNNEL_PRE_BLOCKER_SCRIPTNAME )
+
 	#if SERVER
 		RegisterSignal( "PhaseTunnel_ReturnWeaponsToPlayerAfterDelay" )
 		RegisterSignal( "PhaseTunnel_CancelPlacement" )
@@ -232,9 +230,10 @@ void function MpWeaponPhaseTunnel_Init()
 		RegisterSignal( "PhaseTunnel_CancelPhaseTunnelUse" )
 		RegisterSignal( "PhaseTunnel_PhaseTunnelEntered" )
 		RegisterSignal( "PhaseTunnel_DestroyTunnel" )
-
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+			PrecacheModel( TILE_MODEL )
 		Bleedout_AddCallback_OnPlayerStartBleedout( PhaseTunnel_OnPlayerStartBleedout )
-		// AddCallback_OnPlayerPositionReset( OnPlayerPositionReset )
+		AddCallback_OnPlayerPositionReset( OnPlayerPositionReset )
 	#endif //SERVER
 
 	#if CLIENT
@@ -342,13 +341,17 @@ bool function OnWeaponChargeBegin_weapon_phase_tunnel( entity weapon )
 
 			#if SERVER
 				// Defensive fix for R5DEV-70839
-				if ( StatusEffect_GetSeverity( player, eStatusEffect.placing_phase_tunnel ) )
+				if ( StatusEffect_HasSeverity( player, eStatusEffect.placing_phase_tunnel ) )
 					return false
 
 				// Defensive fix for R5DEV-70839
 				array mods = player.GetExtraWeaponMods()
 				if ( mods.contains( "ult_active" ) )
 					return false
+
+				//%if HAS_HOVER_VEHICLE
+				//	Vehicle_KickPlayer( player )
+				//%endif
 
 				entity f = StartParticleEffectOnEntity_ReturnEntity( player, GetParticleSystemIndex( PHASE_TUNNEL_3P_FX ), FX_PATTACH_POINT_FOLLOW, attachIndex )
 				f.SetOwner( player )
@@ -388,7 +391,7 @@ void function OnWeaponChargeEnd_weapon_phase_tunnel( entity weapon )
 		if ( player in file.hasLockedWeaponsAndMelee && file.hasLockedWeaponsAndMelee[player]  )
 		{
 			if ( IsValid(player) )
-				UnlockWeaponsAndMelee( player )
+				UnlockWeaponsAndMelee( player, "phase_tunnel" )
 			file.hasLockedWeaponsAndMelee[player] <- false
 		}
 	#endif
@@ -397,7 +400,7 @@ void function OnWeaponChargeEnd_weapon_phase_tunnel( entity weapon )
 
 bool function PhaseTunnel_CanUseZipline( entity player, entity zipline, vector ziplineClosestPoint )
 {
-	if ( StatusEffect_GetSeverity( player, eStatusEffect.placing_phase_tunnel ) )
+	if ( StatusEffect_HasSeverity( player, eStatusEffect.placing_phase_tunnel ) )
 		return false
 
 	return true
@@ -463,6 +466,10 @@ void function PhaseTunnel_SanitizeWeaponMods( entity weapon )
 	{
 		weapon.RemoveMod( "ult_active" )
 	}
+	if( mods.contains( "upgrade_core_fast_deploy" ) )
+	{
+		weapon.RemoveMod( "upgrade_core_fast_deploy" )
+	}
 }
 
 void function PhaseTunnel_StartAbility( entity player, float duration, entity weapon )
@@ -472,7 +479,6 @@ void function PhaseTunnel_StartAbility( entity player, float duration, entity we
 	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "PhaseTunnel_CancelPlacement" )
 	player.EndSignal( "BleedOut_OnStartDying" )
-	player.EndSignal( "CleanUpPlayerAbilities" )
 	weapon.EndSignal( "OnDestroy" )
 	EndThreadOn_PlayerChangedClass( player )
 
@@ -484,11 +490,17 @@ void function PhaseTunnel_StartAbility( entity player, float duration, entity we
 	{
 		PhaseTunnel_SanitizeWeaponMods( weapon )
 		mods.append( "ult_active" )
+
+		if( mods.contains( "upgrade_core_fast_deploy" ) )
+		{
+			mods.fastremovebyvalue( "upgrade_core_fast_deploy" )
+		}
+
 	}
 
 	player.SetExtraWeaponMods( mods )
 	ForceAutoSprintOn( player )
-	LockWeaponsAndMelee( player )
+	LockWeaponsAndMelee( player, "phase_tunnel" )
 	file.hasLockedWeaponsAndMelee[player] <- true
 
 	array<int> ids
@@ -517,13 +529,21 @@ void function PhaseTunnel_StartAbility( entity player, float duration, entity we
 				array mods = player.GetExtraWeaponMods()
 				mods.fastremovebyvalue( "ult_active" )
 
+
+				if( player.HasPassive( ePassives.PAS_FASTER_TAC_WINDUP ) ) // wraith_upgrade_faster_phase_walk
+				{
+					PhaseTunnel_SanitizeWeaponMods( weapon )
+					mods.append( "upgrade_core_fast_deploy" )
+				}
+
+
 				player.SetExtraWeaponMods( mods )
 
 				ForceAutoSprintOff( player )
 
 				if ( player in file.hasLockedWeaponsAndMelee && file.hasLockedWeaponsAndMelee[player]  )
 				{
-					UnlockWeaponsAndMelee( player )
+					UnlockWeaponsAndMelee( player, "phase_tunnel" )
 					file.hasLockedWeaponsAndMelee[player] <- false
 				}
 				//RemoveButtonPressedPlayerInputCallback( player, IN_ZOOM_TOGGLE, PhaseTunnel_CancelPlacement )
@@ -593,7 +613,7 @@ void function PhaseTunnel_StartAbility( entity player, float duration, entity we
 	PhaseTunnelData tunnelData
 	tunnelData.startPortal = startPortal
 	tunnelData.endPortal   = endPortal
-	tunnelData.shiftStyle  = eShiftStyle.Tunnel
+	tunnelData.shiftStyle  = PHASETYPE_TUNNEL
 
 	thread PhaseTunnel_OpenTunnel( tunnelData, player )
 }
@@ -756,7 +776,6 @@ void function PhaseTunnel_OpenTunnel( PhaseTunnelData tunnelData, entity player 
 	tunnelEnt.DisableHibernation()
 	SetTeam( tunnelEnt, team )
 	tunnelEnt.SetOwner( player )
-	tunnelData.owner = player 
 
 	ArrayRemoveInvalid( file.allTunnelEnts )
 	file.allTunnelEnts.append( tunnelEnt )
@@ -773,9 +792,10 @@ void function PhaseTunnel_OpenTunnel( PhaseTunnelData tunnelData, entity player 
 	entity wpEnd = CreateWaypoint_Ping_Location( player, ePingType.ABILITY_WORMHOLE, tunnelData.endPortal.portalFX, tunnelData.endPortal.startOrigin, -1, true )
 	wpEnd.SetAbsOrigin( tunnelData.endPortal.startOrigin + <0, 0, 45> )
 
-	// VoidVisionSetExitEnt( tunnelData.startPortal.pathData, tunnelData.endPortal.portalFX )
-	// VoidVisionSetExitEnt( tunnelData.endPortal.pathData, tunnelData.startPortal.portalFX )
-       
+
+	VoidVisionSetExitEnt( tunnelData.startPortal.pathData, tunnelData.endPortal.portalFX )
+	VoidVisionSetExitEnt( tunnelData.endPortal.pathData, tunnelData.startPortal.portalFX )
+
 
 	tunnelData.tunnelEnt = tunnelEnt
 
@@ -830,61 +850,23 @@ void function DEV_PhaseTunnel_DestroyAll()
 }
 #endif
 
-const float STANDARD_PORTAL_DESTROY_DELAY = 3.0
-void function RemovePortalDelayed( entity player, PhaseTunnelData tunnelData )
-{
-	wait STANDARD_PORTAL_DESTROY_DELAY
-	
-	if( IsValid( tunnelData.tunnelEnt ) )
-	{
-		tunnelData.tunnelEnt.Signal( "PhaseTunnel_DestroyTunnel" )
-		
-		if( IsValid( player ) )
-			LocalMsg( player, "#FS_REMOVED_PORTAL", "#FS_REMOVED_PORTAL_DESC", eMsgUI.IBMM, 10 )
-	}
-}
-
-const vector MYSTIC_MAGICAL_ELEVATOR_SHAFT_ORIGIN = < 9761, 5392.29, -4295.97 >
-const float MAX_ELEVATOR_SUCKING_BEHAVIOR_RADIUS = 150
-bool function Realistic_InAllowedZone( vector origin )
-{
-	//printw( "checking allowed zone:", VectorToString( origin ) )
-	float dist2d = Distance2D( origin, MYSTIC_MAGICAL_ELEVATOR_SHAFT_ORIGIN )
-	
-	if ( PHASE_TUNNEL_DEBUG_DRAW_PROJECTILE_TELEPORT )
-		DebugDrawCircle( MYSTIC_MAGICAL_ELEVATOR_SHAFT_ORIGIN, <0,0,0>, MAX_ELEVATOR_SUCKING_BEHAVIOR_RADIUS, 255, 0, 0, true, 10.0, 32 )
-	
-	if( dist2d > MAX_ELEVATOR_SUCKING_BEHAVIOR_RADIUS )
-		return true
-
-	return false
-}
-
-const float MAX_KIDNAP_TIME_AFTER_END_PORTAL = 1.85
 void function PhaseTunnel_WaitForPhaseTunnelExpiration( entity player, PhaseTunnelData tunnelData, float lifetime, bool DEBUG_DRAW = false )
 {
 	tunnelData.expirationType = eTunnelExpirationType.LIFE_TIME_END
 	vector startPos = tunnelData.startPortal.startOrigin
-	vector endPos = tunnelData.endPortal.startOrigin // vector endPos = (tunnelData.shiftStyle == PHASETYPE_BREACH) ? tunnelData.startPortal.endOrigin : tunnelData.endPortal.startOrigin
+	vector endPos = (tunnelData.shiftStyle == PHASETYPE_BREACH) ? tunnelData.startPortal.endOrigin : tunnelData.endPortal.startOrigin
 
 	if ( IsValid( tunnelData.tunnelEnt ) )
 	{
 		tunnelData.tunnelEnt.EndSignal( "PhaseTunnel_DestroyTunnel" )
 		tunnelData.tunnelEnt.EndSignal( "OnDestroy" )
+	}
 
-		player.EndSignal( "CleanUpPlayerAbilities" )
+	if ( IsValid( tunnelData.tunnelEnt ) )
+	{
+		EndThreadOn_PlayerCleanupPermanents( player )
 		player.EndSignal( "PhaseTunnel_DestroyPlacement" )
 
-		if( Playlist() == ePlaylists.fs_realistic_ttv )
-		{
-			if( !Realistic_InAllowedZone( endPos ) )
-				thread RemovePortalDelayed( player, tunnelData )
-				
-			player.p.portalPlacements++
-			player.p.portalPlaceTime = Time()
-			thread CheckForKidnaps( tunnelData, MAX_KIDNAP_TIME_AFTER_END_PORTAL )
-		}
-			
 		EndThreadOn_PlayerChangedClass( player )
 	}
 
@@ -962,55 +944,6 @@ void function PhaseTunnel_WaitForPhaseTunnelExpiration( entity player, PhaseTunn
 	}
 }
 
-void function CheckForKidnaps( PhaseTunnelData tunnelData, float checkForTime )
-{
-	float startTime = Time()
-	entity tunnelOwner = IsValid( tunnelData.owner ) ? tunnelData.owner : GetEnt( "worldspawn" )
-	
-	EndSignal( tunnelOwner, "OnDestroy" )
-	
-	array<entity> kidnapees
-	
-	while( Time() < startTime + checkForTime )
-	{
-		WaitFrame()
-		
-		if( tunnelData.entUsers.len() == 0 )
-			continue
-			
-		foreach( entity user in tunnelData.entUsers )
-		{
-			WaitFrame() 
-			
-			if( tunnelOwner == user )
-				continue 
-				
-			//printw( "Checking enter direction", user.e.portalDirection )
-			if( user.e.portalDirection == eDirection.ENDTOSTART && !kidnapees.contains( user ) )
-			{
-				kidnapees.append( user )
-				__HandleKidnap( tunnelOwner, user )	
-			}
-		}
-	}		
-}
-
-void function __HandleKidnap( entity kidnapper, entity victim )
-{
-	//printw( "Message kidnapper: ", kidnapper )
-	
-	if( !IsValid( kidnapper ) )
-		return
-	
-	if( kidnapper.IsPlayer() )
-	{
-		kidnapper.p.portalKidnaps++	
-	
-		string victimName = IsValid( victim ) ? victim.p.name : "unknown"	
-		LocalEventMsg( kidnapper, "#FS_KIDNAPPED", victimName + " in " + ( Time() - kidnapper.p.portalPlaceTime ) + " seconds" )
-	}
-}
-
 void function PhaseTunnel_CreateTriggerArea( entity tunnelEnt, PhaseTunnelPortalData startPointData, PhaseTunnelPortalData endPointData )
 {
 	Assert ( IsNewThread(), "Must be threaded off" )
@@ -1026,15 +959,15 @@ void function PhaseTunnel_CreateTriggerArea( entity tunnelEnt, PhaseTunnelPortal
 	trigger.RemoveFromAllRealms()
 	trigger.AddToOtherEntitysRealms( tunnelEnt )
 	trigger.SetOwner( tunnelEnt )
-	trigger.SetRadius( PHASE_TUNNEL_TRIGGER_RADIUS )
+	trigger.SetCylinderRadius( PHASE_TUNNEL_TRIGGER_RADIUS )
 	trigger.SetAboveHeight( triggerHeight )
 	trigger.SetBelowHeight( triggerHeight )
 	trigger.SetOrigin( origin )
 	trigger.SetAngles( <0, 0, 0> )
 
-	// if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) && IsT1Active() )
-		// trigger.kv.triggerFilterNonCharacter = "1"
-	// else
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) && IsT1Active() )
+		trigger.kv.triggerFilterNonCharacter = "1"
+	else
 		trigger.kv.triggerFilterNonCharacter = "0"
 
 	trigger.kv.triggerFilterPhaseShift   = "nonphaseshift"
@@ -1128,9 +1061,9 @@ void function PhaseTunnel_CreateTriggerArea( entity tunnelEnt, PhaseTunnelPortal
 
 	vector surfaceNormal = AnglesToUp( trigger.GetAngles() )
 
-	if ( PHASE_TUNNEL_DEBUG_DRAW_PROJECTILE_TELEPORT )
+	//if ( PHASE_TUNNEL_DEBUG_DRAW_PROJECTILE_TELEPORT )
 	{
-		DebugDrawLine( startPointData.portalFX.GetOrigin(), startPointData.portalFX.GetOrigin() + (startPointData.portalFX.GetUpVector() * 64), COLOR_RED, true, 30.0 ) //Grenade Entry Vel
+	//	DebugDrawLine( startPointData.portalFX.GetOrigin(), startPointData.portalFX.GetOrigin() + (startPointData.portalFX.GetUpVector() * 64), COLOR_RED, true, 30.0 ) //Grenade Entry Vel
 	}
 
 	WaitForever()
@@ -1142,56 +1075,84 @@ void function OnPhaseTunnelTriggerEnter( entity trigger, entity ent )
 		thread OnPhaseTunnelTriggerEnter_Internal( trigger, ent )
 }
 
-const float MAX_PORTAL_ENTER_DETECTION_RADIUS = 64.0
 void function OnPhaseTunnelTriggerEnter_Internal( entity trigger, entity ent )
 {
 	entity tunnelEnt = trigger.GetOwner()
 
 	ent.EndSignal( "OnDestroy", "OnDeath" )
 
-	OnThreadEnd 
-	(
-		void function() : ( ent )
-		{
-			if( IsValid( ent ) )
-			{
-				//Warning( "setting to none" )
-				ent.e.portalDirection = eDirection.NONE
-			}
-		}
-	)
-
 	if ( !(trigger in file.triggerEndpoint ) )
 		return
 
 	PhaseTunnelPortalData portalData = file.triggerEndpoint[ trigger ]
 
-	// if ( IsVoidVisionEnabled_PhaseTunnel() )
-	// {
-		// VoidVision_GrantVoidVision( ent )
+	if ( !ent.IsPlayer() )
+	{
+		if ( ( ent.e.lootRef == "fr_nessie_large" ) && ( GetCurrentPlaylistVarBool( "large_nessie_should_phase", false ) ) )
+		{
+			thread PhaseNessie( ent, portalData )
+		}
 
-		// OnThreadEnd(
-			// function() : ( ent )
-			// {
-				// VoidVision_TakeVoidVision( ent )
-			// } )
-	// }
+		return
+	}
+
+
+	if ( IsVoidVisionEnabled_PhaseTunnel() )
+	{
+		VoidVision_GrantVoidVision( ent )
+
+		OnThreadEnd(
+			function() : ( ent )
+			{
+				VoidVision_TakeVoidVision( ent )
+			} )
+	}
+
 
 	PhaseTunnelTravelState travelState
-	travelState.shiftStyle = eShiftStyle.Tunnel
-
-	float dist2d = Distance2D( portalData.startOrigin, ent.GetOrigin() ) //(mk): portalData.startOrigin --- this is really the "END" of the user placed portal
-	bool bEnteredFromEnd = dist2d <= MAX_PORTAL_ENTER_DETECTION_RADIUS	//maybe adjust proxim	
-	
-	if ( PHASE_TUNNEL_DEBUG_DRAW_PROJECTILE_TELEPORT )
-		DebugDrawCircle( portalData.startOrigin, portalData.endAngles, MAX_PORTAL_ENTER_DETECTION_RADIUS, 255, 0, 0, true, 10, 32 )
-	
-	ent.e.portalDirection = bEnteredFromEnd ? eDirection.ENDTOSTART : eDirection.STARTTOEND	
+	travelState.shiftStyle = PHASETYPE_TUNNEL
 
 	//todo-iholstead: remove me once R5DEV-578675 is closed
 	printf("OnPhaseTunnelTriggerEnter_Internal called on "+ ent )
 
 	waitthread PhaseTunnel_PhaseEntity( ent, tunnelEnt, file.tunnelData[ tunnelEnt ], portalData, travelState )
+}
+
+void function PhaseNessie( entity nessie, PhaseTunnelPortalData portalData )
+{
+	int realm = nessie.GetRealms()[0]
+	nessie.Destroy()
+	EmitSoundAtPosition( realm, portalData.startOrigin, "FiringRangeMu1_S20_1_Nessie_EasterEgg_Portal_In", portalData.portalFX )
+	wait 3.0
+	EmitSoundAtPosition( realm, portalData.endOrigin, "FiringRangeMu1_S20_1_Nessie_EasterEgg_Portal_Out", portalData.portalFX )
+	entity destRefEnt = CreatePropDynamic( TILE_MODEL, portalData.endOrigin + <0, 0, 60> , <-90, 0, 0> )
+	vector vel  = Normalize( AnglesToForward( portalData.endAngles ) )  * 200
+	destRefEnt.SetModelScale( 3.0 )
+	destRefEnt.SetScriptName( "MOJANGTILE" )
+	thread FakePhysicsThrow( null, destRefEnt, vel, true )
+	destRefEnt.SetUsable()
+	destRefEnt.AddUsableValue( USABLE_BY_ALL | USABLE_CUSTOM_HINTS )
+	destRefEnt.SetUsablePriority( USABLE_PRIORITY_LOW )
+	destRefEnt.SetUsePrompts( "#S17CR_INTERACT", "#S17CR_INTERACT" )
+	SetCallback_CanUseEntityCallback( destRefEnt,  MajongCanUse )
+	AddCallback_OnUseEntity_ServerOnly( destRefEnt, MojangOnUse )
+}
+
+bool function MajongCanUse( entity playerUser, entity ent, int useFlags )
+{
+	if ( !IsValid ( playerUser ) )
+		return false
+
+	return GenericPropCanUse( playerUser )
+}
+
+void function MojangOnUse( entity ent, entity player, int useInputFlags )
+{
+	if ( IsValid( ent ) )
+	{
+		ent.Destroy()
+		PlayFirstPersonAnimation( player, "TileInspecty" )
+	}
 }
 
 void function PhaseTunnel_OnBulletHitVortexTrigger( entity weapon, entity vortexSphere, var damageInfo )
@@ -1247,7 +1208,7 @@ void function PhaseTunnel_OnProjectileHitVortexTrigger( entity weapon, entity vo
 
 	//printt( "TELEPORTING PROJECTILE" )
 
-	if ( PHASE_TUNNEL_DEBUG_DRAW_PROJECTILE_TELEPORT )
+	/*if ( PHASE_TUNNEL_DEBUG_DRAW_PROJECTILE_TELEPORT )
 	{
 		DebugDrawLine( contactPos, contactPos + (velNorm * 64), COLOR_RED, true, 30.0 ) //Grenade Entry Vel
 		DebugDrawLine( startPortalData.portalFX.GetOrigin(), startPortalData.portalFX.GetOrigin() + (startPortalData.portalFX.GetUpVector() * 64), COLOR_GREEN, true, 30.0 ) //Grenade Entry Vel
@@ -1260,7 +1221,7 @@ void function PhaseTunnel_OnProjectileHitVortexTrigger( entity weapon, entity vo
 		DebugDrawLine( endFXOrigin, endFXOrigin + (endPortalData.portalFX.GetUpVector() * 64), COLOR_GREEN, true, 30.0 ) //Grenade Entry Vel
 		DebugDrawLine( endFXOrigin + exitPoint, (endFXOrigin + exitPoint) + (velNorm * 64), COLOR_RED, true, 30.0 ) //Grenade Entry Vel
 		DebugDrawLine( endFXOrigin + exitPoint, (endFXOrigin + exitPoint) + (newDir * 128), COLOR_BLUE, true, 30.0 ) //Grenade Entry Vel
-	}
+	}*/
 }
 
 vector function PhaseTunnel_GetPointOnRectangularPlane( vector origin, vector planeNormal, vector planeUp, float height, float width, vector testPoint )
@@ -1280,7 +1241,7 @@ vector function PhaseTunnel_GetPointOnRectangularPlane( vector origin, vector pl
 	vector triBPointC  = origin + (planeUp * -halfHeight) + (planeRight * halfWidth)//mainTrapData.trap.GetOrigin() + ( mainTrapData.trap.GetUpVector() * ( TESLA_TRAP_LINK_HEIGHT * TESLA_TRAP_LINK_FX_COUNT ) )
 	vector pointOnTriB = GetClosestPointOnPlane( triBPointA, triBPointB, triBPointC, testPoint, true )
 
-	if ( PHASE_TUNNEL_DEBUG_DRAW_PROJECTILE_TELEPORT )
+	/*if ( PHASE_TUNNEL_DEBUG_DRAW_PROJECTILE_TELEPORT )
 	{
 		DebugDrawLine( triAPointA, triAPointB, COLOR_RED, true, 20.0 )
 		DebugDrawLine( triAPointB, triAPointC, COLOR_RED, true, 20.0 )
@@ -1289,7 +1250,7 @@ vector function PhaseTunnel_GetPointOnRectangularPlane( vector origin, vector pl
 		DebugDrawLine( triBPointA, triBPointB, COLOR_GREEN, true, 20.0 )
 		DebugDrawLine( triBPointB, triBPointC, COLOR_GREEN, true, 20.0 )
 		DebugDrawLine( triBPointC, triBPointA, COLOR_GREEN, true, 20.0 )
-	}
+	}*/
 
 	//Return the closer of the two points
 	float distSqrA = DistanceSqr( testPoint, pointOnTriA )
@@ -1329,7 +1290,6 @@ void function PhaseTunnel_PhaseEntity( entity ent, entity tunnelEnt, PhaseTunnel
 	}
 
 	Signal( ent, "PhaseTunnel_PhaseTunnelEntered" )
-	Signal( ent, "OnChargeEnd" )
 
 	OnThreadEnd(
 		function() : ( ent, tunnelData )
@@ -1346,21 +1306,21 @@ void function PhaseTunnel_PhaseEntity( entity ent, entity tunnelEnt, PhaseTunnel
 	tunnelData.activeUsers++
 	tunnelData.entUsers.append( ent )
 
-	if ( travelState.shiftStyle == eShiftStyle.Tunnel )
+	if ( travelState.shiftStyle == PHASETYPE_TUNNEL )
 	{
-		// LiveAPI_SendOnePlayerEvent( eLiveAPI_EventTypes.wraithPortal, ent )
+		LiveAPI_SendOnePlayerEvent( eLiveAPI_EventTypes.wraithPortal, ent )
 		StatsHook_PhaseTunnel_EntTraversed( ent, tunnelEnt, entHasUsedTunnelBefore )
 	}
-	// else if ( travelState.shiftStyle == PHASETYPE_BREACH )
-	// {
-		// StatsHook_AshPlayersPortaled( tunnelEnt.GetOwner() )
-	// }
-	             
-	// else if ( travelState.shiftStyle == PHASETYPE_TRANSPORT )
-	// {
-		// //TODO-iholstead
-	// }
-       
+	else if ( travelState.shiftStyle == PHASETYPE_BREACH )
+	{
+		StatsHook_AshPlayersPortaled( tunnelEnt.GetOwner() )
+	}
+
+	else if ( travelState.shiftStyle == PHASETYPE_TRANSPORT )
+	{
+		//TODO-iholstead
+	}
+
 
 	waitthread PhaseTunnel_MoveEntAlongPath( ent, portalData.pathData, travelState )
 }
@@ -1369,9 +1329,8 @@ void function PhaseTunnel_MoveEntAlongPath( entity player, PhaseTunnelPathData p
 {
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "PhaseTunnel_CancelPhaseTunnelUse" )
-	player.EndSignal( "CleanUpPlayerAbilities" )
 
-	entity mover = CreateScriptMover_NEW( PHASETUNNEL_MOVER_SCRIPTNAME, player.GetOrigin(), player.GetAngles() )
+	entity mover = CreateScriptMover( PHASETUNNEL_MOVER_SCRIPTNAME, player.GetOrigin(), player.GetAngles() )
 
 	PhaseTunnelPathEndData pathNodeData
 	pathNodeData.nodeData.origin             = player.GetOrigin()
@@ -1444,16 +1403,16 @@ void function PhaseTunnel_MoveEntAlongPath( entity player, PhaseTunnelPathData p
 	{
 		const float PATH_DRAW_TIME = 15.0
 
-		DebugDrawText( pathNodeDataArray[pathNodeDataArray.len()-1].origin + <0,0,10>, ("PathNodes: " + pathNodeDataArray.len()), false, PATH_DRAW_TIME )
+		//Text( pathNodeDataArray[pathNodeDataArray.len()-1].origin + <0,0,10>, ("PathNodes: " + pathNodeDataArray.len()), false, PATH_DRAW_TIME )
 		foreach ( PhaseTunnelPathNodeData nodeData in pathNodeDataArray )
 		{
 			vector color = COLOR_YELLOW
 			if ( !nodeData.validExit )
 			{
 				color = COLOR_ORANGE
-				DebugDrawText( nodeData.origin, "NOT validExit", false, PATH_DRAW_TIME )
+				//DebugDrawText( nodeData.origin, "NOT validExit", false, PATH_DRAW_TIME )
 			}
-			DebugDrawCircle( nodeData.origin, <0, 0, 0>, 10, color, false, PATH_DRAW_TIME )
+			//DebugDrawCircle( nodeData.origin, <0, 0, 0>, 10, color, false, PATH_DRAW_TIME )
 		}
 		//DebugDrawScreenTextWithColor( 0.85, 0.5, "PATH NODES", COLOR_YELLOW )
 	}
@@ -1461,9 +1420,9 @@ void function PhaseTunnel_MoveEntAlongPath( entity player, PhaseTunnelPathData p
 	PhaseShift( player, 0.0, pathData.phaseTime, travelState.shiftStyle )
 	PIN_Interact( player, "wraith_portal", pathNodeDataArray[0].origin )
 
-	                   
-	// VoidVisionStartPhaseShiftPathData( player, pathData )
-       
+
+	VoidVisionStartPhaseShiftPathData( player, pathData )
+
 
 
 	int prevPathIndex    = -1
@@ -1483,10 +1442,10 @@ void function PhaseTunnel_MoveEntAlongPath( entity player, PhaseTunnelPathData p
 		if ( PHASE_TUNNEL_DEBUG_DRAW_PLAYER_TRAVEL )
 		{
 			const float DRAW_TIME = 10.0
-			DebugDrawLine( prevPosition, player.GetOrigin(), COLOR_GREEN, false, DRAW_TIME ) //Prev Player Position to current Pos
+			//DebugDrawLine( prevPosition, player.GetOrigin(), COLOR_GREEN, false, DRAW_TIME ) //Prev Player Position to current Pos
 			prevPosition = player.GetOrigin()
-			// if ( prevPathIndex != currentPathIndex )
-				// DebugDrawSphere( pathNodeDataArray[currentPathIndex].origin, 6, COLOR_GREEN, false, DRAW_TIME )
+			//if ( prevPathIndex != currentPathIndex )
+			//	DebugDrawSphere( pathNodeDataArray[currentPathIndex].origin, 6, COLOR_GREEN, false, DRAW_TIME )
 
 		}
 
@@ -1520,8 +1479,8 @@ void function PhaseTunnel_MoveEntAlongPath( entity player, PhaseTunnelPathData p
 
 						if ( PHASE_TUNNEL_DEBUG_DRAW_PLAYER_TRAVEL )
 						{
-							DebugDrawBox( pathNode.origin, mins, maxs, COLOR_RED,1,10.0)
-							DebugDrawText( pathNode.origin + <0,0,maxs.z/2>, "Blocked",false, 10.0)
+							//DebugDrawBox( pathNode.origin, mins, maxs, COLOR_RED,1,10.0)
+							//DebugDrawText( pathNode.origin + <0,0,maxs.z/2>, "Blocked",false, 10.0)
 							printt( "PHASE TUNNEL - BLOCKED BY SOMETHING, checking previous point. Blocked: "+j + " Trying: " + stopPathIndex )
 						}
 					}
@@ -1532,8 +1491,8 @@ void function PhaseTunnel_MoveEntAlongPath( entity player, PhaseTunnelPathData p
 							endBlocked = false
 							if ( PHASE_TUNNEL_DEBUG_DRAW_PLAYER_TRAVEL )
 							{
-								DebugDrawBox( pathNode.origin, mins, maxs, COLOR_GREEN, 1, 10.0 )
-								DebugDrawText( pathNode.origin + <0, 0, maxs.z / 2>, "Unblocked!", false, 10.0 )
+								//DebugDrawBox( pathNode.origin, mins, maxs, COLOR_GREEN, 1, 10.0 )
+								//DebugDrawText( pathNode.origin + <0, 0, maxs.z / 2>, "Unblocked!", false, 10.0 )
 								printt( "PHASE TUNNEL - UNBLOCKED!, Index: " + stopPathIndex )
 							}
 						}
@@ -1587,18 +1546,18 @@ void function PhaseTunnel_MoveEntAlongPath( entity player, PhaseTunnelPathData p
 	WaitFrame()
 	player.SetAbsOrigin( pathNodeData.nodeData.origin )
 
-	// if ( PHASE_TUNNEL_DEBUG_DRAW_PLAYER_TRAVEL )
-	// {
-		// const float DRAW_TIME = 10.0
-		// float dist = Distance( player.GetOrigin(), pathNodeDataArray[stopPathIndex].origin ) * INCHES_TO_METERS
-		// int distInt = int(dist*100)
-		// dist = distInt/100.0
+	if ( PHASE_TUNNEL_DEBUG_DRAW_PLAYER_TRAVEL )
+	{
+		const float DRAW_TIME = 10.0
+		float dist = Distance( player.GetOrigin(), pathNodeDataArray[stopPathIndex].origin ) * INCHES_TO_METERS
+		int distInt = int(dist*100)
+		dist = distInt/100.0
 
-		// DebugDrawText( player.GetOrigin(), ("Final Pos: " + dist + "m"), false, DRAW_TIME )
-		// DebugDrawSphere( player.GetOrigin(), 10, COLOR_BLUE,false, DRAW_TIME )
-		// DebugDrawSphere( pathNodeDataArray[stopPathIndex].origin, 6, COLOR_LIGHT_BLUE, false, DRAW_TIME )
-		// DebugDrawLine( player.GetOrigin(),pathNodeDataArray[stopPathIndex].origin, COLOR_LIGHT_BLUE, false, DRAW_TIME )
-	// }
+		//DebugDrawText( player.GetOrigin(), ("Final Pos: " + dist + "m"), false, DRAW_TIME )
+		//DebugDrawSphere( player.GetOrigin(), 10, COLOR_BLUE,false, DRAW_TIME )
+		//DebugDrawSphere( pathNodeDataArray[stopPathIndex].origin, 6, COLOR_LIGHT_BLUE, false, DRAW_TIME )
+		//DebugDrawLine( player.GetOrigin(),pathNodeDataArray[stopPathIndex].origin, COLOR_LIGHT_BLUE, false, DRAW_TIME )
+	}
 
 	if ( pathNodeData.nodeData.wasInContextAction && !PutPlayerInSafeSpot( player, null, null, pathNodeData.safeRelativeOrigin, player.GetOrigin() ) )
 		//Only do PutPlayerInSafeSpot check() if the last saved position they were in a context action, since context actions can put you in normally illegal spots, e.g. behind geo. If you do the PutPlayerInSafeSpot() check all the time you get false positives if you always use start position as safe starting spot
@@ -1614,8 +1573,7 @@ void function PhaseTunnel_PrepareToMoveEntAlongTunnel( entity player, PhaseTunne
 	player.ClearTraverse()
 	player.SetPredictionEnabled( false )
 	player.FreezeControlsOnServer()
-	// EndPlayerSkyDive( player )
-	Signal( player, "PlayerSkyDive" )
+	EndPlayerSkyDive( player )
 
 	//disable ping
 	player.SetPlayerNetBool( "pingEnabled", false )
@@ -1625,11 +1583,11 @@ void function PhaseTunnel_PrepareToMoveEntAlongTunnel( entity player, PhaseTunne
 		CancelPhaseShift( player )
 	}
 
-	// PlayerMelee_ClearPlayerAsLungeTarget( player, true )
-	// player.Server_InvalidateMeleeLungeLagCompensationRecords() // EXTREMELY DANGEROUS - Talk to Code before using!!!
+	//PlayerMelee_ClearPlayerAsLungeTarget( player, true )
+	//player.Server_InvalidateMeleeLungeLagCompensationRecords() // EXTREMELY DANGEROUS - Talk to Code before using!!!
 
-	// if ( player.ContextAction_IsEmoting() )
-		// Emote_StopEmoteNow( player )
+	//if ( player.ContextAction_IsEmoting() )
+	//	Emote_StopEmoteNow( player )
 
 	travelState.thirdPersonShoulderModeWasOn = player.IsThirdPersonShoulderModeOn()
 	if ( travelState.thirdPersonShoulderModeWasOn )
@@ -1655,20 +1613,20 @@ void function PhaseTunnel_PrepareToMoveEntAlongTunnel( entity player, PhaseTunne
 
 	WaitEndFrame() // wait for the last save
 
-	if ( travelState.shiftStyle == eShiftStyle.Tunnel )
+	if ( travelState.shiftStyle == PHASETYPE_TUNNEL )
 	{
 		EmitDifferentSoundsOnEntityForPlayerAndWorld( SOUND_PORTAL_TRAVEL_1P, SOUND_PORTAL_TRAVEL_3P, player, player )
 	}
-	// else if ( travelState.shiftStyle == PHASETYPE_BREACH )
-	// {
-		// EmitDifferentSoundsOnEntityForPlayerAndWorld( SOUND_PORTAL_TRAVEL_1P_BREACH, SOUND_PORTAL_TRAVEL_3P_BREACH, player, player )
-	// }
-	             
-	// else if ( travelState.shiftStyle == PHASETYPE_TRANSPORT )
-	// {
-		// EmitDifferentSoundsOnEntityForPlayerAndWorld( SOUND_PORTAL_TRAVEL_1P_TRANSPORT, SOUND_PORTAL_TRAVEL_3P_TRANSPORT, player, player )
-	// }
-       
+	else if ( travelState.shiftStyle == PHASETYPE_BREACH )
+	{
+		EmitDifferentSoundsOnEntityForPlayerAndWorld( SOUND_PORTAL_TRAVEL_1P_BREACH, SOUND_PORTAL_TRAVEL_3P_BREACH, player, player )
+	}
+
+	else if ( travelState.shiftStyle == PHASETYPE_TRANSPORT )
+	{
+		EmitDifferentSoundsOnEntityForPlayerAndWorld( SOUND_PORTAL_TRAVEL_1P_TRANSPORT, SOUND_PORTAL_TRAVEL_3P_TRANSPORT, player, player )
+	}
+
 
 	ViewConeZeroInstant( player )
 }
@@ -1697,23 +1655,23 @@ void function PhaseTunnel_RevertEntStateAfterMovingAlongTunnel( entity player, P
 		if ( travelState.thirdPersonShoulderModeWasOn && IsAlive( player ) )
 			player.SetThirdPersonShoulderModeOn()
 
-		if ( travelState.shiftStyle == eShiftStyle.Tunnel )
+		if ( travelState.shiftStyle == PHASETYPE_TUNNEL )
 		{
 			StopSoundOnEntity( player, SOUND_PORTAL_TRAVEL_1P )
 			StopSoundOnEntity( player, SOUND_PORTAL_TRAVEL_3P )
 		}
-		// else if( travelState.shiftStyle == PHASETYPE_BREACH )
-		// {
-			// StopSoundOnEntity( player, SOUND_PORTAL_TRAVEL_1P_BREACH )
-			// StopSoundOnEntity( player, SOUND_PORTAL_TRAVEL_3P_BREACH )
-		// }
-		             
-		// else if ( travelState.shiftStyle == PHASETYPE_TRANSPORT )
-		// {
-			// StopSoundOnEntity( player, SOUND_PORTAL_TRAVEL_1P )
-			// StopSoundOnEntity( player, SOUND_PORTAL_TRAVEL_3P )
-		// }
-        
+		else if( travelState.shiftStyle == PHASETYPE_BREACH )
+		{
+			StopSoundOnEntity( player, SOUND_PORTAL_TRAVEL_1P_BREACH )
+			StopSoundOnEntity( player, SOUND_PORTAL_TRAVEL_3P_BREACH )
+		}
+
+		else if ( travelState.shiftStyle == PHASETYPE_TRANSPORT )
+		{
+			StopSoundOnEntity( player, SOUND_PORTAL_TRAVEL_1P )
+			StopSoundOnEntity( player, SOUND_PORTAL_TRAVEL_3P )
+		}
+
 	}
 }
 
@@ -1778,12 +1736,12 @@ vector function GetNextAngleToLookAt( int currentIndex, int step, array< PhaseTu
 
 	nextPosition = nextPosition / total
 
-	// bool DEBUG_DRAW_LOOK_AT = false
-	// if ( DEBUG_DRAW_LOOK_AT )
-	// {
-		// DebugDrawSphere( startPosition, 2, COLOR_GREEN, true, 10.0 )
-		// DebugDrawLine( startPosition, nextPosition, COLOR_RED, true, 10.0 )
-	// }
+	bool DEBUG_DRAW_LOOK_AT = false
+	if ( DEBUG_DRAW_LOOK_AT )
+	{
+		//DebugDrawSphere( startPosition, 2, COLOR_GREEN, true, 10.0 )
+		//DebugDrawLine( startPosition, nextPosition, COLOR_RED, true, 10.0 )
+	}
 
 	return VectorToAngles( nextPosition - startPosition )
 }
@@ -1793,15 +1751,13 @@ void function PhaseTunnel_PathFollowCrouchPlayer( entity player, float delay = 0
 	Signal( player, "PhaseTunnel_PathFollowCrouchPlayer" )
 	EndSignal( player, "OnDeath" )
 	EndSignal( player, "PhaseTunnel_PathFollowCrouchPlayer" )
-	int forceCrouchHandle = 0 //player.PushForcedStance( FORCE_STANCE_CROUCH )
-	player.ForceCrouch()
+	int forceCrouchHandle = player.PushForcedStance( FORCE_STANCE_CROUCH )
 	OnThreadEnd(
 		function() : ( player, forceCrouchHandle )
 		{
 			if ( IsValid( player ) )
 			{
-				player.UnforceCrouch()
-				// player.RemoveForcedStance( forceCrouchHandle )
+				player.RemoveForcedStance( forceCrouchHandle )
 				if ( !player.ContextAction_IsActive() && !player.Anim_IsActive() )
 					PutPlayerInSafeSpot( player, null, null, player.GetOrigin(), player.GetOrigin() )
 			}
@@ -1829,9 +1785,27 @@ bool function PhaseTunnel_ShouldPhaseEnt( entity target )
 	//if ( target.IsPhaseShifted() )
 	//	return false
 
+
+		if ( Crafting_IsPlayerAtWorkbench( target ) )
+			return false
+
+
+
+	if ( target.ContextAction_IsReviving() )
+	{
+		//if( !IsEntNewcastleReviver( target ) )
+		//	return false
+	}
+
+	if ( target.ContextAction_IsBeingRevived() )
+	{
+		//if( !IsEntNewcastleReviveTarget( target ) )
+		//	return false
+	}
+
 	if ( target.ContextAction_IsMeleeExecution() || target.ContextAction_IsMeleeExecutionTarget() )
 		return false
-	
+
 	if( target.ContextAction_IsLeeching() )
 		return false
 
@@ -1840,7 +1814,7 @@ bool function PhaseTunnel_ShouldPhaseEnt( entity target )
 		return false
 
 	//We can't go through a phase tunnel while placing a phase tunnel
-	if ( StatusEffect_GetSeverity( target, eStatusEffect.placing_phase_tunnel ) )
+	if ( StatusEffect_HasSeverity( target, eStatusEffect.placing_phase_tunnel ) )
 		return false
 
 	if ( IsSuperSpectre( target ) )
@@ -1861,21 +1835,29 @@ bool function PhaseTunnel_ShouldPhaseEnt( entity target )
 	if ( Time() - target.e.phaseTunnelExitTime  < PHASE_TUNNEL_USE_COOLDOWN_TIME )
 		return false
 
-	// if ( IsValid( target.GetTurret() ) )
-		// return false
+	//if ( IsValid( target.GetTurret() ) )
+	//	return false
 
-	// if ( target.p.totemRecallTime + 2.0 > Time() )
-		// return false
+	if ( target.p.totemRecallTime + 2.0 > Time() )
+		return false
 
-	                            
-		// if ( ExplosiveHold_IsPlayerPlantingGrenade( target ) )
-			// return false
-       
+	//if ( target.Player_IsSkywardFollowing() )
+	{
+	//	ValkUlt_AllyCancel( target )
+	}
 
-	                
-		// if ( GondolasAreActive() && IsPlayerInsideGondola( target ) )
-			// return false
-       
+	//if ( target.Player_IsSkywardLaunching() )
+	//	return false
+
+
+		if ( ExplosiveHold_IsPlayerPlantingGrenade( target ) )
+			return false
+
+
+
+		if ( GondolasAreActive() && IsPlayerInsideGondola( target ) )
+			return false
+
 
 	//todo-iholstead: remove me once R5DEV-578675 is closed
 	printf("PhaseTunnel_ShouldPhaseEnt PASSED for "+ target )
@@ -1917,7 +1899,6 @@ void function PhaseTunnel_StartTrackingPositions( entity player, PhaseTunnelPath
 {
 	player.EndSignal( "PhaseTunnel_CancelPlacement" )
 	player.EndSignal( "OnDeath" )
-	player.EndSignal( "CleanUpPlayerAbilities" )
 	EndThreadOn_PlayerChangedClass( player )
 
 	//StatusEffect_AddTimed( player, eStatusEffect.placing_phase_tunnel, 1.0, PHASE_TUNNEL_PLACEMENT_DURATION, PHASE_TUNNEL_PLACEMENT_DURATION )
@@ -1936,7 +1917,7 @@ void function PhaseTunnel_StartTrackingPositions( entity player, PhaseTunnelPath
 			vector angles = player.GetAngles()
 			angles = <0, player.CameraAngles().y, 0>
 
-			bool isCrouched = player.IsCrouched() && !player.CanStand()//(player.IsCrouched() && !player.StandingPlayerFits())
+			bool isCrouched = (player.IsCrouched())
 
 			float distSqr    = DistanceSqr( startingOrigin, origin )
 			bool canTeleport = PhaseTunnel_IsPortalExitPointValid( player, origin, player, false, isCrouched, PHASE_TUNNEL_DEBUG_DRAW_CREATE_TUNNEL )
@@ -1990,7 +1971,6 @@ void function PhaseTunnel_StartTrackingPositions_Internal( entity player, PhaseT
 	player.EndSignal( "PhaseTunnel_CancelPlacement" )
 	player.EndSignal( "PhaseTunnel_EndPlacement" )
 	player.EndSignal( "OnDeath" )
-	player.EndSignal( "CleanUpPlayerAbilities" )
 
 	vector lastOrigin     = player.GetOriginOutOfTraversal()
 	vector startingOrigin = player.GetOriginOutOfTraversal()
@@ -2037,7 +2017,7 @@ void function PhaseTunnel_StartTrackingPositions_Internal( entity player, PhaseT
 			angles = <0, player.CameraAngles().y, 0>
 			float distSqr = DistanceSqr( startingOrigin, origin )
 
-			bool wasCrouched = firstNode ? ( player.IsCrouched() && !player.CanStand() ) : player.IsCrouched() //player.IsCrouched() && !player.StandingPlayerFits() //
+			bool wasCrouched = player.IsCrouched()//firstNode ? ( player.IsCrouched() && !player.CanStand() ) : player.IsCrouched()
 			bool canTeleport = (PhaseTunnel_IsPortalExitPointValid( player, origin, player, false, wasCrouched, PHASE_TUNNEL_DEBUG_DRAW_CREATE_TUNNEL ))
 			bool safeDist    = distSqr >= PHASE_TUNNEL_MIN_PORTAL_DIST_SQR
 
@@ -2108,6 +2088,14 @@ void function PhaseTunnel_StartTrackingPositions_Internal( entity player, PhaseT
 					float portalDistance = Distance( startingOrigin, origin )
 					float perMaxDist = GraphCapped( portalDistance, 0, file.maxPlacementDist , 0, 100 )
 
+					#if DEVELOPER
+						if ( PHASE_TUNNEL_SPEED_INCREMENT_DEBUG )
+						{
+							printt( "% Dist:  " + perMaxDist + " |  SpeedBoost:  " + speedBoost + " | Speed:  " + Length( player.GetVelocity() ) )
+							//Original Max Speed: 	364 -------------------> //Final Max Speed:		518
+						}
+					#endif
+
 					if( perMaxDist > curDistPercent + PHASE_TUNNEL_SPEED_INCREMENT_PERCENT )
 					{
 						if( IsValid( player ) )
@@ -2137,7 +2125,7 @@ void function PhaseTunnel_StartTrackingPositions_Internal( entity player, PhaseT
 	}
 }
 
-void function PhaseTunnel_CleanAndFinalizePath( PhaseTunnelPathData pathData, float travelSpeed, float minTime, float maxTime, bool skipCleaning, int creatorPassive = ePassives.INVALID )
+void function PhaseTunnel_CleanAndFinalizePath( PhaseTunnelPathData pathData, float travelSpeed, float minTime, float maxTime, bool skipCleaning, int creatorPassive = ePassives.PAS_NONE )
 {
 	if ( !skipCleaning )
 	{
@@ -2241,18 +2229,18 @@ bool function IsValidWorldExitPos( TraceResults results )
 	if ( results.hitEnt.GetNetworkedClassName() == "prop_death_box" )
 		return true
 
-	// if ( results.hitEnt.IsPlayerVehicle() )
-		// return true
+	//if ( results.hitEnt.IsPlayerVehicle() )
+	//	return true
 
 	entity hitDoor = GetDoorForHitEnt( results.hitEnt )
 	if ( IsValid( hitDoor ) )
 		return true
 
-	// if ( results.hitEnt.GetScriptName() == BASE_WALL_SCRIPT_NAME )
-		// return true
+	if ( results.hitEnt.GetScriptName() == BASE_WALL_SCRIPT_NAME )
+		return true
 
-	// if ( results.hitEnt.GetScriptName() == MOUNTED_TURRET_PLACEABLE_SCRIPT_NAME )
-		// return true
+	if ( results.hitEnt.GetScriptName() == MOUNTED_TURRET_PLACEABLE_SCRIPT_NAME )
+		return true
 
 	return false
 }
@@ -2274,32 +2262,44 @@ bool function PhaseTunnel_IsPortalExitPointValid( entity player, vector testOrg,
 
 	if ( IsValid( ignoreEnt ) )
 		ignoreEnts.append( ignoreEnt )
-	                     
-		// entity vehicle = HoverVehicle_GetVehicleOccupiedByPlayer( player )
-		// if ( IsValid( vehicle ) )
-			// ignoreEnts.append( vehicle )
-                            
+
+		entity vehicle = HoverVehicle_GetVehicleOccupiedByPlayer( player )
+		if ( IsValid( vehicle ) )
+			ignoreEnts.append( vehicle )
+
 
 	ignoreEnts.extend( PhaseTunnel_GetPortalIgnoreEnts() )
 
 	TraceResults result
 
-	mins   = player.GetBoundingMins()
-	maxs   = player.GetBoundingMaxs()
+	mins = player.GetPlayerMins()
+	maxs = player.GetPlayerMaxs()
 
 	if ( isCrouched )
 		maxs = < maxs.x, maxs.y, PHASE_TUNNEL_CROUCH_HEIGHT >
 
 	result = TraceHull( testOrg, testOrg + <0, 0, 1>, mins, maxs, ignoreEnts, solidMask, collisionGroup )
+	//PrintTraceResults( result )
 
 	if ( result.startSolid || result.fraction < 1 || result.surfaceNormal != <0, 0, 0> )
 	{
+		if ( DEBUG_DRAW )
+		{
+			//if ( result.startSolid )
+			//	DebugDrawBox( testOrg, mins, maxs, COLOR_RED, 1, 0.1 )
+
+			//DebugDrawBox( result.endPos, mins, maxs, COLOR_RED, 1, 0.1 )
+		}
+
 		if ( !onlyCheckWorld )
 			return false
 
 		if ( !IsValidWorldExitPos( result ) )
 			return false
 	}
+
+	//if ( DEBUG_DRAW )
+	//	DebugDrawBox( result.endPos, mins, maxs, COLOR_GREEN, 1, 0.1 )
 
 	return true
 }
@@ -2317,14 +2317,22 @@ bool function PhaseTunnel_BarrierInDirection( entity player, vector origin, vect
 		ignoreEnts.append( ignoreEnt )
 	TraceResults result
 
-	mins   = player.GetBoundingMins()
-	maxs   = player.GetBoundingMaxs()
+	mins   = player.GetPlayerMins()
+	maxs   = player.GetPlayerMaxs()
 	//result = TraceHull( testOrg, testOrg + <0,0,1>, mins, maxs, ignoreEnts, solidMask, collisionGroup )
 	result = TraceLineHighDetail( origin, origin + (dir * PHASE_TUNNEL_MIN_GEO_REVERSE_DIST), ignoreEnts, solidMask, collisionGroup )
 	//PrintTraceResults( result )
 
 	if ( result.fraction < 1 )
+	{
+		//if ( PHASE_TUNNEL_DEBUG_DRAW_PLAYER_TRAVEL )
+		//	DebugDrawLine( origin, result.endPos, COLOR_RED, true, 20.0 )
+
 		return false
+	}
+
+	//if ( PHASE_TUNNEL_DEBUG_DRAW_PLAYER_TRAVEL )
+	//	DebugDrawLine( origin, result.endPos, COLOR_GREEN, true, 20.0 )
 
 	return true
 }
@@ -2467,7 +2475,7 @@ void function TunnelVisualsEnabled( entity ent, int statusEffect, bool actuallyC
 	if ( !IsValid( cockpit ) )
 		return
 
-	int fxHandle = StartParticleEffectOnEntity( cockpit, GetParticleSystemIndex( PHASE_TUNNEL_1P_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
+	int fxHandle = StartParticleEffectOnEntity( cockpit, GetParticleSystemIndex( PHASE_TUNNEL_1P_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
 	thread TunnelScreenFXThink( player, fxHandle, cockpit )
 }
 

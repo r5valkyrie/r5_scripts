@@ -1,0 +1,222 @@
+"WeaponData"
+{
+	// val unk: 36
+	"printname" "ALTERULTDATAPAD"
+	// val unk: 20
+	"shortprintname" "ALTERULTDATAPAD"
+	// val unk: 69
+	"description" "ALTERULTDATAPAD"
+	// val unk: 14
+	"longdesc" "ALTERULTDATAPAD"
+	// val unk: 28
+	"menu_icon" "rui/hud/loot/loot_health_ultimate"
+	// val unk: 66
+	"hud_icon" "rui/hud/loot/loot_health_ultimate"
+	// val unk: 84
+	"weapon_type_flags" "WPT_VIEWHANDS"
+	// val unk: 29
+	"fire_mode" "offhandHybrid"
+	// val unk: 26
+	"offhand_cancelled_by_melee" "1"
+	// val unk: 32
+	"is_toss_weapon" "0"
+	// val unk: 45
+	"offhand_default_inventory_slot" "2"
+	// val unk: 21
+	"offhand_interupts_weapon_anims" "1"
+	// val unk: 52
+	"offhand_hybrid_switch_on_attack" "1"
+	// val unk: 50
+	"instant_swap_to" "1"
+	// val unk: 37
+	"OnWeaponActivate" "OnWeaponActivate_ability_transport_portal_datapad"
+	// val unk: 22
+	"OnWeaponDeactivate" "OnWeaponDeactivate_ability_transport_portal_datapad"
+	// val unk: 67
+	"OnWeaponPrimaryAttack" "OnWeaponPrimaryAttack_ability_transport_portal_datapad"
+	// val unk: 54
+	"viewmodel" "mdl/weapons/alter/ptpov_transport_portal_datapad.rmdl"
+	// val unk: 35
+	"playermodel" "mdl/Weapons/ultimate_accelerant/w_ultimate_accelerant.rmdl"
+	// val unk: 10
+	"leveled_pickup" "1"
+	// val unk: 25
+	"offhand_keep_primary_in_hand" "0"
+	// val unk: 53
+	"zoom_effects" "0"
+	// val unk: 7
+	"ammo_suck_behavior" "offhand_weapons"
+	// val unk: 4
+	"charge_time" "1.500000"
+	// val unk: 47
+	"charge_cooldown_time" "1.000000"
+	// val unk: 11
+	"charge_cooldown_delay" "0.000000"
+	// val unk: 8
+	"charge_end_forces_fire" "1"
+	// val unk: 33
+	"charge_require_input" "0"
+	// val unk: 5
+	"charge_remain_full_when_fired" "1"
+	// val unk: 72
+	"charge_allow_anim_updates" "0"
+	// val unk: 23
+	"entity_color_from_charge" "1"
+	// val unk: 16
+	"damage_type" "none"
+	// val unk: 39
+	"explosion_damage_heavy_armor" "0"
+	// val unk: 73
+	"damage_near_distance" "0"
+	// val unk: 51
+	"damage_far_distance" "0"
+	// val unk: 70
+	"damage_near_value" "0"
+	// val unk: 42
+	"damage_far_value" "0"
+	// val unk: 41
+	"rumble" "18446744073709551615"
+	// val unk: 6
+	"offhand_blocks_sprint" "1"
+	// val unk: 46
+	"fire_rate" "100"
+	// val unk: 24
+	"fire_anim_rate" "1.000000"
+	// val unk: 74
+	"play_offhand_charging_anim" "1"
+	// val unk: 68
+	"play_offhand_fire_anim" "1"
+	// val unk: 34
+	"play_offhand_start_end_anim" "1"
+	// val unk: 63
+	"raise_time" "0.500000"
+	// val unk: 2
+	"allow_empty_fire" "1"
+	// val unk: 58
+	"reload_enabled" "0"
+	// val unk: 75
+	"empty_reload_only" "0"
+	// val unk: 60
+	"allow_empty_click" "0"
+	// val unk: 86
+	"trigger_snipercam" "0"
+	// val unk: 27
+	"breaks_cloak" "0"
+	// val unk: 76
+	"primary_fire_does_not_block_sprint" "1"
+	// val unk: 18
+	"aimassist_disable_hipfire" "1"
+	// val unk: 17
+	"aimassist_disable_ads" "1"
+	// val unk: 12
+	"ammo_no_remove_from_clip" "1"
+	// val unk: 59
+	"ammo_clip_size" "1"
+	// val unk: 1
+	"ammo_default_total" "1"
+	// val unk: 77
+	"ammo_min_to_fire" "1"
+	// val unk: 56
+	"ammo_per_shot" "1"
+	// val unk: 48
+	"ammo_stockpile_max" "1"
+	// val unk: 0
+	"regen_ammo_refill_rate" "0"
+	// val unk: 65
+	"regen_ammo_refill_start_delay" "0.000000"
+	// val unk: 71
+	"cooldown_type" "ammo_instant"
+	// val unk: 85
+	"activitymodifier3p" "ultimate_battery"
+	// val unk: 78
+	"bob_cycle_time" "0.400000"
+	// val unk: 80
+	"bob_vert_dist" "0.100000"
+	// val unk: 81
+	"bob_horz_dist" "0.100000"
+	// val unk: 13
+	"bob_max_speed" "100"
+	// val unk: 30
+	"bob_pitch" "0.300000"
+	// val unk: 64
+	"bob_yaw" "-0.500000"
+	// val unk: 3
+	"bob_roll" "0.600000"
+	// val unk: 43
+	"sway_rotate_attach" "SWAY_ROTATE"
+	// val unk: 83
+	"sway_min_x" "-0.500000"
+	// val unk: 31
+	"sway_min_y" "-0.500000"
+	// val unk: 57
+	"sway_min_z" "-0.600000"
+	// val unk: 79
+	"sway_max_x" "0.500000"
+	// val unk: 40
+	"sway_max_y" "0.500000"
+	// val unk: 44
+	"sway_max_z" "0.600000"
+	// val unk: 82
+	"sway_min_pitch" "18446744073709551613"
+	// val unk: 38
+	"sway_min_yaw" "-2.500000"
+	// val unk: 19
+	"sway_min_roll" "18446744073709551612"
+	// val unk: 62
+	"sway_max_pitch" "3"
+	// val unk: 55
+	"sway_max_yaw" "2.500000"
+	// val unk: 9
+	"sway_max_roll" "4"
+	// val unk: 49
+	"sway_translate_gain" "2.500000"
+	// val unk: 61
+	"sway_rotate_gain" "7"
+	// val unk: 15
+	"ui1_enable" "1"
+
+	// child unk: 0
+	"Mods"
+	{
+
+		// child unk: 0
+		"player_knocked"
+		{
+			// val unk: 0
+			"charge_time" "2.500000"
+			// val unk: 1
+			"activitymodifier1p" "knocked"
+
+		}
+	}
+
+	// child unk: 2
+	"UiData1"
+	{
+		// val unk: 1
+		"ui" "ui/ultimate_accelerant_screen"
+		// val unk: 0
+		"mesh" "models/weapons/attachments/ultimate_accelerant_rui"
+
+		// child unk: 0
+		"Args"
+		{
+
+		}
+	}
+
+	// child unk: 1
+	"RUI_CrosshairData"
+	{
+
+		// child unk: 0
+		"DefaultArgs"
+		{
+			// val unk: 0
+			"crosshairMovementX" "crosshair_movement_x"
+			// val unk: 1
+			"crosshairMovementY" "crosshair_movement_y"
+
+		}
+	}
+}

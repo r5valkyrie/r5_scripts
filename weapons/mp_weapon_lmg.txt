@@ -482,6 +482,186 @@ WeaponData
 		}
 
 
+		// child unk: 11
+		"stock_tactical_l1"
+		{
+			// val unk: 9
+			"zoom_time_in" "*0.85"
+			// val unk: 20
+			"zoom_time_out" "*0.85"
+			// val unk: 21
+			"deploy_time" "*0.85"
+			// val unk: 22
+			"holster_time" "*0.85"
+			// val unk: 8
+			"raise_time" "*0.9"
+			// val unk: 5
+			"lower_time" "*0.9"
+			// val unk: 23
+			"viewdrift_ads_stand_scale_pitch" "*0.85"
+			// val unk: 24
+			"viewdrift_ads_stand_scale_yaw" "*0.85"
+			// val unk: 13
+			"viewdrift_ads_crouch_scale_pitch" "*0.85"
+			// val unk: 14
+			"viewdrift_ads_crouch_scale_yaw" "*0.85"
+			// val unk: 15
+			"viewdrift_ads_air_scale_pitch" "*0.85"
+			// val unk: 16
+			"viewdrift_ads_air_scale_yaw" "*0.85"
+			// val unk: 17
+			"reload_time" "*0.967"
+			// val unk: 1
+			"reload_time_late1" "*0.967"
+			// val unk: 3
+			"reload_time_late2" "*0.967"
+			// val unk: 25
+			"reload_time_late3" "*0.967"
+			// val unk: 6
+			"reload_time_late4" "*0.967"
+			// val unk: 7
+			"reload_time_late5" "*0.967"
+			// val unk: 4
+			"reloadempty_time" "*0.967"
+			// val unk: 10
+			"reloadempty_time_late1" "*0.967"
+			// val unk: 2
+			"reloadempty_time_late2" "*0.967"
+			// val unk: 11
+			"reloadempty_time_late3" "*0.967"
+			// val unk: 18
+			"reloadempty_time_late4" "*0.967"
+			// val unk: 0
+			"reloadempty_time_late5" "*0.967"
+			// val unk: 12
+			"reloadsegment_time_loop" "*0.967"
+			// val unk: 26
+			"reloadsegment_time_end" "*0.967"
+			// val unk: 19
+			"reloadsegmentempty_time_end" "*0.967"
+
+		}
+
+		// child unk: 17
+		"stock_tactical_l2"
+		{
+			// val unk: 9
+			"zoom_time_in" "*0.8"
+			// val unk: 20
+			"zoom_time_out" "*0.8"
+			// val unk: 21
+			"deploy_time" "*0.8"
+			// val unk: 22
+			"holster_time" "*0.8"
+			// val unk: 8
+			"raise_time" "*0.85"
+			// val unk: 5
+			"lower_time" "*0.85"
+			// val unk: 23
+			"viewdrift_ads_stand_scale_pitch" "*0.75"
+			// val unk: 24
+			"viewdrift_ads_stand_scale_yaw" "*0.75"
+			// val unk: 13
+			"viewdrift_ads_crouch_scale_pitch" "*0.75"
+			// val unk: 14
+			"viewdrift_ads_crouch_scale_yaw" "*0.75"
+			// val unk: 15
+			"viewdrift_ads_air_scale_pitch" "*0.75"
+			// val unk: 16
+			"viewdrift_ads_air_scale_yaw" "*0.75"
+			// val unk: 17
+			"reload_time" "*0.933"
+			// val unk: 1
+			"reload_time_late1" "*0.933"
+			// val unk: 3
+			"reload_time_late2" "*0.933"
+			// val unk: 25
+			"reload_time_late3" "*0.933"
+			// val unk: 6
+			"reload_time_late4" "*0.933"
+			// val unk: 7
+			"reload_time_late5" "*0.933"
+			// val unk: 4
+			"reloadempty_time" "*0.933"
+			// val unk: 10
+			"reloadempty_time_late1" "*0.933"
+			// val unk: 2
+			"reloadempty_time_late2" "*0.933"
+			// val unk: 11
+			"reloadempty_time_late3" "*0.933"
+			// val unk: 18
+			"reloadempty_time_late4" "*0.933"
+			// val unk: 0
+			"reloadempty_time_late5" "*0.933"
+			// val unk: 12
+			"reloadsegment_time_loop" "*0.933"
+			// val unk: 26
+			"reloadsegment_time_end" "*0.933"
+			// val unk: 19
+			"reloadsegmentempty_time_end" "*0.933"
+
+		}
+
+		// child unk: 0
+		"stock_tactical_l3"
+		{
+			// val unk: 9
+			"zoom_time_in" "*0.75"
+			// val unk: 20
+			"zoom_time_out" "*0.75"
+			// val unk: 21
+			"deploy_time" "*0.75"
+			// val unk: 22
+			"holster_time" "*0.75"
+			// val unk: 8
+			"raise_time" "*0.8"
+			// val unk: 5
+			"lower_time" "*0.8"
+			// val unk: 23
+			"viewdrift_ads_stand_scale_pitch" "*0.55"
+			// val unk: 24
+			"viewdrift_ads_stand_scale_yaw" "*0.55"
+			// val unk: 13
+			"viewdrift_ads_crouch_scale_pitch" "*0.55"
+			// val unk: 14
+			"viewdrift_ads_crouch_scale_yaw" "*0.55"
+			// val unk: 15
+			"viewdrift_ads_air_scale_pitch" "*0.55"
+			// val unk: 16
+			"viewdrift_ads_air_scale_yaw" "*0.55"
+			// val unk: 17
+			"reload_time" "*0.9"
+			// val unk: 1
+			"reload_time_late1" "*0.9"
+			// val unk: 3
+			"reload_time_late2" "*0.9"
+			// val unk: 25
+			"reload_time_late3" "*0.9"
+			// val unk: 6
+			"reload_time_late4" "*0.9"
+			// val unk: 7
+			"reload_time_late5" "*0.9"
+			// val unk: 4
+			"reloadempty_time" "*0.9"
+			// val unk: 10
+			"reloadempty_time_late1" "*0.9"
+			// val unk: 2
+			"reloadempty_time_late2" "*0.9"
+			// val unk: 11
+			"reloadempty_time_late3" "*0.9"
+			// val unk: 18
+			"reloadempty_time_late4" "*0.9"
+			// val unk: 0
+			"reloadempty_time_late5" "*0.9"
+			// val unk: 12
+			"reloadsegment_time_loop" "*0.9"
+			// val unk: 26
+			"reloadsegment_time_end" "*0.9"
+			// val unk: 19
+			"reloadsegmentempty_time_end" "*0.9"
+
+		}
+
 		bullets_mag_l1
         {
             "ammo_clip_size"   							"40"
@@ -543,9 +723,142 @@ WeaponData
 
                
                                                                                                      
-                    
+   		"auto_loader"
+		{
+			// val unk: 8
+			"reload_time" "*0.60"
+			// val unk: 9
+			"reload_time_late1" "*0.60"
+			// val unk: 10
+			"reload_time_late2" "*0.60"
+			// val unk: 11
+			"reload_time_late3" "*0.60"
+			// val unk: 1
+			"reload_time_late4" "*0.60"
+			// val unk: 2
+			"reload_time_late5" "*0.60"
+			// val unk: 3
+			"reloadempty_time" "*0.60"
+			// val unk: 4
+			"reloadempty_time_late1" "*0.60"
+			// val unk: 5
+			"reloadempty_time_late2" "*0.60"
+			// val unk: 6
+			"reloadempty_time_late3" "*0.60"
+			// val unk: 0
+			"reloadempty_time_late4" "*0.60"
+			// val unk: 7
+			"reloadempty_time_late5" "*0.60"
+
+		}  
+		
+		// child unk: 12
+		"barrel_stabilizer_l1"
+		{
+			// val unk: 1
+			"fx_muzzle_flash_attach" "muzzle_flash_suppressor_large"
+			// val unk: 4
+			"bodygroup27_set" "1"
+			// val unk: 5
+			"viewkick_pitch_base" "*0.95"
+			// val unk: 2
+			"viewkick_pitch_random" "*0.8"
+			// val unk: 0
+			"viewkick_yaw_base" "*0.95"
+			// val unk: 3
+			"viewkick_yaw_random" "*0.9"
+
+		}
+
+		// child unk: 3
+		"barrel_stabilizer_l2"
+		{
+			// val unk: 1
+			"fx_muzzle_flash_attach" "muzzle_flash_suppressor_large"
+			// val unk: 4
+			"bodygroup27_set" "1"
+			// val unk: 5
+			"viewkick_pitch_base" "*0.9"
+			// val unk: 2
+			"viewkick_pitch_random" "*0.75"
+			// val unk: 0
+			"viewkick_yaw_base" "*0.9"
+			// val unk: 3
+			"viewkick_yaw_random" "*0.85"
+
+		}
+
+		// child unk: 18
+		"barrel_stabilizer_l3"
+		{
+			// val unk: 1
+			"fx_muzzle_flash_attach" "muzzle_flash_suppressor_large"
+			// val unk: 4
+			"bodygroup27_set" "1"
+			// val unk: 5
+			"viewkick_pitch_base" "*0.85"
+			// val unk: 2
+			"viewkick_pitch_random" "*0.7"
+			// val unk: 0
+			"viewkick_yaw_base" "*0.85"
+			// val unk: 3
+			"viewkick_yaw_random" "*0.8"
+
+		}
+
+		// child unk: 13
+		"barrel_stabilizer_l4_flash_hider"
+		{
+			// val unk: 1
+			"fx_muzzle_flash_attach" "muzzle_flash_suppressor_large"
+			// val unk: 4
+			"bodygroup26_set" "1"
+			// val unk: 5
+			"viewkick_pitch_base" "*0.85"
+			// val unk: 2
+			"viewkick_pitch_random" "*0.7"
+			// val unk: 0
+			"viewkick_yaw_base" "*0.85"
+			// val unk: 3
+			"viewkick_yaw_random" "*0.8"
+
+		}
          
-                                                                                          
+		// child unk: 4
+		"paintball"
+		{
+			// val unk: 11
+			"impact_effect_table" "bullet_pb_Random"
+			// val unk: 0
+			"projectile_trail_effect_0" "P_tracer_projectile_pb"
+			// val unk: 12
+			"projectile_trail_effect_1" "P_tracer_projectile_pb"
+			// val unk: 13
+			"reload_time" "*0.75"
+			// val unk: 14
+			"reload_time_late1" "*0.75"
+			// val unk: 4
+			"reload_time_late2" "*0.75"
+			// val unk: 5
+			"reload_time_late3" "*0.75"
+			// val unk: 6
+			"reload_time_late4" "*0.75"
+			// val unk: 7
+			"reload_time_late5" "*0.75"
+			// val unk: 8
+			"reloadempty_time" "*0.75"
+			// val unk: 2
+			"reloadempty_time_late1" "*0.75"
+			// val unk: 1
+			"reloadempty_time_late2" "*0.75"
+			// val unk: 9
+			"reloadempty_time_late3" "*0.75"
+			// val unk: 3
+			"reloadempty_time_late4" "*0.75"
+			// val unk: 10
+			"reloadempty_time_late5" "*0.75"
+
+		}                                                                             
          
       
 	
@@ -568,6 +881,7 @@ WeaponData
 		Args
 		{
 			vis							player_zoomfrac
+			centerOffset				weapon_ads_center_offset
 		}
 	}
 

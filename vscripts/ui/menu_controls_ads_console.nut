@@ -19,7 +19,7 @@ struct
 } file
 
 
-void function InitADSControlsMenuConsole( var menu ) //
+void function InitADSControlsMenuConsole( var menu )                                               
 {
 	file.menu = menu
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, OnOpenControlsADSMenuConsole )
@@ -42,15 +42,17 @@ void function InitADSControlsPanelConsole( var panel )
 	SetupSettingsButton( button, "#PEROPTICADS_ENABLED", "#PEROPTICADS_ENABLED_DESC", $"" )
 	AddButtonEventHandler( button, UIE_CHANGE, Button_Toggle_ADSEnabled )
 
+	                         
 	file.defaultItems.append( SetupSettingsButton( Hud_GetChild( contentPanel, "SwchLookSensitivityADS" ), "#LOOK_SENSITIVITY_ADS", "#GAMEPAD_MENU_SENSITIVITY_ADS_DESC", $"rui/menu/settings/settings_gamepad" ) )
 
-	file.customItems.append( SetupSettingsButton( Hud_GetChild( contentPanel, "SwchLookSensitivityADS0" ), "#PEROPTICADS_0", "", $"" ) )
-	file.customItems.append( SetupSettingsButton( Hud_GetChild( contentPanel, "SwchLookSensitivityADS1" ), "#PEROPTICADS_1", "", $"" ) )
-	file.customItems.append( SetupSettingsButton( Hud_GetChild( contentPanel, "SwchLookSensitivityADS2" ), "#PEROPTICADS_2", "", $"" ) )
-	file.customItems.append( SetupSettingsButton( Hud_GetChild( contentPanel, "SwchLookSensitivityADS3" ), "#PEROPTICADS_3", "", $"" ) )
-	file.customItems.append( SetupSettingsButton( Hud_GetChild( contentPanel, "SwchLookSensitivityADS4" ), "#PEROPTICADS_4", "", $"" ) )
-	file.customItems.append( SetupSettingsButton( Hud_GetChild( contentPanel, "SwchLookSensitivityADS5" ), "#PEROPTICADS_5", "", $"" ) )
-	file.customItems.append( SetupSettingsButton( Hud_GetChild( contentPanel, "SwchLookSensitivityADS6" ), "#PEROPTICADS_6", "", $"" ) )
+	                            
+	file.customItems.append( SetupSettingsButton( Hud_GetChild( contentPanel, "SwchLookSensitivityADS0" ), "#PEROPTICADS_0", "#GAMEPAD_MENU_SENSITIVITY_ZOOM_DESC", $"" ) )
+	file.customItems.append( SetupSettingsButton( Hud_GetChild( contentPanel, "SwchLookSensitivityADS1" ), "#PEROPTICADS_1", "#GAMEPAD_MENU_SENSITIVITY_ZOOM_DESC_2x", $"" ) )
+	file.customItems.append( SetupSettingsButton( Hud_GetChild( contentPanel, "SwchLookSensitivityADS2" ), "#PEROPTICADS_2", "#GAMEPAD_MENU_SENSITIVITY_ZOOM_DESC_3x", $"" ) )
+	file.customItems.append( SetupSettingsButton( Hud_GetChild( contentPanel, "SwchLookSensitivityADS3" ), "#PEROPTICADS_3", "#GAMEPAD_MENU_SENSITIVITY_ZOOM_DESC", $"" ) )
+	file.customItems.append( SetupSettingsButton( Hud_GetChild( contentPanel, "SwchLookSensitivityADS4" ), "#PEROPTICADS_4", "#GAMEPAD_MENU_SENSITIVITY_ZOOM_DESC", $"" ) )
+	file.customItems.append( SetupSettingsButton( Hud_GetChild( contentPanel, "SwchLookSensitivityADS5" ), "#PEROPTICADS_5", "#GAMEPAD_MENU_SENSITIVITY_ZOOM_DESC_8x", $"" ) )
+	file.customItems.append( SetupSettingsButton( Hud_GetChild( contentPanel, "SwchLookSensitivityADS6" ), "#PEROPTICADS_6", "#GAMEPAD_MENU_SENSITIVITY_ZOOM_DESC", $"" ) )
 
 	ScrollPanel_InitPanel( panel )
 	ScrollPanel_InitScrollBar( panel, Hud_GetChild( panel, "ScrollBar" ) )
@@ -64,7 +66,6 @@ void function InitADSControlsPanelConsole( var panel )
 void function OnADSControlsPanel_Show( var panel )
 {
 	ScrollPanel_SetActive( panel, true )
-	ScrollPanel_Refresh( panel )
 }
 
 
@@ -81,7 +82,7 @@ void function OnOpenControlsADSMenuConsole()
 		UI_SetPresentationType( ePresentationType.WEAPON_CATEGORY )
 	SetBlurEnabled( true )
 
-	ShowPanel( Hud_GetChild( file.menu, "ADSControlsPanel" ) )//
+	ShowPanel( Hud_GetChild( file.menu, "ADSControlsPanel" ) )  
 	Button_Toggle_ADSEnabled( null )
 }
 
@@ -113,7 +114,6 @@ void function OpenConfirmRestoreLookControlsDefaultsDialog( var button )
 	OpenConfirmDialogFromData( data )
 }
 
-
 void function RestoreADSDefaultsGamePad()
 {
 	SetConVarToDefault( "gamepad_use_per_scope_ads_settings" )
@@ -125,6 +125,6 @@ void function RestoreADSDefaultsGamePad()
 	SetConVarToDefault( "gamepad_aim_speed_ads_5" )
 	SetConVarToDefault( "gamepad_aim_speed_ads_6" )
 	SetConVarToDefault( "gamepad_aim_speed_ads_7" )
-
+	
 	SavePlayerSettings()
 }

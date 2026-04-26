@@ -43,9 +43,6 @@ global const asset EGG_WHOLE_MODEL = $"mdl/tropics/tropics_spider_eggs_whole_01.
 global const asset EGG_HATCHED_MODEL = $"mdl/tropics/tropics_spider_eggs_broken_01.rmdl"
 global const asset SPIDER_EGG_WEB_ROPE_MATERIAL = $"models/cable/jungle_spider_web_cable"
 
-global const string SPIDER_EGG_SCRIPT_NAME = "prop_spider_egg"
-global const string SPIDER_HATCHED_EGG_EDITOR_CLASS_KEYWORD = "script_ai_spider_egg_hatched"
-
 // attachment spawn points
 
 const string SPAWN_POINT_ONE = "SPAWN_SPIDER_1"

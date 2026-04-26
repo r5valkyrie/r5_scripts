@@ -83,6 +83,8 @@ void function Desertlands_MapInit_Common()
 		AddSpawnCallback_ScriptName( "conveyor_rotator_mover", OnSpawnConveyorRotatorMover )
 	#endif
 
+	ShPrecacheSkydiveLauncherAssets()
+
 	#if CLIENT
 		Freefall_SetPlaneHeight( 15250 )
 		Freefall_SetDisplaySeaHeightForLevel( -8961.0 )

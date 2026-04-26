@@ -48,13 +48,20 @@ void function OnProjectileCollision_weapon_grenade_sonar( entity projectile, vec
 	if( !IsValid( projectile ) )
 		return
 	
-	table collisionParams =
-	{
-		pos = pos,
-		normal = normal,
-		hitEnt = hitEnt,
-		hitbox = hitbox
-	}
+	DeployableCollisionParams collisionParams
+
+	
+	collisionParams.pos = pos
+
+	
+	collisionParams.normal = normal
+
+	
+	collisionParams.hitEnt = hitEnt
+
+	
+	collisionParams.hitBox = hitbox
+
 	
 	projectile.SetScriptName( "grenadeSonarProjectile" )
 	AddToTrackedEnts_Level( projectile )

@@ -104,7 +104,7 @@ var function OnWeaponTossReleaseAnimEvent_weapon_satchel( entity weapon, WeaponP
 	#if SERVER
 		SetVisibleEntitiesInConeQueriableEnabled( satchel, true )
 		Satchel_PostFired_Init( satchel, player )
-		thread EnableTrapWarningSound( satchel, 0, DEFAULT_WARNING_SFX )
+		thread EnableTrapWarningSound( satchel, 0, "" )
 		EmitSoundOnEntityExceptToPlayer( player, player, "weapon_r1_satchel.throw" )
 		PROTO_PlayTrapLightEffect( satchel, "LIGHT", player.GetTeam() )
 		#if BATTLECHATTER_ENABLED
@@ -131,13 +131,16 @@ vector function GetSatchelThrowVelocity( entity player, vector baseAngles )
 
 void function OnProjectileCollision_weapon_satchel( entity weapon, vector pos, vector normal, entity hitEnt, int hitbox, bool isCritical )
 {
-	table collisionParams =
-	{
-		pos = pos,
-		normal = normal,
-		hitEnt = hitEnt,
-		hitbox = hitbox
-	}
+	DeployableCollisionParams collisionParams
+
+	collisionParams.pos = pos
+
+	collisionParams.normal = normal
+
+	collisionParams.hitEnt = hitEnt
+
+	collisionParams.hitBox = hitbox
+
 
 	bool result = PlantStickyEntity( weapon, collisionParams )
 
@@ -156,8 +159,11 @@ void function OnProjectileCollision_weapon_satchel( entity weapon, vector pos, v
 		// Added via AddCallback_OnSatchelPlanted
 		if ( "onSatchelPlanted" in level )
 		{
-			foreach ( callbackFunc in level.onSatchelPlanted )
-				callbackFunc( player, collisionParams )
+			foreach ( callbackFunc in expect array( level.onSatchelPlanted ) )
+			{
+				void functionref( entity, DeployableCollisionParams ) typedFunc = expect void functionref( entity, DeployableCollisionParams )( callbackFunc )
+				typedFunc( player, collisionParams )
+			}
 		}
 
 		//if player is rodeoing a Titan and we stickied the satchel onto the Titan, set lastAttackTime accordingly

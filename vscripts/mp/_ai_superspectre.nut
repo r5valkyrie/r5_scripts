@@ -125,16 +125,13 @@ void function DoSuperSpectreDeath( entity npc, var damageInfo )
 
 	const int SUPER_SPECTRE_NUKE_DEATH_THRESHOLD = 300
 
-	bool giveBattery = ( npc.ai.shouldDropBattery && IsSingleplayer() )
-
+	bool giveBattery = false
 	if ( !ShouldNukeOnDeath( npc ) || !npc.IsOnGround() || !npc.IsInterruptable() || DamageInfo_GetDamage( damageInfo ) > SUPER_SPECTRE_NUKE_DEATH_THRESHOLD || ( IsValid( attacker ) && attacker.IsTitan() ) )
 	{
 		// just boom
 		vector origin = npc.GetWorldSpaceCenter()
 		EmitSoundAtPosition( npc.GetTeam(), origin, "ai_reaper_explo_3p" )
 		npc.Gib( DamageInfo_GetDamageForce( damageInfo ) )
-		if ( giveBattery )
-			SpawnTitanBatteryOnDeath( npc, null )
 
 		return
 	}
@@ -165,10 +162,6 @@ void function DoSuperSpectreDeath( entity npc, var damageInfo )
 			if ( IsValid( npc ) )
 			{
 				thread SuperSpectreNukes( npc, attacker )
-				if ( giveBattery )
-				{
-					SpawnTitanBatteryOnDeath( npc, null )
-				}
 			}
 		}
 	)

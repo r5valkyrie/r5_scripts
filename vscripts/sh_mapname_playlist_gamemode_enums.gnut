@@ -29,10 +29,6 @@ global function GamemodeIs
 global function IsCurrentPlaylistExternal
 global function IsCurrentGamemodeExternal
 
-#if SERVER 
-	global function GetPlaylistMaps //client has a copy already
-#endif
-
 //mode functions:
 global function g_bIs1v1GameType
 global function g_bSinglePlayerChampion
@@ -109,7 +105,11 @@ global enum ePlaylists
 	fs_onlyup, //51
 	fs_nextbots, //52
 	Movement_Recorder,
-	
+	survival_arenas,
+	freedm,
+	freedm_tdm,
+	freedm_gungame,
+
 	_PLAYLISTS_COUNT //LAST
 }
 
@@ -131,7 +131,12 @@ global enum eGamemodes
 	fs_apexkart, //13
 	WINTEREXPRESS, //14	
 	fs_spieslegends, //15
-	
+	fs_1v1,
+	ARENAS, //17
+	freedm, //18
+	freedm_tdm, //19
+	freedm_gungame, //20
+
 	_GAMEMODES_COUNT //LAST
 }
 
@@ -171,13 +176,13 @@ const array<int> playlist1v1Types =
 	ePlaylists.fs_scenarios
 ]
 
-const array<int> gamemode1v1Types = 
+const array<int> gamemode1v1Types =
 [
-
+	eGamemodes.fs_1v1
 ]
 
 #if DEVELOPER
-	const PRINT_GAMEMODE_DEBUGS = true
+	const PRINT_GAMEMODE_DEBUGS = false
 #else
 	const PRINT_GAMEMODE_DEBUGS = false
 #endif
@@ -236,10 +241,10 @@ void function PlayLists_Mapnames_Gamemodes_Init()
 			
 			string currentPlaylistName = GetCurrentPlaylistName()
 			{
+				// Allow launching without playlist — use survival as default
 				if( currentPlaylistName == "can_launch" )
 				{
-					mAssert( false, "Please specify a playlist file when launching. You \"can_launch\", but chose not to." )
-					return
+					currentPlaylistName = "survival"
 				}
 			}
 			
@@ -283,9 +288,9 @@ void function PlayLists_Mapnames_Gamemodes_Init()
 	#endif
 		
 		SH_globals.currentGamemode = currentGamemodeEnum
-		#if !UI
-			mAssert( SH_globals.currentGamemode != -1, format( "Current gamemode \"%s\" is not registered in sh_mapname_playlist_gamemode_enums.nut", curentGamemodeName ) )
-		#endif
+		// #if !UI
+			// mAssert( SH_globals.currentGamemode != -1, format( "Current gamemode \"%s\" is not registered in sh_mapname_playlist_gamemode_enums.nut", curentGamemodeName ) )
+		// #endif
 	
 	AllModeConditionals_Init()
 }
@@ -395,28 +400,6 @@ void function _printstringarray( array<string> arr, string title = "???" )
 	printl( prnt )
 }
 
-#if SERVER 
-	array<string> function GetPlaylistMaps( string playlistName )
-	{
-		array<string> mapsArray
-
-		int numModes = GetPlaylistGamemodesCount( playlistName )
-		for ( int modeIndex = 0; modeIndex < numModes; modeIndex++ )
-		{
-			int numMaps = GetPlaylistGamemodeByIndexMapsCount( playlistName, modeIndex )
-			for ( int mapIndex = 0; mapIndex < numMaps; mapIndex++ )
-			{
-				string mapName = GetPlaylistGamemodeByIndexMapByIndex( playlistName, modeIndex, mapIndex )
-				if ( mapsArray.contains( mapName ) )
-					continue
-
-				mapsArray.append( mapName )
-			}
-		}
-
-		return mapsArray
-	}
-#endif 
 
 //////////////////////////////////////////
 //	gamemode conditional INIT functions	//
@@ -466,7 +449,8 @@ void function PassivesAllowed_Init()
 	[
 		eGamemodes.SURVIVAL,
 		eGamemodes.WINTEREXPRESS,
-		eGamemodes.fs_dm
+		eGamemodes.fs_dm,
+		eGamemodes.ARENAS
 	]
 	
 	const array<int> allowedPassivePlaylists = 
@@ -479,7 +463,10 @@ void function PassivesAllowed_Init()
 		ePlaylists.survival,
 		ePlaylists.survival_solos,
 		ePlaylists.survival_duos,
-		ePlaylists.survival_firingrange
+		ePlaylists.survival_firingrange,
+		ePlaylists.survival_arenas
+		ePlaylists.survival_dev
+		ePlaylists.dev_default
 	]
 
 	bool result = ( allowedPassiveGamemodes.contains( Gamemode() ) && allowedPassivePlaylists.contains( Playlist() ) )

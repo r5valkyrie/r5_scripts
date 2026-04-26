@@ -34,9 +34,9 @@ npc_soldier
 	allowPatrol				1	[$sp]
 	allowSignals			1
 	allowUseCover			1
-	DefaultModelName		"mdl/humans/pilots/pilot_medium_reaper_f.rmdl"
-	DefaultModelName_IMC	"mdl/humans/pilots/pilot_medium_reaper_f.rmdl"
-	DefaultModelName_MIL	"mdl/humans/pilots/pilot_medium_reaper_f.rmdl"
+	DefaultModelName		"mdl/Humans/pilots/pilot_medium_loba.rmdl"
+	DefaultModelName_IMC	"mdl/Humans/pilots/pilot_medium_loba.rmdl"
+	DefaultModelName_MIL	"mdl/Humans/pilots/pilot_medium_loba.rmdl"
 
 	DefaultWeapon			"mp_weapon_rspn101"
 	WeaponCapacity			"PilotMainWeapons"

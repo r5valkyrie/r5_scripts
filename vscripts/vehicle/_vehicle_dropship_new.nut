@@ -42,7 +42,7 @@ global function InitDropShipFlightPaths
 
 const FX_DROPSHIP_THRUSTERS = $"xo_atlas_jet_large"
 const FX_GUNSHIP_DAMAGE =  $"veh_gunship_damage_FULL"
-//const FX_DROPSHIP_DEATH = $"P_veh_exp_crow" //TODO: "mdl\vehicle\crow_dropship\crow_dropship_dest_l_wing.rmdl" does not exist. This particle system requires it. All references have been commented for now.
+const FX_DROPSHIP_DEATH = $"P_veh_evacship_exp"
 
 const DROPSHIP_ROPE_ENDPOINT_FX = $"runway_light_blue"
 const DROPSHIP_ACL_LIGHT_GREEN_FX = $"acl_light_green"
@@ -54,25 +54,24 @@ const ENGAGEMENT_DIST_SQD = ENGAGEMENT_DIST * ENGAGEMENT_DIST
 
 const DEFAULT_READYANIM_BLENDTIME = 1.0
 
-table file = {
-	dropshipAttachments = null
-}
-
-function VehicleDropshipNew_Init()
+struct
 {
+	array<string> dropshipAttachments
+} file
 
+void function VehicleDropshipNew_Init()
+{
 	RegisterSignal( "sRampOpen" )
 	RegisterSignal( "sRampClose" )
 
 	#if SERVER
 		PrecacheParticleSystem( FX_GUNSHIP_CRASH_EXPLOSION_ENTRANCE )
 		PrecacheParticleSystem( FX_GUNSHIP_CRASH_EXPLOSION_EXIT )
-		//PrecacheParticleSystem( FX_DROPSHIP_DEATH )
+		PrecacheParticleSystem( FX_DROPSHIP_DEATH )
 		AddDeathCallback( "npc_dropship", OnNPCDropshipDeath )
 		AddDamageCallback( "npc_dropship", OnDropshipDamaged )
 	#endif
 
-	//PrecacheParticleSystem( FX_HORNET_DEATH )
 	PrecacheParticleSystem( FX_GUNSHIP_DAMAGE )
 	PrecacheParticleSystem( FX_DROPSHIP_THRUSTERS )
 	PrecacheParticleSystem( DROPSHIP_ROPE_ENDPOINT_FX )
@@ -85,40 +84,33 @@ function VehicleDropshipNew_Init()
 	PrecacheEntity( "keyframe_rope" )
 	PrecacheModel( DROPSHIP_MODEL )
 
-	PrecacheSprite( $"sprites/laserbeam.vmt" )
-	PrecacheSprite( $"sprites/glow_05.vmt" )
-
-
 	//Array of all attachments in the dropship model. Used in DropshipDamageEffects
-	local names = []
-	names.append( "FRONT_TURRET"      )
-	names.append( "BOMB_L"            )
-	names.append( "BOMB_R"            )
-	names.append( "Spotlight"         )
-	names.append( "Light_Red0"        )
-	names.append( "Light_Red1"        )
-	names.append( "Light_Red2"        )
-	names.append( "Light_Red3"        )
-	names.append( "HeadlightLeft"     )
-	names.append( "RopeAttachLeftA"   )
-	names.append( "RopeAttachLeftB"   )
-	names.append( "RopeAttachLeftC"   )
-	names.append( "L_exhaust_rear_1"  )
-	names.append( "L_exhaust_rear_2"  )
-	names.append( "L_exhaust_front_1" )
-	names.append( "Light_Green0"      )
-	names.append( "Light_Green1"      )
-	names.append( "Light_Green2"      )
-	names.append( "Light_Green3"      )
-	names.append( "HeadlightRight"    )
-	names.append( "RopeAttachRightA"  )
-	names.append( "RopeAttachRightB"  )
-	names.append( "RopeAttachRightC"  )
-	names.append( "R_exhaust_rear_1"  )
-	names.append( "R_exhaust_rear_2"  )
-	names.append( "R_exhaust_front_1" )
-
-	file.dropshipAttachments = names
+	file.dropshipAttachments.append( "FRONT_TURRET" )
+	file.dropshipAttachments.append( "BOMB_L" )
+	file.dropshipAttachments.append( "BOMB_R" )
+	file.dropshipAttachments.append( "Spotlight" )
+	file.dropshipAttachments.append( "Light_Red0" )
+	file.dropshipAttachments.append( "Light_Red1" )
+	file.dropshipAttachments.append( "Light_Red2" )
+	file.dropshipAttachments.append( "Light_Red3" )
+	file.dropshipAttachments.append( "HeadlightLeft" )
+	file.dropshipAttachments.append( "RopeAttachLeftA" )
+	file.dropshipAttachments.append( "RopeAttachLeftB" )
+	file.dropshipAttachments.append( "RopeAttachLeftC" )
+	file.dropshipAttachments.append( "L_exhaust_rear_1" )
+	file.dropshipAttachments.append( "L_exhaust_rear_2" )
+	file.dropshipAttachments.append( "L_exhaust_front_1" )
+	file.dropshipAttachments.append( "Light_Green0" )
+	file.dropshipAttachments.append( "Light_Green1" )
+	file.dropshipAttachments.append( "Light_Green2" )
+	file.dropshipAttachments.append( "Light_Green3" )
+	file.dropshipAttachments.append( "HeadlightRight" )
+	file.dropshipAttachments.append( "RopeAttachRightA" )
+	file.dropshipAttachments.append( "RopeAttachRightB" )
+	file.dropshipAttachments.append( "RopeAttachRightC" )
+	file.dropshipAttachments.append( "R_exhaust_rear_1" )
+	file.dropshipAttachments.append( "R_exhaust_rear_2" )
+	file.dropshipAttachments.append( "R_exhaust_front_1" )
 
 	level.DSAIziplineAnims <- {}
 	level.DSAIziplineAnims[ "left" ] <- []
@@ -140,7 +132,7 @@ function VehicleDropshipNew_Init()
 	level.DSAIziplineAnims[ "both" ].append( { idle = "pt_dropship_rider_R_B_idle", attach = "RopeAttachRightB" } )
 }
 
-function InitLeanDropship( dropship )
+void function InitLeanDropship( entity dropship )
 {
 	if ( dropship.kv.desiredSpeed.tofloat() <= 0 )
 	{
@@ -164,8 +156,6 @@ array<entity> function CreateNPCSForDropship( entity ship, array<entity function
 	if ( Flag( "disable_npcs" ) )
 		return guys //i.e. empty aray
 
-	//local guy
-
 	// this is to maintain sketchy support for just passing an array of 1 spawn function
 	entity functionref( int, vector, vector ) spawnFunc = spawnFuncs[0]
 
@@ -183,7 +173,7 @@ array<entity> function CreateNPCSForDropship( entity ship, array<entity function
 
 		guys.append( guy )
 
-		local seat 	= i
+		int seat = i
 		table Table = CreateDropshipAnimTable( ship, side, seat )
 
 		thread GuyDeploysOffShip( guy, Table )
@@ -192,12 +182,9 @@ array<entity> function CreateNPCSForDropship( entity ship, array<entity function
 	return guys
 }
 
-
-
-table function CreateDropshipAnimTable( ship, side, seat )
+table function CreateDropshipAnimTable( entity ship, string side, int seat )
 {
 	table Table
-
 	Table.idleAnim			<- level.DSAIziplineAnims[ side ][ seat ].idle
 	Table.deployAnim		<- "zipline"
 	Table.shipAttach 		<- level.DSAIziplineAnims[ side ][ seat ].attach
@@ -209,9 +196,9 @@ table function CreateDropshipAnimTable( ship, side, seat )
 	return Table
 }
 
-function WaitForNPCsDeployed( npcArray )
+void function WaitForNPCsDeployed( array<entity> npcArray )
 {
-	local ent = CreateScriptRef()
+	entity ent = CreateScriptRef()
 	ent.s.count <- 0
 
 	OnThreadEnd(
@@ -222,28 +209,27 @@ function WaitForNPCsDeployed( npcArray )
 		}
 	)
 
-	local func =
-		function( ent, guy )
-		{
-			ent.s.count++
-
-			WaitSignal( guy, "npc_deployed", "OnDeath", "OnDestroy" )
-			ent.s.count--
-
-			if ( !ent.s.count )
-				ent.Kill_Deprecated_UseDestroyInstead()
-		}
-
-	foreach ( entity guy in npcArray )
+	foreach ( guy in npcArray )
 	{
 		if ( IsAlive( guy ) )
-			thread func( ent, guy )
+			thread CountNPCsDeployed( ent, guy )
 	}
 
 	ent.WaitSignal( "OnDestroy" )
 }
 
-function InitDropShipFlightPaths( spawnPoints )
+void function CountNPCsDeployed( entity ent, entity guy )
+{
+	ent.s.count++
+
+	WaitSignal( guy, "npc_deployed", "OnDeath", "OnDestroy" )
+	ent.s.count--
+
+	if ( !ent.s.count )
+		ent.Kill_Deprecated_UseDestroyInstead()
+}
+
+void function InitDropShipFlightPaths( array<entity> spawnPoints )
 {
 	entity tempDropShip = CreateEntity( "prop_dynamic" )
 	tempDropShip.kv.spawnflags = 0
@@ -266,35 +252,35 @@ function InitDropShipFlightPaths( spawnPoints )
 entity function CreateDropship( int team, vector origin, vector angles )
 {
 	entity dropship = CreateEntity( "npc_dropship" )
-	dropship.kv.teamnumber = team
+	SetTeam( dropship, team )
 	dropship.SetOrigin( origin )
 	dropship.SetAngles( angles )
 	return dropship
 }
 
-function GetDropShipAnimOffset( dropShip, animName, refEnt )
+vector function GetDropShipAnimOffset( entity dropShip, string animName, entity refEnt )
 {
-	local animStart = dropShip.Anim_GetStartForRefPoint_Old( animName, refEnt.GetOrigin(), refEnt.GetAngles() )
-	return animStart.origin - refEnt.GetOrigin()
+	table animStart = dropShip.Anim_GetStartForRefPoint_Old( animName, refEnt.GetOrigin(), refEnt.GetAngles() )
+	return expect vector( animStart.origin ) - refEnt.GetOrigin()
 }
 
-
-
-function GetDropshipSquadSize( squadname )
+int function GetDropshipSquadSize( string squadname )
 {
-	local squadsize = 0
+	int squadsize = 0
 	array<entity> dropships = GetNPCArrayByClass( "npc_dropship" )
 
 	//printl( dropships.len()+ " dropships, checking squadname: " + squadname )
 	foreach ( ship in dropships )
+	{
 		if ( ship.kv.squadname == squadname )
 			squadsize++
+	}
 
 	//printl( dropships.len()+ " dropships, squadsize: " + squadsize )
 	return squadsize
 }
 
-function DelayDropshipDelete( dropship )
+void function DelayDropshipDelete( entity dropship )
 {
 	dropship.EndSignal( "OnDeath" )
 
@@ -306,7 +292,7 @@ function DelayDropshipDelete( dropship )
 	dropship.Kill_Deprecated_UseDestroyInstead()
 }
 
-function DefensiveFreePlayers( dropship )
+void function DefensiveFreePlayers( entity dropship )
 {
 	array<entity> players = GetPlayerArrayOfTeam( dropship.GetTeam() )
 	foreach ( player in players )
@@ -329,12 +315,17 @@ void function OnNPCDropshipDeath( entity dropship, var damageInfo )
 		return
 
 	asset modelName = dropship.GetModelName()
-
 	vector dropshipOrigin = dropship.GetOrigin()
 
-	//PlayFX( $"P_veh_exp_crow", dropshipOrigin )
+	int fxID = GetParticleSystemIndex( FX_DROPSHIP_DEATH )
+	int attach = dropship.LookupAttachment( "ORIGIN" )
+	vector origin = dropship.GetAttachmentOrigin( attach )
+	vector angles = dropship.GetAttachmentAngles( attach )
 
-	EmitSoundAtPosition( TEAM_UNASSIGNED, dropshipOrigin, "Goblin_Dropship_Explode" )
+	//PlayFX( FX_DROPSHIP_DEATH, dropshipOrigin, dropship.GetAngles() )
+	StartParticleEffectInWorld( fxID, origin, angles )
+
+	EmitSoundAtPosition( TEAM_UNASSIGNED, dropshipOrigin, "Goblin_Dropship_Explode", dropship )
 }
 
 void function OnDropshipDamaged( entity dropship, var damageInfo )
@@ -346,7 +337,6 @@ void function OnDropshipDamaged( entity dropship, var damageInfo )
 
 	// store the damage so all hits can be tallied
 	entity inflictor = DamageInfo_GetInflictor( damageInfo )
-	Assert( IsValid( inflictor ) )//Done so we can still get the error in dev
 	if ( !IsValid( inflictor ) ) //JFS Defensive fix
 		return
 
@@ -386,7 +376,7 @@ void function GuyDeploysOffShip( entity guy, table Table )
 			}
 
 			if ( !IsAlive( guy ) )
-				guy.BecomeRagdoll( Vector(0,0,0), false )
+				guy.BecomeRagdoll( <0,0,0>, false )
 			}
 	)
 
@@ -402,12 +392,12 @@ void function GuyDeploysOffShip( entity guy, table Table )
 	GuyAnimatesOut( guy, Table )
 }
 
-function WaittillPlayDeployAnims( ref )
+void function WaittillPlayDeployAnims( entity ref )
 {
 	waitthread WaittillPlayDeployAnimsThread( ref )
 }
 
-function WaittillPlayDeployAnimsThread( ref )
+void function WaittillPlayDeployAnimsThread( entity ref )
 {
 	ref.EndSignal( "OnDeath" )
 
@@ -426,7 +416,7 @@ void function GuyAnimatesOut( entity guy, table Table )
 			break
 
 		default:
-			thread PlayAnim( guy, Table.deployAnim, Table.ship, Table.shipAttach )
+			thread PlayAnim( guy, expect string( Table.deployAnim ), Table.ship, Table.shipAttach )
 			break
 	}
 
@@ -442,9 +432,8 @@ void function GuyAnimatesOut( entity guy, table Table )
 	guy.Signal( "npc_deployed" )
 }
 
-function GuyAnimatesRelativeToShipAttachment( guy, Table )
+void function GuyAnimatesRelativeToShipAttachment( entity guy, table Table )
 {
-	expect entity( guy )
 	Table.attachIndex <- Table.ship.LookupAttachment( Table.shipAttach )
 	guy.SetOrigin( Table.ship.GetOrigin() )
 
@@ -485,7 +474,7 @@ table<string, array<string> > function GetDropshipRopeAttachments( string side =
 	return attachments
 }
 
-function PlayDropshipRampDoorOpenSound( entity dropship )
+void function PlayDropshipRampDoorOpenSound( entity dropship )
 {
 	entity snd = CreateOwnedScriptMover( dropship )
 	snd.SetParent( dropship, "RAMPDOORLIP" )
@@ -508,22 +497,21 @@ void function WarpoutEffectFPS( entity dropship )
 	__WarpOutEffectShared( dropship )
 }
 
-void function WarpinEffect( asset model, string animation, vector origin, vector angles, string sfx = "" )
+void function WarpinEffect( entity vehicle, asset model, string animation, vector origin, vector angles, string sfx = "" )
 {
 	//we need a temp dropship to get the anim offsets
 	Point start = GetWarpinPosition( model, animation, origin, angles )
 
-	__WarpInEffectShared( start.origin, start.angles, sfx )
+	__WarpInEffectShared( start.origin, start.angles, sfx, vehicle )
 }
 
-function PlayWarpFxOnPlayers( guys )
+void function PlayWarpFxOnPlayers( array<entity> guys )
 {
-	foreach ( entity guy in guys )
+	foreach ( guy in guys )
 	{
 		if ( !IsAlive( guy ) )
 			continue
 
-		//Remote_CallFunction_Replay( guy, "ServerCallback_PlayScreenFXWarpJump" )
-		Remote_CallFunction_ByRef( guy, "ServerCallback_PlayScreenFXWarpJump" )
+		Remote_CallFunction_Replay( guy, "ServerCallback_PlayScreenFXWarpJump" )
 	}
 }

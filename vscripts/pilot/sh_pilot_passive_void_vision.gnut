@@ -1,0 +1,667 @@
+global function PassiveVoidVision_Init
+
+global function IsVoidVisionEnabled
+                          
+global function IsVoidVisionEnabled_PhaseTunnel
+      
+                       
+global function IsVoidVisionEnabled_PhaseBreach
+      
+
+global function VoidVision_GetPostPhaseVisionTime
+
+#if SERVER
+global function VoidVisionStartPhaseShift
+global function VoidVisionStartPhaseShiftPathData
+global function VoidVisionSetExitEnt
+global function VoidVision_GrantVoidVision
+global function VoidVision_TakeVoidVision
+#endif
+
+#if CLIENT
+global function VoidVision_GetHighlightModeForPlayer
+global function VoidVision_GetPlayersToHighlight
+global function ServerToClient_VoidVisionChanged
+#endif
+
+#if DEV
+#if SERVER
+global function DEV_TestVoidVision
+#endif
+#endif
+
+const string PORTAL_EXIT_NETVAR = "VoidVision_PortalExit"
+const string VOID_VISION_PORTAL_CHANGED_FUNC = "ServerToClient_VoidVisionChanged"
+
+const string VOID_VISION_KILL_THREAD_SIGNAL = "VoidVision_KillThread"
+
+const bool VOID_VISION_DEBUG = false
+
+global enum eVoidVisionHighlightMode
+{
+	none,
+	self,
+	structure
+}
+
+#if CLIENT
+struct HighlightValues
+{
+	bool isHighlighted = false
+	int  highlightMode = 0
+	var  rui
+}
+#endif
+
+struct
+{
+	float maxDistFromPlayerForHighlight = 25
+	float maxSqrDistFromPlayerForHighlight = 0 // set automatically using above
+	float maxDistFromStructureForHighlight = 45
+	float maxSqrDistFromStructureForHighlight = 0 // set automatically using above
+	float postPhaseVisionTime = 2
+	bool showHealthbarsWithUpgrade = true
+	bool showHealthbarsPostPhaseWithUpgrade = true
+} tuning
+
+struct
+{
+	#if SERVER
+		table< PhaseTunnelPathData, entity > phaseTunnelToExitEntMap
+		table< entity, float > voidVisionRefCount
+	#elseif CLIENT
+		table< entity, table<entity, HighlightValues> > alterToHighlightedEnemiesMap
+		entity lastNetvarValue
+	#endif
+} file
+
+
+void function PassiveVoidVision_Init()
+{
+	if ( !IsVoidVisionEnabled() )
+		return
+
+	SetupTuning()
+
+	RegisterNetworkedVariableSafe( PORTAL_EXIT_NETVAR, SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
+
+	Remote_RegisterClientFunction( VOID_VISION_PORTAL_CHANGED_FUNC )
+
+	RegisterSignal( VOID_VISION_KILL_THREAD_SIGNAL )
+	#if SERVER
+	#elseif CLIENT
+		RegisterNetVarEntityChangeCallback( PORTAL_EXIT_NETVAR, ExitPortalNetvarChangedCallback )
+		AddOnSpectatorTargetChangedCallback( OnSpectatorTargetChanged )
+	#endif
+}
+
+void function SetupTuning()
+{
+	tuning.maxDistFromPlayerForHighlight       = GetCurrentPlaylistVarFloat( "alter_void_vision_maxDistFromPlayerForHighlight", tuning.maxDistFromPlayerForHighlight ) * METERS_TO_INCHES
+	tuning.maxSqrDistFromPlayerForHighlight    = tuning.maxDistFromPlayerForHighlight * tuning.maxDistFromPlayerForHighlight
+	tuning.maxDistFromStructureForHighlight    = GetCurrentPlaylistVarFloat( "alter_void_vision_maxDistFromStructureForHighlight", tuning.maxDistFromStructureForHighlight ) * METERS_TO_INCHES
+	tuning.maxSqrDistFromStructureForHighlight = tuning.maxDistFromStructureForHighlight * tuning.maxDistFromStructureForHighlight
+	tuning.postPhaseVisionTime                 = GetCurrentPlaylistVarFloat( "alter_void_vision_postPhaseVisionTime", tuning.postPhaseVisionTime )
+	tuning.showHealthbarsWithUpgrade           = GetCurrentPlaylistVarBool( "alter_void_vision_postPhaseShowHealthbars", tuning.showHealthbarsWithUpgrade )
+	tuning.showHealthbarsPostPhaseWithUpgrade  = GetCurrentPlaylistVarBool( "alter_void_vision_showHealthbarsPostPhaseWithUpgrade", tuning.showHealthbarsPostPhaseWithUpgrade )
+}
+
+bool function IsVoidVisionEnabled()
+{
+	return GetCurrentPlaylistVarBool("aler_void_vision_enabled", true)
+}
+
+                          
+bool function IsVoidVisionEnabled_PhaseTunnel()
+{
+	return GetCurrentPlaylistVarBool( "wraith_void_vision_enabled", true )
+}
+      
+
+                       
+bool function IsVoidVisionEnabled_PhaseBreach()
+{
+	return GetCurrentPlaylistVarBool( "ash_void_vision_enabled", true )
+}
+      
+
+float function VoidVision_GetPostPhaseVisionTime()
+{
+	if ( IsVoidVisionEnabled() )
+	{
+		return tuning.postPhaseVisionTime
+	}
+	return 0
+}
+
+#if SERVER
+void function VoidVision_GrantVoidVision( entity player )
+{
+	#if VOID_VISION_DEBUG
+		printf("VV- VoidVision_GrantVoidVision" )
+	#endif
+	if ( !( player in file.voidVisionRefCount ) )
+	{
+		file.voidVisionRefCount[player] <- 0
+	}
+
+	file.voidVisionRefCount[player]++
+	#if VOID_VISION_DEBUG
+		printf("VV- VoidVision_GrantVoidVision - ref count for " + player + " now " + file.voidVisionRefCount[player])
+	#endif
+}
+
+void function VoidVision_TakeVoidVision( entity player )
+{
+	#if VOID_VISION_DEBUG
+		printf("VV- VoidVision_TakeVoidVision " )
+	#endif
+
+	if ( !( player in file.voidVisionRefCount ) )
+	{
+		Assert( false, "Player has never had void vision!" )
+		return
+	}
+
+	file.voidVisionRefCount[player]--
+
+	Assert( file.voidVisionRefCount[player] >= 0, "Took void vision passive too many times!" )
+
+	#if VOID_VISION_DEBUG
+		printf("VV- VoidVision_TakeVoidVision - ref count for " + player + " now " + file.voidVisionRefCount[player])
+	#endif
+	if ( file.voidVisionRefCount[player] <= 0 )
+	{
+		#if VOID_VISION_DEBUG
+			printf("VV- VoidVision_TakeVoidVision - taking VV for real from " + player )
+		#endif
+		delete file.voidVisionRefCount[player]
+		if ( IsValid( player ) )
+		{
+			player.Signal( VOID_VISION_KILL_THREAD_SIGNAL )
+		}
+	}
+}
+#endif
+
+#if CLIENT
+void function ExitPortalNetvarChangedCallback( entity player, entity exitPortal )
+{
+	#if VOID_VISION_DEBUG
+		printf("VV- ExitPortalNetvarChangedCallback " + exitPortal + " was " + file.lastNetvarValue)
+	#endif
+	if ( exitPortal == file.lastNetvarValue )
+		return
+
+	#if VOID_VISION_DEBUG
+		printf("VV- ExitPortalNetvarChangedCallback " + exitPortal + " was " + file.lastNetvarValue)
+	#endif
+	file.lastNetvarValue = exitPortal
+
+	if ( exitPortal == null )
+	{
+		player.Signal( VOID_VISION_KILL_THREAD_SIGNAL )
+	}
+}
+#endif
+
+#if CLIENT
+void function ServerToClient_VoidVisionChanged(  )
+{
+	entity player = GetLocalViewPlayer()
+	if ( IsValid( player ) && IsAlive( player ) )
+	{
+		#if VOID_VISION_DEBUG
+			printf("VV- ServerToClient_VoidVisionChanged " + player.GetPlayerNetEnt( PORTAL_EXIT_NETVAR ) )
+		#endif
+
+		thread PhaseHighlight_Thread( player )
+	}
+}
+#endif
+
+#if CLIENT
+void function OnSpectatorTargetChanged( entity player, entity prevTarget, entity newTarget )
+{
+	if ( IsValid( prevTarget ) && prevTarget.IsPlayer() )
+	{
+		prevTarget.Signal( VOID_VISION_KILL_THREAD_SIGNAL )
+	}
+
+	if ( IsValid( newTarget ) && newTarget.IsPlayer() )
+	{
+		if ( IsValid( newTarget.GetPlayerNetEnt( PORTAL_EXIT_NETVAR ) ) )
+		{
+			thread PhaseHighlight_Thread( newTarget )
+		}
+	}
+}
+#endif
+
+#if SERVER
+void function VoidVisionStartPhaseShiftPathData( entity player, PhaseTunnelPathData pathData )
+{
+	if ( !IsVoidVisionEnabled() )
+		return
+
+	if ( !(player in file.voidVisionRefCount) )
+		return
+
+	if ( pathData in file.phaseTunnelToExitEntMap )
+	{
+		VoidVisionStartPhaseShift( player, file.phaseTunnelToExitEntMap[pathData] )
+	}
+	else
+	{
+		Warning( "Tried to start void vision using path data, but the path data wasn't in the map! " + GetStack( 2 ) )
+		//Assert( false, "Tried to start void vision using path data, but the path data wasn't in the map!" )
+		VoidVisionStartPhaseShift( player, null )
+	}
+}
+
+void function VoidVisionStartPhaseShift( entity player, entity exitPortal )
+{
+	if ( !IsVoidVisionEnabled() )
+		return
+
+	if ( !IsValid( player ) )
+		return
+
+	if ( !(player in file.voidVisionRefCount) )
+		return
+
+	if ( !player.IsPhaseShifted() )
+		return
+
+	entity entToSend = exitPortal
+	if ( !IsValid( exitPortal ) )
+	{
+		//there's no exit portal (i.e we're just phase shifting).
+		//Send ourselves to trigger the netvar changed callback and sort it out on the client
+		entToSend = player
+	}
+
+	#if VOID_VISION_DEBUG
+		printf("VV- VoidVisionStartPhaseShift " + entToSend )
+	#endif
+	player.Signal( VOID_VISION_KILL_THREAD_SIGNAL )
+	player.SetPlayerNetEnt( PORTAL_EXIT_NETVAR, entToSend )
+
+	//we need to send this RPC as sometimes we set the netvar to the same value it use to be
+	//(which can happen if there's post phase VV and you enter something without an exit i.e. alter tac)
+	//so the netvar changed callback is unreliable
+	Remote_CallFunction_Replay( player, VOID_VISION_PORTAL_CHANGED_FUNC )
+
+	thread ClearNetvarOnUnphase( player )
+}
+#endif
+
+#if SERVER
+void function ClearNetvarOnUnphase( entity player )
+{
+	EndSignal( player, "OnDestroy", "OnDeath", VOID_VISION_KILL_THREAD_SIGNAL )
+
+	OnThreadEnd(
+		function() : ( player )
+		{
+			player.SetPlayerNetEnt( PORTAL_EXIT_NETVAR, null )
+		} )
+
+	float endTime = -1
+	while( true )
+	{
+		if ( endTime != -1 )
+		{
+			if ( Time() >= endTime )
+			{
+				#if VOID_VISION_DEBUG
+					printf( "VV- ClearNetvarOnUnphase breaking due to time" )
+				#endif
+				break
+			}
+		}
+		else if ( !player.IsPhaseShifted() )
+		{
+			#if VOID_VISION_DEBUG
+				printf( "VV- ClearNetvarOnUnphase not phase shifted " )
+			#endif
+			if ( PlayerHasPassive( player, ePassives.PAS_ALTER_UPGRADE_TAC_SCAN ) )
+			{
+				endTime = Time() + tuning.postPhaseVisionTime
+			}
+		}
+		WaitFrame()
+	}
+}
+#endif
+
+#if CLIENT
+void function PhaseHighlight_Thread( entity player )
+{
+	#if VOID_VISION_DEBUG
+		printf("VV- PhaseHighlight_Thread. Player phased: " + player.IsPhaseShifted())
+	#endif
+
+	player.Signal( VOID_VISION_KILL_THREAD_SIGNAL )
+	EndSignal( player, "OnDestroy", "OnDeath", VOID_VISION_KILL_THREAD_SIGNAL )
+
+	table< entity, HighlightValues > highlightedPlayersToHandles
+	file.alterToHighlightedEnemiesMap[player] <- highlightedPlayersToHandles
+
+	PassByReferenceBool showHealthbars
+	showHealthbars.value = false
+
+	while ( !player.IsPhaseShifted() )
+	{
+		#if VOID_VISION_DEBUG
+			printf("VV- PhaseHighlight_Thread. Waited frame")
+		#endif
+		WaitFrame()
+	}
+
+	entity exitPortal = player.GetPlayerNetEnt( PORTAL_EXIT_NETVAR )
+
+	if ( !IsValid( exitPortal ) && GetLocalClientPlayer() != GetLocalViewPlayer() )
+	{
+		float maxWait = Time() + 0.2
+		while ( Time() < maxWait )
+		{
+			WaitFrame()
+
+			if ( IsValid( exitPortal ) )
+				break
+		}
+	}
+
+	int highlightMode = exitPortal == player ? eVoidVisionHighlightMode.self : eVoidVisionHighlightMode.structure
+
+	if ( PlayerHasPassive( player, ePassives.PAS_ALTER_UPGRADE_TAC_SCAN ) )
+	{
+		showHealthbars.value = (player.GetPhaseShiftType() == PHASETYPE_DOOR)
+	}
+
+	OnThreadEnd(
+		function() : ( player, highlightedPlayersToHandles, showHealthbars )
+		{
+			#if VOID_VISION_DEBUG
+				printf("VV- PhaseHighlight_Thread END")
+			#endif
+			delete file.alterToHighlightedEnemiesMap[player]
+			foreach ( entity otherPlayer, HighlightValues handles in highlightedPlayersToHandles )
+			{
+				#if VOID_VISION_DEBUG
+					printf("VV- PhaseHighlight_Thread stopping highlight on " + otherPlayer)
+				#endif
+
+				if ( showHealthbars.value )
+				{
+					if ( handles.rui != null && RuiIsAlive( handles.rui ) )
+					{
+						RuiSetBool( handles.rui, "hideIfPhased", true )
+					}
+					ReconScan_RemoveHudForTarget( player, otherPlayer )
+				}
+				ManageHighlightEntity( otherPlayer )
+			}
+		}
+	)
+
+	float endTime = -1
+	while(true)
+	{
+		array< entity > playersToHighlight
+		array< entity > playersToNotHighlight
+
+		VoidVision_GetPlayersToHighlight( player, exitPortal, highlightMode, playersToHighlight, playersToNotHighlight )
+
+		foreach( entity otherPlayer in playersToHighlight )
+		{
+			if ( !( otherPlayer in highlightedPlayersToHandles ) )
+			{
+				HighlightValues newHandles
+				newHandles.highlightMode = highlightMode
+				highlightedPlayersToHandles[ otherPlayer ] <- newHandles
+
+				if ( showHealthbars.value )
+				{
+					newHandles.rui = ReconScan_ShowHudForTarget( player, otherPlayer, false )
+					if ( newHandles.rui != null && RuiIsAlive( newHandles.rui ) )
+					{
+						RuiSetBool( newHandles.rui, "hideIfPhased", false )
+					}
+				}
+			}
+
+			if ( highlightedPlayersToHandles[otherPlayer].isHighlighted )
+			{
+				continue
+			}
+
+			highlightedPlayersToHandles[otherPlayer].isHighlighted = true
+			#if VOID_VISION_DEBUG
+				printf( "VV- PhaseHighlight_Thread highlighting " + otherPlayer )
+			#endif
+
+			if ( showHealthbars.value )
+			{
+				var rui = highlightedPlayersToHandles[otherPlayer].rui
+				if ( rui != null && RuiIsAlive( rui ) )
+				{
+					RuiSetBool( rui, "isVisible", true )
+				}
+			}
+			ManageHighlightEntity( otherPlayer )
+
+		}
+
+		foreach( entity otherPlayer in playersToNotHighlight )
+		{
+			if ( otherPlayer in highlightedPlayersToHandles )
+			{
+				if ( !highlightedPlayersToHandles[otherPlayer].isHighlighted )
+					continue
+
+				highlightedPlayersToHandles[otherPlayer].isHighlighted = false
+				#if VOID_VISION_DEBUG
+					printf("VV- PhaseHighlight_Thread stopping highlight on " + otherPlayer)
+				#endif
+
+				if ( showHealthbars.value )
+				{
+					var rui = highlightedPlayersToHandles[otherPlayer].rui
+					if ( rui != null && RuiIsAlive( rui ) )
+					{
+						RuiSetBool( rui, "isVisible", false )
+					}
+				}
+				ManageHighlightEntity( otherPlayer )
+			}
+		}
+
+		//wait at least one frame to make sure the netvar gets sent (and received)
+		if ( endTime != -1 )
+		{
+			if ( Time() >= endTime )
+			{
+				#if VOID_VISION_DEBUG
+					printf("VV- PhaseHighlight_Thread breaking due to time" )
+				#endif
+				break
+			}
+		}
+		else if ( !player.IsPhaseShifted() )
+		{
+			#if VOID_VISION_DEBUG
+				printf("VV- PhaseHighlight_Thread not phase shifted " )
+			#endif
+			if ( PlayerHasPassive( player, ePassives.PAS_ALTER_UPGRADE_TAC_SCAN ) )
+			{
+				endTime = Time() + tuning.postPhaseVisionTime
+
+				#if VOID_VISION_DEBUG
+					printf("VV- PhaseHighlight_Thread extending to " + endTime )
+				#endif
+
+				foreach ( entity otherPlayer in playersToHighlight )
+				{
+					ManageHighlightEntity( otherPlayer )
+				}
+
+				if ( tuning.showHealthbarsWithUpgrade && !tuning.showHealthbarsPostPhaseWithUpgrade )
+				{
+					foreach ( entity otherPlayer, HighlightValues handles in highlightedPlayersToHandles )
+					{
+						if ( !IsValid( otherPlayer ) )
+							continue
+
+						if ( handles.rui != null && RuiIsAlive( handles.rui ) )
+						{
+							RuiSetBool( handles.rui, "hideIfPhased", true )
+						}
+						ReconScan_RemoveHudForTarget( player, otherPlayer )
+
+						handles.rui = null
+
+					}
+					showHealthbars.value = false
+				}
+			}
+			else
+			{
+				#if VOID_VISION_DEBUG
+					printf("VV- PhaseHighlight_Thread breaking" )
+				#endif
+				break
+			}
+		}
+
+		WaitFrame()
+	}
+
+	#if VOID_VISION_DEBUG
+		printf("VV- PhaseHighlight_Thread ran to end" )
+	#endif
+}
+#endif
+
+#if CLIENT
+void function VoidVision_GetPlayersToHighlight( entity player, entity exitPortal, int highlightMode,
+		array<entity> outPlayersToHighlight, array<entity> outPlayersToNotHighlight )
+{
+	int playerTeam = player.GetTeam()
+
+	if ( highlightMode == eVoidVisionHighlightMode.structure && !IsValid( exitPortal ) )
+	{
+		Warning("Void Vision trying to grant vision around invalid portal!")
+
+		outPlayersToNotHighlight.extend( GetPlayerArray_Alive() )
+		return
+	}
+
+	vector visibilityCheckPoint = highlightMode == eVoidVisionHighlightMode.structure ? exitPortal.GetOrigin() : player.EyePosition()
+	float maxSqrDist = highlightMode == eVoidVisionHighlightMode.structure ?tuning.maxSqrDistFromStructureForHighlight : tuning.maxSqrDistFromPlayerForHighlight
+
+	array<entity> allTargets = GetPlayerArray_Alive()
+	allTargets.extend( GetEntArrayByScriptName( DECOY_SCRIPTNAME ) )
+	allTargets.extend( GetEntArrayByScriptName( CONTROLLED_DECOY_SCRIPTNAME ) )
+
+	TraceResults results
+	foreach ( entity otherPlayer in allTargets )
+	{
+		if ( otherPlayer == player )
+			continue
+
+		if ( !IsEnemyTeam( playerTeam, otherPlayer.GetTeam() ) )
+			continue
+
+		vector otherPlayerEyePos = otherPlayer.EyePosition()
+
+		if ( DistanceSqr( visibilityCheckPoint, otherPlayerEyePos ) < maxSqrDist )
+		{
+			results = TraceLine( visibilityCheckPoint, otherPlayerEyePos, [player, otherPlayer], TRACE_MASK_OPAQUE, TRACE_COLLISION_GROUP_NONE )
+			if ( results.fraction == 1.0 )
+			{
+				outPlayersToHighlight.append( otherPlayer )
+				continue
+			}
+		}
+
+		outPlayersToNotHighlight.append( otherPlayer )
+	}
+}
+
+int function VoidVision_GetHighlightModeForPlayer( entity player, entity otherPlayer )
+{
+	if ( !IsVoidVisionEnabled() )
+		return eVoidVisionHighlightMode.none
+
+	if ( !(player in file.alterToHighlightedEnemiesMap) )
+		return eVoidVisionHighlightMode.none
+
+	if ( !(otherPlayer in file.alterToHighlightedEnemiesMap[player]) )
+		return eVoidVisionHighlightMode.none
+
+	if ( !file.alterToHighlightedEnemiesMap[player][otherPlayer].isHighlighted )
+		return eVoidVisionHighlightMode.none
+
+	return file.alterToHighlightedEnemiesMap[player][otherPlayer].highlightMode
+}
+#endif
+
+#if SERVER
+void function VoidVisionSetExitEnt( PhaseTunnelPathData pathData, entity exitEnt )
+{
+	if ( !IsVoidVisionEnabled() )
+		return
+
+	#if VOID_VISION_DEBUG
+	printf("VV- VoidVisionSetExitEnt adding " + exitEnt + " from " + GetStack(3) )
+	#endif
+
+	file.phaseTunnelToExitEntMap[pathData] <- exitEnt
+
+	if ( IsValid( exitEnt ) )
+	{
+		thread CleanupExitEnt_Thread( pathData, exitEnt )
+	}
+}
+
+void function CleanupExitEnt_Thread( PhaseTunnelPathData pathData, entity exitEnt )
+{
+	EndSignal( exitEnt, "OnDestroy" )
+
+	OnThreadEnd(
+		function() : ( pathData, exitEnt )
+		{
+			#if VOID_VISION_DEBUG
+			printf("VV- CleanupExitEnt_Thread deleting " + exitEnt )
+			#endif
+			if ( pathData in file.phaseTunnelToExitEntMap )
+			{
+				delete file.phaseTunnelToExitEntMap[pathData]
+			}
+		}
+	)
+
+	WaitForever()
+}
+#endif
+
+#if DEV
+#if SERVER
+void function DEV_TestVoidVision( entity player, float duration )
+{
+	thread DEV_TestVoidVision_Thread( player, duration )
+}
+
+void function DEV_TestVoidVision_Thread( entity player, float duration )
+{
+	VoidVision_GrantVoidVision( player )
+	PhaseShift( player, 0, duration, PHASETYPE_BALANCE )
+	VoidVisionStartPhaseShift( player, null )
+
+	wait duration
+	VoidVision_TakeVoidVision( player )
+}
+#endif
+#endif 

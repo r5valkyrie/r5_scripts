@@ -7,17 +7,16 @@
 //********************************************************************************************
 global function Settings_Init
 
-global table<string, string> GAMETYPE_TEXT = {}
-
-global table<string, string> GAMETYPE_DESC = {}
 
 //global table<string, asset> GAMETYPE_ICON = {
 //	[ RANKED_PLAY ] 			= $"ui/scoreboard_secret_logo",
 //}
 
+global string GAMETYPE
+global int /*eGameModes*/ GAMETYPE_ID
+
 global table<string, array<int> > GAMETYPE_COLOR = {}
 
-global string GAMETYPE
 global int MAX_TEAMS
 global int MAX_PLAYERS
 global int MAX_TEAM_PLAYERS
@@ -384,13 +383,25 @@ global const ROUND_WINNING_KILL_REPLAY_ROUND_SCORE_ANNOUNCEMENT_DURATION = 4.0
 global const ROUND_WINNING_KILL_REPLAY_FINAL_SCORE_ANNOUNCEMENT_DURATION = 6.0
 global const ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH = ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT + ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
 
+// NOTE: if you're increasing this, you might come up against the MAX_REPLAY_DELAY code const! if this becomes an issue, you'll see a warning from code mentioning said const
+global const ROUND_WINNING_KILL_REPLAY_FADE_LENGTH = 2.1
+// most of these have been moved to playlist vars now, see round_winning_killreplay_startup_wait and round_winning_killreplay_length
+
+//-----------------------------------------------------
+// Server Death Flow/Kill Replay consts
+//-----------------------------------------------------
+
+// Non-killreplay deathcam timings
+global const DEATHCAM_TIME = 8.0
+global const DEATHCAM_TIME_SHORT = 3.0
+global const DEATHCAM_MIN_TIME = 0.1
 
 //--------------------------------------------------
 // 				GAME STATE
 //--------------------------------------------------
 
 global const GAME_POSTMATCH_LENGTH = 10.0
-global const GAME_WINNER_DETERMINED_ROUND_WAIT = 10.0
+global const GAME_WINNER_DETERMINED_ROUND_WAIT = 11.0
 global const GAME_WINNER_DETERMINED_FINAL_ROUND_WAIT = 3.0
 global const GAME_WINNER_DETERMINED_FINAL_ROUND_WITH_ROUND_WINNING_KILL_REPLAY_WAIT = ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH + 2.0
 global const GAME_WINNER_DETERMINED_ROUND_WAIT_WITH_ROUND_WINNING_KILL_REPLAY_WAIT =  ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH + 3.0
@@ -398,11 +409,17 @@ global const SWITCHING_SIDES_DELAY = 8.0
 global const SWITCHING_SIDES_DELAY_REPLAY = 2.0
 
 global const GAME_WINNER_DETERMINED_WAIT = 12.8 // Changing this will break music timing for champion sequence
-global const GAME_EPILOGUE_PLAYER_RESPAWN_LEEWAY = 10.0
-global const GAME_EPILOGUE_ENDING_LEADUP = 6.0
+global const GAME_WINNER_DETERMINED_FINAL_ROUND_ROUND_WINNING_KILL_REPLAY_DELAY = 2.0
+global const GAME_WINNER_DETERMINED_ROUND_WAIT_ROUND_WINNING_KILL_REPLAY_DELAY = 3.0
+global const GAME_RESOLUTION_PLAYER_RESPAWN_LEEWAY = 10.0
+global const GAME_RESOLUTION_ENDING_LEADUP = 6.0
 global const GAME_POSTROUND_CLEANUP_WAIT = 5.0
 global const PREMATCH_COUNTDOWN_SOUND = "Menu_Timer_LobbyCountdown_Tick"
 global const WAITING_FOR_PLAYERS_COUNTDOWN_SOUND = "UI_Survival_Intro_WaitinForPlayers_Countdown"
+
+
+global const ARENAS_WAITING_FOR_PLAYERS_COUNTDOWN_SOUND = "ui_arenas_intro_waitinforplayers_countdown"
+
 
 // Must match GAMESTATE_WAITINGFORCUSTOMSTART, etc... in hud_defs.rui
 global enum eGameState	// These must stay in order from beginning of a match till the end
@@ -416,8 +433,9 @@ global enum eGameState	// These must stay in order from beginning of a match til
 	SwitchingSides,
 	WinnerDetermined,
 	Epilogue,
+	Resolution,
 	Postmatch,
-	MapVoting
+	MapVoting,
 
 	_count_
 }
@@ -602,37 +620,25 @@ void function Settings_Init()
 	#if !UI
 		#if SERVER
 			if ( GameRules_GetGameMode() == "" )
-				GameRules_SetGameMode( "survival" )
+				GameRules_SetGameMode( SURVIVAL )
 		#endif
 
 		GAMETYPE = GameRules_GetGameMode()
-		printl( "GAME_TYPE: " + GAMETYPE )
+		printl( "GAMETYPE: " + GAMETYPE )
+		GAMETYPE_ID = GameMode_FindByDevName( GAMETYPE )
+		GameMode_VerifyActiveMode()
+
+		#if CLIENT
+			RunUIScript( "GameMode_NotifyUIOfModeChange", GAMETYPE, GAMETYPE_ID )
+		#endif
+
+		MAX_TEAMS = GetCurrentPlaylistVarInt( "max_teams", 2 )
+		printl( "MAX_TEAMS: " + MAX_TEAMS )
 
 		MAX_PLAYERS = GetCurrentPlaylistVarInt( "max_players", 12 )
 		printl( "MAX_PLAYERS: " + MAX_PLAYERS )
 
 		MAX_TEAM_PLAYERS = GetCurrentPlaylistVarInt( "max_team_size", 1 )
 		printl( "MAX_TEAM_PLAYERS: " + MAX_TEAM_PLAYERS )
-
-		MAX_TEAMS = GetCurrentPlaylistVarInt( "max_teams", 4 )
-		// // if server attempts to start a playlist with a gamemode that is not registered
-		// // or if client attempts to join a server running a gamemode that is not registered
-		// if ( !GameMode_IsDefined( GAMETYPE ) )
-		// {
-			// // display a different message for cl/sv
-			// #if CLIENT || UI
-			// ScriptError("Attempted to init invalid gamemode '%s'.\nPlease ensure that your gamemode scripts are compatible with the server.", GAMETYPE)
-			// #elseif SERVER
-			// ScriptError("Attempted to init invalid gamemode '%s'.\nPlease ensure that your gamemode scripts are compatible with the playlist.", GAMETYPE)
-			// #endif
-
-			// return
-		// }
-
-		GAMEDESC_CURRENT = GAMETYPE_DESC[GAMETYPE]
-
-		Assert( GAMETYPE in GAMETYPE_TEXT, "Unsupported gamemode: " + GameRules_GetGameMode() + " is not a valid game mode." )
-
-		SetWaveSpawnType( GetCurrentPlaylistVarInt( "riff_wave_spawn", 0 ) )
 	#endif
 }

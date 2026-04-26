@@ -21,14 +21,24 @@ global function OnWeaponAttemptOffhandSwitch_ability_black_market
 global function OnWeaponActivate_ability_black_market
 global function OnWeaponDeactivate_ability_black_market
 global function OnWeaponPrimaryAttack_ability_black_market
+global function GetBlackMarketUseCount
+global function GetBlackMarketLastUseTime
 #endif
 
+#if CLIENT
+global function ServerToClient_UpdateBlackMarketUseCount
+global function GetBlackMarketUseItemRefs
+
+#endif
 #if SERVER || CLIENT
 global const string BLACK_MARKET_SCRIPTNAME = "black_market"
 global const string BLACK_MARKET_MOVER_SCRIPTNAME = "black_market_mover"
 global const string BLACK_MARKET_HIGHLIGHT_PROXY_SCRIPTNAME = "black_market_highlight_proxy"
 global const string BLACK_MARKET_CLOSE_CMD = "ClientCallback_CloseBlackMarket"
 const string BLACK_MARKET_OPEN_CMD = "ClientCallback_OpenBlackMarket"
+const string BLACK_MARKET_TRY_PICKUP_CMD = "ClientCallback_TryPickupBlackMarket"
+const string BLACK_MARKET_ENTITY_CLASS = "prop_death_box"
+const string BLACK_MARKET_LEGACY_ENTITY_CLASS = "prop_death_box"
 
 const asset BLACK_MARKET_MODEL = $"mdl/props/loba_loot_stick/loba_loot_stick.rmdl"
 const asset BLACK_MARKET_PROXY_MODEL = $"mdl/fx/loba_staff_holo_stand.rmdl"
@@ -98,7 +108,6 @@ struct {
 void function LobaUltimateBlackMarket_LevelInit()
 {
 	#if SERVER || CLIENT
-		PrecacheScriptString( BLACK_MARKET_SCRIPTNAME )
 		PrecacheParticleSystem( BLACK_MARKET_RADIUS_FX )
 		PrecacheImpactEffectTable( BLACK_MARKET_PLACEMENT_IMPACT_TABLE )
 		PrecacheParticleSystem( BLACK_MARKET_START_FX )
@@ -117,28 +126,24 @@ void function LobaUltimateBlackMarket_LevelInit()
 			"int", 0, 255 // int maxUseCount
 		)
 
-		Remote_RegisterServerFunction( BLACK_MARKET_OPEN_CMD, "typed_entity", "prop_loot_grabber" )
-		Remote_RegisterServerFunction( BLACK_MARKET_CLOSE_CMD, "typed_entity", "prop_loot_grabber" )
-		Remote_RegisterServerFunction( "ClientCallback_TryPickupBlackMarket", "typed_entity", "prop_loot_grabber" )
 	#endif
 
 	#if SERVER
-		Loot_AddCallback_OnPlayerLootPickupRetail( OnPlayerLootPickup )
+		AddClientCommandCallback( BLACK_MARKET_OPEN_CMD, ClientCallback_OpenBlackMarket )
+		AddClientCommandCallback( BLACK_MARKET_CLOSE_CMD, ClientCallback_CloseBlackMarket )
+		AddClientCommandCallback( BLACK_MARKET_TRY_PICKUP_CMD, ClientCallback_TryPickupBlackMarket )
+
+		Loot_AddCallback_OnPlayerLootPickup( OnPlayerLootPickup )
 		RegisterDynamicEntCleanupItem_Parented_Scriptname( BLACK_MARKET_SCRIPTNAME, ForceKillBlackMarket )
 		RegisterDynamicEntCleanupItem_Area_Scriptname( BLACK_MARKET_SCRIPTNAME, ForceKillBlackMarket )
-
-		AddCallback_OnClientConnectionRestored( OnClientConnectionRestored )
 	#endif
 
 	#if CLIENT
-		AddCreateCallback( "prop_loot_grabber", OnPropScriptCreated )
+		AddCreateCallback( BLACK_MARKET_ENTITY_CLASS, OnPropScriptCreated )
 
 		RegisterSignal( "BlackMarket_StopPlacementProxy" )
 
-		{
-			RegisterDefaultMinimapPackage( "prop_loot_grabber", $"", void function( entity ent, var rui ) {} )
-		}
-		RegisterMinimapPackage( "prop_loot_grabber", eMinimapObject_prop_script.BLACK_MARKET,
+		RegisterMinimapPackage( BLACK_MARKET_ENTITY_CLASS, eMinimapObject_prop_script.BLACK_MARKET,
 			MINIMAP_OBJ_AREA_RUI, void function( entity ent, var rui ) {
 				SetupMapRui( ent, rui, false )
 			},
@@ -261,13 +266,13 @@ PlacementInfo function GetPlacementInfo( entity player )
 	info.angles = AnglesCompose( angles, <0, 180, 0> )
 
 	#if BLACK_MARKET_DEBUG_DRAW_PLACEMENT
-		DebugDrawBox( fwdResults.endPos, BLACK_MARKET_BOUND_MINS, BLACK_MARKET_BOUND_MAXS, COLOR_GREEN, 1, 1.0 )
-		DebugDrawBox( info.origin, BLACK_MARKET_BOUND_MINS, BLACK_MARKET_BOUND_MAXS, COLOR_BLUE, 1, 1.0 )
-		DebugDrawLine( eyePos + viewVec * min( BLACK_MARKET_PLACEMENT_RANGE_MIN, range ), fwdResults.endPos, COLOR_GREEN, true, 1.0 )
-		DebugDrawLine( fwdResults.endPos, eyePos + viewVec * range, COLOR_RED, true, 1.0 )
-		DebugDrawLine( fwdResults.endPos, info.origin, COLOR_BLUE, true, 1.0 )
-		DebugDrawLine( player.GetOrigin(), player.GetOrigin() + (AnglesToForward( angles ) * BLACK_MARKET_PLACEMENT_RANGE_MAX), COLOR_GREEN, true, 1.0 )
-		DebugDrawLine( eyePos + <0, 0, 8>, eyePos + <0, 0, 8> + (viewVec * BLACK_MARKET_PLACEMENT_RANGE_MAX), COLOR_GREEN, true, 1.0 )
+		//DebugDrawBox( fwdResults.endPos, BLACK_MARKET_BOUND_MINS, BLACK_MARKET_BOUND_MAXS, <0, 255, 0>, 1, 1.0 )
+		//DebugDrawBox( info.origin, BLACK_MARKET_BOUND_MINS, BLACK_MARKET_BOUND_MAXS, <0, 0, 255>, 1, 1.0 )
+		//DebugDrawLine( eyePos + viewVec * min( BLACK_MARKET_PLACEMENT_RANGE_MIN, range ), fwdResults.endPos, <0, 255, 0>, true, 1.0 )
+		//DebugDrawLine( fwdResults.endPos, eyePos + viewVec * range, <255, 0, 0>, true, 1.0 )
+		//DebugDrawLine( fwdResults.endPos, info.origin, <0, 0, 255>, true, 1.0 )
+		//DebugDrawLine( player.GetOrigin(), player.GetOrigin() + (AnglesToForward( angles ) * BLACK_MARKET_PLACEMENT_RANGE_MAX), <0, 255, 0>, true, 1.0 )
+		//DebugDrawLine( eyePos + <0, 0, 8>, eyePos + <0, 0, 8> + (viewVec * BLACK_MARKET_PLACEMENT_RANGE_MAX), <0, 255, 0>, true, 1.0 )
 	#endif
 
 	if ( info.success && downResults.fraction > 0.99 )
@@ -305,7 +310,7 @@ PlacementInfo function GetPlacementInfo( entity player )
 
 	if ( info.success )
 	{
-		if ( IsOriginInvalidForPlacingPermanentOnto( downResults.endPos, player ) )
+		if ( IsOriginInvalidForPlacingPermanentOnto( downResults.endPos ) )
 		{
 			info.success = false
 		}
@@ -344,21 +349,56 @@ PlacementInfo function GetPlacementInfo( entity player )
 			"trigger_networked_block_all_op"
 		]
 
-		foreach ( entity trigger in GetTriggersByClassesInRealms_HullSize(
-			triggersToCheck,
-			info.origin, info.origin,
-			player.GetRealms(), TRACE_MASK_PLAYERSOLID,
-			BLACK_MARKET_BOUND_MINS, BLACK_MARKET_BOUND_MAXS ) )
-		{
-			info.success = false
-			info.failReason = "#PLAYER_DEPLOY_FAIL_HINT_OBSTRUCTED"
-			break
-		}
+		array<vector> triggerTestPoints = [
+			info.origin,
+			info.origin + < BLACK_MARKET_BOUND_MINS.x, BLACK_MARKET_BOUND_MINS.y, BLACK_MARKET_BOUND_MINS.z >,
+			info.origin + < BLACK_MARKET_BOUND_MINS.x, BLACK_MARKET_BOUND_MAXS.y, BLACK_MARKET_BOUND_MINS.z >,
+			info.origin + < BLACK_MARKET_BOUND_MAXS.x, BLACK_MARKET_BOUND_MINS.y, BLACK_MARKET_BOUND_MINS.z >,
+			info.origin + < BLACK_MARKET_BOUND_MAXS.x, BLACK_MARKET_BOUND_MAXS.y, BLACK_MARKET_BOUND_MINS.z >,
+			info.origin + < BLACK_MARKET_BOUND_MINS.x, BLACK_MARKET_BOUND_MINS.y, BLACK_MARKET_BOUND_MAXS.z >,
+			info.origin + < BLACK_MARKET_BOUND_MINS.x, BLACK_MARKET_BOUND_MAXS.y, BLACK_MARKET_BOUND_MAXS.z >,
+			info.origin + < BLACK_MARKET_BOUND_MAXS.x, BLACK_MARKET_BOUND_MINS.y, BLACK_MARKET_BOUND_MAXS.z >,
+			info.origin + < BLACK_MARKET_BOUND_MAXS.x, BLACK_MARKET_BOUND_MAXS.y, BLACK_MARKET_BOUND_MAXS.z >
+		]
+
+		#if SERVER
+			foreach ( string triggerClass in triggersToCheck )
+			{
+				foreach ( entity trigger in GetEntArrayByClass_Expensive( triggerClass ) )
+				{
+					if ( !IsValid( trigger ) )
+						continue
+
+					if ( !trigger.DoesShareRealms( player ) )
+						continue
+
+					bool overlapsBlockedTrigger = false
+					foreach ( vector testPoint in triggerTestPoints )
+					{
+						if ( trigger.ContainsPoint( testPoint ) )
+						{
+							overlapsBlockedTrigger = true
+							break
+						}
+					}
+
+					if ( !overlapsBlockedTrigger )
+						continue
+
+					info.success = false
+					info.failReason = "#PLAYER_DEPLOY_FAIL_HINT_OBSTRUCTED"
+					break
+				}
+
+				if ( !info.success )
+					break
+			}
+		#endif
 	}
 
 	if ( info.success )
 	{
-		if ( IsOriginInvalidForPlacingPermanentOnto( info.origin, player ) )
+		if ( IsOriginInvalidForPlacingPermanentOnto( info.origin ) )
 		{
 			info.success = false
 			info.failReason = "#PLAYER_DEPLOY_FAIL_HINT_OBSTRUCTED"
@@ -382,8 +422,8 @@ PlacementInfo function GetPlacementInfo( entity player )
 		]
 
 		#if BLACK_MARKET_DEBUG_DRAW_PLACEMENT
-			DebugDrawLine( info.origin, info.origin + (osaRight * 64), COLOR_GREEN, true, 1.0 )
-			DebugDrawLine( info.origin, info.origin + (osaForward * 64), COLOR_BLUE, true, 1.0 )
+			//DebugDrawLine( info.origin, info.origin + (osaRight * 64), <0, 255, 0>, true, 1.0 )
+			//DebugDrawLine( info.origin, info.origin + (osaForward * 64), <0, 0, 255>, true, 1.0 )
 		#endif
 
 		foreach ( vector testOffset in groundTestOffsets )
@@ -395,7 +435,7 @@ PlacementInfo function GetPlacementInfo( entity player )
 				ignoreEnts, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_NONE )
 
 			#if BLACK_MARKET_DEBUG_DRAW_PLACEMENT
-				DebugDrawLine( testPos + (osaUp * BLACK_MARKET_PLACEMENT_MAX_GROUND_DIST), traceResult.endPos, COLOR_RED, true, 1.0 )
+				//DebugDrawLine( testPos + (osaUp * BLACK_MARKET_PLACEMENT_MAX_GROUND_DIST), traceResult.endPos, <255, 0, 0>, true, 1.0 )
 			#endif
 
 			if ( traceResult.fraction == 1.0 )
@@ -450,14 +490,13 @@ void function PlacementProxyThread( entity weapon, entity player )
 
 	float lootGrabDist = GetBlackMarketNearbyLootRadius( player )
 
-	proxy.e.clientEntMinimapClassName = "prop_loot_grabber"
+	proxy.e.clientEntMinimapClassName = BLACK_MARKET_ENTITY_CLASS
 	proxy.e.clientEntMinimapCustomState = eMinimapObject_prop_script.BLACK_MARKET
-	proxy.e.clientEntMinimapFlags = MINIMAP_FLAG_VISIBILITY_SHOW
+	proxy.e.clientEntMinimapFlags = 1
 	proxy.e.clientEntMinimapScale = lootGrabDist / 16384.0
 	proxy.e.clientEntMinimapZOrder = MINIMAP_Z_OBJECT
-	thread MinimapObjectThread( proxy )
 
-	int proxyRadiusFx = StartParticleEffectOnEntity( proxy, GetParticleSystemIndex( BLACK_MARKET_RADIUS_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
+	int proxyRadiusFx = StartParticleEffectOnEntity( proxy, GetParticleSystemIndex( BLACK_MARKET_RADIUS_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
 	EffectSetControlPointVector( proxyRadiusFx, 1, <lootGrabDist, 0, 0> )
 
 	string[1] displayedHint = [""]
@@ -526,7 +565,7 @@ void function BlackMarketDeployThread( entity owner, PlacementInfo placementInfo
 		entity entToDelete = owner.e.activeUltimateTraps.pop()
 		if( IsValid( entToDelete ) )
 		{
-			if ( entToDelete.GetNetworkedClassName() == "prop_loot_grabber" )
+			if ( IsBlackMarketDevice( entToDelete ) )
 			{
 				if ( !GradeFlagsHas( entToDelete, eGradeFlags.IS_BUSY ) )
 				{
@@ -544,7 +583,7 @@ void function BlackMarketDeployThread( entity owner, PlacementInfo placementInfo
 				}
 				else if ( !entToDelete.IsDissolving() )
 				{
-					entToDelete.Dissolve( ENTITY_DISSOLVE_CORE )
+					entToDelete.Dissolve( ENTITY_DISSOLVE_CORE, <0,0,0>, 500 )
 				}
 			}
 			else
@@ -556,7 +595,7 @@ void function BlackMarketDeployThread( entity owner, PlacementInfo placementInfo
 
 	entity blackMarket
 	{
-		blackMarket = CreateEntity( "prop_loot_grabber" )
+		blackMarket = CreateEntity( BLACK_MARKET_ENTITY_CLASS )
 		blackMarket.SetScriptName( BLACK_MARKET_SCRIPTNAME )
 		SetTargetName( blackMarket, BLACK_MARKET_SCRIPTNAME )
 
@@ -575,11 +614,11 @@ void function BlackMarketDeployThread( entity owner, PlacementInfo placementInfo
 		blackMarket.SetOrigin( origin )
 		blackMarket.SetAngles( angles )
 
-		if ( blackMarket.SetLootGrabDist != null )
-			blackMarket.SetLootGrabDist( lootGrabDist )
+		//if ( blackMarket.SetLootGrabDist != null )
+		//	blackMarket.SetLootGrabDist( lootGrabDist )
 
 		#if BLACK_MARKET_DEBUG
-			DebugDrawCircle( origin, <0, 0, 0>, lootGrabDist, COLOR_RED, true, 20.0 )
+			//DebugDrawCircle( origin, <0, 0, 0>, lootGrabDist, <255, 0, 0>, true, 20.0 )
 		#endif
 
 		blackMarket.SetOwner( owner )
@@ -600,7 +639,7 @@ void function BlackMarketDeployThread( entity owner, PlacementInfo placementInfo
 			blackMarket.Minimap_Hide( player.GetTeam(), null )
 		blackMarket.Minimap_AlwaysShow( owner.GetTeam(), null )
 
-		// AllianceProximity_SetMinimapAlwaysShow_ForAlliance( owner.GetTeam(), blackMarket, null )  // TODO: Port from retail if needed
+		// AllianceProximity_SetMinimapAlwaysShow_ForAlliance( owner.GetTeam(), blackMarket, null )  // TODO: Port if needed
 
 		blackMarket.Minimap_SetObjectScale( lootGrabDist / 16384.0 )
 		blackMarket.Minimap_SetAlignUpright( true )
@@ -610,12 +649,12 @@ void function BlackMarketDeployThread( entity owner, PlacementInfo placementInfo
 
 		blackMarket.kv.impacteffectcolorid = COLORID_FX_LOOT_TIER1
 		blackMarket.SetTouchTriggers( true )
-		blackMarket.SetIgnorePredictedTriggerTypes( TT_JUMP_PAD | TT_GRAVITY_LIFT | TT_BLACKHOLE  )
+		blackMarket.SetIgnorePredictedTriggerTypes( TT_JUMP_PAD  )
 		blackMarket.SetPhysics( MOVETYPE_FLY )
 
 		if ( IsValid( placementInfo.parentTo ) )
 		{
-			entity mover = CreateScriptMover( BLACK_MARKET_MOVER_SCRIPTNAME, origin, angles )
+			entity mover = CreateScriptMover_NEW( BLACK_MARKET_MOVER_SCRIPTNAME, origin, angles )
 			mover.SetParent( placementInfo.parentTo )
 			blackMarket.SetParent( mover )
 		}
@@ -706,14 +745,13 @@ void function BlackMarketDeployThread( entity owner, PlacementInfo placementInfo
 
 	blackMarket.SetUsable()
 	blackMarket.SetUsableByGroup( "pilot" )
-	blackMarket.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_EXTENDED_USE )
+	blackMarket.AddUsableValue( USABLE_CUSTOM_HINTS )
 	blackMarket.SetUsablePriority( USABLE_PRIORITY_LOW )
 
-	if ( !IsEventFinale() )
-		PlayBattleChatterLineToSpeakerAndTeam( owner, "bc_super" )
+	PlayBattleChatterLineToSpeakerAndTeam( owner, "bc_super" )
 
-	if ( IsValid( owner ) )
-		CreateWaypoint_Ping_Location( owner, ePingType.ABILITY_BLACK_MARKET, blackMarket, blackMarket.GetOrigin(), -1, false )
+	//if ( IsValid( owner ) )
+	//	CreateWaypoint_Ping_Location( owner, ePingType.ABILITY_BLACK_MARKET, blackMarket, blackMarket.GetOrigin(), -1, false )
 
 	PlayImpactFXTable( blackMarket.GetOrigin(), blackMarket, BLACK_MARKET_PLACEMENT_IMPACT_TABLE )
 
@@ -725,7 +763,7 @@ void function BlackMarketDeployThread( entity owner, PlacementInfo placementInfo
 
 	GradeFlagsClear( blackMarket, eGradeFlags.IS_BUSY )
 
-	StartParticleEffectOnEntity( blackMarket, GetParticleSystemIndex( BLACK_MARKET_START_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
+	StartParticleEffectOnEntity( blackMarket, GetParticleSystemIndex( BLACK_MARKET_START_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
 	PlayImpactFXTable( blackMarket.GetOrigin(), blackMarket, BLACK_MARKET_START_IMPACT_TABLE )
 	EmitSoundOnEntityToTeam( blackMarket, BLACK_MARKET_START_FRIENDLY_SOUND, blackMarket.GetTeam() )
 	EmitSoundOnEntityToEnemies( blackMarket, BLACK_MARKET_START_ENEMY_SOUND, blackMarket.GetTeam() )
@@ -778,7 +816,7 @@ void function OnBlackMarketPostDamaged( entity device, var damageInfo )
 #if SERVER
 void function OnBlackMarketKilled( entity device, var damageInfo )
 {
-	StartParticleEffectInWorldForRealms( GetParticleSystemIndex( BLACK_MARKET_DESTRUCTION_FX ), device.GetOrigin(), device.GetAngles(), device )
+	StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( BLACK_MARKET_DESTRUCTION_FX ), device.GetOrigin(), device.GetAngles() )
 }
 #endif
 
@@ -826,6 +864,7 @@ void function DoBlackMarketPostPickupLogic( entity player, entity blackMarket, e
 		int maxUseCount = GetBlackMarketUseLimit( blackMarket, player )
 		if ( !IsBitFlagSet( pickupFlags, PICKUP_FLAG_DONT_COUNT_TOWARD_BLACK_MARKET_QUOTA ) )
 		{
+			// This bumps GetBlackMarketUseCount
 			AddToBlackMarketPlayerUseData(
 				blackMarket, player,
 				useCount, lootFlav.index, unitsPickedUp, maxUseCount )
@@ -842,7 +881,7 @@ void function DoBlackMarketPostPickupLogic( entity player, entity blackMarket, e
 	entity blackMarketOwner = blackMarket.GetOwner()
 	if ( IsValid( blackMarketOwner ) )
 	{
-		// StatsHook_BlackMarket_OnUsed( blackMarket, blackMarketOwner, player )  // TODO: Port from retail if needed
+		// StatsHook_BlackMarket_OnUsed( blackMarket, blackMarketOwner, player )  // TODO: Port if needed
 	}
 
 	entity lootEntParent = lootEnt.GetParent()
@@ -852,13 +891,13 @@ void function DoBlackMarketPostPickupLogic( entity player, entity blackMarket, e
 		{
 			bool shouldOpenRegularCompartment = true
 			bool shouldOpenSecretCompartment  = lootEnt.e.isSecretLoot
-			// thread LootBin_ForceOpen_Thread( lootEntParent, shouldOpenRegularCompartment, shouldOpenSecretCompartment )  // TODO: Port from retail if needed
+			// thread LootBin_ForceOpen_Thread( lootEntParent, shouldOpenRegularCompartment, shouldOpenSecretCompartment )  // TODO: Port if needed
 		}
 		else if ( lootEntParent.GetScriptName() == CARE_PACKAGE_SCRIPTNAME )
 		{
 			if ( lootEntParent.DoesShareRealms( player ) )
 			{
-				// thread RemoteOpenAirdrop( lootEntParent, null )  // TODO: Port from retail if needed
+				// thread RemoteOpenAirdrop( lootEntParent, null )  // TODO: Port if needed
 			}
 		}
 	}
@@ -868,8 +907,7 @@ void function DoBlackMarketPostPickupLogic( entity player, entity blackMarket, e
 		if ( GetCurrentPlaylistVarBool( "loba_ultimate_refill_weapon_clip", true ) )
 		{
 			entity newMainWeapon = player.p.justCreatedSurvivalMainWeapon
-			Assert( IsValid( newMainWeapon ) && newMainWeapon.GetWeaponClassName() == lootFlav.baseWeapon )
-			if ( newMainWeapon.UsesClipsForAmmo() )
+			if ( IsValid( newMainWeapon ) && newMainWeapon.GetWeaponClassName() == lootFlav.baseWeapon && newMainWeapon.UsesClipsForAmmo() )
 				newMainWeapon.SetWeaponPrimaryClipCount( newMainWeapon.GetWeaponPrimaryClipCountMax() )
 		}
 	}
@@ -887,27 +925,30 @@ void function DoBlackMarketPostPickupLogic( entity player, entity blackMarket, e
 void function OnPlayerLootPickup( entity player, entity lootEnt, string ref, int unitsPickedUp, bool willDestroy, entity blackMarket, int pickupFlags )
 {
 	LootData lootFlav = SURVIVAL_Loot_GetLootDataByRef( ref )
+	entity resolvedBlackMarket = blackMarket
 
-	if ( !IsValid( blackMarket ) )
+	if ( !IsBlackMarketDevice( resolvedBlackMarket ) )
+		resolvedBlackMarket = GetBlackMarketInUseByPlayer( player )
+
+	if ( !IsBlackMarketDevice( resolvedBlackMarket ) )
 		return
 
 	if ( !IsValid( lootEnt ) )
 		return
 
-	if ( blackMarket.GetScriptName() != BLACK_MARKET_SCRIPTNAME )
+	if ( resolvedBlackMarket.GetScriptName() != BLACK_MARKET_SCRIPTNAME )
 		return
 
 	Assert( unitsPickedUp > 0, "In OnPlayerLootPickup with unitsPickedUp: " + unitsPickedUp + ". player: " + player + " lootRef: " + ref )
 
-	DoBlackMarketPostPickupLogic( player, blackMarket, lootEnt, lootFlav, unitsPickedUp, pickupFlags )
+	DoBlackMarketPostPickupLogic( player, resolvedBlackMarket, lootEnt, lootFlav, unitsPickedUp, pickupFlags )
 
-	entity blackMarketOwner = blackMarket.GetOwner()
+	entity blackMarketOwner = resolvedBlackMarket.GetOwner()
 	if ( IsValid( blackMarketOwner )
-	&& IsFriendlyTeam( player.GetTeam(), blackMarket.GetTeam() )
+	&& IsFriendlyTeam( player.GetTeam(), resolvedBlackMarket.GetTeam() )
 	&& Distance( player.GetOrigin(), blackMarketOwner.GetOrigin() ) < 620
-	&& PlayerCanSee( blackMarketOwner, blackMarket, true, 80 )
+	&& PlayerCanSee( blackMarketOwner, resolvedBlackMarket, true, 80 )
 	&& lootFlav.tier >= eLootTier.RARE
-	&& !IsEventFinale()
 	)
 	{
 		string bcLine
@@ -922,9 +963,9 @@ void function OnPlayerLootPickup( entity player, entity lootEnt, string ref, int
 		thread PlayBattleChatterLineDelayedToSpeakerAndTeamWithDebounceTime_Thread( blackMarketOwner, bcLine, 1.0, 55.0, 100.0, player )
 	}
 
-	EmitSoundOnEntity( blackMarket, "Loba_Ultimate_BlackMarket_WarpOut" )
-	EmitSoundAtPosition( TEAM_UNASSIGNED, lootEnt.GetOrigin(), "Loba_Ultimate_BlackMarket_WarpIn", blackMarket )
-	thread WarpBeamFXThread( blackMarket, blackMarket.GetOrigin() + (blackMarket.GetUpVector() * 48.0), lootEnt.GetOrigin() )
+	EmitSoundOnEntity( resolvedBlackMarket, "Loba_Ultimate_BlackMarket_WarpOut" )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, lootEnt.GetOrigin(), "Loba_Ultimate_BlackMarket_WarpIn", resolvedBlackMarket )
+	thread WarpBeamFXThread( resolvedBlackMarket, resolvedBlackMarket.GetOrigin() + (resolvedBlackMarket.GetUpVector() * 48.0), lootEnt.GetOrigin() )
 
 	LiveAPI_SendOnePlayerItemEvent( eLiveAPI_EventTypes.blackMarketAction, player, ref )
 }
@@ -958,7 +999,7 @@ void function AddToBlackMarketPlayerUseData( EHI blackMarketEHI, EHI userEHI, in
 
 #if CLIENT
 	if ( IsValid( GetLocalViewPlayer() ) && userEHI == GetLocalViewPlayer().GetEncodedEHandle() && useCount >= maxUseCount )
-		EmitUISound( "Loba_Ultimate_BlackMarket_MaxedOut" )
+		EmitSoundOnEntity( GetLocalViewPlayer(), "Loba_Ultimate_BlackMarket_MaxedOut" )
 #endif
 
 #if CLIENT
@@ -1083,29 +1124,43 @@ void function WarpBeamFXThread( entity blackMarket, vector startPos, vector endP
 
 
 #if SERVER
-void function ClientCallback_OpenBlackMarket( entity player, entity grabber )
+bool function ClientCallback_OpenBlackMarket( entity player, array<string> args )
 {
-	if ( !IsValid( grabber ) || grabber.GetNetworkedClassName() != "prop_loot_grabber" || !IsValid( player ) || !player.IsPlayer() )
-		return
+	if ( args.len() < 1 )
+		return true
 
-	if ( grabber.IncrementPlayersGrabbingLoot != null )
-		grabber.IncrementPlayersGrabbingLoot()
+	entity grabber = GetEntByIndex( args[0].tointeger() )
+
+	if ( !IsBlackMarketDevice( grabber ) || !IsValid( player ) || !player.IsPlayer() )
+		return true
+
+	//if ( grabber.IncrementPlayersGrabbingLoot != null )
+		//grabber.IncrementPlayersGrabbingLoot()
 	file.playersToBlackMarketMap[ player ] <- grabber
+
+	return true
 }
 #endif
 
 
 #if SERVER
-void function ClientCallback_CloseBlackMarket( entity player, entity grabber )
+bool function ClientCallback_CloseBlackMarket( entity player, array<string> args )
 {
-	if ( !IsValid( grabber ) || grabber.GetNetworkedClassName() != "prop_loot_grabber" || !IsValid( player ) || !player.IsPlayer() )
-		return
+	if ( args.len() < 1 )
+		return true
 
-	if ( grabber.DecrementPlayersGrabbingLoot != null )
-		grabber.DecrementPlayersGrabbingLoot()
+	entity grabber = GetEntByIndex( args[0].tointeger() )
+
+	if ( !IsBlackMarketDevice( grabber ) || !IsValid( player ) || !player.IsPlayer() )
+		return true
+
+	//if ( grabber.DecrementPlayersGrabbingLoot != null )
+		//grabber.DecrementPlayersGrabbingLoot()
 
 	if ( player in file.playersToBlackMarketMap )
 		delete file.playersToBlackMarketMap[ player ]
+
+	return true
 }
 #endif
 
@@ -1127,9 +1182,32 @@ entity function GetBlackMarketInUseByPlayer( entity player )
 
 
 #if SERVER || CLIENT
+bool function IsBlackMarketDevice( entity ent )
+{
+	if ( !IsValid( ent ) )
+		return false
+
+	if ( ent.GetScriptName() == BLACK_MARKET_SCRIPTNAME )
+		return true
+
+	return ent.GetNetworkedClassName() == BLACK_MARKET_LEGACY_ENTITY_CLASS
+}
+#endif
+
+
+#if SERVER || CLIENT
 bool function CanUseBlackMarket( entity player, entity ent, int useFlags )
 {
 	return SURVIVAL_PlayerAllowedToPickup( player )
+}
+#endif
+
+#if CLIENT
+void function ServerToClient_UpdateBlackMarketUseCount( EncodedEHandle blackMarketEEH, EncodedEHandle userEEH, int useCount, int lootRefIdx, int lootRefCount, int maxUseCount )
+{
+	LootData lootFlav = SURVIVAL_Loot_GetLootDataByIndex( lootRefIdx )
+	if (lootFlav.lootType != eLootType.AMMO)
+		AddToBlackMarketPlayerUseData( blackMarketEEH, userEEH, useCount, lootRefIdx, lootRefCount, maxUseCount )
 }
 #endif
 
@@ -1171,8 +1249,8 @@ void function OnBlackMarketUsed( entity blackMarket, entity player, int useInput
 			settings.hint = "#PROMPT_OPEN"
 			settings.successFunc = void function( entity blackMarket, entity player, ExtendedUseSettings settings )
 			{
-				OpenSurvivalGroundList( player, blackMarket, eGroundListBehavior.NEARBY, eGroundListType.GRABBER )
-				Remote_ServerCallFunction( BLACK_MARKET_OPEN_CMD, blackMarket )
+				OpenSurvivalGroundListRetail( player, blackMarket, eGroundListBehavior.NEARBY, eGroundListType.GRABBER )
+				player.ClientCommand( BLACK_MARKET_OPEN_CMD + " " + blackMarket.GetEntIndex() )
 			}
 		#endif
 
@@ -1190,31 +1268,36 @@ void function OnBlackMarketUsed( entity blackMarket, entity player, int useInput
 void function OnCharacterButtonPressed( entity player )
 {
 	entity useEnt = player.GetUsePromptEntity()
-	if ( !IsValid( useEnt ) || useEnt.GetNetworkedClassName() != "prop_loot_grabber" )
+	if ( !IsBlackMarketDevice( useEnt ) )
 		return
 
 	if ( useEnt.GetOwner() != player )
 		return
 
-	Remote_ServerCallFunction( "ClientCallback_TryPickupBlackMarket", useEnt )
+	player.ClientCommand( BLACK_MARKET_TRY_PICKUP_CMD + " " + useEnt.GetEntIndex() )
 }
 #endif
 
 
 #if SERVER
-void function ClientCallback_TryPickupBlackMarket( entity player, entity device )
+bool function ClientCallback_TryPickupBlackMarket( entity player, array<string> args )
 {
-	if ( !SURVIVAL_PlayerAllowedToPickup( player ) )
-		return
+	if ( args.len() < 1 )
+		return false
 
-	if ( !IsValid( device ) || device.GetNetworkedClassName() != "prop_loot_grabber" )
-		return
+	entity device = GetEntByIndex( args[0].tointeger() )
+
+	if ( !SURVIVAL_PlayerAllowedToPickup( player ) )
+		return false
+
+	if ( !IsBlackMarketDevice( device ) )
+		return false
 
 	if ( device != player.GetUseEntity() )
-		return
+		return false
 
 	if ( GradeFlagsHas( device, eGradeFlags.IS_BUSY ) )
-		return
+		return false
 
 	GradeFlagsSet( device, eGradeFlags.IS_BUSY )
 
@@ -1227,6 +1310,8 @@ void function ClientCallback_TryPickupBlackMarket( entity player, entity device 
 			device.e.highlightProxy.Destroy()
 		waitthread PlayAnim( device, "mp_prop_lootcane_destroy" )
 	})()
+
+	return true
 }
 #endif
 
@@ -1340,14 +1425,14 @@ float function GetBlackMarketNearbyLootRadius( entity owner = null )
 
 
 #if SERVER || CLIENT || UI
-int function GetBlackMarketUseLimit( entity blackMarket, entity player )
+int function GetBlackMarketUseLimit( entity blackMarket = null, entity player = null )
 {
 	if ( IsInfiniteAmmoEnabled() )
 		return 99
 	int result = GetCurrentPlaylistVarInt( "loba_ultimate_use_limit", 2 )
 
 	#if SERVER || CLIENT
-		if( !IsValid( blackMarket ) )
+		if( !IsValid( blackMarket ) || !IsValid( player ) )
 			return result
 		if( player.HasPassive( ePassives.PAS_ULT_UPGRADE_ONE ) && player.HasPassive( ePassives.PAS_LOBA_EYE_FOR_QUALITY ) )
 		{
@@ -1375,5 +1460,30 @@ void function ForceKillBlackMarket_Thread( entity device )
 
 	if ( IsValid( device ) )
 		device.TakeDamage( 9999, null, null, {} )
+}
+#endif
+
+#if CLIENT
+array<LootRef> function GetBlackMarketUseItemRefs( entity blackMarket, entity user )
+{
+	EHI blackMarketEHI = ToEHI( blackMarket )
+	EHI userEHI        = ToEHI( user )
+
+	array<LootRef> lootRefs = []
+	if ( blackMarketEHI in file.byBlackMarket_byPlayer_useData )
+	{
+		if ( userEHI in file.byBlackMarket_byPlayer_useData[blackMarketEHI] )
+		{
+			BlackMarketPlayerUseData data = file.byBlackMarket_byPlayer_useData[blackMarketEHI][userEHI]
+			foreach ( int idx, LootData lootFlav in data.lootFlavs )
+			{
+				LootRef ref
+				ref.lootData = lootFlav
+				ref.count = data.lootCounts[idx]
+				lootRefs.append( ref )
+			}
+		}
+	}
+	return lootRefs
 }
 #endif

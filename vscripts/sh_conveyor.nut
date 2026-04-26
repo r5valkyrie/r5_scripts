@@ -1,6 +1,6 @@
 global function ConveyorInit
 global function OnSpawnConveyorCrateMover
-#if DEV
+#if DEVELOPER
 global function DEBUG_Conveyor_DestroyDeployables
 #endif
 global array<string> DEPLOYABLE_ABILITY_NAMES = []
@@ -192,7 +192,7 @@ array<entity> function GetDestroyChildrenNodes ( entity startNode )
 	return result
 }
 
-#if DEV
+#if DEVELOPER
 void function DEBUG_Conveyor_DestroyDeployables ()
 {
 	// destroy the deployables on the 'first' crate it finds them on
@@ -318,4 +318,4 @@ float function GetPathTime ( entity mover, entity startNode )
 
 	if ( file.DEV ) printf ("CONVEYOR: Calculated " + mover.GetTargetName() + " path time as: " + pathTime + " seconds.")
 	return pathTime + 0.7 // For some reason the function calculated the path as 0.7 sec shorter than it really is
-} 
+}

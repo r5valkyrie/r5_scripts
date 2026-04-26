@@ -1,0 +1,448 @@
+// TODO: cleanup once S22.1 is ready to roll - https://jiratf.rspn.ad.ea.com/browse/R5DEV-584004
+
+                    
+global function StatsRegister_S21
+
+#if SERVER
+global function StatsHook_S21EXP_GamePlayedAnyMode
+
+                               
+global function StatsHook_S21_Solo_Games_Played
+global function StatsHook_S21_Solo_Kills
+global function StatsHook_S21_Solo_Damage_Done
+global function StatsHook_S21_Solo_Games_Wins
+global function StatsHook_S21_Solo_Placement_Top_10_with_10_Legends
+                                     
+
+                               
+global function StatsHook_S21_Quad_GamesPlayed
+global function StatsHook_S21_Quad_DamageDone
+global function StatsHook_S21_Quad_Kills
+global function StatsHook_S21_Quad_PlacementTop5
+global function StatsHook_S21_Quad_PremadeWin
+global function StatsHook_S21_Quad_PlacementTop5With10Legends
+global function StatsHook_S21_Quad_Knockdowns
+global function StatsHook_S21_Quad_DamageDoneMaxSingleGame
+                                     
+
+
+                       
+global function StatsHook_S21_BigTDM_GamesPlayed
+                             
+#endif
+
+void function StatsRegister_S21()
+{
+	CAREER_STATS.s21alter_complete_all_challenges = RegisterExpensiveCalculatedStat_Int( null, "s21alter_complete_all_challenges", CHALLENGES_CALC_DEPENDS, SetupS21AlterCompleteAllChallenges, [], eChallengeGameMode.NON_MODE )
+	CAREER_STATS.s21exp_play_game_x_legends_any_mode = RegisterBitfieldStat_Int( null, "s21exp_play_game_x_legends_any_mode", CHALLENGES_CALC_DEPENDS, SetupS21EXPGamePlayedAnyMode, [], eChallengeGameMode.ANY )
+
+	                               
+		CAREER_STATS.gamemode_solo_games_played = RegisterAccumulatedStat_Int( null, "gamemode_solo_games_played", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.gamemode_solo_kills = RegisterAccumulatedStat_Int( null, "gamemode_solo_kills", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.gamemode_solo_damage_done = RegisterAccumulatedStat_Int( null, "gamemode_solo_damage_done", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.gamemode_solo_games_wins = RegisterAccumulatedStat_Int( null, "gamemode_solo_games_wins", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.gamemode_solo_placement_top_10_with_10_legends = RegisterBitfieldStat_Int( null, "gamemode_solo_placement_top_10_with_10_legends", CHALLENGES_CALC_DEPENDS, SetupS21SoloPlacementTop10With10Legends, [], eChallengeGameMode.BATTLE_ROYALE )
+		CAREER_STATS.gamemode_solo_complete_all_challenges = RegisterExpensiveCalculatedStat_Int( null, "gamemode_solo_complete_all_challenges", CHALLENGES_CALC_DEPENDS, SetupS21SoloCompleteAllChallenges, [], eChallengeGameMode.NON_MODE )
+       
+
+	CAREER_STATS.s21ce01_buffet_points = RegisterAccumulatedStat_Int( null, "s21ce01_buffet_points", eChallengeGameMode.NON_MODE, CHALLENGES_CALC_DEPENDS )
+	CAREER_STATS.s21me02_event_currency_total = RegisterAccumulatedStat_Int( null, "s21me02_event_currency_total", eChallengeGameMode.NON_MODE, CHALLENGES_CALC_DEPENDS )
+
+	                               
+		CAREER_STATS.gamemode_quad_games_played = RegisterAccumulatedStat_Int( null, "gamemode_quad_games_played", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.gamemode_quad_damage_done = RegisterAccumulatedStat_Int( null, "gamemode_quad_damage_done", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.gamemode_quad_kills = RegisterAccumulatedStat_Int( null, "gamemode_quad_kills", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.gamemode_quad_placement_top_5 = RegisterAccumulatedStat_Int( null, "gamemode_quad_placement_top_5", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.gamemode_quad_premade_win = RegisterAccumulatedStat_Int( null, "gamemode_quad_premade_win", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.gamemode_quad_placement_top_5_with_10_legends = RegisterBitfieldStat_Int( null, "gamemode_quad_placement_top_5_with_10_legends", CHALLENGES_CALC_DEPENDS, SetupS21QuadPlacementTop5With10Legends, [], eChallengeGameMode.BATTLE_ROYALE )
+		CAREER_STATS.gamemode_quad_knockdowns = RegisterAccumulatedStat_Int( null, "gamemode_quad_knockdowns", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.gamemode_quad_damage_done_max_in_one_game = RegisterAccumulatedStat_Int( null, "gamemode_quad_damage_done_max_in_one_game", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.gamemode_quad_complete_all_challenges = RegisterExpensiveCalculatedStat_Int( null, "gamemode_quad_complete_all_challenges", CHALLENGES_CALC_DEPENDS, SetupS21QuadCompleteAllChallenges, [], eChallengeGameMode.NON_MODE )
+                                      
+
+	                       
+		CAREER_STATS.gamemode_bigtdm_games_played = RegisterAccumulatedStat_Int( null, "gamemode_bigtdm_games_played", eChallengeGameMode.FTDM, CHALLENGES_CALC_DEPENDS )
+                              
+}
+
+StatCalcFuncInfo function SetupS21AlterCompleteAllChallenges( StatEntry calcEntry, array< StatTemplate > sourceTemplate )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = ( int function( entity player, array< StatEntry > sourceEntries, int when ) {
+		array< ItemFlavor > challenges = [
+			GetItemFlavorByAsset( $"settings/itemflav/challenge/alter/damage_done.rpak" ),
+			GetItemFlavorByAsset( $"settings/itemflav/challenge/alter/deathbox_items_seized.rpak" ),
+			GetItemFlavorByAsset( $"settings/itemflav/challenge/alter/surfaces_breached.rpak" ),
+			GetItemFlavorByAsset( $"settings/itemflav/challenge/alter/allies_regrouped.rpak" ),
+			GetItemFlavorByAsset( $"settings/itemflav/challenge/alter/breach_killer.rpak" ),
+		]
+
+		return Challenge_CountComplete( player, challenges )
+	} )
+
+	return info
+}
+
+StatCalcFuncInfo function SetupS21EXPGamePlayedAnyMode( StatEntry calcEntry, array< StatTemplate > sourceTemplate )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = ( int function( entity player, array< StatEntry > sourceEntries, int when ) {
+		return Stats_CountSetBitsInCharacterBitfield( GetStat_Int( player, ResolveStatEntry( CAREER_STATS.s21exp_play_game_x_legends_any_mode ), eStatGetWhen.CURRENT, eStatFetchMode.BITFIELD_RAW ) )
+	} )
+
+	return info
+}
+
+StatCalcFuncInfo function SetupS21SoloPlacementTop10With10Legends( StatEntry calcEntry, array< StatTemplate > sourceTemplate )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = ( int function( entity player, array< StatEntry > sourceEntries, int when ) {
+		return Stats_CountSetBitsInCharacterBitfield( GetStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_solo_placement_top_10_with_10_legends ), eStatGetWhen.CURRENT, eStatFetchMode.BITFIELD_RAW ) )
+	} )
+
+	return info
+}
+
+StatCalcFuncInfo function SetupS21SoloCompleteAllChallenges( StatEntry calcEntry, array< StatTemplate > sourceTemplate )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = ( int function( entity player, array< StatEntry > sourceEntries, int when ) {
+		array< ItemFlavor > challenges = [
+			GetItemFlavorByAsset( $"settings/itemflav/challenge/solos/damage_done.rpak" ),
+			GetItemFlavorByAsset( $"settings/itemflav/challenge/solos/damage_done_match.rpak" ),
+			GetItemFlavorByAsset( $"settings/itemflav/challenge/solos/games_played.rpak" ),
+			GetItemFlavorByAsset( $"settings/itemflav/challenge/solos/kills.rpak" ),
+			GetItemFlavorByAsset( $"settings/itemflav/challenge/solos/kills_match.rpak" ),
+			GetItemFlavorByAsset( $"settings/itemflav/challenge/solos/placement_top_10_with_10_legends.rpak" ),
+			GetItemFlavorByAsset( $"settings/itemflav/challenge/solos/win_match.rpak" ),
+		]
+
+		return Challenge_CountComplete( player, challenges )
+	} )
+
+	return info
+}
+
+                               
+StatCalcFuncInfo function SetupS21QuadPlacementTop5With10Legends( StatEntry calcEntry, array< StatTemplate > sourceTemplates )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = ( int function( entity player, array< StatEntry > sourceEntries, int when ) {
+		return Stats_CountSetBitsInCharacterBitfield( GetStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_quad_placement_top_5_with_10_legends ), eStatGetWhen.CURRENT, eStatFetchMode.BITFIELD_RAW ) )
+	} )
+
+	return info
+}
+
+StatCalcFuncInfo function SetupS21QuadCompleteAllChallenges( StatEntry calcEntry, array< StatTemplate > sourceTemplates )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = ( int function( entity player, array< StatEntry > sourceEntries, int when ) {
+		array< ItemFlavor > requiredChallenges = [
+			GetItemFlavorByAsset( $"settings/itemflav/challenge/quads/damage_done_match.rpak" ),
+			GetItemFlavorByAsset( $"settings/itemflav/challenge/quads/damage_done.rpak" ),
+			GetItemFlavorByAsset( $"settings/itemflav/challenge/quads/games_played.rpak" ),
+			GetItemFlavorByAsset( $"settings/itemflav/challenge/quads/kills.rpak" ),
+			GetItemFlavorByAsset( $"settings/itemflav/challenge/quads/placement_top_5.rpak" ),
+			GetItemFlavorByAsset( $"settings/itemflav/challenge/quads/placement_top_5_with_10_legends.rpak" ),
+			GetItemFlavorByAsset( $"settings/itemflav/challenge/quads/premade_win.rpak" ),
+		]
+
+		return Challenge_CountComplete( player, requiredChallenges )
+	} )
+	return info
+}
+                                     
+
+#if SERVER
+void function StatsHook_S21EXP_GamePlayedAnyMode( entity player, string characterGUID )
+{
+	if ( !IsValid( player ) || !Stats_PlayerIsValidForStats( player ) )
+	{
+		return
+	}
+
+	table< string, int > characterGUIDToBitmaskMap = StatsDefs_GetCharacterGUIDToBitmaskMap()
+	if ( !( characterGUID in characterGUIDToBitmaskMap ) )
+	{
+		Warning( format( "Character with SAID %s does not have stats enabled; skipping write to stats.s21exp_play_game_x_legends_any_mode", characterGUID ) )
+		return
+	}
+
+	StatEntry stat = ResolveStatEntry( CAREER_STATS.s21exp_play_game_x_legends_any_mode )
+	__SetFlagStat_Int( player, stat, characterGUIDToBitmaskMap[ characterGUID ], false )
+}
+
+                               
+void function StatsHook_S21_Solo_Games_Played( entity player, int amount )
+{
+	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SOLOS ) )
+	{
+		return
+	}
+
+	if ( !IsValid( player ) || amount <= 0 )
+	{
+		return
+	}
+
+	if ( !Stats_PlayerIsValidForStats( player ) )
+	{
+		return
+	}
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_solo_games_played ), amount )
+}
+
+void function StatsHook_S21_Solo_Kills( entity player, int amount )
+{
+	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SOLOS ) )
+	{
+		return
+	}
+
+	if ( !IsValid( player ) || amount <= 0 )
+	{
+		return
+	}
+
+	if ( !Stats_PlayerIsValidForStats( player ) )
+	{
+		return
+	}
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_solo_kills ), amount )
+}
+
+void function StatsHook_S21_Solo_Damage_Done( entity player, int amount )
+{
+	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SOLOS ) )
+	{
+		return
+	}
+
+	if ( !IsValid( player ) || amount <= 0 )
+	{
+		return
+	}
+
+	if ( !Stats_PlayerIsValidForStats( player ) )
+	{
+		return
+	}
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_solo_damage_done ), amount )
+}
+
+void function StatsHook_S21_Solo_Games_Wins( entity player )
+{
+	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SOLOS ) || !IsValid( player ) )
+	{
+		return
+	}
+
+	if ( !Stats_PlayerIsValidForStats( player ) )
+	{
+		return
+	}
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_solo_games_wins ), 1 )
+}
+
+void function StatsHook_S21_Solo_Placement_Top_10_with_10_Legends( entity player, string characterGUID )
+{
+	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SOLOS ) )
+	{
+		return
+	}
+	
+	if ( !IsValid( player ) )
+	{
+		return
+	}
+
+	if ( !Stats_PlayerIsValidForStats( player ) )
+	{
+		return
+	}
+
+	table< string, int > characterGUIDToBitmaskMap = StatsDefs_GetCharacterGUIDToBitmaskMap()
+	if ( !( characterGUID in characterGUIDToBitmaskMap ) )
+	{
+		Warning( format( "Character with SAID %s does not have stats enabled; skipping write to stats.gamemode_solo_placement_top_10_with_10_legends", characterGUID ) )
+		return
+	}
+
+	StatEntry stat = ResolveStatEntry( CAREER_STATS.gamemode_solo_placement_top_10_with_10_legends )
+	__SetFlagStat_Int( player, stat, characterGUIDToBitmaskMap[ characterGUID ], false )
+}
+                                     
+
+                               
+bool function StatsCheck_S21_Quads_IsValid( entity player )
+{
+	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_QUADS ) )
+	{
+		return false
+	}
+
+	if ( !IsValid( player ) || !Stats_PlayerIsValidForStats( player ) )
+	{
+		return false
+	}
+
+	return true
+}
+
+void function StatsHook_S21_Quad_GamesPlayed( entity player, int amount )
+{
+	if ( !StatsCheck_S21_Quads_IsValid( player ) )
+	{
+		return
+	}
+
+	if ( amount <= 0 )
+	{
+		return
+	}
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_quad_games_played ), amount )
+}
+
+void function StatsHook_S21_Quad_DamageDone( entity player, int amount )
+{
+	if ( !StatsCheck_S21_Quads_IsValid( player ) )
+	{
+		return
+	}
+
+	if ( amount <= 0 )
+	{
+		return
+	}
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_quad_damage_done ), amount )
+}
+
+void function StatsHook_S21_Quad_DamageDoneMaxSingleGame( entity player, int amount )
+{
+	if ( !StatsCheck_S21_Quads_IsValid( player ) )
+	{
+		return
+	}
+
+	if ( amount <= 0 )
+	{
+		return
+	}
+
+	int oldMaxDamage = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_quad_damage_done_max_in_one_game ), eStatGetWhen.CURRENT )
+	if ( amount < oldMaxDamage )
+	{
+		return
+	}
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_quad_damage_done_max_in_one_game ), amount - oldMaxDamage )
+}
+
+void function StatsHook_S21_Quad_Kills( entity player, int amount )
+{
+	if ( !StatsCheck_S21_Quads_IsValid( player ) )
+	{
+		return
+	}
+
+	if ( amount <= 0 )
+	{
+		return
+	}
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_quad_kills ), amount )
+}
+
+void function StatsHook_S21_Quad_PlacementTop5( entity player )
+{
+	if ( !StatsCheck_S21_Quads_IsValid( player ) )
+	{
+		return
+	}
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_quad_placement_top_5 ), 1 )
+}
+
+void function StatsHook_S21_Quad_PremadeWin( entity player )
+{
+	if ( !StatsCheck_S21_Quads_IsValid( player ) )
+	{
+		return
+	}
+
+	bool isFullPremadeParty = player.GetPartySize() == 4 // 4 since we're in quads
+	if ( !isFullPremadeParty )
+	{
+		return
+	}
+
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_quad_premade_win ), 1 )
+}
+
+void function StatsHook_S21_Quad_PlacementTop5With10Legends( entity player, string characterGUID )
+{
+	if ( !StatsCheck_S21_Quads_IsValid( player ) )
+	{
+		return
+	}
+
+	table< string, int > characterGUIDToBitmaskMap = StatsDefs_GetCharacterGUIDToBitmaskMap()
+	if ( !( characterGUID in characterGUIDToBitmaskMap ) )
+	{
+		Warning( format( "Character with SAID %s does not have stats enabled; skipping write to stats.gamemode_quad_placement_top_5_with_10_legends", characterGUID ) )
+		return
+	}
+
+	StatEntry stat = ResolveStatEntry( CAREER_STATS.gamemode_quad_placement_top_5_with_10_legends )
+	__SetFlagStat_Int( player, stat, characterGUIDToBitmaskMap[ characterGUID ], false )
+}
+
+void function StatsHook_S21_Quad_Knockdowns( entity player )
+{
+	if ( !StatsCheck_S21_Quads_IsValid( player ) )
+	{
+		return
+	}
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_quad_knockdowns ), 1 )
+}
+                                     
+
+                       
+void function StatsHook_S21_BigTDM_GamesPlayed( entity player, int amount )
+{
+	if ( !BigTDM_IsModeEnabled() )
+	{
+		return
+	}
+
+	if ( !IsValid( player ) || !Stats_PlayerIsValidForStats( player ) )
+	{
+		return
+	}
+
+	if ( amount <= 0 )
+	{
+		return
+	}
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_bigtdm_games_played ), amount )
+}
+                             
+
+#endif // SERVER
+                          

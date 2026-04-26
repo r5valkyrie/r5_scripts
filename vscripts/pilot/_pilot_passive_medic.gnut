@@ -1,21 +1,25 @@
 global function PassiveMedic_Init
-
 #if SERVER
 global function GetBestShieldDeployAngles
-global function ClientCommand_CancelRevive
+global function ClientCallback_CancelRevive
 global function DeployMedicCover
 global function PassiveMedic_ShouldDoCombatRevive
+global function PassiveMedic_ShouldDoHandsFreeCombatRevive
 #endif
 
 #if CLIENT
 global function ServerToClient_DisplayCancelReviveHintForPlayer
 global function ServerToClient_RemoveCancelReviveHintForPlayer
-
+                    
 global function ServerToClient_NumSelfRevivesUsed
-// global function ServerToClient_DisplaySelfResRuiForPlayer
-// global function ServerToClient_RemoveDisplaySelfResRuiForlayer
+global function ServerToClient_DisplaySelfResRuiForPlayer
+global function ServerToClient_RemoveDisplaySelfResRuiForlayer
       
 #endif
+
+                       
+                                      
+      
 
 const DEPLOYABLE_SHIELD_FX = $"P_drone_medic_shield"
 const DEPLOYABLE_SHIELD_HEALTH = 850
@@ -42,28 +46,39 @@ const asset DRONE_MODEL = $"mdl/props/lifeline_drone/lifeline_drone.rmdl"
 const vector DRONE_MINS = <-9, -9, -10>
 const vector DRONE_MAXS = <9, 9, 10>
 
+                       
+                                       
+                             
+
 const string PASSIV_MEDIC_SHIELD_MOVER_SCRIPTNAME = "passive_medic_shield_mover"
 
 struct
 {
-	#if SERVER
-		bool shieldEnabled
-	#endif
-	#if CLIENT
-		var selfResRui
-	#endif
+#if SERVER
+	bool shieldEnabled
+#endif
+#if CLIENT
+	                    
+	var selfResRui
+       
+#endif
 } file
 
 void function PassiveMedic_Init()
 {
-	ScriptRemote_RegisterClientFunction( "ServerToClient_NumSelfRevivesUsed", "entity", "int", 0, 255 )
-	// ScriptRemote_RegisterClientFunction( "ServerToClient_DisplaySelfResRuiForPlayer", "entity" )
-	// ScriptRemote_RegisterClientFunction( "ServerToClient_RemoveDisplaySelfResRuiForlayer", "entity" )
+	Remote_RegisterServerFunction( "ClientCallback_CancelRevive" )
+	Remote_RegisterClientFunction( "ServerToClient_DisplayCancelReviveHintForPlayer" )
+	Remote_RegisterClientFunction( "ServerToClient_RemoveCancelReviveHintForPlayer" )
+	                    
+	Remote_RegisterClientFunction( "ServerToClient_NumSelfRevivesUsed", "entity", "int", 0, INT_MAX )
+	Remote_RegisterClientFunction( "ServerToClient_DisplaySelfResRuiForPlayer", "entity" )
+	Remote_RegisterClientFunction( "ServerToClient_RemoveDisplaySelfResRuiForlayer", "entity" )
+       
 
 	RegisterSignal( "OnPassiveMedicReviveEnd" )
+	PrecacheScriptString( REVIVE_SHIELD_SCRIPTNAME )
 
 	#if SERVER
-		AddClientCommandCallback( "ClientCommand_CancelRevive", ClientCommand_CancelRevive )
 		RegisterSignal( "CombatRevive_DestroyRope" )
 		RegisterSignal( "PassiveMedic_AttemptRes" )
 		RegisterSignal( "destroy_beam" )
@@ -80,14 +95,20 @@ void function PassiveMedic_Init()
 		PrecacheParticleSystem( FX_DRONE_MEDIC_JET_LOOP	)
 
 		Bleedout_AddCallback_OnPlayerStartGiveFirstAid( PassiveMedic_OnPlayerStartGiveFirstAid )
+		                    
 		Bleedout_AddCallback_OnPlayerStartGiveSelfRevive( PassiveMedic_OnPlayerStartSelfRevive )
 		Bleedout_AddCallback_OnPlayerGotFirstAid( PassiveMedic_OnPlayerGotFirstAid )
 
 		AddCallback_OnPassiveChanged( ePassives.PAS_SELF_REVIVE, SelfRes_OnPassiveChanged )
         
+
 		file.shieldEnabled = GetCurrentPlaylistVarBool( "lifeline_shield_revive_enabled", false )
+                         
+                                                                                    
+        
 	#else
 		RegisterConCommandTriggeredCallback( "+scriptCommand5", AttemptCancelRevive )
+		                    
 		RegisterSignal( "PassiveMedic_DestroySelfResRUI" )
         
 	#endif
@@ -98,27 +119,25 @@ void function PassiveMedic_OnPassiveChanged( entity player, int passive, bool di
 {
 }
 
+                    
 void function SelfRes_OnPassiveChanged( entity player, int passive, bool didHave, bool nowHas )
 {
 	if( nowHas )
 	{
-		// if( Bleedout_CanSelfResFromUpgrade( player ) )
-			// Remote_CallFunction_Replay( player, "ServerToClient_DisplaySelfResRuiForPlayer", player )
+		if( Bleedout_CanSelfResFromUpgrade( player ) )
+			Remote_CallFunction_Replay( player, "ServerToClient_DisplaySelfResRuiForPlayer", player )
 	}
 
 	if( didHave )
 	{
-		// Remote_CallFunction_Replay( player, "ServerToClient_RemoveDisplaySelfResRuiForlayer", player )
+		Remote_CallFunction_Replay( player, "ServerToClient_RemoveDisplaySelfResRuiForlayer", player )
 		player.p.numSelfRevivesUsed = 0
 		Remote_CallFunction_Replay( player, "ServerToClient_NumSelfRevivesUsed", player, player.p.numSelfRevivesUsed )
 	}
 }
-
+      
 void function PassiveMedic_OnPlayerStartGiveFirstAid( entity medicPlayer, entity patientPlayer, vector animRefAngles, bool endCrouched )
 {
-	if ( Bleedout_IsPlayerSelfReviving( patientPlayer ) )
-		return
-	
 	if ( PlayerHasPassive( medicPlayer, ePassives.PAS_MEDIC ) )
 	{
 		if ( !PassiveMedic_ShouldDoCombatRevive( medicPlayer ) )
@@ -126,16 +145,13 @@ void function PassiveMedic_OnPlayerStartGiveFirstAid( entity medicPlayer, entity
 
 		patientPlayer.Signal( "PassiveMedic_AttemptRes" )
 		thread DeployMedicCover( medicPlayer, patientPlayer, Bleedout_GetFirstAidTime( medicPlayer ), animRefAngles, endCrouched )
-		// PassiveConsumed( medicPlayer, ePassives.PAS_MEDIC )
+		PassiveConsumed( medicPlayer, ePassives.PAS_MEDIC )
 	}
 }
-
+                    
 //Used for Lifeline's Self-Revive Upgrade
 void function PassiveMedic_OnPlayerStartSelfRevive( entity medicPlayer, entity patientPlayer, vector animRefAngles, bool endCrouched )
 {
-	if ( Bleedout_IsPlayerSelfReviving( patientPlayer ) )
-		return
-	
 	if ( PlayerHasPassive( medicPlayer, ePassives.PAS_MEDIC ) )
 	{
 		if( medicPlayer != patientPlayer )
@@ -143,7 +159,7 @@ void function PassiveMedic_OnPlayerStartSelfRevive( entity medicPlayer, entity p
 
 		medicPlayer.Signal( "PassiveMedic_AttemptRes" )
 		thread DeployMedicCover( medicPlayer, medicPlayer, Bleedout_GetFirstAidTime( medicPlayer ), medicPlayer.GetAngles(), false )
-		// PassiveConsumed( medicPlayer, ePassives.PAS_MEDIC )
+		PassiveConsumed( medicPlayer, ePassives.PAS_MEDIC )
 	}
 }
 
@@ -155,13 +171,26 @@ void function PassiveMedic_OnPlayerGotFirstAid(  entity medicPlayer, entity pati
 			Remote_CallFunction_Replay( patientPlayer, "ServerToClient_NumSelfRevivesUsed", patientPlayer, medicPlayer.p.numSelfRevivesUsed )
 		}
 }
+      
 
 bool function PassiveMedic_ShouldDoCombatRevive( entity player )
 {
 	if ( !PlayerHasPassive( player, ePassives.PAS_MEDIC ) )
 		return false
 
+	if ( AreAbilitiesSilenced( player ) )
+		return false
+
 	return true
+}
+
+bool function PassiveMedic_ShouldDoHandsFreeCombatRevive()
+{
+                        
+                                                                           
+     
+	return true
+      
 }
 
 void function DeployMedicCover( entity medicPlayer, entity patientPlayer, float duration, vector animRefAngles, bool endCrouched )
@@ -174,7 +203,7 @@ void function DeployMedicCover( entity medicPlayer, entity patientPlayer, float 
 	patientPlayer.EndSignal( "OnDeath" )
 	patientPlayer.EndSignal( "PassiveMedic_AttemptRes" )
 
-	entity animRef = CreateScriptMover_NEW( PASSIV_MEDIC_SHIELD_MOVER_SCRIPTNAME, patientPlayer.GetOrigin(), animRefAngles )
+	entity animRef = CreateScriptMover( PASSIV_MEDIC_SHIELD_MOVER_SCRIPTNAME, patientPlayer.GetOrigin(), animRefAngles )
 
 	PerfStart( PerfIndexServer.DroneLogic )
 	vector shieldOrigin = patientPlayer.GetOrigin()
@@ -210,7 +239,7 @@ void function DeployMedicCover( entity medicPlayer, entity patientPlayer, float 
 
 		shieldEnt.SetParent( animRef )
 
-		shieldWallFX = StartParticleEffectOnEntityWithPos_ReturnEntity( shieldEnt, GetParticleSystemIndex( DEPLOYABLE_SHIELD_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, -1, <0, 0, 0>, <0, 180, 0> )
+		shieldWallFX = StartParticleEffectOnEntityWithPos_ReturnEntity( shieldEnt, GetParticleSystemIndex( DEPLOYABLE_SHIELD_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, <0, 0, 0>, <0, 180, 0> )
 		if ( IsValid( shieldWallFX ) )
 		{
 			shieldWallFX.RemoveFromAllRealms()
@@ -223,12 +252,34 @@ void function DeployMedicCover( entity medicPlayer, entity patientPlayer, float 
 		EmitSoundOnEntity( shieldEnt, PASSIV_MEDIC_SHEILD_SOUND )
 	}
 
-	entity drone = CreatePropDynamic( DRONE_MODEL, animRef.GetOrigin(), animRef.GetAngles(), 0 )
-
-	drone.SetHealth( 1 )
-	drone.SetTakeDamageType( DAMAGE_NO )
-	AddEntityCallback_OnPostDamaged( drone, OnDroneDamaged )
-	drone.SetOwner( medicPlayer )
+	entity drone = CreatePropDynamic( DRONE_MODEL, animRef.GetOrigin(), animRef.GetAngles(), SOLID_NONE )
+                        
+                                 
+   
+                                                                
+                                               
+                                            
+                                        
+                                       
+                                      
+                                                                  
+                                                                          
+                                                                
+                                
+                                  
+                               
+                                      
+                         
+                                                                                   
+   
+      
+                              
+		{
+			drone.SetHealth( 1 )
+			drone.SetTakeDamageType( DAMAGE_NO )
+			AddEntityCallback_OnPostDamaged( drone, OnDroneDamaged )
+			drone.SetOwner( medicPlayer )
+		}
 
 	if ( patientPlayer.IsPlayer() )
 	{
@@ -243,15 +294,19 @@ void function DeployMedicCover( entity medicPlayer, entity patientPlayer, float 
 	int droneAttchmentId = drone.LookupAttachment( "rope" )
 	int patientAttchmentId = patientPlayer.LookupAttachment( "R_HAND" )
 
+	                    
 	if( medicPlayer != patientPlayer ) //In the case of Self-Revive, we don't need to animate the reviver delployment ( Lifeline's on the ground )
        
 	thread MedicPlayerAnimate( medicPlayer )
 
-	// AddAnimEventTokenized( drone, "CombatRevive_CreateRope", DroneCreateRope, patientPlayer )
-	// AddAnimEvent( drone, "CombatRevive_DestroyRope", DroneDestroyRope )
+	AddAnimEventTokenized( drone, "CombatRevive_CreateRope", DroneCreateRope, patientPlayer )
+	AddAnimEvent( drone, "CombatRevive_DestroyRope", DroneDestroyRope )
 
-	if( medicPlayer != patientPlayer && patientPlayer.IsPlayer() ) //In the case of Self-Revive, we don't need to animate the reviver delployment ( Lifeline's on the ground )
-		Remote_CallFunction_ByRef( patientPlayer, "ServerToClient_DisplayCancelReviveHintForPlayer")
+                    
+	if( medicPlayer != patientPlayer ) //In the case of Self-Revive, we don't need to animate the reviver delployment ( Lifeline's on the ground )
+      
+	if( patientPlayer.IsPlayer() )
+		Remote_CallFunction_Replay( patientPlayer, "ServerToClient_DisplayCancelReviveHintForPlayer")
 
 	OnThreadEnd(
 		function() : ( patientPlayer, medicPlayer, drone )
@@ -260,8 +315,10 @@ void function DeployMedicCover( entity medicPlayer, entity patientPlayer, float 
 			{
 				patientPlayer.Signal( "ReviveInterrupted" )
                     
-				if( medicPlayer != patientPlayer && patientPlayer.IsPlayer() ) //In the case of Self-Revive, we don't need to animate the reviver delployment ( Lifeline's on the ground )
-					Remote_CallFunction_ByRef( patientPlayer, "ServerToClient_RemoveCancelReviveHintForPlayer")
+				if( medicPlayer != patientPlayer ) //In the case of Self-Revive, we don't need to animate the reviver delployment ( Lifeline's on the ground )
+      
+				if( patientPlayer.IsPlayer() )
+					Remote_CallFunction_Replay( patientPlayer, "ServerToClient_RemoveCancelReviveHintForPlayer")
 			}
 		}
 	)
@@ -310,7 +367,7 @@ void function DroneCreateRope( entity drone, array<string> tokens )
 {
 	Assert( tokens.len() >= 3 )
 
-	var ent = null //GetOptionalTokenizedAnimEventVar( drone, "CombatRevive_CreateRope" )
+	var ent = GetOptionalTokenizedAnimEventVar( drone, "CombatRevive_CreateRope" )
 
 	if ( !IsValid( ent ) )
 		return
@@ -353,17 +410,18 @@ void function MedicPlayerAnimate( entity medicPlayer )
 
 	HolsterAndDisableWeapons( medicPlayer )
 
-	if ( GetCurrentPlaylistVarBool( "lifeline_res_slow_disabled", true ) )
-	{
-		StatusEffect_AddTimed( medicPlayer, eStatusEffect.move_slow, 0.4, 0.4, 0.2 )
-		StatusEffect_AddTimed( medicPlayer, eStatusEffect.turn_slow, 0.3, 0.3, 0.2 )
-	}
-	else
-   
-	{
-		StatusEffect_AddTimed( medicPlayer, eStatusEffect.move_slow, 0.7, 1.5, 0.8 )
-		StatusEffect_AddTimed( medicPlayer, eStatusEffect.turn_slow, 1.0, 1.0, 0.8 )
-	}
+	                            
+		if ( GetCurrentPlaylistVarBool( "lifeline_res_slow_disabled", true ) )
+		{
+			StatusEffect_AddTimed( medicPlayer, eStatusEffect.move_slow, 0.4, 0.4, 0.2 )
+			StatusEffect_AddTimed( medicPlayer, eStatusEffect.turn_slow, 0.3, 0.3, 0.2 )
+		}
+		else
+       
+		{
+			StatusEffect_AddTimed( medicPlayer, eStatusEffect.move_slow, 0.7, 1.5, 0.8 )
+			StatusEffect_AddTimed( medicPlayer, eStatusEffect.turn_slow, 1.0, 1.0, 0.8 )
+		}
 
 	OnThreadEnd(
 		function () : ( medicPlayer )
@@ -405,7 +463,7 @@ void function DeployDroneMedic( entity drone, entity animRef, entity patientPlay
 
 				drone.ClearParent()
 				drone.Signal( "destroy_beam" )
-				drone.Dissolve( ENTITY_DISSOLVE_CORE, < 0, 0, 0 >, 1000 )
+				drone.Dissolve( ENTITY_DISSOLVE_CORE, <0,0,0>, 1000 )
 			}
 		}
 	)
@@ -421,10 +479,56 @@ void function DeployDroneMedic( entity drone, entity animRef, entity patientPlay
 		CreateDroneBeam( drone, shieldEnt )
 
 	drone.SetParent( animRef, "ref", false, 0.0 )
-	if ( endCrouched )
-		waitthread PlayAnimTeleport( drone, "mp_drone_lifeline_handsfree_crouch_revive", animRef )
-	else
-		waitthread PlayAnimTeleport( drone, "mp_drone_lifeline_handsfree_revive", animRef )
+
+	string anim = "lifeline_drone_revive"
+	if ( PassiveMedic_ShouldDoHandsFreeCombatRevive() )
+	{
+		if ( endCrouched )
+			anim = "mp_drone_lifeline_handsfree_crouch_revive"
+		else
+			anim = "mp_drone_lifeline_handsfree_revive"
+
+		if ( IsValid( patientPlayer ) )
+		{
+			                    
+				if ( IsValid( drone.GetOwner() ) )
+				{
+					if ( PlayerHasPassive( drone.GetOwner(), ePassives.PAS_FASTER_REVIVES ) ) // upgrade_lifeline_fast_res
+					{
+						if ( endCrouched )
+							anim = "mp_drone_lifeline_handsfree_crouch_revive_fast"
+						else
+							anim = "mp_drone_lifeline_handsfree_revive_fast"
+					}
+				}
+         
+			if ( StatusEffect_HasSeverity( patientPlayer, eStatusEffect.ring_immunity ) )
+			{
+				if ( endCrouched )
+					anim = "mp_drone_lifeline_handsfree_crouch_revive_fast"
+				else
+					anim = "mp_drone_lifeline_handsfree_revive_fast"
+			}
+		}
+	}
+
+	                            
+		if ( GetCurrentPlaylistVarBool( "lifeline_res_slow_disabled", true ) )
+		{
+			entity wp = CreateWaypoint_BasicEnt( drone, "", $"rui/hud/ping/icon_ping_dronemedic", "WAYPOINT" )
+			AllianceProximity_SetOnlyTransmitWaypointToFriendlyTeams( wp, drone.GetTeam() )
+
+			OnThreadEnd(
+				function() : ( wp )
+				{
+					if ( IsValid( wp ) )
+						wp.Destroy()
+				}
+			)
+		}
+       
+
+	waitthread PlayAnimTeleport( drone, anim, animRef )
 }
 
 const bool DEBUG_SHIELD_ANGLES = false
@@ -594,16 +698,13 @@ void function DestroyDroneBeamOnSignal( entity drone, entity shieldEnt, entity b
 	WaitForever()
 }
 
-bool function ClientCommand_CancelRevive( entity player, array<string> args )
+void function ClientCallback_CancelRevive( entity player )
 {
-	if( args.len() != 0 )
-		return true
-	
 	if ( !IsValid( player ) )
-		return true
+		return
 
 	if( !player.IsPlayer() )
-		return true
+		return
 
 	array<entity> players = GetPlayerArrayOfTeam_Alive( player.GetTeam() )
 	foreach ( entity teammate in players )
@@ -613,30 +714,22 @@ bool function ClientCommand_CancelRevive( entity player, array<string> args )
 			player.p.droneRevivingPlayer.Signal( "OnDestroy" )
 		}
 	}
-	
-	return true
 }
 #endif
 
 #if CLIENT
 void function AttemptCancelRevive( entity player )
 {
-	// #if DEVELOPER
-	// Warning( "AttemptCancelRevive " + player )
-	// #endif
 	if( !player.ContextAction_IsBeingRevived() )
 		return
 
 	if( !IsEntLifelineReviveTarget( player ) )
 		return
 
-	if ( player != GetLocalViewPlayer() )
-		return
-	
-	if ( player != GetLocalClientPlayer() )
+	if ( !TryCharacterButtonCommonReadyChecks( player ) )
 		return
 
-	player.ClientCommand("ClientCommand_CancelRevive")
+	Remote_ServerCallFunction( "ClientCallback_CancelRevive" )
 }
 
 bool function IsEntLifelineReviveTarget( entity ent )
@@ -666,6 +759,7 @@ bool function IsEntLifelineReviveTarget( entity ent )
 	return false
 }
 
+                    
 void function ServerToClient_NumSelfRevivesUsed( entity medic, int numSelfRevives )
 {
 	if( medic != GetLocalClientPlayer() )
@@ -676,6 +770,60 @@ void function ServerToClient_NumSelfRevivesUsed( entity medic, int numSelfRevive
 
 	medic.p.numSelfRevivesUsed = numSelfRevives
 }
+      
+
+
+                    
+void function ServerToClient_DisplaySelfResRuiForPlayer( entity player )
+{
+	if ( player != GetLocalViewPlayer() )
+		return
+
+	thread PassiveMedic_UpdateSelfResRUI( player )
+}
+
+void function ServerToClient_RemoveDisplaySelfResRuiForlayer( entity player )
+{
+	if ( player != GetLocalViewPlayer() )
+		return
+
+	player.Signal( "PassiveMedic_DestroySelfResRUI" )
+}
+
+void function PassiveMedic_UpdateSelfResRUI( entity player )
+{
+	player.EndSignal( "PassiveMedic_DestroySelfResRUI" )
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "OnDeath" )
+
+	///////   UI
+	if ( file.selfResRui == null )
+	{
+		file.selfResRui = CreateFullscreenRui( $"ui/upgrade_self_revive.rpak", HUD_Z_BASE ) //CreateFullscreenRui( $"ui/shields_repairing_indicator.rpak", HUD_Z_BASE )
+		RuiTrackFloat( file.selfResRui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
+		RuiTrackFloat( file.selfResRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "reviveEndTime" ) )
+	}
+
+	OnThreadEnd(
+		function() : ( player )
+		{
+			RuiDestroyIfAlive( file.selfResRui )
+			file.selfResRui = null
+		}
+	)
+
+	bool isVisible = true
+
+	while( IsValid( player ) && GetGameState() < eGameState.WinnerDetermined )
+	{
+		if( player.p.numSelfRevivesUsed > 0 )
+			return
+		wait 1
+	}
+	//WaitForever()
+}
+
+      
 
 void function ServerToClient_DisplayCancelReviveHintForPlayer()
 {

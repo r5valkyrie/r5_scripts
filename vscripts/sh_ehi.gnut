@@ -50,6 +50,7 @@ global function EEHHasValidScriptStruct
 global function IsLocalClientEHIValid
 global function LocalClientEHI
 global function WaitForLocalClientEHI
+global function EHI_GetPlatformID
 #endif
 
 #if SERVER || CLIENT
@@ -74,9 +75,13 @@ global function UIToClient_UIVMIsShuttingDown
 global function UIToClient_UIVMJustStarted
 global function GetPlayerName
 global function GetKillerName
+global function GetKillerNameFromEHI
 global function GetDisplayablePlayerNameFromEHI
+global function GetPlayerNameUnlessAnonymized
 global function GetPlayerRankScoreFromEHI
 global function GetPlayerLadderPosFromEHI
+global function GetPlayerRankScorePrevSeasonFromEHI
+global function GetPlayerLadderPosPrevSeasonFromEHI
 #endif
 #if UI
 global function ShEHI_VMShutdown
@@ -113,32 +118,7 @@ FileStruct_LifetimeLevel fileLevel
 FileStruct_LifetimeLevel& fileLevel
 #endif
 
-struct {
-	array < int > allAlliances
-	array < int > allAllianceTeams
-
-	table< int, int > teamToAllianceTable
-	table< int, array< int > > allianceToTeamsTable
-	array<void functionref( int, int )> callbacks_AllianceProximity_OnTeamPutIntoAlliance
-
-	#if SERVER || CLIENT
-		table< EHI, int > playerEHIToOriginalTeamTable // Match the player EHI to their team before we do a team change at the end of the match
-		bool isMinimapDisabled
-		array < int > priorityPingTypes
-	#endif // SERVER || CLIENT
-
-	#if SERVER
-		bool hasFinalizedTeamReassignments = false
-		table < int, int > allianceToReassignedTeamTable // teams from alliances get re-assigned to a single team at the end of the match, this keeps track of which team each alliance got assigned to
-		table < int, array< int > > originalTeamIDToCurrentTeamMemberIndexesTable // store the current indexes of all the team members that were on the same team before the end of match team change
-	#endif // SERVER
-
-	#if DEV && SERVER
-		array < int > teamsSetToAllianceThroughDevCommand_Dev // teams that have been put on an alliance through a dev command
-		array < int > alliancesThatHaveBeenPopulatedWithTeams // A list of alliances that have at some point ended up with any team assigned to it ( for debugging purposes )
-	#endif // DEV && SERVER
-
-} file
+// Alliance data struct moved to mp/sh_alliance_proximity.gnut
 
 /////////////////////////
 /////////////////////////
@@ -205,7 +185,7 @@ EHI function ToEHI( entity ent )
 
 		return ent.GetEncodedEHandle()
 	#elseif UI
-		Assert( ent == GetUIPlayer() )
+		Assert( ent == GetLocalClientPlayer() )
 		Assert( fileLevel.localClientEHI != EHI_null )
 		return fileLevel.localClientEHI
 	#endif
@@ -226,7 +206,7 @@ entity function FromEHI( EHI ent )
 	#elseif UI
 		Assert( fileLevel.localClientEHI != EHI_null )
 		Assert( ent == fileLevel.localClientEHI )
-		return GetUIPlayer()
+		return GetLocalClientPlayer()
 	#endif
 }
 #endif
@@ -520,6 +500,12 @@ EHI function WaitForLocalClientEHI()
 	}
 	return fileLevel.localClientEHI
 }
+
+// stub: platformID not tracked in EHIScriptStruct
+int function EHI_GetPlatformID( EHI ent )
+{
+	return HARDWARE_PC
+}
 #endif
 
 
@@ -781,7 +767,7 @@ string function GetObsfuscatedName( EHI playerEHI )
 		int randomAppend = RandomIntRange( 1000, 9999 )
 		string obsName   = ""
 
-		LoadoutEntry characterSlot = Loadout_CharacterClass()
+		LoadoutEntry characterSlot = Loadout_Character()
 		if ( GetGameState() >= eGameState.Playing && LoadoutSlot_IsReady( playerEHI, characterSlot ) )
 		{
 			ItemFlavor ornull characterOrNull = LoadoutSlot_GetItemFlavor( playerEHI, characterSlot )
@@ -810,6 +796,12 @@ string function GetKillerName( EHI playerEHI )
 
 	return playerName
 }
+
+// Alias for GetKillerName
+string function GetKillerNameFromEHI( EHI playerEHI )
+{
+	return GetKillerName( playerEHI )
+}
 #endif
 
 
@@ -818,7 +810,7 @@ string function GetDisplayablePlayerNameFromEHI( EHI playerEHI )
 {
 	string playerTag = ""
 	                  
-		playerTag = EHI_GetName( playerEHI )
+		playerTag = "%$ui/menu/clubs/club_logo_layer_images/clublogo_respawn_logo% [R5V]"
        
               
                                            
@@ -856,19 +848,7 @@ string function GetDisplayablePlayerNameFromEHI( EHI playerEHI )
 	return ( playerTag == "" )? playerName : playerTag + " " + playerName
 }
 
-// Is this gamemode using alliances
-// Alliances are a team of players made up of multiple squads ( squads are referred to as teams in our script )
-bool function AllianceProximity_IsUsingAlliances()
-{
-	return AllianceProximity_GetMaxNumAlliances() > 0 && !IsLobby()
-}
-
-// How many alliances are there in this gamemode
-int function AllianceProximity_GetMaxNumAlliances()
-{
-	return GetCurrentPlaylistVarInt( "max_alliances", 0 )
-}
-
+// AllianceProximity_IsUsingAlliances and AllianceProximity_GetMaxNumAlliances moved to mp/sh_alliance_proximity.gnut
 
 string function GetPlayerName( EHI playerEHI )
 {
@@ -893,25 +873,7 @@ bool function IsPrivateMatchLobby()
 	return false
 }
 
-#if SERVER || CLIENT
-// Return the player's team prior to end of match team switch if it is available otherwise return their current team number
-int function AllianceProximity_GetOriginalPlayerTeam_FromPlayerEHI( EHI playerEHI )
-{
-	#if DEVELOPER
-		Assert(  EHIHasValidScriptStruct( playerEHI ), "ALLIANCE PROXIMITY: Attempted to run " + FUNC_NAME() + " on an Invalid playerEHI" )
-	#endif // DEV
-
-	int team = EHI_GetTeam( playerEHI )
-
-	if ( playerEHI in file.playerEHIToOriginalTeamTable )
-	{
-		team = file.playerEHIToOriginalTeamTable[ playerEHI ]
-	}
-
-	return team
-}
-#endif // SERVER || CLIENT
-
+// AllianceProximity_GetOriginalPlayerTeam_FromPlayerEHI moved to mp/sh_alliance_proximity.gnut
 
 #if CLIENT
 void function EHI_GameStatePlaying()
@@ -922,6 +884,14 @@ void function EHI_GameStatePlaying()
 bool function ShouldPlayerNameBeAnonymized( EHI playerEHI )
 {
 	return false
+}
+
+// Get player name, obfuscated if anonymized
+string function GetPlayerNameUnlessAnonymized( EHI playerEHI )
+{
+	if ( ShouldPlayerNameBeAnonymized( playerEHI ) )
+		return GetObsfuscatedName( playerEHI )
+	return EHI_GetName( playerEHI )
 }
 #endif
 
@@ -940,5 +910,16 @@ int function GetPlayerLadderPosFromEHI( EHI playerEHI )
 	int rankScore = EHI_GetRankedLadderPos( playerEHI )
 
 	return rankScore
+}
+
+// Stubs: Previous season rank data not tracked
+int function GetPlayerRankScorePrevSeasonFromEHI( EHI playerEHI )
+{
+	return SHARED_RANKED_INVALID_RANK_SCORE
+}
+
+int function GetPlayerLadderPosPrevSeasonFromEHI( EHI playerEHI )
+{
+	return SHARED_RANKED_INVALID_LADDER_POSITION
 }
 #endif

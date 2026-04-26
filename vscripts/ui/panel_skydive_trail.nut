@@ -42,7 +42,7 @@ void function SkydiveTrailPanel_OnShow( var panel )
 	AddCallback_OnTopLevelCustomizeContextChanged( panel, SkydiveTrailPanel_Update )
 	SkydiveTrailPanel_Update( panel )
 
-	//
+	                                                            
 }
 
 
@@ -57,7 +57,7 @@ void function SkydiveTrailPanel_Update( var panel )
 {
 	var scrollPanel = Hud_GetChild( file.listPanel, "ScrollPanel" )
 
-	//
+	          
 	foreach ( int flavIdx, ItemFlavor unused in file.skydiveTrailsList )
 	{
 		var button = Hud_GetChild( scrollPanel, "GridButton" + flavIdx )
@@ -68,7 +68,7 @@ void function SkydiveTrailPanel_Update( var panel )
 	StopVideoOnChannel( file.videoChannel )
 	file.currentVideo = $""
 
-	//
+	                                  
 	if ( IsPanelActive( file.panel ) )
 	{
 		LoadoutEntry entry   = Loadout_SkydiveTrail()
@@ -81,14 +81,14 @@ void function SkydiveTrailPanel_Update( var panel )
 			CustomizeButton_UpdateAndMarkForUpdating( button, [entry], flav, PreviewSkydiveTrail, null )
 		}
 
-		RuiSetString( file.headerRui, "collected", CustomizeMenus_GetCollectedString( entry, file.skydiveTrailsList, false ) )
+		RuiSetString( file.headerRui, "collected", CustomizeMenus_GetCollectedString( entry, file.skydiveTrailsList, false, false ) )
 	}
 }
 
 
 void function SkydiveTrailPanel_OnFocusChanged( var panel, var oldFocus, var newFocus )
 {
-	if ( !IsValid( panel ) ) //
+	if ( !IsValid( panel ) )                  
 		return
 	if ( GetParentMenu( panel ) != GetActiveMenu() )
 		return
@@ -101,7 +101,7 @@ void function PreviewSkydiveTrail( ItemFlavor flav )
 {
 	asset desiredVideo = SkydiveTrail_GetVideo( flav )
 
-	if ( file.currentVideo != desiredVideo ) //
+	if ( file.currentVideo != desiredVideo )                                                
 	{
 		file.currentVideo = desiredVideo
 		StartVideoOnChannel( file.videoChannel, desiredVideo, true, 0.0 )

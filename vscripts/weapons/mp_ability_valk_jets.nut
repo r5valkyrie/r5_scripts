@@ -64,21 +64,21 @@ void function MpAbilityValkJets_Init()
 	RegisterSignal( "ValkFlightReveal" )
 	RegisterSignal( "ValkTeammateStartTracking" )
 
-	RegisterNetworkedVariable( "valkTrackingActive", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "valkTrackingActive", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 
 	#if SERVER
-		//Survival_AddCallback_PlayerFreefallBegin( ValkUlt_FreefallBegin )
-		//Survival_AddCallback_PlayerFreefallEnd( ValkUlt_FreefallEnd )
+		Survival_AddCallback_PlayerFreefallBegin( ValkUlt_FreefallBegin )
+		Survival_AddCallback_PlayerFreefallEnd( ValkUlt_FreefallEnd )
 	#endif
 	#if CLIENT
 		//RegisterNetVarBoolChangeCallback( "valkTrackingActive", OnValkTrackingChanged )
-		//AddCallback_CreatePlayerPassiveRui( Valk_CreateJetPackRui )
-		//AddCallback_DestroyPlayerPassiveRui( Valk_DestroyJetPackRui )
+		AddCallback_CreatePlayerPassiveRui( Valk_CreateJetPackRui )
+		AddCallback_DestroyPlayerPassiveRui( Valk_DestroyJetPackRui )
 		file.colorCorrection = ColorCorrection_Register( "materials/correction/launch_hud.raw_hdr" )
 	#endif
 
 	AddCallback_OnPassiveChanged( ePassives.PAS_VALK, OnPassiveChanged )
-	
+
 	PrecacheParticleSystem( VALK_AMB_EXHAUST_FP )
 	PrecacheParticleSystem( VALK_AMB_EXHAUST_3P )
 }
@@ -130,7 +130,7 @@ void function ValkTeammateStartTracking( entity valk )
 		{
 			array<entity> dummies = GetEntArrayByScriptName( FIRING_RANGE_DUMMIE_SCRIPT_NAME )
 			dummies.extend( GetEntArrayByScriptName( FIRING_RANGE_COMBAT_DUMMIE_SCRIPT_NAME ) )
-			
+
 			enemyPlayers.extend( dummies )
 		}*/
 
@@ -219,8 +219,8 @@ void function Valk_CreateJetPackRui( entity player )
 		file.jetPackRui = CreateCockpitRui( $"ui/valk_jets_meter.rpak" )
 
 		RuiTrackFloat( file.jetPackRui, "chargeFrac", player, RUI_TRACK_GLIDE_METER_FRACTION )
-		RuiTrackFloat( file.jetPackRui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
-		RuiTrackFloat( file.jetPackRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
+		RuiTrackFloat( file.jetPackRui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
+		RuiTrackFloat( file.jetPackRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "reviveEndTime" ) )
 	}
 }
 
@@ -255,10 +255,10 @@ bool function ValkThreatVisionShouldRevealEnemy( entity enemy )
 			return false
 	}
 
-                      
-                                                              
-               
-       
+
+
+
+
 
 	return true
 }
@@ -326,7 +326,7 @@ void function _ValkFlightReveal( entity victim )
 {
 	if ( !IsValid( victim ) )
 		return
-	
+
 	Signal( victim, "ValkFlightReveal" )
 
 	EndSignal( clGlobal.levelEnt, "ValkFlightReveal" )
@@ -352,34 +352,37 @@ void function _ValkFlightReveal( entity victim )
 	RuiSetBool( rui, "isChampion", isChampion )
 	RuiSetBool( rui, "isKillLeader", isKillLeader )
 
-	                        
+
 		/*if ( GameMode_IsActive( eGameModes.CONTROL ) )
 		{
 			bool isEXPLeader = GradeFlagsHas( victim, eTargetGrade.EXP_LEADER )
 			RuiSetBool( rui, "isEXPLeader", isEXPLeader )
 		}*/
-                               
 
 
-	//var fRui = FullMap_AddEnemyLocation( victim )
-	//var mRui = Minimap_AddEnemyToMinimap( victim )
+
+	var fRui = FullMap_AddEnemyLocation( victim )
+	var mRui = Minimap_AddEnemyToMinimap( victim )
 
 	OnThreadEnd (
-		function() : ( victim, rui )
+		function() : ( victim, rui, fRui, mRui )
 		{
 			RuiDestroy( rui )
+			Fullmap_RemoveRui( fRui )
+			RuiDestroy( fRui )
+			Minimap_CommonCleanup( mRui )
 		}
 	)
-                                  
+
 		while( true )
 		{
-			bool scanBlocked = true//FerroWall_BlockScan( player.EyePosition(), victim.GetWorldSpaceCenter() )
+			bool scanBlocked = false//FerroWall_BlockScan( player.EyePosition(), victim.GetWorldSpaceCenter() )
 			RuiSetBool( rui, "isVisible", !scanBlocked )
 			WaitFrame()
 		}
-      
-               
-       
+
+
+
 }
 
 void function OnValkTrackingChanged( entity player, bool new )
@@ -697,11 +700,11 @@ void function ValkStatTrackerPassiveDistance( entity valk )
 
 	//TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_PASSIVE_START, valk, valk.GetOrigin(), valk.GetTeam(), valk )
 
-	//valk.DisableWeaponTypes( WPT_MELEE )
+	valk.DisableWeaponTypes( WPT_MELEE )
 	OnThreadEnd(
 		function() : ( valk, totalDistance, curPos )
 		{
-			//valk.EnableWeaponTypes( WPT_MELEE )
+			valk.EnableWeaponTypes( WPT_MELEE )
 			//TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_PASSIVE_END, valk, valk.GetOrigin(), valk.GetTeam(), valk )
 			float distanceSinceLastCheck = (Distance( curPos, valk.GetOrigin() )) / 40
 			float distanceToAdd          = totalDistance + distanceSinceLastCheck
@@ -759,4 +762,3 @@ void function DestroyValkJumpJetEffects( entity valk )
 	file.valkToJumpJetFXs[valk].clear()
 }
 #endif // SERVER
- 

@@ -52,8 +52,6 @@ struct FollowUpStatusEffectIndexes
 	int followUpVisualsID
 }
 
-const vector UP_VECTOR = < 0, 0, 1 >
-
 struct
 {
 #if SERVER
@@ -130,7 +128,7 @@ void function OnProjectileCollision_weapon_cluster_bomb_launcher( entity project
 	}
 	else
 	{
-		PlantStickyEntity_Retail( projectile, collisionParams, ZERO_VECTOR, false, ( hitEnt.IsPlayer() || hitEnt.IsNPC() ) )
+		PlantStickyEntity( projectile, collisionParams, ZERO_VECTOR, false, ( hitEnt.IsPlayer() || hitEnt.IsNPC() ) )
 	}
 
 #if SERVER
@@ -341,7 +339,7 @@ void function ClusterBombDamageCallback( entity victim, var damageInfo )
 			float damageScale = 1.0
 			if( victim.IsPlayer() )
 			{
-				ItemFlavor victimCharacter = LoadoutSlot_GetItemFlavor( ToEHI( victim ), Loadout_CharacterClass() )
+				ItemFlavor victimCharacter = LoadoutSlot_GetItemFlavor( ToEHI( victim ), Loadout_Character() )
 				damageScale = CharacterClass_GetDamageScale( victimCharacter )
 			}
 			table< entity, int > playerData = file.clusterBombHitTable[ inflictor ]
@@ -563,4 +561,4 @@ void function TakeClusterBombWeapon( entity player )
 }
 
 
-#endif //SERVER 
+#endif //SERVER

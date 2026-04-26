@@ -1,10 +1,14 @@
 Selector Common
 
+	SelectSchedule_FallToGround
 	SelectSchedule_Flinch
+	SelectSchedule_DisplaceFromDangerousArea
 	SelectSchedule_ReactSurprised
-	SelectSchedule_LayeredBehavior
 	SelectSchedule_ReactJumpedOver
+	SelectSchedule_ChangeToDesiredStance
 	SelectSchedule_SyncedMeleeAttack
+	SelectSchedule_PressToInitiateSyncedMeleeAttack
+	SelectSchedule_LayeredBehavior
 
 Selector_End
 
@@ -18,19 +22,17 @@ Selector_End
 
 Selector Alert
 
-	SelectSchedule_PatrolRun
+	SelectSchedule_Alert
 
 Selector_End
 
 
 Selector Combat
 
-	SelectSchedule_MissileDodge
-	SelectSchedule_StrafeDodge
+	//SelectSchedule_TauntOverCapacityEnemy
+    //SelectSchedule_TauntDownedEnemy
 	SelectSchedule_MeleeAttack
-	SelectSchedule_SpecialAttack
 	SelectSchedule_ChaseEnemy
-	SelectSchedule_CombatFace
-	SelectSchedule_EngagementDistMax
+	SelectSchedule_MeleeAttackWait
 
 Selector_End

@@ -8,7 +8,7 @@ struct {
 void function CollectionEventAboutPage_Init( var menu )
 {
 	file.menu = menu
-	//
+	                         
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, CollectionEventAboutPage_OnOpen )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, CollectionEventAboutPage_OnClose )
 
@@ -22,7 +22,7 @@ void function CollectionEventAboutPage_OnOpen()
 {
 	ItemFlavor ornull activeCollectionEvent = GetActiveCollectionEvent( GetUnixTimestamp() )
 	if ( activeCollectionEvent == null )
-	return
+		return
 	expect ItemFlavor(activeCollectionEvent)
 
 	HudElem_SetRuiArg( file.infoPanel, "eventName", ItemFlavor_GetLongName( activeCollectionEvent ) )
@@ -35,15 +35,12 @@ void function CollectionEventAboutPage_OnOpen()
 
 	foreach ( int lineIdx, string line in aboutLines )
 	{
-	if ( line == "" )
-		continue
+		if ( line == "" )
+			continue
 
-	string aboutLine = "%@embedded_bullet_point%" + Localize( line )
-	HudElem_SetRuiArg( file.infoPanel, "aboutLine" + lineIdx, aboutLine )
+		string aboutLine = "%@embedded_bullet_point%" + Localize( line )
+		HudElem_SetRuiArg( file.infoPanel, "aboutLine" + lineIdx, aboutLine )
 	}
-
-	ItemFlavor backgroundItemFlav = CollectionEvent_GetMainPackFlav( activeCollectionEvent )
-	RunClientScript( "UIToClient_ItemPresentation", ItemFlavor_GetGUID( backgroundItemFlav ), -1, 1.21, false, null, false, "collection_event_ref" )
 }
 
 

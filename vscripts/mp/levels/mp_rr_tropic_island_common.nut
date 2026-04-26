@@ -5,6 +5,9 @@ const asset STORMCATCHER_GEOFIX_MODEL = $"mdl/tropics/stormcatcher_towerblock_02
 
 void function CodeCallback_PreMapInit()
 {
+	#if SERVER
+		LaserMesh_Init()
+	#endif
 	if ( IsTropicsWildlifeEnabled() )
 	{
 		TropicsWildlife_PreMapInit()
@@ -29,7 +32,6 @@ void function Tropics_MapInit_Common()
 
 #if SERVER
 	//RegisterGeoFixAsset( STORMCATCHER_GEOFIX_MODEL )
-
 	thread KillPlayersUnderMap_Thread( MAP_KILL_VOLUME_OFFSET_TROPIC_ISLAND ) //-2048
 #endif // SERVER
 

@@ -35,8 +35,8 @@ const string WAYPOINTTYPE_SCREEN = "waypointType_MarvinScreen"
 const float SLOT_MACHINE_CYCLE_LENGTH = 0.3
 
 const asset STORY_MARVIN_CSV_DIALOGUE = $"datatable/dialogue/story_marvin_dialogue.rpak"
-const asset VFX_LOT_MARVIN_DISPERSE = $"P_armor_3P_break_CP"
-const asset VFX_LOT_MARVIN_SPARK_ARM = $"P_sparks_dir_SM_LOOP"
+const asset VFX_LOT_MARVIN_DISPERSE = $"P_marvin_loot_CP"
+const asset VFX_LOT_MARVIN_SPARK_ARM = $"P_sparks_marvin_arm"
 
 #if SERVER
 const int LOOT_MARVIN_TRIGGER_RADIUS = 384
@@ -316,7 +316,7 @@ void function CreateMarvin_Loot( bool hasDetachableArm = false )
 
 	CreateMarvin( traceResults.endPos, <0, 0, 0>, null, false, hasDetachableArm )
 }
-#endif // SERVER && DEV
+#endif // SERVER && DEVELOPER
 
 
 #if SERVER && DEVELOPER
@@ -329,7 +329,7 @@ void function CreateMarvin_Story()
 
 	CreateMarvin( traceResults.endPos, <0, RandomFloat( 360.0 ), 0>, null, true, false )
 }
-#endif // SERVER && DEV
+#endif // SERVER && DEVELOPER
 
 
 #if SERVER && DEVELOPER
@@ -586,7 +586,7 @@ void function OnUseStoryMarvin_Thread( entity marvin, entity playerUser )
 #if SERVER || CLIENT
 bool function IsPlayerPathfinder( entity player )
 {
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	string characterRef  = ItemFlavor_GetHumanReadableRef( character ).tolower()
 
 	if ( characterRef != "character_pathfinder" )
@@ -969,13 +969,13 @@ void function AttemptPingNearestValidMarvinForPlayer( entity player )
 	{
 		entity marvin = allResults[i].ent
 
-		if ( !SURVIVAL_DeathFieldIsValid() )
+		if ( !SURVIVAL_DeathFieldIsValid( 0 ) )
 		{
 			nearestMarvin = marvin
 			break
 		}
 
-		if ( SURVIVAL_PosInSafeZone( marvin.GetOrigin() ) )
+		if ( SURVIVAL_PosInSafeZone( 0, marvin.GetOrigin( ) ) )
 		{
 			nearestMarvin = marvin
 			break
@@ -1289,15 +1289,15 @@ void function SlotMachineCycleThink( entity marvin, MarvinData data )
 #if CLIENT
 void function InstanceMarvinScreenCreatedWP( entity wp )
 {
-	/*entity marvin = wp.GetWaypointEntity( 0 )
+	entity marvin = wp.GetWaypointEntity( 0 )
 
 	/*if( !IsValid( marvin ) )
 	{
 		thread Thread_HandleMarvinInvalid ( wp )
 		return
-	}
+	}*/
 
-	marvin.ai.primaryWaypoint = wp*/
+	marvin.ai.primaryWaypoint = wp
 }
 
 /*void function Thread_HandleMarvinInvalid( entity wp )
@@ -1305,7 +1305,7 @@ void function InstanceMarvinScreenCreatedWP( entity wp )
 	entity marvin = wp.GetWaypointEntity( 0 )
 	while( !IsValid( marvin ) )
 	{
-		#if DEV
+		#if DEVELOPER
 			printf( "Loot Marvin has not yet replicated" )
 		#endif
 		marvin = wp.GetWaypointEntity( 0 )
@@ -1388,7 +1388,7 @@ void function TrackNearestChestScreen( entity player )
 {
 	const float MAYA_SCREEN_WIDTH = 5.686
 	const float MAYA_SCREEN_HEIGHT = 4.512
-	const asset SCREEN_RUI_ASSET = $"ui/ready_up_box.rpak"
+	const asset SCREEN_RUI_ASSET = $"ui/marvin_chest_slot_machine.rpak"
 
 	EndSignal( player, "OnDeath" )
 
@@ -1399,19 +1399,19 @@ void function TrackNearestChestScreen( entity player )
 		file.chestScreenRui = RuiCreate( SCREEN_RUI_ASSET, file.chestScreenTopo, RUI_DRAW_WORLD, 0 )
 
 	float cycleLength = GetCurrentPlaylistVarFloat( "marvin_slot_cycle_length", SLOT_MACHINE_CYCLE_LENGTH )
-	//RuiSetFloat( file.chestScreenRui, "cycleLength", cycleLength )
-	//RuiSetBool( file.chestScreenRui, "isVisible", false )
+	RuiSetFloat( file.chestScreenRui, "cycleLength", cycleLength )
+	RuiSetBool( file.chestScreenRui, "isVisible", false )
 
 	OnThreadEnd(
 		function () : ()
 		{
-			//RuiSetBool( file.chestScreenRui, "isVisible", false )
+			RuiSetBool( file.chestScreenRui, "isVisible", false )
 		}
 	)
 
 	while( true )
 	{
-		/*if ( IsValid( file.topPriorityLootMarvin ) && IsValid( file.topPriorityLootMarvin.ai.primaryWaypoint ) )
+		if ( IsValid( file.topPriorityLootMarvin ) && IsValid( file.topPriorityLootMarvin.ai.primaryWaypoint ) )
 		{
 			entity wp = file.topPriorityLootMarvin.ai.primaryWaypoint
 			RuiTopology_SetParent( file.chestScreenTopo, file.topPriorityLootMarvin, "SCREEN_CENTER" )
@@ -1431,9 +1431,9 @@ void function TrackNearestChestScreen( entity player )
 
 			RuiSetGameTime( file.chestScreenRui, "startCycleTime", wp.GetWaypointGametime( WAYPOINT_IDX_STARTTIME ) )
 		}
-		else*/
+		else
 		{
-			//RuiSetBool( file.chestScreenRui, "isVisible", false )
+			RuiSetBool( file.chestScreenRui, "isVisible", false )
 		}
 
 		WaitFrame()
@@ -1447,9 +1447,9 @@ void function TrackNearestCooldownIndicator( entity player )
 {
 	EndSignal( player, "OnDeath" )
 
-	/*if ( file.cooldownRui == null )
+	if ( file.cooldownRui == null )
 	{
-		file.cooldownRui = CreateCockpitRui( $"ui/death_protection_status.rpak", 1 )
+		file.cooldownRui = CreateCockpitRui( $"ui/wattson_ult_cooldown_timer_world.rpak", 1 )
 		RuiSetFloat3( file.cooldownRui, "worldPosOffset", <0, 0, 0> )
 		RuiSetBool( file.cooldownRui, "shouldDesaturate", true )
 	}
@@ -1493,7 +1493,7 @@ void function TrackNearestCooldownIndicator( entity player )
 		}
 
 		WaitFrame()
-	}*/
+	}
 }
 #endif
 
@@ -1534,4 +1534,4 @@ void function SetTopPriorityLootMarvin( entity player )
 		wait 0.2
 	}
 }
-#endif 
+#endif

@@ -8,8 +8,8 @@ global function DoesConversationExist
 
 global function IsForcedDialogueOnly
 global function GetAllConversationData
-global function GetIndexToConversationTable //(mk): set to 2000 in remote func
-global function GetConversationToIndexTable //(mk): set to 2000 in remote func
+global function GetIndexToConversationTable
+global function GetConversationToIndexTable
 global function GetConversationStruct
 global function GetConversationName
 global function GetConversationDebounce
@@ -26,11 +26,6 @@ global function Voices
 global function ShouldPlaySquadConversation
 
 int convIndex
-
-global const int GENERIC_PILOT	=	0
-global const int BLISK_ID		=	1
-global const int SPYGLASS_ID	=	2
-global const int GRAVES_ID		=	3
 
 global struct ConversationStruct
 {
@@ -60,9 +55,7 @@ void function DialogueShared_Init()
 		DialogueScheduleServer_Init()
 	#endif
 
-	#if HAS_GAMEMODES
 	GameStateDialog_Init()
-	#endif
 
 	Weapon_Dialogue_Init()
 }
@@ -80,7 +73,7 @@ void function RegisterConversation( string conversation, int priority, float deb
 
 	dataStruct.conversationTable[ TEAM_MILITIA ] <- []
 	dataStruct.conversationTable[ TEAM_IMC ] <- []
-	dataStruct.conversationTable[ TEAM_BOTH ] <- []
+	dataStruct.conversationTable[ TEAM_NPC_FRIENDLY_TO_PLAYERS ] <- []
 	dataStruct.priority = priority
 	dataStruct.debounceTime = debounceTime
 	dataStruct.range = range
@@ -155,14 +148,14 @@ string function Dispatch( int team, string alias )
 	switch ( team )
 	{
 		case TEAM_IMC:
-		case TEAM_BOTH:
+		case TEAM_NPC_FRIENDLY_TO_PLAYERS:
 			return "diag_imc_dispatch_" + alias
 
 		case TEAM_MILITIA:
 			return "diag_mcor_dispatch_" + alias
 	}
 
-	Assert( 0, "Unknown team " + team )
+	Assert( false, "Unknown team " + team )
 	unreachable
 }
 
@@ -171,14 +164,14 @@ array<string> function Voices( int team, string baseAlias, array<int> voiceAvail
 	switch ( team )
 	{
 		case TEAM_IMC:
-		case TEAM_BOTH:
+		case TEAM_NPC_FRIENDLY_TO_PLAYERS:
 			return AI_Dialogue_AliasAllVoices( "diag_imc_grunt", "_" + baseAlias, voiceAvailability, true )
 
 		case TEAM_MILITIA:
 			return AI_Dialogue_AliasAllVoices( "diag_mcor_grunt", "_" + baseAlias, voiceAvailability, true )
 	}
 
-	Assert( 0, "Unknown team " + team )
+	Assert( false, "Unknown team " + team )
 	unreachable
 }
 
@@ -194,7 +187,7 @@ array<string> function AI_Dialogue_AliasAllVoices( string aliasPreVoice, string 
 	int firstAvailableVoiceIndex = -1
 	foreach ( voiceIndex, available in voiceAvailability )
 	{
-		if ( available )
+		if ( available != 0 )
 		{
 			firstAvailableVoiceIndex = voiceIndex
 			break
@@ -206,7 +199,7 @@ array<string> function AI_Dialogue_AliasAllVoices( string aliasPreVoice, string 
 	for ( int voiceIndex = 0; voiceIndex < VOICE_COUNT; voiceIndex++ )
 	{
 		int useIndex = voiceIndex
-		if ( !voiceAvailability[ useIndex ] )
+		if ( voiceAvailability[ useIndex ] == 0 )
 			useIndex = firstAvailableVoiceIndex
 
 		string radioAlias = aliasPreVoice + (useIndex + 1) + aliasPostVoice
@@ -219,7 +212,7 @@ array<string> function AI_Dialogue_AliasAllVoices( string aliasPreVoice, string 
 
 bool function IsForcedDialogueOnly( entity player )
 {
-	if ( level.nv.forcedDialogueOnly )
+	if ( GetForcedDialogueOnly() )
 		return true
 
 	return player.GetForcedDialogueOnly()
@@ -236,7 +229,7 @@ bool function ShouldPlaySquadConversation( entity player, string conversationTyp
 		return false
 	}
 
-	if ( !GetGlobalNetBool( "squadConversationEnabled" ) )
+	if ( !GetGlobalNetBoolSafe( "squadConversationEnabled" ) )
 	{
 		//printt( "SquadConversationEnabled is false, not playing AI Conversation:"  + conversationType )
 		return false

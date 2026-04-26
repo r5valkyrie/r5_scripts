@@ -582,7 +582,7 @@ void function Turret_CheckForGeoIntersection( entity turretProxy )
 		vector endPos   = startPos + up // traces one unit upwards
 
 		TraceResults results = TraceHull( startPos, endPos, <-turretWidth, -turretDepth, 0>, <turretWidth, turretDepth, turretHeight - heightOffGround>, ignoreEnts, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER )
-		//DebugDrawBox( results.endPos, <-turretWidth,-turretDepth,0>, <turretWidth,turretDepth,turretHeight - heightOffGround>, COLOR_GREEN, 1, 1.0 ) //Forward Hull Cast Bounding Box
+		//DebugDrawBox( results.endPos, <-turretWidth,-turretDepth,0>, <turretWidth,turretDepth,turretHeight - heightOffGround>, <0, 255, 0>, 1, 1.0 ) //Forward Hull Cast Bounding Box
 		//PrintTraceResults( results )
 		if ( results.startSolid )
 		{
@@ -637,7 +637,7 @@ void function MountedTurretPlaceable_WaitForUse( entity turretProxy )
 		}
 	)
 
-	SetCallback_CanUseEntityCallback_Retail( turretProxy, MountedTurretPlaceable_CanUse )
+	SetCallback_CanUseEntityCallback( turretProxy, MountedTurretPlaceable_CanUse )
 
 	while( true )
 	{
@@ -1171,7 +1171,7 @@ bool function CanReclaimTurret( entity turret )
 		switch ( ent.GetScriptName() )
 		{
 			case MOUNTED_TURRET_PLACEABLE_SCRIPT_NAME:
-				SetCallback_CanUseEntityCallback_Retail( ent, MountedTurretPlaceable_CanUse )
+				SetCallback_CanUseEntityCallback( ent, MountedTurretPlaceable_CanUse )
 				AddEntityCallback_GetUseEntOverrideText( ent, MountedTurretPlaceable_UseTextOverride )
 				file.turretEligibleForRefund[ ent ] <- true
 				//thread MountedTurretPlaceable_CreateHUDMarker( ent )
@@ -1379,10 +1379,10 @@ MountedTurretPlaceablePlacementInfo function MountedTurretPlaceable_GetPlacement
 
 	if ( MOUNTED_TURRET_PLACEABLE_DEBUG_DRAW_PLACEMENT )
 	{
-		DebugDrawLine( fwdStart, fwdResults.endPos, COLOR_RED, true, 0.05 )
-		DebugDrawLine( fwdStart, fwdResults.endPos, COLOR_RED, true, 0.05 )
-		DebugDrawSphere( fwdResults.endPos, 16, COLOR_RED, true, 0.05 )
-		DebugDrawLine( fwdResults.endPos, fwdResults.endPos - MOUNTED_TURRET_PLACEABLE_PLACEMENT_TRACE_OFFSET, COLOR_RED, true, 0.05 )
+		//DebugDrawLine( fwdStart, fwdResults.endPos, <255, 0, 0>, true, 0.05 )
+		//DebugDrawLine( fwdStart, fwdResults.endPos, <255, 0, 0>, true, 0.05 )
+		//DebugDrawSphere( fwdResults.endPos, 16, <255, 0, 0>, true, 0.05 )
+		//DebugDrawLine( fwdResults.endPos, fwdResults.endPos - MOUNTED_TURRET_PLACEABLE_PLACEMENT_TRACE_OFFSET, <255, 0, 0>, true, 0.05 )
 	}
 
 
@@ -1461,7 +1461,7 @@ MountedTurretPlaceablePlacementInfo function MountedTurretPlaceable_GetPlacement
 
 			if ( MOUNTED_TURRET_PLACEABLE_DEBUG_DRAW_PLACEMENT )
 			{
-				DebugDrawLine( testPos, traceResult.endPos, COLOR_RED, true, 0.05 )
+				//DebugDrawLine( testPos, traceResult.endPos, <255, 0, 0>, true, 0.05 )
 			}
 
 			if ( traceResult.fraction == 1.0 )

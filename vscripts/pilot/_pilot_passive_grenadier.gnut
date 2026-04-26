@@ -251,13 +251,5 @@ void function _DisplayToggleThrowPowerHintForPlayer()
 }
       
 
-bool function TryCharacterButtonCommonReadyChecks( entity player )
-{
-	if ( player != GetLocalViewPlayer() )
-		return false
-	if ( player != GetLocalClientPlayer() )
-		return false
-      
-	return true
-}
+// TryCharacterButtonCommonReadyChecks defined in _weapon_utility.nut
 #endif // #if CLIENT

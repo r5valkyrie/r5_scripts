@@ -113,7 +113,7 @@ void function LootRollers_OnKilled(entity ent, var damageInfo)
 	{
 		printt(" Spawning loot in cargobot: " + loot )
 		entity lootent = SpawnGenericLoot( loot, origin, <0, 0, 0>, 1 )
-		FakePhysicsThrow( null, lootent, <RandomFloatRange(0, 360), RandomFloatRange(0, 360), RandomFloatRange(0, 360)>, -1, true)
+		FakePhysicsThrow( null, lootent, <RandomFloatRange(0, 360), RandomFloatRange(0, 360), RandomFloatRange(0, 360)>, true )
 	}
 }
 

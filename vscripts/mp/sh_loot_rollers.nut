@@ -145,7 +145,7 @@ void function Flowstate_BuildLootForDrone( entity roller, bool isMirageRoller = 
 
 		for(int j = 0; j < lootToSpawn; j++)
 		{
-			file.allLootRollers[ roller ][ i ].append( SURVIVAL_Loot_GetByTier( i, false )[RandomIntRangeInclusive(0,SURVIVAL_Loot_GetByTier( i, false ).len()-1)].ref )
+			file.allLootRollers[ roller ][ i ].append( SURVIVAL_Loot_GetByTier( i )[RandomIntRangeInclusive(0,SURVIVAL_Loot_GetByTier( i ).len()-1)].ref )
 		}
 	}
 

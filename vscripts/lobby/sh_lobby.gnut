@@ -1,6 +1,22 @@
 globalize_all_functions
 
-const string PRIVATE_MATCH_PLAYLIST = "private_match"
+global const array< asset > LOBBY_ANNIVERSARY_BALLOON_MDLS =
+[
+	$"mdl/celebration/float_balloons/wraith_float_balloon_01.rmdl",
+ 	$"mdl/celebration/float_balloons/wattson_float_balloon_01.rmdl",
+ 	$"mdl/celebration/float_balloons/revenant_float_balloon_01.rmdl",
+ 	$"mdl/celebration/float_balloons/octane_float_balloon_01.rmdl",
+ 	$"mdl/celebration/float_balloons/mirage_float_balloon_01.rmdl",
+ 	$"mdl/celebration/float_balloons/loba_float_balloon_01.rmdl",
+ 	$"mdl/celebration/float_balloons/ash_float_balloon_01.rmdl",
+ 	$"mdl/celebration/float_balloons/bloodhound_float_balloon_01.rmdl",
+ 	$"mdl/celebration/float_balloons/lifeline_float_balloon_01.rmdl"
+]
+
+global const string PRIVATE_MATCH_PLAYLIST = "private_match"
+global const int    PRIVATE_MATCH_MAX_PARTY_SIZE = 1
+
+global const int TRAINING_REQUIRED_BELOW_LEVEL_0_BASE = 14
 
 array<string> function GetPrivateMatchModes()
 {
@@ -176,24 +192,6 @@ bool function ModeSettings_RequiresAI( string modeName )
 	return false
 }
 
-#if !CLIENT
-string function PrivateMatch_GetSelectedMap()
-{
-	var mapIndex = level.ui.privatematch_map
-	string mapName = GetPrivateMatchMapForIndex( expect int(mapIndex) )
-
-	return mapName
-}
-
-string function PrivateMatch_GetSelectedMode()
-{
-	var modeIndex = level.ui.privatematch_mode
-	string modeName = GetPrivateMatchModeForIndex( expect int(modeIndex) )
-
-	return modeName
-}
-#endif // CLIENT
-
 bool function PrivateMatch_IsValidMapModeCombo( string mapName, string modeName )
 {
 	array<string> mapsForMode = GetPrivateMatchMapsForMode( modeName )
@@ -201,34 +199,8 @@ bool function PrivateMatch_IsValidMapModeCombo( string mapName, string modeName 
 	return mapsForMode.contains( mapName )
 }
 
-
-int function Player_GetMaxMatchmakingDelay( entity player )
-{
-	//	return GetCurrentPlaylistVarInt( "matchmaking_delay", 0 )
-	return 300
-}
-
-int function Player_GetRemainingMatchmakingDelay( entity player )
-{
-	int lastLeaveTime = player.GetPersistentVarAsInt( PERSISTENCE_LAST_LEAVE_TIME )
-
-	return Player_GetMaxMatchmakingDelay( player ) - (GetCurrentTimeForPersistence() - lastLeaveTime)
-}
-
-int function Player_NextAvailableMatchmakingTime( entity player )
-{
-	int lastLeaveTime = player.GetPersistentVarAsInt( PERSISTENCE_LAST_LEAVE_TIME )
-	if ( GetCurrentTimeForPersistence() - lastLeaveTime < Player_GetMaxMatchmakingDelay( player ) )
-	{
-		return Player_GetRemainingMatchmakingDelay(	player )
-	}
-
-	return 0
-}
-
 int function GetCurrentTimeForPersistence()
 {
 	// Returns the unix timestap offset to the timezone we want to use
 	return GetUnixTimestamp() + DAILY_RESET_TIME_ZONE_OFFSET * SECONDS_PER_HOUR
 }
-

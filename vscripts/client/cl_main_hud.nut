@@ -4,49 +4,52 @@ global function ClMainHud_Init
 
 global function InitChatHUD
 global function UpdateChatHUDVisibility
+global function SetChatHUDPosition
+
+global function MainHud_TurnOff_RUI
 
 global function MainHud_AddClient
 global function SetCrosshairPriorityState
 global function ClearCrosshairPriority
 global function UpdateMainHudVisibility
-global function ServerCallback_Announcement
 global function ClientCodeCallback_ControllerModeChanged
 global function UpdateMainHudFromCEFlags
 global function UpdatePlayerStatusCounts
 global function UpdateCoreFX
 global function InitCrosshair
 global function GetHudStatus
-global function HideChat
-global function ShowChat
+global function DEV_DebugHudStatusThread
+global function ShouldOnlyShowMinimap
+global function SetAllHudVisExceptMinimap
+
+global function ServerCallback_SetTacticalHudVis
+global function ServerCallback_SetUltimateHudVis
+global function ServerCallback_SetDpadMenuVis
+
+#if DEVELOPER
+global function Dev_SetDefaultHUD
+#endif
 
 global function IsWatchingReplay
 
-//Chat 
-global function mute
-global function isMuted
-
 global const MAX_ACTIVE_TRAPS_DISPLAYED = 5
-global const VGUI_CLOSED                = 0
-global const VGUI_CLOSING               = 1
-global const VGUI_OPEN                  = 2
-global const VGUI_OPENING               = 3
+global const VGUI_CLOSED = 0
+global const VGUI_CLOSING = 1
+global const VGUI_OPEN = 2
+global const VGUI_OPENING = 3
 
-global const TEAM_ICON_IMC              = $"ui/scoreboard_imc_logo"
-global const TEAM_ICON_MILITIA          = $"ui/scoreboard_mcorp_logo"
-
-global bool isChatShow = false
-global string chatText = ""
+global const TEAM_ICON_IMC = $"ui/scoreboard_imc_logo"
+global const TEAM_ICON_MILITIA = $"ui/scoreboard_mcorp_logo"
 
 const float OFFHAND_ALERT_ICON_ANIMRATE = 0.35
-const float OFFHAND_ALERT_ICON_SCALE    = 4.5
+const float OFFHAND_ALERT_ICON_SCALE = 4.5
 
 const bool ALWAYS_SHOW_BOOST_MOBILITY_BAR = true
-const float CROSSHAIR_ADS_ENTER_THRESHOLD = 0.15
-const float CROSSHAIR_ADS_EXIT_THRESHOLD  = 0.05
-const float CROSSHAIR_ADS_HIDE_DELAY      = 0.04
 
-global string CHAT_TEXT
-struct HudVisibilityStatus
+global const int DEFAULT_TEXTCHAT_VERTICAL_OFFSET = -512
+
+
+global struct HudVisibilityStatus
 {
 	bool mainHud
 	bool permanentHud
@@ -60,15 +63,12 @@ struct
 
 	int iconIdx = 0
 
-	var  rodeoRUI //Primarily because cl_rodeo_titan needs to update the rodeo rui
+	var  rodeoRUI
 	bool trackingDoF = false
-	bool adsWatcherRunning = false
-	bool crosshairAdsActive = false
-	float crosshairAdsHideStartTime = -1.0
-	
-	bool hideChat = false
-	
-	bool muted = false	
+	bool onlyShowMinimap = false
+
+	bool hasInitChatHud = false
+	int chatVerticalOffset = DEFAULT_TEXTCHAT_VERTICAL_OFFSET
 } file
 
 void function ClMainHud_Init()
@@ -79,7 +79,6 @@ void function ClMainHud_Init()
 	PrecacheHUDMaterial( TEAM_ICON_IMC )
 	PrecacheHUDMaterial( TEAM_ICON_MILITIA )
 
-	RegisterSignal( "UpdateTitanCounts" )
 	RegisterSignal( "MainHud_TurnOn" )
 	RegisterSignal( "MainHud_TurnOff" )
 	RegisterSignal( "UpdateWeapons" )
@@ -99,13 +98,12 @@ void function ClMainHud_Init()
 	RegisterSignal( "StopBossIntro" )
 	RegisterSignal( "ClearDoF" )
 
-	AddCreateCallback( "titan_cockpit", CockpitHudInit )
-	PrecacheParticleSystem($"P_player_boost_screen")
-	
-	RegisterServerVarChangeCallback( "gameState", UpdateMainHudFromGameState )
+	AddCreateCallback( "titan_cockpit", HudInit )
+
+	AddCallback_OnGameStateChanged( UpdateMainHudFromGameState )
 	AddCallback_OnPlayerLifeStateChanged( UpdateMainHudFromLifeState )
-	
-	RegisterServerVarChangeCallback( "minimapState", UpdateMinimapVisibility )
+
+	AddOnSpectatorUiStateChanged( OnSpectatorUiStateChanged )
 
 	AddCinematicEventFlagChangedCallback( CE_FLAG_EMBARK, CinematicEventUpdateDoF )
 	AddCinematicEventFlagChangedCallback( CE_FLAG_EXECUTION, CinematicEventUpdateDoF )
@@ -123,51 +121,61 @@ void function ClMainHud_Init()
 	AddCallback_OnSettingsUpdated( UpdateAccessibilityChatHintEnabledCache )
 	UpdateShowButtonHintsConvarCache()
 	UpdateAccessibilityChatHintEnabledCache()
+
+
+	if ( !GetConVarBool( "toggle_on_jump_to_deactivate_changed" ) )
+	{
+		SetConVarBool( "toggle_on_jump_to_deactivate", IsControllerModeActive() ? true : false )
+		SetConVarBool( "toggle_on_jump_to_deactivate_changed", false )
+	}
 }
 
 
 void function MainHud_AddClient( entity player )
 {
-	player.cv.burnCardAnnouncementActive <- false
-	player.cv.burnCardAnnouncementQueue <- []
-
 	clGlobal.empScreenEffect = Hud.HudElement( "EMPScreenFX" )
 
 	thread ClientHudInit( player )
 }
 
-void function CockpitHudInit( entity cockpit )
+
+void function HudInit( entity cockpit )
 {
 	entity player = GetLocalViewPlayer()
-
-	asset cockpitModelName = cockpit.GetModelName()
-	if ( IsHumanCockpitModelName( cockpitModelName ) )
-	{
-		thread PilotMainHud( cockpit, player )
-		cockpit.SetCaptureScreenBeforeViewmodels( true )
-	}
-	else
-	{
-		cockpit.SetCaptureScreenBeforeViewmodels( false )
-	}
+	thread MainHUD( cockpit, player )
+	cockpit.SetCaptureScreenBeforeViewmodels( true )
 }
 
-void function PilotMainHud( entity cockpit, entity player )
-{
-	entity mainVGUI = Create_Hud( "vgui_fullscreen_pilot", cockpit, player )
-	cockpit.e.mainVGUI = mainVGUI
-	local panel = mainVGUI.s.panel
 
-	table warpSettings = expect table( mainVGUI.s.warpSettings )
-	panel.WarpGlobalSettings( expect float( warpSettings.xWarp ), 0, expect float( warpSettings.yWarp ), 0, expect float( warpSettings.viewDist ) )
-	panel.WarpEnable()
-	mainVGUI.s.enabledState <- VGUI_CLOSED
-	thread MainHud_TurnOff_RUI( true )
+void function MainHUD( entity cockpit, entity player )
+{
+	thread MainHud_TurnOff_RUI( cockpit, true )
 
 	HideFriendlyIndicatorAndCrosshairNames()
 
 	cockpit.s.coreFXHandle <- null
 	cockpit.s.pilotDamageAmpFXHandle <- null
+
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
 
 	UpdateMainHudVisibility( player )
 
@@ -183,7 +191,7 @@ void function PilotMainHud( entity cockpit, entity player )
 
 	cockpit.WaitSignal( "OnDestroy" )
 
-	mainVGUI.Destroy()
+
 }
 
 
@@ -222,12 +230,12 @@ void function UpdatePilotDamageAmpFX( entity player )
 
 	if ( cockpit.s.pilotDamageAmpFXHandle && EffectDoesExist( cockpit.s.pilotDamageAmpFXHandle ) )
 	{
-		EffectStop( cockpit.s.pilotDamageAmpFXHandle, false, true ) // stop particles, play end cap
+		EffectStop( cockpit.s.pilotDamageAmpFXHandle, false, true )
 	}
 
-	if ( StatusEffect_GetSeverity( player, eStatusEffect.damageAmpFXOnly ) > 0 )
+	if ( StatusEffect_HasSeverity( player, eStatusEffect.damageAmpFXOnly ) )
 	{
-		cockpit.s.pilotDamageAmpFXHandle = StartParticleEffectOnEntity( cockpit, GetParticleSystemIndex( $"P_core_DMG_boost_screen" ), FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
+		cockpit.s.pilotDamageAmpFXHandle = StartParticleEffectOnEntity( cockpit, GetParticleSystemIndex( $"P_core_DMG_boost_screen" ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
 	}
 }
 
@@ -249,13 +257,13 @@ void function UpdateTitanDamageAmpFX( entity player )
 
 	if ( cockpit.s.titanDamageAmpFXHandle && EffectDoesExist( cockpit.s.titanDamageAmpFXHandle ) )
 	{
-		EffectStop( cockpit.s.titanDamageAmpFXHandle, false, true ) // stop particles, play end cap
+		EffectStop( cockpit.s.titanDamageAmpFXHandle, false, true )
 	}
 
 	entity soul = player.GetTitanSoul()
-	if ( IsValid( soul ) && (StatusEffect_GetSeverity( soul, eStatusEffect.damageAmpFXOnly ) + StatusEffect_GetSeverity( soul, eStatusEffect.titan_damage_amp )) > 0 )
+	if ( IsValid( soul ) && ( StatusEffect_GetSeverity( soul, eStatusEffect.damageAmpFXOnly ) + StatusEffect_GetSeverity( soul, eStatusEffect.titan_damage_amp ) ) > 0 )
 	{
-		cockpit.s.titanDamageAmpFXHandle = StartParticleEffectOnEntity( cockpit, GetParticleSystemIndex( $"P_core_DMG_boost_screen" ), FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
+		cockpit.s.titanDamageAmpFXHandle = StartParticleEffectOnEntity( cockpit, GetParticleSystemIndex( $"P_core_DMG_boost_screen" ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
 	}
 }
 
@@ -314,7 +322,7 @@ void function UpdateCoreFX( entity player )
 
 	if ( cockpit.s.coreFXHandle && EffectDoesExist( cockpit.s.coreFXHandle ) )
 	{
-		EffectStop( cockpit.s.coreFXHandle, false, true ) // stop particles, play end cap
+		EffectStop( cockpit.s.coreFXHandle, false, true )
 	}
 }
 
@@ -366,13 +374,36 @@ void function UpdateMinimapVisibility()
 }
 
 
+void function OnSpectatorUiStateChanged( int newState )
+{
+	if ( GetLocalClientPlayer().GetTeam() == TEAM_SPECTATOR )
+	{
+		/*if ( newState == SPEC_UI_STATE_SHOW_ONLY_MINIMAP )
+		{
+			SetAllHudVisExceptMinimap( false )
+			file.onlyShowMinimap = true
+		}
+		else*/
+		{
+			SetAllHudVisExceptMinimap( true )
+			file.onlyShowMinimap = false
+		}
+	}
+}
+
+
+bool function ShouldOnlyShowMinimap()
+{
+	return file.onlyShowMinimap
+}
+
+
 void function UpdatePlayerStatusCounts()
 {
-	if ( !GetCurrentPlaylistVarInt( "hud_score_enabled", 1 ) )
+	if ( GetCurrentPlaylistVarInt( "hud_score_enabled", 1 ) == 0 )
 		return
 
-	clGlobal.levelEnt.Signal( "UpdatePlayerStatusCounts" ) //
-	clGlobal.levelEnt.Signal( "UpdateTitanCounts" ) //
+	clGlobal.levelEnt.Signal( "UpdatePlayerStatusCounts" )
 }
 
 
@@ -382,10 +413,12 @@ void function UpdateMainHudFromCEFlags( entity player )
 }
 
 
-void function UpdateMainHudFromGameState()
+void function UpdateMainHudFromGameState( int newVal )
 {
 	entity player = GetLocalViewPlayer()
-	UpdateMainHudVisibility( player, 1.0 )
+
+	if ( IsValid( player ) )
+		UpdateMainHudVisibility( player, 1.0 )
 }
 
 
@@ -395,17 +428,23 @@ void function UpdateMainHudFromLifeState( entity player, int oldLifeState, int n
 		return
 
 	UpdateMainHudVisibility( player, 1.0 )
+
+	if ( IsSpectating() && !IsAlive( player ) || IsAlive( player ) )
+	{
+
+		RefreshUnitframesForPlayer( player )
+	}
 }
 
 
 void function UpdateMainHudVisibility( entity player, float duration = 0.0 )
 {
-	int ceFlags                   = player.GetCinematicEventFlags()
+	int ceFlags = player.GetCinematicEventFlags()
 
-	HudVisibilityStatus hudStatus 	= GetHudStatus( player )
-	bool shouldBeVisible          	= hudStatus.mainHud
-	bool shouldBeVisiblePermanent 	= hudStatus.permanentHud
-	bool shouldBeVisibleTargetInfo	= hudStatus.targetInfoHud
+	HudVisibilityStatus hudStatus  = GetHudStatus( player )
+	bool shouldBeVisible           = hudStatus.mainHud
+	bool shouldBeVisiblePermanent  = hudStatus.permanentHud
+	bool shouldBeVisibleTargetInfo = hudStatus.targetInfoHud
 
 	if ( shouldBeVisiblePermanent )
 		ShowPermanentHudTopo()
@@ -417,46 +456,55 @@ void function UpdateMainHudVisibility( entity player, float duration = 0.0 )
 	else
 		HideFriendlyIndicatorAndCrosshairNames()
 
+	if ( ShouldOnlyShowMinimap() )
+	{
+		SetAllHudVisExceptMinimap( false )
+		return
+	}
+
 	entity cockpit = player.GetCockpit()
 	if ( !cockpit )
 		return
 
-	entity mainVGUI = cockpit.e.mainVGUI
-	if ( !mainVGUI )
-		return
 
-	bool isVisible = (mainVGUI.s.enabledState == VGUI_OPEN) || (mainVGUI.s.enabledState == VGUI_OPENING)
-	bool hideHudInstantly = ( (ceFlags & CE_FLAG_HIDE_MAIN_HUD_INSTANT) > 0 ) || !isVisible
-		
+
+
+
+
+
+
+	bool isVisible        = cockpit.e.hudVisible
+	bool hideHudInstantly = true
+
 	if ( !shouldBeVisible )
-		thread MainHud_TurnOff_RUI( hideHudInstantly )
+		thread MainHud_TurnOff_RUI( cockpit, hideHudInstantly )
 	else
-		thread MainHud_TurnOn_RUI()
+		thread MainHud_TurnOn_RUI( cockpit )
 
-	if ( isVisible && !shouldBeVisible )
-	{
-		table warpSettings = expect table( mainVGUI.s.warpSettings )
-		if ( duration <= 0 )
-		{
-			duration = 0.0
-			if ( ceFlags & CE_FLAG_EMBARK )
-				duration = 1.0
-			else if ( ceFlags & CE_FLAG_DISEMBARK )
-				duration = 0.0
-		}
 
-		thread MainHud_TurnOff( mainVGUI, duration, expect float( warpSettings.xWarp ), expect float( warpSettings.xScale ), expect float( warpSettings.yWarp ), expect float( warpSettings.yScale ), expect float( warpSettings.viewDist ) )
-	}
-	else if ( !isVisible && shouldBeVisible )
-	{
-		//printt( "turn on" )
-		table warpSettings = expect table( mainVGUI.s.warpSettings )
 
-		if ( duration <= 0 )
-			duration = 1.0
 
-		thread MainHud_TurnOn( mainVGUI, duration, expect float( warpSettings.xWarp ), expect float( warpSettings.xScale ), expect float( warpSettings.yWarp ), expect float( warpSettings.yScale ), expect float( warpSettings.viewDist ) )
-	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	if ( shouldBeVisibleTargetInfo )
 		ShowTargetInfoHudTopo()
@@ -478,12 +526,12 @@ void function MainHud_TurnOn( entity vgui, float duration, float xWarp, float xS
 
 	vgui.s.enabledState = VGUI_OPENING
 
-	//vgui.s.panel.WarpGlobalSettings( xWarp, xScale, yWarp, yScale, viewDist )
+
 
 	if ( !IsWatchingReplay() )
 	{
 		vgui.s.panel.WarpGlobalSettings( xWarp, 0, yWarp, 0, viewDist )
-		//vgui.SetSize( vgui.s.baseSize[0] * 0.001, vgui.s.baseSize[1] * 0.001 )
+
 
 		float xTimeScale = 0
 		float yTimeScale = 0
@@ -494,26 +542,29 @@ void function MainHud_TurnOn( entity vgui, float duration, float xWarp, float xS
 			xTimeScale = expect float( Anim_EaseIn( GraphCapped( Time() - startTime, 0.0, duration / 2, 0.0, 1.0 ) ) )
 			yTimeScale = expect float( Anim_EaseIn( GraphCapped( Time() - startTime, duration / 4, duration, 0.01, 1.0 ) ) )
 
-			//vector scaledSize = <vgui.s.baseSize[0] * xTimeScale, vgui.s.baseSize[1] * yTimeScale, 0>
-			//vgui.SetAttachOffsetOrigin( vgui.s.baseOrigin )
-			//vgui.SetSize( scaledSize.x, scaleSize.y )
+
+
+
 			vgui.s.panel.WarpGlobalSettings( xWarp, xScale * xTimeScale, yWarp, yScale * yTimeScale, viewDist )
 			WaitFrame()
 		}
 	}
 
-	//vgui.SetSize( vgui.s.baseSize[0], vgui.s.baseSize[1] )
+
 	vgui.s.panel.WarpGlobalSettings( xWarp, xScale, yWarp, yScale, viewDist )
 	vgui.s.enabledState = VGUI_OPEN
 }
 
-void function MainHud_TurnOn_RUI( bool instant = false )
+
+void function MainHud_TurnOn_RUI( entity cockpit, bool instant = false )
 {
 	clGlobal.levelEnt.Signal( "MainHud_TurnOn" )
 	clGlobal.levelEnt.EndSignal( "MainHud_TurnOn" )
 	clGlobal.levelEnt.EndSignal( "MainHud_TurnOff" )
 
-	UpdateFullscreenTopology( clGlobal.topoFullscreenHud, true, true )
+	UpdateFullscreenTopology( clGlobal.topoFullscreenHud, true )
+
+	cockpit.e.hudVisible = true
 }
 
 
@@ -531,7 +582,7 @@ void function MainHud_TurnOff( entity vgui, float duration, float xWarp, float x
 	vgui.s.enabledState = VGUI_CLOSING
 
 	vgui.s.panel.WarpGlobalSettings( xWarp, xScale, yWarp, yScale, viewDist )
-	//vgui.SetSize( vgui.s.baseSize[0], vgui.s.baseSize[1] )
+
 
 	float xTimeScale = 1.0
 	float yTimeScale = 1.0
@@ -542,19 +593,19 @@ void function MainHud_TurnOff( entity vgui, float duration, float xWarp, float x
 		xTimeScale = expect float( Anim_EaseOut( GraphCapped( Time() - startTime, duration * 0.1, duration, 1.0, 0.0 ) ) )
 		yTimeScale = expect float( Anim_EaseOut( GraphCapped( Time() - startTime, 0.0, duration * 0.5, 1.0, 0.01 ) ) )
 
-		//vgui.SetSize( vgui.s.baseSize[0] * xTimeScale, vgui.s.baseSize[1] * yTimeScale )
+
 		vgui.s.panel.WarpGlobalSettings( xWarp, xScale * xTimeScale, yWarp, yScale * yTimeScale, viewDist )
 		WaitFrame()
 	}
 
-	//vgui.SetSize( vgui.s.baseSize[0] * 0.001, vgui.s.baseSize[1] * 0.001 )
+
 	vgui.s.panel.WarpGlobalSettings( xWarp, 0, yWarp, 0, viewDist )
 
 	vgui.s.enabledState = VGUI_CLOSED
 }
 
 
-void function MainHud_TurnOff_RUI( bool instant = false )
+void function MainHud_TurnOff_RUI( entity cockpit, bool instant = false )
 {
 	clGlobal.levelEnt.Signal( "MainHud_TurnOff" )
 	clGlobal.levelEnt.EndSignal( "MainHud_TurnOff" )
@@ -563,38 +614,7 @@ void function MainHud_TurnOff_RUI( bool instant = false )
 	UISize screenSize              = GetScreenSize()
 	UISize scaledVirtualScreenSize = GetScaledVirtualScreenSize( GetCurrentVirtualScreenSize( true ), GetScreenSize() )
 
-	if ( !instant )
-	{
-		array<float> flickerTimes = [ 0.025, 0.035, 0.035, 0.035, 0.215, 0.23 ]
-		int flickerIndex          = 0
-		bool visible              = true
-
-		float startTime = Time()
-		float endTime   = startTime + flickerTimes[ flickerTimes.len() - 1 ]
-
-		while ( true )
-		{
-			float time = Time()
-
-			if ( time >= endTime )
-				break
-
-			float elapsedTime = time - startTime
-
-			if ( flickerIndex < flickerTimes.len() && elapsedTime > flickerTimes[ flickerIndex ] )
-			{
-				visible = !visible
-				flickerIndex++
-			}
-
-			int width  = visible ? scaledVirtualScreenSize.width : 0
-			int height = visible ? scaledVirtualScreenSize.height : 0
-			RuiTopology_UpdatePos( clGlobal.topoFullscreenHud, <0, 0, 0>, <width, 0, 0>, <0, height, 0> )
-
-			WaitFrame()
-		}
-	}
-
+	cockpit.e.hudVisible = false
 	RuiTopology_UpdatePos( clGlobal.topoFullscreenHud, <0, 0, 0>, <0, 0, 0>, <0, 0, 0> )
 }
 
@@ -602,12 +622,54 @@ void function MainHud_TurnOff_RUI( bool instant = false )
 void function HidePermanentHudTopo()
 {
 	RuiTopology_UpdatePos( clGlobal.topoFullscreenHudPermanent, <0, 0, 0>, <0, 0, 0>, <0, 0, 0> )
+
+	HUD_TogglePermanentHudsVisibility( false )
 }
 
 
 void function ShowPermanentHudTopo()
 {
-	UpdateFullscreenTopology( clGlobal.topoFullscreenHudPermanent, true, true )
+	UpdateFullscreenTopology( clGlobal.topoFullscreenHudPermanent, true )
+
+	HUD_TogglePermanentHudsVisibility( true )
+}
+
+
+void function HUD_TogglePermanentHudsVisibility( bool isVisible )
+{
+	var ultimateRui = GetUltimateRui()
+	var pilotRui = GetPilotRui()
+	var dpadMenuRui = GetDpadMenuRui()
+	var weaponRui = GetWeaponRui()
+	var tacticalRui = GetTacticalRui()
+	var compassRui = GetTacticalRui()
+	var gamestateRui = ClGameState_GetRui()
+
+	if ( ultimateRui != null )
+		RuiSetBool( ultimateRui, "isVisible", isVisible )
+
+	if ( pilotRui != null )
+		RuiSetBool( pilotRui, "isVisible", isVisible )
+
+	if ( dpadMenuRui != null )
+		RuiSetBool( dpadMenuRui, "isVisible", isVisible )
+
+	if ( weaponRui != null )
+		RuiSetBool( weaponRui, "isVisible", isVisible )
+
+	if ( tacticalRui != null )
+		RuiSetBool( tacticalRui, "isVisible", isVisible )
+
+	if ( compassRui != null )
+		RuiSetBool( compassRui, "isVisible", isVisible )
+
+	if ( gamestateRui != null )
+		RuiSetBool( gamestateRui, "isVisible", isVisible )
+
+	foreach ( unitFrame in GetTeamUnitFrames() )
+	{
+		RuiSetBool( unitFrame.rui, "isVisible", isVisible )
+	}
 }
 
 void function HideTargetInfoHudTopo()
@@ -624,22 +686,21 @@ void function ShowTargetInfoHudTopo()
 
 void function InitCrosshair()
 {
-	// The number of priority levels should not get huge. Will depend on how many different places in script want control at the same time.
-	// All menus for example should show and clear from one place to avoid unneccessary priority levels.
+
+
 	file.crosshairPriorityOrder.append( crosshairPriorityLevel.ROUND_WINNING_KILL_REPLAY )
 	file.crosshairPriorityOrder.append( crosshairPriorityLevel.MENU )
 	file.crosshairPriorityOrder.append( crosshairPriorityLevel.PREMATCH )
-	file.crosshairPriorityOrder.append( crosshairPriorityLevel.ADS )
 	file.crosshairPriorityOrder.append( crosshairPriorityLevel.TITANHUD )
+	file.crosshairPriorityOrder.append( crosshairPriorityLevel.POSTMATCH )
 	file.crosshairPriorityOrder.append( crosshairPriorityLevel.DEFAULT )
 
 	foreach ( priority in file.crosshairPriorityOrder )
 		file.crosshairPriorityLevel[priority] <- null
 
-	// Fallback default
+
 	file.crosshairPriorityLevel[crosshairPriorityLevel.DEFAULT] = CROSSHAIR_STATE_SHOW_ALL
 	UpdateCrosshairState()
-	StartCrosshairAdsWatcher()
 }
 
 
@@ -677,111 +738,18 @@ void function ClearCrosshairPriority( int priority )
 }
 
 
-void function StartCrosshairAdsWatcher()
-{
-	if ( file.adsWatcherRunning )
-		return
-
-	file.adsWatcherRunning = true
-	thread CrosshairAdsWatcher()
-}
-
-
-void function CrosshairAdsWatcher()
-{
-	OnThreadEnd(
-		function() : ()
-		{
-			if ( file.crosshairAdsActive )
-			{
-				ClearCrosshairPriority( crosshairPriorityLevel.ADS )
-				file.crosshairAdsActive = false
-			}
-			file.crosshairAdsHideStartTime = -1.0
-			file.adsWatcherRunning = false
-		}
-	)
-
-	while ( true )
-	{
-		entity player = GetLocalViewPlayer()
-		bool shouldHide = ShouldHideCrosshairForADS( player )
-
-		if ( shouldHide )
-		{
-			if ( file.crosshairAdsActive )
-			{
-				file.crosshairAdsHideStartTime = -1.0
-			}
-			else
-			{
-				if ( file.crosshairAdsHideStartTime < 0.0 )
-					file.crosshairAdsHideStartTime = Time()
-
-				if ( Time() - file.crosshairAdsHideStartTime >= CROSSHAIR_ADS_HIDE_DELAY )
-				{
-					SetCrosshairPriorityState( crosshairPriorityLevel.ADS, CROSSHAIR_STATE_HIDE_ALL )
-					file.crosshairAdsActive = true
-					file.crosshairAdsHideStartTime = -1.0
-				}
-			}
-		}
-		else
-		{
-			file.crosshairAdsHideStartTime = -1.0
-			if ( file.crosshairAdsActive )
-			{
-				ClearCrosshairPriority( crosshairPriorityLevel.ADS )
-				file.crosshairAdsActive = false
-			}
-		}
-
-		WaitFrame()
-	}
-}
-
-
-bool function ShouldHideCrosshairForADS( entity player )
-{
-	if ( !IsValid( player ) )
-		return false
-
-	if ( player.IsTitan() )
-		return false
-
-	if ( !player.IsPlayer() )
-		return false
-
-	if ( !IsAlive( player ) )
-		return false
-
-	float adsFraction = player.GetAdsFraction()
-	float threshold = file.crosshairAdsActive ? CROSSHAIR_ADS_EXIT_THRESHOLD : CROSSHAIR_ADS_ENTER_THRESHOLD
-	return adsFraction >= threshold
-}
-
-
-void function ServerCallback_Announcement( int titleStringID, int subTextStringID = -1 )
-{
-	entity player = GetLocalViewPlayer()
-
-	string subTextString = ""
-	if ( subTextStringID != -1 )
-		subTextString = GetStringFromID( subTextStringID )
-
-	AnnouncementData announcement = Announcement_Create( GetStringFromID( titleStringID ) )
-	Announcement_SetSubText( announcement, subTextString )
-	Announcement_SetHideOnDeath( announcement, false )
-
-	AnnouncementFromClass( player, announcement )
-}
-
-
 void function ClientCodeCallback_ControllerModeChanged( bool controllerModeEnabled )
 {
 	entity player = GetLocalClientPlayer()
 	if ( IsValid( player ) )
 		player.Signal( "ControllerModeChanged" )
+
+
+
+
+	if ( PlayerHasPassive( player, ePassives.PAS_VALK ) )
+
+		UpdateAbilityToggleOrHoldBasedOnInput()
 }
 
 
@@ -800,21 +768,37 @@ void function ClientHudInit( entity player )
 {
 	Assert( player == GetLocalClientPlayer() )
 
-	#if DEVELOPER
+#if DEVELOPER
 		HudElement( "Dev_Info1" ).Hide()
 		HudElement( "Dev_Info2" ).Hide()
 		HudElement( "Dev_Info3" ).Hide()
+		{
+			if ( IsTestMap() && !IsPVEMode() )
 			{
-				if ( IsTestMap() )
-				{
-					var elem = HudElement( "Dev_Info3" )
-					//Hud_SetText( elem, "Map is in development! Progress: [######################] 100%" )
-					Hud_SetText( elem, "Test Map" )
-					Hud_Show( elem )
-				}
+				var elem = HudElement( "Dev_Info3" )
+				Hud_SetText( elem, "Test Map" )
+				Hud_Show( elem )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 			}
-	#endif //DEVELOPER
+		}
+#endif
 }
+
 
 void function CinematicEventUpdateDoF( entity player )
 {
@@ -823,14 +807,14 @@ void function CinematicEventUpdateDoF( entity player )
 
 	if ( ShouldHaveFarDoF( player ) )
 	{
-		// DoF_LerpFarDepth( 1000, 1500, 0.5 )
+
 		if ( !file.trackingDoF )
 			thread TrackDoF( player )
 	}
 	else
 	{
 		player.Signal( "ClearDoF" )
-		// DoF_LerpFarDepthToDefault( 1.0 )
+
 	}
 }
 
@@ -852,9 +836,9 @@ void function TrackDoF( entity player )
 
 	float tick = 0.25
 
-	while ( 1 )
+	while ( true )
 	{
-		float playerDist    = Distance2D( player.CameraPosition(), player.GetOrigin() )
+		float playerDist    = Distance( player.CameraPosition(), player.GetOrigin() )
 		float distToCamNear = playerDist
 		float distToCamFar  = distToCamNear
 
@@ -865,17 +849,24 @@ void function TrackDoF( entity player )
 			target = player.GetObserverTarget()
 		}
 
-		if ( !IsValid( target ) && player.ContextAction_IsMeleeExecutionTarget() )
+		if ( !IsValid( target ) && player.ContextAction_IsMeleeExecution() )
 		{
-			entity targetParent = player.GetParent()
-			if ( IsValid( targetParent ) )
-				target = targetParent
+			if( player.ContextAction_IsMeleeExecutionAttacker() )
+			{
+				target = player
+			}
+			else
+			{
+				entity targetParent = player.GetParent()
+				if ( IsValid( targetParent ) )
+					target = targetParent
+			}
 		}
 
-		if ( IsValid( target ) && target != player )
+		if ( IsValid( target ) && ( target != player || player.ContextAction_IsMeleeExecution() ) )
 		{
 			float targetDist = Distance( player.CameraPosition(), target.EyePosition() )
-			distToCamFar = max( playerDist, targetDist )
+			distToCamFar  = max( playerDist, targetDist )
 			distToCamNear = min( playerDist, targetDist )
 		}
 
@@ -904,11 +895,49 @@ bool function ShouldHaveFarDoF( entity player )
 {
 	int ceFlags = player.GetCinematicEventFlags()
 
-	if ( ceFlags & CE_FLAG_EMBARK )
+	if ( IsBitFlagSet( ceFlags, CE_FLAG_EMBARK ) )
 		return true
 
-	if ( ceFlags & CE_FLAG_EXECUTION )
+	if ( IsBitFlagSet( ceFlags, CE_FLAG_EXECUTION ) )
 		return true
+
+	return false
+}
+
+
+
+bool function ShouldScriptHideHudInKillreplay()
+{
+	return GetCurrentPlaylistVarBool( "killreplay_hide_hud", false )
+}
+
+bool function ShouldHideHudForDeadPlayer( entity player )
+{
+	if ( IsAlive( player ) )
+		return false
+
+	entity localPlayer = GetLocalClientPlayer()
+	if ( localPlayer.GetTeam() == TEAM_SPECTATOR )
+		return false
+
+	if ( !localPlayer.IsObserver() )
+		return true
+
+	entity obsTarget = localPlayer.GetObserverTarget()
+	if ( obsTarget == localPlayer )
+		return true
+
+	if ( IsWatchingKillReplay() )
+	{
+		if ( ShouldScriptHideHudInKillreplay() )
+			return false
+	}
+	else
+	{
+		if ( obsTarget == null && !IsObserverModeValidWithoutObserverTarget( localPlayer ) )
+			return true
+	}
+
 
 	return false
 }
@@ -918,28 +947,31 @@ bool function ShouldMainHudBeVisible( entity player )
 {
 	int ceFlags = player.GetCinematicEventFlags()
 
-	if ( ceFlags & CE_FLAG_EMBARK )
+	if ( IsWatchingKillReplay() && ShouldScriptHideHudInKillreplay() )
 		return false
 
-	if ( ceFlags & CE_FLAG_DISEMBARK )
+	if ( IsBitFlagSet( ceFlags, CE_FLAG_EMBARK ) )
 		return false
 
-	if ( ceFlags & CE_FLAG_INTRO )
+	if ( IsBitFlagSet( ceFlags, CE_FLAG_DISEMBARK ) )
 		return false
 
-	if ( ceFlags & CE_FLAG_CLASSIC_MP_SPAWNING )
+	if ( IsBitFlagSet( ceFlags, CE_FLAG_INTRO ) )
 		return false
 
-	if ( ceFlags & CE_FLAG_HIDE_MAIN_HUD )
-		return false
-		
-	if ( ceFlags & CE_FLAG_HIDE_MAIN_HUD_INSTANT )
+	if ( IsBitFlagSet( ceFlags, CE_FLAG_CLASSIC_MP_SPAWNING ) )
 		return false
 
-	if ( ceFlags & CE_FLAG_EOG_STAT_DISPLAY )
+	if ( IsBitFlagSet( ceFlags, CE_FLAG_HIDE_MAIN_HUD ) )
 		return false
 
-	if ( ceFlags & CE_FLAG_TITAN_3P_CAM )
+	if ( IsBitFlagSet( ceFlags, CE_FLAG_HIDE_MAIN_HUD_INSTANT ) )
+		return false
+
+	if ( IsBitFlagSet( ceFlags, CE_FLAG_EOG_STAT_DISPLAY ) )
+		return false
+
+	if ( IsBitFlagSet( ceFlags, CE_FLAG_TITAN_3P_CAM ) && !IsSpectating() )
 		return false
 
 	if ( clGlobal.isSoloDialogMenuOpen )
@@ -949,13 +981,13 @@ bool function ShouldMainHudBeVisible( entity player )
 	if ( IsValid( viewEntity ) && viewEntity.IsNPC() )
 		return false
 
-	if ( (!player.IsObserver() || player.GetObserverTarget() == player || player.GetObserverTarget() == null) && !IsAlive( player ) )
+	if ( ShouldHideHudForDeadPlayer( player ) )
 		return false
 
 	if ( IsViewingSquadSummary() || IsViewingDeathRecap() )
 		return false
 
-	if ( Fullmap_IsVisible() )
+	if ( Scoreboard_IsVisible() )
 		return false
 
 	int gameState = GetGameState()
@@ -966,49 +998,80 @@ bool function ShouldMainHudBeVisible( entity player )
 			break
 
 		case eGameState.PickLoadout:
-		case eGameState.Prematch:
 			return false
+
+		case eGameState.Prematch:
+			if ( !GetCurrentPlaylistVarBool( "show_hud_in_prematch", false ) )
+				return false
+			else
+				break
 
 		case eGameState.Playing:
 		case eGameState.SuddenDeath:
 		case eGameState.SwitchingSides:
+		case eGameState.Epilogue:
 			break
 
 		case eGameState.WinnerDetermined:
-		case eGameState.Epilogue:
+		case eGameState.Resolution:
 		case eGameState.Postmatch:
 			return false
 	}
 
-	#if DEVELOPER
+#if DEVELOPER
 		if ( IsModelViewerActive() )
 			return false
-	#endif
+
+		//if ( OutsourceViewer_IsActive() )
+		//	return false
+
+#endif
 
 	return true
 }
 
+
 HudVisibilityStatus function GetHudStatus( entity player )
 {
-	bool showMainHud = ShouldMainHudBeVisible( player )
+	bool showMainHud      = ShouldMainHudBeVisible( player )
 	bool showPermanentHud = ShouldPermanentHudBeVisible( player )
 
 	HudVisibilityStatus hudStatus
-	hudStatus.mainHud = showMainHud
+	hudStatus.mainHud       = showMainHud
 	hudStatus.targetInfoHud = showPermanentHud
-
-	int ceFlags = player.GetCinematicEventFlags()
-	hudStatus.permanentHud = showPermanentHud && ((ceFlags & CE_FLAG_HIDE_PERMANENT_HUD) == 0)
+	hudStatus.permanentHud  = showPermanentHud
 
 	return hudStatus
 }
+
+
+void function DEV_DebugHudStatusThread()
+{
+	RegisterSignal( "DEV_DebugHudStatusThread" )
+	Signal( clGlobal.signalDummy, "DEV_DebugHudStatusThread" )
+	EndSignal( clGlobal.signalDummy, "DEV_DebugHudStatusThread" )
+
+	while ( true )
+	{
+		HudVisibilityStatus hudStatus = GetHudStatus( GetLocalViewPlayer() )
+
+		DebugScreenText( 0.90, 0.5, format( "mainHud: %s", hudStatus.mainHud ? "ON" : "OFF" ) )
+		DebugScreenText( 0.90, 0.512, format( "permanentHud: %s", hudStatus.permanentHud ? "ON" : "OFF" ) )
+
+		WaitFrame()
+	}
+}
+
 
 bool function ShouldPermanentHudBeVisible( entity player )
 {
 	if ( IsViewingSquadSummary() || IsViewingDeathRecap() )
 		return false
 
-	// this hud contains the minimap, unintframes and overhead names etc.
+	if ( IsWatchingKillReplay() && ShouldScriptHideHudInKillreplay() )
+		return false
+
+
 	int gameState = GetGameState()
 	switch( gameState )
 	{
@@ -1017,40 +1080,66 @@ bool function ShouldPermanentHudBeVisible( entity player )
 			break
 
 		case eGameState.PickLoadout:
-		case eGameState.Prematch:
 			return false
+
+		case eGameState.Prematch:
+			if ( !GetCurrentPlaylistVarBool( "show_hud_in_prematch", false ) )
+				return false
+			else
+				break
 
 		case eGameState.Playing:
 		case eGameState.SuddenDeath:
 		case eGameState.SwitchingSides:
+		case eGameState.Epilogue:
 			break
 
 		case eGameState.WinnerDetermined:
-		case eGameState.Epilogue:
+		case eGameState.Resolution:
 		case eGameState.Postmatch:
-			return false
+			return IsWatchingKillReplay() && IsReplayRoundWinning() && !ShouldScriptHideHudInKillreplay()
 	}
 
-	if ( Fullmap_IsVisible() )
+	if ( Scoreboard_IsVisible() )
 		return false
 
 	{
 		int ceFlags = player.GetCinematicEventFlags()
 
-		// hide during execution
-		if ( ceFlags & CE_FLAG_TITAN_3P_CAM )
+
+		if ( IsBitFlagSet( ceFlags, CE_FLAG_TITAN_3P_CAM ) && !IsSpectating() )
+			return false
+
+		if ( IsBitFlagSet( ceFlags, CE_FLAG_HIDE_PERMANENT_HUD ) )
 			return false
 	}
 
-	if ( (!player.IsObserver() || player.GetObserverTarget() == player || player.GetObserverTarget() == null) && !IsAlive( player ) )
+	if ( ShouldHideHudForDeadPlayer( player ) && !GameMode_IsActive( eGameModes.CONTROL ) )
 		return false
 
-	#if DEVELOPER
+#if DEVELOPER
 		if ( IsModelViewerActive() )
 			return false
-	#endif
+
+		//if ( OutsourceViewer_IsActive() )
+		//	return false
+
+#endif
 
 	return true
+}
+
+
+bool function IsObserverModeValidWithoutObserverTarget( entity player )
+{
+	switch( player.GetObserverMode() )
+	{
+		case OBS_MODE_STATIC:
+		case OBS_MODE_STATIC_LOCKED:
+			return true
+	}
+
+	return false
 }
 
 
@@ -1064,42 +1153,54 @@ void function InitChatHUD()
 	UISize screenSize   = GetScreenSize()
 	float resMultiplier = screenSize.height / 1080.0
 	int width           = 630
-	int height          = 155
+	int height          = 200
 
-	HudElement( "IngameTextChat" ).SetSize( width * resMultiplier, height * resMultiplier )
+	var chat = HudElement( "IngameTextChat" )
+	Hud_SetSize( chat, width * resMultiplier, height * resMultiplier )
+
+	file.hasInitChatHud = true
+
+
+	if ( Hud_GetY( chat ) != file.chatVerticalOffset )
+		SetChatHUDPosition( file.chatVerticalOffset )
 }
+
 
 void function UpdateChatHUDVisibility()
 {
-	local chat = HudElement( "IngameTextChat" )
-	
-	//Saves what you typed to a global string
-	//used for all chat if they want to implement it into their gamemode
-	if( !isMuted() )
-	{
-		var chatTextEntry = Hud_GetChild( Hud_GetChild( chat, "ChatInputLine" ), "ChatInputTextEntry" )
-		CHAT_TEXT = Hud_GetUTF8Text(chatTextEntry)
-	}
+	var chat = HudElement( "IngameTextChat" )
 
 	Hud_SetAboveBlur( chat, true )
 
-	if ( isMuted() || IsLobby() || clGlobal.isMenuOpen || file.hideChat )
-		chat.Hide()
+	if ( IsLobby() || clGlobal.isMenuOpen )
+		Hud_Hide( chat )
 	else
-		chat.Show()
+		Hud_Show( chat )
+
+	var hint = HudElement( "AccessibilityHint" )
+
+	int gamestate = GetGameState()
+
+	if ( IsLobby() || clGlobal.isMenuOpen || !IsAccessibilityChatHintEnabled() || GetPlayerArrayOfTeam( GetLocalClientPlayer().GetTeam() ).len() < 2 || gamestate == eGameState.PickLoadout )
+		Hud_Hide( hint )
+	else
+		Hud_Show( hint )
 }
 
-void function HideChat()
+void function SetChatHUDPosition( int yPosition )
 {
-	HudElement( "IngameTextChat" ).Hide()
-	file.hideChat = true
+	if ( IsLobby() || clGlobal.isMenuOpen )
+		return
+
+	file.chatVerticalOffset = yPosition
+
+	if ( !file.hasInitChatHud )
+		return
+
+	var chat = HudElement( "IngameTextChat" )
+	Hud_SetY( chat, yPosition )
 }
 
-void function ShowChat()
-{
-	HudElement( "IngameTextChat" ).Show()
-	file.hideChat = false
-}
 
 bool function IsWatchingReplay()
 {
@@ -1112,12 +1213,49 @@ bool function IsWatchingReplay()
 	return false
 }
 
-void function mute( bool set )
+
+void function SetAllHudVisExceptMinimap( bool toggle )
 {
-	file.muted = set
+	HUD_TogglePermanentHudsVisibility( toggle )
+
+	Obituary_SetEnabled( toggle )
+	Obituary_ClearObituary()
 }
 
-bool function isMuted()
+#if DEVELOPER
+
+void function Dev_SetDefaultHUD( bool toggle )
 {
-	return file.muted
+	HUD_TogglePermanentHudsVisibility( toggle )
+}
+#endif
+
+void function ServerCallback_SetTacticalHudVis( bool toggle )
+{
+
+	if ( !IsEventFinale() )
+		return
+
+	RuiSetBool( GetTacticalRui(), "isVisible", toggle )
+}
+
+void function ServerCallback_SetUltimateHudVis( bool toggle )
+{
+
+	if ( !IsEventFinale() )
+		return
+
+	RuiSetBool( GetUltimateRui(), "isVisible", toggle )
+}
+
+void function ServerCallback_SetDpadMenuVis( int flags )
+{
+
+	if ( !IsEventFinale() )
+		return
+
+	RuiSetBool( GetDpadMenuRui(), "isVisible", (flags != 0) )
+	RuiSetBool( GetDpadMenuRui(), "healthUIEnabled", IsBitFlagSet(flags,1) )
+	RuiSetBool( GetDpadMenuRui(), "ordinanceUIEnabled", IsBitFlagSet(flags, 2) )
+	RuiSetBool( GetDpadMenuRui(), "gadgetUIEnabled", IsBitFlagSet(flags, 4) )
 }

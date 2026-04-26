@@ -700,7 +700,7 @@ var function OnWeaponPrimaryAttack_valk_cluster_missile( entity weapon, WeaponPr
 	WeaponFireMissileParams fireMissileParams
 	fireMissileParams.pos                       = attackPos
 	fireMissileParams.dir                       = attackDir
-	fireMissileParams.scriptTouchDamageType     = damageTypes.projectileImpact// | DF_IMPACT
+	fireMissileParams.scriptTouchDamageType     = damageTypes.projectileImpact// | DF_SHIELD_SYPHON
 	fireMissileParams.scriptExplosionDamageType = damageTypes.explosive
 	fireMissileParams.clientPredicted           = false
 	fireMissileParams.speed                     = 1.0  // Base speed, InitMissileExpandContract handles actual velocity

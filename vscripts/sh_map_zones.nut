@@ -1,43 +1,77 @@
 global function MapZones_SharedInit
 global function MapZones_RegisterNetworking
 global function MapZones_RegisterDataTable
+global function MapZones_GetCount
 global function GetZoneNameForZoneId
+global function MapZones_AddMinimapLevelLabel
 global function GetZoneMiniMapNameForZoneId
 global function MapZones_GetZoneIdForTriggerName
 global function GetDevNameForZoneId
+global function MapZones_GetNormalZoneName
+
+                        
+                                               
+                                            
+                              
 
 #if CLIENT
 global function SCB_OnPlayerEntersMapZone
 global function MapZones_ZoneIntroText
+global function MapZones_ZoneIntroTextFullscreenWithSubtext
 global function MapZones_GetChromaBackgroundForZoneId
+global function MapZones_ShowEnterZoneName
 #endif
 
 #if SERVER
+global function MapZones_GetAllZoneIDs_Sorted
 global function MapZones_GetZoneForOrigin
+global function MapZones_GetZoneOrClosestZoneForPoint
+global function MapZones_GetClosestNamedZoneForPoint
+global function MapZones_GetClosestZoneCenter
 global function MapZones_GetTriggerForZone
 global function MapZones_GetTriggerNameForZone
 global function MapZones_GetTierForZone
+                     
+                                      
+                                            
+                           
+global function MapZones_GetNameForZone
+global function MapZones_GetIdForZoneName
 global function MapZones_GetPopulationInfoForZone
+global function MapZones_GetZoneGroupForZone
+global function MapZones_GetZoneIdsForZoneGroup
+global function MapZones_GetZonesInGroupWithZone
 global function MapZones_GetBoundsArea2DForZone
+global function MapZones_GetNeighborZonesForZones
 global function MapZones_PerZoneCallback
 global function MapZones_RefreshZoneCalloutsForAll
+global function MapZones_RefreshZoneCalloutForPlayer
 global function MapZones_WaitForAnyPlayerEntersZone
+
+global function MapZones_AddCallback_PlayerZoneChanged
+
+global function MapZones_GetZoneDatas
 //
 global function MapZones_GetPopEnumForZone
+global function MapZones_GetPopEnumForZones
+global function MapZones_GetAveragePositionOfZones
+global function MapZones_GetRandomZoneFromPlayers
+global function MapZones_GetZoneStatsRef
 //
-global function MapZones_PushPlayerNoTouch
-global function MapZones_PopPlayerNoTouch
-global function MapZones_ClearPlayerNoTouch
-global function MapZones_ForceRetouchForPlayer
+global function MapZones_GetAllZoneIDs
 //
 
+#if AUTO_PLAYER
+global function AutoPlayer_GetDropDestinations
+#endif // AUTO_PLAYER
 #endif // SERVER
 
-#if SERVER && DEVELOPER
+#if (SERVER && DEVELOPER)
 global function DEV_PrintMapZoneInfo
 global function DEV_MapZone_ToggleOverlay
-global function DEV_DrawLootZones
-#endif // SERVER && DEVELOPER
+global function Dev_GoToZone
+global function DEV_GetAllZoneStatsRef
+#endif // (SERVER && DEVELOPER)
 
 global struct ZonePopulationInfo
 {
@@ -56,13 +90,16 @@ global enum eZonePop
 
 #if SERVER
 const string SIGNAL_ZONES_PLAYER_ENTERED = "PlayerEnteredZone"
-const asset HOT_ZONE_POI_BEAM = $"P_ar_hot_zone_far"
-#endif // SERVER
 
-struct ZoneData
+typedef PlayerZoneChangedCallback void functionref( entity player, int newZoneId )
+
+global struct ZoneData
 {
 	entity     zoneTrigger
-	int		   zoneTier
+	int        zoneTier
+                     
+                         
+      
 	array<int> neighborZoneIds
 
 	float boundsArea2D
@@ -70,20 +107,26 @@ struct ZoneData
 	int playersInside
 	int playersNearby
 
-	int zoneId
+	int    zoneId
 	string zoneName
+	string zoneGroup
+	string zoneTriggerName
+
+	string statsRef
 }
 table<int, ZoneData> s_zoneDatas
-
-global entity hotZoneFx
+#endif // SERVER
 
 struct
 {
-	bool mapZonesInitialized = false
-	var mapZonesDataTable
-	table<int, int> calculatedZoneTiers
-    vector hotZoneOrigin
-    float hotZoneRadius
+	bool            	mapZonesInitialized = false
+	var             	mapZonesDataTable
+	table< int, int > 	calculatedZoneTiers
+
+	#if SERVER
+		array< PlayerZoneChangedCallback > playerZoneChangedCallbacks
+		table< entity, bool > playerCheckCurrentZone
+	#endif
 } file
 
 const int INVALID_ZONE_ID = -1
@@ -96,46 +139,200 @@ string function GetDevNameForZoneId( int zoneId )
 const string EDITOR_CLASSNAME_ZONE_TRIGGER = "trigger_pve_zone"
 void function MapZones_SharedInit()
 {
-#if SERVER
-	AddSpawnCallbackEditorClass( "trigger_multiple", EDITOR_CLASSNAME_ZONE_TRIGGER, InitZoneTrigger )
+	#if SERVER
+		AddSpawnCallbackEditorClass( "trigger_multiple", EDITOR_CLASSNAME_ZONE_TRIGGER, InitZoneTrigger )
 
-	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
+		AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 
-	AddCallback_OnClientDisconnected( OnClientDisconnected )
-	AddDeathCallback( "player", PlayerDeathCallback )
+		AddCallback_OnClientDisconnected( OnClientDisconnected )
+		AddDeathCallback( "player", PlayerDeathCallback )
 
-	RegisterSignal( SIGNAL_ZONES_PLAYER_ENTERED )
-#endif // SERVER
+		RegisterSignal( SIGNAL_ZONES_PLAYER_ENTERED )
+	#endif // SERVER
 }
 
 const string FUNCNAME_OnPlayerEntersZone = "SCB_OnPlayerEntersMapZone"
 void function MapZones_RegisterNetworking()
 {
-	ScriptRemote_RegisterClientFunction( FUNCNAME_OnPlayerEntersZone, "int", 0, 128, "int", 0, 4 )
+	Remote_RegisterClientFunction( FUNCNAME_OnPlayerEntersZone, "int", 0, 128, "int", 0, 4 )
 }
+
 
 void function MapZones_RegisterDataTable( asset dataTableAsset )
 {
-	if( Playlist() == ePlaylists.fs_scenarios )
-		return
-	
-	file.mapZonesDataTable = GetDataTable( dataTableAsset )
+	file.mapZonesDataTable   = GetDataTable( dataTableAsset )
 	file.mapZonesInitialized = true
 }
 
+
+int function MapZones_GetCount()
+{
+	if ( !file.mapZonesInitialized )
+		return 0
+
+	return GetDataTableRowCount( file.mapZonesDataTable )
+}
+
+
+                        
+                                               
+ 
+                                
+ 
+
+                                                                                                    
+ 
+                                                          
+                                           
+
+           
+                                                   
+       
+
+                                 
+  
+                             
+                 
+                                                                                                                                 
+
+            
+                                                                                              
+                                                                                                                                         
+
+                                             
+
+                                           
+                               
+      
+                                   
+
+        
+
+                           
+   
+                             
+            
+   
+
+                                
+                                                                                                                                      
+
+            
+                                                                                                                                         
+                                                  
+
+                                                
+   
+                                                         
+                                       
+                                                   
+                                  
+                                                                    
+          
+                             
+                                                                                 
+         
+   
+      
+   
+          
+                             
+                                                                                                         
+         
+   
+        
+
+            
+                                                                                                                                         
+
+                          
+   
+                                                                      
+
+                                 
+    
+                                                 
+
+                                                                                                                                                                                                                        
+                                                                        
+                                                                   
+                                             
+                                   
+                                          
+                                                                     
+
+           
+                              
+     
+                                                                                                   
+                                                                                                                  
+     
+          
+
+           
+                              
+                                                                                                                                                                                                                      
+          
+
+    
+       
+    
+           
+                              
+                                                                                                                      
+          
+    
+   
+        
+            
+                          
+    
+                                     
+     
+                                                             
+                                            
+     
+    
+        
+
+                    
+  
+
+               
+ 
+      
+
+
 string function GetZoneMiniMapNameForZoneId( int zoneId )
 {
-	Assert( zoneId < GetDatatableRowCount( file.mapZonesDataTable ) )
+	Assert( zoneId < GetDataTableRowCount( file.mapZonesDataTable ) )
 	string zoneName = GetDataTableString( file.mapZonesDataTable, zoneId, GetDataTableColumnByName( file.mapZonesDataTable, "miniMapName" ) )
 	return zoneName
 }
 
+
 string function GetZoneNameForZoneId( int zoneId )
 {
-	Assert( zoneId < GetDatatableRowCount( file.mapZonesDataTable ) )
+	Assert( zoneId < GetDataTableRowCount( file.mapZonesDataTable ) )
 	string zoneName = GetDataTableString( file.mapZonesDataTable, zoneId, GetDataTableColumnByName( file.mapZonesDataTable, "zoneName" ) )
 	return zoneName
 }
+
+
+void function MapZones_AddMinimapLevelLabel( string name, float x, float y, float scale = 1.0, float width = 200, bool overrideLabelDisable = false )
+{
+	if ( GetCurrentPlaylistVarBool( "disable_minimap_labels", false ) && !overrideLabelDisable )
+		return
+
+	#if CLIENT
+		SURVIVAL_AddMinimapLevelLabel( name, x, y, scale, width, overrideLabelDisable )
+	#endif // CLIENT
+
+                      
+                                                         
+                            
+}
+
 
 string function MapZones_GetChromaBackgroundForZoneId( int zoneId )
 {
@@ -147,18 +344,20 @@ string function MapZones_GetChromaBackgroundForZoneId( int zoneId )
 	return chroma
 }
 
+
 int function MapZones_GetZoneIdForTriggerName( string triggerName )
 {
 	int zoneId = GetDataTableRowMatchingStringValue( file.mapZonesDataTable, GetDataTableColumnByName( file.mapZonesDataTable, "triggerName" ), triggerName )
 	return zoneId
 }
 
+
 string function GetZoneGroupForZoneId( int zoneId )
 {
-	Assert( zoneId < GetDatatableRowCount( file.mapZonesDataTable ) )
+	Assert( zoneId < GetDataTableRowCount( file.mapZonesDataTable ) )
 
 	string name = ""
-	int column = GetDataTableColumnByName( file.mapZonesDataTable, "zoneGroup" )
+	int column  = GetDataTableColumnByName( file.mapZonesDataTable, "zoneGroup" )
 	if ( column >= 0 )
 		name = GetDataTableString( file.mapZonesDataTable, zoneId, column )
 
@@ -167,24 +366,51 @@ string function GetZoneGroupForZoneId( int zoneId )
 	return name
 }
 
+
 string function MapZones_GetZoneStatsRef( int zoneId )
 {
 	if ( !file.mapZonesInitialized )
 		return ""
 
-	Assert( zoneId < GetDatatableRowCount( file.mapZonesDataTable ) )
+	Assert( zoneId < GetDataTableRowCount( file.mapZonesDataTable ) )
 	if ( zoneId < 0 )
 		return ""
 
 	string statsRef = ""
-	int column = GetDataTableColumnByName( file.mapZonesDataTable, "statsRef" )
+	int column      = GetDataTableColumnByName( file.mapZonesDataTable, "statsRef" )
 	if ( column >= 0 )
 		statsRef = GetDataTableString( file.mapZonesDataTable, zoneId, column )
 
 	return statsRef
 }
+
+
+string function MapZones_GetNormalZoneName( string zoneName )
+{
+	if ( zoneName.find( "_SHORT" ) > -1 )
+	{
+		return zoneName.slice( 0, zoneName.len() - 6 )
+	}
+
+	return zoneName
+}
+
 #if SERVER
 
+#if AUTO_PLAYER
+array< vector > function AutoPlayer_GetDropDestinations()
+{
+	array< vector > ret
+
+	foreach ( zoneId in s_zoneDatas )
+	{
+		if ( zoneId.zoneTier > 0 )
+			ret.append( zoneId.zoneTrigger.GetOrigin() )
+	}
+
+	return ret
+}
+#endif // AUTO_PLAYER
 
 
 void function PlayerDeathCallback( entity player, var damageInfo )
@@ -203,143 +429,120 @@ void function OnClientDisconnected( entity player )
 
 void function EntitiesDidLoad()
 {
-#if DEVELOPER
-	thread DebugFrameThread()
-#endif // DEVELOPER
-	if( Safe_isScenariosMode() )
-	{
-		SURVIVAL_PlaceGroundItems()
-		return
-	}
+	#if DEVELOPER
+		thread DebugFrameThread()
+	#endif // DEV
 
 	if ( !file.mapZonesInitialized )
 		return
 
-	for ( int zoneId = 0; zoneId < GetDatatableRowCount( file.mapZonesDataTable ); zoneId++ )
-	{
-		if ( !(zoneId in s_zoneDatas) )
-			Warning( "Could not find trigger for zoneId " + zoneId + ": " + GetDevNameForZoneId( zoneId ) )
-	}
-
 	thread GenerateZoneTiers()
 }
 
+                     
+                                                                       
+ 
+                            
+  
+            
 
-void function HotZoneBeamThink(vector origin, float radius)
-{
-    //If we are pre deathfield, spawn hot zone beam
-    if( GetGlobalNetInt( "currentDeathFieldStage" ) == -1 )
-    {
-        //Spawn the beam
-        PrecacheParticleSystem( HOT_ZONE_POI_BEAM )
-        entity hotZoneBeam = StartParticleEffectInWorld_ReturnEntity(GetParticleSystemIndex( HOT_ZONE_POI_BEAM ), origin, <90,0,0> )
-                
-        while (true)
-        {
-            if (SURVIVAL_GetCurrentDeathFieldStage() >= 0)
-            {
-                EffectStop(hotZoneBeam)
-                hotZoneBeam.Destroy()
-                return
-            }
-            wait 1 //Low prio - don't need to check every frame, can check every second. If we kill beam a second late it's acceptable.
-        }
-    }
-}
+                             
+   
+                              
+   
+      
+   
+                  
+   
 
-void function HotZone_MinimapThink()
-{
-    //Create the minimap entity
-    entity hotZoneMapEnt = CreateEntity( "prop_script" )
-    hotZoneMapEnt.SetValueForModelKey( $"mdl/dev/empty_model.rmdl" )
-    hotZoneMapEnt.kv.fadedist = -1
-    hotZoneMapEnt.kv.renderamt = 255
-    hotZoneMapEnt.kv.rendercolor = "255 255 255"
-    hotZoneMapEnt.kv.solid = 6 // 0 = no collision, 2 = bounding box, 6 = use vPhysics, 8 = hitboxes only
-    hotZoneMapEnt.SetOrigin( file.hotZoneOrigin )
-    hotZoneMapEnt.SetAngles( <0, 0, 0> )
-    hotZoneMapEnt.NotSolid()
-    hotZoneMapEnt.Hide()
-    hotZoneMapEnt.DisableHibernation()
-    hotZoneMapEnt.Minimap_SetObjectScale( file.hotZoneRadius / SURVIVAL_MINIMAP_RING_SCALE )
-    hotZoneMapEnt.Minimap_SetAlignUpright( true )
-    hotZoneMapEnt.Minimap_SetZOrder( 2 )
-    hotZoneMapEnt.Minimap_SetClampToEdge( true )
-    hotZoneMapEnt.Minimap_SetCustomState( eMinimapObject_prop_script.OBJECTIVE_AREA )
-    SetTargetName( hotZoneMapEnt, "hotZone" )
-    DispatchSpawn( hotZoneMapEnt )
-           
-    foreach ( player in GetPlayerArray() )
-    {
-        hotZoneMapEnt.Minimap_AlwaysShow( 0, player )
-    }
+                    
+                                      
+                                        
+   
+                                                                                                          
     
-    while (true)
-    {
-        if (SURVIVAL_GetCurrentDeathFieldStage() >= 0)
-        {
-            foreach ( player in GetPlayerArray() )
-            {
-                hotZoneMapEnt.Minimap_Hide( 0, player )
-            }
-            return
-        }
-        wait 1 //Low prio - don't need to check every frame, can check every second. If we hide RUI a second late it's acceptable.
-    }
+                           
+    
+   
+
+                                         
+   
+                               
+   
+  
+ 
+                           
+
+// The code function involved more than just the geometric position and was causing the check to occasionally fail, so just created a new one
+bool function TriggerContainsPointSimple( entity trigger, vector origin )
+{
+	vector topRight = trigger.GetOrigin() + trigger.GetBoundingMaxs()
+	vector botLeft = trigger.GetOrigin() + trigger.GetBoundingMins()
+
+	if ( origin.x > topRight.x || origin.x < botLeft.x )
+		return false
+	if ( origin.y > topRight.y || origin.y < botLeft.y )
+		return false
+	if ( origin.z > topRight.z || origin.z < botLeft.z )
+		return false
+
+	return true
 }
 
 void function GenerateZoneTiers()
 {
-	if (Playlist() == ePlaylists.survival_firingrange || Playlist() == ePlaylists.survival_training)
-		return
-	
 	array<LootZone> lootZones = GetAllLootZones()
-    LootZone hotZone = GetLootHotZone()
-    
-    float hotZoneRadius = hotZone.radius
-    vector hotZoneOrigin = hotZone.origin
-    
-    file.hotZoneRadius = hotZoneRadius
-    file.hotZoneOrigin = hotZoneOrigin
-    
-    if(hotZoneOrigin != <0, 0, 0> && Gamemode() == eGamemodes.SURVIVAL )
-    {
-        thread HotZoneBeamThink(hotZoneOrigin, hotZoneRadius)
-        AddCallback_GameStateEnter( 
-                eGameState.Playing,
-                void function()
-                {
-                    thread HotZone_MinimapThink()
-                }
-            )
-            
-    }
-    
+
 	foreach ( mapZoneData in s_zoneDatas )
 	{
 		foreach ( lootZone in lootZones )
 		{
-			if( !IsValid( mapZoneData.zoneTrigger ) )
-			{
-				#if DEVELOPER
-					printt( "zone not valid?" )
-				#endif 
+			if ( !TriggerContainsPointSimple( mapZoneData.zoneTrigger, lootZone.origin ) )
 				continue
-			}
 
-			if ( !mapZoneData.zoneTrigger.ContainsPoint( lootZone.origin ) )
+			if ( lootZone.zoneClass.find( "poi_" ) == 0 )
 				continue
-            
+
 			int zoneTier = SURVIVAL_LootTierForLootGroup( lootZone.zoneClass )
-            
-			if( Playlist() == ePlaylists.fs_haloMod_survival )
-				mapZoneData.zoneTier = eLootTier.EPIC //make all the zones the same, since loot is randomized
-			else
-				mapZoneData.zoneTier = maxint( zoneTier, mapZoneData.zoneTier )
+
+                        
+                                                                                                           
+     
+                 
+     
+                              
+
+			mapZoneData.zoneTier = maxint( zoneTier, mapZoneData.zoneTier )
+		}
+
+		WaitFrame()
+	}
+
+	foreach ( outerMapZoneData in s_zoneDatas )
+	{
+		if ( outerMapZoneData.zoneName == "" )
+			continue
+
+		foreach ( innerMapZoneData in s_zoneDatas )
+		{
+			if ( innerMapZoneData.zoneName != outerMapZoneData.zoneName )
+				continue
+
+			innerMapZoneData.zoneTier = maxint( outerMapZoneData.zoneTier, innerMapZoneData.zoneTier )
+			outerMapZoneData.zoneTier = maxint( outerMapZoneData.zoneTier, innerMapZoneData.zoneTier )
 		}
 	}
 
-	SURVIVAL_PlaceGroundItems()
+                        
+                                                                             
+                           
+                                        
+   
+                                                        
+   
+
+                                               
+       
 }
 
 int function MapZones_GetZoneForOrigin( vector point )
@@ -352,6 +555,159 @@ int function MapZones_GetZoneForOrigin( vector point )
 
 	return -1
 }
+
+int function MapZones_GetClosestZoneCenter( vector point )
+{
+	int bestZone   = -1
+	float bestDist = 9999999.9
+	foreach ( ZoneData zd in s_zoneDatas )
+	{
+		float dist = Distance( point, zd.zoneTrigger.GetCenter() )
+		if ( dist > bestDist )
+			continue
+
+		bestZone = zd.zoneId
+		bestDist = dist
+	}
+
+	return bestZone
+}
+
+int function MapZones_GetZoneOrClosestZoneForPoint( vector point )
+{
+	int inZone = MapZones_GetZoneForOrigin( point )
+	if ( inZone >= 0 )
+		return inZone
+
+	return MapZones_GetClosestZoneCenter( point )
+}
+
+string function MapZones_GetClosestNamedZoneForPoint( vector point )
+{
+	string bestZone = ""
+	float bestDist  = 9999999.9
+	foreach ( ZoneData zd in s_zoneDatas )
+	{
+		float dist = Distance( point, zd.zoneTrigger.GetCenter() )
+		if ( dist > bestDist )
+			continue
+
+		if ( zd.zoneName.len() == 0 )
+			continue
+
+		bestZone = zd.zoneName
+		bestDist = dist
+	}
+
+	return bestZone
+}
+
+// ---
+
+// Returns array of ZoneDatas:
+//	- Parameters:
+//		- includeUnnamed: append unnamed zoneDatas after named ones.
+//		- doSortByGreatBounds: sort by greater bounds.
+array< ZoneData > function MapZones_GetZoneDatas( bool includeUnnamed = true, bool doSortByGreaterBounds = true, bool doSortByNumLootItems = false )
+{
+	array< ZoneData > zoneDatas_Named
+	array< ZoneData > zoneDatas_Unnamed
+	array< ZoneData > result
+
+	if( !file.mapZonesInitialized )
+	{
+		string warningStr = format( "%s(): called before zones initialized.", FUNC_NAME() )
+		Warning( warningStr )
+		return result
+	}
+
+	foreach( int id, ZoneData zd in s_zoneDatas )
+	{
+		if( zd.zoneName.len() == 0 )
+		{
+			zoneDatas_Unnamed.append( zd )
+		}
+		else
+		{
+			zoneDatas_Named.append( zd )
+		}
+	}
+
+	if( doSortByGreaterBounds )
+	{
+		zoneDatas_Named.sort( Compare_BoundsGreater )
+	}
+	result.extend( zoneDatas_Named )
+	if( includeUnnamed )
+	{
+		if( doSortByGreaterBounds )
+		{
+			zoneDatas_Unnamed.sort( Compare_BoundsGreater )
+		}
+		result.extend( zoneDatas_Unnamed )
+	}
+
+                     
+                            
+  
+                                        
+  
+                           
+
+	return result
+}
+
+int function Compare_BoundsGreater( ZoneData a, ZoneData b )
+{
+	if ( a.boundsArea2D < b.boundsArea2D )
+		return 1
+	else if ( a.boundsArea2D > b.boundsArea2D )
+		return -1
+
+	return 0
+}
+
+                     
+                                                              
+ 
+                                               
+          
+                                                    
+           
+
+         
+ 
+                           
+
+// ---
+
+array< int > function MapZones_GetAllZoneIDs_Sorted( bool includeUnnamed = true, bool doSortByGreaterBounds = true )
+{
+	// Returns array of Zone IDs:
+	//	- Parameters:
+	//		- includeUnnamed: append unnamed zoneIDs after named ones.
+	//		- doSortByGreatBounds: sort by greater bounds.
+
+	array< int > result
+
+	if( !file.mapZonesInitialized )
+	{
+		string warningStr = format( "%s(): called before zones initialized.", FUNC_NAME() )
+		Warning( warningStr )
+		return result
+	}
+
+	array< ZoneData > resultData = MapZones_GetZoneDatas( includeUnnamed, doSortByGreaterBounds )
+	
+	foreach( int id, ZoneData zd in resultData )
+	{
+		if ( !result.contains( zd.zoneId ) )
+			result.append( zd.zoneId )
+	}
+	return result
+}
+
+// ---
 
 string function MapZones_GetTriggerNameForZone( int zoneId )
 {
@@ -380,9 +736,46 @@ int function MapZones_GetTierForZone( int zoneId )
 	return zd.zoneTier
 }
 
+                     
+                                                       
+ 
+                                
+           
+
+                                  
+                           
+ 
+                           
+
+string function MapZones_GetNameForZone( int zoneId )
+{
+	if ( !(zoneId in s_zoneDatas) )
+		return ""
+
+	ZoneData zd = s_zoneDatas[zoneId]
+	return zd.zoneName
+}
+
+int function MapZones_GetIdForZoneName( string zoneName )
+{
+	if ( file.mapZonesDataTable == null )
+		return -1
+
+	zoneName = MapZones_GetNormalZoneName( zoneName )
+	int row = GetDataTableRowMatchingStringValue( file.mapZonesDataTable, GetDataTableColumnByName( file.mapZonesDataTable, "zoneName" ), zoneName )
+	string triggerName = GetDataTableString( file.mapZonesDataTable, row, GetDataTableColumnByName( file.mapZonesDataTable, "triggerName" ) )
+	foreach ( int index, ZoneData zd in s_zoneDatas )
+	{
+		if ( zd.zoneTriggerName == triggerName )
+			return zd.zoneId
+	}
+
+	return -1
+}
+
 void function MapZones_PerZoneCallback( void functionref( int ) callbackFunc )
 {
-	foreach( int index, ZoneData zd in s_zoneDatas )
+	foreach ( int index, ZoneData zd in s_zoneDatas )
 	{
 		callbackFunc( index )
 	}
@@ -399,12 +792,56 @@ ZonePopulationInfo function MapZones_GetPopulationInfoForZone( int zoneId )
 	return result
 }
 
+string function MapZones_GetZoneGroupForZone( int zoneId )
+{
+	if ( !(zoneId in s_zoneDatas) )
+		return ""
+
+	ZoneData zd = s_zoneDatas[zoneId]
+	return zd.zoneGroup
+}
+
+array<int> function MapZones_GetZoneIdsForZoneGroup( string zoneGroup )
+{
+	array<int> ids = []
+	foreach ( zoneId, zoneData in s_zoneDatas )
+	{
+		if ( zoneData.zoneGroup == zoneGroup )
+			ids.append( zoneId )
+	}
+
+	return ids
+}
+
+array<int> function MapZones_GetZonesInGroupWithZone( int zoneId )
+{
+	return MapZones_GetZoneIdsForZoneGroup( MapZones_GetZoneGroupForZone( zoneId ) )
+}
+
 float function MapZones_GetBoundsArea2DForZone( int zoneId )
 {
 	Assert( zoneId in s_zoneDatas )
 
 	ZoneData zd = s_zoneDatas[zoneId]
 	return zd.boundsArea2D
+}
+
+array<int> function MapZones_GetNeighborZonesForZones( array<int> zoneIds )
+{
+	array<int> allneighbors
+	foreach ( zoneId in zoneIds )
+	{
+		ZoneData zd = s_zoneDatas[zoneId]
+		foreach ( neighborId in zd.neighborZoneIds )
+		{
+			if ( zoneIds.contains( neighborId ) )
+				continue
+			if ( allneighbors.contains( neighborId ) )
+				continue
+			allneighbors.append( neighborId )
+		}
+	}
+	return allneighbors
 }
 
 float function GetZoneBoundsArea2D( entity trigger )
@@ -420,7 +857,7 @@ void function DestroyZoneTrigger( entity trigger )
 {
 	//destroy ent along with any linked ents
 	array<entity> linkedEnts = trigger.GetLinkEntArray()
-	foreach( linkedEnt in linkedEnts )
+	foreach ( linkedEnt in linkedEnts )
 	{
 		if ( IsValid( linkedEnt ) )
 			linkedEnt.Destroy()
@@ -446,86 +883,77 @@ void function InitZoneTrigger( entity trigger )
 		return
 	}
 
+	//Assert( !(zoneId in s_zoneDatas), format( "Can't have more than one zone trigger with the same name: '%s'", zoneName ) )
+	if ( (zoneId in s_zoneDatas) )
+	{
+		Warning( "%s() - Can't have more than one zone trigger with the same name: '%s'", FUNC_NAME(), zoneName )
+	}
+
 	ZoneData zd
 	s_zoneDatas[zoneId] <- zd
 	trigger.e.triggerZoneId = zoneId
 
-	trigger.kv.triggerFilterUseNew = 1
-	trigger.kv.triggerFilterPlayer = "all"
-	trigger.kv.triggerFilterPhaseShift = "any"
-	trigger.kv.triggerFilterNpc = "none"
+	trigger.kv.triggerFilterUseNew       = 1
+	trigger.kv.triggerFilterPlayer       = "all"
+	trigger.kv.triggerFilterPhaseShift   = "any"
+	trigger.kv.triggerFilterNpc          = "none"
 	trigger.kv.triggerFilterNonCharacter = 0
-	trigger.kv.triggerFilterTeamMilitia = 1
-	trigger.kv.triggerFilterTeamIMC = 1
-	trigger.kv.triggerFilterTeamNeutral = 1
-	trigger.kv.triggerFilterTeamBeast = 1
-	trigger.kv.triggerFilterTeamOther = 1
+	trigger.kv.triggerFilterTeamMilitia  = 1
+	trigger.kv.triggerFilterTeamIMC      = 1
+	trigger.kv.triggerFilterTeamNeutral  = 1
+	trigger.kv.triggerFilterTeamBeast    = 1
+	trigger.kv.triggerFilterTeamOther    = 1
 	trigger.ConnectOutput( "OnStartTouch", ZoneTrigger_OnStartTouch )
+                         
+                                                         
+                                            
+                                                                          
+                                                   
+                                                   
+                                                                                                                           
+                                                                                         
+                                   
+        
+                           
+                                                                                    
+       
+       
 
-	zd.zoneTrigger = trigger
-	zd.zoneId = zoneId
-	zd.zoneName = GetZoneNameForZoneId( zoneId )
+	zd.zoneTrigger 		= trigger
+	zd.zoneId      		= zoneId
+	zd.zoneName    		= GetZoneNameForZoneId( zoneId )
+	zd.zoneGroup   		= GetZoneGroupForZoneId( zoneId )
+	zd.zoneTriggerName 	= zoneName
+	zd.statsRef   		= MapZones_GetZoneStatsRef( zoneId )
 
 	zd.boundsArea2D = GetZoneBoundsArea2D( trigger )
-	foreach( entity neighborEnt in trigger.GetLinkEntArray() )
+
+	foreach ( entity neighborEnt in trigger.GetLinkEntArray() )
 	{
 		if ( GetEditorClass( neighborEnt ) != EDITOR_CLASSNAME_ZONE_TRIGGER )
 			continue
 
 		string neighborZoneName = expect string( neighborEnt.kv.zone_name )
-		int neighborZoneId = MapZones_GetZoneIdForTriggerName( neighborZoneName )
+		int neighborZoneId      = MapZones_GetZoneIdForTriggerName( neighborZoneName )
 		zd.neighborZoneIds.append( neighborZoneId )
 	}
 }
 
-int function MapZones_GetCount()
-{
-	if ( !file.mapZonesInitialized )
-		return 0
 
-	return GetDatatableRowCount( file.mapZonesDataTable )
-}
-
-void function MapZones_PushPlayerNoTouch( entity player )
+array<int> function MapZones_GetAllZoneIDs()
 {
-	player.p.zoneNoTouchStack += 1
-}
-
-void function MapZones_PopPlayerNoTouch( entity player )
-{
-	Assert( player.p.zoneNoTouchStack > 0 )
-	player.p.zoneNoTouchStack = maxint( 0, (player.p.zoneNoTouchStack - 1) )
-}
-
-void function MapZones_ClearPlayerNoTouch( entity player )
-{
-	player.p.zoneNoTouchStack = 0
-}
-
-bool function PlayerHasNoTouch( entity player )
-{
-	if ( player.p.zoneNoTouchStack > 0 )
-		return true
-	return false
-}
-
-void function MapZones_ForceRetouchForPlayer( entity player )
-{
-	for ( int index = 0; index < MapZones_GetCount(); ++index )
+	array<int> res = []
+	foreach ( ZoneData zd in s_zoneDatas )
 	{
-		if ( !(index in s_zoneDatas) )
-			continue
-		ZoneData zd = s_zoneDatas[index]
-
-		if ( zd.zoneTrigger.IsTouching( player ) )
-		{
-			OnPlayerEntersZone( player, zd.zoneTrigger )
-			return
-		}
+		if ( !res.contains( zd.zoneId ) )
+			res.append( zd.zoneId )
 	}
+
+	return res
 }
 
-void function ZoneTrigger_OnStartTouch( entity self, entity activator, entity caller, var value ) 	
+
+void function ZoneTrigger_OnStartTouch( entity self, entity activator, entity caller, var value )
 {
 	entity triggeringEnt = activator
 	entity trigger       = self
@@ -533,10 +961,7 @@ void function ZoneTrigger_OnStartTouch( entity self, entity activator, entity ca
 		return
 
 	if ( triggeringEnt.IsPlayer() )
-	{
-		if ( !PlayerHasNoTouch( triggeringEnt ) )
-			OnPlayerEntersZone( triggeringEnt, trigger )
-	}
+		OnPlayerEntersZone( triggeringEnt, trigger )
 }
 
 array<ZoneData> s_notifyZonesForPop
@@ -552,11 +977,8 @@ void function RemovePlayerFromCurrentZone( entity player )
 	if ( player.p.currentZoneId == INVALID_ZONE_ID )
 		return
 
-	if ( player.p.currentZoneId == 0 )
-		return
-
 	ZoneData zd = s_zoneDatas[player.p.currentZoneId]
-	foreach( int neighborId in zd.neighborZoneIds )
+	foreach ( int neighborId in zd.neighborZoneIds )
 	{
 		ZoneData neighbor = s_zoneDatas[neighborId]
 		neighbor.playersNearby -= 1
@@ -573,7 +995,7 @@ void function AddPlayerToNewZone( entity player, int zoneId )
 	Assert( player.p.currentZoneId == INVALID_ZONE_ID )
 
 	ZoneData zd = s_zoneDatas[zoneId]
-	foreach( int neighborId in zd.neighborZoneIds )
+	foreach ( int neighborId in zd.neighborZoneIds )
 	{
 		ZoneData neighbor = s_zoneDatas[neighborId]
 		neighbor.playersNearby += 1
@@ -589,6 +1011,7 @@ void function AddPlayerToNewZone( entity player, int zoneId )
 
 void function ExecutePendingPopulationNotifies()
 {
+	s_notifyZonesForPop.clear()
 }
 
 void function MapZones_WaitForAnyPlayerEntersZone( int zoneId )
@@ -601,24 +1024,28 @@ void function MapZones_RefreshZoneCalloutsForAll()
 {
 	array<entity> players = GetPlayerArray()
 	foreach ( entity player in players )
-	{
-		int zoneId = player.p.currentZoneId
-		if ( zoneId >= 0 )
-			Remote_CallFunction_Replay( player, FUNCNAME_OnPlayerEntersZone, zoneId, s_zoneDatas[zoneId].zoneTier )
-	}
+		MapZones_RefreshZoneCalloutForPlayer( player )
+}
+
+void function MapZones_RefreshZoneCalloutForPlayer( entity player )
+{
+	int zoneId = player.p.currentZoneId
+	if ( zoneId >= 0 )
+		Remote_CallFunction_Replay( player, FUNCNAME_OnPlayerEntersZone, zoneId, s_zoneDatas[zoneId].zoneTier )
+}
+
+void function MapZones_AddCallback_PlayerZoneChanged( PlayerZoneChangedCallback callback )
+{
+	Assert( !file.playerZoneChangedCallbacks.contains( callback ), "Already added " + string( callback ) + " with MapZones_AddCallback_PlayerZoneChanged" )
+	file.playerZoneChangedCallbacks.append( callback )
 }
 
 void function OnPlayerEntersZone( entity player, entity zoneTrigger )
 {
 	//string zoneName = expect string( zoneTrigger.kv.zone_name )
 	//Dev_PrintMessage( player, " ", zoneName, 4  )
-	
-	if(GetCurrentPlaylistVarBool( "firingrange_aimtrainerbycolombia", false )) return
 
 	int zoneId = zoneTrigger.e.triggerZoneId
-
-	if ( s_zoneDatas[zoneId].zoneTier > eLootTier.EPIC )
-		return
 
 	Remote_CallFunction_Replay( player, FUNCNAME_OnPlayerEntersZone, zoneId, s_zoneDatas[zoneId].zoneTier )
 
@@ -628,7 +1055,56 @@ void function OnPlayerEntersZone( entity player, entity zoneTrigger )
 		RemovePlayerFromCurrentZone( player )
 		AddPlayerToNewZone( player, newZone )
 		ExecutePendingPopulationNotifies()
+
+                   
+                                                                                                                                                   
+                                                                     
+        
+
+		thread GetPlayerPOIDataThread( player )
+		foreach( func in file.playerZoneChangedCallbacks )
+		{
+			func( player, newZone )
+		}
 	}
+
+	                  
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+		{
+			FR_Nessie_EnterZone( player, zoneId )
+		}
+       
+}
+
+void function GetPlayerPOIDataThread( entity player )
+{
+	if ( !IsValid( player ) )
+		return
+
+	player.EndSignal( "OnDestroy" )
+
+	if ( !(player in file.playerCheckCurrentZone) )
+		file.playerCheckCurrentZone [ player ] <- false
+
+	if ( file.playerCheckCurrentZone [ player ] == true )
+		return
+
+	if ( !(file.playerCheckCurrentZone [ player ]) )
+	{
+		file.playerCheckCurrentZone [ player ] = true
+		PIN_PlayerEnterPOI( player )
+		wait 15.0
+	}
+
+	OnThreadEnd(
+		function() : ( player )
+		{
+			if ( !IsValid( player ) )
+				return
+
+			file.playerCheckCurrentZone [ player ] = false
+		}
+	)
 }
 
 int function MapZones_GetPopEnumForZone( int zoneId )
@@ -640,23 +1116,85 @@ int function MapZones_GetPopEnumForZone( int zoneId )
 		return eZonePop.PLAYERS_NEARBY
 	return eZonePop.NO_PLAYERS_AROUND
 }
+
+int function MapZones_GetPopEnumForZones( array<int> zoneIds )
+{
+	int bestPop = eZonePop.NO_PLAYERS_AROUND
+	foreach ( zoneId in zoneIds )
+	{
+		int thisPop = MapZones_GetPopEnumForZone( zoneId )
+		if ( thisPop > bestPop )
+			bestPop = thisPop
+	}
+	return bestPop
+}
+
+vector function MapZones_GetAveragePositionOfZones( array<int> zoneIds )
+{
+	if ( zoneIds.len() == 0 )
+		return <0, 0, 0>
+
+	vector accum = <0, 0, 0>
+	foreach ( int zoneId in zoneIds )
+	{
+		entity trigger = MapZones_GetTriggerForZone( zoneId )
+		accum += trigger.GetCenter()
+	}
+	vector result = (accum / float( zoneIds.len() ))
+	return result
+}
+
+int function MapZones_GetRandomZoneFromPlayers( array<entity> playersOrig )
+{
+	array<entity> players = clone playersOrig
+	players.randomize()
+	foreach ( player in players )
+	{
+		int zoneId = MapZones_GetZoneForOrigin( player.GetOrigin() )
+		if ( zoneId < 0 )
+			continue
+		return zoneId
+	}
+
+	return -1
+}
 #endif // #if SERVER
 
 
 #if CLIENT
 var s_zoneIntroRui = null
-void function MapZones_ZoneIntroText( entity player, string zoneDisplayName, int zoneTier )
+void function MapZones_ZoneIntroText_( entity player, string zoneDisplayName, int zoneTier, string zoneDisplaySubText, bool doFullscreenRui )
 {
-	if ( !GetGlobalNetBool( "displayMapzoneText" ) )
+	if ( GetGlobalNetBoolSafe( "isMapZoneDisplayTextDisabled" ) )
 		return
 
 	if ( s_zoneIntroRui != null )
 		RuiDestroyIfAlive( s_zoneIntroRui )
 
-	var rui = CreateCockpitRui( $"ui/map_zone_intro_title.rpak", 0 )
+	var rui
+	if ( doFullscreenRui )
+		rui = CreateFullscreenRui( $"ui/map_zone_intro_title.rpak", 0 )
+	else
+		rui = CreateCockpitRui( $"ui/map_zone_intro_title.rpak", 0 )
+
+	string currentPlaylist = GetCurrentPlaylistName()
+
 	RuiSetString( rui, "titleText", zoneDisplayName )
-	RuiSetInt( rui, "zoneTier", zoneTier )
+	if ( GetPlaylistVarBool( currentPlaylist, "loot_display_zone_tier", true ) )
+	{
+		RuiSetString( rui, "subTextDefault", zoneDisplaySubText )
+		RuiSetInt( rui, "zoneTier", zoneTier )
+	}
+	RuiSetBool( rui, "minimapIsDisabled", MiniMapIsDisabled() )
 	s_zoneIntroRui = rui
+}
+void function MapZones_ZoneIntroText( entity player, string zoneDisplayName, int zoneTier )
+{
+	MapZones_ZoneIntroText_( player, zoneDisplayName, zoneTier, "", false )
+}
+void function MapZones_ZoneIntroTextFullscreenWithSubtext( entity player, string zoneDisplayName, int zoneTier, string subText )
+{
+	MapZones_ZoneIntroText_( player, zoneDisplayName, zoneTier, subText, true )
 }
 
 array<string> s_lastZoneDisplayNames = ["", ""]
@@ -668,8 +1206,15 @@ void function SCB_OnPlayerEntersMapZone( int zoneId, int zoneTier )
 	Chroma_SetPlayerZone( zoneId )
 
 	int ceFlags = player.GetCinematicEventFlags()
-	if ( ceFlags & (CE_FLAG_HIDE_MAIN_HUD | CE_FLAG_INTRO) )
+	if ( IsBitFlagSet( ceFlags, (CE_FLAG_HIDE_MAIN_HUD | CE_FLAG_INTRO ) ) )
 		return
+
+	MapZones_ShowEnterZoneName( zoneId, zoneTier )
+}
+
+void function MapZones_ShowEnterZoneName( int zoneId, int zoneTier )
+{
+	entity player = GetLocalViewPlayer()
 
 	string zoneDisplayName = GetZoneNameForZoneId( zoneId )
 	if ( s_lastZoneDisplayNames.contains( zoneDisplayName ) )
@@ -677,24 +1222,24 @@ void function SCB_OnPlayerEntersMapZone( int zoneId, int zoneTier )
 	if ( zoneDisplayName.len() == 0 )
 		return
 
-	if ( zoneTier > 1 )
+	if ( IsPVEMode() )
+		zoneTier = 0
+	if ( IsPVEMode() || (zoneTier > 1) )
 		ClientMusic_RequestStingerForNewZone( zoneId )
 
 	MapZones_ZoneIntroText( player, zoneDisplayName, zoneTier )
-	s_lastZoneDisplayNameIndex = ((s_lastZoneDisplayNameIndex + 1) % s_lastZoneDisplayNames.len())
+	s_lastZoneDisplayNameIndex                         = ((s_lastZoneDisplayNameIndex + 1) % s_lastZoneDisplayNames.len())
 	s_lastZoneDisplayNames[s_lastZoneDisplayNameIndex] = zoneDisplayName
 }
 #endif // CLIENT
 
 
 
-#if SERVER && DEVELOPER
-string function GetZoneLineForPlayer( entity player )
+#if (SERVER && DEVELOPER)
+string function GetZoneLine( int zoneId )
 {
-	int zoneId = player.p.currentZoneId
 	if ( zoneId == INVALID_ZONE_ID )
 		return format( "Not touching any zone." )
-
 	return format( "%s    \"%s\"    (%.1f)", GetDevNameForZoneId( zoneId ), GetZoneNameForZoneId( zoneId ), sqrt( s_zoneDatas[zoneId].boundsArea2D ) )
 }
 
@@ -705,17 +1250,26 @@ void function MapZones_DebugDrawFrame()
 	// Current zone info:
 	{
 		string text = ""
-		foreach( entity player in players )
+		foreach ( entity player in players )
 		{
-			if ( player.p.zoneNoTouchStack > 0 )
-				text += "  [NO_TOUCH]  "
-			text += GetZoneLineForPlayer( player )
+			int zoneID       = MapZones_GetZoneForOrigin( player.GetOrigin() )
+			string statRef   = MapZones_GetZoneStatsRef( zoneID )
+			string zoneGroup = MapZones_GetZoneGroupForZone( zoneID )
+
+			text += GetZoneLine( player.p.currentZoneId )
+			text += format( "  actual: %d", zoneID )
+
+			if ( zoneGroup != "" )
+				text += format( "  zoneGroup: %s", zoneGroup )
+			if ( statRef != "" )
+				text += format( "  statRef: %s", statRef )
+
 			if ( players.len() > 1 )
 				text += format( "    (%s)\n", player.GetPlayerName() )
 			else
 				text += "\n"
 		}
-		DebugScreenText( 0.40, 0.125, text )
+		DebugDrawScreenText( 0.20, 0.125, text )
 	}
 
 	// All zones info:
@@ -734,39 +1288,85 @@ void function MapZones_DebugDrawFrame()
 
 			vector mins = zd.zoneTrigger.GetBoundingMins()
 			vector maxs = zd.zoneTrigger.GetBoundingMaxs()
-			int rrr = ((zd.playersInside == 0) ? 150 : 255)
-			int ggg = ((zd.playersInside == 0) ? 150 : 255)
-			int bbb = ((zd.playersInside == 0) ? 128 : 255)
+			int rrr     = ((zd.playersInside == 0) ? 150 : 255)
+			int ggg     = ((zd.playersInside == 0) ? 150 : 255)
+			int bbb     = ((zd.playersInside == 0) ? 128 : 255)
 			DebugDrawBox( zd.zoneTrigger.GetOrigin(), mins, maxs, rrr, ggg, bbb, 1, 0.1 )
 		}
-		DebugScreenText( 0.85, 0.10, text )
+		DebugDrawScreenText( 0.85, 0.10, text )
 	}
 }
 
 void function DEV_PrintMapZoneInfo()
 {
 	//foreach( int index, ZoneData zd in s_zoneDatas )
+	int total = 0
+	int options = 0
 	for ( int index = 0; index < MapZones_GetCount(); ++index )
 	{
 		if ( !(index in s_zoneDatas) )
 			continue
 		ZoneData zd = s_zoneDatas[index]
 
+		entity trigger = zd.zoneTrigger
+		//DebugDrawBox( trigger.GetOrigin(), trigger.GetBoundingMins(), trigger.GetBoundingMaxs(), <0, 0, 255>, 1, 200.0 )
+		DebugDrawText( trigger.GetOrigin() + <0,0,10>, GetDevNameForZoneId( index ), false, 200.0 )
+
 		//printf( "**********************")
 		printf( "%s   \"%s\"    Area: (%.0f)   %.0f  Trigger: '%s'  (%s)", GetDevNameForZoneId( index ), GetZoneNameForZoneId( index ), sqrt( zd.boundsArea2D ), zd.boundsArea2D, string( zd.zoneTrigger.kv.zone_name ), string( zd.zoneTrigger ) )
+                       
+                                                        
+                               
+
+                                 
+    
+             
+    
+        
 
 		string neighborsDesc = ""
-		foreach( int neighborIndex in zd.neighborZoneIds )
+		foreach ( int neighborIndex in zd.neighborZoneIds )
 			neighborsDesc += format( "%s%s", ((neighborsDesc.len() > 0) ? ", " : ""), GetDevNameForZoneId( neighborIndex ) )
 		printf( "  Neighbors: %s", neighborsDesc )
 		printf( "" )
 	}
+
+	printf( "Total loot locations %.0f and %.0f zones with any loot ", total, options )
 }
 
 bool s_debugDrawFrame = false
 void function DEV_MapZone_ToggleOverlay()
 {
 	s_debugDrawFrame = !s_debugDrawFrame
+}
+
+void function Dev_GoToZone( string triggerName )
+{
+	int zoneId  = MapZones_GetZoneIdForTriggerName( triggerName )
+	ZoneData zd = s_zoneDatas[zoneId]
+	GetPlayerArray()[0].SetOrigin( zd.zoneTrigger.GetOrigin() )
+}
+
+array< string > function DEV_GetAllZoneStatsRef()
+{
+	array< string > zones
+	if ( !file.mapZonesInitialized )
+	{
+		Warning( "Called DEV_GetAllZoneStatsRef before map zones were initialized" )
+	}
+	else
+	{
+		int column = GetDataTableColumnByName( file.mapZonesDataTable, "statsRef" )
+		if ( column >= 0 )
+		{
+			foreach ( zoneId, zoneData in s_zoneDatas )
+			{
+				string temp = GetDataTableString( file.mapZonesDataTable, zoneId, column )
+				zones.append( temp )
+			}
+		}
+	}
+	return zones
 }
 
 void function DebugFrameThread()
@@ -781,46 +1381,4 @@ void function DebugFrameThread()
 		WaitFrame()
 	}
 }
-
-void function DEV_DrawLootZones()
-{
-	array<LootZone> lootZones = GetAllLootZones()
-	printt( "Drawing " + lootZones.len() + " loot zones..." )
-
-	foreach ( LootZone zone in lootZones )
-	{
-		int tier = SURVIVAL_LootTierForLootGroup( zone.zoneClass )
-
-		// Color by tier
-		int r, g, b
-		switch ( tier )
-		{
-			case 0: // NONE/Default - White
-				r = 255; g = 255; b = 255
-				break
-			case 1: // COMMON - Gray/White
-				r = 200; g = 200; b = 200
-				break
-			case 2: // RARE - Blue
-				r = 0; g = 100; b = 255
-				break
-			case 3: // EPIC - Purple
-				r = 200; g = 0; b = 255
-				break
-			case 4: // LEGENDARY - Gold/Yellow
-				r = 255; g = 200; b = 0
-				break
-			case 5: // HEIRLOOM - Red
-				r = 255; g = 0; b = 0
-				break
-			default:
-				r = 255; g = 255; b = 255
-				break
-		}
-
-		DebugDrawCircle( zone.origin, <0, 0, 1>, zone.radius, r, g, b, true, 60.0 )
-		printt( "Zone: " + zone.zoneClass + " - Tier " + tier + " - Origin: " + zone.origin + " - Radius: " + zone.radius )
-	}
-}
-
-#endif // #if SERVER && DEVELOPER
+#endif // #if (SERVER && DEVELOPER)

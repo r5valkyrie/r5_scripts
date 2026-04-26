@@ -4,7 +4,6 @@ global function GameState_Init
 global function InitGameState
 
 global function SetRoundBased
-global function SetCustomIntroLength
 
 global function SetGetDifficultyFunc
 global function GetDifficultyLevel
@@ -27,16 +26,7 @@ struct
 	int functionref() difficultyFunc
 } file
 
-global enum eWinReason
-{
-	DEFAULT,
-	SCORE_LIMIT,
-	TIME_LIMIT,
-	ELIMINATION
-}
-
-
-function GameState_Init()
+void function GameState_Init()
 {
 	FlagInit( "GamePlaying" )
 	FlagInit( "DisableTimeLimit" )
@@ -51,21 +41,18 @@ function GameState_Init()
 	RegisterSignal( "CatchUpFallBehindVO" )
 	RegisterSignal( "ClearedPlayers" )
 
+
 	level.devForcedWin <- false  //For dev purposes only. Used to check if we forced a win through dev command
 	level.devForcedTimeLimit <- false
 
 	level.lastTimeLeftSeconds <- null
-
-	level.lastScoreSwapVOTime <- null
-
-	//level.nextMatchProgressAnnouncementLevel <- MATCH_PROGRESS_EARLY //When we make a matchProgressAnnouncement, this variable is set
 
 	level.endOfRoundPlayerState <- ENDROUND_FREEZE
 
 	level._swapGameStateOnNextFrame <- false
 	level.clearedPlayers <- false
 
-	level.customEpilogueDuration <- null
+	level.customResolutionDuration <- -1.0
 
 	level.lastTeamTitans <- {}
 	level.lastTeamTitans[TEAM_IMC] <- null
@@ -74,35 +61,28 @@ function GameState_Init()
 	level.lastTeamPilots[TEAM_IMC] <- null
 	level.lastTeamPilots[TEAM_MILITIA] <- null
 
-	level.firstTitanfall <- false
-
 	level.lastPlayingEmptyTeamCheck <- 0
-
-	level.doneWaitingForPlayersTimeout <- 0
-
-	level.attackDefendBased <- false
 
 	level.roundBasedUsingTeamScore <- false
 
 	level.roundBasedTeamScoreNoReset <- false
 
-	level.customIntroLength <- null
-
 	level.sendingPlayersAway <- false
 
 	level.forceNoMoreRounds <- false
 
-	// prevents ties... need an option to disable in the future
-	level.firstToScoreLimit <- TEAM_UNASSIGNED
-	level.allowPointsOverLimit <- false
-
 	file.difficultyFunc = DefaultDifficultyFunc
 
-	#if MP
+	GameState_Init_MP()
 	AddCallback_EntitiesDidLoad( GameState_EntitiesDidLoad )
-	#endif
+	AddCallback_OnClientConnected( OnPlayerConnected )
+	AddCallback_OnPlayerChangedTeam( GameState_OnPlayerChangedTeam )
 }
 
+void function OnPlayerConnected(entity player)
+{
+	player.SetPersistentVar( "lastGameWasHeadToHead", GameModeVariant_IsActive( eGameModeVariants.FREEDM_TDM ) )
+}
 
 int function DefaultDifficultyFunc()
 {
@@ -116,28 +96,19 @@ void function SetGetDifficultyFunc( int functionref() difficultyFunc )
 	file.difficultyFunc = difficultyFunc
 }
 
-
 // This function is meant to init stuff that _gamestate uses, as opposed
 // to stuff that any particular gamestate like Playing uses
-function InitGameState()
+void function InitGameState()
 {
-	#if MP
-		PIN_GameStart()
-	#endif
+	//
 }
 
-function SetRoundBased( state )
+void function SetRoundBased( bool state )
 {
-	level.nv.roundBased = state
-}
-
-function SetCustomIntroLength( time )
-{
-	level.customIntroLength = time
+	SetGlobalNonRewindNetBool("roundBased", state)
 }
 
 int function GetDifficultyLevel()
 {
 	return file.difficultyFunc()
 }
-

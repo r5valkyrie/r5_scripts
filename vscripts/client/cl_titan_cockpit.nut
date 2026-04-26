@@ -293,7 +293,7 @@ void function ShowRUIHUD( entity cockpit )
 
 	//RuiSetDrawGroup( file.cockpitAdditionalRui, RUI_DRAW_NONE )
 	#endif
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 #if SP
 	bool ejectIsAllowed = false
 #else
@@ -358,7 +358,7 @@ void function DisplayFrontierRank( bool isFirstBoot = true )
 
 	bool firstBootDisplay
 	//if ( GameRules_GetGameMode() == FD )
-		//firstBootDisplay = isFirstBoot || !GetGlobalNetBool( "FD_waveActive" )
+		//firstBootDisplay = isFirstBoot || !GetGlobalNetBoolSafe( "FD_waveActive" )
 //	else
 		firstBootDisplay = true
 
@@ -736,7 +736,7 @@ function CockpitBodyThink( cockpit, cockpitBody )
 entity function CreateCockpitBody( entity cockpit, entity player, entity cockpitParent )
 {
 	EHI localPlayerEHI = WaitForLocalClientEHI()
-	ItemFlavor character     = LoadoutSlot_WaitForItemFlavor( localPlayerEHI, Loadout_CharacterClass() )
+	ItemFlavor character     = LoadoutSlot_WaitForItemFlavor( localPlayerEHI, Loadout_Character() )
 	ItemFlavor characterSkin = LoadoutSlot_WaitForItemFlavor( localPlayerEHI, Loadout_CharacterSkin( character ) )
 	#if SP
 		string bodySettings = DEFAULT_PILOT_SETTINGS
@@ -749,7 +749,7 @@ entity function CreateCockpitBody( entity cockpit, entity player, entity cockpit
 	#endif
 
 	asset bodyModelName =  CharacterSkin_GetArmsModel( characterSkin )//GetPlayerSettingsAssetForClassName( bodySettings, "armsmodel" )
-	#if DEV
+	#if DEVELOPER
 	if ( bodySettings == "" )
 	{
 		Warning( "Couldn't find armsmodel for set file: " + bodySettings )
@@ -1585,7 +1585,7 @@ void function LinkCoreHint( entity soul )
 	if ( file.coreHintRui == null )
 		return
 
-	RuiTrackFloat( file.coreHintRui, "coreFrac", soul, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "coreAvailableFrac" ) )
+	RuiTrackFloat( file.coreHintRui, "coreFrac", soul, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "coreAvailableFrac" ) )
 }
 
 
@@ -1641,7 +1641,7 @@ var function Scorch_CreateHotstreakBar()
 
 	file.scorchHotstreakRui = CreateFixedTitanCockpitRui( $"ui/scorch_hotstreak_bar.rpak" )
 
-	RuiTrackFloat( file.scorchHotstreakRui, "coreMeterMultiplier", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "coreMeterModifier" ) )
+	RuiTrackFloat( file.scorchHotstreakRui, "coreMeterMultiplier", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "coreMeterModifier" ) )
 
 	return file.scorchHotstreakRui
 }

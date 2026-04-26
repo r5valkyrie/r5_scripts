@@ -108,15 +108,15 @@
 
 	"charge_time" 								"0.350000"
 	"charge_require_input"						"1"
-	"charge_allow_hold_when_full"               "1"
+	"charge_end_forces_fire"                    "0"
 	"charge_remain_full_when_fired"             "1"
-	"charge_attack_min_charge_required"         "0.15"
+	"charge_attack_requires_full_charge"        "0"
+	"charge_allow_midway_charge"                "1"
 	"charge_cooldown_time"						"0.300000"
-	"charge_cooldown_delay"   					"0.1"   //---
+	"charge_cooldown_delay"   					"0.1"
 	"charge_levels"                             "6"
 	"charge_level_base"                         "1"
-    "charge_curve_coefficients"                 "1.4205 -1.1607 .7338"
-	//"charge_allow_midway_charge"                "0"
+	"charge_curve_coefficients"                 "1.4205 -1.1607 .7338"
 
     "red_crosshair_range" 						"0"
 
@@ -1088,76 +1088,130 @@
 
         Crosshair_1
         {
-            "ui"						"ui/crosshair_plus"
+            "ui"						"ui/crosshair_bow_temp"
             "base_spread"				"0.0"
             Args
             {
-				isFiring				weapon_is_firing
+                arrowType                           weapon_script_int_0
             }
         }
     }
 
 
+	// ironsights
 	"ui1_enable"		"1"
 	"ui1_draw_cloaked"	"1"
 	UiData1
 	{
-		"ui"							"ui/car_smg_ammo_counter_small"
-		"mesh"							"models/weapons/attachments/compound_bow_rui_upper"
+		"ui"						    "ui/compound_bow_reticle"
+		//"ui"    						"ui/bow_hcog_classic_sights"
+		"mesh"						    "models/weapons/attachments/compound_bow_rui_upper"
 		Args
 		{
-			vis							player_zoomfrac
-			ammo						weapon_ammo
-			clipSize					weapon_clipSize
+			vis							        player_zoomfrac
+			centerOffset				        weapon_ads_center_offset
+			crossDist					        distance_to_crosshair_target
+			arrowType					        weapon_script_int_0
 		}
 	}
 
-	// // bow weapon rui
-	// "ui2_enable"		"1"
-	// "ui2_draw_cloaked"	"1"
-	// UiData2
-	// {
-		// "ui"							"ui/compound_bow_lower"
-		// "mesh"							"models/weapons/attachments/compound_bow_rui_lower"
-		// Args
-		// {
-			// vis							player_zoomfrac
-			// centerOffset				weapon_ads_center_offset
-			// adjustedChargeFrac			player_chargeFrac_curved
-			// crossDist					distance_to_crosshair_target
-			// arrowType					weapon_script_int_0
-		// }
-	// }
+	// bow weapon rui
+	"ui2_enable"		"1"
+	"ui2_draw_cloaked"	"1"
+	UiData2
+	{
+		"ui"							"ui/compound_bow_lower"
+		"mesh"							"models/weapons/attachments/compound_bow_rui_lower"
+		Args
+		{
+			vis							player_zoomfrac
+			centerOffset				weapon_ads_center_offset
+			crossDist					distance_to_crosshair_target
+			arrowType					weapon_script_int_0
+		}
+	}
 
 	// optic_cq_hcog_classic
 	"UiData11"
 	{
 		//"ui"	  "ui/hcog_classic_sights_bow"
-		"ui"	"ui/hcog_classic_sights"
+		"ui"	"ui/bow_hcog_classic_sights"
 		"mesh" 	"models/weapons/attachments/hcog_classic_sights"
 
 		Args
 	    {
-				vis                 player_zoomfrac
-				ammo                weapon_ammo
-				clipSize            weapon_clipSize
-				centerOffset        weapon_ads_center_offset
+	        vis							        player_zoomfrac
+	        centerOffset		                weapon_ads_center_offset
+			crossDist			                distance_to_crosshair_target
+			arrowType                           weapon_script_int_0
+
 	    }
+	}
+
+	// optic_cq_hcog_bruiser
+	"UiData12"
+	{
+		"ui"	"ui/bow_hcog_bruiser_sights"
+		"mesh"	"models/weapons/attachments/hcog_classic_sights"
+		// mat: models/weapons/attachments/hopup_sights_hcog_ranged
+
+		Args
+		{
+	        vis							        player_zoomfrac
+	        centerOffset		                weapon_ads_center_offset
+			crossDist			                distance_to_crosshair_target
+			arrowType                           weapon_script_int_0
+
+		}
+	}
+
+	// optic_cq_holosight
+	"UiData13"
+	{
+		"ui"	"ui/bow_holo_sights"
+		"mesh"	"models/weapons/attachments/holo_rui_upper"
+
+		Args
+		{
+	        vis							        player_zoomfrac
+	        centerOffset		                weapon_ads_center_offset
+			crossDist			                distance_to_crosshair_target
+			arrowType                           weapon_script_int_0
+
+		}
 	}
 
 	// optic_cq_holosight_variable
 	"UiData14"
 	{
-		"ui"	"ui/holo_variable_sights"
+		"ui"	"ui/bow_variable_holo_sights"
 		"mesh"	"models/weapons/attachments/holo_variable_sights"
 
 		Args
 		{
-			vis						player_zoomfrac
-			ammo					weapon_ammo
-			clipSize				weapon_clipSize
-			zoomFOV                 weapon_zoom_fov
-			centerOffset			weapon_ads_center_offset
+	        vis							        player_zoomfrac
+	        centerOffset		                weapon_ads_center_offset
+			crossDist			                distance_to_crosshair_target
+			zoomFOV                		        weapon_zoom_fov
+			arrowType                           weapon_script_int_0
+
 		}
 	}
+
+	// optic_ranged_hcog
+	"UiData15"
+	{
+		"ui"	"ui/bow_hcog_ranged_sights"
+		"mesh"	"models/weapons/attachments/acgs_rui_upper"
+
+		Args
+		{
+	        vis							        player_zoomfrac
+	        centerOffset		                weapon_ads_center_offset
+			crossDist			                distance_to_crosshair_target
+			arrowType                           weapon_script_int_0
+
+		}
+	}
+
 }

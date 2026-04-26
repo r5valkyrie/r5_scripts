@@ -1,4 +1,5 @@
 global function OnWeaponPrimaryAttack_weapon_shotgun_pistol
+global function OnProjectileCollision_weapon_shotgun_pistol
 
 #if SERVER
 global function OnWeaponNpcPrimaryAttack_weapon_shotgun_pistol
@@ -39,4 +40,16 @@ int function Fire_ShotgunPistol( entity weapon, WeaponPrimaryAttackParams attack
 	weapon.FireWeapon_Default( attackParams.pos, attackParams.dir, speedScale, patternScale, ignoreSpread )
 
 	return weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
+}
+
+void function OnProjectileCollision_weapon_shotgun_pistol( entity projectile, vector pos, vector normal, entity hitEnt, int hitbox, bool isCritical )
+{
+                                 
+            
+                                                                   
+   
+                                                   
+   
+                 
+                     
 }

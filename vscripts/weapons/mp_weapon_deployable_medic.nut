@@ -781,8 +781,8 @@ bool function CanBeHealedByDroneMedic( entity player )
      
 bool function IsEntityInDeathField(entity ent)
 {
-	//DeathFieldData deathFieldData = SURVIVAL_GetDeathFieldData()
-	return !(SURVIVAL_PosInsideDeathField( ent.GetOrigin() ) || StatusEffect_GetSeverity( ent, eStatusEffect.ring_immunity ) > 0.0 ) //|| StatusEffect_HasSeverity( ent, eStatusEffect.in_void_ring )) // first part = is safe
+	//DeathFieldData deathFieldData = SURVIVAL_GetDeathFieldData( 0 )
+	return !(SURVIVAL_PosInsideDeathField( 0, ent.GetOrigin( ) ) || StatusEffect_GetSeverity( ent, eStatusEffect.ring_immunity ) > 0.0 ) //|| StatusEffect_HasSeverity( ent, eStatusEffect.in_void_ring )) // first part = is safe
 }
       
 
@@ -1113,9 +1113,9 @@ void function DeployableMedic_PlayerOnDamage( entity player, var damageInfo )
 	{
 		case eDamageSourceId.outOfBounds:
 		case eDamageSourceId.deathField:
-			if ( DeathField_IsActive() )
+			if ( DeathField_IsActiveForIndex( player.DeathFieldIndex() ) )
 			{
-				float stormDist = DeathField_PointDistanceFromFrontier( player.EyePosition() )
+				float stormDist = DeathField_PointDistanceFromFrontierForIndex( player.EyePosition(), player.DeathFieldIndex() )
 				if ( stormDist > 0 )
 					Signal( player, "DeployableMedic_HealAborted" )
 					break

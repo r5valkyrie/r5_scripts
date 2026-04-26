@@ -1,31 +1,4145 @@
-// stub script
 
 global function Staging_Area_Init
-global function RemoveStagingAreaEntsForRealm
-global function GetPlayerStagingSquadRealm
+global function Survival_SetStagingAreaSettings
+global function Survival_ClearStagingAreaSettings
+global function StagingAreaPlayerTookDamageCallback
+global function GetFiringRangeRealm
 global function CreateWeaponRacksForRealm
+global function CreateGunRangeTargetsForRealm
+global function CreateAttachmentsForRealm
+global function CreateGearForRealm
+global function CreateHealthItemsForRealm
+global function RemoveStagingAreaEntsForRealm
+global function CreateGunRangeTarget
+global function StagingArea_PrePlayerChangedCharacterSetup
+global function StagingArea_AddLootDataRefToNotSpawn
+global function Staging_SpawnChargePylons_Thread
+global function Staging_SpawnJumpPads_Thread
+global function AddStagingCleanupEnt
+
+global function FR_ResidentDummies_CreateInRealm
+global function FR_ResidentDummies_DestroyInRealm
+global function FRDummies_Get
+
+global function LootDatas_To_LootRefs
+
+global function SetWeaponSkinsByPlayer
+
+                           
+global function CLootV2_InitLootInfo
+global function CLootV2_Create_AllWeapons_ForRealm
+
+global function CLoot2_Get_SpawnedWeaponData
+global function IsUsingConsolidatedLoot
+      
+
+// Sets up Firing Range's loot, targets, and dummies for a realm
+global function Create_FiringRange_WeaponsAndLoot_ForRealm
+
+global function FullCombatDummies_Start_ByPlayer
+global function FullCombatDummies_Stop_ByPlayer
+global function FullCombatDummies_IsEnabled
+
+                         
+global function GetCurrentTargetSpeedForPlayerRealm
+global function HasPlaylistVarVariableSpeedTargets
+
+global function FRSetting_TargetSpeed_Get
+global function FRSetting_TargetSpeed_Set
+global function FRSetting_ShieldLevel_Get
+global function FRSetting_DummieShieldLvl_Set
+
+global function FRSetting_DummieHelmetMatchShields_Get
+global function FRSetting_DummieHelmetMatchShields_Set
+
+global function FRSetting_DummieSpeed_Get
+global function FRSetting_DummieSpeed_Set
+global function FRSetting_DummieMovement_Get
+global function FRSetting_DummieMovement_Set
+global function FRSetting_DummieStance_Get
+global function FRSetting_DummieStance_Set
+
+global function FRIntSetting_Set
+global function FRIntSetting_Get
+global function FRBoolSetting_Set
+global function FRBoolSetting_Get
+                   
+global function FRSetting_DummieShooting_Get
+global function FRSetting_DummieShooting_Set
+global function FRSetting_DummieSpawnDists_Get
+global function FRSetting_DummieSpawnDists_Set
+global function FRSetting_DynamicDummiesOn_Get
+global function FRSetting_DynamicDummiesOn_Set
+
+global function FRSetting_DummieHighlightsOn_Get
+global function FRSetting_DummieHighlightsOn_Set
+
+global function FRReplenishLootFromBlackMarketMerge
+global function FRReplenishAmmoBrick
+
+const int TARGETSKIN_IDLE 	= 0
+const int TARGETSKIN_MINORHIT 	= 1
+const int TARGETSKIN_HIT 	= 2
+const int TARGETSKIN_CRIT 	= 3
+const int TARGETSKIN_OFF 	= 4
+
+                         
+
+global function UICallback_FRDummies_Reset
+
+                               
+
+#if DEVELOPER
+global function DEV_PrintEnable
+global function DEV_Record_Training_Bloodhound_Hillslide
+global function DEV_Record_Training_Pathfinder_Bye
+#endif // DEVELOPER
+
+// GUNRACK_MODEL already defined as global const in _loot_gun_racks.nut
+const float STAGING_GUNRACK_SPACING = 32
+
+//--- VARIABLES COLLECTED FROM OTHER PARTS OF THE FILE. Moved here.
+array<entity> s_rackNodes 						// Weapn Rack Nodes used in loot spawning section.
+bool s_attachmentNodeForBowCreated = false		//
+array<entity> s_attachmentNodes					// Attachment Nodes used in loot spawning section.
+array<int> s_combatRealms						//
+table<int, array<entity> > s_FRDummiesInRealm 	// Table of Resident Dummies by realm.
+
+                           
+const float	STAGING_AMMO_OFFSET_FROM_GUNRACK = 25
+const string CONSOLIDATEDLOOT_ROOTNODE_NAME = "consolidatedloot_root"
+const string CONSOLIDATEDLOOT_LOOTSTARTNODE_NAME = "consolidatedloot_start"
+const string CONSOLIDATEDLOOT_LOOTSTARTWIDTH_NAME = "consolidatedloot_width"
+const string CONSOLIDATEDLOOT_WEAPONRACK_NAME 	= "consolidatedloot_weapon_racks"
+const string CONSOLIDATEDLOOT_WEAPONRACK_NAME2 	= "consolidatedloot_weapon_racks_goleft"
+
+enum eConsolidatedLootNodeType
+{
+	WEAPONRACK,
+	LOOT,
+	COUNT_
+}
+
+// Sets up Firing Range's Consolidated loot, targets, and dummies for a realm
+global function ConsolidatedLoot_Create_FiringRange_WeaponsAndLoot_ForRealm
+      
+
+const asset TARGET_FOLDING_MODEL = $"mdl/barriers/shooting_range_target_01_animated.rmdl"
+                   
+const asset TARGET_SKINNED_BASE = $"mdl/canyonlands/firing_range_mu1_targets_01_stand.rmdl"
+const asset TARGET_SKINNED_MODEL = $"mdl/canyonlands/firing_range_mu1_targets_01.rmdl"
+                         
+const asset TARGET_SPINNING_BASE = $"mdl/barriers/shooting_range_target_02_stand.rmdl"
+const asset TARGET_SPINNING_MODEL = $"mdl/barriers/shooting_range_target_02.rmdl"
+const string TARGET_MOVER_SCRIPTNAME = "target_mover"
+
+const vector S16T_SLIDING_TARGET_REMOVAL = < 34813, -4144, -28256 >
+const vector S16T_FOLDING_TARGET_REMOVAL = <31515.0918, -4833.99805, -29140> // Radius check of 100
+
+                         
+const asset SPEED_SHIFT_PANEL = $"mdl/props/global_access_panel_button/global_access_panel_button_console_w_stand.rmdl"
+const asset DUMMY_WALL_PANEL  = $"mdl/props/global_access_panel_button/global_access_panel_button_wall.rmdl"
+const string SPEED_UP_PANEL_NAME  = "speed_up_panel"
+const string SLOW_DOWN_PANEL_NAME = "slow_down_panel"
+const string SHIELD_LEVEL_PANEL_NAME = "shield_level_panel"
+const string DUMMY_PANEL_NAME     = "combat_dummy_panel"
+const int INACTIVE_SKIN = 1
+const int ACTIVE_SKIN   = 0
+
+struct sMovingTarget
+{
+	entity targetBase
+	entity slideTarget
+	bool headedTowardEnd
+	vector start
+	vector end
+	string soundfx = ""
+}
+
+table< int,  array< sMovingTarget > > fr_MovingTargets
+
+      
+
+const float ITEM_RESPAWN_TIME_DEFAULT = 0.25
+
+float ITEM_RESPAWN_TIME = ITEM_RESPAWN_TIME_DEFAULT
+
+global enum eGunRangeTargetTypes
+{
+	SPINNING,
+	FOLDING,
+}
+
+struct
+{
+	array<entity> stagingCleanupEnts
+	array<Point> stagingLootBinLocations
+	table< entity, array<string> > attachmentPileFilters
+	bool stagingAreaEnabled = false
+	array<string> lootDataRefsToNotSpawn
+	bool hasSpawnedWeaponRacks = false
+                         
+	table< int, table< int, int > > frIntSettings
+	table< int, table< int, bool > > frBoolSettings
+
+	table< int, bool > stagingRealm_combatDummiesEnabled   // DO want behavior across SQUAD; but not across ALL realms
+                               
+
+	table < int, bool > residentDummiesSpawned
+
+                           
+	table< string, array< LootData > > weaponDataByAmmoType
+	table< int, array< LootData > > attachmentDataByType
+	table< int, array< string > > attachmentRefsByType
+	array< string > ammoTypesUsed = []
+	array< int > attachmentTypesUsed = []
+
+	// CLoot2 Gear includes backpacks, shields, helmets,
+	table< int, array< LootData > > gearDataByType
+	table< int, array< string > > gearRefsByType
+
+	bool vendingMachinesCreated = false
+      
+
+                  
+	array< string > redNessieWeaponRefs
+                        
+
+	array< string > frSpawnedWeaponRefs
+	bool usingConsolidatedLoot
+} file
+
+/*
+	██╗███╗   ██╗██╗████████╗
+	██║████╗  ██║██║╚══██╔══╝
+	██║██╔██╗ ██║██║   ██║
+	██║██║╚██╗██║██║   ██║
+	██║██║ ╚████║██║   ██║
+	╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝
+*/
 
 void function Staging_Area_Init()
 {
-    PrecacheModel( $"mdl/industrial/gun_rack_arm_down.rmdl" )
+
+	ITEM_RESPAWN_TIME = GetCurrentPlaylistVarFloat( "firing_range_item_respawn_time", ITEM_RESPAWN_TIME_DEFAULT )
+
+	file.stagingAreaEnabled = GetCurrentPlaylistVarBool( "survival_staging_area_enabled", false )
+
+	printt( "STAGING AREA ENABLED:", file.stagingAreaEnabled )
+	
+	PrecacheScriptString( FIRING_RANGE_TARGET_FOLD_SCRIPTNAME )
+
+	if ( file.stagingAreaEnabled )
+	{
+		PrecacheModel( GUNRACK_MODEL )
+		PrecacheModel( TARGET_FOLDING_MODEL )
+		PrecacheModel( TARGET_SPINNING_BASE )
+		PrecacheModel( TARGET_SPINNING_MODEL )
+		                   
+			PrecacheModel( TARGET_SKINNED_BASE )
+			PrecacheModel( TARGET_SKINNED_MODEL )
+        
+		                         
+		PrecacheModel( SPEED_SHIFT_PANEL )
+		PrecacheModel( DUMMY_WALL_PANEL )
+        
+
+		AddSpawnCallback_ScriptName( "staging_loot_bin", OnLootBinSpawned )
+		Loot_AddCallback_OnLootSpawn( Staging_OnLootSpawn ) // S3: callback not available
+
+		AddCallback_GameStateEnter( eGameState.WaitingForPlayers, Survival_OnEnterWaitingForPlayers )
+		AddCallback_GameStateEnter( eGameState.Playing, StagingCleanup )
+
+		RegisterSignal( "FullCombatDummies_Start_ByPlayer" )
+		RegisterSignal("PermanentlyDestroyFRDummyTarget")
+		RegisterSignal( "StartFRDummies" )
+		RegisterSignal( "SlideTargetSpeedReset" )
+		RegisterSignal( "SlideTargetThinkStart" )
+		RegisterSignal( "SlideTargetWaitForReset" )
+		RegisterSignal( "TargetHit" )
+
+		                   
+		RegisterSignal( "fr_ammo_respawn_now" )
+        
+
+		// S3: Nessie easter egg system not deployed
+			// if ( !IsNessieDisabled( NessieSkinIndexes.RED_NESSIE ) )
+			// {
+			// 	file.redNessieWeaponRefs.extend( FR_Nessie_GetRedNessieWeapons() )
+			// }
+
+	}
+}
+
+int function StagingArea_PrePlayerChangedCharacterSetup( entity player, ItemFlavor character )
+{
+	if ( !file.stagingAreaEnabled )
+		return 0
+
+	thread function() : ( player )
+	{
+		WaitFrame()
+		if ( !IsAlive( player ) )
+			return
+
+		array<entity> weapons = SURVIVAL_GetPrimaryWeaponsSorted( player )
+		if ( weapons.len() > 0 )
+			player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, weapons[0].GetWeaponClassName() )
+	}()
+
+	return PerspectiveCleanup( player )
+}
+
+void function Survival_OnEnterWaitingForPlayers()
+{
+	Loot_AddCallback_OnPlayerLootPickup( OnPlayerLootPickedUp )
+	thread TurnOnStagingEffectsDelayed()
+	thread CreateStagingAreaGunRange()
+}
+
+void function CreateStagingAreaGunRange()
+{
+	FlagWait( "EntitiesDidLoad" )
+
+	OutOfBoundsEnable()
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_TRAINING ) )
+		return
+
+	thread Staging_SpawnChargePylons_Thread()
+
+	                   
+		thread Staging_SpawnJumpPads_Thread()
+                          
+
+	InitializeAttachmentNodes()
+
+                           
+	if( IsUsingConsolidatedLoot() )
+	{
+		ConsolidatedLoot_CreateWeaponsAndLootForStaging()
+	}
+	else
+	{
+		Create_WeaponsAndLoot_ForStaging()
+	}
+     
+                                   
+      
+}
+
+void function Create_WeaponsAndLoot_ForStaging()
+{
+	array<int> allCommonPlayerRealms = GetAllPlayerCommonRealms()
+	foreach( int realm in allCommonPlayerRealms )
+	{
+		thread Create_FiringRange_WeaponsAndLoot_ForRealm( realm )
+		WaitFrame() // Can only create range one realm per frame or we run out of physics jobs on the movers
+	}
+}
+
+void function Create_FiringRange_WeaponsAndLoot_ForRealm( int realm )
+{
+	CreateWeaponRacksForRealm( realm )
+	CreateAttachmentsForRealm( realm )
+	CreateGearForRealm( realm )
+	CreateHealthItemsForRealm( realm )
+	CreateGunRangeTargetsForRealm( realm )
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+	{
+		thread FinalizeRealmWhenPopulated_Thread( realm ) // TODO: Wait for a player to connect to this  realm before spawning.
+	}
+}
+
+bool function LootIsSpawnable( LootData lootData )
+{
+	if ( WeaponLootRefIsLockedSet( lootData.ref ) )
+		return false
+
+	if ( lootData.ref.find( WEAPON_SUFFIX_NONCOMBAT ) > 0 ) // don't spawn pets/noncombat weapons
+		return false
+
+	if ( SURVIVAL_Loot_IsRefDisabled( lootData.ref ) )
+		return false
+
+	return true
+}
+
+                           
+bool function PlaylistVar_HasExpandedConsolidatedLoot()
+{
+	return( GetCurrentPlaylistVarBool( "has_expanded_consolidatedloot", true ))
+}
+
+array< entity > function ConsolidatedLoot_GetNodesArray( entity originNode, int nodeType )
+{
+	array< entity > linkedNodes = originNode.GetLinkEntArray()
+	array< entity > resultNodes = []
+
+	// Apped the relevant node.
+	foreach( node in linkedNodes )
+	{
+		string nodeName = node.GetScriptName()
+		switch( nodeType )
+		{
+			case eConsolidatedLootNodeType.WEAPONRACK:
+				if(( nodeName == CONSOLIDATEDLOOT_WEAPONRACK_NAME ) || ( nodeName == CONSOLIDATEDLOOT_WEAPONRACK_NAME2 ))
+				{
+					resultNodes.append( node )
+				}
+				break
+			case eConsolidatedLootNodeType.LOOT:
+				if( nodeName == CONSOLIDATEDLOOT_LOOTSTARTNODE_NAME )
+				{
+					resultNodes.append( node )
+				}
+				break
+		}
+	}
+
+	return resultNodes
+}
+
+void function ConsolidatedLoot_CreateWeaponsAndLootForStaging()
+{
+	CLootV2_InitLootInfo()
+
+	// Create Vending Machines.
+	Create_VendingMachines_ForAllRealms()
+
+	array<int> allCommonPlayerRealms = GetAllPlayerCommonRealms()
+	foreach( int realm in allCommonPlayerRealms )
+	{
+		ConsolidatedLoot_Create_FiringRange_WeaponsAndLoot_ForRealm( realm )
+		WaitFrame() // Can only create range one realm per frame or we run out of physics jobs on the movers
+	}
+}
+
+void function ConsolidatedLoot_Create_FiringRange_WeaponsAndLoot_ForRealm( int realm )
+{
+	CLootV2_Create_AllWeapons_ForRealm( realm )
+
+	CLootV4_Create_AllStuff_ForRealm( realm )
+
+	//CLootV2_Create_AllAttachments_ForRealm( realm )
+	//CLootV3_Create_AllShieldsAndGear_ForRealm( realm )
+
+	CreateGunRangeTargetsForRealm( realm )
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+	{
+		thread FinalizeRealmWhenPopulated_Thread( realm ) // TODO: Wait for a player to connect to this  realm before spawning.
+	}
+}
+
+array< LootData > barrels_LootData
+array< LootData > hopUps_LootData
+array< LootData > mags_LootData
+array< LootData > scopes_LootData
+array< LootData > stocks_LootData
+void function CLootV2_InitLootInfo()
+{
+	// --- Weapons need to be LootData so we could look at their ammoType.
+	//array<LootData> lootData = FilterLootDataByRefsToNotSpawn( SURVIVAL_Loot_GetByType_InLevel( eLootType.MAINWEAPON ) )
+	array< string > weaponRefs = SURVIVAL_GetAllRefsInLootGroup( "firing_range_all_weapons" )
+	                                              
+		if ( IsGoldenHorse_FR() )
+			weaponRefs.append( TITAN_SWORD_WEAPON_REF )
+       
+	array< LootData > lootDatas = LootRefs_To_LootDatas( weaponRefs )
+
+	foreach ( int i, LootData _lootData in lootDatas )
+	{
+		string ammoType = _lootData.ammoType
+		if ( !GetWeaponInfoFileKeyField_GlobalBool( _lootData.baseWeapon, "uses_ammo_pool" ) )
+			ammoType = "_none"
+
+		if ( !( ammoType in file.weaponDataByAmmoType ) )
+			file.weaponDataByAmmoType[ ammoType ] <- []
+
+		if ( !LootIsSpawnable( _lootData ) )
+			continue
+
+		#if DEVELOPER
+			DEV_Print( format( "%s(): Adding weapon of ammo type: %s", FUNC_NAME(), ammoType ))
+		#endif
+
+		if( !file.ammoTypesUsed.contains( ammoType ))
+			file.ammoTypesUsed.append( ammoType )
+
+		if( !file.weaponDataByAmmoType[ ammoType ].contains( _lootData ) )
+			file.weaponDataByAmmoType[ ammoType ].append( _lootData )
+	}
+
+	// --- Grab Loot Data.
+	array< string > gearRefs_Raw = SURVIVAL_GetAllRefsInLootGroup( "loot_roller_contents_03" ) // May include dupes.
+	array< string > gearRefs_All = []
+	array< string > gearRefs = []
+
+	// Remove duplicates.
+	foreach( _ref in gearRefs_Raw )
+	{
+		if( gearRefs_All.contains( _ref ) )
+			continue
+
+		gearRefs_All.append( _ref )
+	}
+
+	gearRefs_All.sort()
+
+	// Remove Disabled Items.
+	foreach( ref in gearRefs_All )
+	{
+		if( SURVIVAL_Loot_IsRefDisabled( ref ) )
+			continue
+
+		gearRefs.append( ref )
+	}
+
+	array< LootData > equipmentData_All = LootRefs_To_LootDatas( gearRefs )
+	// --- Build Gear lists.
+	foreach( item in equipmentData_All )
+	{
+		// Skip weapons
+		if( item.lootType == eLootType.MAINWEAPON )
+			continue
+
+		// Skip attachments. We'll do this later.
+		if( item.lootType == eLootType.ATTACHMENT )
+		{
+			//allAttaches.append( item )
+			continue
+		}
+
+		if( !( item.lootType in file.gearDataByType  ) )
+			file.gearDataByType[ item.lootType ] <- []
+		if( !( item.lootType in file.gearRefsByType ) )
+			file.gearRefsByType[ item.lootType ] <- []
+
+		// Append the LootData of the gear if not already in the table.
+		if( !file.gearDataByType[ item.lootType ].contains( item ) )
+			file.gearDataByType[ item.lootType ].append( item )
+
+		// Append the Loot Ref of the gear if not already in the table.
+		if( !file.gearRefsByType[ item.lootType ].contains( item.ref ) )
+			file.gearRefsByType[ item.lootType ].append( item.ref )
+	}
+
+	// --- Attachments
+	array< string > allAttachRefs_Unfiltered // Includes disabled refs.
+	allAttachRefs_Unfiltered.extend( SURVIVAL_GetAllRefsInLootGroup( "Attachment_L1" ) )
+	allAttachRefs_Unfiltered.extend( SURVIVAL_GetAllRefsInLootGroup( "Attachment_L2" ) )
+	allAttachRefs_Unfiltered.extend( SURVIVAL_GetAllRefsInLootGroup( "Attachment_L3" ) )
+	allAttachRefs_Unfiltered.extend( SURVIVAL_GetAllRefsInLootGroup( "Attachment_L4" ) )
+
+	array< string > allAttachRefs
+	foreach( ref in allAttachRefs_Unfiltered )
+	{
+		if( SURVIVAL_Loot_IsRefDisabled( ref ) )
+			continue
+
+		allAttachRefs.append( ref )
+	}
+
+	array < LootData > allAttaches = LootRefs_To_LootDatas( allAttachRefs )
+
+	barrels_LootData = []
+	hopUps_LootData  = LootRefs_To_LootDatas( SURVIVAL_GetAllRefsInLootGroup( "attachments_hopups_only" ) )
+	mags_LootData    = []
+	scopes_LootData  = []
+	stocks_LootData  = []
+
+	// Sort into different arrays by attach type and desired groupings.
+	foreach ( ld in allAttaches  )
+	{
+		if( !LootIsSpawnable( ld ) )
+			continue
+
+		switch( ld.attachmentType )
+		{
+			case eWeaponAttachmentType.BARREL:
+				barrels_LootData.append( ld )
+				break
+			case eWeaponAttachmentType.HOPUP:
+				// hopUps_LootData should use the loot group so the proto ones don't get spawned.
+				break
+			case eWeaponAttachmentType.MAG:
+				// Move the bolts to barrels_LootData list via string compare in spite of their their attachmentType being "mag"
+				if( ld.ref.find( "shotgun_bolt"  ) != -1 )
+				{
+					barrels_LootData.append( ld )
+				}
+				else
+				{
+					mags_LootData.append( ld )
+				}
+				break
+			case eWeaponAttachmentType.SCOPE:
+				scopes_LootData.append( ld )
+				break
+			case eWeaponAttachmentType.STOCK:
+				stocks_LootData.append( ld )
+				break
+		}
+	}
+
+	// There are some attachments missing from the above method.
+	// Let's look at the entire LootData set and add any missing items.
+	array< LootData > recheckAttaches = SURVIVAL_Loot_GetByType( eLootType.ATTACHMENT )
+	foreach( ld in recheckAttaches )
+	{
+		if( !LootIsSpawnable( ld ) )
+			continue
+
+		switch( ld.attachmentType )
+		{
+			case eWeaponAttachmentType.SCOPE:
+				if ( !scopes_LootData.contains( ld ) )
+				{
+					scopes_LootData.append( ld )
+				}
+				break
+		}
+	}
+
+	// Sort attachments by substrings, sort by tier, then put subsets back together.
+	array< LootData > barrels_LootData_Sorted 	= SortNSpace_LootDatas( barrels_LootData, [ "barrel_stabilizer_", "shotgun_bolt", "laser_sight" ] )
+	array< LootData > mags_Sorted 		= SortNSpace_LootDatas( mags_LootData, [ "bullets_mag", "highcal_mag", "energy_mag", "sniper_mag" ] )
+	array< LootData > scopes_Sorted 	= SortNSpace_LootDatas( scopes_LootData, [ "optic_cq", "optic_ranged", "optic_sniper" ] )
+	array< LootData > stocks_Sorted 	= SortNSpace_LootDatas( stocks_LootData, [ "stock_tactical", "stock_sniper" ] )
+
+	file.attachmentDataByType[ eWeaponAttachmentType.BARREL ] 	<- barrels_LootData_Sorted
+	file.attachmentDataByType[ eWeaponAttachmentType.HOPUP ] 	<- hopUps_LootData
+	file.attachmentDataByType[ eWeaponAttachmentType.MAG ] 		<- mags_Sorted
+	file.attachmentDataByType[ eWeaponAttachmentType.SCOPE ] 	<- scopes_Sorted
+	file.attachmentDataByType[ eWeaponAttachmentType.STOCK ] 	<- stocks_Sorted
+
+	file.attachmentRefsByType[ eWeaponAttachmentType.BARREL ] 	<- LootDatas_To_LootRefs( barrels_LootData )
+	file.attachmentRefsByType[ eWeaponAttachmentType.HOPUP ] 	<- LootDatas_To_LootRefs( hopUps_LootData )
+	file.attachmentRefsByType[ eWeaponAttachmentType.MAG ] 		<- LootDatas_To_LootRefs( mags_LootData )
+	file.attachmentRefsByType[ eWeaponAttachmentType.SCOPE ] 	<- LootDatas_To_LootRefs( scopes_LootData )
+	file.attachmentRefsByType[ eWeaponAttachmentType.STOCK ] 	<- LootDatas_To_LootRefs( stocks_LootData )
+
+	#if DEVELOPER
+		foreach( item in file.attachmentDataByType[ eWeaponAttachmentType.MAG ] )
+			printt( format( "%s(): Mag == %s", FUNC_NAME(), item.ref ))
+
+		foreach( item in file.attachmentDataByType[ eWeaponAttachmentType.BARREL ] )
+			printt( format( "%s(): Barrel == %s", FUNC_NAME(), item.ref ))
+	#endif // DEVELOPER
+}
+
+// -----
+table< string, array< string > > function ItemRefsTableBySubType_Build( array< LootData > items, array< string > subTypes )
+{
+	table< string, array< LootData > > itemsByType = ItemsTableBySubType_Build( items, subTypes )
+	ItemsTableBySubType_Sort( itemsByType, subTypes )
+	
+	table< string, array< string > > itemRefsByType
+	
+	foreach( sType in subTypes )
+	{
+		itemRefsByType[ sType ] <- LootDatas_To_LootRefs( itemsByType[ sType ] )
+	}
+	
+	return itemRefsByType
+}
+
+table< string, array< LootData > > function ItemsTableBySubType_Build( array< LootData > items, array< string > subTypes )
+{
+	table< string, array< LootData > > itemsByType
+	foreach( sType in subTypes )
+	{
+		itemsByType[ sType ] <- []
+	}
+
+	// split into subgroups.
+	foreach( item in items )
+	{
+		if( !LootIsSpawnable( item ) )
+			continue
+
+		foreach( sType in subTypes )
+		{
+			if( item.ref.find( sType ) != -1 )
+			{
+				itemsByType[ sType ].append( item )
+				continue
+			}
+		}
+	}
+	return itemsByType
+}
+
+void function ItemsTableBySubType_Sort( table< string, array< LootData > > itemsByType, array< string > subTypes )
+{
+	for( int i = 0; i < subTypes.len(); i++ )
+	{
+		string sType	= subTypes[ i ]
+		array< LootData > subList = itemsByType[ sType ]
+		subList.sort( CompareLootDataByTier )
+	}
+}
+
+// -----
+
+// Returns array< LootData > of all items broken down by subtype and sorted by tier within each subtype, separated by
+// a blank LootData between subtypes.
+array< LootData > function SortNSpace_LootDatas( array< LootData > items, array< string > subTypes )
+{
+	array< LootData > results
+
+	table< string, array< LootData > > itemsByType = ItemsTableBySubType_Build( items, subTypes )
+
+	for( int i = 0; i < subTypes.len(); i++ )
+	{
+		string sType = subTypes[ i ]
+		array< LootData > subList = itemsByType[ sType ]
+		subList.sort( CompareLootDataByTier )
+
+		// Add a space after each subtype Except the last one, so everything is still centered within the space.
+		if( i < subTypes.len() - 1 )
+		{
+			LootData blankData
+			subList.append( blankData )
+			subList.append( blankData )
+		}
+		results.extend( subList )
+	}
+
+	#if DEVELOPER
+		foreach( item in results )
+			printt( format( "%s(): result item == ", FUNC_NAME(), item.ref ) )
+	#endif // DEVELOPER
+	return results
+}
+
+
+
+int function CompareLootDataByTier( LootData item1, LootData item2 )
+{
+	if ( item1.tier > item2.tier ) return 1
+	else if ( item1.tier < item2.tier ) return -1
+	return 0
+}
+
+int function CompareLootDataByRef( LootData item1, LootData item2 )
+{
+	if ( item1.ref > item2.ref ) return 1
+	else if ( item1.ref < item2.ref ) return -1
+	return 0
+}
+
+// -------------------
+// ----- CLoot2 Creation Functions 
+// -------------------
+
+void function CLootV2_Create_AllWeapons_ForRealm( int realm )
+{
+	// TODO: May need to initialize ammoTypes used for MU1 training.
+
+	// Create All Weapons That Spawn for the given realm.
+	foreach( string ammo in file.ammoTypesUsed )
+	{
+		CLootV2_Spawn_AllWeapons_ByAmmoType_ForRealm( realm, ammo )
+	}
+}
+
+void function CLootV2_Create_AllAttachments_ForRealm( int realm )
+{
+	array< entity > startNodes = GetEntArrayByScriptName( "cloot2_attachments_start" )
+
+	foreach( startNode in startNodes )
+	{
+		CLootV2_Create_Attachments_ForRealm( realm, startNode )
+	}
+}
+
+void function CLootV2_Create_Attachments_ForRealm( int realm, entity startNode )
+{
+	if( !IsValid( startNode ) )
+		return
+
+	array< array< string > > rowsOfItemRefs = []
+	array< vector > angleOffsets
+
+	// TODO: Run those LootData lists through a function that spaces out each subcategory of loot by comparing tiers.
+
+	// Explicitly construct the rowsOfItemRefs and construct an array of angleOverrides to go with each row.
+	// Order the scopes closest to the guns ( last row )
+	rowsOfItemRefs.append( LootDatas_To_LootRefs( file.attachmentDataByType[ eWeaponAttachmentType.HOPUP ] ) )
+	angleOffsets.append( < 0,0,0 > )
+	rowsOfItemRefs.append( LootDatas_To_LootRefs( file.attachmentDataByType[ eWeaponAttachmentType.STOCK ] ) )
+	angleOffsets.append( < 0,90,0 > )
+	rowsOfItemRefs.append( LootDatas_To_LootRefs( file.attachmentDataByType[ eWeaponAttachmentType.BARREL ] ) )
+	angleOffsets.append( < 0,45,0 > )
+	rowsOfItemRefs.append( LootDatas_To_LootRefs( file.attachmentDataByType[ eWeaponAttachmentType.MAG ] ) )
+	angleOffsets.append( < 0,180,0 > )
+	rowsOfItemRefs.append( LootDatas_To_LootRefs( file.attachmentDataByType[ eWeaponAttachmentType.SCOPE ] ) )
+	angleOffsets.append( < 0,45,0 > )
+
+	thread _SpawnLoot_InArea_ForRealm_Thread( realm, startNode, rowsOfItemRefs, 1, angleOffsets )
+}
+
+void function CLootV3_Create_AllShieldsAndGear_ForRealm( int realm )
+{
+	array< entity > startNodes = GetEntArrayByScriptName( "cloot3_gear_start" )
+	if( startNodes.len() == 0 )
+		startNodes = GetEntArrayByScriptName( "cloot2_gear_start" )
+
+	foreach( startNode in startNodes )
+	{
+		CLootV3_Create_ShieldsAndGear_ForRealm( realm, startNode )
+	}
+}
+
+void function CLootV3_Create_ShieldsAndGear_ForRealm( int realm, entity startNode )
+{
+	if( !IsValid( startNode ) )
+		return
+
+	array< array< string > > rowsOfItemRefs = []
+	array< vector > angleOverrides
+
+	// Combine Body Shields, helmets,incapshields, and evo shields into 1 row.
+	array< string > bodyShieldRefs = []
+	array< string > helmetRefs
+	array< string > incapShieldRefs
+	array< string > evoShieldRefs
+
+	// --- Body Shields: armor_pickup_lv1, 2, 3, 4_all_fast
+	                    
+	bool useArmorCores = UpgradeCore_ArmorTiedToUpgrades()
+	#if DEVELOPER
+		printt( format( "%s(): useArmorCores == %s", FUNC_NAME(), string( useArmorCores ) ) )
+	#endif
+
+	if( !useArmorCores )
+       
+	{
+		bodyShieldRefs = [ "armor_pickup_lv1", "armor_pickup_lv2", "armor_pickup_lv3", "armor_pickup_lv4_all_fast" , "" ]
+	}
+
+	// --- Helmets: helmet_pickup_lv1, 2, 3, 4_abilities.
+	helmetRefs = LootDatas_To_LootRefs( file.gearDataByType[ eLootType.HELMET ] )
+	if( !helmetRefs.contains( "helmet_pickup_lv1" ) )
+		helmetRefs.insert( 0, "helmet_pickup_lv1" )
+	helmetRefs.append( "" )
+
+	// --- Knockdown Shields: incapshield_pickup_lv1, 2, 3, 4_selfrevive.
+	incapShieldRefs = LootDatas_To_LootRefs( file.gearDataByType[ eLootType.INCAPSHIELD ] )
+	if( !incapShieldRefs.contains( "incapshield_pickup_lv1" ) )
+		incapShieldRefs.insert( 0, "incapshield_pickup_lv1" )
+	incapShieldRefs.append( "" )
+
+	// --- Evo Shields: armor_pickup_lv1_evolving, lv2_evolving, lv3_evolving, lv4_all_fast
+	                    
+	if( !useArmorCores )
+       
+	{
+		evoShieldRefs = LootDatas_To_LootRefs( file.gearDataByType[ eLootType.ARMOR ] )
+		if( !( evoShieldRefs.contains( "armor_pickup_lv5_evolving" ) ) )
+			evoShieldRefs.append( "armor_pickup_lv5_evolving" )
+		if( evoShieldRefs.contains( "armor_pickup_lv4_all_fast" ) )
+			evoShieldRefs.removebyvalue( "armor_pickup_lv4_all_fast" )
+		evoShieldRefs.sort()
+		evoShieldRefs.append( "" )
+	}
+	                    
+	else
+	{
+		evoShieldRefs = [ "armor_core_pickup_lv1", "armor_core_pickup_lv2", "armor_core_pickup_lv3", "armor_core_pickup_lv5", "" ]
+	}
+       
+
+	// Add BackPacks & ordnances as next row:
+	array< string > ordnanceRefs = SURVIVAL_GetAllRefsInLootGroup( "ordnance_drops" )
+	array< string > backpackRefs = LootDatas_To_LootRefs( file.gearDataByType[ eLootType.BACKPACK ] )
+	array< string > backpackAndOrdnanceRefs = []
+	for( int i = 0; i < backpackRefs.len() - 1; i++ )
+	{
+		backpackAndOrdnanceRefs.append( backpackRefs[ i ] )
+		backpackAndOrdnanceRefs.append( "" )
+		backpackAndOrdnanceRefs.extend( ordnanceRefs )
+		backpackAndOrdnanceRefs.append( "" )
+	}
+	backpackAndOrdnanceRefs.append( backpackRefs[ backpackRefs.len() - 1 ] )
+
+	rowsOfItemRefs.append( backpackAndOrdnanceRefs )
+	angleOverrides.append( < 0, 90, 0 > )
+
+	// Consumables
+	string ultAccelerant = "health_pickup_ultimate"
+	string syringe = "health_pickup_health_small"
+	string medkit = "health_pickup_health_large"
+	string batcell = "health_pickup_combo_small"
+	string battery = "health_pickup_combo_large"
+	string phoenix = "health_pickup_combo_full"
+	array< string > consumableRefs = [ phoenix, battery, medkit, batcell,  syringe, ultAccelerant, syringe, batcell, medkit, battery, phoenix ]
+	rowsOfItemRefs.append( consumableRefs )
+	angleOverrides.append( < 0, 0, 0 > )
+
+	bool armorAtGunRackEnds = CLootV3_CreateShieldsAtGunRackEnds( realm, bodyShieldRefs, evoShieldRefs )
+	array< string > protectiveStuff
+
+	if( armorAtGunRackEnds  )
+	{
+		// TODO: Put the helmets and incapshields by the armors. ( one set for each side. )
+		protectiveStuff.extend( helmetRefs )
+		protectiveStuff.extend( incapShieldRefs )
+	}
+	else
+	{
+		// if the nodes for the gunrack-end armor configuration aren't found, combine all armor pieces.
+		protectiveStuff.extend( bodyShieldRefs )
+		protectiveStuff.extend( helmetRefs )
+		protectiveStuff.extend( incapShieldRefs )
+		protectiveStuff.extend( evoShieldRefs )
+		rowsOfItemRefs.append( protectiveStuff )
+	}
+
+	angleOverrides.append( < 0, 180, 0 > + startNode.GetAngles())
+	thread _SpawnLoot_InArea_ForRealm_Thread( realm, startNode, rowsOfItemRefs, 1, angleOverrides )
+}
+
+// Spawn the body armor and evo armor at the ends of the middle gun racks.
+bool function CLootV3_CreateShieldsAtGunRackEnds( int realm, array< string > bodyShieldRefs, array< string > evoShieldRefs )
+{
+	array< entity > bodyarmor_startNodes = GetEntArrayByScriptName( "cloot3_bodyarmor_start" )
+
+	array< entity > evoarmor_startNodes = GetEntArrayByScriptName( "cloot3_evoarmor_start" )
+
+	if(( bodyarmor_startNodes.len() == 0 ) || ( evoarmor_startNodes.len() == 0 ))
+	{
+		return false
+	}
+
+	// Otherwise, spawn body armor and evo armor at the ends of the middle gun racks.
+	bool result
+	result = _CLootV3_ShieldsAtGunRackEnds( realm, bodyarmor_startNodes, bodyShieldRefs )
+	result = result && _CLootV3_ShieldsAtGunRackEnds( realm, evoarmor_startNodes, evoShieldRefs )
+
+	return result
+}
+
+bool function _CLootV3_ShieldsAtGunRackEnds( int realm, array< entity > allStartNodes, array< string > lootRefs )
+{
+	//foreach( startNode in allStartNodes )
+	//{
+	//	entity endNode = startNode.GetLinkEnt() // There should only be one end.
+	//	if( !IsValid( endNode ) )
+	//		return false
+	//
+	//	// Prepare parameters to spawn a row of weapons.
+	//	float rowWidth = Distance( endNode.GetOrigin(), startNode.GetOrigin() )
+	//	float itemDelta = rowWidth / lootRefs.len()
+	//	vector nextItemDir = startNode.GetForwardVector()
+	//	vector rowStart = startNode.GetOrigin() + nextItemDir * itemDelta / 2
+	//	vector defaultAngles = < 0, 180, 0 > + startNode.GetAngles()
+	//
+	//	// Angle Adjust itemRefs.
+	//	int spawnWeaponHowMany = 1
+	//	array< entity > spawnedItems = _SpawnLootRow_ForRealm( realm, lootRefs, spawnWeaponHowMany, rowStart, rowWidth, nextItemDir, defaultAngles )
+	//}
+	//
+	//return true
+	return ( CLootV4_Spawn_LootRows_For_ArrayOfStartNodes( realm, allStartNodes, lootRefs, [], < 0, 180, 0 > ))
+}
+
+// ----- Loot V4: Spawn Individual rows for maximum flexibility.
+
+void function CLootV4_Create_AllStuff_ForRealm( int realm )
+{
+	if( !( GetCurrentPlaylistVarBool( "has_clootv4", false ) ) )
+	{
+		thread CLootV2_Create_AllAttachments_ForRealm( realm )
+		thread CLootV3_Create_AllShieldsAndGear_ForRealm( realm )
+		return
+	}
+
+	table< string, array< entity > > startNodesTable
+	table< string, array< string > > lootRefsTable
+	table< string, array< int > > 	 lootCountsTable
+
+	string missingStartNodes = ""
+	array< string > startNodeNames =
+	[
+		"cloot4_scopes_basic_start",
+		"cloot4_scopes_advanced_start",
+		"cloot4_scopes_sniper_start",
+		"cloot4_mags_energy_start",
+		"cloot4_mags_heavy_start",
+		"cloot4_mags_light_start",
+		"cloot4_mags_sniper_start",
+		"cloot4_stocks_basic_start",
+		"cloot4_stocks_sniper_start",
+		"cloot4_barrels_start",
+		"cloot4_lasers_start",
+		"cloot4_shotgunbolts_start",
+		"cloot4_hopups_start",
+		"cloot4_bodyarmor_start",
+		"cloot4_evoarmor_start",
+		"cloot4_helmets_start",
+		"cloot4_incaps_start",
+		"cloot4_ordinances_start",
+		"cloot4_batts_start",
+		"cloot4_health_start",
+		"cloot4_specialgear_start",
+		"cloot4_backpacks_start"
+	]
+
+	// --- GET ALL THE START NODES. IF ANY OF THEM ARE MISSING, DEFAULT TO CLootV3_Create_AllShieldsAndGear_ForRealm()
+	foreach( _startNodeName in startNodeNames )
+	{
+		startNodesTable[ _startNodeName ] <- GetEntArrayByScriptName( _startNodeName )
+		if( startNodesTable[ _startNodeName ].len() == 0 )
+		{
+			missingStartNodes = _startNodeName
+			break
+		}
+	}
+
+	if( missingStartNodes != "" )
+	{
+		#if DEVELOPER
+			printt( format( "%s(): Start Nodes Not Found: %s", FUNC_NAME(), missingStartNodes ) )
+		#endif
+		thread CLootV2_Create_AllAttachments_ForRealm( realm )
+		thread CLootV3_Create_AllShieldsAndGear_ForRealm( realm )
+		return
+	}
+
+	// --- Gather all the item lootRefs.
+	// ----- Scopes:
+	table< string, array< string > > scopesRefs = ItemRefsTableBySubType_Build( scopes_LootData, [ "optic_cq", "optic_ranged", "optic_sniper" ] )
+	// Adjust a little bit... put the digi scope in the advanced scopes row.
+	array< string > scopesRefs_cq 		= scopesRefs[ "optic_cq" ]
+	array< string > scopesRefs_advanced	= scopesRefs[ "optic_ranged" ]
+	string digiscope = scopesRefs_cq[ scopesRefs_cq.len() - 1 ]
+	scopesRefs_advanced.append( digiscope )
+	scopesRefs_cq.remove( scopesRefs_cq.len() - 1 )
+
+	lootRefsTable[ "cloot4_scopes_basic_start" ] 	<- scopesRefs_cq
+	lootRefsTable[ "cloot4_scopes_advanced_start" ] <- scopesRefs_advanced
+	lootRefsTable[ "cloot4_scopes_sniper_start" ] 	<- scopesRefs[ "optic_sniper" ]
+
+	lootCountsTable[ "cloot4_scopes_basic_start" ] 		<- CLootV4_InitLootSpawnCount( scopesRefs_cq )
+	lootCountsTable[ "cloot4_scopes_advanced_start" ] 	<- CLootV4_InitLootSpawnCount( scopesRefs_advanced )
+	lootCountsTable[ "cloot4_scopes_sniper_start" ] 		<- CLootV4_InitLootSpawnCount( scopesRefs[ "optic_sniper" ] )
+
+	// -----  Mags:
+	table< string, array< string > > magsRefs = ItemRefsTableBySubType_Build( mags_LootData, [ "bullets_mag", "highcal_mag", "energy_mag", "sniper_mag" ] )
+	lootRefsTable[ "cloot4_mags_energy_start" ] 	<- magsRefs[ "energy_mag" ]
+	lootRefsTable[ "cloot4_mags_heavy_start" ] 		<- magsRefs[ "highcal_mag" ]
+	lootRefsTable[ "cloot4_mags_light_start" ] 		<- magsRefs[ "bullets_mag" ]
+	lootRefsTable[ "cloot4_mags_sniper_start" ] 	<- magsRefs[ "sniper_mag" ]
+
+	lootCountsTable[ "cloot4_mags_energy_start" ] 	<- CLootV4_InitLootSpawnCount( magsRefs[ "energy_mag" ] )
+	lootCountsTable[ "cloot4_mags_heavy_start" ] 	<- CLootV4_InitLootSpawnCount( magsRefs[ "highcal_mag" ] )
+	lootCountsTable[ "cloot4_mags_light_start" ] 	<- CLootV4_InitLootSpawnCount( magsRefs[ "bullets_mag" ] )
+	lootCountsTable[ "cloot4_mags_sniper_start" ] 	<- CLootV4_InitLootSpawnCount( magsRefs[ "sniper_mag" ] )
+
+	// -----  Stocks:
+	table< string, array< string > > stocksRefs = ItemRefsTableBySubType_Build( stocks_LootData, [ "stock_tactical", "stock_sniper" ] )
+	lootRefsTable[ "cloot4_stocks_basic_start" ] 	<- stocksRefs[ "stock_tactical" ]
+	lootRefsTable[ "cloot4_stocks_sniper_start" ] 	<- stocksRefs[ "stock_sniper" ]
+
+	lootCountsTable[ "cloot4_stocks_basic_start" ] 	<- CLootV4_InitLootSpawnCount( stocksRefs[ "stock_tactical" ] )
+	lootCountsTable[ "cloot4_stocks_sniper_start" ]	<- CLootV4_InitLootSpawnCount( stocksRefs[ "stock_sniper" ] )
+
+	// -----  Gun Ends:
+	table< string, array< string > > gunEndRefs = ItemRefsTableBySubType_Build( barrels_LootData, [ "barrel_stabilizer", "shotgun_bolt", "laser_sight" ] )
+	lootRefsTable[ "cloot4_barrels_start" ] 		<- gunEndRefs[ "barrel_stabilizer" ]
+	lootRefsTable[ "cloot4_lasers_start" ] 			<- gunEndRefs[ "laser_sight" ]
+	lootRefsTable[ "cloot4_shotgunbolts_start" ] 	<- gunEndRefs[ "shotgun_bolt" ]
+
+	lootCountsTable[ "cloot4_barrels_start" ] 		<- CLootV4_InitLootSpawnCount( gunEndRefs[ "barrel_stabilizer" ] )
+	lootCountsTable[ "cloot4_lasers_start" ] 		<- CLootV4_InitLootSpawnCount( gunEndRefs[ "laser_sight" ] )
+	lootCountsTable[ "cloot4_shotgunbolts_start" ] 	<- CLootV4_InitLootSpawnCount( gunEndRefs[ "shotgun_bolt" ] )
+
+	// -----  Hopups:
+	lootRefsTable[ "cloot4_hopups_start" ] <- SURVIVAL_GetAllRefsInLootGroup( "attachments_hopups_only" )
+	lootCountsTable[ "cloot4_hopups_start" ] 	<- CLootV4_InitLootSpawnCount( SURVIVAL_GetAllRefsInLootGroup( "attachments_hopups_only" ) )
+
+	// -----  Armors:
+	array< string > armorRefs = []
+	                    
+	bool useArmorCores = UpgradeCore_ArmorTiedToUpgrades()
+	if( !useArmorCores )
+       
+	{
+		armorRefs = [ "armor_pickup_lv1", "armor_pickup_lv2", "armor_pickup_lv3", "armor_pickup_lv4_all_fast" ]
+		lootRefsTable[ "cloot4_bodyarmor_start" ] <- armorRefs
+		lootCountsTable[ "cloot4_bodyarmor_start" ] <- CLootV4_InitLootSpawnCount( armorRefs )
+	}
+
+	array< string >evoShieldRefs = []
+
+	                    
+	if( useArmorCores )
+	{
+		evoShieldRefs.append( "armor_core_pickup_lv1" )
+		evoShieldRefs.append( "armor_core_pickup_lv2" )
+		evoShieldRefs.append( "armor_core_pickup_lv3" )
+		evoShieldRefs.append( "armor_core_pickup_lv5" )
+		lootRefsTable[ "cloot4_bodyarmor_start" ] <- evoShieldRefs
+		lootCountsTable[ "cloot4_bodyarmor_start" ] <- CLootV4_InitLootSpawnCount( evoShieldRefs )
+		lootRefsTable[ "cloot4_evoarmor_start" ] <- []
+		lootCountsTable[ "cloot4_evoarmor_start" ] 	<- []
+	}
+	else
+       
+	{
+		evoShieldRefs.append( "armor_pickup_lv1_evolving" )
+		evoShieldRefs.append( "armor_pickup_lv2_evolving" )
+		evoShieldRefs.append( "armor_pickup_lv3_evolving" )
+		evoShieldRefs.append( "armor_pickup_lv4_all_fast" )
+		evoShieldRefs.append( "armor_pickup_lv5_evolving" )
+
+		lootRefsTable[ "cloot4_evoarmor_start" ] <- evoShieldRefs
+		lootCountsTable[ "cloot4_evoarmor_start" ] 	<- CLootV4_InitLootSpawnCount( evoShieldRefs )
+	}
+
+	array< string >helmetRefs = LootDatas_To_LootRefs( file.gearDataByType[ eLootType.HELMET ] )
+	if( !helmetRefs.contains( "helmet_pickup_lv1" ) )
+	{
+		helmetRefs.insert( 0, "helmet_pickup_lv1" )
+	}
+	lootRefsTable[ "cloot4_helmets_start" ] <- helmetRefs
+	lootCountsTable[ "cloot4_helmets_start" ] 	<- CLootV4_InitLootSpawnCount( helmetRefs )
+
+	array< string >incapShieldRefs = LootDatas_To_LootRefs( file.gearDataByType[ eLootType.INCAPSHIELD ] )
+	if( !incapShieldRefs.contains( "incapshield_pickup_lv1" ) )
+	{
+		incapShieldRefs.insert( 0, "incapshield_pickup_lv1" )
+	}
+	lootRefsTable[ "cloot4_incaps_start" ] <- incapShieldRefs
+	lootCountsTable[ "cloot4_incaps_start" ] 	<- CLootV4_InitLootSpawnCount( incapShieldRefs )
+
+	// -----  Ordinances
+	lootRefsTable[ "cloot4_ordinances_start" ] <- SURVIVAL_GetAllRefsInLootGroup( "ordnance_drops" )
+	lootCountsTable[ "cloot4_ordinances_start" ] 	<- CLootV4_InitLootSpawnCount( SURVIVAL_GetAllRefsInLootGroup( "ordnance_drops" ) )
+
+	// ----- Consumables
+	// Consumables
+	string ultAccelerant = "health_pickup_ultimate"
+	string syringe = "health_pickup_health_small"
+	string medkit = "health_pickup_health_large"
+	string batcell = "health_pickup_combo_small"
+	string battery = "health_pickup_combo_large"
+	string phoenix = "health_pickup_combo_full"
+
+	// Batteries
+	lootRefsTable[ "cloot4_batts_start" ] <- [ phoenix, battery, batcell, batcell ]
+	lootCountsTable[ "cloot4_batts_start" ] <- [ 1, 1, 1, 1 ]
+
+	// Health
+	lootRefsTable[ "cloot4_health_start" ] <- [ medkit, syringe, syringe ]
+	lootCountsTable[ "cloot4_health_start" ] <- [ 1, 2, 2 ]
+
+	                    
+		if( UpgradeCore_IsEnabled())
+		{
+			lootRefsTable[ "cloot4_batts_start" ]. append( "mp_pickup_xp_cache_dynamic" )
+			lootCountsTable[ "cloot4_batts_start" ].append( 1 )
+		}
+                           
+
+	// Special Gear
+                              
+		string evacballoon = "mp_ability_redeploy_balloon"
+		lootRefsTable[ "cloot4_specialgear_start" ] <- [ ultAccelerant, evacballoon ]
+		lootCountsTable[ "cloot4_specialgear_start" ] <- [ 1, 1 ]
+      
+                                                                  
+                                                        
+                                    
+
+	// Backpacks
+	array< string > backpackRefs = LootDatas_To_LootRefs( file.gearDataByType[ eLootType.BACKPACK ] )
+	if( !( backpackRefs.contains( "backpack_pickup_lv1" ) ) )
+	{
+		backpackRefs.insert( 0, "backpack_pickup_lv1" )
+	}
+	lootRefsTable[ "cloot4_backpacks_start" ] <- backpackRefs
+	lootCountsTable[ "cloot4_backpacks_start" ] <- CLootV4_InitLootSpawnCount( backpackRefs )
+
+	// Spawn all the stuff.
+	foreach( category in startNodeNames )
+	{
+		thread CLootV4_Spawn_LootRows_For_ArrayOfStartNodes( realm, startNodesTable[ category ], lootRefsTable[ category ], lootCountsTable[ category ] )
+	}
+}
+
+array< int > function CLootV4_InitLootSpawnCount( array< string > lootRefs )
+{
+	array< int > results = []
+	foreach( _lref in lootRefs )
+	{
+		results.append( 1 )
+	}
+
+	return results
+}
+
+// -----
+
+void function Create_VendingMachines_ForAllRealms()
+{
+	if( !file.vendingMachinesCreated )
+	{
+		array< entity > gearStationNodes = GetEntArrayByScriptName( "gear_vending" )
+		foreach( _gearStationNode in gearStationNodes )
+		{
+			if ( IsValid( _gearStationNode ) )
+			{
+				VendingMachine_CreateSimple( _gearStationNode.GetOrigin(), _gearStationNode.GetAngles() )
+			}
+		}
+		file.vendingMachinesCreated = true
+	}
+}
+
+// -------------------
+// ----- CLoot2 Spawn Functions 
+// -------------------
+
+void function CLootV2_Spawn_AllWeapons_ByAmmoType_ForRealm( int realm, string ammoType )
+{
+	string nodeName = "guns_" + ammoType + "_start"
+
+	array< entity > startNodes = GetEntArrayByScriptName( nodeName )
+	foreach( entity startNode in startNodes)
+	{
+		thread CLootV2_Spawn_WeaponRowAndAmmo_ForRealm( realm, ammoType, startNode )
+		WaitFrame()
+	}
+
+	WaitFrame()
+}
+
+void function CLootV2_Spawn_WeaponRowAndAmmo_ForRealm( int realm, string ammoType, entity startNode )
+{
+	if( !IsValid( startNode ) )
+		return
+
+	array< LootData > lootData = file.weaponDataByAmmoType[ ammoType ]
+
+	if( lootData.len() == 0 )
+		return
+
+	// -------------------
+	// ----- Spawn the Weapons
+	// -------------------
+	// Get the end node
+	entity endNode = startNode.GetLinkEnt() // There should only be one end.
+	if( !IsValid( endNode ) )
+		return
+
+	// Prepare parameters to spawn a row of weapons.
+	array< string > lootRefs_Unfiltered = LootDatas_To_LootRefs( lootData )
+
+	array< string > lootRefs
+	foreach( ref in lootRefs_Unfiltered )
+	{
+		if( SURVIVAL_Loot_IsRefDisabled( ref ) )
+			continue
+
+		lootRefs.append( ref )
+	}
+
+	vector rowStart = startNode.GetOrigin()
+	float rowWidth = Distance( endNode.GetOrigin(), startNode.GetOrigin() )
+	//vector defaultAngles = AnglesCompose ( < 90, 0, 0 >, startNode.GetAngles())
+	vector defaultAngles = < 0, 0, -90 > + startNode.GetAngles()
+	vector nextItemDir = startNode.GetRightVector()
+
+	// Angle Adjust itemRefs.
+	array< string > angleAdjustItemRefs = [ "mp_weapon_bow", "mp_weapon_throwingknife" ]
+
+	                          
+		angleAdjustItemRefs.append( TITAN_SWORD_WEAPON_REF )
+       
+
+	vector itemAdjustAngles = < 85, 0, 0 >
+
+	int spawnWeaponHowMany = 500
+	array< entity > spawnedWeapons = _SpawnLootRow_ForRealm( realm, lootRefs, spawnWeaponHowMany, rowStart, rowWidth, nextItemDir, defaultAngles, angleAdjustItemRefs, itemAdjustAngles, true )
+
+	// -------------------
+	// --- Spawn ammo of ammoType
+	// -------------------
+	if( ammoType != "_none" )
+	{
+		LootData ammoLootData = SURVIVAL_Loot_GetLootDataByRef( ammoType )
+		array< entity > ammoNodes = GetEntArrayByScriptName( "ammo_" + ammoType )
+		foreach( ammoNode in ammoNodes )
+		{
+			vector pos = ammoNode.GetOrigin()
+			vector ang = ammoNode.GetAngles()
+			_SpawnItem_ForRealm( realm, ammoType, pos, ang, ammoLootData.countPerDrop * 1 )
+		}
+	}
+}
+
+// ----- Spawn Functions
+
+entity function _SpawnItem_ForRealm( int realm, string lootRef, vector pos, vector ang, int count = 1, bool hideUsableHUD = false )
+{
+
+	entity item = SpawnGenericLoot( lootRef, pos, ang, count )
+
+	if( IsValid( item ) )
+	{
+		item.SetNetworkDistanceCull( false )
+		item.e.recreateLootOnPickup = true
+
+		item.RemoveFromAllRealms()
+		item.AddToRealm( realm )
+
+		if( hideUsableHUD )
+		{
+			// TODO: Figure out a way to hide the vertical lines.
+			// The scripting below does NOT do this.
+			//item.RemoveUsableValue( USABLE_USE_VERTICAL_LINE )
+			//item.RemoveUsableValue( USABLE_HORIZONTAL_FOV )
+			//item.AddUsableValue( USABLE_USE_DISTANCE_OVERRIDE )
+			//item.SetUsableDistanceOverride( 128.0 )
+		}
+
+		AddStagingCleanupEnt( item )
+	}
+
+	return item
+}
+
+bool function CLootV4_Spawn_LootRows_For_ArrayOfStartNodes( int realm, array< entity > allStartNodes, array< string > lootRefs, array< int > lootCountsParm, vector angleAdjust = < 0, 0, 0 > )
+{
+	foreach( startNode in allStartNodes )
+	{
+		entity endNode = startNode.GetLinkEnt() // There should only be one end.
+		if( !IsValid( endNode ) )
+			return false
+
+		array< int > lootCounts = []
+		if( lootCountsParm.len() > 0 )
+		{
+			lootCounts = lootCountsParm
+		}
+		else
+		{
+			lootCounts = CLootV4_InitLootSpawnCount( lootRefs )
+		}
+
+		array< entity > spawnedItems = CLootV4_SpawnLootRow_ForRealm( realm, lootRefs, lootCounts, startNode )
+	}
+
+	return true
+}
+
+array< entity > function CLootV4_SpawnLootRow_ForRealm( int realm, array< string > lootRefsParm, array< int > lootCounts, entity startNode, array< string > angleAdjustItemRefs = [], vector itemAdjustAngles = < 0, 0, 0>, bool hideUsableHUD = false  )
+{
+	// Spawns a line of Loot Centered between rowStartEdge going rowWidth in the given nextItemDir direction.
+	// Parameters:
+	//		- realm
+	//		- lootRefs: Array of lootRefs to spawn in the line.
+	//		- howMany: How many per item to spawn ( if ammo )
+	//		- startNode: The starting edge of the line. This is used to get the following:
+	//			- endNode:
+	//			- rowStartEdge
+	//			- rowEndEdge
+	//			- rowWidth: How long the line of loot goes.
+	//			- nextItemDir: The direction of the next item in the row.
+	//			- itemAnglesDefault: The default orientation to spawn each item.
+	//		- angleAdjustItemRefs: Items whose angles need to be adjusted.
+	array< entity > result = []
+
+	array< string > lootRefs
+	foreach( item in lootRefsParm )
+	{
+		if ( item != "" )
+		{
+			lootRefs.append( item )
+		}
+	}
+
+	if( !IsValid( startNode ) )
+		return result
+
+	if( lootRefs.len() == 0 )
+		return result
+
+	// Grab the end node
+	entity endNode = startNode.GetLinkEnt()
+	if( !IsValid( endNode ) )
+		return result
+
+	vector rowStartEdge = startNode.GetOrigin()
+	vector rowEndEdge	= endNode.GetOrigin()
+	float rowWidth = Distance( rowStartEdge, rowEndEdge )
+	vector nextItemDir = Normalize( rowEndEdge - rowStartEdge )
+	vector itemAnglesDefault = startNode.GetForwardVector()
+
+	// Calculate the width and the spacing based on how many items in the lootData array.
+	vector itemPos
+	float distBtwnItems
+	if( lootRefs.len() >= 2  )
+	{
+		distBtwnItems = rowWidth / ( lootRefs.len() - 1 )
+		itemPos = rowStartEdge
+	}
+	else
+	{
+		// If only 1 item in the list, spawn it in the middle between the start and end points.
+		distBtwnItems = rowWidth / lootRefs.len()
+		itemPos = rowStartEdge + ( nextItemDir * rowWidth / 2 )
+	}
+	vector nextItemDelta = Normalize( nextItemDir ) * distBtwnItems
+
+	for( int i = 0; i < lootRefs.len(); i++ )
+	{
+		string _lootRef = lootRefs[ i ]
+		int howMany = lootCounts[ i ]
+
+		vector itemAngles = itemAnglesDefault
+		// Exception rotations
+		if(( angleAdjustItemRefs.len() > 0 ) && ( angleAdjustItemRefs.contains( _lootRef ) ))
+		{
+			itemAngles = AnglesCompose( itemAngles, itemAdjustAngles )
+		}
+
+		// If it's not a blank ref, then we spawn the item.
+		if( _lootRef != "" )
+		{
+			entity lootEnt = _SpawnItem_ForRealm( realm, _lootRef, itemPos, itemAngles, howMany, hideUsableHUD )
+			result.append( lootEnt )
+
+			// Advance to next position in the row.
+			itemPos = itemPos + nextItemDelta
+		}
+	}
+
+	return result
+}
+
+array< entity > function _SpawnLootRow_ForRealm( int realm, array< string > lootRefs, int howMany, vector rowStartEdge, float rowWidth, vector nextItemDir, vector itemAnglesDefault, array< string > angleAdjustItemRefs = [], vector itemAdjustAngles = < 0, 0, 0>, bool hideUsableHUD = false  )
+{
+	// Spawns a line of Loot Centered between rowStartEdge going rowWidth in the given nextItemDir direction.
+	// Parameters:
+	//		- realm
+	//		- lootRefs: Array of lootRefs to spawn in the line.
+	//		- rowStartEdge: The starting edge of the line.
+	//		- rowWidth: How long the line of loot goes.
+	//		- nextItemDir: The direction of the next item in the row.
+	//		- itemAnglesDefault: The default orientation to spawn each item.
+	//		- angleAdjustItemRefs: Items whose angles need to be adjusted.
+	//		- itemAdjustAngles: The angles that the above items need to be adjusted.
+	array< entity > result = []
+
+	if( lootRefs.len() == 0 )
+		return result
+
+	// Calculate the width and the spacing based on how many items in the lootData array.
+
+	// Old Version
+	//float distBtwnItems = rowWidth / lootRefs.len()
+	//vector nextItemDelta = Normalize( nextItemDir ) * distBtwnItems
+	//
+	//vector itemPos = rowStartEdge + nextItemDelta / 2
+
+	// --- New Version
+	vector itemPos
+	float distBtwnItems
+	if( lootRefs.len() >= 2  )
+	{
+		distBtwnItems = rowWidth / ( lootRefs.len() - 1 )
+		itemPos = rowStartEdge
+	}
+	else
+	{
+		// If only 1 item in the list, spawn it in the middle between the start and end points.
+		distBtwnItems = rowWidth / lootRefs.len()
+		itemPos = rowStartEdge + ( nextItemDir * rowWidth / 2 )
+	}
+	vector nextItemDelta = Normalize( nextItemDir ) * distBtwnItems
+
+	// ---
+
+	foreach( _lootRef in lootRefs )
+	{
+		vector itemAngles = itemAnglesDefault
+		// Exception rotations
+		if(( angleAdjustItemRefs.len() > 0 ) && ( angleAdjustItemRefs.contains( _lootRef ) ))
+		{
+			                          
+				if ( TitanSword_WeaponRefIsTitanSword( _lootRef ) )
+					itemAngles = AnglesCompose( itemAngles, <270, 180, 0> )
+				else
+         
+			itemAngles = AnglesCompose( itemAngles, itemAdjustAngles )
+		}
+
+		                  
+			if( file.redNessieWeaponRefs.contains( _lootRef ) )
+			{
+				itemAngles = AnglesCompose( itemAngles, < 0, 0, 180 > )
+			}
+        
+
+
+
+		// If it's not a blank ref, then we spawn the item. Otherwise, just skip spawning and provide a space.
+		if( _lootRef != "" )
+		{
+			entity lootEnt = _SpawnItem_ForRealm( realm, _lootRef, itemPos, itemAngles, howMany, hideUsableHUD )
+			result.append( lootEnt )
+		}
+
+		// Advance to next position in the row.
+		itemPos = itemPos + nextItemDelta
+	}
+
+	return result
+}
+
+void function _SpawnLoot_InArea_ForRealm_Thread( int realm, entity startNode, array< array< string > > rowsOfLootRefs, int howMany = 1, array< vector > angleOverrides = [] )
+{
+	if( rowsOfLootRefs.len() < 1 )
+		return
+
+	if( !IsValid( startNode ) )
+		return
+
+	// Get the row end node
+	entity rowEndNode = startNode.GetLinkEnt() // There should only be one end.
+	if( !IsValid( rowEndNode ) )
+		return
+
+	// Get the Top End Node.
+	entity topEndNode = rowEndNode.GetLinkEnt() // Linked from the rightNode.
+	if( !IsValid( topEndNode ) )
+		return
+
+	// Calculate dimensions
+	float areaWidth = Distance( rowEndNode.GetOrigin(), startNode.GetOrigin() )
+	float areaHeight = Distance( rowEndNode.GetOrigin(), topEndNode.GetOrigin() )
+
+	int numRows = rowsOfLootRefs.len()
+	float distBtwnRows = areaHeight / numRows
+	vector nextRowDir = startNode.GetForwardVector()
+	vector nextRowDelta = Normalize( nextRowDir ) * distBtwnRows
+	vector nextItemDir = startNode.GetRightVector()
+
+	int currentRowNDX = 0
+	vector startEdge = startNode.GetOrigin() + nextRowDelta / 2
+	foreach( array< string > rowLootRefs in rowsOfLootRefs )
+	{
+		vector itemAngles = startNode.GetAngles()
+		// Pass in an angle override for particular rows.
+		if( rowsOfLootRefs.len() == angleOverrides.len() )
+		{
+			if( angleOverrides[ currentRowNDX ] != < 0, 0, 0> )
+				itemAngles = angleOverrides[ currentRowNDX ]
+		}
+
+		vector currentRowEdge = startEdge + nextRowDelta * currentRowNDX
+		thread _SpawnLootRow_ForRealm( realm, rowLootRefs, howMany, currentRowEdge, areaWidth, nextItemDir, itemAngles )
+		WaitFrame()
+		currentRowNDX++
+	}
+}
+
+bool function IsUsingConsolidatedLoot()
+{
+	// Need the playlistvar to be true AND have elements from the consolidated loot platform to use consolidated loot.
+	file.usingConsolidatedLoot = GetCurrentPlaylistVarBool( "firingrange_using_consolidatedloot", true )
+	array< entity > consolidatedLootPlatformOrigins = GetEntArrayByScriptName( CONSOLIDATEDLOOT_ROOTNODE_NAME )
+	file.usingConsolidatedLoot = file.usingConsolidatedLoot && ( consolidatedLootPlatformOrigins.len() > 0 )
+	return( file.usingConsolidatedLoot )
+}
+                                 
+
+// -------------------
+// ----- Utility Functions
+// -------------------
+
+array< string > function LootDatas_To_LootRefs( array< LootData > lootData )
+{
+	array< string > lootRefs
+	foreach( _lootData in lootData )
+	{
+		if( _lootData.ref != "" )
+			lootRefs.append( _lootData.ref )
+		else
+			lootRefs.append( "" )
+	}
+	return lootRefs
+}
+
+array< LootData > function LootRefs_To_LootDatas( array< string > lootRefs )
+{
+	array< LootData > lootDatas
+	foreach( _lootRef in lootRefs )
+	{
+		if( _lootRef != "" )
+			lootDatas.append( SURVIVAL_Loot_GetLootDataByRef( _lootRef ) )
+		else
+		{
+			LootData newLootData
+			lootDatas.append( newLootData )
+		}
+	}
+	return lootDatas
+}
+
+void function TurnOnStagingEffectsDelayed()
+{
+	wait 0.1 // Have to wait here so effects ents can be listening for the flag?
+	return
+	if ( GetGameState() == eGameState.WaitingForPlayers )
+		FlagSet( "staging_fx_enabled" )
+}
+
+int function PerspectiveCleanup( entity player )
+{
+	if ( !player.IsCrouched() )
+		return 0
+
+	if ( SURVIVAL_GetPrimaryWeaponsSorted( player ).len() > 0 )
+		return 0
+
+	if ( player.EyeAngles().x < 85.0 )
+		return 0
+
+	if ( GetCurrentPlaylistVarBool( "firingrange_disable_extras", false ) )
+		return 0
+
+                    
+	if ( Distance( player.GetOrigin(), <-89.750946, -1107.061157, -83.833519> ) <= 120.0 )
+      
+                                                                            
+       
+	{
+		if ( !GetCurrentPlaylistVarBool( "allow_third_person", false ) )
+			return 0
+
+		EmitSoundOnEntityOnlyToPlayer( player, player, "UI_CTF_1P_GrabFlag" )
+
+		if ( player.IsThirdPersonShoulderModeOn() )
+			return 1 //player.SetThirdPersonShoulderModeOff()
+		else
+			return 3 //player.SetThirdPersonShoulderModeOn()
+	}
+
+	if ( Distance( player.GetOrigin(), <26707.9297, -4898.70996, -27205.6367> ) <= 50.0 )
+	{
+		EmitSoundOnEntityOnlyToPlayer( player, player, "UI_CTF_1P_GrabFlag" )
+		EmitSoundOnEntityToTeamExceptPlayer( player, "UI_CTF_3P_TeamGrabFlag", player.GetTeam(), player )
+
+		FullCombatDummies_Start_ByPlayer( player )
+
+		return 0
+	}
+
+	return 0
+}
+
+
+// Because I hate the function name GetPLayerStagingSquadRealm().
+int function GetFiringRangeRealm( entity player )
+{
+	return( GetPlayerSquadRealm( player ) )
+}
+
+/*
+	██████╗ ██╗      █████╗ ██╗   ██╗███████╗██████╗
+	██╔══██╗██║     ██╔══██╗╚██╗ ██╔╝██╔════╝██╔══██╗
+	██████╔╝██║     ███████║ ╚████╔╝ █████╗  ██████╔╝
+	██╔═══╝ ██║     ██╔══██║  ╚██╔╝  ██╔══╝  ██╔══██╗
+	██║     ███████╗██║  ██║   ██║   ███████╗██║  ██║
+	╚═╝     ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝
+*/
+
+void function Survival_SetStagingAreaSettings( entity player )
+{
+	if ( IsPVEMode() )
+		return
+
+	printt( "Survival_SetPrematchSettings", player )
+
+	if ( !file.stagingAreaEnabled && !IsEventFinale() )
+	{
+		Survival_SetInventoryEnabled( player, false )
+		player.FreezeControlsOnServer()
+		AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
+	}
+
+	player.EndSignal( "OnDeath" )
+
+	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_TRAINING ) )
+		PlayerMatchState_Set( player, ePlayerMatchState.STAGING_AREA )
+
+	if ( file.stagingAreaEnabled )
+		PutPlayerInRealms( player )
+
+	player.Minimap_Hide( player.GetTeam(), null )
+
+	if ( !player.p.hasStagingAreaDamageProtection && !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+	{
+		AddEntityCallback_OnDamaged( player, StagingAreaPlayerTookDamageCallback )
+		player.p.hasStagingAreaDamageProtection = true
+	}
+
+	if ( GetGameState() < eGameState.Playing && !IsEventFinale() ) //Survival_SetPrematchSettings is still called on late connecting players, however the clean-up script isn't.
+			PlayMusicToPlayer( player, GetLobbyToCharacterSelectMusicTrack( player ) )
+
+	// Refill offhand weapons
+	foreach ( entity weapon in player.GetOffhandWeapons() )
+	{
+		if ( weapon.GetWeaponPrimaryClipCountMax() > 0 )
+			weapon.SetWeaponPrimaryClipCount( weapon.GetWeaponPrimaryClipCountMax() )
+	}
+
+	entity ultimateWeapon = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
+	if ( IsValid( ultimateWeapon ) )
+	{
+		if ( GetCurrentPlaylistVarBool ( "staging_auto_ultimates", true ) && !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_TRAINING ) )
+		{
+			int ammoMax = ultimateWeapon.GetWeaponPrimaryClipCountMax()
+
+			ultimateWeapon.SetWeaponPrimaryClipCountNoRegenReset( ammoMax )
+			Ultimates_OnPlayerUltIsReady( player, ultimateWeapon )
+			StatusEffect_AddTimed( player, eStatusEffect.emp, 0.3, 0.3, 0.3 )
+		}
+		else
+		{
+			ultimateWeapon.SetWeaponPrimaryClipCount( 0 )
+		}
+	}
+}
+
+string function GetLobbyToCharacterSelectMusicTrack( entity player )
+{
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_TRAINING ) )
+		return "Music_StagingArea"
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+		return MusicPack_GetFiringRangeMusic( GetMusicPackForPlayer( player ) )
+
+	return MusicPack_GetLobbyIntoCharacterSelectMusic( GetMusicPackForPlayer( player ) )
+}
+
+void function Survival_ClearStagingAreaSettings( entity player )
+{
+	if ( IsPVEMode() )
+		return
+
+	printt( "Survival_ClearPrematchSettings", player )
+
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+
+	RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
+
+	// Don't do anything while we're fading to black because you'll see pops and weapons being removed. Do it the moment we do character select screen instead
+	//this doesn't seem to be needed? - JH 7.8.21
+	//wait 3.0
+
+	printf( "Clearing the rest of the prematch settings for player: " + player + "\n" )
+
+	Survival_SetInventoryEnabled( player, true )
+	ResetPlayerInventory( player )
+	// CharacterLoadouts_GiveCurrentCharacterLoadoutToPlayer( player, GetCurrentPlaylistVarBool( "dev_loadout_bypass_match_state", false )  ) // S3: character loadout system not deployed
+
+	player.RemoveFromAllRealms()
+	PutPlayerInDefaultRealms( player )
+
+	player.Minimap_AlwaysShow( player.GetTeam(), null )
+	player.Solid()
+	player.Zipline_Stop()
+	Signal( player, "ScriptAnimStop" )
+
+	StopMusicOnPlayer( player, GetLobbyToCharacterSelectMusicTrack( player ) )
+}
+
+void function StagingAreaPlayerTookDamageCallback( entity ent, var damageInfo )
+{
+	Assert( GetGameState() < eGameState.Playing, "Player took damage and ran a damage callback that should only happen before Playing GameState" )
+
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	bool attackerIsPlayer = false
+	if ( IsValid( attacker ) )
+		attackerIsPlayer = attacker.IsPlayer()
+
+	if ( attackerIsPlayer )
+	{
+		int shieldDamage = 0
+
+		// if ( ent.IsPlayer() && ent.IsShadowForm() ) // S3: shadow form not available
+		// 	ShadowHealthUpdate( ent, damageInfo )
+		// else
+			shieldDamage = PilotShieldHealthUpdate( ent, damageInfo )
+
+		PlayerDamageFeedback( ent, damageInfo, shieldDamage )
+	}
+
+	DamageInfo_SetDamage( damageInfo, 0 )
+}
+
+
+/*
+	██╗    ██╗███████╗ █████╗ ██████╗  ██████╗ ███╗   ██╗    ██████╗  █████╗  ██████╗██╗  ██╗███████╗
+	██║    ██║██╔════╝██╔══██╗██╔══██╗██╔═══██╗████╗  ██║    ██╔══██╗██╔══██╗██╔════╝██║ ██╔╝██╔════╝
+	██║ █╗ ██║█████╗  ███████║██████╔╝██║   ██║██╔██╗ ██║    ██████╔╝███████║██║     █████╔╝ ███████╗
+	██║███╗██║██╔══╝  ██╔══██║██╔═══╝ ██║   ██║██║╚██╗██║    ██╔══██╗██╔══██║██║     ██╔═██╗ ╚════██║
+	╚███╔███╔╝███████╗██║  ██║██║     ╚██████╔╝██║ ╚████║    ██║  ██║██║  ██║╚██████╗██║  ██╗███████║
+	 ╚══╝╚══╝ ╚══════╝╚═╝  ╚═╝╚═╝      ╚═════╝ ╚═╝  ╚═══╝    ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝
+*/
+
+array<entity> function GetRackNodesArray( vector rackOrigin = < 0, 0, 0 > )
+{
+                           
+	const MAXDISTFROMORIGIN = 2000
+	if( IsUsingConsolidatedLoot() )
+	{
+
+		s_rackNodes = ArrayClosest( GetEntArrayByScriptName( CONSOLIDATEDLOOT_WEAPONRACK_NAME ), rackOrigin )
+	}
+	else
+	{
+		if ( s_rackNodes.len() == 0 )
+		{
+			s_rackNodes = ArrayClosest( GetEntArrayByScriptName( "weapon_racks" ), rackOrigin )
+			s_rackNodes.append( CreateInfoTarget( <30820.0, -5544.0, -29164>, <0, 90, 0> ) )
+			s_rackNodes.append( CreateInfoTarget( <31030.0, -5544.0, -29164.0>, <0, 90, 0> ) )
+		}
+	}
+     
+                              
+  
+                                                                                     
+                                                                                  
+                                                                                    
+  
+      
+	return s_rackNodes
+}
+
+void function CreateWeaponRacksForRealm( int realm, entity ornull consolidatedLootOriginNode = null )
+{
+	array< entity > rackNodes
+	vector racKOrigin = < 0, 0, 0 >
+                            
+		if( IsUsingConsolidatedLoot() && ( consolidatedLootOriginNode != null ) )
+		{
+			expect entity( consolidatedLootOriginNode )
+			rackNodes = ConsolidatedLoot_GetNodesArray( consolidatedLootOriginNode, eConsolidatedLootNodeType.WEAPONRACK )
+		}
+			else
+		{
+			rackNodes = GetRackNodesArray()
+		}
+      
+                                 
+       
+
+	array< string > weaponRefs = SURVIVAL_GetAllRefsInLootGroup( "firing_range_all_weapons" )
+
+	                                              
+		if ( IsGoldenHorse_FR() )
+			weaponRefs.append( TITAN_SWORD_WEAPON_REF )
+       
+
+	array< LootData > lootData = LootRefs_To_LootDatas( weaponRefs )
+
+	table< string, array<LootData> > lootDataByAmmoType
+
+	foreach ( int i, LootData _lootData in lootData )
+	{
+		string ammoType = _lootData.ammoType
+		if ( !GetWeaponInfoFileKeyField_GlobalBool( _lootData.baseWeapon, "uses_ammo_pool" ) )
+			ammoType = "_none"
+
+		if ( !( ammoType in lootDataByAmmoType ) )
+			lootDataByAmmoType[ ammoType ] <- []
+		lootDataByAmmoType[ ammoType ].append( _lootData )
+	}
+
+	int rackIndex = 0
+	// Make sure "_none" is last
+	foreach( string ammoType, array<LootData> _lootDataArray in lootDataByAmmoType )
+	{
+		if ( rackIndex >= rackNodes.len() )
+			break
+		if ( ammoType == "_none" )
+			continue
+                            
+		if( IsUsingConsolidatedLoot() )
+		{
+			ConsolidatedLoot_CreateWeaponRacksForLoot( rackNodes[rackIndex], _lootDataArray, ammoType, realm )
+		}
+		else
+		{
+			CreateWeaponRacksForLoot( rackNodes[rackIndex], _lootDataArray, ammoType, realm )
+		}
+      
+                                                                                   
+       
+		rackIndex++
+	}
+	// Now do "_none"
+	foreach( string ammoType, array<LootData> _lootDataArray in lootDataByAmmoType )
+	{
+		if ( rackIndex >= rackNodes.len() )
+			break
+		if ( ammoType != "_none" )
+			continue
+
+                            
+		if( IsUsingConsolidatedLoot() )
+		{
+			ConsolidatedLoot_CreateWeaponRacksForLoot( rackNodes[rackIndex], _lootDataArray, ammoType, realm )
+		}
+		else
+		{
+			CreateWeaponRacksForLoot( rackNodes[rackIndex], _lootDataArray, ammoType, realm )
+		}
+      
+                                                                                   
+       
+		rackIndex++
+	}
+
+	if ( !file.hasSpawnedWeaponRacks )
+	{
+		file.hasSpawnedWeaponRacks = true
+	}
+
+	                         
+		FRSettings_InitDefaults( realm )
+       
+}
+
+void function CreateAttachmentNodeForBowRack( entity node )
+{
+	if( s_attachmentNodeForBowCreated )
+		return
+
+	AddAttachmentNode( CreateInfoTarget( <30675.0, -5900.0, -29164.0>, <0, 90, 0> ), node )
+	s_attachmentNodeForBowCreated = true
+}
+
+// TODO: CLEANUP. Old function.
+void function CreateWeaponRacksForLoot( entity node, array<LootData> _lootDataArray, string ammoType, int realm )
+{
+	int numRacks = _lootDataArray.len()
+	if ( numRacks == 0 )
+		return
+
+	vector rackAngles = node.GetAngles()
+	vector forward = node.GetForwardVector()
+	vector right = node.GetRightVector()
+	vector up = node.GetUpVector()
+	vector racksStart = (node.GetOrigin() + (right * STAGING_GUNRACK_SPACING * -3.0))
+
+	file.attachmentPileFilters[ node ] <- []
+
+	if ( ammoType == ARROWS_AMMO )
+		CreateAttachmentNodeForBowRack( node )
+
+	int rackIndex = 0
+	foreach ( int i, LootData _lootData in _lootDataArray )
+	{
+		vector lootAngles = AnglesCompose( rackAngles, <-85, 180, 0> )
+
+		if ( !LootIsSpawnable( _lootData ) )
+			continue
+
+		vector rackOrigin = racksStart + ( right * ( STAGING_GUNRACK_SPACING * rackIndex ) )
+		if ( !file.hasSpawnedWeaponRacks )
+		{
+			// Spawn the rack
+			entity rack = CreatePropDynamic( GUNRACK_MODEL, rackOrigin, rackAngles, SOLID_VPHYSICS )
+		}
+
+		// Spawn the weapon
+
+		vector lootOrigin = rackOrigin + forward * 2 + up * 47
+		if ( _lootData.ref == "mp_weapon_bow" || _lootData.ref == "mp_weapon_throwingknife" )
+			lootAngles = AnglesCompose( lootAngles, <85, 0, 0> )
+
+		                          
+			if ( TitanSword_WeaponRefIsTitanSword( _lootData.ref ) )
+				lootAngles = AnglesCompose( lootAngles, <270, 180, 0> )
+        
+
+		entity lootEnt = SpawnGenericLoot( _lootData.ref, lootOrigin , lootAngles, 500 )
+
+		lootEnt.SetNetworkDistanceCull( false )
+		lootEnt.e.recreateLootOnPickup = true
+		file.attachmentPileFilters[ node ].append( _lootData.ref )
+
+		lootEnt.RemoveFromAllRealms()
+		lootEnt.AddToRealm( realm )
+
+		AddStagingCleanupEnt( lootEnt )
+
+		rackIndex++
+	}
+
+	if ( ammoType != "_none" )
+	{
+		const int AMMO_BOX_COUNT = 6
+		const int AMMO_BOX_PER_ROW = 3
+
+		LootData ammoLootData = SURVIVAL_Loot_GetLootDataByRef( ammoType )
+
+		if ( ammoType == ARROWS_AMMO )
+			right *= -1
+
+		for ( int idx = 0 ; idx < AMMO_BOX_COUNT ; ++idx )
+		{
+			int rowIdx = (idx % AMMO_BOX_PER_ROW)
+			int colIdx = (idx / AMMO_BOX_PER_ROW)
+			vector ammoBasePos = (racksStart + (right * ((STAGING_GUNRACK_SPACING) * rackIndex - 5.0)))
+			vector pos = (ammoBasePos + (forward * rowIdx * 16.0) + (right * colIdx * 25.0))
+
+			vector ang = <0, 90, 0>
+			entity ammoLootEnt = SpawnGenericLoot( ammoType, pos, ang, ammoLootData.countPerDrop )
+			ammoLootEnt.SetNetworkDistanceCull( false )
+			ammoLootEnt.e.recreateLootOnPickup = true
+
+			ammoLootEnt.RemoveFromAllRealms()
+			ammoLootEnt.AddToRealm( realm )
+
+			AddStagingCleanupEnt( ammoLootEnt )
+		}
+
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+		{
+			vector ordnanceBasePos = (racksStart + (right * ((STAGING_GUNRACK_SPACING) * rackIndex + 45.0)))
+			CreateOrdnanceForRealmNode( realm, node, ordnanceBasePos )
+		}
+	}
+}
+
+                           
+array< LootData > function CLoot2_Get_SpawnedWeaponData()
+{
+	array< LootData > result
+	foreach( ammoType in file.ammoTypesUsed )
+	{
+		result.extend( file.weaponDataByAmmoType[ ammoType ] )
+	}
+	return result
+}
+
+void function ConsolidatedLoot_CreateWeaponRacksForLoot( entity node, array<LootData> _lootDataArray, string ammoType, int realm )
+{
+	int numRacks = _lootDataArray.len()
+	if ( numRacks == 0 )
+		return
+
+	vector rackAngles = node.GetAngles()
+	vector forward = node.GetForwardVector()
+	vector right = node.GetRightVector()
+
+	// if the Node's name == CONSOLIDATEDLOOT_WEAPONRACK_NAME2, then we're going LEFT and need to reverse the right vector.
+	#if DEVELOPER
+		printt( format( "%s(): node name == %s", FUNC_NAME(), node.GetScriptName() ) )
+	#endif
+	float spacingMultiplier = -3.0
+	if( node.GetScriptName() == CONSOLIDATEDLOOT_WEAPONRACK_NAME2 )
+	{
+		right = -1 * right
+		spacingMultiplier = 3.0
+	}
+
+	vector racksStart = node.GetOrigin()
+	//vector racksStart = (node.GetOrigin() + (right * STAGING_GUNRACK_SPACING * spacingMultiplier))
+
+	file.attachmentPileFilters[ node ] <- []
+
+	if ( ammoType == ARROWS_AMMO )
+		CreateAttachmentNodeForBowRack( node )
+
+	int rackIndex = 0
+	foreach ( int i, LootData _lootData in _lootDataArray )
+	{
+		vector lootAngles = AnglesCompose( rackAngles, <-85, 180, 0> )
+
+		if ( !LootIsSpawnable( _lootData ) )
+			continue
+
+		// Spawn the rack
+		const int STAGING_GUNRACK_CONSOLIDATED_SPACING = 24 // default was 28
+		vector rackOrigin = racksStart + ( right * ( STAGING_GUNRACK_CONSOLIDATED_SPACING * rackIndex ) )
+		entity rack = CreatePropDynamic( GUNRACK_MODEL, rackOrigin, rackAngles, SOLID_VPHYSICS )
+
+		rack.RemoveFromAllRealms()
+		rack.AddToRealm( realm )
+
+		AddStagingCleanupEnt( rack )
+
+		// Spawn the weapon
+		vector lootOrigin = PositionOffsetFromEnt( rack, 2, 0, 47 )
+		if ( _lootData.ref == "mp_weapon_bow" || _lootData.ref == "mp_weapon_throwingknife" )
+			lootAngles = AnglesCompose( lootAngles, <85, 0, 0> )
+
+		                          
+			if ( TitanSword_WeaponRefIsTitanSword( _lootData.ref ) )
+				lootAngles = AnglesCompose( lootAngles, <270, 180, 0> )
+        
+
+		entity lootEnt = SpawnGenericLoot( _lootData.ref, lootOrigin , lootAngles, 500 )
+
+		lootEnt.SetNetworkDistanceCull( false )
+		lootEnt.e.recreateLootOnPickup = true
+		file.attachmentPileFilters[ node ].append( _lootData.ref )
+
+		lootEnt.RemoveFromAllRealms()
+		lootEnt.AddToRealm( realm )
+
+		AddStagingCleanupEnt( lootEnt )
+
+		if ( ammoType != "_none" )
+		{
+			LootData ammoLootData = SURVIVAL_Loot_GetLootDataByRef( ammoType )
+
+			if ( ammoType == ARROWS_AMMO )
+				right *= -1
+
+			vector pos = rackOrigin + (forward * STAGING_AMMO_OFFSET_FROM_GUNRACK)
+
+			vector ang = < 0, 90, 0 >
+			entity ammoLootEnt = SpawnGenericLoot( ammoType, pos, ang, ammoLootData.countPerDrop )
+			ammoLootEnt.SetNetworkDistanceCull( false )
+			ammoLootEnt.e.recreateLootOnPickup = true
+
+			ammoLootEnt.RemoveFromAllRealms()
+			ammoLootEnt.AddToRealm( realm )
+
+			AddStagingCleanupEnt( ammoLootEnt )
+		}
+
+		rackIndex++
+	}
+}
+      
+
+                         
+
+void function FRSettings_InitDefaults( int realm )
+{
+	FRIntSettings_InitDefaults( realm )
+	FRBoolSettings_InitDefaults( realm )
+}
+
+void function FRIntSettings_InitDefaults( int realm )
+{
+	// If Realm doesn't have a IntSettings table, create one with defaults in it.
+	if( !( realm in file.frIntSettings ) )
+	{
+		table< int, int > newIntSettings = FRIntSettings_CreateDefault()
+		file.frIntSettings[ realm ] <- newIntSettings
+	}
+}
+
+table< int, int > function FRIntSettings_CreateDefault()
+{
+	table< int, int > newSettings
+	for( int intSettingNDX = frIntSettings_NDX_Start; intSettingNDX < frIntSettings_NDX_End; intSettingNDX++ )
+	{
+		newSettings[ intSettingNDX ] <- frIntSettings_Defaults[ intSettingNDX ]
+	}
+	return newSettings
+}
+
+// ---
+
+void function FRBoolSettings_InitDefaults( int realm )
+{
+	// If Realm doesn't have a IntSettings table, create one with defaults in it.
+	if( !( realm in file.frBoolSettings ) )
+	{
+		table< int, bool > newSettings = FRBoolSettings_CreateDefault()
+		file.frBoolSettings[ realm ] <- newSettings
+	}
+}
+
+table< int, bool > function FRBoolSettings_CreateDefault()
+{
+	table< int, bool > newSettings
+	for( int SettingNDX = frBoolSettings_NDX_Start; SettingNDX < frBoolSettings_NDX_End; SettingNDX++ )
+	{
+		newSettings[ SettingNDX ] <- frBoolSettings_Defaults[ SettingNDX ]
+	}
+	return newSettings
+}
+
+      
+
+/*
+	██╗      ██████╗  ██████╗ ████████╗    ██████╗ ██╗███╗   ██╗███████╗
+	██║     ██╔═══██╗██╔═══██╗╚══██╔══╝    ██╔══██╗██║████╗  ██║██╔════╝
+	██║     ██║   ██║██║   ██║   ██║       ██████╔╝██║██╔██╗ ██║███████╗
+	██║     ██║   ██║██║   ██║   ██║       ██╔══██╗██║██║╚██╗██║╚════██║
+	███████╗╚██████╔╝╚██████╔╝   ██║       ██████╔╝██║██║ ╚████║███████║
+	╚══════╝ ╚═════╝  ╚═════╝    ╚═╝       ╚═════╝ ╚═╝╚═╝  ╚═══╝╚══════╝
+*/
+
+void function OnLootBinSpawned( entity lootbin )
+{
+	Point p
+	p.origin = lootbin.GetOrigin()
+	p.angles = lootbin.GetAngles()
+	file.stagingLootBinLocations.append( p )
+	lootbin.Destroy()
+}
+
+void function CreateLootBinsForRealm( int realm )
+{
+	foreach( Point p in file.stagingLootBinLocations )
+	{
+		entity lootBin = CreateCustomLootBin( p.origin, p.angles, GetRandomLootForLootBin() )
+		lootBin.RemoveFromAllRealms()
+		lootBin.AddToRealm( realm )
+		AddStagingCleanupEnt( lootBin )
+	}
+}
+
+array<string> function GetRandomLootForLootBin()
+{
+	array<int> lootTypes = [ eLootType.HEALTH, eLootType.ARMOR, eLootType.INCAPSHIELD, eLootType.ORDNANCE, eLootType.BACKPACK, eLootType.HELMET ]
+	int numItems = CoinFlip() ? 3 : 4
+
+	array<string> items
+	for ( int i = 0 ; i < numItems ; i++ )
+	{
+		if ( lootTypes.len() == 0 )
+			break
+
+		int type = lootTypes.getrandom()
+		lootTypes.fastremovebyvalue( type )
+
+		array<LootData> lootDataForType = FilterLootDataByRefsToNotSpawn( SURVIVAL_Loot_GetByType_InLevel( type, 3 ) )
+		if ( lootDataForType.len() == 0 )
+			continue
+
+		LootData data = lootDataForType.getrandom()
+		items.append( data.ref )
+	}
+
+	return items
+}
+
+/*
+	 █████╗ ████████╗████████╗ █████╗  ██████╗██╗  ██╗███╗   ███╗███████╗███╗   ██╗████████╗███████╗
+	██╔══██╗╚══██╔══╝╚══██╔══╝██╔══██╗██╔════╝██║  ██║████╗ ████║██╔════╝████╗  ██║╚══██╔══╝██╔════╝
+	███████║   ██║      ██║   ███████║██║     ███████║██╔████╔██║█████╗  ██╔██╗ ██║   ██║   ███████╗
+	██╔══██║   ██║      ██║   ██╔══██║██║     ██╔══██║██║╚██╔╝██║██╔══╝  ██║╚██╗██║   ██║   ╚════██║
+	██║  ██║   ██║      ██║   ██║  ██║╚██████╗██║  ██║██║ ╚═╝ ██║███████╗██║ ╚████║   ██║   ███████║
+	╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝
+*/
+
+void function InitializeAttachmentNodes()
+{
+	s_attachmentNodes.clear()
+                           
+	if( IsUsingConsolidatedLoot() )
+	{
+		s_attachmentNodes = GetEntArrayByScriptName( "attachments_consolidated" )
+	}
+	else
+	{
+		s_attachmentNodes = GetEntArrayByScriptName( "attachments" )
+	}
+     
+                                                             
+      
+}
+
+
+array<entity> function GetAttachmentNodesArray()
+{
+	return s_attachmentNodes
+}
+
+
+void function AddAttachmentNode( entity attachmentNode, entity parentNode )
+{
+	s_attachmentNodes.append( attachmentNode )
+
+	parentNode.LinkToEnt( attachmentNode )
+}
+
+
+void function CreateAttachmentsForRealm( int realm )
+{
+	array<entity> attachmentNodes = GetAttachmentNodesArray()
+	vector areaMins = < -45, -180, 0 >
+	vector areaMaxs = < 160, 180, 0 >
+
+	foreach( entity node in attachmentNodes )
+	{
+		array<LootData> lootData = GetAttachmentsForPile( node )
+		int numAttachments = lootData.len()
+		vector forward = node.GetForwardVector()
+		vector right = node.GetRightVector()
+
+		for ( int i = 0 ; i < numAttachments ; i++ )
+		{
+			const int ITEMS_PER_ROW = 5
+			const float DIST_PER_ITEM_FORWARD = 28.0
+			const float DIST_PER_ITEM_RIGHT = 28.0
+			const float OFFSET_FORWARD = 380.0
+			const float OFFSET_RIGHT = 80.0
+
+			int rowIdx = (i % ITEMS_PER_ROW)
+			int colIdx = (i / ITEMS_PER_ROW)
+			vector pos = node.GetOrigin() + (forward * (-DIST_PER_ITEM_FORWARD * colIdx + OFFSET_FORWARD) ) + (right * (DIST_PER_ITEM_RIGHT * rowIdx + OFFSET_RIGHT) )
+			vector ang = < 0, 90, 0 >
+
+			entity lootEnt = SpawnGenericLoot( lootData[i].ref, pos, ang )
+			lootEnt.SetNetworkDistanceCull( false )
+			lootEnt.e.recreateLootOnPickup = true
+
+			lootEnt.RemoveFromAllRealms()
+			lootEnt.AddToRealm( realm )
+
+			AddStagingCleanupEnt( lootEnt )
+		}
+	}
+}
+
+void function CreateOrdnanceForRealmNode( int realm, entity node, vector basePos )
+{
+	array<LootData> lootData = SURVIVAL_Loot_GetByType( eLootType.ORDNANCE )
+
+	{
+		vector forward = node.GetForwardVector()
+		vector right = node.GetRightVector()
+		foreach( int index, LootData ld in lootData )
+		{
+			if ( ld.conditional && !SURVIVAL_Loot_RunConditionalCheck( ld.ref, null ) )
+				continue
+			if ( ld.ref.find( WEAPON_SUFFIX_NONCOMBAT ) > 0 ) // don't spawn pets/noncombat weapons
+				continue
+
+			const int ITEMS_PER_ROW = 1
+			const float DIST_PER_ITEM_FORWARD = 15.0
+			const float DIST_PER_ITEM_RIGHT = 10.0
+			const float OFFSET_FORWARD = 0.0
+			const float OFFSET_RIGHT = 0.0
+			const vector EXTRA_BUMP = <0.0, 0.0, 3.0>
+
+			int rowIdx = index
+
+			for ( int colIdx = 0; colIdx < 2; ++colIdx )
+			{
+				vector pos = basePos + (forward * (DIST_PER_ITEM_FORWARD * rowIdx + OFFSET_FORWARD) ) + (right * (DIST_PER_ITEM_RIGHT * colIdx + OFFSET_RIGHT)) + EXTRA_BUMP
+				vector ang = < 0, 0, 0 >
+
+				entity lootEnt = SpawnGenericLoot( ld.ref, pos, ang )
+				lootEnt.SetNetworkDistanceCull( false )
+				lootEnt.e.recreateLootOnPickup = true
+				lootEnt.RemoveFromAllRealms()
+				lootEnt.AddToRealm( realm )
+				AddStagingCleanupEnt( lootEnt )
+			}
+		}
+	}
+}
+
+array<LootData> function GetLootDataToUse_Shields()
+{
+	// Wants to be: SURVIVAL_Loot_GetByType( eLootType.ARMOR )
+
+	array<LootData> results
+
+	results.append( SURVIVAL_Loot_GetLootDataByRef( "armor_pickup_lv1_evolving" ) )
+	results.append( SURVIVAL_Loot_GetLootDataByRef( "armor_pickup_lv2_evolving" ) )
+	results.append( SURVIVAL_Loot_GetLootDataByRef( "armor_pickup_lv3_evolving" ) )
+	results.append( SURVIVAL_Loot_GetLootDataByRef( "armor_pickup_lv4_all_fast" ) )
+	results.append( SURVIVAL_Loot_GetLootDataByRef( "armor_pickup_lv5_evolving" ) )
+
+	// Bringing back EVO shields per request from R5DEV-393409
+	results.append( SURVIVAL_Loot_GetLootDataByRef( "armor_pickup_lv1" ) )
+	results.append( SURVIVAL_Loot_GetLootDataByRef( "armor_pickup_lv2" ) )
+	results.append( SURVIVAL_Loot_GetLootDataByRef( "armor_pickup_lv3" ) )
+	results.append( SURVIVAL_Loot_GetLootDataByRef( "armor_pickup_lv4_all_fast" ) )
+
+	return results
+}
+
+array<LootData> function GetLootDataToUse_Helmets()
+{
+	array< LootData > results = SURVIVAL_Loot_GetByType( eLootType.HELMET )
+	return results
+}
+
+
+void function CreateGearForRealm( int realm )
+{
+	array<array<LootData> > lootDataRows
+	lootDataRows.append( GetLootDataToUse_Shields() )
+	lootDataRows.append( SURVIVAL_Loot_GetByType( eLootType.HELMET ) )
+	lootDataRows.append( SURVIVAL_Loot_GetByType( eLootType.BACKPACK ) )
+	lootDataRows.append( SURVIVAL_Loot_GetByType( eLootType.INCAPSHIELD ) )
+	
+	array<array<LootData> > clonedData = clone lootDataRows
+	foreach( int rowIndex, array<LootData> ldRow in clonedData )
+	{
+		foreach( int colIdx, LootData ld in ldRow )
+		{
+			if ( SURVIVAL_EquipmentPretendsToBeBlank( ld.ref ) )
+				lootDataRows[rowIndex].removebyvalue( ld )
+		}
+	}
+	
+	array<entity> attachmentNodes = GetAttachmentNodesArray()
+	foreach( int index, entity node in attachmentNodes )
+	{
+		if ( (index < 1) || (index > 3) )
+			continue
+
+		vector forward = node.GetForwardVector()
+		vector right = node.GetRightVector()
+
+		foreach( int rowIndex, array<LootData> ldRow in lootDataRows )
+		{
+			foreach( int colIdx, LootData ld in ldRow )
+			{
+				if ( ld.conditional && !SURVIVAL_Loot_RunConditionalCheck( ld.ref, null ) )
+					continue
+
+				const int ITEMS_PER_ROW = 1
+				const float DIST_PER_ITEM_FORWARD = 30.0 // was 32.0
+				const float DIST_PER_ITEM_RIGHT = -32.0
+				const float OFFSET_FORWARD = -130.0
+				const float OFFSET_RIGHT = 195.0
+				const vector EXTRA_BUMP = <0.0, 0.0, 0.0>
+
+				vector pos = node.GetOrigin() + (forward * (DIST_PER_ITEM_FORWARD * rowIndex + -1.0 * colIdx + OFFSET_FORWARD) ) + (right * (DIST_PER_ITEM_RIGHT * colIdx + OFFSET_RIGHT)) + EXTRA_BUMP
+				vector ang = < 0, 0, 0 >
+
+				entity lootEnt = SpawnGenericLoot( ld.ref, pos, ang )
+				lootEnt.SetNetworkDistanceCull( false )
+				lootEnt.e.recreateLootOnPickup = true
+				lootEnt.RemoveFromAllRealms()
+				lootEnt.AddToRealm( realm )
+				AddStagingCleanupEnt( lootEnt )
+			}
+		}
+	}
+}
+
+void function CreateHealthItemsForRealm( int realm )
+{
+	array<array<LootData> > lootDataRows
+	lootDataRows.append( SURVIVAL_Loot_GetByType( eLootType.HEALTH ) )
+
+	array<entity> attachmentNodes = GetAttachmentNodesArray()
+	foreach( int index, entity node in attachmentNodes )
+	{
+		if ( (index < 1) || (index > 3) )
+			continue
+
+		vector forward = node.GetForwardVector()
+		vector right = node.GetRightVector()
+
+		foreach( int rowIndex, array<LootData> ldRow in lootDataRows )
+		{
+			foreach( int colIdx, LootData ld in ldRow )
+			{
+				if ( ld.conditional && !SURVIVAL_Loot_RunConditionalCheck( ld.ref, null ) )
+					continue
+
+				const int ITEMS_PER_ROW = 1
+				const float DIST_PER_ITEM_FORWARD = 22.0
+				const float DIST_PER_ITEM_RIGHT = -22.0
+				const float OFFSET_FORWARD = -130.0
+				const float OFFSET_RIGHT = -80.0 // was - 50.0
+				const vector EXTRA_BUMP = <0.0, 0.0, 0.0>
+
+				vector pos = node.GetOrigin() + (forward * (DIST_PER_ITEM_FORWARD * rowIndex + -1.0 * colIdx + OFFSET_FORWARD) ) + (right * (DIST_PER_ITEM_RIGHT * colIdx + OFFSET_RIGHT)) + EXTRA_BUMP
+				vector ang = < 0, 0, 0 >
+
+				LootData data = SURVIVAL_Loot_GetLootDataByRef( ld.ref )
+				int clipCount = data.countPerDrop
+
+				entity lootEnt = SpawnGenericLoot( ld.ref, pos, ang, clipCount )
+				lootEnt.SetNetworkDistanceCull( false )
+				lootEnt.e.recreateLootOnPickup = true
+				lootEnt.RemoveFromAllRealms()
+				lootEnt.AddToRealm( realm )
+				AddStagingCleanupEnt( lootEnt )
+			}
+		}
+	}
+}
+
+array<LootData> function GetAttachmentsForPile( entity node )
+{
+	array<string> weaponFilters = []
+	entity parentNode = node.GetLinkParent()
+	if ( IsValid( parentNode ) && parentNode in file.attachmentPileFilters )
+		weaponFilters = file.attachmentPileFilters[ parentNode ]
+
+	array<LootData> lootData = FilterLootDataByRefsToNotSpawn( SURVIVAL_Loot_GetByType_InLevel( eLootType.ATTACHMENT, -1 ) )
+	if ( weaponFilters.len() == 0 )
+		return lootData
+
+                           
+	if( IsUsingConsolidatedLoot() )
+		return lootData
+	else
+		return( GetValidAttachments( lootData, weaponFilters ) )
+     
+                                                         
+      
+
+	unreachable
+}
+
+array< LootData > function GetValidAttachments( array< LootData > lootData, array< string > weaponFilters )
+{
+                           
+	if( IsUsingConsolidatedLoot() )
+	{
+		return lootData
+	}
+	else
+	{
+		array<LootData> validAttachments
+		foreach( LootData data in lootData )
+		{
+			foreach( string weapon in weaponFilters )
+			{
+				if ( CanAttachToWeapon( data.ref, weapon ) && !validAttachments.contains( data ) )
+				{
+					validAttachments.append( data )
+				}
+			}
+		}
+		return validAttachments
+	}
+
+     
+                                 
+                                     
+  
+                                           
+   
+                                                                                     
+    
+                                   
+    
+   
+  
+                        
+      
+
+	unreachable
+}
+
+
+/*
+	████████╗ █████╗ ██████╗  ██████╗ ███████╗████████╗███████╗
+	╚══██╔══╝██╔══██╗██╔══██╗██╔════╝ ██╔════╝╚══██╔══╝██╔════╝
+	   ██║   ███████║██████╔╝██║  ███╗█████╗     ██║   ███████╗
+	   ██║   ██╔══██║██╔══██╗██║   ██║██╔══╝     ██║   ╚════██║
+	   ██║   ██║  ██║██║  ██║╚██████╔╝███████╗   ██║   ███████║
+	   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝   ╚═╝   ╚══════╝
+*/
+
+void function CreateGunRangeTargetsForRealm( int realm, bool autoReset = true, bool doBling = false )
+{
+	                         
+		FRSettings_InitDefaults( realm )
+       
+
+	fr_MovingTargets[ realm ] <- []
+	foreach ( ent in GetEntArrayByScriptName( "shooting_range_rotating_target" ) )
+	{
+                     
+			if ( Has_SkinnedTargets() )
+			{
+				CreateSkinnedGunRangeTarget( ent, eGunRangeTargetTypes.SPINNING, realm, autoReset, doBling )
+			}
+			else
+			{
+				thread CreateGunRangeTarget( ent, eGunRangeTargetTypes.SPINNING, realm, autoReset, doBling )
+			}
+       
+                                                                                               
+        
+		if ( doBling )
+			WaitFrame()
+	}
+
+	foreach ( ent in GetEntArrayByScriptName( "shooting_range_folding_target" ) )
+	{
+		thread CreateGunRangeTarget( ent, eGunRangeTargetTypes.FOLDING, realm, autoReset, doBling )
+		if ( doBling )
+			WaitFrame()
+	}
+}
+
+entity function CreateGunRangeTarget( entity ent, int type, int realm, bool autoReset, bool doBling )
+{
+	entity targetMover
+	entity targetGeo
+	vector anglesReady  = < 0, 0, 0 >
+	vector anglesShot   = < 0, 0, 0 >
+	float rotateDuration = 0.0
+	float resetDuration = autoReset ? 3.0 : -1.0
+	vector origin = ent.GetOrigin()
+
+	entity slideTarget = ent.GetLinkEnt()
+
+	if ( type == eGunRangeTargetTypes.FOLDING )
+	{
+		//printt( "| Creating Gun Range Target (Folding) Realm:", realm )
+
+		targetMover = CreateScriptMover_NEW( TARGET_MOVER_SCRIPTNAME, origin, ent.GetAngles() )
+
+		origin = OffsetPointRelativeToVector( origin, < 26, 2, 0 >, ent.GetForwardVector() )
+		targetGeo = CreatePropDynamic( TARGET_FOLDING_MODEL, origin, ent.GetAngles(), SOLID_OBB, 50000 )
+		targetGeo.SetScriptName( FIRING_RANGE_TARGET_FOLD_SCRIPTNAME )
+		// targetGeo.SetNeverCrush( true ) // S3: entity method not available at compile time
+
+		entity collision = CreatePropDynamic( TARGET_FOLDING_MODEL, origin, ent.GetAngles(), SOLID_VPHYSICS, 50000, false )
+		collision.kv.collisionGroup = TRACE_COLLISION_GROUP_PLAYER
+
+		DispatchSpawn( collision )
+
+		collision.SetParent( targetGeo )
+		collision.Hide()
+		collision.RemoveFromAllRealms()
+		collision.AddToRealm( realm )
+
+		anglesReady = targetMover.GetAngles()
+		anglesShot = AnglesCompose( anglesReady, < -85, 0, 0 > )
+		rotateDuration = 0.1
+
+		// collision.SetNeverCrush( true ) // S3: entity method not available at compile time
+
+	}
+	else if ( type == eGunRangeTargetTypes.SPINNING )
+	{
+		//printt( "| Creating Gun Range Target (Spinning) Realm:", realm )
+
+		entity targetBase
+                     
+			if( Has_SkinnedTargets() )
+			{
+				targetBase = CreateScriptMoverModel( TARGET_SKINNED_BASE, origin, ent.GetAngles(), SOLID_VPHYSICS, 50000 )
+			}
+			else
+			{
+				targetBase = CreateScriptMoverModel( TARGET_SPINNING_BASE, origin, ent.GetAngles(), SOLID_VPHYSICS, 50000 )
+			}
+
+       
+                                                                                                              
+                           
+
+		AddStagingCleanupEnt( targetBase )
+		targetBase.RemoveFromAllRealms()
+		targetBase.AddToRealm( realm )
+
+		origin = OffsetPointRelativeToVector( origin, < 0, 0, 128 >, ent.GetForwardVector() )
+
+		targetMover = CreateScriptMover_NEW( TARGET_MOVER_SCRIPTNAME, origin, ent.GetAngles() )
+		targetMover.NonPhysicsSetRotateModeLocal( true )
+
+                     
+			if( Has_SkinnedTargets() )
+			{
+				targetGeo = CreatePropDynamic( TARGET_SKINNED_MODEL, origin, ent.GetAngles(), SOLID_OBB, 50000 )
+			}
+			else
+			{
+				targetGeo = CreatePropDynamic( TARGET_SPINNING_MODEL, origin, ent.GetAngles(), SOLID_OBB, 50000 )
+			}
+       
+                                                                                                    
+                           
+
+		targetGeo.SetScriptName( FIRING_RANGE_TARGET_FLIP_SCRIPTNAME )
+		// targetGeo.SetNeverCrush( true ) // S3: entity method not available at compile time
+
+		entity collision
+                     
+			if( Has_SkinnedTargets() )
+			{
+				collision = CreatePropDynamic( TARGET_SKINNED_MODEL, origin, ent.GetAngles(), SOLID_VPHYSICS, 50000, false )
+			}
+			else
+			{
+				collision = CreatePropDynamic( TARGET_SPINNING_MODEL, origin, ent.GetAngles(), SOLID_VPHYSICS, 50000, false )
+			}
+       
+                                                                                                                
+                           
+
+		collision.kv.collisionGroup = TRACE_COLLISION_GROUP_PLAYER
+		DispatchSpawn( collision )
+
+		collision.SetParent( targetGeo )
+		collision.Hide()
+		collision.RemoveFromAllRealms()
+		collision.AddToRealm( realm )
+
+		anglesReady = targetMover.GetLocalAngles()
+		anglesShot = AnglesCompose( targetMover.GetLocalAngles(), < 180, 0, 0 > )
+		rotateDuration = 0.0
+
+		if ( IsValid( slideTarget ) )
+		{
+			targetMover.SetParent( targetBase, "", true )
+
+			// Save slideTarget to do Instant Speed Change upon speed change via a signal.
+			sMovingTarget newMovingTarget = MovingTarget_Register( targetBase, slideTarget, realm )
+			thread MovingGunRangeTargetThink( newMovingTarget, realm )
+		}
+		else // Not sliding target, so we don't need scripted base.
+		{
+			targetBase.Destroy()
+		}
+	}
+
+	Assert( IsValid( targetGeo ) )
+	Assert( IsValid( targetMover ) )
+
+	if ( doBling )
+	{
+		Highlight_SetNeutralHighlight( targetGeo, "staging_gun_range_target_appear" )
+	}
+
+	targetGeo.SetParent( targetMover, "", true )
+	targetMover.SetPusher( true )
+
+	AddStagingCleanupEnt( targetGeo )
+	AddStagingCleanupEnt( targetMover )
+
+	targetGeo.RemoveFromAllRealms()
+	targetGeo.AddToRealm( realm )
+	targetMover.RemoveFromAllRealms()
+	targetMover.AddToRealm( realm )
+
+	AddEntityCallback_OnPostDamaged( targetGeo, StagingAreaEntity_OnDamaged )
+                  
+	// S3: Nessie easter egg not deployed
+	// if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+	// {
+	// 	AddEntityCallback_OnPostDamaged( targetGeo, FR_Nessie_OnDamagedEntity )
+	// }
+
+	targetGeo.e.preventStickyEnts = true
+
+	thread GunRangeTargetThink( targetGeo, targetMover, type, anglesReady, anglesShot, rotateDuration, resetDuration )
+
+	return targetGeo
+}
+
+                   
+entity function CreateSkinnedGunRangeTarget( entity ent, int type, int realm, bool autoReset, bool doBling )
+{
+	entity targetGeo
+	vector sliderOrigin = ent.GetOrigin()
+
+	Assert( Has_SkinnedTargets(), "trying to create skinned targets when they don't exist" )
+
+	entity slideTarget = ent.GetLinkEnt()
+
+	if ( type == eGunRangeTargetTypes.FOLDING )
+	{
+		Assert(false, "Folding targets no longer exist")
+	}
+	//printt( "| Creating Gun Range Target (Spinning) Realm:", realm )
+
+
+	vector origin = OffsetPointRelativeToVector( sliderOrigin, < 0, 0, 128 >, ent.GetForwardVector() )
+
+	targetGeo = CreatePropDynamic( TARGET_SKINNED_MODEL, origin, ent.GetAngles(), SOLID_OBB, 50000, false )
+	targetGeo.kv.collisionGroup = TRACE_COLLISION_GROUP_NONE
+	targetGeo.SetScriptName( FIRING_RANGE_TARGET_FLIP_SCRIPTNAME )
+	// targetGeo.SetNeverCrush( true ) // S3: entity method not available at compile time
+	DispatchSpawn( targetGeo )
+
+	targetGeo.RemoveFromAllRealms()
+	targetGeo.AddToRealm( realm )
+
+	if ( IsValid( slideTarget ) )
+	{
+		entity targetBase = CreateScriptMoverModel( TARGET_SKINNED_BASE, sliderOrigin, ent.GetAngles(), SOLID_VPHYSICS, 50000 )
+
+		AddStagingCleanupEnt( targetBase )
+		targetBase.RemoveFromAllRealms()
+		targetBase.AddToRealm( realm )
+
+		targetBase.SetPusher( true )
+
+		targetGeo.SetParent( targetBase, "", true )
+
+		// Save slideTarget to do Instant Speed Change upon speed change via a signal.
+		sMovingTarget newMovingTarget = MovingTarget_Register( targetBase, slideTarget, realm )
+		thread MovingGunRangeTargetThink( newMovingTarget, realm )
+	}
+
+	Assert( IsValid( targetGeo ) )
+
+	if ( doBling )
+	{
+		Highlight_SetNeutralHighlight( targetGeo, "staging_gun_range_target_appear" )
+	}
+
+	AddStagingCleanupEnt( targetGeo )
+
+	AddEntityCallback_OnPostDamaged( targetGeo, StagingAreaEntity_OnDamaged )
+	// S3: Nessie easter egg not deployed
+		// if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+		// {
+		// 	AddEntityCallback_OnPostDamaged( targetGeo, FR_Nessie_OnDamagedEntity )
+		// }
+
+	thread GunRangeTargetSkinnedThink( targetGeo )
+
+	return targetGeo
+}
+      
+
+bool function Has_SkinnedTargets()
+{
+	return( GetCurrentPlaylistVarBool( "has_skinnedtargets", false ))
+}
+
+sMovingTarget function MovingTarget_Register( entity targetBase, entity slideTarget,  int realm )
+{
+	if( !( realm in fr_MovingTargets ) )
+		fr_MovingTargets[ realm ] <- []
+
+	sMovingTarget newTarget
+	newTarget.targetBase = targetBase
+	newTarget.slideTarget = slideTarget
+	newTarget.headedTowardEnd = true
+	newTarget.start = targetBase.GetOrigin()
+	newTarget.end = slideTarget.GetOrigin()
+
+	// Add as a sMovingTarget if not already in fr_MovingTargets
+	if( !MovingTarget_AlreadyRegistered( targetBase, realm ) )
+	{
+		fr_MovingTargets[ realm ].append( newTarget )
+	}
+
+	return newTarget
+}
+
+bool function MovingTarget_AlreadyRegistered( entity targetBase, int realm )
+{
+	foreach( movingTarget in fr_MovingTargets[ realm ] )
+	{
+		if( movingTarget.targetBase == targetBase )
+			return true
+	}
+	
+	return false
+}
+
+                   
+void function GunRangeTargetSkinnedThink( entity targetGeo )
+{
+	int TargetHealth = 100 // 10000
+	targetGeo.SetTakeDamageType( DAMAGE_EVENTS_ONLY )
+	targetGeo.SetDamageNotifications( true )
+	targetGeo.SetMaxHealth( 10000 )
+	targetGeo.SetHealth( 10000 )
+
+	EndSignal( targetGeo, "OnDestroy" )
+
+	Assert(Has_SkinnedTargets(), "Doing skinned target think without skinned targets!")
+
+	while( true )
+	{
+		WaitFrame()
+		table data = WaitSignal( targetGeo, "GunRangeTargetDamaged" )
+		entity attacker = expect entity( data.attacker )
+
+		if ( IsValid( attacker ) && attacker.IsPlayer() )
+		{
+			EmitSoundOnEntityExceptToPlayer( targetGeo, attacker, "Canyonlands_Scr_RangeTarget_Hit_3P" )
+		}
+		else
+		{
+			EmitSoundOnEntity( targetGeo, "Canyonlands_Scr_RangeTarget_Hit_3P" )
+		}
+
+		thread Target_Do_HitSkin_Thread( targetGeo, data  )
+	}
+}
+      
+
+void function GunRangeTargetThink( entity targetGeo, entity targetMover, int type, vector anglesReady, vector anglesShot, float rotateDuration, float resetDuration )
+{
+	int TargetHealth = 100 // 10000
+	targetGeo.SetTakeDamageType( DAMAGE_EVENTS_ONLY )
+	targetGeo.SetDamageNotifications( true )
+	targetGeo.SetMaxHealth( 10000 )
+	targetGeo.SetHealth( 10000 )
+
+	EndSignal( targetGeo, "OnDestroy" )
+	EndSignal( targetMover, "OnDestroy" )
+
+	bool hasSkinnedTargets = Has_SkinnedTargets()
+
+	vector readyPos =  targetMover.GetOrigin()
+	vector anglesShotFromBack = AnglesCompose( anglesReady, < 85, 0, 0 > ) // fall the other way.
+
+	while( true )
+	{
+		WaitFrame()
+		table data = WaitSignal( targetGeo, "GunRangeTargetDamaged" )
+		entity attacker = expect entity( data.attacker )
+
+		if ( IsValid( attacker ) && attacker.IsPlayer() )
+		{
+			EmitSoundOnEntityExceptToPlayer( targetGeo, attacker, "Canyonlands_Scr_RangeTarget_Hit_3P" )
+		}
+		else
+		{
+			EmitSoundOnEntity( targetGeo, "Canyonlands_Scr_RangeTarget_Hit_3P" )
+		}
+
+		targetGeo.e.isDisabled = true
+		if ( rotateDuration > 0 )
+		{
+			vector collapsePos = targetMover.GetOrigin()
+			vector anglesShotToUse = anglesShot
+			if( IsValid( attacker ) )
+			{
+			 	vector ToAttacker = attacker.GetOrigin() - targetMover.GetOrigin()
+				ToAttacker.z = 0
+				if( DotProduct( ToAttacker, targetMover.GetForwardVector() ) < 0 )
+				{
+					// Slighter angle collapse and upward displacement if shot from behind to prevent clipping.
+					anglesShotToUse = anglesShotFromBack
+					collapsePos = collapsePos + < 0, 0, 11 > // Shift up slightly so target doesn't clip.
+				}
+			}
+			// targetMover.SetNeverCrush( true ) // S3: entity method not available at compile time
+			targetMover.NonPhysicsRotateTo( anglesShotToUse, rotateDuration, 0.0, 0.0 )
+			targetMover.NonPhysicsMoveTo( collapsePos, rotateDuration, 0.0, 0.0 )
+			wait rotateDuration
+		}
+		else
+		{
+                      
+				if( hasSkinnedTargets )
+					thread Target_Do_HitSkin_Thread( targetGeo, data  )
+				else
+					targetMover.SetLocalAngles( anglesShot )
+        
+                                            
+               
+                            
+		}
+
+		if(( !hasSkinnedTargets ) && ( type == eGunRangeTargetTypes.SPINNING ))
+		{
+			EmitSoundOnEntity( targetGeo, "Canyonlands_Scr_RangeTarget_Spin" )
+		}
+
+		if ( resetDuration < 0 )
+			return
+
+                     
+			if( !Has_SkinnedTargets() )
+				wait resetDuration
+       
+                     
+        
+
+		if(( !hasSkinnedTargets ) && ( type == eGunRangeTargetTypes.SPINNING ))
+		{
+			EmitSoundOnEntity( targetGeo, "Canyonlands_Scr_RangeTarget_Spin" )
+		}
+
+		if ( rotateDuration > 0 )
+		{
+			// targetMover.SetNeverCrush( true ) // S3: entity method not available at compile time
+			targetMover.NonPhysicsRotateTo( anglesReady, rotateDuration, 0.0, 0.0 )
+			targetMover.NonPhysicsMoveTo( readyPos, rotateDuration, 0.0, 0.0 )
+			wait rotateDuration
+		}
+		else
+		{
+			                   
+				if( !Has_SkinnedTargets() )
+				{
+					targetMover.SetLocalAngles( anglesReady )
+					WaitFrame()
+				}
+         
+		}
+
+		targetGeo.e.isDisabled = false
+	}
+}
+
+                   
+void function Target_Do_HitSkin_Thread( entity target, table data )
+{
+	if( !IsValid( target ) )
+		return
+
+	int hitSkin_Current = target.GetSkin()
+
+	// Let hits and crit hits already playing play out entirely.
+	if( hitSkin_Current >= TARGETSKIN_HIT )
+		return
+
+	target.Signal( "TargetHit" )
+	target.EndSignal( "TargetHit" )
+	target.EndSignal( "OnDestroy" )
+
+	// Determine which skin to switch to through the data given.
+	int hitSkin_New = TARGETSKIN_HIT
+	int hitGroup = expect int( data[ "hitgroup" ] )
+	switch( hitGroup )
+	{
+		case HITGROUP_LEFTLEG:
+			hitSkin_New = TARGETSKIN_MINORHIT
+			break
+		case HITGROUP_CHEST:
+			hitSkin_New = TARGETSKIN_HIT
+			break
+		case HITGROUP_HEAD:
+			hitSkin_New = TARGETSKIN_CRIT
+			break
+	}
+
+	if( hitSkin_New != hitSkin_Current )
+	{
+		target.SetSkin( hitSkin_New )
+	}
+
+	const float HITSKIN_TIME = 0.75
+	wait HITSKIN_TIME
+
+	if( IsValid( target ) )
+	{
+		target.SetSkin( TARGETSKIN_IDLE )
+	}
+}
+                         
+
+                         
+bool function HasPlaylistVarVariableSpeedTargets()
+{
+	return( GetCurrentPlaylistVarBool( "has_variable_speed_targets", true ))
+}
+
+// ----- Int Settings Gets and Sets.
+
+int function FRSetting_TargetSpeed_Get( int realm )
+{
+	return( FRIntSetting_Get( realm, eFRSettingType.TARGETSPEED ))
+}
+
+void function FRSetting_TargetSpeed_Set( int realm, int targetSpeed )
+{
+	FRIntSetting_Set( realm, eFRSettingType.TARGETSPEED, targetSpeed )
+	// Signal speed change on targets.
+	MovingGunRangeTargetsResetSpeed( realm )
+}
+
+// ---
+
+int function FRSetting_ShieldLevel_Get (int realm)
+{
+	int shieldSetting = FRIntSetting_Get( realm, eFRSettingType.FRDUMMIESHIELDLVL )
+
+	const int FRDUMMIE_SHIELD_MIN = 1
+	const int FRDUMMIE_SHIELD_MAX = 4
+
+	int result = shieldSetting
+	if( shieldSetting == FR_RANDOM_SHIELD_SETTING )
+	{
+		result = RandomIntRange( FRDUMMIE_SHIELD_MIN, FRDUMMIE_SHIELD_MAX + 1 )
+		#if DEVELOPER
+			printt( format( "%s(): Random Shield Level Selected: %s", FUNC_NAME(), string( result ) ))
+		#endif
+	}
+
+	return( result )
+}
+
+void function FRSetting_DummieShieldLvl_Set( int realm, int shieldLvl )
+{
+	FRIntSetting_Set( realm, eFRSettingType.FRDUMMIESHIELDLVL, shieldLvl )
+}
+
+bool function FRSetting_DummieHelmetMatchShields_Get( int realm )
+{
+	return( FRBoolSetting_Get( realm, eFRSettingType.FRDUMMIEHELMETMATCHSHIELDS ))
+}
+
+void function FRSetting_DummieHelmetMatchShields_Set( int realm, bool setting )
+{
+	FRBoolSetting_Set( realm, eFRSettingType.FRDUMMIEHELMETMATCHSHIELDS , setting )
+}
+
+// ---
+
+int function FRSetting_DummieSpeed_Get (int realm)
+{
+	return( FRIntSetting_Get( realm, eFRSettingType.FRDUMMIESPEED ))
+}
+
+void function FRSetting_DummieSpeed_Set( int realm, int speed )
+{
+	FRIntSetting_Set( realm, eFRSettingType.FRDUMMIESPEED, speed )
+}
+
+// ---
+
+int function FRSetting_DummieMovement_Get( int realm )
+{
+	return( FRIntSetting_Get( realm, eFRSettingType.FRDUMMIEMOVEMENT ))
+}
+
+void function FRSetting_DummieMovement_Set( int realm, int setting )
+{
+	FRIntSetting_Set( realm, eFRSettingType.FRDUMMIEMOVEMENT, setting )
+}
+
+// ---
+
+int function FRSetting_DummieStance_Get( int realm )
+{
+	return( FRIntSetting_Get( realm, eFRSettingType.FRDUMMIESTANCE ))
+}
+
+void function FRSetting_DummieStance_Set( int realm, int setting )
+{
+	FRIntSetting_Set( realm, eFRSettingType.FRDUMMIESTANCE, setting )
+}
+
+// ---
+
+                   
+int function FRSetting_DummieShooting_Get (int realm)
+{
+	return( FRIntSetting_Get( realm, eFRSettingType.FRDUMMIESHOOTING ))
+}
+
+void function FRSetting_DummieShooting_Set( int realm, int setting )
+{
+	FRIntSetting_Set( realm, eFRSettingType.FRDUMMIESHOOTING , setting )
+}
+
+int function FRSetting_DummieSpawnDists_Get (int realm)
+{
+	return( FRIntSetting_Get( realm, eFRSettingType.FRDUMMIESPAWNDISTS ))
+}
+
+void function FRSetting_DummieSpawnDists_Set( int realm, int setting )
+{
+	FRIntSetting_Set( realm, eFRSettingType.FRDUMMIESPAWNDISTS , setting )
+}
+
+// Get and Set functions for eFRSettingType.DYNAMICDUMMIESON
+bool function FRSetting_DynamicDummiesOn_Get( int realm )
+{
+	return( FRBoolSetting_Get( realm, eFRSettingType.DYNAMICDUMMIESON ))
+}
+
+void function FRSetting_DynamicDummiesOn_Set( int realm, bool setting )
+{
+	FRBoolSetting_Set( realm, eFRSettingType.DYNAMICDUMMIESON , setting )
+}
+
+// Get and Set functions for eFRSettingType.DUMMIEHIGHLIGHTSON
+bool function FRSetting_DummieHighlightsOn_Get( int realm )
+{
+	return( FRBoolSetting_Get( realm, eFRSettingType.DUMMIEHIGHLIGHTSON ))
+}
+
+void function FRSetting_DummieHighlightsOn_Set( int realm, bool setting )
+{
+	FRBoolSetting_Set( realm, eFRSettingType.DUMMIEHIGHLIGHTSON , setting )
+}
+
+                         
+
+// ---
+
+// Get a int setting from the game.
+int function FRIntSetting_Get( int realm, int settingType )
+{
+	if( !( realm in file.frIntSettings ) )
+	{
+		table< int, int > newIntSettings = FRIntSettings_CreateDefault()
+		file.frIntSettings[ realm ] <- newIntSettings
+	}
+
+	table< int, int > frIntSettings = file.frIntSettings[ realm ]
+	return( frIntSettings[ settingType ] )
+}
+
+// Set a int setting to the game.
+void function FRIntSetting_Set( int realm, int settingType, int value )
+{
+	if( !( realm in file.frIntSettings ) )
+	{
+		file.frIntSettings[ realm ] <- FRIntSettings_CreateDefault()
+	}
+
+	table< int, int > frIntSettings = file.frIntSettings[ realm ]
+	frIntSettings[ settingType ] <- value
+}
+
+// ---
+
+// Get a bool setting from the game.
+bool function FRBoolSetting_Get( int realm, int settingType )
+{
+	if( !( realm in file.frBoolSettings ) )
+	{
+		table< int, bool > newIntSettings = FRBoolSettings_CreateDefault()
+		file.frBoolSettings[ realm ] <- newIntSettings
+	}
+
+	table< int, bool > frBoolSettings = file.frBoolSettings[ realm ]
+	return( frBoolSettings[ settingType ] )
+}
+
+// Set a bool setting to the game.
+void function FRBoolSetting_Set( int realm, int settingType, bool value )
+{
+	if( !( realm in file.frBoolSettings ) )
+	{
+		file.frBoolSettings[ realm ] <- FRBoolSettings_CreateDefault()
+	}
+
+	table< int, bool > frBoolSettings = file.frBoolSettings[ realm ]
+	frBoolSettings[ settingType ] <- value
+}
+
+// -----
+
+void function MovingGunRangeTargetsResetSpeed( int realm )
+{
+	if( !( realm in fr_MovingTargets ) )
+	{
+		fr_MovingTargets[ realm ] <- []
+		return
+	}
+
+	foreach( movingTarget in fr_MovingTargets[ realm ] )
+	{
+		if( IsValid( movingTarget.targetBase ) )
+		{
+			Signal( movingTarget.targetBase, "SlideTargetSpeedReset" )
+		}
+	}
+}
+
+                               
+
+void function MovingGunRangeTargetThink( sMovingTarget movingTarget, int realm )
+{
+	if( !IsValid( movingTarget ) )
+		return
+
+	if( !IsValid( movingTarget.targetBase ) )
+		return
+
+	if( !IsValid( movingTarget.slideTarget ) )
+		return
+
+	OnThreadEnd(
+		function() : ( movingTarget )
+		{
+			// Space intentionally left in case there is cleanup needed later.
+		}
+	)
+
+	Signal( movingTarget.targetBase, "SlideTargetWaitForReset" )
+	EndSignal( movingTarget.targetBase, "SlideTargetWaitForReset", "OnDestroy" )
+	EndSignal( movingTarget.slideTarget, "OnDestroy" )
+
+	thread MovingGunRangeTargetMove( movingTarget, realm, true )
+	
+	while( true )
+	{
+		WaitSignal( movingTarget.targetBase, "SlideTargetSpeedReset" )
+		WaitFrame()
+		thread MovingGunRangeTargetMove( movingTarget, realm, false )
+	}
+}
+
+void function MovingGunRangeTargetMove( sMovingTarget movingTarget, int realm, bool initStartPos = true )
+{
+	if( !IsValid( movingTarget ) )
+		return
+
+	if( !IsValid( movingTarget.targetBase ) )
+		return
+
+	if( !IsValid( movingTarget.slideTarget ) )
+		return
+
+	Signal( movingTarget.targetBase, "SlideTargetThinkStart" )
+	EndSignal( movingTarget.targetBase, "SlideTargetThinkStart", "OnDestroy" )
+	EndSignal( movingTarget.slideTarget, "OnDestroy" )
+
+	// Grab the info from the struct.
+	vector start = movingTarget.start
+	vector end = movingTarget.end
+
+	float moveDuration
+	float accelDecel = moveDuration * 0.25
+
+	WaitFrame()
+
+	// Randomly flip the starting direction for variety
+	if( initStartPos )
+	{
+		if( CoinFlip() )
+		{
+			movingTarget.headedTowardEnd = false
+			movingTarget.targetBase.SetOrigin( end )
+		}
+
+		// Wait random time so all targets aren't in sync
+		wait RandomFloat( 1.5 )
+	}
+
+                          
+		//If we're in training, this value isn't in the map, but is needed down the road
+		if ( !(eFRSettingType.TARGETSPEED in frIntSettings_Defaults) )
+		{
+			frIntSettings_Defaults	[ eFRSettingType.TARGETSPEED ] 		<- 2
+		}
+
+		if ( !HasPlaylistVarVariableSpeedTargets() || GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_TRAINING ) )
+		{
+			FRSetting_TargetSpeed_Set( realm, frIntSettings_Defaults[ eFRSettingType.TARGETSPEED ] )
+		}
+
+		// Actual speeds desired, in units/sec.,
+		table< int, float > targetSpeedsActual
+		targetSpeedsActual[ 0 ] <- 80
+		targetSpeedsActual[ 1 ] <- 80
+		targetSpeedsActual[ 2 ] <- 200
+		targetSpeedsActual[ 3 ] <- 300
+		targetSpeedsActual[ 4 ] <- 600
+
+		// TODO: Stop Previous sound and do new appropriate sound
+		/*
+		FiringRangeMu1_Emit_TargetConveyor_CrouchWalk
+		FiringRangeMu1_Emit_TargetConveyor_Run
+		FiringRangeMu1_Emit_TargetConveyor_Walk
+		FiringRangeMu1_Emit_TargetConveyor_Zipline
+		*/
+		table< int, string > targetSpeedSounds
+		targetSpeedSounds[ 0 ] <- "FiringRangeMu1_Emit_TargetConveyor_CrouchWalk"
+		targetSpeedSounds[ 1 ] <- "FiringRangeMu1_Emit_TargetConveyor_CrouchWalk"
+		targetSpeedSounds[ 2 ] <- "FiringRangeMu1_Emit_TargetConveyor_Walk"
+		targetSpeedSounds[ 3 ] <- "FiringRangeMu1_Emit_TargetConveyor_Run"
+		targetSpeedSounds[ 4 ] <- "FiringRangeMu1_Emit_TargetConveyor_Zipline"
+
+		float distance
+		vector destination
+
+		while( true )
+		{
+			int targetSpeedNDX = FRSetting_TargetSpeed_Get( realm )
+			destination = movingTarget.headedTowardEnd ? end : start
+			distance = Distance2D( movingTarget.targetBase.GetOrigin(), destination )
+			if( distance > 0 )
+			{
+				// UPDATE SOUND BEING PLAYED.
+				if( movingTarget.soundfx != targetSpeedSounds[ targetSpeedNDX ] )
+				{
+					if( movingTarget.soundfx != "" )
+					{
+						StopSoundOnEntity( movingTarget.targetBase, movingTarget.soundfx )
+					}
+					movingTarget.soundfx = targetSpeedSounds[ targetSpeedNDX ]
+					EmitSoundOnEntity( movingTarget.targetBase, movingTarget.soundfx )
+				}
+
+				moveDuration = distance / targetSpeedsActual[ targetSpeedNDX ]
+				movingTarget.targetBase.NonPhysicsMoveTo( destination, moveDuration , accelDecel, accelDecel )
+				wait moveDuration
+			}
+			movingTarget.headedTowardEnd = !movingTarget.headedTowardEnd
+		}
+      
+                                                                                         
+               
+   
+                                                                                        
+                    
+                                                                                          
+                    
+   
+       
+}
+
+void function StagingAreaEntity_OnDamaged( entity ent, var damageInfo )
+{
+	if ( !IsValid( ent ) )
+		return
+
+	if ( DamageInfo_GetDamage( damageInfo ) <= 0 )
+		return
+
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	int hitGroup = DamageInfo_GetHitGroup( damageInfo )
+	table data
+	data["attacker"] <- attacker
+	data["hitgroup"] <- hitGroup
+
+	ent.Signal( "GunRangeTargetDamaged", data )
+
+	HandleLocationBasedDamage( ent, damageInfo )
+
+	if ( attacker.IsPlayer() )
+	{
+		attacker.NotifyDidDamage(
+			ent, DamageInfo_GetHitBox( damageInfo ),
+			DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ),
+			DamageInfo_GetDamage( damageInfo ), DamageInfo_GetDamageFlags( damageInfo ),
+			DamageInfo_GetHitGroup( damageInfo ), DamageInfo_GetWeapon( damageInfo ),
+			DamageInfo_GetDistFromAttackOrigin( damageInfo )
+		)
+	}
+}
+
+/*
+
+ ██████╗██╗  ██╗ █████╗ ██████╗  ██████╗ ███████╗    ████████╗ ██████╗ ██╗    ██╗███████╗██████╗
+██╔════╝██║  ██║██╔══██╗██╔══██╗██╔════╝ ██╔════╝    ╚══██╔══╝██╔═══██╗██║    ██║██╔════╝██╔══██╗
+██║     ███████║███████║██████╔╝██║  ███╗█████╗         ██║   ██║   ██║██║ █╗ ██║█████╗  ██████╔╝
+██║     ██╔══██║██╔══██║██╔══██╗██║   ██║██╔══╝         ██║   ██║   ██║██║███╗██║██╔══╝  ██╔══██╗
+╚██████╗██║  ██║██║  ██║██║  ██║╚██████╔╝███████╗       ██║   ╚██████╔╝╚███╔███╔╝███████╗██║  ██║
+ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝       ╚═╝    ╚═════╝  ╚══╝╚══╝ ╚══════╝╚═╝  ╚═╝
+
+*/
+
+void function Staging_SpawnChargePylons_Thread()
+{
+	WaitEndFrame()
+
+	array< ChargePylonData > allChargePylonInstances = clone GetAllChargePylons()
+	array<int> allCommonPlayerRealms = GetAllPlayerCommonRealms()
+	foreach( int realm in allCommonPlayerRealms )
+	{
+		Staging_CreateChargePylonsForRealm( allChargePylonInstances, realm )
+		WaitFrame()
+	}
+
+	foreach( ChargePylonData pylonToDestroy in allChargePylonInstances )
+		DestroyChargePylon( pylonToDestroy )
+}
+
+void function Staging_CreateChargePylonsForRealm( array< ChargePylonData > allChargePylonInstancesInLevel, int realm )
+{
+	foreach( ChargePylonData dataToDupe in allChargePylonInstancesInLevel )
+	{
+		//DuplicateChargePylonToExclusiveRealm( dataToDupe, realm )
+	}
+}
+
+bool function Staging_DoesChargePylonAlreadyExistInRealm( int realm, int interRealmId )
+{
+	array< ChargePylonData > allChargePylons = GetAllChargePylons()
+	foreach( ChargePylonData pylonData in allChargePylons )
+	{
+		if ( pylonData.realm == realm && pylonData.interRealmId == interRealmId )
+			return true
+	}
+
+
+	return false
+}
+
+/*
+ 	 ██╗██╗   ██╗███╗   ███╗██████╗     ██████╗  █████╗ ██████╗ ███████╗
+     ██║██║   ██║████╗ ████║██╔══██╗    ██╔══██╗██╔══██╗██╔══██╗██╔════╝
+     ██║██║   ██║██╔████╔██║██████╔╝    ██████╔╝███████║██║  ██║███████╗
+██   ██║██║   ██║██║╚██╔╝██║██╔═══╝     ██╔═══╝ ██╔══██║██║  ██║╚════██║
+╚█████╔╝╚██████╔╝██║ ╚═╝ ██║██║         ██║     ██║  ██║██████╔╝███████║
+ ╚════╝  ╚═════╝ ╚═╝     ╚═╝╚═╝         ╚═╝     ╚═╝  ╚═╝╚═════╝ ╚══════╝
+*/
+
+void function Staging_SpawnJumpPads_Thread()
+{
+	WaitEndFrame()
+
+	// Get all leveled-spawned neutral srcJumpPads.
+	array< entity > srcJumpPads = GetEntArrayByScriptName( JUMP_PAD_NEUTRAL_SCRIPTNAME )
+	if( srcJumpPads.len() == 0 )
+		return
+
+	array<int> allCommonPlayerRealms = GetAllPlayerCommonRealms()
+	foreach( realm in allCommonPlayerRealms )
+	{
+		foreach( jp in srcJumpPads )
+		{
+
+			entity newJumpPad = JumpPad_CreateAtLocation( jp.GetOrigin(), jp.GetAngles(), null )
+			newJumpPad.RemoveFromAllRealms()
+			newJumpPad.AddToRealm( realm )
+
+			array< entity > jpChildren  = GetChildren(newJumpPad)
+			foreach( child in jpChildren )
+			{
+				if( IsValid( child ) )
+				{
+					child.RemoveFromAllRealms()
+					child.AddToRealm( realm )
+				}
+			}
+		}
+	}
+
+	// destroy the src jumppads.
+	foreach( _srcJP in srcJumpPads )
+	{
+		if( IsValid( _srcJP ) )
+		{
+			_srcJP.Destroy()
+		}
+	}
+}
+
+/*
+	██╗   ██╗████████╗██╗██╗
+	██║   ██║╚══██╔══╝██║██║
+	██║   ██║   ██║   ██║██║
+	██║   ██║   ██║   ██║██║
+	╚██████╔╝   ██║   ██║███████╗
+	 ╚═════╝    ╚═╝   ╚═╝╚══════╝
+*/
+
+void function AddStagingCleanupEnt( entity ent )
+{
+	file.stagingCleanupEnts.append( ent )
+}
+
+void function AddStagingCleanupEnts( array<entity> ents )
+{
+	file.stagingCleanupEnts.extend( ents )
+}
+
+void function OnPlayerLootPickedUp( entity player, entity ent, string ref, int unitsPickedUp, bool willDestroy, entity deathBox, int pickupFlags )
+{
+	if ( !willDestroy )
+		return
+
+	if ( !ent.e.recreateLootOnPickup )
+	{
+		return
+	}
+
+	if ( GetGameState() >= eGameState.Playing )
+		return
+
+	//if ( PlayerMatchState_GetFor( player ) != ePlayerMatchState.STAGING_AREA )
+	//	return
+
+	//LootData lootData = SURVIVAL_Loot_GetLootDataByRef( ref )
+
+	// Give ammo to the player that picked up the weapon
+	/*
+	LootData lootData = SURVIVAL_Loot_GetLootDataByRef( ref )
+	if ( lootData.lootType == eLootType.MAINWEAPON )
+	{
+		//foreach ( ammoRef, value in eAmmoPoolType )
+		for ( int i = 0 ; i < eAmmoPoolType._count ; i++ )
+			player.AmmoPool_SetCount( i, 100 )
+	}
+	*/
+
+	// Store off some info about the loot before it goes away
+	vector origin = ent.GetOrigin()
+	vector angles = ent.GetAngles()
+	array<int> realms = ent.GetRealms()
+	string pstr = "| Looted " + ref + " in realms:"
+	foreach( int realm in realms )
+		pstr += " " + realm
+	//printt( pstr )
+
+	float waitTime = ITEM_RESPAWN_TIME
+
+	                   
+		int lootSrc = eFRLootSource.GROUND
+		string lootSrcStr = "GROUND"
+
+		if ( IsVendingMachine( deathBox ) )
+		{
+			waitTime = 0.0
+			lootSrc = eFRLootSource.SUPPLYBOX
+			lootSrcStr = "SUPPLYBOX"
+		}
+		else if ( IsValid( deathBox ))
+		{
+			string ornull deathBoxType = deathBox.GetNetworkedClassName()
+			if( deathBoxType == null )
+			{
+				expect string( deathBoxType )
+				deathBoxType = "ERROR"
+			}
+			expect string( deathBoxType )
+
+			string errMsg = format( "%s(): Death Box %s does not have a networked classname.", FUNC_NAME(), string( deathBox ) )
+			Assert( deathBoxType != "ERROR", errMsg )
+
+			switch( deathBoxType )
+			{
+				case "prop_death_box":
+					lootSrc = eFRLootSource.BLACKMARKET
+					lootSrcStr = "BLACKMARKET"
+					break
+				default:
+					lootSrc = eFRLootSource.OTHERSOURCE
+					lootSrcStr = "OTHERSOURCE"
+					break
+			}
+		}
+		PIN_FiringRange_Loot_Pickup_Source( player, ref, lootSrc, lootSrcStr, origin )
+		#if DEVELOPER
+			DEV_Print( format( "%s(): %s Picked up %s from source == %s at %s", FUNC_NAME(), player.GetPlayerName(), ref, lootSrcStr, string( origin ) ) )
+		#endif // DEVELOPER
+       
+
+	thread ReplenishLoot( ref, origin, angles, realms, waitTime, player )
+}
+
+                   
+void function FRReplenishLootFromBlackMarketMerge( entity ent, bool isVendingMachine )
+{
+	Assert( IsValid(ent), "Passing null loot ent!" )
+
+	LootData data = SURVIVAL_Loot_GetLootDataByIndex( ent.GetSurvivalInt() )
+	string ref = data.ref
+	vector origin = ent.GetOrigin()
+	vector angles = ent.GetAngles()
+	array<int> realms = ent.GetRealms()
+
+	float waitTime = isVendingMachine ? 0.0 : ITEM_RESPAWN_TIME
+
+	thread ReplenishLoot( ref, origin, angles, realms, waitTime, null )
+}
+
+
+void function FRReplenishAmmoBrick( entity ent, int initialCount, entity deathbox )
+{
+	Assert( IsValid(ent), "Passing null loot ent!" )
+	Assert( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ), "This should only be used in the firing range!" )
+
+	bool isVendingMachine = false
+	if ( IsVendingMachine( deathbox ) )
+	{
+		isVendingMachine = true
+	}
+
+	float waitTime = isVendingMachine ? 0.0 : ITEM_RESPAWN_TIME
+
+	thread FRReplenishAmmoBrick_Thread( ent, initialCount, waitTime )
+}
+
+void function FRReplenishAmmoBrick_Thread( entity ent, int initialCount, float waitTime )
+{
+	EndSignal( ent, "OnDestroy", "fr_ammo_respawn_now" )
+
+	OnThreadEnd(
+		function() : ( ent, initialCount )
+		{
+			ent.SetClipCount( initialCount )
+		}
+	)
+
+	if ( waitTime > 0.0 )
+	{
+		wait waitTime
+	}
+	else
+	{
+		WaitFrame()
+	}
+}
+                         
+
+void function ReplenishLoot( string ref, vector origin, vector angles, array<int> realms, float waitTime, entity player )
+{
+	if ( waitTime > 0.0 )
+	{
+		wait waitTime
+	}
+
+	if ( GetGameState() >= eGameState.Playing )
+		return
+
+	// Recreate the loot
+	int clipCount = -1
+	LootData data = SURVIVAL_Loot_GetLootDataByRef( ref )
+
+	if ( data.lootType != eLootType.MAINWEAPON )
+	{
+		clipCount = data.countPerDrop
+	}
+
+	entity lootEnt = SpawnGenericLoot( ref, origin, angles, clipCount )
+	lootEnt.e.recreateLootOnPickup = true
+	lootEnt.SetNetworkDistanceCull( false )
+
+	if ( GetCurrentPlaylistVarBool( "survival_staging_gun_skins", true ) && data.lootType == eLootType.MAINWEAPON )
+	{
+		entity rangeLeader = RangeMaster_Get_ByPlayer( player )
+		ApplySkinToWeapon( lootEnt, rangeLeader )
+	}
+
+	lootEnt.RemoveFromAllRealms()
+	foreach( int realm in realms )
+		lootEnt.AddToRealm( realm )
+	AddStagingCleanupEnt( lootEnt )
+}
+
+void function ApplySkinToWeapon( entity weapon, entity player )
+{
+	ItemFlavor ornull weaponItemOrNull = GetWeaponItemFlavorByClass( weapon.GetWeaponName() )
+	ItemFlavor ornull weaponSkinOrNull = null
+	ItemFlavor ornull weaponCharmOrNull = null
+
+	if ( weaponItemOrNull != null )
+	{
+		weaponSkinOrNull = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_WeaponSkin( expect ItemFlavor( weaponItemOrNull ) ) )
+		weaponCharmOrNull = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_WeaponCharm( expect ItemFlavor(weaponItemOrNull) ) )
+	}
+
+	if ( weaponSkinOrNull != null || weaponCharmOrNull != null )
+		WeaponCosmetics_Apply( weapon, weaponSkinOrNull, weaponCharmOrNull )
+}
+
+void function Staging_OnLootSpawn( entity ent, LootData data, int count )
+{
+	if ( GetGameState() >= eGameState.Playing )
+		return
+
+	EndSignal( ent, "OnDestroy" )
+
+	WaitFrame()
+
+	if ( ent.e.spawnSource != eSpawnSource.PLAYER_DROP )
+		return
+
+	entity owner = ent.GetOwner()
+	if ( IsValid( owner ) )
+	{
+		int ownerRealm = GetFiringRangeRealm( owner )
+		ent.RemoveFromAllRealms()
+		ent.AddToOtherEntitysRealms( owner )
+		AddStagingCleanupEnt ( ent )
+		if ( FRC_IsChallengeActive( ownerRealm ) )
+		{
+			ent.UnsetUsable()
+		}
+
+	}
+	                  
+	if ( data.lootType == eLootType.COLLECTABLE_NESSIE )
+	{
+		return
+	}
+       
+
+	wait 0.5
+	ent.Dissolve( ENTITY_DISSOLVE_CORE, <0,0,0>, 500 )
+	wait 1.0
+	ent.Destroy()
+}
+
+void function StagingCleanup()
+{
+	AddStagingCleanupEnts( GetRackNodesArray() )
+	AddStagingCleanupEnts( GetAttachmentNodesArray() )
+	AddStagingCleanupEnts( GetEntArrayByScriptName( "shooting_range_rotating_target" ) )
+	AddStagingCleanupEnts( GetEntArrayByScriptName( "shooting_range_folding_target" ) )
+
+	// Loot_RemoveCallback_OnPlayerLootPickup( OnPlayerLootPickedUp ) // S3: loot callback system not available
+
+	foreach( entity ent in file.stagingCleanupEnts )
+	{
+		if ( IsValid( ent ) )
+			ent.Destroy()
+	}
 }
 
 void function RemoveStagingAreaEntsForRealm( int realm )
 {
-
-}
-
-int function GetPlayerStagingSquadRealm( entity player )
-{
-    return 0
-}
-
-void function CreateWeaponRacksForRealm( int realm )
-{
-	// this probably doesn't work
-	array<entity> racks = GetEntArrayByScriptName( "weapon_racks" )
-	foreach( entity rack in racks )
+	foreach( entity ent in file.stagingCleanupEnts )
 	{
-    	rack.SetModel( $"mdl/industrial/gun_rack_arm_down.rmdl" )
+		if ( !IsValid( ent ) )
+			continue
+
+		if ( !ent.IsInRealm( realm ) )
+			continue
+
+		ent.Destroy()
 	}
 }
+
+void function SetWeaponSkinsByPlayer( entity player )
+{
+	if( !IsValid( player ) )
+		return
+
+	foreach ( entity ent in file.stagingCleanupEnts )
+	{
+		if ( !IsValid( ent ) )
+			continue
+
+		if ( ent.GetNetworkedClassName() != "prop_survival" )
+			continue
+
+		if ( !ent.DoesShareRealms( player ) )
+			continue
+
+		int lootIndex = ent.GetSurvivalInt()
+		LootData ld = SURVIVAL_Loot_GetLootDataByIndex( lootIndex )
+		bool isWeapon = ld.lootType == eLootType.MAINWEAPON
+
+		if ( !isWeapon )
+			continue
+
+		ApplySkinToWeapon( ent, player )
+	}
+}
+
+void function FinalizeRealmWhenPopulated_Thread( int realm )
+{
+	while( GetAllPlayersByTeamOrRealm( realm, realm ).len() == 0 )
+	{
+		WaitFrame()
+	}
+
+	// TODO: Space intentionally left blank for any initialization that needs to be done once realm is populated.
+}
+
+// Create the Resident Dummies for the realm.
+void function FR_ResidentDummies_CreateInRealm( int realm )
+{
+	if( !( realm in file.residentDummiesSpawned ) )
+	{
+		file.residentDummiesSpawned[ realm ] <- false
+	}
+
+	if( file.residentDummiesSpawned[ realm ] )
+		return
+
+	bool isPotentialCombatDummie = true
+	bool overrideShields = false
+	int shieldLevel = FRSetting_ShieldLevel_Get( realm )
+
+	array< entity > dummypts = GetEntArrayByScriptName( "spawnpoint_frdummy" )
+	foreach( dummypt in dummypts)
+	{
+		CreateRespawningTrainingDummyInRealm( realm, dummypt.GetOrigin(), dummypt.GetAngles(), isPotentialCombatDummie, overrideShields, shieldLevel )
+	}
+
+	file.residentDummiesSpawned[ realm ] <- true
+}
+
+////////////////////////////
+
+void function FullCombatDummies_Start_ByPlayer( entity player )
+{
+	int realm = GetPlayerSquadRealm( player )
+	if ( realm < 0 )
+		return
+
+	// TODO: CLEANUP
+	//RegisterSignal( "FullCombatDummies_Start_ByPlayer" )
+	if ( s_combatRealms.contains( realm ) )
+	{
+		                         
+			file.stagingRealm_combatDummiesEnabled[ realm ] <- true
+        
+		player.Signal( "FullCombatDummies_Start_ByPlayer" )
+		return
+	}
+
+	thread function() : (player, realm)
+	{
+		                         
+			file.stagingRealm_combatDummiesEnabled[ realm ] <- true
+        
+		s_combatRealms.append( realm )
+		OnThreadEnd( function() : (realm)
+		{
+			s_combatRealms.fastremovebyvalue( realm )
+			Dummies_Reset( realm )
+			                         
+				file.stagingRealm_combatDummiesEnabled[ realm ] <- false
+         
+		} )
+
+		player.EndSignal( "OnDestroy" )
+		player.EndSignal( "FullCombatDummies_Start_ByPlayer" )
+		Dummies_Reset( realm )
+
+		WaitForever()
+	}()
+}
+
+bool function FullCombatDummies_IsEnabled( int realm )
+{
+	if( !( realm in file.stagingRealm_combatDummiesEnabled ) )
+	{
+		file.stagingRealm_combatDummiesEnabled[ realm ] <- false
+	}
+
+	return( file.stagingRealm_combatDummiesEnabled[ realm ] )
+}
+
+                         
+void function FullCombatDummies_Stop_ByPlayer( entity player )
+{
+	int realm = GetPlayerSquadRealm( player )
+	if ( realm < 0 )
+		return
+
+	file.stagingRealm_combatDummiesEnabled[ realm ] <- false
+
+	// TODO: CLEANUP
+	//RegisterSignal( "FullCombatDummies_Start_ByPlayer" )
+	if ( s_combatRealms.contains( realm ) )
+	{
+		s_combatRealms.fastremovebyvalue( realm )
+		FR_ResidentDummies_DestroyInRealm( realm )
+
+		// TODO: Tell All realm players' UI that FullCombatDummies are off.
+	}
+}
+
+// Destroy all FR dummies so they will auto-respawn.
+void function UICallback_FRDummies_Reset( entity player )
+{
+	if( !IsValid( player ) )
+		return
+
+	if( !player.IsPlayer() )
+		return
+
+	int realm = GetPlayerSquadRealm( player )
+	//FRDummies_Reset( realm )
+	FR_ResidentDummies_DestroyInRealm( realm )
+}
+      
+
+void function FR_ResidentDummies_DestroyInRealm( int realm, bool endRespawnThreads = false)
+{
+	if ( !( realm in s_FRDummiesInRealm) )
+		return
+
+	if ( endRespawnThreads )
+	{
+		RealmInfoEntity_Signal( realm, "PermanentlyDestroyFRDummyTarget" )
+	}
+
+	array<entity> npcs = clone( s_FRDummiesInRealm[realm] )
+	foreach( entity npc in npcs )
+	{
+		DummieDespawn( npc )
+	}
+
+	if ( endRespawnThreads )
+	{
+		s_FRDummiesInRealm[realm].clear()
+		file.residentDummiesSpawned[ realm ] <- false
+	}
+}
+
+// TODO: Figure out how to ensure they spawn in their home points upon being killed.
+void function CreateRespawningTrainingDummyInRealm( int realm, vector spawnOrigin, vector spawnAngles, bool isPotentialCombatDummie, bool overrideShieldLevel, int shieldLevel )
+{
+	if ( !( realm in s_FRDummiesInRealm) )
+		s_FRDummiesInRealm[realm] <- []
+
+	thread Respawning_FRDummy_Thread( realm, spawnOrigin, spawnAngles, isPotentialCombatDummie, overrideShieldLevel, shieldLevel )
+}
+
+void function Respawning_FRDummy_Thread( int realm, vector spawnOrigin, vector spawnAngles, bool isPotentialCombatDummie, bool overrideShieldLevel, int shieldLevel )
+{
+	RealmInfoEntity_EndSignal( realm, "PermanentlyDestroyFRDummyTarget" )
+
+	for( ;; )
+	{
+		wait RandomFloatRange( 1.0, 2.0 )
+		int thisShieldLevel = shieldLevel
+		entity npc
+		bool doCombat = s_combatRealms.contains( realm )
+
+		if ( doCombat && isPotentialCombatDummie )
+		{
+                            
+			if ( !overrideShieldLevel )
+			{
+				thisShieldLevel = FRSetting_ShieldLevel_Get( realm )
+			}
+        
+                                    
+         
+			npc = SpawnNPCCombatDummie( spawnOrigin, spawnAngles, thisShieldLevel )
+		}
+		else
+		{
+			                         
+				if ( !overrideShieldLevel )
+				{
+					thisShieldLevel = FRSetting_ShieldLevel_Get( realm )
+				}
+         
+
+			npc = SpawnNPCTrainingDummy( spawnOrigin, spawnAngles, thisShieldLevel )
+		}
+
+		if ( !IsValid( npc ) )
+			continue
+
+		s_FRDummiesInRealm[realm].append( npc )
+		npc.RemoveFromAllRealms()
+		npc.AddToRealm( realm )
+		// npc.SetNetworkDistanceCullEnabled( false ) // S3: entity method not available at compile time
+
+		                         
+			// Spawn FX for the FR Dummie.
+			thread DummieFX_Spawn_Thread( npc )
+
+			if ( FRSetting_DummieHighlightsOn_Get( realm ) )
+			{
+				Highlight_SetEnemyHighlight( npc, COMBATRANGE_DUMMIE_HIGHLIGHT )
+			}
+
+			// Do a behavior based on Behavior Bools.
+			table< int, bool > behaviorSettings = FRDummie_BehaviorData_Get( realm )
+			thread Dummie_Choose_And_Perform_Behavior( npc, behaviorSettings )
+        
+
+		npc.WaitSignal( "OnDestroy" )
+		s_FRDummiesInRealm[realm].fastremovebyvalue( npc )
+
+		if ( doCombat )
+		{
+			while ( s_FRDummiesInRealm[realm].len() > 0 )
+			{
+				WaitFrame()
+			}
+			wait RandomFloatRange( 4.0, 5.0 )
+		}
+	}
+}
+
+array< entity > function FRDummies_Get( int realm )
+{
+	if( !( realm in s_FRDummiesInRealm ) )
+	{
+		s_FRDummiesInRealm[ realm ] <- []
+	}
+
+	return( s_FRDummiesInRealm[ realm ] )
+}
+
+void function StagingArea_AddLootDataRefToNotSpawn( string lootDataRef )
+{
+	file.lootDataRefsToNotSpawn.append( lootDataRef )
+}
+
+
+array<LootData> function FilterLootDataByRefsToNotSpawn( array<LootData> lootData )
+{
+	array<LootData> clonedLootData = clone( lootData )
+	foreach ( LootData data in lootData )
+	{
+		if ( file.lootDataRefsToNotSpawn.contains( data.ref ) )
+			clonedLootData.fastremovebyvalue( data )
+	}
+
+	return clonedLootData
+}
+
+                         
+int function GetCurrentTargetSpeedForPlayerRealm( entity player )
+{
+	// Returns the current Target Speed SETTING, not the speed itself.
+	int realm = GetPlayerSquadRealm( player )
+
+	return( FRSetting_TargetSpeed_Get( realm ) )
+}
+      
+
+// ----- DEV-Only functions
+
+#if DEVELOPER
+bool devPrint = false
+void function DEV_Print( string toPrint )
+{
+	if( devPrint )
+	{
+		printt( format( "%s(): %s", FUNC_NAME(), toPrint ))
+	}
+}
+
+void function DEV_PrintEnable( bool isOn )
+{
+	devPrint = isOn
+}
+                   
+void function DEV_Record_Training_Bloodhound_Hillslide()
+{
+	vector startPos = <-10795.7422, 506.074341, 1581.24622>
+	vector startAng = <-5.36441803e-05, -0.343279809, -5.36441803e-05>
+	vector endPos = <-7312.84717, 405.521118, -19.9930382>
+	vector endAng = <-0.00253736973, 179.997314, -0.000686645508>
+
+	entity player = GP()
+	string name = "training_bloodhound_hillslide_mu1"
+
+	player.SetOrigin( startPos )
+	player.SetAngles( startAng )
+
+	DebugDrawSphere( endPos, 25, 0, 255, 0, true, 100 )
+
+	int length = 10
+	// thread AnimRecordPlayer_Thread( length, name ) // S3: dev utility not available
+}
+
+void function DEV_Record_Training_Pathfinder_Bye()
+{
+	/*
+	PATHFINDER Pos: <-5823.47852, -929.081909, 398>
+	PATHFINDER Ang: <5.36441803e-05, 5.36441803e-05, 5.36441803e-05>
+	*/
+	vector startPos = <-5823.47852, -929.081909, 398>
+	vector startAng = <5.36441803e-05, 5.36441803e-05, 5.36441803e-05>
+
+	entity player = GP()
+	string name = "training_pathfinder_bye_mu1"
+
+	player.SetOrigin( startPos )
+	player.SetAngles( startAng )
+
+	int length = 12
+	// thread AnimRecordPlayer_Thread( 12, name ) // S3: dev utility not available
+}
+
+                         
+#endif

@@ -25,13 +25,12 @@ global const int PROWLER_DEN_SPAWN_TIGGER_RADIUS = 1972
 global const float PROWLER_DEN_MULTI_SPAWN_RANGE_THRESHOLD_FRAC = 0.5
 
 global const string PROWLER_DEN_EDITOR_CLASS_KEYWORD = "script_ai_prowler_den"
-global const string PROWLER_DEN_SCRIPT_NAME = "prop_prowler_den"
 
 const string PROWLER_DEN_KILL_TRIGGER_SIGNAL_NAME = "DeactivateProwlerDenTrigger"
 
 const string PROWLER_TO_SPAWN_NPC_KEYWORD = "npc_prowler"
 
-#if DEV
+#if DEVELOPER
 const bool PROWLER_DEN_DEBUG = false
 global function DEV_ProwlerDen_SpawnDenAtCrosshair
 global function DEV_ProwlerDen_ToggleDebugDrawTriggerRadii
@@ -132,7 +131,7 @@ global const string PROWLER_DEN_SPAWN_ANIM_KEYWORD = "pr_bloodhoundTT_hatch_spaw
 
 // END ANIMATIONS
 
-#if DEV
+#if DEVELOPER
 global struct ProwlerDen_SpawnPointTraceData
 {
 	vector origin
@@ -160,7 +159,7 @@ global struct ProwlerDenData
 
 	bool			monitorThreadActive = false
 
-	#if DEV
+	#if DEVELOPER
 		bool							debugSpawned = false
 		array<ProwlerDen_SpawnPointTraceData>		spawnPointTraceDatas
 	#endif
@@ -303,7 +302,7 @@ void function ProwlerDen_SetLockSpawns( ProwlerDenData denData, bool lockSpawns 
 
 void function OnProwlerDenSpawned( entity denEntity )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( PROWLER_DEN_DEBUG )
 			printf("ProwlerDen.OnProwlerDenSpawned()")
 	#endif
@@ -321,7 +320,7 @@ void function OnProwlerDenSpawned( entity denEntity )
 
 ProwlerDenData function SetupProwlerDen( entity denEntity, int numOfProwlers = -1 )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( PROWLER_DEN_DEBUG )
 			printf("ProwlerDen.SetupProwlerDen()")
 	#endif
@@ -373,7 +372,7 @@ ProwlerDenData function SetupProwlerDen( entity denEntity, int numOfProwlers = -
 
 void function ProwlerDen_OnPlayerEnterTrigger( entity trigger, entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( PROWLER_DEN_DEBUG )
 			printf("ProwlerDen_OnPlayerEnterTrigger()")
 	#endif
@@ -395,7 +394,7 @@ void function ProwlerDen_OnPlayerEnterTrigger( entity trigger, entity player )
 
 void function ProwlerDen_OnPlayerExitTrigger( entity trigger, entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( PROWLER_DEN_DEBUG )
 			printf("ProwlerDen_OnPlayerExitTrigger()")
 	#endif
@@ -422,7 +421,7 @@ void function ProwlerDen_ForceSpawnProwlers( ProwlerDenData denData )
 
 void function ProwlerDenActiveMonitor_Thread( ProwlerDenData denData )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( PROWLER_DEN_DEBUG )
 			printf("ProwlerDenActiveMonitor_Thread()")
 	#endif
@@ -430,7 +429,7 @@ void function ProwlerDenActiveMonitor_Thread( ProwlerDenData denData )
 	EndSignal( denData.denEntity, PROWLER_DEN_KILL_TRIGGER_SIGNAL_NAME )
 
 	OnThreadEnd( void function() : ( denData ) {
-		#if DEV
+		#if DEVELOPER
 			if ( PROWLER_DEN_DEBUG )
 				printf("ProwlerDenActiveMonitor_Thread - OnThreadEnd()")
 		#endif
@@ -449,7 +448,7 @@ void function ProwlerDenActiveMonitor_Thread( ProwlerDenData denData )
 
 	while ( denData.life > 0 )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( PROWLER_DEN_DEBUG )
 				printf( "ProwlerDenActiveMonitor_Thread - Time remaining = " + (PROWLER_DEN_SPAWNER_COOLDOWN - ( Time() - denData.lastSpawnTime )) )
 		#endif
@@ -624,7 +623,7 @@ void function SpawnProwlerAfterDelay_Thread( ProwlerDenData denData, vector spaw
 	entity prowler
 	denData.queuedSpawnCount--
 
-	#if DEV
+	#if DEVELOPER
 	if ( file.prowlerSpawnOverrideCallback != null && denData.debugSpawned == false )
 	#else
 	if ( file.prowlerSpawnOverrideCallback != null )
@@ -633,7 +632,7 @@ void function SpawnProwlerAfterDelay_Thread( ProwlerDenData denData, vector spaw
 		prowler = file.prowlerSpawnOverrideCallback( denData, spawnOrigin, spawnAngles )
 		if ( !IsValid( prowler ) || prowler.ai.npcType != eNPC.PROWLER )
 		{
-			#if DEV
+			#if DEVELOPER
 				if ( PROWLER_DEN_DEBUG )
 					printf( FUNC_NAME() + " - WARNING: prowlerSpawnOverrideCallback is registered but didn't return a valid Prowler NPC!" )
 			#endif
@@ -646,7 +645,7 @@ void function SpawnProwlerAfterDelay_Thread( ProwlerDenData denData, vector spaw
 		UpdateEnemyMemoryWithinRadius( prowler, PROWLER_DEN_SPAWN_TIGGER_RADIUS )
 	}
 
-	#if DEV
+	#if DEVELOPER
 		if ( PROWLER_DEN_DEBUG )
 			printf( "ProwlerDen.SpawnProwlerAfterDelay_Thread() Den life remaining = " + denData.life + " At, Origin: " + spawnOrigin + ", with Angles:" + spawnAngles )
 	#endif
@@ -727,7 +726,7 @@ void function CreateProwlerSpawnPointsForDen( ProwlerDenData denData )
 
 	PerformLowerSpawnPointTraceTests( denData )
 
-	#if DEV
+	#if DEVELOPER
 		if ( PROWLER_DEN_DEBUG )
 			DEV_ProwlerDen_ToggleDebugDrawTriggerRadii()
 	#endif
@@ -753,7 +752,7 @@ void function PerformLowerSpawnPointTraceTests( ProwlerDenData denData )
 			Warning( "%s() - spawn point trace test failed for Prowler Den at " + origin, FUNC_NAME() )
 		}
 
-		#if DEV
+		#if DEVELOPER
 			ProwlerDen_SpawnPointTraceData spawnPointTraceData
 			spawnPointTraceData.bSuccess = bSuccess
 			spawnPointTraceData.origin = spawnOrigin
@@ -762,7 +761,7 @@ void function PerformLowerSpawnPointTraceTests( ProwlerDenData denData )
 		#endif
 	}
 
-	#if DEV
+	#if DEVELOPER
 		if ( PROWLER_DEN_DEBUG )
 			DEV_ProwlerDen_ToggleDebugDrawSpawnPointTraceTests()
 	#endif
@@ -851,7 +850,7 @@ array<ProwlerDenData> function GetAllProwlerDenData()
 	return denData
 }
 
-#if DEV
+#if DEVELOPER
 bool s_isProwlerDensEnabled = true
 void function DEV_ProwlerDen_ToggleEnabled()
 {
@@ -963,7 +962,7 @@ void function DEV_ProwlerDen_ToggleDebugDrawSpawnPointTraceTests()
 							r = 255
 						}
 
-						DebugDrawLine( denData.spawnPointTraceDatas[i].origin, denData.spawnPointTraceDatas[i].endPoint, <r, g, 0>, true, 0.1 )
+						DebugDrawLine( denData.spawnPointTraceDatas[i].origin, denData.spawnPointTraceDatas[i].endPoint, r, g, 0, true, 0.1 )
 					}
 				}
 			}
@@ -996,7 +995,7 @@ void function DEV_ProwlerDen_ToggleDebugDrawTriggerRadii()
 						continue
 					}
 
-					DebugDrawTrigger( denData.denEntity.GetOrigin(), PROWLER_DEN_SPAWN_TIGGER_RADIUS, <26, 230, 0>, 1.0, true )
+					DebugDrawTrigger( denData.denEntity.GetOrigin(), PROWLER_DEN_SPAWN_TIGGER_RADIUS, 26, 230, 0, 1.0, true )
 				}
 			}
 		}()
@@ -1059,4 +1058,4 @@ void function DEV_ProwlerDen_ToggleDebugDrawSpawnAttachments()
 	}
 }
 #endif
-#endif 
+#endif

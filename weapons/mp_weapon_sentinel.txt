@@ -32,14 +32,34 @@
 	"weapon_type_flags"							"WPT_PRIMARY"
 
 	// Script - Callbacks
-	"OnWeaponActivate"                       	"OnWeaponActivate_weapon_sentinel"
-	"OnWeaponDeactivate"                     	"OnWeaponDeactivate_weapon_sentinel"
-	"OnWeaponPrimaryAttack"                    	"OnWeaponPrimaryAttack_weapon_sentinel"
-	"OnClientAnimEvent"						   	"OnClientAnimEvent_weapon_basic_bolt"
-	"OnWeaponCustomActivityStart"            	"OnWeaponCustomActivityStart_weapon_sentinel"
-	"OnWeaponCustomActivityEnd"              	"OnWeaponCustomActivityEnd_weapon_sentinel"
-	"OnWeaponStartZoomIn"                    	"OnWeaponStartZoomIn_weapon_sentinel"
-	"OnWeaponStartZoomOut"                   	"OnWeaponStartZoomOut_weapon_sentinel"
+	"OnWeaponActivate"                         "OnWeaponActivate_weapon_sentinel"
+	"OnWeaponDeactivate"                       "OnWeaponDeactivate_weapon_sentinel"
+	"OnWeaponPrimaryAttack"                    "OnWeaponPrimaryAttack_weapon_sentinel"
+	"OnClientAnimEvent"						   "OnClientAnimEvent_weapon_basic_bolt"
+	"OnWeaponTryEnergize"                      "OnWeaponTryEnergize"
+	"OnWeaponEnergizedStart"                   "OnWeaponEnergizedStart"
+	//Energized UI info
+    "has_energized"                             "1"
+    "energized_consumable"                      "health_pickup_combo_small"
+    "energized_consumable_needed_amount"	    "1"
+    "energized_consumable_name_singular"		"#SURVIVAL_PICKUP_HEALTH_COMBO_SMALL"
+    "energized_consumable_name_plural"			"#SURVIVAL_PICKUP_HEALTH_COMBO_SMALL_PLURAL"
+    "energized_ping_string"                     "#PING_CELLS"
+    "energized_comms"                           "INVENTORY_NEED_SHIELDS"
+    "energized_consumable_hint"                 "#WPN_SENTINEL_CELLS_HINT"
+    "energized_consumable_required_hint"  		"#WPN_SENTINEL_ENERGIZE_CONSUMABLE_REQUIRED"
+    "energizing_state_text"                     "#WPN_SENTINEL_ENERGIZING_LABEL"
+    "energized_state_text"                      "#WPN_SENTINEL_ENERGIZE_LABEL"
+    "energized_full_text"                       "#WPN_SENTINEL_ENERGIZE_FULL"
+    "can_energize_when_energized"               "1"
+    "energized_reenergize_prompt_frac"          "0.18"
+    "energized_max_reenergize_frac"             "0.9"
+
+    "energized_ui_color"             			"134 255 221"
+    "energized_ui_left_bar_color" 				"0 155 146"
+    "energized_ui_bg_color" 					"130 130 130"
+    "energizing_ui_left_bar_color" 				"22 110 194"
+    "energizing_ui_right_bar_color" 			"73 161 245"
 
     // Energize mechanics
     "energized_duration"                       "150.000000"
@@ -253,11 +273,17 @@
     "charge_attack_requires_full_charge"    	"0"
     "charge_weapon_fires_while_charging"        "1"
 
-    // Custom sentinel energize FX -- supports up to 5
-    //"pre_energize_effect0_1p"                   ""
-    //"pre_energize_effect0_3p"                   ""
-    //"pre_energize_effect0_attachment"           ""
-    //"pre_energize_effect0_attachment_scope"     ""
+	"marksmans_tempo_required_shots" "1"
+	// val unk: 38
+	"marksmans_tempo_grace_time" "1.000000"
+	// val unk: 14
+	"marksmans_tempo_grace_time_in_tempo" "1.250000"
+	// val unk: 84
+	"marksmans_tempo_fadeoff_match_grace_time" "1"
+	// val unk: 252
+	"marksmans_tempo_fadeoff_on_perfect_moment" "0.500000"
+	// val unk: 65
+	"marksmans_tempo_fadeoff_on_fire" "0.000000"
 
     "energize_effect0_1p"                       "P_wpn_sentinel_charge_FP"
     "energize_effect0_3p"                       "P_wpn_sentinel_charge_3P"
@@ -292,7 +318,7 @@
 	"damage_very_far_distance"	"12000"
 	"Mods"
 	{
-	    gold
+	    hopup_marksmans_tempo
 	    {
 	    }
 
@@ -484,14 +510,13 @@
 	"UiData1"
 	{
 
-		"ui"							"ui/r97_reticle"
+		"ui"    "ui/sentinel_reticle"
 		"mesh"  "models/weapons/attachments/sentinel_rui_reticle"
 
 		"Args"
 		{
-			vis							player_zoomfrac
-			ammo						weapon_ammo
-			clipSize					weapon_clipSize
+			"vis"       		"player_zoomfrac"
+			"centerOffset"		"weapon_ads_center_offset"
 		}
 	}
 
@@ -500,7 +525,7 @@
 	"UiData2"
 	{
 
-		"ui"    "ui/kraber_ammo_counter"
+		"ui"    "ui/sentinel_ammo_counter"
 		"mesh"  "models/weapons/attachments/sentinel_rui_ammo_counter"
 
 		"Args"

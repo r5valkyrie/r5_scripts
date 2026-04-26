@@ -89,13 +89,11 @@ void function OnProjectileCollision_weapon_deployable_wall( entity projectile, v
 		projectile.Destroy()
 	projectile.proj.projectileBounceCount++
 	#endif
-	table collisionParams =
-	{
-		pos = pos,
-		normal = normal,
-		hitEnt = hitEnt,
-		hitbox = hitbox
-	}
+	DeployableCollisionParams collisionParams
+	collisionParams.pos = pos
+	collisionParams.normal = normal
+	collisionParams.hitEnt = hitEnt
+	collisionParams.hitBox = hitbox
 
 	local result = PlantStickyEntityOnWorldThatBouncesOffWalls( projectile, collisionParams, 0.7 )
 }

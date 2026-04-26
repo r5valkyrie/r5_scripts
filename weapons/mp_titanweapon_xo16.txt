@@ -38,7 +38,7 @@ WeaponData
 
 	"bolt_gravity_enabled"							"0"
 
-	"damage_flags"									"DF_STOPS_TITAN_REGEN | DF_BULLET | DF_NO_SELF_DAMAGE | DF_KNOCK_BACK"
+	"damage_flags"									"DF_SOUR | DF_BULLET | DF_NO_SELF_DAMAGE | DF_KNOCK_BACK"
 
 
 	// Effects

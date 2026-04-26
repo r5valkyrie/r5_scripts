@@ -1,138 +1,735 @@
-
 global function HealthRegen_Init
+global function HealthRegen_RegisterNetworking
 
-//global function PilotHealthRegenThinkSP
+global function HealthRegen_IsOctane
+
+global function GetPlaylistVar_HealthRegenDelay
+global function GetPlaylistVar_HealthRegenPerSec
+
+#if SERVER
+global function HealthRegen_StartOctanePassive
+global function HealthRegen_Thread
+global function HealthRegen_End
 global function PilotShieldHealthUpdate
+global function ShadowHealthUpdate
+global function HealthRegen_OnPlayerHealingEnded
 
-const NO_HEALTH_DMG = ( 1 << eDamageSourceId.mp_ability_crypto_drone_emp ) // | ( 1 << eDamageSourceId. )
+global function AddCallback_OnPlayerShieldBreak
+global function AddCallback_OnPlayerShieldDamage
+global function AddCallback_OnHealRegenMPStateChanged
+#endif // SERVER
+
+const string NETVAR_PLAYER_REGEN_DAMAGE_TIME = "HealthRegen_PlayerRegenDamageTime"
+const string NETVAR_PLAYER_REGEN_START_DELAY = "HealthRegen_PlayerRegenStartDelay"
+const float  TIME_PLAYER_REGEN_START_INVALID = -1.0
+
+#if SERVER
+const string SIGNAL_PLAYER_REGEN_THREAD = "HealthRegen_StartThread"
+const string SIGNAL_PLAYER_REGEN_INTERRUPT = "HealthRegen_TryToInterrupt"
+const int    EPSILON_HEALTH_TOPUP = 2
+const float  TIME_REGEN_TICK = 2.0
+const float  TIME_CHUNKY_PROGRESS_TICK = 2.0
 const string SOUND_SHIELD_BREAK_3P_VS_1P = "humanshield_break_3p_vs_1p"
 const string SOUND_SHIELD_BREAK_1P_VS_3P = "humanshield_break_1p_vs_3p"
 const string SOUND_SHIELD_BREAK_3P_VS_3P = "humanshield_break_3p_vs_3p"
+const string SOUND_HEALTH_REGEN_1P = "PassiveRegen_Health_1P"
+const string SOUND_HEALTH_REGEN_3P = "PassiveRegen_Health_3P"
+const asset  FX_HEALTH_REGEN_1P = $"P_heal_loop_gameMode"
+
+global enum eRegenSource
+{
+	INVALID,
+	STIM_PASSIVE,    // Octane passive
+	CAMPFIRE,        // Campfire in Campfire mode
+	SHIELD_PASSIVE,  // Wattson passive
+	MODE,            // Playlist var enabled regen
+}
+
+struct HealInfo
+{
+	bool  healingState = false
+	bool  regenStartNow = false
+	bool  regenInterrupt = false
+	int   regenSource = eRegenSource.INVALID
+	int   eHealHandle = ENTITY_HEAL_RESOURCE_INVALID
+	float lastDamageTime = TIME_PLAYER_REGEN_START_INVALID
+	float regenStartDelay = 0.0
+	float regenHealthPerSec = 0.0
+	float regenShieldPerSec = 0.0
+	float shieldHeal = 0.0
+
+	entity healingFX
+	RecoveryHealingFXRequest& healingFXRequest
+}
+#endif // SERVER
+
+#if CLIENT
+const string SIGNAL_PLAYER_REGEN_START_TIME_UPDATED = "HealthRegen_RegenTimeUpdated"
+const string SIGNAL_PLAYER_REGEN_RUI_DESTROYED = "HealthRegen_RuiDestroyed"
+#endif // CLIENT
 
 struct
 {
-	float healthRegenRate
-	float healthRegenStartDelay
-	float healthRegenTickTime
-	
-	float maxDamageHistoryTime
+#if SERVER
+	array< void functionref( entity ent, var damageInfo ) > shieldBreakFuncs
+	array< float functionref( entity ent, var damageInfo ) > shieldDamageScaleCallbacks
+	array< void functionref( entity, bool, bool, int ) > healRegenStateUpdatedCallbacks
+
+	table< entity, HealInfo > playersHealInfo
+#endif // SERVER
+
+#if CLIENT
+	var healthRegenRui
+#endif // CLIENT
 } file
+
 
 void function HealthRegen_Init()
 {
-	file.healthRegenRate = 1.85 //values that seems to fit with retail
-	file.healthRegenTickTime = 0.60 //values that seems to fit with retail
-	file.healthRegenStartDelay = 5.0
-	AddCallback_OnPassiveChanged( ePassives.PAS_OCTANE, HealthRegen_OnPassiveChanged )
-	RegisterSignal( "PilotHealthRegenThink" )
-	
-	file.maxDamageHistoryTime = GetCurrentPlaylistVarFloat( "max_damage_history_time", MAX_DAMAGE_HISTORY_TIME )
-}
+#if SERVER
+	RegisterSignal( SIGNAL_PLAYER_REGEN_THREAD )
+	RegisterSignal( SIGNAL_PLAYER_REGEN_INTERRUPT )
 
-bool function IsHealActive( entity player )
-{
-	return StatusEffect_GetSeverity( player, eStatusEffect.stim_visual_effect ) > 0.0
-}
-
-void function PilotHealthRegenThinkMP( entity player )
-{
-	player.EndSignal( "OnDestroy" )
-	player.Signal( "PilotHealthRegenThink" )
-	player.EndSignal( "PilotHealthRegenThink" )
+	AddCallback_PlayerClassActuallyChanged( HealthRegen_OnPlayerClassChangedMP )
 	
-	// There's a delay when you change legends, have to compensate
-	wait 1
-	
-	if( !HealthRegen_IsPlayerAllowed(player) )
-		return
-
-	int tick
-	
-	while ( IsValid( player ) )
+	if ( GetPlaylistVar_KillStartsRegen() )
 	{
-		//Warning("continued")
-		wait( file.healthRegenTickTime )
+		AddCallback_OnPlayerKilled( HealthRegen_OnPlayerKilled )
+	}
 
-		if ( !IsAlive( player ) )
-			continue
+	PrecacheParticleSystem( FX_HEALTH_REGEN_1P )
+#endif // SERVER
 
-		if ( !IsPilot( player ) )
-			continue
+	if ( GetPlaylistVar_IsModeRegenActive() )
+	{
+#if CLIENT
+		RegisterSignal( SIGNAL_PLAYER_REGEN_START_TIME_UPDATED )
+		RegisterSignal( SIGNAL_PLAYER_REGEN_RUI_DESTROYED )
 
-		if ( player.GetHealth() == player.GetMaxHealth() )
-			continue
-
-		if ( player.IsPhaseShifted() )
-		{
-			StatusEffect_StopAllOfType( player, eStatusEffect.target_health )
-			tick = 0
-			continue
-		}
-
-		if ( IsHealActive( player ) )
-		{
-			StatusEffect_StopAllOfType( player, eStatusEffect.target_health )
-			tick = 0
-			continue
-		}
-		else if ( Time() - player.p.lastDamageTime < file.healthRegenStartDelay )
-		{
-			//printt( Time(), player.p.lastDamageTime, file.healthRegenStartDelay )
-			StatusEffect_StopAllOfType( player, eStatusEffect.target_health )
-			tick = 0
-			continue
-		}
-		
-		if( tick == 0 )
-		{
-			//printt( floor( player.GetHealth() + int(file.healthRegenRate*1.5)) / 100 ) 
-			// Green regen HUD bar
-			float value = float( player.GetHealth() + int(file.healthRegenRate*2) )
-			StatusEffect_AddTimed
-			(
-				player, 
-				eStatusEffect.target_health,
-				value / 100,
-				file.healthRegenTickTime*3,
-				0
-			)
-			tick++
-			continue
-		} else if( tick == 2 )
-		{
-			tick = 0
-			player.SetHealth( minint( player.GetMaxHealth(),  player.GetHealth() + int( file.healthRegenRate ) ) )
-		} else
-		{
-			player.SetHealth( minint( player.GetMaxHealth(), player.GetHealth() + int( file.healthRegenRate ) ) )
-			tick++
-		}
-		
-		if ( player.GetHealth() == player.GetMaxHealth() )
-		{
-			ClearRecentDamageHistory( player )
-			ClearLastAttacker( player )
-		}
+		AddCallback_OnClientScriptInit( HealthRegen_InitClient )
+		AddCallback_GameStateEnter( eGameState.Postmatch, HealthRegen_OnGameState_Ending ) // TODO: necessary?
+#endif // CLIENT
 	}
 }
 
-bool function HealthRegen_IsPlayerAllowed( entity player )
+void function HealthRegen_RegisterNetworking()
 {
-	if( PlayerHasPassive( player, ePassives.PAS_OCTANE ) )
+	RegisterNetworkedVariableSafe( NETVAR_PLAYER_REGEN_DAMAGE_TIME, SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, TIME_PLAYER_REGEN_START_INVALID )
+	RegisterNetworkedVariableSafe( NETVAR_PLAYER_REGEN_START_DELAY, SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, TIME_PLAYER_REGEN_START_INVALID )
+
+#if CLIENT
+	RegisterNetVarTimeChangeCallback( NETVAR_PLAYER_REGEN_DAMAGE_TIME, void function( entity player, float newVal ) : ()
+	{
+		Signal( clGlobal.signalDummy, SIGNAL_PLAYER_REGEN_START_TIME_UPDATED )
+	} )
+	RegisterNetVarTimeChangeCallback( NETVAR_PLAYER_REGEN_START_DELAY, void function( entity player, float newVal ) : ()
+	{
+		Signal( clGlobal.signalDummy, SIGNAL_PLAYER_REGEN_START_TIME_UPDATED )
+	} )
+#endif // CLIENT
+}
+
+#if SERVER
+void function HealthRegen_StartOctanePassive( entity player )
+{
+	int regenSource = eRegenSource.STIM_PASSIVE
+	float regenHealthPerSec = Octane_GetPassiveRegenRate()
+	float regenStartDelay = Octane_GetPassiveRegenDelay()
+
+	thread HealthRegen_Thread( player, regenSource, regenHealthPerSec, 0.0, regenStartDelay, true )
+}
+#endif // SERVER
+
+#if SERVER
+void function HealthRegen_StartWattsonPassive( entity player )
+{
+	int regenSource = eRegenSource.SHIELD_PASSIVE
+	float regenShieldPerSec = 1.0
+	float regenStartDelay = 6.0
+
+	thread HealthRegen_Thread( player, regenSource, 0.0, regenShieldPerSec, regenStartDelay, false )
+}
+#endif // SERVER
+
+#if SERVER
+void function HealthRegen_HealInfo_Init( entity player, int regenSource, float regenHealthPerSec, float regenShieldPerSec, float regenStartDelay )
+{
+	HealInfo playerHealInfo
+	playerHealInfo.regenSource = regenSource
+	playerHealInfo.regenHealthPerSec = regenHealthPerSec
+	playerHealInfo.regenShieldPerSec = regenShieldPerSec
+	playerHealInfo.regenStartDelay = regenStartDelay
+
+	file.playersHealInfo[ player ] <- playerHealInfo
+}
+#endif // SERVER
+
+#if SERVER
+void function HealthRegen_End( entity player )
+{
+	player.Signal( SIGNAL_PLAYER_REGEN_THREAD )
+}
+#endif // SERVER
+
+#if SERVER
+// Previously called PilotHealthRegenThinkMP
+void function HealthRegen_Thread( entity player, int regenSource, float regenHealthPerSec, float regenShieldPerSec, float regenStartDelay, bool chunkyProgress )
+{
+	player.Signal( SIGNAL_PLAYER_REGEN_THREAD )
+
+	player.EndSignal( SIGNAL_PLAYER_REGEN_THREAD )
+	player.EndSignal( "OnDestroy" )
+
+	OnThreadEnd( function() : ( player ) {
+		if ( IsValid( player ) )
+		{
+			HealthRegen_PauseRegen( player )
+
+			delete file.playersHealInfo[ player ]
+		}
+	} )
+
+	if ( HealthRegen_IsOctane( player ) )
+	{
+		// Octane should have a stacking buff to regen in special gamemodes
+		if ( HealthRegen_IsFromMode( regenSource ) )
+		{
+			regenHealthPerSec += Octane_GetPassiveRegenRate()
+		}
+	}
+
+	HealthRegen_HealInfo_Init( player, regenSource, regenHealthPerSec, regenShieldPerSec, regenStartDelay )
+
+	while ( IsValid( player ) )
+	{
+		if ( !HealthRegen_ShouldRegenContinue( player ) )
+		{
+			HealthRegen_PauseRegen( player )
+
+			WaitFrame()
+			continue
+		}
+
+		if ( !HealthRegen_IsTimeToStart( player ) )
+		{
+			HealthRegen_PauseRegen( player )
+			HealthRegen_SetLastDamageTime( player )
+
+			thread HealthRegen_MonitorPlayer( player, file.playersHealInfo[ player ].regenStartDelay )
+			WaitSignalTimeout( player, file.playersHealInfo[ player ].regenStartDelay, SIGNAL_PLAYER_REGEN_INTERRUPT )
+			continue
+		}
+
+		HealthRegen_HealingFXUpdate( player )
+
+		if ( HealthRegen_CanHealHealth( player ) )
+		{
+			waitthread HealthRegen_HealPlayerHealth_Thread( player, chunkyProgress )
+		}
+		else if ( HealthRegen_CanHealShields( player ) )
+		{
+			waitthread HealthRegen_HealPlayerShield_Thread( player )
+		}
+
+		if ( !HealthRegen_CanHealHealth( player ) && !HealthRegen_CanHealShields( player ) )
+		{
+			HealthRegen_PauseRegen( player )
+		}
+	}
+}
+#endif // SERVER
+
+#if SERVER
+void function HealthRegen_TryToInterrupt( entity player )
+{
+	player.Signal( SIGNAL_PLAYER_REGEN_INTERRUPT )
+}
+#endif // SERVER
+
+#if SERVER
+bool function HealthRegen_IsTimeToStart( entity player )
+{
+	if ( !( player in file.playersHealInfo ) )
+		return false
+
+	if ( file.playersHealInfo[ player ].regenStartNow )
+	{
 		return true
-		
-	return false
-}
+	}
+	else if ( Time() < ( player.GetLastTimeDamaged() + file.playersHealInfo[ player ].regenStartDelay ) )
+	{
+		return false
+	}
 
-void function HealthRegen_OnPassiveChanged(entity player, int passive, bool didHave, bool nowHas )
+	return true
+}
+#endif // SERVER
+
+#if SERVER
+void function HealthRegen_SetLastDamageTime( entity player )
 {
-	thread PilotHealthRegenThinkMP( player )
-}
-void function HealthRegen_OnPlayerClassChangedMP( entity player )
-{	
-	thread PilotHealthRegenThinkMP( player )
-}
+	if ( !( player in file.playersHealInfo ) )
+		return
 
+	// TODO: This data should always be updated regardless of source
+	// Currently the UI is triggered by the data being set, not the regen source
+	int regenSource = file.playersHealInfo[ player ].regenSource
+	if ( !HealthRegen_IsFromMode( regenSource ) )
+	{
+		return
+	}
+
+	if ( player.GetPlayerNetTime( NETVAR_PLAYER_REGEN_DAMAGE_TIME ) != player.GetLastTimeDamaged() )
+	{
+		float regenStartDelay = file.playersHealInfo[ player ].regenStartDelay
+		player.SetPlayerNetTime( NETVAR_PLAYER_REGEN_DAMAGE_TIME, player.GetLastTimeDamaged() )
+		player.SetPlayerNetTime( NETVAR_PLAYER_REGEN_START_DELAY, regenStartDelay )
+	}
+}
+#endif // SERVER
+
+#if SERVER
+bool function HealthRegen_ShouldRegenContinue( entity player )
+{
+	if ( !IsAlive( player ) || !IsPilot( player ) || player.IsPhaseShifted() )
+		return false
+	if ( !( player in file.playersHealInfo ) )
+		return false
+
+	int regenSource = file.playersHealInfo[ player ].regenSource
+	if ( AreAbilitiesSilenced( player ) && HealthRegen_IsFromMode( regenSource ) )
+		return false
+
+                    
+	if( ( PlayerHasPassive( player, ePassives.PAS_REVENANT_REWORK ) && PlayerHasPassive( player, ePassives.PAS_PAS_UPGRADE_ONE ) ) )
+	{
+		if ( BleedoutState_GetPlayerBleedoutState( player ) == BS_NOT_BLEEDING_OUT )
+			return false
+	}
+	else
+                          
+	{
+		if ( BleedoutState_GetPlayerBleedoutState( player ) != BS_NOT_BLEEDING_OUT )
+			return false
+	}
+
+                             
+	if ( IsPlayerShadowZombie( player ) && !HealthRegen_CanHealHealth( player ) )
+		return false
+                                   
+
+	if ( !HealthRegen_CanHealHealth( player ) && !HealthRegen_CanHealShields( player ) )
+		return false
+
+	return true
+}
+#endif // SERVER
+
+#if SERVER
+void function HealthRegen_PauseRegen( entity player )
+{
+	if ( !( player in file.playersHealInfo ) )
+		return
+
+	HealthRegen_SetPlayerRegenNow( player, false )
+	HealthRegen_RUIDisable( player )
+	HealthRegen_HealingFXStop( player )
+	EntityHealResource_Remove( player, file.playersHealInfo[ player ].eHealHandle )
+	HealthRegen_TryHealingStateCallbacks( player, false, file.playersHealInfo[ player ].regenSource )
+
+	HealthRegen_TryToInterrupt( player )
+}
+#endif // SERVER
+
+#if SERVER
+void function HealthRegen_StartRegenNow( entity player )
+{
+	if ( !player.IsPlayer() )
+		return
+
+	if ( !HealthRegen_IsTimeToStart( player ) )
+	{
+		HealthRegen_SetPlayerRegenNow( player, true )
+		HealthRegen_RUISkipTimer( player )
+		HealthRegen_TryToInterrupt( player )
+	}
+}
+#endif // SERVER
+
+#if SERVER
+bool function HealthRegen_CanHealHealth( entity player )
+{
+	if ( !( player in file.playersHealInfo ) )
+		return false
+
+	if ( file.playersHealInfo[ player ].regenHealthPerSec <= 0.0 )
+		return false
+
+	return ( player.GetHealth() != player.GetMaxHealth() )
+}
+#endif // SERVER
+
+#if SERVER
+void function HealthRegen_HealPlayerHealth_Thread( entity player, bool chunkyProgress )
+{
+	int regenSource = file.playersHealInfo[ player ].regenSource
+	float regenHealthPerSec = file.playersHealInfo[ player ].regenHealthPerSec
+
+	float amountToHeal = float( player.GetMaxHealth() - player.GetHealth() )
+	float totalTimeToHeal = ceil( amountToHeal / regenHealthPerSec )
+	string regenSourceName = GetEnumString( "eRegenSource", regenSource )
+	if ( chunkyProgress )
+	{
+		// Causes the health bar to only display the next tick of expected healing
+		totalTimeToHeal = TIME_CHUNKY_PROGRESS_TICK
+	}
+
+	file.playersHealInfo[ player ].eHealHandle = EntityHealResource_Add( player, totalTimeToHeal, regenHealthPerSec, 0, regenSourceName, player )
+	HealthRegen_TryHealingStateCallbacks( player, true, regenSource )
+
+	thread HealthRegen_MonitorPlayer( player, totalTimeToHeal )
+	WaitSignalTimeout( player, totalTimeToHeal, SIGNAL_PLAYER_REGEN_INTERRUPT )
+
+	EntityHealResource_Remove( player, file.playersHealInfo[ player ].eHealHandle )
+
+	// Round off any health remaining due to time (float) to health (int) conversions
+	if ( player.GetMaxHealth() - player.GetHealth() < EPSILON_HEALTH_TOPUP )
+	{
+		player.SetHealth( player.GetMaxHealth() )
+	}
+}
+#endif // SERVER
+
+#if SERVER
+// This is a workaround for not being able to use AddDamageCallback to monitor the player's health.
+// AddDamageCallback works if the player is damaged, NOT if the player's health is set directly.
+// There are many places this is done in place of damaging the player, which will not trigger the callback.
+// The proper fix is to clean up all of these "damaging" cases of player.SetHealth() in script.
+void function HealthRegen_MonitorPlayer( entity player, float timeSec )
+{
+	Assert( IsNewThread(), "Must be threaded off" )
+
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( SIGNAL_PLAYER_REGEN_INTERRUPT )
+
+	int previousHealth = player.GetHealth()
+	int previousShield = player.GetShieldHealth()
+
+	float totalWaitTime = Time() + timeSec
+	while ( Time() < totalWaitTime )
+	{
+		WaitFrame()
+
+		if ( player.GetHealth() < previousHealth )
+		{
+			HealthRegen_PauseRegen( player )
+			return
+		}
+
+		previousHealth = player.GetHealth()
+
+		if ( player.GetShieldHealth() < previousShield )
+		{
+			HealthRegen_PauseRegen( player )
+			return
+		}
+
+		previousShield = player.GetShieldHealth()
+	}
+}
+#endif // SERVER
+
+#if SERVER
+bool function HealthRegen_CanHealShields( entity player )
+{
+	if ( !( player in file.playersHealInfo ) )
+		return false
+
+	if ( file.playersHealInfo[ player ].regenShieldPerSec <= 0.0 )
+		return false
+
+                         
+                                                                                                                                                                                                         
+  
+             
+  
+       
+
+	return ( player.GetShieldHealth() != player.GetShieldHealthMax() )
+}
+#endif // SERVER
+
+#if SERVER
+void function HealthRegen_HealPlayerShield_Thread( entity player )
+{
+	int regenSource = file.playersHealInfo[ player ].regenSource
+	float regenShieldPerSec = file.playersHealInfo[ player ].regenShieldPerSec
+
+	// Handle < 1.0 shield a second and other rounding errors
+	file.playersHealInfo[ player ].shieldHeal += ( regenShieldPerSec * TIME_REGEN_TICK )
+	if ( file.playersHealInfo[ player ].shieldHeal >= 1.0 )
+	{
+		int maxShieldHealth =  player.GetShieldHealthMax()
+		int curShieldHealth = player.GetShieldHealth()
+		int shieldHealThisTick = int( file.playersHealInfo[ player ].shieldHeal )
+		int newShieldHealth = int( min( maxShieldHealth, curShieldHealth + shieldHealThisTick ))
+
+		if ( regenSource == eRegenSource.SHIELD_PASSIVE )
+		{
+			player.SetShieldHealthFromSource( newShieldHealth, SHIELD_CHANGE_SOURCE_REGEN )
+		}
+		else
+		{
+			player.SetShieldHealth( newShieldHealth )
+		}
+
+                          
+                                                                                            
+   
+                                                                                 
+                     
+    
+                                                          
+                                                     
+     
+                                                                                      
+                                                                                        
+                                                                                     
+                                                        
+     
+    
+   
+        
+
+		HealthRegen_TryHealingStateCallbacks( player, true, regenSource )
+
+		file.playersHealInfo[ player ].shieldHeal -= float( shieldHealThisTick )
+	}
+
+	thread HealthRegen_MonitorPlayer( player, TIME_REGEN_TICK )
+	WaitSignalTimeout( player, TIME_REGEN_TICK, SIGNAL_PLAYER_REGEN_INTERRUPT )
+}
+#endif // SERVER
+
+#if SERVER
+void function HealthRegen_HealingFXPlay( entity player )
+{
+	if ( IsValid( file.playersHealInfo[ player ].healingFX ) )
+	{
+		return
+	}
+
+	int attachID = player.LookupAttachment( "CHESTFOCUS" )
+	int healthFXID = GetParticleSystemIndex( FX_HEALTH_REGEN_1P )
+
+	entity healingFX = StartParticleEffectOnEntity_ReturnEntity( player, healthFXID, FX_PATTACH_POINT_FOLLOW, attachID )
+	healingFX.SetOwner( player )
+	SetTeam( healingFX, player.GetTeam() )
+	healingFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
+
+	//RecoveryHealingFXRequest healingFXRequest = Player3pHealFXAddRequest( player, eHealingRequestType.ShieldRegen ) // S3: not available
+	//healingFXRequest.requestHealthFX = true
+	//file.playersHealInfo[ player ].healingFXRequest = healingFXRequest
+
+	EmitSoundOnEntityOnlyToPlayer( player, player, SOUND_HEALTH_REGEN_1P )
+	EmitSoundOnEntityExceptToPlayer( player, player, SOUND_HEALTH_REGEN_3P )
+
+	file.playersHealInfo[ player ].healingFX = healingFX
+}
+#endif // SERVER
+
+#if SERVER
+void function HealthRegen_HealingFXStop( entity player )
+{
+	if ( !IsValid( file.playersHealInfo[ player ].healingFX ) )
+		return
+
+	entity healingFX = file.playersHealInfo[ player ].healingFX
+	if ( IsValid( healingFX ) )
+	{
+		EffectStop( healingFX )
+	}
+
+	//RecoveryHealingFXRequest healingFXRequest = file.playersHealInfo[ player ].healingFXRequest
+	//Player3pHealFXRemoveRequest( player, healingFXRequest ) // S3: not available
+
+	StopSoundOnEntity( player, SOUND_HEALTH_REGEN_1P )
+	StopSoundOnEntity( player, SOUND_HEALTH_REGEN_3P )
+
+	file.playersHealInfo[ player ].healingFX = null
+}
+#endif // SERVER
+
+#if SERVER
+void function HealthRegen_HealingFXUpdate( entity player )
+{
+	if ( !( player in file.playersHealInfo ) )
+		return
+	if ( !HealthRegen_IsFromMode( file.playersHealInfo[ player ].regenSource ) )
+		return
+
+	if ( player.GetHealth() != player.GetMaxHealth() )
+	{
+		HealthRegen_HealingFXPlay( player )
+	}
+	else
+	{
+		HealthRegen_HealingFXStop( player )
+	}
+}
+#endif // SERVER
+
+#if SERVER
+void function HealthRegen_TryHealingStateCallbacks( entity player, bool newState, int regenSource )
+{
+	if ( !( player in file.playersHealInfo ) )
+		return
+
+	if ( file.playersHealInfo[ player ].healingState != newState )
+	{
+		foreach ( func in file.healRegenStateUpdatedCallbacks )
+			func ( player, file.playersHealInfo[ player ].healingState, newState, regenSource )
+
+		file.playersHealInfo[ player ].healingState = newState
+	}
+}
+#endif // SERVER
+
+#if SERVER
+void function HealthRegen_OnPlayerClassChangedMP( entity player )
+{
+	HealthRegen_End( player )
+
+                         
+	if ( Campfire_IsEnabled() && Campfire_IsPlayerInCampfire( player ) && PlayerMatchState_GetFor( player ) == ePlayerMatchState.NORMAL )
+	{
+		BeginAOEHeal( player )
+		return
+	}
+                               
+
+	if ( GetPlaylistVar_IsModeRegenActive() )
+	{
+		int regenSource = eRegenSource.MODE
+		float regenHealthPerSec = GetPlaylistVar_HealthRegenPerSec()
+		float regenStartDelay = GetPlaylistVar_HealthRegenDelay()
+
+		thread HealthRegen_Thread( player, regenSource, regenHealthPerSec, 0.0, regenStartDelay, false )
+	}
+	else if ( HealthRegen_IsOctane( player ) )
+	{
+		HealthRegen_StartOctanePassive( player )
+	}
+	else if ( HealthRegen_IsWattson( player ) )
+	{
+		HealthRegen_StartWattsonPassive( player )
+	}
+}
+#endif // SERVER
+
+#if SERVER
+void function HealthRegen_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
+{
+	if ( !IsValid( victim ) )
+		return
+
+	if ( GetPlaylistVar_KillStartsRegen() )
+	{
+		HealthRegen_StartRegenNow( attacker )
+	}
+}
+#endif // SERVER
+
+#if SERVER
+void function HealthRegen_OnPlayerHealingEnded( entity player )
+{
+	if ( !( player in file.playersHealInfo ) )
+		return
+
+	if ( GetPlaylistVar_OtherHealingStartsRegen() )
+	{
+		HealthRegen_StartRegenNow( player )
+	}
+
+	if ( !HealthRegen_ShouldRegenContinue( player ) )
+	{
+		HealthRegen_PauseRegen( player )
+	}
+}
+#endif // SERVER
+
+#if SERVER
+void function HealthRegen_SetPlayerRegenNow( entity player, bool startNow )
+{
+	if ( !( player in file.playersHealInfo ) )
+		return
+
+	if ( !HealthRegen_IsFromMode( file.playersHealInfo[ player ].regenSource ) )
+		return
+
+	file.playersHealInfo[ player ].regenStartNow = startNow
+}
+#endif // SERVER
+
+#if SERVER
+bool function HealthRegen_IsFromMode( int regenSource )
+{
+	return regenSource == eRegenSource.MODE
+}
+#endif // SERVER
+
+#if SERVER
+bool function HealthRegen_IsFromWorld( int regenSource )
+{
+	return regenSource == eRegenSource.CAMPFIRE
+}
+#endif // SERVER
+
+#if SERVER
+bool function HealthRegen_IsFromLegend( int regenSource )
+{
+	switch ( regenSource )
+	{
+		case eRegenSource.STIM_PASSIVE:
+		case eRegenSource.SHIELD_PASSIVE:
+			return true
+
+		default:
+			return false
+	}
+
+	unreachable
+}
+#endif // SERVER
+
+#if SERVER
+bool function ShadowHealthUpdate( entity player, var damageInfo )
+{
+	float damage = DamageInfo_GetDamage( damageInfo )
+	
+	if ( damage == 0 )
+		return false
+		
+	bool shadowSaveFromDeath = false
+	
+	DamageInfo_AddCustomDamageType( damageInfo, DF_SHADOW_DAMAGE )
+	
+	// If this shot would kill the player, ask Shadow features if they'd like to save him
+	if ( player.GetHealth() - int( damage ) <= 0 )
+	{
+		foreach ( func in player.e.entOnShadowHealthExhaustedCallbacks )
+		{
+			if ( func( player ) )
+				shadowSaveFromDeath = true
+		}
+	}
+	
+	return shadowSaveFromDeath
+}
+#endif // SERVER
+
+#if SERVER
 int function PilotShieldHealthUpdate( entity player, var damageInfo )
 {
 	if ( player.GetShieldHealthMax() <= 0 )
@@ -147,25 +744,52 @@ int function PilotShieldHealthUpdate( entity player, var damageInfo )
 	if ( player.GetShieldHealth() == 0 )
 		return 0
 		
-	if ( DamageInfo_GetDamage( damageInfo ) == 0 )
+	float baseDamage = DamageInfo_GetDamage( damageInfo )
+	if ( baseDamage == 0 )
 		return 0
 
 	return PilotShieldModifyDamage( player, damageInfo )
 }
+#endif // SERVER
 
+#if SERVER
+void function AddCallback_OnPlayerShieldBreak( void functionref( entity, var ) func )
+{
+	Assert( !file.shieldBreakFuncs.contains( func ) )
+	file.shieldBreakFuncs.append( func )
+}
+#endif // SERVER
+
+#if SERVER
+void function AddCallback_OnPlayerShieldDamage( float functionref( entity, var ) func )
+{
+	Assert( !file.shieldDamageScaleCallbacks.contains( func ) )
+	file.shieldDamageScaleCallbacks.append( func )
+}
+#endif // SERVER
+
+#if SERVER
+void function AddCallback_OnHealRegenMPStateChanged( void functionref( entity, bool, bool, int ) func )
+{
+	Assert( !file.healRegenStateUpdatedCallbacks.contains( func ) )
+	file.healRegenStateUpdatedCallbacks.append( func )
+}
+#endif // SERVER
+
+#if SERVER
 int function PilotShieldModifyDamage( entity player, var damageInfo )
 {
-	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_BYPASS_SHIELD )
+	if ( IsBitFlagSet( DamageInfo_GetCustomDamageType( damageInfo ), DF_BYPASS_SHIELD ) )
 		return 0
 
 	DamageInfo_AddCustomDamageType( damageInfo, DF_SHIELD_DAMAGE )
 
 	float shieldDamageScale = DamageInfo_GetDamageShieldScale( damageInfo )
 
-	// foreach ( func in file.shieldDamageScaleCallbacks )
-	// {
-		// shieldDamageScale *= func( player, damageInfo )
-	// }
+	foreach ( func in file.shieldDamageScaleCallbacks )
+	{
+		shieldDamageScale *= func( player, damageInfo )
+	}
 
 	int startingShieldHealth = player.GetShieldHealth()
 	float baseDamage = DamageInfo_GetDamage( damageInfo )
@@ -179,23 +803,14 @@ int function PilotShieldModifyDamage( entity player, var damageInfo )
 	int shieldDamage = minint( startingShieldHealth, multipliedDamage )
 	int remainingShieldHealth = startingShieldHealth - shieldDamage
 	float normalDamage = max( baseDamage - shieldDamage, 0 )
-	entity attacker = DamageInfo_GetAttacker( damageInfo )
-	
-	bool bPermDamage = false
-	
-	entity weapon = DamageInfo_GetWeapon( damageInfo )
-	
+
 	if ( startingShieldHealth > 0 && remainingShieldHealth <= 0 )
 	{
-		//normalDamage = 0 // Uncomment to clear spill over damage		
+		//normalDamage = 0 // Uncomment to clear spill over damage
+		entity attacker = DamageInfo_GetAttacker( damageInfo )
 		if ( IsValid( attacker ) && attacker.IsPlayer() && attacker != player )
 			EmitSoundOnEntityOnlyToPlayer( attacker, attacker, SOUND_SHIELD_BREAK_1P_VS_3P )
 
-		if( IsValid( weapon ) && weapon.HasMod( "shock_rounds" ) )
-		{
-			EMP_DamagedPlayerOrNPC( player, damageInfo )
-		}
-		
 		array< entity > excludePlayers
 		if ( player.IsPlayer() )
 		{
@@ -207,68 +822,170 @@ int function PilotShieldModifyDamage( entity player, var damageInfo )
 			excludePlayers.append( attacker )
 
 		if ( excludePlayers.len() > 0 )
-		{
-			foreach( sPlayer in excludePlayers )
-			{
-				if( !IsValid( sPlayer ) )
-					continue
-
-				EmitSoundOnEntityExceptToPlayer( player, sPlayer, SOUND_SHIELD_BREAK_3P_VS_3P )
-			}
-		}
+			EmitSoundOnEntityExceptToPlayers( player, excludePlayers, SOUND_SHIELD_BREAK_3P_VS_3P )
 		else
 			EmitSoundOnEntity( player, SOUND_SHIELD_BREAK_3P_VS_3P )
 
 		DamageInfo_AddCustomDamageType( damageInfo, DF_SHIELD_BREAK )
-		
-		if( normalDamage > 0 )
-		{	
-			// if( NO_HEALTH_DMG & ( 1 << DamageInfo_GetDamageSourceIdentifier( damageInfo ) ) )
-			// {
-				// DamageInfo_SetDamage( damageInfo, 0 )
-			// }
-			// else 
-			// {
-				DamageInfo_AddCustomDamageType( damageInfo, DF_BYPASS_SHIELD )
-				DamageInfo_SetDamage( damageInfo, normalDamage )
-			// }
-			
-			bPermDamage = true
+
+		// AddEntityCallback_OnShieldBreak:
+		foreach ( func in player.e.onShieldBreakFuncs )
+		{
+			func( player, damageInfo )
+			DamageInfo_Print( damageInfo, "cb " + ShortenDamageCallbackName( string( func ) ) + " " + DamageInfo_GetDamage( damageInfo ) )
 		}
+
+		foreach ( func in file.shieldBreakFuncs )
+		{
+			func( player, damageInfo )
+			DamageInfo_Print( damageInfo, "cb " + ShortenDamageCallbackName( string( func ) ) + " " + DamageInfo_GetDamage( damageInfo ) )
+		}
+
+
 	}
 
-	#if DEVELOPER
-		// printt( "shieldDamageFrac:", shieldDamageFrac )
-		// printt( "shieldDamage:", shieldDamage )
-		// printt( "remainingShieldHealth:", remainingShieldHealth )
-		// printt( "normalDamage:", normalDamage )
-	#endif
+/*
+	printt( "shieldDamageFrac:", shieldDamageFrac )
+	printt( "shieldDamage:", shieldDamage )
+	printt( "remainingShieldHealth:", remainingShieldHealth )
+	printt( "normalDamage:", normalDamage )
+*/
 
 	Assert( normalDamage + shieldDamage >= baseDamage )
 
-	#if DEVELOPER
-		DamageInfo_Print( damageInfo, "normal " + normalDamage + " shield " + shieldDamage )
-	#endif
+	DamageInfo_Print( damageInfo, "normal " + normalDamage + " shield " + shieldDamage )
 
-	player.SetShieldHealth( max( remainingShieldHealth, 0 ) )
+	player.SetShieldHealth( remainingShieldHealth )
 
-	// (mk): Regular notification and damage calculation is handled by main codecallback for damage.
-	// We only need to add and notify shield damage since we hijacked breakthrough damage into shield bypass and set damageinfo 
-	// to effect player health	
-	if( bPermDamage )
+	float actualShieldDamage = min( startingShieldHealth, shieldDamage )
+	if ( actualShieldDamage > 0 )
 	{
-		if( IsValid( attacker ) && attacker.IsPlayer() )
-		{	
-			float ShieldDmgFloat = float( shieldDamage )
-			attacker.p.playerDamageDealt += ShieldDmgFloat
-			attacker.SetPlayerNetInt( "damage", attacker.GetPlayerNetInt( "damage" ) + shieldDamage )
-			//printt( "damageinfo get damage:", DamageInfo_GetDamage( damageInfo ), "shielddmgfloat:", ShieldDmgFloat )
-			PlayerDamageFeedback( player, damageInfo, int( normalDamage ) )
+		foreach ( func in player.e.entPostShieldDamageCallbacks )
+		{
+			func( player, damageInfo, actualShieldDamage )
+			DamageInfo_Print( damageInfo, "cb " + ShortenDamageCallbackName( string( func ) ) + " " + DamageInfo_GetDamage( damageInfo ) )
 		}
 	}
-	
-	if( IsValid( attacker ) )
-		StoreDamageHistoryAndUpdate( player, file.maxDamageHistoryTime, shieldDamage + normalDamage, attacker.GetOrigin(), DamageInfo_GetCustomDamageType( damageInfo ) & ~DF_SHIELD_DAMAGE, DamageInfo_GetDamageSourceIdentifier( damageInfo ), attacker )
-	
+
 	return shieldDamage
+}
+#endif // SERVER
+
+#if SERVER
+void function HealthRegen_RUIDisable( entity player )
+{
+	player.SetPlayerNetTime( NETVAR_PLAYER_REGEN_START_DELAY, TIME_PLAYER_REGEN_START_INVALID )
+}
+#endif // SERVER
+
+#if SERVER
+void function HealthRegen_RUISkipTimer( entity player )
+{
+	player.SetPlayerNetTime( NETVAR_PLAYER_REGEN_START_DELAY, 0 )
+}
+#endif // SERVER
+
+#if CLIENT
+void function HealthRegen_InitClient( entity player )
+{
+	if ( !GetPlaylistVar_IsModeRegenActive() )
+		return
+
+	HealthRegen_RUICreate()
+	thread HealthRegen_RunClientLifetime_Thread()
+}
+#endif // CLIENT
+
+#if CLIENT
+void function HealthRegen_RUICreate()
+{
+	if ( file.healthRegenRui != null )
+		return
+
+	file.healthRegenRui = CreateCockpitPostFXRui( $"ui/armor_shieldregen.rpak", MINIMAP_Z_BASE )
+
+	RuiSetFloat( file.healthRegenRui, "maxRegenDelay", GetPlaylistVar_HealthRegenDelay() )
+	RuiSetBool( file.healthRegenRui, "upgradeCoreEnabled", UpgradeCore_IsEnabled() )
+	RuiSetImage( file.healthRegenRui, "typeIcon", $"rui/hud/unitframes/healthRegen_icon" )
+	RuiSetFloat3( file.healthRegenRui, "armorColor", SrgbToLinear( <166, 72, 71> / 255.0 ) )
+	RuiSetBool( file.healthRegenRui, "isHealthRegen", true )
+	RuiSetBool( file.healthRegenRui, "isDamaged", false )
+}
+#endif // CLIENT
+
+#if CLIENT
+void function HealthRegen_OnGameState_Ending()
+{
+	Signal( clGlobal.signalDummy, SIGNAL_PLAYER_REGEN_RUI_DESTROYED )
+
+	if ( file.healthRegenRui == null )
+		return
+
+	RuiDestroyIfAlive( file.healthRegenRui )
+	file.healthRegenRui = null
+}
+#endif // CLIENT
+
+#if CLIENT
+void function HealthRegen_RunClientLifetime_Thread()
+{
+	EndSignal( clGlobal.signalDummy, SIGNAL_PLAYER_REGEN_RUI_DESTROYED )
+
+	while ( true )
+	{
+		WaitSignal( clGlobal.signalDummy, SIGNAL_PLAYER_REGEN_START_TIME_UPDATED )
+
+		if ( file.healthRegenRui == null )
+			continue
+
+		entity player = GetLocalViewPlayer()
+		float damageTime = player.GetPlayerNetTime( NETVAR_PLAYER_REGEN_DAMAGE_TIME )
+		float regenStartDelay = player.GetPlayerNetTime( NETVAR_PLAYER_REGEN_START_DELAY )
+
+		if ( regenStartDelay == TIME_PLAYER_REGEN_START_INVALID )
+		{
+			RuiSetBool( file.healthRegenRui, "isDamaged", false )
+			continue
+		}
+
+		RuiSetBool( file.healthRegenRui, "isDamaged", true )
+		RuiSetGameTime( file.healthRegenRui, "lastDamageTime", damageTime )
+		RuiSetFloat( file.healthRegenRui, "regenDelay", regenStartDelay )
+	}
+}
+#endif // CLIENT
+
+bool function HealthRegen_IsOctane( entity player )
+{
+	return ( player.GetPlayerSettings() == $"settings/player/mp/pilot_survival_stim.rpak" )
+}
+
+bool function HealthRegen_IsWattson( entity player )
+{
+	return ( player.GetPlayerSettings() == $"settings/player/mp/pilot_survival_barricade.rpak" )
+}
+
+bool function GetPlaylistVar_OtherHealingStartsRegen()
+{
+	return GetCurrentPlaylistVarBool( "mode_health_regen_starts_from_heal", false )
+}
+
+float function GetPlaylistVar_HealthRegenDelay()
+{
+	return GetCurrentPlaylistVarFloat( "mode_health_regen_delay", 6.0 )
+}
+
+float function GetPlaylistVar_HealthRegenPerSec()
+{
+	return GetCurrentPlaylistVarFloat( "mode_health_regen_amount", 10.0 )
+}
+
+bool function GetPlaylistVar_KillStartsRegen()
+{
+	return GetCurrentPlaylistVarBool( "mode_health_regen_starts_from_kill", false )
+}
+
+bool function GetPlaylistVar_IsModeRegenActive()
+{
+	return GetCurrentPlaylistVarBool( "mode_health_regen_active", false )
 }

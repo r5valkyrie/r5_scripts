@@ -78,7 +78,7 @@ global enum eDamageSourceId
 	mp_weapon_grenade_decoyaudio
 	mp_weapon_grenade_cryonade
 
-	// Pilot Weapons - S3 Defaults. Cafe
+	// Pilot Weapons - Defaults
 	mp_weapon_hemlok
 	mp_weapon_lmg
 	mp_weapon_rspn101
@@ -86,73 +86,81 @@ global enum eDamageSourceId
 	mp_weapon_lstar
 	mp_weapon_g2
 	mp_weapon_r97
+	mp_weapon_volt_smg
 	mp_weapon_dmr
 	mp_weapon_wingman
 	mp_weapon_semipistol
-	mp_weapon_semipistol_crate
 	mp_weapon_autopistol
-	mp_weapon_autopistol_fusion
 	mp_weapon_sniper
 	mp_weapon_sentinel
 	mp_weapon_shotgun
 	mp_weapon_mastiff
 	mp_weapon_frag_grenade
 	mp_weapon_grenade_emp
+	mp_weapon_arc_blast
 	mp_weapon_thermite_grenade
+	mp_weapon_nuke_satchel
+	mp_weapon_defender
+	mp_weapon_defender_sustained
+
+                           
+                       
+       
+                          
+	mp_weapon_titan_sword
+	mp_weapon_titan_sword_slam
+	melee_titan_sword
+	mp_weapon_throwingknife
+       
+                                              
+                              
+      
+	mp_extreme_environment
 	mp_weapon_shotgun_pistol
 	mp_weapon_doubletake
 	mp_weapon_alternator_smg
 	mp_weapon_esaw
+	mp_weapon_wrecking_ball
+	mp_weapon_melee_survival
 	mp_weapon_pdw
 	mp_weapon_energy_ar
-	mp_weapon_volt_smg
-	mp_weapon_defender
-	mp_ability_mobile_respawn_beacon
-	mp_ability_sniper_ult
-	mp_weapon_cluster_bomb_launcher
-	// End S3 Defaults
+	mp_weapon_bow
+	// End Defaults
 
 	// Crate Weapons
 	mp_weapon_energy_ar_crate
 	mp_weapon_energy_shotgun_crate
 	mp_weapon_doubletake_crate
 	mp_weapon_car_crate
-	mp_weapon_melee_survival
+	mp_weapon_lstar_crate
+	mp_weapon_esaw_crate
+	mp_weapon_hemlok_crate
+	mp_weapon_pdw_crate
+	mp_weapon_shotgun_crate
+	mp_weapon_autopistol_crate
+	
 	mp_weapon_car_r2
-	mp_weapon_3030
 	mp_weapon_mgl
-	mp_weapon_dragon_lmg
-	mp_weapon_throwingknife
-	mp_weapon_fs_sheila
-	mp_weapon_bow
-	mp_weapon_nemesis
 	mp_weapon_softball
 	mp_weapon_warmachine
 	mp_weapon_wingman_n
 	mp_weapon_wingmanelite
-	mp_weapon_arc_blast
-	mp_weapon_nuke_satchel
-	mp_weapon_satchel
-	mp_extreme_environment
-	mp_weapon_wrecking_ball
 	mp_weapon_epg
 	mp_weapon_smr
-	mp_weapon_car
 	mp_weapon_rocket_launcher
 	mp_weapon_grenade_electric_smoke
 	mp_weapon_grenade_gravity
 	mp_weapon_rspn101_og
 	sp_weapon_arc_tool
 	mp_weapon_pulse_lmg
-	mp_weapon_mounted_turret_weapon
-	mp_ability_valk_cluster_missile
 	mp_titanweapon_flightcore_rockets
 	mp_titancore_laser_cannon
 	mp_titanweapon_xo16
 	mp_titanweapon_xo16_shorty
-	mp_ability_void_ring
-	heatwave
-	mp_weapon_wrecking_ball_puck
+	mp_titanweapon_meteor_thermite
+	mp_titanweapon_particle_accelerator
+	mp_titanweapon_flame_wall
+	mp_titanweapon_sniper
 	//
 	melee_pilot_emptyhanded
 	melee_pilot_arena
@@ -169,11 +177,6 @@ global enum eDamageSourceId
 	melee_titan_punch_rocket
 	melee_titan_punch_drone
 
-	melee_boxing_ring
-	mp_weapon_melee_boxing_ring
-
-	melee_data_knife
-	mp_weapon_data_knife_primary
 
 	melee_wraith_kunai
 	mp_weapon_wraith_kunai_primary
@@ -187,11 +190,65 @@ global enum eDamageSourceId
 	melee_lifeline_baton
 	mp_weapon_lifeline_baton_primary
 
+	melee_pathfinder_gloves
+	mp_weapon_pathfinder_gloves_primary
+
+	melee_octane_knife
+	mp_weapon_octane_knife_primary
+
+	melee_mirage_statue
+	mp_weapon_mirage_statue_primary
+
+	melee_caustic_hammer
+	mp_weapon_caustic_hammer
+
+	melee_bangalore_heirloom
+	mp_weapon_bangalore_heirloom
+
+	melee_gibraltar_club
+	mp_weapon_gibraltar_club
+
+	melee_revenant_scythe
+	mp_weapon_revenant_scythe
+
+	melee_wattson_gadget
+	mp_weapon_wattson_gadget_primary
+
+	melee_crypto_heirloom
+	mp_weapon_crypto_heirloom
+
+	melee_valkyrie_spear
+	mp_weapon_valkyrie_spear
+
+	melee_loba_heirloom
+	mp_weapon_loba_heirloom
+
+	melee_seer_heirloom
+	mp_weapon_seer_heirloom
+
+	melee_wraith_kunai_rt01
+	mp_weapon_wraith_kunai_primary_rt01
+
+	melee_ash_heirloom
+	mp_weapon_ash_heirloom
+
+	melee_horizon_heirloom
+	mp_weapon_horizon_heirloom_primary
+
+	melee_revenant_scythe_rt01
+	mp_weapon_revenant_scythe_rt01
+
+	melee_fuse_heirloom
+	mp_weapon_fuse_heirloom_primary
 	melee_shadowsquad_hands
 	melee_shadowroyale_hands
 	mp_weapon_shadow_squad_hands_primary
 
-	mp_weapon_tesla_trap
+	melee_boxing_ring
+	mp_weapon_melee_boxing_ring
+
+	melee_rampart_wrench
+	mp_weapon_rampart_wrench_primary
 
 	// Turret Weapons
 	mp_weapon_yh803
@@ -203,15 +260,45 @@ global enum eDamageSourceId
 	mp_turretweapon_blaster
 	mp_turretweapon_plasma
 	mp_turretweapon_sentry
-	mp_weapon_mobile_hmg
 	mp_weapon_smart_pistol
 
 	//Character Abilities
 	mp_weapon_defensive_bombardment_weapon
 	mp_weapon_creeping_bombardment_weapon
 	mp_ability_octane_stim
+	mp_ability_revenant_death_totem
 	mp_ability_crypto_drone_emp
 	mp_ability_crypto_drone_emp_trap
+	mp_ability_valk_cluster_missile
+	mp_weapon_arc_bolt
+	mp_weapon_concussive_breach
+	mp_weapon_riot_shield_impact
+	mp_weapon_wrecking_ball_puck
+                         
+                       
+                                   
+	mp_ability_debuff_zone
+	mp_ability_debuff_zone_aoe
+	overheat_explosion
+	vault_defense
+	mp_weapon_mounted_turret_weapon
+	mp_weapon_mobile_hmg
+	mp_weapon_deployable_cover
+               
+                      
+                          
+                          
+	mp_weapon_tesla_trap
+                
+                         
+                       
+                           
+             
+                          
+                                 
+       
+               
+	mp_ability_conduit_shield_mines
 	mp_ability_sonic_blast
 	mp_weapon_dirty_bomb
 	// AI only Weapons
@@ -226,17 +313,15 @@ global enum eDamageSourceId
 	mp_weapon_gunship_turret
 	mp_weapon_gunship_missile
 
-	mp_titanweapon_stun_laser
-	mp_titanability_smoke
-
-	mp_titanweapon_predator_cannon
-	mp_titanweapon_particle_accelerator
-	mp_titanweapon_rocketeer_rocketstream
-	mp_titanweapon_leadwall
-	mp_titanweapon_meteor_thermite
-	mp_titanweapon_flame_wall
-	mp_titanweapon_meteor
-	mp_titanweapon_sniper
+	npc_weapon_lstar
+	npc_weapon_plasma_cannon
+	npc_weapon_plasma_cannon_overcharged
+	npc_weapon_proximity_ball
+	npc_weapon_rocket_launcher
+	npc_weapon_semipistol
+	npc_weapon_sniper
+	npc_weapon_thermite_grenade
+	npc_weapon_super_spectre
 
 	// Misc
 	rodeo
@@ -249,8 +334,13 @@ global enum eDamageSourceId
 	charge_ball
 	grunt_melee
 	spectre_melee
+	spectre_ranged_hemlock
 	prowler_melee
 	spider_melee
+	spider_ranged
+       
+	nessie_hug
+	nessie_kiss
 	super_spectre_melee
 	titan_execution
 	human_execution
@@ -271,10 +361,6 @@ global enum eDamageSourceId
 	evac_dropship_explosion
 	sticky_explosive
 	titan_grapple
-
-	mp_weapon_mortar_ring
-
-	mp_weapon_arc_bolt
 
 	// streaks
 
@@ -300,6 +386,17 @@ global enum eDamageSourceId
 	turbine
 	harvester_beam
 	toxic_sludge
+	persistent_damage_layer
+                      
+                           
+       
+                   
+       
+       
+
+                            
+	mp_ability_rise_from_the_ashes
+       
 
 	mp_weapon_spectre_spawner
 
@@ -340,6 +437,7 @@ global enum eDamageSourceId
 	bleedout
 	mp_weapon_energy_shotgun
 	fire
+	heatwave
 	//damageSourceId=eDamageSourceId.xxxxx
 	//fireteam
 	//marvin
@@ -347,447 +445,429 @@ global enum eDamageSourceId
 	//orbitallaser
 	//explosion
 
-	//custom
-	nextbot
-	mp_weapon_raygun
-	mp_weapon_haloshotgun
-	mp_weapon_halosmg
-	mp_weapon_halomagnum
-	mp_weapon_halodmr
-	mp_weapon_halobattlerifle
-	mp_weapon_haloassaultrifle
-	mp_weapon_halosniperrifle
-	mp_weapon_haloneedler
-	mp_weapon_energysword
-	mp_weapon_frag_grenade_halomod
-	mp_weapon_plasma_grenade_halomod
-	mp_weapon_oddball_primary
-	melee_oddball
-	mp_weapon_bubble_bunker_master_chief
+	shield_tick_damage_notify
+	spider_poison
 
-	mp_weapon_flagpole_primary
-	melee_flagpole
+	mp_ability_mobile_respawn_beacon
+	mp_ability_tombstone_respawn
 
-	mp_weapon_lightninggun
+                               
+                              
+       
 
-	mp_weapon_titan_sword
-	mp_weapon_titan_sword_slam
-	melee_titan_sword
+                          
+                         
+       
 
-	mp_ability_heal
-	mp_ability_holopilot
-	mp_weapon_grenade_gas
+                             
+	mp_ability_redeploy_balloon
+       
+	landing_zone //new damage def for testing landing zone not damaging players or npc
 
-	mp_weapon_decoy_grenade
-	mp_ability_cloak /* for stats */
-	mp_weapon_bubble_bunker /* for stats */
-	mp_weapon_grenade_defensive_bombardment /* for stats */
+	mp_weapon_stun_mine
+	mp_weapon_cluster_bomb_launcher
 
-	//S0 Dev Protos
-	mp_weapon_concussive_breach
-	mp_weapon_grenade_flashbang
-	mp_weapon_shotgun_kick
-	mp_ability_haunt
-	mp_ability_dodge_roll
-	mp_ability_maelstrom_javelin
-	mp_ability_sonic_shout
-	mp_ability_riot_shield
-	mp_ability_spotter_sight
-	mp_ability_loot_compass
-	mp_weapon_cover_wall
-	mp_ability_ground_slam
-	mp_ability_split_timeline
+	mp_weapon_mortar_ring
+	mp_ability_horizon_black_hole
 
-	mp_weapon_proximity_mine
+	mp_ability_shield_throw
+	mp_ability_armored_leap
+	mp_ability_castle_wall
+	mp_ability_sniper_ult
+	mp_weapon_ferro_wall
+	mp_ability_spike_strip
+	mp_ability_void_ring
+	mp_weapon_3030
+	mp_weapon_dragon_lmg
+	mp_weapon_dragon_lmg_thermite
+       
+	mp_weapon_car
+                              
+	mp_weapon_nemesis
+
+
+
+	mp_ability_copycat_kit
+	mp_ability_copycat_kit_bloodhound_sonar
+	mp_ability_copycat_kit_horizon_elevator
+	mp_ability_copycat_kit_mirage_holopilot
+	mp_ability_copycat_kit_wraith_phase_walk
+	mp_ability_copycat_kit_catalyst_wall
+	mp_ability_copycat_kit_octane_pad
+	mp_ability_copycat_kit_ash_phase_blade
+	mp_ability_copycat_kit_caustic_grenade_gas
 	mp_weapon_grenade_rev_shell
-	mp_ability_devices_jammer
+	
+                    
+	golden_horse_green
+       
+
+	melee_artifact_dagger
+	mp_weapon_artifact_dagger_primary
+
+                    
+	melee_artifact_sword
+	mp_weapon_artifact_sword_primary
+       
+
+                    
+	melee_crypto_heirloom_rt01
+	mp_weapon_crypto_heirloom_rt01_primary
+       
+
+                    
+	melee_octane_knife_rt01
+	mp_weapon_octane_knife_rt01_primary
+	_count
 }
 
-//When adding new mods, they need to be added below and to persistent_player_data_version_N.pdef in r1/cfg/server.
-//Then when updating that file, save a new one and increment N.
-
-global enum eModSourceId
-{
-	accelerator
-	afterburners
-	arc_triple_threat
-	aog
-	burn_mod_autopistol
-	burn_mod_car
-	burn_mod_defender
-	burn_mod_dmr
-	burn_mod_emp_grenade
-	burn_mod_frag_grenade
-	burn_mod_grenade_electric_smoke
-	burn_mod_grenade_gravity
-	burn_mod_thermite_grenade
-	burn_mod_g2
-	burn_mod_hemlok
-	burn_mod_lmg
-	burn_mod_mgl
-	burn_mod_r97
-	burn_mod_rspn101
-	burn_mod_satchel
-	burn_mod_semipistol
-    burn_mod_smart_pistol
-	burn_mod_smr
-	burn_mod_sniper
-	burn_mod_rocket_launcher
-	burn_mod_titan_40mm
-	burn_mod_titan_arc_cannon
-	burn_mod_titan_rocket_launcher
-	burn_mod_titan_sniper
-	burn_mod_titan_triple_threat
-	burn_mod_titan_xo16
-	burn_mod_titan_dumbfire_rockets
-	burn_mod_titan_homing_rockets
-	burn_mod_titan_salvo_rockets
-	burn_mod_titan_shoulder_rockets
-	burn_mod_titan_vortex_shield
-	burn_mod_titan_smoke
-	burn_mod_titan_particle_wall
-	burst
-	capacitor
-	enhanced_targeting
-	extended_ammo
-	fast_lock
-	fast_reload
-	guided_missile
-	instant_shot
-	overcharge
-	quick_shot
-	rapid_fire_missiles
-	burn_mod_shotgun
-	silencer
-	slammer
-	spread_increase_ttt
-	stabilizer
-	titanhammer
-	burn_mod_wingman
-	burn_mod_lstar
-	burn_mod_mastiff
-	burn_mod_vinson
-	ricochet
-	ar_trajectory
-	smart_lock
-	pro_screen
-}
-
-//Attachments intentionally left off. This prevents them from displaying in kill cards.
-// modNameStrings should be defined when the mods are created, not in a separate table -Mackey
-global const modNameStrings = {
-	[ eDamageSourceId.damagedef_DocDrone ] 					= "DRONE", /* ....? */
-	[ eModSourceId.accelerator ]						= "#MOD_ACCELERATOR_NAME",
-	[ eModSourceId.afterburners ]						= "#MOD_AFTERBURNERS_NAME",
-	[ eModSourceId.arc_triple_threat ] 					= "#MOD_ARC_TRIPLE_THREAT_NAME",
-	[ eModSourceId.burn_mod_autopistol ] 				= "#BC_AUTOPISTOL_M2",
-	[ eModSourceId.burn_mod_car ] 						= "#BC_CAR_M2",
-	[ eModSourceId.burn_mod_defender ] 					= "#BC_DEFENDER_M2",
-	[ eModSourceId.burn_mod_dmr ] 						= "#BC_DMR_M2",
-	[ eModSourceId.burn_mod_emp_grenade ] 				= "#BC_EMP_GRENADE_M2",
-	[ eModSourceId.burn_mod_frag_grenade ] 				= "#BC_FRAG_GRENADE_M2",
-	[ eModSourceId.burn_mod_grenade_electric_smoke ] 	= "#BC_GRENADE_ELECTRIC_SMOKE_M2",
-	[ eModSourceId.burn_mod_grenade_gravity ] 			= "#BC_GRENADE_ELECTRIC_SMOKE_M2",
-	[ eModSourceId.burn_mod_thermite_grenade ] 			= "#BC_GRENADE_ELECTRIC_SMOKE_M2",
-	[ eModSourceId.burn_mod_g2 ] 						= "#BC_G2_M2",
-	[ eModSourceId.burn_mod_hemlok ] 					= "#BC_HEMLOK_M2",
-	[ eModSourceId.burn_mod_lmg ] 						= "#BC_LMG_M2",
-	[ eModSourceId.burn_mod_mgl ] 						= "#BC_MGL_M2",
-	[ eModSourceId.burn_mod_r97 ] 						= "#BC_R97_M2",
-	[ eModSourceId.burn_mod_rspn101 ] 					= "#BC_RSPN101_M2",
-	[ eModSourceId.burn_mod_satchel ] 					= "#BC_SATCHEL_M2",
-	[ eModSourceId.burn_mod_semipistol ] 				= "#BC_SEMIPISTOL_M2",
-	[ eModSourceId.burn_mod_smr ] 						= "#BC_SMR_M2",
-	[ eModSourceId.burn_mod_smart_pistol ] 				= "#BC_SMART_PISTOL_M2",
-	[ eModSourceId.burn_mod_sniper ] 					= "#BC_SNIPER_M2",
-	[ eModSourceId.burn_mod_rocket_launcher ] 			= "#BC_ROCKET_LAUNCHER_M2",
-	[ eModSourceId.burn_mod_titan_40mm ] 				= "#BC_TITAN_40MM_M2",
-	[ eModSourceId.burn_mod_titan_arc_cannon ] 			= "#BC_TITAN_ARC_CANNON_M2",
-	[ eModSourceId.burn_mod_titan_rocket_launcher ] 	= "#BC_TITAN_ROCKET_LAUNCHER_M2",
-	[ eModSourceId.burn_mod_titan_sniper ] 				= "#BC_TITAN_SNIPER_M2",
-	[ eModSourceId.burn_mod_titan_triple_threat ] 		= "#BC_TITAN_TRIPLE_THREAT_M2",
-	[ eModSourceId.burn_mod_titan_xo16 ]			 	= "#BC_TITAN_XO16_M2",
-	[ eModSourceId.burn_mod_titan_dumbfire_rockets ] 	= "#BC_TITAN_DUMBFIRE_MISSILE_M2",
-	[ eModSourceId.burn_mod_titan_homing_rockets ] 		= "#BC_TITAN_HOMING_ROCKETS_M2",
-	[ eModSourceId.burn_mod_titan_salvo_rockets ] 		= "#BC_TITAN_SALVO_ROCKETS_M2",
-	[ eModSourceId.burn_mod_titan_shoulder_rockets ] 	= "#BC_TITAN_SHOULDER_ROCKETS_M2",
-	[ eModSourceId.burn_mod_titan_vortex_shield ] 		= "#BC_TITAN_VORTEX_SHIELD_M2",
-	[ eModSourceId.burn_mod_titan_smoke ] 				= "#BC_TITAN_ELECTRIC_SMOKE_M2",
-	[ eModSourceId.burn_mod_titan_particle_wall ] 		= "#BC_TITAN_SHIELD_WALL_M2",
-	[ eModSourceId.burst ] 								= "#MOD_BURST_NAME",
-	[ eModSourceId.capacitor ] 							= "#MOD_CAPACITOR_NAME",
-	[ eModSourceId.enhanced_targeting ] 				= "#MOD_ENHANCED_TARGETING_NAME",
-	[ eModSourceId.extended_ammo ] 						= "#MOD_EXTENDED_MAG_NAME",
-	[ eModSourceId.fast_reload ] 						= "#MOD_FAST_RELOAD_NAME",
-	[ eModSourceId.instant_shot ]						= "#MOD_INSTANT_SHOT_NAME",
-	[ eModSourceId.overcharge ] 						= "#MOD_OVERCHARGE_NAME",
-	[ eModSourceId.quick_shot ]							= "#MOD_QUICK_SHOT_NAME",
-	[ eModSourceId.rapid_fire_missiles ] 				= "#MOD_RAPID_FIRE_MISSILES_NAME",
-	[ eModSourceId.burn_mod_shotgun ] 					= "#BC_SHOTGUN_M2",
-	[ eModSourceId.silencer ] 							= "#MOD_SILENCER_NAME",
-	[ eModSourceId.slammer ] 							= "#MOD_SLAMMER_NAME",
-	[ eModSourceId.spread_increase_ttt ]				= "#MOD_SPREAD_INCREASE_TTT_NAME",
-	[ eModSourceId.stabilizer ]							= "#MOD_STABILIZER_NAME",
-	[ eModSourceId.titanhammer ] 						= "#MOD_TITANHAMMER_NAME",
-	[ eModSourceId.burn_mod_wingman ]					= "#BC_WINGMAN_M2",
-	[ eModSourceId.burn_mod_lstar ]						= "#BC_LSTAR_M2",
-	[ eModSourceId.burn_mod_mastiff ]					= "#BC_MASTIFF_M2",
-	[ eModSourceId.burn_mod_vinson ]					= "#BC_VINSON_M2",
-	[ eModSourceId.ricochet ]							= "Ricochet",
-	[ eModSourceId.ar_trajectory ]						= "AR Trajectory",
-	[ eModSourceId.smart_lock ]							= "Smart Lock",
-	[ eModSourceId.pro_screen ]							= "Pro Screen",
-}
 
 void function DamageTypes_Init()
 {
-#if SERVER
-	SvDemo_ConsistencyCheckString( "DamageTypes_Init()" )
-#endif
+	#if SERVER
+		SvDemo_ConsistencyCheckString( "DamageTypes_Init()" )
+	#endif
 
 	foreach ( name, number in eDamageSourceId )
+	{
 		file.damageSourceIDToString[ number ] <- name
+	}
 
 	PrecacheWeapon( $"mp_weapon_rspn101" ) // used by npc_soldier ><
 
-#if DEVELOPER
+	#if DEVELOPER
 
-	int numDamageDefs = DamageDef_GetCount()
-	table damageSourceIdEnum = expect table( getconsttable().eDamageSourceId )
-	foreach ( name, id in damageSourceIdEnum )
-	{
-		expect int( id )
-		if ( id <= eDamageSourceId.code_reserved || id >= numDamageDefs )
-			continue
+		int numDamageDefs        = DamageDef_GetCount()
+		table damageSourceIdEnum = expect table( getconsttable().eDamageSourceId )
+		foreach ( name, id in damageSourceIdEnum )
+		{
+			expect int( id )
+			if ( id <= eDamageSourceId.code_reserved || id >= numDamageDefs )
+				continue
 
-		string damageDefName = DamageDef_GetName( id )
-		Assert( damageDefName == name, "damage def (" + id + ") name: '" + damageDefName + "' doesn't match damage source id '" + name + "'" )
-	}
-#endif
+			string damageDefName = DamageDef_GetName( id )
+			Assert( damageDefName == name, "damage def (" + id + ") name: '" + damageDefName + "' doesn't match damage source id '" + name + "'" )
+		}
+	#endif
 
 	file.damageSourceIDToImage =
 	{
+		//commented out since we couldn't get the art done on time and there is any number of additional damage sources that should be supported if we support any.
+		//[eDamageSourceId.outOfBounds] = $"rui/damage_icons/damage_out_of_bounds",
+		//[eDamageSourceId.deathField] = $"rui/damage_icons/damage_death_field",
+		//[eDamageSourceId.fall] = $"rui/damage_icons/damage_fall",
+		//[eDamageSourceId.damagedef_crush] = $"rui/damage_icons/damage_crush",
 	}
 
-	file.damageSourceIDToImage[eDamageSourceId.melee_shadowsquad_hands] 				<- $"rui/gamemodes/shadow_squad/shadow_icon_small"
+		file.damageSourceIDToName[eDamageSourceId.mp_weapon_titan_sword_slam] <- "#WPN_TITAN_SWORD_SHORT"
+		file.damageSourceIDToImage[eDamageSourceId.mp_weapon_titan_sword_slam] <- $"rui/weapon_icons/r5/weapon_goldenhorse_sword"
+		file.damageSourceIDToString[eDamageSourceId.mp_weapon_titan_sword_slam] <- TITAN_SWORD_WEAPON_REF
+       
 
-	//file.damageSourceIDToImage[eDamageSourceId.mp_weapon_mobile_hmg]		<- $"rui/weapon_icons/r5/weapon_rampart_turret"
+	                                               
+		file.damageSourceIDToImage[eDamageSourceId.melee_shadowsquad_hands] <- $"rui/gamemodes/shadow_squad/shadow_icon_small"
+		file.damageSourceIDToImage[eDamageSourceId.melee_shadowroyale_hands] <- $"rui/gamemodes/shadow_squad/shadow_icon_small"
+       
 
-	file.damageSourceIDToImage[eDamageSourceId.snd_bomb]								<- $"rui/flowstatecustom/bombicon"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_oddball_primary]				<- $"rui/flowstate_custom/oddball_white"
-	file.damageSourceIDToImage[eDamageSourceId.melee_oddball]							<- $"rui/flowstate_custom/oddball_white"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_flagpole_primary]				<- $"rui/gamemodes/capture_the_flag/mil_flag"
-	file.damageSourceIDToImage[eDamageSourceId.melee_flagpole]							<- $"rui/gamemodes/capture_the_flag/mil_flag"
-
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_volt_smg] 						<- $"rui/weapon_icons/r5/weapon_volt"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_car_r2] 						<- $"rui/weapon_icons/r5/weapon_car"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_sentinel] 						<- $"rui/weapon_icons/r5/weapon_sentinel"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_softball] 						<- $"r2_ui/menus/loadout_icons/primary_weapon/primary_softball"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_epg] 							<- $"r2_ui/menus/loadout_icons/primary_weapon/primary_epg1"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_rocket_launcher] 				<- $"r2_ui/menus/loadout_icons/anti_titan/at_archer"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_arc_launcher] 					<- $"r2_ui/menus/loadout_icons/anti_titan/at_arcball"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_smr] 							<- $"r2_ui/menus/loadout_icons/anti_titan/at_sidewinder"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_mgl] 							<- $"r2_ui/menus/loadout_icons/anti_titan/at_mgl"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_pulse_lmg] 					<- $"r2_ui/menus/loadout_icons/primary_weapon/primary_coldwar"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_wingman_n]						<- $"r2_ui/menus/loadout_icons/primary_weapon/primary_wingman_elite"
-	file.damageSourceIDToImage[eDamageSourceId.sp_weapon_arc_tool]						<- $"r2_ui/menus/loadout_icons/primary_weapon/primary_arc_tool"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_rspn101_og]					<- $"r2_ui/menus/loadout_icons/primary_weapon/primary_arc_tool"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_smart_pistol]					<- $"rui/weapon_icons/r5/weapon_smart_pistol"
-	file.damageSourceIDToImage[eDamageSourceId.mp_titanweapon_predator_cannon]			<- $"r2_ui/menus/loadout_icons/titan_weapon/titan_weapon_predator"
-	file.damageSourceIDToImage[eDamageSourceId.mp_titanweapon_particle_accelerator]		<- $"r2_ui/menus/loadout_icons/titan_weapon/titan_weapon_particle_ac"
-	file.damageSourceIDToImage[eDamageSourceId.mp_titanweapon_rocketeer_rocketstream]	<- $"r2_ui/menus/loadout_icons/titan_weapon/titan_weapon_quad"
-	file.damageSourceIDToImage[eDamageSourceId.mp_titanweapon_leadwall]					<- $"r2_ui/menus/loadout_icons/titan_weapon/titan_weapon_leadwall"
-	file.damageSourceIDToImage[eDamageSourceId.mp_titanweapon_meteor]					<- $"r2_ui/menus/loadout_icons/titan_weapon/titan_weapon_thermite_cannon"
-	file.damageSourceIDToImage[eDamageSourceId.mp_titanweapon_flightcore_rockets] 		<- $"rui/weapon_icons/kral/custom/flamethrower"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_flamethrower] 					<- $"rui/weapon_icons/kral/custom/flamethrower"
-	file.damageSourceIDToImage[eDamageSourceId.mp_ability_mobile_respawn_beacon] 		<- $"rui/weapon_icons/kral/custom/flamethrower"//remove this later
-
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_titan_sword]					<- $"rui/gamemodes/shadow_squad/legend_icon"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_titan_sword_slam]				<- $"rui/gamemodes/shadow_squad/legend_icon"
-	file.damageSourceIDToImage[eDamageSourceId.melee_titan_sword]						<- $"rui/gamemodes/shadow_squad/legend_icon"
-
-	file.damageSourceIDToImage[eDamageSourceId.nextbot]									<- $"rui/gamemodes/shadow_squad/legend_icon"
-
+	                         
+		file.damageSourceIDToImage[eDamageSourceId.heatwave] <- $"rui/pilot_loadout/mods/heatwave_top_sun_spin"
 
 	file.damageSourceIDToName =
 	{
-		[ eDamageSourceId.damagedef_DocDrone ] 						= "DRONE",
-		[ eDamageSourceId.mp_extreme_environment ] 					= "#DAMAGE_EXTREME_ENVIRONMENT",
-		[ eDamageSourceId.mp_weapon_yh803 ] 						= "#WPN_LIGHT_TURRET",
-		[ eDamageSourceId.mp_weapon_yh803_bullet ]					= "#WPN_LIGHT_TURRET",
-		[ eDamageSourceId.mp_weapon_yh803_bullet_overcharged ]		= "#WPN_LIGHT_TURRET",
-		[ eDamageSourceId.mp_weapon_mega_turret ]					= "#WPN_MEGA_TURRET",
-		[ eDamageSourceId.mp_weapon_mega_turret_aa ]				= "#WPN_MEGA_TURRET",
-		[ eDamageSourceId.mp_turretweapon_rockets ]					= "#WPN_TURRET_ROCKETS",
-		[ eDamageSourceId.mp_weapon_super_spectre ]					= "#WPN_SUPERSPECTRE_ROCKETS",
-		[ eDamageSourceId.mp_weapon_dronebeam ] 					= "#WPN_DRONERBEAM",
-		[ eDamageSourceId.mp_weapon_dronerocket ] 					= "#WPN_DRONEROCKET",
-		[ eDamageSourceId.mp_weapon_droneplasma ] 					= "#WPN_DRONEPLASMA",
-		[ eDamageSourceId.mp_weapon_turretplasma ] 					= "#WPN_TURRETPLASMA",
-		[ eDamageSourceId.mp_weapon_turretrockets ] 				= "#WPN_TURRETROCKETS",
-		[ eDamageSourceId.mp_weapon_turretplasma_mega ] 			= "#WPN_TURRETPLASMA_MEGA",
-		[ eDamageSourceId.mp_weapon_gunship_launcher ] 				= "#WPN_GUNSHIP_LAUNCHER",
-		[ eDamageSourceId.mp_weapon_gunship_turret ]				= "#WPN_GUNSHIP_TURRET",
+		//mp
+		[ eDamageSourceId.mp_extreme_environment ] = "#DAMAGE_EXTREME_ENVIRONMENT",
 
-		[ eDamageSourceId.mp_titanability_slow_trap ]				= "#DEATH_SLOW_TRAP",
-		[ eDamageSourceId.damagedef_suicide ] 						= "#DEATH_SUICIDE",
-		[ eDamageSourceId.rodeo ] 									= "#DEATH_TITAN_RODEO",
-		[ eDamageSourceId.rodeo_forced_titan_eject ] 				= "#DEATH_TITAN_RODEO",
-		[ eDamageSourceId.rodeo_execution ] 						= "#DEATH_RODEO_EXECUTION",
-		[ eDamageSourceId.nuclear_turret ] 							= "#DEATH_NUCLEAR_TURRET",
-		[ eDamageSourceId.berserker_melee ]							= "#DEATH_BERSERKER_MELEE",
-		[ eDamageSourceId.human_melee ] 							= "#DEATH_HUMAN_MELEE",
-		[ eDamageSourceId.auto_titan_melee ] 						= "#DEATH_AUTO_TITAN_MELEE",
+		[ eDamageSourceId.npc_weapon_super_spectre ] = "#WPN_SUPERSPECTRE_ROCKETS",
+		[ eDamageSourceId.mp_weapon_dronebeam ] = "#WPN_DRONERBEAM",
+		[ eDamageSourceId.mp_weapon_dronerocket ] = "#WPN_DRONEROCKET",
+		[ eDamageSourceId.mp_weapon_droneplasma ] = "#WPN_DRONEPLASMA",
+		[ eDamageSourceId.mp_weapon_turretplasma ] = "#WPN_TURRETPLASMA",
+		[ eDamageSourceId.mp_weapon_turretrockets ] = "#WPN_TURRETROCKETS",
+		[ eDamageSourceId.mp_weapon_turretplasma_mega ] = "#WPN_TURRETPLASMA_MEGA",
+		[ eDamageSourceId.mp_weapon_gunship_launcher ] = "#WPN_GUNSHIP_LAUNCHER",
+		[ eDamageSourceId.mp_weapon_gunship_turret ] = "#WPN_GUNSHIP_TURRET",
+		[ eDamageSourceId.mp_weapon_gunship_turret ] = "#WPN_GUNSHIP_MISSILE",
 
-		[ eDamageSourceId.prowler_melee ] 							= "#DEATH_PROWLER_MELEE",
-		[ eDamageSourceId.spider_melee ] 							= "#DEATH_SPIDER_MELEE",
-		[ eDamageSourceId.super_spectre_melee ] 					= "#DEATH_SUPER_SPECTRE",
-		[ eDamageSourceId.grunt_melee ] 							= "#DEATH_GRUNT_MELEE",
-		[ eDamageSourceId.spectre_melee ] 							= "#DEATH_SPECTRE_MELEE",
-		[ eDamageSourceId.eviscerate ]	 							= "#DEATH_EVISCERATE",
-		[ eDamageSourceId.wall_smash ] 								= "#DEATH_WALL_SMASH",
-		[ eDamageSourceId.ai_turret ] 								= "#DEATH_TURRET",
-		[ eDamageSourceId.team_switch ] 							= "#DEATH_TEAM_CHANGE",
-		[ eDamageSourceId.rocket ] 									= "#DEATH_ROCKET",
-		[ eDamageSourceId.titan_explosion ] 						= "#DEATH_TITAN_EXPLOSION",
-		[ eDamageSourceId.evac_dropship_explosion ] 				= "#DEATH_EVAC_DROPSHIP_EXPLOSION",
-		[ eDamageSourceId.flash_surge ] 							= "#DEATH_FLASH_SURGE",
-		[ eDamageSourceId.sticky_time_bomb ] 						= "#DEATH_STICKY_TIME_BOMB",
-		[ eDamageSourceId.vortex_grenade ] 							= "#DEATH_VORTEX_GRENADE",
-		[ eDamageSourceId.droppod_impact ] 							= "#DEATH_DROPPOD_CRUSH",
-		[ eDamageSourceId.ai_turret_explosion ] 					= "#DEATH_TURRET_EXPLOSION",
-		[ eDamageSourceId.rodeo_trap ] 								= "#DEATH_RODEO_TRAP",
-		[ eDamageSourceId.round_end ] 								= "#DEATH_ROUND_END",
-		[ eDamageSourceId.burn ]	 								= "#DEATH_BURN",
-		[ eDamageSourceId.caustic_toxin ] 							= "#DEATH_CAUSTIC_TOXIN",
-		[ eDamageSourceId.mind_crime ]								= "Mind Crime",
-		[ eDamageSourceId.charge_ball ]								= "Charge Ball",
-		[ eDamageSourceId.core_overload ]							= "#DEATH_CORE_OVERLOAD",
-		[ eDamageSourceId.mp_weapon_arc_trap ]						= "#WPN_ARC_TRAP",
+		[ eDamageSourceId.auto_titan_melee ] = "#DEATH_AUTO_TITAN_MELEE",
 
-		[ eDamageSourceId.mp_turretweapon_sentry ] 					= "#WPN_SENTRY_TURRET",
-		[ eDamageSourceId.mp_turretweapon_blaster ] 				= "#WPN_BLASTER_TURRET",
-		[ eDamageSourceId.mp_turretweapon_rockets ] 				= "#WPN_ROCKET_TURRET",
-		[ eDamageSourceId.mp_turretweapon_plasma ]	 				= "#WPN_PLASMA_TURRET",
+               
+                                                                                               
+        
 
-		[ eDamageSourceId.bubble_shield ] 							= "#DEATH_BUBBLE_SHIELD",
-		[ eDamageSourceId.sticky_explosive ] 						= "#DEATH_STICKY_EXPLOSIVE",
-		[ eDamageSourceId.titan_grapple ] 							= "#DEATH_TITAN_GRAPPLE",
+		[ eDamageSourceId.prowler_melee ] = "#DEATH_PROWLER_MELEE",
+		                         
+			[ eDamageSourceId.spider_melee ] = "#DEATH_SPIDER_MELEE",
+			[ eDamageSourceId.spider_ranged ] = "#DEATH_SPIDER_RANGED",
+        
+		[ eDamageSourceId.nessie_hug ] = "#BABY_NESSIE_TITLE",
+		[ eDamageSourceId.nessie_kiss ] = "#BABY_NESSIE_TITLE",
+		[ eDamageSourceId.super_spectre_melee ] = "#DEATH_SUPER_SPECTRE",
+		[ eDamageSourceId.grunt_melee ] = "#DEATH_GRUNT_MELEE",
+		                   
+			[ eDamageSourceId.spectre_melee ] = "#DEATH_SPECTRE_MELEE",
+			[ eDamageSourceId.spectre_ranged_hemlock ] = "#DEATH_SPECTRE_RANGED_HEMLOCK",
+			[ eDamageSourceId.npc_weapon_thermite_grenade ] = "#DEATH_SPECTRE_THERMITE",
+        
+		[ eDamageSourceId.eviscerate ] = "#DEATH_EVISCERATE",
+		[ eDamageSourceId.wall_smash ] = "#DEATH_WALL_SMASH",
+		[ eDamageSourceId.ai_turret ] = "#DEATH_TURRET",
+		[ eDamageSourceId.team_switch ] = "#DEATH_TEAM_CHANGE",
+		[ eDamageSourceId.rocket ] = "#DEATH_ROCKET",
+		[ eDamageSourceId.titan_explosion ] = "#DEATH_TITAN_EXPLOSION",
+		[ eDamageSourceId.evac_dropship_explosion ] = "#DEATH_EVAC_DROPSHIP_EXPLOSION",
+		[ eDamageSourceId.flash_surge ] = "#DEATH_FLASH_SURGE",
+                     
+                                                  
+        
+		[ eDamageSourceId.sticky_time_bomb ] = "#DEATH_STICKY_TIME_BOMB",
+		[ eDamageSourceId.vortex_grenade ] = "#DEATH_VORTEX_GRENADE",
+		[ eDamageSourceId.droppod_impact ] = "#DEATH_DROPPOD_CRUSH",
+		[ eDamageSourceId.ai_turret_explosion ] = "#DEATH_TURRET_EXPLOSION",
+		[ eDamageSourceId.rodeo_trap ] = "#DEATH_RODEO_TRAP",
+		[ eDamageSourceId.round_end ] = "#DEATH_ROUND_END",
+		[ eDamageSourceId.burn ] = "#DEATH_BURN",
+		                  
+			[ eDamageSourceId.caustic_toxin ] = "#DEATH_CAUSTIC_TOXIN",
+                          
+		[ eDamageSourceId.mind_crime ] = "Mind Crime",
+		[ eDamageSourceId.charge_ball ] = "Charge Ball",
+
+		[ eDamageSourceId.bubble_shield ] = "#DEATH_BUBBLE_SHIELD",
+		[ eDamageSourceId.sticky_explosive ] = "#DEATH_STICKY_EXPLOSIVE",
+		[ eDamageSourceId.titan_grapple ] = "#DEATH_TITAN_GRAPPLE",
 
 		// Instant death. Show no percentages on death recap.
-		[ eDamageSourceId.fall ]		 							= "#DEATH_FALL",
-		 //Todo: Rename eDamageSourceId.splat with a more appropriate name. This damage type was used for enviornmental damage, but it was for eject killing pilots if they were near a ceiling. I've changed the localized string to "Enviornment Damage", but this will cause confusion in the future.
-		[ eDamageSourceId.splat ] 									= "#DEATH_SPLAT",
-		[ eDamageSourceId.titan_execution ] 						= "#DEATH_TITAN_EXECUTION",
-		[ eDamageSourceId.human_execution ] 						= "#DEATH_HUMAN_EXECUTION",
-		[ eDamageSourceId.deathField ] 								= "#DEATH_DEATH_FIELD",
-		[ eDamageSourceId.outOfBounds ] 							= "#DEATH_OUT_OF_BOUNDS",
-		[ eDamageSourceId.indoor_inferno ]	 						= "#DEATH_INDOOR_INFERNO",
-		[ eDamageSourceId.submerged ]								= "#DEATH_SUBMERGED",
-		[ eDamageSourceId.switchback_trap ]							= "#DEATH_ELECTROCUTION", // Damages teammates and opposing team
-		[ eDamageSourceId.floor_is_lava ]							= "#DEATH_ELECTROCUTION",
-		[ eDamageSourceId.suicideSpectreAoE ]						= "#DEATH_SUICIDE_SPECTRE", // Used for distinguishing the initial spectre from allies.
-		[ eDamageSourceId.titanEmpField ] 							= "#DEATH_TITAN_EMP_FIELD",
-		[ eDamageSourceId.deadly_fog ] 								= "#DEATH_DEADLY_FOG",
+		[ eDamageSourceId.fall ] = "#DEATH_FALL",
+		//Todo: Rename eDamageSourceId.splat with a more appropriate name. This damage type was used for enviornmental damage, but it was for eject killing pilots if they were near a ceiling. I've changed the localized string to "Enviornment Damage", but this will cause confusion in the future.
+		[ eDamageSourceId.splat ] = "#DEATH_SPLAT",
+		[ eDamageSourceId.titan_execution ] = "#DEATH_TITAN_EXECUTION",
+		[ eDamageSourceId.human_execution ] = "#DEATH_HUMAN_EXECUTION",
+		[ eDamageSourceId.outOfBounds ] = "#DEATH_OUT_OF_BOUNDS",
+		[ eDamageSourceId.deathField ] = "#DEATH_DEATH_FIELD",
+		[ eDamageSourceId.indoor_inferno ] = "#DEATH_INDOOR_INFERNO",
+		[ eDamageSourceId.submerged ] = "#DEATH_SUBMERGED",
+		[ eDamageSourceId.switchback_trap ] = "#DEATH_ELECTROCUTION", // Damages teammates and opposing team
+		[ eDamageSourceId.floor_is_lava ] = "#DEATH_ELECTROCUTION",
+		[ eDamageSourceId.suicideSpectreAoE ] = "#DEATH_SUICIDE_SPECTRE", // Used for distinguishing the initial spectre from allies.
+		[ eDamageSourceId.titanEmpField ] = "#DEATH_TITAN_EMP_FIELD",
+		[ eDamageSourceId.deadly_fog ] = "#DEATH_DEADLY_FOG",
+		[ eDamageSourceId.crushed ] = "#DEATH_CRUSHED",
+		[ eDamageSourceId.landing_zone ] = "#DEATH_CRUSHED",
+                                
+                                                                             
+        
 
+		                            
+			[ eDamageSourceId.mp_ability_rise_from_the_ashes ] = "#SHADOW_ARMY_RISE_FROM_THE_ASHES",
+        
 
+		[ eDamageSourceId.mp_ability_valk_cluster_missile ] = "#DEATH_VALK_CLUSTER_MISSILE",
+		[ eDamageSourceId.mp_ability_sniper_ult ] = "#ABL_ULT_SNIPER_SHORT",
 		// Prototype
-		[ eDamageSourceId.mp_weapon_zipline ]						= "Zipline",
-		[ eDamageSourceId.at_turret_override ]						= "AT Turret",
-		[ eDamageSourceId.phase_shift ]								= "#WPN_SHIFTER",
-		[ eDamageSourceId.gamemode_bomb_detonation ]				= "Bomb Detonation",
-		[ eDamageSourceId.bleedout ]								= "#DEATH_BLEEDOUT",
-		[ eDamageSourceId.mp_weapon_energy_shotgun ]				= "Energy Shotgun",
-		[ eDamageSourceId.damagedef_unknownBugIt ] 					= "#DEATH_GENERIC_KILLED",
-		[ eDamageSourceId.damagedef_unknown ] 						= "#DEATH_GENERIC_KILLED",
-		[ eDamageSourceId.weapon_cubemap ] 							= "#DEATH_GENERIC_KILLED",
-		[ eDamageSourceId.stuck ]		 							= "#DEATH_GENERIC_KILLED",
-		[ eDamageSourceId.rodeo_battery_removal ]					= "#DEATH_RODEO_BATTERY_REMOVAL",
-		[ eDamageSourceId.melee_pilot_emptyhanded ] 				= "#DEATH_MELEE",
-		[ eDamageSourceId.melee_pilot_arena ]		 				= "#DEATH_MELEE",
-		[ eDamageSourceId.melee_pilot_sword ] 						= "#DEATH_SWORD",
-		[ eDamageSourceId.melee_titan_punch ] 						= "#DEATH_TITAN_MELEE",
-		[ eDamageSourceId.melee_titan_punch_ion ] 					= "#DEATH_TITAN_MELEE",
-		[ eDamageSourceId.melee_titan_punch_tone ] 					= "#DEATH_TITAN_MELEE",
-		[ eDamageSourceId.melee_titan_punch_northstar ] 			= "#DEATH_TITAN_MELEE",
-		[ eDamageSourceId.melee_titan_punch_scorch ] 				= "#DEATH_TITAN_MELEE",
-		[ eDamageSourceId.melee_titan_punch_legion ] 				= "#DEATH_TITAN_MELEE",
-		[ eDamageSourceId.melee_titan_punch_fighter ]		 		= "#DEATH_TITAN_MELEE",
-		[ eDamageSourceId.melee_titan_punch_vanguard ] 				= "#DEATH_TITAN_MELEE",
-		[ eDamageSourceId.melee_titan_punch_stealth ] 				= "#DEATH_TITAN_MELEE",
-		[ eDamageSourceId.melee_titan_punch_rocket ] 				= "#DEATH_TITAN_MELEE",
-		[ eDamageSourceId.melee_titan_punch_drone ] 				= "#DEATH_TITAN_MELEE",
-		[ eDamageSourceId.mp_titanweapon_flightcore_rockets ] 				= "#flightcore_rocket",
-		[ eDamageSourceId.mp_weapon_volt_smg ] 						= "#WPN_VOLT_SMG",
-		[ eDamageSourceId.mp_weapon_pulse_lmg ] 					= "EM-4 Cold War",
-		[ eDamageSourceId.mp_weapon_flamethrower ] 					= "Flame Thrower",
-		[ eDamageSourceId.mp_weapon_arc_launcher ] 					= "#WPN_ARC_LAUNCHER",
-		[ eDamageSourceId.mp_ability_octane_stim ] 					= "#WPN_OCTANE_STIM_SHORT",
-		[ eDamageSourceId.mp_weapon_tesla_trap ] 					= "#DEATH_TESLA_TRAP",
-		[ eDamageSourceId.mp_weapon_mounted_turret_weapon ] 		= "#untyped",
-		[ eDamageSourceId.mp_ability_crypto_drone_emp ]				= "#WPN_DRONE_EMP",
-		[ eDamageSourceId.mp_ability_crypto_drone_emp_trap ]		= "#WPN_DRONE_EMP",
-		[ eDamageSourceId.melee_wraith_kunai ] 						= "#DEATH_MELEE_WRAITH_KUNAI",
-		[ eDamageSourceId.mp_weapon_wraith_kunai_primary ] 			= "#DEATH_MELEE_WRAITH_KUNAI",
-		[ eDamageSourceId.melee_bloodhound_axe ] 					= "#DEATH_MELEE_BLOODHOUND_AXE",
-		[ eDamageSourceId.mp_weapon_bloodhound_axe_primary ] 		= "#DEATH_MELEE_BLOODHOUND_AXE",
-		[ eDamageSourceId.melee_lifeline_baton ]					= "#DEATH_MELEE_LIFELINE_BATON",
-		[ eDamageSourceId.mp_weapon_lifeline_baton_primary ]		= "#DEATH_MELEE_LIFELINE_BATON",
-		[ eDamageSourceId.melee_shadowsquad_hands ] 				= "#DEATH_MELEE_SHADOWSQUAD_HANDS",
-		[ eDamageSourceId.mp_weapon_shadow_squad_hands_primary ] 	= "#DEATH_MELEE_SHADOWSQUAD_HANDS",
-		[ eDamageSourceId.mp_ability_mobile_respawn_beacon ] 	= "#DEATH_MELEE_SHADOWSQUAD_HANDS",
+		[ eDamageSourceId.phase_shift ] = "#WPN_SHIFTER",
+		[ eDamageSourceId.bleedout ] = "#DEATH_BLEEDOUT",
+		[ eDamageSourceId.mp_weapon_energy_shotgun ] = "Energy Shotgun",
 
-		//r5r
-		[ eDamageSourceId.melee_bolo_sword ] 						= "Bolo Sword Melee",
-		[ eDamageSourceId.mp_weapon_bolo_sword_primary ] 			= "Bolo Sword Melee",
-		[ eDamageSourceId.melee_boxing_ring ] 						= "Boxing Hands",
-		[ eDamageSourceId.mp_weapon_melee_boxing_ring ] 			= "Boxing Hands",
-		[ eDamageSourceId.melee_data_knife ] 						= "Dataknife",
-		[ eDamageSourceId.mp_weapon_data_knife_primary ] 			= "Dataknife",
-		[ eDamageSourceId.mp_weapon_throwingknife ] 				= "Throwing Knife",
-		[ eDamageSourceId.mp_weapon_satchel ] 	 					= "Satchel",
-		[ eDamageSourceId.mp_weapon_wingman_n ] 	 				= "Wingman Elite",
-		[ eDamageSourceId.mp_weapon_sentinel ] 						= "Sentinel",
-		[ eDamageSourceId.mp_weapon_mobile_hmg ] 					= "Sheila",
-		[ eDamageSourceId.mp_weapon_softball ] 						= "Softball",
-		[ eDamageSourceId.mp_weapon_epg ] 							= "EPG",
-		[ eDamageSourceId.mp_weapon_smr ] 							= "Sidewinder SMR",
-		[ eDamageSourceId.mp_weapon_rocket_launcher ] 				= "Archer",
-		[ eDamageSourceId.mp_weapon_car_r2 ] 						= "Car SMG",
-		[ eDamageSourceId.mp_weapon_mgl ] 							= "MGL Mag Launcher",
-		[ eDamageSourceId.mp_weapon_3030 ] 							= "30-30 Repeater",
-		[ eDamageSourceId.mp_titanweapon_particle_accelerator ] 	= "Splitter Rifle",
-		[ eDamageSourceId.mp_titanweapon_predator_cannon ] 			= "Predator Cannon",
-		[ eDamageSourceId.mp_weapon_dragon_lmg ] 					= "Rampage LMG",
-		[ eDamageSourceId.mp_weapon_smart_pistol ] 	 				= "Smart Pistol",
-		[ eDamageSourceId.mp_weapon_grenade_electric_smoke ] 	 	= "Electric Smoke",
-		[ eDamageSourceId.mp_weapon_grenade_gravity ] 	 			= "Gravity Star",
-		[ eDamageSourceId.snd_bomb ] 	 							= "Bomb",
-		[ eDamageSourceId.mp_weapon_oddball_primary ] 	 			= "Ball",
-		[ eDamageSourceId.melee_oddball ] 	 						= "Ball",
-		[ eDamageSourceId.mp_weapon_flagpole_primary ] 	 			= "Ball",
-		[ eDamageSourceId.melee_flagpole ] 	 						= "Ball",
-		[ eDamageSourceId.mp_weapon_rspn101_og ] 	 				= "R101",
-		[ eDamageSourceId.sp_weapon_arc_tool] 	 					= "Arc Tool",
-		[ eDamageSourceId.mp_weapon_titan_sword ] 	 				= "Sword",
-		[ eDamageSourceId.mp_weapon_titan_sword_slam ] 	 			= "Sword",
-		[ eDamageSourceId.melee_titan_sword ] 	 					= "Sword",
-		[ eDamageSourceId.mp_weapon_lightninggun ]					= "Lightning Gun",
-		[ eDamageSourceId.nextbot ]									= "Nextbot"
+		[ eDamageSourceId.damagedef_unknownBugIt ] = "#DEATH_GENERIC_KILLED",
+		[ eDamageSourceId.damagedef_unknown ] = "#DEATH_GENERIC_KILLED",
+		[ eDamageSourceId.weapon_cubemap ] = "#DEATH_GENERIC_KILLED",
+		[ eDamageSourceId.stuck ] = "#DEATH_GENERIC_KILLED",
+
+		[ eDamageSourceId.melee_pilot_emptyhanded ] = "#DEATH_MELEE",
+
+		[ eDamageSourceId.melee_wraith_kunai ] = "#DEATH_MELEE_WRAITH_KUNAI",
+		[ eDamageSourceId.mp_weapon_wraith_kunai_primary ] = "#DEATH_MELEE_WRAITH_KUNAI",
+
+		[ eDamageSourceId.mp_ability_octane_stim ] = "#WPN_OCTANE_STIM_SHORT",
+
+		[ eDamageSourceId.mp_weapon_tesla_trap ] = "#DEATH_TESLA_TRAP",
+
+		[ eDamageSourceId.mp_ability_crypto_drone_emp ] = "#WPN_DRONE_EMP", //shouldn't be possible to die from the EMP
+		[ eDamageSourceId.mp_ability_crypto_drone_emp_trap ] = "#WPN_DRONE_EMP",
+
+		[ eDamageSourceId.melee_bloodhound_axe ] = "#DEATH_MELEE_BLOODHOUND_AXE",
+		[ eDamageSourceId.mp_weapon_bloodhound_axe_primary ] = "#DEATH_MELEE_BLOODHOUND_AXE",
+
+		[ eDamageSourceId.melee_lifeline_baton ] = "#DEATH_MELEE_LIFELINE_BATON",
+		[ eDamageSourceId.mp_weapon_lifeline_baton_primary ] = "#DEATH_MELEE_LIFELINE_BATON",
+
+		[ eDamageSourceId.melee_pathfinder_gloves ] = "#DEATH_MELEE_PATHFINDER_GLOVES",
+		[ eDamageSourceId.mp_weapon_pathfinder_gloves_primary ] = "#DEATH_MELEE_PATHFINDER_GLOVES",
+
+		[ eDamageSourceId.mp_ability_revenant_death_totem ] = "#ABL_DEATH_TOTEM_DAMAGE",
+
+		[ eDamageSourceId.melee_octane_knife ] = "#DEATH_MELEE_OCTANE_KNIFE",
+		[ eDamageSourceId.mp_weapon_octane_knife_primary ] = "#DEATH_MELEE_OCTANE_KNIFE",
+
+		[ eDamageSourceId.melee_mirage_statue ] = "#DEATH_MELEE_MIRAGE_STATUE",
+		[ eDamageSourceId.mp_weapon_mirage_statue_primary ] = "#DEATH_MELEE_MIRAGE_STATUE",
+
+		[ eDamageSourceId.melee_caustic_hammer ] = "#DEATH_MELEE_CAUSTIC_HAMMER",
+		[ eDamageSourceId.mp_weapon_caustic_hammer ] = "#DEATH_MELEE_CAUSTIC_HAMMER",
+
+		[ eDamageSourceId.melee_bangalore_heirloom ] = "#DEATH_MELEE_BANGALORE_HEIRLOOM",
+		[ eDamageSourceId.mp_weapon_bangalore_heirloom ] = "#DEATH_MELEE_BANGALORE_HEIRLOOM",
+
+		[ eDamageSourceId.melee_gibraltar_club ] = "#DEATH_MELEE_GIBRALTAR_CLUB",
+		[ eDamageSourceId.mp_weapon_gibraltar_club ] = "#DEATH_MELEE_GIBRALTAR_CLUB",
+
+		[ eDamageSourceId.melee_revenant_scythe ] = "#DEATH_MELEE_REVENANT_SCYTHE",
+		[ eDamageSourceId.mp_weapon_revenant_scythe ] = "#DEATH_MELEE_REVENANT_SCYTHE",
+
+		[ eDamageSourceId.melee_wattson_gadget ] = "#DEATH_MELEE_WATTSON_GADGET",
+		[ eDamageSourceId.mp_weapon_wattson_gadget_primary ] = "#DEATH_MELEE_WATTSON_GADGET",
+
+		[ eDamageSourceId.melee_crypto_heirloom ] = "#DEATH_MELEE_CRYPTO_HEIRLOOM",
+		[ eDamageSourceId.mp_weapon_crypto_heirloom ] = "#DEATH_MELEE_CRYPTO_HEIRLOOM",
+
+		[ eDamageSourceId.melee_valkyrie_spear ] = "#DEATH_MELEE_VALKYRIE_SPEAR",
+		[ eDamageSourceId.mp_weapon_valkyrie_spear] = "#DEATH_MELEE_VALKYRIE_SPEAR",
+
+		[ eDamageSourceId.melee_loba_heirloom ] = "#DEATH_MELEE_LOBA_HEIRLOOM",
+		[ eDamageSourceId.mp_weapon_loba_heirloom] = "#DEATH_MELEE_LOBA_HEIRLOOM",
+
+		[ eDamageSourceId.melee_seer_heirloom ] = "#DEATH_MELEE_SEER_HEIRLOOM",
+		[ eDamageSourceId.mp_weapon_seer_heirloom] = "#DEATH_MELEE_SEER_HEIRLOOM",
+
+		[ eDamageSourceId.melee_wraith_kunai_rt01 ] = "#DEATH_MELEE_WRAITH_KUNAI_RT01",
+		[ eDamageSourceId.mp_weapon_wraith_kunai_primary_rt01 ] = "#DEATH_MELEE_WRAITH_KUNAI_RT01",
+
+		[ eDamageSourceId.melee_ash_heirloom ] = "#DEATH_MELEE_ASH_HEIRLOOM",
+		[ eDamageSourceId.mp_weapon_ash_heirloom] = "#DEATH_MELEE_ASH_HEIRLOOM",
+
+		[ eDamageSourceId.melee_horizon_heirloom ] = "#DEATH_MELEE_HORIZON_HEIRLOOM",
+		[ eDamageSourceId.mp_weapon_horizon_heirloom_primary] = "#DEATH_MELEE_HORIZON_HEIRLOOM",
+
+		[ eDamageSourceId.melee_revenant_scythe_rt01 ] = "#DEATH_MELEE_REVENANT_SCYTHE_RT01",
+		[ eDamageSourceId.mp_weapon_revenant_scythe_rt01] = "#DEATH_MELEE_REVENANT_SCYTHE_RT01",
+
+		[ eDamageSourceId.melee_fuse_heirloom ] = "#DEATH_MELEE_FUSE_HEIRLOOM",
+		[ eDamageSourceId.mp_weapon_fuse_heirloom_primary] = "#DEATH_MELEE_FUSE_HEIRLOOM",
+
+		                    
+			[ eDamageSourceId.melee_artifact_sword] = "#DEATH_MELEE_ARTIFACT_SWORD",
+			[ eDamageSourceId.mp_weapon_artifact_sword_primary] = "#DEATH_MELEE_ARTIFACT_SWORD",
+        
+
+		                    
+			[ eDamageSourceId.melee_crypto_heirloom_rt01 ] = "#DEATH_MELEE_CRYPTO_HEIRLOOM_RT01",
+			[ eDamageSourceId.mp_weapon_crypto_heirloom_rt01_primary ] = "#DEATH_MELEE_CRYPTO_HEIRLOOM_RT01",
+        
+
+		                    
+			[ eDamageSourceId.melee_octane_knife_rt01 ] = "#DEATH_MELEE_OCTANE_KNIFE_RT01",
+			[ eDamageSourceId.mp_weapon_octane_knife_rt01_primary ] = "#DEATH_MELEE_OCTANE_KNIFE_RT01",
+        
+		
+                      
+                                                                   
+                                                                               
+        
+
+                           
+                                                                                   
+                                                                                               
+        
+
+		[ eDamageSourceId.melee_rampart_wrench ] = "#DEATH_MELEE_RAMPART_WRENCH",
+		[ eDamageSourceId.mp_weapon_rampart_wrench_primary ] = "#DEATH_MELEE_RAMPART_WRENCH",
+
+		[ eDamageSourceId.mp_weapon_stun_mine ] = "#WPN_TACTICAL_STUN_MINES",
+		[ eDamageSourceId.mp_weapon_cluster_bomb_launcher ] = "#WPN_CLUSTER_BOMB",
+		[ eDamageSourceId.mp_weapon_mortar_ring ] = "#WPN_MORTAR_RING",
+
+		[ eDamageSourceId.mp_ability_armored_leap ] = "#WPN_ARMORED_LEAP",
+		[ eDamageSourceId.mp_ability_castle_wall ] = "#WPN_ARMORED_LEAP",
+		[ eDamageSourceId.mp_ability_shield_throw ] = "#WPN_SHIELD_THROW",
+		[ eDamageSourceId.mp_weapon_ferro_wall ] = "#WPN_FERRO_WALL",
+		[ eDamageSourceId.mp_ability_spike_strip ] = "#WPN_SPIKES",
+
+		[ eDamageSourceId.mp_ability_debuff_zone ] = "#WPN_DEBUFF_ZONE",
+		[ eDamageSourceId.mp_ability_debuff_zone_aoe ] = "#WPN_DEBUFF_ZONE",
+		[ eDamageSourceId.overheat_explosion ] = "#WPN_DEBUFF_ZONE_OVERHEAT",
+
+		               
+			[ eDamageSourceId.mp_ability_conduit_shield_mines ] = "#ABL_CONDUIT_ULTIMATE",
+        
+
+                  
+                                                                        
+        
+
+		                                               
+			[ eDamageSourceId.melee_shadowsquad_hands ] = "#DEATH_MELEE_SHADOWSQUAD_HANDS",
+			[ eDamageSourceId.melee_shadowroyale_hands ] = "#DEATH_MELEE_SHADOWSQUAD_HANDS",
+			[ eDamageSourceId.mp_weapon_shadow_squad_hands_primary ] = "#DEATH_MELEE_SHADOWSQUAD_HANDS",
+        
+
+                           
+                                                                                  
+        
+
+                  
+                                                                     
+        
+
+               
+                                                                         
+                                                                                
+        
+
+		               
+			[ eDamageSourceId.melee_boxing_ring ] = "#DEATH_MELEE_BOXING_RING",
+			[ eDamageSourceId.mp_weapon_melee_boxing_ring ] = "#DEATH_MELEE_BOXING_RING",
+        
+
+		[ eDamageSourceId.mp_ability_sonic_blast ] = "#WPN_SONIC_BLAST",
+
+		[ eDamageSourceId.mp_weapon_concussive_breach ] = "#WPN_RIOT_DRILL",
+
+		[ eDamageSourceId.mp_weapon_arc_bolt ] = "#WPN_ARC_BOLT",
+
+		[ eDamageSourceId.vault_defense ] = "#VAULT_DEFENSE",
+		[ eDamageSourceId.mp_weapon_mobile_hmg ] = "#WPN_MOBILE_HMG",
+
+		                    
+			[ eDamageSourceId.golden_horse_green ] = "#WPN_HOPUP_GOLDEN_HORSE_GREEN",
+        
+
+                                  
+                                                                    
+                                                              
+        
+
+		[ eDamageSourceId.melee_artifact_dagger] = "#DEATH_MELEE_ARTIFACT_DAGGER",
+		[ eDamageSourceId.mp_weapon_artifact_dagger_primary] = "#DEATH_MELEE_ARTIFACT_DAGGER",
+
+                      
+                                                                                             
+                                                                                                         
+        
+
+
+                      
+                                                                                 
+                                                                                             
+        
+
 	}
 
 	#if DEVELOPER
 		//development, with retail versions incase a rare bug happens we dont want to show developer text
-		file.damageSourceIDToName[ eDamageSourceId.damagedef_unknownBugIt ] 			= "UNKNOWN! BUG IT!"
-		file.damageSourceIDToName[ eDamageSourceId.damagedef_unknown ] 				= "Unknown"
-		file.damageSourceIDToName[ eDamageSourceId.weapon_cubemap ] 					= "Cubemap"
-		//file.damageSourceIDToName[ eDamageSourceId.invalid ] 					= "INVALID (BUG IT!)"
-		file.damageSourceIDToName[ eDamageSourceId.stuck ]		 					= "NPC got Stuck (Don't Bug it!)"
+		file.damageSourceIDToName[ eDamageSourceId.damagedef_unknownBugIt ] = "UNKNOWN! BUG IT!"
+		file.damageSourceIDToName[ eDamageSourceId.damagedef_unknown ] = "Unknown"
+		file.damageSourceIDToName[ eDamageSourceId.weapon_cubemap ] = "Cubemap"
+		//file.damageSourceIDToName[ eDamageSourceId.invalid ] = "INVALID (BUG IT!)"
+		file.damageSourceIDToName[ eDamageSourceId.stuck ] = "NPC got Stuck (Don't Bug it!)"
 	#endif
 }
 
 void function RegisterWeaponDamageSource( string weaponRef )
 {
+	//Looks like if we want the weapon names to be different, it also needs its own damage source -pmcd
+	if ( !(weaponRef in eDamageSourceId) )
+		weaponRef = Weapon_GetBaseClassName( weaponRef )
+
 	int sourceID = eDamageSourceId[weaponRef]
 	file.damageSourceIDToName[ sourceID ] <- GetWeaponInfoFileKeyField_GlobalString( weaponRef, "shortprintname" )
 	file.damageSourceIDToImage[ sourceID ] <- GetWeaponInfoFileKeyFieldAsset_Global( weaponRef, "hud_icon" )

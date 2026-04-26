@@ -1,5 +1,5 @@
 // add jumppad creation limit, max 4 / player
-// values are not 1:1 the retail ones, can be improved
+// values are not 1:1 accurate, can be improved
 
 global function JumpPad_Init
 global function JumpPad_CreatedCallback
@@ -55,7 +55,6 @@ void function JumpPad_GiveDoubleJump( entity player )
 		player.p.storedPlayerSettings = player.GetPlayerSettings()
 		player.p.storedPlayerSettingsMods = player.GetPlayerSettingsMods()
 		player.p.storedPlayerHealth = [ player.GetHealth(), player.GetShieldHealth() ]
-		player.p.storedPlayerPassives = GetAllPassivesForPlayer( player )
 		array< string > newMods = clone player.p.storedPlayerSettingsMods
 		newMods.append( doubleJump )
 
@@ -162,80 +161,6 @@ const float JUMP_PAD_VIEW_PUNCH_RAND = 0
 
 void function JumpPad_CreatedCallback( entity jumpPad )
 {
-	if( !IsValid( jumpPad ) )
-		return
-
-	jumpPad.kv.contents = CONTENTS_HITBOX | CONTENTS_BULLETCLIP
-
-	vector origin = jumpPad.GetOrigin() // should this allow weapon_jump_pad to be OriginToGround
-	vector angles = jumpPad.GetAngles()
-
-	entity mover = CreateScriptMover( jumpPad.GetOrigin(), angles )
-
-	if( IsValid( jumpPad.GetParent() ) )
-	{
-		mover.SetParent( jumpPad.GetParent() )
-	}
-	jumpPad.SetParent( mover )
-
-	waitthread JumpPad_PlayAnims( jumpPad, mover )
-
-	if( !IsValid( jumpPad ) || jumpPad.IsMarkedForDeletion() )
-		return
-
-	entity trigger = CreateEntity( "trigger_cylinder_heavy" )
-	trigger.SetOwner( jumpPad )
-	trigger.SetRadius( JUMP_PAD_PUSH_RADIUS )
-	trigger.SetAboveHeight( 32 )
-	trigger.SetBelowHeight( 16 ) //need this because the player or jump pad can sink into the ground a tiny bit and we check player feet not half height
-	trigger.SetOrigin( origin )
-	trigger.SetAngles( angles )
-	trigger.SetTriggerType( TT_JUMP_PAD )
-
-	
-	if( !GetCurrentPlaylistVarBool( "flowstate_disable_doublejump_jumppad", false ) )
-	{
-		trigger.SetLaunchScaleValues( JUMP_PAD_PUSH_VELOCITY, 1.7 )
-		trigger.SetViewPunchValues( JUMP_PAD_VIEW_PUNCH_SOFT, JUMP_PAD_VIEW_PUNCH_HARD, JUMP_PAD_VIEW_PUNCH_RAND )
-	} else
-	{
-		trigger.SetLaunchScaleValues( 950.0, 1.25 )
-		trigger.SetViewPunchValues( 25.0, 4.0, 4.0 )
-	}
-	
-	trigger.UsePointCollision()
-	trigger.kv.triggerFilterNonCharacter = "0"
-	DispatchSpawn( trigger )
-	trigger.SetEnterCallback( OnJumpPadAreaEnter )
-	trigger.SetParent( jumpPad )
-	trigger.RemoveFromAllRealms()
-	trigger.AddToOtherEntitysRealms( jumpPad )
-
-	if( jumpPad.GetScriptName() == "map_editor_jumppad" )
-		return
-
-	entity traceBlocker = CreateTraceBlockerVolume( trigger.GetOrigin(), 24.0, true, CONTENTS_BLOCK_PING | CONTENTS_NOGRAPPLE, TEAM_UNASSIGNED, JUMP_PAD_TARGETNAME )
-	traceBlocker.SetBox( jumpPad.GetBoundingMins(), jumpPad.GetBoundingMaxs())
-	traceBlocker.SetParent( trigger )
-
-	traceBlocker.RemoveFromAllRealms()
-	traceBlocker.AddToOtherEntitysRealms( jumpPad )
-	
-	if( GetEditorClass( jumpPad) == "script_survival_jumppad" )
-		return
-
-	// #if DEVELOPER
-	// DrawAngledBox( trigger.GetOrigin(), Vector( 0,0,0 ), jumpPad.GetBoundingMins(), jumpPad.GetBoundingMaxs(), 255, 0, 0, true, 15 )
-	// #endif
-
-	jumpPad.SetMaxHealth( JUMP_PAD_HEALTH )
-	jumpPad.SetHealth( JUMP_PAD_HEALTH )
-	jumpPad.SetDamageNotifications( false )
-	jumpPad.SetDeathNotifications( false )
-	//jumpPad.SetArmorType( ARMOR_TYPE_HEAVY )
-
-	AddEntityCallback_OnDamaged( jumpPad, JumpPad_OnTakeDamage )
-	AddEntityCallback_OnKilled( jumpPad, JumpPad_OnDeath )
 }
 
 void function JumpPad_OnDeath( entity ent, var damageInfo )
@@ -303,14 +228,14 @@ void function OnJumpPadAreaEnter( entity trigger, entity ent )
 		return
 
 	if( !GetCurrentPlaylistVarBool( "flowstate_disable_doublejump_jumppad", false ) )
-		ent.kv.gravity = 0.75 //seems to be a thing in retail
+		ent.kv.gravity = 0.75 //matches expected behavior
 	
 	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_LAUNCH_PAD, ent, ent.GetOrigin(), ent.GetTeam(), ent )
 
 	thread JumpPad_PlayLaunchAnim( trigger )
 	JumpPadPushEnt( trigger, ent, trigger.GetOrigin(), trigger.GetAngles() )
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( ent ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( ent ), Loadout_Character() )
 	string charRef = ItemFlavor_GetHumanReadableRef( character )
 
 	if( charRef == "character_octane" && Time() - ent.p.lastJumpPadChatterTime >= 30 )

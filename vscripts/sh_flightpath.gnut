@@ -1072,25 +1072,6 @@ void function CodeCallback_AINFileBuilt()
 	if ( NavMeshNode_GetNodeCount() <= 0 )
 		return
 
-	if ( Flag( "FlightPath_TitanDrop" ) )
-	{
-		array<asset> allTitanSettings = GetAllowedPlayerTitanSettings()
-		asset titanSettings
-		foreach ( settings in allTitanSettings )
-		{
-			asset model = GetGlobalSettingsAsset( settings, "bodyModel" )
-			if ( !ModelIsPrecached( model ) )
-				continue
-
-			titanSettings = settings
-			break
-		}
-
-	 	Assert( titanSettings != $"", "Trying to use Flag FlightPath_TitanDrop, but there are no titans precached for this level" )
-
-		level.ainTestTitan <- CreateNPCTitanFromSettings( titanSettings, TEAM_IMC, <0,0,0>, <0,0,0> )
-	}
-
 	level.testHardPoints = GetEntArrayByClass_Expensive( "info_hardpoint" )
 	level.testFlagSpawnPoints = GetEntArrayByClass_Expensive( "info_spawnpoint_flag" )
 
@@ -1112,8 +1093,6 @@ void function CodeCallback_AINFileBuilt()
 		}
 	}
 
-	if ( Flag( "FlightPath_TitanDrop" ) )
-		level.ainTestTitan.Destroy()
 
 	if ( MapRequiresFullFlightpathSupport() )
 	{

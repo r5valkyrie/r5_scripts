@@ -40,7 +40,7 @@ struct
 
 void function ClRespawnselect_MP_Init()
 {
-	return //disabled for R5R
+	return //disabled
 	
     //PrecacheHUDMaterial( IMAGE_SELECT_TITAN )
     //PrecacheHUDMaterial( IMAGE_SELECT_PILOT )
@@ -247,7 +247,7 @@ bool function RespawnSelect_ShouldShowRespawnAsPilot( entity player )
 		// return false
 	// }
 
-	if ( GetGameState() != eGameState.Playing && GetGameState() != eGameState.Epilogue && GetGameState() != eGameState.WinnerDetermined )
+	if ( GetGameState() != eGameState.Playing && GetGameState() != eGameState.Resolution && GetGameState() != eGameState.WinnerDetermined )
 	{
 		//printt( " GetGameState() != ...", GetGameState() )
 		return false
@@ -272,7 +272,7 @@ bool function RespawnSelect_ShouldShowSkipReplay( entity player )
 
 	int gameState = GetGameState()
 
-	if ( gameState != eGameState.Playing && gameState != eGameState.Epilogue )
+	if ( gameState != eGameState.Playing && gameState != eGameState.Resolution )
 	{
 		//printt( "Fail gamestate check" )
 		return false

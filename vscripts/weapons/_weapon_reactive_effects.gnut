@@ -93,7 +93,7 @@ void function WeaponReactiveKillTracking_InitForWeapon( entity weapon )
 
 bool function WeaponSkinHasReactiveKillTracking( ItemFlavor weaponSkin )
 {
-	if ( !IsItemFlavorStructValid( weaponSkin ) )
+	if ( !IsItemFlavorStructValid( weaponSkin.guid ) )
 		return false
 
 	if ( !WeaponSkin_DoesReactToKills( weaponSkin ) )

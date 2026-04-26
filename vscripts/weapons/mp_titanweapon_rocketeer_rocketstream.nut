@@ -146,7 +146,7 @@ int function FireMissileStream( entity weapon, WeaponPrimaryAttackParams attackP
 		if ( has_s2s_npcMod || has_mortar_mod )
 			missileSpeed = 2500
 
-		int impactFlags = (DF_IMPACT | DF_GIB | DF_KNOCK_BACK)
+		int impactFlags = (DF_SHIELD_SYPHON | DF_GIB | DF_KNOCK_BACK)
 
 		WeaponFireMissileParams MissileBoltParams
 		MissileBoltParams.pos = attackParams.pos
@@ -208,7 +208,7 @@ void function FireMissileStream_Spiral( entity weapon, WeaponPrimaryAttackParams
 
 	for ( int i = 0; i < numMissiles; i++ )
 	{
-		int impactFlags = (DF_IMPACT | DF_GIB | DF_KNOCK_BACK)
+		int impactFlags = (DF_SHIELD_SYPHON | DF_GIB | DF_KNOCK_BACK)
 
 		WeaponFireMissileParams MissileBoltParams
 		MissileBoltParams.pos = attackParams.pos

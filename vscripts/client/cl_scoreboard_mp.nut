@@ -31,18 +31,21 @@ const int MIC_STATE_PARTY_TALKING = 4
 const int MIC_STATE_MUTED = 5
 
 global function ClScoreboardMp_Init
-//global function ClScoreboardMp_GetGameTypeDescElem
+
 global function ScoreboardFocus
 global function ScoreboardLoseFocus
 global function ScoreboardSelectPrevPlayer
 global function ScoreboardSelectNextPlayer
-//global function GetScoreBoardFooterRui
-//global function SetScoreboardUpdateCallback
+global function ShowScoreboardOrMap_Teams
+global function HideScoreboardOrMap_Teams
+
+
 global function AddScoreboardCallback_OnShowing
 global function AddScoreboardCallback_OnHiding
-global function ScoreboardToggleFocus
-global function ForceScoreboardLoseFocus
-global function ForceScoreboardFocus
+
+global function Scoreboard_AddRui
+global function Scoreboard_SetVisible
+global function Scoreboard_IsVisible
 
 struct {
 	bool hasFocus = false
@@ -53,9 +56,6 @@ struct {
 	var scoreboardBg
 	var scoreboard
 	var background
-	var backgroundCustom
-	var titleCustom
-	var hintCustom
 
 	array<var> scoreboardOverlays
 	array<var> scoreboardElems
@@ -80,19 +80,34 @@ struct {
 
 	var scoreboardRUI
 
+	bool scoreboardVisible = false
+	array<var> scoreboardRuis
+
 	void functionref(entity,var) scoreboardUpdateCallback
 	array <void functionref()> scoreboardCallbacks_OnShowing
 	array <void functionref()> scoreboardCallbacks_OnHiding
-
-	bool bResetScoreboardIgnore
-	int max_teams
 } file
 
-const array<int> IGNORE_SCORE_BOARD_RESET =
-[
-	eGamemodes.SURVIVAL,
-	eGamemodes.fs_aimtrainer
-]
+void function Scoreboard_AddRui( var rui )
+{
+	file.scoreboardRuis.append( rui )
+	RuiSetVisible( rui, file.scoreboardVisible )
+}
+
+void function Scoreboard_SetVisible( bool state )
+{
+	foreach ( rui in file.scoreboardRuis )
+	{
+		RuiSetVisible( rui, state )
+	}
+
+	file.scoreboardVisible = state
+}
+
+bool function Scoreboard_IsVisible()
+{
+	return file.scoreboardVisible
+}
 
 void function ClScoreboardMp_Init()
 {
@@ -100,45 +115,120 @@ void function ClScoreboardMp_Init()
 	clGlobal.showScoreboardFunc = ShowScoreboardMP
 	clGlobal.hideScoreboardFunc = HideScoreboardMP
 	clGlobal.scoreboardInputFunc = ScoreboardInputMP
-
-	// RegisterConCommandTriggeredCallback( "+scriptCommand4", ScoreboardToggleFocus )
-	RegisterConCommandTriggeredCallback( "scoreboard_toggle_focus", ScoreboardToggleFocus )
-	RegisterSignal( "ShutDownScoreboardRefresh" )
-
-	AddClientCallback_OnResolutionChanged( ReInitScoreboard )
-	file.bResetScoreboardIgnore = IGNORE_SCORE_BOARD_RESET.contains( Gamemode() )
-	file.max_teams = GetCurrentPlaylistVarInt( "max_teams", MAX_TEAM_SLOTS )
 }
 
-void function ReInitScoreboard( )
+void function ShowScoreboardOrMap_Teams()
 {
-	file.hasFocus = false
-	thread clGlobal.hideScoreboardFunc()
-	clGlobal.initScoreboardFunc()
+	Scoreboard_SetVisible( true )
+
+	ShowFullmap()
+	Fullmap_ClearInputContext()
+
+	UpdateMainHudVisibility( GetLocalViewPlayer() )
+
+	HudInputContext inputContext
+	inputContext.keyInputCallback = Teams_HandleKeyInput
+	inputContext.moveInputCallback = Teams_HandleMoveInput
+	inputContext.viewInputCallback = Teams_HandleViewInput
+	
+	HudInput_PushContext( inputContext )
+}
+
+bool function Teams_HandleKeyInput( int key )
+{
+	bool swallowInput = false
+
+	switch ( key )
+	{
+		case BUTTON_B:
+			HideScoreboard()
+			return true
+		case BUTTON_DPAD_UP:
+		case KEY_F2:
+			RunUIScript( "UI_OpenFeatureTutorialDialog", Cl_GetPlaylistUIRules() )
+			return true
+	}
+
+	return Fullmap_HandleKeyInput( key )
+}
+
+bool function Teams_HandleMoveInput( float x, float y )
+{
+	return Fullmap_HandleMoveInput( x, y )
+}
+
+bool function Teams_HandleViewInput( float x, float y )
+{
+	return Fullmap_HandleViewInput( x, y )
+}
+
+void function HideScoreboardOrMap_Teams()
+{
+	HudInput_PopContext()
+	Scoreboard_SetVisible( false )
+
+	HideFullmap()
 }
 
 void function ScoreboardFocus( entity player )
 {
-	thread ShowScoreboardMP()
+	if ( !clGlobal.isScoreboardShown || file.hasFocus )
+	{
+		return
+	}
+
+	if ( !ScoreboardEnabled() )
+		return
+
+	EmitSoundOnEntity( player, "menu_click" )
 	file.hasFocus = true
+	file.selectedPlayer = GetLocalClientPlayer()
+
+	HudInputContext inputContext;
+	inputContext.keyInputCallback = clGlobal.scoreboardInputFunc
+	HudInput_PushContext( inputContext )
+
+	RuiSetGameTime( Hud_GetRui( file.footer ), "startFadeTime", -1.0 )
+
+	string text = Localize( "#LEFT_SCOREBOARD_EXIT" ) + "   " + Localize( "#X_BUTTON_MUTE" )
+
+		//if ( PCPlat_IsOverlayAvailable() )
+			text = text + "   " + Localize( "#Y_BUTTON_VIEW_PROFILE" )
+
+
+
+
+	RuiSetString( Hud_GetRui( file.footer ), "footerText", text )
+
+	
+	
+	
+	
 }
 
 void function ScoreboardLoseFocus( entity player )
 {
-	thread HideScoreboardMP()
-	file.hasFocus = false
-}
+	Assert( file.hasFocus )
+	if ( !clGlobal.isScoreboardShown )
+		return
 
-void function ForceScoreboardLoseFocus()
-{
-	thread HideScoreboardMP()
-	file.hasFocus = false
-}
+	if ( !ScoreboardEnabled() )
+		return
 
-void function ForceScoreboardFocus()
-{
-	thread ShowScoreboardMP()
-	file.hasFocus = true
+	
+	
+	
+	
+
+	EmitSoundOnEntity( player, "menu_click" )
+	file.hasFocus = false
+	file.selectedPlayer = null
+
+	HudInput_PopContext()
+
+	RuiSetString( Hud_GetRui( file.footer ), "footerText", "" )
+	
+	
 }
 
 void function ScoreboardToggleFocus( entity player )
@@ -157,12 +247,12 @@ int function GetEnemyScoreboardTeam()
 int function GetNumPlayersToDisplayAsATeam()
 {
 	if ( UseOnlyMyTeamScoreboard() )
-		return GetCurrentPlaylistVarInt( "max_team_size", 1 )
+		return GetMaxTeamPlayers()
 
 	if ( UseSingleTeamScoreboard() )
-		return 12
+		return GetCurrentPlaylistVarInt( "max_players", MAX_TEAMS )
 
-	return GetCurrentPlaylistVarInt( "max_team_size", 1 )
+	return GetCurrentPlaylistVarInt( "max_players", MAX_TEAM_SLOTS ) / GetCurrentPlaylistVarInt( "max_teams", MAX_TEAM_SLOTS )
 }
 
 bool function ScoreboardEnabled()
@@ -172,52 +262,30 @@ bool function ScoreboardEnabled()
 
 void function InitScoreboardMP()
 {
+	if ( !ScoreboardEnabled() )
+		return
+
 	entity localPlayer = GetLocalClientPlayer()
-	int myTeam = TEAM_MULTITEAM_FIRST //localPlayer.GetTeam()
-	// if ( myTeam == TEAM_SPECTATOR ) //To handle demos
-	// {
-		// myTeam = GetDefaultNonSpectatorTeam()
-	// }
+	int myTeam = localPlayer.GetTeam()
+	if ( myTeam == TEAM_SPECTATOR ) 
+	{
+		myTeam = GetDefaultNonSpectatorTeam()
+	}
 	string mapName = GetMapDisplayName( GetMapName() )
 
 	var scoreboard = HudElement( "Scoreboard" )
 	file.scoreboard = scoreboard
 
-	file.backgroundCustom = HudElement( "FS_DMScoreboard_Frame" )
-	file.titleCustom = HudElement( "FS_DMScoreboard_Title" )
-	file.hintCustom = HudElement( "FS_DMScoreboard_Hint" )
-
-	if( Playlist() == ePlaylists.fs_1v1 || Playlist() == ePlaylists.fs_lgduels_1v1 )
-	{
-		Hud_SetText( file.hintCustom, "%toggle_map% Close")
-	}
-
-	if( Playlist() == ePlaylists.survival_dev || Playlist() == ePlaylists.dev_default )
-	{
-		Hud_SetText( file.hintCustom, "%toggle_legend% Close")
-	}
-
-	string title = "SCOREBOARD"
-
-	Hud_SetText( file.titleCustom, title)
-
-	Hud_SetVisible( file.backgroundCustom, false )
-	Hud_SetVisible( file.titleCustom, false )
-	Hud_SetVisible( file.hintCustom, false )
-
-	RuiSetImage( Hud_GetRui( file.backgroundCustom ), "basicImage", $"rui/flowstate_custom/scoreboard_bg" )
-
 	file.header.gametypeAndMap = HudElement( "ScoreboardGametypeAndMap", scoreboard )
-	RuiSetString( Hud_GetRui( file.header.gametypeAndMap ), "gameType", "" )
-	RuiSetString( Hud_GetRui( file.header.gametypeAndMap ), "mapName", "" )
+	
+	RuiSetString( Hud_GetRui( file.header.gametypeAndMap ), "mapName", mapName )
 	file.header.gametypeDesc = HudElement( "ScoreboardHeaderGametypeDesc", scoreboard )
-	RuiSetString( Hud_GetRui( file.header.gametypeDesc ), "desc", "" )
+	
 	file.header.scoreHeader = HudElement( "ScoreboardScoreHeader", scoreboard )
 
 	file.footer = HudElement( "ScoreboardGamepadFooter", scoreboard )
 	file.pingText = HudElement( "ScoreboardPingText", scoreboard )
 
-	file.scoreboardElems.clear()
 	file.scoreboardElems.append( file.header.gametypeAndMap )
 	file.scoreboardElems.append( file.header.gametypeDesc )
 	file.scoreboardElems.append( file.header.scoreHeader )
@@ -225,14 +293,14 @@ void function InitScoreboardMP()
 	file.scoreboardElems.append( file.pingText )
 
 	int maxPlayerDisplaySlots = GetNumPlayersToDisplayAsATeam()
-	//string localPlayerFactionChoice = GetFactionChoice( localPlayer )
+	
 
-	//First init my team's stuff
+	
 	file.playerElems[ myTeam ] <- []
 	file.teamElems[ myTeam ] <- {
 		logo = HudElement( "ScoreboardMyTeamLogo", scoreboard )
 		score = HudElement( "ScoreboardMyTeamScore", scoreboard )
-		//factionChoice = localPlayerFactionChoice
+		
 	}
 
 	file.scoreboardElems.append( file.teamElems[ myTeam ].logo )
@@ -255,6 +323,8 @@ void function InitScoreboardMP()
 		RuiSetImage( Hud_GetRui( file.teamElems[ myTeam ].logo ), "logo", $"" )
 	}
 
+	
+
 	array<int> enemyTeams
 	if ( !UseOnlyMyTeamScoreboard() )
 	{
@@ -271,11 +341,24 @@ void function InitScoreboardMP()
 				teamNumberPrefix = "Team" + minint( teamNum, 4 )
 			}
 
+			
+			
+			
+			
+			
+			
+			
+			
+			
+
+			
+
 			int currentEnemyTeam = enemyTeams[teamNum - 1]
 			file.teamElems[currentEnemyTeam] <-
 			{
 				logo = HudElement( "ScoreboardEnemy" + teamNumberPrefix + "Logo", scoreboard )
 				score = HudElement( "ScoreboardEnemy" + teamNumberPrefix + "Score", scoreboard )
+				
 			}
 
 			file.scoreboardElems.append( file.teamElems[currentEnemyTeam].logo )
@@ -286,7 +369,6 @@ void function InitScoreboardMP()
 			{
 				table rowElementTable
 				rowElementTable.background <- HudElement( "ScoreboardOpponent" + teamNumberPrefix + "Background" + string( elem ), scoreboard )
-
 				rowElementTable.background.Show()
 
 				file.scoreboardElems.append( rowElementTable.background )
@@ -296,9 +378,15 @@ void function InitScoreboardMP()
 		}
 	}
 
+	if ( IsPVEMode() )
 	{
 		file.header.gametypeAndMap.Hide()
 		file.header.gametypeDesc.Hide()
+	}
+	else
+	{
+		file.header.gametypeAndMap.Show()
+		file.header.gametypeDesc.Show()
 	}
 
 	if ( UseOnlyMyTeamScoreboard() )
@@ -348,7 +436,7 @@ void function ScoreboardFadeIn()
 	foreach ( elem in file.scoreboardElems )
 	{
 		RuiSetGameTime( Hud_GetRui( elem ), "fadeOutStartTime", RUI_BADGAMETIME )
-		RuiSetGameTime( Hud_GetRui( elem ), "fadeInStartTime", RUI_BADGAMETIME )
+		RuiSetGameTime( Hud_GetRui( elem ), "fadeInStartTime", Time() )
 	}
 
 	if ( file.scoreboardBg != null )
@@ -375,34 +463,23 @@ void function ScoreboardFadeOut()
 
 void function ShowScoreboardMP()
 {
-	clGlobal.levelEnt.Signal( "ShutDownScoreboardRefresh" )
-	clGlobal.levelEnt.EndSignal( "ShutDownScoreboardRefresh" )
-
-	if( file.bResetScoreboardIgnore )
+#if R2_SCOREBOARD
+	if ( !ScoreboardEnabled() )
 		return
 
-	#if DEVELOPER
-		printf("[SB] %s - %s\n", FUNC_NAME(), GameRules_GetGameMode())
-	#endif
-
-	foreach( void functionref() callbackFunc in file.scoreboardCallbacks_OnShowing )
+	foreach( void functionref() callbackFunc in file.scoreboardCallbacks_OnShowing)
 		callbackFunc()
 
 	entity localPlayer = GetLocalClientPlayer()
 
-	Hud_SetVisible( file.backgroundCustom, true )
-	Hud_SetVisible( file.titleCustom, true )
-	// if( IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_haloMod" || IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_haloMod_oddball" || IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_1v1" && GetCurrentPlaylistName() == "fs_lgduels_1v1" )
-	// {
-		// Hud_SetVisible( file.hintCustom, true )
-	// }
-	// else
-		Hud_SetVisible( file.hintCustom, false )
-
-	//file.scoreboardBg = RuiCreate( $"ui/scoreboard_background.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, 0 )
+	file.scoreboardBg = RuiCreate( $"ui/scoreboard_background.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, 0 )
 	file.scoreboardOverlays = CreateScoreboardOverlays()
 
-	int myTeam = TEAM_MULTITEAM_FIRST // localPlayer.GetTeam()
+	int myTeam = localPlayer.GetTeam()
+	if ( myTeam == TEAM_SPECTATOR ) 
+	{
+		myTeam = GetDefaultNonSpectatorTeam()
+	}
 
 	array<int> enemyTeams = GetAllEnemyTeams( myTeam )
 
@@ -410,36 +487,43 @@ void function ShowScoreboardMP()
 	RuiSetString( Hud_GetRui( file.footer ), "footerText", Localize( "#RIGHT_SCOREBOARD_FOCUS" ) )
 
 
-	// EndSignal( clGlobal.signalDummy, "OnHideScoreboard" )
+	EndSignal( clGlobal.signalDummy, "OnHideScoreboard" )
 
 	UISize screenSize = GetScreenSize()
 	float resMultX = screenSize.width / 1920.0
 	float resMultY = screenSize.height / 1080.0
 
-	int numTeams = file.max_teams
+	int numTeams = GetCurrentPlaylistVarInt( "max_teams", MAX_TEAM_SLOTS )
 	Assert( numTeams >= 1 )
 	int numPlayersOnATeam = GetNumPlayersToDisplayAsATeam()
 	int totalTeamLogoOffset
 
-	totalTeamLogoOffset = SCOREBOARD_TEAM_LOGO_OFFSET
-	numTeams = 1
+	if ( UseOnlyMyTeamScoreboard() || UseSingleTeamScoreboard() )
+	{
+		totalTeamLogoOffset = SCOREBOARD_TEAM_LOGO_OFFSET
+		numTeams = 1
+	}
+	else
+	{
+		totalTeamLogoOffset = SCOREBOARD_TEAM_LOGO_OFFSET * numTeams
+	}
 
 	int teamHeight = SCOREBOARD_TEAM_LOGO_HEIGHT + SCOREBOARD_PLAYER_ROW_OFFSET + ( SCOREBOARD_PLAYER_ROW_HEIGHT + SCOREBOARD_PLAYER_ROW_SPACING ) * numPlayersOnATeam - SCOREBOARD_PLAYER_ROW_SPACING
 	int scoreboardHeight = SCOREBOARD_TITLE_HEIGHT + SCOREBOARD_SUBTITLE_HEIGHT + ( teamHeight * numTeams ) + totalTeamLogoOffset  + SCOREBOARD_FOOTER_HEIGHT
 
-	//printt( "team height: " + teamHeight + ", scoreboardHeight: " + scoreboardHeight )
+	
 	int scoreboardYOffset = -int( ( ( 1080 - scoreboardHeight ) / 2 - 48 ) * resMultY )
 	if ( UseSingleTeamScoreboard() )
-		scoreboardYOffset += int( 85 * resMultY )
+		scoreboardYOffset -= int( 325 * resMultY )
 
 	int winningTeamYOffset = int( ( SCOREBOARD_SUBTITLE_HEIGHT + SCOREBOARD_TEAM_LOGO_OFFSET ) * resMultY )
 	int teamHeightMultiplied = int( teamHeight * resMultY )
-	//Changing losingTeamYOffset to 0 to help with squeezing more players on screen for survival squads
-	int losingTeamYOffset =  0 //int(  SCOREBOARD_TEAM_LOGO_OFFSET  * resMultY )
+	
+	int losingTeamYOffset =  0 
 
 	int footerYOffset = int( ( scoreboardHeight - SCOREBOARD_TITLE_HEIGHT - SCOREBOARD_FOOTER_HEIGHT + 36 ) * resMultY )
 
-	//printt( "scoreboardYOffset: " + scoreboardYOffset + ", winningTeamYOffset: " + winningTeamYOffset + ", losingTeamYOffset" + losingTeamYOffset + ", footerYOffset" + footerYOffset)
+	
 
 	int index
 	var elemTable
@@ -458,26 +542,31 @@ void function ShowScoreboardMP()
 	IntFromEntityCompare compareFunc = GetScoreboardCompareFunc()
 
 	file.scoreboard.Show()
-
-	//WHY THE FUCK DID THIS BREAK THE SCOREBOARD - AyeZeeBB
 	ScoreboardFadeIn()
 
 	int maxPlayerDisplaySlots = GetNumPlayersToDisplayAsATeam()
+
 	bool firstUpdate = true
 
-	while( true ) //TODO : revisit
+	
+	
+
+	for ( ;; )
 	{
 		localPlayer = GetLocalClientPlayer()
 
 		Assert( clGlobal.isScoreboardShown )
 
-		//if( IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_haloMod_ctf" || IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_haloMod" || IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_haloMod_oddball" || IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_1v1" && GetCurrentPlaylistName() == "fs_lgduels_1v1" )
-		if( IsAlive( GetLocalClientPlayer() ) && Playlist() == ePlaylists.fs_haloMod_ctf || IsAlive( GetLocalClientPlayer() ) && Playlist() == ePlaylists.fs_haloMod || IsAlive( GetLocalClientPlayer() ) && Playlist() == ePlaylists.fs_haloMod_oddball || Playlist() == ePlaylists.fs_1v1 || Playlist() == ePlaylists.fs_lgduels_1v1 )
+		if ( file.hasFocus )
 		{
-			Hud_SetVisible( file.hintCustom, true )
+			if ( !IsValid( file.selectedPlayer ) )
+			{
+				if ( IsValid( file.nextPlayer ) )
+					file.selectedPlayer = file.nextPlayer
+				else
+					file.selectedPlayer = localPlayer
+			}
 		}
-		else
-			Hud_SetVisible( file.hintCustom, false )
 
 		if ( UseOnlyMyTeamScoreboard() )
 		{
@@ -490,7 +579,7 @@ void function ShowScoreboardMP()
 		}
 		else if ( UseSingleTeamScoreboard() )
 		{
-			teamPlayers[myTeam] = GetSortedPlayers_FFA( compareFunc )
+			teamPlayers[myTeam] = GetSortedPlayers( compareFunc, 0 )
 			foreach ( enemyTeam in enemyTeams )
 			{
 				teamPlayers[enemyTeam] = []
@@ -503,6 +592,19 @@ void function ShowScoreboardMP()
 		}
 		else
 		{
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+
 			teamPlayers[myTeam] = GetSortedPlayers( compareFunc, myTeam )
 			foreach ( enemyTeam in enemyTeams )
 			{
@@ -525,8 +627,7 @@ void function ShowScoreboardMP()
 		if ( UseOnlyMyTeamScoreboard() || UseSingleTeamScoreboard() )
 		{
 			file.header.gametypeAndMap.SetY( scoreboardYOffset )
-			if( winningTeam in file.teamElems )
-				file.teamElems[winningTeam].logo.SetY( winningTeamYOffset )
+			file.teamElems[winningTeam].logo.SetY( winningTeamYOffset )
 			file.footer.SetY( footerYOffset )
 		}
 		else
@@ -562,9 +663,8 @@ void function ShowScoreboardMP()
 					continue
 
 				elemTable = file.playerElems[team][index]
-				// Hud_SetWidth( elemTable.background, Hud_GetBaseWidth( elemTable.background ) * 1.25 )
-				var rui = Hud_GetRui( elemTable.background )
 
+				var rui = Hud_GetRui( elemTable.background )
 				if ( player == file.selectedPlayer )
 				{
 					RuiSetFloat3( rui, "bgColor", IsFriendlyTeam( player.GetTeam(), myTeam ) ? SCOREBOARD_FRIENDLY_SELECTED_COLOR : SCOREBOARD_ENEMY_SELECTED_COLOR )
@@ -577,7 +677,7 @@ void function ShowScoreboardMP()
 					RuiSetFloat( rui, "selectedAlpha", 0.0 )
 				}
 
-				//Overwrite color if player is dead
+				
 				bool playerIsAlive = IsAlive( player )
 				if ( !playerIsAlive )
 					RuiSetFloat3( rui, "bgColor", <0.5,0.5,0.5> )
@@ -585,24 +685,74 @@ void function ShowScoreboardMP()
 
 				allPlayers.append( player )
 
-				// Update player name and color
+				
+				
+				
+
+				
+
+
+
+
+
+
+
+
+
+				
+
+				
 				string name = player.GetPlayerName()
-				// if ( player.HasBadReputation() )
-					// name = "* " + name
+				if ( player.HasBadReputation() )
+					name = "* " + name
 
 				RuiSetString( rui, "playerName", name )
 
-				ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
-				asset classIcon      = CharacterClass_GetGalleryPortrait( character )
-				RuiSetImage( rui, "playerCard", classIcon )
-
-				if ( playerIsAlive )
-					RuiSetFloat3( rui, "textColor", <1,1,1> )
+				if ( player == localPlayer )
+				{
+					RuiSetFloat3( rui, "textColor", SCOREBOARD_LOCAL_PLAYER_COLOR )
+				}
 				else
-					RuiSetFloat3( rui, "textColor", SCOREBOARD_DEAD_FONT_COLOR )
-
-
-				RuiSetInt( rui, "micState", MIC_STATE_NO_MIC )
+				{
+					if ( !IsPrivateMatch() && IsPartyMember( player ) )
+					{
+						RuiSetFloat3( rui, "textColor", SCOREBOARD_PARTY_COLOR )
+					}
+					else
+					{
+						if ( playerIsAlive )
+							RuiSetFloat3( rui, "textColor", <1,1,1> )
+						else
+							RuiSetFloat3( rui, "textColor", SCOREBOARD_DEAD_FONT_COLOR )
+					}
+				}
+				
+				if ( player.HasMic() )
+				{
+					if ( player.IsVoiceAndTextMuted() )
+					{
+						RuiSetInt( rui, "micState", MIC_STATE_MUTED )
+					}
+					else if ( player.InPartyChat() )
+					{
+						if ( player.IsTalking() )
+							RuiSetInt( rui, "micState", MIC_STATE_PARTY_TALKING )
+						else
+							RuiSetInt( rui, "micState", MIC_STATE_PARTY_HAS_MIC )
+					}
+					else if ( player.IsTalking() )
+					{
+						RuiSetInt( rui, "micState", MIC_STATE_TALKING )
+					}
+					else
+					{
+						RuiSetInt( rui, "micState", MIC_STATE_HAS_MIC )
+					}
+				}
+				else
+				{
+					RuiSetInt( rui, "micState", MIC_STATE_NO_MIC )
+				}
 
 				UpdateScoreboardForGamemode( player, rui, Hud_GetRui( file.header.scoreHeader ) )
 
@@ -615,7 +765,7 @@ void function ShowScoreboardMP()
 					break
 
 				if ( !firstUpdate )
-					WaitFrame() //Only update 1 player a frame; loop takes too long otherwise on consoles
+					WaitFrame() 
 			}
 
 			int reservedCount
@@ -634,7 +784,7 @@ void function ShowScoreboardMP()
 				loadingCount = GetTeamPendingPlayersLoading( team )
 			}
 
-			if ( team > TEAM_UNASSIGNED && ( !UseSingleTeamScoreboard() || team == TEAM_MILITIA ) ) // if you run this block for both teams, then it will show players "connecting" for both teams
+			if ( team > TEAM_UNASSIGNED && ( !UseSingleTeamScoreboard() || team == TEAM_MILITIA ) ) 
 			{
 				int numDone = 0
 				for ( int idx = 0; idx < (reservedCount + connectingCount + loadingCount); idx++ )
@@ -659,10 +809,10 @@ void function ShowScoreboardMP()
 			while ( index < maxPlayerDisplaySlots )
 			{
 				elemTable = file.playerElems[team][index]
-				//Hud_SetWidth( elemTable.background, Hud_GetBaseWidth( elemTable.background ) * 1.25 )
 
 				var rui = Hud_GetRui( elemTable.background )
 				RuiSetString( rui, "playerName", "" )
+				RuiSetInt( rui, "micState", MIC_STATE_NO_MIC )
 				RuiSetImage( rui, "playerStatus", $"" )
 				for ( int i=0; i<6; i++ )
 					RuiSetImage( rui, "extraIcon" + i, $"" )
@@ -679,7 +829,7 @@ void function ShowScoreboardMP()
 
 		RuiSetInt( Hud_GetRui( file.pingText ), "ping", MyPing() )
 
-		if ( allPlayers.len() )
+		if ( allPlayers.len() > 0 )
 		{
 			file.prevPlayer = allPlayers[ (selectedPlayerIndex + allPlayers.len() - 1) % allPlayers.len() ]
 			file.nextPlayer = allPlayers[ (selectedPlayerIndex + 1) % allPlayers.len() ]
@@ -698,21 +848,21 @@ void function ShowScoreboardMP()
 		}
 
 		firstUpdate = false
-
-		wait 0.1
+		WaitFrame()
 	}
+#endif
 }
 
-//Todo: create standalone version for each mode and init for the mode.
 void function UpdateScoreboardForGamemode( entity player, var rowRui, var scoreHeaderRui )
 {
+#if R2_SCOREBOARD
 	array<string> headers = GameMode_GetScoreboardColumnTitles( GAMETYPE )
 	array<int> playerGameStats = GameMode_GetScoreboardColumnScoreTypes( GAMETYPE )
 	array<int> numDigits = GameMode_GetScoreboardColumnNumDigits( GAMETYPE )
 
 	Assert( headers.len() > 0 && headers.len() == playerGameStats.len() && headers.len() == numDigits.len() )
 
-	//int scoreboardWidth = 570
+	
 	int playerScore1 = 0
 	int playerScore2 = 0
 	int playerScore3 = 0
@@ -732,55 +882,22 @@ void function UpdateScoreboardForGamemode( entity player, var rowRui, var scoreH
 	{
 		case 4:
 			playerScore4Header = headers[ 3 ]
-			if (IsValid( player ))
-			{
-				playerScore4 = player.GetPlayerNetInt( "latency" )
-			}
+			playerScore4 = player.GetPlayerGameStat( playerGameStats[ 3 ] )
 			playerScore4NumDigits = numDigits[ 3 ]
 
 		case 3:
 			playerScore3Header = headers[ 2 ]
-			if (IsValid( player ))
-			{
-				if( Playlist() == ePlaylists.fs_dm_oddball || Playlist() == ePlaylists.fs_haloMod_oddball )
-					playerScore3 = player.GetPlayerNetInt( "oddball_ballHeldTime" )
-				else if( Gamemode() == eGamemodes.fs_snd )
-					playerScore3 = player.GetPlayerNetInt( "defused" )
-				else if( Playlist() == ePlaylists.fs_scenarios )
-					playerScore3 = player.GetPlayerNetInt( "FS_Scenarios_PlayerScore" )
-				else
-					playerScore3 = player.GetPlayerNetInt( "damage" )
-			}
+			playerScore3 = player.GetPlayerGameStat( playerGameStats[ 2 ] )
 			playerScore3NumDigits = numDigits[ 2 ]
 
 		case 2:
 			playerScore2Header = headers[ 1 ]
-			if (IsValid( player ))
-			{
-				if( Gamemode() == eGamemodes.CUSTOM_CTF )
-					playerScore2 = player.GetPlayerNetInt( "returns" )
-				else if( Playlist() == ePlaylists.fs_lgduels_1v1 )
-					playerScore2 = player.GetPlayerNetInt( "accuracy" )
-				else if( Gamemode() == eGamemodes.fs_snd )
-					playerScore2 = player.GetPlayerNetInt( "planted" )
-				else if( Playlist() == ePlaylists.fs_scenarios )
-					playerScore2 = player.GetPlayerNetInt( "FS_Scenarios_MatchesWins")
-				else
-					playerScore2 = player.GetPlayerNetInt( "deaths" )
-			}
+			playerScore2 = player.GetPlayerGameStat( playerGameStats[ 1 ] )
 			playerScore2NumDigits = numDigits[ 1 ]
 
 		case 1:
 			playerScore1Header = headers[ 0 ]
-			if (IsValid( player ))
-			{
-				if( Gamemode() == eGamemodes.CUSTOM_CTF )
-					playerScore1 = player.GetPlayerNetInt( "captures" )
-				else if( Playlist() == ePlaylists.fs_scenarios )
-					playerScore1 = player.GetPlayerNetInt( "kills" ) //?
-				else
-					playerScore1 = player.GetPlayerNetInt( "kills" )
-			}
+			playerScore1 = player.GetPlayerGameStat( playerGameStats[ 0 ] )
 			playerScore1NumDigits = numDigits[ 0 ]
 	}
 
@@ -802,26 +919,22 @@ void function UpdateScoreboardForGamemode( entity player, var rowRui, var scoreH
 	RuiSetInt( scoreHeaderRui, "playerScore2NumDigits", playerScore2NumDigits )
 	RuiSetInt( scoreHeaderRui, "playerScore3NumDigits", playerScore3NumDigits )
 	RuiSetInt( scoreHeaderRui, "playerScore4NumDigits", playerScore4NumDigits )
+#endif
 }
 
 void function HideScoreboardMP()
 {
-	clGlobal.levelEnt.Signal( "ShutDownScoreboardRefresh" )
-
 	foreach( void functionref() callbackFunc in file.scoreboardCallbacks_OnHiding )
 		callbackFunc()
 
-	//if ( file.hasFocus )
-		//HudInput_PopContext()
+	if ( !ScoreboardEnabled() )
+		return
 
-	Hud_SetVisible( file.backgroundCustom, false )
-	Hud_SetVisible( file.titleCustom, false )
-	Hud_SetVisible( file.hintCustom, false )
+	if ( file.hasFocus )
+		HudInput_PopContext()
 
 	ScoreboardFadeOut()
-
-	WaitFrame()
-
+	wait( 0.1 )
 	file.hasFocus = false
 	file.selectedPlayer = null
 
@@ -866,7 +979,7 @@ bool function ScoreboardInputMP( int key )
 			return true
 
 		case BUTTON_X:
-			TogglePlayerVoiceMute( file.selectedPlayer )
+			TogglePlayerVoiceAndTextMute( file.selectedPlayer )
 			return true
 
 		case BUTTON_DPAD_LEFT:
@@ -891,21 +1004,24 @@ bool function ScoreboardInputMP( int key )
 	unreachable
 }
 
-//var function ClScoreboardMp_GetGameTypeDescElem()
-//{
-//	return file.header.gametypeDesc
-//}
+
+
+
+
 
 bool function UseSingleTeamScoreboard()
 {
-	return true
+	return (IsFFAGame() || IsSingleTeamMode() || IsPVEMode())
 }
 
 bool function UseOnlyMyTeamScoreboard()
 {
-	// bool scoreboard_onlyMyTeam = bool( GetCurrentPlaylistVarInt( "scoreboard_onlyMyTeam", 0 ) )
-	// if ( scoreboard_onlyMyTeam )
-		// return true
+	if ( IsPVEMode() )
+		return true
+
+	bool scoreboard_onlyMyTeam = bool( GetCurrentPlaylistVarInt( "scoreboard_onlyMyTeam", 1 ) )
+	if ( scoreboard_onlyMyTeam )
+		return true
 
 	return false
 }
@@ -928,15 +1044,15 @@ void function ScoreboardSelectPrevPlayer( entity player )
 	file.selectedPlayer = file.prevPlayer
 }
 
-//var function GetScoreBoardFooterRui()
-//{
-//	return Hud_GetRui( file.footer )
-//}
 
-//void function SetScoreboardUpdateCallback( void functionref( entity, var ) func )
-//{
-//	file.scoreboardUpdateCallback = func
-//}
+
+
+
+
+
+
+
+
 
 void function AddScoreboardCallback_OnShowing( void functionref() func )
 {
@@ -962,5 +1078,5 @@ void function ScoreboardMute( entity player )
 	if ( !file.hasFocus )
 		return
 
-	TogglePlayerVoiceMute( file.selectedPlayer )
+	TogglePlayerVoiceAndTextMute( file.selectedPlayer )
 }

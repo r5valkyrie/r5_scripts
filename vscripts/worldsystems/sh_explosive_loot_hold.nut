@@ -68,11 +68,11 @@ const int EXPLOSIVE_HOLD_PANEL_USE_PARAMS = USABLE_CUSTOM_HINTS | USABLE_BY_OWNE
 const vector PANEL_BOUNDING_BOX_MIN = <-10,-10,60>
 const vector PANEL_BOUNDING_BOX_MAX = <10,10,70>
 
-#if DEV
+#if DEVELOPER
 global function DEV_GiveGrenades
 global function DEV_LootHold_ShowAll
 global function DEV_LootHold_GotoNearest
-#endif // DEV
+#endif // DEVELOPER
 
 #endif // SERVER
 
@@ -227,7 +227,7 @@ void function EntitiesDidLoad()
 				linkEnt.Anim_PlayOnly( EXPLOSIVE_HOLD_PANEL_ANIM_IDLE )
 
 				AddCallback_OnUseEntity_ClientServer( linkEnt, ExplosiveHoldDoor_OnUse )
-				SetCallback_CanUseEntityCallback_Retail( linkEnt, ExplosiveHoldDoor_CanUse )
+				SetCallback_CanUseEntityCallback( linkEnt, ExplosiveHoldDoor_CanUse )
 
 				foreach ( entity panelLinkEnt in linkEnt.GetLinkEntArray() )
 				{
@@ -596,9 +596,9 @@ void function ForcedBreach_OpenPanel_Thread( entity panel )
 	vector explosionPos = panel.GetOrigin() + < 0, 0, 50 >
 
 	//// Uncomment to debug.
-	//#if DEV
-	//	DebugDrawSphere( explosionPos, 32, COLOR_RED, true, 15 )
-	//#endif // DEV
+	//#if DEVELOPER
+	//	DebugDrawSphere( explosionPos, 32, <255, 0, 0>, true, 15 )
+	//#endif // DEVELOPER
 
 	PlayFX( EXPLOSIVE_HOLD_EXPLOSION_FX, explosionPos, panel.GetAngles(), null)
 
@@ -617,7 +617,7 @@ void function OnPanelCreated( entity panel )
 		return
 
 	AddCallback_OnUseEntity_ClientServer( panel, ExplosiveHoldDoor_OnUse )
-	SetCallback_CanUseEntityCallback_Retail( panel, ExplosiveHoldDoor_CanUse )
+	SetCallback_CanUseEntityCallback( panel, ExplosiveHoldDoor_CanUse )
 	AddEntityCallback_GetUseEntOverrideText( panel, GetExplosiveHoldUseTextOverride )
 }
 #endif // CLIENT
@@ -966,9 +966,9 @@ void function ExplosiveHoldAnimation_Thread( entity panel, entity player, Explos
 				}
 				else if ( e[ "kickedoff_bybreach" ] )
 				{
-					#if DEV
+					#if DEVELOPER
 						printt( FUNC_NAME() + "(): Player kicked off panel animation by a breach: " + player.GetPlayerName() )
-					#endif // DEV
+					#endif // DEVELOPER
 				}
 				else
 				{
@@ -1203,7 +1203,7 @@ void function ExplosiveHoldDoor_DoorResponse_Thread ( entity panel, bool wasExpl
 			shake.RemoveFromAllRealms()
 			shake.AddToOtherEntitysRealms( panel )
 			shake.kv.spawnflags = 4 // SF_SHAKE_INAIR // Cam shake with impact
-			//DebugDrawCircle( shake.GetOrigin(), <0,0,0>, 250, COLOR_WHITE, true, 30 )
+			//DebugDrawCircle( shake.GetOrigin(), <0,0,0>, 250, <255, 255, 255>, true, 30 )
 
 			// Turn on vent smoke fx
 			foreach ( entity vfxEntHelper in GetChildren(panel) )
@@ -1374,7 +1374,7 @@ void function CreateGunRackLootData()
 	}
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_GiveGrenades( entity player, int grenadeTypeNDX = 0, int grenadeCount = 3 )
 {
 	table< int, array<string> > lootNamesByType
@@ -1418,7 +1418,7 @@ void function DEV_LootHold_ShowAll( float timeToShow = 30.0 )
 	array< entity > explosiveHolds = _ExplosiveHoldEnts_Get()
 	foreach ( entity explosiveHold in explosiveHolds )
 	{
-		DebugDrawSphere( explosiveHold.GetOrigin(), 256, COLOR_RED, true, timeToShow  )
+		DebugDrawSphere( explosiveHold.GetOrigin(), 256, 255, 0, 0, true, timeToShow  )
 
 		ExplosiveHoldData ornull data = ExplosiveHoldData_Get( explosiveHold )
 		if( data == null )
@@ -1430,7 +1430,7 @@ void function DEV_LootHold_ShowAll( float timeToShow = 30.0 )
 		{
 			foreach( vol in data.noPlaceVolumes )
 			{
-				DebugDrawCylinder( vol.GetOrigin(), < -90, 0, 0 >, EXPLOSIVEHOLD_NOPLACEVOL_RADIUS, EXPLOSIVEHOLD_NOPLACEVOL_HEIGHT, COLOR_YELLOW, true, timeToShow  )
+				DebugDrawCylinder( vol.GetOrigin(), < -90, 0, 0 >, EXPLOSIVEHOLD_NOPLACEVOL_RADIUS, EXPLOSIVEHOLD_NOPLACEVOL_HEIGHT, 255,255,0, true, timeToShow  )
 			}
 		}
 
@@ -1438,7 +1438,7 @@ void function DEV_LootHold_ShowAll( float timeToShow = 30.0 )
 		{
 			foreach( trig in data.breachTriggers )
 			{
-				DebugDrawCylinder( trig.GetOrigin(), < -90, 0, 0 >, EXPLOSIVEHOLD_BREACHTRIGGER_RADIUS, EXPLOSIVEHOLD_BREACHTRIGGER_HEIGHT, COLOR_ORANGE, true, timeToShow  )
+				DebugDrawCylinder( trig.GetOrigin(), < -90, 0, 0 >, EXPLOSIVEHOLD_BREACHTRIGGER_RADIUS, EXPLOSIVEHOLD_BREACHTRIGGER_HEIGHT, 255,128,0, true, timeToShow  )
 			}
 		}
 	}
@@ -1464,12 +1464,12 @@ void function DEV_LootHold_GotoNearest( entity player )
 
 	entity closestHold = ArrayClosest( openHolds, player.GetOrigin() )[ 0 ]
 
-	vector safeSpot = NavMesh_GetClosestPoint( closestHold.GetOrigin() + < 0, 0, 1000 > )
+	vector safeSpot = closestHold.GetOrigin()
 
 	PutPlayerInSafeSpot( player, null, null, safeSpot, safeSpot )
 }
 
-#endif // DEV
+#endif // DEVELOPER
 #endif //SERVER
 
 bool function ExplosiveHold_PlayerHasGrenadeInInventory( entity player )

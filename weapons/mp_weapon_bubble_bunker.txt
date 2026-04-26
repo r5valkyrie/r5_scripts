@@ -27,11 +27,10 @@ WeaponData
     "allow_gibraltar_shield"                        "0"
     "trophy_system_ignore"                          "1"
 
-	"OnWeaponAttemptOffhandSwitch"					"OnWeaponAttemptOffhandSwitch_WeaponBubbleBunker"
-	"OnWeaponTossPrep"								"OnWeaponTossPrep_WeaponBubbleBunker"
-	"OnWeaponTossReleaseAnimEvent"					"OnWeaponTossReleaseAnimEvent_WeaponBubbleBunker"
-	"OnProjectileCollision"							"OnProjectileCollision_weapon_deployable"
-	"OnWeaponRegenEnd"                              "OnWeaponRegenEndGeneric"
+	"OnWeaponTossPrep" 								"OnWeaponTossPrep_WeaponBubbleBunker"
+	"OnWeaponTossReleaseAnimEvent" 					"OnWeaponTossReleaseAnimEvent_WeaponBubbleBunker"
+	"OnProjectileCollision" 						"OnProjectileCollision_weapon_deployable_LDOV"
+	"OnWeaponRegenEnd" 								"OnWeaponRegenEndGeneric"
 	"projectile_ignores_vortex"						"fall_vortex"
 
 
@@ -70,6 +69,7 @@ WeaponData
 	"projectile_visible_to_smart_ammo"				"0"
 
 	"critical_hit"									"0"
+	"grenade_use_mask_ability" "1"
 
 	// Sounds
 	//"sound_throw_1p"								"Gibraltar_BubbleShield_Throw_1P"

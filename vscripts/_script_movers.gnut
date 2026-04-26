@@ -1578,7 +1578,7 @@ void function CreateMoverDangrousAreaUntilMoverPasses( entity mover, vector star
 	entity lifetimeEnt = CreateScriptRef( pos )
 
 	// Create the dangerous area
-	// AI_CreateDangerousArea_Static( lifetimeEnt, null, radius, TEAM_INVALID, true, true, false, pos )
+	AI_CreateDangerousArea_Static( lifetimeEnt, null, radius, TEAM_INVALID, true, true, pos )
 
 	// Wait for mover to go past the dangerous area, or timeout
 	float endTime = Time() + maxDuration
@@ -1679,7 +1679,7 @@ vector function MoverPath_GetAngleAnchor( entity node1, entity node2 )
 	float d = Distance( node1Origin, node2Origin )
 	vector intersect = GetClosestPointToLineSegments( node1Origin, node1Origin + node1SideVec * d, node2Origin, node2Origin + node2SideVec * d )
 
-	//DebugDrawLine( intersect, node1Origin, COLOR_YELLOW, true, 5.0 )
+	//DebugDrawLine( intersect, node1Origin, <255, 255, 0>, true, 5.0 )
 	//DebugDrawLine( intersect, node2Origin, COLOR_CYAN, true, 5.0 )
 	//DebugDrawLine( node1Origin, node1Origin + node1SideVec * 250, <100, 100, 100>, true, 5.0 )
 	//DebugDrawLine( node2Origin, node2Origin + node2SideVec * 250, <100, 100, 100>, true, 5.0 )
@@ -1894,7 +1894,7 @@ void function SeeSawSpeedThink_internal( entity seeSaw, SeeSawThinkStruct e, vec
 		}
 
 		//DebugDrawText( seeSaw.GetOrigin(), "" + e.speed, true, 1 )
-		//DebugDrawLine( seeSaw.GetOrigin(), GetPlayerArray()[0].GetOrigin(), COLOR_RED, true, 0.2 )
+		//DebugDrawLine( seeSaw.GetOrigin(), GetPlayerArray()[0].GetOrigin(), <255, 0, 0>, true, 0.2 )
 	}
 
 //	if ( ge(117) == seeSaw )
@@ -1929,7 +1929,7 @@ void function PlayerNearSeeSaw( entity player, entity seeSaw, float height, SeeS
 {
 	vector playerOrigin = player.GetOrigin()
 	vector seeSawOrigin = seeSaw.GetOrigin()
-	//DebugDrawLine( playerOrigin, seeSawOrigin, COLOR_RED, true, 0.2 )
+	//DebugDrawLine( playerOrigin, seeSawOrigin, <255, 0, 0>, true, 0.2 )
 	vector originDif = playerOrigin - seeSawOrigin
 	vector difNormal = Normalize( originDif )
 	vector seeSawAngles = seeSaw.GetAngles()
@@ -2012,7 +2012,7 @@ void function FanPusherThink( entity fanPusher )
 	table<entity,float> startHeights
 
 	// Play fan sound on entity instead of at position because some occluder bug with miles. Easiest fix for late in game. Next project fan pusher shoudln't be info_target that you can't play sounds on
-	entity fanSoundEntity = CreateScriptMover( fanPusher.GetOrigin() )
+	entity fanSoundEntity = CreateScriptMover( "", fanPusher.GetOrigin() )
 	fanSoundEntity.DisableHibernation()
 
 	// Delay to fix code bug where audio wont play at map load

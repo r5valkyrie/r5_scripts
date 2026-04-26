@@ -1,6 +1,6 @@
 global function UserInfoPanels_LevelInit
+global function UpdateActiveUserInfoPanels
 //global function UpdateUserInfoWithXP
-
 
 struct SingleCurrencyBalanceElement
 {
@@ -20,7 +20,7 @@ void function UserInfoPanels_LevelInit()
 	FileStruct_LifetimeLevel newFileLevel
 	fileLevel = newFileLevel
 
-	SetupUserInfoPanelToolTips()
+//	SetupUserInfoPanelToolTips()
 	AddCallbackOrMaybeCallNow_OnAllItemFlavorsRegistered( SetupUserInfoPanels )
 }
 
@@ -30,11 +30,19 @@ void function UserInfoPanels_LevelInit()
 //}
 
 
-void function SetupUserInfoPanelToolTips()
+void function SetupUserInfoPanelToolTips( int currency1 = 0, int currency2 = 0, int currency3 = 0 )
 {
 	ToolTipData ttd
 	ttd.tooltipStyle = eTooltipStyle.CURRENCY
-	ttd.descText = "#CURRENCIES_TOOLTIP"
+	ttd.actionHint1 = FormatAndLocalizeNumber( "1", float( currency1 ), true )
+	ttd.actionHint2 = FormatAndLocalizeNumber( "1", float( currency2 ), true )
+	ttd.actionHint3 = FormatAndLocalizeNumber( "1", float( currency3 ), true )
+
+	int nextExpirationAmount = 1//GRX_GetNextCurrencyExpirationAmt()
+	if( nextExpirationAmount > 0 )
+		ttd.descText = Localize( "#CURRENCIES_TOOLTIP_EXPIRATION", nextExpirationAmount, ( GetUnixTimestamp() - GetUnixTimestamp() ) / SECONDS_PER_DAY )
+	else
+		ttd.descText = ""
 
 	foreach ( var menu in uiGlobal.allMenus )
 	{
@@ -107,15 +115,14 @@ void function UpdateActiveUserInfoPanels()
 	int premiumBalance, creditsBalance, craftingBalance
 	if ( isReady )
 	{
-		premiumBalance = GRXCurrency_GetPlayerBalance( GetUIPlayer(), GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] )
-		creditsBalance = GRXCurrency_GetPlayerBalance( GetUIPlayer(), GRX_CURRENCIES[GRX_CURRENCY_CREDITS] )
-		craftingBalance = GRXCurrency_GetPlayerBalance( GetUIPlayer(), GRX_CURRENCIES[GRX_CURRENCY_CRAFTING] )
+		premiumBalance = GRXCurrency_GetPlayerBalance( GetLocalClientPlayer(), GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] )
+		creditsBalance = GRXCurrency_GetPlayerBalance( GetLocalClientPlayer(), GRX_CURRENCIES[GRX_CURRENCY_CREDITS] )
+		craftingBalance = GRXCurrency_GetPlayerBalance( GetLocalClientPlayer(), GRX_CURRENCIES[GRX_CURRENCY_CRAFTING] )
 	}
 
 	foreach( var elem, bool unused in fileLevel.activeUserInfoPanelSet )
 	{
 		var rui = Hud_GetRui( elem )
-		//RuiSetString( rui, "userName", GetPlayerName() )
 		RuiSetBool( rui, "isQuerying", !isReady )
 
 		if ( isReady )
@@ -123,20 +130,20 @@ void function UpdateActiveUserInfoPanels()
 			#if DEVELOPER
 				RuiSetBool( rui, "hasUnknownItems", GetConVarBool( "grx_hasUnknownItems" ) )
 			#endif
-			RuiSetInt( rui, "count1", premiumBalance )
-			RuiSetInt( rui, "count2", creditsBalance )
-			RuiSetInt( rui, "count3", craftingBalance )
+			RuiSetString( rui, "count1",  FormatAndLocalizeNumber( "1", float( premiumBalance ), true ) )
+			RuiSetString( rui, "count2", LocalizeAndShortenNumber_Int( creditsBalance ) )
+			RuiSetString( rui, "count3", LocalizeAndShortenNumber_Int( craftingBalance ) )
 		}
 	}
 
 	foreach( SingleCurrencyBalanceElement scbe in fileLevel.singleCurrencyBalanceElementList )
 	{
 		var rui = Hud_GetRui( scbe.element )
-		RuiSetBool( rui, "isQuerying", !isReady )
-
-		if ( isReady )
-			RuiSetInt( rui, "count", GRXCurrency_GetPlayerBalance( GetUIPlayer(), scbe.currency ) )
+		RuiSetBool( rui, "isQuerying", false )
+		RuiSetInt( rui, "count", 420 )
 	}
+
+	SetupUserInfoPanelToolTips( premiumBalance, creditsBalance, craftingBalance )
 }
 
 

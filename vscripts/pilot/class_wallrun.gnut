@@ -37,7 +37,6 @@ function ClassWallrun_Init()
 
 function Wallrun_AddPlayer( player )
 {
-	player.playerClassData[level.pilotClass] <- {}
 }
 
 
@@ -200,7 +199,6 @@ function ShouldAdjustDamageForRodeoPlayer( damageInfo )
 		case eDamageSourceId.rodeo_trap:
 		case eDamageSourceId.mp_titanweapon_vortex_shield:
 		case eDamageSourceId.mp_titanweapon_vortex_shield_ion:
-		case eDamageSourceId.mp_titanability_smoke:
 		case eDamageSourceId.mp_weapon_satchel:	//added so that rodeoing players are no longer invulnerable to their satchels when detonated by Titan's smoke
 			return false
 

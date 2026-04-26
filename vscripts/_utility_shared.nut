@@ -43,38 +43,40 @@ global struct LineSegment
 
 global struct FirstPersonSequenceStruct
 {
-	string firstPersonAnim                      = ""
-	string thirdPersonAnim                      = ""
-	string firstPersonAnimIdle                  = ""
-	string thirdPersonAnimIdle                  = ""
-	string relativeAnim                         = ""
-	string attachment                           = ""
-	bool teleport                               = false
-	bool noParent                               = false
-	float blendTime                             = CALCULATE_SEQUENCE_BLEND_TIME
-	float thirdPersonBlendInTime                = -1.0
-	float firstPersonBlendInTime                = -1.0
-	float firstPersonBlendOutTime               = -1.0
-	float thirdPersonBlendOutTime               = -1.0
-	bool noViewLerp                             = false
-	bool hideProxy                              = false
+	string                     firstPersonAnim = ""
+	string                     thirdPersonAnim = ""
+	string                     firstPersonAnimIdle = ""
+	string                     thirdPersonAnimIdle = ""
+	string                     relativeAnim = ""
+	string                     attachment = ""
+	bool                       teleport = false
+	bool                       noParent = false
+	float                      blendTime = CALCULATE_SEQUENCE_BLEND_TIME
+	float                      thirdPersonBlendInTime = -1.0
+	float                      firstPersonBlendInTime = -1.0
+	float                      firstPersonBlendOutTime = -1.0
+	float                      thirdPersonBlendOutTime = -1.0
+	bool                       noViewLerp = false
+	bool                       hideProxy = false
 	void functionref( entity ) viewConeFunction = null
-	vector ornull origin                        = null
-	vector ornull angles                        = null
-	bool enablePlanting                         = false
-	float setStartTime                          = -1 // Set what time (in seconds since the beginning of Time()) the animation will start in.
-	float setInitialTime                        = 0.0 // Set the starting point of the animation in seconds. 0 = beginning of the animation.
-	bool useAnimatedRefAttachment               = false //Position entity using ref every frame instead of using root motion
-	bool renderWithViewModels                   = false
-	bool gravity                                = false // force gravity command on sequence
-	bool playerPushable                         = false
-	array<string> thirdPersonCameraAttachments  = []
-	bool thirdPersonCameraVisibilityChecks      = false
-	entity thirdPersonCameraEntity              = null
-	bool snapPlayerFeetToEyes                   = true
-	bool prediction                             = false
-	bool setVelocityOnEnd                       = false
-	bool snapForLocalPlayer                     = false
+	vector ornull              origin = null
+	vector ornull              angles = null
+	bool                       enablePlanting = false
+	bool                       enableRelativeToGround = false
+	bool                       enableCollision = false
+	float                      setStartTime = -1 // Set what time (in seconds since the beginning of Time()) the animation will start in.
+	float                      setInitialTime = 0.0 // Set the starting point of the animation in seconds. 0 = beginning of the animation.
+	bool                       useAnimatedRefAttachment = false //Position entity using ref every frame instead of using root motion
+	bool                       renderWithViewModels = false
+	bool                       gravity = false // force gravity command on sequence
+	bool                       playerPushable = false
+	array<string>              thirdPersonCameraAttachments = []
+	bool                       thirdPersonCameraVisibilityChecks = false
+	entity                     thirdPersonCameraEntity = null
+	bool                       snapPlayerFeetToEyes = true
+	bool                       prediction = false
+	bool                       setVelocityOnEnd = false
+	bool                       snapForLocalPlayer = false
 }
 
 global struct FrontRightDotProductsStruct
@@ -90,6 +92,20 @@ global struct RaySphereIntersectStruct
 	float leaveFrac
 }
 
+global struct FriendlyEnemyFXStruct
+{
+	entity friendlyColoredFX
+	entity enemyColoredFX
+	int    team
+}
+
+
+global struct PotentialTargetData
+{
+	entity target
+	float score
+}
+
 global enum eGradeFlags
 {
 	IS_OPEN = (1 << 0),
@@ -97,6 +113,14 @@ global enum eGradeFlags
 	IS_OPEN_SECRET = (1 << 2),
 	IS_LOCKED = (1 << 3),
 }
+
+const array<string> ALLOWED_SCRIPT_PARENT_ENTS = [
+	"hatch_bunker_entrance_model_z16",
+	"hatch_bunker_entrance_model_z6",
+	"hatch_bunker_entrance_model_z5",
+	"hatch_bunker_entrance_model_z12",
+	"hatch_bunker_entrance_model_z12_treasure",
+]
 
 struct RefEntAreaData
 {
@@ -109,8 +133,8 @@ struct
 	array<entity>                 invalidEntsForPlacingPermanentsOnto
 	table<entity, RefEntAreaData> invalidAreasRelativeToEntForPlacingPermanentsOnto
 	//int functionref()            getNumTeamsRemainingCallback
-	//float functionref()			 getDeathCamTimeOverride
-	//float functionref()			 getDeathCamSpectateTimeOverride
+	float functionref()			 getDeathCamTimeOverride
+	float functionref()			 getDeathCamSpectateTimeOverride
 	array<string>				 nonInstalledModsTracked
 
 	//UpdraftTriggerSettings&      updraftSettings = { ... }
@@ -119,8 +143,6 @@ struct
 void function Utility_Shared_Init()
 {
 	PrecacheModel( $"mdl/weapons/arms/human_pov_cockpit.rmdl" ) // todo(dw): move this to a better place
-	PrecacheModel( $"mdl/humans/pilots/pilot_medium_reaper_f.rmdl" )
-	PrecacheModel( $"mdl/humans/pilots/pilot_medium_reaper_m.rmdl" )
 
 	RegisterSignal( TRIGGER_INTERNAL_SIGNAL )
 	RegisterSignal( "devForcedWin" )
@@ -143,89 +165,373 @@ void function InitWeaponScripts()
 	ArcCannon_Init()
 	Grenade_FileInit()
 	Vortex_Init()
+	Weapon_Cubemap_Init()
 
 	//	#if SERVER
 	//		PrecacheProjectileEntity( "grenade_frag" )
 	//		PrecacheProjectileEntity( "crossbow_bolt" )
 	//	#endif
 
-	MpWeaponDoubletake_Init()
-	//MpWeaponGrenadeGravity_Init()
-	MpAbilityShifter_Init()
-	MpWeaponDefender_Init()
+	//Lifesteal_Init()
+
+
+
+
+
+
+
+
+		HopupGoldenHorse_Init()
+
+
+
+
+
+
+
+
+
+
+
+
+	//MpWeaponDefender_Init()
+	//MpWeaponDefenderRailgun_Init()
+
+
+
+
+
+	MpWeaponSentinel_Init()
+
+
+
+	//MpWeaponVoltSmg_Init()
+
+
+
+	MpWeaponBow_Init()
+
+
+
 	MpWeaponDmr_Init()
-	MpWeaponSmartPistol_Init()
-	SonarGrenade_Init()
+
+
+
+
+
+
 	MpWeaponSniper_Init()
 	MpWeaponLSTAR_Init()
-	MpWeaponZipline_Init()
+
+
+
+
+
+
+
+	//	MpWeaponTitanSword_Init()
+
 	MpWeaponAlternatorSMG_Init()
+	//MpWeaponShotgun_Init()
+
+
+
 	MpWeaponThermiteGrenade_Init()
-	MeleeWraithKunai_Init()
+	/*MeleeWraithKunai_Init()
 	MpWeaponWraithKunaiPrimary_Init()
-	MeleeBoloSword_Init()
-	MpWeaponPoloSwordPrimary_Init()
 	MeleeBloodhoundAxe_Init()
 	MpWeaponBloodhoundAxePrimary_Init()
+	MeleeCausticHammer_Init()
+	MpWeaponCausticHammerPrimary_Init()
 	MeleeLifelineBaton_Init()
 	MpWeaponLifelineBatonPrimary_Init()
-	MpWeaponDeployableCover_Init()
-	MeleeShadowsquadHands_Init()
+	MeleePathfinderGloves_Init()
+	MpWeaponPathfinderGlovesPrimary_Init()
+	MeleeOctaneKnife_Init()
+	MpWeaponOctaneKnifePrimary_Init()
+	MeleeMirageStatue_Init()
+	MpWeaponMirageStatuePrimary_Init()
+	MeleeWattsonGadget_Init()
+	MpWeaponWattsonGadgetPrimary_Init()
+	MeleeCryptoHeirloom_Init()
+	MpWeaponCryptoHeirloomPrimary_Init()
+	MeleeValkyrieSpear_Init()
+	MpWeaponValkyrieSpearPrimary_Init()
+	MeleeLobaHeirloom_Init()
+	MpWeaponLobaHeirloomPrimary_Init()
+	MeleeSeerHeirloom_Init()
+	MpWeaponSeerHeirloomPrimary_Init()
+	MeleeWraithKunai_rt01_Init()
+	MpWeaponWraithKunai_rt01_Primary_Init()
+	MeleeAshHeirloom_Init()
+	MpWeaponAshHeirloomPrimary_Init()
+	MeleeHorizonHeirloom_Init()
+	MpWeaponHorizonHeirloomPrimary_Init()
+	//	TODO: DELETE WHEN READY
+	MeleeRevenantScythe_rt01_Init()
+	MpWeaponRevenantScythePrimary_rt01_Init()
+	MeleeFuseHeirloom_Init()
+	MpWeaponFuseHeirloomPrimary_Init()
 
-	#if DEVELOPER
+	MeleeArtifactDagger_Init()
+	MpWeaponArtifactDaggerPrimary_Init()
+
+
+		MeleeArtifactSword_Init()
+		MpWeaponArtifactSwordPrimary_Init()
+
+
+
+
+
+
+
+		MeleeCryptoHeirloomRt01_Init()
+		MpWeaponCryptoHeirloomRt01Primary_Init()
+
+
+		MeleeOctaneKnifeRt01_Init()
+		MpWeaponOctaneKnifePrimaryRt01_Init()
+
+	MeleeGibraltarClub_Init()
+	MpWeaponGibraltarClubPrimary_Init()
+	MeleeRampartWrench_Init()
+	MpWeaponRampartWrenchPrimary_Init()
+	MeleeRevenantScythe_Init()
+	MpWeaponRevenantScythePrimary_Init()*/
+
+		MeleeShadowsquadHands_Init()
 		MpWeaponShadowsquadHandsPrimary_Init()
-		MDLSpawner_Init()
-	#endif
 
-	MpAbilityGibraltarShield_Init()
-	MpWeaponBubbleBunker_Init()
 
-	MpWeaponGrenadeDefensiveBombardment_Init()
+		//MeleeBoxingRing_Init()
+		//MpWeaponMeleeBoxingRing_Init()
+
+
+	MpWeaponEmoteProjector_Init()
+	MpGenericOffhand_Init()
+
+
+
+
+
 	MpAbilityHuntModeWeapon_Init()
-	MpAbilityAreaSonarScan_Init()
-	MpWeaponGrenadeGas_Init()
-	MpWeaponDirtyBomb_Init()
-	MpWeaponDeployableMedic_Init()
 	MpWeaponIncapShield_Init()
-	MpWeaponGrenadeBangalore_Init()
-	MpWeaponGrenadeCreepingBombardment_Init()
-	MpWeaponGrenadeCreepingBombardmentWeapon_Init()
-	MpAbilityMirageUltimate_Init()
+
+
+
+
+
+
+
+
+
+
+	//	MpAbilityRiseFromTheAshes_Init()
+
+
+
+
+
+
 	MpWeapon3030_Init()
-	MpWeaponPhaseTunnel_Init()
-	MpWeaponTeslaTrap_Init()
-	MpWeaponTrophy_Init()
+	MpWeaponDragon_LMG_Init()
+
+
+
+
+
+
+
+
+
+		MpAbilityRedeployBalloon_Init()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		MpAbilityCopycatKit_Init()
+
+
+	VOID_RING_Init()
+	MpWeaponCar_Init()
+
+
+
+
+
+	MpWeaponNemesis_Init()
+
+
+
+
+
+
+
+
 
 	MpWeaponBasicBolt_Init()
-
-	//(cafe) S0 Dev Protos
-	MpWeaponGroundSlam_Init()
-	Haunt_Init()
-	MpAbilityLootCompass_Init()
-	MpAbilityMaelstromJavelin_Init()
-	MpAbilityRiotShield_Init()
-	MpAbilitySonicShoutWeapon_Init()
-	MpAbilitySplitTimelineWeapon_Init()
-	MpAbilitySpotterSight_Init()
-	MpAbilitySonicBlast_Init()
-	MpWeaponConcussiveBreach_Init()
-	MpWeaponGrenadeBarrier_Init()
-	MpWeaponGrenadeFlashbang_Init()
-	MpWeaponDebrisTrap_Init()
-	MpWeaponCoverWall_Init()
-	ShPassiveShotgunKick_Init()
-
-	ChargePylons_Init()
-
-	//(kral) wip abilities
-	ShLobaPassiveEyeForQuality_LevelInit()				// Loba Passive
-	//LobaUltimateBlackMarket_LevelInit()				// Loba Ultimate
+	//MpWeaponLmg_Init()
 
 	#if SERVER
-		//BallLightning_Init()
+		BallLightning_Init()
 	#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
+void function InitAbilityScripts()
+{
+	// Released
+	//MpAbilityNone_Init()								// No Ability
+	MpAbilityShifter_Init() 							// Phasing
+	MpAbilitySharedSilence_Init()						// Silence
+	ShShellShock_Init()									// Shellshock
+	ShGas_Init()										// Caustic Gas
+	Sh_PassiveVoices_Init()								// Wraith Passive
+	MpWeaponPhaseTunnel_Init()							// Wraith Ult
+	MpWeaponZipline_Init() 								// Pathfinder Ult
+	MpAbilityGibraltarShield_Init()						// Gibraltar Passive
+	MpWeaponBubbleBunker_Init()							// Gibraltar Tac
+	MpWeaponGrenadeDefensiveBombardment_Init()			// Gibraltar Ult
+	MpAbilityAreaSonarScan_Init()						// Bloodhound Tac
+	PassiveMedic_Init()									// Lifeline Passive
+	MpWeaponDeployableMedic_Init()						// Lifeline Tac
+	MpWeaponGrenadeBangalore_Init()						// Bangalore Tac
+	MpWeaponGrenadeCreepingBombardment_Init()			// Bangalore Ult
+	MpWeaponGrenadeCreepingBombardmentWeapon_Init()		// Bangalore Ult
+	MpAbilityMirageUltimate_Init()						// Mirage Ult
+	MpWeaponDirtyBomb_Init()							// Caustic Tac
+	MpWeaponGrenadeGas_Init()							// Caustic Ult
+	//PassiveOctane_Init()								// Octane Passive
+	Sh_JumpPad_Init()									// Octane Ult
+	MpWeaponTeslaTrap_Init()							// Wattson Tac
+	MpWeaponTrophy_Init()								// Wattson Ult
+	MpAbilityCryptoDrone_Init()							// Crypto Tac
+	MpAbilityCryptoDroneEMP_Init()						// Crypto Ult
+	MpAbilitySilence_Init()								// Old Revenant Tac
+	MpAbilityRevenantDeathTotem_Init()					// Old Revenant Ult
+	ShLobaPassiveEyeForQuality_LevelInit()				// Loba Passive
+	//LobaTacticalTranslocation_LevelInit()				// Loba Tac
+	LobaUltimateBlackMarket_LevelInit()					// Loba Ult
+	PassiveGunner_Init()								// Rampart Passive
+	MpWeaponCoverWall_Init()							// Rampart Tac
+	MpWeaponMountedTurretPlaceable_Init()				// Rampart Ult
+	MpWeaponMountedTurretWeapon_Init()					// Rampart Ult
+	MpWeaponMobileHMG_Init()							// Rampart Ult
+	MpSpaceElevatorAbility_Init()						// Horizon Tac
+	MpSpaceElevator_Init()								// Horizon Tac
+	MpWeaponBlackHole_Init()							// Horizon Ult
+	PassiveGrenadier_Init()								// Fuse Passive
+	MpWeaponClusterBombLauncher_Init()					// Fuse Tac
+	MpWeapon_Mortar_Ring_Init()							// Fuse Ult
+	MpWeapon_Mortar_Ring_Missile_Init()					// Fuse Ult
+	MpAbilityValkJets_Init()							// Valkyrie Passive
+	MpAbilityValkClusterMissile_Init()					// Valkyrie Tac
+	MpAbilityValkSkyward_Init()							// Valkyrie Ult
+	PassiveHeartbeatSensor_Init()						// Seer Passive
+	MpAbilitySonicBlast_Init()							// Seer Tac
+	MpWeaponEchoLocator_Init()							// Seer Ult
+	//MpWeaponAshDataknife_Init()							// Ash Passive
+	MpWeaponArcBolt_Init()								// Ash Tac
+	MpWeaponPhaseBreach_Init()							// Ash Ult
+	MpMaggieCommon_Init()								// Mad Maggie
+	ShPassiveWarlordsIre_Init()							// Mad Maggie Passive
+	MpWeaponRiotDrill_Init()							// Mad Maggie Tac
+	MpAbilityWreckingBall_Init()						// Mad Maggie Ult
+	//MpWeaponReviveShield_Init()							// Newcastle Passive
+	//MpAbilityShieldThrow_Init()							// Newcastle Tac
+	//MpAbilityArmoredLeap_Init()							// Newcastle Ult
+	//PassiveVantage_Init()								// Vantage Passive
+	//SniperRecon_Init()									// Vantage Passive
+	//Companion_Launch_Init()								// Vantage Tac
+	//VantageCompanion_Init()								// Vantage Tac
+	//MpWeaponVantageRecall_Init()						// Vantage Tac
+	//SniperUlt_Init()									// Vantage Ult
+	//ShResin_Init()										// Catalyst
+	//MpAbilityReinforce_Init()							// Catalyst Passive
+	//PassiveReinforce_Init()								// Catalyst Passive
+	//MpAbilitySpikeStrip_Init()							// Catalyst Tac
+	//MpWeaponFerroWall_Init()							// Catalyst Ult
+	//ShPassiveSling_Init()								// Ballistic Passive
+	//MpWeaponDebuffZone_Init()							// Ballistic Tac
+	//MpAbilityPortableAutoLoader_Init()					// Ballistic Ult
+	//MpAbilityExectioner_Init()							// Revenant Reborn Passive
+	//MpAbilityShadowPounceFree_Init()					// Revenant Reborn Tac
+	//MpAbilityShadowForm_Init()							// Revenant Reborn Ult
+		//ShPassiveConduit_Init()							// Conduit Passive
+		//MpAbilityConduitArcFlash_Init()					// Conduit Tac
+		//Mp_ability_shield_mines_init()					// Conduit Ult
+		//Mp_ability_shield_mines_line_init()				// Conduit Ult
+		ExtraShields_Init()
+		ShPassiveUpgradeCore_Init()
+		//ShPassiveTacCooldownExtra_Init()
+		//ShPassiveExplosiveSpeedBoost_Init()
+		//ShPassiveAirborneHealthRegen_Init()
+		//ShPassiveBoostedHealthRegen_Init()
+		//ShPassiveSquadwipeSquadCount_Init()
+		//ShPassiveKnockShotgunAutoReload_Init()
+		//ShPassiveZiplineShield_Init()
+		//PhysicalOvershield_Init()
+		//ShPassiveKnockTacReset_Init()
+		//ShPassiveFasterTacWindup_Init()
+
+		//UpgradedClusterMissile_Init()
+		//UpgradedJets_Init()
+
+		//AutoWhiteRavens_Init()
+
+		UpgradeSelectionMenu_Init()
+	// Old Protos
+
+	// Active Protos
+		//AlterExtraScript_Init()
+		//MpAbilityPhaseDoor_Init()
+		//MpAbilityTransportPortal_Init()
+		//MpAbilityTransportPortalDatapad_Init()
+		PassiveRemoteDeathboxInteract_Init()
+		PassiveVoidVision_Init()
+}
 
 void function TableDump( table Table, int depth = 0 )
 {
@@ -536,6 +842,25 @@ float function EvaluatePolynomial( float x, array<float> coefficientArray )
 	return sum
 }
 
+bool function GetReplayDisabled()
+{
+	return GetGlobalNonRewindNetBool( "replayDisabled" )
+}
+
+float function GetRoundWinningKillReplayStartupWait()
+{
+	return GetCurrentPlaylistVarFloat( "round_winning_kill_replay_startup_wait", 2.1 )
+}
+
+float function GetRoundWinningKillReplayLength()
+{
+	return GetCurrentPlaylistVarFloat( "round_winning_kill_replay_length", 5.9 )
+}
+
+float function GetRoundWinningKillReplayTotalLength()
+{
+	return GetRoundWinningKillReplayStartupWait() + GetRoundWinningKillReplayLength()
+}
 table function ArrayValuesToTableKeys( arr )
 {
 	Assert( type( arr ) == "array", "Not an array" )
@@ -955,7 +1280,7 @@ bool function ControlPanel_IsValidModel( entity controlPanel )
 	return validModels.contains( string( controlPanel.GetModelName() ) )
 }
 
-bool function ControlPanel_CanUseFunction( entity playerUser, entity controlPanel )
+bool function ControlPanel_CanUseFunction( entity playerUser, entity controlPanel, int useFlags )
 {
 	if ( Bleedout_IsBleedingOut( playerUser ) )
 		return false
@@ -1232,23 +1557,6 @@ bool function GetDoomedState( entity ent )
 	return soul.IsDoomed()
 }
 
-bool function TitanCoreInUse( entity player )
-{
-	Assert( player.IsTitan() )
-
-	if ( !IsAlive( player ) )
-		return false
-
-	return Time() < SoulTitanCore_GetExpireTime( player.GetTitanSoul() )
-}
-
-float function GetTitanCoreTimeRemaining( entity player )
-{
-	Assert( player.IsTitan() )
-
-	return SoulTitanCore_GetExpireTime( player.GetTitanSoul() ) - Time()
-}
-
 bool function CoreAvailableDuringDoomState()
 {
 	return true
@@ -1416,9 +1724,13 @@ bool function IsCloaked( entity ent )
 	return ent.IsCloaked( true ) //pass true to ignore flicker time -
 }
 
+float function GetGameStateChangeTime()
+{
+	return GetGlobalNonRewindNetTime( "gameStateChangeTime" )
+}
 float function TimeSpentInCurrentState()
 {
-	return Time() - expect float( level.nv.gameStateChangeTime )
+	return Time() - GetGameStateChangeTime()
 }
 
 float function DotToAngle( float dot )
@@ -1433,16 +1745,18 @@ float function AngleToDot( float angle )
 
 int function GetGameState()
 {
-	return expect int( GetServerVar( "gameState" ) )
+	return GetGlobalNonRewindNetInt( "gameState" )
 }
 
 bool function GamePlaying()
 {
-	// Allow firing range to count as playing for equipping gadgets and testing
-	if ( Playlist() == ePlaylists.survival_firingrange )
-		return true
-	
 	return GetGameState() == eGameState.Playing
+}
+
+
+bool function GameEpilogue()
+{
+	return GetGameState() == eGameState.Epilogue
 }
 
 bool function GamePlayingOrSuddenDeath()
@@ -1764,7 +2078,88 @@ array<ArrayDistanceEntry> function ArrayDistance2DResultsVector( array<vector> v
 	return allResults
 }
 
-GravityLandData function GetGravityLandData( vector startPos, vector parentVelocity, vector objectVelocity, float timeLimit, bool bDrawPath = false, float bDrawPathDuration = 0.0, array pathColor = [ 255, 255, 0 ] )
+struct PlaneVisibility
+{
+	float value
+	vector connectPoint
+}
+
+vector function FindBestDeathboxEdgeForVFX_WorldSpace( entity deathbox, entity player )
+{
+	vector endPoint = FindBestDeathboxEdgeForVFX_LocalSpace( deathbox, player )
+	endPoint = RotateVector( endPoint, deathbox.GetAngles() )
+	endPoint += deathbox.GetOrigin()
+
+	return endPoint
+}
+vector function FindBestDeathboxEdgeForVFX_LocalSpace( entity deathbox, entity player )
+{
+	vector mins = deathbox.GetBoundingMins()
+	vector maxs = deathbox.GetBoundingMaxs()
+	vector boxToPlayer = player.EyePosition() - deathbox.GetOrigin()
+	vector fwd = deathbox.GetForwardVector()
+	vector rgt = deathbox.GetRightVector()
+	vector up  = deathbox.GetUpVector()
+
+	// General plan - find the plane that most clearly faces the player and play the VFX on the box, on that plane
+	array<PlaneVisibility> planeArray
+
+	{//forwards
+		PlaneVisibility testPlane
+		testPlane.value = DotProduct( fwd, boxToPlayer - maxs.x * fwd )
+		testPlane.connectPoint = <maxs.x, 0, maxs.z * 0.5>
+		planeArray.append( testPlane )
+	}
+
+	{//backwards
+		PlaneVisibility testPlane
+		testPlane.value = DotProduct( -fwd, boxToPlayer - mins.x * fwd )
+		testPlane.connectPoint = <mins.x, 0, maxs.z * 0.5>
+		planeArray.append( testPlane )
+	}
+	// For R/L, I'm flipping the connect points Y coordinate relative to what I think it should be, otherwise the effects show at the opposite point
+	{//right
+		PlaneVisibility testPlane
+		testPlane.value = DotProduct( rgt, boxToPlayer - maxs.y * rgt )
+		testPlane.connectPoint = <0, mins.y, maxs.z * 0.5>
+		planeArray.append( testPlane )
+	}
+
+	{//left
+		PlaneVisibility testPlane
+		testPlane.value = DotProduct( -rgt, boxToPlayer - mins.y * rgt )
+		testPlane.connectPoint = <0, maxs.y, maxs.z * 0.5>
+		planeArray.append( testPlane )
+	}
+
+	{//up
+		PlaneVisibility testPlane
+		testPlane.value = DotProduct( up, boxToPlayer - maxs.z * up )
+		testPlane.connectPoint = <0, 0, maxs.z>
+		planeArray.append( testPlane )
+	}
+
+	{//down
+		PlaneVisibility testPlane
+		testPlane.value = DotProduct( -up, boxToPlayer )
+		testPlane.connectPoint = <0, 0, mins.z>
+		planeArray.append( testPlane )
+	}
+
+	planeArray.sort( int function( PlaneVisibility a, PlaneVisibility b ) : ()
+	{
+		if ( a.value > b.value )
+			return -1
+		else if( a.value < b.value )
+			return 1
+
+		return 0
+	} )
+
+	return planeArray[0].connectPoint
+}
+
+GravityLandData function GetGravityLandData( vector startPos, vector parentVelocity, vector objectVelocity, float timeLimit, bool bDrawPath = false, int traceMask = TRACE_MASK_NPCWORLDSTATIC, float bDrawPathDuration = 0.0, array pathColor = [ 255, 255, 0 ] )
 {
 	GravityLandData returnData
 
@@ -1809,17 +2204,10 @@ GravityLandData function GetGravityLandData( vector startPos, vector parentVeloc
 
 float function GetPulseFrac( rate = 1, startTime = 0 )
 {
-	return (1 - cos( ( Time() - startTime ) * (rate * (2*PI)) )) / 2
+	return (1 - cos( (Time() - startTime) * (rate * (2 * PI)) )) / 2
 }
 
-bool function IsPetTitan( entity titan )
-{
-	Assert( titan.IsTitan() )
-
-	return titan.GetTitanSoul().GetBossPlayer()	!= null
-}
-
-vector function StringToVector( string vecString, string delimiter = " " )
+vector function StringToVector( string vecString, string delimiter = WHITESPACE_CHARACTERS )
 {
 	array<string> tokens = split( vecString, delimiter )
 
@@ -2492,8 +2880,8 @@ int function CompareTitanKills( entity a, entity b )
 
 int function CompareTeamScore( int teamA, int teamB )
 {
-	int aVal = GameScore_GetScore( teamA )
-	int bVal = GameScore_GetScore( teamB )
+	int aVal = GameRules_GetTeamScore( teamA )
+	int bVal = GameRules_GetTeamScore( teamB )
 
 	if ( aVal < bVal )
 		return 1
@@ -2521,7 +2909,7 @@ int function GameScore_GetScore( int team )
 
 bool function TitanEjectIsDisabled()
 {
-	return (GetGlobalNetBool( "titanEjectEnabled" ) == false)
+	return (GetGlobalNetBoolSafe( "titanEjectEnabled" ) == false)
 }
 
 bool function IsHitEffectiveVsTitan( entity victim, int damageType )
@@ -2618,32 +3006,20 @@ array<vector> function VectorArrayWithin( array<vector> Array, vector origin, fl
 	return resultArray
 }
 
-string function GetTitanChassis( entity titan )
-{
-	if ( !("titanChassis" in titan.s ) )
-	{
-		Assert( HasSoul( titan ) )
-
-		entity soul = titan.GetTitanSoul()
-		titan.s.titanChassis <- GetSoulTitanSubClass( soul )
-	}
-
-	return expect string( titan.s.titanChassis )
-}
-
 vector function ClampVectorToCube( vector vecStart, vector vec, vector cubeOrigin, float cubeSize )
 {
 	float halfCubeSize = cubeSize * 0.5
-	vector cubeMins = <-halfCubeSize, -halfCubeSize, -halfCubeSize>
-	vector cubeMaxs = <halfCubeSize, halfCubeSize, halfCubeSize>
+	vector cubeMins    = <-halfCubeSize, -halfCubeSize, -halfCubeSize>
+	vector cubeMaxs    = <halfCubeSize, halfCubeSize, halfCubeSize>
 
 	return ClampVectorToBox( vecStart, vec, cubeOrigin, cubeMins, cubeMaxs )
 }
 
+
 vector function ClampVectorToBox( vector vecStart, vector vec, vector cubeOrigin, vector cubeMins, vector cubeMaxs )
 {
 	float smallestClampScale = 1.0
-	vector vecEnd = vecStart + vec
+	vector vecEnd            = vecStart + vec
 
 	smallestClampScale = ClampVectorComponentToCubeMax( cubeOrigin.x, cubeMaxs.x, vecStart.x, vecEnd.x, vec.x, smallestClampScale )
 	smallestClampScale = ClampVectorComponentToCubeMax( cubeOrigin.y, cubeMaxs.y, vecStart.y, vecEnd.y, vec.y, smallestClampScale )
@@ -2654,6 +3030,7 @@ vector function ClampVectorToBox( vector vecStart, vector vec, vector cubeOrigin
 
 	return vec * smallestClampScale
 }
+
 
 vector function ClampAnglesToAngles( vector angles, vector anglesMin, vector anglesMax )
 {
@@ -2666,48 +3043,52 @@ vector function ClampAnglesToAngles( vector angles, vector anglesMin, vector ang
 	return clampedAngles
 }
 
+
 float function ClampVectorComponentToCubeMax( float cubeOrigin, float cubeSize, float vecStart, float vecEnd, float vec, float smallestClampScale )
 {
-	float max = cubeOrigin + cubeSize
+	float max       = cubeOrigin + cubeSize
 	float clearance = fabs( vecStart - max )
 	if ( vecEnd > max )
 	{
-		float scale = fabs( clearance / ( ( vecStart + vec ) - vecStart ) )
+		float scale = fabs( clearance / ((vecStart + vec) - vecStart) )
 		if ( scale > 0 && scale < smallestClampScale )
 			return scale
 	}
 
 	return smallestClampScale
 }
+
 
 float function ClampVectorComponentToCubeMin( float cubeOrigin, float cubeSize, float vecStart, float vecEnd, float vec, float smallestClampScale )
 {
-	float min = cubeOrigin - cubeSize
+	float min       = cubeOrigin - cubeSize
 	float clearance = fabs( min - vecStart )
 	if ( vecEnd < min )
 	{
-		float scale = fabs( clearance / ( ( vecStart + vec ) - vecStart ) )
+		float scale = fabs( clearance / ((vecStart + vec) - vecStart) )
 		if ( scale > 0 && scale < smallestClampScale )
 			return scale
 	}
 
 	return smallestClampScale
 }
+
 
 bool function PointInCapsule( vector vecBottom, vector vecTop, float radius, vector point )
 {
 	return GetDistanceFromLineSegment( vecBottom, vecTop, point ) <= radius
 }
 
+
 bool function PointInCylinder( vector vecBottom, vector vecTop, float radius, vector point )
 {
 	if ( GetDistanceFromLineSegment( vecBottom, vecTop, point ) > radius )
 		return false
 
-	vector bottomVec = Normalize( vecTop - vecBottom )
+	vector bottomVec     = Normalize( vecTop - vecBottom )
 	vector pointToBottom = Normalize( point - vecBottom )
 
-	vector topVec = Normalize( vecBottom - vecTop )
+	vector topVec     = Normalize( vecBottom - vecTop )
 	vector pointToTop = Normalize( point - vecTop )
 
 	if ( DotProduct( bottomVec, pointToBottom ) < 0 )
@@ -2719,9 +3100,10 @@ bool function PointInCylinder( vector vecBottom, vector vecTop, float radius, ve
 	return true
 }
 
+
 float function AngleDiff( float ang, float targetAng )
 {
-	float delta = ( targetAng - ang ) % 360.0
+	float delta = (targetAng - ang) % 360.0
 	if ( targetAng > ang )
 	{
 		if ( delta >= 180.0 )
@@ -2789,28 +3171,29 @@ float function GetAverageValueInArray( array<float> values )
 	return ( sum / values.len() )
 }
 
-int function GetWinningTeam()
+int function GetWinningTeam( bool shouldReturnInvalidInCaseOfTie = true )
 {
-	if ( level.nv.winningTeam != null )
-		return expect int( level.nv.winningTeam )
+	int currentWinningTeam = GetNetWinningTeam()
+	if ( currentWinningTeam != -1 )
+		return currentWinningTeam
 
-	int maxScore = 0
-	int playerTeam
+	int maxScore = -1
 	int currentScore
 	int winningTeam = TEAM_UNASSIGNED
+	array < int > allTeamsArray = GetAllValidPlayerTeams()
 
-	foreach ( player in GetPlayerArray() )
+	foreach ( playerTeam in allTeamsArray )
 	{
-		playerTeam = player.GetTeam()
 		if ( IsRoundBased() )
 			currentScore = GameRules_GetTeamScore2( playerTeam )
 		else
 			currentScore = GameRules_GetTeamScore( playerTeam )
 
-		if ( currentScore == maxScore) //Treat multiple teams as having the same score as no team winning
+		if ( shouldReturnInvalidInCaseOfTie && currentScore == maxScore && winningTeam != playerTeam ) //Treat multiple teams as having the same score as no team winning
+		{
 			winningTeam = TEAM_UNASSIGNED
-
-		if ( currentScore > maxScore )
+		}
+		else if ( currentScore > maxScore )
 		{
 			maxScore = currentScore
 			winningTeam = playerTeam
@@ -2820,13 +3203,13 @@ int function GetWinningTeam()
 	return winningTeam
 }
 
-void function EmitSkyboxSoundAtPosition( vector positionInSkybox, string sound, float skyboxScale = 0.001, bool clamp = false )
-{
-	if ( IsServer() )
-		clamp = true // sounds cannot play outside 16k limit on server
-	vector position = SkyboxToWorldPosition( positionInSkybox, skyboxScale, clamp )
-	EmitSoundAtPosition( TEAM_UNASSIGNED, position, sound )
-}
+//void function EmitSkyboxSoundAtPosition( vector positionInSkybox, string sound, float skyboxScale = 0.001, bool clamp = false )
+//{
+//	if ( IsServer() )
+//		clamp = true // sounds cannot play outside 16k limit on server
+//	vector position = SkyboxToWorldPosition( positionInSkybox, skyboxScale, clamp )
+//	EmitSoundAtPosition( TEAM_UNASSIGNED, position, sound )
+//}
 
 vector function SkyboxToWorldPosition( vector positionInSkybox, float skyboxScale = 0.001, bool clamp = true )
 {
@@ -2885,11 +3268,40 @@ void function FadeOutSoundOnEntityAfterDelay( entity ent, string soundAlias, flo
 	}
 }*/
 
+float function GetGameEndTime()
+{
+	return GetGlobalNonRewindNetTime( "gameEndTime" )
+}
+
+
+float function GetGameStartTime()
+{
+	return GetGlobalNonRewindNetTime( "gameStartTime" )
+}
+
+
+float function GetRoundStartTime()
+{
+	return GetGlobalNonRewindNetTime( "roundStartTime" )
+}
+
+
+float function GetRoundEndTime()
+{
+	return GetGlobalNonRewindNetTime( "roundEndTime" )
+}
+
+
+bool function GetForcedDialogueOnly()
+{
+	return GetGlobalNonRewindNetBool( "forcedDialogueOnly" )
+}
 bool function IsMatchOver()
 {
-	if ( IsRoundBased() && level.nv.gameEndTime )
+	float gameEndTime = GetGameEndTime()
+	if ( IsRoundBased() && gameEndTime > 0.0 )
 		return true
-	else if ( !IsRoundBased() && level.nv.gameEndTime && Time() > level.nv.gameEndTime )
+	else if ( !IsRoundBased() && gameEndTime > 0.0 && Time() > gameEndTime )
 		return true
 
 	return false
@@ -2898,47 +3310,39 @@ bool function IsMatchOver()
 
 bool function IsRoundBased()
 {
-	return expect bool( level.nv.roundBased )
+	return GetGlobalNonRewindNetBool( "roundBased" )
+}
+
+bool function IsLootRoundBased()
+{
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_EXPLORE ) )
+		return true
+
+	return IsRoundBased()
 }
 
 
 int function GetRoundsPlayed()
 {
-	return expect int( level.nv.roundsPlayed )
+	return GetGlobalNonRewindNetInt( "roundsPlayed" )
 }
 
-void function __WarpInEffectShared( vector origin, vector angles, string sfx, float preWaitOverride = -1.0, entity ornull vehicle = null )
+int function GetNetWinningTeam()
+// careful, another function GetWinningTeam exists
 {
-	float preWait = 2.0
-	float sfxWait = 0.1
-	float totalTime = WARPINFXTIME
+	return GetGlobalNonRewindNetInt( "winningTeam" )
+}
 
-	if ( sfx == "" )
-		sfx = "dropship_warpin"
 
-	if ( preWaitOverride >= 0.0 )
-		wait preWaitOverride
-	else
-		wait preWait  //this needs to go and the const for warpin fx time needs to change - but not this game - the intro system is too dependent on it
+bool function IsEliminationBased()
+{
+	return GetCurrentPlaylistVarBool( "is_elimination_based", true )
+}
 
-	#if CLIENT
-		int fxIndex = GetParticleSystemIndex( FX_GUNSHIP_CRASH_EXPLOSION_ENTRANCE )
-		StartParticleEffectInWorld( fxIndex, origin, angles )
-	#else
-		entity fx = PlayFX( FX_GUNSHIP_CRASH_EXPLOSION_ENTRANCE, origin, angles )
-		fx.FXEnableRenderAlways()
-		fx.DisableHibernation()
-		if ( IsValid( vehicle ) )
-		{
-			fx.RemoveFromAllRealms()
-			fx.AddToOtherEntitysRealms( expect entity ( vehicle ) )
-		}
-	#endif //
-
-	wait sfxWait
-	EmitSoundAtPosition( TEAM_UNASSIGNED, origin, sfx )
-
-	wait totalTime - preWait - sfxWait
+bool function IsPilotEliminationBased()
+{
+	return true
 }
 
 void function __WarpInDropPodEffectShared( vector origin, vector angles, string sfx, float preWaitOverride = -1.0, entity ornull vehicle = null )
@@ -2975,6 +3379,45 @@ void function __WarpInDropPodEffectShared( vector origin, vector angles, string 
 	wait totalTime - preWait - sfxWait
 }
 
+void function __WarpInEffectShared( vector origin, vector angles, string sfx, entity vehicle, float preWaitOverride = -1.0 )
+{
+	float preWait   = 2.0
+	float sfxWait   = 0.1
+	float totalTime = WARPINFXTIME
+
+	if ( sfx == "" )
+		sfx = "dropship_warpin"
+
+	if ( preWaitOverride >= 0.0 )
+		wait preWaitOverride
+	else
+		wait preWait  //this needs to go and the const for warpin fx time needs to change - but not this game - the intro system is too dependent on it
+
+	#if CLIENT
+		int fxIndex = GetParticleSystemIndex( FX_GUNSHIP_CRASH_EXPLOSION_ENTRANCE )
+		StartParticleEffectInWorld( fxIndex, origin, angles )
+	#else
+		entity fx = PlayFX( FX_GUNSHIP_CRASH_EXPLOSION_ENTRANCE, origin, angles )
+		fx.FXEnableRenderAlways()
+		fx.DisableHibernation()
+		if ( IsValid( vehicle ) )
+		{
+			fx.RemoveFromAllRealms()
+			fx.AddToOtherEntitysRealms( vehicle )
+		}
+	#endif // CLIENT
+
+	wait sfxWait
+#if CLIENT
+	EmitSoundAtPosition( TEAM_UNASSIGNED, origin, sfx )
+#endif
+#if SERVER
+	EmitSoundAtPosition( TEAM_UNASSIGNED, origin, sfx, vehicle )
+#endif
+
+
+	wait totalTime - preWait - sfxWait
+}
 void function __WarpOutEffectShared( entity dropship )
 {
 	int attach    = dropship.LookupAttachment( "origin" )
@@ -2995,18 +3438,31 @@ void function __WarpOutEffectShared( entity dropship )
 		}
 	#endif
 
-	EmitSoundAtPosition( TEAM_UNASSIGNED, origin, "dropship_warpout" )
+	#if CLIENT
+		EmitSoundAtPosition( TEAM_UNASSIGNED, origin, "dropship_warpout" )
+	#endif
+	#if SERVER
+		EmitSoundAtPosition( TEAM_UNASSIGNED, origin, "dropship_warpout", dropship )
+	#endif
+}
+
+
+int function GetSwitchedSides()
+{
+	return GetGlobalNonRewindNetInt( "switchedSides" )
 }
 
 
 bool function IsSwitchSidesBased()
 {
-	return (level.nv.switchedSides != null)
+	return GetSwitchedSides() != -1
 }
 
-int function HasSwitchedSides() //This returns an int instead of a bool! Should rewrite
+
+int function HasSwitchedSides()
+//This returns an int instead of a bool! Should rewrite
 {
-	return expect int( level.nv.switchedSides )
+	return GetSwitchedSides()
 }
 
 bool function IsFirstRoundAfterSwitchingSides()
@@ -3014,13 +3470,16 @@ bool function IsFirstRoundAfterSwitchingSides()
 	if ( !IsSwitchSidesBased() )
 		return false
 
+	int switchedSide = GetSwitchedSides()
+
 	if ( IsRoundBased() )
-		return  level.nv.switchedSides > 0 && GetRoundsPlayed() == level.nv.switchedSides
+		return  switchedSide > 0 && GetRoundsPlayed() == switchedSide
 	else
-		return  level.nv.switchedSides > 0
+		return  switchedSide > 0
 
 	unreachable
 }
+
 
 void function CamBlendFov( entity cam, float oldFov, float newFov, float transTime, float transAccel, float transDecel )
 {
@@ -3030,33 +3489,34 @@ void function CamBlendFov( entity cam, float oldFov, float newFov, float transTi
 	cam.EndSignal( "OnDestroy" )
 
 	float currentTime = Time()
-	float startTime = currentTime
-	float endTime = startTime + transTime
+	float startTime   = currentTime
+	float endTime     = startTime + transTime
 
 	while ( endTime > currentTime )
 	{
 		float interp = Interpolate( startTime, endTime - startTime, transAccel, transDecel )
 		cam.SetFOV( GraphCapped( interp, 0.0, 1.0, oldFov, newFov ) )
-		wait( 0.0 )
+		wait(0.0)
 		currentTime = Time()
 	}
 }
 
-void function CamFollowEnt( entity cam, entity ent, float duration, vector offset = <0,0,0>, string attachment = "", bool isInSkybox = false )
+
+void function CamFollowEnt( entity cam, entity ent, float duration, vector offset = <0, 0, 0>, string attachment = "", bool isInSkybox = false )
 {
 	if ( !IsValid( cam ) )
 		return
 
 	cam.EndSignal( "OnDestroy" )
 
-	vector camOrg = <0,0,0>
+	vector camOrg = <0, 0, 0>
 
-	vector targetPos = <0,0,0>
+	vector targetPos  = <0, 0, 0>
 	float currentTime = Time()
-	float startTime = currentTime
-	float endTime = startTime + duration
-	vector diff = <0,0,0>
-	int attachID = ent.LookupAttachment( attachment )
+	float startTime   = currentTime
+	float endTime     = startTime + duration
+	vector diff       = <0, 0, 0>
+	int attachID      = ent.LookupAttachment( attachment )
 
 	while ( endTime > currentTime )
 	{
@@ -3069,11 +3529,11 @@ void function CamFollowEnt( entity cam, entity ent, float duration, vector offse
 
 		if ( isInSkybox )
 			targetPos = SkyboxToWorldPosition( targetPos )
-		diff = ( targetPos + offset ) - camOrg
+		diff = (targetPos + offset) - camOrg
 
 		cam.SetAngles( VectorToAngles( diff ) )
 
-		wait( 0.0 )
+		wait(0.0)
 
 		currentTime = Time()
 	}
@@ -3194,24 +3654,43 @@ int function RemoveBitMask( int bitsExisting, int bitsToRemove )
 	return bitsExisting & ( ~bitsToRemove )
 }
 
-bool function HasBitMask( int bitsExisting, int bitsToCheck )
+void function SetDeathCamTimeOverride( float functionref() func )
 {
-	int bitsCommon = bitsExisting & bitsToCheck
-	return bitsCommon == bitsToCheck
+	file.getDeathCamTimeOverride = func
 }
 
-float function GetDeathCamLength( )
+float function GetDeathCamLength( entity player )
 {
+	if ( file.getDeathCamTimeOverride != null )
+		return file.getDeathCamTimeOverride()
+
+	// use short time if death cam didn't happen mid match.
 	if ( GetGameState() < eGameState.Playing )
 		return DEATHCAM_TIME_SHORT
 
 	return DEATHCAM_TIME
 }
 
+void function SetDeathCamSpectateTimeOverride( float functionref() func )
+{
+	file.getDeathCamSpectateTimeOverride = func
+}
+
+// Returns minimum death cam spectate length from playlist
+float function GetDeathCamSpectateLength()
+{
+	if ( file.getDeathCamSpectateTimeOverride != null )
+		return file.getDeathCamSpectateTimeOverride()
+
+	return GetCurrentPlaylistVarFloat( "min_deathcam_spectate_length", 0.0 )
+}
+
 float function GetRespawnButtonCamTime( entity player )
 {
+	const float RESPAWN_BUTTON_BUFFER = 0.0
 	return DEATHCAM_TIME + RESPAWN_BUTTON_BUFFER
 }
+
 
 bool function IntroPreviewOn()
 {
@@ -3231,6 +3710,7 @@ bool function IntroPreviewOn()
 
 	return false
 }
+
 
 bool function EntHasModelSet( entity ent )
 {
@@ -3275,26 +3755,9 @@ void function RemoveCallback_OnUseEntity( entity ent, void functionref( entity, 
 	int ornull funcPos = ent.e.onUseEntityCallbacks.find( callbackFunc )
 	Assert( funcPos != null, "Cannot remove " + string( callbackFunc ) + " that was not added to entity" )
 	ent.e.onUseEntityCallbacks.remove( expect int( funcPos ) )
-}
-
-void function SetWaveSpawnType( int spawnType )
-{
-	shGlobal.waveSpawnType = spawnType
-}
-
-int function GetWaveSpawnType()
-{
-	return shGlobal.waveSpawnType
-}
-
-void function SetWaveSpawnInterval( float interval )
-{
-	shGlobal.waveSpawnInterval = interval
-}
-
-float function GetWaveSpawnInterval()
-{
-	return shGlobal.waveSpawnInterval
+	#if SERVER
+		ent.SetPredictedUse( true )
+	#endif
 }
 
 bool function IsArcTitan( entity npc )
@@ -3448,6 +3911,36 @@ array<entity> function GetAllSoldiers()
 	return GetNPCArrayByClass( "npc_soldier" )
 }
 
+
+array< entity > function GetAllPlayersByRealm( int realm, bool mustBeAlive = true )
+{
+	array<entity> players = GetPlayerArray()
+	array< entity > playersInRealm = []
+	foreach( player in players)
+	{
+		if( !IsValid( player ) )
+			continue
+
+		if( mustBeAlive && !IsAlive( player ) )
+			continue
+
+		bool inRealmCheck = false
+		array< int > playerRealms = player.GetRealms()
+		foreach( playerRealm in playerRealms )
+		{
+			inRealmCheck = inRealmCheck || ( playerRealm == realm )
+		}
+
+		if( !inRealmCheck )
+			continue
+
+		playersInRealm.append( player )
+	}
+
+	return playersInRealm
+}
+
+
 int function GameTeams_GetNumLivingPlayers( int teamIndex = TEAM_ANY )
 {
 	int noOfLivingPlayers = 0
@@ -3591,7 +4084,7 @@ string function GetPlayerVoice( entity player )
 
 	if ( player.IsTitan() )
 	{
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 		Assert( ItemFlavor_GetType( character ) == eItemType.character )
 		var block = GetSettingsBlockForAsset( CharacterClass_GetSetFile( character ) )
 		return GetSettingsBlockString( block, "voice" )
@@ -3608,31 +4101,46 @@ void function SetPlayerVoiceOverride( entity player, string voice )
 
 void function SetTeam( entity ent, int team )
 {
-	int oldTeam = ent.GetTeam()
-
-	#if DEVELOPER
-	if( ent.IsPlayer() )
-		printw( "TEAMING - ASSIGNING TEAM TO PLAYER", ent, "NEW", team, "OLD", oldTeam )
-	#endif
-
-	ent.Code_SetTeam( team )
-
-	#if SERVER
-		if( ent.IsPlayer() )
+	#if CLIENT
+		ent.Code_SetTeam( team )
+	#else
+		if ( ent.IsPlayer() )
 		{
-			if( team != oldTeam )
-				AssignTeamIndexToPlayer( ent )
+			ent.Code_SetTeam( team )
+			SetTeam_EquipmentAndAbilities( ent, team )
+		}
+		else if ( ent.IsNPC() )
+		{
+			ent.Code_SetTeam( team )
 
-			foreach ( player in GetPlayerArrayOfTeam( oldTeam ) )
+			if ( ent.GetModelName() == $"" )
+				return
+
+			if ( IsGrunt( ent ) || IsSpectre( ent ) )
 			{
-				if( IsValid( player ) && player.p.isConnected )
-					Remote_CallFunction_ByRef( player, "UpdateRUITest" )
+				array<entity> players = GetPlayerArray()
+				foreach ( player in players )
+				{
+					Remote_CallFunction_Replay( player, "ServerCallback_UpdateOverheadIconForNPC", ent )
+				}
 			}
-			foreach ( player in GetPlayerArrayOfTeam( team ) )
+			else if ( IsShieldDrone( ent ) )
 			{
-				if( IsValid( player ) && player.p.isConnected )
-					Remote_CallFunction_ByRef( player, "UpdateRUITest" )
+				if ( team == 0 )
+				{
+					// anybody can use neutral shield drone
+					ent.SetUsable()
+				}
+				else
+				{
+					// only friendlies use a team shield drone
+					ent.SetUsableByGroup( "friendlies pilot" )
+				}
 			}
+		}
+		else
+		{
+			ent.Code_SetTeam( team )
 		}
 	#endif
 }
@@ -4166,6 +4674,21 @@ void function Embark_Allow( entity player )
 	player.SetTitanEmbarkEnabled( true )
 }
 
+// Given an array of strings with repeats, constructs a table with item counts indexed by item.
+table< string, int > function Count_Strings_IntoTable( array< string > itemsToCount )
+{
+	table< string, int > results
+	foreach( item in itemsToCount )
+	{
+		if( !( item in results ) )
+		{
+			results[ item ] <- 0
+		}
+		results[ item ]++
+	}
+	return results
+}
+
 void function Embark_Disallow( entity player )
 {
 	player.SetTitanEmbarkEnabled( false )
@@ -4298,6 +4821,13 @@ bool function IsAndroidNPC( entity ent )
 	return ( IsSpectre( ent ) || IsStalker( ent ) || IsMarvin( ent ) )
 }
 
+bool function IsBiologicalNPC( entity ent )
+{
+	if ( IsNessie( ent ) )
+		return true
+	return (IsProwler( ent ) || IsSpider( ent ))
+}
+
 bool function IsStalker( entity ent )
 {
 	return ent.IsNPC() && ( ent.GetAIClass() == AIC_STALKER || ent.GetAIClass() == AIC_STALKER_CRAWLING )
@@ -4390,6 +4920,25 @@ bool function IsNPCTitan( entity ent )
 }
 #endif
 
+bool function CanNPCDoDamageOnBehalfOfPlayer( entity ent )
+{
+	if (!IsValid(ent))
+		return false
+
+
+
+
+
+
+
+
+
+
+
+
+
+	return false
+}
 RaySphereIntersectStruct function IntersectRayWithSphere( vector rayStart, vector rayEnd, vector sphereOrigin, float sphereRadius )
 {
 	RaySphereIntersectStruct intersection
@@ -4626,7 +5175,7 @@ float function GetClosestDistanceBetweenLineSegments( vector line1Point1, vector
 	return Distance( seg.start, seg.end )
 }
 
-bool function PlayerCanSee( entity player, entity ent, bool doTrace, float degrees )
+bool function PlayerCanSee( entity player, entity ent, bool doTrace, float degrees, bool passIfChildHit = false )
 {
 	float minDot = deg_cos( degrees )
 
@@ -4640,6 +5189,8 @@ bool function PlayerCanSee( entity player, entity ent, bool doTrace, float degre
 	{
 		TraceResults trace = TraceLine( player.EyePosition(), ent.GetWorldSpaceCenter(), null, TRACE_MASK_BLOCKLOS, TRACE_COLLISION_GROUP_NONE )
 		if ( trace.hitEnt == ent || trace.fraction >= 0.99 )
+			return true
+		else if( passIfChildHit && trace.hitEnt != null && trace.hitEnt.GetParent() == ent )
 			return true
 		else
 			return false
@@ -4740,12 +5291,7 @@ float function GetRoundTimeLimit_ForGameMode()
 	if ( GameState_GetTimeLimitOverride() >= 0 )
 		return GameState_GetTimeLimitOverride()
 
-	if ( !GameMode_IsDefined( GAMETYPE ) )
-		return GetCurrentPlaylistVarFloat( "roundtimelimit", 10.0 )
-	else
-		return GameMode_GetRoundTimeLimit( GAMETYPE )
-
-	unreachable
+	return GetCurrentPlaylistVarFloat( "roundtimelimit", 10.0 )
 }
 #endif // SERVER
 
@@ -4808,7 +5354,7 @@ bool function IsTitanPrimeTitan( entity titan )
 
 bool function IsPilotAbilitySelectMenuEnabled()
 {
-	return GetGlobalNetInt( "PilotAbilitySelectMenu_Enabled" ) >= 1
+	return GetGlobalNetIntSafe( "PilotAbilitySelectMenu_Enabled" ) >= 1
 }
 
 string function GetEditorClass( entity ent )
@@ -4831,17 +5377,31 @@ void function DebugDrawLineFromEntToPos( entity ent, vector pos, int r, int g, i
 }
 
 
-bool function PlayerIsInADS( entity player )
+bool function PlayerIsInADS( entity player, bool checkMelee = true  )
 {
 	entity activeWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
 
 	if ( !IsValid( activeWeapon ) )
 		return false
 
-	if ( activeWeapon.GetWeaponSettingBool( eWeaponVar.attack_button_presses_melee ) )
-		return false
+	if ( checkMelee )
+	{
+		if ( activeWeapon.GetWeaponSettingBool( eWeaponVar.attack_button_presses_melee ) )
+			return false
+	}
 
 	return activeWeapon.IsWeaponAdsButtonPressed() || activeWeapon.IsWeaponInAds()
+}
+
+float function GetCurrentPlayerFOV( entity player )
+{
+	entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
+	if ( IsValid( weapon ) )
+	{
+		return weapon.GetWeaponZoomFOV()
+	}
+
+	return float( player.GetDefaultFOV() )
 }
 
 //bool function PlayerIsInMeleeBlockingADS( entity player )
@@ -5915,6 +6475,153 @@ void function TakePlayerSettingsMods( entity player, array<string> modsToTake, b
 	#endif
 }
 
+bool function Placement_IsHitEntScriptedPlaceable( entity hitEnt, int depth )
+{
+	if ( hitEnt.IsWorld() )
+		return false
+
+	var hitEntClassname = hitEnt.GetNetworkedClassName()
+	if ( hitEntClassname == "func_brush" || hitEntClassname == "script_mover" || hitEntClassname == "func_brush_lightweight" )
+	{
+		return true
+	}
+
+	if ( ALLOWED_SCRIPT_PARENT_ENTS.contains( hitEnt.GetScriptName() ) )
+	{
+		return true
+	}
+
+	if ( depth > 0 )
+	{
+		if ( IsValid( hitEnt.GetParent() ) )
+		{
+			return Placement_IsHitEntScriptedPlaceable( hitEnt.GetParent(), depth - 1 )
+		}
+	}
+
+	return false
+}
+
+#if SERVER
+void function SetPlayerStandingThread( entity player )
+{
+	Assert ( IsNewThread(), "Must be threaded off." )
+
+	if ( !IsValid(player) )
+		return
+
+	if ( !player.CanStand() )
+		return
+
+	int forceStandHandle = player.PushForcedStance( FORCE_STANCE_STAND )
+
+	WaitFrame()
+
+	if ( IsValid( player ) )
+	{
+		player.RemoveForcedStance( forceStandHandle )
+	}
+
+}
+
+void function DestroyFXAfterDelay( FriendlyEnemyFXStruct fxResults, float delay )
+{
+	Assert ( IsNewThread(), "Must be threaded off." )
+
+	//sound ping vfx have a 1s long playback.
+	wait delay
+
+	if ( IsValid( fxResults.friendlyColoredFX ) )
+	{
+		EffectStop( fxResults.friendlyColoredFX )
+		fxResults.friendlyColoredFX.Destroy()
+	}
+
+	if ( IsValid( fxResults.enemyColoredFX ) )
+	{
+		EffectStop( fxResults.enemyColoredFX )
+		fxResults.enemyColoredFX.Destroy()
+	}
+}
+
+
+FriendlyEnemyFXStruct function CreateFriendlyFX( entity projectile, asset particleSystem, vector origin, vector angles, int team, vector endPos = <0.0, 0.0, 0.0> )
+{
+	int particleSystemID = GetParticleSystemIndex( particleSystem )
+
+	entity friendlyColoredFX = StartParticleEffectInWorld_ReturnEntity ( particleSystemID, origin, angles )
+	friendlyColoredFX.SetParent( projectile )
+	SetTeam( friendlyColoredFX, team )
+	friendlyColoredFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+	EffectSetControlPointVector( friendlyColoredFX, 1, FRIENDLY_COLOR_FX )
+
+	if ( endPos != <0.0, 0.0, 0.0> )
+		EffectSetControlPointVector( friendlyColoredFX, 2, endPos )
+
+	friendlyColoredFX.RemoveFromAllRealms()
+	friendlyColoredFX.AddToOtherEntitysRealms( projectile )
+
+	FriendlyEnemyFXStruct effects
+	effects.friendlyColoredFX = friendlyColoredFX
+	effects.team = team
+
+	return effects
+}
+
+FriendlyEnemyFXStruct function CreateEnemyFX( entity projectile, asset particleSystem, vector origin, vector angles, int team, vector endPos = <0.0, 0.0, 0.0> )
+{
+	int particleSystemID = GetParticleSystemIndex( particleSystem )
+
+	entity enemyColoredFX = StartParticleEffectInWorld_ReturnEntity ( particleSystemID, origin, angles )
+	enemyColoredFX.SetParent( projectile )
+	SetTeam( enemyColoredFX, team )
+	enemyColoredFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
+	EffectSetControlPointVector( enemyColoredFX, 1, ENEMY_COLOR_FX )
+
+	if ( endPos != <0.0, 0.0, 0.0> )
+		EffectSetControlPointVector( enemyColoredFX, 2, endPos )
+
+	enemyColoredFX.RemoveFromAllRealms()
+	enemyColoredFX.AddToOtherEntitysRealms( projectile )
+
+	FriendlyEnemyFXStruct effects
+	effects.enemyColoredFX = enemyColoredFX
+	effects.team = team
+
+	return effects
+}
+
+FriendlyEnemyFXStruct function CreateFriendlyEnemyFX( entity projectile, asset particleSystem, vector origin, vector angles, int team, vector friendlyColorOverride = ZERO_VECTOR )
+{
+	int particleSystemID = GetParticleSystemIndex( particleSystem )
+
+	entity friendlyColoredFX = StartParticleEffectInWorld_ReturnEntity ( particleSystemID, origin, angles )
+	friendlyColoredFX.SetParent( projectile )
+	SetTeam( friendlyColoredFX, team )
+	friendlyColoredFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+	vector friendlyColor = friendlyColorOverride != ZERO_VECTOR ? friendlyColorOverride : FRIENDLY_COLOR_FX
+	EffectSetControlPointVector( friendlyColoredFX, 1, friendlyColor )
+	friendlyColoredFX.RemoveFromAllRealms()
+	friendlyColoredFX.AddToOtherEntitysRealms( projectile )
+
+	entity enemyColoredFX = StartParticleEffectInWorld_ReturnEntity ( particleSystemID, origin, angles )
+	enemyColoredFX.SetParent( projectile )
+	SetTeam( enemyColoredFX, team )
+	enemyColoredFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
+	EffectSetControlPointVector( enemyColoredFX, 1, ENEMY_COLOR_FX )
+	enemyColoredFX.RemoveFromAllRealms()
+	enemyColoredFX.AddToOtherEntitysRealms( projectile )
+
+	FriendlyEnemyFXStruct effects
+	effects.friendlyColoredFX = friendlyColoredFX
+	effects.enemyColoredFX = enemyColoredFX
+	effects.team = team
+
+	return effects
+}
+#endif //SERVER
+
+
 void function WaitForGameState(int state) {
 	while ( GetGameState() != state )
 	{
@@ -6003,10 +6710,6 @@ void function DEV_PrintClientCommands( table< string, void functionref( entity, 
 #if SERVER
 	void function printm( ... )
 	{
-		#if !MULTIPLAYER_DEBUG_PRINTS
-			return
-		#endif
-
 		if ( vargc <= 0 )
 			return
 
@@ -6065,7 +6768,7 @@ bool function Tracker_IsStatsReadyFor( entity player )
 
 int function GetConnectedPlayerCount()
 {
-	return GetGlobalNetInt( "connectedPlayerCount" )
+	return GetGlobalNetIntSafe( "connectedPlayerCount" )
 }
 
 vector function MapAngleToRadius( float angle, float radius )
@@ -6116,3 +6819,26 @@ bool function StatusEffect_HasSeverity( entity player, int statuseffect )
 		// printt( "boom" )
 	// }
 // #endif
+
+float function GetEffectiveDeltaSince( float timeThen )
+{
+	if ( timeThen <= 0.0001 )
+		return 999999.0
+
+	return (Time() - timeThen)
+}
+
+int function SortByScore( PotentialTargetData a, PotentialTargetData b )
+{
+	if ( a.score > b.score )
+		return -1
+	else if ( a.score < b.score )
+		return 1
+
+	return 0
+}
+
+string function GetGameVersion()
+{
+	return "R5V-N1094"
+}

@@ -1,14 +1,424 @@
-// stub script
+untyped
 
-global function Utility_MP_Init
-global function ClientCommand_OnDevnetBugScreenshot
+globalize_all_functions
+
+struct
+{
+	#if DEVELOPER
+		array<void functionref( entity recordPlayer )> botRecordStartCallbacks
+		array<void functionref( entity playbackBot )>  botPlaybackStartCallbacks
+	#endif
+} file
+
+// dev function
+void function summonplayers()
+{
+	entity guy                  = GetPlayerArray()[0]
+	array<entity> livingPlayers = GetPlayerArray_Alive()
+	foreach ( player in livingPlayers )
+	{
+		if ( player == guy )
+			continue
+		player.SetOrigin( guy.GetOrigin() )
+		player.SetVelocity( RandomVec( 250.0 ) )
+	}
+}
+
+
+void function DefaultStayPut( entity guys )
+{
+	foreach ( guy in guys )
+	{
+		guy.AssaultPoint( guy.GetOrigin() )
+		guy.DisableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE )
+	}
+}
+
+
+float function GetTimeLimit_ForGameMode()
+{
+	#if DEVELOPER
+		if ( "devForcedTimeLimit" in level && level.devForcedTimeLimit )
+			return 0.1
+	#endif
+
+	if ( GameState_GetTimeLimitOverride() >= 0 )
+		return GameState_GetTimeLimitOverride()
+
+	return GetCurrentPlaylistVarFloat( "timelimit", 30.0 )
+}
+
+
+void function SetupAssaultPointKeyValues()
+{
+	printt( "WARNING, USED GETENTARRAY INSTEAD OF ADDSPAWNCALLBACK" )
+	array<entity> assaultpoints = GetEntArrayByClass_Expensive( "assault_assaultpoints" )
+	foreach ( point in assaultpoints )
+	{
+		SetupAssaultPoint( point )
+	}
+}
+
+
+void function SetupAssaultPoint( entity point )
+{
+	point.kv.allowdiversionradius = 1000
+	point.kv.faceAssaultPointAngles = 1
+	point.kv.arrivaltolerance = 120
+}
+
+
+float function GetTimeTillGameStarts()
+{
+	return GetGameStartTime() - Time()
+}
+
+
+//////////////////////////////////////////////////////////////
+// No death screams from npcs
+void function SetSilentDeath( entity npc, bool silent )
+{
+	Assert( npc.IsNPC(), "Cannot call SetSilentDeath on a non-npc: " + npc.GetClassName() )
+	Assert( IsAlive( npc ), "Cannot call SetSilentDeath on a dead npc" )
+
+	if ( silent )
+	{
+		if ( !("silentDeath" in npc.s) )
+			npc.s.silentDeath <- true
+	}
+	else
+	{
+		if ( "silentDeath" in npc.s )
+			delete npc.s.silentDeath
+	}
+}
+
+
+bool function PlayerFullyConnected( player )
+{
+	if ( !player.hasConnected || player.GetTeam() == TEAM_SPECTATOR )
+		return false
+
+	if ( player.IsMarkedForDeletion() )
+		return false
+
+	return true
+}
+
+
+void function SaveDatePlayed( entity player )
+{
+	Assert( IsServer() )
+	Assert( IsValid( player ) )
+	Assert( player.IsPlayer() )
+
+	player.SetPersistentVar( "lastTimePlayed", Daily_GetCurrentTime() )
+}
+
+
+void function SaveDateLoggedIn( entity player )
+{
+	Assert( IsServer() )
+	Assert( IsValid( player ) )
+	Assert( player.IsPlayer() )
+
+	player.SetPersistentVar( "lastTimeLoggedIn", Daily_GetCurrentTime() )
+}
+
+
+float function GetDaysInactive( entity player )
+{
+	return _GetDaysSinceVar( player, "lastTimePlayed" )
+}
+
+
+float function GetDaysSinceLastLogin( entity player )
+{
+	return _GetDaysSinceVar( player, "lastTimeLoggedIn" )
+}
+
+
+string function GetMapNameForScoreboardData()
+{
+	string mapName = GetMapName()
+
+	#if DEVELOPER
+		if ( MapIsValidForPersistence( mapName ) )
+			return mapName
+
+		if ( IsTestMap() && !IsLobby() )
+		{
+			string fakeMapName = PersistenceGetEnumItemNameForIndex( "maps", 0 )
+			Warning( "GetMapNameForScoreboardData() - Test map '" + mapName + "' isn't set up for scoreboard persistence, so substituting map name '" + fakeMapName + "' instead." )
+			return fakeMapName
+		}
+	#endif // DEVELOPER
+
+	return mapName
+}
+
+#if DEVELOPER
+struct
+{
+	int health
+} DEV_botPlaybackState
+#endif
+
+void function CodeCallback_BotRecordStart( entity player )
+{
+	// note: I already save position, orientation and velocity in C++ code
+	#if DEVELOPER
+		DEV_botPlaybackState.health = player.GetHealth()
+		foreach( void functionref( entity recordPlayer ) callback in file.botRecordStartCallbacks )
+			callback( player )
+	#endif
+}
+
+
+void function CodeCallback_BotPlaybackStart( entity bot )
+{
+	// note: the bot has been spawned and already set to the correct initial position, orientation and velocity by C++ code
+	#if DEVELOPER
+		Assert( IsValid( bot ) )
+
+		//bot.SetHealth( DEV_botPlaybackState.health )
+
+		// todo(dw): status effects
+
+		foreach( void functionref( entity playbackBot ) callback in file.botPlaybackStartCallbacks)
+			callback( bot )
+
+		thread DelayedBotPlaybackState( bot )
+	#endif
+}
+
+#if DEVELOPER
+void function DelayedBotPlaybackState( entity bot )
+{
+	EndSignal( bot, "OnDestroy" )
+
+	WaitEndFrame()
+	while ( true )
+	{
+		if ( IsAlive( bot ) )
+		{
+			bot.SetHealth( DEV_botPlaybackState.health )
+			break
+		}
+		WaitFrame()
+	}
+}
+void function AddCallback_BotRecordStart( void functionref( entity recordPlayer ) callback )
+{
+	Assert( !file.botRecordStartCallbacks.contains( callback ), "Tried to add a callback that was already added" )
+	file.botRecordStartCallbacks.append( callback )
+}
+
+void function AddCallback_BotPlaybackStart( void functionref( entity playbackBot ) callback )
+{
+	Assert( !file.botPlaybackStartCallbacks.contains( callback ), "Tried to add a callback that was already added" )
+	file.botPlaybackStartCallbacks.append( callback )
+}
+#endif
+
+void function UpdatePersistenceOnDisconnect( entity player )
+{
+	if ( player.p.updatedPersistenceOnDisconnect )
+		return
+
+	if ( Bleedout_IsBleedingOut( player ) ) // if we don't catch this here, players can disconnect and because stats have been written, deaths are not recorded
+		StatsHook_TrackPlayerDeaths( player )
+
+	StatsInternals_UpdatePersistenceOnDisconnect( player )
+	//Boost_UpdatePersistenceOnDisconnect( player ) // sh_boost, implement later - kral
+	//Mastery_UpdatePersistenceOnDisconnect( player ) // implement later - kral
+	UpdatePlayerMatchCodeStats( player )
+
+	if ( player.GetTeam() != TEAM_SPECTATOR )
+		SaveDatePlayed( player )
+	SaveDateLoggedIn( player )
+
+	player.p.updatedPersistenceOnDisconnect = true
+}
+
+
+void function CodeCallback_FinalizePersistentData( entity player )
+{
+	printt( "CodeCallback_FinalizePersistentData():", player.GetPlayerName() )
+
+	if ( !player.hasConnected || player.GetTeam() == TEAM_SPECTATOR )
+		return
+
+	UpdatePersistenceOnDisconnect( player )
+}
+
+
+
+/*
+
+This is only loaded in MP
+Eventually, _utility_mp should not be loaded in SP, and we should move everything in this file there
+For now, this is where we put utility functions that we want to split from SP
+
+*/
+
 
 void function Utility_MP_Init()
 {
-    
 }
 
-bool function ClientCommand_OnDevnetBugScreenshot( entity player, array<string> args )
+void function ForceMatchEnd()
 {
-	return true
+	printt( "Match ended with ForceMatchEnd()" )
+	int winningTeam = GetWinningTeam()
+
+	if ( winningTeam == TEAM_UNASSIGNED )
+	{
+		winningTeam = GetPlayerArray().getrandom().GetTeam()
+	}
+
+	ForceTeamWin( winningTeam )
 }
+
+
+void function ForceTeamWin( int team )
+{
+	level.devForcedWin = true
+	svGlobal.levelEnt.Signal( "devForcedWin" )
+	if ( IsRoundBased() )
+	{
+		SetWinner( team, eWinReason.DEFAULT, "#DEV_COMMAND_FORCED_WIN_ANNOUNCEMENT", "#DEV_COMMAND_FORCED_LOSS_ANNOUNCEMENT" )
+	}
+	else
+	{
+		SetWinner( team, eWinReason.DEFAULT, "#DEV_COMMAND_FORCED_WIN_ANNOUNCEMENT", "#DEV_COMMAND_FORCED_LOSS_ANNOUNCEMENT" )
+	}
+}
+
+
+bool function HasGameStateProtection( entity ent )
+{
+	// return true if the ent CAN'T die in the current gamestate
+	switch ( GetGameState() )
+	{
+		case eGameState.WaitingForCustomStart:
+		case eGameState.WaitingForPlayers:
+		case eGameState.PickLoadout:
+		case eGameState.Playing:
+		case eGameState.SuddenDeath:
+		case eGameState.Epilogue:
+		case eGameState.Resolution:
+			// can die
+			return false
+
+		case eGameState.Prematch:
+
+			if ( "canDieInPrematch" in ent.s )
+				return false // some ents could die in Prematch
+
+			return true // most ents doesn't die in Prematch
+
+		case eGameState.SwitchingSides:
+		case eGameState.Postmatch:
+			// nothing dies
+			return true
+
+		case eGameState.WinnerDetermined:
+			return !IsWinnerDeterminedPlayable()
+
+		default:
+			Assert( false, "Unknown gamestate " + GetGameState() )
+	}
+
+	return false
+}
+
+// Return a table which organizes all players into their teams
+table< int, array<entity> > function GetAllPlayersSortedByTeam()
+{
+	return GetPlayersSortedByTeam( GetPlayerArray() )
+}
+
+// Return a table which organizes players ( from the passed in array of players ) into their teams
+table< int, array<entity> > function GetPlayersSortedByTeam( array<entity> players )
+{
+	table< int, array<entity> > groupedPlayers
+
+	foreach( entity player in players )
+	{
+		if ( !IsValid( player ) )
+			continue
+
+		int team = player.GetTeam()
+		if ( !(team in groupedPlayers) )
+			groupedPlayers[ team ] <- []
+
+		groupedPlayers[ team ].append( player )
+	}
+
+	return groupedPlayers
+}
+
+
+float function GetDistanceToNearestTeammate( entity player )
+{
+	float dist              = -1
+	array<entity> teammates = GetPlayerArrayOfTeam_Alive( player.GetTeam() )
+	if ( teammates.len() <= 1 )
+		return dist
+
+	foreach( entity teammate in teammates )
+	{
+		if ( teammate == player )
+			continue
+		float d = Distance( teammate.GetOrigin(), player.GetOrigin() )
+		if ( dist < 0 || d < dist )
+			dist = d
+	}
+	return dist
+}
+
+
+
+#if DEVELOPER
+
+entity function GetPlayerByName( string name )
+{
+	foreach ( player in GetPlayerArray() )
+	{
+		if ( player.GetPlayerName().tolower() == name.tolower() )
+			return player
+	}
+
+	return null
+}
+
+
+void function PlayerKillsPlayer( string killerName, string victimName )
+{
+	entity killer = GetPlayerByName( killerName )
+	entity victim = GetPlayerByName( victimName )
+	if ( !IsValid( killer ) || !IsValid( victim ) )
+		return
+
+	victim.TakeDamage( 1000, killer, killer, {} )
+}
+
+void function AddLastSquadPlayer( int index, string name, string playerUID, string nucleusID, int hardwareID )
+{
+	GP().SetPersistentVar( "lastGameSquadStats[" + index + "].playerName", name )
+	GP().SetPersistentVar( "lastGameSquadStats[" + index + "].platformUid", playerUID )
+	GP().SetPersistentVar( "lastGameSquadStats[" + index + "].nucleusID", nucleusID )
+	GP().SetPersistentVar( "lastGameSquadStats[" + index + "].hardwareID", hardwareID )
+
+
+	GP().SetPersistentVar( "lastGamePlayers", 6 )
+	GP().SetPersistentVar( "lastGameTime", GetUnixTimestamp() + 3000 )
+}
+
+void function DEV_SetShowBattlePassSummary( entity player  )
+{
+	player.SetPersistentVar( "showGameSummary", true )
+	player.SetPersistentVar( "lastGameTime", GetUnixTimestamp()  )
+}
+#endif

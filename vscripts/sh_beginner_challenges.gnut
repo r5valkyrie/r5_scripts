@@ -1,0 +1,372 @@
+global function BeginnerChallenges_Init
+
+global function BeginnerChallenges_IsActive
+
+global function BeginnerChallenges_GetChallengeList
+global function BeginnerChallenges_GetChallengeIndex
+global function BeginnerChallenges_GetBeginnerChallengesCount
+global function BeginnerChallenges_GetPlayerCompletedChallengeCount
+
+                                  
+                                                            
+                                                      
+                                                
+                                               
+          
+                                                              
+               
+                 
+                                                                
+                      
+                                       
+
+                                  
+                                                                                               
+
+                        
+ 
+                 
+                                 
+ 
+
+                     
+ 
+                           
+                              
+                                   
+ 
+
+                       
+ 
+                        
+                                                
+ 
+                                       
+
+struct {
+                                  
+                               
+                                       
+	array< ItemFlavor > beginnerChallenges
+} file
+
+void function BeginnerChallenges_Init()
+{
+	AddCallback_RegisterRootItemFlavors( OnRegisterRootItemFlavors )
+
+#if SERVER && DEVELOPER
+	AddCallback_GeneratePDef( GenerateBeginnerChallengesPDef )
+#endif
+}
+
+bool function BeginnerChallenges_IsActive()
+{
+	return GetCurrentPlaylistVarBool( "beginner_challenges_active", true )
+}
+
+
+void function OnRegisterRootItemFlavors()
+{
+	if ( !BeginnerChallenges_IsActive() )
+		return
+
+                                  
+                                          
+                                  
+
+                                                                            
+                                                                                                             
+                                                                                                         
+                                                                                                                 
+                                                                                            
+                                                                                                 
+                               
+                                                                                        
+  
+                                                                                                                       
+                                                                                                                           
+                                                                      
+
+                                                                                                         
+                                                                                 
+                            
+   
+                                   
+                                               
+                                                                           
+
+                                               
+   
+
+                                                                                  
+   
+                                                                                                                  
+                                                                                         
+   
+      
+   
+                                                                                             
+                                                                                                            
+                                                                                        
+                                                                                                                  
+                                       
+
+                                                                                      
+                                
+    
+                                             
+     
+                                                        
+          
+     
+
+            
+     
+                                                                     
+          
+     
+    
+   
+  
+
+                         
+                                             
+                    
+                                                                                                             
+  
+                                                                                                                                                                                                                                      
+
+                                                    
+                                             
+  
+                                            
+
+     
+	file.beginnerChallenges.clear()
+
+	foreach ( asset beginnerChallenge in GetBaseItemFlavorsFromArray( "beginnerChallenges" ) )
+	{
+		ItemFlavor newChallenge = expect ItemFlavor(RegisterItemFlavorFromSettingsAsset( beginnerChallenge ))
+
+		Assert( ItemFlavor_GetType( newChallenge ) == eItemType.challenge && Challenge_GetTimeSpanKind( newChallenge ) == eChallengeTimeSpanKind.BEGINNER )
+
+		file.beginnerChallenges.append( newChallenge )
+	}
+      
+}
+
+                                  
+                                                                                          
+ 
+                          
+
+                                                                                        
+                                 
+ 
+
+                                                                                      
+ 
+                          
+
+                      
+                                                    
+  
+               
+  
+
+        
+                                      
+   
+                
+   
+       
+
+                                                                                                     
+                       
+                                                                            
+                                                                       
+                    
+  
+                                                               
+                                                                                       
+   
+                    
+           
+   
+                                                                                                     
+   
+                    
+                                 
+           
+   
+                                                                                                                           
+   
+                    
+           
+   
+
+                                                        
+                                                                                              
+  
+
+              
+ 
+
+                                                               
+ 
+                          
+
+                                                                                                     
+                                                                              
+
+                                                                
+ 
+
+                                                              
+ 
+                            
+
+                                                                                       
+                                           
+  
+              
+  
+
+                                                                       
+  
+                                                                                                                    
+   
+              
+   
+  
+
+             
+ 
+
+                                                                       
+ 
+                          
+
+                         
+                                                                   
+                                 
+  
+                     
+  
+
+                                                                                                     
+                                 
+                                                                                              
+  
+                                           
+                                                     
+   
+                             
+   
+  
+
+                                                                       
+                    
+ 
+
+          
+                                                                             
+ 
+                          
+
+                                                                                               
+                                                   
+  
+              
+  
+
+                                                                               
+  
+                                                                                                                     
+   
+               
+   
+  
+
+                                                                                                     
+                                                                       
+                                                                                                                             
+            
+ 
+               
+
+                 
+                                                                               
+ 
+                          
+
+                                                                                               
+                                                   
+  
+              
+  
+
+                                                                                                     
+                                                                       
+                                                                                                                             
+            
+ 
+                      
+      
+
+array< ItemFlavor > function BeginnerChallenges_GetChallengeList()
+{
+	return file.beginnerChallenges
+}
+
+int function BeginnerChallenges_GetChallengeIndex( ItemFlavor challenge )
+{
+	Assert( file.beginnerChallenges.contains( challenge ) )
+	return file.beginnerChallenges.find( challenge )
+}
+
+int function BeginnerChallenges_GetBeginnerChallengesCount( entity player )
+{
+	Assert( IsValid( player ) )
+
+	int numChallenges = 0
+
+	for( int i = 0; i < file.beginnerChallenges.len(); ++i )
+	{
+		if ( !Challenge_IsAssigned( player, file.beginnerChallenges[i] ) )
+		{
+			continue
+		}
+
+		++numChallenges
+	}
+
+	return numChallenges
+}
+
+int function BeginnerChallenges_GetPlayerCompletedChallengeCount( entity player )
+{
+	Assert( IsValid( player ) )
+
+	int count = 0;
+	for( int i = 0; i < file.beginnerChallenges.len(); ++i )
+	{
+		if ( !Challenge_IsAssigned( player, file.beginnerChallenges[i] ) )
+			continue
+
+		if( Challenge_IsComplete(player, file.beginnerChallenges[i] ) )
+			count++;
+	}
+	return count;
+}
+
+#if SERVER && DEVELOPER
+void function GenerateBeginnerChallengesPDef()
+{
+                                   
+                                                     
+                                                                      
+                             
+       
+}
+#endif

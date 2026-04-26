@@ -62,12 +62,8 @@ void function Olympus_MapInit_Common()
 		/////////////////////////////////////////////////////////////REMOVE THESE ONCE FIXED/////////////////////////////////////////////////////////////////////////
 
 		AddSpawnCallbackEditorClass( "player_vehicle", "hover_vehicle", EditorSpawnCallbackRemoveEnts )
-		//AddSpawnCallbackEditorClass( "prop_dynamic", "script_loot_marvin", EditorSpawnCallbackRemoveEnts )
 		AddSpawnCallbackEditorClass( "prop_dynamic", "audio_log_console_03", EditorSpawnCallbackRemoveEnts )
 		AddSpawnCallbackEditorClass( "prop_dynamic", "audio_log_console_tunnel", EditorSpawnCallbackRemoveEnts )
-		AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_crafting_harvester", EditorSpawnCallbackRemoveEnts )
-		AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_crafting_workbench_cluster", EditorSpawnCallbackRemoveEnts )//TODO: REMOVE THESE!!!
-		AddSpawnCallbackEditorClass( "func_brush", "func_brush_control_wall", EditorSpawnCallbackRemoveEnts )
 		InitVehicleARBarriers()
 	#endif
 
@@ -86,7 +82,7 @@ void function EntitiesDidLoad()
 	#if SERVER && DEVELOPER
 		//test_runmapchecks()
 	#endif
-
+	InitPathTTRingTVSystem()
 	// JFS: Create phase runner pings
 }
 
@@ -95,7 +91,7 @@ void function EditorSpawnCallbackRemoveEnts( entity ent )
 	if( !IsValid( ent ) )
 		return
 
-	ent.Destroy()//TODO: Remove this function once we get tridents -LorryLeKral
+	ent.Destroy()//TODO: Remove this function once we get tridents -Kral
 }
 #endif
 
@@ -111,7 +107,7 @@ void function InitVehicleARBarriers()
 			return
 
 		brush.NotSolid()
-		brush.Destroy()//TODO: Recover this function once we get tridents -LorryLeKral
+		brush.Destroy()//TODO: Recover this function once we get tridents -Kral
 	} )
 }
 

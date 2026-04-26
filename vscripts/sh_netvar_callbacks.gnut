@@ -1,0 +1,82 @@
+//=============================================================================//
+//
+// Purpose: ScriptNetData - Networked Variable Change Callback System
+//
+// Uses native engine callbacks via the Safe wrappers in sh_sndc_callbacks.gnut.
+// Non-overflow vars: engine DT-driven callbacks (immediate).
+// Overflow vars: SDK callback system (fired on NET_ScriptMessage receive).
+//
+//=============================================================================//
+
+global function NetVarCallbacks_Init
+global function RegisterNetVarBoolChangeCallback
+global function RegisterNetVarIntChangeCallback
+global function RegisterNetVarFloatChangeCallback
+global function RegisterNetVarTimeChangeCallback
+global function RegisterNetVarEntChangeCallback
+global function TriggerGlobalNetVarCallbacks
+global function TriggerPlayerNetVarCallbacks
+
+void function NetVarCallbacks_Init()
+{
+}
+
+#if CLIENT || UI
+
+void function RegisterNetVarBoolChangeCallback( string varName, void functionref( entity, bool ) callback, int category = 0 )
+{
+	RegisterNetworkedVariableChangeCallback_boolSafe( varName,
+		void function( entity ent, bool oldVal, bool newVal, bool changed ) : ( callback )
+		{ if ( changed ) callback( ent, newVal ) }
+	)
+}
+
+void function RegisterNetVarIntChangeCallback( string varName, void functionref( entity, int ) callback, int category = 0 )
+{
+	RegisterNetworkedVariableChangeCallback_intSafe( varName,
+		void function( entity ent, int oldVal, int newVal, bool changed ) : ( callback )
+		{ if ( changed ) callback( ent, newVal ) }
+	)
+}
+
+void function RegisterNetVarFloatChangeCallback( string varName, void functionref( entity, float ) callback, int category = 0 )
+{
+	RegisterNetworkedVariableChangeCallback_floatSafe( varName,
+		void function( entity ent, float oldVal, float newVal, bool changed ) : ( callback )
+		{ if ( changed ) callback( ent, newVal ) }
+	)
+}
+
+void function RegisterNetVarTimeChangeCallback( string varName, void functionref( entity, float ) callback, int category = 0 )
+{
+	RegisterNetworkedVariableChangeCallback_timeSafe( varName,
+		void function( entity ent, float oldVal, float newVal, bool changed ) : ( callback )
+		{ if ( changed ) callback( ent, newVal ) }
+	)
+}
+
+void function RegisterNetVarEntChangeCallback( string varName, void functionref( entity, entity ) callback, int category = 0 )
+{
+	RegisterNetworkedVariableChangeCallback_entSafe( varName,
+		void function( entity ent, entity oldVal, entity newVal, bool changed ) : ( callback )
+		{ if ( changed ) callback( ent, newVal ) }
+	)
+}
+
+#elseif SERVER
+
+void function RegisterNetVarBoolChangeCallback( string varName, void functionref( entity, bool ) callback, int category = 0 ) {}
+void function RegisterNetVarIntChangeCallback( string varName, void functionref( entity, int ) callback, int category = 0 ) {}
+void function RegisterNetVarFloatChangeCallback( string varName, void functionref( entity, float ) callback, int category = 0 ) {}
+void function RegisterNetVarTimeChangeCallback( string varName, void functionref( entity, float ) callback, int category = 0 ) {}
+void function RegisterNetVarEntChangeCallback( string varName, void functionref( entity, entity ) callback, int category = 0 ) {}
+
+#endif
+
+void function TriggerGlobalNetVarCallbacks()
+{
+}
+
+void function TriggerPlayerNetVarCallbacks( entity player )
+{
+}

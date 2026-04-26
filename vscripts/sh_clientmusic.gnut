@@ -1,12 +1,12 @@
 global function ClientMusic_SharedInit
 global function ClientMusic_RegisterNetworking
 //
-global function ClientMusic_ToggleForClient
 global function ClientMusic_PlayCustomTrackOnClient
 global function ClientMusic_StopCustomTrackOnClient
 
 #if CLIENT
 global function ClientMusic_RequestStingerForNewZone
+
 #if DEVELOPER
 global function ClientMusic_PrintStatus
 #endif // #if DEVELOPER
@@ -19,61 +19,92 @@ global function ClientMusic_StopCustomTrackOnAll
 
 global enum eMusicTrack
 {
-	ZoneTransitionStingers,
+	ZoneTransitionStingers_Survival,
+	ZoneTransitionStingers_Quest,
 
-	GeneralTeamWipe,
-	GeneralCombat,
-	GeneralCombatOver,
+	GeneralCombatLow,
+	GeneralCombatHigh,
+
 	GeneralWaitingForPlayers,
+	GeneralMatchIntro,
 
 	//
-	IntroTense,
-	IntroMysterious,
+	ObjectiveComplete,
 	GetToTheLZ,
-	BigVictory,
-	BossFight,
-	BossFightVictory,
-	Surprise,
-	CrowRescue,
-	CrowWon,
-	Assault,
-	GetItDone,
-	LastStand,
-	DaySaved,
-	Goodbye,
+	GetOnTheDropship,
+	GetOnTheDropshipLong,
+	DropshipSafe,
+	DropshipMissed,
+	DrillExtraction45sec,
+	DrillExtraction80sec,
+
+
+	//
+	TetraBossFight,
+
+	//
+	QuestBunker_HatchOpen,
+	QuestBunker_1stFloor,
+	QuestBunker_2ndFloor,
+	QuestBunker_EndAnim,
 
 	_count
 }
 
 const array<string> [eMusicTrack._count] s_TracksMap =
 [
-	/* ZoneTransitionStingers */			["music_beacon_12_spoke1fallensoldiers", "music_skyway_17_slonedies", "music_timeshift_16_explorepresent", "music_timeshift_22_panicburst", "music_wilds_14_timetoinstallbatterytwo"],
+	/* ZoneTransitionStingers_Survival */		["music_skyway_17_slonedies"],
 
-	/* GeneralTeamWipe */					["music_boomtown_20_abovethedome"],
-	/* GeneralCombat */						["music_skyway_16_slonefight"],
-	/* GeneralCombatOver*/					["music_skyway_17_slonedies"],
+	//////
+
+	/* ZoneTransitionStingers_Quest */			["Music_Quest_NewZone"],
+
+	/* GeneralCombatLow */					["Music_Quest_EncounterEnemy"],
+	/* GeneralCombatHigh */					["Music_Quest_CombatActive"],
+
 	/* GeneralWaitingForPlayers*/			["music_timeshift_elevator_bossanova"],
+	/* GeneralMatchIntro*/					["music_tday_02_intro"],
 
 	//
-	/* IntroTense */						["Music_CloudCity_04_SpottedBySoldiers"],
-	/* IntroMysterious */					["music_timeshift_34_timestop"],
-	/* GetToTheLZ */						["Music_PvE_BossBattle"],
-	/* BigVictory */						["music_cloudcity_05_turretsdestroyed"],
-	/* BossFight */							["music_cloudcity_10_bossintroduction"],
-	/* BossFightVictory */					["music_cloudcity_22_miragebossdefeated"],
-	/* Surprise */							["music_s2s_03_jump2malta"],
-	/* Crow Rescue */						["music_reclamation_04_firsttitanbattle"],
-	/* Crow Won */							["music_s2s_13_btarrives"],
-	/* Assault */							["music_cloudcity_16_enemytitansarrive"],
-	/* GetItDone */							["music_s2s_04_maltabattle_alt"],
-	/* LastStand */							["music_s2s_02_throw2blackbird64_land"],
-	/* DaySaved */							["music_s2s_17_bossdead"],
-	/* Goodbye */							["music_cloudcity_06_goodbyegibraltar"]
+	/* ObjectiveComplete */					["music_mp_freeagents_outro_win"],
+	/* GetToTheLZ */						["music_s2s_04_maltabattle_alt"],
+	/* GetOnTheDropship */					["Music_Quest_DropshipHasArrived"],
+	/* GetOnTheDropshipLong */				["Music_Quest_DropshipHasArrived_Long"],
+	/* DropshipSafe */						["Music_Quest_Success"],
+	/* DropshipMissed */					["Music_Quest_Failure"],
+	/* DrillExtraction45sec */				["Music_Quest_DrillPlaced_Short"],
+	/* DrillExtraction80sec */				["Music_Quest_DrillPlaced_Long"],
+
+	/* TetraBossFight */					["Music_PvE_BossBattle"],
+
+	/* QuestBunker_HatchOpen */				["Music_Quest_Bunker_HatchOpen"],
+	/* QuestBunker_1stFloor */				["Music_Quest_Bunker_FirstFloor"],
+	/* QuestBunker_2ndFloor */				["Music_Quest_Bunker_SecondFloor"],
+	/* QuestBunker_EndAnim */				["Music_Quest_Bunker_EndAnimation"],
+
+	//	/* xxxxxxxxxxxxxx */					[""],
 ]
 
-struct
+enum eMusicLevel
 {
-} file
+	None,
+	Ambient,
+
+	EnemyNear,
+	CombatLow,
+	CombatHigh,
+	WaitingForPlayers,
+	MatchIntro,
+
+	CustomTrack,
+
+	_count
+}
+
+enum eMusicFlag
+{
+	IntroMusicShouldKeepPlaying =	(1 << 0)
+}
 
 
 #if CLIENT
@@ -132,19 +163,17 @@ void function ClientMusic_RequestStingerForNewZone( int zoneId )
 
 float function GetStartTimeForAlias( string alias )
 {
-#if(false)
-
-
-
-
-
-#endif //
+	//switch( alias )
+	//{
+	//	case "Music_PvE_BossBattle":
+	//		return 50.0
+	//}
 	return 0.0
 }
 
-var s_lastPlayedHandle = null
-string s_lastPlayedAliasDEBUG = ""
-void function StartPlayingMusic( string musicAlias )
+var[2] s_lastPlayedHandles = [null, null]
+string[2] s_lastPlayedAliasesDEBUG = ["", ""]
+void function StartPlayingMusic_( string musicAlias, int idx )
 {
 	if ( musicAlias == "" )
 		return
@@ -154,45 +183,40 @@ void function StartPlayingMusic( string musicAlias )
 
 	float seekTime = GetStartTimeForAlias( musicAlias )
 	if ( seekTime > 0.0001 )
-		s_lastPlayedHandle = EmitSoundOnEntityWithSeek( player, musicAlias, seekTime )
+		s_lastPlayedHandles[idx] = EmitSoundOnEntityWithSeek( player, musicAlias, seekTime )
 	else
-		s_lastPlayedHandle = EmitSoundOnEntity( player, musicAlias )
-	SetPlayThroughKillReplay( s_lastPlayedHandle )
-	s_lastPlayedAliasDEBUG = musicAlias
+		s_lastPlayedHandles[idx] = EmitSoundOnEntity( player, musicAlias )
+	SetPlayThroughKillReplay( s_lastPlayedHandles[idx] )
+	s_lastPlayedAliasesDEBUG[idx] = musicAlias
 
-	//printf( "%s() - '%s'", FUNC_NAME(), musicAlias )
+	printf( "%s() - '%s'", FUNC_NAME(), musicAlias )
 }
 void function StopPlayingMusic()
 {
-	//FadeOutSoundOnEntity( s_lastPlayedEntity, s_lastPlayedAlias, 2.0 )		// StopSoundOnEntity
-
-	if ( s_lastPlayedHandle != null )
-		StopSound( s_lastPlayedHandle )
-
-	s_lastPlayedHandle = null
+	for ( int idx = 0; idx < s_lastPlayedHandles.len(); ++idx )
+	{
+		if ( s_lastPlayedHandles[idx] != null )
+			StopSound( s_lastPlayedHandles[idx] )
+		s_lastPlayedHandles[idx] = null
+	}
 }
-
-enum eMusicLevel
+void function StartPlayingMusicA( string musicAlias )
 {
-	None,
-	Ambient,
-	EnemyNear,
-	Combat,
-	GameOver,
-	WaitingForPlayers,
-
-	CustomTrack,
-
-	_count
+	StartPlayingMusic_( musicAlias, 0 )
 }
-
-bool s_musicSystemIsDisabled = false
+void function StartPlayingMusicB( string musicAlias )
+{
+	StartPlayingMusic_( musicAlias, 1 )
+}
 
 int s_cachedAnswer = 0
 float s_cachedAnswerTime = -999.0
 float s_cachedAnswerTimeWasLastTrue = -999.0
 int function CountEnemiesNearby()
 {
+	if ( !IsPVEMode() )
+		return 0
+
 	if ( (Time() - s_cachedAnswerTime) < 5.0 )
 		return s_cachedAnswer
 
@@ -200,7 +224,7 @@ int function CountEnemiesNearby()
 	if ( !IsValid( player ) )
 		return 0
 
-	array<entity> NPCs = GetNPCArrayEx( "any", TEAM_ANY, player.GetTeam(), player.GetOrigin(), 2000.0 )
+	array<entity> NPCs = GetNPCArrayEx( "any", TEAM_ANY, player.GetTeam(), player.GetOrigin(), 3000.0 )
 	s_cachedAnswer = NPCs.len()
 	s_cachedAnswerTime = Time()
 	if ( s_cachedAnswer > 0 )
@@ -212,16 +236,17 @@ float function CountEnemiesNearbyTimeSinceValid()
 	return (Time() - s_cachedAnswerTimeWasLastTrue)
 }
 
-float function GetEffectiveDeltaSince( float timeThen )
+bool function CombatTriggeredCheck( entity player, bool requireHighIntensity )
 {
-	if ( timeThen <= 0.0001 )
-		return 999999.0
+	if ( !IsPVEMode() )
+		return false
 
-	return (Time() - timeThen)
-}
+	if ( !requireHighIntensity )
+	{
+		if ( GetEffectiveDeltaSince( NPCs_GetLastTimePlayerSpotted( player ) ) < 10.0 )
+			return true
+	}
 
-bool function CombatTriggeredCheck( entity player )
-{
 	if ( GetEffectiveDeltaSince( player.GetLastTimeDamagedByNPC() ) < 10.0 )
 		return true
 	if ( GetEffectiveDeltaSince( player.GetLastTimeDidDamageToNPC() ) < 10.0 )
@@ -231,16 +256,27 @@ bool function CombatTriggeredCheck( entity player )
 }
 
 const float NEARBY_FRIENDLY_RANGE = 3000.0
-bool function AnyNearbyFriendlyIsCombatTriggered( entity player )
+bool function AnyNearbyFriendlyIsCombatTriggered_( entity player, bool requireHighIntensity )
 {
+	if ( !IsPVEMode() )
+		return false
+
 	array<entity> teamPlayers = GetPlayerArrayEx( "any", player.GetTeam(), TEAM_ANY, player.GetOrigin(), NEARBY_FRIENDLY_RANGE )
 	foreach ( teamPlayer in teamPlayers )
 	{
-		if ( CombatTriggeredCheck( teamPlayer ) )
+		if ( CombatTriggeredCheck( teamPlayer, requireHighIntensity ) )
 			return true
 	}
 
 	return false
+}
+bool function AnyNearbyFriendlyIsCombatTriggered_HighIntensity( entity player )
+{
+	return AnyNearbyFriendlyIsCombatTriggered_( player, true )
+}
+bool function AnyNearbyFriendlyIsCombatTriggered_LowIntensity( entity player )
+{
+	return AnyNearbyFriendlyIsCombatTriggered_( player, false )
 }
 
 bool function AnyNearbyFriendlyIsBleedingOut( entity player )
@@ -257,14 +293,15 @@ bool function AnyNearbyFriendlyIsBleedingOut( entity player )
 
 bool function MyTeamIsDeadMyWholeTeamIsDead( entity player )
 {
-	if ( !IsMultiTeamMission() )
+	foreach ( teamPlayer in GetPlayerArrayOfTeam( player.GetTeam() ) )
 	{
-		array<entity> teamPlayers = GetPlayerArrayOfTeam_Alive( player.GetTeam() )
-		if ( teamPlayers.len() == 0 )
-			return true
-	}
+		if ( IsAlive( teamPlayer ) )
+			return false
 
-	return false
+		if ( MissionCheckpoints_GetRespawnsLeftForPlayer( teamPlayer ) > 0 )
+			return false
+	}
+	return true
 }
 
 bool s_customTrackIsPlaying = false
@@ -277,7 +314,7 @@ void function StartPlayingCustomTrack( int musicTrack )
 	if ( alias == "" )
 		return
 
-	StartPlayingMusic( alias )
+	StartPlayingMusicA( alias )
 	s_customTrackIsPlaying = true
 
 	OnThreadEnd(
@@ -287,8 +324,8 @@ void function StartPlayingCustomTrack( int musicTrack )
 		}
 	)
 
-	if ( s_lastPlayedHandle != null )
-		WaitSignal( s_lastPlayedHandle, "OnSoundFinished" )
+	if ( s_lastPlayedHandles[0] != null )
+		WaitSignal( s_lastPlayedHandles[0], "OnSoundFinished" )
 }
 
 void function StopPlayingCustomTrack()
@@ -298,62 +335,144 @@ void function StopPlayingCustomTrack()
 }
 
 int s_queuedCustomTrack = -1
-int function GetDesiredMusicLevel( int currentMusicLevel )
+int function GetDesiredMusicLevel( int levelNow )
 {
-	//if ( s_musicSystemIsDisabled )
-	//	return eMusicLevel.None
+	if ( !IsPVEMode() )
+		return eMusicLevel.None
 
-	return eMusicLevel.None
+	entity player = GetLocalViewPlayer()
+	if ( !IsValid( player ) )
+		return eMusicLevel.Ambient
+
+	int gameState = GetGameState()
+//	if ( (gameState == eGameState.PickLoadout) || ((levelNow == eMusicLevel.MatchIntro) && IntroMusicShouldKeepPlaying( player )) )
+//		return eMusicLevel.MatchIntro
+	if ( (gameState >= eGameState.Playing) && MyTeamIsDeadMyWholeTeamIsDead( player ) )
+		return eMusicLevel.None
+
+	if ( (s_queuedCustomTrack >= 0) || s_customTrackIsPlaying )
+		return eMusicLevel.CustomTrack
+
+//	if ( gameState == eGameState.WaitingForPlayers )
+//		return eMusicLevel.WaitingForPlayers
+
+	if ( (levelNow != eMusicLevel.CombatHigh) && AnyNearbyFriendlyIsCombatTriggered_HighIntensity( player ) && (CountEnemiesNearby() >= 2) )
+	{
+		return eMusicLevel.CombatHigh
+	}
+	else if ( (levelNow != eMusicLevel.CombatHigh) && (levelNow != eMusicLevel.CombatLow) && AnyNearbyFriendlyIsCombatTriggered_LowIntensity( player ) && (CountEnemiesNearby() >= 1) )
+	{
+		return eMusicLevel.CombatLow
+	}
+	else if ( (levelNow == eMusicLevel.CombatHigh) || (levelNow == eMusicLevel.CombatLow) )
+	{
+		if ( CountEnemiesNearby() >= 1 )
+			return levelNow
+		if ( CountEnemiesNearbyTimeSinceValid() < 10.0 )
+			return levelNow
+		if ( AnyNearbyFriendlyIsBleedingOut( player ) )
+			return levelNow
+		if ( GetEffectiveDeltaSince( NPCs_GetLastTimePlayerSpotted( player ) ) < 10.0 )
+			return levelNow
+	}
+
+	//if ( AnyEnemiesNearby() )
+	//	return eMusicLevel.EnemyNear
+
+	return eMusicLevel.Ambient
 }
 
 int s_musicLevel = eMusicLevel.None
 void function ClientMusicFRAME()
 {
+	int oldMusicLevel = s_musicLevel
 	int newMusicLevel = GetDesiredMusicLevel( s_musicLevel )
 	if ( (newMusicLevel != s_musicLevel) || ((newMusicLevel == eMusicLevel.CustomTrack) && (s_queuedCustomTrack > 0)) )
 	{
-		StopPlayingMusic()
+		bool oldMusicWasCombat = ((oldMusicLevel == eMusicLevel.CombatLow) || (oldMusicLevel == eMusicLevel.CombatHigh))
+		bool newMusicIsCombat = ((newMusicLevel == eMusicLevel.CombatLow) || (newMusicLevel == eMusicLevel.CombatHigh))
+		if ( !(oldMusicWasCombat && newMusicIsCombat) )
+			StopPlayingMusic()
+
 		if ( newMusicLevel == eMusicLevel.CustomTrack )
 		{
 			thread StartPlayingCustomTrack( s_queuedCustomTrack )
 			s_queuedCustomTrack = -1
 		}
-		else if ( newMusicLevel == eMusicLevel.EnemyNear )
+		else if ( IsPVEMode() )
 		{
-			//
-		}
-		else if ( newMusicLevel == eMusicLevel.Combat )
-		{
-			StartPlayingMusic( GetNextShuffledTrackFor( eMusicTrack.GeneralCombat ) )
-		}
-		else if ( newMusicLevel == eMusicLevel.GameOver )
-		{
-			StartPlayingMusic( GetNextShuffledTrackFor( eMusicTrack.GeneralTeamWipe ) )
-		}
-		else if ( newMusicLevel == eMusicLevel.WaitingForPlayers )
-		{
-			StartPlayingMusic( GetNextShuffledTrackFor( eMusicTrack.GeneralWaitingForPlayers ) )
-		}
-		else if ( newMusicLevel == eMusicLevel.Ambient )
-		{
-			if ( s_musicLevel == eMusicLevel.Combat )
-				StartPlayingMusic( GetNextShuffledTrackFor( eMusicTrack.GeneralCombatOver ) )
+			if ( newMusicLevel == eMusicLevel.EnemyNear )
+			{
+				//
+			}
+			else if ( (newMusicLevel == eMusicLevel.CombatLow) || (newMusicLevel == eMusicLevel.CombatHigh) )
+			{
+				if ( oldMusicLevel != eMusicLevel.CombatLow )
+					StartPlayingMusicA( GetNextShuffledTrackFor( eMusicTrack.GeneralCombatLow ) )
+				if ( newMusicLevel == eMusicLevel.CombatHigh )
+					StartPlayingMusicB( GetNextShuffledTrackFor( eMusicTrack.GeneralCombatHigh ) )
+			}
+			else if ( newMusicLevel == eMusicLevel.WaitingForPlayers )
+			{
+				StartPlayingMusicA( GetNextShuffledTrackFor( eMusicTrack.GeneralWaitingForPlayers ) )
+			}
+			else if ( newMusicLevel == eMusicLevel.MatchIntro )
+			{
+				StartPlayingMusicA( GetNextShuffledTrackFor( eMusicTrack.GeneralMatchIntro ) )
+			}
+			else if ( newMusicLevel == eMusicLevel.Ambient )
+			{
+			}
 		}
 
-		s_musicLevel = newMusicLevel
+		if ( IsPVEMode() )
+			s_musicLevel = newMusicLevel
 	}
 
 	if ( s_zoneStingerRequested && (s_musicLevel == eMusicLevel.Ambient || s_musicLevel == eMusicLevel.None) )
 	{
 		float timeSinceRequest = (Time() - s_zoneStingerRequestedTime)
 		if ( timeSinceRequest < 10.0 )
-		{
-			StartPlayingMusic( "music_skyway_17_slonedies" )
-		}
+			StartPlayingMusicA( GetNextShuffledTrackFor( IsPVEMode() ? eMusicTrack.ZoneTransitionStingers_Quest : eMusicTrack.ZoneTransitionStingers_Survival ) )
 
 		s_zoneStingerRequested = false
 	}
+
+	// debug drawing
+#if DEVELOPER
+	if ( GetConVarInt( "pve_debug" ) != 0 )
+	{
+		string text = GetClientMusicStatusLine()
+		DebugDrawScreenTextWithColor( 0.65, 0.985, GetClientMusicStatusLine(), <128, 128, 168> )
+
+		entity player = GetLocalViewPlayer()
+		if ( IsPVEMode() && IsValid( player ) )
+		{
+			string npcText = "Last Spotted: Never"
+			float delta = 99.9
+			float lastSpotted = NPCs_GetLastTimePlayerSpotted( player )
+			if ( lastSpotted > 0.0 )
+			{
+				delta = (Time() - lastSpotted)
+				npcText = format( "Last Spotted: %.0f", delta )
+			}
+			vector color = GraphCappedVector( delta, 0.0, 2.0, <255, 128, 168>, <128, 128, 168> )
+			DebugDrawScreenTextWithColor( 0.05, 0.985, npcText, color )
+		}
+
+		string freelanceText
+		if ( IsPVEMode() )
+		{
+			freelanceText = "FreelanceMode N/A"
+		}
+		DebugDrawScreenTextWithColor( 0.25, 0.985,
+			//format( "eGameState.%s (%d)   eFreelanceModePhase.%s (#%d) t:%.0f", GetNameForEnum( eGameState, GetGameState() ), GetGameState(), GetNameForEnum( eFreelanceModePhase, FreelanceMode_GetCurrentPhase() ), FreelanceMode_GetCurrentPhase(), (Time() - FreelanceMode_GetCurrentPhaseStartedTime()) ),
+			format( "eGameState.%s (%d)  %s t:%.0f", GetNameForEnum( eGameState, GetGameState() ), GetGameState(), freelanceText, Time() ),
+			<128, 128, 168> )
+	}
+#endif // #if DEVELOPER
 }
+
 
 bool s_isRunning = false
 bool s_inFrame = false
@@ -366,11 +485,13 @@ void function ClientMusicFrameThread()
 	s_isRunning = true
 	s_startTime = Time()
 
+	WaitFrame()
+
 	while ( true )
 	{
 #if DEVELOPER
 		float preFrameTime = Time()
-#endif // DEVELOPER
+#endif // DEV
 
 		s_inFrame = true
 		s_lastFrameTime = Time()
@@ -380,7 +501,7 @@ void function ClientMusicFrameThread()
 #if DEVELOPER
 		float postFrameTime = Time()
 		Assert( preFrameTime == postFrameTime, format( "ClientMusicFRAME() stalled for %.2f seconds. Should have no waits.", (postFrameTime - preFrameTime) ) )
-#endif // DEVELOPER
+#endif // DEV
 
 		s_inLoopWaitFrame = true
 		WaitFrame()
@@ -420,40 +541,18 @@ string function GetDebugNameForMusicTrack( int musicTrack )
 string function GetClientMusicStatusLine()
 {
 	//	 = musicTrack
-	return format( "'%s',   latest - %s::'%s'", GetDebugNameForMusicLevel( s_musicLevel ), GetDebugNameForMusicTrack( s_lastPlayedMuscTrackDEBUG ), s_lastPlayedAliasDEBUG )
+	return format( "'%s',   latest - %s::'%s','%s'", GetDebugNameForMusicLevel( s_musicLevel ), GetDebugNameForMusicTrack( s_lastPlayedMuscTrackDEBUG ), s_lastPlayedAliasesDEBUG[0], s_lastPlayedAliasesDEBUG[1] )
 }
 #endif // #if DEVELOPER
 #endif // CLIENT
 
-
 const string FUNCNAME_PLAYCUSTOMTRACKONCLIENT = "ClientMusic_PlayCustomTrackOnClient"
 const string FUNCNAME_STOPCUSTOMTRACKONCLIENT = "ClientMusic_StopCustomTrackOnClient"
+
 void function ClientMusic_RegisterNetworking()
 {
-	ScriptRemote_RegisterClientFunction( "ClientMusic_ToggleForClient", "entity", "bool" )
-	ScriptRemote_RegisterClientFunction( FUNCNAME_PLAYCUSTOMTRACKONCLIENT, "entity", "int", -1, eMusicTrack._count )
-	ScriptRemote_RegisterClientFunction( FUNCNAME_STOPCUSTOMTRACKONCLIENT, "entity" )
-}
-
-//(mk): if this system was intended to be called from native it will need restored prior to 2/22/2025
-void function ClientMusic_ToggleForClient( entity player, bool toggle )
-{
-	if( !toggle )
-	{
-		#if SERVER
-			Remote_CallFunction_NonReplay( player, "ClientMusic_ToggleForClient", player, false )
-		#else
-			s_musicSystemIsDisabled = true
-		#endif
-	}
-	else
-	{
-		#if SERVER
-			Remote_CallFunction_NonReplay( player, "ClientMusic_ToggleForClient", player, true )
-		#else
-			s_musicSystemIsDisabled = false
-		#endif
-	}
+	Remote_RegisterClientFunction( FUNCNAME_PLAYCUSTOMTRACKONCLIENT, "entity", "int", -1, eMusicTrack._count )
+	Remote_RegisterClientFunction( FUNCNAME_STOPCUSTOMTRACKONCLIENT, "entity" )
 }
 
 void function ClientMusic_PlayCustomTrackOnClient( entity player, int musicTrack )
@@ -481,13 +580,11 @@ void function ClientMusic_StopCustomTrackOnClient( entity player )
 
 void function ClientMusic_SharedInit()
 {
-#if SERVER
-#else
+#if CLIENT
 	RegisterSignal( "ClientMusic_CustomTrackStop" )
 	thread ClientMusicFrameThread()
 #endif // CLIENT
 }
-
 
 
 #if SERVER
@@ -505,8 +602,5 @@ void function ClientMusic_StopCustomTrackOnAll()
 		ClientMusic_StopCustomTrackOnClient( player )
 }
 #endif // SERVER
-
-
-
 
 

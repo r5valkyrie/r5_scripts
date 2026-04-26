@@ -82,14 +82,6 @@ function CommonNPCOnSpawned( entity npc )
 		npc.SetValidHealthBarTarget( true )
 
 	// baseclass logic
-	if ( npc.IsTitan() )
-	{
-		if ( !SpawnWithoutSoul( npc ) )
-		{
-			CreateTitanSoul( npc )
-		}
-	}
-
 	if ( npc.GetTeam() <= 0 )
 	{
 		SetTeam( npc, expect int( npc.kv.teamnumber.tointeger() ) )
@@ -125,28 +117,6 @@ function CommonNPCOnSpawned( entity npc )
 		npc.ai.buddhaMode = true
 	}
 
-	if ( npc.IsTitan() )
-	{
-		// set boss titan type before setting proficiency for Titans
-		if ( npc.HasKey( "TitanType" ) )
-		{
-			npc.ai.bossTitanType = int( npc.kv.TitanType )
-
-			// this is to get rid of all weak titans
-			if ( npc.ai.bossTitanType == TITAN_WEAK )
-			{
-				Warning( "Spawned weak Titan at " + npc.GetOrigin() + ". Change TitanType to Henchman Titan." )
-
-			// GetSettingsTitle() is causing a script error.  Removed for now.
-			//	Warning( "Spawned weak Titan " + npc.GetSettingsTitle() + " at " + npc.GetOrigin() + ". Change TitanType to Henchman Titan." )
-				npc.ai.bossTitanType = TITAN_HENCH
-			}
-		}
-
-		if ( npc.HasKey( "disable_vdu" ) )
-			npc.ai.bossTitanVDUEnabled = int( npc.kv.disable_vdu ) == 0
-	}
-
 	// Set proficiency before giving weapons
 	//SPMP_UpdateNPCProficiency( npc )
 
@@ -172,11 +142,6 @@ function CommonNPCOnSpawned( entity npc )
 		entity weapon = npc.GetActiveWeapon( eActiveInventorySlot.mainHand )
 		if ( weapon != null && weapon.GetWeaponType() == WT_SIDEARM )
 			npc.DisableNPCFlag( NPC_CROUCH_COMBAT )
-	}
-
-	if ( npc.HasKey( "drop_battery" ) )
-	{
-		npc.ai.shouldDropBattery = (npc.kv.drop_battery == "1")
 	}
 
 	switch ( npc.GetClassName() )

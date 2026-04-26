@@ -13,45 +13,12 @@ void function FlightCore_Init()
 
 int function OnAbilityStart_FlightCore( entity weapon )
 {
-	if ( !OnAbilityCharge_TitanCore( weapon ) )
-		return 0
-
-#if SERVER
-	OnAbilityChargeEnd_TitanCore( weapon )
-#endif
-
-	OnAbilityStart_TitanCore( weapon )
-
-	entity titan = weapon.GetOwner() // GetPlayerFromTitanWeapon( weapon )
-
-#if SERVER
-	//if ( titan.IsPlayer() )
-		//Melee_Disable( titan )
-	thread PROTO_FlightCore( titan, weapon.GetCoreDuration() )
-#else
-	if ( titan.IsPlayer() && (titan == GetLocalViewPlayer()) && IsFirstTimePredicted() )
-		Rumble_Play( "rumble_titan_hovercore_activate", {} )
-#endif
 	return 1
 }
 
 void function OnAbilityEnd_FlightCore( entity weapon )
 {
-	entity titan = weapon.GetWeaponOwner()
 
-	#if SERVER
-	OnAbilityEnd_TitanCore( weapon )
-
-	if ( titan != null )
-	{
-		//if ( titan.IsPlayer() )
-			//Melee_Enable( titan )
-		titan.Signal( "CoreEnd" )
-	}
-	#else
-		if ( titan.IsPlayer() )
-			TitanCockpit_PlayDialog( titan, "flightCoreOffline" )
-	#endif
 }
 
 #if SERVER

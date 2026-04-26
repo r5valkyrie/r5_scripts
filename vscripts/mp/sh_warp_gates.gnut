@@ -833,7 +833,7 @@ void function MovePlayerThroughWarpGate( entity trigger, entity player )
 	StatusEffect_AddEndless( player, eStatusEffect.phase_gate_tracking, 0.5 )
 
 	// OBSERVER LIVE LOGS
-	//LiveAPI_SendOnePlayerEvent( eLiveAPI_EventTypes.warpGateUsed, player )
+	LiveAPI_SendOnePlayerEvent( eLiveAPI_EventTypes.warpGateUsed, player )
 
 	OnThreadEnd(
 		function() : ( player, mover, fx, travelState, data, trigger, isOlympus )
@@ -864,7 +864,7 @@ void function MovePlayerThroughWarpGate( entity trigger, entity player )
 				// Defensive Fix for R5DEV-515474
 				//TODO (caobrien): More elegant solution for preventing this exploit, possibly disabling phase runner when both sides are outside of the ring?
 
-				//if ( isOlympus && ( DeathField_PointDistanceFromFrontier( player.GetOrigin(), player.DeathFieldIndex() ) <= 0 ))
+				//if ( isOlympus && ( DeathField_PointDistanceFromFrontier( player.GetOrigin() ) <= 0 ))
 				//{
 				//	if ( player.IsPhaseShifted() )
 				//		CancelPhaseShift ( player )
@@ -918,7 +918,7 @@ void function MovePlayerThroughWarpGate( entity trigger, entity player )
 			}
 		#endif
 
-		PhaseShift( player, SCRIPT_FRAME_TIME, totalWarpTime + SCRIPT_FRAME_TIME, eShiftStyle.Gate )
+		PhaseShift( player, SCRIPT_FRAME_TIME, totalWarpTime + SCRIPT_FRAME_TIME, PHASETYPE_GATE )
 		EnableDemigod( player )
 	}
 
@@ -1075,7 +1075,7 @@ void function MovePlayerThroughWarpGate( entity trigger, entity player )
 		#endif
 		player.Signal( "ForceStopPhaseShift" )
 		wait SCRIPT_FRAME_TIME
-		PhaseShift( player, 0, PHASE_REPOSITION_TIME, eShiftStyle.Balance )
+		PhaseShift( player, 0, PHASE_REPOSITION_TIME, PHASETYPE_BALANCE )
 		player.SetVelocity( player.GetForwardVector() * PHASE_EXIT_VELOCITY )
 	}
 }
