@@ -84,17 +84,6 @@ FileStruct_LifetimeLevel& fileLevel
 
 void function ShStickers_LevelInit()
 {
-	Warning("enable stickers later!")
-	Warning("enable stickers later!")
-	Warning("enable stickers later!")
-	Warning("enable stickers later!")
-	Warning("enable stickers later!")
-	Warning("enable stickers later!")
-	Warning("enable stickers later!")
-	Warning("enable stickers later!")
-	Warning("enable stickers later!")
-	Warning("enable stickers later!")
-	return
 	FileStruct_LifetimeLevel newFileLevel
 	fileLevel = newFileLevel
 
@@ -158,7 +147,7 @@ void function RegisterStickers()
 			// Server pushes sticker loadouts to players through a specific data table. When the loadout changes fill up this table to be propegated
 			// to other players.
 #if SERVER
-			AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( entry,
+			AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( entry, 
 				void function ( EHI playerEHI, ItemFlavor flavor ) : ( i, stickerObjectType )
 				{
 					entity player = FromEHI( playerEHI )

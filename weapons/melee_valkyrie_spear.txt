@@ -18,14 +18,7 @@
 	"playermodel" "mdl/weapons/valkyrie_heirloom/valkyrie_heirloom_base_w.rmdl"
 	// val unk: 17
 	"holstermodel" "mdl/props/valkyrie_spear_prop/valkyrie_heirloom_prop.rmdl"
-	// val unk: 47
-	"OnWeaponActivate" "OnWeaponActivate_melee_valkyrie_spear"
-	// val unk: 33
-	"OnWeaponDeactivate" "OnWeaponDeactivate_melee_valkyrie_spear"
-	// val unk: 21
-	"OnWeaponActivate" "OnWeaponActivate_weapon_melee_primary"
-	// val unk: 35
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_melee_primary"
+
 	// val unk: 30
 	"is_heirloom" "1"
 	// val unk: 53

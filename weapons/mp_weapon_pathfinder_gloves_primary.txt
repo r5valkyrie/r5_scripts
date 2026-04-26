@@ -24,10 +24,7 @@
 	"holster_offset" "8 -3 -1"
 	// val unk: 50
 	"holster_angles_offset" "50 2 110"
-	// val unk: 43
-	"OnWeaponActivate" "OnWeaponActivate_weapon_pathfinder_gloves_primary"
-	// val unk: 69
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_pathfinder_gloves_primary"
+
 	// val unk: 89
 	"is_heirloom" "1"
 	// val unk: 15

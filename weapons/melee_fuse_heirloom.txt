@@ -17,9 +17,7 @@
 	// val unk: 14
 	"playermodel" "mdl/Weapons/fuse_heirloom/w_fuse_heirloom.rmdl"
 	// val unk: 44
-	"OnWeaponActivate" "OnWeaponActivate_melee_fuse_heirloom"
-	// val unk: 30
-	"OnWeaponDeactivate" "OnWeaponDeactivate_melee_fuse_heirloom"
+
 	// val unk: 18
 	"is_heirloom" "1"
 	// val unk: 32

@@ -18,10 +18,7 @@
 	"playermodel" "mdl/weapons/bangalore_heirloom/w_bangalore_heirloom.rmdl"
 	// val unk: 45
 	"holstermodel" "mdl/Props/bangalore_heirloom_prop/bangalore_heirloom_prop.rmdl"
-	// val unk: 31
-	"OnWeaponActivate" "OnWeaponActivate_melee_bangalore_heirloom"
-	// val unk: 19
-	"OnWeaponDeactivate" "OnWeaponDeactivate_melee_bangalore_heirloom"
+
 	// val unk: 33
 	"is_heirloom" "1"
 	// val unk: 28

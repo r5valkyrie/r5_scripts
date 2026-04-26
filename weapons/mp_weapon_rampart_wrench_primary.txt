@@ -18,14 +18,7 @@
 	"playermodel" "mdl/weapons/rampart_heirloom/w_rampart_heirloom.rmdl"
 	// val unk: 71
 	"holstermodel" "mdl/Props/rampart_heirloom_holster/rampart_heirloom_holster.rmdl"
-	// val unk: 9
-	"OnWeaponActivate" "OnWeaponActivate_weapon_rampart_wrench_primary"
-	// val unk: 78
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_rampart_wrench_primary"
-	// val unk: 67
-	"OnWeaponCustomActivityStart" "OnWeaponCustomActivityStart_weapon_rampart_wrench_primary"
-	// val unk: 24
-	"OnWeaponCustomActivityEnd" "OnWeaponCustomActivityEnd_weapon_rampart_wrench_primary"
+
 	// val unk: 41
 	"is_heirloom" "1"
 	// val unk: 91

@@ -137,7 +137,7 @@
 		"ability_used_mod"
 		{
 			// val unk: 0
-			"activitymodifier1p" "ability_used"
+			//"activitymodifier1p" "ability_used"
 
 		}
 	}

@@ -88,7 +88,7 @@ WeaponData
 	"aimassist_disable_ads"							"1"
 	"cooldown_type"									"ammo"
 
-	"activitymodifier1p"                            "mobile_respawn_beacon"
+	//"activitymodifier1p"                            "mobile_respawn_beacon"
 
 	//"enable_highlight_networking_on_creation"		"<KEEP_DEFAULT>"
 

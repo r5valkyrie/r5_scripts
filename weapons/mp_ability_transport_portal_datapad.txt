@@ -185,7 +185,7 @@
 			// val unk: 0
 			"charge_time" "2.500000"
 			// val unk: 1
-			"activitymodifier1p" "knocked"
+			//"activitymodifier1p" "knocked"
 
 		}
 	}

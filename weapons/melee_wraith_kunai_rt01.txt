@@ -100,10 +100,7 @@
 	"allow_gibraltar_shield" "0"
 	// val unk: 28
 	"flyoutEnabled" "0"
-	// val unk: 3
-	"OnWeaponActivate" "OnWeaponActivate_weapon_melee_primary"
-	// val unk: 43
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_melee_primary"
+
 	// val unk: 62
 	"melee_angle" "30"
 	// val unk: 37

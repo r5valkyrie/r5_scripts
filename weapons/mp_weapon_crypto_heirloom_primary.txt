@@ -24,10 +24,7 @@
 	"holster_offset" "2 -3 2"
 	// val unk: 66
 	"holster_angles_offset" "125 10 -10"
-	// val unk: 23
-	"OnWeaponActivate" "OnWeaponActivate_weapon_crypto_heirloom_primary"
-	// val unk: 40
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_crypto_heirloom_primary"
+
 	// val unk: 90
 	"is_heirloom" "1"
 	// val unk: 15
@@ -39,7 +36,7 @@
 	// val unk: 60
 	//"activitymodifier3P" "sword"
 	// val unk: 81
-	"activitymodifier1p" "sword_1p"
+	//"activitymodifier1p" "sword_1p"
 	// val unk: 21
 	"bob_cycle_time" "0.400000"
 	// val unk: 62
@@ -221,7 +218,7 @@
 			// val unk: 1
 			//"activitymodifier3P" "sword_rt01"
 			// val unk: 0
-			"activitymodifier1p" "sword_rt01_1p"
+			//"activitymodifier1p" "sword_rt01_1p"
 
 		}
 

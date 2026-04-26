@@ -410,7 +410,7 @@
 	// val unk: 82
 	"targeting_laser_beam_length_3p_enemy" "30000"
 	// val unk: 80
-	"activitymodifier1p" "sniper_zoom"
+	//"activitymodifier1p" "sniper_zoom"
 	// val unk: 110
 	"projectilemodel" "mdl/weapons/bullets/projectile_20mm.rmdl"
 	// val unk: 145

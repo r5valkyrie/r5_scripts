@@ -34,7 +34,7 @@ WeaponData
 	//"activitymodifier3P"							"ordnance"
     "trophy_system_ignores"                         "always"
     "grenade_touch_triggers_on_impact"              "1"
-	"hide_when_holstered"							"1"
+	//"hide_when_holstered"							"1"
 
 	"viewmodel"									    "mdl/weapons/void_ring/ptpov_void_ring_held.rmdl"
 	"playermodel"   								"mdl/weapons/void_ring/w_void_ring.rmdl"

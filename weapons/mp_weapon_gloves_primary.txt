@@ -15,8 +15,6 @@ WeaponData
 	// Models
 	"viewmodel"   								     "mdl/dev/empty_model.rmdl"//"mdl/Weapons/karambit/ptpov_karambit.rmdl"
 
-	"OnWeaponActivate"								"OnWeaponActivate_weapon_shadow_squad_hands_primary"
-	"OnWeaponDeactivate"							"OnWeaponDeactivate_weapon_shadow_squad_hands_primary"
 
 	"dof_nearDepthStart"							"0.5"
 	"dof_nearDepthEnd"							    "6.4"

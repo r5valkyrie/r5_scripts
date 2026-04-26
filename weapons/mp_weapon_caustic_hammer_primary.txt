@@ -25,13 +25,7 @@
 	// val unk: 78
 	"holster_angles_offset" "75 90 90"
 	// val unk: 67
-	"OnWeaponActivate" "OnWeaponActivate_weapon_caustic_hammer_primary"
-	// val unk: 24
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_caustic_hammer_primary"
-	// val unk: 41
-	"OnWeaponActivate" "OnWeaponActivate_weapon_melee_primary"
-	// val unk: 91
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_melee_primary"
+
 	// val unk: 17
 	"is_heirloom" "1"
 	// val unk: 68

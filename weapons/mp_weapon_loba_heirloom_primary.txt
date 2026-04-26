@@ -24,11 +24,7 @@
 	"holster_offset" "1 1 -0.5"
 	// val unk: 65
 	"holster_angles_offset" "270 -20 -90"
-	// val unk: 22
-	"OnWeaponActivate" "OnWeaponActivate_weapon_loba_heirloom_primary"
-	// val unk: 39
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_loba_heirloom_primary"
-	// val unk: 89
+
 	"is_heirloom" "1"
 	// val unk: 15
 	"dof_nearDepthStart" "0.500000"

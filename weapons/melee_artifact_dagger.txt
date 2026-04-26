@@ -17,11 +17,7 @@
 	// val unk: 23
 	"playermodel" "mdl/Weapons/char_artifact/w_set_v23_mob.rmdl"
 	// val unk: 18
-	"OnWeaponActivate" "OnWeaponActivate_melee_artifact_dagger"
-	// val unk: 53
-	"OnWeaponDeactivate" "OnWeaponDeactivate_melee_artifact_dagger"
-	// val unk: 20
-	"OnWeaponOwnerChanged" "OnWeaponOwnerChanged_melee_artifact_dagger"
+
 	// val unk: 39
 	"is_heirloom" "1"
 	// val unk: 27

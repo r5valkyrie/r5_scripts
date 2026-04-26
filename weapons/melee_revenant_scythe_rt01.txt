@@ -19,9 +19,7 @@
 	// val unk: 45
 	"holstermodel" "mdl/Props/revenant_heirloom_prop/revenant_heirloom_prop.rmdl"
 	// val unk: 31
-	"OnWeaponActivate" "OnWeaponActivate_melee_revenant_scythe_rt01"
-	// val unk: 19
-	"OnWeaponDeactivate" "OnWeaponDeactivate_melee_revenant_scythe_rt01"
+
 	// val unk: 33
 	"is_heirloom" "1"
 	// val unk: 28

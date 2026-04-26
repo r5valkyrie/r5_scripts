@@ -482,10 +482,7 @@
 	"bob_horz_dist_zoomed" "0.010000"
 	// val unk: 379
 	"bob_max_speed_zoomed" "150"
-	// val unk: 339
-	"OnWeaponActivate" "OnWeaponActivate_weapon_basic_bolt"
-	// val unk: 80
-	"OnClientAnimEvent" "OnClientAnimEvent_weapon_basic_bolt"
+
 	// val unk: 358
 	"spread_stand_ads" "0.350000"
 	// val unk: 18

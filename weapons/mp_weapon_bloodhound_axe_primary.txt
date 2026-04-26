@@ -25,9 +25,7 @@
 	// val unk: 50
 	"holster_angles_offset" "115 -10 -10"
 	// val unk: 43
-	"OnWeaponActivate" "OnWeaponActivate_weapon_bloodhound_axe_primary"
-	// val unk: 69
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_bloodhound_axe_primary"
+
 	// val unk: 89
 	"is_heirloom" "1"
 	// val unk: 15

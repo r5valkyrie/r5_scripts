@@ -25,7 +25,7 @@
 	// val unk: 8
 	//"activitymodifier3P" "ordnance"
 	// val unk: 44
-	"hide_when_holstered" "1"
+	//"hide_when_holstered" "1"
 	// val unk: 135
 	"minimap_reveal_distance" "32000"
 	// val unk: 87

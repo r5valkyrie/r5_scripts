@@ -231,7 +231,7 @@ WeaponData
 
 	    //ability_used_mod
 	    //{
-	    //    "activitymodifier1p"              "ability_used"
+	    //    //"activitymodifier1p"              "ability_used"
 	    //}
 	}
 

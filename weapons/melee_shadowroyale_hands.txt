@@ -21,9 +21,7 @@
 	// val unk: 31
 	"viewmodel" "mdl/Weapons/empty_handed/ptpov_shadowhand.rmdl"
 	// val unk: 17
-	"OnWeaponActivate" "OnWeaponActivate_melee_shadowsquad_hands"
-	// val unk: 33
-	"OnWeaponDeactivate" "OnWeaponDeactivate_melee_shadowsquad_hands"
+
 	// val unk: 27
 	"weapon_type_flags" "WPT_MELEE"
 	// val unk: 51

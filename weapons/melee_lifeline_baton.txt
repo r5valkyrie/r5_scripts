@@ -17,9 +17,7 @@
 	// val unk: 14
 	"playermodel" "mdl/weapons/drumstick/w_baton_lifeline.rmdl"
 	// val unk: 44
-	"OnWeaponActivate" "OnWeaponActivate_melee_lifeline_baton"
-	// val unk: 30
-	"OnWeaponDeactivate" "OnWeaponDeactivate_melee_lifeline_baton"
+
 	// val unk: 18
 	"is_heirloom" "1"
 	// val unk: 32

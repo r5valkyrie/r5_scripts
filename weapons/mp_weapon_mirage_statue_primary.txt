@@ -24,11 +24,7 @@
 	"holster_offset" "4 -2.5 12.5"
 	// val unk: 12
 	"holster_angles_offset" "0 102 108"
-	// val unk: 47
-	"OnWeaponActivate" "OnWeaponActivate_weapon_mirage_statue_primary"
-	// val unk: 21
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_mirage_statue_primary"
-	// val unk: 92
+
 	"is_heirloom" "1"
 	// val unk: 40
 	"dof_nearDepthStart" "0.500000"

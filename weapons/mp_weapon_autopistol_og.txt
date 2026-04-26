@@ -362,10 +362,7 @@
 	"minimap_reveal_distance" "32000"
 	// val unk: 120
 	"leveled_pickup" "1"
-	// val unk: 350
-	"OnWeaponActivate" "OnWeaponActivate_weapon_basic_bolt"
-	// val unk: 250
-	"OnClientAnimEvent" "OnClientAnimEvent_weapon_basic_bolt"
+
 	// val unk: 296
 	"damage_flags" "DF_BULLET"
 	// val unk: 353

@@ -22,10 +22,7 @@
 	"holster_offset" "12 0 2"
 	// val unk: 92
 	"holster_angles_offset" "-90 10 0"
-	// val unk: 11
-	"OnWeaponActivate" "OnWeaponActivate_weapon_seer_heirloom_primary"
-	// val unk: 47
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_seer_heirloom_primary"
+
 	// val unk: 88
 	"deploy_allow_ads" "1"
 	// val unk: 22

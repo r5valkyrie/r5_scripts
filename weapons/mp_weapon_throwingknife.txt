@@ -39,7 +39,7 @@
 	// val unk: 13
 	"show_grenade_indicator_to_owner" "1"
 	// val unk: 83
-	"hide_when_holstered" "0"
+	//"hide_when_holstered" "0"
 	// val unk: 38
 	"deploy_allow_ads" "1"
 	// val unk: 152

@@ -19,9 +19,7 @@
 	// val unk: 45
 	"holstermodel" "mdl/Props/bloodhound_heirloom_holster/bloodhound_heirloom_holster.rmdl"
 	// val unk: 31
-	"OnWeaponActivate" "OnWeaponActivate_melee_bloodhound_axe"
-	// val unk: 19
-	"OnWeaponDeactivate" "OnWeaponDeactivate_melee_bloodhound_axe"
+
 	// val unk: 33
 	"is_heirloom" "1"
 	// val unk: 28

@@ -17,9 +17,7 @@
 	// val unk: 15
 	"playermodel" "mdl/Weapons/ragold_artifact/ragold_artifact_base_w.rmdl"
 	// val unk: 45
-	"OnWeaponActivate" "OnWeaponActivate_melee_artifact_sword"
-	// val unk: 31
-	"OnWeaponDeactivate" "OnWeaponDeactivate_melee_artifact_sword"
+
 	// val unk: 19
 	"is_heirloom" "1"
 	// val unk: 33

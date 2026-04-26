@@ -23,11 +23,7 @@
 	// val unk: 85
 	"holster_angles_offset" "0 -10 -10"
 	// val unk: 74
-	"OnWeaponActivate" "OnWeaponActivate_weapon_artifact_dagger_primary"
-	// val unk: 27
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_artifact_dagger_primary"
-	// val unk: 44
-	"OnWeaponOwnerChanged" "OnWeaponOwnerChanged_weapon_artifact_dagger"
+
 	// val unk: 98
 	"is_heirloom" "1"
 	// val unk: 46

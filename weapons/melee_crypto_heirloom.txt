@@ -19,9 +19,7 @@
 	// val unk: 46
 	"holstermodel" "mdl/props/crypto_heirloom_prop/crypto_heirloom_prop.rmdl"
 	// val unk: 32
-	"OnWeaponActivate" "OnWeaponActivate_melee_crypto_heirloom"
-	// val unk: 20
-	"OnWeaponDeactivate" "OnWeaponDeactivate_melee_crypto_heirloom"
+
 	// val unk: 34
 	"is_heirloom" "1"
 	// val unk: 29
@@ -29,7 +27,7 @@
 	// val unk: 52
 	//"activitymodifier3P" "sword"
 	// val unk: 18
-	"activitymodifier1p" "sword_1p"
+	//"activitymodifier1p" "sword_1p"
 	// val unk: 4
 	"weapon_type_flags" "WPT_MELEE"
 	// val unk: 19
@@ -141,7 +139,7 @@
 			// val unk: 1
 			//"activitymodifier3P" "sword_rt01"
 			// val unk: 0
-			"activitymodifier1p" "sword_rt01_1p"
+			//"activitymodifier1p" "sword_rt01_1p"
 
 		}
 

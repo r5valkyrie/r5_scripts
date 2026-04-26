@@ -103,9 +103,7 @@
 	// val unk: 3
 	"flyoutEnabled" "0"
 	// val unk: 44
-	"OnWeaponActivate" "OnWeaponActivate_weapon_melee_primary"
-	// val unk: 63
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_melee_primary"
+
 	// val unk: 38
 	"melee_angle" "30"
 	// val unk: 9

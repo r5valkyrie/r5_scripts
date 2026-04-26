@@ -17,9 +17,8 @@
 	// val unk: 15
 	"playermodel" "mdl/props/seer_heirloom/seer_heirloom_static.rmdl"
 	// val unk: 45
-	"OnWeaponActivate" "OnWeaponActivate_melee_seer_heirloom"
-	// val unk: 31
-	"OnWeaponDeactivate" "OnWeaponDeactivate_melee_seer_heirloom"
+
+
 	// val unk: 19
 	"is_heirloom" "1"
 	// val unk: 33

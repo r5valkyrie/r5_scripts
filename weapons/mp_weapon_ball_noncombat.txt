@@ -39,7 +39,7 @@
 	// val unk: 96
 	"allow_gibraltar_shield" "0"
 	// val unk: 40
-	"hide_when_holstered" "1"
+	//"hide_when_holstered" "1"
 	// val unk: 150
 	"OnWeaponTossReleaseAnimEvent" "Ball_OnWeaponTossReleaseAnimEvent"
 	// val unk: 112

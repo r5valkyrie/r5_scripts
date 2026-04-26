@@ -396,6 +396,106 @@ void function DoTwitchPrime( entity player )
 #if SERVER
 void function DoTwitchDrops( entity player )
 {
+	// Twitch Drops entitlements
+	// Keep user's inventory consistent with whatever Drops entitlements Twitch says they've claimed
+	// If they've claimed items on Twitch that don't exist in their inventory, add them.
+	// If they've got items in their inventory that don't exist on Twitch, remove them.
+
+	//if ( player.AreTwitchDropsInitialized() )
+	{
+		// Array to collect items we might want to delete when managing inventory
+		array<ItemFlavor> itemsToRemove = []
+		array<ItemFlavor> entitlementsToReset = []
+
+		foreach ( ItemFlavor entitlementFlav, array<ItemFlavor> itemList in (entitlementRewardMap[eEntitlementType.TWITCH_DROPS]) )
+		{
+			// Determine if we think the player has claimed any entitlements on Twitch
+			string twitchDropsRef = Entitlement_GetTwitchPrimeRef( entitlementFlav )
+			//if ( !player.DoesUserHaveTwitchDrops( twitchDropsRef ) )
+			{
+			//	continue
+			}
+
+			// If any of these items are stackable, go into reward sequence flow.
+			// If NONE are stackable, do the existing individual granting flow.
+			if ( EntitlementUsesRewardSequence( itemList ) )
+			{
+				HandleRewardSequenceForEntitlement( player, entitlementFlav, eEntitlementType.TWITCH_DROPS, twitchDropsRef, GRX_HTTPQUERYGOAL_GIVE_TWITCH_DROP_SEQUENCE_REWARD )
+				continue
+			}
+
+			bool hasDropsToAward = false//player.DoesUserHaveTwitchDrops( twitchDropsRef )
+
+			foreach ( ItemFlavor flavor in itemList )
+			{
+				Assert( ItemFlavor_GetGRXMode( flavor ) == eItemFlavorGRXMode.REGULAR, "Invalid mode for function " + ItemFlavor_GetGRXMode( flavor ) )
+				bool hasItemInInventory = GRX_HasItem( player, ItemFlavor_GetGRXIndex( flavor ) )
+
+				// Perform MTX add/remove, depending:
+				if ( hasDropsToAward )
+				{
+					if ( !hasItemInInventory )
+					{
+						// Grant item to player, mark as new in inventory
+						ScriptGRXOperationInfo operation
+						operation.expectedQueryGoal = GRX_HTTPQUERYGOAL_GIVE_ITEM
+						operation.doOperationFunc = (void function( int opID ) : ( player, flavor )
+						{
+							GRX_GiveCosmetic( player, opID, ItemFlavor_GetGRXIndex( flavor ) )
+						})
+						operation.onDoneCallback = ( void function( int status ) : ( player, twitchDropsRef, flavor, entitlementFlav ) {
+							bool didOperationSucceed = ( status == eScriptGRXOperationStatus.DONE_SUCCESS )
+							if ( !didOperationSucceed )
+								return
+
+							// Because these items may have been deleted before, explicitly reset persistence
+
+							// Reset menu persistence (MOTD)
+							string menuPersistenceName = Entitlement_GetMenuPersistenceVarName( entitlementFlav )
+							if ( menuPersistenceName != GENERIC_ACKNOWLEDGEMENT_PVAR )
+								player.SetPersistentVar( menuPersistenceName, 0 )
+
+							// Reset other persistence ("new" red dot that appears in inventory)
+							GRX_MarkAsNewIfAppropriate( player, flavor )
+						})
+						operation.DEV_goalInfo = ItemFlavor_GetGRXAlias( flavor )
+						QueueGRXOperation( player, operation, false )
+					}
+				}
+				else // No Drops awarded
+				{
+					if ( hasItemInInventory )
+					{
+						itemsToRemove.append( flavor )
+						string itemRemoved = ItemFlavor_GetHumanReadableRefForPIN_Slow( flavor )
+						PIN_TwitchDropItemRemoved( player, itemRemoved )
+						entitlementsToReset.append( entitlementFlav )
+					}
+				}
+			}
+		}
+
+		if ( itemsToRemove.len() > 0 && GetConVarBool( "script_enable_twitch_drops_clawback" ) == true )
+		{
+			ScriptGRXOperationInfo operation
+			operation.expectedQueryGoal = GRX_HTTPQUERYGOAL_DELETE_ITEMS
+			operation.doOperationFunc = ( void function( int opID ) : ( player, itemsToRemove, entitlementsToReset )
+			{
+				RemoveCosmeticItems( player, opID, itemsToRemove, entitlementsToReset )
+			})
+
+			operation.onDoneCallback = (void function( int status ) : ( player, itemsToRemove )
+			{
+				if ( status != eScriptGRXOperationStatus.DONE_SUCCESS )
+					return
+
+				if ( IsValid( player ) )
+					ValidateGRXSpecificLoadoutSlotsForItemFlavors( player, itemsToRemove )
+			})
+
+			QueueGRXOperation( player, operation, false )
+		}
+	}
 }
 #endif
 

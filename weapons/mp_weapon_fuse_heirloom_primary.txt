@@ -23,10 +23,7 @@
 	// val unk: 75
 	"holster_angles_offset" "100 94 86"
 	// val unk: 64
-	"OnWeaponActivate" "OnWeaponActivate_weapon_fuse_heirloom_primary"
-	// val unk: 21
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_fuse_heirloom_primary"
-	// val unk: 38
+
 	"is_heirloom" "1"
 	// val unk: 88
 	"dof_nearDepthStart" "0.500000"

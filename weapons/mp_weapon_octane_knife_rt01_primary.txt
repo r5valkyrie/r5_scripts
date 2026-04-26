@@ -18,10 +18,7 @@
 	"playermodel" "mdl/weapons/octane_knife/w_octane_knife.rmdl"
 	// val unk: 93
 	"holstermodel" "mdl/Props/octane_heirloom_holster/octane_heirloom_holster.rmdl"
-	// val unk: 108
-	"OnWeaponActivate" "OnWeaponActivate_weapon_octane_knife_rt01_primary"
-	// val unk: 27
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_octane_knife_rt01_primary"
+
 	// val unk: 9
 	"is_heirloom" "1"
 	// val unk: 49

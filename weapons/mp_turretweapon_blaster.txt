@@ -17,11 +17,6 @@ WeaponData
 	"minimap_reveal_distance"						"32000"
 	"fast_swap_to"									"0"
 
-	"OnWeaponActivate"								"OnWeaponActivate_weapon_smr"
-	"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_weapon_smr"
-	"OnWeaponNpcPrimaryAttack"						"OnWeaponNpcPrimaryAttack_weapon_smr"
-	"OnClientAnimEvent"								"OnClientAnimEvent_weapon_smr"
-
 	"projectile_first_person_offset_fraction"		"1.0"
 
 	"projectile_drift_windiness"					"10"

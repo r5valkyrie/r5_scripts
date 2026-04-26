@@ -24,10 +24,7 @@
 	"holster_offset" "0 0 0"
 	// val unk: 12
 	"holster_angles_offset" "0 0 0"
-	// val unk: 46
-	"OnWeaponActivate" "OnWeaponActivate_weapon_wattson_gadget_primary"
-	// val unk: 97
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_wattson_gadget_primary"
+
 	// val unk: 71
 	"is_heirloom" "1"
 	// val unk: 21

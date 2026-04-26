@@ -22,10 +22,7 @@
 	"clone_sync_to_player" "1"
 	// val unk: 10
 	"clone_anim_blending" "1"
-	// val unk: 33
-	"OnWeaponActivate" "OnWeaponActivate_melee_ash_heirloom"
-	// val unk: 21
-	"OnWeaponDeactivate" "OnWeaponDeactivate_melee_ash_heirloom"
+
 	// val unk: 35
 	"is_heirloom" "1"
 	// val unk: 30

@@ -20,7 +20,7 @@ WeaponData
 	"dev_menu_type"									"offhand"
 	"show_grenade_indicator"						"0"
     "grenade_show_indicator_to_owner"               "0"
-    "hide_when_holstered"							"1"
+    //"hide_when_holstered"							"1"
 	"offhand_default_inventory_slot"				"0"
 	"offhand_active_slot"                          "mainHand"
 

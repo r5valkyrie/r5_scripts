@@ -18,18 +18,7 @@
 	"playermodel" "mdl/weapons/valkyrie_heirloom/valkyrie_heirloom_base_w.rmdl"
 	// val unk: 73
 	"holstermodel" "mdl/props/valkyrie_spear_prop/valkyrie_heirloom_prop.rmdl"
-	// val unk: 13
-	"OnWeaponActivate" "OnWeaponActivate_weapon_valkyrie_spear_primary"
-	// val unk: 9
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_valkyrie_spear_primary"
-	// val unk: 80
-	"OnWeaponCustomActivityStart" "OnWeaponCustomActivityStart_weapon_valkyrie_spear_primary"
-	// val unk: 69
-	"OnWeaponCustomActivityEnd" "OnWeaponCustomActivityEnd_weapon_valkyrie_spear_primary"
-	// val unk: 26
-	"OnWeaponActivate" "OnWeaponActivate_weapon_melee_primary"
-	// val unk: 43
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_melee_primary"
+
 	// val unk: 93
 	"is_heirloom" "1"
 	// val unk: 16
@@ -225,7 +214,7 @@
 		"using_jets"
 		{
 			// val unk: 0
-			"hide_when_holstered" "1"
+			//"hide_when_holstered" "1"
 
 		}
 

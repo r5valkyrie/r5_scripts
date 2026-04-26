@@ -39,7 +39,7 @@
 	// val unk: 49
 	"menu_category" "ordnance"
 	// val unk: 123
-	"hide_when_holstered" "1"
+	//"hide_when_holstered" "1"
 	// val unk: 129
 	"grenade_touch_triggers_on_impact" "1"
 	// val unk: 118

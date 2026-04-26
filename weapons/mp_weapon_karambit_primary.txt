@@ -30,6 +30,4 @@ WeaponData
 	//"activitymodifier3P"							"kunai"
 
 
-    "OnWeaponActivate"								"OnWeaponActivate_weapon_melee_primary"
-    "OnWeaponDeactivate"							"OnWeaponDeactivate_weapon_melee_primary"
 }

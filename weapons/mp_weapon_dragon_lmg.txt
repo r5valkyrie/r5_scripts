@@ -510,7 +510,7 @@ WeaponData
 		}
 		has_been_energized
 		{
-	        //"activitymodifier1p"                            "has_been_energized"
+	        ////"activitymodifier1p"                            "has_been_energized"
 		}
 	    energized
         {

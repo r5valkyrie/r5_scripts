@@ -19,14 +19,7 @@
 	// val unk: 17
 	"holstermodel" "mdl/Props/caustic_heirloom_holster/caustic_heirloom_holster.rmdl"
 	// val unk: 47
-	"OnWeaponActivate" "OnWeaponActivate_melee_caustic_hammer"
-	// val unk: 33
-	"OnWeaponDeactivate" "OnWeaponDeactivate_melee_caustic_hammer"
-	// val unk: 21
-	"OnWeaponActivate" "OnWeaponActivate_weapon_melee_primary"
-	// val unk: 35
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_melee_primary"
-	// val unk: 30
+
 	"is_heirloom" "1"
 	// val unk: 53
 	"impact_effect_table" "melee_casutic_hammer"

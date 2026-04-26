@@ -29,7 +29,7 @@
 	// val unk: 23
 	"show_grenade_indicator_to_owner" "0"
 	// val unk: 53
-	"hide_when_holstered" "1"
+	//"hide_when_holstered" "1"
 	// val unk: 170
 	"does_not_interrupt_cloak" "1"
 	// val unk: 213

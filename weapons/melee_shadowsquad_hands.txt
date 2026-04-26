@@ -17,8 +17,7 @@ WeaponData
 	// Models
     "viewmodel"   							    "mdl/Weapons/empty_handed/ptpov_shadowhand.rmdl"
 
-	"OnWeaponActivate"							"OnWeaponActivate_melee_shadowsquad_hands"
-    "OnWeaponDeactivate"						"OnWeaponDeactivate_melee_shadowsquad_hands"
+
 
     // FX
 	//"impact_effect_table" 						"melee_bhaxe"

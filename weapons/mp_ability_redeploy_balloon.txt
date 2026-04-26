@@ -17,9 +17,9 @@
 	// val unk: 32
 	"readyhint" "BUG IT"
 	// val unk: 34
-	"weapon_type_flags" "WPT_SURVIVAL"
+	//"weapon_type_flags" "WPT_SURVIVAL"
 	// val unk: 65
-	"weaponType" "gadget"
+	//"weaponType" "gadget"
 	// val unk: 35
 	"fire_mode" "automatic"
 	// val unk: 56
@@ -153,7 +153,7 @@
 	// val unk: 49
 	"cooldown_type" "ammo"
 	// val unk: 19
-	"activitymodifier1p" "mp_ability_redeploy_balloon"
+	//"activitymodifier1p" "mp_ability_redeploy_balloon"
 
 	// child unk: 0
 	"Mods"

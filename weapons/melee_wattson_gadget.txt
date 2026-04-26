@@ -18,10 +18,7 @@
 	"playermodel" "mdl/weapons/wattson_heirloom/wattson_heirloom_v21_base_w.rmdl"
 	// val unk: 46
 	"holstermodel" "mdl/Props/wattson_heirloom_prop/wattson_heirloom_prop.rmdl"
-	// val unk: 32
-	"OnWeaponActivate" "OnWeaponActivate_melee_wattson_gadget"
-	// val unk: 20
-	"OnWeaponDeactivate" "OnWeaponDeactivate_melee_wattson_gadget"
+
 	// val unk: 34
 	"is_heirloom" "1"
 	// val unk: 29

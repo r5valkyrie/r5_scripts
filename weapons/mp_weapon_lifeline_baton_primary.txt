@@ -23,9 +23,7 @@
 	// val unk: 75
 	"holster_angles_offset" "0 0 2"
 	// val unk: 49
-	"OnWeaponActivate" "OnWeaponActivate_weapon_lifeline_baton_primary"
-	// val unk: 42
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_lifeline_baton_primary"
+
 	// val unk: 68
 	"is_heirloom" "1"
 	// val unk: 88

@@ -25,10 +25,7 @@
 	// val unk: 65
 	"holster_angles_offset" "90 15 0"
 	// val unk: 22
-	"OnWeaponActivate" "OnWeaponActivate_weapon_revenant_scythe_primary_rt01"
-	// val unk: 39
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_revenant_scythe_primary_rt01"
-	// val unk: 89
+
 	"is_heirloom" "1"
 	// val unk: 15
 	"dof_nearDepthStart" "0.500000"

@@ -16,7 +16,7 @@ WeaponData
 	"is_toss_weapon"								"1"
 	"menu_category"									"ordnance"
     "activitymodifier"								"ordnance"
-    "hide_when_holstered"							"1"
+    //"hide_when_holstered"							"1"
 
 	"minimap_reveal_distance"						"32000"
 	"leveled_pickup"								"1"
