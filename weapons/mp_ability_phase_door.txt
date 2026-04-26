@@ -19,17 +19,7 @@
 	// val unk: 104
 	"projectilemodel" "mdl/dev/empty_model.rmdl"
 	// val unk: 93
-	"OnWeaponActivate" "OnWeaponActivate_ability_phase_door"
-	// val unk: 101
-	"OnWeaponDeactivate" "OnWeaponDeactivate_ability_phase_door"
-	// val unk: 102
-	"OnWeaponTossReleaseAnimEvent" "OnWeaponTossReleaseAnimEvent_ability_phase_door"
-	// val unk: 60
-	"OnWeaponTossPrep" "Grenade_OnWeaponTossPrep"
-	// val unk: 103
-	"OnProjectileCollision" "OnProjectileCollision_ability_phase_door"
-	// val unk: 66
-	"OnCreateClientOnlyModel" "OnCreateClientOnlyModel_ability_phase_door"
+
 	// val unk: 116
 	"max_cook_time" "18446744073709551615"
 	// val unk: 64
@@ -265,77 +255,6 @@
 	"Mods"
 	{
 
-		// child unk: 6
-		"survival_armor_cooldown_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.25"
-
-		}
-
-		// child unk: 1
-		"placement_error"
-		{
-			// val unk: 0
-			"grenade_arc_impact_indicator_effect" "P_mm_breach_arc_end_fail"
-
-		}
-
-		// child unk: 7
-		"upgrade_core_tac_cooldown_reduction"
-		{
-			// val unk: 3
-			"ammo_clip_size" "20"
-			// val unk: 4
-			"ammo_default_total" "20"
-			// val unk: 1
-			"ammo_min_to_fire" "20"
-			// val unk: 2
-			"ammo_per_shot" "20"
-			// val unk: 0
-			"ammo_stockpile_max" "20"
-
-		}
-
-		// child unk: 3
-		"copycat_mod"
-		{
-			// val unk: 0
-			"weapon_type_flags" "WPT_SURVIVAL"
-
-		}
-
-		// child unk: 0
-		"survival_armor_cooldown_extra_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.5"
-
-		}
-
-		// child unk: 2
-		"survival_ammo_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 4
-		"ability_in_effect_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 5
-		"survival_ammo_regen_staging"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*5.0"
-
-		}
 	}
 
 	// child unk: 1

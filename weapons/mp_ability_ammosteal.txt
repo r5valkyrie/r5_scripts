@@ -29,7 +29,7 @@
 	// val unk: 33
 	"OnWeaponTossPrep" "OnWeaponTossPrep_AmmoSteal"
 	// val unk: 61
-	"OnWeaponTossReleaseAnimEvent" "OnWeaponTossReleaseAnimEvent_AmmoSteal"
+
 	// val unk: 59
 	"max_cook_time" "18446744073709551615"
 	// val unk: 26
@@ -270,52 +270,5 @@
 	"Mods"
 	{
 
-		// child unk: 4
-		"copycat_mod"
-		{
-			// val unk: 0
-			"weapon_type_flags" "WPT_SURVIVAL"
-
-		}
-
-		// child unk: 5
-		"survival_armor_cooldown_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.25"
-
-		}
-
-		// child unk: 0
-		"survival_armor_cooldown_extra_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.5"
-
-		}
-
-		// child unk: 1
-		"survival_ammo_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 2
-		"ability_in_effect_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 3
-		"survival_ammo_regen_staging"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*5.0"
-
-		}
 	}
 }

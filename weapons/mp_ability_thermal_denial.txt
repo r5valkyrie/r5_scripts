@@ -49,19 +49,6 @@
 	// val unk: 15
 	"battle_chatter_event" "bc_tactical"
 	// val unk: 9
-	"OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
-	// val unk: 12
-	"OnWeaponAttemptOffhandSwitch" "OnWeaponAttemptOffhandSwitch_ability_thermal_denial"
-	// val unk: 42
-	"OnWeaponActivate" "OnWeaponActivate_ability_thermal_denial"
-	// val unk: 29
-	"OnWeaponDeactivate" "OnWeaponDeactivate_ability_thermal_denial"
-	// val unk: 36
-	"OnWeaponChargeBegin" "OnWeaponChargeBegin_ability_thermal_denial"
-	// val unk: 49
-	"OnWeaponChargeEnd" "OnWeaponChargeEnd_ability_thermal_denial"
-	// val unk: 32
-	"OnWeaponPrimaryAttack" "OnWeaponPrimaryAttack_ability_thermal_denial"
 	// val unk: 20
 	"burn_segment_radius" "50.000000"
 	// val unk: 19
@@ -113,58 +100,6 @@
 	"Mods"
 	{
 
-		// child unk: 0
-		"survival_finite_ordnance"
-		{
 
-		}
-
-		// child unk: 5
-		"copycat_mod"
-		{
-			// val unk: 0
-			"weapon_type_flags" "WPT_SURVIVAL"
-
-		}
-
-		// child unk: 6
-		"survival_armor_cooldown_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.25"
-
-		}
-
-		// child unk: 1
-		"survival_armor_cooldown_extra_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.5"
-
-		}
-
-		// child unk: 2
-		"survival_ammo_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 3
-		"ability_in_effect_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 4
-		"survival_ammo_regen_staging"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*5.0"
-
-		}
 	}
 }

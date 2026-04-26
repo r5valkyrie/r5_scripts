@@ -25,11 +25,7 @@
 	// val unk: 19
 	"offhand_interupts_weapon_anims" "1"
 	// val unk: 4
-	"OnWeaponPrimaryAttack" "OnWeaponPrimaryAttack_ability_earthshaker"
-	// val unk: 29
-	"OnWeaponDeactivate" "OnWeaponDeactivate_ability_earthshaker"
-	// val unk: 11
-	"OnWeaponAttemptOffhandSwitch" "OnWeaponAttemptOffhandSwitch_ability_earthshaker"
+
 	// val unk: 5
 	"viewmodel" "mdl/weapons/empty_handed/ptpov_mirage_holopilot.rmdl"
 	// val unk: 50
@@ -107,61 +103,7 @@
 	"Mods"
 	{
 
-		// child unk: 5
-		"survival_armor_cooldown_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.25"
 
-		}
-
-		// child unk: 6
-		"ultimates_charge_over_time_disabled"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "0"
-
-		}
-
-		// child unk: 2
-		"copycat_mod"
-		{
-			// val unk: 0
-			"weapon_type_flags" "WPT_SURVIVAL"
-
-		}
-
-		// child unk: 0
-		"survival_armor_cooldown_extra_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.5"
-
-		}
-
-		// child unk: 3
-		"survival_ammo_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 1
-		"ability_in_effect_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 4
-		"survival_ammo_regen_staging"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*5.0"
-
-		}
 	}
 
 	// child unk: 1

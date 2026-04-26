@@ -32,26 +32,7 @@
 	"fire_in_real_world_while_phased" "1"
 	// val unk: 67
 	"trophy_system_ignores" "always"
-	// val unk: 40
-	"OnWeaponActivate" "OnWeaponActivate_ranged_breach"
-	// val unk: 137
-	"OnWeaponDeactivate" "OnWeaponDeactivate_ranged_breach"
-	// val unk: 95
-	"OnProjectileCollision" "OnProjectileCollision_weapon_ranged_breach"
-	// val unk: 119
-	"OnWeaponToss" "OnWeaponToss_weapon_ranged_breach"
-	// val unk: 149
-	"OnWeaponTossReleaseAnimEvent" "OnWeaponTossReleaseAnimEvent_weapon_ranged_breach"
-	// val unk: 147
-	"OnWeaponReadyToFire" "OnWeaponReadyToFire_ranged_breach"
-	// val unk: 45
-	"OnWeaponTossPrep" "Grenade_OnWeaponTossPrep"
-	// val unk: 47
-	"OnWeaponTossCancel" "Grenade_OnWeaponTossCancelDrop"
-	// val unk: 39
-	"OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
-	// val unk: 100
-	"OnClientAnimEvent" "OnClientAnimEvent_weapon_ranged_breach"
+
 	// val unk: 48
 	"max_cook_time" "18446744073709551615"
 	// val unk: 32
@@ -317,53 +298,6 @@
 	"Mods"
 	{
 
-		// child unk: 4
-		"survival_armor_cooldown_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.25"
-
-		}
-
-		// child unk: 5
-		"copycat_mod"
-		{
-			// val unk: 0
-			"weapon_type_flags" "WPT_SURVIVAL"
-
-		}
-
-		// child unk: 1
-		"survival_armor_cooldown_extra_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.5"
-
-		}
-
-		// child unk: 0
-		"survival_ammo_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 2
-		"ability_in_effect_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 3
-		"survival_ammo_regen_staging"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*5.0"
-
-		}
 	}
 
 	// child unk: 1

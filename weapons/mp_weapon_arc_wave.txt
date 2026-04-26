@@ -29,13 +29,6 @@
 	// val unk: 44
 	"offhand_interupts_weapon_anims" "1"
 	// val unk: 26
-	"OnWeaponAttemptOffhandSwitch" "OnWeaponAttemptOffhandSwitch_arc_wave"
-	// val unk: 40
-	"OnWeaponActivate" "OnWeaponActivate_arc_wave"
-	// val unk: 9
-	"OnWeaponPrimaryAttackAnimEvent" "OnWeaponPrimaryAttack_arc_wave"
-	// val unk: 28
-	"OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
 	// val unk: 55
 	"zoom_effects" "0"
 	// val unk: 7
@@ -133,67 +126,6 @@
 	"Mods"
 	{
 
-		// child unk: 0
-		"survival_finite_ordnance"
-		{
-
-		}
-
-		// child unk: 6
-		"ultimates_charge_over_time_disabled"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "0"
-
-		}
-
-		// child unk: 7
-		"copycat_mod"
-		{
-			// val unk: 0
-			"weapon_type_flags" "WPT_SURVIVAL"
-
-		}
-
-		// child unk: 2
-		"survival_armor_cooldown_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.25"
-
-		}
-
-		// child unk: 3
-		"survival_armor_cooldown_extra_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.5"
-
-		}
-
-		// child unk: 4
-		"survival_ammo_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 1
-		"ability_in_effect_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 5
-		"survival_ammo_regen_staging"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*5.0"
-
-		}
 	}
 
 	// child unk: 1

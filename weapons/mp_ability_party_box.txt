@@ -27,13 +27,6 @@
 	// val unk: 33
 	"viewmodel" "mdl/weapons/clacker_detonator/ptpov_proximity_detonator.rmdl"
 	// val unk: 10
-	"OnWeaponPrimaryAttack" "OnWeaponPrimaryAttack_party_box"
-	// val unk: 53
-	"OnWeaponActivate" "OnWeaponActivate_care_package"
-	// val unk: 8
-	"OnWeaponDeactivate" "OnWeaponDeactivate_care_package"
-	// val unk: 4
-	"OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
 	// val unk: 46
 	"ammo_clip_size" "360"
 	// val unk: 11
@@ -129,60 +122,5 @@
 	"Mods"
 	{
 
-		// child unk: 5
-		"ultimates_charge_over_time_disabled"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "0"
-
-		}
-
-		// child unk: 6
-		"copycat_mod"
-		{
-			// val unk: 0
-			"weapon_type_flags" "WPT_SURVIVAL"
-
-		}
-
-		// child unk: 1
-		"survival_armor_cooldown_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.25"
-
-		}
-
-		// child unk: 2
-		"survival_armor_cooldown_extra_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.5"
-
-		}
-
-		// child unk: 3
-		"survival_ammo_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 0
-		"ability_in_effect_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 4
-		"survival_ammo_regen_staging"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*5.0"
-
-		}
 	}
 }

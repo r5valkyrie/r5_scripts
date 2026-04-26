@@ -46,18 +46,7 @@
 	"play_offhand_start_end_anim" "1"
 	// val unk: 138
 	"is_semi_auto" "1"
-	// val unk: 19
-	"OnWeaponReadyToFire" "OnWeaponReadyToFire_ability_armored_leap"
-	// val unk: 139
-	"OnWeaponPrimaryAttack" "OnWeaponPrimaryAttack_ability_armored_leap"
-	// val unk: 70
-	"OnWeaponPrimaryAttackAnimEvent" "OnWeaponPrimaryAttackAnimEvent_ability_armored_leap"
-	// val unk: 175
-	"OnWeaponActivate" "OnWeaponActivate_ability_armored_leap"
-	// val unk: 101
-	"OnWeaponDeactivate" "OnWeaponDeactivate_ability_armored_leap"
-	// val unk: 63
-	"OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
+
 	// val unk: 146
 	"viewmodel" "mdl/weapons/newcastle_shield/newcastle_shield_v21_base_v.rmdl"
 	// val unk: 12
@@ -367,102 +356,6 @@
 	"Mods"
 	{
 
-		// child unk: 5
-		"survival_armor_cooldown_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.25"
 
-		}
-
-		// child unk: 11
-		"newcastle_ult_leap_dash_mod"
-		{
-			// val unk: 0
-			"activitymodifier3p" "armored_leap_dash"
-
-		}
-
-		// child unk: 3
-		"newcastle_ult_leap_launch_mod"
-		{
-			// val unk: 0
-			"activitymodifier3p" "armored_leap_launch"
-
-		}
-
-		// child unk: 12
-		"newcastle_ult_leap_slam_mod"
-		{
-			// val unk: 0
-			"activitymodifier3p" "armored_leap_slam"
-
-		}
-
-		// child unk: 8
-		"axiom_leap_ult_held"
-		{
-
-		}
-
-		// child unk: 0
-		"upgrade_core_newcastle_ult_hp_bonus"
-		{
-
-		}
-
-		// child unk: 9
-		"upgrade_core_newcastle_ult_energized_duration_bonus"
-		{
-
-		}
-
-		// child unk: 2
-		"ultimates_charge_over_time_disabled"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "0"
-
-		}
-
-		// child unk: 6
-		"copycat_mod"
-		{
-			// val unk: 0
-			"weapon_type_flags" "WPT_SURVIVAL"
-
-		}
-
-		// child unk: 1
-		"survival_armor_cooldown_extra_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.5"
-
-		}
-
-		// child unk: 7
-		"survival_ammo_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 4
-		"ability_in_effect_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 10
-		"survival_ammo_regen_staging"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*5.0"
-
-		}
 	}
 }

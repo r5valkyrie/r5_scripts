@@ -47,17 +47,7 @@
 	// val unk: 105
 	"projectile_ricochet_max_count" "2"
 	// val unk: 60
-	"OnWeaponTossReleaseAnimEvent" "OnWeaponTossReleaseAnimEvent_ability_spectre_drop"
-	// val unk: 91
-	"OnWeaponTossPrep" "Grenade_OnWeaponTossPrep"
-	// val unk: 58
-	"OnWeaponReadyToFire" "OnWeaponReadyToFire_ability_spectre_drop"
-	// val unk: 81
-	"OnWeaponDeactivate" "Grenade_OnWeaponDeactivate"
-	// val unk: 100
-	"OnProjectileCollision" "OnProjectileCollision_ability_spectre_drop"
-	// val unk: 14
-	"OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
+
 	// val unk: 67
 	"trophy_system_ignores" "none"
 	// val unk: 32
@@ -236,54 +226,6 @@
 	// child unk: 0
 	"Mods"
 	{
-
-		// child unk: 4
-		"survival_armor_cooldown_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.25"
-
-		}
-
-		// child unk: 5
-		"copycat_mod"
-		{
-			// val unk: 0
-			"weapon_type_flags" "WPT_SURVIVAL"
-
-		}
-
-		// child unk: 1
-		"survival_armor_cooldown_extra_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.5"
-
-		}
-
-		// child unk: 0
-		"survival_ammo_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 2
-		"ability_in_effect_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 3
-		"survival_ammo_regen_staging"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*5.0"
-
-		}
 	}
 
 	// child unk: 1

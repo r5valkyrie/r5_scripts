@@ -37,20 +37,7 @@
 	// val unk: 112
 	"trophy_system_ignores" "none"
 	// val unk: 35
-	"grenade_use_mask_ability" "1"
-	// val unk: 33
-	"OnWeaponTossPrep" "OnWeaponTossPrep_weapon_shield_deconstructor"
-	// val unk: 128
-	"OnWeaponTossReleaseAnimEvent" "OnWeaponTossReleaseAnimEvent_weapon_shield_deconstructor"
-	// val unk: 145
-	"OnWeaponReload" "OnWeaponReload_weapon_shield_deconstructor"
-	// val unk: 193
-	"OnProjectileCollision" "OnProjectileCollision_weapon_deployable_noVehicles"
-	// val unk: 191
-	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_shield_deconstructor"
-	// val unk: 55
-	"OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
-	// val unk: 76
+
 	"projectile_ignores_vortex" "fall_vortex"
 	// val unk: 170
 	"viewmodel" "mdl/weapons/nova_trophy_system/ptpov_nova_trophy_system.rmdl"
@@ -410,74 +397,6 @@
 	// child unk: 0
 	"Mods"
 	{
-
-		// child unk: 0
-		"burn_card_weapon_mod"
-		{
-
-		}
-
-		// child unk: 1
-		"survival_finite_ordnance"
-		{
-
-		}
-
-		// child unk: 7
-		"ultimates_charge_over_time_disabled"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "0"
-
-		}
-
-		// child unk: 8
-		"copycat_mod"
-		{
-			// val unk: 0
-			"weapon_type_flags" "WPT_SURVIVAL"
-
-		}
-
-		// child unk: 3
-		"survival_armor_cooldown_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.25"
-
-		}
-
-		// child unk: 4
-		"survival_armor_cooldown_extra_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.5"
-
-		}
-
-		// child unk: 5
-		"survival_ammo_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 2
-		"ability_in_effect_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 6
-		"survival_ammo_regen_staging"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*5.0"
-
-		}
 	}
 
 	// child unk: 1

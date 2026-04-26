@@ -18,13 +18,6 @@
 	"playermodel" "mdl/weapons/empty_handed/w_empty_handed_human.rmdl"
 	// val unk: 19
 	"projectilemodel" "mdl/dev/empty_model.rmdl"
-	// val unk: 57
-	"OnWeaponActivate" "OnWeaponActivate_ability_rise_from_the_ashes"
-	// val unk: 46
-	"OnWeaponTossReleaseAnimEvent" "OnWeaponTossReleaseAnimEvent_ability_rise_from_the_ashes"
-	// val unk: 55
-	"OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
-	// val unk: 33
 	"fire_mode" "offhand"
 	// val unk: 30
 	"offhand_default_inventory_slot" "1"
@@ -137,82 +130,6 @@
 	"Mods"
 	{
 
-		// child unk: 2
-		"ability_used_mod"
-		{
-			// val unk: 0
-			"activitymodifier1p" "ability_used"
 
-		}
-
-		// child unk: 7
-		"survival_armor_cooldown_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "0.000000"
-
-		}
-
-		// child unk: 8
-		"upgrade_ult_one"
-		{
-			// val unk: 3
-			"ammo_clip_size" "90"
-			// val unk: 1
-			"ammo_default_total" "0"
-			// val unk: 2
-			"ammo_min_to_fire" "90"
-			// val unk: 0
-			"ammo_per_shot" "90"
-
-		}
-
-		// child unk: 4
-		"ultimates_charge_over_time_disabled"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "0"
-
-		}
-
-		// child unk: 1
-		"copycat_mod"
-		{
-			// val unk: 0
-			"weapon_type_flags" "WPT_SURVIVAL"
-
-		}
-
-		// child unk: 5
-		"survival_armor_cooldown_extra_mod"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*1.5"
-
-		}
-
-		// child unk: 3
-		"survival_ammo_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 0
-		"ability_in_effect_regen_paused"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*0.0"
-
-		}
-
-		// child unk: 6
-		"survival_ammo_regen_staging"
-		{
-			// val unk: 0
-			"regen_ammo_refill_rate" "*5.0"
-
-		}
 	}
 }

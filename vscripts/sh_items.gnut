@@ -1192,15 +1192,7 @@ string function ItemFlavor_GetRewardShortDescription( ItemFlavor flav )
 asset function ItemFlavor_GetIcon( ItemFlavor flavor )
 {
 	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
-	try
-	{
-		return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "icon" )
-	}
-	catch ( e )
-	{
-		Warning( "Warning: Asset \"" + ItemFlavor_GetAsset( flavor ) + "\" does not have setting var  \"" + "icon" + "\"" )
-		return $""  // Return empty asset if icon setting doesn't exist
-	}
+	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "icon" )
 }
 #endif
 
@@ -1209,15 +1201,7 @@ asset function ItemFlavor_GetIcon( ItemFlavor flavor )
 asset function ItemFlavor_GetSourceIcon( ItemFlavor flavor )
 {
 	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
-	try
-	{
-		return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "tagIcon" )
-	}
-	catch ( e )
-	{
-		Warning( "Warning: Asset \"" + ItemFlavor_GetAsset( flavor ) + "\" does not have setting var  \"" + "tagIcon" + "\"" )
-		return $""  // Return empty asset if tagIcon setting doesn't exist
-	}
+	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "tagIcon" )
 }
 
 

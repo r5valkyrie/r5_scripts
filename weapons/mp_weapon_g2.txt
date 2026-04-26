@@ -24,8 +24,8 @@
 	"stat_rof"                                 "33"
 
 	// Models
-	"viewmodel"                                "mdl/weapons/g2/ptpov_g2a4.rmdl"
-	"playermodel"                              "mdl/weapons/g2/w_g2a4.rmdl"
+	"viewmodel"                                "mdl/techart/mshop/weapons/class/assault/g7/g7_base_v.rmdl"
+	"playermodel"                              "mdl/techart/mshop/weapons/class/assault/g7/g7_base_w.rmdl"
 
 	"chroma_color"								"1 .8 .3"
 

@@ -241,6 +241,7 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 
 void function SetupWeaponCharm( ItemFlavor charm )
 {
+	return
 	asset charmModel = WeaponCharm_GetCharmModel( charm )
 
 	#if SERVER || CLIENT
@@ -251,6 +252,7 @@ void function SetupWeaponCharm( ItemFlavor charm )
 
 void function SetupWeaponSkin( ItemFlavor skin )
 {
+	return
 	if ( ItemFlavor_IsTheFavoriteSentinel( skin ) )
 		return
 
