@@ -31,7 +31,7 @@ WeaponData
 	"deployfirst_time"								"2.7"
 
 	// Animation
-	"activitymodifier3P"							"trophy"
+	//"activitymodifier3P"							"trophy"
 
 	// View Drift
 	"viewdrift_hipfire_stand_scale_pitch" 			"0.325"

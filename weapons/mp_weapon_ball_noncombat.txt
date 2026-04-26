@@ -77,7 +77,7 @@
 	// val unk: 103
 	"damage_indicator_model" "GRENADE_INDICATOR_FRAG_MODEL"
 	// val unk: 109
-	"activitymodifier3p" "ordnance"
+	//"activitymodifier3P" "ordnance"
 	// val unk: 62
 	"bounce_effect_table" "bounce_small"
 	// val unk: 90

@@ -40,7 +40,7 @@ WeaponData
 	"offhand_keep_primary_in_hand"					"0"
 
 	"zoom_effects"									"0"
-	"melee_anim_1p_number"							"2"
+	//"melee_anim_1p_number"							"2"
 
 	//
 

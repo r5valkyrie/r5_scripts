@@ -23,7 +23,7 @@
 	// val unk: 23
 	"menu_category" "ordnance"
 	// val unk: 8
-	"activitymodifier3p" "ordnance"
+	//"activitymodifier3P" "ordnance"
 	// val unk: 44
 	"hide_when_holstered" "1"
 	// val unk: 135

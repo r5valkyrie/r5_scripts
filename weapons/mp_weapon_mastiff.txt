@@ -37,8 +37,8 @@ WeaponData
 	"stat_rof"										"15"
 
 	// Models
-	"viewmodel"   									"mdl/weapons/mastiff_stgn/ptpov_mastiff.rmdl"
-	"playermodel" 									"mdl/weapons/mastiff_stgn/w_mastiff.rmdl"
+	"viewmodel"   									"mdl/techart/mshop/weapons/class/shotgun/mastiff/mastiff_base_v.rmdl"
+	"playermodel" 									"mdl/techart/mshop/weapons/class/shotgun/mastiff/mastiff_base_w.rmdl"
 	"holster_type"									"rifle"
 
 	"chroma_color"									"1 .6 .1"

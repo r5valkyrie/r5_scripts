@@ -37,7 +37,7 @@
 	// val unk: 208
 	"allow_gibraltar_shield" "0"
 	// val unk: 156
-	"activitymodifier3p" "ordnance"
+	//"activitymodifier3P" "ordnance"
 	// val unk: 187
 
 	// val unk: 7

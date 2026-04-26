@@ -27,7 +27,7 @@ WeaponData
 	"deployfirst_time"								"1.8"
 
 	// Animation
-	"activitymodifier3P"							"kunai"
+	//"activitymodifier3P"							"kunai"
 
 
     "OnWeaponActivate"								"OnWeaponActivate_weapon_melee_primary"

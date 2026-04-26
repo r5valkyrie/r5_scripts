@@ -30,5 +30,5 @@ WeaponData
 	"melee_knockback_velocity_magnitude"		"600"
 
 	// Animation
-	"activitymodifier3P"						"boxer"
+	//"activitymodifier3P"						"boxer"
 }

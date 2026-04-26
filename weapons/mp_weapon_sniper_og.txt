@@ -355,7 +355,7 @@
 	// val unk: 319
 	"thirdperson_fire_from_mount_point" "1"
 	// val unk: 241
-	"heartbeat_sensor_size" "84"
+	//"heartbeat_sensor_size" "84"
 	// val unk: 125
 	"fire_mode" "automatic"
 	// val unk: 156

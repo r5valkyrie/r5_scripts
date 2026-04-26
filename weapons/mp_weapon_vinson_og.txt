@@ -53,7 +53,7 @@
 	// val unk: 152
 	"stat_rof" "60"
 	// val unk: 276
-	"heartbeat_sensor_size" "70"
+	//"heartbeat_sensor_size" "70"
 	// val unk: 66
 	"viewmodel" "mdl/techart/mshop/weapons/class/assault/flatline/flatline_base_v.rmdl"
 	// val unk: 234

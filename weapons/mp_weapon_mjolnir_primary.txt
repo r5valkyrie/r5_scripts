@@ -27,7 +27,7 @@ WeaponData
 	"deployfirst_time"								"2.7"
 
 	// Animation
-	"activitymodifier3P"							"axe"
+	//"activitymodifier3P"							"axe"
 
 
     "OnWeaponActivate"								"OnWeaponActivate_weapon_melee_primary"

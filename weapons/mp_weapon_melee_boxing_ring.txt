@@ -26,5 +26,5 @@ WeaponData
 	"deployfirst_time"								"1"
 
 	// Animation
-	"activitymodifier3P"							"boxer"
+	//"activitymodifier3P"							"boxer"
 }

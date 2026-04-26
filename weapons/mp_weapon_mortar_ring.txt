@@ -251,7 +251,7 @@ WeaponData
 	"sway_move_origin_factor_zoomed"  				"0.03"
 	"sway_gain"   									"15.0"
 
-	"activitymodifier3p"							"rocket"
+	//"activitymodifier3P"							"rocket"
     "sprint_fractional_anims"						"0"
     "fire_rumble"									"rumble_antititan"
     "viewkick_spring" 								"launcher"

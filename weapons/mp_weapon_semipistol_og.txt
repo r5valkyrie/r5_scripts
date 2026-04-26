@@ -287,9 +287,9 @@
 	// val unk: 249
 	"weaponSubClass" "sidearm"
 	// val unk: 168
-	"heartbeat_sensor_size" "84"
+	//"heartbeat_sensor_size" "84"
 	// val unk: 107
-	"activitymodifier3p" "pistol"
+	//"activitymodifier3P" "pistol"
 	// val unk: 145
 	"holster_type" "pistol"
 	// val unk: 181

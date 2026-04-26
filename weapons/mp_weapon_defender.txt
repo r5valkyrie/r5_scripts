@@ -110,7 +110,7 @@ WeaponData
     "viewmodel_offset_zoom_frac_start"              "0.25"
     "viewmodel_offset_zoom_frac_end"                "0.75"
 
-    "heartbeat_sensor_size"                         "65"
+    //"heartbeat_sensor_size"                         "65"
 
     // CHARGE
 	"charge_time" 									"0.85" //0.85

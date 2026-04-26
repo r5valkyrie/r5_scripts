@@ -20,7 +20,7 @@ WeaponData
     "hide_holstered_sidearm_when_active"			"1"
 	"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_ItemSpawner"
 	"OnWeaponRegenEnd"                              "OnWeaponRegenEndGeneric"
-	"activitymodifier3p"							"mp_ability_holopilot"
+	//"activitymodifier3P"							"mp_ability_holopilot"
     "zoom_effects"                                  "0"
 
 	"play_offhand_charging_anim"  					"0"

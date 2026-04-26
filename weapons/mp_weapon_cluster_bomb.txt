@@ -63,7 +63,7 @@ WeaponData
 
 	// Models
 	"projectilemodel"								"mdl/weapons_r5/misc_fuse_tactical_grenade/w_fuse_tactical_grenade_projectile.rmdl"
-	"activitymodifier3p"							"ordnance"
+	//"activitymodifier3P"							"ordnance"
 
 	// Effects
 	"bounce_effect_table"							"bounce_small_nosound_nowhizby"

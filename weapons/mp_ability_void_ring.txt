@@ -31,7 +31,7 @@ WeaponData
     "grenade_arc_indicator_effect_first"			"P_arc_voidring"
     "grenade_arc_impact_indicator_effect"			"P_arc_voidring_end"
     "projectile_launch_speed"                       "800"
-	"activitymodifier3p"							"ordnance"
+	//"activitymodifier3P"							"ordnance"
     "trophy_system_ignores"                         "always"
     "grenade_touch_triggers_on_impact"              "1"
 	"hide_when_holstered"							"1"

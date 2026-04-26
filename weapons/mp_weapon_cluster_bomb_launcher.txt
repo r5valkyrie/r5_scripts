@@ -70,7 +70,7 @@ WeaponData
 	"viewmodel"										"mdl/weapons_r5/misc_fuse_tactical_grenade/ptpov_fuse_tactical_grenade_held.rmdl" 
 	"playermodel"									"mdl/weapons_r5/misc_fuse_tactical_grenade/w_fuse_tactical_grenade.rmdl"
 	"projectilemodel"								"mdl/weapons_r5/misc_fuse_tactical_grenade/w_fuse_tactical_grenade_projectile_large.rmdl"
-	"activitymodifier3p"							"ordnance"
+	//"activitymodifier3P"							"ordnance"
 
 	// Effects
 	"bounce_effect_table"							"bounce_small_nosound_nowhizby"

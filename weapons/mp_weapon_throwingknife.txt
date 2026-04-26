@@ -49,7 +49,7 @@
 	// val unk: 134
 	"allow_gibraltar_shield" "0"
 	// val unk: 216
-	"activitymodifier3p" "ordnance"
+	//"activitymodifier3P" "ordnance"
 
 	// val unk: 35
 	"viewmodel" "mdl/techart/mshop/weapons/class/cqc/throwingknife/throwingknife_base_v.rmdl"

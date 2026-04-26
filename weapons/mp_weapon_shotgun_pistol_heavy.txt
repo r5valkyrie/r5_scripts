@@ -433,9 +433,9 @@
 	// val unk: 369
 	"rui_crosshair_index" "0"
 	// val unk: 390
-	"heartbeat_sensor_size" "84"
+	//"heartbeat_sensor_size" "84"
 	// val unk: 216
-	"activitymodifier3p" "pistol"
+	//"activitymodifier3P" "pistol"
 	// val unk: 377
 	"holster_type" "pistol"
 	// val unk: 221

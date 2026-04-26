@@ -133,7 +133,7 @@
 			// val unk: 1
 			"viewmodel" "mdl/weapons/empty_handed/ptpov_emptyhand.rmdl"
 			// val unk: 0
-			"activitymodifier3p" "incap_lvl_0"
+			//"activitymodifier3P" "incap_lvl_0"
 
 		}
 
@@ -141,7 +141,7 @@
 		"passive_revive_incap_shield_mod"
 		{
 			// val unk: 0
-			"activitymodifier3p" "revive_shield"
+			//"activitymodifier3P" "revive_shield"
 
 		}
 
@@ -149,7 +149,7 @@
 		"passive_revive_incap_shield_outro_mod"
 		{
 			// val unk: 0
-			"activitymodifier3p" "revive_shield_outro"
+			//"activitymodifier3P" "revive_shield_outro"
 
 		}
 	}

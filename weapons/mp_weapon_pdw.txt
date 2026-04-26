@@ -31,8 +31,8 @@ WeaponData
 	"stat_rof"										"70"
 
 	// Models
-	"viewmodel"   									"mdl/weapons/prowler_smg/ptpov_prowler_smg.rmdl"
-	"playermodel" 									"mdl/weapons/prowler_smg/w_prowler_smg.rmdl"
+	"viewmodel"   									"mdl/techart/mshop/weapons/class/smg/prowler/prowler_base_v.rmdl"
+	"playermodel" 									"mdl/techart/mshop/weapons/class/smg/prowler/prowler_base_w.rmdl"
 	"holster_offset"								"8 0 0"
 
 	"chroma_color"									".2 1 .6"

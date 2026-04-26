@@ -13,7 +13,7 @@
 	// val unk: 66
 	"hud_icon" "rui/hud/loot/loot_health_ultimate"
 	// val unk: 84
-	"weapon_type_flags" "WPT_VIEWHANDS"
+	//"weapon_type_flags" "WPT_VIEWHANDS"
 	// val unk: 29
 	"fire_mode" "offhandHybrid"
 	// val unk: 26
@@ -127,7 +127,7 @@
 	// val unk: 71
 	"cooldown_type" "ammo_instant"
 	// val unk: 85
-	"activitymodifier3p" "ultimate_battery"
+	//"activitymodifier3P" "ultimate_battery"
 	// val unk: 78
 	"bob_cycle_time" "0.400000"
 	// val unk: 80

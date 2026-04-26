@@ -1,0 +1,342 @@
+"WeaponData"
+{
+	// val unk: 57
+	"printname" "Melee"
+	// val unk: 38
+	"shortprintname" "Melee"
+	// val unk: 64
+	"description" "Description needed"
+	// val unk: 69
+	"longdesc" "Description needed"
+	// val unk: 8
+	"menu_icon" "rui/hud/common/melee_icon"
+	// val unk: 15
+	"hud_icon" "rui/hud/common/melee_icon"
+	// val unk: 34
+	"viewmodel" "mdl/Weapons/char_artifact/ptpov_set_v23_mob.rmdl"
+	// val unk: 23
+	"playermodel" "mdl/Weapons/char_artifact/w_set_v23_mob.rmdl"
+	// val unk: 18
+	"OnWeaponActivate" "OnWeaponActivate_melee_artifact_dagger"
+	// val unk: 53
+	"OnWeaponDeactivate" "OnWeaponDeactivate_melee_artifact_dagger"
+	// val unk: 20
+	"OnWeaponOwnerChanged" "OnWeaponOwnerChanged_melee_artifact_dagger"
+	// val unk: 39
+	"is_heirloom" "1"
+	// val unk: 27
+	"is_artifact" "1"
+	// val unk: 41
+	"projectile_adjust_to_hand" "1"
+	// val unk: 12
+	"projectile_adjust_to_gun_barrel" "0"
+	// val unk: 36
+	"impact_effect_table" "melee_artifact"
+	// val unk: 59
+	//"activitymodifier3P" "artifact_dagger"
+	// val unk: 25
+	"anim_reuse_unarmed" "1"
+	// val unk: 4
+	"bodygroup3_name" "blade"
+	// val unk: 26
+	"bodygroup3_set" "0"
+	// val unk: 30
+	"bodygroup4_name" "power"
+	// val unk: 51
+	"bodygroup4_set" "0"
+	// val unk: 65
+	"weapon_type_flags" "WPT_MELEE"
+	// val unk: 5
+	"weaponType" "melee"
+	// val unk: 47
+	"body_type" "battle_rifle"
+	// val unk: 37
+	"fire_mode" "offhandMelee"
+	// val unk: 62
+	"offhand_cancelled_by_melee" "0"
+	// val unk: 10
+	"never_drop" "1"
+	// val unk: 52
+	"melee_can_hit_humansized" "1"
+	// val unk: 21
+	"melee_can_hit_titans" "0"
+	// val unk: 22
+	"melee_raise_recovery_animtime_normal" "0.750000"
+	// val unk: 48
+	"melee_raise_recovery_animtime_quick" "0.400000"
+	// val unk: 13
+	"melee_range" "60"
+	// val unk: 16
+	"melee_rumble_on_hit" "pilot_melee_hit"
+	// val unk: 2
+	"melee_rumble_on_hit_partial" "pilot_melee_hit_partial"
+	// val unk: 43
+	"melee_freezelook_on_hit" "0.250000"
+	// val unk: 32
+	"damage_flags" "DF_MELEE | DF_KNOCK_BACK"
+	// val unk: 19
+	"impulse_force" "0"
+	// val unk: 7
+	"offhand_keep_primary_in_hand" "0"
+	// val unk: 6
+	"zoom_effects" "0"
+	// val unk: 54
+	//"melee_anim_1p" "ACT_VM_MELEE_ATTACK2"
+	// val unk: 24
+	"ammo_suck_behavior" "melee_weapons"
+	// val unk: 1
+	"viewkick_spring" "melee"
+	// val unk: 66
+	"viewkick_pitch_base" "-1.750000"
+	// val unk: 67
+	"viewkick_pitch_random" "0.750000"
+	// val unk: 42
+	"viewkick_pitch_softScale" "2.300000"
+	// val unk: 35
+	"viewkick_pitch_hardScale" "2.500000"
+	// val unk: 31
+	"viewkick_yaw_base" "1.000000"
+	// val unk: 33
+	"viewkick_yaw_random" "0.380000"
+	// val unk: 0
+	"viewkick_yaw_softScale" "2.380000"
+	// val unk: 45
+	"viewkick_yaw_hardScale" "2.500000"
+	// val unk: 60
+	"viewkick_roll_base" "0"
+	// val unk: 63
+	"viewkick_roll_randomMin" "0.600000"
+	// val unk: 70
+	"viewkick_roll_randomMax" "0.800000"
+	// val unk: 14
+	"viewkick_roll_softScale" "15.200000"
+	// val unk: 58
+	"viewkick_roll_hardScale" "15.750000"
+	// val unk: 50
+	"damage_rodeo" "100"
+	// val unk: 40
+	"deployfirst_time" "1.250000"
+	// val unk: 3
+	"sprintcycle_time" "0.550000"
+	// val unk: 55
+	"force_has_weapon_clone" "1"
+	// val unk: 71
+	"allow_gibraltar_shield" "0"
+	// val unk: 49
+	"flyoutEnabled" "0"
+	// val unk: 11
+	"melee_angle" "30"
+	// val unk: 29
+	"melee_attack_animtime" "0"
+	// val unk: 44
+	"melee_damage" "30"
+	// val unk: 46
+	"melee_damage_heavyarmor" "30"
+	// val unk: 61
+	"melee_lunge_no_target_range" "60"
+	// val unk: 17
+	"melee_lunge_target_angle" "30"
+	// val unk: 56
+	"melee_lunge_target_range" "60"
+	// val unk: 28
+	"melee_lunge_time" "0.350000"
+	// val unk: 68
+	"melee_knockback_velocity_magnitude" "350"
+	// val unk: 9
+	"is_Melee_Weapon" "1"
+
+	// child unk: 0
+	"Mods"
+	{
+
+		// child unk: 9
+		"blade0"
+		{
+			// val unk: 0
+			"bodygroup3_set" "0"
+
+		}
+
+		// child unk: 17
+		"blade1"
+		{
+			// val unk: 0
+			"bodygroup3_set" "1"
+
+		}
+
+		// child unk: 10
+		"blade2"
+		{
+			// val unk: 0
+			"bodygroup3_set" "2"
+
+		}
+
+		// child unk: 11
+		"blade3"
+		{
+			// val unk: 0
+			"bodygroup3_set" "3"
+
+		}
+
+		// child unk: 12
+		"blade4"
+		{
+			// val unk: 0
+			"bodygroup3_set" "4"
+
+		}
+
+		// child unk: 0
+		"blade5"
+		{
+			// val unk: 0
+			"bodygroup3_set" "5"
+
+		}
+
+		// child unk: 1
+		"power0"
+		{
+			// val unk: 0
+			"bodygroup4_set" "0"
+
+		}
+
+		// child unk: 2
+		"power1"
+		{
+			// val unk: 0
+			"bodygroup4_set" "1"
+
+		}
+
+		// child unk: 3
+		"power2"
+		{
+			// val unk: 0
+			"bodygroup4_set" "2"
+
+		}
+
+		// child unk: 13
+		"power3"
+		{
+			// val unk: 0
+			"bodygroup4_set" "3"
+
+		}
+
+		// child unk: 4
+		"power4"
+		{
+			// val unk: 0
+			"bodygroup4_set" "4"
+
+		}
+
+		// child unk: 5
+		"power5"
+		{
+			// val unk: 0
+			"bodygroup4_set" "5"
+
+		}
+
+		// child unk: 15
+		"power6"
+		{
+			// val unk: 0
+			"bodygroup4_set" "6"
+
+		}
+
+		// child unk: 14
+		"data_knife"
+		{
+			// val unk: 13
+			"viewmodel" "mdl/weapons/data_knife/ptpov_data_knife.rmdl"
+			// val unk: 2
+			"melee_attack_animtime" "1"
+			// val unk: 11
+			"damage_flags" "DF_BULLET"
+			// val unk: 7
+			"viewkick_pitch_base" "-0.500000"
+			// val unk: 12
+			"viewkick_pitch_random" "0.750000"
+			// val unk: 8
+			"viewkick_pitch_softScale" "1.300000"
+			// val unk: 3
+			"viewkick_pitch_hardScale" "1.500000"
+			// val unk: 0
+			"viewkick_yaw_base" "0.500000"
+			// val unk: 14
+			"viewkick_yaw_random" "0.380000"
+			// val unk: 5
+			"viewkick_yaw_softScale" "2.380000"
+			// val unk: 1
+			"viewkick_yaw_hardScale" "2.500000"
+			// val unk: 10
+			"viewkick_roll_base" "0"
+			// val unk: 15
+			"viewkick_roll_randomMin" "0.600000"
+			// val unk: 9
+			"viewkick_roll_randomMax" "0.800000"
+			// val unk: 4
+			"viewkick_roll_softScale" "7.200000"
+			// val unk: 6
+			"viewkick_roll_hardScale" "7.750000"
+
+		}
+
+		// child unk: 16
+		"disable_lunge"
+		{
+			// val unk: 1
+			"melee_lunge_target_range" "0"
+			// val unk: 0
+			"melee_lunge_no_target_range" "0"
+
+		}
+
+		// child unk: 6
+		"shadow_form_hands"
+		{
+			// val unk: 0
+			"viewmodel" "mdl/Weapons/empty_handed/ptpov_shadowhand.rmdl"
+
+		}
+
+		// child unk: 7
+		"revenant_shadow_form_melee"
+		{
+			// val unk: 0
+			"melee_angle" "*1.4"
+			// val unk: 4
+			"melee_lunge_no_target_range" "*1.4"
+			// val unk: 1
+			"melee_lunge_target_angle" "*1.4"
+			// val unk: 2
+			"melee_lunge_target_range" "*1.4"
+			// val unk: 3
+			"melee_range" "*1.4"
+
+		}
+
+		// child unk: 8
+		"proto_door_kick"
+		{
+			// val unk: 2
+			"melee_attack_animtime" "1.300000"
+			// val unk: 3
+			//"melee_anim_1p" "ACT_VM_MELEE_ATTACK3"
+			// val unk: 0
+			"impulse_force" "20000"
+			// val unk: 1
+			//"activitymodifier3P" "door"
+
+		}
+	}
+}
