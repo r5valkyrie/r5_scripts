@@ -5690,20 +5690,12 @@ array<entity> function GetAllPlayersOfLockstepIndex( int index )
 /////////////////////////////////////////////////////////////////////////////////
 bool function IsMultiplayer()
 {
-	#if UI
-		return GetConVarString( "mp_gamemode" ) != "solo"
-	#else
-		return GAMETYPE != GAMEMODE_SP
-	#endif
+	return GAMETYPE != GAMEMODE_SP
 }
 
 bool function IsSingleplayer()
 {
-	#if UI
-		return GetConVarString( "mp_gamemode" ) == "solo"
-	#else
-		return GAMETYPE == GAMEMODE_SP
-	#endif
+	return GAMETYPE == GAMEMODE_SP
 }
 
 void function LockWeaponsAndMelee( entity player, string debug_source = "" )

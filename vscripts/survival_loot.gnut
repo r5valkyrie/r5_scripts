@@ -795,7 +795,7 @@ bool function FinalizeLootGroupRecursive( array<LootGroup> visitedStack, LootGro
 
 void function ReadDatatableLootGroups()
 {
-	var dt                    = GetDataTable( $"datatable/survival_loot_groups_sdk_new.rpak" )
+	var dt                    = GetDataTable( $"datatable/survival_loot_groups_new.rpak" )
 	int rowCount              = GetDataTableRowCount( dt )
 	int col_groupRef          = GetDataTableColumnByName( dt, "groupRef" )
 	int col_entryRef          = GetDataTableColumnByName( dt, "entryRef" )

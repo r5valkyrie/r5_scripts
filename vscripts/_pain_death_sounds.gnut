@@ -54,15 +54,22 @@ enum eBodyTypes
 	CLASS_REVENANT
 	CLASS_LOBA
 	CLASS_RAMPART
-	CLASS_FUSE
 	CLASS_HORIZON
-	CLASS_DUMMIE
+	CLASS_FUSE
 	CLASS_VALKYRIE
-	CLASS_ASH
 	CLASS_SEER
+	CLASS_DUMMIE
+                
+               
+                          
+	CLASS_ASH
 	CLASS_MADMAGGIE
-	CLASS_TITAN
-	CLASS_PILOT
+	CLASS_NEWCASTLE
+	CLASS_VANTAGE
+	CLASS_CATALYST
+	CLASS_BALLISTIC
+	CLASS_CONDUIT
+	CLASS_ALTER
 	TITAN
 	COUNT
 }
@@ -245,12 +252,9 @@ bool functionref( entity, entity, bool, int, int ) function GetSoundTypeFuncFrom
 
 bool function SE_ANY( entity victim, entity attacker, bool isValidHeadshot, int damageTypes, int damageSourceID )
 {
-	if( Playlist() == ePlaylists.fs_lgduels_1v1 || Flowstate_IsHaloMode() )
-		return false
-
 	if ( damageSourceID == eDamageSourceId.outOfBounds || damageSourceID == eDamageSourceId.deathField )
 		return false
-	
+
 	return true
 }
 
@@ -341,7 +345,7 @@ bool function SE_PROWLER( entity victim, entity attacker, bool isValidHeadshot, 
 
 bool function SE_SMOKE( entity victim, entity attacker, bool isValidHeadshot, int damageTypes, int damageSourceID )
 {
-	return damageSourceID == eDamageSourceId.mp_weapon_grenade_electric_smoke
+	return false
 }
 
 

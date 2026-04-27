@@ -8,9 +8,13 @@ global function SvApexScreens_HighlightPlayerForKillSpree
 global function SvApexScreens_SetEventTimeA
 global function SvApexScreens_SetEventTimeB
 global function SvApexScreens_SetEventIntA
+global function SvApexScreens_SetScreenSequenceForGameState
+global function SvApexScreens_RefreshScreenSequence
+global function SvApexScreens_QueueCustomScreenSequence
+global function SvApexScreens_SetLogoModeCenterOnly
 #endif
 
-#if SERVER && DEVELOPER
+#if SERVER && DEV
 global function DEV_ApexScreens_SetMode
 global function DEV_ApexScreens_TogglePreviewMode
 global function DEV_ApexScreens_GladCardPreviewMode
@@ -29,43 +33,37 @@ global function ClApexScreens_OnStaticPropRuiVisibilityChange
 global function ClApexScreens_AddScreenOverride
 global function ClApexScreens_GetCustomBannerScreen
 global function ClApexScreens_PosInStaticBanner
+
 global function ClApexScreens_SetCustomApexScreenBGAsset
 global function ClApexScreens_SetCustomLogoTint
 global function ClApexScreens_SetCustomLogoImage
 global function ClApexScreens_SetCustomLogoSize
 global function ClApexScreens_SetAnimatedLogoAsset
+global function ClApexScreens_SetEventScreenOverride
 #endif
 
 global function GetCurrentPlaylistVarAsset
 
-#if CLIENT && DEVELOPER
+#if CLIENT && DEV
 global function DEV_CreatePerfectApexScreen
 global function DEV_ToggleActiveApexScreenDebug
-global function DEV_ToggleFloatyBitsPrototype
-global int countCreation = 0
-global int countDestruction = 0
 #endif
-
-#if CLIENT
-const bool HAS_FLOATING_BITS_PROTOTYPE = false
-#endif // CLIENT
 
 global const string CUSTOM_BANNER_LEFT_SCRIPTNAME = "leftScreen_custom"
 global const string CUSTOM_BANNER_CENTER_SCRIPTNAME = "centerScreen_custom"
 global const string CUSTOM_BANNER_RIGHT_SCRIPTNAME = "rightScreen_custom"
 
-#if CLIENT || SERVER
-global function CastStringToAsset
-#endif
+const int EHI_LOCALSELF 				= -1
+const int EHI_LOCALTEAMMATE_RANDOM 	= -2
 
 const float APEX_SCREEN_TRANSITION_IN_DURATION = 0.7 // must stay in sync with apex_screens.rui
 
 const float APEX_SCREEN_RANDOM_TINT_INTENSITY_MIN = 0.4
 const float APEX_SCREEN_RANDOM_TINT_INTENSITY_MAX = 0.6
 const vector[3] APEX_SCREEN_RANDOM_TINT_PALETTE = [
-			<1.0, 1.0, 1.0> - <0.85, 0.87, 0.88>,
-			<1.0, 1.0, 1.0> - <0.80, 0.95, 1.00>,
-			<1.0, 1.0, 1.0> - <0.98, 1.00, 1.00>,
+	<1.0, 1.0, 1.0> - <0.85, 0.87, 0.88>,
+	<1.0, 1.0, 1.0> - <0.80, 0.95, 1.00>,
+	<1.0, 1.0, 1.0> - <0.98, 1.00, 1.00>,
 ]
 
 const asset BLANK_ASSET = $"ui/apex_screen_logo_only.rpak"
@@ -76,7 +74,7 @@ const asset BLANK_ASSET = $"ui/apex_screen_logo_only.rpak"
 
 global enum eApexScreenPosition
 {
-	// must match APEX_SCREEN_POSITION_* in apex_screens.rui
+	// must match  * in apex_screens.rui
 	L = 0,
 	C = 1,
 	R = 2,
@@ -90,21 +88,21 @@ global enum eApexScreenPosition
 global enum eApexScreenMode
 {
 	// must match APEX_SCREEN_MODE_* in apex_screens.rui
-	OFF                     = 0,
-	LOGO                    = 1,
-	PLAYER_NAME_CHAMPION    = 2,
-	PLAYER_NAME_KILLLEADER  = 3,
-	GCARD_FRONT_CLEAN       = 4,
-	GCARD_FRONT_DETAILS     = 5,
-	GCARD_BACK              = 6,
-	UNUSED                  = 7,
-	CIRCLE_STATE            = 8,
-	PLAYERS_REMAINING       = 9,
-	SQUADS_REMAINING        = 10,
-	ZONE_NAME               = 11,
-	ZONE_LOOT               = 12,
-	CAMERA_VIEW             = 13,
-	BG_NO_LOGO 				= 14,
+	OFF = 0,
+	LOGO = 1,
+	PLAYER_NAME_CHAMPION = 2,
+	PLAYER_NAME_KILLLEADER = 3,
+	GCARD_FRONT_CLEAN = 4,
+	GCARD_FRONT_DETAILS = 5,
+	GCARD_BACK = 6,
+	UNUSED = 7,
+	CIRCLE_STATE = 8,
+	PLAYERS_REMAINING = 9,
+	SQUADS_REMAINING = 10,
+	ZONE_NAME = 11,
+	ZONE_LOOT = 12,
+	CAMERA_VIEW = 13,
+	BG_NO_LOGO = 14,
 
 	_COUNT,
 	INVALID = -1,
@@ -113,9 +111,9 @@ global enum eApexScreenMode
 global enum eApexScreenTransitionStyle
 {
 	// must match APEX_SCREEN_TRANSITION_STYLE_* in apex_screens.rui
-	NONE           = 0,
-	SLIDE          = 1,
-	FADE_TO_BLACK  = 2,
+	NONE = 0,
+	SLIDE = 1,
+	FADE_TO_BLACK = 2,
 }
 
 
@@ -135,21 +133,6 @@ global enum eApexScreenDisplayGroup
 	DISPLAY_LOCALPLAYER,
 	DISPLAY_RANDOM_LOCALTEAMMATE
 }
-
-#if SERVER
-global struct ApexScreenSettingsGroup
-{
-	float duration = 20.0
-	int displayMode = eApexScreenDisplayGroup.DISPLAY_LOGOS
-	//EncodedEHandle functionref() getFocusPlayerFunc // S22 function ref, not used in FR
-	int overrideScreen_L = -1
-	int overrideScreen_C = -1
-	int overrideScreen_R = -1
-}
-
-global function SvApexScreens_SetScreenSequenceForGameState
-global function SvApexScreens_RefreshScreenSequence
-#endif // SERVER
 
 #if CLIENT
 global struct ScreenOverrideInfo
@@ -180,7 +163,9 @@ table<string, ScreenOverrideInfo> s_screenOverrides
 global struct ApexScreenState
 {
 	var    rui
+
 	var 	nestedRui
+
 	int    magicId
 	string mockup
 	asset  ruiToCreate
@@ -214,8 +199,8 @@ global struct ApexScreenState
 
 	vector tint
 
-	var    floatingTopo  = null
-	var    floatingRui   = null
+	var    floatingTopo = null
+	var    floatingRui = null
 	var[3] floatingNestedBadgeRuiList = [null, null, null]
 
 	int updateSerialNum = 0
@@ -238,13 +223,30 @@ struct ApexScreenPositionMasterState
 struct ApexScreenJob
 {
 	int mode = eApexScreenMode.INVALID
+
+}
+
+global struct ApexScreenSettingsGroup
+{
+	float duration = 20.0
+	int displayMode = eApexScreenDisplayGroup.DISPLAY_LOGOS
+	EncodedEHandle functionref() getFocusPlayerFunc
+	int overrideScreen_L = -1
+	int overrideScreen_C = -1
+	int overrideScreen_R = -1
 }
 #endif
 
 
 struct {
-	#if SERVER && DEVELOPER
+	#if SERVER && DEV
 		bool DEV_inDebugPreviewMode = false
+	#endif
+
+	#if SERVER
+		array<ApexScreenSettingsGroup> queuedScreenSettings
+		table< int, array<ApexScreenSettingsGroup> > gameStateToScreenSettings
+		bool logoModeCenterOnly = false
 	#endif
 
 	#if CLIENT
@@ -252,10 +254,10 @@ struct {
 
 		bool                        forceDisableScreens = false
 		array<ApexScreenState>      staticScreenList
-		bool                        allScreenUpdateQueued              = false
+		bool                        allScreenUpdateQueued = false
 		table<int, ApexScreenState> magicIdScreenStateMap
 		table<int, array<var> >     environmentalRUIListMapByMagicId
-		int                         killScreenDamageSourceID           = -1
+		int                         killScreenDamageSourceID = -1
 		float                       killScreenDistance
 		int                         killedPlayerGrade
 		string                      killedPlayerName
@@ -263,13 +265,15 @@ struct {
 
 		table<string, ApexScreenState> customBannerList
 
-		bool DEV_activeScreenDebug                                     = false
-		bool DEV_isFloatyBitsPrototypeEnabled                          = false
+		bool DEV_activeScreenDebug = false
+
 		asset bannerBGAssert = $"rui/rui_screens/banner_c"
 		vector logoOverlayTint = < 1.0 , 1.0, 1.0 >
 		vector logoSize = <562,407,0>
 		asset logoImage = $"rui/rui_screens/apex_logo"
 		asset animatedLogoAsset = $""
+
+		table< int, ScreenOverrideInfo > eventScreenOverrideByScreenPosTable
 	#endif
 } file
 
@@ -289,8 +293,63 @@ void function ShApexScreens_Init()
 	if ( !GetCurrentPlaylistVarBool( "enable_apex_screens", true ) )
 		return
 
-	//ScriptRemote_RegisterClientFunction( "ServerToClient_ApexScreenKillDataChanged", "int", 0, 512, "float", 0.0, 10000.0, 32, "int", 0, 32, "entity" )
-	ScriptRemote_RegisterClientFunction( "ServerToClient_ApexScreenRefreshAll" )
+	#if SERVER
+		foreach ( state in eGameState )
+		{
+			file.gameStateToScreenSettings[ state ] <- []
+		}
+
+		{
+			ApexScreenSettingsGroup settings
+			settings.displayMode = eApexScreenDisplayGroup.DISPLAY_LOGOS
+			settings.duration = 2.5
+			file.gameStateToScreenSettings[ eGameState.WaitingForPlayers ].append( settings )
+		}
+
+		{
+			ApexScreenSettingsGroup settings
+			settings.displayMode = eApexScreenDisplayGroup.DISPLAY_RANDOM_PLAYERS
+			settings.duration = 18.0
+			file.gameStateToScreenSettings[ eGameState.WaitingForPlayers ].append( settings )
+		}
+
+		{
+			ApexScreenSettingsGroup settings
+			settings.displayMode = eApexScreenDisplayGroup.DISPLAY_PLAYER
+			settings.duration = 20.0
+			settings.getFocusPlayerFunc = SurvivalCommentary_GetChampionEEH
+			settings.overrideScreen_L = eApexScreenMode.PLAYER_NAME_CHAMPION
+			file.gameStateToScreenSettings[ eGameState.Playing ].append( settings )
+		}
+
+		{
+			ApexScreenSettingsGroup settings
+			settings.displayMode = eApexScreenDisplayGroup.DISPLAY_PLAYER_SQUAD
+			settings.duration = 20.0
+			settings.getFocusPlayerFunc = SurvivalCommentary_GetChampionEEH
+			file.gameStateToScreenSettings[ eGameState.Playing ].append( settings )
+		}
+
+		{
+			ApexScreenSettingsGroup settings
+			settings.displayMode = eApexScreenDisplayGroup.DISPLAY_PLAYER
+			settings.duration = 20.0
+			settings.getFocusPlayerFunc = SurvivalCommentary_GetKillLeaderEEH
+			settings.overrideScreen_L = eApexScreenMode.PLAYER_NAME_KILLLEADER
+			file.gameStateToScreenSettings[ eGameState.Playing ].append( settings )
+		}
+
+		{
+			ApexScreenSettingsGroup settings
+			settings.displayMode = eApexScreenDisplayGroup.DISPLAY_PLAYER_SQUAD
+			settings.duration = 20.0
+			settings.getFocusPlayerFunc = SurvivalCommentary_GetKillLeaderEEH
+			file.gameStateToScreenSettings[ eGameState.Playing ].append( settings )
+		}
+	#endif
+
+	Remote_RegisterClientFunction( "ServerToClient_ApexScreenKillDataChanged", "int", 0, 512, "float", 0.0, 10000.0, 32, "int", 0, 32, "entity" )
+	Remote_RegisterClientFunction( "ServerToClient_ApexScreenRefreshAll" )
 
 	for ( int screenPosition = eApexScreenPosition.L; screenPosition <= eApexScreenPosition.R; screenPosition++ )
 	{
@@ -300,35 +359,35 @@ void function ShApexScreens_Init()
 		RegisterNetworkedVariableSafe( format( "ApexScreensMasterState_Pos%d_Player", screenPosition ), SNDC_GLOBAL, SNVT_BIG_INT, -1 )
 
 		#if CLIENT
-			RegisterNetworkedVariableChangeCallback_timeSafe( format( "ApexScreensMasterState_Pos%d_CommenceTime", screenPosition ), void function( entity unused, float old, float new, bool ac ) : (screenPosition) {
+			RegisterNetVarTimeChangeCallback( format( "ApexScreensMasterState_Pos%d_CommenceTime", screenPosition ), void function( entity unused, float new ) : (screenPosition) {
 				file.screenPositionMasterStates[screenPosition].commenceTime = new
 				UpdateAllScreensContent()
 			} )
-			RegisterNetworkedVariableChangeCallback_intSafe( format( "ApexScreensMasterState_Pos%d_ModeIndex", screenPosition ), void function( entity unused, int old, int new, bool ac ) : (screenPosition) {
+			RegisterNetVarIntChangeCallback( format( "ApexScreensMasterState_Pos%d_ModeIndex", screenPosition ), void function( entity unused, int new ) : (screenPosition) {
 				file.screenPositionMasterStates[screenPosition].modeIndex = new
 				UpdateAllScreensContent()
 			} )
-			RegisterNetworkedVariableChangeCallback_intSafe( format( "ApexScreensMasterState_Pos%d_TransitionStyle", screenPosition ), void function( entity unused, int old, int new, bool ac ) : (screenPosition) {
+			RegisterNetVarIntChangeCallback( format( "ApexScreensMasterState_Pos%d_TransitionStyle", screenPosition ), void function( entity unused, int new ) : (screenPosition) {
 				file.screenPositionMasterStates[screenPosition].transitionStyle = new
 				UpdateAllScreensContent()
 			} )
-			RegisterNetworkedVariableChangeCallback_intSafe( format( "ApexScreensMasterState_Pos%d_Player", screenPosition ), void function( entity unused, int old, int new, bool ac ) : (screenPosition) {
+			RegisterNetVarIntChangeCallback( format( "ApexScreensMasterState_Pos%d_Player", screenPosition ), void function( entity unused, int new ) : (screenPosition) {
 				file.screenPositionMasterStates[screenPosition].playerEHI = new
 				UpdateAllScreensContent()
 			} )
-		#endif
+		#endif // CLIENT
 	}
+
 	RegisterNetworkedVariableSafe( NV_ApexScreensEventTimeA, SNDC_GLOBAL, SNVT_TIME, -1 )
 	#if CLIENT
-		RegisterNetworkedVariableChangeCallback_timeSafe( NV_ApexScreensEventTimeA, void function( entity unused, float oldTime, float newTime, bool actuallyChanged )
+		RegisterNetVarTimeChangeCallback( NV_ApexScreensEventTimeA, void function( entity unused, float newTime )
 		{
-			if ( !actuallyChanged )
-				return
 			OnUpdateApexScreensEventTime( newTime )
 		} )
-	#endif //
+	#endif // CLIENT
 	RegisterNetworkedVariableSafe( NV_ApexScreensEventTimeB, SNDC_GLOBAL, SNVT_TIME, -1 )
 	RegisterNetworkedVariableSafe( NV_ApexScreensEventIntA, SNDC_GLOBAL, SNVT_INT, -1 )
+
 	#if SERVER
 		RegisterSignal( "ApexScreenMasterThink" )
 
@@ -341,35 +400,34 @@ void function ShApexScreens_Init()
 		RegisterSignal( "ScreenOff" )
 
 		AddCallback_OnStaticPropRUICreated( ClientStaticPropRUICreated )
-
-		SetupScreenOverrides()
 	#endif
 
 	//AddCallback_OnSurvivalDeathFieldStageChanged( OnSurvivalDeathFieldStageChanged )
 }
 #endif
 
-#if CLIENT || SERVER
+#if SERVER
 void function SvApexScreens_SetEventTimeA( float time )
 {
-	//SetGlobalNetTimeSafe( NV_ApexScreensEventTimeA, time )
+	SetGlobalNetTimeSafe( NV_ApexScreensEventTimeA, time )
 }
 
 void function SvApexScreens_SetEventTimeB( float time )
 {
-	//SetGlobalNetTimeSafe( NV_ApexScreensEventTimeB, time )
+	SetGlobalNetTimeSafe( NV_ApexScreensEventTimeB, time )
 }
 
 void function SvApexScreens_SetEventIntA( int val )
 {
-	//SetGlobalNetIntSafe( NV_ApexScreensEventIntA, val )
+	SetGlobalNetIntSafe( NV_ApexScreensEventIntA, val )
 }
+
+#endif // SERVER
 
 asset function CastStringToAsset( string val )
 {
 	return GetKeyValueAsAsset( { kn = val }, "kn" )
 }
-#endif
 
 
 asset function GetCurrentPlaylistVarAsset( string varName, asset defaultAsset = $"" )
@@ -391,7 +449,7 @@ vector function CastStringToFloat3( string val )
 	return <xx, yy, zz>
 }
 
-void function SetupScreenOverrides()
+void function SetupScreenOverridesFromPlaylist_S3Tease()
 {
 	for ( int overrideIdx = 0; overrideIdx < 5; ++overrideIdx )
 	{
@@ -400,55 +458,62 @@ void function SetupScreenOverrides()
 		if ( !GetCurrentPlaylistVarBool( keyName, false ) )
 			continue
 
-		ScreenOverrideInfo newInfo
-		newInfo.scriptNameRequired = GetCurrentPlaylistVarString( format( "%s_scriptname", keyName ), "" )
-		newInfo.ruiAsset = CastStringToAsset( GetCurrentPlaylistVarString( format( "%s_rui", keyName ), "" ) )
-		newInfo.skipStandardVars = GetCurrentPlaylistVarBool( format( "%s_skip_standard_vars", keyName ), false )
-		newInfo.bindStartTimeVarToEventTimeA = GetCurrentPlaylistVarBool( format( "%s_bind_startTime_var_to_event_a", keyName ), false )
-		newInfo.bindStartTimeVarToEventTimeB = GetCurrentPlaylistVarBool( format( "%s_bind_startTime_var_to_event_b", keyName ), false )
+		SetupScreenOverridesFromPlaylists( keyName )
+	}
+}
 
-		for ( int varIdx = 0; varIdx < 10; ++varIdx )
+void function SetupScreenOverridesFromPlaylists( string playlistKey )
+{
+	ScreenOverrideInfo newInfo
+	newInfo.scriptNameRequired = GetCurrentPlaylistVarString( format( "%s_scriptname", playlistKey ), "" )
+	newInfo.ruiAsset = CastStringToAsset( GetCurrentPlaylistVarString( format( "%s_rui", playlistKey ), "" ) )
+	newInfo.skipStandardVars = GetCurrentPlaylistVarBool( format( "%s_skip_standard_vars", playlistKey ), false )
+	newInfo.bindStartTimeVarToEventTimeA = GetCurrentPlaylistVarBool( format( "%s_bind_startTime_var_to_event_a", playlistKey ), false )
+	newInfo.bindStartTimeVarToEventTimeB = GetCurrentPlaylistVarBool( format( "%s_bind_startTime_var_to_event_b", playlistKey ), false )
+
+	for ( int varIdx = 0; varIdx < 10; ++varIdx )
+	{
+		string varPlaylistKey = format( "%s_var%d", playlistKey, varIdx )
+		string val            = GetCurrentPlaylistVarString( varPlaylistKey, "" )
+		if ( val.len() == 0 )
+			continue
+
+		array<string> splitVals = split( val, "~" )
+		Assert( (splitVals.len() == 3), format( "Key '%s' with val '%s' only has %d/3 fields.", varPlaylistKey, val, splitVals.len() ) )
+		switch( splitVals[0] )
 		{
-			string varPlaylistKey = format( "%s_var%d", keyName, varIdx )
-			string val            = GetCurrentPlaylistVarString( varPlaylistKey, "" )
-			if ( val.len() == 0 )
-				continue
+			case "int":
+				newInfo.vars.ints[splitVals[1]] <- int( splitVals[2] )
+				break
 
-			array<string> splitVals = split( val, "~" )
-			Assert( (splitVals.len() == 3), format( "Key '%s' with val '%s' only has %d/3 fields.", varPlaylistKey, val, splitVals.len() ) )
-			switch( splitVals[0] )
-			{
-				case "int":
-					newInfo.vars.ints[splitVals[1]] <- int( splitVals[2] )
-					break
+			case "float":
+				newInfo.vars.floats[splitVals[1]] <- float( splitVals[2] )
+				break
 
-				case "float":
-					newInfo.vars.floats[splitVals[1]] <- float( splitVals[2] )
-					break
+			case "bool":
+				newInfo.vars.bools[splitVals[1]] <- ((int( splitVals[2] ) != 0) || (splitVals[2] == "true"))
+				break
 
-				case "bool":
-					newInfo.vars.bools[splitVals[1]] <- ((int( splitVals[2] ) != 0) || (splitVals[2] == "true"))
-					break
+			case "string":
+				newInfo.vars.strings[splitVals[1]] <- splitVals[2]
+				break
 
-				case "string":
-					newInfo.vars.strings[splitVals[1]] <- splitVals[2]
-					break
+			case "image":
+				newInfo.vars.images[splitVals[1]] <- CastStringToAsset( splitVals[2] )
+				break
 
-				case "image":
-					newInfo.vars.images[splitVals[1]] <- CastStringToAsset( splitVals[2] )
-					break
+			case "float3":
+				newInfo.vars.float3s[splitVals[1]] <- CastStringToFloat3( splitVals[2] )
+				break
 
-				case "float3":
-					newInfo.vars.float3s[splitVals[1]] <- CastStringToFloat3( splitVals[2] )
-					break
+			case "float2":
+				newInfo.vars.float2s[splitVals[1]] <- CastStringToFloat3( splitVals[2] )
+				break
 
-				default:
-					Assert( false, format( "Unhandled field type '%s'.", splitVals[0] ) )
-					break
-			}
+			default:
+				Assert( false, format( "Unhandled field type '%s'.", splitVals[0] ) )
+				break
 		}
-
-		s_screenOverrides[newInfo.scriptNameRequired] <- newInfo
 	}
 }
 
@@ -457,11 +522,13 @@ void function ClApexScreens_AddScreenOverride( ScreenOverrideInfo newInfo )
 	s_screenOverrides[newInfo.scriptNameRequired] <- newInfo
 }
 
+
 ApexScreenState function ClApexScreens_GetCustomBannerScreen( string teaseScreenKey )
 {
 	return file.customBannerList[ teaseScreenKey ]
 }
-#endif //
+#endif // CLIENT
+
 
 ////
 ////
@@ -472,7 +539,7 @@ ApexScreenState function ClApexScreens_GetCustomBannerScreen( string teaseScreen
 #if SERVER
 void function SvApexScreens_ForceShowSquad( EncodedEHandle ply0, EncodedEHandle ply1, EncodedEHandle ply2 )
 {
-	#if DEVELOPER
+	#if DEV
 		if ( file.DEV_inDebugPreviewMode )
 			return
 	#endif
@@ -488,7 +555,7 @@ void function SvApexScreens_ForceShowSquad( EncodedEHandle ply0, EncodedEHandle 
 #if SERVER
 void function SvApexScreens_ShowCircleState()
 {
-	#if DEVELOPER
+	#if DEV
 		if ( file.DEV_inDebugPreviewMode )
 			return
 	#endif
@@ -504,10 +571,14 @@ void function SvApexScreens_ShowCircleState()
 #if SERVER
 void function SvApexScreens_HighlightPlayerForImpressiveKill( entity player, int damageSourceID, float distanceBetweenPlayers, int killedPlayerGrade, entity killedPlayer )
 {
-	#if DEVELOPER
+	#if DEV
 		if ( file.DEV_inDebugPreviewMode )
 			return
 	#endif
+
+	if ( !GetCurrentPlaylistVarBool( "enable_apex_screens", true ) )
+		return
+
 	foreach ( entity playerToInform in GetPlayerArray() )
 		Remote_CallFunction_Replay( playerToInform, "ServerToClient_ApexScreenKillDataChanged", damageSourceID, distanceBetweenPlayers, killedPlayerGrade, killedPlayer )
 
@@ -523,7 +594,7 @@ void function SvApexScreens_HighlightPlayerForImpressiveKill( entity player, int
 #if SERVER
 void function SvApexScreens_HighlightPlayerForKillSpree()
 {
-	#if DEVELOPER
+	#if DEV
 		if ( file.DEV_inDebugPreviewMode )
 			return
 	#endif
@@ -535,9 +606,11 @@ void function SvApexScreens_HighlightPlayerForKillSpree()
 #if SERVER
 void function ShowModeInternal( int screenPosition, int transitionStyle, int mode, EncodedEHandle playerEEH )
 {
+	return
 	if ( !GetCurrentPlaylistVarBool( "enable_apex_screens", true ) )
 		return
 
+	Assert( screenPosition < eApexScreenPosition._COUNT_BANNERTYPES )
 	SetGlobalNetTimeSafe( format( "ApexScreensMasterState_Pos%d_CommenceTime", screenPosition ), Time() )
 	SetGlobalNetIntSafe( format( "ApexScreensMasterState_Pos%d_ModeIndex", screenPosition ), mode )
 	SetGlobalNetIntSafe( format( "ApexScreensMasterState_Pos%d_TransitionStyle", screenPosition ), transitionStyle )
@@ -588,14 +661,13 @@ void function HaltApexScreenMasterThink()
 void function ApexScreenMasterThink()
 {
 	// todo(dw): this kind of think function with arbitrary waits is temp
+	if ( !GetCurrentPlaylistVarBool( "enable_apex_screens", true ) )
+		return
 
 	HaltApexScreenMasterThink()
 	svGlobal.levelEnt.EndSignal( "ApexScreenMasterThink" )
 
-	if ( !GetCurrentPlaylistVarBool( "enable_apex_screens", true ) )
-		return
-
-	#if DEVELOPER
+	#if DEV
 		if ( file.DEV_inDebugPreviewMode )
 			return
 	#endif
@@ -604,23 +676,48 @@ void function ApexScreenMasterThink()
 
 	table<ItemFlavor, bool> previousChosenCharacterSet
 
-	if ( GetGameState() != eGameState.WaitingForPlayers )
-		wait 21.0 // let whatever screen is on there play
-
+	int lastGameState = -1
+	int idx = 0
 	while ( true )
 	{
-		switch ( GetGameState() )
+		if ( lastGameState != GetGameState() )
 		{
-			case eGameState.WaitingForPlayers:
-			{
-				ShowModeInternal( eApexScreenPosition.L, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.LOGO, EncodedEHandle_null )
-				ShowModeInternal( eApexScreenPosition.C, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.LOGO, EncodedEHandle_null )
-				ShowModeInternal( eApexScreenPosition.R, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.LOGO, EncodedEHandle_null )
-				wait 2.5
+			idx = 0
+			lastGameState = GetGameState()
+		}
 
+		ApexScreenSettingsGroup ornull data
+
+		if ( file.queuedScreenSettings.len() > 0 )
+		{
+			data = file.queuedScreenSettings[ 0 ]
+			file.queuedScreenSettings.remove( 0 )
+		}
+
+		if ( data == null )
+		{
+			if ( !( GetGameState() in file.gameStateToScreenSettings ) || file.gameStateToScreenSettings[ GetGameState() ].len() == 0 )
+			{
+				wait 0.3
+				continue
+			}
+			idx = idx % file.gameStateToScreenSettings[ GetGameState() ].len()
+
+			data = file.gameStateToScreenSettings[ GetGameState() ][ idx ]
+		}
+
+		expect ApexScreenSettingsGroup( data )
+
+		switch ( data.displayMode )
+		{
+			case eApexScreenDisplayGroup.DISPLAY_RANDOM_PLAYERS:
 				array<entity> allPlayers = GetPlayerArray()
 				if ( allPlayers.len() == 0 )
-					continue
+				{
+					wait 0.5
+					break
+				}
+
 				LoadoutEntry characterSlot = Loadout_Character()
 
 				array<EncodedEHandle> randomPlayerOrNullList
@@ -649,83 +746,124 @@ void function ApexScreenMasterThink()
 				ShowModeInternal( eApexScreenPosition.L, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.GCARD_FRONT_DETAILS, randomPlayerOrNullList[0] )
 				ShowModeInternal( eApexScreenPosition.C, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.GCARD_FRONT_DETAILS, randomPlayerOrNullList[1] )
 				ShowModeInternal( eApexScreenPosition.R, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.GCARD_FRONT_DETAILS, randomPlayerOrNullList[2] )
-				wait 18.0
-
+				wait data.duration
 				break
-			}
 
-			case eGameState.Playing:
-			{
-				array<EncodedEHandle> squad
-				while ( true )
+			case eApexScreenDisplayGroup.DISPLAY_LOGOS:
+				_DisplayLogos( data.duration )
+				break
+
+			case eApexScreenDisplayGroup.DISPLAY_PLAYER:
+				EncodedEHandle playerEEH    = data.getFocusPlayerFunc()
+				int expectedSquadSizeChampion = GetExpectedSquadSize( GetEntityFromEncodedEHandle( playerEEH ) )
+
+				int L_screen = data.overrideScreen_L <= -1 ? eApexScreenMode.PLAYER_NAME_CHAMPION : data.overrideScreen_L
+				int C_screen = data.overrideScreen_C <= -1 ? eApexScreenMode.GCARD_FRONT_CLEAN : data.overrideScreen_C
+				int R_screen = data.overrideScreen_R <= -1 ? eApexScreenMode.GCARD_BACK : data.overrideScreen_R
+
+				if ( playerEEH != EncodedEHandle_null )
 				{
-					EncodedEHandle championEEH = SurvivalCommentary_GetChampionEEH()
-					if ( championEEH != EncodedEHandle_null )
-					{
-						squad = GetPlayerSquadSafe( championEEH, 3 ) // todo(dw): hard-coded squad size?
-
-						ShowModeInternal( eApexScreenPosition.L, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.PLAYER_NAME_CHAMPION, championEEH )
-						ShowModeInternal( eApexScreenPosition.C, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.GCARD_FRONT_CLEAN, championEEH )
-						ShowModeInternal( eApexScreenPosition.R, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.GCARD_BACK, championEEH )
-						wait 20.0
-
-						if ( squad[1] != EncodedEHandle_null || squad[2] != EncodedEHandle_null )
-						{
-							ShowModeInternal( eApexScreenPosition.L, eApexScreenTransitionStyle.FADE_TO_BLACK, eApexScreenMode.GCARD_FRONT_DETAILS, squad[1] )
-							ShowModeInternal( eApexScreenPosition.C, eApexScreenTransitionStyle.NONE, eApexScreenMode.GCARD_FRONT_DETAILS, championEEH )
-							ShowModeInternal( eApexScreenPosition.R, eApexScreenTransitionStyle.FADE_TO_BLACK, eApexScreenMode.GCARD_FRONT_DETAILS, squad[2] )
-						}
-						wait 20.0
-					}
-					else
-					{
-						ShowModeInternal( eApexScreenPosition.L, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.LOGO, EncodedEHandle_null )
-						ShowModeInternal( eApexScreenPosition.C, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.LOGO, EncodedEHandle_null )
-						ShowModeInternal( eApexScreenPosition.R, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.LOGO, EncodedEHandle_null )
-						wait 4.5
-					}
-
-					EncodedEHandle killLeaderEEH = SurvivalCommentary_GetKillLeaderEEH()
-					if ( killLeaderEEH != EncodedEHandle_null )
-					{
-						squad = GetPlayerSquadSafe( killLeaderEEH, 3 ) // todo(dw): hard-coded squad size?
-
-						ShowModeInternal( eApexScreenPosition.L, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.PLAYER_NAME_KILLLEADER, killLeaderEEH )
-						ShowModeInternal( eApexScreenPosition.C, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.GCARD_FRONT_CLEAN, killLeaderEEH )
-						ShowModeInternal( eApexScreenPosition.R, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.GCARD_BACK, killLeaderEEH )
-						wait 20.0
-
-						if ( squad[1] != EncodedEHandle_null || squad[2] != EncodedEHandle_null )
-						{
-							ShowModeInternal( eApexScreenPosition.L, eApexScreenTransitionStyle.FADE_TO_BLACK, eApexScreenMode.GCARD_FRONT_DETAILS, squad[1] )
-							ShowModeInternal( eApexScreenPosition.C, eApexScreenTransitionStyle.NONE, eApexScreenMode.GCARD_FRONT_DETAILS, killLeaderEEH )
-							ShowModeInternal( eApexScreenPosition.R, eApexScreenTransitionStyle.FADE_TO_BLACK, eApexScreenMode.GCARD_FRONT_DETAILS, squad[2] )
-						}
-						wait 20.0
-					}
-					else
-					{
-						ShowModeInternal( eApexScreenPosition.L, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.LOGO, EncodedEHandle_null )
-						ShowModeInternal( eApexScreenPosition.C, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.LOGO, EncodedEHandle_null )
-						ShowModeInternal( eApexScreenPosition.R, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.LOGO, EncodedEHandle_null )
-						wait 4.5
-					}
+					ShowModeInternal( eApexScreenPosition.L, eApexScreenTransitionStyle.SLIDE, L_screen, playerEEH )
+					ShowModeInternal( eApexScreenPosition.C, eApexScreenTransitionStyle.SLIDE, C_screen, playerEEH )
+					ShowModeInternal( eApexScreenPosition.R, eApexScreenTransitionStyle.SLIDE, R_screen, playerEEH )
+					wait data.duration
+				}
+				else
+				{
+					_DisplayLogos( 4.5 )
 				}
 				break
-			}
 
-			default:
-			{
-				wait 0.3
+			case eApexScreenDisplayGroup.DISPLAY_LOCALPLAYER:
+				int L_screen = data.overrideScreen_L <= -1 ? eApexScreenMode.LOGO : data.overrideScreen_L
+				int C_screen = data.overrideScreen_C <= -1 ? eApexScreenMode.GCARD_FRONT_DETAILS : data.overrideScreen_C
+				int R_screen = data.overrideScreen_R <= -1 ? eApexScreenMode.LOGO : data.overrideScreen_R
+
+				_SetLogoDisplay()
+				ShowModeInternal( eApexScreenPosition.C, eApexScreenTransitionStyle.SLIDE, C_screen, EHI_LOCALSELF )
+				wait data.duration
 				break
-			}
+
+			case eApexScreenDisplayGroup.DISPLAY_RANDOM_LOCALTEAMMATE:
+				int L_screen = data.overrideScreen_L <= -1 ? eApexScreenMode.LOGO : data.overrideScreen_L
+				int C_screen = data.overrideScreen_C <= -1 ? eApexScreenMode.GCARD_FRONT_DETAILS : data.overrideScreen_C
+				int R_screen = data.overrideScreen_R <= -1 ? eApexScreenMode.LOGO : data.overrideScreen_R
+
+				_SetLogoDisplay()
+				ShowModeInternal( eApexScreenPosition.C, eApexScreenTransitionStyle.SLIDE, C_screen, EHI_LOCALTEAMMATE_RANDOM )
+				wait data.duration
+				break
+
+			case eApexScreenDisplayGroup.DISPLAY_PLAYER_SQUAD:
+			case eApexScreenDisplayGroup.DISPLAY_PLAYER_SQUAD_CENTERED:
+				EncodedEHandle playerEEH    = data.getFocusPlayerFunc()
+				int expectedSquadSizeChampion = GetExpectedSquadSize( GetEntityFromEncodedEHandle( playerEEH ) )
+
+				array<EncodedEHandle> squad = GetPlayerSquadSafe( playerEEH, 3 ) // todo(dw): hard-coded squad size?
+
+				// Centered version must have null EHIs removed.
+				if( data.displayMode == eApexScreenDisplayGroup.DISPLAY_PLAYER_SQUAD_CENTERED )
+				{
+					foreach( squadEHI in squad)
+					{
+						if( squadEHI == EncodedEHandle_null )
+						{
+							squad.removebyvalue( squadEHI )
+						}
+					}
+					expectedSquadSizeChampion = squad.len()
+				}
+
+				if ( playerEEH != EncodedEHandle_null )
+				{
+					if ( expectedSquadSizeChampion == 1 )
+					{
+						_SetLogoDisplay()
+						ShowModeInternal( eApexScreenPosition.C, eApexScreenTransitionStyle.FADE_TO_BLACK, eApexScreenMode.GCARD_FRONT_DETAILS, playerEEH )
+					}
+					if ( expectedSquadSizeChampion == 2 )
+					{
+						_SetLogoDisplay()
+						ShowModeInternal( eApexScreenPosition.L, eApexScreenTransitionStyle.FADE_TO_BLACK, eApexScreenMode.GCARD_FRONT_DETAILS, playerEEH )
+						ShowModeInternal( eApexScreenPosition.R, eApexScreenTransitionStyle.FADE_TO_BLACK, eApexScreenMode.GCARD_FRONT_DETAILS, squad[1] )
+					}
+					else if( expectedSquadSizeChampion > 2 )
+					{
+						ShowModeInternal( eApexScreenPosition.L, eApexScreenTransitionStyle.FADE_TO_BLACK, eApexScreenMode.GCARD_FRONT_DETAILS, squad[1] )
+						ShowModeInternal( eApexScreenPosition.C, eApexScreenTransitionStyle.NONE, eApexScreenMode.GCARD_FRONT_DETAILS, playerEEH )
+						ShowModeInternal( eApexScreenPosition.R, eApexScreenTransitionStyle.FADE_TO_BLACK, eApexScreenMode.GCARD_FRONT_DETAILS, squad[2] )
+					}
+					wait data.duration
+				}
+				else
+				{
+					_DisplayLogos( 4.5 )
+				}
+				break
 		}
+
+		idx++
 	}
+}
+
+void function _DisplayLogos( float duration )
+{
+	_SetLogoDisplay()
+	wait duration
+}
+
+void function _SetLogoDisplay()
+{
+	int sideLogo = file.logoModeCenterOnly ? eApexScreenMode.BG_NO_LOGO : eApexScreenMode.LOGO
+
+	ShowModeInternal( eApexScreenPosition.L, eApexScreenTransitionStyle.SLIDE, sideLogo, EncodedEHandle_null )
+	ShowModeInternal( eApexScreenPosition.C, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.LOGO, EncodedEHandle_null )
+	ShowModeInternal( eApexScreenPosition.R, eApexScreenTransitionStyle.SLIDE, sideLogo, EncodedEHandle_null )
 }
 #endif
 
 
-#if SERVER && DEVELOPER
+#if SERVER && DEV
 void function DEV_ApexScreens_TogglePreviewMode()
 {
 	file.DEV_inDebugPreviewMode = !file.DEV_inDebugPreviewMode
@@ -734,7 +872,7 @@ void function DEV_ApexScreens_TogglePreviewMode()
 #endif
 
 
-#if SERVER && DEVELOPER
+#if SERVER && DEV
 void function DEV_ApexScreens_GladCardPreviewMode()
 {
 	file.DEV_inDebugPreviewMode = true
@@ -754,10 +892,13 @@ void function DEV_ApexScreens_GladCardPreviewMode()
 #endif
 
 
-#if SERVER && DEVELOPER
+#if SERVER && DEV
 void function DEV_ApexScreens_SetMode( var opt = "random" )
 {
-	int currentMode = GetGlobalNetIntSafe( "ApexScreensMasterState_Pos1_ModeIndex" ) // just use center screen
+    if ( !GetCurrentPlaylistVarBool( "enable_apex_screens", true ) )
+        return
+
+	int currentMode = GetGlobalNetInt( "ApexScreensMasterState_Pos1_ModeIndex" ) // just use center screen
 	int nextMode
 	if ( opt == "random" )
 		nextMode = RandomIntRange( 0, eApexScreenMode._COUNT )
@@ -840,13 +981,15 @@ void function ClApexScreens_EnableAllScreens()
 	file.forceDisableScreens = false
 	UpdateAllScreensContent()
 }
+#endif
 
+#if CLIENT
 bool function ClApexScreens_IsDisabled()
+///asdfasdf
 {
 	return file.forceDisableScreens
 }
 #endif
-
 
 #if CLIENT
 void function UpdateAllScreensContent()
@@ -871,15 +1014,16 @@ void function UpdateAllScreensContentThread()
 	file.allScreenUpdateQueued = false
 	UpdateScreensContent( file.staticScreenList )
 }
+
 //
 void function OnUpdateApexScreensEventTime( float newTime )
 {
-	//printf( "%s() - New time: %.2f", FUNC_NAME(), newTime )
+	printf( "%s() - New time: %.2f", FUNC_NAME(), newTime )
 
 	if ( newTime < 0 )
 	{
 		bool didChange = false
-		foreach( ApexScreenState screen in file.staticScreenList )
+		foreach ( ApexScreenState screen in file.staticScreenList )
 		{
 			if ( screen.ruiToCreateOrig != $"" )
 			{
@@ -894,55 +1038,22 @@ void function OnUpdateApexScreensEventTime( float newTime )
 		return
 	}
 
-	asset eventScreenAsset = GetCurrentPlaylistVarAsset( "banner_event_rui" )
-	if ( eventScreenAsset == $"" )
+	foreach ( ApexScreenState screen in file.staticScreenList )
 	{
-		Warning( "%s() - No banner rui specified for event.", FUNC_NAME() )
-		return
-	}
-	bool showSuccess = GetCurrentPlaylistVarBool( "banner_event_show_success", false )
 
-	ScreenOverrideInfo offScreens
-	{
-		offScreens.skipStandardVars = true
-		offScreens.ruiAsset = eventScreenAsset
-		offScreens.vars.gametimes["eventTriggerTime"] <- GetGlobalNetTimeSafe( NV_ApexScreensEventTimeA )
-	}
-
-	ScreenOverrideInfo onScreens
-	{
-		onScreens.skipStandardVars = true
-		onScreens.ruiAsset = eventScreenAsset
-		onScreens.vars.strings["eventText"] <- "#BANNER_EVENT_MAINTEXT"
-		onScreens.vars.bools["eventShowFailure"] <- (!showSuccess)
-		onScreens.vars.bools["eventShowSuccess"] <- showSuccess
-		onScreens.vars.gametimes["eventTriggerTime"] <- GetGlobalNetTimeSafe( NV_ApexScreensEventTimeA )
-	}
-
-	array<ApexScreenState> centerScreens
-	foreach( ApexScreenState screen in file.staticScreenList )
-	{
-		if ( screen.position == eApexScreenPosition.TV_LIKE )
+		if ( !(screen.position in file.eventScreenOverrideByScreenPosTable) )
 			continue
 
-		if ( screen.position == eApexScreenPosition.C )
-			centerScreens.append( screen )
+		ScreenOverrideInfo screenOverrideInfo = file.eventScreenOverrideByScreenPosTable[ screen.position ]
 
 		screen.overrideInfoIsValid = true
-		screen.overrideInfo = offScreens
 
 		if ( screen.ruiToCreateOrig == $"" )
 			screen.ruiToCreateOrig = screen.ruiToCreate
-		screen.ruiToCreate = offScreens.ruiAsset
-	}
 
-	foreach( index, screen in centerScreens )
-	{
-		if ( index % 3 != 2 )
-			continue
-
-		screen.overrideInfo = onScreens
-		screen.ruiToCreate = onScreens.ruiAsset
+		screen.overrideInfo = screenOverrideInfo
+		screen.ruiToCreate = screenOverrideInfo.ruiAsset
+		screen.overrideInfo.vars.gametimes["eventTriggerTime"] <- GetGlobalNetTime( NV_ApexScreensEventTimeA )
 	}
 
 	UpdateAllScreensContent()
@@ -952,7 +1063,7 @@ void function ClApexScreens_OnStaticPropRuiVisibilityChange( array<int> newlyVis
 {
 	array<ApexScreenState> screensToUpdate = []
 
-	foreach( int magicId in newlyHidden )
+	foreach ( int magicId in newlyHidden )
 	{
 		if ( !(magicId in file.magicIdScreenStateMap) )
 			continue // not an apex screen
@@ -965,7 +1076,7 @@ void function ClApexScreens_OnStaticPropRuiVisibilityChange( array<int> newlyVis
 		screensToUpdate.append( screen )
 	}
 
-	foreach( int magicId in newlyVisible )
+	foreach ( int magicId in newlyVisible )
 	{
 		if ( !(magicId in file.magicIdScreenStateMap) )
 			continue // not an apex screen
@@ -983,7 +1094,7 @@ void function ClApexScreens_OnStaticPropRuiVisibilityChange( array<int> newlyVis
 #endif
 
 
-#if CLIENT && DEVELOPER
+#if CLIENT && DEV
 void function DEV_ToggleActiveApexScreenDebug()
 {
 	file.DEV_activeScreenDebug = !file.DEV_activeScreenDebug
@@ -1002,18 +1113,18 @@ void function DEV_ActiveApexScreenDebugThread()
 		wait interval
 
 		int totalCount = 0, activeCount = 0, activeTVCount = 0
-		foreach( ApexScreenState screen in file.staticScreenList )
+		foreach ( ApexScreenState screen in file.staticScreenList )
 		{
 			totalCount += 1
 
 			if ( screen.visibleInPVS )
 			{
 				activeCount += 1
-				DebugDrawRotatedBox( <0, 0, 0>, screen.spawnMins + <-1, -1, -3>, screen.spawnMaxs + <-1, -1, -3>, <0, 0, 0>, 140, 185, 255, true, interval + 0.1 )
+				DebugDrawRotatedBox( <0, 0, 0>, screen.spawnMins + <-1, -1, -3>, screen.spawnMaxs + <-1, -1, -3>, <0, 0, 0>, <140, 185, 255>, true, interval + 0.1 )
 			}
 			else
 			{
-				DebugDrawRotatedBox( <0, 0, 0>, screen.spawnMins + <-1, -1, -3>, screen.spawnMaxs + <-1, -1, -3>, <0, 0, 0>, 25, 25, 80, true, interval + 0.1 )
+				DebugDrawRotatedBox( <0, 0, 0>, screen.spawnMins + <-1, -1, -3>, screen.spawnMaxs + <-1, -1, -3>, <0, 0, 0>, <25, 25, 80>, true, interval + 0.1 )
 			}
 		}
 		printt( "ACTIVE SCREEN COUNT: " + activeCount + " (of " + totalCount + ") (" + activeTVCount + " TVs)" )
@@ -1022,17 +1133,7 @@ void function DEV_ActiveApexScreenDebugThread()
 #endif
 
 
-#if CLIENT && DEVELOPER
-void function DEV_ToggleFloatyBitsPrototype()
-{
-	file.DEV_isFloatyBitsPrototypeEnabled = !file.DEV_isFloatyBitsPrototypeEnabled
-	UpdateAllScreensContent()
-}
-#endif
-
-
 #if CLIENT
-
 bool function ClApexScreens_PosInStaticBanner( vector pos )
 {
 	foreach ( magicId, screen in file.magicIdScreenStateMap )
@@ -1092,15 +1193,23 @@ struct DelayedScreenContentData
 	EHI              playerEHI
 	int              lifestateOverride
 }
+
 void function UpdateScreensContent( array<ApexScreenState> screenList )
 {
-	array<DelayedScreenContentData> delayedData = []
+	if ( GetGameState() >= eGameState.WinnerDetermined )
+		return
 
+	array<DelayedScreenContentData> delayedData = []
 
 	entity localViewPlayer = GetLocalViewPlayer()
 	bool isCrypto          = PlayerHasPassive( localViewPlayer, ePassives.PAS_CRYPTO )
-	bool inCamera          = IsValid( localViewPlayer.p.cryptoActiveCamera )
-	foreach( ApexScreenState screen in screenList )
+                               
+	bool activeCamera      = IsValid( localViewPlayer.p.cryptoActiveCamera )
+      
+                                                                            
+       
+
+	foreach ( ApexScreenState screen in screenList )
 	{
 		bool shouldShow = true
 
@@ -1117,7 +1226,7 @@ void function UpdateScreensContent( array<ApexScreenState> screenList )
 		if ( needShutdown )
 		{
 			screen.commenceTime = -1.0
-			Signal( screen, "ScreenOff" ) //
+			Signal( screen, "ScreenOff" ) // to clean up any threads expecting the RUI to exist
 
 			CleanupNestedGladiatorCard( screen.nestedGladiatorCard0Handle )
 
@@ -1127,21 +1236,29 @@ void function UpdateScreensContent( array<ApexScreenState> screenList )
 				screen.nestedRui = null
 			}
 
-			RuiDestroyIfAlive( screen.rui )
-			screen.rui = null
-
+			#if NX_PROG
+				thread RuiDestroyIfAliveDelay_Thread( screen.rui, 0.4 )
+				screen.rui = CreateBlankApexScreenRUIElement( screen )
+				if( screen.rui != null )
+					RuiSetGameTime( screen.rui, "transitionInStartTime", Time() )
+			#else
+				RuiDestroyIfAlive( screen.rui )
+				screen.rui = null
+			#endif
 		}
 
 		bool doStandardVars = (!screen.overrideInfoIsValid || !screen.overrideInfo.skipStandardVars)
 
 		bool needStartup = (shouldShow && (screen.rui == null || screen.ruiLastCreated == BLANK_ASSET))
+
 		if ( needStartup )
 		{
-			// #if DEVELOPER
-				// ++countCreation
-				// Warning ( "Creating screen" )
-				// Warning( "------------------" + countCreation )
-			// #endif
+			#if NX_PROG
+				if ( screen.rui != null )
+				{
+					RuiDestroyIfAlive( screen.rui )
+				}
+			#endif
 
 			screen.rui = CreateApexScreenRUIElement( screen )
 			if ( screen.rui != null )
@@ -1154,13 +1271,24 @@ void function UpdateScreensContent( array<ApexScreenState> screenList )
 				shouldShow = false
 			}
 
+			#if NX_PROG
+				var tmpRui = CreateBlankApexScreenRUIElement( screen )
+				if( tmpRui != null )
+					RuiSetGameTime( tmpRui, "transitionOutStartTime", Time() )
+				thread RuiDestroyIfAliveDelay_Thread( tmpRui, 0.4 )
 
+				screen.ruiLastCreated = screen.ruiToCreate
+			#endif
 		}
 
 		if ( !shouldShow )
 			continue
 		if ( !doStandardVars )
 			continue
+		#if NX_PROG
+			if ( screen.ruiLastCreated == BLANK_ASSET )
+				continue
+		#endif
 
 		ApexScreenPositionMasterState masterState = file.screenPositionMasterStates[screen.position]
 		float desiredCommenceTime                 = masterState.commenceTime
@@ -1168,7 +1296,11 @@ void function UpdateScreensContent( array<ApexScreenState> screenList )
 		int desiredTransitionStyle                = masterState.transitionStyle
 		EHI desiredPlayerEHI                      = masterState.playerEHI
 
-		if ( desiredCommenceTime == screen.commenceTime && !inCamera )
+                                
+		if ( desiredCommenceTime == screen.commenceTime && !activeCamera )
+       
+                                                                
+        
 			continue
 
 		if ( isCrypto )
@@ -1176,7 +1308,11 @@ void function UpdateScreensContent( array<ApexScreenState> screenList )
 		else
 			RuiSetFloat( screen.rui, "cryptoHintAlpha", 0.0 )
 
-		if ( inCamera )
+                                
+		if ( activeCamera )
+       
+                 
+        
 		{
 			desiredMode = eApexScreenMode.CAMERA_VIEW
 			desiredTransitionStyle = eApexScreenTransitionStyle.NONE
@@ -1202,7 +1338,27 @@ void function UpdateScreensContent( array<ApexScreenState> screenList )
 		dscd.screen = screen
 		dscd.transitionStyle = desiredTransitionStyle
 		dscd.gcardPresentation = gcardPresentation
+
 		dscd.playerEHI = desiredPlayerEHI
+		if( dscd.playerEHI == EHI_LOCALSELF )
+		{
+			dscd.playerEHI = GetLocalViewPlayer().GetEncodedEHandle()
+		}
+		else if( dscd.playerEHI == EHI_LOCALTEAMMATE_RANDOM )
+		{
+			array< entity > teammates = GetPlayerArrayOfTeam( GetLocalViewPlayer().GetTeam() )
+			teammates.randomize()
+
+			foreach( player in teammates )
+			{
+				if( IsValid( player ) )
+				{
+					dscd.playerEHI = player.GetEncodedEHandle()
+					break
+				}
+			}
+		}
+
 		dscd.lifestateOverride = lifestateOverride
 		delayedData.append( dscd )
 	}
@@ -1222,7 +1378,7 @@ void function UpdateScreensContent( array<ApexScreenState> screenList )
 			if ( dscd.screen.updateSerialNum != dscd.serialNum )
 				continue
 
-			//
+			// Account for the case where the rui has been destroyed outside of the thread (see needShutdown above)
 			if ( dscd.screen.rui == null )
 				continue
 
@@ -1230,7 +1386,10 @@ void function UpdateScreensContent( array<ApexScreenState> screenList )
 		}
 	})()
 }
+#endif
 
+
+#if CLIENT
 int function GetGCardPresentationForApexScreenMode( int screenMode )
 {
 	switch( screenMode )
@@ -1253,87 +1412,40 @@ int function GetGCardPresentationForApexScreenMode( int screenMode )
 #if CLIENT
 void function UpdateScreenDetails( ApexScreenState screen, float modeChangeTime, int transitionStyle, int gcardPresentation, EHI playerEHI, int lifestateOverride )
 {
-
-
 	string playerName = ""
-	if ( EHIHasValidScriptStruct( playerEHI ) )
-		playerName = EHI_GetName( playerEHI )
-	//for ( int ci = 0; ci < 16; ci++ )
-	//{
-	//	string c = (ci < playerName.len() ? playerName.slice( ci, ci + 1 ) : "")
-	//	c = RegexpReplace( c, "_", "-" )
-	//	RuiSetString( screen.rui, format( "playerNameChar%02d", ci ), c )
-	//}
-	//playerName = RepeatString( " ", 16 - playerName.len() ) + playerName
+	int playerEHI_ToUse = playerEHI
+
+	if( playerEHI_ToUse == EHI_LOCALSELF )
+	{
+		playerEHI_ToUse = GetLocalViewPlayer().GetEncodedEHandle()
+	}
+	else if( playerEHI_ToUse == EHI_LOCALTEAMMATE_RANDOM )
+	{
+		array< entity > teammates = GetPlayerArrayOfTeam( GetLocalViewPlayer().GetTeam() )
+		teammates.randomize()
+
+		foreach( player in teammates )
+		{
+			if( IsValid( player ) )
+			{
+				playerEHI_ToUse = player.GetEncodedEHandle()
+				break
+			}
+		}
+	}
+
+	if ( EHIHasValidScriptStruct( playerEHI_ToUse ) )
+		playerName = GetPlayerNameUnlessAnonymized( playerEHI_ToUse ) //EHI_GetName( playerEHI )
 	RuiSetString( screen.rui, "playerName", playerName )
 
-	entity player = FromEHI( playerEHI ) // todo(dw): cache kills
+	entity player = FromEHI( playerEHI_ToUse ) // todo(dw): cache kills
 	if ( IsValid( player ) )
-		RuiTrackInt( screen.rui, "playerKillCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "kills" ) )
+		RuiTrackInt( screen.rui, "playerKillCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "kills" ) )
 
 	RuiSetFloat( screen.rui, "xpBonusAmount", XpEventTypeData_GetAmount( eXPType.KILL_CHAMPION_MEMBER ) )
 
 	ChangeNestedGladiatorCardPresentation( screen.nestedGladiatorCard0Handle, gcardPresentation )
 	ChangeNestedGladiatorCardOwner( screen.nestedGladiatorCard0Handle, playerEHI, modeChangeTime, lifestateOverride )
-
-	//if ( screen.floatingRui != null )
-	//{
-	//	ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_Character() )
-	//
-	//	// todo(dw): aaaaaaaaa
-	//	// todo(dw): aaaaaaaaa
-	//	// todo(dw): aaaaaaaaa
-	//	// todo(dw): aaaaaaaaa
-	//	for ( int badgeIndex = 0; badgeIndex < GLADIATOR_CARDS_NUM_BADGES; badgeIndex++ )
-	//	{
-	//		if ( screen.floatingNestedBadgeRuiList[badgeIndex] != null )
-	//		{
-	//			RuiDestroyNested( screen.floatingRui, "badge" + badgeIndex + "Instance" )
-	//			screen.floatingNestedBadgeRuiList[badgeIndex] = null
-	//		}
-	//
-	//		LoadoutEntry badgeSlot        = Loadout_GladiatorCardBadge( character, badgeIndex )
-	//		ItemFlavor ornull badgeOrNull = LoadoutSlot_GetItemFlavorOrNull( playerEHI, badgeSlot )
-	//
-	//		if ( badgeOrNull != null )
-	//		{
-	//			ItemFlavor badge = expect ItemFlavor(badgeOrNull)
-	//
-	//			// todo(dw): tier override
-	//			int tierIndex = -1
-	//
-	//			//LoadoutEntry badgeTierSlot = Loadout_GladiatorCardBadgeTier( character, badgeIndex )
-	//			//if ( tierIndex == -1 && LoadoutSlot_IsReady( playerEHI, badgeTierSlot ) )
-	//			//{
-	//			//	ItemFlavor tierDummy = LoadoutSlot_GetItemFlavor( playerEHI, badgeTierSlot )
-	//			//	tierIndex = DummyItemFlavor_GetDummyIndex( tierDummy )
-	//			//}
-	//
-	//			if ( tierIndex == -1 )
-	//				tierIndex = 0
-	//
-	//			asset badgeRuiAsset, badgeImageAsset
-	//			array<GladCardBadgeTierData> tierDataList = GladiatorCardBadge_GetTierDataList( badge )
-	//			if ( GladiatorCardBadge_HasOwnRUI( badge ) )
-	//			{
-	//				badgeRuiAsset = tierDataList[tierIndex].ruiAsset
-	//			}
-	//			else
-	//			{
-	//				badgeRuiAsset = $"ui/gcard_badge_basic.rpak"
-	//				badgeImageAsset = tierDataList[tierIndex].imageAsset
-	//			}
-	//
-	//			var badgeRui = RuiCreateNested( screen.floatingRui, "badge" + badgeIndex + "Instance", badgeRuiAsset )
-	//			screen.floatingNestedBadgeRuiList[badgeIndex] = badgeRui
-	//
-	//			RuiSetInt( badgeRui, "tier", tierIndex )
-	//
-	//			if ( badgeImageAsset != $"" )
-	//				RuiSetImage( badgeRui, "img", badgeImageAsset )
-	//		}
-	//	}
-	//}
 }
 #endif
 
@@ -1365,6 +1477,7 @@ void function SetupForHorizontalTVScreen( StaticPropRui staticPropRuiInfo, ApexS
 	apexScreen.position = eApexScreenPosition.DISABLED
 }
 
+
 void function SetupForVerticalBannerScreen( StaticPropRui staticPropRuiInfo, ApexScreenState apexScreen )
 {
 	if ( staticPropRuiInfo.scriptName in s_screenOverrides )
@@ -1379,8 +1492,10 @@ void function SetupForVerticalBannerScreen( StaticPropRui staticPropRuiInfo, Ape
 		return
 	}
 
-	//
+	//apexScreen.position = eApexScreenPosition.DISABLED
 }
+
+
 bool function OnEnumStaticPropRui( StaticPropRui staticPropRuiInfo )
 {
 	if ( !GetCurrentPlaylistVarBool( "enable_apex_screens", true ) )
@@ -1397,7 +1512,7 @@ bool function OnEnumStaticPropRui( StaticPropRui staticPropRuiInfo )
 	apexScreen.spawnScale = Length( staticPropRuiInfo.spawnForward )
 	apexScreen.spawnMins = staticPropRuiInfo.spawnMins
 	apexScreen.spawnMaxs = staticPropRuiInfo.spawnMaxs
-	apexScreen.ruiToCreate = $"ui/apex_screen.rpak" //$"ui/apex_screen_vertical.rpak"
+	apexScreen.ruiToCreate = $"ui/apex_screen.rpak"
 	apexScreen.mockup = staticPropRuiInfo.mockupName
 	apexScreen.diagonalSize = Distance( staticPropRuiInfo.spawnMins, staticPropRuiInfo.spawnMaxs )
 
@@ -1408,7 +1523,7 @@ bool function OnEnumStaticPropRui( StaticPropRui staticPropRuiInfo )
 	{
 		string modsStr = staticPropRuiInfo.args.apex_screen_mods
 		apexScreen.modBits = 0
-		foreach( string modKey in GetTrimmedSplitString( modsStr, "," ) )
+		foreach ( string modKey in GetTrimmedSplitString( modsStr, "," ) )
 		{
 			if ( modKey.toupper() in eApexScreenMods )
 				apexScreen.modBits = apexScreen.modBits | eApexScreenMods[modKey.toupper()]
@@ -1489,6 +1604,7 @@ bool function OnEnumStaticPropRui( StaticPropRui staticPropRuiInfo )
 					SetupForVerticalBannerScreen( staticPropRuiInfo, apexScreen )
 					file.customBannerList["left"] <- apexScreen
 					break
+
 				case "rightScreen":
 					apexScreen.position = eApexScreenPosition.R
 					break
@@ -1504,6 +1620,7 @@ bool function OnEnumStaticPropRui( StaticPropRui staticPropRuiInfo )
 					SetupForVerticalBannerScreen( staticPropRuiInfo, apexScreen )
 					file.customBannerList["center"] <- apexScreen
 					break
+
 				default:
 					apexScreen.position = eApexScreenPosition.C
 					break
@@ -1523,14 +1640,13 @@ bool function OnEnumStaticPropRui( StaticPropRui staticPropRuiInfo )
 }
 #endif
 
-
 #if CLIENT
 var function CreateApexScreenRUIElement( ApexScreenState screen )
 {
 	var rui
 	if ( screen.magicId == -1 )
 	{
-		#if DEVELOPER
+		#if DEV
 			float aspectRatio = 1.0//0.38
 			float height      = screen.diagonalSize / sqrt( 1.0 + pow( aspectRatio, 2.0 ) )
 			float width       = aspectRatio * height
@@ -1553,6 +1669,7 @@ var function CreateApexScreenRUIElement( ApexScreenState screen )
 
 	vector basePos = screen.spawnOrigin
 	basePos.z -= (screen.spawnMaxs.z - screen.spawnMins.z)
+
 	//DebugDrawAxis( basePos, VectorToAngles( screen.spawnForward ), 25, 5 )
 	RuiSetFloat3( rui, "screenWorldPos", basePos )
 	RuiSetFloat( rui, "screenScale", screen.spawnScale )
@@ -1573,45 +1690,49 @@ var function CreateApexScreenRUIElement( ApexScreenState screen )
 		var nestedRui = RuiCreateNested( rui, "animatedLogoHandle", file.animatedLogoAsset )
 		screen.nestedRui = nestedRui
 	}
+
 	if ( screen.sharesPropWithEnvironmentalRUI )
 		RuiSetBool( rui, "sharesPropWithEnvironmentalRUI", true )
 
-	RuiTrackInt( rui, "cameraNearbyEnemySquads", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "cameraNearbyEnemySquads" ) )
-
+	RuiTrackInt( rui, "cameraNearbyEnemySquads", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "cameraNearbyEnemySquads" ) )
 
 	if ( screen.overrideInfoIsValid )
 	{
-		foreach( string varName, int varValue in screen.overrideInfo.vars.ints )
+		foreach ( string varName, int varValue in screen.overrideInfo.vars.ints )
 			RuiSetInt( rui, varName, varValue )
 
-		foreach( string varName, float varValue in screen.overrideInfo.vars.floats )
+		foreach ( string varName, float varValue in screen.overrideInfo.vars.floats )
 			RuiSetFloat( rui, varName, varValue )
 
-		foreach( string varName, bool varValue in screen.overrideInfo.vars.bools )
+		foreach ( string varName, bool varValue in screen.overrideInfo.vars.bools )
 			RuiSetBool( rui, varName, varValue )
 
-		foreach( string varName, string varValue in screen.overrideInfo.vars.strings )
+		foreach ( string varName, string varValue in screen.overrideInfo.vars.strings )
 			RuiSetString( rui, varName, varValue )
 
-		foreach( string varName, asset varValue in screen.overrideInfo.vars.images )
+		foreach ( string varName, asset varValue in screen.overrideInfo.vars.images )
 			RuiSetImage( rui, varName, varValue )
 
-		foreach( string varName, vector varValue in screen.overrideInfo.vars.float3s )
+		foreach ( string varName, vector varValue in screen.overrideInfo.vars.float3s )
 			RuiSetFloat3( rui, varName, varValue )
 
-		foreach( string varName, float varValue in screen.overrideInfo.vars.gametimes )
+		foreach ( string varName, vector varValue in screen.overrideInfo.vars.float2s )
+			RuiSetFloat2( rui, varName, varValue )
+
+		foreach ( string varName, float varValue in screen.overrideInfo.vars.gametimes )
 			RuiSetGameTime( rui, varName, varValue )
 
 		if ( screen.overrideInfo.bindStartTimeVarToEventTimeA )
-			RuiTrackFloat( rui, "startTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndexSafe( NV_ApexScreensEventTimeA ) )
+			RuiTrackFloat( rui, "startTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndex( NV_ApexScreensEventTimeA ) )
 		if ( screen.overrideInfo.bindStartTimeVarToEventTimeB )
-			RuiTrackFloat( rui, "startTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndexSafe( NV_ApexScreensEventTimeB ) )
+			RuiTrackFloat( rui, "startTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndex( NV_ApexScreensEventTimeB ) )
 		if ( screen.overrideInfo.bindEventIntA )
-			RuiTrackInt( rui, "intA", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndexSafe( NV_ApexScreensEventIntA ) )
+			RuiTrackInt( rui, "intA", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( NV_ApexScreensEventIntA ) )
 	}
 
 	return rui
 }
+
 void function ClApexScreens_SetCustomApexScreenBGAsset( asset bg )
 {
 	file.bannerBGAssert = bg
@@ -1635,10 +1756,15 @@ void function ClApexScreens_SetAnimatedLogoAsset( asset ruiAsset )
 {
 	file.animatedLogoAsset = ruiAsset
 }
+
+void function ClApexScreens_SetEventScreenOverride( int position, ScreenOverrideInfo screenOverrideInfo )
+{
+	file.eventScreenOverrideByScreenPosTable[ position ] <- screenOverrideInfo
+}
 #endif
 
 
-#if CLIENT && DEVELOPER
+#if CLIENT && DEV
 void function DEV_CreatePerfectApexScreen( vector origin, float diagonalSize, int screenPosition )
 {
 	ApexScreenState apexScreen
@@ -1748,7 +1874,7 @@ void function ServerToClient_ApexScreenRefreshAll()
 //
 //	{
 //		// circle state -- about to close & just closed
-//		float nextCircleStartTime = GetGlobalNetTimeSafe( "nextCircleStartTime" )
+//		float nextCircleStartTime = GetGlobalNetTime( "nextCircleStartTime" )
 //	}
 //
 //	// impressive kill
@@ -1763,13 +1889,23 @@ void function ServerToClient_ApexScreenRefreshAll()
 //#endif
 
 #if SERVER
-void function SvApexScreens_SetScreenSequenceForGameState( int gameState, array< ApexScreenSettingsGroup > settings )
+void function SvApexScreens_SetScreenSequenceForGameState( int gameState, array<ApexScreenSettingsGroup> sequence )
 {
-	// S22 screen sequence system — not implemented in S3
+	file.gameStateToScreenSettings[ gameState ] = sequence
 }
 
 void function SvApexScreens_RefreshScreenSequence()
 {
-	// S22 screen sequence system — not implemented in S3
+	thread ApexScreenMasterThink()
 }
-#endif // SERVER
+
+void function SvApexScreens_QueueCustomScreenSequence( ApexScreenSettingsGroup sequence )
+{
+	file.queuedScreenSettings.append( sequence )
+}
+
+void function SvApexScreens_SetLogoModeCenterOnly( bool logoModeCenterOnly )
+{
+	file.logoModeCenterOnly = logoModeCenterOnly
+}
+#endif
