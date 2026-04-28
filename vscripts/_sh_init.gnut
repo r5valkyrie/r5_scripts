@@ -966,7 +966,7 @@ void function Shared_Lobby_Init()
 	ShXP_Init()
 	PassivesShared_Init()
 	RemoteFunctions_Init_Begin()
-	ModSystem_RunCallbacks() // MOD SYSTEM CALLBACKS
+	//ModSystem_RunCallbacks() // MOD SYSTEM CALLBACKS
 	ShPersistentData_LevelInit_Begin()
 	ShAnimWindows_LevelInit()
 
@@ -1115,7 +1115,7 @@ void function Shared_Lobby_Init()
 	ShPlaylist_Init()
 	ShEHI_LevelInit_End()
 
-	SURVIVAL_Loot_All_InitShared() // need this to precache the weapons
+	//SURVIVAL_Loot_All_InitShared() // need this to precache the weapons
 
 	#if SERVER
 		Server_Lobby_Init()
@@ -1125,7 +1125,7 @@ void function Shared_Lobby_Init()
 		Client_Lobby_Init()
 	#endif
 
-	MpWeaponEmoteProjector_Init()
+	//MpWeaponEmoteProjector_Init()
 	ShEmotes_Lobby_Init()
                        
                            
