@@ -799,7 +799,6 @@ int function SURVIVAL_Loot_GetLootTypeFromString( string lootTypeString )
 	switch( lootTypeString )
 	{
 		case "main_weapon":
-		case "weapon_custom":
 			return eLootType.MAINWEAPON
 
 		case "ammo":
@@ -821,7 +820,6 @@ int function SURVIVAL_Loot_GetLootTypeFromString( string lootTypeString )
 			return eLootType.ORDNANCE
 
 		case "attachment":
-		case "attachment_custom":
 			return eLootType.ATTACHMENT
 
 		case "backpack":

@@ -3245,15 +3245,9 @@ void function _ChallengeReRoll( entity player, int guid )
 	while ( !GRX_IsInventoryReady( player ) )
 		WaitFrame()
 
-	ItemFlavor ornull rerollFlavOrNull = BattlePass_GetRerollFlavOrNull( activeBattlePass )
-	if ( rerollFlavOrNull == null )
-	{
-		Warning( "ServerCodeCallback_RerollDailyChallenge: No reroll flavor set for battlepass " + string( ItemFlavor_GetAsset( activeBattlePass ) ) )
-		return
-	}
+	ItemFlavor rerollFlav = BattlePass_GetRerollFlav( activeBattlePass )
 
-	ItemFlavor rerollFlav = expect ItemFlavor( rerollFlavOrNull )
-	int numTokens         = GRX_GetConsumableCount( ItemFlavor_GetGRXIndex( rerollFlav ) )
+	int numTokens         = GRX_GetConsumableCount( player, ItemFlavor_GetGRXIndex( rerollFlav ) )
 	string persistenceKey = "challengeRerollsUsed"
 	int tokensUsed        = player.GetPersistentVarAsInt( persistenceKey )
 
@@ -3666,6 +3660,7 @@ void function UpdateWeeklyRecurringChallenges( entity player, bool reinitialize 
 #if SERVER
 void function RefreshEventChallengesThread( entity player )
 {
+	return
 	Assert( IsLobby() )
 
 	EndSignal( player, "OnDestroy" )

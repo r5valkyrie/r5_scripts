@@ -23,7 +23,6 @@ global const int PLAYER_ARMORED_LEAP_PHASE_NONE = 0
 global const float SHADOWARMY_LEGEND_SPAWN_FADE_FROM_BLACK_HOLD_DURATION = 0.0
 global const float SHADOWARMY_LEGEND_SPAWN_FADE_FROM_BLACK_FADE_DURATION = 0.0
 global const int CODE_REDEMPTION_RESULT_SUCCESS = 0
-global const int PREMIUM_CURRENCY_05 = 0
 global const int playedApexFalse = 0
 
 global enum eCanLaunchResult

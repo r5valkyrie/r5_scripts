@@ -42,7 +42,6 @@ global function ForceScriptError
 #if SERVER
 global function CircleCullClassName
 global function CircleCullScriptName
-global function SetVictoryKillMode
 // GetPlayerArrayIncludingSpectators moved to SERVER || CLIENT scope below
 // GameRules_GetTeamScore2 is engine-native
 global function WeaponStatsHook_OnKillEnemy
@@ -165,7 +164,6 @@ void function ForceScriptError( string message ) { ScriptError( message ) }
 #if SERVER
 void function CircleCullClassName( string className ) {}
 void function CircleCullScriptName( string scriptName ) {}
-void function SetVictoryKillMode( bool enabled ) {}
 array<entity> function GetPlayerArrayIncludingSpectators() { return GetPlayerArray() }
 void function WeaponStatsHook_OnKillEnemy( entity victim, entity attacker, entity creditedAttacker, var damageInfo ) {}
 void function Remote_CallFunction_QueueForNoKillCam( entity player, string funcName, ... ) {}

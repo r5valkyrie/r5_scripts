@@ -121,7 +121,6 @@ global function ItemFlavor_ChallengesHaveMetaData
 global function ItemFlavor_CalEventsHaveTimeStampMetaData
 global function ItemFlavor_GetMetaData
 global function IsCalEvent
-// Sticker functions now in mp/sh_stickers.nut
 
 global function DEV_DescItemFlavor
 
@@ -556,7 +555,6 @@ void function ShItems_LevelInit_Begin()
 
 void function ShItems_CacheEntitlementForPSPlusAndXBGold()
 {
-	return
 	foreach ( ItemFlavor entitlementFlav in GetAllItemFlavorsOfType( eItemType.entitlement ) )
 	{
 		int entitlementType = Entitlement_GetEntitlementType( entitlementFlav )

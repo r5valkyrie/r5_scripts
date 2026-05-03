@@ -79,7 +79,7 @@ void function SV_CL_Init()
 	CodeCallbacksShared_Init()
 	Flags_Init()
 	RemoteFunctions_Init_Begin()
-	ModSystem_RunCallbacks()// MOD SYSTEM CALLBACKS, has to run as soon as remote functions start registering
+	//ModSystem_RunCallbacks()// MOD SYSTEM CALLBACKS, has to run as soon as remote functions start registering
 	ShGamepad_LevelInit()
 	Thirdperson_Init()
 	DeathHints_Init()
@@ -1115,7 +1115,7 @@ void function Shared_Lobby_Init()
 	ShPlaylist_Init()
 	ShEHI_LevelInit_End()
 
-	//SURVIVAL_Loot_All_InitShared() // need this to precache the weapons
+	SURVIVAL_Loot_All_InitShared() // need this to precache the weapons
 
 	#if SERVER
 		Server_Lobby_Init()

@@ -1342,7 +1342,7 @@ int function Artifacts_Loadouts_GetConfigIndexForLoadoutSlot( LoadoutEntry slot 
 #if SERVER
 void function Artifacts_Loadouts_ClearComponentChange( entity player )
 {
-	SetItemFlavorLoadoutSlot( ToEHI( player ), fileLevel.componentChangeSlot, fileLevel.componentChangeSlot.defaultItemFlavor )
+	//SetItemFlavorLoadoutSlot( ToEHI( player ), fileLevel.componentChangeSlot, fileLevel.componentChangeSlot.defaultItemFlavor )
 }
 
 void function Artifacts_Loadouts_RegisterComponentChange( EHI playerEHI, ItemFlavor component )

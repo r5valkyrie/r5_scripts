@@ -1476,7 +1476,7 @@ void function UpdatePlayerTreasureBoxPurchaseCache( entity player )
 
 		expect ItemFlavor( quest )
 		ItemFlavor treasureBoxPurchaseFlav = SeasonQuest_GetTreasureBoxPurchaseFlav( quest )
-		int numPurchasedBoxes = GRX_GetConsumableCount( ItemFlavor_GetGRXIndex( treasureBoxPurchaseFlav ) )
+		int numPurchasedBoxes = GRX_GetConsumableCount( player, ItemFlavor_GetGRXIndex( treasureBoxPurchaseFlav ) )
 
 		player.SetPersistentVar( BuildPersistentVarName( quest, VARNAME_TB_lastSeenPurchased ), numPurchasedBoxes )
 	}()

@@ -645,6 +645,8 @@ global struct ServerPlayerStruct
 	array<void functionref( entity )> playerOnRealmChangedCallbacks
 	bool isOutOfBoundsHolsterCheck = false
 	entity outOfBoundsActiveWeapon
+	float                         lastOnslaughtTime = -ONSLAUGHT_REQUIREMENT_TIME
+	float                         lastMayhemTime = -MAYHEM_REQUIREMENT_TIME
 
 	float 						lastDroneShieldStunPushTime
 
@@ -670,8 +672,6 @@ global struct ServerPlayerStruct
 	bool						seekingRevenge
 	table<entity, int>			playerKillStreaks
 	int							playerOrTitanKillsSinceLastDeath //This used to only be player Kills, changed primarily for challenge unlock. See 207007
-	// float						lastOnslaughtTime = -ONSLAUGHT_REQUIREMENT_TIME
-	// float						lastMayhemTime = -MAYHEM_REQUIREMENT_TIME
 
 	entity						lastSpawnPoint
 	entity justCreatedSurvivalMainWeapon

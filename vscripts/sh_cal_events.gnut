@@ -296,7 +296,7 @@ ItemFlavor function GetLatestSeason( int t )
 // If there is a current season, get that. Otherwise, return the most recent season that was active.
 ItemFlavor ornull function GetActiveSeason( int t )
 {
-	ItemFlavor ornull seasonOrNull = RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/calevent/season16.rpak" )
+	ItemFlavor ornull seasonOrNull = RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/calevent/season21.rpak" )
 	if ( seasonOrNull == null )
 		return null
 

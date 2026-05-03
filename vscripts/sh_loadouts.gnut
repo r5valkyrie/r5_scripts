@@ -3099,6 +3099,7 @@ bool function IsContentsIndexValidForLoadoutSlot( EHI playerEHI, LoadoutEntry en
 #if SERVER
 void function ValidateAndFixAllLoadoutSlots( EHI playerEHI, array<LoadoutEntry> loadoutSlots, bool isInitialValidation, bool forceReset, bool resetToRandom )
 {
+	return
 	EndSignal( FromEHI( playerEHI ), "OnDestroy" )
 	EndSignal( FromEHI( playerEHI ), "OnDisconnecting" )
 

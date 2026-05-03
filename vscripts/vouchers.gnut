@@ -369,10 +369,18 @@ int function Voucher_GetVoucherActiveCount( entity player, ItemFlavor voucherFla
 			return fileLevel.voucherFlavGetActiveQuantityFuncMap[ItemFlavor_GetAsset( voucherFlav )]( player )
 
 		case eVoucherBehavior.GRX_STACKABLE:
+#if SERVER
+			return GRX_GetConsumableCount( player, ItemFlavor_GetGRXIndex( voucherFlav ) )
+#else
 			return GRX_GetConsumableCount( ItemFlavor_GetGRXIndex( voucherFlav ) )
+#endif
 
 		case eVoucherBehavior.GRX_CONSUMABLE_INSTANT:
+#if SERVER
+			return GRX_GetConsumableCount( player, ItemFlavor_GetGRXIndex( voucherFlav ) )
+#else
 			return GRX_GetConsumableCount( ItemFlavor_GetGRXIndex( voucherFlav ) )
+#endif
 
 		case eVoucherBehavior.GRX_CONSUMABLE_OVER_TIME:
 			return 0 //todo(dw)
