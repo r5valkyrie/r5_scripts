@@ -25,7 +25,7 @@ global function Ranked_IsValidHistoricalRankedPeriodGUID
 global function Ranked_GetHistoricalRankScore
 global function Ranked_GetHistoricalFirstSplitRankScore
 global function Ranked_GetHistoricalRankedDivisionFromScore
-global function Ranked_GetHighestHistoricalRankedTierData //used in clubs?
+global function Ranked_GetHighestHistoricalRankedTierData 
 global function Ranked_GetHistoricalRankedDivisionFromScoreAndLadderPosition
 global function Ranked_GetHistoricalRankedTiers
 global function Ranked_GetHistoricalLadderPosition
@@ -51,79 +51,67 @@ global function Ranked_GetAllRankedPeriodsInAscendingChronologicalOrder
 global function Ranked_HasActiveLadderOnlyDivision
 global function Ranked_GetActiveLadderOnlyDivisionData
 
-#if SERVER || CLIENT
+
 global function Ranked_IsPlayerAbandoning
 global function SharedRanked_DidPlayerEverHaveAFullTeam
 global function SharedRanked_GetAbandonPenaltyLength
-#endif
 
-// CreateNestedRankedRui + SharedRanked_FillInRuiEmblemText moved to clui_ranked.nut
 
-#if CLIENT || UI
+
 global function Ranked_GetHistoricalRankScoreAcrossSplitsForPlayer
 global function Ranked_GetHistoricalRankedPersistenceData
 global function Ranked_RankedPartyMaxTierDifferential
-#endif
-#if CLIENT
 global function Ranked_ShowRankedSummary
-global function ServerToClient_Ranked_UpdatePlayerPrevRankedScore
-global function ServerToClient_Ranked_UpdatePlayerPrevLadderPos
-#endif
 
-#if UI
-global function Ranked_GetTierCount
-global function Ranked_IsLocalPlayerInLadderOnlyTier
-global function Ranked_PopulateAboutText
-// ServerToUI_Ranked_NotifyRankedPeriodScoreChanged moved to clui_ranked.nut
-#endif
 
-#if SERVER
-global function Ranked_SetXProgMergedPersistenceData
-global function SharedRanked_SetMatchmakingDelayDuration
-global function Ranked_OnPlayerRankedLadderPositionFound
-global function Ranked_OnStryderConfirmEndSeasonOrSplitScore
-global function Ranked_OnStryderConfirmSeasonOrSplitStart
-global function Ranked_SetStatsForRankedSeasonTwo
-global function CodeCallback_BotMimicPlayerRanked
-global function RankedGameSummary_GetPlayerData
-                  
-global function RankedGameSummary_GetTeamDataOrNull
-      
-global function Sh_Rank_GameSummary_MatchStart
-global function Ranked_SetHistoricalRankedPersistenceData
-global function SetPlayerRankScore
-global function Ranked_GetHighestHistoricalTierAcrossSplitsForPlayer
-global function SetRankedPersistenceData
-global function SetRankedGameData
-global function Ranked_GetPeakLadderPositionPrevSeason
-global function Ranked_GetPlayerHardwareUIDString
-global function Ranked_GetStryderSequenceIdForLatestRankedPeriod
-global function Ranked_GetStryderSequenceIdForHistoricalRankedPeriod
 
-#if DEVELOPER
-global function Ranked_GetHistoricalRankedPersistenceData
-global function Ranked_ResetNumPenalizedAbandons_Dev
-#endif // DEVELOPER
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 global function Ranked_IsRankedV2FirstSplit
 global function Ranked_IsRankedV2SecondSplit
-#if SERVER || CLIENT
 global function Ranked_IsDisablePointGain
-#endif
 
-#if SERVER
-global function ShouldRecordRankedStats
-#endif
 
-global const int MASTER_PLUS_SCALING_RP = 5
-global const int MASTER_PLUS_SCALING_RP_INTERVAL = 1000
 
-global const int SHARED_RANKED_LEVEL_REQUIREMENT = (20 - 1) // i.e. display account level 50, but it's actually level 49 in script/data land. 0 based indexes yay!
+
+
+global const int SHARED_RANKED_LEVEL_REQUIREMENT = (20 - 1) 
 
 global const int SHARED_RANKED_NUM_ABANDON_FORGIVENESS_GAMES = 3
-global const int RANKED_RESET_DIVISION_COUNT = 6 // 1.5 tiers, which is normal ranked reset
-global const int RANKED_RESET_DIVISION_FLOOR = 4  // Bronze 4 is the lowest
+global const int RANKED_RESET_DIVISION_COUNT = 6 
+global const int RANKED_RESET_DIVISION_FLOOR = 4  
 
 global const int SHARED_RANKED_ROOKIE_FLOOR_VALUE = 1
 global const int SHARED_RANKED_INVALID_RANK_SCORE = -1
@@ -131,18 +119,18 @@ global const int SHARED_RANKED_INVALID_LADDER_POSITION = -1
 global const string SHARED_RANKED_SPLIT_1_STRYDER_SUFFIX = "_split_1"
 global const string SHARED_RANKED_SPLIT_2_STRYDER_SUFFIX = "_split_2"
 
-// refer to pdef_autogen.pdef; only add *special* season GUID strings here that you MUST reference in Script
-global const string RANKED_SEASON_02_GUIDSTRING = "SAID00747315762" // First season of Ranked
-global const string RANKED_SEASON_03_GUIDSTRING = "SAID00091805734" // Has weird Stryder naming schema
-global const string RANKED_SEASON_04_GUIDSTRING = "SAID00609587000" // Has weird Stryder naming schema
-global const string RANKED_SEASON_05_GUIDSTRING = "SAID00638209737" // Has weird Stryder naming schema; Ranked is mostly the same since
-global const string RANKED_SEASON_10_GUIDSTRING = "SAID01091892544" // First season where badges were broken
-global const string RANKED_SEASON_13_GUIDSTRING = "SAID02144147554" // First season with demotions
-global const string RANKED_SEASON_15_GUIDSTRING = "SAID00102643758" // First season with MTX badges
-global const string RANKED_SEASON_16_GUIDSTRING = "SAID02005235415" // Final ranked 1.0 season
 
-global const string RANKED_2PT0_PERIOD_17_GUIDSTRING = "SAID01711148254" // First ranked 2.0 season
-global const string RANKED_2PT0_PERIOD_19_GUIDSTRING = "SAID01234567890" // Start of XProg
+global const string RANKED_SEASON_02_GUIDSTRING = "SAID00747315762" 
+global const string RANKED_SEASON_03_GUIDSTRING = "SAID00091805734" 
+global const string RANKED_SEASON_04_GUIDSTRING = "SAID00609587000" 
+global const string RANKED_SEASON_05_GUIDSTRING = "SAID00638209737" 
+global const string RANKED_SEASON_10_GUIDSTRING = "SAID01091892544" 
+global const string RANKED_SEASON_13_GUIDSTRING = "SAID02144147554" 
+global const string RANKED_SEASON_15_GUIDSTRING = "SAID00102643758" 
+global const string RANKED_SEASON_16_GUIDSTRING = "SAID02005235415" 
+
+global const string RANKED_2PT0_PERIOD_17_GUIDSTRING = "SAID01711148254" 
+global const string RANKED_2PT0_PERIOD_19_GUIDSTRING = "SAID01234567890" 
 
 global const int RANKED_2PT0_NON_SPLIT = 0
 global const int RANKED_2PT0_SPLIT1 = 1
@@ -159,18 +147,18 @@ global const string RANKED_CURRENT_SCORE_PERSISTENCE_VAR_NAME = "currentRankedSc
 global const string RANKED_PROVISIONAL_MATCH_COUNT_PERSISTENCE_VAR_NAME = "rankedProvisionalMatchesCompleted"
 global const string RANKED_PROVISIONAL_MATCH_HAS_PROGRESSED_OUT_PERSISTENCE_VAR_NAME = "rankedHasProgressedOutOfProvisional"
 global const string RANKED_PROVISIONAL_MATCH_CONVAR_KILL_SWITCH = "ranked_disable_placement_matches"
-                  
+
 global const string RANKED_TOP_5_STREAK_PERSISTENCE_VAR_NAME = "rankedTop5StreakCount"
 global const string RANKED_PROVISONAL_MATCH_RESULTS = "rankedProvisionalMatchScores"
 global const string RANKED_PROVISONAL_MATCH_RESULTS_FORMAT_STRINGS = RANKED_PROVISONAL_MATCH_RESULTS + "[%s]"
-      
+
 global const string RANKED_SHOW_RANKED_SUMMARY_PERSISTENCE_VAR_NAME = "showRankedSummary"
 const array< string > XPROG_MERGED_PLATFORM_PERSISTENCE_FIELDS = [
 	RANKED_CURRENT_SCORE_PERSISTENCE_VAR_NAME,
 	RANKED_PROVISIONAL_MATCH_COUNT_PERSISTENCE_VAR_NAME,
 	RANKED_PROVISIONAL_MATCH_HAS_PROGRESSED_OUT_PERSISTENCE_VAR_NAME,
 	RANKED_SHOW_RANKED_SUMMARY_PERSISTENCE_VAR_NAME,
-                  
+
 	RANKED_TOP_5_STREAK_PERSISTENCE_VAR_NAME,
 	RANKED_PROVISONAL_MATCH_RESULTS + "[0]",
 	RANKED_PROVISONAL_MATCH_RESULTS + "[1]",
@@ -182,17 +170,17 @@ const array< string > XPROG_MERGED_PLATFORM_PERSISTENCE_FIELDS = [
 	RANKED_PROVISONAL_MATCH_RESULTS + "[7]",
 	RANKED_PROVISONAL_MATCH_RESULTS + "[8]",
 	RANKED_PROVISONAL_MATCH_RESULTS + "[9]",
-      
+
 ]
 
 global const string XPROG_PERSISTENCE_RANKED_STRUCT_NAME = "xProgRanked"
-global const string XPROG_PERSISTENCE_PREFIX_FORMAT_STRING = XPROG_PERSISTENCE_MERGED_PLAT_STRUCT_NAME + "[ %s ]." + XPROG_PERSISTENCE_RANKED_STRUCT_NAME + "." // e.g. xMergedPlat[pc].xProgRanked. --> so that an additional formatting string can be appended
-global const string XPROG_PERSISTENCE_FORMAT_STRING = XPROG_PERSISTENCE_PREFIX_FORMAT_STRING + "%s" // e.g. xMergedPlat[pc].xProgRanked.currentRankedScore
+global const string XPROG_PERSISTENCE_PREFIX_FORMAT_STRING = XPROG_PERSISTENCE_MERGED_PLAT_STRUCT_NAME + "[ %s ]." + XPROG_PERSISTENCE_RANKED_STRUCT_NAME + "." 
+global const string XPROG_PERSISTENCE_FORMAT_STRING = XPROG_PERSISTENCE_PREFIX_FORMAT_STRING + "%s" 
 
-#if CLIENT || UI
+
 global const string RANKED_IGNORE_MAX_TIER_DIFFERENTIAL_PLAYLIST_VAR = "ranked_ignore_party_rank_difference"
 global const string RANKED_PARTY_IGNORE_MAX_TIER_DIFFERENTIAL_PLAYLIST_VAR = "ranked_ignore_full_party_rank_difference"
-#endif
+
 global const string RANKED_DEV_PLAYTEST_PLAYLIST_VAR = "ranked_dev_playtest"
 const string RANKED_PARTY_MAX_TIER_DIFFERENTIAL_PLAYLIST_VAR = "ranked_party_max_tier_differential"
 const int RANKED_PARTY_MAX_TIER_DIFFERENTIAL = 3
@@ -207,7 +195,7 @@ const array<string> RANKED_2PT0_PERSISTENCE_FIELDS = [
 	"rewardSeq",
 ]
 
-global enum emblemDisplayMode // Shared between regualar and arenas ranked
+global enum emblemDisplayMode 
 {
 	DISPLAY_DIVISION,
 	DISPLAY_RP,
@@ -215,49 +203,49 @@ global enum emblemDisplayMode // Shared between regualar and arenas ranked
 	NONE,
 }
 
-#if SERVER
-global enum eRankedSeqId // *must* match Stryder ranked.lua
-{
-	// RANKED 1.0
-	calevent_rankedperiod01 = 1, // no split
-	calevent_rankedperiod02 = 2, // no split
-	calevent_rankedperiod03_split_1 = 3,
-	calevent_rankedperiod03_split_2 = 4,
-	calevent_rankedperiod04_split_1 = 5,
-	calevent_rankedperiod04_split_2 = 6,
-	calevent_rankedseason06_split_1 = 7,
-	calevent_rankedseason06_split_2 = 8,
-	calevent_rankedseason07_split_1 = 9,
-	calevent_rankedseason07_split_2 = 10,
-	calevent_rankedseason08_split_1 = 11,
-	calevent_rankedseason08_split_2 = 12,
-	calevent_rankedseason09_split_1 = 13,
-	calevent_rankedseason09_split_2 = 14,
-	calevent_rankedseason10_split_1 = 15,
-	calevent_rankedseason10_split_2 = 16,
-	calevent_rankedseason11_split_1 = 17,
-	calevent_rankedseason11_split_2 = 18,
-	calevent_rankedseason12_split_1 = 19,
-	calevent_rankedseason12_split_2 = 20,
-	calevent_rankedseason13_split_1 = 21,
-	calevent_rankedseason13_split_2 = 22,
-	calevent_rankedseason14_split_1 = 23,
-	calevent_rankedseason14_split_2 = 24,
-	calevent_rankedseason15_split_1 = 25,
-	calevent_rankedseason15_split_2 = 26,
-	calevent_rankedseason16_split_1 = 27,
-	calevent_rankedseason16_split_2 = 28,
-	// RANKED 2.0
-	// Ranked 2.0 Periods use Bakery Settings Asset ID - SAID01234567890
-	SAID01711148254 = 29, // Ranked Period 17 GUID String - no split
-	SAID01068186165 = 30, // Ranked Period 18 GUID String - no split
-	SAID00254133756 = 31, // Ranked Period 19 GUID String - no split
-	SAID00400418920 = 32, // Ranked Period 20 GUID String - split 1; Ranked 2.0 splits are *distinct* GUIDs
-	SAID01350373342 = 33, // Ranked Period 20 GUID String - split 2
-	SAID00635449927 = 34, // Ranked Period 21 GUID String - split 1
-	SAID00969954275 = 35, // Ranked Period 21 GUID String - split 2
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 global const array<string> DIVISION_ORDERING_BY_LOC_KEY =
 [
@@ -332,7 +320,7 @@ global struct SharedRankedTierData
 	string                    promotionAnnouncement
 	bool                      isLadderOnlyTier = false
 	array<SharedRankedReward> rewards
-	//Note that we don't store array<RankedDivisionData> because that creates a circular array reference, which we can't currently do :(
+	
 }
 
 
@@ -355,32 +343,32 @@ struct RankedResetStruct
 	string currentDivisionName
 }
 
-#if SERVER
-global struct RankedVictimData
-{
-	string playerName
-	float  mmr
-	int    rp
-}
 
-global struct RankedGameSummarySquadData
-{
-	//Ranked Appendix of GameSummarySquadData from _gamemode_survival.nut
-	//int kill          //tracked in _gamemode_survival
-	//int assist         //tracked in _gamemode_survival
-	//int participation = 0
-	//int knockdownAssist //tracked in _gamemode_survival
 
-	//int premadeSize
 
-	// Ranked_GetPlayerHardwareUIDString -> MMR_Rank_GetPostAdjustedMMR
-	table< string, RankedVictimData > killsPlayerByHwUID
-	table< string, RankedVictimData > assistsPlayerByHwUID
-	table< string, RankedVictimData > participationPlayerByHwUID
-	table< string, RankedVictimData > knockdownPlayerByHwUID
-	table< string, RankedVictimData > knockdownAssistPlayerByHwUID
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 struct
 {
@@ -395,107 +383,96 @@ struct
 	table< string, array < SharedRankedTierData > >    historicalRankedTiers
 	table< string, array< SharedRankedDivisionData > > historicalRankedDivisions
 
-	#if SERVER
-	table< int, table< int, RankedGameSummarySquadData > > rankedSquadData
-	#endif
+
+
+
 
 	SharedRankedDivisionData& topRankedDivisionData
 
 	table<string, string > stryderLadderNameToPeriodGUIDStringTable
 
-	#if SERVER
-		table<EHI, int> playerToMaxTeamSizeThisGameTable
-	#endif
 
-	#if SERVER
-		table<entity, bool> playersToCheckLadderPositions
-	#endif
+
+
+
+
+
+
 
 	array<ItemFlavor> allRanked2Pt0Periods
 } file
 
 void function Sh_Ranked_Init()
 {
-	// Note that Sh_Ranked_ItemRegistrationInit and is separate! Needs to be separate from Sh_Ranked_Init() because Items need to be initialized before stats and stats need to be initialized before persistence
+	
 
-	if ( !file.initialized ) //Put things in here that need to be done in server, client and UI, but only once in UI.
+	if ( !file.initialized ) 
 	{
-		//Item registration stuff used to be here, now is in Sh_Ranked_ItemRegistrationInit()
+		
 		Sh_RankedScoring_Init()
-		                  
-		#if SERVER
-		// Sh_Ranked_Bonus_Init() — sv_ranked_bonus.nut not deployed
-		#endif
-        
+
+
+
+
+
 		RegisterSignal( "Ranked_NotifyRankedPeriodScoreChanged" )
 		file.initialized = true
 	}
 
-	#if CLIENT || SERVER
-		Sh_RankedTrials_Init() // UI init is run explicitly from _menus.init since we need it to be AFTER stats
-	#endif
 
-	#if SERVER
-		//These all run even if it's not a ranked game
-		AddCallback_OnClientConnected( Ranked_OnPlayerConnected )
-		AddCallback_OnClientConnectionRestored ( Ranked_OnPlayerReconnected )
-		AddCallback_OnClientDisconnected( Ranked_OnPlayerDisconnected )
-		AddCallback_OnPlayerConnectedForStats( Ranked_HandleRankedResets ) // this ensures PIN is ready
-		AddCallback_UpgradePlayerPersistentData( Ranked_UpgradePlayerPersistence ) // TODO: deprecated; delete
-	#endif
+		Sh_RankedTrials_Init() 
 
-	#if SERVER || CLIENT
+
+
+
+
+
+
+
+
+
+
+
 		Remote_RegisterServerFunction( "ClientCallback_rankedPeriodRewardAcknowledged" )
 
-		Remote_RegisterUIFunction( "ServerToUI_Ranked_NotifyRankedPeriodScoreChanged" ) //Need to register on server and client even though we only call it on the server
+		Remote_RegisterUIFunction( "ServerToUI_Ranked_NotifyRankedPeriodScoreChanged" ) 
 
 		Remote_RegisterClientFunction ( "ServerToClient_Ranked_UpdatePlayerPrevRankedScore" , "entity", "int", -1, INT_MAX )
 		Remote_RegisterClientFunction ( "ServerToClient_Ranked_UpdatePlayerPrevLadderPos" , "entity", "int", -1, INT_MAX )
 
-		// SURVIVAL_RANKED mode variant may not exist
-		if ( !("SURVIVAL_RANKED" in eGameModeVariants) || !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
+		if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
 			return
 
-		#if SERVER
-			AddCallback_GameStatePostEnter( eGameState.PickLoadout, Ranked_FindLadderPositionsForCharSelect )
-		#endif
 
-		                      
-			#if SERVER
-				SetAbandonCheckFunc( Ranked_IsPlayerAbandoning )
-				MatchBehaviorPlayer_AddEndedCallback( Ranked_OnMatchBehaviorEnd )
-			#endif // #if SERVER
-                                  
-	#endif // SERVER || CLIENT
+
+
+
+
+
+
+
+
+
+
 }
 
 
 void function Sh_Ranked_ItemRegistrationInit()
 {
-	Warning("enable ranked later!")
-	Warning("enable ranked later!")
-	Warning("enable ranked later!")
-	Warning("enable ranked later!")
-	Warning("enable ranked later!")
-	Warning("enable ranked later!")
-	Warning("enable ranked later!")
-	Warning("enable ranked later!")
-	Warning("enable ranked later!")
-	return
-	#if SERVER && DEVELOPER
-		AddCallback_GeneratePDef( GenerateRanked_PDef )
-	#endif
+
+
+
 
 	AddCallback_RegisterRootItemFlavors( RegisterRanked2Pt0Periods )
 	AddCallback_OnPreAllItemFlavorsRegistered( RankedTrials_RegisterAllRankedTrials )
 
-	//Needs to be separate from Sh_Ranked_Init() because Items need to be initialized before stats and stats need to be initialized before persistence
-	if ( !file.itemRegistrationInitialized ) // Put things in here that need to be done in server, client and UI, but only once in UI.
+	
+	if ( !file.itemRegistrationInitialized ) 
 	{
-		#if UI
-			//Have to do this here instead of in ShPlayerStatCards_Init(), since that's run before loading into any maps etc and callbacks registered then don't work
-			AddCallback_OnItemFlavorRegistered( eItemType.ranked_2pt0_period, StatsCard_OnRankedPeriodRegistered )
-		#endif
+
+
+
+
 		AddCallback_OnItemFlavorRegistered( eItemType.calevent_rankedperiod, OnRankedPeriodRegistered )
 		AddCallback_OnItemFlavorRegistered( eItemType.ranked_2pt0_period, OnRankedPeriodRegistered )
 		AddCallbackOrMaybeCallNow_OnAllItemFlavorsRegistered( Ranked_AllItemFlavorsRegistered )
@@ -505,9 +482,9 @@ void function Sh_Ranked_ItemRegistrationInit()
 
 void function RegisterRanked2Pt0Periods()
 {
-	#if UI
-		file.allRanked2Pt0Periods.clear() // UIVM is NOT stateless!
-	#endif
+
+
+
 	foreach ( asset rp2pt0 in GetBaseItemFlavorsFromArray( "ranked2Pt0Periods" ) )
 	{
 		if ( rp2pt0 == $"" )
@@ -583,7 +560,7 @@ void function OnRankedPeriodRegistered( ItemFlavor rp )
 		Assert ( TIER_ORDERING_BY_LOC_KEY.contains(tier.name) , "Tier Name : " + tier.name + " is not found in TIER_ORDERING_BY_LOC_KEY." )
 	}
 
-	// Get Playlist overrides for isTopEnd
+	
 	for ( int i = 0; i < tierData.len(); i++ )
 	{
 		tierData[i].isTopEnd = GetPlaylistVarBool( "defaults", "ranked_tier_isTopEnd_" + i, tierData[i].isTopEnd )
@@ -595,15 +572,15 @@ void function OnRankedPeriodRegistered( ItemFlavor rp )
 		SharedRankedDivisionData data = divisionData[i]
 		data.index = i
 
-		Assert ( DIVISION_ORDERING_BY_LOC_KEY.contains(divisionData[i].divisionName) , "Divionsion name: " + divisionData[i].divisionName + " is not found in DIVISION_ORDERING_BY_LOC_KEY.")		//Divisional Entry Cost Playlist Override
+		Assert ( DIVISION_ORDERING_BY_LOC_KEY.contains(divisionData[i].divisionName) , "Divionsion name: " + divisionData[i].divisionName + " is not found in DIVISION_ORDERING_BY_LOC_KEY.")		
 		divisionData[i].divisionEntryCost = GetCurrentPlaylistVarInt ( "ranked_division_entry_cost_" + i , divisionData[i].divisionEntryCost )
 	}
 
 	int ladderOnlyTiers = 0
 
-	foreach ( var tierBlock in IterateSettingsAssetArray( ItemFlavor_GetAsset( rp ), "ladderOnlyTier" ) ) //Note that we don't add ladderOnlyTiers and divisions to the rest of the tier data!
+	foreach ( var tierBlock in IterateSettingsAssetArray( ItemFlavor_GetAsset( rp ), "ladderOnlyTier" ) ) 
 	{
-		Assert( ladderOnlyTiers == 0 ) //Make sure at most 1 ladder only tier
+		Assert( ladderOnlyTiers == 0 ) 
 		++ladderOnlyTiers
 
 		SharedRankedTierData ladderOnlyTier
@@ -629,7 +606,7 @@ void function OnRankedPeriodRegistered( ItemFlavor rp )
 
 		foreach ( var divBlock in IterateSettingsArray( GetSettingsBlockArray( tierBlock, "divisions" ) ) )
 		{
-			Assert( ladderOnlyDivisions == 0 ) //Make sure only 1 ladder only division
+			Assert( ladderOnlyDivisions == 0 ) 
 			++ladderOnlyDivisions
 
 			SharedRankedDivisionData data
@@ -649,7 +626,7 @@ void function OnRankedPeriodRegistered( ItemFlavor rp )
 			file.historicalLadderOnlyDivision[ rpGUIDString  ] <- data
 		}
 
-		Assert( ladderOnlyDivisions == 1 ) ////Make sure only 1 ladder only division
+		Assert( ladderOnlyDivisions == 1 ) 
 
 		foreach ( var rewardBlock in IterateSettingsArray( GetSettingsBlockArray( tierBlock, "rewards" ) ) )
 		{
@@ -699,27 +676,27 @@ array<ItemFlavor> function Ranked_GetAllRankedPeriodsInAscendingChronologicalOrd
 	array<ItemFlavor> ranked2Pt0PeriodList = clone( Ranked_GetAllRanked2Pt0Periods() )
 	rankedPeriodList.extend( ranked2Pt0PeriodList )
 
-	#if SERVER && ASSERTS
-		int previousPeriodFinishTime = 0 //Sanity check to make sure ranked periods are chronologically sorted
-		int prevRankedSeqId = 0
-		foreach ( ItemFlavor rankedPeriod in rankedPeriodList )
-		{
-				if ( ItemFlavor_GetType( rankedPeriod ) == eItemType.calevent_rankedperiod )
-				{
-					int rankedPeriodFinishTime = CalEvent_GetFinishUnixTime( rankedPeriod )
-					Assert( previousPeriodFinishTime < rankedPeriodFinishTime, format( "Ranked GUID %s starts after previous Ranked GUID but should NOT!", ItemFlavor_GetCleanDownloadAssetPath_Slow( rankedPeriod ) ) )
 
-					if ( rankedPeriodFinishTime > GetUnixTimestamp() )
-						continue // ranked season hasn't finished yet
 
-					previousPeriodFinishTime = rankedPeriodFinishTime
-				}
 
-			int periodSeqId = Ranked_GetStryderSequenceIdForHistoricalRankedPeriod( rankedPeriod, false )
-			Assert( prevRankedSeqId < periodSeqId )
-			prevRankedSeqId = periodSeqId
-		}
-	#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	return rankedPeriodList
 }
@@ -857,29 +834,29 @@ bool function Ranked_PlayedGamesInPeriod( entity player, string rankedPeriodGUID
 
 SharedRankedTierData function Ranked_GetHigherOfTwoTiers( SharedRankedTierData firstTier, SharedRankedTierData secondTier )
 {
-	//Split out to its own function mainly because comparing indexes is fragile but there isn't a quick, better way to do this now
+	
 
 	SharedRankedTierData highestTierAchieved = firstTier.index > secondTier.index ? firstTier : secondTier
 	return highestTierAchieved
 }
 
 
-#if SERVER
-int function Ranked_GetStryderSequenceIdForLatestRankedPeriod()
-{
-	string currentLadderName = Ranked_GetStryderLadderNameForLatestRankedPeriod()
-	Assert( currentLadderName in eRankedSeqId )
-	return eRankedSeqId[ currentLadderName ]
-}
 
 
-int function Ranked_GetStryderSequenceIdForHistoricalRankedPeriod( ItemFlavor rankedPeriod, bool isFirstSplit )
-{
-	string ladderName = Ranked_GetStryderLadderNameForHistoricalRankedPeriod( rankedPeriod, isFirstSplit )
-	Assert( ladderName in eRankedSeqId )
-	return eRankedSeqId[ ladderName ]
-}
-#endif // #if SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 string function Ranked_GetStryderLadderNameForLatestRankedPeriod()
@@ -899,7 +876,7 @@ string function Ranked_GetStryderLadderNameForHistoricalRankedPeriod( ItemFlavor
 	if ( ItemFlavor_GetType( rankedPeriod ) == eItemType.ranked_2pt0_period )
 		return ItemFlavor_GetGUIDString( rankedPeriod )
 
-	//We renamed the ranked calendar events for Season 6, so this handles legacy stuff.
+	
 	string baseLadderName
 
 	string periodGUIDString = ItemFlavor_GetGUIDString( rankedPeriod )
@@ -979,7 +956,7 @@ int function SharedRanked_CompareDivision( SharedRankedDivisionData a, SharedRan
 	if ( a == b )
 		return 0
 
-	// lower priority first
+	
 	if ( a.scoreMin != b.scoreMin )
 		return a.scoreMin - b.scoreMin
 
@@ -1009,7 +986,7 @@ SharedRankedDivisionData function GetCurrentRankedDivisionFromScoreAndLadderPosi
 	{
 		SharedRankedDivisionData ladderDivisionData = expect SharedRankedDivisionData ( file.ladderOnlyDivision )
 
-		if ( ladderDivisionData.scoreMin > score ) // Take the score over the ladder position. One might argue that this is a case where you are making a call with invalid parameters and we should thus error, but the postgame ranked menu is one place where we can make such a valid call.
+		if ( ladderDivisionData.scoreMin > score ) 
 			return GetCurrentRankedDivisionFromScore( score )
 		else
 			return (ladderDivisionData)
@@ -1029,7 +1006,7 @@ SharedRankedDivisionData function GetCurrentRankedDivisionFromScore( int score )
 	if ( score <= 0 )
 	{
 		Assert( file.rankedDivisions.len() > 0 )
-		// allow 1 as the starting point because we have some concerns about missed Redis reads returning 0
+		
 		Assert( file.rankedDivisions[ 0 ].scoreMin == 1 || file.rankedDivisions[ 0 ].scoreMin == 0  )
 		return file.rankedDivisions[ 0 ]
 	}
@@ -1055,7 +1032,7 @@ SharedRankedDivisionData function GetCurrentRankedDivisionFromScore( int score )
 SharedRankedDivisionData ornull function GetNextRankedDivisionFromScore( int score )
 {
 	if ( score <= 0 )
-		score = 1 // see note above re: minScore of 1 (but TOTAL rookies have 0RP)
+		score = 1 
 
 	bool foundRank = false
 	SharedRankedDivisionData data
@@ -1087,39 +1064,39 @@ SharedRankedDivisionData ornull function GetNextRankedDivisionFromScore( int sco
 	return data
 }
 
-                  
-	int function Ranked_GetCostForEntry ( SharedRankedDivisionData currentRank, int rankScore = 0 )
+
+	int function Ranked_GetCostForEntry ( SharedRankedDivisionData currentRank )
 	{
 		return GetCurrentPlaylistVarInt ( "Ranked_EnryCost_Override_" + currentRank.index , abs ( currentRank.divisionEntryCost ))
 	}
-     
-                                      
-  
-                                                                                                             
-  
-      
+
+
+
+
+
+
 
 int function Ranked_GetHistoricalRankScore( entity player, string rankedSeasonGUID, bool highScore = false )
 {
-	//Gets current split's highscore, if looking historically for a first split value
-	//use Ranked_GetHistoricalFirstSplitRankScore for that
-#if UI
-	if ( !IsFullyConnected() )
-		return 0
-#endif
+	
+	
 
-#if CLIENT
+
+
+
+
+
 	if ( !IsConnected() )
 		return 0
-#endif
 
-	#if CLIENT
-		Assert ( player == GetLocalClientPlayer() )
-	#endif
 
-	#if UI
+
 		Assert ( player == GetLocalClientPlayer() )
-	#endif
+
+
+
+
+
 
 	int score
 	if ( highScore )
@@ -1141,24 +1118,24 @@ int function Ranked_GetHistoricalFirstSplitRankScore( entity player, string rank
 	if ( !SharedRankedPeriod_HasSplits( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( rankedSeasonGUID ) ) ) )
 		return 0
 
-	//Only used for stats page currently now.
-#if UI
-	if ( !IsFullyConnected() )
-		return 0
-#endif
+	
 
-#if CLIENT
+
+
+
+
+
 	if ( !IsConnected() )
 		return 0
-#endif
 
-	#if CLIENT
-		Assert ( player == GetLocalClientPlayer() )
-	#endif
 
-	#if UI
+
 		Assert ( player == GetLocalClientPlayer() )
-	#endif
+
+
+
+
+
 
 	int score
 	if ( highScore )
@@ -1183,7 +1160,7 @@ SharedRankedDivisionData function Ranked_GetHistoricalRankedDivisionFromScore( i
 	if ( rankScore <= 0 )
 	{
 		Assert( historicalRankedDivisionData.len() > 0 )
-			// allow 1 as the starting point because we have some concerns about missed Redis reads returning 0
+			
 		Assert( historicalRankedDivisionData[ 0 ].scoreMin == 1 || historicalRankedDivisionData[ 0 ].scoreMin == 0  )
 		return historicalRankedDivisionData[ 0 ]
 	}
@@ -1225,7 +1202,7 @@ SharedRankedTierData function Ranked_GetHighestHistoricalRankedTierData( entity 
 		int bestRankScore       				= firstSplitRankScore > endRankScore ? firstSplitRankScore : endRankScore
 		SharedRankedTierData thisTier			= Ranked_GetHistoricalRankedDivisionFromScore (bestRankScore, periodGUID).tier
 
-		if ( i == 0 ) //initialization
+		if ( i == 0 ) 
 		{
 			highestTier = thisTier
 		}
@@ -1245,51 +1222,27 @@ int function Ranked_RankedPartyMaxTierDifferential()
 	return GetCurrentPlaylistVarInt( RANKED_PARTY_MAX_TIER_DIFFERENTIAL_PLAYLIST_VAR, RANKED_PARTY_MAX_TIER_DIFFERENTIAL )
 }
 
-#if CLIENT
+
 bool function Ranked_ShowRankedSummary()
 {
+
+
+
+
 	bool rpGainDisabled = false
-	rpGainDisabled = RankedRumble_IsLatestGameRankedRumble( GetLocalClientPlayer() )
+
+		rpGainDisabled = RankedRumble_IsLatestGameRankedRumble( GetLocalClientPlayer() )
+
 	return !rpGainDisabled && Ranked_GetXProgMergedPersistenceData( GetLocalClientPlayer(), RANKED_SHOW_RANKED_SUMMARY_PERSISTENCE_VAR_NAME ) != 0
 }
 
-void function ServerToClient_Ranked_UpdatePlayerPrevRankedScore( entity player, int score )
-{
-	if ( IsLobby() )
-		return
-
-	if ( score == SHARED_RANKED_INVALID_RANK_SCORE )
-		return
-
-	if ( !IsValid( player ) )
-		return
-
-	EHI playerEHI = ToEHI( player )
-	Ranked_UpdateEHIRankScorePrevSeason( playerEHI, score )
-}
-
-void function ServerToClient_Ranked_UpdatePlayerPrevLadderPos( entity player, int pos )
-{
-	if ( IsLobby() )
-		return
-
-	if ( pos == SHARED_RANKED_INVALID_LADDER_POSITION )
-		return
-
-	if ( !IsValid( player ) )
-		return
-
-	EHI playerEHI = ToEHI( player )
-	Ranked_UpdateEHIRankedLadderPositionPrevSeason( playerEHI, pos )
-}
-#endif
 
 SharedRankedDivisionData function Ranked_GetHistoricalRankedDivisionFromScoreAndLadderPosition( int rankScore, int ladderPosition, string rankedSeasonGUID )
 {
 	if ( Ranked_PeriodHasLadderOnlyDivision( rankedSeasonGUID ) )
 	{
 		int historicalNumPlayersOnLadder = Ranked_GetHistoricalNumPlayersOnLadder( rankedSeasonGUID )
-		if ( ladderPosition != SHARED_RANKED_INVALID_LADDER_POSITION && ladderPosition > 0 && ladderPosition <= historicalNumPlayersOnLadder ) //Need to explicitly check for 0 since 0 is default in persistence :(
+		if ( ladderPosition != SHARED_RANKED_INVALID_LADDER_POSITION && ladderPosition > 0 && ladderPosition <= historicalNumPlayersOnLadder ) 
 			return Ranked_GetHistoricalLadderOnlyDivision( rankedSeasonGUID )
 	}
 
@@ -1319,17 +1272,17 @@ int function Ranked_GetHistoricalLadderPosition( entity player, string rankedSea
 
 bool function Ranked_PlayerDeservesRewardsInPeriod(entity player, string rankedPeriodGUID )
 {
-	// we invalidate the rewardSeq var at season start and only set it to 0 when a player graduates from Provisionals
+	
 	return Ranked_GetHistoricalRankedPersistenceData( player, "rewardSeq", rankedPeriodGUID ) != GRX_INVALID_SEQUENCE_NUMBER
 }
 
 
 var function Ranked_GetHistoricalRankedPersistenceData( entity player, string persistenceField, string rankedSeasonGUID )
 {
-	#if DEVELOPER
+#if DEV
 		if ( DEV_ShouldIgnorePersistence() )
 			return null
-	#endif
+#endif
 
 	Assert( rankedSeasonGUID in file.historicalRankedTiers )
 	if ( ItemFlavor_GetType( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( rankedSeasonGUID ) ) ) == eItemType.ranked_2pt0_period )
@@ -1337,19 +1290,19 @@ var function Ranked_GetHistoricalRankedPersistenceData( entity player, string pe
 		Assert( RANKED_2PT0_PERSISTENCE_FIELDS.contains( persistenceField ) )
 		if ( !(RANKED_2PT0_PERSISTENCE_FIELDS.contains( persistenceField )) )
 			return null
-		#if UI
-			return GetPersistentVar( "rankedPeriodData[" + rankedSeasonGUID + "]." + persistenceField )
-		#else
+
+
+
 			return player.GetPersistentVar( "rankedPeriodData[" + rankedSeasonGUID + "]." + persistenceField )
-		#endif
+
 	}
 	else
 	{
-		#if UI
-			return GetPersistentVar( "allRankedData[" + rankedSeasonGUID + "]." + persistenceField )
-		#else
+
+
+
 			return player.GetPersistentVar( "allRankedData[" + rankedSeasonGUID + "]." + persistenceField )
-		#endif
+
 	}
 
 	unreachable
@@ -1358,94 +1311,94 @@ var function Ranked_GetHistoricalRankedPersistenceData( entity player, string pe
 
 int function GetPrevSeasonPeakPlayerRankScore( entity player )
 {
-#if UI
-	if ( !IsFullyConnected() )
-		return 0
-#endif
 
-#if CLIENT
+
+
+
+
+
 	if ( !IsConnected() )
 		return 0
-#endif
 
-	#if SERVER
-		int score = -1
-		ItemFlavor ornull latestRankedPeriod = Ranked_GetCurrentActiveRankedPeriod()
 
-		if ( latestRankedPeriod == null )
-			return 0
 
-		expect ItemFlavor ( latestRankedPeriod )
 
-		ItemFlavor ornull previousRankedPeriod = GetPrecedingRankedPeriod( latestRankedPeriod )
 
-		if ( previousRankedPeriod == null )
-			return 0
 
-		expect ItemFlavor ( previousRankedPeriod )
 
-		if ( SharedRankedPeriod_HasSplits( previousRankedPeriod ) )
-		{
-			score = Ranked_GetHistoricalRankScoreAcrossSplitsForPlayer ( player, previousRankedPeriod )
-		}
-		else
-		{
-			string previousRankedPeriodRef = ItemFlavor_GetGUIDString( previousRankedPeriod )
-			score = Ranked_GetHistoricalRankScore ( player, previousRankedPeriodRef, true )
-		}
 
-		if ( score == -1 )
-			return 0
 
-		return score
-	#endif
 
-	#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 		Assert( !IsLobby() )
 		EHI playerEHI = ToEHI( player )
 		return GetEHIScriptStruct( playerEHI ).rankScorePrevSeason
-	#endif
 
-	#if UI
-		if ( !IsLobby() )
-		{
-			EHI playerEHI = ToEHI( player )
-			return GetEHIScriptStruct( playerEHI ).rankScorePrevSeason
-		}
-		else
-		{
-			Assert( player == GetLocalClientPlayer() )
-			int score = -1
-			ItemFlavor ornull latestRankedPeriod = Ranked_GetCurrentActiveRankedPeriod()
 
-			if ( latestRankedPeriod == null )
-				return 0
 
-			expect ItemFlavor ( latestRankedPeriod )
 
-			ItemFlavor ornull previousRankedPeriod = GetPrecedingRankedPeriod( latestRankedPeriod )
 
-			if ( previousRankedPeriod == null )
-				return 0
 
-			expect ItemFlavor ( previousRankedPeriod )
 
-			if ( SharedRankedPeriod_HasSplits( previousRankedPeriod ) )
-			{
-				score = Ranked_GetHistoricalRankScoreAcrossSplitsForPlayer ( player, previousRankedPeriod )
-			}
-			else
-			{
-				string previousRankedPeriodRef = ItemFlavor_GetGUIDString( previousRankedPeriod )
-				score = Ranked_GetHistoricalRankScore ( player, previousRankedPeriodRef, true )
-			}
 
-			if ( score == -1 )
-				return 0
 
-			return score
-		}
-	#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	unreachable
 }
@@ -1453,126 +1406,128 @@ int function GetPrevSeasonPeakPlayerRankScore( entity player )
 
 int function GetPlayerRankScore( entity player )
 {
-#if UI
-	if ( !IsFullyConnected() )
-		return 0
-#endif
 
-#if CLIENT
+
+
+
+
+
 	if ( !IsConnected() )
 		return 0
-#endif
 
-	#if SERVER
-		// GetPlayerRankScoreFromClientData not available — use persistence data directly
-		int score = GetRankedPersistenceData( player, RANKED_CURRENT_SCORE_PERSISTENCE_VAR_NAME )
-		return score
-	#endif
 
-	#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 		Assert( !IsLobby() )
 		EHI playerEHI = ToEHI( player )
 		return GetEHIScriptStruct( playerEHI ).rankScore
-	#endif
 
-	#if UI
-		if ( !IsLobby() )
-		{
-			EHI playerEHI = ToEHI( player )
-			return GetEHIScriptStruct( playerEHI ).rankScore
-		}
-		else
-		{
-			Assert( player == GetLocalClientPlayer() )
 
-			int score
-			if ( GetCurrentPlaylistVarBool( "use_user_stats_for_rp", true ) )
-			{
-				CommunityUserInfo ornull cui = GetUserInfo( GetPlayerHardware(), GetPlayerUID() )
 
-				if ( cui == null )
-				{
-					score = GetRankedPersistenceData( player, RANKED_CURRENT_SCORE_PERSISTENCE_VAR_NAME )
-				}
-				else
-				{
-				expect CommunityUserInfo( cui )
-				score = cui.rankScore
-			}
-			}
-			else
-			{
-				score = GetRankedPersistenceData( player, RANKED_CURRENT_SCORE_PERSISTENCE_VAR_NAME )
-			}
 
-			return score
-		}
-	#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	unreachable
 }
 
-#if SERVER
-// Stubs for functions not available
-// Moved to workarounds.gnut for load order
-//bool function Ranked_HasFinishedProvisionalMatches( entity player )
-//{
-//	return true
-//}
 
-void function KickMatchmakingCheater( entity player )
-{
-	// No-op stub - just print warning instead of kicking
-	printt( "KickMatchmakingCheater stub called for", player )
-}
 
-int function Ranked_CalculateBadgeAwardLevelStat( entity player, int rankScore, ItemFlavor rankedPeriod, bool isEndingASplit )
-{
-	// Stub: Return tier index based on score (simplified badge award calculation)
-	SharedRankedDivisionData division = GetCurrentRankedDivisionFromScore( rankScore )
-	return division.tier.index
-}
 
-void function Ranked_GiveRankedSeasonRewards( entity player )
-{
-	// stub
-}
 
-void function ConfirmPlayerRankedPeriod( entity player, string stryderLadderName, bool isHistorical, int splitStatus )
-{
-	// stub
-}
 
-void function SetPlayerRankScore( entity player, int score, int startingScore )
-{
-	if ( !IsRankedInSeason() )
-		return
-                     
-	if ( RankedRumble_IsLatestGameRankedRumble( player ) )
-		return
-      
-	SetRankedPersistenceData( player, RANKED_CURRENT_SCORE_PERSISTENCE_VAR_NAME, score )
-	StatsHook_RecordRankScoreStats( player, score )
 
-	if ( startingScore != SHARED_RANKED_INVALID_RANK_SCORE )
-	{
-		SharedRankedDivisionData oldRank = GetCurrentRankedDivisionFromScore( startingScore ) // Deliberately only doing score, so will give us Master instead of Apex.
-		SharedRankedDivisionData newRank = GetCurrentRankedDivisionFromScore( score ) // Deliberately only doing score, so will give us Master instead of Apex.
 
-		if ( oldRank.index != newRank.index )
-			PIN_PlayerRankedPlayDivisionChange( player, oldRank.divisionName, newRank.divisionName, eItemType.calevent_rankedperiod )
-	}
-	else if ( !player.IsBot() )
-	{
-		Assert( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
-		SetRankedGameData( player, "lastGameStartingScore", score )
-	}
-}
-#endif
 
-#if SERVER || CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 bool function Ranked_IsPlayerAbandoning( entity player )
-//Needs to run on both server and client!
+
 {
 	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
 		return false
@@ -1583,9 +1538,9 @@ bool function Ranked_IsPlayerAbandoning( entity player )
 	if ( bool( GetRankedGameData( player, "lastGameRankedForgiveness" ) ) )
 		return false
 
-	//TODO(chin): Expand out rankedDidPlayerEverHaveAFullTeam net var functionality to be set on server as and when
-	//actions happen to make it safe for a player to abandon or not, instead of checking the state of the world at
-	//the current time. All this script below then just becomes a check on the net var
+	
+	
+	
 
 	if ( Ranked_IsMatchOverForPlayer( player ) )
 		return false
@@ -1593,25 +1548,25 @@ bool function Ranked_IsPlayerAbandoning( entity player )
 	if ( Ranked_IsDeadAndCanExitWithoutPenalty( player ) )
 		return false
 
-	if ( GetGameState() >= eGameState.Prematch && !SharedRanked_DidPlayerEverHaveAFullTeam( player ) ) //Once we get into skydiving; allow people to leave if they haven't had a full squad ever connected
+	if ( GetGameState() >= eGameState.Prematch && !SharedRanked_DidPlayerEverHaveAFullTeam( player ) ) 
 		return false
 
 	return true
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+
 bool function SharedRanked_DidPlayerEverHaveAFullTeam( entity player )
-//Has to run on both server and client for menu warning, so use a net var. Functioned off to make it easier to rewrite Ranked_IsPlayerAbandoning in the future
+
 {
 	return player.GetPlayerNetBool( "rankedDidPlayerEverHaveAFullTeam" )
 }
-#endif
 
 
-#if SERVER || CLIENT
-// TODO: do we actually ever use the switch?
+
+
+
 int function SharedRanked_GetAbandonPenaltyLength( entity player )
 {
 	if( !IsValid( player ) )
@@ -1628,82 +1583,82 @@ int function SharedRanked_GetAbandonPenaltyLength( entity player )
 		switch( numGamesAbandoned )
 		{
 			case 1:
-				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_1", 60 * 5 ) //5 minutes
+				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_1", 60 * 5 ) 
 				break
 
 			case 2:
-				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_2", 60 * 10 ) //10 minutes
+				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_2", 60 * 10 ) 
 				break
 
 			case 3:
-				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_3", 60 * 20 )  //20 minutes
+				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_3", 60 * 20 )  
 				break
 
 			case 4:
-				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_4", 60 * 45 ) //45 minutes
+				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_4", 60 * 45 ) 
 				break
 
 			case 5:
-				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_5", 60 * 90 ) //90 minutes
+				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_5", 60 * 90 ) 
 				break
 
 			case 6:
-				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_6", 60 * 180 ) //180 minutes, i.e. 3 hours
+				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_6", 60 * 180 ) 
 				break
 
 			case 7:
-				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_7", 60 * 360 ) //360 minutes, i.e. 6 hours
+				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_7", 60 * 360 ) 
 				break
 
 			case 8:
-				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_8", 60 * 720 ) //720 minutes, i.e. 12 hours
+				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_8", 60 * 720 ) 
 				break
 
 			case 9:
-				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_9", 60 * 1440 ) //1 day
+				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_9", 60 * 1440 ) 
 				break
 
 			case 10:
-				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_10", 60 * 1440 * 3 ) //3 days
+				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_10", 60 * 1440 * 3 ) 
 				break
 
 			case 11:
-				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_11", 60 * 1440 * 5 )  //5 days
+				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_11", 60 * 1440 * 5 )  
 				break
 
 			case 12:
 			default:
-				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_12", 60 * 1440 * 7 ) //7 days, i.e. a week
+				banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_12", 60 * 1440 * 7 ) 
 				break
 		}
 	}
 	else
 	{
-		banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_1", 60 * 10 ) //10 minutes
+		banLengthInSeconds = GetCurrentPlaylistVarInt( "ranked_abandon_penalty_1", 60 * 10 ) 
 	}
 
 	return banLengthInSeconds
 }
-#endif
-
-#if SERVER && DEVELOPER
-void function Ranked_ResetNumPenalizedAbandons_Dev( entity player )
-{
-	if ( IsValid( player ) )
-		player.SetPersistentVar( "numPenalizedAbandons", 0 )
-}
-#endif
 
 
-#if SERVER || CLIENT
+
+
+
+
+
+
+
+
+
+
 bool function Ranked_IsMatchOverForPlayer( entity player )
-//Slightly different from player.p.hasMatchParticipationEnded, mainly used for abandon checks. Has to run on the client as well.
+
 {
 	if ( GetGameState() >= eGameState.WinnerDetermined )
 		return true
 
-	//Note that if you disconnect when you are the last person on your team alive this check means you are not abandoning. If you quit via menus while you are the last person your team alive this check means you *ARE* abandoning.
-	if ( GetGameState() >= eGameState.Playing && GetPlayerArrayOfTeam_Alive( player.GetTeam() ).len() == 0 ) //We no longer spawn players on connect automatically, so cannot just check to see that we have no players alive on team.
+	
+	if ( GetGameState() >= eGameState.Playing && GetPlayerArrayOfTeam_Alive( player.GetTeam() ).len() == 0 ) 
 		return true
 
 	if ( PlayerMatchState_GetFor( player ) >= ePlayerMatchState.NORMAL )
@@ -1711,18 +1666,21 @@ bool function Ranked_IsMatchOverForPlayer( entity player )
 		switch ( player.GetPlayerNetInt( "respawnStatus" ) )
 		{
 			case eRespawnStatus.PICKUP_DESTROYED:
-			// Perk_CanTeammateCraftPlayerBanner not available — fall through
-			case eRespawnStatus.SQUAD_ELIMINATED: //i.e. can't be respawned anymore
+
+				if ( Perk_CanTeammateCraftPlayerBanner( player ) )
+					return false
+
+			case eRespawnStatus.SQUAD_ELIMINATED: 
 				return true
 		}
 	}
 
 	return false
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+
 bool function Ranked_IsDeadAndCanExitWithoutPenalty( entity player )
 {
 	if ( IsAlive( player ) )
@@ -1731,25 +1689,25 @@ bool function Ranked_IsDeadAndCanExitWithoutPenalty( entity player )
 	if ( PlayerMatchState_GetFor( player ) < ePlayerMatchState.NORMAL )
 		return false
 
-	// We allow the dead player to exit the game without penalty only after a leaver
-	// timer has started and finished.  The leaver penalty timer starts as soon as
-	// one of the following conditions has been met:
-	//
-	// 1. The player's banner is picked up or crafted before it expires
-	// 2. The banner expires without being collected or crafted
+	
+	
+	
+	
+	
+	
 
 	int respawnStatus = player.GetPlayerNetInt( "respawnStatus" )
 	float abandonPenaltyWaitPeriod = GetCurrentPlaylistVarFloat( "ranked_respawn_banner_pickedup_timeout", RANKED_LEAVER_PENALTY_TIME_LIMIT_SEC )
-	float timeOfDeath = Time() // GetDeathTime() not available
+	float timeOfDeath = player.GetDeathTime()
 
-	bool bannerCanBeCrafted = false // Perk_CanTeammateCraftPlayerBanner not available
-      
-                                
-       
+	bool bannerCanBeCrafted = Perk_CanTeammateCraftPlayerBanner( player )
+
+
+
 	float exitWithoutAbandonTime = 0.0
 
-	// If the banner expired and hasn't been picked up or crafted,
-	// we just need to check if we've waited long enough
+	
+	
 	if ( respawnStatus == eRespawnStatus.PICKUP_DESTROYED )
 	{
 		if ( !bannerCanBeCrafted )
@@ -1759,8 +1717,8 @@ bool function Ranked_IsDeadAndCanExitWithoutPenalty( entity player )
 		return Time() > exitWithoutAbandonTime
 	}
 
-	// If the player's banner is in some teammate's hands, it may have
-	// been pulled from the death box, or it may have been crafted after expiring
+	
+	
 	if ( respawnStatus == eRespawnStatus.WAITING_FOR_DELIVERY )
 	{
 		float timeBannerRecovered = player.GetPlayerNetTime( "respawnBannerPickedUpTime" )
@@ -1776,8 +1734,8 @@ bool function Ranked_IsDeadAndCanExitWithoutPenalty( entity player )
 		return Time() > exitWithoutAbandonTime
 	}
 
-	// If we are in some other respawn state (e.g WAITING_FOR_PICKUP or WAITING_FOR_DROPPOD), the timer hasn't
-	// started or we're in the process of being respawned
+	
+	
 	return false
 }
 
@@ -1797,59 +1755,59 @@ bool function Ranked_HasPlayerWaitedTooLongAfterBannerWasPickedUp( entity player
 
 	return (timeSinceBeaconPickedUp > GetCurrentPlaylistVarFloat( "ranked_respawn_banner_pickedup_timeout", 150.0 ))
 }
-#endif
 
 
-#if SERVER
-void function Sh_Rank_GameSummary_MatchStart(entity player)
-{
-
-	RankedGameSummarySquadData data
-	int teamIndex       = player.GetTeam()
-	int teamMemberIndex = player.GetTeamMemberIndex()
-	if ( !(teamIndex in file.rankedSquadData) )
-		file.rankedSquadData[ teamIndex ] <- {}
-
-	if ( !(teamMemberIndex in file.rankedSquadData[ teamIndex ]) )
-		file.rankedSquadData[ teamIndex ][ teamMemberIndex ] <- data
-	else
-		file.rankedSquadData[ teamIndex ][ teamMemberIndex ] = data
-
-	// MMR_Rank_MatchMMRCalculate ()  //todo make sure this works aarli
-}
-#endif // #if SERVER
 
 
-#if SERVER
-RankedGameSummarySquadData function RankedGameSummary_GetPlayerData( entity player )
-{
-	int team  = player.GetTeam()
-	int index = player.GetTeamMemberIndex()
-	return file.rankedSquadData[ team ][ index ]
-}
 
-                  
-table< int, RankedGameSummarySquadData > ornull function RankedGameSummary_GetTeamDataOrNull( int team )
-{
-	if ( team in file.rankedSquadData )
-		return file.rankedSquadData[ team ]
-	return null
-}
-      
-#endif
 
-#if SERVER
-string function Ranked_GetPlayerHardwareUIDString( entity player )
-{
-	Assert( IsValid( player ) )
 
-	if ( player.IsBot() )
-		return player.GetPlayerName()
 
-	Assert( player.IsPlayer() )
-	return "hw_" + player.GetPlayerName() // GetUnspoofedHardware/GetUserID not available
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 int function Ranked_GetXProgMergedPersistenceData( entity player, string persistenceField )
 {
@@ -1857,33 +1815,33 @@ int function Ranked_GetXProgMergedPersistenceData( entity player, string persist
 	string platformId = GetMergedPlatformIdForPlayer( player )
 	string persistenceKey = format( XPROG_PERSISTENCE_FORMAT_STRING, platformId, persistenceField )
 
-	#if UI
-	Assert( player == GetLocalClientPlayer() )
-	return UISafeGetPersistentVarAsInt( persistenceKey )
-	#else
+
+
+
+
 	return SafeGetPersistentVarAsInt( player, persistenceKey )
-	#endif
+
 }
 
-#if SERVER
-void function Ranked_SetXProgMergedPersistenceData( entity player, string persistenceField, int valToSet )
-{
-	Assert( XPROG_MERGED_PLATFORM_PERSISTENCE_FIELDS.contains( persistenceField ) )
-	string platformId = GetMergedPlatformIdForPlayer( player )
-	string persistenceKey = format( XPROG_PERSISTENCE_FORMAT_STRING, platformId, persistenceField )
 
-	SafeSetPersistentVar( player, persistenceKey, valToSet )
-}
-#endif
+
+
+
+
+
+
+
+
+
 
 int function GetRankedPersistenceData( entity player, string persistenceField )
 {
-	#if DEVELOPER
+#if DEV
 		if ( DEV_ShouldIgnorePersistence() )
 			return 0
-	#endif
+#endif
 
-	// this only cares if it's passed an Arenas Ranked type. Otherwise just returns ref of Ranked 1.0 OR 2.0
+	
 	string ornull currentSeasonRefOrNull = GetCurrentStatRankedPeriodRefOrNullByType( eItemType.calevent_rankedperiod )
 	if ( currentSeasonRefOrNull != null )
 	{
@@ -1900,20 +1858,20 @@ int function GetRankedPersistenceData( entity player, string persistenceField )
 			}
 			else
 			{
-				#if UI
-				return GetPersistentVarAsInt( "rankedPeriodData[" + currentSeasonRefOrNull + "]." + persistenceField )
-				#else
+
+
+
 				return player.GetPersistentVarAsInt( "rankedPeriodData[" + currentSeasonRefOrNull + "]." + persistenceField )
-				#endif
+
 			}
 		}
 		else
 		{
-			#if UI
-			return GetPersistentVarAsInt( "allRankedData[" + currentSeasonRefOrNull + "]." + persistenceField )
-			#else
+
+
+
 			return player.GetPersistentVarAsInt( "allRankedData[" + currentSeasonRefOrNull + "]." + persistenceField )
-			#endif
+
 		}
 	}
 
@@ -1922,16 +1880,16 @@ int function GetRankedPersistenceData( entity player, string persistenceField )
 
 int function GetRankedGameData( entity player, string persistenceField )
 {
-	#if DEVELOPER
+#if DEV
 		if ( DEV_ShouldIgnorePersistence() )
 			return 0
-	#endif
+#endif
 
-	#if UI
-		return GetPersistentVarAsInt( "rankedGameData." + persistenceField )
-	#else
+
+
+
 		return player.GetPersistentVarAsInt( "rankedGameData." + persistenceField )
-	#endif
+
 }
 
 
@@ -1953,7 +1911,7 @@ bool function IsRankedInSeason()
 
 int function Ranked_GetRankedLevelRequirement()
 {
-	// note; ranked_level_requirement needs to be minus 1 in the playlist value
+	
 	return GetPlaylistVarInt ( "defaults" , "ranked_level_requirement_0_base" , SHARED_RANKED_LEVEL_REQUIREMENT )
 }
 
@@ -1996,535 +1954,524 @@ array< SharedRankedDivisionData > function Ranked_GetRankedDivisionDataForTier( 
 
 
 
-#if SERVER
-void function Ranked_FindLadderPositionsForCharSelect()
-//Doing this in character select as a batch for most players, instead of doing individual lookups whenever players connect. We still do that for late stragglers to catch edge cases
-{
-	Assert( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
-	foreach ( entity player in GetPlayerArray() )
-	{
-		if ( Ranked_ShouldCheckLadderPositionForPlayer( player ) && !(player in file.playersToCheckLadderPositions) )
-			file.playersToCheckLadderPositions[ player ] <- true
-	}
-
-	if ( file.playersToCheckLadderPositions.len() > 0 )
-	{
-		string periodName = Ranked_GetStryderLadderNameForLatestRankedPeriod()
-		//printt( "Ranked_FindLadderPositionsForCharSelect, periodName is: " + periodName )
-		array<entity> playersToLookUp
-		foreach ( player, value in file.playersToCheckLadderPositions )
-		{
-			if ( value )
-				playersToLookUp.append( player )
-		}
-
-		LookupRankedPosForPlayers( periodName, playersToLookUp )
-	}
-}
-
-
-void function CodeCallback_BotMimicPlayerRanked( entity player, entity bot )
-{
-	if ( !IsValid( player ) )
-		return
-
-	if ( !IsValid( bot ) )
-		return
-
-	int rankedScore = GetRankedPersistenceData( player, RANKED_CURRENT_SCORE_PERSISTENCE_VAR_NAME )
-	SetRankedPersistenceData( bot, RANKED_CURRENT_SCORE_PERSISTENCE_VAR_NAME, rankedScore )
-}
-
-
-void function UpdateHighScore( entity player, int score, string seasonRef )
-{
-	int highest
-	ItemFlavor rankedPeriod = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( seasonRef ) )
-
-	if ( ItemFlavor_GetType( rankedPeriod ) == eItemType.ranked_2pt0_period )
-	{
-		highest = player.GetPersistentVarAsInt( "rankedPeriodData[" + seasonRef + "]." + "highestRankedScore" )
-		if ( score > highest )
-			player.SetPersistentVar( "rankedPeriodData[" + seasonRef + "]." + "highestRankedScore", score )
-
-		return
-	}
-
-	bool hasSplit = ( !SharedRankedPeriod_HasSplits( rankedPeriod ) || ItemFlavor_GetType( rankedPeriod ) == eItemType.ranked_2pt0_period ||
-						!SharedRankedPeriod_IsFirstSplitActive( rankedPeriod ) )
-
-	if ( hasSplit )
-		highest = player.GetPersistentVarAsInt( "allRankedData[" + seasonRef + "]." + "highestRankedScore" )
-	else
-		highest = player.GetPersistentVarAsInt( "allRankedData[" + seasonRef + "]." + "firstSplitHighScore" )
-
-	if ( score > highest )
-	{
-		if ( hasSplit )
-			player.SetPersistentVar( "allRankedData[" + seasonRef + "]." + "highestRankedScore", score )
-		else
-			player.SetPersistentVar( "allRankedData[" + seasonRef + "]." + "firstSplitHighScore", score )
-	}
-
-	// don't worry about offseason high score; it's not really used for anything.
-}
-
-
-void function SetRankedPersistenceData( entity player, string persistenceField, int data )
-{
-	string ornull currentSeasonRefOrNull = GetCurrentStatRankedPeriodRefOrNullByType( eItemType.calevent_rankedperiod )
-
-	if ( currentSeasonRefOrNull != null )
-	{
-		expect string( currentSeasonRefOrNull )
-		if ( ItemFlavor_GetType( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( currentSeasonRefOrNull ) ) ) == eItemType.ranked_2pt0_period )
-		{
-			Assert( RANKED_2PT0_PERSISTENCE_FIELDS.contains( persistenceField ) )
-			if ( !(RANKED_2PT0_PERSISTENCE_FIELDS.contains( persistenceField )) )
-				return
-
-			if ( XPROG_MERGED_PLATFORM_PERSISTENCE_FIELDS.contains( persistenceField ) )
-			{
-				Ranked_SetXProgMergedPersistenceData( player, persistenceField, data )
-				return
-			}
-			else
-			{
-				player.SetPersistentVar( "rankedPeriodData[" + currentSeasonRefOrNull + "]." + persistenceField, data )
-			}
-		}
-		else
-		{
-			player.SetPersistentVar( "allRankedData[" + currentSeasonRefOrNull + "]." + persistenceField, data )
-		}
-
-		// make sure to always update high score when setting current score
-		// N.B.: highestRankedScore == 2nd-split (*not overall*) high score for seasons with splits
-		if ( persistenceField == RANKED_CURRENT_SCORE_PERSISTENCE_VAR_NAME )
-			UpdateHighScore( player, data, currentSeasonRefOrNull )
-	}
-}
-
-void function SetRankedGameData( entity player, string persistenceField, int data )
-{
-	player.SetPersistentVar( "rankedGameData." + persistenceField, data )
-}
-
-
-void function Ranked_SetHistoricalRankedPersistenceData( entity player, string persistenceField, var data, string rankedPeriodRef )
-{
-	// allRankedData persistence uses integer indices, not GUID strings
-	// ranked_2pt0_period flavors aren't registered either - skip all historical ranked persistence writes
-	return
-}
-
-
-                      
-void function Ranked_OnMatchBehaviorEnd( entity player, bool wasUnexpectedDisconnect )
-{
-
-	#if DEVELOPER
-		DEV_script_ranked_debug ( "Ranked_OnMatchBehaviorEnd for player: " + player.GetPlayerName() + " and wasUnexpectedDisconnect: " + wasUnexpectedDisconnect )
-	#endif
-
-	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
-		return
-
-	if ( !MatchBehavior_Enabled() )
-		return
-
-	bool bIsNetworkAlertInUse = GetCurrentPlaylistVarBool( "networkalert_nostats", true )
-	if( bIsNetworkAlertInUse && IsServerNetworkAlertTriggered() )
-	{
-		SetRankedGameData( player, "lastGameRankedForgiveness", 1 ) // server was ddosed, do not apply abandon penalty
-	}
-	else if ( !MatchBehaviorPlayer_DidAbandonThisMatch( player ) )
-	{
-		if ( wasUnexpectedDisconnect ) // Player who left didn't abandon, but it was an unexpected disconnect, so give his teammates loss forgiveness, if they are still playing
-		{
-			foreach ( entity teamPlayer in GetPlayerArrayOfTeam( player.GetTeam() ) )
-			{
-				if ( teamPlayer == player )
-					continue
-
-				if ( !Ranked_IsMatchOverForPlayer( teamPlayer ) ) //Give loss forgiveness as long as match participation hasn't fully ended for the players
-					SetRankedGameData( teamPlayer, "lastGameRankedForgiveness", 1 )
-			}
-		}
-		else //Player quit out on purpose through the menus; only give lossForgivessness if the team was never full
-		{
-			if ( !SharedRanked_DidPlayerEverHaveAFullTeam( player ) )
-				SetRankedGameData( player, "lastGameRankedForgiveness", 1 )
-		}
-	}
-	else
-	{
-		//In here: Player is marked as abandon. We may or may not forgive the player for this, but we are definitely incrementing the number of games consisdered to have been abandoned.
-		int timeBetweenAbandonResetsAllowed = GetCurrentPlaylistVarInt( "ranked_time_between_abandon_resets_allowed", SECONDS_PER_DAY )
-
-		int usedAbandonedForgivenessGames = expect int ( player.GetPersistentVar( "numUsedForgivenessAbandons" ) )
-
-		if ( GetCurrentPlaylistVarBool( "ranked_track_unexpected_disconnects", true ) )
-		{
-			if ( usedAbandonedForgivenessGames < GetCurrentPlaylistVarInt( "ranked_num_abandon_forgiveness_games", SHARED_RANKED_NUM_ABANDON_FORGIVENESS_GAMES ) && wasUnexpectedDisconnect )
-			{
-				player.SetPersistentVar( "totalRankedGamesAbandoned", expect int ( player.GetPersistentVar( "totalRankedGamesAbandoned" ) ) + 1 )
-				int lastTimeRankedAbandoned = expect int( player.GetPersistentVar( "lastTimeGameWasRankedAbandoned" ) )
-
-				if ( lastTimeRankedAbandoned > 0 && GetCurrentTimeForPersistence() < lastTimeRankedAbandoned + timeBetweenAbandonResetsAllowed )
-				{
-					player.SetPersistentVar( "numUsedForgivenessAbandons", expect int ( player.GetPersistentVar( "numUsedForgivenessAbandons" ) ) + 1 )
-				}
-
-				player.SetPersistentVar( "lastTimeGameWasRankedAbandoned", GetCurrentTimeForPersistence() )
-				SetRankedGameData( player, "lastGameAbandonForgiveness", 1 )
-			}
-			else
-			{
-				player.SetPersistentVar( "totalRankedGamesAbandoned", expect int ( player.GetPersistentVar( "totalRankedGamesAbandoned" ) ) + 1 )
-				player.SetPersistentVar( "lastTimeGameWasRankedAbandoned", GetCurrentTimeForPersistence() )
-				SetRankedGameData( player, "lastGameRankedAbandon", 1 )
-				SharedRanked_SetMatchmakingDelayDuration( player )
-				player.SetPersistentVar( "numPenalizedAbandons", expect int ( player.GetPersistentVar( "numPenalizedAbandons" ) ) + 1 )
-			}
-		}
-		else
-		{
-			if ( wasUnexpectedDisconnect )
-			{
-				player.SetPersistentVar( "totalRankedGamesAbandoned", expect int ( player.GetPersistentVar( "totalRankedGamesAbandoned" ) ) + 1 )
-				player.SetPersistentVar( "lastTimeGameWasRankedAbandoned", GetCurrentTimeForPersistence() )
-				SetRankedGameData( player, "lastGameAbandonForgiveness", 1 )
-			}
-			else
-			{
-				player.SetPersistentVar( "totalRankedGamesAbandoned", expect int ( player.GetPersistentVar( "totalRankedGamesAbandoned" ) ) + 1 )
-				player.SetPersistentVar( "lastTimeGameWasRankedAbandoned", GetCurrentTimeForPersistence() )
-				SetRankedGameData( player, "lastGameRankedAbandon", 1 )
-				SharedRanked_SetMatchmakingDelayDuration( player )
-				player.SetPersistentVar( "numPenalizedAbandons", expect int ( player.GetPersistentVar( "numPenalizedAbandons" ) ) + 1 )
-			}
-		}
-
-		//Player has abandoned, give teammates that are not also party mates loss forgiveness.
-		foreach ( entity teamPlayer in GetPlayerArrayOfTeam( player.GetTeam() ) )
-		{
-			if ( teamPlayer == player )
-				continue
-
-			if ( PlayersInSameParty( teamPlayer, player ) )
-				continue
-
-			SetRankedGameData( teamPlayer, "lastGameRankedForgiveness", 1 )
-
-			#if DEVELOPER
-			//DEV OVERRIDE
-			if ( GetCurrentPlaylistVarBool ( "Ranked_DEV_QV_Disable_RankForgiveness" , false ) )
-			{
-				SetRankedGameData( teamPlayer, "lastGameRankedForgiveness", 0 )
-			}
-			#endif
-		}
-	}
-
-	#if DEVELOPER
-	//DEV OVERRIDE
-	if ( GetCurrentPlaylistVarBool ( "Ranked_DEV_QV_Disable_RankForgiveness" , false ) )
-	{
-		SetRankedGameData( player, "lastGameRankedForgiveness", 0 )
-	}
-	#endif
-
-	// hasMatchParticipationStarted not available, PrepareGameSummaryForPointCalculation is stubbed
-	// if ( !player.p.hasMatchParticipationStarted )
-	// 	PrepareGameSummaryForPointCalculation( player )
-}
-                       
-
-
-void function SharedRanked_SetMatchmakingDelayDuration( entity player )
-{
-	//printt( "Player ban time is: " +  banLengthInSeconds )
-	SetPlayerBan( player, MATCHBANREASON_ABANDONED, SharedRanked_GetAbandonPenaltyLength( player ) )
-}
-
-
-void function Ranked_OnPlayerDisconnected( entity player )
-{
-	if ( IsLobby() )
-	{
-		if ( player in file.playersToCheckLadderPositions )
-			delete file.playersToCheckLadderPositions[ player ]
-	}
-}
-
-void function Ranked_InitPrevRankBadges( entity player , bool reconnect = false )
-{
-	if ( Ranked_ShouldShowRankedBadge() )
-	{
-		return
-	}
-
-	int teamID = player.GetTeam()
-	array<entity> teammates = GetPlayerArrayOfTeam ( teamID )
-
-	foreach (teammate in teammates)
-	{
-		//Pull
-		int scorePrevSeason = GetPrevSeasonPeakPlayerRankScore ( teammate )
-		printf ("badge rank on connect scorePrevSeason player: " + teammate.GetPlayerName() + " : " + scorePrevSeason )
-		Remote_CallFunction_NonReplay( player, "ServerToClient_Ranked_UpdatePlayerPrevRankedScore", teammate, scorePrevSeason )
-
-
-
-		int ladderPosPrevSeason = Ranked_GetPeakLadderPositionPrevSeason ( teammate )
-		printf ("badge rank on connect laddder pos PrevSeason player: " + teammate.GetPlayerName() + " : " + ladderPosPrevSeason )
-		Remote_CallFunction_NonReplay( player, "ServerToClient_Ranked_UpdatePlayerPrevLadderPos", teammate, ladderPosPrevSeason )
-
-		if ( !reconnect )
-		{
-			//Push
-			scorePrevSeason = GetPrevSeasonPeakPlayerRankScore ( player )
-			printf ( "badge rank on connect scorePrevSeason teammate: " + player.GetPlayerName() + " : " + scorePrevSeason )
-			Remote_CallFunction_NonReplay( teammate, "ServerToClient_Ranked_UpdatePlayerPrevRankedScore", player, scorePrevSeason )
-
-			ladderPosPrevSeason = Ranked_GetPeakLadderPositionPrevSeason ( player )
-			printf ( "badge rank on connect laddder pos PrevSeason teammate: " + teammate.GetPlayerName() + " : " + ladderPosPrevSeason )
-			Remote_CallFunction_NonReplay( teammate, "ServerToClient_Ranked_UpdatePlayerPrevLadderPos", player, ladderPosPrevSeason )
-		}
-	}
-}
-
-void function Ranked_OnPlayerReconnected( entity player )
-{
-	//early out if hide RP display
-	if ( Ranked_ShouldShowPreRankedBadge () )
-	{
-		return
-	}
-
-	Ranked_InitPrevRankBadges ( player, true )
-}
-
-
-#if DEVELOPER
-// Stubs for native functions not available
-bool function HasPlayerMMR( entity player )
-{
-	return true // Assume player has MMR to skip random MMR assignment
-}
-
-void function SetPlayerMmrUtil( entity player, float mmr, float variance )
-{
-	// stub
-}
-
-void function SetDemotionProtectionBuffer( entity player, int buffer )
-{
-	// stub
-}
-#endif
-
-void function Ranked_OnPlayerConnected( entity player )
-{
-	#if DEVELOPER
-	DEV_script_ranked_debug ( "Ranked_OnPlayerConnected " + player.GetPlayerName() + " has connected." )
-
-	if ( DEV_ShouldIgnorePersistence() )
-		return
-	#endif
-
-	#if DEVELOPER
-	//if player without MMR
-	if ( !player.IsBot() && !HasPlayerMMR(player) )
-	{
-		DEV_script_ranked_debug ( "Ranked_OnPlayerConnected " + player.GetPlayerName() + " without; setting MMR." )
-
-		//acceptable values are 0 to 50
-		float maxMMR = GetCurrentPlaylistVarFloat ( "Ranked_MMR_Random_Max", 50 )
-		float minMMR = GetCurrentPlaylistVarFloat ( "Ranked_MMR_Random_Min", 0 )
-
-		//acceptable values are 2 to 69.5
-		float maxVariance = GetCurrentPlaylistVarFloat ( "Ranked_Variance_Random_Max", 69.5 )
-		float minVariance = GetCurrentPlaylistVarFloat ( "Ranked_Variance_Random_Min", 2 )
-
-		float mmr = RandomFloatRange ( minMMR, maxMMR )
-		float variance = RandomFloatRange ( minVariance, maxVariance )
-
-		SetPlayerMmrUtil (  player,  mmr,  variance )
-	}
-
-	if ( player.IsBot() )
-	{
-		DEV_script_ranked_debug ( "Ranked_OnPlayerConnected " + player.GetPlayerName() + " is a bot; setting MMR." )
-
-		//We MUST to set a MMR
-		if ( GetCurrentPlaylistVarBool ("Ranked_MMR_Random", true  )  )
-		{
-			//acceptable values are 0 to 50
-			float maxMMR = GetCurrentPlaylistVarFloat ( "Ranked_MMR_Random_Max", 50 )
-			float minMMR = GetCurrentPlaylistVarFloat ( "Ranked_MMR_Random_Min", 0 )
-
-			//acceptable values are 2 to 69.6
-			float maxVariance = GetCurrentPlaylistVarFloat ( "Ranked_Variance_Random_Max", 69.5 )
-			float minVariance = GetCurrentPlaylistVarFloat ( "Ranked_Variance_Random_Min", 2 )
-
-			float mmr = RandomFloatRange ( minMMR, maxMMR )
-			float variance = RandomFloatRange ( minVariance, maxVariance )
-
-			SetPlayerMmrUtil (  player,  mmr,  variance )
-		}
-		else
-		{
-			//assume we are setting a value;
-			float mmr = GetCurrentPlaylistVarFloat ( "Ranked_MMR_Set" , 25 )
-			float variance = GetCurrentPlaylistVarFloat ( "Ranked_Variance_Set" , 10 )
-
-			SetPlayerMmrUtil (  player,  mmr,  variance )
-		}
-
-		if ( GetCurrentPlaylistVarBool ( "Ranked_BotRankedTier_Random" , true ) )
-		{
-			int maxLPForBot = GetCurrentPlaylistVarInt ( "Ranked_BotRankedTier_Random_Max", 15000 )
-			int minLPForBot = GetCurrentPlaylistVarInt ( "Ranked_BotRankedTier_Random_Min", 0 )
-			SetPlayerRankScore ( player, RandomIntRangeInclusive( minLPForBot, maxLPForBot ), SHARED_RANKED_INVALID_RANK_SCORE )
-		}
-		else if (GetCurrentPlaylistVarInt ( "Ranked_BotRankSet_LP" , -1 ) > 0 )
-		{
-			int lpToSet = GetCurrentPlaylistVarInt ( "Ranked_BotRankSet_LP" , 0 )
-			SetPlayerRankScore ( player, lpToSet, SHARED_RANKED_INVALID_RANK_SCORE )
-		}
-
-	}
-	#endif
-
-	Assert( !IsLobby() )
-
-	Ranked_SetXProgMergedPersistenceData( player, RANKED_SHOW_RANKED_SUMMARY_PERSISTENCE_VAR_NAME, GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) ? 1 : 0 )
-
-	SetRankedGameData( player, "lastGameRankedForgiveness", 0 )
-	SetRankedGameData( player, "lastGameRankedAbandon", 0 )
-	SetRankedGameData( player, "lastGameAbandonForgiveness", 0 )
-
-	//Set these scores all to 0 in the case that a server disconnects etc we don't show misleading info.
-	SetRankedGameData( player, "lastGameKillScore", 0 )
-	SetRankedGameData( player, "lastGamePlacementScore", 0 )
-	SetRankedGameData( player, "lastGamePenaltyPointsForAbandoning", 0 )
-	SetRankedGameData( player, "lastGameLossProtectionAdjustment", 0 )
-	SetRankedGameData( player, "lastGameTierDerankingProtectionAdjustment", 0 )
-
-	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
-		return
-
-	int score = GetPlayerRankScore( player )
-	Ranked_UpdateEHIRankScore( ToEHI( player ), score )
-	player.SetPlayerNetInt( "nv_currentRankedScore", score )
-
-                        
-                                                                                   
-  
-                                      
-  
-	     
-
-	if ( Ranked_ShouldShowRankedBadge () )
-	{
-		Ranked_InitPrevRankBadges ( player )
-	}
-
-       
-
-	SharedRankedDivisionData currentDivision = GetCurrentRankedDivisionFromScore( score ) //Deliberately only doing score, so will give us Master instead of Apex.
-                   
-	//If the player is in provisional, entry cost stays at zero
-	int costOfEntry                          = ( Ranked_HasFinishedProvisionalMatches ( player ) ) ? -1 * Ranked_GetCostForEntry( currentDivision ) : 0
-
-      
-                                                                         
-                                     
-                                                                
-       
-
-	#if DEVELOPER
-		DEV_script_ranked_debug ( "Setting inMatchRankScoreProgress for " + player.GetPlayerName() + " at the start of game with value: " + costOfEntry )
-	#endif
-
-	player.SetPlayerNetInt( "inMatchRankScoreProgress", costOfEntry )
-
-	file.playerToMaxTeamSizeThisGameTable[ ToEHI( player ) ] <- 0
-	array< entity > teamPlayers = GetPlayerArrayOfTeam( player.GetTeam() )
-	foreach ( teamPlayer in teamPlayers )
-	{
-		EHI teamPlayerEHI = ToEHI( teamPlayer )
-		if ( file.playerToMaxTeamSizeThisGameTable[ teamPlayerEHI ] < teamPlayers.len() )
-			file.playerToMaxTeamSizeThisGameTable[ teamPlayerEHI ] = teamPlayers.len()
-
-		if ( file.playerToMaxTeamSizeThisGameTable[ teamPlayerEHI ]  ==  GetMaxTeamPlayers() )
-			teamPlayer.SetPlayerNetBool( "rankedDidPlayerEverHaveAFullTeam", true )
-	}
-
-	// TODO: Stryder handles this as well?
-	thread SharedRanked_WaitRanked_CheckPlayerXPRequirement( player )
-
-	if ( GetGameState() >= eGameState.PickLoadout ) // Handle rare case of players connecting late, past character select
-	{
-		if ( Ranked_ShouldCheckLadderPositionForPlayer( player ) && !(player in file.playersToCheckLadderPositions) ) // Check ladder position if they should be on the ladder
-		{
-			//printt( "Adding player " + player + " to list of players to check ladder position past character select"  )
-			file.playersToCheckLadderPositions[ player ] <- true
-			string periodName       = Ranked_GetStryderLadderNameForLatestRankedPeriod()
-			LookupRankedPosForPlayers( periodName, [ player ] )
-		}
-	}
-
-	//TODO needs to be fixed,  because someone could have died, and invalid information could be determined ...
-	//if ( GetGameState() >= eGameState.Playing )
-	//{
-	//	MMR_Rank_MatchMMRCalculate()
-	//}
-}
-
-
-void function SharedRanked_WaitRanked_CheckPlayerXPRequirement( entity player )
-{
-	EndSignal( player, "OnDestroy" )
-
-	if ( player.IsBot() )
-		return
-
-	if ( GetCurrentPlaylistVarBool( RANKED_DEV_PLAYTEST_PLAYLIST_VAR, false ) )
-		return
-
-	// wait one frame to let all OnConnect callback execute
-	WaitFrame()
-
-	if ( GetPlayerAccountLevel( player ) < Ranked_GetRankedLevelRequirement() )
-	{
-		printt( "SharedRanked_WaitRanked_CheckPlayerXPRequirement - Kick player", player )
-		KickMatchmakingCheater( player ) // forfeit and disconnect with appropriate message
-	}
-}
-
-
-bool function Ranked_ShouldCheckLadderPositionForPlayer( entity player )
-{
-	int rankScore = GetPlayerRankScore( player )
-	if ( file.ladderOnlyDivision != null )
-		return rankScore >= expect SharedRankedDivisionData ( file.ladderOnlyDivision ).scoreMin
-
-	if ( file.topRankedDivisionData.emblemDisplayMode == emblemDisplayMode.DISPLAY_LADDER_POSITION )
-		return rankScore >= file.topRankedDivisionData.scoreMin
-
-	return false
-}
-#endif //if SERVER
-
-
-////////////////
-// EHI UPDATE //
-////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function Ranked_UpdateEHIRankScore( EHI playerEHI, int rankScore )
-//Function exists on server, client and UI, basically called there to make sure the ehiss ranked stuff is in sync on all 3 vms.
+
 {
 	EHIScriptStruct ehiss = GetEHIScriptStruct( playerEHI )
 	ehiss.rankScore = rankScore
@@ -2532,7 +2479,7 @@ void function Ranked_UpdateEHIRankScore( EHI playerEHI, int rankScore )
 
 
 void function Ranked_UpdateEHIRankScorePrevSeason( EHI playerEHI, int rankScore )
-//Function exists on server, client and UI, basically called there to make sure the ehiss ranked stuff is in sync on all 3 vms.
+
 {
 	EHIScriptStruct ehiss = GetEHIScriptStruct( playerEHI )
 	ehiss.rankScorePrevSeason = rankScore
@@ -2541,7 +2488,7 @@ void function Ranked_UpdateEHIRankScorePrevSeason( EHI playerEHI, int rankScore 
 
 
 void function Ranked_UpdateEHIRankedLadderPosition( EHI playerEHI, int rankedLadderPosition )
-//Function exists on server, client and UI, basically called there to make sure the ehiss ranked stuff is in sync on all 3 vms.
+
 {
 	EHIScriptStruct ehiss = GetEHIScriptStruct( playerEHI )
 	ehiss.rankedLadderPosition = rankedLadderPosition
@@ -2549,86 +2496,86 @@ void function Ranked_UpdateEHIRankedLadderPosition( EHI playerEHI, int rankedLad
 
 
 void function Ranked_UpdateEHIRankedLadderPositionPrevSeason( EHI playerEHI, int rankedLadderPosition )
-//Function exists on server, client and UI, basically called there to make sure the ehiss ranked stuff is in sync on all 3 vms.
+
 {
 	EHIScriptStruct ehiss = GetEHIScriptStruct( playerEHI )
 	ehiss.rankedLadderPositionPrevSeason = rankedLadderPosition
 }
 
 
-////////////////////////////////////////
-// PLAYER POSITION & DIVISION GETTERS //
-////////////////////////////////////////
+
+
+
 int function Ranked_GetLadderPosition( entity player )
 {
-	#if SERVER
-		EHI playerEHI = ToEHI( player )
-		return GetEHIScriptStruct( playerEHI ).rankedLadderPosition
 
-	#endif
 
-	#if CLIENT
+
+
+
+
+
 		Assert( !IsLobby() )
 		EHI playerEHI = ToEHI( player )
 		return GetEHIScriptStruct( playerEHI ).rankedLadderPosition
-	#endif
 
-	#if UI
-		if ( !IsLobby() )
-		{
-			EHI playerEHI = ToEHI( player )
-			return GetEHIScriptStruct( playerEHI ).rankedLadderPosition
-		}
-		else
-		{
-			Assert( player == GetLocalClientPlayer() )
-			CommunityUserInfo ornull cui = GetUserInfo( GetPlayerHardware(), GetPlayerUID() )
 
-			if ( cui == null )
-				return -1
 
-			expect CommunityUserInfo( cui )
-			return cui.rankedLadderPos
-		}
-	#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	unreachable
 }
 
-#if SERVER
-int function Ranked_GetPeakLadderPositionPrevSeason( entity player )
-{
-	if ( IsValid( player ) )
-	{
-		Assert( Ranked_GetCurrentActiveRankedPeriod() != null )
-		ItemFlavor currentRankedPeriod = expect ItemFlavor( Ranked_GetCurrentActiveRankedPeriod() )
-		ItemFlavor previousRankedPeriod = expect ItemFlavor ( GetPrecedingRankedPeriod( currentRankedPeriod ) )
-		string previousPeriodGUID = ItemFlavor_GetGUIDString( previousRankedPeriod )
 
-		int firstSplitLadderPos  = Ranked_GetHistoricalLadderPosition( player, previousPeriodGUID, true )
-		int secondSplitLadderPos = Ranked_GetHistoricalLadderPosition( player, previousPeriodGUID, false )
 
-		if ( secondSplitLadderPos == SHARED_RANKED_INVALID_LADDER_POSITION )
-			return SHARED_RANKED_INVALID_LADDER_POSITION
 
-		int ladderPos = firstSplitLadderPos
-		if ( ladderPos == SHARED_RANKED_INVALID_LADDER_POSITION  )
-		{
-			// only 2nd split valid have valid position
-			ladderPos = secondSplitLadderPos
-		}
-		else
-		{
-			//both split have valid position; return lower of the two
-			ladderPos = minint( firstSplitLadderPos, secondSplitLadderPos )
-		}
 
-		return  ladderPos
-	}
 
-	return 0
-}
-#endif // SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 SharedRankedDivisionData function Ranked_GetNewDivisionForNewSeasonOrSplitReset( entity player, ItemFlavor rankedPeriod, bool isSplitReset )
@@ -2646,8 +2593,8 @@ SharedRankedDivisionData function Ranked_GetNewDivisionForNewSeasonOrSplitReset(
 	switch ( rankedPeriodRef )
 	{
 		case RANKED_SEASON_13_GUIDSTRING:
-			// For S12->S13, we are adding a tier to the bottom, so the index count shifts by 4+. To offset, we decrease by 1 less tier during the s12 -> s13 transition, so the 2 is really 6
-			// For S13 Split, because it was MUCH harder, only reset by 4 - rather than 6
+			
+			
 			resetDivisionCount = isSplitReset ? 4 : 2
 			break
 
@@ -2656,13 +2603,13 @@ SharedRankedDivisionData function Ranked_GetNewDivisionForNewSeasonOrSplitReset(
 			break
 	}
 
-	//Do switch casing on the rankedPeriodGUID if we decide to change how ranked resets work between Ranked Season, i.e. we don't always reset 1.5 tiers down.
+	
 	int previousRankedScore             = Ranked_GetHistoricalRankScore( player, previousRankedPeriodRef )
-	SharedRankedDivisionData divData    = Ranked_GetHistoricalRankedDivisionFromScore( previousRankedScore, previousRankedPeriodRef ) //Get what rank we would be in this period if we just continued score from last period
+	SharedRankedDivisionData divData    = Ranked_GetHistoricalRankedDivisionFromScore( previousRankedScore, previousRankedPeriodRef ) 
 
 	int resetDivisionIndex = maxint( 0,  divData.index - resetDivisionCount )
 
-	//rookies are reset into rookies, otherwise floor at Bronze 4
+	
 	if ( divData.index >= RANKED_RESET_DIVISION_FLOOR )
 	{
 		resetDivisionIndex = maxint( RANKED_RESET_DIVISION_FLOOR, resetDivisionIndex )
@@ -2692,411 +2639,421 @@ bool function Ranked_IsRankedV2SecondSplit( ItemFlavor rankPeriodItemFlav )
 	return Ranked_GetRankedV2SplitStatus( rankPeriodItemFlav ) == RANKED_2PT0_SPLIT2
 }
 
-#if SERVER || CLIENT
 bool function Ranked_IsDisablePointGain( entity player )
 {
+
 	return RankedRumble_IsLatestGameRankedRumble( player ) || GetConVarBool( "ranked_disable_point_gain" )
-}
-#endif
 
-#if SERVER
-bool function ShouldRecordRankedStats( entity player )
-{
-	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
-		return false
-	                     
-		return !RankedRumble_IsRunningRankedRumbleCached( player )
-                           
-	return true
-}
-#endif
 
-#if SERVER
-//////////////////////////////
-// STRYDER LOOKUP CALLBACKS //
-//////////////////////////////
-void function _InitXMergedPlatformRankedData( entity player )
-{
-	string lastPlat = ""
-	foreach( int pId, string platformId in HARDWARE_TO_MERGED_PLATFORM )
-	{
-		if ( platformId == lastPlat ) // PS4 & PS5 | X1 & XB5 are same xMergePlat
-			continue
 
-		lastPlat = platformId
-
-		player.SetPersistentVar( format( XPROG_PERSISTENCE_FORMAT_STRING, platformId, RANKED_CURRENT_SCORE_PERSISTENCE_VAR_NAME ), SHARED_RANKED_ROOKIE_FLOOR_VALUE )
-		player.SetPersistentVar( format( XPROG_PERSISTENCE_FORMAT_STRING, platformId, RANKED_PROVISIONAL_MATCH_COUNT_PERSISTENCE_VAR_NAME ), 0 )
-		player.SetPersistentVar( format( XPROG_PERSISTENCE_FORMAT_STRING, platformId, RANKED_SHOW_RANKED_SUMMARY_PERSISTENCE_VAR_NAME ), 0 )
-
-		// "graduate" players immediately if Provisionals are *not* active.
-		if ( GetConVarBool( RANKED_PROVISIONAL_MATCH_CONVAR_KILL_SWITCH ) )
-			player.SetPersistentVar( format( XPROG_PERSISTENCE_FORMAT_STRING, platformId, RANKED_PROVISIONAL_MATCH_HAS_PROGRESSED_OUT_PERSISTENCE_VAR_NAME ), 1 )
-		else
-			player.SetPersistentVar( format( XPROG_PERSISTENCE_FORMAT_STRING, platformId, RANKED_PROVISIONAL_MATCH_HAS_PROGRESSED_OUT_PERSISTENCE_VAR_NAME ), 0 )
-
-		                  
-		player.SetPersistentVar( format( XPROG_PERSISTENCE_FORMAT_STRING, platformId, RANKED_TOP_5_STREAK_PERSISTENCE_VAR_NAME ), 0 )
-
-		for (int i = 0; i < RANKED_NUM_PROVISIONAL_MATCHES; i++)
-		{
-			player.SetPersistentVar( format( XPROG_PERSISTENCE_FORMAT_STRING, platformId, format ( RANKED_PROVISONAL_MATCH_RESULTS_FORMAT_STRINGS, string ( i )  ), 0 ) , 0 )
-		}
-        
-
-		RankedTrials_ResetXMergePlatformPersistenceData( player, platformId )
-	}
-}
-
-void function Ranked_OnStryderConfirmSeasonOrSplitStart( entity player, string stryderLadderName, int rankScore, int rankPos )
-{
-	string periodGUIDString = Ranked_GetSeasonGUIDStringFromStryderLadderName( stryderLadderName )
-	ItemFlavor rankedPeriod = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( periodGUIDString ) )
-	Assert( rankedPeriod == Ranked_GetCurrentActiveRankedPeriod(), "StartPlayerRankedPeriod did not start the current ranked period." )
-
-	if ( ItemFlavor_GetGUID( rankedPeriod ) == player.GetPersistentVarAsInt( RANKED_LAST_INITIALIZED_PERIOD_GUID_VAR_NAME ) )
-		return // we got a duplicate start so do nothing.
-
-	player.SetPersistentVar( RANKED_LAST_INITIALIZED_PERIOD_GUID_VAR_NAME, ItemFlavor_GetGUID( rankedPeriod ) )
-
-	ItemFlavor previousPeriod = expect ItemFlavor ( GetPrecedingRankedPeriod( rankedPeriod ) )
-	int prevRankScore         = Ranked_GetHistoricalRankScore( player, ItemFlavor_GetGUIDString( previousPeriod ) )
-
-	SharedRankedDivisionData oldDivData = GetCurrentRankedDivisionFromScore( prevRankScore )
-	SharedRankedDivisionData newDivData = GetCurrentRankedDivisionFromScore( rankScore )
-	// a reset *might* not have actually triggered a division change for a player who doesn't play ranked much
-	if ( oldDivData.index != newDivData.index )
-	{
-		if ( PIN_IsPlayerAdded( player ) )
-			PIN_PlayerRankedPlayDivisionChange( player, oldDivData.divisionName, newDivData.divisionName, eItemType.calevent_rankedperiod )
-		else
-			Assert( false, "ERROR: Ranked - we somehow got a response from Stryder for a player who wasn't registered for PIN." )
-	}
-
-	if ( Ranked_IsRankedV2SecondSplit( rankedPeriod ) )
-	{
-		StatsHook_TransferWinStreak( player, ItemFlavor_GetGUIDString( previousPeriod ), periodGUIDString )
-	}
-	else
-	{
-		_InitXMergedPlatformRankedData( player )
-	}
-
-	Ranked_SetHistoricalRankedPersistenceData( player, RANKED_CURRENT_SCORE_PERSISTENCE_VAR_NAME, rankScore, periodGUIDString )
-	Ranked_SetHistoricalRankedPersistenceData( player, "highestRankedScore", rankScore, periodGUIDString )
-
-	// we invalidate the rewardSeq here IF Provisional are *active*; then set it to 0 when the player gradautes from Provisionals
-	if ( !GetConVarBool( RANKED_PROVISIONAL_MATCH_CONVAR_KILL_SWITCH ) )
-		SetRankedPersistenceData( player, "rewardSeq", GRX_INVALID_SEQUENCE_NUMBER )
-
-	if ( ItemFlavor_GetType( rankedPeriod ) == eItemType.calevent_rankedperiod ) // TODO: for QA testing only
-		Ranked_SetHistoricalRankedPersistenceData( player, "rankedInitialized", 1, periodGUIDString )
-
-	Remote_CallFunction_UI( player, "ServerToUI_Ranked_NotifyRankedPeriodScoreChanged" )
-}
-
-void function Ranked_OnStryderConfirmEndSeasonOrSplitScore( entity player, string stryderLadderName, int rankScore, int rankPos, bool doRankedReset = true )
-{
-	printf( "RankedDebug: %s %s period=%s score=%d pos=%d", FUNC_NAME(), player.GetPlayerName(), stryderLadderName, rankScore, rankPos )
-	Assert( rankPos != 0 && rankScore != SHARED_RANKED_INVALID_RANK_SCORE, format( "received an invalid value from Stryder for end of period %s.", stryderLadderName ) )
-	if ( rankPos == 0 || rankScore == SHARED_RANKED_INVALID_RANK_SCORE )
-		return // don't action. we should try again because Stryder gave us bad data.
-
-	string periodGUIDString                 = Ranked_GetSeasonGUIDStringFromStryderLadderName( stryderLadderName )
-	ItemFlavor rankedPeriod                 = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( periodGUIDString ) )
-	string rankedLadderPersistenceFieldName = "endSeriesLadderPosition"
-
-	bool isEndingASplit = ItemFlavor_GetType( rankedPeriod ) == eItemType.calevent_rankedperiod && Ranked_GetStryderLadderNameForHistoricalRankedPeriod( rankedPeriod, true ) == stryderLadderName
-	if ( ItemFlavor_GetType( rankedPeriod ) == eItemType.calevent_rankedperiod && SharedRankedPeriod_HasSplits( rankedPeriod ) )
-	{
-		if ( isEndingASplit )
-		{
-			rankedLadderPersistenceFieldName = "endFirstSplitLadderPosition"
-
-			Ranked_SetHistoricalRankedPersistenceData( player, "firstSplitRankedScore", rankScore, periodGUIDString )
-
-			// anyone ending a split currently didn't play the second phase, so just set their ladder pos to prevent trying to end an unplayed second split
-			// if we use this logic for non-Cal-Event "splits," just block on check if CalEvent type
-			// TODO: needed for QA only for testing - need to avoid clobbering data for QA testers who spoof into second period
-			if ( Ranked_GetHistoricalRankScore( player, periodGUIDString ) <= SHARED_RANKED_ROOKIE_FLOOR_VALUE )
-			{
-				Ranked_SetHistoricalRankedPersistenceData( player, "endSeriesLadderPosition", -1, periodGUIDString )
-				Ranked_SetHistoricalRankedPersistenceData( player, "highestRankedScore", GetConVarInt( "ranked_current_period_start_score" ), periodGUIDString )
-			}
-		}
-	}
-
-	Ranked_SetHistoricalRankedPersistenceData( player, RANKED_CURRENT_SCORE_PERSISTENCE_VAR_NAME, rankScore, periodGUIDString )
-	Ranked_SetHistoricalRankedPersistenceData( player, "highestRankedScore", rankScore, periodGUIDString )
-	Ranked_SetHistoricalRankedPersistenceData( player, rankedLadderPersistenceFieldName, rankPos, periodGUIDString )
-
-	//Set stats needed for badges
-	StatsHook_SetRankedScore( player, MATCHRANKEDMODE_RANKED, periodGUIDString, rankScore )
-	int badgeAwardLevel = Ranked_CalculateBadgeAwardLevelStat( player, rankScore, rankedPeriod, isEndingASplit )
-	printf( "RankedDebug: %s %s period=%s score=%d badge_level=%d", FUNC_NAME(), player.GetPlayerName(), periodGUIDString, rankScore, badgeAwardLevel )
-	StatsHook_SetRankedBadgeLevel( player, MATCHRANKEDMODE_RANKED, periodGUIDString, badgeAwardLevel )
-
-	// reset the CLUI notification for non-Rookies in Seasons 13 - 16, *all* in Ranked 2.0, and *all* (Bronze+) in pre-S13
-	// don't reset on splits, because we always need to end both halves of a split as we don't track whether a player only played in one half of a split
-	SharedRankedTierData historicalTier = Ranked_GetHistoricalRankedDivisionFromScoreAndLadderPosition( rankScore, rankPos, periodGUIDString ).tier
-	if ( ItemFlavor_GetType( rankedPeriod ) == eItemType.ranked_2pt0_period || ( !isEndingASplit && ( historicalTier.index > 0 || CompareRankedPeriodStartTime( rankedPeriod , GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( RANKED_SEASON_13_GUIDSTRING ) ) ) < 0 ) ) )
-		player.SetPersistentVar( "rankedRewardsAcknowledged", false )
-	else
-		player.SetPersistentVar( "rankedRewardsAcknowledged", true )
-
-	if ( player.p.grxInitialized && GRX_IsInventoryReady( player ) ) // player.p.grxInitialized guarantees GRXScriptState exists
-		Ranked_GiveRankedSeasonRewards( player )
-
-	if ( doRankedReset )
-		Ranked_HandleRankedResets( player ) // Just call this instead of trying to reset only that ranked period because this might not be the most recent expired period
 }
 
 
-void function Ranked_OnPlayerRankedLadderPositionFound( entity player, string rankedPeriodName, int rankPos, table<string, int> platformPositions )
-{
-	// Ranked Rumble position
-	// NOTE: platformLadderPosition removed - not available in EHIScriptStruct
-	// Cross-platform ladder positions skipped
-
-	string ladderNameForLatestPeriod = Ranked_GetStryderLadderNameForLatestRankedPeriod()
-	if ( ladderNameForLatestPeriod == rankedPeriodName )
-	{
-		if ( ( player in file.playersToCheckLadderPositions ) == false )
-			return
-
-		GetEHIScriptStruct( player ).rankedLadderPosition = rankPos
-		file.playersToCheckLadderPositions[ player ] = false
-		player.SetPlayerNetInt( "nv_currentRankedLadderPosition", rankPos )
-	}
-}
-
-/////////////////////
-// RESET FUNCTIONS //
-/////////////////////
-void function Ranked_HandleRankedResets( entity player )
-{
-	#if DEVELOPER
-		//if ( GetConVarBool( "persistence_development_mode", false ) )
-		if ( DEV_ShouldIgnorePersistence() )
-			return
-	#endif
-
-	if ( !IsLobby() )
-		return
-
-	if ( IsPrivateMatch() )
-		return
-
-	if ( !GetCurrentPlaylistVarBool( "ranked_end_series_stryder_check", true ) )
-		return
-
-	if ( !IsMatchmakingServer() )
-		return // Necessary because EndPlayerRankedPeriod() will cause an error when called outside of party dedis.
-
-	ItemFlavor ornull activeRankedPeriod = Ranked_GetCurrentActiveRankedPeriod()
-	if ( activeRankedPeriod == null )
-		return
-
-	expect ItemFlavor( activeRankedPeriod )
-	int lastInitializedGUID = player.GetPersistentVarAsInt( RANKED_LAST_INITIALIZED_PERIOD_GUID_VAR_NAME )
-	if ( IsValidItemFlavorGUID( lastInitializedGUID ) &&
-			Ranked_GetStryderSequenceIdForHistoricalRankedPeriod( GetItemFlavorByGUID( lastInitializedGUID ), false ) >= Ranked_GetStryderSequenceIdForHistoricalRankedPeriod( activeRankedPeriod, false ) )
-		return // If the current ranked season was initialized we don't need to check on previous ones.
-
-	#if DEVELOPER
-		// TODO: Make a Jira for once Dev Tool does this
-		// in DEV ONLY, make sure we set this for QV accounts
-		SetDemotionProtectionBuffer ( player, DEMOTION_BUFFER_MAX )
-	#endif
-
-	array<ItemFlavor> rankedPeriodList = Ranked_GetAllRankedPeriodsInAscendingChronologicalOrder()
-	foreach ( ItemFlavor rankedPeriod in rankedPeriodList )
-	{
-		string rankedPeriodGUID = ItemFlavor_GetGUIDString( rankedPeriod )
-
-		if ( ItemFlavor_GetType( rankedPeriod ) == eItemType.calevent_rankedperiod )
-		{
-			if ( bool( Ranked_GetHistoricalRankedPersistenceData( player, "rankedInitialized", rankedPeriodGUID ) ) )
-				continue
-		}
-
-		ItemFlavor ornull previousRankedPeriod = GetPrecedingRankedPeriod( rankedPeriod )
-		if ( previousRankedPeriod != null )
-		{
-			expect ItemFlavor( previousRankedPeriod )
-			string previousRankedPeriodGUID = ItemFlavor_GetGUIDString( previousRankedPeriod )
-			bool playedGamesInPeriod = Ranked_PlayedGamesInPeriod( player, previousRankedPeriodGUID )
-
-			// Check if we need to finalize first split of prior period with Styder
-			// 0 is default in Persistence. Either want SHARED_RANKED_INVALID_LADDER_POSITION *OR* > 0
-			if ( SharedRankedPeriod_HasSplits( previousRankedPeriod ) )
-			{
-				if ( playedGamesInPeriod && Ranked_GetHistoricalLadderPosition( player, previousRankedPeriodGUID, true ) == 0 )
-				{
-					string firstSplitStryderLadderName = Ranked_GetStryderLadderNameForHistoricalRankedPeriod( previousRankedPeriod, true )
-					ConfirmPlayerRankedPeriod( player, firstSplitStryderLadderName, true, RANKED_2PT0_NON_SPLIT )
-					return
-				}
-			}
-
-			// Check if we need to finalize second - or only - split of prior period with Styder
-			if ( playedGamesInPeriod && Ranked_GetHistoricalLadderPosition( player, previousRankedPeriodGUID ) == 0 )
-			{
-				string stryderPeriodName = Ranked_GetStryderLadderNameForHistoricalRankedPeriod( previousRankedPeriod, false )
-				ConfirmPlayerRankedPeriod( player, stryderPeriodName, true, Ranked_GetRankedV2SplitStatus( previousRankedPeriod ) )
-				return
-			}
-
-			// if they didn't play, just set their Ladder Pos to finalized default
-			if ( !playedGamesInPeriod )
-			{
-				if ( ItemFlavor_GetType( rankedPeriod ) == eItemType.calevent_rankedperiod )
-					Ranked_SetHistoricalRankedPersistenceData( player, "endFirstSplitLadderPosition", SHARED_RANKED_INVALID_LADDER_POSITION, previousRankedPeriodGUID )
-
-				Ranked_SetHistoricalRankedPersistenceData( player, "endSeriesLadderPosition", SHARED_RANKED_INVALID_LADDER_POSITION, previousRankedPeriodGUID )
-			}
-		} // END if ( previousRankedPeriod != null )
-
-		if ( rankedPeriod == activeRankedPeriod )
-			break // don't run the loop past the current stated ranked period; handles ConVar overrides, etc
-
-		if ( ItemFlavor_GetType( rankedPeriod ) == eItemType.calevent_rankedperiod )
-			Ranked_SetHistoricalRankedPersistenceData( player, "rankedInitialized", 1, rankedPeriodGUID )
-	} // END foreach ( ItemFlavor rankedPeriod ... )
-
-	if ( GetPlayerAccountLevel( player ) >= Ranked_GetRankedLevelRequirement() )
-		ConfirmPlayerRankedPeriod( player, Ranked_GetStryderLadderNameForLatestRankedPeriod(), false, Ranked_GetRankedV2SplitStatus( expect ItemFlavor( Ranked_GetCurrentActiveRankedPeriod() ) ) )
-}
-#endif // SERVER
 
 
-//////////////////////
-// LEGACY FUNCTIONS //
-//////////////////////
-#if SERVER
-void function Ranked_UpgradePlayerPersistence( entity player, int oldVersion, int newVersion )
-{
-	#if DEVELOPER
-		if ( DEV_ShouldIgnorePersistence() )
-			return
-	#endif
-
-	int versionNum_setEndLadderPosForSeason1 = 202001120
-	if ( oldVersion < versionNum_setEndLadderPosForSeason1 )
-	{
-		Ranked_SetHistoricalRankedPersistenceData( player, "endSeriesLadderPosition", -1, RANKED_SEASON_02_GUIDSTRING )
-	}
-}
 
 
-void function Ranked_SetStatsForRankedSeasonTwo( entity player )
-//For people who never played ranked before we added the stat tracker for RP. This is needed to unlock the correct badge
-{
-	int statTrackerRP = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_current_rank_score, RANKED_SEASON_02_GUIDSTRING ) )
-	if ( statTrackerRP == 0 )
-	{
-		int rankedScoreForSeasonTwo = Ranked_GetHistoricalRankScore( player, RANKED_SEASON_02_GUIDSTRING )
-		StatsHook_SetRankedScore( player, MATCHRANKEDMODE_RANKED, RANKED_SEASON_02_GUIDSTRING, rankedScoreForSeasonTwo )
-	}
-}
-#endif // SERVER
 
 
-//////////
-// PDEF //
-//////////
-#if SERVER && DEVELOPER
-void function GenerateRanked_PDef()
-{
-	array<string> ranked2Pt0PeriodRefs = []
-	array<string> ranked2Pt0PeriodComments = []
-	foreach ( int idx, ItemFlavor rankedPeriod in file.allRanked2Pt0Periods )
-	{
-		ranked2Pt0PeriodRefs.append( ItemFlavor_GetGUIDString( rankedPeriod ) )
-		ranked2Pt0PeriodComments.append( string(ItemFlavor_GetAsset( rankedPeriod )) )
-	}
-	DEV_PDefGen_AddEnum( "eRankedPeriod2Pt0Flavor", ranked2Pt0PeriodRefs, "All Ranked 2.0 Periods.", ranked2Pt0PeriodComments )
-
-	array<string> rankedPeriodRefs = []
-	array<string> rankedPeriodComments = []
-	foreach ( int idx, ItemFlavor rankedPeriod in GetAllRankedPeriodCalEventFlavorsByType( eItemType.calevent_rankedperiod ) )
-	{
-		rankedPeriodRefs.append( ItemFlavor_GetGUIDString( rankedPeriod ) )
-		rankedPeriodComments.append( string(ItemFlavor_GetAsset( rankedPeriod )) )
-	}
-	foreach ( int idx, ItemFlavor rankedPeriod in file.allRanked2Pt0Periods )
-	{
-		rankedPeriodRefs.append( ItemFlavor_GetGUIDString( rankedPeriod ) )
-		rankedPeriodComments.append( string(ItemFlavor_GetAsset( rankedPeriod )) )
-	}
-	DEV_PDefGen_AddEnum( "eRankedStatPeriod", rankedPeriodRefs, "All Ranked Stat Periods.", rankedPeriodComments )
-
-	DEV_PDefGen_BeginFieldGroup( "Shared Ranked Vars" )
-
-	DEV_PDefGen_AddField_Int( "lastTimeGameWasRankedAbandoned" )
-	DEV_PDefGen_AddField_Int( "numPenalizedAbandons" )
-	DEV_PDefGen_AddField_Int( "numUsedForgivenessAbandons" )
-	DEV_PDefGen_AddField_Int( "totalRankedGamesAbandoned" )
-
-	DEV_PDefGen_EndFieldGroup()
-}
-#endif
 
 
-#if UI
-int function Ranked_GetTierCount()
-{
-	string rankedPeriodGUID = Ranked_GetCurrentPeriodGUIDString()
-	array < SharedRankedTierData > currentTiers = file.historicalRankedTiers[ rankedPeriodGUID ]
-	return currentTiers.len()
-}
 
-bool function Ranked_IsLocalPlayerInLadderOnlyTier()
-{
-	entity player 						 = GetLocalClientPlayer()
-	int currentScore                     = GetPlayerRankScore( player )
-	int ladderPosition                   = Ranked_GetLadderPosition( player  )
-	SharedRankedDivisionData currentRank = GetCurrentRankedDivisionFromScoreAndLadderPosition( currentScore, ladderPosition )
-	SharedRankedTierData currentTier     = currentRank.tier
-	return currentTier.isLadderOnlyTier
-}
 
-array< featureTutorialTab > function Ranked_PopulateAboutText()
-{
-	array< featureTutorialTab > tabs
 
-	featureTutorialTab tab1
-	array< featureTutorialData > tab1Rules
 
-	// Tab 1 contains surface overview of ranked play
-	tab1.tabName = 	"#RANKED_ABOUT_TAB_1_NAME"
-	// TODO - It would be preferable for us to make #RANKED_ABOUT_TAB_1_DESC_1 a dynamic string that can incorperate Ranked_RankedPartyMaxTierDifferential() instead of hardcoding the value into the string
-	// https://jiratf.rspn.ad.ea.com/browse/R5DEV-588232
-	tab1Rules.append( UI_FeatureTutorialDialog_BuildDetailsData( "#RANKED_ABOUT_TAB_1_HEADER_1", "#RANKED_ABOUT_TAB_1_DESC_1", $"" ) )
-	tab1Rules.append( UI_FeatureTutorialDialog_BuildDetailsData( "#RANKED_ABOUT_TAB_1_HEADER_2", "#RANKED_ABOUT_TAB_1_DESC_2", $"" ) )
-	tab1Rules.append( UI_FeatureTutorialDialog_BuildDetailsData( "#RANKED_ABOUT_TAB_1_HEADER_3", "#RANKED_ABOUT_TAB_1_DESC_3", $"" ) )
 
-	tab1.rules = tab1Rules
-	tabs.append( tab1 )
 
-                     
-	tab1.tabName = "#RANKED_TITLE"
 
-	featureTutorialTab tab2
-	array<featureTutorialData> tab2Rules
-	tab2.tabName = "#RANKED_RUMBLE"
 
-	tab2Rules.append( UI_FeatureTutorialDialog_BuildDetailsData( "#RANKED_RUMBLE_ABOUT_TAB_1_HEADER_1", "#RANKED_RUMBLE_ABOUT_TAB_1_DESC_1", $"" ) )
-	tab2Rules.append( UI_FeatureTutorialDialog_BuildDetailsData( "#RANKED_RUMBLE_ABOUT_TAB_1_HEADER_2", "#RANKED_RUMBLE_ABOUT_TAB_1_DESC_2", $"" ) )
-	tab2Rules.append( UI_FeatureTutorialDialog_BuildDetailsData( "#RANKED_RUMBLE_ABOUT_TAB_1_HEADER_3", "#RANKED_RUMBLE_ABOUT_TAB_1_DESC_3", $"" ) )
 
-	tab2.rules = tab2Rules
-	tabs.append( tab2 )
-                          
 
-	return tabs
-}
-#endif // UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 bool function Ranked_ShouldShowRankedBadge ()
 {
@@ -3111,5 +3068,4 @@ bool function Ranked_ShouldShowPreRankedBadge ()
 	return false
 }
 
-// CreateNestedRankedRui, SharedRanked_FillInRuiEmblemText, ServerToUI_Ranked_NotifyRankedPeriodScoreChanged moved to clui_ranked.nut
-
+ 

@@ -16,213 +16,44 @@ TestVars function TV()
 	return s_testVars
 }
 
-#if SERVER || CLIENT || UI
+struct
+{
+	float dev_finisherFOV = 0.0
+} file
+
+
 void function ShDevUtility_Init()
 {
 	RegisterSignal( "DevSignal1" )
 	RegisterSignal( "DevSignal2" )
 
-	#if SERVER || CLIENT
-		PrecacheModel( $"mdl/Humans/class/medium/pilot_medium_empty.rmdl" ) // for spectator players
-	#endif
 
-	#if SERVER
-		AddClientCommandCallback( "respawn", ClientCommand_Respawn )
-		AddClientCommandCallback( "set_respawn_override", ClientCommand_SetRespawnOverride )
-		AddClientCommandCallback( "giveheirloom", ClientCommand_GiveHeirloom )
-		AddClientCommandCallback( "toggle_legend", ClientCommand_ToggleLegend )
-	#endif
+		PrecacheScriptString( "DEV_CreateCrow" )
+		PrecacheModel( $"mdl/Humans/class/medium/pilot_medium_empty.rmdl" ) 
 
-	#if CLIENT
+
+
+
+
+
+
+
 		RegisterSignal( "DEV_PreviewScreenRUI" )
 		RegisterSignal( "DEV_PreviewWorldRUI" )
-	#endif
-}
-#endif
 
-#if SERVER
-const string defaultkraldesc = "Made by @LorryLeKral."
-const string defaultmackdesc = "Made by @MackTheBoatMan."
-const string defaultcafedesc = "Made by @CafeFPS."
-const array< array<string> > CustomHeirlooms =
-[
-	//-1 resets back the default melee
-    [ "mp_weapon_bolo_sword_primary", "melee_bolo_sword", defaultkraldesc ], // 0
-    [ "mp_weapon_macks_knife_primary", "melee_macks_knife", defaultmackdesc ], // 1
-	[ "mp_weapon_mc_sword_primary", "melee_mc_sword", defaultkraldesc ], // 2
-	[ "mp_weapon_mjolnir_primary", "melee_mjolnir", defaultkraldesc ], // 3
-	[ "mp_weapon_karambit_primary", "melee_karambit", defaultkraldesc ], // 4
-	[ "mp_weapon_vctblue_primary", "melee_vctblue", defaultcafedesc ] // 5
-]
-
-bool function ClientCommand_GiveHeirloom( entity commandPlayer, array<string> argList )
-{
-	if ( !GetConVarInt( "sv_cheats" ) || !IsValid( commandPlayer ))
-		return true
-
-	if ( argList.len() == 0 )
-	{
-		Dev_PrintMessage( commandPlayer, "Invalid usage of giveheirloom", "Please pass an heirloom index example : 'giveheirloom 0-4'" )
-		return false
-	}
-
-	int selected = int(argList[0])
-
-    if(selected == -1)
-	{
-		commandPlayer.TakeOffhandWeapon( OFFHAND_MELEE )
-		commandPlayer.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
-
-		commandPlayer.GiveWeapon( "mp_weapon_melee_survival", WEAPON_INVENTORY_SLOT_PRIMARY_2 )
-		commandPlayer.GiveOffhandWeapon( "melee_pilot_emptyhanded", OFFHAND_MELEE )
-		commandPlayer.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_2)
-
-		Dev_PrintMessage( commandPlayer, "Reset Melee", "" )
-		return true
-	}
-
-    if(selected == -2)
-	{
-		commandPlayer.TakeOffhandWeapon( OFFHAND_MELEE )
-		commandPlayer.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
-
-		commandPlayer.GiveWeapon( "mp_weapon_melee_titan", WEAPON_INVENTORY_SLOT_PRIMARY_2 )
-		commandPlayer.GiveOffhandWeapon( "melee_titan_punch", OFFHAND_MELEE )
-		commandPlayer.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_2)
-
-		return true
-	}
-
-    if(selected >= CustomHeirlooms.len())
-	{
-		Dev_PrintMessage( commandPlayer, "Invalid usage of giveheirloom", "Invalid Heirloom Index : " + string(selected) + "| Maximum Index : " + string(CustomHeirlooms.len() - 1) )
-		return false
-	}
-
-    array<string> SelectedData = CustomHeirlooms[selected]
-	string primaryclass = SelectedData[0]
-    string meleeclass = SelectedData[1]
-
-	if( WeaponIsPrecached( primaryclass ) && WeaponIsPrecached( meleeclass ) )
-	{
-		commandPlayer.TakeOffhandWeapon( OFFHAND_MELEE )
-		commandPlayer.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
-
-		commandPlayer.GiveWeapon( primaryclass, WEAPON_INVENTORY_SLOT_PRIMARY_2 )
-		commandPlayer.GiveOffhandWeapon( meleeclass, OFFHAND_MELEE )
-
-		commandPlayer.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_2)
-
-		if(SelectedData.len() >= 3)
-		{
-			string Description = SelectedData[2]
-			Dev_PrintMessage( commandPlayer, "ENJOY YOUR FREE HEIRLOOM!", Description, 4, "LootVault_Access" )
-		}
-
-		return true
-	} else
-	{
-		Dev_PrintMessage( commandPlayer, "error", "Make sure both melee and primary are precached", 4, "LootVault_Access" )
-	}
-
-    return false
 }
 
-bool function ClientCommand_ToggleLegend( entity commandPlayer, array<string> argList )
-{
-	if ( GetConVarInt( "sv_cheats" ) != 1 || !IsValid( commandPlayer ) )
-		return true
 
-	return true
-}
-#endif
 
-#if SERVER
-void function SetupHeirloom( int heirloomIndex )
-{
-	entity player = gp()[0]
-	if ( !IsValid( player ) )
-		return
 
-	player.TakeOffhandWeapon(OFFHAND_MELEE)
-	player.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
-
-	switch(heirloomIndex)
-	{
-		case 0:
-		player.GiveWeapon( "mp_weapon_bolo_sword_primary", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
-		player.GiveOffhandWeapon( "melee_bolo_sword", OFFHAND_MELEE, [] )
-		break
-
-		case 1:
-		// player.GiveWeapon( "mp_weapon_paracord_knife_primary", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
-		// player.GiveOffhandWeapon( "melee_paracord_knife", OFFHAND_MELEE, [] )
-		break
-
-		case 2:
-		player.GiveWeapon( "mp_weapon_vctblue_primary", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
-		player.GiveOffhandWeapon( "melee_vctblue", OFFHAND_MELEE, [] )
-		break
-
-		case 3:
-		player.GiveWeapon( "mp_weapon_shadow_squad_hands_primary", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
-		player.GiveOffhandWeapon( "melee_shadowsquad_hands", OFFHAND_MELEE, [] )
-		break
-
-		case 4:
-		player.GiveWeapon( "mp_weapon_melee_boxing_ring", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
-		player.GiveOffhandWeapon( "melee_boxing_ring", OFFHAND_MELEE, [] )
-		break
-
-		case 5:
-		player.GiveWeapon( "mp_weapon_gloves_primary", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
-		player.GiveOffhandWeapon( "melee_gloves", OFFHAND_MELEE, [] )
-		break
-
-		case 6:
-		player.GiveWeapon( "mp_weapon_macks_knife_primary", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
-		player.GiveOffhandWeapon( "melee_macks_knife", OFFHAND_MELEE, [] )
-		break
-	}
-
-	EmitSoundOnEntity( player, "LootCeremony_LootHologram_Appear_Heirloom" )
-}
-
-void function UnEquipMelee( bool allplayers = false)
-{
-	entity player = gp()[0]
-	if ( !IsValid( player ) )
-		return
-
-	player.TakeOffhandWeapon(OFFHAND_MELEE)
-	player.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
-
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
-	ItemFlavor meleeSkin = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_MeleeSkin( character ) )
-	string meleePrimary = MeleeSkin_GetMainWeaponClassname( meleeSkin )
-	string meleeOffhand = MeleeSkin_GetOffhandWeaponClassname( meleeSkin )
-
-	player.GiveWeapon( meleePrimary, WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
-	player.GiveOffhandWeapon( meleeOffhand, OFFHAND_MELEE, [] )
-}
-#endif
-
-#if SERVER || CLIENT || UI
-void function ShDevConsole_Init()
-{
-	// "ToggleConsole" command callback
-}
-#endif
-
-#if SERVER || CLIENT
 entity function GEBI( int entIndex )
 {
 	return GetEntByIndex( entIndex )
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+
 entity function GP( int playerIndex = 0 )
 {
 	array<entity> players = GetPlayerArray()
@@ -231,20 +62,20 @@ entity function GP( int playerIndex = 0 )
 
 	return players[playerIndex]
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+
 entity function GPAW( int playerIndex = 0 )
 {
 	entity player = GP( playerIndex )
 	entity result = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
 	return result
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+
 entity function GBOT( int botIndex = 0 )
 {
 	array<entity> bots
@@ -260,36 +91,75 @@ entity function GBOT( int botIndex = 0 )
 
 	return bots[botIndex]
 }
-#endif
+
+entity function GBOT_LAST()
+{
+	array<entity> bots
+	array<entity> players = GetPlayerArray()
+	foreach ( entity player in players )
+	{
+		if ( player.IsBot() )
+			bots.append( player )
+	}
+
+	if ( bots.len() == 0 )
+		return null
+
+	return bots[bots.len()-1]
+}
 
 
-#if SERVER || CLIENT
+
+
 void function PrintEntArray( array<entity> arr )
 {
 	printf( "%s() - len:%d  %s", FUNC_NAME(), arr.len(), string( arr ) )
-	foreach( int index, entity ent in arr )
+	foreach ( int index, entity ent in arr )
 		printf( " [%d] - %s %s", index, string( ent ), string( ent.GetOrigin() ) )
 }
-#endif
+
 
 void function PrintStringArray( array<string> arr )
 {
 	printf( "%s() - len:%d  %s", FUNC_NAME(), arr.len(), string( arr ) )
-	foreach( int index, string str in arr )
+	foreach ( int index, string str in arr )
 		printf( " [%d] - \"%s\"", index, str )
 }
 
-// short cut for the console
-// script gp()[0].Die( gp()[1] )
-#if SERVER || CLIENT
+
+void function PrintIntArray( array<int> arr )
+{
+	printf( "%s() - len:%d  %s", FUNC_NAME(), arr.len(), string( arr ) )
+	foreach ( int index, int intVal in arr )
+		printf( " [%d] - %d", index, intVal )
+}
+
+void function PrintFloatArray( array<float> arr )
+{
+	printf( "%s() - len:%d  %s", FUNC_NAME(), arr.len(), string( arr ) )
+	foreach ( int index, float val in arr )
+		printf( " [%d] - %f", index, val )
+}
+
+
+
+
+
 array<entity> function gp()
 {
 	return GetPlayerArray()
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+array<entity> function getnpcs( entity player )
+{
+	return GetNPCArrayOfTeam( player.GetTeam() )
+}
+
+
+
+
 entity function ge( int ornull index = null )
 {
 	if ( index != null )
@@ -305,11 +175,11 @@ entity function ge( int ornull index = null )
 
 	return results.hitEnt
 }
-#endif
 
 
-#if SERVER || CLIENT
-vector function EyeTraceVec( entity player = null )
+
+
+vector function EyeTraceVec( entity player = null, bool debugDraws = false, int traceMask = 0, int traceGroup = 0, float debugDrawTime = 120 )
 {
 	if ( player == null )
 		player = gp()[0]
@@ -318,87 +188,160 @@ vector function EyeTraceVec( entity player = null )
 	vector traceDir   = player.GetViewVector()
 	vector traceEnd   = traceStart + (traceDir * 50000)
 
-	TraceResults results = TraceLine( traceStart, traceEnd, player )
+	TraceResults results = TraceLine( traceStart, traceEnd, player, traceMask, traceGroup )
+
+#if DEV
+		if( debugDraws )
+		{
+			DrawStar( results.endPos, 16,debugDrawTime, true )
+		}
+#endif
 
 	return results.endPos
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+
 void function PrintLoc()
 {
 	vector origin    = GetPlayerArray()[0].GetOrigin()
-	//vector origin = GetPlayerCrosshairOriginRaw( GetPlayerArray()[0] )
+	
 	vector eyeAngles = GetPlayerArray()[0].EyeAngles()
 	eyeAngles.x = 0
 	printt( "xxx: " + origin + ", " + eyeAngles + "" )
 }
-#endif
 
-//////////////////////////
-//////////////////////////
-//// Random Dev Stuff ////
-//////////////////////////
-//////////////////////////
-#if CLIENT
+
+
+
+
+
+
+
 void function BatchClientsideExecutionTest( vector refPoint, vector ang, array<ItemFlavor> characterPool )
 {
 	int count = 0
-	foreach( ItemFlavor attackerCharacter in characterPool )
+	foreach ( ItemFlavor attackerCharacter in characterPool )
 	{
 		ItemFlavor attackerSkin = GetValidItemFlavorsForLoadoutSlot( EHI_null, Loadout_CharacterSkin( attackerCharacter ) ).getrandom()
-		foreach( ItemFlavor execution in GetValidItemFlavorsForLoadoutSlot( EHI_null, Loadout_CharacterExecution( attackerCharacter ) ) )
+		foreach ( ItemFlavor execution in GetValidItemFlavorsForLoadoutSlot( EHI_null, Loadout_CharacterExecution( attackerCharacter ) ) )
 		{
 			ItemFlavor victimCharacter = characterPool.getrandom()
 			ItemFlavor victimSkin      = GetValidItemFlavorsForLoadoutSlot( EHI_null, Loadout_CharacterSkin( victimCharacter ) ).getrandom()
-			//delaythread(1.0 + count * 0.15)
+			
 			delaythread(1.1) ClientsideExecutionTest( refPoint + count * AnglesToForward( ang ) * 180, attackerCharacter, attackerSkin, victimCharacter, victimSkin, execution )
 			count++
 		}
 	}
 }
-void function ClientsideExecutionTestInspiration( vector refPoint, entity attackerInspiration, entity victimInspiration, string whichCamera = "none" )
+
+void function ClientsideExecutionTestInspiration( vector refPoint, entity attackerInspiration, entity victimInspiration, string whichCamera = "none", string weight = "none" )
 {
 	ItemFlavor attackerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( attackerInspiration ), Loadout_Character() )
 	ItemFlavor attackerSkin      = LoadoutSlot_GetItemFlavor( ToEHI( attackerInspiration ), Loadout_CharacterSkin( attackerCharacter ) )
 	ItemFlavor victimCharacter, victimSkin
+
 	if ( victimInspiration == null )
 	{
-		array<entity> players = GetPlayerArray()
-		players.fastremovebyvalue( GetLocalClientPlayer() )
-		if ( players.len() > 0 )
+		if ( weight == "manual" ) 
 		{
-			victimInspiration = players.getrandom()
+			array<entity> players = GetPlayerArray()
+			players.fastremovebyvalue( GetLocalClientPlayer() )
+			if ( players.len() > 0 )
+			{
+				victimInspiration = players.getrandom()
+				victimCharacter = LoadoutSlot_GetItemFlavor( ToEHI( victimInspiration ), Loadout_Character() )
+				victimSkin = LoadoutSlot_GetItemFlavor( ToEHI( victimInspiration ), Loadout_CharacterSkin( victimCharacter ) )
+			}
+			else
+			{
+				Warning( "No other player / bot in game to clone!" )
+				return
+			}
 		}
-	}
-	if ( victimInspiration == null )
-	{
-		victimCharacter = GetAllCharacters().getrandom()
-		victimSkin = GetValidItemFlavorsForLoadoutSlot( EHI_null, Loadout_CharacterSkin( victimCharacter ) ).getrandom()
+		else 
+		{
+			array<ItemFlavor> characters = GetAllCharacters()
+			array<ItemFlavor> sizedCharacters = []
+			array<ItemFlavor> sizedSkins = []
+
+			foreach ( character in characters )
+			{
+				asset setFile = CharacterClass_GetSetFile( character )
+				string rigWeight = GetGlobalSettingsString( setFile, "bodyModelRigWeight" )
+
+				if ( ( rigWeight == weight || weight == "random" ) )
+				{
+					ItemFlavor sizedSkin = GetValidItemFlavorsForLoadoutSlot( EHI_null, Loadout_CharacterSkin( character ) ).getrandom()
+					asset bodyModel = CharacterSkin_GetBodyModel( sizedSkin )
+					asset armsModel = CharacterSkin_GetArmsModel( sizedSkin )
+
+					
+					if ( bodyModel != "" && armsModel != "" )
+					{
+						sizedCharacters.append( character )
+						sizedSkins.append( sizedSkin )
+					}
+				}
+			}
+
+			if ( sizedCharacters.len() > 0 )
+			{
+				int randomIndex = RandomIntRange( 0, sizedCharacters.len() )
+				victimCharacter = sizedCharacters[randomIndex]
+				victimSkin = sizedSkins[randomIndex]
+			}
+			else
+			{
+				Warning( "Couldn't find any characters of this type!" )
+				return
+			}
+		}
 	}
 	else
 	{
 		victimCharacter = LoadoutSlot_GetItemFlavor( ToEHI( victimInspiration ), Loadout_Character() )
 		victimSkin = LoadoutSlot_GetItemFlavor( ToEHI( victimInspiration ), Loadout_CharacterSkin( victimCharacter ) )
 	}
+
 	ItemFlavor attackerExecution = LoadoutSlot_GetItemFlavor( ToEHI( attackerInspiration ), Loadout_CharacterExecution( attackerCharacter ) )
 	ClientsideExecutionTest( refPoint, attackerCharacter, attackerSkin, victimCharacter, victimSkin, attackerExecution, whichCamera )
 }
-void function ClientsideExecutionTest(
-		vector refPoint,
-		ItemFlavor attackerCharacter, ItemFlavor attackerSkin,
-		ItemFlavor victimCharacter, ItemFlavor victimSkin,
-		ItemFlavor attackerExecution, string whichCamera = "none" )
+
+void function dev_finisherfov( float fov )
 {
-	entity attacker = CreateClientSidePropDynamic( refPoint, <0, 0, 0>, $"mdl/dev/empty_model.rmdl" )
-	entity victim   = CreateClientSidePropDynamic( refPoint, <0, 0, 0>, $"mdl/dev/empty_model.rmdl" )
+	if ( fov > 0.0 && fov < 180.0 )
+		file.dev_finisherFOV = fov
+	else
+		Warning( "Dev_FinisherFOV - FOV must be in the range of 1 to 179" )
+}
+
+void function ClientsideExecutionTest(
+vector refPoint,
+ItemFlavor attackerCharacter, ItemFlavor attackerSkin,
+ItemFlavor victimCharacter, ItemFlavor victimSkin,
+ItemFlavor attackerExecution, string whichCamera = "none" )
+{
+	entity attacker = CreateClientSidePropDynamic( refPoint, <0, 0, 0>, EMPTY_MODEL )
+	entity victim   = CreateClientSidePropDynamic( refPoint, <0, 0, 0>, EMPTY_MODEL )
 	entity camera   = null
 
 	CharacterSkin_Apply( attacker, attackerSkin )
 	CharacterSkin_Apply( victim, victimSkin )
 
 	float fov = 70.0
+
+	if ( whichCamera == "attacker" || whichCamera == "victim" )
+	{
+		fov = file.dev_finisherFOV
+		if ( fov == 0.0 )
+		{
+			fov = 70.0
+			Warning( "Using default fov = 70 - Type into console: script_client dev_finisherfov( x ) ... x = AE_SV_FOV in the animation event in bakery" )
+		}
+	}
+
 	switch( whichCamera )
 	{
 		case "attacker":
@@ -418,7 +361,7 @@ void function ClientsideExecutionTest(
 		case "orbit":
 		{
 			camera = CreateClientSidePointCamera( attacker.GetOrigin(), attacker.GetAngles(), fov )
-			//camera.SetParent( attacker, "ref", false, 0.0 )
+			
 			break
 		}
 	}
@@ -455,7 +398,7 @@ void function ClientsideExecutionTest(
 		GetLocalClientPlayer().SetMenuCameraEntity( camera )
 	}
 
-	if ( whichCamera == "delay" ) // lol
+	if ( whichCamera == "delay" ) 
 		wait 2.2
 
 	attacker.Anim_PlayWithRefPoint( attackerAnimSeq, refPoint, <0, 0, 0>, 0.0 )
@@ -496,299 +439,275 @@ void function ClientsideExecutionTest(
 	}
 	wait 0.25
 }
-#endif
 
 
-#if SERVER
-void function DEV_TestAnim( entity player, float rate, float cycle )
-{
-	player.Anim_Play( "pt_rodeo_ride_L_return_battery" )
-	//player.Anim_SetInitialTime( 0.0 )
-	//player.Anim_SetPlaybackRate( rate )
-	thread blah1( player, cycle )
-}
-
-void function blah1( entity player, float cycle )
-{
-	EndSignal( player, "DevSignal1" )
-
-	OnThreadEnd( function() {
-		printt( "### blah1 OnThreadEnd" )
-	} )
-
-	PlayAnim( player, "ACT_MP_MENU_READYUP_INTRO" )
-	PlayAnim( player, "ACT_MP_MENU_READYUP_IDLE" )
-
-	//waitthread blah2( player, cycle )
-
-	//thread blah2( player, cycle )
-	//wait 5.0
-	//player.Signal( "DevSignal1" )
-	//player.Anim_Stop()
-}
-void function blah2( entity player, float cycle )
-{
-	OnThreadEnd( function() {
-		printt( "### blah2 OnThreadEnd" )
-	} )
-	//player.EndSignal( "DevSignal1" )
-	//while( true )
-	//{
-	//	player.SetCycle( cycle )
-	//	WaitFrame()
-	//}
-	WaitForever()
-}
-
-void function DEV_ModelScaleTest()
-{
-	entity ent = CreateEntity( "prop_physics" )
-	ent.SetValueForModelKey( $"mdl/weapons/grenades/m20_f_grenade_projectile.rmdl" )
-	ent.SetModelScale( 10.0 )
-	ent.SetOrigin( gp()[0].GetOrigin() + <0, 0, 300> )
-	DispatchSpawn( ent )
-	ent.SetModelScale( 10.0 )
-}
-#endif
-
-//////////////////////////////
-//////////////////////////////
-//// Dev Respawn Commands ////
-//////////////////////////////
-//////////////////////////////
-#if SERVER
-struct {
-	string behaviourOverride = "off"
-} devRespawnState
-
-bool ornull function DevRespawnGetPlayerEliminationOverride( entity player )
-{
-	switch( devRespawnState.behaviourOverride )
-	{
-		case "allow":
-			return false // not eliminated
-
-		case "deny":
-			return true // eliminated
-
-		case "bots":
-			if ( player.IsBot() )
-			{
-				return false // not eliminated
-			}
-			break
-	}
-	return null // don't override
-}
-
-void function DevRespawnPlayer( entity player, bool shouldForce, void functionref( entity, int ) devCallbackFunc = null, int devIndex = -1 )
-{
-	if ( shouldForce && IsAlive( player ) )
-	{
-		player.Die( null, null, { damageSourceId = eDamageSourceId.damagedef_suicide } )
-
-		if( IsFiringRangeGameMode() || Gamemode() == eGamemodes.fs_dm )
-			return
-
-		wait 1.0
-	}
-	if ( !IsAlive( player ) )
-	{
-		player.p.respawnPodLanded = true // pretend this is a valid survival respawn
-		thread _DelayUnsetRespawnPodLanded( player )
-		//player.p.hasMatchParticipationEnded = false // they're still going!
-		//player.p.lastDeathTime = -1.0
-		ClearPlayerEliminated( player )
-		DecideRespawnPlayer( player, false )
-	}
-	if ( devCallbackFunc != null )
-	{
-		devCallbackFunc( player, devIndex )
-	}
-}
-
-void function _DelayUnsetRespawnPodLanded( entity player )
-{
-	player.EndSignal( "OnDestroy" )
-	WaitEndFrame()
-	player.p.respawnPodLanded = false
-}
-
-void function DEV_RespawnPlayersBySpecifiers( array<string> specifiers, entity primaryPlayer = null, void functionref( entity, int ) devCallbackFunc = null )
-{
-	if ( specifiers.len() == 0 )
-	{
-		specifiers.append( "me" )
-	}
-	if ( primaryPlayer == null )
-		primaryPlayer = GetPlayerArray()[0]
-
-	array<entity> playersToRespawnList = []
-	foreach ( string specifier in specifiers )
-	{
-		switch( specifier )
-		{
-			case "me":
-				playersToRespawnList.append( primaryPlayer )
-				break
-
-			case "all":
-				foreach( entity player in GetPlayerArray() )
-				{
-					playersToRespawnList.append( player )
-				}
-				break
-
-			case "alldead":
-				foreach( entity player in GetPlayerArray() )
-				{
-					if ( !IsAlive( player ) )
-					{
-						playersToRespawnList.append( player )
-					}
-				}
-				break
-
-			case "random":
-				array<entity> randomCandidates = []
-				foreach( entity player in GetPlayerArray() )
-				{
-					if ( !playersToRespawnList.contains( player ) )
-					{
-						randomCandidates.append( player )
-					}
-				}
-				if ( randomCandidates.len() > 0 )
-				{
-					playersToRespawnList.append( randomCandidates[ RandomInt( randomCandidates.len() ) ] )
-				}
-				break
-
-			case "randomdead":
-				array<entity> randomCandidates = []
-				foreach( entity player in GetPlayerArray() )
-				{
-					if ( !IsAlive( player ) && !playersToRespawnList.contains( player ) )
-					{
-						randomCandidates.append( player )
-					}
-				}
-				if ( randomCandidates.len() > 0 )
-				{
-					playersToRespawnList.append( randomCandidates[ RandomInt( randomCandidates.len() ) ] )
-				}
-				break
-
-			case "bots":
-				foreach( entity player in GetPlayerArray() )
-				{
-					if ( player.IsBot() )
-					{
-						playersToRespawnList.append( player )
-					}
-				}
-				break
-
-			case "deadbots":
-				foreach( entity player in GetPlayerArray() )
-				{
-					if ( !IsAlive( player ) && player.IsBot() )
-					{
-						playersToRespawnList.append( player )
-					}
-				}
-				break
-
-			case "allies":
-				foreach( entity player in GetPlayerArrayOfTeam( primaryPlayer.GetTeam() ) )
-				{
-					playersToRespawnList.append( player )
-				}
-				break
-
-			case "enemies":
-				foreach( entity player in GetPlayerArrayOfEnemies( primaryPlayer.GetTeam() ) )
-				{
-					playersToRespawnList.append( player )
-				}
-				break
-
-			default:
-				Dev_PrintMessage( primaryPlayer, "Invalid usage of respawn", "Please specify zero or more of: me, all, alldead, random, randomdead, bots, deadbots, allies, enemies" )
-		}
-	}
-	array<entity> uniquePlayersToRespawnList = []
-	table<entity, bool> playersAlreadyRespawned
-	foreach( entity player in playersToRespawnList )
-	{
-		if ( !(player in playersAlreadyRespawned) )
-		{
-			playersAlreadyRespawned[player] <- true
-			uniquePlayersToRespawnList.append( player )
-			thread DevRespawnPlayer( player, true, devCallbackFunc, uniquePlayersToRespawnList.len() )
-		}
-	}
-	//return uniquePlayersToRespawnList
-}
-void function DEV_RespawnAllPlayersAndPutThemInALineAndGiveRandomSurvivalStuff( bool circle = false )
-{
-	entity primaryPlayer = GetPlayerArray()[0]
-	vector pos           = primaryPlayer.GetOrigin()
-	vector dir           = AnglesToForward( primaryPlayer.EyeAngles() )
-	dir.z = 0
-	dir = Normalize( dir )
-	DEV_RespawnPlayersBySpecifiers( [ "all" ], null, void function( entity ply, int i ) : ( pos, dir, circle ) {
-		svGlobal.levelEnt.Signal( "SlowMo" )
-		if ( circle )
-		{
-			float r = float(i) / float(GetPlayerArray().len()) * 2 * PI
-			ply.SetOrigin( pos + 500.0 * <sin( r ), cos( r ), 0.0> )
-		}
-		else
-		{
-			ply.SetOrigin( pos + 120.0 * i * dir )
-		}
-		//GiveSurvivalClass( ply, RandomIntRange( 0, GetNumPilotLoadouts() ) )
-		// todo(dw): give random survival class
-		// todo(dw): give random weapon with random mods with appropriate ammo
-	} )
-}
-
-bool function ClientCommand_Respawn( entity commandPlayer, array<string> argList )
-{
-	if ( GetConVarInt( "sv_cheats" ) != 1 )
-		return true
-
-	thread DEV_RespawnPlayersBySpecifiers( argList, commandPlayer )
-	return true
-}
-
-bool function ClientCommand_SetRespawnOverride( entity commandPlayer, array<string> al )
-{
-	if ( GetConVarInt( "sv_cheats" ) != 1 )
-		return true
-
-	if ( al.len() != 1 || !(al[0] == "off" || al[0] == "allow" || al[0] == "deny" || al[0] == "bots") )
-	{
-		Dev_PrintMessage( commandPlayer, "Invalid usage of set_respawn_override", "Please pass one of: off, allow, deny, bots" )
-		return false
-	}
-	devRespawnState.behaviourOverride = al[0]
-	foreach( entity player in GetPlayerArray() )
-	{
-		thread DevRespawnPlayer( player, false ) // check to see if dead players should be respawned using new rules
-	}
-	return true
-}
-#endif
 
 
-///////////////////////////////
-///////////////////////////////
-//// Screen Alignment Tool ////
-///////////////////////////////
-///////////////////////////////
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 var DEV_screenAlignmentTopo = null
 var DEV_screenAlignmentRui = null
 var function DEV_ToggleScreenAlignmentTool()
@@ -810,30 +729,30 @@ var function DEV_ToggleScreenAlignmentTool()
 	RuiSetResolution( DEV_screenAlignmentRui, float( screenSize.width ), float( screenSize.height ) )
 	return DEV_screenAlignmentRui
 }
-#endif
 
 
 
 
 
-///////////////////////////
-///////////////////////////
-//// RUI Preview Setup ////
-///////////////////////////
-///////////////////////////
-// Usage:
-//     script_client thread DEV_PreviewScreenRUI( $"ui/gcard_badge_warlord.rpak", [255,255,255,125] )
-//     script_client DEV_HidePreviewRUIs()
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
 void function DEV_HidePreviewRUIs()
 {
 	Signal( clGlobal.levelEnt, "DEV_PreviewScreenRUI" )
 	Signal( clGlobal.levelEnt, "DEV_PreviewWorldRUI" )
 }
-#endif
 
-#if CLIENT
+
+
 void function DEV_PreviewScreenRUI( asset ruiAsset, array<int> bgCol )
 {
 	Signal( clGlobal.levelEnt, "DEV_PreviewScreenRUI" )
@@ -859,13 +778,13 @@ void function DEV_PreviewScreenRUI( asset ruiAsset, array<int> bgCol )
 	}
 	try
 	{
-		//	RuiCreateNested( nestedRui, "doubleNestedInstance", $"ui/double_nested_instance.rpak" )
+		
 	}
 	catch ( e2 )
 	{
-		//
+		
 	}
-	//RuiSetResolution( rui, float( screenSize.width ), float( screenSize.height ) )
+	
 
 	OnThreadEnd( function() : ( topo, rui, nestedRui ) {
 		RuiDestroyNestedIfAlive( rui, "instance" )
@@ -875,9 +794,9 @@ void function DEV_PreviewScreenRUI( asset ruiAsset, array<int> bgCol )
 
 	WaitForever()
 }
-#endif
 
-#if CLIENT
+
+
 void function DEV_PreviewWorldRUI( asset ruiAsset, float width = 100, float height = 100 )
 {
 	Signal( clGlobal.levelEnt, "DEV_PreviewWorldRUI" )
@@ -909,8 +828,8 @@ void function DEV_PreviewWorldRUI( asset ruiAsset, float width = 100, float heig
 		}
 	}
 
-	DebugDrawLine( pos, pos + 50.0 * right, 255, 120, 120, true, 5 )
-	DebugDrawLine( pos, pos + 50.0 * down, 120, 255, 120, true, 5 )
+	DebugDrawLine( pos, pos + 50.0 * right, <255, 120, 120>, true, 5 )
+	DebugDrawLine( pos, pos + 50.0 * down, <120, 255, 120>, true, 5 )
 
 	pos -= 0.5 * width * right
 	pos -= 0.5 * height * down
@@ -942,9 +861,9 @@ void function DEV_PreviewWorldRUI( asset ruiAsset, float width = 100, float heig
 
 	WaitForever()
 }
-#endif
 
-#if CLIENT
+
+
 void function DEV_PreviewCurvedRUI( asset ruiAsset )
 {
 	Signal( clGlobal.levelEnt, "DEV_PreviewScreenRUI" )
@@ -959,7 +878,7 @@ void function DEV_PreviewCurvedRUI( asset ruiAsset )
 		-deg_cos( TITAN_COCKPIT_ROTATION_ANGLE )>,
 		TITAN_COCKPIT_TOPO_RADIUS,
 		TITAN_COCKPIT_RUI_SCREEN_WIDTH,
-				TITAN_COCKPIT_RUI_SCREEN_WIDTH / 1.7665,
+		TITAN_COCKPIT_RUI_SCREEN_WIDTH / 1.7665,
 		TITAN_COCKPIT_RUI_SUBDIV
 	)
 	var rui           = RuiCreate( $"ui/preview_screen_rui.rpak", topo, RUI_DRAW_COCKPIT, RUI_SORT_SCREENFADE + 9002 )
@@ -978,7 +897,7 @@ void function DEV_PreviewCurvedRUI( asset ruiAsset )
 		Announcement_SetPurge( announcement, true )
 		AnnouncementFromClass( GetLocalClientPlayer(), announcement )
 	}
-	//RuiSetResolution( rui, float( screenSize.width ), float( screenSize.height ) )
+	
 
 	OnThreadEnd( function() : ( topo, rui, nestedRui ) {
 		RuiDestroyNestedIfAlive( rui, "instance" )
@@ -988,18 +907,18 @@ void function DEV_PreviewCurvedRUI( asset ruiAsset )
 
 	WaitForever()
 }
-#endif
 
 
 
 
 
-/////////////////////////////////
-/////////////////////////////////
-//// Player Debug Lines Tool ////
-/////////////////////////////////
-/////////////////////////////////
-#if CLIENT
+
+
+
+
+
+
+
 bool isPlayerDebugLinesToolRunning = false
 void function DEV_TogglePlayerDebugLinesTool()
 {
@@ -1021,20 +940,20 @@ void function DEV_PlayerDebugLinesTool_Thread( entity localClientPlayer )
 
 	while( true )
 	{
-		foreach( entity player in GetPlayerArray() )
+		foreach ( entity player in GetPlayerArray() )
 		{
-			DebugDrawLine( player.GetOrigin(), player.EyePosition(), 10, 80, 65, true, 0.0 )
-			DebugDrawLine( player.EyePosition(), player.EyePosition() + 40.0 * AnglesToForward( player.EyeAngles() ), 30, 255, 220, false, 0.0 )
+			DebugDrawLine( player.GetOrigin(), player.EyePosition(), <10, 80, 65>, true, 0.0 )
+			DebugDrawLine( player.EyePosition(), player.EyePosition() + 40.0 * AnglesToForward( player.EyeAngles() ), <30, 255, 220>, false, 0.0 )
 			DebugDrawAxis( player.GetOrigin(), player.GetAngles(), 0.0, 10.0 )
 		}
 
 		WaitFrame()
 	}
 }
-#endif
 
 
-#if CLIENT
+
+
 void function DEV_DumpItems()
 {
 	string fmtStr = "%s,%s,%s,%s,\"%s\",\"%s\"\n"
@@ -1051,7 +970,7 @@ void function DEV_DumpItems()
 	{
 		SpamLog( format( fmtStr,
 			ItemFlavor_GetGUIDString( flav ),
-			ItemFlavor_GetHumanReadableRef( flav ),
+			DEV_ItemFlavor_GetCleanedAssetPath( flav ),
 			DEV_GetEnumStringSafe( "eItemType", ItemFlavor_GetType( flav ) ),
 			ItemFlavor_HasQuality( flav ) ? Localize( ItemFlavor_GetQualityName( flav ) ) : "None",
 			Localize( ItemFlavor_GetLongName( flav ) ),
@@ -1059,4 +978,765 @@ void function DEV_DumpItems()
 		) )
 	}
 }
-#endif
+
+void function DEV_DrawBoundingBox()
+{
+	entity player = GetLocalClientPlayer()
+	RegisterSignal( "DEV_DrawBoundingBox" )
+	Signal( player, "DEV_DrawBoundingBox" )
+	EndSignal( player, "DEV_DrawBoundingBox" )
+
+	bool wasAttackHeld = player.IsInputCommandHeld( IN_ATTACK )
+	vector[4] fourCorners
+	int cornerIdx      = 0
+	while ( cornerIdx < 4 )
+	{
+		WaitFrame()
+
+		if ( cornerIdx == 0 )
+		{
+			fourCorners[0] = EyeTraceVec( GP() )
+			DebugDrawMark( fourCorners[0], 20, COLOR_WHITE, false, 0.0 )
+			DebugDrawMark( fourCorners[0], 20, <120, 120, 120>, true, 0.0 )
+		}
+		else if ( cornerIdx >= 1 )
+		{
+			if ( cornerIdx == 1 )
+			{
+				fourCorners[1] = EyeTraceVec( GP() )
+			}
+			DebugDrawLine( fourCorners[0], fourCorners[1], COLOR_GREEN, false, 0.0 )
+			DebugDrawLine( fourCorners[0], fourCorners[1], <0, 120, 0>, true, 0.0 )
+			vector fwdDir    = Normalize( fourCorners[1] - fourCorners[0] )
+			vector fwdDirAng = VectorToAngles( fwdDir )
+
+			if ( cornerIdx >= 2 )
+			{
+				if ( cornerIdx == 2 )
+				{
+					vector ornull intersection = GetIntersectionOfLineAndPlane(
+						player.EyePosition(), player.EyePosition() + 10000.0 * player.GetViewVector(),
+						fourCorners[0], fwdDir )
+					if ( intersection == null )
+						continue
+					fourCorners[2] = expect vector(intersection)
+				}
+				DebugDrawLine( fourCorners[0], fourCorners[2], COLOR_RED, false, 0.0 )
+				DebugDrawLine( fourCorners[0], fourCorners[2], <120, 0, 0>, true, 0.0 )
+				vector rightDir    = Normalize( fourCorners[2] - fourCorners[0] )
+				vector rightDirAng = VectorToAngles( rightDir )
+
+				if ( cornerIdx == 3 )
+				{
+					vector rightAngInFwdDirSpace = AnglesCompose( AnglesInverse( fwdDirAng ), rightDirAng )
+					float roll                   = rightAngInFwdDirSpace.z
+					vector boxAng                = RotateAnglesAboutAxis( fwdDirAng, fwdDir, roll )
+
+					LineSegment bridgeSegment = GetShortestLineSegmentConnectingLineSegments(
+						player.EyePosition(), player.EyePosition() + 10000.0 * player.GetViewVector(),
+						fourCorners[0], fourCorners[0] + 10000.0 * AnglesToUp( boxAng )
+					)
+					fourCorners[3] = bridgeSegment.end
+					DebugDrawLine( fourCorners[0], fourCorners[3], COLOR_BLUE, false, 0.0 )
+					DebugDrawLine( fourCorners[0], fourCorners[3], <0, 0, 120>, true, 0.0 )
+				}
+			}
+		}
+
+		bool isAttackHeld = player.IsInputCommandHeld( IN_ATTACK )
+		if ( isAttackHeld && !wasAttackHeld )
+			cornerIdx++
+		wasAttackHeld = isAttackHeld
+	}
+
+	vector fwdDir                = Normalize( fourCorners[1] - fourCorners[0] )
+	vector fwdDirAng             = VectorToAngles( fwdDir )
+	vector rightDir              = Normalize( fourCorners[2] - fourCorners[0] )
+	vector rightDirAng           = VectorToAngles( rightDir )
+	vector rightAngInFwdDirSpace = AnglesCompose( AnglesInverse( fwdDirAng ), rightDirAng )
+	float roll                   = rightAngInFwdDirSpace.z
+	vector boxAng                = RotateAnglesAboutAxis( fwdDirAng, fwdDir, roll )
+
+	vector boxCenter = fourCorners[0]
+	boxCenter += 0.5 * (fourCorners[1] - fourCorners[0])
+	boxCenter += 0.5 * (fourCorners[2] - fourCorners[0])
+	boxCenter += 0.5 * (fourCorners[3] - fourCorners[0])
+
+	vector boxSize = <
+	Length( fourCorners[1] - fourCorners[0] ),
+	Length( fourCorners[2] - fourCorners[0] ),
+	Length( fourCorners[3] - fourCorners[0] )
+	>
+	vector boxMaxs = 0.5 * boxSize
+	vector boxMins = -boxMaxs
+
+	DebugDrawRotatedBox( boxCenter, boxMins, boxMaxs, boxAng, COLOR_WHITE, true, 20.0 )
+
+	printf( "BOX!\n\tcenter = <%f, %f, %f>\n\t angle = <%f, %f, %f>\n\t  mins = <%f, %f, %f>\n\t  maxs = <%f, %f, %f>",
+		boxCenter.x, boxCenter.y, boxCenter.z,
+		boxAng.x, boxAng.y, boxAng.z,
+		boxMins.x, boxMins.y, boxMins.z,
+		boxMaxs.x, boxMaxs.y, boxMaxs.z
+	)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+array<entity> function DEV_PrintChildren( entity ent )
+{
+	array<entity> children = []
+	foreach ( entity child in ent.GetChildren() )
+	{
+		printt( child )
+		children.append( child )
+	}
+	return children
+}
+
+int function DEV_PrintChildrenRecursive( entity parentEnt, string prefix = "" )
+{
+	if ( !IsValid( parentEnt ) )
+		return 0
+
+	printt( prefix + parentEnt )
+
+	int rv = 1
+	array<entity> children = parentEnt.GetChildren()
+	foreach ( child in children )
+	{
+		rv += DEV_PrintChildrenRecursive( child, prefix + "|" )
+	}
+
+	return rv
+}
+
+void function DEV_DumpPlayers( string filter = "", float drawDuration = 60 )
+{
+	filter = filter.toupper()
+
+	array<entity> players
+	if ( filter == "SPEC" )
+	{
+		players = GetPlayerArrayIncludingSpectators()
+	}
+	else if ( filter == "ALIVE" )
+	{
+		players = GetPlayerArray_Alive()
+	}
+	else
+	{
+		players = GetPlayerArray()
+		filter = ""
+	}
+
+	string plural = players.len() > 1 ? "players" : "player"
+
+	printt( "---", FUNC_NAME(), filter, players.len(), plural, "total ---" )
+	if ( players.len() == 0 )
+		return
+
+	players.sort(
+		int function( entity lhs, entity rhs )
+		{
+			int rv = 0
+
+			int lhsTeam = lhs.GetTeam()
+			int rhsTeam = rhs.GetTeam()
+			if ( lhsTeam == rhsTeam )
+			{
+				int entIndexDelta = lhs.GetEntIndex() - rhs.GetEntIndex()
+				rv = entIndexDelta
+			}
+			else
+			{
+				int teamDelta = lhsTeam - rhsTeam
+				rv = teamDelta
+			}
+
+			return ClampInt( rv, -1, 1 )
+		}
+	)
+
+	int lastTeam = TEAM_INVALID
+	foreach( idx, player in players )
+	{
+		int playerTeam = player.GetTeam()
+		if ( playerTeam == TEAM_INVALID )
+		{
+			Warning( "%s is on TEAM_INVALID", string( player ) )
+			return
+		}
+
+		if ( playerTeam != lastTeam )
+		{
+			int teamCount = GetTeamPlayerCount( playerTeam )
+			string teamName = string( playerTeam )
+			if ( playerTeam == TEAM_SPECTATOR )
+				teamName = format( "SPECTATOR (%s)", teamName )
+
+			plural = teamCount > 1 ? "players" : "player"
+
+			printt( "" )
+			printt( "Team", teamName, "has", teamCount, plural )
+			lastTeam = playerTeam
+		}
+
+		string playerPrefix = "    "
+		if ( player.IsBot() )
+			playerPrefix = " BOT"
+
+
+			if ( player == GetLocalViewPlayer() && player == GetLocalClientPlayer() )
+				playerPrefix = "LCVP"
+			else if ( player == GetLocalViewPlayer() )
+				playerPrefix = " LVP"
+			else if ( player == GetLocalClientPlayer() )
+				playerPrefix = " LCP"
+
+			vector randomOffset = 10 * GetRandomUnitVector()
+			DebugDrawText( player.GetOrigin() + randomOffset, string( player.GetEntIndex() ), false, drawDuration )
+
+
+		printf( "  %s [%3d] %-20s", playerPrefix, player.GetEntIndex(), player.GetPlayerName() )
+	}
+}
+
+
+
+
+void function DEV_FreeCamBasedOnSun( vector toSunDir, entity target, float horzDist, float elevation, float fov )
+{
+	entity ply = GetLocalClientPlayer()
+
+	if ( Distance( ply.EyePosition(), GetFinalClientMainViewOrigin() ) < 20.0 )
+		ply.ClientCommand( "freecam" )
+
+	vector freecamPos = target.GetWorldSpaceCenter() + FlattenVec( toSunDir ) * horzDist + <0, 0, elevation>
+	vector freecamAng = VectorToAngles( Normalize( target.GetWorldSpaceCenter() - freecamPos ) )
+	ply.ClientCommand( format( "freecam_setpos %f %f %f", freecamPos.x, freecamPos.y, freecamPos.z ) )
+	ply.ClientCommand( format( "freecam_setang %f %f %f", freecamAng.x, freecamAng.y, freecamAng.z ) )
+
+	ply.ClientCommand( format( "set fov %f", fov ) )
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

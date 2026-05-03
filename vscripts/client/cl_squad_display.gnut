@@ -13,6 +13,9 @@ global function UICallback_BlockSquadMate
 global function UICallback_PopulatePlayerStatsRui
 global function GetTeammateAtIndex
 
+global function Cl_Squad_GetTeammates
+global function CL_Squad_GetPlayerInfo
+
 global struct PlayerInfo
 {
 	EHI ehi
@@ -21,6 +24,7 @@ global struct PlayerInfo
 	string hardware
 	entity player
 	int    team
+	float  lastTimeActive
 
 	string unspoofedUid
 }
@@ -43,7 +47,7 @@ void function Cl_SquadDisplay_Init()
 
 void function OnPlayerCreated( entity player )
 {
-	                                                           
+	
 
 	OnPlayerTeamChanged( player, TEAM_UNASSIGNED, player.GetTeam() )
 }
@@ -55,8 +59,8 @@ void function OnPlayerTeamChanged( entity player, int oldTeam, int newTeam )
 	if ( IsValid( clientPlayer ) )
 		playerTeam = clientPlayer.GetTeam()
 
-	                                       
-	                                                                                         
+	
+	
 
 	EHI ehi = ToEHI( player )
 
@@ -64,14 +68,8 @@ void function OnPlayerTeamChanged( entity player, int oldTeam, int newTeam )
 	{
 		if ( !( ehi in file.teammates ) )
 		{
-			PlayerInfo info
-			info.player = player
-			info.uid = player.GetPlatformUID()
-			info.eaid = ""  // stub
-			info.hardware = ""  // stub
-			info.unspoofedUid = ""  // stub
-			info.team = player.GetTeam()
-			info.ehi = ehi
+			PlayerInfo info = CL_Squad_GetPlayerInfo( player )
+
 			file.teammates[ ehi ] <- info
 		}
 	}
@@ -80,6 +78,21 @@ void function OnPlayerTeamChanged( entity player, int oldTeam, int newTeam )
 		if ( ehi in file.teammates )
 			delete file.teammates[ ehi ]
 	}
+}
+
+PlayerInfo function CL_Squad_GetPlayerInfo( entity player )
+{
+	PlayerInfo info
+	info.player = player
+	info.uid = player.GetUserID()
+	info.eaid = player.GetEadpUserIdStr()
+	info.hardware = player.GetUnspoofedHardware()
+	info.unspoofedUid = player.GetUnspoofedPlatformUserIdStr()
+	info.team = player.GetTeam()
+	info.ehi = ToEHI( player )
+	info.lastTimeActive = Time()
+
+	return info
 }
 
 void function UICallback_DestroyAllClientGladCardData()
@@ -119,13 +132,39 @@ void function UICallback_UpdateGladCardVisibility( var panel, var elem, int team
 		if ( info == null )
 			Hud_Hide( elem )
 
-                   
-			if ( IsFallLTM() )
-			{
-				Hud_Hide( elem )
-			}
-        
+
+
+
+
+
+
 	}
+}
+
+array< PlayerInfo > function Cl_Squad_GetTeammates( bool includeLocalPlayer = false )
+{
+	PlayerInfo localClientPlayerInfo = CL_Squad_GetPlayerInfo( GetLocalClientPlayer() )
+
+	array< PlayerInfo > teammates
+
+	foreach ( data in file.teammates )
+	{
+		teammates.push( data )
+	}
+
+	teammates.sort( int function( PlayerInfo a, PlayerInfo b ) {
+		if ( a.lastTimeActive > b.lastTimeActive )
+			return -1
+		if ( b.lastTimeActive > a.lastTimeActive )
+			return 1
+
+		return 0
+	} )
+
+	if( includeLocalPlayer )
+		teammates.insert( 0, localClientPlayerInfo )
+
+	return teammates
 }
 
 PlayerInfo ornull function GetTeammateAtIndex( int teamMemberIndex )
@@ -143,8 +182,33 @@ PlayerInfo ornull function GetTeammateAtIndex( int teamMemberIndex )
 		PlayerInfo teammateInfo
 
 		bool foundTeammate = false
-		int i=0
-		foreach ( info in teamMembers )
+		int i = 0
+		int expectedSquadSize = GetExpectedSquadSize( player ) - 1 
+
+		array< PlayerInfo > teamMembersFiltered
+		int localPlayerOrigionalTeam = AllianceProximity_GetOriginalPlayerTeam_FromPlayerEHI( ToEHI( player ) )
+
+		foreach ( playerEhi, info in teamMembers )
+		{
+			bool shouldPush = true
+
+			if( AllianceProximity_IsUsingAlliances() )
+				shouldPush = localPlayerOrigionalTeam == AllianceProximity_GetOriginalPlayerTeam_FromPlayerEHI( playerEhi )
+
+			if( shouldPush )
+				teamMembersFiltered.push( info )
+		}
+
+		teamMembersFiltered.sort( int function( PlayerInfo a, PlayerInfo b ) {
+			if ( a.lastTimeActive > b.lastTimeActive )
+				return -1
+			if ( b.lastTimeActive > a.lastTimeActive )
+				return 1
+
+			return 0
+		} )
+
+		foreach ( info in teamMembersFiltered )
 		{
 			if ( index == i++ )
 			{
@@ -170,7 +234,7 @@ void function UICallback_PopulateClientGladCard( var panel, var elem, var muteBu
 	EHI ehi = player.GetEncodedEHandle()
 	string hardware
 
-	startTime = Time()	                                                                                                         
+	startTime = Time()	
 
 	var rui = Hud_GetRui( elem )
 	RuiSetBool( rui, "isEmpty", true )
@@ -178,7 +242,16 @@ void function UICallback_PopulateClientGladCard( var panel, var elem, var muteBu
 
 	if ( displayType == eGladCardPresentation.FULL_BOX )
 	{
-		bool ranked = IsRankedGame() || IsArenasRankedGame()
+		bool ranked = false
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
+			ranked = true
+
+
+
+
+
+
+
 		float scale = float( GetScreenSize().height ) / 1080.0
 		if ( muteButton != null )
 		{
@@ -200,13 +273,13 @@ void function UICallback_PopulateClientGladCard( var panel, var elem, var muteBu
 	{
 		PlayerInfo ornull teammateInfo = GetTeammateAtIndex( teamMemberIndex )
 
-                   
-			if ( IsFallLTM() )
-			{
-				if ( teammateInfo != null && expect PlayerInfo( teammateInfo ).ehi != GetLocalClientPlayer().GetEncodedEHandle() )
-					teammateInfo = null
-			}
-        
+
+
+
+
+
+
+
 
 		if ( teammateInfo != null )
 		{
@@ -221,7 +294,7 @@ void function UICallback_PopulateClientGladCard( var panel, var elem, var muteBu
 
 			if ( IsValid( player ) )
 			{
-				isMuted = false  // stub
+				isMuted = player.IsVoiceAndTextMuted()
 				isPingMuted = PlayerIsPingMuted( player )
 
 				SetIsMuted( muteButton, isMuted )
@@ -235,15 +308,15 @@ void function UICallback_PopulateClientGladCard( var panel, var elem, var muteBu
 
 				switch ( reportStyle )
 				{
-					case 1:                  
-						canReport = true  // stub
+					case 1: 
+						canReport = CrossplayUserOptIn() ? true : teammateInfo.hardware == GetLocalClientPlayer().GetUnspoofedHardware()
 						break
 
-					case 2:               
+					case 2: 
 						canReport = true
 						break
 
-					case 0:            
+					case 0: 
 					default:
 						canReport = false
 				}
@@ -262,15 +335,14 @@ void function UICallback_PopulateClientGladCard( var panel, var elem, var muteBu
 
 			SetIsVisible( blockButton, CrossplayUserOptIn() && !IsUserOnSamePlatform( teammateInfo.hardware ) )
 
-			// obfuscatedID not available in EHIScriptStruct
-			// EHIScriptStruct teammateEHISS
-			// if ( EEHHasValidScriptStruct( ehi ) )
-			// 	teammateEHISS = GetEHIScriptStruct( ehi )
-			// if ( GetCurrentPlaylistVarBool( "showPlayerObfuscatedID", true ) && teammateEHISS.obfuscatedID != "" )
-			// {
-			// 	Hud_SetText( obfuscatedID, Localize( "#DEATH_SCREEN_ID", teammateEHISS.obfuscatedID ) )
-			// 	SetIsVisible( obfuscatedID, true )
-			// }
+			EHIScriptStruct teammateEHISS
+			if ( EEHHasValidScriptStruct( ehi ) )
+				teammateEHISS = GetEHIScriptStruct( ehi )
+			if ( GetCurrentPlaylistVarBool( "showPlayerObfuscatedID", true ) && teammateEHISS.obfuscatedID != "" )
+			{
+				Hud_SetText( obfuscatedID, Localize( "#DEATH_SCREEN_ID", teammateEHISS.obfuscatedID ) )
+				SetIsVisible( obfuscatedID, true )
+			}
 
 			if ( DeathScreenSummaryShouldFadeIn() )
 			{
@@ -286,7 +358,7 @@ void function UICallback_PopulateClientGladCard( var panel, var elem, var muteBu
 			SetDefaultTooltipData( blockButton, "#BLOCK_SQUAD_MATE" )
 
 			if ( overlayButton != null )
-				RunUIScript( "ClientCallback_UpdatePlayerOverlayButton", panel, overlayButton, GetPlayerNameFromEHI( ehi ), teammateInfo.uid, teammateInfo.hardware, teammateInfo.eaid, teammateInfo.unspoofedUid, teamMemberIndex )
+				RunUIScript( "ClientCallback_UpdatePlayerOverlayButton", panel, overlayButton, GetDisplayablePlayerNameFromEHI( ehi ), teammateInfo.uid, teammateInfo.hardware, teammateInfo.eaid, teammateInfo.unspoofedUid, teamMemberIndex )
 
 			hardware = teammateInfo.hardware
 		}
@@ -307,7 +379,7 @@ void function UICallback_PopulateClientGladCard( var panel, var elem, var muteBu
 	}
 	else
 	{
-		hardware = ""  // stub
+		hardware = player.GetUnspoofedHardware()
 	}
 
 	if ( displayType == eGladCardPresentation.FRONT_CLEAN )
@@ -345,7 +417,7 @@ void function UICallback_PopulateClientGladCard( var panel, var elem, var muteBu
 	}
 
 	RuiSetGameTime( rui, "startTime", startTime )
-	RuiSetString( rui, "playerName", GetPlayerNameFromEHI( ehi ) )
+	RuiSetString( rui, "playerName", GetDisplayablePlayerNameFromEHI( ehi ) )
 
 	ChangeNestedGladiatorCardOwner( nestedGCHandle, ehi, Time(), eGladCardLifestateOverride.ALIVE )
 }
@@ -365,7 +437,7 @@ void function FadeInButtonElement( var button, float fadeInTime, float fadeInDel
 
 void function UICallback_PlayerStatusUpdateThread( var panel, var elem, var muteButton, var mutePingButton, var reportButton, var inviteButton, var overlayButton, var disconnectedElem, int teamMemberIndex )
 {
-	                                                                      
+	
 	thread _PlayerStatusUpdateThread( panel, elem, muteButton, mutePingButton, reportButton, inviteButton, overlayButton, disconnectedElem, teamMemberIndex )
 }
 
@@ -377,7 +449,7 @@ void function _PlayerStatusUpdateThread( var panel, var statsPanel, var muteButt
 	PlayerInfo ornull info = GetTeammateAtIndex( teamMemberIndex )
 	if ( info == null )
 	{
-		                                        
+		
 		if ( teamMemberIndex == 0 )
 			thread UpdateMicStatus( GetLocalClientPlayer(), Hud_GetRui( statsPanel ) )
 
@@ -403,7 +475,7 @@ void function _PlayerStatusUpdateThread( var panel, var statsPanel, var muteButt
 			SetIsVisible( inviteButton, connected )
 
 			var statsRui = Hud_GetRui( statsPanel )
-			                                                            
+			
 			_PopulatePlayerStatsRui( statsPanel, teamMemberIndex, connected )
 
 			wasConnected = connected
@@ -505,7 +577,7 @@ void function UICallback_ToggleMute( var button )
 		TogglePlayerVoiceAndTextMute( player )
 		var rui = Hud_GetRui( button )
 
-		bool isMuted = false  // stub
+		bool isMuted = player.IsVoiceAndTextMuted()
 
 		RuiSetBool( rui, "isMuted", isMuted )
 
@@ -522,27 +594,13 @@ void function UICallback_ToggleMutePing( var button )
 {
 	int index = int( Hud_GetScriptID( button ) )
 	entity player
-	player = GetLocalClientPlayer()
-	int team = player.GetTeam()
-	table<EHI, PlayerInfo> teamMembers = file.teammates
 
-	index = index-1
-	PlayerInfo teammateInfo
+	PlayerInfo ornull teammateInfo = GetTeammateAtIndex( index )
 
-	bool foundTeammate = false
-	int i=0
-	foreach ( info in teamMembers )
+	if ( teammateInfo != null )
 	{
-		if ( index == i++ )
-	{
-			teammateInfo = info
-			foundTeammate = true
-			break
-		}
-	}
+		expect PlayerInfo( teammateInfo )
 
-	if ( foundTeammate )
-	{
 		player = GetPlayerFromTeammateInfo( teammateInfo )
 
 		if ( !IsValid( player ) )
@@ -567,29 +625,14 @@ void function UICallback_ToggleMutePing( var button )
 void function UICallback_InviteSquadMate( var button )
 {
 	int index = int( Hud_GetScriptID( button ) )
-	entity player
-	player = GetLocalClientPlayer()
-	int team = player.GetTeam()
-	table<EHI, PlayerInfo> teamMembers = file.teammates
 
-	index = index-1
-	PlayerInfo teammateInfo
+	PlayerInfo ornull teammateInfo = GetTeammateAtIndex( index )
 
-	bool foundTeammate = false
-	int i=0
-	foreach ( info in teamMembers )
+	if ( teammateInfo != null )
 	{
-		if ( index == i++ )
-		{
-			teammateInfo = info
-			foundTeammate = true
-			break
-		}
-	}
+		expect PlayerInfo( teammateInfo )
 
-	if ( foundTeammate )
-	{
-		int localHardwareId = GetHardwareFromName( "" )  // stub
+		int localHardwareId = GetHardwareFromName( GetLocalClientPlayer().GetUnspoofedHardware() )
 		if ( localHardwareId != GetHardwareFromName( teammateInfo.hardware ) )
 		{
 			RunUIScript( "ClientToUI_InviteToPlayByEAID", teammateInfo.eaid.tostring() )
@@ -607,62 +650,31 @@ void function UICallback_InviteSquadMate( var button )
 void function UICallback_ReportSquadMate( var button )
 {
 	int index = int( Hud_GetScriptID( button ) )
-	entity player
-	player = GetLocalClientPlayer()
-	int team = player.GetTeam()
-	table<EHI, PlayerInfo> teamMembers = file.teammates
 
-	index = index-1
-	PlayerInfo teammateInfo
+	PlayerInfo ornull playerInfo = GetTeammateAtIndex( index )
 
-	bool foundTeammate = false
-	int i=0
-	foreach ( info in teamMembers )
+	if ( playerInfo != null )
 	{
-		if ( index == i++ )
-	{
-			teammateInfo = info
-			foundTeammate = true
-			break
-		}
-	}
-
-	if ( foundTeammate )
-	{
+		expect PlayerInfo( playerInfo )
 		string friendlyOrEnemy = "friendly"
 
-		int hardwareID = GetHardwareFromName( teammateInfo.hardware )
-		RunUIScript( "ClientToUI_ShowReportPlayerDialog", GetPlayerNameFromEHI( teammateInfo.ehi ), hardwareID, teammateInfo.uid, teammateInfo.eaid, friendlyOrEnemy )
+		int hardwareID = GetHardwareFromName( playerInfo.hardware )
+		RunUIScript( "ClientToUI_ShowReportPlayerDialog", GetDisplayablePlayerNameFromEHI( playerInfo.ehi ), hardwareID, playerInfo.uid, playerInfo.eaid, friendlyOrEnemy )
 	}
 }
 
 void function UICallback_BlockSquadMate( var button )
 {
 	int index = int( Hud_GetScriptID( button ) )
-	entity player
-	player = GetLocalClientPlayer()
-	int team = player.GetTeam()
-	table<EHI, PlayerInfo> teamMembers = file.teammates
 
-	index = index-1
-	PlayerInfo teammateInfo
+	PlayerInfo ornull teammateInfo = GetTeammateAtIndex( index )
 
-	bool foundTeammate = false
-	int i=0
-	foreach ( info in teamMembers )
+	if ( teammateInfo != null )
 	{
-		if ( index == i++ )
-		{
-			teammateInfo = info
-			foundTeammate = true
-			break
-		}
-	}
+		expect PlayerInfo( teammateInfo )
 
-	if ( foundTeammate )
-	{
 		printt( "#EADP UICallback_BlockSquadMate", teammateInfo.ehi, teammateInfo.hardware, teammateInfo.uid, teammateInfo.eaid )
-		RunUIScript( "ClientToUI_ShowBlockPlayerDialog", GetPlayerNameFromEHI( teammateInfo.ehi ), teammateInfo.hardware, teammateInfo.uid, teammateInfo.eaid )
+		RunUIScript( "ClientToUI_ShowBlockPlayerDialog", GetDisplayablePlayerNameFromEHI( teammateInfo.ehi ), teammateInfo.hardware, teammateInfo.uid, teammateInfo.eaid )
 	}
 }
 
@@ -680,26 +692,26 @@ entity function GetPlayerFromTeammateInfo( PlayerInfo teammateInfo )
 
 void function UICallback_PopulatePlayerStatsRui( var panel, int index )
 {
-	                                                          
+	
 	_PopulatePlayerStatsRui( panel, index, true )
 }
 
 void function _PopulatePlayerStatsRui( var cardElem, int index, bool connected )
 {
-	                                                           
+	
 	SquadSummaryData squadSummaryData = GetSquadSummaryData()
 	if ( index >= squadSummaryData.playerData.len() )
 	{
-		                                                 
+		
 		Hud_Hide( cardElem )
-		#if DEVELOPER
+#if DEV
 			printt( "ClearPlayerStatsRui", index )
-		#endif
+#endif
 		ClearPlayerStatsRui( Hud_GetRui( cardElem ) )
 		return
 	}
 
-	                                              
+	
 	int eHandle = -1
 
 	if ( index > 0 )
@@ -709,7 +721,7 @@ void function _PopulatePlayerStatsRui( var cardElem, int index, bool connected )
 
 		if ( teammateInfo == null )
 		{
-			                                                  
+			
 			return
 		}
 
@@ -718,7 +730,7 @@ void function _PopulatePlayerStatsRui( var cardElem, int index, bool connected )
 	}
 	else
 	{
-		                                                
+		
 		eHandle = GetLocalClientPlayer().GetEncodedEHandle()
 	}
 
@@ -728,11 +740,11 @@ void function _PopulatePlayerStatsRui( var cardElem, int index, bool connected )
 
 	for ( int i = 0; i<squadSummaryData.playerData.len(); i++ )
 	{
-		                                                                                                                                                            
+		
 		if ( squadSummaryData.playerData[i].eHandle == eHandle )
 		{
 			PopulatePlayerStatsRui( rui, i, connected)
 			break
 		}
 	}
-}
+} 

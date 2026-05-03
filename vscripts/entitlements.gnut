@@ -4,40 +4,40 @@ global function Entitlement_GetEntitlementEnumValAsString
 global function Entitlement_GetEntitlementType
 global function Entitlement_GetMenuTitleText
 
-#if UI
-global function Entitlement_GetSKUStoreTitle
-global function Entitlement_GetSKUStoreDesc
-global function Entitlement_GetSKUStoreLink
-global function Entitlement_GetSKUStoreImage
-global function Entitlement_GetSKUStoreApexCoinFlav
-global function Entitlement_GetSKUStoreCalEvent
-global function TryEntitlementMenus
-global function UICodeCallback_GRXFirstPartyBundlePurchased
-global function UICodeCallback_ActivateRootPanel
-global function ServerToUI_EntitlementInitialized
-global function Entitlement_IsSKUBundleOwned
-#endif
 
-#if UI || CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 global function Entitlement_GetSKUStoreApexCoinAmount
 global function Entitlement_GetSKUStoreApexCoinTierImage
 global function Entitlement_GetSKUStoreApexCoinCardBaseImage
-#endif
 
-#if SERVER
-global function ClientCallback_MarkEntitlementMenuSeen
-global function TryGiveFirstPartyEntitlements
-global function SetEntitlementAsGivenInPlayerState
-#endif
 
-#if DEVELOPER && UI
-global function DEV_OpenHijackedEntitlementRedeemPopup
-#endif
 
-#if DEVELOPER && SERVER
-global function DEV_PrintEntitlements
-global function DEV_ResetCheckRewardSet
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 table<entity, bool> checkedPlayerRewardsSet = {}
 
@@ -50,15 +50,15 @@ global table< int, table<ItemFlavor, array< int > > > entitlementRewardCountsMap
 global table<entity, bool> playersToCheckForUpgrade
 global array< ItemFlavor > upgradableAccessRewardRefs
 
-#if UI
-struct DialogQueueEntry
-{
-	asset assetRef
-	int entitlementGUID
-	string persistenceVarName
-}
-array< DialogQueueEntry > dialogQueue
-#endif
+
+
+
+
+
+
+
+
+
 
 const string GENERIC_ACKNOWLEDGEMENT_PVAR = "genericEntitlementsAcknowledgement"
 
@@ -82,10 +82,10 @@ global enum eFirstPartyRewardType
 
 struct FileStruct_LifetimeLevel
 {
-#if UI
-	bool hasRunMenuEntitlementsFirstTime = false
-	bool hasEntitlementsInitialized = false
-#endif
+
+
+
+
 }
 FileStruct_LifetimeLevel& fileLevel
 
@@ -102,12 +102,12 @@ void function Entitlements_LevelInit()
 		entitlementRewardCountsMap[entitlementType] <- {}
 	}
 
-	//eaAccessRewardRefs["founders_pack"] <- []
-	//eaAccessRewardRefs["starters_pack"] <- []
+	
+	
 
 	AddCallback_RegisterRootItemFlavors( void function() {
 		array<asset> entitlementAssetArray = GetBaseItemFlavorsFromArray( "entitlements" )
-		entitlementAssetArray.reverse() // Reversed to show newest first. New entries are generally added at the end of the list in bakery.
+		entitlementAssetArray.reverse() 
 		foreach ( asset entitlementAsset in entitlementAssetArray )
 			RegisterItemFlavorFromSettingsAsset( entitlementAsset )
 
@@ -122,404 +122,504 @@ void function Entitlements_LevelInit()
 
 	AddCallback_OnItemFlavorRegistered( eItemType.entitlement, EntitlementRegister )
 
-	#if SERVER && DEVELOPER
-		AddCallback_GeneratePDef( GenerateEntitlementsPDef )
-	#endif
 
-	#if SERVER || CLIENT
+
+
+
+
 		Remote_RegisterServerFunction( "ClientCallback_MarkEntitlementMenuSeen", "int", 0, INT_MAX )
 		Remote_RegisterUIFunction( "ServerToUI_EntitlementInitialized" )
-	#endif
 
-	#if SERVER
-		AddCallbackOrMaybeCallNow_OnAllItemFlavorsRegistered( EntitlementsPopulate )
-		AddCallback_FirstTimeInventoryClean( EntitlementsDoFirstTimeInventoryIsClean )
-	#endif
+
+
+
+
+
 }
 
-#if SERVER
-void function EntitlementsDoFirstTimeInventoryIsClean( entity player )
-{
-	thread EntitlementsDoFirstTimeInventoryIsCleanThread( player )
-}
-#endif
-
-#if SERVER
-void function EntitlementsDoFirstTimeInventoryIsCleanThread( entity player )
-{
-	player.EndSignal( "OnDestroy" )
-	player.EndSignal( "OnDisconnecting" )
-
-	do {
-		WaitFrame()
-		if ( !IsValid( player ) )
-		{
-			return
-		}
-	} while ( !HasChallengeThreadCompletedForPlayer( player ) )
-
-	if ( GetActiveBattlePass() != null && !Challenges_AreStatCallbacksRegistered( player ) )
-	{
-		printt("Challenge thread completed without registering challenge stat callbacks. Exiting without granting entitlements.")
-		return
-	}
-
-	if ( player in checkedPlayerRewardsSet )
-		return
-
-	checkedPlayerRewardsSet[player] <- true
-
-	if ( expect bool( player.GetPersistentVar( GENERIC_ACKNOWLEDGEMENT_PVAR ) ) == false )
-		player.SetPersistentVar( GENERIC_ACKNOWLEDGEMENT_PVAR, true )
-
-	string playerPlatform = player.GetPlayerPlatformName().tolower()
-
-	DoFirstPartyEntitlements( player, playerPlatform )
-
-	DoTwitchPrime( player )
-
-	DoTwitchDrops( player )
-
-	if ( GetCurrentPlaylistVarBool( "ea_access_gives_premium_pass", false ) )
-		thread TryGivePremiumPassForEAAccess( player )
-
-	Remote_CallFunction_UI( player, "ServerToUI_EntitlementInitialized" )
-}
-#endif
-
-#if SERVER
-void function DoFirstPartyEntitlements( entity player, string playerPlatform )
-{
-	if ( GetCurrentPlaylistVarBool( "allow_entitlement_upgrade", true ) )
-	{
-		// Conversion of old EA Access/PS Plus Pack 01 rewards from entitlement based into marketplace
-		//
-		// If a player has the "accessAcknowledged" bit or "plusAcknowledged" bit set in persistence, that means that at some point in the past they
-		// were detected as having owned those entitlements, and were shown a popup stating such.
-		// Now, we use these bits to give marketplace items.  Once all of these items are shown as owned (checkedItemCount == ownedItemCount below)
-		// we clear the bit from persistence, so that we're not running marketplace queries for players every time they connect.
-		//
-		// This should be "safe" since the script that would initially set those bits has since been removed.
-
-		if ( player.GetPersistentVarAsInt( "accessAcknowledged" ) > 0 )
-		{
-			// Meh.
-			if ( !upgradableAccessRewardRefs.contains( GetItemFlavorByAsset( $"settings/itemflav/gcard_badge/account/ea_access_member.rpak" ) ) )
-				upgradableAccessRewardRefs.append( GetItemFlavorByAsset( $"settings/itemflav/gcard_badge/account/ea_access_member.rpak" ) )
-
-			int checkedItemCount = 0
-			int ownedItemCount = 0
-
-			foreach ( ItemFlavor flavor in upgradableAccessRewardRefs )
-			{
-				Assert( ItemFlavor_GetGRXMode( flavor ) == eItemFlavorGRXMode.REGULAR, "Invalid mode for function " + ItemFlavor_GetGRXMode( flavor ) + " " + string(ItemFlavor_GetAsset( flavor )) )
-
-				if ( ItemFlavor_HasUnlockFunc( flavor ) )
-				{
-					string unlockFuncKey = ItemFlavor_GetUnlockFuncKey( flavor )
-					if ( unlockFuncKey == "origin_access_on_pc" && !(playerPlatform == "pc" || playerPlatform == "pc_steam") )
-						continue
-					else if ( unlockFuncKey == "ea_access_on_xbox" && !(playerPlatform == "x1") )
-						continue
-				}
-
-				checkedItemCount++
-				if ( GRX_HasItem( player, ItemFlavor_GetGRXIndex( flavor ) ) )
-				{
-					ownedItemCount++
-					continue
-				}
-
-				ScriptGRXOperationInfo operation
-				operation.expectedQueryGoal = GRX_HTTPQUERYGOAL_GIVE_ITEM
-				operation.doOperationFunc = (void function( int opID ) : ( player, flavor )
-				{
-					GRX_GiveCosmetic( player, opID, ItemFlavor_GetGRXIndex( flavor ) )
-				})
-				operation.onDoneCallback = (void function( int status ) : ( player, flavor ) {
-					bool didOperationSucceed = (status == eScriptGRXOperationStatus.DONE_SUCCESS)
-					if ( !didOperationSucceed )
-						return
-
-					GRX_MarkAsNewIfAppropriate( player, flavor )
-				})
-				operation.DEV_goalInfo = ItemFlavor_GetGRXAlias( flavor )
-				QueueGRXOperation( player, operation, false )
-			}
-
-			if ( checkedItemCount == ownedItemCount )
-				player.SetPersistentVar( "accessAcknowledged", false )
-		}
-	}
-
-	TryGiveFirstPartyEntitlements( player )
-}
-#endif
-
-#if SERVER
-// Determines if any of an entitlement's items are stackable.
-bool function EntitlementUsesRewardSequence( array<ItemFlavor> itemList )
-{
-	foreach( ItemFlavor flavor in itemList )
-	{
-		if ( ItemFlavorIsStackable( flavor ) )
-		{
-			return true
-		}
-	}
-	return false
-}
-#endif
-
-#if SERVER
-// Returns a table of all rewards and their counts for a given entitlement.
-table< ItemFlavor, int > function GetEntitlementRewardsTable( ItemFlavor entitlementFlav, int entitlementType )
-{
-	Assert( entitlementFlav in entitlementRewardMap[entitlementType] && entitlementFlav in entitlementRewardCountsMap[entitlementType],
-		   "Could not get rewards table for entitlement." )
-	table< ItemFlavor, int > rewardsTable
-	array<ItemFlavor> itemList = entitlementRewardMap[entitlementType][entitlementFlav]
-	array<int> itemCounts = entitlementRewardCountsMap[entitlementType][entitlementFlav]
-	for ( int i = 0; i < itemList.len(); ++i )
-	{
-		rewardsTable[itemList[i]] <- itemCounts[i]
-	}
-	return rewardsTable
-}
-#endif
-
-#if SERVER
-void function SetEntitlementAsGivenInPlayerState( entity player, int entitlementType, string entitlementRef, ItemFlavor entitlementFlav )
-{
-	switch( entitlementType )
-	{
-		case eEntitlementType.TWITCH_PRIME:
-		{
-			player.UserWasGivenTwitchPrimeReward( entitlementRef )
-			return
-		}
-		case eEntitlementType.TWITCH_DROPS:
-		{
-			string menuPersistenceName = Entitlement_GetMenuPersistenceVarName( entitlementFlav )
-			if ( menuPersistenceName != GENERIC_ACKNOWLEDGEMENT_PVAR )
-				player.SetPersistentVar( menuPersistenceName, 0 )
-			return
-		}
-	}
-}
-#endif
-
-#if SERVER
-// Executes a reward sequence for an entitlement. NOTE: This function should only be called for entitlements with
-// stackable items (packs, currency, consumables). Otherwise, you don't need an reward sequence. Just simply check if
-// the player owns each item in the entitlement.
-void function HandleRewardSequenceForEntitlement( entity player, ItemFlavor entitlementFlav, int entitlementType, string entitlementRef, int queryGoal )
-{
-	// Check if the reward is already acknowledged from previous sessions
-	if ( player.GetPersistentVarAsInt( Entitlement_GetMenuPersistenceVarName( entitlementFlav ) ) > 0 )
-		return
-
-	ScriptGRXOperationInfo operation
-	operation.expectedQueryGoal = queryGoal
-	operation.DEV_goalInfo = "entitlement_" + entitlementRef
-	ItemFlavorBag rewards = MakeItemFlavorBag( GetEntitlementRewardsTable( entitlementFlav, entitlementType ) )
-	operation.doOperationFunc = ( void function( int opID ) : ( player, entitlementFlav, rewards, queryGoal )
-	{
-		string entitlementSequenceName = format( entitlementSequenceNameTemplate,
-												ItemFlavor_GetHumanReadableRefForPIN_Slow( entitlementFlav ) )
-		GRX_GiveSequenceRewardEasy( player, opID, queryGoal, entitlementPersistenceStructName + "." + entitlementSequenceName, 0, 1, rewards )
-	})
-	operation.onDoneCallback = ( void function( int status ) : ( player, entitlementFlav, entitlementType, entitlementRef, rewards ) {
-		bool didOperationSucceed = ( status == eScriptGRXOperationStatus.DONE_SUCCESS )
-		if ( !didOperationSucceed )
-		{
-			return
-		}
-
-		foreach ( ItemFlavor reward in rewards.flavors )
-		{
-			GRX_MarkAsNewIfAppropriate( player, reward )
-		}
-		SetEntitlementAsGivenInPlayerState( player, entitlementType, entitlementRef, entitlementFlav )
-	} )
-	QueueGRXOperation( player, operation, false )
-}
-#endif
-
-#if SERVER
-void function DoTwitchPrime( entity player )
-{
-	// Twitch Prime entitlements
-	foreach ( ItemFlavor entitlementFlav, array<ItemFlavor> itemList in (entitlementRewardMap[eEntitlementType.TWITCH_PRIME]) )
-	{
-		string twitchPrimeRef = Entitlement_GetTwitchPrimeRef( entitlementFlav )
-		if ( !player.DoesUserHaveTwitchPrimeReward( twitchPrimeRef ) )
-		{
-			continue
-		}
-
-		// If any of these items are stackable, go into reward sequence flow.
-		// if NONE are stackable, do the existing individual granting flow.
-		if ( EntitlementUsesRewardSequence( itemList ) )
-		{
-			HandleRewardSequenceForEntitlement( player, entitlementFlav,  eEntitlementType.TWITCH_PRIME, twitchPrimeRef, GRX_HTTPQUERYGOAL_GIVE_AMAZON_PRIME_SEQUENCE_REWARD )
-			continue
-		}
-		foreach ( ItemFlavor flavor in itemList )
-		{
-			Assert( ItemFlavor_GetGRXMode( flavor ) == eItemFlavorGRXMode.REGULAR, "Invalid mode for function " + ItemFlavor_GetGRXMode( flavor ) )
-			if ( GRX_HasItem( player, ItemFlavor_GetGRXIndex( flavor ) ) )
-				continue
-
-			ScriptGRXOperationInfo operation
-			operation.expectedQueryGoal = GRX_HTTPQUERYGOAL_GIVE_ITEM
-			operation.doOperationFunc = (void function( int opID ) : ( player, flavor )
-			{
-				GRX_GiveCosmetic( player, opID, ItemFlavor_GetGRXIndex( flavor ) )
-			})
-			operation.onDoneCallback = (void function( int status ) : ( player, twitchPrimeRef, flavor ) {
-				bool didOperationSucceed = (status == eScriptGRXOperationStatus.DONE_SUCCESS)
-				if ( !didOperationSucceed )
-					return
-
-				GRX_MarkAsNewIfAppropriate( player, flavor )
-
-				player.UserWasGivenTwitchPrimeReward( twitchPrimeRef )
-			})
-			operation.DEV_goalInfo = ItemFlavor_GetGRXAlias( flavor )
-			QueueGRXOperation( player, operation, false )
-		}
-	}
-}
-#endif
-
-#if SERVER
-void function DoTwitchDrops( entity player )
-{
-}
-#endif
-
-#if SERVER
-void function TryGivePremiumPassForEAAccess( entity player )
-{
-	EndSignal( player, "OnDestroy" )
-
-	while ( !GRX_IsInventoryReady( player ) )
-		WaitFrame()
-
-	ItemFlavor ornull activeBattlePass = GetActiveBattlePass()
-	if ( activeBattlePass != null )
-	{
-		expect ItemFlavor( activeBattlePass )
-
-		bool hasPremium = DoesPlayerOwnBattlePass( player, activeBattlePass )
-		bool hasBasicPack = GRX_GetPackCount( player, ItemFlavor_GetGRXIndex( BattlePass_GetBasicPurchasePack( activeBattlePass ) ) ) > 0
-		bool hasBundlePack = GRX_GetPackCount( player, ItemFlavor_GetGRXIndex( BattlePass_GetBundlePurchasePack( activeBattlePass ) ) ) > 0
-
-		if ( IsEAAccessPremiumMember( player ) && !hasPremium && !hasBasicPack && !hasBundlePack )
-		{
-			ItemFlavor purchasePack = BattlePass_GetBasicPurchasePack( activeBattlePass )
-			printt( "------- GIVE BATTLE PASS FOR EA ACCESS -----------" )
-
-			ScriptGRXOperationInfo operation
-			operation.expectedQueryGoal = GRX_HTTPQUERYGOAL_GIVE_BONUS_EA_PREMIER
-			operation.doOperationFunc = (void function( int opID ) : ( player, purchasePack, activeBattlePass )
-			{
-				string eaAccessSequenceName         = format( "battlePasses[%s].grxEaAccessPremium", ItemFlavor_GetGUIDString( activeBattlePass ) )
-				ItemFlavorBag what = MakeItemFlavorBag( { [purchasePack] = 1, } )
-				GRX_GiveSequenceRewardEasy( player, opID, GRX_HTTPQUERYGOAL_GIVE_BONUS_EA_PREMIER, eaAccessSequenceName, 0, 1, what )
-			})
-			operation.onDoneCallback = (void function( int status ) : ( player, purchasePack ) {
-				bool didOperationSucceed = (status == eScriptGRXOperationStatus.DONE_SUCCESS)
-				if ( !didOperationSucceed )
-					return
-				Remote_CallFunction_UI( player, "ServerCallback_GotBPFromPremier" )
-
-			})
-			QueueGRXOperation( player, operation, false )
-		}
-	}
-}
-#endif
-
-#if SERVER
-void function TryGiveFirstPartyEntitlements( entity player )
-{
-	if ( !IsLobby() )
-		return
-
-	foreach ( ItemFlavor entitlementFlav, array<ItemFlavor> itemList in (entitlementRewardMap[eEntitlementType.FIRSTPARTY]) )
-	{
-		int enumVal = Entitlement_GetEntitlementEnumVal( entitlementFlav )
-		if ( enumVal == BLOODHOUND_LIFELINE_PACK )
-			continue
-
-		if ( !player.HasEntitlement( enumVal ) )
-			continue
-
-		foreach ( ItemFlavor flavor in itemList )
-		{
-			Assert( ItemFlavor_GetGRXMode( flavor ) == eItemFlavorGRXMode.REGULAR, "Invalid mode for function " + ItemFlavor_GetGRXMode( flavor ) )
-			if ( GRX_HasItem( player, ItemFlavor_GetGRXIndex( flavor ) ) )
-				continue
-
-			ScriptGRXOperationInfo operation
-			operation.expectedQueryGoal = GRX_HTTPQUERYGOAL_GIVE_ITEM
-			operation.doOperationFunc = (void function( int opID ) : ( player, flavor )
-			{
-				GRX_GiveCosmetic( player, opID, ItemFlavor_GetGRXIndex( flavor ) )
-			})
-			operation.onDoneCallback = (void function( int status ) : ( player, enumVal, flavor ) {
-				bool didOperationSucceed = (status == eScriptGRXOperationStatus.DONE_SUCCESS)
-				if ( !didOperationSucceed )
-					return
-
-				GRX_MarkAsNewIfAppropriate( player, flavor )
-
-				// do nothing for now with the entitlement ID
-			})
-			operation.DEV_goalInfo = ItemFlavor_GetGRXAlias( flavor )
-			QueueGRXOperation( player, operation, false )
-		}
-	}
-}
-#endif
-
-#if SERVER
-
-void function RemoveCosmeticItems( entity player, int opID, array<ItemFlavor> itemsToRemove, array<ItemFlavor> entitlementsToReset )
-{
-	array<int> idxsToRemove = []
-	foreach ( ItemFlavor flavor in itemsToRemove )
-	{
-		idxsToRemove.append( ItemFlavor_GetGRXIndex( flavor ) )
-	}
-
-	GRX_RemoveCosmetics( player, opID, idxsToRemove )
-
-	// Reset the persistence state for each item we removed
-	// This is done before we affirm the delete, to err on the side of not showing a popup for deleted items if the response arrives late.
-	foreach ( ItemFlavor flavor in itemsToRemove )
-	{
-		// "new" red dot in menu titles
-		SettingsAssetGUID GUID = ItemFlavor_GetGUID( flavor )
-		Newness_MarkItemFlavorGUIDAsNotNewForPlayer( player, GUID )
-	}
-
-	// Reset menu persistence for the "parent" entitlement of each item we removed
-	foreach (ItemFlavor entitlementFlav in entitlementsToReset)
-	{
-		// MOTD
-		string menuPersistenceName = Entitlement_GetMenuPersistenceVarName( entitlementFlav )
-		if ( menuPersistenceName != GENERIC_ACKNOWLEDGEMENT_PVAR )
-			player.SetPersistentVar( menuPersistenceName, 0 )
-	}
-}
-
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function UnlockFuncRegister( ItemFlavor flavor )
 {
 	if ( !ItemFlavor_HasUnlockFunc( flavor ) )
@@ -533,10 +633,10 @@ void function UnlockFuncRegister( ItemFlavor flavor )
 	else if ( unlockFuncKey == "origin_access_on_pc" || unlockFuncKey == "ea_access_on_xbox" )
 		upgradableAccessRewardRefs.append( flavor )
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 int function Entitlement_GetEntitlementType( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.entitlement )
@@ -557,10 +657,10 @@ int function Entitlement_GetEntitlementType( ItemFlavor flavor )
 	Assert( false, "Unhandled entitlement type '" + typeString + "' for " + string(ItemFlavor_GetAsset( flavor )) )
 	return -1
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 int function Entitlement_GetEntitlementEnumVal( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.entitlement )
@@ -570,10 +670,10 @@ int function Entitlement_GetEntitlementEnumVal( ItemFlavor flavor )
 	Assert( enumString in getconsttable() )
 	return expect int( getconsttable()[ enumString ] )
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 string function Entitlement_GetEntitlementEnumValAsString( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.entitlement )
@@ -583,19 +683,19 @@ string function Entitlement_GetEntitlementEnumValAsString( ItemFlavor flavor )
 
 	return enumString
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 string function Entitlement_GetMenuTitleText( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.entitlement )
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "menuTitleText" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
-// NOTE(rk): Can be used for both Drops and Prime entitlements
+
+
+
 string function Entitlement_GetTwitchPrimeRef( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.entitlement, "Flavor " + ItemFlavor_GetHumanReadableRefForPIN_Slow( flavor ) + " isn't an entitlement.")
@@ -605,10 +705,10 @@ string function Entitlement_GetTwitchPrimeRef( ItemFlavor flavor )
 
 	return twitchRef
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 string function Entitlement_GetMenuPersistenceVarName( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.entitlement )
@@ -644,460 +744,461 @@ string function Entitlement_GetMenuPersistenceVarName( ItemFlavor flavor )
 
 	return persistenceVarName
 }
-#endif
 
 
-#if UI
-string function Entitlement_GetSKUStoreTitle( ItemFlavor flavor )
-{
-	Assert( ItemFlavor_GetType( flavor ) == eItemType.entitlement )
-	return GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "productTitle" )
-}
-#endif
 
 
-#if UI
-string function Entitlement_GetSKUStoreDesc( ItemFlavor flavor )
-{
-	Assert( ItemFlavor_GetType( flavor ) == eItemType.entitlement )
-	return GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "productDesc" )
-}
-#endif
 
 
-#if UI
-string function Entitlement_GetSKUStoreLink( ItemFlavor flavor )
-{
-	Assert( ItemFlavor_GetType( flavor ) == eItemType.entitlement )
-	return GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "productLink" )
-}
-#endif
 
 
-#if UI
-asset function Entitlement_GetSKUStoreImage( ItemFlavor flavor )
-{
-	Assert( ItemFlavor_GetType( flavor ) == eItemType.entitlement )
-	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "productImage" )
-}
-#endif
 
 
-#if UI
-ItemFlavor ornull function Entitlement_GetSKUStoreApexCoinFlav( ItemFlavor flavor )
-{
-	Assert( ItemFlavor_GetType( flavor ) == eItemType.entitlement )
-	asset coinsAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "apexCoinsFlavor" )
-	if( IsValidItemFlavorSettingsAsset( coinsAsset ) )
-		return GetItemFlavorByAsset( coinsAsset )
-
-	return null
-}
-#endif
 
 
-#if UI
-ItemFlavor ornull function Entitlement_GetSKUStoreCalEvent( ItemFlavor flavor )
-{
-	Assert( ItemFlavor_GetType( flavor ) == eItemType.entitlement )
-	asset calEventAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "productVisibilityCalEvent" )
-	if ( IsValidItemFlavorSettingsAsset( calEventAsset ) )
-		return GetItemFlavorByAsset( calEventAsset )
-
-	return null
-}
-#endif
 
 
-#if UI || CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 string function Entitlement_GetSKUStoreApexCoinAmount( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.apex_coins )
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "apexCoinAmount" )
 }
-#endif
 
 
-#if UI || CLIENT
+
+
 asset function Entitlement_GetSKUStoreApexCoinTierImage( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.apex_coins )
 	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "apexCoinTierImage" )
 }
-#endif
 
 
-#if UI || CLIENT
+
+
 asset function Entitlement_GetSKUStoreApexCoinCardBaseImage( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.apex_coins )
 	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "apexCoinCardBaseImage" )
 }
-#endif
 
 
-#if UI
-void function UICodeCallback_ActivateRootPanel()
-{
-	if ( GetActiveMenu() != null )
-	{
-		printt( "ActivateRootPanel: " + GetActiveMenuName())
-	}
-	
-	bool showLobbyTab = false
-	if ( GetActiveMenu() != null && GetActiveMenuName() != "VCPopUp" )
-		showLobbyTab = true
 
-	if ( GetActiveMenu() != null && GetActiveMenuName() != "LobbyMenu" )
-		CloseActiveMenu()
 
-	if( showLobbyTab )
-	{
-		TabData lobbyTabData = GetTabDataForPanel( GetMenu( "LobbyMenu" ) )
-		ActivateTab( lobbyTabData, Tab_GetTabIndexByBodyName( lobbyTabData, "PlayPanel" ) )	
-	}	
-}
 
-void function UICodeCallback_GRXFirstPartyBundlePurchased( string bundleEnum )
-{	
-	printt( "Checking for first party purchase: " + bundleEnum )
 
-	if ( bundleEnum == "BLOODHOUND_LIFELINE_PACK" )
-	{
-		UICodeCallback_GRXFirstPartyBundlePurchased( "BLOODHOUND_SKU" )
-		UICodeCallback_GRXFirstPartyBundlePurchased( "LIFELINE_SKU" )
-		return
-	}
 
-	foreach ( ItemFlavor entitlementFlav, array<ItemFlavor> itemList in (entitlementRewardMap[eEntitlementType.FIRSTPARTY]) )
-	{
-		if ( GetGlobalSettingsString( ItemFlavor_GetAsset( entitlementFlav ), "productLink" ) == bundleEnum )
-		{
-			bool hasAll = true
 
-			foreach ( ItemFlavor flavor in itemList )
-			{
-				//Assert( ItemFlavor_GetGRXMode( flavor ) == eItemFlavorGRXMode.REGULAR, "Invalid mode for function " + ItemFlavor_GetGRXMode( flavor ) )
-				if ( !GRX_HasItem( ItemFlavor_GetGRXIndex( flavor ) ) )
-				{
-					hasAll = false
-					break
-				}
-			}
-			if ( hasAll )
-			{
-				if ( IsPersistenceAvailable() )
-				{
-					string persistenceVarName = Entitlement_GetMenuPersistenceVarName( entitlementFlav )
 
-					Assert( persistenceVarName != GENERIC_ACKNOWLEDGEMENT_PVAR, "SKU Bundles should always be explicitly acknowledged. Do not use the generic ack pvar." )
 
-					if ( GetDialogFlowTablesValueOrPersistence( persistenceVarName ) == false )
-					{
-						asset entitlementAsset = ItemFlavor_GetAsset( entitlementFlav )
-						int guid = ItemFlavor_GetGUID( entitlementFlav )
-						QueueEntitlementMenu( entitlementAsset, persistenceVarName, guid )
-					}
-				}
-			}
-		}
 
-	}
-}
-#endif
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function EntitlementRegister( ItemFlavor flavor )
 {
 	int entitlementType = Entitlement_GetEntitlementType( flavor )
 	entitlementRewardMap[entitlementType][flavor] <- []
 	entitlementRewardCountsMap[entitlementType][flavor] <- []
 }
-#endif
-
-#if SERVER
-void function EntitlementsPopulate()
-{
-	foreach ( ItemFlavor entitlementFlav in GetAllItemFlavorsOfType( eItemType.entitlement ) )
-	{
-		int entitlementType = Entitlement_GetEntitlementType( entitlementFlav )
-		foreach ( var block in IterateSettingsAssetArray( ItemFlavor_GetAsset( entitlementFlav ), "list" ) )
-		{
-			ItemFlavor rewardFlav = GetItemFlavorByAsset( GetSettingsBlockAsset( block, "flavor" ) )
-			entitlementRewardMap[entitlementType][entitlementFlav].append( rewardFlav )
-
-			int rewardQuantity = GetSettingsBlockInt( block, "quantity" )
-
-			Assert( rewardQuantity > 0, "Item quantities must be greater than 0." )
-
-			if ( rewardQuantity > 1 )
-			{
-				Assert( ItemFlavorIsStackable( rewardFlav ),
-					"Error: Invalid item quantity. Item was either a non-stackable (skin, emote, frame etc.) with a quantity > 1 or a stackable that's not currently supported." )
-			}
-			entitlementRewardCountsMap[entitlementType][entitlementFlav].append( rewardQuantity )
-		}
-	}
-}
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 int function GetEntitlementForString( string entitlementString )
 {
 	Assert( entitlementString in getconsttable() )
 	return expect int( getconsttable()[ entitlementString ] )
 }
-#endif
-
-#if UI
-bool function TryEntitlementMenus()
-{
-	Assert( IsPersistenceAvailable() )
-
-	if ( fileLevel.hasRunMenuEntitlementsFirstTime )
-		return false
-
-	if ( fileLevel.hasEntitlementsInitialized == false )
-		return false
-
-	foreach ( ItemFlavor entitlementFlav in GetAllItemFlavorsOfType( eItemType.entitlement ) )
-	{
-		asset entitlementAsset = ItemFlavor_GetAsset( entitlementFlav )
-
-		if ( !GetGlobalSettingsBool( entitlementAsset, "isMenuEnabled" ) )
-			continue
-
-		int entitlementType = Entitlement_GetEntitlementType( entitlementFlav )
-
-		bool hasEntitlement = false
-		if ( entitlementType == eEntitlementType.FIRSTPARTY )
-			hasEntitlement = LocalPlayerHasEntitlement( Entitlement_GetEntitlementEnumVal( entitlementFlav ) )
-		else if ( entitlementType == eEntitlementType.TWITCH_PRIME )
-			hasEntitlement = DoesUserHaveTwitchPrimeReward( Entitlement_GetTwitchPrimeRef( entitlementFlav ) )
-		else if ( entitlementType == eEntitlementType.TWITCH_DROPS )
-			hasEntitlement = DoesUserHaveTwitchDrops( Entitlement_GetTwitchPrimeRef( entitlementFlav ) )
-		else
-			Assert( false, "Unknown entitlementType: " + entitlementType )
-
-		string persistenceVarName = Entitlement_GetMenuPersistenceVarName( entitlementFlav )
-		int guid = ItemFlavor_GetGUID( entitlementFlav )
-
-		if ( hasEntitlement && GetDialogFlowTablesValueOrPersistence( persistenceVarName, true ) == false )
-		{
-			SetDialogFlowPersistenceTables( persistenceVarName, true )
-			Remote_ServerCallFunction( "ClientCallback_MarkEntitlementMenuSeen", guid )
-			Remote_ServerCallFunction( "ClientCallback_lastSeenPremiumCurrency" )
-			OpenEntitlementMenu( entitlementAsset )
-			IncrementNumDialogFlowDialogsDisplayed()
-
-			return true
-		}
-	}
-
-	if ( dialogQueue.len() > 0 )
-	{
-		DialogQueueEntry dqe = dialogQueue.pop()
-
-		if ( GetGlobalSettingsBool( dqe.assetRef, "isMenuEnabled" ) ) // IF isMenuEnabled is not true, don't mark entitlement as seen
-		{
-			SetDialogFlowPersistenceTables( dqe.persistenceVarName, true )
-			Remote_ServerCallFunction( "ClientCallback_MarkEntitlementMenuSeen", dqe.entitlementGUID )
-			Remote_ServerCallFunction( "ClientCallback_lastSeenPremiumCurrency" )
-
-			OpenEntitlementMenu( dqe.assetRef )
-			IncrementNumDialogFlowDialogsDisplayed()
-		}
-
-		return true
-	}
-
-	fileLevel.hasRunMenuEntitlementsFirstTime = true
-
-	return false
-}
-#endif // UI
-
-#if UI
-bool function Entitlement_IsSKUBundleOwned( int bundleEnum, ItemFlavor bundleFlav )
-{
-	string persistenceVarName = Entitlement_GetMenuPersistenceVarName( bundleFlav )
-
-	Assert( persistenceVarName != GENERIC_ACKNOWLEDGEMENT_PVAR, "SKU Bundles should not use the generic ack pvar." )
-
-	if ( GetPersistentVarAsInt( persistenceVarName ) != 0 )
-		return true
-	
-	return LocalPlayerHasEntitlement( bundleEnum )
-}
-#endif // UI
 
 
-#if UI
-void function OpenEntitlementMenu( asset entitlementAsset )
-{
-	Assert( GetGlobalSettingsBool( entitlementAsset, "isMenuEnabled" ) )
 
-	string titleText = Localize( GetGlobalSettingsString( entitlementAsset, "menuTitleText" ) )
-	string descText = Localize( GetGlobalSettingsString( entitlementAsset, "menuDescText" ) )
-	string imageName = GetGlobalSettingsString( entitlementAsset, "menuImageName" )
-	imageName = GetCurrentPlaylistVarString( imageName + "_image_override", imageName )
 
-	printt ( "open dialog: " + titleText )
-	PromoDialog_OpenHijackedUM( titleText, descText, imageName )
-}
-#endif // UI
 
-#if UI
-void function QueueEntitlementMenu( asset entitlementAsset, string persistenceVarName, int guid )
-{
-	DialogQueueEntry dqe
-	dqe.assetRef = entitlementAsset
-	dqe.persistenceVarName = persistenceVarName
-	dqe.entitlementGUID = guid
-	dialogQueue.append( dqe )
-}
-#endif // UI
 
-#if SERVER
-void function ClientCallback_MarkEntitlementMenuSeen( entity player, int entitlementGUID )
-{
-	if ( !IsValid( player ) || !player.IsPlayer() )
-		return
 
-	// the starter pack & founders pack - code defined consts, *not* GUIDs - are unique cases that need special handling
-	if ( entitlementGUID == STARTER_PACK )
-	{
-		player.SetPersistentVar( "starterAcknowledged", true )
-		return
-	}
 
-	if ( entitlementGUID == FOUNDERS_PACK )
-	{
-		player.SetPersistentVar( "founderAcknowledged", true )
-		return
-	}
-	// end special cases
 
-	if ( !IsValidItemFlavorGUID( entitlementGUID ) )
-		return
 
-	ItemFlavor flav = GetItemFlavorByGUID( entitlementGUID )
 
-	if ( !(ItemFlavor_GetType( flav ) == eItemType.entitlement) )
-		return
 
-	string persistenceVarName = Entitlement_GetMenuPersistenceVarName( flav )
 
-	player.SetPersistentVar( persistenceVarName, true )
-}
-#endif // SERVER
 
-#if SERVER && DEVELOPER
-void function GenerateEntitlementsPDef()
-{
-	DEV_PDefGen_BeginFieldGroup( "Entitlement menu data" )
-	array<string> registeredPersistenceVarNames
-	foreach ( ItemFlavor entitlementFlav in GetAllItemFlavorsOfType( eItemType.entitlement ) )
-	{
-		if ( GetGlobalSettingsBool( ItemFlavor_GetAsset( entitlementFlav ), "isMenuEnabled" ) == false )
-			continue
 
-		string persistenceVarName = Entitlement_GetMenuPersistenceVarName( entitlementFlav )
-		Assert( !(registeredPersistenceVarNames.contains(persistenceVarName)), "The persistence variable name: " + persistenceVarName + " in entitlement: " + string(ItemFlavor_GetAsset( entitlementFlav )) + " is already in use." )
 
-		DEV_PDefGen_AddField_Bool( persistenceVarName )
-	}
-	DEV_PDefGen_AddField_Bool( GENERIC_ACKNOWLEDGEMENT_PVAR )
-	DEV_PDefGen_EndFieldGroup()
-}
-#endif // SERVER && DEVELOPER
 
-#if UI
-void function ServerToUI_EntitlementInitialized()
-{
-	fileLevel.hasEntitlementsInitialized = true
-	thread TryRunDialogFlowThread()
-}
-#endif
 
-#if DEVELOPER && UI
-// Quick refs: BLOODHOUND_SKU_PACK, LEGACY_PACK_VALK, algs_s09_holospray, amazon_valk_skin1, PSPLUS_PACK_10
-void function DEV_OpenHijackedEntitlementRedeemPopup( string entitlementEnumName )
-{
-	foreach ( ItemFlavor entitlementFlav in GetAllItemFlavorsOfType( eItemType.entitlement ) )
-	{
-		int type = Entitlement_GetEntitlementType( entitlementFlav )
-		string enumValName
 
-		if ( type == eEntitlementType.FIRSTPARTY )
-			enumValName = Entitlement_GetEntitlementEnumValAsString( entitlementFlav )
 
-		if ( type == eEntitlementType.TWITCH_PRIME )
-			enumValName = Entitlement_GetTwitchPrimeRef( entitlementFlav )
 
-		if ( type == eEntitlementType.TWITCH_DROPS)
-			enumValName = Entitlement_GetTwitchPrimeRef( entitlementFlav )
 
-		if ( enumValName == entitlementEnumName )
-		{
-			asset entitlementAsset = ItemFlavor_GetAsset( entitlementFlav )
-			OpenEntitlementMenu( entitlementAsset )
-		}
-	}
-}
-#endif
 
-#if DEVELOPER && SERVER
-void function DEV_PrintEntitlements( string entitlementType = "FIRSTPARTY" )
-{
-	int typeIndex = eEntitlementType[entitlementType]
 
-	array< string > sortedItemDesc
-	bool shouldSort = true
 
-	foreach ( ItemFlavor entitlementFlav, array<ItemFlavor> itemList in entitlementRewardMap[typeIndex] )
-	{
-		string finalDesc
-		string itemFlavAssetStr = string( ItemFlavor_GetAsset( entitlementFlav ) )
 
-		if ( typeIndex == eEntitlementType.FIRSTPARTY )
-		{
-			shouldSort = true
 
-			int itemFlavEnum = Entitlement_GetEntitlementEnumVal( entitlementFlav )
-			string itemFlavString = Entitlement_GetEntitlementEnumValAsString( entitlementFlav )
 
-			finalDesc = format( "[%04d] %-50s  %s", itemFlavEnum, itemFlavString, itemFlavAssetStr )
-		}
-		else
-		{
-			Assert( typeIndex == eEntitlementType.TWITCH_PRIME || typeIndex == eEntitlementType.TWITCH_DROPS )
-			
-			string itemFlavString = Entitlement_GetTwitchPrimeRef( entitlementFlav )
 
-			finalDesc = format( "%-40s  %s", itemFlavString, itemFlavAssetStr )
-		}
 
-		sortedItemDesc.append( finalDesc )
-	}
 
-	if ( shouldSort )
-	{
-		sortedItemDesc.sort()
-	}
 
-	printt( entitlementType, "has index", typeIndex )
-	printt( sortedItemDesc.len(), "entitlements" )
 
-	foreach ( string itemDesc in sortedItemDesc )
-	{
-		printt( "\t", itemDesc )
-	}
-}
 
-void function DEV_ResetCheckRewardSet()
-{
-	checkedPlayerRewardsSet = {}
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

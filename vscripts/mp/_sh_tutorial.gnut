@@ -1,20 +1,20 @@
 global function ShTutorial_Init
 
-#if SERVER
-global function SetTutorialContext
-global function IsTutorialContextCompleted
-global function UpdateActionCount
-#endif
 
-#if CLIENT
+
+
+
+
+
+
 global function ServerCallback_ActionCountUpdated
-#endif
 
 
-#if CLIENT
+
+
 const int ORDINANCE_MENU_STEP_INDEX = 3
 const int PING_MENU_STEP_INDEX = 4
-#endif
+
 
 global struct InputHint
 {
@@ -74,27 +74,23 @@ struct
 	table< entity, array<bool> >        playerTutorialContextHistory
 } file
 
-table<int, bool functionref( entity player ) > baseInputCallbacks
 table<int, void functionref( entity player ) > baseInputCallacks
 
 void function ShTutorial_Init()
 {
-	if ( !IsSurvivalTraining() )
-		return
 
-	#if SERVER
-		AddCallback_OnClientConnected( OnPlayerConnected )
-	#elseif CLIENT
+
+
 		AddCallback_OnClientScriptInit( OnLocalClientConnected )
 		AddCallback_FullUpdate( OnFullUpdate )
 		AddCallback_OnSettingsUpdated( UpdateTutorialWhenOptionsChange )
-		RegisterNetworkedVariableChangeCallback_intSafe( "tutorialContext", OnTutorialContextChanged )
-	#endif
+		RegisterNetVarIntChangeCallback( "tutorialContext", OnTutorialContextChanged )
+
 
 	for( int i = eTutorialContext.NONE ; i < eTutorialContext._count ; i++ )
 		file.contextInputHintMap[i] <- []
 
-	AddInputHint( eTutorialContext.MOVEMENT, IN_FORWARD, "%[S2_UP|forward]%", "#SURVIVAL_TRAINING_MOVE", TryActionMove, "", null, "%S2_UP%" )
+	AddInputHint( eTutorialContext.MOVEMENT, IN_FORWARD, "%forward%", "#SURVIVAL_TRAINING_MOVE", TryActionMove, "", null, "%S2_UP%" )
 	AddInputHint( eTutorialContext.MOVEMENT, -1, "%speed%", "#SURVIVAL_TRAINING_SPRINT", TryActionSprint )
 	AddInputHint( eTutorialContext.MOVEMENT, IN_JUMP, "%jump%", "#SURVIVAL_TRAINING_JUMP", TryActionJump )
 	AddInputHint( eTutorialContext.MOVEMENT, -1, "%duck%", "#SURVIVAL_TRAINING_SLIDE", TryActionSlide )
@@ -110,6 +106,7 @@ void function ShTutorial_Init()
 	AddInputHint( eTutorialContext.ORDNANCE, -1, "%attack%", "#SURVIVAL_TRAINING_THROW_GRENADE", Tutorial_TryAction_ThrewGrenade )
 	AddInputHint( eTutorialContext.ORDNANCE, -1, "#SURVIVAL_TRAINING_TAP_HEAL_BIND", "#SURVIVAL_TRAINING_USE_HEALTHKIT", Tutorial_TryAction_UseHealth )
 	AddInputHint( eTutorialContext.ORDNANCE, -1, "#SURVIVAL_TRAINING_ORDNANCE_MENU_BIND", "#SURVIVAL_TRAINING_USE_ORDNANCE_MENU", Tutorial_TryAction_OrdnanceMenu )
+	
 
 	AddInputHint( eTutorialContext.WEAPON_LOOT_BIN, -1, "%use%", "#SURVIVAL_TRAINING_OPEN_BIN", Tutorial_TryAction_OpenLootBin2 )
 
@@ -129,9 +126,11 @@ void function ShTutorial_Init()
 	AddInputHint( eTutorialContext.PING, -1, "%ping%", "#SURVIVAL_TRAINING_PING_WEAPON", Tutorial_TryAction_PingWeapon )
 	AddInputHint( eTutorialContext.PING, -1, "%ping%", "#SURVIVAL_TRAINING_PING_AMMO", Tutorial_TryAction_PingAmmo )
 	AddInputHint( eTutorialContext.PING, -1, "#SURVIVAL_TRAINING_HOLD_PING", "#SURVIVAL_TRAINING_PING_MENU", Tutorial_TryAction_PingMenu )
+	
 
 	AddInputHint( eTutorialContext.PATHFINDER, -1, "", "#SURVIVAL_TRAINING_PATHFINDER", Tutorial_TryAction_Pathfinder )
 	AddInputHint( eTutorialContext.PATHFINDER, -1, "#SURVIVAL_TRAINING_HOLSTER_BIND", "#SURVIVAL_TRAINING_HOLSTER", TryActionHolster, "", null, "#SURVIVAL_TRAINING_HOLSTER_BIND_GAMEPAD" )
+	AddInputHint( eTutorialContext.PATHFINDER, -1, "#SURVIVAL_TRAINING_MANTLE_BIND", "#SURVIVAL_TRAINING_MANTLE", TryActionMantle, "", null, "#SURVIVAL_TRAINING_MANTLE_BIND_GAMEPAD" )
 
 	AddInputHint( eTutorialContext.REVIVE, -1, "%&use_long%", "#SURVIVAL_TRAINING_REVIVE", Tutorial_TryAction_ReviveDummy )
 
@@ -149,251 +148,253 @@ void function ShTutorial_Init()
 	AddInputHint( eTutorialContext.FREEFALL, -1, "%zoom%", "#SURVIVAL_TUTORIAL_FREE_LOOK", TryActionFreeLook )
 
 
-	AddInputHint( eTutorialContext.WEAPON, -1, "%scriptCommand3%", "Toggle Fire Mode", TryActionFireMode )
-	AddInputHint( eTutorialContext.WEAPON, IN_OFFHAND1, "%offhand1%", "Tactical", TryActionTactical )
-}
-
-#if SERVER
-void function SetTutorialContext( entity player, int context )
-{
-	Assert( context >= eTutorialContext.NONE && context < eTutorialContext._count )
-	player.SetPlayerNetInt( "tutorialContext", context )
-}
-
-void function OnPlayerConnected( entity player )
-{
-	foreach ( index, inputHint in file.inputHints )
-	{
-		if ( inputHint.triggerButtonEnum < 0 )
-			continue
-
-		if ( inputHint.triggerButtonEnum == IN_FORWARD )
-		{
-			AddOptionalButtonPressedPlayerInputCallback( player, IN_FORWARD, baseInputCallacks[IN_FORWARD] )
-		}
-		else
-		{
-			AddOptionalButtonPressedPlayerInputCallback( player, inputHint.triggerButtonEnum, baseInputCallacks[inputHint.triggerButtonEnum] )
-		}
-
-		if ( inputHint.triggerButtonEnum == IN_DUCK )
-			AddOptionalButtonPressedPlayerInputCallback( player, IN_DUCKTOGGLE, baseInputCallacks[IN_DUCK] )
-		if ( inputHint.triggerButtonEnum == IN_ZOOM )
-			AddOptionalButtonPressedPlayerInputCallback( player, IN_ZOOM_TOGGLE, baseInputCallacks[IN_ZOOM] )
-	}
-
-	thread TutorialContextPlayerThink( player )
-}
-
-
-void function TutorialContextPlayerThink( entity player )
-{
-	player.EndSignal( "OnDestroy" )
-	//player.EndSignal( "FreefallEnded" )
-
-	OnThreadEnd(
-		function() : ( player )
-		{
-			if ( !IsValid( player ) )
-				return
-
-			SetTutorialContext( player, eTutorialContext.NONE )
-
-			foreach ( index, inputHint in file.inputHints )
-			{
-				if ( inputHint.triggerButtonEnum < 0 )
-					continue
-
-				if ( inputHint.triggerButtonEnum == IN_FORWARD )
-				{
-					RemoveButtonPressedPlayerInputCallback( player, IN_FORWARD, baseInputCallacks[IN_FORWARD] )
-				}
-				else
-				{
-					RemoveButtonPressedPlayerInputCallback( player, inputHint.triggerButtonEnum, baseInputCallacks[inputHint.triggerButtonEnum] )
-				}
-
-				if ( inputHint.triggerButtonEnum == IN_DUCK )
-					RemoveButtonPressedPlayerInputCallback( player, IN_DUCKTOGGLE, baseInputCallacks[IN_DUCK] )
-				if ( inputHint.triggerButtonEnum == IN_ZOOM_TOGGLE )
-					RemoveButtonPressedPlayerInputCallback( player, IN_ZOOM_TOGGLE, baseInputCallacks[IN_ZOOM] )
-			}
-		}
-	)
-
-	int tutorialContext     = player.GetPlayerNetInt( "tutorialContext" )
-	int lastTutorialContext = tutorialContext
-
-	InitPlayerTutorialContextHistory( player, IsSurvivalTraining() )
-
-	float nextUpdateTime = 0
-	while ( true )
-	{
-		if ( tutorialContext != lastTutorialContext )
-		{
-			SetTutorialContext( player, tutorialContext )
-		}
-
-		lastTutorialContext = tutorialContext
-
-		WaitFrame()
-
-		if ( !IsAlive( player ) )
-		{
-			tutorialContext = -1
-			continue
-		}
-
-		int matchState = PlayerMatchState_GetFor( player )
-		switch ( matchState )
-		{
-			case ePlayerMatchState.TRAINING:
-				tutorialContext = player.GetPlayerNetInt( "tutorialContext" )
-				break
-
-			case ePlayerMatchState.STAGING_AREA:
-				array<entity> mainWeapons = player.GetMainWeapons()
-				bool hasMainWeapons = false
-				foreach ( weapon in mainWeapons )
-				{
-					if ( weapon.GetWeaponSettingBool( eWeaponVar.attack_button_presses_melee ) )
-						continue
-
-					hasMainWeapons = true
-					break
-				}
-				tutorialContext = hasMainWeapons ? eTutorialContext.WEAPON : eTutorialContext.MOVEMENT
-
-				break
-
-			case ePlayerMatchState.SKYDIVE_PRELAUNCH:
-				tutorialContext = eTutorialContext.PRELAUNCH
-				break
-
-			case ePlayerMatchState.SKYDIVE_FALLING:
-				tutorialContext = eTutorialContext.FREEFALL
-				break
-
-			case ePlayerMatchState.NORMAL:
-				tutorialContext = -1
-				break
-		}
-
-		//if ( IsSurvivalTraining() )
-		//	tutorialContext = player.GetPlayerNetInt( "tutorialContext" )
-
-		if ( tutorialContext >= 0 && IsTutorialContextCompleted( player, tutorialContext ) && WasTutorialContextCompleted( player, tutorialContext ) )
-			tutorialContext = -1
-
-		if ( tutorialContext >= 0 && Time() >= nextUpdateTime )
-		{
-			foreach ( index, inputHint in file.contextInputHintMap[tutorialContext] )
-			{
-				if ( inputHint.triggerButtonEnum >= 0 )
-					continue
-
-				inputHint.triggerCallback( player, inputHint )
-			}
-
-			nextUpdateTime = Time() + 0.25
-		}
-	}
-}
-
-
-void function InitPlayerTutorialContextHistory( entity player, bool forceReset = false )
-{
-	array<bool> contextHistory
-
-	for ( int tutorialContext; tutorialContext < eTutorialContext._count; tutorialContext++ )
-	{
-		bool wasCompleted = IsTutorialContextCompleted( player, tutorialContext ) && !forceReset
-		contextHistory.append( wasCompleted )
-
-		// zero out old completions when new hints are added
-		if ( !wasCompleted )
-			ResetPlayerTutorialContext( player, tutorialContext )
-	}
-
-	file.playerTutorialContextHistory[ player ] <- contextHistory
-}
-
-
-void function ResetPlayerTutorialContext( entity player, int tutorialContext )
-{
-	player.SetPersistentVar( "tutorialActionCount[" + tutorialContext + "]", 0 ) // TODO: Add persistence var
-}
-
-
-bool function WasTutorialContextCompleted( entity player, int tutorialContext )
-{
-	return file.playerTutorialContextHistory[player][tutorialContext]
-}
-
-
-bool function IsTutorialContextCompleted( entity player, int tutorialContext )
-{
-	array<InputHint> inputHints = file.contextInputHintMap[tutorialContext]
-
-	int contextBitField = player.GetPersistentVarAsInt( "tutorialActionCount[" + tutorialContext + "]" )
-
-	foreach ( bitIndex, InputHint inputHint in inputHints )
-	{
-		if ( IsBitFlagSet( contextBitField, (1 << bitIndex) ) )
-			continue
-
-		return false
-	}
-
-	return true
-}
-
-
-void function SetTutorialInputCompleted( entity player, InputHint completedHint )
-{
-	array<InputHint> inputHints = file.contextInputHintMap[completedHint.context]
-
-	int contextBitField = player.GetPersistentVarAsInt( "tutorialActionCount[" + completedHint.context + "]" )
-
-	foreach ( bitIndex, InputHint inputHint in inputHints )
-	{
-		if ( inputHint != completedHint )
-			continue
-
-		contextBitField = contextBitField | (1 << bitIndex)
-		player.SetPersistentVar( "tutorialActionCount[" + completedHint.context + "]", contextBitField )
-		break
-	} // TODO: [SERVER] Persistent data not available for client #0
-}
-
-
-void function UpdateActionCount( entity player, InputHint inputHint )
-{
-	if ( player.GetPlayerNetInt( "tutorialContext" ) != inputHint.context )
-		return
-
-	Remote_CallFunction_NonReplay( player, "ServerCallback_ActionCountUpdated", inputHint.index, 1 )
-
-	SetTutorialInputCompleted( player, inputHint )
-}
-
-
-#elseif CLIENT
-void function OnLocalClientConnected( entity player )
-{/*
-	int usedIndices = 0
-	foreach ( index, inputHint in file.inputHints )
-	{
-		if ( player.GetPersistentVar( "tutorialActionCount[" + index + "]" ) < 5 )
-		{
-			var hintRui = CreateCockpitRui( $"ui/tutorial_hint_line.rpak" )
-			RuiSetString( hintRui, "hintText", inputHint.hintText )
-			RuiSetInt( hintRui, "hintOffset", usedIndices )
 	
-			inputHint.rui = hintRui
-			usedIndices++
-		}
-	}*/
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void function OnLocalClientConnected( entity player )
+{
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }
 
 void function OnFullUpdate()
@@ -418,12 +419,12 @@ void function OnFullUpdate()
 	}
 }
 
-void function OnTutorialContextChanged( entity player, int old, int new, bool actuallyChanged )
+void function OnTutorialContextChanged( entity player, int new )
 {
 	if ( player != GetLocalClientPlayer() )
 		return
 
-	// TODO: clean file.contextInputHintMap[old]
+	
 
 	if ( new < 0 )
 		return
@@ -496,22 +497,22 @@ void function ServerCallback_ActionCountUpdated( int actionIndex, int actionCoun
 		RuiSetBool( inputHint.rui, "hintCompleted", true )
 	}
 
-	//if ( actionCount < inputHint.requiredActionCount )
-	//	return
+	
+	
 
-	//if ( inputHint.rui != null )
-	//	RuiDestroy( inputHint.rui )
-	//
-	//inputHint.rui = null
+	
+	
+	
+	
 }
-#endif
+
 
 
 void function PingAltHintInit( entity player, InputHint inputHint )
 {
-	#if CLIENT
-		RuiTrackBool( inputHint.rui, "showAltHint", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndexSafe( "isJumpmaster" ) )
-	#endif
+
+		RuiTrackBool( inputHint.rui, "showAltHint", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "isJumpmaster" ) )
+
 }
 
 
@@ -542,7 +543,7 @@ int function GetHintIndexForButtonEnum( int buttonEnum )
 	return -1
 }
 
-#if CLIENT
+
 void function UpdateTutorialBindingIcons()
 {
 	array<InputHint> movementHints = file.contextInputHintMap[eTutorialContext.MOVEMENT]
@@ -577,9 +578,9 @@ void function UpdateTutorialWhenOptionsChange()
 {
 	UpdateTutorialBindingIcons()
 }
-#endif
 
-#if SERVER || CLIENT
+
+
 bool function IsTutorialInputCompleted( entity player, InputHint completedHint )
 {
 	array<InputHint> inputHints = file.contextInputHintMap[completedHint.context]
@@ -593,7 +594,7 @@ bool function IsTutorialInputCompleted( entity player, InputHint completedHint )
 
 		if ( IsBitFlagSet( contextBitField, (1 << bitIndex) ) )
 		{
-			return false
+			return true
 		}
 		else
 		{
@@ -604,7 +605,7 @@ bool function IsTutorialInputCompleted( entity player, InputHint completedHint )
 
 	return false
 }
-#endif
+
 
 void function AddInputHint( int hintContext, int triggerButtonEnum, string buttonText, string hintText, bool functionref( entity, InputHint ) inputPressedCallback, string altHintText = "", void functionref( entity, InputHint ) altHintCallback = null, string gamePadButtonText = "" )
 {
@@ -624,14 +625,14 @@ void function AddInputHint( int hintContext, int triggerButtonEnum, string butto
 
 	file.contextInputHintMap[hintContext].append( inputHint )
 
-	#if SERVER
-		if ( triggerButtonEnum <= 0 )
-			return
 
-		baseInputCallacks[triggerButtonEnum] <- void function( entity player ) : (triggerButtonEnum) {
-			RunInputHintCallback( player, triggerButtonEnum )
-		}
-	#endif
+
+
+
+
+
+
+
 }
 
 
@@ -649,12 +650,12 @@ void function RunInputHintCallback( entity player, int buttonEnum )
 
 bool function TryActionMove( entity player, InputHint inputHint )
 {
-	#if SERVER
-		if ( player.GetVelocity() == <0, 0, 0> )
-			return false
 
-		UpdateActionCount( player, inputHint )
-	#endif
+
+
+
+
+
 
 	return true
 }
@@ -662,12 +663,12 @@ bool function TryActionMove( entity player, InputHint inputHint )
 
 bool function TryActionJump( entity player, InputHint inputHint )
 {
-	#if SERVER
-		if ( player.IsOnGround() )
-			return false
 
-		UpdateActionCount( player, inputHint )
-	#endif
+
+
+
+
+
 
 	return true
 }
@@ -675,12 +676,12 @@ bool function TryActionJump( entity player, InputHint inputHint )
 
 bool function TryActionSprint( entity player, InputHint inputHint )
 {
-	#if SERVER
-		if ( !player.IsSprinting() )
-			return false
 
-		UpdateActionCount( player, inputHint )
-	#endif
+
+
+
+
+
 
 	return true
 }
@@ -688,12 +689,24 @@ bool function TryActionSprint( entity player, InputHint inputHint )
 
 bool function TryActionHolster( entity player, InputHint inputHint )
 {
-	#if SERVER
-		entity weapon = player.GetActiveWeapon(0)
-		if ( !IsValid( weapon ) || weapon.GetWeaponClassName() != "mp_weapon_melee_survival" )
-			return false
-		UpdateActionCount( player, inputHint )
-	#endif
+
+
+
+
+
+
+
+	return true
+}
+
+bool function TryActionMantle( entity player, InputHint inputHint )
+{
+
+
+
+
+
+
 
 	return true
 }
@@ -701,25 +714,25 @@ bool function TryActionHolster( entity player, InputHint inputHint )
 
 bool function TryActionCrouch( entity player, InputHint inputHint )
 {
-	#if SERVER
-		if ( !player.IsOnGround() )
-			return false
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 		if ( player.IsSprinting() )
 			return false
 
-		if ( player.IsSliding() )
-			return false
-
-		if ( player.IsStanding() || player.IsCrouched() )
-			return false
-
-		//thread TryActionCrouch_Internal( player, inputHint )
-		UpdateActionCount( player, inputHint )
-	#else
-		if ( player.IsSprinting() )
-			return false
-	#endif
 
 	return true
 }
@@ -727,18 +740,18 @@ bool function TryActionCrouch( entity player, InputHint inputHint )
 
 bool function TryActionCrouch_Internal( entity player, InputHint inputHint )
 {
-	#if SERVER
-		float endTime = Time() + 1.0
-		while ( Time() < endTime || !player.IsCrouched() )
-		{
-			WaitFrame()
-		}
 
-		if ( !player.IsOnGround() || !player.IsCrouched() && player.IsSprinting() )
-			return false
 
-		UpdateActionCount( player, inputHint )
-	#endif
+
+
+
+
+
+
+
+
+
+
 
 	return true
 }
@@ -754,9 +767,9 @@ bool function TryActionTactical( entity player, InputHint inputHint )
 	if ( weapon.GetWeaponPrimaryClipCount() < ammoPerShot )
 		return false
 
-	#if SERVER
-		UpdateActionCount( player, inputHint )
-	#endif
+
+
+
 
 	return true
 }
@@ -764,15 +777,15 @@ bool function TryActionTactical( entity player, InputHint inputHint )
 
 bool function TryActionSlide( entity player, InputHint inputHint )
 {
-	#if SERVER
-		if ( !player.IsSliding() )
-			return false
 
-		UpdateActionCount( player, inputHint )
-	#else
+
+
+
+
+
 		if ( !player.IsSprinting() )
 			return false
-	#endif
+
 
 	return true
 }
@@ -787,12 +800,12 @@ bool function TryActionFireMode( entity player, InputHint inputHint )
 	if ( DoesModExist( weapon, "hopup_selectfire" ) && !weapon.HasMod( "hopup_selectfire" ) || !DoesModExist( weapon, "altfire" ) )
 		return false
 
-	#if SERVER
-		if ( !weapon.HasMod( "altfire" ) )
-			return false
 
-		UpdateActionCount( player, inputHint )
-	#endif
+
+
+
+
+
 
 	return true
 }
@@ -803,9 +816,9 @@ bool function TryActionWeaponCycle( entity player, InputHint inputHint )
 	if ( SURVIVAL_GetPrimaryWeapons( player ).len() < 2 )
 		return false
 
-	#if SERVER
-		UpdateActionCount( player, inputHint )
-	#endif
+
+
+
 
 	return true
 }
@@ -813,9 +826,9 @@ bool function TryActionWeaponCycle( entity player, InputHint inputHint )
 
 bool function TryActionPing( entity player, InputHint inputHint )
 {
-	#if SERVER
-		UpdateActionCount( player, inputHint )
-	#endif
+
+
+
 
 	return true
 }
@@ -823,16 +836,16 @@ bool function TryActionPing( entity player, InputHint inputHint )
 
 bool function TryActionADS( entity player, InputHint inputHint )
 {
-	#if SERVER
-		entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
-		if ( !weapon )
-			return false
 
-		if ( !weapon.IsWeaponInAds() )
-			return false
 
-		UpdateActionCount( player, inputHint )
-	#endif
+
+
+
+
+
+
+
+
 
 	return true
 }
@@ -840,12 +853,12 @@ bool function TryActionADS( entity player, InputHint inputHint )
 
 bool function TryActionFreeLook( entity player, InputHint inputHint )
 {
-	#if SERVER
-		if ( !player.GetPlayerNetBool( "skydiveFreelookActive" ) )
-			return false
 
-		UpdateActionCount( player, inputHint )
-	#endif
+
+
+
+
+
 
 	return true
 }
@@ -857,15 +870,15 @@ bool function TryActionReload( entity player, InputHint inputHint )
 	if ( !weapon )
 		return false
 
-	#if SERVER
-		if ( !weapon.IsReloading() )
-			return false
 
-		UpdateActionCount( player, inputHint )
-	#else
+
+
+
+
+
 		if ( weapon.GetWeaponPrimaryClipCount() == weapon.GetWeaponPrimaryClipCountMax() )
 			return false
-	#endif
+
 
 	return true
 }
@@ -874,4 +887,4 @@ bool function TryActionReload( entity player, InputHint inputHint )
 bool function TryActionBlank( entity player, InputHint inputHint )
 {
 	return true
-}
+} 

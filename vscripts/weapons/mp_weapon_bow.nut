@@ -9,17 +9,17 @@ global function OnWeaponChargeLevelIncreased_weapon_bow
 global function OnWeaponCustomActivityStart_weapon_bow
 global function OnWeaponCustomActivityEnd_weapon_bow
 
-#if CLIENT
+
 global function AttemptCancelCharge
-#endif
 
-#if SERVER
-global function Remote_CancelCharge
-#endif
 
-#if CLIENT
+
+
+
+
+
 global function WeaponBow_UpdateArrowColor
-#endif
+
 
 global function ArrowsCanBePickedUp
 
@@ -41,7 +41,7 @@ enum eArrowTypes
 const array<int> STANDARD_ARROWS_AVAILABLE_DMG_LEVELS = [0, 1, 2, 3, 4, 5]
 const array<int> SHATTER_ARROWS_AVAILABLE_DMG_LEVELS = [0, 3, 5]
 
-//TODO: remove hacky charge level mod thing when we get code features
+
 const string CHARGE_MODS_BASE_STR = "charge_lv"
 const string STANDARD_CHARGE_DMG_MODS_BASE_STR = "std_charge_dmg_lv"
 const int CHARGE_MODS_MAX_LEVEL = 5
@@ -102,6 +102,8 @@ struct
 
 	string chargeCompleteSound
 
+	MarksmansTempoSettings& bowTempoSettings
+
 	table<string, array<asset> > fxLightAssets1p
 
 	array<vector> arrowTypeColors
@@ -119,30 +121,34 @@ struct
 	float arrowsStickLifetimeWorld
 	bool  arrowsCanBePickedUp
 
+
+
+
+
 	int ammoStackSize
 
 	LootData& singleArrowLootData
 
-	#if CLIENT
+
 		bool inspectDOF
-	#endif
+
 
 } file
 
 
 void function MpWeaponBow_Init()
 {
+	PrecacheWeapon( $"mp_weapon_bow" )
+
 	RegisterSignal( BOW_DEACTIVATE_SIGNAL )
 	RegisterSignal( HELPER_DOT_RUI_ABORT_SIGNAL )
 
 	PrecacheModel( SINGLE_ARROW_MODEL )
 	PrecacheModel( SINGLE_ARROW_MODEL_PICKUP )
 
-	PrecacheWeapon( "mp_weapon_bow" )
 
-	#if SERVER
-		AddWeaponModChangedCallback( "mp_weapon_bow", OnWeaponModChanged_WeaponBow )
-	#endif
+
+
 
 	file.fxLightAssets1p = {}
 	string settingStr
@@ -153,21 +159,21 @@ void function MpWeaponBow_Init()
 		{
 			settingStr = FX_BOW_LIGHT_PREFIX + optic + "_" + i
 			asset fx1p = GetWeaponInfoFileKeyFieldAsset_Global( "mp_weapon_bow", settingStr + "_1p" )
-			#if SERVER
-				PrecacheEffect( fx1p )
-			#endif
+
+
+
 			fxLightArr.append( fx1p )
 		}
 		file.fxLightAssets1p[optic] <- fxLightArr
 	}
 
-	//ScriptRemote_RegisterClientFunction( "Remote_CancelCharge" )
+	Remote_RegisterServerFunction( "Remote_CancelCharge" )
 
-	#if CLIENT
+
 		RegisterConCommandTriggeredCallback( "+weaponcycle", AttemptCancelCharge )
-		//RegisterConCommandTriggeredCallback( "+speed", AttemptCancelCharge )
+		
 		RegisterConCommandTriggeredCallback( "+reload", AttemptCancelCharge )
-	#endif
+
 
 
 	file.arrowsStickChance         = GetPlaylistVarFloat( GetCurrentPlaylistName(), "arrows_stick_chance", ARROWS_STICK_CHANCE_DEFAULT )
@@ -180,9 +186,12 @@ void function MpWeaponBow_Init()
 	file.arrowsStickLifetimeWorld  = GetPlaylistVarFloat( GetCurrentPlaylistName(), "arrows_stick_lifetime_world", ARROWS_STICK_LIFETIME_WORLD_DEFAULT )
 	file.arrowsCanBePickedUp       = GetPlaylistVarBool( GetCurrentPlaylistName(), "arrows_can_be_picked_up", ARROWS_CAN_BE_PICKED_UP_DEFAULT )
 
-	#if CLIENT
+
 		file.inspectDOF = GetPlaylistVarBool( GetCurrentPlaylistName(), "bow_inspect_dof", true )
-	#endif
+
+
+
+
 }
 
 
@@ -194,7 +203,7 @@ bool function ArrowsCanBePickedUp()
 
 void function OnWeaponActivate_weapon_bow( entity weapon )
 {
-	//this isn't in Init because many refs aren't loaded or initialized at that time, lame
+	
 	if ( !file.fileStructInitialized )
 	{
 		file.fileStructInitialized = true
@@ -204,30 +213,85 @@ void function OnWeaponActivate_weapon_bow( entity weapon )
 
 		file.chargeCompleteSound = GetWeaponInfoFileKeyField_GlobalString( "mp_weapon_bow", CHARGE_COMPLETE_SOUND_SETTING )
 
+		MarksmansTempoSettings settings
+		settings.requiredShots             = GetWeaponInfoFileKeyField_GlobalInt( "mp_weapon_bow", MARKSMANS_TEMPO_REQUIRED_SHOTS_SETTING )
+		settings.graceTimeBuildup          = GetWeaponInfoFileKeyField_GlobalFloat( "mp_weapon_bow", MARKSMANS_TEMPO_GRACE_TIME_SETTING )
+		settings.graceTimeInTempo          = GetWeaponInfoFileKeyField_GlobalFloat( "mp_weapon_bow", MARKSMANS_TEMPO_GRACE_TIME_IN_TEMPO_SETTING )
+		settings.fadeoffMatchGraceTime     = GetWeaponInfoFileKeyField_GlobalInt( "mp_weapon_bow", MARKSMANS_TEMPO_FADEOFF_MATCH_GRACE_TIME )
+		settings.fadeoffOnPerfectMomentHit = GetWeaponInfoFileKeyField_GlobalFloat( "mp_weapon_bow", MARKSMANS_TEMPO_FADEOFF_ON_PERFECT_MOMENT_SETTING )
+		settings.fadeoffOnFire             = GetWeaponInfoFileKeyField_GlobalFloat( "mp_weapon_bow", MARKSMANS_TEMPO_FADEOFF_ON_FIRE_SETTING )
+		settings.weaponDeactivateSignal    = BOW_DEACTIVATE_SIGNAL
+		file.bowTempoSettings              = settings
+
 		file.centerDotHelperMinChargeLvl           = GetWeaponInfoFileKeyField_GlobalInt( "mp_weapon_bow", CENTER_DOT_MIN_CHARGE_SETTING )
 		file.centerDotHelperMinChargeLvlOpticClamp = GetWeaponInfoFileKeyField_GlobalInt( "mp_weapon_bow", CENTER_DOT_MIN_CHARGE_SETTING + "_optic_clamp" )
 
-		//file.ammoStackSize = SURVIVAL_Loot_GetLootDataByRef( SURVIVAL_Loot_GetLootDataByRef( "mp_weapon_bow" ).ammoType ).inventorySlotCount
+		Assert( eArrowTypes._count == 2 )    
+		file.arrowTypeColors.append( GetWeaponInfoFileKeyField_GlobalVectorInt( "mp_weapon_bow", ARROW_COLOR_STANDARD_SETTING ) )
+		file.arrowTypeColors.append( GetWeaponInfoFileKeyField_GlobalVectorInt( "mp_weapon_bow", ARROW_COLOR_SHATTER_SETTING ) )
+
+		
 
 		file.singleArrowLootData = SURVIVAL_Loot_GetLootDataByRef( ARROWS_AMMO )
+
+		if ( ArrowsCanBePickedUp() )
+			SetCallback_LootTypeExtraCanUseFunction( file.singleArrowLootData, StuckArrow_ExtraCanUseFunction )
+
+
+
+
+
+
+
+
 	}
 
 	entity player = weapon.GetWeaponOwner()
+
+
+	thread ShatterRounds_UpdateShatterRoundsThink( weapon )
+
+
+
+
+
+
+	thread MarksmansTempo_OnActivate( weapon, file.bowTempoSettings )
+
+
+
+
+
+
+
 }
 
 
 void function OnWeaponDeactivate_weapon_bow( entity weapon )
 {
 	ClearChargeAndDmgLevelMods( weapon )
-	#if CLIENT
+
 		weapon.Signal( BOW_DEACTIVATE_SIGNAL )
 
+		weapon.Signal( SHATTER_ROUNDS_THINK_END_SIGNAL )
 
-		#if SERVER
-			weapon.Signal( SHATTER_ROUNDS_ADS_THINK_THREAD_ABORT_SIGNAL )
-		#endif
 
-	#endif
+
+
+
+
+	MarksmansTempo_OnDeactivate( weapon, file.bowTempoSettings )
+
+
+
+
+
+
+
+
+
+
+
 }
 
 
@@ -240,34 +304,47 @@ var function OnWeaponPrimaryAttack_weapon_bow( entity weapon, WeaponPrimaryAttac
 	if ( !IsValid( player ) || !player.IsPlayer() )
 		return 0
 
-	// Minimum charge threshold (replaces engine's charge_attack_min_charge_required)
-	if ( weapon.GetWeaponChargeFractionCurved() < 0.15 )
-		return 0
 
-	#if CLIENT
 		if ( !(InPrediction() && weapon.ShouldPredictProjectiles()) )
 			return 0
-	#endif
+
 
 	ApplyModsForChargeLevel( weapon, weapon.GetWeaponChargeLevel() )
 
+	weapon.SetSoundCodeControllerValue( 100.0 * weapon.GetWeaponChargeFractionCurved() )
+
+	
 	float adjustedChargeFrac = max( 0.0, min( weapon.GetWeaponChargeFractionCurved(), 1.0 ) )
 
 	float baseSpeed       = weapon.GetWeaponSettingFloat( eWeaponVar.projectile_launch_speed )
 	float speedMultiplier = 0.0
 	bool ignoreSpread     = false
 
-	speedMultiplier = GraphCapped( adjustedChargeFrac, 0.0, 1.0, baseSpeed, file.fullChargeSpeed )
-	speedMultiplier /= baseSpeed        //the code multiplies by projectile_launch_speed internally, the speed is meant to be a multipler of that base speed
+	if ( weapon.HasMod( SHATTER_ROUNDS_HIPFIRE_MOD ) )
+	{
+		speedMultiplier = GraphCapped( adjustedChargeFrac, 0.0, 1.0, baseSpeed, file.fullChargeSpeedSplit )
+		ignoreSpread    = true
+	}
+	else
+	{
+		speedMultiplier = GraphCapped( adjustedChargeFrac, 0.0, 1.0, baseSpeed, file.fullChargeSpeed )
+	}
+	speedMultiplier /= baseSpeed        
 
+
+
+		GoldenHorsePurple_OnWeaponPrimaryAttack( weapon, attackParams )
 
 	weapon.FireWeapon_Default( attackParams.pos, attackParams.dir, speedMultiplier, 1.0, ignoreSpread )
 
+		GoldenHorsePurple_PostFire( weapon )
 
+
+	MarksmansTempo_OnFire( weapon, file.bowTempoSettings, true )
 
 	thread ClearChargeAfterFrame( weapon )
 
-	#if CLIENT
+
 		if ( InPrediction() )
 		{
 			int slot     = GetSlotForWeapon( player, weapon )
@@ -300,47 +377,46 @@ var function OnWeaponPrimaryAttack_weapon_bow( entity weapon, WeaponPrimaryAttac
 					duration -= clampOpticDelay
 					delay = clampOpticDelay
 				}
-				//thread DisplayCenterDotRui( weapon, HELPER_DOT_RUI_ABORT_SIGNAL, delay, duration, 0.7, 0.05, 0.1 )
+				thread DisplayCenterDotRui( weapon, HELPER_DOT_RUI_ABORT_SIGNAL, delay, duration, 0.7, 0.05, 0.1 )
 			}
 		}
-	#endif
+
 
 	return weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
 }
 
 
-void function OnWeaponCustomActivityStart_weapon_bow( entity weapon )
+void function OnWeaponCustomActivityStart_weapon_bow( entity weapon, int sequence )
 {
-	#if CLIENT
+
 		if ( !file.inspectDOF )
 			return
 
-		//Logic so the bow doesn't look blurry on inspect
+		
 		if ( weapon.GetWeaponActivity() == ACT_VM_WEAPON_INSPECT )
 		{
 			DoF_LerpNearDepth( 0.5, 6.4, 0.3 )
 		}
-	#endif
+
 }
 
 
-void function OnWeaponCustomActivityEnd_weapon_bow( entity weapon )
+void function OnWeaponCustomActivityEnd_weapon_bow( entity weapon, int activity )
 {
-	#if CLIENT
+
 		if ( !file.inspectDOF )
 			return
-		/*int activity == 0
 
 		if ( activity == ACT_VM_WEAPON_INSPECT )
 		{
 			DoF_LerpNearDepthToDefault( 0.3 )
-		}*/
-	#endif
+		}
+
 }
 
 void function ClearChargeAfterFrame( entity weapon )
 {
-	//we clear mods after a frame so that the mod still is on the weapon when the shot is fired, so viewkick and such is still scaled
+	
 	AssertIsNewThread()
 	weapon.EndSignal( "OnDestroy" )
 	weapon.EndSignal( BOW_DEACTIVATE_SIGNAL )
@@ -363,10 +439,12 @@ bool function OnWeaponChargeBegin_weapon_bow( entity weapon )
 	if ( !IsValid( player ) || !IsAlive( player ) )
 		return false
 
-	#if CLIENT
+
 		weapon.Signal( HELPER_DOT_RUI_ABORT_SIGNAL )
 		PlayChargeFX( player, weapon )
-	#endif
+
+
+	MarksmansTempo_AbortFadeoff( weapon, file.bowTempoSettings )
 	return true
 }
 
@@ -385,140 +463,203 @@ bool function OnWeaponChargeLevelIncreased_weapon_bow( entity weapon )
 		if ( !IsValid( player ) )
 			return true
 
-		#if CLIENT
+
 			weapon.EmitWeaponSound_1p3p( file.chargeCompleteSound, "" )
 
 			if ( IsValid( player ) && IsLocalClientPlayer( player ) )
 			{
-				//Rumble_Play( "rumble_bow_max_charge", {} )
+				Rumble_Play( "rumble_bow_max_charge", {} )
 			}
-		#endif
 
+
+		MarksmansTempo_SetPerfectTempoMoment( weapon, file.bowTempoSettings, player, Time(), true )
 	}
 
-	//apply mods every charge up to show spread
+	
 	ApplyModsForChargeLevel( weapon, weapon.GetWeaponChargeLevel() )
 
 	return true
 }
 
-// --------------------------------------------------------------------------------------
-//
-//	ARROW STICK
-//
-// --------------------------------------------------------------------------------------
 
-void function OnProjectileCollision_weapon_bow( entity projectile, vector pos, vector normal, entity hitEnt, int hitBox, bool isCritical )
+
+
+
+
+
+void function OnProjectileCollision_weapon_bow( entity projectile, vector pos, vector normal, entity hitEnt, int hitBox, bool isCritical, bool isPassthrough )
 {
-	#if SERVER
-		if ( GetCurrentPlaylistVarBool( "arrows_stick_disable", false ) )
-			return
-
-		if ( !IsValid( hitEnt ) )
-			return
-		//float rand = RandomFloat( 1.0 )
-		//if ( rand > file.arrowsStickChance )
-		//	return
-
-		if ( hitEnt.IsPlayer() || hitEnt.IsNPC() )
-		{
-			vector position = pos + projectile.GetForwardVector() * file.arrowsStickIntoPlayerDist
-			vector angles   = VectorToAngles( projectile.GetForwardVector() )
-			entity moverEnt = CreateScriptMover_NEW( BOW_MOVER_SCRIPTNAME, position, angles )
-			moverEnt.e.spawnTime = Time()
-			moverEnt.SetParentWithHitbox( hitEnt, hitBox, true )
-
-			entity ent = CreatePropDynamic( SINGLE_ARROW_MODEL, position, angles, 0 )
-			ent.kv.fadedist    = 3000
-			ent.e.spawnTime    = Time()
-			ent.SetParent( moverEnt, "", true )
 
 
-			//ent.kv.rendercolor = file.arrowTypeColors[ eArrowTypes.STANDARD ]
 
 
-			ent.RemoveFromAllRealms()
-			if ( IsValid( projectile ) )
-				ent.AddToOtherEntitysRealms( projectile )
-			else
-				ent.AddToOtherEntitysRealms( hitEnt )
-
-			thread CleanupArrows( moverEnt, hitEnt, file.arrowsStickLifetimePlayer )
-		}
-		else//if ( PositionIsInMapBounds( pos ) )
-		{
 
 
-			entity ent
-
-			if ( ArrowsCanBePickedUp() )
-			{
-				ent = CreateEntity( "prop_survival" )
-				ent.SetValueForModelKey( SINGLE_ARROW_MODEL_PICKUP )
-
-				ent.SetSurvivalInt( file.singleArrowLootData.index )
-
-				ent.SetUsable()
-				ent.SetUsableByGroup( "pilot" )
-				ent.AddUsableValue( USABLE_USE_COLLISION_ORIGIN | USABLE_CUSTOM_HINTS | USABLE_HORIZONTAL_FOV | USABLE_PRIORITY_LOW )
-
-				ent.e.lootRef = ARROWS_AMMO
-
-				ent.SetClipCount( 1 )
-			}
-			else
-			{
-				ent = CreateEntity( "prop_dynamic" )
-				ent.SetValueForModelKey( SINGLE_ARROW_MODEL )
-			}
-
-			ent.kv.CollisionGroup = TRACE_COLLISION_GROUP_NONE
-			ent.kv.fadedist       = 3000
-			ent.kv.renderamt      = 255
 
 
-				if ( projectile.HasWeaponMod( WEAPON_LOCKEDSET_MOD_CUPID ) )
-				{
-					ent.kv.rendercolor = VALENTINES_COLOR
-				}
-				else
-
-			ent.kv.rendercolor    = "255 255 255"
-			ent.kv.solid          = 0    // 0 = no collision, 2 = bounding box, 6 = use vPhysics, 8 = hitboxes only
-			SetForceDrawWhileParented( ent, true )
-
-			DispatchSpawn( ent )
-
-			ent.e.spawnTime = Time()
-			SetItemSpawnSource( ent, eSpawnSource.PLAYER_DROP )
-
-			//vector angles = VectorToAngles( projectile.GetForwardVector() )
-			//angles = AnglesCompose( angles, <0, 90, 0> )
-			//ent.SetAngles( angles )
-			//ent.SetOrigin( pos )
-
-			DeployableCollisionParams params
-			params.pos        = pos
-			params.normal     = projectile.GetForwardVector()
-			params.hitEnt     = hitEnt
-			params.hitBox     = 0    //prop survival's cant attach to hitboxes for networking optimization, so don't do it
-			params.isCritical = isCritical
-
-			vector angleOffset = <0, 0, 0>
-
-			if ( ArrowsCanBePickedUp() )
-				angleOffset = <0, 90, 0>
 
 
-			ent.RemoveFromAllRealms()
-			if ( IsValid( projectile ) )
-				ent.AddToOtherEntitysRealms( projectile )
-			else
-				Warning( "Could not add arrow to realm because it hit world and projectile was null." )
 
-			thread CleanupArrows( ent, hitEnt, file.arrowsStickLifetimeWorld )
-		}
-	#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	return
 }
@@ -532,70 +673,104 @@ bool function StuckArrow_ExtraCanUseFunction( entity player, entity arrow, int u
 	if ( !ArrowsCanBePickedUp() )
 		return false
 
+	if ( IsBitFlagSet( useFlags, USE_FLAG_AUTO) )
+	{
+		
+		array<entity> weapons = player.GetMainWeapons()
+		bool hasBow           = false
+		foreach ( entity weapon in weapons )
+		{
+			if ( weapon.GetWeaponClassName() == "mp_weapon_bow" )
+			{
+				hasBow = true
+				break
+			}
+		}
+
+		if ( !hasBow )
+			return false
+
+		
+		int poolCount = player.AmmoPool_GetCount( eAmmoPoolType.arrows )
+		if ( poolCount > 0 && (poolCount % file.ammoStackSize) == 0 )
+			return false
+	}
 	return true
 }
 
-#if SERVER
-void function CleanupArrows( entity ent, entity hitEnt, float time )
-{
-	OnThreadEnd(
-		function() : ( ent, hitEnt )
-		{
-			if ( IsValid( ent ) )
-			{
-				ent.Destroy()
-			}
-		}
-	)
 
-	if ( IsValid( hitEnt ) )
-	{
-		if ( (hitEnt.IsPlayer() || hitEnt.IsNPC()) && !IsAlive( hitEnt ) )
-			return
 
-		hitEnt.EndSignal( "OnDestroy" )
-		hitEnt.EndSignal( "OnDeath" )
-	}
-	else
-	{
-		return
-	}
 
-	if ( IsValid( ent ) )
-		ent.EndSignal( "OnDestroy" )
-	else
-		return
 
-	if ( time >= 0 )
-		wait time
-	else
-		WaitForever()
-}
-#endif
 
-// --------------------------------------------------------------------------------------
-//
-//	ARROW TIPS
-//
-// --------------------------------------------------------------------------------------
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function WeaponBow_UpdateArrowColor( entity weapon, int shatterRoundsType )
 {
-	//weapon.kv.rendercolor = VectorToColorString( file.arrowTypeColors[ eArrowTypes.STANDARD ], 255 )
-}
-#endif
 
-// --------------------------------------------------------------------------------------
-//
-//	CHARGE
-//
-// --------------------------------------------------------------------------------------
+		if ( weapon.HasMod( WEAPON_LOCKEDSET_MOD_CUPID ) )
+		{
+			weapon.kv.rendercolor = VALENTINES_COLOR
+			return
+		}
+
+
+	if ( shatterRoundsType == eShatterRoundsTypes.STANDARD )
+		weapon.kv.rendercolor = VectorToColorString( file.arrowTypeColors[ eArrowTypes.STANDARD ], 255 )
+	else if ( shatterRoundsType == eShatterRoundsTypes.SHATTER_TRI )
+		weapon.kv.rendercolor = VectorToColorString( file.arrowTypeColors[ eArrowTypes.SHATTER ], 255 )
+}
+
+
+
+
+
+
+
 void function ApplyModsForChargeLevel( entity weapon, int level )
 {
-	#if CLIENT
+
 		if ( !InPrediction() )
 			return
-	#endif
+
 
 	ClearChargeAndDmgLevelMods( weapon )
 
@@ -604,11 +779,16 @@ void function ApplyModsForChargeLevel( entity weapon, int level )
 
 	int dmgModLevel
 	string baseDmgModStr
-
+	if ( weapon.HasMod( SHATTER_ROUNDS_HIPFIRE_MOD ) )
+	{
+		baseDmgModStr = SHATTER_ARROWS_DMG_MODS_BASE_STR
+		dmgModLevel   = GetBestAvailableModLevel( SHATTER_ARROWS_AVAILABLE_DMG_LEVELS, level - 1 )
+	}
+	else
 	{
 		baseDmgModStr = STANDARD_CHARGE_DMG_MODS_BASE_STR
 		dmgModLevel   = GetBestAvailableModLevel( STANDARD_ARROWS_AVAILABLE_DMG_LEVELS, level - 1 )
-		//had to remove std_charge_dmg_lv0 to get more mod slots. It doesn't do anything anyway, we just use base values at that point
+		
 		if ( dmgModLevel == 0 )
 			return
 	}
@@ -618,10 +798,10 @@ void function ApplyModsForChargeLevel( entity weapon, int level )
 
 void function ClearChargeAndDmgLevelMods( entity weapon )
 {
-	#if CLIENT
+
 		if ( !InPrediction() )
 			return
-	#endif
+
 
 	for ( int i = 0; i < CHARGE_MODS_MAX_LEVEL + 1; i++ )
 	{
@@ -647,7 +827,7 @@ int function GetBestAvailableModLevel( array<int> availableLevels, int desiredLe
 	return availableLevels[availableLevels.len() - 1]
 }
 
-#if CLIENT
+
 void function AttemptCancelCharge( entity player )
 {
 	if ( !IsValid( player ) )
@@ -663,31 +843,31 @@ void function AttemptCancelCharge( entity player )
 	if ( !weapon.IsWeaponCharging() )
 		return
 
-	//thread Remote_CancelCharge( player )
+	Remote_ServerCallFunction( "Remote_CancelCharge" )
 }
-#endif
-
-#if SERVER
-void function Remote_CancelCharge( entity player )
-{
-	entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
-	if ( !IsValid( weapon ) )
-		return
-
-	if ( weapon.GetWeaponClassName() != "mp_weapon_bow" )
-		return
-
-	weapon.ForceChargeEndNoAttack()
-}
-#endif
 
 
-// --------------------------------------------------------------------------------------
-//
-//	FX
-//
-// --------------------------------------------------------------------------------------
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function PlayChargeFX( entity player, entity weapon )
 {
 	if ( !IsValid( weapon ) || !IsValid( player ) || !IsAlive( player ) )
@@ -705,18 +885,25 @@ void function PlayChargeFX( entity player, entity weapon )
 	{
 		asset fx1p = file.fxLightAssets1p[opticAttachment][i]
 
-		//printt( "Playing " + fx1p + " from setting " + (FX_BOW_LIGHT_PREFIX + opticAttachment + "_" + i + "_1p") + " at pt " + attachPoints[i] )
+		
 
 		if ( fx1p == "" )
 			continue
 
-		//int handle = weapon.PlayWeaponEffectNoCullReturnViewEffectHandle( fx1p, $"", attachPoints[i], true, "" )
+		int handle = weapon.PlayWeaponEffectNoCullReturnViewEffectHandle( fx1p, $"", attachPoints[i], true, FX_PATTACH_WEAPON_CHARGE_FRACTION_CURVED )
 
 
-		//EffectSetControlPointVector( handle, 2, file.arrowTypeColors[ weapon.GetScriptInt0() ] )
+
+		if ( weapon.HasMod( WEAPON_LOCKEDSET_MOD_CUPID ) )
+		{
+			EffectSetControlPointVector( handle, 2, VALENTINES_COLOR_VEC )
+		}
+		else
+
+		EffectSetControlPointVector( handle, 2, file.arrowTypeColors[ weapon.GetScriptInt0() ] )
 	}
 }
-#endif
+
 
 void function StopChargeFX( entity weapon )
 {
@@ -744,9 +931,28 @@ void function StopChargeFX( entity weapon )
 }
 
 
-#if SERVER
-void function OnWeaponModChanged_WeaponBow( entity weapon, string mod, bool modAdded )
-{
 
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

@@ -5,17 +5,18 @@ global function OnWeaponReadyToFire_ability_grapple
 global function CodeCallback_OnGrappleActivate
 global function CodeCallback_OnGrappleAttach
 global function CodeCallback_OnGrappleDetach
+global function CodeCallback_GrappleDetachFromNPC
 global function GrappleWeaponInit
 
-#if SERVER
-global function OnWeaponNpcPrimaryAttack_ability_grapple
-global function AddEntityCallback_OnGrappled
-global function RemoveEntityCallback_OnGrappled
-global function AddCallback_OnGrappled
-global function AddCallback_OnGrappleDetached
-global function RemoveCallback_OnGrappled
 
-#endif // SERVER
+
+
+
+
+
+
+
+
 
 struct
 {
@@ -43,12 +44,17 @@ void function GrappleWeaponInit()
 	file.grappleDrainMaxDist = GetCurrentPlaylistVarFloat( "pathfinder_grapple_drain_max_dist", 4500 )
 	file.grappleDrainMaxDist_Zscalar = GetCurrentPlaylistVarFloat( "pathfinder_grapple_drain_z_scalar", 0.5 )
 
-#if SERVER
-	Bleedout_AddCallback_OnPlayerStartBleedout( Grapple_OnPlayerStartBleedout )
-	AddCallback_OnGrappled( GrappleNPCCallback )
-	RegisterSignal( "OnGrappled" )
-	//RegisterSignal( "OnGrappleDetach" )
-#endif
+
+
+
+
+
+
+
+
+
+
+
 }
 
 void function OnWeaponActivate_ability_grapple( entity weapon )
@@ -60,6 +66,7 @@ void function OnWeaponActivate_ability_grapple( entity weapon )
 	else
 		weapon.SetScriptTime0( 0.0 )
 
+	
 	{
 		int oldFlags = weapon.GetScriptFlags0()
 		weapon.SetScriptFlags0( oldFlags & ~GRAPPLEFLAG_CHARGED )
@@ -72,6 +79,11 @@ var function OnWeaponPrimaryAttack_ability_grapple( entity weapon, WeaponPrimary
 
 	if ( owner.IsPlayer() )
 	{
+
+
+
+
+
 		int pmLevel = -1
 		float scriptTime = weapon.GetScriptTime0()
 		if ( (pmLevel >= 2) && (scriptTime != 0.0) )
@@ -103,30 +115,25 @@ var function OnWeaponPrimaryAttack_ability_grapple( entity weapon, WeaponPrimary
 			}
 		}
 	}
-
 	owner.Grapple( grappleDirection )
 
 	if ( owner.IsPlayer() && owner.IsGrappleActive() && grappleAutoAimTarget )
 	{
 		owner.SetGrappleAutoAimTarget( grappleAutoAimTarget )
 	}
-
-	if ( weapon.HasMod( "survival_finite_ordnance" ) )
-		return 0
-	else
-		return 0 // weapon.GetWeaponSettingInt( eWeaponVar.ammo_min_to_fire ) 
+	return 0
 }
 
-#if SERVER
-var function OnWeaponNpcPrimaryAttack_ability_grapple( entity weapon, WeaponPrimaryAttackParams attackParams )
-{
-	entity owner = weapon.GetWeaponOwner()
 
-	owner.GrappleNPC( attackParams.dir )
 
-	return 1
-}
-#endif
+
+
+
+
+
+
+
+
 
 bool function OnWeaponAttemptOffhandSwitch_ability_grapple( entity weapon )
 {
@@ -144,17 +151,17 @@ bool function OnWeaponAttemptOffhandSwitch_ability_grapple( entity weapon )
 
 void function OnWeaponReadyToFire_ability_grapple( entity weapon )
 {
-	#if SERVER
-		PIN_PlayerAbilityReady( weapon.GetWeaponOwner(), ABILITY_TYPE.TACTICAL )
-	#endif
+
+
+
 }
 
 void function DoGrappleImpactExplosion( entity player, entity grappleWeapon, entity hitent, vector hitpos, vector hitNormal )
 {
-#if CLIENT
+
 	if ( !grappleWeapon.ShouldPredictProjectiles() )
 		return
-#endif
+
 
 	vector origin = hitpos + hitNormal * 16.0
 	int damageType = (DF_RAGDOLL | DF_EXPLOSION | DF_ELECTRICAL)
@@ -169,7 +176,7 @@ void function DoGrappleImpactExplosion( entity player, entity grappleWeapon, ent
 	fireGrenadeParams.lagCompensated = true
 	fireGrenadeParams.useScriptOnDamage = true
 	entity nade = grappleWeapon.FireWeaponGrenade( fireGrenadeParams )
-	if ( !nade )
+	if ( !IsValid( nade ) || nade == null )
 		return
 
 	nade.SetImpactEffectTable( file.grappleExplodeImpactTable )
@@ -178,42 +185,36 @@ void function DoGrappleImpactExplosion( entity player, entity grappleWeapon, ent
 
 void function CodeCallback_OnGrappleActivate( entity player )
 {
-	entity grappleWeapon = player.GetOffhandWeapon( OFFHAND_LEFT )
-	if ( !IsValid( grappleWeapon ) )
-		return
-	if ( !grappleWeapon.GetWeaponSettingBool( eWeaponVar.grapple_weapon ) )
-		return
-
-	grappleWeapon.e.lastGrappleTime = -1
 }
 
 void function CodeCallback_OnGrappleAttach( entity player, entity hitent, vector hitpos, vector hitNormal )
 {
-#if SERVER	
-	PIN_PlayerAbility( player, "mp_ability_grapple", ABILITY_TYPE.TACTICAL, null, {pos = hitpos, attached = true} )
-	if ( IsValid( hitent ) )
-	{
-		// Added via AddEntityCallback_OnGrappled
-		foreach ( callbackFunc in hitent.e.onGrappledCallbacks )
-		{
-			thread callbackFunc( player, hitent, hitpos, hitNormal )
-		}
-	}
 
-	// Added via AddCallback_OnGrappled
-	foreach ( callbackFunc in file.onGrappledCallbacks )
-	{
-		thread callbackFunc( player, hitent, hitpos, hitNormal )
-	}
 
-	if ( RandomIntRange( 0, 100 ) <= CHANCE_TO_COMMENT_GRAPPLE )
-		PlayBattleChatterLineToSpeakerAndTeam( player, "bc_tactical" )
 
-	StatsHook_Grapple_OnAttach( player )
 
-#endif // SERVER
 
-	// assault impact:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
 	{
 		if ( !IsValid( player ) )
 			return
@@ -224,13 +225,18 @@ void function CodeCallback_OnGrappleAttach( entity player, entity hitent, vector
 		if ( !grappleWeapon.GetWeaponSettingBool( eWeaponVar.grapple_weapon ) )
 			return
 
-		grappleWeapon.e.lastGrappleTime = Time()
-		
-		if( !GetCurrentPlaylistVarBool( "lsm_mod7", false ) )
+		if ( GetCurrentPlaylistVarBool( "pathfinder_grapple_scaled_ammo_drain", true ) )
+		{
 			thread GrappleDecreaseAmmo( player, grappleWeapon )
+		}
+		else
+		{
+			int newAmmo = maxint( 0, grappleWeapon.GetWeaponPrimaryClipCount() - grappleWeapon.GetWeaponSettingInt( eWeaponVar.ammo_min_to_fire ) )
+			grappleWeapon.SetWeaponPrimaryClipCount( newAmmo )
+		}
 
 		int flags = grappleWeapon.GetScriptFlags0()
-		if ( ! (flags & GRAPPLEFLAG_CHARGED) )
+		if ( !IsBitFlagSet( flags, GRAPPLEFLAG_CHARGED ) )
 			return
 
 		int expDamage = grappleWeapon.GetWeaponSettingInt( eWeaponVar.explosion_damage )
@@ -243,10 +249,10 @@ void function CodeCallback_OnGrappleAttach( entity player, entity hitent, vector
 
 void function GrappleDecreaseAmmo( entity player, entity grappleWeapon )
 {
-	#if CLIENT
+
 		if ( !InPrediction() )
 			return
-	#endif
+
 	player.EndSignal( "OnDeath" )
 	grappleWeapon.EndSignal( "OnDestroy" )
 
@@ -300,6 +306,8 @@ void function GrappleDecreaseAmmo( entity player, entity grappleWeapon )
 		float distanceTraveled = max( max( d[ "distanceTraveled" ], Distance( e[ "startPos" ], player.GetOrigin() ) ), d[ "distanceTraveled_z" ] * file.grappleDrainMaxDist_Zscalar )
 		e[ "lastPos" ] <- player.GetOrigin()
 
+		player.EndSignal( "JumpPad_GiveDoubleJump" )
+
 		if ( player.IsZiplining() && !playerWasOnZipline )
 			break
 
@@ -308,169 +316,186 @@ void function GrappleDecreaseAmmo( entity player, entity grappleWeapon )
 
 		if ((Time() - startTime) > 5)
 			break
-		
+
 		wait 0.1
 	}
 }
 
 void function ReduceAmmoBasedOnDistance( entity grappleWeapon, float distanceTraveled, int startAmmo, int maxAmmo )
 {
-	#if CLIENT
+
 		if ( !InPrediction() )
 			return
-	#endif
+
 
 	if ( !IsValid( grappleWeapon.GetWeaponOwner() ) )
 		return
 
-	float XYScalar = GraphCapped( distanceTraveled, file.grappleDrainMinDist, file.grappleDrainMaxDist, 0, 1.0 )
+	
+	
 
-	int amountToReduce = int( GraphCapped( XYScalar, 0, 1.0, 0, maxAmmo ) )                                                                                                          
+	float XYScalar = GraphCapped( distanceTraveled, file.grappleDrainMinDist, file.grappleDrainMaxDist, 0, 1.0 )
+	
+
+	
+	
+
+	int amountToReduce = int( GraphCapped( XYScalar, 0, 1.0, 0, maxAmmo ) ) 
 	amountToReduce += file.grappleDrainBaseCost
 
 	int newAmmo = minint( maxAmmo, maxint( 0, startAmmo - amountToReduce ) )
 
+	if ( grappleWeapon.HasMod( "arenas_tac_max_cooldown" ) )
+	{
+		if( grappleWeapon.GetWeaponPrimaryAmmoCount( AMMOSOURCE_STOCKPILE ) < grappleWeapon.GetWeaponSettingInt( eWeaponVar.ammo_min_to_fire ) )
+			newAmmo = 0
+	}
+
+	
+	
+	
 	grappleWeapon.SetWeaponPrimaryClipCount( newAmmo )
 	if ( grappleWeapon.HasMod( "grapple_regen_stop" ) )
 		grappleWeapon.RemoveMod( "grapple_regen_stop" )
 
 	grappleWeapon.RegenerateAmmoReset()
 }
+
+
+
+
+
+
+
+
 void function CodeCallback_OnGrappleDetach( entity player )
 {
-	#if SERVER
-		// Added via AddCallback_OnGrappleDetached
-		foreach ( callbackFunc in file.onGrappleDetachCallbacks )
-		{
-			thread callbackFunc( player )
-		}
-		
-		// Signal( player, "OnGrappleDetach" )
 
-		if( GetCurrentPlaylistVarBool( "lsm_mod7", false ) )
-		{
-			array<entity> weapons = player.GetOffhandWeapons()
-			entity grappleWeapon
-			foreach ( index, weapon in clone weapons )
-			{
-				if ( !IsValid( weapon ) )
-					continue
-				if ( !weapon.GetWeaponSettingBool( eWeaponVar.grapple_weapon ) )
-					continue
-				else
-					grappleWeapon = weapon
-			}
 
-			grappleWeapon.SetWeaponPrimaryClipCount( grappleWeapon.GetWeaponPrimaryClipCount() )
-			player.SetSuitGrapplePower(100)
-			int oldFlags = grappleWeapon.GetScriptFlags0()
-			grappleWeapon.SetScriptTime0( Time() )
-			grappleWeapon.SetScriptFlags0( oldFlags & ~GRAPPLEFLAG_CHARGED )
-		}
-	#endif
+
+
+
+
+
+
+
 }
 
-#if SERVER
-void function AddEntityCallback_OnGrappled( entity ent, void functionref( entity player, entity hitent, vector hitpos, vector hitNormal ) callbackFunc )
+bool function CodeCallback_GrappleDetachFromNPC( entity player, entity npc )
 {
-	Assert( !ent.e.onGrappledCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " to entity" )
-	ent.e.onGrappledCallbacks.append( callbackFunc )
-}
-
-void function RemoveEntityCallback_OnGrappled( entity ent, void functionref( entity player, entity hitent, vector hitpos, vector hitNormal ) callbackFunc )
-{
-	Assert( ent.e.onGrappledCallbacks.contains( callbackFunc ), "Callback " + string( callbackFunc ) + " doesn't exist on entity" )
-	ent.e.onGrappledCallbacks.fastremovebyvalue( callbackFunc )
-}
-
-void function AddCallback_OnGrappled( void functionref( entity player, entity hitent, vector hitpos, vector hitNormal ) callbackFunc )
-{
-	Assert( !file.onGrappledCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) )
-	file.onGrappledCallbacks.append( callbackFunc )
-}
-
-void function RemoveCallback_OnGrappled( void functionref( entity player, entity hitent, vector hitpos, vector hitNormal ) callbackFunc )
-{
-	Assert( file.onGrappledCallbacks.contains( callbackFunc ), "Callback " + string( callbackFunc ) + " doesn't exist" )
-	file.onGrappledCallbacks.fastremovebyvalue( callbackFunc )
-}
-
-void function AddCallback_OnGrappleDetached( void functionref( entity player ) callbackFunc )
-{
-	Assert( !file.onGrappleDetachCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) )
-	file.onGrappleDetachCallbacks.append( callbackFunc )
-}
-
-void function Grapple_OnPlayerStartBleedout( entity player, entity attacker, var damageInfo )
-{
-	if ( player.HasGrapple() && player.IsGrappleActive() )
+	if( IsValid( player ) && IsValid( npc ) )
 	{
-		player.Grapple( <0,0,0> )
+		if( npc.GetAIClassName() == "prowler" && Length( player.GetVelocity() ) > 400 )
+		{
+			return true
+		}
 	}
+
+	return false
 }
 
-void function GrappleNPCCallback( entity player, entity hitent, vector hitpos, vector hitNormal )
-{
-	const enablePlanting = true
 
-	hitent.EndSignal( "OnDestroy" )
 
-	if ( !IsEnemyTeam( hitent.GetTeam(), player.GetTeam() ) )
-		return
 
-	if ( hitent.IsNPC() && IsAlive( hitent ) && IsHumanSized( hitent ) )
-	{
-		//Fix crash if player is using buggy dummie model
-		if(player.GetModelName() != $"mdl/humans/class/medium/pilot_medium_generic.rmdl")
-			PlayGrappleAttachedAnimation( player, "ptpov_cloudcity_grapple_switch_quick" )
 
-		string ReleaseACT
-		if ( hitent.Anim_HasActivity( "ACT_FLINCH_GRAPPLE" ) )
-		{
-			ReleaseACT = "ACT_FLINCH_GRAPPLE"
-		}
-		else
-		{
-			switch ( hitent.GetClassName() )
-			{
-				case "npc_soldier":
-				case "npc_spectre":
-					ReleaseACT = "ACT_STUNNED"
-					break
 
-				case "npc_stalker":
-					ReleaseACT = "ACT_STUNNED"
-					break
 
-				case "npc_prowler":
-					ReleaseACT = "ACT_SMALL_FLINCH"
-					break
 
-				default:
-					break
-			}
-		}
 
-		if ( hitent.IsInterruptable() && ReleaseACT != "" )
-		{
-			hitent.Anim_ScriptedPlayActivityByName( ReleaseACT, enablePlanting, 0.1 )
-			float duration = 2
-			StatusEffect_AddTimed( hitent, eStatusEffect.grapple_slow, 1, duration, 0 )
-		}
 
-		if ( ReleaseACT == "" )
-			player.Grapple( < 0, 0, 0 > )
-		vector forceVec = Normalize( player.EyePosition() - hitent.GetCenter() ) // towards the player since we are pulling on the rope
-		entity grappleWeapon = player.GetGrappleWeapon()
-	}
-}
 
-void function EnableGrappleAutoAim( entity npc )
-{
-	if ( !IsEnemyTeam( npc.GetTeam(), TEAM_MILITIA ) )
-		return
 
-	GrappleAutoAim_AddTarget( npc )
-}
 
-#endif // SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

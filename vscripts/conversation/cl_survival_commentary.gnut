@@ -695,3 +695,4 @@ void function KillReplayEnded()
 	FlagSet( "KillReplayComplete" )
 }
 
+ 

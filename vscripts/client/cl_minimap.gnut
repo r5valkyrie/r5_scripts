@@ -93,8 +93,6 @@ global function DEV_Minimap_DumpEntHandles
 #endif
 
 global function Fullmap_SetVisible_MapOnly
-global function Minimap_DisableDraw_Internal
-global function Minimap_EnableDraw_Internal
 
 global struct MapFeature
 {
@@ -941,7 +939,7 @@ void function Minimap_RunInitFunction( entity ent, var rui )
 {
 	string className = GetEntityMinimapClassName( ent )
 	int customState  = GetEntityMinimapCustomState( ent )
-//	minimapAssetMap[className][customState].initFunction( ent, rui )
+	minimapAssetMap[className][customState].initFunction( ent, rui )
 }
 
 
@@ -1850,15 +1848,15 @@ void function Fullmap_SetTintParams( float startTime, float tintDuration, vector
 
 void function ChallengesOnScoreboardShow()
 {
-	RegisterButtonPressedCallback( false ? BUTTON_DPAD_RIGHT : BUTTON_DPAD_LEFT, FullmapChallengeCategoryLeft )
-	RegisterButtonPressedCallback( false ? BUTTON_DPAD_LEFT : BUTTON_DPAD_RIGHT, FullmapChallengeCategoryRight )
+	RegisterButtonPressedCallback( IsRTL() ? BUTTON_DPAD_RIGHT : BUTTON_DPAD_LEFT, FullmapChallengeCategoryLeft )
+	RegisterButtonPressedCallback( IsRTL() ? BUTTON_DPAD_LEFT : BUTTON_DPAD_RIGHT, FullmapChallengeCategoryRight )
 	RegisterButtonPressedCallback( KEY_Y, FullmapChallengeCategoryRight )
 }
 
 void function ChallengesOnScoreboardHide()
 {
-	DeregisterButtonPressedCallback( false ? BUTTON_DPAD_RIGHT : BUTTON_DPAD_LEFT, FullmapChallengeCategoryLeft )
-	DeregisterButtonPressedCallback( false ? BUTTON_DPAD_LEFT : BUTTON_DPAD_RIGHT, FullmapChallengeCategoryRight )
+	DeregisterButtonPressedCallback( IsRTL() ? BUTTON_DPAD_RIGHT : BUTTON_DPAD_LEFT, FullmapChallengeCategoryLeft )
+	DeregisterButtonPressedCallback( IsRTL() ? BUTTON_DPAD_LEFT : BUTTON_DPAD_RIGHT, FullmapChallengeCategoryRight )
 	DeregisterButtonPressedCallback( KEY_Y, FullmapChallengeCategoryRight )
 }
 
@@ -1955,7 +1953,7 @@ void function UpdateFullmapRuiTracks()
 	RuiSetBool( viewPlayerRui, "useShadowFormFrame", viewPlayer.IsShadowForm() && !isPlayerShadow )
 
 
-	//	RuiTrackBool( viewPlayerRui, "hasAltStatus", viewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndexSafe( EXPIRED_BANNER_RECOVERY_NETVAR ) )
+		RuiTrackBool( viewPlayerRui, "hasAltStatus", viewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( EXPIRED_BANNER_RECOVERY_NETVAR ) )
 
 
 	if ( IsValid( clientPlayer ) )
@@ -2069,17 +2067,17 @@ void function UpdateFullmapRuiTracks()
 	string playlistUiRules = GetPlaylistVarString( playlist, "ui_rules", "" )
 	RuiSetBool( file.fullmap_legendRui, "rulesEnabled", playlistUiRules != "" )
 	RuiSetBool( file.fullmap_legendRui, "isObserver", GetLocalClientPlayer().IsObserver() && GetLocalClientPlayer().GetTeam() == TEAM_SPECTATOR )
-	RuiTrackBool( file.fullmap_legendRui, "pingEnabled", viewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndexSafe( "pingEnabled" ) )
+	RuiTrackBool( file.fullmap_legendRui, "pingEnabled", viewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "pingEnabled" ) )
 
 	
 	int roundNumber = SURVIVAL_GetCurrentDeathFieldStage() + 1
 	if ( roundNumber < 1 )
 		return
 
-	float circleStartTime = GetGlobalNetTimeSafe( "nextCircleStartTime" )
+	float circleStartTime = GetGlobalNetTime( "nextCircleStartTime" )
 	RuiSetGameTime( file.fullmap_gamestateRui, "circleStartTime", circleStartTime )
 
-	float circleCloseTime = GetGlobalNetTimeSafe( "circleCloseTime" )
+	float circleCloseTime = GetGlobalNetTime( "circleCloseTime" )
 	RuiSetGameTime( file.fullmap_gamestateRui, "circleCloseTime", circleCloseTime )
 
 	RuiSetInt( file.fullmap_gamestateRui, "roundNumber", roundNumber )
@@ -2223,7 +2221,7 @@ void function UpdateMapFeatures()
 		RuiSetString( file.fullmap_legendRui, "itemTitle" + featurePostfix, mapFeature.titleText )
 		RuiSetString( file.fullmap_legendRui, "itemDesc" + featurePostfix, mapFeature.descDesc )
 		RuiSetImage( file.fullmap_legendRui, "itemIcon" + featurePostfix, mapFeature.icon )
-		//RuiSetColorAlpha( file.fullmap_legendRui, "itemIconColor" + featurePostfix, SrgbToLinear( mapFeature.iconColor ), 1.0 )
+		RuiSetColorAlpha( file.fullmap_legendRui, "itemIconColor" + featurePostfix, SrgbToLinear( mapFeature.iconColor ), 1.0 )
 	}
 }
 
@@ -2267,3 +2265,4 @@ void function Minimap_SetVisiblityConeColor( vector color = <0,0,0>, float alpha
 	RuiSetFloat( file.minimap_you, "visibilityConeAlpha", alpha )
 	RuiSetFloat( file.minimap_you, "visibilityConeLerpTime", lerpTime )
 }
+ 

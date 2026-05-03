@@ -16,9 +16,9 @@ global function SeasonQuest_GetComicPageForIndex
 global function SeasonQuest_GetComicPanelDataForIndex
 global function SeasonQuest_GetComicPagesReadByPlayer
 global function SeasonQuest_GetComicPagesUnlockedByPlayer
-                          
+
 global function SeasonQuest_GetUnlockTimeForComicIndex
-      
+
 global function SeasonQuest_GetLoreTypeForMissionIndex
 
 global function SeasonQuest_GetMissionsMaxCount
@@ -59,7 +59,6 @@ global function SeasonQuest_GetQuestItemIconForMissionIndex
 global function SeasonQuest_GetQuestItemSecondIconForMissionIndex
 
 global function SeasonQuest_Tab_GetLongDesc
-global function SeasonQuest_Tab_GetCornerImage
 global function SeasonQuest_Tab_GetLeftCornerImage
 global function SeasonQuest_Tab_GetRightCornerImage
 global function SeasonQuest_Tab_GetBasicInfoHeader
@@ -72,63 +71,63 @@ global function SeasonQuest_Tab_GetArtifactProgressHeader
 
 global function Comic_GetPreviewImage
 
-#if SERVER
-global function SeasonQuest_RecordNewTreasureBoxItemPickupForPlayer
-global function SeasonQuest_RecordNewComicPageReadByPlayer
-global function SeasonQuest_RecordNewMissionSuccessForPlayerIfAllowed
-global function SeasonQuest_TreasurePackTimerFix
 
-global function ClientCallback_TreasureBoxDisplayAcknowledged
-global function ClientCallback_QuestStartedAcknowledged
-global function ClientCallback_QuestComicReadAcknowledged
-global function ClientCallback_QuestComicRewardDisplayAcknowledged
-global function ClientCallback_QuestMissionReadAcknowledged
-global function ClientCallback_QueueRadioPlayRewardGranting
-#endif // SERVER
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
 global function SeasonQuest_UpdateMinimapRui
 global function SeasonQuest_GetCurrentPackCountDesc
 global function SCB_DoGotTreasurePackNotify
-#endif // CLIENT
 
-#if UI
-global function SeasonQuest_GetComicPagesIconForIndex
 
-global function SeasonQuest_GetMissionIconForMissionIndex
-global function TryDisplayTreasureBoxRewards
-global function DisplayTreasureBoxRewards
-global function DisplayQuestMissionRewards
-global function TryDisplayQuestFinalRewards
-global function DisplayQuestFinalRewards
-global function SeasonQuest_AcknowledgeHaveStartedQuest
-global function SeasonQuest_AcknowledgeQuestComicRead
-global function SeasonQuest_AcknowledgeQuestMissionRead
-global function FillTooltipDataForMissionButton
-global function PopulateRewardButtonWithArtifact
-global function PopulateRewardButtonWithLore
-global function IsSelectedPlaylistQuestMission
-#endif // UI
 
-// TODO: R5DEV-451148 - combined logic for preprocessor macros works in ... strange ways.
-// because the function declaration is nested inside a standalone DEV block, it's stripped
-// but DEVELOPER && UI doesn't equate to false if UI is true for reasons that are ... complicated
-// so `#if DEVELOPER \n #if UI` behaves correct while `#if (DEVELOPER && UI)` does not
-#if DEVELOPER
-#if UI
-global function SetupDevMenu_SeasonQuests
-#endif // UI
-#endif // DEVELOPER
 
-#if (SERVER && DEVELOPER)
-global function ResetQuestPersistence
-#endif // (SERVER && DEVELOPER)
 
-global const SHOW_UNKNOWN_ARTIFACTS = true	// if true will hide true name of artifacts until mission is beaten.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if DEV
+
+
+
+#endif
+
+
+
+
+
+global const SHOW_UNKNOWN_ARTIFACTS = true	
 
 global enum eQuestMissionStatus
 {
-	// should have matching consts in quest.rui
+	
 	INVALID = -1,
 	LOCKED,
 	UNLOCKED_BUT_TOO_EARLY,
@@ -160,29 +159,28 @@ const string CC_QueueRadioPlayRewardGranting = "ClientCallback_QueueRadioPlayRew
 
 void function SeasonQuest_SharedInit()
 {
-	printt("Quest system registered")
-	#if SERVER || CLIENT
+
 		Remote_RegisterServerFunction( CC_TreasureBoxDisplayAcknowledged, "int", INT_MIN, INT_MAX )
 		Remote_RegisterServerFunction( CC_QuestStartedAcknowledged, "int", INT_MIN, INT_MAX )
 		Remote_RegisterServerFunction( CC_QuestComicReadAcknowledged, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
 		Remote_RegisterServerFunction( CC_QuestComicRewardDisplayAcknowledged, "int", INT_MIN, INT_MAX )
 		Remote_RegisterServerFunction( CC_QuestMissionReadAcknowledged, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
 		Remote_RegisterServerFunction( CC_QueueRadioPlayRewardGranting )
-	#endif
 
-	#if SERVER
-		AddCallback_QueueServersideScriptGRXOperations( GivePlayerAnyPendingTreasureBoxRewards )
-		AddCallback_QueueServersideScriptGRXOperations( GivePlayerAnyPendingMissionRewards )
-		AddCallback_QueueServersideScriptGRXOperations( UpdatePlayerTreasureBoxPurchaseCache )
-		AddCallback_QueueServersideScriptGRXOperations( UpdatePlayerQuestNewness )
 
-		AddCallback_Lobby_OnClientConnected( SeasonQuest_TreasurePackTimerFix  )
 
-		#if DEVELOPER
-			RegisterDevCommands()
-			AddCallback_GeneratePDef( GenerateSeasonQuest_PDef )
-		#endif // DEVELOPER
-	#endif // SERVER
+
+
+
+
+
+
+
+
+
+
+
+
 
 	AddCallback_OnItemFlavorRegistered( eItemType.quest, OnQuestRegistered )
 }
@@ -190,13 +188,11 @@ void function SeasonQuest_SharedInit()
 
 void function OnQuestRegistered( ItemFlavor quest )
 {
-	//printt( "DEBUG: OnQuestRegistered called for:", string( quest ) )
 	array<ItemFlavor> comicPages = RegisterReferencedItemFlavorsFromArray( quest, "comicPages", "flavor" )
 	file.questComicPages[ quest ] <- comicPages
 
 	array<ItemFlavor> missions = RegisterReferencedItemFlavorsFromArray( quest, "missions", "flavor" )
 	file.questMissions[ quest ] <- missions
-	//printt( "DEBUG: OnQuestRegistered - missions count:", missions.len() )
 
 	foreach( int idx, ItemFlavor mission in missions )
 	{
@@ -208,14 +204,14 @@ void function OnQuestRegistered( ItemFlavor quest )
 		}
 	}
 
-	//RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_sentinel/s05_quest_mission_dummy.rpak" )
-	//RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_sentinel/s06_quest_comic_dummy.rpak" )
+	RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_sentinel/s05_quest_mission_dummy.rpak" )
+	RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_sentinel/s06_quest_comic_dummy.rpak" )
 
-	#if SERVER || CLIENT
-		// was used in season 5
-		//asset questModelAsset = SeasonQuest_GetGoalModel( quest )
-		//PrecacheModel( questModelAsset )
-	#endif
+
+		
+		
+		
+
 }
 
 
@@ -254,43 +250,43 @@ int function SeasonQuest_GetStatusForComicPageIndex( entity player, ItemFlavor q
 {
 	Assert( ItemFlavor_GetType( quest ) == eItemType.quest )
 
-	// reusing eQuestMissionStatus since it works for now.
+	
 
 	if ( IsEverythingUnlocked() )
 		return eQuestMissionStatus.COMPLETED
 
-	// THERE IS NO FINAL COMIC PAGE - The finale requires all prev missions to be complete, but no new boxes required:
-	//int comicPagesTotalMax = SeasonQuest_GetComicPagesMaxCount( quest )
-	//if ( index == (comicPagesTotalMax - 1) )
-	//{
-	//	int prevStatus = SeasonQuest_GetStatusForMissionIndex( player, quest, (index - 1) )
-	//	if ( prevStatus == eQuestMissionStatus.COMPLETED )
-	//		return eQuestMissionStatus.LAUNCHABLE
-	//	return eQuestMissionStatus.LOCKED
-	//}
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
-                           
-                             
-                                                                                
-                                                                                                         
 
-                                                              
 
-                                                                             
 
-                                           
-  
-                                                                                                                 
-                                   
-  
 
-                                                        
-                                   
-     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	int unlockTime = SeasonQuest_GetUnlockTimeForComicIndex( quest, index )
 	if ( unlockTime > GetUnixTimestamp() )
 		return eQuestMissionStatus.UNLOCKED_BUT_TOO_EARLY
-      
+
 
 	int comicsPagesRead = SeasonQuest_GetComicPagesReadByPlayer( player, quest )
 	if ( index < comicsPagesRead )
@@ -329,260 +325,260 @@ int function SeasonQuest_GetStatusForMissionIndex( entity player, ItemFlavor que
 	return eQuestMissionStatus.LAUNCHABLE
 }
 
-#if UI
-void function FillTooltipDataForMissionButton( entity player, ItemFlavor quest, int missionIndex, ToolTipData tt )
-{
-	int packsInSeason = SeasonQuest_GetTreasurePacksMaxCount( quest )
-	int packIndexRequiredForMission = SeasonQuest_GetTreasurePackIndexRequiredForMission( quest, missionIndex )
-	int packsFoundRequired = (packIndexRequiredForMission + 1)
-	int packsFound = SeasonQuest_GetTreasurePacksCountForPlayer( player, quest )
-	if ( packsFound < packsFoundRequired )
-		tt.titleText = Localize( "#QUEST_MISSION_TOOLTIP_PACKS", string( packsFoundRequired - packsFound ) )
-	else
-		tt.titleText = ""
 
-	int timeNow = GetUnixTimestamp()
-	int unlockTime = SeasonQuest_GetUnlockTimeForMissionIndex( quest, missionIndex )
-	int delta = (unlockTime - timeNow)
-	if ( delta < 0 )
-	{
-		tt.descText = "#QUEST_MISSION_TOOLTIP_AVAILABLE_NOW"
-		return
-	}
 
-	int days = (delta / SECONDS_PER_DAY)
-	int hours = (delta - (days * SECONDS_PER_DAY)) / SECONDS_PER_HOUR
-	tt.descText = Localize( "#QUEST_MISSION_TOOLTIP_AVAILABLE_DAYS", string( days ), string( hours ) )
-}
-#endif //
 
-#if SERVER
-array<entity> s_playersInMissionRewarding
-void function GivePlayerAnyPendingMissionRewards( entity player )
-{
-	thread function() : (player)
-	{
-		EndSignal( player, "OnDestroy" )
 
-		if ( s_playersInMissionRewarding.contains( player ) )
-			return
-		OnThreadEnd( function() : (player)
-		{
-			s_playersInMissionRewarding.removebyvalue( player )
-		} )
-		s_playersInMissionRewarding.append( player )
 
-		while ( !GRX_IsInventoryReady( player ) )
-			WaitFrame()
 
-		foreach ( ItemFlavor quest in GetAllItemFlavorsOfType( eItemType.quest ) )
-		{
-			if ( !IsQuestCurrentOrLastSeason( quest ) )
-				continue
 
-			// don't give mission rewards for quests that doesn't have missions.
-			if ( GetRewardSequenceMarketplaceVarForMissions( quest ) != "" )
-				GivePlayerMissionRewardsForQuest( player, quest )
 
-			if ( GetRewardSequenceMarketplaceVarForComic( quest ) != "" )
-				GivePlayerMissionRewardsForComic( player, quest )
-		}
-	}()
-}
-void function GivePlayerMissionRewardsForQuest( entity player, ItemFlavor quest )
-{
-	if ( ItemFlavor_IsItemDisabledForGRX( quest ) )
-		return
 
-	GivePlayerQuestRewardSequencesFor_(
-		player, quest,
-		GetRewardSequenceMarketplaceVarForMissions( quest ),
-		SeasonQuest_GetMissionsCompletedForPlayer( player, quest ),
-		SeasonQuest_GetMissionRewardsForIndex
-	)
-}
 
-void function GivePlayerAnyPendingRadioPlayRewards( entity player )
-{
-	thread function() : (player)
-	{
-		EndSignal( player, "OnDestroy" )
 
-		if ( s_playersInMissionRewarding.contains( player ) )
-			return
-		OnThreadEnd( function() : (player)
-		{
-			s_playersInMissionRewarding.removebyvalue( player )
-		} )
-		s_playersInMissionRewarding.append( player )
 
-		while ( !GRX_IsInventoryReady( player ) )
-			WaitFrame()
 
-		foreach ( ItemFlavor quest in GetAllItemFlavorsOfType( eItemType.quest ) )
-		{
-			if ( !IsQuestActive( quest ) )
-				continue
 
-			// don't give mission rewards for quests that doesn't have missions.
-			int missionsCompleted = SeasonQuest_GetMissionsCompletedForPlayer( player, quest )
-			ItemFlavorBag rewardBags
-			for( int i = 0; i < missionsCompleted; i++ )
-			{
-				ItemFlavorBag rewardBag = SeasonQuest_GetMissionRewardsForIndex( quest, i )
-				if ( rewardBag.flavors.len() == 0 )
-					continue
 
-				GrantRewardsConfig grc
-				grc.what               = rewardBag
-				grc.sourceFlav         = quest
-				grc.showCeremony       = true    //Challenge tiers with multiple rewards will have one ceremony for each reward. It's not the best, but it works. It's the same behavior as if you complete multiple tiers in one go.
-				grc.markAsNew          = true
-				int grantResult = GRX_GrantRewards( player, grc )
-			}
-		}
-	}()
-}
 
-void function GivePlayerMissionRewardsForComic( entity player, ItemFlavor quest )
-{
-	if ( ItemFlavor_IsItemDisabledForGRX( quest ) )
-		return
 
-	ItemFlavorBag finalRewards = SeasonQuest_GetCompletionRewards( quest )
-	if ( finalRewards.flavors.len() == 0 )
-		return
 
-	string mtxSequenceName = GetRewardSequenceMarketplaceVarForComic( quest )
-	int sequenceStartNum = GRX_GetSequenceNumber( player, mtxSequenceName )
-	if ( sequenceStartNum > 0 || sequenceStartNum == GRX_INVALID_SEQUENCE_NUMBER )
-	{
-		#if DEVELOPER
-			Assert( sequenceStartNum != GRX_INVALID_SEQUENCE_NUMBER, "Seasonal reward sequence " + mtxSequenceName + " is not valid." )
-		#endif
-		return
-	}
 
-                          
-	// S08 - decouples comics and treasure packs
-	// Grant the completion rewards when all treasure packs have been collected
-	if ( !SeasonQuest_AllTreasurePacksHaveBeenCollectedForPlayer( player, quest ) )
-		return
-     
-                                                          
-                                                                                
-                                 
-        
 
-                                                                        
-                             
-        
-      
 
-	ScriptGRXOperationInfo operation
-	operation.expectedQueryGoal = HTTPQUERYGOAL
-	operation.doOperationFunc = (void function( int opID ) : ( player, mtxSequenceName, finalRewards )
-	{
-		GRX_GiveSequenceRewardEasy( player, opID, HTTPQUERYGOAL, mtxSequenceName, 0, 1, finalRewards )
-	})
-	operation.onDoneCallback = ( void function( int status ) : ( player, quest )
-	{
-		bool didOperationSucceed = (status == eScriptGRXOperationStatus.DONE_SUCCESS)
-		if ( didOperationSucceed )
-		{
-			SetComicFinalRewardDisplay( player, quest, true )
-		}
-	} )
-	QueueGRXOperation( player, operation )
-}
 
-const int HTTPQUERYGOAL = GRX_HTTPQUERYGOAL_GIVE_QUEST_SEQUENCE_REWARD
-struct sGiveResults
-{
-	int count
-	int startNum
-}
-sGiveResults function GivePlayerQuestRewardSequencesFor_(
-entity player, ItemFlavor quest,
-string mtxSequenceName,
-int sequenceGoalNum,
-ItemFlavorBag functionref( ItemFlavor flav, int seqIndex ) getRewardsFunc
-)
-{
-	sGiveResults res
 
-	int sequenceStartNum = GRX_GetSequenceNumber( player, mtxSequenceName )
-	if ( sequenceStartNum == GRX_INVALID_SEQUENCE_NUMBER )
-	{
-		#if DEVELOPER
-			Assert( false, "Seasonal reward sequence " + mtxSequenceName + " is not valid." )
-		#endif
-		return res
-	}
 
-	int count = (sequenceGoalNum - sequenceStartNum)
 
-	ItemFlavorBag questRewards
-	int questRewardIndex = sequenceStartNum
-	for ( int rewardIndex = sequenceStartNum; rewardIndex < sequenceGoalNum; rewardIndex++ )
-	{
-		int level = rewardIndex // remove
-		ItemFlavorBag rewards = getRewardsFunc( quest, rewardIndex )
-		ItemFlavorBag_ClearZeroQuantityFlavors( rewards )
 
-		// some bags will be empty but we still have to treat them as real indexes
-		if ( rewards.flavors.len() > 0 )
-		{
-			IsItemFlavorBagValid( rewards, false, eValidation.ASSERT )
-			foreach( int bagIndex, ItemFlavor reward in rewards.flavors )
-			{
-				Assert( rewards.quantities[ bagIndex ] > 0 )
 
-				questRewards.flavors.append( reward )
-				questRewards.quantities.append( rewards.quantities[ bagIndex ] )
-			}
-		}
 
-		questRewardIndex = rewardIndex
-	}
 
-	int sequenceGoalNum2 = questRewardIndex+1
 
-	if ( sequenceGoalNum2 != sequenceStartNum && questRewards.flavors.len() > 0 )
-	{
-		ScriptGRXOperationInfo operation
-		operation.expectedQueryGoal = HTTPQUERYGOAL
-		operation.doOperationFunc = (void function( int opID ) : ( player, mtxSequenceName, sequenceStartNum, sequenceGoalNum2, questRewards )
-		{
-			GRX_GiveSequenceRewardEasy( player, opID, HTTPQUERYGOAL, mtxSequenceName, sequenceStartNum, sequenceGoalNum2, questRewards )
-		})
 
-		operation.onDoneCallback = (void function( int status ) : ( player, questRewards ) {
-			bool didOperationSucceed = (status == eScriptGRXOperationStatus.DONE_SUCCESS)
-			if ( !didOperationSucceed )
-				return
 
-			foreach ( int flavIdx, ItemFlavor flav in questRewards.flavors )
-				GRX_MarkAsNewIfAppropriate( player, flav )
-		})
 
-		QueueGRXOperation( player, operation )
 
-		while ( !IsGRXOperationDone( operation ) )
-			WaitFrame()
 
-		if ( operation.status != eScriptGRXOperationStatus.DONE_SUCCESS )
-			Warning( "Treasure Pack Rewards operation failed" )
-	}
 
-	res.count = count
-	res.startNum = sequenceStartNum
-	return res
-}
-#endif // SERVER
 
-/////////////
-/////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const string VARBLOCKNAME_QuestDatas = "questDatas"
 const string VARNAME_TB_lastPickupTime = "treasureBox_lastPickupTime"
@@ -608,332 +604,331 @@ int function GetPersistentQuestVarInt( entity player, ItemFlavor quest, string v
 	return player.GetPersistentVarAsInt( BuildPersistentVarName( quest, varName ) )
 }
 
-#if SERVER
-array<entity> s_playersInTreasureBoxRewarding
-void function GivePlayerAnyPendingTreasureBoxRewards( entity player )
-{
-	thread function() : (player)
-	{
-		EndSignal( player, "OnDestroy" )
-
-		if ( s_playersInTreasureBoxRewarding.contains( player ) )
-			return
-		OnThreadEnd( function() : (player)
-		{
-			s_playersInTreasureBoxRewarding.removebyvalue( player )
-		} )
-		s_playersInTreasureBoxRewarding.append( player )
-
-		while ( !GRX_IsInventoryReady( player ) )
-			WaitFrame()
-
-		foreach ( ItemFlavor quest in GetAllItemFlavorsOfType( eItemType.quest ) )
-		{
-			if ( !IsQuestCurrentOrLastSeason( quest ) )
-				continue
-
-			GivePlayerTreasureBoxRewardsForQuest( player, quest )
-		}
-	}()
-}
-
-void function GivePlayerTreasureBoxRewardsForQuest( entity player, ItemFlavor quest )
-{
-	if ( ItemFlavor_IsItemDisabledForGRX( quest ) )
-		return
-
-	sGiveResults res = GivePlayerQuestRewardSequencesFor_(
-		player, quest,
-		GetRewardSequenceMarketplaceVarForTreasurePacks( quest ),
-		SeasonQuest_GetTreasurePacksCountForPlayer( player, quest ),
-		SeasonQuest_GetTreasurePackRewardsForIndex
-	)
-
-	if ( res.count > 0 )
-		SetTreasureBoxRewardDisplay( player, quest, res.startNum, res.count )
-	}
-
-void function SetComicFinalRewardDisplay( entity player, ItemFlavor quest, bool status )
-{
-	player.SetPersistentVar( BuildPersistentVarName( quest, VARNAME_CP_displayFinalRewards ), status )
-}
-
-void function SetTreasureBoxRewardDisplay( entity player, ItemFlavor quest, int startNum, int count )
-{
-	player.SetPersistentVar( BuildPersistentVarName( quest, VARNAME_TB_displayStartNum ), startNum )
-	player.SetPersistentVar( BuildPersistentVarName( quest, VARNAME_TB_displayCount ), count )
-}
-
-void function ClientCallback_QuestComicRewardDisplayAcknowledged( entity player, int guid )
-{
-	if ( !IsValidItemFlavorGUID( guid ) )
-		return
-	ItemFlavor quest = GetItemFlavorByGUID( guid )
-	if ( ItemFlavor_GetType( quest ) != eItemType.quest )
-		return
-
-	SetComicFinalRewardDisplay( player, quest, false )
-}
-
-void function ClientCallback_TreasureBoxDisplayAcknowledged( entity player, int guid )
-{
-	if ( !IsValidItemFlavorGUID( guid ) )
-		return
-	ItemFlavor quest = GetItemFlavorByGUID( guid )
-	if ( ItemFlavor_GetType( quest ) != eItemType.quest )
-		return
-
-	SetTreasureBoxRewardDisplay( player, quest, 0, 0 )
-}
 
 
-void function ClientCallback_QuestStartedAcknowledged( entity player, int guid )
-{
-	if ( !IsValidItemFlavorGUID( guid ) )
-		return
-	ItemFlavor quest = GetItemFlavorByGUID( guid )
-	if ( ItemFlavor_GetType( quest ) != eItemType.quest )
-		return
-
-	RecordHaveStartedQuest( player, quest )
-	SetTreasureBoxRewardDisplay( player, quest, 0, 0 )
-
-	Remote_CallFunction_UI( player, FUNCNAME_UpdatePanelData )
-}
-
-void function ClientCallback_QuestComicReadAcknowledged( entity player, int guid, int pageIndex )
-{
-	if ( !IsValidItemFlavorGUID( guid ) )
-		return
-	ItemFlavor quest = GetItemFlavorByGUID( guid )
-	if ( ItemFlavor_GetType( quest ) != eItemType.quest )
-		return
-
-	int pagesUnlocked = SeasonQuest_GetComicPagesUnlockedByPlayer( player, quest )
-	if ( pageIndex >= pagesUnlocked )
-		return
-
-	SeasonQuest_RecordNewComicPageReadByPlayer( player, quest, pageIndex )
-	Remote_CallFunction_UI( player, FUNCNAME_UpdatePanelData )
-}
-
-void function ClientCallback_QuestMissionReadAcknowledged( entity player, int guid, int missionIndex )
-{
-	if ( !IsValidItemFlavorGUID( guid ) )
-		return
-	ItemFlavor quest = GetItemFlavorByGUID( guid )
-	if ( ItemFlavor_GetType( quest ) != eItemType.quest )
-		return
-
-	int missionsUnlocked = SeasonQuest_GetMissionsMaxCount( quest )
-	if ( missionIndex >= missionsUnlocked )
-		return
-
-	SeasonQuest_RecordNewMissionSuccessForPlayerIfAllowed( player, quest, missionIndex )
-	Remote_CallFunction_UI( player, FUNCNAME_UpdatePanelData )
-}
-
-void function ClientCallback_QueueRadioPlayRewardGranting( entity player  )
-{
-	GivePlayerAnyPendingRadioPlayRewards( player )
-}
-
-#endif // SERVER
-
-#if UI
-void function TryDisplayTreasureBoxRewards()
-{
-	WaitEndFrame()
-	if ( !IsConnected() )
-		return
-	if ( !IsPersistenceAvailable() )
-		return
-
-	DisplayTreasureBoxRewards()
-}
-
-bool function DisplayTreasureBoxRewards()
-{
-	array<ItemFlavor> quests = GetAllItemFlavorsOfType( eItemType.quest )
-	foreach ( ItemFlavor quest in quests )
-	{
-		if ( IsConnected() )
-		{
-			if ( !IsQuestCurrentOrLastSeason( quest ) )
-				continue
-		}
-
-		Newness_IfNecessaryMarkItemFlavorAsNoLongerNewAndInformServer( quest )
-
-		int count = expect int( GetDialogFlowTablesValueOrPersistence( BuildPersistentVarName( quest, VARNAME_TB_displayCount ) ) )    // This is incorrect for some reason, also see R5DEV-77438  and R5DEV-194461 for documentation as to why this function exists.
-		if ( count <= 0 )
-			continue
-
-		bool shouldPurge = false
-		Assert( count <= SeasonQuest_GetTreasurePacksMaxCount( quest ) )
-		if ( count > SeasonQuest_GetTreasurePacksMaxCount( quest ) )
-			shouldPurge = true // R5DEV-534569
-
-		int startNum = expect int( GetDialogFlowTablesValueOrPersistence( BuildPersistentVarName( quest, VARNAME_TB_displayStartNum )  )  ) //See R5DEV-77438  and R5DEV-194461 for documentation as to why this function exists.
-
-		Assert( startNum <= SeasonQuest_GetTreasurePacksMaxCount( quest ) )
-		if ( startNum > SeasonQuest_GetTreasurePacksMaxCount( quest ) )
-			shouldPurge = true // R5DEV-534569
-
-		if ( shouldPurge ) // R5DEV-534569: clear out bad data
-		{
-			Remote_ServerCallFunction( CC_TreasureBoxDisplayAcknowledged, quest.guid )
-			continue
-		}
-
-		array<BattlePassReward> rewards
-
-		for ( int idx = 0; idx < count; ++idx )
-		{
-			int sequenceNumNext = (startNum + idx + 1)
-
-			int boxIndex            = (sequenceNumNext - 1) // box pickups [1,N] -> box indices [0,N-1]
-			ItemFlavorBag rewardBag = SeasonQuest_GetTreasurePackRewardsForIndex( quest, boxIndex )
-
-			foreach ( int itemsIndex, ItemFlavor item in rewardBag.flavors )
-			{
-				if ( ItemFlavor_GetType( item ) == eItemType.grx_sentinel )
-					continue
-
-				BattlePassReward info
-				info.level = -1
-				info.flav = item
-				info.quantity = rewardBag.quantities[itemsIndex] //itemCounts[itemsIndex]
-				rewards.append( info )
-			}
-		}
-
-		if ( rewards.len() == 0 )
-			return false
-
-		bool isForBattlePass = false
-		bool isForQuest = true
-
-		ShowRewardCeremonyDialog(
-			"",
-			"#TREASUREBOX_REWARD_SPLASH_TITLE",
-			"#TREASUREBOX_REWARD_SPLASH_DETAILS",
-			rewards,
-			isForBattlePass,
-			isForQuest,
-			true,
-			true
-		)
-
-		SetDialogFlowPersistenceTables( BuildPersistentVarName( quest, VARNAME_TB_displayStartNum ), 0  ) //See R5DEV-77438  and R5DEV-194461 for documentation as to why this function exists.
-		SetDialogFlowPersistenceTables( BuildPersistentVarName( quest, VARNAME_TB_displayCount ), 0  ) //See R5DEV-77438  and R5DEV-194461 for documentation as to why this function exists.
-
-		Remote_ServerCallFunction( CC_TreasureBoxDisplayAcknowledged, quest.guid )
-		return true
-	}
-
-	return false
-}
 
 
-bool function DisplayQuestMissionRewards( ItemFlavor quest, int missionIndex )
-{
-	array<BattlePassReward> rewards
-	ItemFlavorBag rewardBag = SeasonQuest_GetMissionRewardsForIndex( quest, missionIndex )
-	foreach( int index, ItemFlavor reward in rewardBag.flavors )
-	{
-		rewards.append( ItemFlavorBagToBattlePassRewardByIndex( rewardBag, index ) )
-	}
 
-	if ( rewards.len() == 0 )
-		return false
 
-	bool isForBattlePass = false
-	bool isForQuest = true
 
-	ShowRewardCeremonyDialog(
-		"",
-		"QUEST_REWARD_SPLASH_TITLE",
-		"",
-		rewards,
-		isForBattlePass,
-		isForQuest,
-		true,
-		true
-	)
 
-	return true
-}
 
-void function TryDisplayQuestFinalRewards()
-{
-	WaitEndFrame()
-	if ( !IsConnected() )
-		return
-	if ( !IsPersistenceAvailable() )
-		return
 
-	DisplayQuestFinalRewards()
-}
 
-bool function DisplayQuestFinalRewards()
-{
-	// If we're currently on the reward menu, keep the quest completion rewards queued (otherwise they'll be ignored).
-	if ( GetActiveMenu() == GetMenu( "RewardCeremonyMenu" ) )
-		return false
 
-	array<ItemFlavor> questsToAcknowledge
-	array<BattlePassReward> rewards
 
-	foreach ( ItemFlavor quest in GetAllItemFlavorsOfType( eItemType.quest ) )
-	{
-		if ( IsConnected() )
-		{
-			if ( !IsQuestCurrentOrLastSeason( quest ) )
-				continue
-		}
 
-		if ( GetPersistentVar( BuildPersistentVarName( quest, VARNAME_CP_displayFinalRewards ) ) )
-		{
-			ItemFlavorBag rewardBag = SeasonQuest_GetCompletionRewards( quest )
-			foreach ( int index, ItemFlavor reward in rewardBag.flavors )
-			{
-				rewards.append( ItemFlavorBagToBattlePassRewardByIndex( rewardBag, index ) )
-			}
 
-			questsToAcknowledge.append( quest )
-		}
-	}
 
-	if ( rewards.len() == 0 )
-		return false
 
-	bool isForBattlePass = false
-	bool isForQuest = true
 
-	ShowRewardCeremonyDialog(
-		"",
-		"QUEST_REWARD_SPLASH_TITLE",
-		"",
-		rewards,
-		isForBattlePass,
-		isForQuest,
-		true,
-		true
-	)
 
-	foreach ( quest in questsToAcknowledge )
-		Remote_ServerCallFunction( CC_QuestComicRewardDisplayAcknowledged, quest.guid )
 
-	return true
-}
-#endif // UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ItemFlavor ornull function SeasonQuest_GetActiveSeasonQuest( int timeNow )
 {
 	ItemFlavor ornull season = GetActiveSeason( timeNow )
-	printt( "DEBUG SeasonQuest_GetActiveSeasonQuest: season =", season != null ? string( season ) : "null" )
 	if ( season == null )
 		return null
 	expect ItemFlavor( season )
@@ -968,11 +963,6 @@ string function SeasonQuest_Tab_GetLongDesc( ItemFlavor quest )
 	Assert( ItemFlavor_GetType( quest ) == eItemType.quest )
 	var settingsBlock = ItemFlavor_GetSettingsBlock( quest )
 	return GetSettingsBlockString( settingsBlock, "questTabLongDesc" )
-}
-
-asset function SeasonQuest_Tab_GetCornerImage( ItemFlavor quest )
-{
-	return SeasonQuest_Tab_GetLeftCornerImage( quest )
 }
 
 asset function SeasonQuest_Tab_GetLeftCornerImage( ItemFlavor quest )
@@ -1102,14 +1092,14 @@ int function SeasonQuest_GetMissionsMaxCount( ItemFlavor quest )
 
 int function SeasonQuest_GetComicPagesReadByPlayer( entity player, ItemFlavor quest )
 {
-	int forcedPagesRead = -1 // GetConVarInt( "seasonquest_force_pages_read_count" ) // for this to work, the convar need to be added in code.
+	int forcedPagesRead = -1 
 	if ( forcedPagesRead >= 0 )
 	{
 		int countMax = SeasonQuest_GetComicPagesMaxCount( quest )
 		return minint( forcedPagesRead, countMax )
 	}
 
-	return player.GetPersistentVarAsInt( BuildPersistentVarName( quest, VARNAME_comicPagesRead ) ) //VARNAME_missionProgress
+	return player.GetPersistentVarAsInt( BuildPersistentVarName( quest, VARNAME_comicPagesRead ) ) 
 }
 
 
@@ -1118,11 +1108,11 @@ int function SeasonQuest_GetComicPagesUnlockedByPlayer( entity player, ItemFlavo
 	int pageCount = SeasonQuest_GetComicPagesMaxCount( quest )
 	for( int index = 0; index < pageCount; index++ )
 	{
-                          
+
 		if ( SeasonQuest_GetStatusForComicPageIndex( player, quest, index ) < eQuestMissionStatus.UNLOCKED_BUT_NOT_NEXT )
-     
-                                                                                                     
-      
+
+
+
 			return index
 	}
 	return pageCount
@@ -1141,59 +1131,59 @@ int function SeasonQuest_GetMissionsCompletedForPlayer( entity player, ItemFlavo
 	return player.GetPersistentVarAsInt( BuildPersistentVarName( quest, VARNAME_missionProgress ) )
 }
 
-#if SERVER
-bool function SeasonQuest_RecordNewComicPageReadByPlayer( entity player, ItemFlavor quest, int index )
-{
-	int comicPagesRead = (index + 1)
-	player.SetPersistentVar( BuildPersistentVarName( quest, VARNAME_comicPagesRead ), comicPagesRead )
 
-	if ( comicPagesRead >= SeasonQuest_GetComicPagesMaxCount( quest ) )
-	{
-		ForcePlayerGRXUpdate( player )
-	}
 
-	return true
-}
-#endif // SERVER
 
-#if SERVER
-bool function SeasonQuest_RecordNewMissionSuccessForPlayerIfAllowed( entity player, ItemFlavor quest, int missionIndex )
-{
-	int status = SeasonQuest_GetStatusForMissionIndex( player, quest, missionIndex )
-	if ( status != eQuestMissionStatus.LAUNCHABLE )
-	{
-		printf( "%s() - Not recording '%s' success for '%s' mission #%d. Mission status is '%s'.", FUNC_NAME(), string( player ), string(ItemFlavor_GetAsset( quest )), missionIndex, GetNameForEnum( eQuestMissionStatus, status ) )
-		return false
-	}
 
-	int missionsCompletedCount = (missionIndex + 1)
-	player.SetPersistentVar( BuildPersistentVarName( quest, VARNAME_missionProgress ), missionsCompletedCount )
-	return true
-}
-#endif // SERVER
 
-#if SERVER
-void function SeasonQuest_TreasurePackTimerFix( entity player ) //This was a defensive fix for a production issue with test_FakeTimeDays being set in the live environment
-{
-	ItemFlavor ornull quest = SeasonQuest_GetActiveSeasonQuest( GetUnixTimestamp() )
-	if ( quest == null  )
-		return
 
-	expect ItemFlavor( quest )
 
-	int treasurePackPickupTime = SeasonQuest_GetTreasurePacksLatestPickupTimeForPlayer( player, quest )
-	int currentTime = GetUnixTimestamp()
 
-	if ( currentTime > treasurePackPickupTime  )
-		return
 
-	//Now that we are here: we are in an unusual case where we have picked up a treasure pack in a future time. This is probably an issue with fake_time_days stuff, so just reset the last time we picekd up a treasure pack.
 
-	Warning( "%s() - Current treasure pack pickup time is from the future, so resetting for player: %s.", FUNC_NAME(), string( player ) )
 
-	player.SetPersistentVar( BuildPersistentVarName( quest, VARNAME_TB_lastPickupTime ), 0 )
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 string function SeasonQuest_GetPlaylistForMissionIndex( ItemFlavor flav, int missionIndex )
 {
@@ -1201,21 +1191,21 @@ string function SeasonQuest_GetPlaylistForMissionIndex( ItemFlavor flav, int mis
 	return SeasonQuestMission_GetPlaylistName( file.questMissions[ flav ][missionIndex] )
 }
 
-#if UI
-asset function SeasonQuest_GetComicPagesIconForIndex( ItemFlavor flav, int comicIndex )
-{
-	Assert( ItemFlavor_GetType( flav ) == eItemType.quest )
-	return ItemFlavor_GetIcon( file.questComicPages[ flav ][comicIndex] )
-}
-#endif //UI
 
-#if UI
-asset function SeasonQuest_GetMissionIconForMissionIndex( ItemFlavor flav, int missionIndex )
-{
-	Assert( ItemFlavor_GetType( flav ) == eItemType.quest )
-	return ItemFlavor_GetIcon( file.questMissions[ flav ][missionIndex] )
-}
-#endif //UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 int function SeasonQuest_GetMissionIndexForPlaylistName( ItemFlavor flav, string playlist )
 {
@@ -1238,7 +1228,7 @@ int function SeasonQuest_GetUnlockTimeForMissionIndex( ItemFlavor flav, int miss
 	return SeasonQuestMission_GetUnlockTime( file.questMissions[ flav ][missionIndex] )
 }
 
-                          
+
 int function SeasonQuest_GetUnlockTimeForComicIndex( ItemFlavor flav, int comicIndex )
 {
 	Assert( ItemFlavor_GetType( flav ) == eItemType.quest )
@@ -1256,7 +1246,7 @@ int function SeasonQuestComic_GetUnlockTime( ItemFlavor comic )
 		return expect int(ut)
 	return INT_MAX
 }
-      
+
 
 ItemFlavorBag function SeasonQuest_GetMissionRewardsForIndex( ItemFlavor flav, int missionIndex )
 {
@@ -1324,7 +1314,7 @@ int function GetMissionIndexByUnixTimestamp( ItemFlavor quest, int timestamp )
 			return missionIndex - 1
 	}
 
-	// -2 since this is used toward the treasure pack rewards track, and we can't include the final 10th mission since it's not rewarded there.
+	
 	return maxMissions - 2
 }
 
@@ -1400,7 +1390,7 @@ ItemFlavorBag function SeasonQuest_GetTreasurePackRewardsForIndex( ItemFlavor qu
 
 		ItemFlavor reward = GetItemFlavorByAsset( rewardAsset )
 		if ( !IsQuestActive( quest ) && ItemFlavor_GetType( reward ) == eItemType.voucher )
-			continue // don't give Voucher rewards - BP stars - in subsequent seasons
+			continue 
 
 		rewards.flavors.append( reward )
 		rewards.quantities.append( quantity )
@@ -1418,10 +1408,10 @@ int function SeasonQuest_GetTreasurePacksLatestPickupTimeForPlayer( entity playe
 
 int function SeasonQuest_GetTreasurePacksCountForPlayer( entity player, ItemFlavor quest )
 {
-	#if DEVELOPER
+#if DEV
 		if ( DEV_ShouldIgnorePersistence() )
 			return 0
-	#endif
+#endif
 
 	int maxPacks = SeasonQuest_GetTreasurePacksMaxCount( quest )
 	if ( GetCurrentPlaylistVarBool( "seasonquest_force_all_treasurepacks_collected", false ) )
@@ -1453,65 +1443,65 @@ int function SeasonQuest_GetLastMissionUnlockTime( entity player, ItemFlavor que
 	return player.GetPersistentVarAsInt( BuildPersistentVarName( quest, VARNAME_lastMissionUnlockTime ) )
 }
 
-#if SERVER
-void function SeasonQuest_UpdateLastMissionUnlockTime( entity player, ItemFlavor quest )
-{
-	return player.SetPersistentVar( BuildPersistentVarName( quest, VARNAME_lastMissionUnlockTime ), GetUnixTimestamp() )
-}
-#endif
 
-#if SERVER
-void function UpdatePlayerTreasureBoxPurchaseCache( entity player )
-{
-	thread function() : (player)
-	{
-		EndSignal( player, "OnDestroy" )
 
-		while ( !GRX_IsInventoryReady( player ) )
-			WaitFrame()
 
-		ItemFlavor ornull quest = SeasonQuest_GetActiveSeasonQuest( GetUnixTimestamp() )
-		if ( quest == null )
-			return
 
-		expect ItemFlavor( quest )
-		ItemFlavor treasureBoxPurchaseFlav = SeasonQuest_GetTreasureBoxPurchaseFlav( quest )
-		int numPurchasedBoxes = GRX_GetConsumableCount( ItemFlavor_GetGRXIndex( treasureBoxPurchaseFlav ) )
 
-		player.SetPersistentVar( BuildPersistentVarName( quest, VARNAME_TB_lastSeenPurchased ), numPurchasedBoxes )
-	}()
-}
-#endif //SERVER
-#if SERVER
-void function UpdatePlayerQuestNewness( entity player )
-{
-	thread function() : (player)
-	{
-		EndSignal( player, "OnDestroy" )
 
-		while ( !GRX_IsInventoryReady( player ) )
-			WaitFrame()
 
-		ItemFlavor ornull quest = SeasonQuest_GetActiveSeasonQuest( GetUnixTimestamp() )
-		if ( quest == null )
-			return
 
-		expect ItemFlavor( quest )
-		for ( int missionIndex = 0; missionIndex < SeasonQuest_GetMissionsMaxCount( quest ); missionIndex++ )
-		{
-			ItemFlavor mission = SeasonQuest_GetMissionForIndex( quest, missionIndex )
-			int missionStatus = SeasonQuest_GetStatusForMissionIndex( player, quest, missionIndex )
-			int unlockTime = SeasonQuestMission_GetUnlockTime( mission )
 
-			if ( missionStatus == eQuestMissionStatus.LAUNCHABLE && unlockTime >= SeasonQuest_GetLastMissionUnlockTime( player, quest ) )
-			{
-				Newness_MarkItemFlavorsAsNewForPlayer( player, [mission], true )
-				SeasonQuest_UpdateLastMissionUnlockTime( player, quest )
-			}
-		}
-	}()
-}
-#endif //SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 string function SeasonQuest_GetGRXOfferLocation( ItemFlavor quest )
@@ -1529,29 +1519,29 @@ ItemFlavor function SeasonQuest_GetTreasureBoxPurchaseFlav( ItemFlavor quest )
 }
 
 
-#if SERVER
-void function SeasonQuest_RecordNewTreasureBoxItemPickupForPlayer( entity player, ItemFlavor quest )
-{
-	int timeNow = GetUnixTimestamp()
-	int oldVal  = SeasonQuest_GetEarnedTreasurePacksCountForPlayer( player, quest )
-	player.SetPersistentVar( BuildPersistentVarName( quest, VARNAME_TB_totalPickups ), (oldVal + 1) )
-	player.SetPersistentVar( BuildPersistentVarName( quest, VARNAME_TB_lastPickupTime ), timeNow )
 
-	Newness_MarkItemFlavorsAsNewForPlayer( player, [quest] )
-}
-#endif // SERVER
+
+
+
+
+
+
+
+
+
+
 
 bool function SeasonQuest_HaveStartedQuest( entity player, ItemFlavor quest )
 {
 	return (player.GetPersistentVarAsInt( BuildPersistentVarName( quest, VARNAME_haveStartedQuest ) ) != 0)
 }
 
-#if SERVER
-void function RecordHaveStartedQuest( entity player, ItemFlavor quest )
-{
-	player.SetPersistentVar( BuildPersistentVarName( quest, VARNAME_haveStartedQuest ), true )
-}
-#endif // SERVER
+
+
+
+
+
+
 
 asset function SeasonQuest_GetComicPanelDataForIndex( ItemFlavor quest, int index )
 {
@@ -1820,7 +1810,7 @@ ItemFlavorBag function SeasonQuest_GetCompletionRewards( ItemFlavor quest )
 
 		ItemFlavor reward = GetItemFlavorByAsset( rewardAsset )
 		if ( !IsQuestActive( quest ) && ItemFlavor_GetType( reward ) == eItemType.voucher )
-			continue // don't give Voucher rewards - BP stars - in subsequent seasons
+			continue 
 
 		rewards.flavors.append( reward )
 		rewards.quantities.append( GetSettingsBlockInt( rewardData, "quantity" ) )
@@ -1847,7 +1837,7 @@ ItemFlavorBag function SeasonQuestMission_GetRewards( ItemFlavor quest, ItemFlav
 
 		ItemFlavor reward = GetItemFlavorByAsset( rewardAsset )
 		if ( !IsQuestActive( quest ) && ItemFlavor_GetType( reward ) == eItemType.voucher )
-			continue // don't give Voucher rewards - BP stars - in subsequent seasons
+			continue 
 
 		rewards.flavors.append( reward )
 		rewards.quantities.append( GetSettingsBlockInt( rewardData, "quantity" ) )
@@ -1856,186 +1846,186 @@ ItemFlavorBag function SeasonQuestMission_GetRewards( ItemFlavor quest, ItemFlav
 	return rewards
 }
 
-#if UI
-void function SeasonQuest_AcknowledgeHaveStartedQuest( ItemFlavor quest )
-{
-	Remote_ServerCallFunction( CC_QuestStartedAcknowledged, quest.guid )
-}
 
-void function SeasonQuest_AcknowledgeQuestComicRead( ItemFlavor quest, int pageIndex )
-{
-	entity player = GetLocalClientPlayer()
-	int pagesRead = SeasonQuest_GetComicPagesReadByPlayer( player, quest )
-	if ( pagesRead > pageIndex )
-		return
 
-	Remote_ServerCallFunction( CC_QuestComicReadAcknowledged, quest.guid, pageIndex )
-}
 
-void function SeasonQuest_AcknowledgeQuestMissionRead( ItemFlavor quest, int pageIndex )
-{
-	entity player = GetLocalClientPlayer()
-	int pagesRead = SeasonQuest_GetMissionsCompletedForPlayer( player, quest )
-	if ( pagesRead > pageIndex )
-		return
 
-	Remote_ServerCallFunction( CC_QuestMissionReadAcknowledged, quest.guid, pageIndex )
-}
-#endif // UI
 
-///////////
-/// Dev Stuff
 
-#if DEVELOPER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if DEV
 const string CMD_GIVETREASUREBOX_1 = "seasonquest_give_treasurebox_1"
 const string CMD_GIVETREASUREBOX_5 = "seasonquest_give_treasurebox_5"
 const string CMD_FINISHMISSION = "seasonquest_finish_mission"
 
-#if UI
-void function SetupDevMenu_SeasonQuests()
-{
-	if ( !IsLobby() )
-		return
 
-	SetupDevMenu( "Season Quest", void function( var _ )
-	{
-		thread ChangeToThisMenu( void function()
-		{
-			SetupDevCommand( "Give 1 Treasure Pack", CMD_GIVETREASUREBOX_1 )
-			SetupDevCommand( "Give 5 Treasure Packs", CMD_GIVETREASUREBOX_5 )
-			SetupDevCommand( "Complete Next Mission", CMD_FINISHMISSION )
-		} )
-	} )
-}
-#endif // UI
 
-#if SERVER
-void function ResetQuestPersistence()
-{
-	ItemFlavor ornull quest = SeasonQuest_GetActiveSeasonQuest( GetUnixTimestamp() )
-	expect ItemFlavor( quest )
 
-	GP().SetPersistentVar( BuildPersistentVarName( quest, VARNAME_TB_lastPickupTime ), 0 )
-	GP().SetPersistentVar( BuildPersistentVarName( quest, VARNAME_TB_totalPickups ), 0 )
-	GP().SetPersistentVar( BuildPersistentVarName( quest, VARNAME_TB_displayStartNum ), 0 )
-	GP().SetPersistentVar( BuildPersistentVarName( quest, VARNAME_TB_displayCount ), 0 )
-	GP().SetPersistentVar( BuildPersistentVarName( quest, VARNAME_missionProgress ), 0 )
-	GP().SetPersistentVar( BuildPersistentVarName( quest, VARNAME_lastMissionUnlockTime ), 0 )
 
-	GP().SetPersistentVar( BuildPersistentVarName( quest, VARNAME_comicPagesRead ), 0 )
-}
-#endif // SERVER
 
-#if SERVER
-void function RegisterDevCommands()
-{
-	AddClientCommandCallbackVoid( CMD_GIVETREASUREBOX_1, void function ( entity player, array<string> args ) // dev
-	{
-		TreasureBox_Dev_GrantTreasureBoxPickupsTo( player, 1 )
-	} )
 
-	AddClientCommandCallbackVoid( CMD_GIVETREASUREBOX_5, void function ( entity player, array<string> args ) // dev
-	{
-		TreasureBox_Dev_GrantTreasureBoxPickupsTo( player, 5 )
-	} )
 
-	AddClientCommandCallbackVoid( CMD_FINISHMISSION, void function ( entity player, array<string> args ) // dev
-	{
-		ItemFlavor ornull quest = SeasonQuest_GetActiveSeasonQuest( GetUnixTimestamp() )
-		if ( quest == null )
-		{
-			Warning( "No season quest is active at this time." )
-			return
-		}
-		expect ItemFlavor( quest )
 
-		int missionsDone     = SeasonQuest_GetMissionsCompletedForPlayer( player, quest )
-		int missionsTotalMax = SeasonQuest_GetMissionsMaxCount( quest )
-		if ( missionsDone >= missionsTotalMax )
-			return
 
-		SeasonQuest_RecordNewMissionSuccessForPlayerIfAllowed( player, quest, missionsDone )
-		GivePlayerAnyPendingMissionRewards( player )
-	} )
-}
 
-void function TreasureBox_Dev_GrantTreasureBoxPickupsTo( entity player, int count )
-{
-	if ( !GRX_IsInventoryReady( player ) )
-		return
 
-	ItemFlavor ornull quest = SeasonQuest_GetActiveSeasonQuest( GetUnixTimestamp() )
-	if ( quest == null )
-		return
-	expect ItemFlavor( quest )
 
-	int packsNow          = SeasonQuest_GetTreasurePacksCountForPlayer( player, quest )
-	int earnedPacksNow    = SeasonQuest_GetEarnedTreasurePacksCountForPlayer( player, quest )
-	int purchasedPacksNow = SeasonQuest_GetPurchasedTreasurePacksCountForPlayer( player, quest )
-	int packsMax          = SeasonQuest_GetTreasurePacksMaxCount( quest )
-	int goalNum           = minint( (earnedPacksNow + count), packsMax - purchasedPacksNow )
-	for ( int num = earnedPacksNow; num < goalNum; ++num )
-		SeasonQuest_RecordNewTreasureBoxItemPickupForPlayer( player, quest )
-	GivePlayerAnyPendingTreasureBoxRewards( player )
-}
 
-void function GenerateSeasonQuest_PDef()
-{
-	// Quest itemflavors:
-	{
-		array<string> questRefs = []
-		array<string> questComments = []
-		foreach ( ItemFlavor questFlav in GetAllItemFlavorsOfType( eItemType.quest ) )
-		{
-			questRefs.append( ItemFlavor_GetGUIDString( questFlav ) )
-			questComments.append( string(ItemFlavor_GetAsset( questFlav )) )
-		}
-		DEV_PDefGen_AddEnum( "eQuestFlavor", questRefs, "All season quests.", questComments )
-	}
 
-	DEV_PDefGen_BeginStruct( "sSeasonQuestData", "Data for season quests." )
-	DEV_PDefGen_AddField_Int( VARNAME_TB_lastPickupTime )
-	DEV_PDefGen_AddField_Int( VARNAME_TB_totalPickups )
-	DEV_PDefGen_AddField_Int( VARNAME_TB_displayStartNum )
-	DEV_PDefGen_AddField_Int( VARNAME_TB_displayCount )
-	DEV_PDefGen_AddField_Bool( VARNAME_CP_displayFinalRewards )
-	DEV_PDefGen_AddField_Int( VARNAME_missionProgress )
-	DEV_PDefGen_AddField_Int( VARNAME_TB_lastSeenPurchased )
-	DEV_PDefGen_AddField_Int( VARNAME_lastMissionUnlockTime )
 
-	DEV_PDefGen_AddField_Int( VARNAME_comicPagesRead )
-	DEV_PDefGen_AddField_Bool( VARNAME_haveStartedQuest )
 
-	DEV_PDefGen_EndStruct()
 
-	DEV_PDefGen_BeginFieldGroup( "Season Quest Vars" )
-	DEV_PDefGen_AddField_StructArray_EnumKey( "sSeasonQuestData", "questDatas", "eQuestFlavor" )
-	//
-	{
-		array<string> mtxSeqVars
-		foreach ( ItemFlavor questFlav in GetAllItemFlavorsOfType( eItemType.quest ) )
-		{
-			var settingsBlock = ItemFlavor_GetSettingsBlock( questFlav )
-			AddToArrayIfUnique( mtxSeqVars, GetSettingsBlockString( settingsBlock, "treasurePacksSequenceMarketplaceVar" ) )
-			AddToArrayIfUnique( mtxSeqVars, GetSettingsBlockString( settingsBlock, "missionRewardsSequenceMarketplaceVar" ) )
-			AddToArrayIfUnique( mtxSeqVars, GetSettingsBlockString( settingsBlock, "comicPageRewardsSequenceMarketplaceVar" ) )
-		}
-		foreach ( mtxSeqVar in mtxSeqVars )
-			DEV_PDefGen_AddField_Int( mtxSeqVar )
-	}
-	DEV_PDefGen_EndFieldGroup()
-}
 
-void function AddToArrayIfUnique( array<string> arr, string newVal )
-{
-	if ( arr.contains( newVal ) || newVal == "" )
-		return
-	arr.append( newVal )
-}
-#endif // SERVER
-#endif // DEVELOPER
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif
+
+
 string function SeasonQuest_GetCurrentPackCountDesc()
 {
 	ItemFlavor ornull quest = SeasonQuest_GetActiveSeasonQuest( GetUnixTimestamp() )
@@ -2051,7 +2041,7 @@ string function SeasonQuest_GetCurrentPackCountDesc()
 
 void function SeasonQuest_UpdateMinimapRui( var rui )
 {
-	//Defensive fix for R5DEV-205227
+	
 	if ( !IsConnected() )
 		return
 
@@ -2090,7 +2080,7 @@ void function SeasonQuest_UpdateMinimapRui( var rui )
 
 void function SCB_DoGotTreasurePackNotify()
 {
-	// Notify
+	
 	{
 		AnnouncementData announcement = Announcement_Create( "" )
 		Announcement_SetStyle( announcement, ANNOUNCEMENT_STYLE_GOT_TREASURE_PACK )
@@ -2102,60 +2092,60 @@ void function SCB_DoGotTreasurePackNotify()
 		AnnouncementFromClass( GetLocalViewPlayer(), announcement )
 	}
 }
-#endif // CLIENT
 
-#if UI
-void function PopulateRewardButtonWithArtifact( var rewardButton, ItemFlavor quest, int missionIndex, bool isOwned )
-{
-	var btnRui
-	if ( rewardButton != null )
-		btnRui = Hud_GetRui( rewardButton )
 
-	Assert( btnRui != null )
 
-	RuiSetBool( btnRui, "isOwned", isOwned )
-	RuiSetInt( btnRui, "rarity", eRarityTier.EPIC )
 
-	asset rewardImage = SeasonQuest_GetQuestItemIconForMissionIndex( quest, missionIndex )
-	if ( !isOwned && SHOW_UNKNOWN_ARTIFACTS  )
-		rewardImage = $"rui/menu/quest/artifact_unknown"
 
-	RuiSetImage( btnRui, "buttonImage", rewardImage )
-}
-#endif // UI
 
-#if UI
-void function PopulateRewardButtonWithLore( var rewardButton, ItemFlavor quest, bool isOwned )
-{
-	var btnRui
-	if ( rewardButton != null )
-		btnRui = Hud_GetRui( rewardButton )
 
-	Assert( btnRui != null )
 
-	RuiSetBool( btnRui, "isOwned", isOwned )
-	RuiSetInt( btnRui, "rarity", eRarityTier.RARE )
 
-	asset rewardImage = SeasonQuest_GetQuestItemIconForMissionIndex( quest, 0 )
-	RuiSetImage( btnRui, "buttonImage", rewardImage )
-}
-#endif // UI
 
-#if UI
-bool function IsSelectedPlaylistQuestMission()
-{
-	string playlist = LobbyPlaylist_GetSelectedPlaylist()
-	return GetPlaylistVarBool( playlist, "freelance_mode", false )
-}
-#endif // UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 bool function IsQuestActive( ItemFlavor quest )
 {
 	ItemFlavor ornull season = SeasonQuest_GetSeasonForQuest( quest )
 	Assert( season != null, "No season is associated with this quest." )
-	#if CLIENT || UI
+
 	Assert( IsConnected() )
-	#endif
+
 
 	if ( season == null )
 		return false
@@ -2169,9 +2159,9 @@ bool function IsQuestCurrentOrLastSeason( ItemFlavor quest )
 {
 	ItemFlavor ornull season = SeasonQuest_GetSeasonForQuest( quest )
 	Assert( season != null, "No season is associated with this quest." )
-	#if CLIENT || UI
+
 	Assert( IsConnected() )
-	#endif
+
 
 	if ( season == null )
 		return false
@@ -2182,3 +2172,4 @@ bool function IsQuestCurrentOrLastSeason( ItemFlavor quest )
 
 	return false
 }
+ 

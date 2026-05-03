@@ -1,5 +1,4 @@
 global function ShQuips_LevelInit
-global function ShQuips_Init
 global function RegisterEquippableQuipsForCharacter
 
 global function CharacterQuip_IsTheEmpty
@@ -15,24 +14,23 @@ global function CharacterQuip_GetUseEffectColor2
 global function CharacterQuip_GetEffectColor1
 global function CharacterQuip_GetEffectColor2
 
-#if CLIENT
+
 global function PerformQuip
 global function CharacterQuip_ShortenTextForCommsMenu
-#endif
 
-#if SERVER
-global function BroadcastQuip
-global function ClientCallback_BroadcastQuip
-global function ClientCallback_BroadcastFavoredQuip
-#endif
 
-#if CLIENT || UI
+
+
+
+
+
+
+
 global function CreateNestedRuiForQuip
 global function EmoteIcon_PopulateNestedRui
 global function ItemFlavor_GetFavoredQuipArrayForCharacter
-#endif
 
-global function ItemFlavor_GetQuipArrayForCharacter
+
 global function CharacterQuip_GetCharacterFlavor
 global function CharacterQuip_GetAliasSubName
 global function Loadout_CharacterQuip
@@ -40,10 +38,11 @@ global function Loadout_FavoredQuip
 global function Loadout_FavoredQuipArrayForCharacter
 global function Loadout_IsCharacterQuipLoadoutEntry
 global function ItemFlavor_CanEquipToWheel
+global function ItemFlavor_GetQuipArrayForCharacter
 
-#if SERVER
-const float PLANE_QUIP_DEBOUNCE = 5.0
-#endif
+
+
+
 
 global const int MAX_QUIPS_EQUIPPED = 8
 global const int MAX_FAVORED_QUIPS = 4
@@ -59,8 +58,8 @@ struct FileStruct_LifetimeLevel
 }
 FileStruct_LifetimeLevel& fileLevel
 
-// Bakery Data Keys
-const string ANIM_3P_KEY = "anim3p" // also used for the override anim
+
+const string ANIM_3P_KEY = "anim3p" 
 const string OVERRIDE_ANIMS_ARRAY_KEY = "overrideAnims"
 const string OVERRIDE_CHARACTER_KEY = "character"
 
@@ -68,28 +67,23 @@ void function ShQuips_LevelInit()
 {
 	FileStruct_LifetimeLevel newFileLevel
 	fileLevel = newFileLevel
-
-	#if SERVER
-		Remote_RegisterServerFunction( "ClientCallback_BroadcastQuip", "int", 0, MAX_QUIPS_EQUIPPED )
-		Remote_RegisterServerFunction( "ClientCallback_BroadcastFavoredQuip", "int", 0, MAX_FAVORED_QUIPS )
-	#endif
-}
-
-void function ShQuips_Init()
-{
-	ShQuips_LevelInit()
 }
 
 void function RegisterEquippableQuipsForCharacter( ItemFlavor characterClass, array<ItemFlavor> quipList, array<ItemFlavor> characterEmotesList )
 {
-	foreach( int index, ItemFlavor quip in quipList )
+	foreach ( int index, ItemFlavor quip in quipList )
 	{
-		#if CLIENT || SERVER
+		if ( GetGlobalSettingsAsset( ItemFlavor_GetAsset( quip ), "parentItemFlavor" ) == "" )
+		{
+			fileLevel.universalQuips.append( quip )
+		}
+
+
 		if ( CharacterQuip_UseHoloProjector( quip ) )
 		{
 			PrecacheModel( CharacterQuip_GetModelAsset( quip ) )
 		}
-		#endif
+
 	}
 
 	fileLevel.loadoutCharacterQuipsSlotListMap[characterClass] <- []
@@ -98,69 +92,69 @@ void function RegisterEquippableQuipsForCharacter( ItemFlavor characterClass, ar
 	{
 		LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "quips_" + quipIndex + "_for_" + ItemFlavor_GetGUIDString( characterClass ), eLoadoutEntryClass.CHARACTER )
 		entry.category     = eLoadoutCategory.CHARACTER_QUIPS
-		#if DEVELOPER
+#if DEV
 			entry.pdefSectionKey = "character " + ItemFlavor_GetGUIDString( characterClass )
 			entry.DEV_name       = ItemFlavor_GetCharacterRef( characterClass ) + " Quip " + quipIndex
-		#endif
+#endif
 		entry.validItemFlavorList = quipList
 		entry.defaultItemFlavor   = (quipIndex == 0 && characterEmotesList.len() > 0) ? characterEmotesList[0] : entry.validItemFlavorList[0]
 		entry.isSlotLocked        = bool function( EHI playerEHI ) {
 			return !IsLobby()
 		}
 
-		#if SERVER
-			if  ( GetCurrentPlaylistVarBool( "dev_equip_all_emotes", false ) /* || EquipAllEmotesConVarEnabled() */ )
-			{
-				entry.specialValidationFunc = ItemFlavor function( EHI playerEHI, ItemFlavor currFlav, bool ignoreGRX ) : ( entry, quipList, quipIndex )
-				{
 
-					array<ItemFlavor> allEmotes
-					array<ItemFlavor> allQuips = GetValidItemFlavorsForLoadoutSlot( playerEHI, entry )
 
-					array<int> typesToEquip = [
-							eItemType.character_emote,
-					]
 
-					for ( int i=0; i<allQuips.len(); i++ )
-					{
-						if ( typesToEquip.contains( ItemFlavor_GetType( allQuips[i] ) ) && ItemFlavor_GetQuality( allQuips[i], eRarityTier.NONE ) >= eRarityTier.RARE )
-						{
-							if ( IsItemFlavorUnlockedForLoadoutSlot( playerEHI, entry, allQuips[i] ) )
-							{
-								allEmotes.append( allQuips[i] )
-							}
-						}
-					}
 
-					allEmotes.sort( ItemFlavor_SortByTier )
 
-					if ( allEmotes.len() > quipIndex )
-					{
-						return allEmotes[ quipIndex ]
-					}
 
-					return currFlav
-				}
-			}
-		#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 		entry.associatedCharacterOrNull = characterClass
 		entry.networkTo                 = eLoadoutNetworking.PLAYER_EXCLUSIVE
-
+		
 		fileLevel.loadoutCharacterQuipsSlotListMap[characterClass].append( entry )
 	}
 
 	fileLevel.loadoutCharacterFavoredQuipMap[characterClass] <- []
 
-
+	
 	for ( int favQuipIndex = 0; favQuipIndex < MAX_FAVORED_QUIPS; favQuipIndex++ )
 	{
 		LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "favoredQuip_" + favQuipIndex + "_for_" + ItemFlavor_GetGUIDString( characterClass ), eLoadoutEntryClass.CHARACTER )
 		entry.category     = eLoadoutCategory.CHARACTER_FAVORED_QUIPS
-		#if DEVELOPER
+#if DEV
 			entry.pdefSectionKey = "character " + ItemFlavor_GetGUIDString( characterClass )
 			entry.DEV_name       = ItemFlavor_GetCharacterRef( characterClass ) + " Favored Quip " + favQuipIndex
-		#endif
+#endif
 		entry.validItemFlavorList = quipList
 		entry.defaultItemFlavor   = entry.validItemFlavorList[0]
 		entry.isSlotLocked        = bool function( EHI playerEHI ) {
@@ -174,20 +168,35 @@ void function RegisterEquippableQuipsForCharacter( ItemFlavor characterClass, ar
 }
 
 
-#if CLIENT
+
 void function PerformQuip( entity player, int index )
 {
 	if ( !IsAlive( player ) )
 		return
 
-	// PlaySoundForCommsAction has different signature, quip sounds disabled for now
-	// TODO: Implement direct sound playback for quips
+	ItemFlavor quip      = GetItemFlavorByGUID( index )
+
+	CommsAction act
+	act.index = eCommsAction.QUIP
+	act.aliasSubname = CharacterQuip_GetAliasSubName( quip )
+	act.hasCalm = false
+	act.hasCalmFar = false
+	act.hasUrgent = false
+	act.hasUrgentFar = false
+
+	CommsOptions opt
+	opt.isFirstPerson = (player == GetLocalViewPlayer())
+	opt.isFar = false
+	opt.isUrgent = false
+	opt.pauseQueue = player.GetTeam() == GetLocalViewPlayer().GetTeam()
+
+	PlaySoundForCommsAction( player, null, act, opt )
 }
-#endif
 
 
 
-#if SERVER || CLIENT || UI
+
+
 LoadoutEntry function Loadout_CharacterQuip( ItemFlavor characterClass, int badgeIndex )
 {
 	return fileLevel.loadoutCharacterQuipsSlotListMap[characterClass][badgeIndex]
@@ -205,7 +214,10 @@ array<LoadoutEntry> function Loadout_QuipArrayForCharacter( ItemFlavor character
 
 array<LoadoutEntry> function Loadout_FavoredQuipArrayForCharacter( ItemFlavor characterClass )
 {
-	return fileLevel.loadoutCharacterFavoredQuipMap[characterClass]
+	if ( characterClass in fileLevel.loadoutCharacterFavoredQuipMap )
+		return fileLevel.loadoutCharacterFavoredQuipMap[characterClass]
+
+	return [] 
 }
 
 bool function Loadout_IsCharacterQuipLoadoutEntry( LoadoutEntry entry )
@@ -225,20 +237,11 @@ bool function CharacterQuip_IsTheEmpty( ItemFlavor flavor )
 	AssertEmoteIsValid( flavor )
 
 	if ( ItemFlavor_GetType( flavor ) == eItemType.character_emote )
-		return false // Character Emotes have a default, rather than an "empty"
+		return false 
 
-	try
-	{
-		return ( GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "isTheEmpty" ) )
-	}
-	catch ( e )
-	{
-		Warning( "Warning: Asset \"" + ItemFlavor_GetAsset( flavor ) + "\" does not have setting var  \"" + "isTheEmpty" + "\"" )
-		return false  // Return empty asset if isTheEmpty setting doesn't exist
-	}
+	return ( GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "isTheEmpty" ) )
 }
 
-// S22: removed #if CLIENT || UI guard - function now uses ToEHI(player) instead of LocalClientEHI()
 array<ItemFlavor> function ItemFlavor_GetQuipArrayForCharacter( entity player, ItemFlavor characterClass, bool characterEmotesOnly = false )
 {
 	array<ItemFlavor> quips = []
@@ -259,7 +262,7 @@ array<ItemFlavor> function ItemFlavor_GetQuipArrayForCharacter( entity player, I
 	return quips
 }
 
-#if CLIENT || UI
+
 array<ItemFlavor> function ItemFlavor_GetFavoredQuipArrayForCharacter( ItemFlavor characterClass, bool characterEmotesOnly = false )
 {
 	array<ItemFlavor> favoredQuips = []
@@ -279,7 +282,7 @@ array<ItemFlavor> function ItemFlavor_GetFavoredQuipArrayForCharacter( ItemFlavo
 
 	return favoredQuips
 }
-#endif
+
 
 string function CharacterQuip_GetAnim3p( ItemFlavor quip, ItemFlavor character )
 {
@@ -316,6 +319,14 @@ var function CharacterQuip_SelectWeightedAnimFlourish3p( ItemFlavor flavor )
 
 	var flourishSettingsArray = GetSettingsBlockArray( GetSettingsBlockForAsset( ItemFlavor_GetAsset( flavor ) ), "flourishSequences" )
 	int flourishCount = GetSettingsArraySize( flourishSettingsArray )
+
+#if DEV
+	int forceIdx = GetConVarInt( "force_sequence_index" )
+
+	if ( forceIdx >= 0 && forceIdx < flourishCount )
+		return GetSettingsArrayElem( flourishSettingsArray, forceIdx )
+
+#endif
 
 	if ( flourishCount <= 0 )
 		return null
@@ -379,90 +390,93 @@ void function AssertEmoteIsValid( ItemFlavor flavor )
 
 	Assert( allowedList.contains( ItemFlavor_GetType( flavor ) ) )
 }
-#endif
 
 
-#if SERVER
-void function ClientCallback_BroadcastQuip( entity player, int quip)
-{
-	thread BroadcastQuipAtIndex( player, quip )
-}
 
-void function ClientCallback_BroadcastFavoredQuip( entity player, int quip )
-{
-	thread BroadcastFavoredQuipAtIndex( player, quip )
-}
 
-void function BroadcastQuipAtIndex( entity player, int index )
-{
-	if ( !IsAlive( player ) )
-		return
 
-	if ( index >= MAX_QUIPS_EQUIPPED )
-		return
 
-	EHI playerEHI = ToEHI( player )
-	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( playerEHI, Loadout_Character() )
-	ItemFlavor quip      = LoadoutSlot_WaitForItemFlavor( playerEHI, Loadout_CharacterQuip( character, index ) )
 
-	BroadcastQuip( player, quip )
-}
 
-void function BroadcastFavoredQuipAtIndex( entity player, int index )
-{
-	if ( !IsAlive( player ) )
-		return
 
-	if ( index >= MAX_FAVORED_QUIPS )
-		return
 
-	EHI playerEHI = ToEHI( player )
-	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( playerEHI, Loadout_Character() )
-	ItemFlavor quip      = LoadoutSlot_WaitForItemFlavor( playerEHI, Loadout_FavoredQuip( character, index ) )
 
-	BroadcastQuip( player, quip )
-}
 
-void function BroadcastQuip( entity player, ItemFlavor quip )
-{
-	if ( !IsAlive( player ) )
-		return
 
-	EHI playerEHI = ToEHI( player )
-	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( playerEHI, Loadout_Character() )
 
-	int quipGUID = ItemFlavor_GetGUID( quip )
 
-	if ( quipGUID < 0 )
-		return
 
-	if ( AreEmotesEnabled() && CharacterQuip_GetAnim3p( quip, character ) != "" )
-		RequestPlayerPerformEmote( player, quip )
 
-	if ( GetGameState() >= eGameState.Resolution )
-		return
 
-	if ( CharacterQuip_UseHoloProjector( quip ) )
-	{
-		AssignGUIDToHoloProjector( player, quipGUID )
-	}
 
-	bool speakerInPlane = player.GetPlayerNetBool( "playerInPlane" )
-	if ( CharacterQuip_GetAliasSubName( quip ) != "" )
-	{
-		foreach ( p in GetPlayerArray_Alive() )
-		{
-			if ( !speakerInPlane || IsFriendlyTeam( p.GetTeam(), player.GetTeam() ) || p.p.nextAllowPlaneEmoteTime < Time() )
-			{
-				p.p.nextAllowPlaneEmoteTime = Time() + PLANE_QUIP_DEBOUNCE
-				Remote_CallFunction_Replay( p, "PerformQuip", player, quipGUID )
-			}
-		}
-	}
 
-	// FR_Nessie_OnQuipUsed not available
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 bool function ItemFlavor_CanEquipToWheel( ItemFlavor item )
 {
@@ -479,7 +493,7 @@ bool function ItemFlavor_CanEquipToWheel( ItemFlavor item )
 	return false
 }
 
-#if CLIENT || UI
+
 string function CharacterQuip_ShortenTextForCommsMenu( ItemFlavor flav )
 {
 	string txt = ""
@@ -492,9 +506,9 @@ string function CharacterQuip_ShortenTextForCommsMenu( ItemFlavor flav )
 		int WORD_MAX_LEN = 11
 		int TEXT_MAX_LEN = 26
 		int TEXT_MAX_LEN_W_DOTS = TEXT_MAX_LEN - 2
-#if CLIENT
+
 		txt = CondenseText( txt, WORD_MAX_LEN, TEXT_MAX_LEN )
-#endif
+
 	}
 	return txt
 }
@@ -531,7 +545,7 @@ void function EmoteIcon_PopulateNestedRui( var rui, ItemFlavor item, int ornull 
 	RuiSetInt( rui, "tier", ItemFlavor_GetQuality( item, 0 ) + 1 )
 	RuiSetImage( nested, "basicImage", icon )
 }
-#endif
+
 
 
 asset function CharacterQuip_GetModelAsset( ItemFlavor item )
@@ -567,4 +581,4 @@ ItemFlavor ornull function CharacterQuip_GetCharacterFlavor( ItemFlavor item )
 	Assert( GetGlobalSettingsAsset( ItemFlavor_GetAsset( item ), "parentItemFlavor" ) != "" )
 
 	return GetItemFlavorByAsset( GetGlobalSettingsAsset( ItemFlavor_GetAsset( item ), "parentItemFlavor" ) )
-}
+} 

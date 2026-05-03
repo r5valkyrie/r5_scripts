@@ -39,7 +39,7 @@ global struct MapBloomSettings
 	float deathScreen		= -1.0
 	float control			= 0.0
 }
-global int ATTACHMENTID_INVALID = -1
+
 struct
 {
 	MapBloomSettings bloomSettings
@@ -303,6 +303,7 @@ void function RunClientConnectScriptsThreaded( entity player )
 	ExecuteNetBufferedCallbacks()
 
 	TriggerGlobalChangeCallbacks()
+
 	RunCallbacks_EntitiesDidLoad()
 
 	FlagSet( "EntitiesDidLoad" )
@@ -416,4 +417,4 @@ void function PerfInitLabels()
 
 function ClientCodeCallback_OnDropShipCinematicEventStateChanged()
 {
-}
+} 

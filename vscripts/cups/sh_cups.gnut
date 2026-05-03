@@ -101,7 +101,7 @@ global struct CupBakeryAssetData
 
 	string gameModePlaylistVar
 
-	string gameModeLocalisationString
+
 
 
 	CupEntryRestrictions entryRestrictions
@@ -130,7 +130,7 @@ global struct CupContainerBakeryAssetData
 
 	string gameModePlaylistVar
 
-		string gameModeLocalisationString
+
 
 
 	int maximumNumberOfReRolls
@@ -397,9 +397,9 @@ void function Cups_ParseContainerBakeryParams( ItemFlavor cupItemFlavor )
 	cupContainer.itemFlavor = cupItemFlavor
 
 
-		cupContainer.name = ItemFlavor_GetLongName( cupItemFlavor )
 
 
+		cupContainer.name = string( ItemFlavor_GetAsset( cupItemFlavor ) )
 
 
 	cupContainer.squadSize = GetGlobalSettingsInt( ItemFlavor_GetAsset( cupItemFlavor ), SQUAD_SIZE_FIELD_NAME )
@@ -622,7 +622,7 @@ void function Cups_ValidateBakeryGamemodeParams()
 		if( cup.gameModePlaylistVar in cupGamemodeNames && cupGamemodeNames[ cup.gameModePlaylistVar ] != "" )
 		{
 
-			cup.gameModeLocalisationString = cupGamemodeNames[ cup.gameModePlaylistVar ]
+
 
 		}
 		else
@@ -1120,7 +1120,7 @@ void function DEV_Cups_DumpAllCupBakeryAssetData( int Timezone_Offset_Hours = -7
 
 		printt( "\tGame Mode Playlist Var:", cup.gameModePlaylistVar )
 
-		printt( "\tGame Mode Localisation String:", cup.gameModeLocalisationString )
+
 
 
 		if(cup.entryRestrictions.hasMMREntryRequirement)
@@ -1199,25 +1199,25 @@ void function DEV_Cups_DumpMyRegisteredCups()
 	if( !GetConVarBool( "cups_enabled" ) ) return
 
 
-		RunClientScript( FUNC_NAME() )
-		return
 
 
 
 
+			entity player = GetLocalClientPlayer()
 
 
 
 
-
-
-
-
-
-
-
-
-
+		foreach ( UserCupEntryData userCupEntry in Cups_GetPlayersFullPCupData( player ) )
+		{
+			printf(
+				"pData Index: %d\n\tCupID: %d\n\tSquadID: %s\n\tNumMatches: %d",
+				userCupEntry.cupIndex,
+				userCupEntry.cupID,
+				userCupEntry.squadID,
+				userCupEntry.numMatches
+			)
+		}
 
 
 }
@@ -1227,27 +1227,27 @@ void function DEV_Cups_DumpMyCupMatchSummaryData()
 	if( !GetConVarBool( "cups_enabled" ) ) return
 
 
-	RunClientScript( FUNC_NAME() )
-	return
 
 
 
 
+		entity player = GetLocalClientPlayer()
 
 
 
 
+	LastCupMatchPlayedData ornull cupsLastMatchData = Cups_GetLatestMatchSummaryData( player )
 
+	if ( cupsLastMatchData == null )
+		return
 
+	expect LastCupMatchPlayedData( cupsLastMatchData )
 
-
-
-
-
-
-
-
-
+	printf(
+		"CupID: %d\n\tMatch Num: %d",
+		cupsLastMatchData.cupID,
+		cupsLastMatchData.matchNum
+	)
 
 
 }
@@ -1258,10 +1258,10 @@ CupMatchSummary function DEV_GenerateDummyMatchHistory( SettingsAssetGUID cupID,
 	Assert( squad.len() > 0 )
 
 
-
-
-
-
+	foreach( entity player in squad )
+	{
+		Assert( player.IsPlayer() )
+	}
 
 
 	CupBakeryAssetData cup = Cups_GetCupBakeryAssetDataFromGUID(cupID)
@@ -1277,11 +1277,11 @@ CupMatchSummary function DEV_GenerateDummyMatchHistory( SettingsAssetGUID cupID,
 		playerSummary.playerLegendName = ItemFlavor_GetCharacterRef( LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() ) )
 
 
-			playerSummary.playerUID = GetPlayerUID()
-			playerSummary.playerHardware = GetPlayerHardware()
 
 
 
+			playerSummary.playerUID = player.GetUserID()
+			playerSummary.playerHardware = player.GetHardwareName()
 
 
 		matchSummary.squadCalculatedScore += Cups_GetPointsForPlacement( cup, squadPlacement )
@@ -1310,3 +1310,4 @@ CupMatchSummary function DEV_GenerateDummyMatchHistory( SettingsAssetGUID cupID,
 }
 
 #endif
+ 

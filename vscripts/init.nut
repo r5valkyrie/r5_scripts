@@ -4,8 +4,6 @@
 
 
 
-global const bool DEVELOPER = false
-
 global function printl
 global function CodeCallback_Precompile
 
@@ -328,6 +326,7 @@ global struct GRXScriptInboxMessage
 
 
 
+#if UI
 global struct GRXStoreScenario
 {
 	string key
@@ -371,6 +370,48 @@ global struct GRXStoreTab
 	string localization = ""
 	array<GRXStoreSection> sections
 }
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 global struct GRXContainerInfo
@@ -638,13 +679,13 @@ global struct OpticAppearanceOverride
 	array<string>	uiDataNames
 }
 
-
-
-
-
-
-
-
+#if CLIENT
+global struct ArtifactViewmodelData
+{
+	int bladeGUID
+	int powerSourceGUID
+}
+#endif
 
 global struct ConsumableInventoryItem
 {
@@ -1125,16 +1166,16 @@ global struct UMData
 }
 
 
-
-
-
-
-
-
-
-
-
-
+#if CLIENT
+global struct ChallengeDebugDataStruct 
+{
+	int guid
+	int category
+	bool complete
+	string ref
+	string debugInfo
+}
+#endif
 
 
 
@@ -1156,3 +1197,4 @@ void function CodeCallback_Precompile()
 #endif
 }
 
+ 

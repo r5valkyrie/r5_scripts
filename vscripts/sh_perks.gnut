@@ -2,7 +2,7 @@ global asset PERK_MINIMAP_OBJECT = $"ui/minimap_square_perk_icon.rpak"
 global asset PERK_FULL_MINIMAP_OBJECT = $"ui/in_world_minimap_square_perk_icon.rpak"
 global asset PERK_IN_WORLD_HUD_OBJECT = $"ui/in_world_perk_icon_marker.rpak"
 
-#if CLIENT
+
 global const float NON_INTERACTIBLE_PERK_MINIMAP_OPACITY = .5
 global const vector NON_INTERACTIBLE_PERK_MINIMAP_COLOR =  <.25, .25, .25>
 global const vector INTERACTIBLE_PERK_MINIMAP_COLOR = <1, 1, 1>
@@ -10,7 +10,7 @@ global const float PERK_HIGHLIGHT_DEGREES = 3
 global const float PERK_ENT_MAX_PING_DISTANCE = 3000
 
 global function Perks_UpdateNonInteractiblePerkMinimapIcons
-#endif
+
 
 global function Perks_Init
 global function Perks_RegisterClassPerk
@@ -26,24 +26,24 @@ global function Perks_GetSettingsInfoForPerk
 
 
 
-#if SERVER || CLIENT
+
 global function Perks_DoesPlayerHavePerk
 global function Perks_AddMinimapEntityForPerk
 global function Perks_GetIconForPerk
 global function Perks_GetRoleForPlayer
 global function Perks_AddPerk
-#endif
 
-#if SERVER
-global function Perks_HideMinimapVisibility
-global function Perks_HideMinimapVisibilityForTeam
-global function Perks_ClientToServer_MinimapIconPinged
 
-global function Perks_UpdateForUpgradeSelection
 
-#endif
 
-#if CLIENT
+
+
+
+
+
+
+
+
 global function ServerToClient_UpdatePerkPropVisibility
 global function ServerToClient_HidePerkPropMinimapVisibility
 global function Perks_UpdateHighlightedPerkIcon
@@ -53,16 +53,16 @@ global function Perks_PerkPropPinged
 global function Perks_PingTypeToPingIcon
 global function Perks_SetHighlightedPerkIcon
 global function Perks_SetWorldspaceIconVisibility
-#endif
 
-// TODO: Short term - Support player-chosen perks
-// TODO: Long term - Combine with (or just revamp) passives - shouldn't be using passives for checking character, didHave vs nowHas inaccurate for client, duplicate calls causing trourble, etc.
-// Also check on things from sh_characters that might make more sense here
-// character_skills.nut for UI?  There's also sh_character_abilities to glance at, but perks are (probably) separate
+
+
+
+
+
 
 global enum ePerkIndex
 {
-	// Make sure to add a corresponding entry to itemtype_class_perk.rson when adding a new enum
+	
 	INVALID = -1,
 	BEACON_SCAN,
 	EXTRA_BIN_LOOT,
@@ -89,14 +89,14 @@ global enum ePerkIndex
 
 
 
-	COUNT	// this stays last
+	COUNT	
 }
 
 global struct PerkInfo
 {
 	int perkId = ePerkIndex.INVALID
 
-	#if SERVER || CLIENT
+
 	void functionref( entity, string ) activateCallback
 	void functionref( entity ) deactivateCallback
 	void functionref( var, entity) ruiThinkThread
@@ -108,22 +108,22 @@ global struct PerkInfo
 	bool trackEntityPosition = false
 	string mapFeatureTitle
 	string mapFeatureDescription
-	#endif
-	#if CLIENT
+
+
 	bool functionref( entity ) canPingEnt = null
 	vector functionref( entity ) getPingPosition = null
 	float functionref( entity ) getDynamicPingMaxDistance = null
 	float worldspaceIconUpOffset = 0
 	float staticPingDistance = PERK_ENT_MAX_PING_DISTANCE
-	#endif
+
 }
 
 global struct ClassRoleSettingsInfo
 {
 	array<int> perks
 
-	// the below aren't really necessary on the server, but a bunch of the ui functions aren't correctly flagged to be client only
-	// consider making these client only at some point in the future
+	
+	
 	string name
 	string fullDescription
 	string shortDescription
@@ -146,14 +146,14 @@ global struct PerkSettingsInfo
 	string perkPropName
 }
 
-#if CLIENT
+
 global struct PerkPingInfo
 {
 	entity ent
 	int pingType
 	float originUpOffset
 }
-#endif
+
 
 struct
 {
@@ -161,44 +161,39 @@ struct
 	table< int, PerkSettingsInfo  >		 perkToPerkSettingsTable
 	table< int, PerkInfo > 				 perkInfoTable
 	table< ItemFlavor, int > 		 	 characterToRoleTable
-	#if CLIENT
+
 	table< entity, bool > 			  	 worldspacePerkIconVisibility
 	table< entity, var >				 entityToWorldSpaceicon
 	array< entity >					     pingedPerkProps
 	PerkPingInfo 						 highlightedEnt
 	table<int, array<entity> > 			visiblePerkEntities
-	#endif
+
 } file
 
 void function Perks_Init()
 {
-	printt( "PERKS: Perks_Init() called" )
-	// These must always be processed regardless of perks being disabled because they also contain perk icons
+	
 	AddCallback_RegisterRootItemFlavors( OnRegisterRootItemFlavors )
 	AddCallback_OnItemFlavorRegistered( eItemType.character_class, OnItemFlavorRegistered_Class )
 	AddCallback_OnItemFlavorRegistered( eItemType.character_perk, OnItemFlavorRegistered_Perk )
 
-	printt( "PERKS: Perks_Enabled() = " + Perks_Enabled() )
 	if ( !Perks_Enabled() )
-	{
-		printt( "PERKS: Perks disabled, returning early" )
 		return
-	}
 
 	RegisterSignal( "UpdatePerkMinimapVisibility" )
 	RegisterSignal( "UpdatePerkMinimapReady" )
 	RegisterSignal( "HidePerkMinimapVisibility" )
 
-	#if SERVER || CLIENT
+
 		AddCallback_PlayerClassActuallyChanged( OnPlayerClassChanged )
 		Remote_RegisterClientFunction( "ServerToClient_HidePerkPropMinimapVisibility", "entity", "int", 0, ePerkIndex.COUNT )
 		Remote_RegisterClientFunction( "ServerToClient_UpdatePerkPropVisibility" )
 		Remote_RegisterServerFunction( "Perks_ClientToServer_MinimapIconPinged", "typed_entity", "prop_script" )
-	#endif
-	#if SERVER
-		AddCallback_GameStateEnter( eGameState.Playing, Perks_UpdateMinimapVisibilityForAllPlayers )
-	#endif
-	#if CLIENT
+
+
+
+
+
 		RegisterSignal( "PerkPropPinged" )
 		RegisterSignal( "PerkPropPingDestroyed" )
 
@@ -207,7 +202,6 @@ void function Perks_Init()
 			AddCreateCallback( "player", Perks_PlayerSpawnedOnClient )
 		}
 		AddCallback_OnFindFullMapAimEntity( GetPerkPropUnderAim, PingPerkPropUnderAim )
-	#endif
 
 
 	AddCallbackOrMaybeCallNow_OnAllItemFlavorsRegistered( InitializePerkTables )
@@ -229,10 +223,10 @@ void function OnItemFlavorRegistered_Class( ItemFlavor characterClass )
 	array<int> perks = []
 	asset classAsset = ItemFlavor_GetAsset( characterClass )
 
-#if UI || CLIENT
+
 	string name = GetGlobalSettingsString( classAsset, "localizationKey_NAME" )
 	string fullDescription = "`1" + Localize( name ) + "`0:"
-#endif
+
 
 
 	foreach ( var perkBlock in IterateSettingsAssetArray( classAsset, "perks" ) )
@@ -245,14 +239,14 @@ void function OnItemFlavorRegistered_Class( ItemFlavor characterClass )
 			{
 				expect ItemFlavor( perk )
 				int perkIndex = Perks_GetPerkIndex( perk )
-				Assert( perkIndex != ePassives.INVALID )  // no real reason for this other than sanity
+				Assert( perkIndex != ePassives.INVALID )  
 				perks.append( perkIndex )
 
-#if UI || CLIENT
+
 				string shortDesc = GetGlobalSettingsString( ItemFlavor_GetAsset( perk ), "localizationKey_DESCRIPTION_SHORT" )
 				fullDescription += " "
 				fullDescription += Localize( shortDesc )
-#endif
+
 			}
 		}
 	}
@@ -267,7 +261,7 @@ void function OnItemFlavorRegistered_Class( ItemFlavor characterClass )
 	ClassRoleSettingsInfo settingsInfo
 	settingsInfo.perks = perks
 
-#if UI || CLIENT
+
 	string shortDescription = GetGlobalSettingsString( classAsset, "localizationKey_DESCRIPTION_SHORT" )
 	asset icon = GetGlobalSettingsAsset( classAsset, "icon" )
 	vector color = GetGlobalSettingsVector( classAsset, "uiColor" )
@@ -281,7 +275,7 @@ void function OnItemFlavorRegistered_Class( ItemFlavor characterClass )
 
 
 
-#endif
+
 
 	int role = eCharacterClassRole[GetGlobalSettingsString( classAsset, "role" )]
 	file.classRoleToSettingsTable[role] <- settingsInfo
@@ -367,18 +361,17 @@ bool function Perks_NotifyClassChangeOnSpawn()
 
 void function InitializePerkTables()
 {
-	// All characters now known, can build the tables now
-	#if UI
-		file.characterToRoleTable.clear()		// UI VM persists through level switching, but prefer not to do fileLevel-type implementations due to race conditions
-	#endif
+	
+
+
+
 
 	array<ItemFlavor> characterArray = GetAllCharacters()
-	//printt( "PERKS: InitializePerkTables found " + characterArray.len() + " characters" )
-	// For now, just assigning perks to characters by role
+	
 	foreach( character in characterArray )
 	{
 		int characterRole = CharacterClass_GetRole( character )
-		// TODO support multiple perks per character
+		
 		file.characterToRoleTable[character] <- characterRole
 	}
 }
@@ -388,7 +381,7 @@ void function Perks_RegisterClassPerk( PerkInfo perkToRegister )
 	Assert( perkToRegister.perkId > ePerkIndex.INVALID && perkToRegister.perkId < ePerkIndex.COUNT, "Registering perk with invalid ID" )
 	file.perkInfoTable[ perkToRegister.perkId ] <- perkToRegister
 
-	#if CLIENT
+
 
 	if( !IsLobby() && perkToRegister.minimapStateIndex >= 0 && Perks_Enabled() )
 	{
@@ -412,11 +405,11 @@ void function Perks_RegisterClassPerk( PerkInfo perkToRegister )
 
 		RegisterMinimapPackage( "prop_script", perkToRegister.minimapStateIndex, PERK_MINIMAP_OBJECT, registerFunc, PERK_FULL_MINIMAP_OBJECT, registerFunc )
 	}
-	#endif
+
 }
 
 
-#if SERVER || CLIENT
+
 asset function Perks_GetIconForPerk( int perk )
 {
 	PerkSettingsInfo info = Perks_GetSettingsInfoForPerk( perk )
@@ -436,8 +429,8 @@ void function Perks_PlayerSpawnedOnClient( entity player )
 
 void function OnPlayerClassChanged( entity player )
 {
-	// Note - currently called multiple times.  First CodeCallback_PlayerClassChanged from code, then later CodeCallback_OnPlayerRespawned script
-	// sets player settings with mod, which triggers a second PlayerClassChanged callback
+	
+	
 
 	array<int> perksToClear = player.p.activePerks
 	player.p.activePerks = []
@@ -452,8 +445,8 @@ void function OnPlayerClassChanged( entity player )
 		}
 	}
 
-	// Figure out what perks I should have
-	// For now - just based on character
+	
+	
 	EHI playerEHI = ToEHI( player )
 	LoadoutEntry loadoutCharacter = Loadout_Character()
 
@@ -462,17 +455,17 @@ void function OnPlayerClassChanged( entity player )
 
 void function ApplyPerkWhenCharacterFlavorIsKnown( entity player, EHI playerEHI, LoadoutEntry entry )
 {
-	// TODO: Do we need to account for the race condition when we try to activate a perk while another perk is already waiting to be activated here?
+	
 	ItemFlavor characterItemFlavor = LoadoutSlot_WaitForItemFlavor( playerEHI, entry )
 	if ( !IsValid( player ) )
 		return
 
 	Assert( characterItemFlavor in file.characterToRoleTable, "Trying to activate perks but character " + ItemFlavor_GetCharacterRef( characterItemFlavor ) + " wasn't in perk table\nNeed to run pdef_autogen" )
+
 	string characterName = ItemFlavor_GetCharacterRef( characterItemFlavor )
 	array<string> nameSplit = split( characterName, "_" )
 	if ( nameSplit.len() >= 2 )
 		characterName = nameSplit[ 1 ]
-
 
 
 	int roleIndex = file.characterToRoleTable[ characterItemFlavor ]
@@ -490,18 +483,18 @@ void function ApplyPerkWhenCharacterFlavorIsKnown( entity player, EHI playerEHI,
 
 	if( !IsLobby() )
 	{
-		#if SERVER
-			Perks_UpdateMinimapVisibilityForTeam( player.GetTeam() )
-		#endif
 
-		#if CLIENT
+
+
+
+
 			entity localPlayer = GetLocalViewPlayer()
 			if ( localPlayer.GetTeam() == player.GetTeam() )
 			{
 				Perks_UpdatePerkPropMinimapVisibility( localPlayer )
 				Perks_UpdatePerkPropMapFeatureVisibility( localPlayer )
 			}
-		#endif
+
 	}
 }
 
@@ -516,20 +509,20 @@ void function Perks_AddPerk( entity player, int perkIndex )
 	player.p.activePerks.append( perkIndex )
 	PerkInfo perk = file.perkInfoTable[perkIndex]
 	if ( perk.activateCallback != null )
-		perk.activateCallback( player, "" ) // TODO actually get character name, don't think it matters for the most part currently though
+		perk.activateCallback( player, "" ) 
 
-	#if SERVER
-		Perks_UpdateMinimapVisibilityForTeam( player.GetTeam() )
-	#endif
 
-	#if CLIENT
+
+
+
+
 		entity localPlayer = GetLocalViewPlayer()
 		if( localPlayer.GetTeam() == player.GetTeam() )
 		{
 			Perks_UpdatePerkPropMinimapVisibility( localPlayer )
 			Perks_UpdatePerkPropMapFeatureVisibility( localPlayer )
 		}
-	#endif
+
 }
 
 bool function Perks_DoesPlayerHavePerk( entity player, int perkIndex )
@@ -567,23 +560,23 @@ void function Perks_AddMinimapEntityForPerk( int perkId, entity ent )
 {
 	file.perkInfoTable[perkId].minimapEntities.append( ent )
 
-	#if SERVER
-		int minimapStateIndex = file.perkInfoTable[perkId].minimapStateIndex
-		if( minimapStateIndex >= 0 )
-		{
-			ent.Minimap_SetCustomState( minimapStateIndex )
-			ent.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
-			ent.Minimap_SetAlignUpright( true )
-		}
-	#endif
 
-	#if CLIENT
+
+
+
+
+
+
+
+
+
+
 	if( Perks_ShouldLocalPlayerSeeMinimapHudForPerk( perkId ) )
 	{
 		bool hasPerk = Perks_DoesPlayerHavePerk( GetLocalViewPlayer(), perkId )
 		Perks_SetupWorldspacePerkIcon( ent, file.perkInfoTable[perkId], hasPerk )
 	}
-	#endif
+
 }
 
 bool function Perks_CanTeamSeePerkProp( int team, int perkId )
@@ -623,138 +616,139 @@ int function GetPingTypeForEntity( entity ent )
 	}
 	return -1
 }
-#endif
-
-#if SERVER
-void function Perks_UpdateMinimapVisibilityForAllPlayers()
-{
-	thread Perks_UpdateMinimapVisibilityDelayed()
-}
-
-void function Perks_UpdateMinimapVisibilityDelayed()
-{
-	// wait a frame so that beacon randomization can occur first
-	WaitFrame()
-	foreach( team in GetAllValidPlayerTeams() )
-	{
-		Perks_UpdateMinimapVisibilityForTeam( team )
-	}
-}
-
-void function Perks_UpdateMinimapVisibilityForTeam( int team )
-{
-	foreach( PerkInfo perk in file.perkInfoTable )
-	{
-		if( perk.minimapStateIndex < 0 )
-			continue
-		bool teamHasPerk = Perks_CanTeamSeePerkProp( team, perk.perkId )
-		ArrayRemoveInvalid( perk.minimapEntities )
-		foreach( entity minimapObject in perk.minimapEntities )
-		{
-			bool hiddenFromTeam = !teamHasPerk || Perks_IsEntHiddenFromTeam( minimapObject, team, perk )
-			if( !hiddenFromTeam )
-			{
-				if( perk.hideFromTeammates )
-				{
-					array<entity> teamPlayers = GetPlayerArrayOfTeam( team )
-					foreach ( entity player in teamPlayers )
-					{
-						if( Perks_DoesPlayerHavePerk( player, perk.perkId ) )
-						{
-							minimapObject.Minimap_AlwaysShow( TEAM_INVALID, player )
-						}
-					}
-				}
-				else
-				{
-					minimapObject.Minimap_AlwaysShow( team, null )
-				}
-			}
-			else
-			{
-				minimapObject.Minimap_Hide( team, null )
-			}
-		}
-	}
-}
 
 
-void function Perks_UpdateForUpgradeSelection( entity player )
-{
-	if( !Perks_Enabled() )
-		return
-
-	int team = player.GetTeam()
-	Perks_UpdateMinimapVisibilityForTeam( team )
-	array<entity> teammates = GetPlayerArrayOfTeam( team )
-	foreach( entity teammate in teammates )
-	{
-		Remote_CallFunction_NonReplay( teammate, "ServerToClient_UpdatePerkPropVisibility" )
-	}
-}
 
 
-void function Perks_HideMinimapVisibility( entity ent, int perkId )
-{
-	foreach( team in GetAllValidPlayerTeams() )
-	{
-		ent.Minimap_Hide( team, null )
-	}
 
-	file.perkInfoTable[perkId].minimapEntities.fastremovebyvalue( ent )
 
-	array<entity> allPlayers = GetPlayerArray()
-	foreach ( p in allPlayers )
-	{
-		Remote_CallFunction_Replay( p, "ServerToClient_HidePerkPropMinimapVisibility", ent, perkId )
-	}
-}
 
-void function Perks_HideMinimapVisibilityForTeam( entity ent, int perkId, int team )
-{
-	if( !(ent in file.perkInfoTable[perkId].teamsToHideMinimapEntitiesFrom) )
-	{
-		file.perkInfoTable[perkId].teamsToHideMinimapEntitiesFrom[ent] <- []
-	}
 
-	ent.Minimap_Hide( team, null )
-	file.perkInfoTable[perkId].teamsToHideMinimapEntitiesFrom[ent].append( team )
 
-	foreach( entity player in GetPlayerArrayOfTeam( team ) )
-	{
-		Remote_CallFunction_Replay( player, "ServerToClient_HidePerkPropMinimapVisibility", ent, perkId )
-	}
-}
 
-void function Perks_ClientToServer_MinimapIconPinged( entity player, entity minimapEnt )
-{
-	if( !IsValid( minimapEnt ) )
-		return
 
-	int pingType = GetPingTypeForEntity( minimapEnt )
-	if( pingType < 0 )
-		return
 
-	entity wp = CreateWaypoint_Ping_Location( player, pingType, minimapEnt, minimapEnt.GetOrigin() + <0, 0, 50>, -1, false, false, pingWheelIndex.PING_MAP )
-}
-#endif // SERVER
 
-#if SERVER || CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 int function Perks_GetRoleForPlayer( entity player )
 {
 	LoadoutEntry loadoutCharacter = Loadout_Character()
-	#if SERVER
-		ItemFlavor characterItemFlavor = LoadoutSlot_GetItemFlavor( player, loadoutCharacter )
-	#elseif CLIENT
+
+
+
 		ItemFlavor characterItemFlavor = LoadoutSlot_GetItemFlavor( ToEHI( player ), loadoutCharacter )
-	#endif
+
+
 	if( characterItemFlavor in file.characterToRoleTable )
 		return file.characterToRoleTable[characterItemFlavor]
 	return eCharacterClassRole.UNDECIDED
 }
-#endif // SERVER || CLIENT
 
-#if CLIENT
+
+
 
 var function Perk_CreateClientSideHUDMarker( asset hudImage, entity minimapObj, float upOffset, bool trackPosition )
 {
@@ -1132,8 +1126,8 @@ PerkPingInfo function Perks_GetPerkPingInfo()
 	return file.highlightedEnt
 }
 
-// this is a weird workaround for getting teammate perk index while we are spectating
-// for some reason entity.p, where the active perk is stored, gets cleared for teammates while spectating
+
+
 array<int> function Perks_GetActivePerksFromPlayerLoadout( entity player )
 {
 	if( !IsValid( player ) )
@@ -1187,4 +1181,5 @@ asset function Perks_PingTypeToPingIcon( int pingType )
 
 	return Perks_GetIconForPerk( perkIndex )
 }
-#endif
+
+ 

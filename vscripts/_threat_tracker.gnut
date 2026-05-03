@@ -1,8 +1,0 @@
-// stub script
-
-global function ThreatTracker_Init
-
-void function ThreatTracker_Init()
-{
-    
-}

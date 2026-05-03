@@ -1,8 +1,8 @@
-//
 
-#if SERVER
-untyped
-#endif
+
+
+
+
 
 globalize_all_functions
 
@@ -11,11 +11,11 @@ const float DEFAULT_MIN_AIRDROP_DISTANCE = 3000.0
 global const float DEFAULT_MAX_AIRDROP_SEARCH_RUNTIME = 10
 global const float FLIGHTPATH_ELEVATION_VALIDATION_OFFSET = 7500.0
 
-                       
-                                               
-                                                  
-                                                    
-                                
+
+
+
+
+
 
 global struct AirdropBadPlace
 {
@@ -78,24 +78,24 @@ array<vector> function GetFlightPathPoints( FlightPath flightPath, vector origin
 	return orgs
 }
 
-#if SERVER
-void function InitCallinData( CallinData drop )
-{
-	drop.npcSpawnFuncs = [ CreateSoldier, CreateSoldier, CreateSoldier, CreateSoldier, CreateSoldier, CreateSoldier ]
-}
 
-vector function GetAnalysisNodePos( FlightPath flightPath, int node )
-{
-	vector origin = NavMeshNode_GetNodePos( node )
 
-	if ( flightPath.model in level.superCallinOffset )
-	{
-		origin.z += expect float( level.superCallinOffset[ flightPath.model ] )
-	}
 
-	return origin
-}
-#endif // SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 bool function IsLegalFlightPath( FlightPath flightPath, vector origin, vector forward, vector right, bool draw = false )
 {
@@ -112,25 +112,25 @@ bool function IsLegalFlightPath( FlightPath flightPath, vector origin, vector fo
 		{
 			if ( result.hitSky )
 			{
-				//DebugDrawLine( orgs[i-1], orgs[i], <0, 255, 0>, true, ANALYSIS_PREVIEW_TIME )
+				
 				continue
 			}
 
 			if ( Distance( result.endPos, endPos ) > 16 )
 			{
-				//if ( draw )
-				//  DebugDrawLine( orgs[i-1], orgs[i], <255, 0, 0>, true, ANALYSIS_PREVIEW_TIME )
+				
+				
 
 				DoTraceCoordCheck( true )
 				return false
 			}
 		}
 
-		//if ( draw )
-		// DebugDrawLine( orgs[i-1], orgs[i], <0, 255, 0>, true, ANALYSIS_PREVIEW_TIME )
+		
+		
 	}
 
-	//DebugDrawLine( result.endPos, result.endPos + RandomVec( 50.0 ), <255, 255, 0>, true, 0.2 )
+	
 	DoTraceCoordCheck( true )
 	return true
 }
@@ -152,14 +152,14 @@ bool function IsLegalFlightPath_OverTime( FlightPath flightPath, vector origin, 
 			if ( result.hitSky )
 			{
 				if ( draw )
-					//DebugDrawLine( orgs[i - 1], orgs[i], <0, 255, 0>, true, ANALYSIS_PREVIEW_TIME )
+					DebugDrawLine( orgs[i - 1], orgs[i], COLOR_GREEN, true, ANALYSIS_PREVIEW_TIME )
 				continue
 			}
 
 			if ( Distance( result.endPos, endPos ) > 16 )
 			{
 				if ( draw )
-					//DebugDrawLine( orgs[i - 1], orgs[i], <255, 0, 0>, true, ANALYSIS_PREVIEW_TIME )
+					DebugDrawLine( orgs[i - 1], orgs[i], COLOR_RED, true, ANALYSIS_PREVIEW_TIME )
 
 				DoTraceCoordCheck( true )
 				return false
@@ -167,155 +167,155 @@ bool function IsLegalFlightPath_OverTime( FlightPath flightPath, vector origin, 
 		}
 
 		if ( draw )
-			//DebugDrawLine( orgs[i - 1], orgs[i], <0, 255, 0>, true, ANALYSIS_PREVIEW_TIME )
+			DebugDrawLine( orgs[i - 1], orgs[i], COLOR_GREEN, true, ANALYSIS_PREVIEW_TIME )
 
 		WaitFrame()
 	}
 
-	//DebugDrawLine( result.endPos, result.endPos + RandomVec( 50.0 ), <255, 255, 0>, true, 0.2 )
+	
 	DoTraceCoordCheck( true )
 	return true
 }
 
-#if SERVER
-int function NodeAnalysis( FlightPath flightPath, int index, vector offset )
-{
-	array<bool> Array = []
-	Array.resize( ANALYSIS_STEPS )
 
-	vector origin = NavMeshNode_GetNodePos( index )
-	origin = origin + offset
 
-	TryAnalysisAtOrigin( flightPath, Array, origin )
 
-	int dataIndex = GetAnalysisDataIndex( flightPath )
-	int count     = 0
 
-	for ( int p = 0; p < Array.len(); p++ )
-	{
-		if ( !Array[ p ] )
-		{
-			//printt( index + " " + p )
-			continue
-		}
 
-		NavMeshNode_SetBooleanData( index, dataIndex + p, true )
-		count++
-		//printt( index + " *" + p + "*" )
-	}
 
-	return count
-}
 
-int function NodeAnalysisPreview( FlightPath flightPath, int index, vector offset )
-{
-	array<bool> Array = []
-	Array.resize( ANALYSIS_STEPS )
 
-	vector origin = NavMeshNode_GetNodePos( index )
-	origin = origin + offset
 
-	TryAnalysisAtOriginPreview( flightPath, Array, origin )
-	int dataIndex = GetAnalysisDataIndex( flightPath )
-	int count     = 0
 
-	for ( int p = 0; p < Array.len(); p++ )
-	{
-		if ( !Array[ p ] )
-		{
-			printt( (p + dataIndex) + ": False" )
-			continue
-		}
 
-		printt( (p + dataIndex) + ": True" )
-		float yaw      = p * ANALYSIS_YAW_STEP
-		vector angles  = <0, yaw, 0>
-		vector forward = AnglesToForward( angles )
-		//DebugDrawLine( origin, origin + forward * 80, <255, 100, 0>, true, 5.0 )
-		count++
-	}
 
-	return count
-}
 
-void function TryAnalysisAtOriginPreview( FlightPath flightPath, array<bool> Array, vector origin )
-{
-	if ( FLIGHT_PATH_DEBUG )
-		DebugDrawAxis( origin )
-	TryAnalysisAtOrigin( flightPath, Array, origin )
-}
 
-SpawnPointFP function GetNearestSpawnPointFromFunc( FlightPath flightPath, vector origin, int count, var functionref( int, int, float, float ) getFunc, float variable )
-{
-	//DebugDrawLine( origin, origin + <0,0,100>, COLOR_MAGENTA, true, 2.0 )
-	int node = NavMeshNode_GetNearestNodeToPos( origin )
-	if ( node == -1 )
-	{
-		//DebugDrawLine( origin, origin + <0,0,100>, <255, 0, 0>, true, 5.0 )
-		origin = OriginToGround( origin )
-		node = NavMeshNode_GetNearestNodeToPos( origin )
 
-		if ( node == -1 )
-		{
-			//DebugDrawLine( origin, origin + <0,0,100>, <255, 0, 0>, true, 5.0 )
-			return InvalidSpawnPoint()
-		}
-	}
 
-	//DebugDrawLine( origin, NavMeshNode_GetNodePos( node, flightPath.hull ), <0, 255, 0>, true, 5.0 )
 
-	int dataIndex = GetAnalysisDataIndex( flightPath )
 
-	if ( NodeAvailable( node ) )
-	{
-		var foundSpawnYaw = getFunc( node, dataIndex, variable, ANALYSIS_YAW_STEP )
-		if ( foundSpawnYaw != null )
-		{
-			expect float( foundSpawnYaw )
-			return CreateSpawnPoint( flightPath, node, foundSpawnYaw )
-		}
-	}
 
-	/*
-	// We don't support GetNeighborNodes with NavMesh 8/2015
-	array neighborNodes = GetNeighborNodes( node, count, flightPath.hull )
 
-	for ( int i = 0; i < neighborNodes.len(); i++ )
-	{
-		int neighborNode = expect int( neighborNodes[i] )
-		if ( !NodeAvailable( neighborNode ) )
-			continue
-		//DebugDrawLine( NavMeshNode_GetNodePos( neighborNode, HULL_HUMAN ), origin, <255, 255, 0>, true, 2.0 )
 
-		var foundSpawnYaw = getFunc( neighborNode, dataIndex, variable, 0 )
-		if ( foundSpawnYaw != null )
-		{
-			expect float( foundSpawnYaw )
-			return CreateSpawnPoint( flightPath, neighborNode, foundSpawnYaw )
-		}
-	}
-	*/
 
-	return InvalidSpawnPoint()
-}
 
-SpawnPointFP function GetAnalysisSpawn_ClosestYaw( FlightPath flightPath, vector origin, float yaw, int nearestNodes = 10 )
-{
-	Assert( GetAINScriptVersion() == AIN_REV, "AIN out of date" )
 
-	yaw = FixYaw( yaw )
 
-	return GetNearestSpawnPointFromFunc( flightPath, origin, nearestNodes, GetSpawnPoint_ClosestYaw, yaw )
-}
 
-SpawnPointFP function GetAnalysisSpawn_Nearest( FlightPath flightPath, vector origin, int count )
-{
-	if ( GetAINScriptVersion() != AIN_REV )
-		return InvalidSpawnPoint()
 
-	return GetNearestSpawnPointFromFunc( flightPath, origin, count, GetSpawnPoint_Random, 0 )
-}
-#endif // SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 float function FixYaw( float yaw )
 {
@@ -325,599 +325,599 @@ float function FixYaw( float yaw )
 	return yaw
 }
 
-#if SERVER
-SpawnPointFP function InvalidSpawnPoint()
-{
-	SpawnPointFP spawnPoint
-	return spawnPoint
-}
-
-SpawnPointFP function CreateSpawnPoint( FlightPath flightPath, int node, float spawnYaw )
-{
-	SpawnPointFP spawnPoint
-	vector origin = NavMeshNode_GetNodePos( node )
-	spawnPoint.angles = <0, spawnYaw, 0>
-	spawnPoint.node = node
-	spawnPoint.valid = true
-
-	if ( flightPath.model in level.superCallinOffset )
-	{
-		origin.z += expect float( level.superCallinOffset[ flightPath.model ] )
-	}
-
-	spawnPoint.origin = origin
-	return spawnPoint
-}
-
-SpawnPointFP function CreateSpawnPointManual( vector origin, vector angles, int node )
-{
-	SpawnPointFP spawnPoint
-	spawnPoint.origin = origin
-	spawnPoint.angles = angles
-	spawnPoint.node = node
-	spawnPoint.valid = true
-	return spawnPoint
-}
-
-var function GetSpawnPoint_ClosestYaw( int nodeIndex, int dataIndex, float desiredYaw, float lowestYawDifference )
-{
-	float yaw
-	var closestYaw
-	float dif
-
-	for ( int i = 0; i < ANALYSIS_STEPS; i++ )
-	{
-		//vector org = NavMeshNode_GetNodePos( nodeIndex, 0 )
-		if ( !NavMeshNode_GetBooleanData( nodeIndex, i + dataIndex ) )
-		{
-			//DebugDrawLine( org, org + <0,0,100>, <255, 150, 0>, true, 5.0 )
-			continue
-		}
-
-		yaw = i * ANALYSIS_YAW_STEP
-		dif = YawDifference( desiredYaw, yaw )
-		if ( dif > lowestYawDifference )
-		{
-			//DebugDrawLine( org, org + <0,0,100>, <0, 100, 255>, true, 5.0 )
-			continue
-		}
-
-
-		//DebugDrawLine( org, org + <0,0,100>, <0, 255, 0>, true, 5.0 )
-		lowestYawDifference = dif
-
-		closestYaw = yaw
-	}
-
-	if ( closestYaw != null )
-	{
-		Assert( closestYaw >= 0 && closestYaw <= 360 )
-	}
-
-	return closestYaw
-}
-
-var function GetSpawnPoint_Random( int nodeIndex, int dataIndex, float _1, float _2 )
-{
-	float yaw
-	array<float> legalYaws = []
-
-	for ( int i = 0; i < ANALYSIS_STEPS; i++ )
-	{
-		if ( !NavMeshNode_GetBooleanData( nodeIndex, i + dataIndex ) )
-			continue
-
-		yaw = i * ANALYSIS_YAW_STEP
-		legalYaws.append( yaw )
-	}
-
-	if ( legalYaws.len() == 0 )
-		return null
-
-	return legalYaws.getrandom()
-}
-
-SpawnPointFP function FindNearestDropPosWithYawAndFallback( FlightPath flightPath, CallinData drop )
-{
-	// try in front of us
-	return GetAnalysisSpawn_ClosestYaw( flightPath, drop.origin, drop.yaw, 30 )
-}
-
-SpawnPointFP function FindNearestDropPositionWithYaw( FlightPath flightPath, CallinData drop )
-{
-	vector angles  = <0, drop.yaw, 0>
-	vector forward = AnglesToForward( angles )
-
-	// try in front of us
-	return GetAnalysisSpawn_ClosestYaw( flightPath, drop.origin, drop.yaw, 10 )
-}
-
-SpawnPointFP function FindNearestDropPosition( FlightPath flightPath, CallinData drop )
-{
-	//vector angles = <0,drop.yaw,0>
-	//vector forward = AnglesToForward( angles )
-
-	// try in front of us
-	return GetAnalysisSpawn_Nearest( flightPath, drop.origin, 5 )
-}
-
-/*
-function FindSpawnpointAtDistance( flightPath, CallinData drop )
-{
-	local node, dist, origin
-	local pumpOrigin = drop.origin
-	local found = []
-
-	if ( drop.yaw )
-	{
-		vector forward = AnglesToForward( <0,drop.yaw,0> )
-		pumpOrigin += forward * drop.dist
-		drop.dist = 800
-	}
-
-	local maxDist = 0
-	local mostDistant = null
-
-	local spawnPoints = GetSpawnPoints( flightPath )
-
-	foreach ( node, yaws in spawnPoints )
-	{
-		if ( yaws.len() == 0 )
-			continue
-
-		origin = NavMeshNode_GetNodePos( node, flightPath.hull )
-		dist = Distance( origin, pumpOrigin )
-
-		if ( dist > maxDist )
-		{
-			maxDist = dist
-		}
-
-		if ( dist >= drop.dist )
-		{
-			local spawn = CreateSpawnPoint( flightPath, node, yaws[0] )
-			spawn.dist <- dist // add this for sorting
-			found.append( spawn )
-		}
-	}
-
-
-	if ( found.len() == 0 )
-	{
-		maxDist *= 0.9
-		foreach ( node, yaws in spawnPoints )
-		{
-			if ( yaws.len() == 0 )
-				continue
-
-			origin = NavMeshNode_GetNodePos( node, flightPath.hull )
-			dist = Distance( origin, pumpOrigin )
-
-			if ( dist > maxDist )
-			{
-				local spawn = CreateSpawnPoint( flightPath, node, yaws[0] )
-				spawn.dist <- dist // add this for sorting
-				found.append( spawn )
-			}
-		}
-
-		if ( found.len() == 0 )
-			return
-	}
-
-	found.sort( CallinCompare )
-	local result = found[0]
-
-	local vec = drop.origin - result.origin
-	vector angles = VectorToAngles( vec )
-
-	local Table = {}
-	Table.origin <- result.origin
-	Table.yaw <- angles.y
-
-	local betterResult = FindNearestDropPositionWithYaw( flightPath, Table )
-
-	if ( betterResult )
-	{
-		return betterResult
-	}
-
-	return result
-}
-*/
-
-function CallinCompare( a, b )
-{
-	if ( a.dist < b.dist )
-		return -1
-	if ( a.dist > b.dist )
-		return 1
-	return 0
-}
-
-bool function NodeInHotDropFov( int nearestNode, FlightPath flightPath, int dataIndex, vector startOrigin, vector forward )
-{
-	if ( !NodeHasFlightPath( dataIndex, nearestNode ) )
-		return false
-
-	vector nearestNodeOrigin = NavMeshNode_GetNodePos( nearestNode )
-
-	// do a flat dot
-	nearestNodeOrigin.z = startOrigin.z
-
-	vector nearestVec = nearestNodeOrigin - startOrigin
-	nearestVec.Norm()
-	float nearestDot = DotProduct( forward, nearestVec )
-
-	//if ( nearestDot >= 0.95 )
-	//{
-	//	local start = GetPlayerArray()[0].GetOrigin()
-	//	DebugDrawLine( start, start + forward * 1500, <255, 255, 0>, true, 5.0 )
-	//	DebugDrawLine( start, start + nearestVec * 1500, <155, 255, 50>, true, 5.0 )
-	//}
-	//printt( "dot " + nearestDot )
-	return nearestDot >= 0.95
-}
-
-int function GetClosestYawIndexFromYaw( float desiredYaw )
-{
-	float lowestYawDifference = 360
-	float yaw, dif
-	int yawIndex
-	bool foundYaw
-	for ( int i = 0; i < ANALYSIS_STEPS; i++ )
-	{
-		yaw = i * ANALYSIS_YAW_STEP
-		dif = YawDifference( desiredYaw, yaw )
-		if ( dif > lowestYawDifference )
-			continue
-
-		lowestYawDifference = dif
-		yawIndex = i
-		foundYaw = true
-	}
-
-	Assert( foundYaw )
-
-	return yawIndex
-}
-
-SpawnPointFP function FindSpawnpointFromYawOnly( FlightPath flightPath, CallinData drop )
-{
-	// find the yaw index we will be searching through
-	int yawIndex    = GetClosestYawIndexFromYaw( drop.yaw )
-	float resultYaw = yawIndex * ANALYSIS_YAW_STEP // the yaw we'll actually be when we use the node
-
-	int iterator  = flightPath.iterator
-	int dataIndex = GetAnalysisDataIndex( flightPath )
-
-	int nodeCount = NavMeshNode_GetNodeCount()
-	Assert( nodeCount > 0, "No nodes in level. Does this level have a nav mesh?" )
-
-	int nodeIndex
-	int nodeOffset = RandomInt( nodeCount )
-
-	for ( int i = 0; i < nodeCount; i++ )
-	{
-		// start on a randone node and go forwards until we get a legal node
-		nodeIndex = i + nodeOffset
-		nodeIndex %= nodeCount
-		vector origin = NavMeshNode_GetNodePos( nodeIndex )
-
-		if ( !NavMeshNode_GetBooleanData( nodeIndex, yawIndex + dataIndex ) )
-			continue
-
-		if ( !NodeAvailable( nodeIndex ) )
-			continue
-
-		return CreateSpawnPoint( flightPath, nodeIndex, resultYaw )
-	}
-
-	return InvalidSpawnPoint()
-}
-
-bool function NodeAvailable( int nodeIndex )
-{
-	if ( !(nodeIndex in level.spawnPointsInUse) )
-		return true
-
-	return Time() > level.spawnPointsInUse[ nodeIndex ]
-}
-
-SpawnPointFP function TryFromOrigin_FallbackToNearest( FlightPath flightPath, CallinData drop )
-{
-	float range = drop.dist
-	Assert( range != 0 )
-	float yaw     = drop.yaw
-	vector origin = drop.origin
-
-	yaw = FixYaw( yaw )
-
-	// try at origin
-	SpawnPointFP result = GetAnalysisSpawn_ClosestYaw( flightPath, origin, yaw, 30 )
-	if ( result.valid )
-		return result
-
-	vector angles  = <0, yaw, 0>
-	vector forward = AnglesToForward( angles )
-	vector right   = AnglesToRight( angles )
-
-	// try to the right
-	result = GetAnalysisSpawn_ClosestYaw( flightPath, origin + right * range, yaw, 30 )
-	if ( result.valid )
-		return result
-
-	// left
-	result = GetAnalysisSpawn_ClosestYaw( flightPath, origin + right * -range, yaw, 30 )
-	if ( result.valid )
-		return result
-
-	// try in back
-	result = GetAnalysisSpawn_ClosestYaw( flightPath, origin + forward * -range, yaw, 30 )
-	if ( result.valid )
-		return result
-
-	// try in front
-	result = GetAnalysisSpawn_ClosestYaw( flightPath, origin + forward * range, yaw, 30 )
-	if ( result.valid )
-		return result
-
-	return GetAnalysisSpawn_Nearest( flightPath, origin, 5 )
-}
-
-void function SetCallinStyle( CallinData drop, int style )
-{
-	drop.style = style
-	drop.styleSet = true
-}
-
-void function SetCallinYaw( CallinData drop, float yaw )
-{
-	drop.yaw = yaw
-	drop.yawSet = true
-}
-
-void function SetCallinOwnerEyePos( CallinData drop, vector ownerEyePos )
-{
-	drop.ownerEyePos = ownerEyePos
-	drop.ownerEyePosSet = true
-}
-
-SpawnPointFP function GetSpawnPointForStyle( FlightPath flightPath, CallinData drop )
-{
-	if ( GetAINScriptVersion() != AIN_REV )
-		return InvalidSpawnPoint()
-
-	PerfStart( PerfIndexServer.GetSpawnPointForStyle )
-
-	int style = drop.style
-	if ( !drop.styleSet )
-	{
-		if ( !drop.yawSet )
-		{
-			style = eDropStyle.NEAREST
-		}
-		else
-		{
-			style = eDropStyle.NEAREST_YAW
-		}
-	}
-
-	SpawnPointFP spawnPoint
-
-	switch ( style )
-	{
-		case eDropStyle.NEAREST_YAW:
-			spawnPoint = FindNearestDropPositionWithYaw( flightPath, drop )
-			break
-
-		case eDropStyle.NEAREST:
-			spawnPoint = FindNearestDropPosition( flightPath, drop )
-			break
-
-		case eDropStyle.FLYER_PICKUP:
-		case eDropStyle.ZIPLINE_NPC:
-			spawnPoint = TryFromOrigin_FallbackToNearest( flightPath, drop )
-			break
-
-		case eDropStyle.RANDOM_FROM_YAW:
-			spawnPoint = FindSpawnpointFromYawOnly( flightPath, drop ) // owner, 1800 )
-			break
-
-		case eDropStyle.FORCED:
-			spawnPoint = CreateSpawnPointManual( drop.origin, <0, drop.yaw, 0>, NavMeshNode_GetNearestNodeToPos( drop.origin ) )
-			break
-
-		case eDropStyle.NEAREST_YAW_FALLBACK:
-			spawnPoint = FindNearestDropPosWithYawAndFallback( flightPath, drop )
-			break
-
-			//case eDropStyle.FROM_SET_DISTANCE:
-			//	spawnPoint = FindSpawnpointAtDistance( flightPath, CallinData drop )
-			//
-			//	break
-
-		default:
-			Assert( false, "Unknown style " + style )
-			break
-	}
-
-	PerfEnd( PerfIndexServer.GetSpawnPointForStyle )
-
-	if ( !spawnPoint.valid )
-		return InvalidSpawnPoint()
-
-	//DebugDrawLine( spawnPoint.origin, drop.origin, COLOR_MAGENTA, true, 15.0 )
-	//printt( "Reserved " + spawnPoint.node )
-	// reserve the spawn point
-
-	//Assert( NodeAvailable( spawnPoint.node ) )
-	level.spawnPointsInUse[ spawnPoint.node ] <- Time() + SPAWNPOINT_USE_TIME
-
-	if ( AnalysisHasPrepSpawnpointFunc( flightPath ) )
-	{
-		var newOrg = RunAnalysisPrepFunc( flightPath, spawnPoint.origin, spawnPoint.angles.y )
-		if ( newOrg != null )
-			spawnPoint.origin = expect vector( newOrg )
-		// bring this assert back
-		//spawnPoint.origin = flightPath.analysisPrepSpawnpointFunc( spawnPoint.origin, spawnPoint.angles.y )
-		//Assert( spawnPoint.origin, "Spawnpoint failed prep!" )
-	}
-
-	return spawnPoint
-}
-
-//Function tests to see if a given flight path with a given CallinData returns a valid dropship spawn point.
-//Note: Avoid calling this function in general game play. Instead, use a wrapper function such as DropshipCanZiplineDropAtSpawnPoint to test a flight path to a spawn
-//and then store the spawn for later use.
-bool function TestSpawnPointForStyle( FlightPath flightPath, CallinData drop )
-{
-	Assert( !GamePlayingOrSuddenDeath(), "TestSpawnPointsForStyle should only be called OnEntitiesLoaded and not during general gameplay." )
-
-	if ( GetAINScriptVersion() != AIN_REV )
-		return false
-
-	PerfStart( PerfIndexServer.GetSpawnPointForStyle )
-
-	int style = drop.style
-	if ( !drop.styleSet )
-	{
-		if ( !drop.yawSet )
-		{
-			style = eDropStyle.NEAREST
-		}
-		else
-		{
-			style = eDropStyle.NEAREST_YAW
-		}
-	}
-
-	SpawnPointFP spawnPoint
-
-	switch ( style )
-	{
-		case eDropStyle.NEAREST_YAW:
-			spawnPoint = FindNearestDropPositionWithYaw( flightPath, drop )
-			break
-
-		case eDropStyle.NEAREST:
-			spawnPoint = FindNearestDropPosition( flightPath, drop )
-			break
-
-		case eDropStyle.FLYER_PICKUP:
-		case eDropStyle.ZIPLINE_NPC:
-			spawnPoint = TryFromOrigin_FallbackToNearest( flightPath, drop )
-			break
-
-		case eDropStyle.RANDOM_FROM_YAW:
-			spawnPoint = FindSpawnpointFromYawOnly( flightPath, drop ) // owner, 1800 )
-			break
-
-		case eDropStyle.FORCED:
-			spawnPoint = CreateSpawnPointManual( drop.origin, <0, drop.yaw, 0>, NavMeshNode_GetNearestNodeToPos( drop.origin ) )
-			break
-
-		case eDropStyle.NEAREST_YAW_FALLBACK:
-			spawnPoint = FindNearestDropPosWithYawAndFallback( flightPath, drop )
-			break
-
-			//		case eDropStyle.FROM_SET_DISTANCE:
-			//			spawnPoint = FindSpawnpointAtDistance( flightPath, CallinData drop )
-			//
-			//			break
-
-		default:
-			Assert( false, "Unknown style " + style )
-			break
-	}
-
-	PerfEnd( PerfIndexServer.GetSpawnPointForStyle )
-
-	if ( !spawnPoint.valid )
-		return false
-
-	return true
-}
-
-Point function GetWarpinPosition( asset model, string animation, vector origin, vector angles )
-{
-	Point start
-
-	if ( HasAnalysisForModel( model, animation ) )
-	{
-		FlightPath flightPath = GetAnalysisForModel( model, animation )
-
-		Assert( flightPath.points.len() > 0, "No points in flightPath" )
-		AttachPoint point = flightPath.points[0]
-		vector forward    = AnglesToForward( angles )
-		vector right      = AnglesToRight( angles )
-
-		start.origin = GetOriginFromAttachPoint( point, origin, forward, right )
-		start.angles = GetAnglesFromAttachPoint( point, angles )
-		return start
-	}
-
-	entity dummyDropship = CreatePropDynamic( model, origin, angles )
-	dummyDropship.Hide()
-	dummyDropship.SetOrigin( origin )
-	dummyDropship.SetAngles( angles )
-	Attachment attachResult = dummyDropship.Anim_GetAttachmentAtTime( animation, "ORIGIN", 0 )
-	start.origin = attachResult.position
-	start.angles = attachResult.angle
-	dummyDropship.Destroy()
-
-	return start
-}
-
-bool function NodeHasFlightPath( int dataIndex, int nodeIndex )
-{
-	for ( int p = 0; p < ANALYSIS_STEPS; p++ )
-	{
-		if ( NavMeshNode_GetBooleanData( nodeIndex, p + dataIndex ) )
-			return true
-	}
-
-	return false
-}
-
-int function GetFlightPathCount( int dataIndex, int nodeIndex )
-{
-	int count = 0
-	for ( int p = 0; p < ANALYSIS_STEPS; p++ )
-	{
-		if ( NavMeshNode_GetBooleanData( nodeIndex, p + dataIndex ) )
-			count++
-	}
-
-	return count
-}
-
-bool function FlightPathHasNodeAndMatchesAINData( FlightPath flightPath )
-{
-	int dataIndex = GetAnalysisDataIndex( flightPath )
-	vector offset = GetAnalysisOffset( flightPath )
-
-	int hits = 0
-	bool foundPass
-	for ( int i = 0; i < NavMeshNode_GetNodeCount(); i++ )
-	{
-		for ( int p = 0; p < ANALYSIS_STEPS; p++ )
-		{
-			if ( !NavMeshNode_GetBooleanData( i, p + dataIndex ) )
-				continue
-
-			float yaw = p * ANALYSIS_YAW_STEP
-			// should always succeed if the node data was writen as true, represents node data mismatch
-			if ( !PassedAnalysisFunc( flightPath, NavMeshNode_GetNodePos( i ) + offset, yaw ) )
-				return false
-
-			foundPass = true
-		}
-	}
-
-	return foundPass
-}
-#endif // SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const bool DEBUG_DROP_POINTS = false
 const bool DEBUG_DROP_POINTS_LINES = false
@@ -946,7 +946,7 @@ bool function VerifyAirdropPoint( vector baseOrigin, float yaw, bool isCarePacka
 	vector forward     = AnglesToForward( < 0, yaw, 0 > )
 	vector up          = <0, 0, 1>
 
-	//bigger than model to compensate for large effect and the fact that we want to be able to walk around it
+	
 	vector maxs = !isCarePackage ? AIRDROP_MAXS : AIRDROP_MAXS * 0.65
 	vector mins = !isCarePackage ? AIRDROP_MINS : AIRDROP_MINS * 0.65
 
@@ -955,19 +955,19 @@ bool function VerifyAirdropPoint( vector baseOrigin, float yaw, bool isCarePacka
 
 	TraceResults trace = TraceHull( startOrigin, endOrigin, mins, maxs, file.airdropTraceIgnoreEntArray, (TRACE_MASK_PLAYERSOLID | TRACE_MASK_TITANSOLID | CONTENTS_NOAIRDROP), TRACE_COLLISION_GROUP_NONE, UP_VECTOR, realmEnt )
 	float dot          = DotProduct( up, trace.surfaceNormal )
-	// surface angle is to great
+	
 	if ( dot != 0 && DotToAngle( dot ) > maxSurfaceAngle )
 	{
 		failCode = failCode | 0x0001
-		#if DEBUG_DROP_POINTS_LINES
+#if DEBUG_DROP_POINTS_LINES
 			vector right = CrossProduct( AnglesToForward( <0, yaw, 0> ), trace.surfaceNormal )
-			//DebugDrawLine( trace.endPos, trace.endPos + right * 64, <0, 255, 0>, true, DEBUG_DRAW_TIME )
-			//DebugDrawLine( trace.endPos, trace.endPos + trace.surfaceNormal * 64, <0, 0, 255>, true, DEBUG_DRAW_TIME )
-			//DebugDrawArrow( trace.endPos, baseOrigin, 2, <255, 255, 255>, true, DEBUG_DRAW_TIME )
-		#endif
+			DebugDrawLine( trace.endPos, trace.endPos + right * 64, COLOR_GREEN, true, DEBUG_DRAW_TIME )
+			DebugDrawLine( trace.endPos, trace.endPos + trace.surfaceNormal * 64, COLOR_BLUE, true, DEBUG_DRAW_TIME )
+			DebugDrawArrow( trace.endPos, baseOrigin, 2, COLOR_WHITE, true, DEBUG_DRAW_TIME )
+#endif
 	}
 
-	// Lets not land on moving stuff or anything that might be dynamic
+	
 	entity groundEnt = trace.hitEnt
 	if ( IsValid( groundEnt ) && !groundEnt.IsWorld() && !file.airdropAllowedDynamicEnts.contains( groundEnt ) )
 		failCode = failCode | 0x0002
@@ -975,14 +975,14 @@ bool function VerifyAirdropPoint( vector baseOrigin, float yaw, bool isCarePacka
 	if ( trace.startSolid )
 		failCode = failCode | 0x0200
 
-	// did I get close enough to the ground?
+	
 	float distToNodeSqr = DistanceSqr( trace.endPos, baseOrigin )
 	float distToNode    = Distance( trace.endPos, baseOrigin )
 	if ( distToNodeSqr > MAX_DIST_TO_GROUND_SQR )
 		failCode = failCode | 0x0004
 
 
-	// to check if we are on a ridge. makes a tringle and all traces have to hit solid or we are probably on a ridge.
+	
 	vector traceOrigin                  = trace.endPos
 	array<vector> ridgeTraceVectorArray = [ <1, 0, 0>, <-0.5, 0.86, 0>, <-0.5, -0.86, 0> ]
 	foreach ( traceVector in ridgeTraceVectorArray )
@@ -995,15 +995,15 @@ bool function VerifyAirdropPoint( vector baseOrigin, float yaw, bool isCarePacka
 		if ( fraction == 1 )
 		{
 			failCode = failCode | 0x0080
-			#if DEBUG_DROP_POINTS_LINES
+#if DEBUG_DROP_POINTS_LINES
 				DebugDrawArrow( ridgeOrigin, ridgeTrace.endPos, 4, <0, 128, 128>, true, DEBUG_DRAW_TIME )
-			#endif
+#endif
 			break
 		}
 	}
 
 
-	// to check if we are on a ledge.
+	
 	array<vector> edgeTraceVectorArray = [ <1, 0, 0>, <0.5, 0.86, 0>, <-0.5, 0.86, 0>, <-1, 0, 0>, <-0.5, -0.86, 0>, <0.5, -0.86, 0> ]
 	foreach ( traceVector in edgeTraceVectorArray )
 	{
@@ -1013,10 +1013,10 @@ bool function VerifyAirdropPoint( vector baseOrigin, float yaw, bool isCarePacka
 		TraceResults sightTrace = TraceLine( baseOrigin + <0, 0, EDGE_TRACE_HEIGHT>, edgeOrigin, file.airdropTraceIgnoreEntArray, (TRACE_MASK_PLAYERSOLID | TRACE_MASK_TITANSOLID | CONTENTS_NOAIRDROP), TRACE_COLLISION_GROUP_NONE, realmEnt )
 		if ( sightTrace.fraction < 1 )
 		{
-			#if DEBUG_DROP_POINTS_LINES
-				 //DebugDrawArrow( baseOrigin + <0, 0, EDGE_TRACE_HEIGHT>, sightTrace.endPos, 4, <0, 255, 0>, true, DEBUG_DRAW_TIME )
-			#endif
-			continue    // trace hit ground so we would be starting the next trace from below the ground, so just skip it instead.
+#if DEBUG_DROP_POINTS_LINES
+				 DebugDrawArrow( baseOrigin + <0, 0, EDGE_TRACE_HEIGHT>, sightTrace.endPos, 4, COLOR_GREEN, true, DEBUG_DRAW_TIME )
+#endif
+			continue    
 		}
 
 		TraceResults edgeTrace = TraceLine( edgeOrigin, edgeTraceOrigin, file.airdropTraceIgnoreEntArray, (TRACE_MASK_PLAYERSOLID | TRACE_MASK_TITANSOLID | CONTENTS_NOAIRDROP), TRACE_COLLISION_GROUP_NONE, realmEnt )
@@ -1024,28 +1024,31 @@ bool function VerifyAirdropPoint( vector baseOrigin, float yaw, bool isCarePacka
 		if ( fraction == 1 )
 		{
 			failCode = failCode | 0x0020
-			#if DEBUG_DROP_POINTS_LINES
-				//DebugDrawArrow( edgeOrigin, edgeTraceOrigin, 4, <255, 0, 0>, true, DEBUG_DRAW_TIME )
-			#endif
+#if DEBUG_DROP_POINTS_LINES
+				DebugDrawArrow( edgeOrigin, edgeTraceOrigin, 4, COLOR_RED, true, DEBUG_DRAW_TIME )
+#endif
 			break
 		}
 	}
 
-	// check if we are out of bounds
+	
 	array< int > realmsToTest = IsValid( realmEnt ) ? realmEnt.GetRealms() : [ eRealms.DEFAULT ]
-	array<entity> __triggerResults = [] //GetTriggersByClassesInRealms_HullSize not in S3
-	foreach ( entity trigger in __triggerResults )
+	foreach ( entity trigger in GetTriggersByClassesInRealms_HullSize(
+		["trigger_slip", "trigger_out_of_bounds", "trigger_networked_out_of_bounds"],
+		baseOrigin, baseOrigin,
+		realmsToTest, TRACE_MASK_PLAYERSOLID,
+		< -1, -1, -1 >, < 1, 1, 1 > ) )
 	{
 		failCode = failCode | 0x0100
-		#if DEBUG_DROP_POINTS_LINES
-			//DebugDrawArrow( baseOrigin, baseOrigin + < 0, 0, 100 >, 4, <255, 0, 0>, true, DEBUG_DRAW_TIME )
-		#endif
+#if DEBUG_DROP_POINTS_LINES
+			DebugDrawArrow( baseOrigin, baseOrigin + < 0, 0, 100 >, 4, COLOR_RED, true, DEBUG_DRAW_TIME )
+#endif
 		break
 	}
 
-	// to check if the doors are accessible
-	vector playerMins = <-16, -16, 0>//GetBoundsMin( HULL_HUMAN )
-	vector playerMaxs = <16, 16, 72>//GetBoundsMax( HULL_HUMAN )
+	
+	vector playerMins = <-16, -16, 0>
+	vector playerMaxs = <16, 16, 72>
 	vector doorOrigin = baseOrigin + <0, 0, DOOR_UP_OFFSET>
 
 	vector base     = <0, yaw, 0>
@@ -1065,36 +1068,38 @@ bool function VerifyAirdropPoint( vector baseOrigin, float yaw, bool isCarePacka
 			vector doorEndOrigin = doorOrigin + traceVector * door_space_distance
 			vector ledgeOrigin   = doorEndOrigin + <0, 0, -LEDGE_DOWN_OFFSET>
 
-			// check that the area infront of the door is clear
+			
 			float fraction = TraceHullSimple( doorOrigin, doorEndOrigin, playerMins, playerMaxs, null )
 			if ( fraction != 1 )
 			{
 				failCode = failCode | 0x0008
 				failed = true
 
-				#if DEBUG_DROP_POINTS_LINES
-					//DebugDrawArrow( doorOrigin, doorEndOrigin, 4, <255, 0, 0>, true, DEBUG_DRAW_TIME )
-				#endif
+#if DEBUG_DROP_POINTS_LINES
+					DebugDrawArrow( doorOrigin, doorEndOrigin, 4, COLOR_RED, true, DEBUG_DRAW_TIME )
+#endif
 				break
 			}
 
-			// check that the we didn't drop it on a ledge with the door facing out
+			
 			fraction = TraceHullSimple( doorEndOrigin, ledgeOrigin, playerMins, playerMaxs, null )
 			if ( fraction == 1 )
 			{
 				failCode = failCode | 0x0010
 				failed = true
 
-				#if DEBUG_DROP_POINTS_LINES
-					//DebugDrawArrow( doorOrigin, doorEndOrigin, 4, <255, 0, 0>, true, DEBUG_DRAW_TIME )
-					//DebugDrawArrow( doorEndOrigin, ledgeOrigin, 4, COLOR_MAGENTA, true, DEBUG_DRAW_TIME )
-				#endif
+#if DEBUG_DROP_POINTS_LINES
+					DebugDrawArrow( doorOrigin, doorEndOrigin, 4, COLOR_RED, true, DEBUG_DRAW_TIME )
+					DebugDrawArrow( doorEndOrigin, ledgeOrigin, 4, COLOR_MAGENTA, true, DEBUG_DRAW_TIME )
+#endif
 				break
 			}
 		}
 
-		array<entity> __triggerResults2 = [] //GetTriggersByClassesInRealms not in S3
-		foreach ( entity trigger in __triggerResults2 )
+		foreach ( entity trigger in GetTriggersByClassesInRealms(
+			["trigger_hurt"],
+			baseOrigin + < 0, 0, 512>, baseOrigin, realmsToTest
+			, TRACE_MASK_PLAYERSOLID ) )
 		{
 			if ( trigger.HasKey( "damageSourceId" ) && trigger.GetValueForKey( "damageSourceId" ) != "" )
 			{
@@ -1111,7 +1116,7 @@ bool function VerifyAirdropPoint( vector baseOrigin, float yaw, bool isCarePacka
 
 
 
-	#if DEBUG_DROP_POINTS
+#if DEBUG_DROP_POINTS
 		if ( DEBUG_DROP_POINTS_LINES && (failCode & 0x0005) != 0 )
 		{
 			DebugDrawCylinder( trace.endPos, < -90, 0, 0 >, maxs.x, maxs.z, <250, 50, 0>, false, DEBUG_DRAW_TIME )
@@ -1142,12 +1147,12 @@ bool function VerifyAirdropPoint( vector baseOrigin, float yaw, bool isCarePacka
 			printt( "\t- Trace started in solid." )
 		if ( IsBitFlagSet( failCode, 0x0400 ) )
 			printt( "\t- Trace passes through a hurt trigger." )
-	#endif //#if DEBUG_DROP_POINTS
+#endif
 
 	if ( failCode != 0 )
 		return false
 
-	// passed all tests, should be find for calling in a drop
+	
 	return true
 }
 
@@ -1169,633 +1174,633 @@ array<entity> function GetAirDropTraceIgnoreEntArray()
 	return file.airdropTraceIgnoreEntArray
 }
 
-                       
-                                                                                             
- 
-                                                                    
-                                                                                
-
-                                                  
-
-                                                                                                                 
-
-                                
-                                       
-                                                       
-                                                       
-
-                                 
-                 
-
-                                            
-  
-                                                                                                                                                                                                                                          
-
-                                                                           
-
-                                        
-                                  
-  
-
-                    
- 
-                                
-
-                       
-                                              
-                                            
-                                                                                                     
- 
-                                      
-                        
-                 
-
-                     
-                   
-
-                                                
-                                             
-                                                  
-
-                                                     
-                              
-
-                                                                                                                                                      
-                 
-
-                                                                                                                 
-
-                           
-                                
-                                       
-                                                       
-                                                       
-
-                                            
-  
-                                 
-                                                                                                                                                                                                                 
-                                                                                                            
-
-                       
-   
-                               
-                                
-                                                                                             
-                                      
-                                   
-                
-                                        
-   
-
-                                                          
-                                           
-   
-                               
-                                   
-                
-                                        
-   
-
-                                                                    
-                                                               
-   
-                               
-                             
-                                   
-                
-                                        
-   
-
-                           
-   
-                               
-                                   
-                
-                                        
-   
-
-                                       
-  
-
-                                
-                                                   
-   
-                                                            
-                                    
-    
-             
-                                                                                    
-    
-   
-                                       
-   
-                                      
-                                                                     
-                                                
-    
-              
-                                                                                                  
-    
-   
-
-                      
-                                                                              
-                                         
-                                          
-                                         
-                                                                               
-                                         
-                                          
-                                         
-                                      
-                                     
-
-                     
-              
-
-                                                          
-            
- 
-
-          
-                                                                 
- 
-                                                                             
-
-                                                   
-
-                                                        
- 
-                   
-
-                 
-                                                         
- 
-                                                    
-
-                              
-  
-                                                           
-  
- 
-                          
-
-                                
-
-#if SERVER
-Point function GetClosestEndZonePoint( vector baseOrigin )
-{
-	FlightPath flightPath = GetAnalysisForModel( CARE_PACKAGE_AIRDROP_MODEL, CARE_PACKAGE_IDLE )
-
-	int dataIndex = GetAnalysisDataIndex( flightPath )
-
-	return GetClosestDrop_Internal( baseOrigin, dataIndex )
-}
-
-Point function GetClosestAirdropPoint( vector baseOrigin )
-{
-	FlightPath flightPath = GetAnalysisForModel( DROPPOD_MODEL, AIRDROP_BASE_ANIM )
-
-	int dataIndex = GetAnalysisDataIndex( flightPath )
-
-	return GetClosestDrop_Internal( baseOrigin, dataIndex )
-}
-
-Point function GetClosestDrop_Internal( vector baseOrigin, int dataIndex )
-{
-	Point closestNodePoint
-	int node = NavMeshNode_GetBestNodeForPos( baseOrigin, dataIndex, ANALYSIS_STEPS )
-	if ( node < 0 )
-	{
-		//if ( !IsTestMap() && !IsEventFinale() )
-			//Warning( "AIN file does not contain any valid airdrop point, please rebuild the AIN file." )
-		closestNodePoint.origin = baseOrigin
-		return closestNodePoint
-	}
-
-	array<int> validSlots = NavmeshNode_GetValidDataSlots( node, dataIndex, ANALYSIS_STEPS )
-	Assert( validSlots.len() > 0, "NavMeshNode_GetBestNodeForPos(...) returned an node index that didn't have any valid slots" )
-
-	float yaw = (validSlots.getrandom() - dataIndex) * ANALYSIS_YAW_STEP
-
-	closestNodePoint.origin = NavMeshNode_GetNodePos( node )
-	closestNodePoint.angles = < 0, yaw, 0 >
-
-	#if DEBUG_DROP_POINTS || DEBUG_DROP_POINTS_LINES
-		vector origin        = closestNodePoint.origin
-		vector forward       = AnglesToForward( closestNodePoint.angles )
-		vector doorOrigin    = origin + <0, 0, 32>
-		vector doorEndOrigin = doorOrigin + forward * 128
-		vector ledgeOrigin   = doorEndOrigin + <0, 0, -72>
-
-		printt( node, origin, closestNodePoint.angles )
-		DebugDrawCylinder( origin, < -90, 0, 0 >, 64, 256, <250, 250, 0>, false, DEBUG_DRAW_TIME )
-		//DebugDrawArrow( doorOrigin, doorEndOrigin, 4, <255, 0, 0>, true, DEBUG_DRAW_TIME )
-		//DebugDrawArrow( doorEndOrigin, ledgeOrigin, 4, COLOR_MAGENTA, true, DEBUG_DRAW_TIME )
-	#endif
-
-	return closestNodePoint
-}
-
-void function FindRandomAirdropDropPoint_Thread( Point airdropPoint, float baseAngle, vector center, float radius, array<vector> previousAirdrops, bool allowLoopForever = true, float maxRunTime = DEFAULT_MAX_AIRDROP_SEARCH_RUNTIME, int randomSeedIntForCircleCenter = -1, float minDistanceBase = DEFAULT_MIN_AIRDROP_DISTANCE, bool shouldCheckAirspaceAbove = false, array< entity > boundaryWalls = [])
-{
-	const float INIT_ANGLE_DEVIATION = 10.0
-	const int INIT_NUM_TRIES = 0
-	const int INIT_TIMES_TO_TRY = 20
-	const float INIT_MIN_SCALE = 0.5
-	//bool allowLoopForever = true - this is the default behavior used by PvP but is probably not ideal
-	int numTries         = INIT_NUM_TRIES
-	float minDistance    = min( radius, minDistanceBase )
-	float angleDeviation = INIT_ANGLE_DEVIATION
-	int timesToTry       = INIT_TIMES_TO_TRY
-	int maxTimesToTry    = 100
-	float minScale       = INIT_MIN_SCALE
-	vector maxs          = AIRDROP_MAXS
-	vector mins          = AIRDROP_MINS
-	int minAirdropRadius = 0
-	bool useRandomSeed	 = false
-	int randomSeedIndex	 = 0
-                               
-                                  
-                                     
-
-	                        
-		if ( GameMode_IsActive( eGameModes.CONTROL ) )
-			minAirdropRadius = int( AIRDROP_MAXS.x )
-                               
-
-	if ( randomSeedIntForCircleCenter != -1 )
-		useRandomSeed = true
-
-	// Sometimes we actually want to let this loop forever (like with DEV tests) but in most live situations we actually
-	// want to limit the run time even when allowLoopForever is true
-	maxRunTime = ( maxRunTime <= 0 ) ? 99999.0 : maxRunTime
-	float startTime = Time()
-
-	while ( true )
-	{
-		if ( ( !allowLoopForever && (timesToTry >= maxTimesToTry) ) ||
-				( allowLoopForever && Time() - startTime > maxRunTime ) )
-		{
-			if ( allowLoopForever && Time() - startTime > maxRunTime )
-				printf( "%s() - Unable to FindRandomAirdropDropPoint after %f seconds. Returning <0,0,0>:", FUNC_NAME(), maxRunTime )
-			else
-				printf( "%s() - Unable to FindRandomAirdropDropPoint after %d tries. Returning <0,0,0>:", FUNC_NAME(), timesToTry )
-
-			airdropPoint.origin = <0,0,0>
-			airdropPoint.angles = <0,0,0>
-			return
-		}
-
-		if ( numTries >= timesToTry && minDistance > minAirdropRadius )
-		{
-			minDistance -= 100
-			                        
-				// This logic combined with the larger size ( not 0 ) for the minAirdropRadius ensures we don't run into an issue where minDistance can be 0.
-				// When minDistance is 0 airdrops can drop on top of other airdrops, it is very unlikely to occur but can occur.
-				// Gated behind Control logic for copy up, too risky to break care packages in other modes this late.
-				if ( GameMode_IsActive( eGameModes.CONTROL ) )
-					minDistance = max( minDistance, minAirdropRadius )
-                                 
-
-			if ( angleDeviation < 90.0 )
-				angleDeviation += 10.0
-			if ( minScale > 0.0 )
-				minScale -= 0.1
-			numTries = INIT_NUM_TRIES
-			timesToTry += 20
-		}
-
-		bool fail       = false
-		var randomSeed = null
-		if ( useRandomSeed )
-		{
-			randomSeed = CreateRandomSeed( randomSeedIntForCircleCenter + randomSeedIndex )
-			randomSeedIndex++
-		}
-
-		vector startPos = GetRandomCenter( center, radius * minScale, radius, baseAngle - angleDeviation, baseAngle + angleDeviation, randomSeed )
-
-		TraceResults trace = TraceHull( <startPos.x, startPos.y, 10000>, <startPos.x, startPos.y, -10000>, mins, maxs, null, TRACE_MASK_TITANSOLID, TRACE_COLLISION_GROUP_NONE )
-		if ( trace.fraction == 1 )
-			fail = true    // didn't find any ground
-
-		if ( !fail )
-		{
-			vector groundPos = trace.endPos
-
-			Point tempAirdropPoint = GetClosestAirdropPoint( groundPos )
-			airdropPoint.origin = tempAirdropPoint.origin
-			airdropPoint.angles = tempAirdropPoint.angles
-
-			foreach ( point in previousAirdrops )
-			{
-				if ( Distance2D( airdropPoint.origin, point ) < minDistance )
-				{
-					fail = true
-					break
-				}
-			}
-		}
-
-                                
-                                                                                                        
-                                                                                      
-                                                                                                                                                          
-    
-                                                                                      
-                
-
-                                    
-     
-                              
-                                                 
-                                          
-                                   
-                              
-                               
-     
-    
-                                      
-
-		if ( !fail )
-		{
-			fail = !CommonAirdropValidationCheck( airdropPoint.origin, airdropPoint.angles, center, maxs, mins, radius, shouldCheckAirspaceAbove, boundaryWalls )
-		}
-
-		if ( fail )
-		{
-			numTries++
-			WaitFrame()
-			continue
-		}
-
-		return
-	}
-
-	unreachable
-}
-
-bool function CommonAirdropValidationCheck( vector origin, vector angles, vector center, vector maxs, vector mins, float radius = -1, bool shouldCheckAirspaceAbove = false, array< entity > boundaryWalls = [] )
-{
-	if ( shouldCheckAirspaceAbove )
-	{
-		TraceResults results = TraceHull( origin, <origin.x, origin.y, origin.z + 60000>, mins, maxs, null, TRACE_MASK_TITANSOLID, TRACE_COLLISION_GROUP_NONE )
-		if ( !results.hitSky )
-		{
-			return false
-		}
-	}
-
-	                        
-		// Get the airdrops to do extra tests in Control because we have custom func brush geo that needs airdrop no clip volumes checked
-		if ( GameMode_IsActive( eGameModes.CONTROL ) )
-		{
-			if ( !VerifyAirdropPoint( origin, angles.y, true ) )
-				return false
-		}
-                               
-
-	// Check boundary wall. Set fail to true if airdopPoint is outside of boundary
-	// TODO Justin Moon: It's a temp solution. Height change for center and airdropPoint should be removed
-	if ( HasValidBoundaryWall( boundaryWalls ) )
-	{
-		float BOUNDARY_CHECK_HEIGHT = 7000
-		#if DEBUG_DROP_POINTS
-			float DEBUG_LINE_DRAWTIME = 3000
-		#endif //DEBUG_DROP_POINTS
-
-		vector modifiedCenter = center
-		modifiedCenter.z = BOUNDARY_CHECK_HEIGHT
-		vector modifiedAirdropPoint = origin
-		modifiedAirdropPoint.z = BOUNDARY_CHECK_HEIGHT
-
-		TraceResults ret
-		foreach( boundaryWall in boundaryWalls )
-		{
-			ret = TraceLine( modifiedCenter, modifiedAirdropPoint, [ boundaryWall ], TRACE_MASK_PLAYERSOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE ) //ClipRayToEntity not in S3
-			if ( ret.fraction < 1 )
-			{
-				#if DEBUG_DROP_POINTS
-					vector boundaryWallClip = modifiedCenter + (modifiedAirdropPoint - modifiedCenter) * ret.fraction
-					//DebugDrawLine( modifiedCenter, boundaryWallClip, <255, 0, 0>, true, DEBUG_LINE_DRAWTIME )
-					//DebugDrawLine( boundaryWallClip, modifiedAirdropPoint, <0, 0, 255>, true, DEBUG_LINE_DRAWTIME )
-				#endif //DEBUG_DROP_POINTS
-
-				return false
-			}
-		}
-
-		#if DEBUG_DROP_POINTS
-			if ( ret.fraction == 1 )
-			{
-				//DebugDrawLine( modifiedCenter, modifiedAirdropPoint, <0, 255, 0>, true, DEBUG_LINE_DRAWTIME )
-			}
-		#endif //DEBUG_DROP_POINTS
-	}
-
-	if ( radius >= 0 )
-	{
-		float distToCenter = Distance2D( origin, center )
-		if ( distToCenter > radius && !IsTestMap() )
-		{
-			if ( DEBUG_DROP_POINTS )
-				printt( "airdrop distToCenter too great", origin, center, distToCenter )
-
-			return false
-		}
-	}
-
-	return true
-}
-
-bool function HasValidBoundaryWall( array< entity > boundaryWalls )
-{
-	return HasBoundaryWall() && boundaryWalls.len() > 0
-}
-
-void function TransmitAirdropBadPlaceLocation( entity player, AirdropBadPlace airdropBadPlace )
-{
-	if ( !IsValid( airdropBadPlace.ownerEnt ) )
-		Remote_CallFunction_NonReplay( player, "ServerCallback_CreateAirdropBadPlaceNoEnt", airdropBadPlace.id, airdropBadPlace.origin, airdropBadPlace.radius )
-	else if ( player.DoesShareRealms( airdropBadPlace.ownerEnt ) ) // don't send badplaces to client that doesn't share a realm with the ownerEnt
-		Remote_CallFunction_NonReplay( player, "ServerCallback_CreateAirdropBadPlace", airdropBadPlace.id, airdropBadPlace.origin, airdropBadPlace.radius, airdropBadPlace.ownerEnt )
-}
-
-void function TransmitAirdropBadPlaceLocations( entity player )
-{
-	foreach( airdropBadPlace in file.airdropBadPlaceArray )
-	{
-		TransmitAirdropBadPlaceLocation( player, airdropBadPlace )
-	}
-}
-
-void function CreateNonExpiringAirdropBadPlace( vector origin, int radius, entity ownerEnt = null )
-{
-	AirdropBadPlace airdropBadPlace
-	airdropBadPlace.id = file.airdropBadPlaceCount++
-	airdropBadPlace.origin = origin
-	airdropBadPlace.radius = radius
-	airdropBadPlace.ownerEnt = ownerEnt
-
-	file.airdropBadPlaceArray.append( airdropBadPlace )
-
-	array< entity > players = GetPlayerArray()
-	foreach ( player in players )
-	{
-		TransmitAirdropBadPlaceLocation( player, airdropBadPlace )
-	}
-}
-
-void function CreateAirdropBadPlace( entity ownerEnt, vector origin, int radius, float duration = -1 )
-{
-	AirdropBadPlace airdropBadPlace
-	airdropBadPlace.id = file.airdropBadPlaceCount++
-	airdropBadPlace.origin = origin
-	airdropBadPlace.radius = radius
-	airdropBadPlace.ownerEnt = ownerEnt
-
-	file.airdropBadPlaceArray.append( airdropBadPlace )
-
-	array< entity > players = GetPlayerArray()
-	foreach ( player in players )
-	{
-		TransmitAirdropBadPlaceLocation( player, airdropBadPlace )
-	}
-
-	thread RemoveAirdropBadPlaceOnOwnerDeathOrTimeout( ownerEnt, airdropBadPlace.id, duration )
-}
-
-void function RemoveAirdropBadPlaceOnOwnerDeathOrTimeout( entity ownerEnt, int id, float duration )
-{
-	OnThreadEnd(
-		function() : ( id )
-		{
-			DestroyAirdropBadPlace( id )
-			array<entity> players = GetPlayerArray()
-			foreach ( player in players )
-			{
-				Remote_CallFunction_NonReplay( player, "ServerCallback_DestroyAirdropBadPlace", id )
-			}
-		}
-	)
-
-	if ( IsValid( ownerEnt ) )
-		EndSignal( ownerEnt, "OnDestroy" )
-
-	if ( duration <= 0 )
-	{
-		Assert( IsValid( ownerEnt ), "Trying to create an infinite airdrop bad place with no owner ent." )
-		WaitForever()
-	}
-
-	wait duration
-}
-
-Point function GetClosestRespawnDropoff( vector baseOrigin )
-{
-	// "Point" type contains both origin and angles.
-	string anim           = "dropship_classic_mp_flyin"
-	FlightPath flightPath = GetAnalysisForModel( DROPSHIP_MODEL, anim )
-	Point closestNodePoint
-
-	int dataIndex = GetAnalysisDataIndex( flightPath )
-
-	int node = NavMeshNode_GetBestNodeForPos( baseOrigin, dataIndex, ANALYSIS_STEPS )
-
-	if ( node < 0 )
-	{
-		if ( !IsTestMap() )
-			Warning( "AIN file does not contain any valid respawn dropoff point, please rebuild the AIN file." )
-		closestNodePoint.origin = baseOrigin
-		return closestNodePoint
-	}
-
-	array<int> validSlots = NavmeshNode_GetValidDataSlots( node, dataIndex, ANALYSIS_STEPS )
-	Assert( validSlots.len() > 0, "NavMeshNode_GetBestNodeForPos(...) returned an node index that didn't have any valid slots" )
-
-	float yaw = (validSlots.getrandom() - dataIndex) * ANALYSIS_YAW_STEP
-
-	vector offset = GetAnalysisOffset( flightPath )
-	closestNodePoint.origin = NavMeshNode_GetNodePos( node ) + offset
-	closestNodePoint.angles = < 0, yaw, 0 >
-
-	// if it hit something, just move it up hopefully it will be clear
-	if ( !AnaylsisFuncLegalFlightPath( flightPath, closestNodePoint.origin, yaw ) )
-	{
-		closestNodePoint.origin += <0, 0, 5000>
-	}
-
-	if( UsingFlightPathElevationValidation() )
-	{
-		closestNodePoint.origin = OriginToGround( closestNodePoint.origin )
-
-		                    
-			if ( GetCurrentPlaylistVarBool( "anniversary_ballon_flightpath_fix", false ) )
-			{
-				// Balloons are TRACE_COLLISION_GROUP_PLAYER_MOVEMENT
-				// Lets do a trace from high up to the ground to reduce the number of other things we'd hit with the hull trace
-				// Max Z of existing balloons over gameplay space is 5000, but make it a playlist var if we need to adjust.
-				TraceResults result = TraceHull( closestNodePoint.origin + <0, 0, GetCurrentPlaylistVarFloat( "anniversary_ballon_trace_z", 5000 )>, closestNodePoint.origin, flightPath.mins, flightPath.maxs, GetPlayerArray(), TRACE_MASK_VISIBLE, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
-				if ( result.hitEnt != null && result.hitEnt.GetScriptName() == "celebration_balloon" )
-				{
-					// Set the "ground" to the balloon origin z - this will offset the respawn point from the balloon rather than the ground.
-					closestNodePoint.origin = <closestNodePoint.origin.x, closestNodePoint.origin.y, (result.hitEnt.GetOrigin().z + GetCurrentPlaylistVarFloat( "anniversary_ballon_offset", 0 ))>
-				}
-			}
-        
-
-		closestNodePoint.origin = ValidateFlightPathElevation( closestNodePoint.origin )
-	}
-	return closestNodePoint
-}
-
-//build a validation function which changes the Z position of the currently assigned Flight Path Point, this will essentially catch any cases where for some reason the logic has found what it thinks is a valid point far beneath the map,
-//it will then use the established KILL VOLUME OFFSET (which is set in each map file arbitrarily) and with an added offset, pass back a new flight origin at a much high offset to prevent players from spawning below the map in a dropship
-vector function ValidateFlightPathElevation( vector currentOrigin )
-{
-	vector newOrigin
-
-	string mapName = GetMapName()
-
-	if( mapName.find( "mp_rr_divided_moon" ) >= 0 && currentOrigin.z < MAP_KILL_VOLUME_OFFSET_DIVIDED_MOON )
-	{
-		newOrigin = <currentOrigin.x, currentOrigin.y, ( MAP_KILL_VOLUME_OFFSET_DIVIDED_MOON + FLIGHTPATH_ELEVATION_VALIDATION_OFFSET )>
-	}
-	else if( mapName.find( "mp_rr_desertlands" ) >= 0 && currentOrigin.z < MAP_KILL_VOLUME_OFFSET_DESERTLANDS )
-	{
-		newOrigin = <currentOrigin.x, currentOrigin.y, ( MAP_KILL_VOLUME_OFFSET_DESERTLANDS + FLIGHTPATH_ELEVATION_VALIDATION_OFFSET )>
-	}
-	else if( mapName.find( "mp_rr_canyonlands" ) >= 0 && currentOrigin.z < MAP_KILL_VOLUME_OFFSET_CANYONLANDS )
-	{
-		newOrigin = <currentOrigin.x, currentOrigin.y, ( MAP_KILL_VOLUME_OFFSET_CANYONLANDS + FLIGHTPATH_ELEVATION_VALIDATION_OFFSET )>
-	}
-	else if( mapName.find( "mp_rr_olympus" ) >= 0 && currentOrigin.z < MAP_KILL_VOLUME_OFFSET_OLYMPUS )
-	{
-		newOrigin = <currentOrigin.x, currentOrigin.y, ( MAP_KILL_VOLUME_OFFSET_OLYMPUS + FLIGHTPATH_ELEVATION_VALIDATION_OFFSET )>
-	}
-	else if( mapName.find( "mp_rr_tropic_island" ) >= 0 && currentOrigin.z < MAP_KILL_VOLUME_OFFSET_TROPIC_ISLAND)
-	{
-		newOrigin = <currentOrigin.x, currentOrigin.y, ( MAP_KILL_VOLUME_OFFSET_TROPIC_ISLAND + FLIGHTPATH_ELEVATION_VALIDATION_OFFSET )>
-	}
-	else
-		newOrigin = currentOrigin
-
-	return newOrigin
-}
-
-bool function UsingFlightPathElevationValidation()
-{
-	return GetCurrentPlaylistVarBool( "use_flight_path_elevation_validation", true )
-}
-#endif //SERVER
-
-#if SERVER || CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 bool function IsNearAirdropBadPlace( vector origin, entity realmEnt = null )
 {
-	// Possible issue: Client will only have bad places where the realmEnt was in the same realm as the player when the badplace was created.
-	// if we had a CodeCallback_OnChangedRealm() we could update as needed
+	
+	
 	foreach( airdropBadPlace in file.airdropBadPlaceArray  )
 	{
 		if ( IsValid( airdropBadPlace.ownerEnt ) && IsValid( realmEnt ) )
@@ -1810,7 +1815,7 @@ bool function IsNearAirdropBadPlace( vector origin, entity realmEnt = null )
 			return true
 	}
 
-	if ( IsOriginInvalidForPlacingPermanentOnto( origin ) )
+	if ( IsOriginInvalidForPlacingPermanentOnto( origin, realmEnt ) )
 		return true
 
 	return false
@@ -1827,15 +1832,15 @@ void function DestroyAirdropBadPlace( int id )
 		}
 	}
 }
-#endif //SERVER || CLIENT
 
-#if CLIENT
+
+
 void function ServerCallback_CreateAirdropBadPlace( int id, vector origin, int radius, entity ownerEnt )
 {
 	foreach( badPlace in file.airdropBadPlaceArray )
 	{
 		if ( badPlace.id == id )
-			return // already added
+			return 
 	}
 
 	printt( "Adding airdrop badplace this client", GetLocalClientPlayer() )
@@ -1848,7 +1853,7 @@ void function ServerCallback_CreateAirdropBadPlace( int id, vector origin, int r
 
 	file.airdropBadPlaceArray.append( airdropBadPlace )
 
-	//DebugDrawArrow( airdropBadPlace.origin, airdropBadPlace.origin + <0, 0, 10000>, 2000, <255, 255, 255>, true, 1000 )
+	
 }
 
 void function ServerCallback_CreateAirdropBadPlaceNoEnt( int id, vector origin, int radius )
@@ -1860,45 +1865,46 @@ void function ServerCallback_DestroyAirdropBadPlace( int id )
 {
 	DestroyAirdropBadPlace( id )
 }
-#endif //CLIENT
-
-#if SERVER && DEVELOPER
-void function AirdropTraceTest( entity player )
-{
-	vector startPosition = player.EyePosition() + <0, 0, 8>
-	vector endPosition   = startPosition + 1024 * player.GetViewVector()
-	TraceResults result  = TraceLine( startPosition, endPosition, player, (TRACE_MASK_PLAYERSOLID | TRACE_MASK_TITANSOLID | CONTENTS_NOAIRDROP), TRACE_COLLISION_GROUP_PLAYER )
-	//DebugDrawLine( startPosition, result.endPos, <0, 255, 0>, false, 5.0 )
-	if ( result.fraction < 1 )
-	{
-		//DebugDrawLine( result.endPos, endPosition, <255, 0, 0>, false, 5.0 )
-	}
-}
-#endif
 
 
-#if SERVER || CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function AddToAllowedAirdropDynamicEntities( entity ent )
 {
 	Assert( !file.airdropAllowedDynamicEnts.contains( ent ), "Entity already added to allowed airdrop dynamic ents!" )
 
 	file.airdropAllowedDynamicEnts.append( ent )
 }
-#endif
 
 
-#if SERVER && CLIENT
-void function RemoveFromAllowedAirdropDynamicEntities( entity ent )
-{
-	Assert( file.airdropAllowedDynamicEnts.contains( ent ), "Entity not contained in allowed dynamic airdrop entities! Cannot remove from array." )
 
-	file.airdropAllowedDynamicEnts.fastremovebyvalue( ent )
-}
-#endif
 
-#if SERVER || CLIENT
+
+
+
+
+
+
+
+
+
 array< entity > function GetAllowedAirdropDynamicEntitiesArray()
 {
 	return file.airdropAllowedDynamicEnts
 }
-#endif
+
+ 

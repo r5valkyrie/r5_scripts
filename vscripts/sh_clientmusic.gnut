@@ -1,21 +1,21 @@
 global function ClientMusic_SharedInit
 global function ClientMusic_RegisterNetworking
-//
+
 global function ClientMusic_PlayCustomTrackOnClient
 global function ClientMusic_StopCustomTrackOnClient
 
-#if CLIENT
+
 global function ClientMusic_RequestStingerForNewZone
 
-#if DEVELOPER
+#if DEV
 global function ClientMusic_PrintStatus
-#endif // #if DEVELOPER
-#endif // CLIENT
+#endif
 
-#if SERVER
-global function ClientMusic_PlayCustomTrackToAll
-global function ClientMusic_StopCustomTrackOnAll
-#endif // SERVER
+
+
+
+
+
 
 global enum eMusicTrack
 {
@@ -28,7 +28,7 @@ global enum eMusicTrack
 	GeneralWaitingForPlayers,
 	GeneralMatchIntro,
 
-	//
+	
 	ObjectiveComplete,
 	GetToTheLZ,
 	GetOnTheDropship,
@@ -39,10 +39,10 @@ global enum eMusicTrack
 	DrillExtraction80sec,
 
 
-	//
+	
 	TetraBossFight,
 
-	//
+	
 	QuestBunker_HatchOpen,
 	QuestBunker_1stFloor,
 	QuestBunker_2ndFloor,
@@ -53,36 +53,36 @@ global enum eMusicTrack
 
 const array<string> [eMusicTrack._count] s_TracksMap =
 [
-	/* ZoneTransitionStingers_Survival */		["music_skyway_17_slonedies"],
+			["music_skyway_17_slonedies"],
 
-	//////
+	
 
-	/* ZoneTransitionStingers_Quest */			["Music_Quest_NewZone"],
+				["Music_Quest_NewZone"],
 
-	/* GeneralCombatLow */					["Music_Quest_EncounterEnemy"],
-	/* GeneralCombatHigh */					["Music_Quest_CombatActive"],
+						["Music_Quest_EncounterEnemy"],
+						["Music_Quest_CombatActive"],
 
-	/* GeneralWaitingForPlayers*/			["music_timeshift_elevator_bossanova"],
-	/* GeneralMatchIntro*/					["music_tday_02_intro"],
+				["music_timeshift_elevator_bossanova"],
+						["music_tday_02_intro"],
 
-	//
-	/* ObjectiveComplete */					["music_mp_freeagents_outro_win"],
-	/* GetToTheLZ */						["music_s2s_04_maltabattle_alt"],
-	/* GetOnTheDropship */					["Music_Quest_DropshipHasArrived"],
-	/* GetOnTheDropshipLong */				["Music_Quest_DropshipHasArrived_Long"],
-	/* DropshipSafe */						["Music_Quest_Success"],
-	/* DropshipMissed */					["Music_Quest_Failure"],
-	/* DrillExtraction45sec */				["Music_Quest_DrillPlaced_Short"],
-	/* DrillExtraction80sec */				["Music_Quest_DrillPlaced_Long"],
+	
+						["music_mp_freeagents_outro_win"],
+							["music_s2s_04_maltabattle_alt"],
+						["Music_Quest_DropshipHasArrived"],
+					["Music_Quest_DropshipHasArrived_Long"],
+							["Music_Quest_Success"],
+						["Music_Quest_Failure"],
+					["Music_Quest_DrillPlaced_Short"],
+					["Music_Quest_DrillPlaced_Long"],
 
-	/* TetraBossFight */					["Music_PvE_BossBattle"],
+						["Music_PvE_BossBattle"],
 
-	/* QuestBunker_HatchOpen */				["Music_Quest_Bunker_HatchOpen"],
-	/* QuestBunker_1stFloor */				["Music_Quest_Bunker_FirstFloor"],
-	/* QuestBunker_2ndFloor */				["Music_Quest_Bunker_SecondFloor"],
-	/* QuestBunker_EndAnim */				["Music_Quest_Bunker_EndAnimation"],
+					["Music_Quest_Bunker_HatchOpen"],
+					["Music_Quest_Bunker_FirstFloor"],
+					["Music_Quest_Bunker_SecondFloor"],
+					["Music_Quest_Bunker_EndAnimation"],
 
-	//	/* xxxxxxxxxxxxxx */					[""],
+	
 ]
 
 enum eMusicLevel
@@ -107,7 +107,7 @@ enum eMusicFlag
 }
 
 
-#if CLIENT
+
 
 struct TrackPlayData
 {
@@ -134,7 +134,7 @@ string function GetNextShuffledTrackFor( int musicTrack )
 	{
 		tpd.shufflePos = 0
 
-		// Shuffle order:
+		
 		{
 
 			int length = s_TracksMap[musicTrack].len()
@@ -143,7 +143,7 @@ string function GetNextShuffledTrackFor( int musicTrack )
 				indices[idx] = idx
 			indices.randomize()
 
-			// no repeats:
+			
 			if ( (length > 1) && (indices[0] == tpd.lastIndex) )
 				indices.reverse()
 		}
@@ -163,11 +163,11 @@ void function ClientMusic_RequestStingerForNewZone( int zoneId )
 
 float function GetStartTimeForAlias( string alias )
 {
-	//switch( alias )
-	//{
-	//	case "Music_PvE_BossBattle":
-	//		return 50.0
-	//}
+	
+	
+	
+	
+	
 	return 0.0
 }
 
@@ -261,7 +261,7 @@ bool function AnyNearbyFriendlyIsCombatTriggered_( entity player, bool requireHi
 	if ( !IsPVEMode() )
 		return false
 
-	array<entity> teamPlayers = GetPlayerArrayEx( "any", player.GetTeam(), TEAM_ANY, player.GetOrigin(), NEARBY_FRIENDLY_RANGE )
+	array<entity> teamPlayers = GetPlayerArrayEx( player.GetTeam(), TEAM_ANY, player.GetOrigin(), NEARBY_FRIENDLY_RANGE )
 	foreach ( teamPlayer in teamPlayers )
 	{
 		if ( CombatTriggeredCheck( teamPlayer, requireHighIntensity ) )
@@ -281,7 +281,7 @@ bool function AnyNearbyFriendlyIsCombatTriggered_LowIntensity( entity player )
 
 bool function AnyNearbyFriendlyIsBleedingOut( entity player )
 {
-	array<entity> teamPlayers = GetPlayerArrayEx( "any", player.GetTeam(), TEAM_ANY, player.GetOrigin(), NEARBY_FRIENDLY_RANGE )
+	array<entity> teamPlayers = GetPlayerArrayEx( player.GetTeam(), TEAM_ANY, player.GetOrigin(), NEARBY_FRIENDLY_RANGE )
 	foreach ( teamPlayer in teamPlayers )
 	{
 		if ( Bleedout_IsBleedingOut( teamPlayer ) )
@@ -345,16 +345,16 @@ int function GetDesiredMusicLevel( int levelNow )
 		return eMusicLevel.Ambient
 
 	int gameState = GetGameState()
-//	if ( (gameState == eGameState.PickLoadout) || ((levelNow == eMusicLevel.MatchIntro) && IntroMusicShouldKeepPlaying( player )) )
-//		return eMusicLevel.MatchIntro
+
+
 	if ( (gameState >= eGameState.Playing) && MyTeamIsDeadMyWholeTeamIsDead( player ) )
 		return eMusicLevel.None
 
 	if ( (s_queuedCustomTrack >= 0) || s_customTrackIsPlaying )
 		return eMusicLevel.CustomTrack
 
-//	if ( gameState == eGameState.WaitingForPlayers )
-//		return eMusicLevel.WaitingForPlayers
+
+
 
 	if ( (levelNow != eMusicLevel.CombatHigh) && AnyNearbyFriendlyIsCombatTriggered_HighIntensity( player ) && (CountEnemiesNearby() >= 2) )
 	{
@@ -376,8 +376,8 @@ int function GetDesiredMusicLevel( int levelNow )
 			return levelNow
 	}
 
-	//if ( AnyEnemiesNearby() )
-	//	return eMusicLevel.EnemyNear
+	
+	
 
 	return eMusicLevel.Ambient
 }
@@ -403,7 +403,7 @@ void function ClientMusicFRAME()
 		{
 			if ( newMusicLevel == eMusicLevel.EnemyNear )
 			{
-				//
+				
 			}
 			else if ( (newMusicLevel == eMusicLevel.CombatLow) || (newMusicLevel == eMusicLevel.CombatHigh) )
 			{
@@ -438,8 +438,8 @@ void function ClientMusicFRAME()
 		s_zoneStingerRequested = false
 	}
 
-	// debug drawing
-#if DEVELOPER
+	
+#if DEV
 	if ( GetConVarInt( "pve_debug" ) != 0 )
 	{
 		string text = GetClientMusicStatusLine()
@@ -463,14 +463,15 @@ void function ClientMusicFRAME()
 		string freelanceText
 		if ( IsPVEMode() )
 		{
-			freelanceText = "FreelanceMode N/A"
+			int phase = FreelanceMode_GetCurrentPhase()
+			freelanceText = format( "eFreelanceModePhase.%s (#%d) ", GetNameForEnum( eFreelanceModePhase, phase ), phase )
 		}
 		DebugDrawScreenTextWithColor( 0.25, 0.985,
-			//format( "eGameState.%s (%d)   eFreelanceModePhase.%s (#%d) t:%.0f", GetNameForEnum( eGameState, GetGameState() ), GetGameState(), GetNameForEnum( eFreelanceModePhase, FreelanceMode_GetCurrentPhase() ), FreelanceMode_GetCurrentPhase(), (Time() - FreelanceMode_GetCurrentPhaseStartedTime()) ),
+			
 			format( "eGameState.%s (%d)  %s t:%.0f", GetNameForEnum( eGameState, GetGameState() ), GetGameState(), freelanceText, Time() ),
 			<128, 128, 168> )
 	}
-#endif // #if DEVELOPER
+#endif
 }
 
 
@@ -489,19 +490,19 @@ void function ClientMusicFrameThread()
 
 	while ( true )
 	{
-#if DEVELOPER
+#if DEV
 		float preFrameTime = Time()
-#endif // DEV
+#endif
 
 		s_inFrame = true
 		s_lastFrameTime = Time()
 		ClientMusicFRAME()
 		s_inFrame = false
 
-#if DEVELOPER
+#if DEV
 		float postFrameTime = Time()
 		Assert( preFrameTime == postFrameTime, format( "ClientMusicFRAME() stalled for %.2f seconds. Should have no waits.", (postFrameTime - preFrameTime) ) )
-#endif // DEV
+#endif
 
 		s_inLoopWaitFrame = true
 		WaitFrame()
@@ -509,13 +510,13 @@ void function ClientMusicFrameThread()
 	}
 }
 
-#if DEVELOPER
+#if DEV
 void function ClientMusic_PrintStatus()
 {
 	printf( "running: %s, mid-frame: %s, in-waitframe: %s, startTime: %.2f, lastFrameTime: %.2f, timeNow: %.2f", (s_isRunning ? "yes" : "no"), (s_inFrame ? "yes" : "no"), (s_inLoopWaitFrame ? "yes" : "no"), s_startTime, s_lastFrameTime, Time() )
 	printf( "status: %s", GetClientMusicStatusLine() )
 }
-#endif // #if DEVELOPER
+#endif
 
 string function GetDebugNameForMusicLevel( int musicLevel )
 {
@@ -537,14 +538,14 @@ string function GetDebugNameForMusicTrack( int musicTrack )
 	return ""
 }
 
-#if DEVELOPER
+#if DEV
 string function GetClientMusicStatusLine()
 {
-	//	 = musicTrack
+	
 	return format( "'%s',   latest - %s::'%s','%s'", GetDebugNameForMusicLevel( s_musicLevel ), GetDebugNameForMusicTrack( s_lastPlayedMuscTrackDEBUG ), s_lastPlayedAliasesDEBUG[0], s_lastPlayedAliasesDEBUG[1] )
 }
-#endif // #if DEVELOPER
-#endif // CLIENT
+#endif
+
 
 const string FUNCNAME_PLAYCUSTOMTRACKONCLIENT = "ClientMusic_PlayCustomTrackOnClient"
 const string FUNCNAME_STOPCUSTOMTRACKONCLIENT = "ClientMusic_StopCustomTrackOnClient"
@@ -559,48 +560,49 @@ void function ClientMusic_PlayCustomTrackOnClient( entity player, int musicTrack
 {
 	Assert( (musicTrack >= 0) && (musicTrack < eMusicTrack._count) )
 
-#if SERVER
-	//printf( "%s() - sending musicTrack:%d to '%s'", FUNC_NAME(), musicTrack, string( player ) )
-	Remote_CallFunction_NonReplay( player, FUNCNAME_PLAYCUSTOMTRACKONCLIENT, player, musicTrack )
-#else
+
+
+
+
 	printf( "%s() - recieved for musicTrack:%d", FUNC_NAME(), musicTrack )
 	s_queuedCustomTrack = musicTrack
-#endif
+
 }
 
 void function ClientMusic_StopCustomTrackOnClient( entity player )
 {
-#if SERVER
-	Remote_CallFunction_NonReplay( player, FUNCNAME_STOPCUSTOMTRACKONCLIENT, player )
-#else
+
+
+
 	printf( "%s() - received.", FUNC_NAME() )
 	StopPlayingCustomTrack()
-#endif
+
 }
 
 void function ClientMusic_SharedInit()
 {
-#if CLIENT
+
 	RegisterSignal( "ClientMusic_CustomTrackStop" )
 	thread ClientMusicFrameThread()
-#endif // CLIENT
+
 }
 
 
-#if SERVER
-void function ClientMusic_PlayCustomTrackToAll( int musicTrack )
-{
-	array<entity> players = GetPlayerArray()
-	foreach ( player in players )
-		ClientMusic_PlayCustomTrackOnClient( player, musicTrack )
-}
-
-void function ClientMusic_StopCustomTrackOnAll()
-{
-	array<entity> players = GetPlayerArray()
-	foreach ( player in players )
-		ClientMusic_StopCustomTrackOnClient( player )
-}
-#endif // SERVER
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

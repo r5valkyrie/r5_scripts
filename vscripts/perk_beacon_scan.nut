@@ -1,6 +1,6 @@
 global function Perk_BeaconScan_Init
 
-#if SERVER || CLIENT
+
 global function SurveyBeacon_GetBeaconIcon
 global function SurveyBeacon_IsSurveyBeacon
 global function PlayerShouldSeeSurveyBeaconMarkers
@@ -10,23 +10,23 @@ global function HasCryptoSword
 global function HasSeerBlades
 global function RegisterSurveyBeaconData
 global function OnDeactivate_BeaconScan
-#if SERVER
-global function SurveyBeacon_PopulateHackPanelAnims
-global function OnPanelUse_SurveyBeacon
-global function AddSurveyBeaconSpawnCallbacks
-global function SurveyBeacon_RandomizeBeaconArray
-global function GetRingConsoleGoalNumber
-global function SurveyBeacon_SetBeaconGoalCount
-global function RingConsole_SetConsoleGoalCount
-#endif
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
 global function SurveyBeacon_CreateHUDMarker
 global function SurveyBeacon_AddSurveyBeaconMinimapPackage
 global function OnSurveyBeaconCreated
-#endif
 
-#endif
+
+
 
 
 global struct SurveyBeaconData
@@ -35,10 +35,10 @@ global struct SurveyBeaconData
 	string calloutLine
 	int scanType
 
-	#if SERVER
-		void functionref( entity, entity, SurveyBeaconData ) successFunc
-		HackPanelAnims anims
-	#endif
+
+
+
+
 }
 
 global enum eBeaconScanType
@@ -53,14 +53,14 @@ global enum eBeaconScanType
 
 struct
 {
-	#if SERVER || CLIENT
-	table< entity, table<int, SurveyBeaconData > > surveyBeaconData
-	#endif
 
-	#if SERVER
-	int defaultBeaconGoalCount = 12
-	int	defaultConsoleGoalCount = 12
-	#endif
+	table< entity, table<int, SurveyBeaconData > > surveyBeaconData
+
+
+
+
+
+
 } file
 
 void function Perk_BeaconScan_Init()
@@ -68,9 +68,9 @@ void function Perk_BeaconScan_Init()
 	Perk_NextZoneBeaconScan_Init()
 	Perk_EnemyBeaconScan_Init()
 
-	#if CLIENT
+
 	RegisterSignal( "BeaconIconReset" )
-	#endif
+
 }
 
 float function GetBaseSurveyBeaconExclusionDistance()
@@ -78,28 +78,28 @@ float function GetBaseSurveyBeaconExclusionDistance()
 	return GetCurrentPlaylistVarFloat( "survey_beacon_exclusion_distance", 12000 )
 }
 
-#if SERVER
-int function GetEnemyScanBeaconGoalNumber()
-{
-	return GetCurrentPlaylistVarInt( "enemy_scan_beacon_goal_number", file.defaultBeaconGoalCount )
-}
 
-void function SurveyBeacon_SetBeaconGoalCount( int goal )
-{
-	file.defaultBeaconGoalCount = goal
-}
 
-int function GetRingConsoleGoalNumber()
-{
-	return GetCurrentPlaylistVarInt( "ring_console_goal_number", file.defaultConsoleGoalCount )
-}
 
-void function RingConsole_SetConsoleGoalCount( int goal )
-{
-	file.defaultConsoleGoalCount = goal
-}
-#endif
-#if SERVER || CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 asset function SurveyBeacon_GetBeaconIcon( entity beacon )
 {
 	if( beacon.GetScriptName() == NEXT_ZONE_SURVEY_BEACON_SCRIPTNAME )
@@ -117,13 +117,13 @@ bool function HasCryptoSword( entity player )
 
 	string meleeSkinName
 
-	#if SERVER
-		meleeSkinName = Survival_GetMeleeWeaponName( player )
-	#elseif CLIENT
+
+
+
 		entity meleeWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
 		if ( meleeWeapon != null )
 			meleeSkinName = meleeWeapon.GetWeaponClassName()
-	#endif
+
 
 	if ( meleeSkinName == "mp_weapon_crypto_heirloom_primary" )
 		return true
@@ -135,13 +135,13 @@ bool function HasSeerBlades( entity player )
 {
 	string meleeSkinName
 
-	#if SERVER
-		meleeSkinName = Survival_GetMeleeWeaponName( player )
-	#elseif CLIENT
+
+
+
 		entity meleeWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
 		if ( meleeWeapon != null )
 			meleeSkinName = meleeWeapon.GetWeaponClassName()
-	#endif
+
 
 	if ( meleeSkinName == "mp_weapon_seer_heirloom_primary" )
 		return true
@@ -169,7 +169,7 @@ int function BeaconEntToScanType( entity beacon )
 	return eBeaconScanType.DEFAULT
 }
 
-#if DEVELOPER
+#if DEV
 bool function SurveyBeacon_IgnoreCanUseCheck()
 {
 	return GetCurrentPlaylistVarBool( "survey_beacon_ignore_can_use_check", false )
@@ -198,9 +198,9 @@ bool function SurveyBeacon_CanActivate( entity player, entity beacon )
 	table<int, SurveyBeaconData> usableBeacons = file.surveyBeaconData[ player ]
 
 
-	#if DEVELOPER
+#if DEV
 	if( !SurveyBeacon_IgnoreCanUseCheck() )
-	#endif
+#endif
 	{
 		if( beaconType in usableBeacons )
 		{
@@ -247,7 +247,7 @@ bool function PlayerShouldSeeSurveyBeaconMarkers( entity player, entity beacon )
 {
 	return PlayerHasAccessToBeacons( player, beacon ) || player.GetTeam() == TEAM_SPECTATOR
 }
-#if CLIENT
+
 void function OnSurveyBeaconCreated( entity beacon )
 {
 	if ( !IsValid( beacon ) )
@@ -387,178 +387,19 @@ entity function GetTeamSurveyBeaconUser( int team )
 	}
 	return null
 }
-#endif
-
-#if SERVER
-void function AddSurveyBeaconSpawnCallbacks()
-{
-	AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_survey_beacon", SurveyBeacons_AddEnemyBeacon )
-	AddSpawnCallbackEditorClass( "prop_script", "script_survival_survey_beacon", SurveyBeacons_AddEnemyBeacon )
-
-	AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_next_zone_survey_beacon", SurveyBeacons_AddNextZoneBeacon )
-	AddSpawnCallbackEditorClass( "prop_script", "script_survival_next_zone_survey_beacon", SurveyBeacons_AddNextZoneBeacon )
-
-
-	if( SurveyBeacons_ShouldUseNextZoneSurveyBeaconProp() )
-	{
-		PrecacheModel( $"mdl/communication/terminal_usable_imc_01.rmdl" )
-		PrecacheModel( $"mdl/communication/radar_tower_imc_01_animated.rmdl" )
-		AddCallback_GameStateEnter( eGameState.Playing, SurveyBeacons_SpawnBeacons )
-	}
-
-}
-
-void function OnPanelUse_SurveyBeacon( entity beacon, entity player, entity useEnt )
-{
-	Warning("player trying to use survey beacon panel")
-	if ( !( player in file.surveyBeaconData ) )
-		return
-	int beaconType =  BeaconEntToScanType( beacon )
-	if( !( beaconType in file.surveyBeaconData[player] ) )
-		return
-
-	file.surveyBeaconData[ player ][beaconType].successFunc( beacon, player, file.surveyBeaconData[player][beaconType] )
-	Warning("succeed when using beacon")
-}
-
-bool function SurveyBeacon_PopulateHackPanelAnims( entity player, entity panel, HackPanelAnims anims )
-{
-	if ( !( player in file.surveyBeaconData ) )
-		return false
-	int beaconType =  BeaconEntToScanType( panel )
-	if( !( beaconType in file.surveyBeaconData[player] ) )
-		return false
-
-	{
-		anims.playerAnimation1pStart = file.surveyBeaconData[ player ][beaconType].anims.playerAnimation1pStart
-		anims.playerAnimation1pIdle = file.surveyBeaconData[ player ][beaconType].anims.playerAnimation1pIdle
-		anims.playerAnimation1pEnd = file.surveyBeaconData[ player ][beaconType].anims.playerAnimation1pEnd
-
-		anims.playerAnimation3pStart = file.surveyBeaconData[ player ][beaconType].anims.playerAnimation3pStart
-		anims.playerAnimation3pIdle = file.surveyBeaconData[ player ][beaconType].anims.playerAnimation3pIdle
-		anims.playerAnimation3pEnd = file.surveyBeaconData[ player ][beaconType].anims.playerAnimation3pEnd
-
-		anims.panelAnimation3pStart = file.surveyBeaconData[ player ][beaconType].anims.panelAnimation3pStart
-		anims.panelAnimation3pIdle = file.surveyBeaconData[ player ][beaconType].anims.panelAnimation3pIdle
-		anims.panelAnimation3pEnd = file.surveyBeaconData[ player ][beaconType].anims.panelAnimation3pEnd
-
-		anims.parentBlendTime = file.surveyBeaconData[ player ][beaconType].anims.parentBlendTime
-	}
-
-	return true
-}
-
-void function SurveyBeacon_RandomizeBeaconArray( array<entity> surveyBeacons, string propType, vector optionalDebugColor = <0,255,255>, int goal = -1 )
-{
-	if( goal < 0 )
-		goal = GetEnemyScanBeaconGoalNumber()
-	array<entity> distributedBeacons
-	if( GetIsUnifiedRandomizerEnabled() )
-	{
-		distributedBeacons = RandomizeNodeLocations( surveyBeacons, GetBaseSurveyBeaconExclusionDistance(), goal, true, propType, optionalDebugColor )
-	}
-	else
-	{
-		ArrayRemoveInvalid( surveyBeacons )
-		surveyBeacons.randomize()
-		array<entity> nonDistributedBeacons
-		if ( surveyBeacons.len() >= goal )
-		{
-			float exclusionDistanceSquared = GetBaseSurveyBeaconExclusionDistance() * GetBaseSurveyBeaconExclusionDistance()
-			distributedBeacons.append( surveyBeacons.pop() )
-
-			for ( int i = 0; i < goal - 1; i++ )
-			{
-				for ( int j = surveyBeacons.len() - 1; j >= 0 ; j-- )
-				{
-					int count = 0
-					entity beacon = surveyBeacons[j]
-					foreach ( distributedBeacon in distributedBeacons )
-					{
-						if ( DistanceSqr( beacon.GetOrigin(), distributedBeacon.GetOrigin() ) > exclusionDistanceSquared )
-						{
-							count++
-						}
-					}
 
-					if ( count == distributedBeacons.len() )
-					{
-						distributedBeacons.append( beacon )
-						surveyBeacons.remove( j )
-						break
-					}
-					else
-					{
-						nonDistributedBeacons.append( beacon )
-						surveyBeacons.remove( j )
-					}
-				}
-			}
 
-			int validSpotsFound = distributedBeacons.len()
-			if ( validSpotsFound < goal )
-			{
-				for ( int i = 0; i < goal - validSpotsFound; i++ )
-				{
-					distributedBeacons.append( nonDistributedBeacons[i] )
-				}
-			}
-		}
-		else
-		{
-			// if we have less then 10 lets just keep all of them.
-			distributedBeacons = clone surveyBeacons
-			surveyBeacons.clear()
-		}
 
-		printt( "[BEACONS PRE COUNT]: " + distributedBeacons.len() )
 
-		//Destroying unused entities
-		foreach ( beacon in surveyBeacons )
-			beacon.Destroy()
 
-		surveyBeacons.clear()
 
-		for ( int i = nonDistributedBeacons.len() - 1 ; i >= 0 ; i-- )
-		{
-			if ( !distributedBeacons.contains( nonDistributedBeacons[i] ) )
-			{
-				nonDistributedBeacons[i].Destroy()
-				nonDistributedBeacons.remove( i )
-			}
-		}
 
-		ArrayRemoveInvalid( distributedBeacons )
-	}
 
-	surveyBeacons.clear()
-	foreach ( beacon in distributedBeacons )
-	{
-		array< entity > players = GetPlayerArray()
-		array< entity > beaconUsers
-		foreach ( player in players )
-		{
-			beacon.Minimap_Hide( player.GetTeam(), null )
-			if ( PlayerShouldSeeSurveyBeaconMarkers( player, beacon ) )
-				beaconUsers.append( player )
-		}
 
-		foreach ( beaconUser in beaconUsers )
-		{
-			int team = beaconUser.GetTeam()
-			beacon.Minimap_AlwaysShow( team, null )
-		}
 
-		surveyBeacons.append( beacon )
-	}
 
-	ArrayRemoveInvalid( surveyBeacons )
 
-	printt( "[BEACONS COUNT]: " + surveyBeacons.len() )
-}
-#endif
 
-#if SERVER
 
 
 
@@ -605,7 +446,164 @@ void function SurveyBeacon_RandomizeBeaconArray( array<entity> surveyBeacons, st
 
 
 
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void function OnDeactivate_BeaconScan( entity player )
 {
@@ -614,11 +612,12 @@ void function OnDeactivate_BeaconScan( entity player )
 
 	delete file.surveyBeaconData[ player ]
 }
-#endif
 
-#if CLIENT
+
+
 void function SurveyBeacon_AddSurveyBeaconMinimapPackage()
 {
-	// purposefully empty to support the live version of survey beacons, can remove once we're transitioned over to the perk beacons
+	
 }
-#endif
+
+ 

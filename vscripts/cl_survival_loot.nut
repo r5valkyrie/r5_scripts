@@ -40,7 +40,7 @@ global function RegisterCustomItemPromptUpdate
 
 global function ShouldOpenQuickswap
 
-#if DEVELOPER
+#if DEV
 global function DEV_ToggleLootRefs
 #endif
 
@@ -102,7 +102,7 @@ struct {
 	bool greyTierEnabled = false
 	bool checkWeaponDisableForLootPingPrompt = false
 
-#if DEVELOPER
+#if DEV
 		bool devShowLootRefs = false
 #endif
 } file
@@ -144,7 +144,7 @@ void function Cl_Survival_LootInit()
 
 	AddCallback_EntitiesDidLoad( SurvivalLoot_EntitiesDidLoad )
 
-	AddOnSpectatorTargetChangedCallback( SurvivalLoot_OnSpectatorTargetChanged )
+	AddOnSpectatorTargetChangedCallback( OnSpectatorTargetChanged )
 
 #if LOOT_GROUND_VERTICAL_LINES
 		for ( int i = 0; i < VERTICAL_LINE_COUNT; i++ )
@@ -194,7 +194,7 @@ void function Cl_Survival_LootInit()
 	file.useAltBind = GetButtonBoundTo( "+use_alt" )
 
 	file.showTeammateUsefulIcon = GetCurrentPlaylistVarBool( "enable_teammate_useful_icons", true )
-	file.greyTierEnabled = GetCurrentPlaylistVarBool( "grey_tier_enabled", false )
+	file.greyTierEnabled = GetCurrentPlaylistVarBool( "grey_tier_enabled", false )	
 	file.checkWeaponDisableForLootPingPrompt = GetCurrentPlaylistVarBool( "weapon_disable_disables_loot_prompt", false )
 }
 
@@ -287,7 +287,7 @@ bool function LootGoesInPack( entity player, LootRef lootRef )
 	if ( lootRef.lootData.inventorySlotCount == 0 )
 		return false
 
-
+	
 	if( lootRef.lootData.lootType == eLootType.GADGET  )
 	{
 		return false
@@ -353,8 +353,8 @@ void function UseSelectedHealthPickupType( entity player )
 			selectedPickupType = SURVIVAL_GetBestHealthPickupType( player )
 			if ( !Survival_CanUseHealthPack( player, selectedPickupType, true ) )
 			{
-
-
+				
+				
 				int idealKitType = SURVIVAL_GetBestHealthPickupType( player, false )
 				Survival_CanUseHealthPack( player, idealKitType, true, true )
 				return
@@ -373,10 +373,10 @@ void function UseSelectedHealthPickupType( entity player )
 
 void function Survival_UseHealthPack( entity player, string ref )
 {
+	
+	
 
-
-
-
+	
 	LootData data = SURVIVAL_Loot_GetLootDataByRef( ref )
 	Remote_ServerCallFunction( "ClientCallback_Sur_UseHealthPack", data.index )
 }
@@ -468,7 +468,7 @@ void function OnDeathBoxCreated( entity ent )
 		{
 			thread CreateDeathBoxRui( ent )
 		}
-		DeathBoxTextOverride( ent )
+		DeathBoxTextOverride( ent )  
 	}
 }
 
@@ -563,7 +563,7 @@ void function CreateDeathBoxRui( entity deathBox )
 	WaitForever()
 }
 
-void function SurvivalLoot_OnSpectatorTargetChanged( entity player, entity prevTarget, entity newTarget )
+void function OnSpectatorTargetChanged( entity player, entity prevTarget, entity newTarget )
 {
 	CustomUsePrompt_Hide()
 }
@@ -643,7 +643,7 @@ string function DeathBoxTextOverride( entity ent )
 	int team          = EHI_GetTeam( ehi )
 	string playerName = GetDisplayablePlayerNameFromEHI( ehi )
 
-	if ( ent.GetCustomOwnerName() != "" )
+	if ( ent.GetCustomOwnerName() != "" ) 
 		playerName = ent.GetCustomOwnerName()
 
 	string hint = "#DEATHBOX_HINT_NAME"
@@ -867,7 +867,7 @@ void function Sur_OnUseEntGainFocus( entity ent )
 
 void function TryStreamHintForWeapon( entity ent )
 {
-	int skinGUID = 0//ent.GetItemFlavorGUID()
+	int skinGUID = ent.GetItemFlavorGUID()
 	ItemFlavor ornull weaponSkinOrNull
 	if ( IsValidItemFlavorGUID( skinGUID ) )
 	{
@@ -890,7 +890,7 @@ void function TryStreamHintForWeapon( entity ent )
 	expect ItemFlavor( weaponSkinOrNull )
 
 
-	if ( ItemFlavor_GetType( weaponSkinOrNull ) != eItemType.weapon_skin )
+	if ( ItemFlavor_GetType( weaponSkinOrNull ) != eItemType.weapon_skin ) 
 		return
 
 	asset viewModel = WeaponSkin_GetViewModel( weaponSkinOrNull )
@@ -907,7 +907,7 @@ void function Sur_OnUseEntLoseFocus( entity ent )
 	HideLootPrompts()
 
 	clGlobal.levelEnt.Signal( "ClearSwapOnUseThread" )
-
+	
 
 	if ( IsValid( ent ) && ent.GetNetworkedClassName() == "prop_survival" )
 	{
@@ -966,14 +966,14 @@ void function UpdateUseHintForEntity( entity ent, var rui = null )
 
 	bool isFocusedOnOtherWaypoint
 
-
+	
 	if( IsValid( focusedWp ) )
 	{
-		if( focusedWp.GetParent() == ent )
+		if( focusedWp.GetParent() == ent ) 
 		{
 			isFocusedOnOtherWaypoint = false
 		}
-		else if ( focusedWp != ent )
+		else if ( focusedWp != ent ) 
 		{
 			isFocusedOnOtherWaypoint = true
 		}
@@ -1004,7 +1004,7 @@ void function UpdateUseHintForEntity( entity ent, var rui = null )
 	float zOffset = ent.GetBoundingMaxs().z
 
 		if ( TitanSword_WeaponRefIsTitanSword( data.ref ) )
-			zOffset = 10
+			zOffset = 10 
 
 	RuiSetFloat( rui, "zOffset", zOffset )
 
@@ -1019,7 +1019,7 @@ void function UpdateUseHintForEntity( entity ent, var rui = null )
 
 table<string, string> function BuildAttachmentMapForPickupPrompt( entity player, LootData data, LootRef lootRef, LootActionStruct asMain )
 {
-
+	
 	if ( IsValid( lootRef.lootEnt ) && SURVIVAL_Weapon_IsAttachmentLocked( data.ref ) )
 	{
 		table<string, string> results
@@ -1039,7 +1039,7 @@ table<string, string> function BuildAttachmentMapForPickupPrompt( entity player,
 		return results
 	}
 
-
+	
 	array<entity> weapons = SURVIVAL_GetPrimaryWeaponsSorted( player )
 	entity latestPrimary  = (weapons.len() > 0) ? weapons[0] : null
 	if ( IsValid( latestPrimary ) && (asMain.action == eLootAction.SWAP) )
@@ -1049,7 +1049,7 @@ table<string, string> function BuildAttachmentMapForPickupPrompt( entity player,
 			return GetCompatibleAttachmentMap( player, latestPrimary, data.ref, true )
 	}
 
-
+	
 	return GetCompatibleAttachmentsFromInventory( player, data.ref )
 }
 
@@ -1110,7 +1110,7 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 		vector color
 		switch ( data.skinOverride )
 		{
-
+			
 			case 0:
 				color = <73, 209, 27>
 				break
@@ -1145,14 +1145,14 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 
 	RuiSetInt( rui, "lootTier", data.tier )
 	RuiSetBool( rui, "useCustomLootColor", useCustomLootColor )
-	//RuiSetBool( rui, "useAltTextColor", useAltTextColor )
+	RuiSetBool( rui, "useAltTextColor", useAltTextColor )
 
 
 	vector iconScale = data.lootType == eLootType.MAINWEAPON ? <2.0, 1.0, 0.0> : <1.0, 1.0, 0.0>
 	RuiSetFloat2( rui, "iconScale", iconScale )
 
 	RuiSetString( rui, "titleText", Localize( data.pickupString ).toupper() )
-#if DEVELOPER
+#if DEV
 		if ( file.devShowLootRefs )
 			RuiSetString( rui, "titleText", Localize( data.pickupString ).toupper() + " | " + data.ref )
 #endif
@@ -1213,11 +1213,11 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 		if ( asMain.additionalData.lootType == eLootType.ARMOR )
 		{
 			int replacePropertyValue = int( SURVIVAL_GetPlayerShieldHealthFromArmor( player ) / float(SURVIVAL_GetCharacterShieldHealthMaxForArmor( player, asMain.additionalData )) * 100)
-
+			
 
 			if ( EvolvingArmor_IsEquipmentEvolvingArmor( asMain.additionalData.ref ) )
 			{
-
+				
 
 
 
@@ -1263,15 +1263,15 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 		}
 	}
 
-	//RuiSetString( rui, "characterAction1Text", asCharacterAction1.displayString )
-	//RuiSetString( rui, "characterAction2Text", asCharacterAction2.displayString )
+	RuiSetString( rui, "characterAction1Text", asCharacterAction1.displayString )
+	RuiSetString( rui, "characterAction2Text", asCharacterAction2.displayString )
 
 	RuiSetBool( rui, "isSurvivalGadget", false )
 
 	if ( (data.lootType == eLootType.HEALTH || data.lootType == eLootType.AMMO || data.lootType == eLootType.ORDNANCE ) && lootRef.count > 1 )
 	{
 		RuiSetString( rui, "titleText", Localize( "#SURVIVAL_PICKUP_STACK_COUNT", Localize( data.pickupString ).toupper(), lootRef.count ) )
-#if DEVELOPER
+#if DEV
 			if ( file.devShowLootRefs )
 				RuiSetString( rui, "titleText", Localize( "#SURVIVAL_PICKUP_STACK_COUNT", Localize( data.pickupString ).toupper(), lootRef.count ) + " | " + data.ref )
 #endif
@@ -1379,7 +1379,7 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 	}
 
 	const int MAX_ATTACHMENT_TAGS = 6
-	const int NUM_OF_CATEGORIES_TO_BE_CONSIDERED_UNIVERSAL = 5
+	const int NUM_OF_CATEGORIES_TO_BE_CONSIDERED_UNIVERSAL = 5 
 	for ( int index = 0; index < MAX_ATTACHMENT_TAGS; index++ )
 	{
 		RuiSetString( nestedCompatibleWeaponsRui, "tagText" + (index + 1), "" )
@@ -1405,8 +1405,8 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 		RuiSetBool( rui, "isFullyKitted", SURVIVAL_Weapon_IsAttachmentLocked( data.ref ) )
 
 		int skinGUID = 0
-		//if ( IsValid( lootRef.lootEnt ) )
-		//	skinGUID = lootRef.lootEnt.GetItemFlavorGUID()
+		if ( IsValid( lootRef.lootEnt ) )
+			skinGUID = lootRef.lootEnt.GetItemFlavorGUID()
 
 		if ( IsValidItemFlavorGUID( skinGUID ) )
 		{
@@ -1429,7 +1429,7 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 
 		RuiSetString( rui, "typeText", Localize( "#LOOT_TYPE_WEAPON", Localize( generalType ) ) )
 		RuiSetString( rui, "typeTextTag", detailType )
-
+		
 
 		int attachmentCount                 = 0
 		int numSwaps                        = 0
@@ -1541,7 +1541,7 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 					if ( tagIndex < MAX_ATTACHMENT_TAGS && passiveDesc == "" )
 					{
 						if ( tagId in attachmentTagData.exceptionToTheRuleForThisWeaponClass )
-							RuiSetString( nestedCompatibleWeaponsRui, "tagText" + (tagIndex + 1), Localize( "#WEAPON_CLASS_HAS_EXCEPTION", Localize( GetStringForTagId( tagId ) ) ) )
+							RuiSetString( nestedCompatibleWeaponsRui, "tagText" + (tagIndex + 1), Localize( "#WEAPON_CLASS_HAS_EXCEPTION", Localize( GetStringForTagId( tagId ) ) ) ) 
 						else
 							RuiSetString( nestedCompatibleWeaponsRui, "tagText" + (tagIndex + 1), GetStringForTagId( tagId ) )
 
@@ -1576,8 +1576,8 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 							if ( exceptionIndex < attachmentTagData.exceptionToTheRuleForThisWeaponClass.len() - 1 && tagIndex < MAX_ATTACHMENT_TAGS - 1 )
 								exceptionName += ","
 
-
-
+							
+							
 							if ( tagIndex == 2 )
 								tagIndex = 3
 
@@ -1823,7 +1823,7 @@ void function ManageDeathBoxLoot()
 	{
 		loot = GetDeathBoxLootEnts( currentDeathBox )
 
-
+		
 		if ( currentDeathBox.GetScriptName() == BLACK_MARKET_SCRIPTNAME )
 		{
 			isBlackMarket = true
@@ -1883,7 +1883,7 @@ void function ManageVerticalLines()
 
 			if ( !Survival_IsGroundlistOpen() )
 			{
-				loot = GetSurvivalLootNearbyPos( org, VERTICAL_LINE_DIST_MAX, false, true )
+				loot = GetSurvivalLootNearbyPos( org, VERTICAL_LINE_DIST_MAX, false, true, false, player )
 
 				if ( useEntity != null )
 				{
@@ -1913,7 +1913,7 @@ void function ManageVerticalLines()
 						if ( LOOT_PING_DISTANCE > VERTICAL_LINE_DIST_MAX )
 							width *= GraphCapped( dist, VERTICAL_LINE_DIST_MAX, LOOT_PING_DISTANCE, 1.0, 2.0 )
 
-						RuiTopology_UpdatePos( file.verticalLines[v].topo, useEntity.GetOrigin() - (0.5 * rgt * width), rgt * width, <0, 0, VERTICAL_LINE_HEIGHT> )
+						RuiTopology_UpdatePos( file.verticalLines[v].topo, useEntity.GetRenderOrigin() - (0.5 * rgt * width), rgt * width, <0, 0, VERTICAL_LINE_HEIGHT> )
 						ShowVerticalLineStruct( file.verticalLines[v], useEntity )
 						RuiSetBool( file.verticalLines[v].rui, "isSelected", true )
 
@@ -1954,7 +1954,7 @@ void function ManageVerticalLines()
 				fwd = Normalize( < fwd.x, fwd.y, 0.0 > )
 				vector rgt = CrossProduct( fwd, <0, 0, 1> )
 
-				RuiTopology_UpdatePos( file.verticalLines[v].topo, item.GetOrigin() - (0.5 * rgt * VERTICAL_LINE_WIDTH / scalar), rgt * VERTICAL_LINE_WIDTH / scalar, <0, 0, VERTICAL_LINE_HEIGHT> )
+				RuiTopology_UpdatePos( file.verticalLines[v].topo, item.GetRenderOrigin() - (0.5 * rgt * VERTICAL_LINE_WIDTH / scalar), rgt * VERTICAL_LINE_WIDTH / scalar, <0, 0, VERTICAL_LINE_HEIGHT> )
 				ShowVerticalLineStruct( file.verticalLines[v], item )
 
 				file.verticalLines[v].ent = item
@@ -1983,7 +1983,7 @@ void function ShowVerticalLineStruct( VerticalLineStruct lineStruct, entity ent 
 
 	RuiSetBool( lineStruct.rui, "isSelected", false )
 	RuiSetVisible( lineStruct.rui, true )
-	RuiSetFloat3( lineStruct.rui, "worldPos", ent.GetOrigin() )
+	RuiSetFloat3( lineStruct.rui, "worldPos", ent.GetRenderOrigin() )
 	RuiSetBool( lineStruct.rui, "isVisible", true )
 
 #if LINE_COLORS
@@ -1995,7 +1995,7 @@ void function ShowVerticalLineStruct( VerticalLineStruct lineStruct, entity ent 
 
 
 
-
+		
 		if ( file.greyTierEnabled && ( data.lootType == eLootType.MAINWEAPON ) && !SURVIVAL_Weapon_IsAttachmentLocked( data.ref ) )
 			RuiSetBool( lineStruct.rui, "isGreyTier", true )
 		else
@@ -2142,9 +2142,9 @@ void function TrackLootToPing( entity player )
 
 
 			if ( player.ContextAction_IsInVehicle() )
-				loot = GetSurvivalLootNearbyPos( player.EyePosition(), LOOT_PING_DISTANCE * GetFovScalar( player ), false, false )
+				loot = GetSurvivalLootNearbyPos( player.EyePosition(), LOOT_PING_DISTANCE * GetFovScalar( player ), false, false, false, player )
 			else
-				loot = GetSurvivalLootNearbyPlayer( player, LOOT_PING_DISTANCE * GetFovScalar( player ), false, false )
+				loot = GetSurvivalLootNearbyPlayer( player, LOOT_PING_DISTANCE * GetFovScalar( player ), false, false, false )
 			file.crosshairEntity = GetEntityPlayerIsLookingAt( player, loot )
 		}
 		else
@@ -2167,7 +2167,7 @@ void function TrackLootToPing( entity player )
 
 					case eLootType.AMMO:
 						e.farRui = CreateFullscreenRui( $"ui/loot_pickup_hint_far.rpak", -1 )
-
+						
 						break
 
 					default:
@@ -2247,9 +2247,9 @@ entity function GetEntityPlayerIsLookingAt( entity player, array<entity> ents, f
 		lootItem.playerViewDot = dot
 		finalLootEnts.append( lootItem )
 
-#if DEVELOPER
-
-
+#if DEV
+			
+			
 #endif
 	}
 
@@ -2270,7 +2270,7 @@ entity function GetEntityPlayerIsLookingAt( entity player, array<entity> ents, f
 			TraceResults result = TraceLineHighDetail( playerEyePos, item.ent.GetWorldSpaceCenter(), player, TRACE_MASK_SOLID_BRUSHONLY, TRACE_COLLISION_GROUP_PLAYER )
 			if ( result.fraction == 1.0 )
 			{
-
+				
 				if ( IsValid( item.ent.GetParent() ) && item.ent.GetParent().GetScriptName() == CARE_PACKAGE_SCRIPTNAME )
 				{
 					if ( item.ent.GetParent().GetCurrentSequenceName().find( "droppod_loot_closed_idle" ) > 0 )
@@ -2317,9 +2317,9 @@ entity function GetDeathboxPlayerIsLookingAt( entity player, float degrees = 8.0
 		lootItem.playerViewDot = dot
 		finalLootEnts.append( lootItem )
 
-#if DEVELOPER
-
-
+#if DEV
+			
+			
 #endif
 	}
 
@@ -2385,12 +2385,12 @@ void function SetupSurvivalLoot( var categories )
 	string cats              = expect string( categories )
 	array<string> stringCats = split( cats, WHITESPACE_CHARACTERS )
 
-
+	
 	array<int> catTypes
 	foreach ( string cat in stringCats )
 		catTypes.append( SURVIVAL_Loot_GetLootTypeFromString( cat ) )
 
-
+	
 	if ( catTypes.contains( eLootType.ATTACHMENT ) )
 		RunUIScript( "SetupDevCommand", "Spawn All Optics", "script SpawnAllOptics()" )
 
@@ -2400,8 +2400,8 @@ void function SetupSurvivalLoot( var categories )
 		refs.append( ref )
 	refs.sort( int function( string aa, string bb ) : (lootTable)
 	{
-
-
+		
+		
 		string aaS = CreateLootDevDisplayString( lootTable[aa] )
 		string bbS = CreateLootDevDisplayString( lootTable[bb] )
 		int aaLen = aaS.len()
@@ -2589,7 +2589,7 @@ void function TryHolsterWeapon( entity player )
 	if ( file.useAltBind == -1 )
 		return
 
-
+	
 	if ( !InputIsButtonDown( file.useAltBind ) )
 		return
 
@@ -2618,19 +2618,19 @@ void function TryHolsterWeapon( entity player )
 		return
 	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 	player.ClientCommand( "weaponSelectPrimary2" )
 }
@@ -2675,9 +2675,9 @@ float function GetHighlightFillAlphaForLoot( entity lootEnt )
 {
 	int survivalInt = lootEnt.GetSurvivalInt()
 
-
-
-
+	
+	
+	
 
 	if ( !(survivalInt in s_highlightFillCache) )
 	{
@@ -2788,9 +2788,10 @@ void function ApplyEquipmentColorAndFXOverrides( entity prop )
 	}
 }
 
-#if DEVELOPER
+#if DEV
 void function DEV_ToggleLootRefs()
 {
 	file.devShowLootRefs = !(file.devShowLootRefs)
 }
 #endif
+ 

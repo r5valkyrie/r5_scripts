@@ -1,76 +1,69 @@
 global function Sh_JumpPad_Init
 
-#if CLIENT
+
 global function ServerCallback_DisplayJumpPadHint
 global function ServerCallback_HideJumpPadHint
-#endif
 
-global function JumpPad_GiveDoubleJumpp
+
+global function JumpPad_GiveDoubleJump
 global const string JUMP_PAD_SCRIPTNAME = "octane_jump_pad"
+
 global const string JUMP_PAD_UPGRADE_TARGETNAME = "jump_pad_upgrade"
 
-#if SERVER
-global function JumpPad_CreateAndDeployFromProjectile
-global function JumpPad_CreateAtLocation
-global function RemoveDoubleJump
 
-global function DEV_SetGravityCannonLaunchSequence
-global function DEV_SetGravityCannonLaunchVelocity
-global function DEV_SetGravityCannonVerticalMult
-global function GravityCannon_Create
-global function CodeCallback_GravityCannonLaunch
 
-const float JUMP_PAD_PUSH_VELOCITY = 1150.0
-const float JUMP_PAD_VERT_OVERRIDE = 2.0
 
-const float JUMP_PAD_PUSH_RADIUS = 32.0
-const float JUMP_PAD_PUSH_PROJECTILE_RADIUS = 36.0
-const float JUMP_PAD_VIEW_PUNCH_SOFT = -20.0
-const float JUMP_PAD_VIEW_PUNCH_HARD = -4.0
-const float JUMP_PAD_VIEW_PUNCH_RAND = 2.0
-const float JUMP_PAD_VIEW_PUNCH_SOFT_TITAN = 120.0
-const float JUMP_PAD_VIEW_PUNCH_HARD_TITAN = 20.0
-const float JUMP_PAD_VIEW_PUNCH_RAND_TITAN = 20.0
 
-const float JUMP_PAD_ANGLE_LIMIT = 0.70
-const float JUMP_PAD_ICON_HEIGHT_OFFSET = 48.0
-const float JUMP_PAD_ACTIVATION_TIME = 0.5
 
-const bool JUMP_PAD_USES_VORTEX_SPHERE = false
 
-const float GRAVITY_CANNON_LAUNCH_DELAY = 1.0
-float GRAVITY_CANNON_LAUNCH_VELOCITY = 1350.0
-float GRAVITY_CANNON_VERTICAL_MULTIPLIER = 1.1
-const vector GRAVITY_CANNON_LAUNCH_OFFSET = <0, 0, 50>
-asset GRAVITY_CANNON_LAUNCH_SEQUENCE = $"animseq/props/gravity_cannon/gravity_cannon/gravity_cannon_fireA.rseq"
 
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 global array<string> INVALID_GRAVITY_CANNON_PLACEABLES
 
-enum eGravityCannonState
-{
-	IDLE,
-	CHARGING,
-	READY_TO_LAUNCH,
-}
 
-#if SERVER
-struct GravityCannonData
-{
-	int cannonState = eGravityCannonState.IDLE
-	entity trigger
-	entity currentPlayer
-	entity fxEnt
-}
-#endif
 
 struct
 {
 	array<entity> jumpPads
-	#if SERVER
-	table< entity, GravityCannonData > gravityCannonDataMap
-	#endif
 }file
 
 const asset DOUBLE_JUMP_REDIRECT_TRAIL_3P = $"P_LU_Octane_trail"
@@ -79,6 +72,9 @@ const string UPGRADED_LAUNCHPLAYER_1P = "JumpPad_Upgraded_LaunchPlayer_1P"
 const string UPGRADED_LAUNCHPLAYER_3P = "JumpPad_Upgraded_LaunchPlayer_3P"
 const string JUMP_PAD_DESTRUCTION_UPGRADED = "jump_pad_upgrade_destruction"
 
+
+
+
 const asset GRAVITY_CANNON_CHARGE_FX = $"P_toy_gravity_cannon_charge"
 const TEAM_JUMPJET_DBL = $"P_team_jump_jet_ON_trails"
 const ENEMY_JUMPJET_DBL = $"P_enemy_jump_jet_ON_trails"
@@ -86,18 +82,25 @@ const asset JUMP_PAD_MODEL = $"mdl/props/octane_jump_pad/octane_jump_pad.rmdl"
 const asset JUMP_PAD_LAUNCH_FX = $"P_launchpad_launch"
 const JUMP_PAD_DESTRUCTION = "jump_pad_destruction"
 
+
 const bool GRAVITY_CANNON_DEBUG = false
 const asset GRAVITY_CANNON_MODEL = $"mdl/props/gravity_cannon/gravity_cannon_v21_base_w.rmdl"
 const float GRAVITY_CANNON_RADIUS = 70
 const float GRAVITY_CANNON_ABOVE_HEIGHT = 210
 const float GRAVITY_CANNON_BELOW_HEIGHT = 200
 
+
 void function Sh_JumpPad_Init()
 {
-	#if SERVER
-		AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_jumppad", AddNeutralJumpPad )
-		RegisterDynamicEntCleanupItem_Area_Scriptname( JUMP_PAD_SCRIPTNAME )
-	#endif
+
+
+
+
+
+	PrecacheScriptString( JUMP_PAD_SCRIPTNAME )
+
+		PrecacheScriptString( JUMP_PAD_UPGRADE_TARGETNAME )
+
 
 	PrecacheModel( JUMP_PAD_MODEL )
 	PrecacheImpactEffectTable( JUMP_PAD_DESTRUCTION )
@@ -106,29 +109,32 @@ void function Sh_JumpPad_Init()
 	RegisterSignal( "JumpPadStart" )
 	RegisterSignal( "JumpPad_GiveDoubleJump" )
 	RegisterSignal( "JumpPad_DummieInAir" )
-	RegisterSignal( "GravityCannonCancel" )
+
 
 	PrecacheParticleSystem( GRAVITY_CANNON_CHARGE_FX )
+	INVALID_GRAVITY_CANNON_PLACEABLES.append( CAUSTIC_DIRTY_BOMB_WEAPON_CLASS_NAME )
 	AddCallback_EntitiesDidLoad( OnGravCannonEntitiesLoaded )
 
-	#if SERVER
-		AddClientCommandCallback( "SetGravityCannonVelocity", ClientCommand_SetGravityCannonVelocity )
-		AddClientCommandCallback( "SetGravityCannonVerticalMult", ClientCommand_SetGravityCannonVerticalMult )
-	#endif
 
 	PrecacheParticleSystem( TEAM_JUMPJET_DBL )
 	PrecacheParticleSystem( ENEMY_JUMPJET_DBL )
 	PrecacheParticleSystem( JUMP_PAD_LAUNCH_FX )
-	PrecacheParticleSystem( DOUBLE_JUMP_REDIRECT_TRAIL_3P )
-	PrecacheParticleSystem( DOUBLE_JUMP_FX )
-	PrecacheImpactEffectTable( JUMP_PAD_DESTRUCTION_UPGRADED )
 
-	#if CLIENT
+
+		PrecacheParticleSystem( DOUBLE_JUMP_REDIRECT_TRAIL_3P )
+		PrecacheParticleSystem( DOUBLE_JUMP_FX )
+		PrecacheImpactEffectTable( JUMP_PAD_DESTRUCTION_UPGRADED )
+
+
+
 		AddCreateCallback( "trigger_cylinder_heavy", OnJumpPadCreated )
-		AddCreateCallback( "trigger_cylinder", OnGravityCannonCreated )
 		AddCallback_OnBleedoutStarted( HideDoubleJumpHint )
-		AddCreateCallback( "trigger_cylinder_heavy", OnGravityCannonCreated )
-	#endif
+
+			AddCreateCallback( "trigger_cylinder_heavy", OnGravityCannonCreated )
+
+
+
+	AddCallback_GivePlayerDoubleJump( StartGivePlayerDoubleJump )
 }
 
 string function JumpPad_GetLaunchSFX_1p( entity trigger )
@@ -136,8 +142,8 @@ string function JumpPad_GetLaunchSFX_1p( entity trigger )
 	entity jumppad = trigger.GetOwner()
 	string result = "JumpPad_LaunchPlayer_1p"
 
-	if ( IsValid( jumppad ) && jumppad.GetTargetName() == JUMP_PAD_UPGRADE_TARGETNAME )
-		result = UPGRADED_LAUNCHPLAYER_1P
+		if ( IsValid( jumppad ) && jumppad.GetTargetName() == JUMP_PAD_UPGRADE_TARGETNAME )
+			result = UPGRADED_LAUNCHPLAYER_1P
 
 	return result
 }
@@ -147,525 +153,661 @@ string function JumpPad_GetLaunchSFX_3p( entity trigger )
 	entity jumppad = trigger.GetOwner()
 	string result = "JumpPad_LaunchPlayer_3p"
 
-	if ( IsValid( jumppad ) && jumppad.GetTargetName() == JUMP_PAD_UPGRADE_TARGETNAME )
-		result = UPGRADED_LAUNCHPLAYER_3P
+		if ( IsValid( jumppad ) && jumppad.GetTargetName() == JUMP_PAD_UPGRADE_TARGETNAME )
+			result = UPGRADED_LAUNCHPLAYER_3P
 
 	return result
 }
 
-#if SERVER
-float function JumpPad_GetPushVelocity( entity owner )
-{
-	float result = JUMP_PAD_PUSH_VELOCITY
-
-	if( IsValid( owner ) && owner.HasPassive( ePassives.PAS_ULT_UPGRADE_ONE ) )
-		result *= 1.2
-
-	return result
-}
-
-void function JumpPad_ActivateLaunchLogic( entity jumpPad, entity owner )
-{
-	jumpPad.Anim_PlayOnly( "prop_octane_jump_pad_deploy_idle" )
-
-	#if JUMP_PAD_USES_VORTEX_SPHERE
-	JumpPad_CreateVortexSphereEntity( jumpPad, owner )
-	#endif
-
-	JumpPad_CreateTriggerEntity( jumpPad, owner )
-}
-
-void function AddNeutralJumpPad( entity jumpPad )
-{
-	if ( GetCurrentPlaylistVarBool( "neutral_jump_pads_enabled", true ) )
-	{
-		entity neutralJumppad = JumpPad_CreateAtLocation( jumpPad.GetOrigin(), jumpPad.GetAngles(), null )
-		if( IsValid( neutralJumppad ) )
-		{
-			neutralJumppad.SetScriptName( "jump_pad_neutral" )
-		}
-	}
-
-	jumpPad.Destroy()
-}
-
-void function OnJumpPadDamaged( entity jumpPad, var damageInfo )
-{
-	entity attacker = DamageInfo_GetAttacker( damageInfo )
-	entity weapon = DamageInfo_GetWeapon ( damageInfo )
-
-	if ( IsValid( weapon ) && weapon.HasMod( "hopup_shield_breaker" )  )
-	{
-		DamageInfo_ScaleDamage( damageInfo, 2.0 )
-		DamageInfo_AddCustomDamageType( damageInfo, DF_CRITICAL )
-	}
-
-	if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.damagedef_gas_exposure )
-	{
-	}
-}
-
-void function OnJumpPadPostDamaged( entity jumpPad, var damageInfo )
-{
-	entity attacker = DamageInfo_GetAttacker( damageInfo )
-
-	float damage = DamageInfo_GetDamage( damageInfo )
-	if ( damage <= 0 )
-		return
-
-	float newHealth = max( jumpPad.GetHealth() - damage, 0.0 )
-	if ( newHealth <= 0 )
-		DamageInfo_AddCustomDamageType( damageInfo, DF_CRITICAL )
-	else
-		DamageInfo_AddCustomDamageType( damageInfo, DF_CRITICAL )
-
-	if ( IsAlive( attacker ) && attacker.IsPlayer() )
-		attacker.NotifyDidDamage( jumpPad, DamageInfo_GetHitBox( damageInfo ),
-			DamageInfo_GetDamagePosition( damageInfo ),
-			DamageInfo_GetCustomDamageType( damageInfo ),
-			damage,
-			DamageInfo_GetDamageFlags( damageInfo ) | DF_NO_HITBEEP,
-			DamageInfo_GetHitGroup( damageInfo ),
-			DamageInfo_GetWeapon( damageInfo ),
-			DamageInfo_GetDistFromAttackOrigin( damageInfo ) )
-}
-
-void function OnJumpPadKilled( entity jumpPad, var damageInfo )
-{
-	if( jumpPad.GetSkin() == jumpPad.GetSkinIndexByName( "UPGRADED" ) )
-	{
-		PlayImpactFXTable( jumpPad.GetOrigin(), jumpPad, JUMP_PAD_DESTRUCTION_UPGRADED )
-	}
-	else
-	{
-		PlayImpactFXTable( jumpPad.GetOrigin(), jumpPad, JUMP_PAD_DESTRUCTION )
-	}
-}
-
-void function JumpPad_CreateAndDeployFromProjectile( entity projectile )
-{
-	Assert ( IsNewThread(), "Must be threaded off" )
-	if ( !IsValid( projectile ) )
-		return
-
-	vector origin  = projectile.GetOrigin()
-	vector angles  = projectile.GetAngles()
-	entity owner   = projectile.GetOwner()
-	entity _parent = projectile.GetParent()
-
-	projectile.Destroy()
-
-	entity jumpPad = JumpPad_CreateAtLocation( origin, angles, owner, false )
-	jumpPad.SetMaxHealth( 200 )
-	jumpPad.SetHealth( 200 )
-	jumpPad.SetTakeDamageType( DAMAGE_YES )
-	jumpPad.SetCanBeMeleed( true )
-	jumpPad.SetScriptName( JUMP_PAD_SCRIPTNAME )
-	jumpPad.SetTouchTriggers( true )
-	AddEntityCallback_OnKilled( jumpPad, OnJumpPadKilled )
-	AddEntityCallback_OnDamaged( jumpPad, OnJumpPadDamaged )
-	AddEntityCallback_OnPostDamaged( jumpPad, OnJumpPadPostDamaged )
-
-	if( IsValid( owner ) )
-	{
-	}
-
-	if ( IsValid( _parent ) )
-		jumpPad.SetParent( _parent, "", true, 0 )
-
-	Highlight_SetOwnedHighlight( jumpPad, "sp_friendly_hero" )
-	Highlight_SetFriendlyHighlight( jumpPad, "sp_friendly_hero" )
-
-	EmitSoundOnEntity( jumpPad, "JumpPad_Deploy_Unpack" )
-
-	jumpPad.Anim_PlayOnly( "prop_octane_jump_pad_deploy" )
-	jumpPad.Anim_DisableUpdatePosition()
-	WaittillAnimDone( jumpPad )
-
-	if ( !IsValid( jumpPad ) )
-		return
-
-	JumpPad_ActivateLaunchLogic( jumpPad, owner )
-}
-
-entity function JumpPad_CreateAtLocation( vector origin, vector angles, entity owner, bool activateImmediately = true )
-{
-	entity jumpPad = CreatePropScript( JUMP_PAD_MODEL, origin, angles, SOLID_CYLINDER )
-
-	if( PlayerHasPassive( owner, ePassives.PAS_ULT_UPGRADE_THREE ) )
-	{
-		jumpPad.SetSkin( jumpPad.GetSkinIndexByName( "UPGRADED" ) )
-		SetTargetName( jumpPad, JUMP_PAD_UPGRADE_TARGETNAME )
-	}
-	file.jumpPads.append( jumpPad )
-
-	if ( IsValid( owner ) )
-	{
-		SetTeam( jumpPad, owner.GetTeam() )
-		jumpPad.SetOwner( owner )
-		thread TrapDestroyOnRoundEnd( owner, jumpPad )
-		AddToUltimateRealm( owner, jumpPad )
-	}
-
-	jumpPad.DisableHibernation()
-	jumpPad.SetDamageNotifications( false )
-	jumpPad.SetDeathNotifications( false )
-	jumpPad.SetArmorType( ARMOR_TYPE_HEAVY )
-	jumpPad.SetBlocksRadiusDamage( false )
-	jumpPad.SetCanBeMeleed( false )
-	jumpPad.Highlight_Enable()
-	jumpPad.SetPhysics( MOVETYPE_FLY )
-	jumpPad.kv.collisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS
-	jumpPad.SetIgnorePredictedTriggerTypes( TT_JUMP_PAD )
-	jumpPad.e.canBurn = true
-
-	SetVisibleEntitiesInConeQueriableEnabled( jumpPad, false )
-	AddSonarDetectionForPropScript( jumpPad )
-	AddEMPDamageDevice( jumpPad )
-
-	if ( activateImmediately )
-		JumpPad_ActivateLaunchLogic( jumpPad, owner )
-
-	return jumpPad
-}
-
-void function JumpPad_CreateTriggerEntity( entity jumpPad, entity owner )
-{
-	Assert( IsValid( jumpPad ) )
-
-	vector origin = jumpPad.GetOrigin()
-	vector angles = jumpPad.GetAngles()
-
-	float radiusToUse = JUMP_PAD_PUSH_RADIUS
-	if ( jumpPad.HasKey( "use_radius_override" ) && jumpPad.kv.use_radius_override )
-	{
-		if ( jumpPad.HasKey( "radius_override" ) && (float( jumpPad.kv.radius_override ) > 0) )
-		{
-			radiusToUse = float( jumpPad.GetValueForKey( "radius_override" ) )
-		}
-		else
-		{
-			Warning( "!!! WARNING !!! Jump pad has use_radius_override set, but no radius_override specified! " + jumpPad.GetOrigin() )
-		}
-	}
-
-	entity trigger = CreateEntity( "trigger_cylinder_heavy" )
-	trigger.SetOwner( jumpPad )
-	trigger.SetRadius( radiusToUse )
-	trigger.SetAboveHeight( 32 )
-	trigger.SetOrigin( origin )
-	trigger.SetAngles( angles )
-	trigger.SetTriggerType( TT_JUMP_PAD )
-	trigger.SetLaunchScaleValues( JumpPad_GetPushVelocity( owner ), JUMP_PAD_VERT_OVERRIDE )
-	trigger.SetViewPunchValues( JUMP_PAD_VIEW_PUNCH_SOFT, JUMP_PAD_VIEW_PUNCH_HARD, JUMP_PAD_VIEW_PUNCH_RAND )
-	trigger.kv.triggerFilterNonCharacter = "1"
-	trigger.kv.triggerFilterNpc = "all"
-
-	trigger.SetParent( jumpPad, "", false, 0.0 )
-
-	DispatchSpawn( trigger )
-
-	trigger.SetAbsOrigin( origin )
-	trigger.SetAbsAngles( angles )
-	trigger.SetEnterCallback( JumpPad_OnTouchTrigger_Server )
-
-	if ( IsValid( owner ) )
-		AddToUltimateRealm( owner, trigger )
-
-	if ( IsTooCloseToSkydiveLauncher( trigger ) )
-		trigger.Disable()
-}
-
-void function JumpPad_OnTouchTrigger_Server( entity trigger, entity ent )
-{
-	#if !DEVELOPER
-	if ( !IsValid( trigger ) )
-		return
-	#endif
-
-	entity jumpPad = trigger.GetOwner()
-	if ( !IsValid( jumpPad ) )
-		return
-
-	thread JumpPad_PlayLaunchAnim( jumpPad )
-	int fxId = GetParticleSystemIndex( JUMP_PAD_LAUNCH_FX )
-	StartParticleEffectOnEntity( jumpPad, fxId, FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
-
-	if ( ent.IsPlayer() )
-	{
-		ent.Signal( "JumpPad_GiveDoubleJump" )
-
-		thread JumpJetsWhileAirborne( ent, trigger, false )
-
-		entity ownerPlayer = jumpPad.GetOwner()
-
-	}
-
-	else if ( ent.IsPlayerDecoy() )
-	{
-		EmitSoundOnEntity( ent, JumpPad_GetLaunchSFX_3p( trigger ) )
-		EmitSoundOnEntity( ent, "JumpPad_AirborneMvmt_3p" )
-		thread JumpPad_EndSoundGeneric( ent, "JumpPad_AirborneMvmt_3p" )
-	}
-	else
-	{
-		EmitSoundOnEntity( ent, JumpPad_GetLaunchSFX_3p( trigger ) )
-	}
-}
-
-void function JumpPad_PlayLaunchAnim( entity jumpPad )
-{
-	jumpPad.Anim_Stop()
-	jumpPad.EndSignal( "OnDestroy" )
-	jumpPad.Signal( "ScriptAnimStop" )
-	jumpPad.EndSignal( "ScriptAnimStop" )
-
-	jumpPad.Anim_PlayOnly( "prop_octane_jump_pad_deploy_trans" )
-	WaittillAnimDone( jumpPad )
-
-	jumpPad.Anim_PlayOnly( "prop_octane_jump_pad_deploy_idle" )
-}
-
-void function RemoveDoubleJump ( entity player )
-{
-	Remote_CallFunction_Replay( player, "ServerCallback_HideJumpPadHint" )
-
-	if( HasPlayerSettingMod( player, "enable_doublejump_aircontrol" ) )
-	{
-		TakePlayerSettingsMods( player, [ "enable_doublejump_aircontrol" ] )
-		if( HasPlayerMovementEventCallback( player, ePlayerMovementEvents.DOUBLE_JUMP, PlayUpgradedDoubleJumpFx ) )
-		{
-			RemovePlayerMovementEventCallback( player, ePlayerMovementEvents.DOUBLE_JUMP, PlayUpgradedDoubleJumpFx  )
-		}
-	}
-	else
-		TakePlayerSettingsMods( player, [ "enable_doublejump" ] )
-}
-
-void function PlayUpgradedDoubleJumpFx( entity player )
-{
-	int vent_CenterAttachID_3P = player.LookupAttachment( "vent_Center" )
-	StartParticleEffectOnEntity( player, GetParticleSystemIndex( DOUBLE_JUMP_FX ), FX_PATTACH_POINT_FOLLOW, vent_CenterAttachID_3P )
-}
-
-void function JumpPad_EndSoundGeneric( entity ent, string soundName )
-{
-	if ( !IsValid( ent ) )
-		return
-
-	ent.EndSignal( "OnDeath" )
-	ent.EndSignal( "OnDestroy" )
-
-	OnThreadEnd(
-		function() : ( ent, soundName )
-		{
-			if ( IsValid( ent ) )
-				StopSoundOnEntity( ent, soundName )
-		}
-	)
-
-	WaitFrame()
-
-	while( IsValid( ent ) && !ent.IsOnGround() )
-	{
-		WaitFrame()
-	}
-}
-
-void function JumpJetsWhileAirborne( entity player, entity trigger, bool gravityCannonLaunch )
-{
-	if ( !IsPilot( player ) )
-		return
-
-	player.EndSignal( "OnDeath" )
-	player.EndSignal( "OnDestroy" )
-	player.Signal( "JumpPadStart" )
-	player.EndSignal( "JumpPadStart" )
-	player.EnableSlowMo()
-
-	if( gravityCannonLaunch )
-	{
-		EmitSoundOnEntityOnlyToPlayer( player, player, "GravityCannon_Travel_1p" )
-		EmitSoundOnEntityExceptToPlayer( player, player, "GravityCannon_Travel_3p" )
-	}
-	else
-	{
-		EmitSoundOnEntityExceptToPlayer( player, player, JumpPad_GetLaunchSFX_3p( trigger ) )
-		EmitSoundOnEntityExceptToPlayer( player, player, "JumpPad_AirborneMvmt_3p" )
-	}
-
-	if ( PlayerHasPassive( player, ePassives.PAS_OCTANE ) )
-	{
-		PlayBattleChatterLineToSpeakerAndTeamWithDebounceTime( player, "bc_octane_jumppad_launch", 30.0, 60.0 )
-	}
-
-	array<entity> jumpJetFXs
-	array<string> attachments = [ "vent_left", "vent_right" ]
-
-	OnThreadEnd(
-		function() : ( jumpJetFXs, player, gravityCannonLaunch )
-		{
-			if ( IsValid( player ) )
-			{
-				player.DisableSlowMo()
-				if ( gravityCannonLaunch )
-				{
-					StopSoundOnEntity( player, "GravityCannon_Travel_1p" )
-					StopSoundOnEntity( player, "GravityCannon_Travel_3p" )
-				}
-				else
-					StopSoundOnEntity( player, "JumpPad_AirborneMvmt_3p" )
-			}
-		}
-	)
-
-	WaitFrame()
-
-	wait 0.1
-
-	while( !player.IsOnGround() )
-	{
-		WaitFrame()
-	}
-}
-
-#if JUMP_PAD_USES_VORTEX_SPHERE
-void function JumpPad_CreateVortexSphereEntity( entity jumpPad, entity owner )
-{
-	Assert( IsValid( jumpPad ) )
-
-	entity vortexSphere = CreateEntity( "vortex_sphere" )
-
-	vortexSphere.kv.spawnflags = SF_BLOCK_OWNER_WEAPON
-	vortexSphere.kv.enabled = 0
-	vortexSphere.kv.radius = JUMP_PAD_PUSH_PROJECTILE_RADIUS
-	vortexSphere.kv.height = JUMP_PAD_PUSH_PROJECTILE_RADIUS
-	vortexSphere.kv.bullet_fov = 360
-	vortexSphere.kv.physics_pull_strength = 0
-	vortexSphere.kv.physics_side_dampening = 0
-	vortexSphere.kv.physics_fov = 360
-	vortexSphere.kv.physics_max_mass = 0
-	vortexSphere.kv.physics_max_size = 0
-
-	vortexSphere.SetAngles( <0, 0, 0> )
-	vortexSphere.SetOrigin( jumpPad.GetOrigin() )
-	vortexSphere.SetMaxHealth( 100 )
-	vortexSphere.SetHealth( 100 )
-
-	vortexSphere.RemoveFromAllRealms()
-	vortexSphere.AddToOtherEntitysRealms( jumpPad )
-
-	DispatchSpawn( vortexSphere )
-
-	Vortex_ConvertToVortexTriggerArea( vortexSphere )
-	SetCallback_VortexSphereTriggerOnBulletHit( vortexSphere, JumpPad_OnBulletHitVortexTrigger )
-	SetCallback_VortexSphereTriggerOnProjectileHit( vortexSphere, JumpPad_OnProjectileHitVortexTrigger )
-
-	VortexFireEnable( vortexSphere )
-	vortexSphere.SetInvulnerable()
-	vortexSphere.SetOwner( jumpPad )
-	vortexSphere.SetParent( jumpPad, "", true, 0.0 )
-	if ( IsValid( owner ) )
-		AddToUltimateRealm( owner, vortexSphere )
-}
-
-void function JumpPad_OnBulletHitVortexTrigger( entity weapon, entity vortexSphere, var damageInfo )
-{
-}
-
-void function JumpPad_OnProjectileHitVortexTrigger( entity weapon, entity vortexSphere, entity attacker, entity projectile, vector contactPos )
-{
-	entity jumpPad = vortexSphere.GetOwner()
-
-	if ( !IsValid( jumpPad ) )
-		return
-
-	if ( !JumpPad_ShouldLaunchProjectile( projectile ) )
-		return
-
-	vector origin = jumpPad.GetOrigin()
-
-	float timeSinceLastBounce = Time() - projectile.proj.lastVortexBounceTime
-	if ( projectile.proj.isPlanted || timeSinceLastBounce < GetCurrentPlaylistVarFloat( "jump_pad_debounce_time", 1.0 ) )
-		return
-
-	vector posToTarget = Normalize( projectile.GetOrigin() - origin )
-
-	vector velocity = projectile.GetVelocity()
-	velocity.z = 0
-	velocity = Normalize( velocity )
-	vector pushNormal = Normalize( (<0, 0, 1.25> + velocity) )
-
-	JumpPad_PushProjectileAway( projectile, pushNormal * JumpPad_GetPushVelocity( jumpPad.GetOwner() ) )
-	EmitSoundOnEntity( projectile, JumpPad_GetLaunchSFX_3p( vortexSphere ) )
-	int fxId = GetParticleSystemIndex( JUMP_PAD_LAUNCH_FX )
-	StartParticleEffectOnEntity( jumpPad, fxId, FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
-
-	projectile.proj.lastVortexBounceTime = Time()
-}
-
-bool function JumpPad_ShouldLaunchProjectile( entity projectile )
-{
-	string weaponClassName = projectile.ProjectileGetWeaponClassName()
-	if ( weaponClassName == "mp_weapon_deployable_medic" )
-		return false
-
-	bool isGrenade = IsABaseGrenade( projectile )
-	return isGrenade
-}
-#endif
-
-bool function JumpPad_EntityTriggerFilter( entity target )
-{
-	if ( target.GetNetworkedClassName() == "phys_bone_follower" )
-		return false
-
-	if ( target.GetNetworkedClassName() == "prop_death_box" )
-		return false
-
-	if ( target.GetNetworkedClassName() == "prop_dynamic" )
-		return false
-
-	if( target.GetNetworkedClassName() == "prop_dynamic_lightweight" )
-		return false
-
-	if ( target.GetNetworkedClassName() == "prop_script" )
-		return false
-
-	if ( target.GetNetworkedClassName() == "func_brush" )
-		return false
-
-	if ( target.GetNetworkedClassName() == "func_brush_lightweight" )
-		return false
-
-	if ( target.GetNetworkedClassName() == "trace_volume" )
-		return false
-
-	if( target.GetNetworkedClassName() == "prop_material_harvester" )
-		return false
-
-	if ( GetEditorClass( target ) == "control_flag_prop" )
-		return false
-
-	if ( IsDropship( target ) )
-		return false
-
-	return true
-}
-
-void function JumpPad_PushProjectileAway( entity projectile, vector velocity )
-{
-	Assert ( projectile.IsProjectile() )
-
-	if ( projectile.proj.isPlanted )
-		return
-
-	vector result = velocity
-	projectile.SetVelocity( result )
-}
-#endif
-
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function ServerCallback_DisplayJumpPadHint()
 {
 	thread _DisplayJumpPadHint()
@@ -708,9 +850,10 @@ void function _DisplayJumpPadHint()
 		WaitFrame()
 	}
 }
-#endif
 
-void function JumpPad_GiveDoubleJumpp( entity player )
+
+
+void function JumpPad_GiveDoubleJump( entity player )
 {
 	Assert( player.IsPlayer() )
 
@@ -729,71 +872,82 @@ void function JumpPad_GiveDoubleJumpp( entity player )
 
 	if ( !player.IsOnGround() )
 	{
-		ArrayRemoveInvalid( file.jumpPads )
-		float maxDistSqr = 100 * 100
-		entity closestPad = null
-		float closestDistSqr = maxDistSqr
-		vector playerPos = player.GetOrigin()
-		foreach( pad in file.jumpPads )
-		{
-			float distToPlayerSqr = DistanceSqr( playerPos, pad.GetOrigin() )
-			if( distToPlayerSqr > closestDistSqr )
-				continue
-			closestDistSqr = distToPlayerSqr
-			closestPad = pad
-		}
-		entity trailFx = null
-		if( IsValid( closestPad ) && closestPad.GetSkin() == closestPad.GetSkinIndexByName( "UPGRADED" ) )
-		{
-			GivePlayerSettingsMods( player, [ "enable_doublejump_aircontrol" ] )
-			#if SERVER
-			if( !HasPlayerMovementEventCallback( player, ePlayerMovementEvents.DOUBLE_JUMP, PlayUpgradedDoubleJumpFx ) )
-			{
-				AddPlayerMovementEventCallback( player, ePlayerMovementEvents.DOUBLE_JUMP, PlayUpgradedDoubleJumpFx )
-			}
-			int vent_CenterAttachID_3P = player.LookupAttachment( "vent_Center" )
-			trailFx = StartParticleEffectOnEntity_ReturnEntity( player, GetParticleSystemIndex( DOUBLE_JUMP_REDIRECT_TRAIL_3P ), FX_PATTACH_POINT_FOLLOW, vent_CenterAttachID_3P )
-			#endif
-		}
-		else
-			GivePlayerSettingsMods( player, [ "enable_doublejump" ] )
 
-		#if SERVER
-			Remote_CallFunction_Replay( player, "ServerCallback_DisplayJumpPadHint" )
-			AddPlayerMovementEventCallback( player, ePlayerMovementEvents.TOUCH_GROUND, OnPlayerTouchGround )
-		#endif
+
+			
+			
+			ArrayRemoveInvalid( file.jumpPads )
+			float maxDistSqr = 100 * 100
+			entity closestPad = null
+			float closestDistSqr = maxDistSqr
+			vector playerPos = player.GetOrigin()
+			foreach( pad in file.jumpPads )
+			{
+				float distToPlayerSqr = DistanceSqr( playerPos, pad.GetOrigin() )
+				if( distToPlayerSqr > closestDistSqr )
+					continue
+				closestDistSqr = distToPlayerSqr
+				closestPad = pad
+			}
+			entity trailFx = null
+			if( IsValid( closestPad ) && closestPad.GetSkin() == closestPad.GetSkinIndexByName( "UPGRADED" ) ) 
+			{
+				GivePlayerSettingsMods( player, [ "enable_doublejump_aircontrol" ] )
+
+
+
+
+
+
+
+
+			}
+			else
+
+				GivePlayerSettingsMods( player, [ "enable_doublejump" ] )
+
+
+
+
+
 
 		OnThreadEnd(
+
 			function() : ( player, trailFx )
+
+
+
 			{
 				if ( IsValid( player ) )
 				{
-					#if SERVER
-					if( trailFx != null )
-					{
-						EffectStop( trailFx )
-						trailFx.Destroy()
-					}
-					#endif
 
-					if( player.GetPlayerSettingsMods().contains( "enable_doublejump_aircontrol" ) )
-					{
-						TakePlayerSettingsMods( player, [ "enable_doublejump_aircontrol" ] )
-						#if SERVER
-						if( HasPlayerMovementEventCallback( player, ePlayerMovementEvents.DOUBLE_JUMP, PlayUpgradedDoubleJumpFx ) )
+
+
+
+
+
+
+
+
+						if( player.GetPlayerSettingsMods().contains( "enable_doublejump_aircontrol" ) ) 
 						{
-							RemovePlayerMovementEventCallback( player, ePlayerMovementEvents.DOUBLE_JUMP, PlayUpgradedDoubleJumpFx  )
-						}
-						#endif
-					}
-					else
-						TakePlayerSettingsMods( player, [ "enable_doublejump" ] )
+							TakePlayerSettingsMods( player, [ "enable_doublejump_aircontrol" ] )
 
-					#if SERVER
-						player.TouchGround()
-						Remote_CallFunction_Replay( player, "ServerCallback_HideJumpPadHint" )
-						RemovePlayerMovementEventCallback( player, ePlayerMovementEvents.TOUCH_GROUND, OnPlayerTouchGround )
-					#endif
+
+
+
+
+
+						}
+						else
+
+							TakePlayerSettingsMods( player, [ "enable_doublejump" ] )
+
+
+
+
+
+
 				}
 			}
 		)
@@ -805,24 +959,14 @@ void function JumpPad_GiveDoubleJumpp( entity player )
 	}
 }
 
-#if SERVER
-void function OnPlayerTouchGround( entity player )
-{
-	player.Signal( "JumpPad_GiveDoubleJump" )
-}
 
-void function GravityCannon_OnPlayerTouchGround( entity player )
-{
-	if( !IsValid(player) )
-		return
 
-	RemovePlayerMovementEventCallback( player, ePlayerMovementEvents.TOUCH_GROUND, GravityCannon_OnPlayerTouchGround )
-	player.kv.airSpeed = player.GetPlayerSettingFloat( "airSpeed" )
-	player.kv.airAcceleration = player.GetPlayerSettingFloat( "airAcceleration" )
-}
-#endif
 
-#if CLIENT
+
+
+
+
+
 void function OnJumpPadCreated( entity trigger )
 {
 	if ( trigger.GetTriggerType() != TT_JUMP_PAD )
@@ -836,7 +980,10 @@ void function OnJumpPadCreated( entity trigger )
 
 	trigger.SetClientEnterCallback( JumpPad_OnTouchTrigger_Client )
 
+
+	
 	file.jumpPads.append( trigger.GetOwner() )
+
 }
 
 void function JumpPad_OnTouchTrigger_Client( entity trigger, entity player )
@@ -855,452 +1002,192 @@ void function JumpPad_OnTouchTrigger_Client( entity trigger, entity player )
 
 	Chroma_UsedJumpPad()
 }
-#endif
+
 
 void function StartGivePlayerDoubleJump(entity player)
 {
+	thread JumpPad_GiveDoubleJump( player )
 }
 
-#if SERVER
-void function GravityCannon_OnTouchTrigger_Server( entity trigger, entity ent )
-{
-	if ( !IsValid( trigger ) )
-		return
-
-	if ( !ent.IsPlayer() && !ent.IsPlayerDecoy() )
-		return
-
-	entity launcher = trigger.GetParent()
-	if ( IsValid( launcher ) && launcher.GetModelName().tolower() == GRAVITY_CANNON_MODEL.tolower() )
-	{
-		int attachmentID = launcher.LookupAttachment( "fx_center" )
-		StartParticleEffectOnEntity( launcher, GetParticleSystemIndex( GRAVITY_CANNON_CHARGE_FX ), FX_PATTACH_POINT_FOLLOW, attachmentID )
-
-		EmitSoundOnEntity( trigger, "GravityCannon_Charge" )
-
-		launcher.Anim_Play(  GRAVITY_CANNON_LAUNCH_SEQUENCE )
-	}
-	else if ( GRAVITY_CANNON_DEBUG )
-	{
-		printt( "\nWARNING: COULD NOT FIND A LAUNCHER MODEL FOR GRAVITY CANNON LAUNCH SEQUENCE.\n" )
-	}
-}
-
-void function GravityCannon_OnLeaveTrigger_Server( entity trigger, entity ent )
-{
-}
-
-void functionref( entity trigger, entity ent ) function CreateOnEnterGravityCannonTriggerFunc( entity cannon )
-{
-	return void function( entity trigger, entity ent ) : ( cannon )
-	{
-		if ( !(cannon in file.gravityCannonDataMap) )
-			return
-
-		GravityCannonData data = file.gravityCannonDataMap[ cannon ]
-		OnEnterGravityCannonTrigger( trigger, ent, cannon, data )
-	}
-}
-
-void functionref( entity trigger, entity ent ) function CreateOnLeaveGravityCannonTriggerFunc( entity cannon )
-{
-	return void function( entity trigger, entity ent ) : ( cannon )
-	{
-		if ( !(cannon in file.gravityCannonDataMap) )
-			return
-
-		GravityCannonData data = file.gravityCannonDataMap[ cannon ]
-		OnLeaveGravityCannonTrigger( trigger, ent, cannon, data )
-	}
-}
-
-void function OnEnterGravityCannonTrigger( entity trigger, entity ent, entity cannon, GravityCannonData data )
-{
-	if ( GRAVITY_CANNON_DEBUG )
-		printt( "OnEnterGravityCannonTrigger called by: " + ent )
-
-	if ( !IsValid( ent ) )
-	{
-		if ( GRAVITY_CANNON_DEBUG )
-			printt( "GravityCannon: ent not valid, returning" )
-		return
-	}
-
-	if ( !ent.IsPlayer() )
-	{
-		if ( GRAVITY_CANNON_DEBUG )
-			printt( "GravityCannon: ent is not player" )
-		if ( !ent.IsPlayerDecoy() )
-			return
-	}
-
-	if ( !IsValid( cannon ) )
-	{
-		if ( GRAVITY_CANNON_DEBUG )
-			printt( "GravityCannon: cannon not valid, returning" )
-		return
-	}
-
-	if ( GRAVITY_CANNON_DEBUG )
-		printt( "GravityCannon: Passed basic checks, ent.IsPlayer() = " + ent.IsPlayer() )
-
-	if ( ent.IsPlayerDecoy() )
-	{
-		if ( GRAVITY_CANNON_DEBUG )
-			printt( "GravityCannon: Is decoy, launching immediately" )
-
-		vector launchDir = AnglesToForward( cannon.GetAngles() ) * -1
-		vector velocity = launchDir * GRAVITY_CANNON_LAUNCH_VELOCITY
-		velocity.z += GRAVITY_CANNON_LAUNCH_VELOCITY * GRAVITY_CANNON_VERTICAL_MULTIPLIER
-		ent.SetVelocity( velocity )
-
-		EmitSoundOnEntity( cannon, "GravityCannon_Launch" )
-		EmitSoundOnEntity( ent, "GravityCannon_Travel_3p" )
-		thread JumpPad_EndSoundGeneric( ent, "GravityCannon_Travel_3p" )
-		thread JumpJetsWhileAirborne( ent, trigger, true )
-		return
-	}
-
-	if ( GRAVITY_CANNON_DEBUG )
-		printt( "GravityCannon: Current state = " + data.cannonState )
-
-	if ( data.cannonState != eGravityCannonState.IDLE )
-	{
-		if ( GRAVITY_CANNON_DEBUG )
-			printt( "GravityCannon: Cannon not idle, returning" )
-		return
-	}
-
-	if ( GRAVITY_CANNON_DEBUG )
-		printt( "GravityCannon: Starting charge-up thread" )
 
-	thread TryGravityCannonChargeUp( cannon, ent )
-}
 
-void function OnLeaveGravityCannonTrigger( entity trigger, entity ent, entity cannon, GravityCannonData data )
-{
-	if ( !IsValid( ent ) || !ent.IsPlayer() )
-		return
 
-	if ( !IsValid( cannon ) )
-		return
 
-	if ( !(cannon in file.gravityCannonDataMap) )
-		return
 
-	data = file.gravityCannonDataMap[ cannon ]
 
-	array<entity> touchingPlayers
-	foreach ( entity touchEnt in trigger.GetTouchingEntities() )
-	{
-		if ( touchEnt.IsPlayer() )
-			touchingPlayers.append( touchEnt )
-	}
 
-	if ( touchingPlayers.len() > 0 )
-	{
-		if ( GRAVITY_CANNON_DEBUG )
-			printt( "GravityCannon: Other players still in trigger, not canceling" )
-		return
-	}
 
-	if ( data.cannonState == eGravityCannonState.CHARGING && data.currentPlayer == ent )
-	{
-		if ( GRAVITY_CANNON_DEBUG )
-			printt( "GravityCannon: Player left trigger, canceling charge" )
 
-		cannon.Signal( "GravityCannonCancel" )
-	}
-}
 
-void function TryGravityCannonChargeUp( entity cannon, entity player )
-{
-	if ( !IsValid( cannon ) )
-		return
 
-	if ( !IsValid( player ) || !IsAlive( player ) )
-		return
 
-	EndSignal( cannon, "OnDeath" )
-	EndSignal( cannon, "OnDestroy" )
-	EndSignal( cannon, "GravityCannonCancel" )
-	player.EndSignal( "OnDeath" )
-	player.EndSignal( "OnDestroy" )
-
-	if ( !(cannon in file.gravityCannonDataMap) )
-		return
 
-	GravityCannonData data
-	data = file.gravityCannonDataMap[ cannon ]
 
-	data.cannonState = eGravityCannonState.CHARGING
-	data.currentPlayer = player
-	file.gravityCannonDataMap[ cannon ] <- data
-
-	if ( GRAVITY_CANNON_DEBUG )
-		printt( "GravityCannon: Starting charge up" )
-
-	int attachmentID = cannon.LookupAttachment( "fx_center" )
-	int fxIndex = GetParticleSystemIndex( GRAVITY_CANNON_CHARGE_FX )
-	data.fxEnt = StartParticleEffectOnEntity_ReturnEntity( cannon, fxIndex, FX_PATTACH_POINT_FOLLOW, attachmentID )
-	file.gravityCannonDataMap[ cannon ] <- data
-
-	EmitSoundOnEntity( cannon, "GravityCannon_Charge" )
-	cannon.Anim_Play( GRAVITY_CANNON_LAUNCH_SEQUENCE )
-
-	OnThreadEnd(
-		function() : ( cannon )
-		{
-			if ( !(cannon in file.gravityCannonDataMap) )
-				return
-
-			GravityCannonData data
-			data = file.gravityCannonDataMap[ cannon ]
-
-			if ( IsValid( data.fxEnt ) )
-				data.fxEnt.Destroy()
-
-			StopSoundOnEntity( cannon, "GravityCannon_Charge" )
-
-			data.currentPlayer = null
-			data.cannonState = eGravityCannonState.IDLE
-
-			file.gravityCannonDataMap[ cannon ] <- data
-
-			if ( GRAVITY_CANNON_DEBUG )
-				printt( "GravityCannon: Reset to IDLE state" )
-		}
-	)
-
-	PIN_Interact( player, "gravity_cannon", cannon.GetOrigin() )
-
-	wait GRAVITY_CANNON_LAUNCH_DELAY
-
-	if ( !IsValid( player ) || !IsAlive( player ) )
-		return
-
-	if ( GRAVITY_CANNON_DEBUG )
-		printt( "GravityCannon: Launching player!" )
-
-	if ( IsValid( data.fxEnt ) )
-	{
-		data.fxEnt.Destroy()
-		data.fxEnt = null
-	}
-
-	vector launchDir = AnglesToForward( cannon.GetAngles() ) * -1
-	vector velocity = launchDir * GRAVITY_CANNON_LAUNCH_VELOCITY
-	velocity.z += GRAVITY_CANNON_LAUNCH_VELOCITY * GRAVITY_CANNON_VERTICAL_MULTIPLIER
-
-	if ( GRAVITY_CANNON_DEBUG )
-		printt( "GravityCannon: launchDir = " + launchDir + ", velocity = " + velocity )
-
-	player.SetVelocity( velocity )
-
-	player.kv.airSpeed = 0.01
-	player.kv.airAcceleration = 1
-	AddPlayerMovementEventCallback( player, ePlayerMovementEvents.TOUCH_GROUND, GravityCannon_OnPlayerTouchGround )
-
-	EmitSoundOnEntity( cannon, "GravityCannon_Launch" )
-	thread JumpJetsWhileAirborne( player, data.trigger, true )
-
-	wait 0.5
-
-	if ( GRAVITY_CANNON_DEBUG )
-		printt( "GravityCannon: Launch complete" )
-}
-
-entity function GravityCannon_Create( vector origin, vector angles )
-{
-	entity trigger = CreateEntity( "trigger_cylinder" )
-	SetTargetName( trigger, "gravity_cannon_trigger" )
-	trigger.SetScriptName( "gravity_cannon" )
-	trigger.SetRadius( GRAVITY_CANNON_RADIUS )
-	trigger.SetAboveHeight( GRAVITY_CANNON_ABOVE_HEIGHT )
-	trigger.SetBelowHeight( GRAVITY_CANNON_BELOW_HEIGHT )
-	trigger.SetOrigin( origin )
-	trigger.SetAngles( angles )
-	trigger.kv.triggerFilterPlayer = "all"
-
-	if ( GRAVITY_CANNON_DEBUG )
-	{
-		DebugDrawCylinder( origin, AnglesCompose( angles, < 90, 0, 0 > ), GRAVITY_CANNON_RADIUS, -GRAVITY_CANNON_ABOVE_HEIGHT, 0, 255, 0, true, 10000 )
-		DebugDrawCylinder( origin, AnglesCompose( angles, < 90, 0, 0 > ), GRAVITY_CANNON_RADIUS, GRAVITY_CANNON_BELOW_HEIGHT, 0, 255, 0, true, 10000 )
-		DebugDrawText( origin + <0,0,80>, "GRAVITY CANNON", false, 10000 )
-	}
-
-	TraceResults traceResultsDown = TraceLine( origin + <0, 0, 50>, origin + <0, 0, -150>, [trigger], TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
-	entity cannonEnt = traceResultsDown.hitEnt
-
-	if ( IsValid( cannonEnt ) )
-	{
-		if ( cannonEnt.GetClassName() == "phys_bone_follower" && IsValid( cannonEnt.GetOwner() ) )
-			cannonEnt = cannonEnt.GetOwner()
-
-		if ( cannonEnt.GetModelName().tolower() == GRAVITY_CANNON_MODEL.tolower() )
-		{
-			cannonEnt.SetScriptName( GetEnumString( "eSkydiveLauncherType", eSkydiveLauncherType.GRAVITY_CANNON ) )
-		}
-		else if ( GRAVITY_CANNON_DEBUG )
-		{
-			printt( "\nGRAVITY CANNON: NOT THE EXPECTED MODEL; " + cannonEnt.GetModelName() + ": " + cannonEnt +"\n" )
-			DebugDrawSphere( traceResultsDown.endPos, 4, 200, 0, 0, true, 10000 )
-			DebugDrawSphere( traceResultsDown.endPos, 1000, 200, 0, 0, true, 10000 )
-		}
-
-		cannonEnt.DisableHibernation()
-		cannonEnt.SetDamageNotifications( false )
-		cannonEnt.SetDeathNotifications( false )
-		cannonEnt.SetCanBeMeleed( false )
-		cannonEnt.Highlight_Enable()
-
-		AddEntityCallback_OnKilled( cannonEnt, GravityCannon_OnKilled )
-
-		trigger.SetParent( cannonEnt )
-		trigger.SetOwner( cannonEnt )
-
-		if ( GRAVITY_CANNON_DEBUG )
-		{
-			vector launchDir = AnglesToForward( cannonEnt.GetAngles() )
-			DebugDrawArrow( origin, origin + launchDir * 200, 10, 255, 255, 0, true, 10000 )
-		}
-	}
-	else
-	{
-		if ( GRAVITY_CANNON_DEBUG )
-		{
-			printt( "\nGRAVITY CANNON; COULD NOT FIND A PARENT ENTITY\n" )
-			DebugDrawSphere( origin, 4, 0, 0, 200, true, 10000 )
-		}
-		return null
-	}
-
-	GravityCannonData data
-	data.trigger = trigger
-	file.gravityCannonDataMap[ cannonEnt ] <- data
-
-	DispatchSpawn( trigger )
-
-	trigger.SetEnterCallback( CreateOnEnterGravityCannonTriggerFunc( cannonEnt ) )
-	trigger.SetLeaveCallback( CreateOnLeaveGravityCannonTriggerFunc( cannonEnt ) )
-
-	if ( GRAVITY_CANNON_DEBUG )
-	{
-		printt( "GravityCannon_Create: Trigger created at " + origin )
-		printt( "GravityCannon_Create: Cannon = " + cannonEnt )
-	}
-
-	return cannonEnt
-}
-
-void function DEV_SetGravityCannonLaunchSequence( asset sequence )
-{
-	GRAVITY_CANNON_LAUNCH_SEQUENCE = sequence
-}
-
-void function DEV_SetGravityCannonLaunchVelocity( float velocity )
-{
-	GRAVITY_CANNON_LAUNCH_VELOCITY = velocity
-	printt( "GRAVITY_CANNON_LAUNCH_VELOCITY set to: " + velocity )
-}
-
-void function DEV_SetGravityCannonVerticalMult( float mult )
-{
-	GRAVITY_CANNON_VERTICAL_MULTIPLIER = mult
-	printt( "GRAVITY_CANNON_VERTICAL_MULTIPLIER set to: " + mult )
-}
-
-void function GravityCannon_OnKilled( entity cannon, var damageInfo )
-{
-	if ( cannon in file.gravityCannonDataMap )
-	{
-		GravityCannonData data = file.gravityCannonDataMap[ cannon ]
-
-		if ( IsValid( data.trigger ) )
-			data.trigger.Destroy()
-
-		if ( IsValid( data.fxEnt ) )
-			data.fxEnt.Destroy()
-
-		delete file.gravityCannonDataMap[ cannon ]
-	}
-}
-
-void function CodeCallback_GravityCannonLaunch( entity trigger, int numLaunched )
-{
-	entity launcher = trigger.GetParent()
-	if ( IsValid( launcher ) )
-	{
-		if ( numLaunched == 0 )
-			EmitSoundOnEntity( trigger, "GravityCannon_Launch_Empty" )
-		else
-			EmitSoundOnEntity( trigger, "GravityCannon_Launch" )
-	}
-	else if ( GRAVITY_CANNON_DEBUG )
-	{
-		printt( "\nWARNING: COULD NOT FIND A LAUNCHER MODEL FOR GRAVITY CANNON LAUNCH CALLBACK.\n" )
-	}
-}
-
-bool function ClientCommand_SetGravityCannonVelocity( entity player, array<string> args )
-{
-	if ( args.len() < 1 )
-	{
-		printt( "Usage: SetGravityCannonVelocity <velocity>" )
-		printt( "Current: GRAVITY_CANNON_LAUNCH_VELOCITY = " + GRAVITY_CANNON_LAUNCH_VELOCITY )
-		return false
-	}
-
-	float velocity = float( args[0] )
-	GRAVITY_CANNON_LAUNCH_VELOCITY = velocity
-	printt( "GRAVITY_CANNON_LAUNCH_VELOCITY set to: " + velocity )
-	return true
-}
-
-bool function ClientCommand_SetGravityCannonVerticalMult( entity player, array<string> args )
-{
-	if ( args.len() < 1 )
-	{
-		printt( "Usage: SetGravityCannonVerticalMult <multiplier>" )
-		printt( "Current: GRAVITY_CANNON_VERTICAL_MULTIPLIER = " + GRAVITY_CANNON_VERTICAL_MULTIPLIER )
-		return false
-	}
-
-	float mult = float( args[0] )
-	GRAVITY_CANNON_VERTICAL_MULTIPLIER = mult
-	printt( "GRAVITY_CANNON_VERTICAL_MULTIPLIER set to: " + mult )
-	return true
-}
-#endif
-
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function OnGravityCannonCreated( entity trigger )
 {
-	if ( GRAVITY_CANNON_DEBUG )
-		printt( "CL OnGravityCannonCreated: trigger = " + trigger + ", scriptname = " + trigger.GetScriptName() )
-
-	if ( trigger.GetScriptName() == "gravity_cannon" )
+	if ( trigger.GetTriggerType() == TT_GRAVITY_CANNON )
 	{
 		if ( GRAVITY_CANNON_DEBUG )
-			printt( "\nCL GRAVITY CANNON CREATED: Setting client enter callback\n" )
+			printt( "\nCL GRAVITY CANNON CREATED\n" )
 
+		trigger.SetClientTouchCallback( GravityCannon_OnTouchTrigger_Client )
 		trigger.SetClientEnterCallback( GravityCannon_OnEnterTrigger_Client )
 	}
 }
 
 void function GravityCannon_TravelSound_1p( entity player )
 {
-	if ( GRAVITY_CANNON_DEBUG )
-		printt( "CL GRAVITY CANNON: GravityCannon_TravelSound_1p started" )
-
 	if ( !player.IsPlayer() )
 		return
 
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnDestroy" )
-
-	if ( GRAVITY_CANNON_DEBUG )
-		printt( "CL GRAVITY CANNON: Emitting 1p sound" )
 
 	EmitSoundOnEntity( player, "GravityCannon_Travel_1p" )
 
@@ -1308,7 +1195,7 @@ void function GravityCannon_TravelSound_1p( entity player )
 		function() : ( player )
 		{
 			if ( IsValid( player ) )
-				StopSoundOnEntity( player, "GravityCannon_Travel_1p" )
+					StopSoundOnEntity( player, "GravityCannon_Travel_1p" )
 		}
 	)
 
@@ -1321,61 +1208,42 @@ void function GravityCannon_TravelSound_1p( entity player )
 
 void function GravityCannon_OnEnterTrigger_Client( entity trigger, entity ent )
 {
+	
 	if ( GRAVITY_CANNON_DEBUG )
-		printt( "CL GRAVITY CANNON: OnEnterTrigger_Client called, ent = " + ent + ", local = " + GetLocalViewPlayer() )
+		printt( "CL GRAVITY CANNON TRIGGER LAUNCH" )
 
 	if ( !IsValid( trigger ) )
-	{
-		if ( GRAVITY_CANNON_DEBUG )
-			printt( "CL GRAVITY CANNON: trigger not valid" )
 		return
-	}
 
 	if ( !ent.IsPlayer() )
-	{
-		if ( GRAVITY_CANNON_DEBUG )
-			printt( "CL GRAVITY CANNON: ent is not player" )
 		return
-	}
 
 	if ( ent != GetLocalViewPlayer() )
-	{
-		if ( GRAVITY_CANNON_DEBUG )
-			printt( "CL GRAVITY CANNON: ent is not local view player" )
 		return
-	}
 
 	entity launcher = trigger.GetParent()
-	if ( GRAVITY_CANNON_DEBUG )
-		printt( "CL GRAVITY CANNON: launcher = " + launcher )
-
 	if ( IsValid( launcher ) && launcher.GetModelName().tolower() == GRAVITY_CANNON_MODEL.tolower() )
 	{
-		if ( GRAVITY_CANNON_DEBUG )
-			printt( "CL GRAVITY CANNON: Starting 1p sound thread" )
-
 		thread GravityCannon_TravelSound_1p( ent )
 		Chroma_UsedJumpPad()
 	}
 	else if ( GRAVITY_CANNON_DEBUG )
 	{
-		if ( IsValid( launcher ) )
-			printt( "CL GRAVITY CANNON: Launcher model mismatch: " + launcher.GetModelName() )
-		else
-			printt( "CL GRAVITY CANNON: Launcher not valid" )
+		printt( "\nWARNING: COULD NOT FIND A LAUNCHER MODEL FOR GRAVITY CANNON LAUNCH SOUND.\n" )
 	}
 }
 
 void function GravityCannon_OnTouchTrigger_Client( entity trigger, entity ent )
 {
 }
-#endif
+
+
 
 void function OnGravCannonEntitiesLoaded()
 {
 	if ( !GetCurrentPlaylistVarBool( "tropics_grav_cannons_enabled", true ) )
 	{
-		#if CLIENT
+
 		array<entity> fxEnts = GetClientEntArrayBySignifier( "info_particle_system" )
 		foreach ( fxEnt in fxEnts )
 		{
@@ -1384,6 +1252,9 @@ void function OnGravCannonEntitiesLoaded()
 				fxEnt.Destroy()
 			}
 		}
-		#endif
+
 	}
 }
+
+
+ 

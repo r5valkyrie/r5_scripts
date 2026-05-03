@@ -127,7 +127,7 @@ struct
 	table<EHI, var> 			fullmapPlayerItems
 
 	entity 						highlightedPlayer
-	int							playerTagMode = -1
+	int							playerTagMode = OBS_PLAYERTAG_RANGE_INFINITE
 	bool						updatePlayerTags = true
 	AimTargetStruct				mapAimTarget
 
@@ -325,7 +325,7 @@ bool function Survival_ShouldChangeTeamUI()
 	 if( AllianceProximity_IsUsingAlliances() )
 	 {
 
-			 /*if ( IsRevTakeover() )
+			 if ( IsRevTakeover() )
 			 {
 				 if( team != SHADOWARMY_REVENANT_ALLIANCE )
 				 {
@@ -335,7 +335,7 @@ bool function Survival_ShouldChangeTeamUI()
 				 {
 					 return SrgbToLinear( GetKeyColor( COLORID_ALLIANCE_1 ) / 255.0 )
 				 }
-			 }*/
+			 }
 
 
 		 return SrgbToLinear( GetSkydiveSmokeColorForTeam( team + TEAM_IMC ) / 255.0 )
@@ -363,14 +363,14 @@ string function Survival_GetTeamName( int team )
 {
 	string teamName = ""
 
-		/*if ( IsRevTakeover() )
+		if ( IsRevTakeover() )
 		{
 			if( team == SHADOWARMY_REVENANT_ALLIANCE )
 				teamName = "#SHADOW_ARMY_TEAM_REV"
 			else
 				teamName = "#SHADOW_ARMY_TEAM_LEGENDS"
 		}
-		else*/
+		else
 
 		{
 			Assert( team > TEAM_INVALID ) 
@@ -389,13 +389,13 @@ asset function Survival_GetTeamIcon( int team )
 	asset teamIcon = $""
 
 
-		/*if ( IsRevTakeover() )
+		if ( IsRevTakeover() )
 		{
 			if( team == SHADOWARMY_REVENANT_ALLIANCE )
 				teamIcon = $"rui/menu/buttons/battlepass/character_skin_revenant"
 			else
 				teamIcon = $"rui/menu/buttons/battlepass/character_skin_loba"
-		}*/
+		}
 
 
 	return teamIcon
@@ -728,7 +728,7 @@ var function FullMap_AddHuntPreyLocation( entity enemy )
 
 	RuiSetFloat3( rui, "objectPos", enemy.GetOrigin() )
 	RuiSetFloat3( rui, "objectAngles", ( enemy.GetAngles() + <0, -90, 0> ) )
-	RuiSetFloat3( rui, "objColor", <0,255,0> * ( 1.0 / 255.0 ) )
+	RuiSetFloat3( rui, "objColor", GetKeyColor( COLORID_HUD_INDICATOR_ARROW ) * ( 1.0 / 255.0 ) )
 	RuiSetFloat( rui, "objectSize", 10.0 )
 	RuiSetBool( rui, "doAnnounceEffect", true )
 	RuiSetImage( rui, "iconImage", $"rui/hud/minimap/compass_icon_hunt_prey" )
@@ -1265,6 +1265,23 @@ void function UpdateMap_THREAD()
 				distanceToPlayerDelta.z = 0
 				float sqrDistanceToPlayer = distanceToPlayerDelta.LengthSqr()
 
+				switch( file.playerTagMode )
+				{
+					case OBS_PLAYERTAG_RANGE_NONE:
+					case OBS_PLAYERTAG_RANGE_TEAM:
+						showNameTag = false
+						break;
+
+					case OBS_PLAYERTAG_RANGE_SMALL:
+						showNameTag = sqrDistanceToPlayer < ( GetConVarInt( "spectator_playerTagRange_small" ) ^ 2 )
+						break;
+					case OBS_PLAYERTAG_RANGE_MEDIUM:
+						showNameTag = sqrDistanceToPlayer < ( GetConVarInt( "spectator_playerTagRange_medium" ) ^ 2 )
+						break;
+					case OBS_PLAYERTAG_RANGE_LARGE:
+						showNameTag = sqrDistanceToPlayer < ( GetConVarInt( "spectator_playerTagRange_large" ) ^ 2 )
+						break;
+				}
 
 				if ( showNameTag )
 				{
@@ -2051,12 +2068,12 @@ void function ObserverTeleport_Thread()
 
 	wait 0.2 
 
-	//if ( GetLocalClientPlayer().GetObserverMode() != OBS_MODE_ROAMING )
-	//	GetLocalClientPlayer().SetObserverFreecamState( true );
+	if ( GetLocalClientPlayer().GetObserverMode() != OBS_MODE_ROAMING )
+		GetLocalClientPlayer().SetObserverFreecamState( true );
 
-	//while ( GetLocalClientPlayer().GetObserverMode() != OBS_MODE_ROAMING )
-	//	WaitFrame()
+	while ( GetLocalClientPlayer().GetObserverMode() != OBS_MODE_ROAMING )
+		WaitFrame()
 
-	//GetLocalClientPlayer().SetObserverPosition( groundPosition + OBSERVER_TELEPORT_OFFSET )
+	GetLocalClientPlayer().SetObserverPosition( groundPosition + OBSERVER_TELEPORT_OFFSET )
 	ScreenFade( GetLocalViewPlayer(), 0, 0, 0, 255, 0.2, 0.1, FFADE_IN | FFADE_PURGE )
-}
+} 

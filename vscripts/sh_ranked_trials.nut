@@ -3,7 +3,7 @@ global function RankedTrials_IsKillswitchEnabled
 global function RankedTrials_GetTrialToEnterTier
 global function RankedTrials_RegisterAllRankedTrials
 
-// Bakery data accessors
+
 global function RankedTrials_GetTrialMatchCount
 global function RankedTrials_GetTrialMaxMatchCount
 global function RankedTrials_GetTrialBonusLPGain
@@ -16,9 +16,9 @@ global function RankedTrials_GetTrialStatEntryByIndex
 global function RankedTrials_HasSecondaryTrial
 global function RankedTrials_HasDualStatSecondaryTrial
 
-// Persistence accessors
+
 global function RankedTrials_PlayerHasAssignedTrial
-//global function RankedTrials_GetAssignedTrial // Moved to workarounds.gnut
+global function RankedTrials_GetAssignedTrial
 global function RankedTrials_GetNetLP
 global function RankedTrials_GetSecondaryStatMatchComboStatProgress
 global function RankedTrials_GetGamesPlayedInTrialsState
@@ -26,27 +26,27 @@ global function RankedTrials_GetGamesAllowedInTrialsState
 global function RankedTrials_GetTimesFailedTrial
 global function RankedTrials_GetProgressValueForStatByIndex
 global function RankedTrials_GetTrialState
-//global function RankedTrials_PlayerHasIncompleteTrial // Moved to workarounds.gnut
+global function RankedTrials_PlayerHasIncompleteTrial
 
-#if CLIENT || UI
+
 global function RankedTrials_GetDescription
 global function RankedTrials_GetTrialsCountForTrial
 global function RankedTrials_NextRankHasTrial
-#endif // #if CLIENT || UI
 
-#if SERVER
-global function RankedTrials_OnPlayerConnected
-global function RankedTrials_AssignTrial
-global function RankedTrials_UpdateTrialCompletion
-global function RankedTrials_SaveMatchLP
-global function RankedTrials_PlayerShouldBePlacedIntoTrialForTier
-global function RankedTrials_ResetXMergePlatformPersistenceData
-#endif // #if SERVER
 
-#if DEVELOPER
-#if SERVER
-global function DEV_TrialsUnitTest
-#endif
+
+
+
+
+
+
+
+
+
+#if DEV
+
+
+
 #endif
 
 global const string RANKED_TRIALS_PERSISTENCE_STATE_KEY = "trialState"
@@ -69,46 +69,46 @@ global enum eRankedTrialGoalIdx
 
 struct
 {
-	table< string, int > rankedTierToTrialMap // string is tier LOC - #RANKED_TIER_BRONZE; int is ItemFlavor guid
-	table< int, array< string > > trialStatRefCache // int is ItemFlavor guid
+	table< string, int > rankedTierToTrialMap 
+	table< int, array< string > > trialStatRefCache 
 } file
 
 const string CONVAR_KILL_SWITCH = "ranked_disable_promo_trials"
 
-// Bakery Data Keys
-const string R2P0_SETTINGS_KEY_RANKED_TRIAL = "rankedTrialToEnterTier" // on parent ranked2Pt0Period
-const string SETTINGS_KEY_ENTERS_TIER = "entersTier" // NO override
+
+const string R2P0_SETTINGS_KEY_RANKED_TRIAL = "rankedTrialToEnterTier" 
+const string SETTINGS_KEY_ENTERS_TIER = "entersTier" 
 const string SETTINGS_KEY_MATCH_COUNT = "matchCount"
 const string SETTINGS_KEY_MATCH_COUNT_MAX = "matchCountMax"
 const string SETTINGS_KEY_BONUS_LP_GAIN = "bonusLPGain"
 const string SETTINGS_KEY_MAX_LP_LOSS = "maxLPLoss"
 const string SETTINGS_KEY_MIN_LP_LOSS = "minLPLoss"
-const string SETTINGS_KEY_PRIMARY_GOAL_VAL = "goalVal" // primary
-const string SETTINGS_KEY_PRIMARY_STAT_REF = "statRef" // primary
-const string SETTINGS_KEY_SECONDARY_REQUIRES_SINGLE_MATCH = "singleMatch" // secondary
-const string SETTINGS_KEY_SECONDARY_SINGLE_MATCH_COMBO_COUNT = "singleMatchComboCount" // secondary
-const string SETTINGS_KEY_SECONDARY_GOAL_VAL_ONE = "goalValAltOne" // secondary
-const string SETTINGS_KEY_SECONDARY_STAT_REF_ONE = "statRefAltOne" // secondary
-const string SETTINGS_KEY_SECONDARY_GOAL_VAL_TWO = "goalValAltTwo" // secondary
-const string SETTINGS_KEY_SECONDARY_STAT_REF_TWO = "statRefAltTwo" // secondary
-const string SETTINGS_KEY_DESCRIPTION_PRIMARY = "description" // use LOC key override
-const string SETTINGS_KEY_DESCRIPTION_SECONDARY_ONE = "descriptionAltOne" // use LOC key override
-const string SETTINGS_KEY_DESCRIPTION_SECONDARY_TWO = "descriptionAltTwo" // use LOC key override
+const string SETTINGS_KEY_PRIMARY_GOAL_VAL = "goalVal" 
+const string SETTINGS_KEY_PRIMARY_STAT_REF = "statRef" 
+const string SETTINGS_KEY_SECONDARY_REQUIRES_SINGLE_MATCH = "singleMatch" 
+const string SETTINGS_KEY_SECONDARY_SINGLE_MATCH_COMBO_COUNT = "singleMatchComboCount" 
+const string SETTINGS_KEY_SECONDARY_GOAL_VAL_ONE = "goalValAltOne" 
+const string SETTINGS_KEY_SECONDARY_STAT_REF_ONE = "statRefAltOne" 
+const string SETTINGS_KEY_SECONDARY_GOAL_VAL_TWO = "goalValAltTwo" 
+const string SETTINGS_KEY_SECONDARY_STAT_REF_TWO = "statRefAltTwo" 
+const string SETTINGS_KEY_DESCRIPTION_PRIMARY = "description" 
+const string SETTINGS_KEY_DESCRIPTION_SECONDARY_ONE = "descriptionAltOne" 
+const string SETTINGS_KEY_DESCRIPTION_SECONDARY_TWO = "descriptionAltTwo" 
 
-const string PLAYLIST_OVERRIDE_FORMAT_STRING = "ranked_trials_%s_%s" // ranked_trials_SAID_KEY = override
+const string PLAYLIST_OVERRIDE_FORMAT_STRING = "ranked_trials_%s_%s" 
 
-// Persistence Var Keys
+
 const string RANKED_TRIALS_PERSISTENCE_STRUCT = "rankedTrials"
 const string PERSISTENCE_KEY_FORMAT_STRING = XPROG_PERSISTENCE_PREFIX_FORMAT_STRING + RANKED_TRIALS_PERSISTENCE_STRUCT + ".%s"
-const string PERSISTENCE_KEY_GUID = "guid" // Bakery SAID
-const string PERSISTENCE_KEY_PRIMARY_STAT_PROGRESS = "primaryStatProgress" // tracks explicitly - not a diff like Challenges - because underlying stats are not per-platform
-const string PERSISTENCE_KEY_SECONDARY_STAT_PROGRESS_ONE = "secondaryStatProgressOne" // tracks explicitly - not a diff like Challenges - because underlying stats are not per-platform
-const string PERSISTENCE_KEY_SECONDARY_STAT_PROGRESS_TWO = "secondaryStatProgressTwo" // tracks explicitly - not a diff like Challenges - because underlying stats are not per-platform
-const string PERSISTENCE_KEY_SECONDARY_STAT_PROGRESS_COMBO = "secondaryTrialCombinedProgress" // --> for when a single match, tick this. like (3x, get A & B in a single match)
+const string PERSISTENCE_KEY_GUID = "guid" 
+const string PERSISTENCE_KEY_PRIMARY_STAT_PROGRESS = "primaryStatProgress" 
+const string PERSISTENCE_KEY_SECONDARY_STAT_PROGRESS_ONE = "secondaryStatProgressOne" 
+const string PERSISTENCE_KEY_SECONDARY_STAT_PROGRESS_TWO = "secondaryStatProgressTwo" 
+const string PERSISTENCE_KEY_SECONDARY_STAT_PROGRESS_COMBO = "secondaryTrialCombinedProgress" 
 const string PERSISTENCE_KEY_GAMES_IN_TRIAL_STATE = "gamesPlayedInTrialState"
-const string PERSISTENCE_KEY_NET_LP_DURING_TRIAL = "netLPDuringTrial" // where we track LP gains/losses during Trial
-const string PERSISTENCE_KEY_TRIAL_STATE = "state" // see eRankedTrialState
-const string PERSISTENCE_KEY_TIMES_FAILED_TRIAL = "timesFailedTrial" // reset only upon succesful completion --> Tier Up
+const string PERSISTENCE_KEY_NET_LP_DURING_TRIAL = "netLPDuringTrial" 
+const string PERSISTENCE_KEY_TRIAL_STATE = "state" 
+const string PERSISTENCE_KEY_TIMES_FAILED_TRIAL = "timesFailedTrial" 
 
 const array< string > PERSISTENCE_KEYS =
 [
@@ -120,7 +120,7 @@ const array< string > PERSISTENCE_KEYS =
 	PERSISTENCE_KEY_GAMES_IN_TRIAL_STATE,
 	PERSISTENCE_KEY_NET_LP_DURING_TRIAL,
 	PERSISTENCE_KEY_TRIAL_STATE,
-	PERSISTENCE_KEY_TIMES_FAILED_TRIAL, // MUST be last entry
+	PERSISTENCE_KEY_TIMES_FAILED_TRIAL, 
 ]
 
 const table< string, string > BAKERY_LABEL_TO_STAT_REF =
@@ -128,24 +128,24 @@ const table< string, string > BAKERY_LABEL_TO_STAT_REF =
 	["PLACEMENTS_WIN"] = "stats.rankedperiods[%s].placements_win",
 	["PLACEMENTS_TOP_5"] = "stats.rankedperiods[%s].placements_top_5",
 	["PLACEMENTS_TOP_10"] = "stats.rankedperiods[%s].placements_top_10",
-	["KILLS_OR_ASSISTS"] = "stats.kills_or_assists", // just reuses the base kills-or-assists because we only increment underlying progress markers in Ranked Games
+	["KILLS_OR_ASSISTS"] = "stats.kills_or_assists", 
 	["KILLS"] = "stats.rankedperiods[%s].kills",
 	["DAMAGE_DONE"] = "stats.rankedperiods[%s].damage_done",
 	["NONE"] = "",
 }
 
-#if DEVELOPER
+#if DEV
 const string DEV_RUN_PLAYLIST_OVERRIDE_CHECK = "ranked_trials_dev_playlist_check"
-const int DEV_FORCE_COMPLETION_STATUS = -1 // -1 disables
+const int DEV_FORCE_COMPLETION_STATUS = -1 
 #endif
 
 void function Sh_RankedTrials_Init()
 {
-	_CacheStatEntries() // do this every level load - even in UIVM - because the cache needs to purge any playlist overrides during a session
-	#if DEVELOPER
+	_CacheStatEntries() 
+#if DEV
 		Assert( PERSISTENCE_KEYS.find( PERSISTENCE_KEY_TIMES_FAILED_TRIAL ) == PERSISTENCE_KEYS.len() - 1 )
 		Assert( DEV_CheckPlaylistOverrides() )
-	#endif
+#endif
 }
 
 bool function RankedTrials_IsKillswitchEnabled()
@@ -192,7 +192,7 @@ ItemFlavor function RankedTrials_GetTrialToEnterTier( string tierName )
 	return GetItemFlavorByGUID( file.rankedTierToTrialMap[ tierName ] )
 }
 
-// Bakery Data Accessors With Playlist Overrides
+
 int function RankedTrials_GetTrialMatchCount( ItemFlavor rankedTrial )
 {
 	Assert( ItemFlavor_GetType( rankedTrial ) == eItemType.ranked_trial )
@@ -225,7 +225,7 @@ int function RankedTrials_GetTrialBonusLPGain( ItemFlavor rankedTrial )
 
 int function RankedTrials_GetTrialMaxLPLoss( ItemFlavor rankedTrial )
 {
-	// returns a NEGATIVE number. Assumes all INPUTS are POSITIVE numbers.
+	
 	Assert( ItemFlavor_GetType( rankedTrial ) == eItemType.ranked_trial )
 
 	var settingsBlock = ItemFlavor_GetSettingsBlock( rankedTrial )
@@ -238,7 +238,7 @@ int function RankedTrials_GetTrialMaxLPLoss( ItemFlavor rankedTrial )
 
 int function RankedTrials_GetTrialMinLPLoss( ItemFlavor rankedTrial )
 {
-	// returns a NEGATIVE number. Assumes all INPUTS are POSITIVE numbers.
+	
 	Assert( ItemFlavor_GetType( rankedTrial ) == eItemType.ranked_trial )
 
 	var settingsBlock = ItemFlavor_GetSettingsBlock( rankedTrial )
@@ -299,18 +299,16 @@ int function RankedTrials_GetTrialStatGoalByIndex( ItemFlavor rankedTrial, int s
 bool function RankedTrials_HasSecondaryTrial( ItemFlavor rankedTrial )
 {
 	Assert( ItemFlavor_GetType( rankedTrial ) == eItemType.ranked_trial )
-	int idx1 = eRankedTrialGoalIdx.SECONDARY_ONE
-	return (idx1 >= 0 && idx1 < file.trialStatRefCache[ ItemFlavor_GetGUID( rankedTrial ) ].len())
+	return file.trialStatRefCache[ ItemFlavor_GetGUID( rankedTrial ) ].isvalidindex( eRankedTrialGoalIdx.SECONDARY_ONE )
 }
 
 bool function RankedTrials_HasDualStatSecondaryTrial( ItemFlavor rankedTrial )
 {
 	Assert( ItemFlavor_GetType( rankedTrial ) == eItemType.ranked_trial )
-	int idx2 = eRankedTrialGoalIdx.SECONDARY_TWO
-	return (idx2 >= 0 && idx2 < file.trialStatRefCache[ ItemFlavor_GetGUID( rankedTrial ) ].len())
+	return file.trialStatRefCache[ ItemFlavor_GetGUID( rankedTrial ) ].isvalidindex( eRankedTrialGoalIdx.SECONDARY_TWO )
 }
 
-#if CLIENT || UI
+
 int function RankedTrials_GetTrialsCountForTrial( ItemFlavor rankedTrial )
 {
 	int trialsCount = 1
@@ -322,7 +320,7 @@ int function RankedTrials_GetTrialsCountForTrial( ItemFlavor rankedTrial )
 	}
 	return trialsCount
 }
-#endif
+
 
 void function _CacheStatEntries()
 {
@@ -394,11 +392,11 @@ bool function _IsValidTrialStatEntryIndex( ItemFlavor rankedTrial, int statIdx )
 	Assert( ItemFlavor_GetType( rankedTrial ) == eItemType.ranked_trial )
 	Assert( guid in file.trialStatRefCache )
 
-	return (statIdx >= 0 && statIdx < file.trialStatRefCache[ guid ].len())
+	return file.trialStatRefCache[ guid ].isvalidindex( statIdx )
 }
 
 
-#if CLIENT || UI
+
 string function RankedTrials_GetDescription( ItemFlavor rankedTrial, int statIdx )
 {
 	Assert( ItemFlavor_GetType( rankedTrial ) == eItemType.ranked_trial )
@@ -422,19 +420,19 @@ string function RankedTrials_GetDescription( ItemFlavor rankedTrial, int statIdx
 
 	unreachable
 }
-#endif // #if CLIENT || UI
-// End Bakery Data Accessors
 
-// Persistence Accessors
+
+
+
 int function _GetPersistenceData( entity player, string persistenceValueKey )
 {
 	Assert( PERSISTENCE_KEYS.contains( persistenceValueKey ) )
 	string platformId = GetMergedPlatformIdForPlayer( player )
 	string persistenceKey = format( PERSISTENCE_KEY_FORMAT_STRING, platformId, persistenceValueKey )
 
-	#if UI
-	return GetPersistentVarAsInt( persistenceKey )
-	#endif
+
+
+
 
 	return player.GetPersistentVarAsInt( persistenceKey )
 }
@@ -445,23 +443,27 @@ bool function RankedTrials_PlayerHasAssignedTrial( entity player )
 		return false
 
 	string platformId = GetMergedPlatformIdForPlayer( player )
-	#if UI
-	int guid = GetPersistentVarAsInt( format( PERSISTENCE_KEY_FORMAT_STRING, platformId, PERSISTENCE_KEY_GUID ) )
-	#else
+
+
+
 	int guid = player.GetPersistentVarAsInt( format( PERSISTENCE_KEY_FORMAT_STRING, platformId, PERSISTENCE_KEY_GUID ) )
-	#endif
+
 
 	return ( IsValidItemFlavorGUID( guid, eValidation.DONT_ASSERT ) )
 }
 
-// Moved to workarounds.gnut for load order
-//ItemFlavor function RankedTrials_GetAssignedTrial( entity player )
-//{
-//	string platformId = GetMergedPlatformIdForPlayer( player )
-//	int guid = player.GetPersistentVarAsInt( format( PERSISTENCE_KEY_FORMAT_STRING, platformId, PERSISTENCE_KEY_GUID ) )
-//	Assert( IsValidItemFlavorGUID( guid, eValidation.ASSERT ) )
-//	return GetItemFlavorByGUID( guid )
-//}
+ItemFlavor function RankedTrials_GetAssignedTrial( entity player )
+{
+	string platformId = GetMergedPlatformIdForPlayer( player )
+
+
+
+	int guid = player.GetPersistentVarAsInt( format( PERSISTENCE_KEY_FORMAT_STRING, platformId, PERSISTENCE_KEY_GUID ) )
+
+
+	Assert( IsValidItemFlavorGUID( guid, eValidation.ASSERT ) )
+	return GetItemFlavorByGUID( guid )
+}
 
 int function RankedTrials_GetNetLP( entity player )
 {
@@ -498,13 +500,12 @@ int function RankedTrials_GetTrialState( entity player )
 	return state
 }
 
-// Moved to workarounds.gnut for load order
-//bool function RankedTrials_PlayerHasIncompleteTrial( entity player )
-//{
-//	return RankedTrials_PlayerHasAssignedTrial( player ) && RankedTrials_GetTrialState( player ) == eRankedTrialState.INCOMPLETE
-//}
+bool function RankedTrials_PlayerHasIncompleteTrial( entity player )
+{
+	return RankedTrials_PlayerHasAssignedTrial( player ) && RankedTrials_GetTrialState( player ) == eRankedTrialState.INCOMPLETE
+}
 
-#if CLIENT || UI
+
 bool function RankedTrials_NextRankHasTrial( SharedRankedDivisionData currentDivision, SharedRankedDivisionData ornull nextDivision )
 {
 	if ( nextDivision != null )
@@ -514,7 +515,7 @@ bool function RankedTrials_NextRankHasTrial( SharedRankedDivisionData currentDiv
 	}
 	return false
 }
-#endif
+
 
 int function RankedTrials_GetProgressValueForStatByIndex( entity player, int statIdx )
 {
@@ -533,295 +534,294 @@ int function RankedTrials_GetProgressValueForStatByIndex( entity player, int sta
 	unreachable
 }
 
-#if SERVER
-void function _SetPersistenceDataByXMergePlatform( entity player, string persistenceValueKey, string platformId, int valToSet )
-{
-	Assert( PERSISTENCE_KEYS.contains( persistenceValueKey ) )
-	string persistenceKey = format( PERSISTENCE_KEY_FORMAT_STRING, platformId, persistenceValueKey )
-	player.SetPersistentVar( persistenceKey, valToSet )
-}
 
-void function _SetPersistenceData( entity player, string persistenceValueKey, int valToSet )
-{
-	Assert( PERSISTENCE_KEYS.contains( persistenceValueKey ) )
-	string platformId = GetMergedPlatformIdForPlayer( player )
-	_SetPersistenceDataByXMergePlatform( player, persistenceValueKey, platformId, valToSet )
-}
 
-void function _InitializePersistenceData( entity player, bool resetTimesFailedTrials )
-{
-	#if DEVELOPER
-		Assert( PERSISTENCE_KEYS[ PERSISTENCE_KEYS.len() - 1 ] == PERSISTENCE_KEY_TIMES_FAILED_TRIAL )
-	#endif
 
-	int failedTrialsIdx = PERSISTENCE_KEYS.len() - 1
-	foreach( int idx, string key in PERSISTENCE_KEYS )
-	{
-		if ( !resetTimesFailedTrials && idx == failedTrialsIdx )
-			break
 
-		_SetPersistenceData( player, key, 0 )
-	}
-}
 
-void function RankedTrials_ResetXMergePlatformPersistenceData( entity player, string platformId )
-{
-	foreach ( int idx, string key in PERSISTENCE_KEYS )
-		_SetPersistenceDataByXMergePlatform( player, key, platformId, 0 )
-}
 
-void function RankedTrials_SaveMatchLP( entity player, int matchLP )
-{
-	int currentNetLP = RankedTrials_GetNetLP( player )
-	int newLP = currentNetLP + matchLP
 
-	_SetPersistenceData( player, PERSISTENCE_KEY_NET_LP_DURING_TRIAL, newLP )
-}
 
-void function _IncrementMatchComboStatProgress( entity player )
-{
-	int currentComboStatProgress = RankedTrials_GetSecondaryStatMatchComboStatProgress( player )
 
-	_SetPersistenceData( player, PERSISTENCE_KEY_SECONDARY_STAT_PROGRESS_COMBO, currentComboStatProgress + 1 )
-}
 
-void function _IncrementGamesPlayedInTrialsState( entity player )
-{
-	int currentGamesPlayedCount = RankedTrials_GetGamesPlayedInTrialsState( player )
 
-	_SetPersistenceData( player, PERSISTENCE_KEY_GAMES_IN_TRIAL_STATE, currentGamesPlayedCount + 1 )
-}
 
-void function _IncrementTimesFailedTrial( entity player )
-{
-	int currentTimesFailedTrial = RankedTrials_GetTimesFailedTrial( player )
 
-	_SetPersistenceData( player, PERSISTENCE_KEY_TIMES_FAILED_TRIAL, currentTimesFailedTrial + 1 )
-}
 
-void function _UpdateProgressValueForStatByIndex( entity player, int statIdx, int newVal )
-{
-	switch ( statIdx )
-	{
-		case eRankedTrialGoalIdx.PRIMARY:
-			_SetPersistenceData( player, PERSISTENCE_KEY_PRIMARY_STAT_PROGRESS, newVal )
-			break
 
-		case eRankedTrialGoalIdx.SECONDARY_ONE:
-			_SetPersistenceData( player, PERSISTENCE_KEY_SECONDARY_STAT_PROGRESS_ONE, newVal )
-			break
 
-		case eRankedTrialGoalIdx.SECONDARY_TWO:
-			_SetPersistenceData( player, PERSISTENCE_KEY_SECONDARY_STAT_PROGRESS_TWO, newVal )
-			break
 
-		default:
-			Assert( false )
-	}
-}
 
-void function _UpdateTrialState( entity player, int state )
-{
-	Assert( state >= 0 && state < eRankedTrialState.COUNT )
-	_SetPersistenceData( player, PERSISTENCE_KEY_TRIAL_STATE, state )
-}
-#endif // #if SERVER
-// End Persistence Accessors
 
-#if SERVER
-void function RankedTrials_OnPlayerConnected( entity player, bool isReconnecting )
-{
-	if ( GetConVarBool( CONVAR_KILL_SWITCH ) )
-		return
 
-	Assert( !IsLobby() )
-	Assert( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
 
-	if ( !RankedTrials_PlayerHasAssignedTrial( player ) )
-		return
 
-	// NOTE: hasRankedTrialsStatsCallbacksAdded not in S3 ServerPlayerStruct
-	// Assert( ( !isReconnecting && !player.p.hasRankedTrialsStatsCallbacksAdded ) || isReconnecting )
-	// if ( isReconnecting && player.p.hasRankedTrialsStatsCallbacksAdded )
-	// 	return
 
-	// RESET Trial Completion due Success or Failure based on *PREVIOUS* Match. We store state and keep data in the Lobby so UI can use it.
-	if ( RankedTrials_GetTrialState( player ) == eRankedTrialState.SUCCESS || RankedTrials_GetTrialState( player ) == eRankedTrialState.FAILURE )
-	{
-		bool shouldResetFailures = ( RankedTrials_GetTrialState( player ) == eRankedTrialState.SUCCESS )
-		_RemoveTrial( player, shouldResetFailures )
-		return
-	}
 
-	Assert( RankedTrials_GetTrialState( player ) == eRankedTrialState.INCOMPLETE )
-	ItemFlavor assignedTrialForPlatform = RankedTrials_GetAssignedTrial( player )
 
-	foreach ( string enumKey, int statIdx in eRankedTrialGoalIdx )
-	{
-		if ( !_IsValidTrialStatEntryIndex( assignedTrialForPlatform, statIdx ) )
-			break
 
-		StatEntry statEntry = RankedTrials_GetTrialStatEntryByIndex( assignedTrialForPlatform, statIdx )
-		AddCallback_StatChanged_Int( player, statEntry, void function( entity player, int oldValue, int newValue ) : ( statEntry ) {
-				Callback_OnStatChanged_Int( player, statEntry, oldValue, newValue )
-		} )
-	}
-	// player.p.hasRankedTrialsStatsCallbacksAdded = true // Not in S3 struct
-}
 
-int function RankedTrials_UpdateTrialCompletion( entity player, ItemFlavor rankedTrial )
-{
-	#if DEVELOPER
-		if ( DEV_FORCE_COMPLETION_STATUS != -1 )
-			return DEV_FORCE_COMPLETION_STATUS
-	#endif
 
-	Assert( !GetConVarBool( CONVAR_KILL_SWITCH ) )
-	Assert( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) && player.p.placementStatsRecorded )
-	Assert( RankedTrials_GetAssignedTrial( player ) == rankedTrial )
-	Assert( RankedTrials_GetTrialState( player ) == eRankedTrialState.INCOMPLETE )
 
-	_IncrementGamesPlayedInTrialsState( player )
 
-	int trialState = eRankedTrialState.INCOMPLETE
-	if ( RankedTrials_GetProgressValueForStatByIndex( player, eRankedTrialGoalIdx.PRIMARY ) >= RankedTrials_GetTrialStatGoalByIndex( rankedTrial, eRankedTrialGoalIdx.PRIMARY ) )
-	{
-		trialState = eRankedTrialState.SUCCESS // completed Primary
-	}
-	else if ( RankedTrials_HasSecondaryTrial( rankedTrial ) )
-	{
-		if ( !RankedTrials_SecondaryTrialRequiresSingleMatchPerformance( rankedTrial ) )
-		 {
-			 bool success = RankedTrials_GetProgressValueForStatByIndex( player, eRankedTrialGoalIdx.SECONDARY_ONE ) >= RankedTrials_GetTrialStatGoalByIndex( rankedTrial, eRankedTrialGoalIdx.SECONDARY_ONE )
-			 if ( RankedTrials_HasDualStatSecondaryTrial( rankedTrial ) )
-				 success = success && RankedTrials_GetProgressValueForStatByIndex( player, eRankedTrialGoalIdx.SECONDARY_TWO ) >= RankedTrials_GetTrialStatGoalByIndex( rankedTrial, eRankedTrialGoalIdx.SECONDARY_TWO )
 
-			 if ( success )
-				 trialState = eRankedTrialState.SUCCESS // completed Secondary
-		 }
-		 else // calculate whether they match the single-match requirement for the secondary stat(s)
-		 {
-			 StatEntry stat  = RankedTrials_GetTrialStatEntryByIndex( rankedTrial, eRankedTrialGoalIdx.SECONDARY_ONE )
-			 int statValSOM  = GetStat_Int( player, stat, eStatGetWhen.START_OF_CURRENT_MATCH )
-			 int statValEOM  = GetStat_Int( player, stat, eStatGetWhen.CURRENT )
-			 bool didSucceed = ((statValEOM - statValSOM) >= RankedTrials_GetTrialStatGoalByIndex( rankedTrial, eRankedTrialGoalIdx.SECONDARY_ONE ))
 
-			 if ( RankedTrials_HasDualStatSecondaryTrial( rankedTrial ) )
-			 {
-				 stat       = RankedTrials_GetTrialStatEntryByIndex( rankedTrial, eRankedTrialGoalIdx.SECONDARY_TWO )
-				 statValSOM = GetStat_Int( player, stat, eStatGetWhen.START_OF_CURRENT_MATCH )
-				 statValEOM = GetStat_Int( player, stat, eStatGetWhen.CURRENT )
-				 didSucceed = didSucceed && ((statValEOM - statValSOM) >= RankedTrials_GetTrialStatGoalByIndex( rankedTrial, eRankedTrialGoalIdx.SECONDARY_TWO ))
-			 }
 
-			 if ( didSucceed )
-				 _IncrementMatchComboStatProgress( player )
 
-			 if ( RankedTrials_GetSecondaryStatMatchComboStatProgress( player ) >= RankedTrials_GetSecondaryTrialSingleMatchComboCount( rankedTrial ) )
-				 trialState = eRankedTrialState.SUCCESS // completed Secondary combo
-		 }
-	}
 
-	if ( trialState != eRankedTrialState.SUCCESS && RankedTrials_GetGamesPlayedInTrialsState( player ) >= RankedTrials_GetGamesAllowedInTrialsState( player, rankedTrial ) )
-	{
-		trialState = eRankedTrialState.FAILURE
-		_IncrementTimesFailedTrial( player )
-	}
 
-	Assert( trialState != eRankedTrialState.NOT_IN_TRIAL && trialState < eRankedTrialState.COUNT )
-	_UpdateTrialState( player, trialState )
-	return trialState
-}
 
-void function RankedTrials_AssignTrial( entity player, int tierToProgressTo )
-{
-	Assert( tierToProgressTo >= 0 && tierToProgressTo < TIER_ORDERING_BY_LOC_KEY.len() )
-	// regular Ranked script should check if player is ready to change Tiers and, if so, call this
-	_InitializePersistenceData( player, false )
-	ItemFlavor rankedTrial = RankedTrials_GetTrialToEnterTier( TIER_ORDERING_BY_LOC_KEY[ tierToProgressTo ] )
-	_SetPersistenceData( player, PERSISTENCE_KEY_GUID, ItemFlavor_GetGUID( rankedTrial ) )
-	_SetPersistenceData( player, PERSISTENCE_KEY_TRIAL_STATE, eRankedTrialState.INCOMPLETE )
-}
 
-void function _RemoveTrial( entity player, bool resetTimesFailedTrials )
-{
-	_InitializePersistenceData( player, resetTimesFailedTrials )
-}
 
-bool function RankedTrials_PlayerShouldBePlacedIntoTrialForTier( entity player, int tierIdx )
-{
-	if ( GetConVarBool( CONVAR_KILL_SWITCH ) )
-		return false
 
-	if ( !( TIER_ORDERING_BY_LOC_KEY[ tierIdx ] in file.rankedTierToTrialMap ) )
-		return false
 
-	if ( !Ranked_HasCompletedProvisionalMatches( player ) || ( Ranked_GetXProgMergedPersistenceData( player, RANKED_PROVISIONAL_MATCH_HAS_PROGRESSED_OUT_PERSISTENCE_VAR_NAME ) == 0 ) )
-		return false
 
-	return true
-}
 
-void function Callback_OnStatChanged_Int( entity player, StatEntry statEntry, int oldValue, int newValue )
-{
-	if ( GetConVarBool( CONVAR_KILL_SWITCH ) )
-		return
 
-	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
-	{
-		Assert( false, "Ranked Trials: trial stats updated outside of a Ranked match." )
-		return
-	}
 
-	Assert( RankedTrials_PlayerHasAssignedTrial( player ) )
-	ItemFlavor assignedTrialForPlatform = RankedTrials_GetAssignedTrial( player )
 
-	int statIdxToUpdate = -1
-	foreach ( string enumKey, int statIdx in eRankedTrialGoalIdx )
-	{
-		StatEntry trialStatEntry = RankedTrials_GetTrialStatEntryByIndex( assignedTrialForPlatform, statIdx )
-		if ( statEntry == trialStatEntry )
-		{
-			statIdxToUpdate = statIdx
-			break
-		}
-	}
-	Assert( statIdxToUpdate != -1 )
 
-	// for single match, diff with SOPM and only update once they meet the threshold
-	if ( statIdxToUpdate > eRankedTrialGoalIdx.PRIMARY && RankedTrials_SecondaryTrialRequiresSingleMatchPerformance( assignedTrialForPlatform ) )
-	{
-		return // only calculate combo results at match end
-	}
-	else // otherwise, tick the stat
-	{
-		int currProgressValue = RankedTrials_GetProgressValueForStatByIndex( player, statIdxToUpdate )
-		currProgressValue += ( newValue - oldValue )
-		_UpdateProgressValueForStatByIndex( player, statIdxToUpdate, currProgressValue )
-	}
-}
-#endif // #if SERVER
 
-#if DEVELOPER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if DEV
 bool function DEV_CheckPlaylistOverrides()
 {
 	if ( !GetCurrentPlaylistVarBool( DEV_RUN_PLAYLIST_OVERRIDE_CHECK, false ) )
 		return true
 
-	/* // Playlist Overrides for Ranked Trial: replace SAID01753960760 with Asset SAID
-	ranked_trials_SAID01753960760_matchCount 1
-	ranked_trials_SAID01753960760_matchCountMax 1
-	ranked_trials_SAID01753960760_bonusLPGain 1
-	ranked_trials_SAID01753960760_maxLPLoss 1
-	ranked_trials_SAID01753960760_goalVal 1
-	ranked_trials_SAID01753960760_statRef "stats.placements_win"
-	ranked_trials_SAID01753960760_singleMatch 1 // bool
-	ranked_trials_SAID01753960760_singleMatchComboCount 1
-	ranked_trials_SAID01753960760_goalValAltOne 1
-	ranked_trials_SAID01753960760_statRefAltOne "stats.placements_win"
-	ranked_trials_SAID01753960760_goalValAltTwo 1
-	ranked_trials_SAID01753960760_statRefAltTwo "stats.placements_win" // can be empty string --> disables secondary_two stat
-	*/
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	foreach ( string _, int rankedTrialGUID in file.rankedTierToTrialMap )
 	{
@@ -862,22 +862,23 @@ bool function DEV_CheckPlaylistOverrides()
 	return true
 }
 
-#if SERVER
-void function DEV_TrialsUnitTest()
-{
-	foreach ( ItemFlavor trial in clone GetAllItemFlavorsOfType( eItemType.ranked_trial ) )
-	{
-		foreach ( string enumKey, int statIdx in eRankedTrialGoalIdx )
-		{
-			if ( !_IsValidTrialStatEntryIndex( trial, statIdx ) )
-				break
 
-			StatEntry statEntry = RankedTrials_GetTrialStatEntryByIndex( trial, statIdx )
-			AddCallback_StatChanged_Int( GP(), statEntry, void function( entity player, int oldValue, int newValue ) : ( statEntry ) {
-				Callback_OnStatChanged_Int( player, statEntry, oldValue, newValue )
-			} )
-		}
-	}
-}
-#endif // #if SERVER
-#endif // #if DEVELOPER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif
+ 

@@ -1,4 +1,4 @@
-//
+
 
 global function PreGame_GetWaitingForPlayersHasBlackScreen
 global function PreGame_GetWaitingForPlayersSpawningEnabled
@@ -21,7 +21,7 @@ global function CharSelect_GetOutroMVPPresentDuration
 global function CharSelect_GetOutroChampionPresentDuration
 global function CharSelect_GetOutroTransitionDuration
 
-#if SERVER || CLIENT
+
 global function GamemodeSurvivalShared_Init
 
 global function Survival_CanUseHealthPack
@@ -64,11 +64,6 @@ global function Survival_GetPlaneLeaveMapDurationMultiplier
 
 
 global function Survival_RequireJumpmasterInPlane
-#endif
-
-#if SERVER
-global function Survival_GetCurrentRank
-global function Survival_GetFinalRank
 
 
 
@@ -79,7 +74,6 @@ global function Survival_GetFinalRank
 
 
 
-#endif
 
 
 
@@ -87,17 +81,23 @@ global function Survival_GetFinalRank
 
 
 
-#if SERVER && DEVELOPER
-global function DEV_OverridePodiumBackground
-global function DEV_OverridePodiumBanners
-global function DEV_OverridePodiumBase
-global function DEV_TeleportToPodium
-#endif
 
 
-#if UI
-global function GamemodeSurvivalShared_UI_Init
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 global function IsSquadDataPersistenceEmpty
 
@@ -144,9 +144,9 @@ const string PODIUM_FX_FIREBALL_R1 = "Fireball_R1"
 const string PODIUM_FX_FIREBALL_R2 = "Fireball_R2"
 const string PODIUM_FX_CONFETTI = "confetti_burst"
 
-// each mode should have enums that are specific to the final display location - e.g., 4 displays in "slot 4" -> 1 / 1a / 1b | 2 | 3 | 4 | 5 -- maps to --> [ 0, ... , 0 ]
-// so 4 would be index 4 - or the 5th slot - *in the array* or position 3 on the UI.
-global const int NUMBER_OF_SUMMARY_DISPLAY_VALUES = 7 // 1 - 1a - 1b / 2 / 3 (time) / 4 / 5
+
+
+global const int NUMBER_OF_SUMMARY_DISPLAY_VALUES = 7 
 global const array< int > SUMMARY_DISPLAY_EMPTY_SET = [ 0, 0, 0, 0, 0, 0, 0 ]
 
 enum eUseHealthKitResult
@@ -249,7 +249,7 @@ global enum ePodiumBackground
 
 global struct VictoryPlatformModelData
 {
-	bool   isSet = false // DEPRECATED
+	bool   isSet = false 
 	asset  modelAsset = $"mdl/dev/empty_model.rmdl"
 	vector originOffset = < 0, 0, -10 >
 	vector modelAngles = < 0, 0, 0 >
@@ -269,9 +269,9 @@ struct
 
 	VictoryPlatformModelData & victorySequencePlatforData
 
-	#if SERVER && DEVELOPER
-		bool podiumFXSeqInProgress = false
-	#endif
+
+
+
 } file
 
 
@@ -280,27 +280,27 @@ bool function HasFastIntro()
 	if ( GetCurrentPlaylistVarBool( "fast_intro", false ) )
 		return true
 
-	return false // ConVar "fast_intro" not in S3
+	return GetConVarBool( "fast_intro" )
 }
 
-//
+
 bool function PreGame_GetWaitingForPlayersHasBlackScreen()		{ return GetCurrentPlaylistVarBool( "waiting_for_players_has_black_screen", false ) }
 bool function PreGame_GetWaitingForPlayersSpawningEnabled()		{ return GetCurrentPlaylistVarBool( "waiting_for_players_spawning_enabled", false ) }
 float function PreGame_GetWaitingForPlayersDelayMin()			{ return GetCurrentPlaylistVarFloat( "waiting_for_players_min_wait", 0.0 ) }
 float function PreGame_GetWaitingForPlayersDelayMax()			{ return GetCurrentPlaylistVarFloat( "waiting_for_players_timeout_seconds", 20.0 ) }
 float function PreGame_GetWaitingForPlayersCountdown()			{ return (HasFastIntro() ? 0.0 : GetCurrentPlaylistVarFloat( "waiting_for_players_countdown_seconds", 8.0 ) ) }
-//
+
 float function CharSelect_GetIntroMusicStartTime()		 		{ return GetCurrentPlaylistVarFloat( "charselect_intro_music_start_time", -0.8 ) }
 float function CharSelect_GetIntroTransitionDuration()			{ return GetCurrentPlaylistVarFloat( "charselect_intro_transition_duration", 3.0 ) }
 float function CharSelect_GetIntroCountdownDuration()			{ return GetCurrentPlaylistVarFloat( "charselect_intro_countdown_duration", 0.0 ) }
-//
+
 float function CharSelect_GetPickingDelayBeforeAll()			{ return GetCurrentPlaylistVarFloat( "charselect_picking_delay_before_all", 0.0 ) }
 float function CharSelect_GetPickingDelayOnFirst()				{ return GetCurrentPlaylistVarFloat( "charselect_picking_delay_on_first", 1.5 ) }
 float function CharSelect_GetPickingSingleDurationMax()			{ return (HasFastIntro() ? 0.0 : GetCurrentPlaylistVarFloat( "character_select_time_max", 8.0 ) ) }
 float function CharSelect_GetPickingSingleDurationMin()			{ return (HasFastIntro() ? 0.0 : GetCurrentPlaylistVarFloat( "character_select_time_min", 6.0 ) ) }
 float function CharSelect_GetPickingDelayAfterEachLock()		{ return GetCurrentPlaylistVarFloat( "charselect_picking_delay_after_each_lock", 0.5 ) }
 float function CharSelect_GetPickingDelayAfterAll()				{ return GetCurrentPlaylistVarFloat( "charselect_picking_delay_after_all", 1.5 ) }
-//
+
 float function CharSelect_GetOutroSceneChangeDuration()			{ return GetCurrentPlaylistVarFloat( "charselect_outro_scene_change_duration", 4.0 ) }
 float function CharSelect_GetOutroAllSquadsPresentDuration()	{ return GetCurrentPlaylistVarFloat( "charselect_outro_all_squads_present_duration", 0.0 ) }
 float function CharSelect_GetOutroSquadPresentDuration()		{ return GetCurrentPlaylistVarFloat( "charselect_outro_squad_present_duration", 6.0  ) }
@@ -309,10 +309,10 @@ float function CharSelect_GetOutroChampionPresentDuration()		{ return GetCurrent
 float function CharSelect_GetOutroTransitionDuration()			{ return GetCurrentPlaylistVarFloat( "charselect_outro_transition_duration", 3.0 ) }
 
 
-#if SERVER || CLIENT
+
 void function GamemodeSurvivalShared_Init()
 {
-	#if SERVER || CLIENT
+
 		BleedoutShared_Init()
 		ShApexScreens_Init()
 		Sh_RespawnBeacon_Init()
@@ -345,7 +345,7 @@ void function GamemodeSurvivalShared_Init()
 		Remote_RegisterServerFunction( "ClientCallback_Sur_RequestSquadDataPersistence" )
 		Remote_RegisterServerFunction( "ClientCallback_Sur_UpdateCharacterLock", "bool")
 
-		// GamemodeSurvival_Init
+		
 		var dt = GetDataTable( LOOT_DATATABLE )
 		int numRows = GetDataTableRowCount( dt )
 		Remote_RegisterServerFunction( "ClientCallback_Sur_UseHealthPack", "int", -1, numRows )
@@ -361,23 +361,17 @@ void function GamemodeSurvivalShared_Init()
 		Remote_RegisterServerFunction( "ClientCallback_Sur_CancelHeal" )
 
 		Remote_RegisterServerFunction( "ClientCallback_TPPromptGoToMapPoint", "float", -FLT_MAX, FLT_MAX, 32, "float", -FLT_MAX, FLT_MAX, 32 )
-		RegisterNetworkedVariableSafe( "numberOfAirdropRoundsLeft", SNDC_GLOBAL, SNVT_INT, 0 )
-		RegisterNetworkedVariableSafe( "ringOpacityOverride", SNDC_GLOBAL, SNVT_FLOAT_RANGE, 1.0, 0.0, 1.0 )
-
-		#if CLIENT
-			// Callbacks must be registered during the registration window (before EndRegisteringFunctions)
-			RegisterNetVarFloatChangeCallback( "ringOpacityOverride", Cl_Deathfield_SetOpacityOverride )
-		#endif
-	#endif
-
-	#if SERVER
-		AddDamageCallbackSourceID( eDamageSourceId.burn, Player_OnBurnDamage )
+		RegisterNetworkedVariable( "numberOfAirdropRoundsLeft", SNDC_GLOBAL, SNVT_INT, 0 )
 
 
-			AddDamageCallbackSourceID( eDamageSourceId.caustic_toxin, Player_OnCausticToxinDamage )
 
 
-	#endif // SERVER
+
+
+
+
+
+
 
 	if ( FreelanceSystemsAreEnabled() )
 	{
@@ -386,26 +380,26 @@ void function GamemodeSurvivalShared_Init()
 		ObjectiveSystem_Init()
 		EncounterSystem_Init()
 
-#if SERVER
-		NPCGarbageCollection_InitForGameMode()
-		PVELoot_InitForGameMode()
-#endif // SERVER
+
+
+
+
 
 	}
 
-#if SERVER
 
 
 
-#endif //server
 
-#if SERVER
-	Survival_AddCallback_OnPlayerLaunchedFromPlane(LTM_AnnouncementSplash)
-#endif //server
 
-#if SERVER || CLIENT
+
+
+
+
+
+
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
-#endif
+
 
 
 
@@ -413,59 +407,59 @@ void function GamemodeSurvivalShared_Init()
 
 
 }
-#endif
 
-#if SERVER || CLIENT
+
+
 void function EntitiesDidLoad()
 {
-	// TODO BA: Switch this to an entity that is available on both client / server.
+	
 
-	#if SERVER
-		string entityToCheck = "podium_bg_skin_swap"
-	#elseif CLIENT
+
+
+
 		string entityToCheck = "podium_info_target"
-	#endif
+
 
 	array< entity > podiumInfoTargets = GetEntArrayByScriptName(entityToCheck )
 	if ( podiumInfoTargets.len() != 1 )
-		return // Map is not setup for this.
+		return 
 
 	SetVictorySequencePlatformModel( $"mdl/dev/empty_model.rmdl", < 0, 0, -10 >, < 0, 0, 0 > )
-#if CLIENT
+
 	SetVictorySequenceLocationFromInfoNode()
-#endif
 
-#if SERVER
-	SetupVictoryPodium()
 
-	FlagInit( PODIUM_FX_SPARKS_L1 )
-	FlagInit( PODIUM_FX_SPARKS_L2 )
-	FlagInit( PODIUM_FX_SPARKS_R1 )
-	FlagInit( PODIUM_FX_SPARKS_R2 )
-	FlagInit( PODIUM_FX_FIREBALL_L1)
-	FlagInit( PODIUM_FX_FIREBALL_L2)
-	FlagInit( PODIUM_FX_FIREBALL_R1)
-	FlagInit( PODIUM_FX_FIREBALL_R2)
-	FlagInit( PODIUM_FX_CONFETTI)
 
-	AddCallback_GameStateEnter( eGameState.Resolution, Podium_OnResolution )
-#endif
-}
-#endif
 
-#if UI
-void function GamemodeSurvivalShared_UI_Init()
-{
-	AddUICallback_InputModeChanged( UIInputChanged )
-}
 
-void function UIInputChanged( bool controllerModeActive )
-{
+
+
+
+
+
+
+
+
+
+
+
 
 }
-#endif
 
-#if SERVER || CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 bool function Survival_PlayerCanDrop( entity player )
 {
 	if ( !IsAlive( player ) )
@@ -474,8 +468,8 @@ bool function Survival_PlayerCanDrop( entity player )
 	if ( IsEventFinale() )
 		return false
 
-	//if ( !GamePlaying() )
-	//	return false
+	
+	
 
 
 
@@ -543,111 +537,111 @@ bool function Survival_CanUseHealthPack( entity player, int itemType, bool check
 		}
 	}
 
-	#if CLIENT
+
 		if ( printReason )
 		{
 			switch( canUseResult )
 			{
 				case eUseHealthKitResult.DENY_NONE:
-					// no announcement
+					
 					break
 
 				case eUseHealthKitResult.DENY_NO_HEALTH_KIT:
 				case eUseHealthKitResult.DENY_NO_KITS:
 				case eUseHealthKitResult.DENY_NO_SHIELD_KIT:
 					Remote_ServerCallFunction( "ClientCallback_Quickchat", eCommsAction.INVENTORY_NEED_HEALTH, eCommsFlags.NONE )
-					// falls through to announcement
+					
 				default:
 					AnnouncementMessageRight( player, healthKitResultStrings[canUseResult] )
 					break
 			}
 		}
-	#endif
+
 
 	return false
 
-	/*
-	#if CLIENT
-		if ( player != GetLocalClientPlayer() )
-			return false
+	
 
-		if ( player != GetLocalViewPlayer() )
-			return false
 
-		if ( IsWatchingReplay() )
-			return false
-	#elseif SERVER
-		if ( Bleedout_IsPlayerGivingFirstAid( player ) )
-			return false
-	#endif
 
-	if ( player.ContextAction_IsActive() && !player.ContextAction_IsRodeo() )
-		return false
 
-	if ( Bleedout_IsBleedingOut( player ) )
-		return false
 
-	if ( !IsAlive( player ) )
-		return false
 
-	if ( player.IsPhaseShifted() )
-		return false
 
-	if ( StatusEffect_GetSeverity( player, eStatusEffect.placing_phase_tunnel ) )
-		return false
 
-	if ( player.GetWeaponDisableFlags() == WEAPON_DISABLE_FLAGS_ALL )
-		return false
 
-	if ( player.IsTitan() )
-		return false
 
-	if ( itemType == eHealthPickupType.ULTIMATE )
-	{
-		entity ultimateAbility = player.GetOffhandWeapon( OFFHAND_INVENTORY )
-		int ammo = ultimateAbility.GetWeaponPrimaryClipCount()
-		int maxAmmo = ultimateAbility.GetWeaponPrimaryClipCountMax()
 
-		if( ammo >= maxAmmo )
-			return false
-	}
-	else
-	{
-		int currentHealth = player.GetHealth()
-		int currentShields = player.GetShieldHealth()
-		bool canHeal = false
-		bool canShield = false
 
-		HealthPickup pickup = SURVIVAL_Loot_GetHealthKitDataFromStruct( itemType )
 
-		if ( pickup.healAmount > 0 && currentHealth < pickup.healCap )
-			canHeal = true
 
-		if ( pickup.healAmount > 0 && pickup.healTime > 0 )
-			canHeal = true
 
-		if ( pickup.shieldAmount > 0 && currentShields < player.GetShieldHealthMax() )
-			canShield = true
 
-		if ( pickup.healAmount > 0 && pickup.healCap > 100 )
-		{
-			int targetHealth = int( currentHealth + pickup.healAmount )
-			int overHeal = targetHealth - player.GetMaxHealth()
-			if ( overHeal && currentShields < player.GetShieldHealthMax() )
-				canShield = true
-		}
 
-		if ( !canHeal && !canShield )
-			return false
-	}
 
-	return true
-	*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 int function Survival_TryUseHealthPack( entity player, int itemType )
 {
-	#if CLIENT
+
 		if ( player != GetLocalClientPlayer() )
 			return eUseHealthKitResult.DENY_NONE
 
@@ -656,10 +650,10 @@ int function Survival_TryUseHealthPack( entity player, int itemType )
 
 		if ( IsWatchingReplay() )
 			return eUseHealthKitResult.DENY_NONE
-	#elseif SERVER
-		if ( Bleedout_IsPlayerGivingFirstAid( player ) )
-			return eUseHealthKitResult.DENY_NONE
-	#endif
+
+
+
+
 
 	if ( player.ContextAction_IsActive() && !player.ContextAction_IsRodeo() )
 		return eUseHealthKitResult.DENY_NONE
@@ -750,25 +744,25 @@ int function Survival_TryUseHealthPack( entity player, int itemType )
 
 	return eUseHealthKitResult.ALLOW
 }
-#endif
 
-#if SERVER || CLIENT
+
+
 float function Survival_GetCharacterSelectDuration( int pickIndex )
 {
 	float min = CharSelect_GetPickingSingleDurationMin()
 	float max = CharSelect_GetPickingSingleDurationMax()
 	return GraphCapped( pickIndex, 0, (MAX_TEAM_PLAYERS - 1), max, min )
 }
-#endif
 
-#if SERVER || CLIENT
+
+
 bool function Survival_CharacterSelectEnabled()
 {
 	return Survival_GetCharacterSelectDuration( 0 ) > 0.0
 }
-#endif
 
-#if SERVER || CLIENT
+
+
 bool function Sur_CanUseZipline( entity player, entity zipline, vector ziplineClosestPoint )
 {
 	if ( player.IsGrapplingZipline() )
@@ -793,43 +787,43 @@ bool function Sur_CanUseZipline( entity player, entity zipline, vector ziplineCl
 
 		if ( allowZipAttachFromUpdraft )
 		{
-			//if ( player.Player_IsSkydiveAnticipating() && player.Skydive_IsFromUpdraft() )
+			if ( player.Player_IsSkydiveAnticipating() && player.Skydive_IsFromUpdraft() )
 				allowedDuringWeaponDisable = true
 		}
 
 		return allowedDuringWeaponDisable
 	}
 
-	//if ( IsValid( player.GetActiveWeapon( eActiveInventorySlot.mainHand ) ) && player.GetActiveWeapon( eActiveInventorySlot.mainHand ).IsWeaponOffhand() )
-	//	return false
+	
+	
 
 	if ( Bleedout_IsBleedingOut( player ) )
 		return false
 
 	return true
 }
-#endif
 
-#if SERVER || CLIENT
+
+
 void function Sur_SetPlaneCenterEnt( entity ent )
 {
 	file.planeCenterEnt = ent
 }
-#endif
 
-#if SERVER || CLIENT
+
+
 void function Sur_SetPlaneEnt( entity ent )
 {
 	file.planeEnt = ent
 
-	#if SERVER
-		foreach( player in GetPlayerArray() )
-		{
-			player.SetPlayerNetEnt( "planeEnt", ent )
-		}
-	#endif
+
+
+
+
+
+
 }
-#endif
+
 
 
 
@@ -990,14 +984,14 @@ float function Survival_GetPlaneLeaveMapDurationMultiplier()
 	return GetCurrentPlaylistVarFloat( "survival_plane_leave_map_duration_multiplier", 3.0 )
 }
 
-#if SERVER || CLIENT
+
 entity function Sur_GetPlaneCenterEnt()
 {
 	return file.planeCenterEnt
 }
-#endif
 
-#if SERVER || CLIENT
+
+
 entity function Sur_GetPlaneEnt( int teamNum = -1 )
 {
 
@@ -1012,34 +1006,34 @@ entity function Sur_GetPlaneEnt( int teamNum = -1 )
 
 	return file.planeEnt
 }
-#endif
-
-#if !UI
-
-#if SERVER
-//This should live in sh_fire, but for now we're avoiding DFS
-const string SFX_BURN_1P = "flesh_fire_damage_1p"
-const string SFX_BURN_3P = "flesh_thermiteburn_1p_vs_3p"
-void function Player_OnBurnDamage( entity target, var damageInfo )
-{
-	if ( !target.IsPlayer() )
-		return
-
-	EmitSoundOnEntityOnlyToPlayer( target, target, SFX_BURN_1P )
-	EmitSoundOnEntityExceptToPlayer( target, target, SFX_BURN_3P )
-}
 
 
-void function Player_OnCausticToxinDamage( entity target, var damageInfo )
-{
-	if ( !target.IsPlayer() )
-		return
 
-	EmitSoundOnEntityOnlyToPlayer( target, target, "flesh_causticgas_damage_1p" )
-	EmitSoundOnEntityExceptToPlayer( target, target, "flesh_causticgas_damage_3p" )
-}
 
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 TargetKitHealthAmounts function PredictHealthPackUse( entity player, HealthPickup itemData )
 {
@@ -1070,7 +1064,7 @@ TargetKitHealthAmounts function PredictHealthPackUse( entity player, HealthPicku
 
 		Assert( currentShields + shieldsToApply <= shieldHealthMax, "Bad math: " + currentShields + " + " + shieldsToApply + " > " + shieldHealthMax )
 
-		if ( healthToApply != 0 || itemData.healTime > 0 ) // healTime items can exceed the cap
+		if ( healthToApply != 0 || itemData.healTime > 0 ) 
 			targetValues.targetHealth = (healthToApply + resourceHealthRemaining) / float( maxHealth )
 
 		if ( shieldsToApply != 0 && shieldHealthMax > 0 )
@@ -1084,8 +1078,8 @@ TargetKitHealthAmounts function PredictHealthPackUse( entity player, HealthPicku
 }
 
 
-#endif
-#if SERVER || CLIENT
+
+
 bool function CanWeaponInspect( entity player, int activity )
 {
 	if ( Bleedout_IsBleedingOut( player ) )
@@ -1093,25 +1087,17 @@ bool function CanWeaponInspect( entity player, int activity )
 
 	return GetCurrentPlaylistVarBool( "enable_weapon_inspect", true )
 }
-#endif
 
 
-#if SERVER
-int function Survival_GetCurrentRank( entity player )
-{
 
 
 
 
 
 
-		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_WINTEREXPRESS ) )
-			return WinterExpress_GetCurrentRank( player )
 
 
 
-		if ( GameMode_IsActive( eGameModes.CONTROL ) )
-			return Control_GetCurrentRank( player )
 
 
 
@@ -1120,50 +1106,19 @@ int function Survival_GetCurrentRank( entity player )
 
 
 
-		if( GameMode_IsActive( eGameModes.FREEDM ) )
-			return FreeDM_GetCurrentRank( player )
 
 
 
-		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
-			return ShadowArmy_GetCurrentRank( player )
 
 
-	int team                  = player.GetTeam()
-	int numLivingSquadMembers = GetPlayerArrayOfTeam_AliveConnected( team ).len()
-	if ( numLivingSquadMembers <= 0 )
-	{
-		#if SERVER
-			return _GetSquadRank( EHIToEncodedEHandle( player ) )
-		#else
-			return player.GetPersistentVarAsInt( "lastGameRank" )
-		#endif
-	}
-	return GetNumTeamsRemaining()
-}
 
 
-int function Survival_GetFinalRank( int teamIndex )
-{
-	int bestRank = GetCurrentPlaylistVarInt( "max_teams", 20 )
 
-	table< int, GameSummarySquadData > ornull squadDataMap = GameSummary_GetTeamDataOrNull( teamIndex )
-	if ( squadDataMap == null )
-		return bestRank
 
-	expect table<int, GameSummarySquadData>( squadDataMap )
 
-	foreach ( teamMemberIndex, squadMemberData in squadDataMap )
-	{
-		bestRank = minint( _GetSquadRank( squadMemberData.eHandle ), bestRank )
-	}
 
-	return bestRank
-}
-#endif // SERVER
 
 
-#if SERVER
 
 
 
@@ -1171,279 +1126,318 @@ int function Survival_GetFinalRank( int teamIndex )
 
 
 
-#if DEVELOPER
-void function DEV_OverridePodiumBackground( int i )
-{
-	array< entity > podiumBackground = GetEntArrayByScriptName( "podium_bg_skin_swap" )
-	if ( podiumBackground.len() == 1 )
-	{
-		podiumBackground[0].SetSkin( i )
-	}
-}
 
-void function DEV_OverridePodiumBanners( int i )
-{
-	array< entity > podiumBanners = GetEntArrayByScriptName( "podium_banner_skin_swap" )
-	foreach ( podiumBanner in podiumBanners )
-	{
-		podiumBanner.SetSkin( i )
-	}
-}
 
-void function DEV_OverridePodiumBase( int i )
-{
-	array< entity > podiumBase = GetEntArrayByScriptName( "podium_base_skin_swap" )
-	if ( podiumBase.len() == 1 )
-	{
-		podiumBase[0].SetSkin( i )
-	}
-}
-
-void function DEV_TeleportToPodium( entity player )
-{
-	if ( !IsValid ( player ) )
-		return
-
-
-	array< entity > podiumBase = GetEntArrayByScriptName( "podium_base_skin_swap" )
-	if ( podiumBase.len() == 1 )
-	{
-		player.SetOrigin( podiumBase[0].GetOrigin() )
-	}
-}
-#endif
-
-void function Podium_OnResolution()
-{
-
-
-	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
-	{
-		SetupPodiumForShadowArmy()
-		return
-	}
-
-
-	thread PodiumFXThread(  )
-}
-
-
-void function SetupPodiumForShadowArmy()
-{
-	int gameResultFlag = Survival_GetGameResultFlags()
-	bool legendsWon =  ( gameResultFlag == SHADOWARMY_VICTORY_FLAGS_EVAC )
-
-	array< entity > podiumBanners = GetEntArrayByScriptName( "podium_banner_skin_swap" )
-	foreach ( podiumBanner in podiumBanners )
-	{
-		podiumBanner.SetSkin( legendsWon ? ePodiumBanner.SR_LEGENDS : ePodiumBanner.SR_REV )
-	}
-
-	array< entity > podiumBase = GetEntArrayByScriptName( "podium_base_skin_swap" )
-	if ( podiumBase.len() == 1 )
-	{
-		podiumBase[0].SetSkin( legendsWon ? ePodiumBanner.SR_LEGENDS : ePodiumBanner.SR_REV  )
-	}
-
-	array< entity > podiumBackground = GetEntArrayByScriptName( "podium_bg_skin_swap" )
-	if ( podiumBackground.len() == 1 )
-	{
-		int podiumBackgroundSkin = GetPodiumBackgroundSkinFromMapName()
-		podiumBackground[0].SetSkin( legendsWon ? ePodiumBackground.SR_LEGENDS : ePodiumBackground.SR_REV  )
-	}
-}
-
-
-
-void function PodiumFXThread( )
-{
-	//	SEQUENTIAL SPARKS AND FLAMES LEFT TO RIGHT
-
-	#if SERVER && DEVELOPER
-		if( file.podiumFXSeqInProgress )
-			return
-
-		file.podiumFXSeqInProgress = true
-
-		OnThreadEnd(
-			function() : ()
-			{
-				file.podiumFXSeqInProgress = false
-			}
-		)
-	#endif
-	#if SERVER
-		string entityToCheck = "podium_bg_skin_swap"
-	#elseif CLIENT
-		string entityToCheck = "podium_info_target"
-	#endif
-
-	array< entity > podiumInfoTargets = GetEntArrayByScriptName(entityToCheck )
-	if( podiumInfoTargets.len() == 0 )
-		return
-
-	EmitSoundAtPosition( TEAM_ANY, <0, 0, 10000>,  "Podium_Pyro_FlameBurst_Sequence", podiumInfoTargets[0] )
-
-	// 	FLAMES ONLY
-
-	wait 1
-	FlagSet(PODIUM_FX_FIREBALL_L1)
-	FlagSet(PODIUM_FX_FIREBALL_R1)
-
-	wait .1
-	FlagSet(PODIUM_FX_FIREBALL_L2)
-	FlagSet(PODIUM_FX_FIREBALL_R2)
-
-	wait .25
-	FlagClear(PODIUM_FX_FIREBALL_L1)
-	FlagClear(PODIUM_FX_FIREBALL_R1)
-
-	wait .1
-	FlagClear(PODIUM_FX_FIREBALL_L2)
-	FlagClear(PODIUM_FX_FIREBALL_R2)
-
-	wait .25
-	FlagSet(PODIUM_FX_FIREBALL_L1)
-	FlagSet(PODIUM_FX_FIREBALL_R1)
-
-	wait .1
-	FlagSet(PODIUM_FX_FIREBALL_L2)
-	FlagSet(PODIUM_FX_FIREBALL_R2)
-
-	wait .25
-	FlagClear(PODIUM_FX_FIREBALL_L1)
-	FlagClear(PODIUM_FX_FIREBALL_R1)
-
-	wait .1
-	FlagClear(PODIUM_FX_FIREBALL_L2)
-	FlagClear(PODIUM_FX_FIREBALL_R2)
-
-	wait .5
-	FlagSet(PODIUM_FX_FIREBALL_L1)
-	wait .015
-	FlagSet(PODIUM_FX_FIREBALL_R1)
-	wait .015
-	FlagSet(PODIUM_FX_FIREBALL_L2)
-	wait .015
-	FlagSet(PODIUM_FX_FIREBALL_R2)
-
-	wait 1
-	FlagClear(PODIUM_FX_FIREBALL_L1)
-	FlagClear(PODIUM_FX_FIREBALL_R1)
-	FlagClear(PODIUM_FX_FIREBALL_L2)
-	FlagClear(PODIUM_FX_FIREBALL_R2)
-}
-
-void function SetupVictoryPodium()
-{
-	int podiumSkin = GetPodiumBannerSkinFromGameMode()
-
-	array< entity > podiumBanners = GetEntArrayByScriptName( "podium_banner_skin_swap" )
-	foreach ( podiumBanner in podiumBanners )
-	{
-		podiumBanner.SetSkin( podiumSkin )
-		podiumBanner.SetModelScale( 0.5 )
-	}
-
-	array< entity > podiumBase = GetEntArrayByScriptName( "podium_base_skin_swap" )
-	if ( podiumBase.len() == 1 )
-	{
-		podiumBase[0].SetSkin( podiumSkin )
-	}
-
-	array< entity > podiumBackground = GetEntArrayByScriptName( "podium_bg_skin_swap" )
-	if ( podiumBackground.len() == 1 )
-	{
-		int podiumBackgroundSkin = GetPodiumBackgroundSkinFromMapName()
-		podiumBackground[0].SetSkin( podiumBackgroundSkin )
-	}
-}
-
-int function GetPodiumBannerSkinFromGameMode()
-{
-	if ( UseLTMPodiumBanner() )
-	{
-		return ePodiumBanner.LTM
-	}
-
-	if ( IsCurrentModeMixtape() )
-	{
-		return ePodiumBanner.MIXTAPE
-	}
-
-	return ePodiumBanner.NORMAL
-}
-
-int function GetPodiumBackgroundSkinFromMapName()
-{
-	switch ( GetMapName() )
-	{
-		case "mp_rr_desertlands_hu" :
-			return ePodiumBackground.MP_RR_DESERTLANDS_HU
-			break
-		case "mp_rr_divided_moon_mu1" :
-			return ePodiumBackground.MP_RR_DIVIDED_MOON
-			break
-		case "mp_rr_canyonlands_hu":
-			return ePodiumBackground.MP_RR_CANYONLANDS_HU
-			break
-		case "mp_rr_olympus_mu2":
-			return ePodiumBackground.MP_RR_OLYMPUS_MU2
-			break
-		case "mp_rr_tropic_island_mu1":
-
-
-
-			return ePodiumBackground.MP_RR_TROPICS_ISLAND_MU1
-			break
-		case "mp_rr_aqueduct":
-			return ePodiumBackground.MP_RR_ADQUEDUCT
-			break
-		case "mp_rr_arena_habitat" :
-			return ePodiumBackground.MP_RR_ARENA_HABITAT
-			break
-		case "mp_rr_party_crasher" :
-			return ePodiumBackground.MP_RR_PARTY_CRASHER
-			break
-		case "mp_rr_arena_phase_runner":
-			return ePodiumBackground.MP_RR_ARENA_PHASE_RUNNER
-			break
-		case "mp_rr_freedm_skulltown":
-			return ePodiumBackground.MP_RR_FREEDM_SKULLTOWN
-			break
-		case "mp_rr_arena_skygarden":
-			return ePodiumBackground.MP_RR_ARENA_SKYGARDER
-			break
-		case "mp_rr_desertlands_night":
-			return ePodiumBackground.MP_RR_DESERTLANDS_NIGHT
-			break
-		case "mp_rr_canyonlands_mu1_night" :
-			return ePodiumBackground.MP_RR_CANYONLANDS_MU1_NIGHT
-			break
-		case "mp_rr_olympus_mu1_night":
-			return ePodiumBackground.MP_RR_OLYMPUS_MU1_NIGHT
-			break
-		case "mp_rr_tropic_island_mu2":
-			return ePodiumBackground.MP_RR_TROPICS_ISLAND_MU2
-			break
-		case "mp_rr_thunderdome":
-			return ePodiumBackground.MP_RR_THUNDERDOME
-			break
-		default:
-			printt("[GetPodiumBackgroundSkinFromMapName] map:" + GetMapName() + " not setup in GetPodiumBackgroundSkinFromMapName and will use default background")
-			break
-	}
-
-	return 0
-
-}
-#endif
-
-#if SERVER || CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function SetVictorySequencePlatformModel( asset model, vector originOffset, vector modelAngles )
 {
 	VictoryPlatformModelData data
-	data.isSet = true // DEPRECATE
+	data.isSet = true 
 	data.modelAsset = model
 	data.originOffset = originOffset
 	data.modelAngles = modelAngles
@@ -1462,7 +1456,7 @@ string function GetMusicForJump( entity player )
 	string override = GetCurrentPlaylistVarString( "music_override_skydive", "" )
 
 
-		// Uses different music tracks depending on which Alliance players are in so I can't use the playlist override
+		
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
 		{
 			int playerAlliance = AllianceProximity_GetAllianceFromTeam( player.GetTeam() )
@@ -1502,7 +1496,7 @@ bool function PlayerIsMarkedAsCanBeRespawned( entity player )
 	return false
 }
 
-#endif // SERVER || CLIENT
+
 
 bool function IsSquadDataPersistenceEmpty( entity player )
 {
@@ -1511,14 +1505,14 @@ bool function IsSquadDataPersistenceEmpty( entity player )
 	{
 		int eHandle = player.GetPersistentVarAsInt( "lastGameSquadStats[" + i + "].eHandle" )
 
-		// If we have any data at all it's not empty
+		
 		if ( eHandle > 0 )
 			return false
 	}
 	return true
 }
 
-#if SERVER || CLIENT
+
 bool function Survival_RequireJumpmasterInPlane()
 {
 
@@ -1531,14 +1525,15 @@ bool function Survival_RequireJumpmasterInPlane()
 
 	return true
 }
-#endif // SERVER || CLIENT
-
-#if SERVER
-void function Survival_OnGameplayStarted()
-{
 
 
 
 
-}
-#endif // SERVER
+
+
+
+
+
+
+
+ 

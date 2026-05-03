@@ -1,4 +1,4 @@
-                    
+
 global function HopupGoldenHorse_Init
 global function HopupGoldenHorse_Switcheroo
 global function HopupGoldenHorse_Switcheroo_LockedSets
@@ -16,15 +16,15 @@ global function GoldenHorseBlue_HasMod
 
 global function HopupGoldenHorse_GetEnabledList
 
-#if CLIENT || UI
+
 global function HopupGoldenHorse_SwapLootTier
-#endif
 
-#if SERVER
-global function HopupGoldenHorse_TryDisplayLootHint
-#endif
 
-#if CLIENT
+
+
+
+
+
 global function ServerToClient_TryDisplayLootHint
 global function GoldenHorseGreen_CockpitExplodeVFX
 global function GoldenHorseGreen_StartWeaponVFX
@@ -35,26 +35,26 @@ global function GoldenHorseGreen_HUDExplode
 
 global function GoldenHorseRed_ShowRui
 global function GoldenHorseRed_HideRui
+
+
+#if DEV
+
+
+
+
+
+
 #endif
 
-#if DEVELOPER
-#if SERVER
-global function DEV_SpawnGoldenHorseHopups
-global function DEV_SpawnGoldenHorseHopupsWithWeapons
-global function DEV_TestGoldenHorseRedSpawn
-global function DEV_SpawnGoldenHorseSummon
-#endif
-#endif
 
-//COLORS
 const string GH_BLUE = "blue"
 const string GH_GREEN = "green"
 const string GH_YELLOW = "yellow"
 const string GH_PURPLE = "purple"
 const string GH_RED = "red"
 
-//Playlist
-//TO ENABLE OR DISABLE A HOPUP... "golden_horse_enabled_color"
+
+
 const string PVAR_GOLDEN_HORSE_HOPUP_ENABLED = "golden_horse_enabled_"
 const string PVAR_GOLDEN_HORSE_RED_USE = "golden_horse_red_allow_use"
 
@@ -66,7 +66,7 @@ const string PVAR_GOLDEN_HORSE_RED_COOLDOWN = "golden_horse_red_cooldown_sec"
 const string PVAR_GOLDEN_HORSE_RED_TELEPORT_DIST = "golden_horse_red_teleport_dist"
 const string PVAR_GOLDEN_HORSE_RED_TELEPORT_COMBAT_DIST = "golden_horse_red_teleport_combat_dist"
 
-//Names
+
 const string GOLDEN_HORSE_MOD = "hopup_golden_horse_"
 
 const string GOLDEN_HORSE_MOD_BLUE = GOLDEN_HORSE_MOD + GH_BLUE
@@ -77,16 +77,16 @@ const string GOLDEN_HORSE_MOD_RED = GOLDEN_HORSE_MOD + GH_RED
 
 const string GOLDEN_HORSE_ACTIVE_MOD = "hopup_golden_horse_active_"
 
-//Signals
+
 const string SIG_GOLDEN_HORSE_RED_EMPTY = "golden_horse_red_empty"
 const string SIG_GOLDEN_HORSE_RED_HIDE_RUI = "golden_horse_red_hide_rui"
 const string SIG_GOLDEN_HORSE_GREEN_STOP_HURT_VFX = "golden_horse_green_stop_screen_vfx"
 const string SIG_GOLDEN_HORSE_GREEN_STOP_HUD = "golden_horse_green_stop_hud"
 
-//DEV
+
 const bool DEBUG_REQUIRE_HOPUP = false
 
-//VARS
+
 const float GOLDEN_HORSE_RED_MAX_SUMMON_PER_PLAYER = 2
 const float GOLDEN_HORSE_RED_SUMMON_SPAWN_TIME_SEC = 1
 const float GOLDEN_HORSE_RED_SUMMON_COOLDOWN_TIME_SEC = 15
@@ -95,38 +95,38 @@ const float GOLDEN_HORSE_RED_MAX_DIST = 75 * METERS_TO_INCHES
 const float GOLDEN_HORSE_RED_MAX_DIST_COMBAT = 200 * METERS_TO_INCHES
 const float GOLDEN_HORSE_RED_MAX_DIST_SQR = GOLDEN_HORSE_RED_MAX_DIST * GOLDEN_HORSE_RED_MAX_DIST
 const float GOLDEN_HORSE_RED_MAX_DIST_COMBAT_SQR = GOLDEN_HORSE_RED_MAX_DIST_COMBAT * GOLDEN_HORSE_RED_MAX_DIST_COMBAT
-const float GOLDEN_HORSE_RED_FOLLOW_MOVE = 256 //128
-const float GOLDEN_HORSE_RED_FOLLOW_COMBAT = 1024 //12000
-const float GOLDEN_HORSE_RED_FOLLOW_GOAL = 500 //500
+const float GOLDEN_HORSE_RED_FOLLOW_MOVE = 256 
+const float GOLDEN_HORSE_RED_FOLLOW_COMBAT = 1024 
+const float GOLDEN_HORSE_RED_FOLLOW_GOAL = 500 
 const float GOLDEN_HORSE_RED_ENEMY_DIST = 150 * METERS_TO_INCHES
-//NPCFollowsPlayer( summon, owner, 128, 12000, 500 )
 
-//MDL
+
+
 const asset MDL_GOLDEN_HORSE_NESSIE = $"mdl/props/nessie/nessie_ragold_w.rmdl"
 
-//VFX
-//const asset VFX_GOLDEN_HORSE_GREEN_CHARGE_1P = $"P_emp_explosion" //Do we need a 1P effect???
-const asset VFX_GOLDEN_HORSE_GREEN_CHARGE_3P = $"P_Gmat_exp_buildup" //Want it to be like sucking in effects before it shockwaves out
-//const asset VFX_GOLDEN_HORSE_GREEN_HURT_1P = $"P_cryo_1p"
-//const asset VFX_GOLDEN_HORSE_GREEN_HURT_3P = FX_EMP_BODY_HUMAN //Using the emp 3P for temp
-const asset VFX_GOLDEN_HORSE_GREEN_EXPLODE_COCKPIT = $"P_gmat_exp_FP_shockwave"//$"P_emp_explosion"
-const asset VFX_GOLDEN_HORSE_GREEN_EXPLODE_1P = $"P_gmat_exp_FP_dlight"//$"P_emp_explosion"
-const asset VFX_GOLDEN_HORSE_GREEN_EXPLODE_3P = $"P_Gmat_exp_shockwave"//$"P_emp_explosion"
+
+
+const asset VFX_GOLDEN_HORSE_GREEN_CHARGE_3P = $"P_Gmat_exp_buildup" 
+
+
+const asset VFX_GOLDEN_HORSE_GREEN_EXPLODE_COCKPIT = $"P_gmat_exp_FP_shockwave"
+const asset VFX_GOLDEN_HORSE_GREEN_EXPLODE_1P = $"P_gmat_exp_FP_dlight"
+const asset VFX_GOLDEN_HORSE_GREEN_EXPLODE_3P = $"P_Gmat_exp_shockwave"
 const asset VFX_GOLDEN_HORSE_GREEN_WEAPON_3P = $"P_Gmat_Gun_arcs"
 
-const asset VFX_GOLDEN_HORSE_RED_SUMMON = $"P_Rmat_warp_spawn"  // Nessie Spawn In
-const asset VFX_GOLDEN_HORSE_RED_TELEPORT_START = $"P_Rmat_warp_out" // distance = warp start
-const asset VFX_GOLDEN_HORSE_RED_TELEPORT_END = $"P_Rmat_warp_in" // distance = warp end
+const asset VFX_GOLDEN_HORSE_RED_SUMMON = $"P_Rmat_warp_spawn"  
+const asset VFX_GOLDEN_HORSE_RED_TELEPORT_START = $"P_Rmat_warp_out" 
+const asset VFX_GOLDEN_HORSE_RED_TELEPORT_END = $"P_Rmat_warp_in" 
 
-const asset VFX_GOLDEN_HORSE_RED_USE = $"P_Rmat_emote" // emote = pet nessie
+const asset VFX_GOLDEN_HORSE_RED_USE = $"P_Rmat_emote" 
 
-//SFX
+
 const string SFX_GOLDEN_HORSE_GREEN_CHARGE_1P = "materia_green_emp_charge_start_1P"
 const string SFX_GOLDEN_HORSE_GREEN_CHARGE_3P = "materia_green_emp_charge_start_3P"
 const string SFX_GOLDEN_HORSE_GREEN_EXPLODE_1P = "materia_green_emp_charge_explode_1P"
 const string SFX_GOLDEN_HORSE_GREEN_EXPLODE_3P = "materia_green_emp_charge_explode_3P"
-//const string SFX_GOLDEN_HORSE_GREEN_HURT_1P = "cryogrenade_freeze_1p"
-//const string SFX_GOLDEN_HORSE_GREEN_HURT_3P = "cryogrenade_freeze_3p"
+
+
 
 const string SFX_GOLDEN_HORSE_RED_SUMMON = "materia_red_nessie_spawn_3P"
 const string SFX_GOLDEN_HORSE_RED_TELEPORT_START = "afltm_vocal_death"
@@ -136,13 +136,13 @@ const string SFX_GOLDEN_HORSE_RED_USE = "materia_red_nessie_cuddle_3P"
 
 const string SFX_GOLDEN_HORSE_PURPLE_SUCCESS = "lootmarvin_dispenseloot"
 
-//RUI
+
 const asset RUI_GOLDEN_HORSE_RED_HUD = $"ui/weapon_hud_charged_nessie.rpak"
 
-//Taken From firing range loot
+
 const array<string> VALID_WEAPONS = [
-	"mp_weapon_wingman", //WINGMAN GOING INTO CRATE
-	"mp_weapon_wingman_crate", //WINGMAN GOING INTO CRATE
+	"mp_weapon_wingman", 
+	"mp_weapon_wingman_crate", 
 	"mp_weapon_semipistol",
 	"mp_weapon_autopistol",
 	"mp_weapon_shotgun_pistol",
@@ -158,8 +158,8 @@ const array<string> VALID_WEAPONS = [
 	"mp_weapon_energy_ar",
 	"mp_weapon_hemlok",
 	"mp_weapon_esaw",
-	"mp_weapon_lstar", //LSTAR COMING OUT OF CRATE
-	"mp_weapon_lstar_crate", //LSTAR COMING OUT OF CRATE
+	"mp_weapon_lstar", 
+	"mp_weapon_lstar_crate", 
 	"mp_weapon_lmg",
 	"mp_weapon_g2",
 	"mp_weapon_dmr",
@@ -176,14 +176,14 @@ const array<string> VALID_WEAPONS = [
 ]
 
 
-#if SERVER
-struct SummonData
-{
-	float         nextAvailableSummon = -1
-	array<entity> summons
-	int           maxSummons = 0
-}
-#endif
+
+
+
+
+
+
+
+
 
 struct CritData
 {
@@ -192,15 +192,15 @@ struct CritData
 }
 
 struct {
-	#if SERVER
-		table<entity, SummonData> summoners
-		table<entity, float>      yellows
-	#endif
+
+
+
+
 	table<entity, CritData>   crits
-	#if CLIENT
+
 		var redRui
 		var greenRui
-	#endif
+
 }file
 
 bool function IsEnabled( string color )
@@ -218,13 +218,7 @@ bool function HasMod( entity weapon, string mod, string color )
 
 bool function ProjectileHasMod( entity projectile, string mod, string color )
 {
-	// HasWeaponMod not available on CLIENT in S3
-	#if SERVER
-		return projectile.HasWeaponMod( mod + color )
-	#else
-		Warning( "ProjectileHasMod: HasWeaponMod not available on CLIENT" )
-		return false
-	#endif
+	return projectile.HasWeaponMod( mod + color )
 }
 
 bool function IsValidProjectileWithMod( entity projectile, string mod, string color )
@@ -254,15 +248,15 @@ void function RemoveMod( entity weapon, string mod, string color )
 array<string> function HopupGoldenHorse_GetEnabledList()
 {
 	array<string> hopups
-	if ( IsEnabled( GH_BLUE ) ) //TUNE
+	if ( IsEnabled( GH_BLUE ) ) 
 		hopups.append( GOLDEN_HORSE_MOD + GH_BLUE )
-	if ( IsEnabled( GH_GREEN ) ) //TUNE
+	if ( IsEnabled( GH_GREEN ) ) 
 		hopups.append( GOLDEN_HORSE_MOD + GH_GREEN )
-	if ( IsEnabled( GH_YELLOW ) ) //TUNE
+	if ( IsEnabled( GH_YELLOW ) ) 
 		hopups.append( GOLDEN_HORSE_MOD + GH_YELLOW )
-	if ( IsEnabled( GH_PURPLE ) ) //TUNE
+	if ( IsEnabled( GH_PURPLE ) ) 
 		hopups.append( GOLDEN_HORSE_MOD + GH_PURPLE )
-	if ( IsEnabled( GH_RED ) ) //NEEDS CODE SUPPORT
+	if ( IsEnabled( GH_RED ) ) 
 		hopups.append( GOLDEN_HORSE_MOD + GH_RED )
 
 	return hopups
@@ -270,40 +264,40 @@ array<string> function HopupGoldenHorse_GetEnabledList()
 
 void function HopupGoldenHorse_Init()
 {
-	//TODO Hey Dingus did you forget what happened with april fools?
-	//Make sure the build can see all the assets we need, it's no good if it's gated behind this playlist
+	
+	
 	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_GOLDEN_HORSE ) )
 	{
 		HopupGoldenHorse_DisableAll()
 		return
 	}
 
-                   
-                                              
-       
 
-	if ( IsEnabled( GH_BLUE ) ) //TUNE
+
+
+
+	if ( IsEnabled( GH_BLUE ) ) 
 		GoldenHorseBlue_Init()
-	if ( IsEnabled( GH_GREEN ) ) //TUNE
+	if ( IsEnabled( GH_GREEN ) ) 
 		GoldenHorseGreen_Init()
-	if ( IsEnabled( GH_YELLOW ) ) //TUNE
+	if ( IsEnabled( GH_YELLOW ) ) 
 		GoldenHorseYellow_Init()
-	if ( IsEnabled( GH_PURPLE ) ) //TUNE
+	if ( IsEnabled( GH_PURPLE ) ) 
 		GoldenHorsePurple_Init()
-	if ( IsEnabled( GH_RED ) ) //NEEDS CODE SUPPORT
+	if ( IsEnabled( GH_RED ) ) 
 		GoldenHorseRed_Init()
 
 	var dt      = GetDataTable( LOOT_DATATABLE )
 	int numRows = GetDataTableRowCount( dt )
 	Remote_RegisterClientFunction( "ServerToClient_TryDisplayLootHint", "int", 0, numRows )
 
-	#if SERVER
-		//Loot_AddCallback_OnLootSpawn( GoldenHorse_OnLootSpawned )
-	#endif
 
-	#if CLIENT || UI
+
+
+
+
 		AddCallback_EditLootDesc( HopupGoldenHorse_EditWeaponDescription )
-	#endif
+
 }
 
 void function HopupGoldenHorse_DisableAll()
@@ -315,19 +309,19 @@ void function HopupGoldenHorse_DisableAll()
 	SURVIVAL_Loot_AddDisabledRef( GOLDEN_HORSE_MOD + GH_RED )
 }
 
-//Oh no I fell for the ol' switcheroo!
+
 void function HopupGoldenHorse_Switcheroo( LootData wData )
 {
 	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_GOLDEN_HORSE ) )
 		return
 
-	//If we're assuming a hopup slot on every weapon...
+	
 
-	//Special cases for crate weapons - build the hopups into it
+	
 	switch( wData.ref )
 	{
 		case "mp_weapon_bow":
-			//Doesn't play nice with crits
+			
 			wData.supportedAttachments.append( "hopup" )
 			wData.supportedAttachments.fastremovebyvalue( "hopupMulti_a" )
 			wData.baseMods.fastremovebyvalue( "hopup_shatter_rounds" )
@@ -335,8 +329,8 @@ void function HopupGoldenHorse_Switcheroo( LootData wData )
 			break
 
 		case "mp_weapon_wingman_crate":
-			//wData.supportedAttachments.fastremovebyvalue( "hopupMulti_a" )
-			//wData.supportedAttachments.fastremovebyvalue( "hopupMulti_b" )
+			
+			
 			wData.baseMods.fastremovebyvalue( "hopup_headshot_dmg_elite" )
 			wData.baseMods.fastremovebyvalue( "hopup_smart_reload" )
 			wData.baseMods.append( "hopup_headshot_dmg_elite_ghorse" )
@@ -348,7 +342,7 @@ void function HopupGoldenHorse_Switcheroo( LootData wData )
 			break
 
 		case "mp_weapon_pdw_crate":
-			//wData.baseMods.fastremovebyvalue( "hopup_selectfire" )
+			
 			wData.supportedAttachments.fastremovebyvalue( "hopup" )
 			wData.supportedAttachments.append( "hopupMulti_a" )
 			wData.supportedAttachments.append( "hopupMulti_b" )
@@ -388,7 +382,7 @@ void function HopupGoldenHorse_Switcheroo_LockedSets( LootData wData )
 
 	if ( isGold )
 	{
-		//Remove default hopup
+		
 		for ( int i = 0; i < wData.baseMods.len(); ++i )
 		{
 			if ( wData.baseMods[i].find( "hopup" ) != -1 )
@@ -400,7 +394,7 @@ void function HopupGoldenHorse_Switcheroo_LockedSets( LootData wData )
 
 		array<string> hopups = GetAttachmentsForPoint( "hopup", wData.baseWeapon )
 
-		//Add proper ghorse hopup
+		
 		foreach ( string hopup in hopups )
 		{
 			if ( hopup.find( GOLDEN_HORSE_MOD ) != -1 )
@@ -423,7 +417,7 @@ void function HopupGoldenHorse_Switcheroo_LockedSets( LootData wData )
 	}
 }
 
-#if CLIENT || UI
+
 string function HopupGoldenHorse_EditWeaponDescription( string lootRef, entity player, string originalDesc )
 {
 	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_GOLDEN_HORSE ) )
@@ -454,48 +448,48 @@ string function HopupGoldenHorse_EditWeaponDescription( string lootRef, entity p
 
 	return originalDesc
 }
-#endif
 
-#if SERVER
-void function HopupGoldenHorse_TryDisplayLootHint( entity weapon )
-{
-	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_GOLDEN_HORSE ) )
-		return
 
-	if ( !IsValid( weapon ) )
-		return
 
-	string weaponRef = GetWeaponClassNameWithLockedSet( weapon )
-	if ( weaponRef.find( "_paint" ) >= 0 ) //Paintball guns
-		return
 
-	entity player = weapon.GetWeaponOwner()
-	if ( !IsValid( player ) )
-		return
 
-	string hopupToFind   = ""
-	array<string> hopups = GetAttachmentsForPoint( "hopup", weapon.GetWeaponClassName() )
-	foreach ( string hopup in hopups )
-	{
-		if ( hopup.find( GOLDEN_HORSE_MOD ) >= 0 )
-		{
-			hopupToFind = hopup
-			break
-		}
-	}
 
-	if ( hopupToFind == "" )
-		return
 
-	if ( !weapon.GetMods().contains( hopupToFind ) )
-	{
-		LootData data = SURVIVAL_Loot_GetLootDataByRef( hopupToFind )
-		Remote_CallFunction_NonReplay( player, "ServerToClient_TryDisplayLootHint", data.index )
-	}
-}
-#endif
 
-#if CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 bool function HopupGoldenHorse_SwapLootTier( var rui, string ref, int tier, string ruiVar = "lootTier" )
 {
 	if ( ref == GOLDEN_HORSE_MOD + GH_GREEN )
@@ -506,9 +500,9 @@ bool function HopupGoldenHorse_SwapLootTier( var rui, string ref, int tier, stri
 	RuiSetInt( rui, ruiVar, tier )
 	return false
 }
-#endif
 
-#if CLIENT
+
+
 void function ServerToClient_TryDisplayLootHint( int lootIndex )
 {
 	Assert( SURVIVAL_Loot_IsLootIndexValid( lootIndex ) )
@@ -527,7 +521,7 @@ void function ServerToClient_TryDisplayLootHint( int lootIndex )
 
 	AddPlayerHint( 6, 0.5, lootData.hudIcon, localize )
 }
-#endif
+
 
 asset function HopupGoldenHorse_GetIconFor( string color )
 {
@@ -552,10 +546,10 @@ asset function HopupGoldenHorse_GetIconFor( string color )
 	return $"rui/pilot_loadout/mods/empty_hopup"
 }
 
-//BLUE!
+
 void function GoldenHorseBlue_Init()
 {
-	//Doesn't need anything, everything is built into _lifesteal
+	
 }
 
 bool function GoldenHorseBlue_HasMod( entity weapon )
@@ -563,7 +557,7 @@ bool function GoldenHorseBlue_HasMod( entity weapon )
 	return HasMod( weapon, GOLDEN_HORSE_MOD, GH_BLUE )
 }
 
-//GREEN!
+
 void function GoldenHorseGreen_Init()
 {
 	PrecacheParticleSystem( VFX_GOLDEN_HORSE_GREEN_CHARGE_3P )
@@ -581,10 +575,10 @@ void function GoldenHorseGreen_Init()
 	Remote_RegisterClientFunction( "GoldenHorseGreen_HUDExplode" )
 	Remote_RegisterClientFunction( "GoldenHorseGreen_CockpitExplodeVFX" )
 
-	#if SERVER
-		Loot_AddCallback_OnWeaponAttachmentChanged( GoldenHorseGreen_OnWeaponAttachmentChanged )
-		AddDamageCallbackSourceID( eDamageSourceId.golden_horse_green, GoldenHorseGreen_OnDamagedBy )
-	#endif
+
+
+
+
 }
 
 void function GoldenHorseGreen_StartWeaponVFX( entity weapon )
@@ -603,10 +597,10 @@ void function GoldenHorseGreen_OnWeaponActivate( entity weapon )
 		return
 
 	GoldenHorseGreen_StartWeaponVFX( weapon )
-	#if CLIENT
-		if ( weapon.IsReadyToFire() /*IsWeaponActivated not in S3*/ )
+
+		if ( weapon.IsWeaponActivated() )
 			GoldenHorseGreen_StartHUD( weapon )
-	#endif
+
 }
 
 void function GoldenHorseGreen_OnWeaponDeactivate( entity weapon )
@@ -615,12 +609,12 @@ void function GoldenHorseGreen_OnWeaponDeactivate( entity weapon )
 		return
 
 	GoldenHorseGreen_StopWeaponVFX( weapon )
-	#if CLIENT
+
 		GoldenHorseGreen_StopHUD( weapon )
-	#endif
+
 }
 
-#if CLIENT
+
 void function GoldenHorseGreen_StartHUD( entity weapon )
 {
 	thread GoldenHorseGreen_HUDThread( weapon )
@@ -662,7 +656,7 @@ void function GoldenHorseGreen_HUDThread( entity weapon )
 	int clipCount
 	int maxClipCount
 	float clipCountFrac = 1.0
-	float delay         = GetWeaponInfoFileKeyField_GlobalFloat( weapon.GetWeaponClassName(), "golden_horse_green_delay_sec" )
+	float delay         = GetWeaponInfoFileKeyField_GlobalFloat( weapon.GetWeaponBaseClassName(), "golden_horse_green_delay_sec" )
 
 	RuiSetFloat( chargeBarRui, "flashDelay", delay )
 
@@ -683,7 +677,7 @@ void function GoldenHorseGreen_HUDThread( entity weapon )
 
 		clipCount    = weapon.GetWeaponPrimaryClipCount()
 		maxClipCount = weapon.GetWeaponPrimaryClipCountMax()
-		if ( weapon.GetWeaponClassName() == "mp_weapon_lstar" ) //lstar overheats
+		if ( weapon.GetWeaponBaseClassName() == "mp_weapon_lstar" ) 
 		{
 			clipCountFrac = 1.0 - weapon.GetWeaponChargeFraction()
 		}
@@ -719,35 +713,35 @@ void function GoldenHorseGreen_StopHUD( entity weapon )
 
 	weapon.Signal( SIG_GOLDEN_HORSE_GREEN_STOP_HUD )
 }
-#endif
 
-#if SERVER
-void function GoldenHorseGreen_OnWeaponAttachmentChanged( entity player, entity weapon, string modToAdd, string modToRemove )
-{
-	if ( !IsValid( player ) )
-		return
 
-	if ( !IsValid( weapon ) )
-		return
 
-	if ( !weapon.IsWeaponX() )
-		return
 
-	if ( modToAdd == GOLDEN_HORSE_MOD + GH_GREEN )
-	{
-		GoldenHorseGreen_StartWeaponVFX( weapon )
-		Remote_CallFunction_Replay( player, "GoldenHorseGreen_StartWeaponVFX", weapon )
-		if ( weapon.IsReadyToFire() /*IsWeaponActivated not in S3*/ )
-			Remote_CallFunction_NonReplay( player, "GoldenHorseGreen_StartHUD", weapon )
-	}
-	else if ( modToRemove == GOLDEN_HORSE_MOD + GH_GREEN )
-	{
-		GoldenHorseGreen_StopWeaponVFX( weapon )
-		Remote_CallFunction_Replay( player, "GoldenHorseGreen_StopWeaponVFX", weapon )
-		Remote_CallFunction_Replay( player, "GoldenHorseGreen_StopHUD", weapon )
-	}
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void function GoldenHorseGreen_OnPlayerRemoveWeaponMod( entity player, entity weapon, string mod )
 {
@@ -762,235 +756,235 @@ void function GoldenHorseGreen_OnPlayerRemoveWeaponMod( entity player, entity we
 			return
 
 		GoldenHorseGreen_StopWeaponVFX( weapon )
-		#if CLIENT
+
 			GoldenHorseGreen_StopHUD( weapon )
-		#endif
+
 	}
 }
 
 void function GoldenHorseGreen_OnWeaponReload( entity weapon, int milestoneIndex )
 {
-	#if SERVER
-		if ( !HasMod( weapon, GOLDEN_HORSE_MOD, GH_GREEN ) )
-			return
 
-		//LSTAR COOLING DOWN
-		if ( weapon.GetWeaponClassName() == "mp_weapon_lstar" && weapon.GetWeaponChargeFraction() < 1.0 )
-			return
 
-		//Weapon hasn't gotten more ammo yet
-		if ( weapon.GetWeaponPrimaryClipCount() != 0 )
-			return
 
-		if ( weapon.w.isGreen )
-			return
 
-		printt( "RELOADING: " + weapon.GetWeaponClassName() + " " + milestoneIndex )
-		entity owner = weapon.GetWeaponOwner()
 
-		thread Explode_Thread( owner, weapon )
-	#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 void function GoldenHorseGreen_OnWeaponReloadFinished( entity weapon )
 {
-	//Do nothing right now cuz it's broken
+	
 	return
 
 	if ( !HasMod( weapon, GOLDEN_HORSE_MOD, GH_GREEN ) )
 		return
 
-	#if SERVER
-		weapon.w.isGreen = false
-	#endif
+
+
+
 }
 
-#if SERVER
-void function Explode_Thread( entity player, entity weapon )
-{
-	if ( !IsValid( player ) )
-		return
 
-	if ( !IsValid( weapon ) )
-		return
 
-	if ( !player.IsPlayer() )
-		return
 
-	if ( weapon.w.isGreen )
-		return
 
-	weapon.w.isGreen = true
 
-	player.EndSignal( "OnDeath" )
-	player.EndSignal( "OnDestroy" )
-	player.EndSignal( "BleedOut_OnStartDying" )
 
-	weapon.EndSignal( "OnDestroy" )
 
-	thread ExplosionCooldown_Thread( weapon )
 
-	//Get min bullets/max bullets
-	//Change damage
-	//Get explody radius
-	float dmgScale = 1.0
-	/*if ( weapon.GetWeaponClassName() == "mp_weapon_lstar" ) //lstar always blows up on overheat
-		dmgScale = 1.0
-	else
-		dmgScale = 1.0 - float(weapon.GetWeaponPrimaryClipCount()) / float(weapon.GetWeaponPrimaryClipCountMax())
-*/
-	float dmgMin   = GetWeaponInfoFileKeyField_GlobalFloat( weapon.GetWeaponClassName(), "golden_horse_green_dmg_min" )
-	float dmgMax   = GetWeaponInfoFileKeyField_GlobalFloat( weapon.GetWeaponClassName(), "golden_horse_green_dmg_max" )
-	float delay    = GetWeaponInfoFileKeyField_GlobalFloat( weapon.GetWeaponClassName(), "golden_horse_green_delay_sec" )
-	int inner      = GetWeaponInfoFileKeyField_GlobalInt( weapon.GetWeaponClassName(), "golden_horse_green_inner_radius" )
-	int outer      = GetWeaponInfoFileKeyField_GlobalInt( weapon.GetWeaponClassName(), "golden_horse_green_outer_radius" )
 
-	float damage = GraphCapped( dmgScale, 0.0, 1.0, dmgMin, dmgMax )
 
-	entity chargeFx3p = StartParticleEffectOnEntity_ReturnEntity( player, GetParticleSystemIndex( VFX_GOLDEN_HORSE_GREEN_CHARGE_3P ), FX_PATTACH_POINT_FOLLOW, player.LookupAttachment( "CHESTFOCUS" ) )
-	chargeFx3p.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE | ENTITY_VISIBLE_EXCLUDE_PARENT_PLAYER
-	chargeFx3p.SetOwner( player )
 
-	EmitSoundOnEntityOnlyToPlayer( player, player, SFX_GOLDEN_HORSE_GREEN_CHARGE_1P )
-	EmitSoundOnEntityExceptToPlayer( player, player, SFX_GOLDEN_HORSE_GREEN_CHARGE_3P )
 
-	entity threatIndicator = CreateThreatIndicator( player.GetCenter(), eThreatIndicatorID.GRENADE_INDICATOR_GENERIC, outer + 50.0, <0, 0, 0>, eThreatIndicatorVisibility.INDICATOR_SHOW_TO_ENEMIES, player )
-	CopyRealmsFromTo( player, threatIndicator )
-	threatIndicator.SetParent( player )
 
-	Remote_CallFunction_Replay( player, "GoldenHorseGreen_HUDExplode" )
 
-	OnThreadEnd( void function() : ( weapon, chargeFx3p, player, threatIndicator ) {
-		if ( IsValid( chargeFx3p ) )
-			EffectStop( chargeFx3p )
 
-		if ( IsValid( player ) )
-		{
-			StopSoundOnEntity( player, SFX_GOLDEN_HORSE_GREEN_CHARGE_1P )
-			StopSoundOnEntity( player, SFX_GOLDEN_HORSE_GREEN_CHARGE_3P )
-		}
 
-		if ( IsValid( threatIndicator ) )
-		{
-			threatIndicator.ClearParent()
-			threatIndicator.Destroy()
-		}
-	} )
 
-	wait delay //Wait explodey duration
 
-	Explode( player, damage, inner, outer )
-}
 
-void function ExplosionCooldown_Thread( entity weapon )
-{
-	weapon.EndSignal( "OnDestroy" )
 
-	while( GoldenHorseGreen_ExplosionOnCooldown( weapon ) )
-	{
-		WaitFrame()
-	}
 
-	weapon.w.isGreen = false
-}
 
-bool function GoldenHorseGreen_ExplosionOnCooldown( entity weapon )
-{
-	//LSTAR COOLING DOWN
-	if ( weapon.GetWeaponClassName() == "mp_weapon_lstar" )
-	{
-		printt( "LSTAR COOLDOWN: " + weapon.GetWeaponChargeFraction() )
-		return false
-	}
-	//Weapon hasn't gotten more ammo yet
-	if ( weapon.GetWeaponPrimaryClipCount() == 0 )
-		return true
 
-	return false
-}
 
-void function Explode( entity player, float damage, int inner, int outer )
-{
-	int attachID  = player.LookupAttachment( "CHESTFOCUS" )
-	vector origin = player.GetAttachmentOrigin( attachID )
 
-	entity chargeFx1p = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( VFX_GOLDEN_HORSE_GREEN_EXPLODE_1P ), origin, player.GetAngles() )
-	SetTeam( chargeFx1p, player.GetTeam() )
-	chargeFx1p.SetOwner( player )
-	chargeFx1p.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
-	CopyRealmsFromTo( player, chargeFx1p )
 
-	entity chargeFx3p = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( VFX_GOLDEN_HORSE_GREEN_EXPLODE_3P ), origin, player.GetAngles() )
-	SetTeam( chargeFx3p, player.GetTeam() )
-	chargeFx3p.SetOwner( player )
-	chargeFx3p.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY
-	CopyRealmsFromTo( player, chargeFx3p )
 
-	//Remote_CallFunction_Replay( player, "GoldenHorseGreen_CockpitExplodeVFX" )
 
-	EmitSoundAtPositionOnlyToPlayer( TEAM_UNASSIGNED, origin, player, SFX_GOLDEN_HORSE_GREEN_EXPLODE_1P )
-	EmitSoundAtPositionExceptToPlayer( TEAM_UNASSIGNED, origin, player, SFX_GOLDEN_HORSE_GREEN_EXPLODE_3P )
-	entity shake = CreateAirShake( origin, 8, 50, 0.5, 800 )
-	CopyRealmsFromTo( player, shake )
 
-	//CreateShake( player.GetOrigin(), 10, 105, chargeTimeSec, 1500 )
 
-	RadiusDamage(
-		origin,
-		player,
-		player,
-		damage,
-		damage,
-		inner,
-		outer,
-		SF_ENVEXPLOSION_NO_DAMAGEOWNER,
-		0,
-		0,
-		DF_RAGDOLL | DF_EXPLOSION,
-		eDamageSourceId.golden_horse_green )
-}
 
-void function GoldenHorseGreen_OnDamagedBy( entity victim, var damageInfo )
-{
-	const float SLOWTURN = 0.0//0.7
-	const float duration = 2.5
-	const float fadeout = 1.0
 
-	//int effectHandle = StatusEffect_AddTimed( victim, eStatusEffect.golden_horse_green, 0.5, duration, fadeout )
 
-	//if ( victim.IsPlayer() )
-	//	victim.p.empStatusEffectsToClearForPhaseShift.append( effectHandle )
 
-	//thread EMP_FX( VFX_GOLDEN_HORSE_GREEN_HURT_3P, victim, "CHESTFOCUS", duration, -1, SIG_GOLDEN_HORSE_GREEN_STOP_HURT_VFX, SFX_GOLDEN_HORSE_GREEN_HURT_3P )
-	//thread GoldenHorseGreen_HurtVFX_Thread( victim, duration )
 
-	//A little hacky but all green values are the same
-	const string weaponRef = "mp_weapon_shotgun"
 
-	float slowCap = GetWeaponInfoFileKeyField_GlobalFloat( weaponRef, "golden_horse_green_slow_cap" )
-	float slowMin = GetWeaponInfoFileKeyField_GlobalFloat( weaponRef, "golden_horse_green_slow_min" )
-	float slowMax = GetWeaponInfoFileKeyField_GlobalFloat( weaponRef, "golden_horse_green_slow_max" )
-	float dmgMax  = GetWeaponInfoFileKeyField_GlobalFloat( weaponRef, "golden_horse_green_dmg_max" )
-	float dmg     = DamageInfo_GetDamage( damageInfo )
 
-	float dmgScale = dmg / dmgMax
 
-	float slow = GraphCapped( dmgScale, slowCap, 1.0, slowMin, slowMax )
 
-	Electricity_DamagedPlayerOrNPC( victim, damageInfo, duration )
-	GiveEMPStunStatusEffects( victim, duration, fadeout, SLOWTURN, slow )
 
-	/*float dmgMin = GetWeaponInfoFileKeyField_GlobalFloat( weapon.GetWeaponClassName(), "golden_horse_green_dmg_min" )
-	float dmgMax = GetWeaponInfoFileKeyField_GlobalFloat( weapon.GetWeaponClassName(), "golden_horse_green_dmg_max" )
-	float delay  = GetWeaponInfoFileKeyField_GlobalFloat( weapon.GetWeaponClassName(), "golden_horse_green_delay_sec" )
-	int inner    = GetWeaponInfoFileKeyField_GlobalInt( weapon.GetWeaponClassName(), "golden_horse_green_inner_radius" )
-	int outer    = GetWeaponInfoFileKeyField_GlobalInt( weapon.GetWeaponClassName(), "golden_horse_green_outer_radius" )
 
-	float reverseScale = GraphCapped( dmgScale, 0.0, 1.0, dmgMin, dmgMax )*/
-}
-#endif
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function GoldenHorseGreen_CockpitExplodeVFX()
 {
 	entity player = GetLocalViewPlayer()
@@ -999,98 +993,98 @@ void function GoldenHorseGreen_CockpitExplodeVFX()
 	if ( !IsValid( cockpit ) )
 		return
 
-	//Assert( !EffectDoesExist( file.greenCockpitFxHandle ), "tried to start a second screen fx" )
+	
 
 	int fxID   = GetParticleSystemIndex( VFX_GOLDEN_HORSE_GREEN_EXPLODE_COCKPIT )
 	int handle = StartParticleEffectOnEntity( cockpit, fxID, FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
 	EffectSetIsWithCockpit( handle, true )
 }
-#endif
 
-//YELLOW!
+
+
 void function GoldenHorseYellow_Init()
 {
-	#if SERVER
-		AddDamageCallback( "player", GoldenHorseYellow_OnPlayerDamaged )
-	#endif
+
+
+
 }
 
-#if SERVER
-void function GoldenHorseYellow_OnPlayerDamaged( entity player, var damageInfo )
-{
-	entity inflictor = DamageInfo_GetInflictor( damageInfo )
 
-	if ( !IsValidProjectileWithMod( inflictor, GOLDEN_HORSE_MOD, GH_YELLOW ) )
-		return
 
-	entity attacker = DamageInfo_GetAttacker( damageInfo )
 
-	if ( !IsValid( attacker ) )
-		return
 
-	if ( Bleedout_IsBleedingOut( player ) )
-		return
 
-	const float duration = 3
 
-	Remote_CallFunction_Replay( attacker, "ServerToClient_ShowHealthRUI", attacker, player, duration )
 
-	//This is just for tracking stats... could we do this with a status effect instead?
-	if ( !(player in file.yellows) )
-	{
-		file.yellows[player] <- Time()
-		thread GoldenHorseYellow_TimeTracked_Thread( attacker, player, duration )
-	}
-}
 
-void function GoldenHorseYellow_TimeTracked_Thread( entity attacker, entity victim, float duration )
-{
-	victim.EndSignal( "OnDeath" )
-	victim.EndSignal( "OnDestroy" )
-	victim.EndSignal( "BleedOut_OnStartDying" )
 
-	OnThreadEnd(
-		function() : ( attacker, victim )
-		{
-			if ( victim in file.yellows )
-			{
-				float timeTracked = Time() - file.yellows[victim]
-				int time          = int( RoundToNearestInt( timeTracked ) )
-				delete file.yellows[victim]
-			}
-		}
-	)
 
-	while( Time() < file.yellows[victim] + duration && IsAlive( victim ) && !Bleedout_IsBleedingOut( victim ) )
-	{
-		WaitFrame()
-	}
-}
-#endif
 
-//PURPLE!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function GoldenHorsePurple_Init()
 {
-	#if SERVER
-		AddDamageCallback( "player", GoldenHorsePurple_OnPlayerDamaged )
-	#endif
+
+
+
 }
 
 
 var function GoldenHorsePurple_OnWeaponPrimaryAttack( entity weapon, WeaponPrimaryAttackParams params )
 {
-	#if CLIENT
+
 		if ( !InPrediction() )
 			return
-	#endif
+
 
 	if ( !HasMod( weapon, GOLDEN_HORSE_MOD, GH_PURPLE ) )
 		return
 
-	float baseChance = GetWeaponInfoFileKeyField_GlobalFloat( weapon.GetWeaponClassName(), "golden_horse_purple_chance" )
-	float growth     = GetWeaponInfoFileKeyField_GlobalFloat( weapon.GetWeaponClassName(), "golden_horse_purple_growth" )
-	float whiffMax   = GetWeaponInfoFileKeyField_GlobalFloat( weapon.GetWeaponClassName(), "golden_horse_purple_whiff" )
-	float reset      = GetWeaponInfoFileKeyField_GlobalFloat( weapon.GetWeaponClassName(), "golden_horse_purple_reset_sec" )
+	float baseChance = GetWeaponInfoFileKeyField_GlobalFloat( weapon.GetWeaponBaseClassName(), "golden_horse_purple_chance" )
+	float growth     = GetWeaponInfoFileKeyField_GlobalFloat( weapon.GetWeaponBaseClassName(), "golden_horse_purple_growth" )
+	float whiffMax   = GetWeaponInfoFileKeyField_GlobalFloat( weapon.GetWeaponBaseClassName(), "golden_horse_purple_whiff" )
+	float reset      = GetWeaponInfoFileKeyField_GlobalFloat( weapon.GetWeaponBaseClassName(), "golden_horse_purple_reset_sec" )
 
 	float rand = RandomFloat( 1.0 )
 
@@ -1099,39 +1093,39 @@ var function GoldenHorsePurple_OnWeaponPrimaryAttack( entity weapon, WeaponPrima
 	{
 		data.critChance = baseChance
 		file.crits[weapon] <- data
-		//We can potentially add these to weapon entity struct instead
+		
 		AddEntityDestroyedCallback( weapon, GoldenHorsePurple_OnEntityDestroyed )
 	}
 
 	data = file.crits[weapon]
 
-	//Little cooldown on the crit chance if they haven't fired in a while (so we can't "store" crits)
+	
 	const float GOLDEN_HORSE_PURPLE_CRIT_RESET_SEC = 5
 	const float GOLDEN_HORSE_PURPLE_CRIT_GROWTH = 0.1
 
-	if ( Time() - weapon.GetNextAttackAllowedTime() /*GetLastWeaponFireTime not in S3*/ > reset )
+	if ( Time() - weapon.GetLastWeaponFireTime() > reset )
 		data.critChance = baseChance
 
-	//printt( "CRIT CALC: " + data.critChance + " : " + (Time() - weapon.GetNextAttackAllowedTime() /*GetLastWeaponFireTime not in S3*/) )
+	
 
 	if ( rand < data.critChance )
 	{
-		//printt( "CRIT!" )
+		
 		if ( !HasMod( weapon, GOLDEN_HORSE_ACTIVE_MOD, GH_PURPLE ) )
 		{
 			AddMod( weapon, GOLDEN_HORSE_ACTIVE_MOD, GH_PURPLE )
-			data.critChance = baseChance //we got a crit so reset the chance
+			data.critChance = baseChance 
 			data.whiffs     = 0
-			//This is very annoying atm
-			//EmitSoundOnEntity( weapon, SFX_GOLDEN_HORSE_PURPLE_SUCCESS )
+			
+			
 		}
 	}
 	else
 	{
-		data.critChance += growth //we want the crit to grow with each miss
-		data.whiffs += 1 //check how many times we whiff
+		data.critChance += growth 
+		data.whiffs += 1 
 
-		//If we miss too many times, the next one is a crit for sure
+		
 		if ( data.whiffs >= whiffMax )
 			data.critChance = 1.0
 	}
@@ -1141,17 +1135,17 @@ var function GoldenHorsePurple_OnWeaponPrimaryAttack( entity weapon, WeaponPrima
 void function GoldenHorsePurple_OnEntityDestroyed( entity weapon )
 {
 	delete file.crits[weapon]
-	//RemoveEntityDestroyedCallback( weapon, GoldenHorsePurple_OnEntityDestroyed ) //not in S3
+	RemoveEntityDestroyedCallback( weapon, GoldenHorsePurple_OnEntityDestroyed )
 	printt( "Weapon Crit recently removed - size: " + file.crits.len() )
 }
 
 
 void function GoldenHorsePurple_PostFire( entity weapon )
 {
-	#if CLIENT
+
 		if ( !InPrediction() )
 			return
-	#endif
+
 
 	if ( !HasMod( weapon, GOLDEN_HORSE_MOD, GH_PURPLE ) )
 		return
@@ -1165,34 +1159,34 @@ bool function GoldenHorsePurple_HasMod( entity weapon )
 	return HasMod( weapon, GOLDEN_HORSE_MOD, GH_PURPLE )
 }
 
-#if SERVER
-void function GoldenHorsePurple_OnPlayerDamaged( entity player, var damageInfo )
-{
-	entity inflictor = DamageInfo_GetInflictor( damageInfo )
-
-	if ( !IsValidProjectileWithMod( inflictor, GOLDEN_HORSE_ACTIVE_MOD, GH_PURPLE ) )
-		return
-
-	//If it's already a headshot, return
-	if ( IsValidHeadShot( damageInfo, player ) )
-		return
-
-	DamageInfo_AddCustomDamageType( damageInfo, DF_CRITICAL )
-	DamageInfo_AddCustomDamageType( damageInfo, DF_HEADSHOT )
 
 
-	float critScale = GetHeadshotDamageMultiplierFromDamageInfo( damageInfo )
-	//critScale -= 0.05 //do we want to make crits worse than a normal headshot?
-	DamageInfo_ScaleDamage( damageInfo, critScale )
-	OnPlayerTookHeadshot( player, damageInfo )
 
 
-	entity attacker = DamageInfo_GetAttacker( damageInfo )
-	int damage      = int(ceil( DamageInfo_GetDamage( damageInfo ) ))
-}
-#endif
 
-//RED!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function GoldenHorseRed_Init()
 {
 	PrecacheParticleSystem( VFX_GOLDEN_HORSE_RED_SUMMON )
@@ -1205,25 +1199,25 @@ void function GoldenHorseRed_Init()
 	Remote_RegisterClientFunction( "GoldenHorseRed_ShowRui", "entity" )
 	Remote_RegisterClientFunction( "GoldenHorseRed_HideRui", "entity" )
 
-	#if SERVER
-		//TODO THIS ISN"T GOOD ENOUGH
-		//Maybe an activation period or recall button
-		//Should make nessie fight the target the owner shoots at if nessie doesnt already have a target
-		//Nessies knock you off the zipline if they spawn in front of you LOL
 
-		AddCallback_OnPlayerInventoryChanged( GoldenHorseRed_OnPlayerInventoryChanged )
-		AddDamageByCallback( "player", Summon_OnDamagedByPlayer )
-		Loot_AddCallback_OnWeaponAttachmentChanged( GoldenHorseRed_OnWeaponAttachmentChanged )
 
-		RegisterSignal( SIG_GOLDEN_HORSE_RED_EMPTY )
-	#endif
 
-	#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
 		RegisterSignal( SIG_GOLDEN_HORSE_RED_HIDE_RUI )
 		StatusEffect_RegisterEnabledCallback( eStatusEffect.golden_horse_red, GoldenHorseRed_OnStatusEffectEnabled )
 		StatusEffect_RegisterDisabledCallback( eStatusEffect.golden_horse_red, GoldenHorseRed_OnStatusEffectDisabled )
 		AddCallback_OnPlayerWeaponSwitched( GoldenHorseRed_OnPlayerWeaponSwitched )
-	#endif
+
 }
 
 float function GoldenHorseRed_GetCooldown()
@@ -1237,107 +1231,107 @@ bool function GoldenHorseRed_HasMod( entity weapon )
 	return HasMod( weapon, GOLDEN_HORSE_MOD, GH_RED )
 }
 
-#if SERVER
-void function GoldenHorseRed_OnWeaponAttachmentChanged( entity player, entity weapon, string modToAdd, string modToRemove )
-{
-	if ( !IsValid( player ) )
-		return
 
-	if ( !IsValid( weapon ) )
-		return
 
-	if ( !weapon.IsWeaponX() )
-		return
 
-	if ( modToAdd == GOLDEN_HORSE_MOD + GH_RED )
-	{
-		Remote_CallFunction_Replay( player, "GoldenHorseRed_ShowRui", player )
-	}
-	else if ( modToRemove == GOLDEN_HORSE_MOD + GH_RED )
-	{
-		Remote_CallFunction_Replay( player, "GoldenHorseRed_HideRui", player )
-	}
-}
 
-void function GoldenHorseRed_OnPlayerInventoryChanged( entity player )
-{
-	bool exists = false
-	foreach ( entity weapon in player.GetMainWeapons() )
-	{
-		if ( DoesModExist( weapon, GOLDEN_HORSE_MOD + GH_RED ) )
-		{
-			exists = true
-			break
-		}
-	}
-	if ( exists )
-	{
-		if ( !(player in file.summoners) )
-		{
-			SummonData summoner
-			file.summoners[player] <- summoner
 
-			thread GoldenHorseRed_Heartbeat_Thread( player )
-		}
-	}
-	else if ( player in file.summoners && file.summoners[player].nextAvailableSummon == -1 )
-	{
-		if ( file.summoners[player].maxSummons > 0 )
-		{
-			file.summoners[player].nextAvailableSummon = Time() + GoldenHorseRed_GetCooldown()
-			StartSummonCooldown( player, GoldenHorseRed_GetCooldown() )
-			thread SummonerCooldown_Thread( player, GoldenHorseRed_GetCooldown() )
-		}
-		else
-			player.Signal( SIG_GOLDEN_HORSE_RED_EMPTY )
-	}
-}
 
-//This checks for red hopups
-//We do it like this to check for swaps between guns, etc, to make sure the hopup count adds up
-void function GoldenHorseRed_Heartbeat_Thread( entity player )
-{
-	player.EndSignal( "OnDeath" )
-	player.EndSignal( "OnDestroy" )
-	player.EndSignal( SIG_GOLDEN_HORSE_RED_EMPTY )
 
-	OnThreadEnd( void function() : ( player ) {
-		delete file.summoners[player]
-	} )
 
-	while( IsValidSummoner( player ) )
-	{
-		SummonData summoner = file.summoners[player]
 
-		summoner.maxSummons = 0
-		foreach ( entity weapon in player.GetMainWeapons() )
-		{
-			if ( HasMod( weapon, GOLDEN_HORSE_MOD, GH_RED ) )
-				summoner.maxSummons += 1
-		}
 
-		int diff = summoner.summons.len() - summoner.maxSummons
-		if ( diff > 0 ) //Too many, remove summons
-		{
-			int num = 0
-			foreach ( entity summon in summoner.summons )
-			{
-				thread HACK_SummonKill_Thread( summon )
-				++num
-				if ( num == diff )
-					break
-			}
-		}
-		else if ( diff < 0 && summoner.nextAvailableSummon == -1 )
-		{
-			thread SummonerCooldown_Thread( player, 0 )
-		}
 
-		WaitFrame()
-		//printt( "SUMMONER HEARTBEAT: " + summoner.summons.len() + " :: " + summoner.maxSummons + " :: " + summoner.nextAvailableSummon )
-	}
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 bool function HasSummonCooldown( entity player )
@@ -1345,501 +1339,498 @@ bool function HasSummonCooldown( entity player )
 	return StatusEffect_HasSeverity( player, eStatusEffect.golden_horse_red )
 }
 
-#if SERVER
-bool function IsValidSummoner( entity player )
-{
-	return IsValid( player ) && player in file.summoners
-}
-
-void function StartSummonCooldown( entity player, float duration )
-{
-	StatusEffect_AddTimed( player, eStatusEffect.golden_horse_red, 1.0, duration, 0.0 )
-}
-
-void function Summon( entity player )
-{
-	if ( !IsValidSummoner( player ) )
-		return
-
-	SummonData summoner = file.summoners[player]
-
-	if ( summoner.summons.len() >= summoner.maxSummons )
-		return
-
-	vector spawnLocation = GetPetSpawnLocation( player )
-
-	//Make the NPC and wait for it to die
-	entity summon = CreateSummonNPC( spawnLocation, player.GetAngles(), player.GetTeam(), player )
-
-	AddEntityCallback_OnKilled( summon, Summon_OnKilled )
-
-	entity summonFx = StartParticleEffectOnEntity_ReturnEntity( summon, GetParticleSystemIndex( VFX_GOLDEN_HORSE_RED_SUMMON ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
-	//entity summonFx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( VFX_GOLDEN_HORSE_RED_SUMMON ), summon.GetOrigin(), summon.GetAngles() )
-	CopyRealmsFromTo( summon, summonFx )
-
-	EmitSoundAtPosition( TEAM_UNASSIGNED, summon.GetOrigin(), SFX_GOLDEN_HORSE_RED_SUMMON, summon )
-
-	summoner.summons.append( summon )
-	printt( "SUMMON ADDED: " + summoner.summons.len() + " :: " + summoner.maxSummons )
-	thread SummonLifetime_Thread( player, summon )
-}
-
-void function SummonLifetime_Thread( entity player, entity summon )
-{
-	summon.EndSignal( "OnDeath" )
-	summon.EndSignal( "OnDestroy" )
-
-	player.EndSignal( "OnDeath" )
-	player.EndSignal( "OnDestroy" )
-	player.EndSignal( SIG_GOLDEN_HORSE_RED_EMPTY )
-
-	OnThreadEnd( void function() : ( player, summon ) {
-		thread HACK_SummonKill_Thread( summon )
-	} )
-
-	while( true )
-	{
-		float distSqr = DistanceSqr( player.GetOrigin(), summon.GetOrigin() )
-		bool hasEnemy = IsValid( summon.GetEnemy() )
-		if ( (hasEnemy && distSqr > GOLDEN_HORSE_RED_MAX_DIST_COMBAT_SQR) || (!hasEnemy && distSqr > GOLDEN_HORSE_RED_MAX_DIST_SQR) )
-		{
-			bool waitingForValidSpawn = false
-			while( !PlayerCanSpawnPet( player ) )
-			{
-				waitingForValidSpawn = true
-				WaitFrame()
-			}
-
-			if ( waitingForValidSpawn )
-			{
-				waitingForValidSpawn = false
-				distSqr              = DistanceSqr( player.GetOrigin(), summon.GetOrigin() )
-				if ( distSqr <= GOLDEN_HORSE_RED_MAX_DIST_SQR )
-				{
-					continue
-				}
-			}
-
-			entity startFx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( VFX_GOLDEN_HORSE_RED_TELEPORT_START ), summon.GetOrigin(), summon.GetAngles() )
-			CopyRealmsFromTo( summon, startFx )
-
-			EmitSoundAtPosition( TEAM_UNASSIGNED, summon.GetOrigin(), SFX_GOLDEN_HORSE_RED_TELEPORT_START, summon )
-
-			vector spawnLocation = GetPetSpawnLocation( player )
-			summon.SetOrigin( spawnLocation )
-
-			entity endFx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( VFX_GOLDEN_HORSE_RED_TELEPORT_END ), summon.GetOrigin(), summon.GetAngles() )
-			CopyRealmsFromTo( summon, endFx )
-
-			//Remove enemy from memory
-			summon.ClearEnemy()
-			summon.ClearAllEnemyMemory()
-
-			EmitSoundAtPosition( TEAM_UNASSIGNED, summon.GetOrigin(), SFX_GOLDEN_HORSE_RED_TELEPORT_END, summon )
-		}
-		wait GOLDEN_HORSE_RED_DIST_TIME_SEC
-	}
-}
-
-//Logic to make summons attack your current target
-void function Summon_OnDamagedByPlayer( entity hitEnt, var damageInfo )
-{
-	if ( !hitEnt.IsEntAlive() )
-		return
-
-	if ( !hitEnt.IsPlayer() )
-		return
-
-	entity attacker = DamageInfo_GetAttacker( damageInfo )
-	if ( !IsValidSummoner( attacker ) )
-		return
-
-	SummonData summoner = file.summoners[attacker]
-
-	foreach ( entity summon in summoner.summons )
-	{
-		if ( !IsValid( summon ) )
-			continue
-
-		if ( IsValid( summon.GetEnemy() ) )
-			continue
-
-		//TODO: This is a slight improvement but it kinda seems like they still need LoS
-		//And then they jump around in place
-		summon.SetEnemy( hitEnt )
-	}
-}
-
-void function Summon_OnKilled( entity summon, var damageInfo )
-{
-	entity player = summon.GetBossPlayer()
-	if ( !IsValidSummoner( player ) )
-		return
-
-	SummonData summoner = file.summoners[player]
-	summoner.summons.fastremovebyvalue( summon )
-
-	if ( summoner.nextAvailableSummon == -1 )
-	{
-		summoner.nextAvailableSummon = Time() + GoldenHorseRed_GetCooldown()
-		StartSummonCooldown( player, GoldenHorseRed_GetCooldown() )
-		thread SummonerCooldown_Thread( player, GoldenHorseRed_GetCooldown() )
-	}
-
-	printt( "SUMMON REMOVED: " + summoner.summons.len() + " :: " + summoner.maxSummons + " SUMMON TIME: " + summoner.nextAvailableSummon )
-}
-
-void function SummonerCooldown_Thread( entity player, float cooldown )
-{
-	if ( !IsValidSummoner( player ) )
-		return
-
-	player.EndSignal( "OnDeath" )
-	player.EndSignal( "OnDestroy" )
-	player.EndSignal( SIG_GOLDEN_HORSE_RED_EMPTY )
-
-	wait cooldown
-
-	printt( "SUMMON COOLDOWN HIT" )
-
-	//Wait until we're not doing crazy stuff that will get the nessie broke
-	while( !PlayerCanSpawnPet( player ) )
-	{
-		WaitFrame()
-	}
-
-	//Summon until we're full of summons, and then when we're done reset the clock
-	while( IsValidSummoner( player ) )
-	{
-		//If we finished the cooldown, check if we have a weapon that can still put on a red hopup
-		if ( file.summoners[player].maxSummons <= 0 )
-		{
-			bool exists = false
-			foreach ( entity weapon in player.GetMainWeapons() )
-			{
-				if ( DoesModExist( weapon, GOLDEN_HORSE_MOD + GH_RED ) )
-				{
-					exists = true
-					break
-				}
-			}
-			if ( !exists ) //It doesn't exist, so let the threads know we're empty
-			{
-				player.Signal( SIG_GOLDEN_HORSE_RED_EMPTY )
-				break
-			}
-		}
-		Summon( player )
-
-		if ( file.summoners[player].summons.len() >= file.summoners[player].maxSummons )
-		{
-			file.summoners[player].nextAvailableSummon = -1
-			break
-		}
-		else
-			wait 0.7 //wait a beat in between summons
-	}
-}
-
-void function HACK_SummonKill_Thread( entity summon )
-{
-	if ( !IsValid( summon ) )
-		return
-
-	if ( !summon.IsEntAlive() )
-		return
-
-	summon.EndSignal( "OnDeath" )
-	summon.EndSignal( "OnDestroy" )
-	//Hey gang
-	//This is the stupidest hack I've done
-	//Looks like there's some race conditions mumbo jumbo around entities getting killed on map despawn
-	WaitFrame()
-	if ( IsValid( summon ) && summon.IsEntAlive() ) //THIS WOULD OTHERWISE CRASH WHEN THE MAP UNLOADS
-		summon.TakeDamage( 9999, null, null, {} )
-}
-
-entity function CreateSummonNPC( vector origin, vector angles, int team, entity owner )
-{
-	entity summon = Nessie_SpawnNPC( team, owner, origin, angles )
-	if ( summon == null )
-		return null
-
-	//probably a smarter way to do this
-	array<entity> children = [] //GetChildren not in S3
-	foreach ( entity child in children )
-	{
-		if ( child.GetScriptName() == NESSIE_SPIDER_SCRIPT_NAME )
-			child.SetModel( MDL_GOLDEN_HORSE_NESSIE )
-	}
-
-	summon.kv.alwaysalert = true
-
-	summon.SetTitle( "#GOLDEN_HORSE_NESSIE_TITLE" )
-
-	summon.SetEnemyChangeCallback( OnEnemyChanged )
-
-	PetStartFollowingOwner( summon, owner )
-
-	float enemyDist = GetCurrentPlaylistVarFloat( PVAR_GOLDEN_HORSE_RED_ENEMY_DIST, GOLDEN_HORSE_RED_ENEMY_DIST )
-	summon.SetMaxEnemyDistOverride( enemyDist )
-	summon.SetMaxEnemyDistHeavyArmorOverride( enemyDist )
-
-	if ( GetCurrentPlaylistVarBool( PVAR_GOLDEN_HORSE_RED_USE, true ) )
-		CreateUsableNessie( summon )
-
-	//Causing a couple false positives, but not covering all the negatives
-	//thread NessieStuckMonitor_Thread( summon )
-
-	Highlight_SetEnemyHighlight( summon, "enemy_ai" )
-
-	return summon
-}
-
-//TODO: move to _ai_nessie after golden horse...
-void function CreateUsableNessie( entity nessie )
-{
-	nessie.SetUsable()
-	nessie.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_TEAMMATES | USABLE_BLOCK_CONTINUOUS_USE )
-	nessie.RemoveUsableValue( USABLE_BY_ENEMIES )
-	nessie.SetUsablePriority( USABLE_PRIORITY_LOW )
-	nessie.SetUsePrompts( "#WPN_HOPUP_GOLDEN_HORSE_RED_USE_PROMPT", "#WPN_HOPUP_GOLDEN_HORSE_RED_USE_PROMPT" )
-
-	AddCallback_OnUseEntity_ServerOnly( nessie, Nessie_OnUse )
-}
-
-void function Nessie_OnUse( entity summon, entity player, int useInputFlags )
-{
-	if ( !IsValid( summon ) )
-		return
-
-	summon.UnsetUsable()
-
-	if ( IsValid( summon ) && summon.IsInterruptable() )
-	{
-		string anim
-		int index = RandomInt( 3 )
-		switch( index )
-		{
-			case 0:
-			case 1:
-				anim = "spdr_idle_react_threatA_noloop"
-				break
-
-			case 2:
-				anim = "spdr_pain_small"
-				break
-
-			default:
-				anim = "spdr_idle_react_threatA_noloop"
-				break
-		}
-
-		thread PlayAnim( summon, anim )
-	}
-
-	vector origin = summon.GetOrigin()
-
-	entity useFx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( VFX_GOLDEN_HORSE_RED_USE ), origin + <0, 0, 50>, player.GetAngles() )
-	CopyRealmsFromTo( player, useFx )
-
-	EmitSoundAtPosition( TEAM_UNASSIGNED, origin, SFX_GOLDEN_HORSE_RED_USE, player )
-
-	summon.SetHealth( summon.GetMaxHealth() )
-
-	thread Nessie_DebounceUse_Thread( summon )
-}
-
-void function Nessie_DebounceUse_Thread( entity summon )
-{
-	summon.EndSignal( "OnDeath" )
-	summon.EndSignal( "OnDestroy" )
-
-	wait 5
-
-	summon.SetUsable()
-
-	if ( GetCurrentPlaylistVarBool( "golden_horse_red_remove_use_enemy", true ) )
-	{
-		summon.RemoveUsableValue( USABLE_BY_ENEMIES )
-		summon.SetUsablePriority( USABLE_PRIORITY_LOW )
-	}
-}
-
-void function NessieStuckMonitor_Thread( entity nessie )
-{
-	nessie.EndSignal( "OnDeath", "OnDestroy" )
-	const string IDLE_WANDER_SCHEDULE = "SCHED_IDLE_WANDER"
-	array< string > stationarySchedules = [
-		"SCHED_FOLLOWER_IDLE_STAND",
-		"SCHED_WAIT_FOR_SCRIPT_ANIM_END",
-		"SCHED_COMBAT_FACE",
-		"SCHED_RANGE_ATTACK1"
-	]
-
-	bool maybeTryingToMove    = false
-	float stuckCheckStartTime = 0
-	vector stuckCheckStartPos
-	while ( true )
-	{
-		WaitFrame()
-		if ( stationarySchedules.contains( nessie.GetCurScheduleName() ) )
-		{
-			maybeTryingToMove = false
-
-			wait 0.5
-			continue
-		}
-
-		if ( !maybeTryingToMove )
-		{
-			maybeTryingToMove   = true
-			stuckCheckStartPos  = nessie.GetOrigin()
-			stuckCheckStartTime = Time()
-		}
-
-		float temp = Distance2DSqr( stuckCheckStartPos, nessie.GetOrigin() )
-		if ( Distance2DSqr( stuckCheckStartPos, nessie.GetOrigin() ) < 5 )
-		{
-			if ( (Time() - stuckCheckStartTime) > 1.0 )
-			{
-				printf( "NESSIE - we're stuck :(" )
-			}
-		}
-		else
-		{
-			wait 1
-			maybeTryingToMove = false
-		}
-	}
-}
-#endif
-
-//NESSIE FOLLOW -- modified from sh_player_pet
-
-#if SERVER
-vector function GetPetSpawnLocation( entity player )
-{
-	const float behind = -120
-	const float side = -120
-
-	vector spawnLocation = player.GetOrigin() + player.GetForwardVector() * -120
-	if ( CoinFlip() )
-	{
-		spawnLocation += player.GetRightVector() * side
-	}
-	else
-	{
-		spawnLocation -= player.GetRightVector() * side
-	}
-
-	vector safeSpotOnNavmesh = NavMesh_GetClosestPoint( spawnLocation )
-	//DebugDrawSphere( safeSpotOnNavmesh, 4.0, <0, 128, 0>, true, 100.0, 4 )
-
-	return safeSpotOnNavmesh
-}
-
-bool function PlayerCanSpawnPet( entity player, array<entity> squad = [] )
-{
-	if ( !IsValid( player ) )
-		return false
-
-	if ( !IsAlive( player ) )
-		return false
-
-	if ( player.IsZiplining() )
-		return false
-
-	//if ( player.IsSkydiving() /*Player_IsSkydiving not in S3*/ )
-		return false
-
-	if ( !player.IsOnGround() )
-		return false
-
-	if ( player.IsPhaseShifted() )
-		return false
-
-	if ( player.GetPlayerNetBool( "playerInPlane" ) )
-		return false
-
-	if ( player.IsNoclipping() )
-		return false
-
-	if ( player.IsMountingZipline() )
-		return false
-
-	//if ( player.Player_IsSkydiveAnticipating() )
-		return false
-
-	return true
-}
-
-void function OnEnemyChanged( entity pet )
-{
-	entity owner = PetGetOwner( pet )
-	if ( !IsValid( owner ) )
-		return
-
-	entity enemy = pet.GetEnemy()
-
-	if ( enemy == null )
-		PetStartFollowingOwner( pet, owner )
-
-	//Do we even need to check this? if it has an enemy, it should probably stop following owner to attack?
-	else if ( enemy.IsNPC() || enemy.IsPlayer() || IsDoor( enemy ) )
-		PetStopFollowingOwner( pet )
-
-	else
-		PetStartFollowingOwner( pet, owner )
-}
-
-void function PetStopFollowingOwner( entity pet )
-{
-	ClearFollowBehavior( pet )
-}
-
-entity function PetGetOwner( entity pet )
-{
-	return pet.GetBossPlayer()
-}
-
-void function PetStartFollowingOwner( entity pet, entity owner )
-{
-	if ( !IsAlive( pet ) )
-		return
-
-	if ( !IsAlive( owner ) )
-		return
-
-	//Set target move tolerance to change follow position when follow target moves
-	float followTargetMoveTolerance = GetCurrentPlaylistVarFloat( PVAR_GOLDEN_HORSE_RED_FOLLOW_MOVE, GOLDEN_HORSE_RED_FOLLOW_MOVE )
-
-	//Set goal tolerance when in combat
-	float followGoalCombatTolerance = GetCurrentPlaylistVarFloat( PVAR_GOLDEN_HORSE_RED_FOLLOW_COMBAT, GOLDEN_HORSE_RED_FOLLOW_COMBAT )
-
-	//Set goal tolerance when not in combat
-	float followGoalTolerance = GetCurrentPlaylistVarFloat( PVAR_GOLDEN_HORSE_RED_FOLLOW_GOAL, GOLDEN_HORSE_RED_FOLLOW_GOAL )
-
-	//float attackRadius = 1024				//will auto attack enemies within this radius
-
-	//if ( GetCurrentPlaylistVarBool( "squad_pet_force_clear_enemy", true ) )
-	//{
-	pet.ClearEnemy()
-	//}
-
-	//if ( GetCurrentPlaylistVarBool( "squad_pet_force_clear_enemy_memory", true ) )
-	//{
-	pet.ClearAllEnemyMemory()
-	//}
-
-	NPCFollowsPlayer( pet, owner )
-
-	//designate owner/pet relationship
-	pet.SetBossPlayer( owner )
-}
-#endif //SERVER
-
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function GoldenHorseRed_OnPlayerWeaponSwitched( entity player, entity newWeapon, entity oldWeapon )
 {
 	if ( DoesModExist( newWeapon, GOLDEN_HORSE_MOD + GH_RED ) )
@@ -1892,7 +1883,7 @@ void function GoldenHorseRed_SummonRui_Thread( entity player )
 	if ( !IsValid( weapon ) )
 		return
 
-	if ( !DoesModExist( weapon, GOLDEN_HORSE_MOD + GH_RED ) ) //current weapon does not have mod
+	if ( !DoesModExist( weapon, GOLDEN_HORSE_MOD + GH_RED ) ) 
 		return
 
 	if ( !HasSummonCooldown( player ) )
@@ -1948,103 +1939,103 @@ void function GoldenHorseRed_SummonRui_Thread( entity player )
 		WaitFrame()
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if DEV
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #endif
 
-#if SERVER
-void function GoldenHorse_OnLootSpawned( entity ent, LootData data, int count )
-{
-	//We'll want to use this to hook into colors I think
-	switch( data.ref )
-	{
-		case GOLDEN_HORSE_MOD + GH_GREEN:
-			ent.kv.rendercolor = "0 255 0"
-			break
-
-		case GOLDEN_HORSE_MOD + GH_BLUE:
-			ent.kv.rendercolor = "0 0 255"
-			break
-
-		case GOLDEN_HORSE_MOD + GH_PURPLE:
-			ent.kv.rendercolor = "93 63 211"
-			break
-
-		case GOLDEN_HORSE_MOD + GH_YELLOW:
-			ent.kv.rendercolor = "255 255 0"
-			break
-
-		case GOLDEN_HORSE_MOD + GH_RED:
-			ent.kv.rendercolor = "255 0 0"
-			break
-	}
-}
-#endif
-
-#if DEVELOPER
-#if SERVER
-void function DEV_SpawnGoldenHorseHopups( entity player )
-{
-	vector origin = player.GetOrigin()
-
-	array<string> hopups = HopupGoldenHorse_GetEnabledList()
-
-	const diff = 20
-	origin.x += diff * (hopups.len() / 2.0)
-
-	foreach ( string hopup in hopups )
-	{
-		SpawnGenericLoot( hopup, origin, < -1, -1, -1 >, -1 )
-		origin.x -= diff
-	}
-}
-
-void function DEV_SpawnGoldenHorseHopupsWithWeapons( entity player )
-{
-	vector origin = player.GetOrigin()
-
-	array<string> hopups = HopupGoldenHorse_GetEnabledList()
-
-	const diffX = 40
-	const diffY = 60
-
-	origin.x += diffX * (hopups.len() / 2.0)
-	float startingX = origin.x
-
-	foreach ( string hopup in hopups )
-	{
-		origin.x = startingX
-		AttachmentData aData = GetAttachmentData( hopup )
-		foreach ( string weapon in aData.compatibleWeapons )
-		{
-			SpawnLoot( weapon, origin, false )
-			SpawnLoot( hopup, origin, false )
-			origin.x -= diffX
-		}
-		origin.y -= diffY
-	}
-}
-
-void function DEV_TestGoldenHorseRedSpawn( entity player, int numToKill = 99 )
-{
-	if ( !IsValidSummoner( player ) )
-		return
-
-	SummonData summons = file.summoners[player]
-
-	int num = 0
-	foreach ( entity summon in summons.summons )
-	{
-		thread HACK_SummonKill_Thread( summon )
-		++num
-		if ( num == numToKill )
-			break
-	}
-}
-
-void function DEV_SpawnGoldenHorseSummon( entity player )
-{
-	CreateSummonNPC( player.GetOrigin(), player.GetAngles(), player.GetTeam(), player )
-}
-#endif
-#endif
-
-                         
+                          

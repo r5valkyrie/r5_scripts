@@ -1,54 +1,61 @@
-untyped
-
 global function CLHud_Init
 global function DamageFlyout
 
 global function ServerCallback_ScoreEvent
+global function ServerCallback_ScoreEventNoEnt
+
+global function ServerCallback_ScoreEventSquadWipe
+global function ServerCallback_ScoreEventWithXpOverride
+global function ServerCallback_ScoreEventWithXpOverrideAndEntity
+
 global function ScoreEvents_SetEnabled
 global function AddGenericQueueMessage
+global function AddImageQueueMessage
 global function AddScoreEventMessage
 
 global function AddCallback_ModifyDamageFlyoutForScriptName
 
 global function DEV_DamageFlyout
 
-global function Flowstate_AddCustomScoreEventMessage
-global function FS_GetScoreEventTopo
 
-// Control/FreeDM score events
 global function ServerCallback_ControlScoreEvent
+
+
+
 global function ServerCallback_FreeDMScoreEvent
 
-// Training hit indicators
+
+
 int bulletColorSeed = 0
-bool showTrainingHitIndicators = false                                                                                                    
+bool showTrainingHitIndicators = false 
 const asset TARGET_SPINNING_MODEL = $"mdl/barriers/shooting_range_target_02.rmdl"
 global function UICallback_ToggleTrainingHitIndicators
 global function SCB_ShowHitMarks_Set_ByNetvar
 global function ShouldShowTrainingHitIndicators
 
+
 const bool RUI_ENABLED = true
 
-/*
 
 
-        ==== SCRIPT ====
-        ) Client script can now create and destroy Respawn UIs. To create one, do:
-           rui = RuiCreate( $"ui/assetname.rpak", topology, drawGroup, sortKey )
 
-        You can then manipulate it using the following:
-		   RuiSetVisible( rui, visible )
-           RuiSetString( rui, argName, value )
-           RuiSetBool( rui, argName, value )
-           RuiSetInt( rui, argName, value )
-           RuiSetFloat( rui, argName, value )
-           RuiSetFloat2( rui, argName, value )  // value is a vector; only x and y are used
-           RuiSetFloat3( rui, argName, value )
-           RuiSetColorAlpha( rui, argName, color, alpha )  // color is a vector
 
-        To destroy it, just do:
-           RuiDestroy( rui )
-*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 struct MessageData
 {
@@ -68,12 +75,6 @@ struct MessageData
 const int NUM_OFFSETS = 4
 const int[NUM_OFFSETS] DAMAGE_OFFSETS = [0, 1, 0, -1]
 
-
-// Ability entity checks (stubs)
-bool function IsMobileShieldEnt( entity ent ) { return false }
-bool function IsCastleWallEnt( entity ent ) { return false }
-bool function IsResinShard( entity ent ) { return false }
-
 struct DamageData
 {
 	float creationTime
@@ -83,6 +84,10 @@ struct DamageData
 struct DamageFlyoutData
 {
 	var stackingDamageRui
+
+	
+	float replayDelay
+	entity viewEntity
 
 	float lastDamageFlyoutTime
 	int   lastDamageFlyoutDamage
@@ -113,8 +118,7 @@ struct
 	table<entity, DamageFlyoutData> entityDamageFlyouts
 
 	var rui_hitIndicator
-	var flowstateSmallServerMsg
-	var flowstateSmallServerMsg_Topo
+
 	table< string, vector functionref( entity, vector ) > modifyDamageFlyoutForScriptNameCallbacks
 } file
 
@@ -138,6 +142,22 @@ void function AddGenericQueueMessage( string messageText, float duration = 4.0 )
 {
 	MessageData messageData
 	messageData.messageText = Localize( messageText )
+	messageData.duration = duration
+
+	file.pendingEventQueue.append( messageData )
+
+	if ( file.eventQueueActive )
+		return
+
+	thread QueueMessageThink()
+}
+
+
+void function AddImageQueueMessage( string messageText, asset image, float duration = 4.0 )
+{
+	MessageData messageData
+	messageData.messageText = Localize( messageText )
+	messageData.icon = image
 	messageData.duration = duration
 
 	file.pendingEventQueue.append( messageData )
@@ -189,7 +209,7 @@ asset function GetRuiAssetForMessage( MessageData messageData )
 
 void function QueueMessageThink()
 {
-	// allow multiple queue messages to come in this frame
+	
 	file.eventQueueActive = true
 	WaitEndFrame()
 
@@ -258,11 +278,21 @@ void function MessageThink( MessageData messageData )
 
 asset function GetScoreMessageRuiAssetForMode()
 {
+
 	if ( GameMode_IsActive( eGameModes.CONTROL ) )
 		return $"ui/control_score_info.rpak"
+
+
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.FREEDM_LOCKDOWN ) )
+		return $"ui/lockdown_score_info.rpak"
+
+
 	return $""
 }
-//
+
+
+
 void function DEV_DamageFlyout( entity victim )
 {
 	DamageFlyout( 15, victim.GetWorldSpaceCenter(), victim, eHitType.NORMAL )
@@ -275,6 +305,7 @@ const DUMMY_SHIELD_ICON = $"rui/hud/loot/loot_armor_1"
 
 const STUN_GRENADE_ICON = $"rui/hud/character_abilities/fuse_stun_indicator" 
 const float STUN_GRENADE_ICON_TIMESCALE = 0.3
+
 
 void function DamageFlyout( float damageAmount, vector damagePosition, entity victim, int hitType, int damageFlags = 0, int damageType = 0, entity weapon = null )
 {
@@ -314,6 +345,16 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 		isExtraShieldShot = true
 		isOvershieldShot = false
 	}
+
+
+
+
+
+
+
+
+
+
 	int sortKey = (file.lastSortKey++) % 100
 
 	asset shieldIcon = $""
@@ -321,33 +362,39 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 	bool overshield = false
 	float timeScale = 1.0 	
 	float shieldFrac = -1.0
-	if ( isShieldShot || isShieldBreak || hitType == eHitType.ARMOR )
+	if ( isShieldShot || isShieldBreak || isOvershieldShot || hitType == eHitType.ARMOR
+
+		|| isExtraShieldShot
+
+		)
 	{
 		if ( victim.IsPlayer() )
 		{
 			LootData shieldData = EquipmentSlot_GetEquippedLootDataForSlot( victim, "armor" )
 			shieldIcon = shieldData.hudIcon
 			shieldLevel = shieldData.tier
+
 			if( UpgradeCore_IsEquipmentArmorCore( shieldData.ref ) )
 			{
 				shieldIcon = $"rui/hud/loot/loot_armor_upgrade"
 				shieldLevel = UpgradeCore_GetPlayerArmorTier( victim, false )
 			}
+
 		}
-		// Training dummie shield support
+
 		else if ( victim.IsNPC() && IsTrainingDummie( victim ) )
 		{
 			shieldIcon = DUMMY_SHIELD_ICON
 			shieldLevel = victim.GetGrade() + 1
 		}
-	}
-	
-	if ( victim.IsPlayer() && isShadowShot )
-	{
-		//
+
 	}
 
-	
+	if ( victim.IsPlayer() && isShadowShot )
+	{
+		
+	}
+
 	if ( !victim.IsPlayer() && (isKOShieldShot || hitType == eHitType.VORTEX) )
 	{
 		entity shieldOwner = victim.GetOwner()
@@ -366,27 +413,48 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 			isStructure = true
 		}
 
-		// Mobile shield (Madmaggie)
 		else if ( IsMobileShieldEnt( victim ) )
 		{
 			shieldIcon = $""
 			shieldLevel = 1
 			shieldFrac = isKillShot ? 0.0 : max( 0, ( victim.GetHealth() - damageAmount ) / victim.GetMaxHealth() )
 		}
-		// Castle wall (Newcastle)
 		else if ( IsCastleWallEnt( victim ) )
 		{
 			shieldIcon = $""
 			shieldLevel = 1
 			shieldFrac = isKillShot ? 0.0 : max( 0, ( victim.GetHealth() - damageAmount ) / victim.GetMaxHealth() )
 		}
-		// Resin shard (Catalyst)
-		else if ( IsResinShard( victim ) )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		else if ( IsForgedShadowsShield( victim ) )
 		{
+			isShadowForm = true
 			shieldIcon = $""
-			shieldLevel = 1
 			shieldFrac = isKillShot ? 0.0 : max( 0, ( victim.GetHealth() - damageAmount ) / victim.GetMaxHealth() )
 		}
+
+
+
+
+
+
+
+
 		else
 		{
 			if ( IsValid( shieldOwner ) && shieldOwner.IsPlayer() )
@@ -403,15 +471,23 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 					shieldLevel = 1
 				}
 			}
+
+
+
+
+
+
+
+
 		}
 	}
 
+
 	if ( victim.IsPlayer() && isOvershieldShot )
 	{
-		shieldIcon = GIBRALTAR_PASSIVE_ICON
-		shieldLevel = 1
 		overshield = true
 	}
+
 
 	if ( victim.IsPlayer() && isStunned )
 	{
@@ -419,7 +495,23 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 		shieldLevel = 1
 		timeScale = STUN_GRENADE_ICON_TIMESCALE
 	}
-       
+
+
+
+
+
+
+
+
+
+		if ( TitanSword_Block_PlayerIsBlocking( victim ) && isSourShot )
+		{
+			
+			shieldIcon = GIBRALTAR_PASSIVE_ICON
+			isSourShot = false
+		}
+
+
 	if ( showHitIndicator )
 	{
 		if ( file.rui_hitIndicator == null )
@@ -469,6 +561,9 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 		{
 			RuiSetColorAlpha( rui, "shieldBorderColor", <0.0,0.0,0.0>, 0.0 )
 		}
+
+
+
 		RuiSetFloat( rui, "timeScale", timeScale )
 		RuiSetBool( rui, "isShadowForm", isShadowForm )
 
@@ -483,6 +578,7 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 		RuiSetBool( hitDotRui, "isCrit", isHeadShot || isCritShot )
 	}
 
+
 	const float FDT_DURATION = 1.0
 	const float FDT_STACK_THRESHOLD = 0.25
 
@@ -493,16 +589,17 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 	else
 		file.entityDamageFlyouts[victim] <- flyoutData
 
-	bool initNewStackingDamageText = Time() - flyoutData.lastDamageFlyoutTime > FDT_STACK_THRESHOLD || !showStackingDamageText
+	bool initNewStackingDamageText = Time() - flyoutData.lastDamageFlyoutTime > FDT_STACK_THRESHOLD || flyoutData.viewEntity != GetLocalViewPlayer() || flyoutData.replayDelay != GetReplayDelay() || !showStackingDamageText || !RuiIsAlive( flyoutData.stackingDamageRui )
 	if ( initNewStackingDamageText )
 	{
 		flyoutData.lastDamageFlyoutTime = Time()
 		flyoutData.lastDamageFlyoutDamage = 0
+		flyoutData.replayDelay = GetReplayDelay()
+		flyoutData.viewEntity = GetLocalViewPlayer()
 	}
 
 	float distance = Distance( victim.GetOrigin(), GetLocalViewPlayer().EyePosition() )
 	vector damageFlyoutDisplayPosition = GraphCappedVector( distance, 0, 256, victim.GetWorldSpaceCenter(), victim.GetOrigin() + <0, 0, victim.GetBoundingMaxs().z> )
-
 
 	if ( victim.GetScriptName() in file.modifyDamageFlyoutForScriptNameCallbacks )
 	{
@@ -522,7 +619,7 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 		var stackingRui
 		if ( initNewStackingDamageText )
 		{
-			stackingRui = RuiCreate( $"ui/stacking_damage_text.rpak", clGlobal.topoFullscreenHud, RUI_DRAW_HUD, sortKey + 100 )
+			stackingRui = RuiCreate( $"ui/stacking_damage_text.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, sortKey + 100 )
 			RuiSetResolutionToScreenSize( stackingRui )
 		}
 		else
@@ -541,9 +638,10 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 		RuiSetFloat( stackingRui, "shieldFrac", shieldFrac )
 		RuiSetBool( stackingRui, "isCrit", isHeadShot || isCritShot )
 		RuiSetBool( stackingRui, "isSour", isSourShot )
+		
+		
 		if ( isShieldBreak )
 		{
-			//printt( "wasShieldBreak" )
 			RuiSetGameTime( stackingRui, "shieldBreakTime", Time() )
 			RuiSetInt( stackingRui, "shieldBreakTier", shieldLevel )
 		}
@@ -585,6 +683,13 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 		}
 
 
+
+
+
+
+
+
+
 		flyoutData.stackingDamageRui = stackingRui
 
 		damageTextOffset += <0, -0.025, 0>
@@ -603,7 +708,7 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 		}
 		else
 		{
-			var floatingRui = RuiCreate( $"ui/floating_damage_text.rpak", clGlobal.topoFullscreenHud, RUI_DRAW_HUD, sortKey )
+			var floatingRui = RuiCreate( $"ui/floating_damage_text.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, sortKey )
 			RuiSetResolutionToScreenSize( floatingRui )
 
 			RuiSetGameTime( floatingRui, "startTime", Time() )
@@ -630,6 +735,14 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 					RuiSetString( floatingRui, "extraText", "#WPN_HOPUP_GOLDEN_HORSE_PURPLE_CRIT" )
 				}
 
+
+
+
+
+
+
+
+
 			DamageData newDamageData
 			newDamageData.rui = floatingRui
 			newDamageData.creationTime = Time()
@@ -643,8 +756,8 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 
 				if ( timeDelta < 0.33 )
 				{
-					//RuiSetGameTime( damageData.rui, "startTime", Time() - (0.33 * index) )
-					//damageData.creationTime = Time() - (0.33 * index)
+					
+					
 					RuiSetInt( damageData.rui, "index", index )
 				}
 				lastValidIndex = index
@@ -659,25 +772,26 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 	flyoutData.lastDamageFlyoutDamage = int( flyoutData.lastDamageFlyoutDamage + damageAmount )
 }
 
-
 bool function ShouldShowProjectileHitDot( int damageType, entity weapon )
 {
 	if ( !IsValid( weapon ) )
 		return false
 
+
 	if ( ShouldShowTrainingHitIndicators() )
 		return false
 
-	#if DEVELOPER
-		// disables hit dots for video capture
+
+#if DEV
+		
 		if ( GetCurrentPlaylistVarBool( "hud_projectile_hit_dots_disabled", false ) )
 			return false
-	#endif
+#endif
 
 	return (weapon.GetProjectilesPerShot() > 1)
 }
 
-                         
+
 bool function ShouldShowTrainingHitIndicators ()
 {
 	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
@@ -692,17 +806,18 @@ bool function ShouldShowTrainingHitIndicators ()
 	return true
 }
 
+
 int function GetArmorLevelFromDamageFlags( int damageFlags )
 {
-	if ( damageFlags & DAMAGEFLAG_ARMOR1 )
+	if ( IsBitFlagSet(  damageFlags, DAMAGEFLAG_ARMOR1 ) )
 	{
 		return 1
 	}
-	else if ( damageFlags & DAMAGEFLAG_ARMOR2 )
+	else if ( IsBitFlagSet( damageFlags, DAMAGEFLAG_ARMOR2 ) )
 	{
 		return 2
 	}
-	else if ( damageFlags & DAMAGEFLAG_ARMOR3 )
+	else if ( IsBitFlagSet( damageFlags, DAMAGEFLAG_ARMOR3 ) )
 	{
 		return 3
 	}
@@ -711,39 +826,73 @@ int function GetArmorLevelFromDamageFlags( int damageFlags )
 }
 
 
-void function ServerCallback_ScoreEvent( int scoreEventId, int unusedInt, int displayType, int associatedEntityHandle = 0, float valueA = 0, float valueB = 0 )
+void function ServerCallback_ScoreEventSquadWipe( int scoreEventId, int displayType, entity associatedEntity, int killAssistBitFlag )
 {
 	if ( !file.scoreEventsEnabled )
 		return
 
 	ScoreEvent scoreEvent = ScoreEvent_FromId( scoreEventId )
-
-	if ( displayType & eEventDisplayType.CENTER )
-	{
-		AddScoreEventMessage( scoreEvent, EncodedEHandleToEHI( associatedEntityHandle ), displayType, unusedInt, valueA, valueB )
-	}
-}
-
-
-const float READY_INFO_DURATION = 2.5
-
-void function AddScoreEventMessage( ScoreEvent scoreEvent, EHI associatedEHI, int displayType, int pointValue, float earnedValue, float ownedValue )
-{
 	string eventText = ScoreEvent_GetSplashText( scoreEvent )
 
 	entity player = GetLocalClientPlayer()
 
-	eventText = GetFormattedEventText( scoreEvent, pointValue, associatedEHI, earnedValue, ownedValue )
+	eventText = GetFormattedEventText( scoreEvent, 0, associatedEntity, 0, 0 )
+
+	if( scoreEvent.xpValue > 0 )
+	{
+		string imageStr = scoreEvent.isTeamXp ? "%$rui/hud/common/squad_trios%" : "%$rui/hud/common/squad_solo%"
+
+		if( UpgradeCore_ProgressionLocked_ForPlayer_Get( GetLocalViewPlayer() ) )
+		{
+			eventText += "`0 " + "#SCORE_EVENT_PROGRESSION_LOCKED" + " " + imageStr
+		}
+		else
+		{
+			eventText += "`0 + " + scoreEvent.xpValue + " " + imageStr
+		}
+	}
+	if( ScoreEvent_GetEventName( scoreEvent ) == "Sur_SquadWipe" && IsValid( associatedEntity ) )
+	{
+		eventText += "\n ( "
+		array<entity> teammates = GetPlayerArrayOfTeam( associatedEntity.GetTeam() )
+		bool shouldAddComma = false
+		for( int i=0; i < teammates.len(); i++ )
+		{
+			if( teammates[i] != associatedEntity && !IsAlive( teammates[i] ) )
+				continue
+			if( shouldAddComma )
+			{
+				eventText += ", "
+			}
+			else
+			{
+				shouldAddComma = true
+			}
+			entity teammate = teammates[i]
+			bool isKillingPlayer = ( killAssistBitFlag & ( 1 << i ) ) > 0
+			if( isKillingPlayer )
+				eventText += "%$rui/hud/gamestate/player_kills_icon% `1"
+			else
+			{
+				bool isAssistingPlayer = ( killAssistBitFlag & ( 1 << ( i + teammates.len() ) ) ) > 0
+				if( isAssistingPlayer )
+				{
+					eventText += "%$rui/hud/gamestate/assist_count_icon2%"
+				}
+			}
+			eventText += GetDisplayablePlayerNameFromEHI( ToEHI( teammate ) ) + "`0"
+		}
+		eventText += " ) "
+	}
+
 
 	MessageData messageData
 	messageData.scoreEventId = ScoreEvent_GetEventId( scoreEvent )
-	messageData.scoreEventValue = pointValue
+	messageData.scoreEventValue = 0
 	messageData.messageText = eventText
-	messageData.messageScale = (displayType & eEventDisplayType.BIG) ? 1.01 : 1.0
-	if ( ScoreEvent_GetEventName( scoreEvent ) == "Sur_DownedPilot" || ScoreEvent_GetEventName( scoreEvent ) == "Sur_DownedPilotAssist" )
-		messageData.messageScale = 1.5
+	messageData.messageScale = 1.51
 
-	if ( !(displayType & eEventDisplayType.BIG) )
+	if ( !IsBitFlagSet( displayType, eEventDisplayType.BIG ) )
 		return
 
 	file.pendingEventQueue.append( messageData )
@@ -754,62 +903,133 @@ void function AddScoreEventMessage( ScoreEvent scoreEvent, EHI associatedEHI, in
 	thread QueueMessageThink()
 }
 
-void function Flowstate_AddCustomScoreEventMessage( string eventText, float duration )
+void function ServerCallback_ScoreEventWithXpOverride( int scoreEventId, int displayType, float valueA, int xpOverride, bool isTeam )
 {
-	if( file.flowstateSmallServerMsg != null )
-	{
-		RuiDestroyIfAlive( file.flowstateSmallServerMsg )
-		file.flowstateSmallServerMsg = null
-	}
-	
-	if ( file.flowstateSmallServerMsg_Topo != null )
-	{
-		RuiTopology_Destroy( file.flowstateSmallServerMsg_Topo )
-		file.flowstateSmallServerMsg_Topo = null
-	}
-	
-	if( eventText == " " )
-	{
+	ScoreEvent scoreEvent = ScoreEvent_FromId( scoreEventId )
+	ScoreEvent_SetXpValue( scoreEvent, xpOverride, isTeam )
+	ServerCallback_ScoreEvent( scoreEventId, displayType, null, valueA )
+}
+
+void function ServerCallback_ScoreEventWithXpOverrideAndEntity( int scoreEventId, int displayType, float valueA, int xpOverride, bool isTeam, entity associatedEntity )
+{
+	ScoreEvent scoreEvent = ScoreEvent_FromId( scoreEventId )
+	ScoreEvent_SetXpValue( scoreEvent, xpOverride, isTeam )
+	ServerCallback_ScoreEvent( scoreEventId, displayType, associatedEntity, valueA )
+}
+
+
+void function ServerCallback_ScoreEventNoEnt( int scoreEventId, int displayType, float valueA )
+{
+	ServerCallback_ScoreEvent( scoreEventId, displayType, null, valueA )
+}
+
+void function ServerCallback_ScoreEvent( int scoreEventId, int displayType, entity ent, float valueA )
+{
+	if ( !file.scoreEventsEnabled )
 		return
+
+	ScoreEvent scoreEvent = ScoreEvent_FromId( scoreEventId )
+
+	if ( IsBitFlagSet( displayType, eEventDisplayType.CENTER ) )
+	{
+		AddScoreEventMessage( scoreEvent, ent, displayType, 0, valueA, 0 )
+	}
+}
+
+
+const float READY_INFO_DURATION = 2.5
+
+void function AddScoreEventMessage( ScoreEvent scoreEvent, entity associatedEntity, int displayType, int pointValue, float earnedValue, float ownedValue )
+{
+	string eventText = ScoreEvent_GetSplashText( scoreEvent )
+
+	entity player = GetLocalClientPlayer()
+
+	eventText = GetFormattedEventText( scoreEvent, pointValue, associatedEntity, earnedValue, ownedValue )
+
+
+	if( UpgradeCore_UsePersonalObituaryNotifications() )
+	{
+		if( scoreEvent.xpValue > 0 )
+		{
+			string imageStr = scoreEvent.isTeamXp ? "%$rui/hud/common/squad_trios%" : "%$rui/hud/common/squad_solo%"
+
+			if( UpgradeCore_ProgressionLocked_ForPlayer_Get( GetLocalViewPlayer() ) )
+			{
+				eventText += "`0 " + "#SCORE_EVENT_PROGRESSION_LOCKED" + " " + imageStr
+			}
+			else
+			{
+				eventText += "`0 + " + scoreEvent.xpValue + " " + imageStr
+			}
+		}
+		if( ScoreEvent_GetEventName( scoreEvent ) == "Sur_DownedPilot" )
+		{
+			eventText += "\n" + Localize( "#SCORE_EVENT_SUR_DOWNED_PILOT_DAMAGE_INFLICTED", earnedValue )
+		}
+		else if( ScoreEvent_GetEventName( scoreEvent ) == "Sur_SquadWipe" && IsValid( associatedEntity ) )
+		{
+			int bitFlag = int( earnedValue )
+			eventText += "\n ( "
+			array<entity> teammates = GetPlayerArrayOfTeam( associatedEntity.GetTeam() )
+			for( int i=0; i < teammates.len(); i++ )
+			{
+				if( i > 0 )
+				{
+					eventText += ", "
+				}
+				entity teammate = teammates[i]
+				bool isKillingPlayer = ( bitFlag & ( 1 << i ) ) > 0
+				if( isKillingPlayer )
+					eventText += "`1"
+				eventText += GetDisplayablePlayerNameFromEHI( ToEHI( teammate ) ) + "`0"
+			}
+			eventText += " ) "
+		}
 	}
 
-	UISize screenSize = GetScreenSize()
-	var topo = RuiTopology_CreatePlane( <( screenSize.width * 0),( screenSize.height * -0.618 ), 0>, <float( screenSize.width ), 0, 0>, <0, float( screenSize.height ), 0>, false )
-	var rui = RuiCreate( $"ui/centerevent_info.rpak", topo, RUI_DRAW_POSTEFFECTS, MINIMAP_Z_BASE + 10 )
 
-	RuiSetGameTime( rui, "startTime", Time() )
-	RuiSetFloat( rui, "duration", duration )
-	RuiSetString( rui, "messageText", Localize( eventText ) )
-	RuiSetBool( rui, "isBigText", true )
-	RuiSetFloat( rui, "messageOffsetScale", 1.0 )
-	RuiSetGameTime( rui, "updateTime", Time() )	
-	file.flowstateSmallServerMsg = rui
-	file.flowstateSmallServerMsg_Topo = topo
+
+	MessageData messageData
+	messageData.scoreEventId = ScoreEvent_GetEventId( scoreEvent )
+	messageData.scoreEventValue = pointValue
+	messageData.messageText = eventText
+	messageData.messageScale = IsBitFlagSet( displayType, eEventDisplayType.BIG ) ? 1.01 : 1.0
+	if ( ScoreEvent_GetEventName( scoreEvent ) == "Sur_DownedPilot" || ScoreEvent_GetEventName( scoreEvent ) == "Sur_DownedPilotAssist" )
+		messageData.messageScale = 1.5
+
+	if ( !IsBitFlagSet( displayType, eEventDisplayType.BIG ) )
+		return
+
+	file.pendingEventQueue.append( messageData )
+
+	if ( file.eventQueueActive )
+		return
+
+	thread QueueMessageThink()
 }
 
-var function FS_GetScoreEventTopo()
-{
-	return file.flowstateSmallServerMsg_Topo
-}
 
-string function GetFormattedEventText( ScoreEvent scoreEvent, int pointValue, EHI associatedEHI, float valueA, float valueB )
+string function GetFormattedEventText( ScoreEvent scoreEvent, int pointValue, entity targetEntity, float valueA, float valueB )
 {
 	string eventText = ScoreEvent_GetSplashText( scoreEvent )
 
 	string targetEntityText = Localize( "#DISCONNECTED" )
 
-	entity targetEntity = FromEHI( associatedEHI )
-	if ( IsValid( targetEntity ) && !targetEntity.IsPlayer() )
+	if ( IsValid( targetEntity ) )
 	{
-		entity bossPlayer = targetEntity.GetBossPlayer()
-		if ( IsValid( bossPlayer ) )
-			targetEntityText = GetPlayerNameFromEHI( ToEHI( bossPlayer ) )
+		if( targetEntity.IsPlayer() )
+		{
+			targetEntityText = GetDisplayablePlayerNameFromEHI( ToEHI( targetEntity ) )
+		}
 		else
-			targetEntityText = targetEntity.GetBossPlayerName()
-	}
-	else if ( EHIHasValidScriptStruct( associatedEHI ) )
-	{
-		targetEntityText = GetPlayerNameFromEHI( associatedEHI )
+		{
+			entity bossPlayer = targetEntity.GetBossPlayer()
+			if ( IsValid( bossPlayer ) )
+				targetEntityText = GetDisplayablePlayerNameFromEHI( ToEHI( bossPlayer ) )
+			else
+				targetEntityText = targetEntity.GetBossPlayerName()
+		}
 	}
 
 	return Localize( eventText, targetEntityText, valueA, valueB )
@@ -821,7 +1041,8 @@ void function ScoreEvents_SetEnabled( bool state )
 	file.scoreEventsEnabled = state
 }
 
-                                                
+
+
 void function ServerCallback_ControlScoreEvent( int scoreEventId, bool isExpEvent, int pointsValue, int associatedEntityHandle )
 {
 	if ( !file.scoreEventsEnabled )
@@ -833,14 +1054,14 @@ void function ServerCallback_ControlScoreEvent( int scoreEventId, bool isExpEven
 		return
 
 	ScoreEvent scoreEvent = ScoreEvent_FromId( scoreEventId )
-	if ( pointsValue <= 0 || ScoreEvent_GetEventName( scoreEvent ) == "Control_Exp_ExpReset" )
+	if ( pointsValue <= 0 || ScoreEvent_GetEventName( scoreEvent ) == CONTROL_EXPEVENT_EXPRESET )
 		return
 
-	                                                                                             
+	
 	string splashText = ScoreEvent_GetSplashText( scoreEvent )
 	string messageText = ""
 
-	                                                                                                                   
+	
 	if ( associatedEntityHandle != 0 )
 	{
 		EHI associatedEHI = EncodedEHandleToEHI( associatedEntityHandle )
@@ -850,13 +1071,13 @@ void function ServerCallback_ControlScoreEvent( int scoreEventId, bool isExpEven
 		{
 			entity bossPlayer = targetEntity.GetBossPlayer()
 			if ( IsValid( bossPlayer ) )
-				targetEntityText = GetPlayerNameFromEHI( ToEHI( bossPlayer ) )
+				targetEntityText = GetDisplayablePlayerNameFromEHI( ToEHI( bossPlayer ) )
 			else
 				targetEntityText = targetEntity.GetBossPlayerName()
 		}
 		else if ( EHIHasValidScriptStruct( associatedEHI ) )
 		{
-			targetEntityText = GetPlayerNameFromEHI( associatedEHI )
+			targetEntityText = GetDisplayablePlayerNameFromEHI( associatedEHI )
 		}
 
 		messageText = Localize( splashText, targetEntityText, pointsValue )
@@ -870,14 +1091,14 @@ void function ServerCallback_ControlScoreEvent( int scoreEventId, bool isExpEven
 	messageData.scoreEventId = scoreEventId
 	messageData.scoreEventValue = pointsValue
 	messageData.messageText = messageText
-	messageData.duration = 5.0
+	messageData.duration = CONTROL_MESSAGE_DURATION
 	messageData.messageScale = isExpEvent ? 1.0 : 1.01
 
 	messageData.icon = ScoreEvent_GetMedalIcon( scoreEvent )
-	                                                                                                                                 
+	
 	if ( isExpEvent )
 	{
-		//Control_PlayEXPGainSFX()
+		Control_PlayEXPGainSFX()
 		file.pendingEventQueue.append( messageData )
 		if ( !file.eventQueueActive )
 			thread QueueMessageThink()
@@ -888,10 +1109,10 @@ void function ServerCallback_ControlScoreEvent( int scoreEventId, bool isExpEven
 		Obituary_Print_Localized( messageText,friendlyObjectiveCol, friendlyObjectiveCol )
 	}
 }
-                              
 
-                       
-                                                
+
+
+
 void function ServerCallback_FreeDMScoreEvent( int scoreEventId )
 {
 	if ( !file.scoreEventsEnabled )
@@ -905,9 +1126,9 @@ void function ServerCallback_FreeDMScoreEvent( int scoreEventId )
 	ScoreEvent scoreEvent = ScoreEvent_FromId(scoreEventId)
 	Obituary_Print_Localized( ScoreEvent_GetMedalText(scoreEvent) )
 }
-      
 
-                         
+
+
 void function UICallback_ToggleTrainingHitIndicators ()
 {
 	showTrainingHitIndicators = !( FRS_NetVar_Get_Bool( GetLocalViewPlayer(), eFRSettingType.SHOWHITMARKS ) )
@@ -918,3 +1139,4 @@ void function SCB_ShowHitMarks_Set_ByNetvar()
 {
 	showTrainingHitIndicators = FRS_NetVar_Get_Bool( GetLocalViewPlayer(), eFRSettingType.SHOWHITMARKS )
 }
+       

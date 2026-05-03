@@ -1,12 +1,12 @@
-#if SERVER || CLIENT || UI
+
 global function EventShop_Init
-#endif
 
-#if UI
-global function EventShop_IsPlaylistVarEnabled
-#endif
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
 global function EventShop_GetCurrentActiveEventShop
 global function EventShop_CurrentActiveEventShopHasDailyChallenges
 global function EventShop_GetCurrentActiveEventShopDailyChallenges
@@ -59,28 +59,28 @@ global function EventShop_GetTotalCurrencyPersistenceVar
 global function EventShop_GetTotalCurrencyStat
 global function EventShop_IsEventShopActive
 global function EventShop_GetCurrentEventCurrencyLifetimeTotal
-#endif
 
-#if SERVER
-global function EventShop_GetCurrentMaxEventCurrencyInOneGrant
-#endif // SERVER
 
-#if UI
-global function EventShop_GetWeeklyResetsTimestamps
-global function EventShop_GetCoreItemFlav
-global function EventShop_GetItemPrice
-global function EventShop_GetCoreItemQuantity
-global function EventShop_GetChallengeHeaderImage
-global function EventShop_HasMilestoneEventPack
-#endif
 
-//////////////////////
-//////////////////////
-//// Global Types ////
-//////////////////////
-//////////////////////
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 global struct EventShopBadgeData
 {
 	ItemFlavor& badge
@@ -134,16 +134,16 @@ global struct EventShopData
 	ItemFlavor ornull eventCurrency
 	string eventShopButtonText
 }
-#endif
 
 
-///////////////////////
-///////////////////////
-//// Private Types ////
-///////////////////////
-///////////////////////
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
 struct FileStruct_LifetimeLevel
 {
 	table<ItemFlavor, EventShopData> eventShopDataMap
@@ -155,41 +155,41 @@ struct FileStruct_LifetimeLevel
 }
 
 
-#endif
-
-#if SERVER || CLIENT
-FileStruct_LifetimeLevel fileLevel // resets every level change
-#elseif UI
-FileStruct_LifetimeLevel& fileLevel // resets every level change
-
-struct {
-	//
-} fileVM // resets every UI VM reset
-#endif
 
 
-/////////////////////////
-/////////////////////////
-//// Initialization /////
-/////////////////////////
-/////////////////////////
 
-#if SERVER || CLIENT || UI
+FileStruct_LifetimeLevel fileLevel 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function EventShop_Init()
 {
-	#if UI
-		FileStruct_LifetimeLevel newFileLevel
-		fileLevel = newFileLevel
-	#endif
+
+
+
+
 
 	AddCallback_OnItemFlavorRegistered( eItemType.calevent_event_shop, void function( ItemFlavor event ) {
 		EventShopData eventShopData
 		bool expired = false
 
-		#if CLIENT || UI
+
 			Assert( IsConnected(), "We're not connected to a server. This will result in excess challenges being loaded. This won't break anything, but it also shouldn't happen." )
 			if ( IsConnected() )
-		#endif // SERVER always has access to clock time; scoping brackets for readability here...
+
 			{
 				expired = CalEvent_GetFinishUnixTime( event ) < GetUnixTimestamp()
 			}
@@ -267,7 +267,7 @@ void function EventShop_Init()
 		if ( expired )
 		{
 			printt( "EventShop_Init: skipping registration of nonessential subassets for expired event ", ItemFlavor_GetGUIDString( event ) )
-			return // EventShops Events don't require any of the following sub-assets once they expire.
+			return 
 		}
 
 		foreach ( int index, var tutorialBlock in IterateSettingsAssetArray( ItemFlavor_GetAsset( event ), "tutorialItems" ) )
@@ -317,124 +317,124 @@ void function EventShop_Init()
 		fileLevel.eventShopDataMap[event] <- eventShopData
 	} )
 
-	#if SERVER
-		AddCallback_QueueServersideScriptGRXOperations( TryGrantCurrentEventCurrencyToPlayer )
-		AddCallback_OnClientDisconnected( OnPlayerDisconnected )
-	#endif // SERVER
-}
-#endif
 
-#if SERVER
-table< entity, bool > tbl_eventCurrencyGrants = {}
 
-void function OnPlayerDisconnected( entity player )
-{
-	if ( player in tbl_eventCurrencyGrants )
-	{
-		delete tbl_eventCurrencyGrants[ player ]
-	}
+
+
 }
 
-void function TryGrantCurrentEventCurrencyToPlayer( entity player )
-{
-	thread ServerThread_TryGrantCurrentEventCurrencyToPlayer( player )
-}
 
-void function ServerThread_TryGrantCurrentEventCurrencyToPlayer( entity player )
-{
-	EndSignal( player, "OnDestroy" )
-	EndSignal( player, "OnDisconnecting" )
 
-	if ( player in tbl_eventCurrencyGrants && tbl_eventCurrencyGrants[ player ] )
-	{
-		return
-	}
 
-	OnThreadEnd(
-		function() : ( player )
-		{
-			tbl_eventCurrencyGrants[ player ] <- false
-		}
-	)
 
-	ItemFlavor ornull activeEventShop = EventShop_GetCurrentActiveEventShop()
-	if ( activeEventShop == null )
-	{
-		return
-	}
-	expect ItemFlavor( activeEventShop )
 
-	tbl_eventCurrencyGrants[ player ] <- true
 
-	while ( !GRX_IsInventoryReady( player ) )
-	{
-		WaitFrame()
-	}
 
-	string currencyRewardSeq = EventShop_GetCurrencyRewardSequence( activeEventShop )
 
-	int targetCurrency = player.GetPersistentVarAsInt( EventShop_GetTotalCurrencyPersistenceVar( activeEventShop ) )
-	if ( targetCurrency <= 0 )
-	{
-		return
-	}
 
-	int currentCurrency = GRX_GetSequenceNumber( player, currencyRewardSeq )
-	if ( currentCurrency >= targetCurrency )
-	{
-		return
-	}
 
-	int grantAmount = targetCurrency - currentCurrency
-	Assert( grantAmount <= EventShop_GetCurrentMaxEventCurrencyInOneGrant(), "Beyond limit of expected single-time currency grant: " + string( grantAmount ) )
 
-	ItemFlavor eventCurrencyFlav = EventShop_GetEventShopCurrency( activeEventShop )
-	ItemFlavorBag rewards = MakeItemFlavorBag( { [ eventCurrencyFlav ] = grantAmount } )
 
-	ScriptGRXOperationInfo op
-	op.expectedQueryGoal = GRX_HTTPQUERYGOAL_GIVE_EVENT_SEQUENCE_REWARD
-	op.doOperationFunc = ( void function ( int opID ) : ( player, currencyRewardSeq, currentCurrency, targetCurrency, rewards ) {
-		GRX_GiveSequenceRewardEasy(
-			player,
-			opID,
-			GRX_HTTPQUERYGOAL_GIVE_EVENT_SEQUENCE_REWARD,
-			currencyRewardSeq,
-			currentCurrency,
-			targetCurrency,
-			rewards
-		)
-	} )
-	op.onDoneCallback = ( void function ( int opID ) : ( player, grantAmount, activeEventShop ) {
-		StatHook_UpdateCurrentEventCurrencyStat( player, grantAmount, activeEventShop )
-	} )
 
-	QueueGRXOperation( player, op )
-	while ( !IsGRXOperationDone( op ) )
-	{
-		WaitFrame()
-	}
 
-	if ( op.status != eScriptGRXOperationStatus.DONE_SUCCESS )
-	{
-		Warning( "Failed to grant event currency rewards from challenge completion!" )
-	}
-}
-#endif
 
-//////////////////////////
-//////////////////////////
-//// Global functions ////
-//////////////////////////
-//////////////////////////
 
-#if UI
-bool function EventShop_IsPlaylistVarEnabled()
-{
-	return GetCurrentPlaylistVarBool( "enable_event_shop", true )
-}
-#endif
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ItemFlavor ornull function EventShop_GetCurrentActiveEventShop()
 {
 	Assert( IsItemFlavorRegistrationFinished() )
@@ -447,18 +447,18 @@ ItemFlavor ornull function EventShop_GetCurrentActiveEventShop()
 
 	return fileLevel.activeEventShop
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 bool function EventShop_CurrentActiveEventShopHasDailyChallenges()
 {
 	Assert( IsItemFlavorRegistrationFinished() )
 	ItemFlavor ornull currentShop = EventShop_GetCurrentActiveEventShop()
 	return currentShop != null && fileLevel.eventShopDataMap[ expect ItemFlavor( currentShop ) ].dailyChallenges.len() > 0
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 array< ItemFlavor > function EventShop_GetCurrentActiveEventShopDailyChallenges()
 {
 	Assert( IsItemFlavorRegistrationFinished() )
@@ -472,18 +472,18 @@ array< ItemFlavor > function EventShop_GetCurrentActiveEventShopDailyChallenges(
 
 	return challenges
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 bool function EventShop_CurrentActiveEventShopHasEventChallenges()
 {
 	Assert( IsItemFlavorRegistrationFinished() )
 	ItemFlavor ornull currentShop = EventShop_GetCurrentActiveEventShop()
 	return currentShop != null && fileLevel.eventShopDataMap[ expect ItemFlavor( currentShop ) ].eventChallenges.len() > 0
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 array< ItemFlavor > function EventShop_GetCurrentActiveEventShopEventChallenges()
 {
 	Assert( IsItemFlavorRegistrationFinished() )
@@ -497,72 +497,72 @@ array< ItemFlavor > function EventShop_GetCurrentActiveEventShopEventChallenges(
 
 	return challenges
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 bool function EventShop_GetShowEventChallengesInLobby( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsBool( ItemFlavor_GetAsset( event ), "showEventChallengesInLobby" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 ItemFlavor function EventShop_GetEventShopCurrency( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetItemFlavorByAsset( GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "eventShopCurrencyFlav" ) )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 ItemFlavor function EventShop_GetEventShopGRXCurrency()
 {
-	return GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] // no event currency, fallback to premium
+	return GRX_CURRENCIES[GRX_CURRENCY_EVENT]
 }
-#endif
 
-#if UI
-bool function EventShop_HasMilestoneEventPack()
-{
-	ItemFlavor ornull currentEventShop = EventShop_GetCurrentActiveEventShop()
 
-	if (currentEventShop == null)
-		return false
 
-	expect ItemFlavor(currentEventShop)
 
-	Assert( ItemFlavor_GetType( currentEventShop ) == eItemType.calevent_event_shop )
 
-	string offerLocation = EventShop_GetGRXOfferLocation( currentEventShop )
-	if ( !GRX_IsLocationActive( offerLocation ) )
-		return false
 
-	array<GRXScriptOffer> offers = GRX_GetLocationOffers( offerLocation )
-	foreach ( GRXScriptOffer eventShopOffer in offers )
-	{
-		ItemFlavor ornull coreItemFlav = EventShop_GetCoreItemFlav( eventShopOffer )
-		if ( coreItemFlav == null )
-		{
-			continue
-		}
 
-		expect ItemFlavor(coreItemFlav)
 
-		if ( IsValid( coreItemFlav )
-				&& ItemFlavor_GetType( coreItemFlav ) == eItemType.account_pack
-				&& ItemFlavor_GetAccountPackType( coreItemFlav ) == eAccountPackType.SIRNGE
-		)
-		{
-			return true
-		}
-	}
 
-	return false
-}
-#endif
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 bool function EventShop_HasSweepstakesOffers( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
@@ -573,161 +573,161 @@ bool function EventShop_HasSweepstakesOffers( ItemFlavor event )
 	}
 	return false
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 string function EventShop_GetGRXOfferLocation( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( event ), "eventShopGRXOfferLocation" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 string function EventShop_GetGridToolTipBodyText( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( event ), "eventShopGridToolTipBodyText" )
 }
-#endif // SERVER || CLIENT || UI
 
-#if SERVER || CLIENT || UI
+
+
 string function EventShop_GetGridToolTipBodySetsText( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( event ), "eventShopGridToolTipBodySetsText" )
 }
-#endif // SERVER || CLIENT || UI
 
-#if SERVER || CLIENT || UI
+
+
 string function EventShop_GetGridToolTipBodyInsufficientText( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( event ), "eventShopGridToolTipBodyInsufficientText" )
 }
-#endif // SERVER || CLIENT || UI
 
-#if SERVER || CLIENT || UI
+
+
 string function EventShop_GetGridToolTipSubtitleDailyLimitText( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( event ), "eventShopGridToolTipSubtitleDailyLimitText" )
 }
-#endif // SERVER || CLIENT || UI
 
-#if SERVER || CLIENT || UI
+
+
 string function EventShop_GetGridToolTipCounterAvailableText( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( event ), "eventShopGridToolTipCounterAvailableText" )
 }
-#endif // SERVER || CLIENT || UI
 
-#if SERVER || CLIENT || UI
+
+
 string function EventShop_GetGridToolTipCounterDailyLimitText( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( event ), "eventShopGridToolTipCounterDailyLimitText" )
 }
-#endif // SERVER || CLIENT || UI
 
-#if SERVER || CLIENT || UI
+
+
 string function EventShop_GetGridToolTipBodySweepstakesText( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( event ), "eventShopGridToolTipBodySweepstakesText" )
 }
-#endif // SERVER || CLIENT || UI
 
-#if SERVER || CLIENT || UI
+
+
 string function EventShop_GetGridToolTipBody2Text( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( event ), "eventShopGridToolTipBody2Text" )
 }
-#endif // SERVER || CLIENT || UI
 
-#if SERVER || CLIENT || UI
+
+
 asset function EventShop_GetEventMainIcon( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "eventMainIcon" )
 }
-#endif
 
-#if UI
-asset function EventShop_GetChallengeHeaderImage( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
-	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "eventShopLobbyHeaderBackgroundImage" )
-}
-#endif
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
+
 asset function EventShop_GetShopPageItemsBackground( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "eventShopPageItemsBg" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 asset function EventShop_GetLobbyButtonImage( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "eventShopLobbyButtonImage" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 asset function EventShop_GetSweepstakesPrizeImage( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "sweepstakesPrizeImage" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 EventShopData function EventShop_GetEventShopData( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return fileLevel.eventShopDataMap[event]
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 array<EventShopBadgeData> function EventShop_GetBadges( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return fileLevel.eventShopDataMap[event].badges
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 array<EventShopRewardData> function EventShop_GetRewards( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return fileLevel.eventShopDataMap[event].rewards
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 array<EventShopRadioPlayData> function EventShop_GetRadioPlays( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return fileLevel.eventShopDataMap[event].radioPlays
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 array<EventShopOfferData> function EventShop_GetOffers( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return fileLevel.eventShopDataMap[event].offers
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 EventShopOfferData ornull function EventShop_GetOfferData( ItemFlavor event, int index )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
@@ -739,9 +739,9 @@ EventShopOfferData ornull function EventShop_GetOfferData( ItemFlavor event, int
 
 	return fileLevel.eventShopDataMap[event].offers[index]
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 EventShopOfferData function EventShop_GetOfferByCoreItem( ItemFlavor event, ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
@@ -754,7 +754,7 @@ EventShopOfferData function EventShop_GetOfferByCoreItem( ItemFlavor event, Item
 		}
 	}
 
-	// Error messaging
+	
 	string eventName	= ItemFlavor_GetAssetName( event )
 	string flavorName	= ItemFlavor_GetAssetName( flavor )
 
@@ -773,33 +773,33 @@ EventShopOfferData function EventShop_GetOfferByCoreItem( ItemFlavor event, Item
 
 	return fileLevel.eventShopDataMap[event].offers[0]
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 array<EventShopTutorialData> function EventShop_GetTutorials( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return fileLevel.eventShopDataMap[event].tutorials
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 int ornull function EventShop_GetCurrencyProgressionType( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsInt( ItemFlavor_GetAsset( event ), "eventShopCurrencyProgression" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 ItemFlavor ornull function EventShop_GetMainChallenge( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return fileLevel.eventShopDataMap[event].mainChallengeFlav
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 array<ItemFlavor> function EventShop_GetTierRewards( ItemFlavor event, int tier )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
@@ -822,9 +822,9 @@ array<ItemFlavor> function EventShop_GetTierRewards( ItemFlavor event, int tier 
 
 	return rewards
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 array<ItemFlavor> function EventShop_GetTierBadges( ItemFlavor event, int tier )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
@@ -847,9 +847,9 @@ array<ItemFlavor> function EventShop_GetTierBadges( ItemFlavor event, int tier )
 
 	return badges
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 array<ItemFlavor> function EventShop_GetTierRadioPlays( ItemFlavor event, int tier )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
@@ -872,9 +872,9 @@ array<ItemFlavor> function EventShop_GetTierRadioPlays( ItemFlavor event, int ti
 
 	return radioPlays
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 int function EventShop_GetTierUnlockValue( ItemFlavor event, int tier )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
@@ -882,9 +882,9 @@ int function EventShop_GetTierUnlockValue( ItemFlavor event, int tier )
 	var tierBlock = Challenge_GetTierDataBlock( expect ItemFlavor(EventShop_GetMainChallenge( event )), tier )
 	return GetSettingsBlockInt( tierBlock, "goalVal" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 array<EventShopTierData> function EventShop_GetTiersData( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
@@ -907,113 +907,113 @@ array<EventShopTierData> function EventShop_GetTiersData( ItemFlavor event )
 
 	return tiersData
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 string function EventShop_GetGridTitle( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( event ), "gridLocString" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 string function EventShop_GetRewardsTitle( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( event ), "rewardsLocString" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 vector function EventShop_GetBarsColor( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "eventShopBarsColor" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 vector function EventShop_GetLinesColor( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "eventShopLinesColor" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 vector function EventShop_GetLeftPanelTitleColor( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "eventShopLeftPanelTitleColor" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 vector function EventShop_GetLeftPanelEventNameColor( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "eventShopLeftPanelEventNameColor" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 vector function EventShop_GetLeftPanelTimeRemainingColor( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "eventShopLeftPanelTimeRemainingColor" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 vector function EventShop_GeTooltipsColor( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "eventShopTooltipsColor" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 float function EventShop_GetRightPanelOpacity( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsFloat( ItemFlavor_GetAsset( event ), "rightPanelOpacity" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 float function EventShop_GetLeftPanelOpacity( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsFloat( ItemFlavor_GetAsset( event ), "leftPanelOpacity" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 string function EventShop_GetCurrencyRewardSequence( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( event ), "eventShopCurrencyRewardSequence" )
 }
-#endif // SERVER|| CLIENT || UI
 
-#if SERVER || CLIENT || UI
+
+
 string function EventShop_GetTotalCurrencyPersistenceVar( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( event ), "eventShopTotalCurrencyPersistenceVar" )
 }
-#endif // SERVER|| CLIENT || UI
 
-#if SERVER || CLIENT || UI
+
+
 string function EventShop_GetTotalCurrencyStat( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( event ), "eventShopTotalCurrencyStat" )
 }
-#endif // SERVER|| CLIENT || UI
 
-#if SERVER || CLIENT || UI
+
+
 bool function EventShop_IsEventShopActive()
 {
 	ItemFlavor ornull eventFlav = EventShop_GetCurrentActiveEventShop()
@@ -1025,9 +1025,9 @@ bool function EventShop_IsEventShopActive()
 
 	return CalEvent_IsActive( eventFlav, GetUnixTimestamp() )
 }
-#endif // SERVER|| CLIENT || UI
 
-#if CLIENT || UI || SERVER
+
+
 int function EventShop_GetCurrentEventCurrencyLifetimeTotal( entity player )
 {
 	ItemFlavor ornull eventFlav = EventShop_GetCurrentActiveEventShop()
@@ -1046,119 +1046,119 @@ int function EventShop_GetCurrentEventCurrencyLifetimeTotal( entity player )
 
 	return 0
 }
-#endif // SERVER|| CLIENT || UI
 
-#if SERVER
-// As of 19.1, Event Currency is only granted by Daily Challenges. So we are summing the currency rewards of all Event Daily Challenges to determine the most currency a player can be granted at once.
-int function EventShop_GetCurrentMaxEventCurrencyInOneGrant()
-{
-	Assert( IsItemFlavorRegistrationFinished() )
 
-	int now = GetUnixTimestamp()
-	if ( now > fileLevel.eventShopStaleTimestamp )
-	{
-		RefreshActiveEventShopIfRequired( now )
-	}
 
-	return fileLevel.currentMaxEventCurrencyInOneGrant
-}
-#endif // SERVER
 
-#if SERVER
-void function EventShop_CalculateCurrentMaxEventCurrencyInOneGrant()
-{
-	int maxDailyCurrencyRewards = 0
 
-	ItemFlavor ornull currentEventShop = EventShop_GetCurrentActiveEventShop()
-	if ( currentEventShop != null )
-	{
-		expect ItemFlavor( currentEventShop )
-		ItemFlavor currencyVoucher = GetItemFlavorByAsset( GetGlobalSettingsAsset( ItemFlavor_GetAsset( currentEventShop ), "eventShopCurrencyVoucherFlav" ) )
 
-		array< ItemFlavor > dailyChallenges = EventShop_GetCurrentActiveEventShopDailyChallenges()
-		foreach ( ItemFlavor challenge in dailyChallenges )
-		{
-			for ( int tier = 0; tier < Challenge_GetTierCount( challenge ); tier++ )
-			{
-				ItemFlavorBag rewardsBag = Challenge_GetRewards( challenge, tier )
 
-				foreach ( int bagIndex, ItemFlavor reward in rewardsBag.flavors )
-				{
-					if ( reward == currencyVoucher )
-					{
-						maxDailyCurrencyRewards += rewardsBag.quantities[ bagIndex ]
-					}
-				}
-			}
-		}
-	}
 
-	fileLevel.currentMaxEventCurrencyInOneGrant = maxDailyCurrencyRewards
-}
-#endif // SERVER
 
-#if UI
-ItemFlavor ornull function EventShop_GetCoreItemFlav( GRXScriptOffer offer )
-{
-	//Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
-	for ( int offerIndex = 0; offerIndex < offer.items.len(); offerIndex++ )
-	{
-		if ( offer.offerType != GRX_OFFERTYPE_BUNDLE || offer.items[offerIndex].itemType == GRX_OFFERITEMTYPE_CORE )
-		{
-			ItemFlavor coreItemFlav = GetItemFlavorByGRXIndex( offer.items[offerIndex].itemIdx )
 
-			if (ItemFlavor_GetGRXMode( coreItemFlav ) == eItemFlavorGRXMode.REGULAR)
-				return coreItemFlav
-		}
-	}
 
-	// gotta add an Assert here
-	return GetItemFlavorByGRXIndex( offer.items[0].itemIdx )
-}
-#endif
 
-#if UI
-int function EventShop_GetItemPrice( GRXScriptOffer offer )
-{
-	foreach ( ItemFlavorBag price in offer.prices )
-	{
-		Assert( price.flavors.len() == 1, "No price given for ItemFlavor bag in GRX offer." )
-		if ( price.flavors[0] == EventShop_GetEventShopGRXCurrency() )
-		{
-			return price.quantities[0]
-		}
-	}
-	return 0
-}
-#endif
 
-#if UI
-int function EventShop_GetCoreItemQuantity( GRXScriptOffer offer )
-{
-	for ( int offerIndex = 0; offerIndex < offer.items.len(); offerIndex++ )
-	{
-		if ( offer.offerType != GRX_OFFERTYPE_BUNDLE || offer.items[offerIndex].itemType == GRX_OFFERITEMTYPE_CORE )
-		{
-			ItemFlavor coreItemFlav = GetItemFlavorByGRXIndex( offer.items[offerIndex].itemIdx )
 
-			if (ItemFlavor_GetGRXMode( coreItemFlav ) == eItemFlavorGRXMode.REGULAR)
-				return offer.items[offerIndex].itemQuantity
-		}
-	}
 
-	// gotta add an Assert here
-	return offer.items[0].itemQuantity
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void function RefreshActiveEventShopIfRequired( int timestamp )
 {
-	#if CLIENT || UI
+
 		if ( !IsConnected() )
 		{
 			return
 		}
-	#endif
+
 
 	if ( timestamp < fileLevel.eventShopStaleTimestamp )
 	{
@@ -1186,47 +1186,48 @@ void function RefreshActiveEventShopIfRequired( int timestamp )
 		fileLevel.eventShopStaleTimestamp = CalEvent_GetFinishUnixTime( expect ItemFlavor( fileLevel.activeEventShop ) )
 		GRXCurrency_RegisterNewCurrencyAssetInEventSlot( eventShopCurrencyFlav )
 		GRX_SetEventCurrency( ItemFlavor_GetGRXAlias( eventShopCurrencyFlav ) )
-		#if SERVER
-			EventShop_CalculateCurrentMaxEventCurrencyInOneGrant()
-		#endif // SERVER
+
+
+
 	}
 }
 
-#if UI
-bool function EventShop_HasWeeklyResets( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
-	return GetGlobalSettingsBool( ItemFlavor_GetAsset( event ), "isWeeklyRotatingOffers" )
-}
-#endif
-#if UI
-array<int> function EventShop_GetWeeklyResetsTimestamps( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_event_shop )
 
-	const int HOUR_IN_SECONDS = 3600
-	const int DAY_IN_SECONDS = 24 * HOUR_IN_SECONDS
-	const int WEEK_IN_SECONDS = 7 * DAY_IN_SECONDS
-	int startTimestamp = CalEvent_GetStartUnixTime( event )
-	int endTimestamp  = CalEvent_GetFinishUnixTime( event )
-	int currentTimestamp = GetUnixTimestamp()
-	array<int> resetTimestamps = []
 
-	if ( !EventShop_HasWeeklyResets( event ) )
-	{
-		resetTimestamps.append( endTimestamp )
-		return resetTimestamps
-	}
-	
-	int weeks = abs( (endTimestamp - startTimestamp) ) / WEEK_IN_SECONDS
-	for ( int i = 1; i <= weeks; i++ )
-	{
-		int nextWeekTimeStamp = startTimestamp + (WEEK_IN_SECONDS * i)
-		if ( currentTimestamp < nextWeekTimeStamp )
-		{
-			resetTimestamps.append( nextWeekTimeStamp )
-		}
-	}
-	return resetTimestamps
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

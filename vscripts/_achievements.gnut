@@ -1,8 +1,0 @@
-// stub script
-
-global function Achievements_Init
-
-void function Achievements_Init()
-{
-    
-}

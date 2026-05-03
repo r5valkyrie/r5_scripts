@@ -1,2 +1,0 @@
-mp_weapon_alternator_smg
-mp_weapon_energy_ar

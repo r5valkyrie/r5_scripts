@@ -27,17 +27,17 @@ global function Mythics_SkinHasCustomSkydivetrail
 global function Mythics_GetCustomSkydivetrailForCharacterOrSkin
 global function Mythics_IsExecutionUsableOnTier1AndTier2
 
-#if SERVER
-global function Mythics_RegisterBoostedMythicChallengeForPlayer
-global function Mythics_UnregisterBoostedMythicChallengesForPlayer
-global function Mythics_GetPlayerBoostedMythicChallenges
-global function Mythics_GetBoostEnabledChallengeProgressMade
-#endif // SERVER
 
-#if UI
-global function Mythics_ToggleTrackChallenge
-global function Mythics_UpdateTrackingButton
-#endif
+
+
+
+
+
+
+
+
+
+
 struct FileStruct_LifetimeLevel
 {
 	table< int, int > mythicSkinsGUIDToCustomExecutionGUID
@@ -61,7 +61,7 @@ global struct Mythic_ChallengeProgress
 	int statMarker
 }
 
-const int CHALLENGE_SORT_ORDINAL = 0 // only support a single challenge per mythic for now
+const int CHALLENGE_SORT_ORDINAL = 0 
 const int FINAL_TIER = 3
 
 void function ShMythics_LevelInit()
@@ -165,7 +165,7 @@ bool function Mythics_CharacterHasMythic( ItemFlavor character )
 	return ( characterGUID in fileLevel.mythicCharactersGUIDToChallengesGUID )
 }
 
-// Use this to check for 1:1 skin-executions (v1 prestige finishers)
+
 bool function Mythics_SkinHasCustomExecution( ItemFlavor skin )
 {
 	Assert( IsItemFlavorStructValid( skin.guid, eValidation.DONT_ASSERT ), eValidation.ASSERT )
@@ -175,7 +175,7 @@ bool function Mythics_SkinHasCustomExecution( ItemFlavor skin )
 	return ( skinGUID in fileLevel.mythicSkinsGUIDToCustomExecutionGUID )
 }
 
-// Use this to check if a character has a custom execution at all
+
 bool function Mythics_CharacterHasCustomExecution( ItemFlavor character )
 {
 	Assert( IsItemFlavorStructValid( character.guid, eValidation.DONT_ASSERT ), eValidation.ASSERT )
@@ -288,7 +288,7 @@ int function Mythics_GetSkinGUIDFromItem( ItemFlavor item )
 		int characterGUID = ItemFlavor_GetGUID( item )
 		skinGUID = fileLevel.charactersGUIDToMythicSkinGUIDs[ characterGUID ][ FINAL_TIER - 1 ]
 	}
-	else // eItemType == character_skin
+	else 
 	{
 		skinGUID = ItemFlavor_GetGUID( item )
 	}
@@ -319,41 +319,41 @@ bool function Mythics_IsItemFlavorMythicSkin( ItemFlavor item )
 	return ItemFlavor_GetType( item ) == eItemType.character_skin && ItemFlavor_GetQuality( item ) == eRarityTier.MYTHIC
 }
 
-#if UI
-void function Mythics_ToggleTrackChallenge( ItemFlavor challenge, var button, bool isSkinPanel = false )
-{
-	fileLevel.currentChallenge = challenge
-	SettingsAssetGUID challengeGUID = ItemFlavor_GetGUID( challenge )
-	var rui = Hud_GetRui( button )
-
-	if ( IsChallengeValidAsFavorite( GetLocalClientPlayer(), challenge ) )
-		Remote_ServerCallFunction( "ClientCallback_ToggleFavoriteChallenge", challengeGUID )
-}
-
-void function Mythics_UpdateTrackingButton()
-{
-	if ( fileLevel.currentChallenge == null )
-		return
-
-	var skinsPanel = GetPanel( "CharacterSkinsPanel" )
-	var celebrationMenu = GetMenu( "LootBoxOpen" )
-
-	var trackChallengeButton = Hud_GetChild( celebrationMenu, "TrackChallengeButton" )
-	var mythicTrackingButton = Hud_GetChild( skinsPanel, "TrackMythicButton" )
-
-	var skinPanelRui = Hud_GetRui( mythicTrackingButton )
-	var celebrationMenuRui = Hud_GetRui( trackChallengeButton )
 
 
-	bool isChallengeTracked = IsFavoriteChallenge( expect ItemFlavor( fileLevel.currentChallenge )  )
 
-	RuiSetString( skinPanelRui, "descText", isChallengeTracked ? "#CHALLENGE_TRACKED"  : "#CHALLENGE_TRACK" )
-	RuiSetString( skinPanelRui, "bigText", isChallengeTracked ? "`1%$rui/hud/check_selected%" : "`1%$rui/borders/key_border%" )
-	HudElem_SetRuiArg( trackChallengeButton, "buttonText", isChallengeTracked ?  "#CHALLENGE_TRACKED" : "#CHALLENGE_TRACK")
-	HudElem_SetRuiArg( trackChallengeButton, "isChallengeTracked", isChallengeTracked )
 
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 int function Mythics_GetSkinTierIntForSkin( ItemFlavor skin )
 {
@@ -485,109 +485,110 @@ string function Mythics_GetSkinBaseNameForCharacter( ItemFlavor character )
 	return fileLevel.charactersGUIDToSkinBaseName[ ItemFlavor_GetGUID( character ) ]
 }
 
-#if SERVER
-void function Mythics_RegisterBoostedMythicChallengeForPlayer( entity player )
-{
-	if ( Boost_IsBoostModifierTypeActive( player, eBoostModifierType.MYTHIC_PROGRESS ) )
-	{
-		array<ItemFlavor> allMythic = clone GetAllChallengesOfTimespan( eChallengeTimeSpanKind.MYTHIC )
 
-		foreach ( ItemFlavor challenge in allMythic )
-		{
-			if ( Challenge_IsBoostEnabled( challenge ) && Challenge_IsAssigned( player, challenge ) )
-			{
-				if ( player in fileLevel.mythicBoostedChallenges )
-				{
-					fileLevel.mythicBoostedChallenges[player].append( challenge )
-				}
-				else
-				{
-					array< ItemFlavor > flavors
-					flavors.append( challenge )
 
-					fileLevel.mythicBoostedChallenges[player] <- flavors
-				}
-			}
-		}
-	}
-}
-#endif // SERVER
 
-#if SERVER
-void function Mythics_UnregisterBoostedMythicChallengesForPlayer( entity player )
-{
-	if ( player in fileLevel.mythicBoostedChallenges )
-	{
-		delete fileLevel.mythicBoostedChallenges[player]
-	}
-}
-#endif // SERVER
 
-#if SERVER
-array< ItemFlavor > function Mythics_GetPlayerBoostedMythicChallenges( entity player )
-{
-	if ( player in fileLevel.mythicBoostedChallenges )
-	{
-		return fileLevel.mythicBoostedChallenges[player]
-	}
 
-	array< ItemFlavor > emptyArray
-	return emptyArray
-}
-#endif // SERVER
 
-#if SERVER
-array<Mythic_ChallengeProgress> function Mythics_GetBoostEnabledChallengeProgressMade( entity player, array<ItemFlavor> boostEnabledChallenges )
-{
-	array<Mythic_ChallengeProgress> progressedBoostEnabledChallenges
 
-	foreach ( ItemFlavor challengeFlav in boostEnabledChallenges)
-	{
-		if ( !Challenge_IsBoostEnabled( challengeFlav ) )
-			continue
 
-		PlayerChallengesState pcs = GetPlayerChallengesState( player )
-		ChallengeState cs = pcs.challengeStateMap[ challengeFlav ]
 
-		int statMarker = player.GetPersistentVarAsInt( "challenges[" + cs.persistenceIdx + "].statMarker" )
 
-		int pIdx = Challenge_GetPostGamePersistenceIndex( player,challengeFlav.guid )
-		if ( pIdx < 0 )
-			continue
 
-		int startProgress = player.GetPersistentVarAsInt( "postGameChallengesProgress[" + pIdx + "].progressMatchStart" )
-		int currentProgress = 0
-		int currentTier = Challenge_GetCurrentTier( player, challengeFlav )
 
-		if ( currentTier >= Challenge_GetTierCount( challengeFlav ) )
-		{
-			continue
-		}
 
-		array<string> statRefs = Challenge_GetStatRefs( challengeFlav, currentTier ) // 19.0 Boost Enabled Challenges do not use Alt conditions.
-		foreach ( string statRef in statRefs )
-		{
-			StatEntry entry = GetStatEntryByRef( statRef )
-			currentProgress += GetStat_Int( player, entry, eStatGetWhen.CURRENT )
-		}
 
-		startProgress   = startProgress - statMarker
-		currentProgress = currentProgress - statMarker
 
-		int progressMade = currentProgress - startProgress
 
-		if ( progressMade > 0 )
-		{
-			Mythic_ChallengeProgress entry
 
-			entry.challenge = challengeFlav
-			entry.challengeProgress = progressMade
-			entry.statMarker = statMarker
 
-			progressedBoostEnabledChallenges.append( entry )
-		}
-	}
 
-	return progressedBoostEnabledChallenges
-}
-#endif // SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

@@ -442,3 +442,5 @@ void function PlayShieldOverlayFX( entity player, int particleSystemIdx )
 	EffectSetIsWithCockpit( fxHandle, true )
 	EffectSetControlPointVector( fxHandle, 1, shieldColor )
 }
+
+ 

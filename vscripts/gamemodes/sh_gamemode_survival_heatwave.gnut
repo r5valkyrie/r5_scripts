@@ -5,17 +5,17 @@ global function Heatwave_getHeatStatusIcon
 global function Heatwave_getHeatStatusIconColor
 
 
-#if SERVER
-global function Heatwave_UpdatePlayerHeatStatus
-global function Heatwave_TriggerHeatwave
-global function Heatwave_IsHeatwaveActive
-#endif
 
-#if CLIENT
+
+
+
+
+
+
 global function Heatwave_CreateRui
 global function Heatwave_ServerToClient_UpdateProtected
 global function Thread_Heatwave_StartDmgFX
-#endif
+
 
 const string PLAYER_HEAT_REF = "Player_Heat_Int"
 const string SERVER_HEATWAVE_ACTIVE = "Server_Heatwave_Active"
@@ -64,38 +64,38 @@ void function Sh_Survival_Heatwave_Init()
 	PrecacheParticleSystem( VFX_HEATWAVE_TAKING_DAMAGE )
 	PrecacheParticleSystem( VFX_HEATWAVE_TAKING_DAMAGE_SUNGLASSES )
 
-#if CLIENT
+
 	AddCallback_GameStateEnter( eGameState.Playing, Heatwave_CreateRui)
 	RegisterNetVarIntChangeCallback( PLAYER_HEAT_REF, Heatwave_UpdatePlayerHeatRui)
 	file.colourCorrection = ColorCorrection_Register( HEATWAVE_COLOR_CORRECTION )
-#endif
 
-#if SERVER
-	AddCallback_GameStateEnter( eGameState.Playing, OnGameStart )
-	AddSpawnCallback( "prop_death_box", OnDeathBoxCreated )
-	Loot_AddCallback_OnPlayerLootPickup( Heatwave_OnHeatshieldPickup )
-#endif
+
+
+
+
+
+
 
 	Sh_Heatwave_RegisterNetworking()
 }
 
 void function Sh_Heatwave_RegisterNetworking()
 {
-	RegisterNetworkedVariableSafe( PLAYER_HEAT_REF, SNDC_PLAYER_EXCLUSIVE, SNVT_INT, ePlayerHeatState.Warm )
-	RegisterNetworkedVariableSafe( SERVER_HEATWAVE_ACTIVE, SNDC_GLOBAL, SNVT_BOOL )
-	RegisterNetworkedVariableSafe( SERVER_HEATWAVE_TIME_REMAINING, SNDC_GLOBAL, SNVT_TIME, 0 )
+	RegisterNetworkedVariable( PLAYER_HEAT_REF, SNDC_PLAYER_EXCLUSIVE, SNVT_INT, ePlayerHeatState.Warm )
+	RegisterNetworkedVariable( SERVER_HEATWAVE_ACTIVE, SNDC_GLOBAL, SNVT_BOOL )
+	RegisterNetworkedVariable( SERVER_HEATWAVE_TIME_REMAINING, SNDC_GLOBAL, SNVT_TIME, 0 )
 
 	Remote_RegisterClientFunction( "Heatwave_ServerToClient_UpdateProtected", "bool" )
 }
 
-#if SERVER
-bool function Heatwave_IsHeatwaveActive()
-{
-	return file.IsHeatwaveActive
-}
-#endif
 
-#if CLIENT
+
+
+
+
+
+
+
 void function Heatwave_CreateRui()
 {
 	if ( IsValid( file.HeatwaveRui ))
@@ -106,9 +106,9 @@ void function Heatwave_CreateRui()
 	thread Heatwave_UpdateRui_Thread()
 
 }
-#endif
 
-#if CLIENT
+
+
 void function Heatwave_UpdatePlayerHeatRui( entity player,int new )
 {
 	if (file.HeatwaveRui == null)
@@ -122,9 +122,9 @@ void function Heatwave_UpdatePlayerHeatRui( entity player,int new )
 		Heatwave_StopDmgFX(player)
 
 }
-#endif
 
-#if CLIENT
+
+
 void function Heatwave_UpdateRui_Thread()
 {
 	bool heatwaveActive = false
@@ -135,10 +135,10 @@ void function Heatwave_UpdateRui_Thread()
 
 	while (true)
 	{
-		if ( firstLoop || GetGlobalNetBoolSafe(SERVER_HEATWAVE_ACTIVE) != heatwaveActive )
+		if ( firstLoop || GetGlobalNetBool(SERVER_HEATWAVE_ACTIVE) != heatwaveActive )
 		{
 			firstLoop = false
-			heatwaveActive = GetGlobalNetBoolSafe( SERVER_HEATWAVE_ACTIVE )
+			heatwaveActive = GetGlobalNetBool( SERVER_HEATWAVE_ACTIVE )
 			file.IsHeatwaveActive = heatwaveActive
 			RuiSetBool( file.HeatwaveRui, "heatwaveStatus", heatwaveActive )
 			Status_UpdatePlayerUnitFrame()
@@ -166,11 +166,11 @@ void function Thread_Heatwave_ColourCorrection( float endtime )
 	thread ColorCorrection_LerpWeight( file.colourCorrection , 1, 0, 1)
 }
 
-  // TODO: Makes these timers run on the RUI - Shicks
+  
 void function Thread_Heatwave_Cooldown_Timer()
 {
 	float duration = GetCurrentPlaylistVarFloat( "survival_heatwave_timer", 240.0 )
-	float endTime  = GetGlobalNetTimeSafe( SERVER_HEATWAVE_TIME_REMAINING )
+	float endTime  = GetGlobalNetTime( SERVER_HEATWAVE_TIME_REMAINING )
 	float warningTime = endTime - HEATWAVE_SFX_WARNING_TIME
 	bool warningPlayed = false
 	while ( Time() < endTime && GetGameState() <= eGameState.Playing )
@@ -189,7 +189,7 @@ void function Thread_Heatwave_Cooldown_Timer()
 void function Thread_Heatwave_Active_Timer()
 {
 	float duration = GetCurrentPlaylistVarFloat( "survival_heatwave_duration", 25.0 )
-	float endTime  = GetGlobalNetTimeSafe( SERVER_HEATWAVE_TIME_REMAINING )
+	float endTime  = GetGlobalNetTime( SERVER_HEATWAVE_TIME_REMAINING )
 	thread Thread_Heatwave_ColourCorrection(duration)
 	while ( Time() < endTime && GetGameState() <= eGameState.Playing)
 	{
@@ -222,7 +222,7 @@ void function Heatwave_StopDmgFX(entity player)
 	EffectStop(file.heatwaveDmgFXHandle, false, true )
 }
 
-#if CLIENT
+
 void function ColorCorrection_LerpWeight( int colorCorrection, float startWeight, float endWeight, float lerpTime = 0 )
 {
 	float startTime = Time()
@@ -238,8 +238,8 @@ void function ColorCorrection_LerpWeight( int colorCorrection, float startWeight
 
 	ColorCorrection_SetWeight( colorCorrection, endWeight )
 }
-#endif //CLIENT
-#endif
+
+
 
 vector function Heatwave_getHeatStatusColor()
 {
@@ -275,251 +275,253 @@ asset function Heatwave_getHeatStatusIcon()
 	unreachable
 }
 
-#if SERVER
-void function OnGameStart()
-{
-	SetHeatwaveStatus( false )
-	thread Thread_TrackPlayersHeatState()
-	thread Thread_HeatwaveTimer()
 
-	array<entity> players = GetPlayerArray()
-	foreach ( player in players )
-	{
-		GenericOffhand_AddSunglasses(player)
-		Heatwave_AddHeatShieldMod(player)
-	}
-}
-#endif
 
-#if SERVER
-void function OnDeathBoxCreated( entity box )
-{
-	box.SetSkin( HEATWAVE_DEATHBOX_SKIN_INDEX )
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void function Heatwave_OnSunglassesPickup( entity player )
 {
 	ActivateGenericOffhand( player )
 }
 
-#if SERVER
-void function Thread_TrackPlayersHeatState()
-{
-	while ( GetGameState() < eGameState.WinnerDetermined )
-	{
-		array<entity> players = GetPlayerArray()
-		foreach ( player in players )
-		{
-			Heatwave_UpdatePlayerHeatStatus( player )
-			Heatwave_UpdatePlayerProtectedStatus( player )
-		}
 
-		wait 0.10
-	}
-}
-#endif
 
-#if SERVER
-void function Heatwave_UpdatePlayerHeatStatus( entity player )
-{
-	// Set the int to 0, and calcualte the "total heat" this frame.
-	int heatAmount = 0
-	heatAmount += Heatwave_IsSliding( player ) ? -1 : 0
-	//heatAmount += Heatwave_IsInWater( player) ? -1 : 0
-	heatAmount += Heatwave_IsInHeatshield( player ) ? -1 : 0
-	heatAmount += Heatwave_IsInside( player ) ? -1 : 1
-	heatAmount += player.IsPhaseShifted() ? -1 : 0
-	heatAmount += file.IsHeatwaveActive ? 1 : 0
-	Heatwave_AdjustPlayerTemp( player, heatAmount )
-}
-#endif
 
-#if SERVER
-void function Heatwave_AdjustPlayerTemp( entity player, int value )
-{
-	int newValue = minint ( maxint( ePlayerHeatState.Cold , value ) , ePlayerHeatState.Hot )
-	if( newValue != player.GetPlayerNetInt( PLAYER_HEAT_REF ))
-		player.SetPlayerNetInt( PLAYER_HEAT_REF, newValue )
-}
-#endif
 
-#if SERVER
-bool function Heatwave_IsSliding(entity player)
-{
-	return player.IsSliding()
-}
-#endif
 
-#if SERVER
-bool function Heatwave_IsInWater(entity player)
-{
-	TraceResults waterTraceResult = TraceLineHighDetail( player.GetOrigin() + <0,0,1>, player.GetOrigin() + <0,0,2000>, [], TRACE_MASK_WATER, TRACE_COLLISION_GROUP_NONE )
 
-	return waterTraceResult.surfaceName == "water"
-}
-#endif
 
-#if SERVER
-bool function  Heatwave_IsInHeatshield( entity player )
-{
-	return StatusEffect_GetSeverity( player, eStatusEffect.in_void_ring ) > 0.0 ? true : false
-}
-#endif
 
-#if SERVER
-bool function Heatwave_IsInside(entity player)
-{
-	TraceResults results = TraceLine( player.GetOrigin(), player.GetOrigin() + <0, 0, TRACE_DISTANCE>, [ player ], TRACE_MASK_PLAYERSOLID_BRUSHONLY , TRACE_COLLISION_GROUP_BLOCK_WEAPONS_AND_PHYSICS )
 
-	bool isInside = results.fraction < 1.0
-	return isInside
-}
-#endif
 
-#if SERVER
-bool function Heatwave_IsProtected( entity player )
-{
-	if ( Heatwave_IsSliding( player ) || Heatwave_IsInHeatshield( player ) || Heatwave_IsInside( player ) || player.IsPhaseShifted() )
-		return true
 
-	return false
-}
-#endif
 
-#if SERVER
-void function Heatwave_UpdatePlayerProtectedStatus( entity player )
-{
-	Remote_CallFunction_Replay( player,"Heatwave_ServerToClient_UpdateProtected", Heatwave_IsProtected( player ) )
-}
-#endif
 
-#if SERVER
-void function Heatwave_TriggerHeatwave()
-{
-	thread Thread_Heatwave()
-}
-#endif
 
-#if SERVER
-void function SetHeatwaveStatus( bool value )
-{
-	file.IsHeatwaveActive = value
-	SetGlobalNetBoolSafe( SERVER_HEATWAVE_ACTIVE, value )
-}
-#endif
 
-#if SERVER
-void function Thread_Heatwave()
-{
-	float endTime = Time() + GetCurrentPlaylistVarFloat( "survival_heatwave_duration", 10.0 )
 
-	float percentDamagePerTick = GetCurrentPlaylistVarFloat( "survival_heatwave_damage_percent", 0.05 )
-	float burnTime             = GetCurrentPlaylistVarFloat( "survival_heatwave_damage_tick", 0.75 )
-	string dmgString = ""
 
-	SetHeatwaveStatus( true )
 
-	while ( Time() < endTime )
-	{
-		array<entity> players = GetPlayerArray()
-		foreach ( player in players )
-		{
-			if( player.GetPlayerNetInt( PLAYER_HEAT_REF ) == ePlayerHeatState.Hot )
-			{
-				// Check if the player has Sunglasses equipped and reduce their damage if so. The else helps reset incase they drop them during the heatwave
-				if ( Heatwave_SunglassesCheck( player ) )
-				{
-					percentDamagePerTick = HEATWAVE_DAMAGE_PERCENT_SUNGLASSES
-					dmgString            = HEWATWAVE_DMG_PROTECTED_SFX
-				}
 
-				// Players take reduced heat damage when downed. This is still more damage than with sunglasses.
-				else if ( Bleedout_IsBleedingOut( player ) )
-				{
-					percentDamagePerTick = HEATWAVE_DAMAGE_PERCENT_DOWNED
-					dmgString            = HEWATWAVE_DMG_PROTECTED_SFX
-				}
 
-				else
-				{
-					percentDamagePerTick = GetCurrentPlaylistVarFloat( "survival_heatwave_damage_percent", 0.05 )
-					dmgString            = HEWATWAVE_DMG_SFX
-				}
 
-				player.TakeDamage( int( percentDamagePerTick * float( player.GetMaxHealth() ) ), null, null, { scriptType = DF_BYPASS_SHIELD | DF_DOOMED_HEALTH_LOSS, damageSourceId = eDamageSourceId.heatwave } )
-				EmitSoundOnEntityOnlyToPlayer( player, player, dmgString )
-			}
-		}
 
-		wait min( burnTime, endTime - Time() )
-	}
 
-	SetHeatwaveStatus( false )
 
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 bool function Heatwave_SunglassesCheck(entity player)
 {
-#if SERVER
-	string playerHelmet = Inventory_GetPlayerEquipment( player, "helmet" )
 
-	return playerHelmet == ITEM_SUNGLASSES_REF
-#endif
-#if CLIENT
+
+
+
+
+
 	LootData currentEquipment = EquipmentSlot_GetEquippedLootDataForSlot( GetLocalClientPlayer(), "helmet" )
 
 	return currentEquipment.ref == ITEM_SUNGLASSES_REF
-#endif
-}
-
-#if SERVER
-void function Thread_HeatwaveTimer()
-{
-	float duration = GetCurrentPlaylistVarFloat( "survival_heatwave_timer", 240.0 )
-	float cooldown = GetCurrentPlaylistVarFloat( "survival_heatwave_duration", 25.0)
-
-	while ( GetGameState() <= eGameState.Playing )
-	{
-		{
-			SetGlobalNetTimeSafe( SERVER_HEATWAVE_TIME_REMAINING, Time() + duration )
-			wait duration
-		}
-
-		Heatwave_TriggerHeatwave()
-		SetGlobalNetTimeSafe( SERVER_HEATWAVE_TIME_REMAINING, Time() + cooldown )
-		wait cooldown
-	}
-}
-#endif
-
-#if SERVER
-void function Heatwave_AddHeatShieldMod(entity player )
-{
-	if ( !IsValid( player ) )
-		return
-
-	if ( !GetCurrentPlaylistVarBool( "heatwave_reduce_heatshield_ammo_enabled", false ) )
-		return
-
-	entity gadgetWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_GADGET )
-	if( !IsValid( gadgetWeapon ) )
-		return
-	gadgetWeapon.AddMod( "heatwave" )
 
 }
-#endif
 
-#if SERVER
-void function Heatwave_OnHeatshieldPickup(entity player, entity lootEnt, string ref, int unitsPickedUp, bool willDestroy, entity blackMarket, int pickupFlags )
-{
-	if ( !GetCurrentPlaylistVarBool( "heatwave_reduce_heatshield_ammo_enabled", false ) )
-		return
 
-	if ( ref == VOID_RING_WEAPON_REF )
-	{
-		Heatwave_AddHeatShieldMod(player)
-	}
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

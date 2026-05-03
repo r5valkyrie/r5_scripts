@@ -14,59 +14,59 @@ global function SURVIVAL_Loot_GetAttachmentType_Enum
 global function SURVIVAL_Loot_GetByTier
 global function SURVIVAL_Loot_GetSortedStringArrayFromSupportedAttachmentsString
 
-#if CLIENT || SERVER
+
 global function SURVIVAL_Loot_IsRestrictedPanelLocked
 global function SURVIVAL_Loot_GetRestrictedLootType
 global function SURVIVAL_Loot_GetRestrictedPanel
 global function SURVIVAL_Loot_IsAmmoSpawningDisabled
-#endif
 
-#if SERVER
-global function SURVIVAL_Loot_MaybeStartRestrictedDefense_Thread
-global function SURVIVAL_Loot_IsLootRestricted
-#endif
 
-#if UI
-global function SURVIVAL_Loot_GetRestrictedDialogArray
-#endif
 
-#if CLIENT || UI
+
+
+
+
+
+
+
+
+
 global function SURVIVAL_Loot_GetPickupString
 global function SURVIVAL_Loot_GetDesc
 global function SURVIVAL_GetButtonStringForLootActionType
 
 global function AddCallback_EditLootDesc
 global function RemoveCallback_EditLootDesc
-#endif
+
 
 
 
 global function SURVIVAL_Loot_IsUniqueAmmoWeapon
 
-#if CLIENT
-global function GetRarityColor
-#endif
 
-#if CLIENT && DEVELOPER
+global function GetRarityColor
+
+
+#if DEV
 global function DumpModdedKeyColors
 global function DiffKeyColors
 #endif
 
-#if DEVELOPER
+#if DEV
 global function DEV_PrintDisabledLoot
-#endif//DEV
+#endif
 
-//global function TEMP_RarityTierToLootTier
-global function GetFXRarityColorForTier // use this for in game loot
-global function GetFXRarityColorForUnlockable // use this for lootbox loot
 
-                  
-      
-                                                   
-     
-                                                            
-      
-      
+global function GetFXRarityColorForTier 
+global function GetFXRarityColorForUnlockable 
+
+
+
+
+
+
+
+
 
 global enum eLootTier
 {
@@ -160,8 +160,8 @@ global enum eWeaponAttachmentType
 global enum eLootType
 {
 	INVALID
-	MAINWEAPON // must match with LOOT_TYPE_MAINWEAPON in RUI
-	AMMO // must match with LOOT_TYPE_AMMO in RUI
+	MAINWEAPON 
+	AMMO 
 	HEALTH
 	ARMOR
 	INCAPSHIELD
@@ -170,59 +170,59 @@ global enum eLootType
 	ATTACHMENT
 	CUSTOMPICKUP
 	BACKPACK
-                   
-           
-       
-                             
-                 
-       
+
+
+
+
+
+
 	HELMET
-                        
-            
-       
+
+
+
 	BLANK
-	                      
+
 		DATAKNIFE
-       
-	                  
+
+
 		SHIPKEYCARD
-       
+
 	RESOURCE
-                     
-             
-       
+
+
+
 
 	LOCKBOX
 	GADGET
 
-	                   
+
 		MARVIN_ARM
-       
 
-                        
-                 
-       
 
-                    
-             
-             
-       
 
-	                  
+
+
+
+
+
+
+
+
+
 		COLLECTABLE_NESSIE
-       
 
-	                      
+
+
 		CANDY_PICKUP
-       
 
-	                    
+
+
 		EVO_CACHE
-       
 
-                          
-               
-       
+
+
+
+
 
 	_count
 }
@@ -234,56 +234,56 @@ global enum eRestrictedLootTypes
 	SHIP_VAULT,
 	BLOODHOUND_TT,
 	CAUSTIC_TT,
-	                  
+
 		RAMPART_TT,
-       
-	                      
+
+
 		SPECTRE_SHACK,
-       
-	                            
+
+
 		EXPLOSIVE_HOLDS,
-       
+
 }
 
 struct RestrictedLootInfo
 {
-	#if SERVER || CLIENT
+
 		entity functionref( entity ) getRestrictedPanel
 		bool functionref( entity ) isRestrictedPanelLocked
-	#endif
-	#if SERVER
-		void functionref( entity, entity, entity) maybeActivateRestrictedPanelDefense
-	#endif
-	#if UI
-		string dialogPopupHeader
-		string dialogPopupAreYouSure
-		string dialogPopupDeny
-	#endif
+
+
+
+
+
+
+
+
+
 }
 
-                  
-                                      
-      
 
-                         
-#if SERVER
-global function SendGenericProfileForDeathBoxRui
-int OVERRIDE_DEATHBOX_FORCE_USE_ROW = -1
-#if DEVELOPER
-global function SetOverrideDeathboxForceUseRow
-#endif // #if DEVELOPER
-#endif // #if SERVER
-                                   
+
+
+
+
+
+
+
+
+
+
+
+
 
 global function IsDeathboxAutoPickupEnabled
 
-#if CLIENT || SERVER
+
 global function SetCallback_LootTypeExtraCanUseFunction
 global function ClearCallback_LootTypeExtraCanUseFunction
-#endif
 
 
-                         
+
+
 global struct OverrideDeathBoxRUI_NetworkOptimizedStruct
 {
 	string name
@@ -302,7 +302,7 @@ global struct OverrideDeathBoxRUI_NetworkOptimizedStruct
 
 	bool isValid = false
 }
-      
+
 
 
 struct
@@ -315,14 +315,14 @@ struct
 
 	table<int, RestrictedLootInfo> restrictedLootInfo
 
-	                         
-		array< OverrideDeathBoxRUI_NetworkOptimizedStruct >              handcraftedProfiles
-		array< OverrideDeathBoxRUI_NetworkOptimizedStruct >              handcraftedProfilesMasterList //Keeping this list twice is kind of wasteful, but avoids us ever running out of profiles to use
-       
 
-	#if CLIENT || UI
+		array< OverrideDeathBoxRUI_NetworkOptimizedStruct >              handcraftedProfiles
+		array< OverrideDeathBoxRUI_NetworkOptimizedStruct >              handcraftedProfilesMasterList 
+
+
+
 	array<string functionref( string, entity , string)> editLootDescCallbacks
-	#endif
+
 
 } file
 
@@ -403,9 +403,6 @@ bool function ShouldUsePlaylistOverridesBasedOnCalendarTime( string ref, string 
 
 void function SURVIVAL_Loot_All_InitShared()
 {
-	#if !UI
-		// Need these here so they get included in bulids
-	#endif
 
 	var dt = GetDataTable( LOOT_DATATABLE )
 	file.lootIndexToString.clear()
@@ -414,17 +411,17 @@ void function SURVIVAL_Loot_All_InitShared()
 
 	var attachmentTable = GetDataTable( $"datatable/survival_weapon_mods.rpak" )
 
-	#if UI
-	file.disabledRefs.clear()
-	#endif
+
+
+
 	string disabledRefs = GetCurrentPlaylistVarString( "survival_disabled_loot", " " )
-	                    
+
 	if( UpgradeCore_ArmorTiedToUpgrades() )
 	{
 		string upgradeDisabledRefs = GetCurrentPlaylistVarString( "upgrade_core_survival_disabled_loot", " armor_pickup_lv0 armor_pickup_lv0_evolving armor_pickup_lv1 armor_pickup_lv1_evolving armor_pickup_lv2 armor_pickup_lv2_evolving armor_pickup_lv3 armor_pickup_lv3_evolving armor_pickup_lv4_exec_armor armor_pickup_lv4_all_fast" )
 		disabledRefs += upgradeDisabledRefs
 	}
-       
+
 
 	file.disabledRefs.extend( split( disabledRefs, WHITESPACE_CHARACTERS ) )
 
@@ -442,9 +439,9 @@ void function SURVIVAL_Loot_All_InitShared()
 
 		string pingCommsActionName = GetLootTableString( data.ref, dt, i, "pingCommsAction" )
 
-		#if (SERVER || CLIENT)
+
 			data.pingCommsAction = GetCommsActionEnumForName( pingCommsActionName )
-		#endif
+
 
 		string lootType = GetLootTableString( data.ref, dt, i, "type" )
 
@@ -471,16 +468,16 @@ void function SURVIVAL_Loot_All_InitShared()
 		data.isDynamic = GetLootTableBool( data.ref, dt, i, "isDynamic" )
 		data.pretendsToBeBlank = GetLootTableBool( data.ref, dt, i, "pretendsToBeBlank" )
 		data.conditional = GetLootTableBool( data.ref, dt, i, "conditional" )
-		data.printPickupToObituary = (data.ref == "treasure_box")    //GetLootTableBool( data.ref, dt, i, "printPickupToObituary" )
+		data.printPickupToObituary = (data.ref == "treasure_box")    
 
 		data.pickupString = GetLootTableString( data.ref, dt, i, "pickupString" )
 		data.desc = GetLootTableString( data.ref, dt, i, "desc" )
 
 		data.countPerDrop = GetLootTableInt( data.ref, dt, i, "countPerDrop" )
 		data.tier = GetLootTableInt( data.ref, dt, i, "tier" )
-		#if SERVER
-			Assert( data.tier >= MIN_LOOT_TIER && data.tier <= MAX_LOOT_TIER )
-		#endif
+
+
+
 
 		if ( GetLootTableBool( data.ref, dt, i, "isDisabled" ) )
 			file.disabledRefs.append( data.ref )
@@ -503,58 +500,52 @@ void function SURVIVAL_Loot_All_InitShared()
 		{
 			Assert( passiveRef in ePassives )
 			data.passive = ePassives[passiveRef]
-			#if CLIENT || UI
+
 				Assert( data.passive in PASSIVE_NAME_MAP )
 				Assert( data.passive in PASSIVE_DESCRIPTION_SHORT_MAP )
-			#endif
+
 		}
 
 		switch ( data.lootType )
 		{
 			case eLootType.MAINWEAPON:
 				RegisterWeaponForUse( data.baseWeapon )
-				//#if DEVELOPER
-				//	string modsStr = ""
-				//	foreach ( mod in data.baseMods )
-				//		modsStr += mod + " "
-				//	//printt( "[LOOT DIAG] row=" + i + " ref=\"" + data.ref + "\" baseWeapon=\"" + data.baseWeapon + "\" baseMods=[" + modsStr + "]" )
-				//#endif
 				data.pickupString = GetWeaponInfoFileKeyField_WithMods_GlobalString( data.baseWeapon, data.baseMods, "printName" )
 				data.desc = GetWeaponInfoFileKeyField_WithMods_GlobalString( data.baseWeapon, data.baseMods, "description" )
 				data.hudIcon = GetWeaponInfoFileKeyFieldAsset_Global( data.baseWeapon, "hud_icon" )
 				data.craftingIcon = GetWeaponInfoFileKeyFieldAsset_Global( data.baseWeapon, "crafting_icon" )
 
-				#if SERVER || CLIENT
-					//Weapons by default use the player model as their inworld model. This overrides it to use the "pickupModel" column in survival_loot.csv
+
+					
 					if ( !OverridePickupModel_Weapon ( data ) )
 					{
 						data.model = GetWeaponInfoFileKeyFieldAsset_Global( data.baseWeapon, "playermodel" )
 					}
-				#endif
+
 
 				if ( IsWeaponKeyFieldDefined( data.baseWeapon, "ammo_pool_type" ) && GetWeaponInfoFileKeyField_Global( data.baseWeapon, "uses_ammo_pool" ) != false )
 				{
-					// Engine returns ammo_pool_type as a string (e.g. "shotgun", "bullet"), not an integer.
-					// Must use the string value directly to map to ammo type constants.
-					string type = GetWeaponInfoFileKeyField_GlobalString( data.baseWeapon, "ammo_pool_type" )
+					
+					
+					int type = GetWeaponInfoFileKeyField_WithMods_GlobalInt( data.baseWeapon, data.baseMods, "ammo_pool_type" )
 					switch( type )
 					{
-						case BULLET_AMMO:
+						case 0:
 							data.ammoType = BULLET_AMMO
 							break
-						case HIGHCAL_AMMO:
+						case 1:
 							data.ammoType = HIGHCAL_AMMO
 							break
-						case SPECIAL_AMMO:
+						case 2:
 							data.ammoType = SPECIAL_AMMO
 							break
-						case SHOTGUN_AMMO:
+						case 3:
 							data.ammoType = SHOTGUN_AMMO
 							break
-						case SNIPER_AMMO:
+						case 4:
 							data.ammoType = SNIPER_AMMO
 							break
-						case ARROWS_AMMO:
+						case 5:
 							data.ammoType = ARROWS_AMMO
 							break
 						default:
@@ -631,7 +622,7 @@ void function SURVIVAL_Loot_All_InitShared()
 
 				if ( data.desc == "" )
 					data.desc = GetWeaponInfoFileKeyField_GlobalString( data.baseWeapon, "description" )
-				
+
 				data.hudIcon = GetWeaponInfoFileKeyFieldAsset_Global( data.baseWeapon, "hud_icon" )
 				break
 
@@ -648,7 +639,7 @@ void function SURVIVAL_Loot_All_InitShared()
 
 				data.ammoType = GetDataTableString( attachmentTable, row, GetDataTableColumnByName( attachmentTable, "ammoType" ) )
 				data.hudIcon = GetLootTableAsset( data.ref, dt, i, "icon" )
-				data.specialCaseInvalidReason = ""//GetDataTableString( attachmentTable, row, GetDataTableColumnByName( attachmentTable, "specialCaseInvalidReason" ) )
+				data.specialCaseInvalidReason = ""
 				if ( data.hudIcon == $"" )
 					data.hudIcon = GetDataTableAsset( attachmentTable, row, GetDataTableColumnByName( attachmentTable, "image" ) )
 
@@ -658,12 +649,12 @@ void function SURVIVAL_Loot_All_InitShared()
 				data.attachmentType = SURVIVAL_Loot_GetAttachmentType_Enum( attachmentPointList[0] )
 				data.emptyImage = GetDataTableAsset( attachmentTable, row, GetDataTableColumnByName( attachmentTable, "emptyImage" ) )
 
-#if (SERVER || CLIENT)
+
 				foreach ( string attachmentPoint in attachmentPointList )
 				{
 					RegisterAttachmentPoint( attachmentPoint )
 				}
-#endif
+
 				break
 		}
 
@@ -672,68 +663,68 @@ void function SURVIVAL_Loot_All_InitShared()
 			file.lootIndexToString.append( data.ref )
 			file.lootData[ data.ref ] <- data
 
-			#if SERVER
-				SURVIVAL_AddSpawnPointGroup( data.ref )
-			#endif
+
+
+
 		}
 
-		#if !UI
+
 			if ( data.model != $"" )
 				PrecacheModel( data.model )
-		#endif
+
 	}
 
-                  
-                       
-                    
-   
-         
-                        
-        
-                                     
-            
-                                         
-                                                      
-                                              
-    
-                                                                     
-                                              
-                             
-    
-                                                                                                 
-   
-                        
 
-	                         
-	#if SERVER
-	SURVIVAL_ServerInit_HAS_DEATHBOX_OVERRIDE()
-	#endif // #if SERVER
-                                    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	SURVIVAL_Loot_InitRestrictedLoot()
 
 	file.initialized = true
 }
 
-#if SERVER || CLIENT
+
 bool function OverridePickupModel_Weapon ( LootData data )
 {
-	//Weapons by default use the player model as their in world model. This overrides it to use the "pickupModel" column in survival_loot.csv
+	
 
-               
-                                                                             
-                       
-              
-       
 
-	                          
+
+
+
+
+
+
 		if ( TitanSword_WeaponRefIsTitanSword( data.ref ) )
 			return true
-       
+
 
 	return false
 }
-#endif
+
 
 array<string> function SURVIVAL_Loot_GetSortedStringArrayFromSupportedAttachmentsString( string supportedAttachmentsString )
 {
@@ -799,7 +790,6 @@ int function SURVIVAL_Loot_GetLootTypeFromString( string lootTypeString )
 	switch( lootTypeString )
 	{
 		case "main_weapon":
-		case "weapon_custom":
 			return eLootType.MAINWEAPON
 
 		case "ammo":
@@ -821,7 +811,6 @@ int function SURVIVAL_Loot_GetLootTypeFromString( string lootTypeString )
 			return eLootType.ORDNANCE
 
 		case "attachment":
-		case "attachment_custom":
 			return eLootType.ATTACHMENT
 
 		case "backpack":
@@ -833,22 +822,22 @@ int function SURVIVAL_Loot_GetLootTypeFromString( string lootTypeString )
 		case "helmet":
 			return eLootType.HELMET
 
-                       
 
-                    
-                              
-      
 
-                      
+
+
+
+
+
 
 		case "data_knife":
 			return eLootType.DATAKNIFE
-      
 
-                  
+
+
 		case "ship_keycard":
 			return eLootType.SHIPKEYCARD
-      
+
 
 		case "blank":
 			return eLootType.BLANK
@@ -856,64 +845,64 @@ int function SURVIVAL_Loot_GetLootTypeFromString( string lootTypeString )
 		case "resource":
 			return eLootType.RESOURCE
 
-                    
-                     
-                               
-      
+
+
+
+
 
 		case "lockbox":
 			return eLootType.LOCKBOX
 
-                  
-                   
-                             
-      
 
-                            
-                          
-                                     
-      
+
+
+
+
+
+
+
+
 
 		case "gadget":
 			return eLootType.GADGET
 
-                   
+
 		case "marvin_arm":
 			return eLootType.MARVIN_ARM
-      
 
-                       
-                         
-                                   
-                             
 
-                   
-                     
-                               
-                     
-                               
-      
 
-                  
+
+
+
+
+
+
+
+
+
+
+
+
 		case "collectable_nessie":
 			return eLootType.COLLECTABLE_NESSIE
-      
-                      
+
+
 		case "candy_pickup":
 			return eLootType.CANDY_PICKUP
-      
-                    
+
+
 		case "evo_pickup":
 			return eLootType.EVO_CACHE
-      
 
-                         
-                       
-                                 
-      
+
+
+
+
+
 
 		default:
-			//Assert( false, "Error Building LootData Struct: Unknown loot type string: " + lootTypeString )
+			
 			string warnMsg = "Error Building LootData Struct: Unknown loot type string: "
 			Warning( warnMsg + lootTypeString )
 			return eLootType.BLANK
@@ -957,21 +946,21 @@ LootData function SURVIVAL_Loot_GetLootDataByIndex( int index )
 
 bool function SURVIVAL_Loot_IsLootIndexValid( int index )
 {
-	return (index >= 0 && index < file.lootIndexToString.len())
+	return file.lootIndexToString.isvalidindex( index )
 }
 
 
 LootData function SURVIVAL_Loot_GetLootDataByRef( string ref )
 {
-	#if SERVER || CLIENT
+
 		if ( ref == "" )
 		{
-			//3 is the depth of the callstack we're getting, with 1 being the current function (GetStack)
-			// and 2 being this function (which doesn't help, we are concerned about the caller)
+			
+			
 			string stack = GetStack(3)
 			ForceScriptError("Calling SURVIVAL_Loot_GetLootDataByRef with empty string from " + stack)
 		}
-	#endif // SERVER || CLIENT
+
 	return file.lootData[ ref ]
 }
 
@@ -982,34 +971,34 @@ bool function SURVIVAL_Loot_IsRefValid( string ref )
 }
 
 
-                  
-      
-                                                  
-     
-                                                                          
-      
- 
-               
-                                                        
-  
-                                                           
-                                           
-           
 
-                                                             
 
-        
-                                                   
-       
-                                                          
-        
 
-                     
-  
 
-              
- 
-                        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 bool function SURVIVAL_Loot_IsRefDisabled( string ref )
@@ -1022,17 +1011,17 @@ bool function SURVIVAL_Loot_IsReforBaseWeaponDisabled( string ref )
 	if( SURVIVAL_Loot_IsRefDisabled( ref ) )
 		return true
 
-	// If it's not valid, lets consider it disabled
+	
 	if( !SURVIVAL_Loot_IsRefValid( ref ) )
 		return true
 
-	// If the base weapon is disabled, disable all derived locked sets
+	
 	LootData lootData = SURVIVAL_Loot_GetLootDataByRef( ref )
 
-                     
-                                                         
-               
-       
+
+
+
+
 
 	if( lootData.lootType == eLootType.MAINWEAPON && SURVIVAL_Loot_IsRefDisabled( lootData.baseWeapon ) )
 		return true
@@ -1048,7 +1037,7 @@ void function SURVIVAL_Loot_AddDisabledRef( string ref )
 	}
 }
 
-#if DEVELOPER
+#if DEV
 void function DEV_PrintDisabledLoot()
 {
 	printf("Dumping Disabled Loot")
@@ -1057,137 +1046,137 @@ void function DEV_PrintDisabledLoot()
 		printf( ref )
 	}
 }
-#endif//DEV
+#endif
 
-#if CLIENT
+
 vector function GetRarityColor( entity ent )
 {
 	int lootIndex = ent.GetSurvivalInt()
 	Assert( lootIndex >= 0 )
 	LootData lootData = SURVIVAL_Loot_GetLootDataByIndex( lootIndex )
 
-	                    
+
 		if ( lootData.ref == "hopup_golden_horse_green" )
 			return GetKeyColor( COLORID_HUD_LOOT_TIER_GH, 0 ) * 0.85
-       
+
 
 	return GetKeyColor( COLORID_TEXT_LOOT_TIER0, lootData.tier )
 }
-#endif
 
 
-#if SERVER
-//HACK: Resurrection of loot color consts for when the server picks a color
-const int RARE_R = 58
-const int RARE_G = 133
-const int RARE_B = 176
-
-const int EPIC_R = 136
-const int EPIC_G = 63
-const int EPIC_B = 162
-
-const int LEGENDARY_R = 220
-const int LEGENDARY_G = 185
-const int LEGENDARY_B = 39
-
-const vector LOOT_COLOR_NONE = <0, 0, 0>
-const vector LOOT_COLOR_COMMON = <192, 192, 192>
-const vector LOOT_COLOR_RARE = <RARE_R, RARE_G, RARE_B>
-const vector LOOT_COLOR_EPIC = <EPIC_R, EPIC_G, EPIC_B>
-const vector LOOT_COLOR_LEGENDARY = <LEGENDARY_R, LEGENDARY_G, LEGENDARY_B>
-const vector LOOT_COLOR_MYTHIC = <255, 0, 0>
-const vector LOOT_COLOR_ICONIC = <0, 255, 204>
-const vector LOOT_COLOR_EVOLVING_ARMOR = <0, 255, 0>
-#endif
 
 
-//int function TEMP_RarityTierToLootTier( int rarityTier )
-//{
-//	return rarityTier + 1
-//}
 
 
-// use this for in game loot
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 vector function GetFXRarityColorForTier( int tier )
 {
-	#if SERVER
-		switch ( tier )
-		{
-			case eLootTier.NONE:
-				return LOOT_COLOR_NONE
 
-			case eLootTier.COMMON:
-				return LOOT_COLOR_COMMON
 
-			case eLootTier.RARE:
-				return LOOT_COLOR_RARE
 
-			case eLootTier.EPIC:
-				return LOOT_COLOR_EPIC
 
-			case eLootTier.LEGENDARY:
-				return LOOT_COLOR_LEGENDARY
 
-			case eLootTier.MYTHIC:
-				return LOOT_COLOR_MYTHIC
 
-			case eLootTier.ICONIC:
-				return LOOT_COLOR_ICONIC
 
-			default:
-				return <255, 255, 255>
-		}
-	#endif
 
-	#if !SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 		return GetKeyColor( COLORID_FX_LOOT_TIER0, tier )
-	#endif
+
 
 	unreachable
 }
 
 
-// use this for lootbox loot
+
 vector function GetFXRarityColorForUnlockable( int tier )
 {
-	#if SERVER
-		switch ( tier )
-		{
-			case eLootTier.NONE:
-				return LOOT_COLOR_NONE
 
-			case eLootTier.COMMON:
-				return LOOT_COLOR_COMMON
 
-			case eLootTier.RARE:
-				return LOOT_COLOR_RARE
 
-			case eLootTier.EPIC:
-				return LOOT_COLOR_EPIC
 
-			case eLootTier.LEGENDARY:
-				return LOOT_COLOR_LEGENDARY
 
-			case eLootTier.MYTHIC:
-				return LOOT_COLOR_MYTHIC
 
-			case eLootTier.ICONIC:
-				return LOOT_COLOR_ICONIC
 
-			default:
-				return <255, 255, 255>
-		}
-	#endif
 
-	#if !SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 		return GetKeyColor( COLORID_FX_LOOT_TIER0, tier + 1 )
-	#endif
+
 
 	unreachable
 }
 
 
-#if CLIENT && DEVELOPER
+#if DEV
 void function DumpModdedKeyColors( int colorID, float modVal )
 {
 	for ( int index = 0; index < 6; index++ )
@@ -1203,7 +1192,7 @@ void function DumpModdedKeyColors( int colorID, float modVal )
 #endif
 
 
-#if CLIENT && DEVELOPER
+#if DEV
 void function DiffKeyColors( int baseColorID, int colorID )
 {
 	var datatable = GetDataTable( $"datatable/colorpalette_table.rpak" )
@@ -1232,7 +1221,7 @@ bool function SURVIVAL_Loot_IsUniqueAmmoWeapon( string ref )
 }
 
 
-#if CLIENT || UI
+
 string function SURVIVAL_Loot_GetPickupString( LootData data, entity forPlayer )
 {
 	string result = Localize( data.pickupString )
@@ -1257,7 +1246,7 @@ string function SURVIVAL_Loot_GetDesc( LootData data, entity forPlayer )
 		result = Localize( "#HUD_LOOT_WITH_PASSIVE_DESC", result, Localize( passiveName ).toupper(), Localize( passiveDesc ) )
 	}
 
-	//Callbacks here
+	
 	foreach ( func in file.editLootDescCallbacks )
 	{
 		result = func( data.ref, forPlayer, result )
@@ -1298,7 +1287,7 @@ string function SURVIVAL_GetButtonStringForLootActionType( int actionType, bool 
 
 			return ""
 			break
-		
+
 		case eLootActionType.CHARACTER_ACTION1:
 			if( isInMenu )
 			{
@@ -1337,169 +1326,169 @@ void function RemoveCallback_EditLootDesc( string functionref( string, entity, s
 	file.editLootDescCallbacks.fastremovebyvalue( callback )
 }
 
-#endif
 
 
 
-                         
-#if SERVER
-void function SURVIVAL_ServerInit_HAS_DEATHBOX_OVERRIDE()
-{
-	if ( GetCurrentPlaylistVarInt( "enableFlyers", 1 ) != 1 )
-		return
-
-	var dataTable = GetDataTable( $"datatable/deathbox_gcard_override_profiles.rpak" ) //Force precache sad
-	int numRows   = GetDataTableRowCount( dataTable )
-
-	for ( int i = 0; i < numRows; ++i )
-	{
-		OverrideDeathBoxRUI_NetworkOptimizedStruct dataStructInstance
-
-		dataStructInstance.name = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "name" ) )
-		dataStructInstance.hardware = "PC"
-
-		//Need to validate that even the ItemFlavors here are not disabled/locked etc by other parts of the system e.g. through playlists. Whenever we find a thing that isn't valid,
-		//just do the safe thing and skip the entire row.
-
-		string characterRef                = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "characterRef" ) )
-		LoadoutEntry characterLoadoutEntry = Loadout_Character()
-		ItemFlavor character
-		if ( !IsValidItemFlavorGUID( ConvertItemFlavorGUIDStringToGUID( characterRef ) ) )
-			continue
-		else
-			character = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( characterRef ) )
-
-		dataStructInstance.characterIndex = ConvertItemFlavorToLoadoutSlotContentsIndex( characterLoadoutEntry, character )
 
 
-		string skinRef                = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "skinRef" ) )
-		LoadoutEntry skinLoadoutEntry = Loadout_CharacterSkin( character )
-		ItemFlavor skin
-		if ( !IsValidItemFlavorGUID( ConvertItemFlavorGUIDStringToGUID( skinRef ) ) )
-			continue
-		else
-			skin = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( skinRef ) )
-
-		dataStructInstance.skinIndex = ConvertItemFlavorToLoadoutSlotContentsIndex( skinLoadoutEntry, skin )
 
 
-		string frameRef                = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "frameRef" ) )
-		LoadoutEntry frameLoadoutEntry = Loadout_GladiatorCardFrame( character )
-		ItemFlavor frame
-		if ( !IsValidItemFlavorGUID( ConvertItemFlavorGUIDStringToGUID( frameRef ) ) )
-			continue
-		else
-			frame = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( frameRef ) )
 
-		dataStructInstance.frameIndex = ConvertItemFlavorToLoadoutSlotContentsIndex( frameLoadoutEntry, frame )
 
-		string stanceRef                = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "stanceRef" ) )
-		LoadoutEntry stanceLoadoutEntry = Loadout_GladiatorCardStance( character )
-		ItemFlavor stance
-		if ( !IsValidItemFlavorGUID( ConvertItemFlavorGUIDStringToGUID(stanceRef ) ) )
-			continue
-		else
-			stance = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( stanceRef ) )
 
-		dataStructInstance.stanceIndex = ConvertItemFlavorToLoadoutSlotContentsIndex( stanceLoadoutEntry, stance )
 
-		string firstBadgeRef                = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "firstBadgeRef" ) )
-		LoadoutEntry firstBadgeLoadoutEntry = Loadout_GladiatorCardBadge( character, 0 )
-		ItemFlavor firstBadge
-		if ( !IsValidItemFlavorGUID( ConvertItemFlavorGUIDStringToGUID( firstBadgeRef ) ) )
-			continue
-		else
-			firstBadge = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( firstBadgeRef ) )
 
-		dataStructInstance.firstBadgeIndex = ConvertItemFlavorToLoadoutSlotContentsIndex( firstBadgeLoadoutEntry, firstBadge )
-		dataStructInstance.firstBadgeDataInt = GetDataTableInt( dataTable, i, GetDataTableColumnByName( dataTable, "firstBadgeDataInteger" ) )
 
-		string secondBadgeRef                = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "secondBadgeRef" ) )
-		LoadoutEntry secondBadgeLoadoutEntry = Loadout_GladiatorCardBadge( character, 1 )
-		ItemFlavor secondBadge
-		if ( !IsValidItemFlavorGUID( ConvertItemFlavorGUIDStringToGUID( secondBadgeRef ) ) )
-			continue
-		else
-			secondBadge = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( secondBadgeRef ) )
 
-		dataStructInstance.secondBadgeIndex = ConvertItemFlavorToLoadoutSlotContentsIndex( secondBadgeLoadoutEntry, secondBadge )
-		dataStructInstance.secondBadgeDataInt = GetDataTableInt( dataTable, i, GetDataTableColumnByName( dataTable, "secondBadgeDataInteger" ) )
 
-		string thirdBadgeRef                = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "thirdBadgeRef" ) )
-		LoadoutEntry thirdBadgeLoadoutEntry = Loadout_GladiatorCardBadge( character, 2 )
-		ItemFlavor thirdBadge
-		if ( !IsValidItemFlavorGUID( ConvertItemFlavorGUIDStringToGUID( thirdBadgeRef ) ) )
-			continue
-		else
-			thirdBadge = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( thirdBadgeRef ) )
 
-		dataStructInstance.thirdBadgeIndex = ConvertItemFlavorToLoadoutSlotContentsIndex( thirdBadgeLoadoutEntry, thirdBadge )
-		dataStructInstance.thirdBadgeDataInt = GetDataTableInt( dataTable, i, GetDataTableColumnByName( dataTable, "thirdBadgeDataInteger" ) )
-		file.handcraftedProfilesMasterList.append( dataStructInstance )
-	}
-}
 
-void function SendGenericProfileForDeathBoxRui( entity deathBox )
-{
-	deathBox.SetNetInt( "ownerEHI", 0 )
 
-	OverrideDeathBoxRUI_NetworkOptimizedStruct profile = GetHandcraftedProfileAndRemoveFromList()
-	deathBox.SetNetInt( "overrideRUIType", 1 )
-	deathBox.SetCustomOwnerName( profile.name )
-	deathBox.SetNetInt( "characterIndex", profile.characterIndex )
-	deathBox.SetNetInt( "skinIndex", profile.skinIndex )
-	deathBox.SetNetInt( "frameIndex", profile.frameIndex )
-	deathBox.SetNetInt( "stanceIndex", profile.stanceIndex )
-	deathBox.SetNetInt( "firstBadgeIndex", profile.firstBadgeIndex )
-	deathBox.SetNetInt( "firstBadgeDataInt", profile.firstBadgeDataInt )
-	deathBox.SetNetInt( "secondBadgeIndex", profile.secondBadgeIndex )
-	deathBox.SetNetInt( "secondBadgeDataInt", profile.secondBadgeDataInt )
-	deathBox.SetNetInt( "thirdBadgeIndex", profile.thirdBadgeIndex )
-	deathBox.SetNetInt( "thirdBadgeDataInt", profile.thirdBadgeDataInt )
-}
 
-OverrideDeathBoxRUI_NetworkOptimizedStruct function GetHandcraftedProfileAndRemoveFromList()
-{
-	if ( file.handcraftedProfiles.len() == 0 )
-		file.handcraftedProfiles = clone file.handcraftedProfilesMasterList //Either this is the first time we're sending a handcrafted list, or we've run out of handcrafted profiles so recycle them.
 
-	Assert( file.handcraftedProfiles.len() >= 1 )
 
-	if ( OVERRIDE_DEATHBOX_FORCE_USE_ROW != -1 )
-	{
-		return file.handcraftedProfiles[ OVERRIDE_DEATHBOX_FORCE_USE_ROW  ]
-	}
 
-	int randomIndex = RandomInt( file.handcraftedProfiles.len() )
 
-	OverrideDeathBoxRUI_NetworkOptimizedStruct instanceStruct = file.handcraftedProfiles[ randomIndex ]
 
-	file.handcraftedProfiles.fastremove( randomIndex )
 
-	return instanceStruct
 
-}
-#endif // #if SERVER
 
-#if SERVER && DEVELOPER
-void function SetOverrideDeathboxForceUseRow( int value )
-{
-	OVERRIDE_DEATHBOX_FORCE_USE_ROW = value
-}
-#endif // #if SERVER && DEVELOPER
-                                   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 bool function IsDeathboxAutoPickupEnabled()
 {
-                            
-                        
-	     
+
+
+
 		bool defaultVal = false
-       
+
 	return GetCurrentPlaylistVarBool( "survival_deathbox_autopickup_enabled", defaultVal )
 }
 
-#if CLIENT || SERVER
+
 void function SetCallback_LootTypeExtraCanUseFunction( LootData data, bool functionref( entity, entity, int ) func )
 {
 	Assert( IsValid( data ) )
@@ -1512,15 +1501,15 @@ void function ClearCallback_LootTypeExtraCanUseFunction( LootData data )
 	Assert( IsValid( data ) )
 	data.extraCanUseFunction = null
 }
-#endif
 
-#if SERVER || CLIENT
+
+
 bool function SURVIVAL_Loot_IsRestrictedPanelLocked ( int restrictedLootType, entity vendPanel )
 {
 	return file.restrictedLootInfo[ restrictedLootType ].isRestrictedPanelLocked( vendPanel )
 }
 
-// The flags check works for all restricted loot EXCEPT Caustic TT; Caustic TT just uses its own function
+
 bool function IsPanelWithGradeFlagsLocked( entity vendPanel )
 {
 	return GradeFlagsHas( vendPanel, eGradeFlags.IS_LOCKED )
@@ -1540,175 +1529,183 @@ int function SURVIVAL_Loot_GetRestrictedLootType ( entity lootEnt )
 	}
 	return -1
 }
-#endif
 
-#if SERVER
-void function SURVIVAL_Loot_MaybeStartRestrictedDefense_Thread( int restrictedLootType, entity pickup, entity device, entity player )
-{
-	thread file.restrictedLootInfo[ restrictedLootType ].maybeActivateRestrictedPanelDefense( pickup, device, player )
-}
 
-bool function SURVIVAL_Loot_IsLootRestricted ( entity lootEnt )
-{
-	int restrictedLootType = SURVIVAL_Loot_GetRestrictedLootType ( lootEnt )
 
-	if ( IsValidEnumValue ( "eRestrictedLootTypes", restrictedLootType ) )
-	{
-		entity restrictedPanel = SURVIVAL_Loot_GetRestrictedPanel ( restrictedLootType, lootEnt )
-		if ( restrictedPanel != null && SURVIVAL_Loot_IsRestrictedPanelLocked ( restrictedLootType, restrictedPanel ) )
-			return true
-	}
-	return false
-}
-#endif
 
-#if UI
-array< string > function SURVIVAL_Loot_GetRestrictedDialogArray( int restrictedLootType )
-{
-	array< string > dialogArray = [ file.restrictedLootInfo[ restrictedLootType ].dialogPopupHeader,
-	                                file.restrictedLootInfo[ restrictedLootType ].dialogPopupAreYouSure,
-	                                file.restrictedLootInfo[ restrictedLootType ].dialogPopupDeny ]
 
-	return dialogArray
-}
-#endif
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function SURVIVAL_Loot_InitRestrictedLoot()
 {
 	{
 		RestrictedLootInfo emptyLoot
-		// VAULT LOOT
+		
 		file.restrictedLootInfo[ eRestrictedLootTypes.VAULT ] <- emptyLoot
-		#if SERVER || CLIENT
+
 			file.restrictedLootInfo[ eRestrictedLootTypes.VAULT ].getRestrictedPanel = GetVaultPanelForLoot
 			file.restrictedLootInfo[ eRestrictedLootTypes.VAULT ].isRestrictedPanelLocked = IsPanelWithGradeFlagsLocked
-		#endif
-		#if SERVER
-			file.restrictedLootInfo[ eRestrictedLootTypes.VAULT ].maybeActivateRestrictedPanelDefense = MaybeActivateVaultDefense_Thread
-		#endif
-		#if UI
-			file.restrictedLootInfo[ eRestrictedLootTypes.VAULT ].dialogPopupHeader = "#LOBA_ULT_BLACK_MARKET_VAULT_CONFIRM_HEADER"
-			file.restrictedLootInfo[ eRestrictedLootTypes.VAULT ].dialogPopupAreYouSure = "#LOBA_ULT_BLACK_MARKET_VAULT_CONFIRM_BODY"
-			file.restrictedLootInfo[ eRestrictedLootTypes.VAULT ].dialogPopupDeny = "#LOBA_ULT_BLACK_MARKET_VAULT_DENY_BODY"
-		#endif
+
+
+
+
+
+
+
+
+
 	}
 
 	{
 		RestrictedLootInfo emptyLoot
-		// BRIDGE LOOT
+		
 		file.restrictedLootInfo[ eRestrictedLootTypes.SHIP_VAULT ] <- emptyLoot
-		#if SERVER || CLIENT
+
 			file.restrictedLootInfo[ eRestrictedLootTypes.SHIP_VAULT ].getRestrictedPanel = GetVaultPanelForLoot
 			file.restrictedLootInfo[ eRestrictedLootTypes.SHIP_VAULT ].isRestrictedPanelLocked = IsPanelWithGradeFlagsLocked
-		#endif
-		#if SERVER
-			file.restrictedLootInfo[ eRestrictedLootTypes.SHIP_VAULT ].maybeActivateRestrictedPanelDefense = MaybeActivateVaultDefense_Thread
-		#endif
-		#if UI
-			file.restrictedLootInfo[ eRestrictedLootTypes.SHIP_VAULT ].dialogPopupHeader = "#LOBA_ULT_BLACK_MARKET_BRIDGE_VAULT_CONFIRM_HEADER"
-			file.restrictedLootInfo[ eRestrictedLootTypes.SHIP_VAULT ].dialogPopupAreYouSure = "#LOBA_ULT_BLACK_MARKET_BRIDGE_VAULT_CONFIRM_BODY"
-			file.restrictedLootInfo[ eRestrictedLootTypes.SHIP_VAULT ].dialogPopupDeny = "#LOBA_ULT_BLACK_MARKET_BRIDGE_VAULT_DENY_BODY"
-		#endif
+
+
+
+
+
+
+
+
+
 	}
 
 	{
 		RestrictedLootInfo emptyLoot
-		// BLOODHOUND TT LOOT
+		
 		file.restrictedLootInfo[ eRestrictedLootTypes.BLOODHOUND_TT ] <- emptyLoot
-		#if SERVER || CLIENT
+
 			file.restrictedLootInfo[ eRestrictedLootTypes.BLOODHOUND_TT ].getRestrictedPanel = GetBloodTTRewardPanelForLoot
 			file.restrictedLootInfo[ eRestrictedLootTypes.BLOODHOUND_TT ].isRestrictedPanelLocked = IsPanelWithGradeFlagsLocked
-		#endif
-		#if SERVER
-			file.restrictedLootInfo[ eRestrictedLootTypes.BLOODHOUND_TT ].maybeActivateRestrictedPanelDefense = MaybeActivateBloodTTDefense_Thread
-		#endif
-		#if UI
-			file.restrictedLootInfo[ eRestrictedLootTypes.BLOODHOUND_TT ].dialogPopupHeader = "#LOBA_ULT_BLACK_MARKET_BLOODTT_CONFIRM_HEADER"
-			file.restrictedLootInfo[ eRestrictedLootTypes.BLOODHOUND_TT ].dialogPopupAreYouSure = "#LOBA_ULT_BLACK_MARKET_BLOODTT_CONFIRM_BODY"
-			file.restrictedLootInfo[ eRestrictedLootTypes.BLOODHOUND_TT ].dialogPopupDeny = "#LOBA_ULT_BLACK_MARKET_BLOODTT_DENY_BODY"
-		#endif
+
+
+
+
+
+
+
+
+
 	}
 
 	{
 		RestrictedLootInfo emptyLoot
-		// CAUSTIC TT LOOT
+		
 		file.restrictedLootInfo[ eRestrictedLootTypes.CAUSTIC_TT ] <- emptyLoot
-		                  
-		#if SERVER || CLIENT
+
+
 
 		file.restrictedLootInfo[ eRestrictedLootTypes.CAUSTIC_TT ].getRestrictedPanel = GetCausticTTCanisterFrameForLoot
 		file.restrictedLootInfo[ eRestrictedLootTypes.CAUSTIC_TT ].isRestrictedPanelLocked = AreCausticTTCanistersClosed
-		#endif
-		#if SERVER
-			file.restrictedLootInfo[ eRestrictedLootTypes.CAUSTIC_TT ].maybeActivateRestrictedPanelDefense = MaybeActivateCausticTTDefense_Thread
-		#endif
-        
-		#if UI
-			file.restrictedLootInfo[ eRestrictedLootTypes.CAUSTIC_TT ].dialogPopupHeader = "#LOBA_ULT_BLACK_MARKET_CAUSTICTT_CONFIRM_HEADER"
-			file.restrictedLootInfo[ eRestrictedLootTypes.CAUSTIC_TT ].dialogPopupAreYouSure = "#LOBA_ULT_BLACK_MARKET_CAUSTICTT_CONFIRM_BODY"
-			file.restrictedLootInfo[ eRestrictedLootTypes.CAUSTIC_TT ].dialogPopupDeny = "#LOBA_ULT_BLACK_MARKET_CAUSTICTT_DENY_BODY"
-		#endif
+
+
+
+
+
+
+
+
+
+
 	}
 
 	{
 		RestrictedLootInfo emptyLoot
-		                  
-			// RAMPART TT LOOT
+
+			
 			file.restrictedLootInfo[ eRestrictedLootTypes.RAMPART_TT ] <- emptyLoot
-			#if SERVER || CLIENT
+
 			file.restrictedLootInfo[ eRestrictedLootTypes.RAMPART_TT ].getRestrictedPanel = GetRampartTTPanelForLoot
 			file.restrictedLootInfo[ eRestrictedLootTypes.RAMPART_TT ].isRestrictedPanelLocked = IsPanelWithGradeFlagsLocked
-			#endif
-			#if SERVER
-				file.restrictedLootInfo[ eRestrictedLootTypes.RAMPART_TT ].maybeActivateRestrictedPanelDefense = MaybeActivateRampartTTDefense_Thread
-			#endif
-			#if UI
-				file.restrictedLootInfo[ eRestrictedLootTypes.RAMPART_TT ].dialogPopupHeader = "#LOBA_ULT_BLACK_MARKET_RAMPARTTT_CONFIRM_HEADER"
-				file.restrictedLootInfo[ eRestrictedLootTypes.RAMPART_TT ].dialogPopupAreYouSure = "#LOBA_ULT_BLACK_MARKET_RAMPARTTT_CONFIRM_BODY"
-				file.restrictedLootInfo[ eRestrictedLootTypes.RAMPART_TT ].dialogPopupDeny = "#LOBA_ULT_BLACK_MARKET_RAMPARTTT_DENY_BODY"
-			#endif
-        
+
+
+
+
+
+
+
+
+
+
 	}
 
 	{
 		RestrictedLootInfo emptyLoot
-		                      
-			// Spectre Shack Smart Loot (skit system not deployed)
+
+			
 			file.restrictedLootInfo[ eRestrictedLootTypes.SPECTRE_SHACK ] <- emptyLoot
-			#if UI
-				file.restrictedLootInfo[ eRestrictedLootTypes.SPECTRE_SHACK ].dialogPopupHeader = "#LOBA_ULT_BLACK_MARKET_SMARTLOOT_CONFIRM_HEADER"
-				file.restrictedLootInfo[ eRestrictedLootTypes.SPECTRE_SHACK ].dialogPopupAreYouSure = "#LOBA_ULT_BLACK_MARKET_SMARTLOOT_CONFIRM_BODY"
-				file.restrictedLootInfo[ eRestrictedLootTypes.SPECTRE_SHACK ].dialogPopupDeny = "#LOBA_ULT_BLACK_MARKET_SMARTLOOT_DENY_BODY"
-			#endif
-        
+
+				file.restrictedLootInfo[ eRestrictedLootTypes.SPECTRE_SHACK ].getRestrictedPanel = GetSpectreShackSmartLootBinForLoot
+				file.restrictedLootInfo[ eRestrictedLootTypes.SPECTRE_SHACK ].isRestrictedPanelLocked = IsSpectreShackSmartLootLocked
+
+
+
+
+
+
+
+
+
+
 	}
 
 	{
 		RestrictedLootInfo emptyLoot
-		                            
-			// Explosive holds
+
+			
 			file.restrictedLootInfo[ eRestrictedLootTypes.EXPLOSIVE_HOLDS ] <- emptyLoot
-			#if SERVER || CLIENT
+
 				file.restrictedLootInfo[ eRestrictedLootTypes.EXPLOSIVE_HOLDS ].getRestrictedPanel = GetExplosiveHoldProxyForLoot
 				file.restrictedLootInfo[ eRestrictedLootTypes.EXPLOSIVE_HOLDS ].isRestrictedPanelLocked = IsPanelWithGradeFlagsLocked
-			#endif
-			#if SERVER
-				file.restrictedLootInfo[ eRestrictedLootTypes.EXPLOSIVE_HOLDS ].maybeActivateRestrictedPanelDefense = MaybeActivateExplosiveHoldDefense_Thread
-			#endif
-			#if UI
-				file.restrictedLootInfo[ eRestrictedLootTypes.EXPLOSIVE_HOLDS ].dialogPopupHeader = "#LOBA_ULT_BLACK_MARKET_EXPLOSIVEHOLD_CONFIRM_HEADER"
-				file.restrictedLootInfo[ eRestrictedLootTypes.EXPLOSIVE_HOLDS ].dialogPopupAreYouSure = "#LOBA_ULT_BLACK_MARKET_EXPLOSIVEHOLD_CONFIRM_BODY"
-				file.restrictedLootInfo[ eRestrictedLootTypes.EXPLOSIVE_HOLDS ].dialogPopupDeny = "#LOBA_ULT_BLACK_MARKET_EXPLOSIVEHOLD_DENY_BODY"
-			#endif
-        
+
+
+
+
+
+
+
+
+
+
 	}
 }
-#endif
 
-#if SERVER || CLIENT
+
+
 bool function SURVIVAL_Loot_IsAmmoSpawningDisabled()
 {
 	return GetCurrentPlaylistVarBool( "block_ammo_spawning", false )
 }
-#endif
+
+ 

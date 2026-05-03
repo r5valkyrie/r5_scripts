@@ -1,1 +1,0 @@
-// Generated spawn tool files will be output to this directory.     .csv |  .nut

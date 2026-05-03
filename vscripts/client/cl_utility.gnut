@@ -45,7 +45,7 @@ struct
 	int gfxDesaturateCount = 0
 } file
 
-#if DEVELOPER
+#if DEV
 const bool SCREEN_SPACE_DATA_DEBUG = false
 #endif
 
@@ -178,7 +178,7 @@ void function AddCreateCallback( string className, void functionref( entity ) ca
 	if ( !( className in clGlobal.onCreateCallbacks ) )
 		clGlobal.onCreateCallbacks[ className ] <- []
 
-#if DEVELOPER
+#if DEV
 	foreach ( func in clGlobal.onCreateCallbacks[ className ] )
 	{
 		Assert( func != callbackFunc )
@@ -193,7 +193,7 @@ void function AddTargetNameCreateCallback( string targetName, void functionref( 
 	if ( !( targetName in clGlobal.onTargetNameCreateCallbacks ) )
 		clGlobal.onTargetNameCreateCallbacks[ targetName ] <- []
 
-#if DEVELOPER
+#if DEV
 	foreach ( func in clGlobal.onTargetNameCreateCallbacks[ targetName ] )
 	{
 		Assert( func != callbackFunc )
@@ -979,8 +979,8 @@ void function __Dev_CreateTextInfoPanel( vector origin, vector angles, bool show
 	float width = 120 * textScale
 	float height = 360 * textScale
 
-	//if ( showPin )
-	//	DebugDrawSphere( origin, 4.0, COLOR_YELLOW, false, 99999.0, true, 3 )
+	if ( showPin )
+		DebugDrawSphere( origin, 4.0, COLOR_YELLOW, false, 99999.0, 3 )
 
 	origin += (AnglesToUp( angles )*-1) * (height*0.5)  
 	var topo = CreateRUITopology_Worldspace( origin, angles, width, height )
@@ -1110,7 +1110,7 @@ bool function ShouldShowWeakpoints( entity ent )
 			return false
 	}
 
-#if DEVELOPER
+#if DEV
 		if ( Dev_CommandLineHasParm( "-noweakpoints" ) )
 			return false
 #endif
@@ -1323,7 +1323,7 @@ void function AddCallback_OnStaticPropRUICreated( void functionref( StaticPropRu
 	clGlobal.onStaticPropRUICreatedCallbacks.append( callbackFunc )
 }
 
-#if DEVELOPER
+#if DEV
 table<int, StaticPropRui> DEV_magicIdStaticPropRuiMap
 bool DEV_staticPropRuiVisibilityDebugEnabled = false
 void function DEV_ToggleStaticPropRuiVisibilityDebug()
@@ -1332,7 +1332,7 @@ void function DEV_ToggleStaticPropRuiVisibilityDebug()
 }
 #endif
 
-#if DEVELOPER
+#if DEV
 void function DevTestForEachLoopDelete()
 {
 	table<int, int> toto
@@ -1371,7 +1371,7 @@ void function ClientCodeCallback_OnEnumStaticPropRui( StaticPropRui propRui )
 			callbackFunc( propRui, rui )
 	}
 
-#if DEVELOPER
+#if DEV
 		DEV_magicIdStaticPropRuiMap[propRui.magicId] <- propRui
 #endif
 }
@@ -1383,7 +1383,7 @@ void function ClientCodeCallback_OnStaticPropRuiVisibilityChange( array<int> new
 
 	ClApexScreens_OnStaticPropRuiVisibilityChange( newlyVisible, newlyHidden )
 
-#if DEVELOPER
+#if DEV
 		if ( DEV_staticPropRuiVisibilityDebugEnabled )
 		{
 			if ( newlyVisible.len() > 0 )
@@ -1395,13 +1395,13 @@ void function ClientCodeCallback_OnStaticPropRuiVisibilityChange( array<int> new
 			foreach( int magicId in newlyVisible )
 			{
 				StaticPropRui info = DEV_magicIdStaticPropRuiMap[magicId]
-				//DebugDrawRotatedBox( <0, 0, 0>, info.spawnMins, info.spawnMaxs, <0, 0, 0>, <100, 225, 115>, true, 1.0 )
+				DebugDrawRotatedBox( <0, 0, 0>, info.spawnMins, info.spawnMaxs, <0, 0, 0>, <100, 225, 115>, true, 1.0 )
 			}
 
 			foreach( int magicId in newlyHidden )
 			{
 				StaticPropRui info = DEV_magicIdStaticPropRuiMap[magicId]
-				//DebugDrawRotatedBox( <0, 0, 0>, info.spawnMins + <1, 1, 3>, info.spawnMaxs + <1, 1, 3>, <0, 0, 0>, <255, 110, 110>, true, 1.0 )
+				DebugDrawRotatedBox( <0, 0, 0>, info.spawnMins + <1, 1, 3>, info.spawnMaxs + <1, 1, 3>, <0, 0, 0>, <255, 110, 110>, true, 1.0 )
 			}
 		}
 #endif
@@ -1642,18 +1642,18 @@ ScreenSpaceData function GetScreenSpaceData( entity player, vector position )
 	int screenPosX   = -1
 	int screenPosY   = -1
 
-	var results = player.GetPositionInScreenSpace( position )
+	array<int> results = player.GetPositionInScreenSpace( position )
 
-#if DEVELOPER
+#if DEV
 		if ( SCREEN_SPACE_DATA_DEBUG )
 		{
-			//DebugDrawMark( position, 5, COLOR_RED, true, 1.5 )
+			DebugDrawMark( position, 5, COLOR_RED, true, 1.5 )
 		}
 #endif
 
 	posOnScreen = bool( results[0] )
-	screenPosX = expect int( results[1] )
-	screenPosY = expect int( results[2] )
+	screenPosX = results[1]
+	screenPosY = results[2]
 
 	screenPosX = ClampInt( screenPosX, 0, screenWidth )
 	screenPosY = ClampInt( screenPosY, 0, screenHeight )
@@ -1672,7 +1672,7 @@ ScreenSpaceData function GetScreenSpaceData( entity player, vector position )
 		degs += 360
 	}
 
-#if DEVELOPER
+#if DEV
 		if ( SCREEN_SPACE_DATA_DEBUG )
 		{
 			printt( "posOnScreen: " + posOnScreen + " screenX: " + screenPosX + " screenY: " + screenPosY + " degrees: " + degs)
@@ -1736,3 +1736,5 @@ void function UpdateAbilityToggleOrHoldBasedOnInput()
 		SetConVarBool( "toggle_on_jump_to_deactivate_changed", false )
 	}
 }
+
+ 

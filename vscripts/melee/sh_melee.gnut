@@ -1,12 +1,11 @@
-//
-// melee attack = regular melee punch/slash/kick/etc
-// synced melee = execution/finisher
-//
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
 global function MeleeShared_Init
 
-global function MeleeSkin_HasLoadoutSlot
 global function Loadout_MeleeSkin
 global function Loadout_Deathbox
 global function Deathbox_GetDefaultItemFlavor
@@ -29,27 +28,27 @@ global function MeleeSkin_GetItemInspectOffset
 global function MeleeSkin_ShouldHideIfLocked
 global function MeleeSkin_IsItemFlavorUnlocked
 global function MeleeCustomization_ShouldHideIfLocked
-#endif
 
-#if UI
-global function MeleeSkin_IsRewardForActiveEvent
-#endif
+
+
+
+
 
 global function ArtifactsCallback_AddArtifactDeathboxesToCharacterLoadouts
-#if CLIENT || UI
+
 global function Deathbox_GetVideo
 global function RequestSetDeathboxEquipForMeleeSkin
 global function Deathbox_GetEquipped
-#endif // #if CLIENT || UI
-#if CLIENT
-global function ServerCallback_Loadouts_DeathboxEquipForMeleeSkinToggled
-#endif // #if CLIENT
-#if SERVER
-global function ClientCallback_Loadouts_ToggleDeathboxEquipForMeleeSkin
-global function Loadout_EquipSavedMeleeSkinAndDeathboxPair
-#endif // #if SERVER
 
-#if SERVER || CLIENT
+
+global function ServerCallback_Loadouts_DeathboxEquipForMeleeSkinToggled
+
+
+
+
+
+
+
 global function DoesWeaponTriggerMeleeAttack
 global function DoesWeaponClassTriggerMeleeAttack
 global function IsWeaponClassMelee
@@ -62,9 +61,9 @@ global function MeleeSkin_GetSkinName
 global function MeleeSkin_GetCamoIndex
 global function MeleeSkin_GetSkinNameFromPlayer
 global function MeleeSkin_GetMeleeSkinFromPlayer
-#endif
 
-#if SERVER || CLIENT
+
+
 global function CodeCallback_OnMeleePressed
 global function CodeCallback_OnMeleeStartActivity
 global function CodeCallback_OnMeleeHeld
@@ -72,32 +71,32 @@ global function CodeCallback_OnMeleeReleased
 global function CodeCallback_IsValidMeleeAttackTarget
 global function CodeCallback_OnMeleeAttackAnimEvent
 global function Melee_Attack
-#endif
 
-#if SERVER
-global function CodeCallback_OnMeleeKilled
-global function CodeCallback_NPCMeleeChargedPlayerOrNPC
-global function MeleeSkin_RemapSkinToDamageSourceId
-global function Melee_StoreBleedoutAttackerForVictim
 
-#elseif CLIENT
+
+
+
+
+
+
+
 global function ClientCodeCallback_ShowMeleePrompt
-#endif
 
-#if SERVER || CLIENT
+
+
 global function Melee_SetModsForLegendAbilities
 global function Melee_RemoveModsForLegendAbilities
-#endif
 
-#if DEVELOPER && UI
-global function SetDevMenu_OverrideMenuHeirloomModels
-global function SetupChangeOverrideMenuHeirloomModels
-#endif // DEVELOPER && UI
 
-#if DEVELOPER && (CLIENT || UI)
+
+
+
+
+
+#if DEV
 global function DEV_SetMenuHeirloomOverrideGUID
 global function DEV_GetMenuHeirloomOverrideGUID
-#endif // DEVELOPER && (CLIENT || UI)
+#endif
 
 global enum eMeleeWeaponType {
 	HEIRLOOM
@@ -108,27 +107,27 @@ global enum eMeleeWeaponType {
 
 global const string LOADOUT_CLIENT_CALLBACK_TOGGLE_DEATHBOX = "ClientCallback_Loadouts_ToggleDeathboxEquipForMeleeSkin"
 global const string LOADOUT_SERVER_CALLBACK_DEATHBOX_TOGGLED = "ServerCallback_Loadouts_DeathboxEquipForMeleeSkinToggled"
-global const string ARTIFACT_EQUIPPED_MOD = "artifact_equipped" // only used by Seer's tactical currently - HEARTBEAT_SENSOR_WEAPON_NAME
+global const string ARTIFACT_EQUIPPED_MOD = "artifact_equipped" 
 
-global const GH_DEATHBOX_FX = $"P_death_box_fx_gh" // needed by VBSPInfo
+global const GH_DEATHBOX_FX = $"P_death_box_fx_gh" 
 
 global const int DEFAULT_MELEE_WEAPON_SKIN_GUID = 519356259
 const int DEFAULT_MELEE_WEAPON_GUID = 1222621873
-const int GOLDEN_HORSE_DEATHBOX_GUID = 989815244//705533011
+const int GOLDEN_HORSE_DEATHBOX_GUID = 705533011
 const int DEFAULT_DEATHBOX_GUID = 989815244
 
 const string FX_CORE = "FX_CORE"
 const string FX_CENTER = "FX_CENTER"
 
 const asset DEFAULT_DEATHBOX = $"settings/itemflav/artifact_components/deathbox_default.rpak"
-const asset GOLDEN_HORSE_DEATHBOX = $"settings/itemflav/artifact_components/deathbox_default.rpak"//$"settings/itemflav/artifact_components/deathbox_ragold.rpak"
+const asset GOLDEN_HORSE_DEATHBOX = $"settings/itemflav/artifact_components/deathbox_ragold.rpak"
 
-const int NUM_LOADOUT_BACKUPS = 4 // slot for fists plus max # of heirlooms per character is 2 plus one slot for artifact
+const int NUM_LOADOUT_BACKUPS = 4 
 const string WEAPON_TYPE_SETTINGS_BLOCK_KEY = "meleeWeaponType"
 
-#if SERVER
-table< entity, entity > fxTable
-#endif
+
+
+
 
 const asset DEFAULT_MELEE_SKIN = $"settings/itemflav/melee_skin/default.rpak"
 const int MELEE_VIEWHANDS_SLOT = 2
@@ -139,10 +138,10 @@ const float MELEE_CONFIRMATION_SEVERITY_SCALE_WHEN_NOT_ENEMY = 0.5
 
 const float MELEE_KNOCKBACK_DURATION = 0.25
 
-//global const KNIFE_MODEL = $"mdl/weapons/combat_knife/w_combat_knife.rmdl"
-//global const BIRD_MODEL = $"mdl/creatures/bird/bird.rmdl"
-//const HUMAN_BLOOD_FX = $"impact_flesh"
-//const MECHANICAL_BLOOD_FX = $"P_impact_metal_spectre"
+
+
+
+
 
 struct CharacterAndMeleeWeapons
 {
@@ -154,41 +153,41 @@ struct FileStruct_LifetimeLevel
 {
 	table<ItemFlavor, LoadoutEntry> characterMeleeSkinLoadoutEntryMap
 
-	                    
+
 	table<ItemFlavor, LoadoutEntry> characterDeathboxLoadoutEntryMap
 	array<ItemFlavor> fullDeathboxList
-       
+
 
 	table<ItemFlavor, int> cosmeticFlavorSortOrdinalMap
-	
-	table<ItemFlavor, CharacterAndMeleeWeapons > charactersMeleeWeaponsMap // Mapping of Character to all of their Weapon Weapons
 
-#if SERVER
-	table< entity, entity > victimToBleedoutAttackerMap
-#endif
+	table<ItemFlavor, CharacterAndMeleeWeapons > charactersMeleeWeaponsMap 
 
-#if DEVELOPER && CLIENT || UI
+
+
+
+
+#if DEV
 	int menuHeirloomOverrideGUID = -1
-#endif // DEVELOPER && (CLIENT || UI)
+#endif
 }
 FileStruct_LifetimeLevel& fileLevel
 
-#if SERVER || CLIENT || UI
+
 void function MeleeShared_Init()
 {
 	FileStruct_LifetimeLevel newFileLevel
 	fileLevel = newFileLevel
 
-	#if SERVER
-		AddCallback_OnDeathBoxSpawned( OnDeathboxSpawned )
-		// AddCallback_OnDeathBoxLootUpdated( OnLootUpdated ) -- native not available
-	#endif // #if SERVER
+
+
+
+
 
 	AddCallback_RegisterRootItemFlavors( void function() {
 		foreach ( asset meleeWeaponAsset in GetBaseItemFlavorsFromArray( "meleeWeapons" ) )
 			RegisterItemFlavorFromSettingsAsset( meleeWeaponAsset )
 	} )
-	
+
 	AddCallback_OnItemFlavorRegistered( eItemType.character, OnItemFlavorRegistered_Character )
 	AddCallback_OnItemFlavorRegistered( eItemType.melee_weapon, OnItemFlavorRegistered_Melee_Weapon )
 
@@ -200,20 +199,20 @@ void function OnItemFlavorRegistered_Character( ItemFlavor character )
 	CharacterAndMeleeWeapons obj
 	obj.character = character
 	obj.meleeWeapons = []
-	
+
 	fileLevel.charactersMeleeWeaponsMap[character] <- obj
 }
 
 void function OnItemFlavorRegistered_Melee_Weapon( ItemFlavor meleeWeapon )
 {
-	#if SERVER || CLIENT
-		PrecacheWeapon( MeleeWeapon_GetMainWeaponClassname( meleeWeapon ) )
-		PrecacheWeapon( MeleeWeapon_GetOffhandWeaponClassname( meleeWeapon ) )
-	#endif
-	
+
+		//PrecacheWeapon( MeleeWeapon_GetMainWeaponClassname( meleeWeapon ) )
+		//PrecacheWeapon( MeleeWeapon_GetOffhandWeaponClassname( meleeWeapon ) )
+
+
 	array<ItemFlavor> legendsList = RegisterReferencedItemFlavorsFromArray( meleeWeapon, "legends", "flavor" )
+
 	
-	// Global Melee Weapon for all Characters
 	if ( legendsList.len() == 0 )
 	{
 		Assert( ItemFlavor_GetGUID( meleeWeapon ) == DEFAULT_MELEE_WEAPON_GUID || MeleeWeapon_GetWeaponType( meleeWeapon ) == eMeleeWeaponType.ARTIFACT )
@@ -223,7 +222,7 @@ void function OnItemFlavorRegistered_Melee_Weapon( ItemFlavor meleeWeapon )
 			obj.meleeWeapons.append( meleeWeapon )
 		}
 	}
-	else // One or several Legend's Melee Weapon
+	else 
 	{
 		foreach ( legend in legendsList )
 		{
@@ -231,44 +230,42 @@ void function OnItemFlavorRegistered_Melee_Weapon( ItemFlavor meleeWeapon )
 		}
 	}
 
-	if ( false && MeleeWeapon_GetWeaponType( meleeWeapon ) == eMeleeWeaponType.ARTIFACT && Artifacts_GetConfigurationFramework( meleeWeapon ) == eArtifactConfigurationType.COMPONENT )
+	if ( MeleeWeapon_GetWeaponType( meleeWeapon ) == eMeleeWeaponType.ARTIFACT && Artifacts_GetConfigurationFramework( meleeWeapon ) == eArtifactConfigurationType.COMPONENT )
 		RegisterArtifactComponentsForWeapon( meleeWeapon )
 }
 
 void function OnAllItemFlavorsRegistered_Deathboxes()
 {
-	#if false
 	ItemFlavor ornull defaultBox = RegisterItemFlavorFromSettingsAsset( DEFAULT_DEATHBOX )
-	Assert( defaultBox != null, "Failed to register default Deathbox from asset " + DEFAULT_DEATHBOX ) // default should never be disabled
+	Assert( defaultBox != null, "Failed to register default Deathbox from asset " + DEFAULT_DEATHBOX ) 
 	fileLevel.fullDeathboxList.append( expect ItemFlavor( defaultBox ) )
 
 	ItemFlavor ornull goldenHorseBox = RegisterItemFlavorFromSettingsAsset( GOLDEN_HORSE_DEATHBOX )
-	if ( goldenHorseBox != null ) // ItemFlavors may be disabled via Playlist
+	if ( goldenHorseBox != null ) 
 	{
 		expect ItemFlavor( goldenHorseBox )
 
 		fileLevel.fullDeathboxList.append( goldenHorseBox )
 
-		#if SERVER || CLIENT
+
 			if ( !IsLobby() )
 			{
 				Artifact_PrecacheDeathboxModelAndFX( goldenHorseBox )
 			}
-		#endif // #if SERVER || CLIENT
+
 	}
-	#endif
 }
 
 void function OnAllItemFlavorsRegistered_Melee_Weapon()
 {
 	OnAllItemFlavorsRegistered_Deathboxes()
 
-	// Finish registering Melee Weapons + Melee Weapon Skins now that we've formulated the entire list
+	
 	foreach ( obj in fileLevel.charactersMeleeWeaponsMap )
 	{
 		array<ItemFlavor> fullMeleeSkinList = []
 		ItemFlavor character = obj.character
-		
+
 		foreach ( meleeWeapon in obj.meleeWeapons )
 		{
 			array<ItemFlavor> meleeSkinList = RegisterReferencedItemFlavorsFromArray( meleeWeapon, "skins", "flavor" )
@@ -283,15 +280,15 @@ void function OnAllItemFlavorsRegistered_Melee_Weapon()
 
 		LoadoutEntry skinEntry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "character_meleeskin_for_" + ItemFlavor_GetGUIDString( character ), eLoadoutEntryClass.CHARACTER )
 		skinEntry.category     = eLoadoutCategory.CHARACTER_MELEESKINS
-		#if DEVELOPER
+#if DEV
 			skinEntry.pdefSectionKey = "character " + ItemFlavor_GetGUIDString( character )
 			skinEntry.DEV_name       = ItemFlavor_GetCharacterRef( character ) + " Melee Skin"
-		#endif
+#endif
 		skinEntry.defaultItemFlavor         = GetItemFlavorByAsset( DEFAULT_MELEE_SKIN )
 		skinEntry.validItemFlavorList       = fullMeleeSkinList
-		                    
+
 		skinEntry.backupCount 			    = NUM_LOADOUT_BACKUPS
-        
+
 		skinEntry.isSlotLocked              = bool function( EHI playerEHI ) { return !IsLobby() }
 		skinEntry.associatedCharacterOrNull = character
 		skinEntry.networkTo                 = eLoadoutNetworking.PLAYER_GLOBAL
@@ -299,22 +296,20 @@ void function OnAllItemFlavorsRegistered_Melee_Weapon()
 		skinEntry.stryderCharDataArrayIndex = ePlayerStryderCharDataArraySlots.MELEE_SKIN
 		skinEntry.isItemFlavorUnlocked      = MeleeSkin_IsItemFlavorUnlocked
 		fileLevel.characterMeleeSkinLoadoutEntryMap[character] <- skinEntry
-	
-		#if SERVER && DEVELOPER
-			AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( skinEntry, void function( EHI playerEHI, ItemFlavor meleeSkin ) {
-				DEV_UpdatePlayerMeleeWeaponCosmetics( FromEHI( playerEHI ), meleeSkin )
-			} )
-		#endif
 
-		// Only create deathbox loadout entry if we have deathbox items registered
-		if ( fileLevel.fullDeathboxList.len() > 0 )
-		{
+
+
+
+
+
+
+
 			LoadoutEntry boxEntry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "character_deathbox_for_" + ItemFlavor_GetGUIDString( character ), eLoadoutEntryClass.CHARACTER )
 			boxEntry.category     = eLoadoutCategory.DEATHBOX
-			#if DEVELOPER
+#if DEV
 				boxEntry.pdefSectionKey = "character " + ItemFlavor_GetGUIDString( character )
 				boxEntry.DEV_name       = ItemFlavor_GetCharacterRef( character ) + " Death Box"
-			#endif
+#endif
 			boxEntry.defaultItemFlavor         = fileLevel.fullDeathboxList[0]
 			boxEntry.validItemFlavorList       = fileLevel.fullDeathboxList
 			boxEntry.backupCount 			   = NUM_LOADOUT_BACKUPS
@@ -323,8 +318,7 @@ void function OnAllItemFlavorsRegistered_Melee_Weapon()
 			boxEntry.networkTo                 = eLoadoutNetworking.PLAYER_EXCLUSIVE
 			boxEntry.stryderCharDataArrayIndex = ePlayerStryderCharDataArraySlots.INVALID
 			fileLevel.characterDeathboxLoadoutEntryMap[character] <- boxEntry
-		}
-                                
+
 	}
 }
 
@@ -343,9 +337,9 @@ int function MeleeWeapon_GetWeaponType( ItemFlavor flavor )
 	Assert ( typeName in eMeleeWeaponType )
 	return eMeleeWeaponType[ typeName ]
 }
-#endif
 
-#if SERVER || CLIENT
+
+
 void function MeleeWeaponCosmetics_Apply( entity player )
 {
 	entity primaryWeapon = player.GetNormalWeapon( MELEE_VIEWHANDS_SLOT )
@@ -376,27 +370,27 @@ void function MeleeWeaponCosmetics_ApplyForWeapon( entity player, entity weapon 
 
 void function MeleeWeaponCosmetics_Apply_Internal( entity weapon, ItemFlavor meleeSkin )
 {
-	weapon.SetSkin( 0 ) // Lame that we need this, but this avoids invalid skin errors when the model changes and the currently shown skin index doesn't exist for the new model
-	
+	weapon.SetSkin( 0 ) 
+
 	int skinIndex = weapon.GetSkinIndexByName( MeleeSkin_GetSkinName( meleeSkin ) )
 	int camoIndex = MeleeSkin_GetCamoIndex( meleeSkin )
+
 	
-	// If there's only one skin, then the skin index isn't found and returns -1 (even though the real skinIndex is 0)
 	if ( skinIndex == -1 )
 	{
 		skinIndex = 0
 		camoIndex = 0
 	}
-		
+
 	Assert( skinIndex >= 0 )
 	Assert( camoIndex >= 0 )
-	
+
 	weapon.SetSkin( skinIndex )
 	weapon.SetCamo( camoIndex )
-	
-#if SERVER
-	//weapon.SetItemFlavorGUID( ItemFlavor_GetGUID( meleeSkin ) )
-#endif // #if SERVER
+
+
+
+
 }
 
 string function MeleeSkin_GetSkinName( ItemFlavor meleeSkin )
@@ -421,7 +415,7 @@ string function MeleeSkin_GetSkinNameFromPlayer( entity player )
 {
 	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	ItemFlavor meleeSkin = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_MeleeSkin( character ) )
-	
+
 	return MeleeSkin_GetSkinName( meleeSkin )
 }
 
@@ -429,79 +423,79 @@ ItemFlavor function MeleeSkin_GetMeleeSkinFromPlayer( entity player )
 {
 	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	ItemFlavor meleeSkin = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_MeleeSkin( character ) )
-	
+
 	return meleeSkin
 }
-#endif // SERVER || CLIENT
 
-#if SERVER || CLIENT || UI
+
+
 asset function MeleeSkin_GetStoreImage( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.melee_skin )
 
 	if ( Artifacts_Loadouts_IsConfigPointerItemFlavor( flavor ) )
 	{
-		// Artifacts don't have a single skin, so we store core data on the weapon ItemFlavor
+		
 		asset meleeWeaponAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "parentItemFlavor" )
 		flavor = GetItemFlavorByAsset( meleeWeaponAsset )
 	}
 
 	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "storeImage" )
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 asset function MeleeSkin_GetEquipImage( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.melee_skin )
 
 	if ( Artifacts_Loadouts_IsConfigPointerItemFlavor( flavor ) )
 	{
-		// Artifacts don't have a single skin, so we store core data on the weapon ItemFlavor
+		
 		asset meleeWeaponAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "parentItemFlavor" )
 		flavor = GetItemFlavorByAsset( meleeWeaponAsset )
 	}
 
 	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "equipImage" )
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 float function MeleeSkin_GetItemInspectScale( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.melee_skin)
 
 	if ( Artifacts_Loadouts_IsConfigPointerItemFlavor( flavor ) )
 	{
-		// Artifacts don't have a single skin, so we store core data on the weapon ItemFlavor
+		
 		asset meleeWeaponAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "parentItemFlavor" )
 		flavor = GetItemFlavorByAsset( meleeWeaponAsset )
 	}
 
 	return GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "itemInspectScale" )
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 vector function MeleeSkin_GetItemInspectOffset( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.melee_skin)
 
 	if ( Artifacts_Loadouts_IsConfigPointerItemFlavor( flavor ) )
 	{
-		// Artifacts don't have a single skin, so we store core data on the weapon ItemFlavor
+		
 		asset meleeWeaponAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "parentItemFlavor" )
 		flavor = GetItemFlavorByAsset( meleeWeaponAsset )
 	}
 
 	return GetGlobalSettingsVector( ItemFlavor_GetAsset( flavor ), "itemInspectOffset" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 bool function MeleeSkin_ShouldHideIfLocked( ItemFlavor meleeSkin )
 {
 	if ( ItemFlavor_GetType( meleeSkin ) != eItemType.melee_skin )
@@ -509,9 +503,9 @@ bool function MeleeSkin_ShouldHideIfLocked( ItemFlavor meleeSkin )
 
 	return GetGlobalSettingsBool( ItemFlavor_GetAsset( meleeSkin ), "shouldHideIfLocked" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 bool function MeleeSkin_IsItemFlavorUnlocked( EHI playerEHI, ItemFlavor meleeSkin, bool shouldIgnoreGRX = false, bool shouldIgnoreOtherSlots = false )
 {
 	if ( Artifacts_Loadouts_IsConfigPointerItemFlavor( meleeSkin ) )
@@ -519,39 +513,39 @@ bool function MeleeSkin_IsItemFlavorUnlocked( EHI playerEHI, ItemFlavor meleeSki
 
 	return IsItemFlavorGRXUnlockedForLoadoutSlot( playerEHI, meleeSkin, shouldIgnoreGRX, shouldIgnoreOtherSlots )
 }
-#endif
 
-#if UI
-bool function MeleeSkin_IsRewardForActiveEvent( ItemFlavor itemFlav )
-{
-	if ( ItemFlavor_GetGRXMode( itemFlav ) == eItemFlavorGRXMode.NONE )
-		return false
 
-	array<ItemFlavor> activeEvents = GetAllActiveMilestoneEvents( GetUnixTimestamp() )
-	if ( activeEvents.len() > 0 )
-	{
-		foreach ( activeEvent in activeEvents )
-		{
-			if ( ItemFlavor_GetType( itemFlav ) == eItemType.melee_skin && Artifacts_Loadouts_IsConfigPointerItemFlavor( itemFlav ) )
-				return MilestoneEvent_EventAwardsArtifact( activeEvent )
-			else
-				return MilestoneEvent_IsMythicEventItem( activeEvent, ItemFlavor_GetGRXIndex( itemFlav ) )
-		}
-	}
 
-	ItemFlavor ornull activeCollectionEvent = GetActiveCollectionEvent( GetUnixTimestamp() )
-	if ( activeCollectionEvent != null )
-	{
-		expect ItemFlavor( activeCollectionEvent )
-		ItemFlavor reward = HeirloomEvent_GetPrimaryCompletionRewardItem( activeCollectionEvent )
-		return ( reward == itemFlav )
-	}
 
-	return false
-}
-#endif
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 bool function MeleeCustomization_ShouldHideIfLocked( ItemFlavor component )
 {
 	if ( ItemFlavor_GetType( component ) <= eItemType.artifact_component_START || ItemFlavor_GetType( component ) >= eItemType.artifact_component_END )
@@ -559,13 +553,8 @@ bool function MeleeCustomization_ShouldHideIfLocked( ItemFlavor component )
 
 	return GetSettingsBlockBool( ItemFlavor_GetSettingsBlock( component ), "shouldHideIfLocked" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
-bool function MeleeSkin_HasLoadoutSlot( ItemFlavor character )
-{
-	return ( character in fileLevel.characterMeleeSkinLoadoutEntryMap )
-}
+
 
 LoadoutEntry function Loadout_MeleeSkin( ItemFlavor character )
 {
@@ -573,39 +562,35 @@ LoadoutEntry function Loadout_MeleeSkin( ItemFlavor character )
 
 	return fileLevel.characterMeleeSkinLoadoutEntryMap[character]
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 LoadoutEntry function Loadout_Deathbox( ItemFlavor character )
 {
 	Assert( ItemFlavor_GetType( character ) == eItemType.character )
 
 	return fileLevel.characterDeathboxLoadoutEntryMap[character]
 }
-#endif // #if SERVER || CLIENT || UI
 
-#if SERVER || CLIENT || UI
+
+
 void function ArtifactsCallback_AddArtifactDeathboxesToCharacterLoadouts( array< ItemFlavor > deathboxList )
 {
 	foreach ( ItemFlavor character, CharacterAndMeleeWeapons unused in fileLevel.charactersMeleeWeaponsMap )
-	{
-		// Skip if deathbox entry doesn't exist (deathboxes disabled)
-		if ( character in fileLevel.characterDeathboxLoadoutEntryMap )
-			Loadout_Deathbox( character ).validItemFlavorList = deathboxList
-	}
+		Loadout_Deathbox( character ).validItemFlavorList = deathboxList
 }
-#endif // #if SERVER || CLIENT || UI
 
-#if CLIENT || UI
+
+
 asset function Deathbox_GetVideo( ItemFlavor deathbox )
 {
 	Assert( ItemFlavor_GetType( deathbox ) == eItemType.artifact_component_deathbox )
 
 	return GetGlobalSettingsStringAsAsset( ItemFlavor_GetAsset( deathbox ), "video" )
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 ItemFlavor function Deathbox_GetDefaultItemFlavor()
 {
 	Assert( IsValidItemFlavorGUID( DEFAULT_DEATHBOX_GUID ) )
@@ -619,9 +604,9 @@ ItemFlavor ornull function Deathbox_GetGoldenHorseDeathbox()
 
 	return null
 }
-#endif // #if SERVER || CLIENT || UI
 
-#if CLIENT || UI
+
+
 void function RequestSetDeathboxEquipForMeleeSkin( EHI playerEHI, LoadoutEntry entry, ItemFlavor meleeSkin, ItemFlavor deathbox )
 {
 	Assert( playerEHI == LocalClientEHI(), "Tried to use RequestSetDeathboxEquipForMeleeSkin on a different player" )
@@ -632,9 +617,9 @@ void function RequestSetDeathboxEquipForMeleeSkin( EHI playerEHI, LoadoutEntry e
 	expect ItemFlavor( character )
 	Remote_ServerCallFunction( LOADOUT_CLIENT_CALLBACK_TOGGLE_DEATHBOX, ItemFlavor_GetGUID( character ), slotContentsIndex, deathbox.guid )
 }
-#endif // #if CLIENT || UI
 
-#if CLIENT || UI
+
+
 ItemFlavor function Deathbox_GetEquipped( ItemFlavor character, ItemFlavor meleeSkin )
 {
 	EHI playerEHI = LocalClientEHI()
@@ -645,10 +630,6 @@ ItemFlavor function Deathbox_GetEquipped( ItemFlavor character, ItemFlavor melee
 		LoadoutEntry loadoutSlot = Artifacts_Loadouts_GetEntryForConfigIndexAndType( configIdx, eArtifactComponentType.DEATHBOX )
 		return LoadoutSlot_GetItemFlavor( playerEHI, loadoutSlot )
 	}
-
-	// Deathboxes disabled - return melee skin as fallback
-	if ( !(character in fileLevel.characterDeathboxLoadoutEntryMap) )
-		return meleeSkin
 
 	LoadoutEntry skinSlot = Loadout_MeleeSkin( character )
 	LoadoutEntry boxSlot  = Loadout_Deathbox( character )
@@ -663,9 +644,9 @@ ItemFlavor function Deathbox_GetEquipped( ItemFlavor character, ItemFlavor melee
 
 	return GetDefaultItemFlavorForLoadoutSlot( playerEHI, boxSlot )
 }
-#endif // #if CLIENT || UI
 
-#if CLIENT
+
+
 void function ServerCallback_Loadouts_DeathboxEquipForMeleeSkinToggled( int characterGUID, int skinGUID, int deathboxGUID )
 {
 	if ( !IsValidItemFlavorGUID( characterGUID ) || !IsValidItemFlavorGUID( skinGUID ) || !IsValidItemFlavorGUID( deathboxGUID ) )
@@ -675,330 +656,323 @@ void function ServerCallback_Loadouts_DeathboxEquipForMeleeSkinToggled( int char
 	ItemFlavor meleeSkin = GetItemFlavorByGUID( skinGUID )
 	Assert( ItemFlavor_GetType( GetItemFlavorByGUID( characterGUID ) ) == eItemType.character && ItemFlavor_GetType( GetItemFlavorByGUID( skinGUID ) ) == eItemType.melee_skin )
 
-	// TODO: make func names const
+	
 	RunUIScript( "MeleeCustomizationScreen_ClientToUI_UpdateDeathboxEquipState", characterGUID, skinGUID, deathboxGUID )
 }
-#endif // #if CLIENT
-
-#if SERVER
-void function ClientCallback_Loadouts_ToggleDeathboxEquipForMeleeSkin( entity player, int characterGUID, int meleeSkinGUID, int deathboxGUID )
-{
-	if ( !IsLobby() )
-		return
-
-	if ( !IsValid( player ) || !player.IsPlayer() )
-		return
-
-	if ( !IsValidItemFlavorGUID( meleeSkinGUID ) )
-		return
-
-	ItemFlavor meleeSkin = GetItemFlavorByGUID( meleeSkinGUID )
-	if ( ItemFlavor_GetType( meleeSkin ) != eItemType.melee_skin || Artifacts_Loadouts_IsConfigPointerItemFlavor( meleeSkin ) )
-		return
-
-	if ( !IsValidItemFlavorGUID( deathboxGUID ) || ItemFlavor_GetType( GetItemFlavorByGUID( deathboxGUID ) ) != eItemType.artifact_component_deathbox )
-		return
-
-	if ( !IsValidItemFlavorGUID( characterGUID ) || ItemFlavor_GetType( GetItemFlavorByGUID( characterGUID ) ) != eItemType.character )
-		return
-
-	ItemFlavor character = GetItemFlavorByGUID( characterGUID )
-	if ( !IsItemFlavorUnlockedForLoadoutSlot( ToEHI( player ), Loadout_Character(), character ) )
-		return
-
-	if ( !IsItemFlavorUnlockedForLoadoutSlot( ToEHI( player ), Loadout_MeleeSkin( character ), GetItemFlavorByGUID( meleeSkinGUID ) ) )
-		return
-
-	// Deathboxes disabled - skip
-	if ( !(character in fileLevel.characterDeathboxLoadoutEntryMap) )
-		return
-
-	if ( !IsItemFlavorUnlockedForLoadoutSlot( ToEHI( player ), Loadout_Deathbox( character ), GetItemFlavorByGUID( deathboxGUID ) ) )
-		return
-
-	Loadout_EquipDeathboxToMeleeSkin( ToEHI( player ), character, meleeSkin, GetItemFlavorByGUID( deathboxGUID ) )
-}
-#endif // #if SERVER
-
-#if SERVER
-void function Loadout_EquipDeathboxToMeleeSkin( EHI playerEHI, ItemFlavor character, ItemFlavor meleeSkin, ItemFlavor deathbox )
-{
-	Assert( !Artifacts_Loadouts_IsConfigPointerItemFlavor( meleeSkin ) )
-
-	// Deathboxes disabled - skip
-	if ( !(character in fileLevel.characterDeathboxLoadoutEntryMap) )
-		return
-
-	LoadoutEntry skinSlot = Loadout_MeleeSkin( character )
-	LoadoutEntry boxSlot = Loadout_Deathbox( character )
-	ItemFlavor currentSkinFlav = LoadoutSlot_GetItemFlavor( playerEHI, skinSlot )
-	if ( meleeSkin == currentSkinFlav )
-		SetItemFlavorLoadoutSlot( playerEHI, boxSlot, deathbox )
-
-	// backup this data: either update existing or set in a new slot
-	array<ItemFlavor> skinBackups = LoadoutSlot_GetBackups( playerEHI, skinSlot )
-
-	Assert( boxSlot.backupPdefKeys != null )
-	array<string> ornull boxes = boxSlot.backupPdefKeys
-	expect array<string>( boxes )
-
-	Assert( skinSlot.backupPdefKeys != null )
-	array<string> ornull skins = skinSlot.backupPdefKeys
-	expect array<string>( skins )
-
-	entity player = FromEHI( playerEHI )
-	bool found = false
-	int insertAt = -1
-	bool shouldClean = GetCurrentPlaylistVarBool( "artifacts_clean_loadout_backups", true )
-	for ( int i = skinBackups.len() - 1; i >= 0; i-- )
-	{
-		if ( skinBackups[i] == meleeSkin )
-		{
-			if ( found )
-			{
-				if ( shouldClean )
-				{
-					player.SetPersistentVar( LOADOUT_PDEF_PREFIX + boxes[i], 0 )
-					player.SetPersistentVar( LOADOUT_PDEF_PREFIX + skins[i], 0 )
-					Assert( false, format( "Loadouts: duplicate backups found for melee skin %s", ItemFlavor_GetGUIDString( meleeSkin ) ) )
-				}
-			}
-			else
-			{
-				int currentBoxGUID = FromEHI( playerEHI ).GetPersistentVarAsInt( LOADOUT_PDEF_PREFIX + boxes[i] )
-				int guidToSet = ( currentBoxGUID == ItemFlavor_GetGUID( deathbox ) ) ? ItemFlavor_GetGUID( boxSlot.defaultItemFlavor ) : ItemFlavor_GetGUID( deathbox )
-				player.SetPersistentVar( LOADOUT_PDEF_PREFIX + boxes[i], guidToSet )
-				found = true
-				if ( !shouldClean )
-					break
-			}
-		}
-		else if ( Artifacts_Loadouts_IsConfigPointerItemFlavor( skinBackups[i] ) ) // fix for bug in 20.1 where Artifacts were getting saved in backup slots
-		{
-			skinBackups.remove( i )
-			player.SetPersistentVar( LOADOUT_PDEF_PREFIX + skins[i], 0 )
-			player.SetPersistentVar( LOADOUT_PDEF_PREFIX + boxes[i], 0 )
-			insertAt = i
-		}
-	}
-
-	if ( !found ) // save in the first open slot
-	{
-		int idx = insertAt == -1 ? skinBackups.len() : insertAt
-		if ( idx >= NUM_LOADOUT_BACKUPS ) // don't crash Prod if someone somehow forgot to bump the backup count; remove the assert if we start to bloat on the number of backups. Even 4 (8x slots per legend) is likely already way excessive...
-			return
-
-		player.SetPersistentVar( LOADOUT_PDEF_PREFIX + skins[idx], ItemFlavor_GetGUID( meleeSkin ) )
-		player.SetPersistentVar( LOADOUT_PDEF_PREFIX + boxes[idx], ItemFlavor_GetGUID( deathbox ) )
-	}
-
-	Remote_CallFunction_NonReplay( FromEHI( playerEHI ), LOADOUT_SERVER_CALLBACK_DEATHBOX_TOGGLED, character.guid, meleeSkin.guid, deathbox.guid )
-}
-#endif // #if SERVER
-
-#if SERVER
-void function Loadout_EquipSavedMeleeSkinAndDeathboxPair( EHI playerEHI, LoadoutEntry skinSlot, ItemFlavor meleeSkin )
-{
-	// this is called from Loadouts when a melee skin is equipped to equip the deathbox paired with that skin in the backups (if any)
-	ItemFlavor ornull character = skinSlot.associatedCharacterOrNull
-	Assert( character != null )
-	expect ItemFlavor( character )
-
-	// Deathboxes disabled - skip
-	if ( !(character in fileLevel.characterDeathboxLoadoutEntryMap) )
-		return
-
-	LoadoutEntry boxSlot = Loadout_Deathbox( character )
-
-	// if it's an artifact weapon, get the configured Deathbox and store that for consistency
-	if ( Artifacts_Loadouts_IsConfigPointerItemFlavor( meleeSkin ) )
-	{
-		int artifactConfigIdx = Artifacts_Loadouts_GetConfigIndex( meleeSkin )
-		LoadoutEntry artifactDeathboxSlot = Artifacts_Loadouts_GetEntryForConfigIndexAndType( artifactConfigIdx, eArtifactComponentType.DEATHBOX )
-		ItemFlavor artifactDeathbox = LoadoutSlot_GetItemFlavor( playerEHI, artifactDeathboxSlot )
-		FromEHI( playerEHI ).SetPersistentVar( LOADOUT_PDEF_PREFIX + boxSlot.id, ItemFlavor_GetGUID( artifactDeathbox ) )
-		return
-	}
-
-	// backup this data: either update existing or set in a new slot
-	array<ItemFlavor> skinBackups = LoadoutSlot_GetBackups( playerEHI, skinSlot )
-	array<ItemFlavor> boxBackups  = LoadoutSlot_GetBackups( playerEHI, boxSlot )
-
-	bool found = false
-	for ( int i = 0; i < skinBackups.len(); i++ )
-	{
-		if ( skinBackups[i] == meleeSkin )
-		{
-			found = true
-			if ( !(i >= 0 && i < boxBackups.len()) || !IsItemFlavorUnlockedForLoadoutSlot( playerEHI, boxSlot, boxBackups[i] ) )
-			{
-				// equip the default box & clear/set the backup slot to the default
-				FromEHI( playerEHI ).SetPersistentVar( LOADOUT_PDEF_PREFIX + boxSlot.id, ItemFlavor_GetGUID( boxSlot.defaultItemFlavor ) )
-				Assert( boxSlot.backupPdefKeys != null )
-				array<string> ornull boxes = boxSlot.backupPdefKeys
-				expect array<string>( boxes )
-				FromEHI( playerEHI ).SetPersistentVar( LOADOUT_PDEF_PREFIX + boxes[i], ItemFlavor_GetGUID( boxSlot.defaultItemFlavor ) )
-			}
-			else
-			{			
-				FromEHI( playerEHI ).SetPersistentVar( LOADOUT_PDEF_PREFIX + boxSlot.id, ItemFlavor_GetGUID( boxBackups[i] ) )
-			}
-			break
-		}
-	}
-
-	if ( !found ) // clear any currently active box if we're equipping a new melee skin for the first time
-		FromEHI( playerEHI ).SetPersistentVar( LOADOUT_PDEF_PREFIX + boxSlot.id, ItemFlavor_GetGUID( boxSlot.defaultItemFlavor ) )
-}
-#endif // #if SERVER
-
-#if SERVER
-void function OnDeathboxSpawned( entity deathbox, entity attacker, int damageSourceID )
-{
-	if ( IsValid( deathbox ) )
-	{
-		entity victim = deathbox.GetOwner()
-		if ( victim in fileLevel.victimToBleedoutAttackerMap )
-		{
-			entity bleedoutAttacker = fileLevel.victimToBleedoutAttackerMap[ victim ]
-			if ( IsValid( bleedoutAttacker ) && bleedoutAttacker.IsPlayer() )
-				attacker = bleedoutAttacker
-
-			delete fileLevel.victimToBleedoutAttackerMap[ victim ]
-		}
-
-		if ( !IsValid( attacker ) )
-			return
-
-		bool attackerIsPlayer = attacker.IsPlayer()
-		bool attackerIsNPC    = attacker.IsNPC()
-
-		if ( !attackerIsPlayer && !attackerIsNPC )
-			return
-
-		if ( attackerIsNPC )
-		{
-			return
-		}
 
 
-		ItemFlavor attackerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( attacker ), Loadout_Character() )
-		ItemFlavor meleeSkinFlavor   = LoadoutSlot_GetItemFlavor( ToEHI( attacker ), Loadout_MeleeSkin( attackerCharacter ) )
 
-		// Deathboxes disabled - skip deathbox logic
-		if ( !(attackerCharacter in fileLevel.characterDeathboxLoadoutEntryMap) )
-			return
 
-		ItemFlavor deathboxFlavor    = LoadoutSlot_GetItemFlavor( ToEHI( attacker ), Loadout_Deathbox( attackerCharacter ) )
 
-		bool hasSpecialBox  = false
-		asset deathboxFX    = $""
-		asset deathboxModel = $""
-		string deathboxSFX  = ""
 
-		if ( Artifacts_Loadouts_IsConfigPointerItemFlavor( meleeSkinFlavor ) )
-		{
-			int configIndex      = Artifacts_Loadouts_GetConfigIndex( meleeSkinFlavor )
-			LoadoutEntry boxSlot = Artifacts_Loadouts_GetEntryForConfigIndexAndType( configIndex, eArtifactComponentType.DEATHBOX )
-			deathboxFlavor       = LoadoutSlot_GetItemFlavor( ToEHI( attacker ), boxSlot )
 
-			if ( deathboxFlavor == Deathbox_GetDefaultItemFlavor() )
-				return
 
-			deathboxModel = Artifacts_GetDeathboxModel( deathboxFlavor )
-			deathboxFX    = Artifacts_FX_GetDeathboxFX( deathboxFlavor )
-			deathboxSFX   = Artifacts_FX_GetDeathboxSpawnSFX( deathboxFlavor )
 
-			hasSpecialBox = true
-		}
-		else if ( deathboxFlavor != Deathbox_GetDefaultItemFlavor() )
-		{
-			deathboxModel = Artifacts_GetDeathboxModel( deathboxFlavor )
-			deathboxFX    = Artifacts_FX_GetDeathboxFX( deathboxFlavor )
-			deathboxSFX   = Artifacts_FX_GetDeathboxSpawnSFX( deathboxFlavor )
 
-			hasSpecialBox = true
-		}
 
-		if ( hasSpecialBox )
-		{
-			if ( deathboxModel == $"" )
-				return
 
-			deathbox.SetModel( deathboxModel )
 
-			if ( deathboxFX == $"" )
-				return
 
-			entity boxFX = StartParticleEffectOnEntity_ReturnEntity( deathbox, GetParticleSystemIndex( deathboxFX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
-			boxFX.SetParent( deathbox, FX_CENTER )
 
-			Assert( !( deathbox in fxTable ) )
-			fxTable[deathbox] <- boxFX
-			AddEntityDestroyedCallback( deathbox, OnDeathBoxDestroyed )
 
-			if ( deathboxSFX != "" )
-				EmitSoundOnEntity( deathbox, deathboxSFX )
-		}
-	}
-}
-#endif // #if SERVER
 
-#if SERVER
-void function OnDeathBoxDestroyed( entity deathbox )
-{
-	if( deathbox in fxTable )
-	{
-		delete fxTable[deathbox]
-	}
-}
-#endif // #if SERVER
 
-#if SERVER
-void function OnLootUpdated( entity deathbox )
-{
-	if( !( deathbox in fxTable ) )
-		return
 
-	entity boxFX = fxTable[deathbox]
-	array<entity> itemsInBox = deathbox.GetLinkEntArray()
 
-	int maxTier = 0
-	if ( itemsInBox.len() > 0 )
-	{
-		foreach ( loot in itemsInBox )
-		{
-			LootData data = SURVIVAL_Loot_GetLootDataByRef( loot.e.lootRef )
-			if ( data.tier > maxTier )
-				maxTier = data.tier
-		}
-	}
 
-	EffectSetControlPointColorById( boxFX, 1, COLORID_FX_LOOT_TIER0 + maxTier )
-}
-#endif // #if SERVER
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 string function MeleeWeapon_GetMainWeaponClassname( ItemFlavor meleeWeapon )
 {
 	Assert( ItemFlavor_GetType( meleeWeapon ) == eItemType.melee_weapon )
 
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( meleeWeapon ), "mainWeaponClassname" )
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 string function MeleeWeapon_GetOffhandWeaponClassname( ItemFlavor meleeWeapon )
 {
 	Assert( ItemFlavor_GetType( meleeWeapon ) == eItemType.melee_weapon )
 
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( meleeWeapon ), "offhandWeaponClassname" )
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 asset function MeleeSkin_GetMenuModel( ItemFlavor meleeSkin )
 {
 	Assert( ItemFlavor_GetType( meleeSkin ) == eItemType.melee_skin )
@@ -1008,123 +982,123 @@ asset function MeleeSkin_GetMenuModel( ItemFlavor meleeSkin )
 	string mainWeaponClassname = MeleeWeapon_GetMainWeaponClassname( meleeWeapon )
 	return GetWeaponInfoFileKeyFieldAsset_Global( mainWeaponClassname, "viewmodel" )
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 asset function MeleeSkin_GetMenuAnimSeq( ItemFlavor meleeSkin )
 {
 	Assert( ItemFlavor_GetType( meleeSkin ) == eItemType.melee_skin )
 
 	if ( Artifacts_Loadouts_IsConfigPointerItemFlavor( meleeSkin ) )
 	{
-		// Artifacts don't have a single skin, so we store core data on the weapon ItemFlavor
+		
 		asset meleeWeaponAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( meleeSkin ), "parentItemFlavor" )
 		meleeSkin = GetItemFlavorByAsset( meleeWeaponAsset )
 	}
 
 	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( meleeSkin ), "menuAnimSeq" )
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 string function MeleeSkin_GetKOSound( ItemFlavor meleeSkin )
 {
 	Assert( ItemFlavor_GetType( meleeSkin ) == eItemType.melee_skin )
 
 	if ( Artifacts_Loadouts_IsConfigPointerItemFlavor( meleeSkin ) )
 	{
-		// Artifacts don't have a single skin, so we store core data on the weapon ItemFlavor
+		
 		asset meleeWeaponAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( meleeSkin ), "parentItemFlavor" )
 		meleeSkin = GetItemFlavorByAsset( meleeWeaponAsset )
 	}
 
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( meleeSkin ), "koSound" )
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 vector function MeleeSkin_GetMenuModelRotation( ItemFlavor meleeSkin )
 {
 	Assert( ItemFlavor_GetType( meleeSkin ) == eItemType.melee_skin )
 
 	if ( Artifacts_Loadouts_IsConfigPointerItemFlavor( meleeSkin ) )
 	{
-		// Artifacts don't have a single skin, so we store core data on the weapon ItemFlavor
+		
 		asset meleeWeaponAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( meleeSkin ), "parentItemFlavor" )
 		meleeSkin = GetItemFlavorByAsset( meleeWeaponAsset )
 	}
 
 	return GetGlobalSettingsVector( ItemFlavor_GetAsset( meleeSkin ), "menuMdlRot" )
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 bool function MeleeSkin_HasSpecificCharacterFlavor( ItemFlavor meleeSkin )
 {
 	Assert( ItemFlavor_GetType( meleeSkin ) == eItemType.melee_skin )
-	
+
 	asset meleeWeapon = GetGlobalSettingsAsset( ItemFlavor_GetAsset( meleeSkin ), "parentItemFlavor" )
 	Assert( ItemFlavor_GetType( GetItemFlavorByAsset( meleeWeapon ) ) == eItemType.melee_weapon )
-	
+
 	asset character = GetGlobalSettingsAsset( meleeWeapon, "parentItemFlavor" )
-	
+
 	if ( character == "" )
 		return false
-	
+
 	Assert( ItemFlavor_GetType( GetItemFlavorByAsset( character ) ) == eItemType.character )
-	
+
 	return true
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 ItemFlavor function MeleeSkin_GetCharacterFlavor( ItemFlavor meleeSkin )
 {
 	Assert( ItemFlavor_GetType( meleeSkin ) == eItemType.melee_skin )
-	
+
 	asset meleeWeapon = GetGlobalSettingsAsset( ItemFlavor_GetAsset( meleeSkin ), "parentItemFlavor" )
 	Assert( ItemFlavor_GetType( GetItemFlavorByAsset( meleeWeapon ) ) == eItemType.melee_weapon )
-	
+
 	asset character = GetGlobalSettingsAsset( meleeWeapon, "parentItemFlavor" )
 	Assert( character != "", "Implies all characters can use this melee weapon. Check this case with MeleeSkin_HasSpecificCharacterFlavor()" )
 	Assert( ItemFlavor_GetType( GetItemFlavorByAsset( character ) ) == eItemType.character )
 
 	return GetItemFlavorByAsset( character )
 }
-#endif
 
 
-#if SERVER
-void function MeleeSkin_RemapSkinToDamageSourceId( var damageInfo, table<string, table< int, int > > heirloomSkinRemap )
-{
-	entity attacker      = DamageInfo_GetAttacker( damageInfo )
-	string meleeSkinName = MeleeSkin_GetSkinNameFromPlayer( attacker )
 
-	if ( meleeSkinName in heirloomSkinRemap )
-	{
-		int sourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-		if ( sourceId in heirloomSkinRemap[meleeSkinName] )
-		{
-			DamageInfo_SetDamageSourceIdentifier( damageInfo, heirloomSkinRemap[meleeSkinName][sourceId] )
-		}
-	}
-}
-#endif
 
-#if CLIENT || SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function Melee_SetModsForLegendAbilities( entity player )
 {
-	#if CLIENT
+
 		if ( !InPrediction() )
 			return
-	#endif
 
-	// special case for Seer
+
+	
 	if ( IsValid( player ) )
 	{
 		entity offhand = player.GetOffhandWeapon( OFFHAND_EQUIPMENT )
@@ -1135,12 +1109,12 @@ void function Melee_SetModsForLegendAbilities( entity player )
 
 void function Melee_RemoveModsForLegendAbilities( entity player )
 {
-	#if CLIENT
+
 	if ( !InPrediction() )
 		return
-	#endif
 
-	// special case for Seer
+
+	
 	if ( IsValid( player ) )
 	{
 		entity offhand = player.GetOffhandWeapon( OFFHAND_EQUIPMENT )
@@ -1148,44 +1122,44 @@ void function Melee_RemoveModsForLegendAbilities( entity player )
 			offhand.RemoveMod( ARTIFACT_EQUIPPED_MOD )
 	}
 }
-#endif
 
-#if SERVER || CLIENT
+
+
 bool function DoesWeaponTriggerMeleeAttack( entity weapon )
 {
 	return (weapon.IsWeaponOffhandMelee() || weapon.GetWeaponSettingBool( eWeaponVar.attack_button_presses_melee ))
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+
 bool function DoesWeaponClassTriggerMeleeAttack( string weaponName )
 {
 	return (IsWeaponClassMelee( weaponName ) || GetWeaponInfoFileKeyField_GlobalBool( weaponName, "attack_button_presses_melee" ))
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+
 bool function IsWeaponClassMelee( string weaponName )
 {
-	// (dw): meant to mimic weapon.IsWeaponOffhandMelee()
+	
 	int fireMode = expect int(GetWeaponInfoFileKeyField_Global( weaponName, "fire_mode" ))
 	return (fireMode == eWeaponFireMode.offhandMelee || fireMode == eWeaponFireMode.offhandMeleeHybrid)
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+
 entity function GetPlayerMeleeOffhandWeapon( entity player )
 {
-	entity meleeAttackWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand ) // Check if the active weapon is melee first
+	entity meleeAttackWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand ) 
 
 	bool isValid = IsValid( meleeAttackWeapon )
 
 	if ( !isValid || !meleeAttackWeapon.IsWeaponOffhandMelee() )
 	{
-		meleeAttackWeapon = player.GetOffhandWeapon( OFFHAND_MELEE ) // Try using default melee weapon
+		meleeAttackWeapon = player.GetOffhandWeapon( OFFHAND_MELEE ) 
 
 		if ( !IsValid( meleeAttackWeapon ) )
 			return null
@@ -1195,10 +1169,10 @@ entity function GetPlayerMeleeOffhandWeapon( entity player )
 
 	return meleeAttackWeapon
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+
 bool function IsValidMeleeAttackTarget( entity attacker, entity inputWeaponOrNull, entity attackWeapon, entity target )
 {
 	if ( attacker == target )
@@ -1208,22 +1182,19 @@ bool function IsValidMeleeAttackTarget( entity attacker, entity inputWeaponOrNul
 		return false
 
 	if ( target.IsBreakableGlass() )
-		return true // special case
+		return true 
 
 	if ( !target.CanBeMeleed() )
 		return false
 
 	entity targetOwner = target.GetOwner()
-	// CanBeMeleedByOwner -- entity method not available
-	// if( IsValid( targetOwner ) && attacker == targetOwner && !target.CanBeMeleedByOwner() )
-	// 	return false
+	if( IsValid( targetOwner ) && attacker == targetOwner && !target.CanBeMeleedByOwner() )
+		return false
 
-	#if SERVER // todo(dw): fix this server/client mismatch (which may cause mispredictions!)
-		// ShouldPreventDamageDueToFriendlyFire -- function not available
-		// Default to preventing friendly-fire melee damage
-		if ( IsFriendlyTeam( attacker.GetTeam(), target.GetTeam() ) )
-			return false
-	#endif
+
+
+
+
 
 	if ( !attacker.DoesShareRealms( target ) )
 		return false
@@ -1236,36 +1207,36 @@ bool function IsValidMeleeAttackTarget( entity attacker, entity inputWeaponOrNul
 
 	if ( target.IsPlayer() || target.IsNPC() )
 	{
-		// target is BaseCombatCharacter
+		
 		if ( target.ContextAction_IsMeleeExecutionTarget() )
 			return false
 	}
 
 	return true
 }
-#endif
 
-#if SERVER
-void function Melee_StoreBleedoutAttackerForVictim( entity victim, entity bleedoutAttacker )
-{
-	fileLevel.victimToBleedoutAttackerMap[ victim ] <- bleedoutAttacker
-}
-#endif
 
-///////////////////
-///////////////////
-//// Internals ////
-///////////////////
-///////////////////
-#if SERVER || CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
 entity function GetMeleeAttackLungeTarget( entity attacker, entity meleeAttackWeapon )
 {
 	return PlayerMelee_LungeConeTrace( attacker, meleeAttackWeapon, SHARED_CB_IS_VALID_MELEE_ATTACK_TARGET )
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+
 bool function AttackerCanStartMelee( entity attacker, entity inputWeaponOrNull )
 {
 	Assert( attacker.IsPlayer() )
@@ -1276,11 +1247,11 @@ bool function AttackerCanStartMelee( entity attacker, entity inputWeaponOrNull )
 	if ( attacker.PlayerMelee_GetState() != PLAYER_MELEE_STATE_NONE )
 		return false
 
-	if ( attacker.IsWeaponSlotDisabled( eActiveInventorySlot.mainHand ) ) // Covers bleedout
+	if ( attacker.IsWeaponSlotDisabled( eActiveInventorySlot.mainHand ) ) 
 		return false
 
-	//if ( PlayerIsInMeleeBlockingADS( attacker ) )
-	//	return false
+	
+	
 
 	if ( attacker.IsPhaseShifted() )
 		return false
@@ -1294,13 +1265,13 @@ bool function AttackerCanStartMelee( entity attacker, entity inputWeaponOrNull )
 
 	return true
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+
 bool function CodeCallback_IsValidMeleeAttackTarget( entity attacker, entity target )
 {
-	entity meleeInputWeapon  = null // We don't know what it is because they haven't pressed a button yet
+	entity meleeInputWeapon  = null 
 	entity meleeAttackWeapon = GetPlayerMeleeOffhandWeapon( attacker )
 
 	if ( !IsValidMeleeAttackTarget( attacker, meleeInputWeapon, meleeAttackWeapon, target ) )
@@ -1308,10 +1279,10 @@ bool function CodeCallback_IsValidMeleeAttackTarget( entity attacker, entity tar
 
 	return true
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+
 void function CodeCallback_OnMeleePressed( entity attacker, entity meleeInputWeapon )
 {
 	entity meleeAttackWeapon = GetPlayerMeleeOffhandWeapon( attacker )
@@ -1320,32 +1291,32 @@ void function CodeCallback_OnMeleePressed( entity attacker, entity meleeInputWea
 		return
 
 	entity currentWeapon              = attacker.GetActiveWeapon( eActiveInventorySlot.mainHand )
-	// eWeaponVar.offhand_restore_after_melee not available
+	bool restoreMainOffhandAfterMelee = (IsValid( currentWeapon ) && currentWeapon.IsWeaponOffhand() && currentWeapon.GetWeaponSettingBool( eWeaponVar.offhand_restore_after_melee ))
+	entity offhandToRestore           = restoreMainOffhandAfterMelee ? currentWeapon : null
 
 	attacker.ClearOffhand( eActiveInventorySlot.mainHand )
-	// PlayerMelee_StartAttack takes only 1 param (state)
-	attacker.PlayerMelee_StartAttack( PLAYER_MELEE_STATE_KICK_ATTACK )
+	attacker.PlayerMelee_StartAttack( PLAYER_MELEE_STATE_KICK_ATTACK, offhandToRestore )
 
 	TryDoorLunge( attacker, meleeAttackWeapon )
 
-	#if SERVER
-		meleeAttackWeapon.EmitWeaponNpcSound_DontUpdateLastFiredTime( 200, 0.2 )
-	#endif
+
+
+
 
 	attacker.SetSelectedOffhand( eActiveInventorySlot.mainHand, meleeAttackWeapon )
 }
-#endif
 
-#if SERVER || CLIENT
+
+
 void function TryDoorLunge( entity attacker, entity lungeWeapon )
 {
-	// DOOR BUSTING PROTOTYPE
-	// todo(dw): use better door detection logic
+	
+	
 	{
 		bool isShadowSquad = false
-		                             
+
 			isShadowSquad = IsPlayerShadowZombie( attacker )
-                                     
+
 
 		bool doorLungeEnabled = !isShadowSquad && GetCurrentPlaylistVarBool( "blockable_door_can_be_hurt_by_special_kick", true )
 		entity lungeTarget    = GetMeleeAttackLungeTarget( attacker, lungeWeapon )
@@ -1374,13 +1345,13 @@ void function TryDoorLunge( entity attacker, entity lungeWeapon )
 
 		if ( doorLungeEnabled && IsValid( lungeTarget ) && ( IsDoor( lungeTarget ) || IsRebuiltDoor( lungeTarget ) ) )
 		{
-			                    
+
 			if ( lungeWeapon.HasMod( "sword_rt01" ) )
 				lungeWeapon.RemoveMod( "sword_rt01" )
-         
+
 			lungeWeapon.AddMod( "proto_door_kick" )
 
-			attacker.Lunge_SetTargetPosition( <eyeTraceHitPos.x, eyeTraceHitPos.y, lungeTarget.GetWorldSpaceCenter().z - 52 > ) //52 is half the door height
+			attacker.Lunge_SetTargetPosition( <eyeTraceHitPos.x, eyeTraceHitPos.y, lungeTarget.GetWorldSpaceCenter().z - 52 > ) 
 			attacker.Lunge_SetSmoothTime( 0.7 )
 			attacker.Lunge_EnableFlying()
 		}
@@ -1390,15 +1361,15 @@ void function TryDoorLunge( entity attacker, entity lungeWeapon )
 		}
 	}
 }
-#endif
 
-#if SERVER || CLIENT
+
+
 void function CodeCallback_OnMeleeStartActivity( entity attacker, entity meleeAttackWeapon )
 {
 	if ( GetBugReproNum() == 53982 )
 		Assert( attacker.PlayerMelee_IsAttackActive() )
 	else if ( !attacker.PlayerMelee_IsAttackActive() )
-		return // todo(dw): workaround for R5DEV-53982
+		return 
 
 	const float STUN_EFFECT_CUTOFF = 0.05
 	float movestunEffect = StatusEffect_GetSeverity( attacker, eStatusEffect.move_slow )
@@ -1416,55 +1387,52 @@ void function CodeCallback_OnMeleeStartActivity( entity attacker, entity meleeAt
 		}
 	}
 
-	//Check if weapon has AMMO_PUNCHER hop up
-                           
-            
-                               
-        
-       
+	
+
+
+
+
+
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+
 void function CodeCallback_OnMeleeHeld( entity player, entity weapon )
 {
-	//
+	
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+
 void function CodeCallback_OnMeleeReleased( entity player, entity weapon )
 {
-	//
+	
 }
-#endif
 
-#if SERVER || CLIENT
-// Callback takes 2 params - impactTableOverride defaults to -1
-void function CodeCallback_OnMeleeAttackAnimEvent( entity attacker, entity meleeAttackWeapon )
+
+
+void function CodeCallback_OnMeleeAttackAnimEvent( entity attacker, entity meleeAttackWeapon, int impactTableOverride )
 {
-	int impactTableOverride = -1 // not passed as param in this engine version
-
 	Assert( IsValid( attacker ) )
 
 	if ( !attacker.PlayerMelee_IsAttackActive() )
-		return // (dw): see R5DEV-53886
+		return 
 
 	Assert( attacker.PlayerMelee_GetState() != PLAYER_MELEE_STATE_NONE )
 	Assert( !attacker.PlayerMelee_GetAttackHitEntity() )
 
-	#if SERVER
-		PIN_OnWeaponAttack( attacker, meleeAttackWeapon, meleeAttackWeapon.GetWeaponClassName(), 1, attacker.GetOrigin(), attacker.GetViewForward() )
-	#endif
+
+
+
 
 		if ( TitanSword_TryMultiAttack( attacker, meleeAttackWeapon, impactTableOverride ) )
 			return
-       
+
 	float attackRange = meleeAttackWeapon.GetMeleeAttackRange()
 
-	// attack trace
+	
 	table legacyTraceResults = PlayerMelee_AttackTrace( attacker, attackRange, (bool function( entity attacker, entity target ) : (meleeAttackWeapon) {
 		return IsValidMeleeAttackTarget( attacker, null, meleeAttackWeapon, target )
 	}) )
@@ -1481,85 +1449,85 @@ void function Melee_Attack( entity attacker, entity meleeAttackWeapon, int impac
 	int impactEffectFlags                 = expect int(legacyTraceResults.impactEffectFlags)
 	int codeDamageType                    = expect int(legacyTraceResults.damageType)
 	vector startPosition                  = expect vector(legacyTraceResults.startPosition)
-	bool shouldHitForward                 = "hitWithFlatTrace" in legacyTraceResults ? expect bool(legacyTraceResults.hitWithFlatTrace) : true
+	bool shouldHitForward                 = expect bool(legacyTraceResults.hitWithFlatTrace)
 	float attackRange                     = meleeAttackWeapon.GetMeleeAttackRange()
 	vector hitNormal                      = Normalize( startPosition - endPosition )
 	int meleeAttackWeaponImpactTableIndex = impactTableOverride >= 0 ? impactTableOverride : meleeAttackWeapon.GetImpactTableIndex()
-	#if SERVER
-		string weaponName  = meleeAttackWeapon.GetWeaponClassName()
-		int damageSourceId = (weaponName in eDamageSourceId ? eDamageSourceId[weaponName] : eDamageSourceId.damagedef_unknownBugIt)
-		vector damageForce = AnglesToForward( attacker.EyeAngles() ) * meleeAttackWeapon.GetWeaponDamageForce()
-		int damageAmount   = meleeAttackWeapon.GetDamageAmountForArmorType( 0 )
-	#endif
+
+
+
+
+
+
 
 	if ( IsValid( target ) )
 	{
-		// We have a valid melee target, so do all the things associated with a
-		// "successful" melee hit.
+		
+		
 
-		// Defensive fix for R5DEV-70830
+		
 		if ( !attacker.PlayerMelee_IsAttackActive() )
 			return
 
-		// Melee state
+		
 		attacker.PlayerMelee_SetAttackHitEntity( target )
 		if ( !target.IsWorld() )
 			attacker.PlayerMelee_SetAttackRecoveryShouldBeQuick( true )
 
-		// Special case for breakable glass
+		
 		if ( target.IsBreakableGlass() )
 		{
-			#if SERVER
-				target.BreakSphere( endPosition, 50 )
-			#endif // #if SERVER
+
+
+
 		}
 		else
 		{
-			// Melee hit confirmation
+			
 			bool targetIsEnemy  = IsEnemyTeam( attacker.GetTeam(), target.GetTeam() )
 			float severityScale = (targetIsEnemy ? MELEE_CONFIRMATION_SEVERITY_SCALE_WHEN_ENEMY : MELEE_CONFIRMATION_SEVERITY_SCALE_WHEN_NOT_ENEMY)
 			meleeAttackWeapon.DoMeleeHitConfirmation( severityScale )
 
-			// Damage (server only)
-			#if SERVER
-				damageAmount = meleeAttackWeapon.GetDamageAmountForArmorType( target.GetArmorType() )
-				int damageScriptType = meleeAttackWeapon.GetWeaponDamageFlags()
-				vector damageOrigin  = endPosition
+			
 
-				if ( target.IsNPC() && target.CanBeGroundExecuted() )
-				{
-					damageAmount = target.GetHealth()
-					damageScriptType = damageScriptType | DF_RAGDOLL
-					damageForce = <0, 0, 0>
-				}
 
-				// (dw): I'm commenting this out because it's stateful and will stick around on the entity, even if that entity
-				// doesn't die to this melee attack.
-				//if ( IsHumanSized( target ) )
-				//	target.SetContinueAnimatingAfterRagdoll( true )
 
-				int TEMP_targetHealthBefore         = target.GetHealth() // todo(dw): remove
-				bool TEMP_isTargetBleedingOutBefore = Bleedout_IsBleedingOut( target ) // todo(dw): remove
 
-				table damageTable = {
-					scriptType = meleeAttackWeapon.GetWeaponDamageFlags(),
-					damageType = codeDamageType,
-					damageSourceId = damageSourceId,
-					origin = damageOrigin,
-					force = damageForce,
-					weapon = meleeAttackWeapon
-				}
 
-				target.TakeDamage( damageAmount, attacker, attacker, damageTable )
-			#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 		}
 	}
 	else
 	{
-		// We do NOT have a valid melee target. Do another trace to see if we
-		// hit anything (like a wall or dynamic prop). We need it to do things
-		// later like impact effects, knock back forces, and searching for
-		// melee-able trigger boxes.
+		
+		
+		
+		
 
 		vector impactEffectTraceBegin        = meleeAttackWeapon.GetAttackPosition()
 		vector impactEffectTraceEnd          = impactEffectTraceBegin + (attackRange * meleeAttackWeapon.GetAttackDirection())
@@ -1568,7 +1536,7 @@ void function Melee_Attack( entity attacker, entity meleeAttackWeapon, int impac
 		{
 			target = impactEffectTraceResult.hitEnt
 
-			//need to do this because code said we missed our target and don't want to knock back an enemy and not do damage
+			
 			if ( target.IsPlayer() && IsEnemyTeam( attacker.GetTeam(), target.GetTeam() ) )
 				return
 
@@ -1577,41 +1545,41 @@ void function Melee_Attack( entity attacker, entity meleeAttackWeapon, int impac
 			hitNormal = impactEffectTraceResult.surfaceNormal
 			surfaceProp = impactEffectTraceResult.surfaceProp
 			staticPropID = impactEffectTraceResult.staticPropID
-			#if SERVER
-				damageAmount = meleeAttackWeapon.GetDamageAmountForArmorType( impactEffectTraceResult.hitEnt.GetArmorType() )
-			#endif
+
+
+
 		}
 	}
 
-	// At this point, 'target' (and related hit variables like startPosition,
-	// endPosition, hitNormal, etc.) is either a valid melee target (from a
-	// successful melee attack), an impact effect target (like a wall or a
-	// prop), or null (player hit nothing).
+	
+	
+	
+	
 
 	if ( IsValid( target ) )
 	{
 		attacker.DispatchImpactEffects( target, startPosition, endPosition, hitNormal, surfaceProp, staticPropID, codeDamageType, meleeAttackWeaponImpactTableIndex, attacker, impactEffectFlags )
 	}
 
-	#if SERVER
-		// Irregardless of whether we hit something, do a trace here for any potential hits into trigger boxes
-		{
-			table damageTable = {
-				scriptType = meleeAttackWeapon.GetWeaponDamageFlags(),
-				damageType = codeDamageType,
-				damageSourceId = damageSourceId,
-				origin = endPosition,
-				force = damageForce
-			}
-			attacker.TraceAttackToTriggers( damageAmount, attacker, attacker, damageTable, startPosition, endPosition, hitNormal )
-		}
-	#endif
 
-	// Knockback - only do it if we actually hit something
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
 	if ( IsValid( target ) )
 	{
-		// eWeaponVar.melee_knockback_velocity_magnitude not available
-		float  knockbackMagnitude	= 0.0
+
+		float  knockbackMagnitude	= meleeAttackWeapon.GetWeaponSettingFloat( eWeaponVar.melee_knockback_velocity_magnitude )
 		vector lookDirection		= attacker.GetViewForward()
 		if ( shouldHitForward )
 		{
@@ -1629,11 +1597,11 @@ void function Melee_Attack( entity attacker, entity meleeAttackWeapon, int impac
 				{
 					pushBackVelocity = -pushBackVelocity
 				}
-				                          
-				//We want to override the victim hit with titan sword logic -- should globalize this at some point with a callback (pmcd)
+
+				
 				if ( !TitanSword_VictimHitOverride( meleeAttackWeapon, attacker, target, pushBackVelocity ) )
 				{
-                                   
+
 				if ( target.IsPlayer() )
 				{
 					if ( LengthSqr( pushBackVelocity ) > 0.0 )
@@ -1641,20 +1609,20 @@ void function Melee_Attack( entity attacker, entity meleeAttackWeapon, int impac
 						target.KnockBack( pushBackVelocity, MELEE_KNOCKBACK_DURATION )
 					}
 				}
-#if SERVER
-				else
-				{
-					float pushbackScale = target.IsOnGround() ? 1.0 : 0.1
-					PushEnt( target, pushBackVelocity * pushbackScale )
+
+
+
+
+
+
+
+
 				}
-#endif
-				                          
-				}
-          
+
 			}
 		}
 
-		// Must end the melee lunge or else it will cancel out the knock back
+		
 		attacker.Lunge_ClearTarget()
 
 		vector attackerKnockBackVelocity = -pushBackVelocity
@@ -1668,20 +1636,20 @@ void function Melee_Attack( entity attacker, entity meleeAttackWeapon, int impac
 		{
 			vector currentVel = attacker.GetVelocity()
 			currentVelDotInKnockbackDir = DotProduct(Normalize(attackerKnockBackVelocity), Normalize(currentVel))
-			if( currentVelDotInKnockbackDir <= 0.0  ) //melee knockback shouldnt speed us up.
+			if( currentVelDotInKnockbackDir <= 0.0  ) 
 			{
 				attacker.KnockBack( attackerKnockBackVelocity, 0.25 )
 			}
 		}
 
 
-		#if DEVELOPER
+#if DEV
 			const bool DEBUG_MELEE_KNOCKBACK = false
 			if ( DEBUG_MELEE_KNOCKBACK )
 			{
 				DebugDrawSphere( <endPosition.x, endPosition.y, endPosition.z - GroundOffset>, 2, <0, 100, 255>, false, 5.0 )
-				//DebugDrawSphere( endPosition, 3, <255, 0, 0>, false, 5.0 )
-				//DebugDrawSphere( attacker.GetOrigin(), 4, <0, 255, 0>, false, 5.0 )
+				DebugDrawSphere( endPosition, 3, COLOR_RED, false, 5.0 )
+				DebugDrawSphere( attacker.GetOrigin(), 4, COLOR_GREEN, false, 5.0 )
 				DebugDrawArrow( attacker.GetOrigin(), endPosition, 3, <100, 255, 0>, false, 5.0 )
 
 				if( currentVelDotInKnockbackDir <= 0.0 )
@@ -1695,124 +1663,124 @@ void function Melee_Attack( entity attacker, entity meleeAttackWeapon, int impac
 
 				printt( "Melee knockback isAttackingGround: " + isAttackingGround + " endPosition.z: " + endPosition.z + " attackerOrigin.z: " + attacker.GetOrigin().z )
 			}
-		#endif
+#endif
 
 		attacker.GrappleDetach()
 	}
 }
-#endif
 
 
-#if SERVER
-void function CodeCallback_OnMeleeKilled( entity target )
-{
-	return
-}
-#endif
 
 
-#if SERVER
-void function CodeCallback_NPCMeleeChargedPlayerOrNPC( entity ent, var damageInfo )
-{
-	return
-}
-#endif
 
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 bool function ClientCodeCallback_ShowMeleePrompt( entity player )
 {
 	return false
 }
-#endif
 
 
-///////////////////////
-///////////////////////
-//// Dev functions ////
-///////////////////////
-///////////////////////
-#if SERVER && DEVELOPER
-void function DEV_UpdatePlayerMeleeWeaponCosmetics( entity player, ItemFlavor unused )
-{
-	if ( IsLobby() )
-		return
-
-	if ( !IsAlive( player ) )
-		return
-
-	if ( Bleedout_IsBleedingOut( player ) )
-	{
-		Warning( "%s() - Skipping melee cosmetic update b/c player is in bleedout. Dev-only issue.", FUNC_NAME() )
-		return
-	}
-
-	SURVIVAL_TryGivePlayerDefaultMeleeWeapons( player )
-}
-#endif // SERVER
 
 
-#if DEVELOPER && UI
-void function SetDevMenu_OverrideMenuHeirloomModels( var _ )
-{
-	thread ChangeToThisMenu( SetupChangeOverrideMenuHeirloomModels )
-}
 
 
-void function SetupChangeOverrideMenuHeirloomModels()
-{
-	SetupDevCommand( "Disable Override", "script_ui DEV_SetMenuHeirloomOverrideGUID( -1 ); script_client DEV_SetMenuHeirloomOverrideGUID( -1 )" )
-
-	array<ItemFlavor> meleeSkins = clone GetAllItemFlavorsOfType( eItemType.melee_skin )
-	meleeSkins.removebyvalue( GetItemFlavorByAsset( DEFAULT_MELEE_SKIN ) )
-
-	table<ItemFlavor, string> meleeSkinNames
-
-	foreach ( meleeSkin in meleeSkins )
-	{
-		string characterName
-		asset parentWeapon 	  = GetGlobalSettingsAsset( ItemFlavor_GetAsset( meleeSkin ), "parentItemFlavor" )
-		asset parentCharacter = GetGlobalSettingsAsset( parentWeapon, "parentItemFlavor" )
-		bool lacksParentCharacter = ( parentCharacter == "" || !IsValidItemFlavorSettingsAsset( parentCharacter ) || ItemFlavor_GetType( GetItemFlavorByAsset( parentCharacter ) ) != eItemType.character )
-		if ( lacksParentCharacter )
-			characterName = "<UNDEFINED>"
-		else
-			characterName = Localize( ItemFlavor_GetLongName( MeleeSkin_GetCharacterFlavor( meleeSkin ) ) )
-
-		string meleeSkinName = Localize( ItemFlavor_GetLongName( meleeSkin ) )
-		if ( meleeSkinName == "" )
-			meleeSkinName = "<UNNAMED>"
-
-		meleeSkinNames[meleeSkin] <- characterName + " - " + meleeSkinName
-	}
-
-	meleeSkins.sort( int function( ItemFlavor a, ItemFlavor b ) : ( meleeSkinNames ) {
-		if ( meleeSkinNames[a] < meleeSkinNames[b] )
-			return -1
-
-		if ( meleeSkinNames[a] > meleeSkinNames[b] )
-			return 1
-
-		return 0
-	} )
-
-	foreach ( ItemFlavor meleeSkin in meleeSkins )
-	{
-		SetupDevFunc( meleeSkinNames[meleeSkin], void function( var unused ) : ( meleeSkin ) {
-			fileLevel.menuHeirloomOverrideGUID = ItemFlavor_GetGUID( meleeSkin )
-			if ( CanRunClientScript() )
-				RunClientScript( "DEV_SetMenuHeirloomOverrideGUID", fileLevel.menuHeirloomOverrideGUID )
-
-			int ownedPacks = GRX_IsInventoryReady() ? GRX_GetTotalPackCount() : 0
-			if ( ownedPacks < 1 )
-				DEV_GRX_TestPurchase( "pack_cosmetic_rare", [100, 0, 0, 0, 0], 50 )
-		} )
-	}
-}
-#endif // DEVELOPER && UI
 
 
-#if DEVELOPER && (CLIENT || UI)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if DEV
 void function DEV_SetMenuHeirloomOverrideGUID( int guid )
 {
 	fileLevel.menuHeirloomOverrideGUID = guid
@@ -1823,4 +1791,5 @@ int function DEV_GetMenuHeirloomOverrideGUID()
 {
 	return fileLevel.menuHeirloomOverrideGUID
 }
-#endif // DEVELOPER && (CLIENT || UI)
+#endif
+ 

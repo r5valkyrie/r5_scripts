@@ -8,8 +8,8 @@ global const int MAX_FR_REALMS = 60
 const string SFX_DYNSTAT_RESET 			= "FiringRangeMu1_UI_Range_Stats_ManualReset_1P"
 const string SFX_SETTING_CHANGE_NOTIFY 	= "FiringRangeMu1_UI_Obituary_Updates_1P"
 
-const int DYNSTATS_MAX_RESETTIMEDELTA = 65536	// Max of 18 hours between resets.
-const float FIRINGRANGE_MAX_SESSIONDURATION = 3600 * 1000 	// 1000 hours.
+const int DYNSTATS_MAX_RESETTIMEDELTA = 65536	
+const float FIRINGRANGE_MAX_SESSIONDURATION = 3600 * 1000 	
 const float DYNTIMER_PRETIMER_COUNTDOWN_DURATION = 3.0
 const float COUNTDOWN_TIMER_SHRINK = 3.0
 
@@ -23,8 +23,8 @@ enum eRangeMasterUpdateType
 	COUNT_
 }
 
-                         
-// Int Settings variables.
+
+
 
 table< int, bool >	frSetting_IsShared
 table< int, bool > 	frSetting_ShouldBeSaved
@@ -33,27 +33,27 @@ table< int, string > fr_TargetSpeedNames
 table< int, bool > frDummie_Behavior_Defaults
 table< int, bool > frDummie_Behavior_ShouldBeSaved
 
-global table< int, int > frDB_Bits // Dummie Behavior ( DB ) bit assignments for use in packedbool NetVars & PVars.
-global table< int, int > frS_Bits // Firing Range Setting bit assignments for use in packedbool NetVars & PVars.
+global table< int, int > frDB_Bits 
+global table< int, int > frS_Bits 
 
-// -------------------
-// ------------------- Variable names for NetVars and PersistentVars.
+
+
 
 global const string NETVAR_FR_RANGEMASTER_EHI				= "fr_rangemaster_ehi"
 
-// ----- PERSONAL BOOL SETTINGS ( All players can change independently )
+
 int frPS_NDX_Start
 int frPS_NDX_End
-const string NETVAR_FRPS_PACKEDBOOLS		= "frps_packedbools" // Personal settings bools
+const string NETVAR_FRPS_PACKEDBOOLS		= "frps_packedbools" 
 const string PVAR_FRPS_PACKEDBOOLS			= "FRSettingsPVars.frps_packedbools"
 
-// ----- FR SHARED BOOL SETTING ( All Team members can see, only Party Leader can change. )
+
 int frSS_NDX_Start
 int frSS_NDX_End
-const string NETVAR_FRSS_PACKEDBOOLS		= "frss_packedbools" // Shared settings bools
+const string NETVAR_FRSS_PACKEDBOOLS		= "frss_packedbools" 
 const string PVAR_FRSS_PACKEDBOOLS			= "FRSettingsPVars.frss_packedbools"
 
-// ----- SHARED INT SETTING INTS ( All Team members can see, only Party Leader can change. )
+
 global int frBoolSettings_NDX_Start
 global int frBoolSettings_NDX_End
 global int frIntSettings_NDX_Start
@@ -65,15 +65,15 @@ global table < int, int > frIntSettings_Defaults
 table < int, int > frIntSettings_Mins
 table < int, int > frIntSettings_Maxs
 
-// ----- SHARED DUMMIE MOVEMENTS ( All Team members can see, only Party Leader can change. )
+
 int frDB_Movements_NDX_Start
 int frDB_Movements_NDX_End
 int dummie_PackedBoolInt_Default_Movements
 
-// ----- SHARED DUMMIE MODIFIERS ( All Team members can see, only Party Leader can change. )
+
 int frDB_Modifiers_NDX_Start
 int frDB_Modifiers_NDX_End
-// Subset for Stances.
+
 int frDB_Stances_NDX_Start
 int frDB_Stances_NDX_End
 int dummie_PackedBoolInt_Default_Modifiers
@@ -83,8 +83,8 @@ const string PVAR_FRDB_MODIFIERS_PACKEDBOOLS 	= "FRSettingsPVars.frdb_modifiers_
 global table< int, table< int, bool > > dummie_Movements_BySelector
 global table< int, table< int, bool > > dummie_Stances_BySelector
 
-                   
-// ----- SHARED DUMMIE SPAWN SETTINGS ( All Team members can see, only Party Leader can change. )
+
+
 int frDB_SpawnSettings_NDX_Start
 int frDB_SpawnSettings_NDX_End
 int dummie_PackedBoolInt_Default_SpawnSettings
@@ -92,25 +92,25 @@ const string NETVAR_FRDB_SPAWNSETTINGS_PACKEDBOOLS 	= "frdb_spawnsettings_packed
 const string PVAR_FRDB_SPAWNSETTINGS_PACKEDBOOLS 	= "FRSettingsPVars.frdb_spawnsettings_packedbools"
 
 global table< int, table< int, bool > > dummie_SpawnDists_BySelector
-                         
 
-// -------------------
-// -------------------
 
-// ----- FR Settings Defaults
+
+
+
+
 const bool FRSETTING_DEFAULT_SHOWRUI = true
 const bool FRSETTING_DEFAULT_SHOWDYNSTATS = true
 const bool FRSETTING_DEFAULT_SHOWDYNTIMER = false
 const bool FRSETTING_DEFAULT_INFINITERELOADS = false
 const bool FRSETTING_DEFAULT_SHOWHITMARKS = false
 const bool FRSETTING_DEFAULT_SHOW3RDPERSON = false
-                    
+
 const bool FRSETTING_DEFAULT_LEGENDUPGRADESENABLED = true
-                          
+
 
 const bool 	FRSETTING_DEFAULT_FRIENDLYFIRE = false
 
-// ----- FR Behavior Defaults
+
 global const string SETTINGS_MEGASTRING_PREFIX = "         -"
 const vector FRSETTINGS_PARAMCOLOR = < 190, 214, 255 >
 
@@ -121,105 +121,105 @@ global function FRS_PVar_Get_Bool
 
 global function FRS_NetVar_Get_Int
 
-                               
+
 
 const vector NOTIFY_INCREASE_COLOR = < 190, 119, 119 >
 const vector NOTIFY_DECREASE_COLOR = < 119, 119, 190 >
 
 global function FiringRangeGameMode_Init
 
-#if DEVELOPER
+#if DEV
 const bool DEBUG_MANTLING = false
 const bool DEBUG_RESPAWNING = false
 #endif
 
-#if SERVER
-const string FR_DEFAULT_CONSUMABLES_LOADOUT = "health_pickup_health_small:2 health_pickup_combo_small:2"
-const string FR_DEFAULT_ARMOR_LOADOUT = "helmet_pickup_lv1 armor_pickup_lv1 incapshield_pickup_lv1"
 
-                    
-const string FR_DEFAULT_ARMOR_LOADOUT_UGRADECORE = "helmet_pickup_lv1 armor_pickup_lv0 incapshield_pickup_lv1"
-       
 
-global function FiringRange_Banners_Init
 
-global function FiringRange_AddToPermanentDeployableQuota
-global function FiringRange_AddToRemoveOnCharacterChange
-global function FiringRange_PrePlayerChangedCharacterSetup
-global function FiringRange_CleanUpPlayerPermanents
 
-global function UCB_SV_FRSetting_FriendlyFire_Toggle
-global function UCB_SV_FRSetting_FriendlyFire
 
-global function Dummies_Reset
 
-// Customize Range Menu open state tracking.
-global function CustomizeRangeMenu_IsOpen
-global function UCB_CustomizeRangeMenu_TrackState
 
-                         
-global function FR_GetPartyLeader
 
-global function RangeMaster_Get_ByPlayer
 
-global function UCB_SV_FRSetting_DynStats
-global function UCB_SV_FRSetting_DynTimer
-global function UCB_SV_FRSetting_InfiniteReloads
-global function UCB_SV_FRSetting_HitMarks
-global function UCB_SV_FRSetting_HitMarks_Toggle
-global function UCB_SV_FRSetting_Show3rdPerson
-                    
-global function UCB_SV_FRSetting_LegendUpgradesEnabled
-                          
-global function FRSetting_3rdPerson_IsOn
 
-global function UCB_SV_FRSetting_DummieHelmetMatchShields
 
-// Unified
-global function UCB_SV_FRSetting_Change_Int
 
-                   
-global function UCB_SV_FRsetting_DynamicDummiesOn_Changed
-global function UCB_SV_FRsetting_DummieHighlightsOn_Changed
-                         
 
-global function UCB_ResetDoors
 
-                    
-global function UCB_LegendUpgradesReset
-                          
 
-global function IsInfiniteReloadsEnabled
 
-// Used after Challenges.
-global function FRSetting_InfiniteReloads_Restore_From_NetVar
 
-global function FRDummie_BehaviorData_Get
 
-global function ClientToServer_FiringRange_ResetHealthOnSameCharacterSelect
-global function ClientToServer_FiringRange_StopValkPassive
-global function ClientToServer_FiringRange_MenuIsOn
-global function ClientToServer_FiringRange_MenuIsOff
 
-// PIN Functions
-global function PIN_Record_CustomizeRangeSettings
-global function PIN_Record_CustomizeRangeSettings_ForMenuClose
-global function PIN_CCB_Record_DynamicStats_TimeBetweenResets
 
-                               
 
-#if DEVELOPER
 
-                         
-global function DEV_Reset_Persistence
-global function DEV_PrintReadiedPlayers
-global function DEV_CheckWeapons
-                               
 
-#endif // DEVELOPER
-#endif // SERVER
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 global function SCB_CloseCharacterSelectMenu
 global function FiringRange_IsCharacterSwitchingEnabled
 global function SCB_FiringRange_EnableCharacterChange
@@ -228,12 +228,12 @@ global function FiringRange_IsPlayerInFinale
 
 global function SCB_Broadcast_FRSetting_FriendlyFire_Change
 
-                    
+
 global function SCB_Restore_UpgradeCore_Rui
 global function SCB_Broadcast_UpgradeCore_Level_Set
-                          
 
-                         
+
+
 global function SCB_DynStats_ResetStats
 global function SCB_DynTimer_ResetTimer
 global function SCB_Broadcast_FRSettings_TargetSpeed_Change
@@ -242,9 +242,9 @@ global function SCB_Broadcast_FRDummie_Speed_Change
 global function SCB_Broadcast_FRSetting_Changed_Int
 global function SCB_Broadcast_FRSetting_Changed_Bool
 
-                   
+
 global function SCB_Broadcast_FRSetting_DynamicDummiesEnabled_Change
-                         
+
 
 global function FR_Settings_Toggle_RUI
 global function FR_Settings_Show_RUI
@@ -265,9 +265,9 @@ global function SCB_Broadcast_RangeMaster_Change
 global function SCB_SettingChangedNotification_InfiniteMags
 global function SCB_SettingChangedNotification_ShowHitMarks
 global function SCB_SettingChangedNotification_Show3rdPerson
-                    
+
 global function SCB_SettingChangedNotification_LegendUpgradesEnabled
-                          
+
 
 global function Make_TitleString
 
@@ -279,60 +279,60 @@ global function SCB_ShowDynTimer_ByPVar
 
 global function FR_Settings_HUD_SetFCDummies_On
 global function FR_Settings_HUD_SetFCDummies_Off
-                               
-#endif // CLIENT
 
-#if SERVER
-struct PlayerDeathLocData // Cache origin/angles on death, to be reapplied after respawning
-{
-	vector respawnPos = <0, 0, 0>
-	vector respawnAngles = <0, 0, 0>
-	bool   respawnIn3P = false
-}
-#endif
+
+
+
+
+
+
+
+
+
+
 
 const float SCB_MININTERVAL = 1.0
 
 struct
 {
 	bool fr_NetVarsAndPVarsInitiated = false
-	#if SERVER
 
-		// Bool for Auto-Starting dynamic dummies so each range leader can auto-start just once.
-		table< entity, bool > dynDummiesAutoStarted
 
-		table< entity, bool > customizeRangeMenuIsOpen
 
-		// Execution Victim Special Handling
-		table< entity, vector > executionStartVictimOrigins
 
-		                         
-			// Arrays of players indexed by team, added by order of each player's PersistentVar Readiness.
-			// readyPVarPlayers[ team ][0] is the RangeMaster of that team.
-			table<int, array< entity > > readyPVarPlayers
-			table< int, int> rangeMasterEHIs
 
-			array< entity > persistentDataReadiedPlayers
 
-			// NOTE: Shieldlevels and TargetSpeeds are in _staging_area.gnut.
 
-			// ----- Dummie Behavior.
-			table< int, table< int, bool > > dummieBehaviorsByRealm
-                                 
-		table< EncodedEHandle, PlayerDeathLocData > playerRespawnData
-		
-		table< EncodedEHandle, PlayerDeathLocData > playerStartSpawnData
 
-		table< int, float > lastCommentaryTimes
 
-		// PIN stuff
-		table< entity, float > sessionStartTime
-	#endif
 
-	#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 		bool characterSwitchingEnabled = true
 		bool inFinale = false
-		                         
+
 			var dynamicStatsRui = null
 			var dynamicTimerRui = null
 			var timerCountdownRUI = null
@@ -353,28 +353,28 @@ struct
 			int lastKills = 0
 
 			float lastResetTime = -1.0
-			
-#if NX_PROG
-			int resetStatsButton = BUTTON_Y
-#else
+
+
+
+
 			int resetStatsButton = BUTTON_X
-#endif
-                                 
 
 
-		                         
+
+
+
 			var frSettings_RUI = null
 
 			bool frSetting_ShowRUI = true
 
 			table< int, float > lastFRSettingsBroadcastTimes
-                                 
-	#endif // CLIENT
+
+
 }file
 
 void function FiringRangeGameMode_Init()
 {
-	//This is to prevent out-of-edicts Jiras from being created when devs mistakenly load a BR map on the firing range playlist
+	
 	Assert( GetMapName() == "mp_rr_canyonlands_staging_mu1", "Invalid: the firing range playlist only supports mp_rr_canyonlands_staging_mu1" )
 
 	Remote_RegisterServerFunction( "UCB_SV_FRSetting_FriendlyFire_Toggle" )
@@ -383,23 +383,23 @@ void function FiringRangeGameMode_Init()
 	Remote_RegisterClientFunction( "SCB_CloseCharacterSelectMenu" )
 	Remote_RegisterClientFunction( "SCB_Broadcast_FRSetting_FriendlyFire_Change", "entity" )
 
-	                    
+
 	Remote_RegisterClientFunction( "SCB_Restore_UpgradeCore_Rui" )
-	Remote_RegisterClientFunction( "SCB_Broadcast_UpgradeCore_Level_Set", "entity", "int", 0, 5 ) // TODO: Update # levels MAX with a constant.
-                           
+	Remote_RegisterClientFunction( "SCB_Broadcast_UpgradeCore_Level_Set", "entity", "int", 0, 5 ) 
+
 
 	Remote_RegisterServerFunction( "UCB_SV_FRSetting_DummieHelmetMatchShields", "bool", "bool" )
 
-	// Customize Range Menu open state tracking.
+	
 	Remote_RegisterServerFunction( "UCB_CustomizeRangeMenu_TrackState", "bool" )
 
-	                   
+
 		Remote_RegisterServerFunction( "UCB_SV_FRsetting_DynamicDummiesOn_Changed", "bool", "bool" )
 		Remote_RegisterServerFunction( "UCB_SV_FRsetting_DummieHighlightsOn_Changed", "bool", "bool" )
 		Remote_RegisterClientFunction( "SCB_Broadcast_FRSetting_DynamicDummiesEnabled_Change", "entity" )
-                          
 
-	                         
+
+
 		FR_Init_NetVars_And_PVars()
 
 		fr_TargetSpeedNames[ 0 ] <- "#FR_TARGETSPEED_NAME_1"
@@ -414,18 +414,19 @@ void function FiringRangeGameMode_Init()
 		Remote_RegisterServerFunction( "UCB_SV_FRSetting_HitMarks", "bool" )
 		Remote_RegisterServerFunction( "UCB_SV_FRSetting_HitMarks_Toggle" )
 		Remote_RegisterServerFunction( "UCB_SV_FRSetting_Show3rdPerson", "bool" )
+
 		Remote_RegisterServerFunction( "UCB_SV_FRSetting_LegendUpgradesEnabled", "bool" )
-                           
 
 
-		// UNIFIED int settings change function.
-		Remote_RegisterServerFunction( "UCB_SV_FRSetting_Change_Int", "int", 0, eFRSettingType.COUNT_, "int", 0, FRINTSETTINGS_MAXSELECTIONS )
+
 		
+		Remote_RegisterServerFunction( "UCB_SV_FRSetting_Change_Int", "int", 0, eFRSettingType.COUNT_, "int", 0, FRINTSETTINGS_MAXSELECTIONS )
+
 		Remote_RegisterServerFunction( "UCB_ResetDoors" )
 
-	                    
+
 		Remote_RegisterServerFunction( "UCB_LegendUpgradesReset" )
-                           
+
 
 		Remote_RegisterServerFunction( "UICallback_FRDummies_Reset" )
 
@@ -443,11 +444,11 @@ void function FiringRangeGameMode_Init()
 		Remote_RegisterClientFunction( "SCB_SettingChangedNotification_InfiniteMags" )
 		Remote_RegisterClientFunction( "SCB_SettingChangedNotification_ShowHitMarks" )
 		Remote_RegisterClientFunction( "SCB_SettingChangedNotification_Show3rdPerson" )
-		                    
-			Remote_RegisterClientFunction( "SCB_SettingChangedNotification_LegendUpgradesEnabled" )
-                            
 
-		// UNIFIED VERSION
+			Remote_RegisterClientFunction( "SCB_SettingChangedNotification_LegendUpgradesEnabled" )
+
+
+		
 		Remote_RegisterClientFunction( "SCB_Broadcast_FRSetting_Changed_Int", "entity", "int", 0, eFRSettingType.COUNT_, "int", 0, FRINTSETTINGS_MAXSELECTIONS )
 		Remote_RegisterClientFunction( "SCB_Broadcast_FRSetting_Changed_Bool", "entity", "int", 0, eFRSettingType.COUNT_, "bool" )
 
@@ -462,47 +463,47 @@ void function FiringRangeGameMode_Init()
 
 		Remote_RegisterClientFunction( "FRSettings_Client_Update" )
 
-		// PIN Functions
+		
 		Remote_RegisterServerFunction( "PIN_Record_CustomizeRangeSettings_ForMenuClose" )
 		Remote_RegisterServerFunction( "PIN_CCB_Record_DynamicStats_TimeBetweenResets", "int", 0, DYNSTATS_MAX_RESETTIMEDELTA )
-                                
 
-	#if SERVER
-		AddCallback_OnClientConnected( OnPlayerConnected )
-		AddCallback_OnClientDisconnected( OnPlayerDisconnected_FR )
-		AddCallback_OnPlayerRespawned( OnPlayerSpawned )
-		AddCallback_OnPlayerKilled( OnPlayerKilled )
-		BleedoutState_AddCallback_OnPlayerBleedoutStateChanged( OnPlayerBleedoutChanged )
 
-		                         
-			AddCallback_OnPersistentDataReady( PersistentDataReady_AddPlayer )
-			AddCallback_OnPlayerAddedToRealm( OnPlayerReadiedInRealm )
-                                 
 
-		TrainingDummyInit()
 
-		s_firingRangeLogicIsActive = true
 
-		if ( GamemodeUtility_IsJIPEnabledInPlaylist() )
-			GamemodeUtility_SetJIPEnabled( true )
 
-		RegisterSignal ("FRPlayerSpawned")
-		RegisterSignal ("FRExecutionWatch")
-	#endif // SERVER
 
-	#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 		AddCallback_OnClientScriptInit( OnClientScriptInit )
 		AddClientCallback_OnResolutionChanged( FiringRange_ResolutionChanged )
 		AddCallback_OnCharacterSelectMenuOpened( FiringRange_CharacterMenuOpened )
 		AddCallback_OnCharacterSelectMenuClosed( FiringRange_CharacterMenuClosed )
 
-		                         
+
 			Obituary_SetVerticalOffset( 80 )
 
 			AddCallback_OnWeaponAttack( DynStats_OnWeaponFired )
 			AddLocalPlayerDidDamageCallback( OnPlayerDidDamage )
 			RegisterSignal ("OnShotFired")
-                                 
+
 
 		IntroDisplayThread()
 
@@ -514,76 +515,76 @@ void function FiringRangeGameMode_Init()
 		)
 		RunUIScript( "SettingsButton_SetShieldDescription", shieldDesc )
 		FiringRangeOverrideGamestateUI()
-	#endif // CLIENT
+
 }
 
-#if SERVER
-void function FiringRange_Banners_Init( int team )
-{
-	ApexScreenSettingsGroup set_logo
-	set_logo.displayMode = eApexScreenDisplayGroup.DISPLAY_LOGOS
-	set_logo.duration = 2.5
-
-	ApexScreenSettingsGroup settings
-	settings.displayMode = eApexScreenDisplayGroup.DISPLAY_RANDOM_LOCALTEAMMATE
-	settings.duration = 7.0
-
-	array< ApexScreenSettingsGroup > bannerSettings = [ set_logo, settings ]
-
-	SvApexScreens_SetScreenSequenceForGameState( eGameState.WaitingForPlayers, bannerSettings )
-	SvApexScreens_RefreshScreenSequence()
-}
-#endif // SERVER
 
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function FiringRangeOverrideGamestateUI()
 {
-//	ClGameState_RegisterGameStateAsset( $"ui/gamestate_info_firingrange.rpak" )
+	ClGameState_RegisterGameStateAsset( $"ui/gamestate_info_firingrange.rpak" )
 }
-#endif // CLIENT
 
-                         
+
+
 void function FR_Init_NetVars_And_PVars()
 {
-	// --- Shared Bool Settings.
+	
 	frBoolSettings_NDX_Start 	= eFRSettingType.FRIENDLYFIRE
 	frBoolSettings_NDX_End		= eFRSettingType.TARGETSPEED
 	frBoolSettings_Defaults	[ eFRSettingType.FRIENDLYFIRE ] 	<- false
 
 	frBoolSettings_Defaults	[ eFRSettingType.FRDUMMIEHELMETMATCHSHIELDS ] <- false
 
-	                   
+
 		frBoolSettings_Defaults	[ eFRSettingType.DYNAMICDUMMIESON ] <- true
 		frBoolSettings_Defaults [ eFRSettingType.DUMMIEHIGHLIGHTSON ] <- true
-                          
 
-	// --- Shared Int Settings.
+
+	
 	frIntSettings_NDX_Start = eFRSettingType.TARGETSPEED
 	frIntSettings_NDX_End 	= eFRSettingType.COUNT_
 
-	// ----- Sliding Target Speeds
+	
 	frIntSettings_NetVars	[ eFRSettingType.TARGETSPEED ] 		<- "frsetting_targetspeed"
 	frIntSettings_PVars		[ eFRSettingType.TARGETSPEED ] 		<- "FRSettingsPVars.targetspeed"
 	frIntSettings_Mins		[ eFRSettingType.TARGETSPEED ] 		<- eTarget_Selector_Speeds.CROUCHWALK
 	frIntSettings_Maxs		[ eFRSettingType.TARGETSPEED ] 		<- eTarget_Selector_Speeds.ZIPLINE
 	frIntSettings_Defaults	[ eFRSettingType.TARGETSPEED ] 		<- eTarget_Selector_Speeds.WALK
 
-	// ----- Dummie Shield Levels
+	
 	frIntSettings_NetVars	[ eFRSettingType.FRDUMMIESHIELDLVL ] <- "frsetting_dummieshieldlvl"
 	frIntSettings_PVars		[ eFRSettingType.FRDUMMIESHIELDLVL ] <- "FRSettingsPVars.dummieshieldlvl"
-	frIntSettings_Mins		[ eFRSettingType.FRDUMMIESHIELDLVL ] <- eDummie_Selector_Shields.WHITE	// was 1
-	frIntSettings_Maxs		[ eFRSettingType.FRDUMMIESHIELDLVL ] <- eDummie_Selector_Shields.RANDOM // was FR_RANDOM_SHIELD_SETTING	// RANDOM Shield Level.
-	frIntSettings_Defaults	[ eFRSettingType.FRDUMMIESHIELDLVL ] <- eDummie_Selector_Shields.PURPLE	// was 3
+	frIntSettings_Mins		[ eFRSettingType.FRDUMMIESHIELDLVL ] <- eDummie_Selector_Shields.WHITE	
+	frIntSettings_Maxs		[ eFRSettingType.FRDUMMIESHIELDLVL ] <- eDummie_Selector_Shields.RANDOM 
+	frIntSettings_Defaults	[ eFRSettingType.FRDUMMIESHIELDLVL ] <- eDummie_Selector_Shields.PURPLE	
 
-	// ----- Dummie Speeds
+	
 	frIntSettings_NetVars	[ eFRSettingType.FRDUMMIESPEED ] 	<- "frsetting_dummiespeed"
 	frIntSettings_PVars		[ eFRSettingType.FRDUMMIESPEED ] 	<- "FRSettingsPVars.dummiespeed"
 	frIntSettings_Mins		[ eFRSettingType.FRDUMMIESPEED ] 	<- eDummie_Selector_Speeds.WALK
 	frIntSettings_Maxs		[ eFRSettingType.FRDUMMIESPEED ] 	<- eDummie_Selector_Speeds.RANDOM
 	frIntSettings_Defaults	[ eFRSettingType.FRDUMMIESPEED ] 	<- eDummie_Selector_Speeds.RUN
 
-	// ----- Dummie Movements
+	
 	frIntSettings_NetVars	[ eFRSettingType.FRDUMMIEMOVEMENT ] 	<- "frsetting_dummiemovement"
 	frIntSettings_PVars		[ eFRSettingType.FRDUMMIEMOVEMENT ] 	<- "FRSettingsPVars.dummiemovement"
 	frIntSettings_Mins		[ eFRSettingType.FRDUMMIEMOVEMENT ] 	<- eDummie_Selector_Movements.STAYINPLACE
@@ -591,7 +592,7 @@ void function FR_Init_NetVars_And_PVars()
 	frIntSettings_Defaults	[ eFRSettingType.FRDUMMIEMOVEMENT ] 	<- eDummie_Selector_Movements.STAYINPLACE
 	FRDummie_Movements_Settings_Init()
 
-	// ----- Dummie States
+	
 	frIntSettings_NetVars	[ eFRSettingType.FRDUMMIESTANCE ] 	<- "frsetting_dummiestate"
 	frIntSettings_PVars		[ eFRSettingType.FRDUMMIESTANCE ] 	<- "FRSettingsPVars.dummiestate"
 	frIntSettings_Mins		[ eFRSettingType.FRDUMMIESTANCE ] 	<- eDummie_Selector_States.STAND
@@ -599,8 +600,8 @@ void function FR_Init_NetVars_And_PVars()
 	frIntSettings_Defaults	[ eFRSettingType.FRDUMMIESTANCE ] 	<- eDummie_Selector_States.STAND
 	FRDummie_Stances_Settings_Init()
 
-                   
-	// ----- SpawnDistances
+
+	
 	frIntSettings_NetVars	[ eFRSettingType.FRDUMMIESPAWNDISTS ] <- "frsetting_dummiespawndists"
 	frIntSettings_PVars		[ eFRSettingType.FRDUMMIESPAWNDISTS ] <- "FRSettingsPVars.dummiespawndists"
 	frIntSettings_Mins		[ eFRSettingType.FRDUMMIESPAWNDISTS ] <- eDummie_Selector_SpawnDists.CQB
@@ -608,16 +609,16 @@ void function FR_Init_NetVars_And_PVars()
 	frIntSettings_Defaults	[ eFRSettingType.FRDUMMIESPAWNDISTS ] <- eDummie_Selector_SpawnDists.MID
 	FRDummie_SpawnDist_Settings_Init()
 
-	// ----- Dummie Shooting
+	
 	frIntSettings_NetVars	[ eFRSettingType.FRDUMMIESHOOTING ] <- "frsetting_dummiesshoot"
 	frIntSettings_PVars		[ eFRSettingType.FRDUMMIESHOOTING ] <- "FRSettingsPVars.dummiesshoot"
 	frIntSettings_Mins		[ eFRSettingType.FRDUMMIESHOOTING ] <- eDummie_Selector_Shooting.OFF
 	frIntSettings_Maxs		[ eFRSettingType.FRDUMMIESHOOTING ] <- eDummie_Selector_Shooting.FULLCOMBAT
 	frIntSettings_Defaults	[ eFRSettingType.FRDUMMIESHOOTING ] <- eDummie_Selector_Shooting.OFF
-	
-                         
 
-	// Denotes which parameters are shared ( only editable by RangeMaster )
+
+
+	
 	frSetting_IsShared[ eFRSettingType.SHOWRUI ] 		<- false
 	frSetting_IsShared[ eFRSettingType.SHOWDYNSTATS ] 	<- false
 	frSetting_IsShared[ eFRSettingType.SHOWDYNTIMER ] 	<- false
@@ -625,10 +626,10 @@ void function FR_Init_NetVars_And_PVars()
 	frSetting_IsShared[ eFRSettingType.SHOWHITMARKS ] 	<- false
 	frSetting_IsShared[ eFRSettingType.SHOW3RDPERSON ] 	<- false
 
-                    
+
 	frSetting_IsShared[ eFRSettingType.LEGENDUPGRADESENABLED ] 	<- false
-                          
-	
+
+
 	frSetting_IsShared[ eFRSettingType.FRIENDLYFIRE ] 		<- true
 	frSetting_IsShared[ eFRSettingType.TARGETSPEED ] 		<- true
 	frSetting_IsShared[ eFRSettingType.FRDUMMIESHIELDLVL ] 	<- true
@@ -637,50 +638,50 @@ void function FR_Init_NetVars_And_PVars()
 	frSetting_IsShared[ eFRSettingType.FRDUMMIEMOVEMENT ]	<- true
 	frSetting_IsShared[ eFRSettingType.FRDUMMIESTANCE ]		<- true
 
-                   
+
 	frSetting_IsShared[ eFRSettingType.FRDUMMIESPAWNDISTS ] <- true
 	frSetting_IsShared[ eFRSettingType.FRDUMMIESHOOTING ] 	<- true
 	frSetting_IsShared[ eFRSettingType.DYNAMICDUMMIESON ] 	<- true
 	frSetting_IsShared[ eFRSettingType.DUMMIEHIGHLIGHTSON ] <- true
-                         
 
-	// Denotes which settings are supposed to be saved via frSetting_ShouldBeSaved
+
+	
 	frSetting_ShouldBeSaved[ eFRSettingType.SHOWRUI ] 		<- true
 	frSetting_ShouldBeSaved[ eFRSettingType.SHOWDYNSTATS ] 	<- true
 	frSetting_ShouldBeSaved[ eFRSettingType.SHOWDYNTIMER ] 	<- true
 	frSetting_ShouldBeSaved[ eFRSettingType.INFINITEMAGS ] 	<- true
 	frSetting_ShouldBeSaved[ eFRSettingType.SHOWHITMARKS ] 	<- true
 	frSetting_ShouldBeSaved[ eFRSettingType.SHOW3RDPERSON ]	<- true
-                    
-	frSetting_ShouldBeSaved[ eFRSettingType.LEGENDUPGRADESENABLED ]	<- false
-                          
 
-	// FR Bool Settings
+	frSetting_ShouldBeSaved[ eFRSettingType.LEGENDUPGRADESENABLED ]	<- false
+
+
+	
 	frSetting_ShouldBeSaved[ eFRSettingType.FRIENDLYFIRE ] 	<- false
 	frSetting_ShouldBeSaved[ eFRSettingType.FRDUMMIEHELMETMATCHSHIELDS ] <- true
 
-	// FR Int Settings
+	
 	frSetting_ShouldBeSaved[ eFRSettingType.TARGETSPEED ] 		<- true
 	frSetting_ShouldBeSaved[ eFRSettingType.FRDUMMIESHIELDLVL ] <- true
 	frSetting_ShouldBeSaved[ eFRSettingType.FRDUMMIESPEED ] 	<- true
 	frSetting_ShouldBeSaved[ eFRSettingType.FRDUMMIEMOVEMENT ] 	<- true
 	frSetting_ShouldBeSaved[ eFRSettingType.FRDUMMIESTANCE ] 	<- true
-	                   
-		frSetting_ShouldBeSaved[ eFRSettingType.FRDUMMIESHOOTING ] 		<- true // Should be saved so PVar gets used in propagation, but inits to "FALSE" upon start.
+
+		frSetting_ShouldBeSaved[ eFRSettingType.FRDUMMIESHOOTING ] 		<- true 
 		frSetting_ShouldBeSaved[ eFRSettingType.FRDUMMIESPAWNDISTS ] 	<- true
 		frSetting_ShouldBeSaved[ eFRSettingType.DYNAMICDUMMIESON ] 		<- false
 		frSetting_ShouldBeSaved[ eFRSettingType.DUMMIEHIGHLIGHTSON ] 	<- false
-                          
 
-	// Each Setting Bool is assigned a bit in the packedbool netvar and pvar. Here are their int values.
-	// We can have up to:
-	//		+ 10 personal settings, stored in NETVAR_FRPS_PACKEDBOOLS
-	//		+ 10 shared settings, stored in NETVAR_FRSS_PACKEDBOOLS
 
-	// Personal Settings:
+	
+	
+	
+	
+
+	
 	frPS_NDX_Start 	= eFRSettingType.SHOWRUI
 	frPS_NDX_End	= eFRSettingType.FRIENDLYFIRE
-		
+
 	int bitIndex
 	bitIndex = 0
 	for( int settingIndex = frPS_NDX_Start; settingIndex < frPS_NDX_End; settingIndex++ )
@@ -688,7 +689,7 @@ void function FR_Init_NetVars_And_PVars()
 		frS_Bits[ settingIndex ] <- ( 1 << bitIndex )
 		bitIndex++
 	}
-	// Shared Bool Settings:
+	
 	frSS_NDX_Start 	= eFRSettingType.FRIENDLYFIRE
 	frSS_NDX_End	= eFRSettingType.TARGETSPEED
 	bitIndex = 0
@@ -698,63 +699,63 @@ void function FR_Init_NetVars_And_PVars()
 		bitIndex++
 	}
 
-	// Dummie Default Values.
+	
 
-	// - Movements( fka "Movement Behaviors" ):
+	
 	frDummie_Behavior_Defaults[ eDummieBehaviorType.STAYINPLACE ] 	<- true
 	frDummie_Behavior_Defaults[ eDummieBehaviorType.STRAFE ] 		<- false
 
-	// - Modifiers( aka "Dummie Settings" in-game ):
+	
 	frDummie_Behavior_Defaults[ eDummieBehaviorType.CANSTAND ] 		<- true
 	frDummie_Behavior_Defaults[ eDummieBehaviorType.CANCROUCH ] 	<- false
 	frDummie_Behavior_Defaults[ eDummieBehaviorType.RANDINTERVALS ] <- false
 
-	#if DEVELOPER
+#if DEV
 		printt( format( "%s(): Dummie Movements Default PackedBool Int == %s ", FUNC_NAME(), string( dummie_PackedBoolInt_Default_Movements  )))
 		printt( format( "%s(): Dummie Modifiers Default PackedBool Int == %s ", FUNC_NAME(), string( dummie_PackedBoolInt_Default_Modifiers  )))
-		                   
+
 			printt( format( "%s(): Dummie Spawn Settings Default PackedBool Int == %s ", FUNC_NAME(), string( dummie_PackedBoolInt_Default_SpawnSettings  )))
-                           
-	#endif
 
-	// --------- Register Netvars
-	// ----- RANGEMASTER EHI
-	RegisterNetworkedVariableSafe( NETVAR_FR_RANGEMASTER_EHI, SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, -1 )
+#endif
 
-	// Shared Int Settings ( All Team members can see, only Party Leader can change. )
+	
+	
+	RegisterNetworkedVariable( NETVAR_FR_RANGEMASTER_EHI, SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, -1 )
+
+	
 	for( int settingNDX = frIntSettings_NDX_Start; settingNDX < frIntSettings_NDX_End; settingNDX++ )
 	{
-		RegisterNetworkedVariableSafe( frIntSettings_NetVars[ settingNDX ], SNDC_PLAYER_EXCLUSIVE, SNVT_INT, frIntSettings_Defaults[ settingNDX ])
+		RegisterNetworkedVariable( frIntSettings_NetVars[ settingNDX ], SNDC_PLAYER_EXCLUSIVE, SNVT_INT, frIntSettings_Defaults[ settingNDX ])
 	}
 
-	// Settings PackedBools
-	RegisterNetworkedVariableSafe( NETVAR_FRPS_PACKEDBOOLS, SNDC_PLAYER_EXCLUSIVE, SNVT_UNSIGNED_INT, 3 ) // Show RUI & Show Dyn Stats default TRUE.
-	RegisterNetworkedVariableSafe( NETVAR_FRSS_PACKEDBOOLS, SNDC_PLAYER_EXCLUSIVE, SNVT_UNSIGNED_INT, 0 )
+	
+	RegisterNetworkedVariable( NETVAR_FRPS_PACKEDBOOLS, SNDC_PLAYER_EXCLUSIVE, SNVT_UNSIGNED_INT, 3 ) 
+	RegisterNetworkedVariable( NETVAR_FRSS_PACKEDBOOLS, SNDC_PLAYER_EXCLUSIVE, SNVT_UNSIGNED_INT, 0 )
 
-	#if CLIENT
-		// ----- NetVar Change Callbacks
-		// Range Leader Change
-		RegisterNetVarIntChangeCallback( NETVAR_FR_RANGEMASTER_EHI, NetVarCallback_Changed_Int, SNDC_PLAYER_EXCLUSIVE )
-		// Settings PackedBools
-		RegisterNetVarIntChangeCallback( NETVAR_FRPS_PACKEDBOOLS, NetVarCallback_Changed_Int, SNDC_PLAYER_EXCLUSIVE )
-		RegisterNetVarIntChangeCallback( NETVAR_FRSS_PACKEDBOOLS, NetVarCallback_Changed_Int, SNDC_PLAYER_EXCLUSIVE )
 
-		// Shared INT Settings
+		
+		
+		RegisterNetVarIntChangeCallback( NETVAR_FR_RANGEMASTER_EHI, NetVarCallback_Changed_Int )
+		
+		RegisterNetVarIntChangeCallback( NETVAR_FRPS_PACKEDBOOLS, NetVarCallback_Changed_Int )
+		RegisterNetVarIntChangeCallback( NETVAR_FRSS_PACKEDBOOLS, NetVarCallback_Changed_Int )
+
+		
 		for( int settingNDX = frIntSettings_NDX_Start; settingNDX < frIntSettings_NDX_End; settingNDX++ )
 		{
-			RegisterNetVarIntChangeCallback( frIntSettings_NetVars[ settingNDX ], NetVarCallback_Changed_Int, SNDC_PLAYER_EXCLUSIVE )
+			RegisterNetVarIntChangeCallback( frIntSettings_NetVars[ settingNDX ], NetVarCallback_Changed_Int )
 		}
-	#endif // CLIENT
+
 
 	file.fr_NetVarsAndPVarsInitiated = true
 }
 
-                   
+
 void function FRDummie_SpawnDist_Settings_Init()
 {
-	// Initialize settings for selectors.
+	
 	for( int i = 0; i < eDummie_Selector_SpawnDists.COUNT_; i++ )
-		dummie_SpawnDists_BySelector[ i ] <- {} // {} is an empty table.
+		dummie_SpawnDists_BySelector[ i ] <- {} 
 
 	table< int, bool > spawnDists
 
@@ -788,13 +789,13 @@ void function FRDummie_SpawnDist_Settings_Init()
 	spawnDists[ eCRng_SpawnDistances.FAR ] <- true
 	spawnDists[ eCRng_SpawnDistances.VFAR ] <- true
 }
-                         
+
 
 void function FRDummie_Movements_Settings_Init()
 {
-	// Initialize settings for selectors.
+	
 	for( int i = 0; i < eDummie_Selector_Movements.COUNT_; i++ )
-		dummie_Movements_BySelector[ i ] <- {} // {} is an empty table.
+		dummie_Movements_BySelector[ i ] <- {} 
 
 	table< int, bool > movementBools
 
@@ -821,9 +822,9 @@ void function FRDummie_Movements_Settings_Init()
 
 void function FRDummie_Stances_Settings_Init()
 {
-	// Initialize settings for selectors.
+	
 	for( int i = 0; i < eDummie_Selector_States.COUNT_; i++ )
-		dummie_Stances_BySelector[ i ] <- {} // {} is an empty table.
+		dummie_Stances_BySelector[ i ] <- {} 
 
 	table< int, bool > stanceBools
 
@@ -848,8 +849,8 @@ void function FR_DummieBehaviorData_SetDefaults( table< int, bool > behaviorData
 	}
 }
 
-// -------------------
-// ----- FRDB( Firing Range Dummie Behavior ) Helper Functions
+
+
 
 void function FRDB_ErrorCheck ( entity player, int behaviorType )
 {
@@ -860,7 +861,7 @@ void function FRDB_ErrorCheck ( entity player, int behaviorType )
 	Assert( (( behaviorType >= 0 ) && ( behaviorType < eDummieBehaviorType.COUNT_ )), errStr  )
 }
 
-// ---
+
 
 bool function FRDB_BehaviorIsMovement( int behaviorType )
 {
@@ -872,14 +873,14 @@ bool function FRDB_BehaviorIsModifier( int behaviorType )
 	return(( behaviorType >= frDB_Modifiers_NDX_Start) && ( behaviorType < frDB_Modifiers_NDX_End ))
 }
 
-                   
+
 bool function FRDB_BehaviorIsSpawnSetting( int behaviorType )
 {
 	return(( behaviorType >= frDB_SpawnSettings_NDX_Start) && ( behaviorType < frDB_SpawnSettings_NDX_End ))
 }
-                         
 
-// ----- FRS( Firing Range Settings ) Helper Functions
+
+
 
 void function FRS_ErrorCheck ( entity player, int settingType )
 {
@@ -890,21 +891,21 @@ void function FRS_ErrorCheck ( entity player, int settingType )
 	Assert( (( settingType >= 0 ) && ( settingType < eFRSettingType.COUNT_ )), errStr  )
 }
 
-// ---
+
 
 bool function FRS_SettingIsPersonal( int settingType )
 {
 	return(( settingType >= frPS_NDX_Start ) && ( settingType < frPS_NDX_End ))
 }
 
-// ---
+
 
 bool function FRS_SettingIsShared( int settingType )
 {
 	return(( settingType >= frSS_NDX_Start ) && ( settingType < frSS_NDX_End ))
 }
 
-// ----- FRS( Firing Range Settings ) Get Functions
+
 
 string function FRS_GetNetVarForSetting( int settingType )
 {
@@ -917,7 +918,7 @@ string function FRS_GetNetVarForSetting( int settingType )
 	return NETVAR_FRSS_PACKEDBOOLS
 }
 
-// ---
+
 
 string function FRS_GetPVarForSetting( int settingType )
 {
@@ -930,7 +931,7 @@ string function FRS_GetPVarForSetting( int settingType )
 	return PVAR_FRSS_PACKEDBOOLS
 }
 
-// ---
+
 
 bool function FRS_NetVar_Get_Bool( entity player, int settingType )
 {
@@ -944,7 +945,7 @@ bool function FRS_NetVar_Get_Bool( entity player, int settingType )
 	return result
 }
 
-// ---
+
 
 bool function FRS_PVar_Get_Bool( entity player, int settingType )
 {
@@ -958,7 +959,7 @@ bool function FRS_PVar_Get_Bool( entity player, int settingType )
 	return result
 }
 
-// ---
+
 
 int function FRS_NetVar_Get_Int( entity player, int settingType )
 {
@@ -966,7 +967,7 @@ int function FRS_NetVar_Get_Int( entity player, int settingType )
 	return( player.GetPlayerNetInt( behaviorNetVar ))
 }
 
-// ---
+
 
 int function FRS_PVar_Get_Int( entity player, int settingType )
 {
@@ -974,260 +975,260 @@ int function FRS_PVar_Get_Int( entity player, int settingType )
 	return value
 }
 
-#if SERVER
 
-// ----- FRS( Firing Range Settings ) Set Functions
 
-void function FRS_NetVar_Set_Bool( entity player, int settingType, bool isOn )
-{
-	FRS_ErrorCheck( player, settingType )
 
-	int bitToCheck = frS_Bits[ settingType ]
-	string varToUse = FRS_GetNetVarForSetting( settingType )
-	int packedBool = player.GetPlayerNetInt( varToUse )
 
-	bool wasOn = ( packedBool & bitToCheck ) > 0 ? true : false
 
-	if( isOn != wasOn )
-	{
-		if( isOn )
-		{
-			if( !wasOn )
-				packedBool += bitToCheck
-		}
-		else
-		{
-			if( wasOn )
-				packedBool -= bitToCheck
-		}
-		player.SetPlayerNetInt( varToUse, packedBool )
-	}
-}
 
-void function FRS_PVar_Set_Bool( entity player, int settingType, bool isOn )
-{
-	FRS_ErrorCheck( player, settingType )
 
-	// ----- PackedBool Version
-	int bitToCheck = frS_Bits[ settingType ]
-	string varToUse = FRS_GetPVarForSetting( settingType )
-	int packedBool = expect int( player.GetPersistentVar( varToUse ))
 
-	bool wasOn = ( packedBool & bitToCheck ) > 0 ? true : false
 
-	if( isOn != wasOn )
-	{
-		if( isOn )
-		{
-			if( !wasOn )
-				packedBool += bitToCheck
-		}
-		else
-		{
-			if( wasOn )
-				packedBool -= bitToCheck
-		}
-		player.SetPersistentVar( varToUse, packedBool )
-	}
-}
 
-void function FRS_NetVar_Set_Int( entity player, int settingType, int value )
-{
-	string netVarName = frIntSettings_NetVars[ settingType ]
 
-	// TODO: Only set it if there values are different.
 
-	player.SetPlayerNetInt( netVarName, value )
-}
 
-void function FRS_PVar_Set_Int( entity player, int settingType, int value )
-{
-	string pVarName = frIntSettings_PVars[ settingType ]
 
-	// TODO: Only set it if there values are different.
 
-	player.SetPersistentVar( pVarName, value )
-}
 
-// -----
-// ----- Behavior Bools Stuff.
-// -----
 
-void function FRDummie_BehaviorData_InitForPlayer( entity player )
-{
-	int realm = GetPlayerSquadRealm( player )
 
-	if( !( realm in file.dummieBehaviorsByRealm ))
-	{
-		table< int, bool > newBehaviors
-		FR_DummieBehaviorData_SetDefaults( newBehaviors )
-		file.dummieBehaviorsByRealm[ realm ] <- newBehaviors
-	}
-}
 
-table< int, bool > function FRDummie_BehaviorData_Get( int realm )
-{
-	// Add if new realm not previously added.
-	if( !( realm in file.dummieBehaviorsByRealm ))
-	{
-		table< int, bool > newBehaviorBools
-		file.dummieBehaviorsByRealm[ realm ] <- newBehaviorBools
-		FR_DummieBehaviorData_SetDefaults( file.dummieBehaviorsByRealm[ realm ] )
-	}
 
-	table< int, bool > dummieBehaviorsByRealm = file.dummieBehaviorsByRealm[ realm ]
 
-	return dummieBehaviorsByRealm
-}
 
-void function FRDummie_BehaviorData_Set( int realm, int behaviorType, bool isOn )
-{
-	if( !( realm in file.dummieBehaviorsByRealm  ) )
-		return
 
-	if(( behaviorType < 0 ) || ( behaviorType >= eDummieBehaviorType.COUNT_ ))
-		return
 
-	table< int, bool > behaviorBools = FRDummie_BehaviorData_Get( realm )
-	behaviorBools[ behaviorType ] <- isOn
-}
 
-// This is to replace FRDummie_BehaviorData_Set()
-void function FRDummie_BehaviorData_Set_ByPlayerSelectors( entity player, int movementSelected, int stateSelected )
-{
-	if( !IsValid( player ) || !player.IsPlayer() )
-		return
 
-	int realm = GetFiringRangeRealm ( player )
 
-	// Add if new realm not previously added.
-	if( !( realm in file.dummieBehaviorsByRealm ))
-	{
-		table< int, bool > newBehaviorBools
-		file.dummieBehaviorsByRealm[ realm ] <- newBehaviorBools
-		FR_DummieBehaviorData_SetDefaults( file.dummieBehaviorsByRealm[ realm ] )
-	}
 
-	FRDummie_Movements_Set_FromSelection( realm, movementSelected )
-	FRDummie_Stances_Set_FromSelection( realm, stateSelected )
-}
 
-void function FRDummie_Movements_Set_FromSelection( int realm, int selected )
-{
-	table< int, bool > dummieBehaviorsByRealm = file.dummieBehaviorsByRealm[ realm ]
-	table< int, bool > movementsSettings = dummie_Movements_BySelector[ selected ]
 
-	// Copy to in-game settings.
-	dummieBehaviorsByRealm[ eDummieBehaviorType.STAYINPLACE ] 	<- movementsSettings[ eDummieBehaviorType.STAYINPLACE ]
-	dummieBehaviorsByRealm[ eDummieBehaviorType.STRAFE ] 		<- movementsSettings[ eDummieBehaviorType.STRAFE ]
-	dummieBehaviorsByRealm[ eDummieBehaviorType.RANDINTERVALS ] <- movementsSettings[ eDummieBehaviorType.RANDINTERVALS ]
-}
 
-void function FRDummie_Stances_Set_FromSelection( int realm, int selected )
-{
-	table< int, bool > dummieBehaviorsByRealm = file.dummieBehaviorsByRealm[ realm ]
-	table< int, bool > stanceSettings = dummie_Stances_BySelector[ selected ]
 
-	// Copy to in-game settings
-	dummieBehaviorsByRealm[ eDummieBehaviorType.CANSTAND ] 		<- stanceSettings[ eDummieBehaviorType.CANSTAND ]
-	dummieBehaviorsByRealm[ eDummieBehaviorType.CANCROUCH ] 	<- stanceSettings[ eDummieBehaviorType.CANCROUCH ]
-}
 
-void function FRSettings_Sync_Netvars( entity srcPlayer, entity destPlayer )
-{
-	if ( !IsValid( srcPlayer ) )
-		return
 
-	if ( !srcPlayer.IsPlayer() )
-		return
 
-	if ( !IsValid( destPlayer ) )
-		return
 
-	if ( !destPlayer.IsPlayer() )
-		return
 
-	string settingNetVar
-	int settingType
-	int setting_Int
-	bool setting_Bool
 
-	setting_Bool = IsTeamRabid( srcPlayer.GetTeam() )
-	FRS_NetVar_Set_Bool( destPlayer, settingType, setting_Bool )
-	
-	settingType = eFRSettingType.TARGETSPEED
-	setting_Int = FRS_NetVar_Get_Int( srcPlayer, settingType )
-	FRS_NetVar_Set_Int( destPlayer, settingType, setting_Int )
 
-	settingType = eFRSettingType.FRDUMMIESHIELDLVL
-	setting_Int = FRS_NetVar_Get_Int( srcPlayer, settingType )
-	FRS_NetVar_Set_Int( destPlayer, settingType, setting_Int )
 
-	settingType = eFRSettingType.FRDUMMIEHELMETMATCHSHIELDS
-	setting_Bool = FRS_NetVar_Get_Bool( srcPlayer, settingType )
-	FRS_NetVar_Set_Bool( destPlayer, settingType, setting_Bool )
 
-	settingType = eFRSettingType.FRDUMMIESPEED
-	setting_Int = FRS_NetVar_Get_Int( srcPlayer, settingType )
-	FRS_NetVar_Set_Int( destPlayer, settingType, setting_Int )
 
-	settingType = eFRSettingType.FRDUMMIEMOVEMENT
-	setting_Int = FRS_NetVar_Get_Int( srcPlayer, settingType )
-	FRS_NetVar_Set_Int( destPlayer, settingType, setting_Int )
 
-	settingType = eFRSettingType.FRDUMMIESTANCE
-	setting_Int = FRS_NetVar_Get_Int( srcPlayer, settingType )
-	FRS_NetVar_Set_Int( destPlayer, settingType, setting_Int )
 
-	                   
-	settingType = eFRSettingType.FRDUMMIESPAWNDISTS
-	setting_Int = FRS_NetVar_Get_Int( srcPlayer, settingType )
-	FRS_NetVar_Set_Int( destPlayer, settingType, setting_Int )
-                          
-}
 
-void function FR_CopyNetVars( entity srcPlayer, entity destPlayer, int settingType, bool value )
-{
 
-}
 
-entity function FR_GetPartyLeader( int realm )
-{
-	entity partyLeader
 
-	array< entity > playersInRealm = []
-	array< entity > allPlayers = GetPlayerArray()
-	foreach( player in allPlayers )
-	{
-		if( !IsValid( player ) )
-			continue
 
-		if( player.IsInRealm( realm ) )
-			playersInRealm.append( player )
-	}
 
-	// Return the first party leader found.
-	// NOTE: This will break if there are more than 1 squads allowed in each realm of the firing range.
-	foreach( player in playersInRealm )
-	{
-		int partyLeaderIndex = player.GetPartyLeaderClientIndex()
-		if( player.GetPlayerIndex() == partyLeaderIndex )
-		{
-			partyLeader = player
-			break
-		}
-	}
 
-	return partyLeader
-}
 
-// -----
-// -----
-// -----
-#endif // SERVER
-                               
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function SCB_CloseCharacterSelectMenu()
 {
 	RunUIScript( "CloseAllDialogs" )
@@ -1236,16 +1237,16 @@ void function SCB_CloseCharacterSelectMenu()
 
 void function SCB_Broadcast_FRSetting_FriendlyFire_Change( entity playerThatChanged )
 {
-                          
+
 		if( CheckFRSettingsBroadcastDebounce( eFRSettingType.FRIENDLYFIRE ) )
 		{
-			entity localPlayer = GetLocalViewPlayer() // formerly LocalClientPlayer.
+			entity localPlayer = GetLocalViewPlayer() 
 			bool isEnabled     = IsTeamRabid( localPlayer.GetTeam() )
 			string mainText    = (isEnabled ? "#NOTIFY_FRIENDLY_FIRE_ON" : "#NOTIFY_FRIENDLY_FIRE_OFF")
 			string mainTextLoc = Localize( mainText )
 			string subText     = (IsValid( playerThatChanged ) ? Localize( "#NOTIFY_FRIENDLY_FIRE_SUBTEXT", playerThatChanged.GetPlayerName() ) : "")
 			vector titleColor  = (isEnabled ? ENEMY_COLOR : FRIENDLY_COLOR)
-			//Obituary_Print_Localized( mainTextLoc )
+			
 			AnnouncementMessage( localPlayer, mainTextLoc, subText, titleColor )
 			file.lastFRSettingsBroadcastTimes[ eFRSettingType.FRIENDLYFIRE ] = Time()
 		}
@@ -1254,29 +1255,29 @@ void function SCB_Broadcast_FRSetting_FriendlyFire_Change( entity playerThatChan
 		{
 			FRSettings_Client_Update()
 		}
-      
-                                                                          
-                                                           
-                                                                                             
-                                           
-                                                                                                                                           
-                                                                 
-                                                                      
-                                
+
+
+
+
+
+
+
+
+
 }
 
-                   
+
 void function SCB_Broadcast_FRSetting_DynamicDummiesEnabled_Change( entity playerThatChanged )
 {
 	if( CheckFRSettingsBroadcastDebounce( eFRSettingType.DYNAMICDUMMIESON ) )
 	{
-		entity localPlayer = GetLocalViewPlayer() // formerly LocalClientPlayer.
+		entity localPlayer = GetLocalViewPlayer() 
 		bool isEnabled     = IsTeamRabid( localPlayer.GetTeam() )
 		string mainText    = (isEnabled ? "#NOTIFY_FRIENDLY_FIRE_ON" : "#NOTIFY_FRIENDLY_FIRE_OFF")
 		string mainTextLoc = Localize( mainText )
 		string subText     = (IsValid( playerThatChanged ) ? Localize( "#NOTIFY_FRIENDLY_FIRE_SUBTEXT", playerThatChanged.GetPlayerName() ) : "")
 		vector titleColor  = (isEnabled ? ENEMY_COLOR : FRIENDLY_COLOR)
-		//Obituary_Print_Localized( mainTextLoc )
+		
 		AnnouncementMessage( localPlayer, mainTextLoc, subText, titleColor )
 		file.lastFRSettingsBroadcastTimes[ eFRSettingType.DYNAMICDUMMIESON ] = Time()
 	}
@@ -1287,17 +1288,17 @@ void function SCB_Broadcast_FRSetting_DynamicDummiesEnabled_Change( entity playe
 	}
 }
 
-                         
 
-                         
-// -----
-// Unified Broadcast for Int Setting Change.
+
+
+
+
 void function SCB_Broadcast_FRSetting_Changed_Int( entity playerThatChanged, int settingType, int value )
 {
 	if( !IsValid( playerThatChanged ) || !playerThatChanged.IsPlayer())
 		return
 
-	// Get Notifier name and color.
+	
 	string notifierName = playerThatChanged.GetPlayerName()
 	if( notifierName == "" )
 		return
@@ -1305,13 +1306,13 @@ void function SCB_Broadcast_FRSetting_Changed_Int( entity playerThatChanged, int
 	vector playerColor = GetKeyColor( COLORID_MEMBER_COLOR0, playerThatChanged.GetTeamMemberIndex())
 	vector valueColor = FRIENDLY_COLOR
 	vector baseColor = < 219, 219, 219 >
-	
+
 	table< int, string > settingValues
 	table< int, vector > valueColors
 	string settingName
 	string settingValue
-	string settingNameLocalized // = Localize( settingName, "" )
-	string settingValueLocalized // = Localize( settingValues[ value ] )
+	string settingNameLocalized 
+	string settingValueLocalized 
 
 	switch( settingType )
 	{
@@ -1353,17 +1354,17 @@ void function SCB_Broadcast_FRSetting_Changed_Int( entity playerThatChanged, int
 			settingValues[ 2 ] <- "#LOOT_TIER2"
 			settingValues[ 3 ] <- "#LOOT_TIER3"
 			settingValues[ 4 ] <- "#LOOT_TIER5"
-			settingValues[ FR_RANDOM_SHIELD_SETTING ] <- "#RANDOM"	// RANDOM Shield Level.
+			settingValues[ FR_RANDOM_SHIELD_SETTING ] <- "#RANDOM"	
 			valueColors[ 0 ] <- GetKeyColor( COLORID_TEXT_LOOT_TIER1, 0 )
 			valueColors[ 1 ] <- GetKeyColor( COLORID_TEXT_LOOT_TIER1, 0 )
 			valueColors[ 2 ] <- GetKeyColor( COLORID_TEXT_LOOT_TIER2, 0 )
 			valueColors[ 3 ] <- GetKeyColor( COLORID_TEXT_LOOT_TIER3, 0 )
 			valueColors[ 4 ] <- GetKeyColor( COLORID_TEXT_LOOT_TIER5, 0 )
-			valueColors[ FR_RANDOM_SHIELD_SETTING ] <- COLOR_GRAY // RANDOM Shield Level.
+			valueColors[ FR_RANDOM_SHIELD_SETTING ] <- COLOR_GRAY 
 			settingValue = settingValues[ value ]
 			valueColor = valueColors[ value ]
 			break
-	                   
+
 		case eFRSettingType.FRDUMMIESHOOTING:
 			settingName = "#DUMMIE_SHOOTING"
 			settingValues[ eDummie_Selector_Shooting.OFF ] 		<- "#DUMMIE_SHOOTING_OFF"
@@ -1382,12 +1383,12 @@ void function SCB_Broadcast_FRSetting_Changed_Int( entity playerThatChanged, int
 			settingValues[ eDummie_Selector_SpawnDists.RANDOM ] <- "#DUMMIE_SPAWNDISTS_RANDOM"
 			settingValue = settingValues[ value ]
 			break
-                          
+
 	}
 	settingNameLocalized = Localize( settingName, "" )
 	settingValueLocalized = Localize( settingValue )
 
-	// Output to the obituary.
+	
 	EmitSoundOnEntity( GetLocalViewPlayer(), SFX_SETTING_CHANGE_NOTIFY )
 	Obituary_Print_Localized( Localize( "#OBIT_SETTINGCHANGE_NOTIFY", notifierName, settingNameLocalized, settingValueLocalized), playerColor, valueColor )
 
@@ -1402,54 +1403,54 @@ void function SCB_Broadcast_FRSetting_Changed_Bool( entity playerThatChanged, in
 	if( !IsValid( playerThatChanged ) || !playerThatChanged.IsPlayer())
 		return
 
-	// Get Notifier name and color.
+	
 	string notifierName = playerThatChanged.GetPlayerName()
 	if( notifierName == "" )
 		return
 
 	vector playerColor = GetKeyColor( COLORID_MEMBER_COLOR0, playerThatChanged.GetTeamMemberIndex())
 
-	// Get value set
+	
 	bool isOn = value
 	string onOff = isOn ? Localize( "#FRSETTING_ON" ) : Localize( "#FRSETTING_OFF" )
 	vector valueColor  = isOn ? FRIENDLY_COLOR : ENEMY_COLOR
 
-	// Get Setting name
+	
 	table< int, string > settingNamesByType
 	string settingName = ""
 	string settingNameLocalized
 
 	settingNamesByType[ eFRSettingType.FRDUMMIEHELMETMATCHSHIELDS ] <- "#FRSETTING_DUMMIEHELMETMATCHSHIELDS_CHANGED"
 
-	                   
+
 		settingNamesByType[ eFRSettingType.DYNAMICDUMMIESON ] 	<- "#DYNDUMMIE_DYNSPAWN_CHANGED"
 		settingNamesByType[ eFRSettingType.DUMMIEHIGHLIGHTSON ] <- "#FRDUMMIE_HIGHLIGHTSON_CHANGED"
-                          
+
 
 	settingName = settingNamesByType[ settingType ]
 	settingNameLocalized = Localize( settingName )
 
-	// Output to the obituary.
+	
 	vector baseColor = < 219, 219, 219 >
-	#if DEVELOPER
+#if DEV
 		printt( format( "%s(): setting changed == %s", FUNC_NAME(), settingNameLocalized ) )
-	#endif
+#endif
 
 	EmitSoundOnEntity( GetLocalViewPlayer(), SFX_SETTING_CHANGE_NOTIFY )
 	Obituary_Print_Localized( Localize( "#OBIT_SETTINGCHANGE_NOTIFY", notifierName, settingNameLocalized, onOff ), playerColor, valueColor )
-	//Obituary_Print_Localized( Localize( "#OBIT_SETTINGCHANGE_DUMMIE", notifierName, settingNameLocalized, onOff ), baseColor )
+	
 
 	FRSettings_Client_Update()
 }
 
-// -----
+
 
 void function SCB_Broadcast_FRSettings_TargetSpeed_Change( entity playerThatChanged, int speedParm )
 {
 	if( !IsValid( playerThatChanged ) || !playerThatChanged.IsPlayer())
 		return
 
-	// Get Notifier name and color.
+	
 	string notifierName = playerThatChanged.GetPlayerName()
 	if( notifierName == "" )
 		return
@@ -1460,7 +1461,7 @@ void function SCB_Broadcast_FRSettings_TargetSpeed_Change( entity playerThatChan
 
 	string settingNameLocalized = Localize( "#FR_SETTINGNAME_TARGETSPEED" )
 
-	// Output to the obituary.
+	
 	vector valueColor = FRIENDLY_COLOR
 	vector baseColor = < 219, 219, 219 >
 	EmitSoundOnEntity( GetLocalViewPlayer(), SFX_SETTING_CHANGE_NOTIFY )
@@ -1477,7 +1478,7 @@ void function SCB_Broadcast_FRDummie_ShieldLevel_Change( entity playerThatChange
 	if( !IsValid( playerThatChanged ) || !playerThatChanged.IsPlayer())
 		return
 
-	// Get Notifier name and color.
+	
 	string notifierName = playerThatChanged.GetPlayerName()
 	if( notifierName == "" )
 		return
@@ -1486,7 +1487,7 @@ void function SCB_Broadcast_FRDummie_ShieldLevel_Change( entity playerThatChange
 
 	string settingNameLocalized = Localize( "#DUMMIE_SHIELDLVL", "" )
 
-	// Shield Levels
+	
 	table< int, string > shieldLevelNames
 	shieldLevelNames[ 1 ] <- "#LOOT_TIER1"
 	shieldLevelNames[ 2 ] <- "#LOOT_TIER2"
@@ -1502,7 +1503,7 @@ void function SCB_Broadcast_FRDummie_ShieldLevel_Change( entity playerThatChange
 	string shieldNameLocalized = Localize( shieldLevelNames[ shieldParm ] )
 	vector shieldColor = shieldColors[ shieldParm ]
 
-	// Output to the obituary.
+	
 	vector valueColor = FRIENDLY_COLOR
 	vector baseColor = < 219, 219, 219 >
 	EmitSoundOnEntity( GetLocalViewPlayer(), SFX_SETTING_CHANGE_NOTIFY )
@@ -1519,7 +1520,7 @@ void function SCB_Broadcast_FRDummie_Speed_Change( entity playerThatChanged, int
 	if( !IsValid( playerThatChanged ) || !playerThatChanged.IsPlayer())
 		return
 
-	// Get Notifier name and color.
+	
 	string notifierName = playerThatChanged.GetPlayerName()
 	if( notifierName == "" )
 		return
@@ -1531,7 +1532,7 @@ void function SCB_Broadcast_FRDummie_Speed_Change( entity playerThatChanged, int
 	dummieSpeedNames[ 2 ] <- "#FRSETTING_DUMMIESTRAFESPEED_NAME_2"
 	dummieSpeedNames[ 3 ] <- "#FRSETTING_DUMMIESTRAFESPEED_NAME_3"
 
-	// Output to the obituary.
+	
 	vector valueColor = FRIENDLY_COLOR
 	vector baseColor = < 219, 219, 219 >
 	string settingNameLocalized = Localize( "#DUMMIE_SPEED", "" )
@@ -1545,13 +1546,13 @@ void function SCB_Broadcast_FRDummie_Speed_Change( entity playerThatChanged, int
 	}
 }
 
-                    
+
 void function SCB_Broadcast_UpgradeCore_Level_Set( entity playerThatChanged, int upgradeCoreParm )
 {
 	if( !IsValid( playerThatChanged ) || !playerThatChanged.IsPlayer())
 		return
 
-	// Get Notifier name and color.
+	
 	string notifierName = playerThatChanged.GetPlayerName()
 	if( notifierName == "" )
 		return
@@ -1560,15 +1561,15 @@ void function SCB_Broadcast_UpgradeCore_Level_Set( entity playerThatChanged, int
 
 	string settingNameLocalized = Localize( "#LEGENDUPGRADE_LEVEL", "" )
 
-	// Upgrade Core Level Names, if necessary.
-	//table< int, string > upgradeCoreLevelNames
-	//upgradeCoreLevelNames[ 0 ] <- "0"
-	//upgradeCoreLevelNames[ 1 ] <- "1"
-	//upgradeCoreLevelNames[ 2 ] <- "2"
-	//upgradeCoreLevelNames[ 3 ] <- "3"
-	//upgradeCoreLevelNames[ 4 ] <- "4"
-	//upgradeCoreLevelNames[ 5 ] <- "5"
-	//string upgradeCoreNameLocalized = Localize( upgradeCoreLevelNames[ upgradeCoreParm ] )
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	string upgradeCoreNameLocalized = string( upgradeCoreParm )
 
 	table< int, vector > upgradeCoreColors
@@ -1579,21 +1580,21 @@ void function SCB_Broadcast_UpgradeCore_Level_Set( entity playerThatChanged, int
 	upgradeCoreColors[ 4 ] <- GetKeyColor( COLORID_TEXT_LOOT_TIER5, 0 )
 	vector upgradeCoreColor = upgradeCoreColors[ upgradeCoreParm ]
 
-	// Output to the obituary.
+	
 	vector valueColor = FRIENDLY_COLOR
 	vector baseColor = < 219, 219, 219 >
 	EmitSoundOnEntity( GetLocalViewPlayer(), SFX_SETTING_CHANGE_NOTIFY )
 	Obituary_Print_Localized( Localize( "#OBIT_SETTINGCHANGE_NOTIFY", notifierName, settingNameLocalized, upgradeCoreNameLocalized ), playerColor, upgradeCoreColor )
 
-	// TODO: Uncomment if this is needed later.
-	//if( PlaylistVar_HasFRSettingsHUD() )
-	//{
-	//	FRSettings_Client_Update()
-	//}
+	
+	
+	
+	
+	
 }
-                          
 
-// -----
+
+
 
 bool function CheckFRSettingsBroadcastDebounce( int SCBType )
 {
@@ -1605,7 +1606,7 @@ bool function CheckFRSettingsBroadcastDebounce( int SCBType )
 
 	return( Time() - file.lastFRSettingsBroadcastTimes[ SCBType ] >= SCB_MININTERVAL )
 }
-                               
+
 
 bool function FiringRange_IsCharacterSwitchingEnabled()
 {
@@ -1668,2203 +1669,2205 @@ bool function FiringRange_IsPlayerInFinale()
 	return file.inFinale
 }
 
-                    
+
 void function SCB_Restore_UpgradeCore_Rui()
 {
 	entity viewPlayer = GetLocalViewPlayer()
 
-	                    
+
 		if( UpgradeCore_IsEnabled() && UpgradeCore_ShowHudUpgradeSelection() )
 		{
 			thread UpgradeCore_RuiThread( viewPlayer )
 		}
-                           
-}
-                          
-
-#endif // CLIENT
-
-#if SERVER
-void function UCB_SV_FRSetting_FriendlyFire( entity player, bool value, bool indicateChange )
-{
-	if ( !FiringRangeHasFriendlyFire() )
-	{
-		Warning( "%s() - Ignoring command from player '%s' because friendly-fire toggling is not enabled.", FUNC_NAME(), string( player ) )
-		return
-	}
-
-	int team                  = player.GetTeam()
-	array< entity > teamPlayers = ReadyPVarPlayers_Get_ByPlayer( player )
-
-	bool canHurtTeammates = value
-	if ( teamPlayers.len() == 1 )
-	{
-		canHurtTeammates = false
-	}
-
-	printf( "%s() - player '%s' setting canHurtTeammates: %s", FUNC_NAME(), string( player ), string( canHurtTeammates ) )
-	SetTeamIsRabid( team, canHurtTeammates )
-
-	string ffSound = value ? "HUD_center_announcement_warning_1P" : "HUD_center_announcement_calm_1P"
-
-	foreach( entity teamPlayer in teamPlayers )
-	{
-		if( IsValid( teamPlayer ) )
-		{
-			                         
-				FRS_NetVar_Set_Bool( teamPlayer, eFRSettingType.FRIENDLYFIRE, canHurtTeammates )
-				if( indicateChange )
-					EmitSoundAtPositionOnlyToPlayer( teamPlayer.GetTeam(), teamPlayer.GetOrigin(), teamPlayer, ffSound )
-                                  
-			if( indicateChange )
-				Remote_CallFunction_NonReplay( teamPlayer, "SCB_Broadcast_FRSetting_FriendlyFire_Change", player )
-		}
-	}
-}
 
-void function UCB_SV_FRSetting_FriendlyFire_Toggle( entity player )
-{
-	if ( !FiringRangeHasFriendlyFire() )
-	{
-		Warning( "%s() - Ignoring command from player '%s' because friendly-fire toggling is not enabled.", FUNC_NAME(), string( player ) )
-		return
-	}
-
-	int team = player.GetTeam()
-	array<entity> teamPlayers = GetPlayerArrayOfTeam( player.GetTeam() )
-	if ( teamPlayers.len() <= 1 )
-	{
-		Warning( "%s() - Ignoring command from player '%s' because team population is only [%d].", FUNC_NAME(), string( player ), teamPlayers.len() )
-		return
-	}
-
-	bool canHurtTeammates = !IsTeamRabid( team )
-	printf( "%s() - player '%s' setting canHurtTeammates: %s", FUNC_NAME(), string( player ), string( canHurtTeammates ) )
-	SetTeamIsRabid( team, canHurtTeammates )
-
-	foreach( entity teamPlayer in teamPlayers )
-	{
-		if( IsValid( teamPlayer ) )
-		{
-			                         
-				FRS_NetVar_Set_Bool( teamPlayer, eFRSettingType.FRIENDLYFIRE, canHurtTeammates )
-                                  
-			Remote_CallFunction_NonReplay( teamPlayer, "SCB_Broadcast_FRSetting_FriendlyFire_Change", player )
-		}
-	}
 }
 
-void function UCB_SV_FRSetting_DummieHelmetMatchShields( entity player, bool value, bool indicateChange )
-{
-	if( !IsValid( player ) )
-		return
-
-	int realm = GetCombatRangeRealm( player )
-	int team                  = player.GetTeam()
-	array< entity > teamPlayers = ReadyPVarPlayers_Get_ByPlayer( player )
-	foreach( entity teamPlayer in teamPlayers )
-	{
-		if( IsValid( teamPlayer ) )
-		{
-			FRS_NetVar_Set_Bool( teamPlayer, eFRSettingType.FRDUMMIEHELMETMATCHSHIELDS, value )
-			if( indicateChange )
-				Remote_CallFunction_NonReplay( teamPlayer, "SCB_Broadcast_FRSetting_Changed_Bool", player, eFRSettingType.FRDUMMIEHELMETMATCHSHIELDS, value )
-		}
-	}
-	FRS_PVar_Set_Bool( player, eFRSettingType.FRDUMMIEHELMETMATCHSHIELDS, value )
-	FRSetting_DummieHelmetMatchShields_Set( realm, value )
-	thread Dummies_DelayedReset_Thread( realm, true )
-}
 
-                   
-void function UCB_SV_FRsetting_DynamicDummiesOn_Changed( entity player, bool value, bool indicateChange )
-{
-	if( !IsValid( player ) )
-		return
-
-	int team                  = player.GetTeam()
-	array< entity > teamPlayers = ReadyPVarPlayers_Get_ByPlayer( player )
-	foreach( entity teamPlayer in teamPlayers )
-	{
-		if( IsValid( teamPlayer ) )
-		{
-			FRS_NetVar_Set_Bool( teamPlayer, eFRSettingType.DYNAMICDUMMIESON, value )
-			if( indicateChange )
-				Remote_CallFunction_NonReplay( teamPlayer, "SCB_Broadcast_FRSetting_Changed_Bool", player, eFRSettingType.DYNAMICDUMMIESON, value )
-		}
-	}
-	FRS_PVar_Set_Bool( player, eFRSettingType.DYNAMICDUMMIESON, value )
-	FRSetting_DynamicDummiesOn_Set( GetCombatRangeRealm( player ), value )
-	UCB_DynSpawns_SetActive( player, value )
-}
 
-void function UCB_SV_FRsetting_DummieHighlightsOn_Changed( entity player, bool value, bool indicateChange )
-{
-	if( !IsValid( player ) )
-		return
-
-	int team                  = player.GetTeam()
-	array< entity > teamPlayers = ReadyPVarPlayers_Get_ByPlayer( player )
-	foreach( entity teamPlayer in teamPlayers )
-	{
-		if( IsValid( teamPlayer ) )
-		{
-			FRS_NetVar_Set_Bool( teamPlayer, eFRSettingType.DUMMIEHIGHLIGHTSON, value )
-			if( indicateChange )
-				Remote_CallFunction_NonReplay( teamPlayer, "SCB_Broadcast_FRSetting_Changed_Bool", player, eFRSettingType.DUMMIEHIGHLIGHTSON, value )
-		}
-	}
-	FRS_PVar_Set_Bool( player, eFRSettingType.DUMMIEHIGHLIGHTSON, value )
-	FRSetting_DummieHighlightsOn_Set( GetCombatRangeRealm( player ), value )
-
-	int realm = player.GetRealms()[0]
-	Dummies_Reset( realm, true )
-}
-                         
-
-                         
-void function UCB_SV_FRSetting_DynStats( entity player, bool value )
-{
-	if( !IsValid( player ) )
-		return
-
-	FRSetting_DynStats_Set_OnPlayer( player, value )
-}
 
-void function FRSetting_DynStats_Set_OnPlayer( entity player, bool isOn )
-{
-	FRSetting_SetOnPlayer_Bool( player, eFRSettingType.SHOWDYNSTATS, isOn )
 
-	Remote_CallFunction_NonReplay( player, "SCB_ShowDynStats_ByPVar" )
-}
 
-void function UCB_SV_FRSetting_DynTimer( entity player, bool value )
-{
-	if( !IsValid( player ) )
-		return
 
-	FRSetting_DynTimer_Set_OnPlayer( player, value )
-}
 
-void function FRSetting_DynTimer_Set_OnPlayer( entity player, bool isOn )
-{
-	FRSetting_SetOnPlayer_Bool( player, eFRSettingType.SHOWDYNTIMER, isOn )
 
-	Remote_CallFunction_NonReplay( player, "SCB_ShowDynTimer_ByPVar" )
-}
 
-// -----
 
-bool function FRSetting_ShouldSave_ToPVar( entity player, int settingType )
-{
-	if( !IsValid( player ) )
-		return false
 
-	if( !player.IsPlayer() )
-		return false
 
-	if (!frSetting_ShouldBeSaved[ settingType ])
-		return false
 
-	bool leaderOnly = frSetting_IsShared[ settingType ]
-	
-	if( leaderOnly )
-	{
-		return( RangeMaster_Check( player ) )
-	}
 
-	return true
-}
 
-void function FRSetting_SetOnPlayer_Bool( entity player, int settingType, bool isOn )
-{
-	if( !IsValid( player ) )
-		return
-
-	if( !player.IsPlayer() )
-		return
-
-	string errorStr = format( "%s(): settingType out of range.", FUNC_NAME()  )
-	Assert( (( settingType >= 0 ) && ( settingType < eFRSettingType.COUNT_ )), errorStr )
-
-	FRS_NetVar_Set_Bool( player, settingType, isOn )
-	#if DEVELOPER
-		printt( format( "%s(): Friendly Fire for %s to be set == %s", FUNC_NAME(), player.GetPlayerName(), string( isOn ) ))
-	#endif
-
-	// Save Setting to Persistent Var:
-	//	- If not Leader-Only.
-	//	- If Leader-Only and this player is a leader.
-	if( FRSetting_ShouldSave_ToPVar( player, settingType ) )
-	{
-		FRS_PVar_Set_Bool( player, settingType, isOn )
-	}
-}
 
-void function FRSetting_SetOnPlayer_Int( entity player, int settingType, int value )
-{
-	if( !IsValid( player ) )
-		return
-
-	if( !player.IsPlayer() )
-		return
-
-	string errorStr = format( "%s(): settingType out of range.", FUNC_NAME()  )
-	Assert( (( settingType >= frIntSettings_NDX_Start ) && ( settingType < frIntSettings_NDX_End )), errorStr )
-
-	FRS_NetVar_Set_Int( player, settingType, value )
-
-	// Save Setting to Persistent Var:
-	// 	- If is a ShouldSave setting.
-	//	- If not Leader-Only, or if Leader-Only and this player is a leader.
-	if( FRSetting_ShouldSave_ToPVar( player, settingType ) )
-	{
-		FRS_PVar_Set_Int( player, settingType, value )
-	}
-}
 
-void function UCB_SV_FRSetting_InfiniteReloads( entity player, bool value )
-{
-	if ( FRC_IsChallengeActive( player.GetRealms()[0] ) ) //Prevent toggling infinite ammo in firing range challenge
-		return
 
-	FRSetting_InfiniteReloads_Set_OnPlayer( player, value )
-}
 
-bool function IsInfiniteReloadsEnabled( entity player )
-{
-	if( !IsValid( player ) )
-		return false
 
-	bool isInfiniteReloadsOn = FRS_NetVar_Get_Bool( player, eFRSettingType.INFINITEMAGS )
-	return( isInfiniteReloadsOn )
-}
 
-void function FRSetting_InfiniteReloads_Restore_From_NetVar( entity player )
-{
-	if ( !IsValidPlayer( player ) )
-		return
 
-	bool isOn = FRS_NetVar_Get_Bool( player, eFRSettingType.INFINITEMAGS )
-	FRSetting_InfiniteReloads_Set_OnPlayer( player, isOn )
-}
 
-void function FRSetting_InfiniteReloads_Set_OnPlayer( entity player, bool enable )
-{
-	//Do not toggle if the player is invalid.
-	if ( !IsValidPlayer( player ) )
-		return
 
-	//Prevent toggling infinite ammo in firing range challenge
-	if ( FRC_IsChallengeActive( player.GetRealms()[0] ) )
-		return
 
-	FRSetting_SetOnPlayer_Bool( player, eFRSettingType.INFINITEMAGS, enable )
 
-	SetInfiniteAmmoForGameMode( player, enable, [], true, true )
 
-	if( PlaylistVar_HasFRSettingsHUD())
-	{
-		Remote_CallFunction_NonReplay( player, "SCB_SettingChangedNotification_InfiniteMags" )
-	}
-}
 
-void function UCB_SV_FRSetting_HitMarks_Toggle( entity player )
-{
-	if ( FRC_IsChallengeActive( player.GetRealms()[0] ) ) //Prevent toggling infinite ammo in firing range challenge
-		return
 
-	//Do not toggle if the player is not alive
-	if ( !IsValid( player ) || !IsAlive( player ) )
-		return
 
-	// Get the Netvar for Hitmarks and set its inverse.
-	bool currentState = FRS_NetVar_Get_Bool( player, eFRSettingType.SHOWHITMARKS )
-	bool newState = !currentState
 
-	UCB_SV_FRSetting_HitMarks( player, newState )
-}
 
-void function UCB_SV_FRSetting_HitMarks( entity player, bool value )
-{
-	if ( FRC_IsChallengeActive( player.GetRealms()[0] ) ) //Prevent toggling infinite ammo in firing range challenge
-		return
 
-	//Do not toggle if the player is not alive
-	if ( !IsValid( player ) || !IsAlive( player ) )
-		return
 
-	FRSetting_HitMarks_Set_OnPlayer( player, value )
 
-	if( PlaylistVar_HasFRSettingsHUD())
-	{
-		Remote_CallFunction_NonReplay( player, "SCB_SettingChangedNotification_ShowHitMarks" )
-	}
-}
 
-void function FRSetting_HitMarks_Set_OnPlayer( entity player, bool isOn, bool notify = true )
-{
-	FRSetting_SetOnPlayer_Bool( player, eFRSettingType.SHOWHITMARKS, isOn )
-	Remote_CallFunction_NonReplay( player, "SCB_ShowHitMarks_Set_ByNetvar" )
-	if ( notify )
-		Remote_CallFunction_NonReplay( player, "SCB_SettingChangedNotification_ShowHitMarks" )
-}
 
-void function UCB_SV_FRSetting_Show3rdPerson( entity player, bool value )
-{
-	//Do not toggle if the player is not alive
-	if ( !IsValid( player ) || !IsAlive( player ) )
-		return
-
-	FRSetting_3rdPerson_Set_OnPlayer( player, value )
-
-	if( PlaylistVar_HasFRSettingsHUD())
-	{
-		Remote_CallFunction_NonReplay( player, "SCB_SettingChangedNotification_Show3rdPerson" )
-	}
-}
 
-                    
-void function UCB_SV_FRSetting_LegendUpgradesEnabled( entity player, bool value )
-{
-	//Do not toggle if the player is not alive
-	if ( !IsValid( player ) || !IsAlive( player ) )
-		return
 
-	FRSetting_LegendUpgradesEnabled_Set_OnPlayer( player, value )
 
-	if( PlaylistVar_HasFRSettingsHUD())
-	{
-		Remote_CallFunction_NonReplay( player, "SCB_SettingChangedNotification_LegendUpgradesEnabled" )
-	}
 
-}
-                          
-
-void function FRSetting_3rdPerson_Set_OnPlayer( entity player, bool isOn, bool notify = true )
-{
-	FRSetting_SetOnPlayer_Bool( player, eFRSettingType.SHOW3RDPERSON, isOn )
-
-	if( isOn )
-	{
-		player.SetThirdPersonShoulderModeOn()
-	}
-	else
-	{
-		player.SetThirdPersonShoulderModeOff()
-	}
-
-	if ( notify )
-	{
-		Remote_CallFunction_NonReplay( player, "SCB_SettingChangedNotification_Show3rdPerson" )
-	}
-}
 
-bool function FRSetting_3rdPerson_IsOn( entity player )
-{
-	if( !file.fr_NetVarsAndPVarsInitiated )
-		return false
 
-	bool isOn = FRS_NetVar_Get_Bool( player, eFRSettingType.SHOW3RDPERSON )
-	return isOn
-}
 
-                    
-void function FRSetting_LegendUpgradesEnabled_Set_OnPlayer( entity player, bool isOn, bool notify = true )
-{
-	// Lock the progression if LegendUpgradesEnabled == false.
-	UpgradeCore_ProgressionLocked_ForPlayer_Set( player, !isOn )
-	FRSetting_SetOnPlayer_Bool( player, eFRSettingType.LEGENDUPGRADESENABLED, isOn )
-
-	if ( notify )
-	{
-		Remote_CallFunction_NonReplay( player, "SCB_SettingChangedNotification_LegendUpgradesEnabled" )
-	}
-}
-                          
-
-void function FRIntSetting_TargetSpeed_Set_OnAllPlayers( entity player, int setting )
-{
-	if( !IsValid( player ) || !player.IsPlayer() )
-		return
-
-	FRIntSetting_TargetSpeed_Set_OnPlayer( player, setting )
-
-	array< entity > playersInRealm = GetAllPlayersInRealm_ByPlayer( player )
-	foreach( pl in playersInRealm )
-	{
-		FRIntSetting_TargetSpeed_Set_OnPlayer( pl, setting )
-	}
-
-	int realm = GetFiringRangeRealm ( player )
-	FRSetting_TargetSpeed_Set( realm, setting )
-}
 
-void function FRIntSetting_TargetSpeed_Set_OnPlayer( entity player, int targetSpeed )
-{
-	FRSetting_SetOnPlayer_Int( player, eFRSettingType.TARGETSPEED, targetSpeed )
-}
 
-// ----- Unified function for all UCB_SV_<INT SETTING>_Change functions.
-void function UCB_SV_FRSetting_Change_Int( entity player, int settingType, int value )
-{
-	if ( !IsValid( player ) )
-		return
-
-	if ( !player.IsPlayer() )
-		return
-
-	if ( FRC_IsChallengeActive( player.GetRealms()[0] ) ) //Prevent toggling in firing range challenge
-		return
-
-	// Server crash exploit prevention: If settingType is out of range, return.
-	if(( settingType < frIntSettings_NDX_Start ) || ( settingType >= frIntSettings_NDX_End ))
-		return
-
-	int realm = GetPlayerSquadRealm( player )
-	int activeValue = value
-	int oldValue = FRS_NetVar_Get_Int( player, settingType )
-	bool isUp = oldValue < value
-
-	int min = frIntSettings_Mins[ settingType ]
-	int max = frIntSettings_Maxs[ settingType ]
-
-	if( activeValue > max )
-		activeValue = min
-
-	if( activeValue < min  )
-		activeValue = max
-
-	// Assign all players in realm the same shared value.
-	FRSetting_SetOnAllPlayers_Int( player, settingType, activeValue, true )
-
-	// Resolve any special calls needed.
-	bool spawnInPlace = true
-	bool resetDummies = true
-
-	switch( settingType )
-	{
-		case eFRSettingType.TARGETSPEED:
-			resetDummies = false
-			FRSetting_TargetSpeed_Set( realm, activeValue )
-			break
-		case eFRSettingType.FRDUMMIESPEED:
-			FRSetting_DummieSpeed_Set( realm, activeValue )
-			break
-		case eFRSettingType.FRDUMMIEMOVEMENT:
-			FRSetting_DummieMovement_Set( realm, activeValue )
-			FRDummie_Movements_Set_FromSelection( realm, activeValue )
-			break
-		case eFRSettingType.FRDUMMIESTANCE:
-			FRSetting_DummieStance_Set( realm, activeValue )
-			FRDummie_Stances_Set_FromSelection( realm, activeValue )
-			break
-		case eFRSettingType.FRDUMMIESHIELDLVL:
-			FRSetting_DummieShieldLvl_Set( realm, activeValue )
-			break
-	                   
-		case eFRSettingType.FRDUMMIESHOOTING:
-			FRSetting_DummieShooting_Set( realm, activeValue )
-			Handle_DummieShooting_Setting( player, activeValue )
-
-			bool isFCOn = activeValue == eDummie_Selector_Shooting.FULLCOMBAT
-			if ( isFCOn )
-				Remote_CallFunction_NonReplay( player, "FR_Settings_HUD_SetFCDummies_On" )
-			else
-				Remote_CallFunction_NonReplay( player, "FR_Settings_HUD_SetFCDummies_Off" )
-			break
-		case eFRSettingType.FRDUMMIESPAWNDISTS:
-			spawnInPlace = false
-			FRSetting_DummieSpawnDists_Set( realm, activeValue )
-			break
-                          
- 		default:
-			break
-	}
-
-	if( resetDummies )
-	{
-		// We have to wait a little bit to reset the Dummies so that the netvars can propagate.
-		thread Dummies_DelayedReset_Thread( realm, spawnInPlace )
-	}
-}
 
-// ----- PIN Functions
 
-void function PIN_Record_CustomizeRangeSettings_ForMenuClose( entity player )
-{
-	PIN_Record_CustomizeRangeSettings( player, eFiringRangeSettingsPINRecordContext.MENUCLOSE, "", "", player.GetOrigin() )
-}
 
-void function PIN_Record_CustomizeRangeSettings( entity player, int contextID, string attackerName = "", string weaponRef = "", vector location = < 0, 0, 0 > )
-{
-	if( !IsValid( player ) )
-		return
-
-	if( !player.IsPlayer() )
-		return
-
-	int team = player.GetTeam()
-
-	bool dynStatsOn 	= FRS_NetVar_Get_Bool( player, eFRSettingType.SHOWDYNSTATS )
-	bool dynTimerOn 	= FRS_NetVar_Get_Bool( player, eFRSettingType.SHOWDYNTIMER )
-	bool infReloadsOn 	= FRS_NetVar_Get_Bool( player, eFRSettingType.INFINITEMAGS )
-	bool hitMarksOn		= FRS_NetVar_Get_Bool( player, eFRSettingType.SHOWHITMARKS )
-	bool show3rdPerson	= FRS_NetVar_Get_Bool( player, eFRSettingType.SHOW3RDPERSON )
-	                    
-		bool legendUpgradesEnabled = FRS_NetVar_Get_Bool( player, eFRSettingType.LEGENDUPGRADESENABLED )
-                           
-
-	bool friendlyFireOn	= IsTeamRabid( team )
-
-	int targetSpeed		= FRS_NetVar_Get_Int( player, eFRSettingType.TARGETSPEED )
-
-	int dummieShields	= FRS_NetVar_Get_Int( player, eFRSettingType.FRDUMMIESHIELDLVL )
-	int dummieMovement	= FRS_NetVar_Get_Int( player, eFRSettingType.FRDUMMIEMOVEMENT )
-	int dummieStances	= FRS_NetVar_Get_Int( player, eFRSettingType.FRDUMMIESTANCE )
-	int dummieSpeed		= FRS_NetVar_Get_Int( player, eFRSettingType.FRDUMMIESPEED )
-
-                    
-		int dummieShoot		= FRS_NetVar_Get_Int( player, eFRSettingType.FRDUMMIESHOOTING )
-		int dummieSpawnDist = FRS_NetVar_Get_Int( player, eFRSettingType.FRDUMMIESPAWNDISTS )
-		bool dynamicSpawnsOn = FRS_NetVar_Get_Bool( player, eFRSettingType.DYNAMICDUMMIESON )
-		bool dummieHighlightsOn = FRS_NetVar_Get_Bool( player, eFRSettingType.DUMMIEHIGHLIGHTSON )
-      
-                       
-                          
-                           
-                              
-       
-
-	PIN_FiringRange_Settings( 	player, contextID, dynStatsOn, dynTimerOn, infReloadsOn, hitMarksOn, show3rdPerson, legendUpgradesEnabled, friendlyFireOn, targetSpeed,
-								dummieShields, dummieMovement, dummieStances,dummieSpeed, dummieShoot, dummieSpawnDist,
-								dynamicSpawnsOn, dummieHighlightsOn, attackerName, weaponRef, location )
-}
 
-void function PIN_CCB_Record_DynamicStats_TimeBetweenResets( entity player, int timeDelta )
-{
-	PIN_FiringRange_DynamicStats_TimeBetweenResets( player, timeDelta )
-}
 
-// -----
 
-void function Dummies_DelayedReset_Thread( int realm, bool spawnInPlace, float delay = 0.4 )
-{
-	wait( delay )
-	Dummies_Reset( realm, spawnInPlace )
-}
 
-                   
-void function Handle_DummieShooting_Setting( entity player, int setting )
-{
-	if ( setting == eDummie_Selector_Shooting.FULLCOMBAT )
-	{
-		FullCombatDummies_Start_ByPlayer( player )
-	}
-	else
-	{
-		FullCombatDummies_Stop_ByPlayer( player )
-	}
-}
-                         
-
-// -----
-
-void function FRSetting_SetOnAllPlayers_Int( entity player, int settingType, int value, bool notify = false )
-{
-	if( !IsValid( player ) || !player.IsPlayer() )
-		return
-
-	array< entity > playersInRealm = GetAllPlayersInRealm_ByPlayer( player )
-	foreach( pl in playersInRealm )
-	{
-		// [ R5DEV-442189 ] Safeguard
-		if( !IsValid( pl ) )
-			continue
-
-		FRSetting_SetOnPlayer_Int( pl, settingType, value )
-		if( notify )
-			Remote_CallFunction_NonReplay( pl, "SCB_Broadcast_FRSetting_Changed_Int", player, settingType, value )
-	}
-
-	int realm = GetFiringRangeRealm( player )
-	FRIntSetting_Set( realm, settingType, value )
-
-	switch( settingType )
-	{
-		case eFRSettingType.TARGETSPEED:
-			FRSetting_TargetSpeed_Set( realm, value )
-			break
-		case eFRSettingType.FRDUMMIESHIELDLVL:
-			break
-		case eFRSettingType.FRDUMMIESPEED:
-			FRSetting_DummieSpeed_Set( realm, value )
-			break
-		case eFRSettingType.FRDUMMIEMOVEMENT:
-			FRSetting_DummieMovement_Set( realm, value )
-			break
-		case eFRSettingType.FRDUMMIESTANCE:
-			FRSetting_DummieStance_Set( realm, value )
-			break
-
-		case eFRSettingType.FRDUMMIESHOOTING:
-			FRSetting_DummieShooting_Set( realm, value )
-			break
-
-		default:
-			break
-	}
-}
 
-// ---
-
-void function FRSetting_SetOnAllPlayers_Bool( entity player, int settingType, bool value, bool notify = false )
-{
-	if( !IsValid( player ) || !player.IsPlayer() )
-		return
-
-	array< entity > playersInRealm = GetAllPlayersInRealm_ByPlayer( player )
-	foreach( pl in playersInRealm )
-	{
-		FRSetting_SetOnPlayer_Bool( player, settingType, value )
-		if( notify )
-			Remote_CallFunction_NonReplay( pl, "SCB_Broadcast_FRSetting_Changed_Bool", player, settingType, value )
-	}
-
-	int realm = GetFiringRangeRealm( player )
-	FRBoolSetting_Set( realm, settingType, value )
-}
 
-// ---
 
-void function FRIntSetting_DummieSpeed_Set_OnAllPlayers( entity player, int value )
-{
-	if( !IsValid( player ) || !player.IsPlayer() )
-		return
 
-	array< entity > playersInRealm = GetAllPlayersInRealm_ByPlayer( player )
-	foreach( pl in playersInRealm )
-	{
-		FRIntSetting_DummieSpeed_Set_OnPlayer( pl, value )
-	}
 
-	int realm = GetFiringRangeRealm( player )
-	FRSetting_DummieSpeed_Set( realm, value )
-}
 
-void function FRIntSetting_DummieSpeed_Set_OnPlayer( entity player, int speed )
-{
-	FRSetting_SetOnPlayer_Int( player, eFRSettingType.FRDUMMIESPEED, speed )
-}
 
-// ---
-
-void function Dummies_Reset( int realm, bool CRDummies_InPlace = true )
-{
-	FR_ResidentDummies_DestroyInRealm( realm )
-
-	                   
-	if( DynDummie_Spawns_IsEnabled( realm ) )
-	{
-		if( CRDummies_InPlace )
-		{
-			CRDummies_RespawnInPlace( realm )
-		}
-		else
-		{
-			CRDummies_SpawnNew( realm )
-		}
-	}
-                          
-}
 
-                               
 
-const int MY_RANDOM_DUMMIE_TEAM = 97
 
-const int MAX_PERM_DEPLOYABLES_PER_PLAYER = 4
-table<entity, array<entity> > s_permDeployablesPerPlayer
-table<entity, array<entity> > s_charChangeCleanupDeployablesPerPlayer
-bool s_firingRangeLogicIsActive = false
 
-void function OnPlayerConnected( entity player )
-{
-	file.dynDummiesAutoStarted[ player ] <- false
 
-	s_permDeployablesPerPlayer[player] <- []
-	s_charChangeCleanupDeployablesPerPlayer[player] <- []
 
-	if( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
-	{
-		Remote_CallFunction_NonReplay( player, "SCB_FiringRange_EnableCharacterChange", true )
-		file.sessionStartTime[ player ] <- Time()
 
-		thread ExecutionWatch_Thread( player )
-	}
-}
 
-                         
-// --------------------------------------
-// ------------------- START: SERVER RANGEMASTER FUNCTIONS
-// -------------------
-
-// A RANGEMASTER ( RangeLeader )  is either the Team Leader or the team player whose PersistentVars were ready earliest.
-entity function RangeMaster_Get_ByPlayer( entity player )
-{
-	if( !IsValid( player ) )
-		return null
-
-	int team = player.GetTeam()
-	return( RangeMaster_Get( team ) )
-}
 
-entity function RangeMaster_Get( int team )
-{
-	if( !( team in file.readyPVarPlayers ))
-		return null
-
-	if( file.readyPVarPlayers[ team ].len() == 0 )
-		return null
-
-	array< entity > readiedPlayers = file.readyPVarPlayers[ team ]
-
-	// Remove stale entries in the readied players array
-	while(( readiedPlayers.len() > 0 ) && !IsValid( readiedPlayers[0] )  )
-	{
-		readiedPlayers.remove( 0 )
-	}
-
-	entity result
-
-	if( readiedPlayers.len() > 0 )
-	{
-		result = readiedPlayers[0]
-
-		foreach( readiedPlayer in readiedPlayers )
-		{
-			// readiedPlayer.IsPartyLeader() // S22 entity method, not in S3
-			if( IsValid( readiedPlayer ) )
-			{
-				result = readiedPlayer
-				break
-			}
-		}
-	}
-
-	return result
-}
 
-// Adds player to readied players array and returns TRUE if player is earliest connector according to the array.
-bool function RangeMaster_Check( entity player )
-{
-	if( !IsValid( player ) || !player.IsPlayer())
-		return false
 
-	int team = player.GetTeam()
 
-	ReadyPVarPlayers_Add( player )
 
-	RangeMaster_Update( team )
 
-	// Check for RangeMaster.
-	return( player == RangeMaster_Get( team ) )
-}
 
-int function RangeMaster_Update( int team )
-{
-	// New Team? Add to table.
-	if( !( team in file.rangeMasterEHIs ) )
-		file.rangeMasterEHIs[ team ] <- -1
-
-	array< entity > readiedPlayers = file.readyPVarPlayers[ team ]
-
-	// Remove stale entries in the readied players array
-	while(( readiedPlayers.len() > 0 ) && !IsValid( readiedPlayers[0] )  )
-	{
-		readiedPlayers.remove( 0 )
-	}
-
-	int result
-
-	// Check the Range Master, and notify if there's a new one.
-	result = eRangeMasterUpdateType.INVALID
-	if( readiedPlayers.len() == 0 )
-	{
-		file.rangeMasterEHIs[ team ] <- -1
-	}
-	else
-	{
-		entity rangeMaster = RangeMaster_Get( team )
-
-		if( IsValid( rangeMaster ) )
-		{
-			result = eRangeMasterUpdateType.SAME
-
-			// Apply Skins based on this Range Leader.
-			if ( GetCurrentPlaylistVarBool( "survival_staging_gun_skins", true ) )
-			{
-				thread SetWeaponSkinsByPlayer( rangeMaster )
-			}
-
-			// Check: is this the same guy as before?
-			int rMasterEHI = rangeMaster.GetEncodedEHandle()
-			if( rMasterEHI != file.rangeMasterEHIs[ team ] )
-			{
-				printt( format( "%s(): RangeMaster for team %s is now %s.", FUNC_NAME(), string( team ), rangeMaster.GetPlayerName() ) )
-				RangeMaster_EHI_Set_OnAllPlayers( team, rMasterEHI )
-				result = eRangeMasterUpdateType.NEW
-			}
-		}
-		else
-		{
-			file.rangeMasterEHIs[ team ] <- -1
-		}
-	}
-
-	RangeMaster_Code_Sync_Netvars( team )
-	FriendlyFire_Validate( team )
-	FiringRange_Banners_Init( team )
-
-	return result
-}
 
-void function FriendlyFire_Validate( int team )
-{
-	// If there's only one player left, turn off Friendly Fire.
-	array< entity > readiedPlayers = file.readyPVarPlayers[ team ]
-	if( readiedPlayers.len() == 1 )
-	{
-		UCB_SV_FRSetting_FriendlyFire( readiedPlayers[0], false, false )
-	}
-}
 
-void function RangeMaster_EHI_Set_OnAllPlayers( int team, int rMasterEHI )
-{
-	array< entity > teamPlayers = GetPlayerArrayOfTeam( team )
-	foreach( player in teamPlayers )
-	{
-		if( IsValid( player ) )
-		{
-			player.SetPlayerNetInt( NETVAR_FR_RANGEMASTER_EHI, rMasterEHI )
-			file.rangeMasterEHIs[ team ] <- rMasterEHI
-			//Remote_CallFunction_NonReplay( player, "SCB_Broadcast_RangeMaster_Change" )
-		}
-	}
-}
 
-void function RangeMaster_Notify_AllPlayers( int team )
-{
-	array< entity > teamPlayers = GetPlayerArrayOfTeam( team )
-	foreach( player in teamPlayers )
-	{
-		if ( IsValid( player ) )
-		{
-			RangeMaster_Notify_Player( player )
-		}
-	}
-}
 
-void function RangeMaster_Notify_Player( entity player )
-{
-	Remote_CallFunction_NonReplay( player, "SCB_Broadcast_RangeMaster_Change" )
-}
 
-void function RangeMaster_Code_Sync_Netvars( int team )
-{
-	foreach( player in file.readyPVarPlayers[ team ])
-	{
-		if( IsValid( player ) )
-		{
-			player.SetPlayerNetInt( NETVAR_FR_RANGEMASTER_EHI, file.rangeMasterEHIs[ team ] )
-		}
-		else
-		{
-			file.readyPVarPlayers[ team ].removebyvalue( player )
-		}
-	}
-}
 
-void function RangeMaster_PassToNext( entity player )
-{
-	if( !IsValid( player ) )
-		return
 
-	FRS_NetVar_Set_Bool( player, eFRSettingType.FRIENDLYFIRE, false )
-	int team = player.GetTeam()
-	ReadyPVarPlayers_Remove( player )
-	int result = RangeMaster_Update( team )
 
-	RangeMaster_Notify_AllPlayers( team )
 
-	thread RangeMaster_New_UpdateDummieParms_Thread( team, result )
-}
 
-void function RangeMaster_New_UpdateDummieParms_Thread( int team, int rangeMasterUpdateState )
-{
-	wait( 0.1 ) // Give New RangeMaster notification time to show first.
-
-	// New RangeMaster, turn off Shooting
-	if( rangeMasterUpdateState == eRangeMasterUpdateType.NEW )
-	{
-		entity rangeMaster = RangeMaster_Get( team )
-		if( IsValid( rangeMaster ) )
-		{
-			//thread UCB_SV_FRSetting_Change_Int( rangeMaster, eFRSettingType.FRDUMMIESHOOTING, eDummie_Selector_Shooting.OFF )
-
-			// Set the Dynamic Dummie Shooting Setting to match what's already set.
-			int realm = GetFiringRangeRealm( rangeMaster )
-			int value = FRSetting_DummieShooting_Get( realm )
-			UCB_SV_FRSetting_Change_Int( rangeMaster, eFRSettingType.FRDUMMIESHOOTING, value )
-		}
-	}
-}
 
-void function ReadyPVarPlayers_Add( entity player )
-{
-	if( !IsValid( player ) || !player.IsPlayer())
-		return
-
-	int team = player.GetTeam()
-
-	// Empty readyPVarPlayers? Then this player is the first and is thus RangeMaster.
-	if( !( team in file.readyPVarPlayers ))
-	{
-		file.readyPVarPlayers[ team ] <- []
-	}
-
-	if( !( file.readyPVarPlayers[ team ].contains( player ) ) )
-	{
-		file.readyPVarPlayers[ team ].append( player )
-	}
-}
 
-void function ReadyPVarPlayers_Remove( entity player )
-{
-	// IsInvalidButMemberVarsStillValid() // S22 function, not in S3
-	if( !IsValid( player ) || !player.IsPlayer() )
-		return
-
-	int team = player.GetTeam()
-
-	// Empty readyPVarPlayers? Then this player is the first and is thus RangeMaster.
-	if( !( team in file.readyPVarPlayers ))
-	{
-		file.readyPVarPlayers[ team ] <- []
-	}
-
-	if( file.readyPVarPlayers[ team ].contains( player ) )
-		file.readyPVarPlayers[ team ].removebyvalue( player )
-}
 
-array< entity > function ReadyPVarPlayers_Get_ByPlayer( entity player )
-{
-	return ReadyPVarPlayers_Get( player.GetTeam() )
-}
 
-array< entity > function ReadyPVarPlayers_Get( int team )
-{
-	if( !( team in file.readyPVarPlayers ))
-	{
-		file.readyPVarPlayers[ team ] <- []
-	}
-
-	return ( file.readyPVarPlayers[ team ] )
-}
 
-// -----
 
-void function PersistentDataReady_AddPlayer( entity player )
-{
-	if( !IsValid( player ) )
-		return
 
-	if( !player.IsPlayer() )
-		return
 
-	if( !file.persistentDataReadiedPlayers.contains( player ) )
-		file.persistentDataReadiedPlayers.append( player )
-}
 
-void function PersistentDataReady_RemovePlayer( entity player )
-{
-	if( file.persistentDataReadiedPlayers.contains( player ) )
-		file.persistentDataReadiedPlayers.fastremovebyvalue( player )
-}
 
-bool function PersistentData_IsReady_ForPlayer( entity player )
-{
-	return( file.persistentDataReadiedPlayers.contains( player ) )
-}
 
-// -------------------
-// ------------------- END: SERVER RANGEMASTER FUNCTIONS
-// --------------------------------------
-                               
-
-                         
-void function OnPlayerReadiedInRealm( entity player )
-{
-	if ( !IsValid (player) )
-		return
-
-	int realm = GetFiringRangeRealm ( player )
-	// FR_ManageNessiesForRealm( realm ) // S22 Nessie easter egg, not in S3
-
-	// Wait until the player's persistent data is ready.
-	while( !PersistentData_IsReady_ForPlayer( player ) )
-		wait( 0.1 )
-
-	// For Tracking Menu State
-	CustomizeRangeMenu_StateTracking_Add( player )
-
-	                   
-		DummieTargeting_RegisterPlayer( player )
-                          
-
-	// Init or Restore FR Settings.
-	bool persistenceready = expect bool ( player.GetPersistentVar( PERSISTENCEREADY_VAR ))
-
-	int settingType
-	int team = player.GetTeam()
-	int realmDirect = player.GetRealms()[0]
-	string playerName = player.GetPlayerName()
-
-	                   
-	CRParticipant_Add( player )
-                          
-
-	#if DEVELOPER
-		printt( FUNC_NAME() + " " + playerName + " team == " + player.GetTeam() )
-		printt( FUNC_NAME() + " " + playerName + " teamMemberIndex == " + player.GetTeamMemberIndex() )
-		printt( FUNC_NAME() + " " + playerName + " realm == " + realm )
-		printt( FUNC_NAME() + " " + playerName + " realmDirect == " + realmDirect )
-	#endif
-
-	RealmInfoEntity_Signal( realm, "StartFRDummies" )
-	if( !persistenceready )
-	{
-		// New user with no saved settings. Initialilze the settings by reading them from the game.
-
-		// Personal Settings. Set to Defaults.
-		FRSetting_SetOnPlayer_Bool( player, eFRSettingType.SHOWRUI, true )
-		FRSetting_DynStats_Set_OnPlayer( player, FRSETTING_DEFAULT_SHOWDYNSTATS )
-		FRSetting_DynTimer_Set_OnPlayer( player, FRSETTING_DEFAULT_SHOWDYNTIMER )
-		FRSetting_InfiniteReloads_Set_OnPlayer( player, FRSETTING_DEFAULT_INFINITERELOADS )
-		FRSetting_HitMarks_Set_OnPlayer( player, FRSETTING_DEFAULT_SHOWHITMARKS, false )
-		FRSetting_3rdPerson_Set_OnPlayer( player, FRSETTING_DEFAULT_SHOW3RDPERSON, false )
-
-		                    
-			FRSetting_LegendUpgradesEnabled_Set_OnPlayer( player, FRSETTING_DEFAULT_LEGENDUPGRADESENABLED, false )
-                            
-
-		// Shared Settings.
-		// --- Friendly Fire is not restore based on leader. 2 or more players need to be in the fr realm to trigger it.
-		FRSetting_SetOnPlayer_Bool( player, eFRSettingType.FRIENDLYFIRE, false )
-
-		int value
-		bool boolVal
-
-		// --- Get shared Target Speed
-		value = FRSetting_TargetSpeed_Get( realm )
-		FRIntSetting_TargetSpeed_Set_OnPlayer( player, value )
-
-		// --- Get shared Dummie Shield Level
-		value = FRSetting_ShieldLevel_Get( realm )
-		FRSetting_SetOnPlayer_Int( player, eFRSettingType.FRDUMMIESHIELDLVL, value )
-
-		boolVal = FRSetting_DummieHelmetMatchShields_Get( realm )
-		FRSetting_SetOnPlayer_Bool( player, eFRSettingType.FRDUMMIEHELMETMATCHSHIELDS, boolVal )
-
-		// --- Get shared Dummie Speed
-		value = FRSetting_DummieSpeed_Get( realm )
-		FRSetting_SetOnPlayer_Int( player, eFRSettingType.FRDUMMIESPEED, value )
-
-		// --- Get shared Dummie Movement
-		value = FRSetting_DummieMovement_Get( realm )
-		FRSetting_SetOnPlayer_Int( player, eFRSettingType.FRDUMMIEMOVEMENT, value )
-
-		// --- Get shared Dummie STATE
-		value = FRSetting_DummieStance_Get( realm )
-		FRSetting_SetOnPlayer_Int( player, eFRSettingType.FRDUMMIESTANCE, value )
-
-		                   
-			value = FRSetting_DummieShooting_Get( realm )
-			FRSetting_SetOnPlayer_Int( player, eFRSettingType.FRDUMMIESHOOTING , value )
-
-			// --- Get shared Dummie Spawn Distances
-			value = FRSetting_DummieSpawnDists_Get( realm )
-			FRSetting_SetOnPlayer_Int( player, eFRSettingType.FRDUMMIESPAWNDISTS , value )
-
-			// --- Dynamic Spawning
-			// If there is only 1 participant and their persistent data is not initialized, set Dynamic Spawning to TRUE.
-			bool dynSpawnDefault = 	frBoolSettings_Defaults[ eFRSettingType.DYNAMICDUMMIESON ]
-			FRS_PVar_Set_Bool( player, eFRSettingType.DYNAMICDUMMIESON, dynSpawnDefault )
-			array< entity > participants = Get_CombatRange_Participants( realm )
-			if( participants.len() > 1 )
-			{
-				FRSetting_SetOnPlayer_Bool( player, eFRSettingType.DYNAMICDUMMIESON, DynDummie_Spawns_IsEnabled( realm ) )
-			}
-			else
-			{
-				FRSetting_SetOnPlayer_Bool( player, eFRSettingType.DYNAMICDUMMIESON, dynSpawnDefault )
-			}
-
-			// --- Dummie Highlights
-			bool dummieHighlightsOnDefault = frBoolSettings_Defaults[ eFRSettingType.DUMMIEHIGHLIGHTSON ]
-			FRS_PVar_Set_Bool( player, eFRSettingType.DUMMIEHIGHLIGHTSON, dummieHighlightsOnDefault )
-			FRSetting_SetOnPlayer_Bool( player, eFRSettingType.DUMMIEHIGHLIGHTSON, dummieHighlightsOnDefault )
-
-                           
-
-		// Marked this player as having saved before.
-		player.SetPersistentVar( PERSISTENCEREADY_VAR, true )
-	}
-	else // Returning user with saved settings. Read and apply settings.
-	{
-
-		bool savedSetting_Bool
-		int savedSetting_Int
-
-		// Restore Personal Settings
-		savedSetting_Bool = FRS_PVar_Get_Bool( player, eFRSettingType.SHOWDYNSTATS )
-		FRSetting_DynStats_Set_OnPlayer( player, savedSetting_Bool )
-		FRSetting_DynTimer_Set_OnPlayer( player, false )
-
-		savedSetting_Bool = FRS_PVar_Get_Bool( player, eFRSettingType.INFINITEMAGS )
-		FRSetting_InfiniteReloads_Set_OnPlayer( player, savedSetting_Bool )
-
-		savedSetting_Bool = FRS_PVar_Get_Bool( player, eFRSettingType.SHOWHITMARKS )
-		FRSetting_HitMarks_Set_OnPlayer( player, savedSetting_Bool, false )
-		savedSetting_Bool = FRS_PVar_Get_Bool( player, eFRSettingType.SHOW3RDPERSON )
-		FRSetting_3rdPerson_Set_OnPlayer( player, savedSetting_Bool, false )
-
-		                    
-			// Legend Upgrade Enabled is initially based on the locked state. !Locked == Enabled.
-			savedSetting_Bool = !UpgradeCore_ProgressionLocked_ForPlayer_Get( player )
-			FRSetting_LegendUpgradesEnabled_Set_OnPlayer( player, savedSetting_Bool, false )
-                            
-
-		// Shared Settings
-		bool playerIsRangeMaster = RangeMaster_Check( player )
-
-		if(( playerIsRangeMaster ) || ( ReadyPVarPlayers_Get_ByPlayer( player ).len() == 1 ))
-		{
-			#if DEVELOPER
-				printt( format( "%s(): %s is the Range Master. Applying settings from this player. ", FUNC_NAME(), player.GetPlayerName() ) )
-			#endif
-			// Get and apply this player's shared settings.
-
-			int intSettingType
-			// --- Target Speed
-			FRSettings_Int_Propagate( player, eFRSettingType.TARGETSPEED )
-
-			// --- Dummie Shield Levels
-			FRSettings_Int_Propagate( player, eFRSettingType.FRDUMMIESHIELDLVL )
-
-			// --- Dummie Helmet Match Shields
-			FRSettings_Bool_Propagate( player, eFRSettingType.FRDUMMIEHELMETMATCHSHIELDS )
-
-			// --- Dummie Speeds
-			FRSettings_Int_Propagate( player, eFRSettingType.FRDUMMIESPEED )
-
-			// --- Dummie Movements & Dummie States
-			int movementSaved 	= FRS_PVar_Get_Int( player, eFRSettingType.FRDUMMIEMOVEMENT )
-			int stateSaved		= FRS_PVar_Get_Int( player, eFRSettingType.FRDUMMIESTANCE )
-			FRDummie_BehaviorData_Set_ByPlayerSelectors( player, movementSaved, stateSaved )
-			FRSettings_Int_Propagate( player, eFRSettingType.FRDUMMIEMOVEMENT )
-			FRSettings_Int_Propagate( player, eFRSettingType.FRDUMMIESTANCE )
-
-		                   
-			// --- Dummie Shooting
-			if( !file.dynDummiesAutoStarted[ player ] )
-			{
-				FRSetting_SetOnPlayer_Int( player, eFRSettingType.FRDUMMIESHOOTING, eDummie_Selector_Shooting.OFF )
-			}
-			FRSettings_Int_Propagate( player, eFRSettingType.FRDUMMIESHOOTING )
-
-			// --- Dummie Spawn Distances
-			FRSettings_Int_Propagate( player, eFRSettingType.FRDUMMIESPAWNDISTS )
-
-			// --- Dynamic Spawning
-			//FRSettings_Bool_Propagate( player, eFRSettingType.DYNAMICDUMMIESON )
-			FRSettings_DynDummies_Propagate( player )
-
-			// --- Dummie Highlights
-			bool dummieHighlightsOnDefault = frBoolSettings_Defaults[ eFRSettingType.DUMMIEHIGHLIGHTSON ]
-			FRS_PVar_Set_Bool( player, eFRSettingType.DUMMIEHIGHLIGHTSON, dummieHighlightsOnDefault )
-			FRSetting_SetOnPlayer_Bool( player, eFRSettingType.DUMMIEHIGHLIGHTSON, dummieHighlightsOnDefault )
-			FRSettings_DummieHighlightsOn_Propagate( player )
-
-                           
-
-			// Reset all the dummies after all the dummie settings are restored from the player.
-			Dummies_Reset( realm )
-		}
-		else // NOT RangeMaster
-		{
-			#if DEVELOPER
-				printt( format( "%s(): %s is NOT Range Master. Applying settings to this player. ", FUNC_NAME(), player.GetPlayerName() ) )
-			#endif
-
-			//// Read shared settings and set them to this player.
-			//// --- Friendly Fire: Read team rabid status and set friendly fire netvar accordingly.
-			//bool isRabid = IsTeamRabid( team )
-			//FRS_NetVar_Set_Bool( player, eFRSettingType.FRIENDLYFIRE, isRabid )
-
-			// Shared Int Settings
-			// --- Target Speed
-			savedSetting_Int = FRSetting_TargetSpeed_Get( realm )
-			FRIntSetting_TargetSpeed_Set_OnPlayer( player, savedSetting_Int )
-
-			// --- Dummie Speed
-			savedSetting_Int = FRSetting_DummieSpeed_Get( realm )
-			FRSetting_SetOnPlayer_Int( player, eFRSettingType.FRDUMMIESPEED, savedSetting_Int )
-
-			// --- Dummie Movemenets
-			savedSetting_Int = FRSetting_DummieMovement_Get( realm )
-			FRSetting_SetOnPlayer_Int( player, eFRSettingType.FRDUMMIEMOVEMENT, savedSetting_Int )
-
-			// --- Dummie States
-			savedSetting_Int = FRSetting_DummieStance_Get( realm )
-			FRSetting_SetOnPlayer_Int( player, eFRSettingType.FRDUMMIESTANCE, savedSetting_Int )
-
-			// --- Shield Levels
-			savedSetting_Int = FRSetting_ShieldLevel_Get( realm )
-			FRSetting_SetOnPlayer_Int( player, eFRSettingType.FRDUMMIESHIELDLVL, savedSetting_Int )
-
-			savedSetting_Bool = FRSetting_DummieHelmetMatchShields_Get( realm )
-			FRSetting_SetOnPlayer_Bool( player, eFRSettingType.FRDUMMIEHELMETMATCHSHIELDS, savedSetting_Bool )
-
-		                   
-			// --- Dummie Shooting
-			savedSetting_Int = FRSetting_DummieShooting_Get( realm )
-			FRSetting_SetOnPlayer_Int( player, eFRSettingType.FRDUMMIESHOOTING , savedSetting_Int )
-
-			// --- Spawn Dists
-			savedSetting_Int = FRSetting_DummieSpawnDists_Get( realm )
-			FRSetting_SetOnPlayer_Int( player, eFRSettingType.FRDUMMIESPAWNDISTS , savedSetting_Int )
-
-			// --- Dynamic Dummies On?
-			savedSetting_Bool = FRSetting_DynamicDummiesOn_Get( realm )
-			FRSetting_SetOnPlayer_Bool( player, eFRSettingType.DYNAMICDUMMIESON , savedSetting_Bool )
-
-			// --- Dummie Highlights On?
-			savedSetting_Bool = FRSetting_DummieHighlightsOn_Get( realm )
-			FRSetting_SetOnPlayer_Bool( player, eFRSettingType.DUMMIEHIGHLIGHTSON , savedSetting_Bool )
-
-                           
-		}
-	}
-	// --- Friendly Fire: Set the status based on Team rabidity.
-	bool ffOn = ( ReadyPVarPlayers_Get_ByPlayer( player ).len() > 1 ) ? IsTeamRabid( team ) : false
-	UCB_SV_FRSetting_FriendlyFire( player, ffOn, false )
-
-	                   
-		// [ R5DEV-480546 ] AutoStart Dynamic Spawning only once.
-		if( !file.dynDummiesAutoStarted[ player ] )
-		{
-			file.dynDummiesAutoStarted[ player ] <- true
-			if( !DynDummie_Spawns_IsEnabled( realm ) )
-			{
-				DynSpawns_AutoStart( player )
-			}
-		}
-                          
-
-	Remote_CallFunction_NonReplay( player, "FRSettings_Client_Update" )
-}
 
-void function FRSettings_Int_Propagate( entity player, int intSettingType )
-{
-	string errStr = format( "%s(): Int Setting Type out of range.", FUNC_NAME() )
-	Assert( (( intSettingType >= frIntSettings_NDX_Start ) && ( intSettingType < frIntSettings_NDX_End )), errStr )
-	
-	int min = frIntSettings_Mins[ intSettingType ]
-	int max = frIntSettings_Maxs[ intSettingType ]
-	int default_value = frIntSettings_Defaults[ intSettingType ]
-	
-	int intSetting_Saved = FRS_PVar_Get_Int( player, intSettingType  )
-	if(( intSetting_Saved < min ) || ( intSetting_Saved > max ))
-		intSetting_Saved = default_value 
-	
-	switch( intSettingType )
-	{
-		case eFRSettingType.TARGETSPEED:
-			FRIntSetting_TargetSpeed_Set_OnAllPlayers( player, intSetting_Saved )
-			break
-		case eFRSettingType.FRDUMMIESPEED:
-			FRIntSetting_DummieSpeed_Set_OnAllPlayers( player, intSetting_Saved )
-			break
-		case eFRSettingType.FRDUMMIEMOVEMENT:
-			FRSetting_SetOnAllPlayers_Int( player, eFRSettingType.FRDUMMIEMOVEMENT, intSetting_Saved )
-			break
-		case eFRSettingType.FRDUMMIESTANCE:
-			FRSetting_SetOnAllPlayers_Int( player, eFRSettingType.FRDUMMIESTANCE, intSetting_Saved )
-			break
-		case eFRSettingType.FRDUMMIESHIELDLVL:
-			FRSetting_SetOnAllPlayers_Int( player, eFRSettingType.FRDUMMIESHIELDLVL, intSetting_Saved )
-			break
-	                   
-		case eFRSettingType.FRDUMMIESHOOTING:
-			FRSetting_SetOnAllPlayers_Int( player, eFRSettingType.FRDUMMIESHOOTING, intSetting_Saved )
-			break
-		case eFRSettingType.FRDUMMIESPAWNDISTS :
-			FRSetting_SetOnAllPlayers_Int( player, eFRSettingType.FRDUMMIESPAWNDISTS, intSetting_Saved )
-			break
-                          
-	}
-}
 
-void function FRSettings_Bool_Propagate( entity player, int boolSettingType )
-{
-	string errStr = format( "%s(): Int Setting Type out of range.", FUNC_NAME() )
-	Assert( (( boolSettingType >= frBoolSettings_NDX_Start ) && ( boolSettingType < frBoolSettings_NDX_End )), errStr )
-
-	bool boolSetting_Saved = FRS_PVar_Get_Bool( player, boolSettingType  )
-
-	if( frSetting_ShouldBeSaved[ boolSettingType ] )
-	{
-		FRSetting_SetOnAllPlayers_Bool( player, boolSettingType, boolSetting_Saved )
-	}
-	else
-	{
-		FRS_PVar_Set_Bool( player, boolSettingType, frBoolSettings_Defaults[ boolSettingType ]  )
-		FRSetting_SetOnAllPlayers_Bool( player, boolSettingType, frBoolSettings_Defaults[ boolSettingType ] )
-	}
-}
 
-void function FRSettings_DynDummies_Propagate( entity player )
-{
-	int boolSettingType = eFRSettingType.DYNAMICDUMMIESON
-
-	bool boolSetting_Saved
-	if( file.dynDummiesAutoStarted[ player ] )
-	{
-		boolSetting_Saved = FRS_NetVar_Get_Bool( player, boolSettingType )
-	}
-	else
-	{
-		boolSetting_Saved = frBoolSettings_Defaults[ boolSettingType ]
-	}
-
-	FRS_PVar_Set_Bool( player, boolSettingType, boolSetting_Saved  )
-	FRSetting_SetOnAllPlayers_Bool( player, boolSettingType, boolSetting_Saved )
-}
 
-void function FRSettings_DummieHighlightsOn_Propagate( entity player )
-{
-	int boolSettingType = eFRSettingType.DUMMIEHIGHLIGHTSON
 
-	bool boolSetting_Saved = FRS_NetVar_Get_Bool( player, boolSettingType )
 
-	FRS_PVar_Set_Bool( player, boolSettingType, boolSetting_Saved  )
-	FRSetting_SetOnAllPlayers_Bool( player, boolSettingType, boolSetting_Saved )
-}
 
-bool function FR_IsPartyLeaderOrEarliestConnector( entity player )
-{
-	bool result = player == FR_GetTeamPartyLeaderOrEarliestConnector( player )
-	#if DEVELOPER
-		string resultStr
-		if( result  )
-			printt( format( "%s(): %s is the leader", FUNC_NAME(), string( player ) ))
-		else
-			printt( format( "%s(): %s is NOT leader", FUNC_NAME(), string( player ) ))
-	#endif
-	return( result )
-}
 
-entity function FR_GetTeamPartyLeaderOrEarliestConnector( entity player )
-{
-	int leaderIndex = player.GetPartyLeaderClientIndex()
-
-	// Uncomment to debug
-	#if DEVELOPER
-		printt( format( "%s(): %s Leader Index == %s", FUNC_NAME(), player.GetPlayerName(), string( leaderIndex ) ) )
-	#endif
-
-	array< entity > allPlayersOnTeam = GetPlayersInParty( player )
-	int playerIndex
-	entity result
-
-	if( leaderIndex == -1 )
-	{
-		result = allPlayersOnTeam[ 0 ]
-		foreach( pl in allPlayersOnTeam )
-		{
-			playerIndex = pl.GetPlayerIndex()
-
-			// Uncomment to debug
-			#if DEVELOPER
-				printt( format( "   %s(): %s Index == %s", FUNC_NAME(), pl.GetPlayerName(), string( playerIndex ) ) )
-			#endif
-			if( playerIndex <= result.GetPlayerIndex() )
-				result = pl
-		}
-	}
-	else
-	{
-		foreach( pl in allPlayersOnTeam )
-		{
-			playerIndex = pl.GetPlayerIndex()
-			// Uncomment to debug
-			#if DEVELOPER
-				printt( format( "   %s(): %s Index == %s", FUNC_NAME(), pl.GetPlayerName(), string( playerIndex ) ) )
-			#endif
-			if( playerIndex == leaderIndex )
-				result = pl
-			break
-		}
-	}
-	// Uncomment to debug
-	#if DEVELOPER
-		if( IsValid( result ) )
-			printt( format( "   %s(): Result == %s", FUNC_NAME(),string( result ) ) )
-	#endif
-	return result
-}
-                               
-
-void function OnPlayerDisconnected_FR( entity player )
-{
-	printf( "%s() - for player: %s", FUNC_NAME(), string( player ) )
-
-	// Remove saved start spawn entry for disconnected player.
-	EncodedEHandle playerHandle = EHIToEncodedEHandle( player )
-	if( playerHandle in file.playerStartSpawnData )
-	{
-		delete file.playerStartSpawnData[ playerHandle ]
-	}
-
-	if ( player in file.dynDummiesAutoStarted )
-	{
-		delete file.dynDummiesAutoStarted[ player ]
-	}
-
-	PersistentDataReady_RemovePlayer( player )
-
-	CustomizeRangeMenu_StateTracking_Remove( player )
-
-	player.Signal( "FRExecutionWatch" )
-
-	if( player in file.executionStartVictimOrigins )
-	{
-		delete( file.executionStartVictimOrigins[ player ] )
-	}
-
-	int team = player.GetTeam()
-	int realm = GetFiringRangeRealm( player )
-
-	// PIN Session length.
-	if( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) && ( player in file.sessionStartTime ))
-	{
-		float duration = Time() - file.sessionStartTime[ player ]
-
-		if( duration > FIRINGRANGE_MAX_SESSIONDURATION )
-		{
-			duration = FIRINGRANGE_MAX_SESSIONDURATION
-		}
-
-		PIN_FiringRange_SessionDuration( player, duration)
-		delete( file.sessionStartTime[ player ] )
-	}
-	RangeMaster_PassToNext( player )
-
-	// If last to leave, clean up all remaining dummies.
-	array< entity > playersInRealm = GetAllPlayersInRealm( realm )
-	bool lastToLeave = playersInRealm.len() == 0
-	if( lastToLeave )
-	{
-		#if DEVELOPER
-			printt( format( "%s was the last to leave realm %s", player.GetPlayerName(), string( realm ) ) )
-		#endif
-
-		                   
-			// Shut off dynamic spawning so no new dummies are created to replaced dummies about to be deleted.
-			DynDummie_Spawns_Stop( realm )
-                           
-
-		// Clear out remaining old dummies from this realm.
-		RealmInfoEntity_Signal( realm, "PermanentlyDestroyFRDummyTarget" )
-		array< entity > leftOverDummies = GetEntArrayByScriptName( FIRING_RANGE_DUMMIE_SCRIPT_NAME )
-		leftOverDummies.extend( GetEntArrayByScriptName( FIRING_RANGE_COMBAT_DUMMIE_SCRIPT_NAME ) )
-		foreach( dummie in leftOverDummies)
-		{
-			if( IsValid( dummie ) && ( dummie.GetRealms()[ 0 ] == realm ))
-			{
-				dummie.Destroy()
-			}
-		}
-	}
-
-	//
-	DoCleanupPlayerPermanents( player )
-
-	//
-	if ( player in s_permDeployablesPerPlayer )
-	{
-		array<entity> perms = s_permDeployablesPerPlayer[player]
-		foreach( perm in perms )
-		{
-			if ( IsValid( perm ) )
-			{
-				printf( "%s() - destroying '%s' for '%s'. [disconnect]", FUNC_NAME(), string( perm ), string( player ) )
-				perm.Destroy()
-			}
-		}
-		delete( s_permDeployablesPerPlayer[player] )
-	}
-
-	//
-	if ( player in s_charChangeCleanupDeployablesPerPlayer )
-		delete( s_charChangeCleanupDeployablesPerPlayer[player] )
-
-	//
-
-	int teamCount = GetPlayerArrayOfTeam_Connected( team ).len()
-	if ( teamCount == 1 )
-	{
-		entity rangeMaster = RangeMaster_Get( team )
-		if( IsValid( rangeMaster ) )
-		{
-			UCB_SV_FRSetting_FriendlyFire( rangeMaster, false, false )
-		}
-	}
-	else if ( teamCount == 0 )
-	{
-		SURVIVAL_ResetAllDoorsInRealm( realm )
-		// FR_CleanupNessieForRealm( realm ) // S22 Nessie easter egg, not in S3
-	}
-}
 
-void function FiringRange_PrePlayerChangedCharacterSetup( entity player, ItemFlavor character )
-{
-	if ( !s_firingRangeLogicIsActive )
-		return
-
-	if ( player.IsPhaseShifted() )
-		CancelPhaseShift( player )
-
-	if ( player in s_charChangeCleanupDeployablesPerPlayer )
-	{
-		array<entity> deps = s_charChangeCleanupDeployablesPerPlayer[player]
-		foreach( dep in deps )
-		{
-			if ( IsValid( dep ) )
-			{
-				printf( "%s() - destroying '%s' for '%s'. [character change]", FUNC_NAME(), string( dep ), string( player ) )
-				dep.Destroy()
-			}
-		}
-		deps.clear()
-	}
-}
 
-void function CleanOutAnyInvalidEnts( array<entity> ents )
-{
-	array<int> deadEntries
-	foreach( int index, entity ent in ents )
-	{
-		if ( !IsValid( ent ) )
-			deadEntries.append( index )
-	}
-
-	int deadCount = deadEntries.len()
-	for( int idx = 0; idx < deadCount; ++idx )
-	{
-		int indexToRemove = deadEntries[deadCount - 1 - idx]
-		ents.remove( indexToRemove )
-	}
-}
 
-void function FiringRange_AddToPermanentDeployableQuota( entity ent, entity player )
-{
-	if ( !s_firingRangeLogicIsActive )
-		return
-
-	Assert( !ent.IsPlayer() )
-
-	array<entity> perms = s_permDeployablesPerPlayer[player]
-	CleanOutAnyInvalidEnts( perms )
-	if ( perms.len() >= MAX_PERM_DEPLOYABLES_PER_PLAYER )
-	{
-		entity perm = perms.remove( 0 )
-		printf( "%s() - destroying '%s' for '%s'. [too many exist]", FUNC_NAME(), string( perm ), string( player ) )
-		perm.Destroy()
-	}
-
-	perms.append( ent )
-}
 
-void function FiringRange_AddToRemoveOnCharacterChange( entity ent, entity player )
-{
-	if ( !s_firingRangeLogicIsActive )
-		return
 
-	if(!IsValid(player))
-		return
 
-	Assert( !ent.IsPlayer() )
 
-	array<entity> deps = s_charChangeCleanupDeployablesPerPlayer[player]
-	CleanOutAnyInvalidEnts( deps )
-	deps.append( ent )
-}
 
-void function OnPlayerSpawned( entity player )
-{
-	thread function() : ( player )
-	{
-		if( !IsValid( player ) )
-			return
-
-		player.Signal( "FRPlayerSpawned" )
-		player.EndSignal( "FRPlayerSpawned" )
-		player.EndSignal( "OnDestroy" )
-		player.EndSignal( "OnDeath" )
-		player.UnfreezeControlsOnServer()
-
-		int realm = GetFiringRangeRealm( player )
-
-		EncodedEHandle playerHandle = EHIToEncodedEHandle( player )
-		if( playerHandle in file.playerRespawnData )
-		{
-			
-			//player.ClearParent() // Fix for R5DEV-383498?
-
-			player.SetAngles( file.playerRespawnData[playerHandle].respawnAngles )
-
-			vector safeSpot = file.playerRespawnData[ playerHandle ].respawnPos
-			vector safeSpotOnNavmesh = NavMesh_GetClosestPoint( safeSpot )
-
-			#if DEVELOPER
-				if( DEBUG_RESPAWNING )
-				{
-					DebugDrawSphere( safeSpotOnNavmesh, 48, 0, 0, 255, true, 30 )
-				}
-			#endif
-
-			// Teleport to new location because SetOrigin() and PutPlayerInSafeSpot() don't do the job for mantles.
-			// player.StartTeleport() // S22 entity method, not in S3
-			WaitFrame()
-			if( !IsValid( player ) )
-				return
-
-			bool success = TeleportPlayerNoInterp( player, safeSpotOnNavmesh )
-
-			// player.EndTeleport() // S22 entity method, not in S3
-
-			if( !success )
-			{
-				PutPlayerInSafeSpot( player, null, null, safeSpotOnNavmesh, safeSpotOnNavmesh )
-				#if DEVELOPER
-					if( DEBUG_RESPAWNING )
-					{
-						DebugDrawSphere( safeSpotOnNavmesh, 48, 0, 255, 0, true, 30 )
-					}
-				#endif
-			}
-		}
-
-		// Save start position if new player.
-		if( !( playerHandle in file.playerStartSpawnData ))
-		{
-			PlayerDeathLocData startPos 
-			startPos.respawnPos = player.GetOrigin()
-			startPos.respawnAngles = player.GetAngles()
-			
-			file.playerStartSpawnData[ playerHandle ] <- startPos
-		}
-
-		HolsterAndDisableWeapons( player )
-
-		WaitFrame()
-
-		DeployAndEnableWeapons( player )
-
-                           
-
-			// Give Armor if player doesn't have one already.
-			string equipSlot = "armor"
-			LootData existingArmor = EquipmentSlot_GetEquippedLootDataForSlot( player, "armor" )
-			LootData existingHelmet = EquipmentSlot_GetEquippedLootDataForSlot( player, "helmet" )
-
-			// If player has no armor and no helmet, give them basic body shield and helmet.
-			if(( existingArmor.ref == "" ) && ( existingHelmet.ref == "" ) )
-			{
-				array<string> equipmentLoadout = ParseEquipmentLoadoutText( FR_GetArmorLoadoutString(), false, [] )
-				foreach( equipment in equipmentLoadout )
-				{
-					if( equipment.find( "armor" ) > -1 )
-					{
-						Give_Appropriate_StartingArmor( player )
-					}
-					else
-					{
-						SURVIVAL_GivePlayerEquipment( player, equipment, 0, null, "", false )
-					}
-				}
-				string itemRef = EquipmentSlot_GetLootRefForSlot( player, "armor" )
-				if ( SURVIVAL_Loot_IsRefValid( itemRef ) )
-				{
-					LootData data = SURVIVAL_Loot_GetLootDataByRef( itemRef )
-					player.SetShieldHealthMax( SURVIVAL_GetCharacterShieldHealthMaxForArmor( player, data ) )
-					player.SetShieldHealth( SURVIVAL_GetCharacterShieldHealthMaxForArmor( player, data ) )
-				}
-			}
-
-			// Give Consumables if player doesn't have any already.
-			if( SURVIVAL_GetPlayerInventory( player ).len() == 0 )
-			{
-				array<string> defaultConsumables = ParseConsumableLoadoutText( FR_GetConsumableLoadoutString(), false )
-				CharacterLoadouts_GiveConsumableLoadoutToPlayer( player, defaultConsumables )
-			}
-
-			// Initialize settings if it doesn't already exist.
-			FRDummie_BehaviorData_InitForPlayer( player )
-
-			// Show the HUD overlay if it's set to show.
-			Remote_CallFunction_NonReplay( player, "ServerCallback_FRSettings_Restore_RUI" )
-
-			SURVIVAL_AutoEquipOrdnanceFromInventory( player, false )
-			Remote_CallFunction_NonReplay( player, "ServerCallback_RefreshInventoryAndWeaponInfo" )
-			Remote_CallFunction_NonReplay( player, "SCB_DynStats_ResetStats" )
-
-			FRSetting_InfiniteReloads_Restore_From_NetVar( player )
-
-			                   
-				if( FullCombatDummies_IsEnabled( realm  ) )
-					Dummies_Reset( realm )
-                            
-
-       
-                                                               
-    
-                                              
-                                   
-    
-                                 
-
-		if( playerHandle in file.playerRespawnData )
-			delete file.playerRespawnData[ playerHandle ]
-
-		                    
-			Remote_CallFunction_NonReplay( player, "SCB_Restore_UpgradeCore_Rui" )
-                            
-	}()
-}
 
-void function Give_Appropriate_StartingArmor( entity player )
-{
-	                    
-		if( UpgradeCore_ArmorTiedToUpgrades())
-		{
-			SURVIVAL_GivePlayerEquipment( player, "armor_core_pickup_lv1", 0, null, "", false )
-		}
-		else
-                           
-	{
-		SURVIVAL_GivePlayerEquipment( player, "armor_pickup_lv1", 0, null, "", false )
-	}
 
-}
 
 
-string function FR_GetArmorLoadoutString()
-{
-	string result
-                     
-		if( UpgradeCore_IsEnabled() )
-		{
-			return FR_DEFAULT_ARMOR_LOADOUT_UGRADECORE
-		}
-		else
-		{
-			return GetCurrentPlaylistVarString( "fr_default_armor_loadout", FR_DEFAULT_ARMOR_LOADOUT )
-		}
-      
-                                                                                            
-                           
-
-	unreachable
-}
 
-string function FR_GetConsumableLoadoutString()
-{
-	return GetCurrentPlaylistVarString( "fr_default_consumables_loadout", FR_DEFAULT_CONSUMABLES_LOADOUT )
-}
 
-#if DEVELOPER
-void function Debug_PlayerWeapons( entity player )
-{
-	if ( !IsValid( player ) )
-		return
-
-	printt( "FR_DeadPlayer: " + player )
-	printt( "FR_DeadPlayer: Wepaons" )
-
-	for ( int slot = WEAPON_INVENTORY_SLOT_PRIMARY_0; slot <= WEAPON_INVENTORY_SLOT_GADGET; ++slot )
-	{
-		entity weapon = player.GetNormalWeapon( slot )
-		if ( !IsValid( weapon ) )
-			continue
-		printt( weapon )
-	}
-
-	foreach ( offhandWeap in player.GetOffhandWeapons() )
-	{
-		if ( !IsValid( offhandWeap ) )
-			continue
-		printt( offhandWeap )
-	}
-}
-#endif
-
-void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
-{
-	// [ R5DEV-489904 ] Close Character Select if player dies.
-	Remote_CallFunction_NonReplay( victim, "SCB_CloseCharacterSelectMenu" )
-
-	#if DEVELOPER
-	Debug_PlayerWeapons( victim )
-	#endif
-	ResetPlayerInventory( victim )
-	victim.FreezeControlsOnServer()
-
-	int damageSourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-	PIN_CustomizeRangeSettings_ForPlayerKilled( victim, damageInfo, damageSourceId, victim.GetOrigin() )
-
-	if( damageSourceId == eDamageSourceId.damagedef_unknown || damageSourceId == eDamageSourceId.outOfBounds || damageSourceId == eDamageSourceId.fall) //if any of these cases occur, put the player at the top of the hill
-		return
-
-	if( damageSourceId == eDamageSourceId.human_execution )
-	{
-		if( IsValid( attacker ) )
-		{
-			thread PlayKillQuipThread( victim, ToEHI( attacker ), null, 2.0 )
-		}
-	}
-
-	EncodedEHandle victimHandle = EHIToEncodedEHandle( victim )
-
-	//since gold ko shields were removed, allowing respawns at player death location in firing range
-	if( !( victimHandle in file.playerRespawnData) )
-	{
-		PlayerDeathLocData pdld
-
-		pdld.respawnPos = NavMesh_GetClosestPoint( victim.GetOriginOutOfTraversal())
-
-		// If killed by dummie, put the player at the starting area. They should have a starting area saved from OnSpawned.
-		if( attacker.IsNPC() && ( victimHandle in file.playerStartSpawnData ))
-		{
-			#if DEVELOPER
-				printt( victim.GetPlayerName() + " was killed by an NPC. Dummie!" )
-			#endif
-
-			pdld.respawnPos 	= file.playerStartSpawnData[ victimHandle ].respawnPos
-			pdld.respawnAngles 	= file.playerStartSpawnData[ victimHandle ].respawnAngles
-		}
-		else if( victim.IsMantling() )
-		{
-			pdld.respawnPos = victim.GetMantlingEndPosition()
-
-			#if DEVELOPER
-				if ( DEBUG_MANTLING )
-				{
-					printt( format( "%s(): Mantling detected", FUNC_NAME() ) )
-					DebugDrawSphere( pdld.respawnPos, 48, 255, 0, 0, true, 60 )
-				}
-			#endif
-		}
-		else if(  damageSourceId == eDamageSourceId.human_execution )
-		{
-			#if ASSERTS
-				string errMsg = format( "ERROR in %s(): player %s not in file.executionStartVictimOrigins", FUNC_NAME(), victim.GetPlayerName() )
-				Assert( victim in file.executionStartVictimOrigins, errMsg )
-			#endif
-			pdld.respawnPos = file.executionStartVictimOrigins[ victim ]
-		}
-		else if (( damageSourceId == eDamageSourceId.crushed ) || ( damageSourceId == eDamageSourceId.damagedef_crush ))
-		{
-			pdld.respawnPos = victim.GetOrigin()
-		}
-
-		vector ornull testSafeSpot = CanPutPlayerInSafeSpot( victim, null, null, true, true, pdld.respawnPos, pdld.respawnPos )
-		if( testSafeSpot != null )
-		{
-			expect vector( testSafeSpot )
-			pdld.respawnPos = testSafeSpot
-		}
-		pdld.respawnPos = NavMesh_GetClosestPoint( pdld.respawnPos )
-
-		#if DEVELOPER
-			if( DEBUG_RESPAWNING )
-			{
-				DebugDrawSphere( pdld.respawnPos, 40, 255, 0, 0, true, 30 )
-			}
-		#endif
-
-		pdld.respawnAngles = victim.GetAngles()
-		file.playerRespawnData[ victimHandle ] <- pdld
-	}
-}
 
-void function OnPlayerBleedoutChanged( entity player, int newState )
-{
-	if( newState > BS_NOT_BLEEDING_OUT )
-	{
-		Remote_CallFunction_NonReplay( player, "SCB_CloseCharacterSelectMenu" )
-	}
-}
 
-void function PIN_CustomizeRangeSettings_ForPlayerKilled( entity player, var damageInfo, int damageSourceId, vector deathLocation )
-{
-	entity attacker = DamageInfo_GetAttacker( damageInfo )
-	entity weapon = DamageInfo_GetWeapon( damageInfo )
-
-	int contextID = eFiringRangeSettingsPINRecordContext.PLAYERDEATHBYNONPLAYER
-	string attackerName = ""
-	if( IsValid( attacker ) )
-	{
-		if( attacker.IsPlayer() )
-		{
-			attackerName = attacker.GetPlayerName()
-
-			if( damageSourceId == eDamageSourceId.human_execution )
-			{
-				contextID = eFiringRangeSettingsPINRecordContext.PLAYERDEATHBYPLAYEREXECUTION
-			}
-			else
-			{
-				contextID = eFiringRangeSettingsPINRecordContext.PLAYERDEATHBYPLAYER
-			}
-		}
-		else
-		{
-			attackerName = attacker.GetScriptName()
-		}
-	}
-	else
-	{
-		switch( damageSourceId )
-		{
-			case eDamageSourceId.crushed:
-			case eDamageSourceId.damagedef_crush:
-				contextID = eFiringRangeSettingsPINRecordContext.PLAYERDEATHBYCRUSH
-				break
-			case eDamageSourceId.outOfBounds:
-				contextID = eFiringRangeSettingsPINRecordContext.PLAYERDEATHBYOOB
-				break
-			case eDamageSourceId.fall:
-				contextID = eFiringRangeSettingsPINRecordContext.PLAYERDEATHBYFALL
-				break
-			default:
-				contextID = eFiringRangeSettingsPINRecordContext.PLAYERDEATHBYUNKNOWN
-				break
-		}
-	}
-
-	string weaponName = ""
-	if( IsValid( weapon ) )
-	{
-		weaponName = weapon.GetWeaponClassName()
-	}
-
-	PIN_Record_CustomizeRangeSettings( attacker, contextID, attackerName, weaponName, deathLocation )
-}
 
-void function FiringRange_CleanUpPlayerPermanents( entity player )
-{
-	if ( player.IsPhaseShifted() )
-		CancelPhaseShift( player )
-
-	DoCleanupPlayerPermanents( player )
-
-	if ( player in s_permDeployablesPerPlayer )
-	{
-		array<entity> perms = s_permDeployablesPerPlayer[player]
-		foreach( perm in perms )
-		{
-			if ( IsValid( perm ) )
-			{
-				perm.Destroy()
-			}
-		}
-		s_permDeployablesPerPlayer[player].clear()
-	}
-}
 
-                         
-void function ClientToServer_FiringRange_ResetHealthOnSameCharacterSelect( entity player )
-{
-	//Make sure Player is alive when using character select to avoid assert
-	if ( IsAlive( player ) )
-	{
-		player.SetHealth( player.GetMaxHealth() )
-		player.SetShieldHealth( player.GetShieldHealthMax() )
-	}
-}
-                               
-
-void function ClientToServer_FiringRange_StopValkPassive( entity player )
-{
-	if	(PlayerHasPassive( player, ePassives.PAS_VALK ))
-	{
-		CodeCallback_OnPlayerJetpackStop( player )
-	}
-}
 
-void function ClientToServer_FiringRange_MenuIsOn( entity player )
-{
-	if	(PlayerHasPassive( player, ePassives.PAS_CRYPTO ))
-	{
-		SetForceExitDroneView( true )
-	}
 
-}
 
-void function ClientToServer_FiringRange_MenuIsOff ( entity player )
-{
-	if	(PlayerHasPassive( player, ePassives.PAS_CRYPTO ))
-	{
-		SetForceExitDroneView( false )
-	}
 
-}
 
-array< entity > function GetSquadPlayers_ByPlayer( entity player )
-{
-	array< entity > teamPlayers = ReadyPVarPlayers_Get_ByPlayer( player )
-	return teamPlayers
-}
 
-void function UCB_ResetDoors( entity player )
-{
-	int realm = GetCombatRangeRealm( player )
-	SURVIVAL_ResetAllDoorsInRealm( realm )
-}
 
-                    
-void function UCB_LegendUpgradesReset( entity player )
-{
-	// Reset Legend Upgrades for given player.
-	UpgradeCore_Set_Level( player, 0 )
-
-	array< entity > teamPlayers = GetSquadPlayers_ByPlayer( player )
-	foreach( entity teamPlayer in teamPlayers )
-	{
-		if( IsValidPlayer( teamPlayer ) )
-		{
-			Remote_CallFunction_NonReplay( teamPlayer, "SCB_Broadcast_UpgradeCore_Level_Set", player, 0 )
-		}
-	}
-}
-                          
 
-// ----- Customize Range Menu State Tracking Functions
 
-void function UCB_CustomizeRangeMenu_TrackState( entity player, bool isOn )
-{
-	if ( !IsValid( player ) || !player.IsPlayer() )
-		return
 
-	if( !( player in file.customizeRangeMenuIsOpen ) )
-		return
 
-	#if DEVELOPER
-		printt( format( "Customize Range Menu ON State for %s set to %s", player.GetPlayerName(), string( isOn ) ) )
-	#endif
 
-	file.customizeRangeMenuIsOpen[ player ] <- isOn
-}
 
-void function CustomizeRangeMenu_StateTracking_Add( entity player, bool isOn = false )
-{
-	file.customizeRangeMenuIsOpen[ player ] <- false
-}
 
-void function CustomizeRangeMenu_StateTracking_Remove( entity player )
-{
-	if( player in file.customizeRangeMenuIsOpen )
-	{
-		delete( file.customizeRangeMenuIsOpen[player] )
-	}
-}
 
-bool function CustomizeRangeMenu_IsOpen( entity player )
-{
-	if( !( player in file.customizeRangeMenuIsOpen ) )
-		return false
 
-	// Uncomment to debug.
-	//#if DEVELOPER
-	//	printt( format( "%s(): Customize Range Menu State Open == %s", FUNC_NAME(), string( file.customizeRangeMenuIsOpen[ player ] )) )
-	//#endif
 
-	return( file.customizeRangeMenuIsOpen[ player ] )
-}
 
-// ----- Execution Special Handling
-
-void function ExecutionWatch_Thread( entity player )
-{
-	player.Signal( "FRExecutionWatch" )
-	player.EndSignal( "OnDestroy", "FRExecutionWatch" )
-
-	while( true )
-	{
-		// Save the victim player's origin at the START of the execution, to be used for respawning after death.
-		player.WaitSignal( "OnSyncedMeleeVictim" )
-		file.executionStartVictimOrigins[ player ] <- player.GetOrigin()
-	}
-}
 
 
-// -----
 
-#if DEVELOPER
-void function DEV_Reset_Persistence( entity player )
-{
-	#if DEVELOPER
-		printt( "Persistence Reset for Player " + player.GetPlayerName() )
-	#endif // DEVELOPER
-	player.SetPersistentVar( PERSISTENCEREADY_VAR, false )
-}
 
-void function DEV_PrintReadiedPlayers( entity player )
-{
-	int team = player.GetTeam()
-
-	if( !( team in file.readyPVarPlayers ) )
-	{
-		file.readyPVarPlayers[ team ] <- []
-	}
-
-	array< entity > readiedPlayers = file.readyPVarPlayers[ team ]
-	foreach( readiedPlayer in readiedPlayers )
-	{
-		string isLeader = "is NOT" // S3: IsPartyLeader() entity method doesn't exist
-		printt( format( "Player %s %s Party Leader", readiedPlayer.GetPlayerName(), isLeader ) )
-	}
-}
 
-void function DEV_CheckWeapons( entity player )
-{
-	array <entity> activeWeapons = SURVIVAL_GetPrimaryWeaponsSorted( player )
-	foreach( weapon in activeWeapons )
-	{
-		int weaponType = weapon.GetWeaponType()
-		string ammoTypeRef = AmmoType_GetRefFromIndex( weapon.GetWeaponAmmoPoolType() )
-		printt( format( "DEV:Weapon Type: %s \n", string( weaponType )))
-		printt( format( "DEV:Weapon AmmoTypeRef: %s \n", ammoTypeRef ))
-	}
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
-#endif // DEVELOPER
 
-#endif // SERVER
 
-#if CLIENT
 
 void function OnClientScriptInit( entity player )
 {
@@ -3886,40 +3889,40 @@ void function IntroDisplayThread()
 		if ( IsValid( viewPlayer ) )
 			MapZones_ZoneIntroText( viewPlayer, ("#" + GetMapName()), -1 )
 
-		                    
+
 			if( UpgradeCore_IsEnabled() && UpgradeCore_ShowHudUpgradeSelection() )
 			{
 				thread UpgradeCore_RuiThread( viewPlayer )
 			}
-                            
+
 
 		wait 6.0
 		SCB_Broadcast_RangeMaster_Change()
 	}()
 }
-#endif // CLIENT
 
 
-#if SERVER
-const asset TRAINING_DUMMY_MODEL = $"mdl/humans/class/medium/dummy_v20_base_w.rmdl"
-void function TrainingDummyInit()
-{
-	//PrecacheModel( TRAINING_DUMMY_MODEL )
-}
-#endif // SERVER
 
-/*
-┌─────━┿────┿━─────┐
-	Dyanmic Stats
-└─────━┿────┿━─────┘
-*/
-                         
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function SCB_ShowDynStats_ByPVar()
 {
 	entity player = GetLocalViewPlayer()
 
-	// Show or Hide the Dynamic Stats based on the PVar.
+	
 	bool isOn = FRS_PVar_Get_Bool( player, eFRSettingType.SHOWDYNSTATS )
 
 	if ( isOn )
@@ -3934,7 +3937,7 @@ void function SCB_ShowDynTimer_ByPVar()
 {
 	entity player = GetLocalViewPlayer()
 
-	// Show or Hide the Dynamic Stats based on the PVar.
+	
 	bool isOn = FRS_PVar_Get_Bool( player, eFRSettingType.SHOWDYNTIMER )
 
 	if ( isOn )
@@ -3960,11 +3963,11 @@ void function DynStats_OnWeaponFired( entity player, entity weapon, string weapo
 		 || IsBitFlagSet( weapon.GetWeaponTypeFlags(), WPT_CONSUMABLE ) 
 		 || IsBitFlagSet( weapon.GetWeaponTypeFlags(), WPT_SURVIVAL ) )
 	{
-		if ( weaponName != "mp_ability_sniper_ult" && weaponName != "mp_weapon_mobile_hmg" ) //if a legends ability is a weapon, thats fine
+		if ( weaponName != "mp_ability_sniper_ult" && weaponName != "mp_weapon_mobile_hmg" ) 
 			return
 	}
 
-	// Increment shots fired stat.
+	
 	file.shotsFired+= weapon.GetProjectilesPerShot()
 
 	DynStats_UpdateStats_RUI (
@@ -3983,7 +3986,7 @@ void function OnPlayerDidDamage ( entity attacker, entity victim, vector damageP
 
 	table< string, bool > damageFlags
 
-	// Flags actually used below.
+	
 	damageFlags[ "DF_BULLET" ] <- IsBitFlagSet( damageType, DF_BULLET )
 	damageFlags[ "DF_HEADSHOT" ] <- IsBitFlagSet( damageType, DF_HEADSHOT )
 	damageFlags[ "DF_MELEE" ] <- IsBitFlagSet( damageType, DF_MELEE )
@@ -3991,46 +3994,46 @@ void function OnPlayerDidDamage ( entity attacker, entity victim, vector damageP
 	damageFlags[ "DF_SHIELD_DAMAGE" ] <- IsBitFlagSet( damageType, DF_SHIELD_DAMAGE )
 	damageFlags[ "DF_SNIPER" ] <- IsBitFlagSet( damageType, DF_SNIPER )
 
-	/*
-	 	Below are the rest of the damage flag possibilities.
-	 	Uncomment to see what flags a weapon is setting.
-	 */
-	//damageFlags[ "DF_BYPASS_SHIELD" ] <- IsBitFlagSet( damageType, DF_BYPASS_SHIELD )
-	//damageFlags[ "DF_CRITICAL" ] <- IsBitFlagSet( damageType, DF_CRITICAL )
-	//damageFlags[ "DF_OVERFLOW" ] <- IsBitFlagSet( damageType, DF_OVERFLOW )
-	//damageFlags[ "DF_DISSOLVE" ] <- IsBitFlagSet( damageType, DF_DISSOLVE )
-	//damageFlags[ "DF_DOOMED_HEALTH_LOSS" ] <- IsBitFlagSet( damageType, DF_DOOMED_HEALTH_LOSS )
-	//damageFlags[ "DF_ELECTRICAL" ] <- IsBitFlagSet( damageType, DF_ELECTRICAL )
-	//damageFlags[ "DF_EXPLOSION" ] <- IsBitFlagSet( damageType, DF_EXPLOSION )
-	//damageFlags[ "DF_GIB" ] <- IsBitFlagSet( damageType, DF_GIB )
-	//damageFlags[ "DF_INSTANT" ] <- IsBitFlagSet( damageType, DF_INSTANT )
-	//damageFlags[ "DF_KILLSHOT" ] <- IsBitFlagSet( damageType, DF_KILLSHOT )
-	//damageFlags[ "DF_KNOCKDOWN" ] <- IsBitFlagSet( damageType, DF_KNOCKDOWN )
-	//damageFlags[ "DF_KNOCK_BACK" ] <- IsBitFlagSet( damageType, DF_KNOCK_BACK )
-	//damageFlags[ "DF_MAX_RANGE" ] <- IsBitFlagSet( damageType, DF_MAX_RANGE )
-	//damageFlags[ "DF_NO_HITBEEP" ] <- IsBitFlagSet( damageType, DF_NO_HITBEEP )
-	//damageFlags[ "DF_NO_SELF_DAMAGE" ] <- IsBitFlagSet( damageType, DF_NO_SELF_DAMAGE )
-	//damageFlags[ "DF_OVERSHIELD" ] <- IsBitFlagSet( damageType, DF_OVERSHIELD )
-	//damageFlags[ "DF_RADIUS_DAMAGE" ] <- IsBitFlagSet( damageType, DF_RADIUS_DAMAGE )
-	//damageFlags[ "DF_RAGDOLL" ] <- IsBitFlagSet( damageType, DF_RAGDOLL )
-	//damageFlags[ "DF_SHADOW_DAMAGE" ] <- IsBitFlagSet( damageType, DF_SHADOW_DAMAGE )
-	//damageFlags[ "DF_SHIELD_ONLY_DAMAGE" ] <- IsBitFlagSet( damageType, DF_SHIELD_ONLY_DAMAGE )
-	//damageFlags[ "DF_SHIELD_SYPHON" ] <- IsBitFlagSet( damageType, DF_SHIELD_SYPHON )
-	//damageFlags[ "DF_SHOTGUN" ] <- IsBitFlagSet( damageType, DF_SHOTGUN )
-	//damageFlags[ "DF_SKIPS_DOOMED_STATE" ] <- IsBitFlagSet( damageType, DF_SKIPS_DOOMED_STATE )
-	//damageFlags[ "DF_SOUR" ] <- IsBitFlagSet( damageType, DF_SOUR )
-	//damageFlags[ "DF_STUN_AI" ] <- IsBitFlagSet( damageType, DF_STUN_AI )
+	
 
-	if ( damageAmount <= 0 || damageFlags[ "DF_MELEE" ] || !damageFlags[ "DF_BULLET" ] ) // dont include melee or non bullets in dynamic stats
+
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+	if ( damageAmount <= 0 || damageFlags[ "DF_MELEE" ] || !damageFlags[ "DF_BULLET" ] ) 
 	{
-		if ( !damageFlags[ "DF_SNIPER" ]  ) // allow chargerifle through these checks.
+		if ( !damageFlags[ "DF_SNIPER" ]  ) 
 			return
 	}
 
 	int damageInt = int(damageAmount)
 	if( damageFlags[ "DF_SHIELD_BREAK" ] )
 	{
-		if( !damageFlags[ "DF_SHIELD_DAMAGE" ] ) // only count one instance as a hit, but include both damage amounts
+		if( !damageFlags[ "DF_SHIELD_DAMAGE" ] ) 
 		{
 			file.damage += float(damageInt)
 			DynStats_UpdateStats_RUI (
@@ -4106,7 +4109,7 @@ void function DynTimer_SaveAndResetTimer()
 	if ( file.dynamicTimerRui == null )
 		return
 
-	// Save Timer data
+	
 	float lastResetTime = file.lastResetTime == -1 ? Time() : file.lastResetTime
 	float timeSinceLastReset = Time() - lastResetTime
 	float countdownDuration = 0
@@ -4151,7 +4154,7 @@ void function PIN_CL_Record_DynamicStats_TimeBetweenResets( entity player )
 {
 	if( file.lastResetTime == -1 )
 	{
-		// First reset. Don't PIN this.
+		
 		file.lastResetTime = Time()
 	}
 	else
@@ -4171,29 +4174,18 @@ void function PIN_CL_Record_DynamicStats_TimeBetweenResets( entity player )
 	}
 }
 
-// S3: LocalizeAndShortenNumber_Float/Int are in clui_menus.nut which loads after firing_range.gnut
-// Simple local formatting for dynamic stats display
-string function FR_FormatFloat( float number, int maxInt = 5, int maxDec = 2 )
-{
-	if ( number == 0.0 )
-		return "0"
-	return format( "%.2f", number )
-}
-
-string function FR_FormatInt( int number, int maxInt = 5, int maxDec = 2 )
-{
-	return format( "%d", number )
-}
-
 void function DynStats_UpdateStats_RUI(  int shotsFired, float damageDone, int shotsHit, int critShotsHit, int kills )
 {
 	if (!(FiringRangeHasDynamicStats()))
 		return
 
+	if( FRC_GetState() != eFiringRangeChallengeState.FR_CHALLENGE_INACTIVE )
+		return
+
 	if ( file.dynamicStatsRui == null )
 		return
 
-	float accuracy // accuracy does not work properly with sv_infinite_ammo
+	float accuracy 
 	if ( shotsFired != 0 )
 	{
 		accuracy = (float (shotsHit) / float(shotsFired) ) * 100.0
@@ -4206,10 +4198,10 @@ void function DynStats_UpdateStats_RUI(  int shotsFired, float damageDone, int s
 	}
 
 	RuiSetFloat( file.dynamicStatsRui, "accuracy" , accuracy )
-	//RuiSetString( file.dynamicStatsRui, "damageDone" , FR_FormatFloat( damageDone, 5, 2 ) )
-//	RuiSetString( file.dynamicStatsRui, "critShots" , FR_FormatInt( critShotsHit, 5, 2 ) )
-//	RuiSetString(file.dynamicStatsRui, "shotsFired", FR_FormatInt( shotsFired, 5, 2 ) )
-//	RuiSetString(file.dynamicStatsRui, "kills", FR_FormatInt( kills, 5, 2 ) )
+	RuiSetString( file.dynamicStatsRui, "damageDone" , LocalizeAndShortenNumber_Float( damageDone, 5, 2 ) )
+	RuiSetString( file.dynamicStatsRui, "critShots" , LocalizeAndShortenNumber_Int( critShotsHit, 5, 2 ) )
+	RuiSetString(file.dynamicStatsRui, "shotsFired", LocalizeAndShortenNumber_Int( shotsFired, 5, 2 ) )
+	RuiSetString(file.dynamicStatsRui, "kills", LocalizeAndShortenNumber_Int( kills, 5, 2 ) )
 
 	float lastAccuracy
 	if ( file.lastShotsFired != 0 )
@@ -4219,11 +4211,11 @@ void function DynStats_UpdateStats_RUI(  int shotsFired, float damageDone, int s
 				lastAccuracy = 100.0
 	}
 
-//	RuiSetFloat( file.dynamicStatsRui, "lastAccuracy", lastAccuracy )
-//	RuiSetString( file.dynamicStatsRui, "lastDamageDone", FR_FormatFloat( file.lastDamage, 5, 2 ) )
-//	RuiSetString( file.dynamicStatsRui, "lastCritShots", FR_FormatInt( file.lastCritShotsHit, 5, 2 ) )
-//	RuiSetString (file.dynamicStatsRui, "lastShotsFired", FR_FormatInt( file.lastShotsFired, 5, 2 ) )
-//	RuiSetString (file.dynamicStatsRui, "lastKills", FR_FormatInt( file.lastKills, 5, 2 ) )
+	RuiSetFloat( file.dynamicStatsRui, "lastAccuracy", lastAccuracy )
+	RuiSetString( file.dynamicStatsRui, "lastDamageDone", LocalizeAndShortenNumber_Float( file.lastDamage, 5, 2 ) )
+	RuiSetString( file.dynamicStatsRui, "lastCritShots", LocalizeAndShortenNumber_Int( file.lastCritShotsHit, 5, 2 ) )
+	RuiSetString (file.dynamicStatsRui, "lastShotsFired", LocalizeAndShortenNumber_Int( file.lastShotsFired, 5, 2 ) )
+	RuiSetString (file.dynamicStatsRui, "lastKills", LocalizeAndShortenNumber_Int( file.lastKills, 5, 2 ) )
 }
 
 void function FR_DymicStats_OnReloadHoldResetStatsController( var button )
@@ -4313,10 +4305,20 @@ void function FR_DynStats_Show_RUI()
 	if (file.dynamicStatsIsVisible)
 		return
 
-	file.dynamicStatsRui = CreateFullscreenPostFXRui( $"ui/dynamic_stats_rui.rpak" )
+	if ( file.dynamicStatsRui == null )
+		file.dynamicStatsRui = CreateFullscreenPostFXRui( $"ui/dynamic_stats_rui.rpak" )
+
+	RuiSetGameTime( file.dynamicStatsRui, "animateInTime" , ClientTime() )
+	RuiSetBool( file.dynamicStatsRui, "animateInOut" , true )
+	file.dynamicStatsIsVisible = true
+
+	RegisterButtonPressedCallback( file.resetStatsButton, FR_DymicStats_OnReloadHoldResetStatsController )
+	RegisterConCommandTriggeredCallback( "+reload", FR_DymicStats_OnReloadHoldResetStatsPC )
 
 	entity player = GetLocalViewPlayer()
-	thread DS_WaitForNewDamage_Thread( player )
+	bool isDynTimerEnabled = FRS_PVar_Get_Bool( player, eFRSettingType.SHOWDYNTIMER )
+	if ( isDynTimerEnabled )
+		SCB_ShowDynTimer_ByPVar()
 }
 
 bool function FR_DynStats_Hide_RUI()
@@ -4324,74 +4326,15 @@ bool function FR_DynStats_Hide_RUI()
 	if (!file.dynamicStatsIsVisible)
 		return false
 
-	RuiSetGameTime( file.dynamicStatsRui, "animateOutTime" , Time() )
-	file.dynamicStatsRui = null
+	RuiSetGameTime( file.dynamicStatsRui, "animateOutTime" , ClientTime() )
+	RuiSetBool( file.dynamicStatsRui, "animateInOut" , false )
+	file.dynamicStatsIsVisible = false
+
+	DeregisterButtonPressedCallback( file.resetStatsButton, FR_DymicStats_OnReloadHoldResetStatsController )
+	DeregisterConCommandTriggeredCallback( "+reload", FR_DymicStats_OnReloadHoldResetStatsPC )
 
 	return true
 }
-
-
-void function DS_WaitForNewDamage_Thread(entity player)
-{
-	Signal( player, "OnShotFired" )
-	EndSignal( player, "OnShotFired" )
-
-	EndSignal( player, "OnDestroy" )
-
-	wait 7.0
-
-	DS_ResetStats( player )
-	FR_DynStats_Hide_RUI( )
-}
-
-void function DS_ResetStats( entity player )
-{
-	if (!IsValid( player ))
-		return
-
-	file.shotsFired = 0
-	file.damage = 0
-	file.shotsHit = 0
-	file.critShotsHit = 0
-	file.kills = 0
-
-	if ( file.dynamicStatsRui == null )
-		return
-
-	DS_UpdateStats_RUI (
-		file.shotsFired,
-		file.damage,
-		file.shotsHit,
-		file.critShotsHit,
-		file.kills
-	)
-}
-
-void function DS_UpdateStats_RUI(  int shotsFired, float damageDone, int shotsHit, int critShotsHit, int kills )
-{
-	if (!(FiringRangeHasDynamicStats()))
-		return
-
-	bool showDynStats = FRS_NetVar_Get_Bool( GetLocalViewPlayer(), eFRSettingType.SHOWDYNSTATS )
-	if( showDynStats && file.dynamicStatsRui == null )
-		FR_DynStats_Show_RUI()
-
-	if ( file.dynamicStatsRui == null )
-		return
-
-	float accuracy                                                         
-	if ( shotsFired != 0 )
-		accuracy = (float (shotsHit) / float(shotsFired) ) * 100.0
-	else
-		accuracy = 100
-
-	RuiSetFloat( file.dynamicStatsRui, "accuracy" , accuracy )
-	RuiSetFloat( file.dynamicStatsRui, "damageDone" , damageDone )
-	RuiSetInt( file.dynamicStatsRui, "critShots" , critShotsHit )
-	RuiSetInt (file.dynamicStatsRui, "shotsFired", shotsFired )
-	RuiSetInt (file.dynamicStatsRui, "kills", kills )
-}
-
 
 void function FR_DynTimer_Show_RUI()
 {
@@ -4434,29 +4377,29 @@ void function FR_Settings_HUD_SetFCDummies_Off()
 
 	RuiSetBool( file.frSettings_RUI, "isFullCombatDummiesOn" , false )
 }
-#endif // CLIENT
-                               
 
-/*
-┌─────━┿────┿━─────┐
-	FR Settings HUD
-└─────━┿────┿━─────┘
-*/
-                         
+
+
+
+
+
+
+
+
 bool function PlaylistVar_HasFRSettingsHUD()
 {
 	return( GetCurrentPlaylistVarBool( "has_fr_settings_hud", true ) )
 }
-                               
 
-#if CLIENT
-                         
+
+
+
 void function FR_Settings_Toggle_RUI()
 {
 	if( !PlaylistVar_HasFRSettingsHUD() )
 		return
 
-	//if (file.frSettings_RUI == null)
+	
 	if( !file.frSetting_ShowRUI )
 	{
 		FR_Settings_Show_RUI()
@@ -4549,9 +4492,9 @@ void function NetVarCallback_Changed_Bool( entity player, bool newVal )
 
 void function NetVarCallback_Changed_Int( entity player, int newVal )
 {
-	#if DEVELOPER
+#if DEV
 		printt( format( "*** %s(): Player == %s", FUNC_NAME(), player.GetPlayerName() ) )
-	#endif
+#endif
 	FRSettings_Client_Update()
 }
 
@@ -4567,100 +4510,99 @@ void function FRSettings_Client_Update()
 	int settingType
 	bool settingOn
 
-	#if DEVELOPER
+#if DEV
 		printt( format( "*** %s(): for %s",FUNC_NAME(), player.GetPlayerName()) )
-	#endif
+#endif
 
 	if (file.frSettings_RUI != null)
 	{
 		bool useConsolePrompts = true
-		#if PC_PROG
+
 			useConsolePrompts = false
-		#endif
+
 		RuiSetBool( file.frSettings_RUI,  "useConsolePrompts", useConsolePrompts )
 
-		// Update Overlay
+		
 		bool ffOn = IsTeamRabid( player.GetTeam() )
 		RuiSetBool( file.frSettings_RUI,  "isFriendlyFireOn", ffOn )
 	}
-	// [ -- PERSONAL RANGE SETTINGS -- ]
+	
 
-	// Show RangeMaster
+	
 	entity rangeMaster  = RangeMaster_CL_Get()
 	bool isLocalViewPlayerRangeMaster = false
 	if ( IsValid( rangeMaster ) )
 	{
 		string whoIsRMaster = RangeMaster_CL_Get_ChangeString()
-		//player.p.frSettings_AllStrs = format( "\n%s is RangeMaster.\n", rangeMasterName )
+		
 		player.p.frSettings_AllStrs = "\n" + whoIsRMaster + "\n"
 		isLocalViewPlayerRangeMaster = player == rangeMaster
 	}
 
 	player.p.frSettings_AllStrs = player.p.frSettings_AllStrs + Make_TitleString( Localize( "#FRSETTING_LABEL_PERSONAL" ))
 	RunUIScript( "Firing_Range_SetIsRangeMaster", isLocalViewPlayerRangeMaster )
-	// S3: FRC_GetState loads after firing_range.gnut — default to inactive
-	RunUIScript( "Firing_Range_SetRangeState", eFiringRangeChallengeState.FR_CHALLENGE_INACTIVE )
-	//// ShowRUI
-	//settingType = eFRSettingType.SHOWRUI
-	//player.p.FRSettings_Bools[ settingType ] <- file.frSetting_ShowRUI
-	//isOn = file.frSetting_ShowRUI ? "#SETTING_ON" : "#SETTING_OFF"
-	//player.p.FRSettings_Strs[ settingType ] <- Localize( "#FRSETTING_SHOWRUI", Localize( isOn ), FRSETTINGS_PARAMCOLOR  )
-	//player.p.frSettings_AllStrs = player.p.frSettings_AllStrs + "\n" + SETTINGS_MEGASTRING_PREFIX + player.p.FRSettings_Strs[ settingType ]
+	RunUIScript( "Firing_Range_SetRangeState", FRC_GetState() )
+	
+	
+	
+	
+	
+	
 
-	// Dynamic Stats
+	
 	Update_SettingsMenu_Bool( eFRSettingType.SHOWDYNSTATS )
 
-	// Dynamic Stats
-	Update_SettingsMenu_Bool( eFRSettingType.SHOWDYNTIMER )
 	
-	// Infinite Reloads.
+	Update_SettingsMenu_Bool( eFRSettingType.SHOWDYNTIMER )
+
+	
 	Update_SettingsMenu_Bool( eFRSettingType.INFINITEMAGS )
 
-	// Hit Marks.
+	
 	Update_SettingsMenu_Bool( eFRSettingType.SHOWHITMARKS )
 
-	// 3rd Person
+	
 	Update_SettingsMenu_Bool( eFRSettingType.SHOW3RDPERSON )
 
-	                    
-		Update_SettingsMenu_Bool( eFRSettingType.LEGENDUPGRADESENABLED )
-                           
 
-	// [ -- FIRING RANGE SETTINGS -- ]
+		Update_SettingsMenu_Bool( eFRSettingType.LEGENDUPGRADESENABLED )
+
+
+	
 	player.p.frSettings_AllStrs = player.p.frSettings_AllStrs + "\n" + Make_TitleString( Localize( "#FRSETTING_LABEL_FR" ))
 
-	// Friendly Fire.
+	
 	Update_SettingsMenu_Bool( eFRSettingType.FRIENDLYFIRE )
 
-	// Target Speeds.
+	
 	Update_SettingsMenu_Int( eFRSettingType.TARGETSPEED )
 
-	// [ -- FIRING RANGE DUMMIE SETTINGS -- ]
-	// Dummie Shield Level.
+	
+	
 	Update_SettingsMenu_Int( eFRSettingType.FRDUMMIESHIELDLVL )
 
-	// Dummie Helmet Match Shields
+	
 	Update_SettingsMenu_Bool( eFRSettingType.FRDUMMIEHELMETMATCHSHIELDS )
 
-	// Dummie Speed.
+	
 	Update_SettingsMenu_Int( eFRSettingType.FRDUMMIESPEED )
 
-	// Dummie Movements.
+	
 	Update_SettingsMenu_Int( eFRSettingType.FRDUMMIEMOVEMENT )
 
-	// Dummie States.
+	
 	Update_SettingsMenu_Int( eFRSettingType.FRDUMMIESTANCE )
 
-	                   
+
 		Update_SettingsMenu_Int( eFRSettingType.FRDUMMIESHOOTING )
 		Update_SettingsMenu_Int( eFRSettingType.FRDUMMIESPAWNDISTS )
 		Update_SettingsMenu_Bool( eFRSettingType.DYNAMICDUMMIESON )
 		Update_SettingsMenu_Bool( eFRSettingType.DUMMIEHIGHLIGHTSON )
-                          
 
-	#if DEVELOPER
+
+#if DEV
 		printt( format( "*** Latest Player Settings: \n%s", player.p.frSettings_AllStrs ) )
-	#endif
+#endif
 }
 
 void function Update_SettingsMenu_Int( int settingType )
@@ -4676,7 +4618,7 @@ void function Update_SettingsMenu_Bool( int settingType )
 	entity player = GetLocalViewPlayer()
 	bool ffOn = false
 
-	// Friendly Fire setting is based on IsTeamRabid(), not the netvar.
+	
 	if( settingType == eFRSettingType.FRIENDLYFIRE )
 	{
 		int team = player.GetTeam()
@@ -4703,7 +4645,7 @@ bool function RangeMaster_AmI()
 {
 	entity player = GetLocalViewPlayer()
 	entity rangeMaster = RangeMaster_CL_Get()
-	
+
 	return( rangeMaster == player )
 }
 
@@ -4723,7 +4665,7 @@ string function Make_TitleString( string theTitle )
 
 void function SCB_SettingChangedNotification_InfiniteMags()
 {
-	// Text notification for local setting.
+	
 	bool isOn = FRS_NetVar_Get_Bool( GetLocalViewPlayer(), eFRSettingType.INFINITEMAGS )
 	LocalSettings_ChangeNotify( "#NOTIFY_INFINITEMAGS", isOn )
 
@@ -4732,7 +4674,7 @@ void function SCB_SettingChangedNotification_InfiniteMags()
 
 void function SCB_SettingChangedNotification_ShowHitMarks()
 {
-	// Text notification for local setting.
+	
 	bool isOn = FRS_NetVar_Get_Bool( GetLocalViewPlayer(), eFRSettingType.SHOWHITMARKS )
 	LocalSettings_ChangeNotify( "#NOTIFY_SHOWHITMARKS", isOn )
 
@@ -4741,23 +4683,23 @@ void function SCB_SettingChangedNotification_ShowHitMarks()
 
 void function SCB_SettingChangedNotification_Show3rdPerson()
 {
-	// Text notification for local setting.
+	
 	bool isOn = FRS_NetVar_Get_Bool( GetLocalViewPlayer(), eFRSettingType.SHOW3RDPERSON )
 	LocalSettings_ChangeNotify( "#NOTIFY_SHOW3RDPERSON", isOn )
 
 	FRSettings_Client_Update()
 }
 
-                    
+
 void function SCB_SettingChangedNotification_LegendUpgradesEnabled()
 {
-	// Text notification for local setting.
+	
 	bool isOn = FRS_NetVar_Get_Bool( GetLocalViewPlayer(), eFRSettingType.LEGENDUPGRADESENABLED )
 	LocalSettings_ChangeNotify( "#NOTIFY_LEGENDUPGRADES_ENABLED", isOn )
 
 	FRSettings_Client_Update()
 }
-                          
+
 
 void function LocalSettings_ChangeNotify( string baseString, bool isOn )
 {
@@ -4771,21 +4713,21 @@ void function SCB_Broadcast_FRBehavior_Change( entity playerThatChanged, int beh
 	if( !IsValid( playerThatChanged ) || !playerThatChanged.IsPlayer())
 		return
 
-	// Get Notifier name and color.
+	
 	string notifierName = playerThatChanged.GetPlayerName()
 	if( notifierName == "" )
 		return
 
 	vector playerColor = GetKeyColor( COLORID_MEMBER_COLOR0, playerThatChanged.GetTeamMemberIndex())
 
-	// Get value set
+	
 	bool isOn = value
 	string onOff = isOn ? Localize( "#FRSETTING_ON" ) : Localize( "#FRSETTING_OFF" )
 	vector valueColor  = isOn ? FRIENDLY_COLOR : ENEMY_COLOR
 
 	Assert( (( behaviorType < eDummieBehaviorType.COUNT_ ) && ( behaviorType >= 0 )), format( "%s(): Behavior Type Out of Range.", FUNC_NAME() ) )
+
 	
-	// Get Setting name
 	table< int, string > settingNamesByType
 	string settingName = ""
 	string settingNameLocalized
@@ -4798,11 +4740,11 @@ void function SCB_Broadcast_FRBehavior_Change( entity playerThatChanged, int beh
 	settingName = settingNamesByType[ behaviorType ]
 	settingNameLocalized = Localize( settingName )
 
-	// Output to the obituary.
+	
 	vector baseColor = < 219, 219, 219 >
-	#if DEVELOPER
+#if DEV
 		printt( format( "%s(): setting changed == %s", FUNC_NAME(), settingNameLocalized ) )
-	#endif
+#endif
 	EmitSoundOnEntity( GetLocalViewPlayer(), SFX_SETTING_CHANGE_NOTIFY )
 	Obituary_Print_Localized( Localize( "#OBIT_SETTINGCHANGE_NOTIFY", notifierName, settingNameLocalized, onOff ), playerColor, valueColor )
 
@@ -4840,7 +4782,7 @@ void function SCB_Broadcast_RangeMaster_Change_Thread()
 	entity localPlayer = GetLocalViewPlayer()
 	localPlayer.EndSignal( "OnDeath" )
 
-	wait ( 2.0 ) // Wait for EHI Netvar to propagate.
+	wait ( 2.0 ) 
 
 	vector titleColor  = < 255, 255, 255 >
 	string rangemaster_notify = RangeMaster_CL_Get_ChangeString()
@@ -4852,12 +4794,12 @@ void function SCB_Broadcast_RangeMaster_Change_Thread()
 	SquadLeader_UpdateAllUnitFramesRui()
 }
 
-                               
-#endif// CLIENT
 
-/*
--------------------
-Dev Notes:
--------------------
-*/
- 
+
+
+
+
+
+
+
+  

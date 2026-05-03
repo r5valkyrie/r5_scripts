@@ -127,6 +127,10 @@ void function ClPlayer_Init()
 	if ( GetConVarBool( "cl_liveapi_enabled" ) )
 		ClLiveAPI_Init()
 
+
+
+
+
 }
 
 entity function FindEnemyRodeoParent( entity player )
@@ -263,8 +267,6 @@ void function Player_AddPlayer( entity player )
 
 void function ClientCodeCallback_HUDThink()
 {
-	SDKProcessCallbacks()
-
 	PerfStart( PerfIndexClient.HUDThink )
 
 	entity player = GetLocalViewPlayer()
@@ -368,7 +370,7 @@ void function Player_OnPlayerConnectionStateChanged( entity player )
 
 void function ServerCallback_ResetReconnectParametersAsync()
 {
-	//ResetReconnectParametersAsync()
+	ResetReconnectParametersAsync()
 }
 
 void function AddCallback_OnPlayerDisconnected( void functionref( entity ) callbackFunc )
@@ -385,7 +387,7 @@ void function RemoveCallback_OnPlayerDisconnected( void functionref( entity ) ca
 }
 
 
-void function ClientCodeCallback_PlayerDisconnected( entity player, string removethis )
+void function ClientCodeCallback_PlayerDisconnected( entity player )
 {
 	PlayerConnectedOrDisconnected( player, 0 )
 
@@ -458,7 +460,7 @@ void function PlayerConnectedOrDisconnected( entity player, int state )
 		vector backgroundColor = <255,255,255>
 		float backgroundAlpha = 0.0
 		bool bCheckForDuplicateEntry = true
-		Obituary_Print_Localized( Localize( "#MP_PLAYER_CONNECTED", playerName ), playerNameColor, altColor2, altColor3, backgroundColor, backgroundAlpha )
+		Obituary_Print_Localized( Localize( "#MP_PLAYER_CONNECTED", playerName ), playerNameColor, altColor2, altColor3, backgroundColor, backgroundAlpha, bCheckForDuplicateEntry )
 	}
 }
 
@@ -1906,4 +1908,4 @@ bool function GetHideCrosshairHitIndicatorOverride()
 void function SetHideCrosshairHitIndicatorOverride( bool value )
 {
 	file.hideCrosshairHitIndicatorOverride = value
-}
+} 

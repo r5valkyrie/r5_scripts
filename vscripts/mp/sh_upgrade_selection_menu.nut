@@ -1,54 +1,54 @@
 global function UpgradeSelectionMenu_Init
 
-#if UI || CLIENT
+
 global function UpgradeSelectionMenu_IsActive
-#endif
 
-#if UI
-global function ClientToUi_SetUpgradeSelectionOpen
-#endif
 
-#if CLIENT
+
+
+
+
+
 global function UpgradeSelectionMenu_Open
 global function UpgradeSelectionMenu_HandleKeyInput
 global function UpgradeSelectionMenu_MockSelection
 global function UpgradeSelectionMenu_UpdateChoices
 global function UpgradeSelectionMenu_TryClose
-#endif
+
 
 void function UpgradeSelectionMenu_Init()
 {
-	#if CLIENT
+
 		RegisterSignal( "UpgradeSelectionMenuClose" )
 		AddOnSpectatorTargetChangedCallback( UpgradeSelectionMenu_OnSpectatorChanged )
-	#endif
+
 }
 
-#if UI
-struct
-{
-	bool isOpen
-} file
 
-void function ClientToUi_SetUpgradeSelectionOpen( bool open )
-{
-	file.isOpen = open
-}
-#endif
 
-#if UI || CLIENT
+
+
+
+
+
+
+
+
+
+
+
 bool function UpgradeSelectionMenu_IsActive()
 {
-	#if CLIENT
-	return file.upgradesSelectionMenu != null
-	#endif
-	#if UI
-	return file.isOpen
-	#endif
-}
-#endif
 
-#if CLIENT
+	return file.upgradesSelectionMenu != null
+
+
+
+
+}
+
+
+
 struct {
 	var upgradesSelectionMenu
 }file
@@ -83,7 +83,7 @@ vector function ProcessMouseInput( float deltaX, float deltaY )
 
 	s_mousePad = <s_mousePad.x + deltaX, s_mousePad.y + deltaY, 0.0>
 
-	// clamp to circle:
+	
 	{
 		float lenRaw = Length( s_mousePad )
 		if ( lenRaw > MAX_BOUNDS )
@@ -93,12 +93,12 @@ vector function ProcessMouseInput( float deltaX, float deltaY )
 	float lenNow = Length( s_mousePad )
 	if ( lenNow < 25.0 )
 	{
-		//DebugDrawScreenText( 0.25, 0.25, format( "lenNow:%.2f", lenNow ) )
+		
 		return <0, 0, 0>
 	}
 
 	vector result = (s_mousePad / Length( s_mousePad ))
-	//DebugDrawScreenText( 0.25, 0.25, format( "result:(%.1f, %.1f)  posNow:(%.1f, %.1f)  lenNow:%.2f", result.x, result.y, s_mousePad.x, s_mousePad.y, lenNow ) )
+	
 	return result
 }
 
@@ -380,7 +380,7 @@ bool function UpgradeSelectionMenu_HandleViewInput( float x, float y )
 	if ( GetLocalClientPlayer() != GetLocalViewPlayer() )
 		return false
 
-	//printt( format( "x: %.1f  y: %.1f", x, y ) )
+	
 	{
 		float lockoutTime            = IsControllerModeActive() ? 0.0 : 0.01
 		float deltaSinceInputStarted = (Time() - s_latestViewInputResetTime)
@@ -391,7 +391,7 @@ bool function UpgradeSelectionMenu_HandleViewInput( float x, float y )
 	int optionCount = 2
 	int choice      = -1
 
-	//float lenCutoff = IsControllerModeActive() ? ((s_currentChoice < 0) ? 0.8 : 0.4) : 15.0
+	
 	float lenCutoff = IsControllerModeActive() ? ((s_currentChoice < 0) ? 0.8 : 0.4) : ((s_currentChoice < 0) ? 0.8 : 0.4)
 
 	RuiSetFloat2( file.upgradesSelectionMenu, "inputVec", <0, 0, 0> )
@@ -404,7 +404,7 @@ bool function UpgradeSelectionMenu_HandleViewInput( float x, float y )
 	else if ( inputLen > lenCutoff )
 	{
 		float circle = 2.0 * PI
-		float angle  = atan2( inputVec.x, inputVec.y )        // center of index 0 is always <0,1>
+		float angle  = atan2( inputVec.x, inputVec.y )        
 		if ( angle < 0.0 )
 			angle += circle
 
@@ -413,7 +413,7 @@ bool function UpgradeSelectionMenu_HandleViewInput( float x, float y )
 
 		choice = (int( ( ( angle + PI / 2 ) / circle) * optionCount ) % optionCount)
 
-		//DebugDrawScreenText( 0.25, 0.30, format( "inputVec:%s", string( inputVec ) ) )
+		
 
 		vector ruiInputVec = IsControllerModeActive() ? Normalize( inputVec ) : inputVec
 		RuiSetFloat2( file.upgradesSelectionMenu, "inputVec", Normalize( inputVec ) )
@@ -421,7 +421,7 @@ bool function UpgradeSelectionMenu_HandleViewInput( float x, float y )
 	else
 	{
 		if ( IsControllerModeActive() )
-			choice = s_currentChoice // -1
+			choice = s_currentChoice 
 		else
 			choice = s_currentChoice
 	}
@@ -441,4 +441,5 @@ void function SetCurrentChoice( int choice )
 	s_currentChoice = choice
 	RuiSetInt( file.upgradesSelectionMenu, "highlightedChoice", choice )
 }
-#endif
+
+ 

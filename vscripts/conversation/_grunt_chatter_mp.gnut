@@ -1,8 +1,0 @@
-// stub script
-
-global function GruntChatter_MP_Init
-
-void function GruntChatter_MP_Init()
-{
-    
-}

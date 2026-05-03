@@ -9,7 +9,7 @@ global function ServerToClient_ScreenCoverTransition
 global function SetCustomScreenFadeAsset
 global function ScreenCoverEndTransition
 
-// these must match content/r2/ui/screen_fade.rui
+
 global const float SCREEN_COVER_TRANSITION_IN_DURATION = 0.7
 global const float SCREEN_COVER_TRANSITION_OUT_DURATION = 0.9
 
@@ -57,8 +57,8 @@ void function ScreenCoverEndTransition( float screenTransitionOutDuration = 1.6 
 {
 	printt( "ScreenCoverTransitionEnd() called" )
 
-	//RuiSetFloat( file.screenFade, "screenTransitionOutDuration", screenTransitionOutDuration )
-	//RuiSetBool( file.screenFade, "continueHoldCover", false )
+	RuiSetFloat( file.screenFade, "screenTransitionOutDuration", screenTransitionOutDuration )
+	RuiSetBool( file.screenFade, "continueHoldCover", false )
 
 	if ( !file.screenCoverHolding )
 		wait file.screenCoverEndTime - SCREEN_COVER_TRANSITION_OUT_DURATION - 0.1 - Time()
@@ -68,16 +68,15 @@ void function ScreenCoverEndTransition( float screenTransitionOutDuration = 1.6 
 	file.screenCoverHolding = false
 	Chroma_EndBannerTransition()
 }
+
+
 void function ScreenCoverTransition( float endTime, bool continueHoldOver = false )
 {
-	// #if DEVELOPER
-		// DumpStack()
-		printt( "Calling ScreenCoverTransition with endTime", endTime, " at time", Time() )
-	// #endif
-	// can be called from server
-	// returns the time remaining until the out transition plays
+	printt( "Calling ScreenCoverTransition with endTime", endTime, " at time", Time() )
+	
+	
 
-	//ScreenFade( GetLocalViewPlayer(), 0, 1, 1, 255, screenFadeInOutDuration, screenFadeHoldDuration, FFADE_PURGE | FFADE_INOUT | FFADE_NOT_IN_REPLAY )
+	
 	if ( endTime > file.screenCoverEndTime )
 	{
 		Chroma_BeginBannerTransition()
@@ -89,8 +88,8 @@ void function ScreenCoverTransition( float endTime, bool continueHoldOver = fals
 		bool hasActiveFade = expect int( fadeParams.a ) != 0
 
 		
-		//RuiSetBool( file.screenFade, "holdCoverImmediately", hasActiveFade )
-		//RuiSetBool( file.screenFade, "continueHoldCover", file.screenCoverHolding )
+		RuiSetBool( file.screenFade, "holdCoverImmediately", hasActiveFade )
+		RuiSetBool( file.screenFade, "continueHoldCover", file.screenCoverHolding )
 
 		file.screenCoverEndTime = endTime
 		RuiSetGameTime( file.screenFade, "coverEndTime", endTime )
@@ -136,11 +135,13 @@ void function UpdateScreenFadeInternal()
 {
 	table fadeParams = expect table( GetFadeParams() )
 
-	//For debugging screen fade
-	/*int alpha = expect int(fadeParams.a )
+	
+	
 
 
-	file.lastAlpha = alpha*/
+
+
+
 
 	RuiSetFloat3( file.screenFade, "fadeColor", <expect int( fadeParams.r ) / 255.0, expect int( fadeParams.g ) / 255.0, expect int( fadeParams.b ) / 255.0> )
 	RuiSetFloat( file.screenFade, "fadeAlpha", expect int( fadeParams.a ) / 255.0 )
@@ -166,44 +167,7 @@ void function RegisterDoomProtectionHintDamage( float newAmount )
 		return
 
 	g_doomProtectionHintDamage += newAmount
-	
-	#if DEVELOPER
-		printt( "g_doomProtectionHintDamage is now:", g_doomProtectionHintDamage )
-	#endif
-}
-
-
-void function DoomProtectionHintThread()
-{
-	const float HINT_DURATION = 4.0
-	const float THRESHOLD_PILOT = 1000
-	const float THRESHOLD_TITAN = 2000
-	const float FIRSTTIME_SCALE = 0.6
-
-	while ( true )
-	{
-		WaitFrame()
-
-		entity player = GetLocalViewPlayer()
-		if ( !IsValid( player ) )
-			continue
-
-		float threshold = player.IsTitan() ? THRESHOLD_TITAN : THRESHOLD_PILOT
-		if ( g_doomProtectionHintLastShowedTime == 0.0 )
-			threshold *= FIRSTTIME_SCALE
-
-		if ( g_doomProtectionHintDamage > threshold )
-		{
-			wait 0.4
-			player = GetLocalViewPlayer()
-			if ( IsValid( player ) )
-			{
-				SetTimedEventNotification( HINT_DURATION, player.IsTitan() ? "#NOTIFY_HINT_TITAN_USE_FINISHERS" : "#NOTIFY_HINT_PILOTS_USE_FINISHERS" )
-				g_doomProtectionHintLastShowedTime = Time()
-				g_doomProtectionHintDamage = 0.0
-			}
-		}
-	}
+	printt( "g_doomProtectionHintDamage is now:", g_doomProtectionHintDamage )
 }
 
 
@@ -218,7 +182,7 @@ void function PlayerDeathfieldSoundThread()
 	entity ourPlayer = null
 	bool arePlaying  = false
 
-	const float START_PLAYING_DIST = -30.0		// postive distance is inside safe zone
+	const float START_PLAYING_DIST = -30.0        
 	const float STOP_PLAYING_DIST = 0.0
 
 	const string SOUND_DEATHFIELD_START = "Survival_Circle_Enter"
@@ -228,7 +192,12 @@ void function PlayerDeathfieldSoundThread()
 	while ( true )
 	{
 		bool shouldPlay = false
+		
 		bool shouldCheckOtherDeathFieldSources = false
+
+
+
+
 
 		entity localViewPlayer = GetLocalViewPlayer()
 		if ( !IsValid( localViewPlayer ) )
@@ -237,7 +206,7 @@ void function PlayerDeathfieldSoundThread()
 		else if ( !IsAlive( localViewPlayer ) )
 		{
 		}
-		else if ( !DeathField_IsActiveForIndex( localViewPlayer.DeathFieldIndex() ) )
+		else if ( !DeathField_IsActive( localViewPlayer.DeathFieldIndex() ) && !shouldCheckOtherDeathFieldSources )
 		{
 		}
 		else if ( (ourPlayer != null) && (ourPlayer != localViewPlayer) )
@@ -245,16 +214,25 @@ void function PlayerDeathfieldSoundThread()
 		}
 		else
 		{
-			//eye
+			
 			vector eyePos      = localViewPlayer.EyePosition()
-			float frontierDist = DeathField_PointDistanceFromFrontierForIndex( eyePos, localViewPlayer.DeathFieldIndex() )
+			float frontierDist = DeathField_PointDistanceFromFrontier( eyePos, localViewPlayer.DeathFieldIndex() )
 			if ( arePlaying && (frontierDist < STOP_PLAYING_DIST) )
 				shouldPlay = true
 			if ( !arePlaying && (frontierDist < START_PLAYING_DIST) )
 				shouldPlay = true
+
+
+
+
+
+
 		}
 
+		
+		
 		entity clientPlayer = GetLocalClientPlayer()
+
 		if ( !arePlaying && shouldPlay )
 		{
 			ourPlayer = localViewPlayer
@@ -267,9 +245,9 @@ void function PlayerDeathfieldSoundThread()
 		{
 			if ( IsValid( clientPlayer ) )
 			{
-				//
+				
 				StopSoundOnEntity( clientPlayer, SOUND_DEATHFIELD_CONSTANT )
-				//
+				
 				EmitSoundOnEntity( clientPlayer, SOUND_DEATHFIELD_STOP )
 			}
 
@@ -286,14 +264,11 @@ void function PlayerDeathfieldSoundThread()
 
 void function PlayerPainSoundThread()
 {
-	if( Playlist() == ePlaylists.fs_lgduels_1v1 )
-		return
-
-	// Each layer has:
-	//: begin threshold (health falls below XX)
-	//: end threshold (health has risen back up above YY)
-	//: looping sound
-	//: endcap sound
+	
+	
+	
+	
+	
 
 	float HEALTH_PERCENT_LAYER1     = 0.85
 	float HEALTH_PERCENT_LAYER1_END = 0.85
@@ -302,14 +277,14 @@ void function PlayerPainSoundThread()
 	float HEALTH_PERCENT_LAYER3     = 0.55
 	float HEALTH_PERCENT_LAYER3_END = 0.59
 
-	if ( true )	// ( GameRules_GetGameMode() == SURVIVAL )
+	if ( true )    
 	{
-		HEALTH_PERCENT_LAYER1      = 0.66
-		HEALTH_PERCENT_LAYER1_END  = 0.66
-		HEALTH_PERCENT_LAYER2      = 0.33
-		HEALTH_PERCENT_LAYER2_END  = 0.33
-		HEALTH_PERCENT_LAYER3      = 0.33 // Player settings intentionally sets no sound for layer 3, so value here not that important
-		HEALTH_PERCENT_LAYER3_END  = 0.33 // Player settings intentionally sets no sound for layer 3, so value here not that important
+		HEALTH_PERCENT_LAYER1 = 0.66
+		HEALTH_PERCENT_LAYER1_END = 0.66
+		HEALTH_PERCENT_LAYER2 = 0.33
+		HEALTH_PERCENT_LAYER2_END = 0.33
+		HEALTH_PERCENT_LAYER3 = 0.33 
+		HEALTH_PERCENT_LAYER3_END = 0.33 
 	}
 
 	entity ourPlayer      = null
@@ -380,7 +355,7 @@ void function PlayerPainSoundThread()
 		{
 			if ( shouldPlayLayer1 )
 			{
-				//printt( "LAYER 1 STARTS" )
+				
 				arePlayingLayer1 = true
 				Assert( (ourPlayer == null) || (ourPlayer == localViewPlayer) )
 				ourPlayer = localViewPlayer
@@ -397,7 +372,7 @@ void function PlayerPainSoundThread()
 			}
 			else
 			{
-				//printt( "LAYER 1 _stop_" )
+				
 				if ( IsValid( ourPlayer ) )
 				{
 					if ( soundLayer1Start != "" )
@@ -417,7 +392,7 @@ void function PlayerPainSoundThread()
 		{
 			if ( shouldPlayLayer2 )
 			{
-				//printt( "LAYER 2 STARTS" )
+				
 				arePlayingLayer2 = true
 				Assert( (ourPlayer == null) || (ourPlayer == localViewPlayer) )
 				ourPlayer = localViewPlayer
@@ -434,7 +409,7 @@ void function PlayerPainSoundThread()
 			}
 			else
 			{
-				//printt( "LAYER 2 _stop_" )
+				
 				if ( IsValid( ourPlayer ) )
 				{
 					if ( soundLayer2Start != "" )
@@ -454,7 +429,7 @@ void function PlayerPainSoundThread()
 		{
 			if ( shouldPlayLayer3 )
 			{
-				//printt( "LAYER 3 STARTS" )
+				
 				arePlayingLayer3 = true
 				Assert( (ourPlayer == null) || (ourPlayer == localViewPlayer) )
 				ourPlayer = localViewPlayer
@@ -471,7 +446,7 @@ void function PlayerPainSoundThread()
 			}
 			else
 			{
-				//printt( "LAYER 3 _stop_" )
+				
 				if ( IsValid( ourPlayer ) )
 				{
 					if ( soundLayer3Start != "" )
@@ -495,14 +470,16 @@ void function PlayerPainSoundThread()
 }
 
 
-/*
-void function ClientSetPilotPainFlashColor( entity player, int a )
-{
-	player.hudElems.damageOverlayPainFlash.SetColor( 255, 255, 255, a )
 
-	if ( a > 0 )
-		player.hudElems.damageOverlayPainFlash.Show()
-	else
-		player.hudElems.damageOverlayPainFlash.Hide()
-}
-*/
+
+
+
+
+
+
+
+
+
+
+
+ 

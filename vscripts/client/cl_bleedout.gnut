@@ -60,6 +60,16 @@ string function PlayerBleedoutUseTextOverride( entity player )
 	entity localPlayer = GetLocalViewPlayer()
 	if ( Bleedout_IsReviverFriendlyToVictim( localPlayer, player ) )
 	{
+
+
+
+
+
+
+
+
+
+
 		if ( !Bleedout_PlayerCanRes( localPlayer ) )
 			return " "
 
@@ -72,7 +82,7 @@ string function PlayerBleedoutUseTextOverride( entity player )
 	{
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RECRUIT ) && CanRecruitOrRevivePlayer( localPlayer, player ) )
 			return "#RECRUIT_USE_TEAMMATE_RES_DYNAMIC"
-		//TODO: handle recruit_same_character == 0
+		
 
 		if ( IsValidSyncedMeleeTarget( localPlayer, null, null, player ) )
 			return "#MELEE_EXECUTE_PROMPT_DYNAMIC"
@@ -118,15 +128,18 @@ void function BLEEDOUT_RevivePlayerHealerChanged( entity playerToRes, entity pla
 		playerHealer = playerToRes.GetPlayerNetEnt( "revivePlayerHealer" )
 		Assert( !IsValid( playerHealer ), "Player net vars [revivePlayerHealer] and [reviveEndTime] are out of sync, [revivePlayerHealer] is not null while [reviveEndTime] is 0" )
 	}
+
 	if ( !IsValid( playerHealer ) )
 	{
 		if ( IsValid( playerToRes ) )
+		{
 			playerToRes.Signal( "Bleedout_StopFirstAid" )
+		}
 
 		if ( IsValid( file.oldPlayerHealer ) && ( playerToRes == file.oldPlayerToRes ) )
 		{
-			//if ( file.oldPlayerHealer.IsPlayer() )
-			//	file.oldPlayerHealer.SetSingle3PWeaponClonesVisibility( true, WEAPON_INVENTORY_SLOT_PRIMARY_2 )
+			if ( file.oldPlayerHealer.IsPlayer() )
+				file.oldPlayerHealer.SetSingle3PWeaponClonesVisibility( true, WEAPON_INVENTORY_SLOT_PRIMARY_2 )
 			file.oldPlayerHealer.Signal( "Bleedout_StopFirstAid" )
 			file.oldPlayerHealer = null
 			file.oldPlayerToRes = null
@@ -135,8 +148,8 @@ void function BLEEDOUT_RevivePlayerHealerChanged( entity playerToRes, entity pla
 		return
 	}
 
-	//if ( playerHealer.IsPlayer() )
-	//	playerHealer.SetSingle3PWeaponClonesVisibility( false, WEAPON_INVENTORY_SLOT_PRIMARY_2 )
+	if ( playerHealer.IsPlayer() )
+		playerHealer.SetSingle3PWeaponClonesVisibility( false, WEAPON_INVENTORY_SLOT_PRIMARY_2 )
 
 	if ( IsValid( playerHealer ) && IsValid( file.oldPlayerHealer ) && (playerHealer != file.oldPlayerHealer) && ( file.oldPlayerToRes == playerToRes ) )
 	{
@@ -162,6 +175,7 @@ void function BLEEDOUT_RevivePlayerHealerChanged( entity playerToRes, entity pla
 
 	if ( viewPlayer == playerToRes || viewPlayer == playerHealer )
 	{
+		
 		bool hasGuardianAngel = false
 
 		if ( playerHealer.IsPlayer() )
@@ -195,7 +209,7 @@ void function Bleedout_StopTrainingFirstAidProgressBar()
 
 void function Bleedout_DisplayFirstAidProgressBar( entity playerToRes, float endTime, float progressTime, string text, bool hasGuardianAngel = false )
 {
-	//printt( "Bleedout_DisplayFirstAidProgressBar", playerToRes, endTime, progressTime, text, Time(), endTime - Time() )
+	
 
 	Signal( playerToRes, "Bleedout_OnRevive" )
 
@@ -210,6 +224,15 @@ void function Bleedout_DisplayFirstAidProgressBar( entity playerToRes, float end
 	RuiSetGameTime( rui, "endTime", endTime )
 	RuiSetFloat( rui, "progressTime", progressTime )
 	RuiSetInt( rui, "reviveTier", hasGuardianAngel ? 4 : 0 )
+
+
+
+
+
+
+
+
+
 
 	Chroma_BeginRevive( progressTime )
 
@@ -294,7 +317,6 @@ void function ShowWoundedMarker( entity woundedPlayer, float endTime )
 	{
 		RuiSetString( rui, "title", "#SURVIVAL_BLEEDING_OUT" )
 
-
 		incapShieldTier = EquipmentSlot_GetEquipmentTier( woundedPlayer, "incapshield" )
 		if( incapShieldTier > 0 )
 		{
@@ -302,20 +324,36 @@ void function ShowWoundedMarker( entity woundedPlayer, float endTime )
 
 			RuiSetString( shieldRUI, "nameText", lootData.pickupString )
 
-			//if ( incapShieldTier == 4 )
-			//	RuiSetString( shieldRUI, "nameText", "#BLEEDOUT_USE_SELF_RES_TITLE" )
-
 			RuiSetBool( shieldRUI, "hasKOShield", true )
 			RuiSetInt( shieldRUI, "shieldTier", incapShieldTier )
 			RuiSetImage( shieldRUI, "shieldIcon", lootData.hudIcon )
 			thread TrackKOShieldHealthAndReadiness( woundedPlayer, shieldRUI )
 		}
 
-		//Display self revive propmpt if the player has the ability to self revive.
+		
 		thread TrackSelfReviveState( woundedPlayer, shieldRUI )
 
-	thread TrackForceBleedoutState( woundedPlayer, shieldRUI )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+				
+				thread TrackForceBleedoutState( woundedPlayer, shieldRUI )
+
+
+
 		thread BleedoutScreenFX_Start( woundedPlayer, startTime, endTime )
+
 		didCC = true
 	}
 	RuiSetGameTime( rui, "startTime", startTime )
@@ -336,7 +374,10 @@ void function ShowWoundedMarker( entity woundedPlayer, float endTime )
 		{
 			showTimer = false
 		}
+
+
 	RuiSetBool( rui, "showTimer", showTimer )
+
 	OnThreadEnd(
 	function() : ( rui, shieldRUI, woundedPlayer, didCC )
 		{
@@ -381,6 +422,7 @@ void function TrackSelfReviveState( entity player, var rui )
 }
 
 
+
 void function TrackForceBleedoutState( entity player, var rui )
 {
 	player.EndSignal( "OnDeath" )
@@ -394,6 +436,7 @@ void function TrackForceBleedoutState( entity player, var rui )
 	}
 }
 
+
 bool function CanSelfRevive( entity player )
 {
 	if ( PlayerHasPassive( player, ePassives.PAS_SELF_REVIVE ) )
@@ -401,9 +444,19 @@ bool function CanSelfRevive( entity player )
 		if ( Bleedout_GetIsInfiniteSelfResEnabled() )
 			return true
 
+
 		if ( Bleedout_CanSelfResFromUpgrade( player ) && GameMode_IsActive( eGameModes.SURVIVAL ) && player.p.numSelfRevivesUsed == 0 )
+
 		return true
 	}
+
+
+
+
+
+
+
+
 
 	return false
 }
@@ -434,12 +487,14 @@ void function TrackKOShieldHealthAndReadiness( entity player, var rui )
 	{
 		float currentShieldHealth = float( shield.GetScriptInt0() )
 
+		
+
 		RuiSetFloat( rui, "shieldHealth", currentShieldHealth )
 		RuiSetFloat( rui, "shieldMaxHealth", maxShieldHealth )
 
 		bool isReady = !IsPlayingFirstPersonAnimation( player ) && shield.IsReadyToFire() && (currentShieldHealth > 0)
 		RuiSetBool( rui, "isKOShieldReady", isReady )
-		
+
 		WaitFrame()
 	}
 }
@@ -459,8 +514,11 @@ void function BleedoutScreenFX_Start( entity woundedPlayer, float startTime, flo
 	if ( !IsValid( woundedPlayer.GetCockpit() ) )
 		return
 
+
 	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_STRIKEOUT ) )
 		return
+
+
 	if ( woundedPlayer.ContextAction_IsMeleeExecutionTarget() )
 		return
 
@@ -473,10 +531,9 @@ void function BleedoutScreenFX_Start( entity woundedPlayer, float startTime, flo
 	EndSignal( woundedPlayer, "Bleedout_StopBleedoutEffects" )
 
 	
-	//Creates the particle effect
 	file.bleedoutFXID = StartParticleEffectOnEntity( woundedPlayer, index, FX_PATTACH_POINT_FOLLOW, woundedPlayer.GetCockpit().LookupAttachment( "CAMERA" ) )
 
-	//Draw over view model
+	
 	EffectSetIsWithCockpit( file.bleedoutFXID, true )
 
 	OnThreadEnd(
@@ -526,7 +583,7 @@ void function BleedoutScreenFX_Start( entity woundedPlayer, float startTime, flo
 			EffectSetControlPointVector( file.bleedoutFXID, 1, <file.bleedoutFXAlpha, 0, 0> )
 
 		ColorCorrection_SetWeight( file.colorCorrection, colorCorrectionWeight )
-		// printt("showing redish screen" )
+
 		WaitFrame()
 	}
 }
@@ -584,3 +641,4 @@ void function HideWoundedMarker( entity woundedPlayer )
 		func( woundedPlayer )
 	}
 }
+ 

@@ -13,21 +13,21 @@ global function ParseWeaponLoadoutText
 global function ParseEquipmentLoadoutText
 global function ParseConsumableLoadoutText
 
-#if SERVER
-global function CharacterLoadouts_GiveCurrentCharacterLoadoutToPlayer
-global function CharacterLoadouts_GiveWeaponLoadoutToPlayer
-global function CharacterLoadouts_GiveEquipmentLoadoutToPlayer
-global function CharacterLoadouts_GiveConsumableLoadoutToPlayer
 
-global function Ensure_Min_Loadout
-global function Ensure_Min_Weapon
-global function Ensure_Min_Ammo
-global function Ensure_Min_Consumables
-global function Get_Weapon_Datas
-global function Remove_Weapons
-global function Restore_Shields
 
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 global struct WeaponLoadout {
 	array< string > weaponRefs
@@ -50,14 +50,14 @@ struct {
 
 	int identicalLoadoutIndex = -1
 
-	#if CLIENT
+
 		var           loadoutInfoRui = null
 		array<var>    loadoutRuiElements
 		table<int,string> characterClassToLoadoutNameTable
 
 		bool		  isDetailsPanelShowing = false
 		bool          is16x10 = false
-	#endif
+
 } file
 
 void function CharacterLoadouts_Init()
@@ -66,24 +66,24 @@ void function CharacterLoadouts_Init()
 		return
 
 	if ( GetCurrentPlaylistVarBool( "character_loadouts_identical", false ) )
-		CharacterLoadouts_SetIdenticalLoadoutIndex( 0 ) //initialize index
+		CharacterLoadouts_SetIdenticalLoadoutIndex( 0 ) 
 
-	#if CLIENT
+
 		if ( GetCurrentPlaylistVarBool( "character_loadouts_class_based", false ) )
 			Init_CharacterClassToLoadoutNameTable()
 
-	#endif
+
 
 	SetDefaultLoadouts()
 
 	PopulateCharacterLoadouts()
 
-	#if SERVER
-		AddCallback_OnPlayerMatchStateChanged( OnPlayerMatchStateChanged )
-		AddCallback_OnPlayerPostRespawned( OnPlayerRespawned )
-	#endif
 
-	#if CLIENT
+
+
+
+
+
 		file.loadoutInfoRui = RuiCreate( $"ui/loadout_selection_info.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, 1 )
 
 		AddCallback_OnCharacterSelectMenuOpened( Callback_OnCharacterSelectOpened )
@@ -91,7 +91,7 @@ void function CharacterLoadouts_Init()
 		AddCallback_CharacterSelectMenu_OnCharacterFocused( Callback_OnCharacterFocusChanged )
 		AddCallback_CharacterSelectMenu_OnCharacterLocked( Callback_OnCharacterLocked )
 		AddCallback_OnCharacterSelectDetailsToggled( Callback_OnCharacterDetailsToggled )
-	#endif
+
 }
 
 void function SetDefaultLoadouts()
@@ -172,11 +172,11 @@ bool function IsCharacterLoadoutsEnabled()
 
 void function CharacterLoadouts_SetIdenticalLoadoutIndex( int index )
 {
-	//define loadouts in playlist
-	//default loadout 1
-	//character_loadout_weapons_0         "mp_weapon_vinson:optic_cq_hcog_bruiser:highcal_mag_l2:stock_tactical_l3 mp_weapon_shotgun:hopup_double_tap:optic_cq_hcog_classic"
-	//character_loadout_consumables_0     "health_pickup_health_small:1 health_pickup_combo_small:1 mp_weapon_grenade_emp:2"
-	//character_loadout_equipment_0       "backpack_pickup_lv2 armor_pickup_lv2 helmet_pickup_lv1 incapshield_pickup_lv1"
+	
+	
+	
+	
+	
 
 	Assert( index > -1 )
 	file.identicalLoadoutIndex = index
@@ -187,16 +187,16 @@ string function GetCharacterLoadoutRef( string characterRef )
 	array<ItemFlavor> characterList = clone GetAllCharacters()
 	characterList.sort( SortByMenuButtonIndex )
 
-	////////////////////////////////////////////
-	// loadout defaults (day zero of the event)
-	////////////////////////////////////////////
+	
+	
+	
 	table<string, int> characterDefaultLoadoutList
 	for( int i = 0; i<characterList.len(); i++ )
 	{
 		characterDefaultLoadoutList[ ItemFlavor_GetCharacterRef( characterList[i] ).tolower() ] <- i
 	}
 
-	int characterLoadoutRefInt = 0 //default to loadout 0 if not in this list
+	int characterLoadoutRefInt = 0 
 	if ( GetCurrentPlaylistVarBool( "character_loadouts_identical", false ) )
 	{
 		Assert( file.identicalLoadoutIndex != -1, "Need to call CharacterLoadouts_SetIdenticalLoadoutIndex() to define character loadout for match" )
@@ -208,9 +208,9 @@ string function GetCharacterLoadoutRef( string characterRef )
 		characterLoadoutRefInt = characterDefaultLoadoutList[ characterRef ]
 	}
 
-	//////////////////////////////////////////////////////////////////////
-	// increment loadout number based on number of days we've been playing
-	///////////////////////////////////////////////////////////////////////
+	
+	
+	
 	string unixTimeEventStartString = GetCurrentPlaylistVarString( "character_loadouts_daily_cycle_start_date", "" )
 	if ( unixTimeEventStartString != "" )
 	{
@@ -234,11 +234,11 @@ string function GetCharacterLoadoutRef( string characterRef )
 		}
 
 		expect int( unixTimeEventStart )
-		if ( unixTimeNow > unixTimeEventStart ) //only increment loadouts if we are actually past the start of the event
+		if ( unixTimeNow > unixTimeEventStart ) 
 		{
 			int unixTimeSinceEventStarted = ( unixTimeNow - unixTimeEventStart )
 			int daysSinceEventStarted =  int( floor( unixTimeSinceEventStarted / SECONDS_PER_DAY ) )
-			//daysSinceEventStarted = 5 //hardcode to test
+			
 			characterLoadoutRefInt = ( ( characterLoadoutRefInt + daysSinceEventStarted ) % maxCharacterLoadouts )
 		}
 	}
@@ -353,14 +353,14 @@ void function PopulateCharacterLoadouts()
 		string weaponLoadoutsPlaylist
 		string consumableLoadoutPlaylist
 		string equipmentLoadoutPlaylist
-		// Using a character based loadout
+		
 		if ( !useClassBasedLoadout )
 		{
 			weaponLoadoutsPlaylist    = GetCurrentPlaylistVarString( "character_loadout_weapons_" + characterLoadoutRef, "" )
 			consumableLoadoutPlaylist = GetCurrentPlaylistVarString( "character_loadout_consumables_" + characterLoadoutRef, "" )
 			equipmentLoadoutPlaylist  = GetCurrentPlaylistVarString ( "character_loadout_equipment_" + characterLoadoutRef, "" )
 		}
-		else // Using a character class/role based loadout
+		else 
 		{
 			int role = CharacterClass_GetRole( character )
 
@@ -381,7 +381,7 @@ void function PopulateCharacterLoadouts()
 		else if ( !GetCurrentPlaylistVarBool( "character_loadout_ignore_default", false ) )
 			displayIgnoredItems = file.loadoutDisplayIgnoreItemsDefault
 
-		//parse equipment loadout
+		
 		file.characterFlavorToEquipmentLoadout[characterRef] <- ParseEquipmentLoadoutText( equipmentLoadoutPlaylist, useDefaultLoadout, displayIgnoredItems )
 		array<string> equipmentToDisplay = []
 		foreach ( string equipment in file.characterFlavorToEquipmentLoadout[characterRef] )
@@ -391,7 +391,7 @@ void function PopulateCharacterLoadouts()
 		}
 		file.characterFlavorToDisplayedEquipmentLoadout[characterRef] <- equipmentToDisplay
 
-		//parse weapon loadout
+		
 		file.characterFlavorToWeaponLoadout[characterRef] <- ParseWeaponLoadoutText( weaponLoadoutsPlaylist, useDefaultLoadout )
 		array<string> weaponsToDisplay
 		foreach( string weaponRef in file.characterFlavorToWeaponLoadout[characterRef].weaponRefs )
@@ -402,7 +402,7 @@ void function PopulateCharacterLoadouts()
 		file.characterFlavorToDisplayedWeaponLoadout[characterRef] <- weaponsToDisplay
 
 
-		//parse consumable loadout
+		
 		file.characterFlavorToConsumableLoadout[characterRef] <- ParseConsumableLoadoutText( consumableLoadoutPlaylist, useDefaultLoadout )
 		array<string> consumablesToDisplay
 		foreach( itemRef in file.characterFlavorToConsumableLoadout[characterRef] )
@@ -417,7 +417,7 @@ void function PopulateCharacterLoadouts()
 	printf( "CHARACTER LOADOUTS: Character Loadouts populated" )
 }
 
-#if CLIENT
+
 void function Init_CharacterClassToLoadoutNameTable()
 {
 	string prefix = "#CHARACTER_CLASS_LOADOUT_"
@@ -427,40 +427,6 @@ void function Init_CharacterClassToLoadoutNameTable()
 		file.characterClassToLoadoutNameTable[ value ] <- loadoutName
 	}
 }
-#endif // CLIENT
-
-#if SERVER
-void function OnPlayerMatchStateChanged( entity player, int oldValue, int newValue )
-{
-	bool defaultSetting = GetCurrentPlaylistVarBool( "should_give_lvl0_evo_armor", true )
-
-	if ( !GetCurrentPlaylistVarBool( "should_give_character_loadout_on_survival_ship_skydive", defaultSetting ) )
-		return
-
-	if ( IsValid( player ) && newValue == ePlayerMatchState.SKYDIVE_FALLING && GetTotalNumberOfDeaths( player ) == 0 ) // For modes with respawns, make sure this isn't a respawn skydive ( those loadouts should be awarded through the should_give_character_loadout_on_spawn_and_respawn playlist var )
-	{
-		CharacterLoadouts_GiveCurrentCharacterLoadoutToPlayer( player, true )
-	}
-}
-
-
-void function OnPlayerRespawned( entity player )
-{
-	bool defaultSetting = GetCurrentPlaylistVarBool( "should_give_lvl0_evo_armor", true )
-	if ( !GetCurrentPlaylistVarBool( "should_give_character_loadout_on_spawn_and_respawn", defaultSetting ) )
-		return
-
-
-
-
-
-
-
-
-	// If we're running the option of not resetting the inventory on a dev playlist with the playlist var "dev_loadout_bypass_match_state",
-	// repeated respawns calling GrantLoadoutOnRespawnThread will accumulate heals and cells.
-	if( !Survival_ShouldResetInventoryOnRespawn( player ) )
-		return
 
 
 
@@ -471,225 +437,259 @@ void function OnPlayerRespawned( entity player )
 
 
 
-	GrantLoadoutOnRespawnThread( player )
-}
-
-void function GrantLoadoutOnRespawnThread( entity player )
-{
-	if ( IsValid( player ) )
-	{
-		bool doGranting = GetCurrentPlaylistVarBool( "dev_loadout_bypass_match_state", false )
-		CharacterLoadouts_GiveCurrentCharacterLoadoutToPlayer( player, doGranting )
-	}
-}
-#endif
 
 
-#if SERVER
-void function CharacterLoadouts_GiveCurrentCharacterLoadoutToPlayer( entity player, bool bypassMatchStateCheck = false )
-{
-	Assert( IsValidPlayer( player ), "CHARACTER LOADOUTS: Trying to give loadout to invalid player" )
-	Assert( IsAlive( player ), "CHARACTER LOADOUTS: Trying to give loadout to player who is not alive" )
-
-	if ( !bypassMatchStateCheck && PlayerMatchState_GetFor( player ) != ePlayerMatchState.NORMAL )
-		return
-
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
-	string characterRef  = ItemFlavor_GetCharacterRef( character ).tolower()
-
-	if ( !(characterRef in file.characterFlavorToWeaponLoadout) )
-	{
-		printf( "CHARACTER LOADOUTS: Player Character " + characterRef + " does not have a playlist-defined loadout" )
-		return
-	}
-
-	CharacterLoadouts_GiveWeaponLoadoutToPlayer( player, file.characterFlavorToWeaponLoadout[characterRef], characterRef )
-	CharacterLoadouts_GiveEquipmentLoadoutToPlayer( player, file.characterFlavorToEquipmentLoadout[characterRef] )
-	CharacterLoadouts_GiveConsumableLoadoutToPlayer( player, file.characterFlavorToConsumableLoadout[characterRef] )
-
-	player.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_0 )
-}
-#endif
-
-#if SERVER
-void function CharacterLoadouts_GiveWeaponLoadoutToPlayer( entity player, WeaponLoadout weaponLoadout, string debugLoadoutName = "", bool doFirstDeploy = true )
-{
-	const int MAX_MAIN_WEAPON_COUNT = 2
-	Assert( weaponLoadout.weaponRefs.len() <= MAX_MAIN_WEAPON_COUNT, "CHARACTER LOADOUTS: More than " + MAX_MAIN_WEAPON_COUNT + " weapons defined in playlist for loadout " + debugLoadoutName )
-
-	array<entity> mainSlotWeapons = player.GetMainWeapons()
-	entity meleeWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
-	mainSlotWeapons.removebyvalue( meleeWeapon )
-
-	int currentWeaponCount = mainSlotWeapons.len()
-	int weaponsToAdd = weaponLoadout.weaponRefs.len()
-
-	if ( ( weaponsToAdd + currentWeaponCount ) > MAX_MAIN_WEAPON_COUNT )
-	{
-		Warning( "CHARACTER LOADOUTS: Attempting to add " + weaponsToAdd + " weapons to a character that already has " + currentWeaponCount + " weapons, skipping weapon loadout." )
-		foreach ( weapon in mainSlotWeapons )
-			Warning( "Current weapon: " + weapon.GetWeaponClassName() )
-		foreach ( ref in weaponLoadout.weaponRefs )
-			Warning( "Will not add: " + ref )
-		return
-	}
-
-	for ( int i = 0; i < weaponLoadout.weaponRefs.len(); i++ )
-	{
-		string weaponRef = weaponLoadout.weaponRefs[i]
-
-		LootData ld    = SURVIVAL_Loot_GetLootDataByRef( weaponRef )
-		weaponRef = ld.baseWeapon
-
-		entity weapon   = player.GiveWeapon( weaponRef, ( i + currentWeaponCount ), ld.baseMods, doFirstDeploy )
-
-		// Ensure we set the weapon properly to a locked set weapon if this mode uses locked sets
-		if ( ShouldRestoreKittedWeapons() )
-			SetWeaponLockedSetFromLootTags( ld.lootTags, weapon )
-
-		if ( weaponRef in weaponLoadout.weaponAttachmentsByWeapon )
-		{
-			array<string> mods = []
-			mods.extend( SURVIVAL_Weapon_GetBaseMods( weaponRef ) )
-			weapon.SetMods( mods )
-
-			mods = weapon.GetMods()
-			array<string> modsCopy = clone mods
-			foreach ( mod in modsCopy )
-			{
-				if ( !SURVIVAL_Loot_IsRefValid( mod ) )
-					continue
-
-				LootData data = SURVIVAL_Loot_GetLootDataByRef( mod )
-				if ( data.lootType == eLootType.ATTACHMENT && CanAttachmentEquipToOneOfAttachPoints( mod, ["hopup", "hopupMulti_a", "hopupMulti_b"] ) )
-					ApplyDefaultToggledMods( weapon.GetWeaponClassName(), mod, mods )
-			}
-			VerifyToggleMods( mods )
-
-			weapon.SetMods( mods )
-
-			foreach( attachmentRef in weaponLoadout.weaponAttachmentsByWeapon[weaponRef] )
-			{
-				AttachToWeapon( player, weapon, attachmentRef, "", false, false, true, false, null, false )
-			}
-		}
-
-		if ( weapon.GetActiveAmmoSource() == AMMOSOURCE_STOCKPILE && weapon.UsesClipsForAmmo() )
-		{
-			weapon.SetWeaponPrimaryClipCount( weapon.GetWeaponPrimaryClipCountMax() )
-
-			if ( CharacterLoadouts_GetHasInfiniteClips() )
-				SetInfiniteAmmoForWeapon ( player, weapon, true )
-		}
-		else
-		{
-			if ( weapon.UsesClipsForAmmo() )
-			{
-				weapon.SetWeaponPrimaryClipCount( weapon.GetWeaponPrimaryClipCountMax() )
-			}
-
-			if ( CharacterLoadouts_GetHasInfiniteClips() )
-				SetInfiniteAmmoForWeapon ( player, weapon, true )
-
-			string ammoRef = GetWeaponAmmoType( weaponRef )
-			int ammoType   = AmmoType_GetTypeFromRef( ammoRef )
-			int currentPoolCount   = player.AmmoPool_GetCount( ammoType )
-			int maxPoolCount = player.AmmoPool_GetCapacity()
-			int desiredPoolCount = currentPoolCount
-			int defaultMultiplier = 1
-			int loadoutAmmoMultiplier = GetCurrentPlaylistVarInt( "loadout_ammo_multiplier", defaultMultiplier )
-			LootData data = SURVIVAL_Loot_GetLootDataByRef( ammoRef )
-			desiredPoolCount += data.countPerDrop * loadoutAmmoMultiplier
-
-			int poolcountToGive = desiredPoolCount
-			if ( desiredPoolCount > maxPoolCount )
-				poolcountToGive = maxPoolCount
-			player.AmmoPool_SetCount( ammoType, poolcountToGive )
-		}
-
-		//skins and charms for weapon
-		ItemFlavor ornull weaponItemOrNull = GetWeaponItemFlavorByClass( weaponRef )
-		ItemFlavor ornull weaponSkinOrNull = null
-		if ( weapon.e.skinItemFlavorGUID != ASSET_SETTINGS_UNIQUE_ID_INVALID )
-		{
-			weaponSkinOrNull = GetItemFlavorByGUID( weapon.e.skinItemFlavorGUID )
-		}
-		else
-		{
-			if ( weaponItemOrNull != null )
-			{
-				weaponSkinOrNull = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_WeaponSkin( expect ItemFlavor(weaponItemOrNull) ) )
-			}
-		}
-
-		ItemFlavor ornull weaponCharmOrNull = null
-		if ( weapon.e.charmItemFlavorGUID != ASSET_SETTINGS_UNIQUE_ID_INVALID )
-		{
-			weaponCharmOrNull = GetItemFlavorByGUID( weapon.e.charmItemFlavorGUID )
-		}
-		else
-		{
-			if ( weaponItemOrNull != null )
-			{
-				weaponCharmOrNull = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_WeaponCharm( expect ItemFlavor(weaponItemOrNull) ) )
-			}
-		}
-
-		if ( weaponSkinOrNull != null || weaponCharmOrNull != null )
-			WeaponCosmetics_Apply( weapon, weaponSkinOrNull, weaponCharmOrNull )
-	}
-}
-#endif
-
-#if SERVER
-void function CharacterLoadouts_GiveEquipmentLoadoutToPlayer( entity player, array < string > equipmentLoadout )
-{
-	foreach( equipment in equipmentLoadout )
-	{
-		LootData data    = SURVIVAL_Loot_GetLootDataByRef( equipment )
-		Assert( GetLootTypeData( data.lootType ).equipmentSlot != "", "Non-equipment item specified in default equipment loadout. Try using the default weapon or consumable loadout instead." )
-
-		SURVIVAL_GivePlayerEquipment( player, equipment, 0, null, "", false )
-	}
-
-	string itemRef = EquipmentSlot_GetLootRefForSlot( player, "armor" )
-	if ( SURVIVAL_Loot_IsRefValid( itemRef ) )
-	{
-		LootData data = SURVIVAL_Loot_GetLootDataByRef( itemRef )
-		player.SetShieldHealthMax( SURVIVAL_GetCharacterShieldHealthMaxForArmor( player, data ) )
-		player.SetShieldHealth( SURVIVAL_GetCharacterShieldHealthMaxForArmor( player, data ) )
-
-		if ( EvolvingArmor_IsEquipmentEvolvingArmor( itemRef ) )
-			EvolvingArmor_SetEvolutionProgress( player, EvolvingArmor_GetRequirementForEvolution( data.tier ) )
-	}
-}
-#endif
-
-#if SERVER
-void function CharacterLoadouts_GiveConsumableLoadoutToPlayer( entity player, array < string > consumableLoadout )
-{
-	foreach( consumable in consumableLoadout )
-	{
-		SURVIVAL_AddToPlayerInventory( player, consumable, 1 )
-
-		// Bug fix (http://jiratf.respawn.net:8080/browse/R5DEV-145402)
-		// so we don't auto-equip an mrb after respawning.
-		if ( consumable == "mp_ability_mobile_respawn_beacon" )
-		{
-			continue
-		}
-
-		LootData data = SURVIVAL_Loot_GetLootDataByRef( consumable )
-		if ( data.lootType == eLootType.ORDNANCE )
-		{
-			SURVIVAL_EquipOrdnanceFromInventory( player, consumable, true )
-		}
-	}
-}
-#endif
 
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function Callback_OnCharacterSelectOpened()
 {
 	file.is16x10 = GetNearestAspectRatio( GetScreenSize().width, GetScreenSize().height ) == 1.6
@@ -750,7 +750,7 @@ void function DisplayLoadoutForCharacter( ItemFlavor character )
 {
 	string characterRef = ItemFlavor_GetCharacterRef( character ).tolower()
 
-	//clear out old icons
+	
 	foreach( ruiAsset in file.loadoutRuiElements )
 	{
 		RuiDestroy( ruiAsset )
@@ -761,7 +761,7 @@ void function DisplayLoadoutForCharacter( ItemFlavor character )
 	file.characterFlavorToDisplayedConsumableLoadout[characterRef].len() > 0 ||
 	file.characterFlavorToDisplayedEquipmentLoadout[characterRef].len() > 0
 
-	//do not show loadout if character does not have one
+	
 	if ( !shouldShowLoadout )
 	{
 		RuiSetBool( file.loadoutInfoRui, "isVisible", false )
@@ -787,7 +787,7 @@ void function DisplayLoadoutForCharacter( ItemFlavor character )
 		RuiSetString( file.loadoutInfoRui, "characterLoadoutName", Localize( "#" + characterRef + "_NAME" ) )
 	}
 
-	//populate weapon inventory
+	
 	for ( int i = 0; i < file.characterFlavorToDisplayedWeaponLoadout[characterRef].len(); i++ )
 	{
 		string weaponRef    = file.characterFlavorToDisplayedWeaponLoadout[characterRef][i]
@@ -803,7 +803,7 @@ void function DisplayLoadoutForCharacter( ItemFlavor character )
 		string ammoRef = GetWeaponAmmoType( weaponRef )
 		if ( ammoRef != "" )
 		{
-			//Crate weapons won't have ammoRefs
+			
 			LootData ammoData = SURVIVAL_Loot_GetLootDataByRef( ammoRef )
 			RuiSetAsset( weaponRuiAsset, "ammoImage", ammoData.hudIcon )
 		}
@@ -812,7 +812,7 @@ void function DisplayLoadoutForCharacter( ItemFlavor character )
 
 		file.loadoutRuiElements.append( weaponRuiAsset )
 
-		//populate attachments for weapon
+		
 		array<string> attachmentRefs
 		if( !SURVIVAL_Weapon_IsAttachmentLocked ( weaponRef ) )
 		{
@@ -842,7 +842,7 @@ void function DisplayLoadoutForCharacter( ItemFlavor character )
 		}
 	}
 
-	//populate equipment
+	
 	for ( int i = 0; i < file.characterFlavorToDisplayedEquipmentLoadout[characterRef].len(); i++ )
 	{
 		string equipmentRef    = file.characterFlavorToDisplayedEquipmentLoadout[characterRef][i]
@@ -857,7 +857,7 @@ void function DisplayLoadoutForCharacter( ItemFlavor character )
 		file.loadoutRuiElements.append( equipmentRuiAsset )
 	}
 
-	//populate consumables
+	
 	table<string, int> trackedConsumableCount
 	table<string, var> trackConsumableRuiAssets
 	int consumableCounter = 0
@@ -900,12 +900,12 @@ void function DisplayLoadoutForCharacter( ItemFlavor character )
 
 bool function ShouldShrinkWeaponIcon( string weaponRef )
 {
-	//if ( weaponRef == "mp_weapon_defender" )
-		//return true
+	
+		
 
 	return false
 }
-#endif
+
 
 array<string> function CharacterLoadouts_GetDefaultWeaponLoadoutArray()
 {
@@ -937,307 +937,308 @@ array<string> function CharacterLoadouts_GetEquipmentLoadoutArray( ItemFlavor ch
 	return file.characterFlavorToEquipmentLoadout[ItemFlavor_GetCharacterRef( character ).tolower()]
 }
 
-// -------------------
-// Minimum Equipment Functions: These functions can be used to ensure the player is given minimal items.
-// -------------------
-
-#if SERVER
-void function Ensure_Min_Loadout( entity player )
-{
-	if( !IsValidPlayer( player ) )
-		return
-
-	Ensure_Min_Weapon( player )
-	Ensure_Min_Consumables( player )
-
-}
-#endif // SERVER
-
-
-#if SERVER
-void function Ensure_Min_Weapon( entity player )
-{
-	if( !IsValidPlayer( player ) )
-		return
-
-	// Check for weapons. If no weapons, give a pistol.
-	int weaponCount = SURVIVAL_GetPrimaryWeaponsSorted( player ).len()
-	if( weaponCount == 0 )
-	{
-		string weaponRef = "mp_weapon_semipistol"
-		LootData weaponData = SURVIVAL_Loot_GetLootDataByRef( weaponRef )
-
-		entity newActiveWeapon = SpawnGenericLoot( weaponRef, player.GetOrigin(), player.GetAngles(), -1 )
-		array<string> lootTags = weaponData.lootTags
-		SURVIVAL_GiveMainWeapon( player, newActiveWeapon, lootTags, null, false, null, false, false, [], true )
-		newActiveWeapon.Destroy()
-	}
-	Ensure_Min_Ammo( player )
-}
-#endif // SERVER
-
-#if SERVER
-// This function fills up the player's guns, and also gives them stacks of ammo for their weapons if the player does not have any.
-void function Ensure_Min_Ammo( entity player )
-{
-	if( !IsValidPlayer( player ) )
-		return
-
-	// Only give ammo stacks if the player doesn't have infinite ammo
-	if ( !player.p.infiniteGameModeAmmo && !player.p.infiniteAmmo )
-	{
-		// Full mag in each weapon.
-		array< entity > playerWeapons = SURVIVAL_GetPrimaryWeaponsSorted( player )
-		array< LootData > weaponDatas
-		foreach( weaponEnt in playerWeapons )
-		{
-			string weaponName = weaponEnt.GetWeaponBaseClassName()
-			if ( ( weaponName != "mp_weapon_lstar" ) && !weaponEnt.UsesClipsForAmmo() && weaponEnt.GetActiveAmmoSource() == AMMOSOURCE_POOL )
-			{
-				if ( weaponName == "mp_weapon_bow" )
-				{
-					weaponEnt.SetWeaponPrimaryAmmoCount( AMMOSOURCE_STOCKPILE, 30 )
-				}
-				else if ( weaponName == "mp_weapon_throwingknife" )
-				{
-					weaponEnt.SetWeaponPrimaryAmmoCount( AMMOSOURCE_STOCKPILE, 1 )
-				}
-			}
-			else if( weaponName == "mp_weapon_lstar" )
-			{
-				weaponEnt.SetWeaponPrimaryAmmoCount( AMMOSOURCE_STOCKPILE, 80 )
-				weaponDatas.append( SURVIVAL_Loot_GetLootDataByRef( weaponName ) )
-			}
-			else
-			{
-				int ammoCount = weaponEnt.GetWeaponPrimaryClipCountMax()
-				weaponEnt.SetWeaponPrimaryClipCount( ammoCount )
-				weaponDatas.append( SURVIVAL_Loot_GetLootDataByRef( weaponName ) )
-			}
-
-		}
-
-		array< string > AmmoTypesForReload
-		AmmoTypesForReload.append( "bullet" )
-		AmmoTypesForReload.append( "highcal" )
-		AmmoTypesForReload.append( "shotgun" )
-		AmmoTypesForReload.append( "sniper" )
-		AmmoTypesForReload.append( "special" )
-
-		table< string, int > ammoBoxStackByType
-		ammoBoxStackByType[ "bullet" ] 	<- 4 // was 3
-		ammoBoxStackByType[ "highcal" ] <- 4 // was 3
-		ammoBoxStackByType[ "shotgun" ] <- 3 // was 2
-		ammoBoxStackByType[ "sniper" ] 	<- 3 // was 2
-		ammoBoxStackByType[ "special" ] <- 4 // was 3
-
-
-			if( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_BATTLE_RUSH ) )
-			{
-				ammoBoxStackByType[ "bullet" ] 	<- 2
-				ammoBoxStackByType[ "highcal" ] <- 2
-				ammoBoxStackByType[ "shotgun" ] <- 2
-				ammoBoxStackByType[ "sniper" ] 	<- 2
-				ammoBoxStackByType[ "special" ] <- 2
-			}
-
-
-		// Count ammo in inventory.
-		array< ConsumableInventoryItem > playerInventory = SURVIVAL_GetPlayerInventory( player )
-		array< string > refs_Inventory = SURVIVAL_ConsumableInventoryItems_To_ItemRefs( playerInventory )
-		table< string, int > counts_Inventory = Count_Strings_IntoTable( refs_Inventory )
-
-		// Give a full ammo stack by each weapon's ammo type if player has none.
-		foreach( weaponData in weaponDatas )
-		{
-			int ammoBoxesStack
-			string ammoType = weaponData.ammoType
-
-			// If the ammo type isn't a reload type, skip to next weapon.
-			if( !( ammoType in ammoBoxStackByType ) )
-				continue
-
-			bool playerHasAmmo = ammoType in counts_Inventory
-			bool playerNeedsAmmo = !playerHasAmmo
-
-			int ammoStacksToGive
-			int ammoToGive
-
-			int stackSize = SURVIVAL_Loot_GetLootDataByRef( ammoType ).countPerDrop
-			if( playerHasAmmo )
-			{
-
-				int ammoInInventory = counts_Inventory[ ammoType ]
-				int ammoMin = stackSize * ammoBoxStackByType[ ammoType ]
-
-				if( ammoInInventory < ammoMin  )
-				{
-					playerNeedsAmmo = true
-					ammoToGive = ammoMin - ammoInInventory
-					ammoStacksToGive = ( ammoMin - ammoInInventory ) / stackSize
-				}
-			}
-			else
-			{
-				playerNeedsAmmo = true
-				ammoStacksToGive = ammoBoxStackByType[ ammoType ]
-				ammoToGive = stackSize * ammoStacksToGive
-			}
-
-			if( playerNeedsAmmo )
-			{
-				GiveLoot( player, ammoType, ammoToGive )
-			}
-		}
-	}
-}
-#endif // SERVER
-
-#if SERVER
-void function Ensure_Min_Consumables( entity player, array< string > refsInventoryParm = [], bool doDevOut = false )
-{
-	if( !IsValidPlayer( player ) )
-		return
-
-	// 		1. Get CharacterLoadouts_GetConsumableLoadoutArray() for player's current character, and count its occurrences of cells, syringes, etc.
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
-	array< string > refs_Default = CharacterLoadouts_GetConsumableLoadoutArray( character )
-	table< string, int > counts_Default = Count_Strings_IntoTable( refs_Default )
-
-	// 		2. Get player's inventory and count its occurrences of cells, syringes, etc.
-	array< ConsumableInventoryItem > playerInventory = SURVIVAL_GetPlayerInventory( player )
-	array< string > refs_Inventory
-	if( refsInventoryParm.len() == 0 )
-	{
-		refs_Inventory = SURVIVAL_ConsumableInventoryItems_To_ItemRefs( playerInventory )
-	}
-	else
-	{
-		refs_Inventory = refsInventoryParm
-	}
-	table< string, int > counts_Inventory = Count_Strings_IntoTable( refs_Inventory )
-
-	// 		3. Compare counts and construct counts of items to top off.
-	array< string > itemRefs_ToGive
-	foreach( itemRef, itemCount_Default in counts_Default )
-	{
-		int itemCount_ToGive = 0
-		if( !( itemRef in counts_Inventory ) )
-		{
-			itemCount_ToGive = itemCount_Default
-		}
-		else if( itemCount_Default > counts_Inventory[ itemRef ] )
-		{
-			itemCount_ToGive = itemCount_Default - counts_Inventory[ itemRef ]
-		}
-		else
-		{
-			itemCount_ToGive = 0
-		}
-
-		if( itemCount_ToGive > 0 )
-		{
-			#if DEV
-				if( doDevOut )
-				{
-					printt( FUNC_NAME() + "(): Giving " + itemCount_ToGive + " " + itemRef )
-				}
-			#endif
-
-			for( int i = 0; i < itemCount_ToGive; i++ )
-			{
-				itemRefs_ToGive.append( itemRef )
-			}
-		}
-	}
-
-	// 		4. Give items to top off.
-	if( itemRefs_ToGive.len() > 0 )
-	{
-		CharacterLoadouts_GiveConsumableLoadoutToPlayer( player, itemRefs_ToGive )
-	}
-}
-
-array< LootData > function Get_Weapon_Datas( entity player )
-{
-	array< LootData > weaponsDatas
-	if( !IsValidPlayer( player ) )
-		return weaponsDatas
-
-	array< entity > weaponEnts = SURVIVAL_GetPrimaryWeapons( player )
-	foreach( weaponEnt in weaponEnts )
-	{
-		LootData wData = SURVIVAL_GetLootDataFromWeapon( weaponEnt )
-		weaponsDatas.append( wData )
-	}
-
-	return weaponsDatas
-}
-
-array< LootData > function Remove_Weapons( entity player, bool devOut = false )
-{
-	array< LootData > playerWeaponsData
-	if( !IsValidPlayer( player ) )
-		return playerWeaponsData
-
-	#if DEV
-		if( devOut )
-		{
-			printt( FUNC_NAME() + "(): Remove_Weapons for " + player.GetPlayerName() )
-		}
-	#endif // DEV
-
-	playerWeaponsData  = Get_Weapon_Datas( player )
-	array< string > playerWeaponRefs = LootDatas_To_LootRefs( playerWeaponsData )
-	#if DEV
-		if( devOut )
-		{
-			foreach( wpRef in playerWeaponRefs )
-			{
-				printt( FUNC_NAME() + "(): " + player.GetPlayerName() + " weapon == " + wpRef )
-			}
-			printt( "-----" )
-		}
-	#endif // DEV
-
-	foreach( ref in playerWeaponRefs)
-	{
-		player.TakeWeaponNow( ref )
-	}
-	SURVIVAL_TryGivePlayerDefaultMeleeWeapons( player )
-
-	// TODO: CLEANUP if not needed
-	// Reset primary weapon netvars
-	player.SetPlayerNetInt( "playerPrimaryWeapon0", -1 )
-	player.SetPlayerNetInt( "playerPrimaryWeapon1", -1 )
-
-	#if DEV
-		if( devOut )
-		{
-			printt( FUNC_NAME() + "(): After Weapon Removal: " + player.GetPlayerName() )
-			array< LootData > checkWeaponsData = Get_Weapon_Datas( player )
-			foreach( wpData in checkWeaponsData )
-			{
-				printt( FUNC_NAME() + "(): " + player.GetPlayerName() + " weapon == " + wpData.ref )
-			}
-		}
-	#endif // DEV
-
-	return playerWeaponsData
-}
-
-void function Restore_Shields( entity player )
-{
-	if( !IsValidPlayer( player ) )
-		return
-
-
-		string ref = UpgradeCore_GetPlayerShieldCoreRef( player )
-		Inventory_SetPlayerEquipment( player, ref, "armor" )
 
 
 
-}
 
 
-#endif // SERVER 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

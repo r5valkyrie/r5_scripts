@@ -1,4 +1,4 @@
-#if SERVER || CLIENT || UI
+
 global function StoryChallengeEvents_Init
 global function GetActiveStoryChallengeEvents
 global function GetStoryChallengeEventIfActive
@@ -7,7 +7,6 @@ global function StoryChallengeEvent_GetActiveChallengesForPlayer
 global function StoryChallengeEvent_IsChallengeAvailableForPlayer
 global function StoryChallengeEvent_HasChallengesPopupBeenSeen
 global function StoryChallengeEvent_GetHasChallengesData
-global function StoryChallengeEvent_GetHasChallengesPopupBeenSeenVarNameOrNull
 global function StoryChallengeEvent_GetAutoplayDialogueDataForPlayer
 global function StoryChallengeEvent_GetNonAutoplayDialogueDataForPlayer
 
@@ -21,30 +20,29 @@ global function StoryChallengeEvent_IsPrologueCompleted
 global function StoryEvent_GetShowInChallengeBoxBool
 global function StoryEvent_GetRadioVignetteBink
 global function StoryEvent_GetRadioVignetteMilesEvent
-#endif
 
-#if UI
-global function StoryEvent_GetHeaderIcon
-global function StoryEvent_GetChapterHeaderImage
-global function StoryEvent_GetChapterAboutBgImage
-global function StoryEvent_OnLobbyPlayPanelSpecialChallengeClicked
-global function StoryEvent_GetChapterTagString
-global function StoryEvent_GetCompletionReward
-global function StoryEvent_GetPrologueLobbyDesc
-global function StoryEvent_GetPlaylistName
-global function StoryEvent_PlayRadioVignetteForChapter
-#endif
-///////////////////////
-///////////////////////
-//// Private Types ////
-///////////////////////
-///////////////////////
 
-#if SERVER
-global function StoryChallengeEvent_MarkPrologueCompleted
-#endif
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 global struct StoryEventRadioVignetteData
 {
 	string ornull	  radioVignetteBinkOrNull
@@ -65,10 +63,10 @@ global struct StoryEventGroupChallengeData
 
 	StoryEventRadioVignetteData vignetteData
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 global struct StoryEventDialogueData
 {
 	string        bodyText
@@ -87,46 +85,46 @@ global struct StoryEventDialogueData
 
 
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 struct FileStruct_LifetimeLevel
 {
 	table< ItemFlavor, array<StoryEventGroupChallengeData> > eventChallengesDataMap
 	table< ItemFlavor, array<StoryEventDialogueData> >       eventDialogueDataMap
 	table< ItemFlavor, StoryEventGroupChallengeData >        challengeToEventDataMap
 }
-#endif
-#if SERVER || CLIENT
-FileStruct_LifetimeLevel fileLevel // resets every level change
-#elseif UI
-FileStruct_LifetimeLevel& fileLevel // resets every level change
 
-struct {
-	//
-} fileVM // resets every UI VM reset
-#endif
+
+FileStruct_LifetimeLevel fileLevel 
 
 
 
 
-/////////////////////////
-/////////////////////////
-//// Initialiszation ////
-/////////////////////////
-/////////////////////////
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function StoryChallengeEvents_Init()
 {
-	#if UI
-		FileStruct_LifetimeLevel newFileLevel
-		fileLevel = newFileLevel
-	#endif
+
+
+
+
 
 	AddCallback_OnItemFlavorRegistered( eItemType.calevent_story_challenges, void function( ItemFlavor ev ) {
-		// Challenges
+		
 		int challengeSortOrdinal = 1
 		array<StoryEventGroupChallengeData> challengeGroupDatas
 		bool hasPrologue = false
@@ -142,7 +140,7 @@ void function StoryChallengeEvents_Init()
 			data.persistenceVarCountToUnlock = GetSettingsBlockInt( challengeGroupBlock, "requiredChallengesPersistentVarNameCount" )
 			data.isPrologue					= GetSettingsBlockBool( challengeGroupBlock, "isPrologue" )
 
-			// unlock persistence var
+			
 			if ( persistenceVarNameToUnlock != "" )
 			{
 				Assert( PersistenceGetVarHandle( persistenceVarNameToUnlock ) != null, "Invalid challenge required persistence variable name: " + persistenceVarNameToUnlock )
@@ -153,7 +151,7 @@ void function StoryChallengeEvents_Init()
 				data.persistenceVarNameToUnlockOrNull = null
 			}
 
-			// has seen persistence var
+			
 			if ( persistenceVarNameHasSeen != "" )
 			{
 				Assert( PersistenceGetVarHandle( persistenceVarNameHasSeen ) != null, "Invalid challenge required persistence variable name: " + persistenceVarNameHasSeen )
@@ -166,7 +164,7 @@ void function StoryChallengeEvents_Init()
 				data.persistenceVarNameHasSeenOrNull = null
 			}
 
-			// required start date
+			
 			if ( requiredStartDate != "" )
 			{
 				int ornull requiredStartDateUnixTimeOrNull = DateTimeStringToUnixTimestamp( requiredStartDate )
@@ -192,7 +190,7 @@ void function StoryChallengeEvents_Init()
 			}
 			else
 			{
-				// gather and register challenges
+				
 				foreach ( var challengeBlock in IterateSettingsArray( GetSettingsBlockArray( challengeGroupBlock, "challenges" ) ) )
 				{
 					ItemFlavor ornull challengeFlavOrNull = RegisterItemFlavorFromSettingsAsset( GetSettingsBlockAsset( challengeBlock, "challengeFlav" ) )
@@ -221,7 +219,7 @@ void function StoryChallengeEvents_Init()
 
 		fileLevel.eventChallengesDataMap[ev] <- challengeGroupDatas
 
-		// Dialogue Messages
+		
 		array<StoryEventDialogueData> dialogueDatas
 		int dialogueIndex = 0
 		foreach ( var dialogueBlock in IterateSettingsAssetArray( ItemFlavor_GetAsset( ev ), "dialogueMessages" ) )
@@ -239,7 +237,7 @@ void function StoryChallengeEvents_Init()
 			data.autoPlay = GetSettingsBlockBool( dialogueBlock, "dialogueAutoPlay" )
 			data.persistenceVarCountToHide = GetSettingsBlockInt( dialogueBlock, "dialoguePersistentVarNameToHideCount" )
 
-			// unlock persistence var
+			
 			if ( persistenceVarNameToUnlock != "" )
 			{
 				Assert( PersistenceGetVarHandle( persistenceVarNameToUnlock ) != null, "Invalid dialogue message persistence var name to unlock: " + persistenceVarNameToUnlock )
@@ -250,7 +248,7 @@ void function StoryChallengeEvents_Init()
 				data.persistenceVarNameToUnlockOrNull = null
 			}
 
-			// has seen persistence var
+			
 			if ( persistenceVarNameHasSeen != "" )
 			{
 				Assert( PersistenceGetVarHandle( persistenceVarNameHasSeen ) != null, "Invalid dialogue message persistence var name to hide: " + persistenceVarNameHasSeen )
@@ -263,7 +261,7 @@ void function StoryChallengeEvents_Init()
 				data.persistenceVarNameHasSeenOrNull = null
 			}
 
-			// should hide persistence var
+			
 			if ( persistenceVarNameToHide != "" )
 			{
 				Assert( PersistenceGetVarHandle( persistenceVarNameToHide ) != null, "Invalid dialogue message persistence var name to hide: " + persistenceVarNameToHide )
@@ -279,19 +277,19 @@ void function StoryChallengeEvents_Init()
 			{
 				string dialogueAlias = GetSettingsBlockString( audioBlock, "dialogueAudioAlias" )
 
-				#if CLIENT || UI
+
 					if ( dialogueAlias != "" )
 					{
 						soundDuration += GetSoundDuration( dialogueAlias )
 						data.audioAliases.append( dialogueAlias )
 					}
-				#endif
+
 			}
 
-			#if CLIENT || UI
+
 				if ( soundDuration > 0.0 )
 					data.duration = soundDuration
-			#endif
+
 
 			dialogueDatas.append( data )
 			dialogueIndex++
@@ -300,17 +298,17 @@ void function StoryChallengeEvents_Init()
 		fileLevel.eventDialogueDataMap[ev] <- dialogueDatas
 	} )
 }
-#endif
 
 
 
-//////////////////////////
-//////////////////////////
-//// Global functions ////
-//////////////////////////
-//////////////////////////
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
 array<ItemFlavor> function GetActiveStoryChallengeEvents( int t )
 {
 	Assert( IsItemFlavorRegistrationFinished() )
@@ -341,10 +339,10 @@ ItemFlavor ornull function GetStoryChallengeEventIfActive( int t, string challen
 	}
 	return null
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 array<ItemFlavor> function StoryChallengeEvent_GetStoryChallengesForPlayer( ItemFlavor event, entity player )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_story_challenges )
@@ -361,9 +359,9 @@ array<ItemFlavor> function StoryChallengeEvent_GetStoryChallengesForPlayer( Item
 
 	return appropriateChallenges
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 array<ItemFlavor> function StoryChallengeEvent_GetActiveChallengesForPlayer( ItemFlavor event, entity player )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_story_challenges )
@@ -387,9 +385,9 @@ array<ItemFlavor> function StoryChallengeEvent_GetActiveChallengesForPlayer( Ite
 
 	return appropriateChallenges
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 bool function StoryChallengeEvent_IsChallengeAvailableForPlayer( ItemFlavor event, ItemFlavor challenge, entity player )
 {
 	if ( !(challenge in fileLevel.challengeToEventDataMap) )
@@ -403,74 +401,51 @@ bool function StoryChallengeEvent_IsChallengeAvailableForPlayer( ItemFlavor even
 
 	return true
 }
-#endif
-
-#if UI
-void function StoryEvent_PlayRadioVignetteForChapter( int chapter )
-{
-	                                                                                   
-	ItemFlavor event = GetItemFlavorByGUID( GetUniqueIdForSettingsAsset( $"settings/itemflav/calevent/s12e04/s12e04_story_challenges.rpak" ) )
-	var challengeGroupBlock  = StoryEvent_GetChapters( event )[chapter]
-	string radioVignetteBink = StoryEvent_GetRadioVignetteBink ( challengeGroupBlock )
-	string radioVignetteMiles = StoryEvent_GetRadioVignetteMilesEvent ( challengeGroupBlock )
-
-	VideoPlaySettings videoSettings
-	videoSettings.video = radioVignetteBink
-	videoSettings.milesAudio = radioVignetteMiles
-	videoSettings.videoCompleteFunc = StoryEvent_OnRadioVignetteFinished
-
-	thread PlayVideoMenu( false, videoSettings )
-}
-
-void function StoryEvent_OnRadioVignetteFinished()
-{
-	Remote_ServerCallFunction( "StoryEvent_OnRadioVignetteFinishedLobbyKick" )
-}
-#endif
-
-#if SERVER
-void function StoryChallengeEvent_MarkPrologueCompleted( entity player, string storyEventGUIDString )
-{
-	if ( !IsValid ( player ) )
-		return
-
-	ItemFlavor ornull storyChallengeItemFlav = GetStoryChallengeEventIfActive( GetUnixTimestamp(), storyEventGUIDString )
-	if ( storyChallengeItemFlav == null )
-	{
-		printt("Could not mark prologue complete for story challenge event: " + storyEventGUIDString + " because it isn't active.")
-		return
-	}
-
-	foreach ( StoryEventGroupChallengeData groupData in fileLevel.eventChallengesDataMap[ expect ItemFlavor(storyChallengeItemFlav) ] )
-	{
-		if ( !groupData.isPrologue )
-			continue
-
-		bool challengesGroupIsUnlockedFromPersistence = groupData.persistenceVarNameToUnlockOrNull == null || player.GetPersistentVarAsInt( expect string( groupData.persistenceVarNameToUnlockOrNull ) ) >= groupData.persistenceVarCountToUnlock
-
-		if ( !challengesGroupIsUnlockedFromPersistence )
-			continue
-
-		bool challengesGroupIsUnlockedFromDate = groupData.requiredStartDateUnixTime < UNIX_TIME_FALLBACK_1970 || GetUnixTimestamp() >= groupData.requiredStartDateUnixTime
-
-		if ( !challengesGroupIsUnlockedFromDate )
-			continue
-
-		if ( groupData.persistenceVarNamePrologueOrNull == null )
-		{
-			printt("Could not mark prologue complete for story challenge event: " + storyEventGUIDString + " no persistent var specified.")
-			break
-		}
-
-		string prologuePersistentVar = expect string(groupData.persistenceVarNamePrologueOrNull)
-		player.SetPersistentVar( prologuePersistentVar, 1 )
-	}
-
-}
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 bool function StoryChallengeEvent_HasChallengesPopupBeenSeen( ItemFlavor challenge, entity player )
 {
 	Assert( ItemFlavor_GetType( challenge ) == eItemType.challenge )
@@ -482,20 +457,10 @@ bool function StoryChallengeEvent_HasChallengesPopupBeenSeen( ItemFlavor challen
 
 	return false
 }
-#endif
 
-#if SERVER || CLIENT || UI
-string ornull function StoryChallengeEvent_GetHasChallengesPopupBeenSeenVarNameOrNull( ItemFlavor challenge, entity player )
-{
-	Assert( ItemFlavor_GetType( challenge ) == eItemType.challenge )
 
-	StoryEventGroupChallengeData data = fileLevel.challengeToEventDataMap[ challenge ]
 
-	return data.persistenceVarNameHasSeenOrNull
-}
-#endif
 
-#if SERVER || CLIENT || UI
 StoryEventGroupChallengeData function StoryChallengeEvent_GetHasChallengesData( ItemFlavor challenge, entity player )
 {
 	Assert( ItemFlavor_GetType( challenge ) == eItemType.challenge )
@@ -504,11 +469,11 @@ StoryEventGroupChallengeData function StoryChallengeEvent_GetHasChallengesData( 
 
 	return data
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
-// Used for autoplay dialogue.
+
+
+
 array<StoryEventDialogueData> function StoryChallengeEvent_GetAutoplayDialogueDataForPlayer( ItemFlavor event, entity player )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_story_challenges )
@@ -532,11 +497,11 @@ array<StoryEventDialogueData> function StoryChallengeEvent_GetAutoplayDialogueDa
 
 	return appropriateDialogueDatas
 }
-#endif // SERVER || CLIENT || UI
 
 
-#if SERVER || CLIENT || UI
-// Used for non-autoplay dialogue.
+
+
+
 StoryEventDialogueData function StoryChallengeEvent_GetNonAutoplayDialogueDataForPlayer( ItemFlavor event, entity player )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_story_challenges )
@@ -566,7 +531,7 @@ array<ItemFlavor> function StoryEvent_GetCurrentChapterChallenges( entity player
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_story_challenges )
 
 	array<ItemFlavor> result
-	//check is locked
+	
 	var challengeGroupBlock  = StoryEvent_GetChapters( event )[StoryEvent_GetActiveChapter( player, event )]
 
 	foreach ( var challenges in IterateSettingsArray( GetSettingsBlockArray( challengeGroupBlock, "challenges" ) ) )
@@ -712,7 +677,7 @@ int function StoryEvent_GetActiveChapter( entity player, ItemFlavor event )
 		}
 	}
 
-	//if finished
+	
 	if(chapter >= chapters.len())
 		chapter = chapters.len() -1
 
@@ -765,77 +730,78 @@ string function StoryEvent_GetRadioVignetteMilesEvent ( var chapter )
 {
 	return GetSettingsBlockString( chapter, "radioVignetteMilesEvent" )
 }
-#endif // SERVER || CLIENT || UI
 
 
-#if UI
-ItemFlavorBag function StoryEvent_GetCompletionReward( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_story_challenges )
 
-	ItemFlavorBag rewards
 
-	asset rewardAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset(event), "storyCompletionFlavor" )
-	if ( !IsValidItemFlavorSettingsAsset( rewardAsset ) )
-	{
-		Warning( "Skipping completion reward  of story event")
-	}
-	else
-	{
-		rewards.flavors.append( GetItemFlavorByAsset( rewardAsset ) )
-		rewards.quantities.append( GetGlobalSettingsInt( ItemFlavor_GetAsset( event ), "storyCompletionQuantity" ) )
-	}
-	return rewards
-}
-string function StoryEvent_GetPrologueLobbyDesc ( var chapter )
-{
-	Assert( StoryEvent_GetChapterIsPrologue(chapter) )
-	return GetSettingsBlockString( chapter, "prologueLobbyDesc" )
-}
-string function StoryEvent_GetPlaylistName ( var chapter )
-{
-	return GetSettingsBlockString( chapter, "playlistName" )
-}
-asset function StoryEvent_GetHeaderIcon( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_story_challenges )
-	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "headerIcon" )
-}
-asset function StoryEvent_GetChapterHeaderImage( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_story_challenges )
-	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "eventChallengeHeaderImage" )
-}
 
-asset function StoryEvent_GetChapterAboutBgImage( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_story_challenges )
-	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "storyEventAboutHeroImage" )
-}
 
-void function StoryEvent_OnLobbyPlayPanelSpecialChallengeClicked( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_story_challenges )
 
-	Assert( IsLobby() )
-	Assert( IsFullyConnected() )
-	Assert( GetActiveMenu() == GetMenu( "LobbyMenu" ) )
-	Assert( IsTabPanelActive( GetPanel( "PlayPanel" ) ) )
 
-	StoryEventAboutDialog_SetEvent( event )
-	AdvanceMenu( GetMenu( "StoryEventAboutDialog" ) )
-}
-string function StoryEvent_GetChapterTagString( ItemFlavor event, int idx )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_story_challenges )
 
-	if( idx == 0 )
-		return "#CHALLENGE_TAG_PROLOGUE"
-	else if( idx == StoryEvent_GetChaptersCount(event) - 1 )
-		return "#CHALLENGE_TAG_FINALE"
-	else
-		return "#CHALLENGE_TAG_MISSION"
 
-	return ""
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

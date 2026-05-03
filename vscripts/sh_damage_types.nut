@@ -4,35 +4,29 @@ global function GetObitFromDamageSourceID
 global function GetObitImageFromDamageSourceID
 global function DamageSourceIDToString
 global function DamageSourceIDHasString
-global function GetRefFromDamageSourceID //duplicate of DamageSourceIDToString
+global function GetRefFromDamageSourceID
 global function PIN_GetDamageCause
-global function DamageSourceIDToStringTable
-global function RegisterCustomWeaponDamageDef
 global function RegisterAdditionalMainWeapon
 global function GetIsAdditionalMainWeapon
 
-#if DEVELOPER
-	global function DEV_PrintDamageSourceIDs
-	global function DEV_PrintBackendNames
-#endif
-
 struct
 {
-	table<int,string> damageSourceIDToName
-	table<int,asset> damageSourceIDToImage
-	table<int,string> damageSourceIDToString
+	table<int, string> damageSourceIDToName
+	table<int, asset>  damageSourceIDToImage
+	table<int, string> damageSourceIDToString
 	array<int>         additionalMainWeapons
 } file
 
+
 global enum eDamageSourceId
 {
-	invalid 	= -1  // used in code
+	invalid = -1  
 
-	//---------------------------
-	// defined in damageDef.txt. This will go away ( you can use damagedef_nuclear_core instead of eDamageSourceId.[enum id] and get rid of it from here )
-	// once this list has only damagedef_*, then we can remove eDamageSourceId
-	code_reserved  				// may be merged with invalid -1 above
-	damagedef_unknown		   	// must start at 1 and order must match what's in damageDefs.txt
+	
+	
+	
+	code_reserved                
+	damagedef_unknown            
 	damagedef_unknownBugIt
 	damagedef_suicide
 	damagedef_despawn
@@ -64,21 +58,40 @@ global enum eDamageSourceId
 	damagedef_dirty_bomb_explosion
 	damagedef_sonic_boom
 	damagedef_bangalore_smoke_explosion
-	damagedef_tank_bombardment_detcord_explosion
 	damagedef_creeping_bombardment_detcord_explosion
 	damagedef_ability_silence
+
+
+
 	damagedef_defensive_bombardment
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	damagedef_loot_drone_explosion
-	//// end of must match order ////
 
-	//Custom
-	damagedef_DocDrone
 
-	//---------------------------
-	mp_weapon_grenade_decoyaudio
-	mp_weapon_grenade_cryonade
 
-	// Pilot Weapons - Defaults
+
+	
+
+	
 	mp_weapon_hemlok
 	mp_weapon_lmg
 	mp_weapon_rspn101
@@ -102,87 +115,68 @@ global enum eDamageSourceId
 	mp_weapon_nuke_satchel
 	mp_weapon_defender
 	mp_weapon_defender_sustained
-
-                           
-                       
-       
-                          
+mp_weapon_autopistol_crate
+mp_weapon_esaw_crate
+mp_weapon_shotgun_crate
+mp_weapon_hemlok_crate
+mp_weapon_lstar_crate
+mp_weapon_pdw_crate
 	mp_weapon_titan_sword
 	mp_weapon_titan_sword_slam
 	melee_titan_sword
+
+
+
+
+
 	mp_weapon_throwingknife
-       
-                                              
-                              
-      
+
+
+
+
 	mp_extreme_environment
 	mp_weapon_shotgun_pistol
+
+
+
+
+
+
+
+
+
 	mp_weapon_doubletake
 	mp_weapon_alternator_smg
 	mp_weapon_esaw
 	mp_weapon_wrecking_ball
 	mp_weapon_melee_survival
 	mp_weapon_pdw
+
+
+
+
+
+
+
+
+
 	mp_weapon_energy_ar
+
+
+
 	mp_weapon_bow
-	// End Defaults
 
-	// Crate Weapons
-	mp_weapon_energy_ar_crate
-	mp_weapon_energy_shotgun_crate
-	mp_weapon_doubletake_crate
-	mp_weapon_car_crate
-	mp_weapon_lstar_crate
-	mp_weapon_esaw_crate
-	mp_weapon_hemlok_crate
-	mp_weapon_pdw_crate
-	mp_weapon_shotgun_crate
-	mp_weapon_autopistol_crate
+
+
+
+
+
+
 	
-	mp_weapon_car_r2
-	mp_weapon_mgl
-	mp_weapon_softball
-	mp_weapon_warmachine
-	mp_weapon_wingman_n
-	mp_weapon_wingmanelite
-	mp_weapon_epg
-	mp_weapon_smr
-	mp_weapon_rocket_launcher
-	mp_weapon_grenade_electric_smoke
-	mp_weapon_grenade_gravity
-	mp_weapon_rspn101_og
-	sp_weapon_arc_tool
-	mp_weapon_pulse_lmg
-	mp_titanweapon_flightcore_rockets
-	mp_titancore_laser_cannon
-	mp_titanweapon_xo16
-	mp_titanweapon_xo16_shorty
-	mp_titanweapon_meteor_thermite
-	mp_titanweapon_particle_accelerator
-	mp_titanweapon_flame_wall
-	mp_titanweapon_sniper
-	//
 	melee_pilot_emptyhanded
-	melee_pilot_arena
-	melee_pilot_sword
-	melee_titan_punch
-	melee_titan_punch_ion
-	melee_titan_punch_tone
-	melee_titan_punch_legion
-	melee_titan_punch_scorch
-	melee_titan_punch_northstar
-	melee_titan_punch_fighter
-	melee_titan_punch_vanguard
-	melee_titan_punch_stealth
-	melee_titan_punch_rocket
-	melee_titan_punch_drone
-
 
 	melee_wraith_kunai
 	mp_weapon_wraith_kunai_primary
-
-	melee_bolo_sword
-	mp_weapon_bolo_sword_primary
 
 	melee_bloodhound_axe
 	mp_weapon_bloodhound_axe_primary
@@ -240,69 +234,117 @@ global enum eDamageSourceId
 
 	melee_fuse_heirloom
 	mp_weapon_fuse_heirloom_primary
+
+
+
+
+
+
+
+
+
+
+
+
 	melee_shadowsquad_hands
 	melee_shadowroyale_hands
 	mp_weapon_shadow_squad_hands_primary
 
+
+
+
+
+
+
 	melee_boxing_ring
 	mp_weapon_melee_boxing_ring
+
 
 	melee_rampart_wrench
 	mp_weapon_rampart_wrench_primary
 
-	// Turret Weapons
-	mp_weapon_yh803
-	mp_weapon_yh803_bullet
-	mp_weapon_yh803_bullet_overcharged
-	mp_weapon_mega_turret
-	mp_weapon_mega_turret_aa
-	mp_turretweapon_rockets
-	mp_turretweapon_blaster
-	mp_turretweapon_plasma
-	mp_turretweapon_sentry
-	mp_weapon_smart_pistol
-
-	//Character Abilities
+	
 	mp_weapon_defensive_bombardment_weapon
 	mp_weapon_creeping_bombardment_weapon
+
 	mp_ability_octane_stim
 	mp_ability_revenant_death_totem
 	mp_ability_crypto_drone_emp
 	mp_ability_crypto_drone_emp_trap
 	mp_ability_valk_cluster_missile
 	mp_weapon_arc_bolt
+
+
+
 	mp_weapon_concussive_breach
 	mp_weapon_riot_shield_impact
 	mp_weapon_wrecking_ball_puck
-                         
-                       
-                                   
+
+
+
 	mp_ability_debuff_zone
 	mp_ability_debuff_zone_aoe
 	overheat_explosion
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	vault_defense
 	mp_weapon_mounted_turret_weapon
 	mp_weapon_mobile_hmg
 	mp_weapon_deployable_cover
-               
-                      
-                          
-                          
+
+
+
+
 	mp_weapon_tesla_trap
-                
-                         
-                       
-                           
-             
-                          
-                                 
-       
-               
+
+
+
+
+
+
+
+
+
 	mp_ability_conduit_shield_mines
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	mp_ability_sonic_blast
-	mp_weapon_dirty_bomb
-	// AI only Weapons
-	mp_weapon_super_spectre
+
+	
 	mp_weapon_dronebeam
 	mp_weapon_dronerocket
 	mp_weapon_droneplasma
@@ -323,22 +365,19 @@ global enum eDamageSourceId
 	npc_weapon_thermite_grenade
 	npc_weapon_super_spectre
 
-	// Misc
-	rodeo
-	rodeo_forced_titan_eject //For awarding points when you force a pilot to eject via rodeo
-	rodeo_execution
+	
 	human_melee
 	auto_titan_melee
-	berserker_melee
 	mind_crime
 	charge_ball
 	grunt_melee
 	spectre_melee
 	spectre_ranged_hemlock
 	prowler_melee
+
 	spider_melee
 	spider_ranged
-       
+
 	nessie_hug
 	nessie_kiss
 	super_spectre_melee
@@ -351,6 +390,9 @@ global enum eDamageSourceId
 	rocket
 	titan_explosion
 	flash_surge
+
+
+
 	sticky_time_bomb
 	vortex_grenade
 	droppod_impact
@@ -362,14 +404,16 @@ global enum eDamageSourceId
 	sticky_explosive
 	titan_grapple
 
-	// streaks
+	
 
-	// Environmental
+	
 	fall
 	splat
 	crushed
 	burn
+
 	caustic_toxin
+
 	lasergrid
 	outOfBounds
 	deathField
@@ -387,63 +431,52 @@ global enum eDamageSourceId
 	harvester_beam
 	toxic_sludge
 	persistent_damage_layer
-                      
-                           
-       
-                   
-       
-       
 
-                            
+
+
+
+
+
+
+
 	mp_ability_rise_from_the_ashes
-       
+
 
 	mp_weapon_spectre_spawner
 
-	// development
+
+
+
+	
 	weapon_cubemap
 
-	// Prototype
-	mp_weapon_zipline
-	at_turret_override
-	rodeo_battery_removal
+	
 	phase_shift
-	gamemode_bomb_detonation
-	nuclear_turret
-	proto_viewmodel_test
-	mp_titanweapon_heat_shield
-	mp_titanweapon_sonar_pulse
-	mp_titanability_slow_trap
-	mp_titanability_gun_shield
-	mp_titanability_power_shot
-	mp_titanability_ammo_swap
-	mp_titanability_sonar_pulse
-	mp_titanability_rearm
-	mp_titancore_upgrade
-	mp_titanweapon_xo16_vanguard
-	mp_weapon_arc_trap
-	mp_weapon_arc_launcher
-	mp_weapon_flamethrower
-	core_overload
-	mp_titanweapon_stasis
-	mp_titanweapon_stealth_titan
-	mp_titanweapon_rocket_titan
-	mp_titanweapon_drone_titan
-	mp_titanweapon_stealth_sword
 	mp_ability_consumable
-	snd_bomb
 
 	bombardment
 	bleedout
 	mp_weapon_energy_shotgun
 	fire
+
+
+
+
+
 	heatwave
-	//damageSourceId=eDamageSourceId.xxxxx
-	//fireteam
-	//marvin
-	//rocketstrike
-	//orbitallaser
-	//explosion
+
+
+	
+	
+	
+	
+	
+	
+
+
+
+
+
 
 	shield_tick_damage_notify
 	spider_poison
@@ -451,18 +484,34 @@ global enum eDamageSourceId
 	mp_ability_mobile_respawn_beacon
 	mp_ability_tombstone_respawn
 
-                               
-                              
-       
 
-                          
-                         
-       
 
-                             
+
+
+
+
+
+
+
 	mp_ability_redeploy_balloon
-       
-	landing_zone //new damage def for testing landing zone not damaging players or npc
+
+	landing_zone 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	mp_weapon_stun_mine
 	mp_weapon_cluster_bomb_launcher
@@ -470,20 +519,91 @@ global enum eDamageSourceId
 	mp_weapon_mortar_ring
 	mp_ability_horizon_black_hole
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	mp_ability_shield_throw
 	mp_ability_armored_leap
 	mp_ability_castle_wall
 	mp_ability_sniper_ult
 	mp_weapon_ferro_wall
 	mp_ability_spike_strip
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	mp_ability_void_ring
 	mp_weapon_3030
 	mp_weapon_dragon_lmg
 	mp_weapon_dragon_lmg_thermite
-       
+
+
+
+
+
+
+
 	mp_weapon_car
-                              
+
 	mp_weapon_nemesis
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -497,45 +617,82 @@ global enum eDamageSourceId
 	mp_ability_copycat_kit_ash_phase_blade
 	mp_ability_copycat_kit_caustic_grenade_gas
 	mp_weapon_grenade_rev_shell
-	
-                    
+
+
+
+
+
+
+
+
 	golden_horse_green
-       
+
 
 	melee_artifact_dagger
 	mp_weapon_artifact_dagger_primary
 
-                    
+
 	melee_artifact_sword
 	mp_weapon_artifact_sword_primary
-       
 
-                    
+
+
 	melee_crypto_heirloom_rt01
 	mp_weapon_crypto_heirloom_rt01_primary
-       
 
-                    
+
+
 	melee_octane_knife_rt01
 	mp_weapon_octane_knife_rt01_primary
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	_count
 }
 
-
 void function DamageTypes_Init()
 {
-	#if SERVER
-		SvDemo_ConsistencyCheckString( "DamageTypes_Init()" )
-	#endif
+
+
+
 
 	foreach ( name, number in eDamageSourceId )
 	{
 		file.damageSourceIDToString[ number ] <- name
 	}
 
-	PrecacheWeapon( $"mp_weapon_rspn101" ) // used by npc_soldier ><
+	PrecacheWeapon( $"mp_weapon_rspn101" ) 
 
-	#if DEVELOPER
+#if DEV
 
 		int numDamageDefs        = DamageDef_GetCount()
 		table damageSourceIdEnum = expect table( getconsttable().eDamageSourceId )
@@ -548,33 +705,35 @@ void function DamageTypes_Init()
 			string damageDefName = DamageDef_GetName( id )
 			Assert( damageDefName == name, "damage def (" + id + ") name: '" + damageDefName + "' doesn't match damage source id '" + name + "'" )
 		}
-	#endif
+#endif
 
 	file.damageSourceIDToImage =
 	{
-		//commented out since we couldn't get the art done on time and there is any number of additional damage sources that should be supported if we support any.
-		//[eDamageSourceId.outOfBounds] = $"rui/damage_icons/damage_out_of_bounds",
-		//[eDamageSourceId.deathField] = $"rui/damage_icons/damage_death_field",
-		//[eDamageSourceId.fall] = $"rui/damage_icons/damage_fall",
-		//[eDamageSourceId.damagedef_crush] = $"rui/damage_icons/damage_crush",
+		
+		
+		
+		
+		
 	}
+
 
 		file.damageSourceIDToName[eDamageSourceId.mp_weapon_titan_sword_slam] <- "#WPN_TITAN_SWORD_SHORT"
 		file.damageSourceIDToImage[eDamageSourceId.mp_weapon_titan_sword_slam] <- $"rui/weapon_icons/r5/weapon_goldenhorse_sword"
 		file.damageSourceIDToString[eDamageSourceId.mp_weapon_titan_sword_slam] <- TITAN_SWORD_WEAPON_REF
-       
 
-	                                               
+
+
 		file.damageSourceIDToImage[eDamageSourceId.melee_shadowsquad_hands] <- $"rui/gamemodes/shadow_squad/shadow_icon_small"
 		file.damageSourceIDToImage[eDamageSourceId.melee_shadowroyale_hands] <- $"rui/gamemodes/shadow_squad/shadow_icon_small"
-       
 
-	                         
+
+
 		file.damageSourceIDToImage[eDamageSourceId.heatwave] <- $"rui/pilot_loadout/mods/heatwave_top_sun_spin"
+
 
 	file.damageSourceIDToName =
 	{
-		//mp
+		
 		[ eDamageSourceId.mp_extreme_environment ] = "#DAMAGE_EXTREME_ENVIRONMENT",
 
 		[ eDamageSourceId.npc_weapon_super_spectre ] = "#WPN_SUPERSPECTRE_ROCKETS",
@@ -590,24 +749,24 @@ void function DamageTypes_Init()
 
 		[ eDamageSourceId.auto_titan_melee ] = "#DEATH_AUTO_TITAN_MELEE",
 
-               
-                                                                                               
-        
+
+
+
 
 		[ eDamageSourceId.prowler_melee ] = "#DEATH_PROWLER_MELEE",
-		                         
+
 			[ eDamageSourceId.spider_melee ] = "#DEATH_SPIDER_MELEE",
 			[ eDamageSourceId.spider_ranged ] = "#DEATH_SPIDER_RANGED",
-        
+
 		[ eDamageSourceId.nessie_hug ] = "#BABY_NESSIE_TITLE",
 		[ eDamageSourceId.nessie_kiss ] = "#BABY_NESSIE_TITLE",
 		[ eDamageSourceId.super_spectre_melee ] = "#DEATH_SUPER_SPECTRE",
 		[ eDamageSourceId.grunt_melee ] = "#DEATH_GRUNT_MELEE",
-		                   
+
 			[ eDamageSourceId.spectre_melee ] = "#DEATH_SPECTRE_MELEE",
 			[ eDamageSourceId.spectre_ranged_hemlock ] = "#DEATH_SPECTRE_RANGED_HEMLOCK",
 			[ eDamageSourceId.npc_weapon_thermite_grenade ] = "#DEATH_SPECTRE_THERMITE",
-        
+
 		[ eDamageSourceId.eviscerate ] = "#DEATH_EVISCERATE",
 		[ eDamageSourceId.wall_smash ] = "#DEATH_WALL_SMASH",
 		[ eDamageSourceId.ai_turret ] = "#DEATH_TURRET",
@@ -616,9 +775,9 @@ void function DamageTypes_Init()
 		[ eDamageSourceId.titan_explosion ] = "#DEATH_TITAN_EXPLOSION",
 		[ eDamageSourceId.evac_dropship_explosion ] = "#DEATH_EVAC_DROPSHIP_EXPLOSION",
 		[ eDamageSourceId.flash_surge ] = "#DEATH_FLASH_SURGE",
-                     
-                                                  
-        
+
+
+
 		[ eDamageSourceId.sticky_time_bomb ] = "#DEATH_STICKY_TIME_BOMB",
 		[ eDamageSourceId.vortex_grenade ] = "#DEATH_VORTEX_GRENADE",
 		[ eDamageSourceId.droppod_impact ] = "#DEATH_DROPPOD_CRUSH",
@@ -626,9 +785,9 @@ void function DamageTypes_Init()
 		[ eDamageSourceId.rodeo_trap ] = "#DEATH_RODEO_TRAP",
 		[ eDamageSourceId.round_end ] = "#DEATH_ROUND_END",
 		[ eDamageSourceId.burn ] = "#DEATH_BURN",
-		                  
+
 			[ eDamageSourceId.caustic_toxin ] = "#DEATH_CAUSTIC_TOXIN",
-                          
+
 		[ eDamageSourceId.mind_crime ] = "Mind Crime",
 		[ eDamageSourceId.charge_ball ] = "Charge Ball",
 
@@ -636,9 +795,9 @@ void function DamageTypes_Init()
 		[ eDamageSourceId.sticky_explosive ] = "#DEATH_STICKY_EXPLOSIVE",
 		[ eDamageSourceId.titan_grapple ] = "#DEATH_TITAN_GRAPPLE",
 
-		// Instant death. Show no percentages on death recap.
+		
 		[ eDamageSourceId.fall ] = "#DEATH_FALL",
-		//Todo: Rename eDamageSourceId.splat with a more appropriate name. This damage type was used for enviornmental damage, but it was for eject killing pilots if they were near a ceiling. I've changed the localized string to "Enviornment Damage", but this will cause confusion in the future.
+		
 		[ eDamageSourceId.splat ] = "#DEATH_SPLAT",
 		[ eDamageSourceId.titan_execution ] = "#DEATH_TITAN_EXECUTION",
 		[ eDamageSourceId.human_execution ] = "#DEATH_HUMAN_EXECUTION",
@@ -646,24 +805,24 @@ void function DamageTypes_Init()
 		[ eDamageSourceId.deathField ] = "#DEATH_DEATH_FIELD",
 		[ eDamageSourceId.indoor_inferno ] = "#DEATH_INDOOR_INFERNO",
 		[ eDamageSourceId.submerged ] = "#DEATH_SUBMERGED",
-		[ eDamageSourceId.switchback_trap ] = "#DEATH_ELECTROCUTION", // Damages teammates and opposing team
+		[ eDamageSourceId.switchback_trap ] = "#DEATH_ELECTROCUTION", 
 		[ eDamageSourceId.floor_is_lava ] = "#DEATH_ELECTROCUTION",
-		[ eDamageSourceId.suicideSpectreAoE ] = "#DEATH_SUICIDE_SPECTRE", // Used for distinguishing the initial spectre from allies.
+		[ eDamageSourceId.suicideSpectreAoE ] = "#DEATH_SUICIDE_SPECTRE", 
 		[ eDamageSourceId.titanEmpField ] = "#DEATH_TITAN_EMP_FIELD",
 		[ eDamageSourceId.deadly_fog ] = "#DEATH_DEADLY_FOG",
 		[ eDamageSourceId.crushed ] = "#DEATH_CRUSHED",
 		[ eDamageSourceId.landing_zone ] = "#DEATH_CRUSHED",
-                                
-                                                                             
-        
 
-		                            
+
+
+
+
 			[ eDamageSourceId.mp_ability_rise_from_the_ashes ] = "#SHADOW_ARMY_RISE_FROM_THE_ASHES",
-        
+
 
 		[ eDamageSourceId.mp_ability_valk_cluster_missile ] = "#DEATH_VALK_CLUSTER_MISSILE",
 		[ eDamageSourceId.mp_ability_sniper_ult ] = "#ABL_ULT_SNIPER_SHORT",
-		// Prototype
+		
 		[ eDamageSourceId.phase_shift ] = "#WPN_SHIFTER",
 		[ eDamageSourceId.bleedout ] = "#DEATH_BLEEDOUT",
 		[ eDamageSourceId.mp_weapon_energy_shotgun ] = "Energy Shotgun",
@@ -682,7 +841,7 @@ void function DamageTypes_Init()
 
 		[ eDamageSourceId.mp_weapon_tesla_trap ] = "#DEATH_TESLA_TRAP",
 
-		[ eDamageSourceId.mp_ability_crypto_drone_emp ] = "#WPN_DRONE_EMP", //shouldn't be possible to die from the EMP
+		[ eDamageSourceId.mp_ability_crypto_drone_emp ] = "#WPN_DRONE_EMP", 
 		[ eDamageSourceId.mp_ability_crypto_drone_emp_trap ] = "#WPN_DRONE_EMP",
 
 		[ eDamageSourceId.melee_bloodhound_axe ] = "#DEATH_MELEE_BLOODHOUND_AXE",
@@ -744,30 +903,30 @@ void function DamageTypes_Init()
 		[ eDamageSourceId.melee_fuse_heirloom ] = "#DEATH_MELEE_FUSE_HEIRLOOM",
 		[ eDamageSourceId.mp_weapon_fuse_heirloom_primary] = "#DEATH_MELEE_FUSE_HEIRLOOM",
 
-		                    
+
 			[ eDamageSourceId.melee_artifact_sword] = "#DEATH_MELEE_ARTIFACT_SWORD",
 			[ eDamageSourceId.mp_weapon_artifact_sword_primary] = "#DEATH_MELEE_ARTIFACT_SWORD",
-        
 
-		                    
+
+
 			[ eDamageSourceId.melee_crypto_heirloom_rt01 ] = "#DEATH_MELEE_CRYPTO_HEIRLOOM_RT01",
 			[ eDamageSourceId.mp_weapon_crypto_heirloom_rt01_primary ] = "#DEATH_MELEE_CRYPTO_HEIRLOOM_RT01",
-        
 
-		                    
+
+
 			[ eDamageSourceId.melee_octane_knife_rt01 ] = "#DEATH_MELEE_OCTANE_KNIFE_RT01",
 			[ eDamageSourceId.mp_weapon_octane_knife_rt01_primary ] = "#DEATH_MELEE_OCTANE_KNIFE_RT01",
-        
-		
-                      
-                                                                   
-                                                                               
-        
 
-                           
-                                                                                   
-                                                                                               
-        
+
+
+
+
+
+
+
+
+
+
 
 		[ eDamageSourceId.melee_rampart_wrench ] = "#DEATH_MELEE_RAMPART_WRENCH",
 		[ eDamageSourceId.mp_weapon_rampart_wrench_primary ] = "#DEATH_MELEE_RAMPART_WRENCH",
@@ -786,37 +945,37 @@ void function DamageTypes_Init()
 		[ eDamageSourceId.mp_ability_debuff_zone_aoe ] = "#WPN_DEBUFF_ZONE",
 		[ eDamageSourceId.overheat_explosion ] = "#WPN_DEBUFF_ZONE_OVERHEAT",
 
-		               
+
 			[ eDamageSourceId.mp_ability_conduit_shield_mines ] = "#ABL_CONDUIT_ULTIMATE",
-        
 
-                  
-                                                                        
-        
 
-		                                               
+
+
+
+
+
 			[ eDamageSourceId.melee_shadowsquad_hands ] = "#DEATH_MELEE_SHADOWSQUAD_HANDS",
 			[ eDamageSourceId.melee_shadowroyale_hands ] = "#DEATH_MELEE_SHADOWSQUAD_HANDS",
 			[ eDamageSourceId.mp_weapon_shadow_squad_hands_primary ] = "#DEATH_MELEE_SHADOWSQUAD_HANDS",
-        
 
-                           
-                                                                                  
-        
 
-                  
-                                                                     
-        
 
-               
-                                                                         
-                                                                                
-        
 
-		               
+
+
+
+
+
+
+
+
+
+
+
+
 			[ eDamageSourceId.melee_boxing_ring ] = "#DEATH_MELEE_BOXING_RING",
 			[ eDamageSourceId.mp_weapon_melee_boxing_ring ] = "#DEATH_MELEE_BOXING_RING",
-        
+
 
 		[ eDamageSourceId.mp_ability_sonic_blast ] = "#WPN_SONIC_BLAST",
 
@@ -827,44 +986,45 @@ void function DamageTypes_Init()
 		[ eDamageSourceId.vault_defense ] = "#VAULT_DEFENSE",
 		[ eDamageSourceId.mp_weapon_mobile_hmg ] = "#WPN_MOBILE_HMG",
 
-		                    
-			[ eDamageSourceId.golden_horse_green ] = "#WPN_HOPUP_GOLDEN_HORSE_GREEN",
-        
 
-                                  
-                                                                    
-                                                              
-        
+			[ eDamageSourceId.golden_horse_green ] = "#WPN_HOPUP_GOLDEN_HORSE_GREEN",
+
+
+
+
+
+
 
 		[ eDamageSourceId.melee_artifact_dagger] = "#DEATH_MELEE_ARTIFACT_DAGGER",
 		[ eDamageSourceId.mp_weapon_artifact_dagger_primary] = "#DEATH_MELEE_ARTIFACT_DAGGER",
 
-                      
-                                                                                             
-                                                                                                         
-        
 
 
-                      
-                                                                                 
-                                                                                             
-        
+
+
+
+
+
+
+
+
 
 	}
 
-	#if DEVELOPER
-		//development, with retail versions incase a rare bug happens we dont want to show developer text
+#if DEV
+		
 		file.damageSourceIDToName[ eDamageSourceId.damagedef_unknownBugIt ] = "UNKNOWN! BUG IT!"
 		file.damageSourceIDToName[ eDamageSourceId.damagedef_unknown ] = "Unknown"
 		file.damageSourceIDToName[ eDamageSourceId.weapon_cubemap ] = "Cubemap"
-		//file.damageSourceIDToName[ eDamageSourceId.invalid ] = "INVALID (BUG IT!)"
+		
 		file.damageSourceIDToName[ eDamageSourceId.stuck ] = "NPC got Stuck (Don't Bug it!)"
-	#endif
+#endif
 }
+
 
 void function RegisterWeaponDamageSource( string weaponRef )
 {
-	//Looks like if we want the weapon names to be different, it also needs its own damage source -pmcd
+	
 	if ( !(weaponRef in eDamageSourceId) )
 		weaponRef = Weapon_GetBaseClassName( weaponRef )
 
@@ -874,49 +1034,18 @@ void function RegisterWeaponDamageSource( string weaponRef )
 	file.damageSourceIDToString[ sourceID ] <- weaponRef
 }
 
+
 bool function DamageSourceIDHasString( int index )
 {
 	return (index in file.damageSourceIDToString)
 }
 
-//(mk): for adding invalids in stat calc
+
 string function DamageSourceIDToString( int index )
 {
 	return file.damageSourceIDToString[ index ]
 }
 
-table<int,string> function DamageSourceIDToStringTable()
-{
-	return file.damageSourceIDToString
-}
-
-//(mk): for adding custom wep
-void function RegisterCustomWeaponDamageDef( string weaponRef, string name = "Unknown", string imgAssetString = "$\"\"" )
-{
-	//Check if weapon already registered
-	foreach( int idx, string ref in file.damageSourceIDToString )
-	{
-		if( ref == weaponRef )
-			return
-	}
-
-	int sourceID = file.damageSourceIDToString.len()
-
-	//If sourceID already exists in any table, skip registration
-	if( (sourceID in file.damageSourceIDToName) || (sourceID in file.damageSourceIDToImage) || (sourceID in file.damageSourceIDToString) )
-		return
-
-	file.damageSourceIDToString[ sourceID ] <- weaponRef
-	file.damageSourceIDToName[ sourceID ] <- name
-
-	#if CLIENT || UI
-		file.damageSourceIDToImage[ sourceID ] <- GetAssetFromString( imgAssetString )
-	#endif
-
-	#if SERVER
-		file.damageSourceIDToImage[ sourceID ] <- $""
-	#endif
-}
 
 string function GetObitFromDamageSourceID( int damageSourceID )
 {
@@ -938,6 +1067,7 @@ string function GetObitFromDamageSourceID( int damageSourceID )
 	return ""
 }
 
+
 asset function GetObitImageFromDamageSourceID( int damageSourceID )
 {
 	if ( damageSourceID in file.damageSourceIDToImage )
@@ -946,29 +1076,32 @@ asset function GetObitImageFromDamageSourceID( int damageSourceID )
 	return $""
 }
 
+
 string function GetRefFromDamageSourceID( int damageSourceID )
 {
 	return file.damageSourceIDToString[damageSourceID]
 }
 
+
 string function PIN_GetDamageCause( var damageInfo )
 {
-	/*
-	headshot
-	ability
-	weapon
-	melee
-	item
-	env
-	self
-	bleedout
-	player_stuck
-	*/
+	
 
-	//int id = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+
+
+
+
+
+
+
+
+
+
+	
 
 	return ""
 }
+
 
 void function RegisterAdditionalMainWeapon( string weaponRef )
 {
@@ -982,34 +1115,4 @@ bool function GetIsAdditionalMainWeapon( int damageSourceID )
 {
 	return file.additionalMainWeapons.contains( damageSourceID )
 }
-
-#if DEVELOPER
-
-	void function DEV_PrintDamageSourceIDs()
-	{
-		string data = "\n\n ------ DAMAGE SOURCE IDS ------ \n\n";
-
-		foreach( int idx, ref in file.damageSourceIDToString )
-		{
-			data += format( "[%d] = \"%s\", \n", idx, ref )
-		}
-
-		printt( data )
-	}
-
-	void function DEV_PrintBackendNames()
-	{
-		string printText = "TableForClientScript:\n\n table< string, string > serverOutput = {\n"
-
-		foreach( int enumIdx, string ref in DamageSourceIDToStringTable()  )
-		{
-			if( enumIdx in file.damageSourceIDToName )//janu weapon framework weapons will be here too + precached weps
-				printText += ( "[ \"" + ref + "\" ] = \"" + file.damageSourceIDToName[ enumIdx ] + "\",\n" )
-		}
-
-		printText += "}"
-
-		print( printText )
-	}
-
-#endif
+ 

@@ -1,33 +1,33 @@
-//
-#if CLIENT
+
+
 global function Menu_GetCameraTarget
 global function UICallback_MenuModels_UIScriptHasReset
 global function OnReady_PLAY
 
-#if DEVELOPER
-// Only declare as global when in DEV for usage with editor menu
+#if DEV
+
 global function Menu_InitPresentationDataFromCameraSettings
 global function DEV_PlayLobbyIdle
 global function OnReadyThread
 #endif
-#endif
 
-#if CLIENT || SERVER
+
+
 const string STORE_BACKGROUND_ENT_NAME = "store_inspect_bg_target"
 const asset STORE_BACKGROUND_SMOKE_MODEL = $"mdl/levels_terrain/mp_lobby/mp_lobby_bundle_store_smoke.rmdl"
 const asset STORE_BACKGROUND_GEO_MODEL = $"mdl/levels_terrain/mp_lobby/mp_lobby_bundle_store_bg.rmdl"
 
 const string WEAPON_OVERVIEW_BACKGROUND_ENT_NAME = "weapons_mastery_inspect_bg_target"
 
-                       
-                                                                                                         
-                                                                                                     
-      
-#endif // CLIENT || SERVER
 
 
-#if CLIENT
-const float CARD_TAG_SCALE = 0.0 // update to match same const in hud_defs.rui
+
+
+
+
+
+
+const float CARD_TAG_SCALE = 0.0 
 
 const float DEFAULT_DOF_NEAR_START = 7.5
 const float DEFAULT_DOF_NEAR_END = 7.7
@@ -38,15 +38,15 @@ const float TRANSITION_DURATION = 0.25
 const float DEFAULT_MAX_TURN_SPEED = 270.0
 
 global const asset CHARACTER_BASE_EFFECT = $"P_menu_char_base_rarity"
-                 
-const asset SHADOW_TRAIL_FX = $"P_Bshadow_body"
-const asset SHADOW_EYE_FX = $"P_BShadow_eye"
-      
 
-                       
-                                                               
-                                                      
-      
+
+
+
+
+
+
+
+
 
 const array<asset> STORE_BACKGROUND_FX_TIERS = 
 [
@@ -55,14 +55,14 @@ const array<asset> STORE_BACKGROUND_FX_TIERS =
 	$"P_store_BG_bundle_T3",
 	$"P_store_BG_bundle_T4",
 	$"P_store_BG_bundle_T5",
-	$"P_store_BG_bundle_T5", // TO DO: FX needs to add T6 for Iconic rarity
+	$"P_store_BG_bundle_T5", 
 ]
 
 const asset WEAPON_MASTERY_BACKGROUND_FX = $"P_wpnmstry_BG_bundle_T4"
 
-//#if DEVELOPER
-//const asset MENU_TEST_EFFECT = $"P_menu_char_swap"
-//#endif
+
+
+
 
 global const vector MENU_MODELS_DEFAULT_HIGHLIGHT_COLOR = <102, 120, 242>
 
@@ -79,7 +79,7 @@ global const vector EVENT_LOBBY_OFFSET = <0, 0, 0>
 global struct MenuCharacterDef
 {
 	ItemFlavor ornull characterSkin = null
-	//string idleAnim
+	
 }
 
 global struct MenuModelData
@@ -142,6 +142,10 @@ enum eCameraTargetNames
 	collection_event_camera_target,
 	store_inspect_camera_target,
 	club_landing_camera_target,
+
+	play_camera_quads_target,
+
+	weapon_mastery_inspect_camera_target
 }
 
 struct PresentationDef
@@ -170,7 +174,11 @@ struct PresentationDef
 	void functionref() startFunc
 	void functionref() endFunc
 
-	int cameraTargetName = eCameraTargetNames.play_camera_target
+
+	int cameraTargetName = eCameraTargetNames.play_camera_quads_target
+
+
+
 }
 
 struct LightDef
@@ -204,15 +212,15 @@ struct AppliedStickerData
 	ItemFlavor& stickerItem
 	int			stickerInstance
 }
-#endif // CLIENT
+
 
 struct
 {
-	#if UI
-		int  activePresentationType = ePresentationType.INACTIVE
-	#endif // UI
 
-	#if CLIENT
+
+
+
+
 		entity defaultCameraTarget
 		entity playCameraTarget
 		entity closeCharacterCameraTarget
@@ -248,11 +256,11 @@ struct
 
 		entity weaponOverviewBackgroundModelGeo
 		entity weaponOverviewBackgroundModelSmoke
-                        
-                                 
-                                   
-                                         
-       
+
+
+
+
+
 
 		string storePlayingAudioAlias
 		int    storeBackgroundFXHandle = -1
@@ -311,25 +319,25 @@ struct
 
 		bool initializedMenuModels = false
 		bool modelTurnEnabled = true
-		bool neverRotateModel = false // certain models (quips) should NEVER rotate, whereas the above allows for additional controls - e.g. a slider
+		bool neverRotateModel = false 
 
 		array<entity> dimmedEnts
 
 		bool uiscriptHasReset
 
-		#if DEVELOPER
+#if DEV
 			bool   DEV_previewSelfAsParty = false
 			string DEV_characterOffsetCharacter = ""
 			vector DEV_characterOffset = <0, 0, 0>
 			bool DEV_modelInfoEnabled = false
-		#endif // DEV
-	#endif // CLIENT
+#endif
+
 
 	array<void functionref()> mouseWheelDownCallbacks
 	array<void functionref()> mouseWheelUpCallbacks
 } file
 
-#if CLIENT
+
 global function ClMenuModels_Init
 global function TurntableUpdateAnglesFromInput
 global function TurntableSetCameraZoomPos
@@ -364,11 +372,11 @@ global function UIToClient_PreviewMeleeSkin
 global function UIToClient_ClearMeleeSkinPreview
 global function UIToClient_OverviewWeapon
 global function UIToClient_PreviewUnappliedSticker
-                      
-                                                  
-     
+
+
+
 global function UIToClient_PreviewAppliedStickers
-      
+
 global function UIToClient_ResetWeaponRotation
 global function UIToClient_PartyMemberGetFocus
 global function UIToClient_PartyMemberLoseFocus
@@ -388,7 +396,7 @@ global function ShMenuModels_ClientToUI_OnMouseWheel
 
 global function FlashMenuModel
 
-#if DEVELOPER
+#if DEV
 global function DEV_SetPresentationDataFromString
 global function DEV_TweakPlayCamera
 global function DEV_TweakCharacterCamera
@@ -401,90 +409,91 @@ global function DEV_SpinActiveMenuModelLinearly
 global function DEV_SpinActiveMenuModelSmoothly
 global function ApplyEventPositioning
 global function DEV_ToggleModelInfo
-#endif // DEV
+#endif
 
 global function UIToClient_PROTO_UpdateClientWithLocalClientUID
 global function IsEventLobbyActive
-#endif // CLIENT
-
-const STICK_ROTATE_SPEED = 2.0 //maxturnspeed per second
-
-#if UI
-const MOUSE_ROTATE_SPEED = 1.0 //degrees per second per pixel
-
-global function ShMenuModels_UIInit
-
-global function RunMenuClientFunction
-global function UI_SetPresentationType
-global function UI_GetPresentationType
-
-global function UICodeCallback_MouseMovementCapture
-global function OnMouseWheelDown
-global function OnMouseWheelUp
-
-global function ClientToUI_PROTO_UpdateClientWithLocalClientUID
-
-global function TrackIsOverScrollBar
-#endif // UI
-
-#if SERVER
-global function MenuModels_Init
-#endif //SERVER
 
 
-#if CLIENT || UI
+const STICK_ROTATE_SPEED = 2.0 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 global function AddCallback_OnMouseWheelDown
 global function AddCallback_OnMouseWheelUp
 global function RemoveCallback_OnMouseWheelDown
 global function RemoveCallback_OnMouseWheelUp
 global function IsCallbackRegistered_OnMouseWheelDown
 global function IsCallbackRegistered_OnMouseWheelUp
-#endif
 
 
-#if UI
-void function ShMenuModels_UIInit()
-{
-	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN, OnMouseWheelDown )
-	RegisterButtonPressedCallback( MOUSE_WHEEL_UP, OnMouseWheelUp )
-}
-#endif
 
-#if SERVER
-void function MenuModels_Init()
-{
-	// These models need to be precached on the server in addition to the client or else CreateClientSidePropDynamic will error
-	PrecacheModel( STORE_BACKGROUND_SMOKE_MODEL )
-	PrecacheModel( STORE_BACKGROUND_GEO_MODEL )
-                        
-                                               
-                                             
-       
-}
-#endif
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function ClMenuModels_Init()
 {
 	PrecacheParticleSystem( CHARACTER_BASE_EFFECT )
-                  
-		//PrecacheParticleSystem( SHADOW_TRAIL_FX )
-		//PrecacheParticleSystem( SHADOW_EYE_FX )
-       
+
+
+
+
 
 	foreach ( asset fxTierAsset in STORE_BACKGROUND_FX_TIERS )
 		PrecacheParticleSystem( fxTierAsset )
 
-	PrecacheModel( STORE_BACKGROUND_SMOKE_MODEL )
-	PrecacheModel( STORE_BACKGROUND_GEO_MODEL )
-	//#if DEVELOPER
-	//	PrecacheParticleSystem( MENU_TEST_EFFECT )
-	//#endif
+	//PrecacheModel( STORE_BACKGROUND_SMOKE_MODEL )
+	//PrecacheModel( STORE_BACKGROUND_GEO_MODEL )
+	
+	
+	
 
-                        
-                                             
-       
 
+
+
+
+	PrecacheParticleSystem( WEAPON_MASTERY_BACKGROUND_FX )
 
 
 	RegisterSignal( "EndRevConvo" )
@@ -497,9 +506,9 @@ void function ClMenuModels_Init()
 	RegisterSignal( "EndGunCharmScaleLerp" )
 	RegisterSignal( "EndCameraZoom" )
 	RegisterSignal( "EndCameraLockZoom" )
-                       
-                                                
-      
+
+
+
 	RegisterSignal( "EndPendingItemInspectThreads" )
 	RegisterSignal( "StopShowingModelInfo" )
 	RegisterSignal( "EndOnReadyThread" )
@@ -528,17 +537,30 @@ bool function MenuMapEntitiesExist()
 	array<string> entNames =
 	[
 		"default_camera_target",
-		"play_camera_target",
-		"play_character_ref",
-		"play_teammate1_ref",
-		"play_teammate2_ref",
+
+		"play_camera_quads_target",
+		"play_character_quads_ref",
+		"play_teammate1_quads_ref",
+		"play_teammate2_quads_ref",
+		"play_teammate3_quads_ref",
+
+
+
+
+
+
+
 		"close_character_camera_target",
+
 		"customize_character_camera_target",
 		"customize_character_ref",
 		"customize_character_skin_ref",
+
 		"customize_weapon_camera_target",
 		"customize_weapon_ref",
+
 		"store_inspect_ref",
+
 		"club_landing_camera_target"
 		"club_landing_discovery_ref"
 		"club_landing_lobby_ref"
@@ -557,10 +579,18 @@ bool function MenuMapEntitiesExist()
 void function ApplyEventPositioning()
 {
 	array<entity> ents
-	ents.append( GetEntByScriptName( "play_camera_target" ) )
-	ents.append( GetEntByScriptName( "play_character_ref" ) )
-	ents.append( GetEntByScriptName( "play_teammate1_ref" ) )
-	ents.append( GetEntByScriptName( "play_teammate2_ref" ) )
+
+	ents.append( GetEntByScriptName( "play_camera_quads_target" ) )
+	ents.append( GetEntByScriptName( "play_character_quads_ref" ) )
+	ents.append( GetEntByScriptName( "play_teammate1_quads_ref" ) )
+	ents.append( GetEntByScriptName( "play_teammate2_quads_ref" ) )
+	ents.append( GetEntByScriptName( "play_teammate3_quads_ref" ) )
+
+
+
+
+
+
 	ents.append( GetEntByScriptName( "battlepass_camera_target" ) )
 	ents.append( GetEntByScriptName( "battlepass_3_camera_target" ) )
 	ents.append( GetEntByScriptName( "collection_event_camera_target" ) )
@@ -568,11 +598,13 @@ void function ApplyEventPositioning()
 	ents.append( GetEntByScriptName( "battlepass_center_ref" ) )
 	ents.append( GetEntByScriptName( "collection_event_ref" ) )
 
+
+
 	foreach ( ent in ents )
 		ent.SetOrigin( ent.GetOrigin() + EVENT_LOBBY_OFFSET )
 }
 
-#if DEVELOPER
+#if DEV
 void function ShowModelInfo()
 {
 	EndSignal( level, "StopShowingModelInfo" )
@@ -606,7 +638,7 @@ void function DEV_ToggleModelInfo()
 
 	file.DEV_modelInfoEnabled = !file.DEV_modelInfoEnabled
 }
-#endif //#if DEVELOPER
+#endif
 
 void function InitTeammatePosition( string scriptName, string idle )
 {
@@ -642,7 +674,7 @@ const float STICK_DEADZONE = 0.1
 void function TurntableUpdateEntityAngles( MenuModelData modelData )
 {
 	float[2] rotationDelta   = ModelData_GetRotationDelta( modelData )
-	//printt( "RotationDelta:", rotationDelta[0], rotationDelta[1] )
+	
 	vector baseAngles        = ModelData_GetBaseAngles( modelData )
 	vector pitchTowardCamera = AnglesCompose( baseAngles + <0, -90, 0>, AnglesCompose( <rotationDelta[1], 0, 0>, <0, 90, 0> ) )
 	vector newAng            = AnglesCompose( pitchTowardCamera, <0, rotationDelta[0], 0> )
@@ -677,7 +709,7 @@ bool function TurntableUpdateAnglesFromInput( MenuModelData modelData, float max
 			float stickXRemappedAbs = (fabs( stickXRaw ) < STICK_DEADZONE) ? 0.0 : ((fabs( stickXRaw ) - STICK_DEADZONE) / (1.0 - STICK_DEADZONE))
 			float stickX            = EaseIn( stickXRemappedAbs ) * (stickXRaw < 0.0 ? -1.0 : 1.0)
 			modelData.rotationVel[0] += stickX * maxTurnSpeed * FrameTime() * STICK_ROTATE_SPEED
-			
+
 			float stickYRaw         = clamp( InputGetAxis( ANALOG_RIGHT_Y ), -1.0, 1.0 )
 			float stickYRemappedAbs = (fabs( stickYRaw ) < STICK_DEADZONE) ? 0.0 : ((fabs( stickYRaw ) - STICK_DEADZONE) / (1.0 - STICK_DEADZONE))
 			float stickY            = EaseIn( stickYRemappedAbs ) * (stickYRaw < 0.0 ? -1.0 : 1.0)
@@ -686,10 +718,10 @@ bool function TurntableUpdateAnglesFromInput( MenuModelData modelData, float max
 		else
 		{
 			modelData.rotationVel[0] += file.mouseRotateDelta[0]
-			file.mouseRotateDelta[0] = 0  // clear because otherwise it would keep spinning
+			file.mouseRotateDelta[0] = 0  
 
 			modelData.rotationVel[1] -= file.mouseRotateDelta[1]
-			file.mouseRotateDelta[1] = 0 // clear because otherwise it would keep spinning
+			file.mouseRotateDelta[1] = 0 
 		}
 	}
 
@@ -829,7 +861,7 @@ void function Menu_InitPresentationDataFromCameraSettings()
 
 		int presentationIdx = -1
 		camName = camName.slice( 6 )
-		
+
 		foreach ( string presentationType, int eNumIdx in ePresentationType )
 		{
 			if ( camName == presentationType )
@@ -873,7 +905,7 @@ void function Menu_InitPresentationDataFromCameraSettings()
 		}
 
 		string targetEntName = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "targetEntName" ) )
-		
+
 		foreach ( string scriptName, int eNumIdx in eCameraTargetNames )
 		{
 			if ( targetEntName == scriptName )
@@ -890,7 +922,7 @@ void function Menu_InitPresentationDataFromCameraSettings()
 
 void function InitPresentationData()
 {
-	// TODO: Rework so scenes can be defined in a more flexible way (what entities get created, shown, hidden, animated)
+	
 
 	{
 		PresentationDef pd = file.presentationData[ePresentationType.INACTIVE]
@@ -1029,14 +1061,14 @@ void function InitPresentationData()
 		pd.startFunc = StartPresentation_CLUBS_DISCOVERY
 	}
 
-                        
-  
-                                                                             
-                     
-                                            
-                                        
-  
-       
+
+
+
+
+
+
+
+
 
 	{
 		PresentationDef pd = file.presentationData[ePresentationType.APPLIED_STICKER_INJECTOR]
@@ -1073,12 +1105,14 @@ void function InitPresentationData()
 		pd.endFunc = EndPresentation_WEAPON_TRIAL_CELEBRATIONS
 	}
 
+
 	{
 		PresentationDef pd = file.presentationData[ePresentationType.PLAY_QUADS]
 		pd.modelData = file.playCharacter
 		pd.startFunc = StartPresentation_PLAY
 		pd.endFunc = EndPresentation_PLAY
 	}
+
 
 	Menu_InitPresentationDataFromCameraSettings()
 }
@@ -1151,7 +1185,7 @@ void function InitMenuModelFlashData()
 		fd.outlineIntensityScalar = 300
 		fd.fadeInTime             = 0.01
 		fd.fadeOutTime            = 0.3
-		fd.lifeTime               = 0.1
+		fd.lifeTime               = 0.01
 		fd.outlineRadius          = 2
 	}
 
@@ -1249,7 +1283,7 @@ void function EndPresentation_PLAY()
 
 void function StartPresentation_CHARACTER_SELECT()
 {
-	ModelData_SetPoseEntity( file.customizeCharacter, GetEntByScriptName( "customize_character_ref" ) ) // needed by useCharacterOffsets logic which updates position after the character is known
+	ModelData_SetPoseEntity( file.customizeCharacter, GetEntByScriptName( "customize_character_ref" ) ) 
 	ModelData_SetAnim( file.customizeCharacter, "ACT_MP_MENU_LOBBY_SELECT_IDLE" )
 	UpdateMenuCharacterModel( GetLocalClientPlayer(), -1 )
 }
@@ -1341,15 +1375,15 @@ void function EndPresentation_WEAPON_SKIN()
 
 	if ( !desireWeaponCharmPresentation )
 	{
-		// stop the camera zoom
+		
 		Signal( level, "EndGunCharmCameraZoom" )
 
 		CameraZoomThreadEnd()
 
-		// reset the mover
+		
 		weaponMover.SetOrigin( ModelData_GetBaseOrigin( file.customizeWeapon ) )
 
-		// reset the camera
+		
 		int cameraTargetIndex    = eCameraTargetNames.customize_weapon_camera_target
 		entity cameraTarget      = file.cameraTargets[ cameraTargetIndex ]
 		vector cameraStartOrigin = file.cameraStartOriginsAngles[ cameraTargetIndex ]["origin"]
@@ -1380,15 +1414,15 @@ void function StartPresentation_WEAPON_CHARMS()
 
 void function EndPresentation_WEAPON_CHARMS()
 {
-	//in case of R5DEV-397867 (that can also be reproduced on other platforms) 
-	//On disconnect/reconnect (or huge internet lag on players end) calls a RefreshPresentationType that calls a SetPresentationType
-	//that maybe should hit that return statement in between but doesn't due to bool presentationTypeInitialized getting reset
-	//so for now charms shouldn't reset camera stuff as we are still presenting the same thing
+	
+	
+	
+	
 	if( file.currentPresentationType == file.desiredPresentationType )
 	{
 		return;
 	}
-	
+
 	entity weaponModel = ModelData_GetModel( file.customizeWeapon )
 	entity weaponMover = ModelData_GetMover( file.customizeWeapon )
 	entity charm       = GetCharmForWeaponEntity( weaponModel )
@@ -1406,7 +1440,7 @@ void function EndPresentation_WEAPON_CHARMS()
 		vector cameraStartOrigin = file.cameraStartOriginsAngles[ cameraTargetIndex ]["origin"]
 		vector cameraStartAngles = file.cameraStartOriginsAngles[ cameraTargetIndex ]["angles"]
 
-		// reset the gun's pivot/mover to the 'MENU_ROTATE' attachment location, which is what the weapon skins panel uses
+		
 		string attachmentName = "MENU_ROTATE"
 		int attachID          = weaponModel.LookupAttachment( attachmentName )
 		vector attachOrigin   = weaponModel.GetAttachmentOrigin( attachID )
@@ -1415,7 +1449,7 @@ void function EndPresentation_WEAPON_CHARMS()
 		weaponMover.SetOrigin( ModelData_GetBaseOrigin( file.customizeWeapon ) )
 		weaponModel.SetParent( weaponMover )
 
-		// stop all movers when the thread ends, in case someone zooms back in midway through zoom out
+		
 		file.cameraZoomData.lastVal = 0.0
 		file.cameraZoomData.mover.NonPhysicsStop()
 		weaponMover.NonPhysicsStop()
@@ -1472,8 +1506,8 @@ void function EndPresentation_MELEE_INSPECT()
 
 void function StartPresentation_WEAPON_TRIAL_CELEBRATIONS()
 {
-	// Reuses store entities
-	int rarityIdx = 1 // rare
+	
+	int rarityIdx = 1 
 
 	SetStoreBackgroundSkins( rarityIdx )
 	file.storeBackgroundModelGeo.Show()
@@ -1493,7 +1527,7 @@ void function StartPresentation_WEAPON_TRIAL_CELEBRATIONS()
 
 void function EndPresentation_WEAPON_TRIAL_CELEBRATIONS()
 {
-	// Reuses store entities
+	
 	file.storeBackgroundModelGeo.Hide()
 	file.storeBackgroundModelSmoke.Hide()
 
@@ -1518,60 +1552,60 @@ void function EndPresentation_WEAPON_OVERVIEW_INSPECT()
 	CameraZoomThreadEnd()
 }
 
-                       
-                                           
- 
-                                       
- 
 
-                                              
- 
-                                                  
-                              
 
-                                     
-                                       
 
-                                                  
-                                                                      
 
-                                                
-                                                                         
 
-                                                                            
 
-                                                              
-                                                                
 
-                                                                                                                                                                                       
-                                                                                                
-                                                                  
 
-                                                   
 
-             
-                           
-   
-                                     
-                                       
 
-                                       
-                                         
-   
-  
 
-              
- 
 
-                                         
- 
-                                               
- 
-      
 
-//"club_landing_discovery_ref"
-//"club_landing_lobby_ref"
-//"club_landing_marvin"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function StartPresentation_CLUBS_DISCOVERY()
 {
 	printf( "ClubBackgroundDebug: Marvin should be up close" )
@@ -1579,7 +1613,7 @@ void function StartPresentation_CLUBS_DISCOVERY()
 	entity ref = GetEntByScriptName( "club_landing_discovery_ref" )
 	mrvn.SetOrigin( ref.GetOrigin() )
 	mrvn.SetAngles( ref.GetAngles() )
-	//mrvn.Anim_Play( "mrvn_salute" )
+	
 	mrvn.Anim_Play( "mrvn_underworld_idle" )
 }
 
@@ -1603,7 +1637,7 @@ void function StartPresentation_CLUBS_LANDING()
 
 void function StartPresentation_APPLIED_STICKER()
 {
-	// Reusing an existing environment so move the normal customizeWeapon model to hide it
+	
 	ModelData_GetMover( file.customizeWeapon ).SetOrigin( GetEntByScriptName( "customize_weapon_ref" ).GetOrigin() + <0, 0, -500> )
 
 	entity objectModel = ModelData_GetModel( file.appliedStickerModelData )
@@ -1617,13 +1651,13 @@ void function EndPresentation_APPLIED_STICKER()
 	if ( IsValid( objectModel ) )
 		objectModel.Hide()
 
-	// Reusing an existing environment so move the normal customizeWeapon model to show it again
+	
 	ModelData_GetMover( file.customizeWeapon ).SetOrigin( GetEntByScriptName( "customize_weapon_ref" ).GetOrigin() )
 }
 
 void function StartPresentation_UNAPPLIED_STICKER()
 {
-	// Reusing an existing environment so move the normal customizeWeapon model to hide it
+	
 	ModelData_GetMover( file.customizeWeapon ).SetOrigin( GetEntByScriptName( "customize_weapon_ref" ).GetOrigin() + <0, 0, -500> )
 
 	entity objectModel = ModelData_GetModel( file.unappliedStickerModelData )
@@ -1637,7 +1671,7 @@ void function EndPresentation_UNAPPLIED_STICKER()
 	if ( IsValid( objectModel ) )
 		objectModel.Hide()
 
-	// Reusing an existing environment so move the normal customizeWeapon model to show it again
+	
 	ModelData_GetMover( file.customizeWeapon ).SetOrigin( GetEntByScriptName( "customize_weapon_ref" ).GetOrigin() )
 }
 
@@ -1655,7 +1689,7 @@ void function EnableLobbyMenuCameraZoom()
 
 	EndSignal( level, "EndCameraZoom" )
 
-	// wait for the model's skins to actually be applied
+	
 	while( !file.cameraZoomModelInitialized )
 		WaitFrame()
 
@@ -1736,7 +1770,7 @@ void function EnableLobbyMenuCameraZoom()
 				maxZoomDistance = ZOOM_DISTANCE_INSPECT_MELEE_SKIN
 				break
 
-			default: // item types that don't support zoom
+			default: 
 				return
 		}
 		cameraTargetIndex = eCameraTargetNames.store_inspect_camera_target
@@ -1759,7 +1793,7 @@ void function EnableLobbyMenuCameraZoom()
 					focalPoint = model.GetAttachmentOrigin( model.LookupAttachment( "MENU_ROTATE" ) )
 				maxZoomDistance = 0
 				break
-			default: // item types that don't support zoom
+			default: 
 			return
 		}
 
@@ -1782,7 +1816,7 @@ void function EnableLobbyMenuCameraZoom()
 		cameraTargetIndex = eCameraTargetNames.customize_character_camera_target
 	}
 
-	//DebugDrawSphere( focalPoint, 2.0, COLOR_YELLOW, true, 15.0 )
+	
 
 	entity cameraTarget      = file.cameraTargets[ cameraTargetIndex ]
 	vector cameraStartOrigin = file.cameraStartOriginsAngles[ cameraTargetIndex ]["origin"]
@@ -1830,10 +1864,10 @@ bool function IsEventLobbyActive()
 void function InitMenuEntities()
 {
 	printf( "InitMenuEntitiesDebug: InitMenuEntities() START" )
-	#if DEVELOPER
+#if DEV
 		if ( BuildingCubeMaps() )
 			return
-	#endif
+#endif
 
 	Assert( MenuMapEntitiesExist() )
 
@@ -1843,13 +1877,14 @@ void function InitMenuEntities()
 	InitPresentationData()
 	InitMenuModelFlashData()
 
-                               
-	InitTeammatePosition( "play_teammate1_ref", "ACT_MP_MENU_LOBBY_LEFT_IDLE" )
-	InitTeammatePosition( "play_teammate2_ref", "ACT_MP_MENU_LOBBY_RIGHT_IDLE" )
-     
-                                                                            
-                                                                             
-      
+
+	InitTeammatePosition( "play_teammate1_quads_ref", "ACT_MP_MENU_LOBBY_LEFT_IDLE" )
+	InitTeammatePosition( "play_teammate2_quads_ref", "ACT_MP_MENU_LOBBY_RIGHT_IDLE" )
+	InitTeammatePosition( "play_teammate3_quads_ref", "ACT_MP_MENU_LOBBY_LEFT_IDLE" )
+
+
+
+
 
 	file.cameraZoomData.mover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", <0, 0, 0>, <0, 0, 0> )
 
@@ -1864,116 +1899,59 @@ void function InitMenuEntities()
 
 	clGlobal.menuCamera = CreateClientSidePointCamera( <0, 0, 0>, <0, 0, 0>, DEFAULT_FOV )
 
-	// Wait for character class to be known
+	
 	EHI localPlayerEHI = WaitForLocalClientEHI()
 	if ( IsSpectator( GetLocalClientPlayer() ) && !IsPrivateMatchLobby() )
 	{
 		printf( "InitMenuEntitiesDebug: InitMenuEntities() Return: Local Client is Spectator" )
-		return // server demo
+		return 
 	}
 
 	if ( IsLobby() || IsPrivateMatchLobby() )
 	{
 		entity localPlayer = GetLocalClientPlayer()
-		localPlayer.SetMenuCameraEntityWithAudio( clGlobal.menuCamera ) // (dw): see R5DEV-86674
+		localPlayer.SetMenuCameraEntityWithAudio( clGlobal.menuCamera ) 
 	}
 
 	entity refEnt
 	entity model
 	float[2] baseRotationDelta
 
-	refEnt = GetEntByScriptName( "play_character_ref" )
+
+	refEnt = GetEntByScriptName( "play_character_quads_ref" )
+
+
 
 	ModelData_SetBaseOrigin( file.playCharacter, refEnt.GetOrigin() )
 	ModelData_SetBaseAngles( file.playCharacter, refEnt.GetAngles() )
-	model = CreateMenuModel( file.playCharacter, $"mdl/dev/empty_model.rmdl" )
-	ItemFlavor character     = LoadoutSlot_WaitForItemFlavor( localPlayerEHI, Loadout_Character() )
-	ItemFlavor characterSkin = LoadoutSlot_WaitForItemFlavor( localPlayerEHI, Loadout_CharacterSkin( character ) )
-	CharacterSkin_Apply( model, characterSkin )
-	model.SetAlive( true )
+	//model = CreateMenuModel( file.playCharacter, $"mdl/dev/empty_model.rmdl" )
+	//ItemFlavor character     = LoadoutSlot_WaitForItemFlavor( localPlayerEHI, Loadout_Character() )
+	//ItemFlavor characterSkin = LoadoutSlot_WaitForItemFlavor( localPlayerEHI, Loadout_CharacterSkin( character ) )
+	//CharacterSkin_Apply( model, characterSkin )
+	//model.SetAlive( true )
 
 	refEnt = GetEntByScriptName( "customize_character_ref" )
-                   
+
 	refEnt.SetOrigin( refEnt.GetOrigin()  + <-20, 0, -2 > )
-      
-	ModelData_SetBaseOrigin( file.customizeCharacter, refEnt.GetOrigin() )
-                   
-	ModelData_SetBaseAngles( file.customizeCharacter, <0, -100, 0> )
-     
-                                                                 
-      
-	baseRotationDelta[0] = 0
-	baseRotationDelta[1] = 0
-	ModelData_SetBaseRotationDelta( file.customizeCharacter, baseRotationDelta )
-	model = CreateMenuModel( file.customizeCharacter, $"mdl/dev/empty_model.rmdl" )
-	ModelData_CreateMover( file.customizeCharacter )
-	CharacterSkin_Apply( model, characterSkin )
-	model.SetAlive( true )
-
-	refEnt = GetEntByScriptName( "customize_weapon_ref" )
-	file.customizeWeaponRefEnt = refEnt
-	ModelData_SetBaseOrigin( file.customizeWeapon, refEnt.GetOrigin() )
-	ModelData_SetBaseAngles( file.customizeWeapon, WEAPON_BASE_ANGLES )
-	ModelData_SetBaseRotationDelta( file.customizeWeapon, WEAPON_BASE_ROTATION_DELTA )
-	model = CreateMenuModel( file.customizeWeapon, $"mdl/dev/empty_model.rmdl" )
-	model.kv.rendercolor = "0 0 0 255" // Force charge and heat materials hidden
-	ModelData_CreateMover( file.customizeWeapon )
-	ItemFlavor weapon     = GetAllWeaponItemFlavors()[0]
-	ItemFlavor weaponSkin = LoadoutSlot_GetItemFlavor( localPlayerEHI, Loadout_WeaponSkin( weapon ) )
-	WeaponCosmetics_Apply( model, weaponSkin, null )
-
-	refEnt = GetEntByScriptName( "store_inspect_ref" )
-	file.storeInspectRefEnt = refEnt
-	ModelData_SetBaseOrigin( file.storeInspectModelData, refEnt.GetOrigin() )
-	ModelData_SetBaseAngles( file.storeInspectModelData, refEnt.GetAngles() )
-	ModelData_SetBaseRotationDelta( file.storeInspectModelData, baseRotationDelta )
-	model = CreateMenuModel( file.storeInspectModelData, $"mdl/dev/empty_model.rmdl" )
-	ModelData_CreateMover( file.storeInspectModelData )
 
 
-	refEnt = GetEntByScriptName( "customize_character_skin_ref" )
-	file.meleeInspectRefEnt = refEnt
-	ModelData_SetBaseOrigin( file.meleeInspectModelData, refEnt.GetOrigin() )
-	ModelData_SetBaseAngles( file.meleeInspectModelData, <0, 0, 0> )
-	ModelData_SetBaseRotationDelta( file.meleeInspectModelData, baseRotationDelta )
-	model = CreateMenuModel( file.meleeInspectModelData, $"mdl/dev/empty_model.rmdl" )
-	ModelData_CreateMover( file.meleeInspectModelData )
 
-	// quest version
-	refEnt = GetEntByScriptName( "battlepass_right_ref" )    // reuse this ref
-	ModelData_SetBaseOrigin( file.questGoalModelData, refEnt.GetOrigin() )
-	ModelData_SetBaseAngles( file.questGoalModelData, <0, -115, 0> )
-	model = CreateMenuModel( file.questGoalModelData, $"mdl/dev/empty_model.rmdl" )
-	CreateMenuSubModel( file.questGoalModelData, $"mdl/dev/empty_model.rmdl" )
-	ModelData_CreateMover( file.questGoalModelData )
-
-	refEnt = GetEntByScriptName( "customize_weapon_ref" ) // Reusing "customize_weapon_ref" with an offset
-	ModelData_SetBaseOrigin( file.appliedStickerModelData, refEnt.GetOrigin() + <3.25, 0, 2.5> )
-	ModelData_SetBaseAngles( file.appliedStickerModelData, <0, 0, 0> )
-	model = CreateMenuModel( file.appliedStickerModelData, $"mdl/dev/empty_model.rmdl" )
-	ModelData_CreateMover( file.appliedStickerModelData )
-
-	ModelData_SetBaseOrigin( file.unappliedStickerModelData, refEnt.GetOrigin() + <4, 0, 2> )
-	ModelData_SetBaseAngles( file.unappliedStickerModelData, <0, 255, 0> )
-	model = CreateMenuModel( file.unappliedStickerModelData, $"mdl/dev/empty_model.rmdl" )
-	ModelData_CreateMover( file.unappliedStickerModelData )
-
-	//thread DrawEntityOriginForever( ModelData_GetMover( file.playCharacter ) )
-	//thread DrawEntityOriginForever( ModelData_GetMover( file.customizeWeapon ) )
-	//thread DrawEntityOriginForever( ModelData_GetMover( file.appliedStickerModelData ) )
-	//thread DrawEntityOriginForever( ModelData_GetMover( file.unappliedStickerModelData ) )
+	
+	
+	
+	
 
 	InitBattlePassLights()
 	InitLightingConfigs()
-	InitBackgroundModels()
+	//InitBackgroundModels()
 
-	file.initializedMenuModels = true
+	file.initializedMenuModels = false
 	printf( "InitMenuEntitiesDebug: InitMenuEntities() END" )
 }
 
 void function InitBackgroundModels()
 {
-	#if CLIENT
+	return
 		entity targetBackground = GetEntByScriptName( STORE_BACKGROUND_ENT_NAME )
 
 		vector offset            = <0, 0, 24>
@@ -1996,41 +1974,38 @@ void function InitBackgroundModels()
 		file.storeBackgroundModelSmoke.MakeSafeForUIScriptHack()
 		file.storeBackgroundModelSmoke.Hide()
 
-                        
-                                                                                                                                                                 
-                                            
-                                                     
-                                                
-                                                         
-                                      
 
-                                                                                                                                                                     
-                                              
-                                                       
-                                                  
-                                                           
-                                        
-       
 
-		array<entity> weaponOverviewBgEnts = GetEntArrayByScriptName( WEAPON_OVERVIEW_BACKGROUND_ENT_NAME )
-		if ( weaponOverviewBgEnts.len() > 0 )
-		{
-			entity weaponOverviewTargetBackground = weaponOverviewBgEnts[0]
-			file.weaponOverviewBackgroundModelGeo = CreateClientSidePropDynamic( weaponOverviewTargetBackground.GetOrigin() + <0, -100, 0 >, weaponOverviewTargetBackground.GetAngles(), STORE_BACKGROUND_GEO_MODEL )
-			file.weaponOverviewBackgroundModelGeo.kv.solid = 0
-			file.weaponOverviewBackgroundModelGeo.kv.disableshadows = 1
-			file.weaponOverviewBackgroundModelGeo.kv.fadedist = -1
-			file.weaponOverviewBackgroundModelGeo.MakeSafeForUIScriptHack()
-			file.weaponOverviewBackgroundModelGeo.Hide()
 
-			file.weaponOverviewBackgroundModelSmoke = CreateClientSidePropDynamic( weaponOverviewTargetBackground.GetOrigin() + <0, -100, 0 >, weaponOverviewTargetBackground.GetAngles(), STORE_BACKGROUND_SMOKE_MODEL )
-			file.weaponOverviewBackgroundModelSmoke.kv.solid = 0
-			file.weaponOverviewBackgroundModelSmoke.kv.disableshadows = 1
-			file.weaponOverviewBackgroundModelSmoke.kv.fadedist = -1
-			file.weaponOverviewBackgroundModelSmoke.MakeSafeForUIScriptHack()
-			file.weaponOverviewBackgroundModelSmoke.Hide()
-		}
-	#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+		entity weaponOverviewTargetBackground = GetEntByScriptName( WEAPON_OVERVIEW_BACKGROUND_ENT_NAME )
+
+		file.weaponOverviewBackgroundModelGeo = CreateClientSidePropDynamic( weaponOverviewTargetBackground.GetOrigin() + <0, -100, 0 >, weaponOverviewTargetBackground.GetAngles(), STORE_BACKGROUND_GEO_MODEL )
+		file.weaponOverviewBackgroundModelGeo.kv.solid = 0
+		file.weaponOverviewBackgroundModelGeo.kv.disableshadows = 1
+		file.weaponOverviewBackgroundModelGeo.kv.fadedist = -1
+		file.weaponOverviewBackgroundModelGeo.MakeSafeForUIScriptHack()
+		file.weaponOverviewBackgroundModelGeo.Hide()
+
+		file.weaponOverviewBackgroundModelSmoke = CreateClientSidePropDynamic( weaponOverviewTargetBackground.GetOrigin() + <0, -100, 0 >, weaponOverviewTargetBackground.GetAngles(), STORE_BACKGROUND_SMOKE_MODEL )
+		file.weaponOverviewBackgroundModelSmoke.kv.solid = 0
+		file.weaponOverviewBackgroundModelSmoke.kv.disableshadows = 1
+		file.weaponOverviewBackgroundModelSmoke.kv.fadedist = -1
+		file.weaponOverviewBackgroundModelSmoke.MakeSafeForUIScriptHack()
+		file.weaponOverviewBackgroundModelSmoke.Hide()
+
 }
 
 entity function CreateMenuModel_( MenuModelData modelData, asset modelAsset, bool isMainModel )
@@ -2077,13 +2052,13 @@ void function UpdateMenuCharacterModel( entity player, int overrideCharacterFlav
 	thread UpdateMenuCharacterModelInternal( overrideCharacterFlavorGUID )
 }
 
-// TODO: Should have a single flag that we're ready rather than sprinkle waits around with LoadoutSlot_WaitForItemFlavor()
+
 void function UpdateMenuCharacterModelInternal( int overrideCharacterFlavorGUID )
 {
 	Signal( file.signalDummy, "UpdateMenuCharacterModelInternal" )
 	EndSignal( file.signalDummy, "UpdateMenuCharacterModelInternal" )
 
-	while ( !file.initializedMenuModels ) // Handle early calls that UI script can trigger before client is ready
+	while ( !file.initializedMenuModels ) 
 		WaitFrame()
 
 	EHI playerEHI = LocalClientEHI()
@@ -2095,25 +2070,25 @@ void function UpdateMenuCharacterModelInternal( int overrideCharacterFlavorGUID 
 	else
 		character = GetItemFlavorByGUID( overrideCharacterFlavorGUID )
 
-	#if DEVELOPER
-		if ( GetBugReproNum() == 1747 ) //Testing for FastPatch - Client script change - Shows up as Dummie regardless of character choice. Other party members unaffected
+#if DEV
+		if ( GetBugReproNum() == 1747 ) 
 			character = GetItemFlavorByCharacterRef( "character_dummie"  )
-	#endif
+#endif
 
 	LoadoutSlot_WaitForItemFlavor( playerEHI, Loadout_CharacterSkin( character ) )
 
 	clGlobal.currentMenuPilotModels.characterSkin = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_CharacterSkin( character ) )
-	//clGlobal.currentMenuPilotModels.idleAnim = "NOTUSED"
+	
 
 	if ( file.presentationData[ file.currentPresentationType ].useCharacterOffsets && file.presentationData[ file.currentPresentationType ].modelData != null )
 	{
 		entity refEnt = ModelData_GetPoseEntity( expect MenuModelData( file.presentationData[ file.currentPresentationType ].modelData ) )
 		vector base   = refEnt.GetOrigin()
 		vector offset = CharacterClass_GetGalleryModelOffset( character )
-		#if DEVELOPER
+#if DEV
 			if ( ItemFlavor_GetCharacterRef( character ) == file.DEV_characterOffsetCharacter )
 				offset = file.DEV_characterOffset
-		#endif // DEV
+#endif
 
 		ModelData_GetMover( expect MenuModelData( file.presentationData[ file.currentPresentationType ].modelData ) ).SetOrigin( base + offset )
 
@@ -2144,21 +2119,21 @@ void function UIToClient_PreviewCharacterEmote( int guid, int overrideCharacterF
 void function UIToClient_PreviewUnappliedSticker( SettingsAssetGUID itemFlavorGUID )
 {
 	ItemFlavor stickerItem = GetItemFlavorByGUID( itemFlavorGUID )
-                       
+
 	Assert( !Sticker_IsTheEmpty( stickerItem ) )
-      
+
 
 	if ( IsValidStickerInstance( file.currentUnappliedStickerInstance ) )
 		DestroyStickerInstance( file.currentUnappliedStickerInstance )
 
 	entity stickerEnt = ModelData_GetModel( file.unappliedStickerModelData )
-                      
-                                         
-  
-                   
-        
-  
-      
+
+
+
+
+
+
+
 
 	stickerEnt.SetLocalOrigin( <0, 0, 0> )
 	stickerEnt.SetLocalAngles( <0, 0, 0> )
@@ -2176,56 +2151,56 @@ void function UIToClient_PreviewUnappliedSticker( SettingsAssetGUID itemFlavorGU
 	}
 }
 
-                      
-                                                                                                           
- 
-                                                               
 
-                                                          
-                                                         
-                                                  
 
-                                                                       
-                                                               
-                       
-                                  
-                                                           
-                        
 
-                                       
-                         
-                                 
 
-                                                        
-  
-                             
-                   
-                                 
-  
 
-                                        
-                                       
-                                       
 
-                                                                      
-                                                                
 
-                                         
-        
 
-                                                                
-                                                                                              
-                                                                                                                            
 
-                                                                                                
-                                            
-  
-                                                                     
-                                                                                                                     
-                                                                                       
-  
- 
-     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function UIToClient_PreviewAppliedStickers( int stickerObjectType, int updatedStickerSlot )
 {
 	if ( IsValidStickerInstance( file.currentUnappliedStickerInstance ) )
@@ -2241,7 +2216,7 @@ void function UIToClient_PreviewAppliedStickers( int stickerObjectType, int upda
 	{
 		table< int, table<int, AppliedStickerData> > appliedStickersDataCopy = clone file.appliedStickersData
 
-		// Destroy sticker instances and clear table content for everything that isn't the new stickerObjectType
+		
 		foreach ( stickerObjectTypeKey, stickerSlotTable in appliedStickersDataCopy )
 		{
 			if ( stickerObjectTypeKey == stickerObjectType )
@@ -2262,12 +2237,12 @@ void function UIToClient_PreviewAppliedStickers( int stickerObjectType, int upda
 		objectEnt.SetSkin( 0 )
 		objectEnt.SetModel( objectAsset )
 
-		//if ( string( objectEnt.GetModelName() ).tolower() != string( objectAsset ).tolower() )
-		//{
-		//	printt( "Model was:", string( objectEnt.GetModelName() ) )
-		//	objectEnt.SetModel( objectAsset )
-		//	printt( "SetModel to:", string( objectAsset ) )
-		//}
+		
+		
+		
+		
+		
+		
 
 		if ( stickerObjectType == eStickerObjectType.phoenix_kit )
 			objectEnt.SetSkin( 1 )
@@ -2293,7 +2268,7 @@ void function UIToClient_PreviewAppliedStickers( int stickerObjectType, int upda
 	ItemFlavor ornull updatedStickerItem
 	int updatedStickerInstance = -1
 
-	// Use loadout contents to apply any unapplied stickers and update tracked sticker instances
+	
 	for ( int stickerSlot = 0; stickerSlot < GetMaxStickersForObjectType( stickerObjectType ); stickerSlot++ )
 	{
 		bool stickerSlotExists = (stickerSlot in file.appliedStickersData[stickerObjectType])
@@ -2340,7 +2315,7 @@ void function UIToClient_PreviewAppliedStickers( int stickerObjectType, int upda
 	{
 		expect ItemFlavor( updatedStickerItem )
 
-		// TODO: Flashing the whole object for now since we can't yet flash just the sticker decal yet.
+		
 		if ( !Sticker_IsTheEmpty( updatedStickerItem ) && ItemFlavor_HasQuality( updatedStickerItem ) )
 		{
 			vector flashColor = ItemFlavor_GetQualityColor( updatedStickerItem ) / 255
@@ -2349,7 +2324,7 @@ void function UIToClient_PreviewAppliedStickers( int stickerObjectType, int upda
 		}
 	}
 }
-      
+
 
 void function UIToClient_PreviewCharacterSkin( int guid, int overrideCharacterFlavorGUID )
 {
@@ -2395,7 +2370,7 @@ void function SetStoreBackgroundSkins( int skinIndex )
 
 void function TransitionStoreBackgroundColors( ItemFlavor itemFlav )
 {
-	int rarityIdx     = 0 // default to common rarity, black smoke bg
+	int rarityIdx     = 0 
 	vector flashColor = MENU_MODELS_DEFAULT_HIGHLIGHT_COLOR / 255
 
 	if ( ItemFlavor_HasQuality( itemFlav ) )
@@ -2406,7 +2381,7 @@ void function TransitionStoreBackgroundColors( ItemFlavor itemFlav )
 
 	SetStoreBackgroundSkins( rarityIdx )
 
-	// Stickers trigger their own flash when their material asset finishes loading.
+	
 	if ( ItemFlavor_GetType( itemFlav ) == eItemType.sticker )
 		return
 
@@ -2418,7 +2393,7 @@ void function TransitionStoreBackgroundColors( ItemFlavor itemFlav )
 
 void function TransitionWeaponOverviewBackgroundColors( ItemFlavor itemFlav )
 {
-	int rarityIdx     = 0 // default to common rarity, black smoke bg
+	int rarityIdx     = 0 
 	vector flashColor = MENU_MODELS_DEFAULT_HIGHLIGHT_COLOR / 255
 
 	if ( ItemFlavor_HasQuality( itemFlav ) )
@@ -2433,12 +2408,12 @@ void function TransitionWeaponOverviewBackgroundColors( ItemFlavor itemFlav )
 	thread FlashMenuModel( model, eMenuModelFlashType.DEFAULT, flashColor, includeChildren, depthDiscard )
 }
 
-#if CLIENT
+
 void function TransitionStoreBackgroundFX( ItemFlavor itemFlav )
 {
 	EndSignal( level, "EndSetPresentationType" )
 
-	int rarityIdx      = 0 // default to common rarity
+	int rarityIdx      = 0 
 	vector rarityColor = MENU_MODELS_DEFAULT_HIGHLIGHT_COLOR
 
 	if ( ItemFlavor_HasQuality( itemFlav ) )
@@ -2447,7 +2422,7 @@ void function TransitionStoreBackgroundFX( ItemFlavor itemFlav )
 		rarityColor = GetFXRarityColorForUnlockable( rarityIdx )
 	}
 
-	//fx
+	
 	Assert( rarityIdx < STORE_BACKGROUND_FX_TIERS.len(), "Couldn't find particle beam asset based on rarity: " + rarityIdx )
 	asset particleAssetRarity = STORE_BACKGROUND_FX_TIERS[rarityIdx]
 	entity targetBackground   = GetEntByScriptName( STORE_BACKGROUND_ENT_NAME )
@@ -2472,14 +2447,14 @@ void function TransitionStoreBackgroundFX( ItemFlavor itemFlav )
 
 	WaitForever()
 }
-#endif
 
-#if CLIENT
+
+
 void function TransitionWeaponOverviewBackgroundFX( ItemFlavor itemFlav )
 {
 	EndSignal( level, "EndSetPresentationType" )
 
-	int rarityIdx      = 0 // default to common rarity
+	int rarityIdx      = 0 
 	vector rarityColor = MENU_MODELS_DEFAULT_HIGHLIGHT_COLOR
 
 	if ( ItemFlavor_HasQuality( itemFlav ) )
@@ -2488,20 +2463,18 @@ void function TransitionWeaponOverviewBackgroundFX( ItemFlavor itemFlav )
 		rarityColor = GetFXRarityColorForUnlockable( rarityIdx )
 	}
 
-	//fx
+	
 	Assert( rarityIdx < STORE_BACKGROUND_FX_TIERS.len(), "Couldn't find particle beam asset based on rarity: " + rarityIdx )
 	asset particleAssetRarity = STORE_BACKGROUND_FX_TIERS[rarityIdx]
-	array<entity> overviewBgEnts = GetEntArrayByScriptName( WEAPON_OVERVIEW_BACKGROUND_ENT_NAME )
-	if ( overviewBgEnts.len() > 0 )
-	{
-		entity targetBackground = overviewBgEnts[0]
-		if ( EffectDoesExist( file.weaponOverviewBackgroundFXHandle ) )
-			EffectStop( file.weaponOverviewBackgroundFXHandle, true, false )
+	entity targetBackground   = GetEntByScriptName( WEAPON_OVERVIEW_BACKGROUND_ENT_NAME )
 
-		file.weaponOverviewBackgroundFXHandle = StartParticleEffectInWorldWithHandle( GetParticleSystemIndex( particleAssetRarity ), targetBackground.GetOrigin(), targetBackground.GetAngles() )
-		EffectSetControlPointVector( file.weaponOverviewBackgroundFXHandle, 1, rarityColor )
-		EffectSetDontKillForReplay( file.weaponOverviewBackgroundFXHandle )
-	}
+	if ( EffectDoesExist( file.weaponOverviewBackgroundFXHandle ) )
+		EffectStop( file.weaponOverviewBackgroundFXHandle, true, false )
+
+	file.weaponOverviewBackgroundFXHandle = StartParticleEffectInWorldWithHandle( GetParticleSystemIndex( particleAssetRarity ), targetBackground.GetOrigin(), targetBackground.GetAngles() )
+
+	EffectSetControlPointVector( file.weaponOverviewBackgroundFXHandle, 1, rarityColor )
+	EffectSetDontKillForReplay( file.weaponOverviewBackgroundFXHandle )
 
 	int FXHandle = file.weaponOverviewBackgroundFXHandle
 
@@ -2515,14 +2488,14 @@ void function TransitionWeaponOverviewBackgroundFX( ItemFlavor itemFlav )
 
 	WaitForever()
 }
-#endif
+
 
 void function UpdateCharacterModelDisplay( MenuModelData modelData, bool doTransitionFX )
 {
-	if ( !file.initializedMenuModels ) // Handle early calls that UI script can trigger before client is ready
+	if ( !file.initializedMenuModels ) 
 		return
 
-	if ( clGlobal.currentMenuPilotModels.characterSkin == null ) // Other script is running too early when this can be null
+	if ( clGlobal.currentMenuPilotModels.characterSkin == null ) 
 		return
 
 	entity model         = ModelData_GetModel( modelData )
@@ -2534,14 +2507,14 @@ void function UpdateCharacterModelDisplay( MenuModelData modelData, bool doTrans
 		characterSkin = clGlobal.currentMenuPilotModels.characterSkin
 	CharacterSkin_Apply( model, expect ItemFlavor( characterSkin ) )
 
-	//asset bodyModel = CharacterSkin_GetBodyModel( expect ItemFlavor( characterSkin ) )
-	//string idleAnim = clGlobal.previewMenuPilotModels.idleAnim
-	//if ( idleAnim == "" )
-	//	idleAnim = clGlobal.currentMenuPilotModels.idleAnim
+	
+	
+	
+	
 
 	bool modelChanged = model.GetModelName() != lastModelAsset
-	//bool animChanged = idleAnim != character.bodyAnim
-	if ( modelChanged ) // || animChanged
+	
+	if ( modelChanged ) 
 	{
 		model = CreateMenuModel( modelData, model.GetModelName() )
 		entity mover = ModelData_GetMover( modelData )
@@ -2559,7 +2532,7 @@ void function UpdateCharacterModelDisplay( MenuModelData modelData, bool doTrans
 			ModelData_SetAnim( modelData, "ACT_MP_MENU_LOBBY_CENTER_IDLE" )
 		else
 			ModelData_SetAnim( modelData, "ACT_MP_MENU_LOBBY_SELECT_IDLE" )
-		//character.bodyAnim = idleAnim
+		
 	}
 
 	if ( model == ModelData_GetModel( file.customizeCharacter ) && doTransitionFX )
@@ -2600,7 +2573,7 @@ void function TrackPartyMembersAndDisplayModelsThread()
 		return
 	file.isTrackPartyMembersAndDisplayModelsThreadRunning = true
 
-	// Handle early calls that UI script can trigger before client is ready
+	
 	while ( !file.initializedMenuModels )
 		WaitFrame()
 
@@ -2626,12 +2599,12 @@ void function TrackPartyMembersAndDisplayModelsThread()
 		}
 
 		Party party           = GetParty()
-		//Assert( party.amIInThis )
+		
 		string localClientUid = PROTO_GetLocalClientUIDFromUIVM()
 
 		bool realMember = true
 
-		#if DEVELOPER
+#if DEV
 			if ( file.DEV_previewSelfAsParty )
 			{
 				realMember = false
@@ -2645,7 +2618,7 @@ void function TrackPartyMembersAndDisplayModelsThread()
 					party.members.append( fakeMember )
 				}
 			}
-		#endif // DEV
+#endif
 
 		foreach ( PartyMember partyMemberInfo in party.members )
 		{
@@ -2672,7 +2645,7 @@ void function TrackPartyMembersAndDisplayModelsThread()
 				if ( userInfoOrNull != null )
 					partyMemberDisplayThreadData.userInfo = expect CommunityUserInfo( userInfoOrNull )
 			}
-			partyMemberDisplayThreadData.userInfo.charData.resize( ePlayerStryderCharDataArraySlots.COUNT, 0 ) // (dw): charData is sometimes empty (R5DEV-48722)
+			partyMemberDisplayThreadData.userInfo.charData.resize( ePlayerStryderCharDataArraySlots.COUNT, 0 ) 
 
 			partyMemberDisplayThreadData.partyMemberSeenThisUpdate = true
 			if ( partyMemberDisplayThreadData.partyMemberFirstSeenTime == null )
@@ -2683,7 +2656,7 @@ void function TrackPartyMembersAndDisplayModelsThread()
 		foreach ( string partyMemberUid, PartyMemberDisplayThreadData partyMemberDisplayThreadData in file.partyMemberUidCharacterDataMap )
 		{
 			bool shouldDestroyModel = false
-			bool shouldModelBeShown = false // will only create if model doesn't exist (because new party member or because shouldDestroyModel was true)
+			bool shouldModelBeShown = false 
 
 			if ( partyMemberDisplayThreadData.partyMemberSeenThisUpdate )
 			{
@@ -2698,13 +2671,13 @@ void function TrackPartyMembersAndDisplayModelsThread()
 
 				ItemFlavor ornull characterOrNull = null
 				ItemFlavor ornull skinOrNull      = null
-				#if DEVELOPER
+#if DEV
 					if ( file.DEV_previewSelfAsParty )
 					{
 						characterOrNull = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
 						skinOrNull = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterSkin( expect ItemFlavor(characterOrNull) ) )
 					}
-				#endif
+#endif
 
 				if ( characterOrNull == null )
 				{
@@ -2717,7 +2690,7 @@ void function TrackPartyMembersAndDisplayModelsThread()
 					}
 				}
 
-				// If we don't get their data from Stryder within a second or so, just show a random launch character for them
+				
 				if ( characterOrNull == null && partyMemberDisplayThreadData.character == null
 				&& partyMemberDisplayThreadData.partyMemberFirstSeenTime != null && Time() > expect float(partyMemberDisplayThreadData.partyMemberFirstSeenTime) + 1.5 )
 				{
@@ -2778,9 +2751,9 @@ void function TrackPartyMembersAndDisplayModelsThread()
 				foreach ( entity candidateRefEnt in file.teammateRefEnts )
 				{
 					if ( file.teammateRefEntsUsedMap[candidateRefEnt] )
-						continue // spot is used
+						continue 
 
-					file.teammateRefEntsUsedMap[candidateRefEnt] = true // spot is free, reserve it!
+					file.teammateRefEntsUsedMap[candidateRefEnt] = true 
 					refEnt = candidateRefEnt
 					idleActivity = file.teammateRefEntIdleAnimMap[candidateRefEnt]
 
@@ -2833,7 +2806,7 @@ void function TellUIToUpdateInviteButtons()
 	string rightSpotName     = ""
 	bool rightSpotInMatch    = false
 
-                               
+
 	string fourthSpotUID      = ""
 	string fourthSpotEAID     = ""
 	string fourthSpotHardware = ""
@@ -2841,9 +2814,9 @@ void function TellUIToUpdateInviteButtons()
 	string fourthSpotUnspoofedHardware = ""
 	string fourthSpotName     = ""
 	bool fourthSpotInMatch    = false
-      
 
-	// TODO: (bw) Client/UI should understand and agree about GetParty() return values and the slots that they fill
+
+	
 	foreach ( string partyMemberUid, PartyMemberDisplayThreadData partyMemberDisplayThreadData in file.partyMemberUidCharacterDataMap )
 	{
 		if ( partyMemberDisplayThreadData.posRef == file.teammateRefEnts[0] && file.teammateRefEntsUsedMap[file.teammateRefEnts[0]] )
@@ -2866,7 +2839,7 @@ void function TellUIToUpdateInviteButtons()
 			rightSpotName = partyMemberDisplayThreadData.partyMemberInfo.name
 			rightSpotInMatch = PartyMemberInMatch( partyMemberDisplayThreadData.partyMemberInfo )
 		}
-	                               
+
 		else if ( partyMemberDisplayThreadData.posRef == file.teammateRefEnts[2] && file.teammateRefEntsUsedMap[file.teammateRefEnts[2]] )
 		{
 			fourthSpotUID = partyMemberUid
@@ -2877,20 +2850,21 @@ void function TellUIToUpdateInviteButtons()
 			fourthSpotName = partyMemberDisplayThreadData.partyMemberInfo.name
 			fourthSpotInMatch = PartyMemberInMatch( partyMemberDisplayThreadData.partyMemberInfo )
 		}
-       
-	}
-                               
-	RunUIScript( "ClientToUI_PartyMemberJoinedOrLeft", leftSpotUID, leftSpotHardware, leftSpotName, leftSpotInMatch,
-		                                               rightSpotUID, rightSpotHardware, rightSpotName, rightSpotInMatch )
-     
-                                                                                                                                                                                
-                                                                                                                                                    
-      
 
-	// todo(dw): hard-coded for now
-	//bool personInLeftSpot  = file.teammateRefEntsUsedMap[file.teammateRefEnts[0]] // assume index 0 is left spot
-	//bool personInRightSpot = file.teammateRefEntsUsedMap[file.teammateRefEnts[1]] // assume index 1 is right spot
-	//RunUIScript( "ClientToUI_PartyMemberJoinedOrLeft", personInLeftSpot, personInRightSpot )
+	}
+
+	RunUIScript( "ClientToUI_PartyMemberJoinedOrLeft", leftSpotUID, leftSpotEAID, leftSpotHardware, leftSpotUnspoofedUID, leftSpotUnspoofedHardware, leftSpotName, leftSpotInMatch,
+		                                               rightSpotUID, rightSpotEAID, rightSpotHardware, rightSpotUnspoofedUID, rightSpotUnspoofedHardware, rightSpotName, rightSpotInMatch,
+													   fourthSpotUID, fourthSpotEAID, fourthSpotHardware, fourthSpotUnspoofedUID, fourthSpotUnspoofedHardware, fourthSpotName, fourthSpotInMatch )
+
+
+
+
+
+	
+	
+	
+	
 }
 
 bool function PartyMemberInMatch( PartyMember partyMemberInfo )
@@ -2923,7 +2897,7 @@ void function DisplayPartyMemberModelThread( PartyMemberDisplayThreadData data )
 	OnThreadEnd( function() : ( data ) {
 		data.displayThreadActive = false
 
-		file.teammateRefEntsUsedMap[data.posRef] = false // release the spot
+		file.teammateRefEntsUsedMap[data.posRef] = false 
 		data.posRef = null
 		data.idleActivity = ""
 		data.isReady = data.partyMemberInfo.ready
@@ -2996,7 +2970,7 @@ void function UIToClient_ResetWeaponRotation()
 
 void function UIToClient_PreviewWeaponSkin( int skinFlavorGUID, int charmFlavorGUID, bool shouldHighlightWeapon )
 {
-	if ( !file.initializedMenuModels ) // Handle early calls that UI script can trigger before client is ready
+	if ( !file.initializedMenuModels ) 
 		return
 
 	ItemFlavor weaponSkin   = GetItemFlavorByGUID( skinFlavorGUID )
@@ -3012,12 +2986,12 @@ void function UIToClient_PreviewWeaponSkin( int skinFlavorGUID, int charmFlavorG
 
 	entity weaponModel = ModelData_GetModel( file.customizeWeapon )
 	entity weaponMover = ModelData_GetMover( file.customizeWeapon )
-	// apply the new models
+	
 	WeaponCosmetics_Apply( weaponModel, weaponSkin, charmFlavor )
 
 	bool isReactive = WeaponSkin_DoesReactToKills( weaponSkin )
 
-	// apply body groups
+	
 	if ( isReactive )
 		MenuWeaponModel_ApplyReactiveSkinBodyGroup( weaponSkin, weaponFlavor, weaponModel )
 	else
@@ -3027,16 +3001,16 @@ void function UIToClient_PreviewWeaponSkin( int skinFlavorGUID, int charmFlavorG
 	if ( isReactive )
 	{
 		MenuWeaponModel_StartReactiveEffects( weaponModel, weaponSkin )
-		//weaponModel.SetPoseParameter( "script0", 3 )
-		//weaponModel.Anim_Play( "kill_reactive_layer" )
+		
+		
 	}
 
 	weaponModel.Anim_SetPaused( true )
 
-	// tell the zoom logic that the model is fully initalized and ready to find a focal point
+	
 	file.cameraZoomModelInitialized = true
 
-	// scale the models, if needed
+	
 	float armoryScale = WeaponItemFlavor_GetArmoryScale( weaponFlavor )
 
 	if ( ShouldScaleWeaponAndCharmForPreview() )
@@ -3045,7 +3019,7 @@ void function UIToClient_PreviewWeaponSkin( int skinFlavorGUID, int charmFlavorG
 		ScaleWeaponSkinAndCharm( weaponModel, charmFlavor, armoryScale )
 	}
 
-	// zoom in if we just entered gun charm view
+	
 	bool shouldZoomIn = file.currentPresentationType == ePresentationType.WEAPON_CHARMS && !file.cameraZoomedToGunCharm
 
 	if( file.currentPresentationType != ePresentationType.WEAPON_CHARMS )
@@ -3053,7 +3027,7 @@ void function UIToClient_PreviewWeaponSkin( int skinFlavorGUID, int charmFlavorG
 		ModelData_SetBaseOrigin( file.customizeWeapon, origin )
 		weaponMover.SetOrigin( ModelData_GetBaseOrigin( file.customizeWeapon ) )
 	}
-	// zoom in or out
+	
 	bool shouldZoomOut = file.currentPresentationType == ePresentationType.WEAPON_SKIN && file.cameraZoomedToGunCharm
 
 	if ( shouldZoomIn || shouldZoomOut )
@@ -3069,7 +3043,7 @@ void function UIToClient_PreviewWeaponSkin( int skinFlavorGUID, int charmFlavorG
 		SetWeaponSkinLocalOffset( weaponModel, useCharmAttachment )
 	}
 
-	// outline/highlight the gun and charm
+	
 	if ( shouldHighlightWeapon )
 	{
 		vector flashColor = ItemFlavor_HasQuality( weaponSkin ) ? ItemFlavor_GetQualityColor( weaponSkin ) / 255 : MENU_MODELS_DEFAULT_HIGHLIGHT_COLOR / 255
@@ -3406,7 +3380,7 @@ void function UpdateStoreItemDisplay_Badge( ItemFlavor item )
 	ItemFlavor dummy
 	CreateNestedGladiatorCardBadge( rui, file.nestedRuiArgName, LocalClientEHI(), item, 0, dummy, 0 )
 	RuiSetBool( rui, "isVisible", true )
-	RuiSetBool( rui, "battlepass", true ) // this is used for some scanline animation effect, we'll use the BP version
+	RuiSetBool( rui, "battlepass", true ) 
 
 	file.topo = topo
 	file.rui = rui
@@ -3423,11 +3397,11 @@ void function UpdateStoreItemDisplay_Quip( ItemFlavor item )
 	vector placardAngles = AnglesCompose( angles, <0, 180, 0> )
 
 	const float ruiAspectRatio = 390.0 / 208.0
-	#if NX_PROG
-		const float ruiHeight = 25.422218 // 1.208791 times taller
-	#else
+
+
+
 		const float ruiHeight = 21.031111
-	#endif
+
 	const float ruiWidth = ruiHeight * ruiAspectRatio
 
 	const asset modelAsset  = $"mdl/menu/loot_ceremony_quip_bg.rmdl"
@@ -3466,7 +3440,7 @@ void function UpdateStoreItemDisplay_Quip( ItemFlavor item )
 	RuiSetString( rui, "quipTypeText", labelText )
 	RuiTrackFloat( rui, "level", null, RUI_TRACK_SOUND_METER, 0 )
 
-	// Play audio preview
+	
 	if ( audioAlias != "" )
 	{
 		file.storePlayingAudioAlias = audioAlias
@@ -3477,8 +3451,8 @@ void function UpdateStoreItemDisplay_Quip( ItemFlavor item )
 	file.rui = rui
 }
 
-// Holosprays as implemented aren't made to scale, so this is faked with modified positioning.
-// Normally this would also be an issue because this would place the item outside of it's lighting, but luckily lighting doesn't matter much for holosprays.
+
+
 void function UpdateStoreItemDisplay_Holospray( ItemFlavor item )
 {
 	Assert( ItemFlavor_GetType( item ) == eItemType.emote_icon )
@@ -3603,7 +3577,7 @@ void function UpdateStoreItemDisplay_StatTracker( ItemFlavor item )
 	var rui = RuiCreate( ruiAsset, topo, RUI_DRAW_WORLD, 0 )
 
 	ItemFlavor ornull character = GladiatorCardStatTracker_GetCharacterFlavor( item )
-	if ( character == null ) // item wasn't character specific
+	if ( character == null ) 
 		character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
 
 	expect ItemFlavor( character )
@@ -3651,7 +3625,7 @@ void function UpdateStoreItemDisplay_MusicPack( ItemFlavor item )
 	RuiSetString( rui, "quipTypeText", "#MUSIC_PACK" )
 	RuiTrackFloat( rui, "level", null, RUI_TRACK_SOUND_METER, 0 )
 
-	// Play audio preview
+	
 	string audioAlias = MusicPack_GetPreviewMusic( item )
 	if ( audioAlias != "" )
 	{
@@ -3680,7 +3654,7 @@ void function UpdateStoreItemDisplay_Loadscreen( ItemFlavor item )
 
 	UpdateModelsforStoreItem( origin, angles, angles, modelAsset, modelScale )
 
-	var topo = CreateRUITopology_Worldspace( origin + <0, -1, 0>, placardAngles, ruiWidth, ruiHeight ) // The origin offset is to push the model just behind the rui.
+	var topo = CreateRUITopology_Worldspace( origin + <0, -1, 0>, placardAngles, ruiWidth, ruiHeight ) 
 	var rui = RuiCreate( ruiAsset, topo, RUI_DRAW_WORLD, 0 )
 
 	RuiSetImage( rui, "loadscreenImage", $"" )
@@ -3710,7 +3684,7 @@ void function UpdateStoreItemDisplay_Image2D( ItemFlavor item )
 	const float ruiHeight = 50
 	const float ruiWidth = ruiHeight * ruiAspectRatio
 
-	var topo = CreateRUITopology_Worldspace( origin + <0, -1, 0>, placardAngles, ruiWidth, ruiHeight ) // The origin offset is to push the model just behind the rui.
+	var topo = CreateRUITopology_Worldspace( origin + <0, -1, 0>, placardAngles, ruiWidth, ruiHeight ) 
 	var rui = RuiCreate( ruiAsset, topo, RUI_DRAW_WORLD, 0 )
 
 	RuiSetImage( rui, "image2d", $"" )
@@ -3745,9 +3719,9 @@ void function UpdateStoreItemDisplay_BPStar( ItemFlavor item )
 	model.MakeSafeForUIScriptHack()
 	model.SetDoDestroyCallback( true )
 	entity mover = ModelData_GetMover( file.storeInspectModelData )
-	// Rotate mover around the y-axis
+	
 	mover.SetLocalAngles(<0, 90, 0>)
-	// Rotate model's starting position across the x-axis. Otherwise, the model's face will point directly upward.
+	
 	model.SetLocalAngles(<90, 0, 0>)
 }
 
@@ -3756,11 +3730,11 @@ void function UpdateStoreItemDisplay_BattlepassPresale( ItemFlavor item )
 	UISize screenSize = GetScreenSize()
 	Assert( ItemFlavor_GetType( item ) == eItemType.battlepass_presale_voucher )
 
-	// For 1920x1080 res, raise image 25 pixels. This ratio lets us scale accordingly for other resolutions.
+	
 	float heightOffset = 25 / 1080.0
-	// For 1920x1080 res, shift image 330 pixels right.
+	
 	float widthOffset = 330.0 / 1920.0
-	// Move image up and to the right slightly so it isn't covered by the button icons.
+	
 	vector origin = <screenSize.width * widthOffset, screenSize.height * heightOffset * -1, 0>
 
 	const asset ruiAsset = $"ui/world_space_image2d.rpak"
@@ -3773,7 +3747,7 @@ void function UpdateStoreItemDisplay_BattlepassPresale( ItemFlavor item )
 	file.topo = topo
 	file.rui = rui
 
-	// NOTE: Rui doesn't like const values. Do NOT set these values to const, otherwise Rui will ignore them completely.
+	
 	float baseImageScale = 0.7
 	float baseImageWidth = 1570.0
 	float baseImageHeight = 740.0
@@ -3792,11 +3766,11 @@ void function UpdateStoreItemDisplay_Battlepass( ItemFlavor item )
 	int safeWidth = int( ( screenSize.height / 9.0 ) * 16.0 )
 	int leftOverWidth = screenSize.width - safeWidth
 
-	// For 1920x1080 res, raise image 25 pixels. This ratio lets us scale accordingly for other resolutions.
+	
 	float heightOffset = 25 / 1080.0
-	// For 1920x1080 res, shift image 330 pixels right.
+	
 	float widthOffset = 330.0 / 1920.0
-	// Move image up and to the right slightly so it isn't covered by the button icons.
+	
 	vector origin = <(leftOverWidth / 2) + ( screenSize.width * widthOffset), screenSize.height * heightOffset * -1, 0>
 
 	const asset ruiAsset = $"ui/world_space_image2d.rpak"
@@ -3809,7 +3783,7 @@ void function UpdateStoreItemDisplay_Battlepass( ItemFlavor item )
 	file.topo = topo
 	file.rui = rui
 
-	// NOTE: Rui doesn't like const values. Do NOT set these values to const, otherwise Rui will ignore them completely.
+	
 	float baseImageScale = 0.7
 	float baseImageWidth = 1570.0
 	float baseImageHeight = 740.0
@@ -3849,11 +3823,11 @@ PakHandle function LoadItemInspectPakFile( ItemFlavor item )
 	Assert( ItemFlavor_GetType( item ) == eItemType.loadscreen )
 
 	string pakName = Loadscreen_GetRPakName( item )
-	if ( pakName in file.pakHandles ) // Already requested
+	if ( pakName in file.pakHandles ) 
 		return file.pakHandles[ pakName ]
 
-	//printt( "<><><> Loading:", pakName )
-	PakHandle pakHandle = RequestPakFile( pakName )
+	
+	PakHandle pakHandle = RequestPakFile( pakName, TRACK_FEATURE_UI )
 	file.pakHandles[ pakName ] <- pakHandle
 
 	return pakHandle
@@ -3871,7 +3845,7 @@ void function UIToClient_UnloadItemInspectPakFile()
 	{
 		if ( handle.isAvailable )
 		{
-			//printt( "<><><> Unloading:", pakName )
+			
 			ReleasePakFile( handle )
 		}
 	}
@@ -3916,13 +3890,13 @@ void function UpdateStoreItemDisplay_MeleeSkin( ItemFlavor item )
 
 	if ( isArtifact )
 	{
-		// blade: just blade; no theme & nullcap ps
-		// theme: blade & theme; nullcap ps
-		// ps: blade & theme & ps
+		
+		
+		
 
-		ItemFlavor bladeComponent = setItems[ eArtifactComponentType.BLADE ] // always blade
-		ItemFlavor themeComponent = isBlade ? emptySetItems[ eArtifactComponentType.THEME ] : setItems[ eArtifactComponentType.THEME ] // if blade, empty theme; otherwise - theme & ps - use set theme
-		ItemFlavor powerSourceComponent = isPowerSource ? setItems[ eArtifactComponentType.POWER_SOURCE ] :  emptySetItems[ eArtifactComponentType.POWER_SOURCE ] // if ps, all others must be owned; note "inversion" of logic order for theme
+		ItemFlavor bladeComponent = setItems[ eArtifactComponentType.BLADE ] 
+		ItemFlavor themeComponent = isBlade ? emptySetItems[ eArtifactComponentType.THEME ] : setItems[ eArtifactComponentType.THEME ] 
+		ItemFlavor powerSourceComponent = isPowerSource ? setItems[ eArtifactComponentType.POWER_SOURCE ] :  emptySetItems[ eArtifactComponentType.POWER_SOURCE ] 
 
 		Artifacts_Loadouts_ApplyModelForSet( model, setIndex )
 		Artifacts_Loadouts_PreviewBladeAndPowerSource( model, bladeComponent, powerSourceComponent )
@@ -4021,7 +3995,7 @@ void function UpdateStoreItemDisplay_Sticker( ItemFlavor item )
 	Sticker_OnPlaced( stickerInstance, Sticker_FlashOnLoadComplete )
 }
 
-                    
+
 void function UpdateStoreItemDisplay_ArtifactBink( ItemFlavor item )
 {
 	Assert( ItemFlavor_GetType( item ) == eItemType.artifact_component_deathbox || ItemFlavor_GetType( item ) == eItemType.artifact_component_activation_emote )
@@ -4064,7 +4038,7 @@ void function UpdateStoreItemDisplay_ArtifactBink( ItemFlavor item )
 	file.rui = rui
 	file.videoChannel = videoChannel
 }
-      
+
 
 
 void function UIToClient_PreviewStoreItem( SettingsAssetGUID itemFlavorGUID, bool isSingleItem = false )
@@ -4073,17 +4047,17 @@ void function UIToClient_PreviewStoreItem( SettingsAssetGUID itemFlavorGUID, boo
 
 	ItemFlavor item = GetItemFlavorByGUID( itemFlavorGUID )
 
-	ModelData_SetSkinFlavor( file.storeInspectModelData, item ) // Ugly hack!!! EnableLobbyMenuCameraZoom() depends on this
+	ModelData_SetSkinFlavor( file.storeInspectModelData, item ) 
 
 	bool autoRotate = file.desiredPresentationType == ePresentationType.STORE_INSPECT
 
-	#if DEVELOPER
+#if DEV
 		if ( InputIsButtonDown( KEY_LSHIFT ) )
 		{
 			string locedName = Localize( ItemFlavor_GetLongName( item ) )
 			printt( "\"" + locedName + "\" grx ref is: " + GetGlobalSettingsString( ItemFlavor_GetAsset( item ), "grxRef" ) )
 		}
-	#endif // DEV
+#endif
 
 	switch ( ItemFlavor_GetType( item ) )
 	{
@@ -4102,7 +4076,7 @@ void function UIToClient_PreviewStoreItem( SettingsAssetGUID itemFlavorGUID, boo
 		case eItemType.weapon_skin:
 			asset video = WeaponSkin_GetVideo( item )
 			if ( video != $"" )
-				UpdateStoreItemDisplay_WeaponVideo( item ) // Justin Doan - Showing bink video of reactive waepon fx, this will be removed when we can show reactive fx with the 3d model
+				UpdateStoreItemDisplay_WeaponVideo( item ) 
 			else
 				UpdateStoreItemDisplay_WeaponSkin( item )
 			break
@@ -4255,10 +4229,10 @@ void function UIToClient_PreviewStoreItem( SettingsAssetGUID itemFlavorGUID, boo
 			mover.NonPhysicsRotate( <0, 0, -1>, STORE_ITEM_ROTATE_SPEED )
 	}
 
-	// tell the zoom logic that the model is fully initalized and ready to find a focal point
+	
 	file.cameraZoomModelInitialized = true
 
-	// Need this for DEV_TweakStoreInspectCamera to work. Very useful for debugging position on the scene.
+	
 	file.storeInspectCameraTarget = file.cameraTargets[eCameraTargetNames.store_inspect_camera_target]
 
 	TransitionStoreBackgroundColors( item )
@@ -4273,7 +4247,7 @@ void function UIToClient_PreviewMeleeSkin( SettingsAssetGUID itemFlavorGUID )
 
 	ItemFlavor item = GetItemFlavorByGUID( itemFlavorGUID )
 
-	ModelData_SetSkinFlavor( file.meleeInspectModelData, item ) // Ugly hack!!! EnableLobbyMenuCameraZoom() depends on this
+	ModelData_SetSkinFlavor( file.meleeInspectModelData, item ) 
 
 	UpdateMeleeInspectDisplay( item )
 
@@ -4284,7 +4258,7 @@ void function UIToClient_PreviewMeleeSkin( SettingsAssetGUID itemFlavorGUID )
 	if ( IsValid( mover ) )
 		mover.NonPhysicsRotate( <0, 0, -1>, STORE_ITEM_ROTATE_SPEED )
 
-	// tell the zoom logic that the model is fully initalized and ready to find a focal point
+	
 	file.cameraZoomModelInitialized = true
 
 	thread EnableLobbyMenuCameraZoom()
@@ -4295,44 +4269,44 @@ void function UIToClient_ClearMeleeSkinPreview()
 	ClearMeleeInspectItem()
 }
 
-// UIToClient_OverviewWeapon is invoked from UI and run on the Client, and it sets the weapon that should be shown in 
-// the WEAPON_OVERVIEW state.  If you are not currently in the WEAPON_OVERVIEW state, we still store the weapon
-// you selected, but we won't show it yet.  This is a step towards having the visuals driven more by state, rather
-// than being set directly be UIToClient functions 
+
+
+
+
 void function UIToClient_OverviewWeapon( SettingsAssetGUID itemFlavorGUID )
 {
 	ItemFlavor item = GetItemFlavorByGUID( itemFlavorGUID )
 	ModelData_SetSkinFlavor( file.weaponOverviewModelData, item )
-	// by storing the skin flavor, we are able to recreate the model at will, e.g. when we refresh the state
-	// also, apparently "EnableLobbyMenuCameraZoom() depends on this"
+	
+	
 	if (file.currentPresentationType == ePresentationType.WEAPON_OVERVIEW)
 		ShowWeaponOverviewItem()
 }
 
-// ShowWeaponOverviewItem will be called when we enter the WEAPON_OVERVIEW state, or are already in the WEAPON_OVERVIEW
-// state and the current weapon to show gets updated
+
+
 void function ShowWeaponOverviewItem() 
 {
 	ClearStoreInspectItem()
 	ItemFlavor item = ModelData_GetSkinFlavor( file.weaponOverviewModelData)
 
-	#if DEVELOPER
+#if DEV
 		if ( InputIsButtonDown( KEY_LSHIFT ) )
 		{
 			string locedName = Localize( ItemFlavor_GetLongName( item ) )
 			printt( "\"" + locedName + "\" grx ref is: " + GetGlobalSettingsString( ItemFlavor_GetAsset( item ), "grxRef" ) )
 		}
-	#endif // DEV
+#endif
 
 	UpdateWeaponOverviewDisplay_WeaponSkin( item )
 
 	ModelData_ResetRotation( file.weaponOverviewModelData )
 	ModelData_SetBaseRotationDelta( file.weaponOverviewModelData, STORE_ITEM_BASE_ROTATION_DELTA )
 
-	// tell the zoom logic that the model is fully initalized and ready to find a focal point
+	
 	file.cameraZoomModelInitialized = true
 
-	// Need this for DEV_TweakStoreInspectCamera to work. Very useful for debugging position on the scene.
+	
 	file.weaponOverviewCameraTarget = file.cameraTargets[eCameraTargetNames.weapon_mastery_inspect_camera_target]
 
 	TransitionWeaponOverviewBackgroundColors( item )
@@ -4363,7 +4337,7 @@ void function ClearWeaponOverviewItem()
 		mover.SetAngles( ModelData_GetBaseAngles( file.weaponOverviewModelData ) )
 	}
 
-	// Clear banner card frames and poses
+	
 	CleanupNestedGladiatorCard( file.bannerHandle )
 
 	if ( file.nestedRuiArgName != "" )
@@ -4419,7 +4393,7 @@ void function ClearStoreInspectItem()
 		mover.SetAngles( ModelData_GetBaseAngles( file.storeInspectModelData ) )
 	}
 
-	// Clear banner card frames and poses
+	
 	CleanupNestedGladiatorCard( file.bannerHandle )
 
 	if ( file.nestedRuiArgName != "" )
@@ -4508,14 +4482,14 @@ bool function ShouldScaleWeaponAndCharmForPreview()
 
 	if ( file.currentPresentationType == ePresentationType.WEAPON_CHARMS )
 	{
-		// Only scale if we're the first gun skin to initiate the zoom in.
-		// This keeps visual pops to a minimum when later switching guns in the zoomed in view.
+		
+		
 		if ( !file.cameraZoomedToGunCharm )
 			shouldScale = true
 	}
 	else
 	{
-		// if we're just in the weapon skin view or leaving the charms view then let's scale the weapons as normal
+		
 		if ( !file.cameraZoomedToGunCharm )
 			shouldScale = true
 	}
@@ -4548,7 +4522,7 @@ void function ZoomInCameraToWeaponCharm( entity model, entity mover, float armor
 
 	file.cameraZoomedToGunCharm = true
 
-	// get camera target destination
+	
 	entity cameraTarget        = file.cameraTargets[ eCameraTargetNames.customize_weapon_camera_target ]
 	vector cameraCurrentPos    = cameraTarget.GetOrigin()
 	vector cameraCurrentAngles = cameraTarget.GetAngles()
@@ -4563,9 +4537,9 @@ void function ZoomInCameraToWeaponCharm( entity model, entity mover, float armor
 		attachID = model.LookupAttachment( "CHARM" )
 
 	vector charmOrigin = model.GetAttachmentOrigin( attachID )
-	float multiplier   = GraphCapped( armoryScale, 0.5, 2.0, 0.5, 1.8 ) // scale the amount of zoom by the weapon's (remapped/graph capped) scale
+	float multiplier   = GraphCapped( armoryScale, 0.5, 2.0, 0.5, 1.8 ) 
 
-	// move the gun's mover/pivot to the charm attachment position
+	
 	model.ClearParent()
 	mover.SetOrigin( charmOrigin )
 	model.SetParent( mover )
@@ -4573,7 +4547,7 @@ void function ZoomInCameraToWeaponCharm( entity model, entity mover, float armor
 	file.charmVerticalOffset = GraphCapped( armoryScale, 0.5, 2.0, 0.35, 1.5 )
 	SetWeaponSkinLocalOffset( model, true )
 
-	// move/zoom the camera target to the charm
+	
 	file.cameraZoomData.mover.SetOrigin( cameraTarget.GetOrigin() )
 	cameraTarget.SetParent( file.cameraZoomData.mover )
 
@@ -4590,15 +4564,15 @@ void function ZoomOutCameraToWeaponSkin( entity model, ItemFlavor charmFlavor, e
 
 	file.cameraZoomedToGunCharm = false
 
-	// in case the camera mover was mid-zoom...
+	
 	file.cameraZoomData.mover.NonPhysicsStop()
 
-	// get camera target original start origin
+	
 	int cameraTargetIndex    = eCameraTargetNames.customize_weapon_camera_target
 	entity cameraTarget      = file.cameraTargets[ cameraTargetIndex ]
 	vector cameraStartOrigin = file.cameraStartOriginsAngles[ cameraTargetIndex ]["origin"]
 
-	// reset the gun's pivot/mover to the 'MENU_ROTATE' attachment location, which is what the weapon skins panel uses
+	
 	string attachmentName = "MENU_ROTATE"
 	int attachID          = model.LookupAttachment( attachmentName )
 	vector attachOrigin   = model.GetAttachmentOrigin( attachID )
@@ -4606,7 +4580,7 @@ void function ZoomOutCameraToWeaponSkin( entity model, ItemFlavor charmFlavor, e
 	mover.SetOrigin( attachOrigin )
 	model.SetParent( mover )
 
-	// stop all movers when the thread ends, in case someone zooms back in midway through zoom out
+	
 	OnThreadEnd(
 		function () : ( cameraTarget, mover )
 		{
@@ -4618,15 +4592,15 @@ void function ZoomOutCameraToWeaponSkin( entity model, ItemFlavor charmFlavor, e
 		}
 	)
 
-	// zoom out the camera
+	
 	file.cameraZoomData.mover.NonPhysicsMoveTo( cameraStartOrigin, CHARM_CAMERA_ZOOM_DURATION, 0.0, CHARM_CAMERA_ZOOM_DURATION * 0.25 )
 
-	// because the mover went from the 'CHARM' location to the 'MENU_ROTATE' location, with god knows what weapon scale, we need to move it back to its starting location
+	
 	mover.NonPhysicsMoveTo( ModelData_GetBaseOrigin( file.customizeWeapon ), CHARM_CAMERA_ZOOM_DURATION, 0.0, CHARM_CAMERA_ZOOM_DURATION * 0.25 )
 
-	// zoomed in weapons have the scale of the first weapon skin that initiated the zoom, to prevent large visual pops when zoomed in.
-	// this means we have to get the weapon back into it's original scale, and lerping is the best way.
-	// note that if someone was fast enough to cycle to another weapon mid-zoom out, the scale lerp is cut short and the new scale is immediately applied
+	
+	
+	
 	thread LerpWeaponSkinScale( model, charmFlavor, model.GetModelScale(), armoryScale, mover, ModelData_GetBaseOrigin( file.customizeWeapon ), CHARM_CAMERA_ZOOM_DURATION )
 
 	wait CHARM_CAMERA_ZOOM_DURATION
@@ -4638,12 +4612,12 @@ void function LerpWeaponSkinScale( entity weaponModel, ItemFlavor charmFlavor, f
 	EndSignal( level, "EndGunCharmCameraZoom" )
 	EndSignal( level, "EndGunCharmScaleLerp" )
 
-	// since client frames fluctuate, use the progress of the weapon mover to set the amount of lerp
+	
 	float startTime     = Time()
 	float totalDistance = DistanceSqr( mover.GetOrigin(), moverEnd )
 	float scaleOffset   = end - start
 
-	// merely setting the scale doesn't work. You need to reapply the local offset so it matches up to the weapon_skin panel weapon position
+	
 	while( startTime + duration > Time() )
 	{
 		float multiplier = Graph( DistanceSqr( mover.GetOrigin(), moverEnd ), totalDistance, 0.0, 0.0, 1.0 )
@@ -4655,7 +4629,7 @@ void function LerpWeaponSkinScale( entity weaponModel, ItemFlavor charmFlavor, f
 		WaitFrame()
 	}
 
-	// set the scale at the end just to be sure
+	
 	ScaleWeaponSkinAndCharm( weaponModel, charmFlavor, end )
 	SetWeaponSkinLocalOffset( weaponModel, false )
 }
@@ -4684,7 +4658,7 @@ void function EndPresentation_QUEST_GOAL()
 	if ( IsValid( subModel ) )
 		subModel.Hide()
 
-	//CameraZoomThreadEnd()
+	
 }
 
 void function SetBodyGroupsForQuestModel( ItemFlavor quest, entity model, int piecesToShowMask )
@@ -4727,7 +4701,7 @@ void function UIToClient_QuestGoalPresentation( SettingsAssetGUID questItemFlavG
 
 	asset questModelAsset = SeasonQuest_GetGoalModel( quest )
 
-	// Model:
+	
 	{
 		entity model = ModelData_GetModel( modelData )
 		model.SetModel( questModelAsset )
@@ -4735,7 +4709,7 @@ void function UIToClient_QuestGoalPresentation( SettingsAssetGUID questItemFlavG
 		int mask = ((1 << missionsDone) - 1)
 		SetBodyGroupsForQuestModel( quest, model, mask )
 	}
-	// Submodel:
+	
 	{
 		entity subModel = ModelData_GetSubModel( modelData )
 		subModel.SetModel( questModelAsset )
@@ -4746,44 +4720,44 @@ void function UIToClient_QuestGoalPresentation( SettingsAssetGUID questItemFlavG
 	entity mover = ModelData_GetMover( modelData )
 	mover.SetOrigin( sceneRef.GetOrigin() + offset )
 
-	// internal threaded function for zoom functionality, not that we should use it but just in case I don't want to redo the work I already did.
-	/*
-		thread function() : ( model )
-		{
-			const float MAX_ZOOM_DISTANCE = 72.0 // test and see
+	
+	
 
-			EndSignal( level, "EndCameraZoom" )
 
-			vector focalPoint = model.GetWorldSpaceCenter() //might need to be better
-			int cameraTargetIndex = eCameraTargetNames.battlepass_3_camera_target
 
-			entity cameraTarget      = file.cameraTargets[ cameraTargetIndex ]
-			vector cameraStartOrigin = file.cameraStartOriginsAngles[ cameraTargetIndex ]["origin"]
-			vector cameraStartAngles = file.cameraStartOriginsAngles[ cameraTargetIndex ]["angles"]
 
-			file.cameraZoomData.mover.SetOrigin( cameraStartOrigin )
-			file.cameraZoomData.mover.SetAngles( cameraStartAngles )
-			cameraTarget.SetParent( file.cameraZoomData.mover )
 
-			vector normVec = Normalize( focalPoint - cameraStartOrigin )
-			file.cameraZoomData.startPos = cameraStartOrigin
-			file.cameraZoomData.endPos = file.cameraZoomData.startPos + (normVec * MAX_ZOOM_DISTANCE)
-			file.cameraZoomData.maxDist = MAX_ZOOM_DISTANCE
-			file.cameraZoomData.normVec = normVec
 
-			OnThreadEnd(
-				function () : ( cameraTarget, cameraStartOrigin, cameraStartAngles )
-				{
-					cameraTarget.ClearParent()
-					cameraTarget.SetOrigin( cameraStartOrigin )
-					cameraTarget.SetAngles( cameraStartAngles )
-					file.cameraZoomModelInitialized = false
-				}
-			)
 
-			waitthread CameraZoomThread( file.cameraZoomData )
-		}()
-	*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 void function UIToClient_QuestGoalPresentationUpdateHighlight( SettingsAssetGUID questItemFlavGUID, int missionsDone, int highlightIndex, bool doSpecial )
@@ -4959,7 +4933,7 @@ void function ModelData_SetAnim( MenuModelData modelData, string anim )
 	ModelData_GetModel( modelData ).Anim_Play( anim )
 }
 
-#if DEVELOPER
+#if DEV
 void function DEV_PlayLobbyIdle( string anim = "" )
 {
 	if ( file.currentPresentationType == ePresentationType.PLAY )
@@ -5001,7 +4975,7 @@ vector function GetAttachmentOriginOffset( entity ent, string attachName, vector
 void function ClearAllCharacterPreview( entity player )
 {
 	clGlobal.previewMenuPilotModels.characterSkin = null
-	//clGlobal.previewMenuPilotModels.idleAnim = ""
+	
 	UpdateCharacterModelDisplay( file.playCharacter, false )
 	UpdateCharacterModelDisplay( file.customizeCharacter, false )
 }
@@ -5035,7 +5009,7 @@ void function SetPresentationTypeThread( entity player, int desiredPresentationT
 
 	if ( GetCurrentPlaylistVarBool( "workaround_r5dev_68883_2019_02_04", true ) )
 	{
-		// (dw): hopefully this fixes R5DEV-68883
+		
 		player = GetLocalClientPlayer()
 		Assert( IsValid( player ) )
 		if ( IsValid( player ) )
@@ -5082,7 +5056,7 @@ void function SetPresentationTypeThread( entity player, int desiredPresentationT
 		entity model = ModelData_GetModel( modelData )
 		if ( IsValid( model ) )
 		{
-			// Stop the seq now so it doesn't play any more sound events:
+			
 			model.Anim_Stop()
 			StopAllSoundsOnEntity( model )
 		}
@@ -5114,7 +5088,7 @@ void function SetMenuCamera( entity player, int presentationType, bool interpola
 	int cameraTargetName = file.presentationData[ presentationType ].cameraTargetName
 	entity cameraTarget  = file.cameraTargets[ cameraTargetName ]
 
-	// Temporary workaround. Disallow offsetting for the WEAPON_SKIN and WEAPON_CHARMS screens since they are more heavily scripted
+	
 	if ( presentationType != ePresentationType.WEAPON_SKIN && presentationType != ePresentationType.WEAPON_CHARMS )
 	{
 		cameraTarget.SetOrigin( file.cameraStartOriginsAngles[ cameraTargetName ]["origin"] + file.presentationData[ presentationType ].positionOffset )
@@ -5124,19 +5098,19 @@ void function SetMenuCamera( entity player, int presentationType, bool interpola
 	clGlobal.menuCamera.SetTarget( cameraTarget, fov, interpolate, EASING_CUBIC_INOUT, TRANSITION_DURATION )
 	file.currentCameraTarget = cameraTarget
 
-	//EASING_LINEAR
-	//EASING_SINE_IN
-	//EASING_SINE_OUT
-	//EASING_SINE_INOUT
-	//EASING_CIRC_IN
-	//EASING_CIRC_OUT
-	//EASING_CIRC_INOUT
-	//EASING_CUBIC_IN
-	//EASING_CUBIC_OUT
-	//EASING_CUBIC_INOUT
-	//EASING_BACK_IN
-	//EASING_BACK_OUT
-	//EASING_BACK_INOUT
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 	if ( interpolate )
 		printt( "Interpolating menu camera to:", GetEnumString( "ePresentationType", presentationType ) )
@@ -5145,18 +5119,18 @@ void function SetMenuCamera( entity player, int presentationType, bool interpola
 
 	ApplyDOF( presentationType, interpolate )
 
-	#if CONSOLE_PROG
-		const float texelNorm = 2.0
-	#else
+
+
+
 		const float texelNorm = 1.0
-	#endif
+
 
 	float csmTexelScale1   = file.presentationData[ presentationType ].csmTexelScale1 * texelNorm
 	float csmTexelScale2   = file.presentationData[ presentationType ].csmTexelScale2 * texelNorm
 	float csmStartDistance = file.presentationData[ presentationType ].csmStartDistance
 
-	// Tweaks in order to maximize the shadow space usage for the pilot and/or the titan.
-	// Used the convar csm_debug_2d to find the best values on PC.
+	
+	
 	SetMapSetting_CsmTexelScale( csmTexelScale1, csmTexelScale2 )
 	SetMapSetting_CsmStartDistance( csmStartDistance )
 }
@@ -5179,7 +5153,7 @@ void function ApplyDOF( int presentationType, bool interpolate = false )
 		DoF_SetFarDepth( farStart, farEnd )
 	}
 
-	DoFSetDilateInfocus( true ) // We want to reduce DoF aliasing around bright edges in the menus.
+	DoFSetDilateInfocus( true ) 
 }
 
 void function ModelRotationThread()
@@ -5331,7 +5305,7 @@ void function ShouldPauseMenuMouseWheelValues( bool shouldPause )
 	file.mouseWheelPauseInput = shouldPause
 }
 
-#if DEVELOPER
+#if DEV
 void function DEV_SetPresentationDataFromString( string presentationName, string presentationDataString )
 {
 	if ( presentationName.len() <= 6 || presentationName.slice(0, 6) != "LOBBY_" )
@@ -5339,7 +5313,7 @@ void function DEV_SetPresentationDataFromString( string presentationName, string
 
 	int presentationIdx = -1
 	presentationName = presentationName.slice( 6 )
-		
+
 	foreach ( string presentationType, int eNumIdx in ePresentationType )
 	{
 		if ( presentationName == presentationType )
@@ -5357,7 +5331,7 @@ void function DEV_SetPresentationDataFromString( string presentationName, string
 	int endIndex = presentationDataString.find( "," )
 
 	string targetEntName = presentationDataString.slice( startIndex, endIndex )
-		
+
 	foreach ( string scriptName, int eNumIdx in eCameraTargetNames )
 	{
 		if ( targetEntName == scriptName )
@@ -5367,9 +5341,9 @@ void function DEV_SetPresentationDataFromString( string presentationName, string
 		}
 	}
 
-	startIndex = endIndex + 2 // +2 to skip the leading '"'
+	startIndex = endIndex + 2 
 	endIndex = presentationDataString.find( ",", startIndex )
-	
+
 	float vecValX = 0
 	float vecValY = 0
 	float vecValZ = 0
@@ -5380,7 +5354,7 @@ void function DEV_SetPresentationDataFromString( string presentationName, string
 	startIndex = endIndex + 1
 	endIndex = presentationDataString.find( "\"", startIndex )
 	vecValZ = presentationDataString.slice( startIndex, endIndex ).tofloat()
-	startIndex = endIndex + 3 // +3 to skip '","'
+	startIndex = endIndex + 3 
 	endIndex = presentationDataString.find( ",", startIndex )
 	pd.positionOffset = <vecValX, vecValY, vecValZ>
 
@@ -5391,18 +5365,18 @@ void function DEV_SetPresentationDataFromString( string presentationName, string
 	startIndex = endIndex + 1
 	endIndex = presentationDataString.find( "\"", startIndex )
 	vecValZ = presentationDataString.slice( startIndex, endIndex ).tofloat()
-	startIndex = endIndex + 2 // +2 to skip the trailing '"'
+	startIndex = endIndex + 2 
 	endIndex = presentationDataString.find( ",", startIndex )
 	pd.angleOffset = <vecValX, vecValY, vecValZ>
-	
+
 	pd.maxYawDegrees = presentationDataString.slice( startIndex, endIndex ).tofloat()
 	startIndex = endIndex + 1
 	endIndex = presentationDataString.find( ",", startIndex )
-	
+
 	pd.maxPitchDegrees = presentationDataString.slice( startIndex, endIndex ).tofloat()
 	startIndex = endIndex + 1
 	endIndex = presentationDataString.find( ",", startIndex )
-	
+
 	pd.useCharacterOffsets = presentationDataString.slice( startIndex, endIndex ) != "0"
 	startIndex = endIndex + 1
 	endIndex = presentationDataString.find( ",", startIndex )
@@ -5410,38 +5384,38 @@ void function DEV_SetPresentationDataFromString( string presentationName, string
 	pd.fov = presentationDataString.slice( startIndex, endIndex ).tofloat()
 	startIndex = endIndex + 1
 	endIndex = presentationDataString.find( ",", startIndex )
-	
+
 	pd.dofNearStart = presentationDataString.slice( startIndex, endIndex ).tofloat()
 	startIndex = endIndex + 1
 	endIndex = presentationDataString.find( ",", startIndex )
-	
+
 	pd.dofNearEnd = presentationDataString.slice( startIndex, endIndex ).tofloat()
 	startIndex = endIndex + 1
 	endIndex = presentationDataString.find( ",", startIndex )
-	
+
 	pd.dofFarStart = presentationDataString.slice( startIndex, endIndex ).tofloat()
 	startIndex = endIndex + 1
 	endIndex = presentationDataString.find( ",", startIndex )
-	
+
 	pd.dofFarEnd = presentationDataString.slice( startIndex, endIndex ).tofloat()
 	startIndex = endIndex + 1
 	endIndex = presentationDataString.find( ",", startIndex )
-	
+
 	pd.csmTexelScale1 = presentationDataString.slice( startIndex, endIndex ).tofloat()
 	startIndex = endIndex + 1
 	endIndex = presentationDataString.find( ",", startIndex )
-	
+
 	pd.csmTexelScale2 = presentationDataString.slice( startIndex, endIndex ).tofloat()
 	startIndex = endIndex + 1
 	endIndex = presentationDataString.find( ",", startIndex )
-	
+
 	pd.csmStartDistance = presentationDataString.slice( startIndex, endIndex ).tofloat()
 	startIndex = endIndex + 1
 	endIndex = presentationDataString.find( ",", startIndex )
-	
+
 
 	string associatedLightsName = presentationDataString.slice( startIndex, endIndex )
-	
+
 	if ( associatedLightsName != "" )
 	{
 		pd.lights = GetEntArrayByScriptName( associatedLightsName )
@@ -5557,136 +5531,136 @@ void function DEV_TweakCharacterOffset( string character, vector offset )
 	file.DEV_characterOffsetCharacter = character
 	file.DEV_characterOffset = offset
 }
-#endif // DEV
-#endif // CLIENT
-
-#if UI
-void function RunMenuClientFunction( string func, var arg1 = null, var arg2 = null, var arg3 = null )
-{
-	if ( !CanRunClientScript() )
-		return
-
-	if ( arg1 == null )
-		RunClientScript( func, GetLocalClientPlayer() )
-	else if ( arg2 == null )
-		RunClientScript( func, GetLocalClientPlayer(), arg1 )
-	else if ( arg3 == null )
-		RunClientScript( func, GetLocalClientPlayer(), arg1, arg2 )
-	else
-		RunClientScript( func, GetLocalClientPlayer(), arg1, arg2, arg3 )
-}
-
-void function UI_SetPresentationType( int newPresentationType, bool interpolate = false )
-{
-	if ( !IsFullyConnected() )
-		return
-
-	RunClientScript( "SetPresentationType", GetLocalClientPlayer(), newPresentationType, interpolate )
-
-	file.activePresentationType = newPresentationType
-
-	if ( newPresentationType == ePresentationType.PLAY )
-		RunClientScript( "UpdateMenuWithPartyMembers" )
-}
-
-int function UI_GetPresentationType()
-{
-	return file.activePresentationType
-}
-
-void function UICodeCallback_MouseMovementCapture( var capturePanel, int deltaX, int deltaY )
-{
-	float screenScaleXModifier = 1920.0 / GetScreenSize().width // 1920 is base screen width
-	float mouseXRotateDelta    = deltaX * screenScaleXModifier * MOUSE_ROTATE_SPEED
-	//printt( "deltaX:", deltaX, "screenScaleXModifier:", screenScaleXModifier, "mouseXRotateDelta:", mouseXRotateDelta )
-
-	float screenScaleYModifier = 1080.0 / GetScreenSize().height // 1920 is base screen width
-	float mouseYRotationDelta  = deltaY * screenScaleYModifier * MOUSE_ROTATE_SPEED
-
-	RunMenuClientFunction( "UpdateMouseRotateDelta", mouseXRotateDelta, mouseYRotationDelta )
-}
-
-void function TrackIsOverScrollBar( var listPanel )
-{
-	EndSignal( uiGlobal.signalDummy, "TrackIsOverScrollBar" )
-
-	var scrollPanel      = Hud_GetChild( listPanel, "ScrollPanel" )
-	bool rotationEnabled = true
-
-	while ( true )
-	{
-		var focus       = GetFocus()
-		var focusParent = focus == null ? null : Hud_GetParent( focus )
-		bool isOverList = focus == listPanel || focusParent == listPanel || focusParent == scrollPanel
-
-		if ( rotationEnabled && isOverList )
-		{
-			rotationEnabled = false
-			RunClientScript( "DisableModelTurn" )
-		}
-		else if ( !rotationEnabled && !isOverList )
-		{
-			rotationEnabled = true
-			RunClientScript( "EnableModelTurn" )
-		}
-
-		WaitFrame()
-	}
-}
-#endif // UI
-
-
-
-
-////
-//// PROTO - BEWARE OF DRAGONS
-////
-
-#if CLIENT
-string PROTO_localClientUid
 #endif
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+string PROTO_localClientUid
+
+
+
 string function PROTO_GetLocalClientUIDFromUIVM()
 {
 	try
 	{
-		// (dw): UI script reload failures often cause this line to error, which is annoying.
+		
 		RunUIScript( "ClientToUI_PROTO_UpdateClientWithLocalClientUID" )
 	}
 	catch ( e ) {}
 	return PROTO_localClientUid
 }
-#endif
 
 
-#if UI
-void function ClientToUI_PROTO_UpdateClientWithLocalClientUID()
-{
-	RunClientScript( "UIToClient_PROTO_UpdateClientWithLocalClientUID", GetPlayerUID() )
-}
-#endif
 
 
-#if CLIENT
+
+
+
+
+
+
+
+
 void function UIToClient_PROTO_UpdateClientWithLocalClientUID( string localClientUid )
 {
 	PROTO_localClientUid = localClientUid
 }
-#endif
 
 
-#if CLIENT
+
+
 void function FlashMenuModel( entity model, int flashType, vector flashColor, bool includeChildren = true, bool depthDiscard = false )
 {
 	if ( !IsValid( model ) )
 		return
 
-	// WaitForOdlModelLoad( model, true )
+	
 
-	WaitFrame() // todo(dw): aaaaahhh
+	WaitFrame() 
 
-	// wait for the model to be loaded. This should only matter for charm entities.
+	
 	while ( true )
 	{
 		if ( !IsValid( model ) )
@@ -5715,7 +5689,7 @@ void function FlashMenuModel( entity model, int flashType, vector flashColor, bo
 
 	if ( includeChildren )
 	{
-		WaitFrame() // todo(dw): aaaaahhh
+		WaitFrame() 
 
 		if ( !IsValid( model ) )
 			return
@@ -5758,7 +5732,7 @@ void function MenuModelHighlightClear( entity model )
 
 void function InitLightingConfigs()
 {
-	// IMPORTANT! Add 90 to the Y value when copying angles from LevelEd lights
+	
 
 	array<LightDef> closeCharacterLightDefs
 	{
@@ -5963,17 +5937,17 @@ void function ApplyLightingConfigThread( string name )
 	Signal( file.signalDummy, "ApplyLightingConfig" )
 	EndSignal( file.signalDummy, "ApplyLightingConfig" )
 
-	while ( !file.initializedMenuModels ) // Handle early calls that UI script can trigger before client is ready
+	while ( !file.initializedMenuModels ) 
 		WaitFrame()
 
 	foreach ( index, light in file.presentationData[ file.currentPresentationType ].lights )
 	{
-		//printt( "Updating light index:", index, "for:", GetEnumString( "ePresentationType", file.currentPresentationType ) )
+		
 
 		LightDef lightDef = file.lightingConfigs[name][index]
-		#if DEVELOPER
-			//DrawLightDebug( lightDef.origin, lightDef.angles, lightDef.color, lightDef.distance )
-		#endif // DEV
+#if DEV
+			
+#endif
 
 		light.SetTweakLightOrigin( lightDef.origin )
 		light.SetTweakLightAngles( lightDef.angles )
@@ -5991,79 +5965,79 @@ void function ApplyLightingConfigThread( string name )
 	}
 }
 
-                 
-                                     
- 
-                                                                           
-  
-                                                                     
 
-                                                        
-                                                           
 
-                                                    
-     
-                                                                                                                                                 
-                                                                                                
-     
 
-                                                  
 
-                                       
-   
-                                                
-    
-                                                                                                                                            
-                                                                                                    
-    
-   
-  
- 
-                       
 
-#if DEVELOPER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if DEV
 void function DrawLightDebug( vector origin, vector angles, vector color, float dist )
 {
 	vector endOrigin = origin + AnglesToForward( angles ) * dist
 
-	DebugDrawLine( origin, endOrigin, (color.x * 255).tointeger(), (color.y * 255).tointeger(), (color.z * 255).tointeger(), true, 999999 )
-}
-#endif // DEV
-#endif // CLIENT
-
-
-#if UI
-void function OnMouseWheelDown( var unused )
-{
-	foreach ( void functionref() cb in file.mouseWheelDownCallbacks )
-		cb()
-
-	if ( CanRunClientScript() )
-		RunClientScript( "ShMenuModels_ClientToUI_OnMouseWheel", true )
-}
-
-
-void function OnMouseWheelUp( var unused )
-{
-	foreach ( void functionref() cb in file.mouseWheelUpCallbacks )
-		cb()
-
-	if ( CanRunClientScript() )
-		RunClientScript( "ShMenuModels_ClientToUI_OnMouseWheel", false )
+	DebugDrawArrow( origin, endOrigin, 4, (color * 255), true, 999999 )
 }
 #endif
 
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function ShMenuModels_ClientToUI_OnMouseWheel( bool isDown )
 {
 	foreach ( void functionref() cb in (isDown ? file.mouseWheelDownCallbacks : file.mouseWheelUpCallbacks) )
 		cb()
 }
-#endif
 
 
-#if CLIENT || UI
+
+
 void function AddCallback_OnMouseWheelDown( void functionref() cb )
 {
 	Assert( !file.mouseWheelDownCallbacks.contains( cb ) )
@@ -6094,18 +6068,19 @@ bool function IsCallbackRegistered_OnMouseWheelDown( void functionref() cb )
 {
 	return file.mouseWheelDownCallbacks.contains( cb )
 }
-#endif // CLIENT || UI
 
-#if CLIENT
+
+
 entity function Menu_GetCameraTarget()
 {
 	return file.currentCameraTarget
 }
-#endif
 
-#if CLIENT
+
+
 void function UICallback_MenuModels_UIScriptHasReset()
 {
 	file.uiscriptHasReset = true
 }
-#endif
+
+ 

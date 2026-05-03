@@ -16,77 +16,77 @@ global function Crafting_DoesPlayerOwnItem
 
 global function Crafting_IsPingMapIconEnabled
 
-#if SERVER
-global function Crafting_GetDisabledGroundLoot
-global function Crafting_GetDisabledPoolLoot
-global function Crafting_IsLootRemovedFromGround
-global function Crafting_IsLootRemovedFromPool
-global function Crafting_AddExclusiveLoot
-global function Crafting_GetPreviousAirdropLocations
-
-global function Crafting_GetCraftingItemsByCategoryName
-
-global function AirdropWorkbench_Thread
-global function Crafting_GetAllWorkbenchClusters
-global function Crafting_WorkbenchAirdropLogicForRound_Thread
-global function Crafting_GetAllHarvesters
-
-global function Crafting_ClearUseLinksForAllHarvesters
-
-global function Crafting_OnNPCKill
-global function Crafting_RewardOnWildlifeCampComplete
-
-global function Crafting_AddMaterialsToPlayer
-global function AddCallback_OnCraftingMaterialsGranted
-
-global function Crafting_RemoveMaterialsFromPlayer
-global function Crafting_GetUseStatusForWorkbench
-global function Crafting_OnPlayerConnectionChanged
-global function Crafting_AirdropWorkbenchAtPlayer
-global function Crafting_CloseCraftingMenu
-
-global function ClientCallback_InitializeCraftingAtWorkbench
-global function ClientCallback_ClosedCraftingMenu
-
-
-global function Crafting_PingNearestWorkbench
-
-
-global function Dispensers_PingNearestDispenser
-
-global function ClientCallback_Crafting_Notify_Teammates_On_Obit
-
-#if DEVELOPER
-global function Crafting_ShowCraftingLocations
-global function RemoveLimitedStockFromWorkbenchAtIndex
-global function DEV_PlayerUseRandomHarvester
-global function DEV_PrintDisabledGroundLoot
-global function DEV_PrintDisabledPoolLoot
-#endif // DEVELOPER
-
-global function Crafting_IsPlayerAtWorkbench
-global function Crafting_CreateHolderEnt
 
 
 
 
 
-global function Crafting_DoorCloseCheck
 
-global function Crafting_ClientToServer_PingCrafterFromMap
 
-global function Crafting_PossibleWorkbenchLocations_Get
-global function Crafting_SetCrafterGoalCount
-#endif // SERVER
 
-#if DEVELOPER
-#if SERVER
-global function DEV_PrintUsedHarvesters
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if DEV
+
+
+
 global function DEV_Crafting_PrintsOn
 #endif
 
-#if CLIENT
+
 global function UICallback_PopulateCraftingPanel
 global function Crafting_Workbench_OpenCraftingMenu
 global function Crafting_PopulateItemRuiAtIndex
@@ -125,11 +125,10 @@ global function Crafting_GetCraftingIcon
 global function Crafting_GetSmallCraftingIcon
 global function Crafting_GetCraftingZoneIcon
 
-#if DEVELOPER
+#if DEV
 global function DEV_Crafting_TogglePreMatchRotation
 global function DEV_Crafting_PrintUsedHarvesterEHIs
-#endif // DEVELOPER
-#endif // CLIENT
+#endif
 
 
 
@@ -142,7 +141,8 @@ global function DEV_Crafting_PrintUsedHarvesterEHIs
 
 
 
-//data
+
+
 const asset CRAFTING_DATATABLE = $"datatable/crafting_workbench.rpak"
 const asset CRAFTING_CATEGORIES_DATATABLE = $"datatable/crafting_bundles.rpak"
 const string CRAFTING_NULL_CHECK = "null"
@@ -150,14 +150,14 @@ const string CRAFTING_NULL_CHECK = "null"
 const asset CRAFTING_DISPENSERS_DATATABLE = $"datatable/crafting_dispenser_workbench.rpak"
 const asset CRAFTING_DISPENSERS_CATEGORIES_DATATABLE = $"datatable/crafting_dispenser_bundles.rpak"
 
-//initialization scriptnames
+
 global const string HARVESTER_SCRIPTNAME = "crafting_harvester"
 global const string WORKBENCH_CLUSTER_SCRIPTNAME = "crafting_workbench_cluster"
 global const string WORKBENCH_SCRIPTNAME = "crafting_workbench"
 global const string WORKBENCH_CLUSTER_AIRDROPPED_SCRIPTNAME = "crafting_workbench_cluster_airdropped"
 const string WORKBENCH_RANDOMIZATION_TARGET_SCRIPTNAME = "crafting_workbench_randomization"
 
-//harvester assets
+
 const float HARVESTER_USE_DURATION = 0.5
 const asset HARVESTER_MODEL = $"mdl/props/crafting_siphon/crafting_siphon.rmdl"
 const string HARVESTER_FULL_IDLE_ANIM = "source_full_idle"
@@ -167,7 +167,7 @@ const string HARVESTER_MINIMAP_SCRIPTNAME = "crafting_harvester_minimap"
 
 const asset HARVESTER_IDLE_FX = $"P_siphon_idle"
 
-//workbench assets
+
 const asset WORKBENCH_CLUSTER_AIRDROP_MODEL = $"mdl/props/crafting_replicator/crafting_replicator.rmdl"
 const asset WORKBENCH_CLUSTER_MODEL = $"mdl/props/crafting_replicator/crafting_replicator_no_engine.rmdl"
 const asset WORKBENCH_MODEL = $"mdl/dev/empty_model.rmdl"
@@ -193,18 +193,18 @@ const asset WORKBENCH_ENGINE_SMOKE_FX = $"P_lootpod_vent_top"
 const asset WORKBENCH_DOOR_OPEN_FX = $"P_lootpod_door_open"
 const asset WORKBENCH_PRINTING_FX = $"P_replipod_printing_CP"
 
-//workbench consts
+
 const float WORKBENCH_CLOSEDOOR_DURATION = 0.8
 
-//Crafting PIN: If the category is in this array, the PIN will post the actual item name as the item_id.
+
 const array<string> CRAFTED_ITEM_CATEGORIES_FOR_ITEM_NAMES = [ "weapon_one", "weapon_two" ]
 
-//rewards
+
 const int CRAFTING_PASSIVE_REWARD = 5
 const int HARVESTER_SUCCESS_REWARD = 25
 const int HARVESTER_TEAMMATE_REWARD = 25
 
-//minimap assets
+
 const asset WORKBENCH_ICON_ASSET = $"rui/hud/gametype_icons/survival/crafting_workbench"
 const asset WORKBENCH_ICON_LIMITED_ASSET = $"rui/hud/gametype_icons/survival/crafting_workbench_limited"
 const asset WORKBENCH_ICON_AIRDROP_ASSET = $"rui/hud/gametype_icons/survival/crafting_workbench_airdrop"
@@ -220,7 +220,7 @@ const asset CRAFTING_SMALL_WORKBENCH_ASSET = $"rui/hud/ping/icon_ping_crafting_h
 global const asset CRAFTING_ZONE_ASSET = $"rui/hud/gametype_icons/survival/crafting_zone"
 const asset CRAFTING_CURRENCY_ASSET = $"rui/hud/gametype_icons/survival/crafting_currency"
 
-//audio assets
+
 const string HARVESTER_AMBIENT_LOOP = "Crafting_Extractor_AmbientLoop"
 const string WORKBENCH_AMBIENT_LOOP = "Crafting_V2_0_Replicator_AmbientLoop"
 const string HARVESTER_COLLECT_1P = "Crafting_Extractor_Collect_1P"
@@ -237,21 +237,21 @@ const string WORKBENCH_CRAFTING_LOOP = "Crafting_Replicator_CraftingLoop"
 const string WORKBENCH_CRAFTING_DOOR_OPEN = "Crafting_V2_0_Replicator_Crafting_Finish_Eject"
 const string WORKBENCH_CRAFTING_DOOR_CLOSE = "Crafting_V2_0_Replicator_Crafting_Close"
 
-//rui tracking
-const int RUI_TRACK_INDEX_CAPTURE_END_TIME = 0 //gametime
-const int RUI_TRACK_INDEX_REQUIRED_TIME = 1 //float
-const int RUI_TRACK_INDEX_ACTIVATOR_TEAM = 4 //int
-const int RUI_TRACK_INDEX_COLOR = 0 //float3
 
-//item creation consts
+const int RUI_TRACK_INDEX_CAPTURE_END_TIME = 0 
+const int RUI_TRACK_INDEX_REQUIRED_TIME = 1 
+const int RUI_TRACK_INDEX_ACTIVATOR_TEAM = 4 
+const int RUI_TRACK_INDEX_COLOR = 0 
+
+
 const float CRAFTING_PICKUP_GRACE_PERIOD = 5.0
 global const string HOLDER_ENT_NAME = "holder_ent"
 
-//Evo Amount
+
 global const int CRAFTING_EVO_GRANT = 200
 const int MAX_ARMOR_EVO_TIER = 5
 
-//Ammo Amount Multipler
+
 global const int CRAFTING_AMMO_MULTIPLIER = 3
 global const int CRAFTING_AMMO_MULTIPLIER_SMALL = 2
 
@@ -259,22 +259,22 @@ global const int DISPENSERS_CRAFTING_AMMO_MULTIPLIER = 6
 global const int DISPENSERS_CRAFTING_AMMO_MULTIPLIER_SMALL = 4
 
 
-//Exiting Crafter Safe Spot Checks
+
 const float IDEAL_END_FLAT_LENGTH = 27
 const vector IDEAL_END_TRACE_OFFSET_START = <0, 0, 72>
 const vector IDEAL_END_TRACE_OFFSET_END = <0, 0, -32>
 
-//Crafting Obituary
+
 global const float CRAFTING_OBIT_DEBOUNCE_PERIOD = 1.0
 
-//Ping from Map func name
+
 const string FUNCNAME_PingCrafterFromMap = "Crafting_ClientToServer_PingCrafterFromMap"
 
 
 
 
 
-//Airdrops
+
 const float REPLICATOR_AIRDROP_DISPLACEMENT = 3000.0
 
 global enum eHarvesterState
@@ -304,19 +304,19 @@ global enum eCraftingRotationStyle
 
 		PERK,
 
-	/*%if HAS_SHELVED_LEGEND_ABILITIES
-	CALIBER_PASSIVE,
-	%endif*/
+	
+
+
 	COUNT_
 }
 
 global enum eCraftingRandomization
 {
-	NO_DISTRIBUTION, //no randomization, all entities present
-	RANDOM_HARVESTER_DISTRIBUTION, //active harvesters are randomized
-	RANDOM_CLUSTER_DISTRIBUTION, //active workbench clusters are randomized
-	RANDOM_CLUSTER_LINKED_DISTRIBUTION, //active workbench clusters and their linked harvesters are randomized
-	RANDOM_COMBINATION_DISTRIBUTION, //workbenches and harvesters are independently randomized
+	NO_DISTRIBUTION, 
+	RANDOM_HARVESTER_DISTRIBUTION, 
+	RANDOM_CLUSTER_DISTRIBUTION, 
+	RANDOM_CLUSTER_LINKED_DISTRIBUTION, 
+	RANDOM_COMBINATION_DISTRIBUTION, 
 	COUNT_
 }
 
@@ -342,9 +342,9 @@ global struct CraftingBundle
 {
 	array< string > 			itemsInBundle
 
-	#if CLIENT
+
 		table<int, var> attachedRui
-	#endif
+
 }
 
 global struct CraftingCategory
@@ -369,9 +369,9 @@ struct WorkbenchData
 	bool isDoorOpen = false
 	array<entity> spawnedLoot
 
-#if SERVER
-	vector userSafeSpot
-#endif
+
+
+
 
 	entity cluster
 	bool isCrafting = false
@@ -397,9 +397,9 @@ struct CraftingItemInfo
 
 
 
-#if SERVER
-global typedef OnCraftingMaterialsGrantedCallback void functionref( entity, entity, int )
-#endif
+
+
+
 
 struct {
 	bool                           isEnabled = false
@@ -413,7 +413,7 @@ struct {
 	entity		  limitedStockParent
 	int 		  timeAtMatchStart
 
-	#if CLIENT
+
 	table<entity, entity>	   	   harvesterToClientProxy
 	table<entity, var>             harvesterRuiTable
 	table<entity, var>			   workbenchRuiTable
@@ -439,47 +439,47 @@ struct {
 
 	array< CraftingItemInfo >	   craftingItems_ClientList
 
-	// Added so we can restore a used harvester's state locally at create time.
+	
 	table< EHI, array< EHI > >		usedHarvesterEHIs
 
-	//To help with locally refreshing the client's local fake harvesters
+	
 	table< EHI, entity >			harvesterTableLocal
 
-	// For Referencing back to if players used a Dispenser already
+	
 	table<entity, WorkbenchData>	workbenchDataTable_Client
 	bool							playerIsCrafting = false
 
-	#if DEVELOPER
+#if DEV
 	bool 							DEV_testingRotationRui
-	#endif
-	#endif
-
-	#if SERVER
-		array< Point > 							workbenchPossibleLocations // Locations of the placed workbench locations. Useful in many other applications.
-		array<entity>                  			harvesterArray
-		array<entity>				   			workbenchArray
-		array<vector>				   			workbenchAirdropPositions
-		table<entity, WorkbenchData>   			workbenchDataTable
-		table<entity, array<WorkbenchData> > 	workbenchClusterToBenchData
-		table<entity, entity>		   			minimapObjTable
-		table<entity, entity>		   			limitedStockFXTable
-		array<OnCraftingMaterialsGrantedCallback> craftingMatsGrantedCallbacks
-
-		table< entity, entity >			playerToNextStepTable
-		int								matchStartTime
-
-		float							craftingPickupGracePeriod
-
-		table< EHI, float > notifyingPlayerObitTimes
-
-		array<entity>					playersInCraftingIdle
-
-		int defaultCrafterGoalCount = 12
+#endif
 
 
-	table<int, int>					npcCraftingRewardTable
 
-	#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	table<entity, entity>		   ambGenericTable
 	array<entity>				   workbenchClusterArray
@@ -490,9 +490,9 @@ struct {
 
 	bool crafting_obit_notify = true
 
-	#if DEVELOPER
+#if DEV
 		bool devPrintsOn = false
-	#endif
+#endif
 } file
 
 void function Crafting_Init()
@@ -502,53 +502,53 @@ void function Crafting_Init()
 	RegisterCraftingData()
 	RegisterCraftingDistribution()
 
-	// If TRUE, all teammates will get materials if any teammate interacts with a Harvester.
+	
 	file.harvestersTeamUse 	= GetCurrentPlaylistVarBool( "harvesters_teamuse", true )
 
 	file.craftingBetterSpectatorEnabled	= GetCurrentPlaylistVarBool( "crafting_use_better_specating", true )
 
 	file.crafting_obit_notify = GetCurrentPlaylistVarBool( "crafting_obit_notify", true )
 
-	#if SERVER
-		file.matchStartTime = GetUnixTimestamp()
-		HandleCraftingExclusivity()
-
-		file.craftingPickupGracePeriod = GetCurrentPlaylistVarFloat( "crafting_pickup_grace_period", CRAFTING_PICKUP_GRACE_PERIOD )
-
-
-		file.npcCraftingRewardTable = {}
-		file.npcCraftingRewardTable[eNPC.PROWLER] <- GetCurrentPlaylistVarInt( "wildlife_ai_prowler_crafting_reward", 0 )
 
 
 
 
-			file.npcCraftingRewardTable[eNPC.SPIDER_JUNGLE] <- GetCurrentPlaylistVarInt( "wildlife_ai_spider_jungle_crafting_reward", 0 )
 
 
-	#endif
 
-	#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
 		if ( IsLobby() )
 		{
 			file.isEnabled = Crafting_PlaylistVar_IsEnabled()
 			return
 		}
-	#endif
 
-	#if SERVER
-		AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_crafting_harvester", OnHarvesterScriptTargetSpawned )
-		AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_crafting_workbench_cluster", OnWorkbenchScriptTargetSpawned )
-	#endif
 
-	#if SERVER
-		AddSpawnCallback( "prop_dynamic", SetupWorkbenchClusterFromTarget )
-	#endif
-	#if CLIENT
+
+
+
+
+
+
+
+
+
 		AddCreateCallback( "prop_material_harvester", OnHarvesterCreated )
 		AddDestroyCallback( "prop_material_harvester", OnHarvesterDestroyed )
 		AddCreateCallback( "prop_dynamic", OnWorkbenchClusterCreated )
 		AddCreateCallback( "info_target", OnLimitedStockParentCreated )
-	#endif
+
 
 	RegisterSignal( "Crafting_PlayerStartedPlaying" )
 	RegisterSignal( "CraftingPlayerAttaching" )
@@ -563,10 +563,10 @@ void function Crafting_Init()
 		RegisterSignal( "crafting_kill_spectator_thread" )
 	}
 
-	#if CLIENT
+
 		RegisterSignal ( "OnPlayerUsedDispenser" )
 		RegisterSignal ( "OnNewHoloStartPlaying" )
-	#endif
+
 
 
 
@@ -580,31 +580,31 @@ void function Crafting_Init()
 	printf( "CRAFTING: Crafting Systems enabled" )
 	file.isEnabled = true
 
-	#if SERVER
-		AddCallback_GameStateEnter( eGameState.Playing, Crafting_OnGameStatePlaying )
-		//AddCallback_OnClientConnectionLost( Crafting_OnPlayerConnectionChanged ) //not in S3
-		//AddCallback_OnClientConnectionRestored( Crafting_OnPlayerConnectionChanged ) //not in S3
-		AddCallback_EntitiesDidLoad( Crafting_OnEntitiesDidLoad )
-		//AddCallback_OnQuickchatEvent( eCommsAction.REPLY_CRAFTING_NEXT_HARVESTER_OR_WORKBENCH, PingNextGoalForPlayer ) //S22 comms action
-		//AddCallback_OnQuickchatEvent( eCommsAction.REPLY_CRAFTING_PING_ALL_WORKBENCHES, PingAllWorkbenches ) //S22 comms action
-		AddCallback_OnLootBinOpening( Crafting_OnLootbinOpen )
-		AddPingCallbackForType( ePingType.LOOT, OnLootPinged )
 
-		Loot_AddCallback_OnPlayerLootPickup( Crafting_OnLootPickedUp )
-		AddCallback_OnPlayerKilled( Crafting_OnPlayerKilled )
-		Bleedout_AddCallback_OnPlayerStartBleedout( Crafting_OnPlayerBleedingOut )
-		AddCallback_OnPlayerMatchStateChanged( Crafting_OnPlayerMatchStateChanged ) //signature mismatch
 
-		AddCallback_OnPlayerRespawned( Dispensers_OnPlayerStateChanged )
-		//AddCallback_OnClientConnectionLost( Dispensers_OnPlayerStateChanged ) //not in S3
-		//AddCallback_OnClientConnectionRestored( Dispensers_OnPlayerStateChanged ) //not in S3
-		AddCallback_OnSurvivalDeathFieldStageChanged( Callback_Dispensers_RefreshState )
 
-	#endif
-	#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 		AddCallback_GameStateEnter( eGameState.WaitingForPlayers, OnWaitingForPlayers_Client )
 		AddCallback_GameStateEnter( eGameState.Playing, OnGameStartedPlaying_Client )
-		//AddDestroyCallback( "prop_dynamic", OnWorkbenchDestroyed )
+		
 		AddCreateCallback( PLAYER_WAYPOINT_CLASSNAME, SetupProgressWaypoint )
 		AddCallback_GameStateEnter( eGameState.Playing, Crafting_OnGameStatePlaying )
 		AddLocalPlayerTookDamageCallback( TryCloseCraftingMenuFromDamage )
@@ -623,7 +623,7 @@ void function Crafting_Init()
 
 		if( Replicators_PingFromMap_Enabled() )
 			AddCallback_OnFindFullMapAimEntity( GetCrafterUnderAim, PingCrafterUnderAim )
-	#endif
+
 
 	PrecacheScriptString( WORKBENCH_SCRIPTNAME )
 	PrecacheScriptString( WORKBENCH_RANDOMIZATION_TARGET_SCRIPTNAME )
@@ -668,15 +668,15 @@ void function Crafting_RegisterNetworking()
 
 	if ( !Crafting_IsDispenserCraftingEnabled() )
 	{
-		RegisterNetworkedVariableSafe( "craftingMaterials", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
-		RegisterNetworkedVariableSafe( "Crafting_NumHarvesters", SNDC_GLOBAL, SNVT_INT, 0 )
+		RegisterNetworkedVariable( "craftingMaterials", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
+		RegisterNetworkedVariable( "Crafting_NumHarvesters", SNDC_GLOBAL, SNVT_INT, 0 )
 	}
 
-	RegisterNetworkedVariableSafe( "Crafting_StartTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
+	RegisterNetworkedVariable( "Crafting_StartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
 
-#if SERVER || CLIENT
+
 	Remote_RegisterClientFunction( "ServerCallback_CL_MaterialsChanged", "int", -1, INT_MAX, "int", -1, INT_MAX, "int", 0, eWildLifeCampType.Count, "entity", "bool" )
-#endif
+
 
 	Remote_RegisterClientFunction( "ServerCallback_CL_HarvesterUsed", "entity", "entity" )
 	Remote_RegisterClientFunction( "ServerCallback_CL_ArmorDeposited" )
@@ -700,11 +700,11 @@ void function Crafting_RegisterNetworking()
 
 	Remote_RegisterClientFunction( "ServertoClientCallback_SetDispenserData", "entity", "entity", "entity", "entity", "bool", "bool" )
 
-	#if CLIENT
+
 	AddOnSpectatorTargetChangedCallback( Crafting_OnSpectateTargetChanged )
 	AddFirstPersonSpectateStartedCallback( Crafting_OnFirstPersonSpectateStarted )
 	AddFirstPersonSpectateEndedCallback( Crafting_OnFirstPersonSpectateEnded )
-	#endif
+
 
 	file.isNetworkingRegistered = true
 }
@@ -722,8 +722,7 @@ bool function Crafting_PlaylistVar_IsEnabled()
 
 bool function Crafting_IsDispenserCraftingEnabled()
 {
-	//return( GetCurrentPlaylistVarBool( "crafting_dispensers_enabled", false ))
-	return false//force disabled due to rui for this does not exist in s16
+	return( GetCurrentPlaylistVarBool( "crafting_dispensers_enabled", true ))
 }
 
 int function Crafting_DispenserAmmoMulitplier()
@@ -771,12 +770,12 @@ bool function Crafting_LocationBeam_Enabled()
 	return GetCurrentPlaylistVarBool( "crafting_dispensers_locationbeam", true )
 }
 
-#if CLIENT||SERVER
+
 bool function Replicators_PingFromMap_Enabled()
 {
 	return GetCurrentPlaylistVarBool( "replicators_pingfrommap_enabled", true )
 }
-#endif
+
 
 array<CraftingCategory> function Crafting_GetCraftingDataArray()
 {
@@ -803,17 +802,17 @@ float function Crafting_HarvesterExlusionDistance()
 	return GetCurrentPlaylistVarFloat( "crafting_harvester_exclusion_distance", 12000 )
 }
 
-#if SERVER
-int function Crafting_HarvesterGoalOverride()
-{
-	return GetCurrentPlaylistVarInt( "crafting_cluster_goal_override", file.defaultCrafterGoalCount )
-}
 
-void function Crafting_SetCrafterGoalCount( int goal )
-{
-	file.defaultCrafterGoalCount = goal
-}
-#endif // SERVER
+
+
+
+
+
+
+
+
+
+
 
 void function RegisterCraftingData()
 {
@@ -858,7 +857,7 @@ void function RegisterCraftingData()
 
 	printf( "CRAFTING: Data parsed and registered" )
 
-	//check for playlist bundle overrides
+	
 	foreach ( item in file.craftingDataArray )
 	{
 		string bundlesPlaylistCheck = GetCurrentPlaylistVarString( "crafting_dt_override_" + item.category + "_bundles", "" )
@@ -975,7 +974,7 @@ void function HandleCraftingExclusivity()
 		}
 		else if ( group.exclusivityStyle == eCraftingExclusivityStyle.NONE )
 		{
-			//do nothing
+			
 		}
 
 		foreach ( item in itemsToDisable )
@@ -989,7 +988,7 @@ void function Crafting_AddExclusiveLoot( string item )
 {
 	if ( item.find( "mp_weapon" ) != -1 )
 	{
-		//If it's a weapon, add all known locked sets
+		
 		string weapon = GetBaseWeaponRef( item )
 		file.disabledPoolLoot.append( weapon )
 		foreach ( string set in GetLockedSetsDisabledByCrafting() )
@@ -998,7 +997,7 @@ void function Crafting_AddExclusiveLoot( string item )
 		}
 	}
 	else
-		//if loot is not a weapon, add to disabled ground loot list so it can still spawn in care packages etc, but does not spawn in initial ground loot spawn
+		
 		file.disabledGroundLoot.append( item )
 }
 
@@ -1055,40 +1054,40 @@ void function Crafting_OnGameStatePlaying()
 
 void function Crafting_OnGameStatePlaying_Thread()
 {
-	#if SERVER
-		int randomizationStyle = GetCraftingRandomizationStyle()
-		if ( randomizationStyle == eCraftingRandomization.RANDOM_HARVESTER_DISTRIBUTION )
-		{
-			RandomizeHarvesterLocations()
-		}
-		else if ( randomizationStyle == eCraftingRandomization.RANDOM_CLUSTER_DISTRIBUTION )
-		{
-			waitthread RandomizeClusterLocations_Thread( false )
-		}
-		else if ( randomizationStyle == eCraftingRandomization.RANDOM_CLUSTER_LINKED_DISTRIBUTION )
-		{
-			waitthread RandomizeClusterLocations_Thread( true )
-		}
-		else if ( randomizationStyle == eCraftingRandomization.RANDOM_COMBINATION_DISTRIBUTION )
-		{
-			waitthread RandomizeClusterLocations_Thread( false )
-			RandomizeHarvesterLocations()
-		}
-
-		foreach( harvester in file.harvesterArray )
-		{
-			foreach( ent in harvester.GetLinkEntArray() )
-				harvester.UnlinkFromEnt( ent )
-		}
 
 
-		SetupLimitedStockParent()
-		SetupMinimapZones()
-		if ( file.workbenchClusterArray.len() > 0 )
-		{
-			thread Crafting_WorkbenchAirdropLogic()
-		}
-	#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	file.timeAtMatchStart = GetUnixTimestamp()
 
@@ -1096,559 +1095,559 @@ void function Crafting_OnGameStatePlaying_Thread()
 }
 
 
-#if SERVER
-int function GetCraftingRandomizationStyle()
-{
-	int randomizationStyle
-	string playlistStyle = GetCurrentPlaylistVarString( "crafting_randomization_pattern", "RANDOM_CLUSTER_LINKED_DISTRIBUTION" ).tolower()
-	bool randomizationPatternFound = false
-
-	for( int i = 0; i < eCraftingRandomization.COUNT_; i++ )
-	{
-		string enumStyle = GetEnumString( "eCraftingRandomization", i )
-		if (enumStyle.tolower() == playlistStyle)
-		{
-			randomizationStyle = i
-			randomizationPatternFound = true
-			break
-		}
-	}
-
-	Assert( randomizationPatternFound, "Playlist Crafting Randomization Pattern '" + playlistStyle + "' is not a specified enumerator." )
-
-	return randomizationStyle
-}
-
-void function RandomizeHarvesterLocations()
-{
-	if ( Crafting_IsDispenserCraftingEnabled() )
-		return
-
-	if ( file.harvesterArray.len() == 0 )
-		return
-
-	file.harvesterArray.randomize()
-	array<entity> distributedHarvesters
-	array<entity> nonDistributedHarvesters
-	int goal = file.workbenchClusterArray.len() * 2
-
-	if ( GetCurrentPlaylistVarInt( "crafting_harvester_goal_override", -1 ) != -1 )
-		goal = GetCurrentPlaylistVarInt( "crafting_harvester_goal_override", -1 )
-
-	if ( GetIsUnifiedRandomizerEnabled() )
-	{
-		distributedHarvesters = RandomizeNodeLocations( file.harvesterArray, Crafting_HarvesterExlusionDistance(), goal, true, ePropPlacementType.NO_TYPE_SPECIFIED, COLOR_MAGENTA )
-	}
-	else
-	{
-		if ( file.harvesterArray.len() >= goal )
-		{
-			float exclusionDistanceSquared = Crafting_HarvesterExlusionDistance() * Crafting_HarvesterExlusionDistance();
-			distributedHarvesters.append( file.harvesterArray[0] )
-			for ( int i = 0; i < goal - 1; i++ )
-			{
-				for ( int j = 0; j < file.harvesterArray.len(); j++ )
-				{
-					int count = 0
-					foreach ( distributedHarvester in distributedHarvesters )
-					{
-						if ( DistanceSqr( file.harvesterArray[j].GetOrigin(), distributedHarvester.GetOrigin() ) > exclusionDistanceSquared )
-						{
-							count++
-						}
-					}
-					if ( count == distributedHarvesters.len() )
-					{
-						distributedHarvesters.append( file.harvesterArray[j] )
-						file.harvesterArray.remove( j )
-						j--
-						break
-					}
-					else
-					{
-						nonDistributedHarvesters.append( file.harvesterArray[j] )
-						file.harvesterArray.remove( j )
-						j--
-					}
-				}
-			}
-
-			int validSpotsFound = distributedHarvesters.len()
-			if ( validSpotsFound < goal )
-			{
-				for ( int i = 0; i < goal - validSpotsFound + 1; i++ )
-				{
-					distributedHarvesters.append( nonDistributedHarvesters[i] )
-				}
-			}
-		}
-		else
-		{
-			// if we have less then goal lets just keep all of them.
-			distributedHarvesters = clone file.harvesterArray
-			file.harvesterArray.clear()
-		}
-
-		//Destroying unused entities
-		for ( int i = 0; i < file.harvesterArray.len(); i++ )
-		{
-			file.harvesterArray[i].Destroy()
-			file.harvesterArray.remove( i )
-			i--
-		}
-
-		for ( int i = 0; i < nonDistributedHarvesters.len(); i++ )
-		{
-			if ( !distributedHarvesters.contains( nonDistributedHarvesters[i] ) )
-			{
-				nonDistributedHarvesters[i].Destroy()
-				nonDistributedHarvesters.remove( i )
-				i--
-			}
-		}
-	}
-
-	file.harvesterArray.clear()
-	file.harvesterArray = clone distributedHarvesters
-
-	SetGlobalNetIntSafe( "Crafting_NumHarvesters", file.harvesterArray.len() )
-}
-
-
-void function RandomizeClusterLocations_Thread( bool shouldLinkHarvesters )
-{
-	if ( file.workbenchClusterArray.len() == 0 )
-		return
-
-	file.workbenchClusterArray.randomize()
-	array< entity > distributedClusters
-	array < entity > nonDistributedClusters
-	int goal = Crafting_HarvesterGoalOverride()
-
-	if ( GetIsUnifiedRandomizerEnabled() )
-	{
-		distributedClusters = RandomizeNodeLocations( file.workbenchClusterArray, Crafting_CrafterExlusionDistance(), goal, false, ePropPlacementType.CRAFTER, COLOR_ORANGE )
-		ArrayRemoveInvalid( file.workbenchClusterArray )
-
-		//Destroying unused entities
-		for ( int i = 0; i < file.workbenchClusterArray.len(); i++ )
-		{
-			DestroyClusterAndLinkedEntities( file.workbenchClusterArray, file.workbenchClusterArray[i], i, shouldLinkHarvesters )
-			i--
-		}
-	}
-	else
-	{
-		if ( file.workbenchClusterArray.len() >= goal )
-		{
-			float exclusionDistanceSquared = Crafting_CrafterExlusionDistance() * Crafting_CrafterExlusionDistance()
-			distributedClusters.append( file.workbenchClusterArray[0] )
-			for ( int i = 0; i < goal - 1; i++ )
-			{
-				for ( int j = 0; j < file.workbenchClusterArray.len(); j++ )
-				{
-					int count = 0
-					foreach ( distributedCluster in distributedClusters )
-					{
-						if ( DistanceSqr( file.workbenchClusterArray[j].GetOrigin(), distributedCluster.GetOrigin() ) > exclusionDistanceSquared )
-						{
-							count++
-						}
-					}
-					if ( count == distributedClusters.len() )
-					{
-						distributedClusters.append( file.workbenchClusterArray[j] )
-						file.workbenchClusterArray.remove( j )
-						j--
-						break
-					}
-					else
-					{
-						nonDistributedClusters.append( file.workbenchClusterArray[j] )
-						file.workbenchClusterArray.remove( j )
-						j--
-					}
-				}
-			}
-
-			int validSpotsFound = distributedClusters.len()
-			if ( validSpotsFound < goal )
-			{
-				for ( int i = 0; i < goal - validSpotsFound + 1; i++ )
-				{
-					distributedClusters.append( nonDistributedClusters[i] )
-				}
-			}
-		}
-		else
-		{
-			// if we have less then goal lets just keep all of them.
-			distributedClusters = clone file.workbenchClusterArray
-			file.workbenchClusterArray.clear()
-		}
-
-		//Destroying unused entities
-		for ( int i = 0; i < file.workbenchClusterArray.len(); i++ )
-		{
-			DestroyClusterAndLinkedEntities( file.workbenchClusterArray, file.workbenchClusterArray[i], i, shouldLinkHarvesters )
-			i--
-		}
-		WaitFrame() // Doing both these loops in the same frame contributed to an issue with running over the frame budget
-		for ( int i = 0; i < nonDistributedClusters.len(); i++ )
-		{
-			if ( !distributedClusters.contains( nonDistributedClusters[i] ) )
-			{
-				DestroyClusterAndLinkedEntities( nonDistributedClusters, nonDistributedClusters[i], i, shouldLinkHarvesters )
-				i--
-			}
-		}
-	}
-
-	file.workbenchClusterArray.clear()
-	file.workbenchClusterArray = clone distributedClusters
-	ArrayRemoveInvalid( file.workbenchClusterArray )
-
-	array<entity> clusterArray = clone file.workbenchClusterArray
-	clusterArray.randomize()
-	for( int i = 4; i >= 2; i-- )
-	{
-		int perPOIgoal = goal - 2
-		if ( i == 4 || i == 2 )
-			perPOIgoal = 1
-		if ( perPOIgoal < 0 )
-			continue
-
-		array<entity> arrayForRemoval = clone clusterArray
-		foreach ( cluster in clusterArray )
-		{
-			int harvesterCount = 0
-			foreach ( ent in cluster.GetLinkEntArray() )
-			{
-				if ( ent.GetScriptName() == HARVESTER_SCRIPTNAME )
-					harvesterCount++
-			}
-
-			if ( harvesterCount >= i )
-			{
-				DestroyLinkedHarvestersFromWorkbenchCluster( cluster, harvesterCount - i )
-				perPOIgoal--
-				arrayForRemoval.removebyvalue( cluster )
-			}
-
-			if ( perPOIgoal <= 0 )
-				break
-		}
-
-		clusterArray = arrayForRemoval
-	}
-
-	if ( !Crafting_IsDispenserCraftingEnabled() )
-	{
-		SetGlobalNetIntSafe( "Crafting_NumHarvesters", file.harvesterArray.len() )
-	}
-}
-
-void function DestroyClusterAndLinkedEntities( array<entity> arrayRef, entity cluster, int index, bool shouldlinkHarvesters )
-{
-	array<entity> linkedEntities = cluster.GetLinkEntArray()
-
-	foreach( ent in linkedEntities )
-	{
-		if( !IsValid( ent ) )
-			continue
-
-		if ( ent.GetScriptName() == WORKBENCH_SCRIPTNAME )
-		{
-			cluster.UnlinkFromEnt( ent )
-			if (( cluster in file.ambGenericTable ) && IsValid( file.ambGenericTable[cluster] ))
-			{
-				file.ambGenericTable[cluster].Destroy()
-				delete file.ambGenericTable[cluster]
-			}
-			ent.Destroy()
-		}
-
-		if ( ent.GetScriptName() == HARVESTER_SCRIPTNAME && shouldlinkHarvesters )
-		{
-			cluster.UnlinkFromEnt( ent )
-			file.harvesterArray.fastremovebyvalue( ent )
-			ent.Destroy()
-		}
-	}
-
-	arrayRef.remove( index )
-	cluster.Destroy()
-}
-
-void function DestroyLinkedHarvestersFromWorkbenchCluster( entity cluster, int numToDestroy )
-{
-	if ( numToDestroy <= 0 )
-		return
-
-	array<entity> linkedEntities = clone cluster.GetLinkEntArray()
-	linkedEntities.randomize()
-	int destroyedCounter = 0
-
-	foreach( ent in linkedEntities )
-	{
-		if ( ent.GetScriptName() == HARVESTER_SCRIPTNAME && destroyedCounter < numToDestroy )
-		{
-			cluster.UnlinkFromEnt( ent )
-			file.harvesterArray.fastremovebyvalue( ent )
-			ent.Destroy()
-			destroyedCounter++
-		}
-	}
-}
-
-
-void function SetupMinimapZones()
-{
-	foreach( cluster in file.workbenchClusterArray )
-	{
-		vector averageLocation = cluster.GetOrigin()
-		//check if cluster has harvesters
-		array<entity> linkedEntities = cluster.GetLinkEntArray()
-		int numEntities = 1
-		foreach( ent in linkedEntities )
-		{
-			if ( ent.GetScriptName() == HARVESTER_SCRIPTNAME )
-			{
-				averageLocation += ent.GetOrigin()
-				numEntities++
-			}
-		}
-
-		averageLocation = averageLocation / ( numEntities )
-
-		entity furthestEnt = cluster
-		vector averageLocationProjection = < averageLocation.x, averageLocation.y, 0 >
-		foreach( ent in linkedEntities )
-		{
-			if ( ent.GetScriptName() == HARVESTER_SCRIPTNAME )
-			{
-				vector entProjection = < ent.GetOrigin().x, ent.GetOrigin().y, 0 >
-				vector furthestEntProjection = < furthestEnt.GetOrigin().x, furthestEnt.GetOrigin().y, 0 >
-				if ( Distance( entProjection, averageLocationProjection ) > Distance( furthestEntProjection, averageLocationProjection ) )
-					furthestEnt = ent
-			}
-		}
-
-		vector furthestEntProjection = < furthestEnt.GetOrigin().x, furthestEnt.GetOrigin().y, 0 >
-		float radius = Distance( averageLocationProjection, furthestEntProjection ) + 300
-
-		//minimapObj for zone
-		entity surveyZone = CreatePropScript( $"mdl/dev/empty_model.rmdl", averageLocation )
-		surveyZone.Minimap_SetObjectScale( radius / SURVIVAL_MINIMAP_RING_SCALE )
-		surveyZone.Minimap_SetAlignUpright( true )
-		surveyZone.Minimap_SetZOrder( MINIMAP_Z_OBJECTIVE )
-		surveyZone.Minimap_SetClampToEdge( true )
-		surveyZone.Minimap_SetCustomState( eMinimapObject_prop_script.OBJECTIVE_AREA )
-		surveyZone.DisableHibernation()
-		SetTargetName( surveyZone, "craftingZone" )
-	}
-}
-
-
-void function SetupLimitedStockParent()
-{
-	entity randomizationParent = CreateEntity( "info_target" )
-	randomizationParent.SetScriptName( WORKBENCH_RANDOMIZATION_TARGET_SCRIPTNAME )
-	randomizationParent.kv.spawnFlags = SF_INFOTARGET_ALWAYS_TRANSMIT_TO_CLIENT
-	randomizationParent.DisableHibernation()
-	DispatchSpawn( randomizationParent )
-
-	file.limitedStockParent = randomizationParent
-}
-
-void function SetupLimitedStockWorkbench( entity workbench )
-{
-	workbench.LinkToEnt( file.limitedStockParent )
-	int fxId = GetParticleSystemIndex( WORKBENCH_BEAM_FX )
-	file.limitedStockFXTable[workbench] <- StartParticleEffectOnEntity_ReturnEntity( workbench, fxId, FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
-
-	workbench.SetTakeDamageType( DAMAGE_NO )
-	workbench.SetShieldHealthMax( WORKBENCH_LIMITED_STOCK_USE_DEFAULT )
-	workbench.SetShieldHealth( WORKBENCH_LIMITED_STOCK_USE_DEFAULT )
-
-	foreach( player in GetConnectedPlayers() )
-		Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateWorkbenchVars" )
-}
-
-#if DEVELOPER
-void function RemoveLimitedStockFromWorkbenchAtIndex( entity workbench )
-{
-	if ( workbench.GetShieldHealth() > 0 )
-	{
-		workbench.SetShieldHealth( workbench.GetShieldHealth() - 1 )
-
-		if ( workbench.GetShieldHealth() <= 0 )
-		{
-			array<entity> otherWorkbenchesInCluster = workbench.GetLinkEntArray()
-			array<entity> otherPlayersAtCluster
-			foreach ( bench in otherWorkbenchesInCluster )
-			{
-				if ( bench.GetScriptName() == WORKBENCH_SCRIPTNAME )
-				{
-					foreach ( potentialPlayer in bench.GetLinkEntArray() )
-					{
-						if ( IsValidPlayer( potentialPlayer ) )
-							otherPlayersAtCluster.append( potentialPlayer )
-					}
-				}
-			}
-
-			foreach( player in otherPlayersAtCluster )
-			{
-				if ( file.craftingBetterSpectatorEnabled )
-				{
-					Remote_CallFunction_Replay( player, "TryCloseCraftingMenu" )
-				}
-				else
-				{
-					Remote_CallFunction_NonReplay( player, "TryCloseCraftingMenu" )
-				}
-			}
-
-			EffectStop( file.limitedStockFXTable[workbench] )
-			delete file.limitedStockFXTable[workbench]
-		}
-	}
-
-	foreach( player in GetConnectedPlayers() )
-		Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateWorkbenchVars" )
-}
-#endif
-
-array<string> function Crafting_GetDisabledGroundLoot()
-{
-	return file.disabledGroundLoot
-}
-
-array<string> function Crafting_GetDisabledPoolLoot()
-{
-	return file.disabledPoolLoot
-}
-
-bool function Crafting_IsLootRemovedFromGround( string ref )
-{
-	return Crafting_GetDisabledGroundLoot().contains( ref )
-}
-
-bool function Crafting_IsLootRemovedFromPool( string ref )
-{
-	return Crafting_GetDisabledPoolLoot().contains( ref )
-}
-
-array<vector> function Crafting_GetPreviousAirdropLocations()
-{
-	return file.workbenchAirdropPositions
-}
-
-#if DEVELOPER
-void function DEV_PrintDisabledGroundLoot()
-{
-	printf( "Crafting -- Disabled Ground Loot" )
-	foreach ( string ref in Crafting_GetDisabledGroundLoot() )
-	{
-		printf( ref )
-	}
-}
-
-void function DEV_PrintDisabledPoolLoot()
-{
-	printf( "Crafting -- Disabled Pool Loot" )
-	foreach ( string ref in Crafting_GetDisabledPoolLoot() )
-	{
-		printf( ref )
-	}
-}
-#endif
-
-array<entity> function Crafting_GetAllHarvesters()
-{
-	return file.harvesterArray
-}
-
-array<entity> function Crafting_GetAllWorkbenchClusters()
-{
-	return file.workbenchClusterArray
-}
-
-void function Dispensers_OnPlayerStateChanged( entity player )
-{
-	if ( !Crafting_IsDispenserCraftingEnabled() )
-		return
-
-	if ( !IsValid( player ) )
-		return
-
-	array<entity> workbenchClusters = Crafting_GetAllWorkbenchClusters()
-	foreach ( entity cluster in workbenchClusters )
-	{
-		if ( !IsValid( cluster ) )
-			continue
-
-		array <entity> benchSiblings = cluster.GetLinkEntArray()
-		foreach ( bench in benchSiblings)
-		{
-			if ( bench.GetScriptName() == WORKBENCH_SCRIPTNAME )
-			{
-				WorkbenchData craftingBenchData = file.workbenchDataTable[bench]
-				foreach( teammate in GetPlayerArrayOfTeam( player.GetTeam() ) )
-				{
-					if ( teammate in craftingBenchData.playersHaveUsed )
-					{
-						if ( teammate == player )
-							craftingBenchData.playersHaveUsed[ player ] <- true
-
-						Remote_CallFunction_NonReplay( player, "ServertoClientCallback_SetDispenserData", teammate, bench, cluster, file.minimapObjTable[cluster], false, true )
-					}
-				}
-			}
-		}
-	}
-}
-
-void function Callback_Dispensers_RefreshState( int stage, float nextCircleStartTime )
-{
-	if ( !Crafting_DispenserReactivation_IsEnabled() )
-		return
-
-	if ( stage == 0 || stage > 4 )
-		return
-
-	array< entity > allPlayers = GetPlayerArray()
-	array<entity> workbenchClusters = Crafting_GetAllWorkbenchClusters()
-	foreach ( entity cluster in workbenchClusters )
-	{
-		array <entity> benchSiblings = cluster.GetLinkEntArray()
-		foreach ( bench in benchSiblings)
-		{
-			if ( bench.GetScriptName() == WORKBENCH_SCRIPTNAME )
-			{
-				WorkbenchData craftingBenchData = file.workbenchDataTable[bench]
-				foreach ( player in allPlayers )
-				{
-					if ( player in craftingBenchData.playersHaveUsed )
-					{
-						// dont need to call for all teammates here because we already clear their data in the next function
-						Remote_CallFunction_NonReplay( player, "ServertoClientCallback_SetDispenserData", player, bench, cluster, file.minimapObjTable[cluster], false, false )
-					}
-				}
-				craftingBenchData.playersHaveUsed.clear()
-			}
-		}
-	}
-}
-#endif // SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 int function Dispensers_GetReplicatorStateForPlayer( entity player, entity pingEnt )
 {
 	if ( !IsValid( pingEnt ) || !IsValid( player ) )
 		return 0
 
-	//check state of replicator to see who has used it on the team
+	
 	int notifyType
 	int teammatesUsed = 0
 	bool isNotifier = false
@@ -1659,13 +1658,13 @@ int function Dispensers_GetReplicatorStateForPlayer( entity player, entity pingE
 	{
 		if ( bench.GetScriptName() == WORKBENCH_SCRIPTNAME )
 		{
-			#if SERVER
-			craftingBenchData = file.workbenchDataTable[bench]
-			#endif
 
-			#if CLIENT
+
+
+
+
 			craftingBenchData = file.workbenchDataTable_Client[bench]
-			#endif
+
 			break
 		}
 		else
@@ -1713,9 +1712,9 @@ array<string> function GetItemNamesFromCraftingBundle( CraftingBundle craftedBun
 
 	foreach( string bundleString in craftedBundle.itemsInBundle )
 	{
-		#if DEVELOPER
+#if DEV
 		DEV_Crafting_Print( format( "  ** crafting item bundlestring = %s", bundleString  ))
-		#endif // DEVELOPER
+#endif
 		arrayResults.append( bundleString )
 	}
 	return arrayResults
@@ -1736,7 +1735,7 @@ bool function IsLimitedStockWorkbench( entity workbench )
 	if ( !IsValid( file.limitedStockParent ) || !IsValid( workbench ) )
 		return false
 
-	//return file.limitedStockParent.GetLinkParentArray().contains( workbench )
+	
 	return false
 }
 
@@ -1765,7 +1764,7 @@ string function LimitedStock_TextOverride( entity workbench )
 }
 
 
-#if CLIENT
+
 void function OnLimitedStockParentCreated( entity target )
 {
 	if ( !file.isEnabled )
@@ -1927,117 +1926,116 @@ void function TryCloseCraftingMenuFromDamage( float damage, vector damageOrigin,
 	if ( GetConVarBool( "player_setting_damage_closes_deathbox_menu" ) )
 		TryCloseCraftingMenu()
 }
-#endif // CLIENT
 
 
-///// SETUP FUNCTIONS /////
-#if SERVER
-void function Crafting_OnEntitiesDidLoad()
-{
-	if ( !Crafting_IsDispenserCraftingEnabled() )
-	{
-		SetGlobalNetIntSafe( "Crafting_NumHarvesters", file.harvesterArray.len() )
-	}
-
-	SetGlobalNetTimeSafe( "Crafting_StartTime", float(file.matchStartTime) )
-}
-
-entity function CreateMaterialHarvester( asset model, vector ornull origin = null, vector ornull angles = null, int solidType = 0, float fadeDist = -1, bool dispatchSpawn = true )
-{
-	entity materialHarvester = CreateEntity( "prop_dynamic" )
-	materialHarvester.SetValueForModelKey( model )
-	materialHarvester.kv.fadedist = fadeDist
-	materialHarvester.kv.renderamt = 255
-	materialHarvester.kv.rendercolor = "255 255 255"
-	materialHarvester.kv.solid = solidType // 0 = no collision, 2 = bounding box, 6 = use vPhysics, 8 = hitboxes only
-	if ( origin )
-	{
-		// hack: Setting origin twice. SetOrigin needs to happen before DispatchSpawn, otherwise the prop may not touch triggers
-		materialHarvester.SetOrigin( expect vector( origin ) )
-		if ( angles )
-			materialHarvester.SetAngles( expect vector( angles ) )
-	}
-
-	if ( dispatchSpawn )
-		DispatchSpawn( materialHarvester )
-
-	if ( origin )
-	{
-		// hack: Setting origin twice. SetOrigin needs to happen after DispatchSpawn, otherwise origin is snapped to nearest whole unit
-		materialHarvester.SetOrigin( expect vector( origin ) )
-		if ( angles )
-			materialHarvester.SetAngles( expect vector( angles ) )
-	}
-
-	materialHarvester.SetFadeDistance( fadeDist )
-
-	return materialHarvester
-}
-
-void function OnHarvesterScriptTargetSpawned( entity ent )
-{
-	if ( Crafting_IsDispenserCraftingEnabled() )
-	{
-		ent.Destroy()
-		return
-	}
-
-	vector origin = ent.GetOrigin()
-	vector angles = ent.GetAngles()
-	array<entity> links = ent.GetLinkEntArray()
-	array<entity> parentLinks = ent.GetLinkParentArray()
-	entity par = ent.GetParent()
-
-//	ent.Destroy()
-
-	if ( !file.isEnabled )
-		return
-
-	entity harvester = ent//CreateMaterialHarvester( HARVESTER_MODEL, origin, angles, 6, 15000, false )
-	harvester.SetCanBeMeleed( false )
-
-	//DispatchSpawn( harvester )
-	harvester.SetFadeDistance( 15000 )
-	harvester.SetScriptName( HARVESTER_SCRIPTNAME )
-
-	harvester.SetUsable()
-	harvester.AddUsableValue( USABLE_CUSTOM_HINTS )
-	AddCallback_OnUseEntity_ClientServer( harvester, HarvestCraftingMaterials )
-	SetCallback_CanUseEntityCallback( harvester, Crafting_Harvester_IsNotBusy )
-	//harvester.Hide()
-
-	file.harvesterArray.append( harvester )
-	return
-	/*entity minimapObj = CreatePropScript( $"mdl/dev/empty_model.rmdl", harvester.GetOrigin() )
-	minimapObj.SetAngles( <0, 0, 0> )
-	minimapObj.Minimap_SetCustomState( eMinimapObject_prop_script.CRAFTING_HARVESTER )
-	minimapObj.Minimap_SetObjectScale( 1 )
-	minimapObj.SetScriptName( HARVESTER_MINIMAP_SCRIPTNAME )
-	minimapObj.SetParent( harvester )
-	minimapObj.Minimap_SetAlignUpright( true )
-	SetTargetName( minimapObj, "craftingHarvesterIcon" )
-	minimapObj.Minimap_AlwaysShow( TEAM_UNASSIGNED, null )
-	minimapObj.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
-	minimapObj.DisableHibernation()
 
 
-	file.minimapObjTable[harvester] <- minimapObj*/
 
-	#if DEVELOPER
-		DEV_Crafting_Print( format( "OnHarvesterScriptTargetSpawned():  %s", string( harvester ) ))
-	#endif
 
-	foreach( link in links )
-		harvester.LinkToEnt( link )
-	foreach( rent in parentLinks )
-		rent.LinkToEnt( harvester )
 
-	if ( IsValid( par ) )
-		harvester.SetParent( par )
-}
-#endif
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function OnHarvesterCreated( entity target )
 {
 	if ( !file.isEnabled )
@@ -2054,14 +2052,14 @@ void function OnHarvesterCreated( entity target )
 		return
 	}
 
-	#if DEVELOPER
+#if DEV
 	DEV_Crafting_Print( format( "OnHarvesterCreated():  %s", string( target ) ))
-	#endif
+#endif
 
 	EHI harvesterEHI = ToEHI( target )
 	file.harvesterTableLocal[ harvesterEHI ] <- target
 
-	//create fake harvester for proxies
+	
 	vector origin = target.GetOrigin()
 	vector angles = target.GetAngles()
 	entity fakeHarvester = CreatePropDynamic( HARVESTER_MODEL, origin, angles)
@@ -2098,8 +2096,8 @@ void function OnHarvesterCreated( entity target )
 		}
 
 		bool success = SetMapIconsAsUsed( target, minimapObj )
-		//In some cases, the RUI table isn't built yet, as it's created by another spawn callbacks
-		//so this logic just let's us try again next frame, which should fix it.
+		
+		
 		if ( !success )
 		{
 			thread SetMapIconStateRetry_Thread( target, minimapObj )
@@ -2159,9 +2157,9 @@ void function CL_SetHarvesterState( entity harvester, int harvesterState )
 
 void function OnHarvesterDestroyed( entity target )
 {
-	#if DEVELOPER
+#if DEV
 		DEV_Crafting_Print( format( "OnHarvesterDestroyed():  %s", string( target ) ))
-	#endif
+#endif
 
 	if ( !( target in file.harvesterRuiTable ) )
 		return
@@ -2187,7 +2185,7 @@ void function PlayHarvesterIdleFX( entity harvester )
 	if( !IsValid( harvester ) )
 		return
 
-	//This is to prevent multiple instances of FX stacking up
+	
 	Signal( harvester, "HarvesterStopFX" )
 
 	EndSignal( harvester, "OnDestroy", "HarvesterDisabled", "HarvesterStopFX" )
@@ -2215,7 +2213,7 @@ string function Crafting_Harvester_UseTextOverride( entity ent )
 	CustomUsePrompt_Show( ent )
 	CustomUsePrompt_SetSourcePos( ent.GetOrigin() + < 0, 0, 30 > )
 
-	//CustomUsePrompt_SetAdditionalText( "%ping% " + Localize( "#COMMS_PING" ) ) //removing for 14.1 due to shared crafting materials removing the need for pinging harvestors for teammates
+	
 	CustomUsePrompt_SetText( Localize("#CRAFTING_HARVESTER_USE_PROMPT") )
 	CustomUsePrompt_SetLineColor( GetCraftingColor() )
 	CustomUsePrompt_SetHintImage( CRAFTING_CURRENCY_ASSET )
@@ -2228,7 +2226,7 @@ string function Crafting_Harvester_UseTextOverride( entity ent )
 
 	return ""
 }
-#endif
+
 
 bool function PlayerHasUsedHarvester( entity player, entity harvester )
 {
@@ -2246,112 +2244,112 @@ bool function PlayerHasUsedHarvester( entity player, entity harvester )
 	else
 	{
 		indexToCheck = EHIToEncodedEHandle( ToEHI( player ) )
-		//the first player is index 1
+		
 		indexToCheck--
 	}
 
-	return false //GetUseStateByIndex not in S3
+	return harvester.GetUseStateByIndex( indexToCheck )
 }
 
-#if SERVER
-//Can only sets this on the server
-void function SetHarvesterAsUsedByPlayer( entity player, entity harvester )
-{
-	if( !IsValid( harvester ) )
-		return
 
-	if( !IsValid( player ) || !player.IsPlayer() )
-		return
 
-	int indexToSet = 0
-	if ( file.harvestersTeamUse )
-	{
-		indexToSet = player.GetTeam()
-	}
-	else
-	{
-		indexToSet = EHIToEncodedEHandle( ToEHI( player ) )
-		//the first player is index 1
-		indexToSet--
-	}
 
-	//harvester.SetUseStateByIndex( indexToSet, true ) //not in S3
-}
-#endif
 
-///// HARVESTER USE FUNCTIONS /////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function HarvestCraftingMaterials( entity harvester, entity player, int pickupFlags )
 {
-	#if SERVER
-		if( !IsValid( harvester ) )
-			return
 
-		if( !IsValid( player ) )
-			return
 
-		if( file.harvestersTeamUse )
-		{
-			// Say "Got Materials" line from Arenas.
-			thread PlayBattleChatterLineDelayedToSpeakerAndTeamWithDebounceTime_Thread( player, "bc_arenasMatsPickedUp", 0.80, 5.0, 5.0 )
 
-			foreach( squadMember in GetPlayerArrayOfTeam( player.GetTeam() ) )
-			{
-				HarvestCraftingMaterials_Single( harvester, squadMember, player, pickupFlags )
-			}
-		}
-		else
-		{
-			HarvestCraftingMaterials_Single( harvester, player, player, pickupFlags )
-		}
-	#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
-#if SERVER
-void function HarvestCraftingMaterials_Single( entity harvester, entity player, entity playerInteractor, int pickupFlags )
-{
-	Assert( IsValid( harvester ) )
-	Assert( IsValid( player ) )
 
-	if ( player == playerInteractor )
-	{
-		SetHarvesterAsUsedByPlayer( player, harvester )
-	}
 
-//	Remote_CallFunction_Replay( player, "ServerCallback_CL_HarvesterUsed", harvester, file.minimapObjTable[harvester] )
 
-	Crafting_AddMaterialsToPlayer( player, playerInteractor, HARVESTER_TEAMMATE_REWARD  )
-	if(( player == playerInteractor ) && ( Stats_ShouldGatherBRStatsInModeForPlayer( player ) )) //This is tied up to a challenge so needs to be checked.
-	{
-		StatsHook_HarvesterExtracted( player )
-	}
 
-	if ( player == playerInteractor )
-	{
-		printf( format( "CRAFTING: Material harvest success for interactor %s at Harvester %s", string( player ), string( harvester )  ))
-		EmitSoundOnEntityOnlyToPlayer( harvester, player, HARVESTER_COLLECT_1P )
-		EmitSoundOnEntityExceptToPlayer( harvester, player, HARVESTER_COLLECT_3P )
-		Harvester_GetNextStepForPlayer( harvester, player )
-	}
-	else
-	{
-		printf( format( "CRAFTING: Material harvest for teammate %s at Harvester %s", string( player ), string( harvester )  ))
-		EmitSoundOnEntityOnlyToPlayer( player, player, HARVESTER_COLLECT_TEAM )
-	}
 
-	PIN_Interact( player, "crafting_harvester_used", harvester.GetOrigin() )
-}
-#endif
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function Crafting_OnSpectateTargetChanged( entity spectatingPlayer, entity oldSpectatorTarget, entity newSpectatorTarget )
 {
-	#if DEVELOPER
+#if DEV
 		DEV_Crafting_Print( format( " ********** Refreshing Local Harvesters"))
-	#endif
+#endif
 
 	entity player = GetLocalViewPlayer()
 
-	#if DEVELOPER
+#if DEV
 		DEV_Crafting_Print( format( "*** SPECTATOR: ServerCallback_RefreshLocalHarvesters: "))
 		DEV_Crafting_Print( format( "*** SPECTATOR: Player == %s", string( player ) ))
 		EHI playerEHI = ToEHI( player )
@@ -2359,7 +2357,7 @@ void function Crafting_OnSpectateTargetChanged( entity spectatingPlayer, entity 
 		{
 			DEV_Crafting_Print( format( "*** SPECTATOR: Local file.usedHarvesterEHIs.len() == %s", string( file.usedHarvesterEHIs[ playerEHI ].len()) ))
 		}
-	#endif
+#endif
 
 	foreach( harvesterEHI, harvester in file.harvesterTableLocal )
 	{
@@ -2451,132 +2449,132 @@ void function HarvesterAnimThread( entity harvesterProxy, bool doEmptyingAnim = 
 		}
 	}
 }
-#endif
 
-#if SERVER
-void function Harvester_GetNextStepForPlayer( entity harvester, entity player )
-{
-	if( !IsValid( harvester ) )
-		return
 
-	if( !IsValid( player ) )
-		return
 
-	//find linked workbench
-	entity workbench = harvester.GetLinkParent()
-	if ( workbench == null )
-	{
-		Warning( "CRAFTING: Trying to find connected Workbench for harvester but unable to find link" )
-		return
-	}
 
-	//try to find any other unused harvester for this workbench for this player
-	entity nextHarvester = null
-	foreach ( possibleHarvester in workbench.GetLinkEntArray() )
-	{
-		if ( IsValidPlayer( possibleHarvester ) )
-			continue
 
-		if ( possibleHarvester.GetScriptName() != HARVESTER_SCRIPTNAME )
-			continue
 
-		if ( player.GetLinkParentArray().contains( possibleHarvester ) )
-			continue
 
-		// See whether a player has used a harvester.
-		if( PlayerHasUsedHarvester( player,  possibleHarvester ))
-			continue
 
-		nextHarvester = possibleHarvester
-		break
-		//
-	}
 
-	//send contextual prompt for next harvester if one is found
-	if ( nextHarvester != null )
-	{
-		StoreNextGoalForPlayer( player, nextHarvester )
-		Remote_CallFunction_NonReplay( player, "ServerCallback_PromptNextHarvester", player, nextHarvester )
-		return
-	}
 
-	//if not found, send contextual prompt for workbench - the player must have used all harvesters for this bench
-	StoreNextGoalForPlayer( player, workbench )
-	Remote_CallFunction_NonReplay( player, "ServerCallback_PromptWorkbench", player, workbench )
-}
 
-void function StoreNextGoalForPlayer( entity player, entity nextStep )
-{
-	if ( player in file.playerToNextStepTable )
-	{
-		file.playerToNextStepTable[player] = nextStep
-	}
-	else
-	{
-		file.playerToNextStepTable[player] <- nextStep
-	}
-}
 
-void function PingNextGoalForPlayer( entity player, int commsAction, entity subjectEnt )
-{
-	entity nextStep = null
-	if ( player in file.playerToNextStepTable )
-		nextStep = file.playerToNextStepTable[player]
 
-	if ( nextStep != null )
-	{
-		Remote_CallFunction_NonReplay( player, "MarkNextStepForPlayer", nextStep )
-	}
-	else
-	{
-		Warning( "CRAFTING: Next Step Not Found, cannot ping" )
-	}
-}
 
-void function PingAllWorkbenches( entity player, int commsAction, entity subjectEnt )
-{
-	Remote_CallFunction_NonReplay( player, "MarkAllWorkbenches" )
-}
 
-void function Crafting_ClearUseLinksForAllHarvesters()
-{
-	foreach ( harvester in file.harvesterArray )
-		ClearUseLinksForHarvester( harvester )
-}
 
-void function ClearUseLinksForHarvester( entity harvester )
-{
-	if( !IsValid( harvester ) )
-		return
 
-	foreach ( linkedEnt in harvester.GetLinkEntArray() )
-		harvester.UnlinkFromEnt( linkedEnt )
-}
 
-void function ClearUseLinksForPlayer( entity player )
-{
-	if ( !IsValidPlayer( player ) )
-		return
 
-	foreach ( linkedEnt in player.GetLinkParentArray() )
-	{
-		if ( linkedEnt.GetScriptName() == HARVESTER_SCRIPTNAME )
-			linkedEnt.UnlinkFromEnt( player )
-	}
-}
 
-bool function Crafting_GetUseStatusForWorkbench()
-{
-	return file.workbenchArray[0].GetLinkEntArray().len() == 1
-}
-#endif // SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 bool function Crafting_Harvester_IsNotBusy( entity player, entity ent, int useFlags )
 {
-	#if CLIENT
+
 	if( GetLocalClientPlayer() != GetLocalViewPlayer() )
 		return false
-	#endif // CLIENT
+
 
 	if ( Bleedout_IsBleedingOut( player ) )
 		return false
@@ -2587,22 +2585,22 @@ bool function Crafting_Harvester_IsNotBusy( entity player, entity ent, int useFl
 	if ( !SURVIVAL_PlayerAllowedToPickup( player ) )
 		return false
 
-	//players that have used the harvester cannot use it again.
+	
 	if ( PlayerHasUsedHarvester( player, ent ) )
 		return false
 
 	return true
 }
 
-#if CLIENT
+
 void function ServerCallback_CL_HarvesterUsed( entity harvester, entity minimapObj )
 {
 	if( !IsValid( harvester ) )
 		return
 
-	#if DEVELOPER
+#if DEV
 		DEV_Crafting_Print( format( "ServerCallback_CL_HarvesterUsed():  %s", string( harvester ) ))
-	#endif
+#endif
 
 	file.ambGenericTable[harvester].SetEnabled( false )
 	thread HarvesterAnimThread( file.harvesterToClientProxy[harvester] )
@@ -2625,7 +2623,7 @@ bool function SetMapIconsAsUsed( entity harvester, entity minimapObj )
 	bool setMap = false
 	if ( IsValid(minimapObj) && (minimapObj in file.harvesterFullmapRuiTable) && (minimapObj in file.harvesterMinimapRuiTable) )
 	{
-		//RuiSetBool( file.harvesterRuiTable[harvester], "enabled", false )
+		
 		RuiSetFloat3( file.harvesterFullmapRuiTable[minimapObj], "iconColor", <0,0,0> )
 		RuiSetFloat3( file.harvesterMinimapRuiTable[minimapObj], "iconColor", <0,0,0> )
 		setMap = true
@@ -2675,11 +2673,11 @@ void function ServerCallback_CL_MaterialsChanged( int amount, int difference, in
 		AnnouncementMessageRight( GetLocalViewPlayer(), header + Localize( "#CRAFTING_HARVESTER_BALANCE_UPDATE", amount ), "", <214, 214, 214>, $"", 2, milesAlias )
 	}
 
-	// Update the Materials count in the Crafting Menu if player is in crafting.
+	
 	RefreshCraftingMenu()
 }
 
-// Update the Crafting Menu's Materials if the Player is crafting.
+
 void function RefreshCraftingMenu()
 {
 	if ( !Crafting_IsPlayerAtWorkbench( GetLocalViewPlayer() ) )
@@ -2735,7 +2733,7 @@ void function ServerCallback_Crafting_Notify_Player_On_Obit( entity notifyingPla
 	if(( notifyType < 0 ) || ( notifyType >= eCrafting_Obit_NotifyType.COUNT_ ))
 		return
 
-	// Grab the item and validItems list via itemIndex.
+	
 	CraftingCategory ornull item = GetCategoryForIndex( itemIndex )
 	if ( item == null )
 		return
@@ -2744,7 +2742,7 @@ void function ServerCallback_Crafting_Notify_Player_On_Obit( entity notifyingPla
 	string itemCategory = item.category
 	array<string> validItems = Crafting_GetLootDataFromIndex( itemIndex, notifyingPlayer )
 
-	// Resolve item name.
+	
 	array< string > obit_SpecialCategories = [
 		"evo",
 
@@ -2761,11 +2759,11 @@ void function ServerCallback_Crafting_Notify_Player_On_Obit( entity notifyingPla
 		int numValidItems = validItems.len()
 		if( numValidItems > 0 )
 		{
-			// Output Crafting Obit for each item in list. Don't show  dupes.
+			
 			array< string > prevItems = []
 			for ( int i = numValidItems - 1; i >= 0; i-- )
 			{
-				// Don't show duplicates.
+				
 				if( !( prevItems.contains( validItems[i] )))
 				{
 					Crafting_Obit_Notify_Single( notifyingPlayer, notifyType, cost, validItems[i] )
@@ -2837,136 +2835,136 @@ void function Crafting_Obit_Notify_Single( entity notifyingPlayer, int notifyTyp
 }
 
 
-#endif // CLIENT
-
-///// CRAFTING MANAGEMENT /////
-#if SERVER
-void function Crafting_OnLootbinOpen( entity player, entity lootbin, array<entity> regularLootEnts, array<entity> secretLootEnts, void functionref( bool, bool ) preventLootRevealFun )
-{
-	if ( Crafting_IsDispenserCraftingEnabled() )
-		return
-
-	if ( IsValidPlayer( player ) && !lootbin.e.hasBeenOpened )
-	{
-		Crafting_AddMaterialsToPlayer( player, player, CRAFTING_PASSIVE_REWARD, eWildLifeCampType.UNKNOWN, true )
-	}
-}
-
-
-void function Crafting_OnNPCKill (entity npc, var damageInfo, int npcType)
-{
-	if ( Crafting_IsDispenserCraftingEnabled() )
-		return
-
-	entity player = DamageInfo_GetAttacker(damageInfo)
-
-	if (npcType in file.npcCraftingRewardTable)
-	{
-		if (IsValidPlayer ( player ) && file.npcCraftingRewardTable[npcType] > 0)
-		{
-			Crafting_AddMaterialsToPlayer( player, player, file.npcCraftingRewardTable[npcType], eWildLifeCampType.UNKNOWN, true )
-		}
-	}
-}
-
-void function Crafting_RewardOnWildlifeCampComplete ( array<entity> playersToReward, int campType, int rewardAmount, float rewardDelay )
-{
-	wait rewardDelay
-
-	array<entity> validPlayersToReward = []
-
-	foreach ( entity player in playersToReward )
-	{
-		if ( IsValidPlayer( player ) )
-			validPlayersToReward.append( player )
-	}
-
-	if ( validPlayersToReward.len() == 0 )
-		return
-
-	int rewardPerSquadmate = rewardAmount / validPlayersToReward.len()
-	foreach ( entity player in validPlayersToReward )
-	{
-		Crafting_AddMaterialsToPlayer( player, player, rewardPerSquadmate, campType, true )
-	}
-}
-
-
-void function AddCallback_OnCraftingMaterialsGranted( OnCraftingMaterialsGrantedCallback callback )
-{
-	Assert( !file.craftingMatsGrantedCallbacks.contains( callback ), "Already added " + string( callback ) + " with AddCallback_OnCraftingMaterialsGranted" )
-	file.craftingMatsGrantedCallbacks.append( callback )
-}
-
-void function Crafting_AddMaterialsToPlayer( entity player, entity giver, int amount, int campIndex = eWildLifeCampType.UNKNOWN, bool selfOnly = false )
-{
-	if( !Crafting_PlaylistVar_IsEnabled())
-		return
-
-	if ( Crafting_IsDispenserCraftingEnabled() )
-		return
-
-	int oldMaterials = player.GetPlayerNetInt( "craftingMaterials" )
 
 
 
 
 
-	player.SetPlayerNetInt( "craftingMaterials", oldMaterials + amount )
 
-	if ( player != giver )
-	{
-		Remote_CallFunction_NonReplay( player, "ServerCallback_CL_MaterialsChanged", oldMaterials + amount, amount, campIndex, giver, false )
 
-		// The Thanks prompt is delayed so the material finder can mark more materials before possibly responding to teammates' thanks.
-		if( IsAlive( player ) )
-			thread DoDelayedThanks( player, giver )
-	}
-	else
-		Remote_CallFunction_NonReplay( player, "ServerCallback_CL_MaterialsChanged", oldMaterials + amount, amount, campIndex, player, selfOnly )
 
-	foreach( callback in file.craftingMatsGrantedCallbacks )
-	{
-		callback( player, giver, amount )
-	}
 
-	if( player == giver )
-	{
-		if ( !Stats_ShouldGatherBRStatsInModeForPlayer( player ) ) //This is tied up to a challenge so needs to be checked.
-			return
 
-		StatsHook_CraftingMaterialsCollected( player, amount )
-	}
-}
 
-void function DoDelayedThanks( entity player, entity playerToThank, float delay = 2.5 )
-{
-	wait delay
-	if( IsValid( player ) )
-		Remote_CallFunction_NonReplay( player, "ServerCallback_PromptSayThanks", playerToThank )
-}
 
-//if too many are removed, reset to 0 so player never has negative materials
-void function Crafting_RemoveMaterialsFromPlayer( entity player, int amount )
-{
-	if( !Crafting_PlaylistVar_IsEnabled())
-		return
 
-	if ( Crafting_IsDispenserCraftingEnabled() )
-		return
 
-	int oldMaterials = player.GetPlayerNetInt( "craftingMaterials" )
-	int newMaterials = oldMaterials - amount
 
-	if ( newMaterials < 0 )
-		newMaterials = 0
 
-	player.SetPlayerNetInt( "craftingMaterials", newMaterials )
 
-	Remote_CallFunction_NonReplay( player, "ServerCallback_CL_MaterialsChanged", newMaterials, -1, eWildLifeCampType.UNKNOWN, player, true )
-}
 
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 int function Crafting_GetPlayerCraftingMaterials( entity player )
 {
@@ -2980,7 +2978,7 @@ int function Crafting_GetPlayerCraftingMaterials( entity player )
 	return playerMaterials
 }
 
-#if SERVER || CLIENT
+
 bool function Crafting_IsPlayerAtWorkbench( entity player )
 {
 	if ( !IsValid( player ) )
@@ -3025,573 +3023,573 @@ asset function Crafting_GetCraftingZoneIcon()
 	return CRAFTING_ZONE_ASSET
 }
 
-#endif
-
-
-///// CRAFTING WORKBENCHES /////
-#if SERVER
-void function OnWorkbenchScriptTargetSpawned( entity ent )
-{
-	vector origin = ent.GetOrigin()
-	vector angles = ent.GetAngles()
-	array<entity> links = ent.GetLinkEntArray()
-	entity par = ent.GetParent()
-
-	// Add to Possible Crafting Locations. Useful in many other features:
-	// - POI Player Spawning.
-	// - Free Respawns
-	Crafting_PossibleWorkbenchLocations_Add( origin, angles )
-
-	ent.Destroy()
-
-	if ( !file.isEnabled )
-		return
-
-	entity workbench_cluster = CreatePropDynamic_NoDispatchSpawn( WORKBENCH_CLUSTER_MODEL, origin, angles, 6 )
-	workbench_cluster.SetScriptName( WORKBENCH_CLUSTER_SCRIPTNAME )
-	workbench_cluster.SetCanBeMeleed( false )
-
-	if ( Crafting_IsDispenserCraftingEnabled() )
-		workbench_cluster.SetSkin( 2 )
-
-	AddCallback_GroundCheckOnPhysicsThrowCompleted( workbench_cluster, Workbench_OnLootGroundCheck )
-
-	array<entity> workbenches
-	array<WorkbenchData> benchDataList
-	for ( int i = 1; i <= 3; i++ )
-	{
-		entity workbench       = CreatePropDynamic_NoDispatchSpawn( WORKBENCH_MODEL, workbench_cluster.GetOrigin(), workbench_cluster.GetAngles(), 6 )
-		workbench.SetScriptName( WORKBENCH_SCRIPTNAME )
-		workbench.SetCanBeMeleed( false )
-		workbench.kv.CollisionGroup = TRACE_COLLISION_GROUP_NONE
-		workbench.SetCollisionAllowed( false )
-
-		workbench.SetFadeDistance( 15000 )
-		workbenches.append( workbench )
-
-		WorkbenchData benchData
-		benchData.workbench = workbench
-		benchData.cluster = workbench_cluster
-		switch ( i )
-		{
-			case 2:
-				benchData.doorAnimIndex = "A"
-				benchData.lootAttachmentIndex = "C"
-				break
-			case 3:
-				benchData.doorAnimIndex = "B"
-				benchData.lootAttachmentIndex = "L"
-				break
-			case 1:
-				benchData.doorAnimIndex = "C"
-				benchData.lootAttachmentIndex = "R"
-				break
-		}
-
-		workbench.kv.targetname = benchData.doorAnimIndex
-		DispatchSpawn( workbench )
-
-		file.workbenchDataTable[workbench] <- benchData
-		benchDataList.append( benchData )
-	}
-
-	file.workbenchClusterToBenchData[workbench_cluster] <- benchDataList
-
-	foreach( workbench in workbenches )
-		workbench_cluster.LinkToEnt( workbench )
-
-	foreach( link in links )
-		workbench_cluster.LinkToEnt( link )
-
-	if ( IsValid( par ) )
-	{
-		workbench_cluster.SetParent( par )
-		foreach ( bench in workbenches )
-			bench.SetParent( par )
-	}
-
-	DispatchSpawn( workbench_cluster )
-	workbench_cluster.SetFadeDistance( 15000 )
-
-	thread PlayWorkbenchHologramFX( workbench_cluster )
-	thread PlayWorkbenchEngineFX( workbench_cluster )
-
-	//update workbench itneract locations
-	int workbenchCounter = 1
-	foreach( bench in workbenches )
-	{
-		int doorAttachment = workbench_cluster.LookupAttachment( "door_open_" + workbenchCounter )
-		vector originToAttachment = workbench_cluster.GetAttachmentOrigin( doorAttachment ) - workbench_cluster.GetOrigin()
-		vector workbenchOrigin = workbench_cluster.GetAttachmentOrigin( doorAttachment ) + (originToAttachment * 0.3)
-		workbenchOrigin = <workbenchOrigin.x, workbenchOrigin.y, workbench_cluster.GetAttachmentOrigin( doorAttachment ).z - 20>
-		vector workbenchAngles = workbench_cluster.GetAttachmentAngles( doorAttachment )
-		bench.SetOrigin( workbenchOrigin )
-		bench.SetAngles( workbenchAngles )
-
-		workbenchCounter++
-	}
-
-	workbench_cluster.Anim_Play( WORKBENCH_IDLE_GROUND_ANIM )
-}
-
-void function Crafting_PossibleWorkbenchLocations_Add( vector origin, vector angles )
-{
-	Point newLoc
-	newLoc.origin = origin
-	newLoc.angles = angles
-	file.workbenchPossibleLocations.append( newLoc )
-}
-
-array< Point > function Crafting_PossibleWorkbenchLocations_Get()
-{
-	return( file.workbenchPossibleLocations )
-}
-
-void function SetupWorkbenchClusterFromTarget( entity target )
-{
-	if ( target.GetScriptName() != WORKBENCH_CLUSTER_SCRIPTNAME )
-		return
-
-	if ( !file.isEnabled )
-	{
-		foreach( ent in target.GetLinkEntArray() )
-		{
-			target.UnlinkFromEnt( ent )
-			ent.Destroy()
-		}
-
-		target.Destroy()
-		return
-	}
-
-	entity ambGen = CreateEntity( "ambient_generic" )
-	ambGen.SetOrigin( target.GetOrigin() )
-	ambGen.SetSoundName( WORKBENCH_AMBIENT_LOOP )
-	ambGen.SetEnabled( true )
-	ambGen.SetParent( target )
-	ambGen.SetLocalOrigin( <0, 0, 60> )
-	DispatchSpawn( ambGen )
-
-	file.ambGenericTable[target] <- ambGen
-
-	//minimap obj for small Icon
-	entity minimapObj = CreatePropScript( $"mdl/dev/empty_model.rmdl", target.GetOrigin() )
-	minimapObj.Minimap_SetCustomState( IsLimitedStockWorkbench(target) ? eMinimapObject_prop_script.CRAFTING_WORKBENCH_LIMITED : eMinimapObject_prop_script.CRAFTING_WORKBENCH )
-	minimapObj.Minimap_SetObjectScale( 1 )
-	minimapObj.SetParent( target )
-	minimapObj.Minimap_SetAlignUpright( true )
-	SetTargetName( minimapObj, target.GetModelName() == WORKBENCH_CLUSTER_AIRDROP_MODEL ? "craftingWorkbenchAirdropIcon" : "craftingWorkbenchIcon" )
-	minimapObj.Minimap_AlwaysShow( TEAM_UNASSIGNED, null )
-	minimapObj.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
-	minimapObj.DisableHibernation()
-
-	file.minimapObjTable[target] <- minimapObj
-
-	foreach( ent in target.GetLinkEntArray() )
-	{
-		SetupWorkbenchFromTarget( ent )
-	}
-
-	file.workbenchClusterArray.append( target )
-
-	CreateAirdropBadPlace( target, target.GetOrigin(), 512 )
-}
-
-void function SetupWorkbenchFromTarget( entity target )
-{
-	if ( target.GetScriptName() != WORKBENCH_SCRIPTNAME )
-		return
-
-	target.SetUsable()
-	target.AddUsableValue( USABLE_CUSTOM_HINTS )
-	target.SetBoundingBox( <-4, -4, -12>, <4, 4, 12> )
-	target.SetUsableDistanceOverride( 35 )
-	target.SetUsableFOVByDegrees( 250.0 )
-	AddCallback_OnUseEntity_ClientServer( target, UseCraftingWorkbench )
-	SetCallback_CanUseEntityCallback( target, Crafting_Workbench_IsNotBusy )
-
-	file.workbenchArray.append( target )
-}
-
-void function Crafting_OnPlayerConnectionChanged( entity player )
-{
-	player.Signal( "CraftingPlayerDetachImmediate" )
-}
-
-void function PlayWorkbenchHologramFX( entity workbench )
-{
-	//Dont play FX if workbench is IsMarkedForDeletion
-	if ( !IsValid(workbench) )
-	{
-		return
-	}
-
-	if ( Crafting_IsDispenserCraftingEnabled() )
-		return
-
-	workbench.EndSignal( "OnDestroy" )
-
-	//printt( "FX: Workbench Holo FX START")
-
-	int attachId = workbench.LookupAttachment( "FX_LIGHT" )
-	entity holoFx = StartParticleEffectOnEntityWithPos_ReturnEntity( workbench, GetParticleSystemIndex( WORKBENCH_HOLO_FX ), FX_PATTACH_POINT_FOLLOW_NOROTATE, attachId, <0, 0, 0>, <-90, 0, 0> )
-
-	OnThreadEnd(
-		function() : ( holoFx )
-		{
-			if ( IsValid( holoFx ) )
-			{
-				//printt( "FX: Workbench Holo FX END")
-				EffectStop( holoFx )
-			}
-		}
-	)
-
-	WaitForever()
-}
-
-void function PlayWorkbenchEngineFX( entity workbench )
-{
-	StartParticleEffectOnEntity( workbench, GetParticleSystemIndex( WORKBENCH_ENGINE_SMOKE_FX ), FX_PATTACH_POINT_FOLLOW, workbench.LookupAttachment( "thruster_fx_1" ) )
-	StartParticleEffectOnEntity( workbench, GetParticleSystemIndex( WORKBENCH_ENGINE_SMOKE_FX ), FX_PATTACH_POINT_FOLLOW, workbench.LookupAttachment( "thruster_fx_2" ) )
-	StartParticleEffectOnEntity( workbench, GetParticleSystemIndex( WORKBENCH_ENGINE_SMOKE_FX ), FX_PATTACH_POINT_FOLLOW, workbench.LookupAttachment( "thruster_fx_3" ) )
-}
-
-void function Crafting_WorkbenchAirdropLogic()
-{
-	if ( !GetCurrentPlaylistVarBool( "crafting_midgame_airdrop_enabled", true ) )
-		return
-
-	EndSignal( svGlobal.levelEnt, "RoundEnd" )
-	string playlistVar = GetCurrentPlaylistVarString( "crafting_midgame_airdrop_stages", "1:2 2:1" )
-
-	if ( Crafting_IsDispenserCraftingEnabled() )
-	{
-		playlistVar = GetCurrentPlaylistVarString( "crafting_dispensers_airdrop_stages", "1:2 2:1 3:1" )
-
-		if ( Crafting_DispenserReactivation_IsEnabled() )
-		{
-			playlistVar = GetCurrentPlaylistVarString( "crafting_dispensers_airdrop_stages", "2:1 3:1" )
-		}
-	}
-
-	//parse airdropstages
-	array<string> airdropStrings = GetTrimmedSplitString( playlistVar, " " )
-	table<int, int> stageToAmountTable
-
-	foreach( stage in airdropStrings )
-	{
-		array<string> tokens = GetTrimmedSplitString( stage, ":" )
-		stageToAmountTable[int(tokens[0])-1] <- int(tokens[1])
-
-		printf( "CRAFTING: Adding airdrop at stage " + (int(tokens[0]) - 1) + " with amount " + int(tokens[1]) )
-	}
-
-	FlagWait( "DeathCircleActive" )
-
-	while ( true )
-	{
-		FlagWaitClear( "SUR_DeathFieldShrinking" )
-
-		if ( SURVIVAL_GetCurrentDeathFieldStage() in stageToAmountTable )
-		{
-			int currentStage = SURVIVAL_GetCurrentDeathFieldStage()
-			int dropCount = stageToAmountTable[ currentStage ]
-
-			if ( !(currentStage in stageToAmountTable) )
-				continue
-
-			wait 15.0
-			printf( "CRAFTING: Stage is " + currentStage + " airdropping " + dropCount + " benches"  )
-
-
-
-
-
-
-
-
-			thread Crafting_WorkbenchAirdropLogicForRound_Thread( dropCount, false, currentStage )
-
-			FlagWait( "SUR_DeathFieldShrinking" )
-		} else {
-			wait 0.1
-			FlagWait( "SUR_DeathFieldShrinking" )
-		}
-	}
-}
-
-void function Crafting_WorkbenchAirdropLogicForRound_Thread( int dropCount, bool debugCrafters = false, int aidropStage = -1 )
-{
-	entity fakePod = CreatePropDynamic( SURVIVAL_LOOT_POD_MODEL )
-	float dropDuration = fakePod.GetSequenceDuration( CARE_PACKAGE_ANIMATION )
-	fakePod.Destroy()
-
-	float baseAngle = RandomFloatForLoot( 360.0 )
-	float angleAdjust = 360.0 / float( dropCount )
-
-	int failedAirdrops = 0
-
-	for(int i = 0; i < dropCount; i++ )
-	{
-		printf( "CRAFTING: Attempting to airdrop workbench" )
-		//crafting workbench airdrop logic here
-		vector center
-		float radius
-		#if DEVELOPER
-			if ( debugCrafters )
-			{
-				DeathFieldStageData deathFieldStageData = GetDeathFieldStage( Survival_Loot_GetDefaultRealm(), aidropStage )
-				center = deathFieldStageData.endPos
-				radius = deathFieldStageData.endRadius * 0.75
-			}
-			else
-		#endif // DEVELOPER
-		{
-			DeathFieldData deathFieldData = SURVIVAL_GetDeathFieldData( Survival_Loot_GetDefaultRealm() )
-			center                 = deathFieldData.center
-			radius                  = deathFieldData.endRadius * 0.75
-		}
-
-
-		int randomSeedIntForCircleCenter = -1
-		if ( IsLockedLootActive() )
-			randomSeedIntForCircleCenter = GetRandomSeedIntForLoot()
-
-		float minDistance = REPLICATOR_AIRDROP_DISPLACEMENT
-		if ( aidropStage > 1 ) //airdropStage is referring to what set of airdrops is occuring, NOT necessarily the round they are occuring at
-			minDistance = GetCurrentPlaylistVarFloat( "crafting_airdrop_min_distance", 500.0 )
-
-		array<vector> prevAirdrops
-		prevAirdrops.extend( file.workbenchAirdropPositions )
-		prevAirdrops.extend( Survival_GetPreviousAirdrops() )
-		prevAirdrops.extend( UpgradeCore_GetPreviousDropLocations() )
-		foreach( workbenchCluster in file.workbenchClusterArray )
-			prevAirdrops.append( workbenchCluster.GetOrigin() )
-
-		Point airdropPoint
-		waitthread FindRandomAirdropDropPoint_Thread( airdropPoint, baseAngle, center, radius, prevAirdrops, false, DEFAULT_MAX_AIRDROP_SEARCH_RUNTIME, randomSeedIntForCircleCenter, minDistance )
-		if ( ( airdropPoint.angles == <0,0,0> ) && ( airdropPoint.origin == <0,0,0> ) )
-		{
-			printf( "CRAFTING: Failed to find airdrop location" )
-			failedAirdrops++
-			continue //skip airdrop if we failed to find a location
-		}
-
-		#if DEVELOPER
-			if ( debugCrafters )
-			{
-				//DebugDrawArrow( airdropPoint.origin + <0, 0, 7000>, airdropPoint.origin, 128, <255, 0, 0>, true, 100.0 )
-				//DebugDrawCircle( airdropPoint.origin, <0,0,0>, 32, <255, 0, 0>, true, 100.0 )
-			}
-		#endif //DEVELOPER
-
-		IssueAirdropPing( airdropPoint.origin, dropDuration + 8.0, eLootTier.NONE, eAirdropType.CRAFTING_REPLICATOR )
-
-		PIN_AirdropAction ( "crafting_station", airdropPoint.origin )
-
-		thread AirdropWorkbench_Thread( airdropPoint.origin, airdropPoint.angles, true, debugCrafters )
-		file.workbenchAirdropPositions.append( airdropPoint.origin )
-
-		baseAngle += angleAdjust
-	}
-
-	if ( failedAirdrops != dropCount ) // if all our airdrops fail, don't issue the commentary event
-		AddSurvivalCommentaryEvent( eSurvivalEventType.REPLICATOR_AIRDROP_INCOMING )
-}
-
-void function AirdropWorkbench_Thread( vector origin, vector angles, bool animateDrop = true, bool saveEntity = false )
-{
-	printf( "CRAFTING: Location found, Airdropping Workbench" )
-	entity dropPod = CreatePropDynamic_NoDispatchSpawn( WORKBENCH_CLUSTER_AIRDROP_MODEL, origin, angles, 6 )
-	dropPod.SetScriptName( CARE_PACKAGE_SCRIPTNAME )
-	dropPod.EnableRenderAlways()
-	dropPod.DisableHibernation()
-	dropPod.SetScriptName( WORKBENCH_CLUSTER_AIRDROPPED_SCRIPTNAME )
-	SetTargetName( dropPod, "care_package" )
-
-	if ( Crafting_IsDispenserCraftingEnabled() )
-		dropPod.SetSkin( 2 )
-
-	DispatchSpawn( dropPod )
-
-	dropPod.SetAIObstacle( true )
-	TeslaTrap_MakeEntityRealTimeObstructor( dropPod )
-	MarkEntForCleanupOnRoundEnd( dropPod )
-
-	#if DEVELOPER
-		if ( saveEntity )
-			DEV_AddAirdropEntity( dropPod )
-	#endif // DEVELOPER
-
-	dropPod.EndSignal( "OnDestroy" )
-
-	int podFlags = 0
-	dropPod.Solid()
-	dropPod.DisallowZiplines()
-
-	thread DropPodLocationMarker( dropPod, null, COLORID_AIRDROP_CRAFTING_COLOR, FX_AIRDROP_GROUND_MARKER_CRAFTING_CP )
-
-	if ( Crafting_LocationBeam_Enabled() )
-		thread DropPodLocationBeam( dropPod, null, COLORID_CRAFTING_DISPENSER )
-
-	vector soundOrigin = dropPod.GetOrigin()
-	EmitSoundAtPosition( TEAM_UNASSIGNED, soundOrigin, "Survival_LootPod_Beacon_Marker", dropPod )
-
-	CreateAirdropBadPlace( dropPod, origin, 128 )
-
-	OnThreadEnd(
-		function() : ( soundOrigin )
-		{
-			// incase the droppod gets destroyed before it lands. Shouldn't happen but better safe ...
-			StopSoundAtPosition( soundOrigin, "Survival_LootPod_Beacon_Marker" )
-		}
-	)
-
-	if ( Time() > 30 )
-		Leviathan_ConsiderLookAtEnt( dropPod, RandomFloatRange( 10, 16 ), 0.2 )
-
-	if ( animateDrop )
-	{
-		waitthread AnimateAirdropPod( dropPod, origin, angles, "crafting_replicator_drop" )
-		StopSoundAtPosition( soundOrigin, "Survival_LootPod_Beacon_Marker" )
-		EmitSoundOnEntity( dropPod, "Survival_LootPod_SteamSizzle" )
-	}
-
-	//deploy workbench cluster here
-	entity workbench_cluster = CreatePropDynamic_NoDispatchSpawn( WORKBENCH_CLUSTER_AIRDROP_MODEL, dropPod.GetOrigin(), dropPod.GetAngles(), 6 )
-	workbench_cluster.SetScriptName( WORKBENCH_CLUSTER_SCRIPTNAME )
-	workbench_cluster.SetCanBeMeleed( false )
-	workbench_cluster.kv.spawnflags = SF_INFOTARGET_ALWAYS_TRANSMIT_TO_CLIENT
-
-	if ( Crafting_IsDispenserCraftingEnabled() )
-		workbench_cluster.SetSkin( 2 )
-
-	#if DEVELOPER
-		if ( saveEntity )
-			DEV_AddAirdropEntity( workbench_cluster )
-	#endif // DEVELOPER
-
-	AddCallback_GroundCheckOnPhysicsThrowCompleted( workbench_cluster, Workbench_OnLootGroundCheck )
-
-	array<entity> workbenches
-	array<WorkbenchData> benchDataList
-	for ( int i = 1; i <= 3; i++ )
-	{
-		entity workbench       = CreatePropDynamic_NoDispatchSpawn( WORKBENCH_MODEL, workbench_cluster.GetOrigin(), workbench_cluster.GetAngles(), 6 )
-		workbench.SetScriptName( WORKBENCH_SCRIPTNAME )
-		workbench.SetCanBeMeleed( false )
-		workbench.kv.CollisionGroup = TRACE_COLLISION_GROUP_NONE
-		workbench.SetCollisionAllowed( false )
-
-		workbench.SetFadeDistance( 15000 )
-		workbenches.append( workbench )
-
-		WorkbenchData benchData
-		benchData.workbench = workbench
-		switch ( i )
-		{
-			case 2:
-				benchData.doorAnimIndex = "A"
-				benchData.lootAttachmentIndex = "C"
-				break
-			case 3:
-				benchData.doorAnimIndex = "B"
-				benchData.lootAttachmentIndex = "L"
-				break
-			case 1:
-				benchData.doorAnimIndex = "C"
-				benchData.lootAttachmentIndex = "R"
-				break
-		}
-
-		workbench.kv.targetname = benchData.doorAnimIndex
-		DispatchSpawn( workbench )
-
-		file.workbenchDataTable[workbench] <- benchData
-		benchDataList.append( benchData )
-	}
-
-	file.workbenchClusterToBenchData[workbench_cluster] <- benchDataList
-
-	foreach( workbench in workbenches )
-		workbench_cluster.LinkToEnt( workbench )
-
-
-	//SetupLimitedStockWorkbench( workbench_cluster )
-	workbench_cluster.SetFadeDistance( 15000 )
-	DispatchSpawn( workbench_cluster )
-	workbench_cluster.Anim_Play( WORKBENCH_IDLE_ANIM )
-
-	//update workbench interact locations
-	int workbenchCounter = 1
-	foreach( bench in workbenches )
-	{
-		int doorAttachment = workbench_cluster.LookupAttachment( "door_open_" + workbenchCounter )
-		vector originToAttachment = workbench_cluster.GetAttachmentOrigin( doorAttachment ) - workbench_cluster.GetOrigin()
-		vector workbenchOrigin = workbench_cluster.GetAttachmentOrigin( doorAttachment ) + (originToAttachment *0.3)
-		workbenchOrigin = <workbenchOrigin.x, workbenchOrigin.y, workbench_cluster.GetAttachmentOrigin( doorAttachment ).z - 20>
-		vector workbenchAngles = workbench_cluster.GetAttachmentAngles( doorAttachment )
-		bench.SetOrigin( workbenchOrigin )
-		bench.SetAngles( workbenchAngles )
-		workbenchCounter++
-	}
-
-	thread PlayWorkbenchHologramFX( workbench_cluster )
-	thread PlayWorkbenchEngineFX( workbench_cluster )
-
-	dropPod.Destroy()
-}
-
-void function Crafting_AirdropWorkbenchAtPlayer( entity player )
-{
-	thread AirdropWorkbench_Thread( player.GetOrigin(), player.GetAngles() )
-}
-
-
-void function Workbench_OnLootGroundCheck( entity dropEnt, entity checkEnt )
-{
-	//fix case of loot sticking to Replicators
-	if ( IsValid( dropEnt.GetParent() ) && dropEnt.GetParent() == checkEnt )
-	{
-		vector vel = ( dropEnt.GetOrigin() - dropEnt.GetParent().GetOrigin() ) * 1.5
-		FakePhysicsThrow( null, dropEnt, vel, true )
-	}
-}
-
-#if DEVELOPER
-//bind t "script thread Crafting_ShowCraftingLocations()"
-void function Crafting_ShowCraftingLocations( float lifetime = 5.0)
-{
-	array<entity> ReplicatorLocations = GetEntArrayByScriptName( "crafting_workbench" )
-	array<entity> HarvestorLocations = GetEntArrayByScriptName( "crafting_harvester" )
-	int ReplicatorCount = ReplicatorLocations.len()
-	int HarvestorCount = HarvestorLocations.len()
-	//float lifetime = 5.0
- 	DEV_Crafting_Print( format( "Crafting Replicator Locations: %s", string( ReplicatorCount )))
-	DEV_Crafting_Print( format( "Crafting Harvestor Locations: %s", string( ReplicatorCount )))
-
-	foreach( location in ReplicatorLocations )
-	{
-		vector origin = location.GetOrigin()
-		DebugDrawSphere( origin, 128, 255, 255, 0, true, lifetime )
-		DebugDrawLine( origin, origin + <0,0,12000>, 255, 255, 0, true, lifetime )
-		DEV_Crafting_Print( format( "Crafting Replicator Location: %s", string( origin )))
-
-	}
-	foreach( location in HarvestorLocations )
-	{
-		vector origin = location.GetOrigin()
-		DebugDrawSphere( origin, 64, 0, 255, 0, true, lifetime )
-		DebugDrawLine( origin, origin + <0,0,6000>, 0, 255, 0, true, lifetime )
-		DEV_Crafting_Print( format( "Crafting Harvestor Location: %s", string( origin )))
-	}
-}
-#endif // DEVELOPER
-
-#endif // SERVER
-
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function OnWorkbenchClusterCreated( entity target )
 {
 	if ( !file.isEnabled )
@@ -3628,7 +3626,7 @@ void function OnWorkbenchClusterCreated( entity target )
 		thread PlayClientSideWorkbenchHologramFX( target )
 	}
 
-	//CreateWorkbenchWorldIcon( target, IsLimitedStockWorkbench( target ) )
+	
 	file.workbenchClusterArray.append( target )
 }
 
@@ -3673,39 +3671,39 @@ string function Crafting_Workbench_UseTextOverride( entity ent )
 
 	return ""
 }
-#endif
+
 
 void function UseCraftingWorkbench( entity bench, entity player, int pickupFlags )
 {
-	#if CLIENT
+
 		CustomUsePrompt_SetLastUsedTime( Time() )
-	#endif
+
 
 	if ( player.IsInventoryOpen() )
 		return
 
-	//if( player.Player_IsSkywardLaunching() ) // S3: entity method not available
-	//	return
+	if( player.Player_IsSkywardLaunching() )
+		return
 
-	//if( player.Player_IsSkywardFollowing() ) // S3: entity method not available
-	//	return
-
-
-	//	if ( TitanSword_Super_BlockAction( player, "use_crafter" ) )
-	//		return
+	if( player.Player_IsSkywardFollowing() )
+		return
 
 
-	#if SERVER
-		if ( Crafting_IsDispenserCraftingEnabled() )
-		{
-			WorkbenchData craftingBenchData = file.workbenchDataTable[bench]
-			if ( player in craftingBenchData.playersHaveUsed )
-				{
-					EmitSoundOnEntityOnlyToPlayer( bench, player, "menu_deny" )
-					return
-				}
-		}
-	#endif
+		if ( TitanSword_Super_BlockAction( player, "use_crafter" ) )
+			return
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	if ( IsBitFlagSet( pickupFlags, USE_INPUT_LONG ) )
 	{
@@ -3719,37 +3717,37 @@ void function UseCraftingWorkbench( entity bench, entity player, int pickupFlags
 			}
 		}
 
-		//check limited use
+		
 		if ( IsLimitedStockWorkbench( cluster ) && GetLimitedStockFromWorkbench( cluster ) <= 0 )
 			return
 
 		thread WorkbenchThink( bench, player )
 
-		#if CLIENT
+
 			cluster.Signal("WorkbenchUsed")
-		#endif
+
 	}
 }
 
 void function WorkbenchThink( entity ent, entity playerUser )
 {
-	#if SERVER
-		if ( Crafting_IsDispenserCraftingEnabled() )
-		{
-			WorkbenchData craftingBenchData = file.workbenchDataTable[ent]
-			if ( playerUser in craftingBenchData.playersHaveUsed )
-				return
-		}
-	#endif
 
-	#if CLIENT
+
+
+
+
+
+
+
+
+
 		if ( Crafting_IsDispenserCraftingEnabled() )
 		{
 			WorkbenchData craftingBenchData = file.workbenchDataTable_Client[ent]
 			if ( playerUser in craftingBenchData.playersHaveUsed )
 				return
 		}
-	#endif
+
 
 	ExtendedUseSettings settings = WorkbenchExtendedUseSettings( ent, playerUser )
 
@@ -3763,1043 +3761,1043 @@ ExtendedUseSettings function WorkbenchExtendedUseSettings( entity ent, entity pl
 {
 	ExtendedUseSettings settings
 	settings.duration = 0.3
-	#if CLIENT
+
 	settings.loopSound = "UI_Survival_PickupTicker"
 	settings.displayRui = $"ui/extended_use_hint.rpak"
 	settings.displayRuiFunc = DefaultExtendedUseRui
 	settings.icon = $""
 	settings.hint = "#PROMPT_OPEN"
-	#elseif SERVER
-	settings.successFunc = UseCraftingWorkbench_Success
-	settings.failureFunc = UseCraftingWorkbench_Failure
-	#endif
+
+
+
+
 
 	return settings
 }
 
-#if SERVER
-void function UseCraftingWorkbench_Success( entity bench, entity player, ExtendedUseSettings settings )
-{
-	bool isWorkbenchBusy = bench.GetLinkEntArray().len() != 0
-	bool isWorkbenchCrafting = bench.GetOwner() != null
-	if ( isWorkbenchBusy || isWorkbenchCrafting )
-		return
-
-	if ( IsPlayerInCryptoDroneCameraView( player ) )
-		return
-
-	if ( player.IsPhaseShifted() )
-		return
-
-	if ( GetPlayerIsEmoting( player ) )
-		return
 
-	if ( player.IsInventoryOpen() )
-		return
 
-	//if ( player.Player_IsSkywardLaunching() ) // S3: entity method not available
-	//	return
-
-	//if ( player.Player_IsSkywardFollowing() ) // S3: entity method not available
-	//	return
-
-	bench.LinkToEnt( player )
-
-	entity cluster
-	foreach ( ent in bench.GetLinkParentArray() )
-	{
-		if ( ent.GetScriptName() == WORKBENCH_CLUSTER_SCRIPTNAME )
-		{
-			cluster = ent
-			break
-		}
-	}
-
-	thread WorkbenchUseThread( bench, cluster, player )
-
-//%if HAS_BOUNTYHUNT
-//	if ( IsBountyHuntEnabled() )
-//		GiveBounty( player )
-//%endif
-
-}
-
-void function UseCraftingWorkbench_Failure( entity bench, entity player, ExtendedUseSettings settings )
-{
-	if ( bench.GetLinkEntArray().contains( player ) )
-		bench.UnlinkFromEnt( player )
-}
-
-void function WorkbenchUseThread( entity bench, entity cluster, entity player )
-{
-	player.Signal( "CraftingPlayerAttaching" )
-
-	thread PlayerAttachedToWorkbenchThread( cluster, bench, player, file.workbenchDataTable[bench] )
-}
-
-void function WorkbenchAnimation_IdleDoneCallback( entity ent )
-{
-	if( IsValid( ent.GetParent()) )
-	{
-		try { PlayParentedFirstAndThirdPersonAnimation( ent, ent.GetParent(), "ref", ent.e.entAnim1p, ent.e.entAnim3p ) } catch(e) {}
-	}
-}
-
-void function PlayerAttachedToWorkbenchThread( entity cluster, entity bench, entity player, WorkbenchData data )
-{
-	if ( !player.ContextAction_IsActive() )
-		player.ContextAction_SetBusy()
-	else
-		return
-
-	if ( player.GetParent() != null )
-	{
-		printf( "CRAFTING: player tried to attach to crafting workbench while parented to " + player.GetParent() )
-		return
-	}
-
-
-
-
-
-	player.EndSignal( "CraftingPlayerDetachImmediate" )
-	player.EndSignal( "DeathTotem_PreRecallPlayer" )
-	player.EndSignal( "OnDeath" )
-	player.EndSignal( "BleedOut_OnStartDying" )
-	player.EndSignal( "Interrupted" )
-	player.EndSignal( "OnDestroy" )
-
-	vector safeSpot = player.GetOrigin()
-	data.userSafeSpot = safeSpot
-
-	PassByReferenceBool needToHideCraftingMenuForSpectator
-	needToHideCraftingMenuForSpectator.value = false
-
-	OnThreadEnd(
-		function() : ( player, bench, safeSpot, needToHideCraftingMenuForSpectator )
-		{
-			if ( player.ContextAction_IsBusy() )
-				player.ContextAction_ClearBusy()
-
-			if ( needToHideCraftingMenuForSpectator.value && file.craftingBetterSpectatorEnabled )
-			{
-				Remote_CallFunction_Replay( player, "TryCloseCraftingMenu" )
-				file.playersInCraftingIdle.fastremovebyvalue( player )
-			}
-
-			if ( !IsValid( player ) )
-				return
-
-			if ( Crafting_IsDispenserCraftingEnabled() && Crafting_QuickOpenCraftingMenu() )
-				thread ForceCrouchStand_1PCameraRestoreHack_Thread( player )
-
-			RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD_INSTANT )
-			RemoveCinematicFlag( player, CE_FLAG_HIDE_PERMANENT_HUD )
-
-			EnableOffhandWeapons( player )
-			if ( !Crafting_Access_Inventory_Enabled() )
-				EnableInventory( player )
-
-			bench.UnlinkFromEnt( player )
-			Assert(!HoverVehicle_IsPlayerInAnyVehicle(player), "Player is considered to be in a vehicle as they attach to Workbench. Parent is " + player.GetParent().name)
-			Vehicle_KickPlayer_ForOtherReason( player ) //ewww for some reason this is necessary
-			player.ClearParent()
-			StopPlayingAnimation( player )
-			// We need this in addition to StopPlayingAnimation as a fix for R5DEV-383734. The player may not be in an animation
-			// at this point but can have an animation entity blocker (if they try to revive someone immediately) so without
-			// destroying the animation entity blocker the below call to PutPlayerInSafeSpace can error.
-			DestroyPlayAnimationEntityBlocker( player )
-
-			vector dirFromWorkbenchToPlayer = Normalize(FlattenVec(player.GetOrigin() - bench.GetOrigin()))
-
-			vector idealExitSpot = bench.GetOrigin() + dirFromWorkbenchToPlayer * IDEAL_END_FLAT_LENGTH
-			TraceResults tr = TraceLine( player.GetOrigin() + IDEAL_END_TRACE_OFFSET_START, player.GetOrigin() + IDEAL_END_TRACE_OFFSET_END, player, TRACE_MASK_PLAYERSOLID )
-			idealExitSpot.z = tr.endPos.z
-
-			PutPlayerInSafeSpot( player, null, null, safeSpot, idealExitSpot )
-
-			if ( player.e.Callback_PlayParentedAnim != null )
-			{
-				player.e.Callback_PlayParentedAnim = null
-				player.e.entAnim1p = ""
-				player.e.entAnim3p = ""
-			}
-
-			player.Signal( "CraftingPlayerDetached" )
-		}
-	)
-
-	AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD_INSTANT )
-	AddCinematicFlag( player, CE_FLAG_HIDE_PERMANENT_HUD )
-
-	DisableOffhandWeapons( player )
-	if ( !Crafting_Access_Inventory_Enabled() )
-		DisableInventory( player )
-
-	string airAppend = ""
-	if ( cluster.GetModelName() == WORKBENCH_CLUSTER_AIRDROP_MODEL )
-		airAppend = "_air"
-
-	string animAppendSequence = "" + data.doorAnimIndex + airAppend
-
-	if ( Crafting_IsDispenserCraftingEnabled() && Crafting_QuickOpenCraftingMenu() )
-	{
-		try { PlayParentedFirstAndThirdPersonAnimation( player, cluster, "ref", "ptpov_crafting_replicator_start_" + animAppendSequence + "_quick", "pilot_crafting_replicator_start_" + animAppendSequence ) } catch(e) {}
-	}
-	else
-	{
-		try { PlayParentedFirstAndThirdPersonAnimation( player, cluster, "ref", "ptpov_crafting_replicator_start_" + animAppendSequence, "pilot_crafting_replicator_start_" + animAppendSequence ) } catch(e) {}
-	}
-	player.e.Callback_PlayParentedAnim = WorkbenchAnimation_IdleDoneCallback
-	player.e.entAnim1p = "ptpov_crafting_replicator_idle_" + animAppendSequence
-	player.e.entAnim3p = "pilot_crafting_replicator_idle_" + animAppendSequence
-
-	if ( Crafting_IsDispenserCraftingEnabled() && Crafting_QuickOpenCraftingMenu() )
-	{
-		wait GetCurrentPlaylistVarFloat( "crafting_quickopen_time", 0.5 )
-	}
-	else
-	{
-		waitthread WaittillAnimDone( player )
-	}
-
-	needToHideCraftingMenuForSpectator.value = true
-	if ( file.craftingBetterSpectatorEnabled )
-	{
-		Remote_CallFunction_Replay( player, "Crafting_Workbench_OpenCraftingMenu", bench )
-	}
-	else
-	{
-		Remote_CallFunction_NonReplay( player, "Crafting_Workbench_OpenCraftingMenu", bench )
-	}
-	if( Crafting_CraftersDisabledInDeathField() )
-	{
-		thread Crafting_RingLogic_Thread( player )
-	}
-	PIN_Interact( player, "crafting_workbench_used", bench.GetOrigin() )
-
-	thread PlayBattleChatterLineDelayedToSpeakerAndTeamWithDebounceTime_Thread( player, "bc_crafting", 1.0, 45.0, 90.0 )
-
-	EmitSoundOnEntityOnlyToPlayer( bench, player, WORKBENCH_MENU_OPEN_SUCCESS )
-
-	//this shouldn't be required per se, but helps ensure that players can't get stuck in crafting
-	file.playersInCraftingIdle.append( player )
-	WaitSignal( player, "CraftingPlayerPlayExitAnim" )
-	file.playersInCraftingIdle.fastremovebyvalue( player )
-
-	needToHideCraftingMenuForSpectator.value = false
-
-	if ( player.GetParent() != cluster )
-	{
-		Assert( false, "CRAFTING: player tried to detach from crafting workbench while parented to something else" )
-		return
-	}
-
-	try { PlayParentedFirstAndThirdPersonAnimation( player, cluster, "ref", "ptpov_crafting_replicator_end_" + animAppendSequence, "pilot_crafting_replicator_end_" + animAppendSequence ) } catch(e) {}
-	try { player.Anim_SetStartTime(1) } catch(ex2) {}
-	waitthread WaittillAnimDone( player )
-}
-
-void function Crafting_RingLogic_Thread(entity player)
-{
-	player.EndSignal( "CraftingPlayerDetached" )
-	while ( DeathField_PointDistanceFromFrontierForIndex( player.GetOrigin(), player.DeathFieldIndex() ) > 0 )
-	{
-		WaitFrame()
-	}
-	player.Signal( "CraftingPlayerDetachImmediate" )
-}
-
-void function Crafting_OnPlayerKilled( entity player, entity attacker, var damageInfo )
-{
-	player.Signal( "CraftingPlayerDetachImmediate" )
-	ClearUseLinksForPlayer( player )
-}
-
-void function Crafting_OnPlayerBleedingOut( entity player, entity attacker, var damageInfo )
-{
-	player.Signal( "CraftingPlayerDetachImmediate" )
-	BleedoutState_SetPlayerBleedoutState( player, BS_BLEEDING_OUT )
-}
-
-void function ClientCallback_ClosedCraftingMenu( entity player )
-{
-	Crafting_CloseCraftingMenu( player )
-}
-
-void function Crafting_CloseCraftingMenu( entity player)
-{
-	if ( !IsValidPlayer( player )  || !Crafting_IsPlayerAtWorkbench( player ) )
-		return
-
-	if ( file.craftingBetterSpectatorEnabled )
-	{
-		Remote_CallFunction_Replay( player, "TryCloseCraftingMenu" )
-	}
-
-	if ( file.playersInCraftingIdle.contains( player ) )
-	{
-		player.Signal( "CraftingPlayerPlayExitAnim" )
-	}
-	else
-	{
-		if ( player.IsBot() )
-		{
-			Warning("Bot " + player +" is trying to close the crafting menu but isn't in the right step of crafting!")
-		}
-		else
-		{
-			Assert( false, "Player: " + player + " is trying to close the crafting menu but isn't in the right step of crafting!")
-		}
-
-		player.Signal( "CraftingPlayerDetachImmediate" )
-	}
-}
-
-////////////////////////////////////////////////////////
-// Crafting the loot item(s)
-////////////////////////////////////////////////////////
-
-void function ClientCallback_InitializeCraftingAtWorkbench( entity player, int craftingIndex )
-{
-	entity workbench = null
-	foreach( ent in player.GetLinkParentArray() )
-	{
-		if ( ent.GetScriptName() == WORKBENCH_SCRIPTNAME )
-		{
-			workbench = ent
-			break
-		}
-	}
-
-	if ( workbench == null )
-	{
-		Warning( "CRAFTING: Trying to initialize crafting at workbench but player is not linked to workbench properly" )
-		return
-	}
-
-	if ( file.craftingBetterSpectatorEnabled )
-	{
-		Remote_CallFunction_Replay( player, "ServerCallback_SetCraftingIndexForSpectator", craftingIndex )
-	}
-
-	// Check if bench is crafting to avoid a malicious user using the same bench multiple times
-	WorkbenchData benchDataPreCraftAttempt = file.workbenchDataTable[workbench]
-	if ( player in benchDataPreCraftAttempt.playersHaveUsed )
-	{
-		Warning( "CRAFTING: Tried to craft even though bench was already used by this player." )
-		return
-	}
-
-	if ( benchDataPreCraftAttempt.isCrafting )
-	{
-		Warning( "CRAFTING: Trying to craft even though crafting is in progress" )
-		return
-	}
-	benchDataPreCraftAttempt.isCrafting = true
-
-	EmitSoundOnEntityOnlyToPlayer( workbench, player, WORKBENCH_CRAFTING_START_1P )
-	EmitSoundOnEntityExceptToPlayer( workbench, player, WORKBENCH_CRAFTING_START_3P )
-
-	if ( Crafting_IsDispenserCraftingEnabled() )
-	{
-		entity cluster
-		foreach ( ent in workbench.GetLinkParentArray() )
-		{
-			if ( ent.GetScriptName() == WORKBENCH_CLUSTER_SCRIPTNAME )
-			{
-				cluster = ent
-				break
-			}
-		}
-		array <entity> benchSiblings = cluster.GetLinkEntArray()
-		foreach ( bench in benchSiblings)
-		{
-			if (bench.GetScriptName() == WORKBENCH_SCRIPTNAME)
-			{
-				WorkbenchData craftingBenchData = file.workbenchDataTable[bench]
-				if ( !(player in craftingBenchData.playersHaveUsed) )
-				{
-					CraftingCategory ornull item = GetCategoryForIndex( craftingIndex )
-					expect CraftingCategory( item )
-					if ( !( item.category == "banner" && (Perks_GetRoleForPlayer( player ) == eCharacterClassRole.SUPPORT) && Crafting_DispenserFreeSupportBanner() ) )
-					{
-						craftingBenchData.playersHaveUsed [ player ] <- true
-					}
-
-					bool isBanner = item.category == "banner"
-					foreach( teammate in GetPlayerArrayOfTeam( player.GetTeam() ) )
-					{
-						Remote_CallFunction_NonReplay( teammate, "ServertoClientCallback_SetDispenserData", player, bench, cluster, file.minimapObjTable[cluster], isBanner, true )
-					}
-				}
-			}
-		}
-	}
-
-	thread CraftingThread_Internal( player, workbench, WORKBENCH_CRAFTING_DURATION, craftingIndex )
-}
-
-void function CraftingThread_Internal( entity player, entity workbench, float duration, int itemIndex )
-{
-	if ( Crafting_IsDispenserCraftingEnabled() )
-		duration = WORKBENCH_CRAFTING_DURATION_NEW
-
-	entity cluster
-	foreach ( ent in workbench.GetLinkParentArray() )
-	{
-		if ( ent.GetScriptName() == WORKBENCH_CLUSTER_SCRIPTNAME )
-		{
-			cluster = ent
-			break
-		}
-	}
-
-
-
-
-
-	// Handled as a reference so we don't need to have multiple of these
-	WorkbenchData craftingBenchData = file.workbenchDataTable[workbench]
-
-	// Make sure to always set that we are not crafting when our thread ends.
-	OnThreadEnd(
-		function() : ( craftingBenchData )
-		{
-			craftingBenchData.isCrafting = false
-		}
-	)
-
-	CraftingCategory ornull item = GetCategoryForIndex( itemIndex )
-	if ( item == null )
-	{
-		Warning( "CRAFTING: Trying to craft when specified index category is null" )
-		return
-	}
-
-	expect CraftingCategory( item )
-
-	//creating valid item list
-	array<string> validItems = Crafting_GetLootDataFromIndex( itemIndex, player )
-	if ( validItems.len() == 0 )
-	{
-		Warning( "CRAFTING: Trying to craft when validItems is not populated" )
-		return
-	}
-
-	int cost
-	foreach ( ref in validItems )
-	{
-		cost += item.itemToCostTable[ref]
-	}
-
-	bool canAfford = Crafting_GetPlayerCraftingMaterials( player ) >= cost
-	if ( !canAfford )
-	{
-		if ( !Crafting_IsDispenserCraftingEnabled() )
-		{
-			Warning( "CRAFTING: Trying to craft without necessary fund" )
-			return // silently fail if we do not have the money, certainly cheating
-		}
-	}
-
-	Crafting_RemoveMaterialsFromPlayer( player, cost )
-	StatsHook_CraftingItemCrafted( player )
-
-	// PIN V0: If the category is in this array, post the item name with the cost. Else, post the category with the cost
-	if ( CRAFTED_ITEM_CATEGORIES_FOR_ITEM_NAMES.contains( item.category ) )
-	{
-		// Get the item names.
-		CraftingBundle craftedItemBundle = item.bundlesInCategory[ item.category ]
-		array<string> craftedItemNames = GetItemNamesFromCraftingBundle( craftedItemBundle )
-		string craftedItemRef = craftedItemNames[0]
-
-		#if DEVELOPER
-		DEV_Crafting_Print( format( "***** crafted item name = %s", craftedItemRef ))
-		#endif
-
-		PIN_Interact( player, "crafting_item_crafted" , workbench.GetOrigin(), craftedItemRef, cost )
-	}
-	else
-	{
-		PIN_Interact( player, "crafting_item_crafted" , workbench.GetOrigin(), item.category, cost )
-	}
-
-	int evoArmorProgress
-	int evoTier = -1
- 	LootData existingArmorData
-	if ( item.category == "evo" )
-	{
-		string equipSlot = "armor"
-		existingArmorData = EquipmentSlot_GetEquippedLootDataForSlot( player, equipSlot )
-		evoArmorProgress = EvolvingArmor_GetEvolutionProgress( player )
-		Inventory_SetPlayerEquipment( player, "armor_pickup_lv0_evolving", equipSlot )
-		EvolvingArmor_SetEvolutionProgress( player, EvolvingArmor_GetRequirementForEvolution( 0 ) )
-
-		Remote_CallFunction_NonReplay( player, "ServerCallback_CL_ArmorDeposited" )
-	}
-
-	/*if ( IsLimitedStockWorkbench( cluster ) )
-		RemoveLimitedStockFromWorkbenchAtIndex( cluster )*/
-
-	bool isAnyWorkbenchCrafting = false
-	foreach( benchData in file.workbenchClusterToBenchData[cluster] )
-	{
-		//printf( "Crafting: Checking bench " + benchData.workbench + " at cluster " + benchData.cluster + " with value " + benchData.isCrafting )
-		if ( benchData.isCrafting && benchData.workbench != workbench )
-		{
-			isAnyWorkbenchCrafting = true
-			break
-		}
-	}
-
-	if ( !isAnyWorkbenchCrafting )
-		EmitSoundOnEntity( cluster, WORKBENCH_CRAFTING_LOOP )
-
-	bool needWP = true
-	if ( Crafting_IsDispenserCraftingEnabled() )
-		needWP = false
-
-	entity wp = CreateWaypoint_ObjectiveEntLocation( workbench, ePingType.OBJECTIVE )
-	if ( needWP == true )
-	{
-		wp.SetParent( workbench )
-		wp.SetLocalOrigin( <0, 0, -4> )
-		{
-			if ( item.category == "evo" )
-			{
-				int tier = existingArmorData.tier
-				int amountToGrant = GetCurrentPlaylistVarInt( "crafting_override_evo_grant", CRAFTING_EVO_GRANT )
-				int armorProgress = evoArmorProgress - amountToGrant
-				while ( armorProgress <= 0 && tier != 5 )
-				{
-					tier = tier + 1
-					if ( tier == 4 )
-						tier = tier + 1
-
-					if ( tier == MAX_ARMOR_EVO_TIER )
-						break
-
-					armorProgress = EvolvingArmor_GetRequirementForEvolution( tier ) - abs( armorProgress )
-					StatsHook_EvoArmorEvolved( player, tier )
-				}
-				wp.SetWaypointInt( 5, tier )
-				evoTier = EnsureValidEvoTier( tier )
-			}
-
-			else if ( item.category == "banner" )
-			{
-				wp.SetWaypointInt( 5, 5 )
-				wp.SetWaypointInt( 6, 1 )
-			}
-
-			else
-			{
-				LootData data = SURVIVAL_Loot_GetLootDataByRef( validItems[0] )
-				wp.SetWaypointInt( 5, data.tier )
-			}
-		}
-
-		wp.SetWaypointGametime( RUI_TRACK_INDEX_CAPTURE_END_TIME, Time() + duration )
-		wp.SetWaypointFloat( RUI_TRACK_INDEX_REQUIRED_TIME, duration )
-		wp.SetWaypointInt( RUI_TRACK_INDEX_ACTIVATOR_TEAM, player.GetTeam() )
-		wp.SetWaypointString( 0, craftingBenchData.doorAnimIndex )
-	}
-
-	if (Crafting_IsDispenserCraftingEnabled())
-	{
-		entity startFX = StartParticleEffectOnEntityWithPos_ReturnEntity( cluster, GetParticleSystemIndex( WORKBENCH_DISPENSER_START_FX ), FX_PATTACH_POINT_FOLLOW_NOROTATE, cluster.LookupAttachment( "FX_LIGHT" ), <0, 0, 0>, <0, 0, 0> )
-		EffectSetControlPointVector( startFX, 1, WORKBENCH_DISPENSER_VFX_COLOR )
-	}
-	else
-	{
-		StartParticleEffectOnEntityWithPos( cluster, GetParticleSystemIndex( WORKBENCH_START_FX ), FX_PATTACH_POINT_FOLLOW_NOROTATE, cluster.LookupAttachment( "FX_LIGHT" ), <0, 0, 0>, <0, 0, 0> )
-	}
-
-	// Notify via obit that this player is crafting.
-	if( file.crafting_obit_notify )
-		Crafting_Obit_Items_Notify_Teammates( player, eCrafting_Obit_NotifyType.IS_CRAFTING_ITEM, cost, itemIndex, evoTier )
-
-	//start UI process if crafted itemref is valid
-	float waitCraftDuration = 3.0
-	if (Crafting_IsDispenserCraftingEnabled())
-		waitCraftDuration = 1.0
-
-	if ( needWP == true )
-	{
-		workbench.SetOwner( wp )
-	}
-
-	wait duration - waitCraftDuration
-	EmitSoundOnEntity( workbench, WORKBENCH_CRAFTING_FINISH_WARNING )
-	wait waitCraftDuration
-
-	Signal( cluster, "CraftingComplete" )
-
-	if ( needWP == true )
-	{
-		workbench.SetOwner( null )
-	}
-
-	wp.Destroy()
-
-	StopSoundOnEntity( workbench, WORKBENCH_CRAFTING_START_1P )
-	StopSoundOnEntity( workbench, WORKBENCH_CRAFTING_START_3P )
-
-	EmitSoundOnEntity( workbench, WORKBENCH_CRAFTING_FINISH )
-
-	craftingBenchData.isCrafting = false
-
-	isAnyWorkbenchCrafting = false
-	foreach( benchData in file.workbenchClusterToBenchData[cluster] )
-	{
-		if ( benchData.isCrafting )
-		{
-			isAnyWorkbenchCrafting = true
-			break
-		}
-	}
-
-	if ( !isAnyWorkbenchCrafting )
-		StopSoundOnEntity( cluster, WORKBENCH_CRAFTING_LOOP )
-
-	thread DoorOpenAnimThread( cluster, craftingBenchData )
-
-
-	bool autoCloseDoor = false
-	array<entity> bannerPlayers = []
-	if ( item.category == "banner" )
-	{
-		bannerPlayers = GetCraftableTeamBanners( player )
-		if ( bannerPlayers.len() == 0 )
-			autoCloseDoor = true
-
-		foreach( teammate in bannerPlayers )
-		{
-			int respawnStatus = teammate.GetPlayerNetInt( "respawnStatus" )
-			if ( respawnStatus == eRespawnStatus.PICKUP_DESTROYED )
-			{
-				StatsHook_RespawnBannerCrafted( player )
-			}
-		}
-
-	}
-
-	if ( autoCloseDoor )
-	{
-		craftingBenchData.isDoorOpen = true
-
-		wait 1
-
-		entity closeCluster
-		foreach ( ent in workbench.GetLinkParentArray() )
-		{
-			if ( ent.GetScriptName() == WORKBENCH_CLUSTER_SCRIPTNAME )
-			{
-				closeCluster = ent
-				break
-			}
-		}
-
-		thread DoorCloseAnimThread( closeCluster, craftingBenchData )
-		craftingBenchData.isDoorOpen = false
-
-		return
-	}
-
-
-	array<string> itemsToSpawn = clone validItems
-	int evoProgressToSpawn = 0
-	if ( item.category == "evo" )
-	{
-		string newArmorRef = existingArmorData.ref
-		int tierLevel = existingArmorData.tier
-		int amountToGrant = GetCurrentPlaylistVarInt( "crafting_override_evo_grant", CRAFTING_EVO_GRANT )
-		int newProgress = evoArmorProgress - amountToGrant
-		printf( "CRAFTING: Trying to grant evo shield with progress " + newProgress )
-		while ( newProgress <= 0  && tierLevel != 5)
-		{
-			tierLevel = tierLevel + 1
-			printf( "CRAFTING: Levelling up shield to tier " + tierLevel )
-			if ( tierLevel >= 4 )
-			{
-				newArmorRef = "armor_pickup_lv5_evolving"
-				newProgress = 0
-			}
-			else
-			{
-				newArmorRef = "armor_pickup_lv" + tierLevel + "_evolving"
-				newProgress = EvolvingArmor_GetRequirementForEvolution( tierLevel ) - abs( newProgress )
-			}
-			printf( "CRAFTING: Setting shield progress to " + newProgress )
-		}
-		evoProgressToSpawn = newProgress
-
-		itemsToSpawn.clear()
-		itemsToSpawn.append( newArmorRef )
-	}
-
-
-	if( item.category == "banner" )
-	{
-		while( itemsToSpawn.len() < bannerPlayers.len() )
-		{
-			itemsToSpawn.append( CRAFTED_BANNER_REF )
-		}
-
-		if (  Crafting_IsDispenserCraftingEnabled() && Crafting_DispenserSupportMRB() && Perks_GetRoleForPlayer( player ) == eCharacterClassRole.SUPPORT  )
-		{
-			itemsToSpawn.append( "mp_ability_mobile_respawn_beacon" )
-		}
-	}
-
-
-	if ( Crafting_IsDispenserCraftingEnabled() )
-	{
-		if ( item.category == "health_pickup" )
-		{
-			for ( int i = 0; i < GetCurrentPlaylistVarInt( "dispenser_health_number", 0 ); i++ )
-			{
-				itemsToSpawn.append( "health_pickup_health_large" )
-			}
-		}
-
-		if ( item.category == "shield_pickup" )
-		{
-			for ( int i = 0; i < GetCurrentPlaylistVarInt( "dispenser_batt_number", 0 ); i++ )
-			{
-				itemsToSpawn.append( "health_pickup_combo_large" )
-			}
-		}
-	}
-
-	array<entity> spawnedLoot = DroppodDoorThink( cluster, craftingBenchData.lootAttachmentIndex, itemsToSpawn, true )
-	for ( int i = 0; i < spawnedLoot.len(); i++ )
-	{
-		entity lootItem = spawnedLoot[i]
-		if ( item.category == "evo" )
-		{
-			SetPropSurvivalExtraPropertyOnEnt( lootItem, evoProgressToSpawn )
-		}
-
-
-		if ( item.category == "banner" )
-		{
-			int lootIndex = lootItem.GetSurvivalInt()
-			LootData data = SURVIVAL_Loot_GetLootDataByIndex( lootIndex )
-			if ( data.ref == CRAFTED_BANNER_REF )
-			{
-				lootItem.SetSurvivalProperty( EHIToEncodedEHandle( bannerPlayers[i] ) )
-
-				float waitDuration = Perk_Get_CraftedBannerTimeoutDuration()
-				thread SetCraftedItemtoExpire_Thread( player, lootItem, waitDuration )
-			}
-		}
-
-
-		workbench.LinkToEnt( lootItem )
-
-		if ( file.craftingPickupGracePeriod > 0 && item.category != "banner" )
-		{
-			Crafting_CreateHolderEnt( player, lootItem, file.craftingPickupGracePeriod )
-			if ( Crafting_AutoEject_IsEnabled() )
-				thread Crafting_AutoEject( lootItem, file.craftingPickupGracePeriod )
-		}
-	}
-
-	craftingBenchData.isDoorOpen = true
-	craftingBenchData.spawnedLoot = spawnedLoot
-}
-
-int function CalculateEvoArmorTierAfterCrafting( entity player )
-{
-	string equipSlot = "armor"
-	LootData existingArmorData = EquipmentSlot_GetEquippedLootDataForSlot( player, equipSlot )
-	int evoArmorProgress = EvolvingArmor_GetEvolutionProgress( player )
-
-	int tierLevel = existingArmorData.tier
-	int amountToGrant = GetCurrentPlaylistVarInt( "crafting_override_evo_grant", CRAFTING_EVO_GRANT )
-	int newProgress = evoArmorProgress - amountToGrant
-
-	if( newProgress <= 0  )
-	{
-		tierLevel++
-		if( tierLevel == 4 )
-			return( MAX_ARMOR_EVO_TIER )
-		else
-			return( tierLevel )
-	}
-
-	return tierLevel
-}
-
-void function DoorOpenAnimThread( entity workbench, WorkbenchData data )
-{
-
-
-
-
-	int attachId = workbench.LookupAttachment( "FX_DOOR_OPEN_" + data.doorAnimIndex )
-	StartParticleEffectOnEntity( workbench, GetParticleSystemIndex( WORKBENCH_DOOR_OPEN_FX ), FX_PATTACH_POINT_FOLLOW, attachId )
-
-	int animIndex = workbench.LookupPoseParameterIndex( "Open" + data.doorAnimIndex )
-	workbench.SetPoseParameterOverTime( animIndex, 1.0, 0.8 )
-
-	vector attachmentOrigin = workbench.GetAttachmentOrigin( attachId )
-	EmitSoundAtPosition( TEAM_ANY, attachmentOrigin, WORKBENCH_CRAFTING_DOOR_OPEN, workbench )
-}
-
-void function Crafting_OnLootPickedUp( entity player, entity pickup, string ref, int unitsPickedUp, bool willDestroy, entity deathBox, int pickupFlags )
-{
-	Crafting_DoorCloseCheck ( pickup, willDestroy )
-}
-
-void function SetCraftedItemtoExpire_Thread( entity player, entity item, float expirationWaitDuration)
-{
-	EndSignal( item, "OnDestroy" )
-
-	wait expirationWaitDuration
-
-	Crafting_DoorCloseCheck( item, true )
-
-	if( IsValid(item) )
-		item.Destroy()
-}
-
-void function Crafting_DoorCloseCheck( entity pickup, bool willDestroy )
-{
-	bool lootOnWorkbench = false
-	WorkbenchData data
-	foreach ( bench in file.workbenchArray )
-	{
-		if ( bench in file.workbenchDataTable )
-		{
-			data = file.workbenchDataTable[bench]
-			foreach ( lootEnt in data.spawnedLoot )
-			{
-				if ( pickup == lootEnt )
-				{
-					lootOnWorkbench = true
-					break
-				}
-			}
-		}
-
-		if ( lootOnWorkbench )
-			break
-	}
-
-	if ( !lootOnWorkbench )
-		return
-
-	entity cluster
-	foreach ( ent in data.workbench.GetLinkParentArray() )
-	{
-		if ( ent.GetScriptName() == WORKBENCH_CLUSTER_SCRIPTNAME )
-		{
-			cluster = ent
-			break
-		}
-	}
-
-	if ( lootOnWorkbench && willDestroy )
-	{
-		data.spawnedLoot.fastremovebyvalue( pickup )
-		data.workbench.UnlinkFromEnt( pickup )
-
-		if ( data.spawnedLoot.len() <= 0 )
-		{
-
-
-			thread DoorCloseAnimThread( cluster, data )
-			data.isDoorOpen = false
-			file.workbenchDataTable[data.workbench] <- data
-		}
-	}
-}
-
-void function DoorCloseAnimThread( entity workbench, WorkbenchData data )
-{
-
-
-
-
-	wait 0.5
-	if ( !IsValid(workbench) )
-		return
-
-	int animIndex = workbench.LookupPoseParameterIndex( "Open" + data.doorAnimIndex )
-	workbench.SetPoseParameterOverTime( animIndex, 0.0, WORKBENCH_CLOSEDOOR_DURATION )
-
-	int attachId = workbench.LookupAttachment( "FX_DOOR_OPEN_" + data.doorAnimIndex )
-	vector attachmentOrigin = workbench.GetAttachmentOrigin( attachId )
-	EmitSoundAtPosition( TEAM_ANY, attachmentOrigin, WORKBENCH_CRAFTING_DOOR_CLOSE, workbench)
-}
-
-void function Crafting_CreateHolderEnt( entity player, entity item, float holdDuration )
-{
-	thread CreateHolderEnt_Thread( player, item, holdDuration )
-}
-
-void function CreateHolderEnt_Thread( entity player, entity item, float holdDuration )
-{
-	EndSignal( player, "OnDeath" )
-	EndSignal( player, "OnDestroy" )
-	EndSignal( item, "OnDestroy" )
-	EndSignal( item, "OnPinged_Crafting" )
-
-	if ( !IsValid( player ) || !IsValid( item ) )
-		return
-
-	entity oldParent = item.GetParent()
-	string oldParentAttachment = item.GetParentAttachment()
-
-	entity holder = CreatePropScript( EMPTY_MODEL, item.GetOrigin(), item.GetAngles() )
-
-	if(IsValid(oldParent))
-	{
-		holder.SetParent( oldParent, oldParentAttachment, true )
-	}
-
-	holder.SetScriptName( HOLDER_ENT_NAME )
-	item.SetParent( holder )
-	holder.SetOwner( player )
-
-	OnThreadEnd(
-		function() : ( item, oldParent, oldParentAttachment, holder )
-		{
-			if (IsValid(item))
-			{
-				if (IsValid(oldParent))
-				{
-					item.SetParent( oldParent, oldParentAttachment, true )
-				}
-				else
-				{
-					item.ClearParent()
-				}
-			}
-
-			if ( IsValid( holder ))
-			{
-				holder.Destroy()
-			}
-		}
-	)
-
-	wait holdDuration
-}
-
-void function OnLootPinged( entity player, entity wp, entity pingEnt, int pingType )
-{
-	if ( !IsValid( player ) )
-		return
-
-	if ( !IsValid( pingEnt ) )
-		return
-
-	if ( ! Crafting_DoesPlayerOwnItem( player, pingEnt ) )
-		return
-
-	if ( pingEnt.e.spawnSource == eSpawnSource.CRAFTING )
-		Signal( pingEnt, "OnPinged_Crafting" )
-}
-
-void function Dispensers_PingNearestDispenser( entity player, vector origin )
-{
-	if ( !IsValid ( player ) )
-		return
-
-	entity dispenser = GetClosestValidDispenser( player, origin )
-	int pingType
-	int notifyType = Dispensers_GetReplicatorStateForPlayer( player, dispenser )
-	switch( notifyType )
-	{
-		case eCrafting_Dispenser_StateType.NO_ONE_HAS_USED:
-			pingType = ePingType.PING_REPLICATOR_NOONE_USED
-			break
-		case eCrafting_Dispenser_StateType.ALL_USED:
-			pingType = ePingType.PING_REPLICATOR_ALL_USED
-			break
-		case eCrafting_Dispenser_StateType.PLAYER_HAS_USED:
-			pingType = ePingType.PING_REPLICATOR_PLAYER_USED
-			break
-		case eCrafting_Dispenser_StateType.TEAMMATE_HAS_USED:
-			pingType = ePingType.PING_REPLICATOR_TEAMMATE_USED
-			break
-		default:
-			pingType = ePingType.PING_REPLICATOR
-			break
-	}
-
-	if ( IsValid( dispenser ) )
-	{
-		entity wp = CreateWaypoint_Ping_Location( player, pingType, dispenser, dispenser.GetOrigin(), -1, true )
-		wp.SetAbsOrigin( dispenser.GetOrigin() + <0, 0, 35> )
-		wp.SetParent( dispenser )
-	}
-}
-
-entity function GetClosestValidDispenser( entity player, vector origin )
-{
-	array<entity> dispensers               = clone file.workbenchClusterArray
-	if( dispensers.len() <= 0 )
-		return null
-
-	array<entity> teamArray = GetPlayerArrayOfTeam( player.GetTeam() )
-
-	foreach ( entity cluster in dispensers )
-	{
-		if ( !IsValid( cluster ) )
-			continue
-
-		array< entity > benchSiblings = cluster.GetLinkEntArray()
-		foreach ( bench in benchSiblings)
-		{
-			if ( bench.GetScriptName() == WORKBENCH_SCRIPTNAME )
-			{
-				WorkbenchData craftingBenchData = file.workbenchDataTable[bench]
-				foreach( ally in teamArray )
-				{
-					if ( ally in craftingBenchData.playersHaveUsed )
-					{
-						dispensers.removebyvalue( cluster )
-						break
-					}
-				}
-			}
-		}
-	}
-
-	if ( dispensers.len() <= 0 )
-		return null
-
-	array< ArrayDistanceEntry > allResults = ArrayDistanceResults( dispensers, origin )
-	allResults.sort( DistanceCompareClosest )
-
-	return allResults[0].ent
-}
-
-void function Crafting_AutoEject( entity loot, float holdDuration )
-{
-	EndSignal( loot, "OnDestroy" )
-	float extraDuration = GetCurrentPlaylistVarFloat( "crafting_auto_eject_time", 10.0 )
-
-	float totalDuration = holdDuration + extraDuration
-
-	wait totalDuration
-
-	if ( IsValid( loot ) )
-	{
-		vector vel = ( loot.GetOrigin() - loot.GetParent().GetOrigin() ) * 2.0
-		FakePhysicsThrow( null, loot, vel, true )
-
-		wait 0.5
-
-		Crafting_DoorCloseCheck( loot, true )
-	}
-}
-#endif // SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 int function EnsureValidEvoTier( int evoTier )
 {
@@ -4807,7 +4805,7 @@ int function EnsureValidEvoTier( int evoTier )
 	if( evoTier > MAX_ARMOR_EVO_TIER )
 		return MAX_ARMOR_EVO_TIER
 
-	// Skips to Max if 4.
+	
 	if( evoTier == 4  )
 		return MAX_ARMOR_EVO_TIER
 
@@ -4852,7 +4850,7 @@ array< string > function GenerateCraftingItemsInCategory( entity player, Craftin
 {
 	int craftingRotation = categoryToCheck.rotationStyle
 
-	//check categories that aren't based on timestamps to short circuit
+	
 	if ( craftingRotation == eCraftingRotationStyle.PERMANENT || craftingRotation == eCraftingRotationStyle.SEASONAL )
 	{
 		CraftingBundle bundle = GetBundleForCategory( categoryToCheck )
@@ -4925,11 +4923,11 @@ void function Crafting_Obit_Items_Notify_Teammates( entity notifyingplayer, int 
 	{
 		int evoTierToUse = EnsureValidEvoTier( evoTier )
 
-		#if SERVER
-			ClientCallback_Crafting_Notify_Teammates_On_Obit( notifyingplayer, notifyType, cost, itemIndex, evoTierToUse )
-		#elseif CLIENT
+
+
+
 			Remote_ServerCallFunction( "ClientCallback_Crafting_Notify_Teammates_On_Obit", notifyType, cost, itemIndex, evoTierToUse )
-		#endif
+
 	}
 }
 
@@ -4937,7 +4935,7 @@ CraftingBundle function GetBundleForCategory( CraftingCategory categoryToCheck )
 {
 	int craftingRotation = categoryToCheck.rotationStyle
 
-	//check categories that aren't based on timestamps to short circuit
+	
 
 	if ( CheckCraftingRotation( craftingRotation ) )
 	{
@@ -4945,21 +4943,21 @@ CraftingBundle function GetBundleForCategory( CraftingCategory categoryToCheck )
 		return categoryToCheck.bundlesInCategory[categoryToCheck.bundleStrings.top()]
 	}
 
-	//remainder of categories are based on rotations
+	
 	string unixTimeEventStartString = GetCurrentPlaylistVarString( "crafting_rotation_start", "2020-03-01 10:00:00 -08:00" )
 	int unixTimeNow
-	#if SERVER
-		if ( file.isNetworkingRegistered )
-			unixTimeNow = GetUnixTimestamp()//int(GetGlobalNetTimeSafe( "Crafting_StartTime" ))
-		else
-			unixTimeNow = file.matchStartTime
-	#endif
-	#if CLIENT
+
+
+
+
+
+
+
 		if ( !IsLobby() )
-			unixTimeNow = GetUnixTimestamp()//int(GetGlobalNetTimeSafe( "Crafting_StartTime" ))
+			unixTimeNow = int(GetGlobalNetTime( "Crafting_StartTime" ))
 		else
 			unixTimeNow = GetUnixTimestamp()
-	#endif
+
 
 	int ornull unixTimeEventStart = DateTimeStringToUnixTimestamp( unixTimeEventStartString )
 	Assert( unixTimeEventStart != null, format( "Bad format in playlist for setting 'crafting_rotation_start': '%s'", unixTimeEventStartString ) )
@@ -5002,123 +5000,123 @@ bool function CheckCraftingRotation( int craftingRotation )
 		return true
 
 
-	/*%if HAS_SHELVED_LEGEND_ABILITIES
-	if( craftingRotation == eCraftingRotationStyle.CALIBER_PASSIVE )
-		return true
-	%endif*/
+	
+
+
+
 
 	return false
 }
 
-#if SERVER
-void function Crafting_OnPlayerMatchStateChanged( entity player, int oldState, int newState )
-{
-	if ( newState == ePlayerMatchState.SKYDIVE_PRELAUNCH )
-		thread Thread_Crafting_PromptAllWorkbenches ( player )
-}
-
-void function Thread_Crafting_PromptAllWorkbenches ( entity player )
-{
-
-	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_GOLDEN_HORSE ) && GoldenHorse_TicksEnabled() )
-		return
 
 
-	FlagWait( "CraftingInitialized" )
-	if ( file.workbenchClusterArray.len() == 0 || !IsValid(player) )
-		return
-	Remote_CallFunction_NonReplay( player, "ServerCallback_PromptAllWorkbenches", player )
-}
 
-#if DEVELOPER
-void function DEV_PlayerUseRandomHarvester ( entity player )
-{
-	foreach (entity harvester in file.harvesterArray)
-	{
-		if( IsValid( harvester ) )
-		{
-			if ( !PlayerHasUsedHarvester( player, harvester ) )
-			{
-				player.ForceUseEntity( harvester, 1 )
-				break
-			}
-		}
-	}
-}
-#endif
 
-void function ClientCallback_Crafting_Notify_Teammates_On_Obit( entity player, int notifyType, int mats, int itemIndex, int evoTierParm )
-{
-	if( !file.crafting_obit_notify )
-		return
 
-	if( !Can_Notify_Via_Obit( player ) )
-		return
 
-	if(( notifyType < 0 ) || ( notifyType > eCrafting_Obit_NotifyType.COUNT_ ))
-		return
 
-	if( mats < 0  )
-		return
 
-	// Check to see if item is an evo shield and if so, pass the expected Shield Level after crafting to the Obit.
-	int evoTier = evoTierParm
-	CraftingCategory ornull item = GetCategoryForIndex( itemIndex )
-	if ( item == null )
-		return
 
-	expect CraftingCategory( item )
-	if(( item.category == "evo" ) && ( notifyType == eCrafting_Obit_NotifyType.IS_REQUESTING_MATERIALS ))
-	{
-		evoTier = CalculateEvoArmorTierAfterCrafting( player )
-	}
 
-	array< entity > squad = GetPlayerArrayOfTeam_Alive( player.GetTeam() )
-	foreach ( teammate in squad )
-	{
-		if ( IsValid( teammate ) && IsAlive( teammate ) )
-			Remote_CallFunction_NonReplay( teammate, "ServerCallback_Crafting_Notify_Player_On_Obit", player, notifyType, mats, itemIndex, EnsureValidEvoTier( evoTier ))
-	}
-}
 
-bool function Can_Notify_Via_Obit( entity player )
-{
-	if( !IsValid( player ) || !player.IsPlayer())
-		return false
 
-	float currentTime = Time()
 
-	if( !( player in file.notifyingPlayerObitTimes ) )
-	{
-		file.notifyingPlayerObitTimes[ player ] <- currentTime
-		return true
-	}
 
-	float timePassed = currentTime - file.notifyingPlayerObitTimes[ player ]
-	file.notifyingPlayerObitTimes[ player ] = currentTime
-	return( timePassed > CRAFTING_OBIT_DEBOUNCE_PERIOD )
-}
 
-#endif // SERVER
 
-#if DEVELOPER
-#if SERVER
-void function DEV_PrintUsedHarvesters()
-{
-	DEV_Crafting_Print( "----- Used Harvesters:"  )
-	foreach( entity player in GetPlayerArray_AliveConnected() )
-	{
-		DEV_Crafting_Print( format( "	- Player: %s", string( player )))
-		foreach( entity harvester in file.harvesterArray )
-		{
-			if ( PlayerHasUsedHarvester( player, harvester ) )
-			{
-				DEV_Crafting_Print( format( "	--- used Harvester: %s ", string( harvester )))
-			}
-		}
-	}
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if DEV
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void function DEV_Crafting_PrintsOn( bool isOn = true )
 {
@@ -5133,7 +5131,7 @@ void function DEV_Crafting_Print( string printThis )
 	}
 }
 
-#endif // DEVELOPER
+#endif
 
 
 
@@ -5147,7 +5145,7 @@ bool function Crafting_Workbench_IsNotBusy( entity player, entity ent, int useFl
 
 	if( Crafting_CraftersDisabledInDeathField() )
 	{
-		if ( DeathField_PointDistanceFromFrontierForIndex( ent.GetOrigin(), player.DeathFieldIndex() ) <= 0 )
+		if ( DeathField_PointDistanceFromFrontier( ent.GetOrigin(), player.DeathFieldIndex() ) <= 0 )
 		{
 			return false
 		}
@@ -5230,38 +5228,38 @@ CraftingCategory ornull function GetCategoryForIndex( int index )
 }
 
 
-#if SERVER
-void function Crafting_PingNearestWorkbench( entity player, vector origin )
-{
-	entity workbench = GetClosestValidWorkbench( player, origin )
-
-	if ( IsValid( workbench ) )
-	{
-		entity wp = CreateWaypoint_Ping_Location( player, ePingType.PING_REPLICATOR, workbench, workbench.GetOrigin(), -1, true )
-		wp.SetAbsOrigin( workbench.GetOrigin() + <0, 0, 35> )
-		wp.SetParent( workbench )
-	}
-}
-
-entity function GetClosestValidWorkbench( entity player, vector origin )
-{
-	array<entity> workbenches               = clone file.workbenchClusterArray
-	if( workbenches.len() <= 0 )
-		return null
-
-	array<ArrayDistanceEntry> allResults = ArrayDistanceResults( workbenches, origin )
-	allResults.sort( DistanceCompareClosest )
-
-	//TODO: Add logic similar to GetClosestValidStation() from sh_respawn_beacon.nut for better determining which is the best, closest, safest valid work bench. That logic checks for things like ring threat and estimated time for a player to travel to the station.
-	//For the time being, just going to grab whatever is the closest
-
-	return allResults[0].ent
-}
-#endif
 
 
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function MarkNextStepForPlayer( entity markedEnt )
 {
 	thread NextStepMarkerThread( markedEnt )
@@ -5324,8 +5322,8 @@ void function Crafting_ShowCraftingMapFeature()
 	string mapName = GetMapName()
 	bool showMapFeature = true
 
-	//hide the Crafting Map Feature on Storm Point because we don't have enough space for Crafting. Other maps do have space however.
-	//TODO: Refactor when a better system for managing too many enumerated map features is developed.
+	
+	
 	if(  mapName.find( "mp_rr_tropic_island" ) >= 0 )
 		showMapFeature = false
 
@@ -5422,7 +5420,7 @@ void function Crafting_OnLoseFocus( entity ent )
 		CustomUsePrompt_ClearForEntity( ent )
 }
 
-#if DEVELOPER
+#if DEV
 void function DEV_Crafting_TogglePreMatchRotation()
 {
 	if ( file.DEV_testingRotationRui )
@@ -5457,7 +5455,7 @@ void function DEV_Crafting_PrintUsedHarvesterEHIs()
 	}
 }
 
-#endif //DEVELOPER
+#endif
 
 void function OnWaitingForPlayers_Client()
 {
@@ -5466,7 +5464,7 @@ void function OnWaitingForPlayers_Client()
 
 	if ( file.gameStartRui.len() != 0 )
 		Warning( "CRAFTING: OnWaitingForPlayers_Client() in sh_crafting.nut is being triggering multiple times - Code should investigate" )
-	//This flag set is jank, remove this when we understand why this is hitting multiple times
+	
 	if ( file.gameStartRuiCreated )
 		return
 
@@ -5480,8 +5478,8 @@ void function OnWaitingForPlayers_Client()
 		{
 			var rui = SetupWorkbenchPreview( file.gameStartRui[0], i , "rotation" + i, false )
 			file.gameStartRui.append( rui )
-			//if ( i == 1 || i == 3 || i == 5)
-			//RuiSetBool( rui, "shouldDisplayRotation", true )
+			
+			
 		}
 	}
 
@@ -5502,18 +5500,18 @@ void function GameStart_CleanupThread()
 		}
 	)
 
-	#if DEVELOPER
+#if DEV
 	while ( file.DEV_testingRotationRui )
 	{
 		WaitFrame()
 	}
-	#endif
+#endif
 	while ( GetGameState() == eGameState.WaitingForPlayers )
 	{
 		WaitFrame()
 	}
 
-	//end thread and cleanup when gamestate is no longer waiting for players
+	
 }
 
 
@@ -5525,7 +5523,7 @@ void function UICallback_PopulateCraftingPanel( var button )
 	var rui = Hud_GetRui( button )
 	if ( rui == null )
 		return
-	//only setup first 4 categories
+	
 	for ( int i = 0; i < 6; i++ )
 	{
 		var nestedRui = SetupWorkbenchPreview( rui, i , "rotation" + i, false )
@@ -5615,7 +5613,7 @@ void function OnGameStartedPlaying_Client()
 	if ( !Crafting_IsDispenserCraftingEnabled() )
 	{
 		file.fullmapRui.append( RuiCreate( $"ui/crafting_fullmap.rpak", clGlobal.topoFullscreenFullMap, FULLMAP_RUI_DRAW_LAYER, 20 ) )
-		RuiTrackInt( file.fullmapRui[0], "craftingMaterials", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "craftingMaterials" ) )
+		RuiTrackInt( file.fullmapRui[0], "craftingMaterials", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "craftingMaterials" ) )
 
 		for ( int i = 0; i < 6; i++ )
 		{
@@ -5633,54 +5631,54 @@ void function OnGameStartedPlaying_Client()
 		file.fullmapInitialized = true
 	}
 
-	#if DEVELOPER
+#if DEV
 	DEV_Crafting_Print( format( "CLIENT: Player Started Playing: %s", string( GetLocalViewPlayer() ) ) )
-	#endif // DEVELOPER
+#endif
 
-	//thread NotificationThread()
+	
 }
 
-//todo: Refactor notifications to display when player can craft something new
-/*void function NotificationThread()
-{
-	FlagWaitClear( "CraftingNotificationLive" )
-	FlagSet( "CraftingNotificationLive" )
 
-	wait 3
 
-	float displayTime = 20
-	file.exclusivityNotification.append( CreatePermanentCockpitPostFXRui( $"ui/crafting_notification.rpak" ) )
-	RuiSetGameTime( file.exclusivityNotification[0], "startTime", Time() )
-	RuiSetGameTime( file.exclusivityNotification[0], "endTime", Time() + displayTime )
 
-	int exclusiveCounter = 0
-	array<string> leftOverDisabledItems = clone file.disabledGroundLoot
-	foreach( item in file.disabledGroundLoot )
-	{
-		foreach ( group in file.craftingDataArray )
-		{
-			if ( group.itemsInCategory.contains( item ) || group.upgradesInCategory.contains( item ) )
-			{
-				SetupWorkbenchPreview( file.exclusivityNotification[0], -1, "exclusive" + exclusiveCounter, false, true, item )
-				exclusiveCounter++
-				leftOverDisabledItems.fastremovebyvalue( item )
-				printf( "CRAFTING: Removing " + item + " from leftover disabled list" )
-			}
-		}
-	}
 
-	for( int i = 0; i<leftOverDisabledItems.len(); i++ )
-	{
-		SetupWorkbenchPreview( file.exclusivityNotification[0], -1, "disabled" + i, false, true, leftOverDisabledItems[i] )
-		printf( "CRAFTING: Adding " + leftOverDisabledItems[i] + " to disabeld list" )
-	}
 
-	wait displayTime
 
-	thread DeleteNotificationThread()
-}*/
 
-void function OnPlayerMatchStateChanged( entity player, int newState, int oldState )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void function OnPlayerMatchStateChanged( entity player, int newState )
 {
 	if ( player != GetLocalViewPlayer() )
 		return
@@ -5691,24 +5689,24 @@ void function OnPlayerMatchStateChanged( entity player, int newState, int oldSta
 	}
 }
 
-/*void function DeleteNotificationThread()
-{
-	if ( file.exclusivityNotification.len() == 0 )
-		return
 
-	RuiSetGameTime( file.exclusivityNotification[0], "endTime", Time() )
-	wait 1
 
-	if ( file.exclusivityNotification.len() > 0)
-	{
-		foreach( rui in file.exclusivityNotification )
-			RuiDestroyIfAlive( rui )
-	}
 
-	file.exclusivityNotification.clear()
 
-	FlagClear( "CraftingNotificationLive" )
-}*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 vector function GetCraftingColor()
 {
@@ -5721,7 +5719,7 @@ vector function GetCraftingColor()
 }
 
 
-///////////////// WORKBENCH RUI //////////////
+
 void function Crafting_Workbench_OpenCraftingMenu( entity workbench )
 {
 	file.playerIsCrafting = true
@@ -5739,7 +5737,7 @@ void function Crafting_Workbench_OpenCraftingMenu( entity workbench )
 
 	file.craftingItems_ClientList.clear()
 
-	PushLockFOV()
+	PushLockFOV(0.2)
 	UpgradeSelectionMenu_TryClose()
 	CommsMenu_OpenMenuTo( GetLocalViewPlayer(), eChatPage.CRAFTING, eCommsMenuStyle.CRAFTING, false )
 
@@ -5757,7 +5755,7 @@ void function Crafting_Workbench_OpenCraftingMenuAsSpectator( entity workbench )
 	CommsMenu_Shutdown( false )
 	file.craftingItems_ClientList.clear()
 
-	PushLockFOV()
+	PushLockFOV(0.2)
 	UpgradeSelectionMenu_TryClose()
 	CommsMenu_OpenMenuTo( GetLocalViewPlayer(), eChatPage.CRAFTING, eCommsMenuStyle.CRAFTING, false )
 }
@@ -5828,7 +5826,7 @@ bool function Crafting_OnMenuItemSelected( int index, var menuRui )
 
 				canBuy = false
 			}
-			// TODO: else figure out evoTier and send it to the obit.
+			
 		}
 
 		else if (  item.category == "banner" )
@@ -5853,7 +5851,7 @@ bool function Crafting_OnMenuItemSelected( int index, var menuRui )
 
 	bool canAfford = Crafting_GetPlayerCraftingMaterials( player ) >= cost
 
-	//only craft if available and in budget
+	
 	if (canBuy && canAfford)
 	{
 		Remote_ServerCallFunction( "ClientCallback_InitializeCraftingAtWorkbench", index )
@@ -5866,7 +5864,7 @@ bool function Crafting_OnMenuItemSelected( int index, var menuRui )
 		RuiSetGameTime( bundle.attachedRui[index], "invalidSelectionTime", Time() )
 		RuiSetGameTime( menuRui, "invalidSelectionTime", Time() )
 
-		// Notify "<Name> needs $$ for crafting" to team if player can't afford.
+		
 		if( file.crafting_obit_notify )
 		{
 			int materialsNeeded = cost - Crafting_GetPlayerCraftingMaterials( player )
@@ -5932,7 +5930,7 @@ void function Crafting_OnWorkbenchMenuClosed( bool instant )
 	{
 		Remote_ServerCallFunction( "ClientCallback_ClosedCraftingMenu" )
 	}
-	PopLockFOV()
+	PopLockFOV( instant ? 0.0 : 0.1 )
 
 	file.playerIsCrafting = false
 	file.craftingItems_ClientList.clear()
@@ -6002,8 +6000,8 @@ void function SetupProgressWaypoint_Internal( entity waypoint )
 	RuiSetBool( waypoint.wp.ruiHud, "reverseProgress", false )
 	RuiSetBool( waypoint.wp.ruiHud, "iconColorOverride", true )
 	RuiSetFloat3( waypoint.wp.ruiHud, "iconColor", Crafting_GetWaypointColor( waypoint ) )
-	//RuiSetImage( waypoint.wp.ruiHud, "fillBackgroundImage", $"rui/hud/gametype_icons/obj_background_capturepoint" )
-	//RuiSetImage( waypoint.wp.ruiHud, "fillImage", $"rui/hud/gametype_icons/obj_background_capturepoint_fill" )
+	RuiSetImage( waypoint.wp.ruiHud, "fillBackgroundImage", $"rui/hud/gametype_icons/obj_background_capturepoint" )
+	RuiSetImage( waypoint.wp.ruiHud, "fillImage", $"rui/hud/gametype_icons/obj_background_capturepoint_fill" )
 
 	RuiTrackGameTime( waypoint.wp.ruiHud, "captureEndTime", waypoint, RUI_TRACK_WAYPOINT_GAMETIME, RUI_TRACK_INDEX_CAPTURE_END_TIME )
 	RuiTrackFloat( waypoint.wp.ruiHud, "captureTimeRequired", waypoint, RUI_TRACK_WAYPOINT_FLOAT, RUI_TRACK_INDEX_REQUIRED_TIME )
@@ -6047,7 +6045,7 @@ vector function Crafting_GetWaypointColor( entity waypoint, bool isVFX = false )
 {
 	switch( waypoint.GetWaypointInt( 6 ) )
 	{
-		case 1: //banners
+		case 1: 
 			return SrgbToLinear( GetKeyColor( COLORID_HUD_HEAL_COLOR ) / 255.0 )
 			break
 		case 0:
@@ -6282,9 +6280,9 @@ void function Crafting_PopulateItemRuiAtIndex( var rui, int index )
 	bool canAfford = Crafting_GetPlayerCraftingMaterials( GetLocalViewPlayer() ) >= cost
 	RuiSetBool( rui, "isEnabled", canBuy && canAfford )
 
-	// Set Crafting 2.0 style
-	//if ( Crafting_IsDispenserCraftingEnabled() )
-	//	RuiSetBool( rui, "isCrafting2pt0", true )
+	
+	if ( Crafting_IsDispenserCraftingEnabled() )
+		RuiSetBool( rui, "isCrafting2pt0", true )
 
 	CraftingBundle bundle = GetBundleForCategory( item )
 	bundle.attachedRui[index] <- rui
@@ -6292,12 +6290,12 @@ void function Crafting_PopulateItemRuiAtIndex( var rui, int index )
 	Add_CraftingItem_To_ClientList( index, rui, cost, canBuy, canAfford )
 }
 
-// Save out item info to client list so availability can be updated when Materials are added:
+
 void function Add_CraftingItem_To_ClientList( int index, var rui, int cost, bool canBuy, bool canAfford )
 {
 	int playerMaterials = Crafting_GetPlayerCraftingMaterials( GetLocalViewPlayer() )
 
-	// If the item is already in the list, then just update it.
+	
 	foreach( itemInfo in file.craftingItems_ClientList )
 	{
 		if( itemInfo.index == index )
@@ -6320,7 +6318,7 @@ void function Add_CraftingItem_To_ClientList( int index, var rui, int cost, bool
 	file.craftingItems_ClientList.append( newItem )
 }
 
-// Go through crafting items list and update their availability in the Crafting Menu.
+
 void function Update_CraftingItems_Availabilities()
 {
 	int playerMaterials = Crafting_GetPlayerCraftingMaterials( GetLocalViewPlayer() )
@@ -6330,7 +6328,7 @@ void function Update_CraftingItems_Availabilities()
 		if( IsValid( item.rui ) )
 		{
 			bool newCanAfford = playerMaterials >= item.cost
-			// TODO: UI Improvements- Look at itemInfo.canAfford vs newCanAfford to trigger item flourish if newly affordable.
+			
 
 			item.canAfford = newCanAfford
 			RuiSetBool( item.rui, "isEnabled", item.canBuy && item.canAfford )
@@ -6347,7 +6345,7 @@ void function ServertoClientCallback_SetDispenserData( entity player, entity ben
 	dispensorData.workbench = bench
 	if ( isBanner && ( Perks_GetRoleForPlayer( player ) == eCharacterClassRole.SUPPORT ) && Crafting_DispenserFreeSupportBanner() )
 	{
-		//dooooooo nothing - there is a pretty way to do this i'm sure
+		
 	}
 	else if ( !hasUsed )
 	{
@@ -6425,7 +6423,7 @@ void function PlayClientSideWorkbenchHologramFX( entity workbench )
 	if ( !IsValid( workbench ) )
 		return
 
-	workbench.Signal( "OnNewHoloStartPlaying" ) //Stop any existing before starting a new one. Preventing overlapping Holo FX
+	workbench.Signal( "OnNewHoloStartPlaying" ) 
 
 	workbench.EndSignal( "OnDestroy" )
 	workbench.EndSignal ( "OnPlayerUsedDispenser" )
@@ -6452,7 +6450,6 @@ bool function Crafting_IsPlayerCrafting()
 {
 	return file.playerIsCrafting
 }
-#endif // CLIENT
 
 
 
@@ -6795,7 +6792,8 @@ bool function Crafting_IsPlayerCrafting()
 
 
 
-#if CLIENT
+
+
 entity function GetCrafterUnderAim( vector worldPos, float worldRange )
 {
 	float closestDistSqr        = FLT_MAX
@@ -6851,41 +6849,42 @@ bool function PingCrafterUnderAim( entity crafter )
 
 	return true
 }
-#endif
 
-#if SERVER
-void function Crafting_ClientToServer_PingCrafterFromMap( entity player, entity crafter )
-{
-	if ( IsValid( player ) && IsValid( crafter ) )
-	{
-		if ( Crafting_IsDispenserCraftingEnabled() )
-		{
-			int pingType
-			int notifyType = Dispensers_GetReplicatorStateForPlayer( player, crafter )
-			switch( notifyType )
-			{
-				case eCrafting_Dispenser_StateType.NO_ONE_HAS_USED:
-					pingType = ePingType.PING_REPLICATOR_NOONE_USED
-					break
-				case eCrafting_Dispenser_StateType.ALL_USED:
-					pingType = ePingType.PING_REPLICATOR_ALL_USED
-					break
-				case eCrafting_Dispenser_StateType.PLAYER_HAS_USED:
-					pingType = ePingType.PING_REPLICATOR_PLAYER_USED
-					break
-				case eCrafting_Dispenser_StateType.TEAMMATE_HAS_USED:
-					pingType = ePingType.PING_REPLICATOR_TEAMMATE_USED
-					break
-				default:
-					pingType = ePingType.PING_REPLICATOR
-					break
-			}
-			CreateWaypoint_Ping_Location( player, pingType, crafter, crafter.GetOrigin() + <0, 0, 50>, -1, false )
-		}
-		else
-		{
-			CreateWaypoint_Ping_Location( player, ePingType.PING_REPLICATOR, crafter, crafter.GetOrigin() + <0, 0, 50>, -1, false )
-		}
-	}
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

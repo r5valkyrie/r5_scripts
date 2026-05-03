@@ -1,18 +1,18 @@
-//
 
-#if SERVER || CLIENT || UI
+
+
 global function ShQuickchat_Init
-#endif
 
 
-#if SERVER || CLIENT
+
+
 global function AddCallback_OnQuickchatEvent
 global function PlayerDeliveryShouldBeUrgent
 global function PlayerIsInCombat
-#endif
 
 
-#if CLIENT
+
+
 global function Quickchat
 global function HandleBroadcastCommsAction
 global function ServerToClient_BroadcastCommsActionToTeam
@@ -28,25 +28,25 @@ global function SetCommsDialogueEnabled
 global function PlaySoundForCommsAction
 
 global function ClientCodeCallback_GetPlayerThreatLevel
-#endif
 
 
-#if SERVER
-global function BroadcastCommsActionToTeam
-global function QuickChat_RegisterDisabledCommsActions
-global function ClientCallback_Quickchat
-global function ClientCallback_QuickchatSubject_Player
-global function ClientCallback_Quickchat_UI
-#endif
 
 
-#if DEVELOPER && (SERVER || CLIENT || UI)
+
+
+
+
+
+
+
+
+#if DEV
 global function DEV_ReloadCommsTable
 const bool DEBUG_PLAYER_IS_IN_COMBAT = false
 #endif
 
 
-#if SERVER || UI || CLIENT
+
 global enum eCommsFlags
 {
 	NONE = 0,
@@ -60,10 +60,10 @@ global enum eCommsFlags
 
 	_flagCount = 6
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+
 global struct CommsAction
 {
 	int index
@@ -87,10 +87,10 @@ global struct CommsAction
 
 	bool hasForcedTempVoice
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+
 global struct CommsOptions
 {
 	bool isFirstPerson
@@ -98,33 +98,33 @@ global struct CommsOptions
 	bool isUrgent
 	bool pauseQueue
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+
 struct
 {
 	bool                    quickchatInitialized = false
 	table<int, CommsAction> actions
-	#if CLIENT
+
 		bool  commsDialogueEnabled = true
-		float flavorDebounceTime = 120.0 //time before repeating the same line
-		float flavorGlobalDebounceTime = 30.0 //time before saying any line
+		float flavorDebounceTime = 120.0 
+		float flavorGlobalDebounceTime = 30.0 
 		array<int> alwaysPlayFlavorActions = [ eCommsAction.FLAVOR_LOOT_DIBS ]
 		table< int, int > replyMap
 		table< int, int > altMap
-	#endif // CLIENT
+
 	table< int, array<void functionref( entity player, int eventId, entity subjectEnt )> >    onQuickchatCallbacks
 
-	#if SERVER
-		array<int> disabledCommsActions
-	#endif
+
+
+
 } file
-#endif
 
 
-#if SERVER || CLIENT || UI
-void function LoadCommsActionsFromDataTable()
+
+
+void function LoadCommsActionsFromDatatable()
 {
 	var dt = GetDataTable( $"datatable/comms_actions.rpak" )
 
@@ -152,7 +152,7 @@ void function LoadCommsActionsFromDataTable()
 		if ( pingAsset != $"" )
 			RegisterItemFlavorFromSettingsAsset( pingAsset )
 
-		#if SERVER || CLIENT
+
 			int commsAction = eCommsAction[commsActionName]
 
 			CommsAction action
@@ -174,105 +174,105 @@ void function LoadCommsActionsFromDataTable()
 
 			file.actions[commsAction] <- action
 
-		#endif
+
 	}
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 void function ShQuickchat_Init()
 {
-	AddCallback_RegisterRootItemFlavors( LoadCommsActionsFromDataTable )
+	AddCallback_RegisterRootItemFlavors( LoadCommsActionsFromDatatable )
 
-	#if SERVER
-		InitDisabledCommActionsFromPlaylist()
-	#endif
 
-	#if SERVER || CLIENT
+
+
+
+
 		Remote_RegisterServerFunction( "ClientCallback_Quickchat_UI", "int", 0, eCommsAction._count, "int", 0, 1 << eCommsFlags._flagCount, "int", 0, eEquipmentSlotType.COUNT  )
 		Remote_RegisterServerFunction( "ClientCallback_Quickchat", "int", 0, eCommsAction._count, "int", 0, 1 << eCommsFlags._flagCount )
 		Remote_RegisterServerFunction( "ClientCallback_QuickchatSubject_Player", "int", 0, eCommsAction._count, "int", 0, 1 << eCommsFlags._flagCount, "typed_entity", "player" )
 
-		// Quickchat
+		
 		var dt = GetDataTable( LOOT_DATATABLE )
 		int numRows = GetDataTableRowCount( dt )
 
 		Remote_RegisterClientFunction( "ServerToClient_BroadcastCommsActionToTeam", "entity", "int", 0, eCommsAction._count, "int", 0, (1 << eCommsFlags._flagCount), "int", -1, INT_MAX,"int", 0, eCommsAction._count, "entity", "vector", -32000.0, 32000.0, 32, "int", -1, numRows, "int", 0, INVALID_SOUND_SELECTOR )
 		Remote_RegisterClientFunction( "ServerToClient_BroadcastSubjectlessCommsActionToTeam", "entity", "int", 0, eCommsAction._count, "int", 0, (1 << eCommsFlags._flagCount), "int", -1, INT_MAX,"int", 0, eCommsAction._count, "vector", -32000.0, 32000.0, 32, "int", -1, numRows, "int", 0, INVALID_SOUND_SELECTOR )
 		Remote_RegisterClientFunction( "ServerCallback_BroadcastPlayerKicked", "int", 1, 129,  "bool" )
-	#endif // SERVER
 
-	#if CLIENT
+
+
 		file.flavorDebounceTime = GetCurrentPlaylistVarFloat( "comms_actions_flavor_debounce_time", 150.0 )
 		file.flavorGlobalDebounceTime = GetCurrentPlaylistVarFloat( "comms_actions_flavor_global_debounce_time", 90.0 )
 
 		file.replyMap[ eCommsAction.REPLY_THANKS ] <- eCommsAction.REPLY_WELCOME
 		file.replyMap[ eCommsAction.REPLY_REVIVE_THANKS ] <- eCommsAction.REPLY_REVIVE_WELCOME
 
-		                               
+
 			file.replyMap[eCommsAction.REPLY_LOVE_YOU] <- eCommsAction.REPLY_LOVE_YOU_MORE
 			file.replyMap[eCommsAction.REPLY_LOVE_YOU_MORE] <- eCommsAction.REPLY_NO_I_LOVE_YOU_MORE
 			file.replyMap[eCommsAction.REPLY_NO_I_LOVE_YOU_MORE] <- eCommsAction.REPLY_NO_I_LOVE_YOU_MORE
 
-			//Adding to alt map as well, otherwise crash R5DEV-387463
+			
 			file.altMap[eCommsAction.REPLY_LOVE_YOU] <- eCommsAction.REPLY_LOVE_YOU
 			file.altMap[eCommsAction.REPLY_LOVE_YOU_MORE] <- eCommsAction.REPLY_LOVE_YOU_MORE
 			file.altMap[eCommsAction.REPLY_NO_I_LOVE_YOU_MORE] <- eCommsAction.REPLY_NO_I_LOVE_YOU_MORE
-        
+
 
 		file.altMap[ eCommsAction.REPLY_WELCOME ] <- eCommsAction.REPLY_WELCOME_ALT
 		file.altMap[ eCommsAction.REPLY_REVIVE_WELCOME ] <- eCommsAction.REPLY_REVIVE_WELCOME_ALT
 
-                    
-                                                                         
-                                                                        
-        
-	#endif
 
-	#if SERVER
-		                               
-			AddCallback_OnQuickchatEvent( eCommsAction.REPLY_LOVE_YOU, OnPlayerSaysThanks )
-        
-		AddCallback_OnQuickchatEvent( eCommsAction.REPLY_THANKS, OnPlayerSaysThanks )
-		AddCallback_OnQuickchatEvent( eCommsAction.REPLY_REVIVE_THANKS, OnPlayerSaysThanks )
-		AddCallback_OnQuickchatEvent( eCommsAction.PROMPT_THANKS_RESPAWN, OnPlayerSaysThanks )
-	#endif
 
-	#if SERVER || CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 		file.quickchatInitialized = true
-	#endif
+
 }
-#endif
 
-#if SERVER
-void function InitDisabledCommActionsFromPlaylist()
-{
-	string disabledCommActionsString = GetCurrentPlaylistVarString( "disabledCommActionList", "" )
-	array<string> disabledCommActionsListString = split( disabledCommActionsString, WHITESPACE_CHARACTERS )
 
-	array<int> disabledCommActionsList
-	foreach( disabledCommsAction in disabledCommActionsListString )
-	{
-		disabledCommActionsList.append( int(  disabledCommsAction )  )
-	}
 
-	QuickChat_RegisterDisabledCommsActions( disabledCommActionsList  )
-}
-#endif
 
-#if DEVELOPER && (SERVER || CLIENT || UI)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if DEV
 void function DEV_ReloadCommsTable()
 {
-	#if SERVER || CLIENT
+
 		file.actions.clear()
-	#endif
-	LoadCommsActionsFromDataTable()
+
+	LoadCommsActionsFromDatatable()
 }
 #endif
 
 
-#if CLIENT
+
 void function Quickchat( int index, entity subject )
 {
 	if ( !file.quickchatInitialized )
@@ -286,16 +286,16 @@ void function QuickchatInternal( int index, int commsFlags, entity subject )
 	if ( !file.quickchatInitialized )
 		return
 
-	// If you need this function for a non player entity, please make a new ClientCallback_QuickchatSubject RPC for that specific entity type!
+	
 	if ( IsValid( subject ) && subject.IsPlayer() )
 		Remote_ServerCallFunction( "ClientCallback_QuickchatSubject_Player", index, commsFlags, subject )
 	else
 		Remote_ServerCallFunction( "ClientCallback_Quickchat", index, commsFlags )
 }
-#endif
 
 
-#if CLIENT
+
+
 vector function GetChatTitleColorForPlayer( entity player )
 {
 	entity localPlayer = GetLocalClientPlayer()
@@ -319,10 +319,10 @@ vector function GetChatTitleColorForPlayer( entity player )
 
 	return OBITUARY_COLOR_ENEMY
 }
-#endif
 
 
-#if CLIENT
+
+
 table< entity, table<int, float> > s_playerToActionTimesMap
 void function SetPlayerLastSaid( entity player, int actionIndex )
 {
@@ -334,10 +334,10 @@ void function SetPlayerLastSaid( entity player, int actionIndex )
 	s_playerToActionTimesMap[player][actionIndex] = Time()
 	SetTeamLastSaid( player.GetTeam(), actionIndex )
 }
-#endif
 
 
-#if CLIENT
+
+
 float function GetPlayerLastSaid( entity player, int actionIndex )
 {
 	float baseline = 0.0
@@ -350,9 +350,9 @@ float function GetPlayerLastSaid( entity player, int actionIndex )
 	float result = (Time() - baseline)
 	return result
 }
-#endif
 
-#if CLIENT
+
+
 table< int, table<int, float> > s_teamToActionTimesMap
 void function SetTeamLastSaid( int team, int actionIndex )
 {
@@ -363,10 +363,10 @@ void function SetTeamLastSaid( int team, int actionIndex )
 
 	s_teamToActionTimesMap[team][actionIndex] = Time()
 }
-#endif
 
 
-#if CLIENT
+
+
 float function GetTeamLastSaid( int team, int actionIndex )
 {
 	float baseline = 0.0
@@ -379,9 +379,9 @@ float function GetTeamLastSaid( int team, int actionIndex )
 	float result = (Time() - baseline)
 	return result
 }
-#endif
 
-#if CLIENT
+
+
 array<string> function GetSubjectNamesForCommsAction( int commsAction, entity subjectEnt, string itemRef )
 {
 	if ( !IsValid( subjectEnt ) )
@@ -392,12 +392,12 @@ array<string> function GetSubjectNamesForCommsAction( int commsAction, entity su
 			return [""]
 	}
 
-	                   
+
 	if( ( commsAction == eCommsAction.REPLY_CAREPACKAGE_INSIGHT || commsAction == eCommsAction.REPLY_CAREPACKAGE_INSIGHT_LOOTED ) && itemRef != "" )
 	{
 		return [SURVIVAL_Loot_GetLootDataByRef( itemRef ).pickupString]
 	}
-       
+
 
 	if ( subjectEnt.IsPlayer() )
 		return [subjectEnt.GetPlayerName()]
@@ -454,12 +454,12 @@ array<string> function GetSubjectNamesForCommsAction( int commsAction, entity su
 		{
 			return [Localize( "#NPC_LOOT_TICK_UI_TITLE" )]
 		}
-		                    
+
 		else if ( commsAction == eCommsAction.PING_NPC_LOOT_TICK_GH )
 		{
 			return [Localize( "#NPC_LOOT_TICK_UI_TITLE_GH" )]
 		}
-        
+
 		else if ( commsAction == eCommsAction.PING_ENEMY_NPC_PROWLER )
 		{
 			return [Localize( "#NPC_PROWLER_UI_TITLE" )]
@@ -489,13 +489,13 @@ array<string> function GetSubjectNamesForCommsAction( int commsAction, entity su
 		return [Localize( "#LOOT_ROLLER_UI_TITLE" )]
 	}
 
-                         
-                                                                                                     
-  
-                                     
-  
-       
-	              
+
+
+
+
+
+
+
 		if ( IsVaultPanel( subjectEnt ) )
 		{
 			UniqueVaultData vaultData = GetUniqueVaultData( subjectEnt )
@@ -505,23 +505,23 @@ array<string> function GetSubjectNamesForCommsAction( int commsAction, entity su
 				return [Localize( vaultData.vaultUITitleString )]
 			}
 		}
-		                  
+
 		else if ( IsVaultDoor( subjectEnt ) )
 		{
 			if ( commsAction == eCommsAction.PING_SHIP_VAULT || commsAction == eCommsAction.PING_SHIP_VAULT_HAS_KEY_SQUAD || commsAction == eCommsAction.PING_SHIP_VAULT_HAS_KEY_SELF )
 				return [Localize( "#SHIP_VAULT_UI_TITLE" )]
 		}
-                          
-       
 
-                                             
+
+
+
 	bool halloweenMode = false
-                  
-                                                                                     
-       
-	                            
+
+
+
+
 		halloweenMode = halloweenMode || GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY )
-       
+
 	if ( halloweenMode )
 	{
 		if ( commsAction == eCommsAction.PING_LOOT_CREEP_INFECTED )
@@ -533,7 +533,7 @@ array<string> function GetSubjectNamesForCommsAction( int commsAction, entity su
 			return [Localize( "#LOOT_CREEP_SPIDER_UI_TITLE" )]
 		}
 	}
-      
+
 
 	if ( CaptureObjectivePing_GetIsCaptureObjectivePingCommsAction( commsAction, subjectEnt ) )
 	{
@@ -543,10 +543,10 @@ array<string> function GetSubjectNamesForCommsAction( int commsAction, entity su
 
 	return ["<subjectUnk:[" + subjectEnt + "]>"]
 }
-#endif // #if CLIENT
 
 
-#if CLIENT
+
+
 vector function GetSubjectColorForCommsAction( entity subjectEnt, string itemRef, entity player )
 {
 	const vector DEFAULT_RESULT = <255, 255, 255>
@@ -568,7 +568,7 @@ vector function GetSubjectColorForCommsAction( entity subjectEnt, string itemRef
 		case "weaponx":
 			return BURN_COLOR
 
-                        
+
 		case PLAYER_WAYPOINT_CLASSNAME:
 			if ( GameMode_IsActive( eGameModes.CONTROL ) && subjectEnt.GetWaypointType() == eWaypoint.CONTROL_OBJECTIVE )
 			{
@@ -586,7 +586,7 @@ vector function GetSubjectColorForCommsAction( entity subjectEnt, string itemRef
 				}
 			}
 			break
-      
+
 
 		case "prop_script":
 			if ( IsEnemyTeam( player.GetTeam(), subjectEnt.GetTeam() ) )
@@ -606,7 +606,7 @@ vector function GetSubjectColorForCommsAction( entity subjectEnt, string itemRef
 		if ( IsValid( bossPlayer ) )
 			return GetChatTitleColorForPlayer( bossPlayer )
 	}
-	
+
 	if( IsValid( GetHealDroneForHitEnt( subjectEnt ) ) )
 	{
 		return GetChatTitleColorForPlayer( player )
@@ -615,7 +615,7 @@ vector function GetSubjectColorForCommsAction( entity subjectEnt, string itemRef
 	return DEFAULT_RESULT
 }
 
-// Only used in special situations, shouldn't have to tune anything here unless you want a third color style supported in the message
+
 vector function GetSecondarySubjectColorForCommsAction( entity subjectEnt, entity player )
 {
 	const vector DEFAULT_RESULT = <255, 255, 255>
@@ -628,7 +628,7 @@ vector function GetSecondarySubjectColorForCommsAction( entity subjectEnt, entit
 
 	switch ( subjectEnt.GetNetworkedClassName() )
 	{
-                        
+
 		case PLAYER_WAYPOINT_CLASSNAME:
 			if ( GameMode_IsActive( eGameModes.CONTROL ) && subjectEnt.GetWaypointType() == eWaypoint.CONTROL_OBJECTIVE )
 			{
@@ -646,15 +646,15 @@ vector function GetSecondarySubjectColorForCommsAction( entity subjectEnt, entit
 				}
 			}
 			break
-      
+
 	}
 
 	return DEFAULT_RESULT
 }
-#endif // #if CLIENT
 
 
-#if CLIENT
+
+
 string function GetSubjectLootTierForCommsAction( entity subjectEnt, string itemRef )
 {
 	int tier = 0
@@ -664,8 +664,8 @@ string function GetSubjectLootTierForCommsAction( entity subjectEnt, string item
 
 	if ( !IsValid( subjectEnt ) || subjectEnt.GetNetworkedClassName() != "prop_survival" )
 	{
-		//Hack that steals the tier field to report who has a vault key
-		              
+		
+
 			if ( IsVaultDoor( subjectEnt ) || IsVaultPanel( subjectEnt ) )
 			{
 				entity playerWithKey = VaultPanel_GetTeammateWithKey( GetLocalClientPlayer().GetTeam() )
@@ -675,7 +675,7 @@ string function GetSubjectLootTierForCommsAction( entity subjectEnt, string item
 				if ( playerWithKeyName != "" )
 					return playerWithKeyName
 			}
-        
+
 
 		return string( tier )
 	}
@@ -683,21 +683,21 @@ string function GetSubjectLootTierForCommsAction( entity subjectEnt, string item
 	LootData data = SURVIVAL_Loot_GetLootDataByIndex( subjectEnt.GetSurvivalInt() )
 	tier = data.tier
 
-	                    
-	// we've got a weird inconsistency with the introduction of upgrades where gold armor was removed so we now have a gap
-	// in armor tiers. gold is technically tier 4, and red is tier 5, but the player doesn't care about that since there are
-	// only 4 tiers of armor. so treat red armor as level 4 so we don't have a weird gap.
+
+	
+	
+	
 	if( UpgradeCore_IsEquipmentArmorCore( data.ref ) && tier == 5 )
 	{
 		tier = 4
 	}
-       
+
 
 	return string( tier )
 }
-#endif
 
-#if CLIENT
+
+
 bool function GetCommsActionIsFar( entity player, entity subjectEnt, vector subjectPos, int commsFlags )
 {
 	const float FAR_DIST_THRESHOLD = 2048.0
@@ -708,14 +708,14 @@ bool function GetCommsActionIsFar( entity player, entity subjectEnt, vector subj
 		return true
 	}
 
-	vector actionPos = subjectPos    // IsValid( subjectEnt ) ? subjectEnt.GetOrigin() : subjectPos
+	vector actionPos = subjectPos    
 	float dist       = Distance( actionPos, player.GetOrigin() )
 	bool result      = (dist > FAR_DIST_THRESHOLD)
 	return result
 }
-#endif
 
-#if SERVER || CLIENT
+
+
 bool function PlayerIsInCombat( entity player )
 {
 	const float TEAMMATE_NEAR_SPOTTED_ENEMY = 2048.0
@@ -727,60 +727,60 @@ bool function PlayerIsInCombat( entity player )
 
 	if ( GetEffectiveDeltaSince( player.GetLastTimeDamagedByOtherPlayer() ) < LAST_DAMAGED_BY_PLAYER_OR_NPC )
 	{
-		#if DEVELOPER
+#if DEV
 		if ( DEBUG_PLAYER_IS_IN_COMBAT )
 			printt( "PlayerIsInCombat: [YES] <- Player was damaged by other player within " + LAST_DAMAGED_BY_PLAYER_OR_NPC + "s" )
-		#endif //DEV
+#endif
 		return true
 	}
 
 	if ( GetEffectiveDeltaSince( player.GetLastTimeDamagedByNPC() ) < LAST_DAMAGED_BY_PLAYER_OR_NPC )
 	{
-		#if DEVELOPER
+#if DEV
 		if ( DEBUG_PLAYER_IS_IN_COMBAT )
 			printt( "PlayerIsInCombat: [YES] <- Player was last damaged by NPC within " + LAST_DAMAGED_BY_PLAYER_OR_NPC + "s" )
-		#endif //DEV
+#endif
 		return true
 	}
 
-	//
+	
 	if ( GetEffectiveDeltaSince( player.GetLastTimeDidDamageToOtherPlayer() ) < LAST_DID_DAMAGE_TO_PLAYER_OR_NPC )
 	{
-		#if DEVELOPER
+#if DEV
 		if ( DEBUG_PLAYER_IS_IN_COMBAT )
 			printt( "PlayerIsInCombat: [YES] <- This player did damage to another player within " + LAST_DID_DAMAGE_TO_PLAYER_OR_NPC + "s" )
-		#endif //DEV
+#endif
 		return true
 	}
 
 	if ( GetEffectiveDeltaSince( player.GetLastTimeDidDamageToNPC() ) < LAST_DID_DAMAGE_TO_PLAYER_OR_NPC )
 	{
-		#if DEVELOPER
+#if DEV
 		if ( DEBUG_PLAYER_IS_IN_COMBAT )
 			printt( "PlayerIsInCombat: [YES] <- This player did damage to NPC within " + LAST_DID_DAMAGE_TO_PLAYER_OR_NPC + "s" )
-		#endif //DEV
+#endif
 		return true
 	}
 
-	//
-#if SERVER
-	if ( Waypoint_AnyEnemySpottedNearPointForPlayer( player.EyePosition(), TEAMMATE_NEAR_SPOTTED_ENEMY, player ) )
-#elseif CLIENT
+	
+
+
+
 	if ( Waypoint_AnyEnemySpottedNearPoint( player.EyePosition(), TEAMMATE_NEAR_SPOTTED_ENEMY ) )
-#endif
+
 	{
-		#if DEVELOPER
+#if DEV
 		if ( DEBUG_PLAYER_IS_IN_COMBAT )
 			printt( "PlayerIsInCombat [YES] <- A teammate is near spotted enemy" )
-		#endif //DEV
+#endif
 		return true
 	}
 
 	return false
 }
-#endif // SERVER || CLIENT
 
-#if SERVER || CLIENT
+
+
 const bool DEBUG_PLAYER_DELIVERY = false
 const float SUBJECT_NEAR_SPOTTED_ENEMY = 1024.0
 
@@ -791,10 +791,10 @@ bool function PlayerDeliveryShouldBeUrgent( entity player, vector subjectPos, in
 
 	if ( IsBitFlagSet( commsFlags, eCommsFlags.FORCE_URGENT ) )
 	{
-		#if DEVELOPER
+#if DEV
 			if ( DEBUG_PLAYER_DELIVERY )
 				printt( "PlayerDeliveryShouldBeUrgent: [YES] <- eCommsFlags.FORCE_URGENT" )
-		#endif //DEV
+#endif
 		return true
 	}
 
@@ -815,56 +815,56 @@ bool function PlayerDeliveryShouldBeUrgent( entity player, vector subjectPos, in
 			return true
 	}
 
-	//
-#if SERVER
-	if ( Waypoint_AnyEnemySpottedNearPointForPlayer( subjectPos, SUBJECT_NEAR_SPOTTED_ENEMY, player ) )
-#elseif CLIENT
+	
+
+
+
 	if ( Waypoint_AnyEnemySpottedNearPoint( subjectPos, SUBJECT_NEAR_SPOTTED_ENEMY ) )
-#endif
+
 	{
-		#if DEVELOPER
+#if DEV
 			if ( DEBUG_PLAYER_DELIVERY )
 				printt( "PlayerDeliveryShouldBeUrgent: [YES] <- Waypoint near spotted enemy" )
-		#endif //DEV
+#endif
 		return true
 	}
 
-	if ( DeathField_IsActiveForIndex( player.DeathFieldIndex() ) )
+	if ( DeathField_IsActive( player.DeathFieldIndex() ) )
 	{
-		const float START_PLAYING_DIST = -30.0        // postive distance is inside safe zone
-		float stormDist = DeathField_PointDistanceFromFrontierForIndex( eyePos, player.DeathFieldIndex() )
+		const float START_PLAYING_DIST = -30.0        
+		float stormDist = DeathField_PointDistanceFromFrontier( eyePos, player.DeathFieldIndex() )
 		if ( stormDist < START_PLAYING_DIST )
 		{
-			#if DEVELOPER
+#if DEV
 				if ( DEBUG_PLAYER_DELIVERY )
 					printt( "PlayerDeliveryShouldBeUrgent: [YES] <- Inside deathfield" )
-			#endif //DEV
+#endif
 			return true
 		}
 	}
 
-	//
+	
 	float stim = StatusEffect_GetSeverity( player, eStatusEffect.stim_visual_effect )
 	if ( stim > 0.001 )
 	{
-		#if DEVELOPER
+#if DEV
 			if ( DEBUG_PLAYER_DELIVERY )
 				printf( "PlayerDeliveryShouldBeUrgent: [YES] <- Stim (%0.2f)", stim )
-		#endif //DEV
+#endif
 		return true
 	}
 
 	return false
 }
-#endif // SERVER || CLIENT
 
-#if CLIENT
+
+
 float function ClientCodeCallback_GetPlayerThreatLevel( entity player )
 {
-	if ( DeathField_IsActiveForIndex( player.DeathFieldIndex() ) )
+	if ( DeathField_IsActive( player.DeathFieldIndex() ) )
 	{
-		const float START_PLAYING_DIST = -30.0        // postive distance is inside safe zone
-		float stormDist = DeathField_PointDistanceFromFrontierForIndex( player.EyePosition(), player.DeathFieldIndex() )
+		const float START_PLAYING_DIST = -30.0        
+		float stormDist = DeathField_PointDistanceFromFrontier( player.EyePosition(), player.DeathFieldIndex() )
 		if ( stormDist < START_PLAYING_DIST )
 		{
 			return 80
@@ -878,9 +878,9 @@ float function ClientCodeCallback_GetPlayerThreatLevel( entity player )
 
 	return 0
 }
-#endif
 
-#if CLIENT
+
+
 float function GetCooldownTimeForCommsAction( int commsAction )
 {
 	switch( commsAction )
@@ -898,34 +898,34 @@ float function GetCooldownTimeForCommsAction( int commsAction )
 		case eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_4:
 		case eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_5:
 			return 0.7
-                         
+
 		case eCommsAction.FIRING_RANGE_TARGET_SPEED_CHANGE:
 			return 0.9
-      
-                   
+
+
 		case eCommsAction.REPLY_CAREPACKAGE_INSIGHT:
 		case eCommsAction.REPLY_CAREPACKAGE_INSIGHT_FUTURE:
 			return 0.5
-      
-                       
-                                                      
-                                                   
-             
-      
+
+
+
+
+
+
 	}
 
 	return 4.0
 }
-#endif
 
 
-#if CLIENT
+
+
 bool function ShouldMuteCommsActionForCooldown( entity player, int commsAction, entity subjectEnt )
 {
-	                               
+
 		if ( commsAction == eCommsAction.REPLY_NO_I_LOVE_YOU_MORE )
 			return false
-       
+
 
 	if ( IsValid( subjectEnt ) && (subjectEnt.GetNetworkedClassName() == "prop_survival") && commsAction != eCommsAction.REPLY_LOOT_DIBS )
 	{
@@ -942,10 +942,10 @@ bool function ShouldMuteCommsActionForCooldown( entity player, int commsAction, 
 
 	bool isEnemyNearbyComm = commsAction == eCommsAction.QUICKCHAT_SKYDIVE_ENEMIES_NEARBY
 
-	                            
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
 			isEnemyNearbyComm = commsAction == eCommsAction.QUICKCHAT_SKYDIVE_ENEMIES_NEARBY || commsAction == eCommsAction.QUICKCHAT_SKYDIVE_REV_NEARBY || commsAction == eCommsAction.QUICKCHAT_SKYDIVE_SKINBAG_NEARBY
-                                   
+
 
 	if ( isEnemyNearbyComm )
 	{
@@ -957,10 +957,10 @@ bool function ShouldMuteCommsActionForCooldown( entity player, int commsAction, 
 
 	return false
 }
-#endif
 
 
-#if CLIENT
+
+
 string function GetNameForCommsAction( int commsAction )
 {
 	foreach ( string key, int val in eCommsAction )
@@ -970,10 +970,10 @@ string function GetNameForCommsAction( int commsAction )
 	}
 	return ""
 }
-#endif
 
 
-#if CLIENT
+
+
 void function ServerToClient_BroadcastSubjectlessCommsActionToTeam( entity player, int commsAction, int commsFlags, int subjectCount, int secondaryCommsAction, vector subjectPos, int itemIndex, int selector )
 {
 	ServerToClient_BroadcastCommsActionToTeam( player, commsAction, commsFlags, subjectCount, secondaryCommsAction, null, subjectPos, itemIndex, selector )
@@ -983,10 +983,10 @@ void function ServerToClient_BroadcastCommsActionToTeam( entity player, int comm
 {
 	HandleBroadcastCommsAction( player, commsAction, subjectEnt, subjectPos, commsFlags, itemIndex, subjectCount, secondaryCommsAction, 0.0, selector )
 }
-#endif
 
 
-#if CLIENT
+
+
 void function HandleBroadcastCommsAction( entity player, int commsAction, entity subjectEnt, vector subjectPos, int commsFlags, int itemIndex, int subjectCount, int secondaryCommsAction, float creationTime = 0.0, int selector = INVALID_SOUND_SELECTOR  )
 {
 	if ( !file.quickchatInitialized )
@@ -1011,21 +1011,21 @@ void function HandleBroadcastCommsAction( entity player, int commsAction, entity
 		itemRef = data.ref
 	}
 
-	                        
-		// ToDo: R5DEV-567005 : Complete refactor to support Capture Objective Pings using Alliances
+
+		
 		bool isControlObjectivePing = false
 		if ( GameMode_IsActive( eGameModes.CONTROL ) )
 		{
 			if ( !IsValid( player ) || !IsValid( GetLocalViewPlayer() ) )
 				return
 
-			// Player is not on the same team as the view player, so we are not going to play dialogue but there is a chance we will display the ping text
+			
 			if ( player.GetTeam() != GetLocalViewPlayer().GetTeam() )
 			{
 				shouldUseTeamCommsBehaviour = false
 			}
+
 			
-			// If a Control Objective was pinged by the player on the same alliance display ping text
 			if ( commsAction == eCommsAction.PING_CONTROL_OBJECTIVE_ATTACK || commsAction == eCommsAction.PING_CONTROL_OBJECTIVE_DEFEND )
 			{
 				if ( IsValid( subjectEnt ) && IsValid( subjectEnt.GetOwner() ) && IsPlayerWaypoint( subjectEnt.GetOwner() ) && subjectEnt.GetOwner().GetWaypointType() == eWaypoint.CONTROL_OBJECTIVE )
@@ -1036,7 +1036,7 @@ void function HandleBroadcastCommsAction( entity player, int commsAction, entity
 						isControlObjectivePing = true
 					}
 
-					// Play ping sfx since they don't play on the objective pings by themselves because they count as replies instead of new pings
+					
 					if ( GetCommsWaypointSoundsEnabled() && shouldUseTeamCommsBehaviour || shouldUseAllianceCommsBehaviour )
 					{
 						int pingType = commsAction == eCommsAction.PING_CONTROL_OBJECTIVE_ATTACK ? ePingType.PING_CAPTURE_OBJECTIVE_ATTACK : ePingType.PING_CAPTURE_OBJECTIVE_DEFEND
@@ -1047,9 +1047,9 @@ void function HandleBroadcastCommsAction( entity player, int commsAction, entity
 				}
 			}
 		}
-       
 
-	// If we are in a mode where we allow communication between players near each other that are on the same team (but not the same squad); make sure this message should appear at all
+
+	
 	if ( AllianceProximity_IsUsingAllianceProximity() )
 	{
 		if ( !IsValid( player ) || !IsValid( GetLocalViewPlayer() ) )
@@ -1057,10 +1057,10 @@ void function HandleBroadcastCommsAction( entity player, int commsAction, entity
 
 		if ( player.GetTeam() != GetLocalViewPlayer().GetTeam() )
 		{
-			// Player is not on the same team as the view player, so we are not going to play dialogue but there is a chance we will display the ping text
+			
 			shouldUseTeamCommsBehaviour = false
 
-			// If we are not already using alliance comms behaviour ( show message but don't play dialogue); check if we should use the behaviour due to alliance proximity
+			
 			if ( !shouldUseAllianceCommsBehaviour )
 			{
 				if ( AllianceProximity_GetLivingAllianceMembersInProximity( player.GetTeam(), player.GetOrigin() ).contains( GetLocalViewPlayer() ) )
@@ -1084,7 +1084,7 @@ void function HandleBroadcastCommsAction( entity player, int commsAction, entity
 	opt.isUrgent = PlayerDeliveryShouldBeUrgent( player, subjectPos, commsFlags )
 	opt.pauseQueue = true
 
-	// Only play comms dialogue to teammates in situations where alliances are used
+	
 	if ( shouldUseTeamCommsBehaviour )
 	{
 		if ( (GetPlayerVoice( player ) == SILENT_PLAYER_VOICE) )
@@ -1102,7 +1102,7 @@ void function HandleBroadcastCommsAction( entity player, int commsAction, entity
 		}
 		else
 		{
-			// Play the sound for all scenarios except when a player pings an enemy's crafted banner. R5DEV-506901
+			
 			if ( !IsValid( subjectEnt ) || subjectEnt.GetModelName() != CRAFTED_BANNER_MODEL_NAME ||
 					( IsValid( GetEntityFromEncodedEHandle( subjectEnt.GetSurvivalProperty() ) ) && GetEntityFromEncodedEHandle( subjectEnt.GetSurvivalProperty() ).GetTeam() == player.GetTeam() ) )
 			{
@@ -1116,7 +1116,7 @@ void function HandleBroadcastCommsAction( entity player, int commsAction, entity
 	string chatText = act.chatText
 	if ( chatText != "" && !IsBitFlagSet( commsFlags, eCommsFlags.NO_TEXT ) )
 	{
-		                               
+
 			switch( commsAction )
 			{
 				case eCommsAction.REPLY_LOVE_YOU:
@@ -1129,7 +1129,7 @@ void function HandleBroadcastCommsAction( entity player, int commsAction, entity
 				default:
 					break
 			}
-        
+
 
 		string playerName          = opt.isFirstPerson ? Localize( "#OBITUARY_YOU" ) : player.GetPlayerName()
 		vector playerColor         = GetChatTitleColorForPlayer( player )
@@ -1139,18 +1139,18 @@ void function HandleBroadcastCommsAction( entity player, int commsAction, entity
 		vector secondarySubjectColor = GetSecondarySubjectColorForCommsAction( subjectEnt, player )
 		string subjectTier         = GetSubjectLootTierForCommsAction( subjectEnt, itemRef )
 
-		                        
-			// ToDo: R5DEV-567005 : Complete refactor to support Capture Objective Pings using Alliances
+
+			
 			if ( GameMode_IsActive( eGameModes.CONTROL ) )
 			{
-				// If this is an objective ping, display the ping count for this objective in the message and use attack/defend colors where appropriate
+				
 				if ( isControlObjectivePing )
 				{
 					subjectColor = GetSubjectColorForCommsAction( subjectEnt.GetOwner(), itemRef, player )
 					secondarySubjectColor = GetSecondarySubjectColorForCommsAction( subjectEnt.GetOwner(), player )
 
 					int pingCount = CaptureObjectivePing_GetPingCountForObjectiveForTeamOrAlliance( subjectEnt.GetOwner(), AllianceProximity_GetAllianceFromTeam( subjectEnt.GetTeam() ) )
-					pingCount-- // subtract 1 since we don't need to show a +1 if just one player is going to an objective
+					pingCount-- 
 					if ( pingCount > 0 )
 					{
 						subjectTier = "+" + pingCount
@@ -1161,56 +1161,56 @@ void function HandleBroadcastCommsAction( entity player, int commsAction, entity
 					}
 				}
 			}
-                                
 
-		                             
-			// ToDo: R5DEV-567005 : Complete refactor to support Capture Objective Pings using Alliances
+
+
+			
 			if ( GameModeVariant_IsActive( eGameModeVariants.FREEDM_LOCKDOWN ) )
 			{
-				// If this is an objective ping, display the ping count for this objective in the message and use attack colors where appropriate
+				
 				if ( commsAction == eCommsAction.PING_TREASUREHUNT_OBJ_ATTACK && IsValid( subjectEnt ) && IsValid( subjectEnt.GetOwner() ) )
 				{
 					subjectColor = GetSubjectColorForCommsAction( subjectEnt.GetOwner(), itemRef, player )
 					secondarySubjectColor = GetSecondarySubjectColorForCommsAction( subjectEnt.GetOwner(), player )
 
 					int pingCount = CaptureObjectivePing_GetPingCountForObjectiveForTeamOrAlliance( subjectEnt.GetOwner(), subjectEnt.GetTeam() )
-					pingCount-- // subtract 1 since we don't need to show a +1 if just one player is going to an objective
+					pingCount-- 
 					if ( pingCount > 0 )
 						subjectTier = "+" + pingCount
 					else
 						subjectTier = ""
 				}
 			}
-        
 
-                                         
-                                                                                               
-                                                   
-    
-                                                                                                                                     
-                                                                                                                          
-     
-                                                                                           
-                                                                                                    
 
-                                                                                                                                  
-                                                                                                           
-                         
-                                   
-         
-                      
-     
-    
-        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 		if ( commsAction == eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_1 ||
 				commsAction == eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_2 ||
 				commsAction == eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_3 ||
 				commsAction == eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_4 ||
 				commsAction == eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_5
-			                    
+
 				|| commsAction == eCommsAction.PING_XP_LEVEL_UP_ABILITY
-         
+
 			)
 		{
 			if ( IsValid( subjectEnt ) )
@@ -1219,12 +1219,12 @@ void function HandleBroadcastCommsAction( entity player, int commsAction, entity
 				string name = ItemFlavor_GetShortName( character )
 				subjectNames = [  name ]
 
-				//Armor tier
+				
 				int armorTier = EquipmentSlot_GetEquipmentTier( subjectEnt, "armor" )
 				subjectTier  = string ( armorTier )
 				secondarySubjectColor = GetKeyColor( COLORID_TEXT_LOOT_TIER0, armorTier )
 
-				//team count
+				
 				array<entity> teamPlayers = GetPlayerArrayOfTeam_Alive( subjectEnt.GetTeam() )
 				int teamCount = teamPlayers.len()
 				subjectCount = teamCount
@@ -1239,8 +1239,8 @@ void function HandleBroadcastCommsAction( entity player, int commsAction, entity
 			foreach ( string subjectName in subjectNames )
 			{
 				string locText
-			                            
-				if(commsAction == eCommsAction.PING_I_ULTIMATE) //modifying Localized Obit to include Ult Status info on an I_ULTIMATE ping
+
+				if(commsAction == eCommsAction.PING_I_ULTIMATE) 
 				{
 					entity weapon = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
 
@@ -1254,8 +1254,8 @@ void function HandleBroadcastCommsAction( entity player, int commsAction, entity
 						locText = Localize( chatText, playerName, Localize( subjectName ), subjectTier, countText, elapseTime)
 				}
 				else
-         
-			                    
+
+
 			if( commsAction == eCommsAction.PING_XP_LEVEL_UP_ARMOR )
 			{
 				array< int > currentAndTargetEvo = UpgradeCore_GetXpRequiredForNextLevel( player )
@@ -1270,11 +1270,11 @@ void function HandleBroadcastCommsAction( entity player, int commsAction, entity
 				locText = Localize( chatText, playerName, evoRequired, subjectTier, countText, elapseTime)
 			}
 			else
-         
+
 					locText = Localize( chatText, playerName, Localize( subjectName ), subjectTier, countText, elapseTime)
 
-			                        
-				// ToDo: R5DEV-567005 : Complete refactor to support Capture Objective Pings using Alliances
+
+				
 				if ( GameMode_IsActive( eGameModes.CONTROL ) )
 				{
 					if ( isControlObjectivePing )
@@ -1287,7 +1287,7 @@ void function HandleBroadcastCommsAction( entity player, int commsAction, entity
 					}
 				}
 				else
-                                 
+
 				{
 					Obituary_Print_Localized( locText, playerColor, subjectColor, secondarySubjectColor, <0, 0, 0>, 0.5 )
 				}
@@ -1297,10 +1297,10 @@ void function HandleBroadcastCommsAction( entity player, int commsAction, entity
 
 	SetPlayerLastSaid( player, commsAction )
 }
-#endif
 
 
-#if CLIENT
+
+
 void function PlaySoundForCommsAction( entity player, entity subjectEnt, CommsAction act, CommsOptions opt, string flavorEventOverride = "", int selector = INVALID_SOUND_SELECTOR )
 {
 	if ( PlayerIsPingMuted( player ) )
@@ -1312,10 +1312,10 @@ void function PlaySoundForCommsAction( entity player, entity subjectEnt, CommsAc
 	if ( ShouldCommsActionDialogBeMuted( subjectEnt, act ) )
 		return
 
-	/* This should no longer be needed (pmcd)
-	if ( act.aliasSubname.find( "outOfAmmo" ) != -1 && player.p.infiniteAmmo )
-		return
-	*/
+	
+
+
+
 
 	string sound = GetPlayerDialogSound( player, subjectEnt, act, opt )
 	if ( sound != "" )
@@ -1331,15 +1331,15 @@ void function PlaySoundForCommsAction( entity player, entity subjectEnt, CommsAc
 		else
 			player.p.lastCanceledCommsAction = eCommsAction.BLANK
 
-		// The dialogue queue is paused here for the duration of the ping VO such that no new items will be popped off of the dialogue queue while ping VO is playing.
-		// This was done to handle multiple pings occurring at the same time, since the dialogue queue pause is done through a stack.
+		
+		
 		var soundHandle = EmitSoundOnEntityWithSelector( player, sound, selector )
 		SetPlayThroughPOVTransitions( soundHandle )
 
 		if ( opt.pauseQueue )
 			thread SuspendMainDialogueQueueForDurationOfSound( player, soundHandle )
 
-		// Remove any player events from the queue so they don't double-speak
+		
 		RemovePlayerDialogueEventsFromMainDialogueQueue( player )
 
 		if ( act.index in file.replyMap && IsValid( subjectEnt ) && subjectEnt.IsPlayer() && subjectEnt == GetLocalViewPlayer() )
@@ -1364,7 +1364,7 @@ void function PlaySoundForCommsAction( entity player, entity subjectEnt, CommsAc
 				act.index == eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_4 ||
 				act.index == eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_5 )
 		{
-			//thread PlayVantageSpottedPingSounds( player, subjectEnt, soundHandle, opt )
+			
 			subEvent = eCommsAction.SUB_TYPE_VANTAGE_TEAM_1
 			if ( IsValid( subjectEnt ) )
 			{
@@ -1394,10 +1394,10 @@ void function PlaySoundForCommsAction( entity player, entity subjectEnt, CommsAc
 		}
 	}
 }
-#endif
 
 
-#if CLIENT
+
+
 bool function ShouldCommsActionDialogBeMuted( entity subjectEnt, CommsAction act )
 {
 	if ( IsValid( subjectEnt ) )
@@ -1411,15 +1411,15 @@ bool function ShouldCommsActionDialogBeMuted( entity subjectEnt, CommsAction act
 
 	return false
 }
-#endif
 
 
-#if CLIENT || SERVER
+
+
 CommsAction function GetCommsAction( int index )
 {
-	#if ASSERTS
-		CheckCommsActionValidity( index )
-	#endif
+
+
+
 
 	CommsAction blankAction
 	if ( (index < 0) || (index >= eCommsAction._count) )
@@ -1427,10 +1427,10 @@ CommsAction function GetCommsAction( int index )
 
 	return file.actions[ index ]
 }
-#endif
 
 
-#if CLIENT
+
+
 bool function ShouldPlayFlavorAction( entity player, int flavorAction )
 {
 	if ( GetCurrentPlaylistVarInt( "disable_flavor_lines", 0 ) > 0 )
@@ -1464,10 +1464,10 @@ bool function ShouldPlayFlavorAction( entity player, int flavorAction )
 
 	unreachable
 }
-#endif
 
 
-#if CLIENT
+
+
 void function PlaySoundForSubActionWhenPrimaryFinishes( var primarySoundHandle, CommsAction primaryAct, CommsAction subCommsAction, entity player, entity subjectEnt, CommsOptions opt, string flavorEvent = "" )
 {
 	EndSignal( player, "OnDestroy" )
@@ -1487,9 +1487,9 @@ void function PlaySoundForSubActionWhenPrimaryFinishes( var primarySoundHandle, 
 	if ( player.p.lastCanceledCommsAction != primaryAct.index )
 		PlaySoundForCommsAction( player, subjectEnt, subCommsAction, opt, flavorEvent )
 }
-#endif
 
-#if CLIENT
+
+
 void function PromptReplyWhenPrimaryFinishes( entity playerSpeakingPrimary, int primaryCommsAction, entity playerToReply, var soundHandle, bool wasConAlt )
 {
 	EndSignal( playerSpeakingPrimary, "OnDestroy" )
@@ -1502,7 +1502,7 @@ void function PromptReplyWhenPrimaryFinishes( entity playerSpeakingPrimary, int 
 	int replyCommsAction = file.replyMap[ primaryCommsAction ]
 
 	bool isReplyForcePlay = ShouldForcePlayConditionalAlt( GetConditionalAltDialogue( file.actions[ replyCommsAction ].aliasSubname, playerToReply, playerSpeakingPrimary, true ) )
-	
+
 	if ( wasConAlt || isReplyForcePlay )
 		replyCommsAction = file.altMap[ replyCommsAction ]
 
@@ -1515,7 +1515,7 @@ void function PromptReplyWhenPrimaryFinishes( entity playerSpeakingPrimary, int 
 		case eCommsAction.REPLY_REVIVE_WELCOME_ALT:
 			locString = Localize( "#PING_SAY_WELCOME" )
 			break
-                               
+
 
 		case eCommsAction.REPLY_LOVE_YOU_MORE:
 			locString = Localize( "#PING_SAY_LOVE_YOU_MORE" )
@@ -1524,7 +1524,7 @@ void function PromptReplyWhenPrimaryFinishes( entity playerSpeakingPrimary, int 
 		case eCommsAction.REPLY_NO_I_LOVE_YOU_MORE:
 			locString = Localize( "#PING_SAY_NO_I_LOVE_YOU_MORE" )
 			break
-      
+
 
 		default:
 			locString = ""
@@ -1535,63 +1535,63 @@ void function PromptReplyWhenPrimaryFinishes( entity playerSpeakingPrimary, int 
 
 	AddOnscreenPromptFunction( "quickchat", CreateQuickchatFunction( replyCommsAction, playerSpeakingPrimary ), 6.0, Localize( locString ) )
 }
-#endif
 
-#if CLIENT
+
+
 string function GetMenuOptionTextForCommsAction( int commsAction )
 {
-	#if ASSERTS
-		CheckCommsActionValidity( commsAction )
-	#endif
+
+
+
 
 	CommsAction data = file.actions[commsAction]
 	return Localize( data.menuText )
 }
-#endif
 
 
-#if CLIENT
+
+
 string function GetShortTextForCommsAction( int commsAction )
 {
-	#if ASSERTS
-		CheckCommsActionValidity( commsAction )
-	#endif
+
+
+
 
 	CommsAction data = file.actions[commsAction]
 	return Localize( data.shortText )
 }
-#endif
 
 
-#if CLIENT
+
+
 asset function GetDefaultIconForCommsAction( int commsAction )
 {
-	#if ASSERTS
-		CheckCommsActionValidity( commsAction )
-	#endif
+
+
+
 
 	CommsAction data = file.actions[commsAction]
 	return data.defaultIcon
 }
-#endif
 
 
-#if CLIENT
+
+
 asset function GetPingAssetForCommsAction( int commsAction )
 {
-	#if ASSERTS
-		CheckCommsActionValidity( commsAction )
-	#endif
+
+
+
 
 	CommsAction data = file.actions[commsAction]
 	return data.pingAsset
 }
-#endif
 
-#if CLIENT || SERVER
+
+
 string function GetShadowDialogSoundForAction( CommsAction act, CommsOptions options )
 {
-	//shadow zombies play a variety of specific grunt/growl sounds depending on subject
+	
 	string perspective = options.isFirstPerson ? "_1p" : "_3p"
 	string prefix = "diag_mp_shadowsquad_ping_spotDefault_"
 
@@ -1618,7 +1618,7 @@ string function GetShadowDialogSoundForAction( CommsAction act, CommsOptions opt
 			if ( aliasSubname.find( "ping_found" ) >= 0 )
 				suffix = "item"
 			else
-				suffix = "item" //TODO: get a generic sound for default
+				suffix = "item" 
 			break
 	}
 
@@ -1627,18 +1627,18 @@ string function GetShadowDialogSoundForAction( CommsAction act, CommsOptions opt
 	return result
 
 }
-#endif
 
-#if CLIENT || SERVER
+
+
 string function GetPlayerDialogSound( entity player, entity subjectEnt, CommsAction act, CommsOptions options )
 {
 	if ( !file.quickchatInitialized )
 		return ""
 
-	                                                           
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) && IsPlayerShadowZombie( player ) )
 			return GetShadowDialogSoundForAction( act, options )
-       
+
 
 	string subAlias = act.aliasSubname
 	if ( subAlias == "" )
@@ -1659,14 +1659,14 @@ string function GetPlayerDialogSound( entity player, entity subjectEnt, CommsAct
 	if ( act.index == eCommsAction.FLAVOR_LOOT_DIBS )
 		ext = TryPrependDibsExtension( player, subjectEnt, act, options, ext )
 
-	                                
+
 
 		bool stompConAlt = ( act.index == eCommsAction.REPLY_WELCOME ) || ( act.index == eCommsAction.REPLY_REVIVE_WELCOME )
 		bool forceConAlt = ( act.index == eCommsAction.REPLY_WELCOME_ALT ) || ( act.index == eCommsAction.REPLY_REVIVE_WELCOME_ALT )
 
 		ext = GetConditionalAltPingExtension( player, subjectEnt, act.aliasSubname, ext, forceConAlt, stompConAlt )
 
-                                       
+
 
 	string result
 	{
@@ -1676,7 +1676,7 @@ string function GetPlayerDialogSound( entity player, entity subjectEnt, CommsAct
 			result = GetBattleChatterAlias1P3P( player, (subAlias + ext), options.isFirstPerson )
 	}
 
-	#if DEVELOPER
+#if DEV
 		if ( ShouldTryToReplaceMissingVoiceWithTempVoice() )
 		{
 			if ( !DoesAliasExist( result ) )
@@ -1687,13 +1687,13 @@ string function GetPlayerDialogSound( entity player, entity subjectEnt, CommsAct
 					Warning( "Attempted to fall back to temp voice \"" + TEMP_VOICE + "\", but resulting alias \"" + result + "\" does not exist in miles." )
 			}
 		}
-	#endif // DEV
+#endif
 
 	return result
 }
-#endif
 
-#if CLIENT || SERVER
+
+
 const string WEAPON_HEADER = "mp_weapon_"
 const string ABILITY_HEADER = "mp_ability_"
 const string CLASS_SUFFIX = "Class"
@@ -1708,7 +1708,7 @@ string function TryPrependDibsExtension( entity player, entity subjectEnt, Comms
 
 	LootData data = SURVIVAL_Loot_GetLootDataByIndex( subjectEnt.GetSurvivalInt() )
 
-	// Only supports weapons and ordnance for the time being. Can be extended in future if necessary.
+	
 	if ( !( data.lootType == eLootType.MAINWEAPON || data.lootType == eLootType.ORDNANCE ) )
 		return currExt
 
@@ -1747,20 +1747,20 @@ string function TryPrependDibsExtension( entity player, entity subjectEnt, Comms
 
 	return ext
 }
-#endif
 
-#if CLIENT
+
+
 void function SetCommsDialogueEnabled( bool value )
 {
 	file.commsDialogueEnabled = value
 }
-#endif
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#if SERVER || CLIENT
+
+
+
 void function AddCallback_OnQuickchatEvent( int index, void functionref(entity, int, entity) func )
 {
 	if ( !(index in file.onQuickchatCallbacks) )
@@ -1769,328 +1769,328 @@ void function AddCallback_OnQuickchatEvent( int index, void functionref(entity, 
 	Assert( !file.onQuickchatCallbacks[ index ].contains( func ) )
 	file.onQuickchatCallbacks[ index ].append( func )
 }
-#endif
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#if SERVER
-void function ClientCallback_Quickchat_UI( entity player, int index, int commFlags, int equipSlotType )
-{
-	if ( EquipmentSlot_IsValidEquipmentSlotType( equipSlotType ) == false )
-		return
-
-	EquipmentSlot e = Survival_GetEquipmentSlotDataByType( equipSlotType )
-	string equipSlot = e.ref
-	entity subject = null
-	int itemIndex = -1
-	LootData lData
-	if ( equipSlot in EquipmentSlot_GetAllEquipmentSlots() )
-	{
-		lData = EquipmentSlot_GetEquippedLootDataForSlot( player, equipSlot )
-
-		if ( EquipmentSlot_IsAttachmentSlot( equipSlot ) )
-			equipSlot = EquipmentSlot_GetAttachmentWeaponSlot( equipSlot )
-
-		if ( EquipmentSlot_IsMainWeaponSlot( equipSlot ) && lData.ref == "" )
-		{
-			lData = EquipmentSlot_GetEquippedLootDataForSlot( player, equipSlot )
-			EquipmentSlot es = Survival_GetEquipmentSlotDataByRef( equipSlot )
-			subject = player.GetNormalWeapon( es.weaponSlot )
-		}
-
-		itemIndex = lData.index
-	}
-
-	ClientCallback_QuickchatInternal( player, index, commFlags, subject, itemIndex )
-}
-
-void function ClientCallback_Quickchat( entity player, int index, int commFlags )
-{
-	ClientCallback_QuickchatInternal( player, index, commFlags, null, -1 )
-}
-
-void function ClientCallback_QuickchatSubject_Player( entity player, int index, int commFlags, entity subject )
-{
-	// Drop the whole call if the subject is not valid.
-	if ( !IsValid( subject ) )
-		return
-
-	ClientCallback_QuickchatInternal( player, index, commFlags, subject, -1 )
-}
-
-void function ClientCallback_QuickchatInternal( entity player, int index, int commFlags, entity subject, int itemIndex )
-{
-	if ( !(index in file.actions) )
-		return
-
-	if ( SURVIVAL_Loot_IsLootIndexValid( itemIndex ) == false && itemIndex != -1 )
-		return
-
-	string itemRef = ""
-	if ( SURVIVAL_Loot_IsLootIndexValid( itemIndex ) == false )
-	{
-		// pass
-	}
-	else
-	{
-		LootData data = SURVIVAL_Loot_GetLootDataByIndex( itemIndex )
-		itemRef = data.ref
-	}
-
-	//printt( "ClientCallback_Quickchat, player: " + player + ", index: " + index + ", commFlags: " + commFlags + ", subject: " + subject + ", itemRef: " + itemRef  )
-
-	BroadcastCommsActionToTeam( player, index, subject, player.GetOrigin(), commFlags, itemRef )
-}
-
-void function BroadcastCommsActionToTeam( entity playerSpeaking, int commsAction, entity subjectEnt, vector subjectPos, int commsFlags, string itemRef )
-{
-	int secondaryCommsAction = 0
-
-                   
-                                             
-                                                                 
-       
-
-	if ( file.disabledCommsActions.contains( commsAction ) )
-	{
-		printf( "QUICKCHAT: Comm action " + commsAction + " is disabled but still being triggered" )
-		return
-	}
-
-	int itemIndex = -1
-	if( itemRef != "" )
-	{
-		if( SURVIVAL_Loot_IsRefValid( itemRef ) == false )
-		{
-			return // cancel on incorrect data
-		}
-		else
-		{
-			LootData lootData = SURVIVAL_Loot_GetLootDataByRef( itemRef )
-			itemIndex = lootData.index
-		}
-	}
-
-	array<entity> players = GetPlayerArrayOfTeam_Alive( playerSpeaking.GetTeam() )
-
-	// If we are in a mode where we allow communication between players near each other that are on the same team (but not the same squad); show kill feed text for the comms action
-	if ( AllianceProximity_IsUsingAllianceProximity() )
-	{
-		if ( IsValid( playerSpeaking ) )
-		{
-			foreach ( proximityPlayer in AllianceProximity_GetLivingAllianceMembersInProximity( playerSpeaking.GetTeam(), playerSpeaking.GetOrigin() ) )
-			{
-				players.append( proximityPlayer )
-			}
-		}
-	}
-
-	                        
-		// ToDo: R5DEV-567005 : Complete refactor to support Capture Objective Pings using Alliances
-		if ( GameMode_IsActive( eGameModes.CONTROL ) )
-		{
-			// If the player pinged an objective, trigger a comms action for the entire alliance
-			if ( commsAction == eCommsAction.PING_CONTROL_OBJECTIVE_ATTACK || commsAction == eCommsAction.PING_CONTROL_OBJECTIVE_DEFEND )
-			{
-				if ( IsValid( subjectEnt ) && IsValid( subjectEnt.GetOwner() ) && subjectEnt.GetOwner().GetClassName() == PLAYER_WAYPOINT_CLASSNAME && subjectEnt.GetOwner().GetWaypointType() == eWaypoint.CONTROL_OBJECTIVE && IsValid( playerSpeaking ) )
-				{
-					players.clear()
-					int alliance = AllianceProximity_GetAllianceFromTeam( playerSpeaking.GetTeam() )
-					foreach( alliancePlayer in GetPlayerArray() )
-					{
-						if ( IsValid( alliancePlayer ) && AllianceProximity_GetAllianceFromTeam( alliancePlayer.GetTeam() ) == alliance )
-							players.append( alliancePlayer )
-					}
-				}
-			}
-		}
-       
-
-	// Get ultimate entity for GetSubjectCountForCommsAction..
-	switch ( commsAction )
-	{
-		case eCommsAction.QUICKCHAT_ULTIMATE_READY_FULL:
-		case eCommsAction.QUICKCHAT_ULTIMATE_READY_ALMOST:
-		case eCommsAction.QUICKCHAT_ULTIMATE_READY_NOT:
-	                            
-		case eCommsAction.PING_I_ULTIMATE:
-       
-		{
-			subjectEnt = playerSpeaking.GetOffhandWeapon( OFFHAND_ULTIMATE )
-			if ( !IsValid( subjectEnt ) )
-				return
-
-			PIN_UltimateReadyPing( playerSpeaking, GetEnumString( "eCommsAction", commsAction ).tolower(), true )
-			break
-		}
-		default:
-			break
-	}
-
-	RunQuickChatCallbacks( playerSpeaking, commsAction, subjectEnt )
-
-                   
-	int subjectCount
-	if ( commsAction == eCommsAction.REPLY_CAREPACKAGE_INSIGHT_FUTURE && IsValid( subjectEnt ) && subjectEnt.GetNetworkedClassName() == PLAYER_WAYPOINT_CLASSNAME )
-	{
-		subjectCount = int( subjectEnt.GetWaypointGametime( 0 ) - Time() )
-		subjectEnt = null
-	}
-	else
-	{
-		subjectCount = GetSubjectCountForCommsAction( playerSpeaking, commsAction, subjectEnt )
-	}
-     
-                                                                                            
-      
-
-	if ( IsBitFlagSet( commsFlags, eCommsFlags.INCLUDE_DEAD ) )
-	{
-		players = GetPlayerArrayOfTeam( playerSpeaking.GetTeam() )
-
-		foreach ( player in players )
-			QuickChat_SendServerToClient_BroadcastCommsActionToTeam( player, playerSpeaking,
-				commsAction, commsFlags, subjectCount, secondaryCommsAction, subjectEnt, subjectPos, itemIndex )
-
-		return
-	}
-
-	if ( IsBitFlagSet( commsFlags, eCommsFlags.BROADCAST_TO_WAYPOINT_OWNER ) )
-	{
-		entity subjToUse = subjectEnt
-
-		if ( IsValid( subjToUse ) )
-		{
-			if ( !subjToUse.IsPlayer() )
-				subjToUse = subjToUse.GetOwner()
-
-			if ( IsValid( subjToUse ) )
-			{
-				if ( subjToUse.IsPlayer() )
-				{
-					QuickChat_SendServerToClient_BroadcastCommsActionToTeam( subjToUse, playerSpeaking,
-						commsAction, commsFlags, subjectCount, secondaryCommsAction, subjectEnt, subjectPos, itemIndex )
-				}
-			}
-		}
-
-		return
-	}
-
-	foreach ( player in players )
-		QuickChat_SendServerToClient_BroadcastCommsActionToTeam( player, playerSpeaking,
-			commsAction, commsFlags, subjectCount, secondaryCommsAction, subjectEnt, subjectPos, itemIndex  )
-}
-
-void function QuickChat_SendServerToClient_BroadcastCommsActionToTeam( entity player, entity playerSpeaking, int commsAction,
-		int commsFlags, int subjectCount, int secondaryCommsAction, entity subjectEnt, vector subjectPos, int itemIndex  )
-{
-	int itemIndexToSend = SURVIVAL_Loot_IsLootIndexValid( itemIndex ) == false ? -1 : itemIndex
-
-	CommsOptions opt
-	opt.isFirstPerson = player == playerSpeaking
-	opt.isFar = false
-	opt.isUrgent = false
-
-	// note: this is not ideal, but we need to pick one variant.. assumes most things won't be far/urgent.
-	// The far / urgent variants are not guaranteed to have matching selector layouts.
-	// In the case that the evaluated selector isn't compatible, miles will just run the evaluation on the client.
-	// This means that urgent/far variants are not 100% guaranteed to have working selector sync right now.
-	string sound = GetPlayerDialogSound( playerSpeaking, player, GetCommsAction( commsAction ), opt )
-	int selector = EvaluateSoundSelector( sound )
-
-	if ( IsValid( subjectEnt ) )
-		Remote_CallFunction_Replay( player, "ServerToClient_BroadcastCommsActionToTeam", playerSpeaking,
-			commsAction, commsFlags,
-			subjectCount, secondaryCommsAction, subjectEnt, subjectPos, itemIndexToSend, selector )
-	else
-		Remote_CallFunction_Replay( player, "ServerToClient_BroadcastSubjectlessCommsActionToTeam", playerSpeaking,
-			commsAction, commsFlags,
-			subjectCount, secondaryCommsAction, subjectPos, itemIndexToSend, selector )
-}
 
 
-void function QuickChat_RegisterDisabledCommsActions( array<int> disabledComms )
-{
-	foreach( commAction in disabledComms )
-	{
-		if ( !file.disabledCommsActions.contains( commAction ) )
-			file.disabledCommsActions.append( commAction )
-	}
-}
-
-int function GetSubjectCountForCommsAction( entity player, int commsAction, entity subjectEnt )
-{
-	// Note: not all comms actions that display counts need to be listed here
-	// Only "quickchat" style comms need to be listed (i.e. comms that aren't from pings being created)
-	// In-world pings should be setting the quantity on the waypoint ent to pass it to the client
-
-	int count = -1
-
-	if ( !IsValid( player ) )
-		return count
-
-	switch ( commsAction )
-	{
-		case eCommsAction.INVENTORY_NEED_AMMO_BULLET:
-	                         
-		case eCommsAction.INVENTORY_NO_AMMO_BULLET:
-       
-			return player.AmmoPool_GetCount( eAmmoPoolType.bullet )
-
-		case eCommsAction.INVENTORY_NEED_AMMO_SPECIAL:
-	                         
-		case eCommsAction.INVENTORY_NO_AMMO_SPECIAL:
-       
-			return player.AmmoPool_GetCount( eAmmoPoolType.special )
-
-		case eCommsAction.INVENTORY_NEED_AMMO_HIGHCAL:
-	                         
-		case eCommsAction.INVENTORY_NO_AMMO_HIGHCAL:
-       
-			return player.AmmoPool_GetCount( eAmmoPoolType.highcal )
-
-		case eCommsAction.INVENTORY_NEED_AMMO_SHOTGUN:
-	                         
-		case eCommsAction.INVENTORY_NO_AMMO_SHOTGUN:
-       
-			return player.AmmoPool_GetCount( eAmmoPoolType.shotgun )
-
-		case eCommsAction.INVENTORY_NEED_AMMO_SNIPER:
-	                         
-		case eCommsAction.INVENTORY_NO_AMMO_SNIPER:
-       
-			return player.AmmoPool_GetCount( eAmmoPoolType.sniper )
-
-		case eCommsAction.INVENTORY_NEED_AMMO_ARROWS:
-	                         
-		case eCommsAction.INVENTORY_NO_AMMO_ARROWS:
-       
-			return player.AmmoPool_GetCount( eAmmoPoolType.arrows )
-
-		case eCommsAction.QUICKCHAT_ULTIMATE_READY_ALMOST:
-		case eCommsAction.QUICKCHAT_ULTIMATE_READY_NOT:
-	                            
-		case eCommsAction.PING_I_ULTIMATE:
-       
-			if ( IsValid( subjectEnt ) && subjectEnt.IsWeaponX() )
-				return int( ceil( float( subjectEnt.GetWeaponPrimaryClipCount() ) / float (subjectEnt.GetWeaponPrimaryClipCountMax() ) * 100 ) )
-			else
-				return count
-                         
-		case eCommsAction.FIRING_RANGE_TARGET_SPEED_CHANGE:
-			return GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) ? GetCurrentTargetSpeedForPlayerRealm( player ) : count
-      
-	}
-
-	return count
-}
-#endif
 
 
-#if SERVER || CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function RunQuickChatCallbacks( entity player, int commsAction, entity subjectEnt )
 {
 	if ( commsAction in file.onQuickchatCallbacks )
@@ -2101,17 +2101,17 @@ void function RunQuickChatCallbacks( entity player, int commsAction, entity subj
 		}
 	}
 }
-#endif
 
-#if SERVER
-void function OnPlayerSaysThanks( entity player, int commsAction, entity subjectEnt )
-{
-	if ( IsValid( player ) && GetCurrentPlaylistVarBool( "enable_stats", true ) )
-		StatsHook_OnPlayerSaidThanks( player )
-}
-#endif
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
 void function ServerCallback_BroadcastPlayerKicked( int entIdx, bool isAnonymous )
 {
 	string name = GetPlayerNameByEntIndex( entIdx )
@@ -2120,15 +2120,16 @@ void function ServerCallback_BroadcastPlayerKicked( int entIdx, bool isAnonymous
 
 	Obituary_Print_Localized( Localize( "#ANTICHEAT_REMOVED_FROM_MATCH", name ), <255, 255, 255> )
 }
-#endif
 
-#if (CLIENT || SERVER) && ASSERTS
-void function CheckCommsActionValidity( int commsAction )
-{
-	Assert( commsAction >= 0 )
-	Assert( commsAction < eCommsAction._count )
 
-	string enumString = IsValidEnumValue( "eCommsAction", commsAction ) ? GetEnumString( "eCommsAction", commsAction ) : "Unknown eCommsAction!"
-	Assert( commsAction in file.actions, "Unhandled commsAction " + enumString + " (" + commsAction + ")" ) // If we are hitting this assert unexpectedly - make sure ePingType has all DEV-only enums at the end of the enum list.
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+ 

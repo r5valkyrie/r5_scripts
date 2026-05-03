@@ -26,12 +26,12 @@ global function CharacterClass_GetCharacterSelectPortrait
 global function CharacterClass_GetCharacterLockedPortrait
 global function CharacterClass_GetCharacterUnlockedStoreIcon
 global function CharacterClass_GetCharacterRoleImage
-               
-                                          
-      
-                    
-                                                       
-     
+
+
+
+
+
+
 global function CharacterClass_GetGalleryRoleBackground
 global function SortByRoleAndMenuIndex
 global function CharacterClass_GetCharacterPerkDescription
@@ -42,7 +42,7 @@ global function CharacterClass_GetRoleSubtitle
 global function CharacterClass_GetRolePerkIconAtIndex
 global function CharacterClass_GetRoleIcon
 global function CharacterClass_GetRoleColor
-      
+
 global function CharacterClass_GetReadyUpVoicelineEventList
 global function CharacterClass_IsAvailable
 global function CharacterClass_GetDamageScale
@@ -52,56 +52,55 @@ global function CharacterClass_GetDamageSlowEaseOut
 global function CharacterClass_GetDamageSlowDebounce
 global function CharacterClass_GetRandomCharacterSentinel
 global function CharacterClass_AllowDuplicateCharacterPicksInTeam
-#if SERVER
-global function CharacterClass_HasSlowStrafe
-#endif
-                   
-                                                      
-      
+
+
+
+
+
+
 global function CharacterClass_ConsiderLegHitBoxAsTorso
 global function CharacterClass_GetMenuZoomOffset
 global function WIP_CharacterClass_ShouldTrackStats
 
 global function ItemFlavor_GetCharacterRef
-global function ItemFlavor_GetHumanReadableRef
 global function IsValidItemFlavorCharacterRef
 global function GetItemFlavorByCharacterRef
 
-#if SERVER
-global function Character_UpdatePlayerOwnershipPersistence
-global function GetStringArrayAvailableClassesForPlayer
-#endif
 
-#if CLIENT || UI
+
+
+
+
+
 global function GetCharacterButtonOrder
 global function GetCharactersByRole
-#endif
+
 
 global function SortByMenuButtonIndex
 
-#if SERVER || CLIENT
+
 global function GetPlayerSettingBaseHealth
 global function GetPlayerSettingBaseShield
-#endif
+
 
 global const asset CHARACTER_DUMMIE = $"settings/itemflav/character/dummie.rpak"
 global const asset CHARACTER_RANDOM = $"settings/itemflav/character/random.rpak"
 global const asset VALK_ITEMFLAVOR = $"settings/itemflav/character/valkyrie.rpak"
 
-//////////////////////
-//////////////////////
-//// Global Types ////
-//////////////////////
-//////////////////////
+
+
+
+
+
 
 global enum eCharacterClassRole
-// the order of this enum decides the order of the groups in the UI
+
 {
 	UNDECIDED,
 	OFFENSE,
-	                   
+
 		SKIRMISHER,
-       
+
 	RECON,
 	DEFENSE,
 	SUPPORT,
@@ -111,15 +110,15 @@ global enum eCharacterClassRole
 const table<int, asset> CHARACTER_ROLE_ICONS = {
 	[eCharacterClassRole.UNDECIDED] = $"",
 	[eCharacterClassRole.OFFENSE]   = $"rui/menu/character_select/utility/util_role_offense",
-	                   
+
 		[eCharacterClassRole.SKIRMISHER]   = $"rui/hud/tactical_icons/tactical_mirage_in_world",
-       
+
 	[eCharacterClassRole.DEFENSE]   = $"rui/menu/character_select/utility/util_role_defense",
 	[eCharacterClassRole.SUPPORT]   = $"rui/menu/character_select/utility/util_role_support",
 	[eCharacterClassRole.RECON]     = $"rui/menu/character_select/utility/util_role_recon",
 }
 
-                   
+
 const table<int, asset> CHARACTER_ROLE_ICONS_NEW = {
 	[eCharacterClassRole.UNDECIDED]		= $"",
 	[eCharacterClassRole.OFFENSE]   	= $"rui/menu/character_select/utility/role_offense",
@@ -191,7 +190,7 @@ const table<int, vector> CHARACTER_ROLE_COLORS = {
 	[eCharacterClassRole.SUPPORT]    = < 0.36, 0.68, 0.28 >,
 	[eCharacterClassRole.RECON]      = < 0.82, 0.4, 0.95 >,
 }
-      
+
 
 global struct CharacterMenuLightData
 {
@@ -249,15 +248,15 @@ struct CharacterDamageStruct
 	float damageSlow_debounce = 3.0
 }
 
-///////////////////////
-///////////////////////
-//// Private Types ////
-///////////////////////
-///////////////////////
+
+
+
+
+
 struct FileStruct_LifetimeLevel
 {
 	LoadoutEntry& characterSelectionSlot
-	array< string > charactersWithStatsGUIDStrings // in Prod, excludes Dummie & Random; in DEV, excludes WIP legends unless Bakery flag to track stats is set.
+	array< string > charactersWithStatsGUIDStrings 
 	table<string, ItemFlavor> characterRefMap
 	table<ItemFlavor, int> characterFlavorSortOrdinalMap
 	array< ItemFlavor > nonGRXCharacters
@@ -268,43 +267,43 @@ struct
 {
 	table<int, string> characterRolePerkDesc
 	table<string, CharacterDamageStruct> characterDamageData
-	                   
+
 		table<ItemFlavor, int>	characterRoleOverride
-       
+
 } file
 
-/////////////////////////
-/////////////////////////
-//// Initialiszation ////
-/////////////////////////
-/////////////////////////
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
 void function ShCharacters_LevelInit()
 {
 	FileStruct_LifetimeLevel newFileGame
 	fileLevel = newFileGame
 
-	#if SERVER && DEVELOPER
-		AddCallback_GeneratePDef( GenerateCharactersPDef )
-	#endif
+
+
+
 
 	AddCallback_RegisterRootItemFlavors( OnRegisterRootItemFlavors )
 	AddCallback_OnItemFlavorRegistered( eItemType.character, OnItemFlavorRegistered_Character )
 
-                     
-                                
-                                                      
-                                      
-                                      
-                                                    
-                                      
-   
-       
+
+
+
+
+
+
+
+
+
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 void function OnRegisterRootItemFlavors()
 {
 	LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "character_selection", eLoadoutEntryClass.ACCOUNT )
@@ -318,16 +317,16 @@ void function OnRegisterRootItemFlavors()
 		return IsCharacterGRXUnlockedForLoadoutSlot( playerEHI, flavor, shouldIgnoreGRX, shouldIgnoreOtherSlots ) || Character_IsCharacterUnlockedForCalevent( flavor )
 	}
 	entry.isSlotLocked = bool function( EHI playerEHI ) {
-		#if SERVER
-			return SURVIVAL_IsCharacterClassLocked( FromEHI( playerEHI ) )
-		#elseif CLIENT || UI
-			return true // todo(dw): fix this
-		#endif
+
+
+
+			return true 
+
 	}
-	#if SERVER
-		if ( GetCurrentPlaylistVarBool( "loadouts_performance_ops_v1", true ) ) // TODO - R5DEV-350895: Loadouts Perf Improvements
-			AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( entry, ValidateCharacterLoadoutDependents )
-	#endif
+
+
+
+
 	fileLevel.characterSelectionSlot = entry
 
 	array<ItemFlavor> characterList = []
@@ -360,14 +359,14 @@ void function OnRegisterRootItemFlavors()
 	}
 	entry.defaultItemFlavor = fileLevel.nonGRXCharacters.getrandom()
 
-	#if CLIENT
+
 		if ( IsLobby() )
 		{
 			AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( entry, void function( EHI playerEHI, ItemFlavor character ) {
 				UpdateMenuCharacterModel( FromEHI( playerEHI ) )
 			} )
 		}
-	#endif
+
 
 	foreach ( character in characterList )
 	{
@@ -387,26 +386,32 @@ void function OnRegisterRootItemFlavors()
 		fileLevel.charactersWithStatsGUIDStrings.append( ItemFlavor_GetGUIDString( character ) )
 	}
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 void function OnItemFlavorRegistered_Character( ItemFlavor character )
 {
 	table<string, string> ornull tmp = character.metaData
 	expect table<string, string>(tmp)
 	fileLevel.characterRefMap[ tmp[ "character_ref" ] ] <- character
 
-	#if SERVER || CLIENT
-		PrecacheModel( GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "bodyModel" ) )
-		PrecacheModel( GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "armsModel" ) )
-	#endif
 
-	#if SERVER
-		InitLegHitBoxOverrides( character )
-	#endif
+		asset bodyModel = GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "bodyModel" )
+		asset loadingBodyModel = GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "loadingBodyModel" )
+		asset armsModel = GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "armsModel" )
+		asset loadingArmsModel = GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "loadingArmsModel" )
+		string pak = string(GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "pak" ))
 
-	                   
+		PrecacheOnDemandLoadModel( ODL_SKINS, pak, bodyModel, loadingBodyModel )
+		PrecacheOnDemandLoadModel( ODL_SKINS, pak, armsModel, loadingArmsModel )
+
+
+
+
+
+
+
 		string characterName = ItemFlavor_GetCharacterRef( character )
 		string overrideString = GetCurrentPlaylistVarString( "role_override_recon", "" )
 		if ( overrideString.find( characterName ) >= 0 )
@@ -427,11 +432,11 @@ void function OnItemFlavorRegistered_Character( ItemFlavor character )
 		overrideString = GetCurrentPlaylistVarString( "role_override_support", "" )
 		if ( overrideString.find( characterName ) >= 0 )
 			file.characterRoleOverride[ character ] <- eCharacterClassRole.SUPPORT
-       
-}
-#endif
 
-#if SERVER || CLIENT || UI
+}
+
+
+
 bool function IsValidItemFlavorCharacterRef( string ref, int validationBehavior = eValidation.DONT_ASSERT )
 {
 	bool good = (ref in fileLevel.characterRefMap)
@@ -439,20 +444,20 @@ bool function IsValidItemFlavorCharacterRef( string ref, int validationBehavior 
 	Assert( good || validationBehavior != eValidation.ASSERT, "Unknown item flavor character ref: " + ref )
 	return good
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 ItemFlavor function GetItemFlavorByCharacterRef( string ref )
 {
 	Assert( IsValidItemFlavorCharacterRef( ref, eValidation.ASSERT ) )
 
 	return fileLevel.characterRefMap[ ref ]
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 string function ItemFlavor_GetCharacterRef( ItemFlavor flavor )
 {
 	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
@@ -465,53 +470,38 @@ string function ItemFlavor_GetCharacterRef( ItemFlavor flavor )
 	return tmp[ "character_ref" ]
 }
 
-string function ItemFlavor_GetHumanReadableRef( ItemFlavor flavor )
-{
-	// Extract human-readable ref from asset path for any item type
-	string assetPath = string( ItemFlavor_GetAsset( flavor ) )
-	if ( assetPath.find( ITEM_FLAV_PREFIX ) == 0 && assetPath.find( ITEM_FLAV_SUFFIX ) == assetPath.len() - ITEM_FLAV_SUFFIX_LEN )
-	{
-		string ref = assetPath.slice( ITEM_FLAV_PREFIX_LEN, assetPath.len() - ITEM_FLAV_SUFFIX_LEN )
-		return replace( ref, "/", "_" )
-	}
-	// Fallback for characters that have metaData
-	if ( flavor.typeIndex == eItemType.character && flavor.metaData != null )
-		return ItemFlavor_GetCharacterRef( flavor )
-	return assetPath
-}
-#endif
-
-
-#if SERVER && DEVELOPER
-void function GenerateCharactersPDef()
-{
-	// required to populate StatRef template resolvers; no longer used as a more generic enum; use ItemFlavor GUID instead in that case.
-	array<string> allCharacterRefs = []
-	array<string> allCharacterComments = []
-	foreach( ItemFlavor character in GetAllCharacters() )
-	{
-		if ( WIP_CharacterClass_ShouldTrackStats( character ) == false && ItemFlavor_GetGRXMode( character ) == eItemFlavorGRXMode.NONE )
-			continue
-
-		allCharacterRefs.append( ItemFlavor_GetGUIDString( character ) )
-		allCharacterComments.append( ItemFlavor_GetCharacterRef( character ) )
-	}
-	DEV_PDefGen_AddEnum( "eCharacterFlavor", allCharacterRefs, "All the character item flavors from Bakery that are registered in the game for *stat tracking* & *character ownership caching*.", allCharacterComments )
-
-	// stores Marketplace data in the event that we do not have a valid Marketplace connection during Loadout validation.
-	DEV_PDefGen_BeginFieldGroup( "Cached character ownership" )
-	DEV_PDefGen_AddField_BoolArray_EnumKey( "cachedCharacterOwnership", "eCharacterFlavor" );
-	DEV_PDefGen_EndFieldGroup()
-}
-#endif
 
 
 
-//////////////////////////
-//////////////////////////
-//// Global functions ////
-//////////////////////////
-//////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 LoadoutEntry function Loadout_Character()
 {
 	return fileLevel.characterSelectionSlot
@@ -574,11 +564,11 @@ int function CharacterClass_GetRole( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.character )
 
-	                   
-		// Temporary way to change the character's role without going through bakery (no easy way to change that via DFS flags)
+
+		
 		if ( flavor in file.characterRoleOverride )
 			return file.characterRoleOverride[ flavor ]
-       
+
 
 	return eCharacterClassRole[GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "role" )]
 }
@@ -723,14 +713,14 @@ asset function CharacterClass_GetGalleryPortrait( ItemFlavor flavor )
 	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "galleryPortrait" )
 }
 
-               
-                                                              
- 
-                                                              
 
-                                                                       
- 
-      
+
+
+
+
+
+
+
 
 asset function CharacterClass_GetGalleryPortraitBackground( ItemFlavor flavor )
 {
@@ -739,7 +729,7 @@ asset function CharacterClass_GetGalleryPortraitBackground( ItemFlavor flavor )
 	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "galleryPortraitBackground" )
 }
 
-                   
+
 asset function CharacterClass_GetGalleryRoleBackground ( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.character )
@@ -774,7 +764,7 @@ asset function CharacterClass_GetGalleryRoleBackground ( ItemFlavor flavor )
 
 	return $"rui/menu/buttons/lobby_character_select/offense_bg"
 }
-      
+
 
 asset function CharacterClass_GetCharacterSelectPortrait( ItemFlavor flavor )
 {
@@ -806,22 +796,22 @@ asset function CharacterClass_GetCharacterRoleImage( ItemFlavor flavor )
 
 	int role = CharacterClass_GetRole( flavor )
 
-                   
+
 	return CharacterClass_GetRoleIcon( role )
-     
-                                  
-      
+
+
+
 }
 
-                    
-                                                                            
- 
-                                                              
 
-                                            
-                                        
- 
-     
+
+
+
+
+
+
+
+
 string function CharacterClass_GetCharacterPerkDescription( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.character )
@@ -883,7 +873,7 @@ asset function CharacterClass_GetRolePerkIconAtIndex( int role, int index = 0 )
 	PerkSettingsInfo perkInfo = Perks_GetSettingsInfoForPerk( info.perks[index] )
 	return perkInfo.icon
 }
-      
+
 
 array<string> function CharacterClass_GetReadyUpVoicelineEventList( ItemFlavor flavor )
 {
@@ -897,19 +887,19 @@ array<string> function CharacterClass_GetReadyUpVoicelineEventList( ItemFlavor f
 	return voicelineEventList
 }
 
-#if SERVER || CLIENT || UI
+
 bool function Survival_HasPlayerLockedInCharacter( EHI playerEHI )
 {
-	#if SERVER || CLIENT
+
 		entity player = FromEHI( playerEHI )
 		if ( player == null || !IsValid( player ) )
 			return false
 
-		if ( Time() > GetGlobalNetTimeSafe( "allSquadsPresentationStartTime" ) && GetGlobalNetTimeSafe( "allSquadsPresentationStartTime" ) != -1 )
+		if ( Time() > GetGlobalNetTime( "allSquadsPresentationStartTime" ) && GetGlobalNetTime( "allSquadsPresentationStartTime" ) != -1 )
 			return true
 
 		return player.GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER )
-	#endif
+
 	return false
 }
 
@@ -932,7 +922,7 @@ bool function Survival_DoesTeamHaveCharacter( int team, ItemFlavor checkCharacte
 
 	return false
 }
-#endif
+
 
 bool function CharacterClass_IsAvailable( EHI playerEHI, ItemFlavor desiredCharacter )
 {
@@ -951,13 +941,13 @@ bool function CharacterClass_IsAvailable( EHI playerEHI, ItemFlavor desiredChara
 	return true
 }
 
-#if SERVER
-bool function CharacterClass_HasSlowStrafe( ItemFlavor flavor )
-{
-	string characterRef = ItemFlavor_GetCharacterRef( flavor )
-	return GetCurrentPlaylistVarBool( "slow_strafe_" + characterRef.tolower(), false )
-}
-#endif
+
+
+
+
+
+
+
 
 float function CharacterClass_GetDamageSlowAmount( ItemFlavor flavor )
 {
@@ -999,21 +989,21 @@ float function CharacterClass_GetDamageScale( ItemFlavor flavor )
 	return damageScale
 }
 
-                   
-                                                                          
- 
-                                                           
-                                                                                                                   
 
-                      
- 
-      
+
+
+
+
+
+
+
+
 
 table< ItemFlavor, array<int> > legHitBoxOverrides = {}
 
 void function InitLegHitBoxOverrides( ItemFlavor character )
 {
-	//foreach ( ItemFlavor character in GetAllCharacters() )
+	
 	{
 		string characterRef = ItemFlavor_GetCharacterRef( character )
 		string legHitBoxOverrideString = GetCurrentPlaylistVarString( "leg_hitbox_override_" + characterRef.tolower(), "" )
@@ -1048,40 +1038,40 @@ vector function CharacterClass_GetMenuZoomOffset( ItemFlavor flavor )
 }
 
 
-#if SERVER
-array<string> function GetStringArrayAvailableClassesForPlayer( entity player )
-{
-	array<string> classes
-	foreach( ItemFlavor itemFlav in GetAllCharacters() )
-	{
-		if ( IsItemFlavorUnlockedForLoadoutSlot( ToEHI( player ), Loadout_Character(), itemFlav ) )
-			classes.append( ItemFlavor_GetCharacterRef( itemFlav ) )
-	}
-	return classes
-}
 
-void function Character_UpdatePlayerOwnershipPersistence( entity player )
-{
-	#if DEVELOPER
-	if ( DEV_ShouldIgnorePersistence() )
-	{
-		return;
-	}
-	#endif
-	if( !GRX_HasInventoryEverBeenReady( player ) )
-	{
-		return
-	}
-	foreach( ItemFlavor itemFlav in GetAllCharacters() )
-	{
-		if ( CharacterClass_GetIsShippingCharacter( itemFlav ) == false )
-			continue
 
-		bool ownsChar = GRX_IsItemOwnedByPlayer_AllowOutOfDateData( itemFlav, player )
-		player.SetPersistentVar( "cachedCharacterOwnership[" + ItemFlavor_GetGUIDString( itemFlav ) + "]", ownsChar )
-	}
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 bool function IsCharacterGRXUnlockedForLoadoutSlot( EHI playerEHI, ItemFlavor itemFlavor, bool shouldIgnoreGRX = false, bool shouldIgnoreOtherSlots = false )
@@ -1105,15 +1095,15 @@ bool function Character_IsCharacterOwnedByPlayer( ItemFlavor character, entity p
 {
 	Assert( ItemFlavor_GetType( character ) == eItemType.character )
 
-	#if SERVER
-		Assert( player != null && IsValid( player ) )
-	#elseif CLIENT
+
+
+
 		if ( player == null )
 			player = GetLocalClientPlayer()
-	#elseif UI
-		if ( player == null )
-			player = GetLocalClientPlayer()
-	#endif
+
+
+
+
 
 	if( GRX_HasInventoryEverBeenReady( player ) )
 	{
@@ -1129,7 +1119,7 @@ bool function Character_IsCharacterOwnedByPlayer( ItemFlavor character, entity p
 	return expect bool ( player.GetPersistentVar( "cachedCharacterOwnership[" + ItemFlavor_GetGUIDString( character ) + "]" ) )
 }
 
-#if CLIENT || UI
+
 array<ItemFlavor> function GetCharacterButtonOrder( array<ItemFlavor> allCharacters, int totalButtons )
 {
 	for ( int i = 0 ; i < allCharacters.len() ; i++ )
@@ -1140,11 +1130,11 @@ array<ItemFlavor> function GetCharacterButtonOrder( array<ItemFlavor> allCharact
 	}
 
 	array<ItemFlavor> sortedCharacters = clone allCharacters
-                    
+
 		sortedCharacters.sort( SortByRoleAndMenuIndex )
-      
-                                                
-       
+
+
+
 
 	return sortedCharacters
 }
@@ -1161,7 +1151,7 @@ array<ItemFlavor> function GetCharactersByRole( array<ItemFlavor> allCharacters,
 
 	return toReturn
 }
-#endif // CLIENT || UI
+
 
 int function SortByMenuButtonIndex( ItemFlavor a, ItemFlavor b )
 {
@@ -1183,7 +1173,7 @@ int function SortByMenuButtonIndex( ItemFlavor a, ItemFlavor b )
 	return 0
 }
 
-                   
+
 int function SortByRoleAndMenuIndex( ItemFlavor a, ItemFlavor b )
 {
 	int aIndex = CharacterClass_GetMenuButtonIndex( a )
@@ -1214,9 +1204,9 @@ int function SortByRoleAndMenuIndex( ItemFlavor a, ItemFlavor b )
 
 	return 0
 }
-      
 
-#if SERVER || CLIENT
+
+
 int function GetPlayerSettingBaseHealth( entity player )
 {
 	return int( player.GetPlayerSettingFloat( "health" ) )
@@ -1226,7 +1216,7 @@ int function GetPlayerSettingBaseShield( entity player )
 {
 	return int( player.GetPlayerSettingFloat( "healthShield" ) )
 }
-#endif
+
 
 bool function WIP_CharacterClass_ShouldTrackStats( ItemFlavor character )
 {
@@ -1238,18 +1228,17 @@ bool function WIP_CharacterClass_ShouldTrackStats( ItemFlavor character )
 	return GetGlobalSettingsBool( ItemFlavor_GetAsset( character ), "shouldTrackStatsInDev" )
 }
 
-#if SERVER || CLIENT || UI
-ItemFlavor ornull function CharacterClass_GetRandomNonGRXCharacter()
+
+ItemFlavor function CharacterClass_GetRandomNonGRXCharacter()
 {
-	if ( fileLevel.nonGRXCharacters.len() == 0 )
-		return null
 	return ( fileLevel.nonGRXCharacters.getrandom() )
 }
-#endif
-///////////////////
-///////////////////
-//// Internals ////
-///////////////////
-///////////////////
 
 
+
+
+
+
+
+
+ 

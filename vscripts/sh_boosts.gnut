@@ -36,13 +36,13 @@ global function Boost_GetBonusPostGameAccountXP
 global function Boost_GetBonusPostGameTotalAccountXP
 global function Boost_GetBonusPostGameMythicProgressBonus
 
-	global function Boost_LowFreqUpdate
-	global function Boost_UI_SetHasNewBoosts
-	global function Boost_UI_HasNewBoosts
-	global function Boost_UI_MarkAllBoostsAsSeen
-	global function GetLegacyXPBoostPercentage
-	global function Boost_GetBoostEventQuantityFromCategory
-	global function Boost_GetActiveLegacyBoostEventQuantity
+
+
+
+
+
+
+
 
 
 
@@ -114,7 +114,13 @@ global enum eBoostCategory
 
 
 
-// eBoostModifierType defined in sh_consts.gnut
+global enum eBoostModifierType
+{
+	ACCOUNT_XP,
+	BP_STARS,
+	MYTHIC_PROGRESS,
+	MASTERY_WEAPON,
+}
 
 global enum eBoostCalculationType
 {
@@ -304,7 +310,7 @@ struct FileStruct_Boosts
 #endif
 
 
-		bool hasNewBoosts = false
+
 
 }
 FileStruct_Boosts& file
@@ -388,6 +394,7 @@ void function Sh_Boosts_Init()
 
 void function OnBoostsLoaded( entity player, BoostTable previousState )
 {
+return
 	BoostTable activeBoosts = Boost_GetActiveBoosts( player )
 	LoadPersistentData( player )
 	ReconcileSeenBoosts( player )
@@ -399,10 +406,10 @@ void function OnBoostsLoaded( entity player, BoostTable previousState )
 void function OnNewBoostDetected( entity player, int boostGuid )
 {
 
-#if DEV
-			printf("\tOnNewBoostDetected: %i\n", boostGuid )
-#endif
-		Boost_UI_SetHasNewBoosts( true )
+
+
+
+
 
 }
 
@@ -530,7 +537,7 @@ void function OnAllItemsRegistered()
 
 	Debug_PrintPlaylist()
 
-		Debug_PrintPlayerBoosts( GetLocalClientPlayer() )
+
 
 	file.initialized = true
 }
@@ -1148,11 +1155,12 @@ BoostCachedModifier ornull function GetCachedModifierForPlayer( entity player, i
 
 int function GetMaxPlaylistBoosts()
 {
-	return PersistenceGetArrayCount( PERSISTENCE_ACTIVE_BOOSTS )
+	return 50//PersistenceGetArrayCount( PERSISTENCE_ACTIVE_BOOSTS )
 }
 
 void function LoadPersistentData( entity player )
 {
+	return
 	bool playlistVersionChanged = PersistentPlaylistVersionMismatch( player )
 
 
@@ -1167,6 +1175,7 @@ void function LoadPersistentData( entity player )
 
 void function LoadPersistentSeenBoosts( entity player, bool playlistVersionChanged )
 {
+	return
 	int persistentListSize = GetMaxPlaylistBoosts()
 
 	
@@ -1332,7 +1341,7 @@ bool function StoredPlaylistVersionMismatch( entity player )
 
 void function ReconcileSeenBoosts( entity player )
 {
-	
+	return
 	BoostTable playerBoosts         = Boost_GetActiveBoosts( player )
 	array< int > boostsToDelete     = []
 	BoostGuidTable playerSeenBoosts = GetPlayerSeenBoosts( player )
@@ -1651,7 +1660,7 @@ bool function BoostEventHasStarted( BoostEvent boostEvent )
 
 bool function PlayerBoostsNeedRefresh( entity player )
 {
-	
+	return false
 	if ( StoredPlaylistVersionMismatch( player ) )
 	{
 		return true
@@ -1834,8 +1843,8 @@ bool function IsClientRegionInList( entity player, array< string > countryCodes 
 
 
 
-		Assert( player == GetLocalClientPlayer() )
-		return GRX_IsClientRegionInList( countryCodes )
+
+
 
 	return false
 }
@@ -1987,6 +1996,7 @@ void function Debug_PrintPlaylist()
 
 void function Debug_PrintPlayerBoosts( entity player )
 {
+return
 	if ( DEBUG_PRINT_BOOSTS )
 	{
 		BoostTable boosts = Boost_GetActiveBoosts( player )
@@ -2114,6 +2124,7 @@ void function Debug_PrintBoosts( entity player )
 
 	void function DEV_Boost_PrintActiveBoosts( entity ornull player = null )
 	{
+	return
 		if ( player == null )
 		{
 
@@ -2472,7 +2483,7 @@ void function Boost_RefreshBoosts()
 
 
 
-		Boost_RefreshPlayerBoosts( GetLocalClientPlayer() )
+
 
 
 	SetStoredPlaylistBoostVersion( GetPlaylistBoostVersion() )
@@ -2493,7 +2504,7 @@ void function Boost_RefreshBoostEvents()
 
 void function Boost_RefreshPlayerBoosts( entity player )
 {
-
+	return
 		Assert( player == GetLocalClientPlayer() )
 
 
@@ -2739,85 +2750,18 @@ int function Boost_GetBonusPostGameMythicProgressBonus( entity player, int pIdx 
 }
 
 
-	void function Boost_LowFreqUpdate()
-	{
-		if ( PlayerBoostsNeedRefresh( GetLocalClientPlayer() ) )
-		{
-#if DEV
-				print( "Refreshing boosts..." )
-#endif
 
-			
-			if ( StoredPlaylistVersionMismatch( GetLocalClientPlayer() ) )
-			{
-				ClearStoredPlaylistData()
-				RegisterPlaylistData()
-				ImportPlaylistData()
-			}
 
-			Boost_RefreshBoosts()
-		}
-	}
 
-	void function Boost_UI_SetHasNewBoosts( bool hasNewBoosts )
-	{
-		file.hasNewBoosts = hasNewBoosts
-	}
 
-	bool function Boost_UI_HasNewBoosts()
-	{
-		return file.hasNewBoosts
-	}
 
-	void function Boost_UI_MarkAllBoostsAsSeen()
-	{
-		entity player                   = GetLocalClientPlayer()
-		BoostGuidTable playerSeenBoosts = GetPlayerSeenBoosts( player )
-		foreach ( Boost boost in file.playerBoosts[ player ] )
-		{
-			playerSeenBoosts[ boost.guid ] <- true
-		}
 
-		Boost_UI_SetHasNewBoosts( false )
-		Remote_ServerCallFunction( "ClientToServer_MarkAllBoostsAsSeen" )
-	}
 
-	const int MAX_XP_BOOST_STACKING_PERCENTAGE = 300
-	const int XP_BOOST_AMOUNT = int(BATTLEPASS_XP_BOOST_AMOUNT * 100.0)
-	int function GetLegacyXPBoostPercentage()
-	{
-		int boostCount = 0
-		Party party = GetParty()
 
-		foreach ( member in party.members )
-		{
-			boostCount += member.boostCount
-		}
 
-		return ClampInt(boostCount * XP_BOOST_AMOUNT, 0, MAX_XP_BOOST_STACKING_PERCENTAGE)
-	}
 
-	int function Boost_GetBoostEventQuantityFromCategory( int category, BoostTable boosts )
-	{
-		int quantity = 0
-		foreach ( Boost boost in boosts )
-		{
-			if ( boost.boostCategory == category )
-				quantity++
-		}
-		return quantity
-	}
 
-	int function Boost_GetActiveLegacyBoostEventQuantity()
-	{
-		int quantity = 0
-		if ( GetLegacyXPBoostPercentage() > 0 )
-			quantity++
-		if ( GetPartySize() > 1 )
-			quantity++
 
-		return quantity
-	}
 
 
 
@@ -2898,3 +2842,71 @@ int function Boost_GetBonusPostGameMythicProgressBonus( entity player, int pIdx 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

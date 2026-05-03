@@ -1,2 +1,0 @@
-//stub script
-untyped

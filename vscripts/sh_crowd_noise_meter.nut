@@ -2,37 +2,37 @@ global function CrowdNoiseMeter_Init
 global function CrowdNoiseMeter_RegisterNetworking
 global function CrowdNoiseMeterEnabled
 
-#if SERVER
-                  
-                                                               
-                                                               
-      
-global function UpdateTeamOrAllianceCrowdNoiseMeterAndBroadcast
-global function UpdateOtherTeamsOrAlliancesCrowdNoiseMeterAndBroadcast
-global function ScaledUpdateTeamOrAllianceCrowdNoiseMeterAndBroadcast
-#if DEV
-global function DEV_ModifyPlayerCrowdNoiseMeter
-global function DEV_ToggleCrowdNoiseMeterDecay
-global function DEV_ToggleCrowdNoiseMeterModifier
-global function DEV_DisableAllCrowdNoiseMeterModifiers
-global function DEV_ToggleCrowdNoiseMeterModifierFilters
-#endif
-#endif
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 global function CrowdNoiseMeter_PlayGameEndSound
 global function ServerCallback_CrowdNoiseMeterValueUpdate
 global function SetCallback_CrowdNoiseMeter_OnFirstSpawn
 global function TriggerCrowdEventOnEntity
 global function ToggleCrowdSoundOnEntity
-                  
-                                                            
-      
+
+
+
 #if DEV
 global function DEV_Cl_ToggleCrowdNoiseMeterOnPlayer
 global function DEV_Cl_ToggleCrowdNoiseMeterOnServer
 global function DEV_Cl_ToggleCrowdNoiseMeterDebug
 #endif
-#endif
+
 
 global enum eCrowdNoiseMeterModifiers
 {
@@ -91,14 +91,14 @@ global enum eCrowdNoiseMeterModifiers
 	KILL_STREAK_FREQUENT_5_POSITIVE,
 	KILL_STREAK_FREQUENT_5_NEGATIVE,
 
-                             
+
 	TREASURE_HUNT_CAPTURING_ZONE_POSITIVE,
 	TREASURE_HUNT_CAPTURING_ZONE_NEGATIVE,
 	TREASURE_HUNT_CAPTURED_ZONE_POSITIVE,
 	TREASURE_HUNT_CAPTURED_ZONE_NEGATIVE,
 	TREASURE_HUNT_CONTESTING_ZONE_POSITIVE,
 	TREASURE_HUNT_CONTESTING_ZONE_NEGATIVE,
-      
+
 
 	NESSIE_FIREWORKS_EE,
 
@@ -127,7 +127,7 @@ global enum eCrowdEvent
 	_count
 }
 
-#if CLIENT
+
 enum eCrowdNoiseUpdateReason
 {
 	DECAY,
@@ -135,7 +135,7 @@ enum eCrowdNoiseUpdateReason
 
 	_count
 }
-#endif // CLIENT
+
 
 global const string SIGNAL_CROWD_NOISE_METER_DECAY_STOP = "CrowdNoiseMeter_Decay_Stop"
 
@@ -153,26 +153,26 @@ struct
 
 	float[eCrowdNoiseMeterModifiers._count] crowdNoiseMeterModifiers
 
-#if SERVER
-	table< int, float > teamNoiseMeterValues
 
-                   
-                                 
-                                              
-                         
 
-	#if DEV
-		bool areFiltersEnabled												= false
-		array<int> validCrowdNoiseMeterModifiers
-	#endif // DEV
-#endif // SERVER
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
 	void functionref() onFirstSpawnCallback
 
 	float localNoiseMeterValue												= 0.0
 	float localNoiseMeterDeltaValue											= 0.0
-	
+
 	float localNoiseMeterLastUpdateTime										= 0.0
 
 	string[eCrowdSound._count] crowdSounds									= [ "tdome_crowd_idle_lp"
@@ -196,17 +196,17 @@ struct
 
 	table < int, int > crowdSoundOdds
 
-	#if DEV
+#if DEV
 		var meterRui														= null
 		bool isServerBroadcasting
-	#endif // DEV
+#endif
 
 	bool isFirstTimeSpawned													= false
-#endif // CLIENT
+
 
 #if DEV
 	bool isDecayEnabled														= true
-#endif // DEV
+#endif
 
 } file
 
@@ -216,15 +216,15 @@ void function CrowdNoiseMeter_Init()
 	if ( !CrowdNoiseMeterEnabled() )
 		return
 
-	#if SERVER
-                    
-                                                                                                                  
-                          
-	#endif // SERVER
 
-	#if CLIENT && DEV
+
+
+
+
+
+#if DEV
 		file.isServerBroadcasting = GetCurrentPlaylistVarBool( "crowd_noise_meter_enable_server_broadcasting", false )
-	#endif // CLIENT && DEV
+#endif
 
 	file.decayIntervalSeconds = GetCurrentPlaylistVarInt( "crowd_noise_meter_decay_interval_seconds", 0 )
 	file.decayValue = GetCurrentPlaylistVarFloat( "crowd_noise_meter_decay_value", 0.0 )
@@ -233,7 +233,7 @@ void function CrowdNoiseMeter_Init()
 
 	file.cheerDeltaTrigger = GetCurrentPlaylistVarFloat( "crowd_noise_meter_cheer_delta_trigger", 0.2 )
 
-	// initialize crowd noise meter modifiers
+	
 	file.crowdNoiseMeterModifiers[eCrowdNoiseMeterModifiers.CONTROL_HALFWAY_POINT_POSITIVE] = GetCurrentPlaylistVarFloat( "crowd_noise_meter_modifier_control_halfway_point_positive", 0.0 )
 	file.crowdNoiseMeterModifiers[eCrowdNoiseMeterModifiers.CONTROL_HALFWAY_POINT_NEGATIVE] = GetCurrentPlaylistVarFloat( "crowd_noise_meter_modifier_control_halfway_point_negative", 0.0 )
 
@@ -314,7 +314,7 @@ void function CrowdNoiseMeter_Init()
 	file.crowdNoiseMeterModifiers[eCrowdNoiseMeterModifiers.KILL_STREAK_FREQUENT_5_POSITIVE] = GetCurrentPlaylistVarFloat( "crowd_noise_meter_modifier_kill_streak_frequent_5_positive", 0.0 )
 	file.crowdNoiseMeterModifiers[eCrowdNoiseMeterModifiers.KILL_STREAK_FREQUENT_5_NEGATIVE] = GetCurrentPlaylistVarFloat( "crowd_noise_meter_modifier_kill_streak_frequent_5_negative", 0.0 )
 
-	                             
+
 		file.crowdNoiseMeterModifiers[eCrowdNoiseMeterModifiers.TREASURE_HUNT_CAPTURING_ZONE_POSITIVE] = GetCurrentPlaylistVarFloat( "crowd_noise_meter_modifier_treasure_hunt_capturing_zone_positive", 0.0 )
 		file.crowdNoiseMeterModifiers[eCrowdNoiseMeterModifiers.TREASURE_HUNT_CAPTURING_ZONE_NEGATIVE] = GetCurrentPlaylistVarFloat( "crowd_noise_meter_modifier_treasure_hunt_capturing_zone_negative", 0.0 )
 
@@ -323,34 +323,34 @@ void function CrowdNoiseMeter_Init()
 
 		file.crowdNoiseMeterModifiers[eCrowdNoiseMeterModifiers.TREASURE_HUNT_CONTESTING_ZONE_POSITIVE] = GetCurrentPlaylistVarFloat( "crowd_noise_meter_modifier_treasure_hunt_contesting_zone_positive", 0.0 )
 		file.crowdNoiseMeterModifiers[eCrowdNoiseMeterModifiers.TREASURE_HUNT_CONTESTING_ZONE_NEGATIVE] = GetCurrentPlaylistVarFloat( "crowd_noise_meter_modifier_treasure_hunt_contesting_zone_negative", 0.0 )
-       
-	
+
+
 	file.crowdNoiseMeterModifiers[eCrowdNoiseMeterModifiers.NESSIE_FIREWORKS_EE] = GetCurrentPlaylistVarFloat( "crowd_noise_meter_nessie_fireworks_ee_positive", 1 )
-	// end crowd noise meter modifiers
+	
 
 	RegisterSignal( SIGNAL_CROWD_NOISE_METER_DECAY_STOP )
 
-	#if SERVER
-		AddCallback_OnClientConnected( SERVER_OnClientConnected )
 
-		                       
-			StreaksTracker_AddCallback_OnStreakTriggered( SERVER_OnStreakTriggered )
-                               
-	#endif // SERVER
+
+
+
+
+
+
 
 	AddCallback_GameStateEnter( eGameState.WaitingForPlayers, CrowdNoiseMeter_OnGameWaitingForPlayers )
 	AddCallback_GameStateEnter( eGameState.Playing, CrowdNoiseMeter_OnGamePlaying )
 
-	#if CLIENT
+
 		AddCallback_LocalClientPlayerSpawned( CrowdNoiseMeter_OnPlayerSpawned )
 		AddOnDeathCallback( "player", CrowdNoiseMeter_OnPlayerKilled )
 
 
-		// the following crowdsounds have a trigger chance of 100%
+		
 		file.crowdSoundOdds[eCrowdSound.CAPTURE_START] <- 100
 
 
-		// the following crowd sounds have a variable trigger percentage from playlist vars
+		
 		int roundPointTriggerOdds = GetCurrentPlaylistVarInt( "crowd_noise_meter_round_point_trigger_odds", 0 )
 		if ( roundPointTriggerOdds > 0 )
 			file.crowdSoundOdds[eCrowdSound.ROUND_POINT] <- roundPointTriggerOdds
@@ -358,7 +358,7 @@ void function CrowdNoiseMeter_Init()
 		int playerDeathTriggerOdds = GetCurrentPlaylistVarInt( "crowd_noise_meter_player_death_trigger_odds", 0 )
 		if ( playerDeathTriggerOdds > 0 )
 			file.crowdSoundOdds[eCrowdSound.PLAYER_DEATH] <- playerDeathTriggerOdds
-	#endif // CLIENT
+
 }
 
 bool function CrowdNoiseMeterEnabled()
@@ -368,40 +368,40 @@ bool function CrowdNoiseMeterEnabled()
 
 void function CrowdNoiseMeter_RegisterNetworking()
 {
-	Remote_RegisterClientFunction( "ServerCallback_CrowdNoiseMeterValueUpdate", "float", -1.0, 1.0, 32, "int", 0, INT_MAX ) // float:updatedCrowdNoiseMeterValue, int:nextDecayIntervalUnixTimestamp
+	Remote_RegisterClientFunction( "ServerCallback_CrowdNoiseMeterValueUpdate", "float", -1.0, 1.0, 32, "int", 0, INT_MAX ) 
 
-                   
-                                                                                         
-                                                                                    
-                                                                                    
-                         
+
+
+
+
+
 }
 
 void function CrowdNoiseMeter_OnGameWaitingForPlayers()
 {
-	#if CLIENT
+
 		file.isFirstTimeSpawned = true
-	#endif // CLIENT
+
 }
 
 void function CrowdNoiseMeter_OnGamePlaying()
 {
-	#if SERVER
-		thread SERVER_CrowdNoiseMeter_Think()
-	#else // NOT SERVER
+
+
+
 		thread CLIENT_CrowdNoiseMeter_Think()
 		thread CLIENT_ScoreCheck_Thread()
-	#endif
+
 }
 
-#if CLIENT
+
 void function CrowdNoiseMeter_OnPlayerSpawned( entity localPlayer )
 {
 	thread OnFirstTimeSpawned_Thread( localPlayer )
 }
-#endif // CLIENT
 
-#if CLIENT
+
+
 void function CrowdNoiseMeter_OnPlayerKilled( entity victim )
 {
 	entity player = GetLocalClientPlayer()
@@ -410,15 +410,15 @@ void function CrowdNoiseMeter_OnPlayerKilled( entity victim )
 
 	ToggleCrowdSoundOnEntity( player, eCrowdSound.PLAYER_DEATH, true )
 }
-#endif // CLIENT
 
-#if CLIENT
+
+
 void function OnFirstTimeSpawned_Thread( entity localPlayer )
 {
 	if ( !IsValid( localPlayer ) )
 		return
 
-	thread CLIENT_CrowdNoiseMeter_Think() // in case we need to start anticipation evts etc..
+	thread CLIENT_CrowdNoiseMeter_Think() 
 
 	if ( !file.isFirstTimeSpawned )
 		return
@@ -435,23 +435,23 @@ void function OnFirstTimeSpawned_Thread( entity localPlayer )
 		file.onFirstSpawnCallback()
 	}
 }
-#endif // CLIENT
 
-#if CLIENT
+
+
 void function SetCallback_CrowdNoiseMeter_OnFirstSpawn( void functionref() func )
 {
 	file.onFirstSpawnCallback = func
 }
-#endif // CLIENT
 
-#if CLIENT
+
+
 void function ServerCallback_CrowdNoiseMeterValueUpdate( float updatedCrowdNoiseMeterValue, int nextDecayIntervalUnixTimestamp )
 {
 	if ( !CrowdNoiseMeterEnabled() )
 		return
 
-	// TODO:
-	// use nextDecayIntervalUnixTimestamp to ensure the synchronization of the decay between the client and server
+	
+	
 
 	CLIENT_SetCrowdNoiseMeterValue( updatedCrowdNoiseMeterValue, eCrowdNoiseUpdateReason.SERVER_UPDATE )
 
@@ -460,46 +460,46 @@ void function ServerCallback_CrowdNoiseMeterValueUpdate( float updatedCrowdNoise
 		thread CLIENT_CrowdNoiseMeter_Think()
 	}
 }
-#endif // CLIENT
 
-#if CLIENT
-                  
-                                                                                                 
- 
-        
-                                                            
 
-                                   
-   
-                                         
-                            
-          
 
-                                                        
 
-                                                        
-    
-                                                                    
-     
-                             
-     
-    
-   
-              
- 
-                        
-#endif // CLIENT
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function CLIENT_SetCrowdNoiseMeterValue( float updatedCrowdNoiseMeterValue, int updateReason )
 {
-	// Update CrowdNoiseMeterValue
+	
 	float crowdNoiseMeterDelta = updatedCrowdNoiseMeterValue - file.localNoiseMeterValue
 	file.localNoiseMeterValue = clamp( updatedCrowdNoiseMeterValue, 0.0, 1.0 )
-	//
+	
 
-	// Update the CrowdNoiseMeterDeltaValue
-	// This value is feed to the miles controller for tuning crowd audio
+	
+	
 	float curtime = Time()
 	float deltaDecay = min( fabs( file.localNoiseMeterDeltaValue ), (curtime - file.localNoiseMeterLastUpdateTime) * file.deltaDecayPerSec )
 	if ( file.localNoiseMeterDeltaValue > 0 )
@@ -507,16 +507,16 @@ void function CLIENT_SetCrowdNoiseMeterValue( float updatedCrowdNoiseMeterValue,
 
 	file.localNoiseMeterDeltaValue += deltaDecay + crowdNoiseMeterDelta
 	file.localNoiseMeterLastUpdateTime = curtime
-	//
+	
 
-	//Sound_SetCrowdState( file.localNoiseMeterValue * 100, file.localNoiseMeterDeltaValue * 100 )
+	Sound_SetCrowdState( file.localNoiseMeterValue * 100, file.localNoiseMeterDeltaValue * 100 )
 
-	#if DEV
+#if DEV
 		if ( IsValid( file.meterRui ) )
 		{
 			RuiSetFloat( file.meterRui, "progress", file.localNoiseMeterValue )
 		}
-	#endif //DEV
+#endif
 
 	if ( !GamePlayingOrSuddenDeath() )
 		return
@@ -525,7 +525,7 @@ void function CLIENT_SetCrowdNoiseMeterValue( float updatedCrowdNoiseMeterValue,
 	if ( !IsValid( player ) )
 		return
 
-	// prevent cheers from triggering due to decay
+	
 	if ( updateReason == eCrowdNoiseUpdateReason.DECAY )
 		return
 
@@ -534,369 +534,369 @@ void function CLIENT_SetCrowdNoiseMeterValue( float updatedCrowdNoiseMeterValue,
 		TriggerCrowdEventOnEntity( player, eCrowdEvent.CHEER )
 	}
 }
-#endif // CLIENT
-
-#if SERVER
-void function SERVER_OnClientConnected( entity player )
-{
-	if ( !IsValid( player ) || player.IsBot() )
-		return
-
-	int team = player.GetTeam()
-	if ( team == TEAM_SPECTATOR || team == TEAM_UNASSIGNED )
-		return
-
-	bool isUsingAlliances   = AllianceProximity_IsUsingAlliances()
-	int allianceOrTeam      = ( isUsingAlliances ) ? AllianceProximity_GetAllianceFromTeam( team ): team
-	if ( !(allianceOrTeam in file.teamNoiseMeterValues) )
-	{
-		file.teamNoiseMeterValues[allianceOrTeam] <- 0.0
-	}
-
-	BroadcastPlayerCrowdNoiseMeter( player )
-}
-#endif // SERVER
-
-#if SERVER
-void function SERVER_OnStreakTriggered( entity player, entity victim, int streakType )
-{
-	if ( !IsValid( player ) )
-		return
-
-	int team = player.GetTeam()
-	if ( team == TEAM_SPECTATOR || team == TEAM_UNASSIGNED )
-		return
-
-	bool isUsingAlliances   = AllianceProximity_IsUsingAlliances()
-	int allianceOrTeam      = ( isUsingAlliances ) ? AllianceProximity_GetAllianceFromTeam( team ): team
-
-	                       
-		int positiveModifier = eCrowdNoiseMeterModifiers._count
-		int negativeModifier = eCrowdNoiseMeterModifiers._count
-		switch ( streakType )
-		{
-			case eStreakType.CONSECUTIVE_KILLS_3:
-				positiveModifier = eCrowdNoiseMeterModifiers.KILL_STREAK_CONSECUTIVE_3_POSITIVE
-				negativeModifier = eCrowdNoiseMeterModifiers.KILL_STREAK_CONSECUTIVE_3_NEGATIVE
-				break
-
-			case eStreakType.CONSECUTIVE_KILLS_5:
-				positiveModifier = eCrowdNoiseMeterModifiers.KILL_STREAK_CONSECUTIVE_5_POSITIVE
-				negativeModifier = eCrowdNoiseMeterModifiers.KILL_STREAK_CONSECUTIVE_5_NEGATIVE
-				break
-
-			case eStreakType.CONSECUTIVE_KILLS_10:
-				positiveModifier = eCrowdNoiseMeterModifiers.KILL_STREAK_CONSECUTIVE_10_POSITIVE
-				negativeModifier = eCrowdNoiseMeterModifiers.KILL_STREAK_CONSECUTIVE_10_NEGATIVE
-				break
-
-			case eStreakType.CONSECUTIVE_KILLS_15:
-				positiveModifier = eCrowdNoiseMeterModifiers.KILL_STREAK_CONSECUTIVE_15_POSITIVE
-				negativeModifier = eCrowdNoiseMeterModifiers.KILL_STREAK_CONSECUTIVE_15_NEGATIVE
-				break
-
-            case eStreakType.FREQUENT_KILLS_1:
-				positiveModifier = eCrowdNoiseMeterModifiers.KILL_STREAK_FREQUENT_1_POSITIVE
-				negativeModifier = eCrowdNoiseMeterModifiers.KILL_STREAK_FREQUENT_1_NEGATIVE
-				break
-
-			case eStreakType.FREQUENT_KILLS_2:
-				positiveModifier = eCrowdNoiseMeterModifiers.KILL_STREAK_FREQUENT_2_POSITIVE
-				negativeModifier = eCrowdNoiseMeterModifiers.KILL_STREAK_FREQUENT_2_NEGATIVE
-				break
-
-			case eStreakType.FREQUENT_KILLS_3:
-				positiveModifier = eCrowdNoiseMeterModifiers.KILL_STREAK_FREQUENT_3_POSITIVE
-				negativeModifier = eCrowdNoiseMeterModifiers.KILL_STREAK_FREQUENT_3_NEGATIVE
-				break
-
-			case eStreakType.FREQUENT_KILLS_5:
-				positiveModifier = eCrowdNoiseMeterModifiers.KILL_STREAK_FREQUENT_5_POSITIVE
-				negativeModifier = eCrowdNoiseMeterModifiers.KILL_STREAK_FREQUENT_5_NEGATIVE
-				break
-
-			default:
-				return
-		}
-
-		UpdateTeamOrAllianceCrowdNoiseMeterAndBroadcast( allianceOrTeam, positiveModifier )
-
-		if ( streakType == eStreakType.FREQUENT_KILLS_1 )
-		{
-			// Frequent Kill Streak of 1 is a special case
-			// For this kill streak we only want to negatively impact the team of the victim, not all of the teams that are not the trigger player's team
-			if ( !IsValid( victim ) )
-				return
-
-			int victimTeam = victim.GetTeam()
-			if ( victimTeam == TEAM_SPECTATOR || victimTeam == TEAM_UNASSIGNED )
-				return
-
-			int victimAllianceOrTeam      = ( isUsingAlliances ) ? AllianceProximity_GetAllianceFromTeam( victimTeam ): victimTeam
-			UpdateTeamOrAllianceCrowdNoiseMeterAndBroadcast( victimTeam, negativeModifier )
-		}
-		else
-		{
-			UpdateOtherTeamsOrAlliancesCrowdNoiseMeterAndBroadcast( allianceOrTeam, negativeModifier )
-		}
-                              
-}
-#endif // SERVER
-
-#if SERVER
-void function BroadcastPlayerCrowdNoiseMeter( entity player )
-{
-	if ( !CrowdNoiseMeterEnabled() )
-		return
-
-	if ( !IsValid( player ) || player.IsBot() )
-		return
-
-                   
-                                    
-         
-
-                                                
-         
-                         
-
-	int team = player.GetTeam()
-	if ( team == TEAM_SPECTATOR || team == TEAM_UNASSIGNED )
-		return
-
-	bool isUsingAlliances   = AllianceProximity_IsUsingAlliances()
-	int allianceOrTeam      = ( isUsingAlliances ) ? AllianceProximity_GetAllianceFromTeam( team ): team
-
-	Assert( allianceOrTeam in file.teamNoiseMeterValues, "INVALID alliance or team value [ " + allianceOrTeam + " ]" )
-
-	float crowdMeterNoiseValue = file.teamNoiseMeterValues[allianceOrTeam]
-	Remote_CallFunction_NonReplay( player, "ServerCallback_CrowdNoiseMeterValueUpdate", crowdMeterNoiseValue, file.nextDecayUnixTimestamp )
-}
-#endif // SERVER
-
-#if SERVER
-                  
-                                                                              
- 
-                                            
-        
-
-                                               
-  
-                                                  
-                                          
-  
-     
-  
-                                       
-  
- 
-                        
-#endif // SERVER
-
-#if SERVER
-                  
-                                                                              
- 
-                                                         
-                                      
-
-                                  
-  
-                                                                                    
-   
-                                                 
-   
-  
- 
-                        
-#endif // SERVER
-
-#if SERVER
-                  
-                                                   
- 
-                                                                                   
-  
-                           
-                                             
-   
-                                                                                   
-   
-      
-   
-                                                       
-   
-
-                                          
-   
-                            
-            
-
-                                                                                                                      
-   
-  
- 
-                        
-#endif // SERVER && DEV
-
-#if SERVER
-void function SERVER_CrowdNoiseMeter_Think()
-{
-	Signal( svGlobal.levelEnt, SIGNAL_CROWD_NOISE_METER_DECAY_STOP )
-	EndSignal( svGlobal.levelEnt, SIGNAL_CROWD_NOISE_METER_DECAY_STOP )
-
-	if ( file.decayIntervalSeconds == 0 )
-		return
-
-	while ( CrowdNoiseMeterEnabled() )
-	{
-		file.nextDecayUnixTimestamp = GetUnixTimestamp() + file.decayIntervalSeconds
-		wait file.decayIntervalSeconds
-
-		foreach ( int teamOrAlliance, float noiseMeterValue in file.teamNoiseMeterValues )
-		{
-			#if DEV
-				if ( !file.isDecayEnabled )
-					continue
-			#endif // DEV
-
-			UpdateTeamOrAllianceCrowdNoiseMeter( teamOrAlliance, file.decayValue )
-		}
-	}
-}
-#endif // SERVER
-
-#if SERVER
-void function UpdateTeamOrAllianceCrowdNoiseMeter( int teamOrAlliance, float crowdNoiseMeterDelta )
-{
-	if ( !(teamOrAlliance in file.teamNoiseMeterValues) )
-		return
-
-	float updatedCrowdNoiseMeterValue = file.teamNoiseMeterValues[teamOrAlliance] + crowdNoiseMeterDelta
-	file.teamNoiseMeterValues[teamOrAlliance] = clamp( updatedCrowdNoiseMeterValue, 0.0, 1.0 )
-}
-#endif // SERVER
-
-#if SERVER
-void function BroadcastTeamCrowdNoiseMeter( int teamOrAlliance )
-{
-	if ( !CrowdNoiseMeterEnabled() )
-		return
-
-	if ( !(teamOrAlliance in file.teamNoiseMeterValues) )
-		return
-
-	float crowdNoiseMeterValue = file.teamNoiseMeterValues[teamOrAlliance]
-
-	array<entity> teamPlayers
-	if ( AllianceProximity_IsUsingAlliances() )
-	{
-		teamPlayers = AllianceProximity_GetAllPlayersInAlliance( teamOrAlliance, false )
-	}
-	else
-	{
-		teamPlayers = GetPlayerArrayOfTeam( teamOrAlliance )
-	}
-
-	foreach ( entity player in teamPlayers )
-	{
-		if ( !IsValid( player ) )
-			continue
-
-                    
-                                     
-          
-
-                                                 
-          
-                          
-
-		Remote_CallFunction_NonReplay( player, "ServerCallback_CrowdNoiseMeterValueUpdate", crowdNoiseMeterValue, file.nextDecayUnixTimestamp )
-	}
-}
-#endif // SERVER
-
-#if SERVER
-void function UpdateTeamOrAllianceCrowdNoiseMeterAndBroadcast( int teamOrAlliance, int modifier )
-{
-	if ( !(teamOrAlliance in file.teamNoiseMeterValues) )
-		return
-
-	if ( modifier >= eCrowdNoiseMeterModifiers._count )
-		return
-
-	#if DEV
-		if ( file.areFiltersEnabled && !file.validCrowdNoiseMeterModifiers.contains( modifier ) )
-			return
-	#endif // DEV
-
-	float crowdNoiseMeterDelta = file.crowdNoiseMeterModifiers[modifier]
-	if ( fabs( crowdNoiseMeterDelta ) < FLT_EPSILON )
-		return
-
-	float updatedCrowdNoiseMeterValue = file.teamNoiseMeterValues[teamOrAlliance] + crowdNoiseMeterDelta
-	file.teamNoiseMeterValues[teamOrAlliance] = updatedCrowdNoiseMeterValue
-
-	BroadcastTeamCrowdNoiseMeter( teamOrAlliance )
-
-	file.teamNoiseMeterValues[teamOrAlliance] = clamp( updatedCrowdNoiseMeterValue, 0.0, 1.0 )
-}
-
-void function UpdateOtherTeamsOrAlliancesCrowdNoiseMeterAndBroadcast( int teamOrAllianceToIgnore, int modifier )
-{
-	array< int > allTeamsOrAlliances = AllianceProximity_GetAllTeamsOrAlliances()
-	allTeamsOrAlliances.fastremovebyvalue( teamOrAllianceToIgnore )
-
-	foreach ( int teamOrAlliance in allTeamsOrAlliances )
-	{
-		UpdateTeamOrAllianceCrowdNoiseMeterAndBroadcast( teamOrAlliance, modifier )
-	}
-}
-
-void function ScaledUpdateTeamOrAllianceCrowdNoiseMeterAndBroadcast( int teamOrAlliance, int modifier, float scaleValue )
-{
-	if ( !(teamOrAlliance in file.teamNoiseMeterValues) )
-		return
-
-	if ( modifier >= eCrowdNoiseMeterModifiers._count )
-		return
-
-	#if DEV
-		if ( file.areFiltersEnabled && !file.validCrowdNoiseMeterModifiers.contains( modifier ) )
-			return
-	#endif // DEV
-
-	float crowdNoiseMeterDelta = file.crowdNoiseMeterModifiers[modifier] * scaleValue
-	if ( fabs( crowdNoiseMeterDelta ) < FLT_EPSILON )
-		return
-
-	float updatedCrowdNoiseMeterValue = file.teamNoiseMeterValues[teamOrAlliance] + crowdNoiseMeterDelta
-	file.teamNoiseMeterValues[teamOrAlliance] = updatedCrowdNoiseMeterValue
-
-	BroadcastTeamCrowdNoiseMeter( teamOrAlliance )
-
-	file.teamNoiseMeterValues[teamOrAlliance] = clamp( updatedCrowdNoiseMeterValue, 0.0, 1.0 )
-}
-
-#if DEV
-void function DEV_ModifyPlayerCrowdNoiseMeter( entity player, float delta )
-{
-	int teamOrAlliance = AllianceProximity_IsUsingAlliances() ? AllianceProximity_GetAllianceFromTeam( player.GetTeam() ) : player.GetTeam()
-	if ( !(teamOrAlliance in file.teamNoiseMeterValues) )
-		return
-
-	float updatedCrowdNoiseMeterValue = file.teamNoiseMeterValues[teamOrAlliance] + delta
-	file.teamNoiseMeterValues[teamOrAlliance] = updatedCrowdNoiseMeterValue
-
-	BroadcastTeamCrowdNoiseMeter( teamOrAlliance )
-
-	file.teamNoiseMeterValues[teamOrAlliance] = clamp( updatedCrowdNoiseMeterValue, 0.0, 1.0 )
-}
-#endif // DEV
-#endif // SERVER
-
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function CLIENT_CrowdNoiseMeter_Think()
 {
 	Assert( IsNewThread(), "Must be threaded off" )
@@ -905,10 +905,10 @@ void function CLIENT_CrowdNoiseMeter_Think()
 	if ( !IsValid( player ) )
 		return
 
-	#if DEV
+#if DEV
 		if ( !file.isServerBroadcasting )
 			return
-	#endif
+#endif
 
 	Signal( player, SIGNAL_CROWD_NOISE_METER_DECAY_STOP )
 	EndSignal( player, SIGNAL_CROWD_NOISE_METER_DECAY_STOP )
@@ -918,10 +918,10 @@ void function CLIENT_CrowdNoiseMeter_Think()
 	{
 		file.crowdSoundHandles[eCrowdSound.ANTICIPATION] = EmitSoundOnEntity_NoTimeScale( player, file.crowdSounds[eCrowdSound.ANTICIPATION] )
 
-		                  
+
 			SetPlayThroughKillReplay( file.crowdSoundHandles[eCrowdSound.ANTICIPATION] )
 			SetPlayThroughPOVTransitions( file.crowdSoundHandles[eCrowdSound.ANTICIPATION] )
-                          
+
 	}
 
 	if ( file.decayIntervalSeconds == 0 )
@@ -932,17 +932,17 @@ void function CLIENT_CrowdNoiseMeter_Think()
 		file.nextDecayUnixTimestamp = GetUnixTimestamp() + file.decayIntervalSeconds
 		wait file.decayIntervalSeconds
 
-		#if DEV
+#if DEV
 			if ( !file.isDecayEnabled )
 				continue
-		#endif // DEV
+#endif
 
 		UpdateLocalCrowdNoiseMeter( file.decayValue, eCrowdNoiseUpdateReason.DECAY )
 	}
 }
-#endif // CLIENT
 
-#if CLIENT
+
+
 void function CLIENT_ScoreCheck_Thread()
 {
 	Assert( IsNewThread(), "Must be threaded off" )
@@ -951,10 +951,10 @@ void function CLIENT_ScoreCheck_Thread()
 	if ( !IsValid( player ) || player.IsBot() )
 		return
 
-	#if DEV
+#if DEV
 		if ( !file.isServerBroadcasting )
 			return
-	#endif
+#endif
 
 	int prevScore = 0
 	while ( GetGameState() == eGameState.Playing )
@@ -994,17 +994,17 @@ void function CLIENT_ScoreCheck_Thread()
 		prevScore = currentScore
 	}
 }
-#endif // CLIENT
 
-#if CLIENT
+
+
 void function UpdateLocalCrowdNoiseMeter( float crowdNoiseMeterDelta, int updateReason )
 {
 	float updatedCrowdNoiseMeterValue = file.localNoiseMeterValue + crowdNoiseMeterDelta
 	CLIENT_SetCrowdNoiseMeterValue( updatedCrowdNoiseMeterValue, updateReason )
 }
-#endif // CLIENT
 
-#if CLIENT
+
+
 void function TriggerCrowdEventOnEntity( entity ent, int crowdEvent )
 {
 	if ( !CrowdNoiseMeterEnabled() )
@@ -1015,14 +1015,14 @@ void function TriggerCrowdEventOnEntity( entity ent, int crowdEvent )
 
 	var soundHandle = EmitSoundOnEntity_NoTimeScale( ent, file.crowdEventSounds[crowdEvent] )
 
-	                  
+
 		SetPlayThroughKillReplay( soundHandle )
 		SetPlayThroughPOVTransitions( soundHandle )
-                         
-}
-#endif // CLIENT
 
-#if CLIENT
+}
+
+
+
 void function ToggleCrowdSoundOnEntity( entity ent, int crowdSound, bool isEnabled )
 {
 	if ( !CrowdNoiseMeterEnabled() )
@@ -1045,10 +1045,10 @@ void function ToggleCrowdSoundOnEntity( entity ent, int crowdSound, bool isEnabl
 		{
 			file.crowdSoundHandles[crowdSound] = EmitSoundOnEntity_NoTimeScale( ent, file.crowdSounds[crowdSound] )
 
-			                  
+
 				SetPlayThroughKillReplay( file.crowdSoundHandles[crowdSound] )
 				SetPlayThroughPOVTransitions( file.crowdSoundHandles[crowdSound] )
-                           
+
 		}
 	}
 	else
@@ -1060,9 +1060,9 @@ void function ToggleCrowdSoundOnEntity( entity ent, int crowdSound, bool isEnabl
 		}
 	}
 }
-#endif // CLIENT
 
-#if CLIENT
+
+
 void function CrowdNoiseMeter_PlayGameEndSound( entity player, bool isOnWinningTeam )
 {
 	if ( !CrowdNoiseMeterEnabled() )
@@ -1074,14 +1074,14 @@ void function CrowdNoiseMeter_PlayGameEndSound( entity player, bool isOnWinningT
 	string endSound = isOnWinningTeam ? file.crowdEventSounds[eCrowdEvent.VICTORY] : file.crowdEventSounds[eCrowdEvent.LOSS]
 	var endSoundHandle = EmitSoundOnEntity_NoTimeScale( player, endSound )
 
-	                  
+
 		SetPlayThroughKillReplay( endSoundHandle )
 		SetPlayThroughPOVTransitions( endSoundHandle )
-                         
-}
-#endif // CLIENT
 
-#if CLIENT && DEV
+}
+
+
+#if DEV
 void function DEV_Cl_ToggleCrowdNoiseMeterOnPlayer()
 {
 	entity player = GetLocalClientPlayer()
@@ -1100,9 +1100,9 @@ void function DEV_Cl_ToggleCrowdNoiseMeterOnPlayer()
 
 	Remote_ServerCallFunction( "ClientCallback_DevToggleCrowdNoiseMeterOnPlayer" )
 }
-#endif // CLIENT && DEV
+#endif
 
-#if CLIENT && DEV
+#if DEV
 void function DEV_Cl_ToggleCrowdNoiseMeterDebug()
 {
 	if ( IsValid( file.meterRui ) )
@@ -1116,46 +1116,47 @@ void function DEV_Cl_ToggleCrowdNoiseMeterDebug()
 		RuiSetFloat( file.meterRui, "progress", file.localNoiseMeterValue )
 	}
 }
-#endif // CLIENT && DEV
+#endif
 
-#if CLIENT && DEV
+#if DEV
 void function DEV_Cl_ToggleCrowdNoiseMeterOnServer()
 {
 	Remote_ServerCallFunction( "ClientCallback_DevToggleCrowdNoiseMeterOnServer" )
 }
-#endif // CLIENT && DEV
+#endif
 
-#if SERVER && DEV
-void function DEV_ToggleCrowdNoiseMeterDecay()
-{
-	file.isDecayEnabled = !file.isDecayEnabled
-}
-#endif // SERVER && DEV
 
-#if SERVER && DEV
-void function DEV_ToggleCrowdNoiseMeterModifier( int validModifier )
-{
-	if ( file.validCrowdNoiseMeterModifiers.contains( validModifier ) )
-	{
-		file.validCrowdNoiseMeterModifiers.removebyvalue( validModifier )
-	}
-	else
-	{
-		file.validCrowdNoiseMeterModifiers.append( validModifier )
-	}
-}
-#endif // SERVER && DEV
 
-#if SERVER && DEV
-void function DEV_DisableAllCrowdNoiseMeterModifiers()
-{
-	file.validCrowdNoiseMeterModifiers.clear()
-}
-#endif // SERVER && DEV
 
-#if SERVER && DEV
-void function DEV_ToggleCrowdNoiseMeterModifierFilters()
-{
-	file.areFiltersEnabled = !file.areFiltersEnabled
-}
-#endif // SERVER && DEV 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

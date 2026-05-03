@@ -1,34 +1,62 @@
-globalize_all_functions
+global function Lobby_AddLocalPlayer
+global function AddCallback_OnPlayerAddedToLobby
+global function Lobby_SetBannerSkin
+global function ToggleHighlightOnRadioPlayProp
+#if DEV
+global function DEV_SetLobbyBannerSkin
+#endif
 
-      
 
 
-                                                                      
+
+
+
+
+
+global function Lobby_OnReadyFX
+
+
 const int LOBBY_BANNER_DEFAULT_SKIN_INDEX = 0
-const int LOBBY_BANNER_ARENAS_SKIN_INDEX = 1
-const int LOBBY_BANNER_CONTROL_SKIN_INDEX = 2
-const int LOBBY_BANNER_LTM_SKIN_INDEX = 3
-const int LOBBY_BANNER_FREEDM_SKIN_INDEX = 4
-                       
-const int LOBBY_BANNER_BG_DEFAULT_SKIN_INDEX = 5
-      
+const int LOBBY_BANNER_MIXTAPE_SKIN_INDEX = 1
+const int LOBBY_BANNER_LTM_SKIN_INDEX = 2
 
+const int LOBBY_EVENT1_SKIN_OFFSET = 3
+const int LOBBY_EVENT2_SKIN_OFFSET = 6
+
+
+const asset P_S21_PORTAL_1_EFFECT = $"P_S21_portal_01"
+const asset P_S21_PORTAL_2_EFFECT = $"P_S21_portal_02"
+const asset P_S21_PORTAL_IMAGE_EFFECT = $"P_S21_portal_radio_image_01"
+const asset P_S21_PORTAL_FRAME_EFFECT = $"P_S21_portal_frame"
+const asset P_S21_PORTAL_BP_EFFECT = $"P_S21_portal_01_BP"
+
+
+const asset P_S21_RT_PORTAL_1_EFFECT = $"P_S21_portal_01_RT"
+const asset P_S21_RT_PORTAL_2_EFFECT = $"P_S21_portal_02_RT"
+const asset P_S21_IMAGE_PORTAL_2_EFFECT = $"P_image_portal_02_RT"
+
+
+const asset P_KOTV_PORTAL_1_EFFECT = $"P_KotV_portal_01"
+const asset P_KOTV_PORTAL_2_EFFECT = $"P_KotV_portal_02"
 
 struct
 {
 	array<void functionref( entity )> onPlayerAddedToLobbyCallbacks
 
 	array<entity> lobbyBanners
-	#if DEVELOPER
+	array<entity> lobbyReskinProps
+#if DEV
 		bool overrideLobbyBanner = false
-	#endif
+#endif
 
-                        
-	array <entity> confettiNodes
-	float confettiCooldown = 0
-	bool balloonCreated = false
-	int conffettiFxParticleIndex = -1
-       
+	array< entity > radioPlayProps
+
+	float readyUpCooldown = 0
+	float readyUpCooldownTime = 15.0
+
+	bool registeredForPartyMemberCallback = false
+	bool radioPlayPropsSetup = false
+
 } file
 
 void function Lobby_AddLocalPlayer()
@@ -41,42 +69,33 @@ void function Lobby_AddLocalPlayer()
 
 	SetStandardAbilityBindingsForPilot( player )
 	RefreshPresentationType()
+
+
+	
+	
+	
+	RunUIScript( "Lobby_EnableMinimapCoordsOnConnect", player.GetPlayerName() )
+
+
 	foreach ( func in file.onPlayerAddedToLobbyCallbacks )
 		func( player )
-	CacheAnniversaryConfettiEnt()
-	return
-	if ( !file.balloonCreated )
+
+	if ( !file.registeredForPartyMemberCallback )
 	{
-		array< entity > balloonNodes = GetEntArrayByScriptName( "anniversary_lobby_balloon" )
-		if ( balloonNodes.len() == 1 )
-		{
-			asset balloon = LOBBY_ANNIVERSARY_BALLOON_MDLS.getrandom()
-			entity balloonEnt = CreateClientSidePropDynamic( balloonNodes[0].GetOrigin(), balloonNodes[0].GetAngles(), balloon )
-			balloonEnt.SetModelScale(0.16)
-			balloonEnt.SetSkin(1)
-		}
-
-
-
-		array< entity > apexBalloonNodes = GetEntArrayByScriptName( "anniversary_lobby_apexballoon" )
-		if ( apexBalloonNodes.len()== 1 )
-		{
-			entity apexBalloonEnt = CreateClientSidePropDynamic( apexBalloonNodes[0].GetOrigin(), <0, 0, 0>, $"mdl/celebration/float_balloons/apexlogo_float_balloon_01.rmdl" )
-			apexBalloonEnt.SetModelScale(0.40)
-
-
-
-			{
-				apexBalloonEnt.SetSkin( 2 )
-			}
-		}
-
-		file.balloonCreated = true
+		AddCallback_OnClientPartyMemberAdded( OnPartyMemberAdded )
+		file.registeredForPartyMemberCallback = true
 	}
 
+	CacheLobbyBannerEnt()
+	SetupEventProps()
+	SetupEventBase()
 
+
+
+
+
+	RunUIScript( "MaybeSendPINSettingsEvent" )
 }
-
 
 void function AddCallback_OnPlayerAddedToLobby( void functionref( entity ) onPlayerAddedToLobbyCallback )
 {
@@ -87,15 +106,75 @@ void function AddCallback_OnPlayerAddedToLobby( void functionref( entity ) onPla
 
 void function CacheLobbyBannerEnt()
 {
-	file.lobbyBanners = GetEntArrayByScriptName( "lobby_banner" )
-	PrecacheParticleSystem( $"P_s14_HW_eye" )
+	file.lobbyBanners     = GetEntArrayByScriptName( "lobby_banner" )
+	file.lobbyReskinProps = GetEntArrayByScriptName( "event_skin_prop" )
+
+	if ( IsLobbyEvent1Active() )
+	{
+		PrecacheParticleSystem( P_S21_RT_PORTAL_1_EFFECT )
+		PrecacheParticleSystem( P_S21_RT_PORTAL_2_EFFECT )
+		PrecacheParticleSystem( P_S21_IMAGE_PORTAL_2_EFFECT )
+	}
+
+	if ( IsLobbyEvent2Active() )
+	{
+		PrecacheParticleSystem( P_KOTV_PORTAL_1_EFFECT )
+		PrecacheParticleSystem( P_KOTV_PORTAL_2_EFFECT )
+	}
+
+	if ( !IsLobbyEvent1Active() || !IsLobbyEvent2Active() )
+	{
+		PrecacheParticleSystem( P_S21_PORTAL_1_EFFECT )
+		PrecacheParticleSystem( P_S21_PORTAL_2_EFFECT )
+		PrecacheParticleSystem( P_S21_PORTAL_IMAGE_EFFECT )
+		PrecacheParticleSystem( P_S21_PORTAL_FRAME_EFFECT )
+		PrecacheParticleSystem( P_S21_PORTAL_BP_EFFECT )
+	}
+}
+
+void function Lobby_OnReadyFX( bool isReady )
+{
+	if ( !isReady )
+		return
+
+	float now = ClientTime()
+
+	if ( file.readyUpCooldown != 0 && now < (file.readyUpCooldown + file.readyUpCooldownTime))
+		return
+
+	file.readyUpCooldown = now
+
+	if ( IsLobbyEvent1Active() )
+	{
+		thread Event1ReadyFX()
+	}
+	else if ( IsLobbyEvent2Active()  )
+	{
+		thread Event2ReadyFX()
+	}
+	else
+	{
+		thread NonEventLobbyReadyUp()
+	}
+}
+
+void function NonEventLobbyReadyUp()
+{
+}
+
+void function Event1ReadyFX()
+{
+}
+
+void function Event2ReadyFX()
+{
 }
 
 void function Lobby_SetBannerSkin( string playlist )
 {
 	if( file.lobbyBanners.len() == 0 )
 	{
-		                                        
+		
 		CacheLobbyBannerEnt()
 
 		if( file.lobbyBanners.len() == 0 )
@@ -106,23 +185,27 @@ void function Lobby_SetBannerSkin( string playlist )
 	}
 
 	string playlistName = GetParty().playlistName
+	int skinIndex =  LOBBY_BANNER_DEFAULT_SKIN_INDEX
 
-                        
-	int skinIndex = ( false ) ? LOBBY_BANNER_BG_DEFAULT_SKIN_INDEX : LOBBY_BANNER_DEFAULT_SKIN_INDEX
-      
-                                                
-       
 	if ( GetPlaylistVarBool( playlistName, "is_limited_mode", false ) )
-		skinIndex = LOBBY_BANNER_LTM_SKIN_INDEX
-                        
-                                                                                          
-                                            
+		skinIndex =  LOBBY_BANNER_LTM_SKIN_INDEX
+	else if ( GetPlaylistVarString( playlistName, "ui_slot", "" ) == "mixtape" )
+		skinIndex =  LOBBY_BANNER_MIXTAPE_SKIN_INDEX
 
-
-	#if DEVELOPER
+#if DEV
 		if ( file.overrideLobbyBanner )
 			return
-	#endif
+#endif
+
+	if ( IsLobbyEvent1Active() )
+	{
+		skinIndex = skinIndex + LOBBY_EVENT1_SKIN_OFFSET
+	}
+
+	if ( IsLobbyEvent2Active() )
+	{
+		skinIndex = skinIndex + LOBBY_EVENT2_SKIN_OFFSET
+	}
 
 	Lobby_SetBannerSkinInternal ( skinIndex )
 }
@@ -136,7 +219,7 @@ void function Lobby_SetBannerSkinInternal( int skinIndex )
 	}
 }
 
-#if DEVELOPER
+#if DEV
 void function DEV_SetLobbyBannerSkin( int i )
 {
 	if ( i == -1 )
@@ -150,50 +233,191 @@ void function DEV_SetLobbyBannerSkin( int i )
 }
 #endif
 
-                       
-void function CacheAnniversaryConfettiEnt()
+void function SetupEventBase()
 {
-	asset confettiFx = ( false ) ? $"P_S16_lobby_confetti_bg" : $"P_S16_lobby_confetti"
-	PrecacheParticleSystem( confettiFx )
-	file.conffettiFxParticleIndex = GetParticleSystemIndex( confettiFx )
-	file.confettiNodes = GetEntArrayByScriptName( "anniversary_lobby_fx" )
+	string skinName = ""
+
+	if ( IsLobbyEvent1Active() )
+	{
+		skinName = "event_1_skin"
+	}
+
+	if ( IsLobbyEvent2Active() )
+	{
+		skinName = "event_2_skin"
+	}
+
+	
+	if ( !IsLobbyEvent1Active() && !IsLobbyEvent2Active() )
+		SetupBaseFX()
+
+	if ( skinName == "" )
+		return
+
+	foreach ( lobbyReskinProp in file.lobbyReskinProps )
+	{
+		if ( IsValid( lobbyReskinProp ) && lobbyReskinProp.GetSkinIndexByName(skinName) != -1)
+		{
+			lobbyReskinProp.SetSkin(lobbyReskinProp.GetSkinIndexByName(skinName))
+		}
+	}
 }
 
-void function Lobby_AnniversaryConfettiOnReady()
+void function SetupBaseFX()
 {
-	if (  file.confettiNodes.len() == 0 )
-		return
+	array< entity > event_portal_group_1 = GetEntArrayByScriptName( "event_portal_group_1" )
+	SetupParticleEffectOnEntities( event_portal_group_1, P_S21_PORTAL_1_EFFECT, FX_PATTACH_ABSORIGIN, ATTACHMENTID_INVALID )
 
-	float now = ClientTime()
+	array< entity > event_portal_group_2 = GetEntArrayByScriptName( "event_portal_group_2" )
+	array< entity > event_portal_front = GetEntArrayByScriptName( "event_portal_front" )
+	event_portal_group_2.extend( event_portal_front )
+	SetupParticleEffectOnEntities( event_portal_group_2, P_S21_PORTAL_2_EFFECT, FX_PATTACH_ABSORIGIN, ATTACHMENTID_INVALID )
 
-	if ( now < (file.confettiCooldown + 3.0))
-		return
+	array< entity > event_portal_image = GetEntArrayByScriptName( "event_portal_image" )
+	SetupParticleEffectOnEntities( event_portal_image, P_S21_PORTAL_IMAGE_EFFECT, FX_PATTACH_ABSORIGIN, ATTACHMENTID_INVALID )
 
-	file.confettiCooldown = now
+	array< entity > event_portal_frame = GetEntArrayByScriptName( "event_portal_frame" )
+	SetupParticleEffectOnEntities( event_portal_frame, P_S21_PORTAL_FRAME_EFFECT, FX_PATTACH_ABSORIGIN, ATTACHMENTID_INVALID )
 
-	thread function() : ()
+	array< entity > event_portal_bp = GetEntArrayByScriptName( "event_portal_bp" )
+	SetupParticleEffectOnEntities( event_portal_bp, P_S21_PORTAL_BP_EFFECT, FX_PATTACH_ABSORIGIN, ATTACHMENTID_INVALID )
+}
+
+void function SetupEventProps()
+{
+	SetupEvent1Props()
+	SetupEvent2Props()
+}
+
+void function SetupEvent1Props()
+{
+	if ( !IsLobbyEvent1Active() )
 	{
-		array<int> effectHandles
-		OnThreadEnd(
-			function() : ( effectHandles )
-			{
-				foreach ( effectHandle in effectHandles )
-				{
-					if ( EffectDoesExist( effectHandle ) )
-						EffectStop ( effectHandle, true, true )
-				}
-
-			}
-		)
-
-		foreach ( node in file.confettiNodes)
+		array<entity> event_props = GetEntArrayByScriptName( "event_1_prop" )
+		foreach ( event_prop in event_props )
 		{
-			if ( IsValid ( node ) )
-			{
-				effectHandles.append( StartParticleEffectOnEntity( node, file.conffettiFxParticleIndex, FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID ) )
-			}
+			if ( IsValid( event_prop ) )
+				event_prop.Destroy()
 		}
 
-		wait 6.0
-	}()
+		return
+	}
+
+	
+	array< entity > event_portal_group_1 = GetEntArrayByScriptName( "event_portal_group_1" )
+	array< entity > event_portal_bp = GetEntArrayByScriptName( "event_portal_bp" )
+	event_portal_group_1.extend( event_portal_bp )
+	SetupParticleEffectOnEntities( event_portal_group_1, P_S21_RT_PORTAL_1_EFFECT, FX_PATTACH_ABSORIGIN, ATTACHMENTID_INVALID )
+
+	array< entity > event_portal_front = GetEntArrayByScriptName( "event_portal_front" )
+	SetupParticleEffectOnEntities( event_portal_front, P_S21_RT_PORTAL_2_EFFECT, FX_PATTACH_ABSORIGIN, ATTACHMENTID_INVALID )
+
+	array< entity > event_portal_group_2 = GetEntArrayByScriptName( "event_portal_group_2" )
+	array< entity > event_portal_image = GetEntArrayByScriptName( "event_portal_image" )
+	array< entity > event_portal_frame = GetEntArrayByScriptName( "event_portal_frame" )
+	event_portal_group_2.extend( event_portal_image )
+	event_portal_group_2.extend( event_portal_frame )
+	SetupParticleEffectOnEntities( event_portal_group_2, P_S21_IMAGE_PORTAL_2_EFFECT, FX_PATTACH_ABSORIGIN, ATTACHMENTID_INVALID )
 }
+
+void function SetupEvent2Props()
+{
+	if ( !IsLobbyEvent2Active() )
+	{
+		array<entity> event_props = GetEntArrayByScriptName( "event_2_prop" )
+		foreach ( event_prop in event_props )
+		{
+			if ( IsValid( event_prop ) )
+				event_prop.Destroy()
+		}
+
+		return
+	}
+
+	
+	array< entity > event_portal_group_1 = GetEntArrayByScriptName( "event_portal_group_1" )
+	array< entity > event_portal_bp = GetEntArrayByScriptName( "event_portal_bp" )
+	event_portal_group_1.extend( event_portal_bp )
+	SetupParticleEffectOnEntities( event_portal_group_1, P_KOTV_PORTAL_1_EFFECT, FX_PATTACH_ABSORIGIN, ATTACHMENTID_INVALID )
+
+	array< entity > event_portal_group_2 = GetEntArrayByScriptName( "event_portal_group_2" )
+	array< entity > event_portal_front = GetEntArrayByScriptName( "event_portal_front" )
+	array< entity > event_portal_image = GetEntArrayByScriptName( "event_portal_image" )
+	array< entity > event_portal_frame = GetEntArrayByScriptName( "event_portal_frame" )
+	event_portal_group_2.extend( event_portal_front )
+	event_portal_group_2.extend( event_portal_image )
+	event_portal_group_2.extend( event_portal_frame )
+	SetupParticleEffectOnEntities( event_portal_group_2, P_KOTV_PORTAL_2_EFFECT, FX_PATTACH_ABSORIGIN, ATTACHMENTID_INVALID )
+}
+
+void function SetupParticleEffectOnEntities( array< entity > entities,  asset effectAsset, int attachType, int attachmentIndex )
+{
+	print_dev( "SDROVIE - " + FUNC_NAME() + " - " + entities.len() )
+	foreach ( effect in entities )
+	{
+		print_dev( "SDROVIE - " + effect.GetScriptName() )
+		
+			StartParticleEffectOnEntity( effect, GetParticleSystemIndex( effectAsset ), attachType, attachmentIndex )
+	}
+}
+
+void function OnPartyMemberAdded()
+{
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void function ToggleHighlightOnRadioPlayProp( bool focus )
+{
+	if ( focus )
+	{
+		foreach ( radioPlayProp in file.radioPlayProps )
+			SonarViewModelHighlight( radioPlayProp, HIGHLIGHT_COLOR_FRIENDLY )
+	}
+	else
+	{
+		foreach ( radioPlayProp in file.radioPlayProps )
+			SonarViewModelClearHighlight ( radioPlayProp )
+	}
+} 

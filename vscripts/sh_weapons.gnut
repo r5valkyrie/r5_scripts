@@ -23,27 +23,27 @@ global function MainWeapon_GetLoadoutOverviewOffset
 global function MainWeapon_GetLoadoutOverviewRotation
 global function MainWeapon_GetLoadoutSkinsOffset
 
-#if SERVER || CLIENT
+
 global function ShowDefaultBodygroupsOnFakeWeapon
-#endif
 
 
-//////////////////////
-//////////////////////
-//// Global Types ////
-//////////////////////
-//////////////////////
-//
 
-//global const array<string> DEFAULT_WEAPON_SIGHTS_BODYGROUP_NAMES = [ "sight_front", "sight_rear" ]
+
+
+
+
+
+
+
+
 
 global const string WEAPON_STAT_CATEGORY_CRATE_WEAPON = "crate_unique"
 
-///////////////////////
-///////////////////////
-//// Private Types ////
-///////////////////////
-///////////////////////
+
+
+
+
+
 struct FileStruct_LifetimeLevel
 {
 	table<string, ItemFlavor> weaponClassnameItemFlavorMap
@@ -52,24 +52,24 @@ FileStruct_LifetimeLevel& fileLevel
 
 
 
-////////////////////////
-////////////////////////
-//// Initialization ////
-////////////////////////
-////////////////////////
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
 void function ShWeapons_LevelInit()
 {
 	FileStruct_LifetimeLevel newFileLevel
 	fileLevel = newFileLevel
 
-	#if SERVER && DEVELOPER
-		AddCallback_GeneratePDef( GenerateWeaponsPDef )
-	#endif
 
-	#if SERVER || CLIENT //&& DEVELOPER // (dw): needs to be precached even in non-DEV to support DEV clients connecting to non-DEV servers
-		PrecacheWeapon( $"weapon_cubemap" )
-	#endif
+
+
+
+
+	PrecacheWeapon( $"weapon_cubemap" )
+
 
 	AddCallback_RegisterRootItemFlavors( void function() {
 		foreach ( asset weaponAsset in GetBaseItemFlavorsFromArray( "weapons" ) )
@@ -80,10 +80,10 @@ void function ShWeapons_LevelInit()
 	} )
 	AddCallback_OnItemFlavorRegistered( eItemType.loot_main_weapon, OnItemFlavorRegistered_WeaponItemFlavor )
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 void function OnItemFlavorRegistered_WeaponItemFlavor( ItemFlavor weaponFlavor )
 {
 	string classname = WeaponItemFlavor_GetClassname( weaponFlavor )
@@ -97,23 +97,23 @@ void function OnItemFlavorRegistered_WeaponItemFlavor( ItemFlavor weaponFlavor )
 		RegisterWeaponForUse( childClassname )
 	}
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 void function RegisterWeaponForUse( string weaponClassname )
 {
-	#if SERVER || CLIENT
-		PrecacheWeapon( weaponClassname )
-		RegisterWeaponDamageSource( weaponClassname )
-	#endif
-}
-#endif
 
-//////////////////////////
-//////////////////////////
-//// Global functions ////
-//////////////////////////
-//////////////////////////
+	PrecacheWeapon( weaponClassname )
+	RegisterWeaponDamageSource( weaponClassname )
+
+}
+
+
+
+
+
+
+
 string function WeaponItemFlavor_GetClassname( ItemFlavor weapon )
 {
 	Assert( ItemFlavor_GetType( weapon ) == eItemType.loot_main_weapon )
@@ -242,11 +242,11 @@ array<ItemFlavor> function GetWeaponsInCategory( ItemFlavor category )
 	array<ItemFlavor> categoryWeapons
 
 	entity player = null
-	#if UI
+
+
+
 		player = GetLocalClientPlayer()
-	#elseif CLIENT
-		player = GetLocalClientPlayer()
-	#endif
+
 
 	foreach ( weapon in allWeapons )
 	{
@@ -310,7 +310,7 @@ vector function MainWeapon_GetLoadoutSkinsOffset( ItemFlavor flavor )
 	return GetGlobalSettingsVector( ItemFlavor_GetAsset( flavor ), "loadoutSkinsOffset" )
 }
 
-#if SERVER || CLIENT
+
 void function ShowDefaultBodygroupsOnFakeWeapon( entity ent, string weaponClassName )
 {
 	SetBodyGroupsForWeaponConfig( ent, weaponClassName, [] )
@@ -323,44 +323,45 @@ void function ShowDefaultBodygroupsOnFakeWeapon( entity ent, string weaponClassN
 		ent.SetBodygroupModelByIndex( idx, 1 )
 	}
 }
-#endif
-
-
-//#if SERVER || CLIENT
-//void function ShowDefaultSightsOnWeapon( entity ent, string weaponClassName )
-//{
-//	foreach ( group in DEFAULT_WEAPON_SIGHTS )
-//	{
-//		int bodyGroupIndex = ent.FindBodygroup( group )
-//		if ( bodyGroupIndex >= 0 )
-//		{
-//			ent.SetBodygroupModelByIndex( bodyGroupIndex, 1 )
-//		}
-//	}
-//}
-//#endif
 
 
 
-///////////////////
-///////////////////
-//// Internals ////
-///////////////////
-///////////////////
-#if SERVER && DEVELOPER
-void function GenerateWeaponsPDef()
-{
-	// this persistent data enum is required by sh_xp.gnut
-	array<string> allWeaponRefs = []
-	array<string> allWeaponComments = []
-
-	foreach( ItemFlavor weapons in GetAllWeaponItemFlavors() )
-	{
-		allWeaponRefs.append( ItemFlavor_GetGUIDString( weapons ) )
-		allWeaponComments.append( string(ItemFlavor_GetAsset( weapons )) )
-	}
-	DEV_PDefGen_AddEnum( "eWeaponFlavor", allWeaponRefs, "All the weapon item flavors from Bakery that are registered in the game.", allWeaponComments )
-}
-#endif
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

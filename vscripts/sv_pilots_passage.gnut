@@ -1,8 +1,0 @@
-// stub script
-
-global function PilotsPassage_Init
-
-void function PilotsPassage_Init()
-{
-
-}

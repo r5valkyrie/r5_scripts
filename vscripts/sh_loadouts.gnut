@@ -1,22 +1,22 @@
-//
-#if UI
-global function ShLoadouts_VMInit
-#endif
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
 global function ShLoadouts_LevelInit_Begin
 global function ShLoadouts_LevelInit_Finish
 global function ShLoadouts_OnPlayerEHICreated
-#endif
-#if UI
-global function ShLoadouts_LevelShutdown
-#endif
 
-#if DEVELOPER
+
+
+
+
+#if DEV
 global function DEV_DumpLoadoutEntries
 #endif
-//////////////////////
-//////////////////////
+
+
 
 global function RegisterLoadoutSlot
 
@@ -30,9 +30,9 @@ global function LoadoutSlot_GetFavorites
 global function LoadoutSlot_GetBackups
 global function LoadoutSlot_GetRawStorageContents
 
-#if UI
-global function Loadouts_SetSortPriorityForItemFlavor
-#endif
+
+
+
 
 global function AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer
 global function AddCallback_IntegerLoadoutSlotDidChange_AnyPlayer
@@ -40,25 +40,25 @@ global function RemoveCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer
 global function RemoveCallback_IntegerLoadoutSlotDidChange_AnyPlayer
 global function AddCallback_ItemFlavorLoadoutSlotDidChange_SpecificPlayer
 global function RemoveCallback_ItemFlavorLoadoutSlotDidChange_SpecificPlayer
-#if SERVER
-global function ValidateCharacterLoadoutDependents
-global function LoadoutSlot_RefreshFavoritesIfEquipped
-global function SetItemFlavorLoadoutSlot
-global function SetIntegerLoadoutSlot
-global function ClientCallback_loadouts_set
-global function ClientCallback_favorites_set
-global function ClientCallback_favorites_clear
-#if DEVELOPER
-global function ClientCommand_loadouts_devset
-#endif
-#elseif CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
 global function RequestSetItemFlavorLoadoutSlot
 global function RequestSetItemFlavorLoadoutSlot_WithDuplicatePrevention
 global function RequestSetItemFlavorFavoritesSlot
 global function RequestClearItemFlavorFavoritesSlot
 global function RequestSetFavoredQuip
 global function RequestClearFavoredQuip
-#endif
+
 global function IsItemFlavorValidForLoadoutSlot
 global function GetValidItemFlavorsForLoadoutSlot
 global function IsItemFlavorUnlockedForLoadoutSlot
@@ -77,80 +77,74 @@ global function IsValidLoadoutSlotContentsIndex
 global function GetAllLoadoutSlots
 global function IsLoadoutSlotActive
 
-#if UI && DEVELOPER
-global function DEV_GetValidItemFlavorsForLoadoutSlotForDev
-global function DEV_GetValidCustomItemFlavorsForLoadoutSlot
-#endif
 
-#if DEVELOPER
+
+
+
+#if DEV
 global function DEV_RequestSetItemFlavorLoadoutSlot
 #endif
 
-//////////////////////
-//////////////////////
 
-#if SERVER
-global function ValidateGRXPlayerLoadoutFirstTimeClean
-global function ValidateGRXPlayerLoadout
-global function ValidateGRXSpecificLoadoutSlotsForItemFlavors
-#endif
 
-#if CLIENT
+
+
+
+
+
+
+
+
 global function ServerToClient_LoadoutSlotDidChange
 global function ServerToClient_LoadoutSlotDidChangeBatch
 global function ServerToClient_LoadoutSlotSetFailed
-#endif
 
-#if UI
-global function ClientToUI_RefreshLoadoutSlot
-global function GetLoadoutItemsSortedForMenu
-// Loadout_Sticker declaration moved to mp/sh_stickers.nut
-#endif
 
-//#if CLIENT && DEVELOPER
-//global function UIToClient_ResendAllCacheData
-//#endif
+
+
+
+
+
+
+
+
 
 
 const bool LOADOUT_NETVAR_DEBUG_PRINTS = false
 const bool LOADOUTS_DBG = false
 
-//////////////////////
-//////////////////////
-//// Global Types ////
-//////////////////////
-//////////////////////
+
+
+
+
+
 global const string LOADOUT_TREE_TOP_TIER = "! general"
 global const string LOADOUT_PDEF_PREFIX = "loadouts."
 global const string LOADOUT_ID_READY = "Loadout_%s_Ready"
 
-// Valid field names in sCharacterLoadoutsData pdef struct
-// Fields not in this list don't exist in pdef (e.g., deathbox, favoredQuip)
-global table<string, bool> S3_VALID_CHARACTER_LOADOUT_FIELDS = {}
 
-// TODO - R5DEV-356547: DELETE THE FOLLOWING. THEY ARE NOT USED
-// bool shouldIgnoreGRX = false,
-// bool shouldIgnoreOtherSlots = false
-// bool ignoreFavoriting = false // equippedItem = LoadoutSlot_GetItemFlavor( playerEHI, entry, true ) --> that true is "ignore" favoriting, but it's just used to get the favorite value stored on the struct already...
 
-// TODO - R5DEV-356547: DELETE INTEGER LOADOUT SLOTS
-// just get the stat value from persistence // badge int from badge func
+
+
+
+
+
 
 global typedef LoadoutEntry_IsSlotLocked bool functionref( EHI playerEHI )
-#if SERVER
-#if DEVELOPER
-global typedef LoadoutEntry_IsCurrentlyRelevantFuncType bool functionref( EHI playerEHI )
-#endif
-global typedef LoadoutEntry_SpecialValidationFuncType ItemFlavor functionref( EHI playerEHI, ItemFlavor currFlav, bool ignoreGRX )
-#endif
+
+
+
+
+
+
 global typedef LoadoutEntry_IsItemFlavorUnlockedFuncType bool functionref( EHI playerEHI, ItemFlavor itemFlavor, bool shouldIgnoreGRX = false, bool shouldIgnoreOtherSlots = false )
-global typedef ItemFlavorLoadoutSlotDidChangeFuncType void functionref( EHI playerEHI, ItemFlavor flavor ) // TODO: refactor to send the specific Loadout slot; this can be used to avoid "scorched earth" type refreshes
+global typedef ItemFlavorLoadoutSlotDidChangeFuncType void functionref( EHI playerEHI, ItemFlavor flavor ) 
 global typedef IntegerLoadoutSlotDidChangeFuncType void functionref( EHI playerEHI, int value )
 
 global enum eLoadoutNetworking
 {
-	PLAYER_EXCLUSIVE, // the data is available only to the player exclusively, and they get notified when it changes
-	PLAYER_GLOBAL, // the data is available to ALL players via a networked variable, and they all get notified when it changes
+	PLAYER_EXCLUSIVE, 
+	PLAYER_GLOBAL, 
 }
 
 global enum eLoadoutEntryType
@@ -212,9 +206,9 @@ global const table< int, string > LOADOUT_CATEGORIES_TO_NAMES_MAP = {
 
 global enum eLoadoutEntryClass
 {
-	CHARACTER, // skins, etc
-	WEAPON, // skins & charms
-	ACCOUNT, // base character selection, musicpacks, loadscreens, skydive trails, etc
+	CHARACTER, 
+	WEAPON, 
+	ACCOUNT, 
 }
 
 global enum eTristate
@@ -244,79 +238,77 @@ global enum eLoadoutSortPriority
 	EQUIPPED = ( 1 << 12 ),
 }
 
-// lots of these could also be ornull to save space
-// the actual ItemFlavor GUID is saved in persistence. Note that this can mean that we save TheEmpty or TheFavorite - both "sentinel" values - rather than 0
-// on favorite slots can have an actual 0 value saved
+
+
+
 global struct LoadoutEntry
 {
-	int entryIndex = -1 // used for indexing into the EHISS callbacks itemFlavorLoadoutSlotChangedCallbacksMap
-	int nvIndex // this is used to access caches values on the Client EHISS where we store loadout values, this is so after a player dies, we can still show the correct gladiator card...
-	// not entirely clear why we don't just use the id here rather than fabricating a value that could _possibly_ get out of sync between server and client
+	int entryIndex = -1 
+	int nvIndex 
+	
 
-	string id = "" // this with `loadouts.` prefix is the actual persistence var
-	string pdefKey = "" // computed persistence key (character_loadouts[GUID].field or loadouts.id)
-	int    type = -1 // ITEM_FLAVOR or INTEGER
+	string id = "" 
+	int    type = -1 
 	int    loadoutEntryClass = eLoadoutEntryClass.ACCOUNT
 	int    category = eLoadoutCategory.OTHER
-	int    stryderCharDataArrayIndex = ePlayerStryderCharDataArraySlots.INVALID // for sh_social.gnut
+	int    stryderCharDataArrayIndex = ePlayerStryderCharDataArraySlots.INVALID 
 
-	string DEV_name       = "?" // used by DEV menu (moved outside #if DEVELOPER for compat)
-	string DEV_category   = ""
-	#if DEVELOPER
-		string pdefSectionKey = LOADOUT_TREE_TOP_TIER // needed by PDEF autogen
-		#if SERVER
-			LoadoutEntry_IsCurrentlyRelevantFuncType isCurrentlyRelevant = null // optional, default = is relevant (currently only used for dev-menu!)
-		#endif
-	#endif // DEVELOPER
+#if DEV
+		string pdefSectionKey = LOADOUT_TREE_TOP_TIER 
+		string DEV_name       = "?" 
 
-	int maxFavoriteCount = 0 // this is always 8 currently, though it doesn't need to be. Could also be set by category in a table and removed. MOST entries this is zero; only applies to - skin, loadscreen, music pack, skydive emote
-	// note that we also have "favored" quips (up to four) --> DELETE THESE! (eventually...)
-	int backupCount = 0 // similar to favorites, but we don't rotate through; we just use these as storage
-	array<string> ornull backupPdefKeys = null // for slots that have backups. ornull to save space
 
-	// NETWORKING
+
+#endif
+
+	int maxFavoriteCount = 0 
+	
+	int backupCount = 0 
+	array<string> ornull backupPdefKeys = null 
+
+	
 	int           networkTo = eLoadoutNetworking.PLAYER_EXCLUSIVE
 	string ornull networkVarName = ""
 
-	// REFACTOR - too generic; only really difference here is character select vs everything else
-	LoadoutEntry_IsSlotLocked      isSlotLocked = null // optional, default = unlocked IsLobby() for EVERYTHING other than CharacterSelection. Used by skins but deprecated (skin selection at runtime)
-	bool           isAllowedToChangeDuringMatch = false // only true for Character selection slot
-	ItemFlavor ornull associatedCharacterOrNull = null // the associated character if there is one
+	
+	LoadoutEntry_IsSlotLocked      isSlotLocked = null 
+	bool           isAllowedToChangeDuringMatch = false 
+	ItemFlavor ornull associatedCharacterOrNull = null 
 
-	ItemFlavor& defaultItemFlavor // optional, any valid item flavor or an error if none found
-	ItemFlavor& favoriteItemFlavor // optional, any valid item flavor or an error if none found - stores "THE FAVORITE" (sentinel value) BUT ONLY FOR SLOTS THAT SUPPORT FAVORITING - skins, music, loadscreen
+	ItemFlavor& defaultItemFlavor 
+	ItemFlavor& favoriteItemFlavor 
 
-	array<ItemFlavor> validItemFlavorList = [] // used for validation. Leave empty except in Lobby?
-	array<string> ornull favoritePdefKeys = null // for slots that have favorites. ornull to save space
-	// The way favoriting works is that the player selects "Random Favorite." A random skin from the favorite list (though it actually seems sequential in practice) is then assigned to the skin slot, but with a negative value to indicate that we're in "favoriting" mode.
-	// but it seems like we could just store TheFavorite (sentinel ItemFlavor) and _then_ pick a random skin from the favorites list...
+	array<ItemFlavor> validItemFlavorList = [] 
+	array<string> ornull favoritePdefKeys = null 
+	
+	
 
-	LoadoutEntry_IsItemFlavorUnlockedFuncType     isItemFlavorUnlocked       = null // optional func ref, default = unlocked | usuaully unused. Needed for badges (which typically do not use GRX)
-	array<ItemFlavorLoadoutSlotDidChangeFuncType> changeCallbacks_ItemFlavor = [] // important for notifying UI, etc. But could also attach watchers to the netvars
-	table<ItemFlavor, array<LoadoutEntry> >       dependentsByItemFlav       = {} // the ItemFlavor here is "character" (or weapon). Things that have "sub" loadouts. I.e., weapon skin / charm per weapon. should be ornull
+	LoadoutEntry_IsItemFlavorUnlockedFuncType     isItemFlavorUnlocked       = null 
+	array<ItemFlavorLoadoutSlotDidChangeFuncType> changeCallbacks_ItemFlavor = [] 
+	table<ItemFlavor, array<LoadoutEntry> >       dependentsByItemFlav       = {} 
 
-	#if SERVER
-		LoadoutEntry_SpecialValidationFuncType specialValidationFunc = null // used for Weapon Charms & Badges ONLY. could move to fileLevel by category
-	#endif
 
-	// stuff for integer item flavor loadout slots only
-	array<IntegerLoadoutSlotDidChangeFuncType> changeCallbacks_Integer = [] // this ONLY updates gladiator card trackers - just check if it's gladitator card category, if yes, call OnGladiatorCardStatTrackerValueChanged should be ornull
-	// could just store this at fileLevel.
+
+
+
+	
+	array<IntegerLoadoutSlotDidChangeFuncType> changeCallbacks_Integer = [] 
+	
 }
 
 global const int NUM_BADGE_LOADOUT_SLOTS = 3
 global const int NUM_TRACKER_LOADOUT_SLOTS = 3
 
-///////////////////////
-///////////////////////
-//// Private Types ////
-///////////////////////
-///////////////////////
+
+
+
+
+
 const int SLOT_CONTENTS_SENTINEL_INVALID = -9999
 const int SLOT_CONTENTS_SENTINEL_NOTREADY = 0
 
-const int SLOT_CONTENTS_INTEGER_OFFSET = 2 // this offsets an integer value so that we can know if a 0 is actually 0 (because it's 2 in Persistence) or if it's a new Persistence value (0 in persistence). Not sure why this actually matters..
-// Do away with Integer Loadout Slots entirely and just use the stat that a Badge or Tracker references instead.
+const int SLOT_CONTENTS_INTEGER_OFFSET = 2 
+
 
 const int PERSISTENT_DATA_INVALID_SENTINEL = 0
 
@@ -371,227 +363,215 @@ struct FileStruct_LifetimeLevel
 
 	bool allowLoadoutSlotOverridesByPlaylist = false
 
-	#if SERVER || CLIENT || UI // in UI because of initialization consistency reasons
+
 		table<string, LoadoutNetworkVarInfo> networkVars = {}
-	#endif
 
-	#if UI
-		table<ItemFlavor, bool> TEMP_filteredItems
-		bool runHighPerfLoadouts = true // the UI might not be connected to a Server when fetching Loadscreens, so we need to cache playlist var
-	#endif
 
-	#if SERVER && DEVELOPER
-		array<int> botRecord_loadoutValues
-	#endif
 
-	#if SERVER
-		BotLoadoutInfo botLoadoutInfo
-	#endif
+
+
+
+
+
+
+
+
+
+
+
 }
 FileStruct_LifetimeLevel& fileLevel
 
 
 
-/////////////////////////
-/////////////////////////
-//// Initialiszation ////
-/////////////////////////
-/////////////////////////
 
-#if UI && DEVELOPER
-bool DEV_resendAllCacheData = false // for uiscript_reset
-#endif
 
-#if UI
-void function ShLoadouts_VMInit()
-{
-	#if UI && DEVELOPER
-		if ( IsFullyConnected() )
-			DEV_resendAllCacheData = true
-	#endif
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 void function ShLoadouts_LevelInit_Begin()
 {
-	S3_InitValidCharacterLoadoutFields()
-
-	// Note that this resets the state of the UI VM as well
-	// Thus setting isInitialized to false whenever reinitialization is done
+	
+	
 	FileStruct_LifetimeLevel newFileLevel
 	fileLevel = newFileLevel
 
-	#if UI
-		if ( IsConnected() ) // should always be true, but we have had weird transitional issues when going between servers in other cases...
-			fileLevel.runHighPerfLoadouts = GetCurrentPlaylistVarBool( "loadouts_performance_ops_v1", true ) // the UI might not be connected to a Server when fetching Loadscreen / Music, so we cache the playlist kill switch
-	#endif
 
-	#if SERVER || CLIENT
+
+
+
+
+
 		Remote_RegisterServerFunction( "ClientCallback_loadouts_set", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
 		Remote_RegisterServerFunction( "ClientCallback_favorites_set", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
 		Remote_RegisterServerFunction( "ClientCallback_favorites_clear", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
-		Remote_RegisterServerFunction( LOADOUT_CLIENT_CALLBACK_TOGGLE_DEATHBOX, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX ) // ItemFlavor.guid, ItemFlavor.guid, ItemFlavor.guid
-	#endif
+		Remote_RegisterServerFunction( LOADOUT_CLIENT_CALLBACK_TOGGLE_DEATHBOX, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX ) 
 
-	#if SERVER
-		#if DEVELOPER
-			AddCallback_GeneratePDef( GenerateLoadoutsPDef )
-			AddClientCommandCallback( "loadouts_devset", ClientCommand_loadouts_devset ) // dev
-		#endif
-	#endif
 
-	// Initialize bot loadout data
-	// bot_loadout datatables not available
-	#if false // SERVER - disabled
-	{
-		var botLoadoutCharactersDataTable = GetDataTable( LOADOUT_BOT_CHARACTERS_DATATABLE )
-		int characterAssetColumn = GetDataTableColumnByName( botLoadoutCharactersDataTable, "characterAsset" )
-		int characterIsExcludedColumn = GetDataTableColumnByName( botLoadoutCharactersDataTable, "exclude" )
-		int numOfRowsInCharacterDataTable = GetDataTableRowCount( botLoadoutCharactersDataTable )
-		for ( int characterIndex = 0; characterIndex < numOfRowsInCharacterDataTable; characterIndex++ )
-		{
-			if ( GetDataTableBool( botLoadoutCharactersDataTable, characterIndex, characterIsExcludedColumn ) )
-			{
-				continue
-			}
 
-			asset characterAsset = GetDataTableAsset( botLoadoutCharactersDataTable, characterIndex, characterAssetColumn )
-			if ( characterAsset == $"" )
-			{
-				continue
-			}
 
-			fileLevel.botLoadoutInfo.validCharacterAssetsForLoadout.append( characterAsset )
-		}
 
-		var botLoadoutBadgesDataTable = GetDataTable( LOADOUT_BOT_BADGES_DATATABLE )
-		int badgeAssetPathTemplateColumn = GetDataTableColumnByName( botLoadoutBadgesDataTable, "badgeAssetPathTemplate" )
-		int badgeMinValueColumn = GetDataTableColumnByName( botLoadoutBadgesDataTable, "badgeMinValue" )
-		int badgeMaxValueColumn = GetDataTableColumnByName( botLoadoutBadgesDataTable, "badgeMaxValue" )
-		int badgeIsRequiredColumn = GetDataTableColumnByName( botLoadoutBadgesDataTable, "isRequired" )
-		int numOfRowsInBadgesDataTable = GetDataTableRowCount( botLoadoutBadgesDataTable )
-		for ( int badgeIndex = 0; badgeIndex < numOfRowsInBadgesDataTable; badgeIndex++ )
-		{
-			string badgeAssetPathTemplate = GetDataTableString( botLoadoutBadgesDataTable, badgeIndex, badgeAssetPathTemplateColumn )
-			if ( badgeAssetPathTemplate == "" )
-			{
-				continue
-			}
 
-			BotLoadoutInfoBadge newBotLoadoutInfoBadge
-			newBotLoadoutInfoBadge.badgeAssetPathTemplate = badgeAssetPathTemplate
-			newBotLoadoutInfoBadge.minBadgeValue = GetDataTableInt( botLoadoutBadgesDataTable, badgeIndex, badgeMinValueColumn )
-			newBotLoadoutInfoBadge.maxBadgeValue = GetDataTableInt( botLoadoutBadgesDataTable, badgeIndex, badgeMaxValueColumn )
 
-			if ( GetDataTableBool( botLoadoutBadgesDataTable, badgeIndex, badgeIsRequiredColumn ) )
-			{
-				fileLevel.botLoadoutInfo.requiredBadges.append( newBotLoadoutInfoBadge )
-			}
-			else
-			{
-				fileLevel.botLoadoutInfo.optionalBadges.append( newBotLoadoutInfoBadge )
-			}
-		}
 
-		var botLoadoutStatTrackersDataTable = GetDataTable( LOADOUT_BOT_STATTRACKERS_DATATABLE )
-		int statTrackerAssetPathTemplateColumn = GetDataTableColumnByName( botLoadoutStatTrackersDataTable, "statTrackerAssetPathTemplate" )
-		int statTrackerMinValueColumn = GetDataTableColumnByName( botLoadoutStatTrackersDataTable, "statTrackerMinValue" )
-		int statTrackerMaxValueColumn = GetDataTableColumnByName( botLoadoutStatTrackersDataTable, "statTrackerMaxValue" )
-		int numOfRowsInStatTrackersDataTable = GetDataTableRowCount( botLoadoutStatTrackersDataTable )
-		for ( int statTrackerIndex = 0; statTrackerIndex < numOfRowsInStatTrackersDataTable; statTrackerIndex++ )
-		{
-			string statTrackerAssetPathTemplate = GetDataTableString( botLoadoutStatTrackersDataTable, statTrackerIndex, statTrackerAssetPathTemplateColumn )
-			if ( statTrackerAssetPathTemplate == "" )
-			{
-				continue
-			}
 
-			BotLoadoutInfoStatTracker newBotLoadoutInfoStatTracker
-			newBotLoadoutInfoStatTracker.statTrackerAssetPathTemplate = statTrackerAssetPathTemplate
-			newBotLoadoutInfoStatTracker.minStatValue = GetDataTableInt( botLoadoutStatTrackersDataTable, statTrackerIndex, statTrackerMinValueColumn )
-			newBotLoadoutInfoStatTracker.maxStatValue = GetDataTableInt( botLoadoutStatTrackersDataTable, statTrackerIndex, statTrackerMaxValueColumn )
 
-			fileLevel.botLoadoutInfo.optionalTrackers.append( newBotLoadoutInfoStatTracker )
-		}
+	
 
-		var botLoadoutGenericAssetInfoDataTable = GetDataTable( LOADOUT_BOT_GENERIC_ASSET_INFO_DATATABLE )
-		int loadoutCategoryColumn = GetDataTableColumnByName( botLoadoutGenericAssetInfoDataTable, "loadoutCategory" )
-		int assetPathTemplateColumn = GetDataTableColumnByName( botLoadoutGenericAssetInfoDataTable, "assetPathTemplate" )
-		int variationMinValueColumn = GetDataTableColumnByName( botLoadoutGenericAssetInfoDataTable, "variationMinValue" )
-		int variationMaxValueColumn = GetDataTableColumnByName( botLoadoutGenericAssetInfoDataTable, "variationMaxValue" )
-		int numOfRowsInGenericAssetInfoDataTable = GetDataTableRowCount( botLoadoutGenericAssetInfoDataTable )
-		for ( int assetInfoIndex = 0; assetInfoIndex < numOfRowsInGenericAssetInfoDataTable; assetInfoIndex++ )
-		{
-			string loadoutCategoryName = GetDataTableString( botLoadoutGenericAssetInfoDataTable, assetInfoIndex, loadoutCategoryColumn )
-			string assetPathTemplate   = GetDataTableString( botLoadoutGenericAssetInfoDataTable, assetInfoIndex, assetPathTemplateColumn )
-			if ( (loadoutCategoryName == "") || (assetPathTemplate == "") )
-			{
-				continue
-			}
 
-			int minVariationValue = GetDataTableInt( botLoadoutGenericAssetInfoDataTable, assetInfoIndex, variationMinValueColumn )
-			int maxVariationValue = GetDataTableInt( botLoadoutGenericAssetInfoDataTable, assetInfoIndex, variationMaxValueColumn )
-			Assert( (maxVariationValue >= minVariationValue) && (maxVariationValue != 0), "Invalid Variation Info provided in bot_loadout_generic_asset_info DataTable" )
 
-			BotLoadoutGenericAssetInfo newBotLoadoutGenericAsset
-			newBotLoadoutGenericAsset.assetPathTemplate = assetPathTemplate
-			newBotLoadoutGenericAsset.minVariationValue = minVariationValue
-			newBotLoadoutGenericAsset.maxVariationValue = maxVariationValue
 
-			int loadoutCategory = eLoadoutCategory[loadoutCategoryName]
-			fileLevel.botLoadoutInfo.genericAssets[loadoutCategory].append( newBotLoadoutGenericAsset )
-		}
-	}
-	#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 void function ShLoadouts_LevelInit_Finish()
 {
-	#if SERVER || CLIENT
+
 		Remote_RegisterClientFunction( "ServerToClient_LoadoutSlotDidChange", "entity", "int", 0, fileLevel.loadoutSlotEntries.len() )
-		Remote_RegisterClientFunction( LOADOUT_SERVER_CALLBACK_DEATHBOX_TOGGLED, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX ) // ItemFlavor.guid, ItemFlavor.guid, ItemFlavor.guid
+		Remote_RegisterClientFunction( LOADOUT_SERVER_CALLBACK_DEATHBOX_TOGGLED, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX ) 
 		int batchMax = fileLevel.loadoutSlotEntries.len() + 1
 		Remote_RegisterClientFunction( "ServerToClient_LoadoutSlotDidChangeBatch", "entity",
 			"int", 0, batchMax, "int", 0, batchMax, "int", 0, batchMax, "int", 0, batchMax, "int", 0, batchMax, "int", 0, batchMax, "int", 0, batchMax, "int", 0, batchMax,
 			"int", 0, batchMax, "int", 0, batchMax, "int", 0, batchMax, "int", 0, batchMax, "int", 0, batchMax, "int", 0, batchMax, "int", 0, batchMax)
 		Remote_RegisterClientFunction( "ServerToClient_LoadoutSlotSetFailed" )
-	#endif
+
 
 	foreach ( LoadoutEntry entry in fileLevel.loadoutSlotEntries )
 	{
 		if ( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
 		{
-			// Guard against empty validItemFlavorList — asserts don't stop execution in release builds
-			// so accessing defaultItemFlavor.guid after a failed assert would crash
-			if ( entry.validItemFlavorList.len() == 0 )
-			{
-				printf( "WARNING: Entry '%s' has empty validItemFlavorList, skipping validation\n", entry.id )
-				RegisterSignal( format( LOADOUT_ID_READY, entry.id ) )
-				continue
-			}
 			Assert( entry.validItemFlavorList.len() > 0, "Entry " + entry.id + " had an empty validItemFlavorList" )
 			Assert( IsItemFlavorStructValid( entry.defaultItemFlavor.guid, eValidation.DONT_ASSERT ), "entry.defaultValue must have a valid value." )
-			#if ASSERTS
-				if ( entry.associatedCharacterOrNull != null  )
-				{
-					ItemFlavor ornull character = entry.associatedCharacterOrNull
-					expect ItemFlavor( character )
-					if ( CharacterClass_GetIsShippingCharacter( character ) )
-						Assert( ItemFlavor_GetGRXMode( entry.defaultItemFlavor ) == eItemFlavorGRXMode.NONE )
-				}
-			#endif // #if ASSERTS
+
+
+
+
+
+
+
+
+
 		}
 		else if ( entry.type == eLoadoutEntryType.INTEGER )
 		{
-			// Skip defaultItemFlavor.guid check — accessing NULL reference crashes
-			// For INTEGER entries, defaultItemFlavor is expected to be invalid/unset anyway
-			// Assert( !IsItemFlavorStructValid( entry.defaultItemFlavor.guid, eValidation.DONT_ASSERT ) )
+			Assert( !IsItemFlavorStructValid( entry.defaultItemFlavor.guid, eValidation.DONT_ASSERT ) )
 			Assert( entry.validItemFlavorList.len() == 0 )
 			Assert( entry.isItemFlavorUnlocked == null )
-			#if SERVER
-				Assert( entry.specialValidationFunc == null )
-			#endif
+
+
+
 		}
 
 		array<string> ornull forceResetTo = GetLoadoutSlotForceResetTo( entry )
@@ -621,9 +601,9 @@ void function ShLoadouts_LevelInit_Finish()
 
 		if ( entry.networkTo == eLoadoutNetworking.PLAYER_GLOBAL )
 		{
-			#if SERVER || CLIENT
+
 				int desiredNetworkVarType = SNVT_BIG_INT
-			#endif
+
 
 			Assert( entry.networkVarName != "", "LoadoutEntry.networkVarName must be provided if networkTo is set." )
 			LoadoutNetworkVarInfo nvInfo
@@ -632,36 +612,36 @@ void function ShLoadouts_LevelInit_Finish()
 			if ( fullNetworkVarName in fileLevel.networkVars )
 			{
 				nvInfo = fileLevel.networkVars[fullNetworkVarName]
-				#if SERVER || CLIENT
+
 					Assert( nvInfo.type == desiredNetworkVarType )
-				#endif
+
 			}
 			else
 			{
 				nvInfo.nvIndex = fileLevel.networkVars.len()
 				nvInfo.fullNetworkVarName = fullNetworkVarName
 				fileLevel.networkVars[fullNetworkVarName] <- nvInfo
-				#if SERVER || CLIENT
+
 					nvInfo.type = desiredNetworkVarType
-					RegisterNetworkedVariableSafe(
+					RegisterNetworkedVariable(
 						nvInfo.fullNetworkVarName, SNDC_PLAYER_GLOBAL,
 						nvInfo.type, SLOT_CONTENTS_SENTINEL_NOTREADY
 					)
-				#endif
 
-				#if CLIENT
+
+
 					RegisterNetVarIntChangeCallback( fullNetworkVarName, void function( entity player, int new ) : ( nvInfo )
 					{
 						EHI playerEHI         = ToEHI( player )
 						EHIScriptStruct ehiss = GetEHIScriptStruct( playerEHI )
 
-						#if LOADOUT_NETVAR_DEBUG_PRINTS
+#if LOADOUT_NETVAR_DEBUG_PRINTS
 							printf( "### LOADOUT SLOT NV, %s (%s), %s --[%d]-> %d (=%d)",
 								string(player), string(EHI_IsConnected( playerEHI )), nvInfo.fullNetworkVarName,
 								ehiss.netVarsLastSeenValuesMap[nvInfo.nvIndex], new, player.GetPlayerNetInt( nvInfo.fullNetworkVarName ) )
-						#endif
+#endif
 
-						new = player.GetPlayerNetInt( nvInfo.fullNetworkVarName ) // todo(dw): workaround for R5DEV-53709
+						new = player.GetPlayerNetInt( nvInfo.fullNetworkVarName ) 
 
 						if ( !ehiss.isConnected )
 							return
@@ -671,28 +651,28 @@ void function ShLoadouts_LevelInit_Finish()
 
 						ehiss.netVarsLastSeenValuesMap[nvInfo.nvIndex] = new
 
-						#if ASSERTS
-							LoadoutEntry ornull found = null
-						#endif
+
+
+
 						foreach ( LoadoutEntry entry in nvInfo.usedByEntries )
 						{
 							if ( IsLoadoutSlotCurrentlyNetworked( playerEHI, entry ) )
 							{
-								#if ASSERTS
-									Assert( found == null, "Attempted to network two loadout slots using the same network variable name at the same time"
-									+ " (slot 1: \"" + expect LoadoutEntry(found).id + "\", slot 2: \"" + entry.id + "\")." )
-									if ( found != null )
-										continue
-									found = entry
-								#endif
+
+
+
+
+
+
+
 								HandleLoadoutSlotNetworkVarChanged( playerEHI, entry, new )
-								#if !ASSERTS
+
 									break
-								#endif
+
 							}
 						}
 					} )
-				#endif
+
 			}
 
 			entry.nvIndex = nvInfo.nvIndex
@@ -714,11 +694,29 @@ void function ShLoadouts_LevelInit_Finish()
 		{
 			Assert( entry.validItemFlavorList.len() > 0, "No item flavors are registered that are valid for loadout slot '" + entry.id + "'" )
 
-			// Disable favorites — pdef has no _fav fields
-			entry.maxFavoriteCount = 0
+			if ( entry.maxFavoriteCount > 0 )
+			{
+				array<string> favorites = []
+				for ( int favoriteIdx = 0; favoriteIdx < entry.maxFavoriteCount; favoriteIdx++ )
+				{
+					favorites.append( format( "%s_fav%02d", entry.id, favoriteIdx ) )
+				}
+				entry.favoritePdefKeys = favorites
+			}
 
-			// Disable backups — pdef has no _bak fields
-			entry.backupCount = 0
+			if ( entry.backupCount > 0 )
+			{
+				Assert( ( entry.backupCount != 0 && entry.maxFavoriteCount == 0 )
+							|| ( entry.backupCount == 0 && entry.maxFavoriteCount != 0 )
+							|| ( entry.backupCount == 0 && entry.maxFavoriteCount == 0 ) )
+
+				array<string> backups = []
+				for ( int bakIdx = 0; bakIdx < entry.backupCount; bakIdx++ )
+				{
+					backups.append( format( "%s_bak_%02d", entry.id, bakIdx ) )
+				}
+				entry.backupPdefKeys = backups
+			}
 		}
 
 		if ( entry.associatedCharacterOrNull != null )
@@ -737,44 +735,43 @@ void function ShLoadouts_LevelInit_Finish()
 
 	}
 
-	#if DEVELOPER
+#if DEV
 		if ( DEV_ShouldIgnorePersistence() )
 			printt( "LoadoutsDbg: dev_loadouts_ignore_persistence is enabled" )
-	#endif
+#endif
 
 	fileLevel.isInitialized = true
 }
 
 
-#if UI
-void function ShLoadouts_LevelShutdown()
-{
-	// No longer need to set isInitialized to false as we reset in ShLoadouts_LevelInit_Begin
-}
-#endif
 
 
-//////////////////////////
-//////////////////////////
-//// Global functions ////
-//////////////////////////
-//////////////////////////
-LoadoutEntry function RegisterLoadoutSlot( int type, string id, int classId = -1 )
+
+
+
+
+
+
+
+
+
+
+
+LoadoutEntry function RegisterLoadoutSlot( int type, string id, int classId )
 {
 	Assert( !fileLevel.isInitialized, "Cannot call RegisterLoadoutSlot after initialization has finished." )
 	Assert( type == eLoadoutEntryType.ITEM_FLAVOR || type == eLoadoutEntryType.INTEGER )
 
-	#if ASSERTS
-		foreach ( LoadoutEntry otherEntry in fileLevel.loadoutSlotEntries )
-			Assert( id != otherEntry.id, "Found loadout slots with the same id: " + id )
-	#endif
+
+
+
+
 
 	LoadoutEntry entry
 	entry.entryIndex        = fileLevel.loadoutSlotEntries.len()
 	entry.id                = id
 	entry.type              = type
 	entry.loadoutEntryClass = classId
-	entry.pdefKey           = Loadout_ComputePdefKey( id, classId )
 
 	fileLevel.loadoutSlotEntries.append( entry )
 	if ( classId == eLoadoutEntryClass.ACCOUNT || classId == eLoadoutEntryClass.WEAPON )
@@ -783,85 +780,22 @@ LoadoutEntry function RegisterLoadoutSlot( int type, string id, int classId = -1
 	return entry
 }
 
-void function S3_InitValidCharacterLoadoutFields()
-{
-	S3_VALID_CHARACTER_LOADOUT_FIELDS["skin"] <- true
-	S3_VALID_CHARACTER_LOADOUT_FIELDS["execution"] <- true
-	S3_VALID_CHARACTER_LOADOUT_FIELDS["intro_quip"] <- true
-	S3_VALID_CHARACTER_LOADOUT_FIELDS["kill_quip"] <- true
-	S3_VALID_CHARACTER_LOADOUT_FIELDS["meleeskin"] <- true
-	S3_VALID_CHARACTER_LOADOUT_FIELDS["gcard_frame"] <- true
-	S3_VALID_CHARACTER_LOADOUT_FIELDS["gcard_stance"] <- true
-	for ( int i = 0; i < 8; i++ )
-	{
-		S3_VALID_CHARACTER_LOADOUT_FIELDS["quips_" + i] <- true
-		S3_VALID_CHARACTER_LOADOUT_FIELDS["skydive_emote_" + i] <- true
-	}
-	for ( int i = 0; i < 3; i++ )
-	{
-		S3_VALID_CHARACTER_LOADOUT_FIELDS["gcard_badge_" + i] <- true
-		S3_VALID_CHARACTER_LOADOUT_FIELDS["gcard_badge_" + i + "_tier"] <- true
-		S3_VALID_CHARACTER_LOADOUT_FIELDS["gcard_tracker_" + i] <- true
-		S3_VALID_CHARACTER_LOADOUT_FIELDS["gcard_tracker_" + i + "_value"] <- true
-	}
-	for ( int i = 0; i < 4; i++ )
-	{
-		S3_VALID_CHARACTER_LOADOUT_FIELDS["favoredQuip_" + i] <- true
-	}
-}
-
-// Compute the correct persistence key for a loadout slot.
-// Pdef uses "character_loadouts[GUID].fieldName" for character entries
-// and "loadouts.<id>" for account/weapon entries.
-// Returns "" if the pdef field doesn't exist.
-string function Loadout_ComputePdefKey( string id, int classId )
-{
-	if ( classId == eLoadoutEntryClass.CHARACTER )
-	{
-		// Parse GUID and field name from id format: "<prefix>_for_SAID<digits>"
-		int ornull forIdx = id.find( "_for_" )
-		if ( forIdx != null )
-		{
-			expect int( forIdx )
-			string fieldName = id.slice( 0, forIdx )
-			string guid = id.slice( forIdx + 5 ) // skip "_for_"
-
-			// Strip "character_" prefix to match pdef field names
-			// e.g. "character_skin" -> "skin", "character_execution" -> "execution"
-			if ( fieldName.find( "character_" ) == 0 )
-				fieldName = fieldName.slice( 10 )
-
-			// Validate field exists in pdef
-			if ( !(fieldName in S3_VALID_CHARACTER_LOADOUT_FIELDS) )
-			{
-				printf( "S3 WARNING: Character loadout field '%s' not in S3 pdef (entry: %s)\n", fieldName, id )
-				return "" // Mark as no-persistence
-			}
-
-			return "character_loadouts[" + guid + "]." + fieldName
-		}
-	}
-
-	// Account/weapon entries: "loadouts.<id>"
-	return LOADOUT_PDEF_PREFIX + id
-}
-
 
 bool function LoadoutSlot_IsReady( EHI playerEHI, LoadoutEntry entry )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
-	#if CLIENT
+
 		if ( !IsLocalClientEHIValid() )
 			return false
-	#endif
 
-	#if CLIENT || UI
+
+
 		if ( !IsLoadoutSlotCurrentlyAccessible( playerEHI, entry ) )
 			return false
-	#endif
+
 
 	return GetLoadoutSlotContentsIndexInternal( playerEHI, entry ) != SLOT_CONTENTS_SENTINEL_NOTREADY
 }
@@ -869,30 +803,25 @@ bool function LoadoutSlot_IsReady( EHI playerEHI, LoadoutEntry entry )
 
 ItemFlavor function LoadoutSlot_GetItemFlavor( EHI playerEHI, LoadoutEntry entry, bool ignoreFavoriting = false )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
 
 	int slotContentsIndex = SLOT_CONTENTS_SENTINEL_NOTREADY
-#if CLIENT || UI
+
 	if ( IsLoadoutSlotCurrentlyAccessible( playerEHI, entry ) )
-#endif
+
 	{
 		slotContentsIndex = GetLoadoutSlotContentsIndexInternal( playerEHI, entry, ignoreFavoriting )
 	}
 
 
-	//Assert( slotContentsIndex != SLOT_CONTENTS_SENTINEL_NOTREADY, "LoadoutSlot_GetItemFlavor used on a loadout slot that was not ready." )
+	
 
 	if ( slotContentsIndex == SLOT_CONTENTS_SENTINEL_INVALID || slotContentsIndex == SLOT_CONTENTS_SENTINEL_NOTREADY )
-	{
-		// Check validItemFlavorList first — defaultItemFlavor may be NULL
-		if ( entry.validItemFlavorList.len() > 0 )
-			return entry.validItemFlavorList[0]
 		return entry.defaultItemFlavor
-	}
 
 	ItemFlavor flav = ConvertLoadoutSlotContentsIndexToItemFlavor( entry, slotContentsIndex )
 
@@ -907,29 +836,24 @@ ItemFlavor function LoadoutSlot_GetItemFlavor( EHI playerEHI, LoadoutEntry entry
 
 ItemFlavor function LoadoutSlot_GetItemFlavor_ForValidation( EHI playerEHI, LoadoutEntry entry )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
 
 	int slotContentsIndex = GetLoadoutSlotContentsIndexFromPersistence( playerEHI, entry, eValidation.DONT_ASSERT )
 	if ( slotContentsIndex == SLOT_CONTENTS_SENTINEL_INVALID || slotContentsIndex == SLOT_CONTENTS_SENTINEL_NOTREADY )
-	{
-		// Check validItemFlavorList first — defaultItemFlavor may be NULL
-		if ( entry.validItemFlavorList.len() > 0 )
-			return entry.validItemFlavorList[0]
 		return entry.defaultItemFlavor
-	}
 	return ConvertLoadoutSlotContentsIndexToItemFlavor( entry, slotContentsIndex )
 }
 
 
 int function LoadoutSlot_GetInteger( EHI playerEHI, LoadoutEntry entry )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	Assert( entry.type == eLoadoutEntryType.INTEGER )
 
@@ -941,13 +865,13 @@ int function LoadoutSlot_GetInteger( EHI playerEHI, LoadoutEntry entry )
 
 array<ItemFlavor> function LoadoutSlot_GetFavorites( EHI playerEHI, LoadoutEntry entry )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
-	#if CLIENT || UI
+
 		Assert( playerEHI == LocalClientEHI() )
-	#endif
+
 
 	array<ItemFlavor> items
 
@@ -958,20 +882,20 @@ array<ItemFlavor> function LoadoutSlot_GetFavorites( EHI playerEHI, LoadoutEntry
 	expect array<string>( favorites )
 	foreach ( key in favorites )
 	{
-		#if SERVER || CLIENT
-			#if CLIENT
+
+
 				Assert( playerEHI == LocalClientEHI() )
-			#endif
+
 			entity player = FromEHI( playerEHI )
 			int guid      = expect int(player.GetPersistentVar( LOADOUT_PDEF_PREFIX + key ))
-		#endif
 
-		#if UI
-			Assert( playerEHI == LocalClientEHI() )
-			int guid = expect int(GetPersistentVar( LOADOUT_PDEF_PREFIX + key ))
-		#endif
 
-		if ( guid != 0 && IsValidItemFlavorGUID( guid, eValidation.DONT_ASSERT ) )  // If guid doesn't exist, the underlying asset may have changed.  No biggie. Just no favorite.
+
+
+
+
+
+		if ( guid != 0 && IsValidItemFlavorGUID( guid, eValidation.DONT_ASSERT ) )  
 		{
 			ItemFlavor flav = GetItemFlavorByGUID( guid )
 			if ( IsItemFlavorGRXUnlockedForLoadoutSlot( playerEHI, flav ) )
@@ -985,27 +909,25 @@ array<ItemFlavor> function LoadoutSlot_GetFavorites( EHI playerEHI, LoadoutEntry
 array<ItemFlavor> function LoadoutSlot_GetBackups( EHI playerEHI, LoadoutEntry entry )
 {
 	array<ItemFlavor> items
-	// Backups disabled (no bak pdef fields)
-	if ( entry.backupPdefKeys == null )
-		return items
+	Assert( entry.backupPdefKeys != null )
 	array<string> ornull backups = entry.backupPdefKeys
 	expect array<string>( backups )
 	foreach ( key in backups )
 	{
-		#if SERVER || CLIENT
-			#if CLIENT
+
+
 				Assert( playerEHI == LocalClientEHI() )
-			#endif
+
 			entity player = FromEHI( playerEHI )
 			int guid      = expect int(player.GetPersistentVar( LOADOUT_PDEF_PREFIX + key ))
-		#endif
 
-		#if UI
-			Assert( playerEHI == LocalClientEHI() )
-			int guid = expect int(GetPersistentVar( LOADOUT_PDEF_PREFIX + key ))
-		#endif
 
-		if ( guid != 0 && IsValidItemFlavorGUID( guid, eValidation.DONT_ASSERT ) )  // If guid doesn't exist, the underlying asset may have changed.  No biggie. Just no favorite.
+
+
+
+
+
+		if ( guid != 0 && IsValidItemFlavorGUID( guid, eValidation.DONT_ASSERT ) )  
 		{
 			ItemFlavor flav = GetItemFlavorByGUID( guid )
 			if ( IsItemFlavorGRXUnlockedForLoadoutSlot( playerEHI, flav ) )
@@ -1018,19 +940,15 @@ array<ItemFlavor> function LoadoutSlot_GetBackups( EHI playerEHI, LoadoutEntry e
 
 array<ItemFlavor> function LoadoutSlot_GetUsableFavorites( EHI playerEHI, LoadoutEntry entry )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	array<ItemFlavor> items = LoadoutSlot_GetFavorites( playerEHI, entry )
 
 	if ( items.len() == 0 )
 	{
-		// Check validItemFlavorList first — defaultItemFlavor may be NULL
-		if ( entry.validItemFlavorList.len() > 0 )
-			items.append( entry.validItemFlavorList[0] )
-		else
-			items.append( entry.defaultItemFlavor )
+		items.append( entry.defaultItemFlavor )
 	}
 
 	return items
@@ -1039,22 +957,22 @@ array<ItemFlavor> function LoadoutSlot_GetUsableFavorites( EHI playerEHI, Loadou
 
 ItemFlavor function LoadoutSlot_WaitForItemFlavor( EHI playerEHI, LoadoutEntry entry )
 {
-	#if SERVER
-		EndSignal( playerEHI, "OnDestroy" )
-	#endif
 
-	#if LOADOUTS_DBG
+
+
+
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
 
 	int slotContentsIndex
 	while ( true )
 	{
-#if CLIENT || UI
+
 		if ( IsLoadoutSlotCurrentlyAccessible( playerEHI, entry ) )
-#endif
+
 		{
 			slotContentsIndex = GetLoadoutSlotContentsIndexInternal( playerEHI, entry )
 			if ( IsValidLoadoutSlotContentsIndexForItemFlavor( entry, slotContentsIndex ) )
@@ -1070,18 +988,18 @@ ItemFlavor function LoadoutSlot_WaitForItemFlavor( EHI playerEHI, LoadoutEntry e
 
 int function LoadoutSlot_GetRawStorageContents( EHI playerEHI, LoadoutEntry entry )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	int slotContentsIndex = GetLoadoutSlotContentsIndexInternal( playerEHI, entry )
 
-	// TODO - R5DEV-350895: START - Loadouts Perf Improvements
-	#if CLIENT || SERVER
+	
+
 		if ( GetCurrentPlaylistVarBool( "loadouts_performance_ops_v1", true ) )
-	#elseif UI
-		if ( fileLevel.runHighPerfLoadouts ) // the UI might not be connected to a Server because of Loadscreens
-	#endif
+
+
+
 	{
 		if ( entry.type == eLoadoutEntryType.ITEM_FLAVOR && slotContentsIndex != SLOT_CONTENTS_SENTINEL_NOTREADY && slotContentsIndex != SLOT_CONTENTS_SENTINEL_INVALID )
 		{
@@ -1089,7 +1007,7 @@ int function LoadoutSlot_GetRawStorageContents( EHI playerEHI, LoadoutEntry entr
 			return ItemFlavor_GetGUID( flav )
 		}
 	}
-	else // END - Loadouts Perf Improvements
+	else 
 	{
 		Assert( slotContentsIndex != SLOT_CONTENTS_SENTINEL_NOTREADY, "LoadoutSlot_GetRawStorageContents used on a loadout slot that was not ready." )
 
@@ -1100,15 +1018,15 @@ int function LoadoutSlot_GetRawStorageContents( EHI playerEHI, LoadoutEntry entr
 		}
 	}
 
-	return slotContentsIndex // eLoadoutEntryType.INTEGER
+	return slotContentsIndex 
 }
 
 
 void function AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( LoadoutEntry entry, ItemFlavorLoadoutSlotDidChangeFuncType callback, bool shouldCheckRegistered = true )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
 
@@ -1123,9 +1041,9 @@ void function AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( LoadoutEntry
 
 void function AddCallback_IntegerLoadoutSlotDidChange_AnyPlayer( LoadoutEntry entry, IntegerLoadoutSlotDidChangeFuncType callback )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	Assert( entry.type == eLoadoutEntryType.INTEGER )
 	Assert( !entry.changeCallbacks_Integer.contains( callback ), "Tried to add a callback that was already added" )
@@ -1136,9 +1054,9 @@ void function AddCallback_IntegerLoadoutSlotDidChange_AnyPlayer( LoadoutEntry en
 
 void function RemoveCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( LoadoutEntry entry, ItemFlavorLoadoutSlotDidChangeFuncType callback, bool shouldCheckRegistered = true )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
 
@@ -1153,9 +1071,9 @@ void function RemoveCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( LoadoutEn
 
 void function RemoveCallback_IntegerLoadoutSlotDidChange_AnyPlayer( LoadoutEntry entry, IntegerLoadoutSlotDidChangeFuncType callback )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	Assert( entry.type == eLoadoutEntryType.INTEGER )
 	Assert( entry.changeCallbacks_Integer.contains( callback ), "Tried to remove a callback that was not added" )
@@ -1166,9 +1084,9 @@ void function RemoveCallback_IntegerLoadoutSlotDidChange_AnyPlayer( LoadoutEntry
 
 void function AddCallback_ItemFlavorLoadoutSlotDidChange_SpecificPlayer( EHI playerEHI, LoadoutEntry entry, ItemFlavorLoadoutSlotDidChangeFuncType callback, bool shouldCheckRegistered = true )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
 
@@ -1191,9 +1109,9 @@ void function AddCallback_ItemFlavorLoadoutSlotDidChange_SpecificPlayer( EHI pla
 
 void function RemoveCallback_ItemFlavorLoadoutSlotDidChange_SpecificPlayer( EHI playerEHI, LoadoutEntry entry, ItemFlavorLoadoutSlotDidChangeFuncType callback, bool shouldCheckRegistered = true )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
 
@@ -1214,44 +1132,44 @@ void function RemoveCallback_ItemFlavorLoadoutSlotDidChange_SpecificPlayer( EHI 
 }
 
 
-#if SERVER
-void function SetItemFlavorLoadoutSlot( EHI playerEHI, LoadoutEntry entry, ItemFlavor itemFlavor )
-{
-	#if LOADOUTS_DBG
-		DEV_LoadoutsDebug( entry )
-	#endif
-
-	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
-	Assert( IsLobby() || entry.isAllowedToChangeDuringMatch || IsEventFinale() )
-
-	SetItemFlavorLoadoutSlotContentsInternal( playerEHI, entry, itemFlavor )
-}
-#endif
 
 
-#if SERVER
-void function SetIntegerLoadoutSlot( EHI playerEHI, LoadoutEntry entry, int value )
-{
-	#if LOADOUTS_DBG
-		DEV_LoadoutsDebug( entry )
-	#endif
-
-	Assert( entry.type == eLoadoutEntryType.INTEGER )
-
-	int slotContentsIndex = SLOT_CONTENTS_INTEGER_OFFSET + (value)
-	Assert( IsContentsIndexValidForLoadoutSlot( playerEHI, entry, slotContentsIndex, eValidation.ASSERT ) )
-
-	SetIntegerLoadoutSlotContentsInternal( playerEHI, entry, slotContentsIndex )
-}
-#endif
 
 
-#if CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function RequestSetItemFlavorLoadoutSlot_WithDuplicatePrevention( EHI playerEHI, array<LoadoutEntry> loadoutEntries, ItemFlavor itemFlavor, int slotIndex = 0 )
 {
 	if ( loadoutEntries.len() > 1 )
 	{
-		// check to see if this item flavor is already in a different slot
+		
 		LoadoutEntry oldSlot
 		ItemFlavor itemInCurrentSlot = LoadoutSlot_GetItemFlavor( LocalClientEHI(), loadoutEntries[ slotIndex ] )
 
@@ -1270,14 +1188,14 @@ void function RequestSetItemFlavorLoadoutSlot_WithDuplicatePrevention( EHI playe
 }
 void function RequestSetItemFlavorLoadoutSlot( EHI playerEHI, LoadoutEntry entry, ItemFlavor itemFlavor )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
-	#if UI
-		ItemFlavor currentFlavor = LoadoutSlot_GetItemFlavor( playerEHI, entry, true )
-		currentFlavor.loadoutSortPriority = currentFlavor.loadoutSortPriority & ~eLoadoutSortPriority.EQUIPPED
-	#endif
+
+
+
+
 
 	Assert( playerEHI == LocalClientEHI(), "Tried to use RequestSetLoadoutSlot on a different player" )
 
@@ -1289,9 +1207,9 @@ void function RequestSetItemFlavorLoadoutSlot( EHI playerEHI, LoadoutEntry entry
 
 void function RequestSetItemFlavorFavoritesSlot( EHI playerEHI, LoadoutEntry entry, ItemFlavor itemFlavor, int favIndex )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	Assert( playerEHI == LocalClientEHI(), "Tried to use RequestSetItemFlavorFavoritesSlot on a different player" )
 
@@ -1304,15 +1222,15 @@ void function RequestSetItemFlavorFavoritesSlot( EHI playerEHI, LoadoutEntry ent
 
 void function RequestClearItemFlavorFavoritesSlot( EHI playerEHI, LoadoutEntry entry, int favIndex, ItemFlavor flavor )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	Assert( playerEHI == LocalClientEHI(), "Tried to use RequestClearItemFlavorFavoritesSlot on a different player" )
 
-	#if UI
-		flavor.loadoutSortPriority = flavor.loadoutSortPriority & ~eLoadoutSortPriority.FAVORITE
-	#endif
+
+
+
 
 	Remote_ServerCallFunction( "ClientCallback_favorites_clear", favIndex, entry.entryIndex )
 
@@ -1324,11 +1242,11 @@ void function RequestSetFavoredQuip( ItemFlavor quipToSet )
 	ItemFlavor character
 	EHI playerEHI = LocalClientEHI()
 
-	#if CLIENT
+
 		character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_Character() )
-	#elseif UI
-		character = GetTopLevelCustomizeContext()
-	#endif
+
+
+
 
 	foreach ( loadoutEntry in Loadout_FavoredQuipArrayForCharacter( character ) )
 	{
@@ -1348,15 +1266,15 @@ void function RequestClearFavoredQuip( ItemFlavor quipToClear )
 	ItemFlavor character
 	EHI playerEHI = LocalClientEHI()
 
-	#if CLIENT
-		character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_Character() )
-	#elseif UI
-		character = GetTopLevelCustomizeContext()
-	#endif
 
-	#if UI
-		quipToClear.loadoutSortPriority = quipToClear.loadoutSortPriority & ~eLoadoutSortPriority.FAVORITE
-	#endif
+		character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_Character() )
+
+
+
+
+
+
+
 
 	foreach ( loadoutEntry in Loadout_FavoredQuipArrayForCharacter( character ) )
 	{
@@ -1375,79 +1293,74 @@ void function RequestClearFavoredQuip( ItemFlavor quipToClear )
 		}
 	}
 }
-#endif
 
 
-#if DEVELOPER
+
+#if DEV
 void function DEV_RequestSetItemFlavorLoadoutSlot( EHI playerEHI, LoadoutEntry entry, ItemFlavor itemFlavor )
 {
 	string commandString = "loadouts_devset " + entry.id + " " + DEV_ItemFlavor_GetCleanedAssetPath( itemFlavor )
 
-	#if CLIENT
+
 		Assert( playerEHI == LocalClientEHI(), "Tried to use DEV_RequestSetLoadoutSlot on a different player" )
-		GetLocalClientPlayer().ClientCommand( commandString ) //dev
-	#elseif UI
-		ClientCommand( commandString ) // dev
-	#else // SERVER
-		array<string> args = split( commandString, WHITESPACE_CHARACTERS )
-		args.remove( 0 )
-		ClientCommand_loadouts_devset( FromEHI( playerEHI ), args )
-	#endif
+		GetLocalClientPlayer().ClientCommand( commandString ) 
+
+
+
+
+
+
+
 }
 #endif
 
 
 bool function IsItemFlavorValidForLoadoutSlot( EHI playerEHI, LoadoutEntry entry, ItemFlavor itemFlavor )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
 
-	//return entry.isItemFlavorValid( itemFlavor )
+	
 	return ( entry.validItemFlavorList.contains( itemFlavor ) )
 }
 
 
 array<ItemFlavor> function GetValidItemFlavorsForLoadoutSlot( EHI playerEHI, LoadoutEntry entry )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
-
-	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
-
-	Assert( fileLevel.isInitialized )
-	return entry.validItemFlavorList
-}
-
-
-#if UI && DEVELOPER
-array<ItemFlavor> function DEV_GetValidItemFlavorsForLoadoutSlotForDev( EHI playerEHI, LoadoutEntry entry )
-{
-	#if LOADOUTS_DBG
-		DEV_LoadoutsDebug( entry )
-	#endif
-
-	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
-
-	Assert( fileLevel.isInitialized )
-	return entry.validItemFlavorList
-}
-
-array<ItemFlavor> function DEV_GetValidCustomItemFlavorsForLoadoutSlot( EHI playerEHI, LoadoutEntry entry )
-{
-	return DEV_GetValidItemFlavorsForLoadoutSlotForDev( playerEHI, entry )
-}
 #endif
+
+	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
+
+	Assert( fileLevel.isInitialized )
+	return entry.validItemFlavorList
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 string function DEV_DescribeLoadoutSlot( LoadoutEntry entry, int slotContentsIndex, bool doId = true )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	string out = ""
 	if ( doId )
@@ -1485,20 +1398,20 @@ string function DEV_DescribeLoadoutSlot( LoadoutEntry entry, int slotContentsInd
 
 bool function IsItemFlavorUnlockedForLoadoutSlot( EHI playerEHI, LoadoutEntry entry, ItemFlavor itemFlavor, bool shouldIgnoreGRX = false, bool shouldIgnoreOtherSlots = false )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
-	#if CLIENT || UI
+
 		Assert( playerEHI == EHI_null || playerEHI == LocalClientEHI() )
-	#endif
+
 
 	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
 
-	#if SERVER
-		if ( playerEHI != EHI_null && playerEHI.IsBot() && playerEHI.IsPlayback() )
-			return true
-	#endif
+
+
+
+
 
 	if ( !ItemFlavor_IsAvailableInPlaylist( itemFlavor ) )
 		return false
@@ -1506,10 +1419,10 @@ bool function IsItemFlavorUnlockedForLoadoutSlot( EHI playerEHI, LoadoutEntry en
 	if ( playerEHI == EHI_null )
 		return true
 
-	#if SERVER
-		if ( playerEHI.IsBot() )
-			return GetCurrentPlaylistVarBool( "bot_loadout_ignores_personal_locking", true )
-	#endif
+
+
+
+
 
 	LoadoutEntry_IsItemFlavorUnlockedFuncType isItemFlavorUnlocked = entry.isItemFlavorUnlocked
 	if ( isItemFlavorUnlocked == null )
@@ -1524,19 +1437,19 @@ int function IsItemFlavorGRXUnlockedForLoadoutSlotHelper( EHI playerEHI, ItemFla
 	if ( shouldIgnoreGRX )
 		return eTristate.TRUE
 
-#if SERVER
-	if ( !ItemFlavor_IsActiveForEdition( itemFlavor, GetConVarInt( "mtx_svEdition" ) ) )
-		return eTristate.FALSE
 
-	if ( playerEHI.IsBot() )
-	{
-		if ( playerEHI.IsPlayback() )
-			return eTristate.TRUE
-		if( GetCurrentPlaylistVarBool( "bot_loadout_ignores_personal_locking", true ) )
-			return eTristate.TRUE
-		return eTristate.FALSE
-	}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
 
 	if ( IsLobby() && !ItemFlavor_IsActiveForEdition( itemFlavor, GRX_GetPlayerEdition( FromEHI( playerEHI ) ) ) )
 		return eTristate.FALSE
@@ -1547,27 +1460,31 @@ int function IsItemFlavorGRXUnlockedForLoadoutSlotHelper( EHI playerEHI, ItemFla
 
 bool function IsItemFlavorGRXUnlockedForLoadoutSlot( EHI playerEHI, ItemFlavor itemFlavor, bool shouldIgnoreGRX = false, bool shouldIgnoreOtherSlots = false )
 {
-	// UNLOCK ALL COSMETICS - Return true for all cosmetic items when GRX ownership is UNKNOWN
-	int helperResult = IsItemFlavorGRXUnlockedForLoadoutSlotHelper( playerEHI, itemFlavor, shouldIgnoreGRX, shouldIgnoreOtherSlots )
-	switch( helperResult )
+	switch( IsItemFlavorGRXUnlockedForLoadoutSlotHelper( playerEHI, itemFlavor, shouldIgnoreGRX, shouldIgnoreOtherSlots ) )
 	{
 		case eTristate.TRUE:
 			return true
 		case eTristate.FALSE:
 			return false
 		default:
-			// Instead of checking GRX ownership, just return true to unlock all cosmetics
-			return true
+			if ( ItemFlavor_GetType( itemFlavor ) == eItemType.character )
+			{
+				return Character_IsCharacterUnlockedForCalevent( itemFlavor ) || GRX_IsItemOwnedByPlayer_AllowOutOfDateData( itemFlavor, FromEHI( playerEHI ) )
+			}
+			else
+			{
+				return GRX_IsItemOwnedByPlayer_AllowOutOfDateData( itemFlavor, FromEHI( playerEHI ) )
+			}
 	}
 	unreachable
 }
 
 
-array<ItemFlavor> function GetUnlockedItemFlavorsForLoadoutSlot( EHI playerEHI, LoadoutEntry entry, bool shouldIgnoreOtherSlots = false )
+array<ItemFlavor> function GetUnlockedItemFlavorsForLoadoutSlot( EHI playerEHI, LoadoutEntry entry, bool shouldIgnoreOtherSlots )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
 
@@ -1636,9 +1553,9 @@ ItemFlavor function GetFirstValidItemFlavor( EHI playerEHI, LoadoutEntry entry, 
 
 ItemFlavor function GetRandomGoodItemFlavorForLoadoutSlot( EHI playerEHI, LoadoutEntry entry, bool onlyValidateGRX = false, array<ItemFlavor> exceptions = [] )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
 
@@ -1656,9 +1573,9 @@ ItemFlavor function GetRandomGoodItemFlavorForLoadoutSlot( EHI playerEHI, Loadou
 
 ItemFlavor function GetMostPlayedCharacterItemFlavor( EHI playerEHI, LoadoutEntry entry, bool onlyValidateGRX = false, array<ItemFlavor> exceptions = [] )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
 
@@ -1677,7 +1594,7 @@ ItemFlavor function GetMostPlayedCharacterItemFlavor( EHI playerEHI, LoadoutEntr
 		string characterRef2 = ItemFlavor_GetGUIDString( character2 )
 		int charGames2       = GetStat_Int( FromEHI( playerEHI ), ResolveStatEntry( CAREER_STATS.character_games_played, characterRef2 ) )
 
-		int diff = charGames2 - charGames1  //Because we want more kills sorted to the front
+		int diff = charGames2 - charGames1  
 
 		return diff
 	} )
@@ -1712,112 +1629,109 @@ array<LoadoutEntry> function GetAllLoadoutSlots()
 	return fileLevel.loadoutSlotEntries
 }
 
-///////////////////
-///////////////////
-//// Internals ////
-///////////////////
-///////////////////
-#if SERVER && DEVELOPER
-void function GenerateLoadoutsPDef()
-{
-	DEV_PDefGen_BeginStruct( "sLoadoutsData", "All loadout fields registered by script-func RegisterLoadoutSlot." )
-	array<string> sectionKeyList                            = []
-	table<string, array<LoadoutEntry> > sectionEntryListMap = {}
-	foreach ( LoadoutEntry entry in fileLevel.loadoutSlotEntries )
-	{
-		if ( !(entry.pdefSectionKey in sectionEntryListMap) )
-		{
-			sectionKeyList.append( entry.pdefSectionKey )
-			sectionEntryListMap[entry.pdefSectionKey] <- []
-		}
-		sectionEntryListMap[entry.pdefSectionKey].append( entry )
-	}
-	foreach ( string sectionKey in sectionKeyList )
-	{
-		DEV_PDefGen_AddFieldSection( sectionKey )
-		foreach ( LoadoutEntry entry in sectionEntryListMap[sectionKey] )
-		{
-			DEV_PDefGen_AddField_GUID( entry.id )
-			for ( int i = 0; i < entry.maxFavoriteCount; i++ )
-			{
-				Assert( entry.favoritePdefKeys != null )
-				array<string> ornull favorites = entry.favoritePdefKeys
-				expect array<string>( favorites )
-				DEV_PDefGen_AddField_GUID( favorites[ i ] )
-			}
-
-			for ( int i = 0; i < entry.backupCount; i++ )
-			{
-				Assert( entry.backupPdefKeys != null )
-				array<string> ornull backups = entry.backupPdefKeys
-				expect array<string>( backups )
-				DEV_PDefGen_AddField_GUID( backups[ i ] )
-			}
-		}
-	}
-	DEV_PDefGen_EndStruct()
-
-	DEV_PDefGen_BeginFieldGroup( "loadouts" )
-	DEV_PDefGen_AddField_Struct( "sLoadoutsData", "loadouts" )
-	DEV_PDefGen_EndFieldGroup()
-}
-#endif
 
 
-#if SERVER && DEVELOPER
-void function OnBotRecordStart( entity player )
-{
-	fileLevel.botRecord_loadoutValues.resize( fileLevel.loadoutSlotEntries.len() )
-	foreach ( int entryIdx, LoadoutEntry entry in fileLevel.loadoutSlotEntries )
-	{
-		if ( entry.pdefKey != "" )
-			fileLevel.botRecord_loadoutValues[entryIdx] = player.GetPersistentVarAsInt( entry.pdefKey )
-		else
-			fileLevel.botRecord_loadoutValues[entryIdx] = 0
-	}
-}
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function ShLoadouts_OnPlayerEHICreated( EHI player, bool thisCallIsHappeningBecauseTheUIVMReset = false )
 {
 	EHIScriptStruct ehiss = GetEHIScriptStruct( player )
-	#if SERVER || CLIENT
+
 		fileLevel.allowLoadoutSlotOverridesByPlaylist = GetCurrentPlaylistVarBool( "allow_loadout_slot_overrides", false )
-	#elseif UI
-		fileLevel.allowLoadoutSlotOverridesByPlaylist = false // the server will force this if it needs to be changed
-	#endif
 
-#if SERVER
-	#if DEVELOPER
-		if ( IsLobby() && player.IsBot() )
-			return // for ezlaunch
 
-		if ( player.IsPlayback() )
-		{
-			foreach ( int entryIdx, LoadoutEntry entry in fileLevel.loadoutSlotEntries )
-			{
-				if ( entryIdx < fileLevel.botRecord_loadoutValues.len() && entry.pdefKey != "" )
-					player.SetPersistentVar( entry.pdefKey, fileLevel.botRecord_loadoutValues[entryIdx] )
-			}
-		}
-	#endif
 
-	bool isInitialValidation = true
-	if ( GetCurrentPlaylistVarBool( "loadouts_performance_ops_v1", true ) )
-		thread ValidatePlayerLoadoutThreaded( player, fileLevel.accountLoadoutSlotEntries, isInitialValidation )
-	else
-		thread ValidatePlayerLoadoutThreaded( player, fileLevel.loadoutSlotEntries, isInitialValidation )
-#endif
 
-	#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 		ehiss.netVarsLastSeenValuesMap.resize( fileLevel.networkVars.len(), SLOT_CONTENTS_SENTINEL_NOTREADY )
-	#elseif UI
-		ehiss.loadoutSlotsLastSeenContentsMap.resize( fileLevel.loadoutSlotEntries.len(), SLOT_CONTENTS_SENTINEL_NOTREADY )
-	#endif
 
-	#if CLIENT
+
+
+
+
 		if ( thisCallIsHappeningBecauseTheUIVMReset )
 		{
 			foreach ( LoadoutEntry entry in fileLevel.loadoutSlotEntries )
@@ -1829,147 +1743,151 @@ void function ShLoadouts_OnPlayerEHICreated( EHI player, bool thisCallIsHappenin
 				RunUIScript( "ClientToUI_RefreshLoadoutSlot", player, entry.entryIndex, slotContentsIndex )
 			}
 		}
-	#endif
+
 }
-#endif
 
 
-#if SERVER
-void function ValidatePlayerLoadoutThreaded( entity player, array<LoadoutEntry> loadoutSlots, bool isInitialValidation )
-{
-	EndSignal( player, "OnDestroy" )
-
-	OnThreadEnd( function() : ( player, isInitialValidation ) {
-		if ( !IsValid( player ) )
-			return
-
-		if ( isInitialValidation )
-		{
-			ValidateGRXPlayerLoadoutFirstTimeClean( player )
-
-			if ( IsLobby() )
-			{
-				Artifacts_Loadouts_ClearComponentChange( player )
-				Lobby_OnClientConnectionCompleted( player )
-			}
-		}
-	} )
-
-	if ( IsLobby() ) // IsLobby is mostly for smoke test because of 10X
-		WaitFrame() // sometimes this doesn't spin off onto a new frame.
-
-	bool forceReset    = false
-	bool resetToRandom = false
-
-	if ( player.IsBot() && !player.IsPlayback() )
-	{
-		forceReset = true
-		resetToRandom = true
-	}
-
-	waitthread ValidateAndFixAllLoadoutSlots( ToEHI( player ), loadoutSlots, isInitialValidation, forceReset, resetToRandom )
-}
-#endif
 
 
-#if SERVER
-void function ValidateGRXPlayerLoadoutFirstTimeClean( entity player )
-{
-	if ( IsLowCostBot( player ) )
-		return
 
-	if ( GetGameState() >= eGameState.Playing )
-	{
-		if ( !player.IsBot() )
-			printt( "LoadoutsDbg: Player loadouts were not validated against their GRX data because it did not arrive in time." )
-		return
-	}
 
-	if ( GRX_IsInventoryValidated( player ) )
-		return
 
-	ValidateGRXPlayerLoadout( player )
-}
-#endif
 
-#if SERVER
-void function ValidateGRXPlayerLoadout( entity player )
-{
-	EHIScriptStruct ehiss = GetEHIScriptStruct( player )
-	if ( !ehiss.isValidated )
-		return
 
-	array<LoadoutEntry> entriesToVerifyGRX
-	if ( IsLobby() )
-	{
-		if ( GetCurrentPlaylistVarBool( "loadouts_performance_ops_v1", true ) )
-			entriesToVerifyGRX = fileLevel.accountLoadoutSlotEntries
-		else
-			entriesToVerifyGRX = fileLevel.loadoutSlotEntries
-	}
-	else if ( GetCurrentPlaylistVarBool( "grx_validate_loadouts_in_matches", true ) || GetCurrentPlaylistVarBool( "loadouts_performance_ops_v1", true ) == false )
-	{
-		entriesToVerifyGRX = [ Loadout_Character() ]
-	 }
 
-	bool isInitialValidation = false
-	thread ValidatePlayerLoadoutThreaded( player, entriesToVerifyGRX, isInitialValidation )
 
-	GRX_SetInventoryValidated( player )
-}
-#endif
 
-#if SERVER
-void function ValidateGRXSpecificLoadoutSlotsForItemFlavors( entity player, array< ItemFlavor > itemsToVerify )
-{
-	EHIScriptStruct ehiss = GetEHIScriptStruct( player )
-	if ( !ehiss.isValidated )
-		return
 
-	if ( !IsLobby() )
-	{
-		Assert( false, "ValidateGRXSpecificLoadoutSlotsForItemFlavors called while player was NOT in the Lobby" )
-		return
-	}
 
-	array< LoadoutEntry > entriesToCheckForFix
-	foreach ( ItemFlavor flav in itemsToVerify )
-	{
-		foreach ( LoadoutEntry entry in GetAllLoadoutSlots() )
-		{
-			if ( entry.type != eLoadoutEntryType.ITEM_FLAVOR )
-				continue
 
-			if ( IsItemFlavorValidForLoadoutSlot( ToEHI( player ), entry, flav ) )
-				entriesToCheckForFix.append( entry )
-		}
-	}
 
-	bool isInitialValidation = false
-	thread ValidatePlayerLoadoutThreaded( player, entriesToCheckForFix, isInitialValidation )
-}
-#endif
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function HandleLoadoutSlotNetworkVarChanged( EHI playerEHI, LoadoutEntry entry, int new )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	if ( !fileLevel.isInitialized )
 		return
 
 	RefreshLoadoutSlotInternal( playerEHI, entry, null, null, false )
 }
-#endif
+
 
 
 bool function IsValidLoadoutSlotContentsIndex( LoadoutEntry entry, int slotContentsIndex, int validationBehavior = eValidation.DONT_ASSERT )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	if ( entry.type == eLoadoutEntryType.ITEM_FLAVOR && IsValidItemFlavorGUID( slotContentsIndex ) )
 	{
@@ -1994,9 +1912,9 @@ bool function IsValidLoadoutSlotContentsIndex( LoadoutEntry entry, int slotConte
 bool function IsValidLoadoutSlotContentsIndexForItemFlavor( LoadoutEntry entry, int slotContentsIndex )
 {
 
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
 
@@ -2009,24 +1927,15 @@ bool function IsValidLoadoutSlotContentsIndexForItemFlavor( LoadoutEntry entry, 
 
 ItemFlavor function ConvertLoadoutSlotContentsIndexToItemFlavor( LoadoutEntry entry, int slotContentsIndex )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
 
-	// Defensive check — return default for invalid/missing items
-	if ( slotContentsIndex < 0 || slotContentsIndex == SLOT_CONTENTS_SENTINEL_INVALID || slotContentsIndex == SLOT_CONTENTS_SENTINEL_NOTREADY || !IsValidItemFlavorGUID( slotContentsIndex ) )
-	{
-		// Check validItemFlavorList FIRST — accessing defaultItemFlavor crashes if NULL
-		// This happens when no items are registered for a loadout slot (e.g., empty loadscreen list)
-		if ( entry.validItemFlavorList.len() > 0 )
-			return entry.validItemFlavorList[0]
-		// Fallback to defaultItemFlavor only if we know the list had items (meaning default was set)
-		// WARNING: If we reach here, defaultItemFlavor is likely NULL and will crash
-		printf( "WARNING: Loadout entry '%s' has no valid items - crash imminent\n", entry.id )
-		return entry.defaultItemFlavor
-	}
+	Assert( slotContentsIndex != SLOT_CONTENTS_SENTINEL_INVALID, "Invalid loadout slot contents index " + slotContentsIndex + " for " + entry.id )
+	Assert( slotContentsIndex != SLOT_CONTENTS_SENTINEL_NOTREADY )
+	Assert( IsValidItemFlavorGUID( slotContentsIndex ) )
 
 	return GetItemFlavorByGUID( slotContentsIndex )
 }
@@ -2034,9 +1943,9 @@ ItemFlavor function ConvertLoadoutSlotContentsIndexToItemFlavor( LoadoutEntry en
 
 int function ConvertItemFlavorToLoadoutSlotContentsIndex( LoadoutEntry entry, ItemFlavor itemFlavor )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
 
@@ -2047,31 +1956,31 @@ int function ConvertItemFlavorToLoadoutSlotContentsIndex( LoadoutEntry entry, It
 
 int function GetLoadoutSlotContentsIndexInternal( EHI playerEHI, LoadoutEntry entry, bool ignoreFavoriting = false )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
-	#if SERVER
-		if ( !EHIHasValidScriptStruct( playerEHI ) )
-			return SLOT_CONTENTS_SENTINEL_NOTREADY
 
-		EHIScriptStruct ehiss = GetEHIScriptStruct( playerEHI )
 
-		if ( !ehiss.isValidated )
-		{
-			if ( GetCurrentPlaylistVarBool( "loadouts_performance_ops_v1", true ) ) // TODO - R5DEV-350895: Loadouts Perf Improvements
-			{
-				if ( IsLobby() )
-					return SLOT_CONTENTS_SENTINEL_NOTREADY
-			}
-			else // TODO - R5DEV-350895: Loadouts Perf Improvements - Unoptimized Flow
-			{
-				return SLOT_CONTENTS_SENTINEL_NOTREADY
-			}
-		}
 
-		return GetLoadoutSlotContentsIndexFromPersistence( playerEHI, entry, eValidation.ASSERT, ignoreFavoriting )
-	#elseif CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 		if ( !EHIHasValidScriptStruct( playerEHI ) )
 			return SLOT_CONTENTS_SENTINEL_NOTREADY
 
@@ -2079,17 +1988,16 @@ int function GetLoadoutSlotContentsIndexInternal( EHI playerEHI, LoadoutEntry en
 
 		if ( entry.networkTo == eLoadoutNetworking.PLAYER_GLOBAL && playerEHI != LocalClientEHI() )
 		{
-			#if CLIENT
-				slotContentsIndex = GetLoadoutSlotContentsIndexFromNetworkVar( playerEHI, entry )
-			#elseif UI
-				slotContentsIndex = GetLoadoutSlotContentsIndexFromCache( playerEHI, entry )
-			#endif
 
-			// Guard against NULL defaultItemFlavor — check validItemFlavorList.len() > 0 first
-			if ( !IsLobby() && entry.validItemFlavorList.len() > 0 && entry.defaultItemFlavor.guid == DEFAULT_MELEE_WEAPON_SKIN_GUID && IsValidItemFlavorGUID( slotContentsIndex ) && ItemFlavor_GetType( GetItemFlavorByGUID( slotContentsIndex ) ) == Artifacts_Loadouts_GetMeleeSkinNetVarOverrideType( false ) )
-		{
-			return slotContentsIndex // the fact that another user has an ItemFlavor config pointer isn't useful; but a specific component GUID is during matches; Lobby we need pointer to update to trigger customization UI
-		}
+				slotContentsIndex = GetLoadoutSlotContentsIndexFromNetworkVar( playerEHI, entry )
+
+
+
+
+			if ( !IsLobby() && entry.defaultItemFlavor.guid == DEFAULT_MELEE_WEAPON_SKIN_GUID && IsValidItemFlavorGUID( slotContentsIndex ) && ItemFlavor_GetType( GetItemFlavorByGUID( slotContentsIndex ) ) == Artifacts_Loadouts_GetMeleeSkinNetVarOverrideType( false ) )
+			{
+				return slotContentsIndex 
+			}
 		}
 		else
 		{
@@ -2099,11 +2007,11 @@ int function GetLoadoutSlotContentsIndexInternal( EHI playerEHI, LoadoutEntry en
 
 		if ( !IsContentsIndexValidForLoadoutSlot( playerEHI, entry, slotContentsIndex ) )
 		{
-			#if CLIENT || SERVER
+
 				if ( GetCurrentPlaylistVarBool( "loadouts_performance_ops_v1", true ) )
-			#elseif UI
-				if ( fileLevel.runHighPerfLoadouts ) // the UI might not be connected to a Server because of Loadscreens
-			#endif
+
+
+
 			{
 				if ( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
 				{
@@ -2115,24 +2023,24 @@ int function GetLoadoutSlotContentsIndexInternal( EHI playerEHI, LoadoutEntry en
 					return SLOT_CONTENTS_INTEGER_OFFSET
 				}
 			}
-			else // TODO - R5DEV-350895: Loadouts Perf Improvements - Unoptimized Flow
+			else 
 			{
 				return SLOT_CONTENTS_SENTINEL_NOTREADY
 			}
 		}
 		return slotContentsIndex
-	#endif
+
 }
 
 
-#if SERVER || CLIENT || UI
+
 int function GetLoadoutSlotContentsIndexFromPersistence( EHI playerEHI, LoadoutEntry entry, int validationBehavior = eValidation.ASSERT, bool ignoreFavoriting = false )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
-#if DEVELOPER
+#if DEV
 	if ( DEV_ShouldIgnorePersistence() )
 	{
 		if ( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
@@ -2147,23 +2055,19 @@ int function GetLoadoutSlotContentsIndexFromPersistence( EHI playerEHI, LoadoutE
 	}
 #endif
 
-	// Entries with empty pdefKey have no persistence backing
-	if ( entry.pdefKey == "" )
-		return SLOT_CONTENTS_SENTINEL_INVALID
 
-	#if SERVER || CLIENT
 		entity player         = FromEHI( playerEHI )
-		int slotContentsIndex = expect int(player.GetPersistentVar( entry.pdefKey ))
-	#elseif UI
-		if ( !IsPersistenceAvailable() )
-			return SLOT_CONTENTS_SENTINEL_NOTREADY
-
-		Assert( playerEHI == LocalClientEHI() )
-		int slotContentsIndex = expect int(GetPersistentVar( entry.pdefKey ))
-	#endif
+		int slotContentsIndex = -1//expect int(player.GetPersistentVar( LOADOUT_PDEF_PREFIX + entry.id ))
 
 
-	if ( slotContentsIndex < 0 ) // negative means favorites mode
+
+
+
+
+
+
+
+	if ( slotContentsIndex < 0 ) 
 	{
 		if ( ignoreFavoriting )
 			return ConvertItemFlavorToLoadoutSlotContentsIndex( entry, entry.favoriteItemFlavor )
@@ -2173,19 +2077,19 @@ int function GetLoadoutSlotContentsIndexFromPersistence( EHI playerEHI, LoadoutE
 
 	if ( slotContentsIndex == PERSISTENT_DATA_INVALID_SENTINEL )
 	{
-		#if SERVER
-			if ( GetCurrentPlaylistVarBool( "loadouts_performance_ops_v1", true ) ) // TODO - R5DEV-350895: Loadouts Perf Improvements
-			{
-				#if LOADOUTS_DBG
-					if ( IsLobby() )
-						printt( "LoadoutsDbg: persistent loadout slot " + entry.id + " was not initalized - 0-value!" )
-				#endif
-			}
-			else // TODO - R5DEV-350895: Loadouts Perf Improvements - Unoptimized Flow
-			{
-				Assert( false || validationBehavior != eValidation.ASSERT, "Persistent loadout slot " + entry.id + " was set to invalid value! (" + slotContentsIndex + ")" )
-			}
-		#endif // #if SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
 		return SLOT_CONTENTS_SENTINEL_INVALID
 	}
 
@@ -2193,17 +2097,17 @@ int function GetLoadoutSlotContentsIndexFromPersistence( EHI playerEHI, LoadoutE
 	{
 		if ( !IsValidItemFlavorGUID( slotContentsIndex ) )
 		{
-			#if SERVER
-				if ( GetCurrentPlaylistVarBool( "loadouts_performance_ops_v1", true ) ) // TODO - R5DEV-350895: Loadouts Perf Improvements
-				{
-					if ( IsLobby() )
-						printt( "LoadoutsDbg: persistent loadout slot " + entry.id + " was set to invalid value! (" + slotContentsIndex + ")" )
-				}
-				else // TODO - R5DEV-350895: Loadouts Perf Improvements - Unoptimized Flow
-				{
-					Assert( false || validationBehavior != eValidation.ASSERT, "Persistent loadout slot " + entry.id + " was set to invalid value! (" + slotContentsIndex + ")" )
-				}
-			#endif // #if SERVER
+
+
+
+
+
+
+
+
+
+
+
 			return SLOT_CONTENTS_SENTINEL_INVALID
 		}
 
@@ -2216,274 +2120,272 @@ int function GetLoadoutSlotContentsIndexFromPersistence( EHI playerEHI, LoadoutE
 
 	return SLOT_CONTENTS_SENTINEL_INVALID
 }
-#endif
 
 
-#if SERVER || CLIENT
+
+
 int function GetLoadoutSlotContentsIndexFromNetworkVar( EHI playerEHI, LoadoutEntry entry, int validationBehavior = eValidation.ASSERT )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
-	#if SERVER
-		entity player = FromEHI( playerEHI )
-		return player.GetPlayerNetInt( expect string( entry.networkVarName ) )
-	#elseif CLIENT
+
+
+
+
 		return GetEHIScriptStruct( playerEHI ).netVarsLastSeenValuesMap[entry.nvIndex]
-	#endif
-}
-#endif
 
-
-#if UI
-int function GetLoadoutSlotContentsIndexFromCache( EHI playerEHI, LoadoutEntry entry, int validationBehavior = eValidation.ASSERT )
-{
-	#if LOADOUTS_DBG
-		DEV_LoadoutsDebug( entry )
-	#endif
-
-	return GetEHIScriptStruct( playerEHI ).loadoutSlotsLastSeenContentsMap[entry.entryIndex]
-}
-#endif
-
-
-#if SERVER
-int function SetItemFlavorLoadoutSlotFavoritesInternal( EHI playerEHI, LoadoutEntry entry, ItemFlavor itemFlavor, int index )
-{
-	#if LOADOUTS_DBG
-		DEV_LoadoutsDebug( entry )
-	#endif
-
-	Assert( index < entry.maxFavoriteCount )
-
-	int itemFlavorPDefInt = ItemFlavor_GetGUID( itemFlavor )
-
-	Assert ( !ItemFlavor_IsTheFavoriteSentinel( itemFlavor ) )
-
-	#if DEVELOPER
-		if ( DEV_ShouldIgnorePersistence() )
-		{
-			printt( "LoadoutsDbg: loadouts_ignore_persistence is set. Persistent var \"loadouts." + entry.id + "\" will not be saved." )
-			return itemFlavorPDefInt
-		}
-	#endif
-
-	entity player = FromEHI( playerEHI )
-	Assert( entry.favoritePdefKeys != null )
-	array<string> ornull favorites = entry.favoritePdefKeys
-	expect array<string>( favorites )
-	player.SetPersistentVar( LOADOUT_PDEF_PREFIX + favorites[ index ], itemFlavorPDefInt )
-
-	ValidateFromFavoritesList( playerEHI, entry )
-	RefreshLoadoutSlotInternal( playerEHI, entry, null, null, false )
-
-	return itemFlavorPDefInt
 }
 
-int function SetItemFlavorLoadoutSlotContentsInternal( EHI playerEHI, LoadoutEntry entry, ItemFlavor itemFlavor )
-{
-	#if LOADOUTS_DBG
-		DEV_LoadoutsDebug( entry )
-	#endif
-
-	// returns the new slot contents index
-	#if DEVELOPER
-		if ( IsLobby() )
-		{
-			entity player = FromEHI( playerEHI )
-			if ( IsValid( player ) && player.p.connectTime + 1.0 < Time() )
-			{
-				printt( "SetItemFlavorLoadoutSlotContentsInternal " + string(ItemFlavor_GetAsset( itemFlavor )) )
-			}
-		}
-	#endif
-
-	int itemFlavorPDefInt = ItemFlavor_GetGUID( itemFlavor )
-
-	if ( ItemFlavor_IsTheFavoriteSentinel( itemFlavor ) )
-	{
-		array<ItemFlavor> favorites = clone LoadoutSlot_GetUsableFavorites( playerEHI, entry )
-		ItemFlavor fav              = favorites.getrandom()
-
-		if ( favorites.len() > 1 )
-		{
-			ItemFlavor currentEquipped = LoadoutSlot_GetItemFlavor( playerEHI, entry, false )
-			if ( favorites.contains( currentEquipped ) )
-			{
-				int index    = favorites.find( currentEquipped )
-				int newIndex = (index + 1) % favorites.len()
-
-				fav = favorites[ newIndex ]
-			}
-		}
-
-		itemFlavorPDefInt = ItemFlavor_GetGUID( fav ) * -1
-	}
-
-	#if DEVELOPER
-		if ( DEV_ShouldIgnorePersistence() )
-		{
-			Warning( "loadouts_ignore_persistence is set. Persistent var \"loadouts." + entry.id + "\" will not be saved." )
-			return itemFlavorPDefInt
-		}
-	#endif
-
-	int itemType = ItemFlavor_GetType( itemFlavor )
-	if ( itemType == eItemType.melee_skin )
-		Loadout_EquipSavedMeleeSkinAndDeathboxPair( playerEHI, entry, itemFlavor )
-
-	if ( IsLobby() && entry != Artifacts_Loadouts_ComponentChangeSlot() )
-	{
-		if ( itemType == eItemType.artifact_component_power_source || itemType == eItemType.artifact_component_activation_emote )
-			Artifacts_Loadouts_AutoEquipActivationEmoteAndPowerSourcePair( playerEHI, entry, itemFlavor )
-
-		if ( itemType == eItemType.artifact_component_blade || itemType == eItemType.artifact_component_power_source )
-			Artifacts_Loadouts_RegisterComponentChange( playerEHI, itemFlavor )
-	}
-
-	entity player = FromEHI( playerEHI )
-	if ( entry.pdefKey != "" )
-		player.SetPersistentVar( entry.pdefKey, itemFlavorPDefInt )
-
-	RefreshLoadoutSlotInternal( playerEHI, entry, null, null, false )
-
-	return itemFlavorPDefInt
-}
-
-void function ClearItemFlavorLoadoutSlotFavoritesInternal( EHI playerEHI, LoadoutEntry entry, int index )
-{
-	#if LOADOUTS_DBG
-		DEV_LoadoutsDebug( entry )
-	#endif
-
-	Assert( index < entry.maxFavoriteCount )
-
-	#if DEVELOPER
-		if ( DEV_ShouldIgnorePersistence() )
-		{
-			Warning( "loadouts_ignore_persistence is set. Persistent var \"loadouts." + entry.id + "\" will not be saved." )
-			return
-		}
-	#endif
-
-	entity player = FromEHI( playerEHI )
-
-	array<int> favs
-	for ( int i = 0; i < entry.maxFavoriteCount; i++ )
-	{
-		Assert( entry.favoritePdefKeys != null )
-		array<string> ornull favorites = entry.favoritePdefKeys
-		expect array<string>( favorites )
-		favs.append( player.GetPersistentVarAsInt( LOADOUT_PDEF_PREFIX + favorites[ i ] ) )
-	}
-
-	favs[ index ] = 0
-
-	array<int> collapsedFavs
-	for ( int i = 0; i < favs.len(); i++ )
-	{
-		if ( favs[i] != 0 )
-			collapsedFavs.append( favs[i] )
-	}
-
-	for ( int i = 0; i < entry.maxFavoriteCount; i++ )
-	{
-		int guid = 0
-
-		if ( i < collapsedFavs.len() )
-		{
-			guid = collapsedFavs[i]
-		}
-
-		Assert( entry.favoritePdefKeys != null )
-		array<string> ornull favorites = entry.favoritePdefKeys
-		expect array<string>( favorites )
-		player.SetPersistentVar( LOADOUT_PDEF_PREFIX + favorites[ i ], guid )
-	}
-
-	ValidateFromFavoritesList( playerEHI, entry )
-	RefreshLoadoutSlotInternal( playerEHI, entry, null, null, false )
-}
-
-bool function ValidateFromFavoritesList( EHI playerEHI, LoadoutEntry entry )
-{
-	#if LOADOUTS_DBG
-		DEV_LoadoutsDebug( entry )
-	#endif
-
-	ItemFlavor favoritesTest = LoadoutSlot_GetItemFlavor( playerEHI, entry, true )
-
-	if ( favoritesTest != entry.favoriteItemFlavor )
-		return true
-
-	ItemFlavor equipped = LoadoutSlot_GetItemFlavor( playerEHI, entry )
-
-	array<ItemFlavor> favs = LoadoutSlot_GetFavorites( playerEHI, entry )
-
-	if ( favs.contains( equipped ) )
-		return true
-
-	SetItemFlavorLoadoutSlotContentsInternal( playerEHI, entry, favoritesTest )
-
-	return false
-}
-
-bool function LoadoutSlot_RefreshFavoritesIfEquipped( EHI playerEHI, LoadoutEntry entry )
-{
-	#if LOADOUTS_DBG
-		DEV_LoadoutsDebug( entry )
-	#endif
-
-	if ( !IsLobby() )
-		return false
-
-	ItemFlavor favoritesTest = LoadoutSlot_GetItemFlavor( playerEHI, entry, true )
-
-	if ( favoritesTest != entry.favoriteItemFlavor )
-		return false
-
-	SetItemFlavorLoadoutSlotContentsInternal( playerEHI, entry, favoritesTest )
-
-	return true
-}
-#endif
 
 
-#if SERVER
-void function SetIntegerLoadoutSlotContentsInternal( EHI playerEHI, LoadoutEntry entry, int slotContentsIndex )
-{
-	#if LOADOUTS_DBG
-		DEV_LoadoutsDebug( entry )
-	#endif
-
-	#if DEVELOPER
-		if ( DEV_ShouldIgnorePersistence() )
-		{
-			Warning( "loadouts_ignore_persistence is set. Persistent var \"loadouts." + entry.id + "\" will not be saved." )
-			return
-		}
-	#endif
-
-	Assert( slotContentsIndex >= SLOT_CONTENTS_INTEGER_OFFSET )
-
-	int integerPDefInt = slotContentsIndex
-
-	entity player = FromEHI( playerEHI )
-	if ( entry.pdefKey != "" )
-		player.SetPersistentVar( entry.pdefKey, integerPDefInt )
-
-	RefreshLoadoutSlotInternal( playerEHI, entry, null, null, false )
-}
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function RefreshLoadoutSlotInternal( EHI playerEHI, LoadoutEntry entry, table<LoadoutEntry, bool> ornull refreshedSlotsSet, array<int> ornull queuedSlotsIndicesForRpc, bool isDependent )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	if ( refreshedSlotsSet != null )
 	{
@@ -2492,105 +2394,102 @@ void function RefreshLoadoutSlotInternal( EHI playerEHI, LoadoutEntry entry, tab
 			return
 		refreshedSlotsSet[entry] <- true
 	}
-	#if CLIENT || UI
-		LocalClientEHI() // this will assert that the local player is valid, and also send it to the UI
-	#endif
 
-	#if SERVER
-		EHIScriptStruct ehiss = GetEHIScriptStruct( playerEHI )
-		if ( !ehiss.isValidated )
-			return
-	#endif
+		LocalClientEHI() 
+
+
+
+
+
+
+
 
 	int slotContentsIndex = GetLoadoutSlotContentsIndexInternal( playerEHI, entry )
 
-	#if SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 		entity player = FromEHI( playerEHI )
+		RunUIScript( "ClientToUI_RefreshLoadoutSlot", playerEHI, entry.entryIndex, slotContentsIndex )
 
-		if ( IsLoadoutSlotCurrentlyNetworked( playerEHI, entry ) )
-		{
-			if ( entry.networkTo == eLoadoutNetworking.PLAYER_GLOBAL )
-			{
-				#if ASSERTS
-					// this is a very costly check that skews DEV RPROF and also is largely redundant
-					if ( GetCurrentPlaylistVarBool( "loadouts_performance_ops_v1", true ) == false )
-					{
-						foreach ( LoadoutEntry otherEntry in fileLevel.networkVars[expect string(entry.networkVarName)].usedByEntries )
-							Assert( otherEntry == entry || !IsLoadoutSlotCurrentlyNetworked( playerEHI, otherEntry ),
-								"Attempted to network two loadout slots using the same network variable name at the same time"
-								+ " (var: \"" + expect string(entry.networkVarName) + "\", slot 1: \"" + entry.id + "\", slot 2: \"" + otherEntry.id + "\")." )
-					}
-				#endif
-
-				Assert( slotContentsIndex != 0 )
-
-				int savedVal = player.GetPlayerNetInt( expect string(entry.networkVarName) )
-
-				// Guard against NULL defaultItemFlavor — check validItemFlavorList.len() > 0 first
-				if ( !IsLobby() && entry.validItemFlavorList.len() > 0 && entry.defaultItemFlavor.guid == DEFAULT_MELEE_WEAPON_SKIN_GUID && Artifacts_Loadouts_IsConfigPointerGUID( slotContentsIndex ) )
-				{
-					int configIdx = Artifacts_Loadouts_GetConfigIndex( GetItemFlavorByGUID( slotContentsIndex ) )
-					LoadoutEntry overrideSlot = Artifacts_Loadouts_GetEntryForConfigIndexAndType( configIdx, Artifacts_Loadouts_GetMeleeSkinNetVarOverrideType( true ) )
-					int overrideGUID = LoadoutSlot_GetItemFlavor( playerEHI, overrideSlot ).guid
-					player.SetPlayerNetInt( expect string(entry.networkVarName), overrideGUID ) // the fact that another user has an ItemFlavor config pointer isn't useful; but a specific component GUID is *during matches*
-				}
-				else
-				{
-					player.SetPlayerNetInt( expect string(entry.networkVarName), slotContentsIndex )
-				}
-
-				/* this *SEEMS* wrong, but it's actually correct. The reason this hits is because of favoriting. In the event that we actually have changed a "actual" loadout slot
-				 * the client already knows that, because it initiated it. But when we set a favorite, we aren't setting an "actual" loadout slot, we're just setting a persistence
-				 * var in the favorites array. In that case, the Client doesn't actually know if anything has changed. So, in that case, we need to force an update that will cause
-				 * a UI acknowledgement. There's no actual downside (other than a slight performance penalty) to triggering this callback in the case that they are NOT equal,
-				 * just as we in the case of player-exclusive slots. So this is perhaps unneeded complexity. But it's really confusing why you'd only trigger a change if the
-				 * value were received was equal to the saved value. And there was no explanation. So this is why. It's to trigger a change that's not actual visual to the player,
-				 * which is the addition of a skin to the favorites array. But this really could just always get called...
-				 */
-				if ( savedVal == slotContentsIndex && !isDependent && entry.entryIndex >= 0 )
-				{
-					if( queuedSlotsIndicesForRpc == null )
-						Remote_CallFunction_NonReplay( player, "ServerToClient_LoadoutSlotDidChange", player, entry.entryIndex )
-					else
-						( expect array<int>( queuedSlotsIndicesForRpc ) ).append( entry.entryIndex )
-				}
-			}
-			else if ( entry.networkTo == eLoadoutNetworking.PLAYER_EXCLUSIVE && !isDependent && entry.entryIndex >= 0 )
-			{
-				// inform the client that their persistent data changed
-				if( queuedSlotsIndicesForRpc == null )
-					Remote_CallFunction_NonReplay( player, "ServerToClient_LoadoutSlotDidChange", player, entry.entryIndex )
-				else
-					( expect array<int>( queuedSlotsIndicesForRpc ) ).append( entry.entryIndex )
-			}
-		}
-	#elseif CLIENT
-		entity player = FromEHI( playerEHI )
-		if ( entry.entryIndex >= 0 )
-			RunUIScript( "ClientToUI_RefreshLoadoutSlot", playerEHI, entry.entryIndex, slotContentsIndex )
-	#endif
 
 	if ( slotContentsIndex != SLOT_CONTENTS_SENTINEL_NOTREADY && slotContentsIndex != SLOT_CONTENTS_SENTINEL_INVALID )
 	{
 		Signal( GetEHISignalDummy( playerEHI ), format( LOADOUT_ID_READY, entry.id ) )
 	}
 
-	// Guard against negative indices (e.g., -1 from missing persistence data)
-	if ( slotContentsIndex == SLOT_CONTENTS_SENTINEL_NOTREADY || slotContentsIndex == SLOT_CONTENTS_SENTINEL_INVALID || slotContentsIndex < 0 )
+	if ( slotContentsIndex == SLOT_CONTENTS_SENTINEL_NOTREADY || slotContentsIndex == SLOT_CONTENTS_SENTINEL_INVALID )
 	{
-		//
+		
 	}
 	else if ( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
 	{
 		ItemFlavor slotContents = ConvertLoadoutSlotContentsIndexToItemFlavor( entry, slotContentsIndex )
 
-		// TODO - R5DEV-356547: this could be made much more performant since this is very generic when it's really only valid for characters. But we limit this by only calling the
-		// initial refresh for the active character anyway, so this is not called repeatedly even though it seems like it might be. And was before we limited the set passed in.
+		
+		
 		if ( IsLoadoutSlotActive( playerEHI, entry ) )
 		{
 			CallItemFlavorLoadoutSlotDidChangeCallbacks( playerEHI, entry, slotContents )
 
-			#if SERVER || CLIENT // not required in UI because CLIENT will call ClientToUI_RefreshLoadoutSlot for each dependent anyway
+
 				if ( slotContents in entry.dependentsByItemFlav )
 				{
 					foreach ( LoadoutEntry dependentEntry in entry.dependentsByItemFlav[slotContents] )
@@ -2601,7 +2500,7 @@ void function RefreshLoadoutSlotInternal( EHI playerEHI, LoadoutEntry entry, tab
 						}
 					}
 				}
-			#endif
+
 		}
 	}
 	else if ( entry.type == eLoadoutEntryType.INTEGER )
@@ -2611,10 +2510,10 @@ void function RefreshLoadoutSlotInternal( EHI playerEHI, LoadoutEntry entry, tab
 			CallIntegerLoadoutSlotDidChangeCallbacks( playerEHI, entry, value )
 	}
 }
-#endif
 
 
-#if CLIENT
+
+
 void function ServerToClient_LoadoutSlotDidChange( entity player, int entryIndex )
 {
 	EHI playerEHI = player.GetEncodedEHandle()
@@ -2657,304 +2556,299 @@ void function ServerToClient_LoadoutSlotDidChangeBatch( entity player,
 	LoadoutSlotDidChangeBatchInternal( playerEHI, entryIndex14 )
 	LoadoutSlotDidChangeBatchInternal( playerEHI, entryIndex15 )
 }
-#endif
 
-#if CLIENT
+
+
 void function ServerToClient_LoadoutSlotSetFailed()
 {
 	RunUIScript( "ClientToUI_PlayLootCeremonySound", "menu_deny" )
 	return
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+bool function IsLoadoutSlotActive( EHI playerEHI, LoadoutEntry entry, LoadoutEntry ornull entryToNotCheck = null )
+{
+#if LOADOUTS_DBG
+		DEV_LoadoutsDebug( entry )
 #endif
 
 
-#if UI
-void function ClientToUI_RefreshLoadoutSlot( EHI playerEHI, int entryIndex, int slotContentsIndex )
-{
-	if ( !fileLevel.isInitialized )
-		return // (dw): this can happen if the UI VM hits an error
-
-	LoadoutEntry entry    = fileLevel.loadoutSlotEntries[entryIndex]
-	EHIScriptStruct ehiss = GetEHIScriptStruct( playerEHI )
-	ehiss.loadoutSlotsLastSeenContentsMap[entryIndex] = slotContentsIndex
-
-	if ( IsLobby() && playerEHI == LocalClientEHI() && IsTopLevelCustomizeContextValid() && entry.type == eLoadoutEntryType.ITEM_FLAVOR )
-	{
-		Assert( IsValidItemFlavorGUID( slotContentsIndex ) )
-		if ( IsValidItemFlavorGUID( slotContentsIndex ) )
-		{
-			if ( entry.category == eLoadoutCategory.CHARACTER_FAVORED_QUIPS ) // favored quips are explicit slots, not sub-slots like favorites
-			{
-				ItemFlavor favored = GetItemFlavorByGUID( slotContentsIndex )
-				favored.loadoutSortPriority = favored.loadoutSortPriority | eLoadoutSortPriority.FAVORITE
-			}
-			else
-			{
-				// since the callback may have been in response to setting a favorite; we need what's actually in the slot ( not the item from the guid ).
-				ItemFlavor equipped = LoadoutSlot_GetItemFlavor( playerEHI, entry, true )
-				equipped.loadoutSortPriority = equipped.loadoutSortPriority | eLoadoutSortPriority.EQUIPPED
-
-				// when we favorite, the callback hits with the equipped item - guid in persistence - *always*; we then need to derive favorites manually.
-				if ( entry.maxFavoriteCount > 0 )
-				{
-					foreach( favorite in LoadoutSlot_GetFavorites( playerEHI, entry ) )
-						favorite.loadoutSortPriority = favorite.loadoutSortPriority | eLoadoutSortPriority.FAVORITE
-				}
-			}
-		}
-	}
-
-	RefreshLoadoutSlotInternal( playerEHI, entry, null, null, false )
-}
-
-
-array<ItemFlavor> function TEMP_FilterItemsForGRX( EHI playerEHI, array<ItemFlavor> items )
-{
-	// UNLOCK ALL COSMETICS - Don't filter out any GRX items
-	return items
-
-	/*
-	array<ItemFlavor> filteredItems
-
-	foreach ( itemFlavor in items )
-	{
-		if ( ItemFlavor_GetGRXMode( itemFlavor ) == eItemFlavorGRXMode.REGULAR || ItemFlavor_GetGRXMode( itemFlavor ) == eItemFlavorGRXMode.OWNERSHIP_TARGET )
-		{
-			if ( !GRX_AreOffersReady() )
-				continue
-
-			bool shouldShow = false
-			if ( GRX_IsItemCraftable( itemFlavor ) )
-				shouldShow = true
-
-			if ( GRX_IsItemOwnedByPlayer( itemFlavor ) )
-				shouldShow = true
-
-			array<GRXScriptOffer> offers = GRX_GetItemDedicatedStoreOffers( itemFlavor, "recolor" )
-			foreach ( offer in offers )
-			{
-				ItemFlavor ornull prereqFlav = offer.prereq
-				if ( prereqFlav == null )
-					continue
-
-				expect ItemFlavor( prereqFlav )
-
-				if ( offer.prices.len() != 1 )
-					continue
-
-				ItemFlavorBag price = offer.prices[0]
-				if ( price.flavors.len() != 1 )
-					continue
-
-				if ( price.flavors[0] != GRX_CURRENCIES[GRX_CURRENCY_CREDITS] )
-					continue
-
-				shouldShow = GRX_IsInventoryReady() && GRX_IsItemOwnedByPlayer( prereqFlav )
-			}
-
-			if ( !shouldShow )
-				continue
-		}
-
-		filteredItems.append( itemFlavor )
-	}
-
-	return filteredItems
-	*/
-}
-
-
-array<ItemFlavor> function FilterItemsForVisibility( EHI playerEHI, array<ItemFlavor> items )
-{
-	array<ItemFlavor> filteredItems
-
-	entity player = FromEHI( playerEHI )
-
-	foreach ( item in items )
-	{
-		if ( ItemFlavor_ShouldBeVisible( item, player ) )
-		{
-			filteredItems.append( item )
-		}
-	}
-
-	return filteredItems
-}
-
-void function Loadouts_SetSortPriorityForItemFlavor( ItemFlavor item )
-{
-	int priority = 0
-
-	// these are all mutually exclusive, so the if/else if is for perf
-	if ( ItemFlavor_GetSourceIcon( item ) != $"" ) // there are very few "special" (Sentinel/Favorite/Random) items
-		priority = priority | eLoadoutSortPriority.HAS_SOURCE_ICON
-	else if ( ItemFlavor_IsTheFavoriteSentinel( item ) )
-		priority = priority | eLoadoutSortPriority.SENTINEL
-	else if ( ItemTypeHasDefault( ItemFlavor_GetType( item ) ) && ItemFlavor_IsTheDefault( item ) )
-		priority = priority | eLoadoutSortPriority.DEFAULT
-	else if ( ItemTypeHasRandom( ItemFlavor_GetType( item ) ) && ItemFlavor_IsTheRandom( item ) )
-		priority = priority | eLoadoutSortPriority.RANDOM
-
-	if ( ItemFlavor_HasQuality( item ) )
-	{
-		// reactives *always* have quality
-		if( ItemFlavor_GetType( item ) == eItemType.weapon_skin && WeaponSkin_DoesReactToKills( item ) )
-			priority = priority | eLoadoutSortPriority.WEAPON_REACTIVE
-
-		switch ( ItemFlavor_GetQuality( item ) )
-		{
-			case eRarityTier.COMMON:
-				priority = priority | eLoadoutSortPriority.COMMON
-				break
-
-			case eRarityTier.RARE:
-				priority = priority | eLoadoutSortPriority.RARE
-				break
-
-			case eRarityTier.EPIC:
-				priority = priority | eLoadoutSortPriority.EPIC
-				break
-
-			case eRarityTier.LEGENDARY:
-				priority = priority | eLoadoutSortPriority.LEGENDARY
-				break
-
-			case eRarityTier.ICONIC:
-				priority = priority | eLoadoutSortPriority.ICONIC // this is how we show Iconic below Mythic even though for gameplay reasons it must be a higher eRarityTier
-				break
-
-			case eRarityTier.MYTHIC:
-				priority = priority | eLoadoutSortPriority.MYTHIC
-				break
-		}
-	}
-
-	item.loadoutSortPriority = priority
-}
-
-array<ItemFlavor> function GetLoadoutItemsSortedForMenu( array<LoadoutEntry> loadoutEntries, int functionref( ItemFlavor ) sortOrdinalFunc, bool functionref( ItemFlavor ) isEmptyFunc = null, array<int> filterTypes = [] )
-{
-	LoadoutEntry entry = loadoutEntries[0]
-
-	#if LOADOUTS_DBG
-		DEV_LoadoutsDebug( entry )
-	#endif
-
-	EHI playerEHI           = LocalClientEHI()
-	array<ItemFlavor> items = clone GetValidItemFlavorsForLoadoutSlot( playerEHI, entry )
-
-	// the ordering of the loops that slim down the items array are ordered for optimal perf. We run the simplest checks first.
-	// we try to delay all additional checks - and to avoid as much branched logic as possible since we have no compiler optimizations - as some of the items lists are very large
-	// we ultimately want to ensure that whatever is passed to qsort is slimmed down with as many O(N) operations as possible first
-	// be mindful of this if you need to insert additional checks or when reordering the below
-
-	// the type filter is really only for "quips" - which encompasses verbal quips and holosprays and standing emotes
-	// but that is the largest set in the game, so this check should run first
-	if ( filterTypes.len() > 0 )
-	{
-		foreach ( item in clone items )
-		{
-			if ( !filterTypes.contains( ItemFlavor_GetType( item ) ) )
-				items.fastremovebyvalue( item )
-		}
-	}
-
-	// this is the next biggest system to chop items; this helps further slim down quips and is the biggest reducer of charms
-	if ( GetCurrentPlaylistVarBool( "filter_uncraftable_items", true ) )
-		items = TEMP_FilterItemsForGRX( playerEHI, items )
-
-	if ( isEmptyFunc != null )
-	{
-		foreach ( item in items )
-		{
-			if ( isEmptyFunc( item ) )
-			{
-				items.fastremovebyvalue( item )
-				break // there's only one empty for any given set, which is also why we don't need to clone
-			}
-		}
-	}
-
-	// checks for Playlist disabling, which is unlikely but possible, and also GRX edition, which is deprecated/unused
-	items = FilterItemsForVisibility( playerEHI, items )
-
-	foreach ( item in items ) // reset equipped and favorites so they bubble to the top after changing menus
-	{
-		item.loadoutSortPriority = item.loadoutSortPriority & ~eLoadoutSortPriority.EQUIPPED
-		item.loadoutSortPriority = item.loadoutSortPriority & ~eLoadoutSortPriority.FAVORITE
-	}
-
-	array<ItemFlavor> favs
-	if ( loadoutEntries.len() == 1 )
-		favs = LoadoutSlot_GetFavorites( LocalClientEHI(), entry )
-	else if ( loadoutEntries.len() > 1 && Loadout_IsCharacterQuipLoadoutEntry( entry) )
-		favs = ItemFlavor_GetFavoredQuipArrayForCharacter( GetTopLevelCustomizeContext() )
-
-	foreach ( item in favs )
-		item.loadoutSortPriority = item.loadoutSortPriority | eLoadoutSortPriority.FAVORITE
-
-	array<ItemFlavor> equippedItems
-	foreach ( loadoutEntry in loadoutEntries )
-	{
-		if ( LoadoutSlot_IsReady( playerEHI, loadoutEntry ) )
-			equippedItems.append( LoadoutSlot_GetItemFlavor( playerEHI, loadoutEntry, true ) )
-	}
-
-	foreach ( item in equippedItems )
-		item.loadoutSortPriority = item.loadoutSortPriority | eLoadoutSortPriority.EQUIPPED
-
-	items.sort( int function( ItemFlavor a, ItemFlavor b ) : ( sortOrdinalFunc ) {
-		if ( a.loadoutSortPriority > b.loadoutSortPriority )
-			return -1
-		else if ( a.loadoutSortPriority < b.loadoutSortPriority )
-			return 1
-
-		if ( IsBitFlagSet( a.loadoutSortPriority, eLoadoutSortPriority.HAS_SOURCE_ICON ) && IsBitFlagSet( b.loadoutSortPriority, eLoadoutSortPriority.HAS_SOURCE_ICON ) )
-		{
-			string aTag = string(ItemFlavor_GetSourceIcon( a ))
-			string bTag = string(ItemFlavor_GetSourceIcon( b ))
-			if ( aTag > bTag )
-				return -1
-			else if ( aTag < bTag )
-				return 1
-		}
-
-		if ( ItemTypeAlphabetizable( ItemFlavor_GetType( a ) ) ) // avoid alphabetizing if possible; it's slow
-			return SortStringAlphabetize( Localize( ItemFlavor_GetLongName( a ) ), Localize( ItemFlavor_GetLongName( b ) ) )
-
-		if ( sortOrdinalFunc != null )
-			return sortOrdinalFunc( a ) - sortOrdinalFunc( b )
-
-		return 0
-	} )
-
-	return items
-}
-#endif // UI
-
-// TODO - R5DEV-356547: this is called repeatedly - often within the same function, especially for dependencies. Cache dependent character rather than repeatedly checking
-// basically, it's a tree that goes up from every node rather than top-down. the key to realtime loadout validation is to only worry about the current active character.
-bool function IsLoadoutSlotActive( EHI playerEHI, LoadoutEntry entry, LoadoutEntry ornull entryToNotCheck = null )
-{
-	#if LOADOUTS_DBG
-		DEV_LoadoutsDebug( entry )
-	#endif
-
-	#if CLIENT || UI
 		if ( playerEHI != LocalClientEHI() && entry.networkTo != eLoadoutNetworking.PLAYER_GLOBAL )
 			return false
-	#endif
 
-	#if LOADOUTS_DBG
+
+#if LOADOUTS_DBG
 		string func = expect string( expect table( getstackinfos( 1 ) ).func )
 		string func2 = expect string( expect table( getstackinfos( 2 ) ).func )
 		if ( func == "IsLoadoutSlotActive" )
 			printt("LoadoutsDebug: " + func2 + " checking dependency IsLoadoutSlotActive for " + entry.DEV_name )
 		else
 			printt("LoadoutsDebug: func " + func + "is checking loadout slot " + entry.DEV_name)
-	#endif
+#endif
 
-	// this is really just a very complex way of asking "is the character this slot is for the current character"
+	
 	if ( entry.associatedCharacterOrNull != null )
 	{
 		ItemFlavor currentCharacter = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_Character() )
@@ -2967,17 +2861,17 @@ bool function IsLoadoutSlotActive( EHI playerEHI, LoadoutEntry entry, LoadoutEnt
 	return true
 }
 
-// TODO - R5DEV-356547: there is a ton of recursion between is-networked and is-active...
+
 bool function IsLoadoutSlotCurrentlyNetworked( EHI playerEHI, LoadoutEntry entry, LoadoutEntry ornull entryToNotCheck = null )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
-	#if CLIENT || UI
+
 		if ( playerEHI != LocalClientEHI() && entry.networkTo != eLoadoutNetworking.PLAYER_GLOBAL )
 			return false
-	#endif
+
 
 	return IsLoadoutSlotActive( playerEHI, entry, entryToNotCheck )
 }
@@ -2985,13 +2879,13 @@ bool function IsLoadoutSlotCurrentlyNetworked( EHI playerEHI, LoadoutEntry entry
 
 bool function IsLoadoutSlotCurrentlyAccessible( EHI playerEHI, LoadoutEntry entry, LoadoutEntry ornull entryToNotCheck = null )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
-	#if SERVER
-		return true
-	#elseif CLIENT || UI
+
+
+
 		if ( playerEHI == LocalClientEHI() )
 		{
 			return true
@@ -3003,15 +2897,15 @@ bool function IsLoadoutSlotCurrentlyAccessible( EHI playerEHI, LoadoutEntry entr
 		}
 
 		return IsLoadoutSlotActive( playerEHI, entry, entryToNotCheck )
-	#endif
+
 }
 
 
 void function CallItemFlavorLoadoutSlotDidChangeCallbacks( EHI playerEHI, LoadoutEntry entry, ItemFlavor slotContents )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	foreach ( ItemFlavorLoadoutSlotDidChangeFuncType callback in entry.changeCallbacks_ItemFlavor )
 		callback( playerEHI, slotContents )
@@ -3027,9 +2921,9 @@ void function CallItemFlavorLoadoutSlotDidChangeCallbacks( EHI playerEHI, Loadou
 
 void function CallIntegerLoadoutSlotDidChangeCallbacks( EHI playerEHI, LoadoutEntry entry, int value )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	foreach ( IntegerLoadoutSlotDidChangeFuncType callback in entry.changeCallbacks_Integer )
 		callback( playerEHI, value )
@@ -3038,23 +2932,20 @@ void function CallIntegerLoadoutSlotDidChangeCallbacks( EHI playerEHI, LoadoutEn
 
 ItemFlavor function GetDefaultItemFlavorForLoadoutSlot( EHI playerEHI, LoadoutEntry entry )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
-	// Check validItemFlavorList first - defaultItemFlavor may be NULL reference
-	if ( entry.validItemFlavorList.len() > 0 )
-		return entry.validItemFlavorList[0]
 	return entry.defaultItemFlavor
 }
 
 
-#if SERVER || CLIENT || UI
+
 bool function IsContentsIndexValidForLoadoutSlot( EHI playerEHI, LoadoutEntry entry, int slotContentsIndex, int validationBehavior = eValidation.DONT_ASSERT )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	if ( slotContentsIndex == SLOT_CONTENTS_SENTINEL_INVALID )
 	{
@@ -3070,7 +2961,7 @@ bool function IsContentsIndexValidForLoadoutSlot( EHI playerEHI, LoadoutEntry en
 	{
 		if ( !IsValidLoadoutSlotContentsIndex( entry, slotContentsIndex, validationBehavior ) )
 		{
-			// func asserts for us
+			
 			return false
 		}
 
@@ -3093,501 +2984,501 @@ bool function IsContentsIndexValidForLoadoutSlot( EHI playerEHI, LoadoutEntry en
 	Assert( false || validationBehavior != eValidation.ASSERT, "Value is invalid for loadout slot." )
 	return false
 }
-#endif
-
-
-#if SERVER
-void function ValidateAndFixAllLoadoutSlots( EHI playerEHI, array<LoadoutEntry> loadoutSlots, bool isInitialValidation, bool forceReset, bool resetToRandom )
-{
-	EndSignal( FromEHI( playerEHI ), "OnDestroy" )
-	EndSignal( FromEHI( playerEHI ), "OnDisconnecting" )
-
-	EHIScriptStruct ehiss = GetEHIScriptStruct( playerEHI )
-	ehiss.isValidated = false
-
-	bool runHighPerfLoadouts = GetCurrentPlaylistVarBool( "loadouts_performance_ops_v1", true )
-
-	array<LoadoutEntry> fixedList = [] // only used iff isInitialValidation == false
-	if ( IsLobby() == false && isInitialValidation == false && GetCurrentPlaylistVarBool( "grx_validate_loadouts_in_matches", true ) == false )
-	{
-		ehiss.isValidated = true
-		return // only run double validation in the Lobby
-	}
-
-	foreach ( LoadoutEntry entry in loadoutSlots )
-	{
-		bool entryWasFixed = ValidateAndFixLoadoutSlot( playerEHI, entry, isInitialValidation, forceReset, resetToRandom )
-		if ( !isInitialValidation && entryWasFixed )
-			fixedList.append( entry )
-	}
-
-	if ( FromEHI( playerEHI ).IsBot() )
-	{
-		ApplyBotLoadout( playerEHI, loadoutSlots )
-	}
-
-	if ( runHighPerfLoadouts )
-	{
-		LoadoutEntry character = Loadout_Character()
-		int characterSlotIndex = GetLoadoutSlotContentsIndexFromPersistence( playerEHI, character )
-		ItemFlavor characterFlav = ConvertLoadoutSlotContentsIndexToItemFlavor( character, characterSlotIndex )
-		ValidateCharacterLoadoutDependents( playerEHI, characterFlav )
-		fixedList.append( character ) // this ensures that we refresh the character loadout slot on secondary validation, because we MIGHT have fixed data during GRX validation
-	}
-
-	ehiss.isValidated = true
-
-	if ( IsLobby() ) // this is really to get around the smoketest because of its 10X timescale
-		wait 0.1
-
-	ehiss.HACK_wasJustValidated = true // used to prevent triggering banner-was-updated logic in sh_stats
-	table<LoadoutEntry, bool> refreshedSlotsSet = {}
-	array<int> queuedSlotsIndicesForRpc
-	foreach ( LoadoutEntry entry in (isInitialValidation ? loadoutSlots : fixedList) )
-	{
-		if ( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
-		{
-			if ( LoadoutSlot_RefreshFavoritesIfEquipped( playerEHI, entry ) )
-			{
-				continue // LoadoutSlot_RefreshFavoritesIfEquipped already calls RefreshLoadoutSlotInternal if true
-			}
-		}
-		// note that when we refresh the character slot, we *also* refresh every dependent
-		RefreshLoadoutSlotInternal( playerEHI, entry, refreshedSlotsSet, queuedSlotsIndicesForRpc, false )
-	}
-
-	// Batch RPC has too many params for Remote system, use individual calls instead
-	entity player = FromEHI( playerEHI )
-	foreach ( int slotIndex in queuedSlotsIndicesForRpc )
-	{
-		Remote_CallFunction_NonReplay( player, "ServerToClient_LoadoutSlotDidChange", player, slotIndex )
-	}
-
-	// force a *potential* refresh of the Character Skin *only* (all other Favorites are handled at the Account level)
-	if ( runHighPerfLoadouts && isInitialValidation )
-	{
-		LoadoutEntry character   = Loadout_Character()
-		int characterSlotIndex   = GetLoadoutSlotContentsIndexFromPersistence( playerEHI, character )
-		ItemFlavor characterFlav = ConvertLoadoutSlotContentsIndexToItemFlavor( character, characterSlotIndex )
-		LoadoutSlot_RefreshFavoritesIfEquipped( playerEHI, Loadout_CharacterSkin( characterFlav ) )
-	}
-	ehiss.HACK_wasJustValidated = false
-}
-#endif
-
-#if SERVER
-void function ValidateCharacterLoadoutDependents( EHI playerEHI, ItemFlavor character )
-{
-	array<LoadoutEntry> fixedList = []
-
-	EHIScriptStruct ehiss = GetEHIScriptStruct( playerEHI )
-	bool isInitialValidation = !(ehiss.isValidated)
-
-	bool forceReset = false
-	bool resetToRandom = false
-
-	entity player = FromEHI( playerEHI )
-	bool playerIsBot = player.IsBot()
-
-	if ( playerIsBot && !player.IsPlayback() )
-	{
-		forceReset = true
-		resetToRandom = true
-	}
-
-	// if this callback is hit *after* initial validation, fixing a slot will refresh it; refresh is also triggered when loadout data changes.
-	LoadoutEntry characterEntry = Loadout_Character()
-	if ( !(character in characterEntry.dependentsByItemFlav) )
-		return
-	foreach ( LoadoutEntry dependentEntry in characterEntry.dependentsByItemFlav[character] )
-	{
-		if ( dependentEntry.category == eLoadoutCategory.CHARACTER_MELEESKINS )
-		{
-			bool shouldReset = Artifacts_Loadouts_CheckAndFixMisconfigurations( playerEHI, character )
-			if ( !IsLobby() )
-				forceReset = forceReset || shouldReset
-		}
-
-		bool entryWasFixed = ValidateAndFixLoadoutSlot( playerEHI, dependentEntry, isInitialValidation, forceReset, resetToRandom )
-		#if LOADOUTS_DBG
-			printt("LoadoutsDebug: " + dependentEntry.DEV_name )
-		#endif
-	}
-
-	if ( playerIsBot )
-	{
-		ApplyBotLoadout( playerEHI, characterEntry.dependentsByItemFlav[character] )
-	}
-}
-#endif
-
-
-#if SERVER
-bool function ValidateAndFixLoadoutSlot( EHI playerEHI, LoadoutEntry entry, bool isInitialValidation, bool forceReset, bool resetToRandom )
-{
-	#if LOADOUTS_DBG
-		DEV_LoadoutsDebug( entry )
-	#endif
-
-	bool wasFixed = false
-
-	entity player = FromEHI( playerEHI )
-
-	int slotContentsIndex = GetLoadoutSlotContentsIndexFromPersistence( playerEHI, entry, eValidation.DONT_ASSERT )
-
-	array<string> ornull forceResetTo = GetLoadoutSlotForceResetTo( entry )
-
-	bool shouldReset = forceReset || (forceResetTo != null)
-
-	if ( !IsContentsIndexValidForLoadoutSlot( playerEHI, entry, slotContentsIndex ) )
-	{
-		if ( !shouldReset && GetCurrentPlaylistVarBool( "loadouts_performance_ops_v1", true ) == false )
-			printt( "LoadoutsDbg: detected invalid persistent loadout slot contents (%s, %s)", string(player), DEV_DescribeLoadoutSlot( entry, slotContentsIndex ) )
-
-		shouldReset = true
-	}
-	else if ( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
-	{
-		ItemFlavor itemFlavor = ConvertLoadoutSlotContentsIndexToItemFlavor( entry, slotContentsIndex )
-
-		// note that from a practical standpoint, there really is no substantive difference between IsItemFlavorUnlocked and IsItemFlavorGRXUnlocked. One is typically just a wrapper around the other...
-		// but the call to IsItemFlavorUnlockedForLoadoutSlot checks to see things about playlist and other stuff...
-		if ( isInitialValidation )
-		{
-			if ( !IsItemFlavorUnlockedForLoadoutSlot( playerEHI, entry, itemFlavor, isInitialValidation ) )
-			{
-				if ( !shouldReset )
-					printt( "LoadoutsDbg: detected locked persistent loadout slot contents (%s, %s)", string(player), DEV_DescribeLoadoutSlot( entry, slotContentsIndex ) )
-
-				shouldReset = true
-			}
-		}
-		else
-		{
-			// NOTE: this calls to the special unlock func if defined for the flav -- it's just not super clear on first reading.
-			// TODO: review/clean up for 18.1 -- evaluate how we want this flow to look/work -- https://jiratf.rspn.ad.ea.com/browse/R5DEV-496755
-			if ( !IsItemFlavorGRXUnlockedForLoadoutSlot( playerEHI, itemFlavor ) )
-			{
-				if ( !shouldReset )
-					printt( "LoadoutsDbg: detected locked persistent loadout slot contents (%s, %s)", string(player), DEV_DescribeLoadoutSlot( entry, slotContentsIndex ) )
-
-				shouldReset = true
-			}
-		}
-	}
-
-	if ( shouldReset )
-	{
-		array<ItemFlavor> exceptions = []
-		if ( entry == Loadout_Character() )
-		{
-			if ( IsValidItemFlavorSettingsAsset( CHARACTER_RANDOM ) )
-				exceptions.append( GetItemFlavorByAsset( CHARACTER_RANDOM ) )
-			if ( IsValidItemFlavorSettingsAsset( CHARACTER_DUMMIE ) )
-				exceptions.append( GetItemFlavorByAsset( CHARACTER_DUMMIE ) )
-		}
-
-		if ( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
-		{
-			ItemFlavor itemFlavor
-			if ( forceResetTo != null )
-			{
-				array<ItemFlavor> items = []
-				foreach ( string itemRef in expect array<string>(forceResetTo) )
-				{
-					if ( itemRef == "~default~" )
-						items.append( GetDefaultItemFlavorForLoadoutSlot( playerEHI, entry ) )
-					else if ( itemRef == "~random~" )
-						items.append( GetRandomGoodItemFlavorForLoadoutSlot( playerEHI, entry, !isInitialValidation, exceptions ) )
-					else if ( !IsValidItemFlavorGUID( ConvertItemFlavorGUIDStringToGUID( itemRef ) ) )
-					{
-						continue
-					}
-					else
-					{
-						ItemFlavor itemFlav = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( itemRef ) )
-						Assert( entry.validItemFlavorList.contains( itemFlav ) )
-						items.append( itemFlav )
-					}
-				}
-				itemFlavor = items.getrandom()
-			}
-#if DEVELOPER
-			else if ( entry == Loadout_Character() && player.IsBot() && player.GetPlayerSettings() != SPECTATOR_SETTINGS )
-			{
-				//If it's a bot that was spawned with a specific class, let's try sticking to that class
-				asset botClassSettings = player.GetPlayerSettings()
-
-				array< ItemFlavor > characterItemFlavors = GetValidItemFlavorsForLoadoutSlot( player, entry )
-
-				bool foundItemFlavor = false
-
-				//Let's find the ItemFlavor that refers to this class setting
-				foreach ( ItemFlavor characterItemFlavor in characterItemFlavors )
-				{
-					if ( CharacterClass_GetSetFile( characterItemFlavor ) == botClassSettings )
-					{
-						itemFlavor = characterItemFlavor
-						foundItemFlavor = true
-						break
-					}
-				}
-
-				if ( !foundItemFlavor )
-					itemFlavor = GetRandomGoodItemFlavorForLoadoutSlot( playerEHI, entry, !isInitialValidation, exceptions )
-			}
-			else if ( resetToRandom )
-			{
-				if ( !Dev_CommandLineHasParm( "-smoketest" ) )
-				    itemFlavor = GetRandomGoodItemFlavorForLoadoutSlot( playerEHI, entry, !isInitialValidation, exceptions )
-                else
-                    itemFlavor = GetDefaultItemFlavorForLoadoutSlot( playerEHI, entry )
-			}
-#endif
-			else
-			{
-				if ( entry == Loadout_Character() )
-				{
-					ItemFlavor ornull randomChar = CharacterClass_GetRandomNonGRXCharacter()
-					if ( randomChar != null )
-						itemFlavor = expect ItemFlavor(randomChar)
-					else
-						itemFlavor = GetDefaultItemFlavorForLoadoutSlot( playerEHI, entry )
-				}
-				else
-					itemFlavor = GetDefaultItemFlavorForLoadoutSlot( playerEHI, entry )
-			}
-
-			SetItemFlavorLoadoutSlotContentsInternal( playerEHI, entry, itemFlavor )
-			slotContentsIndex = ConvertItemFlavorToLoadoutSlotContentsIndex( entry, itemFlavor )
-			wasFixed = true
-		}
-		else if ( entry.type == eLoadoutEntryType.INTEGER )
-		{
-			int newSlotContentsIndex
-			if ( forceResetTo != null )
-			{
-				array<int> choices = []
-				foreach ( string choiceRef in expect array<string>(forceResetTo) )
-					choices.append( int(choiceRef) )
-				newSlotContentsIndex = choices.getrandom()
-			}
-#if DEVELOPER
-			else if ( resetToRandom )
-			{
-				int value = RandomIntRangeInclusive( 0, INT_MAX )
-				newSlotContentsIndex = SLOT_CONTENTS_INTEGER_OFFSET + value
-			}
-#endif
-			else
-			{
-				newSlotContentsIndex = SLOT_CONTENTS_INTEGER_OFFSET
-			}
-
-			slotContentsIndex = newSlotContentsIndex
-			SetIntegerLoadoutSlotContentsInternal( playerEHI, entry, newSlotContentsIndex )
-			wasFixed = true
-		}
-	}
-
-	if ( entry.specialValidationFunc != null )
-	{
-		Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
-		ItemFlavor currFlav                = ConvertLoadoutSlotContentsIndexToItemFlavor( entry, slotContentsIndex )
-		ItemFlavor specialValidationResult = entry.specialValidationFunc( playerEHI, currFlav, isInitialValidation )
-		if ( specialValidationResult != currFlav )
-		{
-			SetItemFlavorLoadoutSlotContentsInternal( playerEHI, entry, specialValidationResult )
-			wasFixed = true
-		}
-	}
-
-	return wasFixed
-}
-#endif
-
-#if SERVER
-void function ApplyBotLoadout( EHI playerEHI, array<LoadoutEntry> loadoutSlots )
-{
-	if ( !GetConVarBool( "bot_use_loadout_datatables" ) )
-	{
-		return
-	}
-
-	entity player = FromEHI( playerEHI )
-	Assert( IsValid( player ) && player.IsBot(), "Attempting to ApplyBotLoadout on Non-Bot Player" )
-
-	LoadoutEntry characterEntry = Loadout_Character()
-	int characterSlotIndex = GetLoadoutSlotContentsIndexFromPersistence( playerEHI, characterEntry )
-	ItemFlavor character = ConvertLoadoutSlotContentsIndexToItemFlavor( characterEntry, characterSlotIndex )
-	asset characterAsset = ItemFlavor_GetAsset( character )
-	if ( !fileLevel.botLoadoutInfo.validCharacterAssetsForLoadout.contains( characterAsset ) )
-	{
-		return
-	}
-
-	BotLoadoutInfoBadge[NUM_BADGE_LOADOUT_SLOTS] botLoadoutBadges
-	BotLoadoutInfoStatTracker[NUM_TRACKER_LOADOUT_SLOTS] botLoadoutTrackers
-
-	int assignedBadgesCount = 0
-	array<BotLoadoutInfoBadge> requiredBadges = clone( fileLevel.botLoadoutInfo.requiredBadges )
-	while ( (assignedBadgesCount < NUM_BADGE_LOADOUT_SLOTS) && (requiredBadges.len() > 0) )
-	{
-		BotLoadoutInfoBadge randomBadgeInfo = requiredBadges.getrandom()
-		botLoadoutBadges[assignedBadgesCount].badgeAssetPathTemplate = randomBadgeInfo.badgeAssetPathTemplate
-		botLoadoutBadges[assignedBadgesCount].minBadgeValue = randomBadgeInfo.minBadgeValue
-		botLoadoutBadges[assignedBadgesCount].maxBadgeValue = randomBadgeInfo.maxBadgeValue
-		requiredBadges.fastremovebyvalue( randomBadgeInfo )
-		++assignedBadgesCount
-	}
-
-	array<BotLoadoutInfoBadge> optionalBadges = clone( fileLevel.botLoadoutInfo.optionalBadges )
-	while ( (assignedBadgesCount < NUM_BADGE_LOADOUT_SLOTS) && (optionalBadges.len() > 0) )
-	{
-		BotLoadoutInfoBadge randomBadgeInfo = optionalBadges.getrandom()
-		botLoadoutBadges[assignedBadgesCount].badgeAssetPathTemplate = randomBadgeInfo.badgeAssetPathTemplate
-		botLoadoutBadges[assignedBadgesCount].minBadgeValue = randomBadgeInfo.minBadgeValue
-		botLoadoutBadges[assignedBadgesCount].maxBadgeValue = randomBadgeInfo.maxBadgeValue
-		optionalBadges.fastremovebyvalue( randomBadgeInfo )
-		++assignedBadgesCount
-	}
-
-	int assignedTrackersCount = 0
-	array<BotLoadoutInfoStatTracker> optionalTrackers = clone( fileLevel.botLoadoutInfo.optionalTrackers )
-	while ( (assignedTrackersCount < NUM_TRACKER_LOADOUT_SLOTS) && (optionalTrackers.len() > 0) )
-	{
-		BotLoadoutInfoStatTracker randomStatTrackerInfo = optionalTrackers.getrandom()
-		botLoadoutTrackers[assignedTrackersCount].statTrackerAssetPathTemplate = randomStatTrackerInfo.statTrackerAssetPathTemplate
-		botLoadoutTrackers[assignedTrackersCount].minStatValue = randomStatTrackerInfo.minStatValue
-		botLoadoutTrackers[assignedTrackersCount].maxStatValue = randomStatTrackerInfo.maxStatValue
-		optionalTrackers.fastremovebyvalue( randomStatTrackerInfo )
-		++assignedTrackersCount
-	}
-
-	string characterName = ItemFlavor_GetCharacterRef( character )
-	characterName = characterName.slice( 10 )			// characterName is of the form character_gibraltar, we slice the first 10 characters in order to remove the character_ prefix from it
-
-	assignedTrackersCount = minint( assignedTrackersCount, RandomIntRangeInclusive(1, NUM_TRACKER_LOADOUT_SLOTS) )
-	int appliedTrackersCount = 0
-	int appliedTrackerValuesCount = 0
-	assignedBadgesCount = minint( assignedBadgesCount, RandomIntRangeInclusive(1, NUM_BADGE_LOADOUT_SLOTS) )
-	int appliedBadgesCount = 0
-	int appliedBadgesTierCount = 0
-	foreach ( LoadoutEntry loadoutEntry in loadoutSlots )
-	{
-		if ( loadoutEntry.type == eLoadoutEntryType.ITEM_FLAVOR )
-		{
-			ItemFlavor itemFlavor
-			bool applySlotContents = false
-
-			if ( loadoutEntry.category == eLoadoutCategory.GCARD_TRACKERS )
-			{
-				if ( appliedTrackersCount < assignedTrackersCount )
-				{
-					string statTrackerAssetPath = replace( botLoadoutTrackers[appliedTrackersCount].statTrackerAssetPathTemplate, "%char%", characterName )
-					Assert( statTrackerAssetPath != "", "Invalid asset path for Stat Tracker in Bot Loadout Info" )
-
-					asset statTrackerAsset = GetAssetFromString( statTrackerAssetPath )
-					itemFlavor = GetItemFlavorByAsset( statTrackerAsset )
-				}
-				else
-				{
-					itemFlavor = loadoutEntry.defaultItemFlavor
-				}
-
-				applySlotContents = true
-				++appliedTrackersCount
-			}
-			else if ( loadoutEntry.category == eLoadoutCategory.GCARD_BADGES )
-			{
-				if ( appliedBadgesCount < assignedBadgesCount )
-				{
-					string badgeAssetPath = replace( botLoadoutBadges[appliedBadgesCount].badgeAssetPathTemplate, "%char%", characterName )
-					Assert( badgeAssetPath != "", "Invalid asset path for Badge in Bot Loadout Info" )
-
-					asset badgeAsset = GetAssetFromString( badgeAssetPath )
-					itemFlavor = GetItemFlavorByAsset( badgeAsset )
-				}
-				else
-				{
-					itemFlavor = loadoutEntry.defaultItemFlavor
-				}
-
-				applySlotContents = true
-				++appliedBadgesCount
-			}
-			else if ( fileLevel.botLoadoutInfo.genericAssets[loadoutEntry.category].len() > 0 )
-			{
-				// if the GenericAssets array is not empty for this loadout category, then we can randomly apply one to the bot
-				BotLoadoutGenericAssetInfo assetInfo = fileLevel.botLoadoutInfo.genericAssets[loadoutEntry.category].getrandom()
-
-				int assetVariation = RandomIntRangeInclusive( assetInfo.minVariationValue, assetInfo.maxVariationValue )
-				string assetVariationString = assetVariation < 10 ? "0" + assetVariation : string( assetVariation )
-				string assetPath = replace( assetInfo.assetPathTemplate, "%char%", characterName )
-				assetPath = replace( assetPath, "%variation%", assetVariationString )
-
-				asset retrievedAsset = GetAssetFromString( assetPath )
-				itemFlavor = GetItemFlavorByAsset( retrievedAsset )
-
-				applySlotContents = true
-			}
-
-			if ( applySlotContents )
-			{
-				Assert( IsItemFlavorStructValid( itemFlavor.guid, eValidation.ASSERT ) )
-				SetItemFlavorLoadoutSlotContentsInternal( playerEHI, loadoutEntry, itemFlavor )
-			}
-		}
-		else if ( loadoutEntry.type == eLoadoutEntryType.INTEGER )
-		{
-			int slotContentsInt = SLOT_CONTENTS_INTEGER_OFFSET
-			bool applySlotContents = false
-
-			if( loadoutEntry.category == eLoadoutCategory.GCARD_TRACKER_TIER )
-			{
-				if ( appliedTrackerValuesCount < assignedTrackersCount )
-				{
-					int statTrackerValue = RandomIntRangeInclusive( botLoadoutTrackers[appliedTrackerValuesCount].minStatValue, botLoadoutTrackers[appliedTrackerValuesCount].maxStatValue )
-					slotContentsInt += statTrackerValue
-					applySlotContents = true
-					++appliedTrackerValuesCount
-				}
-			}
-			else if ( loadoutEntry.category == eLoadoutCategory.GCARD_BADGE_TIER )
-			{
-				if( appliedBadgesTierCount < assignedBadgesCount )
-				{
-					int badgeTier = RandomIntRangeInclusive( botLoadoutBadges[appliedBadgesTierCount].minBadgeValue, botLoadoutBadges[appliedBadgesTierCount].maxBadgeValue )
-					slotContentsInt += badgeTier
-					applySlotContents = true
-					++appliedBadgesTierCount
-				}
-			}
-
-			if ( applySlotContents )
-			{
-				SetIntegerLoadoutSlotContentsInternal( playerEHI, loadoutEntry, slotContentsInt )
-			}
-		}
-	}
-}
-#endif
-
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 array<string> ornull function GetLoadoutSlotForceResetTo( LoadoutEntry entry )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	if ( fileLevel.allowLoadoutSlotOverridesByPlaylist == false )
 		return null
 
-	//loadout_slot_weapon_skin_for_SAID00048783537_force_reset_to "SAID01234567890" // SAID for ItemFlavor of reset-to
+	
 	string playlistVarVal = GetCurrentPlaylistVarString( format( "loadout_slot_%s_force_reset_to", entry.id ), "" )
 
 	if ( playlistVarVal == "" )
-		playlistVarVal = GetCurrentPlaylistVarString( format( "loadout_slot_%s_force_reset_to", LOADOUT_CATEGORIES_TO_NAMES_MAP[entry.category] ), "" ) // let more specific var take priority
+		playlistVarVal = GetCurrentPlaylistVarString( format( "loadout_slot_%s_force_reset_to", LOADOUT_CATEGORIES_TO_NAMES_MAP[entry.category] ), "" ) 
 
 	array<string> refs = split( playlistVarVal, WHITESPACE_CHARACTERS )
 	if ( refs.len() == 0 )
@@ -3596,293 +3487,291 @@ array<string> ornull function GetLoadoutSlotForceResetTo( LoadoutEntry entry )
 	printf( "LoadoutsDbg: loadout slot '%s' is being force reset to one of '%s'.", entry.id, playlistVarVal )
 	return refs
 }
-#endif
+
 
 
 bool function IsLoadoutSlotLocked( EHI playerEHI, LoadoutEntry entry )
 {
-	#if LOADOUTS_DBG
+#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )
-	#endif
+#endif
 
 	if ( entry.isSlotLocked == null )
 		return false
 
-	#if DEVELOPER
+#if DEV
 		if ( GetCurrentPlaylistVarBool( "dev_loadout_changeable_at_any_time", false ) )
 			return false
-	#endif
+#endif
 
-	// R5DEV-391261 hack, this explicit behavior has to go in hand with the explicit playlist vars below.
-	// We should properly handle each loadout slot for each scenario in their callbacks.
+	
+	
 	if ( !entry.isAllowedToChangeDuringMatch )
 	{
-		                      
+
 		if ( GetCurrentPlaylistVarBool( "winter_express_loadout_changeable_at_anytime", false ) )
 			return false
-        
 
-		                        
+
+
 		if ( GetCurrentPlaylistVarBool( "control_loadout_changeable_at_anytime", false ) )
 			return false
-        
 
-		                       
+
+
 		if ( GetCurrentPlaylistVarBool( "freedm_loadout_changeable_at_anytime", false ) )
 			return false
-        
+
 	}
 
 	return entry.isSlotLocked( playerEHI )
 }
 
 
-#if SERVER
-void function ClientCallback_favorites_clear( entity player, int favIndex, int entryIndex )
-{
-	EHI playerEHI = ToEHI( player )
 
-	if ( !(entryIndex >= 0 && entryIndex < fileLevel.loadoutSlotEntries.len()) )
-	{
-		Assert( false, "'favorites_set' had invalid entry index (got " + entryIndex + ", valid range 0-" + (fileLevel.loadoutSlotEntries.len() - 1) + ")." )
-		return
-	}
-	LoadoutEntry entry = fileLevel.loadoutSlotEntries[entryIndex]
 
-	// returns the new slot contents index
-	if ( entry.maxFavoriteCount <= favIndex )
-		return
 
-	ClearItemFlavorLoadoutSlotFavoritesInternal( playerEHI, entry, favIndex )
-}
 
-void function ClientCallback_favorites_set( entity player, int favIndex, int entryIndex, int slotContentsIndex )
-{
-	EHI playerEHI = ToEHI( player )
 
-	if ( !(entryIndex >= 0 && entryIndex < fileLevel.loadoutSlotEntries.len()) )
-	{
-		Assert( false, "'favorites_set' had invalid entry index (got " + entryIndex + ", valid range 0-" + (fileLevel.loadoutSlotEntries.len() - 1) + ")." )
-		return
-	}
-	LoadoutEntry entry = fileLevel.loadoutSlotEntries[entryIndex]
 
-	if ( IsLoadoutSlotLocked( playerEHI, entry ) )
-	{
-		Assert( false, "Attempted to use 'favorites_set' on locked loadout slot \"" + entry.id + "\")." )
-		return
-	}
 
-	if ( !IsContentsIndexValidForLoadoutSlot( playerEHI, entry, slotContentsIndex, eValidation.ASSERT ) )
-	{
-		// func asserts for us in dev
-		return
-	}
 
-	ItemFlavor itemFlavor = ConvertLoadoutSlotContentsIndexToItemFlavor( entry, slotContentsIndex )
-	if ( !IsItemFlavorUnlockedForLoadoutSlot( playerEHI, entry, itemFlavor ) )
-	{
-		// This could happen if two people try to select the same character at the same time
-		printt( "LoadoutsDbg: 'favorites_set' received item flavor \"" + DEV_DescItemFlavor( itemFlavor ) + "\" which is locked for this player (loadout slot \"" + entry.id + "\")." )
-		return
-	}
 
-	// returns the new slot contents index
-	if ( entry.maxFavoriteCount <= favIndex )
-		return
 
-	SetItemFlavorLoadoutSlotFavoritesInternal( playerEHI, entry, itemFlavor, favIndex )
 
-	return
-}
 
-void function ClientCallback_loadouts_set( entity player, int entryIndex, int slotContentsIndex )
-{
-	EHI playerEHI = ToEHI( player )
 
-	if ( !(entryIndex >= 0 && entryIndex < fileLevel.loadoutSlotEntries.len()) )
-	{
-		Assert( false, "'loadouts_set' had invalid entry index (got " + entryIndex + ", valid range 0-" + (fileLevel.loadoutSlotEntries.len() - 1) + ")." )
-		return
-	}
-	LoadoutEntry entry = fileLevel.loadoutSlotEntries[entryIndex]
 
-	if ( entry.type != eLoadoutEntryType.ITEM_FLAVOR )
-	{
-		RecordServerAbuseForAntiCheat( player, eRSALabels.NonItemFlavorLoadoutSet )
-		return
-	}
 
-	if ( IsLoadoutSlotLocked( playerEHI, entry ) )
-	{
-		Assert( false, "Attempted to use 'loadouts_set' on locked loadout slot \"" + entry.id + "\")." )
-		return
-	}
 
-	if ( !IsContentsIndexValidForLoadoutSlot( playerEHI, entry, slotContentsIndex, eValidation.ASSERT ) )
-	{
-		// func asserts for us in dev
-		return
-	}
 
-	if ( entry != Loadout_Character() && !GRX_IsInventoryReady( player ) )
-	{
-		Remote_CallFunction_NonReplay( player, "ServerToClient_LoadoutSlotSetFailed" )
-		return
-	}
 
-	ItemFlavor itemFlavor = ConvertLoadoutSlotContentsIndexToItemFlavor( entry, slotContentsIndex )
-	if ( !IsItemFlavorUnlockedForLoadoutSlot( playerEHI, entry, itemFlavor ) )
-	{
-		// This could happen if two people try to select the same character at the same time
-		printt( "LoadoutsDbg: 'loadouts_set' received item flavor \"" + DEV_DescItemFlavor( itemFlavor ) + "\" which is locked for this player (loadout slot \"" + entry.id + "\")." )
-		return
-	}
 
-	SetItemFlavorLoadoutSlotContentsInternal( playerEHI, entry, itemFlavor )
-}
-#endif
 
-#if DEVELOPER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if DEV
 void function DEV_LoadoutsDebug( LoadoutEntry entry )
 {
-		string func1 = expect string( expect table( getstackinfos( 3 ) ).func ) // one higher than expected because we're calling to this debug func
+		string func1 = expect string( expect table( getstackinfos( 3 ) ).func ) 
 		string func0 = expect string( expect table( getstackinfos( 2 ) ).func )
 		printt("LoadoutsDebug: " + func1 + " called " + func0 + " for LoadoutEntry "+ entry.DEV_name)
 }
 #endif
 
-#if SERVER && DEVELOPER
-bool function ClientCommand_loadouts_devset( entity commandPlayer, array<string> args )
-{
-	// loadouts_devset
-	// 1: [loadout slot entry id string]
-	// 2: [slot contents item flavor ref string]
-	//
-	// example: loadouts_devset character_selection character_gibraltar
 
-	const int EXPECTED_ARG_COUNT_MIN = 2
-	const int EXPECTED_ARG_COUNT_MAX = 3
-	if ( args.len() < EXPECTED_ARG_COUNT_MIN || args.len() > EXPECTED_ARG_COUNT_MAX )
-	{
-		Warning( "Incorrect number of arguments to client command 'loadouts_devset' (got \"" + DEV_ArrayConcat( args, " " ) + "\", expected " + EXPECTED_ARG_COUNT_MIN + "-" + EXPECTED_ARG_COUNT_MAX + " arguments)." )
-		return true
-	}
 
-	array<entity> playersToAffect = ((args.len() < 3 || args[2] != "all") ? [commandPlayer] : GetPlayerArray())
-	foreach ( entity player in playersToAffect )
-	{
-		EHI playerEHI = ToEHI( player )
 
-		string entryId = args[0]
-		array<LoadoutEntry> relevantEntries
-		foreach ( LoadoutEntry possibleEntry in fileLevel.loadoutSlotEntries )
-		{
-			bool selected = false
-			if ( possibleEntry.id == entryId )
-				selected = true
-			if ( !selected && LOADOUT_CATEGORIES_TO_NAMES_MAP[possibleEntry.category]  == entryId )
-			{
-				if ( possibleEntry.isCurrentlyRelevant != null )
-					selected = possibleEntry.isCurrentlyRelevant( playerEHI )
-				else
-					selected = IsLoadoutSlotActive( playerEHI, possibleEntry )
-			}
 
-			if ( selected )
-			{
-				relevantEntries.clear()
-				relevantEntries.append( possibleEntry )
-				break
-			}
-		}
-		if ( relevantEntries.len() == 0 )
-		{
-			Warning( "Tried to use 'loadouts_devset' with invalid entry id \"" + entryId + "\"." )
-			continue
-		}
 
-		//IsLoadoutSlotLocked( playerEHI, entry )
 
-		string slotContentsString = args[1]
 
-		foreach ( LoadoutEntry entry in relevantEntries )
-		{
-			int slotContentsIndex
-			ItemFlavor itemFlavor
-			if ( slotContentsString == "~default~" )
-			{
-				itemFlavor = GetDefaultItemFlavorForLoadoutSlot( playerEHI, entry )
-			}
-			else if ( slotContentsString == "~random~" )
-			{
-				array<ItemFlavor> random = clone entry.validItemFlavorList
-				random.randomize()
-				itemFlavor = random[0]
-			}
-			else if ( slotContentsString == "~next~" || slotContentsString == "~prev~" )
-			{
-				int dir = (slotContentsString == "~next~" ? 1 : -1)
 
-				array<ItemFlavor> possibleChoices = clone entry.validItemFlavorList
-				foreach ( flav in possibleChoices )
-				{
-					if ( !ItemFlavor_IsTheFavoriteSentinel( flav ) )
-						continue
 
-					possibleChoices.removebyvalue( flav )
-					break
-				}
 
-				ItemFlavor currentChoice = LoadoutSlot_GetItemFlavor( playerEHI, entry )
-				itemFlavor = possibleChoices[real_int_modulo( possibleChoices.find( currentChoice ) + dir, possibleChoices.len() )]
-			}
-			else if ( DEV_IsValidItemFlavorHumanReadableRef_Slow( slotContentsString ) )
-			{
-				itemFlavor = DEV_GetItemFlavorByHumanReadableRef_Slow( slotContentsString )
-			}
-			else
-			{
-				Warning( "Tried to use 'loadouts_devset' with unknown item flavor ref string \"" + slotContentsString + "\"." )
-				continue
-			}
 
-			if ( !entry.validItemFlavorList.contains( itemFlavor ) )
-				slotContentsIndex = SLOT_CONTENTS_SENTINEL_INVALID
-			else
-				slotContentsIndex = ConvertItemFlavorToLoadoutSlotContentsIndex( entry, itemFlavor )
 
-			if ( !IsContentsIndexValidForLoadoutSlot( playerEHI, entry, slotContentsIndex, eValidation.DONT_ASSERT ) )
-			{
-				Warning( "Tried to use 'loadouts_devset' with item flavor \"" + slotContentsString + "\" which is not valid for loadout slot \"" + entryId + "\"." )
-				continue
-			}
 
-			// IsItemFlavorUnlockedForLoadoutSlot( playerEHI, entry, itemFlavor ) )
 
-			if ( ItemFlavor_GetType( itemFlavor ) == eItemType.melee_skin && Artifacts_Loadouts_IsConfigPointerItemFlavor( itemFlavor ) )
-			{
-				// we need to manually set the actual PDEF value to avoid callbacks triggering
-				if ( entry.pdefKey != "" )
-					FromEHI( playerEHI ).SetPersistentVar( entry.pdefKey, itemFlavor.guid )
 
-				Artifacts_StoreLoadoutDataOnPlayerEntityStruct( FromEHI( playerEHI ), null, true )
-				Artifacts_DEV_SetupDaggerForLoadouts( playerEHI, entry )
 
-				if ( itemFlavor == LoadoutSlot_GetItemFlavor( playerEHI, entry ) )
-					return true
-			}
 
-			SetItemFlavorLoadoutSlotContentsInternal( playerEHI, entry, itemFlavor )
 
-			printt( player, "loadouts_devset", entry.id, DEV_ItemFlavor_GetCleanedAssetPath( itemFlavor ) )
-		}
-	}
-	return true
-}
-#endif
 
-#if DEVELOPER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if DEV
 void function DEV_DumpLoadoutEntries()
 {
 	string fmtStr = "%s,%s,%s,%s,%s"
@@ -3919,5 +3808,4 @@ string function DEV_GetClassName( LoadoutEntry entry )
 }
 #endif
 
-// Loadout_Sticker moved to mp/sh_stickers.nut
-
+ 

@@ -112,7 +112,9 @@ void function JumpmasterStatusChanged( entity statusChangePlayer, bool newValue 
 	if ( statusChangePlayer != GetLocalClientPlayer() )
 		return
 
-	// AutoPlayer not in S3
+#if AUTO_PLAYER_DEV
+	AutoPlayer_JumpmasterPutInPlane( statusChangePlayer )
+#endif
 
 	PlayBattleChatterToSelfOnClient( statusChangePlayer, "bc_imJumpmaster" )
 }
@@ -387,28 +389,28 @@ void function PlayDoorsOpenTimerSounds( entity player )
 	EndSignal( player, "CreateSquadLeaderBox" )
 	EndSignal( player, "OnDestroy" )
 
-	float doorsOpenTime = GetGlobalNetTimeSafe( "PlaneDoorsOpenTime" )
+	float doorsOpenTime = GetGlobalNetTime( "PlaneDoorsOpenTime" )
 	float threeSecondWarningTime = doorsOpenTime - 3.0
 
-	while( GetGlobalNetTimeSafe( "PlaneDoorsOpenTime" ) < 0 )
+	while( GetGlobalNetTime( "PlaneDoorsOpenTime" ) < 0 )
 		WaitFrame()
 
-	if ( Time() > GetGlobalNetTimeSafe( "PlaneDoorsOpenTime" ) )
+	if ( Time() > GetGlobalNetTime( "PlaneDoorsOpenTime" ) )
 		return
 
-	while( Time() < ( GetGlobalNetTimeSafe( "PlaneDoorsOpenTime" ) - 3.0 ) )
+	while( Time() < ( GetGlobalNetTime( "PlaneDoorsOpenTime" ) - 3.0 ) )
 	{
 		EmitSoundOnEntity( player, "UI_Survival_Intro_LaunchCountDown_10Seconds" )
 		wait 1.0
 	}
 
-	while( Time() < GetGlobalNetTimeSafe( "PlaneDoorsOpenTime" ) - 0.5 )
+	while( Time() < GetGlobalNetTime( "PlaneDoorsOpenTime" ) - 0.5 )
 	{
 		EmitSoundOnEntity( player, "UI_Survival_Intro_LaunchCountDown_3Seconds" )
 		wait 1.0
 	}
 
-	while( Time() < GetGlobalNetTimeSafe( "PlaneDoorsOpenTime" ) )
+	while( Time() < GetGlobalNetTime( "PlaneDoorsOpenTime" ) )
 		WaitFrame()
 
 	EmitSoundOnEntity( player, "UI_Survival_Intro_LaunchCountDown_Finish" )
@@ -435,8 +437,8 @@ void function CreateSquadLeaderBox( entity player )
 	if ( jumpMasterPlayer == player )
 		EmitSoundOnEntity( player, SQUAD_LEADER_SOUND )
 	RuiSetBool( file.sqadLeaderBoxRui, "isJumpMaster", jumpMasterPlayer == player )
-	RuiTrackFloat( file.sqadLeaderBoxRui, "doorsOpenTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndexSafe( "PlaneDoorsOpenTime" ) )
-	RuiTrackBool( file.sqadLeaderBoxRui, "pingEnabled", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndexSafe( "pingEnabled" ) )
+	RuiTrackFloat( file.sqadLeaderBoxRui, "doorsOpenTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndex( "PlaneDoorsOpenTime" ) )
+	RuiTrackBool( file.sqadLeaderBoxRui, "pingEnabled", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "pingEnabled" ) )
 
 	thread PlayDoorsOpenTimerSounds( player )
 	EmitSoundOnEntity( player, "UI_InGame_SquadLeader_Announce" )
@@ -689,3 +691,4 @@ void function SURVIVAL_RejoinedSquad( entity ent, entity eventEntity )
 	Obituary_Print_Localized( Localize( "#SURVIVAL_HUD_REJOINED_SQUAD", ent.GetPlayerName() ), GetChatTitleColorForPlayer( ent ) )
 }
 
+ 

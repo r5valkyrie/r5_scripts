@@ -1,149 +1,149 @@
-// see sh_stats_internals.gnut for internal stats functions
-// see sh_stats_utility.gnut for extern'ed utility functions like IsPlayerValidForStats() which is used in the module subfiles
+
+
 
 global function ShStats_LevelInit
 global function GetRegisteredStatEnumStruct
 
-#if SERVER
-global function StatsHook_IncrementStatEntryForChallengeReward
-global function StatsHook_OnPlayerOrNPCTookDamage
-global function StatsHook_OnPlayerConnected
-global function StatsHook_OnPlayerLeft
-global function StatsHook_LobbyStart
-global function StatsHook_RecordPlacementStats
-global function StatsHook_RecordRankScoreStats
-global function StatsHook_TransferWinStreak
-global function StatsHook_TrackPlayerDeaths
-
-global function StatsHook_SetRankedScore
-global function StatsHook_SetRankedBadgeLevel
-
-                       
-                                                    
-      
-
-global function StatsHook_SquadEliminated
-global function StatsHook_RoundStart
-global function StatsHook_RoundEnd
-global function StatsHook_ArenasBuySystem
-global function StatsHook_ArenasCashStationCaptured
-global function StatsHook_GameEnd
-
-global function StatsHook_DeathFieldStateChanged
-global function StatsHook_GenericPlayer_OnEntityHealResourceFinished
-global function StatsHook_GenericPlayer_OnEntityShieldResourceFinished
-global function StatsHook_PlayerEquippedAttachmentThisGame
-global function StatsHook_OnPlayerSelfRevived
-
-global function StatsHook_SetPlaneData
-global function StatsHook_SetSafeZone
-global function StatsHook_SetDeathCircle
-
-global function StatsHook_OnDoomingDamage
-global function StatsHook_PlayerRespawnedTeammate
-global function StatsHook_PlayerEquip
-global function StatsHook_PlayerUsedResource
-global function StatsHook_OnPlayerLandedSkydive
-global function StatsHook_OnPlayerCompletedChallenge
-global function StatsHook_OnPlayerEarnedBPGrindPoints
-global function StatsHook_OnPlayerEarnedBPStars
-global function StatsHook_UpdateCachedStatsThatDependOnGRX
-global function StatsHook_UpdateCachedBattlePassLevelStats
-global function StatsHook_UpdateCachedStatsThatDependOnGRXThreaded
-global function StatsHook_OnPlayerAssist
-global function StatsHook_LootCreepKilled
-global function StatsHook_UnlockJumpmasterAchievement
-
-global function IsValidTacticalDamageStatTarget
-
-global function StatsHook_MatchHasBots
-
-//Evo armor
-global function StatsHook_EvoArmorEvolved
 
 
-global function StatsHook_OnPlayerOpenedLootBin
-global function StatsHook_CraftingItemCrafted
-global function StatsHook_CraftingMaterialsCollected
-global function StatsHook_HarvesterExtracted
-
-global function StatsHook_OnPlayerSaidThanks
-
-global function AddCallback_OnPlayerConnectedForStats
-                      
-global function StatsHook_OnPlayerCapturedWinterExpress
-      
-
-global function StatsHook_VoidRing_RingDamagePrevented
-
-                   
-global function StatsHook_RingConsoleScanned
-global function StatsHook_WeaponsSupplyBinLooted
-global function StatsHook_ExtendedSupplyBinLooted
-global function StatsHook_CarePackageRevealed
 
 
-global function StatsHook_ScannedSquadKilled
-global function StatsHook_ScannedRingLocationReached
-global function StatsHook_RespawnBannerCrafted
-global function StatsHook_RevealedCarePackageLooted
-global function StatsHook_WeaponSupplyBinHighTierLootAwarded
-      
-
-                    
-global function StatsHook_UpgradeSelected
-      
-
-// S03E03
-global function StatsHook_TrackSkyDiveDistance
-global function StatsHook_TrackSprint
-
-                     
-global function StatsHook_HoverVehicle_OnDistanceTraveledAsOccupant
-                           
-
-global function UpdatePlayerMatchCodeStats
 
 
-global function StatsHook_S12E04_UpdateChallengeStat
 
-                  
-                                                       
-      
 
-global function StatHook_UpdateCurrentEventCurrencyStat
 
-                             
-global function StatsHook_TreasureHunt_OnObjectiveCaptured
-      
 
-global function Ranked_SetLastGameParticipationScore
-#endif //SERVER
 
-// Localization
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 global function ShStats_GenerateStatLocStringFromStatRef
 global function ShStats_GenerateStatLocStringFromStatRef_Long
 
-#if SERVER || CLIENT || UI
+
 global function ArenasRanked_GetHistoricalPeakLadderPosition
 global function ArenasRanked_GetHistoricalPeakHighScore
-#endif
 
-                  
-          
-                                               
-      
 
-      
-                                   
-      
-      
 
-// if new stat enum structs are needed; please use this enum and add them to RegisterStatEnumStructs() to centralize
-// where we init these from and how we access them -- it's common that multiple stat modules need the same refs
+
+
+
+
+
+
+
+
+
+
+
 global enum eStatEnumStructRefs
 {
-	// single dimension categories
+	
 	ARENA_RANKED_PERIOD,
 	CHARACTER,
 	MODE,
@@ -152,7 +152,7 @@ global enum eStatEnumStructRefs
 	WEAPON,
 	WEAPON_CATEGORY,
 
-	// x * y categories
+	
 	CHARACTER_WEAPONCATEGORY,
 	MODE_CHARACTER,
 	MODE_SEASON,
@@ -164,82 +164,82 @@ global enum eStatEnumStructRefs
 
 struct
 {
-	#if SERVER
-		array < void functionref( entity player ) > onPlayerConnectedForStatsCallbacks
-	#endif
+
+
+
 } file
-#if SERVER || CLIENT || UI
+
 struct FileStruct_LifetimeLevel
 {
-	#if SERVER
-		entity mostRecentDoomAttacker = null
-		entity mostRecentDoomVictim = null
 
-		int currentDeathFieldStage
-		bool matchHasBots
-                   
-                                 
-       
-	#endif
 
-	// StatEnumStructs for other modules to reference; since we only want to register them once
+
+
+
+
+
+
+
+
+
+	
 	table< int, StatEnumStruct > statEnumStructMap
 }
 FileStruct_LifetimeLevel& fileLevel
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 void function ShStats_LevelInit()
 {
-	#if SERVER || CLIENT
+
 		PIN_Init()
-	#endif // SERVER || CLIENT
+
 
 	FileStruct_LifetimeLevel newFileLevel
 	fileLevel = newFileLevel
 
 	RegisterAllStats()
 
-                   
-           
-                                                                
-                 
 
-                     
-                                                                                                    
-                           
-                     
 
-	#if SERVER
-		AddCallbackOrMaybeCallNow_OnAllItemFlavorsRegistered( InitTotalCompleteBannersStatHooks )
 
-		AddCallback_UpgradePlayerPersistentData( UpgradePlayerStatsPersistentData )
 
-		AddCallback_GameStateEnter( eGameState.WaitingForPlayers, OnGameState_WaitingForPlayers )
-		AddCallback_GameStateEnter( eGameState.Playing, OnGameState_Playing )
-		AddCallback_GameStateEnter( eGameState.Postmatch, OnGameState_Postmatch )
-		AddCallback_OnWeaponAttack( OnWeaponAttack )
-		AddCallback_OnPlayerKilled( OnPlayerKilled )
-		AddCallback_OnPlayerRespawned( OnPlayerRespawned )
-		AddCallback_OnTeammatesRespawned( OnTeammatesRespawned )
-		AddCallback_OnNPCKilled( OnNPCKilled )
-		Bleedout_AddCallback_OnPlayerStartBleedout( OnPlayerStartBleedout )
-		Bleedout_AddCallback_OnPlayerGotFirstAid( OnPlayerGotRevived )
-		Loot_AddCallback_OnPlayerLootPickup( OnPlayerLootPickup )
-		AddCallback_OnSurvivalDeathFieldStageChanged( StatsHook_DeathFieldStateChanged )
-	#endif // SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	ShStats_Beginner_LevelInit()
 	ShStats_Gameplay_LevelInit()
 	ShStatsDefs_Init()
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 void function RegisterStatEnumStructs()
 {
-	// ranked arena periods
+	
 	array< string > allArenaRankedPeriodGUIDs
 	foreach( ItemFlavor arenaRankedPeriodFlav in GetAllRankedPeriodCalEventFlavorsByType( eItemType.calevent_arenas_ranked_period ) )
 	{
@@ -248,14 +248,14 @@ void function RegisterStatEnumStructs()
 
 	fileLevel.statEnumStructMap[ eStatEnumStructRefs.ARENA_RANKED_PERIOD ] <- RegisterStatEnumStruct( null, "arenasrankedperiods", "eArenasRankedPeriodFlavor", allArenaRankedPeriodGUIDs )
 
-	// characters
+	
 	array< string > allCharacterGUIDs = GetAllCharacterGUIDStringsForStats()
 	fileLevel.statEnumStructMap[ eStatEnumStructRefs.CHARACTER ] <- RegisterStatEnumStruct( null, "characters", "eCharacterFlavor", allCharacterGUIDs )
 
-	// modes
+	
 	fileLevel.statEnumStructMap[ eStatEnumStructRefs.MODE ] <- RegisterStatEnumStruct( null, "modes", "eModesFlavors", STATS_ALTERNATE_MODE_REFS )
 
-	// ranked periods
+	
 	array< string > allRankedPeriodGUIDs = []
 	array< ItemFlavor > allRankedPeriodFlavs = GetAllRankedPeriodCalEventFlavorsByType( eItemType.calevent_rankedperiod )
 	allRankedPeriodFlavs.extend( Ranked_GetAllRanked2Pt0Periods() )
@@ -266,7 +266,7 @@ void function RegisterStatEnumStructs()
 
 	fileLevel.statEnumStructMap[ eStatEnumStructRefs.RANKED_PERIOD ] <- RegisterStatEnumStruct( null, "rankedperiods", "eRankedStatPeriod", allRankedPeriodGUIDs )
 
-	// season
+	
 	array< string > allSeasonGUIDs = []
 	foreach( ItemFlavor seasonflav in GetAllSeasonFlavors() )
 	{
@@ -275,7 +275,7 @@ void function RegisterStatEnumStructs()
 
 	fileLevel.statEnumStructMap[ eStatEnumStructRefs.SEASON ] <- RegisterStatEnumStruct( null, "seasons", "eSeasonFlavor", allSeasonGUIDs )
 
-	// weapon & weapon category
+	
 	array< string > allWeaponGUIDs = []
 	array< string > allLootWeaponStatsCategories = []
 	foreach( ItemFlavor weaponFlav in GetAllWeaponItemFlavors() )
@@ -288,18 +288,14 @@ void function RegisterStatEnumStructs()
 
 		if ( isGoldWeapon )
 		{
-			ItemFlavor ornull categoryOrNull = WeaponItemFlavor_GetCategory( weaponFlav )
-			if ( categoryOrNull != null )
+			string goldStatsCategory = WeaponCategoryFlavor_GetStatsKey( WeaponItemFlavor_GetCategory ( weaponFlav ) )
+			if ( !allLootWeaponStatsCategories.contains( goldStatsCategory ) )
 			{
-				string goldStatsCategory = WeaponCategoryFlavor_GetStatsKey( expect ItemFlavor( categoryOrNull ) )
-				if ( allLootWeaponStatsCategories.find( goldStatsCategory ) == -1 )
-				{
-					allLootWeaponStatsCategories.append( goldStatsCategory )
-				}
+				allLootWeaponStatsCategories.append( goldStatsCategory )
 			}
 		}
 
-		if ( allLootWeaponStatsCategories.find( weaponCategory ) == -1 )
+		if ( !allLootWeaponStatsCategories.contains( weaponCategory ) )
 		{
 			allLootWeaponStatsCategories.append( weaponCategory )
 		}
@@ -308,26 +304,26 @@ void function RegisterStatEnumStructs()
 	fileLevel.statEnumStructMap[ eStatEnumStructRefs.WEAPON ] <- RegisterStatEnumStruct( null, "weapons", "eWeaponFlavor", allWeaponGUIDs )
 	fileLevel.statEnumStructMap[ eStatEnumStructRefs.WEAPON_CATEGORY ] <- RegisterStatEnumStruct( null, "weaponcategories", "eWeaponStatCategory", allLootWeaponStatsCategories )
 
-	// character - weapon category
+	
 	fileLevel.statEnumStructMap[ eStatEnumStructRefs.CHARACTER_WEAPONCATEGORY ] <- RegisterStatEnumStruct( GetRegisteredStatEnumStruct( eStatEnumStructRefs.CHARACTER ), "weaponcategories", "eWeaponStatCategory", allLootWeaponStatsCategories )
 
-	// now that singleton SES are setup; we can use those refs to do x * y SES setups; generally use GetRegisteredStatEnumStruct instead of refs for safety
-	// mode - character
+	
+	
 	fileLevel.statEnumStructMap[ eStatEnumStructRefs.MODE_CHARACTER ] <- RegisterStatEnumStruct( GetRegisteredStatEnumStruct( eStatEnumStructRefs.MODE ), "characters", "eCharacterFlavor", allCharacterGUIDs )
 
-	// mode- season
+	
 	fileLevel.statEnumStructMap[ eStatEnumStructRefs.MODE_SEASON ] <- RegisterStatEnumStruct( GetRegisteredStatEnumStruct( eStatEnumStructRefs.MODE ), "seasons", "eSeasonFlavor", allSeasonGUIDs )
 
-	// mode- weapon
+	
 	fileLevel.statEnumStructMap[ eStatEnumStructRefs.MODE_WEAPON ] <- RegisterStatEnumStruct( GetRegisteredStatEnumStruct( eStatEnumStructRefs.MODE ), "weapons", "eWeaponFlavor", allWeaponGUIDs )
 
-	// mode - weapon category
+	
 	fileLevel.statEnumStructMap[ eStatEnumStructRefs.MODE_WEWAPONCATEGORY ] <- RegisterStatEnumStruct( GetRegisteredStatEnumStruct( eStatEnumStructRefs.MODE ), "weaponcategories", "eWeaponStatCategory", allLootWeaponStatsCategories )
 
-	// season - character
+	
 	fileLevel.statEnumStructMap[ eStatEnumStructRefs.SEASON_CHARACTER ] <- RegisterStatEnumStruct( GetRegisteredStatEnumStruct( eStatEnumStructRefs.SEASON ), "characters", "eCharacterFlavor", allCharacterGUIDs )
 
-	// ranked period - character
+	
 	fileLevel.statEnumStructMap[ eStatEnumStructRefs.RANKED_PERIOD_CHARACTER ] <-  RegisterStatEnumStruct( GetRegisteredStatEnumStruct( eStatEnumStructRefs.RANKED_PERIOD ), "characters", "eCharacterFlavor", allCharacterGUIDs )
 }
 
@@ -357,24 +353,24 @@ void function RegisterAllStats()
 	CAREER_STATS.respawn_dev = RegisterAccumulatedStat_Int( null, "respawn_dev", eChallengeGameMode.NON_MODE, DELAY_WRITE_BACK_UNTIL_MATCH_END )
 	CAREER_STATS.first_played_unixtime = RegisterExpensiveCalculatedStat_Int( null, "first_played_unixtime", TRACKERS_NEED, SetFirstPlayedUnixTime, [], eChallengeGameMode.NON_MODE )
 
-	                     
+
 		CAREER_STATS.hovervehicle_occupant_meters_traveled = RegisterAccumulatedStat_Int( null, "hovervehicle_occupant_meters_traveled", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
-                            
 
-                   
-                                                                                                                                                 
-       
 
-	// clubs
+
+
+
+
+	
 	CAREER_STATS.clubs_games_played_with_club = RegisterAccumulatedStat_Int( null, "clubs_games_played_with_club", eChallengeGameMode.BATTLE_ROYALE, BADGES_UNLOCK_NEED )
 	CAREER_STATS.clubs_placements_win_with_club = RegisterAccumulatedStat_Int( null, "clubs_placements_win_with_club", eChallengeGameMode.BATTLE_ROYALE, BADGES_UNLOCK_NEED )
 	CAREER_STATS.clubs_placements_win_with_club_squad_alive = RegisterAccumulatedStat_Int( null, "clubs_placements_win_with_club_squad_alive", eChallengeGameMode.BATTLE_ROYALE, BADGES_UNLOCK_NEED )
 	CAREER_STATS.clubs_placements_win_with_club_streak = RegisterAccumulatedStat_Int( null, "clubs_placements_win_with_club_streak", eChallengeGameMode.BATTLE_ROYALE, BADGES_UNLOCK_NEED )
 	CAREER_STATS.clubs_placements_win_with_club_no_deaths = RegisterAccumulatedStat_Int( null, "clubs_placements_win_with_club_no_deaths", eChallengeGameMode.BATTLE_ROYALE, BADGES_UNLOCK_NEED )
 	CAREER_STATS.clubs_placements_win_with_club_no_deaths_or_knockouts = RegisterAccumulatedStat_Int( null, "clubs_placements_win_with_club_no_deaths_or_knockouts", eChallengeGameMode.BATTLE_ROYALE, BADGES_UNLOCK_NEED )
-	//CAREER_STATS.clubs_kills_with_club_squad = RegisterAccumulatedStat_Int( null, "clubs_kills_with_club_squad", BADGES_NEED )
-	//CAREER_STATS.rankedperiod_clubs_games_played_with_club = RegisterAccumulatedStat_Int( null, "rankedperiod_clubs_games_played_with_club" )
-	//CAREER_STATS.rankedperiod_clubs_placements_win_with_club = RegisterAccumulatedStat_Int( null, "rankedperiod_clubs_placements_win_with_club" )
+	
+	
+	
 
 	StatsRegister_Legacy()
 
@@ -382,2599 +378,2602 @@ void function RegisterAllStats()
 	StatsRegister_Characters()
 	StatsRegister_Arenas()
 
-	                        
+
 		StatsRegister_Control()
-                               
+
 
 	StatsRegister_Ranked()
 	StatsRegister_Beginner()
 
-	// TODO: cleanup once S22.1 is ready to roll - https://jiratf.rspn.ad.ea.com/browse/R5DEV-584004
+	
 	StatsRegister_S21()
 
 	StatsRegister_MetaChallenges()
-	                             
-		CAREER_STATS.gamemode_treasurehunt_objectives_captured = RegisterAccumulatedStat_Int( null, "gamemode_treasurehunt_objectives_captured", eChallengeGameMode.TREASURE_HUNT, CHALLENGES_CALC_DEPENDS )
-                                    
 
-                          
-                               
-                                
+		CAREER_STATS.gamemode_treasurehunt_objectives_captured = RegisterAccumulatedStat_Int( null, "gamemode_treasurehunt_objectives_captured", eChallengeGameMode.TREASURE_HUNT, CHALLENGES_CALC_DEPENDS )
+
+
+
+
+
 
 	StatsRegister_Autogen()
 	StatsRegister_EventShopStats()
 }
-#endif
 
 
-#if SERVER
-// TODO - R5DEV-413766: DEPRECATE once we have ability to edit persistence offline and can migrate data without players logging in.
-void function UpgradePlayerStatsPersistentData( entity player, int oldVersion, int newVersion )
-{
-}
-#endif
 
- ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Non-player specific game state events ///////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if SERVER
-void function StatsHook_LobbyStart()
-{
-	Assert( IsLobby() )
-	PIN_GameStart()
-}
 
-void function OnGameState_WaitingForPlayers()
-{
-	Assert( !IsLobby() )
-	PIN_GameStart()
-}
 
-void function StatsHook_SetPlaneData( vector startPos, vector endPos, float duration )
-{
-	PIN_PlanePath( startPos, endPos, duration )
-}
 
-void function OnGameState_Playing()
-{
-	PIN_SetGameStartTime()
-	foreach ( entity player in GetPlayerArray() )
-	{
-		PIN_GameStartedForPlayer( player )
-		if ( player.IsNPC() )
-			fileLevel.matchHasBots = true
-	}
-}
 
-bool function StatsHook_MatchHasBots()
-{
-	return fileLevel.matchHasBots
-}
 
-void function StatsHook_SetDeathCircle( vector origin, float radius, string pinAction )
-{
-	PIN_CircleLocation( "death_circle", origin, radius, pinAction )
-}
 
-void function StatsHook_SetSafeZone( vector origin, float radius )
-{
-	PIN_CircleLocation( "safe_circle", origin, radius, "end_circle_close" )
-}
 
-void function OnGameState_Postmatch()
-{
-	//
-}
 
-// TODO - R5DEV-413763: this should use one of the internal checks rather than cases
-void function StatsHook_RecordPlacementStats( entity player )
-{
-	Assert( !player.p.placementStatsRecorded || player.p.DEV_hasDevRespawned )
-	player.p.placementStatsRecorded = true
 
-	bool isNewPlayerWhoHasNotGraduated = false
-	                            
-		isNewPlayerWhoHasNotGraduated = NewPlayerBotQueue_IsNewPlayerWhoHasNotGraduated( player )
-       
 
-                          
-                                                                                           
-                                                                                                           
-   
-                                                                   
-   
-                                
 
-	if ( !Stats_PlayerIsValidForStats( player ) && !isNewPlayerWhoHasNotGraduated )
-		return
 
-	bool skipNormalPlacementStats = false
-	bool skipNonPlacementStats    = false
-                  
-                                                                            
-                                  
-       
 
-	                      
-		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_WINTEREXPRESS ) )
-		{
-			skipNormalPlacementStats = true
-			skipNonPlacementStats    = true
-		}
-       
 
-	                              
-		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
-		{
-			skipNormalPlacementStats = true
-			skipNonPlacementStats    = true
-		}
-       
 
-	                        
-		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_EXPLORE ) )
-		{
-			skipNormalPlacementStats = true
-			skipNonPlacementStats    = true
-		}
-       
 
-	if ( IsSpawnOnSquadMode() )
-	{
-		skipNormalPlacementStats = true
-		skipNonPlacementStats    = true
-	}
-	if ( IsPVEMode() )
-	{
-		skipNormalPlacementStats = true
-		skipNonPlacementStats    = true
-	}
 
-	                          
-		if ( IsPrivateMatch() )
-		{
-			skipNormalPlacementStats = true
-			skipNonPlacementStats    = true
-		}
-       
 
-	skipNormalPlacementStats = skipNormalPlacementStats || Stats_CurrentModeSupportsCustomStats()
 
-              
-                                                                  
-       
 
-	int rank = Survival_GetCurrentRank( player )
-	Assert( rank > 0 )
-	GameSummarySquadData gameSummaryData                   = GameSummary_GetPlayerData( player )
-	table<int, GameSummarySquadData> playerTeamData = {}
-	// GameSummary_GetTeamDataOrNull returns var; stub always returns null
-	table<int, GameSummarySquadData> ornull playerTeamDataOrNull = GameSummary_GetTeamDataOrNull( player.GetTeam() )
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
-	string characterRef  = ItemFlavor_GetGUIDString( character )
 
-	// these must be ticked for new players - do NOT wrap in a blocking if check
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.games_played_any_mode ), 1 )
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_games_played_any_mode, characterRef ), 1 )
-
-                          
-                                        
-   
-                                                                          
-                                
-    
-                                                                      
-
-                                                       
-     
-                                                                        
-     
-        
-     
-                          
-      
-                                          
-                                                                          
-            
-
-                                          
-                                                                          
-            
-
-                                          
-                                                                        
-            
-      
-     
-    
-                                                                                  
-       
-    
-                                                                     
-    
-   
-                                
-
-	string ornull currentSeasonRefOrNull = GetCurrentStatSeasonRefOrNull()
-
-	                    
-		StatsHook_S21EXP_GamePlayedAnyMode( player, characterRef )
-       
-
-	                            
-		if ( IsOrientationMatch() )
-		{
-			StatHook_NewPlayerBotQueue_OnRecordPlacementStats( player )
-			return
-		}
-       
-
-	if ( !skipNormalPlacementStats )
-	{
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.games_played ), 1 )
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_games_played, characterRef ), 1 )
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.survival_time_seconds ), gameSummaryData.survivalTime )
-
-               
-                       
-                                                                                                   
-        
-
-		                               
-			StatsHook_S21_Solo_Games_Played( player, 1 )
-        
-
-		                               
-			StatsHook_S21_Quad_GamesPlayed( player, 1 )
-        
-	}
-
-	                   
-	if ( !skipNormalPlacementStats || Stats_CurrentModeSupportsCustomStats() )
-	{
-		int role = CharacterClass_GetRole( character )
-		switch( role )
-		{
-			case eCharacterClassRole.OFFENSE:
-				__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.assault_games_played ), 1 )
-				break
-			case eCharacterClassRole.SKIRMISHER:
-				__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.skirmisher_games_played ), 1 )
-				break
-			case eCharacterClassRole.DEFENSE:
-				__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.controller_games_played ), 1 )
-				break
-			case eCharacterClassRole.RECON:
-				__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.recon_games_played ), 1 )
-				break
-			case eCharacterClassRole.SUPPORT:
-				__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.support_games_played ), 1 )
-				break
-		}
-	}
-       
-
-
-	//Modes Lifetime Stats
-	string modeRef = GetCurrentPlaylistVarString( "stats_match_type", "survival" )
-	if ( Stats_CurrentModeSupportsCustomStats() )
-	{
-		                       
-			StatsHook_S21_BigTDM_GamesPlayed( player, 1 )
-        
-		
-		__Mode_IncrementStat_Int( player, CAREER_STATS.modes_games_played, 1 )
-		__Mode_IncrementStat_Int( player, CAREER_STATS.modes_character_games_played, characterRef, 1 )
-
-		int oldMaxModeKills = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.modes_kills_max_single_game, modeRef ), eStatGetWhen.CURRENT )
-		if ( gameSummaryData.kills > oldMaxModeKills )
-			__Mode_SetStat_Int( player, CAREER_STATS.modes_kills_max_single_game, gameSummaryData.kills )
-
-		int oldMaxModeDamage = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.modes_damage_done_max_single_game, modeRef ), eStatGetWhen.CURRENT )
-		if ( gameSummaryData.damageDealt > oldMaxModeDamage )
-			__Mode_SetStat_Int( player, CAREER_STATS.modes_damage_done_max_single_game, gameSummaryData.damageDealt )
-	}
-
-                               
-                                                                                                          
-	     
-	if ( !skipNormalPlacementStats )
-       
-	{
-		                               
-		StatsHook_S21_Quad_DamageDoneMaxSingleGame( player, gameSummaryData.damageDealt )
-                                       
-
-		if ( gameSummaryData.kills >= 5 )
-			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_games_with_5_kills, characterRef ), 1 )
-
-		// wake (>=20 kills in one game) & wrath (2k, 2.5k, 3.5k, 4k damage in one game) badges; requires prestige badges flag
-		if ( PrestigeBadgeIsAllowed() )
-		{
-			// wake
-			if ( gameSummaryData.kills >= 20 )
-			{
-				__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_games_with_20_kills, characterRef ), 1 )
-			}
-
-			// wrath
-			int oldMaxDamage = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.character_damage_done_max_single_game, characterRef ), eStatGetWhen.CURRENT )
-			if ( gameSummaryData.damageDealt > oldMaxDamage )
-			{
-				__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_damage_done_max_single_game, characterRef ), gameSummaryData.damageDealt - oldMaxDamage )
-			}
-		}
-
-		int oldMaxKills = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.kills_max_single_game ), eStatGetWhen.CURRENT )
-		if ( gameSummaryData.kills > oldMaxKills )
-		{
-			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.kills_max_single_game ), gameSummaryData.kills - oldMaxKills )}
-		}
-
-	if ( !skipNormalPlacementStats && currentSeasonRefOrNull != null )
-	{
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.season_games_played, expect string( currentSeasonRefOrNull ) ), 1 )
-
-		int oldSeasonalMaxDamage = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.season_character_damage_done_max_single_game, expect string( currentSeasonRefOrNull ), characterRef ), eStatGetWhen.CURRENT )
-		if ( gameSummaryData.damageDealt > oldSeasonalMaxDamage )
-			__SetStat_Int( player, ResolveStatEntry( CAREER_STATS.season_character_damage_done_max_single_game, expect string( currentSeasonRefOrNull ), characterRef ), gameSummaryData.damageDealt )
-
-		int oldMaxSeasonKills = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.season_kills_max_single_game, expect string( currentSeasonRefOrNull ) ), eStatGetWhen.CURRENT )
-		if ( gameSummaryData.kills > oldMaxSeasonKills )
-			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.season_kills_max_single_game, expect string( currentSeasonRefOrNull ) ), gameSummaryData.kills - oldMaxSeasonKills )
-	}
-
-	//Modes Season Stats
-	if ( Stats_CurrentModeSupportsCustomStats() && currentSeasonRefOrNull != null )
-	{
-		__Mode_IncrementStat_Int( player, CAREER_STATS.modes_season_games_played, expect string(currentSeasonRefOrNull), 1 )
-
-		int oldSeasonalMaxDamage = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.modes_season_damage_done_max_single_game, modeRef, expect string( currentSeasonRefOrNull ) ), eStatGetWhen.CURRENT )
-		if ( gameSummaryData.damageDealt > oldSeasonalMaxDamage )
-			__Mode_SetStat_Int( player, CAREER_STATS.modes_season_damage_done_max_single_game, expect string( currentSeasonRefOrNull ), gameSummaryData.damageDealt )
-
-		int oldMaxSeasonKills = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.modes_season_kills_max_single_game, modeRef, expect string( currentSeasonRefOrNull ) ), eStatGetWhen.CURRENT )
-		if ( gameSummaryData.kills > oldMaxSeasonKills )
-			__Mode_SetStat_Int( player, CAREER_STATS.modes_season_kills_max_single_game, expect string( currentSeasonRefOrNull ), gameSummaryData.kills )
-	}
-
-	string ornull currentRankedPeriodRefOrNull = GetCurrentStatRankedPeriodRefOrNullByType( eItemType.calevent_rankedperiod )
-
-	if ( currentRankedPeriodRefOrNull != null && ShouldRecordRankedStats( player ) )
-	{
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_games_played_base, expect string( currentRankedPeriodRefOrNull ) ), 1 )
-
-		int oldRankedMaxDamage = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_character_damage_done_max_single_game_base, expect string( currentRankedPeriodRefOrNull ), characterRef ), eStatGetWhen.CURRENT )
-		if ( gameSummaryData.damageDealt > oldRankedMaxDamage )
-			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_character_damage_done_max_single_game_base, expect string( currentRankedPeriodRefOrNull ), characterRef ), gameSummaryData.damageDealt - oldRankedMaxDamage )
-
-		int oldMaxRankedKills = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_kills_max_single_game_base, expect string( currentRankedPeriodRefOrNull ) ), eStatGetWhen.CURRENT )
-		if ( gameSummaryData.kills > oldMaxRankedKills )
-			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_kills_max_single_game_base, expect string( currentRankedPeriodRefOrNull ) ), gameSummaryData.kills - oldMaxRankedKills )
-
-		//if ( fullClubSquad )
-		//	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_clubs_games_played_with_club, expect string( currentRankedPeriodRefOrNull ) ), 1 )
-	}
-
-                        
-                                                                                                   
-                                                                                                                                         
-
-                                                                           
-   
-                                                                                                                                                           
-                                                                                                                                                                        
-
-                                                                                                                                                                                                                    
-                                                                
-                                                                                                                                                                                               
-
-                                                                                                                                                                                                             
-                                                         
-                                                                                                                                                                                    
-   
-       
-
-
-	int currentWinStreak = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.win_streak_current ), eStatGetWhen.CURRENT )
-
-	bool fullPremadeSquad = player.GetPartySize() == 3
-
-	if ( fullPremadeSquad && !skipNonPlacementStats && modeRef == "survival" )
-	{
-		int oldTeamWorkKillCount = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.team_work_kill_count ), eStatGetWhen.CURRENT )
-
-		int index        = 0
-		int newKillCount = 0
-		foreach ( summaryData in playerTeamData )
-		{
-			index++
-			if ( summaryData.kills <= oldTeamWorkKillCount || summaryData.kills == 0 )
-				break
-
-			newKillCount = newKillCount > 0 ? minint( newKillCount, summaryData.kills ) : summaryData.kills
-
-			if ( index < 3 )
-				continue
-
-			__SetStat_Int( player, ResolveStatEntry( CAREER_STATS.team_work_kill_count ), newKillCount )
-
-		}
-	}
-
-	if ( GetGameState() >= eGameState.WinnerDetermined )
-	{
-		int winningTeam = GetWinningTeam()
-		table<int, GameSummarySquadData> winnerTeamData = {}
-		table<int, GameSummarySquadData> ornull winnerTeamDataOrNull = GameSummary_GetTeamDataOrNull( winningTeam )
-
-		// if a player quits while we're in the WinnerDetermined state for a round-based game, we'll end up in here.
-		// BEGIN MATCH OVER CHECK -- move me to my own dedicated helper function IF complexity increases beyond this.
-		bool isMatchActuallyOver = false
-		if ( IsRoundBased() )
-			isMatchActuallyOver = IsRoundBasedGameOver()
-		else
-			isMatchActuallyOver = GetGameState() >= eGameState.WinnerDetermined
-		// END MATCH OVER CHECK
-
-		// BEGIN WON MATCH BLOCK
-		if ( player.GetTeam() == winningTeam && isMatchActuallyOver ) // it's probably obvious, but this means the player won. So everything inside of this is related to a win
-		{
-			if ( rank == 1 && Stats_CurrentModeSupportsCustomStats() )
-			{
-				__Mode_IncrementStat_Int( player, CAREER_STATS.modes_placements_win, 1 )
-                           
-                                                  
-                                                                                               
-          
-
-				__Mode_IncrementStat_Int( player, CAREER_STATS.modes_win_streak_current, 1 )
-				int currentModeWinStreak = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.modes_win_streak_current, modeRef ), eStatGetWhen.CURRENT )
-				int longestWinStreak     = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.modes_win_streak_longest, modeRef ), eStatGetWhen.CURRENT )
-				if ( currentModeWinStreak > longestWinStreak )
-					__Mode_SetStat_Int( player, CAREER_STATS.modes_win_streak_longest, currentModeWinStreak )
-
-				if ( currentSeasonRefOrNull != null )
-				{
-					__Mode_IncrementStat_Int( player, CAREER_STATS.modes_season_placements_win, expect string( currentSeasonRefOrNull ), 1 )
-
-					__Mode_IncrementStat_Int( player, CAREER_STATS.modes_season_win_streak_current, expect string( currentSeasonRefOrNull ), 1 )
-					int currentModeSeasonWinStreak = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.modes_season_win_streak_current, modeRef, expect string( currentSeasonRefOrNull ) ), eStatGetWhen.CURRENT )
-					int longestModeSeasonWinStreak = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.modes_season_win_streak_longest, modeRef, expect string( currentSeasonRefOrNull ) ), eStatGetWhen.CURRENT )
-					if ( currentModeSeasonWinStreak > longestModeSeasonWinStreak )
-						__Mode_SetStat_Int( player, CAREER_STATS.modes_season_win_streak_longest, expect string( currentSeasonRefOrNull ), currentModeSeasonWinStreak )
-				}
-
-				__Mode_IncrementStat_Int( player, CAREER_STATS.modes_character_placements_win, characterRef, 1 )
-			}
-
-
-			if( rank == 1 )
-			{
-				__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.wins_any_mode ), 1 )
-				AutogenChallenge_TriggerScriptHooksForId( eAutogenStatHooks.ON_PLAYER_WIN, player )
-
-				                               
-					StatsHook_S21_Solo_Games_Wins( player )
-          
-
-				                               
-					StatsHook_S21_Quad_PremadeWin( player )
-          
-			}
-
-
-                          
-                                                 
-     
-                     
-      
-                      
-       
-                                                                                                                               
-                                                                                                                                                           
-                                                                                                                                                                 
-                                           
-                                                                                                                                                            
-       
-
-                                                                                  
-       
-                                                                                                   
-       
-
-                                                                   
-                                                                     
-       
-                                                                                                  
-       
-
-                            
-                                                                                                  
-                                                                                                          
-
-                                                                     
-
-              
-                           
-                                                                                                                       
-        
-                                                                                                                                                                
-
-                                                                                                                                                                        
-                                                                                                                                                                                                                     
-                                                                                                                                                                                                                     
-                                                                        
-                                                                                                                                                                                             
-        
-            
-      
-
-     
-         
-
-			if ( rank == 1 && !skipNormalPlacementStats )
-			{
-				__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.placements_win ), 1 )
-				__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_placements_win, characterRef ), 1 )
-				UpdateCalculatedStatCachedValue( player, ResolveStatEntry( CAREER_STATS.master_of_all ) )
-
-				__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.win_streak_current ), 1 )
-				currentWinStreak     = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.win_streak_current ), eStatGetWhen.CURRENT )
-				int longestWinStreak = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.win_streak_longest ), eStatGetWhen.CURRENT )
-				if ( currentWinStreak > longestWinStreak )
-					__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.win_streak_longest ), currentWinStreak - longestWinStreak )
-
-				// this is super redundant, but it's because we added this badge in S10 and didn't want to give it away to everyone. So we needed redundant stats.
-				__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.win_streak_account_badge_current ), 1 )
-				int currentBadgeWinStreak = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.win_streak_account_badge_current ), eStatGetWhen.CURRENT )
-				int longestBadgeWinStreak = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.win_streak_account_badge_longest ), eStatGetWhen.CURRENT )
-				if ( currentBadgeWinStreak > longestBadgeWinStreak )
-					__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.win_streak_account_badge_longest ), currentBadgeWinStreak - longestBadgeWinStreak )
-
-				if ( currentSeasonRefOrNull != null )
-				{
-					__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.season_placements_win, expect string( currentSeasonRefOrNull ) ), 1 )
-					__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.season_character_placements_win, expect string(currentSeasonRefOrNull), characterRef ), 1 )
-
-					__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.season_win_streak_current, expect string( currentSeasonRefOrNull ) ), 1 )
-					int currentSeasonWinStreak = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.season_win_streak_current, expect string( currentSeasonRefOrNull ) ), eStatGetWhen.CURRENT )
-					int longestSeasonWinStreak = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.season_win_streak_longest, expect string( currentSeasonRefOrNull ) ), eStatGetWhen.CURRENT )
-					if ( currentSeasonWinStreak > longestSeasonWinStreak )
-						__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.season_win_streak_longest, expect string( currentSeasonRefOrNull ) ), currentSeasonWinStreak - longestSeasonWinStreak )
-				}
-
-				if ( currentRankedPeriodRefOrNull != null && ShouldRecordRankedStats( player ) )
-				{
-					__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_placements_win_base, expect string( currentRankedPeriodRefOrNull ) ), 1 )
-
-					__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_win_streak_current, expect string( currentRankedPeriodRefOrNull ) ), 1 )
-					int currentRankedWinStreak = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_win_streak_current, expect string( currentRankedPeriodRefOrNull ) ), eStatGetWhen.CURRENT )
-					int longestRankedWinStreak = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_win_streak_longest, expect string( currentRankedPeriodRefOrNull ) ), eStatGetWhen.CURRENT )
-					if ( currentRankedWinStreak > longestRankedWinStreak )
-						__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_win_streak_longest_base, expect string( currentRankedPeriodRefOrNull ) ), currentRankedWinStreak - longestRankedWinStreak )
-				}
-
-                 
-                         
-      
-                                                                                                       
-
-                                                                                        
-                                                                                                                                                                      
-      
-          
-
-				int count = 0
-				foreach ( legendRef in GetAllCharacterGUIDStringsForStats() )
-				{
-					if ( GetStat_Int( player, ResolveStatEntry( CAREER_STATS.character_placements_win, legendRef ) ) > 0 )
-						count++
-				}
-				if ( count >= 8 )
-					UnlockAchievement( player, achievements.APEX_LEGEND )
-
-				bool anyDead        = false
-				int teamKillCount   = 0
-				bool noWitnessess   = true
-				bool groupTheatrics = true
-				int teamDeathCount  = 0
-				int teamDownedCount = 0
-				foreach ( int winnerTeamIndex, GameSummarySquadData winnerData in winnerTeamData )
-				{
-					entity winner = GetEntityFromEncodedEHandle( winnerData.eHandle )
-					if ( !IsValid( winner ) || !IsAlive( winner ) )
-						anyDead = true
-					EHIScriptStruct ehiss = GetEHIScriptStructFromEncodedEHandle( winnerData.eHandle )
-
-					teamKillCount += winnerData.kills
-					noWitnessess = noWitnessess && ehiss.noWitnessess
-					groupTheatrics = groupTheatrics && (ehiss.gaveFinisherCount > 0)
-					teamDeathCount += winnerData.deaths
-					teamDownedCount += ehiss.gotDownedCount
-				}
-
-				noWitnessess = noWitnessess && (teamKillCount >= 15)
-
-				if ( teamDeathCount == 0 && !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SOLOS ) )
-				{
-					__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_placements_win_flawless_1, characterRef ), 1 )
-					if ( teamDownedCount == 0 )
-						__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_placements_win_flawless_2, characterRef ), 1 )
-
-                  
-                          
-       
-                                                                                                                  
-                                  
-                                                                                                                                
-       
-           
-				}
-
-				if ( player.p.headshotKills >= 5 )
-					__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_placements_win_with_5_headshots, characterRef ), 1 )
-
-				if ( winnerTeamData.len() == GetExpectedSquadSize( player ) && !anyDead && !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SOLOS ) )
-				{
-					__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.placements_win_with_squad_alive ), 1 )
-					__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_placements_win_with_squad_alive, characterRef ), 1 )
-
-                  
-                          
-                                                                                                                    
-            
-				}
-
-				if ( fullPremadeSquad )
-				{
-					__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.placements_win_with_friends ), 1 )
-					if ( noWitnessess )
-						__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.placements_win_with_no_witnessess ), 1 )
-					if ( groupTheatrics )
-						__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.placements_win_with_min_executions_per_person ), 1 )
-				}
-
-				if ( GetStat_Int( player, ResolveStatEntry( CAREER_STATS.character_won_last_game, characterRef ) ) == 1 )
-					__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_hot_streaks, characterRef ), 1 )
-				__SetStat_Int( player, ResolveStatEntry( CAREER_STATS.character_won_last_game, characterRef ), 1 )
-
-				if ( player.GetEncodedEHandle() == SurvivalCommentary_GetKillLeaderEEH() )
-				{
-					__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_placements_win_as_killleader, characterRef ), 1 )
-					if ( player.GetTeam() == SurvivalCommentary_GetChampionTeam() )
-						__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_placements_win_as_killleader_and_champion, characterRef ), 1 )
-				}
-
-				if ( player.p.wasJumpmaster && !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SOLOS ) )
-					__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_placements_win_as_jumpmaster, characterRef ), 1 )
-			}
-
-			if ( player == fileLevel.mostRecentDoomAttacker && !skipNonPlacementStats )
-			{
-				// this player got the winning "kill"
-
-				__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.winning_kills ), 1 )
-				__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_winning_kills, characterRef ), 1 )
-			}
-		}
-		//END WON MATCH BLOCK
-	}
-
-	/* TODO - R5DEV-413763: if a player leaves a ROUND-BASED match after winning a round - while still in the "round won" state, they will be rank == 1,
-	   this means that win streaks, for example, will not reset if you quit in this window. This IS EXPLOITABLE
-	   Ideally, we should fix this so it checks 1) if the match isn't actually over and 2) IF A PENALTY is active (this system needs work too...)
-	   to evaluate if your streak should be preserved or not.
-	*/
-
-	// now is where we do stuff for everything other than a win
-	if ( rank > 1 && !skipNormalPlacementStats )
-	{
-		__SetStat_Int( player, ResolveStatEntry( CAREER_STATS.character_won_last_game, characterRef ), 0 )
-
-		__SetStat_Int( player, ResolveStatEntry( CAREER_STATS.win_streak_current ), 0 )
-		__SetStat_Int( player, ResolveStatEntry( CAREER_STATS.win_streak_account_badge_current ), 0 )
-		if ( currentSeasonRefOrNull != null )
-			__SetStat_Int( player, ResolveStatEntry( CAREER_STATS.season_win_streak_current, expect string( currentSeasonRefOrNull ) ), 0 )
-		if ( currentRankedPeriodRefOrNull != null && ShouldRecordRankedStats( player ) )
-			__SetStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_win_streak_current, expect string( currentRankedPeriodRefOrNull ) ), 0 )
-	}
-
-	if ( rank > 1 && Stats_CurrentModeSupportsCustomStats() )
-	{
-		__Mode_SetStat_Int( player, CAREER_STATS.modes_win_streak_current, 0 )
-
-		if ( currentSeasonRefOrNull != null )
-			__Mode_SetStat_Int( player, CAREER_STATS.modes_season_win_streak_current, expect string( currentSeasonRefOrNull ), 0 )
-	}
-
-                       
-                                              
-  
-                                                                                    
-                                                                      
-                 
-   
-                                                                                                                      
-
-                        
-                                                                                                                     
-                                                                                                                                                               
-         
-   
-
-                                                                                                                                                             
-                                                   
-                                                                                                                                                    
-
-                                                                                                                                                   
-                                         
-                                                                                                                                        
-  
-      
-
-	if ( rank <= 3 && !skipNormalPlacementStats )
-	{
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.placements_top_3 ), 1 )
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_placements_top_3, characterRef ), 1 )
-
-		// BattlePass Specific
-		if ( ( gameSummaryData.kills + gameSummaryData.knockdowns + gameSummaryData.assists ) >= 3 )
-			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.top_3_with_3_kill_ko_assist ), 1 )
-	}
-
-	if ( rank <= 5 && !skipNormalPlacementStats )
-	{
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.placements_top_5 ), 1 )
-		if ( currentSeasonRefOrNull != null )
-			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.season_character_placements_top_5, expect string(currentSeasonRefOrNull), characterRef ), 1 )
-
-		if ( currentRankedPeriodRefOrNull != null && ShouldRecordRankedStats( player ) )
-		{
-			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_placements_top_5_base, expect string(currentRankedPeriodRefOrNull) ), 1 )
-		}
-
-		                               
-			StatsHook_S21_Quad_PlacementTop5With10Legends( player, characterRef )
-			StatsHook_S21_Quad_PlacementTop5( player )
-        
-	}
-
-	if ( rank <= 10 && !skipNormalPlacementStats )
-	{
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.placements_top_10 ), 1 )
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.br_top_10_or_arena_win ), 1 )
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_placements_top_10, characterRef ), 1 )
-
-		                               
-			StatsHook_S21_Solo_Placement_Top_10_with_10_Legends( player, characterRef )
-        
-
-		if ( currentRankedPeriodRefOrNull != null && ShouldRecordRankedStats( player ) )
-		{
-			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_placements_top_10_base, expect string(currentRankedPeriodRefOrNull) ), 1 )
-		}
-
-		                            
-			StatsHook_NewPlayerBotQueue_RecordTop10Placement( player )
-                                    
-	}
-
-	if ( !skipNormalPlacementStats )
-	{
-		int playersOutlived = MAX_PLAYERS - GetGlobalNetIntSafe( "livingPlayerCount" )
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.opponents_outlived ), playersOutlived )
-
-		int oldMaxSquadWipes = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.character_most_squad_squad_kills_in_1_game, characterRef ), eStatGetWhen.CURRENT )
-		if ( player.p.squadWipes > oldMaxSquadWipes )
-			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_most_squad_squad_kills_in_1_game, characterRef ), player.p.squadWipes - oldMaxSquadWipes )
-	}
-
-	// PUT CALCULATED STAT UPDATE CALLS THAT ONLY NEED TO HAPPEN AT MATCH END HERE FOR NOW
-	if ( modeRef == "survival" ) // TODO - R5DEV-413763: if we make this a loop, we could check enum for modeType against mode. But it's just this one check for now...
-		UpdateCalculatedStatCachedValue( player, ResolveStatEntry( CAREER_STATS.well_rounded ) )
-
-	GladiatorCardBadge_CheckAndAwardBadges( player )
-
-	if( !player.IsNPC() )
-	{
-		Boost_ApplyBoostEnabledChallengeBoost( player )
-		Mythics_UnregisterBoostedMythicChallengesForPlayer( player )
-	}
-}
-
-void function StatsHook_TransferWinStreak( entity player, string split1GUIDString, string split2GUIDString )
-{
-	//handle win streak stats for ranked 2.0 split
-	int split1WinStreak = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_win_streak_current, split1GUIDString ) )
-	if ( split1WinStreak > 0 )
-		__SetStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_win_streak_current, split2GUIDString ), split1WinStreak )
-}
-
-void function StatsHook_RecordRankScoreStats( entity player, int newScore )
-{
-	string ornull currentRankedPeriodRefOrNull = GetCurrentStatRankedPeriodRefOrNullByType( eItemType.calevent_rankedperiod )
-
-	if ( currentRankedPeriodRefOrNull != null && ShouldRecordRankedStats( player ) )
-	{
-		int oldScore = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_current_rank_score, expect string( currentRankedPeriodRefOrNull ) ) )
-		__SetStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_current_rank_score, expect string( currentRankedPeriodRefOrNull ) ), newScore )
-
-		if ( newScore > oldScore )
-		{
-			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_gained_rank_score_only, expect string( currentRankedPeriodRefOrNull ) ), newScore - oldScore )
-		}
-	}
-}
-
-                                            
-                                                                                 
  
-                                                                                                                                        
-
-                                                                                                                 
-  
-                                                                                                                                                                    
-                                                                                                                                                                 
-
-                            
-   
-                                                                                                                                                                                       
-   
-  
- 
-      
-
-void function UpdatePlayerMatchCodeStats( entity player )
-{
-	if ( IsLobby() )
-		return
-
-	int level = GetPlayerAccountLevel( player )
-	player.TrackPlayerLevel( level )
-
-	if ( ShouldRecordRankedStats( player ) )
-	{
-		ItemFlavor ornull rankedPeriod = Ranked_GetCurrentActiveRankedPeriod()
-		if ( rankedPeriod != null )
-			player.TrackRankScore( Ranked_GetStryderLadderNameForLatestRankedPeriod(), GetPlayerRankScore( player ) )
-	}
-
-	int jumpmasterWins = 0
-	foreach ( legendRef in GetAllCharacterGUIDStringsForStats() )
-	{
-		jumpmasterWins += GetStat_Int( player, ResolveStatEntry( CAREER_STATS.character_placements_win_as_jumpmaster, legendRef ) )
-	}
-	int matches           = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.games_played ) )
-	int jumpmasterMatches = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.times_jumpmaster_post_fix ) )
-	int wins              = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.placements_win ), eStatGetWhen.CURRENT )
-	int winsWithFriends   = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.placements_win_with_friends ) )
-	player.TrackPlayerMatches( matches, wins, winsWithFriends, jumpmasterMatches, jumpmasterWins )
-
-	int shotsFired = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.shots ) )
-	int shotsHit   = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.hits ) )
-	player.TrackPlayerShots( shotsFired, shotsHit )
-
-	int totalKills         = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.kills ) )
-	int totalTeamworkKills = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.team_work_kill_count ) )
-	player.TrackPlayerKills( totalKills, totalTeamworkKills )
-
-	int damageDone  = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.damage_done ) )
-	int damageTaken = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.damage_taken ) )
-	player.TrackPlayerDamage( damageDone, damageTaken )
-
-	int allyRevives = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.revived_ally ) )
-	player.TrackPlayerAllyRevives( allyRevives )
-}
-
-void function StatsHook_SquadEliminated( array<entity> connectedSquadMembers )
-{
-	if ( connectedSquadMembers.len() == 0 )
-		return
-
-	const int MIN_MEMBERS_FOR_SQUADWIPE = 3
-	int maxTeamSize = GetMaxTeamSizeForPlaylist( GetCurrentPlaylistName() )
-	if ( maxTeamSize < MIN_MEMBERS_FOR_SQUADWIPE )
-		return
-
-	bool squadWipe      = true
-	entity lastAttacker = connectedSquadMembers[0].p.doomedAttacker
-	if ( !IsValid( lastAttacker ) ) //Squads can die by jumping off cliffs.
-		return
-
-	if ( !( connectedSquadMembers[0].GetTeam() in lastAttacker.p.doomedEnemies ) )
-		return
-
-	if ( lastAttacker.p.doomedEnemies[connectedSquadMembers[0].GetTeam()].len() == maxTeamSize )
-		lastAttacker.p.squadWipes++
-}
-
-void function StatsHook_RoundStart( int roundNum )
-{
-	foreach( player in GetPlayerArray() )
-		PIN_RoundStart( player, roundNum )
-}
-void function StatsHook_RoundEnd( int roundNum )
-{
-	int winningTeam = GetCurrentWinner()
-	int roundWinningTeam = GetNetWinningTeam()
-
-	foreach( player in GetPlayerArray() )
-	{
-		PIN_RoundEnd( roundNum )
-
-                         
-                                               
-   
-                                                                                       
-    
-                                                                                        
-
-                                                                                                  
-                                                                            
-                                                                                                                      
-    
-   
-        
-	}
-}
-void function StatsHook_ArenasBuySystem( entity player, int purchaseType, int purchaseAmount )
-{
-	if ( !Stats_PlayerIsValidForStats( player ) )
-		return
-
-	if ( purchaseAmount < 1 )
-		return
-
-	switch ( purchaseType )
-	{
-		case eArenasPurchaseData.UPGRADE:
-			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.arenas_weapons_upgraded ), purchaseAmount )
-			break
-		case eArenasPurchaseData.SKILL:
-			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.arenas_skills_purchased ), purchaseAmount )
-			break
-		case eArenasPurchaseData.ORDNANCE:
-			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.arenas_ordnance_purchased ), purchaseAmount )
-			break
-		case eArenasPurchaseData.HEAL:
-			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.arenas_heals_purchased ), purchaseAmount )
-			break
-	}
-}
-void function StatsHook_ArenasCashStationCaptured( entity player )
-{
-	if ( !Stats_PlayerIsValidForStats( player ) )
-		return
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.arenas_cash_stations_captured ), 1 )
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.crafting_harvester_used_any_mode ), 1 )
-
-}
-void function StatsHook_GameEnd()
-{
-	PIN_GameEnd()
-}
-#endif
-
-#if SERVER
-// BattlePass Specific
-void function StatsHook_DeathFieldStateChanged( int stage, float nextCircleStartTime )
-{
-	fileLevel.currentDeathFieldStage = stage
-
-	if ( stage < 1 )
-		return
-
-	foreach( player in GetPlayerArray_Alive() )
-	{
-		StatHook_NewPlayerBotQueue_OnDeathFieldStateChanged( player )
-
-		if ( !Stats_PlayerIsValidForStats( player ) )
-			continue
-
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
-		string characterRef  = ItemFlavor_GetGUIDString( character )
-
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.ring_closings_survived ), 1 )
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_ring_closings_survived, characterRef ), 1 )
-	}
-}
-
-void function StatsHook_GenericPlayer_OnEntityHealResourceFinished( entity receiver, int healAmount )
-{
-	Assert( IsValid( receiver ) )
-	if ( !receiver.IsPlayer() )
-		return
-
-	StatHook_NewPlayerBotQueue_OnEntityHealResourceFinished( receiver, healAmount )
-
-	if ( !Stats_PlayerIsValidForStats( receiver ) )
-		return
-
-	__IncrementStat_Int( receiver, ResolveStatEntry( CAREER_STATS.health_restored_any_mode ), healAmount )
-}
-
-void function StatsHook_GenericPlayer_OnEntityShieldResourceFinished( entity receiver, int shieldAmount )
-{
-	Assert( IsValid( receiver ) )
-	if ( !receiver.IsPlayer() )
-		return
-
-	StatHook_NewPlayerBotQueue_OnEntityShieldResourceFinished( receiver, shieldAmount )
-
-	if ( !Stats_PlayerIsValidForStats( receiver ) )
-		return
-
-	if ( !Stats_CurrentModeIsSurvival() ) // delete me if this becomes a generic stat
-		return
-
-	__IncrementStat_Int( receiver, ResolveStatEntry( CAREER_STATS.shield_restored ), shieldAmount )
-}
-
-
-void function StatsHook_PlayerEquippedAttachmentThisGame( entity player )
-{
-	Assert( IsValid( player ) )
-	if ( !player.IsPlayer() )
-		return
-
-	StatHook_NewPlayerBotQueue_OnPlayerEquippedAttachment( player )
-
-	if ( !Stats_PlayerIsValidForStats( player ) )
-		return
-
-	if ( !Stats_CurrentModeIsSurvival() ) // delete me if this becomes a generic stat
-		return
-
-	if ( player.p.hasTickedEquipItemStat )
-		return
-
-	player.p.hasTickedEquipItemStat = true
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.equipped_attachment ), 1 )
-}
-
-void function StatsHook_OnPlayerSelfRevived( entity player )
-{
-	Assert( IsValid( player ) )
-	if ( !player.IsPlayer() )
-		return
-
-	if ( !Stats_PlayerIsValidForStats( player ) )
-		return
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.self_revives ), 1 )
-}
-#endif
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Core player lifecycle events ////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if SERVER
-void function StatsHook_OnPlayerConnected( entity player )
-{
-#if DEVELOPER
-	if ( IsLowCostBot( player ) )
-		return
-#else
-	if ( player.IsNPC() && AutoPlayer_IsAutoPlayer( player ) == false )
-		return
-#endif
-
-	PIN_AddPlayer( player )
-
-                  
-                                                                                              
-                                                                                                                     
-      
-
-	// Triggered in lobby and maps
-	int installTime = expect int( player.GetPersistentVar( "installUnixTime" ) )
-	if ( installTime <= 0 )
-	{
-		player.SetPersistentVar( "installUnixTime", GetUnixTimestamp() )
-
-                           
-                                                               
-                                 
-	}
-
-	                           
-		StatsHook_BeginnerChallenges_OnPlayerConnected( player )
-       
-
-	foreach ( callbackFunc in file.onPlayerConnectedForStatsCallbacks )
-	{
-		callbackFunc( player )
-	}
-}
-
-void function AddCallback_OnPlayerConnectedForStats( void functionref( entity player ) callBackFunc )
-{
-	Assert( file.onPlayerConnectedForStatsCallbacks.find( callBackFunc ) == -1, "Already added " + string( callBackFunc ) + " with AddCallback_OnPlayerConnectedForStats" )
-	file.onPlayerConnectedForStatsCallbacks.append( callBackFunc )
-}
-
-void function StatsHook_OnPlayerLeft( entity player, string reason, bool canReconnect )
-{
-	if ( IsLobby() )
-		return
-
-	PIN_PlayerLeft( player, reason )
-}
-
-void function StatsHook_TrackSkyDiveDistance( entity player )
-{
-	//printf( "[StatDebug] TrackSkyDiveDistance: Beginning tracking skydive for %s", player.GetPlayerName() )
-
-	Assert( IsNewThread(), "Must be threaded off." )
-	player.EndSignal( "OnDestroy" )
-
-	int startDistance = player.GetPlayerStateStats()["d_pilot"]
-
-	//printf( "[StatDebug] TrackSkyDiveDistance: startDistance: %i", startDistance )
-
-	while( IsValid( player ) && !player.IsOnGround() )
-	{
-		wait 0.5
-	}
-
-	int endDistance = player.GetPlayerStateStats()["d_pilot"]
-	float distance  = (endDistance - startDistance) / 12.0
-	distance *= 0.3048 //Convert to meters
-	int distanceInt = int( distance ) //Because we can't use floats for challenge stats
-
-	printf( "[StatDebug] TrackSkyDiveDistance: endDistance: %i. Total Distance (meters): %i", endDistance, distance )
-}
-
-void function StatsHook_TrackSprint( entity player )
-{
-	Assert( IsNewThread(), "Must be threaded off." )
-	player.EndSignal( "OnDestroy" )
-
-                                   
-                                                          
-                                         
-}
-#endif
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Kill, death, bleedout and respawn player events /////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if SERVER
-void function OnPlayerRespawned( entity player )
-{
-	PIN_PlayerSpawned( player )
-}
-
-void function OnTeammatesRespawned( entity playerRespawner, entity beacon, array<entity> playersRespawned )
-{
-	if ( !Stats_PlayerIsValidForStats( playerRespawner ) )
-		return
-
-	__IncrementStat_Int( playerRespawner, ResolveStatEntry( CAREER_STATS.respawned_ally ), playersRespawned.len() )
-}
-
-void function StatsHook_OnDoomingDamage( entity victim, entity attacker, var damageInfo )
-{
-	if ( !attacker.IsPlayer() || !Stats_PlayerIsValidForStats( attacker ) )
-		return
-
-	string ornull currentSeasonRefOrNull = GetCurrentStatSeasonRefOrNull()
-
-	if ( IsValid( attacker ) && attacker.IsPlayer() )
-	{
-		if ( victim != attacker )
-		{
-			ItemFlavor attackerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( attacker ), Loadout_Character() )
-			string attackerCharacterRef  = ItemFlavor_GetGUIDString( attackerCharacter )
-
-			__Mode_IncrementStat_Int( attacker, CAREER_STATS.modes_dooms, 1 )
-
-			__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.dooms_any_mode ), 1 )
-
-			__Mode_IncrementStat_Int( attacker, CAREER_STATS.modes_character_dooms, attackerCharacterRef, 1 )
-
-			if ( currentSeasonRefOrNull != null )
-				__Mode_IncrementStat_Int( attacker, CAREER_STATS.modes_season_dooms, expect string(currentSeasonRefOrNull), 1 )
-
-			if ( IsValidHeadShot( damageInfo, victim ) )
-				__Mode_IncrementStat_Int( attacker, CAREER_STATS.modes_headshots, 1 )
-
-			//Ranked Arenas
-                                               
-                                                                                                                                           
-                                                                                                                    
-     
-                                                                                                                                                        
-     
-         
-
-			// S21 quads knockdowns hook
-			                               
-			StatsHook_S21_Quad_Knockdowns( attacker )
-         
-		}
-	}
-
-	ScriptDamageInfoClone attackerDIC           = CloneScriptDamageInfo( damageInfo ) // need to clone because Code doesn't guarantee this instance of damageInfo persists
-	string ornull attackerWeaponClassNameOrNull = GetWeaponClassNameFromDamageInfoClone( attackerDIC )
-	if ( attackerWeaponClassNameOrNull != null )
-	{
-		ItemFlavor ornull attackerWeaponFlavorOrNull = GetWeaponItemFlavorByClass( expect string(attackerWeaponClassNameOrNull) )
-		if ( attackerWeaponFlavorOrNull != null )
-		{
-			if ( IsValid( attacker ) && attacker.IsPlayer() )
-			{
-				string attackerWeaponRef = ItemFlavor_GetGUIDString( expect ItemFlavor(attackerWeaponFlavorOrNull) )
-				__Mode_IncrementStat_Int( attacker, CAREER_STATS.modes_weapon_dooms, attackerWeaponRef, 1 )
-			}
-		}
-	}
-
-	GetEHIScriptStruct( victim ).gotDownedCount++
-
-	bool validAttacker = IsValid( attacker ) && attacker.IsPlayer() && victim != attacker
-
-	float distance = DamageInfo_GetDistFromAttackOrigin( damageInfo )
-	distance = distance / 12
-	distance *= 0.3048 //Convert to meters
-	int newDistance    = int( distance )
-	                           
-		StatsHook_BeginnerChallenges_OnDoomingDamage( victim, attacker, damageInfo )
-                                 
-
-	if ( !Stats_ShouldGatherBRStatsInModeForPlayer( victim ) )
-		return
-
-	__IncrementStat_Int( victim, ResolveStatEntry( CAREER_STATS.times_got_doomed ), 1 )
-
-	if ( validAttacker )
-	{
-		fileLevel.mostRecentDoomAttacker = attacker
-		victim.p.doomedAttacker = attacker
-		fileLevel.mostRecentDoomVictim = victim
-
-		int victimTeam = victim.GetTeam()
-		array<entity> doomedEnemies
-		if (victimTeam in attacker.p.doomedEnemies)
-			doomedEnemies = attacker.p.doomedEnemies[victimTeam]
-		else
-			attacker.p.doomedEnemies[victimTeam] <- doomedEnemies
-
-		if ( doomedEnemies.find( victim ) != -1 )
-			Warning( "StatsHook_OnDoomingDamage, doomedEnemies already contains victim!" )
-		else
-			doomedEnemies.append(victim)
-
-		ItemFlavor attackerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( attacker ), Loadout_Character() )
-		string attackerCharacterRef  = ItemFlavor_GetGUIDString( attackerCharacter )
-
-		__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.dooms ), 1 )
-		__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.character_dooms, attackerCharacterRef ), 1 )
-
-		if ( attackerWeaponClassNameOrNull != null )
-		{
-			ItemFlavor ornull attackerWeaponFlavorOrNull = GetWeaponItemFlavorByClass( expect string(attackerWeaponClassNameOrNull) )
-			if ( attackerWeaponFlavorOrNull != null )
-			{
-				string attackerWeaponRef = ItemFlavor_GetGUIDString( expect ItemFlavor(attackerWeaponFlavorOrNull) )
-				__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.weapon_dooms, attackerWeaponRef ), 1 )
-				string statsCategory = WeaponItemFlavor_GetStatsCategory( expect ItemFlavor( attackerWeaponFlavorOrNull ) )
-				bool isCrate = statsCategory == WEAPON_STAT_CATEGORY_CRATE_WEAPON
-				ItemFlavor ornull catOrNull = WeaponItemFlavor_GetCategory( expect ItemFlavor(attackerWeaponFlavorOrNull) )
-				if ( catOrNull != null )
-				{
-					string category = WeaponCategoryFlavor_GetStatsKey( expect ItemFlavor( catOrNull ) )
-					__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.character_weaponcategory_dooms, attackerCharacterRef, category ), 1 )
-					if ( isCrate )
-						__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.character_weaponcategory_dooms, attackerCharacterRef, WEAPON_STAT_CATEGORY_CRATE_WEAPON ), 1 )
-				}
-			}
-		}
-
-		if ( currentSeasonRefOrNull != null )
-		{
-			__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.season_dooms, expect string( currentSeasonRefOrNull ) ), 1 )
-		}
-
-		string ornull currentRankedPeriodRefOrNull = GetCurrentStatRankedPeriodRefOrNullByType( eItemType.calevent_rankedperiod )
-		if ( currentRankedPeriodRefOrNull != null && ShouldRecordRankedStats( attacker ) )
-		{
-			__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.rankedperiod_dooms_base, expect string( currentRankedPeriodRefOrNull ) ), 1 )
-		}
-
-		Stats_UpdateDistanceKillStatEntry( attacker, ResolveStatEntry( CAREER_STATS.distance_kill ), newDistance )
-
-		if ( IsValidHeadShot( damageInfo, victim ) )
-		{
-			__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.headshots ), 1 )
-			__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.headshots_any_mode ), 1 )
-			attacker.p.headshotKills++
-		}
-	}
-}
-void function OnPlayerStartBleedout( entity victim, entity attacker, var damageInfo )
-{
-	Assert( victim.IsPlayer() )
-
-	PIN_PlayerDowned( victim, attacker, damageInfo )
-}
-
-void function OnPlayerGotRevived( entity injured, entity healer )
-{
-	PIN_PlayerRevived( injured, healer )
-
-	if ( !Stats_PlayerIsValidForStats( healer ) )
-		return
-
-	if ( IsValid( injured.p.doomedAttacker ) )
-	{
-		GetEHIScriptStruct( injured.p.doomedAttacker ).noWitnessess = false
-		if (injured.GetTeam() in injured.p.doomedAttacker.p.doomedEnemies)
-		{
-			table< int, array<entity> > attackersDoomedEnemies = injured.p.doomedAttacker.p.doomedEnemies
-			attackersDoomedEnemies[injured.GetTeam()].removebyvalue(injured)
-		}
-
-		injured.p.doomedAttacker = null
-	}
-
-	bool modeIsValidForBRStats = Stats_ModeIsValidForBRStats()
-
-	__Mode_IncrementStat_Int( healer, CAREER_STATS.modes_revived_ally, 1 )
-
-	string ornull currentSeasonRefOrNull = GetCurrentStatSeasonRefOrNull()
-	if ( currentSeasonRefOrNull != null )
-		__Mode_IncrementStat_Int( healer, CAREER_STATS.modes_season_revived_ally, expect string( currentSeasonRefOrNull ), 1 )
-
-	// character specific trackers are updated across all modes
-	if ( PlayerHasPassive( injured, ePassives.PAS_MIRAGE ) )
-		__IncrementStat_Int( injured, ResolveStatEntry( CAREER_STATS.mirage_successful_revives ), 1 )
-
-	// should this be inside of the mode-checK? ModeIsValid doesn't currently check against the valentine's playlist var
-	if ( GetCurrentPlaylistVarInt( "valentines_event", 0 ) > 0 )
-		__IncrementStat_Int( healer, ResolveStatEntry( CAREER_STATS.valentines_revives_and_respawns ), 1 )
-
-	if ( modeIsValidForBRStats )
-	{
-		__IncrementStat_Int( healer, ResolveStatEntry( CAREER_STATS.revived_ally ), 1 )
-
-		ItemFlavor healerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( healer ), Loadout_Character() )
-		string healerCharacterRef  = ItemFlavor_GetGUIDString( healerCharacter )
-		__IncrementStat_Int( healer, ResolveStatEntry( CAREER_STATS.character_revived_ally, healerCharacterRef ), 1 )
-
-		if ( currentSeasonRefOrNull != null )
-			__IncrementStat_Int( healer, ResolveStatEntry( CAREER_STATS.season_revived_ally, expect string( currentSeasonRefOrNull ) ), 1 )
-
-		string ornull currentRankedPeriodRefOrNull = GetCurrentStatRankedPeriodRefOrNullByType( eItemType.calevent_rankedperiod )
-		if ( currentRankedPeriodRefOrNull != null && ShouldRecordRankedStats( healer ) )
-			__IncrementStat_Int( healer, ResolveStatEntry( CAREER_STATS.rankedperiod_revived_ally_base, expect string( currentRankedPeriodRefOrNull ) ), 1 )
-	}
-
-	//Ranked Arenas
-                                             
-                                                                                                                                         
-                                                                                                                  
-                                                                                                                                                           
-       
-}
-
-void function StatsHook_TrackPlayerDeaths( entity victim )
-{
-	Assert( IsValid( victim ) )
-	Assert( victim.IsPlayer() )
-	if ( victim.p.updatedPersistenceOnDisconnect )
-		return // if a player was bleeding out and disconnected, we intercepted earlier to accurately track deaths before persistence is finalized
-
-	if ( !Stats_PlayerIsValidForStats( victim ) )
-		return
-
-	bool modeIsValidForBRStats           = Stats_ModeIsValidForBRStats()
-	string ornull currentSeasonRefOrNull = GetCurrentStatSeasonRefOrNull()
-	string victimCharacterRef            = ItemFlavor_GetGUIDString( LoadoutSlot_GetItemFlavor( ToEHI( victim ), Loadout_Character() ) )
-
-	__Mode_IncrementStat_Int( victim, CAREER_STATS.modes_deaths, 1 )
-	__Mode_IncrementStat_Int( victim, CAREER_STATS.modes_character_deaths, victimCharacterRef, 1 )
-	if ( currentSeasonRefOrNull != null )
-	{
-		__Mode_IncrementStat_Int( victim, CAREER_STATS.modes_season_deaths, expect string( currentSeasonRefOrNull ), 1 )
-	}
-
-	if ( modeIsValidForBRStats )
-	{
-		__IncrementStat_Int( victim, ResolveStatEntry( CAREER_STATS.deaths ), 1 )
-		__IncrementStat_Int( victim, ResolveStatEntry( CAREER_STATS.character_deaths, victimCharacterRef ), 1 )
-
-		if ( currentSeasonRefOrNull != null )
-		{
-			__IncrementStat_Int( victim, ResolveStatEntry( CAREER_STATS.season_deaths, expect string( currentSeasonRefOrNull ) ), 1 )
-		}
-
-		string ornull currentRankedPeriodRefOrNull = GetCurrentStatRankedPeriodRefOrNullByType( eItemType.calevent_rankedperiod )
-		if ( currentRankedPeriodRefOrNull != null && ShouldRecordRankedStats( victim ) )
-		{
-			__IncrementStat_Int( victim, ResolveStatEntry( CAREER_STATS.rankedperiod_deaths_base, expect string( currentRankedPeriodRefOrNull ) ), 1 )
-		}
-	}
-}
-
-void function OnPlayerKilled( entity victim, entity attacker, var attackerDamageInfo )
-{
-	Assert( IsValid( victim ) )
-	Assert( IsValid( attacker ) )
-	Assert( victim.IsPlayer() )
-
-	// check Bleedout below as well just because it makes Script more legible
-	// START PIN-SPECIFIC SCOPE
-	{
-		entity bleedoutAttacker
-		if ( Bleedout_IsBleedingOut( victim ) )
-			bleedoutAttacker = Bleedout_GetBleedoutAttacker( victim )
-		PIN_PlayerKilled( victim, attacker, attackerDamageInfo )
-	}
-	// END PIN SCOPE
-
-	if ( !Stats_PlayerIsValidForStats( victim ) )
-		return
-
-	StatsHook_TrackPlayerDeaths( victim )
-
-	if ( attacker == victim )
-		return // don't record kill stats for suicides
-
-	bool modeIsValidForBRStats = Stats_ModeIsValidForBRStats()
-	ItemFlavor attackerCharacter
-
-	if ( attacker.IsPlayer() )
-	{
-		attackerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( attacker ), Loadout_Character() )
-		if ( DamageInfo_GetDamageType( attackerDamageInfo ) == DMG_MELEE_EXECUTION )
-		{
-			// EXECUTION DAMAGE START - Monitor RPROF for performance issues as *both* callbacks here are expensive.
-			{
-				int damageAmount = int( DamageInfo_GetDamage( attackerDamageInfo ) ) // returns float
-				StatsHook_OnPlayerOrNPCTookDamage( attacker, victim, false, attackerDamageInfo, damageAmount, 0 )
-			}
-			// EXECUTION DAMAGE END
-
-			__Mode_IncrementStat_Int( attacker, CAREER_STATS.modes_executions, 1 )
-
-			// Battle Pass Specific
-			__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.executions_any_mode ), 1 )
-
-			if ( modeIsValidForBRStats )
-			{
-				__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.executions ), 1 )
-				__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.character_executions, ItemFlavor_GetGUIDString( attackerCharacter ) ), 1 )
-			}
-			GetEHIScriptStruct( attacker ).gaveFinisherCount++
-		}
-
-		                        
-			StatsEvent_Control_OnPlayerKilled( victim, attacker )
-                                
-	}
-
-	bool haveKiller = false
-	entity killer
-	ItemFlavor killerCharacter
-	ScriptDamageInfoClone killerDIC
-
-	if ( Bleedout_IsBleedingOut( victim ) )
-	{
-		// todo(dw): find out who execution kills should be credited to
-		entity bleedoutAttacker = Bleedout_GetBleedoutAttacker( victim )
-		if ( IsValid( bleedoutAttacker ) && bleedoutAttacker.IsPlayer() )
-		{
-			haveKiller = true
-			killer = bleedoutAttacker
-			killerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( killer ), Loadout_Character() )
-			//killerDamageInfo = Bleedout_GetBleedoutDamageInfo( victim )
-			killerDIC = Bleedout_GetBleedoutDamageInfo( victim )
-		}
-	}
-
-	if ( !haveKiller && attacker.IsPlayer() )
-	{
-		haveKiller = true
-		killer = attacker
-		killerCharacter = attackerCharacter
-		//killerDamageInfo = attackerDamageInfo
-		killerDIC = CloneScriptDamageInfo( attackerDamageInfo ) // todo(dw): aaaaaaaaaAAAAAAAA
-	}
-
-	string ornull currentSeasonRefOrNull = GetCurrentStatSeasonRefOrNull()
-
-	// Modes Stats
-	if ( haveKiller )
-	{
-		// This could possibly go into ShouldGatherStats(), but stats can still be updated for some things after match participation ends
-		if ( killer.p.hasMatchParticipationEnded ) // Don't award kills XP for players who have already been eliminated.
-			return
-
-		// BattlePass Specific
-		// Note that this works fine with melee weapons (fists & heirlooms)
-		string ornull killerWeaponClassNameOrNull = GetWeaponClassNameFromDamageInfoClone( killerDIC )
-		if ( killerWeaponClassNameOrNull != null )
-		{
-			ItemFlavor ornull killerWeaponFlavorOrNull = GetWeaponItemFlavorByClass( expect string(killerWeaponClassNameOrNull) )
-			if ( killerWeaponFlavorOrNull != null )
-			{
-				array<string> baseMods = SURVIVAL_Weapon_GetBaseMods( expect string(killerWeaponClassNameOrNull) )
-				if ( baseMods.find( "crate" ) != -1 )
-					__IncrementStat_Int( killer, ResolveStatEntry( CAREER_STATS.kills_with_red_weapons_any_mode ), 1 )
-				string killerWeaponFlavorRef = ItemFlavor_GetGUIDString( expect ItemFlavor(killerWeaponFlavorOrNull) )
-				__Mode_IncrementStat_Int( killer, CAREER_STATS.modes_weapon_kills, killerWeaponFlavorRef, 1 )
-			}
-
-			                        
-			if ( GameModeVariant_IsActive( eGameModeVariants.FREEDM_GUNGAME ) && killerWeaponClassNameOrNull == GUNGAME_THROWING_KNIFE_WEAPON_NAME )
-			{
-				__IncrementStat_Int( killer, ResolveStatEntry( CAREER_STATS.kills_with_throwing_knife_gungame ), 1 )
-			}
-         
-		}
-		// BattlePass Specific
-		__IncrementStat_Int( killer, ResolveStatEntry( CAREER_STATS.kills_or_assists_any_mode ), 1 )
-
-		// BattlePass Specific
-		ItemFlavor victimCharacter = LoadoutSlot_GetItemFlavor( ToEHI( victim ), Loadout_Character() )
-		if ( victimCharacter == killerCharacter )
-			__IncrementStat_Int( killer, ResolveStatEntry( CAREER_STATS.mirror_legend_kills_any_mode ), 1 )
-
-		__Mode_IncrementStat_Int( killer, CAREER_STATS.modes_kills, 1 )
-		__Mode_IncrementStat_Int( killer, CAREER_STATS.modes_kills_or_assists, 1 )
-
-		if ( currentSeasonRefOrNull != null )
-			__Mode_IncrementStat_Int( killer, CAREER_STATS.modes_season_kills, expect string(currentSeasonRefOrNull), 1 )
-
-		string killerCharacterRef = ItemFlavor_GetGUIDString( killerCharacter )
-		__Mode_IncrementStat_Int( killer, CAREER_STATS.modes_character_kills, killerCharacterRef, 1 )
-
-		// abilities are NOT mode-specific, but we need to increment before we return
-		int killerDamageSourceId = killerDIC.damageSourceIdentifier
-		StatsHook_HuntMode_OnKill( killer )
-		StatsHook_GasTraps_OnKill( killer, victim, killerCharacter )
-		StatsHook_DefensiveBombardment_OnKill( killer, killerDamageSourceId )
-
-		                               
-			StatsHook_S21_Solo_Kills( killer, 1 )
-        
-
-		                               
-			StatsHook_S21_Quad_Kills( killer, 1 )
-        
-	}
-
-	if ( !modeIsValidForBRStats )
-		return
-
-	if ( haveKiller )
-	{
-		if ( !Stats_ShouldGatherBRStatsInModeForPlayer( killer ) )
-			return
-
-		// This could possibly go into ShouldGatherStats(), but stats can still be updated for some things after match participation ends
-		if ( killer.p.hasMatchParticipationEnded ) // Don't award kills XP for players who have already been eliminated.
-			return
-
-		string killerCharacterRef = ItemFlavor_GetGUIDString( killerCharacter )
-
-		// player killed player
-		__IncrementStat_Int( killer, ResolveStatEntry( CAREER_STATS.kills ), 1 )
-		__IncrementStat_Int( killer, ResolveStatEntry( CAREER_STATS.kills_or_assists ), 1 )
-		__IncrementStat_Int( killer, ResolveStatEntry( CAREER_STATS.character_kills, killerCharacterRef ), 1 )
-
-		if ( currentSeasonRefOrNull != null )
-		{
-			__IncrementStat_Int( killer, ResolveStatEntry( CAREER_STATS.season_kills, expect string( currentSeasonRefOrNull ) ), 1 )
-			__IncrementStat_Int( killer, ResolveStatEntry( CAREER_STATS.season_character_kills, expect string(currentSeasonRefOrNull), killerCharacterRef ), 1 )
-		}
-
-		string ornull currentRankedPeriodRefOrNull = GetCurrentStatRankedPeriodRefOrNullByType( eItemType.calevent_rankedperiod )
-		if ( currentRankedPeriodRefOrNull != null && ShouldRecordRankedStats( killer ) )
-			__IncrementStat_Int( killer, ResolveStatEntry( CAREER_STATS.rankedperiod_kills_base, expect string( currentRankedPeriodRefOrNull ) ), 1 )
-
-		if ( Time() < victim.p.lastRespawnTouchGroundTime + 10.0 || victim.p.lastRespawnTouchGroundTime < victim.p.lastRespawnTime )
-			__IncrementStat_Int( killer, ResolveStatEntry( CAREER_STATS.character_reinforcement_recalls, killerCharacterRef ), 1 )
-
-		RemoveInvalidRapidElimKills( killer )
-		killer.p.rapidElimTracker.append( Time() )
-		if ( killer.p.rapidElimTracker.len() == 4 )
-		{
-			__IncrementStat_Int( killer, ResolveStatEntry( CAREER_STATS.character_rapid_eliminations, killerCharacterRef ), 1 )
-			ClearRapidElimKills( killer )
-		}
-
-		if ( killer.GetEncodedEHandle() == SurvivalCommentary_GetKillLeaderEEH() )
-		{
-			__IncrementStat_Int( killer, ResolveStatEntry( CAREER_STATS.kills_while_killleader ), 1 )
-			__IncrementStat_Int( killer, ResolveStatEntry( CAREER_STATS.character_kills_while_killleader, killerCharacterRef ), 1 )
-		}
-
-		string ornull killerWeaponClassNameOrNull = GetWeaponClassNameFromDamageInfoClone( killerDIC )
-
-		if ( killerWeaponClassNameOrNull != null )
-		{
-			ItemFlavor ornull killerWeaponFlavorOrNull = GetWeaponItemFlavorByClass( expect string(killerWeaponClassNameOrNull) )
-			if ( killerWeaponFlavorOrNull != null )
-			{
-				string killerWeaponRef = ItemFlavor_GetGUIDString( expect ItemFlavor(killerWeaponFlavorOrNull) )
-
-				__IncrementStat_Int( killer, ResolveStatEntry( CAREER_STATS.weapon_kills, killerWeaponRef ), 1 )
-
-				string statsCategory = WeaponItemFlavor_GetStatsCategory( expect ItemFlavor( killerWeaponFlavorOrNull ) )
-				bool isCrate = statsCategory == WEAPON_STAT_CATEGORY_CRATE_WEAPON
-				ItemFlavor ornull catOrNull = WeaponItemFlavor_GetCategory( expect ItemFlavor( killerWeaponFlavorOrNull ) )
-				if ( catOrNull != null )
-				{
-					string category = WeaponCategoryFlavor_GetStatsKey( expect ItemFlavor( catOrNull ) )
-					__IncrementStat_Int( killer, ResolveStatEntry( CAREER_STATS.character_weaponcategory_kills, killerCharacterRef, category ), 1 )
-					if ( isCrate )
-						__IncrementStat_Int( killer, ResolveStatEntry( CAREER_STATS.character_weaponcategory_kills, killerCharacterRef, WEAPON_STAT_CATEGORY_CRATE_WEAPON ), 1 )
-				}
-			}
-		}
-	}
-}
-
-void function StatsHook_OnPlayerAssist( entity assistingPlayer )
-{
-	Assert( IsValid( assistingPlayer ) )
-	Assert( assistingPlayer.IsPlayer() )
-
-	if ( !Stats_PlayerIsValidForStats( assistingPlayer ) )
-		return
-
-	string ornull currentSeasonRefOrNull = GetCurrentStatSeasonRefOrNull()
-
-	__Mode_IncrementStat_Int( assistingPlayer, CAREER_STATS.modes_assists, 1 )
-	__Mode_IncrementStat_Int( assistingPlayer, CAREER_STATS.modes_kills_or_assists, 1 )
-	if ( currentSeasonRefOrNull != null )
-		__Mode_IncrementStat_Int( assistingPlayer, CAREER_STATS.modes_season_assists, expect string( currentSeasonRefOrNull ), 1 )
-
-	// BattlePass Specific
-	__IncrementStat_Int( assistingPlayer, ResolveStatEntry( CAREER_STATS.kills_or_assists_any_mode ), 1 )
-
-	//Ranked Arenas
-                                             
-                                                                                                                                         
-                                                                                                                  
-   
-                                                                                                                                                               
-   
-       
-
-	if ( !Stats_ModeIsValidForBRStats() )
-		return
-
-	__IncrementStat_Int( assistingPlayer, ResolveStatEntry( CAREER_STATS.assists ), 1 )
-	__IncrementStat_Int( assistingPlayer, ResolveStatEntry( CAREER_STATS.kills_or_assists ), 1 )
-
-	if ( currentSeasonRefOrNull != null )
-		__IncrementStat_Int( assistingPlayer, ResolveStatEntry( CAREER_STATS.season_assists, expect string( currentSeasonRefOrNull ) ), 1 )
-
-	string ornull currentRankedPeriodRefOrNull = GetCurrentStatRankedPeriodRefOrNullByType( eItemType.calevent_rankedperiod )
-	if ( currentRankedPeriodRefOrNull != null && ShouldRecordRankedStats( assistingPlayer ) )
-		__IncrementStat_Int( assistingPlayer, ResolveStatEntry( CAREER_STATS.rankedperiod_assists_base, expect string( currentRankedPeriodRefOrNull ) ), 1 )
-}
-
-void function StatsHook_LootCreepKilled( entity creep, entity attacker )
-{
-	if ( !IsValid( attacker ) || !attacker.IsPlayer() )
-		return
-
-	if ( !Stats_ShouldGatherBRStatsInModeForPlayer( attacker ) )
-		return
-
-                  
-                                                                             
-         
-       
-}
-
-void function StatsHook_UnlockJumpmasterAchievement( entity player )
-{
-	if ( !Stats_PlayerIsValidForStats( player ) )
-		return
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.times_jumpmaster ), 1 )
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.times_jumpmaster_post_fix ), 1 )
-	int timesJumpmaster = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.times_jumpmaster ), eStatGetWhen.CURRENT )
-	if ( timesJumpmaster >= 5 )
-		UnlockAchievement( player, achievements.JUMPMASTER )
-}
-
-
-
-void function RemoveInvalidRapidElimKills( entity killer )
-{
-	for ( int i = killer.p.rapidElimTracker.len() - 1; i >= 0; i-- )
-	{
-		if ( Time() - killer.p.rapidElimTracker[ i ] > 20.0 )
-			killer.p.rapidElimTracker.remove( i )
-	}
-}
-
-void function ClearRapidElimKills( entity killer )
-{
-	for ( int i = killer.p.rapidElimTracker.len() - 1; i >= 0; i-- )
-	{
-		killer.p.rapidElimTracker.remove( i )
-	}
-}
-
-void function OnNPCKilled( entity victim, entity attacker, var damageInfo )
-{
-	// todo(dw): do this section
-}
-
-
-void function StatsHook_PlayerRespawnedTeammate( entity respawnCaller, entity respawningPlayer )
-{
-	if ( !Stats_PlayerIsValidForStats( respawnCaller ) )
-		return
-
-	__IncrementStat_Int( respawnCaller, ResolveStatEntry( CAREER_STATS.times_respawned_ally ), 1 )
-
-	string ornull currentSeasonRefOrNull = GetCurrentStatSeasonRefOrNull()
-	if ( currentSeasonRefOrNull != null )
-		__IncrementStat_Int( respawnCaller, ResolveStatEntry( CAREER_STATS.season_times_respawned_ally, expect string( currentSeasonRefOrNull ) ), 1 )
-
-	string ornull currentRankedPeriodRefOrNull = GetCurrentStatRankedPeriodRefOrNullByType( eItemType.calevent_rankedperiod )
-	if ( currentRankedPeriodRefOrNull != null && ShouldRecordRankedStats( respawnCaller ) )
-		__IncrementStat_Int( respawnCaller, ResolveStatEntry( CAREER_STATS.rankedperiod_times_respawned_ally_base, expect string( currentRankedPeriodRefOrNull ) ), 1 )
-
-	if ( GetCurrentPlaylistVarInt( "valentines_event", 0 ) > 0 )
-		__IncrementStat_Int( respawnCaller, ResolveStatEntry( CAREER_STATS.valentines_revives_and_respawns ), 1 )
-
-	if ( respawnCaller.p.playersRespawned.find( respawningPlayer ) == -1 )
-	{
-		respawnCaller.p.playersRespawned.append( respawningPlayer )
-		if ( respawnCaller.p.playersRespawned.len() == 2 )
-		{
-			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( respawnCaller ), Loadout_Character() )
-			string characterRef  = ItemFlavor_GetGUIDString( character )
-			__IncrementStat_Int( respawnCaller, ResolveStatEntry( CAREER_STATS.character_games_with_respawning_both_teammates, characterRef ), 1 )
-		}
-	}
-
-	respawningPlayer.p.lastRespawnTime = Time()
-
-	if ( IsValid( respawningPlayer.p.doomedAttacker ) )
-	{
-		GetEHIScriptStruct( respawningPlayer.p.doomedAttacker ).noWitnessess = false
-		if (respawningPlayer.GetTeam() in respawningPlayer.p.doomedAttacker.p.doomedEnemies)
-		{
-			table< int, array<entity> > attackersDoomedEnemies = respawningPlayer.p.doomedAttacker.p.doomedEnemies
-			attackersDoomedEnemies[respawningPlayer.GetTeam()].removebyvalue(respawningPlayer)
-		}
-
-		respawningPlayer.p.doomedAttacker = null
-	}
-}
-#endif //SERVER
-
-
-
-
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Weapon-fire and damage player events ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if SERVER
-
-void function StatsHook_PrivateMatch_IncrementShots( entity player )
-{
-	Assert( IsValid( player ) )
-	Assert( player.IsPlayer() )
-
-	if ( !Stats_IsValidMapForStats() )
-		return
-	if ( GameMode_IsActive( eGameModes.SURVIVAL ) && !Survival_HasPlayerJumpedOutOfPlane( player ) )
-		return
-
-	GameSummarySquadData gameSummaryData = GameSummary_GetPlayerData( player )
-	gameSummaryData.shots++
-}
-
-void function OnWeaponAttack( entity player, entity weapon, string weaponName, int ammoUsed, vector attackOrigin, vector attackDir )
-{
-	Assert( IsValid( player ) )
-	Assert( player.IsPlayer() )
-	Assert( IsValid( weapon ) || IsInvalidButMemberVarsStillValid( weapon ) )
-
-	if ( IsPrivateMatch() )
-		StatsHook_PrivateMatch_IncrementShots( player )
-
-	if ( !Stats_ShouldGatherBRStatsInModeForPlayer( player ) )
-		return
-
-	ItemFlavor ornull weaponFlavorOrNull = GetWeaponItemFlavorByClass( weaponName )
-	if ( weaponFlavorOrNull != null )
-	{
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.shots ), 1 )
-
-		ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
-		string playerCharacterRef  = ItemFlavor_GetGUIDString( playerCharacter )
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_shots, playerCharacterRef ), 1 )
-
-		string weaponFlavorRef = ItemFlavor_GetGUIDString( expect ItemFlavor(weaponFlavorOrNull) )
-
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.weapon_shots, weaponFlavorRef ), 1 )
-
-		string statsCategory = WeaponItemFlavor_GetStatsCategory( expect ItemFlavor( weaponFlavorOrNull ) )
-		bool isCrate = statsCategory == WEAPON_STAT_CATEGORY_CRATE_WEAPON
-		ItemFlavor ornull catOrNull = WeaponItemFlavor_GetCategory( expect ItemFlavor( weaponFlavorOrNull ) )
-		if ( catOrNull != null )
-		{
-			string category = WeaponCategoryFlavor_GetStatsKey( expect ItemFlavor( catOrNull ) )
-			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_weaponcategory_shots, playerCharacterRef, category ), 1 )
-			if ( isCrate )
-				__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_weaponcategory_shots, playerCharacterRef, WEAPON_STAT_CATEGORY_CRATE_WEAPON ), 1 )
-		}
-
-		GameSummarySquadData gameSummaryData = GameSummary_GetPlayerData( player )
-		gameSummaryData.shots++
-	}
-
-                                   
-                                                                         
-       
-}
-
-void function StatsHook_PrivateMatch_IncrementHitsAndHeadshots( entity attacker, entity victim, bool isValidHeadshot, var damageInfo )
-{
-	Assert( IsValid( victim ) )
-	if ( !Stats_IsValidMapForStats() )
-		return
-	if ( attacker == victim )
-		return
-	if ( !( IsValid( attacker ) && attacker.IsPlayer() && victim.IsPlayer() ) )
-		return
-	if ( GameMode_IsActive( eGameModes.SURVIVAL ) && !Survival_HasPlayerJumpedOutOfPlane( attacker ) )
-		return
-
-	string ornull weaponClassNameOrNull = GetWeaponClassNameFromDamageInfo( damageInfo )
-	if ( weaponClassNameOrNull == null )
-		return
-
-	bool isDowned   = Bleedout_IsBleedingOut( victim )
-	bool isHeadshot = !isDowned && isValidHeadshot
-	GameSummarySquadData gameSummaryData = GameSummary_GetPlayerData( attacker )
-	gameSummaryData.hits++
-	if ( isHeadshot )
-		gameSummaryData.headshots++
-}
-
-// Temporary Calevents: Generic Damage Hooks
-void function StatsHook_TemporaryCalEventsTotalDamageDone( entity attacker, int damageAmount )
-{
-}
-
-void function StatsHook_LegendDamageAndAbilities( entity attacker, entity victim, int damageAmount, int damageSourceId )
-{
-	ItemFlavor attackerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( attacker ), Loadout_Character() )
-	string attackerCharacterRef  = ItemFlavor_GetGUIDString( attackerCharacter )
-	__Mode_IncrementStat_Int( attacker, CAREER_STATS.modes_character_damage_done, attackerCharacterRef, damageAmount )
-	__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.character_damage_done_any_mode, attackerCharacterRef ), damageAmount )
-
-	// Begin: Legend Abilities - need to be tracked in all modes
-	if ( PlayerHasPassive( attacker, ePassives.PAS_NOVA ) && StatusEffect_HasSeverity( victim, eStatusEffect.in_black_hole_field ) )
-		StatsHook_BlackholeDamageDone(attacker, damageAmount)
-	StatsHook_GasDamage_OnPlayerTookDamage( attacker, damageSourceId, damageAmount )
-	StatsHook_SmokeHits_OnPlayerTookDamage( attacker, damageSourceId )
-	StatsHook_VantageUltimateDamage( attacker, damageSourceId, damageAmount )
-	StatsHook_CatalystSpikesDamage( attacker, damageSourceId, damageAmount )
-	StatsHook_BallisticUltimateDamage( attacker, damageSourceId, damageAmount )
-	               
-		StatsHook_ConduitUltDamage( attacker, damageSourceId, damageAmount )
-       
-	// End: Legend Abilities
-}
-
-void function StatsHook_OnPlayerOrNPCTookDamage( entity attacker, entity victim, bool isValidHeadshot, var damageInfo, int healthDamage, int shieldDamage )
-{
-	Assert( IsValid( victim ) )
-
-	if ( IsPrivateMatch() )
-		StatsHook_PrivateMatch_IncrementHitsAndHeadshots( attacker, victim, isValidHeadshot, damageInfo )
-
-	int damageAmount = healthDamage + shieldDamage
-
-	if ( IsValid( attacker ) ) // PIN-specific: we want PIN data even for things that we don't want stats on - like self-inflicted, Ring, NPC, & fall damage
-		PIN_DamageDone( attacker, victim, float( damageAmount ) )
-
-	if ( attacker == victim )
-		return // don't track self-inflicted damage in Stats
-
-	if ( IsCombatNPC( attacker ) || !attacker.IsPlayer() )
-		return
-
-	if ( victim.IsPlayer() && Stats_PlayerIsValidForStats( victim ) )
-		__IncrementStat_Int( victim, ResolveStatEntry( CAREER_STATS.damage_taken ), damageAmount )
-
-	// we fire this FTUE hook specifically before checking PlayerIsValidForStats so that we don't early exit before checking if they're FTUE bot queue folks
-	StatHook_NewPlayerBotQueue_OnPlayerOrNPCTookDamage( attacker, victim, damageAmount )
-
-	if ( !IsValid( attacker ) || !Stats_PlayerIsValidForStats( attacker ) )
-		return
-
-	// BEGIN: NPC & Non-Player Victim Stats
-	if ( victim.IsNPC() )
-	{
-		if ( IsStormPoint() )
-		{
-			switch ( victim.ai.npcType )
-			{
-				                                           
-				                         
-				case eNPC.SPIDER_JUNGLE:
-          
-                      
-                     
-          
-					__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.damage_done_to_spider_on_storm_point ), damageAmount )
-					break
-          
-				case eNPC.PROWLER:
-					__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.damage_done_to_prowler_on_storm_point ), damageAmount )
-					break
-			}
-		}
-		return
-	}
-	// END: NPC & Non-Player Victim Stats
-
-	if ( !victim.IsPlayer() )
-		return
-
-	string ornull currentSeasonRefOrNull = GetCurrentStatSeasonRefOrNull()
-	entity weapon = DamageInfo_GetWeapon( damageInfo )
-
-	bool isDowned   = Bleedout_IsBleedingOut( victim )
-	bool isHeadshot = !isDowned && isValidHeadshot
-
-	// Event-Specific Stats for Total Damage During Event
-	StatsHook_TemporaryCalEventsTotalDamageDone( attacker, damageAmount )
-
-	// BEGIN: Mode-Specific & Any-Mode Stats
-	// ALL the damage for ALL the things
-	__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.damage_done_any_mode ), damageAmount )
-
-	// Mixtape LTMs: track overall damage done per mode
-	__Mode_IncrementStat_Int( attacker, CAREER_STATS.modes_damage_done, damageAmount )
-
-	// BR Solos: track all damage done (also counts as regular survival mode)
-	                               
-		StatsHook_S21_Solo_Damage_Done( attacker, damageAmount )
-       
-
-	                               
-		StatsHook_S21_Quad_DamageDone( attacker, damageAmount )
-       
-
-	// BattlePass Specific
-	if ( IsBitFlagSet( DamageInfo_GetCustomDamageType( damageInfo ), DF_MELEE ) )
-		__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.melee_damage_any_mode ), damageAmount )
-
-	if ( currentSeasonRefOrNull != null )
-		__Mode_IncrementStat_Int( attacker, CAREER_STATS.modes_season_damage_done, expect string( currentSeasonRefOrNull ), damageAmount )
-
-	int damageSourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-	StatsHook_LegendDamageAndAbilities( attacker, victim, damageAmount, damageSourceId )
-
-	// BEGIN: Weapon Damage
-	string ornull weaponClassNameOrNull = GetWeaponClassNameFromDamageInfo( damageInfo )
-	if ( weaponClassNameOrNull != null )
-	{
-		PIN_DamageDoneToPlayerForWeapon( attacker, expect string( weaponClassNameOrNull ), float(damageAmount), isHeadshot )
-		GameSummarySquadData gameSummaryData = GameSummary_GetPlayerData( attacker )
-		gameSummaryData.hits++
-		if ( isHeadshot )
-			gameSummaryData.headshots++
-
-		string category = "unknown"
-		if ( SURVIVAL_Loot_IsRefValid( expect string(weaponClassNameOrNull) ) )
-			category = GetEnumString( "eLootType", SURVIVAL_Loot_GetLootDataByRef( expect string(weaponClassNameOrNull) ).lootType )
-
-		if ( category == "ORDNANCE" ) // grenades, thermites, & arc stars
-			__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.damage_done_ordnance_any_mode ), damageAmount )
-
-		ItemFlavor ornull weaponFlavorOrNull = GetWeaponItemFlavorByClass( expect string(weaponClassNameOrNull) )
-		if ( weaponFlavorOrNull != null )
-		{
-			string weaponFlavorRef = ItemFlavor_GetGUIDString( expect ItemFlavor(weaponFlavorOrNull) )
-			__Mode_IncrementStat_Int( attacker, CAREER_STATS.modes_weapon_damage_done, weaponFlavorRef, damageAmount )
-
-                            
-                                                                
-                                 
-
-			// BattlePass Specific
-			if ( PlayerIsInADS( attacker ) == false )
-			{
-				__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.damage_done_hipfire_any_mode ), damageAmount )
-			}
-                            
-       
-    
-                                                              
-    
-                                 
-
-			array<string> baseMods = SURVIVAL_Weapon_GetBaseMods( expect string(weaponClassNameOrNull) )
-			if ( baseMods.find( "crate" ) != -1 )
-				__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.damage_with_red_weapons_any_mode ), damageAmount )
-
-			if ( isHeadshot )
-			{
-				__Mode_IncrementStat_Int( attacker, CAREER_STATS.modes_headshots, 1 )
-				__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.headshots_any_mode ), 1 )
-				__Mode_IncrementStat_Int( attacker, CAREER_STATS.modes_weapon_headshots, weaponFlavorRef, 1 )
-			}
-		}
-	}
-	// END: Weapon Damage
-	// END: Mode-Specific & Any-Mode Stats
-
-	// Mixtape LTMs use modes[mode_name] Persistence fields
-	if ( !Stats_ShouldGatherBRStatsInModeForPlayer( attacker ) || !victim.IsPlayer() )
-		return
-
-	// BEGIN: BR & BR-derived LTM Stats
-	// BR damage done for all things
-	__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.damage_done ), damageAmount )
-
-	// Battle Pass Specific
-	if ( fileLevel.currentDeathFieldStage == 0 )
-		__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.damage_done_first_ring_round_br ), damageAmount )
-
-	// BR damage done for all things WHILE mid air
-	if ( !attacker.IsOnGround() )
-		__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.damage_done_midair ), damageAmount )
-
-	ItemFlavor attackerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( attacker ), Loadout_Character() )
-	string attackerCharacterRef  = ItemFlavor_GetGUIDString( attackerCharacter )
-	__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.character_damage_done, attackerCharacterRef ), damageAmount )
-
-	if ( currentSeasonRefOrNull != null )
-	{
-		__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.season_character_damage_done, expect string(currentSeasonRefOrNull), attackerCharacterRef ), damageAmount )
-		__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.season_damage_done, expect string( currentSeasonRefOrNull ) ), damageAmount )
-	}
-
-	string ornull currentRankedPeriodRefOrNull = GetCurrentStatRankedPeriodRefOrNullByType( eItemType.calevent_rankedperiod )
-	if ( currentRankedPeriodRefOrNull != null && ShouldRecordRankedStats( attacker ) )
-		__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.rankedperiod_damage_done_base, expect string( currentRankedPeriodRefOrNull ) ), damageAmount )
-
-	// BEGIN: Weapon Damage
-	if ( weaponClassNameOrNull != null )
-	{
-		ItemFlavor ornull weaponFlavorOrNull = GetWeaponItemFlavorByClass( expect string(weaponClassNameOrNull) )
-		if ( weaponFlavorOrNull != null )
-		{
-			__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.hits ), 1 )
-			__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.character_hits, attackerCharacterRef ), 1 )
-
-			string weaponFlavorRef = ItemFlavor_GetGUIDString( expect ItemFlavor(weaponFlavorOrNull) )
-			__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.weapon_damage_done, weaponFlavorRef ), damageAmount )
-			__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.weapon_hits, weaponFlavorRef ), 1 )
-
-			string statsCategory = WeaponItemFlavor_GetStatsCategory( expect ItemFlavor( weaponFlavorOrNull ) )
-			bool isCrate = statsCategory == WEAPON_STAT_CATEGORY_CRATE_WEAPON
-			ItemFlavor ornull catOrNull = WeaponItemFlavor_GetCategory( expect ItemFlavor( weaponFlavorOrNull ) )
-			if ( catOrNull != null )
-			{
-				string category = WeaponCategoryFlavor_GetStatsKey( expect ItemFlavor( catOrNull ) )
-				__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.character_weaponcategory_damage_done, attackerCharacterRef, category ), damageAmount )
-				__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.character_weaponcategory_hits, attackerCharacterRef, category ), 1 )
-				if ( isCrate )
-				{
-					__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.character_weaponcategory_damage_done, attackerCharacterRef, WEAPON_STAT_CATEGORY_CRATE_WEAPON ), damageAmount )
-					__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.character_weaponcategory_hits, attackerCharacterRef, WEAPON_STAT_CATEGORY_CRATE_WEAPON ), 1 )
-				}
-			}
-
-			if ( isHeadshot )
-			{
-				__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.headshots ), 1 )
-				ItemFlavor ornull headCatOrNull = WeaponItemFlavor_GetCategory( expect ItemFlavor( weaponFlavorOrNull ) )
-				if ( headCatOrNull != null )
-				{
-					string headCategory = WeaponCategoryFlavor_GetStatsKey( expect ItemFlavor( headCatOrNull ) )
-					__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.character_weaponcategory_headshots, attackerCharacterRef, headCategory ), 1 )
-					if ( isCrate )
-						__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.character_weaponcategory_headshots, attackerCharacterRef, WEAPON_STAT_CATEGORY_CRATE_WEAPON ), 1 )
-				}
-				__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.weapon_headshots, weaponFlavorRef ), 1 )
-				__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.character_headshots, attackerCharacterRef ), 1 )
-			}
-		}
-	}
-	// END: Weapon Damage
-	// END: BR & BR-derived LTM Stats
-}
-#endif
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Loot player events //////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if SERVER
-
-table<entity, bool> t_fullyKittedPlayers
-
-void function OnPlayerLootPickup( entity user, entity lootPickup, string ref, int pickupCount, bool willDestroy, entity deathBox, int spawnSource )
-{
-	Assert( IsValid( user ) && user.IsPlayer() && IsValid( lootPickup ) )
-
-	if ( !Stats_PlayerIsValidForStats( user ) )
-		return
-
-	// we want to track ally pickup from Lifeline care packages across all modes
-	StatsHook_MedicCarePackage_OnPlayerLootPickup( user, lootPickup )
-
-	// we want to track care package openings across all modes
-	if ( lootPickup.e.spawnSource == eSpawnSource.DROPPOD  && !IsValid( GetBlackMarketInUseByPlayer( user ) ) )
-	{
-		entity droppod = lootPickup.GetParent()
-		if ( IsValid( droppod ) && droppod.e.sourceWeaponClassname == "" )
-		{
-			if ( !(user in droppod.e.stats_usersSet) )
-			{
-				ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( user ), Loadout_Character() )
-				string characterRef  = ItemFlavor_GetGUIDString( character )
-
-				__IncrementStat_Int( user, ResolveStatEntry( CAREER_STATS.neutral_airdrops_looted ), 1 )
-				__IncrementStat_Int( user, ResolveStatEntry( CAREER_STATS.character_neutral_airdrops_looted, characterRef ), 1 )
-			}
-			droppod.e.stats_usersSet[user] <- true
-		}
-	}
-
-	if ( !Stats_ShouldGatherBRStatsInModeForPlayer( user ) )
-		return
-
-	#if SERVER
-		StatsHook_Gameplay_LootedAllNonGoldWeaponsInOneMatch( user, ref )
-	#endif
-
-	LootData data = SURVIVAL_Loot_GetLootDataByRef( ref )
-	if ( data.lootType == eLootType.MAINWEAPON )
-	{
-
-                                    
-                                                                
-                                          
-
-		array<entity> weapons = user.GetMainWeapons()
-		int fullyKittedCount  = 0
-		foreach ( weapon in weapons )
-		{
-			LootData wData = SURVIVAL_GetLootDataFromWeapon( weapon )
-			if ( SURVIVAL_Weapon_IsFullyKitted( wData.ref ) )
-				fullyKittedCount++
-		}
-		if ( fullyKittedCount >= 2 && !(user in t_fullyKittedPlayers) && !IsGoldRushMode() ) // TODO: probably a better way to track this via new challenges functionality
-		{
-			__IncrementStat_Int( user, ResolveStatEntry( CAREER_STATS.times_fully_kitted ), 1 )
-			t_fullyKittedPlayers[user] <- true
-		}
-	}
-
-                                   
-                                            
-  
-                                                                              
-  
-                                                
-  
-                                                                                  
-  
-                                         
-
-	if ( lootPickup.e.spawnSource != eSpawnSource.PLAYER_DROP )
-	{
-		if ( data.tier == 3 )
-		{
-			__IncrementStat_Int( user, ResolveStatEntry( CAREER_STATS.looted_epic_item ), 1 )
-		}
-		else if ( data.tier == 4 )
-		{
-			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( user ), Loadout_Character() )
-			string characterRef  = ItemFlavor_GetGUIDString( character )
-
-			__IncrementStat_Int( user, ResolveStatEntry( CAREER_STATS.looted_legendary_item ), 1 )
-			__IncrementStat_Int( user, ResolveStatEntry( CAREER_STATS.character_looted_legendary_item, characterRef ), 1 )
-
-			if ( data.lootType == eLootType.ARMOR )
-				__IncrementStat_Int( user, ResolveStatEntry( CAREER_STATS.looted_legendary_armor ), 1 )
-			else if ( data.lootType == eLootType.HELMET )
-				__IncrementStat_Int( user, ResolveStatEntry( CAREER_STATS.looted_legendary_helmet ), 1 )
-		}
-	}
-}
-
-void function StatsHook_PlayerEquip( entity player )
-{
-	PIN_PlayerEquip( player )
-}
-
-void function StatsHook_PlayerUsedResource( entity player, entity itemEnt, string itemRef )
-{
-	PIN_PlayerUse( player, itemRef )
-
-	if ( SURVIVAL_NumItemsInInventory( player, itemRef ) == 0 )
-		PIN_PlayerOutResource( player, itemRef )
-}
-
-void function StatsHook_CraftingItemCrafted( entity player )
-{
-	if ( !Stats_PlayerIsValidForStats( player ) )
-		return
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.crafting_items_crafted_any_mode ), 1 ) // Items crafted in Any Mode
-
-	if( !Stats_ShouldGatherBRStatsInModeForPlayer( player ) )
-		return
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.crafting_items_crafted ), 1 ) // Items crafted in BR
-}
-
-void function StatsHook_CraftingMaterialsCollected( entity player, int amount )
-{
-	if( !Stats_ShouldGatherBRStatsInModeForPlayer( player ) )
-		return
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.crafting_materials_collected ), amount )
-}
-
-void function StatsHook_HarvesterExtracted( entity player )
-{
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.crafting_harvester_used_any_mode ), 1 )
-}
-
-
-void function StatsHook_OnPlayerOpenedLootBin( entity player, entity lootBin )
-{
-	if ( !Stats_PlayerIsValidForStats( player ) ) // lootbins are any mode
-		return
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.loot_bins ), 1 )
-}
-
-void function StatsHook_OnPlayerLandedSkydive( entity player )
-{
-	//if ( player.IsPlayer() )
-	//{
-	//	// deprecated
-	//}
-}
-
-void function StatsHook_OnPlayerCompletedChallenge( entity player, ItemFlavor challenge )
-{
-	if ( Challenge_GetTimeSpanKind( challenge ) == eChallengeTimeSpanKind.DAILY )
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.daily_challenges_completed ), 1 )
-}
-
-void function StatsHook_OnPlayerEarnedBPStars( entity player, int stars )
-{
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.challenge_stars_earned ), stars )
-}
-
-void function StatsHook_OnPlayerEarnedBPGrindPoints( entity player, int xpEarned )
-{
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.challenge_xp_earned ), xpEarned )
-}
-
-
-// TODO - R5DEV-413763
-void function StatsHook_UpdateCachedStatsThatDependOnGRX( entity player )
-{
-	if ( player.IsNPC() )
-		return
-
-	if ( player.p.isDisconnected )
-		return
-
-	StatsHook_UpdateCachedBattlePassLevelStats( player )
-
-	// TODO - R5DEV-413763: refactor me to just be variable counter stats and then adjust them based on actual GRX operations rather than doing this calculation
-	UpdateCalculatedStatCachedValue( player, ResolveStatEntry( CAREER_STATS.total_legendary_items ) )
-	UpdateCalculatedStatCachedValue( player, ResolveStatEntry( CAREER_STATS.fashionista ) )
-	UpdateCalculatedStatCachedValue( player, ResolveStatEntry( CAREER_STATS.weapons_with_legendary_skin ) )
-}
-
-void function StatsHook_UpdateCachedBattlePassLevelStats( entity player )
-{
-	string ornull currentSeasonRefOrNull = GetCurrentStatSeasonRefOrNull()
-	if ( currentSeasonRefOrNull != null )
-	{
-		string currentSeasonRef = expect string(currentSeasonRefOrNull)
-		UpdateCalculatedStatCachedValue( player, ResolveStatEntry( CAREER_STATS.season_battlepass_level, currentSeasonRef ) ) // this is the only thing we need, but can be refactored to be an incrementing counter
-	}
-}
-
-// TODO - R5DEV-413763: delete the similarly named function above and replace with this one ONLY once we are confident in functionality
-void function StatsHook_UpdateCachedStatsThatDependOnGRXThreaded( entity player )
-{
-	EndSignal( player, "OnDestroy" )
-	EndSignal( player, "OnDisconnecting" )
-
-	if ( player.IsNPC() )
-		return
-
-	StatsHook_UpdateCachedBattlePassLevelStats( player )
-
-	wait 0.1
-
-	// the next two depend on this having run first so make sure it runs
-	if ( GetCurrentPlaylistVarBool( "has_grx_badge_stats_opts", true ) )
-		waitthread UpdateCalculatedStatCachedValue( player, ResolveStatEntry( CAREER_STATS.total_legendary_items ) ) // baller
-	else
-		thread UpdateCalculatedStatCachedValue( player, ResolveStatEntry( CAREER_STATS.total_legendary_items ) ) // baller
-
-	wait 0.1
-
-	thread UpdateCalculatedStatCachedValue( player, ResolveStatEntry( CAREER_STATS.fashionista ) ) // fashionista
-
-	wait 0.1
-
-	thread UpdateCalculatedStatCachedValue( player, ResolveStatEntry( CAREER_STATS.weapons_with_legendary_skin ) ) // warlord
-}
-// TODO - R5DEV-413763: REFACTOR BLOCK END
-
-void function StatsHook_EvoArmorEvolved( entity player, int tier )
-{
-	if ( !Stats_ShouldGatherBRStatsInModeForPlayer( player ) )
-		return
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.evoarmor_evolves ), 1 )
-	if ( tier == 3 )
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.evoarmor_evolves_to_purple ), 1 )
-	else if ( tier == 4 )
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.evoarmor_evolves_to_red ), 1 )
-}
-
-void function StatsHook_VoidRing_RingDamagePrevented( entity player, int damagePrevented )
-{
-	if ( !Stats_ShouldGatherBRStatsInModeForPlayer( player ) )
-		return
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.voidring_damage_prevented ), damagePrevented )
-
-}
-
-#endif
-
-#if SERVER
-                   
-void function StatsHook_RingConsoleScanned( entity player )
-{
-	if ( !IsValid( player ) || !Perks_DoesPlayerHavePerk( player, ePerkIndex.BEACON_SCAN ) || !Stats_PlayerIsValidForStats( player ) )
-		return
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.ring_consoles_used ), 1 )
-}
-
-void function StatsHook_WeaponsSupplyBinLooted( entity player )
-{
-	if ( !IsValid( player ) || !Perks_DoesPlayerHavePerk( player, ePerkIndex.MUNITIONS_BOX ) || !Stats_PlayerIsValidForStats( player ) )
-		return
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.weapon_supply_bins_looted ), 1 )
-}
-void function StatsHook_ExtendedSupplyBinLooted( entity player )
-{
-	if ( !IsValid( player ) || !Perks_DoesPlayerHavePerk( player, ePerkIndex.EXTRA_BIN_LOOT ) || !Stats_PlayerIsValidForStats( player ) )
-		return
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.extended_supply_bins_looted ), 1 )
-}
-void function StatsHook_CarePackageRevealed( entity player )
-{
-	if ( !IsValid( player ) || !Perks_DoesPlayerHavePerk( player, ePerkIndex.CARE_PACKAGE_INSIGHT ) || !Stats_PlayerIsValidForStats( player ) )
-		return
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.care_packages_revealed ), 1 )
-}
-
-void function StatsHook_ScannedSquadKilled( entity player )
-{
-	if ( !IsValid( player ) || !Perks_DoesPlayerHavePerk( player, ePerkIndex.BEACON_ENEMY_SCAN ) || !Stats_PlayerIsValidForStats( player ) )
-		return
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.beacon_scanned_squads_killed ), 1 )
-}
-
-void function StatsHook_ScannedRingLocationReached( entity player )
-{
-	if ( !IsValid( player ) || !Perks_DoesPlayerHavePerk( player, ePerkIndex.BEACON_SCAN ) || !Stats_PlayerIsValidForStats( player ) )
-		return
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.scanned_ring_locations_reached ), 1 )
-}
-
-void function StatsHook_RespawnBannerCrafted( entity player )
-{
-	if ( !IsValid( player ) || !Perks_DoesPlayerHavePerk( player, ePerkIndex.BANNER_CRAFTING ) || !Stats_PlayerIsValidForStats( player ) )
-		return
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.respawn_banners_crafted ), 1 )
-}
-
-void function StatsHook_RevealedCarePackageLooted( entity player )
-{
-	if ( !IsValid( player ) || !Perks_DoesPlayerHavePerk( player, ePerkIndex.CARE_PACKAGE_INSIGHT ) || !Stats_PlayerIsValidForStats( player ) )
-		return
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.revealed_care_packages_looted ), 1 )
-}
-
-void function StatsHook_WeaponSupplyBinHighTierLootAwarded( entity player, int count )
-{
-	if ( !IsValid( player ) || !Perks_DoesPlayerHavePerk( player, ePerkIndex.MUNITIONS_BOX ) || !Stats_PlayerIsValidForStats( player ) )
-		return
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.weapon_supply_bin_epics_looted ), count )
-}
-      
-
-                     
- void function StatsHook_UpgradeSelected( entity player )
- {
-	 if ( !IsValid( player ) || !Stats_PlayerIsValidForStats( player )  )
-		 return
-
-	 __IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.legend_upgrades_selected ), 1 )
- }
-       
-
-#endif //SERVER
-
-//////////////////////////////
-// Challenge-related events //
-//////////////////////////////
-#if SERVER
-void function StatsHook_IncrementStatEntryForChallengeReward( entity player, string statEntryRef, int amount )
-{
-	__IncrementStat_Int( player, GetStatEntryByRef( statEntryRef ), amount )
-}
-#endif
-
-
-////////////
-// Ranked //
-////////////
- #if SERVER
-void function StatsHook_SetRankedScore( entity player, int eRankedMode, string guidString, int score )
-{
-	if ( eRankedMode == MATCHRANKEDMODE_RANKED )
-		__SetStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_current_rank_score, guidString ), score )
-                     
-	else if ( eRankedMode == MATCHRANKEDMODE_RANKED_ARENA )
-		__SetStat_Int( player, ResolveStatEntry( CAREER_STATS.arenas_rankedperiod_current_rank_score, guidString ), score )
-                           
-}
-
-void function StatsHook_SetRankedBadgeLevel( entity player, int eRankedMode, string guidString, int level )
-{
-	if ( eRankedMode == MATCHRANKEDMODE_RANKED )
-		__SetStat_Int( player, ResolveStatEntry( CAREER_STATS.rankedperiod_badge_award_level, guidString ), level )
-                     
-	else if ( eRankedMode == MATCHRANKEDMODE_RANKED_ARENA )
-		__SetStat_Int( player, ResolveStatEntry( CAREER_STATS.arenas_rankedperiod_badge_award_level, guidString ), level )
-                           
-}
-#endif // SERVER
-
-
-/////////////////////////
-// Map-specific events //
-/////////////////////////
-
-#if SERVER
-void function StatsHook_OnPlayerSaidThanks( entity player )
-{
-	if ( player.p.hasTickedThanksStatThisGame )
-		return
-
-	player.p.hasTickedThanksStatThisGame = true
-
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
-	string characterRef  = ItemFlavor_GetGUIDString( character )
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.thanks ), 1 )
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_thanks, characterRef ), 1 )
-}
-#endif
-
-                     
-#if SERVER
-void function StatsHook_HoverVehicle_OnDistanceTraveledAsOccupant( entity player, float distance )
-{
-	if ( !Stats_ShouldGatherBRStatsInModeForPlayer( player ) )
-		return
-
-	float meters = (distance * INCHES_TO_METERS)
-	int intMeters = int( meters + 0.5 )
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.hovervehicle_occupant_meters_traveled ), intMeters )
-}
-#endif // #if SERVER
-                               
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Mode-specific events /////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                      
-#if SERVER
-void function StatsHook_OnPlayerCapturedWinterExpress( entity player )
-{
-	/*if ( CalEvent_IsActive( GetItemFlavorByAsset( $"settings/itemflav/calevent/s07e01_buffet.rpak" ), GetUnixTimestamp() ) )
-		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.s07e01_winter_express_captures ), 1 )*/
-}
-#endif // #if SERVER
-                                
-
-#if SERVER
-void function StatsHook_S12E04_UpdateChallengeStat( entity player, StatTemplate template, int score )
-{
-	if ( !IsValid ( player ) )
-		return
-
-	int oldScore = GetStat_Int( player, ResolveStatEntry( template ), eStatGetWhen.CURRENT )
-	if ( score > oldScore )
-		__SetStat_Int( player, ResolveStatEntry( template ), score )
-}
-#endif
-
-                  
-          
-                                                                                 
- 
-                          
-        
-
-                  
-        
-
-                                                                                         
- 
-      
-      
-
-#if SERVER
-void function StatHook_UpdateCurrentEventCurrencyStat( entity player, int currencyAmount, ItemFlavor event )
-{
-	if ( !IsValid( player ) || currencyAmount <= 0 )
-	{
-		return
-	}
-
-	string statRef = EventShop_GetTotalCurrencyStat( event )
-	StatEntry entry = GetStatEntryByRef( statRef )
-
-	__IncrementStat_Int( player, entry, currencyAmount )
-}
-#endif // SERVER
-
-// TODO - R5DEV-353885: we should move these to GRX. These are expensive. GRX ownership would be much cheaper.
-/////////////////////////////////////////////
-/////////////////////////////////////////////
-//// Calculated stat functions callbacks ////
-/////////////////////////////////////////////
-/////////////////////////////////////////////
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 StatCalcFuncInfo function SetupGetAccountLevelForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
 {
 	StatCalcFuncInfo info
@@ -2987,15 +2986,15 @@ StatCalcFuncInfo function SetupGetAccountLevelForStat( StatEntry calcEntry, arra
 
 	return info
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 StatCalcFuncInfo function SetupGetTotalLegendaryItemsForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
 {
 	StatCalcFuncInfo info
 
 	info.calcFunc_Int = (int function ( entity player, array<StatEntry> sourceEntries, int when ) {
-		// do NOT assert; it's okay to allow out of date data here. NO --> Assert( GRX_IsInventoryReady( player ) )
+		
 
 		int count = 0
 		if ( GetCurrentPlaylistVarBool( "has_grx_badge_stats_opts", true ) )
@@ -3031,9 +3030,9 @@ StatCalcFuncInfo function SetupGetTotalLegendaryItemsForStat( StatEntry calcEntr
 
 	return info
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 StatCalcFuncInfo function SetupGetNumCharactersWithBannersOnceFilledForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
 {
 	StatCalcFuncInfo info
@@ -3051,78 +3050,78 @@ StatCalcFuncInfo function SetupGetNumCharactersWithBannersOnceFilledForStat( Sta
 
 	return info
 }
-#endif
-
-#if SERVER
-void function InitTotalCompleteBannersStatHooks()
-{
-	foreach ( characterRef in GetAllCharacterGUIDStringsForStats() )
-	{
-		ItemFlavor character = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( characterRef ) )
-		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_GladiatorCardFrame( character ), void function( entity player, ItemFlavor unused ) : ( character ) {
-			OnPlayerModifiedBannerSlot( player, character )
-		} )
-		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_GladiatorCardStance( character ), void function( entity player, ItemFlavor unused ) : ( character ) {
-			OnPlayerModifiedBannerSlot( player, character )
-		} )
-
-		for ( int iterBadgeIndex = 0; iterBadgeIndex < GLADIATOR_CARDS_NUM_BADGES; iterBadgeIndex++ )
-			AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_GladiatorCardBadge( character, iterBadgeIndex ), void function( entity player, ItemFlavor unused ) : ( character ) {
-				OnPlayerModifiedBannerSlot( player, character )
-			} )
-
-		for ( int iterTrackerIndex = 0; iterTrackerIndex < GLADIATOR_CARDS_NUM_TRACKERS; iterTrackerIndex++ )
-			AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_GladiatorCardStatTracker( character, iterTrackerIndex ), void function( entity player, ItemFlavor unused ) : ( character ) {
-				OnPlayerModifiedBannerSlot( player, character )
-			} )
-	}
-}
-#endif
-#if SERVER
-void function OnPlayerModifiedBannerSlot( entity player, ItemFlavor character )
-{
-	if ( !IsLobby() )
-		return
-
-	if ( player.IsNPC() )
-		return
-
-	if ( GetEHIScriptStruct( player ).HACK_wasJustValidated )
-		return // only update stat when they actually change their selection
-
-	array<LoadoutEntry> slots = [
-		Loadout_GladiatorCardFrame( character ),
-		Loadout_GladiatorCardStance( character ),
-	]
-
-	for ( int iterBadgeIndex = 1; iterBadgeIndex < GLADIATOR_CARDS_NUM_BADGES; iterBadgeIndex++ )
-		slots.append( Loadout_GladiatorCardBadge( character, iterBadgeIndex ) )
-
-	for ( int iterTrackerIndex = 1; iterTrackerIndex < GLADIATOR_CARDS_NUM_TRACKERS; iterTrackerIndex++ )
-		slots.append( Loadout_GladiatorCardStatTracker( character, iterTrackerIndex ) )
-
-	bool allSlotsFilled = true
-	foreach ( LoadoutEntry entry in slots )
-	{
-		if ( !LoadoutSlot_IsReady( ToEHI( player ), entry ) )
-			return // todo(dw): not sure if this is really needed
-
-		if ( LoadoutSlot_GetItemFlavor( ToEHI( player ), entry ) == GetDefaultItemFlavorForLoadoutSlot( ToEHI( player ), entry ) )
-		{
-			allSlotsFilled = false
-			break
-		}
-	}
-	if ( allSlotsFilled )
-	{
-		__SetStat_Int( player, ResolveStatEntry( CAREER_STATS.character_banner_once_filled, ItemFlavor_GetGUIDString( character ) ), 1 )
-		UpdateCalculatedStatCachedValue( player, ResolveStatEntry( CAREER_STATS.num_characters_with_banners_once_filled ) )
-	}
-}
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 StatCalcFuncInfo function SetupGetStarterPackStatusForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
 {
 	StatCalcFuncInfo info
@@ -3134,9 +3133,9 @@ StatCalcFuncInfo function SetupGetStarterPackStatusForStat( StatEntry calcEntry,
 
 	return info
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 StatCalcFuncInfo function SetupGetFounderPackStatusForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
 {
 	StatCalcFuncInfo info
@@ -3148,28 +3147,28 @@ StatCalcFuncInfo function SetupGetFounderPackStatusForStat( StatEntry calcEntry,
 
 	return info
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 StatCalcFuncInfo function SetupGetTwitchPackStatusForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
 {
 	StatCalcFuncInfo info
 
 	info.calcFunc_Int = (int function ( entity player, array<StatEntry> sourceEntries, int when ) {
-		#if SERVER || CLIENT
+
 			return player.DoesUserHaveTwitchPrimeReward( "twitch_launch_promo" ) ? 1 : 0
-		#endif
-		#if UI
-			return GetConVarInt( "twitch_prime_rewards" ) > 0 ? 1 : 0
-		#endif
+
+
+
+
 	})
 
 	return info
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 StatCalcFuncInfo function SetupGetEAAccessStatusForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
 {
 	StatCalcFuncInfo info
@@ -3180,15 +3179,15 @@ StatCalcFuncInfo function SetupGetEAAccessStatusForStat( StatEntry calcEntry, ar
 
 	return info
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 StatCalcFuncInfo function SetupGetCountOfCharactersWithLegendarySkinAndExecutionForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
 {
 	StatCalcFuncInfo info
 
 	info.calcFunc_Int = (int function ( entity player, array<StatEntry> sourceEntries, int when ) {
-		// do NOT assert; it's okay to allow out of date data here. NO --> Assert( GRX_IsInventoryReady( player ) )
+		
 
 		int count = 0
 		if ( GetCurrentPlaylistVarBool( "has_grx_badge_stats_opts", true ) )
@@ -3203,7 +3202,7 @@ StatCalcFuncInfo function SetupGetCountOfCharactersWithLegendarySkinAndExecution
 				array<ItemFlavor> characterSkins = GetValidItemFlavorsForLoadoutSlot( ToEHI( player ), Loadout_CharacterSkin( character ) )
 				foreach ( ItemFlavor flav in ehiss.legendaryItemsOwnedByPlayer )
 				{
-					if ( characterSkins.find( flav ) != -1 )
+					if ( characterSkins.contains( flav ) )
 					{
 						hasLegendarySkin = true
 						break
@@ -3213,7 +3212,7 @@ StatCalcFuncInfo function SetupGetCountOfCharactersWithLegendarySkinAndExecution
 				array<ItemFlavor> executions = GetValidItemFlavorsForLoadoutSlot( ToEHI( player ), Loadout_CharacterExecution( character ) )
 				foreach ( ItemFlavor flav in ehiss.legendaryItemsOwnedByPlayer )
 				{
-					if ( executions.find( flav ) != -1 )
+					if ( executions.contains( flav ) )
 					{
 						hasLegendaryFinisher = true
 						break
@@ -3262,15 +3261,15 @@ StatCalcFuncInfo function SetupGetCountOfCharactersWithLegendarySkinAndExecution
 
 	return info
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 StatCalcFuncInfo function SetupGetCountOfWeaponsWithLegendarySkinsForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
 {
 	StatCalcFuncInfo info
 
 	info.calcFunc_Int = (int function ( entity player, array<StatEntry> sourceEntries, int when ) {
-		// do NOT assert; it's okay to allow out of date data here. NO --> Assert( GRX_IsInventoryReady( player ) )
+		
 
 		int count = 0
 		if ( GetCurrentPlaylistVarBool( "has_grx_badge_stats_opts", true ) )
@@ -3281,7 +3280,7 @@ StatCalcFuncInfo function SetupGetCountOfWeaponsWithLegendarySkinsForStat( StatE
 				array<ItemFlavor> weaponSkins = GetValidItemFlavorsForLoadoutSlot( ToEHI( player ), Loadout_WeaponSkin( weapon ) )
 				foreach ( ItemFlavor flav in ehiss.legendaryItemsOwnedByPlayer )
 				{
-					if ( weaponSkins.find( flav ) != -1 )
+					if ( weaponSkins.contains( flav ) )
 					{
 						count++
 						break
@@ -3310,9 +3309,9 @@ StatCalcFuncInfo function SetupGetCountOfWeaponsWithLegendarySkinsForStat( StatE
 
 	return info
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 StatCalcFuncInfo function SetupGetCountOfCharactersWithWellRoundedDamageForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
 {
 	StatCalcFuncInfo info
@@ -3330,25 +3329,25 @@ StatCalcFuncInfo function SetupGetCountOfCharactersWithWellRoundedDamageForStat(
 
 	return info
 }
-#endif
 
 
-// TODO - R5DEV-413763: deprecated. deleteme
-#if SERVER || CLIENT || UI
+
+
+
 StatCalcFuncInfo function SetupGetTreasureHunterStatusForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
 {
 	StatCalcFuncInfo info
 
 	info.calcFunc_Int = (int function ( entity player, array<StatEntry> sourceEntries, int when ) {
-		//TODO Times Looted Status
+		
 		return 0
 	})
 
 	return info
 }
-#endif
 
-#if (SERVER || CLIENT || UI)
+
+
 StatCalcFuncInfo function SetFirstPlayedUnixTime( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
 {
 	StatCalcFuncInfo info
@@ -3357,23 +3356,23 @@ StatCalcFuncInfo function SetFirstPlayedUnixTime( StatEntry calcEntry, array<Sta
 		int launchUnixTime           = 1549310400
 		int daysInstalledAfterLaunch = (player.GetPersistentVarAsInt( "installUnixTime" ) - launchUnixTime) / SECONDS_PER_DAY
 
-		// 2 means first week
+		
 		if ( daysInstalledAfterLaunch <= 7 )
 			return 2
 
-		// 1 means first month
+		
 		if ( daysInstalledAfterLaunch <= 31 )
 			return 1
 
-		// everyone else
+		
 		return 0
 	})
 
 	return info
 }
-#endif
 
-#if SERVER || CLIENT || UI
+
+
 StatCalcFuncInfo function SetupGetCountOfCharactersWithTenWinsForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
 {
 	StatCalcFuncInfo info
@@ -3391,26 +3390,26 @@ StatCalcFuncInfo function SetupGetCountOfCharactersWithTenWinsForStat( StatEntry
 
 	return info
 }
-#endif
- 
- #if SERVER
- bool function IsValidTacticalDamageStatTarget( entity attacker, entity target, bool functionref( entity, entity ) addlCheckFunc = null )
-{
-	bool acceptableTargetCheck = IsValid( target )
-	acceptableTargetCheck = acceptableTargetCheck && target.IsPlayer()
-	acceptableTargetCheck = acceptableTargetCheck && ( attacker != target )
 
-	bool addlCheck = true
-	if( addlCheckFunc != null )
-	{
-		addlCheck = addlCheckFunc( attacker, target )
-	}
 
-	bool acceptable = acceptableTargetCheck && addlCheck
 
-	return( acceptable )
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 string function GetStatsStringWithoutGamemode( string originalString )
 {
@@ -3419,7 +3418,7 @@ string function GetStatsStringWithoutGamemode( string originalString )
 	if ( start < 0 || end < 0 )
 		return originalString
 
-	string modeString = originalString.slice( start, end + 2 ) // the +2 is the length of "]."
+	string modeString = originalString.slice( start, end + 2 ) 
 	return replace( originalString, modeString, "" )
 }
 
@@ -3441,19 +3440,19 @@ string function ShStats_GenerateStatLocStringFromStatRef_Long( string statRef )
 	return "#STAT_REF_LONG_" + GetStatsStringWithoutGamemode( statRef.toupper() )
 }
 
-#if SERVER || CLIENT || UI
-// not *technically* stats but keeps us from needing to preserve ranked arenas script which is otherwise now not needed
+
+
 int function ArenasRanked_GetHistoricalPeakHighScore( entity player )
 {
-	// highestArenasRankedScore
+	
 	int max = 0
 	foreach ( string arenasRankedPeriod in ARENAS_RANKED_PERIODS_REFS )
 	{
-		#if UI
-			int score =  GetPersistentVarAsInt( "arenasRankedData[" + arenasRankedPeriod + "].highestArenasRankedScore" )
-		#else
+
+
+
 			int score =  player.GetPersistentVarAsInt( "arenasRankedData[" + arenasRankedPeriod + "].highestArenasRankedScore" )
-		#endif
+
 		if ( score > max )
 			max = score
 	}
@@ -3463,60 +3462,61 @@ int function ArenasRanked_GetHistoricalPeakHighScore( entity player )
 
 int function ArenasRanked_GetHistoricalPeakLadderPosition( entity player )
 {
-	// int endFirstSplitLadderPosition
-	// int endSeriesLadderPosition
+	
+	
 	int max = SHARED_RANKED_INVALID_LADDER_POSITION
 	foreach ( string arenasRankedPeriod in ARENAS_RANKED_PERIODS_REFS )
 	{
-		#if UI
-			int pos1 =  GetPersistentVarAsInt( "arenasRankedData[" + arenasRankedPeriod + "].endFirstSplitLadderPosition" )
-			int pos2 =  GetPersistentVarAsInt( "arenasRankedData[" + arenasRankedPeriod + "].endSeriesLadderPosition" )
-		#else
+
+
+
+
 			int pos1 =  player.GetPersistentVarAsInt( "arenasRankedData[" + arenasRankedPeriod + "].endFirstSplitLadderPosition" )
 			int pos2 =  player.GetPersistentVarAsInt( "arenasRankedData[" + arenasRankedPeriod + "].endSeriesLadderPosition" )
-		#endif
+
 		if ( pos1 > max || pos2 > max )
 			max = maxint( pos1, pos2 )
 	}
 
 	return max
 }
-#endif
-
-                             
-#if SERVER
-// Increment when a player captures an objective in Treasure Hunt Mode
-void function StatsHook_TreasureHunt_OnObjectiveCaptured( entity player )
-{
-	if ( !IsValid( player ) )
-		return
-
-	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.gamemode_treasurehunt_objectives_captured ), 1 )
-}
-#endif // SERVER
-                                   
-
-                  
-          
-                                                                                  
- 
-                                                                                                            
-                                                     
- 
-      
-
-      
-                                                       
- 
-                                                                                                        
- 
-      
-      
 
 
-#if SERVER
-void function Ranked_SetLastGameParticipationScore( entity player, int score )
-{
-	__SetStat_Int( player, ResolveStatEntry( CAREER_STATS.lastGameParticipationScore ), score )
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

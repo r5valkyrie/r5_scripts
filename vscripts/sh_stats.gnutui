@@ -1,0 +1,3522 @@
+
+
+
+global function ShStats_LevelInit
+global function GetRegisteredStatEnumStruct
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+global function ShStats_GenerateStatLocStringFromStatRef
+global function ShStats_GenerateStatLocStringFromStatRef_Long
+
+
+global function ArenasRanked_GetHistoricalPeakLadderPosition
+global function ArenasRanked_GetHistoricalPeakHighScore
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+global enum eStatEnumStructRefs
+{
+	
+	ARENA_RANKED_PERIOD,
+	CHARACTER,
+	MODE,
+	RANKED_PERIOD,
+	SEASON,
+	WEAPON,
+	WEAPON_CATEGORY,
+
+	
+	CHARACTER_WEAPONCATEGORY,
+	MODE_CHARACTER,
+	MODE_SEASON,
+	MODE_WEAPON,
+	MODE_WEWAPONCATEGORY,
+	RANKED_PERIOD_CHARACTER,
+	SEASON_CHARACTER,
+}
+
+struct
+{
+
+
+
+} file
+
+struct FileStruct_LifetimeLevel
+{
+
+
+
+
+
+
+
+
+
+
+
+	
+	table< int, StatEnumStruct > statEnumStructMap
+}
+FileStruct_LifetimeLevel& fileLevel
+
+
+
+
+void function ShStats_LevelInit()
+{
+
+
+
+
+	FileStruct_LifetimeLevel newFileLevel
+	fileLevel = newFileLevel
+
+	RegisterAllStats()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	ShStats_Beginner_LevelInit()
+	ShStats_Gameplay_LevelInit()
+	ShStatsDefs_Init()
+}
+
+
+
+void function RegisterStatEnumStructs()
+{
+	
+	array< string > allArenaRankedPeriodGUIDs
+	foreach( ItemFlavor arenaRankedPeriodFlav in GetAllRankedPeriodCalEventFlavorsByType( eItemType.calevent_arenas_ranked_period ) )
+	{
+		allArenaRankedPeriodGUIDs.append( ItemFlavor_GetGUIDString( arenaRankedPeriodFlav ) )
+	}
+
+	fileLevel.statEnumStructMap[ eStatEnumStructRefs.ARENA_RANKED_PERIOD ] <- RegisterStatEnumStruct( null, "arenasrankedperiods", "eArenasRankedPeriodFlavor", allArenaRankedPeriodGUIDs )
+
+	
+	array< string > allCharacterGUIDs = GetAllCharacterGUIDStringsForStats()
+	fileLevel.statEnumStructMap[ eStatEnumStructRefs.CHARACTER ] <- RegisterStatEnumStruct( null, "characters", "eCharacterFlavor", allCharacterGUIDs )
+
+	
+	fileLevel.statEnumStructMap[ eStatEnumStructRefs.MODE ] <- RegisterStatEnumStruct( null, "modes", "eModesFlavors", STATS_ALTERNATE_MODE_REFS )
+
+	
+	array< string > allRankedPeriodGUIDs = []
+	array< ItemFlavor > allRankedPeriodFlavs = GetAllRankedPeriodCalEventFlavorsByType( eItemType.calevent_rankedperiod )
+	allRankedPeriodFlavs.extend( Ranked_GetAllRanked2Pt0Periods() )
+	foreach ( ItemFlavor rankedPeriodFlav in allRankedPeriodFlavs )
+	{
+		allRankedPeriodGUIDs.append( ItemFlavor_GetGUIDString( rankedPeriodFlav ) )
+	}
+
+	fileLevel.statEnumStructMap[ eStatEnumStructRefs.RANKED_PERIOD ] <- RegisterStatEnumStruct( null, "rankedperiods", "eRankedStatPeriod", allRankedPeriodGUIDs )
+
+	
+	array< string > allSeasonGUIDs = []
+	foreach( ItemFlavor seasonflav in GetAllSeasonFlavors() )
+	{
+		allSeasonGUIDs.append( ItemFlavor_GetGUIDString( seasonflav ) )
+	}
+
+	fileLevel.statEnumStructMap[ eStatEnumStructRefs.SEASON ] <- RegisterStatEnumStruct( null, "seasons", "eSeasonFlavor", allSeasonGUIDs )
+
+	
+	array< string > allWeaponGUIDs = []
+	array< string > allLootWeaponStatsCategories = []
+	foreach( ItemFlavor weaponFlav in GetAllWeaponItemFlavors() )
+	{
+		string weaponGUID = ItemFlavor_GetGUIDString( weaponFlav )
+		allWeaponGUIDs.append( weaponGUID )
+
+		string weaponCategory = WeaponItemFlavor_GetStatsCategory( weaponFlav )
+		bool isGoldWeapon = ( weaponCategory == WEAPON_STAT_CATEGORY_CRATE_WEAPON )
+
+		if ( isGoldWeapon )
+		{
+			string goldStatsCategory = WeaponCategoryFlavor_GetStatsKey( WeaponItemFlavor_GetCategory ( weaponFlav ) )
+			if ( !allLootWeaponStatsCategories.contains( goldStatsCategory ) )
+			{
+				allLootWeaponStatsCategories.append( goldStatsCategory )
+			}
+		}
+
+		if ( !allLootWeaponStatsCategories.contains( weaponCategory ) )
+		{
+			allLootWeaponStatsCategories.append( weaponCategory )
+		}
+	}
+
+	fileLevel.statEnumStructMap[ eStatEnumStructRefs.WEAPON ] <- RegisterStatEnumStruct( null, "weapons", "eWeaponFlavor", allWeaponGUIDs )
+	fileLevel.statEnumStructMap[ eStatEnumStructRefs.WEAPON_CATEGORY ] <- RegisterStatEnumStruct( null, "weaponcategories", "eWeaponStatCategory", allLootWeaponStatsCategories )
+
+	
+	fileLevel.statEnumStructMap[ eStatEnumStructRefs.CHARACTER_WEAPONCATEGORY ] <- RegisterStatEnumStruct( GetRegisteredStatEnumStruct( eStatEnumStructRefs.CHARACTER ), "weaponcategories", "eWeaponStatCategory", allLootWeaponStatsCategories )
+
+	
+	
+	fileLevel.statEnumStructMap[ eStatEnumStructRefs.MODE_CHARACTER ] <- RegisterStatEnumStruct( GetRegisteredStatEnumStruct( eStatEnumStructRefs.MODE ), "characters", "eCharacterFlavor", allCharacterGUIDs )
+
+	
+	fileLevel.statEnumStructMap[ eStatEnumStructRefs.MODE_SEASON ] <- RegisterStatEnumStruct( GetRegisteredStatEnumStruct( eStatEnumStructRefs.MODE ), "seasons", "eSeasonFlavor", allSeasonGUIDs )
+
+	
+	fileLevel.statEnumStructMap[ eStatEnumStructRefs.MODE_WEAPON ] <- RegisterStatEnumStruct( GetRegisteredStatEnumStruct( eStatEnumStructRefs.MODE ), "weapons", "eWeaponFlavor", allWeaponGUIDs )
+
+	
+	fileLevel.statEnumStructMap[ eStatEnumStructRefs.MODE_WEWAPONCATEGORY ] <- RegisterStatEnumStruct( GetRegisteredStatEnumStruct( eStatEnumStructRefs.MODE ), "weaponcategories", "eWeaponStatCategory", allLootWeaponStatsCategories )
+
+	
+	fileLevel.statEnumStructMap[ eStatEnumStructRefs.SEASON_CHARACTER ] <- RegisterStatEnumStruct( GetRegisteredStatEnumStruct( eStatEnumStructRefs.SEASON ), "characters", "eCharacterFlavor", allCharacterGUIDs )
+
+	
+	fileLevel.statEnumStructMap[ eStatEnumStructRefs.RANKED_PERIOD_CHARACTER ] <-  RegisterStatEnumStruct( GetRegisteredStatEnumStruct( eStatEnumStructRefs.RANKED_PERIOD ), "characters", "eCharacterFlavor", allCharacterGUIDs )
+}
+
+StatEnumStruct function GetRegisteredStatEnumStruct( int ref )
+{
+	Assert( ref in fileLevel.statEnumStructMap, format("Attempted to fetch an unknown/invalid StatEnumStruct ref: %d", ref) )
+	return fileLevel.statEnumStructMap[ ref ]
+}
+
+void function RegisterAllStats()
+{
+	RegisterStatEnumStructs()
+
+	CAREER_STATS.account_level = RegisterExpensiveCalculatedStat_Int( null, "account_level", BADGES_UNLOCK_NEED, SetupGetAccountLevelForStat, [], eChallengeGameMode.NON_MODE )
+	CAREER_STATS.total_legendary_items = RegisterCachedCalculatedStat_Int( null, "total_legendary_items", DELAY_WRITE_BACK_UNTIL_MATCH_END, SetupGetTotalLegendaryItemsForStat, [], eChallengeGameMode.NON_MODE )
+	CAREER_STATS.num_characters_with_banners_once_filled = RegisterCachedCalculatedStat_Int( null, "num_characters_with_banners_once_filled", DELAY_WRITE_BACK_UNTIL_MATCH_END, SetupGetNumCharactersWithBannersOnceFilledForStat, [], eChallengeGameMode.NON_MODE )
+	CAREER_STATS.ea_access_member = RegisterExpensiveCalculatedStat_Int( null, "ea_access_member", DELAY_WRITE_BACK_UNTIL_MATCH_END, SetupGetEAAccessStatusForStat, [], eChallengeGameMode.NON_MODE )
+	CAREER_STATS.fashionista = RegisterCachedCalculatedStat_Int( null, "fashionista", DELAY_WRITE_BACK_UNTIL_MATCH_END, SetupGetCountOfCharactersWithLegendarySkinAndExecutionForStat, [], eChallengeGameMode.NON_MODE )
+	CAREER_STATS.weapons_with_legendary_skin = RegisterCachedCalculatedStat_Int( null, "weapons_with_legendary_skin", DELAY_WRITE_BACK_UNTIL_MATCH_END, SetupGetCountOfWeaponsWithLegendarySkinsForStat, [], eChallengeGameMode.NON_MODE )
+	CAREER_STATS.well_rounded = RegisterCachedCalculatedStat_Int( null, "well_rounded", BADGES_UNLOCK_NEED, SetupGetCountOfCharactersWithWellRoundedDamageForStat, [], eChallengeGameMode.BATTLE_ROYALE )
+	CAREER_STATS.looted_all_launch_loot_once = RegisterCachedCalculatedStat_Int( null, "looted_all_launch_loot_once", BADGES_UNLOCK_NEED, SetupGetTreasureHunterStatusForStat, [], eChallengeGameMode.BATTLE_ROYALE )
+	CAREER_STATS.master_of_all = RegisterCachedCalculatedStat_Int( null, "master_of_all", BADGES_UNLOCK_NEED, SetupGetCountOfCharactersWithTenWinsForStat, [], eChallengeGameMode.BATTLE_ROYALE )
+	CAREER_STATS.starter_pack = RegisterExpensiveCalculatedStat_Int( null, "starter_pack_owner", DELAY_WRITE_BACK_UNTIL_MATCH_END, SetupGetStarterPackStatusForStat, [], eChallengeGameMode.NON_MODE )
+	CAREER_STATS.founder_pack = RegisterExpensiveCalculatedStat_Int( null, "founder_pack_owner", DELAY_WRITE_BACK_UNTIL_MATCH_END, SetupGetFounderPackStatusForStat, [], eChallengeGameMode.NON_MODE )
+	CAREER_STATS.twitch_pack = RegisterExpensiveCalculatedStat_Int( null, "twitch_pack_owner", DELAY_WRITE_BACK_UNTIL_MATCH_END, SetupGetTwitchPackStatusForStat, [], eChallengeGameMode.NON_MODE )
+
+	CAREER_STATS.respawn_dev = RegisterAccumulatedStat_Int( null, "respawn_dev", eChallengeGameMode.NON_MODE, DELAY_WRITE_BACK_UNTIL_MATCH_END )
+	CAREER_STATS.first_played_unixtime = RegisterExpensiveCalculatedStat_Int( null, "first_played_unixtime", TRACKERS_NEED, SetFirstPlayedUnixTime, [], eChallengeGameMode.NON_MODE )
+
+
+		CAREER_STATS.hovervehicle_occupant_meters_traveled = RegisterAccumulatedStat_Int( null, "hovervehicle_occupant_meters_traveled", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
+
+
+
+
+
+
+	
+	CAREER_STATS.clubs_games_played_with_club = RegisterAccumulatedStat_Int( null, "clubs_games_played_with_club", eChallengeGameMode.BATTLE_ROYALE, BADGES_UNLOCK_NEED )
+	CAREER_STATS.clubs_placements_win_with_club = RegisterAccumulatedStat_Int( null, "clubs_placements_win_with_club", eChallengeGameMode.BATTLE_ROYALE, BADGES_UNLOCK_NEED )
+	CAREER_STATS.clubs_placements_win_with_club_squad_alive = RegisterAccumulatedStat_Int( null, "clubs_placements_win_with_club_squad_alive", eChallengeGameMode.BATTLE_ROYALE, BADGES_UNLOCK_NEED )
+	CAREER_STATS.clubs_placements_win_with_club_streak = RegisterAccumulatedStat_Int( null, "clubs_placements_win_with_club_streak", eChallengeGameMode.BATTLE_ROYALE, BADGES_UNLOCK_NEED )
+	CAREER_STATS.clubs_placements_win_with_club_no_deaths = RegisterAccumulatedStat_Int( null, "clubs_placements_win_with_club_no_deaths", eChallengeGameMode.BATTLE_ROYALE, BADGES_UNLOCK_NEED )
+	CAREER_STATS.clubs_placements_win_with_club_no_deaths_or_knockouts = RegisterAccumulatedStat_Int( null, "clubs_placements_win_with_club_no_deaths_or_knockouts", eChallengeGameMode.BATTLE_ROYALE, BADGES_UNLOCK_NEED )
+	
+	
+	
+
+	StatsRegister_Legacy()
+
+	StatsRegister_Gameplay()
+	StatsRegister_Characters()
+	StatsRegister_Arenas()
+
+
+		StatsRegister_Control()
+
+
+	StatsRegister_Ranked()
+	StatsRegister_Beginner()
+
+	
+	StatsRegister_S21()
+
+	StatsRegister_MetaChallenges()
+
+		CAREER_STATS.gamemode_treasurehunt_objectives_captured = RegisterAccumulatedStat_Int( null, "gamemode_treasurehunt_objectives_captured", eChallengeGameMode.TREASURE_HUNT, CHALLENGES_CALC_DEPENDS )
+
+
+
+
+
+
+	StatsRegister_Autogen()
+	StatsRegister_EventShopStats()
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+StatCalcFuncInfo function SetupGetAccountLevelForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = (int function ( entity player, array<StatEntry> sourceEntries, int when ) {
+		int xpProgress   = GetPlayerAccountXPProgress( ToEHI( player ) )
+		int accountLevel = GetAccountLevelForXP( xpProgress )
+		return minint( accountLevel, GetHighestAccountDisplaylevel() )
+	})
+
+	return info
+}
+
+
+
+StatCalcFuncInfo function SetupGetTotalLegendaryItemsForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = (int function ( entity player, array<StatEntry> sourceEntries, int when ) {
+		
+
+		int count = 0
+		if ( GetCurrentPlaylistVarBool( "has_grx_badge_stats_opts", true ) )
+		{
+			EHIScriptStruct ehiss = GetEHIScriptStruct( ToEHI( player ) )
+			ehiss.legendaryItemsOwnedByPlayer.clear()
+			foreach ( ItemFlavor flav in GetAllLegendaryItems() )
+			{
+				if ( GRX_IsItemOwnedByPlayer_AllowOutOfDateData( flav, player ) )
+				{
+					count++
+					ehiss.legendaryItemsOwnedByPlayer.append( flav )
+				}
+			}
+		}
+		else
+		{
+			foreach ( ItemFlavor flav in GetAllItemFlavorsCosmetic() )
+			{
+				if ( ItemFlavor_GetGRXMode( flav ) != eItemFlavorGRXMode.REGULAR )
+					continue
+
+				if ( !ItemFlavor_HasQuality( flav ) || ItemFlavor_GetQuality( flav ) < eRarityTier.LEGENDARY )
+					continue
+
+				if ( GRX_IsItemOwnedByPlayer_AllowOutOfDateData( flav, player ) )
+					count++
+			}
+		}
+
+		return count
+	})
+
+	return info
+}
+
+
+
+StatCalcFuncInfo function SetupGetNumCharactersWithBannersOnceFilledForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = (int function ( entity player, array<StatEntry> sourceEntries, int when ) {
+		int count = 0
+
+		foreach ( characterRef in GetAllCharacterGUIDStringsForStats() )
+		{
+			if ( GetStat_Int( player, ResolveStatEntry( CAREER_STATS.character_banner_once_filled, characterRef ), when ) == 1 )
+				count++
+		}
+		return count
+	})
+
+	return info
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+StatCalcFuncInfo function SetupGetStarterPackStatusForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = (int function ( entity player, array<StatEntry> sourceEntries, int when )
+	{
+		return PlayerHasStarterPack( player ) ? 1 : 0
+	})
+
+	return info
+}
+
+
+
+StatCalcFuncInfo function SetupGetFounderPackStatusForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = (int function ( entity player, array<StatEntry> sourceEntries, int when )
+	{
+		return PlayerHasFoundersPack( player ) ? 1 : 0
+	})
+
+	return info
+}
+
+
+
+StatCalcFuncInfo function SetupGetTwitchPackStatusForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = (int function ( entity player, array<StatEntry> sourceEntries, int when ) {
+
+
+
+
+			return GetConVarInt( "twitch_prime_rewards" ) > 0 ? 1 : 0
+
+	})
+
+	return info
+}
+
+
+
+
+StatCalcFuncInfo function SetupGetEAAccessStatusForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = (int function ( entity player, array<StatEntry> sourceEntries, int when ) {
+		return PlayerHadEAAccess( player ) ? 1 : 0
+	})
+
+	return info
+}
+
+
+
+StatCalcFuncInfo function SetupGetCountOfCharactersWithLegendarySkinAndExecutionForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = (int function ( entity player, array<StatEntry> sourceEntries, int when ) {
+		
+
+		int count = 0
+		if ( GetCurrentPlaylistVarBool( "has_grx_badge_stats_opts", true ) )
+		{
+			EHIScriptStruct ehiss = GetEHIScriptStruct( ToEHI( player ) )
+			foreach ( characterRef in GetAllCharacterGUIDStringsForStats() )
+			{
+				ItemFlavor character = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( characterRef ) )
+				bool hasLegendarySkin     = false
+				bool hasLegendaryFinisher = false
+
+				array<ItemFlavor> characterSkins = GetValidItemFlavorsForLoadoutSlot( ToEHI( player ), Loadout_CharacterSkin( character ) )
+				foreach ( ItemFlavor flav in ehiss.legendaryItemsOwnedByPlayer )
+				{
+					if ( characterSkins.contains( flav ) )
+					{
+						hasLegendarySkin = true
+						break
+					}
+				}
+
+				array<ItemFlavor> executions = GetValidItemFlavorsForLoadoutSlot( ToEHI( player ), Loadout_CharacterExecution( character ) )
+				foreach ( ItemFlavor flav in ehiss.legendaryItemsOwnedByPlayer )
+				{
+					if ( executions.contains( flav ) )
+					{
+						hasLegendaryFinisher = true
+						break
+					}
+				}
+
+				if ( hasLegendarySkin && hasLegendaryFinisher )
+					count++
+			}
+		}
+		else
+		{
+			foreach ( characterRef in GetAllCharacterGUIDStringsForStats() )
+			{
+				ItemFlavor character = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( characterRef ) )
+				bool hasLegendarySkin     = false
+				bool hasLegendaryFinisher = false
+
+				array<ItemFlavor> characterSkins = GetValidItemFlavorsForLoadoutSlot( ToEHI( player ), Loadout_CharacterSkin( character ) )
+				foreach ( skin in characterSkins )
+				{
+					if ( GRX_IsItemOwnedByPlayer_AllowOutOfDateData( skin, player ) && ItemFlavor_HasQuality( skin ) && ItemFlavor_GetQuality( skin ) == eRarityTier.LEGENDARY )
+					{
+						hasLegendarySkin = true
+						break
+					}
+				}
+
+				array<ItemFlavor> executions = GetValidItemFlavorsForLoadoutSlot( ToEHI( player ), Loadout_CharacterExecution( character ) )
+				foreach ( execution in executions )
+				{
+					if ( GRX_IsItemOwnedByPlayer_AllowOutOfDateData( execution, player ) && ItemFlavor_HasQuality( execution ) && ItemFlavor_GetQuality( execution ) == eRarityTier.LEGENDARY )
+					{
+						hasLegendaryFinisher = true
+						break
+					}
+				}
+
+				if ( hasLegendarySkin && hasLegendaryFinisher )
+					count++
+			}
+		}
+
+		return count
+	})
+
+	return info
+}
+
+
+
+StatCalcFuncInfo function SetupGetCountOfWeaponsWithLegendarySkinsForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = (int function ( entity player, array<StatEntry> sourceEntries, int when ) {
+		
+
+		int count = 0
+		if ( GetCurrentPlaylistVarBool( "has_grx_badge_stats_opts", true ) )
+		{
+			EHIScriptStruct ehiss = GetEHIScriptStruct( ToEHI( player ) )
+			foreach ( ItemFlavor weapon in GetAllWeaponItemFlavors() )
+			{
+				array<ItemFlavor> weaponSkins = GetValidItemFlavorsForLoadoutSlot( ToEHI( player ), Loadout_WeaponSkin( weapon ) )
+				foreach ( ItemFlavor flav in ehiss.legendaryItemsOwnedByPlayer )
+				{
+					if ( weaponSkins.contains( flav ) )
+					{
+						count++
+						break
+					}
+				}
+			}
+		}
+		else
+		{
+			foreach ( ItemFlavor weapon in GetAllWeaponItemFlavors() )
+			{
+				array<ItemFlavor> weaponSkins = GetValidItemFlavorsForLoadoutSlot( ToEHI( player ), Loadout_WeaponSkin( weapon ) )
+				foreach ( skin in weaponSkins )
+				{
+					if ( GRX_IsItemOwnedByPlayer_AllowOutOfDateData( skin, player ) && ItemFlavor_HasQuality( skin ) && ItemFlavor_GetQuality( skin ) >= eRarityTier.LEGENDARY )
+					{
+						count++
+						break
+					}
+				}
+			}
+		}
+
+		return count
+	})
+
+	return info
+}
+
+
+
+StatCalcFuncInfo function SetupGetCountOfCharactersWithWellRoundedDamageForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = (int function ( entity player, array<StatEntry> sourceEntries, int when ) {
+		int count = 0
+		foreach ( characterRef in GetAllCharacterGUIDStringsForStats() )
+		{
+			int damageDone      = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.character_damage_done, characterRef ), when )
+			if ( damageDone > 20000 )
+				count++
+		}
+		return count
+	})
+
+	return info
+}
+
+
+
+
+
+StatCalcFuncInfo function SetupGetTreasureHunterStatusForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = (int function ( entity player, array<StatEntry> sourceEntries, int when ) {
+		
+		return 0
+	})
+
+	return info
+}
+
+
+
+StatCalcFuncInfo function SetFirstPlayedUnixTime( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = (int function ( entity player, array<StatEntry> sourceEntries, int when ) {
+		int launchUnixTime           = 1549310400
+		int daysInstalledAfterLaunch = (player.GetPersistentVarAsInt( "installUnixTime" ) - launchUnixTime) / SECONDS_PER_DAY
+
+		
+		if ( daysInstalledAfterLaunch <= 7 )
+			return 2
+
+		
+		if ( daysInstalledAfterLaunch <= 31 )
+			return 1
+
+		
+		return 0
+	})
+
+	return info
+}
+
+
+
+StatCalcFuncInfo function SetupGetCountOfCharactersWithTenWinsForStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = (int function ( entity player, array<StatEntry> sourceEntries, int when ) {
+		int count = 0
+		foreach ( characterRef in GetAllCharacterGUIDStringsForStats() )
+		{
+			if ( GetStat_Int( player, ResolveStatEntry( CAREER_STATS.character_placements_win, characterRef ), when ) >= 10 )
+				count++
+		}
+
+		return count
+	})
+
+	return info
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+string function GetStatsStringWithoutGamemode( string originalString )
+{
+	int start = originalString.find( "MODES[" )
+	int end = originalString.find( "]." )
+	if ( start < 0 || end < 0 )
+		return originalString
+
+	string modeString = originalString.slice( start, end + 2 ) 
+	return replace( originalString, modeString, "" )
+}
+
+string function ShStats_GenerateStatLocStringFromStatRef( string statRef )
+{
+	int index = statRef.find( "." )
+	if ( index >= 0 )
+		statRef = statRef.slice( index + 1, statRef.len() )
+
+	return "#STAT_REF_" + GetStatsStringWithoutGamemode( statRef.toupper() )
+}
+
+string function ShStats_GenerateStatLocStringFromStatRef_Long( string statRef )
+{
+	int index = statRef.find( "." )
+	if ( index >= 0 )
+		statRef = statRef.slice( index + 1, statRef.len() )
+
+	return "#STAT_REF_LONG_" + GetStatsStringWithoutGamemode( statRef.toupper() )
+}
+
+
+
+int function ArenasRanked_GetHistoricalPeakHighScore( entity player )
+{
+	
+	int max = 0
+	foreach ( string arenasRankedPeriod in ARENAS_RANKED_PERIODS_REFS )
+	{
+
+			int score =  GetPersistentVarAsInt( "arenasRankedData[" + arenasRankedPeriod + "].highestArenasRankedScore" )
+
+
+
+		if ( score > max )
+			max = score
+	}
+
+	return max
+}
+
+int function ArenasRanked_GetHistoricalPeakLadderPosition( entity player )
+{
+	
+	
+	int max = SHARED_RANKED_INVALID_LADDER_POSITION
+	foreach ( string arenasRankedPeriod in ARENAS_RANKED_PERIODS_REFS )
+	{
+
+			int pos1 =  GetPersistentVarAsInt( "arenasRankedData[" + arenasRankedPeriod + "].endFirstSplitLadderPosition" )
+			int pos2 =  GetPersistentVarAsInt( "arenasRankedData[" + arenasRankedPeriod + "].endSeriesLadderPosition" )
+
+
+
+
+		if ( pos1 > max || pos2 > max )
+			max = maxint( pos1, pos2 )
+	}
+
+	return max
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

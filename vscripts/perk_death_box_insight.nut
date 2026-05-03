@@ -2,7 +2,7 @@
 global function Perk_DeathBoxInsight_Init
 
 
-#if CLIENT
+
 global function Perk_DeathBoxInsight_IsDeathBoxInsightEnabled
 global function DeathBoxInsight_UpdateLookatPing
 global function DeathBoxInsight_GetCurrentPingInfo
@@ -32,11 +32,11 @@ const float ALPHA_LERP_MULTIPLIER = 5.0
 const float PING_DEGREES = 3
 const float LOOKAT_DEGREES = 30
 const int MAX_DEATHBOX_ICONS = 3
-#endif
+
 
 void function Perk_DeathBoxInsight_Init()
 {
-	#if CLIENT
+
 		if ( !Perk_DeathBoxInsight_IsDeathBoxInsightEnabled() )
 			return
 
@@ -52,7 +52,7 @@ void function Perk_DeathBoxInsight_Init()
 		AddCallback_OnPassiveChanged( ePassives.PAS_ORDNANCE_HIGHLIGHT, OnPassiveChanged )
 		AddCallback_OnPassiveChanged( ePassives.PAS_DEATHBOX_BATTERY_COUNT, OnPassiveChanged )
 		AddCallback_OnPassiveChanged( ePassives.PAS_ULTACCEL_HIGHLIGHT, OnPassiveChanged )
-	#endif
+
 
 
 
@@ -95,7 +95,7 @@ void function Perk_DeathBoxInsight_Init()
 
 
 
-#if CLIENT
+
 void function OnPassiveChanged( entity player, int passive, bool didHave, bool nowHas )
 {
 	if ( player != GetLocalViewPlayer() )
@@ -174,7 +174,7 @@ bool function Ammuvision_ShouldSeeLoot( entity loot, entity player, LootData loo
 			continue
 
 
-		// ignore care package weapons as they have a seperate ammo pool
+		
 		if( !weaponAtSlot.GetWeaponSettingBool( eWeaponVar.uses_ammo_pool ) )
 		{
 			continue
@@ -255,7 +255,7 @@ DeathboxContentsInfo function GetContentsToDisplayFromDeathbox( entity box )
 		return result
 
 	entity localPlayer = GetLocalViewPlayer()
-	// this one works differently from the rest so check specifically for it
+	
 	if ( localPlayer.HasPassive( ePassives.PAS_DEATHBOX_BATTERY_COUNT ) )
 	{
 		array<entity> lootInBox = GetDeathBoxLootEnts( box )
@@ -368,7 +368,7 @@ bool function DeathBoxInsight_UpdateLookatPing()
 	float bestBoxDistance
 	vector bestBoxOrigin
 
-	array<entity> enemies = GetPlayerArrayEx( "any", TEAM_ANY, player.GetTeam(), playerEyePos, maxVisibleDist )
+	array<entity> enemies = GetPlayerArrayEx( TEAM_ANY, player.GetTeam(), playerEyePos, maxVisibleDist )
 	bool enemyInView = false
 	foreach( entity enemy in enemies )
 	{
@@ -381,7 +381,7 @@ bool function DeathBoxInsight_UpdateLookatPing()
 
 	if( !enemyInView )
 	{
-		// remove boxes that have already been pinged
+		
 		array<entity> activeWps = Waypoints_GetActiveLootPings()
 		foreach( wp in activeWps )
 		{
@@ -395,7 +395,7 @@ bool function DeathBoxInsight_UpdateLookatPing()
 			}
 		}
 
-		// pick the box we are looking at
+		
 		foreach( entity box in candidateBoxes )
 		{
 			DeathboxContentsInfo tempContents = GetContentsToDisplayFromDeathbox( box )
@@ -403,7 +403,7 @@ bool function DeathBoxInsight_UpdateLookatPing()
 			{
 				contentsToDisplay = tempContents
 			}
-			// ignore boxes that don't have items we can preview
+			
 			if( tempContents.contents.len() == 0 )
 				continue
 
@@ -411,7 +411,7 @@ bool function DeathBoxInsight_UpdateLookatPing()
 			vector offsetCenter = box.GetOrigin() + <0,0, ICON_UP_OFFSET>
 			vector playerToOffsetCenter = Normalize( offsetCenter - playerEyePos )
 			float centerDotProduct =  DotProduct( playerToOffsetCenter, viewVector )
-			// ignore boxes that we aren't looking at
+			
 			if( centerDotProduct < lookatDot || centerDotProduct < bestDot )
 				continue
 
@@ -427,7 +427,7 @@ bool function DeathBoxInsight_UpdateLookatPing()
 			if ( !canRemoteInteractWithBox )
 
 			{
-				// ignore boxes that we can't see
+				
 				TraceResults trace = TraceLine( playerEyePos, box.GetWorldSpaceCenter(), null, TRACE_MASK_BLOCKLOS, TRACE_COLLISION_GROUP_NONE )
 				if ( !( trace.hitEnt == box || trace.fraction >= 0.99 ) )
 					continue
@@ -439,7 +439,7 @@ bool function DeathBoxInsight_UpdateLookatPing()
 		}
 	}
 
-	// if we are looking at something new fade out to start fading that in (or stay faded out if looking at nothing)
+	
 	if( lookatEnt != file.currentLookat )
 	{
 		file.lookatAlpha -= FrameTime() * ALPHA_LERP_MULTIPLIER
@@ -464,7 +464,7 @@ bool function DeathBoxInsight_UpdateLookatPing()
 		UpdateBoxContentsDisplay( file.currentLookat, file.deathboxRui, contentsToDisplay )
 	}
 
-	// fade in the new thing that we're looking at if its not fully visible. early out as we can't ping it yet
+	
 	if( file.lookatAlpha < 1.0 )
 	{
 		if( lookatEnt == file.currentLookat && lookatEnt != null )
@@ -477,7 +477,7 @@ bool function DeathBoxInsight_UpdateLookatPing()
 		file.currentLookatLootIndex = -1
 		return false
 	}
-	// determine which sub element we're looking at and highlight it
+	
 	int lookatLootIndex = -1
 
 	if( file.currentLookat != null && DistanceSqr( playerEyePos, bestBoxOrigin ) < MAX_PING_DISTANCE * MAX_PING_DISTANCE && Perks_GetPerkPingInfo().ent == null )
@@ -489,9 +489,9 @@ bool function DeathBoxInsight_UpdateLookatPing()
 			float sideOffset = 0
 			if( file.numSlotsInCurrentLookat == 2 )
 			{
-				// clamped dist scale values are trying to match those defined in death_box_insight_icon.rui
-				// annoyingly rui is in screen space and this is in world space so just have to tweak it till it looks right
-				// also for some reason rui distance values seemed to be multiplied by 10
+				
+				
+				
 				sideOffset = ClampedDistScale( 7.0, 300.0, 2.5, 10.0, dist ) * ( i == 0 ? -1.0 : 1.0 )
 			}
 			else if( file.numSlotsInCurrentLookat == 3 )
@@ -547,4 +547,7 @@ DeathBoxPingInfo function DeathBoxInsight_GetCurrentPingInfo()
 	}
 	return result
 }
-#endif
+
+
+
+ 

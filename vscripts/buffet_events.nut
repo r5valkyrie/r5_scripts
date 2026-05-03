@@ -1,11 +1,11 @@
 
 
-#if SERVER || CLIENT || UI
+
 global function BuffetEvents_Init
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 global function GetActiveBuffetEventArray
 global function GetActiveBuffetEventForIndex
 global function GetActiveStoryEventArray
@@ -13,46 +13,11 @@ global function GetActiveStoryEventForIndex
 global function BuffetEvent_GetModesAndChallengesData
 global function BuffetEvent_GetCurrentChallenges_EXCLUDING_DAILIES
 global function BuffetEvent_GetDailyChallenges_TEMP
-#endif
 
-#if CLIENT || UI
+
+
 global function BuffetEvent_GetHeaderIcon
 global function BuffetEvent_GetRewardIconCol
-#endif
-
-#if UI
-global function BuffetEvent_GetAboutPageBGImage
-global function BuffetEvent_GetAboutPageBGCol
-global function BuffetEvent_GetAboutPageBigIcon
-global function BuffetEvent_GetAboutPageTitleText
-global function BuffetEvent_GetAboutPageDescText
-global function BuffetEvent_GetAboutPageScoreTitleText
-global function BuffetEvent_GetAboutPageThemeCol
-global function BuffetEvent_GetAboutPageHeaderCol
-global function BuffetEvent_GetAboutPageBodyCol
-global function BuffetEvent_GetAboutPageBarImage
-global function BuffetEvent_GetAboutPageBarTextCol
-global function BuffetEvent_GetAboutPageBarTextOwnedCol
-global function BuffetEvent_GetAboutPageScoreLabelCol
-global function BuffetEvent_GetAboutPageScoreCol
-global function BuffetEvent_GetAboutPageCheckMarkCol
-global function BuffetEvent_GetAboutPageShowsModes
-global function BuffetEvent_GetAboutPageLineImage
-global function BuffetEvent_GetAboutPageUnownedRewardBorderImage
-global function BuffetEvent_GetAboutPageOwnedRewardBorderImage
-global function BuffetEvent_GetProgressBarCol
-global function BuffetEvent_GetProgressBarTextCol
-global function BuffetEvent_GetHeaderTextCol1
-global function BuffetEvent_GetHeaderTextCol2
-global function BuffetEvent_GetCategoryButtonTint
-
-global function BuffetEvent_GetChallengeHeaderImage
-global function BuffetEvent_GetChallengeButtonImage
-global function BuffetEvent_GetChallengeButtonText
-global function BuffetEvent_GetChallengeButtonTextCol
-
-global function BuffetEvent_OnLobbyPlayPanelSpecialChallengeClicked
-#endif
 
 
 
@@ -61,7 +26,42 @@ global function BuffetEvent_OnLobbyPlayPanelSpecialChallengeClicked
 
 
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 global struct BuffetEventBadgeData
 {
 	ItemFlavor& badge
@@ -80,7 +80,6 @@ global struct BuffetEventModesAndChallengesData
 	table<string, array<ItemFlavor> >                modeToChallengesMap
 	array<BuffetEventBadgeData>                      badges
 }
-#endif
 
 
 
@@ -90,21 +89,15 @@ global struct BuffetEventModesAndChallengesData
 
 
 
-#if SERVER || CLIENT || UI
+
+
 struct FileStruct_LifetimeLevel
 {
 	table<ItemFlavor, BuffetEventModesAndChallengesData> eventModesAndChallengesDataMap
 }
-#endif
-#if SERVER || CLIENT
-FileStruct_LifetimeLevel fileLevel
-#elseif UI
-FileStruct_LifetimeLevel& fileLevel
 
-struct {
 
-} fileVM
-#endif
+FileStruct_LifetimeLevel fileLevel 
 
 
 
@@ -115,23 +108,30 @@ struct {
 
 
 
-#if SERVER || CLIENT || UI
+
+
+
+
+
+
+
+
 void function BuffetEvents_Init()
 {
-	#if UI
-		FileStruct_LifetimeLevel newFileLevel
-		fileLevel = newFileLevel
-	#endif
+
+
+
+
 
 	AddCallback_OnItemFlavorRegistered( eItemType.calevent_buffet, void function( ItemFlavor ev ) {
 
 		BuffetEventModesAndChallengesData bemacd
 		bool expired = false
 
-		#if CLIENT || UI
+
 			Assert( IsConnected(), "We're not connected to a server. This will result in excess challenges being loaded. This won't break anything, but it also shouldn't happen." )
 			if ( IsConnected() )
-		#endif
+
 			{
 				expired = CalEvent_GetFinishUnixTime( ev ) < GetUnixTimestamp()
 			}
@@ -239,7 +239,6 @@ void function BuffetEvents_Init()
 		fileLevel.eventModesAndChallengesDataMap[ev] <- bemacd
 	} )
 }
-#endif
 
 
 
@@ -249,7 +248,8 @@ void function BuffetEvents_Init()
 
 
 
-#if SERVER || CLIENT || UI
+
+
 array<ItemFlavor> function GetActiveStoryEventArray( int t )
 {
 	Assert( IsItemFlavorRegistrationFinished() )
@@ -311,19 +311,19 @@ ItemFlavor ornull function GetActiveBuffetEventForIndex( int t, int index )
 
 	return null
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 BuffetEventModesAndChallengesData function BuffetEvent_GetModesAndChallengesData( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
 	return fileLevel.eventModesAndChallengesDataMap[event]
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 array<ItemFlavor> function BuffetEvent_GetCurrentChallenges_EXCLUDING_DAILIES( ItemFlavor event, int[1] OUT_nextRefreshUnixTime )
 {
 	BuffetEventModesAndChallengesData bemacd = BuffetEvent_GetModesAndChallengesData( event )
@@ -365,275 +365,194 @@ array<ItemFlavor> function BuffetEvent_GetCurrentChallenges_EXCLUDING_DAILIES( I
 
 	return result
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 array<ItemFlavor> function BuffetEvent_GetDailyChallenges_TEMP( ItemFlavor event )
 {
 	BuffetEventModesAndChallengesData bemacd = BuffetEvent_GetModesAndChallengesData( event )
 
 	return bemacd.dailyChallenges
 }
-#endif
 
 
-#if SERVER || CLIENT || UI
+
+
 asset function BuffetEvent_GetHeaderIcon( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
 	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "headerIcon" )
 }
-#endif
-
-#if UI
-asset function BuffetEvent_GetAboutPageBGImage( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "aboutPageBGImage" )
-}
-#endif
-
-#if UI
-asset function BuffetEvent_GetChallengeHeaderImage( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "eventChallengeHeaderImage" )
-}
-#endif
-
-#if UI
-asset function BuffetEvent_GetChallengeButtonImage( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "eventChallengeButtonImage" )
-}
-#endif
-
-#if UI
-string function BuffetEvent_GetChallengeButtonText( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsString( ItemFlavor_GetAsset( event ), "eventChallengeButtonText" )
-}
-#endif
-
-#if UI
-vector function BuffetEvent_GetChallengeButtonTextCol( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "eventChallengeButtonTextColor" )
-}
-#endif
-
-#if UI
-asset function BuffetEvent_GetAboutPageBigIcon( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "aboutPageBigIcon" )
-}
-#endif
-
-#if UI
-asset function BuffetEvent_GetAboutPageBarImage( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "aboutPageBarImage" )
-}
-#endif
-
-#if UI
-asset function BuffetEvent_GetAboutPageUnownedRewardBorderImage( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "aboutPageUnownedRewardBorderImage" )
-}
-#endif
-
-#if UI
-asset function BuffetEvent_GetAboutPageOwnedRewardBorderImage( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "aboutPageOwnedRewardBorderImage" )
-}
-#endif
-
-#if UI
-asset function BuffetEvent_GetAboutPageLineImage( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "aboutPageLineImage" )
-}
-#endif
-
-#if UI
-string function BuffetEvent_GetAboutPageTitleText( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsString( ItemFlavor_GetAsset( event ), "aboutPageTitleText" )
-}
-#endif
-
-#if UI
-string function BuffetEvent_GetAboutPageDescText( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsString( ItemFlavor_GetAsset( event ), "aboutPageDescText" )
-}
-#endif
-
-#if UI
-string function BuffetEvent_GetAboutPageScoreTitleText( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsString( ItemFlavor_GetAsset( event ), "aboutPageScoreTitleText" )
-}
-#endif
-
-#if UI
-vector function BuffetEvent_GetAboutPageBGCol( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "aboutPageBGCol" )
-}
-#endif
-
-#if UI
-vector function BuffetEvent_GetAboutPageCheckMarkCol( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "aboutPageCheckMarkCol" )
-}
-#endif
-
-#if UI
-vector function BuffetEvent_GetProgressBarCol( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "progressBarColor" )
-}
-#endif
-
-#if UI
-vector function BuffetEvent_GetProgressBarTextCol( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "progressBarTextColor" )
-}
-#endif
-
-#if UI
-vector function BuffetEvent_GetHeaderTextCol1( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "eventChallengeHeaderColor1" )
-}
-#endif
-
-#if UI
-vector function BuffetEvent_GetHeaderTextCol2( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "eventChallengeHeaderColor2" )
-}
-#endif
 
 
-#if UI
-vector function BuffetEvent_GetCategoryButtonTint( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "eventChallengeCategoryButtonTint" )
-}
-#endif
 
-#if CLIENT || UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 vector function BuffetEvent_GetRewardIconCol( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
 	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "rewardIconColor" )
 }
-#endif
-
-#if UI
-vector function BuffetEvent_GetAboutPageThemeCol( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "aboutPageThemeCol" )
-}
-#endif
-
-#if UI
-vector function BuffetEvent_GetAboutPageHeaderCol( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "aboutPageHeaderTextCol" )
-}
-#endif
-
-#if UI
-vector function BuffetEvent_GetAboutPageBodyCol( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "aboutPageBodyTextCol" )
-}
-#endif
-
-#if UI
-vector function BuffetEvent_GetAboutPageBarTextCol( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "aboutPageBarTextCol" )
-}
-#endif
-
-#if UI
-vector function BuffetEvent_GetAboutPageBarTextOwnedCol( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "aboutPageBarTextOwnedCol" )
-}
-#endif
-
-#if UI
-vector function BuffetEvent_GetAboutPageScoreLabelCol( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "aboutPageScoreLabelCol" )
-}
-#endif
-
-#if UI
-vector function BuffetEvent_GetAboutPageScoreCol( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "aboutPageScoreCol" )
-}
-#endif
-
-#if UI
-bool function BuffetEvent_GetAboutPageShowsModes( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-	return GetGlobalSettingsBool( ItemFlavor_GetAsset( event ), "aboutPageShowsModes" )
-}
-#endif
-
-
-#if UI
-void function BuffetEvent_OnLobbyPlayPanelSpecialChallengeClicked( ItemFlavor event )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_buffet )
-
-	Assert( IsLobby() )
-	Assert( IsFullyConnected() )
-	Assert( GetActiveMenu() == GetMenu( "LobbyMenu" ) )
-	Assert( IsTabPanelActive( GetPanel( "PlayPanel" ) ) )
-
-	BuffetEventAboutDialog_SetEvent( event )
-	AdvanceMenu( GetMenu( "BuffetEventAboutDialog" ) )
-}
-#endif
 
 
 
@@ -654,3 +573,85 @@ void function BuffetEvent_OnLobbyPlayPanelSpecialChallengeClicked( ItemFlavor ev
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

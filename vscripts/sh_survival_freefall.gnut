@@ -1,6 +1,3 @@
-#if SERVER
-global function ForcedSkydiveTriggerThink_EnterCallback
-#endif
 global function SurvivalFreefall_Init
 global function CodeCallback_PlayerSkydiveBegin
 global function CodeCallback_PlayerSkydiveEnd
@@ -9,156 +6,156 @@ global function CodeCallback_PlayerSkydiveAnticipateBegin
 global function CodeCallback_PlayerSkydiveAnticipateEnd
 global function GetSkyDiveTrailPackageForPlayerWithOverrides
 
-#if CLIENT
+
 global function AddCallback_PlayerFreefallActiveChanged
 global function Freefall_SetDisplaySeaHeightForLevel
 global function Freefall_SetPlaneHeight
 global function GetSeaHeightForDisplay
-#endif // CLIENT
 
-#if SERVER
-global function ClientCallback_SkydiveEmote
-global function ClientCallback_SkydiveEmoteNext
-global function ClientCallback_StopFreefallFollowMode
-global function Freefall_CancelSkydiveEmote
-#endif
+
+
+
+
+
+
+
 const asset PLAYER_WIND_FX 	= $"P_wind_cruising"
 
 global const string JUMPTOWER_PING_NAME = "jump_tower"
 
-// If skydiving with constrainedDive == true:
-//	- Players may maneuver during skydive around a given 2D radius from the given destination. The further from the center, the less the player is able to freely skydive.
-//  - Beyond the radius, player skydives straight down. Player can rotate to skydive toward the center of the circle and regain control.
-const CONSTRAINEDDIVE_RADIUS_DEFAULT = 984.252 // 25m
-
-#if SERVER
-	global function Survival_AddCallback_PlayerFreefallBegin
-	global function Survival_AddCallback_PlayerFreefallEnd
-	global function Survival_AddCallback_PlayerSkydiveAnticipateBegin
-	global function Survival_RemoveCallback_PlayerFreefallEnd
-	global function FillSkyWithClouds
-	global function PlayerSkyDive
-	global function EndPlayerSkyDive
-	global function PlayerSkydiveThirdPersonEnable
-	global function SkydiveTest
-	global function PlayerSkydiveFromCurrentPosition
-	global function PlayerSkydiveFromCurrentPositionWithInitVelocity
-	global function PlayerSkydiveLandingFromCurrentPosition
-	global function PlayerFallAssistanceDetection
-	global function IsPointInsideSkydiveBoundary
-
-	global function SetOnPlayerSkydiveCustomTrailsCallback
-	global function SetOverrideSkydiveTrailPackageForPlayer
-	global function SetShouldFillSkyWithClouds
 
 
-//TODO(chin): make_pak_rsons.bat doesn't support assets in bakery correctly, so we still need to have these references here :/
-	global const asset DIAMOND_SKYDIVE_SMOKE_TRAIL_COLOR_FX = $"P_skydive_rank_chrg_trail_1"
-	global const asset DIAMOND_SKYDIVE_SMOKE_COLOR_FX = $"P_skydive_rank_chrg_1"
-	global const asset DIAMOND_JUMPJET_FRIENDLY_SKYDIVE = $"P_skydive_jumpjet_team_rank"
-	global const asset DIAMOND_JUMPJET_ENEMY_SKYDIVE = $"P_skydive_jumpjet_enemy_rank"
-	global const asset DIAMOND_JUMPJET_LAND_FX = $"P_skydive_jumpjet_land_rank"
 
-	global const asset APEX_SKYDIVE_SMOKE_TRAIL_COLOR_FX = $"P_skydive_rank_chrg_trail_2"
-	global const asset APEX_SKYDIVE_SMOKE_COLOR_FX = $"P_skydive_rank_chrg_2"
-	global const asset APEX_JUMPJET_FRIENDLY_SKYDIVE = $"P_skydive_jumpjet_team_rank_AP"
-	global const asset APEX_JUMPJET_ENEMY_SKYDIVE = $"P_skydive_jumpjet_enemy_rank"
-	global const asset APEX_JUMPJET_LAND_FX = $"P_skydive_jumpjet_land_rank"
-
-	global const asset SHADOW_SKYDIVE_SMOKE_TRAIL_COLOR_FX = $"P_skydive_trail_shdw"
-	global const asset SHADOW_SKYDIVE_SMOKE_COLOR_FX = $"P_skydive_smoke_shdw"
-
-	global const asset DIAMOND_S4_SKYDIVE_SMOKE_TRAIL_COLOR_FX = $"P_rank_trl_long_Dmd_s4"
-	global const asset DIAMOND_S4_SKYDIVE_SMOKE_COLOR_FX = $"P_rank_trl_body_Dmd_s4"
-	global const asset DIAMOND_S4_JUMPJET_FRIENDLY_SKYDIVE = $"P_rank_trl_jj_team_Dmd_s4"
-
-	global const asset APEX_S4_SKYDIVE_SMOKE_TRAIL_COLOR_FX = $"P_rank_trl_long_AP_s4"
-	global const asset APEX_S4_SKYDIVE_SMOKE_COLOR_FX = $"P_rank_trl_body_AP_s4"
-	global const asset APEX_S4_JUMPJET_FRIENDLY_SKYDIVE = $"P_rank_trl_jj_team_Ap_s4"
+const CONSTRAINEDDIVE_RADIUS_DEFAULT = 984.252 
 
 
-                        
 
-	global const asset MASTER_S5_SKYDIVE_SMOKE_TRAIL_COLOR_FX = $"P_rank_trl_long_mstr_S5"
-	global const asset MASTER_S5_SKYDIVE_SMOKE_COLOR_FX = $"P_rank_trl_body_mstr_S5"
-	global const asset MASTER_S5_JUMPJET_FRIENDLY_SKYDIVE = $"P_rank_trl_jj_team_mstr_S5"
 
-	global const asset APEX_S5_SKYDIVE_SMOKE_TRAIL_COLOR_FX = $"P_rank_trl_long_AP_s5"
-	global const asset APEX_S5_SKYDIVE_SMOKE_COLOR_FX = $"P_rank_trl_body_AP_S5"
-	global const asset APEX_S5_JUMPJET_FRIENDLY_SKYDIVE = $"P_rank_trl_jj_team_Ap_s5"
 
-      
 
-//%if HAS_RANKED_SERIES_05
 
-	global const asset MASTER_S6_SKYDIVE_SMOKE_TRAIL_COLOR_FX = $"P_rank_trl_long_mstr_s6"
-	global const asset MASTER_S6_SKYDIVE_SMOKE_COLOR_FX = $"P_rank_trl_body_mstr_S6"
-	global const asset MASTER_S6_JUMPJET_FRIENDLY_SKYDIVE = $"P_rank_trl_jj_team_mstr_s6"
 
-	global const asset APEX_S6_SKYDIVE_SMOKE_TRAIL_COLOR_FX = $"P_rank_trl_long_AP_s6"
-	global const asset APEX_S6_SKYDIVE_SMOKE_COLOR_FX = $"P_rank_trl_body_AP_S6"
-	global const asset APEX_S6_JUMPJET_FRIENDLY_SKYDIVE = $"P_rank_trl_jj_team_Ap_s6"
 
-//%endif
 
-//%if HAS_RANKED_SERIES_06
 
-	global const asset MASTER_S7_SKYDIVE_SMOKE_TRAIL_COLOR_FX = $"P_rank_trl_long_mstr_s7"
-	global const asset MASTER_S7_SKYDIVE_SMOKE_COLOR_FX = $"P_rank_trl_body_mstr_S7"
-	global const asset MASTER_S7_JUMPJET_FRIENDLY_SKYDIVE = $"P_rank_trl_jj_team_mstr_s7"
 
-	global const asset APEX_S7_SKYDIVE_SMOKE_TRAIL_COLOR_FX = $"P_rank_trl_long_AP_s7"
-	global const asset APEX_S7_SKYDIVE_SMOKE_COLOR_FX = $"P_rank_trl_body_AP_S7"
-	global const asset APEX_S7_JUMPJET_FRIENDLY_SKYDIVE = $"P_rank_trl_jj_team_Ap_s7"
 
-//%endif
 
-//%if HAS_RANKED_SERIES_07
 
-	global const asset MASTER_S8_SKYDIVE_SMOKE_TRAIL_COLOR_FX = $"P_rank_trl_long_mstr_s8"
-	global const asset MASTER_S8_SKYDIVE_SMOKE_COLOR_FX = $"P_rank_trl_body_mstr_S8"
-	global const asset MASTER_S8_JUMPJET_FRIENDLY_SKYDIVE = $"P_rank_trl_jj_team_mstr_s8"
 
-	global const asset APEX_S8_SKYDIVE_SMOKE_TRAIL_COLOR_FX = $"P_rank_trl_long_AP_s8"
-	global const asset APEX_S8_SKYDIVE_SMOKE_COLOR_FX = $"P_rank_trl_body_AP_S8"
-	global const asset APEX_S8_JUMPJET_FRIENDLY_SKYDIVE = $"P_rank_trl_jj_team_AP_s8"
 
-//%endif
 
-	global const asset DIAMOND_S5_SKYDIVE_SMOKE_TRAIL_COLOR_FX = $"P_rank_trl_long_dmd_S5"
-	global const asset DIAMOND_S5_SKYDIVE_SMOKE_COLOR_FX = $"P_rank_trl_body_dmd_S5"
-	global const asset DIAMOND_S5_JUMPJET_FRIENDLY_SKYDIVE = $"P_rank_trl_jj_team_dmd_S5"
 
-	global const asset DIAMOND_S6_SKYDIVE_SMOKE_TRAIL_COLOR_FX = $"P_rank_trl_long_dmd_S6"
-	global const asset DIAMOND_S6_SKYDIVE_SMOKE_COLOR_FX = $"P_rank_trl_body_dmd_S6"
-	global const asset DIAMOND_S6_JUMPJET_FRIENDLY_SKYDIVE = $"P_rank_trl_jj_team_dmd_S6"
 
-	global const asset DIAMOND_S7_SKYDIVE_SMOKE_TRAIL_COLOR_FX = $"P_rank_trl_long_dmd_S7"
-	global const asset DIAMOND_S7_SKYDIVE_SMOKE_COLOR_FX = $"P_rank_trl_body_dmd_S7"
-	global const asset DIAMOND_S7_JUMPJET_FRIENDLY_SKYDIVE = $"P_rank_trl_jj_team_dmd_S7"
 
-	global const asset DIAMOND_S8_SKYDIVE_SMOKE_TRAIL_COLOR_FX = $"P_rank_trl_long_dmd_s8"
-	global const asset DIAMOND_S8_SKYDIVE_SMOKE_COLOR_FX = $"P_rank_trl_body_dmd_S8"
-	global const asset DIAMOND_S8_JUMPJET_FRIENDLY_SKYDIVE = $"P_rank_trl_jj_team_dmd_s8"
 
-#if DEVELOPER
-	const bool SKYDIVE_DEBUG = false
-#endif
 
-	//global const asset SKYDIVE_SMOKE_FX = $"P_skydive_trail"
-	global const asset SKYDIVE_SMOKE_COLOR_FX = $"P_skydive_trail_CP"
-	const JUMPJET_FRIENDLY_SKYDIVE = $"P_surv_team_jump_jet"
-	const JUMPJET_ENEMY_SKYDIVE = $"P_surv_enemy_jump_jet"
-	const JUMPJET_VALK_SKYDIVE_FRIENDLY = $"P_team_jet_hover_HLD"
-	const JUMPJET_VALK_SKYDIVE_ENEMY = $"P_team_jet_hover_HLD"
-	const JUMPJET_LAND_FX = $"P_surv_team_land_jet"
-	const asset CLOUD_MODEL = $"mdl/fx/cloud_fill_01.rmdl"
-	global const asset UPDRAFT_FX = $"P_skydive_jumpjet_updraft"
-	const float SKYDIVE_LAUNCH_NO_CONTROL_DURATION = 1.0
 
-	const float UNFOLLOW_CONTROL_BLEND_DURATION = 2.5
-	const float POST_EMOTE_DEBOUNCE = 0.5
-#endif //SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	global const float SKYDIVE_SLOWDOWN_DIST_FROM_GROUND = 3000.0
 
@@ -176,37 +173,37 @@ const CONSTRAINEDDIVE_RADIUS_DEFAULT = 984.252 // 25m
 
 	const float SKYDIVE_ENEMY_DETECT_RANGE 		= 2500.0
 
-#if SERVER
-	struct SkydivePlayerData
-	{
-		entity player
-		float inputForward
-		float inputRight
-		float diveAngle
-		vector velocity
-	}
 
-	struct
-	{
-		array<int> freecamInputs = [IN_ZOOM, IN_ZOOM_TOGGLE, IN_ATTACK, IN_DUCK, IN_DUCKTOGGLE ]
-		int decoyInput = IN_OFFHAND1
-		table<entity,SkydivePlayerData> skydivePlayerDataLookup
-		array<entity> cloudModels
-		array<entity> skydiveBoundaryVolumes
-		array<string> jumpJetAttachments = [ "vent_left", "vent_right" ]
-		table<entity, float> playerToLastVocalizedEmoteTime = {}
-		array< void functionref(entity) > Callbacks_OnPlayerFreefallBegin
-		array< void functionref(entity) > Callbacks_OnPlayerFreefallEnd
-		array< void functionref(entity) > Callbacks_OnPlayerSkydiveAnticipateBegin
-		void functionref(entity ) OnPlayerSkydiveCustomTrailsInitFunc = null
 
-		bool nearbySquadsQuickchatEnabled
 
-		bool shouldFillSkyWithClouds = true
-	} file
-#endif //SERVER
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	global function SetSkydiveStartingConvars
 	global function PlayerFreefallActiveChanged
 	global function PlayerFreefallEmoteAvailableChanged
@@ -229,17 +226,17 @@ const CONSTRAINEDDIVE_RADIUS_DEFAULT = 984.252 // 25m
 	const float SKYDIVE_THIRD_PERSON_NORMAL_HEIGHT = 20.0
 	const float SKYDIVE_VIEW_LERP_DURATION_START = 2.3
 
-	const float SKYDIVE_CONTRAIL_SPEED_MIN = 600.0 //1200
+	const float SKYDIVE_CONTRAIL_SPEED_MIN = 600.0 
 	const float SKYDIVE_CONTRAIL_SPEED_MAX = 1400.0
 
 	const float UNFOLLOW_HOLD_DURATION = 0.3
 
-	const CONTRAIL_FX = $"P_surv_team_jet_contrail"//$"P_team_jump_jet_ON_trails"//$"P_flag_fx_friend"//
+	const CONTRAIL_FX = $"P_surv_team_jet_contrail"
 
 	struct
 	{
 		var                        skydiveRui
-		array<string> contrailAttachments = ["l_hand", "r_hand"]//[ "vent_left", "vent_right" ]
+		array<string> contrailAttachments = ["l_hand", "r_hand"]
 
 		bool nearbySquadsMinimapEnabled
 
@@ -247,85 +244,85 @@ const CONSTRAINEDDIVE_RADIUS_DEFAULT = 984.252 // 25m
 
 		array< void functionref( entity, bool ) > playerFreefallActiveChanged_Callbacks
 	} file
-#endif //CLIENT
+
 
 void function SurvivalFreefall_Init()
 {
-	#if DEVELOPER
-		if ( IsCaptureCameraEnabled() ) // Capture camera settings
+#if DEV
+		if ( IsCaptureCameraEnabled() ) 
 		{
 			SKYDIVE_THIRD_PERSON_START_HEIGHT = -50.0
 
-			#if CLIENT
+
 				SKYDIVE_THIRD_PERSON_NORMAL_DIST = 200.0
 				SKYDIVE_THIRD_PERSON_SLOW_DIST = 170.0
 				SKYDIVE_THIRD_PERSON_FAST_DIST = 400.0
-			#endif // CLIENT
+
 		}
-	#endif // DEVELOPER
+#endif
 
 	Remote_RegisterServerFunction( "ClientCallback_StopFreefallFollowMode" )
 	Remote_RegisterServerFunction( "ClientCallback_SkydiveEmote", "int", INT_MIN, INT_MAX )
 	Remote_RegisterServerFunction( "ClientCallback_SkydiveEmoteNext" )
 
-	#if SERVER
-		PrecacheParticleSystem( PLAYER_WIND_FX )
-		//PrecacheParticleSystem( SKYDIVE_SMOKE_FX )
-		PrecacheParticleSystem( SKYDIVE_SMOKE_COLOR_FX )
-		PrecacheParticleSystem( JUMPJET_FRIENDLY_SKYDIVE )
-		PrecacheParticleSystem( JUMPJET_ENEMY_SKYDIVE )
-		PrecacheParticleSystem( JUMPJET_VALK_SKYDIVE_FRIENDLY )
-		PrecacheParticleSystem( JUMPJET_VALK_SKYDIVE_ENEMY )
-		PrecacheParticleSystem( JUMPJET_LAND_FX )
-		PrecacheParticleSystem( UPDRAFT_FX )
-		PrecacheImpactEffectTable( "human_land_jetwash" )
-
-		if ( file.shouldFillSkyWithClouds )
-			PrecacheModel( CLOUD_MODEL )
-
-		RegisterSignal( "PlayerSkyDive" )
-		RegisterSignal( "EndPlayerSkyDive" )
-		RegisterSignal( "SkydiveEmote_Cancel" )
-		RegisterSignal( "PlayerBootsOnGround" )
-		RegisterSignal( "PlayerSkydiveFromCurrentPosition" )
-		RegisterSignal( "PlayerFallAssistanceDetection" )
-                      
-                                
-                                   
-      
-
-		AddSpawnCallback_ScriptName( "skydive_boundary", AddSkydiveBoundaryVolume )
-		                             
-			AddSpawnCallback_ScriptName( REDEPLOY_BALLOON_SKYDIVE_TRIGGER_SCRIPT_NAME, ForcedSkydiveTriggerThink )
-        
-		AddSpawnCallback_ScriptName( "zipline_skydive", ForcedSkydiveTriggerThink )
-		AddSpawnCallbackEditorClass( "trigger_multiple", "trigger_skydive", ForcedSkydiveTriggerThink )
-		AddSpawnCallback_ScriptName( "skydive_tower", SkydiveTowerEntitySpawned )
-		AddSpawnCallback_ScriptName( "jump_tower", SkydiveTowerEntitySpawned )
-		AddSpawnCallback_ScriptName( "jump_tower_flag", SkydiveTowerEntitySpawned )
 
 
-			file.nearbySquadsQuickchatEnabled = GetCurrentPlaylistVarBool( "freefall_nearby_squads_quickchat_enabled", true )
-			                      
-				if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_WINTEREXPRESS ) )
-         
-				{
-					if ( file.nearbySquadsQuickchatEnabled )
-						Survival_AddCallback_PlayerFreefallEnd( Skydive_CheckAndAnnounceNearbySquads )
-				}
 
 
-		AddCallback_OnClientDisconnected( OnPlayerDisconnected )
 
-		AddCallback_PlayerClassChanged( Skydive_CustomTrailsInit  )
-		#if SERVER
-			AddCallback_GameStateEnter( eGameState.Resolution, Skydive_EnterGameStateResolution)
-		#endif
 
-	#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	RegisterSignal( "ReleaseDropEmote" )
 	RegisterSignal( "FreefallEnded" )
-	#if CLIENT
+
 		RegisterSignal( "FreefallStarted" )
 		RegisterSignal( "LerpCameraDistOverTime" )
 		RegisterSignal( "LerpCameraHeightOverTime" )
@@ -338,30 +335,30 @@ void function SurvivalFreefall_Init()
 
 		file.nearbySquadsMinimapEnabled = GetCurrentPlaylistVarBool( "freefall_nearby_squads_minimap_enabled", true )
 
-	#endif
 
-	//skydiveSmokeColors.randomize()
+
+	
 }
 
-#if SERVER
-void function SetShouldFillSkyWithClouds( bool val )
-{
-	file.shouldFillSkyWithClouds = val
-}
-#endif // SERVER
 
 
-SkyDiveTrailPackage function GetSkyDiveTrailPackageForPlayerWithOverrides( entity player ) //Exists on server, and client
+
+
+
+
+
+
+SkyDiveTrailPackage function GetSkyDiveTrailPackageForPlayerWithOverrides( entity player ) 
 {
 	if ( IsPrivateMatch() )
 		return SkydiveTrail_GetSkyDiveTrailPackageFromItemFlavor( GetItemFlavorByAsset( SKYDIVE_TRAIL_DEFAULT ) )
 
 	int index = player.GetPlayerNetInt( "skyDiveTrailOverrideIndex" )
-	//printt( "player " + player + ", index : " + index )
+	
 	if ( index == -1  )
 	{
 		SkyDiveTrailPackage package =  SkydiveTrail_GetSkyDiveTrailPackageForPlayer( player )
-		//printt( "Package smokeColor 0th element? " + package.smokeColorFX[0].fx )
+		
 		return SkydiveTrail_GetSkyDiveTrailPackageForPlayer( player )
 	}
 
@@ -369,1434 +366,1434 @@ SkyDiveTrailPackage function GetSkyDiveTrailPackageForPlayerWithOverrides( entit
 	return SkydiveTrail_GetPackageForIndex( index )
 }
 
-#if SERVER
-
-void function Survival_AddCallback_PlayerFreefallBegin( void functionref(entity) callbackFunc )
-{
-	Assert( !file.Callbacks_OnPlayerFreefallBegin.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with Survival_AddCallback_PlayerFreefallBegin" )
-	file.Callbacks_OnPlayerFreefallBegin.append( callbackFunc )
-}
-
-void function Survival_AddCallback_PlayerFreefallEnd( void functionref(entity) callbackFunc )
-{
-	Assert( !file.Callbacks_OnPlayerFreefallEnd.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with Survival_AddCallback_OnPlayerFreefallEnd" )
-	file.Callbacks_OnPlayerFreefallEnd.append( callbackFunc )
-}
-
-void function Survival_RemoveCallback_PlayerFreefallEnd( void functionref(entity) callbackFunc )
-{
-	Assert( file.Callbacks_OnPlayerFreefallEnd.contains( callbackFunc ), "Callback " + string( callbackFunc ) + " does not exist." )
-	file.Callbacks_OnPlayerFreefallEnd.fastremovebyvalue( callbackFunc )
-}
-
-void function SetOnPlayerSkydiveCustomTrailsCallback( void functionref(entity ) callbackFunc )
-{
-	file.OnPlayerSkydiveCustomTrailsInitFunc = callbackFunc
-}
-
-void function Survival_AddCallback_PlayerSkydiveAnticipateBegin( void functionref(entity) callbackFunc )
-{
-	Assert( !file.Callbacks_OnPlayerSkydiveAnticipateBegin.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with Callbacks_OnPlayerSkydiveAnticipateBegin" )
-	file.Callbacks_OnPlayerSkydiveAnticipateBegin.append( callbackFunc )
-}
-
-
-void function Skydive_CheckAndAnnounceNearbySquads( entity skydiver )
-{
-	if ( !IsValid( skydiver ) )
-		return
-
-	if ( !skydiver.p.enableSkydiveDetection )
-		return
-
-	table<int, entity> closestEnemyPlayersOfTeam = {}
-	array<entity> players = GetPlayerArrayEx( "any", TEAM_ANY, TEAM_ANY, skydiver.GetOrigin(), SKYDIVE_ENEMY_DETECT_RANGE )
-	int ownerTeam = skydiver.GetTeam()
-	vector skydiverOrigin = skydiver.GetOrigin()
-
-	foreach ( player in players )
-	{
-		if ( !player.DoesShareRealms( skydiver ) || player == skydiver || player.IsObserver() )
-			continue
-
-		int playerTeam = player.GetTeam()
-
-		if ( IsFriendlyTeam( ownerTeam, playerTeam ) )
-			continue
-
-		if ( playerTeam == 0 || playerTeam == 1 )
-			continue
-
-		if ( !( playerTeam in closestEnemyPlayersOfTeam ) )
-		{
-			closestEnemyPlayersOfTeam[ playerTeam ] <- player
-		}
-		else
-		{
-			// replace the representative of a given team if the other team member is closer to the skydiver
-			float curDist = Distance2D( skydiverOrigin, closestEnemyPlayersOfTeam[ playerTeam ].GetOrigin() )
-			float newDist = Distance2D( skydiverOrigin, player.GetOrigin() )
-
-			if ( newDist < curDist )
-			{
-				closestEnemyPlayersOfTeam[ playerTeam ] <- player
-			}
-		}
-	}
-
-	// if a team falls in Apex and no one is around to hear it, it doesn't make a sound
-	if ( closestEnemyPlayersOfTeam.len() <= 0 )
-		return
-
-	                            
-		// Run logic in Rev Army that checks for Rev enemies
-		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
-		{
-			// if a player fell from the plane, announce there's another team nearby
-			int teamAlliance = AllianceProximity_GetAllianceFromTeam( ownerTeam )
-			if ( GetNV_FreefallIsFromPlane( skydiver ) )
-			{
-				if ( teamAlliance == SHADOWARMY_LEGEND_ALLIANCE )
-					BroadcastCommsActionToTeam( skydiver, eCommsAction.QUICKCHAT_SKYDIVE_REV_NEARBY, GetTeamEnt( ownerTeam ), skydiver.GetOrigin(), eCommsFlags.NONE, "" )
-				else
-					BroadcastCommsActionToTeam( skydiver, eCommsAction.QUICKCHAT_SKYDIVE_SKINBAG_NEARBY, GetTeamEnt( ownerTeam ), skydiver.GetOrigin(), eCommsFlags.NONE, "" )
-			}
-
-			// regardless of whether a team has fallen from a plane, announce that a team has landed teams in the area
-			foreach ( team, player in closestEnemyPlayersOfTeam )
-			{
-				teamAlliance = AllianceProximity_GetAllianceFromTeam( team )
-
-				if ( teamAlliance == SHADOWARMY_LEGEND_ALLIANCE )
-					BroadcastCommsActionToTeam( player, eCommsAction.QUICKCHAT_SKYDIVE_REV_NEARBY, GetTeamEnt( team ), player.GetOrigin(), eCommsFlags.NONE, "" )
-				else
-					BroadcastCommsActionToTeam( player, eCommsAction.QUICKCHAT_SKYDIVE_SKINBAG_NEARBY, GetTeamEnt( team ), player.GetOrigin(), eCommsFlags.NONE, "" )
-			}
-
-			return
-		}
-                                   
-
-	// if a player fell from the plane, announce there's another team nearby
-	if ( GetNV_FreefallIsFromPlane( skydiver ) )
-		BroadcastCommsActionToTeam( skydiver, eCommsAction.QUICKCHAT_SKYDIVE_ENEMIES_NEARBY, GetTeamEnt( ownerTeam ), skydiver.GetOrigin(), eCommsFlags.NONE, "" )
-
-	// regardless of whether a team has fallen from a plane, announce that a team has landed teams in the area
-	foreach ( team, player in closestEnemyPlayersOfTeam )
-		BroadcastCommsActionToTeam( player, eCommsAction.QUICKCHAT_SKYDIVE_ENEMIES_NEARBY, GetTeamEnt( team ), player.GetOrigin(), eCommsFlags.NONE, "" )
-}
-
-
-void function AddSkydiveBoundaryVolume( entity ent )
-{
-	file.skydiveBoundaryVolumes.append( ent )
-}
-
-bool function IsPointInsideSkydiveBoundary( vector point )
-{
-	if ( GetCurrentPlaylistVarBool( "ignore_skydive_boundries", false ) == true )
-		return false
-
-	foreach( entity volume in file.skydiveBoundaryVolumes )
-	{
-		if ( volume.ContainsPoint( point ) )
-			return true
-	}
-	return false
-}
-
-void function Skydive_CustomTrailsInit( entity player  )
-{
-	if ( !LoadoutSlot_IsReady( ToEHI( player ), Loadout_Character() ) )
-		return
-
-	if ( file.OnPlayerSkydiveCustomTrailsInitFunc != null  )
-	{
-		file.OnPlayerSkydiveCustomTrailsInitFunc( player  )
-	}
-
-}
-
-void function SetOverrideSkydiveTrailPackageForPlayer( SkyDiveTrailPackage package, entity player )
-{
-	EHI playerEHI = ToEHI( player  )
-	int packageIndex = SkydiveTrail_GetIndexForPackage( package )
-	player.SetPlayerNetInt( "skyDiveTrailOverrideIndex", packageIndex )
-}
-
-void function ForcedSkydiveTriggerThink( entity trigger )
-{
-	if ( GetCurrentPlaylistVarBool( "skydive_ziplines_enabled", true ) == false )
-	{
-		trigger.Destroy()
-		return
-	}
-
-                              
-	if ( GetEditorClass( trigger ) == "" && trigger.GetScriptName() != REDEPLOY_BALLOON_SKYDIVE_TRIGGER_SCRIPT_NAME)
-      
-                                       
-       
-		Warning( "!!! Warning !!! Skydive trigger using deprecated script_name at: " + trigger.GetOrigin() )
-
-	if ( trigger.GetScriptName() == "zipline_skydive" && GetEditorClass( trigger ) == "trigger_skydive" )
-	{
-		Warning( "!!! Warning !!! Skydive trigger has both script_name and is a skydive_trigger. Discarding! Located at: " + trigger.GetOrigin() )
-		return
-	}
-
-	EndSignal( trigger, "OnDestroy" )
-
-	trigger.SetEnterCallback( ForcedSkydiveTriggerThink_EnterCallback )
-}
-
-void function ForcedSkydiveTriggerThink_EnterCallback( entity trigger, entity player )
-{
-	if ( !IsValid( player ) )
-		return
-
-	if ( !player.IsPlayer() )
-		return
-
-	if ( PlayerMatchState_GetFor( player ) == ePlayerMatchState.SKYDIVE_FALLING )
-		return
-
-	if ( player.IsNoclipping() )
-		return
-
-	if ( Bleedout_IsBleedingOut( player ) )
-		return
-
-	//if ( player.IsSkydiving() /*Player_IsSkydiving not in S3*/ )
-		return
-
-	if ( HoverVehicle_IsPlayerInAnyVehicle( player ) )
-		return
-
-	//if ( player.Player_IsSkywardLaunching() || player.Player_IsSkywardFollowing() )
-		return
-
-	// Fix for R5DEV-482606: Player shouldn't die or be able to go to illicit locations via skydive tower in training.
-	if( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_TRAINING ) )
-		return
-
-	vector initialVelocity = < 0, 0, 0 >
-	if ( trigger.HasKey( "initial_vert_velocity" ) )
-		initialVelocity += < 0, 0, float( trigger.kv.initial_vert_velocity ) >
-	if ( trigger.HasKey( "initial_fwd_velocity" ) )
-		initialVelocity += player.GetForwardVector() * float( trigger.kv.initial_fwd_velocity )
-
-	                             
-	if ( trigger.GetScriptName() == REDEPLOY_BALLOON_SKYDIVE_TRIGGER_SCRIPT_NAME)
-	{
-		initialVelocity += player.GetForwardVector() * RedeployBalloon_GetSkydiveVelOverride()
-		//TODO: Add unique pin for redeploy balloon
-		PIN_Interact ( player, "MapToy_jump_tower_skydive_start" )
-	}
-	else
-       
-	PIN_Interact ( player, "MapToy_jump_tower_skydive_start" )
-
-	thread ForcedSkydiveTriggerThink_EnterCallback_Spinoff( player, initialVelocity )
-}
-
-void function ForcedSkydiveTriggerThink_EnterCallback_Spinoff ( entity player, vector initialVelocity )
-{
-	                        
-		Control_PrintSkydiveDebug( player, " ForcedSkydiveTriggerThink_EnterCallback_Spinoff going to wait for PlayerSkydiveFromCurrentPositionWithInitVelocity" )
-                               
-	waitthread PlayerSkydiveFromCurrentPositionWithInitVelocity( player, initialVelocity )
-
-	                        
-		Control_PrintSkydiveDebug( player, " ForcedSkydiveTriggerThink_EnterCallback_Spinoff finished waiting for PlayerSkydiveFromCurrentPositionWithInitVelocity to complete" )
-                               
-
-	if ( IsValid( player ) )
-		PIN_PlayerLandedOnGround ( player, "redeploy_land" )
-}
-
-void function SkydiveTowerEntitySpawned( entity ent )
-{
-	if ( GetCurrentPlaylistVarBool( "skydive_ziplines_enabled", true ) == false )
-		thread DeleteEntityAfterAllEntitiesLoaded( ent )
-}
-
-void function DeleteEntityAfterAllEntitiesLoaded( entity ent )
-{
-	FlagWait( "EntitiesDidLoad" )
-	WaitFrame()
-	ent.Destroy()
-}
-
-void function PlayerSkydiveThirdPersonEnable( entity player )
-{
-	player.SetTrackEntity( player )
-	player.SetTrackEntityPitchLookMode( "orbit" )
-	player.SetTrackEntityYawLookMode( "orbit" )
-	player.SetTrackEntityDistanceMode( "scriptOffsetClientOnly" )
-	player.SetTrackEntityMinYaw( -180 )
-	player.SetTrackEntityMaxYaw( 180 )
-	player.SetTrackEntityMinPitch( -89 )
-	player.SetTrackEntityMaxPitch( 89 )
-	player.SetTrackEntityOffsetDistance( SKYDIVE_THIRD_PERSON_START_DIST )
-	player.SetTrackEntityOffsetHeight( SKYDIVE_THIRD_PERSON_START_HEIGHT )
-	//if ( player.Skydive_IsFromUpdraft() ) // S3: entity method not available
-	//{
-	//	player.SetTrackEntityBlendInTimes( 1.25, 0.75, 0.3 )
-	//}
-}
-
-void function OnPlayerDisconnected( entity player )
-{
-	if ( !IsValid( player ) )
-		return
-
-	//if ( !player.IsSkydiving() /*Player_IsSkydiving not in S3*/ )
-		return
-
-	// This player may be jumpmaster so make sure to free any players following
-	ClearChildren( player, true )
-}
-
-void function SkydiveTest()
-{
-	foreach( entity player in GetPlayerArray() )
-	{
-		player.ClearParent()
-		player.SetOrigin( <0,0,35000> )
-		                        
-			Control_PrintSkydiveDebug( player, " SkydiveTest going to trigger PlayerSkydiveFromCurrentPosition" )
-                                
-		thread PlayerSkydiveFromCurrentPosition( player )
-	}
-}
-
-void function PlayerSkydiveFromCurrentPosition( entity player, bool useSpawnJumpSounds = false )
-{
-	                        
-		Control_PrintSkydiveDebug( player, " PlayerSkydiveFromCurrentPosition going to trigger PlayerSkydiveFromCurrentPositionWithInitVelocity" )
-                               
-	thread PlayerSkydiveFromCurrentPositionWithInitVelocity( player, < 0, 0, 0 >, false, useSpawnJumpSounds )
-}
-
-void function PlayerSkydiveFromCurrentPositionWithInitVelocity( entity player, vector velocity, bool enableSkydiveDetection = true, bool useSpawnJumpSounds = false  )
-{
-	Signal( player, "PlayerSkydiveFromCurrentPosition" )
-	EndSignal( player, "PlayerSkydiveFromCurrentPosition" )
-
-	player.Signal( "PhaseTunnel_EndPlacement" )
-
-	player.p.skydiveDecoysFired = 0 //Resetting Mirage's decoy counter so he can use his hidden passive with skydive towers.
-	player.Zipline_Stop()
-	SetPlayerIntroDropSettings( player )
-	                        
-		Control_PrintSkydiveDebug( player, " PlayerSkydiveFromCurrentPositionWithInitVelocity going to wait for PlayerSkyDive" )
-                               
-
-	waitthread PlayerSkyDive( player, player.GetViewVector(), [player], player, false, true, velocity, enableSkydiveDetection, useSpawnJumpSounds )
-
-	                        
-		Control_PrintSkydiveDebug( player, " PlayerSkydiveFromCurrentPositionWithInitVelocity finished waiting for PlayerSkyDive" )
-                               
-}
-
-void function PlayerSkydiveLandingFromCurrentPosition( entity player )
-{
-	Signal( player, "PlayerSkydiveFromCurrentPosition" )
-	EndSignal( player, "PlayerSkydiveFromCurrentPosition" )
-
-	player.Signal( "PhaseTunnel_EndPlacement" )
-
-	player.p.skydiveDecoysFired = 0 //Resetting Mirage's decoy counter so he can use his hidden passive with skydive towers.
-	player.Zipline_Stop()
-	SetPlayerIntroDropSettings( player )
-	waitthread PlayerSkyDive( player, player.GetViewVector(), [player], player, false, false )
-}
-
-void function PlayerSkyDive( 	entity player, vector driverViewVector, array<entity> squadPlayers, entity leaderPlayer,
-		 					 	bool jumpingFromPlane = true, bool freefallEnabled = true, vector initialVelocity = < 0, 0, 0 >,
-								bool enableSkydiveDetection = true,  bool useSpawnJumpSounds = false,
-								bool constrainedDive = false, vector constrainedDiveDestination = < 0, 0, 0 >, float constrainedDive2DRadius = CONSTRAINEDDIVE_RADIUS_DEFAULT )
-{
-	                        
-		Control_PrintSkydiveDebug( player, " PlayerSkyDive starting" )
-                               
-	// Lets us restart this thread and kill previous thread for dev testing
-	Signal( player, "PlayerSkyDive" )
-	EndSignal( player, "PlayerSkyDive" )
-	EndSignal( player, "EndPlayerSkyDive" )
-	EndSignal( player, "OnDeath" )
-
-	if ( IsValid( svGlobal.levelEnt ) ) // prevents crash with restarting the map during droship phase
-	{
-		EndSignal( svGlobal.levelEnt, "DevPlaneTest" )
-	}
-	EndSignal( player, "DeathTotem_PreRecallPlayer" )
-
-	SetPlayerIntroDropSettings( player )
-
-	array<entity> jumpJetFX
-	//if( !player.Skydive_IsFromSkywardLaunch() ) // S3: entity methods not available
-	//	player.Player_BeginSkydive( initialVelocity )
-
-	SetNV_FreefallIsFromPlane( player, jumpingFromPlane )
-	player.p.freefallEnabled = freefallEnabled
-	player.p.enableSkydiveDetection = enableSkydiveDetection
-
-	                      
-		MatchBehaviorPlayer_RecordDropInfo( player )
-       
-
-	OnThreadEnd(
-		function() : ( player, leaderPlayer, jumpJetFX, jumpingFromPlane )
-		{
-			if ( IsValid( player ) )
-			{
-				                        
-					Control_PrintSkydiveDebug( player, " PlayerSkyDive OnThreadEnd" )
-                                  
-				player.Anim_Stop()
-
-				if ( IsValid( player.GetParent() ) && IsValid( leaderPlayer ) )
-				{
-					player.ClearParent()
-					PutEntityInSomewhatSafeSpot( player, null, null, leaderPlayer.GetOrigin(), player.GetOrigin() )
-				}
-				else
-				{
-					player.ClearParent()
-					if ( !player.IsZiplining() )
-						PutEntityInSomewhatSafeSpot( player, null, null, player.GetOrigin(), player.GetOrigin() )
-				}
-
-				thread DisableSkydiveThirdPerson( player, jumpingFromPlane )
-
-				// This track started when we entered the plane, stopping it again (second time) will trigger a fadeout
-				// Disabled, see below:
-				//string music = GetMusicForJump( player )
-				//if ( music.len() > 0 )
-				//	StopMusicOnPlayer( player, music )
-
-				// Defensive fix for R5DEV-64285 & R5DEV-72479; late connecting clients can have music started on them,
-				// but the function that would have stopped it is "in the past" and will never do so.  Defensively stop
-				// all music playing on the player at this point.
-				if ( GetCurrentPlaylistVarBool( "should_stop_music_on_skydive", true ) )
-					StopAllMusicOnPlayer( player )
-
-				StopAllSkydiveSounds( player )
-
-				SkyDiveTrailPackage package = GetSkyDiveTrailPackageForPlayerWithOverrides( player )
-				if ( GetNV_FreefallIsFromPlane( player ) )
-				{
-					EmitSoundOnEntityOnlyToPlayer( player, player, package.DropSequenceLandStop1P )
-					EmitSoundOnEntityExceptToPlayer( player, player, package.DropSequenceLandStop3P )
-				}
-				else
-				{
-					EmitSoundOnEntityOnlyToPlayer( player, player, package.InGameFlightLandStop1P )
-					EmitSoundOnEntityExceptToPlayer( player, player, package.InGameFlightLandStop3P )
-				}
-
-				player.Skydive_SetFreelookMode( false )
-				player.p.skydiveFreelookEnabled = 0
-				//if ( player.IsSkydiving() /*Player_IsSkydiving not in S3*/ )
-				//{
-				//	player.Player_EndSkydive() // S3: entity method not available
-				//}
-
-				HeatMapStat( player, "Sur_Skydive_Landing", player.GetOrigin() )
-				Signal( player, "PlayerBootsOnGround" )
-
-				ClearPlayerIntroDropSettings( player )
-
-				foreach( input in file.freecamInputs )
-				{
-					RemoveButtonPressedPlayerInputCallback( player, input, Freelook_Enable )
-					RemoveButtonReleasedPlayerInputCallback( player, input, Freelook_Disable )
-				}
-			}
-		}
-	)
-
-	foreach( input in file.freecamInputs )
-	{
-		AddButtonPressedPlayerInputCallback( player, input, Freelook_Enable )
-		AddButtonReleasedPlayerInputCallback( player, input, Freelook_Disable )
-	}
-
-	if ( PlayerHasPassive( player, ePassives.PAS_MIRAGE ) )
-	{
-		thread AllowDecoyDrop( player )
-	}
-
-	// Trigger a new stage of the song for the descent
-	string music = GetMusicForJump( player )
-	if ( music.len() > 0 )
-		SignalSoundOnEntity( player, music )
-
-	player.ClearInvulnerable()
-	//if( !player.Skydive_IsFromSkywardLaunch() ) // S3: entity method not available
-			player.ClearParent()
-
-	if ( player.GetPlayerNetBool( "playerInPlane" ) )
-		ClearPlayerPlaneViewMode( player )
-	Remote_CallFunction_NonReplay( player, "ServerCallback_ClearHints" )
-
-	AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
-	if ( jumpingFromPlane )
-		PlayerMatchState_Set( player, ePlayerMatchState.SKYDIVE_FALLING )
-	//Survival_SetInventoryEnabled( player, false )
-
-	if ( GetNV_FreefallIsFromPlane( player ) )
-		PIN_PlayerJumpedFromPlane( player, squadPlayers.len() - 1 )
-
-	vector planeVelocity = leaderPlayer.GetVelocity()
-	vector launchOffset = GetSkydiveFormationOffset( player, squadPlayers, leaderPlayer )
-
-	// Other squad mates get their view snapped to match the driver so it's easier to fly together. This should probably be a lerp but we don't have that ability
-	if ( player != leaderPlayer	/*&& !player.Skydive_IsFromSkywardLaunch()*/ ) // S3: entity method not available
-	{
-		float dot = DotProduct( driverViewVector, AnglesToForward( player.CameraAngles() ) )
-		if ( DotToAngle( dot ) > 35.0 )
-			thread SnapEyeAnglesWithFade( player, VectorToAngles( driverViewVector ) )
-	}
-
-	vector playerOrigin = player.GetOrigin()
-	if ( GetNV_FreefallIsFromPlane( player ) )
-	{
-		float startingYaw = FlattenAngles( VectorToAngles( driverViewVector ) ).y
-		player.SnapFeetAngles( <0, startingYaw, 0> )
-	}
-
-	SkydivePlayerData skydiveData
-	skydiveData.player = player
-
-	if ( !( player in file.skydivePlayerDataLookup ) )
-		file.skydivePlayerDataLookup[ player ] <- skydiveData
-	file.skydivePlayerDataLookup[ player ] = skydiveData
-
-	//if ( !player.IsSkydiving() /*Player_IsSkydiving not in S3*/ && !player.Skydive_IsFromSkywardLaunch() )
-	//{
-	//	player.Player_BeginSkydive( <0, 0, 0> ) // S3: entity method not available
-	//}
-
-	//if( !player.Skydive_IsFromSkywardLaunch() ) // S3: entity method not available
-		PlayerSkydiveThirdPersonEnable( player )
-
-	thread SkydiveAttractLeviathan( player )
-
-	thread StatsHook_TrackSkyDiveDistance( player )
-
-	int forceStandHandle = player.PushForcedStance( FORCE_STANCE_STAND )
-	OnThreadEnd(
-		function() : ( player, forceStandHandle )
-		{
-			if ( IsValid( player ) )
-			{
-				player.RemoveForcedStance( forceStandHandle )
-			}
-		}
-	)
-
-	// Jump Jet FX (Last entire jump duration)
-
-		int team = player.GetTeam()
-
-		//TODO(chin): Figure out how Valk works with custom skydive trails
-		if ( HasPlayerSettingMod( player, "valk_skydive" ) )
-		{
-			vector smokeColor = GetSkydiveSmokeColorForTeam( player.GetTeam() )
-			foreach ( string attachment in file.jumpJetAttachments )
-			{
-				int valkFriendlyID = GetParticleSystemIndex( JUMPJET_VALK_SKYDIVE_FRIENDLY )
-				entity valkSkydiveFX = StartParticleEffectOnEntity_ReturnEntity( player, valkFriendlyID, FX_PATTACH_POINT_FOLLOW, player.LookupAttachment( attachment ) )
-				SetTeam( valkSkydiveFX, team )
-				valkSkydiveFX.SetStopType( "destroyImmediately" )
-				EffectSetControlPointVector( valkSkydiveFX, 1, smokeColor  )
-				valkSkydiveFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
-				jumpJetFX.append( valkSkydiveFX )
-
-				int valkEnemyID = GetParticleSystemIndex( JUMPJET_VALK_SKYDIVE_ENEMY )
-				entity valkEnemyFX = StartParticleEffectOnEntity_ReturnEntity( player, valkEnemyID, FX_PATTACH_POINT_FOLLOW, player.LookupAttachment( attachment ) )
-				SetTeam( valkEnemyFX, team )
-				valkEnemyFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
-				EffectSetControlPointVector( valkEnemyFX, 1, smokeColor )
-				jumpJetFX.append( valkEnemyFX )
-			}
-		}
-
-	//#################
-
-	SkyDiveTrailPackage package = GetSkyDiveTrailPackageForPlayerWithOverrides( player )
-	if ( GetNV_FreefallIsFromPlane( player ) || useSpawnJumpSounds )
-	{
-		EmitSoundOnEntityOnlyToPlayer( player, player, package.DropSequenceLaunch1P )
-	}
-
-	if ( player == leaderPlayer )
-	{
-		if ( GetNV_FreefallIsFromPlane( player ) || useSpawnJumpSounds )
-		{
-			EmitSoundOnEntityExceptToPlayer( player, player, package.DropSequenceLaunch3P  )
-		}
-		else
-		{
-			EmitSoundOnEntityOnlyToPlayer( player, player, package.InGameFlightLaunch1P )
-			EmitSoundOnEntityExceptToPlayer( player, player, package.InGameFlightLaunch3P )
-		}
-	}
-
-	if ( GetNV_FreefallIsFromPlane( player ) || useSpawnJumpSounds )
-	{
-		EmitSoundOnEntityOnlyToPlayer( player, player, package.DropSequenceTravel1P )
-		EmitSoundOnEntityExceptToPlayer( player, player, package.DropSequenceTravel3P )
-	}
-	else
-	{
-		EmitSoundOnEntityOnlyToPlayer( player, player, package.InGameFlightTravel1P )
-		EmitSoundOnEntityExceptToPlayer( player, player, package.InGameFlightTravel3P )
-	}
-
-	                        
-		Control_PrintSkydiveDebug( player, " PlayerSkyDive going to wait for SkyDiveMovement" )
-                               
-
-	waitthread SkyDiveMovement( player, skydiveData, driverViewVector, launchOffset, planeVelocity, leaderPlayer, constrainedDive, constrainedDiveDestination, constrainedDive2DRadius )
-
-	                        
-		Control_PrintSkydiveDebug( player, " PlayerSkyDive completed wait for SkyDiveMovement" )
-                               
-}
-
-void function AllowDecoyDrop( entity player )
-{
-	EndSignal( player, "OnDeath" )
-	EndSignal( player, "FreefallEnded" )
-
-	WaitFrame() //Allows NetVars to be set
-
-	if( !IsValid( player ) )
-		return
-
-	float decoyDropDelay     = 2.0
-
-	bool isSkydiveFollower = player.GetPlayerNetEnt( "skydiveFollowPlayer" ) != null
-	if( !player.GetPlayerNetBool( "isJumpingWithSquad"  ) && isSkydiveFollower )
-		decoyDropDelay = 0.5 // When not diving from the Jump Ship, allow Mirage to fire his clones faster
-
-	wait decoyDropDelay
-
-	player.p.skydiveDecoysFired = 0
-
-	AddButtonPressedPlayerInputCallback( player, file.decoyInput, AttemptDecoyDrop )
-
-	OnThreadEnd(
-		function() : ( player )
-		{
-			RemoveButtonPressedPlayerInputCallback( player, file.decoyInput, AttemptDecoyDrop )
-		}
-	)
-
-	WaitSignal( player, "FreefallEnded" )
-}
-
-void function EndPlayerSkyDive( entity player )
-{
-	Signal( player, "EndPlayerSkyDive" )
-}
-
-void function SkydiveAttractLeviathan( entity player )
-{
-	player.EndSignal( "OnDeath" )
-	wait RandomFloatRange( 2.0, 4.0 )
-	Leviathan_ConsiderLookAtEnt( player, RandomFloatRange( 10, 20 ), 0.1 )
-	wait 5.0
-	Leviathan_ConsiderLookAtEnt( player, RandomFloatRange( 10, 20 ), 0.1 )
-}
-
-void function SkydiveIntroAnim( entity player )
-{
-	EndSignal( player, "OnDeath" )
-	EndSignal( player, "PlayerSkyDive" )
-	EndSignal( player, "BleedOut_OnStartDying" )
-	if ( IsValid( svGlobal.levelEnt ) )
-	{
-		EndSignal( svGlobal.levelEnt, "DevPlaneTest" )
-	}
-
-	wait RandomFloatRange( 0.0, 0.75 )
-}
-
-void function SkyDiveMovement( entity player, SkydivePlayerData skydiveData, vector driverViewVector, vector launchOffset, vector planeVelocity, entity leaderPlayer, bool constrainedDive = false, vector constrainedDiveDestination = < 0, 0, 0 >, float constrainedDive2DRadius = 0.0 )
-{
-	                        
-		Control_PrintSkydiveDebug( player, " SkyDiveMovement starting" )
-                               
-
-	int forwardPoseID = player.LookupPoseParameterIndex( "freefall_pitch" )
-	int sidePoseID = player.LookupPoseParameterIndex( "freefall_yaw" )
-	Assert( forwardPoseID >= 0 )
-	Assert( sidePoseID >= 0 )
-
-	float strafeAmount
-
-	if ( !player.IsBot() )
-		player.SetPlayerNetBool( "freefallActive", true )
-
-	EndSignal( player, "OnDeath" )
-	EndSignal( player, "PlayerSkyDive" )
-	EndSignal( player, "BleedOut_OnStartDying" )
-	if ( IsValid( svGlobal.levelEnt ) )
-	{
-		EndSignal( svGlobal.levelEnt, "DevPlaneTest" )
-	}
-	EndSignal( player, "DeathTotem_PreRecallPlayer" )
-
-	//#####################################
-	// LAUNCH OUT OF PLANE
-	//#####################################
-
-	// Launch out of plane with no control (we need this to get squad members into formation smoothly)
-	if ( GetNV_FreefallIsFromPlane( player ) )
-	{
-		entity planeEnt
-                         
-                                              
-                       
-    
-                                                  
-    
-       
-        
-		{
-			planeEnt = Sur_GetPlaneEnt()
-		}
-
-		if ( IsValid( planeEnt ) )
-		{
-			vector launchEndPoint = player.GetOrigin() + ( driverViewVector * 500 ) + ( planeVelocity * 0.6 )
-			launchEndPoint = OffsetPointRelativeToVector( launchEndPoint, launchOffset, driverViewVector )
-
-			vector jumpDir = FlattenVec( driverViewVector )//FlattenVector( Normalize( launchEndPoint - mover.GetOrigin() ) )
-			strafeAmount = GraphCapped( fabs( ( acos( DotProduct( planeEnt.GetForwardVector(), jumpDir ) ) * 180 / PI ) - 90 ), 0, 90, STRAFE_AMOUNT_MAX, 0.0 )
-			// invert strafeAmount if we are looking out the right side of the plane
-			if ( DotProduct( planeEnt.GetRightVector(), jumpDir ) > 0.0 )
-				strafeAmount *= -1.0
-
-			player.SetPoseParameterOverTime( forwardPoseID, 50, SKYDIVE_LAUNCH_NO_CONTROL_DURATION * 0.5 )
-			player.SetVelocity( (launchEndPoint - player.GetOrigin()) / SKYDIVE_LAUNCH_NO_CONTROL_DURATION)
-
-			thread SkydiveIntroAnim( player )
-			wait SKYDIVE_LAUNCH_NO_CONTROL_DURATION
-		}
-		else
-		{
-			// If we are actually expecting a plane for the skydive but don't have one, assert
-			Assert( !Skydive_IsPlaneExpectedForSkydiveRespawn(), "Tried to skydive but there is no plane entity" )
-		}
-	}
-
-                       
-           
-                              
-   
-                                                                                                              
-                                               
-                                                                                             
-                               
-                                       
-                                                     
-                                               
-                                          
-                                                      
-                                               
-   
-       
-       
-
-	//if ( !player.IsSkydiving() /*Player_IsSkydiving not in S3*/ )
-	{
-		if ( !player.IsBot() )
-		{
-			player.SetPlayerNetBool( "freefallActive", false )
-		}
-		                        
-			Control_PrintSkydiveDebug( player, " SkyDiveMovement breaking out early" )
-                                
-
-		return
-	}
-
-	//#####################################
-	// PLAYER HAS CONTROL
-	//#####################################
-
-	// if constrainedDive, don't let player move past constrainedDive2DRadius from destLoc.
-	if( constrainedDive )
-	{
-		//player.Player_SkydiveSetScriptConstraint( constrainedDiveDestination, constrainedDive2DRadius ) // S3: entity method not available
-	}
-
-	float prevTime = Time()
-	bool slowZone = !player.p.freefallEnabled
-	float lastSlowZoneChangeTime = 0
-	float diveAngleGoal
-	float actualDiveAngle
-	float minGlideAngle
-	float angleChangeRate
-	float forwardPoseValue
-	float sidePoseValue
-	float lastGroundFXTime = 0.0
-	float unfollowTime = -UNFOLLOW_CONTROL_BLEND_DURATION
-	bool jumpJetFixEnabled = GetCurrentPlaylistVarBool( "skydive_jumpjet_fix", true )
-
-	bool isFollowing = false
-	player.p.skydiveIsFollowing = false
-
-	SkydivePlayerData followPlayerData
-	if ( player != leaderPlayer && IsValid( leaderPlayer ) && leaderPlayer in file.skydivePlayerDataLookup )
-	{
-		followPlayerData = file.skydivePlayerDataLookup[leaderPlayer]
-		isFollowing = true
-		player.p.skydiveIsFollowing = true
-		player.SetPlayerNetEnt( "skydiveFollowPlayer", leaderPlayer )
-		vector oldLocalOrigin = CalcWorldToLocalOrigin_Entity( leaderPlayer, player.GetOrigin() )
-		player.Skydive_FollowPlayer( leaderPlayer )
-		//if( !player.Skydive_IsFromSkywardLaunch() ) // S3: entity method not available
-			player.SetLocalOrigin( <launchOffset.y, launchOffset.x, launchOffset.z> )
-	}
-
-	OnThreadEnd(
-		function() : ( player, skydiveData )
-		{
-			if ( IsValid( player ) )
-			{
-				Signal( player, "FreefallEnded" )
-
-				player.RumbleEffect( 0, 0, 0.0 )
-
-				if (!player.IsBot())
-				{
-					player.SetPlayerNetBool( "freefallActive", false )
-				}
-				                        
-					Control_PrintSkydiveDebug( player, " SkyDiveMovement OnThreadEnd" )
-                                  
-			}
-		}
-	)
-
-	#if DEVELOPER
-		float botLastForwardInputTime = 0.0
-		float botNextForwardInputTime = 0.0
-		float botLastForwardInput = 0.0
-		float botNextForwardInput = 0.0
-
-		float botLastRightInputTime = 0.0
-		float botNextRightInputTime = 0.0
-		float botLastRightInput = 0.0
-		float botNextRightInput = 0.0
-
-		float botLastViewVecTime = Time()
-		float botNextViewVecTime = Time() + RandomFloatRange( 3.0, 5.0 )
-		vector botLastViewVec = driverViewVector
-		vector botNextViewVec = driverViewVector
-	#endif
-
-	const float LOCKED_FORWARD_INPUT = 1.0
-	const float LOCKED_FORWARD_SPEED = 900
-
-	while( true )
-	{
-		float dt = Time() - prevTime
-		prevTime = Time()
-		float elapsedTime = Time() - 0.0 /*player.Player_GetSkydiveStartTime() S3: not available*/
-
-		float inputForward = player.GetInputAxisForward()
-
-		float inputRight = player.GetInputAxisRight()
-		vector horizonVec = AnglesToForward( FlattenAngles( player.GetAngles() ) )
-		vector rightVec = AnglesToRight( FlattenAngles( player.GetAngles() ) )
-
-		inputForward = Clamp( inputForward, -1.0, 1.0 )
-		inputRight = Clamp( inputRight, -1.0, 1.0 )
-
-		if ( slowZone && ( inputForward > 0.5 || inputForward < -0.5 || inputRight > 0.5 || inputRight < -0.5 ) )
-			player.p.skydiveIsFollowing = false
-
-		if ( isFollowing )
-		{
-			// Player can break out of follow mode by giving some stick input, or if follow target isn't skydiving anymore
-			//if ( !player.p.skydiveIsFollowing || !IsValid( player.GetParent() ) || !IsValid( leaderPlayer ) || !IsAlive( leaderPlayer ) || !leaderPlayer.IsSkydiving() /*Player_IsSkydiving not in S3*/ || !player.Skydive_IsFollowing() )
-			{
-				isFollowing = false
-				unfollowTime = Time()
-
-				if ( player.Skydive_IsFollowing() )
-				{
-					player.Skydive_StopFollowing()
-				}
-
-				player.SetPlayerNetEnt( "skydiveFollowPlayer", null )
-				player.SetVelocity( followPlayerData.velocity )
-
-				WaitFrame()
-				continue
-			}
-		}
-		else
-		{
-			#if DEVELOPER
-			// Bots fly random paths, turning, speeding up and slowing down
-			if ( player == leaderPlayer && player.IsBot() )
-			{
-				if ( Time() >= botNextForwardInputTime )
-				{
-					botLastForwardInputTime = Time()
-					botNextForwardInputTime = Time() + RandomFloatRange( 2.0, 4.0 )
-					botLastForwardInput = botNextForwardInput
-					botNextForwardInput = RandomFloatRange( -1.0, 1.0 )
-				}
-
-				if ( Time() >= botNextRightInputTime )
-				{
-					botLastRightInputTime = Time()
-					botNextRightInputTime = Time() + RandomFloatRange( 3.0, 6.0 )
-					botLastRightInput = botNextRightInput
-					botNextRightInput = RandomFloatRange( -0.5, 0.5 )
-				}
-
-				if ( Time() >= botNextViewVecTime )
-				{
-					botLastViewVecTime = Time()
-					botNextViewVecTime = Time() + RandomFloatRange( 4.0, 7.0 )
-					botLastViewVec = botNextViewVec
-					botNextViewVec = AnglesToForward( < RandomFloatRange( -20.0, 90.0 ), RandomFloatRange( 0.0, 360.0 ), 0.0 > )
-				}
-
-				inputForward = GraphCapped( Time(), botLastForwardInputTime, botNextForwardInputTime, botLastForwardInput, botNextForwardInput )
-				inputRight = GraphCapped( Time(), botLastRightInputTime, botNextRightInputTime, botLastRightInput, botNextRightInput )
-			}
-			#endif
-
-			// Handle constrainedDive.
-			const float CONSTRAINEDDIVE_MOVEMOD = 0.1
-			inputRight = constrainedDive ? inputRight * CONSTRAINEDDIVE_MOVEMOD : inputRight
-
-			skydiveData.inputForward = inputForward
-			skydiveData.inputRight = inputRight
-
-			//#####################################
-			// 		CALCULATE DIVE ANGLE
-			//#####################################
-
-			actualDiveAngle = player.Skydive_GetDiveAngle();
-			skydiveData.diveAngle = actualDiveAngle
-		}
-
-		//#####################################
-		//     		PLAYER ROTATION
-		//#####################################
-
-		#if DEVELOPER
-			bool outOfBounds = false
-		#endif
-
-		if ( isFollowing )
-		{
-			//#####################################
-			// 			 FOLLOW MODE
-			//#####################################
-
-			actualDiveAngle = followPlayerData.diveAngle
-		}
-		else
-		{
-			//#####################################
-			//     CALCULATE STRAFE MOVEMENT
-			//#####################################
-
-			strafeAmount = player.Skydive_GetStrafeAngle();
-
-			//#####################################
-			// 		CALCULATE NEW VELOCITY
-			//#####################################
-
-			vector newVelocity = player.GetVelocity()
-
-			#if DEVELOPER
-				if ( SKYDIVE_DEBUG )
-				{
-					printt( "lockforward: Player Skydive Speed == " + Length( newVelocity ) )
-				}
-			#endif // DEVELOPER
-
-			// Don't allow us to move the player into a boundary volume
-			vector newPlayerPos = player.GetOrigin() + (newVelocity * dt)
-
-			if ( newPlayerPos.z > MAX_WORLD_COORD_BUFFER || IsPointInsideSkydiveBoundary( newPlayerPos ) )
-			{
-				// Dive us straight down
-				newVelocity = < 0, 0, -newVelocity.Length() >
-
-				#if DEVELOPER
-					outOfBounds = true
-				#endif
-			}
-			else
-			{
-				if ( newPlayerPos.x > MAX_WORLD_COORD_BUFFER || newPlayerPos.x < -MAX_WORLD_COORD_BUFFER )
-					newVelocity = < 0, newVelocity.y, newVelocity.z >
-				if ( newPlayerPos.y > MAX_WORLD_COORD_BUFFER || newPlayerPos.y < -MAX_WORLD_COORD_BUFFER )
-					newVelocity = < newVelocity.x, 0, newVelocity.z >
-				if ( newPlayerPos.z > MAX_WORLD_COORD_BUFFER || newPlayerPos.z < -MAX_WORLD_COORD_BUFFER )
-					newVelocity = < newVelocity.x, newVelocity.y, 0 >
-			}
-
-			// Set the new velocity of the player
-			player.SetVelocity( newVelocity )
-			skydiveData.velocity = newVelocity
-		}
-
-		//#####################################
-		//     		GROUND DETECTION
-		//#####################################
-
-		if ( !player.p.freefallEnabled )
-		{
-			slowZone = true
-		}
-		else
-		{
-			//slowZone = player.Player_IsSkydiveAnticipating()
-		}
-
-		//if ( !player.IsSkydiving() /*Player_IsSkydiving not in S3*/ )
-		{
-			if ( !player.IsBot() )
-			{
-				player.SetPlayerNetBool( "freefallActive", false )
-			}
-
-			player.Signal( "FreefallEnded" )
-
-			MapZones_RefreshZoneCalloutForPlayer( player )
-
-			player.RumbleEffect( 0, 0, 0.0 )
-			                        
-				Control_PrintSkydiveDebug( player, " SkyDiveMovement breaking out early in while loop" )
-                                 
-			return
-		}
-
-		//#####################################
-		// 		  		DEBUG
-		//#####################################
-	
-		#if DEVELOPER
-			if ( SKYDIVE_DEBUG )
-			{
-				vector newVelocity = player.GetVelocity()
-
-				string debugString = "-- SkyDive --"
-				debugString += "\n" + format( "Duration: %.2f", elapsedTime )
-				//debugString += "\n" + format( "Speed: %.2f (%.2f max)", movementSpeed, maxAllowedSpeed )
-				debugString += "\n" + format( "Dive Angle Goal: %.2f", diveAngleGoal )
-				debugString += "\n" + format( "Actual Dive Angle: %.2f (%.2f min)", actualDiveAngle, minGlideAngle )
-				//debugString += "\n" + format( "Distance to collision: %.2f", distanceFromCollision )
-				debugString += "\n" + format( "Out Of Bounds: %s", outOfBounds ? "true" : "false" )
-
-				DebugDrawScreenText( 0.05, 0.5, debugString )
-
-				vector minFallVector = VectorRotateAxis( horizonVec, rightVec, -minGlideAngle )
-
-				//DebugDrawAngles( rotator.GetOrigin(), rotator.GetAngles(), 0.1 )
-
-				//DebugDrawLine( lastPos, mover.GetOrigin(), COLOR_MAGENTA, true, 20.0 )
-				//DebugDrawLine( player.GetOrigin(), player.GetOrigin() + Normalize( horizonVec ) * 100, <255, 255, 255>, true, 0.1 )
-				DebugDrawLine( player.GetOrigin(), player.GetOrigin() + Normalize( rightVec ) * 100, <200, 200, 200>, true, 0.1 )
-				//DebugDrawLine( player.GetOrigin(), player.GetOrigin() + Normalize( newVelocity ) * 100, <255, 255, 0>, true, 0.1 )
-				//DebugDrawLine( player.GetOrigin(), player.GetOrigin() + minFallVector * 125, <0, 255, 0>, true, 0.1 )
-
-				//DebugDrawRotatedBox( traceStart, mins, maxs, VectorToAngles( traceEnd - traceStart ), <255, 255, 0>, true, 0.1 )
-				//DebugDrawLine( player.GetOrigin(), player.GetOrigin() + newVelocity, <255, 255, 255>, true, 0.1 )
-			}
-		#endif
-
-		WaitFrame()
-	}
-}
-
-void function Freelook_Enable( entity player )
-{
-	player.p.skydiveFreelookEnabled++
-	player.Skydive_SetFreelookMode( true )
-	player.SetPlayerNetBool( "skydiveFreelookActive", true )
-}
-
-void function Freelook_Disable( entity player )
-{
-	player.p.skydiveFreelookEnabled = int( max( player.p.skydiveFreelookEnabled - 1, 0 ) )
-	if ( player.p.skydiveFreelookEnabled <= 0 )
-	{
-		player.Skydive_SetFreelookMode( false )
-		player.SetPlayerNetBool( "skydiveFreelookActive", false )
-	}
-}
-
-void function SnapEyeAnglesWithFade( entity player, vector angles )
-{
-	EndSignal( player, "OnDeath" )
-	thread ScreenFadeToBlack( player, 0.5, 0.0 )
-	wait 0.5
-	player.SnapEyeAngles( angles )
-	thread ScreenFadeFromBlack( player, 0.5, 0 )
-}
-
-vector function GetSkydiveFormationOffset( entity player, array<entity> squadPlayers, entity leaderPlayer )
-{
-	if ( player == leaderPlayer )
-		return < 0, 0, 0 >
-
-	int index = 0
-	foreach( entity _player in squadPlayers )
-	{
-		if ( _player == leaderPlayer )
-			continue
-		if ( _player == player )
-			break
-		index++
-	}
-
-	int countBack = ( index + 2 ) / 2
-	vector offset = < 50, -50, 15 > * countBack
-
-	if ( index % 2 == 0 )
-		offset.x *= -1
-
-	return offset
-}
-
-void function FillSkyWithClouds()
-{
-	if ( IsTestMap() )
-		return
-
-	if ( !file.shouldFillSkyWithClouds )
-		return
-
-	int MAP_EXTENTS = 53248
-	float MAX_HEIGHT = SURVIVAL_GetPlaneHeight() - 2000 //GetEntByScriptName( "hover_tank_start_node1" ).GetOrigin().z - 2000
-	float MIN_HEIGHT = SURVIVAL_GetAirburstHeight() + 2000
-	Assert( MAX_HEIGHT > MIN_HEIGHT, "The maps airburst height is too close to the plane height. The plane height must be more than 4000 units higher than the airburst height. If this is a problem we can adjust this logic." )
-	int GRID_COUNT_XY = 4
-	int GRID_COUNT_Z = 3
-	int COVERAGE_MAX = 20
-	int COVERAGE_MIN = 5
-	float JITTER_DIST_XY = 3000.0
-	float JITTER_DIST_Z = 1000.0
-
-	foreach( entity model in file.cloudModels )
-		model.Destroy()
-	file.cloudModels.clear()
-
-	for( float zIt = 0 ; zIt < GRID_COUNT_Z ; zIt++ )
-	{
-		float z = MAX_HEIGHT - ( zIt * (( MAX_HEIGHT - MIN_HEIGHT ) / ( GRID_COUNT_Z - 1 )) )
-		for( float yIt = 0 ; yIt < GRID_COUNT_XY ; yIt++ )
-		{
-			float y = -MAP_EXTENTS + ( yIt * (( MAP_EXTENTS * 2 ) / ( GRID_COUNT_XY - 1 )) )
-			for( float xIt = 0 ; xIt < GRID_COUNT_XY ; xIt++ )
-			{
-				float x = -MAP_EXTENTS + ( xIt * (( MAP_EXTENTS * 2 ) / ( GRID_COUNT_XY - 1 )) )
-				vector cloudPos = <x + RandomFloatRange(-JITTER_DIST_XY,JITTER_DIST_XY), y + RandomFloatRange(-JITTER_DIST_XY,JITTER_DIST_XY), z + RandomFloatRange(-JITTER_DIST_Z,JITTER_DIST_Z)>
-				float chance = GraphCapped( zIt, 0, GRID_COUNT_Z - 1, COVERAGE_MAX, COVERAGE_MIN )
-				if ( RandomInt( 100 ) >= chance )
-					continue
-				//DebugDrawSphere( cloudPos, 512, <255, 0, 0>, true, 99.0 )
-				entity model = CreatePropDynamic( CLOUD_MODEL, cloudPos, <0,RandomInt(359),0> )
-				file.cloudModels.append( model )
-			}
-		}
-	}
-}
-
-void function DisableSkydiveThirdPerson( entity player, bool jumpingFromPlane )
-{
-	                        
-		Control_PrintSkydiveDebug( player, " DisableSkydiveThirdPerson starting" )
-                               
-	if ( !IsValid( player ) )
-		return
-
-	player.ClearTrackEntitySettings()
-	player.Solid()
-
-	vector velocity = player.GetVelocity()
-
-	//if ( player.IsSkydiving() /*Player_IsSkydiving not in S3*/ )
-	{
-		//player.Player_EndSkydive() // S3: entity method not available
-		player.Anim_Stop()
-	}
-
-	if ( player in file.skydivePlayerDataLookup )
-		delete file.skydivePlayerDataLookup[ player ]
-
-	                        
-		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_EXPLORE ) && ShGameModeExplore_GetPlanePassNumber() > 1 )
-			jumpingFromPlane = false
-       
-
-	player.ClearFirstDeployForAllWeapons()
-	if ( jumpingFromPlane )
-	{
-		//player.ResetFirstDeployForMeleeWeapons() // S3: entity method not available
-	}
-	
-	SkyDiveTrailPackage package = GetSkyDiveTrailPackageForPlayerWithOverrides( player )
-	EmitSoundOnEntityOnlyToPlayer( player, player, package.DropSequenceCameraTransition1P )
-	player.p.inThirdPersonTransition = true
-	HolsterAndDisableWeapons( player )
-	
-	// 1.5 second delay so that the third-person -> first-person camera
-	// transition has time to finish
-	wait 1.5
-	
-	if ( !IsValid( player ) )
-		return
-
-	DeployAndEnableWeaponsWithSlowDeploy( player, 0.0 )
-	player.p.inThirdPersonTransition = false
-	                        
-		Control_PrintSkydiveDebug( player, " DisableSkydiveThirdPerson reached function end" )
-                               
-}
-
-void function ClientCallback_StopFreefallFollowMode( entity player )
-{
-	if ( IsValid( player ) )
-		player.p.skydiveIsFollowing = false
-}
-
-void function PlayerFallAssistanceDetection( entity player )
-{
-	if ( GetCurrentPlaylistVarBool( "jumpjet_fall_assistance", false ) == false )
-		return
-
-	float FREEFALL_JETPACK_ACTIVATION_VELOCITY = 650
-	float FREEFALL_JETPACK_ACTIVATION_MIN_HEIGHT = 750
-
-	Signal( player, "PlayerFallAssistanceDetection" )
-	EndSignal( player, "PlayerFallAssistanceDetection" )
-	EndSignal( player, "OnDeath" )
-	EndSignal( player, "OnDestroy" )
-
-	float lastZiplineOrGrappleTime = 0.0
-	float lastUpwardVelocityTime = 0.0
-	bool noclipDebounceActive = false
-
-	while( true )
-	{
-		WaitFrame()
-
-		if ( player.IsNoclipping() )
-		{
-			noclipDebounceActive = true
-			continue
-		}
-
-		//if ( player.IsOnGround() || IsValid( player.GetParent() ) || player.IsSkydiving() /*Player_IsSkydiving not in S3*/ || Bleedout_IsBleedingOut( player ) )
-		{
-			noclipDebounceActive = false
-			continue
-		}
-
-		if ( player.IsGrapplePulling() || player.IsMountingZipline() || IsValid( player.Zipline_GetActiveZipline() ) )
-		{
-			lastZiplineOrGrappleTime = Time()
-			continue
-		}
-
-		vector velocity = player.GetVelocity()
-
-		if ( velocity.z > 0 )
-		{
-			lastUpwardVelocityTime = Time()
-			continue
-		}
-
-		if ( Time() - lastZiplineOrGrappleTime < 2.0 )
-			continue
-
-		if ( Time() - lastUpwardVelocityTime < 2.0 )
-			continue
-
-		if ( noclipDebounceActive )
-			continue
-
-		float speed = velocity.Length()
-		vector traceEnd = player.GetOrigin() + ( Normalize( velocity ) * SKYDIVE_SLOWDOWN_DIST_FROM_GROUND )
-		TraceResults result = TraceLine( player.GetOrigin(), traceEnd, [ player ], TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
-		float distFromGround = Distance( player.GetOrigin(), result.endPos )
-
-		//DebugDrawLine( player.GetOrigin(), traceEnd, <255, 255, 0>, true, 0.1 )
-		//printt( "Fall Assistance", speed, distFromGround )
-
-		if ( speed >= FREEFALL_JETPACK_ACTIVATION_VELOCITY && distFromGround >= FREEFALL_JETPACK_ACTIVATION_MIN_HEIGHT )
-		{
-			thread PlayerSkydiveLandingFromCurrentPosition( player )
-			return
-		}
-	}
-}
-
-void function ClientCallback_SkydiveEmote( entity player, int index )
-{
-	printt( "SERVER EMOTE" )
-
-	//if ( !player.IsSkydiving() /*Player_IsSkydiving not in S3*/ )
-		return
-
-	//if ( player.Player_IsSkydiveAnticipating() )
-		return
-
-	if ( !player.GetPlayerNetBool( "freefallEmoteAvailable" ) )
-		return
-
-	bool validIndex = IsValidArrayIndex( index, NUM_SKYDIVE_EMOTE_SLOTS )
-	Assert( validIndex, format( "%i does NOT index NUM_SKYDIVE_EMOTE_SLOTS", index ) )
-	if ( !validIndex )
-		return
-
-	ItemFlavor emoteFlav = GetPlayerSkydiveEmote( player, index )
-	if ( SkydiveEmote_IsTheEmpty( emoteFlav ) )
-		return
-
-	player.p.lastSkydiveEmote = index
-	thread ActivateSkydiveEmote( player, emoteFlav )
-}
-
-void function ClientCallback_SkydiveEmoteNext( entity player )
-{
-	//if ( !player.IsSkydiving() /*Player_IsSkydiving not in S3*/ )
-		return
-
-	//if ( player.Player_IsSkydiveAnticipating() )
-		return
-
-	if ( !player.GetPlayerNetBool( "freefallEmoteAvailable" ) )
-		return
-
-	table< int, ItemFlavor > emotes = GetValidPlayerSkydiveEmotes( player )
-
-	// Related to Jira R5DEV-572636. This seems to happen if the player has no skydive emotes but does have quips since CodeCallback_PlayerSkydiveBegin sets the above net var if quips/holosprays are available
-	if ( emotes.len() == 0 )
-		return
-
-	array< ItemFlavor > emoteArray
-	foreach ( flav in emotes )
-	{
-		emoteArray.append( flav )
-	}
-
-
-	int index
-	if ( player.p.lastSkydiveEmote == -1 )
-	{
-		index = ( emoteArray.len() - 1 )
-	}
-	else
-	{
-		index = (player.p.lastSkydiveEmote + emoteArray.len() - 1) % emoteArray.len()
-	}
-
-	ItemFlavor emoteFlav = emoteArray[ index ]
-	if ( SkydiveEmote_IsTheEmpty( emoteFlav ) )
-		return
-
-	player.p.lastSkydiveEmote = index
-	thread ActivateSkydiveEmote( player, emoteFlav )
-}
-
-void function Freefall_CancelSkydiveEmote( entity player )
-{
-	if ( IsValid( player ) )
-	{
-		player.Signal( "SkydiveEmote_Cancel" )
-	}
-}
-
-void function ActivateSkydiveEmote( entity player, ItemFlavor emoteFlav )
-{
-	EndSignal( player, "OnDeath" )
-	EndSignal( player, "SkydiveEmote_Cancel" )
-
-	OnThreadEnd( function() : ( player ) {
-		if ( IsValid( player ) )
-		{
-			table<int, ItemFlavor> emotes = GetValidPlayerSkydiveEmotes( player )
-			//if ( emotes.len() > 0 && !player.Player_IsSkydiveAnticipating() && !player.p.skydiveEmotesDisabled ) //if not disabled by playlist var allow freefall emotes
-				player.SetPlayerNetBool( "freefallEmoteAvailable", true )
-		}
-	} )
-
-	player.SetPlayerNetBool( "freefallEmoteAvailable", false )
-
-                         
-	SkydiveEmoteProjector_CancelProjector( player )
-      
-
-	asset animSeq = SkydiveEmote_GetAnimSeq( emoteFlav )
-	player.Anim_PlayOnly( animSeq )
-
-	if( !IsValid( player.GetParent() ) )
-		player.Anim_DisableUpdatePosition()
-
-	player.Anim_EnablePrediction()
-	player.Anim_EnableFadeOut()
-
-	bool canVocalizeEmote = true
-
-	if ( ( player in file.playerToLastVocalizedEmoteTime ) )
-	{
-		canVocalizeEmote = Time() - file.playerToLastVocalizedEmoteTime[player] > ( 2 * ( player.GetSequenceDuration( animSeq ) + POST_EMOTE_DEBOUNCE ) )
-	}
-
-	if ( canVocalizeEmote )
-	{
-		string skydiveBcEventName = SkydiveEmote_GetBcEvent( emoteFlav )
-		PlayBattleChatterLineToSpeakerAndTeam( player, skydiveBcEventName )
-		file.playerToLastVocalizedEmoteTime[player] <- Time()
-	}
-
-	wait player.GetSequenceDuration( animSeq )
-	wait POST_EMOTE_DEBOUNCE
-}
-
-#endif //SERVER
-
-
-/*
-	 ██████╗██╗     ██╗███████╗███╗   ██╗████████╗
-	██╔════╝██║     ██║██╔════╝████╗  ██║╚══██╔══╝
-	██║     ██║     ██║█████╗  ██╔██╗ ██║   ██║
-	██║     ██║     ██║██╔══╝  ██║╚██╗██║   ██║
-	╚██████╗███████╗██║███████╗██║ ╚████║   ██║
-	 ╚═════╝╚══════╝╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝
-*/
-
-
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void function CL_AttemptDropEmote( entity player )
 {
 	printt( "CLIENT EMOTE" )
 
-	//if ( !player.IsSkydiving() /*Player_IsSkydiving not in S3*/ )
+	if ( !player.Player_IsSkydiving() )
 		return
 
-	//if ( player.Player_IsSkydiveAnticipating() )
+	if ( player.Player_IsSkydiveAnticipating() )
 		return
 
 	if ( !player.GetPlayerNetBool( "freefallEmoteAvailable" ) )
@@ -1870,9 +1867,9 @@ void function BeginSkydiveEmoteOrWheel( entity player )
 void function SetSkydiveStartingConvars()
 {
 	SetConVarFloat( "cam_ideallag", 0.0 )
-	// SetConVarFloat( "c_mindistance", 0.0 )
-	// SetConVarFloat( "c_maxdistance", 0.0 )
-	// SetConVarFloat( "cam_idealdist", 0.0 )
+	
+	
+	
 
 	entity player = GetLocalViewPlayer()
 	if ( !IsValid( player ) )
@@ -1885,27 +1882,23 @@ void function SetSkydiveStartingConvars()
 	}
 }
 
-// !!!!!
-// emoteAvailable refers to "Emote Wheel" to activate holosprays during skydive
-// skydiveAvailable refers to "Skydive Wheel" to activate skydive emotes
-// !!!!!
+
+
+
+
 void function UpdateSkydiveRui_Emotes( var rui, entity player )
 {
 	if ( player != GetLocalClientPlayer() )
 		return
-	bool canEmote = player.GetPlayerNetBool( "freefallEmoteAvailable" )
+	bool canEmote = !player.Player_IsSkydiveAnticipating() && player.GetPlayerNetBool( "freefallEmoteAvailable" ) 
 
 	array<ItemFlavor> emotes = ItemFlavor_GetQuipArrayForCharacter( player, LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() ) )
 	bool emoteAvailable = canEmote && emotes.len() > 0
 	RuiSetBool( rui, "emoteAvailable", emoteAvailable )
 
-	//table<int, ItemFlavor> skydiveEmotes = GetValidPlayerSkydiveEmotes( player )
-	//bool skydiveAvailable = canEmote && skydiveEmotes.len() > 0
-	//RuiSetBool( rui, "skydiveAvailable", skydiveAvailable )
-	//these are s21 rui only, does not exist in s21, falling back to s16 codebase
-	
-	string emoteHint = (EmoteMenuOnHold() && (emotes.len() > 1)) ? "#FREEFALL_EMOTE_HINT_MENU" : "#FREEFALL_EMOTE_HINT"
-	RuiSetString( rui, "emoteHintString", emoteHint )
+	table<int, ItemFlavor> skydiveEmotes = GetValidPlayerSkydiveEmotes( player )
+	bool skydiveAvailable = canEmote && skydiveEmotes.len() > 0
+	RuiSetBool( rui, "skydiveAvailable", skydiveAvailable )
 }
 
 void function UpdateSkydiveRui_MusicTrackInfo( var rui )
@@ -1959,14 +1952,14 @@ void function PlayerFreefallActiveChanged( entity player, bool isFreefallActive 
 		}
 	}
 
-	// Crosshair dot while falling
+	
 	if ( isFreefallActive )
 	{
 		ItemFlavor flavor = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() );
 		bool isValk = ItemFlavor_GetAsset( flavor ) == VALK_ITEMFLAVOR
 		bool playerSkywardUsed
 
-		//Get dynamic sky dive Rui from character asset
+		
 		asset skyDiveRuiAsset = GetGlobalSettingsStringAsAsset( ItemFlavor_GetAsset( flavor ), "skyDiveRui" )
 		file.skydiveRui = CreatePermanentCockpitRui( skyDiveRuiAsset )
 
@@ -1977,7 +1970,7 @@ void function PlayerFreefallActiveChanged( entity player, bool isFreefallActive 
 		if( isValk )
 			RuiSetBool( file.skydiveRui, "shouldAnimateAltitudeIn", ! DestroyValkLaunchRui() )
 
-		if ( PlayerHasPassive( player, ePassives.PAS_MIRAGE ) /*&& !player.Skydive_IsFromUpdraft()*/ ) // S3: entity method not available
+		if ( PlayerHasPassive( player, ePassives.PAS_MIRAGE ) && !player.Skydive_IsFromUpdraft() )
 			RuiSetBool( file.skydiveRui, "decoysAvailable", true )
 
 		UpdateSkydiveRui_Emotes( file.skydiveRui, player )
@@ -1989,10 +1982,10 @@ void function PlayerFreefallActiveChanged( entity player, bool isFreefallActive 
 		file.skydiveRui = null
 	}
 
-	// there is almost certainly some lingering cleanup work required around Valk's HUD UI
-	UpdateValkFlightRui( player, isFreefallActive ) //valk special HUD
+	
+	UpdateValkFlightRui( player, isFreefallActive ) 
 
-	// Screen effects while falling
+	
 	if ( isFreefallActive )
 	{
 		SetSkydiveStartingConvars()
@@ -2021,11 +2014,8 @@ void function PlayerFreefallEmoteAvailableChanged( entity player, bool isFreefal
 	printt( "PlayerFreefallEmoteAvailableChanged", isFreefallEmoteAvailable )
 	if ( file.skydiveRui != null )
 	{
-	//	bool hasSkydiveEmotes = GetValidPlayerSkydiveEmotes( player ).len() > 0
-	//	RuiSetBool( file.skydiveRui, "skydiveAvailable", isFreefallEmoteAvailable && hasSkydiveEmotes )
-	// s21 only, falling back to s16
-	
-		RuiSetBool( file.skydiveRui, "emoteAvailable", isFreefallEmoteAvailable )
+		bool hasSkydiveEmotes = GetValidPlayerSkydiveEmotes( player ).len() > 0
+		RuiSetBool( file.skydiveRui, "skydiveAvailable", isFreefallEmoteAvailable && hasSkydiveEmotes )
 	}
 }
 
@@ -2087,9 +2077,9 @@ void function WaitForUnfollow( entity player )
 				{
 					if ( Time() >= endTime )
 					{
-#if CLIENT
+
 						player.Skydive_QueueStopFollowing()
-#endif
+
 						return
 					}
 					WaitFrame()
@@ -2161,7 +2151,7 @@ void function UpdateFlightDisplay( entity player )
 
 		followMode = IsValid( player.GetParent() )
 		if ( followMode )
-			speed = fabs( Distance( lastPos, player.GetOrigin() ) ) / Clamp( FrameTime(), 0.001, 1.0 ) //min 1 fixes very long FrameTime() issue on a join in progress repro
+			speed = fabs( Distance( lastPos, player.GetOrigin() ) ) / Clamp( FrameTime(), 0.001, 1.0 ) 
 		else
 			speed = player.GetVelocity().Length()
 
@@ -2255,10 +2245,10 @@ void function LerpCameraDistOverTime( entity player, float dist, float lerpDurat
 
 void function LerpCameraHeightOverTime( entity player, float dist, float lerpDuration, float functionref( float ) tweenFunc )
 {
-	#if DEVELOPER
+#if DEV
 		if ( IsCaptureCameraEnabled() )
 			return
-	#endif // DEVELOPER
+#endif
 
 	Signal( player, "LerpCameraHeightOverTime" )
 	EndSignal( player, "LerpCameraHeightOverTime" )
@@ -2286,29 +2276,29 @@ void function LerpCameraHeightOverTime( entity player, float dist, float lerpDur
 
 void function StopFollowExtendedUse( entity player )
 {
-	/*
-	EndSignal( player, "FreefallEnded" )
-	EndSignal( player, "FreefallStarted" )
-	EndSignal( player, "OnDeath" )
-	EndSignal( player, "OnDestroy" )
+	
 
-	entity parentEnt = player.GetParent()
-	if ( !IsValid( parentEnt ) || !parentEnt.IsPlayer() )
-		return
 
-	ExtendedUseSettings settings
-	settings.successFunc = ExtendedTryStopFollow
-	settings.loopSound = "survival_titan_linking_loop"
-	settings.successSound = "ui_menu_store_purchase_success"
-	settings.duration = 3.0
-	settings.hint = "#PROMPT_SWAP"
-	settings.displayRui = $"ui/extended_use_hint.rpak"
-	settings.displayRuiFunc = DisplayRuiForStopFollow
-	settings.icon = $""
-	settings.useInputFlag = IN_USE_LONG
 
-	//waitthread ExtendedUse( player, player, settings )
-	*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 
@@ -2330,7 +2320,7 @@ void function Freefall_DisplayEnemiesOnMinimap_Thread( entity skydiver )
 
 	while ( true )
 	{
-		players = GetPlayerArrayEx( "any", TEAM_ANY, TEAM_ANY, skydiver.GetOrigin(), ( SKYDIVE_ENEMY_DETECT_RANGE * 2.0 ) )
+		players = GetPlayerArrayEx( TEAM_ANY, TEAM_ANY, skydiver.GetOrigin(), ( SKYDIVE_ENEMY_DETECT_RANGE * 2.0 ) )
 
 		float timeToStartFade = Time() + ENEMY_DISPLAY_TIME
 		float timeToEndFade = timeToStartFade + ENEMY_FADE_TIME
@@ -2348,7 +2338,7 @@ void function Freefall_DisplayEnemiesOnMinimap_Thread( entity skydiver )
 			if ( playerTeam == 0 || playerTeam == 1 )
 				continue
 
-			// Full map
+			
 			var fRui = FullMap_AddEnemyLocation( player )
 			var mRui = Minimap_AddEnemyToMinimap( player )
 
@@ -2379,92 +2369,92 @@ void function Freefall_DestroyEnemyFullmapDisplayAfterDelay( var ruiToDestroy, f
 }
 
 
-#endif //CLIENT
+
 
 void function CodeCallback_PlayerSkydiveBegin( entity player )
 {
-#if SERVER
-	// printf( "CodeCallback_PlayerSkydiveBegin (Server)" )
 
-	foreach ( callbackFunc in file.Callbacks_OnPlayerFreefallBegin )
-		callbackFunc( player )
 
-	// Start up the smoke effects
 
-	array<SkyDiveTrailFXStruct> smokeFX = GetSkyDiveTrailPackageForPlayerWithOverrides( player ).smokeColorFX
 
-	foreach( fxStruct in smokeFX )
-	{
-		int smokeAttachID = player.LookupAttachment( fxStruct.attachName )
 
-		// There is a rare bug where this attachment doesn't exist. Instead of crashing, just don't play the vfx if the attachment point is missing
-		if ( smokeAttachID == ATTACHMENTID_INVALID )
-			continue
 
-		vector smokeColor
-		if ( fxStruct.useSkyDiveSmokeColorForTeam  )
-			smokeColor = GetSkydiveSmokeColorForTeam( player.GetTeam() )
-		else
-			smokeColor = fxStruct.controlPoint
 
-		entity smokeTrailFX = StartParticleEffectOnEntityWithPos_ReturnEntity( player, GetParticleSystemIndex( fxStruct.fx ), fxStruct.attachType, smokeAttachID, <0,0,0>, VectorToAngles( <0,0,-1> ) )
-		EffectSetControlPointVector( smokeTrailFX, 1, smokeColor )
-		player.p.freefallSmokeFX.append( smokeTrailFX )
-	}
-	table< int, ItemFlavor > skydives = GetValidPlayerSkydiveEmotes( player )
-	// Per @Justin Doan, we have this extra check for holosprays/quips due to an issue where players could holospray during an emote but not the other way around, so this rectifies the issue
-	array<ItemFlavor> emotes = ItemFlavor_GetQuipArrayForCharacter( player, LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() ) )
-	bool emoteAvailable = ( ( skydives.len() > 0 || emotes.len() > 0 ) && !player.p.skydiveEmotesDisabled ) //if skydive emotes disabled by playlist var "disable_skydive_emotes_postdrop" , don't make them available
 
-	player.SetPlayerNetBool( "freefallEmoteAvailable", emoteAvailable )
-#else
-	// printf( "CodeCallback_PlayerSkydiveBegin (Client)" )
 
-//--------Removing Wind and Contrail FX-They were only playing on ability skyward------------
 
-	// if ( IsLocalViewPlayer( player ) )
-	// {
-	// 	int fxID = GetParticleSystemIndex( PLAYER_WIND_FX )
-	// 	int attachID = player.LookupAttachment( "REF" )
-	// 	player.p.freefallWindEffectHandle = StartParticleEffectOnEntityWithPos( player, fxID, FX_PATTACH_POINT_FOLLOW_NOROTATE, attachID, <0,0,0>, VectorToAngles( <0,0,-1> ) )
 
-	// 	foreach( string attachment in file.contrailAttachments )
-	// 	{
-	// 		int handle = StartParticleEffectOnEntity( player, GetParticleSystemIndex( CONTRAIL_FX ), FX_PATTACH_POINT_FOLLOW_NOROTATE, player.LookupAttachment( attachment ) )
-	// 		EffectSetControlPointVector( handle, 2, < 0, 0, 0 > )
-	// 		player.p.freefallContrailFXHandles.append( handle )
-	// 	}
-	// }
-#endif //if SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+
+
+	
+	
+	
+	
+	
+
+	
+	
+	
+	
+	
+	
+	
+
 }
 
 void function CodeCallback_PlayerSkydiveEnd( entity player )
 {
 	player.Anim_Stop()
 
-#if SERVER
-	// printf( "CodeCallback_PlayerSkydiveEnd (Server)" )
 
-	foreach( entity ent in player.p.freefallSmokeFX )
-	{
-		EffectStop( ent )
-		ent.Destroy()
-	}
-	player.p.freefallSmokeFX.clear()
 
-	StopAllSkydiveSounds( player )
 
-	foreach ( callbackFunc in file.Callbacks_OnPlayerFreefallEnd )
-		callbackFunc( player )
 
-                        
-                                                        
-   
-                                             
-   
-       
-#else
-	// printf( "CodeCallback_PlayerSkydiveEnd (Client)" )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
 
 	foreach( int handle in player.p.freefallContrailFXHandles )
 	{
@@ -2480,35 +2470,35 @@ void function CodeCallback_PlayerSkydiveEnd( entity player )
 		EffectStop( player.p.freefallWindEffectHandle, true, false )
 	}
 	player.p.freefallWindEffectHandle = -1
-#endif
+
 }
 
 void function CodeCallback_PlayerSkydiveMove( entity player )
 {
-#if SERVER
-	// printf( "CodeCallback_PlayerSkydiveMove (Server)" )
 
-	//#####################################
-	// 		     GROUND DUST FX
-	//#####################################
 
-	bool slowZone = false //player.Player_IsSkydiveAnticipating() // S3: entity method not available
-	if ( slowZone && (Time() - player.p.freefallLastGroundFXTime) >= SKYDIVE_JETWASH_FREQUENCY )
-	{
-		player.RumbleEffect( 10, 0, 0.0 )
-		vector start = player.GetOrigin() - < 0, 0, 60 >
-		vector end = start - < 0, 0, SKYDIVE_JETWASH_DIST_FROM_GROUND >
-		TraceResults downTraceResult = TraceLine( start, end, [player], TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
-		if ( downTraceResult.fraction < 1.0 )
-		{
-			PlayImpactFXTable( downTraceResult.endPos, player, "human_land_jetwash" )
-			player.p.freefallLastGroundFXTime = Time()
-		}
-	}
-#else
-	// printf( "CodeCallback_PlayerSkydiveMove (Client)" )
 
-	float elapsedTime = Time() - 0.0 /*player.Player_GetSkydiveStartTime() S3: not available*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+	float elapsedTime = Time() - player.Player_GetSkydiveStartTime()
 	if ( elapsedTime >= 2.0 )
 	{
 		float speed = player.GetVelocity().Length()
@@ -2521,172 +2511,172 @@ void function CodeCallback_PlayerSkydiveMove( entity player )
 			}
 		}
 	}
-#endif
+
 }
 
 void function CodeCallback_PlayerSkydiveAnticipateBegin( entity player )
 {
-#if SERVER
-	// printf( "CodeCallback_PlayerSkydiveAnticipateBegin (Server)" )
 
-	foreach ( callbackFunc in file.Callbacks_OnPlayerSkydiveAnticipateBegin )
-		callbackFunc( player )
 
-	player.Anim_DisableUpdatePosition()
 
-	player.SetPlayerNetBool( "freefallEmoteAvailable", false )
 
-	SkyDiveTrailPackage package = GetSkyDiveTrailPackageForPlayerWithOverrides( player )
-	StopSoundOnEntity( player, package.DropSequenceTravel1P )
-	StopSoundOnEntity( player, package.DropSequenceTravel3P )
-	StopSoundOnEntity( player, package.InGameFlightTravel1P )
-	StopSoundOnEntity( player, package.InGameFlightTravel3P )
 
-	if ( GetNV_FreefallIsFromPlane( player ) )
-	{
-		EmitSoundOnEntityOnlyToPlayer( player, player, package.DropSequenceLandStart1P )
-		EmitSoundOnEntityExceptToPlayer( player, player, package.DropSequenceLandStart3P )
-	}
-	else
-	{
-		EmitSoundOnEntityOnlyToPlayer( player, player, package.InGameFlightLandStart1P )
-		EmitSoundOnEntityExceptToPlayer( player, player, package.InGameFlightLandStart3P )
-	}
 
-	int playerTeam = player.GetTeam()
 
-	if ( player.p.freefallLandingFX.len() == 0 )
-	{
-		array<SkyDiveTrailFXStruct> landingFX = GetSkyDiveTrailPackageForPlayerWithOverrides( player ).jumpJetLandFX
 
-		if ( false ) //( player.Skydive_IsFromUpdraft() ) // S3: entity method not available
-		{
-			int updraftFXID = GetParticleSystemIndex( UPDRAFT_FX )
-			entity updraftFXLeft = StartParticleEffectOnEntity_ReturnEntity( player, updraftFXID, FX_PATTACH_POINT_FOLLOW, player.LookupAttachment( "vent_left" ) )
-			entity updraftFXRight = StartParticleEffectOnEntity_ReturnEntity( player, updraftFXID, FX_PATTACH_POINT_FOLLOW, player.LookupAttachment( "vent_right" ) )
-			SetTeam( updraftFXLeft, playerTeam )
-			SetTeam( updraftFXRight, playerTeam )
 
-			Assert( landingFX.len() >= 1 )
 
-			SkyDiveTrailFXStruct fxStruct = landingFX[0]
 
-			vector landingFXColor
-			if ( fxStruct.useSkyDiveSmokeColorForTeam  )
-				landingFXColor = GetSkydiveSmokeColorForTeam( playerTeam )
-			else
-				landingFXColor = fxStruct.controlPoint
 
-			EffectSetControlPointVector( updraftFXLeft, 1, landingFXColor )
-			EffectSetControlPointVector( updraftFXRight, 1, landingFXColor )
-			player.p.freefallLandingFX.append( updraftFXLeft )
-			player.p.freefallLandingFX.append( updraftFXRight )
-		}
-		else
-		{
-			foreach( fxStruct in landingFX )
-			{
-				int landingFXID = GetParticleSystemIndex( fxStruct.fx )
-				int attachID= player.LookupAttachment( fxStruct.attachName )
-				if( attachID == ATTACHMENTID_INVALID )
-					continue
 
-				entity handle = StartParticleEffectOnEntity_ReturnEntity( player, landingFXID, fxStruct.attachType, attachID )
-				SetTeam( handle, playerTeam )
-				vector landingFXColor
-				if ( fxStruct.useSkyDiveSmokeColorForTeam  )
-				{
-					landingFXColor = GetSkydiveSmokeColorForTeam( playerTeam )
-				}
-				else
-				{
-					landingFXColor = fxStruct.controlPoint
-				}
-				EffectSetControlPointVector( handle, 1, landingFXColor )
-				player.p.freefallLandingFX.append( handle )
 
-			}
-		}
 
-	}
 
-	// Kill the smoke effects
-	foreach( entity ent in player.p.freefallSmokeFX )
-	{
-		EffectStop( ent )
-		ent.Destroy()
-	}
-	player.p.freefallSmokeFX.clear()
-#else
-	// printf( "CodeCallback_PlayerSkydiveAnticipateBegin (Client)" )
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
 }
 
 void function CodeCallback_PlayerSkydiveAnticipateEnd( entity player )
 {
-#if SERVER
-	// printf( "CodeCallback_PlayerSkydiveAnticipateEnd (Server)" )
-	SkyDiveTrailPackage package = GetSkyDiveTrailPackageForPlayerWithOverrides( player )
-	StopSoundOnEntity( player, package.DropSequenceLandStart1P )
-	StopSoundOnEntity( player, package.DropSequenceLandStart3P )
-	StopSoundOnEntity( player, package.InGameFlightLandStart1P )
-	StopSoundOnEntity( player, package.InGameFlightLandStart3P )
 
-	foreach( entity ent in player.p.freefallLandingFX )
-	{
-		EffectStop( ent )
-		ent.Destroy()
-	}
-	player.p.freefallLandingFX.clear()
 
-	player.RumbleEffect( 0, 0, 0.0 )
 
-	table< int, ItemFlavor > emotes = GetValidPlayerSkydiveEmotes( player )
 
-	//if ( emotes.len() > 0 && !player.Player_IsSkydiveAnticipating() && !player.p.skydiveEmotesDisabled)
-		player.SetPlayerNetBool( "freefallEmoteAvailable", true )
 
-	if ( !player.IsMarkedForDeletion() )
-	{
-		if ( GetNV_FreefallIsFromPlane( player ) )
-		{
-			EmitSoundOnEntityOnlyToPlayer( player, player, package.DropSequenceTravel1P  )
-			EmitSoundOnEntityExceptToPlayer( player, player, package.DropSequenceTravel3P )
-		}
-		else
-		{
-			EmitSoundOnEntityOnlyToPlayer( player, player, package.InGameFlightTravel1P )
-			EmitSoundOnEntityExceptToPlayer( player, player, package.InGameFlightTravel3P)
-		}
 
-		array<SkyDiveTrailFXStruct> smokeFX = GetSkyDiveTrailPackageForPlayerWithOverrides( player ).smokeColorFX
 
-		foreach( fxStruct in smokeFX )
-		{
-			int smokeAttachID = player.LookupAttachment( fxStruct.attachName )
 
-			if( smokeAttachID == ATTACHMENTID_INVALID )
-				continue
 
-			vector smokeColor
-			if ( fxStruct.useSkyDiveSmokeColorForTeam  )
-				smokeColor = GetSkydiveSmokeColorForTeam( player.GetTeam() )
-			else
-				smokeColor = fxStruct.controlPoint
 
-			entity smokeTrailFX = StartParticleEffectOnEntityWithPos_ReturnEntity( player, GetParticleSystemIndex( fxStruct.fx ), fxStruct.attachType, smokeAttachID, <0,0,0>, VectorToAngles( <0,0,-1> ) )
-			EffectSetControlPointVector( smokeTrailFX, 1, smokeColor )
-			player.p.freefallSmokeFX.append( smokeTrailFX )
-		}
-	}
-#else
-	// printf( "CodeCallback_PlayerSkydiveAnticipateEnd (Client)" )
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
 }
 
 
 
-#if CLIENT
+
 bool function EmoteMenuOnHold()
 {
 	return ( GetCurrentPlaylistVarBool( "skydive_emote_hold_for_wheel", true ) )
@@ -2697,13 +2687,13 @@ void function Freefall_OnPlayerCreated( entity skyDivingPlayer )
 	thread Freefall_OnPlayerCreated_threaded( skyDivingPlayer  )
 }
 
-//Note: Added this to destroy any freefall rui's that had been drawn from spectators before respawning
+
 void function Client_OnPlayerSpawned( entity localPlayer )
 {
-                      
-                                       
-         
-                            
+
+
+
+
 	if( file.skydiveRui != null )
 	{
 		RuiDestroyIfAlive( file.skydiveRui )
@@ -2713,120 +2703,121 @@ void function Client_OnPlayerSpawned( entity localPlayer )
 
 void function Freefall_OnPlayerCreated_threaded( entity skyDivingPlayer )
 {
-	WaitFrame() //HACKY, needed because otherwise FX don't get properly created
+	WaitFrame() 
 	if ( !IsValid( skyDivingPlayer  )  )
 		return
 	UpdatePlayerSkydiveTrailFriendlyEnemyFX( skyDivingPlayer  )
 }
 
-#endif //if client
 
 
 
-#if DEVELOPER
+
+#if DEV
 bool function IsCaptureCameraEnabled()
 {
 	return GetBugReproNum() == 333
 }
-#endif // DEVELOPER
-
-                      
-                                                     
- 
-          
-                               
-                                    
-                                       
-                                          
-                                             
-                                                                                                                        
-                          
-                      
-
-             
-                                       
-  
-                                                                                           
-                                                                                                           
-                                                                                             
-                                                                                              
-                                    
-                     
-                 
-                      
-    
-
-              
-                 
-                    
-  
-                                                                                 
-                                                     
-                                                                  
-                                                
-                      
-                                                                                              
-                                     
-   
-                                      
-    
-                                                       
-    
-   
-
-                                  
-   
-                    
-                                                                                                          
-                                                                                            
-                                                                                             
-                                   
-                    
-                
-                     
-   
-
-             
-  
-
-                
- 
-                            
-
-#if SERVER
-void function Skydive_EnterGameStateResolution()
-{
-	foreach(player in GetPlayerArray_Alive() )
-	{
-		//if ( player.IsSkydiving() /*Player_IsSkydiving not in S3*/ )
-			EndPlayerSkyDive( player )
-	}
-}
 #endif
 
-#if SERVER
-// The GetNV_FreefallIsFromPlane check is used to determine if a player that is skydiving should be treated as if they had respawned ( show enemies pings on minimap, show skydive trails, play squad landed near vo etc )
-// However, we have respawn styles that respawn a player in a skydive without a plane ent but still want all the above functionality without the need for a plane entity
-bool function Skydive_IsPlaneExpectedForSkydiveRespawn()
-{
-	#if DEVELOPER
-		// Dev has debug that allows this behaviour
-		return false
-	#endif
 
-                      
-                                       
-               
-                            
 
-	                         
-		if ( ForcedSpawn_UseForcedSpawning() )
-			return false
-                                
 
-	if ( GetRespawnStyle() == eRespawnStyle.SPAWN_GROUP_SKYDIVE )
-		return false
 
-	return true
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

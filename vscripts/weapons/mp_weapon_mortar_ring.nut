@@ -7,12 +7,12 @@ global function OnWeaponAttemptOffhandSwitch_ability_mortar_ring
 global function OnProjectileCollision_ability_mortar_ring
 global function OnWeaponReadyToFire_ability_mortar_ring
 
-#if SERVER
-global function ClientCallback_ClearanceEnabled
-global function ClientCallback_ClearanceDisabled
-global function ClientCallback_ArcEnabled
-global function ClientCallback_ArcDisabled
-#endif
+
+
+
+
+
+
 
 const string CMDNAME_CLEARANCE_ENABLED = "ClientCallback_ClearanceEnabled"
 const string CMDNAME_CLEARANCE_DISABLED = "ClientCallback_ClearanceDisabled"
@@ -43,7 +43,7 @@ const vector OUT_OF_RANGE_COLOR = < 255, 10, 0>
 
 const string MORTAR_RING_IMPACT_TABLE = "exp_frag_grenade"
 const float MORTAR_RING_RADIUS = 420.0
-const float MORTAR_RING_RADIUS_FX_DIVISOR = 20.0 // 20 seems to be the magic number to get this effect to match the radius
+const float MORTAR_RING_RADIUS_FX_DIVISOR = 20.0 
 const int MORTAR_RING_NUM_MISSILES = 15
 
 global const bool MORTAR_RING_DEBUG = false
@@ -55,9 +55,8 @@ const float MORTAR_RING_LAUNCH_SPEED_MIN = 2750
 const float MORTAR_RING_LAUNCH_SPEED_MAX = 4000
 
 global const float MORTAR_RING_BOMB_AIRBURST_HEIGHT = 750.0
-const float MORTAR_RING_IMPACT_SIM_STEP = 0.05
 
-// Aim pitch tuning
+
 const float MORTAR_RING_AIM_PITCH_ANGLE_MIN = 25.0
 const float MORTAR_RING_AIM_PITCH_ANGLE_MAX = 180.0
 const float MORTAR_RING_AIM_PITCH_PARAM_MIN = 0.0
@@ -69,29 +68,30 @@ const float MORTAR_RING_AIM_PITCH_INCREMENT_MIN = -7
 const float MORTAR_RING_AIM_PITCH_INCREMENT_MAX = 7
 
 const float MORTAR_MIN_FIRE_DISTANCE = MORTAR_RING_RADIUS * MORTAR_RING_AIRBURST_SPEED_MOD_MAX + 60
-const float MORTAR_MAX_FIRE_DISTANCE = 7875 // 200 meters
+const float MORTAR_MAX_FIRE_DISTANCE = 7875 
 
 struct
 {
-#if CLIENT
+
 	bool weaponActive = false
 	bool activateUI = false
-#endif //CLIENT
+
 } file
+
 
 void function MpWeapon_Mortar_Ring_Init()
 {
 
-	/*Remote_RegisterServerFunction( CMDNAME_CLEARANCE_ENABLED )
+	Remote_RegisterServerFunction( CMDNAME_CLEARANCE_ENABLED )
 	Remote_RegisterServerFunction( CMDNAME_CLEARANCE_DISABLED )
 	Remote_RegisterServerFunction( CMDNAME_ARC_ENABLED )
-	Remote_RegisterServerFunction( CMDNAME_ARC_DISABLED )*/
+	Remote_RegisterServerFunction( CMDNAME_ARC_DISABLED )
 
 	RegisterSignal( "MortarRingDeactivate" )
 
 	PrecacheImpactEffectTable( MORTAR_RING_IMPACT_TABLE )
 
-		PrecacheParticleSystem( MORTAR_RING_RADIUS_FX )
+		PrecacheParticleSystem( MORTAR_RING_RADIUS_INSTANT_FX )
 
 
 
@@ -108,12 +108,12 @@ void function OnWeaponActivate_ability_mortar_ring(entity weapon)
 	entity owner = weapon.GetWeaponOwner()
 	Assert( owner.IsPlayer() )
 
-	#if SERVER
-		PlayerUsedOffhand( owner, weapon )
-		EmitSoundOnEntityExceptToPlayer( owner, owner, MORTAR_RING_ACTIVATE_3P_SOUND )
-	#endif //SERVER
 
-	#if CLIENT
+
+
+
+
+
 		if ( owner != GetLocalViewPlayer() )
 			return
 
@@ -122,29 +122,29 @@ void function OnWeaponActivate_ability_mortar_ring(entity weapon)
 
 		EmitSoundOnEntity( owner, MORTAR_RING_ACTIVATE_1P_SOUND )
 		thread WeaponActiveThread_Client( owner, weapon )
-	#endif //CLIENT
+
 }
 
 void function OnWeaponReadyToFire_ability_mortar_ring( entity weapon )
 {
-	#if CLIENT
+
 		entity owner = weapon.GetWeaponOwner()
 		if ( owner != GetLocalViewPlayer() || !file.weaponActive )
 			return
 
 		file.activateUI = true
-	#endif //CLIENT
+
 }
 
 void function OnWeaponDeactivate_ability_mortar_ring(entity weapon)
 {
 	entity owner = weapon.GetWeaponOwner()
 	Assert( owner.IsPlayer() )
-	#if SERVER
-		EmitSoundOnEntityExceptToPlayer( owner, owner, MORTAR_RING_DEACTIVATE_3P_SOUND )
-	#endif
 
-	#if CLIENT
+
+
+
+
 		if ( owner != GetLocalViewPlayer() )
 			return
 
@@ -152,7 +152,7 @@ void function OnWeaponDeactivate_ability_mortar_ring(entity weapon)
 		file.activateUI = false
 
 		EmitSoundOnEntity(owner, MORTAR_RING_DEACTIVATE_1P_SOUND)
-	#endif // CLIENT
+
 
 
 	owner.Signal( "MortarRingDeactivate" )
@@ -169,56 +169,56 @@ var function OnWeaponPrimaryAttack_ability_mortar_ring( entity weapon, WeaponPri
 	{
 		float launchSpeed = GraphCapped( crosshairData.distanceToTarget, 0, MORTAR_MAX_FIRE_DISTANCE, MORTAR_RING_LAUNCH_SPEED_MIN, MORTAR_RING_LAUNCH_SPEED_MAX  )
 		ArcSolution as = SolveBallisticArc( weapon.GetAttackPosition(), launchSpeed, crosshairData.airburstTarget, GetConVarFloat( "sv_gravity" ) )
-		vector arcPos = MortarRing_PredictImpactPos( weapon, as.fire_velocity, as.duration )
+		vector arcPos = weapon.SimulateGrenadeImpactPos( ZERO_VECTOR, as.fire_velocity, as.duration, -1 )
 		float distanceToArcPos =  Distance( arcPos, owner.CameraPosition() )
 		inRange = InRange( distanceToArcPos )
 	}
 
 	if( inRange )
 	{
-		#if CLIENT
+
 			owner.Signal( "MortarRingDeactivate" )
-		#endif
+
 		LaunchBomb( owner, weapon, crosshairData.airburstTarget, attackParams.pos, crosshairData.distanceToTarget )
 	}
 	else
 	{
-		#if CLIENT
+
 			EmitSoundOnEntity( owner, MORTAR_RING_CANT_FIRE_SOUND )
-		#endif
+
 		ammo = 0
 	}
 
 	return ammo
 }
 
-void function OnProjectileCollision_ability_mortar_ring( entity projectile, vector pos, vector normal, entity hitEnt, int hitbox, bool isCritical )
+void function OnProjectileCollision_ability_mortar_ring( entity projectile, vector pos, vector normal, entity hitEnt, int hitbox, bool isCritical, bool isPassthrough )
 {
-	#if SERVER
-	entity player = projectile.GetOwner()
 
-	if ( !IsValid( player ) )
-		return
 
-	if ( hitEnt == player )
-		return
 
-	if ( !EntityShouldStick( projectile, hitEnt ) )
-		return
 
-	if ( hitEnt.IsProjectile() )
-		return
 
-	if ( !LegalOrigin( pos ) )
-		return
 
-	thread MortarRingAirburst( player, projectile, MORTAR_RING_NUM_MISSILES, 0.0, MORTAR_RING_AIRBURST_BASE_LAUNCH_SPEED, MORTAR_RING_AIRBURST_SPEED_MOD_MIN, MORTAR_RING_AIRBURST_SPEED_MOD_MAX )
-	#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
-#if CLIENT
+
 void function WeaponActiveThread_Client( entity owner, entity weapon )
-{
+{	
 	owner.EndSignal( "OnDestroy" )
 	owner.EndSignal( "MortarRingDeactivate" )
 	weapon.EndSignal( "OnDestroy" )
@@ -226,9 +226,11 @@ void function WeaponActiveThread_Client( entity owner, entity weapon )
 	var overlayRui = CreateCockpitPostFXRui( $"ui/mortar_binoculars.rpak", HUD_Z_BASE )
 	RuiSetVisible( overlayRui, false )
 	RuiSetFloat( overlayRui, "maxRangeDist", MORTAR_MAX_FIRE_DISTANCE )
-	RuiSetBool( overlayRui, "useWeaponCycleToCancel", GetKeyCodeForBinding( "weaponCycle" ) != -1 )
+	RuiSetBool( overlayRui, "useWeaponCycleToCancel", GetKeyCodeForBinding( "weaponCycle", IsControllerModeActive().tointeger() ) != -1 )
 
-	int ringFX = StartParticleEffectInWorldWithHandle( GetParticleSystemIndex( MORTAR_RING_RADIUS_FX ), ZERO_VECTOR, ZERO_VECTOR )
+	int ringFX
+
+		ringFX = StartParticleEffectInWorldWithHandle( GetParticleSystemIndex( MORTAR_RING_RADIUS_INSTANT_FX ), ZERO_VECTOR, ZERO_VECTOR )
 
 
 
@@ -245,7 +247,7 @@ void function WeaponActiveThread_Client( entity owner, entity weapon )
 	bool visibleUI = false
 
 	OnThreadEnd(
-		function() : ( owner, ringFX, markerFX, weapon, overlayRui  )
+		function() : ( owner, ringFX, markerFX, weapon, overlayRui )
 		{
 			if( EffectDoesExist( ringFX ) )
 				EffectStop( ringFX, true, false )
@@ -253,8 +255,8 @@ void function WeaponActiveThread_Client( entity owner, entity weapon )
 			if( EffectDoesExist( markerFX ) )
 				EffectStop( markerFX, true, false )
 
-			//if( IsValid( weapon ) )
-				//weapon.ClearIndicatorEffectOverrides()
+			if( IsValid( weapon ) )
+				weapon.ClearIndicatorEffectOverrides()
 
 			EmitSoundOnEntity( owner, MORTAR_RING_UI_CLOSE_SOUND )
 
@@ -270,24 +272,24 @@ void function WeaponActiveThread_Client( entity owner, entity weapon )
 		bool newClearance = false
 		vector arcPos = crosshairData.airburstTarget
 
-		/////////////////////////
-		//  Set variables for the visual arc and get the simulated point of impact
-		/////////////////////////
+		
+		
+		
 
 		if( newInRange )
 		{
 			float launchSpeed = GraphCapped( crosshairData.distanceToTarget, 0, MORTAR_MAX_FIRE_DISTANCE, MORTAR_RING_LAUNCH_SPEED_MIN, MORTAR_RING_LAUNCH_SPEED_MAX  )
 			ArcSolution as = SolveBallisticArc( weapon.GetAttackPosition(), launchSpeed, crosshairData.airburstTarget, GetConVarFloat( "sv_gravity" ) )
-			//weapon.SetIndicatorEffectVelocityOverride( as.fire_velocity )
-			//weapon.SetIndicatorEffectDurationOverride( as.duration )
-			arcPos = MortarRing_PredictImpactPos( weapon, as.fire_velocity, as.duration )
+			weapon.SetIndicatorEffectVelocityOverride( as.fire_velocity )
+			weapon.SetIndicatorEffectDurationOverride( as.duration )
+			arcPos = weapon.SimulateGrenadeImpactPos( ZERO_VECTOR, as.fire_velocity, as.duration, -1 )
 			float distanceToArcPos =  Distance( arcPos, crosshairData.crosshairStart )
 			newInRange = InRange( distanceToArcPos )
 			newClearance = ( Distance( crosshairData.airburstTarget, arcPos ) <= 50 )
 
-			/////////////////////////
-			// Set the pose parameter for the aim blendspace
-			/////////////////////////
+			
+			
+			
 			float angle = DotToAngle( crosshairData.directionToTarget.Dot( Normalize( as.fire_velocity ) ) )
 			float desiredAimPitch = GraphCapped( angle, MORTAR_RING_AIM_PITCH_ANGLE_MIN, MORTAR_RING_AIM_PITCH_ANGLE_MAX, MORTAR_RING_AIM_PITCH_PARAM_MIN, MORTAR_RING_AIM_PITCH_PARAM_MAX  )
 
@@ -295,7 +297,7 @@ void function WeaponActiveThread_Client( entity owner, entity weapon )
 		}
 		else
 		{
-			//weapon.ClearIndicatorEffectOverrides()
+			weapon.ClearIndicatorEffectOverrides()
 			DoPoseParamLerp( weapon, 0, firstLoop )
 		}
 
@@ -307,18 +309,18 @@ void function WeaponActiveThread_Client( entity owner, entity weapon )
 			firstUILoop = true
 		}
 
-		/////////////////////////
-		// Set the mods and effect positions
-		/////////////////////////
+		
+		
+		
 		if( newInRange )
 		{
 			if( firstLoop || newInRange != lastInRange )
-				//Remote_ServerCallFunction( CMDNAME_ARC_ENABLED )
+				Remote_ServerCallFunction( CMDNAME_ARC_ENABLED )
 
 			if( newClearance )
 			{
-				//if( firstLoop || newClearance != lastClearance || newInRange != lastInRange )
-					//Remote_ServerCallFunction( CMDNAME_CLEARANCE_ENABLED )
+				if( firstLoop || newClearance != lastClearance || newInRange != lastInRange )
+					Remote_ServerCallFunction( CMDNAME_CLEARANCE_ENABLED )
 
 				if( EffectDoesExist( ringFX ) )
 					EffectSetControlPointVector( ringFX, 1, DEFAULT_COLOR )
@@ -327,8 +329,8 @@ void function WeaponActiveThread_Client( entity owner, entity weapon )
 			}
 			else
 			{
-				//if( firstLoop || newClearance != lastClearance || newInRange != lastInRange )
-					//Remote_ServerCallFunction( CMDNAME_CLEARANCE_DISABLED )
+				if( firstLoop || newClearance != lastClearance || newInRange != lastInRange )
+					Remote_ServerCallFunction( CMDNAME_CLEARANCE_DISABLED )
 
 				if( EffectDoesExist( ringFX ) )
 					EffectSetControlPointVector( ringFX, 1, CLEARANCE_COLOR )
@@ -342,7 +344,7 @@ void function WeaponActiveThread_Client( entity owner, entity weapon )
 		else
 		{
 			if( firstLoop || newInRange != lastInRange )
-				//Remote_ServerCallFunction( CMDNAME_ARC_DISABLED )
+				Remote_ServerCallFunction( CMDNAME_ARC_DISABLED )
 
 			if( EffectDoesExist( ringFX ) )
 				EffectSetControlPointVector( ringFX, 1, OUT_OF_RANGE_COLOR )
@@ -370,9 +372,9 @@ void function WeaponActiveThread_Client( entity owner, entity weapon )
 				EffectSetControlPointVector( markerFX, 0, crosshairData.groundTarget )
 		}
 
-		/////////////////////////
-		// Set rui variables
-		/////////////////////////
+		
+		
+		
 		RuiSetBool( overlayRui, "inRange", newInRange )
 		RuiSetBool( overlayRui, "hasClearance", newClearance )
 		RuiSetFloat( overlayRui, "rangeDist",  crosshairData.distanceToTarget )
@@ -406,53 +408,26 @@ void function DoPoseParamLerp( entity weapon, float target, bool immeadiate )
 		weapon.SetScriptPoseParam0( target )
 	}
 }
-#endif
 
-vector function MortarRing_PredictImpactPos( entity weapon, vector startVelocity, float duration )
-{
-	vector gravityVec = < 0, 0, -GetConVarFloat( "sv_gravity" ) >
-	vector pos = weapon.GetAttackPosition()
-	vector vel = startVelocity
-	float remaining = duration
-	array<entity> ignoreEnts
-	entity owner = weapon.GetWeaponOwner()
-	if ( IsValid( owner ) )
-		ignoreEnts.append( owner )
-
-	while ( remaining > 0.0 )
-	{
-		float step = min( MORTAR_RING_IMPACT_SIM_STEP, remaining )
-		vector nextPos = pos + vel * step + 0.5 * gravityVec * step * step
-		TraceResults trace = TraceLineHighDetail( pos, nextPos, ignoreEnts, (TRACE_MASK_SHOT | CONTENTS_BLOCKLOS ) & ~CONTENTS_WINDOW, TRACE_COLLISION_GROUP_PROJECTILE )
-		if ( trace.fraction < 1.0 )
-			return trace.endPos
-
-		vel += gravityVec * step
-		pos = nextPos
-		remaining -= step
-	}
-
-	return pos
-}
 
 void function LaunchBomb( entity player, entity weapon, vector target, vector pos, float distance )
 {
 	if( !IsValid( weapon ) )
 		return
 
-#if CLIENT
+
 	if ( !weapon.ShouldPredictProjectiles() )
 		return
-#endif
 
-	#if SERVER
-		PlayBattleChatterLineToSpeakerAndTeam( player, "bc_super" )
-		EmitSoundOnEntityExceptToPlayer( weapon, player, MORTAR_RING_FIRE_3P_SOUND )
-	#endif
 
-	#if CLIENT
+
+
+
+
+
+
 		EmitSoundOnEntity( player, MORTAR_RING_FIRE_1P_SOUND )
-	#endif
+
 
 	float launchSpeed = GraphCapped( distance, 0, MORTAR_MAX_FIRE_DISTANCE, MORTAR_RING_LAUNCH_SPEED_MIN, MORTAR_RING_LAUNCH_SPEED_MAX  )
 	ArcSolution as = SolveBallisticArc( pos, launchSpeed, target, GetConVarFloat( "sv_gravity" ) )
@@ -476,12 +451,12 @@ void function LaunchBomb( entity player, entity weapon, vector target, vector po
 	if ( !IsValid( bomb ) )
 		return
 
-	#if SERVER
-		AddToUltimateRealm( player, bomb )
-		EmitSoundOnEntity( bomb, MORTAR_RING_BOMB_FLIGHT_SOUND )
-		//if( IsValid( player ) )
-			//TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MORTAR_RING_START, player, player.GetOrigin(), player.GetTeam(), player )
-	#endif
+
+
+
+
+
+
 
 	thread BombFlightThread( bomb, player, target )
 }
@@ -493,12 +468,12 @@ void function BombFlightThread( entity projectile, entity player, vector target 
 
 	vector launchDirection = player.GetViewForward()
 
-#if SERVER
-	OnThreadEnd( void function() : ( projectile ) {
-		if( IsValid( projectile ) )
-			projectile.Destroy()
-	} )
-#endif
+
+
+
+
+
+
 
 	vector projectileOriginStart = projectile.GetOrigin()
 	float startDistance = Distance2D( projectileOriginStart, target )
@@ -509,19 +484,19 @@ void function BombFlightThread( entity projectile, entity player, vector target 
 		vector projectileOriginXY = FlattenVec( projectileOrigin )
 		vector projectileDir = Normalize( projectile.GetVelocity() )
 		projectile.SetAngles( VectorToAngles( projectileDir ) )
-		#if SERVER
-			if( Distance2D( projectileOrigin, projectileOriginStart ) < startDistance - 50 )
-			{
-				WaitFrame()
-				continue
-			}
-			else
-			{
-				projectile.SetOrigin( target )
-			}
-			thread MortarRingAirburst( player, projectile, MORTAR_RING_NUM_MISSILES, 0.0, MORTAR_RING_AIRBURST_BASE_LAUNCH_SPEED, MORTAR_RING_AIRBURST_SPEED_MOD_MIN, MORTAR_RING_AIRBURST_SPEED_MOD_MAX )
-			return
-		#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
 		WaitFrame()
 	}
 	unreachable
@@ -532,50 +507,51 @@ bool function InRange( float distance )
 	return ( distance <= MORTAR_MAX_FIRE_DISTANCE )
 }
 
-#if SERVER
-void function ClientCallback_ClearanceDisabled( entity player )
-{
-	if ( !IsAlive( player ) )
-		return
 
-	entity weapon = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
-	if( IsValid( weapon ) )
-		weapon.AddMod( "mortar_ring_target_blocked_mod" )
-}
 
-void function ClientCallback_ClearanceEnabled( entity player )
-{
-	if ( !IsAlive( player ) )
-		return
 
-	entity weapon = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
-	if( IsValid( weapon ) )
-	{
-		if( weapon.HasMod( "mortar_ring_target_blocked_mod" ) )
-			weapon.RemoveMod( "mortar_ring_target_blocked_mod" )
-	}
-}
 
-void function ClientCallback_ArcDisabled( entity player )
-{
-	if ( !IsAlive( player ) )
-		return
 
-	entity weapon = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
-	if( IsValid( weapon ) )
-		weapon.AddMod( "mortar_ring_arc_disabled_mod" )
-}
 
-void function ClientCallback_ArcEnabled( entity player )
-{
-	if ( !IsAlive( player ) )
-		return
 
-	entity weapon = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
-	if( IsValid( weapon ) )
-	{
-		if( weapon.HasMod( "mortar_ring_arc_disabled_mod" ) )
-			weapon.RemoveMod( "mortar_ring_arc_disabled_mod" )
-	}
-}
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

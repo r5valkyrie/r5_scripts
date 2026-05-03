@@ -192,7 +192,7 @@ void function ScoreboardFocus( entity player )
 
 	string text = Localize( "#LEFT_SCOREBOARD_EXIT" ) + "   " + Localize( "#X_BUTTON_MUTE" )
 
-		//if ( PCPlat_IsOverlayAvailable() )
+		if ( PCPlat_IsOverlayAvailable() )
 			text = text + "   " + Localize( "#Y_BUTTON_VIEW_PROFILE" )
 
 
@@ -1080,3 +1080,4 @@ void function ScoreboardMute( entity player )
 
 	TogglePlayerVoiceAndTextMute( file.selectedPlayer )
 }
+ 

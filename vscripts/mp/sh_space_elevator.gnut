@@ -1,29 +1,27 @@
 global function MpSpaceElevator_Init
 
-#if SERVER
-global function SpaceElevator_PropDeployAtPosition
-global function SpaceElevator_PropDeploy
-#endif
 
-#if CLIENT
+
+
+
+
+
 global function ServerToClient_SpaceElevatorTacProgressRuiStart
-#endif
+
 
 global const string SPACE_ELEVATOR_SCRIPTNAME = "space_elevator"
 const string SPACE_ELEVATOR_MOVER_SCRIPTNAME = "space_elevator_mover"
 
-//ELEVATOR FX VARS
+
 int SPACEELEVATOR_1P_SCREEN_FX_ID
 const asset SPACEELEVATOR_1P_SCREEN_FX = $"P_anti_grav_hud"
 const asset ELEVATOR_IGNITION_FX = $"P_wpn_grav_lift_ignition"
 const asset ELEVATOR_BASE_FX = $"P_wpn_grav_lift_base"
 const asset ELEVATOR_TOP_FX = $"P_wpn_grav_lift_top"
-//const asset ELEVATOR_NEWT_FX = $"P_wpn_grav_lift_core"
+
 const asset FX_PROJECTILE_DESTROYED = $"P_projectile_melted"
 
-const asset SPACEELEVATOR_REPULSOR_MODEL = $"mdl/weapons/repulsor/w_repulsor.rmdl"
 
-//ELEVATOR SOUNDS
 const string SPACEELEVATOR_SOUND_NEWT_IDLE_LOOP = "Nova_Tac_Upper_Active"
 const float SPACEELEVATOR_SOUND_NEWT_IDLE_Z_START = 600
 const float SPACEELEVATOR_SOUND_NEWT_IDLE_Z_END = 1200
@@ -41,30 +39,28 @@ const string SPACEELEVATOR_SOUND_PLAYER_ENTER_1P = "Nova_tac_Enter_1p"
 const string SPACEELEVATOR_SOUND_PLAYER_EXIT_1P = "Nova_tac_Exit_1p"
 const string SPACEELEVATOR_SOUND_PLAYER_RIDE_1P = "Nova_tac_Ride_1p"
 
-// DEBUG
-const bool SPACEELEVATOR_DEBUG = false 
+
+const bool SPACEELEVATOR_DEBUG = false
 const bool SPACEELEVATOR_DRONE_DEBUG = false
 const bool SPACEELEVATOR_VORTEX_DEBUG = false
 const bool SPACEELEVATOR_LIFETIME_DEBUG = false
 
-// SPACE ELEVATOR TUNING
+
 const float SPACEELEVATOR_TUNING_RADIUS = 70
 const int SPACEELEVATOR_TUNING_HEIGHT = 1200
 
-const float MANUAL_AIR_FRICTION = 0.35          // Higher = Slippery, Lower = Muddy
-
-const float SPACEELEVATOR_TUNING_UP_SPEED = 450   //Speed the player moves up
+const float SPACEELEVATOR_TUNING_UP_SPEED = 300
 const float SPACEELEVATOR_TUNING_UP_ACCEL = 100000
-const float SPACEELEVATOR_TUNING_HORIZ_SPEED = 170 
+const float SPACEELEVATOR_TUNING_HORIZ_SPEED = 170
 const float SPACEELEVATOR_TUNING_HORIZ_ACCEL = 2000
-const float SPACEELEVATOR_TUNING_TO_CENTER_SPEED = 30 //How hard the player is pulled towards the center
+const float SPACEELEVATOR_TUNING_TO_CENTER_SPEED = 50
 const float SPACEELEVATOR_TUNING_TO_CENTER_ACCEL = 0
 const float SPACEELEVATOR_TUNING_INPUT_THRESHOLD = 0.2
 
-const float SPACEELEVATOR_TUNING_EJECT_UP_SPEED = 450 //Speed the player is ejected up
-const float SPACEELEVATOR_TUNING_EJECT_HORIZ_SPEED = 400 //Speed the player is ejected out
-const float SPACEELEVATOR_TUNING_MAX_EJECT_TIME = 2
-const float SPACEELEVATOR_TUNING_MAX_HOVER_TIME = 2 //Wait time before the player force ejects
+const float SPACEELEVATOR_TUNING_EJECT_UP_SPEED = 450
+const float SPACEELEVATOR_TUNING_EJECT_HORIZ_SPEED = 400
+const float SPACEELEVATOR_TUNING_MAX_EJECT_TIME = 0.5
+const float SPACEELEVATOR_TUNING_MAX_HOVER_TIME = 0.5
 
 const float SPACEELEVATOR_TUNING_PLAYER_VIEWPOINT_OFFSET = 33
 const float SPACEELEVATOR_TUNING_AWAY_FROM_CENTER_DIST = 40
@@ -72,6 +68,13 @@ const float SPACEELEVATOR_TUNING_HOVER_HEIGHT_PCT = 0.9
 
 const float SPACEELEVATOR_TUNING_LIFETIME = 10
 const float SPACEELEVATOR_TUNING_KEEP_ALIVE_MAX_TIME = 5
+
+
+
+
+
+
+
 
 const asset SPACEELEVATOR_SHAFT_MDL_ASSET = $"mdl/fx/nova_elevator_shield.rmdl"
 const asset SPACEELEVATOR_SHAFT_FX = $"p_wpn_grav_lift_column"
@@ -81,27 +84,26 @@ const float SPACEELEVATOR_SHAFT_BOTTOM_SPACING = 150
 const float SPACEELEVATOR_MAX_FRICTION_SCALE = 2500
 
 
-// Finisher particle systems
+
 const asset HORIZON_FINISHER_REPULSOR_FLASH = $"P_repulsor_push_execution_flash_fwd"
 
 struct ElevatorEffectData
 {
 	int forceStandHandle = -1
-	float hoverStartTime = -1.0
 }
 
 struct
 {
-	#if SERVER
-		table<entity, int>            inElevatorRefCount
-		table<entity, array<entity> > inElevatorObjects
-		table<entity, array<entity> > inElevatorHistoryObjects
 
-		                    
-		table<entity, array< entity> >  playerToActiveLifts
-		table<entity, int> elevatorHeights
-        
-	#endif
+
+
+
+
+
+
+
+
+
 
 	var elevatorProgressRui
 } file
@@ -114,34 +116,37 @@ void function MpSpaceElevator_Init()
 	PrecacheParticleSystem( ELEVATOR_IGNITION_FX )
 	PrecacheParticleSystem( ELEVATOR_BASE_FX )
 	PrecacheParticleSystem( ELEVATOR_TOP_FX )
-	//PrecacheParticleSystem( ELEVATOR_NEWT_FX )
+	
 	PrecacheParticleSystem( SPACEELEVATOR_SHAFT_FX )
 	PrecacheParticleSystem( FX_PROJECTILE_DESTROYED )
+
+
+
+
 
 	PrecacheParticleSystem( HORIZON_FINISHER_REPULSOR_FLASH )
 
 	PrecacheModel( SPACEELEVATOR_SHAFT_MDL_ASSET )
-	PrecacheModel( SPACEELEVATOR_REPULSOR_MODEL )
-	//PrecacheScriptString( SPACE_ELEVATOR_SCRIPTNAME )
+	PrecacheScriptString( SPACE_ELEVATOR_SCRIPTNAME )
 
 	RegisterSignal( "SpaceElevator_StopVisualBlend" )
 
 	Remote_RegisterClientFunction( "ServerToClient_SpaceElevatorTacProgressRuiStart", "entity" )
 
-	#if SERVER
-		RegisterDynamicEntCleanupItem_Parented_Scriptname( SPACE_ELEVATOR_SCRIPTNAME )
-		RegisterDynamicEntCleanupItem_Area_Scriptname( SPACE_ELEVATOR_SCRIPTNAME )
-	#endif
 
-	#if CLIENT
+
+
+
+
+
 		RegisterSignal( "SpaceElevator_StopSignal" )
 
 		StatusEffect_RegisterEnabledCallback( eStatusEffect.in_space_elevator, SpaceElevatorTac_1PFX_Start )
 		StatusEffect_RegisterDisabledCallback( eStatusEffect.in_space_elevator, SpaceElevatorTac_1PFX_Stop )
-	#endif //CLIENT
+
 }
 
-                    
+
 int function GetUpgradedSpaceElevatorHeight()
 {
 	return GetCurrentPlaylistVarInt( "horizon_lift_upgraded_height", 600 )
@@ -156,561 +161,710 @@ float function GetUpgradedSpaceElevatorLifetime()
 {
 	return GetCurrentPlaylistVarFloat( "horizon_lift_upgraded_lifetime", 5 )
 }
-      
+
+
 int function GetSpaceElevatorHeight( entity player )
 {
 	int result = SPACEELEVATOR_TUNING_HEIGHT
+
+		if( PlayerHasPassive( player, ePassives.PAS_TAC_UPGRADE_ONE ) ) 
+		{
+			result = GetUpgradedSpaceElevatorHeight()
+		}
+
+
+
+
+
+
+
+
 	return result
 }
 
 float function GetSpaceElevatorLifetime( entity player )
 {
 	float result = SPACEELEVATOR_TUNING_LIFETIME
+
+		if( PlayerHasPassive( player, ePassives.PAS_TAC_UPGRADE_ONE ) ) 
+		{
+			result = GetUpgradedSpaceElevatorLifetime()
+		}
+
+
+
+
+
+
+
+
+
 	return result
 }
 
-#if SERVER
-void function SpaceElevator_PropDeployAtPosition( vector origin, vector angles, entity parentTo = null )
-{
-	SpaceElevator_PropDeploy( null, origin, angles, parentTo )
-}
-#endif
-
-#if SERVER
-void function SpaceElevator_PropDeploy( entity owner, vector origin, vector angles, entity parentTo )
-{
-	bool ownerIsValid = IsValid( owner )
-
-	entity elevatorProp = CreatePropScript( EMPTY_MODEL, origin, angles, 0, 320000 )
-	elevatorProp.kv.collisionGroup = TRACE_COLLISION_GROUP_NONE
-
-	if ( ownerIsValid )
-	{
-		EndThreadOn_PlayerChangedClass( owner )
-		elevatorProp.SetOwner( owner )
-		elevatorProp.SetBossPlayer( owner )
-		elevatorProp.e.noFriendlyFireProtection = true
-		SetTeam( elevatorProp, owner.GetTeam() )
-	}
-
-	elevatorProp.DisableHibernation()
-	elevatorProp.SetTakeDamageType( DAMAGE_NO )
-	elevatorProp.SetDamageNotifications( false )
-	elevatorProp.SetDeathNotifications( false )
-	elevatorProp.SetScriptName( SPACE_ELEVATOR_SCRIPTNAME )
-	SetTargetName( elevatorProp, SPACE_ELEVATOR_SCRIPTNAME )
-
-	if ( ownerIsValid )
-	{
-		elevatorProp.RemoveFromAllRealms()
-		elevatorProp.AddToOtherEntitysRealms( owner )
-		AddToUltimateRealm( owner, elevatorProp )
-	}
-
-	elevatorProp.EndSignal( "OnDestroy" )
-
-	entity mover
-	if ( parentTo != null )
-	{
-		mover = CreateScriptMover_NEW( SPACE_ELEVATOR_MOVER_SCRIPTNAME, origin, angles + <-90, 0, 0> )
-		mover.SetParent( parentTo )
-		elevatorProp.SetParent( mover )
-	}
-	else
-	{
-		mover = elevatorProp
-	}
-
-	entity wp = null
-	if ( ownerIsValid )
-	{
-		//TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_SPACE_ELEVATOR, owner, elevatorProp.GetOrigin(), owner.GetTeam(), owner )
-	}
-
-	int elevatorHeight = GetSpaceElevatorHeight( owner )
-
-	                    
-	if( IsValid( owner ) )
-	{
-		if( !( owner in file.playerToActiveLifts ) )
-			file.playerToActiveLifts[owner] <- []
-
-		file.playerToActiveLifts[owner].append( elevatorProp )
-	}
-	file.elevatorHeights[elevatorProp] <- elevatorHeight
-       
-
-	//Vortex cylinder for detecting grenades
-	entity vortexCylinder = CreateElevatorVortex( elevatorProp, owner, SPACEELEVATOR_TUNING_RADIUS, float( elevatorHeight ) )
-
-	entity traceBlocker = CreateTraceBlockerVolume( elevatorProp.GetOrigin(), 24.0, true, CONTENTS_BLOCK_PING, elevatorProp.GetTeam(), SPACE_ELEVATOR_SCRIPTNAME )
-	vector boxMin = <-SPACEELEVATOR_TUNING_RADIUS/2, -SPACEELEVATOR_TUNING_RADIUS/2, 0>
-	vector boxMax =  <SPACEELEVATOR_TUNING_RADIUS/2, SPACEELEVATOR_TUNING_RADIUS/2, elevatorHeight/2>
-	traceBlocker.SetBox( boxMin,boxMax )
-
-	//NEWT START UP SOUNDS
-	if ( ownerIsValid )
-	{
-		EmitSoundOnEntityToTeam( elevatorProp, SPACEELEVATOR_SOUND_NEWT_START_FRIENDLY, owner.GetTeam() )
-		EmitSoundOnEntityToEnemies( elevatorProp, SPACEELEVATOR_SOUND_NEWT_START_ENEMY, owner.GetTeam() )
-	}
-	else
-	{
-		EmitSoundOnEntity( elevatorProp, SPACEELEVATOR_SOUND_NEWT_START_FRIENDLY )
-	}
-
-	//NEWT LOOP SOUND
-	entity loopAG = CreateEntity( "ambient_generic" )
-	SetTeam( loopAG, elevatorProp.GetTeam() )
-	loopAG.SetOrigin( elevatorProp.GetOrigin() + <0, 0, SPACEELEVATOR_SOUND_NEWT_IDLE_Z_START> )
-	loopAG.SetSegmentEndpoints( elevatorProp.GetOrigin() + <0, 0, SPACEELEVATOR_SOUND_NEWT_IDLE_Z_START>, elevatorProp.GetOrigin() + <0, 0, SPACEELEVATOR_SOUND_NEWT_IDLE_Z_END> )
-	loopAG.RemoveFromAllRealms()
-	loopAG.AddToOtherEntitysRealms( elevatorProp )
-	loopAG.SetParent( elevatorProp )
-	loopAG.SetSoundName( SPACEELEVATOR_SOUND_NEWT_IDLE_LOOP )
-	loopAG.SetEnabled( true )
-
-	array<entity> newtSpaceElevatorFXArray
-	array<entity> newtSpaceElevatorCyclinderFXArray
-
-	entity ignitionFX = StartParticleEffectOnEntityWithPos_ReturnEntity ( elevatorProp, GetParticleSystemIndex( ELEVATOR_IGNITION_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, <0, 0, 2>, ZERO_VECTOR )
-	entity idleAtomFX = StartParticleEffectOnEntityWithPos_ReturnEntity ( elevatorProp, GetParticleSystemIndex( ELEVATOR_BASE_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, <0, 0, 2>, ZERO_VECTOR )
-
-	newtSpaceElevatorFXArray.append( ignitionFX )
-	newtSpaceElevatorFXArray.append( idleAtomFX )
-
-
-	int shaftDivisions = int((elevatorHeight - SPACEELEVATOR_SHAFT_BOTTOM_SPACING) / SPACEELEVATOR_SHAFT_SPACING)
-	vector offset      = <0, 0, SPACEELEVATOR_SHAFT_BOTTOM_SPACING>
-
-	array<entity> newtCylinderArray
-	entity cylinderEntity
-	entity shaftFXEntity
-	for ( int i = 0; i < shaftDivisions; i++ )
-	{
-		shaftFXEntity = StartParticleEffectOnEntityWithPos_ReturnEntity ( elevatorProp, GetParticleSystemIndex( SPACEELEVATOR_SHAFT_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, offset, <0, 0, 0> )
-		newtSpaceElevatorFXArray.append( shaftFXEntity )
-		newtSpaceElevatorCyclinderFXArray.append( shaftFXEntity )
-
-		EffectSetControlPointVector( shaftFXEntity, 2, <1, 0, 0> )
-
-		offset.z += SPACEELEVATOR_SHAFT_SPACING
-	}      
-		{
-			entity elevatorTopFX = StartParticleEffectOnEntityWithPos_ReturnEntity ( elevatorProp, GetParticleSystemIndex( ELEVATOR_TOP_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, <0, 0, GetSpaceElevatorHeight( owner ) - 150>, ZERO_VECTOR )
-			newtSpaceElevatorFXArray.append( elevatorTopFX )
-			newtSpaceElevatorCyclinderFXArray.append( elevatorTopFX )
-		}
-
-	OnThreadEnd(
-		function() : ( owner, elevatorProp, mover, vortexCylinder, loopAG, newtSpaceElevatorFXArray, wp, traceBlocker)
-		{
-			delete file.inElevatorRefCount[elevatorProp]
-			delete file.inElevatorObjects[elevatorProp]
-			delete file.inElevatorHistoryObjects[elevatorProp]
-
-			if ( IsValid( wp ) )
-				wp.Destroy()
-
-			if ( IsValid( loopAG ) )
-				loopAG.Destroy()
-
-			foreach ( fx in newtSpaceElevatorFXArray )
-			{
-				if ( IsValid( fx ) )
-				{
-					EffectStop( fx )
-					fx.Destroy()
-				}
-			}
-			newtSpaceElevatorFXArray.clear()
-
-			if ( IsValid_ThisFrame( elevatorProp ) )
-				elevatorProp.Destroy()
-
-			if ( IsValid( mover ) )
-				mover.Destroy()
-
-			if ( IsValid( vortexCylinder ) )
-				vortexCylinder.Destroy()
-
-			if ( IsValid( traceBlocker ) )
-				traceBlocker.Destroy()
-
-			                    
-			delete file.elevatorHeights[elevatorProp]
-			if( owner in file.playerToActiveLifts && file.playerToActiveLifts[owner].contains( elevatorProp ) )
-				file.playerToActiveLifts[owner].fastremovebyvalue( elevatorProp )
-         
-		}
-	)
-
-	//wait lifetime
-	file.inElevatorRefCount[elevatorProp] <- 0
-	file.inElevatorObjects[elevatorProp] <- []
-	file.inElevatorHistoryObjects[elevatorProp] <- []
-	thread SPACEELEVATOR_CreateTrigger( elevatorProp, elevatorHeight )
-	thread SPACEELEVATOR_KeepUprightThread( elevatorProp , <0,0,0>)
-
-
-	float gravityLiftLifetime = GetCurrentPlaylistVarFloat( "gravity_lift_lifetime", GetSpaceElevatorLifetime( owner ) )
-
-	wait gravityLiftLifetime
-	waitthread SPACEELEVATOR_KeepAliveThread( elevatorProp )
-}
-
-void function SPACEELEVATOR_KeepUprightThread( entity elevator, vector angles )
-{
-	elevator.EndSignal( "OnDestroy" )
-	//This seems horrible but something is setting the angles of the projectile AFTER its planted.
-	while ( true )
-	{
-		elevator.SetAbsAngles( angles )
-		wait 0.1
-	}
-}
-
-void function SPACEELEVATOR_KeepAliveThread( entity elevator )
-{
-	elevator.EndSignal( "OnDestroy" )
-	float timeInKeepAlive = 0.0
-	float TICK_RATE = 0.1
-	if ( elevator in file.inElevatorRefCount )
-	{
-		while ( file.inElevatorRefCount[elevator] > 0 )
-		{
-			//Lets confirm
-			int numObjectsMidElevator = 0
-			if ( elevator in file.inElevatorObjects )
-			{
-				foreach ( player in file.inElevatorObjects[elevator] )
-				{
-					if ( IsValid( player ) )
-					{
-						//If a player is at the top then we can consider them out
-						float playerElevatorPct       = GetPlayerElevatorProgress( elevator, player )
-						float playerSmootherZVelocity = player.GetSmoothedVelocity().z  // We check this because if we just get the velocity, it sometimes comes back as the velocity we set this frame and we might not be at that velocity
-						if ( playerSmootherZVelocity > (SPACEELEVATOR_TUNING_UP_SPEED / 2) && playerElevatorPct < SPACEELEVATOR_TUNING_HOVER_HEIGHT_PCT )
-						{
-							numObjectsMidElevator++
-						}
-					}
-				}
-			}
-
-			float gravityLiftKeepAliveTime = GetCurrentPlaylistVarFloat( "gravity_lift_keep_alive_time", SPACEELEVATOR_TUNING_KEEP_ALIVE_MAX_TIME )
-
-			if ( numObjectsMidElevator == 0 || timeInKeepAlive > gravityLiftKeepAliveTime )
-			{
-				break
-			}
-
-			timeInKeepAlive += TICK_RATE
-			wait TICK_RATE
-		}
-	}
-}
-
-
-entity function CreateElevatorVortex( entity elevatorProp, entity owner, float radius, float height )
-{
-	// Vortex to detect bullets, projectiles, and mortars in our defensive perimeter.
-	// Vortex detects in-air projectiles, whereas trigger_cylinders do not.
-	// However, Vortex can't seem to detect live arc-stars (i.e. arc-stars in the wall/ground)*
-	// *See hack comment for the trigger_cylinder - apparently having a trigger_cylinder poll
-	// fixes the vortex not working with arc-stars in walls!!!????
-	// If you comment out Suction_CreateTriggerArea you will see that somehow the vortex_sphere will
-	// stop detecting arc-stars.  Also if you remove the loop in Suction_CreateTriggerArea, the vortex_sphere
-	// will also stop detecting arc-stars.
-	entity vortexSphere = CreateEntity( "vortex_sphere" )
-	vortexSphere.kv.spawnflags = SF_ABSORB_CYLINDER | SF_BLOCK_OWNER_WEAPON | SF_ABSORB_BULLETS
-	vortexSphere.kv.enabled = 0
-	vortexSphere.kv.radius = radius
-	vortexSphere.kv.bullet_fov = 360
-	vortexSphere.kv.physics_pull_strength = 25
-	vortexSphere.kv.physics_side_dampening = 6
-	vortexSphere.kv.physics_fov = 360
-	vortexSphere.kv.physics_max_mass = 2
-	vortexSphere.kv.physics_max_size = 6
-	vortexSphere.SetAngles( <0, 0, 0> )
-	vortexSphere.SetOrigin( elevatorProp.GetOrigin() )
-	vortexSphere.SetMaxHealth( 100 )
-	vortexSphere.SetHealth( 100 )
-	vortexSphere.SetInvulnerable()
-	vortexSphere.kv.height = fabs( height )
-
-	DispatchSpawn( vortexSphere )
-
-
-	vortexSphere.RemoveFromAllRealms()
-	vortexSphere.AddToOtherEntitysRealms( elevatorProp )
-
-	if ( IsValid( owner ) )
-		AddToUltimateRealm( owner, vortexSphere )
-	vortexSphere.SetOwner( elevatorProp )
-	vortexSphere.SetParent( elevatorProp, "", true, 0.0 )
-
-	//HACK: Until we get a better way to do this use the vortex's target name to specify that it is a vortex trigger that
-	//will run a set callback when a projectile or bullet hits it instead of preforming its normal vortex logic.
-	Vortex_ConvertToVortexTriggerArea( vortexSphere )
-	SetCallback_VortexSphereTriggerOnBulletHit( vortexSphere, SPACEELEVATOR_VortexTriggerOnBulletHit )
-	SetCallback_VortexSphereTriggerOnProjectileHit( vortexSphere, SPACEELEVATOR_VortexTriggerOnProjectileHit )
-	VortexFireEnable( vortexSphere )
-
-
-	return vortexSphere
-}
-
-#if SERVER
-void function SPACEELEVATOR_VortexTriggerOnBulletHit( entity weapon, entity vortexSphere, var damageInfo )
-{
-	if ( SPACEELEVATOR_VORTEX_DEBUG )
-	{
-		printt( "SPACEELEVATOR_VortexTriggerOnBulletHit" )
-	}
-}
-#endif
-
-void function SPACEELEVATOR_VortexTriggerOnProjectileHit( entity weapon, entity vortexSphere, entity attacker, entity projectile, vector contactPos )
-{
-	if ( SPACEELEVATOR_VORTEX_DEBUG )
-	{
-		printt( "SPACEELEVATOR_VortexTriggerOnProjectileHit" )
-		printt( "ELEVATOR HIT " + projectile.GetClassName() )
-	}
-
-	bool forceIgnore         = false
-	bool forceAllow          = false
-	var allowGravityOverride = projectile.ProjectileGetWeaponInfoFileKeyField( "affected_by_gravity_lift" )
-
-	if ( allowGravityOverride != null )
-	{
-		expect int( allowGravityOverride )
-		if ( allowGravityOverride == 1 )
-			forceAllow = true
-		else
-			forceIgnore = false
-	}
-
-	                    
-	entity elevatorProp = vortexSphere.GetOwner()
-	entity playerOwner = IsValid( elevatorProp ) ? elevatorProp.GetOwner() : null
-
-	if ( projectile.GetClassName() == "grenade" || forceAllow && !forceIgnore )
-	{
-		//Cut down the horizontal and add a big upwards boost.
-		float currentFriction = 1 //projectile.GetCurrentFlightFriction()
-		float frictionScalarPercent = (SPACEELEVATOR_MAX_FRICTION_SCALE - currentFriction) / SPACEELEVATOR_MAX_FRICTION_SCALE
-		float frictionScale = 1.0 - (max( frictionScalarPercent, 0.0 ) * 0.75)
-		vector oldVelocity = projectile.GetVelocity()
-		vector newVelocity = (FlattenVec( oldVelocity ) * frictionScale) + <0, 0, 1000>
-		projectile.SetVelocity( newVelocity )
-	}
-}
-
-void function SPACEELEVATOR_CreateTrigger( entity projectile, int aboveHeight )
-{
-	entity owner    = projectile.GetOwner()
-	vector origin   = projectile.GetOrigin()
-	int radius      = int(SPACEELEVATOR_TUNING_RADIUS)
-	int belowHeight = 0
-
-	entity trigger = CreateEntity( "trigger_cylinder" )
-	trigger.SetRadius( radius )
-	trigger.SetAboveHeight( aboveHeight )
-	trigger.SetBelowHeight( belowHeight )
-	trigger.kv.triggerFilterNpc = "all"
-	trigger.kv.triggerFilterPlayer = "all"
-	trigger.kv.triggerFilterNonCharacter = 1
-	trigger.SetOrigin( origin )
-	DispatchSpawn( trigger )
-
-
-	trigger.RemoveFromAllRealms()
-	trigger.AddToOtherEntitysRealms( projectile )
-
-	trigger.SetParent( projectile )
-	trigger.SetOwner( owner )
-	trigger.SetAbsAngles( projectile.GetAngles() )
-
-
-	trigger.SetEnterCallback( SPACEELEVATOR_TriggerEnter )
-	trigger.SearchForNewTouchingEntity()  // set this to catch an entity in the trigger right away
-
-
-	EndSignal( trigger, "OnDestroy" )
-
-	if ( SPACEELEVATOR_DEBUG )
-	{
-		printt( "BLACKHOLE_CreateTrigger thread started" )
-	}
-	OnThreadEnd(
-		function () : ( trigger )
-		{
-			if ( SPACEELEVATOR_DEBUG )
-			{
-				printt( "BLACKHOLE_CreateTrigger thread ENDED" )
-			}
-			if ( IsValid( trigger ) )
-				trigger.Destroy()
-		}
-	)
-
-	if ( SPACEELEVATOR_DEBUG )
-	{
-		DebugDrawCylinder( trigger.GetOrigin(), <-90, 0, 0>, SPACEELEVATOR_TUNING_RADIUS, trigger.GetAboveHeight(), 0, 200, 0, true, GetSpaceElevatorLifetime( owner ) )
-		//DebugDrawCylinder( trigger.GetOrigin(), < -90, 0, 0 >, radius, trigger.GetAboveHeight(), 0, 165, 255, true, 9999.9 )
-		DebugDrawCylinder( trigger.GetOrigin(), <-90, 0, 0>, SPACEELEVATOR_TUNING_AWAY_FROM_CENTER_DIST, trigger.GetAboveHeight(), 0, 200, 200, true, GetSpaceElevatorLifetime( owner ) )
-	}
-
-	WaitForever()
-}
-#endif //SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void function SPACEELEVATOR_TriggerEnter( entity trigger, entity ent )
 {
 	if ( !ent.DoesShareRealms( trigger ) )
 		return
 
-#if SERVER
-	if ( ent.GetScriptName() == DEPLOYABLE_MEDIC_SCRIPT_NAME  )
-	{
-		if ( !StatusEffect_HasSeverity( ent, eStatusEffect.in_space_elevator ) )
-		{
-			if ( SPACEELEVATOR_DRONE_DEBUG )
-			{
-				printt( "ELEVATOR: Drone enter" )
-			}
-			thread SPACEELEVATOR_DroneInTriggerThread( trigger, ent )
-		}
-		return
-	}
-#endif //SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	if ( !ent.IsPlayer() )
 		return
 
 	thread SPACEELEVATOR_InTriggerThread( trigger, ent )
 }
 
-#if SERVER
-float function GetPlayerElevatorProgress( entity elevator, entity player )
-{
-	float progress = 1.0
-	if ( IsValid( player ) )
-	{
-		vector playerPos = player.GetOrigin()
-
-		vector elevatorPos = elevator.GetOrigin()
-
-		vector triggerToPlayer = playerPos - elevatorPos
-
-		vector elevatorDirection = elevator.GetUpVector()
-		float distanceAlongLine  = DotProduct( triggerToPlayer, elevatorDirection )
-
-		float elevatorHeight = float(GetSpaceElevatorHeight( player ))
-
-		                    
-			if( elevator in file.elevatorHeights )
-				elevatorHeight = float(file.elevatorHeights[elevator])
-        
-		progress = distanceAlongLine / elevatorHeight
-	}
-	return progress
-}
-
-void function SPACEELEVATOR_DroneEjectedWaitForGround( entity drone )
-{
-	EndSignal( drone, "OnDestroy" )
-
-	const float GROUND_TRACE = 25
-	TraceResults trace
-	trace.fraction = 1.0
-
-	while ( trace.fraction >= 1.0 )
-	{
-		trace = TraceLine( drone.GetOrigin(), drone.GetOrigin() - <0, 0, GROUND_TRACE>, null, TRACE_MASK_NPCWORLDSTATIC, TRACE_COLLISION_GROUP_NONE, drone )
-		WaitFrame()
-	}
-
-	if ( IsValid( drone ) )
-	{
-		drone.SetAbsOrigin( drone.GetOrigin() )
-		if ( !IsValid( drone.GetParent() ) )
-		{
-			drone.SetPhysics( MOVETYPE_VPHYSICS )
-		}
-	}
-}
-
-void function SPACEELEVATOR_DroneInTriggerThread( entity trigger, entity drone )
-{
-	EndSignal( trigger, "OnDestroy" )
-	EndSignal( drone, "OnDestroy" )
-
-	entity elevatorProp = trigger.GetParent()
-
-	int cachedPhysicsType =  drone.GetPhysics()
-	OnThreadEnd(
-		function() : ( drone, elevatorProp, cachedPhysicsType )
-		{
-			if ( IsValid( drone ) )
-			{
-				vector ejectVelocity = drone.GetForwardVector() * SPACEELEVATOR_TUNING_EJECT_HORIZ_SPEED * 0.75 + <0, 0, -SPACEELEVATOR_TUNING_EJECT_UP_SPEED/1.5>
-
-				drone.SetVelocity( ejectVelocity )
-
-				StatusEffect_StopAllOfType( drone, eStatusEffect.in_space_elevator )
-				StatusEffect_AddTimed( drone, eStatusEffect.in_space_elevator, 1.0, 1.0, 0.0 )
-				if ( drone.GetScriptName() == DEPLOYABLE_MEDIC_SCRIPT_NAME )
-				{
-					thread SPACEELEVATOR_DroneEjectedWaitForGround( drone )
-				}
-				else
-				{
-					drone.SetPhysics( cachedPhysicsType )
-				}
-			}
-		}
-	)
-
-	EmitSoundAtPosition( TEAM_ANY, drone.GetOrigin(), SPACEELEVATOR_SOUND_PLAYER_ENTER_3P, drone )
 
 
-	StatusEffect_AddEndless( drone, eStatusEffect.in_space_elevator, 1.0 )
-
-	while( trigger.IsTouching( drone ) && !IsValid( drone.GetParent() ) )
-	{
-		//Set velocity
-		vector objectPos = drone.GetOrigin()
-		vector triggerPos = trigger.GetOrigin()
-
-		float elevatorSpeed = SPACEELEVATOR_TUNING_UP_SPEED
-
-		vector triggerToObject = objectPos - triggerPos
-
-		vector elevatorDirection = trigger.GetUpVector()
-		float distanceAlongLine = DotProduct(triggerToObject, elevatorDirection)
-
-		vector closestPointOnLine = distanceAlongLine*elevatorDirection + triggerPos + <0,0,-SPACEELEVATOR_TUNING_PLAYER_VIEWPOINT_OFFSET>
-
-		vector objectToCenter = closestPointOnLine - objectPos
 
 
-		vector toCenterOfElevatorVelocity = ZERO_VECTOR
-		if ( Length( objectToCenter ) >= SPACEELEVATOR_TUNING_AWAY_FROM_CENTER_DIST )// Im away from the center
-		{
-			toCenterOfElevatorVelocity = Normalize( objectToCenter ) * SPACEELEVATOR_TUNING_TO_CENTER_SPEED
-		}
 
-		vector elevatorVelocity = elevatorSpeed*elevatorDirection
-		vector finalNewVelocity = elevatorVelocity + toCenterOfElevatorVelocity
 
-		drone.SetPhysics( MOVETYPE_FLY )
 
-		WaitFrame()
-	}
-}
-#endif //SERVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 bool function ShouldSpaceElevatorAffectPlayer( entity player )
 {
@@ -735,83 +889,129 @@ bool function ShouldSpaceElevatorAffectPlayer( entity player )
 	return true
 }
 
+
 void function ApplyElevatorEffects( entity player, entity trigger, array<entity> player3PEffectsArray, ElevatorEffectData data, bool shouldApply )
 {
 	if ( shouldApply )
 	{
 		StatusEffect_AddEndless( player, eStatusEffect.in_space_elevator, 1.0 )
 
-		#if SERVER
-			GiveExtraWeaponMod( player, "elevator_shooter" )
 
-			if ( !Bleedout_IsBleedingOut( player ) )
-			{
-				player.ForceStand()
-			}
-			DisableMantle( player )
 
-			if ( IsValid( trigger ) )
-			{
-				SpaceElevator_3PPlayerFX_Start( trigger, player, player3PEffectsArray )
-				entity newtEntity = trigger.GetParent()
-				if ( IsValid( newtEntity ) )
-				{
-					if ( newtEntity in file.inElevatorRefCount )
-					{
-						file.inElevatorRefCount[newtEntity] += 1
-					}
-					if ( newtEntity in file.inElevatorObjects )
-					{
-						if ( !file.inElevatorObjects[newtEntity].contains( player ) )
-						{
-							file.inElevatorObjects[newtEntity].push( player )
-						}
-					}
-					if ( newtEntity in file.inElevatorHistoryObjects )
-					{
-						if ( !file.inElevatorHistoryObjects[newtEntity].contains( player ) )
-						{
-							file.inElevatorHistoryObjects[newtEntity].push( player )
-						}
-					}
-				}
-			}
-		#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	}
 	else
 	{
 		StatusEffect_StopAllOfType( player, eStatusEffect.in_space_elevator )
 
-		#if SERVER
-			SpaceElevator_3PPlayerFX_Stop( player3PEffectsArray )
 
-			TakeExtraWeaponMod( player, "elevator_shooter" )
 
-			player.UnforceStand()
-			EnableMantle( player )
 
-			if ( IsValid( trigger ) )
-			{
-				entity newtEntity = trigger.GetParent()
-				if ( IsValid( newtEntity ) )
-				{
-					if ( newtEntity in file.inElevatorRefCount )
-					{
-						file.inElevatorRefCount[newtEntity] -= 1
-					}
 
-					if ( newtEntity in file.inElevatorObjects )
-					{
-						if ( file.inElevatorObjects[newtEntity].contains( player ) )
-						{
-							file.inElevatorObjects[newtEntity].removebyvalue( player )
-						}
-					}
-				}
-			}
-		#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	}
 }
+
 
 void function SPACEELEVATOR_InTriggerThread( entity trigger, entity player )
 {
@@ -819,10 +1019,10 @@ void function SPACEELEVATOR_InTriggerThread( entity trigger, entity player )
 	EndSignal( player, "OnDestroy" )
 	EndSignal( player, "OnDeath" )
 
+
 	array<entity> player3PSpaceElevatorFXArray
 	ElevatorEffectData data
-	
-	data.hoverStartTime = -1.0
+
 
 	OnThreadEnd(
 		function() : (player, player3PSpaceElevatorFXArray, trigger, data )
@@ -836,7 +1036,13 @@ void function SPACEELEVATOR_InTriggerThread( entity trigger, entity player )
 
 				if ( ShouldSpaceElevatorAffectPlayer( player ) )
 				{
-					SPACEELEVATOR_EjectPlayer( player, trigger, false )
+					SPACEELEVATOR_EjectPlayer( player, trigger )
+
+
+
+
+
+
 				}
 			}
 		}
@@ -844,188 +1050,166 @@ void function SPACEELEVATOR_InTriggerThread( entity trigger, entity player )
 
 	if ( ShouldSpaceElevatorAffectPlayer( player ) )
 	{
-		#if SERVER
-			EmitSoundAtPositionOnlyToPlayer( TEAM_ANY, player.GetOrigin(), player, SPACEELEVATOR_SOUND_PLAYER_ENTER_1P )
-			if ( player.GetTeam() == trigger.GetTeam() )
-			{
-				EmitSoundAtPositionExceptToPlayer( TEAM_ANY, player.GetOrigin(), player, SPACEELEVATOR_SOUND_PLAYER_ENTER_3P )
-			}
-			else
-			{
-				EmitSoundAtPositionExceptToPlayer( TEAM_ANY, player.GetOrigin(), player, SPACEELEVATOR_SOUND_PLAYER_ENTER_3P_ENEMY )
-			}
-		#endif
+
+
+
+
+
+
+
+
+
+
+
 	}
 
-	while( trigger.IsTouching( player ) )
+	const TICK_RATE = 0.1
+	int lastStatusEffectIdKR = -1
+	bool shouldKeepInside    = false
+	while( trigger.IsTouching( player ) || shouldKeepInside )
 	{
+		if ( SPACEELEVATOR_DEBUG && !trigger.IsTouching( player ) && shouldKeepInside )
+		{
+			printt( "Elevator outside volume but keeping me inside!" )
+		}
+		shouldKeepInside = false
 		if ( ShouldSpaceElevatorAffectPlayer( player ) )
 		{
+			if ( SPACEELEVATOR_DEBUG )
+			{
+				DebugDrawSphere( player.GetOrigin(), 11, <75, 0, 150>, true, TICK_RATE )
+			}
+
 			if ( !StatusEffect_HasSeverity( player, eStatusEffect.in_space_elevator ) )
 			{
 				ApplyElevatorEffects( player, trigger, player3PSpaceElevatorFXArray, data, true )
+
+
+
 			}
 
-			#if SERVER
-				vector playerPos = player.GetOrigin()
-				vector liftPos = trigger.GetOrigin()
-				float liftMaxHeight = trigger.GetAboveHeight()
-				float currentHeight = playerPos.z - liftPos.z
 
-				vector curVel = player.GetVelocity()
 
-				// Check player input to allow early exit
-				float inputForward = player.GetInputAxisForward()
-				float inputRight = player.GetInputAxisRight()
-				vector inputVector = Normalize( <inputForward, inputRight, 0> )
 
-				if ( Length( inputVector ) >= SPACEELEVATOR_TUNING_INPUT_THRESHOLD )
-				{
-					// Player is trying to move
-					vector diff = liftPos - playerPos
-					diff.z = 0
-					vector playerToCenter = Normalize(diff)
-					
-					vector movementIntent = Normalize( inputForward * player.GetForwardVector() + inputRight * player.GetRightVector() )
-					float intentIntoElevator = DotProduct( Normalize( movementIntent ), playerToCenter )
-					
-					// If player is pushing AWAY from elevator center, let them out!
-					if ( intentIntoElevator < 0 )
-					{
-						// Player wants to exit, break the loop
-						break
-					}
-				}
 
-				vector diff = liftPos - playerPos
-				diff.z = 0 
-				
-				if ( Length(diff) > 20.0 )
-				{
-					vector dir = Normalize(diff)
-					
-					float newX = (curVel.x * MANUAL_AIR_FRICTION) + (dir.x * SPACEELEVATOR_TUNING_TO_CENTER_SPEED)
-					float newY = (curVel.y * MANUAL_AIR_FRICTION) + (dir.y * SPACEELEVATOR_TUNING_TO_CENTER_SPEED)
-					
-					player.SetVelocity( <newX, newY, curVel.z> )
-					curVel = <newX, newY, curVel.z>
-				}
 
-				if ( currentHeight >= (liftMaxHeight - 50.0) )
-				{
-					if ( data.hoverStartTime < 0 )
-						data.hoverStartTime = Time()
-					
-					if ( currentHeight > liftMaxHeight )
-					{
-						player.SetVelocity( <curVel.x, curVel.y, -100.0> )
-					}
-					else
-					{
-						player.SetVelocity( <curVel.x, curVel.y, 0.0> )
-					}
-					
-					if ( Time() - data.hoverStartTime > SPACEELEVATOR_TUNING_MAX_HOVER_TIME )
-					{
-						SPACEELEVATOR_EjectPlayer( player, trigger, true )
-						return
-					}
-				}
-				else
-				{
-					data.hoverStartTime = -1.0
-					player.SetVelocity( <curVel.x, curVel.y, SPACEELEVATOR_TUNING_UP_SPEED> )
-				}
-			#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 		}
-		WaitFrame()
+		wait TICK_RATE
 	}
 }
 
-void function SPACEELEVATOR_EjectPlayer( entity player, entity trigger, bool isTopEject )
+
+void function SPACEELEVATOR_EjectPlayer( entity player, entity trigger )
 {
-	#if SERVER
-		if ( !IsValid(player) ) return
-		if ( player.p.totemRecallTime + 2.0 > Time() )
-			return
 
-		vector velocity = player.GetVelocity()
-		
-		if ( isTopEject )
-		{
-			vector viewForward = player.GetViewVector()
-			viewForward.z = 0
-			viewForward = Normalize(viewForward)
-			
-			player.SetVelocity( (viewForward * SPACEELEVATOR_TUNING_EJECT_HORIZ_SPEED) + <0, 0, SPACEELEVATOR_TUNING_EJECT_UP_SPEED> )
-		}
-		else
-		{
-			// Use player's view direction for throw direction
-			vector viewForward = player.GetViewVector()
-			viewForward.z = 0
-			viewForward = Normalize(viewForward)
-			
-			// Check if player is actively moving
-			float inputForward = player.GetInputAxisForward()
-			float inputRight = player.GetInputAxisRight()
-			vector inputVector = Normalize( <inputForward, inputRight, 0> )
-			
-			vector throwDir
-			if ( Length( inputVector ) >= SPACEELEVATOR_TUNING_INPUT_THRESHOLD )
-			{
-				// Use player's movement input direction
-				throwDir = Normalize( inputForward * player.GetForwardVector() + inputRight * player.GetRightVector() )
-				throwDir.z = 0
-			}
-			else
-			{
-				// Use view direction
-				throwDir = viewForward
-			}
-			
-			// Add current upward velocity to the throw
-			float upVel = max( velocity.z, SPACEELEVATOR_TUNING_UP_SPEED * 0.5 )
-			player.SetVelocity( (throwDir * SPACEELEVATOR_TUNING_EJECT_HORIZ_SPEED) + <0, 0, SPACEELEVATOR_TUNING_EJECT_UP_SPEED> )
-		}
 
-		EmitSoundAtPositionOnlyToPlayer( TEAM_ANY, player.GetOrigin(), player, SPACEELEVATOR_SOUND_PLAYER_EXIT_1P )
-		if ( player.GetTeam() ==  trigger.GetTeam() )
-		{
-			EmitSoundAtPositionExceptToPlayer( TEAM_ANY, player.GetOrigin(), player, SPACEELEVATOR_SOUND_PLAYER_EXIT_3P )
-		}
-		else
-		{
-			EmitSoundAtPositionExceptToPlayer( TEAM_ANY, player.GetOrigin(), player, SPACEELEVATOR_SOUND_PLAYER_EXIT_3P_ENEMY )
-		}
-	#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
-#if SERVER
-void function SpaceElevator_3PPlayerFX_Start( entity trophy, entity player, array<entity> spaceElevatorFXArray )
-{
-	// Add any desired 3p fx here
-}
 
-void function SpaceElevator_3PPlayerFX_Stop( array<entity> spaceElevatorFXArray )
-{
-	if ( SPACEELEVATOR_DEBUG )
-	{
-		printt( "DestroyPlayerSpaceElevatorFX" )
-	}
 
-	// 3P effects
-	foreach ( fx in spaceElevatorFXArray )
-	{
-		if ( IsValid( fx ) )
-			fx.Destroy()
-	}
-	spaceElevatorFXArray.clear()
-}
-#endif //SERVER
 
-#if CLIENT
-//Gravity Reduction field 1p effects
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function SpaceElevatorTac_1PFX_Start( entity ent, int statusEffect, bool actuallyChanged )
 {
 	ManageHighlightEntity( ent )
@@ -1038,7 +1222,7 @@ void function SpaceElevatorTac_1PFX_Start( entity ent, int statusEffect, bool ac
 
 	entity viewPlayer = GetLocalViewPlayer()
 	int fxHandle
-	fxHandle = StartParticleEffectOnEntityWithPos( viewPlayer, SPACEELEVATOR_1P_SCREEN_FX_ID, FX_PATTACH_ABSORIGIN_FOLLOW, -1, viewPlayer.EyePosition(), <0, 0, 0> ) //ATTACHMENTID_INVALID
+	fxHandle = StartParticleEffectOnEntityWithPos( viewPlayer, SPACEELEVATOR_1P_SCREEN_FX_ID, FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, viewPlayer.EyePosition(), <0, 0, 0> )
 	EffectSetIsWithCockpit( fxHandle, true )
 
 	thread SpaceElevator_1PFX_Thread( viewPlayer, fxHandle )
@@ -1083,7 +1267,7 @@ void function  SpaceElevator_1PFX_Thread( entity player, int fxHandle )
 		if ( !EffectDoesExist( fxHandle ) )
 			break
 
-		// For FX performance reasons, we dont want or need both 1p effecs on at the same time.
+		
 		bool shouldBeOn = !StatusEffect_HasSeverity( player, eStatusEffect.in_black_hole_field )
 		if ( !wasOn && shouldBeOn )
 		{
@@ -1099,10 +1283,10 @@ void function  SpaceElevator_1PFX_Thread( entity player, int fxHandle )
 		WaitFrame()
 	}
 }
-#endif //CLIENT
 
 
-#if CLIENT
+
+
 void function ServerToClient_SpaceElevatorTacProgressRuiStart( entity base )
 {
 	if ( !IsValid( base ) )
@@ -1137,14 +1321,14 @@ void function CL_SpaceElevatorProgressRUIThread( entity player, entity base )
 		RuiDestroy( file.elevatorProgressRui )
 		file.elevatorProgressRui = null
 	}
-	//file.elevatorProgressRui = CreateCockpitRui( $"ui/nova_elevator_progress.rpak" )
-	//RuiSetFloat( file.elevatorProgressRui, "progress", 0.0 )
-	//RuiSetString( file.elevatorProgressRui, "barLabel", "#WPN_SPACE_ELEVATOR" )
+	
+	
+	
 
 	float progress = 0.0
 	while ( IsValid( base ) && StatusEffect_HasSeverity( player, eStatusEffect.in_space_elevator ) )
 	{
-		//Find my distance from the base
+		
 		vector playerPos       = player.GetOrigin()
 		vector basePos         = base.GetOrigin()
 		vector triggerToPlayer = playerPos - basePos
@@ -1160,4 +1344,6 @@ void function CL_SpaceElevatorProgressRUIThread( entity player, entity base )
 		WaitFrame()
 	}
 }
-#endif
+
+
+ 

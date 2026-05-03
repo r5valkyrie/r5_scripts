@@ -395,7 +395,7 @@ void function ClientCallback_Teams_OnPlayerViewProfile(  int teamIndex, int row 
 
 bool function Teams_CanViewProfile( string otherPlayerUid, string otherPlayerHardware )
 {
-	string hardware = "PC"
+	string hardware = GetUnspoofedPlayerHardware()
 
 	if ( otherPlayerUid == "" )
 		return false

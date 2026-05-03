@@ -13,31 +13,31 @@ const bool CARE_PACKAGE_INSIGHT_PERF_TESTING = false
 #endif
 
 
-#if SERVER
-const float SERVER_REVEAL_TIME_LENIENCY = .75
-const float SERVER_REVEAL_DEGREES_LENIENCY = 1.25
 
-global function Perks_CarePackageInsight_ClientToServer_RevealPackage
-global function Perks_CarePackageInsight_ClientToServer_StartRevealPackage
-global function Perks_CarePackageInsight_ClientToServer_MinimapIconPinged
-global function Perks_CarePackageInsight_CreateCarePackageInsightPing
 
-#if DEV
-global function DeleteCarepackagePerkLinks
-#endif
 
-struct CarePackageData
-{
-	entity carePackage			//Care Package Entity itself
-	string highestLootItem		//The Loot Item  we care about - likely need to store its icon reference here too
-	entity highestLootEnt
-	entity revealedEnt
-	entity revealEnt
-	table< entity, float > startRevealTimes
-}
-#endif
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 global function ClientCodeCallback_OnCarePackageInsightDataChanged
 global function ServerToClient_NotifyPathfinderCooldownReduction
 
@@ -48,26 +48,26 @@ struct RevealEntData
 	bool revealed
 }
 
-#endif
+
 
 struct
 {
-	#if SERVER
-		table<entity, CarePackageData  > carePackageArray
 
-		#if DEV
-			array < entity > carePackageExtraEnts
-		#endif
-	#endif
 
-	#if CLIENT
+
+
+
+
+
+
+
 		table<entity, RevealEntData> revealEntitiesToData
 		array<entity>		 recentlyRevealedEntities
 		table<entity, var> 	 revealEntityToRui
 		entity                       soundController
 		float                        lastRevealPackageHintTime
 		entity 				prevHoverEntity
-	#endif
+
 
 } file
 
@@ -78,16 +78,16 @@ void function Perk_CarePackageInsight_Init()
 
 	PerkInfo carePackageInsight
 	carePackageInsight.perkId          = ePerkIndex.CARE_PACKAGE_INSIGHT
-	#if SERVER || CLIENT
+
 		carePackageInsight.minimapPingType = ePingType.CAREPACKAGE_INSIGHT
 		carePackageInsight.activateCallback = OnActivate_CarePackageInsight
 		carePackageInsight.deactivateCallback = OnDeactivate_CarePackageInsight
 		carePackageInsight.mapFeatureTitle = "#PERK_FEATURE_CARE_PACKAGE_INSIGHT"
 		carePackageInsight.mapFeatureDescription = "#PERK_FEATURE_CARE_PACKAGE_INSIGHT_DESC"
 		RegisterSignal( "Perk_CarePackageInsight_ContentsTaken" )
-	#endif
 
-	#if CLIENT
+
+
 		carePackageInsight.worldspaceIconUpOffset = CAREPACKAGE_WAYPOINT_UP_OFFSET
 		carePackageInsight.hideFromTeammates = true
 		carePackageInsight.trackEntityPosition = true
@@ -95,14 +95,14 @@ void function Perk_CarePackageInsight_Init()
 		carePackageInsight.canPingEnt = Perk_CarePackageInsight_CanPingEnt
 		carePackageInsight.getPingPosition = Perk_CarePackageInsight_GetPingPositionForEnt
 		carePackageInsight.getDynamicPingMaxDistance = Perk_CarePackageInsight_GetPingDistanceForEnt
-	#endif
+
 
 	Perks_RegisterClassPerk( carePackageInsight )
 
-	#if SERVER || CLIENT
-	Remote_RegisterServerFunction( "Perks_CarePackageInsight_ClientToServer_RevealPackage", "typed_entity", "prop_dynamic" )
-	Remote_RegisterServerFunction( "Perks_CarePackageInsight_ClientToServer_StartRevealPackage", "typed_entity", "prop_dynamic" )
-	Remote_RegisterServerFunction( "Perks_CarePackageInsight_ClientToServer_MinimapIconPinged", "typed_entity", "prop_dynamic" )
+
+	Remote_RegisterServerFunction( "Perks_CarePackageInsight_ClientToServer_RevealPackage", "typed_entity", "prop_care_package_insight" )
+	Remote_RegisterServerFunction( "Perks_CarePackageInsight_ClientToServer_StartRevealPackage", "typed_entity", "prop_care_package_insight" )
+	Remote_RegisterServerFunction( "Perks_CarePackageInsight_ClientToServer_MinimapIconPinged", "typed_entity", "prop_care_package_insight" )
 	Remote_RegisterClientFunction( "ServerToClient_NotifyPathfinderCooldownReduction" )
 
 
@@ -111,32 +111,32 @@ void function Perk_CarePackageInsight_Init()
 
 	PrecacheScriptString( HIDDEN_CARE_PACKAGE_ENT_NAME )
 	PrecacheScriptString( REVEALED_CARE_PACKAGE_ENT_NAME )
-	#endif
 
-	#if SERVER
-		Survival_AddCallback_OnAirdropLaunched( CarePackageInsight_OnAirdropLaunched )
-		Survival_AddCallback_OnAirdropOpened( CarePackageInsight_OnAirdropOpened )
 
-		AddCallback_GameStateEnter( eGameState.WinnerDetermined, CarePackageInsight_ClearVisibilityOnGameEnd )
-	#endif
 
-	#if CLIENT
+
+
+
+
+
+
+
 		RegisterSignal( "CarePackage_PerkDisabled" )
 		RegisterSignal( "CarePackage_PerkEnabled" )
-		AddCreateCallback( "prop_dynamic", OnCarePackageDataCreated )
+		AddCreateCallback( "prop_care_package_insight", OnCarePackageDataCreated )
 
 		PrecacheParticleSystem( $"P_ar_loot_drop_point_CP_noZ" )
 
 		AddCallback_OnFindFullMapAimEntity( GetCarePackageUnderAim, PingCarePackageUnderAim )
 
 		file.lastRevealPackageHintTime = -9999
-	#endif
+
 }
 
-#if SERVER || CLIENT
+
 void function OnActivate_CarePackageInsight( entity player, string characterName )
 {
-	#if CLIENT
+
 		if( player != GetLocalViewPlayer() )
 			return
 
@@ -147,19 +147,19 @@ void function OnActivate_CarePackageInsight( entity player, string characterName
 		soundController.SetParent( player )
 		file.soundController = soundController
 		player.Signal( "CarePackage_PerkEnabled" )
-	#endif
+
 }
 
 void function OnDeactivate_CarePackageInsight( entity player )
 {
-	#if CLIENT
+
 		player.Signal( "CarePackage_PerkDisabled" )
 		if( player == GetLocalViewPlayer() && file.soundController != null )
 		{
 			file.soundController.Destroy()
 			file.soundController = null
 		}
-	#endif
+
 }
 
 
@@ -171,9 +171,9 @@ void function OnPassiveChangedCarePackageInsightUpgrade( entity player, int pass
 	}
 }
 
-#endif
 
-// Playlist Var Tuning values
+
+
 float function Perk_CarePackageInsight_LookatRevealTime()
 {
 	return GetCurrentPlaylistVarFloat( "care_package_insight_reveal_time", 1.0 )
@@ -194,371 +194,371 @@ float function Perk_CarePackageInsight_IgnoreLosRevealDistance()
 	return GetCurrentPlaylistVarFloat( "care_package_insight_ignore_los_distance", 6000.0 )
 }
 
-#if SERVER
-bool function Perk_CarePackageInsight_ValidateRevealOnServer()
-{
-	return GetCurrentPlaylistVarBool( "care_package_insight_validate_reveal_on_server", true )
-}
-
-void function Perks_CarePackageInsight_ClientToServer_MinimapIconPinged( entity player, entity minimapEnt )
-{
-	if ( Perks_CarePackageInsight_IsClientDataValid( player, minimapEnt, false ) )
-	{
-		string lootItem = Perk_CarePackageInsight_GetLootItemStringForPing( player, minimapEnt )
-		vector dropPos = minimapEnt.GetOrigin()
-		if( lootItem == "" )
-		{
-			entity locationWp = CreateWaypoint_Ping_Location( player, ePingType.CAREPACKAGE, null, dropPos, -1, false )
-			return
-		}
-		int pingType = false ?  ePingType.CAREPACKAGE_INSIGHT_LOOTED : ePingType.CAREPACKAGE_INSIGHT
-		entity wp = CreateWaypoint_Ping_Location( player,  pingType, minimapEnt, minimapEnt.GetOrigin(), -1, false )
-		wp.SetWaypointString( 0, lootItem )
-	}
-}
-
-bool function Perks_CarePackageInsight_IsClientDataValid( entity player, entity revealEnt, bool isActualRevealEnt )
-{
-	if( !IsValid( player ) || !player.IsPlayer() )
-		return false
-
-	if ( !IsValid( revealEnt ) )
-		return false
-
-	if( revealEnt.GetScriptName() != HIDDEN_CARE_PACKAGE_ENT_NAME && revealEnt.GetScriptName() != REVEALED_CARE_PACKAGE_ENT_NAME )
-		return false
-
-	// the following two checks don't apply to the minimapEnt, but it's simpler to have a single validation function
-	if ( isActualRevealEnt )
-	{
-		entity carePackage = revealEnt.GetLinkEnt()
-		if( !IsValid( carePackage ) )
-			return false
-
-		if( !(carePackage in file.carePackageArray) )
-			return false
-	}
-
-	return true
-}
-
-bool function Perks_CarePackageInsight_ValidateLookAtDegrees( entity player, entity revealEnt, bool validateLos )
-{
-	// validate that the player was looking at the care package to start the reveal, but use a wider lookat degree to account for potential lag
-	entity carePackage = revealEnt.GetLinkEnt()
-	vector viewVector = player.GetViewVector()
-	vector eyePosition = player.EyePosition()
-	float lookatThreshold = deg_cos( Perk_CarePackageInsight_LookAtWideRevealDegrees() * SERVER_REVEAL_DEGREES_LENIENCY )
-
-	vector carePackageLookatPos = carePackage.GetOrigin() + <0,0,CAREPACKAGE_WAYPOINT_UP_OFFSET>
-	vector carePackageDir = Normalize( carePackageLookatPos - eyePosition )
-	float dotProduct = DotProduct( viewVector, carePackageDir )
-
-	if( dotProduct < lookatThreshold )
-		return false
-
-	if( !validateLos )
-		return true
-
-	TraceResults trace = TraceLine( eyePosition, carePackageLookatPos, null, TRACE_MASK_BLOCKLOS, TRACE_COLLISION_GROUP_NONE )
-
-	// for some reason the pathfinder tt collision only seems to exist on the server ( or the collision maks for it are different on the server)
-	// which results in the server validation failing even though it looks correct on the client
-	// fix this by ignoring the pathfinder tt collision if we detect it
-	if( IsValid( trace.hitEnt ) && trace.hitEnt.GetScriptName() == "pathfinder_tt_ring_shield" )
-	{
-		trace = TraceLine( eyePosition, carePackageLookatPos, trace.hitEnt, TRACE_MASK_BLOCKLOS, TRACE_COLLISION_GROUP_NONE )
-	}
-	bool canSee = trace.hitEnt == carePackage || trace.fraction >= 0.99 || trace.hitSky
-	return canSee
-}
-
-void function Perks_CarePackageInsight_ClientToServer_RevealPackage( entity player, entity revealEnt )
-{
-	if( !(Perks_CarePackageInsight_IsClientDataValid( player, revealEnt, true )) )
-		return
-
-	entity carePackage = revealEnt.GetLinkEnt()
-	CarePackageData info = file.carePackageArray[carePackage]
-	if( Perk_CarePackageInsight_ValidateRevealOnServer() )
-	{
-		if( !Perks_DoesPlayerHavePerk( player, ePerkIndex.CARE_PACKAGE_INSIGHT ) )
-			return
-
-		if( !( player in info.startRevealTimes ) )
-			return
-
-		if( Time() - info.startRevealTimes[player] < ( Perk_CarePackageInsight_LookatRevealTime() * SERVER_REVEAL_TIME_LENIENCY ) )
-			return
-
-		if( !Perks_CarePackageInsight_ValidateLookAtDegrees( player, revealEnt, false ) )
-			return
-	}
-
-	// validation succeeded reveal the care package
-	entity revealedEnt = file.carePackageArray[carePackage].revealedEnt
-	int team = player.GetTeam()
-
-	array<entity> teamPlayers = GetPlayerArrayOfTeam( team )
-	bool shouldStopTransmittingReveal = player.HasPassive( ePassives.PAS_PATHFINDER )
-	if( !shouldStopTransmittingReveal )
-	{
-		shouldStopTransmittingReveal = true
-		foreach ( teammate in teamPlayers )
-		{
-			if ( teammate.HasPassive( ePassives.PAS_PATHFINDER ) )
-			{
-				shouldStopTransmittingReveal = false
-				break
-			}
-		}
-	}
-
-	//if( shouldStopTransmittingReveal )
-	//	revealEnt.SetTransmitToTeam( team, false )
-	bool alreadyRevealed = false//revealedEnt.IsTransmittingToTeam( team )
-	//revealedEnt.SetTransmitToTeam( team, true )
-
-	if( !alreadyRevealed )
-	{
-		Perks_CarePackageInsight_CreateCarePackageInsightPing( player, revealedEnt, carePackage.GetOrigin(), 0 )
-		LootData data               = SURVIVAL_Loot_GetLootDataByIndex( 0 )
-		vector carePackageLookatPos = carePackage.GetOrigin() + <0, 0, CAREPACKAGE_WAYPOINT_UP_OFFSET>
-		//PIN_Perks_CarePackageRevealed( player, carePackageLookatPos, data.ref )
-		StatsHook_CarePackageRevealed( player )
-
-
-			UpgradeCore_GrantCarePackageScanXp( player )
-
-	}
-
-	delete info.startRevealTimes[player]
-
-	if ( PlayerHasPassive( player, ePassives.PAS_PATHFINDER ) )
-	{
-		GrantPathfinderCooldownReduction( player )
-	}
-}
-
-void function Perks_CarePackageInsight_ClientToServer_StartRevealPackage( entity player, entity revealEnt )
-{
-	if( !(Perks_CarePackageInsight_IsClientDataValid( player, revealEnt, true )) )
-		return
-
-	if( Perk_CarePackageInsight_ValidateRevealOnServer() )
-	{
-		if( !Perks_DoesPlayerHavePerk( player, ePerkIndex.CARE_PACKAGE_INSIGHT ) )
-			return
-
-		// line of sight is only required if we are far away from the care package's landing location
-		float ignoreLosDistance = Perk_CarePackageInsight_IgnoreLosRevealDistance()
-		bool validateLos = DistanceSqr( revealEnt.GetOrigin(), player.EyePosition() ) > ignoreLosDistance * ignoreLosDistance
-		if( !Perks_CarePackageInsight_ValidateLookAtDegrees( player, revealEnt, validateLos ) )
-			return
-	}
-	entity carePackage = revealEnt.GetLinkEnt()
-	file.carePackageArray[carePackage].startRevealTimes[player] <- Time()
-}
-
-string function Perk_CarePackageInsight_GetLootItemStringForPing( entity player, entity carePackage )
-{
-	int team = player.GetTeam()
-	if( false )
-	{
-		int lootIndex = 0//carePackage.GetLootIndex()
-		LootData data = SURVIVAL_Loot_GetLootDataByIndex( lootIndex )
-		return data.ref
-	}
-	else
-	{
-		return ""
-	}
-	return ""
-}
-
-void function Perks_CarePackageInsight_CreateCarePackageInsightPing( entity player, entity revealEnt, vector pingOrigin, int userTicketId )
-{
-	if( revealEnt.GetClassName() != "prop_dynamic" )
-		return
-	string lootItem = Perk_CarePackageInsight_GetLootItemStringForPing( player, revealEnt )
-	if( lootItem == "" )
-		return
-
-	entity carePackage = revealEnt.GetLinkEnt()
-	vector pingPosition = carePackage.GetOrigin()
-	vector offsetPosition = pingPosition + <0,0,CAREPACKAGE_WAYPOINT_UP_OFFSET - 72>
-
-
-	int pingType = false ? ePingType.CAREPACKAGE_INSIGHT_LOOTED : ePingType.CAREPACKAGE_INSIGHT
-	entity wp = CreateWaypoint_Ping_Location( player, pingType, revealEnt, offsetPosition, userTicketId, false )
-	wp.SetWaypointString( 0, lootItem )
-	wp.SetWaypointGroupFlags( WPGF_NO_CREATE_MINIMAP_ICONS )
-	wp.SetParent( carePackage )
-}
-
-bool function CarePackageInsight_ShouldTeamSeeInsight( int team )
-{
-	array<entity> teamPlayers = GetPlayerArrayOfTeam( team )
-	foreach ( entity player in teamPlayers )
-	{
-		if( Perks_DoesPlayerHavePerk( player, ePerkIndex.CARE_PACKAGE_INSIGHT ) )
-		{
-			return true
-		}
-	}
-	return false
-}
-
-// When an Airdrop first gets launched, store it's loot tier so we can change the look of the icon when it lands based on tier
-void function CarePackageInsight_OnAirdropLaunched( entity airdrop, vector airdropPos )
-{
-	if ( airdrop.GetTargetName() != CARE_PACKAGE_TARGETNAME ) // Lifeline care package, no scans
-		return
-
-	if ( GetGameState() >= eGameState.WinnerDetermined )
-		return
-
-	array< array<string> > contents = airdrop.e.airDropContents
-	if( contents.len() <= 0 )
-		return
-
-	int highestTier = 0
-	int highestTierLootId = -1
-	string highestTierLoot = ""
-
-	array<string> highestTierPanel = contents[contents.len()-1]
-	foreach ( loot in highestTierPanel )
-	{
-		LootData ld = SURVIVAL_Loot_GetLootDataByRef( loot )
-		if ( ( ld.tier > highestTier ) )
-		{
-			highestTier = ld.tier
-			highestTierLoot = loot
-			highestTierLootId = ld.index
-		}
-	}
-
-	array<entity> allPlayers = GetPlayerArray_Alive()
-
-	entity carePackageHiddenEntity = CreateEntity( "prop_dynamic" )
-	carePackageHiddenEntity.RemoveFromAllRealms()
-	carePackageHiddenEntity.AddToOtherEntitysRealms( airdrop )
-	carePackageHiddenEntity.SetValueForModelKey( $"mdl/dev/empty_model.rmdl" )
-	carePackageHiddenEntity.SetOrigin( airdropPos )
-	carePackageHiddenEntity.MakeInvisible()
-	carePackageHiddenEntity.SetScriptName( HIDDEN_CARE_PACKAGE_ENT_NAME )
-	DispatchSpawn( carePackageHiddenEntity )
-
-	entity carePackageVisibleEntity = CreateEntity( "prop_dynamic" )
-	carePackageVisibleEntity.RemoveFromAllRealms()
-	carePackageVisibleEntity.AddToOtherEntitysRealms( airdrop )
-	carePackageVisibleEntity.SetValueForModelKey( $"mdl/dev/empty_model.rmdl" )
-	carePackageVisibleEntity.SetOrigin( airdropPos )
-	carePackageVisibleEntity.MakeInvisible()
-	carePackageVisibleEntity.SetScriptName( REVEALED_CARE_PACKAGE_ENT_NAME )
-	//carePackageVisibleEntity.SetLootIndex( highestTierLootId )
-	DispatchSpawn( carePackageVisibleEntity )
-
-	carePackageHiddenEntity.LinkToEnt( airdrop )
-	carePackageVisibleEntity.LinkToEnt( airdrop )
-
-
-	//Create the Droppod Data on the Server
-	CarePackageData droppod
-	droppod.carePackage 	= airdrop
-	droppod.highestLootItem	= highestTierLoot
-	droppod.revealedEnt = carePackageVisibleEntity
-	droppod.revealEnt = carePackageHiddenEntity
-
-	file.carePackageArray[airdrop] <- droppod
-
-	foreach( team in GetAllValidPlayerTeams() )
-	{
-		//carePackageHiddenEntity.SetTransmitToTeam( team, true )
-	}
-
-	Perks_AddMinimapEntityForPerk( ePerkIndex.CARE_PACKAGE_INSIGHT, airdrop )
-}
-
-void function CarePackageInsight_OnAirdropOpened( entity airdrop, entity player )
-{
-	if( !(airdrop in file.carePackageArray) )
-		return
-
-	//The AirDrop creates its Loot Children when opened - at which point we add a Callback to the loot item to track when it gets taken.
-	CarePackageData carePackageData = file.carePackageArray[airdrop]
-	string highestTierLoot = carePackageData.highestLootItem
-
-	array<entity> childArray = airdrop.GetChildren()
-	foreach ( child in childArray )
-	{
-		if ( !IsValid( child ) || !(child.GetNetworkedClassName() == "prop_survival") )
-			continue
-
-		LootData data = SURVIVAL_Loot_GetLootDataByIndex( child.GetSurvivalInt() )
-		if( data.ref == highestTierLoot )
-		{
-			carePackageData.highestLootEnt = child
-			AddEntityDestroyedCallback( child, OnRemovedAirdropLootItem )
-		}
-	}
-
-	if( IsValid( player ) )
-	{
-		int team = player.GetTeam()
-		if ( false )
-		{
-			array<entity> teamPlayers = GetPlayerArrayOfTeam( team )
-			foreach( teammate in teamPlayers )
-			{
-				if( !IsAlive( teammate ) )
-					continue
-				if( !Perks_DoesPlayerHavePerk( teammate, ePerkIndex.CARE_PACKAGE_INSIGHT ) )
-					continue
-				StatsHook_RevealedCarePackageLooted( teammate )
 
 
 
-			}
-		}
-	}
-}
 
-void function CarePackageInsight_ClearVisibilityOnGameEnd()
-{
-	// hide all the reveal ents on game end so that they don't show up in the winners podium
-	foreach( ent, carePackageData in file.carePackageArray )
-	{
-		array< int > allTeams = GetAllValidPlayerTeams()
-		foreach( int team in allTeams )
-		{
-			//carePackageData.revealEnt.SetTransmitToTeam( team, false )
-			//carePackageData.revealedEnt.SetTransmitToTeam( team, false )
-		}
-	}
-}
 
-void function OnRemovedAirdropLootItem( entity lootItem )
-{
-	foreach( ent, carePackageData in file.carePackageArray )
-	{
-		entity carePackage = carePackageData.carePackage
-		entity bestItem = carePackageData.highestLootEnt
 
-		//If the Pod's Best Item is removed, we kill the WP and update the Map Icon
-		if( bestItem == lootItem )
-		{
-			carePackageData.highestLootEnt = null
-			//carePackageData.revealedEnt.SetAreContentsTaken( true )
-		}
-	}
-}
-#endif // SERVER
 
-#if CLIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function ClientCodeCallback_OnCarePackageInsightDataChanged( entity carePackageInsightEnt )
 {
-	if( false )
+	if( carePackageInsightEnt.GetAreContentsTaken() )
 	{
 		carePackageInsightEnt.Signal( "Perk_CarePackageInsight_ContentsTaken" )
 	}
@@ -566,7 +566,7 @@ void function ClientCodeCallback_OnCarePackageInsightDataChanged( entity carePac
 
 void function OnCarePackageDataCreated( entity ent )
 {
-	// delay this a frame so that perks can be assigned in the event of a cl_fullupdate causing race conditions
+	
 	thread OnCarePackageDataCreated_Delayed( ent )
 }
 
@@ -643,7 +643,7 @@ void function AddCarePackageInsightRui( entity ent, bool revealed )
 
 	if( revealed )
 	{
-		int lootIndex = 0//ent.GetLootIndex()
+		int lootIndex = ent.GetLootIndex()
 		LootData ld = SURVIVAL_Loot_GetLootDataByIndex( lootIndex )
 		lootIcon = ld.hudIcon
 		lootTier = ld.tier
@@ -683,8 +683,8 @@ void function AddCarePackageInsightRui( entity ent, bool revealed )
 	float miniMapScale	= 1.0
 	float fullMapScale 	= 12
 
-	var minimapRui = Minimap_AddCarePackageInsightIconAtPosition( pos, <0,90,0>, lootIcon, miniMapScale, iconColor ) //0.9
-	var fullmapRui = FullMap_AddCarePackageInsightIconAtPos( pos, <0,0,0>, lootIcon, fullMapScale, iconColor ) //6.0
+	var minimapRui = Minimap_AddCarePackageInsightIconAtPosition( pos, <0,90,0>, lootIcon, miniMapScale, iconColor ) 
+	var fullmapRui = FullMap_AddCarePackageInsightIconAtPos( pos, <0,0,0>, lootIcon, fullMapScale, iconColor ) 
 
 	if( isWeapon )
 	{
@@ -713,7 +713,7 @@ void function AddCarePackageInsightRui( entity ent, bool revealed )
 	bool addMinimapEnt = true
 	if( revealed )
 	{
-		if( false )
+		if( ent.GetAreContentsTaken() )
 		{
 			RuiSetBool( fullmapRui, "contentsTaken", true )
 			RuiSetBool( minimapRui, "contentsTaken", true )
@@ -841,7 +841,7 @@ void function UpdateCarePackageLootAtReveal( entity player )
 			}
 
 			vector landPos = ent.GetOrigin()
-			// allow the player to scan through walls when they are close to the care package drop position or have already started scanning
+			
 			float ignoreLosDistance = Perk_CarePackageInsight_IgnoreLosRevealDistance()
 			bool ignoreLosCheck = data.revealProgress > 0 || ( DistanceSqr( landPos, eyePosition ) < ignoreLosDistance * ignoreLosDistance && dot > revealDegrees )
 
@@ -1051,7 +1051,7 @@ void function Perk_CarePackageInsight_UpdateLookatRevealProgressRui( var rui, en
 		entity carePackageEnt = revealEnt.GetLinkEnt()
 		if( IsValid( carePackageEnt ) )
 		{
-			int lootIndex = 0//revealEnt.GetLootIndex()
+			int lootIndex = revealEnt.GetLootIndex()
 			LootData ld = SURVIVAL_Loot_GetLootDataByIndex( lootIndex )
 			if( ld.lootType == eLootType.MAINWEAPON )
 			{
@@ -1066,7 +1066,7 @@ void function Perk_CarePackageInsight_UpdateLookatRevealProgressRui( var rui, en
 			RuiSetBool( rui, "isVisibleOverride", true )
 			RuiSetBool( rui, "isRevealedCarePackageInsight", true )
 
-			// highlight the icon if we are already looking at it so that it doesn't pop for a single frame
+			
 			entity player = GetLocalViewPlayer()
 
 			vector viewVector = player.GetViewVector()
@@ -1164,27 +1164,28 @@ void function ServerToClient_NotifyPathfinderCooldownReduction()
 	}
 }
 
-#endif // CLIENT
-
-#if SERVER
-#if DEV
-void function DeleteCarepackagePerkLinks()
-{
-	foreach( ent, carePackageData in file.carePackageArray )
-	{
-		if ( !IsValid( ent ) )
-			continue
-
-		array< entity > linkParents = ent.GetLinkParentArray()
-		for ( int i = linkParents.len() - 1; i >= 0; i-- )
-		{
-			linkParents[ i ].Destroy()
-		}
 
 
-	}
 
-	file.carePackageArray.clear()
-}
-#endif
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

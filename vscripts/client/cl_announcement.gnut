@@ -1,12 +1,5 @@
 globalize_all_functions
 
-struct
-{
-	var lastAnnouncementRui
-
-	bool announcementsEnabled = true
-} file
-
 global const int ANNOUNCEMENT_STYLE_BIG = 0
 global const int ANNOUNCEMENT_STYLE_QUICK = 1
 global const int ANNOUNCEMENT_STYLE_PLAYER_LEVEL = 2
@@ -22,12 +15,31 @@ global const int ANNOUNCEMENT_STYLE_GENERIC_WARNING = 12
 global const int ANNOUNCEMENT_STYLE_ROUND_WON = 13
 global const int ANNOUNCEMENT_STYLE_RATING_LEADER = 14
 global const int ANNOUNCEMENT_STYLE_TDM_ROUND_WON = 15
-global const int ANNOUNCEMENT_STYLE_WAVE = 16
-global const int ANNOUNCEMENT_STYLE_MILESTONE_SMALL = 17
-global const int ANNOUNCEMENT_STYLE_LEVEL_UP = 19
-global const int ANNOUNCEMENT_STYLE_EVO_STATIONS_SPAWNED = 20
 
-const float ANNOUNCEMENT_DURATION =  16.0
+	global const int ANNOUNCEMENT_STYLE_STRIKE = 16
+	global const int ANNOUNCEMENT_STYLE_MILESTONE_SMALL = 17
+	global const int ANNOUNCEMENT_STYLE_FINAL_RING_NO_RESPAWNS= 18
+
+
+
+	global const int ANNOUNCEMENT_STYLE_LEVEL_UP = 19
+	global const int ANNOUNCEMENT_STYLE_EVO_STATIONS_SPAWNED = 20
+
+
+
+	global const int ANNOUNCEMENT_STYLE_HUNT = 21
+
+
+
+	global const int ANNOUNCEMENT_STYLE_REMAINING_RESPAWNS = 22
+
+
+global const int ANNOUNCEMENT_POSITION_ZONE_NONE = 0
+global const int ANNOUNCEMENT_POSITION_ZONE_TOP_CENTER = 1
+global const int ANNOUNCEMENT_POSITION_ZONE_CENTER = 2
+global const int ANNOUNCEMENT_POSITION_ZONE_TAKEOVER = 3
+
+global const float ANNOUNCEMENT_DURATION =  16.0
 const ASSET_ANNOUNCEMENT_ICON = $"rui/hud/gametype_icons/ltm/ltm_logo"
 const int ANNOUNCEMENT_STYLE_DEFAULT = ANNOUNCEMENT_STYLE_BIG
 
@@ -47,6 +59,7 @@ global struct AnnouncementData
 	string        messageText = "#EMPTY_STRING"
 	string        subText = "#EMPTY_STRING"
 	string        headerText = ""
+	string        additionalText = "" 
 	array<string> leftText = ["", "", "", "", "", ""]
 	array<string> rightText = ["", "", "", "", "", ""]
 	vector        titleColor = <0.5, 0.5, 0.5>
@@ -69,20 +82,36 @@ global struct AnnouncementData
 	bool          useColorOnAnnouncementText = false
 	bool          useColorOnSubtext = false
 	vector        altStyle3OverrideColor = <-1, -1, -1>
-
+	
+	
+	
 	LevelUpData & levelUpData
 }
 
-// stub
-bool function IsValentinesS15()
+struct
 {
-	return false
-}
+	var lastAnnouncementRui = null
+
+	bool announcementsEnabled = true
+
+
+		var functionref( AnnouncementData ) onSetupAnnouncement_RemainingRespawns = null
+
+} file
 
 void function CLAnnouncement_Init()
 {
 	RegisterSignal( "AnnoucementPurge" )
 	RegisterSignal( "UIToClient_Notification" )
+
+	
+	ClearAnnouncements()
+
+	
+	
+	
+	
+	
 }
 
 
@@ -129,6 +158,10 @@ void function Announcement_SetHeaderText( AnnouncementData announcement, string 
 	announcement.headerText = headerText
 }
 
+void function Announcement_SetAdditionalText( AnnouncementData announcement, string additionalText )
+{
+	announcement.additionalText = additionalText
+}
 
 void function Announcement_SetStyle( AnnouncementData announcement, int style )
 {
@@ -171,6 +204,7 @@ void function Announcement_SetSoundAlias( AnnouncementData announcement, string 
 
 void function Announcement_SetOptionalTextArgsArray( AnnouncementData announcement, array<string> args )
 {
+	
 	for ( int i = 0; i < announcement.optionalTextArgs.len(); i++ )
 		announcement.optionalTextArgs[ i ] = ""
 
@@ -181,6 +215,7 @@ void function Announcement_SetOptionalTextArgsArray( AnnouncementData announceme
 
 void function Announcement_SetOptionalSubTextArgsArray( AnnouncementData announcement, array<string> args )
 {
+	
 	for ( int i = 0; i < announcement.optionalSubTextArgs.len(); i++ )
 		announcement.optionalSubTextArgs[ i ] = ""
 
@@ -376,10 +411,12 @@ bool function InitializeAnnouncement_ShouldDisplayNow( AnnouncementData announce
 
 	foreach ( AnnouncementData queueAnnouncement in clGlobal.announcementQueue )
 	{
+		
 		if ( announcement.messageText == queueAnnouncement.messageText )
 			return false
 	}
 
+	
 	clGlobal.announcementQueue.append( announcement )
 
 	return !clGlobal.isAnnouncementActive
@@ -406,11 +443,13 @@ void function AnnouncementFromClass( entity player, AnnouncementData announcemen
 	if( !IsValid( player ) || !IsValid( clGlobal.levelEnt ) )
 		return
 
+	
 	if ( player != clientPlayer && !(IsSpectator( clientPlayer ) && viewPlayer ==  player) )
 		return
 
 	foreach ( AnnouncementData queueAnnouncement in clGlobal.announcementQueue )
 	{
+		
 		if ( announcement.messageText == queueAnnouncement.messageText )
 			return
 	}
@@ -484,6 +523,7 @@ void function AnnouncementMessage_DisplayOnHud( AnnouncementData announcement )
 	entity player = GetLocalClientPlayer()
 	clGlobal.levelEnt.EndSignal( "AnnoucementPurge" )
 
+	
 	if ( file.lastAnnouncementRui != null )
 		RuiDestroyIfAlive( file.lastAnnouncementRui )
 
@@ -494,6 +534,50 @@ void function AnnouncementMessage_DisplayOnHud( AnnouncementData announcement )
 	bool customAnnouncement = false
 	switch ( announcement.announcementStyle )
 	{
+
+		case ANNOUNCEMENT_STYLE_HUNT:
+			rui = RuiCreate( $"ui/announcement_hunt.rpak", clGlobal.topoFullScreen, RUI_DRAW_POSTEFFECTS, RUI_SORT_SCREENFADE + 1 )
+
+			EmitSoundOnEntity( player, announcement.soundAlias )
+			break
+
+
+
+		case ANNOUNCEMENT_STYLE_STRIKE:
+			rui = RuiCreate( $"ui/announcement_strike.rpak", clGlobal.topoFullScreen, RUI_DRAW_POSTEFFECTS, RUI_SORT_SCREENFADE + 1 )
+
+			RuiSetInt( rui, "stikeTotal", Strikeout_GetLocalClientPlayerSquadStrikes() )
+
+			EmitSoundOnEntity( player, announcement.soundAlias )
+			break
+
+
+
+		case ANNOUNCEMENT_STYLE_EVO_STATIONS_SPAWNED:
+			customAnnouncement = true
+			rui = RuiCreate( $"ui/hud_evo_station_activated.rpak", clGlobal.topoFullScreen, RUI_DRAW_POSTEFFECTS, FULLMAP_Z_BASE - 1 )
+			RuiSetFloat( rui, "startTime", Time() )
+			RuiSetFloat( rui, "duration", announcement.duration )
+			EmitSoundOnEntity( player, announcement.soundAlias )
+			break
+
+		case ANNOUNCEMENT_STYLE_LEVEL_UP:
+			customAnnouncement = true
+			rui = RuiCreate( $"ui/level_up_announcement.rpak", clGlobal.topoFullScreen, RUI_DRAW_POSTEFFECTS, FULLMAP_Z_BASE - 1 )
+			RuiSetFloat( rui, "startTime", Time() )
+			RuiSetFloat( rui, "duration", announcement.duration )
+			RuiSetString( rui, "levelUpTxt", optionalTextArgs[0] )
+
+			int currentLevel = UpgradeCore_GetPlayerLevel( GetLocalViewPlayer() )
+			vector tierColor = GetKeyColor( COLORID_HUD_LOOT_TIER0, currentLevel ) * 1.4
+			vector nextTierColor = GetKeyColor( COLORID_HUD_LOOT_TIER0, currentLevel == 3 ? currentLevel + 2 : currentLevel + 1 ) * 1.4
+
+			RuiSetFloat3( rui, "tierColor", SrgbToLinear( tierColor / 255.0 ) )
+			RuiSetFloat3( rui, "nextTierColor", SrgbToLinear( nextTierColor / 255.0 ) )
+			EmitSoundOnEntity( player, announcement.soundAlias )
+			break
+
+
 		case ANNOUNCEMENT_STYLE_SWEEP:
 			if ( announcement.drawOverScreenFade )
 				rui = RuiCreate( $"ui/announcement_center_sweep.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, RUI_SORT_SCREENFADE + 1 )
@@ -506,11 +590,14 @@ void function AnnouncementMessage_DisplayOnHud( AnnouncementData announcement )
 				EmitSoundOnEntity( player, announcement.soundAlias )
 			RuiSetFloat2( rui, "iconAspect", announcement.iconAspect )
 
+			
 			RuiSetImage( rui, "leftIconImage", announcement.leftIcon )
 			RuiSetImage( rui, "rightIconImage", announcement.rightIcon )
 
+			
 			RuiSetInt( rui, "verticalOffset", announcement.verticalOffset )
 
+			
 			RuiSetBool( rui, "useColorOnAnnouncementText", announcement.useColorOnAnnouncementText )
 			RuiSetBool( rui, "useColorOnSubtext", announcement.useColorOnSubtext )
 
@@ -540,6 +627,14 @@ void function AnnouncementMessage_DisplayOnHud( AnnouncementData announcement )
 				RuiSetImage( rui, "iconImage", announcement.icon )
 			break
 
+
+		case ANNOUNCEMENT_STYLE_MILESTONE_SMALL:
+			rui = RuiCreate( $"ui/announcement_milestone_small.rpak", clGlobal.topoFullScreen, RUI_DRAW_POSTEFFECTS, RUI_SORT_SCREENFADE + 1 )
+			if ( announcement.soundAlias != "" )
+				EmitSoundOnEntity( player, announcement.soundAlias )
+			break
+
+
 		case ANNOUNCEMENT_STYLE_OBJECTIVE:
 			if ( announcement.drawOverScreenFade )
 				rui = RuiCreate( $"ui/announcement_objective.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, RUI_SORT_SCREENFADE + 1 )
@@ -555,9 +650,10 @@ void function AnnouncementMessage_DisplayOnHud( AnnouncementData announcement )
 				EmitSoundOnEntity( player, announcement.soundAlias )
 			break
 
-		case ANNOUNCEMENT_STYLE_CIRCLE_WARNING:
+
+		case ANNOUNCEMENT_STYLE_FINAL_RING_NO_RESPAWNS:
 			customAnnouncement = true
-			rui = RuiCreate( $"ui/sur_circle_warning_v2.rpak", clGlobal.topoFullScreen, RUI_DRAW_POSTEFFECTS, 0 )
+			rui = RuiCreate( $"ui/announcement_strikeout_norespawns.rpak", clGlobal.topoFullScreen, RUI_DRAW_POSTEFFECTS, 0 )
 
 			RuiSetGameTime( rui, "startTime", Time() )
 
@@ -576,12 +672,37 @@ void function AnnouncementMessage_DisplayOnHud( AnnouncementData announcement )
 			EmitSoundOnEntity( player, announcement.soundAlias )
 			break
 
+
+		case ANNOUNCEMENT_STYLE_CIRCLE_WARNING:
+			customAnnouncement = true
+			rui = RuiCreate( $"ui/sur_circle_warning_v2.rpak", clGlobal.topoFullScreen, RUI_DRAW_POSTEFFECTS, 0 )
+
+			RuiSetGameTime( rui, "startTime", Time() )
+
+			RuiSetFloat( rui, "duration", announcement.duration )
+			RuiSetFloat( rui, "announceScale", 2.0 )
+
+			RuiSetString( rui, "messageText", Localize( announcement.messageText, Localize( optionalTextArgs[0] ), Localize( optionalTextArgs[1] ), Localize( optionalTextArgs[2] ), Localize( optionalTextArgs[3] ), Localize( optionalTextArgs[4] ) ) )
+			RuiSetString( rui, "messageSubText", Localize( announcement.subText, Localize( optionalSubTextArgs[0] ), Localize( optionalSubTextArgs[1] ), Localize( optionalSubTextArgs[2] ), Localize( optionalSubTextArgs[3] ), Localize( optionalSubTextArgs[4] ) ) )
+			RuiSetString( rui, "messageHeaderText", Localize( announcement.headerText ) )
+
+			RuiSetString( rui, "additionalMessage", Localize( announcement.additionalText ) )
+
+			RuiSetGameTime( rui, "displayEndTime", announcement.displayEndTime )
+
+			RuiSetInt( rui, "verticalOffset", announcement.verticalOffset )
+			RuiSetFloat3( rui, "titleColor", announcement.titleColor )
+
+			EmitSoundOnEntity( player, announcement.soundAlias )
+			break
+
 		case ANNOUNCEMENT_STYLE_KILL_LEADER:
 			customAnnouncement = true
 			rui = RuiCreate( $"ui/kill_leader_noti.rpak", clGlobal.topoFullScreen, RUI_DRAW_POSTEFFECTS, 0 )
-			if (IsValentinesS15())
+			if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_VALENTINES_S15 ) )
 				rui = RuiCreate( $"ui/kill_leader_datenight_noti.rpak", clGlobal.topoFullScreen, RUI_DRAW_POSTEFFECTS, 0 )
 			RuiSetFloat( rui, "startTime", Time() )
+			RuiSetFloat( rui, "duration", announcement.duration )
 			RuiSetString( rui, "messageText", optionalTextArgs[0] )
 			RuiSetString( rui, "messageSubText", optionalTextArgs[1] )
 			EmitSoundOnEntity( player, announcement.soundAlias )
@@ -591,6 +712,7 @@ void function AnnouncementMessage_DisplayOnHud( AnnouncementData announcement )
 			customAnnouncement = true
 			rui = RuiCreate( $"ui/rating_leader_noti.rpak", clGlobal.topoFullScreen, RUI_DRAW_POSTEFFECTS, FULLMAP_Z_BASE - 1 )
 			RuiSetFloat( rui, "startTime", Time() )
+			RuiSetFloat( rui, "duration", announcement.duration )
 			RuiSetString( rui, "messageText", optionalTextArgs[0] )
 			RuiSetString( rui, "messageSubText", optionalTextArgs[1] )
 			EmitSoundOnEntity( player, announcement.soundAlias )
@@ -629,6 +751,7 @@ void function AnnouncementMessage_DisplayOnHud( AnnouncementData announcement )
 			customAnnouncement = true
 			rui = RuiCreate( $"ui/arenas_round_won.rpak", clGlobal.topoFullScreen, RUI_DRAW_POSTEFFECTS, 0 )
 			RuiSetFloat( rui, "startTime", Time() )
+			RuiSetFloat( rui, "duration", announcement.duration )
 			RuiSetString( rui, "messageText", Localize( announcement.messageText ) )
 			RuiSetString( rui, "subText", Localize( announcement.subText ) )
 
@@ -639,10 +762,19 @@ void function AnnouncementMessage_DisplayOnHud( AnnouncementData announcement )
 			rui = RuiCreate( $"ui/tdm_roundwon_noti.rpak", clGlobal.topoFullScreen, RUI_DRAW_POSTEFFECTS, 0 )
 
 			RuiSetFloat( rui, "startTime", Time() )
+			RuiSetFloat( rui, "duration", announcement.duration )
 			RuiSetString( rui, "messageText", Localize( announcement.messageText ) )
 
 			EmitSoundOnEntity( player, announcement.soundAlias )
 			break
+
+
+		case ANNOUNCEMENT_STYLE_REMAINING_RESPAWNS:
+			if ( file.onSetupAnnouncement_RemainingRespawns != null )
+				rui = file.onSetupAnnouncement_RemainingRespawns( announcement )
+
+			break
+
 
 		default:
 			Assert( false, "Unknown announcement style: " + announcement.announcementStyle )
@@ -659,6 +791,9 @@ void function AnnouncementMessage_DisplayOnHud( AnnouncementData announcement )
 		RuiSetImage( rui, "iconImage", announcement.icon )
 	}
 
+	if ( UpgradeSelectionMenu_IsActive() )
+		RuiSetVisible(rui, false)
+
 	file.lastAnnouncementRui = rui
 
 	wait announcement.duration
@@ -672,15 +807,66 @@ void function ClearAnnouncements()
 	file.lastAnnouncementRui = null
 	clGlobal.isAnnouncementActive = false
 	ClearAnnouncementIsActive()
-	clGlobal.levelEnt.Signal( "AnnoucementPurge" )
+	if ( IsValid( clGlobal.levelEnt ) )
+		clGlobal.levelEnt.Signal( "AnnoucementPurge" )
 }
 
+int function Announcement_GetActivePositionZone()
+{
+	if( !clGlobal.isAnnouncementActive )
+		return ANNOUNCEMENT_POSITION_ZONE_NONE
+
+	switch ( clGlobal.activeAnnouncement.announcementStyle )
+	{
+		case ANNOUNCEMENT_STYLE_QUICK:
+			return ANNOUNCEMENT_POSITION_ZONE_CENTER
+			break
+
+		case ANNOUNCEMENT_STYLE_SWEEP:
+		case ANNOUNCEMENT_STYLE_BIG:
+		case ANNOUNCEMENT_STYLE_OBJECTIVE:
+		case ANNOUNCEMENT_STYLE_RESULTS:
+		case ANNOUNCEMENT_STYLE_CIRCLE_WARNING:
+
+		case ANNOUNCEMENT_STYLE_FINAL_RING_NO_RESPAWNS:
+		case ANNOUNCEMENT_STYLE_STRIKE:
+		case ANNOUNCEMENT_STYLE_MILESTONE_SMALL:
+
+		case ANNOUNCEMENT_STYLE_KILL_LEADER:
+		case ANNOUNCEMENT_STYLE_RATING_LEADER:
+		case ANNOUNCEMENT_STYLE_GOT_TREASURE_PACK:
+		case ANNOUNCEMENT_STYLE_GENERIC_WARNING:
+
+		case ANNOUNCEMENT_STYLE_REMAINING_RESPAWNS:
+
+			return ANNOUNCEMENT_POSITION_ZONE_TOP_CENTER
+			break
+
+		case ANNOUNCEMENT_STYLE_ROUND_WON:
+		case ANNOUNCEMENT_STYLE_TDM_ROUND_WON:
+			return ANNOUNCEMENT_POSITION_ZONE_TAKEOVER
+			break
+
+		default:
+			return ANNOUNCEMENT_POSITION_ZONE_NONE
+			break
+	}
+
+	unreachable
+}
 
 void function Announcements_SetEnabled( bool state )
 {
 	file.announcementsEnabled = state
 }
 
+void function Announcements_SetVisible( bool state )
+{
+	if ( file.lastAnnouncementRui == null || clGlobal.isAnnouncementActive == false )
+		return
+
+	RuiSetVisible( file.lastAnnouncementRui, state )
+}
 
 void function UIToClient_Notification( string titleText, string messageText )
 {
@@ -710,17 +896,29 @@ void function ServertoClient_LTM_AnnouncementSplash()
 	entity player = GetLocalViewPlayer()
 	if ( !IsValid( player ) )
 		return
-	string playlistName = GetCurrentPlaylistName()
-	asset emblemImage = ASSET_ANNOUNCEMENT_ICON
+	string playlistName           = GetCurrentPlaylistName()
+	asset emblemImage             = ASSET_ANNOUNCEMENT_ICON
 	float duration                = ANNOUNCEMENT_DURATION
 	string messageText            = GetCurrentPlaylistVarString( "name", "#GAMEMODE_ANNOUNCE_NONE" )
+
+		if ( GameModeVariant_IsActiveForPlaylist( playlistName, eGameModeVariants.SURVIVAL_RANKED ) && RankedRumble_IsLatestGameRankedRumble( player ) )
+			messageText = Localize("#RANKED_RUMBLE")
+
 	string subText                = GetCurrentPlaylistVarString( "announce_desc", "#GAMEMODE_ANNOUNCE_SUBTEXT_NONE" )
+	int subTextCount              = GetCurrentPlaylistVarInt( "announce_count", 1 )
 	vector titleColor             = <0, 0, 0>
 	asset icon                    = $""
 	asset leftIcon                = GetCurrentPlaylistVarAsset( "announce_emblem_left", emblemImage )
-	asset rightIcon               = GetCurrentPlaylistVarAsset( "announce_emblem_right", emblemImage)
+	asset rightIcon               = GetCurrentPlaylistVarAsset( "announce_emblem_right", emblemImage )
 	string soundAlias             = SFX_HUD_ANNOUNCE_LTM
 	int style                     = ANNOUNCEMENT_STYLE_SWEEP
+
+	if ( subTextCount > 1 )
+	{
+		int textSelection = RandomIntRange( 0, subTextCount )
+		subText = subText + "_" + textSelection
+	}
+
 	AnnouncementData announcement = Announcement_Create( messageText )
 	announcement.drawOverScreenFade = true
 	Announcement_SetSubText( announcement, subText )
@@ -736,3 +934,11 @@ void function ServertoClient_LTM_AnnouncementSplash()
 	AnnouncementFromClass( player, announcement )
 
 }
+
+
+void function Announcements_SetOnSetupAnnouncement_RemainingRespawns( var functionref( AnnouncementData announcement ) setupAnnouncementCallback )
+{
+	file.onSetupAnnouncement_RemainingRespawns = setupAnnouncementCallback
+}
+
+ 

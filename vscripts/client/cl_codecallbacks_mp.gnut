@@ -196,7 +196,7 @@ void function ClientCodeCallback_OnEntityCreation( entity ent )
 	if ( ent.IsPlayer() )
 		ShEHI_OnPlayerCreated( ent )
 
-	string className = expect string( ent.GetNetworkedClassName() )
+	string className = PLAYER_CLASSNAME//expect string( ent.GetNetworkedClassName() )
 	if ( IsLobby() )
 	{
 		if ( className == PLAYER_WAYPOINT_CLASSNAME || className == PLAYER_CLASSNAME ) 
@@ -268,7 +268,7 @@ void function ClientCodeCallback_OnDeath( entity ent )
 {
 	
 
-	string className = expect string( ent.GetNetworkedClassName() )
+	string className = PLAYER_CLASSNAME//expect string( ent.GetNetworkedClassName() )
 
 	ent.Signal( "OnDeath" )
 
@@ -643,5 +643,13 @@ void function ClientCodeCallback_UIScriptResetComplete()
 
 void function ClientCodeCallback_PerformSelfReport()
 {
-	//ReportPlayerCustomerService(hardwareID, uid, eaid, "#REPORT_PLAYER_REASON_OFFENSIVE" )
+
+	int hardwareID = GetHardwareFromName(GetUnspoofedPlayerHardware())
+	string uid  = GetPlayerUID()
+	string name = GetPlayerName()
+	string eaid = EADP_GetEadpIdFromFirstPartyID(uid, hardwareID)
+
+	ReportPlayerCustomerService(hardwareID, uid, eaid, "#REPORT_PLAYER_REASON_OFFENSIVE" )
 }
+
+ 

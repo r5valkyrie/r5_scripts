@@ -151,24 +151,23 @@ void function CreateScoreRUI()
 {
 	var rui = CreatePermanentCockpitPostFXRui( GetGameStateAsset(), MINIMAP_Z_BASE - 1 )
 
-	RuiTrackFloat( rui, "jumpEndTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndexSafe( "PlaneDoorsOpenTime" ) )
+	RuiTrackFloat( rui, "jumpEndTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndex( "PlaneDoorsOpenTime" ) )
 
 	RuiTrackBool( rui, "netIssuePacketLoss", null, RUI_TRACK_NET_ISSUE_PACKETLOSS )
 	RuiTrackBool( rui, "netIssueCongestion", null, RUI_TRACK_NET_ISSUE_CONGESTION )
 	RuiTrackBool( rui, "netIssueLatency", null, RUI_TRACK_NET_ISSUE_LATENCY )
 	RuiTrackBool( rui, "netIssuePredictionError", null, RUI_TRACK_NET_ISSUE_PREDICTION_ERROR )
-	//RuiTrackBool( rui, "netIssueLagCompFail", null, RUI_TRACK_NET_ISSUE_LAG_COMP_FAIL )
-	//RuiTrackBool( rui, "netIssueUserCmdDelay", null, RUI_TRACK_NET_ISSUE_USERCMD_DELAY )
+	RuiTrackBool( rui, "netIssueLagCompFail", null, RUI_TRACK_NET_ISSUE_LAG_COMP_FAIL )
+	RuiTrackBool( rui, "netIssueUserCmdDelay", null, RUI_TRACK_NET_ISSUE_USERCMD_DELAY )
 
-	//RuiTrackFloat( rui, "hdTextureProgress", null, RUI_TRACK_GAME_FULLY_INSTALLED_PROGRESS )
-	//RuiTrackBool( rui, "hdTextureNeedsReboot", null, RUI_TRACK_GAME_HAS_NON_FULLY_INSTALLED_ASSETS_LOADED )
+	RuiTrackFloat( rui, "hdTextureProgress", null, RUI_TRACK_GAME_FULLY_INSTALLED_PROGRESS )
+	RuiTrackBool( rui, "hdTextureNeedsReboot", null, RUI_TRACK_GAME_HAS_NON_FULLY_INSTALLED_ASSETS_LOADED )
 
-	//RuiTrackBool( rui, "audioIssueStarvation", null, RUI_TRACK_AUDIO_ISSUE_STARVATION )
-	//RuiTrackBool( rui, "audioIssueData", null, RUI_TRACK_AUDIO_ISSUE_DATA )
-	//RuiTrackBool( rui, "audioIssueLimits", null, RUI_TRACK_AUDIO_ISSUE_LIMITS )
-	//RuiTrackBool( rui, "audioIssueMarker", null, RUI_TRACK_AUDIO_ISSUE_MARKER_INSERTED )
+	RuiTrackBool( rui, "audioIssueStarvation", null, RUI_TRACK_AUDIO_ISSUE_STARVATION )
+	RuiTrackBool( rui, "audioIssueData", null, RUI_TRACK_AUDIO_ISSUE_DATA )
+	RuiTrackBool( rui, "audioIssueLimits", null, RUI_TRACK_AUDIO_ISSUE_LIMITS )
+	RuiTrackBool( rui, "audioIssueMarker", null, RUI_TRACK_AUDIO_ISSUE_MARKER_INSERTED )
 
-	Warning("Missing Net tracks for Score RUI, keep reminding this to cafe - kral")
 
 	
 	if ( file.isNetGraphEnabled == true )
@@ -299,8 +298,8 @@ void function UpdateGamestateRuiTracking( entity player )
 
 void function UpdateCommonScoreRuiTracking( var rui, entity player )
 {
-	RuiTrackInt( rui, "killCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "kills" ) )
-	RuiTrackInt( rui, "damageDealt", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "damageDealt" ) )
+	RuiTrackInt( rui, "killCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "kills" ) )
+	RuiTrackInt( rui, "damageDealt", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "damageDealt" ) )
 
 	bool isValidMode = true
 
@@ -309,12 +308,12 @@ void function UpdateCommonScoreRuiTracking( var rui, entity player )
 
 	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) && isValidMode )
 	{
-		RuiTrackInt( rui, "participationCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "kill_participation" ) )
+		RuiTrackInt( rui, "participationCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "kill_participation" ) )
 	}
 
 	
-	RuiTrackBool( rui, "hasDeathFieldImmunity", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndexSafe( "hasDeathFieldImmunity" ) )
-	RuiTrackInt( rui, "assistCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "assists" ) )
+	RuiTrackBool( rui, "hasDeathFieldImmunity", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "hasDeathFieldImmunity" ) )
+	RuiTrackInt( rui, "assistCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "assists" ) )
 
 
 		RuiTrackFloat( rui, "cameraViewFrac", player, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.camera_view )
@@ -324,7 +323,7 @@ void function UpdateCommonScoreRuiTracking( var rui, entity player )
 		if ( Crafting_IsEnabled() )
 		{
 			if ( !Crafting_IsDispenserCraftingEnabled() )
-				RuiTrackInt( ClGameState_GetRui(), "craftingMaterials", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "craftingMaterials" ) )
+				RuiTrackInt( ClGameState_GetRui(), "craftingMaterials", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "craftingMaterials" ) )
 		}
 
 }
@@ -680,15 +679,12 @@ void function ClGameState_SetResolutionCleanupFunc( void functionref() func )
 
 void function ClGameState_Changed( entity playerEnt, int newVal )
 {
-	printw( "ClGameState_Changed" )
-	
 	Assert( newVal >= -1 )
 	Assert( newVal < eGameState._count_ )
 
 	if ( newVal == -1 )
 		return
 
-	printw( "ClGameState_Changed passed" )
 	string oldPrintVal = file.cachedGameState == -1 ? "-1" : GetEnumString( "eGameState", file.cachedGameState )
 	string newPrintVal = newVal == -1 ? "-1" : GetEnumString( "eGameState", newVal )
 	printf( "ClGameState_Changed(): cachedGameState = %s, newVal = %s", oldPrintVal, newPrintVal )
@@ -802,7 +798,7 @@ void function ClGameState_Changed( entity playerEnt, int newVal )
 
 		case eGameState.Resolution:
 			SetCrosshairPriorityState( crosshairPriorityLevel.POSTMATCH, CROSSHAIR_STATE_HIDE_ALL )
-			//ResetReconnectParametersAsync()
+			ResetReconnectParametersAsync()
 			
 			if ( file.resolutionCompletedCleanupFunc != null )
 			{
@@ -912,7 +908,7 @@ void function UpdateKillLeaderOnGameStateRui( var rui )
 	if ( rui == null )
 		return
 
-	entity killLeader = GetGlobalNetEntSafe( "killLeader" )
+	entity killLeader = GetGlobalNetEnt( "killLeader" )
 
 	RuiSetBool( rui, "isPlayerKillLeader", GetLocalViewPlayer() == killLeader )
 }
@@ -1096,12 +1092,12 @@ var function CreateNestedNetGraph( var rui )
 	RuiTrackInt( nestedGraphRui, "netGraphDataBlockSize", null, RUI_TRACK_NETGRAPH_DATABLOCK_SIZE )
 	RuiTrackInt( nestedGraphRui, "netGraphDataBlockPercentDone", null, RUI_TRACK_NETGRAPH_DATABLOCK_PERCENT_DONE )
 
-#if DEVELOPER
+#if DEV
 		RuiSetBool( nestedGraphRui, "isDEV", true )
 #endif
 
-	RuiSetString( nestedGraphRui, "netGraphServerID", "GetServerDebugId()" )
-	RuiSetBool( nestedGraphRui, "isUsingAntiDDoS", true )
+	RuiSetString( nestedGraphRui, "netGraphServerID", GetServerDebugId() )
+	RuiSetBool( nestedGraphRui, "isUsingAntiDDoS", IsUsingRelayTransport() )
 
 	
 	
@@ -1156,4 +1152,4 @@ void function ClGameState_SetHasScreenBorder( bool value )
 	{
 		RuiSetBool( rui, "hasScreenBorder", value )
 	}
-}
+} 
