@@ -958,15 +958,15 @@ void function UIFullyConnectedInitialization()
 	AutogenStats_Init()
 	//Sh_Kepler_Init()
 
-	//ShRewardSetTracker_LevelInit()
+	ShRewardSetTracker_LevelInit()
 
 	ShItems_LevelInit_Finish()
 	ShItemPerPlayerState_LevelInit()
 	UserInfoPanels_LevelInit()
 	ShLoadouts_LevelInit_Finish()
 	UiNewnessQueries_LevelInit()
-	//ShStatsInternals_LevelInit()
-	//ShStats_LevelInit()
+	ShStatsInternals_LevelInit()
+	ShStats_LevelInit()
 	Sh_RankedTrials_Init() 
 	ShChallenges_LevelInit_PostStats()
 
@@ -1004,7 +1004,7 @@ void function UIFullyConnectedInitialization()
 		Gifting_LevelInit()
 
 
-	//Sh_Mastery_Init()
+	Sh_Mastery_Init()
 }
 
 void function UICodeCallback_FullyConnected( string levelname )

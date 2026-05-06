@@ -2057,7 +2057,7 @@ int function GetLoadoutSlotContentsIndexFromPersistence( EHI playerEHI, LoadoutE
 
 
 		entity player         = FromEHI( playerEHI )
-		int slotContentsIndex = -1//expect int(player.GetPersistentVar( LOADOUT_PDEF_PREFIX + entry.id ))
+		int slotContentsIndex = expect int(player.GetPersistentVar( LOADOUT_PDEF_PREFIX + entry.id ))
 
 
 

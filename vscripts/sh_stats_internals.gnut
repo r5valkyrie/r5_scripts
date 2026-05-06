@@ -399,7 +399,7 @@ int function GetStat_Int( entity player, StatEntry entry, int when = eStatGetWhe
 
 
 
-	return 0
+
 
 
 
@@ -1077,7 +1077,7 @@ StatTemplate function InternalRegisterStatCommon( StatEnumStruct ornull parentSE
 			if ( !DEV_ShouldIgnorePersistence() )
 #endif
 			{
-			//	template.rootEntry.persistenceFullKey_Current_Handle = PersistenceGetVarHandle( template.rootEntry.persistenceFullKey_Current )
+				template.rootEntry.persistenceFullKey_Current_Handle = PersistenceGetVarHandle( template.rootEntry.persistenceFullKey_Current )
 			}
 		}
 
@@ -1168,7 +1168,7 @@ StatTemplateEnumKeyResolver function BuildStatTemplateEnumKeyResolversRecursive(
 				if ( !DEV_ShouldIgnorePersistence() )
 #endif
 				{
-				//	entry.persistenceFullKey_Current_Handle = PersistenceGetVarHandle( entry.persistenceFullKey_Current )
+					entry.persistenceFullKey_Current_Handle = PersistenceGetVarHandle( entry.persistenceFullKey_Current )
 				}
 			}
 

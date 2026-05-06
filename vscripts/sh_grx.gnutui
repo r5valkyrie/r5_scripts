@@ -1262,7 +1262,7 @@ bool function GRX_IsInventoryReady( entity player = null )
 
 		player = GetLocalClientPlayer()
 
-	return GetPlayerGRXScriptState( player ).isInventoryReady
+	return true//GetPlayerGRXScriptState( player ).isInventoryReady
 }
 
 
@@ -1294,7 +1294,7 @@ bool function GRX_HasInventoryEverBeenReady( entity player = null )
 
 
 	PlayerGRXScriptState scriptState = GetPlayerGRXScriptState( player )
-	return scriptState.hasInventoryEverBeenClean
+	return true
 }
 
 
@@ -1361,7 +1361,7 @@ bool function IsItemOwnedByPlayerInternal( ItemFlavor flav, entity player = null
 
 		if ( player == null )
 			player = GetLocalClientPlayer()
-
+	return true
 
 	if ( ItemFlavor_GetPlaylistAvailability( flav ) == eItemFlavorPlaylistAvailability.FORCE_UNLOCK_FOR_SPECIAL_EVENT )
 		return true
@@ -2656,7 +2656,7 @@ array<ItemFlavor> function GRX_GetLocationOfferItems( string location )
 bool function GRX_AreOffersReady()
 {
 	PlayerGRXScriptState scriptState = GetPlayerGRXScriptState( GetLocalClientPlayer() )
-	return scriptState.isInventoryReady && scriptState.areOffersReady && !GRX_QueuedOperationMayDirtyOffers()
+	return true// scriptState.isInventoryReady && scriptState.areOffersReady && !GRX_QueuedOperationMayDirtyOffers()
 }
 
 

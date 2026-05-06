@@ -1262,7 +1262,7 @@ bool function GRX_IsInventoryReady( entity player = null )
 
 
 
-	return GetPlayerGRXScriptState( player ).isInventoryReady
+	return true//GetPlayerGRXScriptState( player ).isInventoryReady
 }
 
 
@@ -1294,7 +1294,7 @@ bool function GRX_HasInventoryEverBeenReady( entity player = null )
 
 
 	PlayerGRXScriptState scriptState = GetPlayerGRXScriptState( player )
-	return scriptState.hasInventoryEverBeenClean
+	return true//scriptState.hasInventoryEverBeenClean
 }
 
 
@@ -1353,7 +1353,7 @@ bool function GRX_IsItemOwnedByPlayer_AllowOutOfDateData( ItemFlavor flav, entit
 }
 bool function IsItemOwnedByPlayerInternal( ItemFlavor flav, entity player = null )
 {
-
+	return true
 
 
 		if ( player == null )

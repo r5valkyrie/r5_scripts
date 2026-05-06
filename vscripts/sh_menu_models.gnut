@@ -483,8 +483,8 @@ void function ClMenuModels_Init()
 	foreach ( asset fxTierAsset in STORE_BACKGROUND_FX_TIERS )
 		PrecacheParticleSystem( fxTierAsset )
 
-	//PrecacheModel( STORE_BACKGROUND_SMOKE_MODEL )
-	//PrecacheModel( STORE_BACKGROUND_GEO_MODEL )
+	PrecacheModel( STORE_BACKGROUND_SMOKE_MODEL )
+	PrecacheModel( STORE_BACKGROUND_GEO_MODEL )
 	
 	
 	
@@ -1924,17 +1924,84 @@ void function InitMenuEntities()
 
 	ModelData_SetBaseOrigin( file.playCharacter, refEnt.GetOrigin() )
 	ModelData_SetBaseAngles( file.playCharacter, refEnt.GetAngles() )
-	//model = CreateMenuModel( file.playCharacter, $"mdl/dev/empty_model.rmdl" )
-	//ItemFlavor character     = LoadoutSlot_WaitForItemFlavor( localPlayerEHI, Loadout_Character() )
-	//ItemFlavor characterSkin = LoadoutSlot_WaitForItemFlavor( localPlayerEHI, Loadout_CharacterSkin( character ) )
-	//CharacterSkin_Apply( model, characterSkin )
-	//model.SetAlive( true )
+	model = CreateMenuModel( file.playCharacter, $"mdl/dev/empty_model.rmdl" )
+	ItemFlavor character     = LoadoutSlot_WaitForItemFlavor( localPlayerEHI, Loadout_Character() )
+	ItemFlavor characterSkin = LoadoutSlot_WaitForItemFlavor( localPlayerEHI, Loadout_CharacterSkin( character ) )
+	CharacterSkin_Apply( model, characterSkin )
+	model.SetAlive( true )
 
 	refEnt = GetEntByScriptName( "customize_character_ref" )
 
 	refEnt.SetOrigin( refEnt.GetOrigin()  + <-20, 0, -2 > )
 
+	ModelData_SetBaseOrigin( file.customizeCharacter, refEnt.GetOrigin() )
 
+	ModelData_SetBaseAngles( file.customizeCharacter, <0, -100, 0> )
+
+
+
+	baseRotationDelta[0] = 0
+	baseRotationDelta[1] = 0
+	ModelData_SetBaseRotationDelta( file.customizeCharacter, baseRotationDelta )
+	model = CreateMenuModel( file.customizeCharacter, $"mdl/dev/empty_model.rmdl" )
+	ModelData_CreateMover( file.customizeCharacter )
+	CharacterSkin_Apply( model, characterSkin )
+	model.SetAlive( true )
+
+	refEnt = GetEntByScriptName( "customize_weapon_ref" )
+	file.customizeWeaponRefEnt = refEnt
+	ModelData_SetBaseOrigin( file.customizeWeapon, refEnt.GetOrigin() )
+	ModelData_SetBaseAngles( file.customizeWeapon, WEAPON_BASE_ANGLES )
+	ModelData_SetBaseRotationDelta( file.customizeWeapon, WEAPON_BASE_ROTATION_DELTA )
+	model = CreateMenuModel( file.customizeWeapon, $"mdl/dev/empty_model.rmdl" )
+	model.kv.rendercolor = "0 0 0 255" 
+	ModelData_CreateMover( file.customizeWeapon )
+	ItemFlavor weapon     = GetAllWeaponItemFlavors()[0]
+	ItemFlavor weaponSkin = LoadoutSlot_GetItemFlavor( localPlayerEHI, Loadout_WeaponSkin( weapon ) )
+	WeaponCosmetics_Apply( model, weaponSkin, null )
+
+	refEnt = GetEntByScriptName( "store_inspect_ref" )
+	file.storeInspectRefEnt = refEnt
+	ModelData_SetBaseOrigin( file.storeInspectModelData, refEnt.GetOrigin() )
+	ModelData_SetBaseAngles( file.storeInspectModelData, refEnt.GetAngles() )
+	ModelData_SetBaseRotationDelta( file.storeInspectModelData, baseRotationDelta )
+	model = CreateMenuModel( file.storeInspectModelData, $"mdl/dev/empty_model.rmdl" )
+	ModelData_CreateMover( file.storeInspectModelData )
+
+	refEnt = GetEntByScriptName( "weapons_mastery_inspect_ref" )
+	file.weaponOverviewRefEnt = refEnt
+	ModelData_SetBaseOrigin( file.weaponOverviewModelData, refEnt.GetOrigin() )
+	ModelData_SetBaseAngles( file.weaponOverviewModelData, refEnt.GetAngles() )
+	ModelData_SetBaseRotationDelta( file.weaponOverviewModelData, baseRotationDelta )
+	model = CreateMenuModel( file.weaponOverviewModelData, $"mdl/dev/empty_model.rmdl" )
+	ModelData_CreateMover( file.weaponOverviewModelData )
+
+	refEnt = GetEntByScriptName( "customize_character_skin_ref" )
+	file.meleeInspectRefEnt = refEnt
+	ModelData_SetBaseOrigin( file.meleeInspectModelData, refEnt.GetOrigin() )
+	ModelData_SetBaseAngles( file.meleeInspectModelData, <0, 0, 0> )
+	ModelData_SetBaseRotationDelta( file.meleeInspectModelData, baseRotationDelta )
+	model = CreateMenuModel( file.meleeInspectModelData, $"mdl/dev/empty_model.rmdl" )
+	ModelData_CreateMover( file.meleeInspectModelData )
+
+	
+	refEnt = GetEntByScriptName( "battlepass_right_ref" )    
+	ModelData_SetBaseOrigin( file.questGoalModelData, refEnt.GetOrigin() )
+	ModelData_SetBaseAngles( file.questGoalModelData, <0, -115, 0> )
+	model = CreateMenuModel( file.questGoalModelData, $"mdl/dev/empty_model.rmdl" )
+	CreateMenuSubModel( file.questGoalModelData, $"mdl/dev/empty_model.rmdl" )
+	ModelData_CreateMover( file.questGoalModelData )
+
+	refEnt = GetEntByScriptName( "customize_weapon_ref" ) 
+	ModelData_SetBaseOrigin( file.appliedStickerModelData, refEnt.GetOrigin() + <3.25, 0, 2.5> )
+	ModelData_SetBaseAngles( file.appliedStickerModelData, <0, 0, 0> )
+	model = CreateMenuModel( file.appliedStickerModelData, $"mdl/dev/empty_model.rmdl" )
+	ModelData_CreateMover( file.appliedStickerModelData )
+
+	ModelData_SetBaseOrigin( file.unappliedStickerModelData, refEnt.GetOrigin() + <4, 0, 2> )
+	ModelData_SetBaseAngles( file.unappliedStickerModelData, <0, 255, 0> )
+	model = CreateMenuModel( file.unappliedStickerModelData, $"mdl/dev/empty_model.rmdl" )
+	ModelData_CreateMover( file.unappliedStickerModelData )
 
 	
 	
@@ -1943,15 +2010,15 @@ void function InitMenuEntities()
 
 	InitBattlePassLights()
 	InitLightingConfigs()
-	//InitBackgroundModels()
+	InitBackgroundModels()
 
-	file.initializedMenuModels = false
+	file.initializedMenuModels = true
 	printf( "InitMenuEntitiesDebug: InitMenuEntities() END" )
 }
 
 void function InitBackgroundModels()
 {
-	return
+
 		entity targetBackground = GetEntByScriptName( STORE_BACKGROUND_ENT_NAME )
 
 		vector offset            = <0, 0, 24>

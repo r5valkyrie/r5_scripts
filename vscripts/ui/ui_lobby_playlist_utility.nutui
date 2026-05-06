@@ -240,19 +240,7 @@ bool function DoesPlaylistRequireTraining( string playlist )
 
 bool function HasLocalPlayerCompletedTraining()
 {
-	if ( !IsFullyConnected() || !IsPersistenceAvailable() )
-		return false
 
-	if ( !GetVisiblePlaylistNames().contains( PLAYLIST_TRAINING ) )
-		return true
-
-#if DEV
-		if ( GetConVarBool( "skip_training" ) )
-			return true
-#endif
-
-	if ( GetCurrentPlaylistVarBool( "require_training", true ) )
-		return GetPersistentVarAsInt( "trainingCompleted" ) > 0
 
 	return true
 }
@@ -288,7 +276,7 @@ bool function IsLocalPlayerExemptFromNewPlayerOrientation()
 
 bool function DoesPlaylistRequireNewPlayerOrientation( string playlist )
 {
-	if( GetConVarBool( "orientation_matches_disabled" ) )
+	//if( GetConVarBool( "orientation_matches_disabled" ) )
 		return false
 
 	if ( playlist == PLAYLIST_NEW_PLAYER_ORIENTATION )
@@ -305,7 +293,7 @@ bool function DoesPlaylistRequireNewPlayerOrientation( string playlist )
 
 bool function HasLocalPlayerCompletedNewPlayerOrientation()
 {
-	if( GetConVarBool( "orientation_matches_disabled" ) )
+	//if( GetConVarBool( "orientation_matches_disabled" ) )
 		return true
 
 	if ( !IsFullyConnected() )

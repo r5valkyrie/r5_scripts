@@ -239,7 +239,6 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 
 void function SetupWeaponCharm( ItemFlavor charm )
 {
-	return
 	string charmModel = WeaponCharm_GetCharmModel( charm )
 
 
@@ -250,7 +249,6 @@ void function SetupWeaponCharm( ItemFlavor charm )
 
 void function SetupWeaponSkin( ItemFlavor skin )
 {
-	return
 	if ( ItemFlavor_IsTheFavoriteSentinel( skin ) )
 		return
 

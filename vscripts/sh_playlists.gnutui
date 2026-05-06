@@ -1544,7 +1544,7 @@ string function GetDefaultPlaylist()
 
 	if ( GetPartySize() == 1 )
 	{
-		if ( !IsLocalPlayerExemptFromTraining() && !HasLocalPlayerCompletedTraining() )
+		//if ( !IsLocalPlayerExemptFromTraining() && !HasLocalPlayerCompletedTraining() )
 			return PLAYLIST_TRAINING
 
 		if ( !IsLocalPlayerExemptFromNewPlayerOrientation() && !HasLocalPlayerCompletedNewPlayerOrientation() )

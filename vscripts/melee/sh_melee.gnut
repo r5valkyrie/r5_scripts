@@ -206,8 +206,8 @@ void function OnItemFlavorRegistered_Character( ItemFlavor character )
 void function OnItemFlavorRegistered_Melee_Weapon( ItemFlavor meleeWeapon )
 {
 
-		//PrecacheWeapon( MeleeWeapon_GetMainWeaponClassname( meleeWeapon ) )
-		//PrecacheWeapon( MeleeWeapon_GetOffhandWeaponClassname( meleeWeapon ) )
+		PrecacheWeapon( MeleeWeapon_GetMainWeaponClassname( meleeWeapon ) )
+		PrecacheWeapon( MeleeWeapon_GetOffhandWeaponClassname( meleeWeapon ) )
 
 
 	array<ItemFlavor> legendsList = RegisterReferencedItemFlavorsFromArray( meleeWeapon, "legends", "flavor" )

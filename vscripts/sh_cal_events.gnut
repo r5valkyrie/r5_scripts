@@ -169,8 +169,11 @@ void function ShCalEvent_LevelInit()
 			if ( eventItemType == eItemType.calevent_season )
 			{
 				ItemFlavor ornull passOrNull = RegisterItemFlavorFromSettingsAsset( GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "battlepassFlav" ) )
-				fileLevel.seasonBattlePassMap[event] <- expect ItemFlavor(passOrNull)
-				fileLevel.battlePassSeasonMap[expect ItemFlavor(passOrNull)] <- event
+				if ( passOrNull != null )
+				{
+					fileLevel.seasonBattlePassMap[event] <- expect ItemFlavor(passOrNull)
+					fileLevel.battlePassSeasonMap[expect ItemFlavor(passOrNull)] <- event
+				}
 
 				asset seasonQuestAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "seasonquestFlav" )
 				if ( seasonQuestAsset != $"" )
@@ -198,8 +201,8 @@ void function ShCalEvent_LevelInit()
 				table<string, string> ornull tmp = event.metaData
 				expect table<string, string>(tmp)
 				fileLevel.eventRefMap[ eItemType.calevent_season ][ tmp[ "season_ref" ] ] <- event
-				if ( CalEvent_GetStartUnixTime( event ) <= now && CalEvent_GetFinishUnixTime( event ) > now )
-					fileLevel.currentActiveSeason = event
+				//if ( CalEvent_GetStartUnixTime( event ) <= now && CalEvent_GetFinishUnixTime( event ) > now )
+					fileLevel.currentActiveSeason = RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/calevent/season21.rpak" )
 
 			}
 
@@ -274,8 +277,7 @@ ItemFlavor function GetLatestSeason( int t )
 		}
 	}
 	Assert( seasonOrNull != null )
-	//return expect ItemFlavor(seasonOrNull)
-	return GetItemFlavorByAsset( $"settings/itemflav/xp_boost/battlepass_season20.rpak"  )
+	return expect ItemFlavor(seasonOrNull)
 }
 
 
@@ -284,30 +286,23 @@ ItemFlavor function GetLatestSeason( int t )
 
 ItemFlavor ornull function GetActiveSeason( int t )
 {
-	ItemFlavor ornull seasonOrNull = RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/calevent/season21.rpak" )
-	if ( seasonOrNull == null )
-		return null
-
-	ItemFlavor season = expect ItemFlavor( seasonOrNull )
-
-	// Ensure the battlepass map is populated for this season
-	if ( !(season in fileLevel.seasonBattlePassMap) )
+	if ( fileLevel.currentActiveSeason != null )
 	{
-		asset bpAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( season ), "battlepassFlav" )
-		//printt( "DEBUG: GetActiveSeason() - battlepassFlav asset:", string( bpAsset ) )
-		if ( bpAsset != $"" )
-		{
-			ItemFlavor ornull passOrNull = RegisterItemFlavorFromSettingsAsset( bpAsset )
-			if ( passOrNull != null )
-			{
-				ItemFlavor pass = expect ItemFlavor( passOrNull )
-				fileLevel.seasonBattlePassMap[season] <- pass
-				fileLevel.battlePassSeasonMap[pass] <- season
-			}
-		}
+		ItemFlavor season = expect ItemFlavor( fileLevel.currentActiveSeason )
+		if ( t < CalEvent_GetFinishUnixTime( season ) && t > CalEvent_GetStartUnixTime( season ) )
+			return season
 	}
 
-	return season
+	
+	foreach ( ItemFlavor season in fileLevel.allSeasons )
+	{
+		if ( CalEvent_IsActive( season, t ) )
+		{
+			fileLevel.currentActiveSeason = season
+			return season
+		}
+	}
+	return null
 }
 
 

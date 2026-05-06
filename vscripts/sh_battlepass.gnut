@@ -784,6 +784,7 @@ int function GetPlayerBattlePassPurchasedLevelsWithLegendTokens( EHI playerEHI, 
 
 int function GetTotalXPToCompletePassLevel( ItemFlavor pass, int levelIndex )
 {
+	return 500
 	Assert( ItemFlavor_GetType( pass ) == eItemType.battlepass )
 
 	Assert( levelIndex >= -1 )
@@ -799,6 +800,7 @@ int function GetTotalXPToCompletePassLevel( ItemFlavor pass, int levelIndex )
 
 int function GetBattlePassLevelForXP( ItemFlavor pass, int xp )
 {
+	return 1
 	Assert( ItemFlavor_GetType( pass ) == eItemType.battlepass )
 	Assert( xp >= 0, "XP " + xp + " too low" )
 	int levelIndex          = 0
@@ -1055,6 +1057,7 @@ array<BattlePassReward> function GetBattlePassPremiumRewards( ItemFlavor pass, i
 
 array<BattlePassReward> function GetBattlePassLevelRewards( ItemFlavor pass, int levelIndex, entity player = null )
 {
+	return []
 	Assert( ItemFlavor_GetType( pass ) == eItemType.battlepass )
 	Assert( levelIndex >= 0, "Level must be >= 0" )
 
@@ -2217,7 +2220,7 @@ array<ItemFlavor> function GetBattlePassChallenges( ItemFlavor pass, int challen
 
 ItemFlavor ornull function GetBattlePassRecurringStarChallenge( ItemFlavor pass )
 {
-	return fileLevel.battlePassMap[ pass ].recurringStarChallenge
+	return null//fileLevel.battlePassMap[ pass ].recurringStarChallenge
 }
 
 ItemFlavor ornull function GetBattlePassRecurringGrindlordChallenge( ItemFlavor pass )
@@ -2234,18 +2237,19 @@ bool function BattlePassHasWeeklyChallenge( ItemFlavor pass, ItemFlavor challeng
 
 void function RefreshCachedSeasonInfo()
 {
-
-		if ( IsConnected() == false )
-			return
-
+	if ( IsConnected() == false )
+		return
+	
+	RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/battlepass/season21.rpak" )
+	RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/pack/battle_pass_season21_basic.rpak" )
 
 	fileLevel.currentSeason = GetActiveSeason( GetUnixTimestamp() )
-	fileLevel.currentBattlePass = null
+	fileLevel.currentBattlePass = GetItemFlavorByAsset( $"settings/itemflav/battlepass/season21.rpak" )
 	fileLevel.expirationTimestamp = 0
 	if ( fileLevel.currentSeason != null )
 	{
-		fileLevel.currentBattlePass = Season_GetBattlePass( expect ItemFlavor( fileLevel.currentSeason ) )
-		fileLevel.expirationTimestamp = CalEvent_GetFinishUnixTime( expect ItemFlavor( fileLevel.currentSeason ) )
+		fileLevel.currentBattlePass = GetItemFlavorByAsset( $"settings/itemflav/battlepass/season21.rpak" )//Season_GetBattlePass( expect ItemFlavor( fileLevel.currentSeason ) )
+		fileLevel.expirationTimestamp = 1841248174
 	}
 }
 
