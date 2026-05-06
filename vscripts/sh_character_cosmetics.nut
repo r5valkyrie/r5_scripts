@@ -136,12 +136,10 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 		{
 			SetupCharacterSkin( skin )
 
-			bool isRandom = IsValidItemFlavorSettingsAsset( CHARACTER_RANDOM ) && characterClass == GetItemFlavorByAsset( CHARACTER_RANDOM )
-			if ( !isRandom && !( characterClass in fileLevel.defaultSkins ) && !ItemFlavor_IsTheFavoriteSentinel( skin ) )
+			if ( characterClass != GetItemFlavorByAsset( CHARACTER_RANDOM ) && !( characterClass in fileLevel.defaultSkins ) && !ItemFlavor_IsTheFavoriteSentinel( skin ) )
 				fileLevel.defaultSkins[characterClass] <- skin
 		}
-		bool isRandomChar = IsValidItemFlavorSettingsAsset( CHARACTER_RANDOM ) && characterClass == GetItemFlavorByAsset( CHARACTER_RANDOM )
-		Assert( isRandomChar || characterClass in fileLevel.defaultSkins, "No default skin found for: " + string(ItemFlavor_GetAsset( characterClass )) )
+		Assert( characterClass == GetItemFlavorByAsset( CHARACTER_RANDOM ) || characterClass in fileLevel.defaultSkins, "No default skin found for: " + string(ItemFlavor_GetAsset( characterClass )) )
 
 		MakeItemFlavorSet( skinList, fileLevel.cosmeticFlavorSortOrdinalMap, setShouldContainANonGRXItem )
 
@@ -152,7 +150,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 			entry.DEV_name       = ItemFlavor_GetCharacterRef( characterClass ) + " Skin"
 		#endif
 		entry.stryderCharDataArrayIndex = ePlayerStryderCharDataArraySlots.CHARACTER_SKIN
-		entry.defaultItemFlavor         = skinList.len() > 1 ? skinList[1] : skinList[0]
+		entry.defaultItemFlavor         = skinList[1]
 		entry.favoriteItemFlavor        = skinList[0]
 		entry.validItemFlavorList       = skinList
 		entry.maxFavoriteCount          = 8
@@ -637,8 +635,7 @@ bool function CharacterSkin_HasMenuCustomLighting( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.character_skin )
 
-	// Custom character select lighting fields not in settings assets
-	return false
+	return GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "hasCustomCharSelectLighting" )
 }
 
 
@@ -661,34 +658,21 @@ string function CharacterSkin_GetStoryBlurbBodyText( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.character_skin )
 
-	try
-	{
-		return GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "customSkinMenuBlurb" )
-	}
-	catch ( ex )
-	{
-		return ""
-	}
+	return GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "customSkinMenuBlurb" )
 }
 
 string function CharacterSkin_GetSubQuality( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.character_skin )
 
-	try
-	{
-		return GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "qualitySubTier" )
-	}
-	catch ( ex )
-	{
-		return ""
-	}
+	return GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "qualitySubTier" )
 }
 
 bool function CharacterExecution_IsNotEquippable( ItemFlavor flavor )
 {
-	// RPaks don't have "isNotEquippable" setting
-	return false
+	Assert( ItemFlavor_GetType( flavor ) == eItemType.character_execution )
+
+	return GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "isNotEquippable" )
 }
 
 bool function CharacterExecution_ShouldHideIfNotEquippable( ItemFlavor flavor )
@@ -943,14 +927,7 @@ string function HoloSpray_GetStoryBlurbBodyText( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.emote_icon )
 
-	try
-	{
-		return GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "customSkinMenuBlurb" )
-	}
-	catch ( ex )
-	{
-		return ""
-	}
+	return GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "customSkinMenuBlurb" )
 }
 
 #if DEVELOPER && CLIENT

@@ -454,7 +454,7 @@ void function ShGladiatorCards_LevelInit()
 		AddCallback_OnPlayerLifeStateChanged( OnPlayerLifestateChanged )
 		AddCallback_PlayerClassChanged( OnPlayerClassChanged )
 
-		//RegisterNetVarIntChangeCallback( UPGRADE_CORE_SELECTED_UPGRADES, GladiatorCards_PlayerCompletedLevelChanged )
+		RegisterNetVarIntChangeCallback( UPGRADE_CORE_SELECTED_UPGRADES, GladiatorCards_PlayerCompletedLevelChanged )
 
 		AddCallback_GameStateEnter( eGameState.WinnerDetermined, OnWinnerDetermined )
 
@@ -1606,12 +1606,6 @@ void function ManageGladiatorCardTrackerState( ItemFlavor character, EHI playerE
 {
 	entity player = FromEHI( playerEHI )
 
-	// Initialize the tracker array if it doesn't exist or is empty
-	if ( player.p.activeGladiatorCardStatTrackerEntries.len() == 0 )
-	{
-		player.p.activeGladiatorCardStatTrackerEntries = [ -1, -1, -1 ]
-	}
-
 	string desiredStatRef = ""
 	if ( !GladiatorCardTracker_IsTheEmpty( tracker ) )
 		desiredStatRef = GladiatorCardStatTracker_GetStatRef( tracker, character )
@@ -1626,7 +1620,7 @@ void function ManageGladiatorCardTrackerState( ItemFlavor character, EHI playerE
 		Signal( player, "StopGladCardStatTracker" + trackerIndex )
 	}
 
-	if ( desiredStatRef != "" && HasStatEntryByRef( desiredStatRef ) )
+	if ( desiredStatRef != "" )
 	{
 		StatEntry desiredStat = GetStatEntryByRef( desiredStatRef )
 		player.p.activeGladiatorCardStatTrackerEntries[trackerIndex] = StatEntry_GetIndex( desiredStat )
@@ -1976,28 +1970,28 @@ void function ActualUpdateNestedGladiatorCard( NestedGladiatorCardHandle handle 
 			RuiSetBool( handle.cardRui, "disableBlur", handle.disableBlur )
 			RuiSetString( handle.cardRui, "platformString", platformString )
 
+			if ( UpgradeCore_GladCardShowUpgrades() )
+			{
+				RuiSetBool( handle.cardRui, "canShowUpgrades", handle.canShowUpgrades )
+				RuiSetBool( handle.cardRui, "showUpgrades", handle.showUpgrades )
+				if ( handle.showUpgrades )
+				{
+					entity viewPlayer = FromEHI( handle.currentOwnerEHI )
+					if ( IsValid ( viewPlayer ) )
+					{
+						array<UpgradeCoreChoice> selectedUpgrades = UpgradeCore_GetSelectedUpgrades( viewPlayer )
+						RuiSetInt( handle.cardRui, "numSlots", selectedUpgrades.len() )
+						for( int i = 0; i < selectedUpgrades.len(); i++ )
+						{
+							array<int> upgradeChoices = UpgradeCore_GetPassiveIndexChoicesForLevel( viewPlayer, i )
 
-			// Upgrade core glad card RUI args not in S3
-			// if ( UpgradeCore_GladCardShowUpgrades() )
-			// {
-			// 	RuiSetBool( handle.cardRui, "canShowUpgrades", handle.canShowUpgrades )
-			// 	RuiSetBool( handle.cardRui, "showUpgrades", handle.showUpgrades )
-			// 	if ( handle.showUpgrades )
-			// 	{
-			// 		entity viewPlayer = FromEHI( handle.currentOwnerEHI )
-			// 		if ( IsValid ( viewPlayer ) )
-			// 		{
-			// 			array<UpgradeCoreChoice> selectedUpgrades = UpgradeCore_GetSelectedUpgrades( viewPlayer )
-			// 			RuiSetInt( handle.cardRui, "numSlots", selectedUpgrades.len() )
-			// 			for( int i = 0; i < selectedUpgrades.len(); i++ )
-			// 			{
-			// 				array<int> upgradeChoices = UpgradeCore_GetPassiveIndexChoicesForLevel( viewPlayer, i )
-			// 				RuiSetImage( handle.cardRui, "slotImage" + i, selectedUpgrades[i].icon )
-			// 				RuiSetBool( handle.cardRui, "slotDirectionIsLeft" + i, upgradeChoices.find( selectedUpgrades[i].passiveIndex ) == 0 )
-			// 			}
-			// 		}
-			// 	}
-			// }
+							RuiSetImage( handle.cardRui, "slotImage" + i, selectedUpgrades[i].icon )
+							RuiSetBool( handle.cardRui, "slotDirectionIsLeft" + i, upgradeChoices.find( selectedUpgrades[i].passiveIndex ) == 0 )
+						}
+					}
+				}
+			}
+         
 
 
 			// HANDLES DISPLAYING RANK DIVISION BADGE BELOW THE GLAD CARD
@@ -2419,7 +2413,7 @@ void function DoGladiatorCardCharacterCapture( CharacterCaptureState ccs )
 	string streamSequence = movingSeq;
 	if ( streamSequence == "" )
 		streamSequence = stillSeq
-	while ( streamSequence != "" && false ) // StreamModelsForAnim not in S3
+	while ( streamSequence != "" ) // StreamModelsForAnim not in S3
 	{
 		WaitFrame()
 	}

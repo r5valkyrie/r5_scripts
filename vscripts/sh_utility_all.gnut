@@ -2406,6 +2406,30 @@ bool function IsFiringRangeGameMode()
 	return Playlist() == ePlaylists.survival_firingrange
 }
 
+bool function IsLobbyEvent1Active()
+{
+	#if DEV
+		// forcing lobby ignores MTX calevent check
+		int devLobby = GetCurrentPlaylistVarInt( "dev_force_lobby", -1 )
+		if ( devLobby != -1 )
+			return ( devLobby == 1 )
+	#endif
+
+	return IsMTXEvent1Active()
+}
+
+bool function IsLobbyEvent2Active()
+{
+	#if DEV
+		// forcing lobby ignores MTX calevent check
+		int devLobby = GetCurrentPlaylistVarInt( "dev_force_lobby", -1 )
+		if ( devLobby != -1 )
+			return ( devLobby == 2 )
+	#endif
+
+	return IsMTXEvent2Active()
+}
+
 bool function IsMTXEvent1Active()
 {
 	ItemFlavor event = GetItemFlavorByAsset( $"settings/itemflav/calevent/s21ce01/collection.rpak" )
@@ -4392,11 +4416,6 @@ bool function HasMatchAdminRole()
 }
 #endif
 
-// Stub — no active season system
-int function GetActiveSeasonNumber()
-{
-	return 16
-}
 
 // Stub — themed shop panel not fully ported yet
 bool function IsFeatureSuppressed( int flag )

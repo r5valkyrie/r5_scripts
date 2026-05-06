@@ -44,7 +44,6 @@ global function CircleCullClassName
 global function CircleCullScriptName
 // GetPlayerArrayIncludingSpectators moved to SERVER || CLIENT scope below
 // GameRules_GetTeamScore2 is engine-native
-global function WeaponStatsHook_OnKillEnemy
 global function Remote_CallFunction_QueueForNoKillCam
 #endif
 global function GameRules_IsTeamIndexValid
@@ -165,7 +164,6 @@ void function ForceScriptError( string message ) { ScriptError( message ) }
 void function CircleCullClassName( string className ) {}
 void function CircleCullScriptName( string scriptName ) {}
 array<entity> function GetPlayerArrayIncludingSpectators() { return GetPlayerArray() }
-void function WeaponStatsHook_OnKillEnemy( entity victim, entity attacker, entity creditedAttacker, var damageInfo ) {}
 void function Remote_CallFunction_QueueForNoKillCam( entity player, string funcName, ... ) {}
 #endif // SERVER
 

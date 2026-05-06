@@ -172,26 +172,12 @@ void function ShCalEvent_LevelInit()
 				fileLevel.battlePassSeasonMap[expect ItemFlavor(passOrNull)] <- event
 
 				asset seasonQuestAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "seasonquestFlav" )
-				printt( "DEBUG: Season quest asset:", string( seasonQuestAsset ) )
 				if ( seasonQuestAsset != $"" )
 				{
-					printt( "DEBUG: Attempting to register quest from:", string( seasonQuestAsset ) )
 					ItemFlavor ornull questOrNull = RegisterItemFlavorFromSettingsAsset( seasonQuestAsset )
-					if ( questOrNull == null )
-					{
-						printt( "DEBUG: WARNING - questOrNull is null for:", string( seasonQuestAsset ) )
-					}
-					else
-					{
-						expect ItemFlavor( questOrNull )
-						fileLevel.seasonToQuestMap[event] <- questOrNull
-						fileLevel.questToSeasonMap[questOrNull] <- event
-						printt( "DEBUG: Registered quest for season:", string( event ), "quest:", string( questOrNull ) )
-					}
-				}
-				else
-				{
-					printt( "DEBUG: seasonQuestAsset is empty string for season:", string( event ) )
+					expect ItemFlavor( questOrNull )
+					fileLevel.seasonToQuestMap[event] <- questOrNull
+					fileLevel.questToSeasonMap[questOrNull] <- event
 				}
 
 				//Assert( (bool function() : ( event ) {
@@ -211,8 +197,8 @@ void function ShCalEvent_LevelInit()
 				table<string, string> ornull tmp = event.metaData
 				expect table<string, string>(tmp)
 				fileLevel.eventRefMap[ eItemType.calevent_season ][ tmp[ "season_ref" ] ] <- event
-				if ( CalEvent_GetStartUnixTime( event ) <= now && CalEvent_GetFinishUnixTime( event ) > now )
-					fileLevel.currentActiveSeason = event
+				//if ( CalEvent_GetStartUnixTime( event ) <= now && CalEvent_GetFinishUnixTime( event ) > now )
+					fileLevel.currentActiveSeason = RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/calevent/season21.rpak" )
 
 			}
 
@@ -296,35 +282,43 @@ ItemFlavor function GetLatestSeason( int t )
 // If there is a current season, get that. Otherwise, return the most recent season that was active.
 ItemFlavor ornull function GetActiveSeason( int t )
 {
-	ItemFlavor ornull seasonOrNull = RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/calevent/season21.rpak" )
-	if ( seasonOrNull == null )
-		return null
-
-	ItemFlavor season = expect ItemFlavor( seasonOrNull )
-
-	// Ensure the battlepass map is populated for this season
-	if ( !(season in fileLevel.seasonBattlePassMap) )
+	if ( fileLevel.currentActiveSeason != null )
 	{
-		asset bpAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( season ), "battlepassFlav" )
-		//printt( "DEBUG: GetActiveSeason() - battlepassFlav asset:", string( bpAsset ) )
-		if ( bpAsset != $"" )
-		{
-			ItemFlavor ornull passOrNull = RegisterItemFlavorFromSettingsAsset( bpAsset )
-			if ( passOrNull != null )
-			{
-				ItemFlavor pass = expect ItemFlavor( passOrNull )
-				fileLevel.seasonBattlePassMap[season] <- pass
-				fileLevel.battlePassSeasonMap[pass] <- season
-			}
-		}
+		ItemFlavor season = expect ItemFlavor( fileLevel.currentActiveSeason )
+		if ( t < CalEvent_GetFinishUnixTime( season ) && t > CalEvent_GetStartUnixTime( season ) )
+			return season
 	}
 
-	return season
+	//return GetItemFlavorByAsset( $"settings/itemflav/calevent/season01.rpak" )
+	foreach ( ItemFlavor season in fileLevel.allSeasons )
+	{
+		if ( CalEvent_IsActive( season, t ) )
+		{
+			fileLevel.currentActiveSeason = season
+			return season
+		}
+	}
+	return null
 }
 #endif
 
 
-// GetActiveSeasonNumber removed — hardcoded in sh_utility_all.gnut
+#if SERVER || CLIENT || UI
+// If there is a current season, get that. Otherwise, return the most recent season that was active.
+int function GetActiveSeasonNumber()
+{
+	int t = GetUnixTimestamp()
+	int seasonCount
+
+	foreach ( ItemFlavor season in fileLevel.allSeasons )
+	{
+		if ( CalEvent_HasStarted( season, t ) )
+			seasonCount++
+	}
+
+	return seasonCount
+}
+#endif
 
 #if SERVER || CLIENT || UI
 // Return the season immediately before the passed in season
@@ -447,7 +441,17 @@ bool function CalEvent_IsActive( ItemFlavor event, int t )
 {
 	Assert( IsItemFlavorRegistrationFinished() )
 	int finishUnixTime = CalEvent_GetFinishUnixTime( event )
-	return CalEvent_HasStarted( event, t ) && (t < finishUnixTime)
+
+	bool hasStarted = CalEvent_HasStarted( event, t )
+	bool hasNotFinished = ( t < finishUnixTime )
+
+	#if ASSERTS && SERVER
+		if ( ItemFlavor_GetType( event ) > eItemType._CALEVENT_LIMITED_TIME &&
+				GetCurrentPlaylistVarBool( "check_for_dead_cal_events", true ) )
+			Assert( GetUnixTimestamp() - finishUnixTime < TWO_SEASONS_IN_SECONDS, format( "MTX Events: Script is checking if a non-Season/Ranked Period Cal Event - GUID %d - that is now over 2 seasons old is active.", ItemFlavor_GetGUID( event ) ) )
+	#endif
+
+	return hasStarted && hasNotFinished
 }
 #endif
 
@@ -527,18 +531,7 @@ int function CalEvent_GetUnixTimeBySettingString( ItemFlavor flav, string settin
 {
 	Assert( ItemFlavor_GetType( flav ) > eItemType._CALEVENT_RANGE_START && ItemFlavor_GetType( flav ) < eItemType._CALEVENT_RANGE_END )
 
-	// Some settings may not exist in older assets — guard the lookup
-	string str = ""
-	try
-	{
-		str = GetGlobalSettingsString( ItemFlavor_GetAsset( flav ), settingString )
-	}
-	catch ( ex )
-	{
-		return defaultUnixTime
-		Warning("CalEvent_GetUnixTimeBySettingString missing for the asset" + GetGlobalSettingsString( ItemFlavor_GetAsset( flav ), settingString ))
-	}
-
+	string str = GetGlobalSettingsString( ItemFlavor_GetAsset( flav ), settingString )
 	if ( str != "" )
 	{
 		int ornull t = DateTimeStringToUnixTimestamp( str )

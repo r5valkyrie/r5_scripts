@@ -146,6 +146,7 @@ Scripts:
 	private_matches.nut
 	sh_image_2d.gnut
 	sh_battlepass_presale_voucher.gnut
+	sh_battlepass_purchasable_xp.gnut
 	clubs.nut
 	sh_movement_rc.nut
 ]
@@ -614,6 +615,8 @@ Scripts:
 	perk_enemies_beacon_scan.nut
 	perk_weapon_infusion.nut
 	perk_munitions_box.nut
+	sh_mastery.gnut
+	sh_mastery_stats.gnut
 ]
 
 When: "SERVER"

@@ -1331,6 +1331,7 @@ bool function IsItemOwnedByPlayerInternal( ItemFlavor flav, entity player = null
 		if ( player == null )
 			player = GetLocalClientPlayer()
 	#endif
+	return true
 
 	if ( ItemFlavor_GetPlaylistAvailability( flav ) == eItemFlavorPlaylistAvailability.FORCE_UNLOCK_FOR_SPECIAL_EVENT )
 		return true

@@ -2211,13 +2211,16 @@ void function RefreshCachedSeasonInfo()
 			return
 	#endif
 
+	RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/battlepass/season21.rpak" )
+	RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/pack/battle_pass_season21_basic.rpak" )
+
 	fileLevel.currentSeason = GetActiveSeason( GetUnixTimestamp() )
-	fileLevel.currentBattlePass = null
+	fileLevel.currentBattlePass = GetItemFlavorByAsset( $"settings/itemflav/battlepass/season21.rpak" )
 	fileLevel.expirationTimestamp = 0
 	if ( fileLevel.currentSeason != null )
 	{
-		fileLevel.currentBattlePass = Season_GetBattlePass( expect ItemFlavor( fileLevel.currentSeason ) )
-		fileLevel.expirationTimestamp = CalEvent_GetFinishUnixTime( expect ItemFlavor( fileLevel.currentSeason ) )
+		fileLevel.currentBattlePass = GetItemFlavorByAsset( $"settings/itemflav/battlepass/season21.rpak" )//Season_GetBattlePass( expect ItemFlavor( fileLevel.currentSeason ) )
+		fileLevel.expirationTimestamp = 1841248174
 	}
 }
 #endif

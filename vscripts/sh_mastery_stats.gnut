@@ -1,0 +1,4197 @@
+#if SERVER
+global function WeaponStatsInit
+global function Mastery_ParseStat
+
+global function WeaponStatsHook_OnPlayerWeaponSwitched
+global function WeaponStatsHook_OnDownEnemy
+global function WeaponStatsHook_OnKillEnemy
+global function WeaponStatsHook_OnPreDamageEnemy
+global function WeaponStatsHook_OnDamageEnemy
+global function WeaponStatsHook_OnUseHealModStart
+global function WeaponStatsHook_OnIncrementStatInstance
+global function WeaponStatsHook_OnWeaponHeatStateChanged
+global function WeaponStatsHook_OnWeaponOverheat
+global function WeaponStatsHook_OnCarModeChange
+global function WeaponStatsHook_OnPlayerIncapShieldBreak
+global function WeaponStatsHook_OnPlayerDropMainWeapon
+global function WeaponStatsHook_OnPlayerDisconnectOrMatchEnd
+global function WeaponStatsHook_OnAssistCredited
+
+global const bool WEAPON_STATS_DEBUG = false//set true if debug info is needed
+
+enum eAdditionalParamsType
+{
+	EXECUTING_TEAMMATE,			//arg1:bool, forceTargetIsTeammate
+	DAMAGE_IN_PERIOD,			//arg1:int, invalidTime OR slot count; arg2:bool, optional, forceDamageCheck; arg3:bool, optional, checkResetTime
+	VICTIMS_PROPERTY,			//arg1:eVictimProperty; arg2:bool, should VictimsProperty record be deleted when player is killed
+	FIREANDHIT,					//arg1:int, eValidateLocation; arg2:bool, optional, HitFromStart
+	KILL_COUNT_XP,				//arg1:float, xp weight
+}
+
+enum eValidateLocation
+{
+	AMMO_FIRED,
+	AMMO_HIT,
+	WIPE_SQUAD,
+	DOUBLE_KILL,
+	BREAK_SHIELD_IN_SQUAD,
+	DAMAGE_ANY_VICTIM_IN_PERIOD,
+	DOWN_VICTIMS_PROPERTY,
+	RAW_DAMAGE,
+	PLAYER_DISCONNECT_OR_MATCH_END,
+	TRIGGER_RELEASE
+}
+
+enum eClearConfig
+{
+	WEAPON_SWITCHED,
+	SWITCH_DIFFERENT_WEAPON,
+	WEAPON_RELOAD,
+	WEAPON_ATTACK,
+	POST_WEAPON_ATTACK,
+	WEAPON_OVERHEAT,
+	WEAPON_HEAT_DECREASE,
+	TRIGGER_RELEASE,
+	FIRE_HIT_VALIDATE_PASSED,
+	COMPLETE_RECOVERY
+}
+
+enum eWriteCondition
+{
+	WIPE_SQUAD_PLAYERS
+	BREAK_SHIELD_IN_SQUAD,
+	DAMAGE_IN_PERIOD,
+	DAMAGE_ANY_VICTIM_IN_PERIOD,
+	VICTIMS_PROPERTY,
+	BREAK_SHIELD_TIME,
+	BREAK_INCAP_SHIELD_TIME,
+	TRACE_ROTATION,
+	DAMAGE_START_TIME,
+	DAMAGED_PLAYERS,
+	VICTIM_EXECUTING_ENEMY,
+	KILL_COUNT_XP
+}
+
+enum eCountTable
+{
+	DOWN,
+	KILL_WITH_DOWN_CONDITION,
+	FINISH_OFF,
+	BREAK_SHIELD,
+	CONTINUOUS_DOWN,
+	RELOAD,
+	AMMO_FIRED,
+	AMMO_HIT,
+	REVIVE_PAIR_KILL,
+	KEEP_FULLY_HEATED,
+	LAND_X_BULLETS_COUNT,
+	LAND_X_BULLETS_COUNT_WRITE_LOCK,
+	BREAK_INCAP_SHIELD,
+	ASSIST,
+	NPC_KILL
+}
+
+enum eStatisticTable
+{
+	DAMAGE,
+	RAW_DAMAGE,
+	DOUBLE_KILL,
+	RELOAD,
+	HOLD_TIME,
+}
+
+enum eVictimProperty
+{
+	TIME,
+	CAR_WEAPON_MOD,
+	LOADOUT,
+}
+
+enum eAmmoHitValidateLocation
+{
+	BURST_END,
+	MAG_END,
+	IMMEDIATE,
+	SHOT_END,
+	ROUND_END,
+}
+
+const table<string, int> AMMO_HIT_VALIDATIONS =
+{
+	["Immediate"] = eAmmoHitValidateLocation.IMMEDIATE,
+	["BurstEnd"] = eAmmoHitValidateLocation.BURST_END,
+	["MagEnd"] = eAmmoHitValidateLocation.MAG_END,
+	["ShotEnd"] = eAmmoHitValidateLocation.SHOT_END,
+	["RoundEnd"] = eAmmoHitValidateLocation.ROUND_END,
+}
+
+const asset WEAPON_ATTACHMENT_MATRIX_DATATABLE = $"datatable/weapon_attachment_matrix.rpak"
+
+table<string, table<string, int> > maxAttachmentLevel		//<weaponRef,<attachmentPoint, max level>>
+array<string> allAttachments								//["sight", "grip", "mag", "barrel", "hopup", "hopupMulti_a", "hopupMulti_b"]
+const string REQUIRE_ALL_ATTACHMENTS = "all"
+const string REQUIRE_MAX_TIER = "max"
+
+//special conditions and condition prefix, please make sure these does not appear in ConditionParse
+const string DOWN = "Down"
+const string DAMAGE = "Damage"
+const string AMMO_HIT_FROM_START = "HitFromStart"
+const string DOWN_PREFIX = "Down@"			//condition will apply to down
+const string DAMAGE_PREFIX = "Damage@"     	//condition will apply to damage
+const string INVALID_TIME = "InvalidTime"
+const string REQUIRED_DAMAGE = "RequiredDamage"
+const string SHIELD_TYPE = "ShieldType"
+const string WITHOUT_RELOADING = "WithoutReloading"
+const string USE_BOTH_WEAPONS = "UseBothWeapons"
+const string CLEAR_ON_WEAPON_ATTACK = "ClearOnWeaponAttack"
+const string CLEAR_ON_POST_WEAPON_ATTACK = "ClearOnPostWeaponAttack"
+const string ALLOW_PARTIAL_HIT = "AllowPartialHit"
+const string ALLOW_DIFFERENT_VICTIM = "AllowDifferentVictim"
+const string LOADOUT = "Loadout"
+const string CAR_WEAPON_MOD = "CarWeaponMod"
+const string FORCE_DAMAGE_CHECK = "ForceDamageCheck"
+const string SHOT_COUNT = "ShotCount"
+const string RESET_AFTER_SWITCH = "ResetAfterSwitch"
+const string HIT_X_EACH_BURST_IN_MAG = "HitXEachBurstInMag"
+const string WITHOUT_EVENT = "WithoutEvent"
+const string BREAK_DOOR_WITH_GUN = "BreakDoorWithGun"
+const string FIRED_MINIMUM = "FiredMinimum"
+const string XP_WEIGHT = "XpWeight"
+//special conditions end
+
+//event key start
+//interactive
+const string REVIVE_START = "revive_start"
+const string BE_KILLED = "be_killed"
+const string BE_DAMAGED = "be_damaged"
+const string DAMAGE_START = "damage_start"
+const string STICK_WITH_ARC_STAR = "stick_with_arc_star"
+const string BREAK_SHIELD = "break_shield"
+const string LAST_DAMAGE_TIME = "last_damage_time"
+const string WEAPON_DAMAGE = "weapon_damage_"
+//independent
+const string BREAK_DOOR = "break_door"
+const string BREAK_DOOR_WITH_GRENADE = "break_door_with_grenade"
+const string BREAK_DOOR_WITH_GUN_PREFIX = "break_door_with_"
+const string NEUTRAL_AIRDROPS_LOOTED = "neutral_airdrops_looted"
+const string DEATHBOX_LOOTED = "deathbox_looted"
+const string FULL_ROTATION = "full_rotation"
+const string START_ZIPLINE = "start_zipline"
+const string RESPAWNED = "respawned"
+const string WEAPON_SWITCH = "weapon_switch"
+const string WEAPON_OVERHEAT = "weapon_overheat"
+const string CAR_MODE_CHANGE = "car_mode_change"
+const string RESTORE_SHIELD_START = "restore_shield_start"
+const string HEAL_HEALTH_START = "heal_health_start"
+const string SHIELD_BROKE = "shield_broke"
+const string REVIVED = "revived"
+//both
+const string BE_DOWNED = "be_downed"
+const string DOWN_OTHER = "down"
+//event key end
+
+const float INCHES_PER_METER = 100 / 2.54
+const string DOWN_COUNT_AFTER_DAMAGE_INVALID_TIME = "15"        //damage becomes invalid after this seconds
+const string DOWN_COUNT_WITH_FIRST_HIT_INVALID_TIME = "30"       //damage becomes invalid after this seconds
+const string DOWN_COUNT_AFTER_DAMAGE_REQUIRED_DAMAGE = "10"     //need to exceed this amount of damage to qualify
+const string DOWN_COUNT_AFTER_RELOAD_INVALID_TIME = "5"			//reload becomes invalid after this seconds
+const string DOWN_COUNT_AFTER_BREAKSHIELD_INVALID_TIME = "8"	//break shield record becomes invalid after this seconds
+const string DOWN_COUNT_AFTER_BREAK_DOOR_WITH_GUN_INVALID_TIME = "5" //break door record becomes invalid after this seconds
+const string DOUBLE_KILL_INVALID_TIME = "10"					//previous kill becomes invalid after this seconds
+const int ONE_SHOT_KILL_INVALID_TIME = 30
+const string WEAPON_CLASS_PREFIX = "mp_weapon_"
+const float WEAPON_PICKUP_INVALID_TIME = 15
+const string CAR_ALT_AMMO_MOD = "alt_ammo"
+const int NO_TIME_LIMIT = -1
+const float CHARGE_EPSILON = 1.0e-5
+const int BATTLE_CD_TIME = 45
+const int ROTATION_RING_BUFFER_SIZE = 6
+const int PLAYER_HEIGHT_OFFSET_DEFAULT = 80
+
+struct DamageInPeriodInfo
+{
+	int   time
+	float damageAmount
+	int weaponSlot
+}
+
+struct DamageInPeriodInfoRingBuffer
+{
+	int                       latest
+	array<DamageInPeriodInfo> damageInfos
+	bool                      isValid = true
+}
+
+struct RotationData
+{
+	float  time
+	vector rotation
+}
+
+struct RotationRingBuffer
+{
+	int                 latest
+	array<RotationData> rotationDatas
+}
+
+struct TargetInPeriodInfo
+{
+	float  timeStamp
+	entity target
+}
+
+struct WeaponStatsStorage
+{
+	entity                                               				mainHandActiveWeapon
+	StatInstance ornull													LastHoldTimeSi			//latest si to record weapon hold time
+	array<table<StatInstance, int> >									Count					//<eCountTable,<statInstance,count>>
+	array<table<StatInstance, float> >									Statistic				//<eStatisticTable, <statInstance,Statistic>>
+
+	table<StatInstance, int>											IncreasedTimes
+
+	table<StatInstance, array<entity> >									WipeSquadPlayers		//<statInstance, <victim>>
+	table<entity, int>													WipeSquadReloadTimes	//<victim, attacker reload times when victim is downed>>
+	table<StatInstance, table<int, array<entity> > >					BreakShieldInSquad		//<statInstance, <teamID,<victim entity>>>
+
+	table<StatInstance, table<entity, DamageInPeriodInfoRingBuffer > >	DamageInPeriod			//<statInstance, <victim,<damage in period info>>>
+	table<StatInstance, DamageInPeriodInfoRingBuffer >					DamageAnyVictimInPeriod //<statInstance, <damage in period info>>
+
+	table<StatInstance, table<entity, RotationRingBuffer > >			RotationTraceInfo		//<statInstance, <player,<rotation trace datas>>>
+
+	table<StatInstance, array<TargetInPeriodInfo> >						TargetsInPeriod
+
+	table<StatInstance, int>											WeaponChargeLevel
+
+	table<StatInstance, int>											AmmoUsed
+	table<StatInstance, array<int> >									AmmoUsedTrace
+	StatInstance&														LastContinuousWeaponDownSi
+	SettingsAssetGUID													LastContinuousWeaponDownGuid
+
+	table<StatInstance, table<entity, var> >							VictimsProperty			//<statInstance, <victim,victim property>>
+
+	table<StatInstance, table<entity, float> >							BreakShieldTime			//<statInstance, <victim, breakShieldTime> >>
+	table<StatInstance, table<entity, float> >							BreakIncapShieldTime	//<statInstance, <victim, breakIncapShieldTime> >>
+	table<StatInstance, table<entity, float> >							DamageStartTime			//<statInstance, <victim, damageStartTime> >>
+	table<StatInstance, table<entity, float> >							DamagedPlayers			//<statInstance, <victim, damage amount>>
+
+	table<StatInstance, table<entity, bool> >							VictimExecutingEnemy		//<statInstance, <victim, is executing>>
+}
+
+struct WeaponStatsConfigs
+{
+	array<table<StatInstance, bool functionref( entity, StatInstance, ... )> >									validateConditions			//<eValidateLocation,<statInstance,(attacker, statInstance, ...)>>
+	array<table<StatInstance, array<var> > >																	additionalParams			//<eAdditionalParamsType,<statInstance,<params>>>
+	array<table<StatInstance, array<void functionref( entity )> > >												clearActionConfigs			//<eClearConfig,<statInstance,<(attacker)>>>
+	array<table<StatInstance, array<bool functionref( entity, StatInstance, entity, entity ornull, var )> > >	writeConditions				//<eWriteCondition,<statInstance,(attacker, statInstance, weapon entity, victim entity)>>
+
+	array<table<StatInstance, array<bool functionref( entity, StatInstance, entity, entity ornull, var )> > >	writeCondition_Count		//<eCountTable,<statInstance,(attacker, statInstance, weapon entity, victim entity)>>
+	table<StatInstance, int>																					validateCondition_Count		//<statInstance,target int>
+
+	array<table<StatInstance, array<bool functionref( entity, StatInstance, entity, entity ornull, var )> > >	writeCondition_Statistic	//<eStatisticTable,<statInstance,(attacker, statInstance, weapon entity, victim entity)>>
+	table<StatInstance, float>																					validateCondition_Statistic	//<statInstance,target float>
+
+	table<StatInstance, array<void functionref( entity, entity )> >									clearActionConfig_ReviveAndRespawn		//<statInstance,<(attacker, victim)>>
+}
+
+struct InteractEvents
+{
+	table<string, float>    times
+}
+
+struct HealthTraceInfo
+{
+	int lastHealth
+	int totalRecover
+}
+
+struct FileStruct_LifetimeLevel
+{
+	bool											isWeaponTrialDeactivated
+	table<entity, array<StatInstance> >				currentStatInstance				//<player,array<current active StatInstance>>
+	// Player data cache region
+	table<entity, WeaponStatsStorage>				weaponStatsStorageSum			//<player, weapon stats storage>
+	WeaponStatsConfigs								weaponStatsConfigs
+
+	table<entity, table<StatInstance, entity> >		clearAction_ReviveAndRespawn	//<victim,<si,attacker>>
+	table<entity, table<string, float> >			PickupWeaponTime				//<player,<weapon class name, pick up time> >
+	table<entity, table<string, float> >			DropWeaponTime					//<player,<weapon class name, drop weapon time> >
+	table<entity, table<entity, float > >			beShotTime						// <victim, <attacker, time> >
+	table<entity, table<string, float > >			independentEventTime			// <player, <EventKey, time> >
+	table<entity, table<entity, InteractEvents> >	interactEvents
+	table<entity, HealthTraceInfo >					healthTraceInfos				// <victim, HealthTraceInfo>
+
+	bool                 							traceThreadRunning
+	table<entity, bool > 							needTraceRotation				// <player, need trace rotation >
+#if DEV
+	int currentParseMask
+	int currentParseParams
+#endif
+}
+FileStruct_LifetimeLevel& fileLevel
+
+////////////////////////////
+////////////////////////////
+////     Check Config   ////
+////////////////////////////
+////////////////////////////
+const int CONDITION_PARAMS_ALL = 3
+const int CONDITION_PARAMS_WEAPON = 1
+const int CONDITION_PARAMS_VICTIM = 2
+void function RefreshParseCheck( int mask )
+{
+#if DEV
+	fileLevel.currentParseMask = mask
+	fileLevel.currentParseParams = 0
+#endif
+}
+
+void function AddParamForChecking( int param )
+{
+#if DEV
+	fileLevel.currentParseParams = fileLevel.currentParseParams | param
+#endif
+}
+
+void function CheckParamsInHook()
+{
+#if DEV
+	if ( fileLevel.currentParseMask < 0 )
+		return
+	Assert ( ( fileLevel.currentParseMask & fileLevel.currentParseParams ) == fileLevel.currentParseParams, format( "Incorrect condition used: Hook: %d; Param: %d", fileLevel.currentParseMask, fileLevel.currentParseParams ) )
+#endif
+}
+/////////////////////////////////
+
+bool function ShouldDeactivateWeaponStats()//referenced from PlayerIsValidForStats and IsValidMapForStats
+{
+	if ( !Mastery_IsEnabled() )
+		return true
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_TRAINING ) )
+		return true
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+		return true
+
+	if ( IsLobby() )
+		return true
+
+	if ( IsPrivateMatch() )
+		return true
+
+	                            
+		if ( IsOrientationMatch() )
+			return true
+       
+
+	return false
+	//return GetGameState() < eGameState.Playing
+}
+
+bool function IsWeaponStatsDeactivated()
+{
+	return Mastery_IsStatTurnOff() || fileLevel.isWeaponTrialDeactivated
+}
+
+void function WeaponStatsInit()
+{
+	FileStruct_LifetimeLevel newFileLevel
+	fileLevel = newFileLevel
+	fileLevel.isWeaponTrialDeactivated = ShouldDeactivateWeaponStats()
+
+	AddCallback_OnPlayerWeaponSwitched( WeaponStatsHook_OnPlayerWeaponSwitched )
+	AddCallback_OnPlayerShieldBreak( WeaponStatsHook_OnPlayerShieldBreak )
+	AddCallback_OnNPCKilled( WeaponStatsHook_OnKillNpc )
+	AddCallback_OnWeaponAttack( WeaponStatsHook_OnWeaponAttack )
+	AddCallback_OnCodeDoorBroken( WeaponStatsHook_OnCodeDoorBroken )
+	Bleedout_AddCallback_OnPlayerStartReceiveFirstAid( WeaponStatsHook_OnPlayerReceivingFirstAid )
+	Bleedout_AddCallback_OnPlayerGotFirstAid( WeaponStatsHook_OnPlayerGotRevived )
+	AddCallback_ZiplineStart( WeaponStatsHook_OnZiplineStart )
+	AddCallback_OnPlayerReload( WeaponStatsHook_OnReload )
+	AddCallback_OnPlayerRespawned( WeaponStatsHook_OnRespawned )
+	Loot_AddCallback_OnPlayerLootPickup( WeaponStatsHook_OnLootPickup )
+	AddCallback_GameStateEnter( eGameState.WinnerDetermined, WeaponStatsHook_OnWinnerDetermined )
+	//Loot_AddCallback_OnWeaponAttachmentChanged( WeaponStatsHook_OnWeaponAttachmentChanged )
+
+	InitMaxAttachmentLevel()
+	InitWeaponStatsConfig()
+}
+
+void function InitPlayerStorage( entity player )
+{
+	if ( !( player in fileLevel.weaponStatsStorageSum ) )
+	{
+		WeaponStatsStorage storage
+		for ( int i = 0; i < eCountTable.len(); i++ )
+			storage.Count.append( {} )
+		for ( int i = 0; i < eStatisticTable.len(); i++ )
+			storage.Statistic.append( {} )
+		fileLevel.weaponStatsStorageSum[player] <- storage
+
+		AddButtonReleasedPlayerInputCallback( player, IN_ATTACK, WeaponStatsHook_OnTriggerReleased )
+	}
+	if ( !( player in fileLevel.currentStatInstance ) )
+		fileLevel.currentStatInstance[player] <- []
+}
+
+ItemFlavor ornull function WeaponEntityToItemFlavor( entity weapon )
+{
+	string weaponClassNameOrNull = weapon.GetWeaponClassName()
+	return GetWeaponItemFlavorByClass( weaponClassNameOrNull )
+}
+
+void function WeaponStatsHook_OnPlayerWeaponSwitched( entity player, entity newWeapon, entity oldWeapon )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	if ( !IsValid( player ) || !player.IsPlayer() )
+		return
+	InitPlayerStorage( player )
+
+	WeaponStatsStorageWrite_FinishRecordWeaponHoldTime( player )
+
+	entity activeWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
+	if ( !IsValid( newWeapon ) || activeWeapon != newWeapon )
+		return
+	ItemFlavor ornull weaponOrNull = WeaponEntityToItemFlavor( newWeapon )
+	if ( weaponOrNull == null )
+		return
+	ItemFlavor weapon = expect ItemFlavor( weaponOrNull )
+	fileLevel.currentStatInstance[player] <- Mastery_GetValidStatArray( player, weapon )
+
+	fileLevel.weaponStatsStorageSum[player].mainHandActiveWeapon = newWeapon
+	WeaponStatsStorageWrite_StartRecordWeaponHoldTime( player, newWeapon )
+	WeaponStats_RecordIndependentEventTime( player, WEAPON_SWITCH )
+	WeaponStatsStorageClear_WeaponSwitched( player, newWeapon, oldWeapon )
+
+	#if WEAPON_STATS_DEBUG
+		//printt( "WeaponStats:RefreshStatInstance", player.GetPlayerName(), newWeapon.GetWeaponClassName() )
+	#endif
+
+	WeaponStats_UpdateTrace( player )
+}
+
+void function WeaponStats_UpdateTrace( entity player )
+{
+	bool needTraceRotation = false
+	foreach ( si in fileLevel.currentStatInstance[player] )
+		if ( si in fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.TRACE_ROTATION] )
+			needTraceRotation = true
+
+	fileLevel.needTraceRotation[ player ] <- needTraceRotation
+
+	if ( !fileLevel.traceThreadRunning && needTraceRotation )
+	{
+		fileLevel.traceThreadRunning = true
+		thread WeaponStats_TraceRotation_Thread()
+	}
+}
+
+void function WeaponStats_TraceRotation_Thread()
+{
+	const float TRACE_INTERVAL = 0.2
+
+	while ( true )
+	{
+		wait( TRACE_INTERVAL )
+
+		if ( IsWeaponStatsDeactivated() )
+			break
+
+		bool needTrace = false
+
+		foreach ( player, needTraceRotation in fileLevel.needTraceRotation )
+		{
+			if ( !needTraceRotation || !IsValid( player ) )
+				continue
+
+			needTrace = true
+			WeaponStatsStorageWrite_OnTraceRotation( player, player.GetAngles() )
+		}
+
+		if ( !needTrace )
+			break
+	}
+
+	fileLevel.traceThreadRunning = false
+}
+
+void function WeaponStatsStorageWrite_OnTraceRotation( entity player, vector rotation )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( !( si in fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.TRACE_ROTATION] ) )
+			continue
+
+		if ( !( si in fileLevel.weaponStatsStorageSum[player].RotationTraceInfo ) )
+			fileLevel.weaponStatsStorageSum[player].RotationTraceInfo[si] <- {}
+
+		if ( !( player in fileLevel.weaponStatsStorageSum[player].RotationTraceInfo[si] ) )
+			fileLevel.weaponStatsStorageSum[player].RotationTraceInfo[si][player] <- InitRotationRingBuffer( ROTATION_RING_BUFFER_SIZE )
+
+		WriteRotationRingBuffer( fileLevel.weaponStatsStorageSum[player].RotationTraceInfo[si][player], rotation )
+
+		if ( FullRotationCheck( fileLevel.weaponStatsStorageSum[player].RotationTraceInfo[si][player] ) )
+			WeaponStats_RecordIndependentEventTime( player, FULL_ROTATION )
+	}
+}
+
+bool function FullRotationCheck( RotationRingBuffer buf )
+{
+	const float MAX_DELTA_ROTATION_DEGREE = 180.0
+	const float FULL_ROTATION_DEGREE = 360.0
+
+	float sumOfDeltaY = 0
+	int bufLen        = buf.rotationDatas.len()
+	for ( int i = 0; i < bufLen - 1; i++ )
+	{
+		int checkIndex = (buf.latest - i + bufLen) % bufLen
+		int preIndex   = (checkIndex - 1 + bufLen) % bufLen
+		float deltaY   = buf.rotationDatas[checkIndex].rotation.y - buf.rotationDatas[preIndex].rotation.y
+		if ( deltaY > MAX_DELTA_ROTATION_DEGREE )
+			deltaY -= FULL_ROTATION_DEGREE
+		if ( -deltaY > MAX_DELTA_ROTATION_DEGREE )
+			deltaY += FULL_ROTATION_DEGREE
+		sumOfDeltaY += deltaY
+
+		if ( sumOfDeltaY > FULL_ROTATION_DEGREE || -sumOfDeltaY > FULL_ROTATION_DEGREE )
+			return true
+	}
+
+	return false
+}
+
+////////////////////////////
+////////////////////////////
+////       Config       ////
+////////////////////////////
+////////////////////////////
+void function InitWeaponStatsConfig()
+{
+	for ( int i = 0; i < eCountTable.len(); i++ )
+		fileLevel.weaponStatsConfigs.writeCondition_Count.append( {} )
+	for ( int i = 0; i < eStatisticTable.len(); i++ )
+		fileLevel.weaponStatsConfigs.writeCondition_Statistic.append( {} )
+	for ( int i = 0; i < eAdditionalParamsType.len(); i++ )
+		fileLevel.weaponStatsConfigs.additionalParams.append( {} )
+	for ( int i = 0; i < eValidateLocation.len(); i++ )
+		fileLevel.weaponStatsConfigs.validateConditions.append( {} )
+	for ( int i = 0; i < eClearConfig.len(); i++ )
+		fileLevel.weaponStatsConfigs.clearActionConfigs.append( {} )
+	for ( int i = 0; i < eWriteCondition.len(); i++ )
+		fileLevel.weaponStatsConfigs.writeConditions.append( {} )
+}
+
+void function ConfigTableAddConditionParams( table<string, array<array<string> > > tab, string conditionKey, array<string> conditionParams )
+{
+	if ( !( conditionKey in tab ) )
+		tab[conditionKey] <- []
+	tab[conditionKey].append( conditionParams )
+}
+
+// this function is used to get the condition params
+// e.g. stat param string: "Down:1|true;Damage:2|false" for behavior "FireAndHit"
+//   "Down" and "Damage" are condition keys
+// after condition key (separated by ':') is condition params, condition params separated by '|'
+//   [ "1", "true" ] for "Down",  [ "2", "false" ] for Damage
+// index starts from 0
+//   GetSingleConfig( configTable, "Down", 0 ) == "1", GetSingleConfig( configTable, "Down", 1 ) == "true"
+//   GetSingleConfig( configTable, "Damage", 0 ) == "2", GetSingleConfig( configTable, "Damage", 1 ) == "false"
+string function GetSingleConfig( table<string, array<array<string> > > tab, string key, int index, string defaultValue = "" )
+{
+	if ( !( key in tab ) )
+		return defaultValue
+	Assert( tab[key].len() == 1, "This config key does not have single value!" )
+	if ( tab[key][0].len() > index )
+		return tab[key][0][index]
+	return defaultValue
+}
+
+bool function HasAdditionalParams( int paramType/*eAdditionalParamsType*/, StatInstance si, int index = 0 )
+{
+	return si in fileLevel.weaponStatsConfigs.additionalParams[paramType] && fileLevel.weaponStatsConfigs.additionalParams[paramType][si].len() > index
+}
+
+void function InitMaxAttachmentLevel()
+{
+	maxAttachmentLevel = {}
+	var attachmentMatrix = GetDataTable( WEAPON_ATTACHMENT_MATRIX_DATATABLE )
+	int amRowCount       = GetDataTableRowCount( attachmentMatrix )
+
+	array<LootData> allWeapons = SURVIVAL_Loot_GetByType( eLootType.MAINWEAPON )
+	for ( int i = 0; i < amRowCount; i++ )
+	{
+		string attachmentName = GetDataTableString( attachmentMatrix, i, GetDataTableColumnByName( attachmentMatrix, "attachmentName" ) )
+		if ( !SURVIVAL_Loot_IsRefValid( attachmentName ) || SURVIVAL_Loot_IsRefDisabled( attachmentName ) )
+			continue
+		int attachmentTier = SURVIVAL_Loot_GetLootDataByRef( attachmentName ).tier
+		array<string> attachPoints = split( GetDataTableString( attachmentMatrix, i, GetDataTableColumnByName( attachmentMatrix, "attachmentPoint" ) ), WHITESPACE_CHARACTERS )
+		foreach ( ap in attachPoints )
+			if ( !allAttachments.contains( ap ) )
+				allAttachments.append( ap )
+		foreach ( data in allWeapons )
+		{
+			Assert( !IsAttachmentAmbiguousForWeapon( attachmentName, data.ref, attachPoints ) )
+			int col = GetDataTableColumnByName( attachmentMatrix, data.baseWeapon )
+			if ( col == -1 )
+				continue
+			bool attachmentIsEnabled = GetDataTableBool( attachmentMatrix, i, col )
+
+			foreach ( string attachPoint in attachPoints )
+			{
+				if ( attachmentIsEnabled && data.supportedAttachments.contains( attachPoint ) )
+				{
+					if ( !( data.baseWeapon in maxAttachmentLevel ) )
+						maxAttachmentLevel[data.baseWeapon] <- {}
+					if ( !( attachPoint in maxAttachmentLevel[data.baseWeapon] ) || maxAttachmentLevel[data.baseWeapon][attachPoint] < attachmentTier )
+						maxAttachmentLevel[data.baseWeapon][attachPoint] <- attachmentTier
+				}
+			}
+		}
+	}
+}
+
+void function Mastery_ParseStat( StatInstance si, string statBehavior, string statValidation, string statParams )
+{
+	table<string, array<array<string> > > configTable
+	array<string> conditions = split( statParams, ";" )//e.g. IsAds:true;WithoutAttachmentType:sight
+
+	foreach ( pairs in conditions )
+	{
+		array<string> pairSplit = split( pairs, ":" )//e.g. IsAds:true
+		Assert( pairSplit.len() <= 2 )
+		if ( pairSplit.len() == 1 )
+			ConfigTableAddConditionParams( configTable, pairSplit[0], [] )
+		else
+			ConfigTableAddConditionParams( configTable, pairSplit[0], ConditionParamBreaker( pairSplit[1], "|" ) )
+	}
+
+	//#if WEAPON_STATS_DEBUG
+	//	printt( "WeaponStats:Parse:", statBehavior, statParams, statValidation )
+	//#endif
+	switch ( statBehavior )
+	{
+		case "DownCount":
+			WeaponStatsConfig_UniversalCount( eCountTable.DOWN, si, configTable, statValidation )
+			break
+
+		case "KillCountXP":
+			WeaponStatsConfig_KillCountXP( si, configTable, statValidation )
+			break
+
+		case "KillCountWithDownCondition":
+			WeaponStatsConfig_KillCountWithDownCondition( si, configTable, statValidation )
+			break
+
+		case "KillNpc":
+			WeaponStatsConfig_UniversalCount( eCountTable.NPC_KILL, si, configTable, statValidation )
+			break
+
+		case "BreakShieldCount":
+			WeaponStatsConfig_BreakShield( si, configTable, statValidation )
+			break
+
+		case "ContinuousWeaponDownCount":
+			WeaponStatsConfig_UniversalCount( eCountTable.CONTINUOUS_DOWN, si, configTable, statValidation )
+			break
+
+		case "AssistCount":
+			WeaponStatsConfig_UniversalCount( eCountTable.ASSIST, si, configTable, statValidation, CONDITION_PARAMS_WEAPON )
+			break
+
+		case "RevivePairKill":
+			WeaponStatsConfig_UniversalCount( eCountTable.REVIVE_PAIR_KILL, si, configTable, statValidation )
+			break
+
+		case "WipeSquad":
+			WeaponStatsConfig_WipeSquad( si, configTable )
+			break
+
+		case "BreakShieldInSquad":
+			WeaponStatsConfig_BreakShieldInSquad( si, configTable, statValidation )
+			break
+
+		case "DownCountAfterDamage":
+			WeaponStatsConfig_DownCountAfterDamage( si, configTable, statValidation )
+			break
+
+		case "DownCountAfterReload":
+			WeaponStatsConfig_DownCountAfterReload( si, configTable, statValidation )
+			break
+
+		case "DownCountAfterBreakShield":
+			WeaponStatsConfig_DownCountAfterBreakShield( si, configTable, statValidation )
+			break
+
+		case "DownCountWithoutReload":
+			WeaponStatsConfig_DownCountWithoutReloadAndTriggerRelease( si, configTable, statValidation )
+			break
+
+		case "DownCountWithoutTriggerRelease":
+			WeaponStatsConfig_DownCountWithoutTriggerRelease( si, configTable, statValidation )
+			break
+
+		case "DownCountWithoutAnyTriggerRelease":
+			WeaponStatsConfig_DownCountWithoutReloadAndTriggerRelease( si, configTable, statValidation, true )
+			break
+
+		case "DownCountWithoutWeaponOverheat":
+			WeaponStatsConfig_DownCountWithoutWeaponOverheat( si, configTable, statValidation )
+			break
+
+		case "DownCountWithFirstHitCondition":
+			WeaponStatsConfig_DownCountWithFirstHitCondition( si, configTable, statValidation )
+			break
+
+		case "DamageStatistic":
+			WeaponStatsConfig_UniversalStatistic( eStatisticTable.DAMAGE, si, configTable, statValidation )
+			break
+
+		case "DamageStatisticInShots":
+			WeaponStatsConfig_DamageStatisticInShots( si, configTable, statValidation )
+			break
+
+		case "DamageStatisticNoReload":
+			WeaponStatsConfig_DamageStatisticNoReload( si, configTable, statValidation )
+			break
+
+		case "DoubleKill":
+			WeaponStatsConfig_DoubleKill( si, configTable )
+			break
+
+		case "FinishOff":
+			WeaponStatsConfig_FinishOff( si, configTable, statValidation )
+			break
+
+		case "KillCountWithCategoryAndDownCondition":
+			WeaponStatsConfig_KillCountWithCategoryAndDownCondition( si, configTable, statValidation )
+			break
+
+		case "DownWithoutEvent":
+			WeaponStatsConfig_DownWithoutEvent( si, configTable, statValidation )
+			break
+
+		case "FireAndHit":
+			WeaponStatsConfig_FireAndHit( si, configTable, statValidation )
+			break
+
+		case "ContinuousHitCount":
+			WeaponStatsConfig_ContinuousHitCount( si, configTable, statValidation )
+			break
+
+		case "LandXBullets":
+			WeaponStatsConfig_LandXBullets( si, configTable, statValidation )
+			break
+
+		case "RawDamage":
+			WeaponStatsConfig_RawDamage( si, configTable, statValidation )
+			break
+
+		case "WeaponHoldTimeStatistic":
+			WeaponStatsConfig_WeaponHoldTimeStatistic( si, configTable, statValidation )
+			break
+
+		case "HitAccuracyAtRound":
+			WeaponStatsConfig_HitAccuracyAtRound( si, configTable, statValidation )
+			break
+
+		case "BreakIncapShieldAfterDown":
+			WeaponStatsConfig_BreakIncapShieldAfterDown( si, configTable, statValidation )
+			break
+	}
+}
+
+array<bool functionref( entity, StatInstance, entity, entity ornull, var )> function ConditionUniversalParse( table<string, array<array<string> > > configTable, StatInstance si, int hookParams = CONDITION_PARAMS_ALL )
+{
+	RefreshParseCheck( hookParams )
+	array<bool functionref( entity, StatInstance, entity, entity ornull, var )> conditionFuncs
+	foreach ( k, v in configTable )
+		foreach( m in v )
+			ConditionParse( conditionFuncs, k, m, si )
+	if ( conditionFuncs.len() == 0 )
+		conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) { return true } )
+	CheckParamsInHook()
+	return conditionFuncs
+}
+
+void function ConditionParse( array<bool functionref( entity, StatInstance, entity, entity ornull, var )> conditionFuncs, string conditionKey, array<string> conditionValues, StatInstance si )
+{
+	switch ( conditionKey )
+	{
+		case "IsAds":
+			AddParamForChecking( CONDITION_PARAMS_WEAPON )
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg ) { return WeaponStatsCondition_IsAds ( si, weaponEnt ) == arg } )
+			break
+
+		case "WithAttachmentType":
+			AddParamForChecking( CONDITION_PARAMS_WEAPON )
+			ParseAttachments( conditionFuncs, conditionValues )
+			break
+
+		case "WithoutAttachmentType":
+			AddParamForChecking( CONDITION_PARAMS_WEAPON )
+			string attachment = conditionValues[0]
+			Assert( allAttachments.contains( attachment ), attachment + " not found in allAttachments!" )
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( attachment ) {
+				return WeaponStatsCondition_WithoutAttachmentType ( si, weaponEnt, attachment )
+			} )
+			break
+
+		case "WithExactAttachment":
+			AddParamForChecking( CONDITION_PARAMS_WEAPON )
+			string attachmentPoint = conditionValues[0]
+			string attachmentName = conditionValues[1]
+			bool isPrefix = conditionValues.len() > 2 && conditionValues[2] == "true"
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( attachmentPoint, attachmentName, isPrefix ) {
+				return WeaponStatsCondition_WithAttachmentName ( si, weaponEnt, attachmentPoint, attachmentName, isPrefix )
+			} )
+			break
+
+		case "WithinGotRevived":
+			int validSeconds = conditionValues[0].tointeger()
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( validSeconds ) { return WeaponStatsCondition_WithinGotRevived ( attacker, si, validSeconds ) } )
+			break
+
+		case "AttackerInZipline":
+			int validSeconds = conditionValues[0].tointeger()
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( validSeconds ) { return WeaponStatsCondition_TargetInZipline ( attacker, si, validSeconds ) } )
+			break
+
+		case "TargetInZipline":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			int validSeconds = conditionValues[0].tointeger()
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( validSeconds ) { return WeaponStatsCondition_TargetInZipline ( expect entity( victim ), si, validSeconds ) } )
+			break
+
+		case "DamageInPeriod":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			int timeLimit = conditionValues[0].tointeger()
+			int requiredDamage = conditionValues[1].tointeger()
+			bool useBothWeapon = conditionValues.contains( "use_both_weapons" ) ? true : false
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( timeLimit, requiredDamage, useBothWeapon )
+			{
+				return WeaponStatsCondition_DamageInPeriodComplete( attacker, si, expect entity( victim ), timeLimit, requiredDamage, useBothWeapon )
+			} )
+			break
+
+		case "IsSemiAuto":
+			AddParamForChecking( CONDITION_PARAMS_WEAPON )
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg ) { return WeaponStatsCondition_IsSemiAuto( si, weaponEnt ) == arg } )
+			break
+
+		case "DistanceWithin":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			float dist = conditionValues[0].tointeger() * INCHES_PER_METER
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( dist ) { return WeaponStatsCondition_TargetDistanceWithin( si, attacker, expect entity( victim ), dist ) } )
+			break
+
+		case "DistanceExceeds":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			float dist = conditionValues[0].tointeger() * INCHES_PER_METER
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( dist ) { return WeaponStatsCondition_TargetDistanceExceeds( si, attacker, expect entity( victim ), dist ) } )
+			break
+
+		case "LimitAmmo":
+			int target = conditionValues[0].tointeger()
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( target )
+			{
+				// if the last kill meet continuous weapon conditions, means all the previous meet the condition.
+				bool needCheckContinuousLimitAmmo = si in fileLevel.weaponStatsStorageSum[attacker].AmmoUsedTrace &&
+				si in fileLevel.weaponStatsConfigs.validateCondition_Count &&
+				fileLevel.weaponStatsStorageSum[attacker].AmmoUsedTrace[si].len() == fileLevel.weaponStatsConfigs.validateCondition_Count[si]
+				return WeaponStatsCondition_LimitAmmo ( attacker, si, target, needCheckContinuousLimitAmmo )
+			} )
+			break
+
+		case "LimitDamage":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.DAMAGED_PLAYERS][si] <- []
+			int limit = conditionValues[0].tointeger()
+			conditionFuncs.append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull target, var damageInfo ) : ( limit )
+			{
+				return WeaponStatsCondition_LimitDamage( player, si, expect entity( target ), limit )
+			} )
+			break
+
+		case "DamageContribution":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.DAMAGED_PLAYERS][si] <- []
+			float ratio = conditionValues[0].tofloat()
+			conditionFuncs.append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull target, var damageInfo ) : ( ratio )
+			{
+				return WeaponStatsCondition_DamageContribution( player, si, expect entity( target ), ratio )
+			} )
+			break
+
+		case "MatchIncreaseOnce":
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo )
+			{
+				return WeaponStatsCondition_IncreaseTimesLimit ( attacker, si, 1 )  // "MatchIncreaseOnce" means limit:1
+			} )
+			break
+
+		case "ReturnFire":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			int validSeconds = conditionValues[0].tointeger()
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( validSeconds )
+			{
+				return WeaponStatsCondition_ReturnFire( attacker, expect entity( victim ), validSeconds )
+			} )
+			break
+
+		case "AttackerEvent":
+			string eventKey = conditionValues[0]
+			int validSeconds = conditionValues[1].tointeger()
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( eventKey, validSeconds )
+			{
+				return WeaponStatsCondition_TargetEvent( attacker, eventKey, validSeconds )
+			} )
+			break
+
+		case "AttackerHasNoEvent":
+			string eventKey = conditionValues[0]
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( eventKey )
+			{
+				return !WeaponStatsCondition_TargetEvent( attacker, eventKey, -1 )
+			} )
+			break
+
+		case "TargetEvent":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			string eventKey = conditionValues[0]
+			int validSeconds = conditionValues[1].tointeger()
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( eventKey, validSeconds )
+			{
+				return WeaponStatsCondition_TargetEvent( expect entity( victim ), eventKey, validSeconds )
+			} )
+			break
+
+		case "TargetHasNoEvent":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			string eventKey = conditionValues[0]
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( eventKey )
+			{
+				return !WeaponStatsCondition_TargetEvent( expect entity( victim ), eventKey, -1 )
+			} )
+			break
+
+		case "TargetInteractEvent":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			string eventKey = conditionValues[0]
+			int validSeconds = conditionValues[1].tointeger()
+			conditionFuncs.append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull target, var damageInfo ) : ( eventKey, validSeconds )
+			{
+				return WeaponStatsCondition_TargetInteractEvent( player, expect entity( target ), eventKey, validSeconds )
+			} )
+			break
+
+		case "TargetRevivePair":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			int validSeconds = conditionValues[0].tointeger()
+			conditionFuncs.append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull target, var damageInfo ) : ( validSeconds )
+			{
+				return WeaponStatsCondition_TargetRevivePair( player, si, expect entity( target ), validSeconds )
+			} )
+			break
+
+		case "TeammateInteractWithTarget":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			string event = conditionValues[0]
+			int validSeconds = conditionValues[1].tointeger()
+			bool exchangeActivePassive = conditionValues[2] == "true" ? true : false
+			conditionFuncs.append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull target, var damageInfo ) : ( event, validSeconds, exchangeActivePassive )
+			{
+				return WeaponStatsCondition_TeammateInteractWithTarget( player, si, expect entity( target ), event, validSeconds, exchangeActivePassive )
+			} )
+			break
+
+		case "TargetDamageAttackerWithWeapon":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			int validSeconds = conditionValues[0].tointeger()
+			string weaponName = conditionValues[1]
+			conditionFuncs.append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull target, var damageInfo ) : ( validSeconds, weaponName )
+			{
+				return WeaponStatsCondition_TargetInteractEvent( expect entity( target ), player, WEAPON_DAMAGE + weaponName, validSeconds )
+			} )
+			break
+
+		case "TargetIsProwler":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			conditionFuncs.append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull target, var damageInfo ) { return IsProwler( expect entity( target ) ) } )
+			break
+
+		case "AttackWithoutOverheat":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.DAMAGE_START_TIME][si] <- []
+			int resetSeconds = conditionValues[0].tointeger()
+			conditionFuncs.append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull target, var damageInfo ) : ( resetSeconds )
+			{
+				return WeaponStatsCondition_AttackWithoutOverheat( player, si, expect entity( target ), resetSeconds )
+			} )
+			break
+
+		case "IncapShieldBreakerSameAsKiller":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.BREAK_INCAP_SHIELD_TIME][si] <- []
+			conditionFuncs.append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull target, var damageInfo )
+			{
+				return WeaponStatsCondition_IncapShieldBreakerSameAsKiller( player, si, expect entity( target ) )
+			} )
+			break
+
+		case "TraceRotation":
+			fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.TRACE_ROTATION][si] <- []
+			break
+
+		case "ClearOnCompleteRecovery":
+			fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.COMPLETE_RECOVERY][si] <- []
+			break
+
+		case "AttackerOutsideSafezone":
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg )  { return WeaponStatsCondition_TargetOutsideSafezone( attacker ) == arg } )
+			break
+
+		case "TargetOutsideSafezone":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg )  { return WeaponStatsCondition_TargetOutsideSafezone( expect entity( victim ) ) == arg } )
+			break
+
+		case "TargetInAir":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg )  { return WeaponStatsCondition_TargetInAir( expect entity( victim ) ) == arg } )
+			break
+
+		case "AttackerInAir":
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg )  { return WeaponStatsCondition_TargetInAir( attacker ) == arg } )
+			break
+
+		case "AttackerSameAsKiller":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			int timeLimit = conditionValues.len() > 0 && conditionValues[0].len() > 0 ? conditionValues[0].tointeger() : -1
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( timeLimit )  { return WeaponStatsCondition_AttackerSameAsKiller( si, attacker, expect entity( victim ), float( timeLimit ) ) } )
+			break
+
+		case "IsHeadshot":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg ) { return WeaponStatsCondition_IsHeadshot( si, damageInfo, expect entity( victim ) ) == arg } )
+			break
+
+		case "IsOneShotKill":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg ) {
+				return !WeaponStatsCondition_TargetInteractEvent( attacker, expect entity( victim ), LAST_DAMAGE_TIME, ONE_SHOT_KILL_INVALID_TIME )
+			} )
+			break
+
+		case "InTempo":
+			AddParamForChecking( CONDITION_PARAMS_WEAPON )
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg ) { return WeaponStatsCondition_InTempo( si, weaponEnt ) == arg } )
+			break
+
+		case "IsFullyHeated":
+			AddParamForChecking( CONDITION_PARAMS_WEAPON )
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg ) { return WeaponStatsCondition_IsFullyHeated( si, weaponEnt ) == arg } )
+			break
+
+		case "IsMaxChargeLevel":
+			AddParamForChecking( CONDITION_PARAMS_WEAPON )
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg ) { return WeaponStatsCondition_IsMaxChargeLevel( attacker, si, weaponEnt ) == arg } )
+			break
+
+		case "OverChargeFraction":
+			AddParamForChecking( CONDITION_PARAMS_WEAPON )
+			float arg = conditionValues[0].tofloat()
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg ) { return WeaponStatsCondition_OverChargeFraction( attacker, si, weaponEnt, arg ) == true } )
+			break
+
+		case "IsEnergized":
+			AddParamForChecking( CONDITION_PARAMS_WEAPON )
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) { return WeaponStatsCondition_IsEnergized( si, weaponEnt ) } )
+			break
+
+		case "VictimWeaponIsReloading":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) { return WeaponStatsCondition_VictimWeaponIsReloading( si, expect entity( victim ) ) } )
+			break
+
+		case "WeaponWithinPickupTime":
+			AddParamForChecking( CONDITION_PARAMS_WEAPON )
+			float target = conditionValues.len() > 0 ? conditionValues[0].tofloat() : WEAPON_PICKUP_INVALID_TIME
+			float dropWeaponCheck = conditionValues.len() > 1 ? conditionValues[1].tofloat() : WEAPON_PICKUP_INVALID_TIME
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( target, dropWeaponCheck ) {
+				return WeaponStatsCondition_WithinPickupTime( si, attacker, weaponEnt, target, dropWeaponCheck )
+			} )
+			break
+
+		case "WeaponWithinSwitchTime":
+			float target = conditionValues.len() > 0 ? conditionValues[0].tofloat() : WEAPON_PICKUP_INVALID_TIME
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( target ) {
+				return Time() - GetTargetEventTime( attacker, WEAPON_SWITCH ) <= target
+			} )
+			break
+
+		case "WeaponFireRateReached":
+			AddParamForChecking( CONDITION_PARAMS_WEAPON )
+			float target = conditionValues[0].tofloat()
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( target ) {
+				return WeaponStatsCondition_FireRateReached( si, attacker, weaponEnt, target )
+			} )
+			break
+
+		case "AttackerIsSliding":
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg ) { return attacker.IsSliding() == arg } )
+			break
+
+		case "VictimIsSliding":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg ) { return ( expect entity( victim ) ).IsSliding() == arg } )
+			break
+
+		case "IsMagEmpty":
+			AddParamForChecking( CONDITION_PARAMS_WEAPON )
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg ) { return WeaponStatsCondition_IsMagEmpty( attacker, si, weaponEnt ) == arg } )
+			break
+
+		case "IsLastMag":
+			AddParamForChecking( CONDITION_PARAMS_WEAPON )
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg ) { return WeaponStatsCondition_IsLastMag( attacker, si, weaponEnt ) == arg } )
+			break
+
+		case "AttackerHpWithin":
+			float target = conditionValues[0].tofloat()
+			conditionFuncs.append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( target )
+			{
+				return !WeaponStatsCondition_PlayerHPExceeds( si, player, target )
+			} )
+			break
+
+		case "VictimUsingWeapon":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			string target = conditionValues[0]
+			conditionFuncs.append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( target )
+			{
+				return WeaponStatsCondition_VictimUsingWeapon( si, target, expect entity( victim ) )
+			} )
+			break
+
+		case "VictimPosLower":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			int offset = conditionValues.len() > 0 ? conditionValues[0].tointeger() : PLAYER_HEIGHT_OFFSET_DEFAULT
+			conditionFuncs.append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( offset ) { return WeaponStatsCondition_VictimPosLower( si, player, expect entity( victim ), offset ) } )
+			break
+
+		case "VictimIsSkydiving":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			conditionFuncs.append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg ) { return WeaponStatsCondition_IsSkydiving( si, expect entity( victim ) ) == arg } )
+			break
+
+		case "VictimIsExecuting":
+			AddParamForChecking( CONDITION_PARAMS_VICTIM )
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			Assert( conditionValues[1] == "true" || conditionValues[1] == "false" )
+			bool forceTargetIsTeammate = conditionValues[1] == "true" ? true : false
+			fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.VICTIM_EXECUTING_ENEMY][si] <- []
+			fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.EXECUTING_TEAMMATE][si] <- [ forceTargetIsTeammate ]
+			fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_ATTACK][si] <- [ void function( entity player ) : ( si ) {
+				if ( !(player in fileLevel.weaponStatsStorageSum) )
+					return
+				if ( !(si in fileLevel.weaponStatsStorageSum[player].VictimExecutingEnemy) )
+					return
+				fileLevel.weaponStatsStorageSum[player].VictimExecutingEnemy[si].clear()
+			} ]
+			conditionFuncs.append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg )
+			{
+				if ( !(player in fileLevel.weaponStatsStorageSum) )
+					return false
+				if ( !(si in fileLevel.weaponStatsStorageSum[player].VictimExecutingEnemy) )
+					return false
+				entity victimEnt = expect entity( victim )
+				if ( !(victimEnt in fileLevel.weaponStatsStorageSum[player].VictimExecutingEnemy[si]) )
+					return false
+				return fileLevel.weaponStatsStorageSum[player].VictimExecutingEnemy[si][victimEnt] == arg
+			} )
+			break
+
+		case "WithWeaponCategory":
+			AddParamForChecking( CONDITION_PARAMS_WEAPON )
+			string weaponCategoryGUID = conditionValues[0].toupper()
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( weaponCategoryGUID )
+			{
+				ItemFlavor ornull weaponItem = GetWeaponItemFlavorByClass( weaponEnt.GetWeaponClassName() )
+				if ( weaponItem == null )
+					return false
+				ItemFlavor weaponCategory = WeaponItemFlavor_GetCategory( expect ItemFlavor( weaponItem ) )
+				return ItemFlavor_GetGUIDString( weaponCategory ) == weaponCategoryGUID
+			} )
+			break
+
+		case "LastOneInTeam":
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			conditionFuncs.append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg ) { return WeaponStatsCondition_IsLastOneInTeam( si, player ) == arg } )
+			break
+
+		case "AttackerHasShield":
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			conditionFuncs.append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg ) { return WeaponStatsCondition_AttackerHasShield( si, player ) == arg } )
+			break
+
+		case "CarUsingAltAmmo":
+			AddParamForChecking( CONDITION_PARAMS_WEAPON )
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			conditionFuncs.append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg ) { return WeaponStatsCondition_IsCarUsingAltAmmo( si, weaponEnt ) == arg } )
+			break
+
+		case "StatisticExist":
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			int statisticType = conditionValues[1].tointeger()
+			conditionFuncs.append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg, statisticType ) { return WeaponStatsCondition_StatisticExist( statisticType, player, si ) == arg } )
+			break
+
+		case "StatisticTimeWithin":
+			Assert( conditionValues[0] == "true" || conditionValues[0] == "false" )
+			bool arg = conditionValues[0] == "true" ? true : false
+			int statisticType = conditionValues[1].tointeger()
+			float validSeconds = conditionValues[2].tofloat()
+			bool clear = conditionValues.len() > 3 && conditionValues[3] == "true"
+			conditionFuncs.append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( arg, statisticType, validSeconds, clear ) {
+				return WeaponStatsCondition_StatisticTimeWithin(statisticType, player, si, validSeconds, clear ) == arg
+			} )
+			break
+
+	}
+}
+
+//arg1: string array, attachment points, e.g. "sight,barrel". If "all" is presented, all attachment is required except other attachments written in this field, e.g. "sight, all" means all attachments except sight
+//arg2: string, optional, weaponRef, e.g. "mp_weapon_rspn101"
+//arg3: int or "max", optional, tier requirement, "max" will find max tier for each attachment
+void function ParseAttachments( array<bool functionref( entity, StatInstance, entity, entity ornull, var )> conditionFuncs, array<string> args )
+{
+	array<string> attachments = ConditionParamBreaker( args[0], "," )
+	string weaponRef = args.len() > 1 ? args[1] : ""
+	if ( attachments.contains( REQUIRE_ALL_ATTACHMENTS ) )
+	{
+		Assert( weaponRef.len() > 0, "Must give weaponRef if arg1 == " + REQUIRE_ALL_ATTACHMENTS )
+		array<string> excludeAttachment = []
+		foreach ( a in attachments )
+			excludeAttachment.append( a )
+		array<string> fullAttachment = SURVIVAL_Loot_GetLootDataByRef( weaponRef ).supportedAttachments
+		attachments = []
+		foreach ( a in fullAttachment )
+			if ( !excludeAttachment.contains( a ) )
+				attachments.append( a )
+	}
+	foreach ( attachment in attachments )
+		if ( !allAttachments.contains( attachment ) )
+		{
+			#if WEAPON_STATS_DEBUG
+				printt( attachment + " not found in allAttachments!" )
+			#endif
+			return
+		}
+	if ( args.len() > 2 && args[2] == REQUIRE_MAX_TIER )
+	{
+		Assert( weaponRef.len() > 0, "Must give weaponRef if arg3 == " + REQUIRE_MAX_TIER )
+		if ( !( weaponRef in maxAttachmentLevel ) )
+		{
+			#if WEAPON_STATS_DEBUG
+				printt( weaponRef + " weaponRef not in maxAttachmentLevel" )
+			#endif
+			return
+		}
+		table<int, array<string> > filter = {}
+		foreach ( attachment in attachments )
+		{
+			if ( !( attachment in maxAttachmentLevel[weaponRef] ) )
+			{
+				#if WEAPON_STATS_DEBUG
+					printt( attachment + " is not in maxAttachmentLevel[" + weaponRef + "]" )
+				#endif
+				return
+			}
+			int tier = maxAttachmentLevel[weaponRef][attachment]
+			if ( !( tier in filter ) )
+				filter[tier] <- []
+			filter[tier].append( attachment )
+		}
+		foreach ( k, v in filter )
+		{
+			int tierRequirement = k
+			array<string> tierAttachments = v
+			conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( tierRequirement, tierAttachments ) {
+				return WeaponStatsCondition_WithAttachmentType ( si, weaponEnt, tierAttachments, tierRequirement )
+			} )
+		}
+	}
+	else
+	{
+		int requireTier = args.len() > 2 ? args[2].tointeger() : -1
+		conditionFuncs.append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( attachments, requireTier ) {
+			return WeaponStatsCondition_WithAttachmentType ( si, weaponEnt, attachments, requireTier )
+		} )
+	}
+}
+
+array<string> function ConditionParamBreaker( string input, string delimiter = "|" )
+{
+	array<string> args
+	int start = 0
+	for ( int i = 0; i < input.len(); i++ )
+	{
+		if ( input.slice( i, i + 1 ) == delimiter )
+		{
+			args.append( input.slice( start, i ) )
+			start = i + 1
+		}
+	}
+	args.append( input.slice( start, input.len() ) )
+	return args
+}
+
+bool function ConditionsEvaluate( array<bool functionref( entity, StatInstance, entity, entity ornull, var )> conditionFuncs, StatInstance si, entity player, entity weaponEnt, entity ornull victim = null, var damageInfo = null )
+{
+	foreach ( condition in conditionFuncs )
+	{
+		if ( !( condition( player, si, weaponEnt, victim, damageInfo ) ) )
+			return false
+	}
+	return true
+}
+
+bool function WriteConditionsEvaluate( int writeCondition/*eWriteCondition*/, StatInstance si, entity player, entity weaponEnt, entity ornull victim = null, var damageInfo = null )
+{
+	return si in fileLevel.weaponStatsConfigs.writeConditions[writeCondition] && ConditionsEvaluate( fileLevel.weaponStatsConfigs.writeConditions[writeCondition][si], si, player, weaponEnt, victim, damageInfo )
+}
+
+void function WeaponStatsConfig_UniversalCount( int countTable/*eCountTable*/, StatInstance si, table<string, array<array<string> > > configTable, string validation, int hookParams = CONDITION_PARAMS_ALL )
+{
+	fileLevel.weaponStatsConfigs.writeCondition_Count[countTable][si] <- ConditionUniversalParse( configTable, si, hookParams )
+	fileLevel.weaponStatsConfigs.validateCondition_Count[si] <- validation.tointeger()
+}
+
+void function WeaponStatsConfig_UniversalStatistic( int statisticType/*eStatisticTable*/, StatInstance si, table<string, array<array<string> > > configTable, string validation, int hookParams = CONDITION_PARAMS_ALL )
+{
+	fileLevel.weaponStatsConfigs.writeCondition_Statistic[statisticType][si] <- ConditionUniversalParse( configTable, si, hookParams )
+	fileLevel.weaponStatsConfigs.validateCondition_Statistic[si] <- validation.tofloat()
+}
+
+void function WeaponStatsConfig_DamageStatisticInShots( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.DAMAGE_ANY_VICTIM_IN_PERIOD][si] <- ConditionUniversalParse( configTable, si )
+
+	int shotCount = GetSingleConfig( configTable, SHOT_COUNT, 0 ).tointeger()
+	fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.DAMAGE_IN_PERIOD][si] <- [ shotCount ]
+
+	fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_ATTACK][si] <- [ void function( entity player ) : ( si ) {
+		if ( si in fileLevel.weaponStatsStorageSum[player].DamageAnyVictimInPeriod )
+			MoveDamageInPeriodInfoToNext( fileLevel.weaponStatsStorageSum[player].DamageAnyVictimInPeriod[si] )
+	} ]
+
+	int damage = validation.tointeger()
+	fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.DAMAGE_ANY_VICTIM_IN_PERIOD][si] <- ( bool function( entity player, StatInstance si, ... ) : ( damage ) {
+		return WeaponStatsCondition_DamageAnyVictimInPeriodComplete( player, si, NO_TIME_LIMIT, damage, false )
+	} )
+}
+
+void function WeaponStatsConfig_DamageStatisticNoReload( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	WeaponStatsConfig_UniversalStatistic( eStatisticTable.DAMAGE, si, configTable, validation )
+	fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_RELOAD][si] <- [ void function( entity player ) : ( si ) { fileLevel.weaponStatsStorageSum[player].Statistic[eStatisticTable.DAMAGE][si] <- 0 } ]
+}
+
+void function WeaponStatsConfig_KillCountXP( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.VICTIMS_PROPERTY][si] <- [eVictimProperty.TIME, true]
+	fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.KILL_COUNT_XP][si] <- [ GetSingleConfig( configTable, XP_WEIGHT, 0, "1" ).tofloat() ]
+	fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.VICTIMS_PROPERTY][si] <- ConditionUniversalParse( configTable, si )
+	fileLevel.weaponStatsConfigs.clearActionConfig_ReviveAndRespawn[si] <- [ void function( entity player, entity victim ) : ( si ) { WeaponStatsStorageClear_VictimsProperty( player, victim, si ) } ]
+}
+
+void function WeaponStatsConfig_KillCountWithDownCondition( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.VICTIMS_PROPERTY][si] <- [eVictimProperty.TIME, true]
+	fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.VICTIMS_PROPERTY][si] <- ConditionUniversalParse( configTable, si )
+	fileLevel.weaponStatsConfigs.clearActionConfig_ReviveAndRespawn[si] <- [ void function( entity player, entity victim ) : ( si ) { WeaponStatsStorageClear_VictimsProperty( player, victim, si ) } ]
+	fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.KILL_WITH_DOWN_CONDITION][si] <- [
+		bool function( entity player, StatInstance si, entity weapon, entity ornull victim, var damageInfo ) {
+			entity victimEnt = expect entity( victim )
+			return si in fileLevel.weaponStatsStorageSum[player].VictimsProperty && victimEnt in fileLevel.weaponStatsStorageSum[player].VictimsProperty[si]
+		} ]
+	fileLevel.weaponStatsConfigs.validateCondition_Count[si] <- validation.tointeger()
+}
+
+void function WeaponStatsConfig_BreakShield( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	WeaponStatsConfig_UniversalCount( eCountTable.BREAK_SHIELD, si, configTable, validation )
+
+	if ( SHIELD_TYPE in configTable )
+	{
+		int shieldTier = GetSingleConfig( configTable, SHIELD_TYPE, 0, "1" ).tointeger()
+		// bool isEvolvedShield = configTable[SHIELD_TYPE][1] == "true" ? true : false
+		fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.BREAK_SHIELD][si].append(
+			bool function( entity player, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( shieldTier )
+			{
+				Assert( victim != null, "WeaponStatsConfig_BreakShield, but victim is null")
+				return WeaponStatsCondition_ShieldMatchType( expect entity( victim ), shieldTier )
+			} )
+	}
+	if ( WITHOUT_RELOADING in configTable )
+	{
+		array<void functionref(entity)> clearActions = [ void function( entity player ) : ( si ) { fileLevel.weaponStatsStorageSum[player].Count[eCountTable.BREAK_SHIELD][si] <- 0 } ]
+		fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_RELOAD][si] <- clearActions
+		fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_SWITCHED][si] <- clearActions
+	}
+}
+
+void function WeaponStatsConfig_FireAndHit( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	int validateLocation   = AMMO_HIT_VALIDATIONS[validation]
+	if ( AMMO_HIT_FROM_START in configTable )
+		fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.FIREANDHIT][si] <- [ validateLocation ]
+	else
+		fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.FIREANDHIT][si] <- [ validateLocation, false ]
+	fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.AMMO_FIRED][si] <- ConditionUniversalParse( {}, si )
+	fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.AMMO_HIT][si] <- ConditionUniversalParse( configTable, si )
+	array<void functionref(entity)> clearActions                      = [ void function( entity player ) : ( si ) {
+		fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si] <- 0
+		fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT][si] <- 0
+	} ]
+	array<bool functionref(entity, StatInstance)> additionalValidates = []
+	if ( DOWN in configTable )
+	{
+		table<string, array<array<string> > > downConfigTable
+		foreach ( condition, args in configTable )
+		{
+			if ( condition.len() >= DOWN_PREFIX.len() && condition.slice( 0, DOWN_PREFIX.len() ) == DOWN_PREFIX )
+				downConfigTable[condition.slice( DOWN_PREFIX.len(), condition.len() )] <- args
+			else
+				downConfigTable[condition] <- args
+		}
+		fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.DOWN][si] <- ConditionUniversalParse( downConfigTable, si )
+		int target    = GetSingleConfig( configTable, DOWN, 0, "0" ).tointeger()
+		bool exactFit = GetSingleConfig( configTable, DOWN, 1 ) == "true" ? true : false
+		additionalValidates.append( bool function( entity player, StatInstance si ) : ( target, exactFit ) {
+			if ( si in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.DOWN] )
+			{
+				int downCount = fileLevel.weaponStatsStorageSum[player].Count[eCountTable.DOWN][si]
+				#if WEAPON_STATS_DEBUG
+					printt( "WeaponStats:FireHitDowned:", player.GetPlayerName(), downCount, target )
+				#endif
+				return exactFit ? downCount == target : downCount >= target
+			}
+			return false
+		} )
+		clearActions.append( void function( entity player ) : ( si ) {
+			fileLevel.weaponStatsStorageSum[player].Count[eCountTable.DOWN][si] <- 0
+		} )
+	}
+	if ( DAMAGE in configTable )
+	{
+		table<string, array<array<string> > > damageConfigTable
+		foreach ( condition, args in configTable )
+		{
+			if ( condition.len() >= DAMAGE_PREFIX.len() && condition.slice( 0, DAMAGE_PREFIX.len() ) == DAMAGE_PREFIX )
+				damageConfigTable[condition.slice( DAMAGE_PREFIX.len(), condition.len() )] <- args
+			else
+				damageConfigTable[condition] <- args
+		}
+		fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.DAMAGED_PLAYERS][si] <- ConditionUniversalParse( damageConfigTable, si )
+		int target    = GetSingleConfig( configTable, DAMAGE, 0, "0" ).tointeger()
+		bool exactFit = GetSingleConfig( configTable, DAMAGE, 1 ) == "true" ? true : false
+		additionalValidates.append( bool function( entity player, StatInstance si ) : ( target, exactFit ) {
+			if ( si in fileLevel.weaponStatsStorageSum[player].DamagedPlayers )
+			{
+				int damagedCount = fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si].len()
+				#if WEAPON_STATS_DEBUG
+					printt( "WeaponStats:FireHitDamaged:", player.GetPlayerName(), damagedCount, target )
+				#endif
+				return exactFit ? damagedCount == target : damagedCount >= target
+			}
+			return false
+		} )
+		clearActions.append( void function( entity player ) : ( si ) {
+			fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si] <- {}
+		} )
+	}
+
+	fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_SWITCHED][si] <- clearActions
+	fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_RELOAD][si] <- clearActions
+	fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.FIRE_HIT_VALIDATE_PASSED][si] <- clearActions
+
+	if ( CLEAR_ON_WEAPON_ATTACK in configTable )
+		fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_ATTACK][si] <- clearActions
+
+	if ( CLEAR_ON_POST_WEAPON_ATTACK in configTable )
+		fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.POST_WEAPON_ATTACK][si] <- clearActions
+
+	bool allowPartialHit = ( ALLOW_PARTIAL_HIT in configTable )
+
+	bool functionref( entity, StatInstance, ... ) validateFunction = ( bool function( entity player, StatInstance si, ... ) : ( additionalValidates, validateLocation, allowPartialHit ) {
+		foreach ( validateFuncs in additionalValidates )
+			if ( !validateFuncs( player, si ) )
+				return false
+		entity weaponEnt = expect entity( vargv[0] )
+		if ( !allowPartialHit && fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT][si] < fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si] )
+			return false
+		if ( validateLocation == eAmmoHitValidateLocation.IMMEDIATE )
+			return true
+		if ( validateLocation == eAmmoHitValidateLocation.SHOT_END )
+			return fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si] >= weaponEnt.GetProjectilesPerShot()
+		if ( validateLocation == eAmmoHitValidateLocation.BURST_END )
+			return !IsWeaponInSingleShotMode( weaponEnt ) && fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si] >= GetWeaponBurstCount( weaponEnt )
+		return fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si] >= GetWeaponMagCount( weaponEnt )//eAmmoHitValidateLocation.MAG_END
+	} )
+	fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.AMMO_FIRED][si] <- validateFunction
+	fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.AMMO_HIT][si] <- validateFunction
+}
+
+void function WeaponStatsConfig_LandXBullets( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.AMMO_FIRED][si] <- ConditionUniversalParse( {}, si )
+	fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.AMMO_HIT][si] <- ConditionUniversalParse( configTable, si )
+	fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_ATTACK][si] <- [ void function( entity player ) : ( si ) {
+		if ( si in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED] &&
+		fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si] >= GetWeaponBurstCount( fileLevel.weaponStatsStorageSum[player].mainHandActiveWeapon ) )
+		{
+			fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si] <- 0
+			fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT][si] <- 0
+			fileLevel.weaponStatsStorageSum[player].Count[eCountTable.LAND_X_BULLETS_COUNT_WRITE_LOCK][si] <- 0
+		}
+	} ]
+	int burstHitTarget = GetSingleConfig( configTable, HIT_X_EACH_BURST_IN_MAG, 0, "0" ).tointeger()
+	if ( burstHitTarget > 0 )
+	{
+		fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_RELOAD][si] <- [ void function( entity player ) : ( si ) {
+			fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si] <- 0
+			fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT][si] <- 0
+			fileLevel.weaponStatsStorageSum[player].Count[eCountTable.LAND_X_BULLETS_COUNT_WRITE_LOCK][si] <- 0
+			fileLevel.weaponStatsStorageSum[player].Count[eCountTable.LAND_X_BULLETS_COUNT][si] <- 0
+		} ]
+	}
+	fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.FIRE_HIT_VALIDATE_PASSED][si] <- [ void function( entity player ) : ( si ) {
+		fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si] <- 0
+		fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT][si] <- 0
+		fileLevel.weaponStatsStorageSum[player].Count[eCountTable.LAND_X_BULLETS_COUNT][si] <- 0
+	} ]
+	int validateTarget = validation.len() > 0 ? validation.tointeger() : 0//0 means hit burstHitTarget every burst until mag empty
+	bool functionref( entity, StatInstance, ... ) validateFunction = ( bool function( entity player, StatInstance si, ... ) : ( burstHitTarget, validateTarget ) {
+		Assert( vargc > 0 )
+		entity weapon = expect entity( vargv[0] )
+		if ( !( si in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.LAND_X_BULLETS_COUNT] ) )
+			fileLevel.weaponStatsStorageSum[player].Count[eCountTable.LAND_X_BULLETS_COUNT][si] <- 0
+		int hitTarget = burstHitTarget > 0 ? burstHitTarget : fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si]
+		bool countIsLocked = si in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.LAND_X_BULLETS_COUNT_WRITE_LOCK] && fileLevel.weaponStatsStorageSum[player].Count[eCountTable.LAND_X_BULLETS_COUNT_WRITE_LOCK][si] > 0
+		if ( !countIsLocked && si in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT] && fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT][si] >= hitTarget )
+		{
+			fileLevel.weaponStatsStorageSum[player].Count[eCountTable.LAND_X_BULLETS_COUNT][si] ++
+			fileLevel.weaponStatsStorageSum[player].Count[eCountTable.LAND_X_BULLETS_COUNT_WRITE_LOCK][si] <- 1
+		}
+		if ( validateTarget == 0 && GetWeaponBurstCount( weapon ) == 0 )
+			return false
+		return fileLevel.weaponStatsStorageSum[player].Count[eCountTable.LAND_X_BULLETS_COUNT][si] >= ( validateTarget > 0 ? validateTarget : GetWeaponMagCount( weapon ) / GetWeaponBurstCount( weapon ) )
+	} )
+	fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.AMMO_FIRED][si] <- validateFunction
+	fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.AMMO_HIT][si] <- validateFunction
+}
+
+void function WeaponStatsConfig_HitAccuracyAtRound( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.FIREANDHIT][si] <- [ eAmmoHitValidateLocation.ROUND_END ]
+	fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.AMMO_FIRED][si] <- ConditionUniversalParse( {}, si )
+	fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.AMMO_HIT][si] <- ConditionUniversalParse( configTable, si )
+	int target = validation.tointeger()
+	int firedMinimum = GetSingleConfig( configTable, FIRED_MINIMUM, 0, "10" ).tointeger()
+	fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.PLAYER_DISCONNECT_OR_MATCH_END][si] <- ( bool function( entity player, StatInstance si, ... ) : ( target, firedMinimum ) {
+		int firedCount = si in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED] ? fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si] : 0
+		int hitCount = si in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT] ? fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT][si] : 0
+		return firedCount >= firedMinimum && hitCount * 100 / firedCount >= target
+	} )
+}
+
+void function WeaponStatsConfig_RawDamage( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	fileLevel.weaponStatsConfigs.writeCondition_Statistic[eStatisticTable.RAW_DAMAGE][si] <- ConditionUniversalParse( configTable, si )
+	fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.RAW_DAMAGE][si] <- ( bool function( entity player, StatInstance si, ... ) { return true } )
+}
+
+void function WeaponStatsConfig_WeaponHoldTimeStatistic( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	fileLevel.weaponStatsConfigs.writeCondition_Statistic[eStatisticTable.HOLD_TIME][si] <- ConditionUniversalParse( {}, si )
+}
+
+void function WeaponStatsConfig_FinishOff( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	table<string, array<array<string> > > downConfigTable
+	table<string, array<array<string> > > killConfigTable
+	foreach ( condition, args in configTable )
+	{
+		if ( condition.len() >= DOWN_PREFIX.len() && condition.slice( 0, DOWN_PREFIX.len() ) == DOWN_PREFIX )
+			downConfigTable[condition.slice( DOWN_PREFIX.len(), condition.len() )] <- args
+		else
+			killConfigTable[condition] <- args
+	}
+	if ( "AttackerSameAsKiller" in killConfigTable )
+	{
+		fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.VICTIMS_PROPERTY][si] <- [eVictimProperty.TIME, true]
+		fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.VICTIMS_PROPERTY][si] <- ConditionUniversalParse( downConfigTable, si )
+		//if victim get revived, clear storage
+		fileLevel.weaponStatsConfigs.clearActionConfig_ReviveAndRespawn[si] <- [ void function( entity player, entity victim ) : ( si ) { WeaponStatsStorageClear_VictimsProperty( player, victim, si ) } ]
+	}
+	WeaponStatsConfig_UniversalCount( eCountTable.FINISH_OFF, si, killConfigTable, validation )
+}
+
+void function WeaponStatsConfig_KillCountWithCategoryAndDownCondition( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.VICTIMS_PROPERTY][si] <- ConditionUniversalParse( configTable, si )
+	//if victim get revived, clear storage
+	fileLevel.weaponStatsConfigs.clearActionConfig_ReviveAndRespawn[si] <- [ void function( entity player, entity victim ) : ( si ) { WeaponStatsStorageClear_VictimsProperty( player, victim, si ) } ]
+	int target = validation.tointeger()
+	if ( LOADOUT in configTable )
+	{
+		fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.VICTIMS_PROPERTY][si].append( bool function( entity player, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( target ) {
+			entity weaponInSlot0 = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+			entity weaponInSlot1 = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_1 )
+			if ( weaponInSlot0 == null || weaponInSlot1 == null || weaponInSlot0.GetWeaponClassName() != weaponInSlot1.GetWeaponClassName() )
+				return false
+			array<entity> currentWeapons = []
+			if ( si in fileLevel.weaponStatsStorageSum[player].VictimsProperty )
+				foreach ( k,v in fileLevel.weaponStatsStorageSum[player].VictimsProperty[si] )
+				{
+					entity thisWeapon = expect entity( v )
+					if ( !currentWeapons.contains( thisWeapon ) )
+						currentWeapons.append( thisWeapon )
+				}
+			return currentWeapons.len() < target || currentWeapons.contains( weaponEnt )
+		} )
+		fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.VICTIMS_PROPERTY][si] <- [eVictimProperty.LOADOUT, false]
+		fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.DOWN_VICTIMS_PROPERTY][si] <- bool function ( entity player, StatInstance si, ... ) : ( target ) { return ValidateDownVictimDifferentProperty( player, si, eVictimProperty.LOADOUT, target ) }
+	}
+	else if ( CAR_WEAPON_MOD in configTable )
+	{
+		fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.VICTIMS_PROPERTY][si] <- [eVictimProperty.CAR_WEAPON_MOD, false]
+		fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.DOWN_VICTIMS_PROPERTY][si] <- bool function ( entity player, StatInstance si, ... ) : ( target ) { return ValidateDownVictimDifferentProperty( player, si, eVictimProperty.CAR_WEAPON_MOD, target ) }
+	}
+}
+
+void function WeaponStatsConfig_DownWithoutEvent( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.VICTIMS_PROPERTY][si] <- ConditionUniversalParse( configTable, si )
+	fileLevel.weaponStatsConfigs.clearActionConfig_ReviveAndRespawn[si] <- [ void function( entity player, entity victim ) { } ]
+	int target = validation.tointeger()
+	string eventKey = GetSingleConfig( configTable, WITHOUT_EVENT, 0 )
+	fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.VICTIMS_PROPERTY][si] <- [eVictimProperty.TIME, false]
+	fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.DOWN_VICTIMS_PROPERTY][si] <- bool function ( entity player, StatInstance si, ... ) : ( target, eventKey ) {
+		if ( !( si in fileLevel.weaponStatsStorageSum[player].VictimsProperty ) )
+			return false
+		float eventTime = GetTargetEventTime( player, eventKey )
+		int count = 0
+		foreach ( victim, time in fileLevel.weaponStatsStorageSum[player].VictimsProperty[si] )
+		{
+			if ( eventTime < 0 || GetTargetInteractEventTime( player, victim, DAMAGE_START ) >= eventTime )
+				count++
+		}
+		bool result = count >= target
+		if ( result )
+			fileLevel.weaponStatsStorageSum[player].VictimsProperty[si] <- {}
+		return result
+	}
+}
+
+void function WeaponStatsConfig_WipeSquad( StatInstance si, table<string, array<array<string> > > configTable )
+{
+	table<string, array<array<string> > > filteredConfigTable
+	array<void functionref(entity, entity)> clearActions
+	//if victim get revived or respawned, clear count from WipeSquadPlayers
+	clearActions.append( void function( entity player, entity victim ) : ( si ) {
+		if ( si in fileLevel.weaponStatsStorageSum[player].WipeSquadPlayers && fileLevel.weaponStatsStorageSum[player].WipeSquadPlayers[si].contains( victim ) )
+			fileLevel.weaponStatsStorageSum[player].WipeSquadPlayers[si].fastremovebyvalue( victim )
+	} )
+	foreach ( condition, args in configTable )
+	{
+		if ( condition == "Reload" )
+		{
+			fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.RELOAD][si] <- ConditionUniversalParse( {}, si )
+			int maxReloadTimes = GetSingleConfig( configTable, "Reload", 0, "1" ).tointeger()
+			fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.WIPE_SQUAD][si] <- ( bool function( entity player, StatInstance si, ... ) : ( maxReloadTimes ) {
+				Assert( vargc == 1 )
+				int victimTeam = expect int( vargv[0] )
+				return WeaponStatsCondition_ReloadTimesBySquadNotExceed( player, si, victimTeam, maxReloadTimes )
+			} )
+		}
+		else
+			filteredConfigTable[condition] <- args
+	}
+	if ( !( si in fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.WIPE_SQUAD] ) )
+		fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.WIPE_SQUAD][si] <- ( bool function( entity player, StatInstance si, ... ) { return true } )
+	fileLevel.weaponStatsConfigs.clearActionConfig_ReviveAndRespawn[si] <- clearActions
+	fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.WIPE_SQUAD_PLAYERS][si] <- ConditionUniversalParse( filteredConfigTable, si )
+}
+
+void function WeaponStatsConfig_BreakShieldInSquad( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.BREAK_SHIELD_IN_SQUAD][si] <- ConditionUniversalParse( configTable, si )
+	int target = validation.tointeger()
+	fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.BREAK_SHIELD_IN_SQUAD][si] <- ( bool function( entity player, StatInstance si, ... ) : ( target ) {
+		Assert( vargc == 1 )
+		int victimTeam = expect int( vargv[0] )
+		return fileLevel.weaponStatsStorageSum[player].BreakShieldInSquad[si][victimTeam].len() >= target
+	} )
+}
+
+void function WeaponStatsConfig_DownCountAfterDamage( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	table<string, array<array<string> > > downConfigTable
+	table<string, array<array<string> > > damageConfigTable
+	string invalidTime    = GetSingleConfig( configTable, INVALID_TIME, 0, DOWN_COUNT_AFTER_DAMAGE_INVALID_TIME )
+	string requiredDamage = GetSingleConfig( configTable, REQUIRED_DAMAGE, 0, DOWN_COUNT_AFTER_DAMAGE_REQUIRED_DAMAGE )
+	array<string> damageInPeriodArgs = [ invalidTime, requiredDamage ]
+	int forceDamageCheck = 0
+	int checkResetTime   = -1
+	foreach ( condition, args in configTable )
+	{
+		switch( condition )
+		{
+			case USE_BOTH_WEAPONS:
+				array<void functionref(entity)> clearActions = [
+					void function( entity player ) : ( si )
+					{
+						if ( !(player in fileLevel.weaponStatsStorageSum) )
+							return
+						if ( !(si in fileLevel.weaponStatsStorageSum[player].DamageInPeriod) )
+							return
+
+						entity weaponInSlot0              = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+						ItemFlavor ornull weaponItemSlot0 = IsValid( weaponInSlot0 ) ? GetWeaponItemFlavorByClass( weaponInSlot0.GetWeaponClassName() ) : null
+						entity weaponInSlot1              = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_1 )
+						ItemFlavor ornull weaponItemSlot1 = IsValid( weaponInSlot1 ) ? GetWeaponItemFlavorByClass( weaponInSlot1.GetWeaponClassName() ) : null
+						ItemFlavor targetWeapon           = GetItemFlavorByGUID( si.targetTag )
+						bool needClear                    = weaponItemSlot0 != targetWeapon || weaponItemSlot1 != targetWeapon
+						if ( !needClear )
+							return
+						foreach ( victim, damageInPeriodInfoRingBuffer in fileLevel.weaponStatsStorageSum[player].DamageInPeriod[si] )
+						{
+							ClearDamageInPeriodInfo( damageInPeriodInfoRingBuffer )
+						}
+					} ]
+				fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_SWITCHED][si] <- clearActions
+				damageInPeriodArgs.append( "use_both_weapons" )
+				break
+
+			case FORCE_DAMAGE_CHECK:
+				// means if we make a unexpect damage(e.g. every shot should be headshot, but land a body shot), reset time will be a cool down to recalculate expect damages
+				forceDamageCheck = 1
+				checkResetTime = GetSingleConfig( configTable, condition, 0, "-1" ).tointeger()
+				fileLevel.weaponStatsConfigs.clearActionConfig_ReviveAndRespawn[si] <- [ void function( entity player, entity victim ) : ( si ) {
+					if( !(si in fileLevel.weaponStatsStorageSum[player].DamageInPeriod) )
+						return
+					if( !(victim in fileLevel.weaponStatsStorageSum[player].DamageInPeriod[si]) )
+						return
+					fileLevel.weaponStatsStorageSum[player].DamageInPeriod[si][victim].isValid = true
+				} ]
+				break
+
+			case RESET_AFTER_SWITCH:
+				array<void functionref(entity)> clearActions = [ void function( entity player ) : ( si ) { fileLevel.weaponStatsStorageSum[player].DamageInPeriod[si] <- {} } ]
+				fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.SWITCH_DIFFERENT_WEAPON][si] <- clearActions
+				break
+
+			default:
+				if ( condition.len() >= DAMAGE_PREFIX.len() && condition.slice( 0, DAMAGE_PREFIX.len() ) == DAMAGE_PREFIX )
+					damageConfigTable[condition.slice( DAMAGE_PREFIX.len(), condition.len() )] <- args
+				else
+					downConfigTable[condition] <- args
+				break
+		}
+	}
+	ConfigTableAddConditionParams( downConfigTable, "DamageInPeriod", damageInPeriodArgs )
+	fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.DAMAGE_IN_PERIOD][si] <- [ invalidTime.tointeger(), forceDamageCheck, checkResetTime ]
+	fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.DOWN][si] <- ConditionUniversalParse( downConfigTable, si )
+	fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.DAMAGE_IN_PERIOD][si] <- ConditionUniversalParse( damageConfigTable, si )
+	fileLevel.weaponStatsConfigs.validateCondition_Count[si] <- validation.tointeger()
+}
+
+void function WeaponStatsConfig_DownCountAfterReload( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	fileLevel.weaponStatsConfigs.writeCondition_Statistic[eStatisticTable.RELOAD][si] <- ConditionUniversalParse( {}, si )
+	ConfigTableAddConditionParams( configTable, "StatisticTimeWithin", [ "true", string( eStatisticTable.RELOAD ), GetSingleConfig( configTable, INVALID_TIME, 0, DOWN_COUNT_AFTER_RELOAD_INVALID_TIME ), "true" ] )
+	WeaponStatsConfig_UniversalCount( eCountTable.DOWN, si, configTable, validation )
+}
+
+void function WeaponStatsConfig_DownCountAfterBreakShield( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	float invalidTime = GetSingleConfig( configTable, INVALID_TIME, 0, DOWN_COUNT_AFTER_BREAKSHIELD_INVALID_TIME ).tofloat()
+	table<string, array<array<string> > > downConfigTable
+	table<string, array<array<string> > > breakShieldConfigTable
+	foreach ( condition, args in configTable )
+	{
+		if ( condition.len() >= DOWN_PREFIX.len() && condition.slice( 0, DOWN_PREFIX.len() ) == DOWN_PREFIX )
+			downConfigTable[condition.slice( DOWN_PREFIX.len(), condition.len() )] <- args
+		else
+			breakShieldConfigTable[condition] <- args
+	}
+	fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.BREAK_SHIELD_TIME][si] <- ConditionUniversalParse( breakShieldConfigTable, si )
+	fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.DOWN][si] <- ConditionUniversalParse( downConfigTable, si )
+	fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.DOWN][si].append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( invalidTime ) {
+		return WeaponStatsCondition_BreakShieldTimeWithin( attacker, si, invalidTime, expect entity( victim ), true )
+	} )
+	fileLevel.weaponStatsConfigs.validateCondition_Count[si] <- validation.tointeger()
+}
+
+void function WeaponStatsConfig_DownCountWithoutReloadAndTriggerRelease( StatInstance si, table<string, array<array<string> > > configTable, string validation, bool clearOnTriggerRelease = false )
+{
+	fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.DOWN][si] <- ConditionUniversalParse( configTable, si )
+	string breakDoorWithGun = GetSingleConfig( configTable, BREAK_DOOR_WITH_GUN, 0, "" )
+	string actualBreakDoorEvent = breakDoorWithGun.len() > 0 ? format( "%s%s", BREAK_DOOR_WITH_GUN_PREFIX, breakDoorWithGun ) : ""
+	array<void functionref(entity)> clearActions = [ void function( entity player ) : ( si, actualBreakDoorEvent ) {
+		fileLevel.weaponStatsStorageSum[player].Count[eCountTable.DOWN][si] <- 0
+		if ( actualBreakDoorEvent.len() > 0 )
+			WeaponStats_ClearIndependentEventTime( player, actualBreakDoorEvent )
+	} ]
+	if ( actualBreakDoorEvent.len() > 0 )
+	{
+		int invalidTime = GetSingleConfig( configTable, BREAK_DOOR_WITH_GUN, 1, DOWN_COUNT_AFTER_BREAK_DOOR_WITH_GUN_INVALID_TIME ).tointeger()
+		fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.DOWN][si].append( bool function( entity attacker, StatInstance si, entity weaponEnt, entity ornull victim, var damageInfo ) : ( invalidTime, actualBreakDoorEvent ) {
+			return WeaponStatsCondition_TargetEvent( attacker, actualBreakDoorEvent, invalidTime )
+		} )
+	}
+	fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_RELOAD][si] <- clearActions
+	fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_SWITCHED][si] <- clearActions
+	if ( clearOnTriggerRelease )
+	{
+		fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.TRIGGER_RELEASE][si] <- clearActions
+		int targetCount = validation.tointeger()
+		fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.TRIGGER_RELEASE][si] <- ( bool function( entity player, StatInstance si, ... ) : ( targetCount ) {
+			return si in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.DOWN] && fileLevel.weaponStatsStorageSum[player].Count[eCountTable.DOWN][si] >= targetCount
+		} )
+	}
+	else
+		fileLevel.weaponStatsConfigs.validateCondition_Count[si] <- validation.tointeger()
+}
+
+//Downcount is with damage requirement
+void function WeaponStatsConfig_DownCountWithoutTriggerRelease( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.DAMAGED_PLAYERS][si] <- ConditionUniversalParse( configTable, si )
+
+	array<void functionref(entity)> clearActions = [ void function( entity player ) : ( si ) {
+		fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si] <- {}
+		fileLevel.weaponStatsStorageSum[player].Count[eCountTable.DOWN][si] <- 0
+	} ]
+
+	fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_RELOAD][si] <- clearActions
+	fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_SWITCHED][si] <- clearActions
+	fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.TRIGGER_RELEASE][si] <- clearActions
+
+	fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.DOWN][si] <- ConditionUniversalParse( configTable, si )
+	fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.DOWN][si].append( bool function( entity player, StatInstance si, entity weapon, entity ornull victim, var damageInfo ) {
+		entity victimEnt = expect entity(victim)
+		#if WEAPON_STATS_DEBUG
+			if( victimEnt != null && si in fileLevel.weaponStatsStorageSum[player].DamagedPlayers && victimEnt in fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si] )
+				printt( "WeaponStats:DownCountWithoutTriggerRelease:", player.GetPlayerName(), fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si][victimEnt], victimEnt.GetShieldHealthMax(), victimEnt.GetMaxHealth() )
+		#endif
+		return ( victimEnt != null && si in fileLevel.weaponStatsStorageSum[player].DamagedPlayers && victimEnt in fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si]
+		&& fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si][victimEnt] >= ( victimEnt.GetShieldHealthMax() + victimEnt.GetMaxHealth() ) / 2 )
+	} )
+	int targetCount = validation.tointeger()
+	fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.TRIGGER_RELEASE][si] <- ( bool function( entity player, StatInstance si, ... ) : ( targetCount ) {
+		return si in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.DOWN] && fileLevel.weaponStatsStorageSum[player].Count[eCountTable.DOWN][si] >= targetCount
+	} )
+}
+
+void function WeaponStatsConfig_DownCountWithFirstHitCondition( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	table<string, array<array<string> > > downConfigTable
+	table<string, array<array<string> > > firstHitConfigTable
+	foreach ( condition, args in configTable )
+	{
+		if ( condition.len() >= DOWN_PREFIX.len() && condition.slice( 0, DOWN_PREFIX.len() ) == DOWN_PREFIX )
+			downConfigTable[condition.slice( DOWN_PREFIX.len(), condition.len() )] <- args
+		else
+			firstHitConfigTable[condition] <- args
+	}
+
+	array<bool functionref( entity, StatInstance, entity, entity ornull, var )> conditions = ConditionUniversalParse( firstHitConfigTable, si )
+	float invalidTime = GetSingleConfig( firstHitConfigTable, INVALID_TIME, 0, DOWN_COUNT_WITH_FIRST_HIT_INVALID_TIME ).tofloat()
+	conditions.append( bool function( entity player, StatInstance si, entity weapon, entity ornull victim, var damageInfo ) : ( invalidTime ) {
+		entity victimEnt = expect entity( victim )
+		if ( si in fileLevel.weaponStatsStorageSum[player].DamageStartTime && victimEnt in fileLevel.weaponStatsStorageSum[player].DamageStartTime[si] && Time() - fileLevel.weaponStatsStorageSum[player].DamageStartTime[si][victimEnt] < invalidTime )
+		{
+			if ( si in fileLevel.weaponStatsStorageSum[player].DamagedPlayers )
+				fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si][victimEnt] <- 0
+			return false
+		}
+		return true
+	}  )
+	fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.DAMAGED_PLAYERS][si] <- conditions
+
+	fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.DAMAGE_START_TIME][si] <- []
+	fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_SWITCHED][si] <-  [ void function( entity player ) : ( si ) {
+		fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si] <- {}
+		fileLevel.weaponStatsStorageSum[player].Count[eCountTable.DOWN][si] <- 0
+	} ]
+
+	fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.DOWN][si] <- ConditionUniversalParse( downConfigTable, si )
+	fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.DOWN][si].insert( 0, bool function( entity player, StatInstance si, entity weapon, entity ornull victim, var damageInfo ) : ( invalidTime ) {
+		entity victimEnt = expect entity(victim)
+		if ( si in fileLevel.weaponStatsStorageSum[player].DamagedPlayers && victimEnt in fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si] )
+		{
+			bool result = fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si][victimEnt] > 0
+			fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si][victimEnt] <- 0
+			return result
+		}
+		return false
+	} )
+	fileLevel.weaponStatsConfigs.validateCondition_Count[si] <- validation.tointeger()
+}
+
+void function WeaponStatsConfig_DownCountWithoutWeaponOverheat( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	WeaponStatsConfig_UniversalCount( eCountTable.DOWN, si, configTable, validation )
+	array< void functionref( entity ) > clearActions = [ void function( entity player ) : ( si ) {
+		fileLevel.weaponStatsStorageSum[player].Count[eCountTable.DOWN][si] <- 0
+	} ]
+	fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_OVERHEAT][si] <- clearActions
+}
+
+void function WeaponStatsConfig_ContinuousHitCount( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	bool allowDifferentVictim = ( ALLOW_DIFFERENT_VICTIM in configTable )
+
+	void functionref(entity) clearAction = void function( entity player ) : ( si, allowDifferentVictim )
+	{
+		if ( !allowDifferentVictim )
+			fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si] <- {}
+		fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si] <- 0
+		fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT][si] <- 0
+	}
+	array<void functionref(entity)> clearActions = [ clearAction ]
+
+	fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_RELOAD][si] <- clearActions
+	fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_SWITCHED][si] <- clearActions
+
+	fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.AMMO_HIT][si] <- ConditionUniversalParse( configTable, si )
+	fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.AMMO_FIRED][si] <- ConditionUniversalParse( {}, si )
+
+	fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.AMMO_HIT][si].insert( 0, bool function( entity player, StatInstance si, entity weapon, entity ornull victim, var damageInfo ) : ( allowDifferentVictim, clearAction ) {
+		if ( !( si in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT] ) || fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT][si] + 1 != fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si] )
+		{
+			clearAction(player)
+			fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si] <- 1
+		}
+
+		if ( !allowDifferentVictim )
+		{
+			entity victimEnt = expect entity(victim)
+			bool onlyVictim = ( si in fileLevel.weaponStatsStorageSum[player].DamagedPlayers && victimEnt in fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si] && fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si].len() == 1 )
+			if ( !onlyVictim )
+			{
+				fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si] <- {}
+				fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si][victimEnt] <- 1
+				fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si] <- 1
+				fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT][si] <- 0
+			}
+		}
+		return true
+	} )
+
+	int target = validation.tointeger()
+	fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.AMMO_HIT][si] <- ( bool function( entity player, StatInstance si, ... ) : ( clearAction, target ) {
+		if( fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT][si] == target && fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT][si] == fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si] )
+		{
+			clearAction( player )
+			return true
+		}
+		return false
+	} )
+}
+
+void function WeaponStatsConfig_DoubleKill( StatInstance si, table<string, array<array<string> > > configTable )
+{
+	table<string, array<array<string> > > downConfigTable
+	bool functionref(entity, StatInstance) additionalValidates
+	float invalidTime = GetSingleConfig( configTable, INVALID_TIME, 0, DOUBLE_KILL_INVALID_TIME ).tofloat()        //interrupt after this seconds
+	foreach ( condition, args in configTable )
+	{
+		switch ( condition )
+		{
+			case "Reload":
+			case "ReloadTactical":
+				int reloadTimes = GetSingleConfig( configTable, condition, 0, "1" ).tointeger()
+				bool isExact = GetSingleConfig( configTable, condition, 1 ) == "true" ? true : false
+				table<string, array<array<string> > > reloadConfigTable
+				ConfigTableAddConditionParams( reloadConfigTable, "StatisticExist", [ "true", string( eStatisticTable.DOUBLE_KILL ) ] )
+				if ( condition == "ReloadTactical" )
+					ConfigTableAddConditionParams( reloadConfigTable, "IsMagEmpty", [ "false" ] )
+				fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.RELOAD][si] <- ConditionUniversalParse( reloadConfigTable, si, CONDITION_PARAMS_WEAPON )
+				additionalValidates = bool function( entity player, StatInstance si ) : ( reloadTimes, isExact ) { return WeaponStatsCondition_ReloadTimesWithin( player, si, reloadTimes, isExact, true ) }
+				fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_SWITCHED][si] <- [ void function( entity player ) : ( si ) {
+					fileLevel.weaponStatsStorageSum[player].Statistic[eStatisticTable.DOUBLE_KILL][si] <- 0
+					fileLevel.weaponStatsStorageSum[player].Count[eCountTable.RELOAD][si] <- 0
+				} ]
+				break
+
+			case "KeepFullyHeated":
+				// Add double kill write condition
+				ConfigTableAddConditionParams( downConfigTable, "IsFullyHeated", [ "true" ] )
+				// Add fully heated flag
+				table<string, array<array<string> > > keepHeatConfigTable
+				ConfigTableAddConditionParams( keepHeatConfigTable, "StatisticExist", [ "true", string( eStatisticTable.DOUBLE_KILL ) ] )
+				fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.KEEP_FULLY_HEATED][si] <- ConditionUniversalParse( keepHeatConfigTable, si, CONDITION_PARAMS_WEAPON )
+				// Clear fully heated flag when leave heat condition
+				fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_HEAT_DECREASE][si] <- [ void function( entity player ) : ( si ) {
+					fileLevel.weaponStatsStorageSum[player].Statistic[eStatisticTable.DOUBLE_KILL][si] <- 0
+					fileLevel.weaponStatsStorageSum[player].Count[eCountTable.KEEP_FULLY_HEATED][si] <- 0
+				} ]
+				break
+
+			default:
+				downConfigTable[condition] <- args
+				break
+		}
+	}
+	fileLevel.weaponStatsConfigs.writeCondition_Statistic[eStatisticTable.DOUBLE_KILL][si] <- ConditionUniversalParse( downConfigTable, si )
+	fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.DOUBLE_KILL][si] <- ( bool function( entity player, StatInstance si, ... ) : (invalidTime, additionalValidates) {
+		if ( additionalValidates != null && !additionalValidates( player, si ) )
+			return false
+		return WeaponStatsCondition_StatisticTimeWithin( eStatisticTable.DOUBLE_KILL, player, si, invalidTime, true )
+	} )
+}
+
+void function WeaponStatsConfig_BreakIncapShieldAfterDown( StatInstance si, table<string, array<array<string> > > configTable, string validation )
+{
+	table<string, array<array<string> > > downConfigTable
+	table<string, array<array<string> > > breakConfigTable
+	foreach ( condition, args in configTable )
+	{
+		if ( condition.len() >= DOWN_PREFIX.len() && condition.slice( 0, DOWN_PREFIX.len() ) == DOWN_PREFIX )
+			downConfigTable[condition.slice( DOWN_PREFIX.len(), condition.len() )] <- args
+		else
+			breakConfigTable[condition] <- args
+	}
+	fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.VICTIMS_PROPERTY][si] <- [eVictimProperty.TIME, true]
+	fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.VICTIMS_PROPERTY][si] <- ConditionUniversalParse( downConfigTable, si )
+	//if victim get revived, clear storage
+	fileLevel.weaponStatsConfigs.clearActionConfig_ReviveAndRespawn[si] <- [ void function( entity player, entity victim ) : ( si ) { WeaponStatsStorageClear_VictimsProperty( player, victim, si ) } ]
+
+	WeaponStatsConfig_UniversalCount( eCountTable.BREAK_INCAP_SHIELD, si, breakConfigTable, validation )
+	float invalidTime = GetSingleConfig( configTable, INVALID_TIME, 0, "-1" ).tofloat()
+	fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.BREAK_INCAP_SHIELD][si].insert ( 0,
+		bool function( entity player, StatInstance si, entity weapon, entity ornull victim, var damageInfo ) : ( invalidTime ) {
+			entity victimEnt = expect entity( victim )
+			bool result = si in fileLevel.weaponStatsStorageSum[player].VictimsProperty && victimEnt in fileLevel.weaponStatsStorageSum[player].VictimsProperty[si] &&
+			( invalidTime < 0 || Time() - expect float( fileLevel.weaponStatsStorageSum[player].VictimsProperty[si][victimEnt] ) <= invalidTime )
+			if ( result )
+				WeaponStatsStorageClear_VictimsProperty( player, victimEnt, si )
+			return result
+		} )
+}
+
+////////////////////////////
+////////////////////////////
+////        Hook       ////
+////////////////////////////
+////////////////////////////
+//For all hooks, unless it's not related to fileLevel.weaponStatsStorageSum, should check null or call InitPlayerStorage( player )
+void function WeaponStatsHook_OnDownEnemy( entity victim, entity attacker, var attackerDamageInfo )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	if ( !IsValid( attacker ) || !attacker.IsPlayer() || !( attacker in fileLevel.weaponStatsStorageSum ) || !IsValid( victim ) || !victim.IsPlayer() )
+		return
+	entity weaponEnt = DamageInfo_GetWeapon( attackerDamageInfo )
+	if ( !IsValid( weaponEnt ) || !weaponEnt.IsWeaponX() || weaponEnt != fileLevel.weaponStatsStorageSum[attacker].mainHandActiveWeapon )
+		return
+
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Hook_OnDownEnemy:", attacker.GetPlayerName(), weaponEnt.GetWeaponClassName() )
+	#endif
+
+	WeaponStats_RecordInteractEventTime( victim, attacker, BE_DOWNED )
+	WeaponStats_RecordIndependentEventTime( victim, BE_DOWNED )
+
+	//storage
+	WeaponStatsStorageWrite_OnUniversalCount( eCountTable.DOWN, attacker, weaponEnt, attackerDamageInfo, victim )
+	WeaponStatsStorageWrite_OnContinuousDownCount( attacker, weaponEnt, victim, attackerDamageInfo )
+	WeaponStatsStorageWrite_OnWipeSquad( attacker, weaponEnt, victim, attackerDamageInfo )
+	WeaponStatsStorageWrite_OnDownVictimsProperty( attacker, weaponEnt, victim, attackerDamageInfo )
+
+	//validate
+	WeaponStatsValidateStorageCondition_UniversalCount( eCountTable.DOWN, attacker )
+	WeaponStatsValidateStorageCondition_UniversalCount( eCountTable.CONTINUOUS_DOWN, attacker, null, CleanupContinuousDownCount )
+	WeaponStatsStorageValidateAndWrite_OnDoubleKill( attacker, weaponEnt, victim, attackerDamageInfo )
+	WeaponStatsValidateStorageCondition_OnFireAndHit( attacker, weaponEnt )
+
+	WeaponStats_RecordInteractEventTime( attacker, victim, DOWN_OTHER )
+	WeaponStats_RecordIndependentEventTime( attacker, DOWN_OTHER )
+}
+
+void function WeaponStatsHook_OnKillEnemy( entity victim, entity attacker, entity killer, var attackerDamageInfo )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	if ( !IsValid( victim ) || !victim.IsPlayer() )
+		return
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Hook_OnKillEnemy:(victim)", victim.GetPlayerName() )
+	#endif
+	WeaponStatsStorageWrite_FinishRecordWeaponHoldTime( victim )
+
+	//for trials related to attacker who finish off the victim
+	if ( IsValid( attacker ) && attacker.IsPlayer() && attacker in fileLevel.weaponStatsStorageSum )
+	{
+		entity weaponEnt = DamageInfo_GetWeapon( attackerDamageInfo )
+		if ( IsValid( weaponEnt ) && weaponEnt.IsWeaponX() && weaponEnt == fileLevel.weaponStatsStorageSum[attacker].mainHandActiveWeapon )
+		{
+			#if WEAPON_STATS_DEBUG
+				printt( "WeaponStats:Hook_OnKillEnemy:(attacker)", attacker.GetPlayerName() )
+			#endif
+			//storage
+			WeaponStatsStorageWrite_OnUniversalCount( eCountTable.FINISH_OFF, attacker, weaponEnt, attackerDamageInfo, victim )
+			//validate
+			WeaponStatsValidateStorageCondition_UniversalCount( eCountTable.FINISH_OFF, attacker )
+		}
+	}
+
+	if ( IsValid( killer ) && killer.IsPlayer() && killer in fileLevel.weaponStatsStorageSum )
+	{
+		#if WEAPON_STATS_DEBUG
+			printt( "WeaponStats:Hook_OnKillEnemy:(killer)", killer.GetPlayerName() )
+		#endif
+		//storage
+		WeaponStats_OnEventNeedHandleTargetInPeriod( killer, victim )
+		WeaponStats_RecordInteractEventTime( victim, killer, BE_KILLED )
+		WeaponStatsStorageWrite_OnUniversalCount( eCountTable.KILL_WITH_DOWN_CONDITION, killer, null, null, victim )
+		WeaponStatsStorageWrite_OnUniversalCount( eCountTable.REVIVE_PAIR_KILL, killer, null, null, victim )
+
+		//validate
+		WeaponStatsValidateStorageCondition_UniversalCount( eCountTable.KILL_WITH_DOWN_CONDITION, killer )
+		WeaponStatsValidateStorageCondition_UniversalCount( eCountTable.REVIVE_PAIR_KILL, killer )
+		WeaponStatsValidateStorageCondition_KillCountXP( killer, victim )
+		WeaponStatsValidateStorageCondition_OnWipeSquad( killer, victim )
+		WeaponStatsValidateStorageCondition_OnDownVictimsProperty( killer, victim )//this function also clean up ReviveAndRespawn for any behavior with eWriteCondition.VICTIMS_PROPERTY, is should remain the last function in this hook
+	}
+}
+
+void function WeaponStatsHook_OnKillNpc( entity victim, entity attacker, var attackerDamageInfo )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	if ( !IsValid( attacker ) || !attacker.IsPlayer() || !( attacker in fileLevel.weaponStatsStorageSum ) )
+		return
+	entity weaponEnt = DamageInfo_GetWeapon( attackerDamageInfo )
+	if ( !IsValid( weaponEnt ) || !weaponEnt.IsWeaponX() || weaponEnt != fileLevel.weaponStatsStorageSum[attacker].mainHandActiveWeapon )
+		return
+
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Hook_OnKillNpc:", attacker.GetPlayerName(), weaponEnt.GetWeaponClassName() )
+	#endif
+
+	//storage
+	WeaponStatsStorageWrite_OnUniversalCount( eCountTable.NPC_KILL, attacker, weaponEnt, attackerDamageInfo, victim )
+
+	//validate
+	WeaponStatsValidateStorageCondition_UniversalCount( eCountTable.NPC_KILL, attacker )
+}
+
+void function WeaponStatsHook_OnPlayerShieldBreak( entity player, var damageInfo )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+
+	if ( !IsValid( attacker ) || !attacker.IsPlayer() || !( attacker in fileLevel.weaponStatsStorageSum ) )
+		return
+	entity weaponEnt = DamageInfo_GetWeapon( damageInfo )
+	if ( !IsValid( weaponEnt ) || !weaponEnt.IsWeaponX() || weaponEnt != fileLevel.weaponStatsStorageSum[attacker].mainHandActiveWeapon )
+		return
+
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Hook_OnPlayerShieldBreak:", attacker.GetPlayerName(), weaponEnt.GetWeaponClassName() )
+	#endif
+
+	//storage
+	WeaponStats_RecordIndependentEventTime( player, SHIELD_BROKE )
+	WeaponStats_RecordInteractEventTime( attacker, player, BREAK_SHIELD )
+	WeaponStatsStorageWrite_OnUniversalCount( eCountTable.BREAK_SHIELD, attacker, weaponEnt, damageInfo, player )
+	WeaponStatsStorageWrite_BreakShieldTime( attacker, weaponEnt, player, damageInfo )
+	WeaponStatsWriteAndValidate_BreakShieldInSquad( attacker, weaponEnt, player, damageInfo )
+
+	//validate
+	WeaponStatsValidateStorageCondition_UniversalCount( eCountTable.BREAK_SHIELD, attacker )
+}
+
+void function WeaponStatsHook_OnPlayerIncapShieldBreak( entity player, var damageInfo )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+
+	if ( !IsValid( attacker ) || !attacker.IsPlayer() || !( attacker in fileLevel.weaponStatsStorageSum ) )
+		return
+
+	entity weaponEnt = DamageInfo_GetWeapon( damageInfo )
+	if ( !IsValid( weaponEnt ) || !weaponEnt.IsWeaponX() || weaponEnt != fileLevel.weaponStatsStorageSum[attacker].mainHandActiveWeapon )
+		return
+
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Hook_OnPlayerIncapShieldBreak:", attacker.GetPlayerName(), weaponEnt.GetWeaponClassName() )
+	#endif
+
+	//storage
+	WeaponStatsStorageWrite_BreakIncapShieldTime( attacker, weaponEnt, player, damageInfo )
+	WeaponStatsStorageWrite_OnUniversalCount( eCountTable.BREAK_INCAP_SHIELD, attacker, weaponEnt, damageInfo, player )
+
+	//validate
+	WeaponStatsValidateStorageCondition_UniversalCount( eCountTable.BREAK_INCAP_SHIELD, attacker )
+}
+
+// eventKey can also support more logic, e.g. heal_health_or_restore_shield_start
+void function WeaponStats_RecordIndependentEventTime( entity player, string eventKey )
+{
+	if ( !IsValid( player ) || !player.IsPlayer() )
+		return
+
+	if ( !( player in fileLevel.independentEventTime ) )
+		fileLevel.independentEventTime[player] <- {}
+
+	fileLevel.independentEventTime[player][eventKey] <- Time()
+}
+
+void function WeaponStats_ClearIndependentEventTime( entity player, string eventKey )
+{
+	if ( !IsValid( player ) || !player.IsPlayer() )
+		return
+
+	if ( player in fileLevel.independentEventTime && eventKey in fileLevel.independentEventTime[player] )
+		delete fileLevel.independentEventTime[player][eventKey]
+}
+
+void function WeaponStatsHook_OnUseHealModStart( entity player, string modName )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	switch ( modName )
+	{
+		case "shield_small":
+		case "shield_large":
+			WeaponStats_RecordIndependentEventTime( player, RESTORE_SHIELD_START )
+			break
+
+		case "health_small":
+		case "health_large":
+			WeaponStats_RecordIndependentEventTime( player, HEAL_HEALTH_START )
+			break
+
+		case "phoenix_kit":
+			WeaponStats_RecordIndependentEventTime( player, RESTORE_SHIELD_START )
+			WeaponStats_RecordIndependentEventTime( player, HEAL_HEALTH_START )
+			break
+	}
+}
+
+void function WeaponStats_RecordInteractEventTime( entity player, entity playerInteracted, string eventKey, float overrideValue = -1 )
+{
+	if ( !IsValid( player ) || !player.IsPlayer() || !IsValid( playerInteracted ) || !playerInteracted.IsPlayer() )
+		return
+
+	if ( !( player in fileLevel.interactEvents ) )
+	{
+		fileLevel.interactEvents[player] <- {}
+	}
+
+	if ( !( playerInteracted in fileLevel.interactEvents[player] ) )
+	{
+		InteractEvents events
+		fileLevel.interactEvents[player][playerInteracted] <- events
+	}
+
+	fileLevel.interactEvents[player][playerInteracted].times[eventKey] <- ( overrideValue == -1 ? Time() : overrideValue )
+}
+
+void function WeaponStatsHook_OnWeaponAttack( entity attacker, entity weaponEnt, string weaponName, int ammoUsed, vector attackOrigin, vector attackDir )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	if ( !IsValid( attacker ) || !attacker.IsPlayer() || !( attacker in fileLevel.weaponStatsStorageSum ) )
+		return
+
+	if ( !IsValid( weaponEnt ) || !weaponEnt.IsWeaponX() || weaponEnt != fileLevel.weaponStatsStorageSum[attacker].mainHandActiveWeapon )
+		return
+
+#if WEAPON_STATS_DEBUG
+	//printt( "WeaponStats:WeaponStatsHook_OnWeaponAttack", attacker, weaponEnt, weaponName, ammoUsed )
+#endif
+
+	//clear
+	foreach ( si in fileLevel.currentStatInstance[attacker] )
+		WeaponStatsUniversalClear( eClearConfig.WEAPON_ATTACK, attacker, si )
+
+	//storage
+	WeaponStatsStorageWrite_OnWeaponAttack( attacker, weaponEnt, ammoUsed )
+	WeaponStatsStorageWrite_OnFireAmmo( attacker, weaponEnt, ammoUsed )
+
+	//validation
+	WeaponStatsValidateStorageCondition_OnFireAmmo( attacker, weaponEnt )
+
+	//clear
+	foreach ( si in fileLevel.currentStatInstance[attacker] )
+		WeaponStatsUniversalClear( eClearConfig.POST_WEAPON_ATTACK, attacker, si )
+}
+
+void function WeaponStatsHook_OnCodeDoorBroken( entity door, entity attacker, vector direction, var damageInfo )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	WeaponStats_RecordIndependentEventTime( attacker, BREAK_DOOR )
+
+	int damageSourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	switch ( damageSourceId )
+	{
+		case eDamageSourceId.mp_weapon_frag_grenade:
+		case eDamageSourceId.mp_weapon_grenade_emp:
+		case eDamageSourceId.mp_weapon_thermite_grenade:
+			WeaponStats_RecordIndependentEventTime( attacker, BREAK_DOOR_WITH_GRENADE )
+			break
+		case eDamageSourceId.mp_weapon_dragon_lmg:
+			WeaponStats_RecordIndependentEventTime( attacker, BREAK_DOOR_WITH_GUN_PREFIX + "mp_weapon_dragon_lmg" )
+			break
+	}
+}
+
+void function WeaponStatsHook_OnPlayerReceivingFirstAid( entity player, entity reviver )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	WeaponStats_RecordInteractEventTime( player, reviver, REVIVE_START )
+}
+
+void function WeaponStatsHook_OnPlayerGotRevived( entity injured, entity healer )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	WeaponStats_RecordIndependentEventTime( injured, REVIVED )
+	if ( !IsValid( injured ) || !injured.IsPlayer() || !( injured in fileLevel.weaponStatsStorageSum ) )
+		return
+	WeaponStatsStorageClear_ReviveAndRespawn( injured )
+}
+
+void function WeaponStatsHook_OnZiplineStart( entity player, entity zipline )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	WeaponStats_RecordIndependentEventTime( player, START_ZIPLINE )
+}
+
+void function WeaponStatsHook_OnReload( entity player )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	if ( !IsValid( player ) || !player.IsPlayer() || !( player in fileLevel.weaponStatsStorageSum ) )
+		return
+	foreach ( si in fileLevel.currentStatInstance[player] )
+		WeaponStatsUniversalClear( eClearConfig.WEAPON_RELOAD, player, si )
+
+	entity mainWeapon = fileLevel.weaponStatsStorageSum[player].mainHandActiveWeapon
+	if ( IsValid( mainWeapon ) && mainWeapon.IsWeaponX() )
+	{
+		WeaponStatsStorageWrite_OnReloadStatistic( player, mainWeapon )
+		WeaponStatsStorageWrite_OnUniversalCount( eCountTable.RELOAD, player, mainWeapon )
+	}
+}
+
+void function WeaponStatsHook_OnRespawned( entity player )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Hook_OnRespawned:", player.GetPlayerName() )
+	#endif
+	WeaponStats_RecordIndependentEventTime( player, RESPAWNED )
+	if ( !IsValid( player ) || !player.IsPlayer() || !( player in fileLevel.weaponStatsStorageSum ) )
+		return
+	WeaponStatsStorageClear_ReviveAndRespawn( player )
+}
+
+void function WeaponStatsHook_OnPreDamageEnemy( entity victim, entity attacker, var attackerDamageInfo )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	if ( !IsValid( attacker ) || !attacker.IsPlayer() || !IsValid( victim ) || !victim.IsPlayer() )
+		return
+
+	//storage
+	if ( attacker in fileLevel.weaponStatsStorageSum )
+	{
+		WeaponStatsStorageWrite_OnVictimExecutingEnemy( attacker, victim )
+	}
+}
+
+void function WeaponStatsHook_OnDamageEnemy( entity victim, entity attacker, var attackerDamageInfo )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	//entity attacker = DamageInfo_GetAttacker( attackerDamageInfo )
+	if ( !IsValid( victim ) || !victim.IsPlayer() || !IsValid( attacker ) || !attacker.IsPlayer() )
+		return
+
+	WeaponStatsStorageWrite_OnVictimHealthTrace( victim, attackerDamageInfo )
+	WeaponStats_RecordInteractEventTime( victim, attacker, BE_DAMAGED )
+
+	entity weaponEnt = DamageInfo_GetWeapon( attackerDamageInfo )
+	if ( !IsValid( weaponEnt ) || !weaponEnt.IsWeaponX() )
+		return
+
+	if ( IsBitFlagSet( weaponEnt.GetWeaponTypeFlags(), WPT_PRIMARY ) )
+	{
+		if ( !( victim in fileLevel.beShotTime ) )
+			fileLevel.beShotTime[victim] <- {}
+
+		if ( !( attacker in fileLevel.beShotTime[victim] ) || fileLevel.beShotTime[victim][attacker] + BATTLE_CD_TIME < Time() )
+			WeaponStats_RecordInteractEventTime( attacker, victim, DAMAGE_START )
+
+		if ( attacker in fileLevel.beShotTime[victim] )
+			WeaponStats_RecordInteractEventTime( attacker, victim, LAST_DAMAGE_TIME, fileLevel.beShotTime[victim][attacker] )
+		fileLevel.beShotTime[victim][attacker] <- Time()
+	}
+
+	int damageSourceId = DamageInfo_GetDamageSourceIdentifier( attackerDamageInfo )
+	if ( damageSourceId == eDamageSourceId.mp_weapon_grenade_emp )
+	{
+		WeaponStats_RecordInteractEventTime( attacker, victim, STICK_WITH_ARC_STAR )
+	}
+
+	WeaponStats_RecordInteractEventTime( attacker, victim, WEAPON_DAMAGE + weaponEnt.GetWeaponClassName() )
+
+	if ( !( attacker in fileLevel.weaponStatsStorageSum ) || weaponEnt != fileLevel.weaponStatsStorageSum[attacker].mainHandActiveWeapon )
+		return
+
+	float effectiveDamage = GetEffectiveDamage( victim, attackerDamageInfo )
+#if WEAPON_STATS_DEBUG
+	// printt( "WeaponStats:Hook_OnDamageEnemy:", attacker.GetPlayerName(), weaponEnt.GetWeaponClassName(), effectiveDamage )
+#endif
+
+	//storage
+	WeaponStatsStorageWrite_OnUniversalStatistic( eStatisticTable.RAW_DAMAGE, attacker, weaponEnt, effectiveDamage, victim, attackerDamageInfo )
+	WeaponStatsStorageWrite_OnDamagedVictim( attacker, weaponEnt, victim, attackerDamageInfo )
+	WeaponStatsStorageWrite_OnFireAndHit( attacker, weaponEnt, victim, attackerDamageInfo )
+	WeaponStatsStorageWrite_OnDamageInPeriod( victim, attacker, weaponEnt, attackerDamageInfo )
+	WeaponStatsStorageWrite_OnDamageAnyVictimInPeriod( victim, attacker, weaponEnt, attackerDamageInfo )
+	WeaponStatsStorageWrite_OnUniversalStatistic( eStatisticTable.DAMAGE, attacker, weaponEnt, effectiveDamage, victim, attackerDamageInfo )
+
+	//validate
+	WeaponStatsValidateStorageCondition_OnRawDamage( attacker )
+	WeaponStatsValidateStorageCondition_UniversalStatistic( eStatisticTable.DAMAGE, attacker )
+	WeaponStatsValidateStorageCondition_OnFireAndHit( attacker, weaponEnt )
+	WeaponStatsValidateStorageCondition_OnDamageStatisticInPeriod( attacker )
+}
+
+void function WeaponStatsHook_OnLootPickup( entity player, entity ent, string ref, int unitsPickedUp, bool willDestroy, entity deathBox, int pickupFlags )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	if ( !IsValid( player ) || !player.IsPlayer() )
+		return
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Hook_OnLootPickup:", player.GetPlayerName(), ref )
+	#endif
+
+	bool blackMarketInUseByPlayer = IsValid( GetBlackMarketInUseByPlayer( player ) )
+
+	// track care package openings, ref to CAREER_STATS.neutral_airdrops_looted
+	if ( ent.e.spawnSource == eSpawnSource.DROPPOD && !blackMarketInUseByPlayer )
+	{
+		entity droppod = ent.GetParent()
+		if ( IsValid( droppod ) && droppod.e.sourceWeaponClassname == "" )
+			WeaponStats_RecordIndependentEventTime( player, NEUTRAL_AIRDROPS_LOOTED )
+	}
+
+	if ( ent.e.spawnSource == eSpawnSource.PLAYER_DEATH && !blackMarketInUseByPlayer )
+		WeaponStats_RecordIndependentEventTime( player, DEATHBOX_LOOTED )
+
+	WeaponStatsWrite_WeaponPickupTime( player, ref )
+}
+
+void function WeaponStatsHook_OnPlayerDropMainWeapon( entity player, entity weapon )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	if ( !IsValid( player ) || !player.IsPlayer() )
+		return
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Hook_OnMainWeaponDrop:", player.GetPlayerName() )
+	#endif
+	WeaponStatsWrite_WeaponDropTime( player, weapon.GetWeaponClassName() )
+}
+
+void function WeaponStatsHook_OnWeaponHeatStateChanged( entity player, entity weapon, bool currentIsHeated )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	printf( "WeaponStatsHook_OnWeaponHeatStateChange player:%s, currentIsHeated:%s", player.GetPlayerName(), currentIsHeated ? "true" : "false" )
+	if ( !( player in fileLevel.weaponStatsStorageSum ) )
+		return
+	if ( !currentIsHeated )
+	{
+		foreach ( si in fileLevel.currentStatInstance[player] )
+			WeaponStatsUniversalClear( eClearConfig.WEAPON_HEAT_DECREASE, player, si )
+	}
+	else
+	{
+		WeaponStatsStorageWrite_OnUniversalCount( eCountTable.KEEP_FULLY_HEATED, player, weapon )
+	}
+}
+
+/*
+void function WeaponStatsHook_OnWeaponAttachmentChanged( entity player, entity weapon, string modToAdd, string modToRemove )
+{
+
+}
+*/
+
+void function WeaponStatsHook_OnTriggerReleased( entity player )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	if ( !IsValid( player ) || !( player in fileLevel.weaponStatsStorageSum ) )
+		return
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		WeaponStatsValidate_UniversalValidateCondition( eValidateLocation.TRIGGER_RELEASE, player, si )
+		WeaponStatsUniversalClear( eClearConfig.TRIGGER_RELEASE, player, si )
+	}
+}
+
+void function WeaponStatsHook_OnWeaponOverheat( entity player, entity weapon )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	if ( !( player in fileLevel.weaponStatsStorageSum ) )
+		return
+	foreach ( si in fileLevel.currentStatInstance[player] )
+		WeaponStatsUniversalClear( eClearConfig.WEAPON_OVERHEAT, player, si )
+
+	WeaponStats_RecordIndependentEventTime( player, WEAPON_OVERHEAT )
+}
+
+void function WeaponStatsHook_OnCarModeChange( entity weapon, string mod, bool modAdded, entity player )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Hook_OnCarModeChange" )
+	#endif
+	WeaponStats_RecordIndependentEventTime( player, CAR_MODE_CHANGE )
+}
+
+void function WeaponStatsHook_OnWinnerDetermined()
+{
+	foreach ( player, storage in fileLevel.weaponStatsStorageSum )
+	{
+		WeaponStatsHook_OnPlayerDisconnectOrMatchEnd( player )
+	}
+}
+
+void function WeaponStatsHook_OnPlayerDisconnectOrMatchEnd( entity player )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	if ( !( player in fileLevel.weaponStatsStorageSum ) )
+		return
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Hook_OnPlayerDisconnectOrMatchEnd", player.GetPlayerName() )
+	#endif
+	WeaponStatsStorageWrite_FinishRecordWeaponHoldTime( player )
+	WeaponStatsValidateStorageCondition_HoldTime( player )
+	WeaponStatsValidateStorageCondition_PlayerDisconnectOrMatchEnd( player )
+}
+
+void function WeaponStatsHook_OnAssistCredited( entity player )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Hook_OnAssistCredited", player.GetPlayerName() )
+	#endif
+	if ( !( player in fileLevel.weaponStatsStorageSum ) )
+		return
+	//storage
+	WeaponStatsStorageWrite_OnUniversalCount( eCountTable.ASSIST, player, fileLevel.weaponStatsStorageSum[player].mainHandActiveWeapon )
+
+	//validate
+	WeaponStatsValidateStorageCondition_UniversalCount( eCountTable.ASSIST, player )
+}
+
+void function WeaponStatsHook_OnIncrementStatInstance( entity player, StatInstance si, int value )
+{
+	if ( IsWeaponStatsDeactivated() )
+		return
+	if ( !( player in fileLevel.weaponStatsStorageSum ) )
+		return
+	if ( !( si in fileLevel.weaponStatsStorageSum[player].IncreasedTimes ) )
+		fileLevel.weaponStatsStorageSum[player].IncreasedTimes[si] <- value
+	else
+		fileLevel.weaponStatsStorageSum[player].IncreasedTimes[si] += value
+}
+////////////////////////////
+////////////////////////////
+////    Storage Write   ////
+////////////////////////////
+////////////////////////////
+void function WeaponStatsStorageWrite_StartRecordWeaponHoldTime( entity player, entity weapon )
+{
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:StorageWrite_StartRecordWeaponHoldTime", player.GetPlayerName(), weapon.GetWeaponClassName() )
+	#endif
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( si in fileLevel.weaponStatsConfigs.writeCondition_Statistic[eStatisticTable.HOLD_TIME] )
+		{
+			if ( !( si in fileLevel.weaponStatsStorageSum[player].Statistic[eStatisticTable.HOLD_TIME] ) )
+				fileLevel.weaponStatsStorageSum[player].Statistic[eStatisticTable.HOLD_TIME][si] <- 0
+			fileLevel.weaponStatsStorageSum[player].LastHoldTimeSi = si
+			break
+		}
+	}
+}
+
+void function WeaponStatsStorageWrite_FinishRecordWeaponHoldTime( entity player )
+{
+	if ( !( player in fileLevel.weaponStatsStorageSum ) || fileLevel.weaponStatsStorageSum[player].LastHoldTimeSi == null )
+		return
+	StatInstance lastHoldTimeSi = expect StatInstance( fileLevel.weaponStatsStorageSum[player].LastHoldTimeSi )
+	if ( lastHoldTimeSi in fileLevel.weaponStatsStorageSum[player].Statistic[eStatisticTable.HOLD_TIME] )
+	{
+		fileLevel.weaponStatsStorageSum[player].Statistic[eStatisticTable.HOLD_TIME][lastHoldTimeSi] += Time() - GetTargetEventTime( player, WEAPON_SWITCH )
+		#if WEAPON_STATS_DEBUG
+			printt( "WeaponStats:StorageWrite_FinishRecordWeaponHoldTime:", player.GetPlayerName(), lastHoldTimeSi.description, fileLevel.weaponStatsStorageSum[player].Statistic[eStatisticTable.HOLD_TIME][lastHoldTimeSi] )
+		#endif
+		fileLevel.weaponStatsStorageSum[player].LastHoldTimeSi = null
+	}
+}
+
+float function GetEffectiveDamage( entity victim, var attackerDamageInfo )
+{
+	// effective damage must limit to victim's health
+	return min( victim.GetHealth()+victim.GetShieldHealth(), DamageInfo_GetDamage( attackerDamageInfo ) )
+}
+
+void function WeaponStatsStorageWrite_OnContinuousDownCount( entity player, entity weaponEnt, entity victim, var damageInfo = null )
+{
+	ItemFlavor ornull weaponOrNull = WeaponEntityToItemFlavor( weaponEnt )
+	if ( weaponOrNull == null )
+		return
+	ItemFlavor weapon = expect ItemFlavor( weaponOrNull )
+	// extra process for ContinuousWeaponDownCount, maybe refactor later
+	if ( fileLevel.weaponStatsStorageSum[player].LastContinuousWeaponDownGuid != 0 && weapon.guid != fileLevel.weaponStatsStorageSum[player].LastContinuousWeaponDownGuid && fileLevel.weaponStatsStorageSum[player].LastContinuousWeaponDownSi in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.CONTINUOUS_DOWN] )
+	{
+		// down enemy with different weapon will break continuity, clear trace and count
+		#if WEAPON_STATS_DEBUG
+			printt( "WeaponStats:StorageWrite_OnDownEnemyCount:", player.GetPlayerName(), weaponEnt.GetWeaponClassName(), "break continuity", fileLevel.weaponStatsStorageSum[player].Count[eCountTable.CONTINUOUS_DOWN][fileLevel.weaponStatsStorageSum[player].LastContinuousWeaponDownSi] )
+		#endif
+		fileLevel.weaponStatsStorageSum[player].AmmoUsedTrace[fileLevel.weaponStatsStorageSum[player].LastContinuousWeaponDownSi].clear()
+		fileLevel.weaponStatsStorageSum[player].Count[eCountTable.CONTINUOUS_DOWN][fileLevel.weaponStatsStorageSum[player].LastContinuousWeaponDownSi] = 0
+	}
+
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		// extra process for ContinuousWeaponDownCount, maybe refactor later
+		if ( si in fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.CONTINUOUS_DOWN] )
+		{
+			if ( !( si in fileLevel.weaponStatsStorageSum[player].AmmoUsedTrace ) )
+				fileLevel.weaponStatsStorageSum[player].AmmoUsedTrace[si] <- []
+
+			if ( !( si in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.CONTINUOUS_DOWN] ) )
+				fileLevel.weaponStatsStorageSum[player].Count[eCountTable.CONTINUOUS_DOWN][si] <- 0
+
+			if ( fileLevel.weaponStatsStorageSum[player].AmmoUsedTrace[si].len() == fileLevel.weaponStatsConfigs.validateCondition_Count[si] )
+				fileLevel.weaponStatsStorageSum[player].AmmoUsedTrace[si].remove( 0 )
+
+			if ( !( si in fileLevel.weaponStatsStorageSum[player].AmmoUsed ) )
+				fileLevel.weaponStatsStorageSum[player].AmmoUsed[si] <- 0
+
+			fileLevel.weaponStatsStorageSum[player].AmmoUsedTrace[si].append( fileLevel.weaponStatsStorageSum[player].AmmoUsed[si] )
+
+			if ( ConditionsEvaluate( fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.CONTINUOUS_DOWN][si], si, player, weaponEnt, victim, damageInfo ) )
+			{
+				fileLevel.weaponStatsStorageSum[player].Count[eCountTable.CONTINUOUS_DOWN][si]++
+
+				#if WEAPON_STATS_DEBUG
+					printt( "WeaponStats:StorageWrite_OnDownEnemyCount:", player.GetPlayerName(), weaponEnt.GetWeaponClassName(), "ContinuousWeaponDownCount", fileLevel.weaponStatsStorageSum[player].Count[eCountTable.CONTINUOUS_DOWN][si] )
+				#endif
+			}
+
+			fileLevel.weaponStatsStorageSum[player].LastContinuousWeaponDownSi = si
+			fileLevel.weaponStatsStorageSum[player].LastContinuousWeaponDownGuid = weapon.guid
+		}
+	}
+}
+
+void function WeaponStatsStorageWrite_OnUniversalCount( int countTable/*eCountTable*/, entity player, entity weaponEnt = null, var damageInfo = null, entity ornull victim = null, int increment = 1 )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( si in fileLevel.weaponStatsConfigs.writeCondition_Count[countTable] )
+		{
+			if ( ConditionsEvaluate( fileLevel.weaponStatsConfigs.writeCondition_Count[countTable][si], si, player, weaponEnt, victim, damageInfo ) )
+			{
+				#if WEAPON_STATS_DEBUG
+					printt( "WeaponStats:StorageWrite_OnUniversalCount:", countTable, player.GetPlayerName() )
+				#endif
+				if ( !( si in fileLevel.weaponStatsStorageSum[player].Count[countTable] ) )
+					fileLevel.weaponStatsStorageSum[player].Count[countTable][si] <- 0
+				fileLevel.weaponStatsStorageSum[player].Count[countTable][si] += increment
+			}
+		}
+	}
+}
+
+bool function WeaponStatsCondition_ReloadTimesWithin( entity player, StatInstance si, int times, bool isExact, bool clear = false )
+{
+	bool result = false
+	if ( times == 0 || !isExact )
+		result = !( si in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.RELOAD] ) || fileLevel.weaponStatsStorageSum[player].Count[eCountTable.RELOAD][si] <= times
+	else
+		result = si in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.RELOAD] && fileLevel.weaponStatsStorageSum[player].Count[eCountTable.RELOAD][si] == times
+	if ( clear )
+		fileLevel.weaponStatsStorageSum[player].Count[eCountTable.RELOAD][si] <- 0
+	return result
+}
+
+void function WeaponStatsStorageWrite_OnUniversalStatistic( int statisticType/*eStatisticTable*/, entity player, entity weaponEnt, float value, entity ornull victim = null, var damageInfo = null )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( si in fileLevel.weaponStatsConfigs.writeCondition_Statistic[statisticType] && ConditionsEvaluate( fileLevel.weaponStatsConfigs.writeCondition_Statistic[statisticType][si], si, player, weaponEnt, victim, damageInfo ) )
+		{
+			#if WEAPON_STATS_DEBUG
+				//printt( "WeaponStats:StorageWrite_OnUniversalStatistic:", statisticType, player.GetPlayerName(), weaponEnt.GetWeaponClassName() )
+			#endif
+			if ( !( si in fileLevel.weaponStatsStorageSum[player].Statistic[statisticType] ) )
+				fileLevel.weaponStatsStorageSum[player].Statistic[statisticType][si] <- 0
+			fileLevel.weaponStatsStorageSum[player].Statistic[statisticType][si] += value
+		}
+	}
+}
+
+int function GetWeaponBurstCount( entity weaponEnt )
+{
+	return weaponEnt.GetWeaponSettingInt( eWeaponVar.burst_fire_count )
+}
+
+int function GetWeaponMagCount( entity weaponEnt )
+{
+	return weaponEnt.GetWeaponPrimaryClipCountMax()
+}
+
+void function WeaponStatsStorageWrite_OnFireAmmo( entity player, entity weaponEnt, int ammoUsed )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( si in fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.AMMO_FIRED] )
+		{
+			if ( !( si in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED] ) )
+				fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si] <- 0
+			if ( HasAdditionalParams( eAdditionalParamsType.FIREANDHIT, si ) && expect int( fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.FIREANDHIT][si][0] ) == eAmmoHitValidateLocation.BURST_END )
+			{
+				int targetCount = GetWeaponBurstCount( weaponEnt ) //GetWeaponBurstCount becomes 0 when switched to single shot mode
+				if ( targetCount == 0 || fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si] >= targetCount )
+				{
+					foreach ( clearFunc in fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.WEAPON_SWITCHED][si] )
+						clearFunc( player )
+				}
+			}
+			fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si] += IsBitFlagSet( weaponEnt.GetWeaponDamageFlags(), DF_SHOTGUN ) ? ammoUsed * weaponEnt.GetProjectilesPerShot() : ammoUsed
+
+			#if WEAPON_STATS_DEBUG
+				printt( "WeaponStats:StorageWrite_OnFireAmmo:", player.GetPlayerName(), weaponEnt.GetWeaponClassName(), fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si], ammoUsed )
+			#endif
+		}
+	}
+}
+
+void function WeaponStatsStorageWrite_OnFireAndHit( entity player, entity weaponEnt, entity victim, var damageInfo )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( si in fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.AMMO_HIT] && ConditionsEvaluate( fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.AMMO_HIT][si], si, player, weaponEnt, victim, damageInfo ) )
+		{
+			if ( !( si in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT] ) )
+				fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT][si] <- 0
+			if ( IsBitFlagSet( weaponEnt.GetWeaponDamageFlags(), DF_SHOTGUN ) )
+				fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT][si]++
+			else if ( fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT][si] == 0 && HasAdditionalParams( eAdditionalParamsType.FIREANDHIT, si, 1 ) && expect bool( fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.FIREANDHIT][si][1] ) == false )
+				fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT][si] = fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED][si]//HitFromStart == false, so fill in fake hit count for previous fire record
+			else
+				fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT][si]++
+			#if WEAPON_STATS_DEBUG
+				printt( "WeaponStats:StorageWrite_OnFireAndHit:", player.GetPlayerName(), weaponEnt.GetWeaponClassName(), fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT][si] )
+			#endif
+		}
+	}
+}
+
+void function WeaponStatsStorageWrite_OnReloadStatistic( entity player, entity weaponEnt )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( si in fileLevel.weaponStatsConfigs.writeCondition_Statistic[eStatisticTable.RELOAD] && ConditionsEvaluate( fileLevel.weaponStatsConfigs.writeCondition_Statistic[eStatisticTable.RELOAD][si], si, player, weaponEnt ) )
+			fileLevel.weaponStatsStorageSum[player].Statistic[eStatisticTable.RELOAD][si] <- Time()
+	}
+}
+
+bool function WeaponStatsCondition_LimitAmmo( entity player, StatInstance si, int target, bool needCheckContinuousLimitAmmo )
+{
+	int ammoUsed = 0
+
+	if ( needCheckContinuousLimitAmmo )
+	{
+		Assert( fileLevel.weaponStatsStorageSum[player].AmmoUsedTrace[si].len() == fileLevel.weaponStatsConfigs.validateCondition_Count[si] )
+		ammoUsed = fileLevel.weaponStatsStorageSum[player].AmmoUsedTrace[si][fileLevel.weaponStatsStorageSum[player].AmmoUsedTrace[si].len() - 1] - fileLevel.weaponStatsStorageSum[player].AmmoUsedTrace[si][0] + 1
+	}
+
+	#if WEAPON_STATS_DEBUG
+		if ( si in fileLevel.weaponStatsStorageSum[player].AmmoUsed )
+			printt( "WeaponStats:WeaponStatsCondition_LimitAmmo", player.GetPlayerName(), "ammoUsed", ammoUsed )
+	#endif
+
+	return ammoUsed <= target
+}
+
+bool function WeaponStatsCondition_LimitDamage( entity player, StatInstance si, entity victim, int limit )
+{
+	if ( victim == null )
+		return false
+
+	if ( !( si in fileLevel.weaponStatsStorageSum[player].DamagedPlayers) )
+		return false
+
+	if ( !( victim in fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si]) )
+		return false
+
+	float damage = fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si][victim]
+	return damage < limit
+}
+
+bool function WeaponStatsCondition_DamageContribution( entity player, StatInstance si, entity victim, float ratio )
+{
+	if ( victim == null )
+		return false
+
+	if ( !( si in fileLevel.weaponStatsStorageSum[player].DamagedPlayers) )
+		return false
+
+	if ( !( victim in fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si]) )
+		return false
+
+	float damage = fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si][victim]
+	int totalHp = victim.GetShieldHealthMax() + victim.GetMaxHealth()
+	if ( victim in fileLevel.healthTraceInfos )
+		totalHp += fileLevel.healthTraceInfos[victim].totalRecover
+
+	if ( totalHp == 0 )
+		return false
+
+	return damage / totalHp > ratio
+}
+
+bool function WeaponStatsCondition_ReturnFire( entity attacker, entity victim, int validSeconds )
+{
+	// return fire, victim become attacker
+	entity beShotCheckVictim   = attacker
+	entity beShotCheckAttacker = victim
+
+	if ( !( beShotCheckVictim in fileLevel.beShotTime ) )
+		return false
+
+	if ( !( beShotCheckAttacker in fileLevel.beShotTime[beShotCheckVictim] ) )
+		return false
+
+	float beShotTime = fileLevel.beShotTime[beShotCheckVictim][beShotCheckAttacker]
+	return Time() - beShotTime < validSeconds
+}
+
+bool function WeaponStatsCondition_TargetEvent( entity player, string eventKey, int validSeconds )
+{
+	if ( !( player in fileLevel.independentEventTime ) )
+		return false
+
+	if ( !( eventKey in fileLevel.independentEventTime[player] ) )
+		return false
+
+	float eventTime = fileLevel.independentEventTime[player][eventKey]
+	return Time() - eventTime < validSeconds
+}
+
+bool function WeaponStatsCondition_TargetInteractEvent_Internal( entity player, entity target, string eventKey, int validSeconds )
+{
+	if ( !( player in fileLevel.interactEvents ) )
+		return false
+
+	if ( !( target in fileLevel.interactEvents[player] ) )
+		return false
+
+	if ( !( eventKey in fileLevel.interactEvents[player][target].times ) )
+		return false
+
+	if ( validSeconds == NO_TIME_LIMIT )
+		return true
+
+	float eventTime = fileLevel.interactEvents[player][target].times[eventKey]
+	return Time() - eventTime < validSeconds
+}
+
+float function GetTargetEventTime( entity player, string eventKey )
+{
+	if ( player in fileLevel.independentEventTime && eventKey in fileLevel.independentEventTime[player] )
+		return fileLevel.independentEventTime[player][eventKey]
+	return -1
+}
+
+float function GetTargetInteractEventTime( entity player, entity target, string eventKey )
+{
+	if ( player in fileLevel.interactEvents && target in fileLevel.interactEvents[player] && eventKey in fileLevel.interactEvents[player][target].times )
+		return fileLevel.interactEvents[player][target].times[eventKey]
+	return -1
+}
+
+// activePassiveExchange determines the active and passive
+// e.g. for event "be_downed"
+//    exchangeActivePassive == false, means player be downed by target
+//    exchangeActivePassive == true,  means target be downed by player
+bool function WeaponStatsCondition_TargetInteractEvent( entity player, entity target, string eventKey, int validSeconds, bool exchangeActivePassive = false )
+{
+	if ( exchangeActivePassive )
+		return WeaponStatsCondition_TargetInteractEvent_Internal( target, player, eventKey, validSeconds )
+
+	return WeaponStatsCondition_TargetInteractEvent_Internal( player, target, eventKey, validSeconds )
+}
+
+// activePassiveExchange determines the active and passive
+// e.g. for event "be_killed"
+//    exchangeActivePassive == false, means teammate be killed by target
+//    exchangeActivePassive == true,  means target be killed by teammate
+bool function WeaponStatsCondition_TeammateInteractWithTarget( entity player, StatInstance si, entity target, string event, int validSeconds, bool exchangeActivePassive )
+{
+	foreach ( teammate in GetPlayerArrayOfTeam( player.GetTeam() ) )
+	{
+		if ( teammate == player )
+			continue
+
+		if ( WeaponStatsCondition_TargetInteractEvent( teammate, target, event, validSeconds, exchangeActivePassive ) )
+			return true
+	}
+
+	return false
+}
+
+void function WeaponStatsWrite_WeaponPickupTime( entity player, string weaponClassName )
+{
+	if ( weaponClassName.len() < WEAPON_CLASS_PREFIX.len() || weaponClassName.slice( 0, WEAPON_CLASS_PREFIX.len() ) != WEAPON_CLASS_PREFIX )
+		return
+	if ( !( player in fileLevel.PickupWeaponTime ) )
+		fileLevel.PickupWeaponTime[player] <- {}
+	fileLevel.PickupWeaponTime[player][weaponClassName] <- Time()
+}
+
+void function WeaponStatsWrite_WeaponDropTime( entity player, string weaponClassName )
+{
+	if ( weaponClassName.len() < WEAPON_CLASS_PREFIX.len() || weaponClassName.slice( 0, WEAPON_CLASS_PREFIX.len() ) != WEAPON_CLASS_PREFIX )
+		return
+	if ( !( player in fileLevel.DropWeaponTime ) )
+		fileLevel.DropWeaponTime[player] <- {}
+	fileLevel.DropWeaponTime[player][weaponClassName] <- Time()
+}
+
+bool function WeaponStatsCondition_AttackWithoutOverheat( entity player, StatInstance si, entity target, int resetSeconds )
+{
+	if ( !WeaponStatsCondition_TargetEvent( player, WEAPON_OVERHEAT, resetSeconds ) )
+		return true
+
+	if ( !( si in fileLevel.weaponStatsStorageSum[player].DamageStartTime ) || !( target in fileLevel.weaponStatsStorageSum[player].DamageStartTime[si] ) )
+	{
+		return true
+	}
+
+	float damageStartTime = fileLevel.weaponStatsStorageSum[player].DamageStartTime[si][target]
+	float overheatTime    = fileLevel.independentEventTime[player][WEAPON_OVERHEAT]
+	return damageStartTime > overheatTime
+}
+
+bool function WeaponStatsCondition_TargetRevivePair( entity player, StatInstance si, entity target, int validSeconds )
+{
+	if ( !( si in fileLevel.weaponStatsStorageSum[player].TargetsInPeriod ) )
+		return false
+
+	float currentTime = Time()
+	while ( fileLevel.weaponStatsStorageSum[player].TargetsInPeriod[si].len() > 0 && currentTime - fileLevel.weaponStatsStorageSum[player].TargetsInPeriod[si][0].timeStamp > validSeconds )
+		fileLevel.weaponStatsStorageSum[player].TargetsInPeriod[si].remove( 0 )
+
+	int validTargetCount = fileLevel.weaponStatsStorageSum[player].TargetsInPeriod[si].len()
+
+	for ( int i = 0; i < validTargetCount; i++ )
+	{
+		entity target1 = fileLevel.weaponStatsStorageSum[player].TargetsInPeriod[si][i].target
+		for ( int j = i + 1; j < validTargetCount; j++ )
+		{
+			entity target2 = fileLevel.weaponStatsStorageSum[player].TargetsInPeriod[si][j].target
+			if ( WeaponStatsCondition_TargetInteractEvent( target1, target2, REVIVE_START, validSeconds ) || WeaponStatsCondition_TargetInteractEvent( target2, target1, REVIVE_START, validSeconds ) )
+				return true
+		}
+	}
+	return false
+}
+
+// refer to GetIsPlayerOnGroundForEchoLocator in mp_ability_echo_locator.nut
+bool function IsPlayerInAirWithHeightCheck( entity player, int heightFromGround )
+{
+	bool isOnGround = true
+
+	if ( player.IsPlayerDecoy() )
+	{
+		isOnGround = true//player.DecoyIsOnGround()
+	}
+	else
+	{
+		isOnGround = player.IsOnGround()
+	}
+
+	//IsOnGround is unreliable when player is bunny hopping.  Trace down to verify not on ground.
+	if ( !isOnGround )
+	{
+		const int TRACE_START_UP_OFFSET = 2
+		vector traceStart        = player.GetOrigin() + ( player.GetUpVector() * TRACE_START_UP_OFFSET )
+		vector traceEnd          = player.GetOrigin() - ( player.GetUpVector() * ( TRACE_START_UP_OFFSET + heightFromGround ) )
+		TraceResults traceResult = TraceLine( traceStart, traceEnd, [ player ], TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_BLOCK_WEAPONS_AND_PHYSICS )
+		isOnGround = ( traceResult.fraction < 0.99 )
+	}
+
+	return !isOnGround
+}
+
+bool function WeaponStatsCondition_TargetInAir( entity victim )
+{
+	const int HEIGHT_FROM_GROUND = 3
+	return IsPlayerInAirWithHeightCheck( victim, HEIGHT_FROM_GROUND ) && !victim.IsZiplining()
+}
+
+bool function WeaponStatsCondition_TargetOutsideSafezone( entity victim )
+{
+	int realm = Survival_Loot_GetDefaultRealm()
+	if ( !SURVIVAL_DeathFieldIsValid( realm ) )
+		return false
+
+	vector nextCircleCenter   = SURVIVAL_GetDeathFieldCenter( realm )
+	float curDeathFieldRadius = SURVIVAL_GetDeathFieldCurrentRadius( realm )
+	float distance            = Distance2D( victim.GetOrigin(), nextCircleCenter )
+	return distance > curDeathFieldRadius
+}
+
+bool function WeaponStatsCondition_IncreaseTimesLimit( entity player, StatInstance si, int limit )
+{
+	if ( !( si in fileLevel.weaponStatsStorageSum[player].IncreasedTimes ) )
+	{
+		return true
+	}
+
+	return fileLevel.weaponStatsStorageSum[player].IncreasedTimes[si] < limit
+}
+
+bool function IsNeedTraceTargetInPeriod( StatInstance si )
+{
+	if ( si in fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.REVIVE_PAIR_KILL] )
+		return true
+
+	return false
+}
+
+void function WeaponStats_OnEventNeedHandleTargetInPeriod( entity player, entity target )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( IsNeedTraceTargetInPeriod( si ) )
+		{
+			TargetInPeriodInfo info
+			info.target = target
+			info.timeStamp = Time()
+
+			if ( !( si in fileLevel.weaponStatsStorageSum[player].TargetsInPeriod ) )
+				fileLevel.weaponStatsStorageSum[player].TargetsInPeriod[si] <- []
+
+			fileLevel.weaponStatsStorageSum[player].TargetsInPeriod[si].append( info )
+		}
+	}
+}
+
+void function WeaponStatsStorageWrite_OnWeaponAttack( entity player, entity weaponEnt, int ammoUsed )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( si in fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.CONTINUOUS_DOWN] )
+		{
+			#if WEAPON_STATS_DEBUG
+				//printt( "WeaponStats:WeaponStatsStorageWrite_OnWeaponAttack:", player.GetPlayerName(), weaponEnt.GetWeaponClassName(), ammoUsed )
+			#endif
+			if ( !( si in fileLevel.weaponStatsStorageSum[player].AmmoUsed ) )
+				fileLevel.weaponStatsStorageSum[player].AmmoUsed[si] <- 1
+			else
+				fileLevel.weaponStatsStorageSum[player].AmmoUsed[si] += ammoUsed
+		}
+
+		fileLevel.weaponStatsStorageSum[player].WeaponChargeLevel[si] <- ( weaponEnt.IsChargeWeapon() ? weaponEnt.GetWeaponChargeLevel() : 1 )
+	}
+}
+
+void function WeaponStatsStorageWrite_BreakShieldTime( entity attacker, entity weaponEnt, entity victim, var attackerDamageInfo )
+{
+	foreach ( si in fileLevel.currentStatInstance[attacker] )
+	{
+		if ( WriteConditionsEvaluate( eWriteCondition.BREAK_SHIELD_TIME, si, attacker, weaponEnt, victim, attackerDamageInfo ) )
+		{
+			#if WEAPON_STATS_DEBUG
+				printt( "WeaponStats:StorageWrite_BreakShieldTime:", attacker.GetPlayerName(), weaponEnt.GetWeaponClassName(), victim.GetPlayerName() )
+			#endif
+			if ( !( si in fileLevel.weaponStatsStorageSum[attacker].BreakShieldTime ) )
+				fileLevel.weaponStatsStorageSum[attacker].BreakShieldTime[si] <- {}
+			fileLevel.weaponStatsStorageSum[attacker].BreakShieldTime[si][victim] <- Time()
+		}
+	}
+}
+
+bool function WeaponStatsCondition_BreakShieldTimeWithin( entity attacker, StatInstance si, float validSeconds, entity victim, bool clear = false )
+{
+	bool result = si in fileLevel.weaponStatsStorageSum[attacker].BreakShieldTime && victim in fileLevel.weaponStatsStorageSum[attacker].BreakShieldTime[si] && Time() - fileLevel.weaponStatsStorageSum[attacker].BreakShieldTime[si][victim] <= validSeconds
+	if ( si in fileLevel.weaponStatsStorageSum[attacker].BreakShieldTime && clear )
+		fileLevel.weaponStatsStorageSum[attacker].BreakShieldTime[si][victim] <- 0
+	return result
+}
+
+void function WeaponStatsStorageWrite_BreakIncapShieldTime( entity attacker, entity weaponEnt, entity victim, var attackerDamageInfo )
+{
+	foreach ( si in fileLevel.currentStatInstance[attacker] )
+	{
+		if ( WriteConditionsEvaluate( eWriteCondition.BREAK_INCAP_SHIELD_TIME, si, attacker, weaponEnt, victim, attackerDamageInfo ) )
+		{
+			#if WEAPON_STATS_DEBUG
+				printt( "WeaponStats:StorageWrite_BreakIncapShieldTime:", attacker.GetPlayerName(), weaponEnt.GetWeaponClassName(), victim.GetPlayerName() )
+			#endif
+
+			if ( !( si in fileLevel.weaponStatsStorageSum[attacker].BreakIncapShieldTime ) )
+				fileLevel.weaponStatsStorageSum[attacker].BreakIncapShieldTime[si] <- {}
+			fileLevel.weaponStatsStorageSum[attacker].BreakIncapShieldTime[si][victim] <- Time()
+		}
+	}
+}
+
+bool function WeaponStatsCondition_IncapShieldBreakerSameAsKiller( entity player, StatInstance si, entity target )
+{
+	if ( !( si in fileLevel.weaponStatsStorageSum[player].BreakIncapShieldTime ) || !( target in fileLevel.weaponStatsStorageSum[player].BreakIncapShieldTime[si] ) )
+	{
+		return false
+	}
+
+	return true
+}
+
+void function WriteReviveAndRespawnClear( StatInstance si, entity attacker, entity victim )
+{
+	//track info for when victim is revived/respawned
+	if ( !( victim in fileLevel.clearAction_ReviveAndRespawn ) )
+		fileLevel.clearAction_ReviveAndRespawn[victim] <- {}
+	fileLevel.clearAction_ReviveAndRespawn[victim][si] <- attacker
+}
+
+void function WeaponStatsStorageWrite_OnWipeSquad( entity player, entity weaponEnt, entity victim, var attackerDamageInfo )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( WriteConditionsEvaluate( eWriteCondition.WIPE_SQUAD_PLAYERS, si, player, weaponEnt, victim, attackerDamageInfo ) )
+		{
+			if ( !( si in fileLevel.weaponStatsStorageSum[player].WipeSquadPlayers ) )
+				fileLevel.weaponStatsStorageSum[player].WipeSquadPlayers[si] <- []
+			if ( !fileLevel.weaponStatsStorageSum[player].WipeSquadPlayers[si].contains( victim ) )
+				fileLevel.weaponStatsStorageSum[player].WipeSquadPlayers[si].append( victim )
+			if ( si in fileLevel.weaponStatsConfigs.writeCondition_Count[eCountTable.RELOAD] )
+				fileLevel.weaponStatsStorageSum[player].WipeSquadReloadTimes[victim] <- ( ( si in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.RELOAD] ) ? fileLevel.weaponStatsStorageSum[player].Count[eCountTable.RELOAD][si] : 0 )
+			#if WEAPON_STATS_DEBUG
+				printt( "WeaponStats:StorageWrite_OnWipeSquad:", player.GetPlayerName(), victim.GetPlayerName() )
+			#endif
+			WriteReviveAndRespawnClear( si, player, victim )
+		}
+	}
+}
+
+bool function WeaponStatsCondition_ReloadTimesBySquadNotExceed( entity player, StatInstance si, int victimTeam, int maxReloadTimes )
+{
+	if ( !( si in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.RELOAD] ) )
+		return true
+	int earliestReload = INT_MAX
+	foreach ( otherVictim in fileLevel.weaponStatsStorageSum[player].WipeSquadPlayers[si] )
+		if ( otherVictim.GetTeam() == victimTeam && otherVictim in fileLevel.weaponStatsStorageSum[player].WipeSquadReloadTimes && fileLevel.weaponStatsStorageSum[player].WipeSquadReloadTimes[otherVictim] < earliestReload )
+			earliestReload = fileLevel.weaponStatsStorageSum[player].WipeSquadReloadTimes[otherVictim]
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:ReloadTimesBySquadNotExceed:", player.GetPlayerName(), victimTeam, earliestReload )
+	#endif
+	return earliestReload >= fileLevel.weaponStatsStorageSum[player].Count[eCountTable.RELOAD][si] - maxReloadTimes
+}
+
+void function WeaponStatsStorageClear_ReviveAndRespawn( entity victim )
+{
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:StorageClear_ReviveAndRespawn", victim.GetPlayerName() )
+	#endif
+	if ( victim in fileLevel.clearAction_ReviveAndRespawn )
+	{
+		foreach ( si, attacker in fileLevel.clearAction_ReviveAndRespawn[victim] )
+		{
+			if ( si in fileLevel.weaponStatsConfigs.clearActionConfig_ReviveAndRespawn )
+				foreach ( clearFunc in fileLevel.weaponStatsConfigs.clearActionConfig_ReviveAndRespawn[si] )
+					clearFunc( attacker, victim )
+		}
+		delete fileLevel.clearAction_ReviveAndRespawn[victim]
+	}
+}
+
+void function WeaponStatsStorageClear_WeaponSwitched( entity player, entity newWeapon, entity oldWeapon )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		WeaponStatsUniversalClear( eClearConfig.WEAPON_SWITCHED, player, si )
+		if ( si in fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.SWITCH_DIFFERENT_WEAPON] )
+		{
+			ItemFlavor ornull weaponItemOld = IsValid( oldWeapon ) ? GetWeaponItemFlavorByClass( oldWeapon.GetWeaponClassName() ) : null
+			ItemFlavor ornull weaponItemNew = IsValid( newWeapon ) ? GetWeaponItemFlavorByClass( newWeapon.GetWeaponClassName() ) : null
+			ItemFlavor targetWeapon			= GetItemFlavorByGUID( si.targetTag )
+			if ( weaponItemOld != targetWeapon || weaponItemOld != weaponItemNew )
+			{
+				#if WEAPON_STATS_DEBUG
+					printt( "WeaponStats:StorageClear_SwitchDifferentWeapon", player.GetPlayerName(), fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.SWITCH_DIFFERENT_WEAPON][si].len() )
+				#endif
+				foreach ( clearFunc in fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.SWITCH_DIFFERENT_WEAPON][si] )
+					clearFunc( player )
+			}
+		}
+	}
+}
+
+void function WeaponStatsUniversalClear( int clearConfig/*eClearConfig*/, entity player, StatInstance si )
+{
+	if ( si in fileLevel.weaponStatsConfigs.clearActionConfigs[clearConfig] )
+	{
+		#if WEAPON_STATS_DEBUG
+			printt( "WeaponStats:StorageClear", clearConfig, player.GetPlayerName(), fileLevel.weaponStatsConfigs.clearActionConfigs[clearConfig][si].len() )
+		#endif
+		foreach ( clearFunc in fileLevel.weaponStatsConfigs.clearActionConfigs[clearConfig][si] )
+			clearFunc( player )
+	}
+}
+
+void function WeaponStatsStorageWrite_OnDownVictimsProperty( entity player, entity weaponEnt, entity victim, var attackerDamageInfo )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( WriteConditionsEvaluate( eWriteCondition.VICTIMS_PROPERTY, si, player, weaponEnt, victim, attackerDamageInfo ) )
+		{
+			#if WEAPON_STATS_DEBUG
+				printt( "WeaponStats:StorageWrite_OnDownVictimsProperty:", player.GetPlayerName() )
+			#endif
+			if ( !( si in fileLevel.weaponStatsStorageSum[player].VictimsProperty ) )
+				fileLevel.weaponStatsStorageSum[player].VictimsProperty[si] <- {}
+			int category = eVictimProperty.TIME
+			if ( HasAdditionalParams( eAdditionalParamsType.VICTIMS_PROPERTY, si, 0 ) )
+				category = expect int( fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.VICTIMS_PROPERTY][si][0] )
+			switch ( category )
+			{
+				case eVictimProperty.TIME:
+					fileLevel.weaponStatsStorageSum[player].VictimsProperty[si][victim] <- Time()
+					break
+
+				case eVictimProperty.CAR_WEAPON_MOD:
+					fileLevel.weaponStatsStorageSum[player].VictimsProperty[si][victim] <- weaponEnt.HasMod( CAR_ALT_AMMO_MOD )
+					break
+
+				case eVictimProperty.LOADOUT:
+					fileLevel.weaponStatsStorageSum[player].VictimsProperty[si][victim] <- weaponEnt
+					break
+			}
+			WriteReviveAndRespawnClear( si, player, victim )
+		}
+	}
+}
+
+void function WeaponStatsStorageClear_VictimsProperty( entity player, entity victim, StatInstance si )
+{
+	if ( si in fileLevel.weaponStatsStorageSum[player].VictimsProperty && victim in fileLevel.weaponStatsStorageSum[player].VictimsProperty[si] )
+		delete fileLevel.weaponStatsStorageSum[player].VictimsProperty[si][victim]
+}
+
+void function WeaponStatsStorageWrite_OnVictimExecutingEnemy( entity player, entity victim )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( si in fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.VICTIM_EXECUTING_ENEMY] )
+		{
+			if ( !( si in fileLevel.weaponStatsStorageSum[player].VictimExecutingEnemy ) )
+				fileLevel.weaponStatsStorageSum[player].VictimExecutingEnemy[si] <- {}
+			if ( !( victim in fileLevel.weaponStatsStorageSum[player].VictimExecutingEnemy[si] ) )
+				fileLevel.weaponStatsStorageSum[player].VictimExecutingEnemy[si][victim] <- false
+			bool forceTargetIsTeammate = expect bool( fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.EXECUTING_TEAMMATE][si][0] )
+			bool isTeammate            = false
+			if ( forceTargetIsTeammate )
+			{
+				entity target = victim.e.syncedMeleeTarget
+				if ( IsValid( target ) && target.IsPlayer() )
+					isTeammate = IsFriendlyTeam( target.GetTeam(), player.GetTeam() )
+			}
+			if ( !forceTargetIsTeammate || ( forceTargetIsTeammate && isTeammate ) )
+				fileLevel.weaponStatsStorageSum[player].VictimExecutingEnemy[si][victim] = fileLevel.weaponStatsStorageSum[player].VictimExecutingEnemy[si][victim] || victim.ContextAction_IsMeleeExecutionAttacker()
+			#if WEAPON_STATS_DEBUG
+				printt( "WeaponStats:StorageWrite_OnVictimExecutingEnemy:", player.GetPlayerName(), victim.GetPlayerName(), victim.ContextAction_IsMeleeExecutionAttacker(), fileLevel.weaponStatsStorageSum[player].VictimExecutingEnemy[si][victim] )
+			#endif
+		}
+	}
+}
+
+void function WeaponStatsStorageWrite_OnVictimHealthTrace( entity victim, var attackerDamageInfo )
+{
+	int healthBeforeAttack = victim.GetShieldHealth() + victim.GetHealth()
+	int health = healthBeforeAttack - int ( DamageInfo_GetDamage( attackerDamageInfo ) )
+	if ( health < 0 )
+		health = 0
+
+	int maxHealth = victim.GetShieldHealthMax() + victim.GetMaxHealth()
+
+	if ( !( victim in fileLevel.healthTraceInfos ) )
+	{
+		HealthTraceInfo info
+		fileLevel.healthTraceInfos[victim] <- info
+	}
+
+	// Health recover to full health, reset trace info
+	if ( healthBeforeAttack >= maxHealth )
+	{
+		foreach ( player, storage in fileLevel.weaponStatsStorageSum )
+		{
+			foreach ( si, damageAmountInfo in storage.DamagedPlayers )
+			{
+				if ( si in fileLevel.weaponStatsConfigs.clearActionConfigs[eClearConfig.COMPLETE_RECOVERY] )
+				{
+					damageAmountInfo[victim] <- 0
+				}
+			}
+		}
+
+		fileLevel.healthTraceInfos[victim].totalRecover = 0
+		fileLevel.healthTraceInfos[victim].lastHealth = health
+	}
+	else
+	{
+		if ( healthBeforeAttack > fileLevel.healthTraceInfos[victim].lastHealth )
+			fileLevel.healthTraceInfos[victim].totalRecover += healthBeforeAttack - fileLevel.healthTraceInfos[victim].lastHealth
+		fileLevel.healthTraceInfos[victim].lastHealth = health
+	}
+}
+
+void function WeaponStatsStorageWrite_OnDamagedVictim( entity player, entity weaponEnt, entity victim, var attackerDamageInfo )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( WriteConditionsEvaluate( eWriteCondition.DAMAGED_PLAYERS, si, player, weaponEnt, victim, attackerDamageInfo ) )
+		{
+			#if WEAPON_STATS_DEBUG
+				printt( "WeaponStats:StorageWrite_OnDamagedVictim:", player.GetPlayerName() )
+			#endif
+			if ( !( si in fileLevel.weaponStatsStorageSum[player].DamagedPlayers ) )
+				fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si] <- {}
+			if ( !( victim in fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si] ) )
+				fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si][victim] <- GetEffectiveDamage( victim, attackerDamageInfo )
+			else
+				fileLevel.weaponStatsStorageSum[player].DamagedPlayers[si][victim] += GetEffectiveDamage( victim, attackerDamageInfo )
+		}
+
+		if ( WriteConditionsEvaluate( eWriteCondition.DAMAGE_START_TIME, si, player, weaponEnt, victim, attackerDamageInfo ) )
+		{
+			#if WEAPON_STATS_DEBUG
+				printt( "WeaponStats:StorageWrite_OnDamagedVictim(DamageStart):", player )
+			#endif
+
+			if ( !( si in fileLevel.weaponStatsStorageSum[player].DamageStartTime ) )
+				fileLevel.weaponStatsStorageSum[player].DamageStartTime[si] <- {}
+			if ( !( victim in fileLevel.weaponStatsStorageSum[player].DamageStartTime[si] ) )
+				fileLevel.weaponStatsStorageSum[player].DamageStartTime[si][victim] <- Time()
+		}
+	}
+}
+
+bool function WeaponStatsCondition_DamageInPeriodComplete( entity player, StatInstance si, entity victim, int timeLimit, int damageAmount, bool useBothWeapons )
+{
+	if ( !( si in fileLevel.weaponStatsStorageSum[player].DamageInPeriod ) || !( victim in fileLevel.weaponStatsStorageSum[player].DamageInPeriod[si] ) )
+		return false
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:DamageInPeriodComplete:", player.GetPlayerName(), victim.GetPlayerName(), DamageInPeriodComplete( fileLevel.weaponStatsStorageSum[player].DamageInPeriod[si][victim], timeLimit, damageAmount, useBothWeapons ) )
+	#endif
+	return DamageInPeriodComplete( fileLevel.weaponStatsStorageSum[player].DamageInPeriod[si][victim], timeLimit, damageAmount, useBothWeapons )
+}
+
+void function WeaponStatsStorageWrite_OnDamageInPeriod( entity victim, entity player, entity weaponEnt, var attackerDamageInfo )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( si in fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.DAMAGE_IN_PERIOD] )
+		{
+			bool passDamageCheck = ConditionsEvaluate( fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.DAMAGE_IN_PERIOD][si], si, player, weaponEnt, victim, attackerDamageInfo )
+			bool forceDamageCheck = HasAdditionalParams( eAdditionalParamsType.DAMAGE_IN_PERIOD, si, 1 ) && expect int( fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.DAMAGE_IN_PERIOD][si][1] ) > 0
+			bool needWriteBuf = forceDamageCheck || passDamageCheck
+			if ( needWriteBuf )
+			{
+				#if WEAPON_STATS_DEBUG
+					printt( "WeaponStats:StorageWrite_OnDamageInPeriod:", player.GetPlayerName(), weaponEnt.GetWeaponClassName() )
+				#endif
+				if ( !(si in fileLevel.weaponStatsStorageSum[player].DamageInPeriod) )
+					fileLevel.weaponStatsStorageSum[player].DamageInPeriod[si] <- {}
+				if ( !(victim in fileLevel.weaponStatsStorageSum[player].DamageInPeriod[si]) )
+				{
+					Assert( HasAdditionalParams( eAdditionalParamsType.DAMAGE_IN_PERIOD, si ) )
+					fileLevel.weaponStatsStorageSum[player].DamageInPeriod[si][victim] <- InitDamageInPeriodInfoRingBuffer( expect int( fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.DAMAGE_IN_PERIOD][si][0] ) )
+				}
+				int forceDamageCheckResetTime = HasAdditionalParams( eAdditionalParamsType.DAMAGE_IN_PERIOD, si, 2 ) ? expect int( fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.DAMAGE_IN_PERIOD][si][2] ) : -1
+				bool setDamageValid = !forceDamageCheck ? true : passDamageCheck &&
+					( fileLevel.weaponStatsStorageSum[player].DamageInPeriod[si][victim].isValid || Time() - GetDamageInPeriodRingBufferLast( fileLevel.weaponStatsStorageSum[player].DamageInPeriod[si][victim] ).time > forceDamageCheckResetTime )
+				entity weaponInSlot0 = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+				entity weaponInSlot1 = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_1 )
+				int weaponSlot       = weaponInSlot0 == weaponEnt ? 0 : 1
+				WriteDamageInPeriodInfoRingBuffer( fileLevel.weaponStatsStorageSum[player].DamageInPeriod[si][victim], GetEffectiveDamage( victim, attackerDamageInfo ), weaponSlot, setDamageValid )
+			}
+		}
+	}
+}
+
+bool function WeaponStatsCondition_DamageAnyVictimInPeriodComplete( entity player, StatInstance si, int timeLimit, int damageAmount, bool useBothWeapons )
+{
+	if ( !( si in fileLevel.weaponStatsStorageSum[player].DamageAnyVictimInPeriod ) )
+		return false
+
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:DamageAnyVictimInPeriodComplete:", player.GetPlayerName(), DamageInPeriodComplete( fileLevel.weaponStatsStorageSum[player].DamageAnyVictimInPeriod[si], timeLimit, damageAmount, useBothWeapons ) )
+	#endif
+
+	return DamageInPeriodComplete( fileLevel.weaponStatsStorageSum[player].DamageAnyVictimInPeriod[si], timeLimit, damageAmount, useBothWeapons )
+}
+
+void function WeaponStatsStorageWrite_OnDamageAnyVictimInPeriod( entity victim, entity player, entity weaponEnt, var attackerDamageInfo )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( si in fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.DAMAGE_ANY_VICTIM_IN_PERIOD] )
+		{
+			#if WEAPON_STATS_DEBUG
+				printt( "WeaponStats:StorageWrite_OnDamageAnyVictimInPeriod:", player.GetPlayerName(), weaponEnt.GetWeaponClassName() )
+			#endif
+
+			if ( !( si in fileLevel.weaponStatsStorageSum[player].DamageAnyVictimInPeriod ) )
+			{
+				Assert( fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.DAMAGE_IN_PERIOD][si].len() > 0 )
+				fileLevel.weaponStatsStorageSum[player].DamageAnyVictimInPeriod[si] <- InitDamageInPeriodInfoRingBuffer( expect int( fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.DAMAGE_IN_PERIOD][si][0] ) )
+			}
+
+			WriteDamageInPeriodInfoRingBufferForShots( fileLevel.weaponStatsStorageSum[player].DamageAnyVictimInPeriod[si], GetEffectiveDamage( victim, attackerDamageInfo ) )
+		}
+	}
+}
+
+DamageInPeriodInfoRingBuffer function InitDamageInPeriodInfoRingBuffer( int size )
+{
+	Assert( size > 0 )
+	DamageInPeriodInfoRingBuffer infoRingBuffer
+	for ( int i = 0; i < size; i++ )
+	{
+		DamageInPeriodInfo info
+		infoRingBuffer.damageInfos.append( info )
+	}
+	infoRingBuffer.latest = 0
+	return infoRingBuffer
+}
+
+void function WriteDamageInPeriodInfoRingBuffer( DamageInPeriodInfoRingBuffer buf, float damageAmount, int weaponSlot, bool isDamagePeriodValid = true )
+{
+	if ( damageAmount <= 0 )
+		return
+	int timeInt = int( Time() )
+	if ( timeInt == buf.damageInfos[buf.latest].time )
+		buf.damageInfos[buf.latest].damageAmount += damageAmount
+	else
+	{
+		buf.latest = ( buf.latest + 1 ) % buf.damageInfos.len()
+		buf.damageInfos[buf.latest].time = timeInt
+		buf.damageInfos[buf.latest].damageAmount = damageAmount
+	}
+	buf.damageInfos[buf.latest].weaponSlot = weaponSlot
+	buf.isValid = isDamagePeriodValid
+}
+
+DamageInPeriodInfo function GetDamageInPeriodRingBufferLast( DamageInPeriodInfoRingBuffer buf )
+{
+	return buf.damageInfos[buf.latest]
+}
+
+void function ClearSingleDamageInPeriodInfo( DamageInPeriodInfo info )
+{
+	info.damageAmount = 0
+	info.time = 0
+	info.weaponSlot = 0
+}
+
+void function ClearDamageInPeriodInfo( DamageInPeriodInfoRingBuffer buf )
+{
+	for( int i = 0; i < buf.damageInfos.len(); i++ )
+		ClearSingleDamageInPeriodInfo( buf.damageInfos[i] )
+	buf.latest = 0
+}
+
+void function MoveDamageInPeriodInfoToNext( DamageInPeriodInfoRingBuffer buf )
+{
+	buf.latest = ( buf.latest + 1 ) % buf.damageInfos.len()
+	ClearSingleDamageInPeriodInfo( buf.damageInfos[buf.latest] )
+}
+
+void function WriteDamageInPeriodInfoRingBufferForShots( DamageInPeriodInfoRingBuffer buf, float damageAmount )
+{
+	buf.damageInfos[buf.latest].damageAmount += damageAmount
+}
+
+bool function DamageInPeriodComplete( DamageInPeriodInfoRingBuffer buf, int timeLimit, int requiredDamage, bool useBothWeapons )
+{
+	float totalAmount = 0
+	int curIntTime    = int( Time() )
+	int index
+	int weaponSlotRecord = 0
+	for ( int i = 0; i < buf.damageInfos.len(); i++ )
+	{
+		index = ( buf.latest + buf.damageInfos.len() - i ) % buf.damageInfos.len()
+		if ( timeLimit != NO_TIME_LIMIT && buf.damageInfos[index].time + timeLimit < curIntTime )
+			break
+		totalAmount += buf.damageInfos[index].damageAmount
+		if( buf.damageInfos[index].damageAmount > 0 )
+		{
+			weaponSlotRecord = weaponSlotRecord | 1 << buf.damageInfos[index].weaponSlot
+		}
+	}
+	bool passWeaponSlotCheck = useBothWeapons ? weaponSlotRecord == 3 : true
+	return buf.isValid && totalAmount > requiredDamage && passWeaponSlotCheck
+}
+
+RotationRingBuffer function InitRotationRingBuffer( int size )
+{
+	Assert( size > 0 )
+	RotationRingBuffer ringBuffer
+	for ( int i = 0; i < size; i++ )
+	{
+		RotationData data
+		ringBuffer.rotationDatas.append( data )
+	}
+	ringBuffer.latest = 0
+	return ringBuffer
+}
+
+void function WriteRotationRingBuffer( RotationRingBuffer buf, vector rotation )
+{
+	buf.latest = ( buf.latest + 1 ) % buf.rotationDatas.len()
+	buf.rotationDatas[buf.latest].time = Time()
+	buf.rotationDatas[buf.latest].rotation = rotation
+}
+
+
+////////////////////////////
+////////////////////////////
+////       Validate     ////
+////////////////////////////
+////////////////////////////
+bool function WeaponStatsValidate_UniversalValidateCondition( int validateLocation/*eValidateLocation*/, entity player, StatInstance si, int validateValue = 1, void functionref( StatInstance si, entity player ) cleanupFunc = null, ... )
+{
+	if ( !( si in fileLevel.weaponStatsConfigs.validateConditions[validateLocation] ) || validateValue <= 0 )
+		return false
+	bool result = false
+	if ( vargc == 0 )
+		result = fileLevel.weaponStatsConfigs.validateConditions[validateLocation][si]( player, si )
+	else if ( vargc == 1 )
+		result = fileLevel.weaponStatsConfigs.validateConditions[validateLocation][si]( player, si, vargv[0] )
+	if ( result )
+	{
+		#if WEAPON_STATS_DEBUG
+			printt( "WeaponStats:UniversalValidateCondition:", validateLocation, si.description, player.GetPlayerName() )
+		#endif
+		Mastery_IncrementStatInstance( player, si, validateValue )
+		if ( cleanupFunc != null )
+			cleanupFunc( si, player )
+	}
+	return result
+}
+
+void function WeaponStatsValidateStorageCondition_UniversalCount( int countTable/*eCountTable*/, entity player, void functionref( StatInstance si, entity player ) cleanupPreValidateFunc = null, void functionref( StatInstance si, entity player ) cleanupPostValidateFunc = null )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( si in fileLevel.weaponStatsStorageSum[player].Count[countTable] && si in fileLevel.weaponStatsConfigs.validateCondition_Count )
+		{
+			if ( cleanupPreValidateFunc != null )
+				cleanupPreValidateFunc( si, player )
+			if ( fileLevel.weaponStatsStorageSum[player].Count[countTable][si] >= fileLevel.weaponStatsConfigs.validateCondition_Count[si] )
+			{
+				#if WEAPON_STATS_DEBUG
+					printt( "WeaponStats:Stats complete:", countTable, si.description, player.GetPlayerName() )
+				#endif
+				Mastery_IncrementStatInstance( player, si, 1 )
+				fileLevel.weaponStatsStorageSum[player].Count[countTable][si] = 0//clear
+				if ( cleanupPostValidateFunc != null )
+					cleanupPostValidateFunc( si, player )
+			}
+		}
+	}
+}
+
+void function CleanupContinuousDownCount( StatInstance si, entity player )
+{
+	if ( si in fileLevel.weaponStatsStorageSum[player].AmmoUsedTrace )
+		fileLevel.weaponStatsStorageSum[player].AmmoUsedTrace[si].clear()
+}
+
+void function WeaponStatsValidateStorageCondition_UniversalStatistic( int statisticType/*eStatisticTable*/, entity player )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( si in fileLevel.weaponStatsStorageSum[player].Statistic[statisticType] && si in fileLevel.weaponStatsConfigs.validateCondition_Statistic )
+		{
+			if ( fileLevel.weaponStatsStorageSum[player].Statistic[statisticType][si] >= fileLevel.weaponStatsConfigs.validateCondition_Statistic[si] )
+			{
+				#if WEAPON_STATS_DEBUG
+					printt( "WeaponStats:Stats complete:", statisticType, si.description, player.GetPlayerName() )
+				#endif
+				Mastery_IncrementStatInstance( player, si, 1 )
+				fileLevel.weaponStatsStorageSum[player].Statistic[statisticType][si] = 0
+			}
+		}
+	}
+}
+
+void function WeaponStatsValidateStorageCondition_HoldTime( entity player )
+{
+	if ( fileLevel.weaponStatsStorageSum[player].Statistic[eStatisticTable.HOLD_TIME].len() > 0 )
+	{
+		foreach ( si, holdTime in fileLevel.weaponStatsStorageSum[player].Statistic[eStatisticTable.HOLD_TIME] )
+		{
+			int intHoldTime = int( holdTime )
+			if ( intHoldTime <= 0 )
+				continue
+			#if WEAPON_STATS_DEBUG
+				printt( "WeaponStats:Stats complete(hold time):", si.description, player.GetPlayerName(), intHoldTime )
+			#endif
+			Mastery_IncrementStatInstance( player, si, intHoldTime )
+			fileLevel.weaponStatsStorageSum[player].Statistic[eStatisticTable.HOLD_TIME][si] = 0
+		}
+	}
+}
+
+void function WeaponStatsValidateStorageCondition_KillCountXP( entity player, entity victim )
+{
+	StatInstance candidateSI
+	float highestWeight = -1
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( si in fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.KILL_COUNT_XP] && si in fileLevel.weaponStatsStorageSum[player].VictimsProperty && victim in fileLevel.weaponStatsStorageSum[player].VictimsProperty[si] )
+		{
+			float thisWeight = expect float( fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.KILL_COUNT_XP][si][0] )
+			if ( thisWeight > highestWeight )
+			{
+				candidateSI = si
+				highestWeight = thisWeight
+			}
+			delete fileLevel.weaponStatsStorageSum[player].VictimsProperty[si][victim]
+		}
+	}
+
+	if ( highestWeight > 0 )
+	{
+		#if WEAPON_STATS_DEBUG
+			printt( "WeaponStats:ValidateStorageCondition_KillCountXP:", candidateSI.description, player.GetPlayerName() )
+		#endif
+		Mastery_IncrementStatInstance( player, candidateSI, 1 )
+	}
+}
+
+void function WeaponStatsValidateStorageCondition_PlayerDisconnectOrMatchEnd( entity player )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+		WeaponStatsValidate_UniversalValidateCondition( eValidateLocation.PLAYER_DISCONNECT_OR_MATCH_END, player, si )
+}
+
+void function DeleteClearAction( StatInstance si, entity attacker, entity victim, bool execute = false )
+{
+	if ( victim in fileLevel.clearAction_ReviveAndRespawn && si in fileLevel.clearAction_ReviveAndRespawn[victim] )
+	{
+		if ( execute )
+		{
+			foreach ( clearFunc in fileLevel.weaponStatsConfigs.clearActionConfig_ReviveAndRespawn[si] )
+				clearFunc( attacker, victim )
+		}
+		delete fileLevel.clearAction_ReviveAndRespawn[victim][si]
+	}
+}
+
+void function WeaponStatsValidateStorageCondition_OnWipeSquad( entity player, entity victim )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( si in fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.WIPE_SQUAD] && si in fileLevel.weaponStatsStorageSum[player].WipeSquadPlayers && fileLevel.weaponStatsStorageSum[player].WipeSquadPlayers[si].contains( victim ) )
+		{
+			int victimTeam = victim.GetTeam()
+			#if WEAPON_STATS_DEBUG
+				printt( "WeaponStats:wipeSquad validate:", player.GetPlayerName(), victimTeam )
+			#endif
+			array<entity> playersInTeam = GetPlayerArrayOfTeam( victimTeam )
+			int teamMemberCount = 0
+			foreach ( teamMember in playersInTeam )
+				if ( fileLevel.weaponStatsStorageSum[player].WipeSquadPlayers[si].contains( teamMember ) )
+					teamMemberCount++
+
+			if ( teamMemberCount == playersInTeam.len() )
+			{
+				WeaponStatsValidate_UniversalValidateCondition( eValidateLocation.WIPE_SQUAD, player, si, 1, null, victimTeam )
+				//clear
+				foreach ( teamMember in playersInTeam )
+					DeleteClearAction( si, player, teamMember, true )
+			}
+		}
+	}
+}
+
+void function WeaponStatsValidateStorageCondition_OnFireAndHit( entity player, entity weaponEnt )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( si in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_HIT] )
+			WeaponStatsValidate_UniversalValidateCondition( eValidateLocation.AMMO_HIT, player, si, 1, void function( StatInstance si, entity player ) { WeaponStatsUniversalClear( eClearConfig.FIRE_HIT_VALIDATE_PASSED, player, si ) }, weaponEnt )
+	}
+}
+
+void function WeaponStatsValidateStorageCondition_OnFireAmmo( entity player, entity weaponEnt )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( si in fileLevel.weaponStatsStorageSum[player].Count[eCountTable.AMMO_FIRED] )
+			WeaponStatsValidate_UniversalValidateCondition( eValidateLocation.AMMO_FIRED, player, si, 1, void function( StatInstance si, entity player ) { WeaponStatsUniversalClear( eClearConfig.FIRE_HIT_VALIDATE_PASSED, player, si ) }, weaponEnt )
+	}
+}
+
+void function WeaponStatsValidateStorageCondition_OnRawDamage( entity player )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( si in fileLevel.weaponStatsStorageSum[player].Statistic[eStatisticTable.RAW_DAMAGE] )
+			WeaponStatsValidate_UniversalValidateCondition( eValidateLocation.RAW_DAMAGE, player, si, int( fileLevel.weaponStatsStorageSum[player].Statistic[eStatisticTable.RAW_DAMAGE][si] ), CleanupRawDamage )
+	}
+}
+
+void function CleanupRawDamage( StatInstance si, entity player )
+{
+	fileLevel.weaponStatsStorageSum[player].Statistic[eStatisticTable.RAW_DAMAGE][si] = 0
+}
+
+bool function ValidateDownVictimDifferentProperty( entity player, StatInstance si, int propertyType, int target ) {
+	if ( !( si in fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.DOWN_VICTIMS_PROPERTY] ) )
+		return false
+	if ( !( si in fileLevel.weaponStatsStorageSum[player].VictimsProperty ) || fileLevel.weaponStatsStorageSum[player].VictimsProperty[si].len() < target )
+		return false
+	var first = null
+	foreach ( k,v in fileLevel.weaponStatsStorageSum[player].VictimsProperty[si] )
+	{
+		if ( first == null )
+			first = v
+		else if ( first != v )
+		{
+			fileLevel.weaponStatsStorageSum[player].VictimsProperty[si] <- {}
+			return true
+		}
+	}
+	return false
+}
+
+void function WeaponStatsValidateStorageCondition_OnDownVictimsProperty( entity player, entity victim )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( si in fileLevel.weaponStatsConfigs.writeConditions[eWriteCondition.VICTIMS_PROPERTY] )
+		{
+			WeaponStatsValidate_UniversalValidateCondition( eValidateLocation.DOWN_VICTIMS_PROPERTY, player, si )
+			DeleteClearAction( si, player, victim, HasAdditionalParams( eAdditionalParamsType.VICTIMS_PROPERTY, si, 1 ) && expect bool( fileLevel.weaponStatsConfigs.additionalParams[eAdditionalParamsType.VICTIMS_PROPERTY][si][1] ) )
+		}
+	}
+}
+
+void function WeaponStatsValidateStorageCondition_OnDamageStatisticInPeriod( entity player )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		WeaponStatsValidate_UniversalValidateCondition( eValidateLocation.DAMAGE_ANY_VICTIM_IN_PERIOD, player, si, 1,
+			void function( StatInstance si, entity player ) { ClearDamageInPeriodInfo( fileLevel.weaponStatsStorageSum[player].DamageAnyVictimInPeriod[si] ) } )
+	}
+}
+
+void function WeaponStatsStorageValidateAndWrite_OnDoubleKill( entity player, entity weaponEnt, entity victim, var attackerDamageInfo )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( si in fileLevel.weaponStatsConfigs.writeCondition_Statistic[eStatisticTable.DOUBLE_KILL] && ConditionsEvaluate( fileLevel.weaponStatsConfigs.writeCondition_Statistic[eStatisticTable.DOUBLE_KILL][si], si, player, weaponEnt, victim, attackerDamageInfo ) )
+		{
+			if ( !WeaponStatsValidate_UniversalValidateCondition( eValidateLocation.DOUBLE_KILL, player, si ) )
+				fileLevel.weaponStatsStorageSum[player].Statistic[eStatisticTable.DOUBLE_KILL][si] <- Time()
+		}
+	}
+}
+
+void function WeaponStatsWriteAndValidate_BreakShieldInSquad( entity player, entity weaponEnt, entity victim, var attackerDamageInfo )
+{
+	foreach ( si in fileLevel.currentStatInstance[player] )
+	{
+		if ( WriteConditionsEvaluate( eWriteCondition.BREAK_SHIELD_IN_SQUAD, si, player, weaponEnt, victim, attackerDamageInfo ) )
+		{
+			#if WEAPON_STATS_DEBUG
+				printt( "WeaponStats:WriteAndValidate_BreakShieldInSquad:", player.GetPlayerName(), weaponEnt.GetWeaponClassName(), victim.GetPlayerName() )
+			#endif
+			if ( !( si in fileLevel.weaponStatsStorageSum[player].BreakShieldInSquad ) )
+				fileLevel.weaponStatsStorageSum[player].BreakShieldInSquad[si] <- {}
+			int victimTeam = victim.GetTeam()
+			if ( !( victimTeam in fileLevel.weaponStatsStorageSum[player].BreakShieldInSquad[si] ) )
+				fileLevel.weaponStatsStorageSum[player].BreakShieldInSquad[si][victimTeam] <- []
+			if ( !( fileLevel.weaponStatsStorageSum[player].BreakShieldInSquad[si][victimTeam].contains( victim ) ) )
+				fileLevel.weaponStatsStorageSum[player].BreakShieldInSquad[si][victimTeam].append( victim )
+			if ( fileLevel.weaponStatsConfigs.validateConditions[eValidateLocation.BREAK_SHIELD_IN_SQUAD][si]( player, si, victimTeam ) )
+			{
+				#if WEAPON_STATS_DEBUG
+					printt( "WeaponStats:Stats complete(BreakShieldInSquad):", si.description, player.GetPlayerName() )
+				#endif
+				Mastery_IncrementStatInstance( player, si, 1 )
+				fileLevel.weaponStatsStorageSum[player].BreakShieldInSquad[si][victimTeam] <- []
+			}
+		}
+	}
+}
+
+////////////////////////////
+////////////////////////////
+//// Instant Conditions ////
+////////////////////////////
+////////////////////////////
+bool function WeaponStatsCondition_WithAttachmentType( StatInstance si, entity weapon, array<string> attachmentTypes, int requireTier = -1 )
+{
+	foreach ( s in attachmentTypes )
+	{
+		string installed = GetInstalledWeaponAttachmentForPoint( weapon, s )
+		if ( installed == "" )
+			return false
+		if ( requireTier > -1 )
+		{
+			if ( !SURVIVAL_Loot_IsRefValid( installed ) || SURVIVAL_Loot_GetLootDataByRef( installed ).tier < requireTier )
+				return false
+		}
+	}
+	return true
+}
+
+bool function WeaponStatsCondition_WithAttachmentName( StatInstance si, entity weapon, string attachmentPoint, string requireAttachment, bool isPrefix )
+{
+	string installed = GetInstalledWeaponAttachmentForPoint( weapon, attachmentPoint )
+	if ( isPrefix )
+		return ( installed.len() >= requireAttachment.len() && installed.slice( 0, requireAttachment.len() ) == requireAttachment )
+	return installed == requireAttachment
+}
+
+bool function WeaponStatsCondition_WithoutAttachmentType( StatInstance si, entity weapon, string withoutType )
+{
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Condition_WithoutAttachmentType:", withoutType, GetInstalledWeaponAttachmentForPoint( weapon, withoutType ) == "" )
+	#endif
+	return GetInstalledWeaponAttachmentForPoint( weapon, withoutType ) == ""
+}
+
+bool function WeaponStatsCondition_IsAds( StatInstance si, entity weapon )
+{
+	#if WEAPON_STATS_DEBUG
+		//printt( "WeaponStats:Condition_IsAds:",weapon.IsWeaponInAds() )
+	#endif
+	return weapon.IsWeaponInAds()
+}
+
+bool function WeaponStatsCondition_WithinGotRevived( entity player, StatInstance si, int validSeconds )
+{
+	if ( WeaponStatsCondition_TargetEvent( player, REVIVED, validSeconds ) )
+	{
+		WeaponStats_ClearIndependentEventTime( player, REVIVED )
+		return true
+	}
+	return false
+}
+
+bool function WeaponStatsCondition_TargetInZipline( entity victim, StatInstance si, int validSeconds )
+{
+	return victim.IsZiplining() && !WeaponStatsCondition_TargetEvent( victim, START_ZIPLINE, validSeconds )
+}
+
+bool function WeaponStatsCondition_IsSemiAuto( StatInstance si, entity weapon )
+{
+	return IsWeaponInSingleShotMode( weapon )
+}
+
+bool function WeaponStatsCondition_TargetDistanceWithin( StatInstance si, entity player, entity victim, float distanceTarget )
+{
+	return DistanceSqr( player.GetOrigin(), victim.GetOrigin() ) <= distanceTarget * distanceTarget
+}
+
+bool function WeaponStatsCondition_TargetDistanceExceeds( StatInstance si, entity player, entity victim, float distanceTarget )
+{
+	return DistanceSqr( player.GetOrigin(), victim.GetOrigin() ) >= distanceTarget * distanceTarget
+}
+
+bool function WeaponStatsCondition_IsMagEmpty( entity player, StatInstance si, entity weaponEnt )
+{
+	int currentAmmo = weaponEnt.UsesClipsForAmmo() ? weaponEnt.GetWeaponPrimaryClipCount() : weaponEnt.GetWeaponPrimaryAmmoCount( weaponEnt.GetActiveAmmoSource() )
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Condition_IsMagEmpty:", player.GetPlayerName(), currentAmmo )
+	#endif
+	return currentAmmo == 0
+}
+
+bool function WeaponStatsCondition_IsLastMag( entity player, StatInstance si, entity weaponEnt )
+{
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Condition_IsLastMag:", player.GetPlayerName(), weaponEnt.GetWeaponPrimaryClipCount(), weaponEnt.GetWeaponPrimaryAmmoCount( weaponEnt.GetActiveAmmoSource() ) )
+	#endif
+	return weaponEnt.GetWeaponPrimaryAmmoCount( weaponEnt.GetActiveAmmoSource() ) == 0
+}
+
+bool function WeaponStatsCondition_AttackerSameAsKiller( StatInstance si, entity attacker, entity victim, float timeLimit = -1 )
+{
+	if ( Bleedout_IsBleedingOut( victim ) )
+	{
+		entity bleedoutAttacker = Bleedout_GetBleedoutAttacker( victim )
+		if ( bleedoutAttacker == null || bleedoutAttacker != attacker )
+			return false
+	}
+	return timeLimit == -1 || ( si in fileLevel.weaponStatsStorageSum[attacker].VictimsProperty && victim in fileLevel.weaponStatsStorageSum[attacker].VictimsProperty[si] && expect float( fileLevel.weaponStatsStorageSum[attacker].VictimsProperty[si][victim] ) + timeLimit > Time() )
+}
+
+bool function WeaponStatsCondition_IsHeadshot( StatInstance si, var damageInfo, entity victim )
+{
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Condition_IsHeadshot:", IsValidHeadShot( damageInfo, victim ) )
+	#endif
+	return IsValidHeadShot( damageInfo, victim )
+}
+
+bool function WeaponStatsCondition_InTempo( StatInstance si, entity weapon )
+{
+	return weapon.HasMod( MOD_MARKSMANS_TEMPO_ACTIVE )
+}
+
+bool function WeaponStatsCondition_IsFullyHeated( StatInstance si, entity weapon )
+{
+	return weapon.GetHeatValueOnLastFire() >= 1.0
+}
+
+bool function WeaponStatsCondition_IsMaxChargeLevel( entity player, StatInstance si, entity weapon )
+{
+	if ( !( player in fileLevel.weaponStatsStorageSum ) )
+		return false
+
+	if ( !( si in fileLevel.weaponStatsStorageSum[player].WeaponChargeLevel ) )
+		return false
+
+	int level    = fileLevel.weaponStatsStorageSum[player].WeaponChargeLevel[si]
+	int maxLevel = weapon.GetWeaponChargeLevelMax()
+	return level == maxLevel
+}
+
+bool function WeaponStatsCondition_OverChargeFraction( entity player, StatInstance si, entity weapon, float targetChargeFraction )
+{
+	float fraction = weapon.GetWeaponChargeFraction() + CHARGE_EPSILON
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Condition_OverChargeFraction:", fraction, targetChargeFraction, fraction >= targetChargeFraction )
+	#endif
+	return fraction >= targetChargeFraction
+}
+
+bool function WeaponStatsCondition_PlayerHPExceeds( StatInstance si, entity player, float target )
+{
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Condition_PlayerHPExceeds:", target, float( player.GetHealth() ), float( player.GetMaxHealth() ), float( player.GetHealth() ) / float( player.GetMaxHealth() ) )
+	#endif
+	return 100 * float( player.GetHealth() ) / float( player.GetMaxHealth() ) >= target
+}
+
+bool function WeaponStatsCondition_VictimUsingWeapon( StatInstance si, string target, entity victim )
+{
+	if ( victim == null || !( victim in fileLevel.weaponStatsStorageSum ) || !IsValid( fileLevel.weaponStatsStorageSum[victim].mainHandActiveWeapon ) || !fileLevel.weaponStatsStorageSum[victim].mainHandActiveWeapon.IsWeaponX() )
+		return false
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Condition_VictimUsingWeapon:", target, fileLevel.weaponStatsStorageSum[victim].mainHandActiveWeapon.GetWeaponClassName() )
+	#endif
+	return fileLevel.weaponStatsStorageSum[victim].mainHandActiveWeapon.GetWeaponClassName() == target
+}
+
+bool function WeaponStatsCondition_VictimPosLower( StatInstance si, entity attacker, entity victim, int offset )
+{
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Condition_VictimPosLower:", attacker.GetOrigin(), victim.GetOrigin() )
+	#endif
+	return attacker.GetOrigin().z > victim.GetOrigin().z + offset
+}
+
+bool function WeaponStatsCondition_IsEnergized( StatInstance si, entity weapon )
+{
+	return false//weapon.GetLastEnergizeState() == ENERGIZE_ENERGIZED
+}
+
+bool function WeaponStatsCondition_ShieldMatchType( entity player, int shieldTier )
+{
+	LootData lootData = EquipmentSlot_GetEquippedLootDataForSlot( player, "armor" )
+	//bool matchEvolvedShield = isEvolvedShield == EvolvingArmor_IsEquipmentEvolvingArmor( lootData.ref )
+	return shieldTier == lootData.tier
+}
+
+bool function WeaponStatsCondition_VictimWeaponIsReloading( StatInstance si, entity victim )
+{
+	if ( victim == null )
+		return false
+	entity activeWeapon = victim.GetActiveWeapon( eActiveInventorySlot.mainHand )
+	if ( !IsValid( activeWeapon ) )
+		return false
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Condition_VictimWeaponIsReloading:", activeWeapon.IsReloading(), activeWeapon.GetWeaponClassName() )
+	#endif
+	return activeWeapon.IsReloading()
+}
+
+bool function WeaponStatsCondition_WithinPickupTime( StatInstance si, entity player, entity weapon, float validSeconds, float dropWeaponCheck )
+{
+	if ( !(player in fileLevel.PickupWeaponTime) )
+		return false
+	string weaponName = weapon.GetWeaponClassName()
+	bool dropRecently = player in fileLevel.DropWeaponTime && weaponName in fileLevel.DropWeaponTime[player] && fileLevel.DropWeaponTime[player][weaponName] + dropWeaponCheck >= Time()
+	return !dropRecently && player in fileLevel.PickupWeaponTime && weaponName in fileLevel.PickupWeaponTime[player] && fileLevel.PickupWeaponTime[player][weaponName] + validSeconds >= Time()
+}
+
+bool function WeaponStatsCondition_FireRateReached( StatInstance si, entity player, entity weapon, float target )
+{
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Condition_FireRateReached", weapon.GetFireRateTimeLerpFraction() )
+	#endif
+	return false//weapon.GetFireRateTimeLerpFraction() >= target
+}
+
+bool function WeaponStatsCondition_IsSkydiving( StatInstance si, entity player )
+{
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Condition_IsSkydiving:", player.GetPlayerName(), player.Player_IsSkydiving() )
+	#endif
+	return player.Player_IsSkydiving()
+}
+
+bool function WeaponStatsCondition_IsLastOneInTeam( StatInstance si, entity player )
+{
+	if ( !IsAlive( player ) )
+		return false
+	array<entity> teammates = GetPlayerArrayOfTeam( player.GetTeam() )
+	if ( teammates.len() == 1 )
+		return false
+	foreach ( teammate in teammates )
+	{
+		if ( teammate != player && IsAlive( teammate ))
+		{
+			return false
+		}
+	}
+	return true
+}
+
+bool function WeaponStatsCondition_AttackerHasShield( StatInstance si, entity player )
+{
+	#if WEAPON_STATS_DEBUG
+		printt( "WeaponStats:Condition_AttackerHasShield:", player.GetPlayerName(), player.GetShieldHealth() )
+	#endif
+	return player.GetShieldHealth() > 0
+}
+
+bool function WeaponStatsCondition_IsCarUsingAltAmmo( StatInstance si, entity weaponEnt )//if true, CAR is using alt(light) ammo
+{
+	return weaponEnt.HasMod( CAR_ALT_AMMO_MOD )
+}
+
+bool function WeaponStatsCondition_StatisticExist( int statisticType/*eStatisticTable*/, entity player, StatInstance si )
+{
+	return si in fileLevel.weaponStatsStorageSum[player].Statistic[statisticType] && fileLevel.weaponStatsStorageSum[player].Statistic[statisticType][si] > 0
+}
+
+bool function WeaponStatsCondition_StatisticTimeWithin( int statisticType/*eStatisticTable*/, entity player, StatInstance si, float validSeconds, bool clear = false )
+{
+	bool result = si in fileLevel.weaponStatsStorageSum[player].Statistic[statisticType] && Time() - fileLevel.weaponStatsStorageSum[player].Statistic[statisticType][si] <= validSeconds
+	if ( clear )
+		fileLevel.weaponStatsStorageSum[player].Statistic[statisticType][si] <- 0
+	return result
+}
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

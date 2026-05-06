@@ -169,7 +169,7 @@ void function SV_CL_Init()
 	ShCharacterCosmetics_LevelInit()
 	ShCalEvent_LevelInit()
 	Vouchers_LevelInit()
-	//TimeGatedLoginRewards_Init()
+	TimeGatedLoginRewards_Init()
 	CollectionEvents_Init()
 	ThemedShopEvents_Init()
 	BuffetEvents_Init()
@@ -201,7 +201,7 @@ void function SV_CL_Init()
 	ShLoadscreen_LevelInit()
 	ShImage2D_LevelInit()
 	ShBattlepassPresaleVoucher_LevelInit()
-	//ShBattlepassPurchasableXP_LevelInit()
+	ShBattlepassPurchasableXP_LevelInit()
 	//Sh_Boosts_Init()
 	                       
 		//ShEventAbilities_Init()
@@ -525,7 +525,7 @@ void function SV_CL_Init()
 
 	Sh_Squads_Init()
 
-	//Sh_Mastery_Init()
+	Sh_Mastery_Init()
 
                         
                        
@@ -1022,7 +1022,7 @@ void function Shared_Lobby_Init()
 	ShCharacterCosmetics_LevelInit()
 	ShCalEvent_LevelInit()
 	Vouchers_LevelInit()
-	//TimeGatedLoginRewards_Init()
+	TimeGatedLoginRewards_Init()
 	CollectionEvents_Init()
 	ThemedShopEvents_Init()
 	BuffetEvents_Init()
@@ -1050,7 +1050,7 @@ void function Shared_Lobby_Init()
 	ShLoadscreen_LevelInit()
 	ShImage2D_LevelInit()
 	ShBattlepassPresaleVoucher_LevelInit()
-	//ShBattlepassPurchasableXP_LevelInit()
+	ShBattlepassPurchasableXP_LevelInit()
 	                       
 		//ShEventAbilities_Init()
        
@@ -1144,7 +1144,7 @@ void function Shared_Lobby_Init()
         
 	#endif
 
-	//Sh_Mastery_Init()
+	Sh_Mastery_Init()
 } // end Shared_Lobby_Init()
 
 #if SERVER

@@ -650,13 +650,13 @@ void function UIFullyConnectedInitialization()
 	ShLoadscreen_LevelInit()
 	ShImage2D_LevelInit()
 	ShBattlepassPresaleVoucher_LevelInit()
-	//ShBattlepassPurchasableXP_LevelInit()
+	ShBattlepassPurchasableXP_LevelInit()
 
 	//	ShEventAbilities_Init()
 
 //	Sh_Boosts_Init()
 	ShMusic_LevelInit()
-	ShBattlePass_LevelInit()
+	//ShBattlePass_LevelInit()
 	//ShCups_LevelInit()
 
 

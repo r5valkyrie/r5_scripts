@@ -323,9 +323,9 @@ void function RemoteFunctions_Init_Begin()
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_ShouldExitDrone" )
 	
-	RegisterNetworkedVariableSafe( "coreAvailableFrac", SNDC_TITAN_SOUL, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )
-	RegisterNetworkedVariableSafe( "coreExpireFrac", SNDC_TITAN_SOUL, SNVT_FLOAT_RANGE_OVER_TIME, 0.0, 0.0, 1.0 )
-	RegisterNetworkedVariableSafe( "upgradeCount", SNDC_TITAN_SOUL, SNVT_INT, 0 )
+	//RegisterNetworkedVariableSafe( "coreAvailableFrac", SNDC_TITAN_SOUL, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )
+	//RegisterNetworkedVariableSafe( "coreExpireFrac", SNDC_TITAN_SOUL, SNVT_FLOAT_RANGE_OVER_TIME, 0.0, 0.0, 1.0 )
+	//RegisterNetworkedVariableSafe( "upgradeCount", SNDC_TITAN_SOUL, SNVT_INT, 0 )
 
 	Remote_RegisterServerFunction( "ClientCallback_ViewedModes" )
 

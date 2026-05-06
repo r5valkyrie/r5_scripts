@@ -142,6 +142,10 @@ enum eCameraTargetNames
 	collection_event_camera_target,
 	store_inspect_camera_target,
 	club_landing_camera_target,
+	                               
+	play_camera_quads_target,
+                                     
+	weapon_mastery_inspect_camera_target
 }
 
 struct PresentationDef
@@ -170,7 +174,11 @@ struct PresentationDef
 	void functionref() startFunc
 	void functionref() endFunc
 
-	int cameraTargetName = eCameraTargetNames.play_camera_target
+                               
+	int cameraTargetName = eCameraTargetNames.play_camera_quads_target
+     
+                                                             
+      
 }
 
 struct LightDef
@@ -485,6 +493,7 @@ void function ClMenuModels_Init()
                                              
        
 
+	PrecacheParticleSystem( WEAPON_MASTERY_BACKGROUND_FX )
 
 
 	RegisterSignal( "EndRevConvo" )
@@ -528,10 +537,11 @@ bool function MenuMapEntitiesExist()
 	array<string> entNames =
 	[
 		"default_camera_target",
-		"play_camera_target",
-		"play_character_ref",
-		"play_teammate1_ref",
-		"play_teammate2_ref",
+		"play_camera_quads_target",
+		"play_character_quads_ref",
+		"play_teammate1_quads_ref",
+		"play_teammate2_quads_ref",
+		"play_teammate3_quads_ref",
 		"close_character_camera_target",
 		"customize_character_camera_target",
 		"customize_character_ref",
@@ -557,10 +567,11 @@ bool function MenuMapEntitiesExist()
 void function ApplyEventPositioning()
 {
 	array<entity> ents
-	ents.append( GetEntByScriptName( "play_camera_target" ) )
-	ents.append( GetEntByScriptName( "play_character_ref" ) )
-	ents.append( GetEntByScriptName( "play_teammate1_ref" ) )
-	ents.append( GetEntByScriptName( "play_teammate2_ref" ) )
+	ents.append( GetEntByScriptName( "play_camera_quads_target" ) )
+	ents.append( GetEntByScriptName( "play_character_quads_ref" ) )
+	ents.append( GetEntByScriptName( "play_teammate1_quads_ref" ) )
+	ents.append( GetEntByScriptName( "play_teammate2_quads_ref" ) )
+	ents.append( GetEntByScriptName( "play_teammate3_quads_ref" ) )
 	ents.append( GetEntByScriptName( "battlepass_camera_target" ) )
 	ents.append( GetEntByScriptName( "battlepass_3_camera_target" ) )
 	ents.append( GetEntByScriptName( "collection_event_camera_target" ) )
@@ -1151,7 +1162,7 @@ void function InitMenuModelFlashData()
 		fd.outlineIntensityScalar = 300
 		fd.fadeInTime             = 0.01
 		fd.fadeOutTime            = 0.3
-		fd.lifeTime               = 0.1
+		fd.lifeTime               = 0.01
 		fd.outlineRadius          = 2
 	}
 
@@ -1844,8 +1855,9 @@ void function InitMenuEntities()
 	InitMenuModelFlashData()
 
                                
-	InitTeammatePosition( "play_teammate1_ref", "ACT_MP_MENU_LOBBY_LEFT_IDLE" )
-	InitTeammatePosition( "play_teammate2_ref", "ACT_MP_MENU_LOBBY_RIGHT_IDLE" )
+	InitTeammatePosition( "play_teammate1_quads_ref", "ACT_MP_MENU_LOBBY_LEFT_IDLE" )
+	InitTeammatePosition( "play_teammate2_quads_ref", "ACT_MP_MENU_LOBBY_RIGHT_IDLE" )
+	InitTeammatePosition( "play_teammate3_quads_ref", "ACT_MP_MENU_LOBBY_LEFT_IDLE" )
      
                                                                             
                                                                              
@@ -1882,7 +1894,7 @@ void function InitMenuEntities()
 	entity model
 	float[2] baseRotationDelta
 
-	refEnt = GetEntByScriptName( "play_character_ref" )
+	refEnt = GetEntByScriptName( "play_character_quads_ref" )
 
 	ModelData_SetBaseOrigin( file.playCharacter, refEnt.GetOrigin() )
 	ModelData_SetBaseAngles( file.playCharacter, refEnt.GetAngles() )
@@ -1930,6 +1942,13 @@ void function InitMenuEntities()
 	model = CreateMenuModel( file.storeInspectModelData, $"mdl/dev/empty_model.rmdl" )
 	ModelData_CreateMover( file.storeInspectModelData )
 
+	refEnt = GetEntByScriptName( "weapons_mastery_inspect_ref" )
+	file.weaponOverviewRefEnt = refEnt
+	ModelData_SetBaseOrigin( file.weaponOverviewModelData, refEnt.GetOrigin() )
+	ModelData_SetBaseAngles( file.weaponOverviewModelData, refEnt.GetAngles() )
+	ModelData_SetBaseRotationDelta( file.weaponOverviewModelData, baseRotationDelta )
+	model = CreateMenuModel( file.weaponOverviewModelData, $"mdl/dev/empty_model.rmdl" )
+	ModelData_CreateMover( file.weaponOverviewModelData )
 
 	refEnt = GetEntByScriptName( "customize_character_skin_ref" )
 	file.meleeInspectRefEnt = refEnt
@@ -2012,24 +2031,21 @@ void function InitBackgroundModels()
                                         
        
 
-		array<entity> weaponOverviewBgEnts = GetEntArrayByScriptName( WEAPON_OVERVIEW_BACKGROUND_ENT_NAME )
-		if ( weaponOverviewBgEnts.len() > 0 )
-		{
-			entity weaponOverviewTargetBackground = weaponOverviewBgEnts[0]
-			file.weaponOverviewBackgroundModelGeo = CreateClientSidePropDynamic( weaponOverviewTargetBackground.GetOrigin() + <0, -100, 0 >, weaponOverviewTargetBackground.GetAngles(), STORE_BACKGROUND_GEO_MODEL )
-			file.weaponOverviewBackgroundModelGeo.kv.solid = 0
-			file.weaponOverviewBackgroundModelGeo.kv.disableshadows = 1
-			file.weaponOverviewBackgroundModelGeo.kv.fadedist = -1
-			file.weaponOverviewBackgroundModelGeo.MakeSafeForUIScriptHack()
-			file.weaponOverviewBackgroundModelGeo.Hide()
+		entity weaponOverviewTargetBackground = GetEntByScriptName( WEAPON_OVERVIEW_BACKGROUND_ENT_NAME )
 
-			file.weaponOverviewBackgroundModelSmoke = CreateClientSidePropDynamic( weaponOverviewTargetBackground.GetOrigin() + <0, -100, 0 >, weaponOverviewTargetBackground.GetAngles(), STORE_BACKGROUND_SMOKE_MODEL )
-			file.weaponOverviewBackgroundModelSmoke.kv.solid = 0
-			file.weaponOverviewBackgroundModelSmoke.kv.disableshadows = 1
-			file.weaponOverviewBackgroundModelSmoke.kv.fadedist = -1
-			file.weaponOverviewBackgroundModelSmoke.MakeSafeForUIScriptHack()
-			file.weaponOverviewBackgroundModelSmoke.Hide()
-		}
+		file.weaponOverviewBackgroundModelGeo = CreateClientSidePropDynamic( weaponOverviewTargetBackground.GetOrigin() + <0, -100, 0 >, weaponOverviewTargetBackground.GetAngles(), STORE_BACKGROUND_GEO_MODEL )
+		file.weaponOverviewBackgroundModelGeo.kv.solid = 0
+		file.weaponOverviewBackgroundModelGeo.kv.disableshadows = 1
+		file.weaponOverviewBackgroundModelGeo.kv.fadedist = -1
+		file.weaponOverviewBackgroundModelGeo.MakeSafeForUIScriptHack()
+		file.weaponOverviewBackgroundModelGeo.Hide()
+
+		file.weaponOverviewBackgroundModelSmoke = CreateClientSidePropDynamic( weaponOverviewTargetBackground.GetOrigin() + <0, -100, 0 >, weaponOverviewTargetBackground.GetAngles(), STORE_BACKGROUND_SMOKE_MODEL )
+		file.weaponOverviewBackgroundModelSmoke.kv.solid = 0
+		file.weaponOverviewBackgroundModelSmoke.kv.disableshadows = 1
+		file.weaponOverviewBackgroundModelSmoke.kv.fadedist = -1
+		file.weaponOverviewBackgroundModelSmoke.MakeSafeForUIScriptHack()
+		file.weaponOverviewBackgroundModelSmoke.Hide()
 	#endif
 }
 
@@ -2491,17 +2507,15 @@ void function TransitionWeaponOverviewBackgroundFX( ItemFlavor itemFlav )
 	//fx
 	Assert( rarityIdx < STORE_BACKGROUND_FX_TIERS.len(), "Couldn't find particle beam asset based on rarity: " + rarityIdx )
 	asset particleAssetRarity = STORE_BACKGROUND_FX_TIERS[rarityIdx]
-	array<entity> overviewBgEnts = GetEntArrayByScriptName( WEAPON_OVERVIEW_BACKGROUND_ENT_NAME )
-	if ( overviewBgEnts.len() > 0 )
-	{
-		entity targetBackground = overviewBgEnts[0]
-		if ( EffectDoesExist( file.weaponOverviewBackgroundFXHandle ) )
-			EffectStop( file.weaponOverviewBackgroundFXHandle, true, false )
+	entity targetBackground   = GetEntByScriptName( WEAPON_OVERVIEW_BACKGROUND_ENT_NAME )
 
-		file.weaponOverviewBackgroundFXHandle = StartParticleEffectInWorldWithHandle( GetParticleSystemIndex( particleAssetRarity ), targetBackground.GetOrigin(), targetBackground.GetAngles() )
-		EffectSetControlPointVector( file.weaponOverviewBackgroundFXHandle, 1, rarityColor )
-		EffectSetDontKillForReplay( file.weaponOverviewBackgroundFXHandle )
-	}
+	if ( EffectDoesExist( file.weaponOverviewBackgroundFXHandle ) )
+		EffectStop( file.weaponOverviewBackgroundFXHandle, true, false )
+
+	file.weaponOverviewBackgroundFXHandle = StartParticleEffectInWorldWithHandle( GetParticleSystemIndex( particleAssetRarity ), targetBackground.GetOrigin(), targetBackground.GetAngles() )
+
+	EffectSetControlPointVector( file.weaponOverviewBackgroundFXHandle, 1, rarityColor )
+	EffectSetDontKillForReplay( file.weaponOverviewBackgroundFXHandle )
 
 	int FXHandle = file.weaponOverviewBackgroundFXHandle
 

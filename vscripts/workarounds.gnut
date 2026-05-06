@@ -182,8 +182,6 @@ global function ShadowArmy_GetLegendMatchStartSpawnLocations
 global function ShadowArmy_GetLegendMatchStartSpawnRadius
 global function ShadowArmy_IsSquadReallyEliminated
 global function Ranked_UpdateRankedScoreProgressForPlayer
-global function WeaponStatsHook_OnAssistCredited
-global function WeaponStatsHook_OnDownEnemy
 global function Bleedout_GetShouldAlliancePlayerBleedout
 global function SquadMuteLegendSelectEnabled
 global function RankedTrials_PlayerHasIncompleteTrial
@@ -250,8 +248,6 @@ global function PassiveAssassinsInstinct_EntityShouldBeHighlighted
 global function CastleWall_EntityShouldBeHighlighted
 global function ArmoredLeap_TargetEntityShouldBeHighlighted
 global function Nessie_GetHighlightDist
-global function IsLobbyEvent1Active
-global function IsLobbyEvent2Active
 global function IsValidStickerInstance
 global function DestroyStickerInstance
 global function RequestLoadStickerPak
@@ -344,7 +340,6 @@ global function TitanSword_ActiveWeaponIsTitanSword
 global function ArrayRandomizeSeeded
 global function ArrayGetRandomSeeded
 global function TrackingVision_CreatePOIForDroppedLoot
-global function WeaponStatsHook_OnPlayerDropMainWeapon
 global function GetCryptoTTAssetsToPrecache
 global function GetLifelineTTAssetsToPrecache
 global function TitanSword_Super_IsActive
@@ -541,10 +536,6 @@ global function GRX_GetItemTier
 global function PersistenceGetVarHandle
 global function HasCallback_OnPartyMemberRemoved
 
-// === Stats/Mastery ===
-global function Mastery_GetStatValue
-global function Mastery_DoesStatSatisfyValue
-global function Mastery_IsValidStatRef
 #endif
 
 // ============================================================================
@@ -676,11 +667,6 @@ global function GRX_GetOffer
 // === Persistence ===
 global function PersistenceGetVarHandle
 global function HasCallback_OnPartyMemberRemoved
-
-// === Stats/Mastery ===
-global function Mastery_GetStatValue
-global function Mastery_DoesStatSatisfyValue
-global function Mastery_IsValidStatRef
 
 // === Ranked ===
 global function Ranked_ConstructSingleRankBadgeForStatsCard
@@ -1439,22 +1425,6 @@ void function IncrementNumDialogFlowDialogsDisplayed()
 void function DataDialog_AddCallback_OnClose( void functionref() callback )
 {
 	Warning( "WORKAROUND: DataDialog_AddCallback_OnClose() called - not implemented" )
-}
-
-
-int function Mastery_GetStatValue( entity player, string statRef )
-{
-	return 0
-}
-
-bool function Mastery_DoesStatSatisfyValue( entity player, string statRef, float checkValue )
-{
-	return false
-}
-
-bool function Mastery_IsValidStatRef( string statRef )
-{
-	return false
 }
 
 // === Ranked ===
@@ -2352,16 +2322,6 @@ bool function ArmoredLeap_TargetEntityShouldBeHighlighted( entity ent )
 	return false
 }
 
-bool function IsLobbyEvent1Active()
-{
-	return false
-}
-
-bool function IsLobbyEvent2Active()
-{
-	return false
-}
-
 bool function IsValidStickerInstance( int instance )
 {
 	Warning( "STUB: IsValidStickerInstance" )
@@ -2872,24 +2832,6 @@ int function PersistenceGetVarHandle( string key )
 }
 
 bool function HasCallback_OnPartyMemberRemoved( void functionref() callbackFunc )
-{
-	return false
-}
-
-// === Stats/Mastery ===
-
-
-int function Mastery_GetStatValue( entity player, string statRef )
-{
-	return 0
-}
-
-bool function Mastery_DoesStatSatisfyValue( entity player, string statRef, float checkValue )
-{
-	return false
-}
-
-bool function Mastery_IsValidStatRef( string statRef )
 {
 	return false
 }
@@ -3522,16 +3464,6 @@ void function Ranked_UpdateRankedScoreProgressForPlayer( entity player )
 	Warning( "STUB: Ranked_UpdateRankedScoreProgressForPlayer" )
 }
 
-void function WeaponStatsHook_OnAssistCredited( entity player )
-{
-	Warning( "STUB: WeaponStatsHook_OnAssistCredited" )
-}
-
-void function WeaponStatsHook_OnDownEnemy( entity victim, entity attacker, var damageInfo )
-{
-	Warning( "STUB: WeaponStatsHook_OnDownEnemy" )
-}
-
 bool function Bleedout_GetShouldAlliancePlayerBleedout( entity player )
 {
 	return true
@@ -3657,10 +3589,6 @@ void function TrackingVision_CreatePOIForDroppedLoot( entity pickup, int lootTyp
 	Warning( "STUB: TrackingVision_CreatePOIForDroppedLoot" )
 }
 
-void function WeaponStatsHook_OnPlayerDropMainWeapon( entity player, entity weapon )
-{
-	Warning( "STUB: WeaponStatsHook_OnPlayerDropMainWeapon" )
-}
 bool function GetCryptoTTAssetsToPrecache( array<string> models, array<string> particles )
 {
 	Warning( "STUB: GetCryptoTTAssetsToPrecache" )

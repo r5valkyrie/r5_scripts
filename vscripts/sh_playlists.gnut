@@ -1,14 +1,11 @@
-  
-  
+//
+//
 
 #if SERVER || CLIENT || UI
 global function GetCurrentPlaylistVarTimestamp
 
 global function GetMaxTeamSizeForPlaylist
-#if CLIENT || UI
 global function GetPlaylistMaps
-global function GetModeBannerLogoOrModeEmblemFallback
-#endif
 
 global function ForceRefreshVisiblePlaylists
 global function GetVisiblePlaylistNames
@@ -19,6 +16,8 @@ global function Playlist_GetNewModeVersion
 global function Playlist_GetPlaylistScheduledTimeRange
 global function Playlist_GetScheduleData_Deprecated
 global function Playlist_ShouldBeHiddenForScheduleBlocks
+global function Playlist_GetRankedSeasonEndDate
+global function Playlist_HasRankedSeasonEndDate
 global function Playlist_ShouldLockRankedPlaylistForPatch
 global function Playlist_IsPastRankedSeasonEndDate
 global function ShPlaylist_Init
@@ -28,6 +27,8 @@ global function GetPlaylistRotationGroup
 #if CLIENT || UI
 global function CanPlaylistFitPartySize
 global function GetModeEmblemImage
+global function GetModeBannerLogo
+global function GetModeBannerLogoOrModeEmblemFallback
 global function GetImageFromImageMap
 global function GetThumbnailImageFromImageMap
 global function GetGamemodeLogoFromImageMap
@@ -40,8 +41,6 @@ global function GetEmblemColor
 global function GetPlaylistRotationNextTime
 global function GetPlaylistRotationNextTimeFormatedString
 global function GetPlaylistsInRotation
-global function GetPanelImageKeyForUISlot
-global function GetMapDisplayNameForUISlot
 global function GetCurrentPlaylistInUiSlot
 global function UpdateMatchmakeFromMatchPlaylist_Thread
 global function MatchRequeueCancel
@@ -51,7 +50,7 @@ global function PartyHasPlaylistAccountLevelRequired
 global int rotationDurationMoreThanDayCount = 0
 #endif
 
-#if (SERVER || CLIENT || UI) && DEVELOPER
+#if (SERVER || CLIENT || UI) && DEV
 global function PrintPlaylists
 #endif
 
@@ -60,8 +59,11 @@ global function PrintPlaylists
 global const table<string, asset> GAMEMODE_IMAGE_MAP = {
 	play_apex = $"rui/menu/gamemode/play_apex",
 	apex_elite = $"rui/menu/gamemode/apex_elite",
-	training = $"rui/menu/gamemode/training",
-	firing_range = $"rui/menu/gamemode/firing_range",
+	training = $"rui/menu/gamemode/playlist_bg_med_training",
+                         
+                                                                  
+      
+	firing_range = $"rui/menu/gamemode/playlist_bg_med_firing_range",
 	generic_01 = $"rui/menu/gamemode/generic_01",
 	generic_02 = $"rui/menu/gamemode/generic_02",
 	ranked_1 = $"rui/menu/gamemode/playlist_bg_kc_mu2_ranked",
@@ -69,22 +71,33 @@ global const table<string, asset> GAMEMODE_IMAGE_MAP = {
 	ranked_3 = $"rui/menu/gamemode/playlist_bg_olympus_mu2_ranked",
 	ranked_4 = $"rui/menu/gamemode/playlist_bg_storm_point_ranked",
 	ranked_5 = $"rui/menu/gamemode/playlist_bg_divided_moon_ranked",
+	ranked_6 = $"rui/menu/gamemode/playlist_bg_storm_point_ranked_mu2",
 	solo_iron_crown = $"rui/menu/gamemode/solo_iron_crown",
 	solo = $"rui/menu/gamemode/solo_iron_crown",
 	duos = $"rui/menu/gamemode/duos_v2",
-                                
+	                               
 		duos_valentines = $"rui/menu/gamemode/duos_valentines",
        
 	trios = $"rui/menu/gamemode/trios",
 
+	                      
+		trios_halloween = $"rui/menu/gamemode/trios_halloween",
+       
+
+	                    
+		trios_golden_horse = $"rui/menu/gamemode/trios_GH_small",
+       
+
 	panel_worlds_edge = $"rui/menu/gamemode/playlist_bg_worldsedge_vanilla",
-	panel_worlds_edge_mu1 = $"rui/menu/gamemode/worlds_edge_mu1",
-	panel_worlds_edge_mu2 = $"rui/menu/gamemode/playlist_bg_worldsedge_mu2",
+	panel_worlds_edge_mu1 = $"rui/menu/gamemode/playlist_bg_worldsedge_mu3",
+	panel_worlds_edge_mu2 = $"rui/menu/gamemode/playlist_bg_worldsedge_mu3",
 	panel_worlds_edge_mu3 = $"rui/menu/gamemode/playlist_bg_worldsedge_mu3",
+	panel_worlds_edge_night = $"rui/menu/gamemode/playlist_bg_worldsedge_night",
 
 	panel_olympus = $"rui/menu/gamemode/playlist_bg_olympus",
 	panel_olympus_mu1 = $"rui/menu/gamemode/playlist_bg_olympus_mu1",
 	panel_olympus_mu2 = $"rui/menu/gamemode/playlist_bg_olympus_mu2",
+	panel_olympus_night = $"rui/menu/gamemode/playlist_bg_olympus_night",
 
 	canyon_land_mu1 = $"rui/menu/gamemode/play_apex",
 	panel_canyon_land = $"rui/menu/gamemode/playlist_bg_kc_vanilla",
@@ -93,11 +106,14 @@ global const table<string, asset> GAMEMODE_IMAGE_MAP = {
 	panel_canyon_land_mu3 = $"rui/menu/gamemode/playlist_bg_kc_mu3",
 	panel_canyon_land_mu3_hu1 = $"rui/menu/gamemode/playlist_bg_kc_mu3_hu1",
 	panel_canyon_land_night = $"rui/menu/gamemode/playlist_bg_kc_night",
+	panel_canyon_land_night2 = $"rui/menu/gamemode/playlist_bg_kc_night2",
 
 	panel_storm_point = $"rui/menu/gamemode/playlist_bg_storm_point",
 	panel_storm_point_mu1 = $"rui/menu/gamemode/playlist_bg_storm_point_mu1",
+	panel_storm_point_mu2 = $"rui/menu/gamemode/playlist_bg_storm_point_mu2",
 
 	panel_divided_moon = $"rui/menu/gamemode/playlist_bg_divided_moon",
+	panel_divided_moon_mu1 = $"rui/menu/gamemode/playlist_bg_divided_moon_mu1",
 
 	shotguns_and_snipers = $"rui/menu/gamemode/playlist_bg_shotguns_and_snipers",
 	panel_worlds_edge_mu2_airdrop = $"rui/menu/gamemode/playlist_bg_worldsedge_airdrop",
@@ -106,16 +122,18 @@ global const table<string, asset> GAMEMODE_IMAGE_MAP = {
 	duos_airdrop = $"rui/menu/gamemode/duos_v2",
 	trios_airdrop = $"rui/menu/gamemode/trios",
 
+	panel_thunderdome = $"rui/menu/gamemode/playlist_bg_thunderdome",
+
                   
-		shadow_squad = $"rui/menu/gamemode/shadow_squad",
+                                                   
        
-                               
+	                              
 		shadow_royale = $"rui/menu/gamemode/playlist_bg_shadow_royale",
        
-                       
+	                      
 		winter_express = $"rui/menu/gamemode/playlist_bg_winterexpress",
        
-                           
+	                          
 		tournament = $"rui/menu/gamemode/tournament",
        
                            
@@ -140,7 +158,7 @@ global const table<string, asset> GAMEMODE_IMAGE_MAP = {
 	night = $"rui/menu/gamemode/night",
 	dummies = $"rui/menu/gamemode/dummies",
 	deja_loot = $"rui/menu/gamemode/deja_loot",
-                          
+	                         
 		campfire = $"rui/menu/gamemode/flashpoint",
 		campfire_oly = $"rui/menu/gamemode/playlist_bg_olympus_mu2_flashpoint",
        
@@ -166,28 +184,89 @@ global const table<string, asset> GAMEMODE_IMAGE_MAP = {
                                                                         
                                                                       
        
-                         
+	                        
 		control_barometer = $"rui/menu/gamemode/playlist_bg_control_barometer",
 		control_hammond_labs = $"rui/menu/gamemode/playlist_bg_control_hammond_labs",
 		control_caustic_tt = $"rui/menu/gamemode/playlist_bg_control_caustic_tt",
 		control_lava_siphon = $"rui/menu/gamemode/playlist_bg_control_lava_siphon",
 		control_hammond_labs_night = $"rui/menu/gamemode/playlist_bg_control_hammond_labs_night",
+		control_moon_production_yard = $"rui/menu/gamemode/playlist_bg_divided_moon_production_yard",
        
-                         
+	                        
 		gungame_skull_town = $"rui/menu/gamemode/playlist_bg_gungame_skull_town",
 		gungame_fragment_east = $"rui/menu/gamemode/playlist_bg_gungame_fragment_east",
 		gungame_estates_night = $"rui/menu/gamemode/playlist_bg_gungame_estates_night",
 		gungame_the_wall = $"rui/menu/gamemode/playlist_bg_gungame_the_wall",
+		gungame_estates_day = $"rui/menu/gamemode/playlist_bg_gungame_estates_day",
        
-                                   
+
 		hardcore_olympus = $"rui/menu/gamemode/playlist_bg_hardcore_olympus",
 		hardcore_divided_moon = $"rui/menu/gamemode/playlist_bg_hardcore_divided_moon",
 		hardcore_worlds_edge = $"rui/menu/gamemode/playlist_bg_hardcore_worlds_edge",
-       
-                        
+	                       
 		tdm_party_crasher = $"rui/menu/gamemode/playlist_bg_arena_party_crasher",
 		tdm_overflow = $"rui/menu/gamemode/playlist_bg_arena_overflow",
 		tdm_habitat = $"rui/menu/gamemode/playlist_bg_arena_habitat",
+		mixtape_phase_runner = $"rui/menu/gamemode/playlist_bg_arena_phase_runner",
+		mixtape_moon_core = $"rui/menu/gamemode/playlist_bg_divided_moon_the_core",
+       
+
+	                    
+		mixtape_wattson = $"rui/menu/gamemode/playlist_bg_mixtape_wattson",
+		mixtape_amps = $"rui/menu/gamemode/playlist_bg_mixtape_amps",
+       
+
+	                         
+		heatwave_storm_point = $"rui/menu/gamemode/playlist_bg_heatwave_storm_point",
+		heatwave_divided_moon = $"rui/menu/gamemode/playlist_bg_heatwave_divided_moon",
+       
+	s17_chronicle = $"rui/menu/gamemode/playlist_bg_s17_chronicle",
+	                          
+		strikeout_divided_moon = $"rui/menu/gamemode/playlist_bg_strikeout_divided_moon",
+		strikeout_olympus_mu2 = $"rui/menu/gamemode/playlist_bg_strikeout_olympus_mu2",
+		strikeout_storm_point_mu2 = $"rui/menu/gamemode/playlist_bg_strikeout_storm_point_mu2",
+		strikeout_canyonlands_hu = $"rui/menu/gamemode/playlist_bg_strikeout_kings_canyon",
+		strikeout_desertlands_hu = $"rui/menu/gamemode/playlist_bg_strikeout_worlds_edge",
+       
+	                            
+		shadow_army = $"rui/menu/gamemode/playlist_bg_shadowarmy"
+		shadow_army_cine = $"rui/menu/gamemode/playlist_bg_shadowarmy_cine",
+		training_event_locked = $"rui/menu/gamemode/playlist_bg_training_event_locked",
+		firing_range_event_locked = $"rui/menu/gamemode/playlist_bg_firing_range_event_locked",
+		duos_event_locked = $"rui/menu/gamemode/playlist_bg_duos_event_locked",
+		trios_event_locked = $"rui/menu/gamemode/playlist_bg_trios_event_locked",
+		play_apex_panel_locked = $"rui/menu/gamemode/playlist_bg_play_apex_panel_locked",
+		mixtape_locked = $"rui/menu/gamemode/playlist_bg_mixtape_event_locked",
+       
+
+	                  
+		trios_bounty_hunt = $"rui/menu/gamemode/playlist_bg_thehunt_trios",
+		duos_bounty_hunt = $"rui/menu/gamemode/playlist_bg_thehunt_duos",
+       
+
+	                               
+		survival_solos = $"rui/menu/gamemode/playlist_bg_survival_solos",
+       
+
+	                               
+		survival_quads = $"rui/menu/gamemode/playlist_bg_survival_quads",
+       
+
+	                       
+		bigtdm = $"rui/menu/gamemode/playlist_bg_arena_phase_runner",
+       
+
+	                             
+		mixtape_treasurehunt_thunderdome = $"rui/menu/gamemode/treasure_hunt/playlist_bg_treasurehunt_thunderdome",
+		mixtape_treasurehunt_skulltown = $"rui/menu/gamemode/treasure_hunt/playlist_bg_treasurehunt_skulltown",
+		mixtape_treasurehunt_storm_point_mu2 = $"rui/menu/gamemode/treasure_hunt/playlist_bg_treasurehunt_storm_point_mu2",
+		mixtape_treasurehunt_monument = $"rui/menu/gamemode/treasure_hunt/playlist_bg_treasurehunt_monument",
+       
+
+                              
+                                                                                                          
+                                                                                                    
+                                                                                                  
        
 }
 
@@ -195,6 +274,9 @@ global const table<string, asset> GAMEMODE_THUMBNAIL_IMAGE_MAP = {
 	play_apex = $"rui/menu/gamemode/play_apex",
 	apex_elite = $"rui/menu/gamemode/apex_elite",
 	training = $"rui/menu/gamemode/playlist_bg_sq_training",
+                         
+                                                                     
+      
 	firing_range = $"rui/menu/gamemode/playlist_bg_sq_firing_range",
 	generic_01 = $"rui/menu/gamemode/generic_01",
 	generic_02 = $"rui/menu/gamemode/generic_02",
@@ -203,23 +285,34 @@ global const table<string, asset> GAMEMODE_THUMBNAIL_IMAGE_MAP = {
 	ranked_3 = $"rui/menu/gamemode/playlist_bg_sq_olympus_mu2_ranked",
 	ranked_4 = $"rui/menu/gamemode/playlist_bg_sq_storm_point_ranked",
 	ranked_5 = $"rui/menu/gamemode/playlist_bg_sq_divided_moon_ranked",
+	ranked_6 = $"rui/menu/gamemode/playlist_bg_sq_storm_point_ranked_mu2",
 	solo_iron_crown = $"rui/menu/gamemode/solo_iron_crown",
 	solo = $"rui/menu/gamemode/solo_iron_crown",
 	duos = $"rui/menu/gamemode/playlist_bg_sq_duos",
-                                
+	                               
 		duos_valentines = $"rui/menu/gamemode/playlist_bg_sq_duos_valentines",
        
 
 	trios = $"rui/menu/gamemode/playlist_bg_sq_trios",
 
+	                      
+		trios_halloween = $"rui/menu/gamemode/playlist_bg_sq_trios_halloween",
+       
+
+	                    
+		trios_golden_horse = $"rui/menu/gamemode/playlist_bg_sq_trios_golden_horse",
+       
+
 	panel_worlds_edge = $"rui/menu/gamemode/playlist_bg_sq_worldsedge_mu3",
 	panel_worlds_edge_mu1 = $"rui/menu/gamemode/playlist_bg_sq_worldsedge_mu3",
 	panel_worlds_edge_mu2 = $"rui/menu/gamemode/playlist_bg_sq_worldsedge_mu3",
-	panel_worlds_edge_mu3 = $"rui/menu/gamemode/playlist_bg_sq_worldsedge_mu3",                                                    
+	panel_worlds_edge_mu3 = $"rui/menu/gamemode/playlist_bg_sq_worldsedge_mu3",
+	panel_worlds_edge_night = $"rui/menu/gamemode/playlist_bg_sq_worldsedge_night",//duping to above to reduce errors for old playlists
 
 	panel_olympus = $"rui/menu/gamemode/playlist_bg_sq_olympus_mu2",
 	panel_olympus_mu1 = $"rui/menu/gamemode/playlist_bg_sq_olympus_mu2",
-	panel_olympus_mu2 = $"rui/menu/gamemode/playlist_bg_sq_olympus_mu2",                                                    
+	panel_olympus_mu2 = $"rui/menu/gamemode/playlist_bg_sq_olympus_mu2",
+	panel_olympus_night = $"rui/menu/gamemode/playlist_bg_sq_olympus_night",//duping to above to reduce errors for old playlists
 
 	canyon_land_mu1 = $"rui/menu/gamemode/play_apex",
 	panel_canyon_land = $"rui/menu/gamemode/playlist_bg_sq_kc_mu3_hu1",
@@ -227,12 +320,15 @@ global const table<string, asset> GAMEMODE_THUMBNAIL_IMAGE_MAP = {
 	panel_canyon_land_mu2 = $"rui/menu/gamemode/playlist_bg_sq_kc_mu3_hu1",
 	panel_canyon_land_mu3 = $"rui/menu/gamemode/playlist_bg_sq_kc_mu3_hu1",
 	panel_canyon_land_mu3_hu1 = $"rui/menu/gamemode/playlist_bg_sq_kc_mu3_hu1"
-	panel_canyon_land_night = $"rui/menu/gamemode/playlist_bg_kc_night",                                                     
+	panel_canyon_land_night = $"rui/menu/gamemode/playlist_bg_kc_night",
+	panel_canyon_land_night2 = $"rui/menu/gamemode/playlist_bg_sq_kc_night2",//duping to above to reduce errors for old playlists
 
 	panel_storm_point = $"rui/menu/gamemode/playlist_bg_sq_storm_point_mu1",
-	panel_storm_point_mu1 = $"rui/menu/gamemode/playlist_bg_sq_storm_point_mu1",                                                    
+	panel_storm_point_mu1 = $"rui/menu/gamemode/playlist_bg_sq_storm_point_mu1",
+	panel_storm_point_mu2 = $"rui/menu/gamemode/playlist_bg_sq_storm_point_mu2",//duping to above to reduce errors for old playlists
 
 	panel_divided_moon = $"rui/menu/gamemode/playlist_bg_sq_divided_moon",
+	panel_divided_moon_mu1 = $"rui/menu/gamemode/playlist_bg_sq_divided_moon_mu1",
 
 	shotguns_and_snipers = $"rui/menu/gamemode/playlist_bg_sq_shotguns_and_snipers",
 	panel_worlds_edge_mu2_airdrop = $"rui/menu/gamemode/playlist_bg_worldsedge_airdrop",
@@ -241,16 +337,18 @@ global const table<string, asset> GAMEMODE_THUMBNAIL_IMAGE_MAP = {
 	duos_airdrop = $"rui/menu/gamemode/playlist_bg_sq_duos",
 	trios_airdrop = $"rui/menu/gamemode/playlist_bg_sq_trios",
 
+	panel_thunderdome = $"rui/menu/gamemode/playlist_bg_sq_thunderdome",
+
                   
-		shadow_squad = $"rui/menu/gamemode/shadow_squad",
+                                                   
        
-                               
+	                              
 		shadow_royale = $"rui/menu/gamemode/playlist_bg_sq_shadow_royale",
        
-                       
+	                      
 		winter_express = $"rui/menu/gamemode/playlist_bg_sq_winterexpress",
        
-                           
+	                          
 		tournament = $"rui/menu/gamemode/tournament",
        
                            
@@ -275,7 +373,7 @@ global const table<string, asset> GAMEMODE_THUMBNAIL_IMAGE_MAP = {
 	night = $"rui/menu/gamemode/night",
 	dummies = $"rui/menu/gamemode/dummies",
 	deja_loot = $"rui/menu/gamemode/deja_loot",
-                          
+	                         
 		campfire = $"rui/menu/gamemode/flashpoint",
 		campfire_oly = $"rui/menu/gamemode/playlist_bg_sq_olympus_mu2_flashpoint",
        
@@ -300,31 +398,89 @@ global const table<string, asset> GAMEMODE_THUMBNAIL_IMAGE_MAP = {
                                                                          
        
 
-                         
+	                        
 		control_barometer = $"rui/menu/gamemode/playlist_bg_sq_control_barometer",
 		control_hammond_labs = $"rui/menu/gamemode/playlist_bg_sq_control_hammond_labs",
 		control_caustic_tt = $"rui/menu/gamemode/playlist_bg_sq_control_caustic_tt",
 		control_lava_siphon = $"rui/menu/gamemode/playlist_bg_sq_control_lava_siphon",
 		control_hammond_labs_night = $"rui/menu/gamemode/playlist_bg_sq_control_hammond_labs_night",
+		control_moon_production_yard = $"rui/menu/gamemode/playlist_bg_sq_divided_moon_production_yard",
        
 
-                         
+	                        
 		gungame_skull_town = $"rui/menu/gamemode/playlist_bg_sq_gungame_skull_town",
 		gungame_fragment_east = $"rui/menu/gamemode/playlist_bg_sq_gungame_fragment_east",
 		gungame_estates_night = $"rui/menu/gamemode/playlist_bg_sq_gungame_estates_night",
 		gungame_the_wall = $"rui/menu/gamemode/playlist_bg_sq_gungame_the_wall",
+		gungame_estates_day = $"rui/menu/gamemode/playlist_bg_sq_gungame_estates_day",
        
 
-                                   
 		hardcore_olympus = $"rui/menu/gamemode/playlist_bg_sq_hardcore_olympus",
 		hardcore_divided_moon = $"rui/menu/gamemode/playlist_bg_sq_hardcore_divided_moon",
 		hardcore_worlds_edge = $"rui/menu/gamemode/playlist_bg_sq_hardcore_worlds_edge",
-       
 
-                        
+	                       
 		tdm_party_crasher = $"rui/menu/gamemode/playlist_bg_sq_arena_party_crasher",
 		tdm_overflow = $"rui/menu/gamemode/playlist_bg_sq_arena_overflow",
 		tdm_habitat = $"rui/menu/gamemode/playlist_bg_sq_arena_habitat",
+		mixtape_phase_runner = $"rui/menu/gamemode/playlist_bg_sq_arena_phase_runner",
+		mixtape_moon_core = $"rui/menu/gamemode/playlist_bg_sq_divided_moon_the_core",
+       
+
+	                    
+		mixtape_wattson = $"rui/menu/gamemode/playlist_bg_sq_mixtape_wattson",
+		mixtape_amps = $"rui/menu/gamemode/playlist_bg_sq_mixtape_amps",
+       
+
+	                         
+		heatwave_storm_point = $"rui/menu/gamemode/playlist_bg_sq_heatwave_storm_point",
+		heatwave_divided_moon = $"rui/menu/gamemode/playlist_bg_sq_heatwave_divided_moon",
+       
+
+	s17_chronicle = $"rui/menu/gamemode/playlist_bg_sq_s17_chronicle",
+
+	                          
+		strikeout_divided_moon = $"rui/menu/gamemode/playlist_bg_sq_strikeout_divided_moon",
+		strikeout_olympus_mu2 = $"rui/menu/gamemode/playlist_bg_sq_strikeout_olympus_mu2",
+		strikeout_storm_point_mu2 = $"rui/menu/gamemode/playlist_bg_sq_strikeout_storm_point_mu2",
+		strikeout_canyonlands_hu = $"rui/menu/gamemode/playlist_bg_sq_strikeout_kings_canyon",
+		strikeout_desertlands_hu = $"rui/menu/gamemode/playlist_bg_sq_strikeout_worlds_edge",
+       
+
+	                            
+		shadow_army = $"rui/menu/gamemode/playlist_bg_sq_shadowarmy",
+		shadow_army_cine = $"rui/menu/gamemode/playlist_bg_sq_shadowarmy_cine",
+		event_locked = $"rui/menu/gamemode/playlist_bg_sq_event_locked",
+       
+
+	                  
+		trios_bounty_hunt = $"rui/menu/gamemode/playlist_bg_sq_thehunt_trios",
+		duos_bounty_hunt = $"rui/menu/gamemode/playlist_bg_sq_thehunt_duos",
+       
+
+	                               
+		survival_solos = $"rui/menu/gamemode/playlist_bg_sq_survival_solos",
+       
+
+	                               
+		survival_quads = $"rui/menu/gamemode/playlist_bg_sq_survival_quads",
+       
+
+	                       
+		bigtdm = $"rui/menu/gamemode/playlist_bg_sq_arena_phase_runner",
+       
+
+	                             
+		mixtape_treasurehunt_thunderdome = $"rui/menu/gamemode/treasure_hunt/playlist_bg_sq_treasurehunt_thunderdome",
+		mixtape_treasurehunt_skulltown = $"rui/menu/gamemode/treasure_hunt/playlist_bg_sq_treasurehunt_skulltown",
+		mixtape_treasurehunt_storm_point_mu2 = $"rui/menu/gamemode/treasure_hunt/playlist_bg_sq_treasurehunt_storm_point_mu2",
+		mixtape_treasurehunt_monument = $"rui/menu/gamemode/treasure_hunt/playlist_bg_sq_treasurehunt_monument",
+       
+
+                              
+                                                                                                             
+                                                                                                       
+                                                                                                     
        
 }
 
@@ -353,15 +509,15 @@ const table<string, asset> GAMEMODE_BINK_MAP = {
 	canyon_land_mu1 = $"media/gamemodes/play_apex.bik",
 	shotguns_and_snipers = $"media/gamemodes/shotguns_and_snipers.bik",
                   
-		shadow_squad = $"media/gamemodes/shadow_squad.bik",
+                                                     
        
-                               
+	                              
 		shadow_royale = $"media/gamemodes/shadow_squad.bik",
        
-                       
+	                      
 		winter_express = $"media/gamemodes/winter_express.bik",
        
-                           
+	                          
 		tournament = $"media/gamemodes/play_apex.bik",
        
 	live_die_live = $"media/gamemodes/live_die_live.bik",
@@ -370,7 +526,7 @@ const table<string, asset> GAMEMODE_BINK_MAP = {
 	night = $"media/gamemodes/night.bik",
 	dummies = $"media/gamemodes/dummies.bik",
 	deja_loot = $"media/gamemodes/deja_loot.bik",
-                          
+	                         
 	campfire = $"media/gamemodes/campfire.bik",
        
 }
@@ -527,10 +683,10 @@ asset function GetImageFromImageMap( string keyName )
 			imageAsset = GAMEMODE_IMAGE_MAP[keyName]
 		else
 		{
-			#if DEVELOPER
+			#if DEV
 				if ( GetConVarBool( "ui_automation_enabled" ) )
 					return imageAsset // skip the warning
-			#endif       
+			#endif // DEV
 
 			Warning( "Invalid playlist value for 'image': %s", keyName )
 		}
@@ -547,10 +703,10 @@ asset function GetThumbnailImageFromImageMap( string keyName )
 			imageAsset = GAMEMODE_THUMBNAIL_IMAGE_MAP[keyName]
 		else
 		{
-			#if DEVELOPER
+			#if DEV
 				if ( GetConVarBool( "ui_automation_enabled" ) )
 					return imageAsset // skip the warning
-			#endif       
+			#endif // DEV
 
 			Warning( "Invalid playlist value for 'image': %s", keyName )
 		}
@@ -581,10 +737,10 @@ asset function GetGamemodeLogoFromImageMap( string keyName )
 
 		if ( !foundLogo )
 		{
-			#if DEVELOPER
+			#if DEV
 				if ( GetConVarBool( "ui_automation_enabled" ) )
-					return imageAsset                    
-			#endif       
+					return imageAsset // skip the warning
+			#endif // DEV
 
 			Warning( "Invalid playlist value for 'image': %s", keyName )
 		}
@@ -622,17 +778,46 @@ int function GetPlaylistIndexForName( PlaylistName playlistName )
 #if SERVER || CLIENT || UI
 bool function Playlist_PlaylistHasSchedule( string playlistName )
 {
-	PlaylistScheduleData scheduleData = Playlist_GetScheduleData_Deprecated( playlistName )
-	return scheduleData.blocks.len() > 0
-    
+                           
+                                                                
+                     
+   
+              
+   
+      
+   
+                                                                                          
+                                       
+   
+	     
+		PlaylistScheduleData scheduleData = Playlist_GetScheduleData_Deprecated( playlistName )
+		return scheduleData.blocks.len() > 0
+       
+
 	return false
 }
 
 TimestampRange ornull function Playlist_GetPlaylistScheduledTimeRange( string playlistName )
 {
-	PlaylistScheduleData scheduleData = Playlist_GetScheduleData_Deprecated( playlistName )
-	return scheduleData.currentBlock
+                           
+                                                                
+                     
+   
+                                                                                          
+                                   
+   
+      
+   
+                       
+                                                                     
+                                                                 
+               
+   
+	     
+		PlaylistScheduleData scheduleData = Playlist_GetScheduleData_Deprecated( playlistName )
+		return scheduleData.currentBlock
        
+
 	return null
 }
 
@@ -714,7 +899,7 @@ PlaylistScheduleData function Playlist_GetNonCachedScheduleData( string plName )
 		block.startUnixTime = expect int( startTime )
 		block.endUnixTime = expect int( endTime )
 
-		#if DEVELOPER
+		#if ASSERTS
 			Assert( block.startUnixTime < block.endUnixTime, format( "Bad times in playlist '%s' for setting '%s': '%s'", plName, varName, varVal ) )
 			foreach ( TimestampRange otherBlock in data.blocks )
 			{
@@ -849,9 +1034,8 @@ void function ShPlaylist_CacheData()
 
 		file.cachedPlaylistArray[index] = playlistData
 		file.cachedPlaylistMap[name] <- playlistData
-		//print( "DEBUG: Cached playlist [" + index + "] = " + name )
 	}
-//	Boost_OnPlaylistsRegistered()
+	//Boost_OnPlaylistsRegistered()
 }
 
 #if SERVER
@@ -870,7 +1054,7 @@ void function ShPlaylist_Lobby_OnClientConnected( entity player )
 array<string> function GetPlaylistModNames()
 {
 	array<string> list = []
-	int numMods = 4//GetPlaylistModCount()
+	int numMods = GetPlaylistModCount()
 
 	list.resize( numMods )
 	for ( int modIter = 0; modIter != numMods; modIter++ )
@@ -889,9 +1073,13 @@ array<string> function GetVisiblePlaylistNames( bool isPrivateMatchQuery = false
 	bool shouldDisplayOptInOptions = false
 	bool shouldCache = true
 	#if UI
-		shouldDisplayOptInOptions = true
-		shouldCache = false
-	#endif
+		bool isOptInServer = ShouldDisplayOptInOptions()
+		if ( isOptInServer && IsOptInEnabled() )
+			shouldDisplayOptInOptions = true
+
+		if ( isOptInServer )
+			shouldCache = false
+	#endif // UI
 
 	// Be aware of moving time when connecting to new servers!
 	int timeSinceLastChecked = ( GetUnixTimestamp() - file.lastCheckedTime )
@@ -911,14 +1099,12 @@ array<string> function GetVisiblePlaylistNames( bool isPrivateMatchQuery = false
 
 	array<string> list      = []
 	array<string> optInList = []
-	//print( "DEBUG: GetVisiblePlaylistNames - Total playlists: " + file.cachedPlaylistArray.len() )
 	for ( int i = 0; i < file.cachedPlaylistArray.len(); i++ )
 	{
 		CachedPlaylistData playlistData = file.cachedPlaylistArray[i]
 
 		if ( forcedVisiblePlaylists.contains( playlistData.name ) )
 		{
-			//print( "DEBUG: " + playlistData.name + " - forced visible" )
 			list.append( playlistData.name )
 			continue
 		}
@@ -937,22 +1123,32 @@ array<string> function GetVisiblePlaylistNames( bool isPrivateMatchQuery = false
 		{
 			if ( shouldDisplayOptInOptions )
 				optInList.append( playlistData.name )
-			print( "DEBUG: " + playlistData.name + " - filtered (opt_in_only)" )
 			continue
 		}
-
+		
 		if ( IsPlaylistBeingRotated( playlistData.name ) && !inActiveRotation )
-		{
-			print( "DEBUG: " + playlistData.name + " - filtered (rotation mismatch)" )
 			continue
-		}
 
 		if ( Playlist_ShouldBeHiddenForScheduleBlocks( playlistData.name ) )
 			continue
 
-		//print( "DEBUG: " + playlistData.name + " - ADDED TO LIST" )
 		list.append( playlistData.name )
 	}
+
+                           
+                                               
+                                           
+   
+                                             
+                                                              
+                                 
+    
+            
+    
+
+                        
+   
+       
 
 	array<string> finalList = []
 
@@ -972,7 +1168,6 @@ array<string> function GetVisiblePlaylistNames( bool isPrivateMatchQuery = false
 
 	finalList.extend( optInList )
 	file.cachedPlaylistNames = finalList
-	//print( "DEBUG: GetVisiblePlaylistNames - Returning " + finalList.len() + " playlists: " + string( finalList ) )
 	return finalList
 }
 #endif
@@ -1005,15 +1200,15 @@ const table<string, asset> GAMEMODE_EMBLEM_MAP = {
 	jan_event = $"rui/menu/gamemode_emblem/sioree",
 	deja_loot = $"rui/menu/gamemode_emblem/deja_loot",
                   
-		shadowfall = $"rui/menu/gamemode_emblem/shadowfall",
+                                                      
        
 
-                               
+	                              
 		shadow_royale = $"rui/menu/gamemode_emblem/shadow_royale",
        
 
 	duos = $"rui/menu/gamemode_emblem/duos",
-                       
+	                      
 		winter_express = $"rui/menu/gamemode_emblem/winter_express",
        
                            
@@ -1032,15 +1227,65 @@ const table<string, asset> GAMEMODE_EMBLEM_MAP = {
                               
                                                           
        
-	generic = $"rui/menu/gamemode_emblem/generic_ltm"
-	genesis = $"rui/menu/gamemode_emblem/genesis"
+	generic = $"rui/menu/gamemode_emblem/generic_ltm",
+	genesis = $"rui/menu/gamemode_emblem/genesis",
 
-                         
-		control_mode = $"rui/menu/gamemode_emblem/emblem_control"
+	                        
+		control_mode = $"rui/menu/gamemode_emblem/emblem_control",
                                
 
-                        
-	freedm = $"rui/menu/gamemode_emblem/emblem_freedm"                                
+	                       
+	freedm = $"rui/menu/gamemode_emblem/emblem_freedm", // TODO Update to freedm emblem
+       
+
+	firing_range = $"rui/menu/gamemode_emblem/emblem_firing_range",
+
+                   
+                                                                        
+      
+
+	                      
+		emblem_halloween = $"rui/menu/gamemode_emblem/emblem_halloween",
+       
+
+	                          
+		emblem_3strikes = $"rui/menu/gamemode_emblem/emblem_three_strikes",
+       
+
+	                            
+		emblem_revenant_army = $"rui/menu/gamemode_emblem/emblem_revenant_army",
+                                   
+
+	                       
+		emblem_uprising = $"rui/menu/gamemode_emblem/emblem_uprising",
+       
+
+	                    
+		emblem_golden_horse = $"rui/gamemodes/golden_horse/golden_horse_mode_icon",
+       
+
+	                  
+		emblem_bounty_hunt = $"rui/hud/gametype_icons/ltm/hunt_ltm_logo_colorized",
+       
+
+	                               
+		emblem_survival_solos = $"rui/menu/gamemode_emblem/generic_ltm", // $"rui/hud/gametype_icons/ltm/survival_solos_ltm_logo_colorized",
+       
+
+	                               
+		emblem_survival_quads = $"rui/menu/gamemode_emblem/generic_ltm", // Need new image
+       
+
+	                       
+		emblem_bigtdm = $"rui/menu/gamemode_emblem/emblem_tdm_big",
+       
+
+	                             
+		emblem_treasure_hunt = $"rui/menu/gamemode_emblem/emblem_treasure_hunt",
+       
+
+                              
+                                                                      
        
 }
 #endif
@@ -1070,77 +1315,6 @@ asset function GetModeEmblemImage( string playlistName )
 		else
 			Warning( "Playlist '%s' has invalid value for 'emblem': %s", playlistName, emblemKey )
 	}
-
-	if ( emblemImage != "" )
-		return emblemImage
-
-	// R5V custom game mode emblems
-	#if CLIENT
-	switch( Gamemode() )
-	{
-		case eGamemodes.fs_prophunt:
-		emblemImage = $"rui/flowstatecustom/prophunt"
-		break
-
-		case eGamemodes.fs_duckhunt:
-		emblemImage = $"rui/flowstatecustom/duckhunt"
-		break
-
-		case eGamemodes.fs_dm:
-		emblemImage = $"rui/flowstatecustom/dm"
-		break
-
-		case eGamemodes.flowstate_pkknockback:
-		emblemImage = $"rui/flowstatecustom/pkpushback2"
-		break
-
-		case eGamemodes.fs_snd:
-		emblemImage = $"rui/flowstatecustom/sndgamemode"
-		break
-	}
-
-	switch( playlistName )
-	{
-		case "fs_movementgym":
-		emblemImage = $"rui/flowstatecustom/movementgym"
-		break
-
-		case "fs_1v1_coaching":
-		emblemImage = $"rui/flowstatecustom/1v1"
-		break
-
-		case "fs_1v1":
-		emblemImage = $"rui/flowstatecustom/1v1"
-		break
-
-		case "fs_lgduels_1v1":
-		emblemImage = $"rui/flowstatecustom/1v1"
-		break
-
-		case "survival_duos":
-		emblemImage = $"rui/menu/gamemode_emblem/duos"
-		break
-
-		case "survival_solos":
-		case "fs_ltm_mortalevoshields":
-		emblemImage = $"rui/flowstatecustom/generic_ltm"
-		break
-
-		case "fs_haloMod":
-		case "fs_haloMod_oddball":
-		case "fs_haloMod_ctf":
-		emblemImage = $"rui/flowstatecustom/halo"
-		break
-
-		case "fs_dm_fast_instagib":
-		emblemImage = $"rui/flowstatecustom/cafesinstagib"
-		break
-
-		case "fs_haloMod_survival":
-		emblemImage = $"rui/hiswattson/ltm"
-		break
-	}
-	#endif
 
 	return emblemImage
 }
@@ -1185,7 +1359,7 @@ array<int> function GetEmblemColor( string playlistName )
 }
 #endif
 
-#if DEVELOPER
+#if DEV
 // this is only needed until rotation groups work on listen servers
 const DEV_SecondsPerRotation = 3600
 #endif
@@ -1194,7 +1368,7 @@ const DEV_SecondsPerRotation = 3600
 string function GetPlaylistRotationGroup()
 {
 	string rotationGroup = GetDefaultPlaylistRotationGroup()
-	#if DEVELOPER
+	#if DEV
 		if ( rotationGroup == "" )
 		{
 			//different map every minute
@@ -1213,7 +1387,7 @@ int function GetPlaylistRotationNextTime( string rotationName = "" )
 {
 	int nextTime = GetNamedPlaylistRotationNextTime( rotationName )
 
-	#if DEVELOPER
+	#if DEV
 		if ( nextTime == 0 )
 			nextTime = (GetUnixTimestamp() / DEV_SecondsPerRotation ) * DEV_SecondsPerRotation + DEV_SecondsPerRotation //fake switch every so often
 	#endif
@@ -1274,26 +1448,6 @@ array<string> function GetPlaylistsInRotation()
 	}
 
 	return list
-}
-#endif
-#if UI
-string function GetPanelImageKeyForUISlot( string uiSlot )
-{
-	string playlist = GetCurrentPlaylistFromRotationAndUISlot( "", uiSlot )
-	if ( playlist == "" )
-		return ""
-
-	return GetPlaylistVarString( playlist, "image", "" )
-}
-#endif
-#if UI
-string function GetMapDisplayNameForUISlot( string uiSlot )
-{
-	string playlist = GetCurrentPlaylistFromRotationAndUISlot( "", uiSlot )
-	if ( playlist == "" )
-		return ""
-
-	return GetPlaylistVarString( playlist, "map_name", "" )
 }
 #endif
 #if UI
@@ -1375,7 +1529,7 @@ void function UpdateMatchmakeFromMatchPlaylist_Thread()
 }
 void function MatchRequeueCancel()
 {
-	if ( AreWeMatchmaking() ) //LeaveMatch_WasInitiate
+	if ( AreWeMatchmaking() && !LeaveMatch_WasInitiated() )
 		CancelMatchmaking()
 
 	Signal( uiGlobal.signalDummy, "UpdateMatchmakeFromMatchPlaylist" )
@@ -1384,6 +1538,9 @@ void function MatchRequeueCancel()
 #if UI
 string function GetDefaultPlaylist()
 {
+	if ( HasEventTakeOverActive() )
+		return GetEventTakeoverPlaylist()
+
                                
 	if ( GetPartySize() == 1 )
 	{
@@ -1478,7 +1635,7 @@ bool function PartyHasPlaylistAccountLevelRequired( string playlistName )
 //// Dev functions ////
 ///////////////////////
 ///////////////////////
-#if (SERVER || CLIENT || UI) && DEVELOPER
+#if (SERVER || CLIENT || UI) && DEV
 void function PrintPlaylists()
 {
 	printt( "=== PLAYLIST NAMES: ===" )
@@ -1490,5 +1647,3 @@ void function PrintPlaylists()
 	}
 }
 #endif
-
-

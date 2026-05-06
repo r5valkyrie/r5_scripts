@@ -682,8 +682,7 @@ void function ShChallenges_LevelInit_PostStats()
 	}
 
 	#if UI
-		// Disabled — persistence fields don't exist
-		// thread InitChallengesThread()
+		thread InitChallengesThread()
 	#endif
 }
 #endif
@@ -2313,6 +2312,7 @@ void function Challenges_LobbyAddStatCallbacks( entity player )
 
 void function Challenges_OnPlayerConnectedThread( entity player, bool isReconnecting )
 {
+	return
 	if ( !IsValid( player ) )
 		return
 
@@ -2699,6 +2699,7 @@ bool function HasChallengeThreadCompletedForPlayer( entity player )
 #if SERVER
 void function RefreshDailyChallengesThread( entity player, bool BPChangeOver )
 {
+	return
 	Assert( IsLobby() )
 
 	EndSignal( player, "OnDestroy" )
@@ -3022,8 +3023,6 @@ void function UpdateDailyChallenges( entity player, bool forceNew = false )
 	Assert( dailyChallengePool.len() >= numDailiesToAssign, "Not enough daily challenges in the pool to assign new unique daily challenges" )
 	dailyChallengePool.randomize()
 
-	return // -fix this for challenges - kral
-	
 	// User doesn't have enough dailies assigned, fill the open slots
 	while( currentDailies.len() < numDailiesToAssign )
 	{
@@ -3628,7 +3627,7 @@ void function UpdateWeeklyRecurringChallenges( entity player, bool reinitialize 
 		AssignChallengeToPlayer( player, challenge )
 		assignedRecurringChallenges.append( challenge )
 	}
-	return // fix this for challenges -kral
+
 	if ( activePass != null )
 	{
 		expect ItemFlavor( activePass ) // expect is scoped
@@ -6078,12 +6077,7 @@ void function MaybeAddChallengeClickEventToButton( var menu, var button, ItemFla
 			fileLevel.lastRerollTime = UITime()
 
 			expect ItemFlavor( activeBattlePass )
-			ItemFlavor ornull rerollFlavOrNull = BattlePass_GetRerollFlavOrNull( activeBattlePass )
-			if ( rerollFlavOrNull == null )
-			{
-				Warning( "TryRerollDailyChallenge: No reroll flavor set for battlepass " + string( ItemFlavor_GetAsset( activeBattlePass ) ) )
-				return
-			}
+			ItemFlavor rerollFlav = BattlePass_GetRerollFlav( activeBattlePass )
 
 			if ( !IsDialog( GetActiveMenu() ) )
 			{
@@ -7755,7 +7749,7 @@ array<string> function Challenge_GetStatRefs( ItemFlavor flavor, int tier, bool 
 
 		string specifiedStatRef = getAlt ? GetSettingsBlockString( tierData, "statRefAlt" ) : GetSettingsBlockString( tierData, "statRef" )
 
-		if ( specifiedStatRef.find( "%char%" ) != -1 )
+		if ( specifiedStatRef.find( "%char%" ) > -1 )
 		{
 			array<ItemFlavor> characterFlavors = Challenge_GetCharacterItemFlavors( flavor, tier )
 			Assert( characterFlavors.len() > 0, format( "Challenge %s tier %i uses char stat ref but doesn't have a character flavor associated with it", string(ItemFlavor_GetAsset( flavor )), tier ) )
