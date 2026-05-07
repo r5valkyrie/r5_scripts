@@ -567,8 +567,8 @@ global struct PriceDisplayData
 }
 #endif
 
-Assert( GRX_CURRENCY_COUNT == 4 )
-global ItemFlavor&[GRX_CURRENCY_COUNT] GRX_CURRENCIES = [{...}, {...}, {...}, {...}]
+Assert( GRX_CURRENCY_COUNT == 7 )
+global ItemFlavor&[GRX_CURRENCY_COUNT] GRX_CURRENCIES = [{...}, {...}, {...}, {...}, {...}, {...}, {...}]
 
 global int GRX_DEV_ITEM = -1
 global int GRX_QA_ITEM = -1
@@ -848,20 +848,19 @@ void function ShGRX_LevelInit()
 	#endif
 
 	AddCallback_RegisterRootItemFlavors( void function() {
-		Assert( GRX_CURRENCY_COUNT == 4 )
+		Assert( GRX_CURRENCY_COUNT == 7 )
 		GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] = expect ItemFlavor(RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_currency/premium.rpak" )) // GRX_CURRENCY_PREMIUM
 		GRX_CURRENCIES[GRX_CURRENCY_CREDITS] = expect ItemFlavor(RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_currency/credits.rpak" )) // GRX_CURRENCY_CREDITS
 		GRX_CURRENCIES[GRX_CURRENCY_CRAFTING] = expect ItemFlavor(RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_currency/crafting.rpak" )) // GRX_CURRENCY_CRAFTING
-	//	GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM] = expect ItemFlavor(RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_currency/heirloom.rpak" )) // not available
-		//GRX_CURRENCIES[GRX_CURRENCY_EXOTIC] = expect ItemFlavor(RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_currency/exotic.rpak" )) // not available
-		//GRX_CURRENCIES[GRX_CURRENCY_ESCROW] = expect ItemFlavor(RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_currency/escrow.rpak" )) // not available
+		GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM] = expect ItemFlavor(RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_currency/heirloom.rpak" )) // GRX_CURRENCY_HEIRLOOM
+		GRX_CURRENCIES[GRX_CURRENCY_EXOTIC] = expect ItemFlavor(RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_currency/exotic.rpak" )) // GRX_CURRENCY_EXOTIC
+		GRX_CURRENCIES[GRX_CURRENCY_ESCROW] = expect ItemFlavor(RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_currency/escrow.rpak" )) // GRX_CURRENCY_ESCROW
+
+		// this is simply a fallback value in case we don't have an active event shop -- see event_shop.nut for where this gets dynamically set
+		GRX_CURRENCIES[GRX_CURRENCY_EVENT] = expect ItemFlavor(RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_currency/s19me01_coin.rpak" )) // GRX_CURRENCY_EVENT
 
 		foreach ( int currencyIndex, ItemFlavor flav in GRX_CURRENCIES )
 		{
-			// HEIRLOOM currency (index 3) may not be initialized
-			if ( ItemFlavor_GetAsset( flav ) == $"" )
-				continue
-
 			fileLevel.currencyIndexMap[ItemFlavor_GetGUIDString( flav )] <- currencyIndex
 			#if SERVER
 				asset previewMdl = GRXCurrency_GetPreviewModel( flav )
@@ -988,6 +987,25 @@ void function ShGRX_RegisterItemFlavor( ItemFlavor flavor )
 				ownershipTarget.grxOwnershipTargettedBy = []
 			array<int> targettedBy = expect array<int>(ownershipTarget.grxOwnershipTargettedBy)
 			targettedBy.append( flavor.guid )
+		}
+	}
+	else if ( flavor.grxMode == eItemFlavorGRXMode.MULTIPLE_OWNERSHIP_TARGET )
+	{
+		array< ItemFlavor > ownershipRequirementsList = ItemFlavor_GetGRXMultipleOwnershipRequirementsList( flavor )
+		if ( ownershipRequirementsList.len() == 0 )
+		{
+			Assert( false, "Item had GRX mode MULTIPLE_OWNERSHIP_TARGET but list was empty: " + string( ItemFlavor_GetAsset( flavor ) ) )
+			return
+		}
+
+		foreach ( reqFlav in ownershipRequirementsList )
+		{
+			#if DEV
+				bool duplicateGRXRefFoundInMultiple = reqFlav.guid in fileLevel.multiOwnershipUnlockMap
+				Assert( !duplicateGRXRefFoundInMultiple, "Duplicate GRX ref in multiple unlock mapping found. Already used by " + string( ItemFlavor_GetAsset( GetItemFlavorByGUID( fileLevel.multiOwnershipUnlockMap[ reqFlav.guid ] ) ) ) )
+			#endif
+
+			fileLevel.multiOwnershipUnlockMap[ reqFlav.guid ] <- flavor.guid
 		}
 	}
 
@@ -1163,7 +1181,21 @@ array<ItemFlavor> function ItemFlavor_GetGRXOwnershipTargettedBy( ItemFlavor fla
 #if SERVER || CLIENT || UI
 void function GRXCurrency_RegisterNewCurrencyAssetInEventSlot( ItemFlavor newCurrencyFlav )
 {
-	// GRX_CURRENCY_EVENT slot not available (only 4 currency slots)
+	Assert( ItemFlavor_GetType( newCurrencyFlav ) == eItemType.account_currency )
+	ItemFlavor oldCurrencyFlav = GRX_CURRENCIES [ GRX_CURRENCY_EVENT ]
+	GRX_CURRENCIES[ GRX_CURRENCY_EVENT ] = newCurrencyFlav
+
+	int targetIndex = GRXCurrency_GetCurrencyIndex( oldCurrencyFlav )
+	delete fileLevel.currencyIndexMap[ ItemFlavor_GetGUIDString( oldCurrencyFlav ) ]
+	fileLevel.currencyIndexMap[ ItemFlavor_GetGUIDString( newCurrencyFlav ) ] <- targetIndex
+
+	#if SERVER
+		asset previewModel = GRXCurrency_GetPreviewModel( newCurrencyFlav )
+		if ( previewModel != $"" )
+		{
+			PrecacheModel( previewModel )
+		}
+	#endif
 }
 #endif
 
@@ -1772,13 +1804,13 @@ int function GetCurrencyPriority(ItemFlavor itemFlavor)
 			currencyPriority = GRX_CURRENCY_CRAFTING
 			break
 
-		//case GRX_CURRENCIES[GRX_CURRENCY_EVENT]: // not available
-		//	currencyPriority = GRX_CURRENCY_EVENT
-		//	break
+		case GRX_CURRENCIES[GRX_CURRENCY_EVENT]:
+			currencyPriority = GRX_CURRENCY_EVENT
+			break
 
-		//case GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM]: // not registered
-		//	currencyPriority = GRX_CURRENCY_HEIRLOOM
-		//	break
+		case GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM]:
+			currencyPriority = GRX_CURRENCY_HEIRLOOM
+			break
 
 		default:
 			Assert( false, "itemFlavor guid: " + itemFlavor.guid + " does not have a currency")
@@ -1814,7 +1846,13 @@ int function GRXOffer_GetCraftingPriceQuantity( GRXScriptOffer offer )
 
 int function GRXOffer_GetHeirloomPriceQuantity( GRXScriptOffer offer )
 {
-	// GRX_CURRENCY_HEIRLOOM not available
+	foreach ( ItemFlavorBag price in offer.prices )
+	{
+		if ( price.flavors[0] == GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM] )
+		{
+			return price.quantities[0]
+		}
+	}
 	return 0
 }
 
@@ -2813,8 +2851,17 @@ bool function GRX_CanAfford( ItemFlavorBag price, int quantity, bool considerEsc
 
 		int currencyBalance = GRXCurrency_GetPlayerBalance( player, costFlav )
 
-		if ( costQuantity > currencyBalance )
-			return false
+		if ( costFlav.guid == premiumCurrencyFlav.guid && considerEscrow )
+		{
+			int escrowBalance = GRXCurrency_GetPlayerBalance( player, GRX_CURRENCIES[GRX_CURRENCY_ESCROW] )
+			if ( costQuantity > ( currencyBalance - escrowBalance ) )
+				return false
+		}
+		else
+		{
+			if ( costQuantity > currencyBalance )
+				return false
+		}
 	}
 
 	return true
@@ -3593,9 +3640,8 @@ void function ShGRX_OnClientConnectionCompleted( entity player )
 
 	// Cache the player's previously logged in timestamp before we update the persistence var in
 	// Lobby_OnClientConnectionCompleted.
-	// lastTimeLoggedIn and ServerCallback_UpdatePlayerLastLoggedInTimestamp not available
-	// int lastLoggedIn = 0
-	// Remote_CallFunction_UI( player,"ServerCallback_UpdatePlayerLastLoggedInTimestamp", lastLoggedIn )
+	Remote_CallFunction_UI( player,"ServerCallback_UpdatePlayerLastLoggedInTimestamp",
+							player.GetPersistentVarAsInt( "lastTimeLoggedIn" ) )
 	HandleGRXCodeUserInfoUpdated( player, GRX_GetUserInfo( player ) )
 }
 #endif
@@ -3926,7 +3972,40 @@ void function UpdatePlayerGRXScriptState( entity player, GRXUserInfo ornull code
 #if UI
 void function UpdatePlayerGRXContainers( entity player, GRXUserInfo codeUserInfo )
 {
-	// Container/gifting system not available
+	if ( !GetConVarBool( "mtx_useClientContainers" ) )
+	{
+		return
+	}
+
+	PlayerGRXScriptState scriptState = GetPlayerGRXScriptState( player )
+	scriptState.containers = codeUserInfo.containers
+
+	EadpPeopleList eadFriendlist = EADP_GetFriendsListWithOffline()
+	array< GRXContainerInfo > giftingContainers
+
+	foreach ( GRXContainerInfo container in codeUserInfo.containers )
+	{
+		if ( container.type == GRX_CONTAINERTYPE_GIFT )
+		{
+			container.senderName = GetFriendNameFromNucleusPId( container.senderNucleusPid, eadFriendlist.people )
+			giftingContainers.append( container )
+		}
+
+		if ( container.isNew )
+		{
+			array< ItemFlavor > newItems
+
+			foreach ( int itemIndex in container.itemIndices )
+			{
+				ItemFlavor itemFlav = GetItemFlavorByGRXIndex( itemIndex )
+				Newness_TEMP_MarkItemAsNewAndInformServer( itemFlav )
+
+				GRXDbg( player, "marking container item as new", "itemFlav", ItemFlavor_GetAssetName( itemFlav ) )
+			}
+		}
+	}
+
+	AddGiftCacheMessages( giftingContainers )
 }
 #endif // UI
 
@@ -4674,9 +4753,9 @@ bool function CodeCallback_GRXCheckStoreOfferPurchase( entity player, GRXStoreOf
 		return false
 	}
 
-	foreach ( int itemIdx in codeOffer.items )
+	foreach ( GRXStoreOfferItem item in codeOffer.items1 )
 	{
-		ItemFlavor flav  = GetItemFlavorByGRXIndex( itemIdx )
+		ItemFlavor flav  = GetItemFlavorByGRXIndex( item.itemIdx )
 		bool canPurchase = CanPlayerPurchaseGRXOffer( player, codeOffer, flav, purchaseQuantity )
 		#if GRX_DEBUG_PRINTS
 			if ( !fileLevel.GRX_DEBUG_PRINTS_disableTemporarily )
@@ -6634,8 +6713,15 @@ void function AssertCurrencyBundlePlaylistVarsAreValid( ItemFlavor bundle )
 
 void function RegisterStickerPacksWithRewards( ItemFlavor pack )
 {
-	// Pack RPaks don't have "hasStickers" setting
-	return
+	if ( !GetGlobalSettingsBool( ItemFlavor_GetAsset( pack ), "hasStickers" ) )
+	{
+		return
+	}
+
+	if ( GRXPack_GetStickerCompletionRewardSequence( pack ) != "" )
+	{
+		fileLevel.stickerPacksWithRewards.append( pack )
+	}
 }
 
 array<ItemFlavor> function GRX_GetStickerPacksWithRewards()
@@ -6695,8 +6781,8 @@ bool function Escrow_IsPlayerTrusted_Internal( entity player )
 #if UI
 bool function HasEscrowBalance()
 {
-	// GRX_CURRENCY_ESCROW not available
-	return false
+	int escrowBalance = GRXCurrency_GetPlayerBalance( GetLocalClientPlayer(), GRX_CURRENCIES[GRX_CURRENCY_ESCROW] )
+	return escrowBalance > 0
 }
 #endif
 

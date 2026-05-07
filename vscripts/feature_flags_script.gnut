@@ -49,6 +49,7 @@ global const table<string, bool> FEATURE_FLAGS_TBL = {
 	HAS_HOVER_VEHICLE 			= true,
 	HAS_CRAFTING 				= true,
 	HAS_VOID_RING 			= true,
+	HAS_21_0_RELEASE			= true,
 }
 
 

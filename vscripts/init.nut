@@ -465,6 +465,8 @@ global struct GRXStoreOffer
 {
 	array< int > items                  // engine populates as array<int>, not array<GRXStoreOfferItem>
 	array< array< int > > prices       // engine populates as array<array<int>>, not array<GRXStoreOfferPrice>
+	array< GRXStoreOfferItem > items1
+	array< GRXStoreOfferPrice > prices1
 	table< string, string > attrs
 	int offerType
 	string offerAlias

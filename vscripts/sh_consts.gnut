@@ -59,9 +59,6 @@ global const int WAT_INVALID = -1
 global const int WAT_BARREL = 0
 global const int WAT_LASER_SIGHT = 1
 global const int WAT_OPTIC = 2
-global const int GRX_CURRENCY_EXOTIC = 4
-global const int GRX_CURRENCY_ESCROW = 5
-global const int GRX_CURRENCY_EVENT = 6
 global const int GRX_INVALID_SEQUENCE_NUMBER = -1
 global const int MATCHRANKEDMODE_RANKED_ARENA = 2
 global const int WEAPON_INVENTORY_SLOT_PRIMARY_4 = 4
@@ -84,7 +81,6 @@ global const string NESSIE_SPIDER_SCRIPT_NAME = "nessie_spider"
 global const int SOLID_NONE = 0
 
 global const int CAMO_SKIN_COUNT = 800
-global const int ODL_SKINS = 0
 global const int ACM_TEAM = 0
 global const int ACM_PLAYER = 1
 global const int ACM_SPECTATORS = 2
@@ -101,15 +97,6 @@ global const int GRX_OFFERTYPE_DEFAULT = 0
 global const int GRX_OFFERTYPE_BUNDLE = 1
 global const int GRX_OFFERTYPE_PYS = 2
 global const int GRX_OFFERITEMTYPE_CORE = 0
-
-global enum eBoostModifierType
-{
-	BP_STARS,
-	MYTHIC_PROGRESS,
-	XP_MATCH,
-	XP_CHALLENGE,
-	_COUNT
-}
 
 global const int HIGHLIGHT_INVALID_ID = -1
 global const string SPIKE_STRIP_WEAPON_NAME = "mp_ability_spike_strip"

@@ -30,9 +30,9 @@ void function InitQuestPanel( var panel )
 	AddPanelEventHandler( panel, eUIEvent.PANEL_HIDE, PanelEventOnHide )
 	AddPanelEventHandler_FocusChanged( panel, QuestPanel_OnFocusChanged )
 
-	                                                  
-	                                                                    
-	                                                                      
+
+
+
 
 	Hud_AddEventHandler( Hud_GetChild( panel, "PurchaseButton" ), UIE_CLICK, Quest_PurchaseButton_OnActivate )
 
@@ -46,7 +46,7 @@ void function PanelEventOnShow( var panel )
 	UI_SetPresentationType( ePresentationType.QUEST_PANEL )
 	RunClientScript( "ClearBattlePassItem" )
 
-	                                          
+
 	ItemFlavor ornull quest = SeasonQuest_GetActiveSeasonQuest( GetUnixTimestamp() )
 	if ( quest == null )
 	{
@@ -62,7 +62,7 @@ void function PanelEventOnShow( var panel )
 		file.callbacksAdded = true
 	}
 
-	                                                                         
+
 	var rui = Hud_GetRui( Hud_GetChild( panel, "QuestInfoBox" ) )
 	RuiSetGameTime( rui, "startTime", ClientTime() )
 	RuiSetImage( rui, "cornerImage", $"" )
@@ -76,10 +76,10 @@ void function PanelEventOnShow( var panel )
 		MissionButtonOnClick( file.missionButtons[doIndex] )
 	}
 
-                          
-	                                                    
+
+
 	thread TryDisplayQuestFinalRewards()
-      
+
 }
 
 int s_autoOpenMissionButtonIndex = -1
@@ -92,12 +92,12 @@ void function SeasonQuestTab_SetAutoOpenMissionButton( int buttonIndex )
 bool function ShouldPurchaseButtonBeVisible( ItemFlavor quest )
 {
 	entity player         = GetLocalClientPlayer()
-                           
-                                                                      
 
-                         
-              
-      
+
+
+
+
+
 
 	int boxesToPurchase = SeasonQuest_GetTreasurePacksMaxPurchableCountForPlayer( GetLocalClientPlayer(), quest )
 	if ( boxesToPurchase <= 0 )
@@ -110,7 +110,7 @@ bool function ShouldPurchaseButtonBeVisible( ItemFlavor quest )
 
 void function SCB_UpdateQuestPanelData()
 {
-	                                                             
+
 	if ( IsValid( file.panel ) )
 		UpdatePanelData( file.panel )
 }
@@ -137,15 +137,15 @@ void function UpdatePanelData( var panel )
 	int totalMissions = SeasonQuest_GetMissionsMaxCount( quest )
 
 
-                          
-	                                                                                         
-	bool haveStartedQuest = true
-     
-                                                                    
-                                                                      
-      
 
-	                  
+
+	bool haveStartedQuest = true
+
+
+
+
+
+
 	{
 		var button     = Hud_GetChild( panel, "PurchaseButton" )
 		bool isVisible = ShouldPurchaseButtonBeVisible( quest )
@@ -154,7 +154,7 @@ void function UpdatePanelData( var panel )
 		RuiSetString( Hud_GetRui( button ), "buttonText", (isVisible ? "#QUEST_PURCHASE_TREASURE_BOX" : "#QUEST_PURCHASE_UNAVAILABLE") )
 	}
 
-	               
+
 	{
 		var rui = Hud_GetRui( Hud_GetChild( panel, "QuestInfoBox" ) )
 
@@ -173,14 +173,14 @@ void function UpdatePanelData( var panel )
 		RuiSetInt( rui, "missionsTotalMax", totalMissions )
 		RuiSetBool( rui, "haveStartedQuest", haveStartedQuest )
 
-		                 
+
 		file.rewardButtonDataMap.clear()
 		UpdateRewardTrackButtons( panel, true, treasureBoxesRemaining )
 		UpdateMissionProgress ( panel )
 		UpdateRewardsButtons(panel, treasureBoxesRemaining )
 	}
 
-	                
+
 	{
 		var button = Hud_GetChild( panel, "IntroButton" )
 		var rui    = Hud_GetRui( button )
@@ -216,7 +216,7 @@ void function PanelEventOnHide( var panel )
 
 void function ReadyUpWithQuestPlaylist( string playlistName )
 {
-	                   
+
 	TabData lobbyTabData = GetTabDataForPanel( GetMenu( "LobbyMenu" ) )
 	ActivateTab( lobbyTabData, Tab_GetTabIndexByBodyName( lobbyTabData, "PlayPanel" ) )
 
@@ -252,7 +252,7 @@ void function MissionButtonOnClick( var button )
 
 void function QuestPanel_OnFocusChanged( var panel, var oldFocus, var newFocus )
 {
-	if ( !IsValid( panel ) )                  
+	if ( !IsValid( panel ) )
 		return
 
 	if ( !newFocus || GetParentMenu( panel ) != GetActiveMenu() )
@@ -270,7 +270,7 @@ void function Quest_PurchaseButton_OnActivate( var button )
 	}
 	expect ItemFlavor( quest )
 
-	                                        
+
 	if ( SeasonQuest_GetTreasurePacksMaxPurchableCountForPlayer( GetLocalClientPlayer(), quest ) <= 0 )
 		return
 
@@ -306,7 +306,7 @@ void function Quest_PurchaseButton_OnActivate( var button )
 	}
 
 	rpdcfg.startingPurchaseLevelIdxCallback = int function() : ( quest ) {
-		return SeasonQuest_GetTreasurePacksCountForPlayer( GetLocalClientPlayer(), quest )                                                  
+		return SeasonQuest_GetTreasurePacksCountForPlayer( GetLocalClientPlayer(), quest )
 	}
 
 	rpdcfg.rewardsCallback = array<BattlePassReward> function( int purchaseQuantity, int startingPurchaseLevelIdx ) : ( quest ) {
@@ -316,7 +316,7 @@ void function Quest_PurchaseButton_OnActivate( var button )
 		{
 			int sequenceNumNext = (startingPurchaseLevelIdx + idx)
 
-			int boxIndex = sequenceNumNext                                            
+			int boxIndex = sequenceNumNext
 
 			ItemFlavorBag rewardBag = SeasonQuest_GetTreasurePackRewardsForIndex( quest, boxIndex )
 			foreach ( int itemsIndex, ItemFlavor item in rewardBag.flavors )
@@ -438,7 +438,7 @@ void function UpdateMissionProgress( var panel )
 	int missionsCount = SeasonQuest_GetMissionsMaxCount( quest )
 	bool firstNewMission = false
 
-	                                                   
+
 	foreach ( int missionIndex, var missionPageButton in file.missionButtons )
 	{
 		if ( missionIndex >= missionsCount )
@@ -455,7 +455,7 @@ void function UpdateMissionProgress( var panel )
 		RuiSetImage( btnRui, "buttonImage", $"" )
 		RuiSetString( btnRui, "buttonText", $"" )
 
-		                                                                  
+
 		int missionStatus = SeasonQuest_GetStatusForMissionIndex( player, quest, missionIndex )
 
 		RuiSetImage( btnRui, "buttonImage", SeasonQuest_GetQuestItemIconForMissionIndex( quest, missionIndex ) )
@@ -488,7 +488,7 @@ void function UpdateRewardsButtons(var panel, int treasureBoxesRemaining)
 	}
 	expect ItemFlavor( quest )
 
-	                              
+
 	var completionRewardButton1
 	var completionRewardButton2
 	var completionRewardButton3
@@ -585,10 +585,10 @@ void function UpdateRewardsButtons(var panel, int treasureBoxesRemaining)
 
 }
 
-                          
+
 void function UpdateLockedMissionsPanel( var panel, bool haveStartedQuest )
 {
-	                                                                                                    
+
 
 	bool isLocked = false
 	var lockedComicsPanel = Hud_GetChild( panel, "LockedComicsPanel" )
@@ -632,7 +632,7 @@ void function UpdateLockedMissionsPanel( var panel, bool haveStartedQuest )
 
 	Hud_SetVisible( lockedComicsPanel, isLocked && haveStartedQuest )
 }
-      
+
 
 void function UpdateRewardTrackButtons( var panel, bool startedQuest, int treasureBoxesRemaining )
 {
@@ -648,8 +648,8 @@ void function UpdateRewardTrackButtons( var panel, bool startedQuest, int treasu
 
 	int todaysIndex 		= (hasPickedUpTodays)? boxIndex - 1: boxIndex
 
-	                      
-	int rewardButtonMaxCount = file.rewardButtons.len()                          
+
+	int rewardButtonMaxCount = file.rewardButtons.len()
 	int maxBoxCount       = SeasonQuest_GetTreasurePacksMaxCount( quest )
 
 	int gridIndex = todaysIndex
@@ -667,7 +667,7 @@ void function UpdateRewardTrackButtons( var panel, bool startedQuest, int treasu
 		}
 		else
 		{
-			ItemFlavorBag rewardBag = SeasonQuest_GetTreasurePackRewardsForIndex( quest, gridIndex++ )                                                               
+			ItemFlavorBag rewardBag = SeasonQuest_GetTreasurePackRewardsForIndex( quest, gridIndex++ )
 			var button  = file.rewardButtons[index]
 			file.rewardButtonDataMap[ button ] <- []
 			foreach ( int rIdx, ItemFlavor reward in rewardBag.flavors )
@@ -676,7 +676,7 @@ void function UpdateRewardTrackButtons( var panel, bool startedQuest, int treasu
 					continue
 
 				if ( index >= rewardButtonMaxCount )
-					break                   
+					break
 
 				BattlePassReward bpReward = ItemFlavorBagToBattlePassRewardByIndex( rewardBag, rIdx )
 				file.rewardButtonDataMap[ button ].append( bpReward )
@@ -690,7 +690,7 @@ void function UpdateRewardTrackButtons( var panel, bool startedQuest, int treasu
 					continue
 
 				if ( index >= rewardButtonMaxCount )
-					break                   
+					break
 
 
 				bool isOwned = rewardIndex < todaysIndex || (hasPickedUpTodays && rewardIndex == todaysIndex)
@@ -707,14 +707,14 @@ void function UpdateRewardTrackButtons( var panel, bool startedQuest, int treasu
 
 				var btnRui = Hud_GetRui( button )
 
-				                                          
+
 				const MIN_ALPHA = 0.3
 				float baseAlpha = (isPeekButton) ?MIN_ALPHA: 1.0
 
 				RuiSetFloat3( btnRui, "colorMult", <baseAlpha, baseAlpha, baseAlpha> )
 				RuiSetBool( btnRui, "dualReward", false )
 
-				                                                                             
+
 				if ( rewardBag.flavors.len() == 2 )
 				{
 					ItemFlavor reward2 = rewardBag.flavors[1]
@@ -729,7 +729,7 @@ void function UpdateRewardTrackButtons( var panel, bool startedQuest, int treasu
 					int rarity = ItemFlavor_HasQuality( reward2 ) ? ItemFlavor_GetQuality( reward2 ) : 0
 					RuiSetInt( btnRui, "rarity2", rarity )
 
-					                     
+
 					string rewardType1 = ItemFlavor_GetRewardShortDescription( reward )
 					string rewardType2 = ItemFlavor_GetRewardShortDescription( reward2 )
 					string rewardName1 = Localize( ItemFlavor_GetLongName( reward ) )
@@ -740,7 +740,7 @@ void function UpdateRewardTrackButtons( var panel, bool startedQuest, int treasu
 					toolTip.tooltipFlags = eToolTipFlag.SOLID
 					Hud_SetToolTipData( button, toolTip )
 
-					break                                                                                              
+					break
 				}
 			}
 			rewardIndex ++

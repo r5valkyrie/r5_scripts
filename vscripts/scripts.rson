@@ -527,6 +527,7 @@ Scripts:
 
 	sh_ping.gnut
 	mp/sh_upgrade_selection_menu.nut
+	sh_boosts.gnut
 ]
 
 When: "SERVER || CLIENT"
@@ -617,6 +618,7 @@ Scripts:
 	perk_munitions_box.nut
 	sh_mastery.gnut
 	sh_mastery_stats.gnut
+	sh_events_refresh.gnut
 ]
 
 When: "SERVER"

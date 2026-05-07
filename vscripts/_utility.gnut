@@ -7015,20 +7015,6 @@ float function GetSoundDuration( string soundAlias )
 	return 1.0
 }
 
-void function PrecacheOnDemandLoadModel( int odlType, string pak, asset model, asset loadingModel )
-{
-}
-
-int function ODL_FindAsset( int odlType, asset model )
-{
-	return -1
-}
-
-bool function ODL_IsLoaded( int odlType, int handle )
-{
-	return true
-}
-
 bool function GenericPropCanUse( entity player )
 {
 	if ( player.Anim_IsActive() )
@@ -7071,10 +7057,6 @@ bool function GenericPropCanUse( entity player )
 		return false
 
 	return true
-}
-
-void function PrecacheSkinName( string skinName )
-{
 }
 
 void function GameRules_SetTeamName( int teamIndex, string name )
@@ -7146,29 +7128,6 @@ void function SetPlayerBotQueueGraduation( entity player, int state )
 bool function PrestigeBadgeIsAllowed()
 {
 	return false
-}
-
-void function Boost_ApplyBoostEnabledChallengeBoost( entity player )
-{
-}
-
-bool function Boost_IsBoostModifierTypeActive( entity player, int modifierType )
-{
-	return false
-}
-
-int function Boost_GetBonus( entity player, int baseValue, int modifierType, int category = 0 )
-{
-	return 0
-}
-
-int function Boost_GetChallengeCategory( ItemFlavor challengeFlav )
-{
-	return 0
-}
-
-void function Boost_Sv_AddToPostGameChallengeBonus( entity player, int guid, int bonus )
-{
 }
 
 void function AddBPStars( entity player, int stars )

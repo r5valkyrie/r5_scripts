@@ -197,8 +197,8 @@ void function ShCalEvent_LevelInit()
 				table<string, string> ornull tmp = event.metaData
 				expect table<string, string>(tmp)
 				fileLevel.eventRefMap[ eItemType.calevent_season ][ tmp[ "season_ref" ] ] <- event
-				//if ( CalEvent_GetStartUnixTime( event ) <= now && CalEvent_GetFinishUnixTime( event ) > now )
-					fileLevel.currentActiveSeason = RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/calevent/season21.rpak" )
+				if ( CalEvent_GetStartUnixTime( event ) <= now && CalEvent_GetFinishUnixTime( event ) > now )
+					fileLevel.currentActiveSeason = event
 
 			}
 
