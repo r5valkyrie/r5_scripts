@@ -394,7 +394,6 @@ void function Sh_Boosts_Init()
 
 void function OnBoostsLoaded( entity player, BoostTable previousState )
 {
-return
 	BoostTable activeBoosts = Boost_GetActiveBoosts( player )
 	LoadPersistentData( player )
 	ReconcileSeenBoosts( player )
@@ -1155,12 +1154,11 @@ BoostCachedModifier ornull function GetCachedModifierForPlayer( entity player, i
 
 int function GetMaxPlaylistBoosts()
 {
-	return 50//PersistenceGetArrayCount( PERSISTENCE_ACTIVE_BOOSTS )
+	return PersistenceGetArrayCount( PERSISTENCE_ACTIVE_BOOSTS )
 }
 
 void function LoadPersistentData( entity player )
 {
-	return
 	bool playlistVersionChanged = PersistentPlaylistVersionMismatch( player )
 
 
@@ -1175,7 +1173,6 @@ void function LoadPersistentData( entity player )
 
 void function LoadPersistentSeenBoosts( entity player, bool playlistVersionChanged )
 {
-	return
 	int persistentListSize = GetMaxPlaylistBoosts()
 
 	
@@ -1341,7 +1338,7 @@ bool function StoredPlaylistVersionMismatch( entity player )
 
 void function ReconcileSeenBoosts( entity player )
 {
-	return
+	
 	BoostTable playerBoosts         = Boost_GetActiveBoosts( player )
 	array< int > boostsToDelete     = []
 	BoostGuidTable playerSeenBoosts = GetPlayerSeenBoosts( player )
@@ -1660,7 +1657,7 @@ bool function BoostEventHasStarted( BoostEvent boostEvent )
 
 bool function PlayerBoostsNeedRefresh( entity player )
 {
-	return false
+	
 	if ( StoredPlaylistVersionMismatch( player ) )
 	{
 		return true
@@ -1996,7 +1993,6 @@ void function Debug_PrintPlaylist()
 
 void function Debug_PrintPlayerBoosts( entity player )
 {
-return
 	if ( DEBUG_PRINT_BOOSTS )
 	{
 		BoostTable boosts = Boost_GetActiveBoosts( player )
@@ -2124,7 +2120,6 @@ void function Debug_PrintBoosts( entity player )
 
 	void function DEV_Boost_PrintActiveBoosts( entity ornull player = null )
 	{
-	return
 		if ( player == null )
 		{
 
@@ -2504,7 +2499,7 @@ void function Boost_RefreshBoostEvents()
 
 void function Boost_RefreshPlayerBoosts( entity player )
 {
-	return
+
 		Assert( player == GetLocalClientPlayer() )
 
 

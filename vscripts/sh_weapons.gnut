@@ -68,7 +68,7 @@ void function ShWeapons_LevelInit()
 
 
 
-	PrecacheWeapon( $"weapon_cubemap" )
+		PrecacheWeapon( $"weapon_cubemap" )
 
 
 	AddCallback_RegisterRootItemFlavors( void function() {
@@ -103,8 +103,8 @@ void function OnItemFlavorRegistered_WeaponItemFlavor( ItemFlavor weaponFlavor )
 void function RegisterWeaponForUse( string weaponClassname )
 {
 
-	PrecacheWeapon( weaponClassname )
-	RegisterWeaponDamageSource( weaponClassname )
+		PrecacheWeapon( weaponClassname )
+		RegisterWeaponDamageSource( weaponClassname )
 
 }
 

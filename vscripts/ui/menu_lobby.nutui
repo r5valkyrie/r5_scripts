@@ -271,7 +271,7 @@ void function OnLobbyMenu_Open()
 		tabData.customFirstTabButton = false
 		tabData.activeTabIdx = GetLobbyDefaultTabIndex()
 		tabData.centerTabs = true
-		tabData.useGRXData = false
+		tabData.useGRXData = true
 		tabData.initialFirstTabButtonXPos = GetNearestAspectRatio( GetScreenSize().width, GetScreenSize().height ) <= 2.0? 80: 0
 #if PC_PROG_NX_UI
 			tabData.callToActionWidth = 180
@@ -397,7 +397,7 @@ void function OnLobbyMenu_Close()
 
 void function OnGRXStateChanged()
 {
-	bool ready = true//GRX_IsInventoryReady() && GRX_AreOffersReady()
+	bool ready = GRX_IsInventoryReady() && GRX_AreOffersReady()
 
 	array<var> panels = [
 		GetPanel( "EventPanel" ),

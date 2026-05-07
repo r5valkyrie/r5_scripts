@@ -1209,10 +1209,12 @@ void function UpdateFriendButtons()
 
 	Party party = GetParty()
 	string playerUID = GetPlayerUID()
+	bool foundSelfInParty = false
 	foreach ( PartyMember partyMember in party.members )
 	{
 		if ( partyMember.uid == playerUID )
 		{
+			foundSelfInParty = true
 			ToolTipData toolTipData
 			toolTipData.tooltipStyle = eTooltipStyle.BUTTON_PROMPT
 			toolTipData.actionHint1 = "#A_BUTTON_INSPECT"
@@ -1322,6 +1324,37 @@ void function UpdateFriendButtons()
 			file.fourthWasReady = partyMember.ready
 		}
 
+	}
+
+
+
+
+
+
+	if ( !foundSelfInParty )
+	{
+		string selfHardware = GetUnspoofedPlayerHardware()
+		PartyMember selfStub
+		selfStub.name              = GetPlayerName()
+		selfStub.uid               = playerUID
+		selfStub.hardware          = selfHardware
+		selfStub.ready             = false
+		selfStub.present           = true
+		selfStub.eaid              = ""
+		selfStub.boostCount        = 0
+		selfStub.unspoofedHardware = selfHardware
+		selfStub.unspoofedUID      = playerUID
+
+		ToolTipData stubToolTipData
+		stubToolTipData.tooltipStyle = eTooltipStyle.BUTTON_PROMPT
+		stubToolTipData.actionHint1  = "#A_BUTTON_INSPECT"
+		Hud_SetToolTipData( file.selfButton, stubToolTipData )
+
+		var friendRui = Hud_GetRui( file.selfButton )
+		RuiSetBool( friendRui, "canViewStats", true )
+		UpdateFriendButton( friendRui, selfStub, false )
+		if ( !Hud_IsVisible( file.selfButton ) )
+			Hud_SetVisible( file.selfButton, true )
 	}
 
 	ToolTipData toolTipData

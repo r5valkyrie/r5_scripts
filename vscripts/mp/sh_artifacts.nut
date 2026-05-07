@@ -17,7 +17,7 @@ global function Artifacts_IsItemFlavorArtifact
 global function Artifacts_PlayerHasArtifactActive
 global function Artifacts_StoreLoadoutDataOnPlayerEntityStruct
 global function Artifacts_OnWeaponOwnerChanged
-global function Artifact_PrecacheDeathboxModelAndFX
+global function Artifact_PrecacheDeathboxModelAndFX 
 
 
 
@@ -145,17 +145,17 @@ global enum eArtifactFXPackageType {
 	LOBBY,
 
 	COUNT,
-
-
+	
+	
 	BLADE_EMISSIVE,
 }
 
 
 global struct ArtifactFXPackage {
-	int fxPackageType = eArtifactFXPackageType.INVALID
+	int fxPackageType = eArtifactFXPackageType.INVALID 
 	asset fxAsset = $""
 	string attachName = ""
-	bool is1P = false
+	bool is1P = false 
 
 	int attachType = FX_PATTACH_POINT_FOLLOW
 }
@@ -198,19 +198,19 @@ struct ArtifactThemeModelData
 
 struct FileStruct_LifetimeLevel
 {
-	ItemFlavor& artifactWeapon
+	ItemFlavor& artifactWeapon 
 
 	array< ItemFlavor > allComponents
-	array< array< ItemFlavor > > componentListsByType
+	array< array< ItemFlavor > > componentListsByType 
 
 	array< array< LoadoutEntry > > loadoutConfigurationEntriesByIndexAndType
 	table< LoadoutEntry, int > loadoutConfigurationSlotsToIndices
 
 	LoadoutEntry& componentChangeSlot
 
-
-	table< int, array< ItemFlavor > > componentSets
-	table< int, ArtifactThemeModelData > setModels
+	
+	table< int, array< ItemFlavor > > componentSets 
+	table< int, ArtifactThemeModelData > setModels 
 
 
 
@@ -238,7 +238,7 @@ global const int ARTIFACT_CONFIGURATION_PTR_0_GUID = 1182724979
 const int ARTIFACT_DAGGER_ITEM_FLAVOR_GUID = 2113589622
 
 const float DEACTIVATED_EMISSIVE_FACTOR = 0.15
-const float ACTIVATION_EMOTE_ANIM_TIME_RESTART_LIMIT = 2.0
+const float ACTIVATION_EMOTE_ANIM_TIME_RESTART_LIMIT = 2.0 
 
 const string WORLD_MODEL = "worldModel"
 const string VIEW_MODEL = "viewModel"
@@ -257,24 +257,24 @@ const table< int, string > ARTIFACT_COMPONENTS_TO_LOADOUT_NAMES_MAP = {
 
 const string EMPTY = "_EMPTY"
 const string RAGOLD = "RAGOLD"
-global enum eArtifactSetIndex {
-
-
+global enum eArtifactSetIndex { 
+	
+	
 	RAGOLD = -2,
-	_EMPTY = -1,
+	_EMPTY = -1, 
 	CELES = 0,
 	DEATH = 1,
 	HISOC = 2,
 	MOB = 3,
 	STEAM = 4,
 	STECH = 5,
-	COUNT = 6
+	COUNT = 6 
 }
 
 const int LOADOUT_MELEE_SKIN_ITEM_TYPE_OVERRIDE = eItemType.artifact_component_blade
 const int LOADOUT_MELEE_SKIN_COMPONENT_TYPE_OVERRIDE = eArtifactComponentType.BLADE
 global const int ULTIMATE_SET_INDEX = eArtifactSetIndex.CELES
-const int BASE_SET_INDEX = eArtifactSetIndex.MOB
+const int BASE_SET_INDEX = eArtifactSetIndex.MOB 
 
 const string BLADE_KEY = "blade"
 const string THEME_KEY = "theme"
@@ -324,8 +324,8 @@ const string ONE_P = "1P"
 const string THREE_P = "3P"
 const int BODY_GROUP_INVALID = -1
 
-const int THEME_BASE = 1
-const int THEME_SHINY = 2
+const int THEME_BASE = 1 
+const int THEME_SHINY = 2 
 
 const string ARTIFACT_EMISSIVE_FX_SIGNAL = "ArtifactsEmissiveFxSignal"
 
@@ -344,17 +344,17 @@ const string COMPONENT_TYPE_SETTINGS_BLOCK_KEY = "artifactComponentType"
 const string CONFIGURATION_TYPE_SETTINGS_BLOCK_KEY = "configurationFramework"
 const string CONFIG_POINTER_INDEX_KEY = "artifactConfigIndex"
 const string IS_CONFIG_POINTER_KEY = "isArtifactConfigPointer"
-const string IS_EMPTY = "isEmpty"
-const string THEME_NAME = "themeName"
+const string IS_EMPTY = "isEmpty" 
+const string THEME_NAME = "themeName" 
 const string COMPONENT_SETS = "componentSets"
 const string SET_ASSET = "set"
-const string BLADE_BODY_GROUP_MOD_PREFIX = "blade"
-const string POWER_SOURCE_BODY_GROUP_MOD_PREFIX = "power"
+const string BLADE_BODY_GROUP_MOD_PREFIX = "blade" 
+const string POWER_SOURCE_BODY_GROUP_MOD_PREFIX = "power" 
 
 const string SCRIPT_ANIM_WINDOW_FX = "scriptAnimWindowFXControls"
 const string SCRIPT_ANIM_WINDOW_PARAMETER = "parameter"
 const string SCRIPT_ANIM_WINDOW_SET_FX = "setSpecificFX"
-const string SCRIPT_ANIM_WINDOW_UNIVERSAL = "UNIVERSAL"
+const string SCRIPT_ANIM_WINDOW_UNIVERSAL = "UNIVERSAL" 
 const string SCRIPT_ANIM_WINDOW_FX_PACKAGE_TYPE = "fxPackageType"
 const string SCRIPT_ANIM_WINDOW_ACTION = "action"
 const string SCRIPT_ANIM_WINDOW_STOP = "STOP"
@@ -417,7 +417,7 @@ const asset VFX_MOB_ATTACK_1P_CP = $"P_art_MOB_blade_attack_FP_CP"
 const asset VFX_MOB_ATTACK_3P = $"P_art_MOB_blade_attack_3P"
 const asset VFX_MOB_FLOURISH_1P = $"P_art_MOB_blade_flourish_FP"
 const asset VFX_MOB_FLOURISH_3P = $"P_art_MOB_blade_flourish_3P"
-const asset VFX_MOB_LOBBY_BLADE = $"P_art_MOB_blade_idle_Menu_CP"
+const asset VFX_MOB_LOBBY_BLADE = $"P_art_MOB_blade_idle_Menu_CP" 
 const asset VFX_MOB_INSPECT_1P = $"P_art_MOB_power_inspect_FP"
 const asset VFX_MOB_LOBBY_POWER_SOURCE = $"P_art_MOB_power_idle_Menu"
 
@@ -497,13 +497,13 @@ void function ShArtifacts_LevelInit()
 	FileStruct_LifetimeLevel newFileLevel
 	fileLevel = newFileLevel
 
-
+	
 	AddCallback_OnPreAllItemFlavorsRegistered( OnAllItemFlavorsRegistered_Artifact_Weapon )
 
+	
 
 
-
-
+	
 	Remote_RegisterServerFunction( "ClientCallback_ActivationEmote", "bool" )
 
 
@@ -520,7 +520,7 @@ void function RegisterArtifactComponentsForWeapon( ItemFlavor artifactWeapon )
 #if DEV
 		printf( "ArtifactsDebug: %s", FUNC_NAME() )
 #endif
-	return
+
 	Assert( !IsValidItemFlavorGUID( fileLevel.artifactWeapon.guid ) )
 	fileLevel.artifactWeapon = artifactWeapon
 
@@ -537,7 +537,7 @@ void function RegisterArtifactComponentsForWeapon( ItemFlavor artifactWeapon )
 
 		string setTheme = GetGlobalSettingsString( componentSet, THEME_NAME )
 
-
+		
 		if ( setTheme != EMPTY && setTheme != RAGOLD )
 		{
 			Assert( setTheme in eArtifactSetIndex )
@@ -557,7 +557,7 @@ void function RegisterArtifactComponentsForWeapon( ItemFlavor artifactWeapon )
 			PrecacheModel( worldModel )
 			PrecacheModel( viewModel )
 
-
+			
 			SetWeaponLegendaryModel( MeleeWeapon_GetOffhandWeaponClassname( artifactWeapon ), eArtifactSetIndex[ setTheme ], viewModel, worldModel )
 			SetWeaponLegendaryModel( MeleeWeapon_GetMainWeaponClassname( artifactWeapon ), eArtifactSetIndex[ setTheme ], viewModel, worldModel )
 		}
@@ -651,7 +651,6 @@ void function OnAllItemFlavorsRegistered_Artifact_Weapon()
 
 void function BuildLoadoutEntries_ArtifactWeapons()
 {
-	return
 #if DEV
 		printf("ArtifactsDebug: %s", FUNC_NAME() )
 #endif
@@ -663,7 +662,7 @@ void function BuildLoadoutEntries_ArtifactWeapons()
 		for ( int componentCounter = 0; componentCounter < eArtifactComponentType.COUNT; componentCounter++ )
 		{
 			if ( fileLevel.componentListsByType[ componentCounter ].len() == 0 )
-				continue
+				continue 
 
 #if DEV
 				printf( "ArtifactsDebug: %s - %s", FUNC_NAME(), ARTIFACT_COMPONENTS_TO_LOADOUT_NAMES_MAP[ componentCounter ] )
@@ -676,12 +675,12 @@ void function BuildLoadoutEntries_ArtifactWeapons()
 				componentEntry.DEV_name = format( LOADOUTS_DEV_ARTIFACT_CONFIGURATION_VERBOSE, artifactIdx )
 #endif
 
-			componentEntry.defaultItemFlavor   = fileLevel.componentSets[ eArtifactSetIndex._EMPTY ][ componentCounter ]
+			componentEntry.defaultItemFlavor   = fileLevel.componentSets[ eArtifactSetIndex._EMPTY ][ componentCounter ] 
 			componentEntry.validItemFlavorList = fileLevel.componentListsByType[ componentCounter ]
 
 			componentEntry.isSlotLocked              = bool function( EHI playerEHI ) { return !IsLobby() }
 			componentEntry.associatedCharacterOrNull = null
-			componentEntry.networkTo                 = eLoadoutNetworking.PLAYER_EXCLUSIVE
+			componentEntry.networkTo                 = eLoadoutNetworking.PLAYER_EXCLUSIVE 
 			componentEntry.stryderCharDataArrayIndex = ePlayerStryderCharDataArraySlots.INVALID
 
 			fileLevel.loadoutConfigurationEntriesByIndexAndType[ artifactIdx ].append( componentEntry )
@@ -689,10 +688,10 @@ void function BuildLoadoutEntries_ArtifactWeapons()
 		}
 	}
 
-
+	
 	ArtifactsCallback_AddArtifactDeathboxesToCharacterLoadouts( fileLevel.componentListsByType[ eArtifactComponentType.DEATHBOX ] )
 
-
+	
 
 
 
@@ -859,9 +858,9 @@ int function Artifacts_Loadouts_GetConfigIndex( ItemFlavor configPtr )
 bool function Artifacts_Loadouts_CheckAndFixMisconfigurations( EHI playerEHI, ItemFlavor character )
 {
 	bool isMisconfigured = false
-
-
-
+	
+	
+	
 	LoadoutEntry skinSlot = Loadout_MeleeSkin( character )
 	ItemFlavor meleeSkin  = LoadoutSlot_GetItemFlavor( playerEHI, skinSlot )
 
@@ -871,7 +870,7 @@ bool function Artifacts_Loadouts_CheckAndFixMisconfigurations( EHI playerEHI, It
 	for ( int i = 0; i < ARTIFACT_MAX_LOADOUTS; i++ )
 	{
 		if ( !IsLobby() && i != Artifacts_Loadouts_GetConfigIndex( meleeSkin ) )
-			continue
+			continue 
 
 		LoadoutEntry bladeSlot    = Artifacts_Loadouts_GetEntryForConfigIndexAndType( i, eArtifactComponentType.BLADE )
 		ItemFlavor bladeComponent = LoadoutSlot_GetItemFlavor_ForValidation( playerEHI, bladeSlot )
@@ -951,7 +950,7 @@ void function Artifacts_Loadouts_StorePreviewDataOnPlayerEntityStruct( int compo
 
 	if ( Artifacts_IsEmptyComponent( artifactConfig.blade ) )
 	{
-
+		
 		LoadoutEntry slot = Artifacts_Loadouts_GetEntryForConfigIndexAndType( 0, eArtifactComponentType.BLADE )
 		artifactConfig.blade = slot.validItemFlavorList[1]
 	}
@@ -964,7 +963,7 @@ void function Artifacts_Loadouts_StorePreviewDataOnPlayerEntityStruct( int compo
 void function Artifacts_StoreLoadoutDataOnPlayerEntityStruct( entity player, entity weapon, bool forceClear )
 {
 
-		if ( player == null )
+		if ( player == null ) 
 		{
 			player = GetLocalClientPlayer()
 		}
@@ -979,7 +978,7 @@ void function Artifacts_StoreLoadoutDataOnPlayerEntityStruct( entity player, ent
 				ArtifactConfig artifactConfig
 				artifactConfig.powerSource = GetItemFlavorByGUID( weapon.GetItemFlavorGUID() )
 
-
+				
 				EHI ownerEHI = ToEHI( player )
 				ItemFlavor character = LoadoutSlot_GetItemFlavor( ownerEHI, Loadout_Character() )
 				artifactConfig.blade = LoadoutSlot_GetItemFlavor( ownerEHI, Loadout_MeleeSkin( character ) )
@@ -989,7 +988,7 @@ void function Artifacts_StoreLoadoutDataOnPlayerEntityStruct( entity player, ent
 				{
 					Warning( "Artifacts: received invalid ItemType for blade GUID." )
 					artifactConfig.blade = fileLevel.componentSets[ BASE_SET_INDEX ][ eArtifactComponentType.BLADE ]
-				}
+				} 
 
 				player.p.artifactConfig = artifactConfig
 			}
@@ -1008,13 +1007,13 @@ void function Artifacts_StoreLoadoutDataOnPlayerEntityStruct( entity player, ent
 	if ( !forceClear && player.p.artifactConfig != null )
 	{
 		ArtifactConfig artifactConfig = expect ArtifactConfig( player.p.artifactConfig )
-		if ( artifactConfig.character == character )
+		if ( artifactConfig.character == character ) 
 			return
 	}
 
 	ItemFlavor meleeSkin = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_MeleeSkin( character ) )
 
-	Assert( IsLobby() || Artifacts_Loadouts_IsConfigPointerItemFlavor( meleeSkin ) )
+	Assert( IsLobby() || Artifacts_Loadouts_IsConfigPointerItemFlavor( meleeSkin ) ) 
 
 	int configIdx = 0
 	if ( Artifacts_Loadouts_IsConfigPointerItemFlavor( meleeSkin ) )
@@ -1061,7 +1060,7 @@ void function Artifacts_OnWeaponOwnerChanged( entity weapon, entity owner )
 			return
 
 
-
+	
 
 	EHI ownerEHI         = ToEHI( owner )
 	int tier             = Artifacts_Loadouts_GetEquippedTier( ownerEHI )
@@ -1111,7 +1110,7 @@ ArtifactViewmodelData ornull function ClientCodeCallback_GetArtifactViewmodelDat
 	}
 
 	if ( owner.IsBot() )
-		return null
+		return null 
 
 	int powerGUID = weapon.GetItemFlavorGUID()
 	Assert( IsValidItemFlavorGUID( powerGUID ) )
@@ -1133,7 +1132,7 @@ void function Artifacts_Loadouts_SetupWeaponComponents( entity weapon, entity ow
 {
 #if DEV
 		if ( weapon.IsWeaponX() )
-			DEV_UpdatePlayerArtifactConfiguration( weapon, owner )
+			DEV_UpdatePlayerArtifactConfiguration( weapon, owner ) 
 #endif
 
 	Assert( owner.IsBot() || owner.p.artifactConfig != null )
@@ -1180,7 +1179,7 @@ void function Artifacts_Loadouts_ApplyModelForSet( entity weapon, int setIndex )
 
 		Assert( weapon.IsClientOnly(), weapon + " isn't client only" )
 		Assert( weapon.GetCodeClassName() == "dynamicprop", weapon + " has classname \"" + weapon.GetCodeClassName() + "\" instead of \"dynamicprop\"" )
-		weapon.SetModel( fileLevel.setModels[ setIndex ].viewModel )
+		weapon.SetModel( fileLevel.setModels[ setIndex ].viewModel ) 
 
 }
 
@@ -1189,9 +1188,9 @@ bool function _SetComponentModByIdx( entity weapon, int idx, string bodyGroupNam
 	if ( weapon.HasMod( bodyGroupName + idx ) )
 		return false
 
-
+	
 	int count = ( bodyGroupName == POWER_SOURCE_BODY_GROUP_MOD_PREFIX ) ? eArtifactSetIndex.COUNT + 1 : eArtifactSetIndex.COUNT
-	for ( int i = 0; i < count; i++ )
+	for ( int i = 0; i < count; i++ ) 
 	{
 		if ( i == idx )
 			continue
@@ -1233,7 +1232,7 @@ void function Artifacts_Loadouts_PreviewBladeAndPowerSource( entity weapon, Item
 
 	_PreviewComponent( weapon, eArtifactSetIndex[ Artifacts_GetSetKey( blade ) ], BLADE_BODY_GROUP_MOD_PREFIX )
 
-
+	
 	int componentIdx = Artifacts_IsEmptyComponent( powerSource ) ? eArtifactSetIndex.COUNT : eArtifactSetIndex[ Artifacts_GetSetKey( powerSource ) ]
 	_PreviewComponent( weapon, componentIdx, POWER_SOURCE_BODY_GROUP_MOD_PREFIX )
 
@@ -1353,23 +1352,23 @@ LoadoutEntry function Artifacts_Loadouts_GetEntryForConfigIndexAndType( int conf
 
 int function Artifacts_Loadouts_GetEquippedTier( EHI playerEHI )
 {
-
-
-
-
+	
+	
+	
+	
 
 #if DEV
 		return GetConVarInt( "artifacts_tier_override" )
 #endif
 
-	return 0
+	return 0 
 }
 
 
 
 ItemFlavor function Artifacts_GetAssociatedWeaponForComponent( ItemFlavor component )
 {
-
+	
 	return GetItemFlavorByAsset( GetGlobalSettingsAsset( ItemFlavor_GetAsset( component ), "parentItemFlavor" ) )
 }
 
@@ -1445,7 +1444,7 @@ ArtifactFX1PAnd3P function Artifacts_FX_Get1PAnd3PFXArraysFromPowerSource( ItemF
 			Assert( false )
 	}
 
-
+	
 	foreach ( fxPackageStruct in fxPackages )
 	{
 		if ( fxPackageStruct.is1P )
@@ -1665,7 +1664,7 @@ void function Artifacts_FX_StartWeaponFX( entity weapon, int fxPackageType )
 	entity effectEntity		 = null
 	bool isWeaponEnt		 = weapon.IsWeaponX()
 
-
+	
 	if ( fxPackageType == eArtifactFXPackageType.BLADE_EMISSIVE )
 	{
 		if ( !IsValidItemFlavorGUID( weapon.GetItemFlavorGUID() ) )
@@ -1726,7 +1725,7 @@ void function Artifacts_FX_StartWeaponFX( entity weapon, int fxPackageType )
 
 void function Artifacts_FX_StopWeaponFX( entity weapon, int fxPackageType )
 {
-
+	
 	if ( fxPackageType == eArtifactFXPackageType.BLADE_EMISSIVE )
 	{
 		if ( !IsValidItemFlavorGUID( weapon.GetItemFlavorGUID() ) )
@@ -1923,7 +1922,7 @@ int function Artifacts_GetComponentChangeGUID( entity player )
 	Assert( player == GetLocalClientPlayer() )
 
 
-
+	
 	ItemFlavor changedComponent = LoadoutSlot_GetItemFlavor( ToEHI( player ), fileLevel.componentChangeSlot )
 	if ( Artifacts_IsEmptyComponent( changedComponent ) )
 		return 0

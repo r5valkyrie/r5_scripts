@@ -927,7 +927,7 @@ void function UIFullyConnectedInitialization()
 
 		ShEventAbilities_Init()
 
-	//Sh_Boosts_Init()
+	Sh_Boosts_Init()
 	ShMusic_LevelInit()
 	ShBattlePass_LevelInit()
 

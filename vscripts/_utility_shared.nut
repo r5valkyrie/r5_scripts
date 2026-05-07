@@ -461,93 +461,88 @@ void function InitWeaponScripts()
 
 void function InitAbilityScripts()
 {
-	
-	//MpAbilityNone_Init()								
-	MpAbilityShifter_Init() 							
-	MpAbilitySharedSilence_Init()						
-	ShShellShock_Init()									
-	ShGas_Init()										
-	Sh_PassiveVoices_Init()								
-	MpWeaponPhaseTunnel_Init()							
-	MpWeaponZipline_Init() 								
-	MpAbilityGibraltarShield_Init()						
-	MpWeaponBubbleBunker_Init()							
-	MpWeaponGrenadeDefensiveBombardment_Init()			
-	MpAbilityAreaSonarScan_Init()						
-	PassiveMedic_Init()									
-	MpWeaponDeployableMedic_Init()						
-	MpWeaponGrenadeBangalore_Init()						
-	MpWeaponGrenadeCreepingBombardment_Init()			
-	MpWeaponGrenadeCreepingBombardmentWeapon_Init()		
-	MpAbilityMirageUltimate_Init()						
-	MpWeaponDirtyBomb_Init()							
-	MpWeaponGrenadeGas_Init()							
-	//PassiveOctane_Init()								
-	Sh_JumpPad_Init()									
-	MpWeaponTeslaTrap_Init()							
-	MpWeaponTrophy_Init()								
-	MpAbilityCryptoDrone_Init()							
-	MpAbilityCryptoDroneEMP_Init()						
-	MpAbilitySilence_Init()								
-	MpAbilityRevenantDeathTotem_Init()					
-	ShLobaPassiveEyeForQuality_LevelInit()				
-	//LobaTacticalTranslocation_LevelInit()				
-	LobaUltimateBlackMarket_LevelInit()					
-	PassiveGunner_Init()								
-	MpWeaponCoverWall_Init()							
-	MpWeaponMountedTurretPlaceable_Init()				
-	MpWeaponMountedTurretWeapon_Init()					
-	MpWeaponMobileHMG_Init()							
-	MpSpaceElevatorAbility_Init()						
-	MpSpaceElevator_Init()								
-	MpWeaponBlackHole_Init()							
-	PassiveGrenadier_Init()								
-	MpWeaponClusterBombLauncher_Init()					
-	MpWeapon_Mortar_Ring_Init()							
-	MpWeapon_Mortar_Ring_Missile_Init()					
-	MpAbilityValkJets_Init()							
-	MpAbilityValkClusterMissile_Init()					
-	MpAbilityValkSkyward_Init()							
-	PassiveHeartbeatSensor_Init()						
-	MpAbilitySonicBlast_Init()							
-	MpWeaponEchoLocator_Init()							
-	//MpWeaponAshDataknife_Init()							
-	MpWeaponArcBolt_Init()								
-	MpWeaponPhaseBreach_Init()							
-	MpMaggieCommon_Init()								
-	ShPassiveWarlordsIre_Init()							
-	MpWeaponRiotDrill_Init()							
-	MpAbilityWreckingBall_Init()						
-	//MpWeaponReviveShield_Init()							
-	//MpAbilityShieldThrow_Init()							
-	//MpAbilityArmoredLeap_Init()							
-	//PassiveVantage_Init()								
-	//SniperRecon_Init()									
-	//Companion_Launch_Init()								
-	//VantageCompanion_Init()								
-	//MpWeaponVantageRecall_Init()						
-	//SniperUlt_Init()									
-	//ShResin_Init()										
-	//MpAbilityReinforce_Init()							
-	//PassiveReinforce_Init()								
-	//MpAbilitySpikeStrip_Init()							
-	//MpWeaponFerroWall_Init()							
-	//ShPassiveSling_Init()								
-	//MpWeaponDebuffZone_Init()							
-	//MpAbilityPortableAutoLoader_Init()					
-	//MpAbilityExectioner_Init()							
-	//MpAbilityShadowPounceFree_Init()					
-	//MpAbilityShadowForm_Init()							
-
-		//ShPassiveConduit_Init()							
-		//MpAbilityConduitArcFlash_Init()					
-		//Mp_ability_shield_mines_init()					
-		//Mp_ability_shield_mines_line_init()				
-
-
-
+	// Released
+	//MpAbilityNone_Init()								// No Ability
+	MpAbilityShifter_Init() 							// Phasing
+	MpAbilitySharedSilence_Init()						// Silence
+	ShShellShock_Init()									// Shellshock
+	ShGas_Init()										// Caustic Gas
+	Sh_PassiveVoices_Init()								// Wraith Passive
+	MpWeaponPhaseTunnel_Init()							// Wraith Ult
+	MpWeaponZipline_Init() 								// Pathfinder Ult
+	MpAbilityGibraltarShield_Init()						// Gibraltar Passive
+	MpWeaponBubbleBunker_Init()							// Gibraltar Tac
+	MpWeaponGrenadeDefensiveBombardment_Init()			// Gibraltar Ult
+	MpAbilityAreaSonarScan_Init()						// Bloodhound Tac
+	PassiveMedic_Init()									// Lifeline Passive
+	MpWeaponDeployableMedic_Init()						// Lifeline Tac
+	MpWeaponGrenadeBangalore_Init()						// Bangalore Tac
+	MpWeaponGrenadeCreepingBombardment_Init()			// Bangalore Ult
+	MpWeaponGrenadeCreepingBombardmentWeapon_Init()		// Bangalore Ult
+	MpAbilityMirageUltimate_Init()						// Mirage Ult
+	MpWeaponDirtyBomb_Init()							// Caustic Tac
+	MpWeaponGrenadeGas_Init()							// Caustic Ult
+	//PassiveOctane_Init()								// Octane Passive
+	Sh_JumpPad_Init()									// Octane Ult
+	MpWeaponTeslaTrap_Init()							// Wattson Tac
+	MpWeaponTrophy_Init()								// Wattson Ult
+	MpAbilityCryptoDrone_Init()							// Crypto Tac
+	MpAbilityCryptoDroneEMP_Init()						// Crypto Ult
+	MpAbilitySilence_Init()								// Old Revenant Tac
+	MpAbilityRevenantDeathTotem_Init()					// Old Revenant Ult
+	ShLobaPassiveEyeForQuality_LevelInit()				// Loba Passive
+	//LobaTacticalTranslocation_LevelInit()				// Loba Tac
+	LobaUltimateBlackMarket_LevelInit()					// Loba Ult
+	PassiveGunner_Init()								// Rampart Passive
+	MpWeaponCoverWall_Init()							// Rampart Tac
+	MpWeaponMountedTurretPlaceable_Init()				// Rampart Ult
+	MpWeaponMountedTurretWeapon_Init()					// Rampart Ult
+	MpWeaponMobileHMG_Init()							// Rampart Ult
+	MpSpaceElevatorAbility_Init()						// Horizon Tac
+	MpSpaceElevator_Init()								// Horizon Tac
+	MpWeaponBlackHole_Init()							// Horizon Ult
+	PassiveGrenadier_Init()								// Fuse Passive
+	MpWeaponClusterBombLauncher_Init()					// Fuse Tac
+	MpWeapon_Mortar_Ring_Init()							// Fuse Ult
+	MpWeapon_Mortar_Ring_Missile_Init()					// Fuse Ult
+	MpAbilityValkJets_Init()							// Valkyrie Passive
+	MpAbilityValkClusterMissile_Init()					// Valkyrie Tac
+	MpAbilityValkSkyward_Init()							// Valkyrie Ult
+	PassiveHeartbeatSensor_Init()						// Seer Passive
+	MpAbilitySonicBlast_Init()							// Seer Tac
+	MpWeaponEchoLocator_Init()							// Seer Ult
+	//MpWeaponAshDataknife_Init()							// Ash Passive
+	MpWeaponArcBolt_Init()								// Ash Tac
+	MpWeaponPhaseBreach_Init()							// Ash Ult
+	MpMaggieCommon_Init()								// Mad Maggie
+	ShPassiveWarlordsIre_Init()							// Mad Maggie Passive
+	MpWeaponRiotDrill_Init()							// Mad Maggie Tac
+	MpAbilityWreckingBall_Init()						// Mad Maggie Ult
+	//MpWeaponReviveShield_Init()							// Newcastle Passive
+	//MpAbilityShieldThrow_Init()							// Newcastle Tac
+	//MpAbilityArmoredLeap_Init()							// Newcastle Ult
+	//PassiveVantage_Init()								// Vantage Passive
+	//SniperRecon_Init()									// Vantage Passive
+	//Companion_Launch_Init()								// Vantage Tac
+	//VantageCompanion_Init()								// Vantage Tac
+	//MpWeaponVantageRecall_Init()						// Vantage Tac
+	//SniperUlt_Init()									// Vantage Ult
+	//ShResin_Init()										// Catalyst
+	//MpAbilityReinforce_Init()							// Catalyst Passive
+	//PassiveReinforce_Init()								// Catalyst Passive
+	//MpAbilitySpikeStrip_Init()							// Catalyst Tac
+	//MpWeaponFerroWall_Init()							// Catalyst Ult
+	//ShPassiveSling_Init()								// Ballistic Passive
+	//MpWeaponDebuffZone_Init()							// Ballistic Tac
+	//MpAbilityPortableAutoLoader_Init()					// Ballistic Ult
+	//MpAbilityExectioner_Init()							// Revenant Reborn Passive
+	//MpAbilityShadowPounceFree_Init()					// Revenant Reborn Tac
+	//MpAbilityShadowForm_Init()							// Revenant Reborn Ult
+		//ShPassiveConduit_Init()							// Conduit Passive
+		//MpAbilityConduitArcFlash_Init()					// Conduit Tac
+		//Mp_ability_shield_mines_init()					// Conduit Ult
+		//Mp_ability_shield_mines_line_init()				// Conduit Ult
 		ExtraShields_Init()
-
 		ShPassiveUpgradeCore_Init()
 		//ShPassiveTacCooldownExtra_Init()
 		//ShPassiveExplosiveSpeedBoost_Init()
@@ -563,234 +558,18 @@ void function InitAbilityScripts()
 		//UpgradedClusterMissile_Init()
 		//UpgradedJets_Init()
 
-		
+		//AutoWhiteRavens_Init()
 
 		UpgradeSelectionMenu_Init()
+	// Old Protos
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	// Active Protos
 		//AlterExtraScript_Init()
 		//MpAbilityPhaseDoor_Init()
 		//MpAbilityTransportPortal_Init()
-	//	MpAbilityTransportPortalDatapad_Init()
-
-
-
-
-
+		//MpAbilityTransportPortalDatapad_Init()
 		PassiveRemoteDeathboxInteract_Init()
-
-
 		PassiveVoidVision_Init()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }
 

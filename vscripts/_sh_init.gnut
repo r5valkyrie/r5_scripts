@@ -198,7 +198,7 @@ void function SV_CL_Init()
 	ShImage2D_LevelInit()
 	ShBattlepassPresaleVoucher_LevelInit()
 	ShBattlepassPurchasableXP_LevelInit()
-	//Sh_Boosts_Init()
+	Sh_Boosts_Init()
 
 		//ShEventAbilities_Init()
 		ShPassiveLootHighlight_Init()
@@ -502,7 +502,7 @@ void function SV_CL_Init()
 
 
 	//Armor_ShieldRegen_Init()
-	//HealthRegen_Init()
+	HealthRegen_Init()
 	SuicideSpectres_Init()
 
 
@@ -1051,7 +1051,7 @@ void function Shared_Lobby_Init()
 
 		//ShEventAbilities_Init()
 
-//	Sh_Boosts_Init()
+	Sh_Boosts_Init()
 	ShMusic_LevelInit()
 	ShBattlePass_LevelInit()
 

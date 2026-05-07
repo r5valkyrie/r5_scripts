@@ -404,6 +404,9 @@ bool function ShouldUsePlaylistOverridesBasedOnCalendarTime( string ref, string 
 void function SURVIVAL_Loot_All_InitShared()
 {
 
+		
+
+
 	var dt = GetDataTable( LOOT_DATATABLE )
 	file.lootIndexToString.clear()
 	file.lootData.clear()

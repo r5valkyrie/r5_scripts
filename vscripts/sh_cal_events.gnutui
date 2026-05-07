@@ -169,11 +169,8 @@ void function ShCalEvent_LevelInit()
 			if ( eventItemType == eItemType.calevent_season )
 			{
 				ItemFlavor ornull passOrNull = RegisterItemFlavorFromSettingsAsset( GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "battlepassFlav" ) )
-				if ( passOrNull != null )
-				{
-					fileLevel.seasonBattlePassMap[event] <- expect ItemFlavor(passOrNull)
-					fileLevel.battlePassSeasonMap[expect ItemFlavor(passOrNull)] <- event
-				}
+				fileLevel.seasonBattlePassMap[event] <- expect ItemFlavor(passOrNull)
+				fileLevel.battlePassSeasonMap[expect ItemFlavor(passOrNull)] <- event
 
 				asset seasonQuestAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "seasonquestFlav" )
 				if ( seasonQuestAsset != $"" )
@@ -201,8 +198,8 @@ void function ShCalEvent_LevelInit()
 				table<string, string> ornull tmp = event.metaData
 				expect table<string, string>(tmp)
 				fileLevel.eventRefMap[ eItemType.calevent_season ][ tmp[ "season_ref" ] ] <- event
-				//if ( CalEvent_GetStartUnixTime( event ) <= now && CalEvent_GetFinishUnixTime( event ) > now )
-					fileLevel.currentActiveSeason = RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/calevent/season21.rpak" )
+				if ( CalEvent_GetStartUnixTime( event ) <= now && CalEvent_GetFinishUnixTime( event ) > now )
+					fileLevel.currentActiveSeason = event
 
 			}
 
@@ -286,7 +283,23 @@ ItemFlavor function GetLatestSeason( int t )
 
 ItemFlavor ornull function GetActiveSeason( int t )
 {
-	return RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/calevent/season21.rpak" )
+	if ( fileLevel.currentActiveSeason != null )
+	{
+		ItemFlavor season = expect ItemFlavor( fileLevel.currentActiveSeason )
+		if ( t < CalEvent_GetFinishUnixTime( season ) && t > CalEvent_GetStartUnixTime( season ) )
+			return season
+	}
+
+	
+	foreach ( ItemFlavor season in fileLevel.allSeasons )
+	{
+		if ( CalEvent_IsActive( season, t ) )
+		{
+			fileLevel.currentActiveSeason = season
+			return season
+		}
+	}
+	return null
 }
 
 
