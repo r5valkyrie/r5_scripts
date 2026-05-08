@@ -1,9 +1,8 @@
-               
 
 #if UI
 global function IsTwoFactorAuthenticationEnabled
 global function IsPlayerLeveledForGifting
-global function IsPlayerWithinGifingLimit
+global function IsPlayerWithinGiftingLimit
 global function CanLocalPlayerGift
 global function RefreshTwoFactorAuthenticationStatus
 global function RefreshTwoFactorAuthenticationAndIsEnabled
@@ -15,21 +14,27 @@ global function GetGiftingMaxLimitPerResetPeriod
 global function ProcessGiftingInboxMessage
 global function GetGiftingInboxMessages
 global function Gifting_LevelInit
+global function Gifting_LevelShutdown
 global function MarkNewGiftedItemsAsNew
 global function GetFriendNameFromNucleusPId
+global function AddGiftCacheMessages
 global function RemoveGiftCacheMessage
-#if DEVELOPER
+global function ShowGiftErrorDialogue
+global function ShowGiftTimeOutDialogue
+#if DEV
 global function DEV_PrintGiftingInboxMessages
-#endif           
+#endif // #if DEV
 #endif
 
 #if SERVER
-                                                   
+global function CodeCallback_GRXSendGiftingPinEvent
+global function CodeCallback_GRXCanPlayerGift
 #endif
 
 #if UI
 struct{
-	array<GRXScriptInboxMessage> inboxMessages
+	array<GRXContainerInfo> inboxMessages
+	bool UIisFullyConnected = false
 } file
 #endif
 
@@ -43,56 +48,108 @@ bool function IsTwoFactorAuthenticationEnabled()
 
 	return isTfaEnabled
 }
-#endif          
+#endif // #if UI
 
-#if UI
-bool function IsPlayerLeveledForGifting()
+#if UI || SERVER
+bool function IsPlayerLeveledForGifting_Internal( entity player )
 {
-	entity localPlayer = GetLocalClientPlayer()
-	if ( !IsValid( localPlayer ) )
+	if ( !IsValid( player ) )
 		return false
 
-	int currentXP = GetPlayerAccountXPProgress( ToEHI( localPlayer ) )
+	int currentXP = GetPlayerAccountXPProgress( ToEHI( player ) )
 
 	int currentLevel = GetAccountLevelForXP( currentXP )
 
-	                                                     
+	// subtract 1 since current level is zero index based
 	if ( currentLevel < ( GetConVarInt( "mtx_giftingMinAccountLevel" ) - 1 ) )
 		return false
 
 	return true
 }
-#endif          
+#endif
 
 #if UI
-bool function IsPlayerWithinGifingLimit()
+bool function IsPlayerLeveledForGifting()
 {
-	entity player = GetLocalClientPlayer()
+	return IsPlayerLeveledForGifting_Internal( GetLocalClientPlayer() )
+}
+#endif // #if UI
+
+#if UI || SERVER
+bool function IsPlayerWithinGiftingLimit_Internal( entity player )
+{
 	int limitCounter = GRX_GetGiftingLimitCounter( player )
 	if  ( limitCounter <  GetGiftingMaxLimitPerResetPeriod() )
 		return true
 
 	return false
 }
-#endif          
+#endif
+
+#if UI
+bool function IsPlayerWithinGiftingLimit()
+{
+	return IsPlayerWithinGiftingLimit_Internal( GetLocalClientPlayer() )
+}
+#endif // #if UI
 
 #if UI
 void function RefreshTwoFactorAuthenticationStatus()
 {
 	RefreshEaTwoFactorAuthenticationStatus()
 }
-#endif          
+#endif // #if UI
 
 #if UI
-bool function CanLocalPlayerGift()
+// This function assumes 'offer' is a gift offer and contains gift prices.
+// Contains identical logic to GRXOffer_IsOfferOnlyGiftable. However, that logic might change as we add
+// gift-only offers with prices > 0. This function, on the other hand, will remain the same.
+bool function IsGiftFree( GRXScriptOffer offer )
 {
-	bool hasTfa = IsTwoFactorAuthenticationEnabled()
-	bool hasLevel = IsPlayerLeveledForGifting()
-	bool withinLimits = IsPlayerWithinGifingLimit()
-
-	return hasTfa && hasLevel && withinLimits
+	foreach ( ItemFlavorBag price in offer.prices )
+	{
+		ItemFlavor flavor = price.flavors[0]
+		if ( flavor == GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] )
+		{
+			return price.quantities[0] == 0
+		}
+	}
+	return false
 }
-#endif          
+
+bool function CanLocalPlayerGift( GRXScriptOffer ornull giftOffer = null )
+{
+	bool isGiftFree
+	if ( giftOffer == null )
+	{
+		isGiftFree = false
+	}
+	else
+	{
+		isGiftFree = IsGiftFree( expect GRXScriptOffer( giftOffer ) )
+	}
+	return PlayerAccountEligibleToGift( isGiftFree, GetLocalClientPlayer() )
+}
+#endif // #if UI
+
+#if UI || SERVER
+bool function PlayerAccountEligibleToGift( bool isFreeOffer, entity player )
+{
+	#if UI
+		// Two-factor authentication is currently client-side only, so server does not check it
+		if ( !IsTwoFactorAuthenticationEnabled() )
+		{
+			return false
+		}
+	#endif
+	// Ignore level requirements if the gift offer is free.
+	if ( !isFreeOffer && !IsPlayerLeveledForGifting_Internal( player ) )
+	{
+		return false
+	}
+	return IsPlayerWithinGiftingLimit_Internal( player )
+}
+#endif // #if UI || SERVER
 
 #if UI
 bool function RefreshTwoFactorAuthenticationAndIsEnabled()
@@ -102,32 +159,50 @@ bool function RefreshTwoFactorAuthenticationAndIsEnabled()
 	bool isTfaEnabled = EADP_IsTfaEnabled()
 	return isTfaEnabled
 }
-#endif          
+#endif // #if UI
 
 #if UI
 int function Gifting_GetRemainingDailyGifts()
 {
-	entity player = GetLocalClientPlayer()
-	return GetGiftingMaxLimitPerResetPeriod() - GRX_GetGiftingLimitCounter( player )
+	return GetGiftingMaxLimitPerResetPeriod() - GRX_GetGiftingLimitCounter( GetLocalClientPlayer() )
 }
-#endif          
+#endif // #if UI
 
 #if UI
-void function GetGiftOfferEligibility( string offerAlias, int hardwareId, string nucleus_pid )
+void function WaitXprogressMigrateStatus_GetOffer( string offerAlias, int hardwareId, string nucleus_pid, string nucleus_id )
+{
+	while ( CrossProgression_IsRequestingUserMigrateStatus() )
+	{
+		WaitFrame()
+	}
+
+	GRX_GetOffer( offerAlias, hardwareId, nucleus_pid, nucleus_id )
+}
+#endif // #if UI
+
+#if UI
+void function GetGiftOfferEligibility( string offerAlias, int hardwareId, string nucleus_pid, string nucleus_id )
 {
 	if ( !IsGiftingEnabled() )
 		return
 
-	GRX_GetOffer( offerAlias, hardwareId, nucleus_pid )
+	// remove this flow when all users have been migrated, https://jiratf.rspn.ad.ea.com/browse/R5DEV-490579
+	if ( CrossProgression_QueryUserMigrateStatusIfNeeded( nucleus_id ) )
+	{
+		thread WaitXprogressMigrateStatus_GetOffer( offerAlias, hardwareId, nucleus_pid, nucleus_id )
+		return
+	}
+
+	GRX_GetOffer( offerAlias, hardwareId, nucleus_pid, nucleus_id )
 }
-#endif          
+#endif // #if UI
 
 #if UI
 bool function IsGiftingEnabled()
 {
 	return GetConVarBool( "mtx_giftingEnabled" )
 }
-#endif          
+#endif // #if UI
 
 #if UI
 bool function HasFriendshipTenureBeenLongEnough( int friendshipCreationTime )
@@ -135,23 +210,27 @@ bool function HasFriendshipTenureBeenLongEnough( int friendshipCreationTime )
 	if ( !IsConnected() )
 		return false
 
+	int minFriendshipInDays = GetConVarInt( "mtx_giftingMinFriendshipInDays" )
+	#if DEV
+		if (minFriendshipInDays == 0)
+			return true
+	#endif
 	int currentTime = GetUnixTimestamp()
 	int friendshipLengthInSeconds = currentTime - friendshipCreationTime
 
-	                                         
+	// tenure is measured in days for gifting
 	int friendshipLengthInDays = friendshipLengthInSeconds / (  60 * 60 * 24 )
-	int minFriendshipInDays = GetConVarInt( "mtx_giftingMinFriendshipInDays" )
 
 	return friendshipLengthInDays >= minFriendshipInDays
 }
-#endif          
+#endif // #if UI
 
-#if UI
+#if UI || SERVER
 int function GetGiftingMaxLimitPerResetPeriod()
 {
 	return GetConVarInt( "mtx_giftingLimit" )
 }
-#endif          
+#endif // #if UI || SERVER
 
 #if UI
 void function ProcessGiftingInboxMessage( int batchCounter, int totalNumBatches, GRXScriptInboxMessage inboxMessage )
@@ -160,12 +239,21 @@ void function ProcessGiftingInboxMessage( int batchCounter, int totalNumBatches,
 	{
 		file.inboxMessages.clear()
 
-		                                           
+		// if there are no gifts, just early return
 		if ( inboxMessage.itemIndex.len() == 0 )
 			return
 	}
 
-	file.inboxMessages.append( inboxMessage )
+	// TODO (R5DEV-577074): Remove this flow
+	GRXContainerInfo containerInfo
+	containerInfo.type = GRX_CONTAINERTYPE_GIFT
+	containerInfo.isNew = inboxMessage.isNew
+	containerInfo.senderNucleusPid = inboxMessage.senderNucleusPid
+	containerInfo.timestamp = inboxMessage.timestamp
+	containerInfo.itemIndices = inboxMessage.itemIndex
+	containerInfo.itemCounts = inboxMessage.itemCount
+
+	file.inboxMessages.append( containerInfo )
 
 	if ( batchCounter == totalNumBatches )
 	{
@@ -174,12 +262,22 @@ void function ProcessGiftingInboxMessage( int batchCounter, int totalNumBatches,
 		file.inboxMessages.sort( SortInboxMessagesByOldest )
 		for ( int i = 0; i < file.inboxMessages.len(); i++ )
 		{
-			file.inboxMessages[i].gifterName = GetFriendNameFromNucleusPId( file.inboxMessages[i].senderNucleusPid, eadFriendlist.people )
+			file.inboxMessages[i].senderName = GetFriendNameFromNucleusPId( file.inboxMessages[i].senderNucleusPid, eadFriendlist.people )
+		}
+
+		// this bit of logic was added to handle gifted items received while a player
+		// is in the lobby; we're just gating this behind a ConVar until we're done testing notifications
+		if ( GetConVarBool( "mtx_gifting_notifications_enabled" ) )
+		{
+			if ( file.UIisFullyConnected )
+			{
+				MarkNewGiftedItemsAsNew()
+			}
 		}
 	}
 }
 
-int function SortInboxMessagesByOldest( GRXScriptInboxMessage a, GRXScriptInboxMessage b )
+int function SortInboxMessagesByOldest( GRXContainerInfo a, GRXContainerInfo b )
 {
 	if ( a.timestamp < b.timestamp )
 		return 1
@@ -189,14 +287,26 @@ int function SortInboxMessagesByOldest( GRXScriptInboxMessage a, GRXScriptInboxM
 
 	return 0
 }
-#endif          
+#endif // #if UI
+
+#if UI
+void function AddGiftCacheMessages( array<GRXContainerInfo> messages )
+{
+	file.inboxMessages.clear()
+
+	foreach ( GRXContainerInfo message in messages )
+	{
+		file.inboxMessages.append( message )
+	}
+}
+#endif // UI
 
 #if UI
 void function RemoveGiftCacheMessage( int timestamp, string nID )
 {
 	for ( int i = 0; i < file.inboxMessages.len(); i++ )
 	{
-		GRXScriptInboxMessage message = file.inboxMessages[i]
+		GRXContainerInfo message = file.inboxMessages[i]
 
 		if ( message.senderNucleusPid == nID && message.timestamp == timestamp )
 		{
@@ -209,8 +319,16 @@ void function RemoveGiftCacheMessage( int timestamp, string nID )
 
 
 #if UI
-array<GRXScriptInboxMessage> function GetGiftingInboxMessages()
+array<GRXContainerInfo> function GetGiftingInboxMessages()
 {
+	//Remove the BP pack from the inbox messages.
+	foreach ( GRXContainerInfo message in file.inboxMessages )
+	for ( int i = 0; i < message.itemIndices.len(); i++ )
+	{
+		ItemFlavor flav = GetItemFlavorByGRXIndex( message.itemIndices[i] )
+		if ( ItemFlavor_IsBattlepass( flav ) )
+			message.itemIndices.remove( i )
+	}
 	return file.inboxMessages
 }
 #endif
@@ -218,9 +336,17 @@ array<GRXScriptInboxMessage> function GetGiftingInboxMessages()
 #if UI
 void function Gifting_LevelInit()
 {
+	file.UIisFullyConnected = true
 	MarkNewGiftedItemsAsNew()
 }
-#endif          
+#endif // #if UI
+
+#if UI
+void function Gifting_LevelShutdown()
+{
+	file.UIisFullyConnected = false
+}
+#endif // #if UI
 
 #if UI
 void function MarkNewGiftedItemsAsNew()
@@ -228,11 +354,11 @@ void function MarkNewGiftedItemsAsNew()
 	if ( !IsLobby() )
 		return
 
-	foreach ( GRXScriptInboxMessage inboxMessage in file.inboxMessages )
+	foreach ( GRXContainerInfo inboxMessage in file.inboxMessages )
 	{
 		if ( inboxMessage.isNew )
 		{
-			foreach ( int itemIndex in inboxMessage.itemIndex )
+			foreach ( int itemIndex in inboxMessage.itemIndices )
 			{
 				ItemFlavor itemFlav = GetItemFlavorByGRXIndex( itemIndex )
 				Newness_TEMP_MarkItemAsNewAndInformServer( itemFlav )
@@ -240,9 +366,9 @@ void function MarkNewGiftedItemsAsNew()
 		}
 	}
 }
-#endif          
+#endif // #if UI
 
-#if DEVELOPER && UI
+#if DEV && UI
 void function DEV_PrintGiftingInboxMessages()
 {
 	printt("Printing gifting inbox messages ---------------")
@@ -253,17 +379,17 @@ void function DEV_PrintGiftingInboxMessages()
 		printt( "\ttimestamp = " + file.inboxMessages[idx].timestamp )
 		printt( "\tsenderNucleusPid = " + file.inboxMessages[idx].senderNucleusPid )
 
-		if ( file.inboxMessages[idx].itemIndex.len() == file.inboxMessages[idx].itemCount.len() )
+		if ( file.inboxMessages[idx].itemIndices.len() == file.inboxMessages[idx].itemCounts.len() )
 		{
-			for ( int itemIdx = 0; itemIdx < file.inboxMessages[idx].itemIndex.len(); ++itemIdx )
+			for ( int itemIdx = 0; itemIdx < file.inboxMessages[idx].itemIndices.len(); ++itemIdx )
 			{
-				printt( "\t\titemIndex = " + file.inboxMessages[idx].itemIndex[itemIdx] + ", itemCount = " + file.inboxMessages[idx].itemCount[itemIdx] )
+				printt( "\t\titemIndex = " + file.inboxMessages[idx].itemIndices[itemIdx] + ", itemCount = " + file.inboxMessages[idx].itemCounts[itemIdx] )
 			}
 		}
 	}
 	printt("End of gifts ---------------")
 }
-#endif                 
+#endif // #if DEV && UI
 #if UI
 string function GetFriendNameFromNucleusPId( string id, array<EadpPeopleData> friends )
 {
@@ -332,19 +458,65 @@ string function GetFriendNameFromNucleusPId( string id, array<EadpPeopleData> fr
 
 	return name
 }
-#endif          
+#endif // #if UI
 
 #if SERVER
-                                                                                                                                                               
- 
-	                                                                                          
- 
-#endif              
+void function CodeCallback_GRXSendGiftingPinEvent( entity player, string offerAlias, string gifterPlat, string gifterPid, string gifteePlat, string gifteePid )
+{
+	//PIN_SendGiftingRequest( player, offerAlias, gifterPlat, gifterPid, gifteePlat, gifteePid )
+}
+#endif // #if SERVER
 
-                     
+#if SERVER
+bool function CodeCallback_GRXCanPlayerGift( entity player, bool isGiftFree )
+{
+	if ( !GRX_IsPlayerGRXScriptStateRegistered( player ) )
+	{
+		return false
+	}
+	return PlayerAccountEligibleToGift( isGiftFree, player )
+}
+#endif // SERVER
+
+#if UI
+void function ShowGiftTimeOutDialogue( string optionalMessage = "" )
+{
+	EmitUISound( "menu_deny" )
+
+	CloseAllDialogs()
+
+	ConfirmDialogData data
+	data.headerText = "#GIFT_WARNING_TIMEOUT_HEADER"
+	data.messageText = Localize( "#GIFT_WARNING_MESSAGE_TIMEOUT" )
+	if ( optionalMessage != "" )
+		data.messageText += "\n\n" + Localize( optionalMessage )
+	data.contextImage = $"ui/menu/common/dialog_notice"
+
+	OpenOKDialogFromData( data )
+}
+#endif
+
+#if UI
+void function ShowGiftErrorDialogue( string optionalMessage = "" )
+{
+	EmitUISound( "menu_deny" )
+
+	CloseAllDialogs()
+
+	ConfirmDialogData data
+	data.headerText = "#GIFT_ERROR_HEADER"
+	data.messageText = Localize( "#GIFT_ERROR_GENERIC" )
+	if ( optionalMessage != "" )
+		data.messageText += "\n\n" + Localize( optionalMessage )
+	data.contextImage = $"ui/menu/common/dialog_error"
+
+	OpenOKDialogFromData( data )
+}
+#endif
 
 
 
 
 
 
+ 
