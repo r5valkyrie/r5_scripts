@@ -3095,7 +3095,15 @@ void function UpdateDailyChallenges( entity player, bool forceNew = false )
 
 ItemFlavor function OverrideChallengeIfNecessary( ItemFlavor challenge, entity player )
 {
-	// Kepler A/B testing not available
+	if ( Kepler_IsPlayerInVariant( player, eKeplerScenario.BATTLEPASS_DAILIES_CHALLENGE_21_0, "set-a" ) )
+	{
+		if ( Challenge_GetDifficulty( challenge ) == eChallegeDifficulty.EASY )
+		{
+			return GetItemFlavorByAsset( $"settings/itemflav/challenge/s21exp/play_game_x_legends_any_mode_set_b.rpak"  )
+			//c:\depot\r5dev\content\r2\assets\settings\itemflav\challenge\s21exp\play_game_x_legends_any_mode_set_b.bk_set
+			//GetItemFlavorByAsset( $"settings/itemflav/challenge/stars_daily_games_played_ash_anymode.rpak" )
+		} 
+	}
 	return challenge
 }
 

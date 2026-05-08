@@ -1,0 +1,450 @@
+// A framework for running client and server experiments and A/B testing
+// All script and data references to this framework are codenamed 'Kepler'
+
+global function Sh_Kepler_Init
+global function Kepler_IsPlayerInVariant
+global function Kepler_IsPlayerEligibleForItemFlavor
+global function Kepler_GetAssetForScenario
+global function Kepler_GetAssetForScenarioKey
+global function Kepler_GetScenarioFromKey
+
+#if UI
+global function Kepler_LevelShutdown
+global function UICodeCallback_GetKnownKeplerScenarios
+global function UICodeCallback_IsKeplerInitialized
+global function UICodeCallback_GetScenarioGUID
+global function UICodeCallback_GetScenarioVariantId
+#endif // UI
+
+#if SERVER
+global typedef OnKeplerReadyCallback void functionref( entity )
+
+global function AddCallbackOrCallNow_OnKeplerReady
+global function CodeCallback_KeplerReady
+global function CodeCallback_GetScenarioGUID
+global function CodeCallback_GetScenarioVariantId
+#endif // SERVER
+
+// To add a new scenario, create an enum entry and then populate it in the table below
+global enum eKeplerScenario
+{
+	APEX_TAB_ORDERING,
+	WELCOME_CHALLENGE_20_1,
+	KEYART_WEAPONS,
+	KEYART_LEGEND_LAUNCH,
+	BATTLEPASS_DAILIES_CHALLENGE_21_0,
+	FTUE_LANDING_FLOW_22_0,
+	KEYART_PACKS_V_SKINS,
+
+	COUNT
+}
+
+table<int, string> keplerActiveScenarios = {
+	[eKeplerScenario.APEX_TAB_ORDERING] = "apex-tab-ordering",
+	[eKeplerScenario.WELCOME_CHALLENGE_20_1] = "20-1-welcome-challenge-01",
+	[eKeplerScenario.KEYART_WEAPONS] = "keyart_weapons",
+	[eKeplerScenario.KEYART_LEGEND_LAUNCH] = "keyart_legendlaunch",
+	[eKeplerScenario.BATTLEPASS_DAILIES_CHALLENGE_21_0] = "21-0-battle-pass-dailies",
+	[eKeplerScenario.FTUE_LANDING_FLOW_22_0] = "22-0-ftue-landing-flow",
+	[eKeplerScenario.KEYART_PACKS_V_SKINS] = "keyart_packsvskins",
+}
+
+struct KeplerVariantData
+{
+	string variantName
+	array<asset> controlledAssets
+}
+
+struct KeplerScenarioData
+{
+	ItemFlavor& flavor
+	string scenarioKey
+	array<KeplerVariantData> variants
+}
+
+struct FileStruct_Kepler
+{
+	table<string, KeplerScenarioData> loadedScenarios
+	bool isInitialized = false
+
+#if SERVER
+	table<entity, array<OnKeplerReadyCallback> > onScenariosReadyCallbacks
+#endif // SERVER
+}
+
+FileStruct_Kepler& file
+
+void function AddControlledAssetToVariant( var variant, KeplerVariantData variantData, string field )
+{
+	asset controlledAsset = GetSettingsBlockAsset( variant, field )
+	if ( controlledAsset != $"" )
+	{
+		variantData.controlledAssets.append( controlledAsset )
+	}
+}
+
+// Loads data from a Bakery asset and caches it in the file struct
+void function InitializeScenarioData( asset scenarioAsset, ItemFlavor flavor )
+{
+	var settingsBlock = GetSettingsBlockForAsset( scenarioAsset )
+
+	KeplerScenarioData scenario
+	scenario.scenarioKey = GetSettingsBlockString( settingsBlock, "scenarioKey" )
+	scenario.flavor = flavor
+
+	var variantArray = GetSettingsBlockArray( settingsBlock, "variants" )
+	foreach ( var variant in IterateSettingsArray( variantArray ) )
+	{
+		KeplerVariantData variantData
+		variantData.variantName = GetSettingsBlockString( variant, "variantName" )
+
+		// Add newly-supported asset types here
+		AddControlledAssetToVariant( variant, variantData, "controlledCollection" )
+		AddControlledAssetToVariant( variant, variantData, "controlledImage" )
+
+		scenario.variants.append( variantData )
+	}
+
+	var challengeArray = GetSettingsBlockArray( settingsBlock, "scenarioChallenges" )
+	foreach ( var challengeBlock in IterateSettingsArray( challengeArray ) )
+	{
+		asset challenge = GetSettingsBlockAsset( challengeBlock, "scenarioChallenge" )
+		
+		ItemFlavor newChallenge = expect ItemFlavor(RegisterItemFlavorFromSettingsAsset( challenge ))
+
+		Assert( ItemFlavor_GetType( newChallenge ) == eItemType.challenge )
+	}
+
+	file.loadedScenarios[scenario.scenarioKey] <- scenario
+}
+
+void function Sh_Kepler_Init()
+{
+	if ( !GetConVarBool( "kepler_isEnabled" ) )
+	{
+		return
+	}
+
+	AddCallback_RegisterRootItemFlavors( void function()
+	{
+		foreach ( asset scenario in GetBaseItemFlavorsFromArray( "keplerScenarios" ) )
+		{
+			ItemFlavor ornull flavor = RegisterItemFlavorFromSettingsAsset( scenario )
+			InitializeScenarioData( scenario, expect ItemFlavor( flavor ) )
+		}
+
+		file.isInitialized = true
+		printf( "Kepler initialized with %d scenarios", file.loadedScenarios.len() )
+	} )
+
+#if SERVER
+	AddCallback_OnClientDisconnected( Kepler_OnPlayerDisconnected )
+#endif // SERVER
+}
+
+bool function Kepler_IsPlayerEligibleForItemFlavor( entity player, ItemFlavor itemFlavor )
+{
+	AssertLocalOrServerValidPlayer( player )
+
+	bool isReferencedByAnyScenario = false
+
+	foreach ( int scenario, string scenarioKey in keplerActiveScenarios )
+	{
+		if ( !( scenarioKey in file.loadedScenarios ) )
+		{
+			Warning( "Active scenario %s does not have a loaded Bakery asset", scenarioKey )
+			continue
+		}
+
+		KeplerScenarioData scenarioData = file.loadedScenarios[scenarioKey]
+		foreach (KeplerVariantData variant in scenarioData.variants )
+		{
+			foreach ( asset controlledAsset in variant.controlledAssets )
+			{
+				if ( GetUniqueIdForSettingsAsset( controlledAsset ) == itemFlavor.guid )
+				{
+					isReferencedByAnyScenario = true
+					if ( Kepler_IsPlayerInVariant( player, scenario, variant.variantName ) )
+					{
+						return true
+					}
+				}
+			}
+		}
+	}
+
+	return !isReferencedByAnyScenario
+}
+
+int function Kepler_GetScenarioFromKey( string scenarioKey )
+{
+	foreach( int scenario, string key in keplerActiveScenarios )
+	{
+		if ( scenarioKey == key )
+			return scenario
+	}
+
+#if DEV
+	Assert( false, "The scenario key " + scenarioKey + " is invalid" )
+#endif // DEV
+	return -1
+}
+
+asset ornull function Kepler_GetAssetForScenarioKey( entity player, string scenarioKey )
+{
+	if ( !( scenarioKey in file.loadedScenarios ) )
+	{
+		Warning( "Active scenario %s does not have a loaded Bakery asset", scenarioKey )
+		return null
+	}
+
+	KeplerScenarioData scenarioData = file.loadedScenarios[scenarioKey]
+
+	foreach ( KeplerVariantData variant in scenarioData.variants )
+	{
+		if ( Kepler_IsPlayerInVariant( player, Kepler_GetScenarioFromKey( scenarioKey ), variant.variantName ) )
+		{
+			if ( variant.controlledAssets.len() > 0 )
+			{
+				#if DEV
+					if ( variant.controlledAssets.len() > 1 )
+					{
+						Warning( "Scenario \"%s\" has multiple controlled assets and is trying to fetch only one", scenarioKey )
+					}
+				#endif // DEV
+				return variant.controlledAssets[0]
+			}
+
+			break
+		}
+	}
+
+	return null
+}
+
+asset ornull function Kepler_GetAssetForScenario( entity player, int scenario )
+{
+	string scenarioKey = keplerActiveScenarios[scenario]
+
+	return Kepler_GetAssetForScenarioKey( player, scenarioKey )
+}
+
+bool function AllowCheckForVariant( int scenario, string variantName )
+{
+	Assert( scenario >= 0 && scenario < eKeplerScenario.COUNT, "Checking variant for invalid Kepler scenario, are you using eKeplerScenario?" )
+	Assert( variantName != "", "Checking for empty Kepler variant name" )
+
+	if ( !GetConVarBool( "kepler_isEnabled" ) )
+	{
+		return false
+	}
+
+	Assert( file.isInitialized, "Attempting to check Kepler variants before Kepler has been initialized" )
+
+	if ( !( scenario in keplerActiveScenarios ) )
+	{
+		Assert( false, "Attempting to look up a Kepler scenario that has not been defined as active" );
+		return false
+	}
+
+	return true
+}
+
+// Returns true if a given player is participating in the specified scenario, and has been included in the specified variant
+// Usage example: bool skipTraining = Kepler_IsPlayerInVariant( player, eKeplerScenario.SKIP_TRAINING, "Treatment A" )
+bool function Kepler_IsPlayerInVariant( entity player, int scenario, string variantName )
+{
+	AssertLocalOrServerValidPlayer( player )
+
+	if ( !AllowCheckForVariant( scenario, variantName ) )
+	{
+		return false
+	}
+
+#if DEV
+	string variantOverride = GetConVarString( "kepler_forceVariant" )
+	if ( variantOverride != "" )
+	{
+		return variantOverride == variantName
+	}
+#endif // DEV
+
+	string scenarioKey = keplerActiveScenarios[scenario]
+
+#if UI || CLIENT
+	return Kepler_IsPlayerInVariant_Internal( scenarioKey, variantName )
+#else
+	KeplerScenarioData data = file.loadedScenarios[scenarioKey]
+	int variant = 0
+
+	for ( int i = 0; i < data.variants.len(); ++i )
+	{
+		if ( variantName == data.variants[i].variantName )
+		{
+			variant = i
+			break
+		}
+	}
+
+	return true//Kepler_IsPlayerInVariant_Internal( player, ItemFlavor_GetGUID( data.flavor ), variant )
+#endif // UI || CLIENT
+}
+
+#if UI
+void function Kepler_LevelShutdown()
+{
+	printf( "Kepler shutting down" )
+	
+	FileStruct_Kepler newFile
+	file = newFile
+}
+#endif // UI
+
+#if UI
+array<string> function UICodeCallback_GetKnownKeplerScenarios()
+{
+	array<string> scenarioKeys
+	scenarioKeys.resize( keplerActiveScenarios.len() )
+
+	int i = 0
+	foreach ( int _, string scenarioKey in keplerActiveScenarios )
+	{
+		scenarioKeys[i++] = scenarioKey
+	}
+
+	return scenarioKeys
+}
+#endif // UI
+
+#if UI
+bool function UICodeCallback_IsKeplerInitialized()
+{
+	return file.isInitialized
+}
+#endif // UI
+
+#if UI || SERVER
+#if UI
+SettingsAssetGUID function UICodeCallback_GetScenarioGUID( string scenarioKey )
+#elseif SERVER
+SettingsAssetGUID function CodeCallback_GetScenarioGUID( string scenarioKey )
+#endif // SERVER
+{
+	if ( file.loadedScenarios.len() == 0 )
+	{
+		Warning( "Attempting to fetch Kepler scenario GUID before scenarios are loaded" )
+		return ASSET_SETTINGS_UNIQUE_ID_INVALID
+	}
+
+	if ( !( scenarioKey in file.loadedScenarios ) )
+	{
+		Assert( false, format( "Attempting to fetch Kepler scenario GUID for unknown scenario \"%s\"", scenarioKey ) )
+		return ASSET_SETTINGS_UNIQUE_ID_INVALID
+	}
+
+	KeplerScenarioData scenario = file.loadedScenarios[ scenarioKey ]
+	return ItemFlavor_GetGUID( scenario.flavor )
+}
+#endif // UI || SERVER
+
+#if UI || SERVER
+#if UI
+int function UICodeCallback_GetScenarioVariantId( string scenarioKey, string variantName )
+#elseif SERVER
+int function CodeCallback_GetScenarioVariantId( string scenarioKey, string variantName )
+#endif // UI
+{
+	if ( file.loadedScenarios.len() == 0 )
+	{
+		Warning( "Attempting to fetch Kepler variant id before scenarios are loaded" )
+		return -1
+	}
+
+	if ( !( scenarioKey in file.loadedScenarios ) )
+	{
+		Assert( false, "Attempting to fetch Kepler variant id for unknown scenario" )
+		return -1
+	}
+
+	KeplerScenarioData scenario = file.loadedScenarios[ scenarioKey ]
+
+	for ( int i = 0; i < scenario.variants.len(); ++i )
+	{
+		if ( variantName == scenario.variants[i].variantName )
+		{
+			return i
+		}
+	}
+
+	Assert( false, format( "No Kepler variant found for %s with %s name", scenarioKey, variantName ) )
+	return -1
+}
+#endif // UI || SERVER
+
+#if SERVER
+void function Kepler_OnPlayerDisconnected( entity client )
+{
+	if ( client in file.onScenariosReadyCallbacks )
+	{
+		delete file.onScenariosReadyCallbacks[ client ]
+	}
+}
+#endif // SERVER
+
+#if SERVER
+void function AddCallbackOrCallNow_OnKeplerReady( entity client, void functionref( entity client ) callback )
+{
+	//if ( Kepler_IsReady( client ) )
+	{
+		callback( client )
+		return
+	}
+
+	array<OnKeplerReadyCallback> clientCallbacks
+
+	if ( !( client in file.onScenariosReadyCallbacks ) )
+	{
+		file.onScenariosReadyCallbacks[client] <- clientCallbacks
+	}
+	else
+	{
+		clientCallbacks = file.onScenariosReadyCallbacks[client]
+	}
+
+	if ( !clientCallbacks.contains( callback ) )
+	{
+		clientCallbacks.append( callback )
+	}
+	else
+	{
+		Assert( false, "Kepler Scenarios Ready callback already registered" )
+	}
+}
+#endif // SERVER
+
+#if SERVER
+void function CodeCallback_KeplerReady( entity client )
+{
+#if DEV
+	if ( GetConVarBool( "kepler_forceNotReady" ) )
+	{
+		return
+	}
+#endif // DEV
+
+	if ( !( client in file.onScenariosReadyCallbacks ) )
+	{
+		return
+	}
+
+	array<OnKeplerReadyCallback> clientCallbacks = file.onScenariosReadyCallbacks[client]
+
+	foreach ( OnKeplerReadyCallback callback in clientCallbacks )
+	{
+		callback( client )
+	}
+
+	// Now that Kepler scenarios are ready for this client, we won't ever need these callbacks again
+	delete file.onScenariosReadyCallbacks[client]
+}
+#endif // SERVER 

@@ -108,6 +108,7 @@ Scripts:
 	sh_survival_equipment_slot.gnut
 	sh_survival_loot_distribution.gnut
 	sh_live_api.gnut
+	sh_kepler.gnut
 ]
 
 When: "SERVER || CLIENT || UI"
@@ -595,6 +596,7 @@ Scripts:
 	_codecallbacks_player_input.gnut
 	_control_panel.gnut
 	sv_live_api.gnut
+	sh_reward_set_tracker.gnut
 ]
 
 When: "CLIENT"

@@ -10,7 +10,6 @@ global function WeaponSkin_GetSkinName
 global function WeaponSkin_GetCamoIndex
 global function WeaponSkin_GetHackyRUISchemeIdentifier
 global function WeaponSkin_DoesReactToKills
-global function WeaponSkin_GetReactToKillsLevelIndexForKillCount
 global function WeaponSkin_ShouldDisplayVideoOnInspect
 global function WeaponSkin_GetReactToKillsLevelCount
 global function WeaponSkin_GetReactToKillsDataForLevel
@@ -35,12 +34,12 @@ global function ClientCallback_WeaponCosmeticsApply
 global function WeaponCosmetics_Apply
 global function WeaponCosmetics_ApplyModelAndSkin
 #endif
-#if DEVELOPER && CLIENT
+#if DEV && CLIENT
 global function DEV_TestWeaponSkinData
 global function DEV_GetCharmForCurrentWeapon
 global function DEV_SetCharmForCurrentWeapon
 #endif
-#if DEVELOPER && SERVER
+#if DEV && SERVER
 global function DEV_SetWeaponCharmForPlayer
 #endif
 #if CLIENT
@@ -90,14 +89,13 @@ struct FileStruct_LifetimeLevel
 
 	table<ItemFlavor, LoadoutEntry>             loadoutWeaponSkinSlotMap
 
-	table<int, LoadoutEntry>             loadoutWeaponCharmSlotMap
+	table<ItemFlavor, LoadoutEntry>             loadoutWeaponCharmSlotMap
 
 	table<ItemFlavor, int> cosmeticFlavorSortOrdinalMap
 
 	#if SERVER || CLIENT
 		table<ItemFlavor, table<asset, int> > weaponModelLegendaryIndexMapMap
 		table<ItemFlavor, int>                weaponSkinLegendaryIndexMap
-		table< string, array<int> >           legendaryWeaponSkinsMap_FS
 	#endif
 
 	#if CLIENT
@@ -145,7 +143,7 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 
 		LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "weapon_skin_for_" + ItemFlavor_GetGUIDString( weaponFlavor ), eLoadoutEntryClass.WEAPON )
 		entry.category     = eLoadoutCategory.WEAPON_SKINS
-		#if DEVELOPER
+		#if DEV
 			entry.pdefSectionKey = "weapon " + ItemFlavor_GetGUIDString( weaponFlavor )
 			entry.DEV_name       = DEV_ItemFlavor_GetCleanedAssetPath( weaponFlavor ) + " Skin"
 		#endif
@@ -157,7 +155,7 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 		}
 		entry.networkTo           = eLoadoutNetworking.PLAYER_EXCLUSIVE
 		entry.maxFavoriteCount    = 8
-		#if SERVER && DEVELOPER
+		#if SERVER && DEV
 			entry.isCurrentlyRelevant = bool function( EHI playerEHI ) : ( weaponFlavor ) {
 				entity player          = FromEHI( playerEHI )
 				string weaponClassName = WeaponItemFlavor_GetClassname( weaponFlavor )
@@ -167,7 +165,7 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 
 				foreach( entity weapon in player.GetAllActiveWeapons() )
 				{
-					if ( weapon.GetWeaponClassName() == weaponClassName )
+					if ( weapon.GetWeaponBaseClassName() == weaponClassName )
 						return true
 				}
 				return false
@@ -192,7 +190,7 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 
 		LoadoutEntry charmEntry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "weapon_charm_for_" + ItemFlavor_GetGUIDString( weaponFlavor ), eLoadoutEntryClass.WEAPON )
 		charmEntry.category     = eLoadoutCategory.WEAPON_CHARMS
-		#if DEVELOPER
+		#if DEV
 			charmEntry.pdefSectionKey = "weapon " + ItemFlavor_GetGUIDString( weaponFlavor )
 			charmEntry.DEV_name       = DEV_ItemFlavor_GetCleanedAssetPath( weaponFlavor ) + " Charm"
 		#endif
@@ -212,7 +210,7 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 			return IsItemFlavorGRXUnlockedForLoadoutSlot( playerEHI, flavor, shouldIgnoreGRX, shouldIgnoreOtherSlots )
 		}
 
-		#if SERVER && DEVELOPER
+		#if SERVER && DEV
 			charmEntry.isCurrentlyRelevant = bool function( EHI playerEHI ) : ( weaponFlavor ) {
 				entity player          = FromEHI( playerEHI )
 				string weaponClassName = WeaponItemFlavor_GetClassname( weaponFlavor )
@@ -235,23 +233,22 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 			#endif
 		} )
 
-		fileLevel.loadoutWeaponCharmSlotMap[weaponFlavor.guid] <- charmEntry
+		fileLevel.loadoutWeaponCharmSlotMap[weaponFlavor] <- charmEntry
 	}
 }
 
 void function SetupWeaponCharm( ItemFlavor charm )
 {
-	asset charmModel = WeaponCharm_GetCharmModel( charm )
+	string charmModel = WeaponCharm_GetCharmModel( charm )
 
 	#if SERVER || CLIENT
-		if ( charmModel != $"" )
+		if ( charmModel != "" )
 			RegisterModel( charmModel )
 	#endif
 }
 
 void function SetupWeaponSkin( ItemFlavor skin )
 {
-
 	if ( ItemFlavor_IsTheFavoriteSentinel( skin ) )
 		return
 
@@ -337,7 +334,7 @@ asset ornull function Loadout_GetLore( ItemFlavor flavor )
 
 LoadoutEntry function Loadout_WeaponCharm( ItemFlavor weaponFlavor )
 {
-	return fileLevel.loadoutWeaponCharmSlotMap[weaponFlavor.guid]
+	return fileLevel.loadoutWeaponCharmSlotMap[weaponFlavor]
 }
 
 
@@ -348,19 +345,14 @@ bool function WeaponCharm_IsTheEmpty( ItemFlavor flavor )
 	return GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "isTheEmpty" )
 }
 
-asset function WeaponCharm_GetCharmModel( ItemFlavor flavor )
+string function WeaponCharm_GetCharmModel( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.weapon_charm )
-	asset assetVal = ItemFlavor_GetAsset( flavor )
-	if ( assetVal == $"" )
-	{
-		Warning("WeaponCharm_GetCharmModel: Invalid ItemFlavor asset")
-		return $""
-	}
-	asset charmName = GetGlobalSettingsAsset( assetVal, "charmModel" )
+
+	string charmName = GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "charmModel" )
 	if ( charmName == $"" )
-		return $""
-	return charmName
+		return charmName;
+	return charmName + ".rmdl"
 }
 
 bool function WeaponCharm_HasStoryBlurb( ItemFlavor flavor )
@@ -416,7 +408,7 @@ int function WeaponSkin_GetSortOrdinal( ItemFlavor flavor )
 	return fileLevel.cosmeticFlavorSortOrdinalMap[flavor]
 }
 
-#if DEVELOPER && CLIENT
+#if DEV && CLIENT
 void function DEV_SetCharmForCurrentWeapon( asset charmModel, string attachmentName )
 {
 	entity player = GetLocalClientPlayer()
@@ -453,9 +445,9 @@ entity function DEV_GetCharmForCurrentWeapon()
 	}
 	return charm
 }
-#endif // #if DEVELOPER && CLIENT
+#endif // #if DEV && CLIENT
 
-#if SERVER && DEVELOPER
+#if SERVER && DEV
 void function DEV_SetWeaponCharmForPlayer( int playerEntIndex, asset charmModel, string attachmentName )
 {
 	entity player = GetEntByIndex( playerEntIndex )
@@ -492,12 +484,12 @@ void function DEV_SetWeaponCharmForPlayer( int playerEntIndex, asset charmModel,
 #if SERVER
 void function UpdatePlayerWeaponCosmetics( entity player, ItemFlavor weaponFlavor, ItemFlavor cosmetic )
 {
-	#if DEVELOPER
+	#if DEV
 		string weaponClassName = WeaponItemFlavor_GetClassname( weaponFlavor )
 
 		foreach( entity weapon in player.GetMainWeapons() )
 		{
-			if ( weapon.GetWeaponClassName() == weaponClassName )
+			if ( weapon.GetWeaponBaseClassName() == weaponClassName )
 			{
 				if ( ItemFlavor_GetType( cosmetic ) == eItemType.weapon_skin )
 					WeaponCosmetics_Apply( weapon, cosmetic, null )
@@ -615,24 +607,6 @@ int function WeaponSkin_GetReactToKillsLevelCount( ItemFlavor flavor )
 	return GetSettingsArraySize( GetSettingsBlockArray( skinBlock, "featureReactsToKillsLevels" ) )
 }
 
-int function WeaponSkin_GetReactToKillsLevelIndexForKillCount( ItemFlavor flavor, int killCount )
-{
-	if ( !WeaponSkin_DoesReactToKills( flavor ) )
-		return -1
-
-	int levelCount = WeaponSkin_GetReactToKillsLevelCount( flavor )
-	int resultLevel = -1
-
-	for ( int i = 0; i < levelCount; i++ )
-	{
-		WeaponReactiveKillsData data = WeaponSkin_GetReactToKillsDataForLevel( flavor, i )
-		if ( killCount >= data.killCount )
-			resultLevel = i
-	}
-
-	return resultLevel
-}
-
 
 WeaponReactiveKillsData function WeaponSkin_GetReactToKillsDataForLevel( ItemFlavor flavor, int levelIdx )
 {
@@ -704,17 +678,28 @@ void function WeaponCosmetics_Apply( entity ent, ItemFlavor ornull skinOrNull, I
 {
 	if ( skinOrNull != null )
 	{
+		if( ent.IsWeaponX() )
+			ent.ClearReactiveEffects()
+
 		ItemFlavor skin = expect ItemFlavor( skinOrNull )
 		Assert( ItemFlavor_GetType( skin ) == eItemType.weapon_skin )
 		ent.e.skinItemFlavorGUID = ItemFlavor_GetGUID( skin )
 		WeaponCosmetics_ApplyModelAndSkin( ent, skin )
+
+		if( ent.IsWeaponX() )
+		{
+			ent.UpdateReactiveEffects()
+			#if SERVER
+			Remote_CallFunction_NonReplay( ent.GetOwner(), "ServerCallback_UpdatePlayerWeaponEffects", ent )
+			#endif
+		}
 	}
 
 	if ( charmOrNull != null )
 	{
 		ItemFlavor charm = expect ItemFlavor( charmOrNull )
 		Assert( ItemFlavor_GetType( charm ) == eItemType.weapon_charm )
-		asset charmModel = WeaponCharm_GetCharmModel( charm )
+		string charmModel = WeaponCharm_GetCharmModel( charm )
 		string attachmentName = WeaponCharm_GetAttachmentName( charm )
 
 		ent.e.charmItemFlavorGUID = ItemFlavor_GetGUID( charm )
@@ -725,7 +710,7 @@ void function WeaponCosmetics_Apply( entity ent, ItemFlavor ornull skinOrNull, I
 				if ( CHARM_DEBUG )
 					printt( "CHARM_DEBUG: Setting weapon charm " + string(ItemFlavor_GetAsset( charm )) + " for weapon " + ent + "( " + ent.GetModelName() + ") owned by player " + ent.GetWeaponOwner() + "(server)" )
 
-				ent.SetWeaponCharmIndex( ent.e.charmItemFlavorGUID )
+				ent.SetWeaponCharmOrArtifactBladeGUID( ent.e.charmItemFlavorGUID )
 				if ( charmModel != "" )
 					ent.SetWeaponCharm( charmModel, attachmentName )
 				else
@@ -755,14 +740,14 @@ void function WeaponCosmetics_Apply( entity ent, ItemFlavor ornull skinOrNull, I
 
 				fileLevel.menuWeaponCharmEntityMap[ent] <- charmEnt
 
-				AddEntityDestroyedCallback( charmEnt,
-					void function ( entity charmEnt ) : ( ent )
+				AddEntityDestroyedCallback( charmEnt, 
+					void function ( entity charmEnt ) : ( ent ) 
 					{
 						if ( ent in fileLevel.menuWeaponCharmEntityMap )
 						{
 							delete fileLevel.menuWeaponCharmEntityMap[ent]
 						}
-					}
+					} 
 				)
 			}
 		#endif
@@ -778,22 +763,22 @@ void function WeaponCosmetics_ApplyModelAndSkin( entity ent, ItemFlavor skin )
 
 	asset weaponModel = WeaponSkin_GetWorldModel( skin )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+               
+                                                       
+   
+                                                                          
+                                            
+                                                                  
+                                                                                    
+                        
+    
+                                    
+    
+   
+       
 
 	ent.SetModel( weaponModel ) // in the world, we want to show the worldmodel
-	//ent.SetItemFlavorGUID( ent.e.skinItemFlavorGUID )
+	ent.SetItemFlavorGUID( ent.e.skinItemFlavorGUID )
 	// ent.SetLegendaryModelIndex *must* be called *after* ent.SetModel(...) as it also makes a SetModel call itself from within Code.
 	if ( ent.GetNetworkedClassName() == "weaponx" )
 		ent.SetLegendaryModelIndex( fileLevel.weaponSkinLegendaryIndexMap[skin] )
@@ -900,7 +885,7 @@ void function AddCallback_UpdatePlayerWeaponEffects( void functionref( entity pl
 	file.callback_UpdatePlayerWeaponEffects.append( callbackFunc )
 }
 
-#if DEVELOPER && CLIENT
+#if DEV && CLIENT
 void function DEV_TestWeaponSkinData()
 {
 	entity model = CreateClientSidePropDynamic( <0, 0, 0>, <0, 0, 0>, $"mdl/dev/empty_model.rmdl" )
@@ -918,4 +903,4 @@ void function DEV_TestWeaponSkinData()
 
 	model.Destroy()
 }
-#endif // DEVELOPER && CLIENT
+#endif // DEV && CLIENT

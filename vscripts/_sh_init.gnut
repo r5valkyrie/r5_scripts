@@ -252,9 +252,9 @@ void function SV_CL_Init()
                           
       
 	AutogenStats_Init()
-	//Sh_Kepler_Init()
+	Sh_Kepler_Init()
                     
-	//ShRewardSetTracker_LevelInit()
+	ShRewardSetTracker_LevelInit()
                           
 	ShItems_LevelInit_Finish()
 	ShItemPerPlayerState_LevelInit()
@@ -1087,9 +1087,9 @@ void function Shared_Lobby_Init()
 		LootBoxCeremony_Init()
 	#endif
 	LootBoxCeremony_SharedInit()
-//	Sh_Kepler_Init()
+	Sh_Kepler_Init()
                     
-	//ShRewardSetTracker_LevelInit()
+	ShRewardSetTracker_LevelInit()
                           
 	ShItems_LevelInit_Finish()
 	ShItemPerPlayerState_LevelInit()

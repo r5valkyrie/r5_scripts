@@ -502,6 +502,18 @@ void function CharacterSkin_Apply( entity ent, ItemFlavor skin )
 	ent.SetSkin( skinIndex )
 	ent.SetCamo( camoIndex )
 
+	if ( bodyModel == $"mdl/humans/class/medium/pilot_medium_bloodhound.rmdl" )
+	{
+		foreach ( entity child in ent.GetChildren() )
+		{
+			if ( child.GetModelName() == BLOODHOUND_BIRD_MDL )
+			{
+				string characterSkinName = CharacterSkin_GetSkinName( skin )
+				child.SetSkin ( characterSkinName == "bloodhound_epicp_v21_aether" ? 2 : 0 )
+			}
+		}
+	}
+
 	#if SERVER
 		if ( ent.IsPlayer() )
 		{
