@@ -241,18 +241,17 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 
 void function SetupWeaponCharm( ItemFlavor charm )
 {
-	return
 	asset charmModel = WeaponCharm_GetCharmModel( charm )
 
 	#if SERVER || CLIENT
-		if ( charmModel != "" )
-			PrecacheModel( charmModel )
+		if ( charmModel != $"" )
+			RegisterModel( charmModel )
 	#endif
 }
 
 void function SetupWeaponSkin( ItemFlavor skin )
 {
-	return
+
 	if ( ItemFlavor_IsTheFavoriteSentinel( skin ) )
 		return
 

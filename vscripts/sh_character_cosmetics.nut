@@ -301,8 +301,9 @@ void function SetupCharacterSkin( ItemFlavor skin )
 	#if SERVER || CLIENT
 		if ( !ItemFlavor_IsTheFavoriteSentinel( skin ) )
 		{
-		//	PrecacheModel( CharacterSkin_GetBodyModel( skin ) )
-		//	PrecacheModel( CharacterSkin_GetArmsModel( skin ) )
+			PrecacheSkinName( CharacterSkin_GetSkinName( skin ) )
+			PrecacheOnDemandLoadModel( ODL_SKINS, CharacterSkin_GetPakFile( skin ), CharacterSkin_GetBodyModel( skin ), CharacterSkin_GetLoadingBodyModel( skin ) )
+			PrecacheOnDemandLoadModel( ODL_SKINS, CharacterSkin_GetPakFile( skin ), CharacterSkin_GetArmsModel( skin ), CharacterSkin_GetLoadingArmsModel( skin ) )
 		}
 	#endif
 }
