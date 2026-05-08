@@ -464,7 +464,7 @@ void function CLLootBoxCeremony_Init()
 void function EntitiesDidLoad()
 {
 	entity targetAnimRef = GetEntByScriptName( "play_camera_quads_target" )
-	fileLevel.lootTickMover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", targetAnimRef.GetOrigin(), targetAnimRef.GetAngles() )
+	fileLevel.lootTickMover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", <8064, -7550, -8128>, <0, 180, 0>)
 	fileLevel.lootTickModel = CreatePropDynamic( TICK_MODEL_DEFAULT, fileLevel.lootTickMover.GetOrigin(), fileLevel.lootTickMover.GetAngles() )
 
 	
@@ -488,8 +488,8 @@ void function EntitiesDidLoad()
 	thread PlayAnim( fileLevel.lootTickModel, "loot_ceremony_tick_entrance_normal_idle", fileLevel.lootTickMover )
 	HideEntityAndChildren( fileLevel.lootTickModel )
 
-	fileLevel.cameraMover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", targetAnimRef.GetOrigin(), targetAnimRef.GetAngles() )
-	fileLevel.cameraEnt = CreateClientSidePointCamera( targetAnimRef.GetOrigin(), targetAnimRef.GetAngles(), CAMERA_FOV )
+	fileLevel.cameraMover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", <8064, -7550, -8128>, <0, 180, 0> )
+	fileLevel.cameraEnt = CreateClientSidePointCamera( <8064, -7550, -8128>, <0, 180, 0>, CAMERA_FOV )
 	fileLevel.cameraEnt.SetParent( fileLevel.cameraMover, "REF" )
 	fileLevel.cameraMover.SetParent( fileLevel.lootTickModel, "CAMERA" )
 }
