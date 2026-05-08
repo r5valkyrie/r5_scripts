@@ -956,7 +956,7 @@ void function UIFullyConnectedInitialization()
 
 
 	AutogenStats_Init()
-	//Sh_Kepler_Init()
+	Sh_Kepler_Init()
 
 	ShRewardSetTracker_LevelInit()
 

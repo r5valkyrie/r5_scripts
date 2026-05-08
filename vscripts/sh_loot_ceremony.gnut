@@ -449,7 +449,7 @@ void function CLLootBoxCeremony_Init()
 	LootCeremonyLightingRigPreCache()
 
 	AddCallback_FullUpdate( LootCeremonyOnFullUpdate )
-	//AddCallback_EntitiesDidLoad( EntitiesDidLoad )
+	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 
 	AddGlobalAnimEventTokenize( "loot_tick_rarity_random_flash_fx", OnLootTickAnimEvent )
 	AddGlobalAnimEventTokenize( "loot_tick_rarity_beam_start_fx", OnLootTickAnimEvent )
@@ -463,7 +463,7 @@ void function CLLootBoxCeremony_Init()
 
 void function EntitiesDidLoad()
 {
-	entity targetAnimRef = GetEntByScriptName( "target_loot_ceremony_ref" )
+	entity targetAnimRef = GetEntByScriptName( "play_camera_quads_target" )
 	fileLevel.lootTickMover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", targetAnimRef.GetOrigin(), targetAnimRef.GetAngles() )
 	fileLevel.lootTickModel = CreatePropDynamic( TICK_MODEL_DEFAULT, fileLevel.lootTickMover.GetOrigin(), fileLevel.lootTickMover.GetAngles() )
 

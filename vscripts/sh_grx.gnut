@@ -1353,13 +1353,13 @@ bool function GRX_IsItemOwnedByPlayer_AllowOutOfDateData( ItemFlavor flav, entit
 }
 bool function IsItemOwnedByPlayerInternal( ItemFlavor flav, entity player = null )
 {
-	return true
+	
 
 
 		if ( player == null )
 			player = GetLocalClientPlayer()
 
-
+return true
 
 
 
