@@ -26,39 +26,39 @@ global function WeaponCharm_GetAttachmentName
 global function WeaponCharm_GetSortOrdinal
 global function GetWeaponThatCharmIsCurrentlyEquippedToForPlayer
 
-
-
-
-
-
+#if SERVER
+global function AddCallback_UpdatePlayerWeaponCosmetics
+global function ClientCallback_WeaponCosmeticsApply
+#endif
+#if SERVER || CLIENT
 global function WeaponCosmetics_Apply
 global function WeaponCosmetics_ApplyModelAndSkin
-
-#if DEV
+#endif
+#if DEV && CLIENT
 global function DEV_TestWeaponSkinData
 global function DEV_GetCharmForCurrentWeapon
 global function DEV_SetCharmForCurrentWeapon
 #endif
-
-
-
-
+#if DEV && SERVER
+global function DEV_SetWeaponCharmForPlayer
+#endif
+#if CLIENT
 global function AddCallback_UpdatePlayerWeaponEffects
 global function ServerCallback_UpdatePlayerWeaponEffects
 global function GetCharmForWeaponEntity
 global function DestroyCharmForWeaponEntity
+#endif
 
-
-
+#if CLIENT || UI
 global function WeaponSkin_ShouldHideIfLocked
+#endif
 
-
-
-
-
-
-
-
+//////////////////////
+//////////////////////
+//// Global Types ////
+//////////////////////
+//////////////////////
+//
 global struct WeaponReactiveKillsData
 {
 	int                killCount
@@ -79,11 +79,11 @@ global struct WeaponReactiveKillsData
 }
 
 
-
-
-
-
-
+///////////////////////
+///////////////////////
+//// Private Types ////
+///////////////////////
+///////////////////////
 struct FileStruct_LifetimeLevel
 {
 
@@ -93,14 +93,14 @@ struct FileStruct_LifetimeLevel
 
 	table<ItemFlavor, int> cosmeticFlavorSortOrdinalMap
 
-
+	#if SERVER || CLIENT
 		table<ItemFlavor, table<asset, int> > weaponModelLegendaryIndexMapMap
 		table<ItemFlavor, int>                weaponSkinLegendaryIndexMap
+	#endif
 
-
-
+	#if CLIENT
 		table<entity, entity>    menuWeaponCharmEntityMap
-
+	#endif
 }
 FileStruct_LifetimeLevel& fileLevel
 
@@ -110,29 +110,29 @@ struct
 	array< void functionref( entity ) > callback_UpdatePlayerWeaponEffects
 } file
 
-
-
-
-
-
+////////////////////////
+////////////////////////
+//// Initialization ////
+////////////////////////
+////////////////////////
 void function ShWeaponCosmetics_LevelInit()
 {
 	FileStruct_LifetimeLevel newFileLevel
 	fileLevel = newFileLevel
 
 	AddCallback_OnItemFlavorRegistered( eItemType.loot_main_weapon, OnItemFlavorRegistered_LootMainWeapon )
-	
+	//AddCallback_OnItemFlavorRegistered( eItemType.weapon_skin, OnItemFlavorRegistered_WeaponSkin ) // (dw): calling this manually instead of using this callback because we need WeaponSkin_GetWeaponFlavor to work
 
-
+	#if SERVER || CLIENT
 	Remote_RegisterServerFunction( "ClientCallback_WeaponCosmeticsApply", "int", INT_MIN, INT_MAX )
 	Remote_RegisterClientFunction( "ServerCallback_UpdatePlayerWeaponEffects", "entity" )
-
+	#endif
 }
 
 
 void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 {
-	
+	// skins
 	{
 		array<ItemFlavor> skinList = RegisterReferencedItemFlavorsFromArray( weaponFlavor, "skins", "flavor" )
 		MakeItemFlavorSet( skinList, fileLevel.cosmeticFlavorSortOrdinalMap, true )
@@ -143,10 +143,10 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 
 		LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "weapon_skin_for_" + ItemFlavor_GetGUIDString( weaponFlavor ), eLoadoutEntryClass.WEAPON )
 		entry.category     = eLoadoutCategory.WEAPON_SKINS
-#if DEV
+		#if DEV
 			entry.pdefSectionKey = "weapon " + ItemFlavor_GetGUIDString( weaponFlavor )
 			entry.DEV_name       = DEV_ItemFlavor_GetCleanedAssetPath( weaponFlavor ) + " Skin"
-#endif
+		#endif
 		entry.defaultItemFlavor   = skinList[1]
 		entry.favoriteItemFlavor  = skinList[0]
 		entry.validItemFlavorList = skinList
@@ -155,31 +155,31 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 		}
 		entry.networkTo           = eLoadoutNetworking.PLAYER_EXCLUSIVE
 		entry.maxFavoriteCount    = 8
+		#if SERVER && DEV
+			entry.isCurrentlyRelevant = bool function( EHI playerEHI ) : ( weaponFlavor ) {
+				entity player          = FromEHI( playerEHI )
+				string weaponClassName = WeaponItemFlavor_GetClassname( weaponFlavor )
 
+				if ( IsValid( player.p.DEV_lastDroppedSurvivalWeaponProp ) && player.p.DEV_lastDroppedSurvivalWeaponProp.GetWeaponName() == weaponClassName )
+					return true
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+				foreach( entity weapon in player.GetAllActiveWeapons() )
+				{
+					if ( weapon.GetWeaponBaseClassName() == weaponClassName )
+						return true
+				}
+				return false
+			}
+		#endif
 		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( entry, void function( EHI playerEHI, ItemFlavor skin ) : ( weaponFlavor, entry ) {
-
-
-
+			#if SERVER
+				UpdatePlayerWeaponCosmetics( FromEHI( playerEHI ), weaponFlavor, skin )
+			#endif
 		} )
 		fileLevel.loadoutWeaponSkinSlotMap[weaponFlavor] <- entry
 	}
 
-	
+	// charms
 	{
 		array<ItemFlavor> charmList = RegisterReferencedItemFlavorsFromArray( weaponFlavor, "charms", "flavor" )
 		MakeItemFlavorSet( charmList, fileLevel.cosmeticFlavorSortOrdinalMap, true )
@@ -190,10 +190,10 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 
 		LoadoutEntry charmEntry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "weapon_charm_for_" + ItemFlavor_GetGUIDString( weaponFlavor ), eLoadoutEntryClass.WEAPON )
 		charmEntry.category     = eLoadoutCategory.WEAPON_CHARMS
-#if DEV
+		#if DEV
 			charmEntry.pdefSectionKey = "weapon " + ItemFlavor_GetGUIDString( weaponFlavor )
 			charmEntry.DEV_name       = DEV_ItemFlavor_GetCleanedAssetPath( weaponFlavor ) + " Charm"
-#endif
+		#endif
 		charmEntry.defaultItemFlavor    = charmList[0]
 		charmEntry.validItemFlavorList  = charmList
 		charmEntry.isSlotLocked         = bool function( EHI playerEHI ) {
@@ -201,7 +201,7 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 		}
 		charmEntry.networkTo            = eLoadoutNetworking.PLAYER_EXCLUSIVE
 		charmEntry.isItemFlavorUnlocked = bool function( EHI playerEHI, ItemFlavor flavor, bool shouldIgnoreGRX = false, bool shouldIgnoreOtherSlots = false ) : ( weaponFlavor ) {
-			if ( !shouldIgnoreOtherSlots ) 
+			if ( !shouldIgnoreOtherSlots ) // TODO - R5DEV-356547:this is the ONLY place shouldIgnoreOtherSlots is *ACTUALLY* used
 			{
 				ItemFlavor ornull flavorCurrentWeaponEquippedTo = GetWeaponThatCharmIsCurrentlyEquippedToForPlayer( playerEHI, flavor )
 				if ( flavorCurrentWeaponEquippedTo != null && flavorCurrentWeaponEquippedTo != weaponFlavor )
@@ -210,27 +210,27 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 			return IsItemFlavorGRXUnlockedForLoadoutSlot( playerEHI, flavor, shouldIgnoreGRX, shouldIgnoreOtherSlots )
 		}
 
+		#if SERVER && DEV
+			charmEntry.isCurrentlyRelevant = bool function( EHI playerEHI ) : ( weaponFlavor ) {
+				entity player          = FromEHI( playerEHI )
+				string weaponClassName = WeaponItemFlavor_GetClassname( weaponFlavor )
 
+				if ( IsValid( player.p.DEV_lastDroppedSurvivalWeaponProp ) && player.p.DEV_lastDroppedSurvivalWeaponProp.GetWeaponName() == weaponClassName )
+					return true
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+				foreach( entity weapon in player.GetAllActiveWeapons() )
+				{
+					if ( weapon.GetWeaponClassName() == weaponClassName )
+						return true
+				}
+				return false
+			}
+		#endif
 
 		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( charmEntry, void function( EHI playerEHI, ItemFlavor charm ) : ( weaponFlavor, charmEntry ) {
-
-
-
+			#if SERVER
+				UpdatePlayerWeaponCosmetics( FromEHI( playerEHI ), weaponFlavor, charm )
+			#endif
 		} )
 
 		fileLevel.loadoutWeaponCharmSlotMap[weaponFlavor] <- charmEntry
@@ -241,10 +241,10 @@ void function SetupWeaponCharm( ItemFlavor charm )
 {
 	string charmModel = WeaponCharm_GetCharmModel( charm )
 
-
+	#if SERVER || CLIENT
 		if ( charmModel != "" )
 			RegisterModel( charmModel )
-
+	#endif
 }
 
 void function SetupWeaponSkin( ItemFlavor skin )
@@ -255,7 +255,7 @@ void function SetupWeaponSkin( ItemFlavor skin )
 	asset worldModel = WeaponSkin_GetWorldModel( skin )
 	asset viewModel  = WeaponSkin_GetViewModel( skin )
 
-
+	#if SERVER || CLIENT
 		if ( worldModel != $"" )
 			PrecacheModel( worldModel )
 		if ( viewModel != $"" )
@@ -283,7 +283,7 @@ void function SetupWeaponSkin( ItemFlavor skin )
 
 		fileLevel.weaponSkinLegendaryIndexMap[skin] <- weaponLegendaryIndexMap[worldModel]
 
-		
+		// fx precaching for react to kills feature
 		if ( WeaponSkin_DoesReactToKills( skin ) )
 		{
 			for ( int levelIdx = 0; levelIdx < WeaponSkin_GetReactToKillsLevelCount( skin ); levelIdx++ )
@@ -306,15 +306,15 @@ void function SetupWeaponSkin( ItemFlavor skin )
 						PrecacheParticleSystem( fx )
 			}
 		}
-
+	#endif
 }
 
 
-
-
-
-
-
+//////////////////////////
+//////////////////////////
+//// Global functions ////
+//////////////////////////
+//////////////////////////
 LoadoutEntry function Loadout_WeaponSkin( ItemFlavor weaponFlavor )
 {
 	return fileLevel.loadoutWeaponSkinSlotMap[weaponFlavor]
@@ -408,7 +408,7 @@ int function WeaponSkin_GetSortOrdinal( ItemFlavor flavor )
 	return fileLevel.cosmeticFlavorSortOrdinalMap[flavor]
 }
 
-#if DEV
+#if DEV && CLIENT
 void function DEV_SetCharmForCurrentWeapon( asset charmModel, string attachmentName )
 {
 	entity player = GetLocalClientPlayer()
@@ -445,80 +445,80 @@ entity function DEV_GetCharmForCurrentWeapon()
 	}
 	return charm
 }
+#endif // #if DEV && CLIENT
+
+#if SERVER && DEV
+void function DEV_SetWeaponCharmForPlayer( int playerEntIndex, asset charmModel, string attachmentName )
+{
+	entity player = GetEntByIndex( playerEntIndex )
+
+	if ( IsValid( player ) )
+	{
+		if ( player.IsPlayer() )
+		{
+			PrecacheModel( charmModel )
+			entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
+			if ( IsValid( weapon ) )
+				weapon.SetWeaponCharm( charmModel, attachmentName )
+			else
+				printt( "Error: No active weapon to attach the charm to." )
+		}
+		else
+		{
+			printt( "Error: Entity is not a player: " + player )
+		}
+	}
+	else
+	{
+		printt( "Error: No valid player for ent index. Can't attach charm to the active weapon." )
+	}
+}
 #endif
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+///////////////////
+///////////////////
+//// Internals ////
+///////////////////
+///////////////////
+#if SERVER
+void function UpdatePlayerWeaponCosmetics( entity player, ItemFlavor weaponFlavor, ItemFlavor cosmetic )
+{
+	#if DEV
+		string weaponClassName = WeaponItemFlavor_GetClassname( weaponFlavor )
+
+		foreach( entity weapon in player.GetMainWeapons() )
+		{
+			if ( weapon.GetWeaponBaseClassName() == weaponClassName )
+			{
+				if ( ItemFlavor_GetType( cosmetic ) == eItemType.weapon_skin )
+					WeaponCosmetics_Apply( weapon, cosmetic, null )
+
+				if ( ItemFlavor_GetType( cosmetic ) == eItemType.weapon_charm )
+					WeaponCosmetics_Apply( weapon, null, cosmetic )
+			}
+		}
+
+		if ( IsValid( player.p.DEV_lastDroppedSurvivalWeaponProp ) && player.p.DEV_lastDroppedSurvivalWeaponProp.GetWeaponName() == weaponClassName )
+		{
+			if ( ItemFlavor_GetType( cosmetic ) == eItemType.weapon_skin )
+				WeaponCosmetics_Apply( player.p.DEV_lastDroppedSurvivalWeaponProp, cosmetic, null )
+
+			if ( ItemFlavor_GetType( cosmetic ) == eItemType.weapon_charm )
+				WeaponCosmetics_Apply( player.p.DEV_lastDroppedSurvivalWeaponProp, null, cosmetic )
+		}
+	#endif
+
+	foreach( callbackFunc in file.callbacks_UpdatePlayerWeaponCosmetics )
+		callbackFunc( player, weaponFlavor, cosmetic )
+}
+
+void function AddCallback_UpdatePlayerWeaponCosmetics( void functionref(entity, ItemFlavor, ItemFlavor) callbackFunc )
+{
+	Assert( !file.callbacks_UpdatePlayerWeaponCosmetics.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_UpdatePlayerWeaponCosmetics" )
+	file.callbacks_UpdatePlayerWeaponCosmetics.append( callbackFunc )
+}
+#endif // SERVER
 
 
 ItemFlavor function WeaponSkin_GetWeaponFlavor( ItemFlavor skin )
@@ -662,18 +662,18 @@ asset function WeaponSkin_GetVideo( ItemFlavor flavor )
 	return GetGlobalSettingsStringAsAsset( ItemFlavor_GetAsset( flavor ), "video" )
 }
 
-
+#if CLIENT || UI
 bool function WeaponSkin_ShouldHideIfLocked( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.weapon_skin )
 
 	return GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "shouldHideIfLocked" )
 }
-
+#endif
 
 
 const bool CHARM_DEBUG = false
-
+#if SERVER || CLIENT
 void function WeaponCosmetics_Apply( entity ent, ItemFlavor ornull skinOrNull, ItemFlavor ornull charmOrNull )
 {
 	if ( skinOrNull != null )
@@ -689,9 +689,9 @@ void function WeaponCosmetics_Apply( entity ent, ItemFlavor ornull skinOrNull, I
 		if( ent.IsWeaponX() )
 		{
 			ent.UpdateReactiveEffects()
-
-
-
+			#if SERVER
+			Remote_CallFunction_NonReplay( ent.GetOwner(), "ServerCallback_UpdatePlayerWeaponEffects", ent )
+			#endif
 		}
 	}
 
@@ -704,23 +704,23 @@ void function WeaponCosmetics_Apply( entity ent, ItemFlavor ornull skinOrNull, I
 
 		ent.e.charmItemFlavorGUID = ItemFlavor_GetGUID( charm )
 
+		#if SERVER
+			if ( ent.GetNetworkedClassName() == "weaponx" )
+			{
+				if ( CHARM_DEBUG )
+					printt( "CHARM_DEBUG: Setting weapon charm " + string(ItemFlavor_GetAsset( charm )) + " for weapon " + ent + "( " + ent.GetModelName() + ") owned by player " + ent.GetWeaponOwner() + "(server)" )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+				ent.SetWeaponCharmOrArtifactBladeGUID( ent.e.charmItemFlavorGUID )
+				if ( charmModel != "" )
+					ent.SetWeaponCharm( charmModel, attachmentName )
+				else
+					ent.ClearWeaponCharm()
+			}
+			else if ( ent.GetNetworkedClassName() != "prop_survival" )
+			{
+				Assert( false, "Attempted to apply weapon charm to unexpected entity: " + string(ent.GetNetworkedClassName()) )
+			}
+		#elseif CLIENT
 			Assert( ent.IsClientOnly(), ent + " isn't client only" )
 			Assert( ent.GetCodeClassName() == "dynamicprop", ent + " has classname \"" + ent.GetCodeClassName() + "\" instead of \"dynamicprop\"" )
 
@@ -750,44 +750,44 @@ void function WeaponCosmetics_Apply( entity ent, ItemFlavor ornull skinOrNull, I
 					} 
 				)
 			}
-
+		#endif
 	}
 }
 
 void function WeaponCosmetics_ApplyModelAndSkin( entity ent, ItemFlavor skin )
 {
-	ent.SetSkin( 0 ) 
+	ent.SetSkin( 0 ) // Lame that we need this, but this avoids invalid skin errors when the model changes and the currently shown skin index doesn't exist for the new model
 
+#if SERVER
+	Assert(  ent.GetNetworkedClassName() == "prop_survival" || ent.GetNetworkedClassName() == "weaponx", "Attempted to apply weapon skin to unexpected entity: " + string(ent.GetNetworkedClassName()) )
 
+	asset weaponModel = WeaponSkin_GetWorldModel( skin )
 
+               
+                                                       
+   
+                                                                          
+                                            
+                                                                  
+                                                                                    
+                        
+    
+                                    
+    
+   
+       
 
+	ent.SetModel( weaponModel ) // in the world, we want to show the worldmodel
+	ent.SetItemFlavorGUID( ent.e.skinItemFlavorGUID )
+	// ent.SetLegendaryModelIndex *must* be called *after* ent.SetModel(...) as it also makes a SetModel call itself from within Code.
+	if ( ent.GetNetworkedClassName() == "weaponx" )
+		ent.SetLegendaryModelIndex( fileLevel.weaponSkinLegendaryIndexMap[skin] )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#elseif CLIENT
 	Assert( ent.IsClientOnly(), ent + " isn't client only" )
 	Assert( ent.GetCodeClassName() == "dynamicprop", ent + " has classname \"" + ent.GetCodeClassName() + "\" instead of \"dynamicprop\"" )
-	ent.SetModel( WeaponSkin_GetViewModel( skin ) ) 
-
+	ent.SetModel( WeaponSkin_GetViewModel( skin ) ) // in the menus, we want to show the viewmodel, because it's the highest LOD
+#endif
 
 	int skinIndex = ent.GetSkinIndexByName( WeaponSkin_GetSkinName( skin ) )
 	int camoIndex = WeaponSkin_GetCamoIndex( skin )
@@ -808,10 +808,10 @@ void function WeaponCosmetics_ApplyModelAndSkin( entity ent, ItemFlavor skin )
 	ent.SetCamo( camoIndex )
 }
 
+#endif // SERVER || CLIENT
 
 
-
-
+#if CLIENT
 void function ServerCallback_UpdatePlayerWeaponEffects( entity weaponEnt )
 {
 	foreach ( callbackFunc in file.callback_UpdatePlayerWeaponEffects )
@@ -849,35 +849,35 @@ void function DestroyCharmForWeaponEntity( entity weapEnt )
 	}
 }
 
+#endif
 
+#if SERVER
+void function ClientCallback_WeaponCosmeticsApply( entity player, int slot )
+{
+	if ( IsLobby() ) //Users trying to run this in mp_lobby end through PC client commands end up crashing servers :/
+		return
 
+	if ( slot < 0 || slot > 1 )
+		return
 
+	EquipmentSlot es = Survival_GetEquipmentSlotDataByRef( "main_weapon" + slot )
+	entity weapon    = player.GetNormalWeapon( es.weaponSlot )
+	if ( !IsValid( weapon ) )
+		return
 
+	ItemFlavor ornull weaponSkinOrNull  = null
+	ItemFlavor ornull weaponCharmOrNull = null
+	ItemFlavor ornull weaponItemOrNull  = GetWeaponItemFlavorByClass( weapon.GetWeaponClassName() )
+	if ( weaponItemOrNull != null )
+	{
+		weaponSkinOrNull = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_WeaponSkin( expect ItemFlavor(weaponItemOrNull) ) )
+		weaponCharmOrNull = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_WeaponCharm( expect ItemFlavor(weaponItemOrNull) ) )
+	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	if ( weaponSkinOrNull != null || weaponCharmOrNull != null )
+		WeaponCosmetics_Apply( weapon, weaponSkinOrNull, weaponCharmOrNull )
+}
+#endif
 
 void function AddCallback_UpdatePlayerWeaponEffects( void functionref( entity player ) callbackFunc )
 {
@@ -885,7 +885,7 @@ void function AddCallback_UpdatePlayerWeaponEffects( void functionref( entity pl
 	file.callback_UpdatePlayerWeaponEffects.append( callbackFunc )
 }
 
-#if DEV
+#if DEV && CLIENT
 void function DEV_TestWeaponSkinData()
 {
 	entity model = CreateClientSidePropDynamic( <0, 0, 0>, <0, 0, 0>, $"mdl/dev/empty_model.rmdl" )
@@ -903,5 +903,4 @@ void function DEV_TestWeaponSkinData()
 
 	model.Destroy()
 }
-#endif
- 
+#endif // DEV && CLIENT
