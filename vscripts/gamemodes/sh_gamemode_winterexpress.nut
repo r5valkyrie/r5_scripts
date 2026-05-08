@@ -2005,7 +2005,7 @@ void function Flowstate_GivePlayerLoadoutOnGameStart_Copy( entity player, bool f
 
 	asset characterSetFile = CharacterClass_GetSetFile( playerCharacter )
 	player.SetPlayerSettingsWithMods( characterSetFile, [] )
-	CharacterSelect_AssignCharacter( player, playerCharacter )
+
 	Survival_SetInventoryEnabled( player, true )
 	// GiveLoadoutRelatedWeapons( player ) // TODO: restore when load order is fixed
 
@@ -3228,46 +3228,6 @@ bool function WinterExpress_CanSquadBeEliminated( entity player )
 }
 #endif
 
-//////////////////////////////////
-// Functions to handle presents //
-//////////////////////////////////
-#if SERVER
-void function SpawnAmmoForCurrentWeapon( entity player, var attackerDamageInfo = null )
-{
-	if( GetCurrentPlaylistVarBool( "survival_infinite_ammo", false ) )
-		return
-
-	LootThrowData throwData
-	throwData.throwAngle = 0
-	throwData.throwScale = 1
-	vector throwOrigin = player.GetOrigin()
-
-
-	if ( attackerDamageInfo != null )
-	{
-		entity damageWeapon = DamageInfo_GetWeapon( attackerDamageInfo )
-		if ( IsValid( damageWeapon ) && damageWeapon.GetActiveAmmoSource() == AMMOSOURCE_POOL )
-		{
-			string ammoType = GetWeaponAmmoTypeFromWeaponEnt( damageWeapon )
-
-			for ( int i = 0; i < 2; i++ )
-			{
-				int countPerDrop = int( floor( SURVIVAL_Loot_GetLootDataByRef( ammoType ).countPerDrop ) )
-
-				entity itemEnt = SpawnGenericLoot( ammoType, throwOrigin, < -1, -1, -1 >, countPerDrop )
-
-				SetItemSpawnSource( itemEnt, eSpawnSource.PLAYER_DEATH, player )
-				vector throwDir = <sin( throwData.throwAngle ), cos( throwData.throwAngle ), 0>
-				float speed     = throwData.throwScale * sqrt( RandomFloatRange( 0.75, 1.0 ) ) * 150
-				vector vel      = throwDir * speed
-				thread FakePhysicsThrow( player, itemEnt, <vel.x, vel.y, 200>, true )
-				throwData = SURVIVAL_DropLoot_IncrementThrowAngle( throwData )
-			}
-		}
-	}
-}
-#endif
-
 /////////////////////////////////////
 // Functions for Custom Commentary //
 /////////////////////////////////////
@@ -4259,8 +4219,7 @@ void function SetupPlayerThread( entity player )
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnDestroy" )
 
-	if( GetGameState() == eGameState.WaitingForPlayers )
-		player.p.timeWaitingInLobby = Time()
+
 
 	while ( !IsValidPlayer(player) || !IsAlive(player) || GetGameState() != eGameState.Playing )
 		WaitFrame()

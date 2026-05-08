@@ -1,0 +1,384 @@
+global function SkinMetrics_Init
+
+#if SERVER
+global function SkinMetrics_OnClientEndRecordingSkinMetrics
+#endif
+
+#if CLIENT
+global function SkinMetrics_ClientStartRecordingMetrics
+#endif
+
+#if CLIENT
+struct
+{
+	string metricsFileName
+	string metricsDataBuffer
+	array<string> metricsDataCategories
+
+	bool oldDVSEnable
+	int oldNotFocusSleep
+	int oldFpsMax
+	int oldVsyncMode
+} skinMetrics
+#endif
+
+#if SERVER
+global struct SkinMetrics_TestParams
+{
+	SettingsAssetGUID 	legendFlavGUID
+	SettingsAssetGUID 	legendSkinFlavGUID
+	SettingsAssetGUID 	weaponGUID
+	SettingsAssetGUID 	weaponSkinFlavGUID
+}
+
+global array< SkinMetrics_TestParams > ALL_SKIN_METRICS_PARAMS_BY_NAME
+global array< SkinMetrics_TestParams > ALL_BASIC_SKIN_METRICS_PARAMS_BY_NAME
+
+const int BOT_COUNT = 10
+#endif
+
+const int SINGLE_TEST_TIME_SECONDS = 10
+const string BLOODHOUND_GUID_STRING = "SAID00898565421"
+const string BLOODHOUND_CLASSIC_GUID_STRING = "SAID00845551255"
+const string AUTOPISTOL_GUID_STRING = "SAID00686444189"
+const string AUTOPISTOL_FACTORY_ISSUE_GUID_STRING = "SAID01309064329"
+
+void function SkinMetrics_Init()
+{
+	SkinMetrics_RegisterNetworking()
+	#if SERVER
+		PopulateSkinMetricsParams()
+		RegisterSignal( "ClientRecordMetricsData" )
+
+		if ( GetCurrentPlaylistName().find( "skin_metrics" ) != -1 )
+		{
+			AddCallback_OnPlayerMatchStateChanged( SkinMetrics_OnPlayerMatchStateChanged )
+		}
+	#endif
+}
+
+void function SkinMetrics_RegisterNetworking()
+{
+	Remote_RegisterClientFunction( "SkinMetrics_ClientStartRecordingMetrics",
+		"int", -INT_MAX, INT_MAX, "int", -INT_MAX, INT_MAX, "int", -INT_MAX, INT_MAX, "int", -INT_MAX, INT_MAX )
+	Remote_RegisterServerFunction( "SkinMetrics_OnClientEndRecordingSkinMetrics" )
+}
+
+#if SERVER
+void function SkinMetrics_OnPlayerMatchStateChanged( entity player, int oldValue, int newValue  )
+{
+	if ( newValue != ePlayerMatchState.NORMAL || player.IsBot() )
+		return
+
+	SetConVarBool( "idleKickTime_never_kick", true )
+	SetConVarBool( "viewDrift", false )
+
+	FlagSet( "DisableLootDrops" )
+	string posStr = GetCurrentPlaylistVarString( "override_start_position", "" )
+	if ( posStr != "" )
+	{
+		vector startingPosition = GamemodeUtility_ParseVectorString( posStr )
+		player.SetOrigin( startingPosition )
+	}
+
+	string orientationStr = GetCurrentPlaylistVarString( "override_start_orientation", "" )
+	if ( orientationStr != "" )
+	{
+		vector startingOrientation = GamemodeUtility_ParseVectorString( orientationStr )
+		player.SetAngles( startingOrientation )
+	}
+
+	player.SetInvulnerable()
+	player.FreezeControlsOnServer()
+	//player.FreezeHudControlsOnServer()
+
+	int functionref( string, string, string ) getOverrideItemFlavGUID = int function ( string playlistVar, string assetFormatStr, string defaultAssetStr ): ()
+	{
+		string overrideStr = GetCurrentPlaylistVarString( playlistVar, "" )
+		if( overrideStr == "" )
+		{
+			overrideStr = defaultAssetStr
+		}
+
+		asset overrideAsset = GetAssetFromString( format( assetFormatStr, overrideStr ) )
+		ItemFlavor overrideFlav = GetItemFlavorByAsset( overrideAsset )
+		return overrideFlav.guid
+	}
+
+	wait 10.0
+	printt( "Beginning tests" )
+	string testType = GetCurrentPlaylistVarString( "test_type", "" )
+	if ( testType == "minimal" || testType == "full" )
+	{
+		// Run minimal or full tests
+		array< SkinMetrics_TestParams > testParams = (testType == "minimal") ? ALL_BASIC_SKIN_METRICS_PARAMS_BY_NAME : ALL_SKIN_METRICS_PARAMS_BY_NAME
+		foreach ( SkinMetrics_TestParams testParam in testParams )
+		{
+			waitthread SkinMetrics_MainLoop(
+				testParam.legendFlavGUID,
+				testParam.legendSkinFlavGUID,
+				testParam.weaponGUID,
+				testParam.weaponSkinFlavGUID )
+
+			wait 2.0
+		}
+	}
+	else
+	{
+		int overrideLegendGUID = getOverrideItemFlavGUID( "override_legend", "settings/itemflav/character/%s.rpak", "bloodhound" )
+
+		// Cache off the legend string, so that we can use it to correctly override the skin asset path
+		string overrideLegendStr = ItemFlavor_GetAssetShortName( GetItemFlavorByGUID( overrideLegendGUID ) )
+		string legendSkinPathFormat = format( "settings/itemflav/character_skin/%s", overrideLegendStr )
+
+		int overrideWeaponGUID = getOverrideItemFlavGUID( "override_weapon", "settings/itemflav/loot/main_weapon/%s.rpak", "autopistol" )
+
+		// Cache off the weapon string, so that we can use it to correctly override the skin asset path
+		string overrideWeaponStr = ItemFlavor_GetAssetShortName( GetItemFlavorByGUID( overrideWeaponGUID ) )
+		string weaponSkinPathFormat = format( "settings/itemflav/weapon_skin/%s", overrideWeaponStr )
+
+		waitthread SkinMetrics_MainLoop(
+			overrideLegendGUID,
+			getOverrideItemFlavGUID( "override_legend_skin", legendSkinPathFormat + "/%s.rpak",  "classic"),
+			overrideWeaponGUID,
+			getOverrideItemFlavGUID( "override_weapon_skin", weaponSkinPathFormat + "/%s.rpak", "factory_issue" ) )
+	}
+
+	player.ClearInvulnerable()
+	player.UnfreezeControlsOnServer()
+	//player.UnfreezeHudControlsOnServer()
+}
+
+void function PopulateSkinMetricsParams()
+{
+	foreach( ItemFlavor weapon in GetAllWeaponItemFlavors() )
+	{
+		SkinMetrics_TestParams newBasicTestParams
+		newBasicTestParams.legendFlavGUID     	= ConvertItemFlavorGUIDStringToGUID( BLOODHOUND_GUID_STRING )
+		newBasicTestParams.legendSkinFlavGUID 	= ConvertItemFlavorGUIDStringToGUID( BLOODHOUND_CLASSIC_GUID_STRING )
+		newBasicTestParams.weaponGUID         	= weapon.guid
+		newBasicTestParams.weaponSkinFlavGUID 	= ConvertItemFlavorGUIDStringToGUID( AUTOPISTOL_FACTORY_ISSUE_GUID_STRING )
+		ALL_BASIC_SKIN_METRICS_PARAMS_BY_NAME.append( newBasicTestParams )
+
+		foreach( ItemFlavor weaponSkin in Loadout_WeaponSkin( weapon ).validItemFlavorList )
+		{
+			if( ItemFlavor_GetAssetShortName( weaponSkin ) == "_shared_favorites" )
+			{
+				continue
+			}
+
+			SkinMetrics_TestParams newTestParams
+			newTestParams.legendFlavGUID = ConvertItemFlavorGUIDStringToGUID( BLOODHOUND_GUID_STRING )
+			newTestParams.legendSkinFlavGUID = ConvertItemFlavorGUIDStringToGUID( BLOODHOUND_CLASSIC_GUID_STRING )
+			newTestParams.weaponGUID = weapon.guid
+			newTestParams.weaponSkinFlavGUID = weaponSkin.guid
+
+			ALL_SKIN_METRICS_PARAMS_BY_NAME.append( newTestParams )
+		}
+	}
+
+	foreach( ItemFlavor legendFlavor in GetAllCharacters() )
+	{
+		string legendName = ItemFlavor_GetAssetShortName( legendFlavor )
+		if( legendName == "random" || legendName == "dummie" )
+		{
+			continue
+		}
+
+		SkinMetrics_TestParams newBasicTestParams
+
+		newBasicTestParams.legendFlavGUID = legendFlavor.guid
+		newBasicTestParams.legendSkinFlavGUID = ConvertItemFlavorGUIDStringToGUID( BLOODHOUND_CLASSIC_GUID_STRING )
+		newBasicTestParams.weaponGUID = ConvertItemFlavorGUIDStringToGUID( AUTOPISTOL_GUID_STRING )
+		newBasicTestParams.weaponSkinFlavGUID = ConvertItemFlavorGUIDStringToGUID( AUTOPISTOL_FACTORY_ISSUE_GUID_STRING )
+
+		ALL_BASIC_SKIN_METRICS_PARAMS_BY_NAME.append( newBasicTestParams )
+
+		foreach( ItemFlavor legendSkin in Loadout_CharacterSkin( legendFlavor ).validItemFlavorList )
+		{
+			if( ItemFlavor_GetAssetShortName( legendSkin ) == "_shared_favorites" )
+			{
+				continue
+			}
+
+			SkinMetrics_TestParams newTestParams
+			newTestParams.legendFlavGUID = legendFlavor.guid
+			newTestParams.legendSkinFlavGUID = legendSkin.guid
+			newTestParams.weaponGUID = ConvertItemFlavorGUIDStringToGUID( AUTOPISTOL_GUID_STRING )
+			newTestParams.weaponSkinFlavGUID = ConvertItemFlavorGUIDStringToGUID( AUTOPISTOL_FACTORY_ISSUE_GUID_STRING )
+
+			ALL_SKIN_METRICS_PARAMS_BY_NAME.append( newTestParams )
+		}
+	}
+}
+
+void function SkinMetrics_MainLoop( int legendFlavGUID, int legendSkinFlavGUID, int weaponFlavGUID, int weaponSkinFlavGUID )
+{
+	ServerCommand( "sv_infinite_ammo 1" )
+	ServerCommand( "bot_randomAttackChance_survival 0.5" )
+	ServerCommand( "bot_flipout 1" )
+
+	entity player = GetPlayerArray()[0]
+	Assert( player != null, "Skin Metrics tests cannot be run without an active player" )
+
+	ItemFlavor botLegendFlavor = GetItemFlavorByGUID( legendFlavGUID )
+	ItemFlavor botLegendSkinFlavor = GetItemFlavorByGUID( legendSkinFlavGUID )
+	ItemFlavor botWeaponFlavor = GetItemFlavorByGUID( weaponFlavGUID )
+	ItemFlavor botWeaponSkinFlavor = GetItemFlavorByGUID( weaponSkinFlavGUID )
+
+	LoadoutEntry skinEntry = Loadout_CharacterSkin( botLegendFlavor )
+	skinEntry.isAllowedToChangeDuringMatch = true
+
+	array<entity> bots
+	vector playerPosition = player.GetOrigin()
+	vector playerForwardVector = player.GetForwardVector()
+
+	for( int i = 0; i < BOT_COUNT; i++ )
+	{
+		// Visual representation of how the bots are spawned(5 on each side in front of the player)
+		// |			| <----- Bots
+		// |			| <----- Bots
+		// |			| <----- Bots
+		// |			| <----- Bots
+		// |			| <----- Bots
+		// 		  |		<----- player
+		vector botSpawnPosition = playerPosition + playerForwardVector * 170 * ( i / 2 + 1 )
+		if ( i % 2 == 0 )
+		{
+			botSpawnPosition += player.GetRightVector() * 100
+		}
+		else
+		{
+			botSpawnPosition += player.GetRightVector() * -100
+		}
+
+		//entity bot = Bots_Spawn( botSpawnPosition, <0,0,0>, -1, "", false )
+		//bots.append( bot )
+
+		//SetItemFlavorLoadoutSlot( ToEHI( bot ), Loadout_Character(), botLegendFlavor )
+		//SetItemFlavorLoadoutSlot( ToEHI( bot ), skinEntry, botLegendSkinFlavor )
+
+		//TakeAllWeapons( bot )
+		//TakeAllBackpackItems( bot )
+
+		//GiveBotWeapon( bot, WeaponItemFlavor_GetClassname( botWeaponFlavor ) )
+		//entity activeWeapon = bot.GetActiveWeapon( eActiveInventorySlot.mainHand  )
+		//WeaponCosmetics_Apply( activeWeapon, botWeaponSkinFlavor, null )
+	}
+
+	ServerCommand( "bot_godmode_all 1" )
+
+	Remote_CallFunction_NonReplay( player, "SkinMetrics_ClientStartRecordingMetrics",
+		legendFlavGUID, legendSkinFlavGUID, weaponFlavGUID, weaponSkinFlavGUID )
+	WaitSignal( player, "ClientRecordMetricsData" )
+
+	foreach ( bot in bots )
+	{
+		//Bots_Kick( bot )
+	}
+}
+
+void function GiveBotWeapon( entity bot, string weaponName )
+{
+	if ( weaponName.find( "_held" ) >= 0 )
+		bot.GiveWeapon( weaponName, WEAPON_INVENTORY_SLOT_ANTI_TITAN )
+	else
+		bot.GiveWeapon( weaponName, WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+
+	bot.RefillAllAmmo()
+	bot.SetActiveWeaponByName( eActiveInventorySlot.mainHand, weaponName )
+}
+
+
+void function SkinMetrics_OnClientEndRecordingSkinMetrics( entity player )
+{
+	player.Signal( "ClientRecordMetricsData" )
+}
+#endif
+
+#if CLIENT
+const string METRICS_FPS = "FPS"
+const int SAMPLE_COUNT = SINGLE_TEST_TIME_SECONDS * 30
+
+void function SkinMetrics_ClientStartRecordingMetrics( int legendGUID, int legendSkinGUID, int weaponGUID, int weaponSkinGUID )
+{
+	skinMetrics.oldDVSEnable = GetConVarBool( "dvs_enable" )
+	skinMetrics.oldNotFocusSleep = GetConVarInt( "not_focus_sleep" )
+	skinMetrics.oldFpsMax = GetConVarInt( "fps_max" )
+	if ( HasConVar( "mat_vsyncMode" ) )
+		skinMetrics.oldVsyncMode = GetConVarInt( "mat_vsyncMode" )
+
+	SetConVarBool( "dvs_enable", false )
+	SetConVarInt( "not_focus_sleep", 0 ) 	// Don't let clicking away affect FPS
+	SetConVarInt( "fps_max", 0 ) 			// Remove FPS cap
+	if ( HasConVar( "mat_vsyncMode" ) )		// Remove vsync cap
+		SetConVarInt( "mat_vsyncMode", 0 )
+
+	thread SkinMetrics_ClientStartRecordingMetrics_Thread( legendGUID, legendSkinGUID, weaponGUID, weaponSkinGUID )
+}
+
+void function SkinMetrics_ClientStartRecordingMetrics_Thread( int legendGUID, int legendSkinGUID, int weaponGUID, int weaponSkinGUID )
+{
+	string mapName = GetMapName()
+	string hardware = GetPlatformName()
+	string buildString = GetGameVersion()
+
+	int buildNum = buildString.slice( buildString.find( "#" ) + 1 ).tointeger()
+
+	string legendName = ItemFlavor_GetAssetShortName( GetItemFlavorByGUID( legendGUID ) )
+	string legendSkinName = ItemFlavor_GetAssetShortName( GetItemFlavorByGUID( legendSkinGUID ) )
+	string weaponName = ItemFlavor_GetAssetShortName( GetItemFlavorByGUID( weaponGUID ) )
+	string weaponSkinName = ItemFlavor_GetAssetShortName( GetItemFlavorByGUID( weaponSkinGUID ) )
+
+	string legendFriendlyName = Localize( ItemFlavor_GetShortName( GetItemFlavorByGUID( legendGUID ) ) )
+	string legendSkinFriendlyName = Localize( ItemFlavor_GetLongName( GetItemFlavorByGUID( legendSkinGUID ) ) )
+	string weaponFriendlyName = Localize( ItemFlavor_GetShortName( GetItemFlavorByGUID( weaponGUID ) ) )
+	string weaponSkinFriendlyName = Localize( ItemFlavor_GetLongName( GetItemFlavorByGUID( weaponSkinGUID ) ) )
+
+	skinMetrics.metricsFileName = format( "skin_metrics_%s_%s_%s_%s_%s_CL#%i.csv", hardware, legendName, legendSkinName, weaponName, weaponSkinName, buildNum )
+
+	skinMetrics.metricsDataBuffer = "Hardware,Build ID,Map,Legend,Legend Skin,Weapon,Weapon Skin,FPS\n"
+	skinMetrics.metricsDataBuffer += format( "%s,%s,%s,%s(%s),%s(%s),%s(%s),%s(%s)",
+		hardware, buildString, mapName, legendFriendlyName, legendName, legendSkinFriendlyName, legendSkinName,
+		weaponFriendlyName, weaponName, weaponSkinFriendlyName, weaponSkinName )
+	skinMetrics.metricsDataBuffer += "\n"
+
+	float lastSampleTime = 0.0
+	for( int i = 0; i < SAMPLE_COUNT; i++ )
+	{
+		float now = Time()
+
+		// WaitFrame may not actually wait a full frame.
+		// This spaces out samples based on the last render frame time,
+		// increasing the likelihood we are actually sampling separate
+		// frames.
+		if ( now - lastSampleTime > RenderFrameTime() )
+		{
+			int fps = int( RoundToNearestInt( 1.0 / RenderFrameTime() ) )
+			skinMetrics.metricsDataBuffer += format( ",,,,,,,%i\n", fps )
+			lastSampleTime = now
+		}
+
+		DebugDrawScreenText( 0.8, 0.6, "Legend: " + legendName )
+		DebugDrawScreenText( 0.8, 0.62, "Legend skin: " + legendSkinName )
+		DebugDrawScreenText( 0.8, 0.64, "Weapon: " + weaponName )
+		DebugDrawScreenText( 0.8, 0.66, "Weapon skin: " + weaponSkinName )
+
+		WaitFrame()
+	}
+
+	SkinMetrics_ClientEndRecordingSkinMetrics()
+}
+
+void function SkinMetrics_ClientEndRecordingSkinMetrics()
+{
+	SetConVarBool( "dvs_enable", skinMetrics.oldDVSEnable )
+	SetConVarInt( "not_focus_sleep", skinMetrics.oldNotFocusSleep )
+	SetConVarInt( "fps_max", skinMetrics.oldFpsMax )
+	if ( HasConVar( "mat_vsyncMode" ) )
+		SetConVarInt( "mat_vsyncMode", skinMetrics.oldVsyncMode )
+
+	Remote_ServerCallFunction( "SkinMetrics_OnClientEndRecordingSkinMetrics" )
+	WriteMetricsDataToFile( skinMetrics.metricsFileName, "skin_metrics", skinMetrics.metricsDataBuffer, true )
+}
+#endif 

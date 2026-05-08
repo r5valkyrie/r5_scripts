@@ -34,11 +34,11 @@ var function OnWeaponTossReleaseAnimEvent_weapon_jump_pad( entity weapon, Weapon
 	{
 		entity player = weapon.GetWeaponOwner()
 		PlayerUsedOffhand( player, weapon, true, deployable )
-		
+
 		#if SERVER
 		if( !IsValid( player ) || !player.IsPlayer() )
 			return
-		
+
 		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 		string charRef = ItemFlavor_GetHumanReadableRef( character )
 
@@ -108,10 +108,10 @@ void function OnJumpPadPlanted( entity projectile, DeployableCollisionParams col
 		newProjectile.SetTakeDamageType( DAMAGE_YES )
 		newProjectile.SetMaxHealth( 100 )
 		newProjectile.SetHealth( 100 )
-	} 
+	}
 	else
-		newProjectile.SetTakeDamageType( DAMAGE_NO )			
-	
+		newProjectile.SetTakeDamageType( DAMAGE_NO )
+
 	SetVisibleEntitiesInConeQueriableEnabled( newProjectile, true )
 
 	newProjectile.SetOwner( owner )
@@ -134,7 +134,7 @@ void function OnJumpPadPlanted( entity projectile, DeployableCollisionParams col
 					{
 						newProjectile.Destroy()
 					}
-				}	
+				}
 			)
 
 			WaitForever()
@@ -168,13 +168,13 @@ void function OnJumpPadPlanted( entity projectile, DeployableCollisionParams col
 	jumpPadProxy.Hide()
 	jumpPadProxy.SetParent( newProjectile )
 	jumpPadProxy.SetOwner( owner )
-	JumpPad_CreatedCallback( newProjectile )
+
 
 	if( gameMode == eGamemodes.fs_dm )
 	{
 		thread JumpPadWatcher(newProjectile)
 	}
-	
+
 	#endif
 }
 
@@ -186,18 +186,18 @@ void function OnJumpPadPlanted( entity projectile, DeployableCollisionParams col
 		owner.EndSignal( "CleanUpPlayerAbilities" )
 		owner.EndSignal( "OnDestroy" )
 		jumpPad.EndSignal( "OnDestroy" )
-		
+
 		OnThreadEnd
-		( 
+		(
 			void function() : ( jumpPad )
 			{
 				if( IsValid(jumpPad) )
 				{
 					jumpPad.Destroy()
 				}
-			}	
+			}
 		)
-	
+
 		wait 15
 		if( IsValid( jumpPad ) )
 			jumpPad.Destroy()

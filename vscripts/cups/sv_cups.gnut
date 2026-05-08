@@ -1,0 +1,800 @@
+global function SvCups_Init
+
+global function Cups_OnPlayerMatchParticipationEnded
+global function Cups_OnClientConnectedToLobby
+global function Cups_Register_OnGetReRollCount_Callback
+global function Cups_UnRegister_OnGetReRollCount_Callback
+global function Cups_GetCupMatchTrackingDataForPlayer
+global function CupMatchTracking_GetPlayerSummary
+
+global function CodeCallback_CupsRegistrationCallback
+global function CodeCallback_CupsGetRegisteredCupsResponse
+global function CodeCallback_CupsOnMatchesPlayedResponse
+global function CodeCallback_CupsOnTierBoundsResponse
+global function CodeCallback_CupsOnUserRewardTiersResponse
+global function CodeCallback_CupsOnGetReRollCountResponse
+
+global function Cups_ServerRegisterForCup
+global function ClientCallback_RegisterForCup
+global function ClientCallback_DeleteCupEntry
+global function ClientCallback_DeleteCupsLastMatchPlayed
+global function ClientCallback_SetCupMatchHistory
+global function ClientCallback_GetLeaderboardData
+global function ClientCallback_GrantAllCupRewards
+global function ClientCallback_ReRollCup
+
+global struct CupMatchTracking
+{
+	int             cupID
+	int             numMembersInSquad
+	int             previousLeaderboardPosition = 0
+	int             numMembersEliminated = 0
+	int             prevNumMatchesCompleted = 0
+	int             squadPointsGained = 0
+	bool            isEligible = true
+	CupMatchSummary matchSummaryData
+}
+
+struct FileStruct_LifetimeLevel
+{
+	table< string, CupMatchTracking > squadCupScores
+	array<bool functionref(SettingsAssetGUID/* cupID*/, string/* squadID*/, int/* reRollCount*/)> cupReRollCountCallbacks
+	table< entity, void functionref() ornull > syncPersistenceCompleteCallbacks
+}
+
+FileStruct_LifetimeLevel& fileLevel
+
+void function SvCups_Init()
+{
+	FileStruct_LifetimeLevel newFileLevel
+	fileLevel = newFileLevel
+
+#if DEV && !SP
+	AddCallback_GeneratePDef( Cups_GenerateCupsPDef )
+#endif
+	AddCallback_GameStateEnter( eGameState.Prematch, Cups_OnGameStateEnterPreMatch )
+}
+
+
+#if DEV && !SP
+void function Cups_GenerateCupsPDef()
+{
+	DEV_PDefGen_BeginStruct( "sCupRegistrationData", "The data to save per registered cup" )
+	DEV_PDefGen_AddField_Bool( "active" )
+	DEV_PDefGen_AddField_GUID( "cupID" )
+	DEV_PDefGen_AddField_String( "squadID", 128 )
+	DEV_PDefGen_AddField_Int( "score" )
+	DEV_PDefGen_AddField_Int( "numMatches" )
+	DEV_PDefGen_AddField_Bool( "uiSeen" )
+	DEV_PDefGen_EndStruct()
+
+	DEV_PDefGen_BeginStruct( "sCupLastMatchPlayedData", "The data to save last cup match played" )
+	DEV_PDefGen_AddField_GUID( "cupID" )
+	DEV_PDefGen_AddField_Int( "matchNum" )
+	DEV_PDefGen_EndStruct()
+
+	DEV_PDefGen_BeginFieldGroup( "cups" )
+	DEV_PDefGen_AddField_StructArray_IntKey( "sCupRegistrationData", "cups", MAX_REGISTERED_CUPS )
+	DEV_PDefGen_AddField_Struct( "sCupLastMatchPlayedData", "cupsLastMatchPlayed" )
+	DEV_PDefGen_AddField_Bool( "seenCupsPopup" )
+	DEV_PDefGen_EndFieldGroup()
+}
+#endif //DEV && !SP
+
+void function ClientCallback_RegisterForCup( entity player, SettingsAssetGUID cupID )
+{
+	if ( !IsValidItemFlavorGUID( cupID ) )
+		return
+                     
+	//Ranked rumble must be registered through auto-enroll
+	ItemFlavor cupFlavor = GetItemFlavorByGUID( cupID )
+	if ( !RankedRumble_IsCupRankedRumble( cupFlavor ) )
+                          
+		Cups_ServerRegisterForCup( player, cupID )
+}
+
+void function Cups_ServerRegisterForCup( entity player, SettingsAssetGUID cupID )
+{
+	if( !GetConVarBool( "cups_enabled" ) ) return
+	//TODO: Limitations in Cups_GetSquadEligibility should be moved to here
+	//TODO: The cup entry requirement validation of this function only works for solos and only covers account level as cup entry requirement.
+	//TODO: For duos & trios as well as other entry reqs future work will be needed to add these checks as part of the party registration consensus
+
+	printt( "Cups_ServerRegisterForCup :" + cupID )
+	//if( !Cups_IsValidCupID( cupID ) || !Cups_IsCupActive( cupID ) || !player.IsCrossPlay() )
+	//	return
+
+	int nextCupIndex = Cups_GetNextAvailablePersistentDataSlot( player )
+	if( nextCupIndex >= 0 )
+	{
+		CupBakeryAssetData bakeryData = Cups_GetCupBakeryAssetDataFromGUID( cupID )
+
+		// Validate player account level meets minimum cup entry requirement
+		if ( bakeryData.entryRestrictions.hasMinLevelLimit )
+		{
+			int currentXP    = player.GetPersistentVarAsInt( "xp" )
+			int currentLevel = GetAccountLevelForXP( currentXP ) + 1 //GetAccountLevelForXP returns 1 less than the displayed level
+			if ( bakeryData.entryRestrictions.minEntryLevel > currentLevel )
+				return
+		}
+
+		string persistentDataKey = format( "cups[%d]", nextCupIndex )
+		player.SetPersistentVar( persistentDataKey+".active", true )
+		player.SetPersistentVar( persistentDataKey+".cupID", cupID )
+		bool isCupRankedRumble = false
+		                     
+			isCupRankedRumble = RankedRumble_IsCupRankedRumble( bakeryData.itemFlavor )
+        
+		//CupsRegisterForCup( player, cupID, isCupRankedRumble, ItemFlavor_GetGUID( bakeryData.containerItemFlavor ), bakeryData.entryRestrictions.hasMMREntryRequirement, bakeryData.entryRestrictions.requiredMMRBucket, Ranked_GetStryderLadderNameForLatestRankedPeriod(), bakeryData.tiers )
+	}
+	//TODO: sbryan R5DEV-515469 Respond to client as we can't add a new registration due to all p-data slots in use.
+}
+
+void function CodeCallback_CupsRegistrationCallback( entity player, bool success, int cupID, string squadID )
+{
+	if( !GetConVarBool( "cups_enabled" ) ) return
+
+	if ( !IsValid( player ) )
+		return
+
+	if ( IsDisconnected( player ) )
+		return
+
+	int cupIndex = Cups_GetPlayersPDataIndexForCupID( player, cupID )
+	Assert( cupIndex >= 0 )
+
+	if( !success )
+	{
+		ResetPlayerCupPersistence( player, cupIndex )
+		return
+	}
+
+	string persistentDataKey = format( "cups[%d]", cupIndex )
+	player.SetPersistentVar( persistentDataKey+".squadID", squadID )
+	player.SetPersistentVar( persistentDataKey+".score", 0 )
+	player.SetPersistentVar( persistentDataKey+".numMatches", 0 )
+}
+
+void function CodeCallback_CupsOnTierBoundsResponse( SettingsAssetGUID cupID, array< int > tierScoreBounds )
+{
+	if( !GetConVarBool( "cups_enabled" ) ) return
+
+	printt("Tier Score Bounds Response for cup", cupID)
+	for( int i = 0; i < tierScoreBounds.len(); ++i )
+	{
+		printt( "\t" + (i+1) + ") " + tierScoreBounds[i] )
+	}
+}
+
+void function CodeCallback_CupsOnMatchesPlayedResponse( table< string, table< string, int > > responseData )
+{
+	if( !GetConVarBool( "cups_enabled" ) ) return
+
+	printt( "CodeCallback_CupsOnMatchesPlayedResponse" )
+	foreach( string squadID, table< string, int > squadResponse in responseData )
+	{
+		if( squadID in fileLevel.squadCupScores )
+		{
+			CupMatchTracking squadMatchTracking = fileLevel.squadCupScores[ squadID ]
+			CupBakeryAssetData cupData = Cups_GetCupBakeryAssetDataFromGUID( squadMatchTracking.cupID )
+			int matchesPlayed = squadResponse["matchesPlayed"]
+			if( matchesPlayed < cupData.numMatches )
+			{
+				// Squad is eligible for cup
+				squadMatchTracking.prevNumMatchesCompleted     = matchesPlayed
+				squadMatchTracking.previousLeaderboardPosition = squadResponse["currentLeaderboardPosition"]
+			}
+			else
+			{
+				squadMatchTracking.isEligible = false
+			}
+		}
+	}
+}
+
+void function CodeCallback_CupsOnUserRewardTiersResponse( entity player, SettingsAssetGUID cupID, int ladderPosition, array< int > rewardTiers, float percentage )
+{
+	if( !GetConVarBool( "cups_enabled" ) )
+		return
+
+	if ( !Cups_IsValidCupID(cupID) )
+		return
+
+	printt( "CodeCallback_CupsOnUserRewardTiersResponse" )
+
+	GrantCupRewards( player, cupID, ladderPosition, rewardTiers, percentage )
+}
+
+void function GrantCupRewards( entity player, SettingsAssetGUID cupID, int ladderPosition, array< int > rewardTiers, float percentage )
+{
+	if( !GRX_IsInventoryReady( player ) )
+		return
+
+	CupBakeryAssetData cupData = Cups_GetCupBakeryAssetDataFromGUID( cupID )
+	string sequenceName = CupEvent_GetRewardSequenceName( CupFlavor_GetEvent( cupData.itemFlavor ) )
+	int sequenceNumber = GRX_GetSequenceNumber( player, sequenceName )
+	if( sequenceNumber > 0 ) // Already received cup rewards, but still need to handle ranked badge
+	{
+		                     
+			RankedRumble_SetBadgeTier( player, cupData, ladderPosition, rewardTiers, percentage )
+        
+		return
+	}
+	if( sequenceNumber == GRX_INVALID_SEQUENCE_NUMBER )
+	{
+		#if DEV
+			Assert( false, sequenceNumber + " is not a valid reward sequence" )
+		#endif
+		return
+	}
+
+	table< ItemFlavor, int > bagContents
+	for( int i = 0; i < rewardTiers.len(); ++i )
+	{
+		foreach( CupTierRewardData rewardData in cupData.tiers[rewardTiers[i]].rewardData )
+		{
+			ItemFlavor rewardFlavor = GetItemFlavorByAsset( rewardData.reward )
+			if( rewardFlavor in bagContents )
+				bagContents[ rewardFlavor ] += rewardData.quantity
+			else
+				bagContents[ rewardFlavor ] <- rewardData.quantity
+		}
+	}
+	                     
+		if ( RankedRumble_IsContainerRankedRumble( cupData.containerItemFlavor ) )
+		{
+			bagContents[expect ItemFlavor( RankedRumble_GetBadge( cupData.containerItemFlavor ) )] <- 1
+		}
+       
+
+	ItemFlavorBag rewardsToGive = MakeItemFlavorBag( bagContents )
+
+	// Grant Rewards
+	GrantRewardsConfig grc
+	grc.what = rewardsToGive
+	grc.showCeremony = true
+
+	// Reward Sequence
+	grc.rewardSequenceName = sequenceName
+	grc.rewardSequenceExpectedIdx = 0
+	grc.rewardSequenceDesiredIdx = 1
+	                     
+	grc.onAsyncGrantRewardComplete = void function( bool wasSuccessful ) : ( player, cupData, ladderPosition, rewardTiers, percentage ) {
+		if ( wasSuccessful )
+			RankedRumble_SetBadgeTier( player, cupData, ladderPosition, rewardTiers, percentage )
+	}
+       
+
+	GRX_GrantRewards( player, grc )
+}
+
+void function CodeCallback_CupsOnGetReRollCountResponse( SettingsAssetGUID cupID, string squadID, int reRollCount )
+{
+	foreach ( bool functionref(SettingsAssetGUID/* cupID*/, string/* squadID*/, int/* reRollCount*/) cb in fileLevel.cupReRollCountCallbacks )
+	{
+		if( cb(cupID, squadID, reRollCount ) )
+			Cups_UnRegister_OnGetReRollCount_Callback( cb )
+	}
+}
+
+//Debug command to populate Match History with random stat data
+void function ClientCallback_SetCupMatchHistory( entity player, SettingsAssetGUID cupID, int matchNumber, int squadPlacement  )
+{
+	if( !GetConVarBool( "cups_enabled" ) ) return
+
+#if DEV
+
+	if( !Cups_IsValidCupID( cupID ) )
+		return
+
+	int cupIndex = Cups_GetPlayersPDataIndexForCupID( player, cupID )
+	if ( cupIndex < 0 )
+		return
+
+	CupMatchSummary matchSummary = DEV_GenerateDummyMatchHistory(cupID, squadPlacement, [ player ] )
+
+	CupsSetMatchResultsData( player, cupID, matchSummary.squadCalculatedScore, matchNumber, matchSummary.playerSummaries )
+
+	string persistentDataKey = format( "cups[%d]", cupIndex )
+	int numMatchesPlayed = player.GetPersistentVarAsInt( persistentDataKey+".numMatches" )
+	if ( matchNumber >= numMatchesPlayed )
+	{
+		player.SetPersistentVar( persistentDataKey+".numMatches", numMatchesPlayed + 1 )
+	}
+
+#endif //DEV
+}
+
+void function ClientCallback_GetLeaderboardData( entity player, SettingsAssetGUID cupID, int start, int count )
+{
+	if( !GetConVarBool( "cups_enabled" ) ) return
+
+	if( !IsValid(player) || !Cups_IsValidCupID(cupID) )
+		return
+
+	if( start < 1 || count < 1 )
+	{
+		Warning( FUNC_NAME()+": Start or Count is less than 1!" )
+		return
+	}
+
+	//CupsGetLeaderboardDataForRange( player, cupID, start, count )
+}
+
+void function ClientCallback_DeleteCupEntry( entity player, SettingsAssetGUID cupID )
+{
+	if( !GetConVarBool( "cups_enabled" ) ) return
+
+#if DEV
+	int pDataIndex = Cups_GetPlayersPDataIndexForCupID( player, cupID )
+	if ( pDataIndex >= 0 )
+	{
+		string persistentDataKey = format( "cups[%d]", pDataIndex )
+		string squadID = expect string(player.GetPersistentVar( persistentDataKey + ".squadID" ))
+		CupsDeleteSquadEntry( player, cupID, squadID )
+		player.SetPersistentVar( persistentDataKey + ".active", false )
+	}
+#endif //DEV
+}
+
+void function Cups_ClearLastMatchPlayed( entity player )
+{
+	string persistentDataKey = "cupsLastMatchPlayed"
+	player.SetPersistentVar( persistentDataKey + ".cupID", 0 )
+}
+
+void function ClientCallback_DeleteCupsLastMatchPlayed( entity player )
+{
+	if( !GetConVarBool( "cups_enabled" ) ) return
+#if DEV
+	Cups_ClearLastMatchPlayed( player )
+#endif //DEV
+}
+
+bool function Cups_IsCupRewardGranted( entity player, SettingsAssetGUID cupID )
+{
+	CupBakeryAssetData cupData  = Cups_GetCupBakeryAssetDataFromGUID( cupID )
+	ItemFlavor cupContainerFlav = CupFlavor_GetEvent( cupData.itemFlavor )
+	string rewardSeqName        = CupEvent_GetRewardSequenceName( cupContainerFlav )
+	bool rewardItemsGranted     = GRX_GetSequenceNumber( player, rewardSeqName ) > 0
+                      
+		return rewardItemsGranted && RankedRumble_BadgeTierHasSet( player, cupContainerFlav )
+      
+                           
+       
+}
+
+void function Cups_CheckAndAwardCupRewards( entity player )
+{
+	EndSignal( player, "OnDestroy" )
+	EndSignal( player, "OnDisconnecting" )
+
+	while ( !GRX_IsInventoryReady( player ) )
+		WaitFrame()
+	
+	array< SettingsAssetGUID > cupIDsToQueryTierResults = [ ]
+	foreach ( UserCupEntryData cupEntry in Cups_GetPlayersFullPCupData( player ) )
+	{
+		if( Cups_HasGracePeriodEndedForCup( cupEntry.cupID ) )
+		{
+			if( Cups_IsCupRewardGranted( player, cupEntry.cupID ) || cupEntry.numMatches == 0 )
+			{
+				string persistentDataKey = format( "cups[%d]", cupEntry.cupIndex )
+				player.SetPersistentVar( persistentDataKey + ".active", false )
+			}
+			else
+			{
+				// Need to query final cup tier
+				cupIDsToQueryTierResults.append( cupEntry.cupID )
+			}
+		}
+		else if ( !Cups_IsValidCupID( cupEntry.cupID ) )
+		{
+			// Remove cup from persistence as bakery data no longer exists
+			string persistentDataKey = format( "cups[%d]", cupEntry.cupIndex )
+			player.SetPersistentVar( persistentDataKey + ".active", false )
+
+			//TODO: Send request to Stryder to clear out redis data
+		}
+	}
+
+	if( cupIDsToQueryTierResults.len() > 0 )
+	{
+		// Send Stryder request to query final cup tier
+		//CupsGetUserRewardTierData( player, cupIDsToQueryTierResults )
+	}
+}
+
+void function ResetPlayerCupPersistence( entity player, int pDataIndex )
+{
+	string persistentDataKey = format( "cups[%d]", pDataIndex )
+	player.SetPersistentVar( persistentDataKey+".active", false )
+	player.SetPersistentVar( persistentDataKey+".cupID", 0 )
+	player.SetPersistentVar( persistentDataKey+".numMatches", 0 )
+	player.SetPersistentVar( persistentDataKey+".squadID", "" )
+}
+
+void function CodeCallback_CupsGetRegisteredCupsResponse( entity player, table< SettingsAssetGUID, string > registeredCups )
+{
+	array<UserCupEntryData> playersPersistentData = Cups_GetPlayersFullPCupData( player )
+
+	array<int> updatedPDataIndices = []
+
+	foreach ( SettingsAssetGUID cupID, string squadID in registeredCups )
+	{
+		if( !Cups_IsValidCupID( cupID ) )
+		{
+			Warning( "Player "+player+" is registered to a cup with an invalid ID ("+cupID+"), please clear this data from Stryder" )
+		}
+
+		int pDataIndex = -1;
+		foreach( UserCupEntryData pDataEntry in playersPersistentData )
+		{
+			if( pDataEntry.cupID == cupID )
+				pDataIndex = pDataEntry.cupIndex
+		}
+
+		if( pDataIndex < 0 )
+			pDataIndex = Cups_GetNextAvailablePersistentDataSlot( player )
+
+		if( pDataIndex < 0 )
+		{
+			Warning( "Player "+player+" is registered for cup "+cupID+" but there's no available Persistent Data Slot!" )
+			continue
+		}
+
+		updatedPDataIndices.append( pDataIndex )
+
+		string persistentDataKey = format( "cups[%d]", pDataIndex )
+		player.SetPersistentVar( persistentDataKey+".active", true )
+		player.SetPersistentVar( persistentDataKey+".cupID", cupID )
+		player.SetPersistentVar( persistentDataKey+".squadID", squadID )
+	}
+
+	for ( int pDataIndex = 0; pDataIndex < MAX_REGISTERED_CUPS; ++pDataIndex )
+	{
+		if( updatedPDataIndices.contains( pDataIndex ) )
+			continue
+
+		ResetPlayerCupPersistence( player, pDataIndex )
+	}
+
+
+	if( player in fileLevel.syncPersistenceCompleteCallbacks && fileLevel.syncPersistenceCompleteCallbacks[player] != null )
+	{
+		void functionref() callback = expect void functionref()( fileLevel.syncPersistenceCompleteCallbacks[player])
+		callback()
+		fileLevel.syncPersistenceCompleteCallbacks[player] = null
+	}
+}
+
+void function Cups_SyncStryderAndPersistence( entity player, void functionref() onCompleteCallback )
+{
+	Assert( !( player in fileLevel.syncPersistenceCompleteCallbacks ) || fileLevel.syncPersistenceCompleteCallbacks[player] == null )
+
+	if( !( player in fileLevel.syncPersistenceCompleteCallbacks ) )
+		fileLevel.syncPersistenceCompleteCallbacks[player] <- onCompleteCallback
+	else
+		fileLevel.syncPersistenceCompleteCallbacks[player] = onCompleteCallback
+
+	//CupsGetRegisteredCups( player )
+}
+
+void function Cups_OnClientConnectedToLobby( entity player )
+{
+	if( !GetConVarBool( "cups_enabled" ) ) return
+
+	printt( "Cups_OnClientConnectedToLobby" )
+
+	Cups_SyncStryderAndPersistence( player, void function() : (player) {
+		if( IsValid( player ) )
+		{
+			thread Cups_CheckAndAwardCupRewards( player )
+			                     
+				RankedRumble_CheckLadderPosition( player )
+				RankedRumble_CheckAutoEnroll( player )
+				Ranked_SetLastGameParticipationScore( player, 0 )
+                             
+		}
+	} )
+}
+
+void function Cups_OnGameStateEnterPreMatch()
+{
+	if( !GetConVarBool( "cups_enabled" ) ) return
+
+	if( !Cups_IsMatchValidForCups() ) return;
+
+	printt( "Cups_OnGameStateEnterPreMatch" )
+
+	table<string, int> squadRequests
+	bool querySquads = false
+
+	foreach ( var squadLeaderIndex, array<entity> squad in GetAllMatchReservationParties() )
+	{
+		foreach( entity player in squad )
+		{
+			Cups_ClearLastMatchPlayed( player )
+		}
+
+		// Query squads crossplay state
+		bool squadCrossPlayEnabled = true
+		foreach ( entity squadMember in squad )
+		{
+			//if( !squadMember.IsCrossPlay() )
+			//	squadCrossPlayEnabled = false
+		}
+		if( !squadCrossPlayEnabled ) continue
+
+                     
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
+		{
+			if ( RankedRumble_IsRunningRankedRumble() )
+			{
+				foreach( entity player in squad )
+				{
+					foreach ( UserCupEntryData cupEntry in Cups_GetPlayersFullPCupData( player ) )
+					{
+						CupBakeryAssetData cupData = Cups_GetCupBakeryAssetDataFromGUID( cupEntry.cupID )
+						if ( !RankedRumble_IsCupRankedRumble( cupData.itemFlavor ) )
+							continue
+						if ( !RankedRumble_IsCupMatchPlayerPlatform( cupEntry.cupID, player ) )
+							continue
+						if( !CalEvent_IsActive( cupData.containerItemFlavor, GetUnixTimestamp() ) ) continue
+						string squadID = Cups_GetPlayersPCupData( player, cupEntry.cupID ).squadID
+						if ( squadID.len() > 0 )
+						{
+							UserCupEntryData cupEntryData = Cups_GetPlayersPCupData( player, cupEntry.cupID )
+
+							if( cupEntryData.numMatches >= cupData.numMatches ) continue // this player has already completed this cup
+
+							if( !( squadID in fileLevel.squadCupScores ) )
+							{
+								CupMatchTracking newMatchTracking
+								newMatchTracking.cupID = cupEntry.cupID
+								newMatchTracking.numMembersInSquad = 1
+								fileLevel.squadCupScores[ squadID ] <- newMatchTracking
+								squadRequests[ squadID ] <- cupEntry.cupID
+								querySquads = true
+								break
+							}
+						}
+					}
+				}
+			}
+		}
+		else
+                          
+		{
+			//We only need a single players cup entries as the whole registered squad needs to be match for it to count and solo cups don't count when you're in squad.
+			foreach ( UserCupEntryData cupEntry in Cups_GetPlayersFullPCupData( squad[0] ) )
+			{
+				if( !Cups_IsValidCupID( cupEntry.cupID ) ) continue
+
+				CupBakeryAssetData cupData = Cups_GetCupBakeryAssetDataFromGUID( cupEntry.cupID )
+
+				if( squad.len() != cupData.squadSize ) continue
+				if( !Cups_IsCupGameMode( cupEntry.cupID ) ) continue
+				if( !CalEvent_IsActive( cupData.containerItemFlavor, GetUnixTimestamp() ) ) continue
+
+				string squadID = Cups_GetCupSquadIDFromSquad( cupEntry.cupID, squad )
+				if ( squadID.len() > 0 )
+				{
+					UserCupEntryData cupEntryData = Cups_GetPlayersPCupData( squad[0], cupEntry.cupID )
+
+					if( cupEntryData.numMatches >= cupData.numMatches ) continue // Squad has already completed this cup
+
+					if( !( squadID in fileLevel.squadCupScores ) )
+					{
+						CupMatchTracking newMatchTracking
+						newMatchTracking.cupID = cupEntry.cupID
+						newMatchTracking.numMembersInSquad = squad.len()
+						fileLevel.squadCupScores[ squadID ] <- newMatchTracking
+						squadRequests[ squadID ] <- cupEntry.cupID
+						querySquads = true
+					}
+				}
+			}
+		}
+	}
+	if( querySquads )
+	{
+		// Grab full cup data of eligible players to confirm cup game eligibility
+		//CupsGetMatchesPlayedForUsers( squadRequests )
+	}
+}
+
+void function Cups_OnPlayerMatchParticipationEnded( entity player )
+{
+	if( !GetConVarBool( "cups_enabled" ) || !Cups_IsMatchValidForCups() )
+		return
+	CupMatchTracking ornull cupMatchData = Cups_GetCupMatchTrackingDataForPlayer( player )
+	if( cupMatchData == null )
+		return
+	printt("Cups_OnPlayerMatchParticipationEnded")
+
+	expect CupMatchTracking(cupMatchData)
+
+	CupBakeryAssetData cup = Cups_GetCupBakeryAssetDataFromGUID( cupMatchData.cupID )
+	int matchCount = cupMatchData.prevNumMatchesCompleted + 1
+
+	// Store cupID & matchNum in persistance for display on match summary screen
+	string persistentDataKey = "cupsLastMatchPlayed"
+	player.SetPersistentVar( persistentDataKey+".cupID", cupMatchData.cupID )
+	player.SetPersistentVar( persistentDataKey+".matchNum", matchCount )
+
+	int persistenceDataIndex = Cups_GetPlayersPDataIndexForCupID( player, cupMatchData.cupID )
+	if ( persistenceDataIndex < 0 )
+	{
+		Warning( "Unable to update cup entry persistence. Invalid cups persistence index." )
+	}
+	else
+	{
+		persistentDataKey = format( "cups[%d]", persistenceDataIndex )
+		player.SetPersistentVar( persistentDataKey+".numMatches", matchCount )
+
+		// Clear Cup "seen" in the UI if we just finished our last match, to get the new tag back
+		if ( matchCount == cup.numMatches )
+			player.SetPersistentVar( persistentDataKey+".uiSeen", false )
+	}
+
+	CupsPlayerMatchSummary playerSummary
+	playerSummary.playerLegendName = ItemFlavor_GetCharacterRef( LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() ) )
+	//playerSummary.playerUID = player.GetPlayerUID()
+	//playerSummary.playerHardware = player.GetHardwareName()
+
+
+	// Add player stats to fileLevel playerSummary
+	foreach ( CupStatPoints statPointData in cup.statPoints )
+	{
+		StatEntry statEntry = GetStatEntryByRef( statPointData.statRef )
+		int startValue = GetStat_Int( player, statEntry, eStatGetWhen.START_OF_CURRENT_MATCH )
+		int endValue = GetStat_Int( player, statEntry, eStatGetWhen.CURRENT )
+
+		int statChange = endValue - startValue
+		int additionalScore = minint( statChange, statPointData.hasStatLimit ? statPointData.statLimit : statChange )
+		additionalScore = int( floor( additionalScore * statPointData.pointsRate ) )
+
+		CupsMatchStatInformation statInfo
+		statInfo.statRef = statPointData.statRef
+		statInfo.statChange = statChange
+		statInfo.pointsGained = additionalScore
+
+		cupMatchData.squadPointsGained += statInfo.pointsGained
+
+		playerSummary.statInformation.push( statInfo )
+	}
+
+	cupMatchData.matchSummaryData.playerSummaries.push( playerSummary )
+
+	cupMatchData.numMembersEliminated++
+	if( cupMatchData.numMembersEliminated == cupMatchData.numMembersInSquad )
+	{
+		for ( int i = 0; i < cupMatchData.matchSummaryData.playerSummaries.len(); i++ )
+		{
+			cupMatchData.matchSummaryData.playerSummaries[i].playerPlacement = Survival_GetCurrentRank( player )
+			int placementScore = Cups_GetPointsForPlacement( cup, Survival_GetCurrentRank( player ) )
+			cupMatchData.squadPointsGained += placementScore
+		}
+		//TODO: Ensure working with duos & trios
+		//CupsSetMatchResultsData( player, cupMatchData.cupID, cupMatchData.squadPointsGained, cupMatchData.prevNumMatchesCompleted + 1, cupMatchData.matchSummaryData.playerSummaries )
+	}
+}
+
+CupMatchTracking ornull function Cups_GetCupMatchTrackingDataForPlayer( entity player )
+{
+	if( !GetConVarBool( "cups_enabled" ) || !Cups_IsMatchValidForCups() )
+		return null
+
+	array<UserCupEntryData> usersRegisteredCupData = Cups_GetPlayersFullPCupData( player )
+	foreach( UserCupEntryData userEntryData in usersRegisteredCupData )
+	{
+		if ( userEntryData.squadID in fileLevel.squadCupScores && userEntryData.cupID == fileLevel.squadCupScores[ userEntryData.squadID ].cupID )
+			return fileLevel.squadCupScores[ userEntryData.squadID ]
+	}
+
+	return null
+}
+
+CupsPlayerMatchSummary ornull function CupMatchTracking_GetPlayerSummary( CupMatchTracking matchTracking, entity player )
+{
+	foreach ( CupsPlayerMatchSummary playerSummary in matchTracking.matchSummaryData.playerSummaries )
+	{
+
+	}
+
+	Warning( "matchTracking struct does not contain summary for player: " + player )
+	return null
+}
+
+void function ClientCallback_ReRollCup( entity player, SettingsAssetGUID cupID )
+{
+	if( !GetConVarBool( "cups_enabled" ) || !Cups_IsValidCupID( cupID ) || !GRX_IsInventoryReady( player ) )
+		return
+
+	thread _ReRollCupThread( player, cupID )
+}
+
+void function _ReRollCupThread( entity player, SettingsAssetGUID cupID )
+{
+	Assert( IsNewThread() )
+
+	CupBakeryAssetData cup = Cups_GetCupBakeryAssetDataFromGUID( cupID )
+
+	if( cup.maximumNumberOfReRolls < 1 )
+		return
+
+	while( !GRX_IsInventoryReady( player ) )
+		WaitFrame()
+
+	int numReRollTokens = maxint( GRX_GetConsumableCount( player, ItemFlavor_GetGRXIndex( cup.reRollToken ) ), 0 )
+	if ( numReRollTokens > cup.maximumNumberOfReRolls )
+		return
+
+	UserCupEntryData pData = Cups_GetPlayersPCupData( player, cupID )
+	if( pData.cupID == cupID )
+	{
+		string squadID = pData.squadID
+		Cups_Register_OnGetReRollCount_Callback( bool function( SettingsAssetGUID cupID, string squadID, int reRollCount ) : (player, numReRollTokens, pData) {
+			if ( !IsValidPlayer( player ) ) // Cancel rerolling when the player is disconnected. This will be call the next time player clicks the reroll button.
+				return true
+
+			if ( pData.cupID != cupID || pData.squadID != squadID )
+				return false
+			if( reRollCount < numReRollTokens )
+			{
+				//CupsRerollCup( player, pData.cupID, pData.squadID )
+				ClearPersistenceForReroll( player, pData.cupID )
+			}
+			return true
+		} )
+		//CupsGetReRollCount( pData.cupID, pData.squadID )
+	}
+}
+
+void function ClearPersistenceForReroll( entity player, int cupID )
+{
+	for( int i = 0; i < MAX_REGISTERED_CUPS; i++ )
+	{
+		string persistentDataKey = format( "cups[%d]", i )
+		bool cupIsActive = expect bool( player.GetPersistentVar( persistentDataKey+".active" ) )
+		if( cupIsActive && cupID == player.GetPersistentVarAsInt( persistentDataKey+".cupID" ) )
+		{
+			player.SetPersistentVar( persistentDataKey+".numMatches", 0 )
+			player.SetPersistentVar( persistentDataKey+".score", 0 )
+			break
+		}
+	}
+}
+
+void function Cups_Register_OnGetReRollCount_Callback(bool functionref(SettingsAssetGUID/* cupID*/, string/* squadID*/, int/* reRollCount*/) callback)
+{
+	Assert( !fileLevel.cupReRollCountCallbacks.contains( callback ), "Attempting to re-register OnGetReRollCount callback!" )
+	fileLevel.cupReRollCountCallbacks.append( callback )
+}
+
+void function Cups_UnRegister_OnGetReRollCount_Callback(bool functionref(SettingsAssetGUID/* cupID*/, string/* squadID*/, int/* reRollCount*/) callback)
+{
+	fileLevel.cupReRollCountCallbacks.removebyvalue( callback )
+}
+
+void function ClientCallback_GrantAllCupRewards( entity player, SettingsAssetGUID cupID )
+{
+	if( !GetConVarBool( "cups_enabled" ) || !Cups_IsValidCupID(cupID) )
+		return
+
+#if DEV
+	CupBakeryAssetData cupData = Cups_GetCupBakeryAssetDataFromGUID( cupID )
+	ItemFlavor cupContainerFlav = CupFlavor_GetEvent( cupData.itemFlavor )
+
+	array<int> rewardTiers = []
+	for( int index = 0; index < cupData.tiers.len(); index++ )
+	{
+		rewardTiers.append( index )
+	}
+	int ladderPosition = 100
+	float percentage = 1.5
+
+	GrantCupRewards( player, cupID, ladderPosition, rewardTiers, percentage )
+#endif //DEV
+} 

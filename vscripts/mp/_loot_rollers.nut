@@ -103,104 +103,17 @@ entity function LootRollers_CreatePathTTLootRoller( vector origin, vector angles
 
 void function LootRollers_OnKilled(entity ent, var damageInfo)
 {
-    vector origin = ent.GetOrigin()
-	EmitSoundAtPosition( TEAM_ANY, origin, "LootBall_Explode" )
-	
-	entity effect = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex(FX_LOOT_ROLLER_EXPLOSION), origin, <0, 0, 0> )
-    EntFireByHandle( effect, "Kill", "", 2, null, null )
 
-	foreach( loot in Flowstate_ReturnDroneLootForCurrentTier( ent ) )
-	{
-		printt(" Spawning loot in cargobot: " + loot )
-		entity lootent = SpawnGenericLoot( loot, origin, <0, 0, 0>, 1 )
-		FakePhysicsThrow( null, lootent, <RandomFloatRange(0, 360), RandomFloatRange(0, 360), RandomFloatRange(0, 360)>, true )
-	}
 }
 
 void function LootRollers_OnDamaged(entity ent, var damageInfo)
 {
-	if( !IsValid( ent ) )
-		return
-	
-    // Don't get damaged by the drone crashing on it
-    if( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == LOOT_DRONE_EXPLOSION_DAMAGEID )
-        return
-	
-	entity attacker = DamageInfo_GetAttacker( damageInfo )
 
-    // Only players can break it
-	if( !IsValid( attacker ) || !attacker.IsPlayer() )
-		return
-
-	LootDroneData droneData = ReturnDroneDataFromRoller( ent )
-	
-	attacker.NotifyDidDamage
-	(
-		ent,
-		DamageInfo_GetHitBox( damageInfo ),
-		DamageInfo_GetDamagePosition( damageInfo ),
-		DamageInfo_GetCustomDamageType( damageInfo ),
-		DamageInfo_GetDamage( damageInfo ),
-		DamageInfo_GetDamageFlags( damageInfo ),
-		DamageInfo_GetHitGroup( damageInfo ),
-		DamageInfo_GetWeapon( damageInfo ),
-		DamageInfo_GetDistFromAttackOrigin( damageInfo )
-	)
-	
-	// the following implementation does not work
-	// if( Time() > droneData.lastPanicTime + LOOT_DRONE_PANIC_DURATION )
-		// LootDrone_Panic( droneData )
-	
-	// Handle damage, props get destroyed on death, we don't want that.
-	float nextHealth = max( 0, ent.GetHealth() - DamageInfo_GetDamage( damageInfo ) ) 
-	DamageInfo_SetDamage( damageInfo, 0 )
-
-	if( nextHealth <= 0 )
-	{
-		if( IsValid( droneData.model ) )
-		{
-			droneData.model.TakeDamage( LOOT_DRONE_HEALTH_MAX, attacker, null, DamageInfo_GetDamageSourceIdentifier( damageInfo ) )
-			droneData.model.SetTakeDamageType( DAMAGE_NO )
-			return
-		}
-	}
-
-	ent.SetHealth(nextHealth)
 }
 
 void function SoloRollers_OnDamaged(entity ent, var damageInfo)
 {
-	if( !IsValid( ent ) )
-		return
-	
-    // Don't get damaged by the drone crashing on it
-    if( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == LOOT_DRONE_EXPLOSION_DAMAGEID )
-        return
-	
-	entity attacker = DamageInfo_GetAttacker( damageInfo )
 
-    // Only players can break it
-	if( !IsValid( attacker ) || !attacker.IsPlayer() )
-		return
-	
-	attacker.NotifyDidDamage
-	(
-		ent,
-		DamageInfo_GetHitBox( damageInfo ),
-		DamageInfo_GetDamagePosition( damageInfo ),
-		DamageInfo_GetCustomDamageType( damageInfo ),
-		DamageInfo_GetDamage( damageInfo ),
-		DamageInfo_GetDamageFlags( damageInfo ),
-		DamageInfo_GetHitGroup( damageInfo ),
-		DamageInfo_GetWeapon( damageInfo ),
-		DamageInfo_GetDistFromAttackOrigin( damageInfo )
-	)
-
-	// Handle damage, props get destroyed on death, we don't want that.
-	float nextHealth = max( 0, ent.GetHealth() - DamageInfo_GetDamage( damageInfo ) ) 
-	DamageInfo_SetDamage( damageInfo, 0 )
-
-	ent.SetHealth(nextHealth)
 }
 
 
@@ -226,7 +139,7 @@ void function OnSpawnPartyBallRotator( entity mover )
 void function LootDrone_Panic( LootDroneData data )
 {
 	data.lastPanicTime = Time()
-	
+
 	entity firstStopMover = CreateTrainSmoothPoint( data.mover.GetOrigin() )
 
 	entity lastNode = data.mover.Train_GetLastNode()
@@ -238,13 +151,13 @@ void function LootDrone_Panic( LootDroneData data )
 		vector smoothPoint = lastNode.GetSmoothPositionAtDistance( data.mover.Train_GetLastDistance() + (Distance2D( data.mover.GetOrigin(), nextMovingNode.GetOrigin() ) / 10 ) * i )
 		smoothPoints.append( smoothPoint )
 	}
-	
+
 	foreach( slink in lastNode.GetLinkEntArray( ) )
 	{
 		//firstStopMover.LinkToEnt ( slink )
 		lastNode.UnlinkFromEnt( slink )
 	}
-	
+
 	lastNode.LinkToEnt( firstStopMover )
 
 	lastNode = firstStopMover
@@ -255,17 +168,17 @@ void function LootDrone_Panic( LootDroneData data )
 		newNode = CreateTrainSmoothPoint( smoothPoint )
 
 		newNode.LinkToEnt ( lastNode )
-		
+
 		lastNode.LinkToEnt( newNode )
-		
+
 		lastNode = newNode
-		
+
 		DebugDrawHemiSphere( smoothPoint, Vector( 0,0,0 ), 25.0, 20, 210, 255, false, 999.0 )
 	}
-	
+
 	//link the last one to next node
 	newNode.LinkToEnt( nextMovingNode )
-	
+
 	// Important so train can start in same place
 	firstStopMover.RegenerateSmoothPoints()
 
@@ -281,6 +194,6 @@ entity function CreateTrainSmoothPoint( vector origin )
 	stopMover.kv.perfect_circular_rotation = 0
 	DispatchSpawn( stopMover )
 	stopMover.SetOrigin( origin )
-	
+
 	return stopMover
 }

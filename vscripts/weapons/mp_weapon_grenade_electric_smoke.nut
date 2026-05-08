@@ -12,7 +12,7 @@ void function MpWeaponGreandeElectricSmoke_Init()
 {
 	PrecacheParticleSystem( FX_ELECTRIC_SMOKESCREEN_PILOT )
 	PrecacheParticleSystem( FX_ELECTRIC_SMOKESCREEN_PILOT_AIR )
-	
+
 	#if SERVER
 	RegisterSignal( "RestartHighlightThread" )
 	#endif
@@ -41,13 +41,13 @@ void function OnProjectileCollision_weapon_grenade_electric_smoke( entity projec
 
 	collisionParams.hitBox = hitbox
 
-	
+
 	projectile.SetModel( $"mdl/dev/empty_model.rmdl" )
 	bool result = PlantStickyEntity( projectile, collisionParams, <90.0, 0.0, 0.0> )
 
 #if SERVER
-	AddToTrackedEnts_Level( projectile )
-	
+
+
 	if ( !result )
 	{
 		projectile.SetVelocity( <0.0, 0.0, 0.0> )
@@ -75,11 +75,11 @@ void function ElectricGrenadeSmokescreen( entity projectile, asset fx )
 
 	if ( !IsValid( owner ) )
 		return
-	
+
 	EmitSoundAtPosition( TEAM_UNASSIGNED, pos, "Wattson_Ultimate_I", owner )
-	
+
 	float duration = 10
-	
+
 	//(cafe) changed this logic to be threaded so it can be canceled with a signal, it was also moved to smokescreen file
 	// entity effect = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( $"P_impact_exp_emp_med_default" ), pos+<0,0,32>, <0,0,0> )
 	// effect.SetOwner( owner )
@@ -107,7 +107,7 @@ void function ElectricGrenadeSmokescreen( entity projectile, asset fx )
 	smokescreen.dpsPilot = radiusDamageData.explosionDamage
 	smokescreen.dpsTitan = radiusDamageData.explosionDamageHeavyArmor
 	smokescreen.lifetime = duration
-	
+
 	smokescreen.deploySound1p = "bangalore_smoke_screen_3p"
 	smokescreen.deploySound3p = "bangalore_smoke_screen_3p"
 	smokescreen.stopSound1p = "bangalore_smoke_screen_stop_3p"
@@ -119,7 +119,7 @@ void function ElectricGrenadeSmokescreen( entity projectile, asset fx )
 	smokescreen.fxOffsets = [ <0.0, 0.0, 5.0> ]
 
 	Smokescreen( smokescreen, owner )
-	
+
 	projectile.Destroy()
 }
 #endif

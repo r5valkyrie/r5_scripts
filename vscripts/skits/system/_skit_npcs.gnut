@@ -1,0 +1,974 @@
+#if SERVER
+global function SkNPC_InitForGameMode
+//
+global function SkNPC_SpawnNPC
+global function SkNPC_SpawnNPCWithRank
+global function SkNPC_SpawnNonCriticalNPC
+global function SkNPC_SpawnNonCriticalNPCWithRank
+global function SkNPC_SpawnNPCDetailed
+global function SkNPC_RemoveNPCFromSkit
+global function SkNPC_GetSkitNPCs
+//
+global function CanSpawnNonCriticalNPC
+global function SkNPC_CanSpawnNonCriticalNPC
+global function SkNPC_MarkNPCCritical
+global function SkNPC_MarkNPCNonCritical
+global function SkNPC_ChangeNPCPriority
+//
+global function SkNPC_GetSkitSpawningReport
+//
+global function SkNPC_SquadRespawn
+global function SkNPC_SquadReleaseAll
+global function SkNPC_SquadAddNPCToSquad
+global function SkNPC_SquadMarkNPCForGC_NoRespawn
+
+// utils:
+global function SkNPC_SpawnDropPodTroops
+
+global function SkNPC_DefendPositionUntilSignal
+global function SkNPC_HuntClosestPlayerInObjective
+global function SkNPC_HuntClosestPlayer
+global function SkNPC_SetToDropCoinsOnDamage
+global function SkNPC_IgnoreAllAndGoToPosToDelete
+
+global function MakeFakeNPC
+global function GetFakeNpcType
+global function TryToReplaceFakeNpcWithReal
+global function GetRandomIdleAnimForNpcType
+global function GetRandomDeathAnimForNpcType
+
+
+// internal:
+global function _RemoveNPCFromSkitDirectly
+
+global const int MAX_NPC_COUNT = 140
+global const int MAX_NPC_COUNT_TO_ALLOW_NON_CRITICAL = 120
+
+global struct NPCSquadInfo
+{
+	array<int> npcTypes
+	int npcRank
+
+	array<InfantrySpawn> spawnPoints
+	array<ProwlerSpawn> prowlerSpawnPoints
+	array<entity> spawnTargets
+	array< table <string, vector> > spawnTableOriginAngles
+	int spawnCredits
+
+	int deathCount
+
+	int criticalNPCCredits = -1
+
+	array<entity> ents
+
+	bool isSpawned
+}
+
+struct SkitNPCSpawnTrackingData
+{
+	int criticalSpawnedCount
+	int nonCriticalSpawnedCount
+	int destroyedCount
+	int nonCriticalFailedSpawnCount
+	int reclaimedCount
+}
+
+global const string SIGNAL_STOP_DEFENDING = "StopDefending"
+global const string SIGNAL_STOP_HUNTING = "StopHunting"
+global const string SIGNAL_STOP_PATHING = "StopPathing"
+
+const float RECLAIM_DESPAWN_PLAYER_DIST = 1000
+const float RECLAIM_DESPAWN_PLAYER_DIST_SQR = RECLAIM_DESPAWN_PLAYER_DIST * RECLAIM_DESPAWN_PLAYER_DIST
+
+const int DEFAULT_RANK = 0
+
+array<entity> s_skitNPCs
+array<entity> s_skitCriticalNPCs
+array<entity> s_skitNonCriticalNPCs
+table<int, array<entity> > s_aiPriorityToNonCriticalNPCs
+SkitNPCSpawnTrackingData& s_trackingData
+
+void function SkNPC_InitForGameMode()
+{
+	SkitNPCSpawnTrackingData trackingData
+	s_trackingData = trackingData
+	RegisterSignal( SIGNAL_STOP_DEFENDING )
+	RegisterSignal( SIGNAL_STOP_HUNTING )
+	RegisterSignal( SIGNAL_STOP_PATHING )
+}
+
+void function SkNPC_DefendPositionUntilSignal( entity npc, vector defendPos, float defendRadius, string signalToStopDefending, SkitInstance skitInstance, float arrivalTolerence = 128, float fightRadius = 128  )
+{
+	//WIP: need a global, reliable way to get an AI to defend a spot until told not to
+	SkThread_MarkAsNewSubthread( skitInstance )
+	AssertIsNewThread()
+
+	if ( !IsAlive( npc ) )
+		return
+
+	npc.EndSignal( "OnDeath" )
+
+	if ( signalToStopDefending != "" )
+		npc.EndSignal( signalToStopDefending )
+
+	float oldFightRadius = npc.AssaultGetFightRadius()
+	float oldGoalRadius = npc.AssaultGetGoalRadius()
+	float oldArrivalTolerence = npc.AssaultGetArrivalTolerance()
+
+	OnThreadEnd(
+		function() : ( npc, oldFightRadius, oldGoalRadius, oldArrivalTolerence )
+		{
+			if ( !IsAlive( npc ) )
+				return
+
+			npc.DisableBehavior( "Assault" )
+			npc.AssaultSetFightRadius( oldFightRadius )
+			npc.AssaultSetGoalRadius( oldGoalRadius )
+			npc.AssaultSetArrivalTolerance( oldArrivalTolerence )
+		}
+	)
+
+	while( true )
+	{
+		npc.EnableBehavior( "Assault" )
+		npc.AssaultSetGoalRadius( defendRadius )
+		npc.AssaultSetArrivalTolerance( arrivalTolerence )
+		npc.AssaultSetFightRadius( fightRadius )
+		npc.AssaultPointClamped( defendPos )
+		WaitSignal( npc, "OnFinishedAssault", "OnFailedToPath" )
+		wait RandomFloatRange( 3, 4 )
+
+		//wander around a little
+		npc.DisableBehavior( "Assault" )
+		npc.AssaultSetFightRadius( oldFightRadius )
+		npc.AssaultSetGoalRadius( oldGoalRadius )
+		npc.AssaultSetArrivalTolerance( oldArrivalTolerence )
+		wait RandomFloatRange( 1, 2 )
+	}
+}
+
+void function HuntClosestPlayer_( entity npc, string signalToStopHunting, SkitInstance si, ObjectiveInstance ornull oi )
+{
+	if ( !IsAlive( npc ) )
+		return
+
+	npc.EndSignal( "OnDeath" )
+
+	//don't want to run this thread more than once on an npc
+	npc.Signal( SIGNAL_STOP_HUNTING )
+	npc.EndSignal( SIGNAL_STOP_HUNTING )
+
+	if ( npc.HasKey( "alwaysalert" ) )
+		npc.kv.alwaysalert = true
+	UpdateEnemyMemoryWithinRadius( npc, 3000 )
+	if ( signalToStopHunting != "" )
+		npc.EndSignal( signalToStopHunting )
+
+	OnThreadEnd(
+		function() : ( npc )
+		{
+			if ( !IsValid( npc ) )
+				return
+
+			npc.DisableMaxEnemyDistHeavyArmorOverride()
+			npc.DisableMaxEnemyDistOverride()
+		}
+	)
+
+	while( true )
+	{
+		wait RandomFloatRange( 5, 10 )
+
+		array<entity> players
+		if ( oi != null )
+		{
+			expect ObjectiveInstance( oi )
+			players = Objectives_GetPlayersInObjective( oi )
+		}
+		else
+		{
+			players = GetPlayerArray_Alive()
+		}
+		if ( players.len() == 0 )
+			continue
+
+		entity closestPlayer = GetClosest( players, npc.GetOrigin() )
+		if ( !IsValid( closestPlayer ) )
+			continue
+
+		float largeMaxEnemyDist = 10000
+
+		// Give enemy location information and allow us to engage enemies really far away from us
+		npc.SetEnemy( closestPlayer )
+		npc.SetMaxEnemyDistOverride( largeMaxEnemyDist )
+		npc.SetMaxEnemyDistHeavyArmorOverride( largeMaxEnemyDist )
+
+		if ( npc.HasKey( "alwaysalert" ) )
+			npc.kv.alwaysalert = true
+
+		//DebugDrawLine( npc.GetOrigin() + <0, 0, 72>, goalPos, COLOR_RED, true, waitTime )
+	}
+}
+void function SkNPC_HuntClosestPlayerInObjective( entity npc, string signalToStopHunting, ObjectiveInstance oi )
+{
+	thread function() : (npc, signalToStopHunting, oi)
+	{
+		SkThread_MarkAsNewSubthread( oi.skitInstance )
+		HuntClosestPlayer_( npc, signalToStopHunting, oi.skitInstance, oi )
+	}()
+}
+
+void function SkNPC_IgnoreAllAndGoToPosToDelete( entity npc, string signalToStopPathing, ObjectiveInstance oi, vector goalPos )
+{
+	if ( !IsAlive( npc ) )
+		return
+
+	AssertIsNewThread()
+	SkThread_MarkAsNewSubthread( oi.skitInstance )
+
+	npc.EndSignal( "OnDeath" )
+
+	if ( signalToStopPathing != "" )
+		npc.EndSignal( signalToStopPathing )
+
+	float oldFightRadius = npc.AssaultGetFightRadius()
+	float oldGoalRadius = npc.AssaultGetGoalRadius()
+	npc.kv.alwaysalert = 1
+
+	OnThreadEnd(
+		function() : ( npc, oldFightRadius, oldGoalRadius )
+		{
+			if ( !IsAlive( npc ) )
+				return
+
+			npc.AssaultSetFightRadius( oldFightRadius )
+			npc.AssaultSetGoalRadius( oldGoalRadius )
+			npc.DisableNPCFlag( NPC_IGNORE_ALL )
+			npc.kv.alwaysalert = 0
+		}
+	)
+
+	npc.EnableNPCFlag( NPC_IGNORE_ALL )
+	npc.AssaultSetGoalRadius( 256 )
+	npc.AssaultSetFightRadius( 64 )
+	npc.AssaultPointClamped( goalPos )
+
+	WaitSignal( npc, "OnFinishedAssault", "OnEnterGoalRadius" )
+
+	npc.Destroy()
+}
+
+
+void function SkNPC_HuntClosestPlayer( SkitInstance si, entity npc )
+{
+	AssertIsNewThread()
+	SkThread_MarkAsNewSubthread( si )
+	HuntClosestPlayer_( npc, "", si, null )
+}
+
+void function AssignNPCToSkit( SkitInstance si, entity npc )
+{
+	if ( si.lifeState != eSkitLifeState.RUNNING )
+	{
+		string warningStr = format( "%s() -- Assigning npc %s to skit instance id %d but skit is not in running state! (state %d)", FUNC_NAME(), string( npc ), si.skitId, si.lifeState )
+		Warning( warningStr )
+		SkDebug_AddMessageToDump( Time(), FUNC_NAME(), warningStr )
+	}
+	Assert( npc.ai.skitId < 0 )
+	npc.ai.skitId = si.skitId
+	si._gc_npcs.append( npc )
+}
+
+array<entity> function SkNPC_GetSkitNPCs( SkitInstance si )
+{
+	return clone si._gc_npcs
+}
+
+void function _RemoveNPCFromSkitDirectly( entity npc, SkitInstance si )
+{
+	Assert( npc.ai.skitId == si.skitId )
+	si._gc_npcs.removebyvalue( npc )
+	npc.ai.skitId = -1
+}
+
+void function SkNPC_RemoveNPCFromSkit( entity npc )
+{
+	SkitInstance ornull si = Sk_GetSkit( npc.ai.skitId )
+	if ( si == null )
+	{
+		string str = format( "%s() -- Attempted to remove skit npc %s from skit %d, but Sk_GetSkit returned null!", FUNC_NAME(), string(npc), npc.ai.skitId )
+		Warning( str )
+		SkDebug_AddMessageToDump( Time(), FUNC_NAME(), str )
+		npc.ai.skitId = -1
+		return
+	}
+	expect SkitInstance( si )
+	_RemoveNPCFromSkitDirectly( npc, si )
+}
+
+void function OnSkitNPCDestroyed( entity npc )
+{
+	if ( s_skitNPCs.contains( npc ) )
+		s_skitNPCs.fastremovebyvalue( npc )
+
+	if ( s_skitCriticalNPCs.contains( npc ) )
+		s_skitCriticalNPCs.fastremovebyvalue( npc )
+
+	if ( s_skitNonCriticalNPCs.contains( npc ) )
+		s_skitNonCriticalNPCs.fastremovebyvalue( npc )
+
+	if ( npc.ai.aiPriority in s_aiPriorityToNonCriticalNPCs )
+		s_aiPriorityToNonCriticalNPCs[npc.ai.aiPriority].fastremovebyvalue( npc )
+
+	if ( npc.ai.skitId >= 0 )
+	{
+		SkNPC_RemoveNPCFromSkit( npc )
+		Assert( npc.ai.skitId == -1 )
+	}
+
+	s_trackingData.destroyedCount++
+}
+
+entity function SkNPC_SpawnNPCDetailed( SkitInstance si, NpcSpawnInfo infoRaw, bool isCritical )
+{
+	entity npc = SpawnNPCDetailed( infoRaw )
+	AddEntityDestroyedCallback( npc, OnSkitNPCDestroyed )
+	AssignNPCToSkit( si, npc )
+
+	npc.ai.aiPriority = si.aiPriority
+
+	printf( "Spawning %sskit NPC %s attached to skit id: %d", (isCritical ? "critical " : ""), string( npc ), si.skitId )
+
+	s_skitNPCs.append( npc )
+	if ( isCritical )
+	{
+		s_skitCriticalNPCs.append( npc )
+		s_trackingData.criticalSpawnedCount++
+	}
+	else
+	{
+		s_skitNonCriticalNPCs.append( npc )
+		int priority = npc.ai.aiPriority
+		if ( !(priority in s_aiPriorityToNonCriticalNPCs) )
+			s_aiPriorityToNonCriticalNPCs[priority] <- []
+		s_aiPriorityToNonCriticalNPCs[priority].append( npc )
+		s_trackingData.nonCriticalSpawnedCount++
+	}
+
+	return npc
+}
+
+entity function SkNPC_SpawnNPC( SkitInstance si, int npcType, vector spawnOrigin, vector spawnAngles )
+{
+	return SkNPC_SpawnNPCWithRank( si, npcType, spawnOrigin, spawnAngles, DEFAULT_RANK )
+}
+
+entity function SkNPC_SpawnNPCWithRank( SkitInstance si, int npcType, vector spawnOrigin, vector spawnAngles, int rank )
+{
+	int npcCount = GetNPCArray().len()
+	if ( npcCount >= MAX_NPC_COUNT )
+		ReclaimNPC()
+
+	NpcSpawnInfo info
+	info.npcType = npcType
+	info.spawnOrigin = spawnOrigin
+	info.spawnAngles = spawnAngles
+	info.npcRank = rank
+
+	return SkNPC_SpawnNPCDetailed( si, info, true )
+}
+
+entity ornull function SkNPC_SpawnNonCriticalNPC( SkitInstance si, int npcType, vector spawnOrigin, vector spawnAngles )
+{
+	return SkNPC_SpawnNonCriticalNPCWithRank( si, npcType, spawnOrigin, spawnAngles, DEFAULT_RANK )
+}
+
+entity ornull function SkNPC_SpawnNonCriticalNPCWithRank( SkitInstance si, int npcType, vector spawnOrigin, vector spawnAngles, int rank )
+{
+	if ( !SkNPC_CanSpawnNonCriticalNPC( si ) )
+	{
+		printf( "NON CRITICAL NPC NOT SPAWNED -- npc type %d not spawned at %s; current npc count: %d, max npcs to allow non critical spawns: %d ", npcType, VectorToString( spawnOrigin ), GetNPCArray().len(), MAX_NPC_COUNT_TO_ALLOW_NON_CRITICAL )
+		s_trackingData.nonCriticalFailedSpawnCount++
+		return null
+	}
+
+	NpcSpawnInfo info
+	info.npcType = npcType
+	info.spawnOrigin = spawnOrigin
+	info.spawnAngles = spawnAngles
+	info.npcRank = rank
+
+	return SkNPC_SpawnNPCDetailed( si, info, false )
+}
+
+bool function IsCriticalNPC( entity npc )
+{
+	if ( s_skitCriticalNPCs.contains( npc ) )
+		return true
+	else if ( s_skitNonCriticalNPCs.contains( npc ) )
+		return false
+	else
+		Assert( false, "NPC is not in critical NPC list or non-critical NPC list" )
+
+	unreachable
+}
+
+bool function CanSpawnNonCriticalNPC()
+{
+	int npcCount = GetNPCArray().len()
+	if ( npcCount >= MAX_NPC_COUNT_TO_ALLOW_NON_CRITICAL )
+		return false
+
+	return true
+}
+bool function SkNPC_CanSpawnNonCriticalNPC( SkitInstance si )
+{
+	return CanSpawnNonCriticalNPC()
+}
+
+void function SkNPC_MarkNPCCritical( SkitInstance si, entity npc )
+{
+	s_skitNonCriticalNPCs.fastremovebyvalue( npc )
+
+	int priority = npc.ai.aiPriority
+	if ( priority in s_aiPriorityToNonCriticalNPCs )
+		s_aiPriorityToNonCriticalNPCs[priority].fastremovebyvalue( npc )
+
+	if ( !s_skitCriticalNPCs.contains( npc ) )
+		s_skitCriticalNPCs.append( npc )
+}
+
+void function SkNPC_MarkNPCNonCritical( SkitInstance si, entity npc )
+{
+	s_skitCriticalNPCs.fastremovebyvalue( npc )
+
+	if ( !s_skitNonCriticalNPCs.contains( npc ) )
+		s_skitNonCriticalNPCs.append( npc )
+
+	int priority = npc.ai.aiPriority
+	if ( !(priority in s_aiPriorityToNonCriticalNPCs) )
+		s_aiPriorityToNonCriticalNPCs[priority] <- [npc]
+	else if ( !s_aiPriorityToNonCriticalNPCs[priority].contains( npc ) )
+		s_aiPriorityToNonCriticalNPCs[priority].append( npc )
+}
+
+void function SkNPC_ChangeNPCPriority( SkitInstance si, entity npc, int newPriority )
+{
+	if ( npc.ai.aiPriority == newPriority )
+		return
+
+	int oldPriority = npc.ai.aiPriority
+	npc.ai.aiPriority = newPriority
+
+	if ( !IsCriticalNPC( npc ) )
+	{
+		if ( oldPriority in s_aiPriorityToNonCriticalNPCs )
+			s_aiPriorityToNonCriticalNPCs[oldPriority].fastremovebyvalue( npc )
+
+		if ( !(newPriority in s_aiPriorityToNonCriticalNPCs) )
+			s_aiPriorityToNonCriticalNPCs[newPriority] <- []
+		s_aiPriorityToNonCriticalNPCs[newPriority].append( npc )
+	}
+}
+
+void function ReclaimNPC()
+{
+	entity ornull npc = SelectNPCToReclaim()
+	if ( npc == null )
+	{
+		string warningStr = format( "FOUND NO NON-CRITICAL NPCS TO RECLAIM! WE MIGHT HIT THE NPC CAP! Current NPC count: %d", GetNPCArray().len() )
+		Warning( warningStr )
+		SkDebug_AddMessageToDump( Time(), FUNC_NAME(), warningStr )
+		return
+	}
+	expect entity( npc )
+
+	printf( "RECLAIMING NPC -- npc %s from skit id %d", string( npc ), npc.ai.skitId )
+	if ( npc.ai.skitId >= 0 )
+	{
+		SkitInstance ornull si = Sk_GetSkit( npc.ai.skitId )
+		if ( si == null )
+		{
+			string str = format( "%s() -- Attempted to reclaim skit npc %s from skit %d, but Sk_GetSkit returned null!", FUNC_NAME(), string(npc), npc.ai.skitId )
+			Warning( str )
+			SkDebug_AddMessageToDump( Time(), FUNC_NAME(), str )
+		}
+		else
+		{
+			expect SkitInstance( si )
+			Assert( npc.ai.skitId == si.skitId )
+			if ( si.func_onNPCGarbageCollected != null )
+				si.func_onNPCGarbageCollected( si, npc )
+
+			foreach ( callback in npc.ai.onNPCGarbageCollectedCallbacks )
+				callback( npc )
+		}
+	}
+
+	if ( GarbageCollection_IsNPCMarked( npc ) )
+		GarbageCollection_ClearMarkFromNPC( npc )
+
+	if ( IsAlive( npc ) )
+		npc.Die( svGlobal.worldspawn, svGlobal.worldspawn, { scriptType = DF_INSTANT, damageSourceId = damagedef_despawn } )
+
+	npc.Destroy()
+
+	s_trackingData.reclaimedCount++
+}
+
+entity ornull function SelectNPCToReclaim()
+{
+	//todo create background job system which calculates data like priority and distance to closest player over time and sorts AI by "best to remove". then use that data to select an npc
+
+	for ( int i=0; i<eSkitAIPriority._count; i++ )
+	{
+		if ( !(i in s_aiPriorityToNonCriticalNPCs) )
+			continue
+
+		array<entity> npcsForPriority = s_aiPriorityToNonCriticalNPCs[i]
+		if ( npcsForPriority.len() == 0 )
+			continue
+
+		//just remove someone -- this might look bad right now but it's better than perf cost of doing calculations here, see above todo
+		return npcsForPriority[0]
+	}
+
+	//there were no entries in s_aiPriorityToNonCriticalNPCs, so remove a random non critical npc if possible
+	if ( s_skitNonCriticalNPCs.len() > 0 )
+		return s_skitNonCriticalNPCs[0]
+
+	//no non-critical AI, so lets see if we have any waiting to be garbage collected
+	array<entity> garbageCollectionEnts = GarbageCollection_GetMarkedNPCs()
+	if ( garbageCollectionEnts.len() > 0 )
+		return garbageCollectionEnts[0]
+
+	//we have no non critical NPCs to remove! uh oh!
+	return null
+}
+
+string function SkNPC_GetSkitSpawningReport()
+{
+	string res = "TRACKED DATA:\n"
+	res += format( "	NPCs spawned: %d -- %d critical; %d non-critical\n", s_trackingData.criticalSpawnedCount + s_trackingData.nonCriticalSpawnedCount, s_trackingData.criticalSpawnedCount, s_trackingData.nonCriticalSpawnedCount )
+	res += format( "	NPCs destroyed: %d\n", s_trackingData.destroyedCount )
+	res += format( "	Non-critical NPCs blocked from spawning: %d\n", s_trackingData.nonCriticalFailedSpawnCount )
+	res += format( "	NPCs reclaimed: %d\n", s_trackingData.reclaimedCount )
+
+	return res
+}
+
+
+////////////////////////
+// NPC Squads
+//
+
+array<entity> function SkNPC_SquadRespawn( SkitInstance si, NPCSquadInfo squad )
+{
+	Assert( !squad.isSpawned )
+
+	// Handle any existing members who haven't been garbage collected yet:
+	foreach ( entity npc in squad.ents )
+	{
+		if ( !IsAlive( npc ) )
+			continue
+		GarbageCollection_ClearMarkFromNPC( npc )
+	}
+
+	// gather spawn location info
+	array<vector> spawnOrigins
+	array<vector> spawnAngles
+	if ( squad.spawnPoints.len() > 0 )
+	{
+		foreach ( spawnInfo in squad.spawnPoints )
+		{
+			spawnOrigins.append( spawnInfo.core.spawnOrigin )
+			spawnAngles.append( spawnInfo.core.spawnAngles )
+		}
+	}
+	else if ( squad.prowlerSpawnPoints.len() > 0 )
+	{
+		foreach ( spawnInfo in squad.prowlerSpawnPoints )
+		{
+			spawnOrigins.append( spawnInfo.core.spawnOrigin )
+			spawnAngles.append( spawnInfo.core.spawnAngles )
+		}
+	}
+	else if( squad.spawnTargets.len() > 0 )
+	{
+		foreach ( entity target in squad.spawnTargets )
+		{
+			spawnOrigins.append( target.GetOrigin() )
+			spawnAngles.append( target.GetAngles() )
+		}
+	}
+	else
+	{
+		Assert( squad.spawnTableOriginAngles.len() > 0, "No valid spawn location data." )
+
+		for ( int i = 0; i < squad.spawnTableOriginAngles.len(); ++i )
+		{
+			spawnOrigins.append( squad.spawnTableOriginAngles[i]["origin"] )
+			spawnAngles.append( squad.spawnTableOriginAngles[i]["angles"] )
+		}
+	}
+
+	// spawn the squad npcs
+	array<entity> newEnts
+	int count = squad.spawnCredits
+	int spawnIdx = 0
+	for ( int idx = 0; idx < count; ++idx )
+	{
+		int npcType = squad.npcTypes.getrandom()
+		entity npc
+
+		//re-cycle through spawn positions if we are at the end of the array
+		if ( spawnIdx > spawnOrigins.len() - 1 )
+			spawnIdx = 0
+
+		if ( squad.criticalNPCCredits < 0 || squad.criticalNPCCredits > 0 )
+		{
+			npc = SkNPC_SpawnNPCWithRank( si, npcType, spawnOrigins[spawnIdx], spawnAngles[spawnIdx], squad.npcRank )
+			if ( squad.criticalNPCCredits > 0 )
+				squad.criticalNPCCredits--
+		}
+		else
+		{
+			entity ornull npcRaw = SkNPC_SpawnNonCriticalNPCWithRank( si, npcType, spawnOrigins[spawnIdx], spawnAngles[spawnIdx], squad.npcRank )
+			if ( npcRaw == null )
+				break
+			npc = expect entity(npcRaw)
+		}
+
+		spawnIdx++
+		squad.spawnCredits--
+		SkNPC_SquadAddNPCToSquad( squad, npc )
+		newEnts.append( npc )
+	}
+
+	squad.isSpawned = true
+	return newEnts
+
+}
+
+void function SkNPC_SquadAddNPCToSquad( NPCSquadInfo squad, entity npc )
+{
+	Assert( npc.ai.isInSquad == false )
+	squad.ents.append( npc )
+	npc.ai.isInSquad = true
+	Assert( npc.ai.squadNoRespawn == false )
+
+	//
+	AddEntityCallback_OnKilled( npc, void function ( entity npc, var damageInfo ) : (squad)
+	{
+		int damageSourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+		if ( damageSourceId == damagedef_despawn )
+			return
+
+		squad.deathCount++
+	} )
+
+	//
+	AddEntityDestroyedCallback( npc, void function ( entity npc ) : (squad)
+	{
+		squad.ents.removebyvalue( npc )
+	} )
+
+	//
+	AddNPCCallback_OnGarbageCollected( npc, void function ( entity npc ) : (squad)
+	{
+		if ( npc.ai.squadNoRespawn )
+			return
+
+		if ( squad.criticalNPCCredits >= 0 && IsCriticalNPC( npc ) )
+			squad.criticalNPCCredits++
+		squad.spawnCredits++
+	} )
+}
+
+void function SkNPC_SquadReleaseAll( NPCSquadInfo squad )
+{
+	Assert( squad.isSpawned )
+
+	foreach ( entity npc in squad.ents )
+	{
+		if ( !IsAlive( npc ) )
+			continue
+		if ( npc.ai.squadNoRespawn )
+			continue
+
+		GarbageCollection_MarkNPC( npc )
+	}
+
+	squad.isSpawned = false
+}
+
+void function SkNPC_SquadMarkNPCForGC_NoRespawn( entity npc )
+{
+	npc.ai.squadNoRespawn = true
+	GarbageCollection_MarkNPC( npc )
+}
+
+
+
+////////////////////////
+// NPC Utils
+//
+
+array<entity> function SkNPC_SpawnDropPodTroops( SkitInstance si, vector dropPos, array<int> payload )
+{
+	entity marker = CreateEntity( "info_target" )
+	DispatchSpawn( marker )
+	marker.SetOrigin( dropPos )
+
+	array<entity functionref( int, vector, vector, table )> spawnfuncs
+	foreach( entry in payload )
+	{
+		int npcType = entry
+		spawnfuncs.append( entity function( int team, vector origin, vector angles, table spawnInfo ) : (si, npcType)
+		{
+			Assert( team == TEAM_ANY )
+			entity result = SkNPC_SpawnNPC( si, npcType, origin, angles )
+			return result
+		} )
+	}
+
+	// Vestigal:
+	array<table> customData
+	customData.resize( payload.len() )
+
+	int podFlags = eDropPodFlag.DISSOLVE_AFTER_DISEMBARKS
+	array<entity> spawnedEnts
+	waitthread Spawn_DropPodSquadCustom( spawnfuncs, customData, spawnedEnts, TEAM_ANY, marker, podFlags, 0 )
+
+	marker.Destroy()
+	return spawnedEnts
+}
+
+////
+
+void function SkNPC_SetToDropCoinsOnDamage( entity npc, int coinsWhileAlive, int coinsOnDeath )
+{
+                    
+                                                                                                                      
+   
+                                                         
+                                                      
+          
+
+                                                                      
+                                  
+                                                                           
+
+                                                                
+                                                 
+    
+                                                                                                
+                                             
+                                                                      
+    
+
+                            
+                                                     
+                                         
+                                           
+                               
+    
+                                                       
+                                                  
+                                                                   
+    
+     
+       
+}
+
+string function GetRandomIdleAnimForNpcType( int npcType )
+{
+	array <string> anims
+	switch( npcType )
+	{
+                    
+                     
+                      
+                                               
+                                               
+                                               
+                                               
+                                               
+                                               
+        
+                          
+
+                   
+		case eNPC.PROWLER:
+		case eNPC.DIRE_PROWLER:
+			anims.append( "pr_attack_wait_idle_01" )
+			anims.append( "pr_attack_wait_idle_02" )
+			anims.append( "pr_combat_idle_01" )
+			anims.append( "pr_combat_idle_04" )
+			anims.append( "pr_idle_lay" )
+			break
+                          
+
+                  
+                   
+                                                  
+        
+                        
+
+                   
+		case eNPC.SPECTRE:
+		case eNPC.DEATH_SPECTRE:
+                            
+                            
+                                  
+                     
+                                 
+                                  
+			anims.append( "CQB_Idle_Casual" )
+			break
+                         
+
+
+			/*
+			case eNPC.STALKER:
+				anims.append( "" )
+				break
+			*/
+		default:
+			Assert( false, "Unhandled npcType" )
+	}
+	anims.randomize()
+	return anims[ 0 ]
+}
+
+string function GetRandomDeathAnimForNpcType( int npcType )
+{
+	array <string> anims
+	switch( npcType )
+	{
+                    
+                     
+                      
+                                                
+        
+                          
+
+                  
+                   
+                                   
+        
+                        
+
+			/*
+			case eNPC.STALKER:
+				anims.append( "" )
+				break
+			case eNPC.SPECTRE:
+				anims.append( "" )
+				break
+			*/
+		default:
+			Assert( false, "Unhandled npcType" )
+	}
+	anims.randomize()
+	return anims[ 0 ]
+}
+
+entity function MakeFakeNPC( int npcType, vector spawnOrigin, vector spawnAngles, int rank = 0 )
+{
+	asset modelAsset
+
+	int skinIndex = 0
+	switch( npcType )
+	{
+                    
+                      
+                                                            
+                
+        
+                     
+                                                            
+        
+                          
+
+                  
+                   
+                                                          
+        
+                        
+
+			/*
+			case eNPC.STALKER:
+				modelAsset = GetNPCAsset( eNPC.STALKER, eNPCAsset.BODY )
+				idleAnims.append( "" )
+				break
+			case eNPC.SPECTRE:
+				modelAsset = GetNPCAsset( eNPC.SPECTRE, eNPCAsset.BODY )
+				idleAnims.append( "" )
+				break
+			*/
+		default:
+			Assert( false, "Unhandled npcType" )
+	}
+
+	entity fakeNPC = CreatePropDynamic( modelAsset, spawnOrigin, spawnAngles, 6 )
+	fakeNPC.SetSkin( skinIndex )
+	DropToGround( fakeNPC )
+	string idleAnim = GetRandomIdleAnimForNpcType( npcType )
+	float initialTime = RandomFloatRange( 0, fakeNPC.GetSequenceDuration( idleAnim ) )
+	thread PlayAnimTeleport( fakeNPC, idleAnim, fakeNPC.GetOrigin(), fakeNPC.GetAngles(), initialTime )
+
+	return fakeNPC
+}
+
+int function GetFakeNpcType( entity fakeNpc )
+{
+	switch ( fakeNpc.GetModelName() )
+	{
+                    
+                                                    
+                                
+                         
+       
+                        
+                          
+
+                  
+                                                  
+                     
+                        
+
+		default:
+			Assert( false, "Unhandled modelName: " + fakeNpc.GetModelName() )
+	}
+
+	unreachable
+}
+
+entity ornull function TryToReplaceFakeNpcWithReal( entity fakeNpc, SkitInstance skitInstance )
+{
+	//will replace with real AI if budget allows, otherwise will play death anim and remove itself
+
+	if ( !IsValid( fakeNpc  ) )
+		return null
+
+	if ( fakeNpc.e.isDisabled ) //already being 'killed'
+		return null
+
+	int npcType = GetFakeNpcType( fakeNpc )
+	entity ornull npcRaw = SkNPC_SpawnNonCriticalNPC( skitInstance, npcType, fakeNpc.GetOrigin(), fakeNpc.GetAngles() )
+	if ( npcRaw == null )
+	{
+		fakeNpc.e.isDisabled = true
+		thread PlayAnim( fakeNpc, GetRandomDeathAnimForNpcType( npcType ) )
+		thread DestroyAfterDelay( fakeNpc, 5 )
+		printf( "%s() - Unable to spawn real npc, making the fake one 'die' ", FUNC_NAME() )
+		return null
+	}
+
+	fakeNpc.Destroy()
+	return expect entity( npcRaw )
+}
+
+#endif // SERVER
+ 

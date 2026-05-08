@@ -8,25 +8,44 @@
 // ########   #######   #######  ##     ##  ######
 //
 
+global function IsDoorLocked
+
+#if SERVER
+global function GetAllDoorEnts
+global function GetAllNonCodeDoorEnts
+global function GetAllCodeDoorEnts
+global function SURVIVAL_ResetAllDoors
+global function SURVIVAL_ResetAllDoorsInRealm
+global function LockDoor
+global function UnlockDoor
+global function OpenDoor
+global function CloseDoor
+global function OpenAndLockAllScriptDoors
+global function GetClosestScriptDoorToPos
+global function GetClosestCodeDoorToPos
+global function IsScriptDoorLocked
+global function AddCallback_OnCodeDoorBroken
+global function ReinforceDoor
+global function UnReinforceDoor
+global function ReplaceDoor
+global function ShouldDestroyDoor
+global function FinishDoorExplosiveDamage
+global function GetDoorType
+#endif
+#if SERVER
+global function CreateSurvivalDoorPlain
+global function GetDoorAtOrigin
+global function GetDoorsAtOrigin
+global function GetEntsFromArrayInRange
+#endif
+
 global function ShDoors_Init
 global function IsDoor
 global function IsCodeDoor
 global function IsDoorOpen
 global function GetAllPropDoors
-global function GetAllPropDoors_BigOnes
-global function IsDoorLocked
 
-#if SERVER
-global function RemoveDoorFromManagedEntArray
-global function LockDoor
-global function UnlockDoor
-global function OpenDoor
-global function CloseDoor
-global function GetDoorType
-global function GetEntsFromArrayInRange
-#endif
-
-#if SERVER && DEVELOPER
+#if SERVER && DEV
 global function DEV_RestartAllDoorThinks
 #endif
 
@@ -34,6 +53,7 @@ global function CodeCallback_OnDoorInteraction
 
 global enum eDoorType
 {
+	UNKNOWN = -1,
 	MODEL,
 	MOVER,
 	PLAIN,
@@ -44,14 +64,14 @@ global enum eDoorType
 
 struct DoorData
 {
-	string className
-	string scriptName
-	vector origin
-	vector angles
-	int realm
-	asset modelName
-	entity linkDoor
-	bool hasLinkDoor
+	string          className
+	string          scriptName
+	vector          origin
+	vector          angles
+	int             realm
+	asset           modelName
+	entity          linkDoor
+	bool            hasLinkDoor
 	DoorData ornull linkDoorData
 }
 
@@ -60,10 +80,9 @@ struct
 	#if SERVER
 		table<entity, int> allDoors
 	#endif
-	array<entity> bigPropDoors
 
 	#if SERVER
-		int propDoorArrayIndex
+		int             propDoorArrayIndex
 		table< int, array< DoorData > > recreateDoorDataByRealm
 		table< entity, DoorData > rebuiltDoorToData
 		table< vector, vector > doorBaseAnglesByDoorLoc // base Angles referenced by location of door.
@@ -74,45 +93,10 @@ struct
 		array<entity> allPropDoors
 	#endif //CLIENT
 
-	bool doorsEnabled
-	bool useBlockableDoors
-	bool useCodeDoors
-	bool forceSlidingDoors
-	int blockableDoorHealth
-	float blockableDoorOperationDuration
-	bool blockableDoorHurtBySpecialKick
-	int blockableDoorGuaranteedKickKillCount
-	bool blockableDoorHurtByMelee
-	float blockableDoorExplosibeDamageMultiplier
-	bool blockableDoorHurtByNormalWeapons
-	bool blockableDoorShowDamageNumbers
-	bool blockableDoorRegenEnabled
-	bool flowstateDoorRegen
-	float blockableDoorRegenStartDelay
-	float blockableDoorRegenDuration
-
-
 } file
 
 void function ShDoors_Init()
 {
-	file.doorsEnabled 							= GetCurrentPlaylistVarBool( "survival_enable_doors", true ) // todo(dw): rename this playlist var to be non-survival specific
-	file.useBlockableDoors 						= GetCurrentPlaylistVarBool( "survival_force_blockable_doors", false )
-	file.useCodeDoors 							= GetCurrentPlaylistVarBool( "survival_force_code_doors", false )//TODO: FIX THIS ASAP
-	file.forceSlidingDoors 						= GetCurrentPlaylistVarBool( "survival_force_sliding_doors", false )
-	file.blockableDoorHealth 					= GetCurrentPlaylistVarInt( "blockable_door_health", 30 )
-	file.blockableDoorOperationDuration			= GetCurrentPlaylistVarFloat( "blockable_door_operation_duration", 0.61 )
-	file.blockableDoorHurtBySpecialKick 		= GetCurrentPlaylistVarBool( "blockable_door_can_be_hurt_by_special_kick", true )
-	file.blockableDoorGuaranteedKickKillCount 	= GetCurrentPlaylistVarInt( "blockable_door_guaranteed_kick_kill_count", 2 )
-	file.blockableDoorHurtByMelee 				= GetCurrentPlaylistVarBool( "blockable_door_can_be_hurt_by_melee", false )
-	file.blockableDoorExplosibeDamageMultiplier = GetCurrentPlaylistVarFloat( "blockable_door_explosive_damage_mutiplier", 1.0 )
-	file.blockableDoorHurtByNormalWeapons 		= GetCurrentPlaylistVarBool( "blockable_door_can_be_hurt_by_normal_weapons", false )
-	file.blockableDoorShowDamageNumbers 		= GetCurrentPlaylistVarBool( "blockable_door_show_damage_numbers", false )
-	file.blockableDoorRegenEnabled 				= GetCurrentPlaylistVarBool( "blockable_door_regen_enabled", false )
-	file.flowstateDoorRegen 					= GetCurrentPlaylistVarBool( "flowstateDoorsRegen", false )
-	file.blockableDoorRegenStartDelay 			= GetCurrentPlaylistVarFloat( "blockable_door_regen_start_delay", 1.8 )
-	file.blockableDoorRegenDuration 			= GetCurrentPlaylistVarFloat( "blockable_door_regen_duration", 4.2 )
-
 	#if SERVER
 		RegisterSignal( "PlayerEnteredDoorTrigger" )
 		RegisterSignal( "PlayerLeftDoorTrigger" )
@@ -122,10 +106,9 @@ void function ShDoors_Init()
 		//RegisterSignal( "DelayedSetDoorUsable" )
 		RegisterSignal( "OperateLinkedDoor" )
 		RegisterSignal( "BlockableDoor_ThreadedRegen" )
-		RegisterSignal( "ScriptCalled" )
+		RegisterSignal( "ForceToggleScriptedDoor" )
 		RegisterSignal( "ScriptedDoorReady" )
 		RegisterSignal( "AnimTimeout" )
-		RegisterSignal( "ForceToggleScriptedDoor" )
 		RegisterSignal( "OnDoorReset" )
 
 		AddSpawnCallback_ScriptName( "survival_door_model", OnDoorSpawned )
@@ -133,9 +116,14 @@ void function ShDoors_Init()
 		AddSpawnCallback_ScriptName( "survival_door_sliding", OnDoorSpawned )
 		AddSpawnCallback( "prop_door", OnCodeDoorSpawned )
 
+			AddSpawnCallback_ScriptName( "survival_door_spectreshack", OnDoorSpawned )
+
+
+		AddCallback_EntitiesDidLoad( EntitiesDidLoad )
+
 		file.propDoorArrayIndex = CreateScriptManagedEntArray()
 
-		#if DEVELOPER
+		#if DEV
 			RegisterSignal( "HaltDoorThink" )
 			AddClientCommandCallback( "dev_spawn_blockable_door", ClientCommand_dev_spawn_blockable_door ) // dev
 		#endif
@@ -152,6 +140,7 @@ void function ShDoors_Init()
 	SurvivalDoorSliding_Init()
 	BlockableDoor_Init()
 }
+
 
 bool function IsDoor( entity ent )
 {
@@ -171,6 +160,7 @@ bool function IsDoor( entity ent )
 	return false
 }
 
+
 bool function IsDoorOpen( entity door )
 {
 	if ( !IsDoor( door ) )
@@ -188,6 +178,7 @@ bool function IsDoorOpen( entity door )
 	return false
 }
 
+
 array<entity> function GetAllPropDoors()
 {
 	#if SERVER
@@ -200,15 +191,8 @@ array<entity> function GetAllPropDoors()
 	#endif //CLIENT
 }
 
-#if SERVER
-void function RemoveDoorFromManagedEntArray( entity door )
-{
-	RemoveFromScriptManagedEntArray( file.propDoorArrayIndex, door )
-}
-#endif
-
-#if SERVER && DEVELOPER
-bool function ClientCommand_dev_spawn_blockable_door( entity player, array<string> args )
+#if SERVER && DEV
+void function ClientCommand_dev_spawn_blockable_door( entity player, array<string> args )
 {
 	TraceResults tr = TraceLine(
 		player.EyePosition(), player.EyePosition() + 300.0 * player.GetViewVector(),
@@ -222,10 +206,10 @@ bool function ClientCommand_dev_spawn_blockable_door( entity player, array<strin
 	door.SetOrigin( tr.endPos )
 	door.SetAngles( AnglesCompose( VectorToAngles( FlattenNormalizeVec( tr.endPos - player.GetOrigin() ) ), <0, -90, 0> ) )
 	DispatchSpawn( door )
-	return true
 }
 #endif
-//#if SERVER && DEVELOPER
+
+//#if SERVER && DEV
 //void function CreateDoor( vector hingeEdgeBottomPos, vector angleToGap, entity existingEnt = null )
 //{
 //	//
@@ -265,18 +249,76 @@ bool function ClientCommand_dev_spawn_blockable_door( entity player, array<strin
 
 bool function DoorsAreEnabled()
 {
-	return file.doorsEnabled
+	return GetCurrentPlaylistVarBool( "survival_enable_doors", true ) // todo(dw): rename this playlist var to be non-survival specific
 }
 
 
 #if SERVER
+void function EntitiesDidLoad()
+{
+	thread TryCreateDoorsForOtherRealms()
+}
+
+void function TryCreateDoorsForOtherRealms()
+{
+	array<entity> allDoors = GetAllDoorEnts()
+
+	array<entity> doorsProcessed = []
+
+	foreach ( door in allDoors )
+	{
+		if ( doorsProcessed.contains( door ) )
+			continue
+
+		DoorData data = CreateDoorDataFromDoor( door, door.GetAngles(), door.GetModelName() )
+
+		array< entity > doors = [ door ]
+		array< int > realms   = GetAllPlayerCommonRealms()
+
+		bool hasLinkDoor = IsValid( data.linkDoor )
+
+		if ( hasLinkDoor )
+		{
+			doorsProcessed.append( data.linkDoor )
+		}
+
+		doorsProcessed.append( door )
+
+		for ( int i = 0; i < realms.len(); i++ )
+		{
+			entity newDoor
+			if ( i < doors.len() )
+			{
+				newDoor = doors[i]
+				door.e.AT_BossID = realms[i]
+				door.RemoveFromAllRealms()
+				door.AddToRealm( realms[i] )
+
+				if ( hasLinkDoor )
+				{
+					data.linkDoor.e.AT_BossID = realms[i]
+					data.linkDoor.RemoveFromAllRealms()
+					data.linkDoor.AddToRealm( realms[i] )
+				}
+			}
+			else
+			{
+				data.realm = realms[ i ]
+				newDoor = CreateDoorFromData( data )
+
+				if ( hasLinkDoor )
+				{
+					DoorData data2 = CreateDoorDataFromDoor( data.linkDoor, data.linkDoor.GetAngles(), data.linkDoor.GetModelName() )
+					data2.realm = realms[ i ]
+					entity oppositeDoor = CreateDoorFromData( data2, newDoor )
+				}
+			}
+		}
+	}
+}
+
 void function OnDoorSpawned( entity door )
 {
-	if( Safe_isScenariosMode() && door.GetTargetName() != "flowstate_realms_doors_by_cafe" )
-	{
-		Safe_FS_Scenarios_SaveBigDoorData( door )
-		return
-	}
 	//printt( "DOOR!", door.GetScriptName(), door.GetModelName(), door.GetOrigin() )
 
 	if ( !DoorsAreEnabled() )
@@ -459,7 +501,7 @@ void function OnDoorSpawned( entity door )
 						door.Destroy()
 
 						entity trig = CreateEntity( "trigger_cylinder" )
-						trig.SetRadius( 30 )
+						trig.SetCylinderRadius( 30 )
 						trig.SetAboveHeight( 90 )
 						trig.SetBelowHeight( 0 )
 						vector rgt = AnglesToRight( door.GetAngles() )
@@ -507,7 +549,6 @@ void function OnDoorSpawned( entity door )
 			door.AddUsableValue( USABLE_USE_DISTANCE_OVERRIDE )
 			door.SetUsableDistanceOverride( 150 ) // no point going higher without increasing context_use_entity_search_range
 			doorType = eDoorType.PLAIN
-			ToggleNPCPathsForEntity( door, false )
 			break
 
 		case "survival_door_sliding":
@@ -521,6 +562,12 @@ void function OnDoorSpawned( entity door )
 		case "survival_door_code":
 			doorType = eDoorType.CODE
 			break
+
+		case "survival_door_spectreshack":
+			doorType = eDoorType.SLIDING
+			//door.
+			break
+
 	}
 
 	door.e.spawnAngles = door.GetAngles()
@@ -550,17 +597,23 @@ void function OnDoorSpawned( entity door )
 
 		default:
 		{
+			if ( doorType == eDoorType.PLAIN && door.GetModelName() == "mdl/door/door_canyonlands_large_01_animated.rmdl" )
+			{
+				//Including the origin is important to maintain backwards compatibility to the gameplay feel of the vertically sliding doors
+				//Due to the structure of the old phys bone follower implementation, the door entity would be "left behind" after the bone follower went up
+				//And the interaction point seems to be the entity collision bounds, so players were able to open/close the door by looking below it at the void it left behind
+				//door.SetIncludeOriginOnCollisionBounds( true )
+			}
+
 			thread SurvivalDoorThink( door, doorType )
 			break
 		}
 	}
 
-	#if DEVELOPER
-		file.allDoors[door] <- doorType
-	#endif
+	door.Highlight_Enable()
+	AddNeurolinkDetectionForPropScript( door )
 
-	ArrayRemoveInvalid( file.bigPropDoors )
-	file.bigPropDoors.append( door )
+	file.allDoors[door] <- doorType
 }
 
 int function GetDoorType( entity door )
@@ -574,15 +627,10 @@ int function GetDoorType( entity door )
 }
 #endif
 
-array<entity> function GetAllPropDoors_BigOnes()
-{
-	return file.bigPropDoors
-}
-
-#if SERVER && DEVELOPER
+#if SERVER && DEV
 void function DEV_RestartAllDoorThinks()
 {
-	foreach( entity door, int doorType in file.allDoors )
+	foreach ( entity door, int doorType in file.allDoors )
 	{
 		if ( !IsValid( door ) )
 			continue
@@ -617,15 +665,15 @@ void function DEV_RestartAllDoorThinks()
 void function OnSomePropCreated( entity prop )
 {
 	if ( prop.GetScriptName() == "survival_door_sliding" )
+	{
 		SetCallback_CanUseEntityCallback( prop, Survival_DoorSliding_CanUseFunction )
+		StreamModelHint( prop.GetModelName() )
+	}
 
 	if ( prop.GetScriptName() == "survival_door_blockable" )
-		OnBlockableDoorSpawned( prop )
-
-	if ( prop.GetScriptName() == "survival_door_model" || prop.GetScriptName() == "survival_door_plain" )
 	{
-		ArrayRemoveInvalid( file.bigPropDoors )
-		file.bigPropDoors.append( prop )
+		OnBlockableDoorSpawned( prop )
+		StreamModelHint( prop.GetModelName() )
 	}
 }
 
@@ -633,6 +681,8 @@ void function OnCodeDoorCreated_Client( entity door )
 {
 	door.SetDoDestroyCallback( true )
 	file.allPropDoors.append( door )
+
+	StreamModelHint( door.GetModelName() )
 }
 
 void function OnCodeDoorDestroyed_Client( entity door )
@@ -642,9 +692,24 @@ void function OnCodeDoorDestroyed_Client( entity door )
 #endif
 
 #if SERVER
+void function OnNpcEnterDoorTrigger_ScriptDoor( entity trigger, entity ent )
+{
+	entity scriptDoor = s_triggerToScriptDoorMap[trigger]
+	if ( !IsValid( scriptDoor ) )
+		return
+	if ( scriptDoor.e.isOpen )
+		return
+	if ( IsScriptDoorLocked( scriptDoor ) )
+		return
 
+	DoorActivateAsRandomPlayer( scriptDoor )
+}
+#endif // #if SERVER
+
+#if SERVER
 void function DoorActivateAsRandomPlayer( entity door )
 {
+	// used to have AI open doors in PvE
 	array<entity> players = GetPlayerArray()
 	if ( players.len() == 0 )
 	{
@@ -659,8 +724,8 @@ void function DoorActivateAsRandomPlayer( entity door )
 #if SERVER
 float function GetDoorTriggerRadius( entity door )
 {
-	float doorWidth   = GetDoorLongestWidth( door )
-	float result = ((doorWidth / 2.0) + 32.0)
+	float doorWidth = GetDoorLongestWidth( door )
+	float result    = ((doorWidth / 2.0) + 32.0)
 	return result
 }
 #endif
@@ -693,6 +758,7 @@ float function GetDoorLongestWidth( entity door )
 	return doorWidth
 }
 #endif
+
 #if SERVER
 array<entity> function GetAllDoorEnts()
 {
@@ -702,8 +768,6 @@ array<entity> function GetAllDoorEnts()
 	results.extend( GetAllCodeDoorEnts() )
 	return results
 }
-
-
 
 array<entity> function GetAllNonCodeDoorEnts()
 {
@@ -731,6 +795,29 @@ array<entity> function GetAllCodeDoorEnts()
 table<entity, entity> s_triggerToScriptDoorMap
 void function SetupScriptDoorForNPCs( entity scriptDoor )
 {
+	float triggerRadius = GetDoorTriggerRadius( scriptDoor )
+
+	entity dt = CreateEntity( "trigger_cylinder" )
+	#if DEV
+		dt.SetScriptName( FUNC_NAME() )
+	#endif
+	dt.SetCylinderRadius( triggerRadius )
+	dt.SetAboveHeight( 90 )
+	dt.SetBelowHeight( 0 )
+	dt.SetOrigin( GetDoorBottomCenterOrg( scriptDoor ) )
+	dt.kv.triggerFilterNpc = "all"
+	dt.kv.triggerFilterPlayer = "none"
+	dt.kv.triggerFilterNonCharacter = 0
+	dt.kv.triggerFilterTeamIMC = 1
+	dt.kv.triggerFilterTeamMilitia = 1
+	dt.kv.triggerFilterTeamBeast = 1
+	dt.kv.triggerFilterTeamNeutral = 1
+	dt.kv.triggerFilterTeamOther = 1
+	DispatchSpawn( dt )
+
+	s_triggerToScriptDoorMap[dt] <- scriptDoor
+	//printf( "%s() - new trigger ent #%d w/ radius %.0f for door (%s)", FUNC_NAME(), dt.entindex(), triggerRadius, string( scriptDoor ) )
+	dt.SetEnterCallback( OnNpcEnterDoorTrigger_ScriptDoor )
 }
 
 entity function CreateSurvivalDoorPlain( asset model, vector origin, vector angles )
@@ -829,6 +916,7 @@ bool function IsScriptDoorLocked( entity door )
 }
 #endif
 
+
 bool function IsCodeDoor( entity door )
 {
 	if ( door.GetNetworkedClassName() == "prop_door" )
@@ -848,7 +936,9 @@ void function PlayAnimWithTimeout( entity ent, string anim, float timeout )
 {
 	table signalObj = {}
 	EndSignal( signalObj, "AnimTimeout" )
-	OnThreadEnd( function() : (signalObj) {Signal( signalObj, "AnimTimeout" )} )
+	OnThreadEnd( function() : (signalObj) {
+		Signal( signalObj, "AnimTimeout" )
+	} )
 
 	thread TimeoutSignal( signalObj, timeout )
 	PlayAnim( ent, anim )
@@ -859,7 +949,7 @@ void function SurvivalDoorThink( entity door, int doorType )
 	vector defaultAngles = door.GetAngles() //not used by SurvivalDoorPlainThink_Internal
 
 	door.EndSignal( "OnDestroy" )
-	#if DEVELOPER
+	#if DEV
 		door.EndSignal( "HaltDoorThink" )
 	#endif
 	OnThreadEnd( function() : ( door, doorType, defaultAngles ) {
@@ -871,7 +961,6 @@ void function SurvivalDoorThink( entity door, int doorType )
 	door.AllowMantle()
 	door.SetUsePrompts( "#SURVIVAL_OPEN_DOOR", "#SURVIVAL_OPEN_DOOR" )
 	door.SetUsableByGroup( "pilot" )
-	door.AddUsableValue( USABLE_HORIZONTAL_FOV )
 
 	door.e.isOpen = false
 	GradeFlagsClear( door, eGradeFlags.IS_OPEN )
@@ -879,10 +968,18 @@ void function SurvivalDoorThink( entity door, int doorType )
 	string lastOpenDirection = "" //not used by SurvivalDoorMoverThink_Internal
 	vector doorIconOrigin    = door.GetWorldSpaceCenter()
 
+	if ( IsPVEMode() )
+	{
+		SetupScriptDoorForNPCs( door )
+		ORS_AddDoorToResourceSystem( door )
+	}
+
 	if ( doorType == eDoorType.PLAIN )
 		door.SetCycle( 1.0 ) // set up as if a close animation has finished
 
-	while ( 1 )
+	Signal( door, "ScriptedDoorReady" )
+
+	while ( true )
 	{
 		table result         = WaitSignal( door, "OnPlayerUse", "ForceToggleScriptedDoor" )
 		entity player        = expect entity( result.player )
@@ -928,7 +1025,7 @@ void function SurvivalDoorThink( entity door, int doorType )
 				door.Anim_SetSafePushMode( true )
 				waitthread PlayAnimWithTimeout( door, "close", 1.3 )
 
-				ToggleNPCPathsForEntity( door, false )
+				ToggleNPCPathsForEntity( door, false );
 			}
 
 			if ( doorType == eDoorType.MODEL )
@@ -974,7 +1071,7 @@ void function SurvivalDoorThink( entity door, int doorType )
 
 				WaittillAnimDone( door )
 
-				ToggleNPCPathsForEntity( door, true )
+				ToggleNPCPathsForEntity( door, true );
 			}
 			else if ( doorType == eDoorType.MODEL )
 			{
@@ -987,6 +1084,7 @@ void function SurvivalDoorThink( entity door, int doorType )
 				{
 					lastOpenDirection = "out"
 				}
+
 				waitthread PlayAnim( door, "open_" + lastOpenDirection )
 			}
 			else if ( doorType == eDoorType.MOVER )
@@ -1013,6 +1111,9 @@ void function SurvivalDoorThink( entity door, int doorType )
 				wait moveTime
 			}
 		}
+
+		if ( IsScriptDoorLocked( door ) )
+			continue
 
 		if ( door.e.isOpen )
 			door.SetUsePrompts( "#SURVIVAL_CLOSE_DOOR", "#SURVIVAL_CLOSE_DOOR" )
@@ -1065,6 +1166,8 @@ const asset BLOCKABLE_DOOR_DESTRUCTION_FX = $"P_door_breach"
 
 const bool BLOCKABLE_DOOR_DEBUG = false
 
+const float GUARANTEED_KICK_OFFSET = 0.5
+
 
 enum eDoorFlags
 {
@@ -1076,6 +1179,11 @@ enum eDoorFlags
 #if SERVER || CLIENT
 void function BlockableDoor_Init()
 {
+	PrecacheScriptString( "survival_door_model" )
+	PrecacheScriptString( "survival_door_code" )
+	PrecacheScriptString( "survival_door_blockable" )
+	PrecacheScriptString( "survival_door_sliding" )
+	PrecacheScriptString( "survival_door_plain" )
 	PrecacheModel( BLOCKABLE_DOOR_MODEL )
 	PrecacheModel( BLOCKABLE_DOOR_DAMAGED_MODEL )
 	PrecacheParticleSystem( BLOCKABLE_DOOR_DAMAGED_FX )
@@ -1119,9 +1227,9 @@ vector function GetBlockableDoorSwingingEdgeFloorPos( entity door, vector angles
 	vector swingEdgeFloorPos             = hingeEdgeFloorPos + BLOCKABLE_DOOR_TEMP_HARDCODED_DOOR_LENGTH * hingeEdgeToClosedSwingEdgeDir
 
 	#if BLOCKABLE_DOOR_DEBUG
-		DebugDrawMark( hingeEdgeFloorPos, 40, [255, 128, 0], true, 10.0 )
-		DebugDrawArrow( hingeEdgeFloorPos, swingEdgeFloorPos, 8, 255, 0, 0, true, 5.0 )
-		DebugDrawArrow( swingEdgeFloorPos, swingEdgeFloorPos + 25.0 * closedSwingEdgeClockwiseDir, 8, 240, 40, 128, true, 5.0 )
+		DebugDrawMark( hingeEdgeFloorPos, 40, <255, 128, 0>, true, 10.0 )
+		DebugDrawArrow( hingeEdgeFloorPos, swingEdgeFloorPos, 8, COLOR_RED, true, 5.0 )
+		DebugDrawArrow( swingEdgeFloorPos, swingEdgeFloorPos + 25.0 * closedSwingEdgeClockwiseDir, 8, <240, 40, 128>, true, 5.0 )
 	#endif
 
 	return swingEdgeFloorPos
@@ -1141,7 +1249,7 @@ int function GetBlockableDoorNotchAt( entity door, vector currAngles )
 	//bool isClosed = (Distance( currSwingEdgeFloorPos, otherSwingEdgeFloorPos ) < (BLOCKABLE_DOOR_PLAYER_HULL_DIAMETER + BLOCKABLE_DOOR_TEMP_HARDCODED_DOOR_THICKNESS))
 	//printt( isClosed, Distance( currSwingEdgeFloorPos, otherSwingEdgeFloorPos ), (BLOCKABLE_DOOR_PLAYER_HULL_DIAMETER + BLOCKABLE_DOOR_TEMP_HARDCODED_DOOR_THICKNESS) )
 	//if ( BLOCKABLE_DOOR_DEBUG )
-	//	DebugDrawArrow( currSwingEdgeFloorPos, otherSwingEdgeFloorPos, 8, 255, 0, 0, true, 5.0 )
+	//	DebugDrawArrow( currSwingEdgeFloorPos, otherSwingEdgeFloorPos, 8, COLOR_RED, true, 5.0 )
 
 	if ( isClosed )
 		return eBlockableDoorNotch.CLOSED
@@ -1198,39 +1306,68 @@ vector function GetBlockableDoorDesiredAngles( entity door, int goalNotch )
 #if SERVER
 void function OnCodeDoorSpawned( entity door )
 {
-	if( Safe_isScenariosMode() && door.GetScriptName() != "flowstate_door_realms" )
-	{
-		AddToScriptManagedEntArray( file.propDoorArrayIndex, door )
-		return
-	}
-	door.SetMaxHealth( file.blockableDoorHealth )
+	thread __DoorSpawned( door )
+}
+
+void function __DoorSpawned( entity door )
+{
+	door.SetMaxHealth( GetCurrentPlaylistVarInt( "blockable_door_health", 30 ) )
 	door.SetHealth( door.GetMaxHealth() )
 	door.SetTakeDamageType( DAMAGE_YES )
 	door.SetDamageNotifications( true )
-
-	door.EnableAttackableByAI( AI_PRIORITY_NO_THREAT, 0, AI_AP_FLAG_NONE )
-	door.SetTouchTriggers( true )
-
+	door.e.noFriendlyFireProtection = true
+	door.e.spawnAngles = door.GetAngles()
 	AddEntityCallback_OnPostDamaged( door, BlockableDoor_OnDamage )
-	SetObjectCanBeMeleed( door, true )
+	vector baseAngles = door.GetAngles()
+	asset baseModel   = door.GetModelName()
+	door.e.baseModel = baseModel
+
+	door.SetCanBeMeleed( true )
 	SetVisibleEntitiesInConeQueriableEnabled( door, true )
 
+	door.Highlight_Enable()
+	AddNeurolinkDetectionForPropScript( door )
 	AddToScriptManagedEntArray( file.propDoorArrayIndex, door )
 
-	AddCallback_OnUseEntity( door, OnCodeDoorUsed )
+	AddCallback_OnUseEntity_ServerOnly( door, OnCodeDoorUsed )
+	door.e.canBurn = true
+	door.SetTouchTriggers( true )
+
+	if ( IsPVEMode() )
+		ORS_AddDoorToResourceSystem( door )
+
+	door.EndSignal( "OnDestroy" )
+
+	WaitEndFrame()
+
+	vector linkDoorBaseAngles
+	asset linkDoorBaseModel
+
+	if ( IsValid( door.GetOppositeDoor() ) )
+	{
+		linkDoorBaseAngles = door.GetOppositeDoor().GetAngles()
+		linkDoorBaseModel = door.GetOppositeDoor().GetModelName()
+	}
+
+	AddEntityCallback_OnKilled( door,
+		void function( entity door, var damageInfo ) : ( baseAngles, baseModel, linkDoorBaseAngles, linkDoorBaseModel )
+		{
+			BlockableDoor_OnKilled( door, damageInfo, baseAngles, baseModel, linkDoorBaseAngles, linkDoorBaseModel )
+		}
+	)
 }
 
 void function OnCodeDoorUsed( entity door, entity player, int useInputFlags )
 {
 	#if MP
-	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.DOOR_USE, door, door.GetWorldSpaceCenter(), player.GetTeam(), player )
+		TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.DOOR_USE, door, door.GetWorldSpaceCenter(), player.GetTeam(), player )
 	#endif
 }
 
 void function BlockableDoorThink( entity door )
 {
 	door.EndSignal( "OnDestroy" )
-	#if DEVELOPER
+	#if DEV
 		door.EndSignal( "HaltDoorThink" )
 	#endif
 	OnThreadEnd( function() : ( door ) {
@@ -1244,7 +1381,7 @@ void function BlockableDoorThink( entity door )
 
 	door.SetPusher( true )
 
-	door.SetMaxHealth( file.blockableDoorHealth )
+	door.SetMaxHealth( GetCurrentPlaylistVarInt( "blockable_door_health", 30 ) )
 	door.SetHealth( door.GetMaxHealth() )
 	door.SetTakeDamageType( DAMAGE_YES )
 	door.SetDamageNotifications( true )
@@ -1252,7 +1389,7 @@ void function BlockableDoorThink( entity door )
 	//door.SetUsableDistanceOverride( 10.0 )
 	//door.SetUsableFOVByDegrees( 90.0 )
 	AddEntityCallback_OnPostDamaged( door, BlockableDoor_OnDamage )
-	SetObjectCanBeMeleed( door, true )
+	door.SetCanBeMeleed( true )
 	SetVisibleEntitiesInConeQueriableEnabled( door, true )
 
 	door.AllowMantle()
@@ -1283,7 +1420,7 @@ void function BlockableDoorThink( entity door )
 			thread OperateBlockableDoor( door, goalNotch, door.e.usePlayer, otherDoor, true )
 		}
 
-		thread DelayedSetDoorUsable( door, file.blockableDoorOperationDuration + BLOCKABLE_DOOR_EXTRA_USE_DEBOUNCE )
+		thread DelayedSetDoorUsable( door, GetCurrentPlaylistVarFloat( "blockable_door_operation_duration", 0.61 ) + BLOCKABLE_DOOR_EXTRA_USE_DEBOUNCE )
 
 		table useData = WaitSignal( door, "OnPlayerUse", "OperateLinkedDoor" )
 		// time passes
@@ -1321,17 +1458,17 @@ void function BlockableDoorThink( entity door )
 			}
 
 			#if BLOCKABLE_DOOR_DEBUG
-				DebugDrawMark( soundPosition, 20, [40, 60, 93], true, 3.0 )
+				DebugDrawMark( soundPosition, 20, <40, 60, 93>, true, 3.0 )
 			#endif
 
 			if ( newGoalNotch == eBlockableDoorNotch.CLOSED )
 			{
-				EmitSoundAtPosition( TEAM_UNASSIGNED, soundPosition, "Door_Single_Metal_Close_Start", door )
+				EmitSoundAtPosition( TEAM_UNASSIGNED, soundPosition, "Door_Single_Metal_Close_Start", door.e.usePlayer )
 				HeatMapStat( door.e.usePlayer, "DoorClosed", door.GetOrigin() )
 			}
 			else
 			{
-				EmitSoundAtPosition( TEAM_UNASSIGNED, soundPosition, "Door_Single_Metal_Open_Start", door )
+				EmitSoundAtPosition( TEAM_UNASSIGNED, soundPosition, "Door_Single_Metal_Open_Start", door.e.usePlayer )
 				HeatMapStat( door.e.usePlayer, "DoorOpened", door.GetOrigin() )
 			}
 		}
@@ -1369,7 +1506,7 @@ void function DelayedSetDoorUsable( entity door, float delay )
 		door.UnsetUsable()
 		wait delay
 	}
-	door.SetUsableValue( USABLE_BY_ALL | USABLE_CUSTOM_HINTS | USABLE_NO_FOV_REQUIREMENTS | USABLE_HORIZONTAL_FOV )
+	door.SetUsableValue( USABLE_BY_ALL | USABLE_CUSTOM_HINTS | USABLE_NO_FOV_REQUIREMENTS )
 	door.SetUsablePriority( USABLE_PRIORITY_MEDIUM )
 }
 #endif
@@ -1423,8 +1560,8 @@ bool function BlockableDoorCanUseCheck( entity player, entity door, int useFlags
 	doorUseRange += GraphCapped( fabs( DotProduct( AnglesToRight( door.GetAngles() ), -playerToDoor ) ), 0.0, 1.0, 0.0, BLOCKABLE_DOOR_TEMP_HARDCODED_DOOR_LENGTH / 2.0 )
 
 	#if BLOCKABLE_DOOR_DEBUG
-		//DebugDrawLine( player.EyePosition(), doorUsePos, 200, 200, 50, true, 0.3 )
-		DebugDrawTrigger( doorUsePos, doorUseRange, 200, 200, 50, 0.3, true )
+		//DebugDrawLine( player.EyePosition(), doorUsePos, <200, 200, 50>, true, 0.3 )
+		DebugDrawTrigger( doorUsePos, doorUseRange, <200, 200, 50>, 0.3, true )
 	#endif
 
 	if ( LengthSqr( playerToDoor ) > doorUseRange * doorUseRange )
@@ -1441,8 +1578,8 @@ bool function BlockableDoorCanUseCheck( entity player, entity door, int useFlags
 			if ( moveIntersectOrNull != null )
 			{
 				#if BLOCKABLE_DOOR_DEBUG
-					DebugDrawArrow( sidePoint, sidePoint + 50.0 * moveIntention, 8, 0, 128, 255, true, 0.3 )
-					DebugDrawMark( expect vector(moveIntersectOrNull), 40, [255, 128, 0], true, 0.3 )
+					DebugDrawArrow( sidePoint, sidePoint + 50.0 * moveIntention, 8, <0, 128, 255>, true, 0.3 )
+					DebugDrawMark( expect vector(moveIntersectOrNull), 40, <255, 128, 0>, true, 0.3 )
 				#endif
 
 				if ( DotProduct( moveIntention, Normalize( (expect vector(moveIntersectOrNull)) - sidePoint ) ) > 0.0 )
@@ -1459,7 +1596,7 @@ bool function BlockableDoorCanUseCheck( entity player, entity door, int useFlags
 	vector ornull lookIntersectOrNull = GetIntersectionOfLineAndPlane( player.EyePosition(), player.EyePosition() + 1000.0 * player.GetViewVector(), door.GetOrigin(), AnglesToForward( door.GetAngles() ) )
 	if ( lookDot > 0.0 && lookIntersectOrNull != null )
 	{
-		//DebugDrawMark( expect vector(lookIntersectOrNull), 40, [255, 0, 128], true, 0.3 )
+		//DebugDrawMark( expect vector(lookIntersectOrNull), 40, <255, 0, 128>, true, 0.3 )
 		vector localLookIntersect = WorldPosToLocalPos( expect vector(lookIntersectOrNull), door )
 		bool doesLookIntersect    = PointIsWithinBounds( localLookIntersect, door.GetBoundingMins(), door.GetBoundingMaxs() )
 		if ( doesLookIntersect )
@@ -1490,7 +1627,7 @@ void function OperateBlockableDoor( entity door, int goalNotch, entity operator,
 {
 	door.EndSignal( "OnDestroy" )
 	door.EndSignal( "DoorOperating" )
-	#if DEVELOPER
+	#if DEV
 		door.EndSignal( "HaltDoorThink" )
 	#endif
 
@@ -1504,7 +1641,7 @@ void function OperateBlockableDoor( entity door, int goalNotch, entity operator,
 	} )
 
 	float startTime         = Time()
-	float operationDuration = file.blockableDoorOperationDuration
+	float operationDuration = GetCurrentPlaylistVarFloat( "blockable_door_operation_duration", 0.61 )
 	float degreesPerSecond  = 90.0 / operationDuration
 
 	vector hingeEdgeFloorPos = door.GetOrigin()
@@ -1579,12 +1716,12 @@ void function OperateBlockableDoor( entity door, int goalNotch, entity operator,
 					capsuleCurr, capsuleDest, capsuleMins, capsuleMaxs, ignoreEnts, TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_NONE, up
 				)
 				#if BLOCKABLE_DOOR_DEBUG
-					//DebugDrawRotatedBox( capsuleCurr, capsuleMins, capsuleMaxs, VectorToAngles( -AnglesToUp( VectorToAngles( up ) ) ), 0, 255, 0, true, operationDuration / BLOCKABLE_DOOR_TRACE_STEP_COUNT + 0.08 )
-					//DebugDrawRotatedBox( capsuleDest, capsuleMins, capsuleMaxs, VectorToAngles( -AnglesToUp( VectorToAngles( up ) ) ), 255, 0, 255, true, operationDuration / BLOCKABLE_DOOR_TRACE_STEP_COUNT + 0.08 )
-					DebugDrawCircle( capsuleCurr, up, capsuleMins.x, 0, 255, 0, true, stepDuration + 0.08 )
-					DebugDrawCircle( capsuleCurr + <0, 0, capsuleMaxs.z>, up, capsuleMins.x, 0, 255, 0, true, stepDuration + 0.08 )
-					DebugDrawCircle( capsuleDest, up, capsuleMins.x, 255, 0, 255, true, stepDuration + 0.08 )
-					DebugDrawCircle( capsuleDest + <0, 0, capsuleMaxs.z>, up, capsuleMins.x, 255, 0, 255, true, stepDuration + 0.08 )
+					//DebugDrawRotatedBox( capsuleCurr, capsuleMins, capsuleMaxs, VectorToAngles( -AnglesToUp( VectorToAngles( up ) ) ), COLOR_GREEN, true, operationDuration / BLOCKABLE_DOOR_TRACE_STEP_COUNT + 0.08 )
+					//DebugDrawRotatedBox( capsuleDest, capsuleMins, capsuleMaxs, VectorToAngles( -AnglesToUp( VectorToAngles( up ) ) ), COLOR_MAGENTA, true, operationDuration / BLOCKABLE_DOOR_TRACE_STEP_COUNT + 0.08 )
+					DebugDrawCircle( capsuleCurr, up, capsuleMins.x, COLOR_GREEN, true, stepDuration + 0.08 )
+					DebugDrawCircle( capsuleCurr + <0, 0, capsuleMaxs.z>, up, capsuleMins.x, COLOR_GREEN, true, stepDuration + 0.08 )
+					DebugDrawCircle( capsuleDest, up, capsuleMins.x, COLOR_MAGENTA, true, stepDuration + 0.08 )
+					DebugDrawCircle( capsuleDest + <0, 0, capsuleMaxs.z>, up, capsuleMins.x, COLOR_MAGENTA, true, stepDuration + 0.08 )
 				#endif
 
 				//if ( collTrace.startSolid && IsValid( collTrace.hitEnt ) && collTrace.hitEnt.IsPlayer() )
@@ -1646,16 +1783,16 @@ void function OperateBlockableDoor( entity door, int goalNotch, entity operator,
 
 
 bool function CircleIntersectsArc(
-		vector circleCenterIn, float circleRadius,
-		vector arcCornerIn, float arcRadius, float arcStartAng, float arcEndAng )
+vector circleCenterIn, float circleRadius,
+vector arcCornerIn, float arcRadius, float arcStartAng, float arcEndAng )
 {
 	#if BLOCKABLE_DOOR_DEBUG
-		DebugDrawCircle( circleCenterIn, <0, 0, 0>, circleRadius, 255, 255, 255, true, 0.6 )
+		DebugDrawCircle( circleCenterIn, <0, 0, 0>, circleRadius, COLOR_WHITE, true, 0.6 )
 	#endif
 	bool intersect = true
 
-	vector circleCenter = FlattenVector( circleCenterIn )
-	vector arcCorner    = FlattenVector( arcCornerIn )
+	vector circleCenter = FlattenVec( circleCenterIn )
+	vector arcCorner    = FlattenVec( arcCornerIn )
 
 	//Assert( AngleDiff( arcStartAng, arcEndAng ) <= 180.0 )
 	if ( AngleDiff( arcStartAng, arcEndAng ) > AngleDiff( arcEndAng, arcStartAng ) )
@@ -1673,14 +1810,14 @@ bool function CircleIntersectsArc(
 	if ( DotProduct( startAngPlaneInnerDir, startAngPlaneCircleCenterDir ) < 0.0 && startAngPlaceCircleCenterDist > circleRadius )
 	{
 		#if BLOCKABLE_DOOR_DEBUG
-			DebugDrawLine( arcCornerIn, arcCornerIn + arcRadius * startAngPlaneAlongDir, 255, 120, 180, true, 0.6 )
+			DebugDrawLine( arcCornerIn, arcCornerIn + arcRadius * startAngPlaneAlongDir, <255, 120, 180>, true, 0.6 )
 		#endif
 		intersect = false
 	}
 	else
 	{
 		#if BLOCKABLE_DOOR_DEBUG
-			DebugDrawLine( arcCornerIn, arcCornerIn + arcRadius * startAngPlaneAlongDir, 120, 255, 180, true, 0.6 )
+			DebugDrawLine( arcCornerIn, arcCornerIn + arcRadius * startAngPlaneAlongDir, <120, 255, 180>, true, 0.6 )
 		#endif
 	}
 
@@ -1692,14 +1829,14 @@ bool function CircleIntersectsArc(
 	if ( DotProduct( endAngPlaneInnerDir, endAngPlaneCircleCenterDir ) < 0.0 && endAngPlaceCircleCenterDist > circleRadius )
 	{
 		#if BLOCKABLE_DOOR_DEBUG
-			DebugDrawLine( arcCornerIn, arcCornerIn + arcRadius * endAngPlaneAlongDir, 255, 120, 30, true, 0.6 )
+			DebugDrawLine( arcCornerIn, arcCornerIn + arcRadius * endAngPlaneAlongDir, <255, 120, 30>, true, 0.6 )
 		#endif
 		intersect = false
 	}
 	else
 	{
 		#if BLOCKABLE_DOOR_DEBUG
-			DebugDrawLine( arcCornerIn, arcCornerIn + arcRadius * endAngPlaneAlongDir, 120, 255, 30, true, 0.6 )
+			DebugDrawLine( arcCornerIn, arcCornerIn + arcRadius * endAngPlaneAlongDir, <120, 255, 30>, true, 0.6 )
 		#endif
 	}
 
@@ -1707,14 +1844,14 @@ bool function CircleIntersectsArc(
 	if ( arcCornerCircleCenterDist > arcRadius + circleRadius )
 	{
 		#if BLOCKABLE_DOOR_DEBUG
-			DebugDrawCircle( arcCornerIn, <0, 0, 0>, arcRadius, 255, 40, 40, true, 0.6 )
+			DebugDrawCircle( arcCornerIn, <0, 0, 0>, arcRadius, <255, 40, 40>, true, 0.6 )
 		#endif
 		intersect = false
 	}
 	else
 	{
 		#if BLOCKABLE_DOOR_DEBUG
-			DebugDrawCircle( arcCornerIn, <0, 0, 0>, arcRadius, 40, 255, 40, true, 0.6 )
+			DebugDrawCircle( arcCornerIn, <0, 0, 0>, arcRadius, <40, 255, 40>, true, 0.6 )
 		#endif
 	}
 
@@ -1723,60 +1860,248 @@ bool function CircleIntersectsArc(
 
 
 #if SERVER
+void function BlockableDoor_OnKilled( entity door, var damageInfo, vector baseAngles, asset baseModel, vector linkDoorBaseAngles, asset linkDoorBaseModel )
+{
+
+}
+
+DoorData function CreateDoorDataFromDoor( entity door, vector baseAngles, asset baseModel )
+{
+	DoorData data
+	data.className = expect string( door.GetNetworkedClassName() )
+	data.scriptName = door.GetScriptName()
+	data.origin = door.GetOrigin()
+
+	// A door's baseAngles received in BlockableDoor_OnKilled() can deviate if the player is standing in the doorway, resets the doors, and then destroys the door again.
+	// We'll use the door's original base angles established at spawn if one is found ( referenced by door origin vector ) to guarantee correct reset angles.
+	vector baseAnglesToUse
+	if( !( data.origin in file.doorBaseAnglesByDoorLoc ) )
+	{
+		file.doorBaseAnglesByDoorLoc[ data.origin ] <- baseAngles
+		baseAnglesToUse = baseAngles
+	}
+	else
+	{
+		baseAnglesToUse = file.doorBaseAnglesByDoorLoc[ data.origin ]
+	}
+	data.angles = baseAnglesToUse
+	data.modelName = baseModel
+	data.realm = door.e.AT_BossID
+
+	if ( IsCodeDoor( door ) )
+	{
+		data.linkDoor = door.GetOppositeDoor()
+	}
+
+	return data
+}
+
+entity function CreateDoorFromData( DoorData data, entity linkDoor = null )
+{
+	entity newDoor = CreateEntity( data.className )
+	newDoor.SetModel( data.modelName )
+	newDoor.SetScriptName( data.scriptName )
+
+	newDoor.SetOrigin( data.origin )
+	newDoor.SetAngles( data.angles )
+
+	DebugDrawSphere( data.origin, 2, 255,255,255, true, 5.0 )
+
+	newDoor.kv.solid = 6
+
+	if ( IsValid( linkDoor ) )
+	{
+		newDoor.LinkToEnt( linkDoor )
+		linkDoor.LinkToEnt( newDoor )
+	}
+
+	DispatchSpawn( newDoor )
+
+	newDoor.RemoveFromAllRealms()
+	newDoor.AddToRealm( data.realm )
+	newDoor.e.AT_BossID = data.realm
+
+	printt( data.realm )
+
+	return newDoor
+}
+
+bool function ShouldDestroyDoor( entity attacker, entity weapon, entity door, float damageInflicted )
+{
+	if ( !IsValid( attacker ) )
+		return false
+
+	if ( IsValid( weapon ) )
+	{
+		bool wpnDestroysDoors = ( GetWeaponInfoFileKeyField_GlobalInt_WithDefault( weapon.GetWeaponClassName(), "should_destroy_doors" , 0 ) == 1 )
+		if( wpnDestroysDoors )
+			return true
+	}
+
+
+
+			if ( IsPlayerShadowZombie( attacker ) )
+				return false
+
+
+
+
+
+
+	return false
+}
+
 void function BlockableDoor_OnDamage( entity door, var damageInfo )
 {
-	entity attacker       = DamageInfo_GetAttacker( damageInfo )
-	float damageInflicted = DamageInfo_GetDamage( damageInfo )
-	//entity weapon      = DamageInfo_GetWeapon( damageInfo ) // This returns null for melee. See R5DEV-28611.
-	entity weapon         = null
-	if ( IsValid( attacker ) && attacker.IsPlayer() )
-		weapon = attacker.GetActiveWeapon( eActiveInventorySlot.mainHand )
+	entity attacker				= DamageInfo_GetAttacker( damageInfo )
+	entity inflictor			= DamageInfo_GetInflictor( damageInfo )
+	float damageInflicted		= DamageInfo_GetDamage( damageInfo )
+	entity weapon				= DamageInfo_GetWeapon( damageInfo )
+	int damageSourceId 			= DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	bool forceKill 				= DamageInfo_GetForceKill( damageInfo )
+	bool isMeleeDamage			= bool(DamageInfo_GetCustomDamageType( damageInfo ) & DF_MELEE)
+	bool damagedByExplosives	= false
+	bool destroyOtherDoor		= false
+	bool damageOtherDoor		= false
 
-	if ( file.blockableDoorHurtBySpecialKick && IsValid( weapon ) && weapon.HasMod( "proto_door_kick" ) )
+	if ( IsValid( attacker ) && attacker.IsNPC() && isMeleeDamage && damageInflicted > 0.0 )
 	{
-		int guaranteedKickCount = file.blockableDoorGuaranteedKickKillCount
-		damageInflicted = float( door.GetMaxHealth() ) / (float( guaranteedKickCount ) - 0.5)
-		DamageInfo_SetDamage( damageInfo, damageInflicted )
-	}
-	else if ( bool(DamageInfo_GetCustomDamageType( damageInfo ) & DF_MELEE) && file.blockableDoorHurtByMelee )
-	{
-		int guaranteedMeleeCount = file.blockableDoorGuaranteedKickKillCount
-		damageInflicted = float( door.GetMaxHealth() ) / (float( guaranteedMeleeCount ) - 0.5)
-		DamageInfo_SetDamage( damageInfo, damageInflicted )
-	}
-	else if ( bool(DamageInfo_GetCustomDamageType( damageInfo ) & DF_EXPLOSION) )
-	{
-		DamageInfo_ScaleDamage( damageInfo, file.blockableDoorExplosibeDamageMultiplier )
-		if ( DamageInfo_GetDamage( damageInfo ) >= door.GetHealth() && door.GetHealth() > 1 )
+		if (attacker == inflictor)
 		{
-			// delay the last point of damage one frame so that the door blocks damage to other entities
-			damageInflicted = float( door.GetHealth() - 1 )
-			if ( damageInflicted < 0 )
-				damageInflicted = 0
-			DamageInfo_SetDamage( damageInfo, damageInflicted )
-			thread FinishDoorExplosiveDamage( door, damageInfo )
+			if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+			{
+				damageInflicted = float( door.GetMaxHealth() ) / 2
+			}
+			else
+			{
+				damageInflicted = float( door.GetMaxHealth() ) / 3
+			}
+
+			if(  IsReinforced( door ) )
+			{
+				damageInflicted /= 2
+			}
+			damageOtherDoor = true
 		}
 	}
-	else if (DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_weapon_thermite_grenade ) {
-		damageInflicted = DamageInfo_GetDamage( damageInfo )
-	}
-	else if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_weapon_dragon_lmg && DamageInfo_GetWeapon( damageInfo ) != null && DamageInfo_GetWeapon( damageInfo ).HasMod( "energized" ) )
+	else if ( GetCurrentPlaylistVarBool( "blockable_door_can_be_hurt_by_special_kick", true ) && IsValid( weapon ) && weapon.HasMod( "proto_door_kick" ) )
 	{
-		damageInflicted = 25.0
-		DamageInfo_SetDamage( damageInfo, damageInflicted )
+		int guaranteedKickCount = GetCurrentPlaylistVarInt( "blockable_door_guaranteed_kick_kill_count", 2 )
+
+		if(  IsReinforced( door ) && attacker.IsPlayer() )
+		{
+
+		}
+
+		damageInflicted = float( door.GetMaxHealth() ) / (float( guaranteedKickCount ) - GUARANTEED_KICK_OFFSET )
+
+
+
+
+
+
+
+
+
+
+		if ( IsPVEMode() )
+		{
+			if ( IsDoorBreachable( door ) )
+			{
+				//if it's locked and breachable, destroy it
+				damageInflicted = float( door.GetMaxHealth() )
+				destroyOtherDoor = true
+			}
+			else if ( door.GetDoorIsLocked() )
+			{
+				//if it's locked and not breachable, don't allow it to open (in PVE at least)
+				DamageInfo_SetDamage( damageInfo, 0 )
+				return
+			}
+		}
 	}
-	else if ( !file.blockableDoorHurtByNormalWeapons )
+	else if ( ShouldDestroyDoor( attacker, weapon, door, damageInflicted ) )
 	{
-		DamageInfo_SetDamage( damageInfo, 0 )
-		return
+		damageInflicted = float( door.GetMaxHealth() )
+		destroyOtherDoor = true
+	}
+	else if ( isMeleeDamage && GetCurrentPlaylistVarBool( "blockable_door_can_be_hurt_by_melee", false ) )
+	{
+		int guaranteedMeleeCount = GetCurrentPlaylistVarInt( "blockable_door_guaranteed_melee_kill_count", 2 )
+		damageInflicted = float( door.GetMaxHealth() ) / (float( guaranteedMeleeCount ) - GUARANTEED_KICK_OFFSET )
 	}
 
-	if ( attacker.IsPlayer() && file.blockableDoorShowDamageNumbers )
+	else if ( IsPlayerShadowZombie( attacker ))
+	{
+		damageInflicted = float( door.GetMaxHealth() / 2 )
+	}
+
+	else if ( bool(DamageInfo_GetCustomDamageType( damageInfo ) & DF_EXPLOSION) )
+	{
+		damageInflicted *= GetCurrentPlaylistVarFloat( "blockable_door_explosive_damage_mutiplier", 1.0 )
+		damagedByExplosives = true
+
+		if ( bool(DamageInfo_GetCustomDamageType( damageInfo ) & DF_GIB) )
+		{
+			damageInflicted = float( door.GetMaxHealth() )
+		}
+	}
+	else if ( bool(DamageInfo_GetDamageType( damageInfo ) & DMG_BURN ) )
+	{
+		damagedByExplosives = true
+	}
+	else if ( !GetCurrentPlaylistVarBool( "blockable_door_can_be_hurt_by_normal_weapons", false ) )
+	{
+		bool zeroOutDamage = !forceKill
+		if ( IsValid( weapon ) )
+		{
+			var weaponName = DamageInfo_GetWeapon( damageInfo ).GetWeaponClassName()
+			if ( weaponName == "mp_weapon_dragon_lmg" )
+			{
+				if ( weapon.HasMod( DRAGON_LMG_ENERGIZED_MOD ) )
+				{
+					damageInflicted = float( door.GetMaxHealth() / 3 )
+					DamageInfo_SetDamage( damageInfo, damageInflicted )
+
+					if ( door.GetModelName() == "mdl/door/canyonlands_door_single_02.rmdl" )
+					{
+						door.SetValueForModelKey( BLOCKABLE_DOOR_DAMAGED_MODEL )
+						door.SetModel( BLOCKABLE_DOOR_DAMAGED_MODEL )
+					}
+					zeroOutDamage = false
+				}
+			}
+		}
+		if( zeroOutDamage )
+		{
+			damageInflicted = 0
+		}
+	}
+
+
+
+
+
+	DamageInfo_SetDamage( damageInfo, damageInflicted )
+	if ( damageInflicted <= 0 )
+		return // Early out if damage was nullified
+
+	if ( damagedByExplosives && damageInflicted >= door.GetHealth() && door.GetHealth() > 1 )
+	{
+		damageInflicted = float( door.GetHealth() - 1 )
+		if ( damageInflicted < 0 )
+			damageInflicted = 0
+		DamageInfo_SetDamage( damageInfo, damageInflicted )
+		// delay the last point of damage one frame so that the door blocks damage to other entities
+		thread FinishDoorExplosiveDamage( door, damageInfo )
+	}
+
+	if ( attacker.IsPlayer() && GetCurrentPlaylistVarBool( "blockable_door_show_damage_numbers", false ) )
 	{
 		attacker.NotifyDidDamage(
 			door, DamageInfo_GetHitBox( damageInfo ),
 			DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ),
-							100.0 * DamageInfo_GetDamage( damageInfo ) / door.GetMaxHealth(), // make the numbers % of door health
+			100.0 * DamageInfo_GetDamage( damageInfo ) / door.GetMaxHealth(), // make the numbers % of door health
 			DamageInfo_GetDamageFlags( damageInfo ), DamageInfo_GetHitGroup( damageInfo ),
 			DamageInfo_GetWeapon( damageInfo ), DamageInfo_GetDistFromAttackOrigin( damageInfo )
 		)
@@ -1787,39 +2112,47 @@ void function BlockableDoor_OnDamage( entity door, var damageInfo )
 	//DamageInfo_SetDamage( damageInfo, 1 )
 
 	float newHealth = door.GetHealth() - damageInflicted
+
+	vector doorAlong  = -door.GetRightVector()
+	vector doorPerp   = door.GetForwardVector()
+	vector doorUp     = door.GetUpVector()
+	vector doorCenter = door.GetOrigin() + 30.0 * doorAlong + 54.0 * doorUp
+	#if BLOCKABLE_DOOR_DEBUG
+		DebugDrawLine( doorCenter, doorCenter + effectDir * 50.0, <200, 200, 50>, true, 3.0 )
+	#endif
+	vector damageDir = DamageInfo_GetDamageForceDirection( damageInfo )
+	if ( damageDir.LengthSqr() == 0 && IsValid( attacker ) )
+		damageDir = DamageInfo_GetDamagePosition( damageInfo ) - (IsValid( inflictor ) ? inflictor : attacker).EyePosition()
+	vector effectDir = doorPerp * (DotProduct( doorPerp, damageDir ) > 0 ? 1.0 : -1.0)
+
 	if ( newHealth > 0 )
 	{
-		vector damageDir = DamageInfo_GetDamageForceDirection( damageInfo )
-		if ( damageDir.LengthSqr() == 0 && attacker )
+		//StartParticleEffectInWorldForRealms( GetParticleSystemIndex( BLOCKABLE_DOOR_DAMAGED_FX ), doorCenter, VectorToAngles( effectDir ), door )
+
+		if( damageSourceId == eDamageSourceId.mp_weapon_concussive_breach )
 		{
-			entity inflictor = DamageInfo_GetInflictor( damageInfo )
-			damageDir = DamageInfo_GetDamagePosition( damageInfo ) - (inflictor ? inflictor : attacker).EyePosition()
+			EmitSoundOnEntity( door, "Door_Impact_Breach_Maggie_Drill" )
+			EmitSoundOnEntity( door, "Door_Impact_StressCreak_Maggie_Drill" )
 		}
-
-		vector doorAlong = -door.GetRightVector()
-		vector doorPerp = door.GetForwardVector()
-		vector doorUp = door.GetUpVector()
-		vector effectDir
-		if ( DotProduct( doorPerp, damageDir ) > 0 )
-			effectDir = doorPerp
 		else
-			effectDir = -doorPerp
+		{
+			EmitSoundOnEntity( door, "Door_Impact_Breach" )
+			EmitSoundOnEntity( door, "Door_Impact_StressCreak" )
 
-		vector doorCenter = door.GetOrigin() + 30.0 * doorAlong + 54.0 * doorUp
-		#if BLOCKABLE_DOOR_DEBUG
-			DebugDrawLine( doorCenter, doorCenter + effectDir * 50.0, 200, 200, 50, true, 3.0 )
-		#endif
+			if(  IsReinforced( door ) )
+			{
+				//EmitSoundOnEntity( door, PASSIVE_REINFORCE_REINFORCED_IMPACT_SFX )
+			}
 
-		StartParticleEffectInWorld( GetParticleSystemIndex( BLOCKABLE_DOOR_DAMAGED_FX ), doorCenter, VectorToAngles( effectDir ) )
-
-
-		EmitSoundOnEntity( door, "Door_Impact_Breach" )
-		EmitSoundOnEntity( door, "tone_jog_stress_3p" )
+		}
 		//EmitSoundOnEntity( door, "door_stop" )
-		if ( file.blockableDoorRegenEnabled || file.flowstateDoorRegen )
+
+		if ( GetCurrentPlaylistVarBool( "blockable_door_regen_enabled", false ) )
 			thread BlockableDoor_ThreadedRegen( door )
 
-		if ( newHealth < door.GetMaxHealth() * 0.5 )
+		float meleeDamageAmount = float( door.GetMaxHealth() ) /
+				( float( GetCurrentPlaylistVarInt( "blockable_door_guaranteed_kick_kill_count", 2 ) ) - GUARANTEED_KICK_OFFSET )
+		if ( newHealth <= meleeDamageAmount || (attacker.IsNPC() && isMeleeDamage) )
 		{
 			if ( door.GetModelName() == "mdl/door/canyonlands_door_single_02.rmdl" )
 			{
@@ -1827,50 +2160,47 @@ void function BlockableDoor_OnDamage( entity door, var damageInfo )
 				door.SetModel( BLOCKABLE_DOOR_DAMAGED_MODEL )
 			}
 		}
+
+		entity otherDoor = door.GetOppositeDoor()
+		if ( damageOtherDoor && IsValid( otherDoor ) )
+		{
+			otherDoor.TakeDamage( damageInflicted, attacker, door, { force = effectDir, scriptType = DF_MELEE } )
+		}
 	}
 	else
 	{
-		vector damageDir = DamageInfo_GetDamageForceDirection( damageInfo )
-		if ( damageDir.LengthSqr() == 0 && attacker )
-		{
-			entity inflictor = DamageInfo_GetInflictor( damageInfo )
-			damageDir = DamageInfo_GetDamagePosition( damageInfo ) - (inflictor ? inflictor : attacker).EyePosition()
-		}
-
-		vector doorAlong = -door.GetRightVector()
-		vector doorPerp = door.GetForwardVector()
-		vector doorUp = door.GetUpVector()
-		vector effectDir
-		if ( DotProduct( doorPerp, damageDir ) > 0 )
-			effectDir = doorPerp
-		else
-			effectDir = -doorPerp
-
-		vector doorCenter = door.GetOrigin() + 30.0 * doorAlong + 54.0 * doorUp
-		#if BLOCKABLE_DOOR_DEBUG
-			DebugDrawLine( doorCenter, doorCenter + effectDir * 50.0, 200, 200, 50, true, 3.0 )
-		#endif
-
-		StartParticleEffectInWorld( GetParticleSystemIndex( BLOCKABLE_DOOR_DESTRUCTION_FX ), doorCenter, VectorToAngles( effectDir ) )
-		string destroySound
-		if ( bool(DamageInfo_GetCustomDamageType( damageInfo ) & DF_MELEE) )
-		{
+		//StartParticleEffectInWorldForRealms( GetParticleSystemIndex( BLOCKABLE_DOOR_DESTRUCTION_FX ), doorCenter, VectorToAngles( effectDir ), door )
+		door.e.lastDeathTime = Time()
+		string destroySound = "Survival_Door_Destroy_Frag"
+		if ( IsBitFlagSet( DamageInfo_GetCustomDamageType( damageInfo ), DF_MELEE ) )
 			destroySound = "Door_Impact_Break"
-		}
-		else if ( bool(DamageInfo_GetCustomDamageType( damageInfo ) & DF_EXPLOSION) )
-		{
+		else if ( IsBitFlagSet( DamageInfo_GetCustomDamageType( damageInfo ), DF_EXPLOSION ) )
 			destroySound = "Survival_Door_Destroy_Frag"
-		}
-		else
-		{
-			destroySound = "Survival_Door_Destroy_Frag" // todo(dw): temp
-		}
 		EmitSoundAtPosition( TEAM_ANY, door.GetOrigin(), destroySound, door )
 
-		#if MP
-			if ( IsValid( attacker ) && attacker.IsPlayer() )
-				TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.DOOR_DESTROYED, attacker, door.GetWorldSpaceCenter(), attacker.GetTeam(), attacker )
-		#endif
+		if(  IsReinforced( door ) )
+		{
+			//EmitSoundAtPosition( TEAM_ANY, door.GetOrigin(), PASSIVE_REINFORCE_DESTROY_REINFORCEMENT_SFX, door )
+		}
+
+		if ( IsValid( attacker ) && attacker.IsPlayer() )
+			TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.DOOR_DESTROYED, attacker, door.GetWorldSpaceCenter(), attacker.GetTeam(), attacker )
+
+		foreach ( func in file.callbacks_onCodeDoorBroken )
+		{
+			func( door, attacker, effectDir, damageInfo )
+		}
+
+		entity otherDoor = door.GetOppositeDoor()
+		if ( destroyOtherDoor && IsValid( otherDoor ) && !otherDoor.IsDoorOpen() )
+		{
+			RemoveEntityCallback_OnPostDamaged( door, BlockableDoor_OnDamage ) // Don't ping pong damage back and forth
+			otherDoor.TakeDamage( otherDoor.GetMaxHealth(), attacker, attacker, { force = effectDir, weapon = weapon } )
+		}
+		else if ( damageOtherDoor && IsValid( otherDoor ) )
+		{
+			otherDoor.TakeDamage( damageInflicted, attacker, door, { force = effectDir, scriptType = DF_MELEE } )
+		}
 	}
 }
 
@@ -1878,8 +2208,8 @@ void function FinishDoorExplosiveDamage( entity door, var damageInfo )
 {
 	door.EndSignal( "OnDestroy" )
 
-	entity attacker = DamageInfo_GetAttacker( damageInfo )
-	entity inflictor = DamageInfo_GetInflictor( damageInfo )
+	entity attacker      = DamageInfo_GetAttacker( damageInfo )
+	entity inflictor     = DamageInfo_GetInflictor( damageInfo )
 	table additionalInfo =
 	{
 		weapon = DamageInfo_GetWeapon( damageInfo ),
@@ -1906,18 +2236,18 @@ void function BlockableDoor_ThreadedRegen( entity door )
 	door.Signal( "BlockableDoor_ThreadedRegen" )
 	door.EndSignal( "BlockableDoor_ThreadedRegen" )
 
-	wait file.blockableDoorRegenStartDelay
+	wait GetCurrentPlaylistVarFloat( "blockable_door_regen_start_delay", 1.8 )
 
 	float startTime         = Time()
 	float startHealth       = float(door.GetHealth())
-	float fullRegenDuration = file.blockableDoorRegenDuration
+	float fullRegenDuration = GetCurrentPlaylistVarFloat( "blockable_door_regen_duration", 4.2 )
 	while ( door.GetHealth() < door.GetMaxHealth() )
 	{
 		door.SetHealth( min( door.GetMaxHealth(), int(startHealth + (Time() - startTime) / fullRegenDuration * float(door.GetMaxHealth())) ) )
 
 		wait 0.21
 
-		//DebugScreenText( 0.05, 0.5, format( "%d", door.GetHealth() ) )
+		//DebugDrawScreenText( 0.05, 0.5, format( "%d", door.GetHealth() ) )
 		//WaitFrame()
 	}
 }
@@ -2009,7 +2339,7 @@ void function SurvivalDoorSliding_PlayAnimationAndResetSkin( entity doorModel, s
 #if SERVER
 void function SurvivalDoorSlidingThink( entity doorModel )
 {
-	#if DEVELOPER
+	#if DEV
 		doorModel.EndSignal( "HaltDoorThink" )
 	#endif
 
@@ -2019,7 +2349,7 @@ void function SurvivalDoorSlidingThink( entity doorModel )
 	doorModel.AllowMantle()
 	doorModel.SetUsePrompts( "#SURVIVAL_OPEN_DOOR", "#SURVIVAL_OPEN_DOOR" )
 	doorModel.SetUsableByGroup( "pilot" )
-	doorModel.AddUsableValue( USABLE_NO_FOV_REQUIREMENTS | USABLE_HORIZONTAL_FOV )
+	doorModel.AddUsableValue( USABLE_NO_FOV_REQUIREMENTS )
 	doorModel.SetTakeDamageType( DAMAGE_YES )
 	doorModel.SetMaxHealth( SURVIVAL_SLIDING_DOOR_HEALTH )
 	doorModel.SetHealth( SURVIVAL_SLIDING_DOOR_HEALTH )
@@ -2052,7 +2382,7 @@ void function SurvivalDoorSlidingThink( entity doorModel )
 		thread SurvivalDoorSlidingTriggerLeaveThink( doorModel, doorTrigger, doorDataIndex )
 	}
 
-	while ( 1 )
+	while ( true )
 	{
 		entity player = expect entity( doorModel.WaitSignal( "OnPlayerUse", "TryDoorInteraction" ).player )
 
@@ -2177,7 +2507,7 @@ void function OnPlayerLeaveSlidingTrigger( entity trigger, entity ent )
 #if SERVER
 void function SurvivalDoorSlidingTriggerEnterThink( entity doorModel, entity trigger, int doorDataIndex )
 {
-	#if DEVELOPER
+	#if DEV
 		doorModel.EndSignal( "HaltDoorThink" )
 	#endif
 	trigger.EndSignal( "OnDeath" )
@@ -2205,7 +2535,7 @@ void function SurvivalDoorSlidingTriggerEnterThink( entity doorModel, entity tri
 #if SERVER
 void function SurvivalDoorSlidingTriggerLeaveThink( entity doorModel, entity trigger, int doorDataIndex )
 {
-	#if DEVELOPER
+	#if DEV
 		doorModel.EndSignal( "HaltDoorThink" )
 	#endif
 	trigger.EndSignal( "OnDeath" )
@@ -2227,7 +2557,7 @@ void function SurvivalDoorSlidingPostDamage( entity ent, var damageInfo )
 	int scriptDamageType      = DamageInfo_GetCustomDamageType( damageInfo )
 	float damageDealt         = DamageInfo_GetDamage( damageInfo )
 
-	if ( (scriptDamageType & DF_EXPLOSION) == 0 || damageDealt < SURVIVAL_SLIDING_DOOR_MINIMUM_DAMAGE )
+	if ( !IsBitFlagSet( scriptDamageType, DF_EXPLOSION ) || damageDealt < SURVIVAL_SLIDING_DOOR_MINIMUM_DAMAGE )
 	{
 		DamageInfo_SetDamage( damageInfo, 0 )
 		return
@@ -2253,8 +2583,8 @@ void function SurvivalDoorSlidingPostDamage( entity ent, var damageInfo )
 			entAngles.x += 180.0
 		}
 
-		// DebugDrawLine( ent.GetOrigin() + <0.0, 30.0, 40.0>, ent.GetOrigin() + <0.0, 30.0, 40.0> + AnglesToForward( entAngles ) * 500.0, 200, 200, 50, true, 3.0 )
-		StartParticleEffectInWorld( GetParticleSystemIndex( SURVIVAL_SLIDING_DOOR_DESTRUCTION_FX ), ent.GetOrigin() + <0.0, 30.0, 40.0>, entAngles )
+		// DebugDrawLine( ent.GetOrigin() + <0.0, 30.0, 40.0>, ent.GetOrigin() + <0.0, 30.0, 40.0> + AnglesToForward( entAngles ) * 500.0, <200, 200, 50>, true, 3.0 )
+		//StartParticleEffectInWorldForRealms( GetParticleSystemIndex( SURVIVAL_SLIDING_DOOR_DESTRUCTION_FX ), ent.GetOrigin() + <0.0, 30.0, 40.0>, entAngles, ent )
 	}
 }
 #endif
@@ -2288,8 +2618,8 @@ bool function Survival_DoorSliding_CanUseFunction( entity playerUser, entity doo
 
 	if ( SURVIVAL_SLIDING_DOOR_DEBUG_DRAW )
 	{
-		DebugDrawLine( playerPos, doorModelPos, 200, 200, 50, true, 1.0 )
-		DebugDrawTrigger( doorModelPos, doorUseRange, 200, 200, 50, 1.0, true )
+		DebugDrawLine( playerPos, doorModelPos, <200, 200, 50>, true, 1.0 )
+		DebugDrawTrigger( doorModelPos, doorUseRange, <200, 200, 50>, 1.0, true )
 	}
 
 	float diffLengthSquared = LengthSqr( doorToPlayer )
@@ -2301,15 +2631,155 @@ bool function Survival_DoorSliding_CanUseFunction( entity playerUser, entity doo
 void function CodeCallback_OnDoorInteraction( entity door, entity user, entity oppositeDoor, bool opening )
 {
 	#if SERVER
-	if ( IsValid( user ) )
-	{
-		string actionName = opening ? "door_open" : "door_close"
-		PIN_Interact( user, actionName )
-	}
+		if ( IsValid( user ) )
+		{
+			string actionName = opening ? "door_open" : "door_close"
+			PIN_Interact( user, actionName )
+
+			if ( door.GetChildren().len() > 0 )
+			{
+				HandleDeathboxOnDoorInteraction( door, user, <0, 0, 0>, 0 )
+			}
+		}
 	#endif
 }
 
+
 #if SERVER
+void function SURVIVAL_ResetAllDoors()
+{
+	foreach ( door in GetAllDoorEnts() )
+	{
+		CloseDoor( door, null )
+		if ( IsCodeDoor( door ) )
+		{
+			door.Signal( "OnDoorReset" )
+			door.SetMaxHealth( GetCurrentPlaylistVarInt( "blockable_door_health", 30 ) )
+			door.SetHealth( door.GetMaxHealth() )
+			door.SetModel( door.e.baseModel )
+		}
+		GradeFlagsClear( door, eGradeFlags.IS_OPEN )
+	}
+
+	//array< entity > rebuiltDoors = GetRebuiltDoorArray()
+	//foreach( door in rebuiltDoors )
+	//{
+	//	if( IsValid( door ) )
+	//		door.Destroy()
+	//}
+
+	foreach ( recreateDoorData in file.recreateDoorDataByRealm )
+	{
+		array<vector> processedDoorPositions
+		for ( int tryCount = 0; tryCount < 2; tryCount++ )
+		{
+			bool linksOnly = tryCount == 0
+
+				foreach ( data in recreateDoorData )
+				{
+					entity oppositeDoor
+
+					if ( processedDoorPositions.contains( data.origin ) )
+						continue
+
+					if ( data.hasLinkDoor )
+					{
+						if ( IsValid( data.linkDoor ) )
+						{
+							oppositeDoor = data.linkDoor
+						}
+						else
+						{
+							oppositeDoor = CreateDoorFromData( expect DoorData( data.linkDoorData ) )
+							processedDoorPositions.append( oppositeDoor.GetOrigin() )
+						}
+					}
+					else if ( linksOnly )
+					{
+						continue
+					}
+
+					entity door = CreateDoorFromData( data, oppositeDoor )
+					processedDoorPositions.append( door.GetOrigin() )
+				}
+		}
+	}
+
+	file.recreateDoorDataByRealm.clear()
+}
+
+void function SURVIVAL_ResetAllDoorsInRealm( int realm )
+{
+	foreach ( door in GetAllDoorEnts() )
+	{
+		if ( door.GetRealms()[0] == realm )
+		{
+			CloseDoor( door, null )
+			if ( IsCodeDoor( door ) )
+			{
+				door.Signal( "OnDoorReset" )
+				door.SetMaxHealth( GetCurrentPlaylistVarInt( "blockable_door_health", 30 ) )
+				door.SetHealth( door.GetMaxHealth() )
+				door.SetModel( door.e.baseModel )
+			}
+			GradeFlagsClear( door, eGradeFlags.IS_OPEN )
+		}
+	}
+
+
+	//array< entity > rebuiltDoors = GetRebuiltDoorArray()
+	//foreach( door in rebuiltDoors )
+	//{
+	//	if( IsValid( door ) && door.GetRealms()[0] == realm)
+	//		door.Destroy()
+	//}
+
+
+	if ( !(realm in file.recreateDoorDataByRealm) )
+	{
+		return
+	}
+
+	array< DoorData > recreateDoorData = file.recreateDoorDataByRealm[ realm ]
+
+	array<vector> processedDoorPositions
+	for ( int tryCount = 0; tryCount < 2; tryCount++ )
+	{
+		bool linksOnly = tryCount == 0
+
+		foreach ( data in recreateDoorData )
+		{
+			entity oppositeDoor
+
+			if ( processedDoorPositions.contains( data.origin ) )
+				continue
+
+			if ( data.hasLinkDoor )
+			{
+				if ( IsValid( data.linkDoor ) )
+				{
+					oppositeDoor = data.linkDoor
+				}
+				else
+				{
+					oppositeDoor = CreateDoorFromData( expect DoorData( data.linkDoorData ) )
+					processedDoorPositions.append( oppositeDoor.GetOrigin() )
+				}
+			}
+			else if ( linksOnly )
+			{
+				continue
+			}
+
+			entity door = CreateDoorFromData( data, oppositeDoor )
+			processedDoorPositions.append( door.GetOrigin() )
+		}
+	}
+
+	delete file.recreateDoorDataByRealm[ realm ]
+}
+
+
 void function OpenDoor( entity door, entity player )
 {
 	if ( IsCodeDoor( door ) )
@@ -2360,16 +2830,17 @@ void function ToggleDoor( entity door, entity player )
 	}
 }
 
+
 void function OpenAndLockAllScriptDoors()
 {
-	/*foreach( door in GetAllNonCodeDoorEnts() )
+	foreach( door in GetAllNonCodeDoorEnts() )
 	{
 		if ( !IsValid( door ) )
 			continue
 		OpenDoor( door, null )
 		LockDoor( door )
 		door.UnsetUsable() //interferes with reload prompt
-	}*/
+	}
 }
 
 entity function GetClosestScriptDoorToPos( vector pos, float maxDist = 256 )
@@ -2389,6 +2860,7 @@ void function AddCallback_OnCodeDoorBroken( void functionref(entity,entity,vecto
 	file.callbacks_onCodeDoorBroken.append( func )
 }
 #endif //SERVER
+
 bool function IsDoorLocked( entity door )
 {
 	if ( IsCodeDoor( door ) )
@@ -2400,3 +2872,38 @@ bool function IsDoorLocked( entity door )
 
 	return false
 }
+
+#if SERVER
+void function ReinforceDoor( entity door )
+{
+	if ( IsCodeDoor( door ) )
+	{
+		//door.SetDoorReinforced( true )
+		return
+	}
+}
+
+void function UnReinforceDoor( entity door )
+{
+	if ( IsCodeDoor( door ) )
+	{
+		//door.SetDoorReinforced( false )
+		return
+	}
+}
+
+entity function ReplaceDoor( entity door, entity otherDoor = null )
+{
+	if ( door in file.rebuiltDoorToData )
+	{
+		if ( !IsValid( otherDoor ) )
+		{
+			otherDoor = file.rebuiltDoorToData[ door ].linkDoor
+		}
+		return CreateDoorFromData( file.rebuiltDoorToData[ door ], otherDoor )
+	}
+
+	return null
+}
+#endif //SERVER
+ 

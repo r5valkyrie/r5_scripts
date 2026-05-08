@@ -3,29 +3,28 @@ untyped
 global function AiDrone_Init
 
 global function CreateDroneSquadString
-global function SetDroneSquadStringForOwner
-global function GetDroneSquadStringFromOwner
+//global function SetDroneSquadStringForOwner
+//global function GetDroneSquadStringFromOwner
 global function DroneGruntThink
 global function RunDroneTypeThink
-global function DroneHasNoOwner
 global function CreateSingleDroneRope
 global function DroneDialogue
 global function IsDroneRebooting
 global function DroneOnLeeched
 global function SetRepairDroneTarget
 
-global const DRONE_SHIELD_COOLDOWN 						= 8
-global const DRONE_SHIELD_WALL_HEALTH 					= 200
-global const DRONE_SHIELD_WALL_RADIUS_TITAN 			= 200
-global const DRONE_SHIELD_WALL_RADIUS_HUMAN 			= 90
-global const DRONE_SHIELD_WALL_HEIGHT_TITAN 			= 450
-global const DRONE_SHIELD_WALL_HEIGHT_HUMAN 			= 190
-global const DRONE_SHIELD_WALL_FOV_TITAN 				= 115
-global const DRONE_SHIELD_WALL_FOV_HUMAN 				= 105
+global const DRONE_SHIELD_COOLDOWN = 8
+global const DRONE_SHIELD_WALL_HEALTH = 200
+global const DRONE_SHIELD_WALL_RADIUS_TITAN = 200
+global const DRONE_SHIELD_WALL_RADIUS_HUMAN = 90
+global const DRONE_SHIELD_WALL_HEIGHT_TITAN = 450
+global const DRONE_SHIELD_WALL_HEIGHT_HUMAN = 190
+global const DRONE_SHIELD_WALL_FOV_TITAN = 115
+global const DRONE_SHIELD_WALL_FOV_HUMAN = 105
 global const DRONE_MINIMUM_DEPLOY_CLEARANCE_FROM_GROUND = 120
-global const MIN_DRONE_SHIELD_FROM_OWNER_DIST 			= 256 //if shield drone gets more than this distance away from host, will drop shield
-global const MIN_DRONE_SHIELD_FROM_OWNER_DIST_TITAN 	= 400 //if shield drone gets more than this distance away from host, will drop shield
-global const DRONE_LEASH_DISTANCE_SQR 					= 589824 // Further than this distance, drones will disengage from combat and go back to their owner.
+global const MIN_DRONE_SHIELD_FROM_OWNER_DIST = 256 //if shield drone gets more than this distance away from host, will drop shield
+global const MIN_DRONE_SHIELD_FROM_OWNER_DIST_TITAN = 400 //if shield drone gets more than this distance away from host, will drop shield
+global const DRONE_LEASH_DISTANCE_SQR =  589824 // Further than this distance, drones will disengage from combat and go back to their owner.
 
 global const SOUND_DRONE_EXPLODE_DEFAULT 	= "Drone_DeathExplo"
 global const SOUND_DRONE_EXPLODE_CLOAK 		= "Drone_DeathExplo"
@@ -38,6 +37,8 @@ global const FX_DRONE_P_EXPLOSION 			= $"P_drone_exp_plasma"
 global const FX_DRONE_W_EXPLOSION 			= $"P_drone_exp_worker"
 global const FX_DRONE_SHIELD_ROPE_GLOW 		= $"acl_light_white"
 
+const string DRONE_MOVER_SCRIPTNAME = "drone_mover"
+
 void function AiDrone_Init()
 {
 	PrecacheParticleSystem( FX_DRONE_EXPLOSION )
@@ -48,92 +49,21 @@ void function AiDrone_Init()
 	PrecacheParticleSystem( FX_DRONE_SHIELD_WALL_HUMAN )
 	PrecacheParticleSystem( FX_DRONE_SHIELD_ROPE_GLOW )
 
-	PrecacheModel( $"mdl/robots/drone_air_attack/drone_air_attack_rockets.rmdl" )
-	PrecacheModel( $"mdl/robots/drone_air_attack/drone_air_attack_plasma.rmdl" )
-
-	PrecacheMaterial( $"cable/cable_selfillum.vmt" )
-	PrecacheModel( $"cable/cable_selfillum.vmt" )
+	PrecacheMaterial( $"cable/cable_selfillum" )
 	AddDeathCallback( "npc_drone", DroneDeath )
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Fallback behavior if we can't find a valid owner for an orphan Drone
-void function DroneHasNoOwner( entity drone )
-{
-	switch ( GetDroneType( drone ) )
-	{
-		case "drone_type_shield":
-			//Transform into a Rocket drone and find some buddies
-			thread DroneTransformsToRocketClass( drone )
-			break
-
-		case "drone_type_engineer_combat":
-		case "drone_type_engineer_shield":
-			EngineerDroneHasNoOwner( drone )
-			break
-	}
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void function DroneTransformsToRocketClass( entity drone )
-{
-	if ( !IsAlive( drone ) )
-		return
-
-	drone.EndSignal( "OnDeath" )
-	drone.EndSignal( "OnDestroy" )
-
-	wait 1.5
-
-	// dont do it if we're parented for some reason
-	if ( IsValid( drone.GetParent() ) )
-		return
-
-	DroneDialogue( drone, "transform_shield_to_assault" )
-	wait 3
-
-	// dont do it if we're parented for some reason
-	if ( IsValid( drone.GetParent() ) )
-		return
-
-	int team = drone.GetTeam()
-	int health = drone.GetHealth()
-	vector origin = drone.GetOrigin()
-	vector angles = drone.GetAngles()
-	angles.x = 0
-	angles.z = 0
-
-	entity newDrone = CreateRocketDrone( team, origin, angles )
-	DispatchSpawn( newDrone )
-	newDrone.SetHealth( health )
-
-	entity enemy = drone.GetEnemy()
-	if ( IsAlive( enemy ) )
-		newDrone.SetEnemyLKP( enemy, enemy.GetOrigin() )
-
-	drone.TransferChildrenTo( newDrone )
-
-	drone.Destroy()
-
-}
-
-void function EngineerDroneHasNoOwner( drone )
-{
-	//TODO: Should probably protect nearest ally, and return to Engineer when he gets close.
-}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Change drone type on spawn or during gameplay (may transform from one to the other eventually)
 void function RunDroneTypeThink( entity drone )
 {
-	CreateDuckTapeHitBox( drone )
-
-	#if DEVELOPER
+	#if DEV
 	Assert( !( "RunDroneTypeThink" in drone.s ), "Already ran drone think!" )
 	drone.s.RunDroneTypeThink <- true
 	#endif
 	////initialize it's type only after the anim is complete
-	//local delay = drone.GetSequenceDuration( spawnAnimDrone )
+	//float delay = drone.GetSequenceDuration( spawnAnimDrone )
 	drone.EndSignal( "OnDeath" )
 
 	switch ( GetDroneType( drone ) )
@@ -141,7 +71,7 @@ void function RunDroneTypeThink( entity drone )
 		case "drone_type_beam":
 		case "drone_type_rocket":
 		case "drone_type_plasma":
-			local owner = drone.GetFollowTarget()
+			entity owner = drone.GetFollowTarget()
 			if ( IsValid( owner ) )
 				owner.Signal( "OnEndFollow" )
 			DroneRocketThink( drone )	//may delay if it's waiting for a spawn anim to finish
@@ -165,94 +95,6 @@ void function RunDroneTypeThink( entity drone )
 	}
 }
 
-void function CreateDuckTapeHitBox( entity drone )
-{
-    if( IsValid( drone ) )
-    {
-		drone.kv.solid = 0
-
-		printl("created ducktape hitbox")
-
-        entity proxy = CreateEntity( "prop_script" )
-        {
-            proxy.SetValueForModelKey( drone.GetModelName() )
-            proxy.SetScriptName("npc_Drone_hitbox")
-
-            proxy.SetAngles( drone.GetAngles() )
-            proxy.SetOrigin( drone.GetOrigin() )
-            //proxy.SetModelScale(0.6)
-
-            proxy.kv.solid = SOLID_VPHYSICS
-            proxy.kv.rendermode = 3
-            proxy.kv.rendercolor = "255 255 255 0"
-            proxy.kv.spawnflags = SF_INFOTARGET_ALWAYS_TRANSMIT_TO_CLIENT
-
-            AddEntityCallback_OnKilled( proxy , OnDroneHitBoxDeath )
-            AddEntityCallback_OnDamaged( proxy , OnDroneDamaged )
-
-            proxy.SetOwner( drone )
-            proxy.SetParent( drone )
-			SetTeam(proxy, drone.GetTeam() )
-
-            proxy.DisableRenderAlways()
-            DispatchSpawn( proxy )
-
-            proxy.SetArmorType( ARMOR_TYPE_HEAVY )
-            proxy.SetTitle( drone.GetTitle() )
-            proxy.SetMaxHealth( drone.GetMaxHealth() )
-            proxy.SetHealth( drone.GetMaxHealth() )
-        }
-
-        proxy.SetTakeDamageType( DAMAGE_YES )
-		proxy.SetNoTargetSmartAmmo(false)
-        proxy.SetSmartAmmoLockType( eSmartAmmoLockType.anyType )
-    }
-}
-
-void function OnDroneDamaged( entity proxy, var damageInfo )
-{
-	entity Drone = proxy.GetOwner()
-
-	entity weapon               = DamageInfo_GetWeapon( damageInfo )
-	entity attacker 			= DamageInfo_GetAttacker( damageInfo )
-	entity inflictor 			= DamageInfo_GetInflictor( damageInfo )
-	float damage				= DamageInfo_GetDamage( damageInfo )
-	int damageSourceId 			= DamageInfo_GetDamageSourceIdentifier( damageInfo )
-	float distance              = Distance( attacker.GetOrigin() , Drone.GetOrigin() )
-
-	//Tried to give visual shield indicator, but it doesn't seem to work?
-	DamageInfo_AddCustomDamageType( damageInfo, DF_SHIELD_DAMAGE )
-
-	// store the damage so all hits can be tallied
-	Assert( IsValid( inflictor ) )//Done so we can still get the error in dev
-	if ( !IsValid( inflictor ) ) //JFS Defensive fix
-		return
-
-	StoreDamageHistoryAndUpdate( Drone, 120.0, damage, inflictor.GetOrigin(), DamageInfo_GetCustomDamageType( damageInfo ), damageSourceId, attacker )
-
-    if(damage >= Drone.GetHealth())
-	   Drone.SetHealth(0)
-	else
-	   Drone.SetHealth( Drone.GetHealth() - damage )
-
-	proxy.SetHealth( Drone.GetHealth() )
-
-	if ( damage < 450 )
-		return
-
-	//vector pos = DamageInfo_GetDamagePosition( damageInfo )
-	//PlayFX( FX_Drone_DAMAGE, pos )
-	//EmitSoundOnEntity( Drone, "crow_flyer_dropshipattack" )
-}
-
-void function OnDroneHitBoxDeath( entity proxy, var damageInfo )
-{
-    entity ent = proxy.GetOwner()
-
-	if( IsValid( ent ) )
-	    ent.Die()
-}
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void function DroneRocketThink( entity drone )
 {
@@ -260,8 +102,8 @@ void function DroneRocketThink( entity drone )
 
 	entity owner
 	entity currentTarget
-	local accuracyMultiplierBase = drone.kv.AccuracyMultiplier
-	local accuracyMultiplierAgainstDrones = 100
+	float accuracyMultiplierBase = float( drone.kv.AccuracyMultiplier )
+	float accuracyMultiplierAgainstDrones = 100.0
 
 	//--------------------------------------------
 	// transform if this used to be a shield drone
@@ -292,7 +134,7 @@ void function DroneRocketThink( entity drone )
 		//----------------------------------------------------------------------
 		if ( IsAlive( owner ) )
 		{
-			local distSqr = DistanceSqr( owner.GetOrigin(), drone.GetOrigin() )
+			float distSqr = DistanceSqr( owner.GetOrigin(), drone.GetOrigin() )
 
 			if ( currentTarget == null || distSqr > DRONE_LEASH_DISTANCE_SQR )
 			{
@@ -313,23 +155,21 @@ void function DroneRocketThink( entity drone )
 			drone.kv.AccuracyMultiplier = accuracyMultiplierBase
 		}
 	}
-
 }
 
 void function ShieldDroneShieldsUser( entity drone )
 {
 	for ( ;; )
 	{
-		var player = drone.WaitSignal( "OnPlayerUse" ).player
+		entity player = expect entity( drone.WaitSignal( "OnPlayerUse" ).player )
 
 		Assert( false, "REMOVED; see mp_pilot_ability_shield to ressurect" )
 	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void function DroneShieldThink( drone )
+void function DroneShieldThink( entity drone )
 {
-	expect entity( drone )
 	if ( !IsValid( drone ) )
 		return
 	drone.EndSignal( "OnDestroy" )
@@ -337,15 +177,15 @@ void function DroneShieldThink( drone )
 	//drone.EndSignal( "OnNewOwner" )
 
 	entity owner
-	local newOwner
+	entity newOwner
 	string ownerSquadName = ""
-	local distSq
-	local distSqHuman = MIN_DRONE_SHIELD_FROM_OWNER_DIST * MIN_DRONE_SHIELD_FROM_OWNER_DIST
-	local distSqTitan = MIN_DRONE_SHIELD_FROM_OWNER_DIST_TITAN * MIN_DRONE_SHIELD_FROM_OWNER_DIST_TITAN
+	int distSq
+	int distSqHuman = MIN_DRONE_SHIELD_FROM_OWNER_DIST * MIN_DRONE_SHIELD_FROM_OWNER_DIST
+	int distSqTitan = MIN_DRONE_SHIELD_FROM_OWNER_DIST_TITAN * MIN_DRONE_SHIELD_FROM_OWNER_DIST_TITAN
 	bool titanStateCurrent = false
 	bool titanStatePrevious = false
 	bool titanStateChanged = false
-	local e = {}
+	table e
 	e.droneShieldTable <- null
 
 	drone.SetUsePrompts( "#SHIELD_DRONE_HOLD_USE", "#SHIELD_DRONE_PRESS_USE" )
@@ -356,7 +196,7 @@ void function DroneShieldThink( drone )
 	OnThreadEnd(
 		function() : ( e, drone )
 		{
-			DroneShieldDestroy( e.droneShieldTable )
+			DroneShieldDestroy( expect table( e.droneShieldTable ) )
 			if ( IsAlive( drone ) )
 				thread ShieldDroneLandsAfterLeaderDeath( drone )
 		}
@@ -367,7 +207,7 @@ void function DroneShieldThink( drone )
 	//------------------------------------------
 	// Drone tentacles/ropes
 	//------------------------------------------
-	local droneRopeTable = CreateDroneRopes( drone )
+	table droneRopeTable = CreateDroneRopes( drone )
 	if ( !( "droneRopeTable" in drone.s ) )
 		drone.s.droneRopeTable <- null
 	drone.s.droneRopeTable = droneRopeTable
@@ -382,7 +222,7 @@ void function DroneShieldThink( drone )
 
 		if ( GetDroneType( drone ) != "drone_type_shield" )
 		{
-			DroneShieldDestroy( e.droneShieldTable )
+			DroneShieldDestroy( expect table( e.droneShieldTable ) )
 			break
 		}
 
@@ -391,7 +231,7 @@ void function DroneShieldThink( drone )
 		//------------------------------------------
 		if ( IsDroneRebooting( drone ) )
 		{
-			DroneShieldDestroy( e.droneShieldTable )
+			DroneShieldDestroy( expect table( e.droneShieldTable ) )
 			continue
 		}
 		//------------------------------------------
@@ -400,7 +240,7 @@ void function DroneShieldThink( drone )
 		owner = drone.GetFollowTarget()
 		if ( !IsAlive( owner ) )
 		{
-			DroneShieldDestroy( e.droneShieldTable )
+			DroneShieldDestroy( expect table( e.droneShieldTable ) )
 			break
 		}
 
@@ -418,7 +258,7 @@ void function DroneShieldThink( drone )
 		if ( newOwner != owner )
 		{
 			//Kill current shield since it will get redeployed on new owner
-			DroneShieldDestroy( e.droneShieldTable )
+			DroneShieldDestroy( expect table( e.droneShieldTable ) )
 		}
 
 		//------------------------------------------
@@ -446,7 +286,7 @@ void function DroneShieldThink( drone )
 		//--------------------------------------------------------------------------------------
 		// We have a valid owner and a valid shield, continue unless we have changed Titan state
 		//--------------------------------------------------------------------------------------
-		if ( ( DroneShieldExists( e.droneShieldTable ) ) && ( !titanStateChanged ) )
+		if ( ( DroneShieldExists( expect table( e.droneShieldTable ) ) ) && ( !titanStateChanged ) )
 			continue
 
 		//------------------------------------------
@@ -454,8 +294,8 @@ void function DroneShieldThink( drone )
 		//------------------------------------------
 		if ( DistanceSqr( drone.GetOrigin(), owner.GetOrigin() ) > distSq )
 		{
-			//printl( "Drone is too far away from host to create a shield")
-			DroneShieldDestroy( e.droneShieldTable )
+			//printl( "Drone is too far away from host to create a shield" )
+			DroneShieldDestroy( expect table( e.droneShieldTable ) )
 			continue
 		}
 
@@ -464,8 +304,8 @@ void function DroneShieldThink( drone )
 		//------------------------------------------
 		if ( titanStateChanged )
 		{
-			//printl( "Drone host embarked/disembarked a Titan, destroying shield")
-			DroneShieldDestroy( e.droneShieldTable )
+			//printl( "Drone host embarked/disembarked a Titan, destroying shield" )
+			DroneShieldDestroy( expect table( e.droneShieldTable ) )
 			continue
 		}
 		//----------------------------------------------------------
@@ -484,9 +324,9 @@ void function EngineerCombatDroneThink( entity drone )
 	drone.EndSignal( "OnDeath" )
 
 	entity owner
-	local currentTarget
-	local accuracyMultiplierPlayers = 50
-	local accuracyMultiplierAgainstNPC = 90
+	entity currentTarget
+	float accuracyMultiplierPlayers = 50.0
+	float accuracyMultiplierAgainstNPC = 90.0
 
 	//--------------------------------------------
 	// transform if this used to be a shield drone
@@ -541,7 +381,7 @@ void function EngineerCombatDroneThink( entity drone )
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function EngineerShieldDroneThink( drone )
+void function EngineerShieldDroneThink( entity drone )
 {
 	if ( !IsValid( drone ) )
 		return
@@ -550,32 +390,29 @@ function EngineerShieldDroneThink( drone )
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function IsDroneRebooting( drone )
+bool function IsDroneRebooting( entity drone )
 {
 	if ( !( "rebooting" in drone.s ) )
 		return false
 
-	return drone.s.rebooting
+	return expect bool( drone.s.rebooting )
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // HACK: may just use generic function "CreateShield()" from particle_wall.nut, but just in prototype mode now
-function MakeDroneShield( drone, owner )
+table function MakeDroneShield( entity drone, entity owner )
 {
-	expect entity( owner )
-
 	if ( !( "shieldTable" in drone.s ) )
 		drone.s.shieldTable <- null
 	else
-		DroneShieldDestroy( drone.s.shieldTable )
+		DroneShieldDestroy( expect table( drone.s.shieldTable ) )
 
 	//------------------------------
 	// Shield vars
 	//------------------------------
 	vector origin = owner.GetOrigin()
-	vector angles = owner.GetAngles() + Vector( 0, 0, 180 )
-	local attachmentTag
-	local DroneShieldTable = {}
+	vector angles = owner.GetAngles() + <0,0,180>
+	table DroneShieldTable
 	DroneShieldTable.vortexSphere <- null
 	DroneShieldTable.shieldWallFX = null
 	DroneShieldTable.shieldRopes <- null
@@ -599,7 +436,6 @@ function MakeDroneShield( drone, owner )
 		shieldWallHeight = DRONE_SHIELD_WALL_HEIGHT_HUMAN
 	}
 
-	local Spawn
 	//------------------------------
 	// Vortex to block the actual bullets
 	//------------------------------
@@ -617,14 +453,9 @@ function MakeDroneShield( drone, owner )
 	vortexSphere.kv.physics_max_size = 6
 
 	vortexSphere.SetAngles( angles ) // viewvec?
-	vortexSphere.SetOrigin( origin + Vector( 0, 0, shieldWallRadius - 64 ) )
+	vortexSphere.SetOrigin( origin + <0, 0, shieldWallRadius - 64> )
 	vortexSphere.SetMaxHealth( DRONE_SHIELD_WALL_HEALTH )
 	vortexSphere.SetHealth( DRONE_SHIELD_WALL_HEALTH )
-
-	if ( IsSingleplayer() )
-	{
-		thread PROTO_VortexSlowsPlayers( vortexSphere, owner )
-	}
 
 	DispatchSpawn( vortexSphere )
 
@@ -632,45 +463,38 @@ function MakeDroneShield( drone, owner )
 
 	vortexSphere.SetInvulnerable() // make particle wall invulnerable to weapon damage. It will still drain over time
 
-	// Shield wall fx control point
-	entity cpoint = CreateEntity( "info_placement_helper" )
-	SetTargetName( cpoint, UniqueString( "shield_wall_controlpoint" ) )
-	DispatchSpawn( cpoint )
-
 	//------------------------------------------
 	// Shield wall fx for visuals/health drain
 	//------------------------------------------
 
-	entity shieldWallFX = PlayFXWithControlPoint( shieldFx, origin + Vector( 0, 0, -64 ), cpoint, -1, null, angles )
-	vortexSphere.e.shieldWallFX = shieldWallFX
-	SetVortexSphereShieldWallCPoint( vortexSphere, cpoint )
-
-	entity mover = CreateScriptMover("")
+	entity mover = CreateScriptMover(DRONE_MOVER_SCRIPTNAME)
 	mover.SetOrigin( owner.GetOrigin() )
 	mover.SetAngles( owner.GetAngles() )
+
+	entity shieldWallFX = StartParticleEffectOnEntityWithPos_ReturnEntity( mover, GetParticleSystemIndex(shieldFx), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, <0,0,-64>, <0,180,0> )
+	vortexSphere.e.shieldWallFX = shieldWallFX
 
 	//-----------------------
 	// Attach shield to owner
 	//------------------------
 	vortexSphere.SetParent( mover )
-	shieldWallFX.SetParent( mover )
 
 	thread ShieldMoverFollowsOwner( owner, mover, vortexSphere, shieldWallFX )
 
 	//-----------------------
 	// Rope attach to shield
 	//------------------------
-	local ropeAttachOrigin1 = PositionOffsetFromEnt( owner, shieldWallRadius -16, wallFOV -16, 128 )
-	local ropeAttachOrigin2 = PositionOffsetFromEnt( owner, shieldWallRadius -16, ( ( wallFOV - 16) * -1 ), 128 )
+	vector ropeAttachOrigin1 = PositionOffsetFromEnt( owner, shieldWallRadius -16, wallFOV -16, 128 )
+	vector ropeAttachOrigin2 = PositionOffsetFromEnt( owner, shieldWallRadius -16, ( ( wallFOV - 16) * -1 ), 128 )
 	if ( owner.IsTitan() )
 	{
 		ropeAttachOrigin1 = PositionOffsetFromEnt( owner, shieldWallRadius - 78, wallFOV + 22, 256 )
 		ropeAttachOrigin2 = PositionOffsetFromEnt( owner, shieldWallRadius - 78, -( wallFOV + 22), 256 )
 	}
 
-	local shieldRopes = []
-	local shieldRope1 = CreateSingleDroneRope( drone, "ROPE_0", false )
-	local shieldRope2 = CreateSingleDroneRope( drone, "ROPE_0", false )
+	array shieldRopes // TODO: Type should be array<entity>, but gets assigned to a table entry below which errors
+	entity shieldRope1 = CreateSingleDroneRope( drone, "ROPE_0", false )
+	entity shieldRope2 = CreateSingleDroneRope( drone, "ROPE_0", false )
 	shieldRopes.append( shieldRope1 )
 	shieldRopes.append( shieldRope2 )
 	entity ropeEnt1 = CreateEntity( "info_target" )
@@ -703,7 +527,7 @@ function MakeDroneShield( drone, owner )
 	// Health and cleanup
 	//------------------------
 	drone.s.shieldTable = DroneShieldTable
-	UpdateShieldWallColorForFrac( shieldWallFX, 1.0 )
+	UpdateShieldWallFX( vortexSphere, 1.0 )
 
 	return DroneShieldTable
 }
@@ -791,6 +615,7 @@ void function VortexStunCheck( entity player, vector origin, float height, float
 	GiveEMPStunStatusEffects( player, VORTEX_STUN_DURATION + 0.5 )
 	float strength = 0.4
 	StatusEffect_AddTimed( player, eStatusEffect.emp, strength, VORTEX_STUN_DURATION, 0.5 )
+	//thread TempLossOfAirControl( player, VORTEX_STUN_DURATION )
 	vector velocity = forward * 300
 	velocity.z = 400
 	player.p.lastDroneShieldStunPushTime = Time()
@@ -798,10 +623,11 @@ void function VortexStunCheck( entity player, vector origin, float height, float
 	EmitSoundOnEntityOnlyToPlayer( player, player, "explo_proximityemp_impact_3p" )
 	player.SetVelocity( velocity )
 }
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function CreateDroneRopes( drone )
+table function CreateDroneRopes( entity drone )
 {
-	local droneRopeTable = {}
+	table droneRopeTable
 	droneRopeTable.rope01 <- CreateSingleDroneRope( drone, "ROPE_0" )
 	droneRopeTable.rope02 <- CreateSingleDroneRope( drone, "ROPE_0" )
 	droneRopeTable.rope03 <- CreateSingleDroneRope( drone, "ROPE_1" )
@@ -811,13 +637,14 @@ function CreateDroneRopes( drone )
 
 	return droneRopeTable
 }
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function RemoveDroneRopes( entity drone )
+void function RemoveDroneRopes( entity drone )
 {
 	if ( !( "droneRopeTable" in drone.s ) )
 		return
 
-	local droneRopeTable = drone.s.droneRopeTable
+	table droneRopeTable = expect table( drone.s.droneRopeTable )
 	if ( IsValid( droneRopeTable.rope01.s.ropeEnd ) )
 		droneRopeTable.rope01.s.ropeEnd.Destroy()
 	if ( IsValid( droneRopeTable.rope02.s.ropeEnd ) )
@@ -842,19 +669,19 @@ function RemoveDroneRopes( entity drone )
 		droneRopeTable.rope05.Destroy()
 	if ( IsValid( droneRopeTable.rope06 ) )
 		droneRopeTable.rope06.Destroy()
-
 }
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function CreateSingleDroneRope( drone, attachTag, dangling = true )
+entity function CreateSingleDroneRope( entity drone, string attachTag, bool dangling = true )
 {
-	local subdivisions = 15 // 25
-	local slack = 200 // 25
+	int subdivisions = 15
+	int slack = 200
 	string startpointName = UniqueString( "rope_startpoint" )
 	string endpointName = UniqueString( "rope_endpoint" )
 
-	local attach_id = drone.LookupAttachment( attachTag )
+	int attach_id = drone.LookupAttachment( attachTag )
 	Assert( attach_id > 0, "Invalid attachment: " + attachTag )
-	local attachPos = drone.GetAttachmentOrigin( attach_id )
+	vector attachPos = drone.GetAttachmentOrigin( attach_id )
 
 	entity rope_start = CreateEntity( "move_rope" )
 	SetTargetName( rope_start, startpointName )
@@ -864,7 +691,7 @@ function CreateSingleDroneRope( drone, attachTag, dangling = true )
 	rope_start.kv.Subdiv = subdivisions
 	rope_start.kv.Width = "1"
 	rope_start.kv.TextureScale = "1"
-	rope_start.kv.RopeMaterial = "cable/cable_selfillum.vmt"
+	rope_start.kv.RopeMaterial = "cable/cable_selfillum"
 	rope_start.kv.PositionInterpolator = 2
 	rope_start.kv.dangling = dangling
 	rope_start.SetOrigin( attachPos )
@@ -877,7 +704,7 @@ function CreateSingleDroneRope( drone, attachTag, dangling = true )
 	rope_end.kv.Subdiv = subdivisions
 	rope_end.kv.Width = "1"
 	rope_end.kv.TextureScale = "1"
-	rope_end.kv.RopeMaterial = "cable/cable_selfillum.vmt"
+	rope_end.kv.RopeMaterial = "cable/cable_selfillum"
 	rope_end.SetOrigin( attachPos )
 
 	DispatchSpawn( rope_start )
@@ -889,16 +716,16 @@ function CreateSingleDroneRope( drone, attachTag, dangling = true )
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function DroneShieldDestroy( DroneShieldTable )
+void function DroneShieldDestroy( table DroneShieldTable )
 {
 	if ( !IsValid( DroneShieldTable ) )
 		return
 
-	local vortexSphere = DroneShieldTable.vortexSphere
-	local shieldWallFX = DroneShieldTable.shieldWallFX
-	local ropes = DroneShieldTable.shieldRopes
+	entity vortexSphere = expect entity( DroneShieldTable.vortexSphere )
+	//entity shieldWallFX = expect entity( DroneShieldTable.shieldWallFX )
+	array ropes = expect array( DroneShieldTable.shieldRopes ) // TODO: Type should be array<entity>
 
-	StopShieldWallFX( expect entity( vortexSphere ) )
+	StopShieldWallFX( vortexSphere )
 	if ( IsValid( vortexSphere ) )
 		vortexSphere.Destroy()
 
@@ -909,14 +736,14 @@ function DroneShieldDestroy( DroneShieldTable )
 	{
 		if ( IsValid( rope.s.ropeEnd ) )
 			rope.s.ropeEnd.Destroy()
+
 		if ( IsValid( rope ) )
 			rope.Destroy()
 	}
-
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function DroneShieldExists( DroneShieldTable )
+bool function DroneShieldExists( table DroneShieldTable )
 {
 	if ( !IsValid( DroneShieldTable) )
 		return false
@@ -938,11 +765,6 @@ void function DroneThrow( entity npc, entity drone, string spawnAnimDrone )
 
 //	EmitSoundOnEntity( drone, "Drone_Power_On" )
 
-	#if GRUNTCHATTER_ENABLED
-	if ( NPC_GruntChatterSPEnabled( npc ) )
-		GruntChatter_TryFriendlyEquipmentDeployed( npc, "npc_drone" )
-	#endif
-
 	vector origin = npc.GetOrigin()
 	vector angles = npc.GetAngles()
 
@@ -960,13 +782,12 @@ void function DroneThrow( entity npc, entity drone, string spawnAnimDrone )
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if !SP
 void function DroneCleanupOnOwnerDeath_Thread( entity owner, entity drone )
 {
 	drone.EndSignal( "OnDestroy" )
 	drone.EndSignal( "OnDeath" )
 
-	for ( ; ; )
+	for ( ;; )
 	{
 		if ( !IsAlive( owner ) )
 			break
@@ -977,7 +798,6 @@ void function DroneCleanupOnOwnerDeath_Thread( entity owner, entity drone )
 	wait RandomFloatRange( 2.0, 10.0 )
 	drone.Die()
 }
-#endif // #if !SP
 
 entity function SpawnDroneFromNPC( entity npc, string aiSettings )
 {
@@ -1009,9 +829,7 @@ entity function SpawnDroneFromNPC( entity npc, string aiSettings )
 	}
 	else
 	{
-		#if DEVELOPER
-			printt( "NPC at ", npc.GetOrigin(), " couldn't spawn drone because there is less than ", DRONE_MINIMUM_DEPLOY_CLEARANCE_FROM_GROUND, " units of clearance from his origin." )
-		#endif
+		printt( "NPC at ", npc.GetOrigin(), " couldn't spawn drone because there is less than ", DRONE_MINIMUM_DEPLOY_CLEARANCE_FROM_GROUND, " units of clearance from his origin." )
 		return null
 	}
 
@@ -1030,9 +848,7 @@ entity function SpawnDroneFromNPC( entity npc, string aiSettings )
 	thread DroneSolidDelayed( drone )
 	thread DroneThrow( npc, drone, spawnAnimDrone )
 
-#if !SP
 	thread DroneCleanupOnOwnerDeath_Thread( npc, drone )
-#endif // #if !SP
 
 	npc.EnableNPCFlag( NPC_PAIN_IN_SCRIPTED_ANIM )
 
@@ -1054,7 +870,7 @@ void function ShieldDroneLandsAfterLeaderDeath( entity drone )
 	drone.DisableBehavior( "Follow" )
 	//SetTeam( drone, TEAM_UNASSIGNED )
 	vector start = drone.GetOrigin()
-	vector end = start + Vector(0,0,-5000)
+	vector end = start + <0,0,-5000>
 	vector mins = drone.GetBoundingMins()
 	vector maxs = drone.GetBoundingMaxs()
 
@@ -1074,23 +890,24 @@ void function ShieldDroneLandsAfterLeaderDeath( entity drone )
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function CreateDroneSquadString( owner )
+string function CreateDroneSquadString( entity owner )
 {
 	Assert( IsValid( owner ), "Trying to MakeDroneSquad name for an invalid entity." )
 
-	local squadName
+	string squadName
 
 	if ( owner.IsPlayer() )
 		squadName = "player" + owner.entindex() + "droneSquad"
 	else if ( owner.IsNPC() )
 		squadName = "npc" + owner.entindex() + "droneSquad"
 	else
-		Assert( 0, "Trying to CreateDroneSquadString for a non-NPC non-player entity at " + owner.GetOrigin() )
+		Assert( false, "Trying to CreateDroneSquadString for a non-NPC non-player entity at " + owner.GetOrigin() )
 
 	return squadName
 }
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function SetDroneSquadStringForOwner( owner, squadName )
+/*void function SetDroneSquadStringForOwner( entity owner, string squadName )
 {
 	Assert( IsValid( owner ), "Trying to SetDroneSquadStringForOwner name on an invalid entity." )
 
@@ -1099,18 +916,20 @@ function SetDroneSquadStringForOwner( owner, squadName )
 
 	owner.s.squadNameDrones = squadName
 }
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function GetDroneSquadStringFromOwner( owner )
+function GetDroneSquadStringFromOwner( entity owner )
 {
 	Assert( IsValid( owner ), "Trying to GetDroneSquadStringFromOwner name on an invalid entity." )
 	if ( !( "squadNameDrones" in owner.s ) )
 		return null
 	else
 		return owner.s.squadNameDrones
-}
+}*/
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // DroneGrunt deploys drone after cooldown when drone is destroyed
-function DroneGruntThink( entity npc, string aiSettings )
+void function DroneGruntThink( entity npc, string aiSettings )
 {
 	if ( !IsValid( npc ) )
 		return
@@ -1125,7 +944,17 @@ function DroneGruntThink( entity npc, string aiSettings )
 
 	while ( true )
 	{
-		wait ( RandomFloatRange( 0, 1.0 ) )
+		//if ( npc.GetNPCState() == "idle" )
+		//{
+		//	npc.WaitSignal( "OnStateChange" )
+		//	continue
+		//}
+
+		wait RandomFloatRange( 0, 1.0 )
+
+		// drone spawning is disabled.
+		if ( !npc.ai.droneSpawnAllowed )
+			continue
 
 		//dont do stuff when animating on a parent
 		if ( npc.GetParent() )
@@ -1154,10 +983,8 @@ function DroneGruntThink( entity npc, string aiSettings )
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function DroneHasEnoughRoomToDeployFromNPC( npc )
+bool function DroneHasEnoughRoomToDeployFromNPC( entity npc )
 {
-	expect entity( npc )
-
 	if ( !IsValid( npc ) )
 		return false
 	//-----------------------------------------------
@@ -1167,12 +994,12 @@ function DroneHasEnoughRoomToDeployFromNPC( npc )
 
 	if ( GetVerticalClearance( deployOrigin ) < DRONE_MINIMUM_DEPLOY_CLEARANCE_FROM_GROUND )
 		return false
-	else
-		return true
 
+	return true
 }
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function DroneWaitTillDeadOrHacked( drone )
+void function DroneWaitTillDeadOrHacked( entity drone )
 {
 	drone.EndSignal( "OnDestroy" )
 	drone.EndSignal( "OnDeath" )
@@ -1180,10 +1007,11 @@ function DroneWaitTillDeadOrHacked( drone )
 
 	WaitForever()
 }
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void function DroneDeath( entity drone, var damageInfo )
 {
-	local deathFX
+	asset deathFX
 
 	switch ( GetDroneType( drone ) )
 	{
@@ -1212,7 +1040,7 @@ void function DroneDeath( entity drone, var damageInfo )
 	explosion.kv.start_active = 1
 	DispatchSpawn( explosion )
 
-	local deathSound
+	string deathSound
 
 	// this sound get should be moved to ai settings file
 	switch ( GetDroneType( drone ) )
@@ -1230,18 +1058,24 @@ void function DroneDeath( entity drone, var damageInfo )
 			break
 	}
 
-	EmitSoundAtPosition( TEAM_UNASSIGNED, drone.GetOrigin(), deathSound )
-	explosion.Kill_Deprecated_UseDestroyInstead( 3 )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, drone.GetOrigin(), deathSound, drone )
+	explosion.Kill_Deprecated_UseDestroyInstead( 3.0 )
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 void function DroneDialogue( entity drone, string event, entity player = null )
 {
-	if ( !IsAlive( drone ) || player != null && !IsAlive( player ) )
+	if ( !IsAlive( drone ) )
 		return
 
-	local alias
+	if ( player != null )
+	{
+		if ( !IsAlive( player ) )
+			return
+	}
+
+	string alias
 	bool playToPlayerOnly = true
 
 	switch ( event )
@@ -1264,7 +1098,7 @@ void function DroneDialogue( entity drone, string event, entity player = null )
 			playToPlayerOnly = false
 			break
 		default:
-			Assert( 0, "Invalid DroneDialogue event: " + event )
+			Assert( false, "Invalid DroneDialogue event: " + event )
 	}
 
 	if ( playToPlayerOnly )
@@ -1273,42 +1107,41 @@ void function DroneDialogue( entity drone, string event, entity player = null )
 		EmitSoundOnEntity( drone, alias )
 
 
-/*
-Hostiles detected, marking targets
-diag_gs_drone_detectHostileTargets
-
-Drone targets marked
-diag_gs_drone_targetsMarked
-
-Escort drone destroyed
-diag_gs_drone_escortDestroyed
-
-Multiple escort drones combined. Shield radius increased
-diag_gs_drone_combinedShieldRadius
-
-Multiple escort drones combined. Projectile accuracy increased
-diag_gs_drone_combinedWpnAccuracy
-
-Recharging drone shield
-diag_gs_drone_rechargingShield
-
-Target lost
-diag_gs_drone_targetLost
-
-Target acquired
-diag_gs_drone_targetAcquired
-*/
+    /*
+    Hostiles detected, marking targets
+    diag_gs_drone_detectHostileTargets
+    
+    Drone targets marked
+    diag_gs_drone_targetsMarked
+    
+    Escort drone destroyed
+    diag_gs_drone_escortDestroyed
+    
+    Multiple escort drones combined. Shield radius increased
+    diag_gs_drone_combinedShieldRadius
+    
+    Multiple escort drones combined. Projectile accuracy increased
+    diag_gs_drone_combinedWpnAccuracy
+    
+    Recharging drone shield
+    diag_gs_drone_rechargingShield
+    
+    Target lost
+    diag_gs_drone_targetLost
+    
+    Target acquired
+    diag_gs_drone_targetAcquired
+    */
 }
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void function DroneOnLeeched( entity drone, entity player )
 {
 	//global behavior when this npc gets leeched
-	delaythread ( 1 ) DroneDialogue( drone, "hack_success", player )
+	delaythread( 1 ) DroneDialogue( drone, "hack_success", player )
 }
 
-void function DroneSelfDestruct( entity drone, delay )
+void function DroneSelfDestruct( entity drone, float delay )
 {
 	drone.EndSignal( "OnDeath" )
 	wait delay
@@ -1319,12 +1152,7 @@ void function RepairDroneThink( entity drone )
 {
 	drone.EndSignal( "OnDeath" )
 	EmitSoundOnEntity( drone, "colony_spectre_initialize_beep" )
-
-    thread function() : ( drone )
-	{
-		wait 60
-		drone.Die()
-	}()
+	thread DroneSelfDestruct( drone, 60 )
 
 	for ( ;; )
 	{
@@ -1336,25 +1164,6 @@ void function RepairDroneThink( entity drone )
 
 		string attachName = "HIJACK"
 		entity repairTitan = drone.e.repairSoul.GetTitan()
-
-		/*
-		if ( IsSoul( repairTarget ) )
-		{
-			repairTarget = repairTarget.GetTitan()
-			attachName = "HIJACK"
-		}
-		else
-		{
-			Assert( !repairTarget.IsTitan() )
-			attachName = "ORIGIN"
-		}
-
-		if ( !IsAlive( repairTitan ) )
-		{
-			wait 2
-			continue
-		}
-		*/
 
 		drone.SetOwner( repairTitan )
 
@@ -1368,19 +1177,17 @@ void function RepairDroneThink( entity drone )
 	}
 }
 
-bool function DroneCanRepairTarget( drone, ent, attachName )
+bool function DroneCanRepairTarget( entity drone, entity ent, string attachName )
 {
-	expect entity( ent )
-
 	if ( !IsAlive( ent ) )
 		return false
 
 	if ( ent.GetHealth() >= ent.GetMaxHealth() )
 		return false
 
-	local attachID = ent.LookupAttachment( attachName )
-	local origin = ent.GetAttachmentOrigin( attachID )
-	local droneOrigin = drone.GetOrigin()
+	int attachID = ent.LookupAttachment( attachName )
+	vector origin = ent.GetAttachmentOrigin( attachID )
+	vector droneOrigin = drone.GetOrigin()
 	if ( Distance( droneOrigin, origin ) > 600 )
 		return false
 
@@ -1388,11 +1195,8 @@ bool function DroneCanRepairTarget( drone, ent, attachName )
 	return trace == 1.0
 }
 
-void function DroneRepairsTarget( drone, ent, attachName )
+void function DroneRepairsTarget( entity drone, entity ent, string attachName )
 {
-	expect entity( drone )
-	expect entity( ent )
-
 	drone.EndSignal( "OnDestroy" )
 	EmitSoundOnEntity( drone, "EMP_Titan_Electrical_Field" )
 
@@ -1416,8 +1220,8 @@ void function DroneRepairsTarget( drone, ent, attachName )
 
 		DroneRepairFX( drone, ent, attachName )
 
-		local maxHealth = ent.GetMaxHealth()
-		local healAmount = maxHealth * 0.015 // 0.005
+		int maxHealth = ent.GetMaxHealth()
+		int healAmount = int( maxHealth * 0.015 ) // 0.005
 		float healTime = RandomFloatRange( 0.8, 1.2 )
 
 		for ( float i = 0.0; i < healTime; i++ )
@@ -1425,15 +1229,15 @@ void function DroneRepairsTarget( drone, ent, attachName )
 			if ( !IsAlive( ent ) )
 				return
 
-			local newHealth = ent.GetHealth() + healAmount
-			newHealth = min( newHealth, maxHealth )
+			int newHealth = ent.GetHealth() + healAmount
+			newHealth = minint( newHealth, maxHealth )
 			ent.SetHealth( newHealth )
 			WaitFrame()
 		}
 	}
 }
 
-void function DroneRepairFX( drone, ent, attachName )
+void function DroneRepairFX( entity drone, entity ent, string attachName )
 {
 	// Control point sets the end position of the effect
 	entity cpEnd = CreateEntity( "info_placement_helper" )
@@ -1442,28 +1246,25 @@ void function DroneRepairFX( drone, ent, attachName )
 	DispatchSpawn( cpEnd )
 
 	entity zapBeam = CreateEntity( "info_particle_system" )
-	{
-		zapBeam.kv.cpoint1 = cpEnd.GetTargetName()
+	zapBeam.kv.cpoint1 = cpEnd.GetTargetName()
 
-		zapBeam.SetValueForEffectNameKey( ARC_CANNON_BEAM_EFFECT )
-		zapBeam.kv.start_active = 0
-		zapBeam.SetOwner( drone )
-		zapBeam.kv.VisibilityFlags = (ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY)
-		zapBeam.SetParent( drone, "ORIGIN", false, 0.0 )
-
-
+	zapBeam.SetValueForEffectNameKey( ARC_CANNON_BEAM_EFFECT )
+	zapBeam.kv.start_active = 0
+	zapBeam.SetOwner( drone )
+	zapBeam.kv.VisibilityFlags = (ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY)
+	zapBeam.SetParent( drone, "ORIGIN", false, 0.0 )
 	DispatchSpawn( zapBeam )
-	}
+
 	zapBeam.Fire( "Start" )
 	zapBeam.Fire( "StopPlayEndCap", "", 2.0 )
 	zapBeam.Kill_Deprecated_UseDestroyInstead( 2.0 )
 	cpEnd.Kill_Deprecated_UseDestroyInstead( 2.0 )
 }
 
-
-function SetRepairDroneTarget( entity drone, entity repairTitan )
+void function SetRepairDroneTarget( entity drone, entity repairTitan )
 {
 	Assert( IsAlive( repairTitan ), "Repair target " + repairTitan + " is dead" )
 	Assert( repairTitan.IsTitan() )
 	drone.e.repairSoul = repairTitan.GetTitanSoul()
 }
+ 

@@ -114,14 +114,14 @@ global const GH_DEATHBOX_FX = $"P_death_box_fx_gh" // needed by VBSPInfo
 
 global const int DEFAULT_MELEE_WEAPON_SKIN_GUID = 519356259
 const int DEFAULT_MELEE_WEAPON_GUID = 1222621873
-const int GOLDEN_HORSE_DEATHBOX_GUID = 989815244//705533011
+const int GOLDEN_HORSE_DEATHBOX_GUID = 705533011
 const int DEFAULT_DEATHBOX_GUID = 989815244
 
 const string FX_CORE = "FX_CORE"
 const string FX_CENTER = "FX_CENTER"
 
 const asset DEFAULT_DEATHBOX = $"settings/itemflav/artifact_components/deathbox_default.rpak"
-const asset GOLDEN_HORSE_DEATHBOX = $"settings/itemflav/artifact_components/deathbox_default.rpak"//$"settings/itemflav/artifact_components/deathbox_ragold.rpak"
+const asset GOLDEN_HORSE_DEATHBOX = $"settings/itemflav/artifact_components/deathbox_ragold.rpak"
 
 const int NUM_LOADOUT_BACKUPS = 4 // slot for fists plus max # of heirlooms per character is 2 plus one slot for artifact
 const string WEAPON_TYPE_SETTINGS_BLOCK_KEY = "meleeWeaponType"
@@ -181,7 +181,7 @@ void function MeleeShared_Init()
 
 	#if SERVER
 		AddCallback_OnDeathBoxSpawned( OnDeathboxSpawned )
-		// AddCallback_OnDeathBoxLootUpdated( OnLootUpdated ) -- native not available
+		AddCallback_OnDeathBoxLootUpdated( OnLootUpdated )
 	#endif // #if SERVER
 
 	AddCallback_RegisterRootItemFlavors( void function() {
@@ -231,13 +231,12 @@ void function OnItemFlavorRegistered_Melee_Weapon( ItemFlavor meleeWeapon )
 		}
 	}
 
-	if ( false && MeleeWeapon_GetWeaponType( meleeWeapon ) == eMeleeWeaponType.ARTIFACT && Artifacts_GetConfigurationFramework( meleeWeapon ) == eArtifactConfigurationType.COMPONENT )
+	if ( MeleeWeapon_GetWeaponType( meleeWeapon ) == eMeleeWeaponType.ARTIFACT && Artifacts_GetConfigurationFramework( meleeWeapon ) == eArtifactConfigurationType.COMPONENT )
 		RegisterArtifactComponentsForWeapon( meleeWeapon )
 }
 
 void function OnAllItemFlavorsRegistered_Deathboxes()
 {
-	#if false
 	ItemFlavor ornull defaultBox = RegisterItemFlavorFromSettingsAsset( DEFAULT_DEATHBOX )
 	Assert( defaultBox != null, "Failed to register default Deathbox from asset " + DEFAULT_DEATHBOX ) // default should never be disabled
 	fileLevel.fullDeathboxList.append( expect ItemFlavor( defaultBox ) )
@@ -256,7 +255,6 @@ void function OnAllItemFlavorsRegistered_Deathboxes()
 			}
 		#endif // #if SERVER || CLIENT
 	}
-	#endif
 }
 
 void function OnAllItemFlavorsRegistered_Melee_Weapon()
@@ -306,9 +304,6 @@ void function OnAllItemFlavorsRegistered_Melee_Weapon()
 			} )
 		#endif
 
-		// Only create deathbox loadout entry if we have deathbox items registered
-		if ( fileLevel.fullDeathboxList.len() > 0 )
-		{
 			LoadoutEntry boxEntry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "character_deathbox_for_" + ItemFlavor_GetGUIDString( character ), eLoadoutEntryClass.CHARACTER )
 			boxEntry.category     = eLoadoutCategory.DEATHBOX
 			#if DEVELOPER
@@ -323,7 +318,6 @@ void function OnAllItemFlavorsRegistered_Melee_Weapon()
 			boxEntry.networkTo                 = eLoadoutNetworking.PLAYER_EXCLUSIVE
 			boxEntry.stryderCharDataArrayIndex = ePlayerStryderCharDataArraySlots.INVALID
 			fileLevel.characterDeathboxLoadoutEntryMap[character] <- boxEntry
-		}
                                 
 	}
 }
@@ -588,11 +582,7 @@ LoadoutEntry function Loadout_Deathbox( ItemFlavor character )
 void function ArtifactsCallback_AddArtifactDeathboxesToCharacterLoadouts( array< ItemFlavor > deathboxList )
 {
 	foreach ( ItemFlavor character, CharacterAndMeleeWeapons unused in fileLevel.charactersMeleeWeaponsMap )
-	{
-		// Skip if deathbox entry doesn't exist (deathboxes disabled)
-		if ( character in fileLevel.characterDeathboxLoadoutEntryMap )
-			Loadout_Deathbox( character ).validItemFlavorList = deathboxList
-	}
+		Loadout_Deathbox( character ).validItemFlavorList = deathboxList
 }
 #endif // #if SERVER || CLIENT || UI
 
@@ -645,10 +635,6 @@ ItemFlavor function Deathbox_GetEquipped( ItemFlavor character, ItemFlavor melee
 		LoadoutEntry loadoutSlot = Artifacts_Loadouts_GetEntryForConfigIndexAndType( configIdx, eArtifactComponentType.DEATHBOX )
 		return LoadoutSlot_GetItemFlavor( playerEHI, loadoutSlot )
 	}
-
-	// Deathboxes disabled - return melee skin as fallback
-	if ( !(character in fileLevel.characterDeathboxLoadoutEntryMap) )
-		return meleeSkin
 
 	LoadoutEntry skinSlot = Loadout_MeleeSkin( character )
 	LoadoutEntry boxSlot  = Loadout_Deathbox( character )
@@ -709,9 +695,6 @@ void function ClientCallback_Loadouts_ToggleDeathboxEquipForMeleeSkin( entity pl
 	if ( !IsItemFlavorUnlockedForLoadoutSlot( ToEHI( player ), Loadout_MeleeSkin( character ), GetItemFlavorByGUID( meleeSkinGUID ) ) )
 		return
 
-	// Deathboxes disabled - skip
-	if ( !(character in fileLevel.characterDeathboxLoadoutEntryMap) )
-		return
 
 	if ( !IsItemFlavorUnlockedForLoadoutSlot( ToEHI( player ), Loadout_Deathbox( character ), GetItemFlavorByGUID( deathboxGUID ) ) )
 		return
@@ -724,10 +707,6 @@ void function ClientCallback_Loadouts_ToggleDeathboxEquipForMeleeSkin( entity pl
 void function Loadout_EquipDeathboxToMeleeSkin( EHI playerEHI, ItemFlavor character, ItemFlavor meleeSkin, ItemFlavor deathbox )
 {
 	Assert( !Artifacts_Loadouts_IsConfigPointerItemFlavor( meleeSkin ) )
-
-	// Deathboxes disabled - skip
-	if ( !(character in fileLevel.characterDeathboxLoadoutEntryMap) )
-		return
 
 	LoadoutEntry skinSlot = Loadout_MeleeSkin( character )
 	LoadoutEntry boxSlot = Loadout_Deathbox( character )
@@ -803,11 +782,6 @@ void function Loadout_EquipSavedMeleeSkinAndDeathboxPair( EHI playerEHI, Loadout
 	ItemFlavor ornull character = skinSlot.associatedCharacterOrNull
 	Assert( character != null )
 	expect ItemFlavor( character )
-
-	// Deathboxes disabled - skip
-	if ( !(character in fileLevel.characterDeathboxLoadoutEntryMap) )
-		return
-
 	LoadoutEntry boxSlot = Loadout_Deathbox( character )
 
 	// if it's an artifact weapon, get the configured Deathbox and store that for consistency
@@ -878,17 +852,23 @@ void function OnDeathboxSpawned( entity deathbox, entity attacker, int damageSou
 
 		if ( attackerIsNPC )
 		{
-			return
+			if ( CanNPCDoDamageOnBehalfOfPlayer( attacker ) )
+			{
+				entity boss = attacker.GetBossPlayer()
+				if ( IsValid( boss ) && boss.IsPlayer() )
+					attacker = boss
+				else // can't get loadout from a nonvalid boss
+					return
+			}
+			else // NPC can't do damage on behalf of player
+			{
+				return
+			}
 		}
 
 
 		ItemFlavor attackerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( attacker ), Loadout_Character() )
 		ItemFlavor meleeSkinFlavor   = LoadoutSlot_GetItemFlavor( ToEHI( attacker ), Loadout_MeleeSkin( attackerCharacter ) )
-
-		// Deathboxes disabled - skip deathbox logic
-		if ( !(attackerCharacter in fileLevel.characterDeathboxLoadoutEntryMap) )
-			return
-
 		ItemFlavor deathboxFlavor    = LoadoutSlot_GetItemFlavor( ToEHI( attacker ), Loadout_Deathbox( attackerCharacter ) )
 
 		bool hasSpecialBox  = false
@@ -1214,14 +1194,11 @@ bool function IsValidMeleeAttackTarget( entity attacker, entity inputWeaponOrNul
 		return false
 
 	entity targetOwner = target.GetOwner()
-	// CanBeMeleedByOwner -- entity method not available
-	// if( IsValid( targetOwner ) && attacker == targetOwner && !target.CanBeMeleedByOwner() )
-	// 	return false
+	if( IsValid( targetOwner ) && attacker == targetOwner )
+		return false
 
 	#if SERVER // todo(dw): fix this server/client mismatch (which may cause mispredictions!)
-		// ShouldPreventDamageDueToFriendlyFire -- function not available
-		// Default to preventing friendly-fire melee damage
-		if ( IsFriendlyTeam( attacker.GetTeam(), target.GetTeam() ) )
+		if ( IsFriendlyTeam( attacker.GetTeam(), target.GetTeam() ) && ShouldPreventDamageDueToFriendlyFire( attacker, target, null ) )
 			return false
 	#endif
 

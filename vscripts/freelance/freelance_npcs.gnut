@@ -11,14 +11,19 @@ global function CalcHullCenterForOrigin
 global function PrintAttackerHistoryForNPC
 global function NpcShadowDeath
 
-#if DEVELOPER
+#if DEV
 global function DEV_CrosshairSpawn
 global function DEV_NPC_ToggleOverlay
 global function NPCDebugOverlayIsActive
-#endif // DEVELOPER
+#endif // DEV
 
 global function PVE_TestDropPod
-global function DropCandy               
+global function DropCandy
+
+                  
+                           
+                                             
+                            
 
 global function CommonSpawnInitNPC
 global function CommonSpawnInfantryBehavior
@@ -27,6 +32,52 @@ global function CommonSpawnInfantryBehavior
 const float FRIENDLYFIRE_HINT_DISPLAY_TIME = 5.0
 const float	HINT_COOLDOWN_FRIENDLYFIRE = 10
 #endif // SERVER
+
+
+
+                  
+                    
+  
+                  
+                                                                                  
+                                                             
+
+                                                                                     
+                                                                       
+
+                                                                                
+                                                            
+
+  
+                
+                                                                                           
+
+  
+                
+                                                                              
+                                                                                     
+                                                                                               
+
+                                                                                                    
+                                                                 
+
+  
+            
+
+  
+               
+                                                                                
+                                                              
+
+                                                                                                     
+                                                                                                     
+                                                                                                     
+                                                                                                     
+
+                                                          
+                                                                                                                        
+                          
+                            
 
 #if SERVER
 global struct NpcSpawnInfo
@@ -70,7 +121,7 @@ void function FreelanceNPCs_Init()
 {
 	if ( isInitialized )
 	{
-		#if DEVELOPER
+		#if DEV
 			printf( "Freelance NPCs System is already initialized" )
 		#endif
 		return
@@ -93,6 +144,63 @@ void function FreelanceNPCs_Init()
 #if CLIENT
 	AddCreateCallback( "npc_spectre", OnNPCCreatedClient )
 #endif //CLIENT
+
+	PrecacheSkinName( "ShadowSqaud" )
+
+                   
+                        
+             
+                                    
+                                      
+
+               
+                                      
+                                        
+
+           
+                                  
+                                    
+
+               
+                                      
+                                                                         
+                                                                         
+                                                                          
+                                                                          
+
+                      
+         
+                                
+                                       
+                                            
+
+          
+                                    
+                                      
+
+                  
+
+                     
+        
+                               
+                                 
+                                             
+                                            
+                                                          
+
+                      
+                                        
+                                        
+                                        
+                                        
+
+            
+                                                          
+                                       
+
+   
+                            
+                        
 }
 #endif // SERVER || CLIENT
 
@@ -102,7 +210,7 @@ void function NPCs_RegisterNetworking()
 {
 	if ( isNetworkingRegistered == false )
 	{
-		RegisterNetworkedVariableSafe( NV_LastSpottedByNPC, SNDC_PLAYER_GLOBAL, SNVT_TIME, -1.0 )
+		RegisterNetworkedVariable( NV_LastSpottedByNPC, SNDC_PLAYER_GLOBAL, SNVT_TIME, -1.0 )
 		isNetworkingRegistered = true
 	}
 }
@@ -154,9 +262,9 @@ void function EntitiesDidLoad()
 			turret.DisableTurret()
 	}
 
-#if DEVELOPER
+#if DEV
 	thread DebugFrameThread()
-#endif // DEVELOPER
+#endif // DEV
 }
 
 void function OnPlayerDamaged( entity player, var di )
@@ -198,6 +306,22 @@ void function OnPlayerDamaged_HandleProwlerDamage( entity player, var di )
 	if ( rawDamage <= 0 )
 		return
 
+	// Melee hint:
+	PlayerProwlerCombatHistory history = GetPlayerProwlerCombatHistory( player )
+	{
+		history.meleeHintCounter++
+		int threshold = (history.meleeHintTimesHinted > 0) ? 8 : 4
+		if ( history.meleeHintCounter >= threshold )
+		{
+			if ( !Bleedout_IsBleedingOut( player ) )
+			{
+				DoFreelanceModeSplashToPlayer( player, eModeSplash.CombatHint_MeleeProwlers )
+				history.meleeHintTimesHinted++
+				history.meleeHintCounter = 0
+			}
+		}
+	}
+
 	if ( GetCurrentPlaylistVarBool( "prowlercombat_damagescale_enabled", true ) )
 	{
 		int lowhealthThreshold = GetProwlerDamageScaleLowhealthThreshold( player )
@@ -220,6 +344,26 @@ void function OnPlayerDamaged_HandleProwlerDamage( entity player, var di )
 			if ( playerHealth > deathProtectionMinHP )
 			{
 				damage = minint( (playerHealth - 1), damage )
+			}
+			else
+			{
+				if ( GetCurrentPlaylistVarBool( "prowlercombat_damageimmunitywindow_enabled", true ) )
+				{
+					float immunityTime = GetProwlerDamageImmunityWindow( player )
+					if ( immunityTime > FLT_EPSILON )
+					{
+						float timeNow = Time()
+						float delta = (timeNow - history.lastGotDamagedTime)
+						if ( delta < immunityTime )
+						{
+							printf( "%s() - Canceled %d dmg, has only been %.2f of %.2f seconds since latest attack.  (%s)", FUNC_NAME(), rawDamage, delta, immunityTime, string( player ) )
+							DamageInfo_SetDamage( di, 0 )
+							return
+						}
+
+						history.lastGotDamagedTime = timeNow
+					}
+				}
 			}
 		}
 
@@ -247,7 +391,7 @@ int function GetProwlerDamageTeamCount( entity player )
 		case 2:
 			return GetPlayerArrayOfTeam( team ).len()
 		case 1:
-			return GetPlayerArrayOfTeam( team ).len()
+			return GetPlayerArrayOfTeam_AliveNotBleedingOut( team ).len()
 	}
 
 	return GetPlayerArrayOfTeam_Alive( team ).len()
@@ -299,6 +443,14 @@ int function GetProwlerDamageScaleDeathProtectMinHp( entity player )
 
 void function OnPlayerDamagedProwler( entity player, entity npc, var damageInfo )
 {
+	int flags = DamageInfo_GetCustomDamageType( damageInfo )
+	if ( IsBitFlagSet( flags, DF_MELEE ) )
+	{
+		PlayerProwlerCombatHistory history = GetPlayerProwlerCombatHistory( player )
+		history.meleeHintCounter = 0
+		if ( history.meleeHintTimesHinted == 0 )
+			history.meleeHintTimesHinted = 1	// they get it
+	}
 }
 
 //
@@ -330,19 +482,107 @@ void function SetupNPCTypes()
 		int prowlerHealth = GetCurrentPlaylistVarInt( "health_prowler", 114 )
 		int shadowProwlerHealth = GetCurrentPlaylistVarInt( "health_shadow_prowler", 20 )
        
-	//Season 11.0: Goliath and Spider
-                
-		int jungleSpiderHealth = GetCurrentPlaylistVarInt( "health_jungle_spider", 42 )
 
-	// type						// team default			//=========  [Health, Shield] Tiers =========
-         
+	//Season 11.0: Goliath and Spider
+                    
+                                                                        
+       
+
+                   
+                                                                    
+       
+
+	                         
+		int jungleSpiderHealth = GetCurrentPlaylistVarInt( "health_jungle_spider", 42 )
+       
+
+                    
+                    
+  
+                     
+                                                                             
+                                                                                         
+        
+  
+      
+						// type						// team default			//=========  [Health, Shield] Tiers =========
+
+	                   
 		RegisterNPCType( eNPC.PROWLER,				eNpcTeam.WILDLIFE,		[ [ prowlerHealth ], 		[prowlerHealth],		[prowlerHealth]			],	NPCSpawn_Prowler )
 		RegisterNPCType( eNPC.DIRE_PROWLER,			eNpcTeam.WILDLIFE,		[ [shadowProwlerHealth],	[shadowProwlerHealth],	[shadowProwlerHealth]	],	NPCSpawn_DireProwler )
-         
+       
+
+                    
+                                                                                                                                     
+       
+
+
+	                   
 		int spectreHealth = GetCurrentPlaylistVarInt( "armory_health_spectre", 150 )
 		RegisterNPCType( eNPC.SPECTRE,				eNpcTeam.LEGION,		[ [ spectreHealth, 0],		[ spectreHealth, 0],	[ spectreHealth, 0],	],	NPCSpawn_Spectre )
-		RegisterNPCType( eNPC.DEATH_SPECTRE,		eNpcTeam.LEGION,		[ [125, 75],	[125, 75],	[125, 75],		],	NPCSpawn_DeathSpectre )               
-		RegisterNPCType( eNPC.SPIDER_JUNGLE,		eNpcTeam.INFECTED,		[ [jungleSpiderHealth],	[jungleSpiderHealth], [jungleSpiderHealth] ],	NPCSpawn_SpiderJungle )                   
+		RegisterNPCType( eNPC.DEATH_SPECTRE,		eNpcTeam.LEGION,		[ [125, 75],	[125, 75],	[125, 75],		],	NPCSpawn_DeathSpectre )
+
+                             
+                                                                                       
+                                                                                                                                                                             
+        
+                      
+                                                                                         
+                                                                                                                                                                                                                        
+        
+       
+
+                    
+                                                                                                             
+                                                                                                                          
+       
+
+                     
+                                                                                                       
+                                                                                                          
+                                                                                                     
+       
+
+                   
+                                                                                                                            
+       
+
+	                         
+		RegisterNPCType( eNPC.SPIDER_JUNGLE,		eNpcTeam.INFECTED,		[ [jungleSpiderHealth],	[jungleSpiderHealth], [jungleSpiderHealth] ],	NPCSpawn_SpiderJungle )
+       
+
+                          
+                                                                                                                 
+       
+
+                  
+                   
+                                                                                                              
+                                                                                                                  
+                                                                                                      
+
+                 
+                                                                                                                  
+
+                 
+                                                                                              
+                                                                                                           
+                                                                                                     
+
+             
+
+                
+                                                                                                    
+                                                                                                                      
+
+            
+                                                                                                                   
+
+          
+                                                                                                   
+                                                                                                    
+                                                                                                   
+                        
 }
 
 entity function SpawnNPCDetailed( NpcSpawnInfo infoRaw )
@@ -369,7 +609,7 @@ entity function SpawnNPC( int npcType, vector spawnOrigin, vector spawnAngles, i
 	return SpawnNPCDetailed( info )
 }
 
-#if DEVELOPER
+#if DEV
 entity function DEV_CrosshairSpawn( int npcType, int rank = 0 )
 {
 	entity player = GP()
@@ -382,7 +622,7 @@ entity function DEV_CrosshairSpawn( int npcType, int rank = 0 )
 
 	return SpawnNPCDetailed( info )
 }
-#endif // #if DEVELOPER
+#endif // #if DEV
 
 ////////////////
 
@@ -421,9 +661,9 @@ array<entity> function PVE_TestDropPod( vector dropPos, int npcType, int spawnCo
 	spawnfuncs.resize( spawnCount, DropPodSpawnWrapper )
 	customData.resize( spawnCount, spawnInfo )
 
-	//int podFlags = eDropPodFlag.DISSOLVE_AFTER_DISEMBARKS
+	int podFlags = eDropPodFlag.DISSOLVE_AFTER_DISEMBARKS
 	array<entity> spawnedEnts
-	//waitthread Spawn_DropPodSquadCustom( spawnfuncs, customData, spawnedEnts, TEAM_ANY, marker, podFlags, 0 )
+	waitthread Spawn_DropPodSquadCustom( spawnfuncs, customData, spawnedEnts, TEAM_ANY, marker, podFlags, 0 )
 
 	marker.Destroy()
 	return spawnedEnts
@@ -434,7 +674,7 @@ array<entity> function PVE_TestDropPod( vector dropPos, int npcType, int spawnCo
 ///////////////////
 // UTILS
 
-#if DEVELOPER
+#if DEV
 void function DebugDrawOverlay( array<entity> npcs )
 {
 	int skitWithGC = 0
@@ -444,9 +684,12 @@ void function DebugDrawOverlay( array<entity> npcs )
 
 	foreach ( entity npc in npcs )
 	{
-		if ( npc.ai.skitId >= 0 )
+		if ( (npc.ai.skitId >= 0) && GarbageCollection_IsNPCMarked( npc ) )
+			++skitWithGC
+		else if ( npc.ai.skitId >= 0 )
 			++skit
-
+		else if ( GarbageCollection_IsNPCMarked( npc ) )
+			++orphanedWithGC
 		else
 			++orphaned
 	}
@@ -464,12 +707,16 @@ void function DebugDrawOverlay( array<entity> npcs )
 		orphaned
 	)
 
-	//DebugDrawScreenText( 0.01, 0.35, promptText )
+	DebugDrawScreenText( 0.01, 0.35, promptText )
 }
 
 bool function IsNPCOrphanedNoGC( entity npc )
 {
-	if ( npc.ai.skitId >= 0 )
+	if ( (npc.ai.skitId >= 0) && GarbageCollection_IsNPCMarked( npc ) )
+		return false
+	else if ( npc.ai.skitId >= 0 )
+		return false
+	else if ( GarbageCollection_IsNPCMarked( npc ) )
 		return false
 
 	return true
@@ -481,8 +728,7 @@ void function DebugDrawEntsInWorld( array<entity> npcs )
 	{
 		vector color = (IsNPCOrphanedNoGC( npc ) ? <255, 10, 10> : <255, 0, 200>)
 		vector markPos = CalcHullCenterForOrigin( npc.GetOrigin(), GetNpcHullType( npc ) )
-		array<int> colorRGB = [ int( color.x ), int( color.y ), int( color.z ) ]
-		DebugDrawMark( markPos, 30.0, colorRGB, true, 0.15 )
+		DebugDrawMark( markPos, 30.0, color, true, 0.15 )
 	}
 }
 
@@ -512,7 +758,7 @@ void function DebugFrameThread()
 		WaitFrame()
 	}
 }
-#endif // DEVELOPER
+#endif // DEV
 
 
 /*
@@ -549,19 +795,19 @@ string function GetRandomAmmoRef()
 
 void function DoGruntDrops( vector org, bool wasExecution )
 {
-	/*LootDropChance( org, "health_pickup_health_small", 0.05 )
+	LootDropChance( org, "health_pickup_health_small", 0.05 )
 	LootDropChance( org, "ordnance_drops", 0.20 )
 	if ( wasExecution )
-		LootDrop( org, "health_pickup_health_small" )*/
+		LootDrop( org, "health_pickup_health_small" )
 }
 
 void function RollAmmoDrops( vector org, float chance )
 {
-	/*AmmoDropChance( org, BULLET_AMMO, -1, chance )
+	AmmoDropChance( org, BULLET_AMMO, -1, chance )
 	AmmoDropChance( org, HIGHCAL_AMMO, -1, chance )
 	AmmoDropChance( org, SPECIAL_AMMO, -1, chance )
 	AmmoDropChance( org, SHOTGUN_AMMO, -1, chance )
-	AmmoDropChance( org, SNIPER_AMMO, -1, chance )*/
+	AmmoDropChance( org, SNIPER_AMMO, -1, chance )
 }
 
 void function RollAmmoDropsForKiller( vector org, float chance, var damageInfo )
@@ -569,15 +815,35 @@ void function RollAmmoDropsForKiller( vector org, float chance, var damageInfo )
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 	if ( !IsAlive( attacker ) || !attacker.IsPlayer() )
 	{
-		//RollAmmoDrops( org, (0.2 * chance) )
+		RollAmmoDrops( org, (0.2 * chance) )
 		return
 	}
 
-	//RollAmmoDropsForPlayer( org, chance, attacker )
+	RollAmmoDropsForPlayer( org, chance, attacker )
 }
 
 void function DropCandy( array<int> counts, array<int> rareCounts, vector pos, int flags = 0 )
-{  
+{
+                    
+                                       
+
+                                                      
+                                                       
+                                                       
+
+                                     
+                        
+   
+                                                            
+                                                            
+                                                             
+   
+
+                                     
+                                                                                          
+                                    
+                                                                                        
+       
 }
 
 void function DoItemDropForDeath( entity victim, var damageInfo )
@@ -599,29 +865,144 @@ void function DoItemDropForDeath_( entity victim, var damageInfo )
 	{
                    
 		case eNPC.PROWLER:
-			//LootDropChance( org, (CoinFlip() ? "health_pickup_combo_small" : "health_pickup_health_small" ), GetCurrentPlaylistVarFloat( "loot_drop_chance_health_item_small_prowler", 0.1 ) )
-			//RollAmmoDropsForKiller( org, 0.6, damageInfo )
-			//RollAmmoDrops( org, 0.05 )
+			LootDropChance( org, (CoinFlip() ? "health_pickup_combo_small" : "health_pickup_health_small" ), GetCurrentPlaylistVarFloat( "loot_drop_chance_health_item_small_prowler", 0.1 ) )
+			RollAmmoDropsForKiller( org, 0.6, damageInfo )
+			RollAmmoDrops( org, 0.05 )
 			break
 		case eNPC.DIRE_PROWLER:
-			//LootDropChance( org, (CoinFlip() ? "health_pickup_combo_small" : "health_pickup_health_small" ), GetCurrentPlaylistVarFloat( "loot_drop_chance_health_item_small_shadow_prowler", 0.05 ) )
-			//RollAmmoDropsForKiller( org, 0.6, damageInfo )
-			//RollAmmoDrops( org, 0.05 )
+			LootDropChance( org, (CoinFlip() ? "health_pickup_combo_small" : "health_pickup_health_small" ), GetCurrentPlaylistVarFloat( "loot_drop_chance_health_item_small_shadow_prowler", 0.05 ) )
+			RollAmmoDropsForKiller( org, 0.6, damageInfo )
+			RollAmmoDrops( org, 0.05 )
 			break
+      
+
+                   
+                    
+                                                                                                          
+                                                 
+                             
+        
+      
+
+                   
+                    
+                                 
+      
 		case eNPC.SPECTRE:
-			//LootDropChance( org, (CoinFlip() ? "health_pickup_combo_small" : "health_pickup_health_small" ), 0.25 )
-			//RollAmmoDropsForKiller( org, 0.75, damageInfo )
-			//RollAmmoDrops( org, 0.1 )
-			//LootDropChance( org, "ordnance_drops", 0.2 )
+			LootDropChance( org, (CoinFlip() ? "health_pickup_combo_small" : "health_pickup_health_small" ), 0.25 )
+			RollAmmoDropsForKiller( org, 0.75, damageInfo )
+			RollAmmoDrops( org, 0.1 )
+			LootDropChance( org, "ordnance_drops", 0.2 )
 			//InstantHealthPickup_DropForAll( 2, 1, org )
 			break
 		case eNPC.DEATH_SPECTRE:
-			//LootDropChance( org, (CoinFlip() ? "health_pickup_combo_small" : "health_pickup_health_small" ), 0.40 )
-			//RollAmmoDropsForKiller( org, 0.9, damageInfo )
-			//RollAmmoDrops( org, 0.2 )
+			LootDropChance( org, (CoinFlip() ? "health_pickup_combo_small" : "health_pickup_health_small" ), 0.40 )
+			RollAmmoDropsForKiller( org, 0.9, damageInfo )
+			RollAmmoDrops( org, 0.2 )
 			//LootDropChance( org, "health_3", 0.50 )
 			//InstantHealthPickup_DropForAll( 2, 1, org )
 			break
+                         
+
+                           
+                            
+                                                                                                          
+                                                  
+                            
+                                               
+                                                
+        
+      
+
+                   
+                    
+                                                
+                                                
+                                                
+                                                           
+                             
+        
+                         
+
+                    
+                     
+                                                                                    
+                                                                        
+                                                     
+                                      
+                      
+                                      
+                                          
+                                                                   
+        
+                      
+                                                            
+                            
+                                                
+                                     
+        
+      
+
+                  
+                   
+                                                            
+                             
+                                      
+        
+      
+
+                  
+    
+                     
+                                   
+                                    
+                                                               
+     
+                                    
+        
+                       
+                                   
+                                                               
+     
+                                    
+        
+                   
+                                    
+                                    
+                                                               
+     
+                                    
+                                                
+        
+
+    
+                       
+                                         
+        
+
+    
+                 
+                        
+                                    
+                                                            
+        
+                     
+                                    
+                                                            
+        
+
+
+    
+                
+                                    
+        
+                              
+             
+        
+
+                        
+
+		//
 		default:
 			Warning( "%s() - Unhandled type: eNPC.%s", FUNC_NAME(), GetNameForEnum( eNPC, victim.ai.npcType ) )
 			break
@@ -672,7 +1053,7 @@ void function CommonSpawnInitNPC( entity npc )
 	AddEntityCallback_OnDamaged( npc, OnNPCDamaged )
 	AddEntityCallback_OnPostDamaged( npc, OnNPCPostDamaged )
 	AddEntityCallback_OnPostShieldDamage( npc, OnNPCPostShieldDamage )
-	//AddEntityCallback_OnShieldBreak( npc, OnShieldBreak )
+	AddEntityCallback_OnShieldBreak( npc, OnShieldBreak )
 	npc.EnableNPCFlag( NPC_NO_MOVING_PLATFORM_DEATH ) //TODO: find a better solution for doors sometimes killing these guys
 	npc.ai.hasDeathFieldImmunity = false //primarily for robots/wildlife. can make this more granular when we get to doing soldiers
 
@@ -712,6 +1093,35 @@ void function HookPlayerSpotting( entity npc )
 
 void function GiveCreditAndAssistsForNPCDeath( entity npc, entity killer )
 {
+	PrintAttackerHistoryForNPC( npc )
+
+	array<entity> players
+	foreach( entity player, AttackHistory history in npc.ai.attackerHistory )
+	{
+		if ( !IsValid( player ) )
+			continue
+		bool isAssist = CountsForAssist( history, npc )
+		if ( isAssist )
+			players.append( player )
+	}
+	if ( IsValid( killer ) && killer.IsPlayer() && !players.contains( killer ) )
+		players.append( killer )
+
+	array<int> squadIDs
+	foreach( player in players )
+	{
+		int squadID = player.GetSquadID()
+		if ( squadID < 0 )
+			continue
+		if ( squadIDs.contains( squadID ) )
+			continue
+		squadIDs.append( squadID )
+	}
+
+	foreach( player in players )
+		CreditNPCKillToPlayer( npc, player )
+	foreach( squadID in squadIDs )
+		CreditNPCKillToSquad( npc, squadID )
 }
 
 void function OnNPCKilled( entity victim, var damageInfo )
@@ -721,16 +1131,19 @@ void function OnNPCKilled( entity victim, var damageInfo )
 
 	entity killer = DamageInfo_GetAttacker( damageInfo )
 
+	if ( GetCurrentPlaylistVarBool( "freelance_npcs_give_kill_credit_on_death", false ) == true )
+		GiveCreditAndAssistsForNPCDeath( victim, killer )
+
 	if ( IsValid( killer ) )
 	{
 		if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.human_execution )
 		{
-			//thread OnSuccessfulSyncedMelee( victim, killer, damageInfo  )
+			thread OnSuccessfulSyncedMelee( victim, killer, damageInfo  )
 
 			bool killerIsPlayer = (IsValid( killer ) && killer.IsPlayer())
 			if ( killerIsPlayer && (killer.p.nagCounter.killedGruntsWithExecutions == 0) )
 			{
-				//DoFreelanceModeSplashToPlayer( killer, eModeSplash.CombatHint_GruntFinishers )
+				DoFreelanceModeSplashToPlayer( killer, eModeSplash.CombatHint_GruntFinishers )
 				killer.p.nagCounter.killedGruntsWithExecutions = 1
 			}
 		}
@@ -795,19 +1208,66 @@ void function OnNPCDamaged( entity npc, var damageInfo )
 void function OnNPCPostDamaged( entity npc, var damageInfo )
 {
 	//printf( "%s() - shield:%d/%d,  health:%d/%d, damage:%.1f", FUNC_NAME(), npc.GetShieldHealth(), npc.GetShieldHealthMax(), npc.GetHealth(), npc.GetMaxHealth(), DamageInfo_GetDamage( damageInfo ) )
-	//AddAttackerToHistory( npc, DamageInfo_GetAttacker( damageInfo ), DamageInfo_GetDamage( damageInfo ) )
+	AddAttackerToHistory( npc, DamageInfo_GetAttacker( damageInfo ), DamageInfo_GetDamage( damageInfo ) )
 }
 
 void function OnNPCPostShieldDamage( entity npc, var damageInfo, float actualShieldDamage )
 {
 	//printf( "%s() - shield:%d/%d,  health:%d/%d, damage:%.1f", FUNC_NAME(), npc.GetShieldHealth(), npc.GetShieldHealthMax(), npc.GetHealth(), npc.GetMaxHealth(), actualShieldDamage )
-	//AddAttackerToHistory( npc, DamageInfo_GetAttacker( damageInfo ), actualShieldDamage )
+	AddAttackerToHistory( npc, DamageInfo_GetAttacker( damageInfo ), actualShieldDamage )
 }
 
+void function AddAttackerToHistory( entity npc, entity attacker, float damage )
+{
+	if ( !IsValid( attacker ) )
+		return
+	if ( !attacker.IsPlayer() )
+		return
+
+	if ( !(attacker in npc.ai.attackerHistory) )
+	{
+		AttackHistory newHistory
+		npc.ai.attackerHistory[attacker] <- newHistory
+	}
+	AttackHistory history = npc.ai.attackerHistory[attacker]
+	history.totalDamage += damage
+	history.lastTimeDamaged = Time()
+}
 
 void function PrintAttackerHistoryForNPC( entity npc )
 {
 	printf( "Attacker history for '%s':", string( npc ) )
+	foreach( entity player, AttackHistory history in npc.ai.attackerHistory )
+	{
+		bool isAssist = CountsForAssist( history, npc )
+		printf( " %.1f damage, last hit %.1f seconds ago, assist: %s  -  %s", history.totalDamage, (Time() - history.lastTimeDamaged), (isAssist ? "YES" : "no"), string( player ) )
+	}
+	printf( "" )
+}
+
+bool function CountsForAssist( AttackHistory history, entity victim )
+{
+	// did > 50% damage in the last 5 minutes
+	// did > 25% damage in the last 2 minutes
+	// did > 5% damage in the last 30 seconds
+	// did > 1% damage in the last 5 seconds
+	// did any damage in the last moment
+
+	float timeSince = (Time() - history.lastTimeDamaged)
+	float ratio = (history.totalDamage / float( victim.GetMaxHealth() + victim.GetShieldHealthMax() ))
+
+	if ( (ratio > 0.5) && (timeSince <= (5.0 * 60.0)) )
+		return true
+	if ( (ratio > 0.25) && (timeSince <= (2.0 * 60.0)) )
+		return true
+	if ( (ratio > 0.05) && (timeSince <= 30.0) )
+		return true
+	if ( (ratio > 0.01) && (timeSince <= 5.0) )
+		return true
+	if ( timeSince <= 0.0001 )
+		return true
+
+	return false
 }
 
 void function CommonSpawnInfantryBehavior( entity npc, vector behaviorOrigin )
@@ -816,6 +1276,8 @@ void function CommonSpawnInfantryBehavior( entity npc, vector behaviorOrigin )
 
 	//npc.SetDefaultSchedule( "SCHED_PATROL_PATH" )
 	npc.SetDefaultSchedule( "" )
+
+	//
 	npc.EnableNPCFlag( 0
 		| NPC_NO_LISTEN_TEAMMATE		//
 		| NPC_ALLOW_INVESTIGATE			//
@@ -862,12 +1324,12 @@ void function SetupNPCExecutionHandling( entity npc, bool enableHighlight = true
 		if ( healthNext > healthThreshold )
 			return
 
-		/*if ( !npc.ContextAction_IsActive() && npc.IsInterruptableForScriptedAnim() )
+		//if ( !npc.ContextAction_IsActive() && npc.IsInterruptableForScriptedAnim() )
 		{
 			//npc.Anim_ScriptedPlayActivityByName( "ACT_STUNNED", true, false, 0.1 )
-			npc.Anim_ScriptedPlayActivityByName( "ACT_BIG_FLINCH", true, false, 0.1 )
-			npc.EnableNPCFlag( NPC_PAIN_IN_SCRIPTED_ANIM )
-		}*/
+			//npc.Anim_ScriptedPlayActivityByName( "ACT_BIG_FLINCH", true, false, 0.1 )
+			//npc.EnableNPCFlag( NPC_PAIN_IN_SCRIPTED_ANIM )
+		}
 
 		if( enableHighlight )
 		{
@@ -877,6 +1339,70 @@ void function SetupNPCExecutionHandling( entity npc, bool enableHighlight = true
 	} )
 }
 
+                  
+                                                      
+  
+                  
+  
+                                                      
+ 
+                                                                                                                                
+                     
+
+                                  
+
+                                      
+
+                      
+                                                                                     
+                                        
+
+                         
+                                  
+
+                          
+                                                     
+           
+ 
+
+                                                        
+ 
+                                                                                                                                  
+                     
+
+                                  
+
+                      
+                                                                                       
+                                        
+
+                         
+                                    
+
+                          
+                                                     
+           
+ 
+
+                                                    
+ 
+                                                                                                                              
+                     
+
+                                  
+
+                      
+                                                                                   
+                                        
+
+                          
+                                                                                                                               
+           
+ 
+                            
+
+
+                   
 entity function NPCSpawn_Spectre( NpcSpawnInfo info )
 {
 	entity npc = CreateNPCFromAISettings( "npc_spectre_outlands", info.npcTeamOverride, info.spawnOrigin, info.spawnAngles )
@@ -932,10 +1458,317 @@ entity function NPCSpawn_DeathSpectre( NpcSpawnInfo info )
 	CommonSpawnInfantryBehavior( npc, info.spawnOrigin )
 	return npc
 }
+                         
+
+                           
+                                                            
+ 
+                                                                                                                        
+                     
+
+                 
+
+                
+                            
+                                                    
+                                  
+
+                                
+
+                              
+
+                                        
+                                           
+
+                          
+                                                     
+           
+ 
+      
+
+                    
+                                                         
+ 
+                                                                                                                     
+                     
+
+                 
+
+                
+                            
+
+                                  
+
+                                
+
+                            
+
+                      
+                                                                                                                 
+                                        
+                                             
+
+                                        
+                          
+                                                     
+           
+ 
+      
+
+                   
+                                                     
+ 
+                                                                                                                         
+                     
+
+                 
+
+                  
+                              
+
+                                  
+
+                                
+                              
+                                        
+                                         
+
+                                                                               
+  
+                                                                                  
    
+                                                    
+                                
+                                             
+   
+    
+
+                      
+                                                                                                                 
+                                        
+                                           
+
+     
+                                 
+     
+
+                          
+           
+ 
+
+                                                            
+ 
+                                      
+                                      
+                 
+                                    
+
+           
+ 
+                         
+
+                  
+                                                        
+ 
+                                                                                                                            
+                     
+
+                 
+
+                
+                            
+
+                                
+
+                      
+                                        
+                                           
+
+                                                          
+                                    
+
+                          
+                                                     
+           
+ 
+
+  
+           
+  
+                                                                
+ 
+                                                                                                                             
+                     
+
+                 
+
+                                    
+
+                          
+           
+ 
+
+
+  
+                
+  
+                                                  
+ 
+                                                                                                                            
+                     
+
+                                           
+
+                                       
+                                    
+                                    
+
+                          
+           
+ 
+
+                                                      
+ 
+                                                                                                                     
+                     
+
+                                           
+
+                                    
+
+                          
+           
+ 
+
+                        
+
+
+                    
+                                                    
+ 
+                                
+
+                                                                                                                         
+                     
+
+                                            
+
+                                    
+
+                                 
+
+                                   
+
+                                 
+                                                     
+                          
+           
+ 
+
+                                                       
+ 
+                                
+
+                                                                                                                         
+                     
+
+                                            
+                                    
+
+                            
+                 
+                                 
+
+                  
+                             
+      
+
+                                                     
+                          
+           
+ 
+
+                                                    
+ 
+                                
+
+                                                                                                                       
+                     
+
+                         
+                                            
+
+                                    
+
+                                
+
+                                   
+
+
+                                
+                                 
+                                                     
+                          
+           
+ 
+
+
+                          
+
+                  
+                                                 
+ 
+                                                                                   
+  
+                                                        
+                             
+         
+                                                   
+                                        
+         
+
+                                                               
+                                    
+                                                          
+
+                              
+                                                                       
+                            
+                                         
+
+                                 
+                                   
+   
+              
+                                  
+    
+                                                                         
+                                       
+    
+     
+    
+ 
+
+                                                    
+ 
+                                                                                                               
+                     
+
+                                            
+
+                                    
+
+                         
+
+                          
+           
+ 
+                        
+
+                         
 entity function NPCSpawn_SpiderJungle( NpcSpawnInfo info )
 {
-	entity npc = CreateNPCFromAISettings( "npc_spider", info.npcTeamOverride, info.spawnOrigin, info.spawnAngles )
+	entity npc = CreateNPCFromAISettings( "npc_spider_jungle", info.npcTeamOverride, info.spawnOrigin, info.spawnAngles )
 	DispatchSpawn( npc )
 
 	int skinIdx = GetCurrentPlaylistVarInt( "ai_force_junglespider_skin", -1 )
@@ -956,7 +1789,9 @@ entity function NPCSpawn_SpiderJungle( NpcSpawnInfo info )
 	CommonSpawnInitNPC( npc )
 	return npc
 }
+                               
 
+                   
 entity function NPCSpawn_Prowler( NpcSpawnInfo info )
 {
 	entity npc = CreateNPCFromAISettings( "npc_prowler", info.npcTeamOverride, info.spawnOrigin, info.spawnAngles )
@@ -1031,6 +1866,51 @@ void function OnProwlerDamaged( entity npc, var damageInfo )
 	if ( IsValid( attacker ) && attacker.IsPlayer() )
 		OnPlayerDamagedProwler( attacker, npc, damageInfo )
 }
+                         
+
+                   
+                                                     
+ 
+                                                                                                                
+                     
+
+                                 
+                                                                                                               
+                       
+
+                                            
+
+                                    
+
+                          
+
+                                                     
+           
+ 
+
+                                                            
+ 
+                                                       
+                                                  
+                                                     
+ 
+
+                                                                                 
+ 
+   
+                                                         
+                                       
+  
+                                                                              
+                              
+                                          
+                                                  
+  
+   
+ 
+
+
+                         
 
 void function NpcShadowDeath( entity npc )
 {
@@ -1053,6 +1933,86 @@ void function NpcShadowDeath( entity npc )
 		npc.Destroy()
 }
 
+                         
+                                                          
+ 
+                             
+                                                                                                                                          
+                                                                                                                                         
+                                                                                          
+                                               
+
+                                                                                                                      
+                     
+
+                 
+
+                
+                            
+                                  
+                                
+                              
+                            
+
+                      
+                                                                                                                       
+                                        
+                                           
+
+                                 
+                          
+                                                     
+           
+ 
+      
+
+                  
+  
+               
+  
+                                                 
+ 
+                                                                                                                    
+                     
+
+                                  
+
+                                      
+
+                      
+                                                                                
+                                        
+
+                          
+                                                     
+           
+ 
+
+                                                              
+ 
+                                                                                                                                
+                     
+
+                                                                                                                         
+                                                                                                                                
+                                                                                                                  
+
+                                   
+                                   
+                                  
+
+                      
+                                                                                     
+                                        
+
+                          
+                                                     
+           
+ 
+
+                            
+
+
 /*
 =======================================================================================================================
 =======================================================================================================================
@@ -1072,13 +2032,170 @@ void function NpcShadowDeath( entity npc )
 =======================================================================================================================
 */
 
+                   
+                                                 
+ 
+                                                                                  
+
+                    
+                       
+        
+
+                           
+
+                                                                                            
+                                                                                 
+                        
+                       
+                        
+                    
+                  
+                       
+                           
+                            
+                      
+                                  
+                                  
+
+                             
+                  
+  
+                            
+                                        
+                                      
+                                             
+                                                       
+                                                  
+                                                      
+        
+          
+                                                                                               
+        
+  
+
+                        
+                        
+                            
+                                                                                            
+                                                                               
+                              
+                             
+                                                                                                  
+  
+                          
+         
+
+                                                        
+
+                            
+         
+
+                             
+         
+
+                                    
+
+    
+
+                                                                    
+
+              
+  
+
+                         
+   
+                                                                     
+                                         
+                             
+                                   
+                                   
+                                                                      
+                           
+                                                                                               
+                                                                                  
+                         
+                           
+
+   
+      
+   
+                                                                                        
+
+                                                   
+        
+   
+
+  
+ 
+
+                                                                              
+ 
+                          
+                                                                                                  
+                                              
+  
+                            
+           
+
+                                               
+           
+
+                            
+
+  
+ 
+
+                                           
+ 
+                       
+        
+
+                                         
+        
+
+                                       
+                                
+        
+
+                                   
+
+ 
+                         
+
 /////////////////////////////////////
 void function OnShieldBreak( entity npc, var damageInfo )
 {
+                  
+                         
+  
+                     
+                       
+                   
+                
+                    
+                            
+                                                                
+        
+  
+                        
 }
 
 bool function ShouldStartWithExecutionEnabled( entity npc )
 {
+                  
+                         
+  
+                     
+                       
+                   
+                
+                    
+                                       
+               
+        
+  
+                        
+
 	return false
 }
 
@@ -1139,7 +2256,7 @@ void function DoNag_Executions( entity npc, entity attacker )
 			case 1:
 			case 5:
 			case 15:
-				//DoFreelanceModeSplashToPlayer( attacker, eModeSplash.CombatHint_ShieldBreaks )
+				DoFreelanceModeSplashToPlayer( attacker, eModeSplash.CombatHint_ShieldBreaks )
 				break
 		}
 	}()
@@ -1163,7 +2280,7 @@ void function DoNag_SniperVSRobots( entity npc, entity attacker )
 			return
 
 		attacker.p.nagCounter.sniperVSRobots = -1	// no more
-		//DoFreelanceModeSplashToPlayer( attacker, eModeSplash.CombatHint_SnipersHurtRobots )
+		DoFreelanceModeSplashToPlayer( attacker, eModeSplash.CombatHint_SnipersHurtRobots )
 	}()
 }
 
@@ -1184,7 +2301,7 @@ void function DoNag_ShotgunsVSWildlife( entity npc, entity attacker )
 		if ( attacker.p.nagCounter.shotgunsVSWildlife < 0 )
 			return
 		attacker.p.nagCounter.shotgunsVSWildlife = -1	// no more
-		//DoFreelanceModeSplashToPlayer( attacker, eModeSplash.CombatHint_ShotgunsHurtWildlife )
+		DoFreelanceModeSplashToPlayer( attacker, eModeSplash.CombatHint_ShotgunsHurtWildlife )
 	}()
 }
 
@@ -1619,3 +2736,4 @@ void function NPCSoldier_OnDamaged( entity target, var di )
 }
 
 #endif // SERVER
+ 

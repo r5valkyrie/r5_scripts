@@ -13,24 +13,15 @@ global function EvacShip_RegisterNetworking
 	global function EvacShipUseAltAttachments
 	global function GetEvacShipDataForShip
 	global function IsPlayerEvacShipPassenger
-
-	#if DEVELOPER
-		global function Dev_DebugEvacPos
-		global function Dev_TestEvacAtCursorPosition
+	#if DEV
+	global function Dev_DebugEvacPos
+	global function Dev_TestEvacAtCursorPosition
 	#endif
 #endif //SERVER
 
 #if CLIENT
 	global function EvacShip_ServerCallback_DisplayShipFullHint
 #endif //CLIENT
-
-#if CLIENT || SERVER
-global function PrecacheObjectiveAsset_Model
-global function GetObjectiveAsset_Model
-
-global function PrecacheObjectiveAsset_FX
-global function GetObjectiveAsset_FX
-#endif // CLIENT || SERVER
 
 global const string EVAC_DROPSHIP_TARGETNAME = "evac_dropship"
 
@@ -50,11 +41,11 @@ global const string EVAC_DROPSHIP_TARGETNAME = "evac_dropship"
 	const string SFX_STRING_EVACSHIP_FLYOUT = "goblin_shadowsquad_evac_flyout"
 #endif //SERVER
 
-global const int	EVAC_SHIP_PASSENGERS_MAX = 1
-global const float DEFAULT_TIME_UNTIL_SHIP_ARRIVES = 60
-global const float DEFAULT_TIME_UNTIL_SHIP_DEPARTS = 30
-global const float DEFAULT_EVAC_RADIUS = 256
-global const float EVAC_SHIP_Z_OFFSET = 128
+global const int	EVAC_SHIP_PASSENGERS_MAX = 6
+const float DEFAULT_TIME_UNTIL_SHIP_ARRIVES = 60
+const float DEFAULT_TIME_UNTIL_SHIP_DEPARTS = 30
+const float DEFAULT_EVAC_RADIUS = 256
+const float EVAC_SHIP_Z_OFFSET = 128
 
 #if CLIENT
 const float EVACSHIP_ANNOUNCEMENT_DURATION = 5.0
@@ -113,14 +104,14 @@ void function Sh_EvacShip_Init()
 
 void function EvacShip_RegisterNetworking()
 {
-	ScriptRemote_RegisterClientFunction( "EvacShip_ServerCallback_DisplayShipFullHint" )
+	Remote_RegisterClientFunction( "EvacShip_ServerCallback_DisplayShipFullHint" )
 }
 
 
 #if SERVER
 entity function CreateEvacShipSequence( vector origin, vector angles, float evacRadius = DEFAULT_EVAC_RADIUS, int friendlyTeamOrAlliance = -1, float timeToArrive = DEFAULT_TIME_UNTIL_SHIP_ARRIVES, float timeToDepart = DEFAULT_TIME_UNTIL_SHIP_DEPARTS, bool displayEvacWaypoint = true, bool displayEvacWaypointToAll = true, bool showEvacRing = false, bool shouldDepartIfFull = false )
 {
-	#if DEVELOPER
+	#if DEV
 		if ( GetPlayerArray_AliveConnected().len() == 0 )
 			return null
 	#endif
@@ -150,7 +141,7 @@ entity function CreateEvacShipSequence( vector origin, vector angles, float evac
 	///////////////////////////
 	float triggerHeight = 600
 	entity trig = CreateEntity( "trigger_cylinder" )
-	trig.SetRadius( evacRadius )
+	trig.SetCylinderRadius( evacRadius )
 	trig.SetAboveHeight( triggerHeight )
 	trig.SetBelowHeight( 96 )
 	trig.SetOrigin( origin )
@@ -168,7 +159,7 @@ entity function CreateEvacShipSequence( vector origin, vector angles, float evac
 	EmitSoundAtPosition( TEAM_ANY, evacFlareFx.GetOrigin(), SFX_STRING_FLARE, evacFlareFx )
 	array <entity> evacZoneFx
 	array<vector> ringFxPoints
-	int friendlyTeam = friendlyTeamOrAlliance
+	int friendlyTeam = AllianceProximity_IsUsingAlliances() ? AllianceProximity_GetRepresentativeTeamForAlliance( friendlyTeamOrAlliance ) : friendlyTeamOrAlliance
 
 	if ( showEvacRing )
 	{
@@ -198,6 +189,11 @@ entity function CreateEvacShipSequence( vector origin, vector angles, float evac
 	if ( displayEvacWaypoint )
 	{
 		wp = CreateWaypoint_BasicLocation( origin + <0, 0, 64>, ePingType.EVAC_SHIP )
+		if ( !displayEvacWaypointToAll )
+		{
+			// Transmit to single team. If using Alliances also show to friendly alliance players
+			AllianceProximity_SetOnlyTransmitWaypointToFriendlyTeams( wp, friendlyTeam )
+		}
 	}
 
 	///////////////////
@@ -315,9 +311,9 @@ void function EvacShipSequence( EvacShipData evacShipData )
 	wait bufferTime
 	evacShip.MakeVisible()
 	evacShip.Solid()
-	// Highlight_SetEnemyHighlight( evacShip, "dropship_enemy" )
-	// Highlight_SetFriendlyHighlight( evacShip, "dropship_friendly" )
-	// Highlight_SetNeutralHighlight( evacShip, "dropship_friendly" )
+	Highlight_SetEnemyHighlight( evacShip, "dropship_enemy" )
+	Highlight_SetFriendlyHighlight( evacShip, "dropship_friendly" )
+	Highlight_SetNeutralHighlight( evacShip, "dropship_friendly" )
 	EmitSoundOnEntity( evacShip, SFX_STRING_EVACSHIP_FLYIN )
 	thread JetwashFX( evacShip )
 	waitthread PlayAnimTeleport( evacShip, animArrive, animOrigin, animAngles )
@@ -401,12 +397,14 @@ void function OnTriggerEvacTrigger( entity trigger, entity ent, entity caller, v
 #if SERVER
 void function OnTriggerEnterEvacTrigger( entity trigger, entity ent )
 {
-	printt( "on player trigger enter " )
-
 		string failMsg
 		if ( !IsValid( ent ) )
 		{
 			failMsg = "ent not valid: " + ent
+                                                 
+                                                                                                              
+                                                
+                                      
 			return
 		}
 
@@ -414,6 +412,10 @@ void function OnTriggerEnterEvacTrigger( entity trigger, entity ent )
 		if ( !ent.IsPlayer() )
 		{
 			failMsg = "ent not a player: " + ent
+                                                 
+                                                                                                              
+                                                
+                                      
 			return
 		}
 
@@ -428,6 +430,10 @@ void function OnTriggerEnterEvacTrigger( entity trigger, entity ent )
 		if ( !shipData.arrived )
 		{
 			failMsg = "evac ship not here yet: " + ent
+                                                 
+                                                                                                              
+                                                
+                                      
 			return
 		}
 
@@ -435,6 +441,10 @@ void function OnTriggerEnterEvacTrigger( entity trigger, entity ent )
 		if ( !IsValid( trigger ) )
 		{
 			failMsg = "trigger not valid for player: " + ent
+                                                 
+                                                                                                              
+                                                
+                                      
 			return
 		}
 
@@ -454,7 +464,7 @@ void function EvacTriggerFailsafe( entity trigger )
 	//workaround/failsafe for seeing playtests where players were clearly inside the trigger but not getting detected
 	trigger.EndSignal( "OnDestroy" )
 
-	float triggerRadius = DEFAULT_EVAC_RADIUS // trigger.GetCylinderRadius()
+	float triggerRadius = trigger.GetRadius()
 	float triggerAboveHeight = trigger.GetAboveHeight()
 	float triggerBelowHeight = trigger.GetBelowHeight()
 	float minDistSq = ( triggerRadius * triggerRadius )
@@ -470,7 +480,7 @@ void function EvacTriggerFailsafe( entity trigger )
 	while ( true )
 	{
 		wait 0.25
-
+		//DebugDrawCylinder( trigger.GetOrigin(), AnglesCompose( trigger.GetAngles(), < -90, 0, 0 > ), triggerRadius, triggerAboveHeight, COLOR_YELLOW, true, 0.2 )
 		foreach( player in GetPlayerArray_Alive() )
 		{
 			if ( !IsAlive( player ) )
@@ -509,7 +519,7 @@ void function PlayerBoardsEvacShip( entity player, EvacShipData evacShipData )
 		player.Zipline_Stop()
 
 	//kick out of portal placement
-	if ( StatusEffect_GetSeverity( player, eStatusEffect.placing_phase_tunnel ) > 0 )
+	if ( StatusEffect_HasSeverity( player, eStatusEffect.placing_phase_tunnel ) )
 	{
 		player.Signal( "PhaseTunnel_CancelPlacement" )
 		/*
@@ -527,15 +537,20 @@ void function PlayerBoardsEvacShip( entity player, EvacShipData evacShipData )
 		}
 		*/
 	}
+	
+	//if ( player.IsJetDriveActive() )
+	//	player.ForceEndJetDrive()
 
-	// // Kick out of turret
-	// entity turret = player.GetTurret()
-	// if ( IsValid( turret ) )
-		// MountedTurretPlaceable_ClearDriver_ForOtherReason( turret )
+	//if ( player.IsArmoredLeapActive() )
+	//	player.EndArmoredLeap()
 
-	// Bleedout_ForceStop( player )
-	// Bleedout_ReviveForceStop( player )
-	Signal( player, "BleedOut_OnRevive" )
+	// Kick out of turret
+	//entity turret = player.GetTurret()
+	//if ( IsValid( turret ) )
+	//	MountedTurretPlaceable_ClearDriver_ForOtherReason( turret )
+
+	Bleedout_ForceStop( player )
+	Bleedout_ReviveForceStop( player )
 	if ( player.GetHealth() < 5 )
 		player.SetHealth( 5 )
 	//player.SetHealth( player.GetMaxHealth() )
@@ -543,23 +558,20 @@ void function PlayerBoardsEvacShip( entity player, EvacShipData evacShipData )
 	if ( !player.IsInvulnerable() )
 		player.SetInvulnerable()
 
-
-	// Message_New( player, "The danger is behind you... for now. You made it out alive.", 10 )
-
-
-	//fixme Cafe
 	//if crypto in evac trigger while flying around in his drone, get out
-	// if ( !player.IsBot() && IsValid( player.p.cryptoActiveCamera ) )
-		// player.p.cryptoActiveCamera.Destroy()
+	if ( !player.IsBot() && IsValid( player.p.cryptoActiveCamera ) )
+		player.p.cryptoActiveCamera.Destroy()
 
 	//don't want to deal with crypto drones, phasing, etc during evac
 	//player.TakeOffhandWeapon( OFFHAND_TACTICAL )
 	//player.TakeOffhandWeapon( OFFHAND_ULTIMATE )
 	player.DisableWeaponTypes( WPT_ULTIMATE | WPT_TACTICAL )
-	player.Server_TurnOffhandWeaponsDisabledOn()
 	Survival_SetInventoryEnabled( player, false )
 
-	player.NotSolid()
+	//Need to make the player NotSolid() to avoid crash in bug 99094
+	if ( GetBugReproNum() != 99094 )
+		player.NotSolid()
+
 	player.SetNoTarget( true )
 	player.SetCanBeMeleed( false )
 	player.SetAimAssistAllowed( false )
@@ -596,15 +608,15 @@ void function PlayerBoardsEvacShip( entity player, EvacShipData evacShipData )
 	player.EndSignal( "OnDestroy" )
 	evacShip.EndSignal( "OnDestroy" )
 
-	if ( player.p.isSkydiving )
+	if ( player.Player_IsSkydiving() )
 	{
-		Signal( player, "PlayerSkyDive" )
+		//player.Player_EndSkydive()
 		player.Anim_Stop()
 		WaitFrame()
 		WaitFrame()
 	}
 
-	// DisableEntityOutOfBounds( player )
+	DisableEntityOutOfBounds( player )
 	player.SetOrigin( attachOrigin )
 	player.SetAngles( attachAngles )
 	player.SetParent( evacShip, attachmentTag, false, 1.0 )
@@ -779,6 +791,14 @@ bool function CanPlayerBoardEvacShip( entity player, EvacShipData evacShipData  
 	if ( evacShipData.passengers.contains( player ) )
 		return false
 
+                                               
+                                                                                                              
+               
+                                    
+
+	if ( HoverVehicle_IsPlayerInAnyVehicle( player ) )
+		return false
+
 	if ( !IsAlive( player ) )
 	{
 		printf( "%s() - player can't board evac ship - not alive: '%s'", FUNC_NAME(), string( player ) )
@@ -803,12 +823,12 @@ bool function CanPlayerBoardEvacShip( entity player, EvacShipData evacShipData  
 		return false
 	}
 
-	// if ( evacShipData.evacShip.GetShieldHealth() >= evacShipData.evacShip.GetShieldHealthMax() )
-	// {
-		// printf( "%s() - player can't board evac ship - it is full: '%s'", FUNC_NAME(), string( player ) )
-		// // Remote_CallFunction_NonReplay( player, "EvacShip_ServerCallback_DisplayShipFullHint" )
-		// return false
-	// }
+	if ( evacShipData.evacShip.GetShieldHealth() >= evacShipData.evacShip.GetShieldHealthMax() )
+	{
+		printf( "%s() - player can't board evac ship - it is full: '%s'", FUNC_NAME(), string( player ) )
+		Remote_CallFunction_NonReplay( player, "EvacShip_ServerCallback_DisplayShipFullHint" )
+		return false
+	}
 
 	return true
 }
@@ -821,9 +841,16 @@ bool function IsPlayerFriendlyToEvacShip( entity player, EvacShipData evacShipDa
 		return false
 
 	int playerTeam = player.GetTeam()
-
-	if ( !IsFriendlyTeam( playerTeam, evacShipData.friendlyTeamOrAlliance ) ) // only allow players on approved teams to board
-		return false
+	if ( AllianceProximity_IsUsingAlliances() )
+	{
+		if ( AllianceProximity_GetAllianceFromTeam( playerTeam ) != evacShipData.friendlyTeamOrAlliance ) // only allow players on approved alliance to board
+			return false
+	}
+	else
+	{
+		if ( !IsFriendlyTeam( playerTeam, evacShipData.friendlyTeamOrAlliance ) ) // only allow players on approved teams to board
+			return false
+	}
 
 	return true
 }
@@ -837,7 +864,7 @@ void function EvacShip_ServerCallback_DisplayShipFullHint()
 }
 #endif //CLIENT
 
-#if SERVER && DEVELOPER
+#if SERVER && DEV
 // Trigger an Evac sequence at the cursor position, used to test out different positions to make sure they work with the ship animation
 void function Dev_TestEvacAtCursorPosition( bool showEvacRing = false, bool showIconForEvacShip = false )
 {
@@ -855,9 +882,9 @@ void function Dev_TestEvacAtCursorPosition( bool showEvacRing = false, bool show
 		printt("Failed to run Debug Command to spawn evac at cursor position, player InValid")
 	}
 }
-#endif //SERVER && DEVELOPER
+#endif //SERVER && DEV
 
-#if SERVER && DEVELOPER
+#if SERVER && DEV
 void function Dev_DebugEvacPos( vector origin, vector angles, bool showEvacRing = false, bool showIconForEvacShip = true )
 {
 	AssertIsNewThread()
@@ -909,7 +936,7 @@ void function Dev_DebugEvacPos( vector origin, vector angles, bool showEvacRing 
 		waitthread PlayAnim( evacShip, animLeave2, evacShip.GetOrigin(), AnglesCompose( evacShip.GetAngles(), <0, -90, 0> ), 2.0 )
 	}
 }
-#endif //SERVER && DEVELOPER
+#endif //SERVER && DEV
 
 
 #if SERVER
@@ -927,7 +954,7 @@ void function AddEntityCallback_OnEvacShipArrived( entity evacShip, void functio
 {
 	EvacShipData evacShipData = GetEvacShipDataForShip( evacShip )
 
-	#if DEVELOPER
+	#if DEV
 		foreach ( func in  evacShipData.callbacksOnArrived )
 		{
 			Assert( func != callbackFunc, "Already added " + string( callbackFunc ) + " to evac ship" )
@@ -945,7 +972,7 @@ void function AddEntityCallback_OnEvacShipBeginningApproach( entity evacShip, vo
 {
 	EvacShipData evacShipData = GetEvacShipDataForShip( evacShip )
 
-	#if DEVELOPER
+	#if DEV
 		foreach ( func in  evacShipData.callbacksOnBeginningApproach )
 		{
 			Assert( func != callbackFunc, "Already added " + string( callbackFunc ) + " to evac ship" )
@@ -963,7 +990,7 @@ void function AddEntityCallback_OnEvacShipDeparted( entity evacShip, void functi
 {
 	EvacShipData evacShipData = GetEvacShipDataForShip( evacShip )
 
-	#if DEVELOPER
+	#if DEV
 		foreach ( func in  evacShipData.callbacksOnDeparted )
 		{
 			Assert( func != callbackFunc, "Already added " + string( callbackFunc ) + " to evac ship" )
@@ -981,7 +1008,7 @@ void function AddEntityCallback_OnEvacShipDepartureCompleted( entity evacShip, v
 {
 	EvacShipData evacShipData = GetEvacShipDataForShip( evacShip )
 
-	#if DEVELOPER
+	#if DEV
 		foreach ( func in  evacShipData.callbacksOnDepartureCompleted )
 		{
 			Assert( func != callbackFunc, "Already added " + string( callbackFunc ) + " to evac ship" )
@@ -999,7 +1026,7 @@ void function AddEntityCallback_OnEvacShipPlayerBoarded( entity evacShip, void f
 {
 	EvacShipData evacShipData = GetEvacShipDataForShip( evacShip )
 
-	#if DEVELOPER
+	#if DEV
 		foreach ( func in  evacShipData.callbacksOnPlayerBoarded )
 		{
 			Assert( func != callbackFunc, "Already added " + string( callbackFunc ) + " to evac ship" )
@@ -1022,35 +1049,4 @@ bool function IsPlayerEvacShipPassenger( entity player )
 	return false
 }
 #endif
-
-
-#if CLIENT || SERVER
-table<string, asset> s_models
-void function PrecacheObjectiveAsset_Model( string name, asset model )
-{
-	Assert( !(name in s_models), format( "Objective model asset '%s' has already been registered with asset '%s'.", name, string( s_models[name] ) ) )
-	s_models[name] <- model
-	PrecacheModel( model )
-}
-asset function GetObjectiveAsset_Model( string name )
-{
-	Assert( (name in s_models), format( "Objective model asset '%s' has not been registered.", name ) )
-	return s_models[name]
-}
-
-table<string, asset> s_fxs
-void function PrecacheObjectiveAsset_FX( string name, asset fx )
-{
-	Assert( !(name in s_fxs), format( "Objective fx asset '%s' has already been registered with asset '%s'.", name, string( s_fxs[name] ) ) )
-	s_fxs[name] <- fx
-	// PrecacheObjectiveAsset_FX( fx )
-	PrecacheParticleSystem( fx )
-}
-asset function GetObjectiveAsset_FX( string name )
-{
-	Assert( (name in s_fxs), format( "Objective fx asset '%s' has not been registered.", name ) )
-	return s_fxs[name]
-}
-
-#endif // CLIENT || SERVER
-
+ 

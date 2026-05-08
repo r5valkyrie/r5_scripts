@@ -805,13 +805,11 @@ global struct OpticAppearanceOverride
 	array<string>	uiDataNames
 }
 
-#if CLIENT
 global struct ArtifactViewmodelData
 {
 	int bladeGUID
 	int powerSourceGUID
 }
-#endif
 
 global struct ConsumableInventoryItem
 {

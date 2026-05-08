@@ -61,6 +61,9 @@ global function MapZones_GetZoneStatsRef
 global function MapZones_GetAllZoneIDs
 //
 
+global function MapZones_RegisterSkitForNotifications
+global function MapZones_StopAllNotificationsForSkit
+
 #if AUTO_PLAYER
 global function AutoPlayer_GetDropDestinations
 #endif // AUTO_PLAYER
@@ -106,6 +109,8 @@ global struct ZoneData
 
 	int playersInside
 	int playersNearby
+
+	array<SkitInstance> skitPopNotifies
 
 	int    zoneId
 	string zoneName
@@ -1011,7 +1016,35 @@ void function AddPlayerToNewZone( entity player, int zoneId )
 
 void function ExecutePendingPopulationNotifies()
 {
+	foreach ( ZoneData zd in s_notifyZonesForPop )
+	{
+		if ( zd.skitPopNotifies.len() == 0 )
+			continue
+
+		array<SkitInstance> listCopy = clone zd.skitPopNotifies
+		foreach ( SkitInstance si in listCopy )
+			Signal( si, SIG_ZONEPOPCHANGED )
+	}
+
 	s_notifyZonesForPop.clear()
+}
+
+void function MapZones_RegisterSkitForNotifications( SkitInstance si, int zoneId )
+{
+	if ( si.zonePopNotifies.contains( zoneId ) )
+		return
+
+	ZoneData zd = s_zoneDatas[zoneId]
+	Assert( !zd.skitPopNotifies.contains( si ) )
+	zd.skitPopNotifies.append( si )
+	si.zonePopNotifies.append( zoneId )
+}
+
+void function MapZones_StopAllNotificationsForSkit( SkitInstance si )
+{
+	foreach ( int zoneId in si.zonePopNotifies )
+		s_zoneDatas[zoneId].skitPopNotifies.fastremovebyvalue( si )
+	si.zonePopNotifies.clear()
 }
 
 void function MapZones_WaitForAnyPlayerEntersZone( int zoneId )

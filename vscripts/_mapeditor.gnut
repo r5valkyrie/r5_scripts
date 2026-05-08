@@ -526,7 +526,7 @@ entity function SetNodeRopeProperties( entity rope )
 
 entity function MapEditor_CreateJumpPad( entity jumpPad, bool addToArray = false )
 {
-    JumpPad_CreatedCallback(jumpPad)
+
 
     if( addToArray ) MapEditorEnts.append( jumpPad )
 

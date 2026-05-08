@@ -473,16 +473,6 @@ void function Sh_Ranked_Init()
 
 void function Sh_Ranked_ItemRegistrationInit()
 {
-	Warning("enable ranked later!")
-	Warning("enable ranked later!")
-	Warning("enable ranked later!")
-	Warning("enable ranked later!")
-	Warning("enable ranked later!")
-	Warning("enable ranked later!")
-	Warning("enable ranked later!")
-	Warning("enable ranked later!")
-	Warning("enable ranked later!")
-	return
 	#if SERVER && DEVELOPER
 		AddCallback_GeneratePDef( GenerateRanked_PDef )
 	#endif

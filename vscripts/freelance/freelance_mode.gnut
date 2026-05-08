@@ -1,0 +1,2065 @@
+global function FreelanceMode_SharedInit
+global function FreelanceMode_RegisterNetworking
+global function FreelanceMode_GetCurrentPhase
+global function FreelanceMode_GetCurrentPhaseStartedTime
+global function FreelanceMode_GetIsVictoryForAll
+
+#if SERVER
+global function FreelanceMode_SignalMainTimerStop
+global function FreelanceMode_SignalEndingStart
+global function FreelanceMode_SignalEndingDropshipArrival
+//
+global function FreelanceMode_SetCurrentPhase
+global function FreelanceMode_ModeWait
+global function FreelanceMode_Signal
+global function FreelanceMode_SignalWhenObjectiveCompletes
+global function FreelanceMode_SpawnExtractionDropship
+global function FreelanceMode_FinalizeMatchDataForPlayer
+global function CreditNPCKillToPlayer
+global function CreditNPCKillToSquad
+global function RegisterAmbientSkitStartupFunc
+global function DoFreelanceModeSplashToAll
+global function DoFreelanceModeSplashToAllDelayed
+global function DoFreelanceModeSplashToPlayer
+global function GetExtractionAreaForPreview
+global function PveBlockerEnable
+global function PveBlockerDisable
+global function PveBlockerEnableByName
+global function PveBlockerDisableByName
+global function PveBlockersGetByScriptNoteworthy
+global function FreelanceMode_SetIsVictoryForAll
+global function FreelanceMode_GetStartofMatchActiveQuest
+global function FreelanceMode_GetStartOfMatchActiveQuestMissionIndex
+global function FreelanceMode_PostGame_QuestMissionMarkSuccess
+global function FreelanceMode_PostGame_MarkFirstTimeVictoryForPlayer
+global function FreelanceMode_PostGame_MarkPlayerAsExtracted
+global function FreelanceMode_MarkMissionSuccessForGivenPlayers
+global function FreelanceMode_SetCommentaryDisables
+global function FreelanceMode_StartTeamInsertionThread_Skydive
+global function FreelanceMode_StartTeamInsertionThread_Dropoff
+
+
+global function SpawnSafeZone
+
+#if DEV
+global function DEV_ModeSkipAhead
+//global function DoItZZZ
+global function DoItYYY
+#endif // DEV
+#endif // SERVER
+
+#if CLIENT
+global function SCB_DoFreelanceModeSplash
+global function DoModeChangeSplash
+
+#if DEV
+global function DEV_TestAllFreelanceModeSplashes
+#endif // DEV
+#endif // CLIENT
+
+global const asset SIDEQUEST_MAP_ICON = $"rui/hud/pve/sidequest_icon"
+global const asset LOOTCACHE_BEACON_FX = $"P_lootcache_far_beam"
+
+#if SERVER
+global const string SIG_MODE_JUMP_AHEAD = "PVEMODE_JUMP_AHEAD"
+global const string SIG_MODE_EXTRACTION_GO_NOW = "EXTRACTION_GO_NOW"
+global const string SIG_MODE_EVERYONE_IS_ON_BOARD_THE_EXTRACTION = "allplayersareonboard"
+
+global const string SIG_MODE_STOP_MAIN_TIMER = "NR_STOP_MAIN_TIMER"
+global const string SIG_MODE_START_ENDING_TIMER = "NR_START_ENDING_TIMER"
+global const string SIG_MODE_START_ENDING_DROPSHIP = "NR_START_ENDING_DROPSHIP"
+
+struct
+{
+	array<entity> pveBrushBlockers
+
+}file
+#endif // SERVER
+
+//const asset MODEL_EXTRACTION_DROPSHIP = $"mdl/vehicle/crow_dropship/crow_dropship_hero.rmdl"
+//const string IDLE_EXTRACTION_DROPSHIP = "dropship_open_doorR_idle"
+//const string IDLE_EXTRACTION_DROPSHIP_FINISH = "cd_dropship_rescue_side_idle"
+//array<string> EXTRACT_TAGS = [ "RampAttachA", "RampAttachB", "RampAttachC", "RampAttachD", "RampAttachE", "RampAttachF", "pelicanCase", "REMOTE_TURRET_ATTACH", "IntLightCockpit1" ]
+//const vector EXTRACT_EXTRA_ORIGIN = <0, 0, 0>
+//const array EXTRACT_EXTRA_ROTATION = <0, 0, 0>
+
+const vector DROPSHIP_LEAVES_COLOR = <193,255,0>
+
+const asset MODEL_EXTRACTION_DROPSHIP = $"mdl/vehicle/goblin_dropship/goblin_dropship.rmdl"
+const string IDLE_EXTRACTION_DROPSHIP = "cd_dropship_rescue_idle"
+const string IDLE_EXTRACTION_DROPSHIP_FINISH = "cd_dropship_rescue_idle"
+array<string> EXTRACT_TAGS = [ "RampAttachF", "RampAttachE", "RampAttachD", "RampAttachC", "RampAttachB", "RampAttachA", "RAMPDOORLIP", "RampAttachF", "RampAttachE" ]
+const vector EXTRACT_EXTRA_ORIGIN = <0, 0, 50>
+const vector EXTRACT_EXTRA_ROTATION = <0, 90, 0>
+
+global enum eFreelanceModePhase
+{
+	Prologue
+	Insertion
+	Exploration
+	WaitForObjective
+	GetToTheLZ
+	NeedTheDropship
+	GetOnTheDropship
+	GameOver
+
+	_count
+}
+
+global enum eModeSplash
+{
+	Initial,
+	Initial_Zombie,
+
+	Initial_NightRun,
+
+	ShadowAbilitiesHint,
+
+	AllObjectivesCleared,
+
+	KillGoalInProgress,
+	KillGoalReached,
+
+	Extraction_Reminder,
+	Extraction_Victory,
+	Extraction_Failed,
+
+	Failed_RanOutOfTime,
+
+	//
+	CheckpointReached,
+	CheckpointRetriesLeft,
+
+	//
+	CombatHint_MeleeProwlers,
+	CombatHint_ShieldBreaks,
+	CombatHint_GruntFinishers,
+	CombatHint_SnipersHurtRobots,
+	CombatHint_ShotgunsHurtWildlife,
+
+                  
+   
+                          
+
+   
+             
+                        
+
+	_count
+}
+
+int s_squadKillsGoal = -1
+void function FreelanceMode_SharedInit()
+{
+	bool modeEnabled = GetCurrentPlaylistVarBool( "freelance_mode", false )
+	if ( !modeEnabled )
+	{
+		#if SERVER
+		// Mode disabled, so just go straight to the main phase:
+		AddCallback_EntitiesDidLoad( void function()
+		{
+			thread function() : ()
+			{
+				wait( 0.5 )
+				FreelanceMode_SetCurrentPhase( eFreelanceModePhase.Exploration, 0 )
+			}()
+		})
+		#endif // SERVER
+
+		return
+	}
+
+	///////
+
+	s_squadKillsGoal = GetCurrentPlaylistVarInt( "freelance_squad_kill_goal", 60 )
+
+#if SERVER
+	MissionCheckpoints_Init()
+	TeamSpawn_SetStartSpawnDisabled( FUNC_NAME() )
+	TeamSpawn_SetSpawnOnTeammates( false, FUNC_NAME() )
+
+	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
+	AddCallback_OnClientConnected( OnPlayerConnected )
+	AddCallback_GameStateEnter( eGameState.Playing, OnGameStatePlaying )
+	AddSpawnCallback_ScriptName( "treasurehunt_blocker", PveBlockerOnSpawn )
+
+	AddCallback_OnClientConnectionLost( OnConnectionLost_Reconnect )
+
+	SetupForActiveQuestMission()
+
+	RegisterSignal( SIG_MODE_EXTRACTION_GO_NOW )
+	RegisterSignal( SIG_MODE_JUMP_AHEAD )
+	RegisterSignal( SIG_MODE_STOP_MAIN_TIMER )
+	RegisterSignal( SIG_MODE_START_ENDING_TIMER )
+	RegisterSignal( SIG_MODE_START_ENDING_DROPSHIP )
+#endif // SERVER
+
+                    
+                                                                     
+                    
+      
+
+	if ( GetCurrentPlaylistVarBool( "freelance_mode_s05ending", false ) )
+		QuestS05EndInit()
+
+                          
+	if ( GetCurrentPlaylistVarBool( "freelance_mode_dropdown", false ) )
+		DropDownModeInit()
+                                
+}
+
+const string NV_MODE_PHASE = "PVEMODEPHASE"
+const string NV_MODE_PHASE_STARTEDTIME = "PVEMODEPHASESTARTEDTIME"
+const string NV_MODE_PHASE_GOALTIME = "PVEMODEPHASEGOALTIME"
+const string NV_MODE_IS_VICTORY_FOR_ALL = "PVEMODEISVICTORYFORALL"
+const string FUNCNAME_DoFreelanceModeSplash = "SCB_DoFreelanceModeSplash"
+
+void function FreelanceMode_RegisterNetworking()
+{
+	MissionCheckpoints_RegisterNetworking()
+
+	RegisterNetworkedVariable( NV_MODE_PHASE, SNDC_GLOBAL, SNVT_UNSIGNED_INT, 0, 0, eFreelanceModePhase._count )
+	RegisterNetworkedVariable( NV_MODE_PHASE_STARTEDTIME, SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariable( NV_MODE_PHASE_GOALTIME, SNDC_GLOBAL, SNVT_TIME, -1 )
+
+	RegisterNetworkedVariable( NV_MODE_IS_VICTORY_FOR_ALL, SNDC_GLOBAL, SNVT_BOOL, false )
+
+	Remote_RegisterClientFunction( FUNCNAME_DoFreelanceModeSplash, "int", 0, eModeSplash._count )
+
+	#if CLIENT
+	RegisterNetVarIntChangeCallback( NV_MODE_PHASE, OnNVModeChanged )
+	SURVIVAL_SetGameStateAssetOverrideCallback( FeelanceOverrideGameState )
+	#endif // CLIENT
+}
+
+#if SERVER
+void function OnConnectionLost_Reconnect(entity player)
+{
+	Assert( IsValid(player) )
+
+	if( player.GetPartySize() == 1 )
+	{
+		printt( "Reconnect cancel because 1 player in party ", player )
+		//player.Forfeit()
+	}
+}
+#endif
+
+int function FreelanceMode_GetCurrentPhase()
+{
+	return GetGlobalNetInt( NV_MODE_PHASE )
+}
+
+float function FreelanceMode_GetCurrentPhaseStartedTime()
+{
+	return GetGlobalNetTime( NV_MODE_PHASE_STARTEDTIME )
+}
+
+bool function FreelanceMode_GetIsVictoryForAll()
+{
+	return GetGlobalNetBool( NV_MODE_IS_VICTORY_FOR_ALL )
+}
+
+
+#if SERVER
+void function FreelanceMode_SignalMainTimerStop()
+{
+	FreelanceMode_Signal( SIG_MODE_STOP_MAIN_TIMER )
+}
+void function FreelanceMode_SignalEndingStart()
+{
+	FreelanceMode_Signal( SIG_MODE_START_ENDING_TIMER )
+}
+void function FreelanceMode_SignalEndingDropshipArrival()
+{
+	FreelanceMode_Signal( SIG_MODE_START_ENDING_DROPSHIP )
+}
+
+void function PveBlockerOnSpawn( entity blocker )
+{
+	//_gamemode_survival already disables all mission-specific blockers by default and reconnects navmesh
+	Assert( blocker.HasKey( "script_noteworthy" ), "Blocker brush at " + blocker.GetOrigin() + " needs a valid script_noteworthy" )
+	file.pveBrushBlockers.append( blocker )
+}
+
+void function PveBlockerDisable( entity blocker )
+{
+	if ( !IsValid( blocker ) )
+		return
+	blocker.Hide()
+	blocker.NotSolid()
+	ToggleNPCPathsForEntity( blocker, true )
+
+}
+
+void function PveBlockerEnable( entity blocker )
+{
+	if ( !IsValid( blocker ) )
+		return
+	blocker.Show()
+	blocker.Solid()
+	ToggleNPCPathsForEntity( blocker, false )
+
+}
+
+void function PveBlockerDisableByName( string scriptNoteworthy )
+{
+	int blockersDisabled = 0
+	foreach( blocker in file.pveBrushBlockers )
+	{
+		if ( !IsValid( blocker ) )
+			continue
+
+		if ( blocker.kv.script_noteworthy != scriptNoteworthy )
+			continue
+
+		PveBlockerDisable( blocker )
+		blockersDisabled++
+	}
+
+	if ( blockersDisabled == 0 )
+		Warning( "%s() - Tried to disable blockers with script_noteworthy '%s' but zero blockers found", FUNC_NAME(), scriptNoteworthy )
+}
+
+void function PveBlockerEnableByName( string scriptNoteworthy )
+{
+	int blockersEnabled = 0
+	foreach( blocker in file.pveBrushBlockers )
+	{
+		if ( !IsValid( blocker ) )
+			continue
+
+		if ( blocker.kv.script_noteworthy != scriptNoteworthy )
+			continue
+
+		PveBlockerEnable( blocker )
+		blockersEnabled++
+	}
+
+	if ( blockersEnabled == 0 )
+		Warning( "%s() - Tried to enable blockers with script_noteworthy '%s' but zero blockers found", FUNC_NAME(), scriptNoteworthy )
+
+}
+
+array <entity> function PveBlockersGetByScriptNoteworthy( string scriptNoteworthy )
+{
+	array <entity> blockers
+	foreach( blocker in file.pveBrushBlockers )
+	{
+		if ( !IsValid( blocker ) )
+			continue
+
+		if ( blocker.kv.script_noteworthy != scriptNoteworthy )
+			continue
+
+		blockers.append( blocker )
+	}
+
+	return blockers
+}
+
+
+void function CreditNPCKillToPlayer( entity npc, entity player )
+{
+	int oldKills = player.GetPlayerNetInt( "kills" )
+	player.SetPlayerNetInt( "kills", (oldKills + 1) )
+}
+
+int[4] s_squadKillTotals
+void function CreditNPCKillToSquad( entity npc, int squadID )
+{
+	s_squadKillTotals[squadID] += 1
+
+	if ( s_squadKillTotals[squadID] == (s_squadKillsGoal / 2) )
+	{
+		int team = GetTeamFromSquadID( squadID )
+		foreach( teamPlayer in GetPlayerArrayOfTeam( team ) )
+			DoFreelanceModeSplashToPlayer( teamPlayer, eModeSplash.KillGoalInProgress )
+	}
+	if ( s_squadKillTotals[squadID] == s_squadKillsGoal )
+	{
+		int team = GetTeamFromSquadID( squadID )
+		foreach( teamPlayer in GetPlayerArrayOfTeam( team ) )
+			DoFreelanceModeSplashToPlayer( teamPlayer, eModeSplash.KillGoalReached )
+	}
+}
+
+struct StartSet
+{
+	vector arrival
+	vector start
+}
+
+const StartSet START0_SWAMPS_SOUTH = 		{ arrival = <32816.0, -8945.0, 6143.0>,		start = <16000.0, -50500.0, 18100.0> }
+const StartSet START0_TWO_SPINES = 			{ arrival = <11945.0, 19657.0, 7658.0>,		start = <15647.0, -50000.0, 18000.0> }
+const StartSet START0_DESERT = 				{ arrival = <-18196.0, -9609.0, 5021.0>,	start = <15000.0, -50250.0, 18200.0> }
+//
+const StartSet START1_TWO_SPINES = 			{ arrival = <15723.0, 23716.0, 7436.0>,		start = <-47519.0, 19179.0, 16453.0> }
+const StartSet START1_THUNDERDOME = 		{ arrival = <-17369.0, -22084.0, 5167.0>,	start = <-47519.0, 19179.0, 16453.0> }
+const StartSet START1_REPULSOR_PAD =		{ arrival = <23043.0, -23933.0, 5507.0>,	start = <-47519.0, 19179.0, 16453.0> }
+//
+const StartSet START2_SLUMLAKES = 			{ arrival = <-27680.0, 25797.0, 10284.0>,	start = <47489.0, -17071.0, 12185.0> }
+const StartSet START2_MARKET = 				{ arrival = <2112.0, -10588.0, 6725.0>,		start = <47489.0, -17071.0, 12185.0> }
+const StartSet START2_SWAMPS = 				{ arrival = <37642.0, 10346.0, 4775.0>,		start = <47489.0, -17071.0, 12185.0> }
+
+array<array<StartSet> > START_SETS = [
+	[START0_SWAMPS_SOUTH, START0_TWO_SPINES, START0_DESERT],
+	[START1_TWO_SPINES, START1_THUNDERDOME, START1_REPULSOR_PAD],
+	[START2_SLUMLAKES, START2_MARKET, START2_SWAMPS],
+]
+
+//											  Arrival		 				Fly-In Start
+//const vector[2] START_SWAMPS_SOUTH =		[ <32816.0, -8945.0, 6143.0>,	<16647.2227, -53688.875, 20000.1973>]
+//const vector[2] START_THING1 =				[ <30000.0, -8000.0, 6143.0>,	<15647.2227, -53688.875, 20000.1973>]
+//const vector[2] START_THING2 =				[ <25816.0, -1000.0, 6143.0>,	<14647.2227, -53688.875, 20000.1973>]
+//
+//const vector[1][3][2] s_startSets = [
+//	[START_SWAMPS_SOUTH, START_THING1, START_THING2]
+//]
+
+void function EntitiesDidLoad()
+{
+	thread function() : ()
+	{
+		wait( 0.5 )
+		StartUpMode()
+	}()
+}
+
+void function OnPlayerConnected( entity player )
+{
+	//int xpAtStart = player.GetPersistentVarAsInt( "pve.xp" )
+	//player.SetPersistentVar( "pve.xpPrev", xpAtStart )
+}
+
+void function OnGameStatePlaying()
+{
+	StartMainModeThread()
+}
+//void function DoItZZZ()
+//{
+//	thread function() : ()
+//	{
+//		DEV_ClearAllObjectives()
+//		wait( 5.0 )
+//		RollObjectivesForMode( [], [] )
+//	}()
+//}
+
+//////
+
+array<StartSet> s_playerStarts
+void function InitPlayerStarts()
+{
+	s_playerStarts = clone( START_SETS.getrandom() )
+	s_playerStarts.randomize()
+}
+
+void functionref() s_ambientSkitStartupFunc = null
+void function RegisterAmbientSkitStartupFunc( void functionref() func )
+{
+	Assert( s_ambientSkitStartupFunc == null )
+	s_ambientSkitStartupFunc = func
+}
+
+void function RollObjectivesForMode( array<string> zoneGroupsToRestrict, array<string> zoneGroupsToBlock )
+{
+	//array<string> objectiveTypes = ObjectiveSystem_GetAllTypes()
+	array<string> objectiveTypes =
+	[
+		//"breachandclear",
+		//"mistdefend",
+
+		"shackattack",
+
+                  
+                   
+                      
+                     
+               
+                  
+                 
+              
+                            
+	]
+	objectiveTypes.randomize()
+
+	int attemptIndex = -1
+	array<ObjectiveInstance> objectives
+	while ( objectives.len() < 4 )
+	{
+		++attemptIndex
+		string objectiveType = objectiveTypes[attemptIndex % objectiveTypes.len()]
+
+		///// Quick hard-code:
+		//if ( attemptIndex == 0 )
+		//	objectiveType = "movingcastle"
+		////
+		ObjectiveInstance ornull oi = Objectives_LaunchObjective( objectiveType, [] )
+		if ( oi == null)
+		{
+			Warning( "%s() - Couldn't launch objective type '%s'.", FUNC_NAME(), objectiveType )
+			continue
+		}
+
+		expect ObjectiveInstance( oi )
+		objectives.append( oi )
+
+		switch( oi.launchData.ambientOverrideType )
+		{
+			case eAmbientOverrideType.RESTRICTED:
+				zoneGroupsToRestrict.extend( oi.launchData.zoneGroups )
+				break
+			case eAmbientOverrideType.BLOCKED:
+				zoneGroupsToBlock.extend( oi.launchData.zoneGroups )
+				break
+		}
+		printf( "%s() - Attempt #%d, launched objective #%d - '%s'", FUNC_NAME(), attemptIndex, (objectives.len() - 1), oi.objectiveType )
+	}
+
+	printf( "%s() - Launched %d objectives.", FUNC_NAME(), objectives.len() )
+}
+
+                  
+                               
+                                     
+ 
+                                             
+  
+                                                       
+                                                       
+  
+
+                                                              
+ 
+                        
+
+Assert( eAmbientOverrideType._count == 3 )
+void function StartUpMode()
+{
+	// Squad starts:
+	array<string> zoneGroupsThatSquadsStartIn
+#if 0
+	if ( false )
+	{
+		{
+			InitPlayerStarts()
+			array<int> startZones
+			foreach( StartSet set in s_playerStarts )
+			{
+				int zoneId = MapZones_GetZoneForOrigin( set.arrival )
+				if ( zoneId < 0 )
+				{
+					vector dropped = DropSpawnToFloor( set.arrival, HULL_HUMAN )
+					if ( dropped != INVALID_DROP_RESULT )
+						zoneId = MapZones_GetZoneForOrigin( dropped )
+				}
+				Assert( zoneId >= 0 )
+				zoneGroupsThatSquadsStartIn.append( MapZones_GetZoneGroupForZone( zoneId ) )
+			}
+			foreach( groupName in zoneGroupsThatSquadsStartIn )
+				printf( "%s() - Team start: '%s'", FUNC_NAME(), groupName )
+		}
+	}
+#endif	// 0
+
+	//
+	SetupExtractionSites()
+	ChooseExtractionSite()
+
+	//
+	array<string> zoneGroupsToRestrict
+	array<string> zoneGroupsToBlock
+	zoneGroupsToRestrict.extend( zoneGroupsThatSquadsStartIn )
+	if ( GetCurrentPlaylistVarBool( "freelance_mode_objectives", false ) )
+		RollObjectivesForMode( zoneGroupsToRestrict, zoneGroupsToBlock )
+
+	if ( GetCurrentPlaylistVarBool( "freelance_mode_zombierun", false ) )
+		DEV_LaunchObjectiveCount( "breachandclear", 31 )
+
+                  
+                                                  
+                                                 
+                                                     
+                                                    
+
+                                
+
+                                                                        
+                         
+
+                                                                           
+  
+                                         
+                             
+  
+                        
+}
+
+struct ExtractionSiteInfo
+{
+	vector center
+	float radius
+	array<table<string, vector> > shipSpots
+}
+array<ExtractionSiteInfo> s_extractionSites
+array<ExtractionSiteInfo> s_extractionBigCircles
+int s_extractSiteIndex
+int s_extractDropshipIndex
+int s_extractBigCircleIndex
+
+void function DoItYYY( int siteIdx, int shipIdx, int bigCircleIdx )
+{
+	if ( IsValid( s_extractShip ) )
+		s_extractShip.Destroy()
+	if ( IsValid( s_safeZone ) )
+		s_safeZone.Destroy()
+	if ( IsValid( s_safeZonePre ) )
+		s_safeZonePre.Destroy()
+
+	SetupExtractionSites()
+	ChooseExtractionSite()
+	if ( siteIdx >= 0 )
+		s_extractSiteIndex = siteIdx
+	if ( shipIdx >= 0 )
+		s_extractDropshipIndex = shipIdx
+	if ( bigCircleIdx >= 0 )
+		s_extractBigCircleIndex = bigCircleIdx
+
+	ExtractionSiteInfo site = s_extractionSites[s_extractSiteIndex]
+	table<string, vector> spot = site.shipSpots[s_extractDropshipIndex]
+	s_safeZone = SpawnSafeZone( site.center, site.radius )
+	s_extractShip = FreelanceMode_SpawnExtractionDropship( spot.origin, spot.angles )
+
+	ExtractionSiteInfo preSite = s_extractionBigCircles[s_extractBigCircleIndex]
+	s_safeZonePre = SpawnSafeZoneNoLine( preSite.center, preSite.radius )
+}
+
+int function CountAliveInArray( array<entity> arr )
+{
+	int result = 0
+	foreach( ent in arr )
+	{
+		if ( IsAlive( ent ) )
+			++result
+	}
+	return result
+}
+
+void function FinalCircleReinforcementsThread( vector center, float radius )
+{
+                  
+                       
+                  
+                         
+                             
+           
+  
+          
+                                                  
+                              
+           
+
+                                                                           
+
+          
+                                                                                       
+
+                       
+                                     
+   
+                        
+                                                                 
+                              
+                                                           
+       
+                                                              
+   
+                              
+
+                                    
+                                 
+                                             
+  
+                            
+}
+
+void function SetupExtractionSites()
+{
+	s_extractionSites.clear()
+
+	// Containment
+	{
+		ExtractionSiteInfo info
+		info.center = <-648.0, 16000.0, 0.0>
+		info.radius = 10000
+
+		info.shipSpots.append( { origin = <-1885.16089, 20321.4023, 4550.0>, angles = <0, 50, 0> } )			// NW, Watchtower
+		info.shipSpots.append( { origin = <2374.86084, 10600.8135, 3003.60913>, angles = <0, 40, 0> } )			// SE
+		info.shipSpots.append( { origin = <-3215.15747, 10170.9463, 3520.84497>, angles = <0, -23, 0> } )		// SW
+		info.shipSpots.append( { origin = <-4319.81055, 17763.8965, 3117.16089>, angles = <0, -100, 0> } )		// NW, containers
+
+		s_extractionSites.append( info )
+	}
+
+	// South-Central
+	{
+		ExtractionSiteInfo info
+		info.center = <-6415.0, -25000.0, 0.0>
+		info.radius = 9000
+
+		info.shipSpots.append( { origin = <-6154.41602, -29697.8789, 2540.57642>, angles = <0, -164, 0> } )		// S,  cliffs
+		info.shipSpots.append( { origin = <-7387.95215, -17779.2754, 3450.79248>, angles = <0, -45, 0> } )		// NW, Skulltown SE
+		info.shipSpots.append( { origin = <-9265.36719, -25024.7578, 3425.88867>, angles = <0, 65, 0> } )		// SW, tall building
+		info.shipSpots.append( { origin = <-4172.25098, -22596.9102, 3207.78418>, angles = <0, -175, 0> } )		// center, near respawn beacon
+
+		s_extractionSites.append( info )
+	}
+
+	// Broken Forest
+	{
+		ExtractionSiteInfo info
+		info.center = <24000.0, 6655.0, 0.0>
+		info.radius = 8000
+
+		info.shipSpots.append( { origin = <28422.3887, 3603.91406, 4042.06885>, angles = <0, -45, 0> } )		// SE, landing platform
+		info.shipSpots.append( { origin = <20018.4121, 10944.8525, 4886.92969>, angles = <0, -175, 0> } )		// N,  Cliff
+		info.shipSpots.append( { origin = <20913.5, 6171.95654, 4750.80664>, angles = <0, -50, 0> } )			// W,  broken buildings
+		info.shipSpots.append( { origin = <24420.0879, 7477.60352, 4260.60791>, angles = <0, 15, 0> } )			// W,  broken buildings
+
+		s_extractionSites.append( info )
+	}
+
+	// Western Desert
+	{
+		ExtractionSiteInfo info
+		info.center = <-16500.0, 2000.0, 0.0>
+		info.radius = 8000
+
+		info.shipSpots.append( { origin = <-16329.3838, -396.795898, 3311.83154>, angles = <0, -70, 0> } )			// Center, cliff
+		info.shipSpots.append( { origin = <-18701.9238, 3800.17383, 4000.0>, angles = <0, -90, 0> } )				// Top of the tower
+		info.shipSpots.append( { origin = <-12079.5703, 5166.30713, 3380.22729>, angles = <0, 90, 0> } )			// E, Near Bunker
+		//info.shipSpots.append( { origin = <-15750.0, 58.4491, 6900.0>, angles = <0, -100, -30> } )					// It is balloon.
+		info.shipSpots.append( { origin = <-15750.0, 58.4491, 5500.0>, angles = <0, -100, -30> } )					// It is balloon.
+
+		s_extractionSites.append( info )
+	}
+
+	////////////////
+
+	s_extractionBigCircles.clear()
+
+	//
+	{
+		ExtractionSiteInfo info
+		info.center = <0.0, 2000.0, 0.0>
+		info.radius = 25000
+		s_extractionBigCircles.append( info )
+	}
+	//
+	{
+		ExtractionSiteInfo info
+		info.center = <-10000.0, 0.0, 0.0>
+		info.radius = 25000
+		s_extractionBigCircles.append( info )
+	}
+	//
+	{
+		ExtractionSiteInfo info
+		info.center = <15000.0, 0.0, 0.0>
+		info.radius = 25000
+		s_extractionBigCircles.append( info )
+	}
+	//
+	{
+		ExtractionSiteInfo info
+		info.center = <-10000, -10000.0, 0.0>
+		info.radius = 25000
+		s_extractionBigCircles.append( info )
+	}
+	//
+	{
+		ExtractionSiteInfo info
+		info.center = <-10000, 10000.0, 0.0>
+		info.radius = 25000
+		s_extractionBigCircles.append( info )
+	}
+	//
+	{
+		ExtractionSiteInfo info
+		info.center = <13000, 14000.0, 0.0>
+		info.radius = 25000
+		s_extractionBigCircles.append( info )
+	}
+	//
+	{
+		ExtractionSiteInfo info
+		info.center = <16000, -6000.0, 0.0>
+		info.radius = 25000
+		s_extractionBigCircles.append( info )
+	}
+}
+
+//
+
+void function ChooseExtractionSite()
+{
+	s_extractSiteIndex = RandomIntRange( 0, s_extractionSites.len() )
+	s_extractDropshipIndex = RandomIntRange( 0, s_extractionSites[s_extractSiteIndex].shipSpots.len() )
+
+	s_extractBigCircleIndex = -1
+	{
+		ExtractionSiteInfo site = s_extractionSites[s_extractSiteIndex]
+
+		array<int> possible
+		foreach( int index, ExtractionSiteInfo big in s_extractionBigCircles )
+		{
+			if ( IsCircleAInsideCircleB( site.center, site.radius, big.center, big.radius ) )
+				possible.append( index )
+		}
+
+		if ( possible.len() > 0 )
+			s_extractBigCircleIndex = possible.getrandom()
+	}
+}
+
+bool function IsCircleAInsideCircleB( vector originA, float radiusA, vector originB, float radiusB )
+{
+	float dist = Distance( originA, originB )
+	if ( radiusB >= (dist + radiusA) )
+		return true
+	return false
+}
+
+///////
+
+void function FreelanceMode_SetCurrentPhase( int modePhase, float goalTime )
+{
+	SetGlobalNetTime( NV_MODE_PHASE_GOALTIME, goalTime )
+	SetGlobalNetTime( NV_MODE_PHASE_STARTEDTIME, Time() )
+	SetGlobalNetInt( NV_MODE_PHASE, modePhase )
+}
+
+void function FreelanceMode_SetIsVictoryForAll( bool isVictoryForAll )
+{
+	SetGlobalNetBool( NV_MODE_IS_VICTORY_FOR_ALL, isVictoryForAll )
+}
+
+void function FreelanceMode_ModeWait( float duration, array<string> extraWorldSignals )
+{
+	waitthread function() : (duration, extraWorldSignals)
+	{
+		EndSignal( svGlobal.worldspawn, SIG_MODE_JUMP_AHEAD )
+		foreach ( signal in extraWorldSignals )
+			EndSignal( svGlobal.worldspawn, signal )
+
+		wait duration
+	}()
+
+	// If the game finished, don't advance:
+	int gs = GetGameState()
+	if ( gs > eGameState.Playing )
+	{
+		printf( "%s() - Finished wait, but gamestate is now '%s', so not advancing.", FUNC_NAME(), GetEnumStringSlow( eGameState, gs ) )
+		WaitForever()
+	}
+}
+
+void function FreelanceMode_Signal( string worldSignal )
+{
+	Signal( svGlobal.worldspawn, worldSignal )
+}
+
+void function FreelanceMode_SignalWhenObjectiveCompletes( ObjectiveInstance oi, string signal )
+{
+	thread function() : (oi, signal)
+	{
+		RegisterSignal( signal )
+		for( ;; )
+		{
+			WaitFrame()
+			if ( oi.objectiveState >= eObjectiveState.COMPLETED )
+				break
+		}
+		FreelanceMode_Signal( signal )
+	}()
+}
+
+#if DEV
+void function DEV_ModeSkipAhead()
+{
+	FreelanceMode_Signal( SIG_MODE_JUMP_AHEAD )
+}
+#endif // DEV
+
+entity function SpawnSafeZone( vector origin, float radius )
+{
+	entity newZone = SafeZone_CreateEnt( origin, radius, Survival_Loot_GetDefaultRealm() )
+	foreach ( player in GetPlayerArray() )
+		newZone.Minimap_AlwaysShow( 0, player )
+	return newZone
+}
+
+entity function SpawnSafeZoneNoLine( vector origin, float radius )
+{
+	entity newZone = SafeZone_CreateEnt_NoLine( origin, radius, Survival_Loot_GetDefaultRealm() )
+	foreach ( player in GetPlayerArray() )
+		newZone.Minimap_AlwaysShow( 0, player )
+	return newZone
+}
+
+void function LaunchEncounterAtPlayersIn( float waitTime )
+{
+	wait waitTime
+
+	for ( int idx = 0; idx < MAX_SQUADS; ++idx )
+	{
+		int team              = GetTeamFromSquadID( idx )
+		array<entity> players = GetPlayerArrayOfTeam( team )
+		if ( players.len() == 0 )
+			continue
+
+		Encounters_LaunchEncounter( "spectrehitsquad", players )
+		wait 15.0
+	}
+}
+
+void function DoSplashReminderAtPlayersIn( float waitTime )
+{
+	wait waitTime
+
+	if ( s_extractBigCircleIndex >= 0 )
+	{
+		ExtractionSiteInfo preSite = s_extractionBigCircles[s_extractBigCircleIndex]
+		s_safeZonePre = SpawnSafeZoneNoLine( preSite.center, preSite.radius )
+		SurveyBeacons_RemoveSurveyZones()
+	}
+
+	DoFreelanceModeSplashToAll( eModeSplash.Extraction_Reminder )
+}
+
+Cylinder function GetExtractionAreaForPreview()
+{
+	Cylinder result
+	if ( s_extractionSites.len() == 0 )
+		return result
+
+	if ( IsValid( s_safeZonePre ) || (s_extractBigCircleIndex < 0) )
+	{
+		ExtractionSiteInfo es = s_extractionSites[s_extractSiteIndex]
+		result.origin = es.center
+		result.radius = es.radius
+		return result
+	}
+
+	ExtractionSiteInfo preSite = s_extractionBigCircles[s_extractBigCircleIndex]
+	result.origin = preSite.center
+	result.radius = preSite.radius
+	return result
+}
+
+entity s_safeZone
+entity s_safeZonePre
+void function MainModeThread()
+{
+	waitthread IntroSkyDiveInThread()
+
+	//periodically do debug dump
+	//thread function()
+	//{
+	//	const float DUMP_INTERVAL = 240.0
+	//	for ( int i = 0; i < floor( 900 / DUMP_INTERVAL ); i++ )
+	//	{
+	//		wait DUMP_INTERVAL
+	//		SkDebug_OnGameEndDump()
+	//	}
+	//}()
+
+	//////
+	// Prologue / Insertion:
+	{
+		float delta = GetCurrentPlaylistVarFloat( "freelance_mode_seconds_prologue", 20.0 )
+		//delaythread( 2.0 ) PlayRadioDialogueToAll( "ObMatchStart_GoExplore" )
+		FreelanceMode_ModeWait( delta, [] )
+	}
+
+	//////
+	// Exploration
+	{
+		float delta = GetCurrentPlaylistVarFloat( "freelance_mode_seconds_exploration", 900.0 )
+		FreelanceMode_SetCurrentPhase( eFreelanceModePhase.Exploration, (Time() + delta) )
+
+		thread DoSplashReminderAtPlayersIn( delta - 360.0 )
+		thread LaunchEncounterAtPlayersIn( delta - 180.0 )
+
+		FreelanceMode_ModeWait( delta, [] )
+	}
+
+	if ( IsValid( s_safeZonePre ) )
+		s_safeZonePre.Destroy()
+
+	ExtractionSiteInfo extractionSite = s_extractionSites[s_extractSiteIndex]
+	table<string, vector> dropshipSpot = extractionSite.shipSpots[s_extractDropshipIndex]
+
+	//////
+	// Get to the LZ
+	{
+		float delta = GetCurrentPlaylistVarFloat( "freelance_mode_seconds_gettothelz", 180.0 )
+		FreelanceMode_SetCurrentPhase( eFreelanceModePhase.GetToTheLZ, (Time() + delta) )
+
+		// create LZ area:
+		s_safeZone = SpawnSafeZone( extractionSite.center, extractionSite.radius )
+		SurveyBeacons_RemoveSurveyZones()
+
+		if ( GetCurrentPlaylistVarBool( "freelance_mode_extraction_reinforcements", true ) )
+			thread FinalCircleReinforcementsThread( extractionSite.center, (extractionSite.radius * 0.5) )
+
+		delaythread( 2.0 ) PlayRadioDialogueToAll( "Obj_Evac_ProceedToEvacCircle" )
+		ClientMusic_PlayCustomTrackToAll( eMusicTrack.GetToTheLZ )
+		FreelanceMode_ModeWait( delta, [] )
+	}
+
+	s_extractShip = FreelanceMode_SpawnExtractionDropship( dropshipSpot.origin, dropshipSpot.angles )
+	wait( 2.0 )
+
+	//////
+	// Get on the Dropship
+	{
+		float delta = GetCurrentPlaylistVarFloat( "freelance_mode_seconds_getontheship", 65.0 )
+		FreelanceMode_SetCurrentPhase( eFreelanceModePhase.GetOnTheDropship, (Time() + delta) )
+
+		if ( IsValid( s_safeZone ) )
+			s_safeZone.Destroy()
+
+		delaythread( 1.0 ) PlayRadioDialogueToAll( "Obj_Evac_ShipArrived" )
+		ClientMusic_PlayCustomTrackToAll( eMusicTrack.GetOnTheDropship )
+		FreelanceMode_ModeWait( delta, [SIG_MODE_EVERYONE_IS_ON_BOARD_THE_EXTRACTION] )
+		wait( 2.0 )
+		Signal( svGlobal.worldspawn, SIG_MODE_EXTRACTION_GO_NOW )
+		wait( 2.0 )
+	}
+
+	//////
+	// Game Over
+	{
+		FreelanceMode_SetCurrentPhase( eFreelanceModePhase.GameOver, Time() )
+
+		SetGameState( eGameState.WinnerDetermined )
+
+		while( GetGameState() < eGameState.Resolution )
+			WaitFrame()
+
+		WaitFrame()
+
+		foreach( player in GetPlayerArray() )
+			Remote_CallFunction_NonReplay( player, "ServerCallback_ShowDeathScreen" )
+
+		while( GetGameState() < eGameState.Postmatch )
+			WaitFrame()
+
+		SkDebug_OnGameEndDump()
+	}
+}
+
+void function MainModeThread_ZombieRun()
+{
+	waitthread IntroInsertionThread_ZombieRun()
+
+	//////
+	// Prologue / Insertion:
+	{
+		float delta = GetCurrentPlaylistVarFloat( "freelance_mode_seconds_prologue", 20.0 )
+		//delaythread( 2.0 ) PlayRadioDialogueToAll( "ObMatchStart_GoExplore" )
+		FreelanceMode_ModeWait( delta, [] )
+	}
+
+	//////
+	// Exploration
+	{
+		float delta = GetCurrentPlaylistVarFloat( "freelance_mode_seconds_exploration", 900.0 )
+		FreelanceMode_SetCurrentPhase( eFreelanceModePhase.Exploration, (Time() + delta) )
+
+		//thread DoSplashReminderAtPlayersIn( delta - 360.0 )
+		//thread LaunchEncounterAtPlayersIn( delta - 180.0 )
+
+		FreelanceMode_ModeWait( delta, [] )
+	}
+
+	//////
+	// Game Over
+	{
+		FreelanceMode_SetCurrentPhase( eFreelanceModePhase.GameOver, Time() )
+
+		SetGameState( eGameState.WinnerDetermined )
+
+		while( GetGameState() < eGameState.Resolution )
+			WaitFrame()
+
+		WaitFrame()
+
+		foreach( player in GetPlayerArray() )
+			Remote_CallFunction_NonReplay( player, "ServerCallback_ShowDeathScreen" )
+
+		while( GetGameState() < eGameState.Postmatch )
+			WaitFrame()
+
+		SkDebug_OnGameEndDump()
+	}
+}
+
+void function StartMainModeThread()
+{
+	if ( GetCurrentPlaylistVarBool( "freelance_mode_zombierun", false ) )
+	{
+		thread MainModeThread_ZombieRun()
+		return
+	}
+
+	if ( GetCurrentPlaylistVarBool( "freelance_mode_standard", true ) )
+		thread MainModeThread()
+}
+
+
+///////
+// Intro Fly-In
+//
+
+entity function GetSkydiveLeaderForPlayers( array<entity> players )
+{
+	if ( players.len() == 0 )
+		return null
+
+	foreach ( entity player in players )
+	{
+		if ( player.GetPlayerNetBool( "isJumpmaster" ) )
+			return player
+	}
+
+	return players[0]
+}
+
+void function ResetUltimateCharge( entity player )
+{
+	entity ult = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
+	if ( !IsValid( ult ) )
+		return
+	ult.SetWeaponPrimaryClipCountAbsolute( 0 )
+	ult.RegenerateAmmoReset()
+}
+
+void function FreelanceMode_StartTeamInsertionThread_Skydive( int team, vector insertOrigin, vector insertAngles, vector viewAngles )
+{
+	array<entity> players = GetPlayerArrayOfTeam( team )
+	if ( players.len() == 0 )
+		return
+
+	thread function() : (team, players, insertOrigin, insertAngles, viewAngles)
+	{
+		vector newAngles = <15, VectorToAngles( viewAngles ).y, 0>
+		foreach( player in players )
+			player.SetAngles( newAngles )
+
+		thread RespawnPlayersInDropshipAtPoint( players, insertOrigin, insertAngles, true, false, "npc_dropship_intro" )
+		wait 12.0
+		{
+			array<entity> playersPreJump = GetPlayerArrayOfTeam( team )  // update the list
+			entity leader = GetSkydiveLeaderForPlayers( playersPreJump )
+			if ( IsValid( leader ) )
+				PlayBattleChatterLineToSpeakerAndTeam( leader, "bc_imJumpmaster" )
+		}
+		wait 4.75
+		array<entity> playersPostWait = GetPlayerArrayOfTeam( team )  // update the list
+		entity leader = GetSkydiveLeaderForPlayers( playersPostWait )
+		foreach( player in playersPostWait )
+		{
+			SetPlayerIntroDropSettings( player )
+			ResetUltimateCharge( player )
+			GiveSpawnLoadout( player )
+			thread PlayerSkyDive( player, leader.GetViewVector(), playersPostWait, leader, false, false )
+			thread PlayerPostSkydiveFixupsThread( player )
+		}
+		if ( IsValid( leader ) )
+			PlayBattleChatterLineToSpeakerAndTeam( leader, "bc_podLeaderLaunch" )
+	}()
+}
+
+void function FreelanceMode_StartTeamInsertionThread_Dropoff( int team, vector insertOrigin, vector insertAngles, vector viewAngles )
+{
+	array<entity> players = GetPlayerArrayOfTeam( team )
+	if ( players.len() == 0 )
+		return
+
+	thread function() : (team, players, insertOrigin, insertAngles, viewAngles)
+	{
+		vector newAngles = <40, ClampAngle( VectorToAngles( viewAngles ).y + 180.0 ), 0>
+		foreach( player in players )
+			player.SetAngles( newAngles )
+
+		thread RespawnPlayersInDropshipAtPoint( players, insertOrigin, insertAngles, true, false, "npc_dropship_intro" )
+		wait 12.0
+		array<entity> playersPostWait = GetPlayerArrayOfTeam( team )  // update the list
+		foreach( player in playersPostWait )
+		{
+			thread PlayerExitsShip( player )
+		}
+	}()
+}
+void function PlayerExitsShip( entity player )
+{
+	if ( !IsAlive( player ) )
+		return
+	player.EndSignal( "OnDeath" )
+
+	ResetUltimateCharge( player )
+	player.FreezeControlsOnServer()
+	float startTime = Time()
+	while ( true )
+	{
+		WaitFrame()
+
+		//failsafe to unfreeze player controls
+		if ( ( Time() - startTime ) > 5.0 )
+			break
+
+		//don't unfreeze player controls till they hit the ground
+		if ( ( player.GetOrigin().z - OriginToGround( player.GetOrigin() ).z ) < 24 )
+			break
+	}
+	player.UnfreezeControlsOnServer()
+	GiveSpawnLoadout( player )
+	player.p.survivalLandedOnGround = true
+}
+
+void function IntroSkyDiveInThread()
+{
+	foreach ( player in GetPlayerArray() )
+		player.p.respawnCount = 1    // to skip some checks
+
+	if ( FreelanceMode_GetCurrentPhase() < eFreelanceModePhase.Insertion )
+		FreelanceMode_SetCurrentPhase( eFreelanceModePhase.Insertion, 0 )
+
+	const float MY_SCALE = 1500.0
+	const vector MY_BASE = <6630.0, 4200.0, 0.0>
+	const vector[3] DROPSHIP_POSITIONS = [
+				MY_BASE + <0, (1.0 * MY_SCALE) ,32500>,
+				MY_BASE + <(0.866 * MY_SCALE), (-0.5 * MY_SCALE), 32500>,
+				MY_BASE + <(-0.866 * MY_SCALE), (-0.5 * MY_SCALE), 32500>
+	]
+	const vector[3] DROPSHIP_ROTATIONS = [<0,90,0>, <0,-30,0>, <0,210,0>]
+
+	for ( int idx = 0; idx < MAX_SQUADS; ++idx )
+	{
+		int team = GetTeamFromSquadID( idx )
+
+		vector viewAngles = <15, VectorToAngles( MY_BASE - DROPSHIP_ROTATIONS[idx] ).y, 0>
+		FreelanceMode_StartTeamInsertionThread_Skydive( team, DROPSHIP_POSITIONS[idx], DROPSHIP_ROTATIONS[idx], viewAngles )
+	}
+
+	/*
+	wait ( 5.0 )
+	DoFreelanceModeSplashToAll( eModeSplash.Initial )
+
+	wait ( 15.0 )
+	DoFreelanceModeSplashToAll( eModeSplash.Falling_NoteObjectives )
+
+	wait ( 10.0 )
+	DoFreelanceModeSplashToAll( eModeSplash.Falling_NoteOtherSquads )
+
+	wait ( 10.0 )
+	DoFreelanceModeSplashToAll( eModeSplash.Falling_NoteSidequests )
+	*/
+}
+
+void function IntroInsertionThread_ZombieRun()
+{
+	foreach ( player in GetPlayerArray() )
+		player.p.respawnCount = 1    // to skip some checks
+
+	if ( FreelanceMode_GetCurrentPhase() < eFreelanceModePhase.Insertion )
+		FreelanceMode_SetCurrentPhase( eFreelanceModePhase.Insertion, 0 )
+
+	//<16250.8457, 23688.3789, 5037.58545>		// Two Spines, north
+
+	const vector[3] DROPSHIP_POSITIONS = [
+		<-14702.8379, 23284.9023, 3910.52563>,		// Slum Lakes, plateau
+		<31735.3633, 20141.4355, 3935.27319>,		// Relay/Wetlands, cliffside
+		<-21366.7715, -8771.75684, 2878.4231>,		// Outide Airbase
+		//<0, 0, 0>  // Todo, South-East, (near tower?)
+	]
+
+	const vector[3] DROPSHIP_ROTATIONS = [
+		<0, 150, 0>,
+		<0, 40, 0>,
+		<0, 180, 0>,
+		//<0, 0, 0>
+	]
+
+	//<16250.8457, 23688.3789, 5037.58545>
+
+	array<int> startIndices
+	for ( int ii = 0; ii < DROPSHIP_POSITIONS.len(); ++ii )
+		startIndices.append( ii )
+	startIndices.randomize()
+
+	for ( int idx = 0; idx < MAX_SQUADS; ++idx )
+	{
+		int team = GetTeamFromSquadID( idx )
+
+		int startIndex = startIndices[idx % startIndices.len()]
+		vector viewAngles = <15, DROPSHIP_ROTATIONS[startIndex].y, 0>
+		FreelanceMode_StartTeamInsertionThread_Dropoff( team, DROPSHIP_POSITIONS[startIndex], DROPSHIP_ROTATIONS[startIndex], viewAngles )
+	}
+
+	wait ( 5.0 )
+	DoFreelanceModeSplashToAll( eModeSplash.Initial_Zombie )
+}
+
+void function PlayerPostSkydiveFixupsThread( entity player )
+{
+	AssertIsNewThread()
+	player.EndSignal( "OnDestroy" )
+
+	wait( 1.0 )
+	for( ; ; )
+	{
+		WaitFrame()
+		if ( !player.Player_IsSkydiving() )
+			break
+		if ( player.IsOnGround() )
+			break
+	}
+
+	const float DEFAULT_ZOOM_LEVEL_ON_GROUND = 2.5
+	player.SetMinimapZoomScale( DEFAULT_ZOOM_LEVEL_ON_GROUND, 3.0 )
+
+	wait( 1.0 )
+	MapZones_RefreshZoneCalloutForPlayer( player )
+}
+
+
+/*
+void function DropShipMarkerThread( DropshipAltFlyinData data, int squadId )
+{
+	AssertIsNewThread()
+	EndSignal( data.dropship, "OnDestroy" )
+
+	entity wp = CreateWaypoint_Custom( WAYPOINTTYPE_SQUADPOS )
+	wp.SetWaypointEntity( 0, data.dropship )
+	wp.SetWaypointInt( 0, squadId )
+	wp.SetWaypointInt( 1, 1 ) // players.len()
+	wp.SetWaypointFloat( 0, 1.0 ) // closeFadeOutDistEnd
+	wp.SetWaypointFloat( 1, 2.0 ) // closeFadeOutDistStart
+
+	wait data.timeToTake
+	wp.Destroy()
+}
+*/
+
+const string INTRO_SHIP_ENGINE_SOUND = "HoverTank_Mvmt_Engine" // "HoverTank_Mvmt_Engine_survival"
+void function DropShipEngineSoundThread( entity ship )
+{
+	AssertIsNewThread()
+	ship.EndSignal( "OnDestroy" )
+
+	OnThreadEnd(
+		function () : ( ship )
+		{
+			if ( !IsValid( ship ) )
+				return
+
+			StopSoundOnEntity( ship, INTRO_SHIP_ENGINE_SOUND )
+		}
+	)
+
+	EmitSoundOnEntity( ship, INTRO_SHIP_ENGINE_SOUND )
+	WaitForever()
+}
+#endif // #if SERVER
+
+
+
+#if CLIENT
+
+void function DoModeChangeSplash( float goalTime, string headerText, string subText )
+{
+	if ( !GamePlaying() )
+		return
+
+	const float DURATION = 7.0
+
+	AnnouncementData dt
+	dt = Announcement_Create( "" )
+	Announcement_SetHeaderText( dt, headerText )
+	Announcement_SetSubText( dt, subText )
+	Announcement_SetDisplayEndTime( dt, goalTime )
+	Announcement_SetStyle( dt, ANNOUNCEMENT_STYLE_CIRCLE_WARNING )
+	Announcement_SetSoundAlias( dt, "UI_InGame_RingMoveWarning" )
+	Announcement_SetPurge( dt, true )
+	Announcement_SetPriority( dt, 200 )
+	Announcement_SetDuration( dt, DURATION )
+
+	AnnouncementFromClass( GetLocalViewPlayer(), dt )
+}
+
+const string COUNTDOWN_WARNING_BEEP_30 = "SQ_UI_InGame_30SecondTimeWarning"
+const string COUNTDOWN_WARNING_BEEP_10 = "SQ_UI_InGame_10SecondTimeWarning"
+void function DoCountdownEndingTimer()
+{
+	thread function () : ()
+	{
+		EndSignal( clGlobal.levelEnt, "OnNVModeChanged" )
+
+		int lastSeconds = -1
+		for ( ;; )
+		{
+			float goalTime = GetGlobalNetTime( NV_MODE_PHASE_GOALTIME )
+			float delta = (goalTime - Time())
+			int seconds = int( delta )
+			if ( (lastSeconds != seconds) && (lastSeconds > 0) )
+			{
+				if ( seconds <= 10 )
+					EmitSoundOnEntity( GetLocalViewPlayer(), COUNTDOWN_WARNING_BEEP_10 )
+				else if ( seconds <= 30 )
+					EmitSoundOnEntity( GetLocalViewPlayer(), COUNTDOWN_WARNING_BEEP_30 )
+				else if ( seconds >= 32.0 )
+					Wait( 1.0 )
+			}
+			lastSeconds = seconds
+			WaitFrame()
+		}
+	}()
+}
+
+void function OnNVModeChanged( entity player, int newVal )
+{
+	RegisterSignal( "OnNVModeChanged" )
+	Signal( clGlobal.levelEnt, "OnNVModeChanged" )
+
+	entity localPlayer = GetLocalClientPlayer()
+
+	float goalTime = GetGlobalNetTime( NV_MODE_PHASE_GOALTIME )
+	switch( newVal )
+	{
+		case eFreelanceModePhase.Exploration:
+			if ( goalTime > 0.001 )
+			{
+				//DoModeChangeSplash( goalTime, "Extraction starts in:", "" )
+				//DoModeChangeSplash( goalTime, "Time Remaining:", "Clear Hotzones, Get Loot" )
+				//DoModeChangeSplash( goalTime, "Time Remaining:", "" )
+				SetGamestateCountdown( goalTime, $"rui/hud/pve/extraction_dropship", "#TIMER_COMPLETE_IN" )
+				DoCountdownEndingTimer()
+			}
+			break
+		case eFreelanceModePhase.WaitForObjective:
+			SetGamestateCountdownClear()
+			break
+		case eFreelanceModePhase.GetToTheLZ:
+			DoModeChangeSplash( goalTime, "Dropship arrives in:", "GET TO EXTRACTION ZONE!" )
+			SetGamestateCountdown( goalTime, $"", "Dropship Arrival In:" )
+			break
+		case eFreelanceModePhase.NeedTheDropship:
+			SetGamestateCountdown( goalTime, $"rui/hud/pve/extraction_dropship", "#TIMER_COMPLETE_IN" )
+			if ( goalTime > 0.001 )
+				DoCountdownEndingTimer()
+			break
+		case eFreelanceModePhase.GetOnTheDropship:
+			SetGamestateCountdownClear()
+			DoModeChangeSplash( goalTime, "#TIMER_DROPSHIP_LEAVES", "#TIMER_DROPSHIP_LEAVES_SUB" )
+			// need to do a wait here so that the rui can know that it's got cleared. Doesn't work to clear and set on the same frame.
+			// This is bad, I know, but I don't have time to break the timer out of gamestate at this point.
+			thread function() : ( goalTime ) {
+				wait 1
+				SetGamestateCountdown( goalTime, $"rui/hud/pve/extraction_dropship", "#TIMER_DROPSHIP_LEAVES", SrgbToLinear( DROPSHIP_LEAVES_COLOR/255.0 ) )
+				DoCountdownEndingTimer()
+			}()
+			break
+		case eFreelanceModePhase.GameOver:
+			SetGamestateCountdownClear()
+			break
+	}
+}
+#endif // CLIENT
+
+
+///////////////////////////////////////
+// Extraction Dropship
+
+int function CountPlayersAttachedTo( entity ent )
+{
+	int result
+	foreach ( player in GetPlayerArray() )
+	{
+		if ( player.GetParent() == ent )
+			++result
+	}
+
+	return result
+}
+
+#if SERVER
+entity s_extractShip
+
+struct ExtractShipInfo
+{
+	array<entity> playersOnShip
+}
+
+array<entity> s_playersThatExtracted
+const string SIG_STOPBOUNCING = "ShipStopBouncing"
+entity function FreelanceMode_SpawnExtractionDropship( vector origin, vector angles )
+{
+	RegisterSignal( SIG_MODE_EVERYONE_IS_ON_BOARD_THE_EXTRACTION )
+	RegisterSignal( SIG_STOPBOUNCING )
+
+	origin = (origin + EXTRACT_EXTRA_ORIGIN)
+	angles = (angles + EXTRACT_EXTRA_ROTATION)
+
+	entity ship = CreateExpensiveScriptMoverModel( MODEL_EXTRACTION_DROPSHIP, origin, angles, SOLID_VPHYSICS, 9999999 )
+	entity node = CreateScriptMover( "spawndropship_mover", origin, angles )
+	SetTeam( ship, eNpcTeam.FRIENDLY )
+	ship.SetParent( node, "REF" )
+	thread PlayAnimTeleport( ship, IDLE_EXTRACTION_DROPSHIP, node, "REF" )
+
+	AddEntityDestroyedCallback( ship, void function ( entity ent ) : (ship, node)
+	{
+		foreach ( player in GetPlayerArray() )
+		{
+			if ( player.GetParent() == ship )
+			{
+				player.ClearParent()
+				if ( IsInvincible( player ) )
+					ClearInvincible( player )
+			}
+		}
+
+		node.Destroy()
+	} )
+
+	thread function() : ( ship, node, origin, angles )
+	{
+		ship.EndSignal( "OnDestroy" )
+		ship.Hide()
+		waitthread WarpinEffect( ship, ship.GetModelName(), IDLE_EXTRACTION_DROPSHIP, ship.GetOrigin(), ship.GetAngles() )
+		ship.Show()
+		EmitSoundOnEntity( ship, INTRO_SHIP_ENGINE_SOUND )
+
+		node.NonPhysicsSetMoveModeLocal( true )
+		thread EndingDropshipHoverBounce( node )
+		thread EndingDropshipHoverRoll( node, angles )
+
+		ExtractShipInfo info
+
+		//entity trigger = SpawnRadiusTrigger( (origin + AnglesToRight( angles ) * 75.0), 120.0, 350.0, 40.0 )
+		entity trigger = SpawnRadiusTrigger( (origin + AnglesToForward( angles ) * -100.0), 120.0, 350.0, 40.0 )
+		trigger.ConnectOutput( "OnStartTouch", void function ( entity trigger, entity activator, entity caller, var value ) : (ship, info)
+		{
+			if ( !IsValid( trigger ) )
+				return
+			if ( !IsValid( activator ) )
+				return
+			if ( !activator.IsPlayer() )
+				return
+			if ( activator.GetParent() )
+				return
+
+			printf( "Boarding: '%s'", string( activator ) )
+
+			int index = CountPlayersAttachedTo( ship )
+			string tag = EXTRACT_TAGS[index % EXTRACT_TAGS.len()]
+			int attachID = ship.LookupAttachment( tag )
+			vector attachOrigin = ship.GetAttachmentOrigin( attachID )
+			vector attachAngles = ship.GetAttachmentAngles( attachID )
+
+			entity player = activator
+			info.playersOnShip.append( player )
+			thread function() : (player, attachOrigin, attachAngles, ship, tag)
+			{
+				player.EndSignal( "OnDestroy" )
+				ship.EndSignal( "OnDestroy" )
+
+				MakeInvincible( player )
+				if ( player.Player_IsSkydiving() )
+				{
+					//player.Player_EndSkydive()
+					player.Anim_Stop()
+					WaitFrame()	// the ol' "just wait two frames and it'll work" trick
+					WaitFrame()	// the ol' "just wait two frames and it'll work" trick
+				}
+
+				player.SetOrigin( attachOrigin )
+				player.SetParent( ship, tag, false, 1.0 )
+				player.SnapEyeAngles( FlattenAngles( attachAngles ) )
+				ScreenFadeFromBlack( player, 0.25, 0.25 )
+				player.SetGroundEntity( ship )
+			}()
+		})
+
+		OnThreadEnd( function() : (trigger)
+		{
+			if ( IsValid( trigger ) )
+				trigger.Destroy()
+		})
+
+		// Waypoint thread:
+		entity wp = CreateWaypoint_ObjectiveEnt( ship, "#PVE_WAYPOINT_EVACSHIP", <0,0,0>, $"rui/hud/common/evac_location_enemy" )
+		thread function() : ( wp )
+		{
+			for( ;; )
+			{
+				wp.EndSignal( "OnDestroy" )
+				Waypoint_BumpAnnounceEffect( wp )
+				wait 10.0
+			}
+		}()
+
+		// Early finish thread:
+		thread function() : ( ship )
+		{
+			for( ;; )
+			{
+				ship.EndSignal( "OnDestroy" )
+				WaitFrame()
+				if ( CountPlayersAttachedTo( ship ) == GetPlayerArray_Alive().len() )
+					FreelanceMode_Signal( SIG_MODE_EVERYONE_IS_ON_BOARD_THE_EXTRACTION )
+			}
+		}()
+
+		WaitSignal( svGlobal.worldspawn, SIG_MODE_EXTRACTION_GO_NOW )
+
+		//
+		wp.Destroy()
+		node.Signal( SIG_STOPBOUNCING )
+		node.NonPhysicsMoveTo( (node.GetOrigin() + <0, 0, 1000>), (3.0 + WARPINFXTIME), (3.0 + WARPINFXTIME), 0.0 )
+		wait( 1.5 )
+
+		trigger.Destroy()
+		foreach( player in GetPlayerArray() )
+		{
+			if ( info.playersOnShip.contains( player ) )
+			{
+				ClientMusic_PlayCustomTrackOnClient( player, eMusicTrack.DropshipSafe )
+				DoFreelanceModeSplashToPlayer( player, eModeSplash.Extraction_Victory )
+				s_playersThatExtracted.append( player )
+			}
+			else
+			{
+				ClientMusic_PlayCustomTrackOnClient( player, eMusicTrack.DropshipMissed )
+				DoFreelanceModeSplashToPlayer( player, eModeSplash.Extraction_Failed )
+			}
+		}
+
+		wait( 1.5 )
+
+		PlayWarpFxOnPlayers( info.playersOnShip )
+
+		const vector DESTINATION = <27900.0, -6400.0, -27500.0>
+		wait WARPINFXTIME
+		EmitSoundAtPosition( 0, ship.GetOrigin(), "dropship_mp_epilogue_warpout", ship )
+		WarpoutEffectFPS( ship )
+		ship.ClearParent()
+		thread PlayAnimTeleport( ship, IDLE_EXTRACTION_DROPSHIP_FINISH, DESTINATION, <0, 0, 0> + EXTRACT_EXTRA_ROTATION )
+		WaitFrame()
+		EmitSoundAtPosition( 0, DESTINATION, "dropship_warpin", ship )
+	}()
+
+	return ship
+}
+
+void function EndingDropshipHoverBounce( entity node )
+{
+	node.EndSignal( "OnDestroy" )
+	node.EndSignal( SIG_STOPBOUNCING )
+	vector localO = node.GetLocalOrigin()
+	while ( true )
+	{
+		float time = RandomFloatRange( 2.0, 4.0 )
+		node.NonPhysicsMoveTo( localO + <0,0,RandomFloatRange(5,10)>, time, time * 0.5, time * 0.5 )
+		wait time
+
+		time = RandomFloatRange( 2.0, 4.0 )
+		node.NonPhysicsMoveTo( localO + <0,0,RandomFloatRange(-5,-10)>, time, time * 0.5, time * 0.5 )
+		wait time
+	}
+}
+
+void function EndingDropshipHoverRoll( entity node, vector angles )
+{
+	node.EndSignal( "OnDestroy" )
+	node.EndSignal( SIG_STOPBOUNCING )
+	while ( true )
+	{
+		float time = RandomFloatRange( 3, 4 )
+		node.NonPhysicsRotateTo( angles + <0,0,RandomFloatRange(3,5)>, time, time * 0.5, time * 0.5 )
+		wait time
+
+		time = RandomFloatRange( 3, 4 )
+		node.NonPhysicsRotateTo( angles + <0,0,RandomFloatRange(-3,-5)>, time, time * 0.5, time * 0.5 )
+		wait time
+	}
+}
+#endif // SERVER
+
+
+//////////
+// Match Awards
+
+#if SERVER
+ItemFlavor ornull s_postGame_quest = null
+int s_postGame_questGUID = -1
+int s_postGame_questMissionIndex = -1
+bool s_postGame_questIsSuccess
+array<entity> s_postGame_questIsFirstTimeVictory
+
+ItemFlavor ornull function FreelanceMode_GetStartofMatchActiveQuest()
+{
+	return s_postGame_quest
+}
+int function FreelanceMode_GetStartOfMatchActiveQuestMissionIndex()
+{
+	return s_postGame_questMissionIndex
+}
+
+void function SetupForActiveQuestMission()
+{
+	ItemFlavor ornull quest = SeasonQuest_GetActiveSeasonQuest( GetUnixTimestamp() )
+	if ( quest == null )
+		return
+
+	s_postGame_quest = quest
+	expect ItemFlavor( quest )
+	int missionIndex = SeasonQuest_GetMissionIndexForPlaylistName( quest, GetCurrentPlaylistName() )
+
+	s_postGame_questGUID = ItemFlavor_GetGUID( quest )
+	s_postGame_questMissionIndex = missionIndex
+}
+
+void function FreelanceMode_PostGame_QuestMissionMarkSuccess()
+{
+	s_postGame_questIsSuccess = true
+}
+
+void function FreelanceMode_PostGame_MarkFirstTimeVictoryForPlayer( entity player )
+{
+	s_postGame_questIsFirstTimeVictory.append( player )
+}
+
+void function FreelanceMode_PostGame_MarkPlayerAsExtracted( entity player )
+{
+	s_playersThatExtracted.append( player )
+}
+
+void function FreelanceMode_MarkMissionSuccessForGivenPlayers( array<entity> players )
+{
+	FreelanceMode_PostGame_QuestMissionMarkSuccess()
+
+	ItemFlavor ornull quest = FreelanceMode_GetStartofMatchActiveQuest()
+	if ( quest != null )
+	{
+		expect ItemFlavor( quest )
+		int missionIndex = FreelanceMode_GetStartOfMatchActiveQuestMissionIndex()
+		if ( missionIndex >= 0 )
+		{
+			foreach ( player in players )
+			{
+				bool isFirstTime = SeasonQuest_RecordNewMissionSuccessForPlayerIfAllowed( player, quest, missionIndex )
+				if ( isFirstTime )
+					FreelanceMode_PostGame_MarkFirstTimeVictoryForPlayer( player )
+			}
+		}
+		else
+		{
+			Warning( "This playlist '%s' is not part of the current season quest, so not recording the victory.", GetCurrentPlaylistName() )
+		}
+	}
+}
+
+void function FreelanceMode_FinalizeMatchDataForPlayer( entity player )
+{
+	player.SetPersistentVar( "pve.postGame_isValid", true )
+
+	GameSummary_GetPlayerData( player )
+	int secondsPlayed = CalcSecondsAliveForPlayer( player )
+	int kills = player.GetPlayerNetInt( "kills" )
+	bool didExtract = s_playersThatExtracted.contains( player )
+
+	player.SetPersistentVar( "pve.postGame_questGUID", s_postGame_questGUID )
+	player.SetPersistentVar( "pve.postGame_questMissionIndex", s_postGame_questMissionIndex )
+	player.SetPersistentVar( "pve.postGame_questIsSuccess", s_postGame_questIsSuccess )
+	player.SetPersistentVar( "pve.postGame_questIsFirstTimeVictory", s_postGame_questIsFirstTimeVictory.contains( player ) )
+
+	player.SetPersistentVar( "pve.postGame_secondsPlayed", secondsPlayed )
+	player.SetPersistentVar( "pve.postGame_kills", kills )
+	player.SetPersistentVar( "pve.postGame_didExtract", didExtract )
+}
+
+void function FreelanceMode_SetCommentaryDisables()
+{
+	SurvivalCommentary_SetEventEnabled( eSurvivalEventType.PILOT_KILL, false )
+	SurvivalCommentary_SetEventEnabled( eSurvivalEventType.CIRCLE_MOVING, false )
+	SurvivalCommentary_SetEventEnabled( eSurvivalEventType.FINAL_CIRCLE_MOVING, false )
+	SurvivalCommentary_SetEventEnabled( eSurvivalEventType.CIRCLE_CLOSING_TO_NOTHING, false )
+	SurvivalCommentary_SetEventEnabled( eSurvivalEventType.CARE_PACKAGE_DROPPING, false )
+	SurvivalCommentary_SetEventEnabled( eSurvivalEventType.FIRST_BLOOD, false )
+	SurvivalCommentary_SetEventEnabled( eSurvivalEventType.HALF_PLAYERS_ALIVE, false )
+	SurvivalCommentary_SetEventEnabled( eSurvivalEventType.HALF_SQUADS_ALIVE, false )
+	SurvivalCommentary_SetEventEnabled( eSurvivalEventType.HOVER_TANK_INBOUND, false )
+	SurvivalCommentary_SetEventEnabled( eSurvivalEventType.ROUND_TIMER_STARTED, false )
+	SurvivalCommentary_SetEventEnabled( eSurvivalEventType.FIRST_CIRCLE_MOVING, false )
+	SurvivalCommentary_SetEventEnabled( eSurvivalEventType.CIRCLE_MOVES_1MIN, false )
+	SurvivalCommentary_SetEventEnabled( eSurvivalEventType.CIRCLE_MOVES_10SEC, false )
+	SurvivalCommentary_SetEventEnabled( eSurvivalEventType.CIRCLE_MOVES_30SEC, false )
+	SurvivalCommentary_SetEventEnabled( eSurvivalEventType.CIRCLE_MOVES_45SEC, false )
+}
+#endif // SERVER
+
+
+
+//////////
+// Splashes
+
+#if CLIENT
+
+string function InlineAsset( asset et )
+{
+	return format( "%%$%s%%", string( et ) )
+}
+
+void function SCB_DoFreelanceModeSplash( int idx )
+{
+	SCB_DoFreelanceModeSplash_( idx )
+}
+void function SCB_DoFreelanceModeSplash_( int idx )
+{
+	string messageText = ""
+	string subText = ""
+	vector titleColor = < 242.0 / 255.0, 101.0 / 255.0, 34.0 / 255.0 >
+	string soundAlias = SFX_HUD_ANNOUNCE_QUICK
+	float duration = 5.0
+	int style = ANNOUNCEMENT_STYLE_SWEEP
+	float delay = 0
+
+	const vector BONUS_COLOR = < 124.0 / 255.0, 39.0 / 255.0, 229.0 / 255.0 >
+
+	if ( idx == eModeSplash.Extraction_Reminder )
+	{
+		float goalTime = GetGlobalNetTime( NV_MODE_PHASE_GOALTIME )
+		DoModeChangeSplash( goalTime, "Extraction starts in:", "Check Your Map" )
+		return
+	}
+
+	switch( idx )
+	{
+		case eModeSplash.Initial_Zombie:
+			messageText = Localize( "#FREELANCE_MODESPLASH_ZOMBIE_FIRST_TEXT" )
+			subText = "#FREELANCE_MODESPLASH_ZOMBIE_FIRST_SUBTEXT"
+			duration = 12.0
+			titleColor = <1.0, 0.5, 0.1>
+			//titleColor = <0.5, 0.25, 0.0>
+			break
+
+		case eModeSplash.Initial_NightRun:
+			//messageText = Localize( "#FREELANCE_MODESPLASH_NIGHTRUN_FIRST_TEXT" )
+			//subText = "#FREELANCE_MODESPLASH_NIGHTRUN_FIRST_SUBTEXT"
+			messageText = Localize( GetCurrentPlaylistVarString( "name", "" ) )
+			subText = GetCurrentPlaylistVarString( "description", "" )
+			duration = 6.0
+			titleColor = <0/255.0, 0/255.0, 0/255.0>
+			break
+
+		case eModeSplash.AllObjectivesCleared:
+			messageText = "#MATCHGOAL_ALLOBJECTIVES_DONE"
+			subText = "#MATCHGOAL_ALLOBJECTIVES_DONE_SUBTEXT"
+			duration = 10.0
+			titleColor = BONUS_COLOR
+			soundAlias = "menu_campaignsummary_titanunlocked"
+			break
+
+		case eModeSplash.KillGoalInProgress:
+			messageText = Localize( "#MATCHGOAL_SQUADKILLS_INPROGRESS", InlineAsset( $"rui/hud/pve/info_icon" ), string( s_squadKillsGoal / 2 ) )
+			duration = 8.0
+			titleColor = BONUS_COLOR
+			soundAlias = "ui_callerid_chime_friendly"
+			style = ANNOUNCEMENT_STYLE_QUICK
+			delay = 1.0
+			break
+		case eModeSplash.KillGoalReached:
+			messageText = "#MATCHGOAL_SQUADKILLS_DONE"
+			subText = Localize( "#MATCHGOAL_SQUADKILLS_DONE_SUBTEXT", s_squadKillsGoal )
+			duration = 10.0
+			titleColor = BONUS_COLOR
+			soundAlias = "menu_campaignsummary_titanunlocked"
+			delay = 1.0
+			break
+
+		case eModeSplash.Extraction_Victory:
+			messageText = "#MATCHGOAL_EVAC_DONE"
+			subText = "#MATCHGOAL_EVAC_DONE_SUBTEXT"
+			duration = 11.0
+			//titleColor = < 242.0 / 255.0, 101.0 / 255.0, 34.0 / 255.0 >
+			//titleColor = < 0 / 255.0, 191.0 / 255.0, 243.0 / 255.0 >
+			titleColor = BONUS_COLOR
+			soundAlias = "menu_campaignsummary_titanunlocked"
+			break
+
+		case eModeSplash.Extraction_Failed:
+			messageText = "#MATCHGOAL_EVAC_FAILED"
+			subText = "#MATCHGOAL_EVAC_FAILED_SUBTEXT"
+			duration = 10.0
+			titleColor = <1.0, 0.2, 0.2>
+			break
+
+		case eModeSplash.Failed_RanOutOfTime:
+			//ScreenFade( GetLocalClientPlayer(), 0, 0, 0, 255, 2.0, 600.0, FFADE_OUT | FFADE_PURGE )
+			messageText = "#MISSION_RAN_OUT_OF_TIME"
+			subText = ""
+			duration = 2.0
+			titleColor = <0.0, 0.0, 0.0>
+			break
+
+		case eModeSplash.CheckpointReached:
+			messageText = "#MISSION_CHECKPOINT"
+			duration = 2.0
+			soundAlias = "SQ_UI_InGame_Checkpoint"
+			style = ANNOUNCEMENT_STYLE_QUICK
+			break
+
+		case eModeSplash.ShadowAbilitiesHint:
+			messageText = "#FREELANCE_HINT_SHADOW"
+			duration = 10.0
+			soundAlias = "SQ_UI_InGame_Checkpoint"
+			style = ANNOUNCEMENT_STYLE_QUICK
+			break
+
+		case eModeSplash.CheckpointRetriesLeft:
+			{
+				int count = MissionCheckpoints_GetRespawnsLeftForPlayer( GetLocalViewPlayer() )
+				string textBase = "#STATUS_RETRIES_NONE"
+				if ( count > 1 )
+					textBase = "#STATUS_RETRIES_PLURAL"
+				else if ( count == 1 )
+					textBase = "#STATUS_RETRIES_ONE"
+
+				messageText = Localize( textBase, string( count ) )
+				duration = 8.0
+				soundAlias = "ui_callerid_chime_friendly"
+				style = ANNOUNCEMENT_STYLE_QUICK
+			}
+			break
+
+
+		// Combat Hints
+		case eModeSplash.CombatHint_MeleeProwlers:
+			messageText = Localize( "#COMBATHINT_MELEEPROWLERS", InlineAsset( $"rui/hud/pve/info_icon" ) )
+			duration = 8.0
+			soundAlias = "ui_callerid_chime_friendly"
+			style = ANNOUNCEMENT_STYLE_QUICK
+			break
+		case eModeSplash.CombatHint_ShieldBreaks:
+			messageText = Localize( "#COMBATHINT_SHIELDBREAKS", InlineAsset( $"rui/hud/pve/info_icon" ) )
+			duration = 8.0
+			soundAlias = "ui_callerid_chime_friendly"
+			style = ANNOUNCEMENT_STYLE_QUICK
+			break
+		case eModeSplash.CombatHint_GruntFinishers:
+			messageText = Localize( "#COMBATHINT_GRUNTFINISHERS", InlineAsset( $"rui/hud/pve/info_icon" ) )
+			duration = 8.0
+			soundAlias = "ui_callerid_chime_friendly"
+			style = ANNOUNCEMENT_STYLE_QUICK
+			delay = 1.0
+			break
+		case eModeSplash.CombatHint_SnipersHurtRobots:
+			messageText = Localize( "#COMBATHINT_SNIPERVSROBOTS", InlineAsset( $"rui/hud/pve/info_icon" ) )
+			duration = 8.0
+			soundAlias = "ui_callerid_chime_friendly"
+			style = ANNOUNCEMENT_STYLE_QUICK
+			break
+		case eModeSplash.CombatHint_ShotgunsHurtWildlife:
+			messageText = Localize( "#COMBATHINT_SHOTGUNSVSWILDLIFE", InlineAsset( $"rui/hud/pve/info_icon" ) )
+			duration = 8.0
+			soundAlias = "ui_callerid_chime_friendly"
+			style = ANNOUNCEMENT_STYLE_QUICK
+			break
+
+                  
+    
+                                            
+                                                   
+                 
+                  
+                                   
+        
+
+    
+                               
+                                                                                        
+                 
+                                            
+                                   
+              
+        
+                        
+	}
+
+	AnnouncementData dt
+	dt = Announcement_Create( messageText )
+//	Announcement_SetHeaderText( dt, messageText )
+	Announcement_SetSubText( dt, subText )
+	Announcement_SetStyle( dt, style )
+	Announcement_SetTitleColor( dt, titleColor )
+	Announcement_SetSoundAlias( dt, soundAlias )
+	//Announcement_SetPurge( dt, true )
+	//Announcement_SetPriority( dt, 200 )
+	Announcement_SetDuration( dt, duration )
+	Announcement_SetHideOnDeath( dt, false )
+	dt.drawOverScreenFade = true
+
+	thread function() : (dt, delay)
+	{
+		wait delay
+		entity player = GetLocalViewPlayer()
+		if ( IsValid( player ) )
+			AnnouncementFromClass( player, dt )
+	}()
+}
+#if DEV
+void function DEV_TestAllFreelanceModeSplashes()
+{
+	for( int idx = 0; idx < eModeSplash._count; ++idx )
+		SCB_DoFreelanceModeSplash( idx )
+}
+#endif // DEV
+
+#else // CLIENT
+
+void function DoFreelanceModeSplashToPlayer( entity player, int index )
+{
+	if ( GetCurrentPlaylistVarBool( "freelance_mode", false ) == false )
+		return
+
+	Remote_CallFunction_Replay( player, FUNCNAME_DoFreelanceModeSplash, index )
+}
+
+void function DoFreelanceModeSplashToAll( int index )
+{
+	foreach ( player in GetPlayerArray() )
+		DoFreelanceModeSplashToPlayer( player, index )
+}
+
+void function DoFreelanceModeSplashToAllDelayed( int index, float delay )
+{
+	AssertIsNewThread()
+	wait( delay )
+	DoFreelanceModeSplashToAll( index )
+}
+
+#endif // else / CLIENT
+
+
+#if CLIENT
+void function FeelanceOverrideGameState()
+{
+	ClGameState_RegisterGameStateAsset( $"ui/gamestate_quest.rpak" )
+	ClGameState_RegisterGameStateFullmapAsset( $"ui/gamestate_quest_fullmap.rpak" )
+}
+#endif //CLIENT
+ 

@@ -1,0 +1,1557 @@
+global function ObjectiveSystem_Init
+global function ObjectiveSystem_RegisterNetworking
+
+#if SERVER
+//
+global function ObjectiveSystem_RegisterType
+global function ObjectiveSystem_GetLaunchOptionsForType
+global function ObjectiveSystem_GetObjectiveForSkit
+global function ObjectiveSystem_GetAllTypes
+global function ObjectiveSystem_LaunchInstance
+
+//
+global function Objectives_LaunchObjective
+
+//
+global function Objectives_MarkObjectiveAsComplete
+global function Objectives_GetPlayersInObjective
+global function Objectives_GetPlayersInOrNearObjective
+
+// Dialogue:
+global function PlayRadioDialogueToObjective
+global function PlayRadioDialogueToObjectiveAndWait
+global function PlayCharacterDialogueToObjective
+global function PlayCharacterDialogueToPlayer
+global function PlayCharacterDialogueToEveryone
+
+//
+global function ObjectiveSplashMessage
+
+// Waypoints:
+global function Waypoint_Objectives_BindToObjective
+global function Waypoint_Objectives_SetHideWhenInside
+global function Waypoint_Objectives_SetHideWhenOutside
+global function Waypoint_Objectives_SetFadeWhenInside
+global function Waypoint_Objectives_SetFadeWhenOutside
+
+// Utils:
+global function Objectives_AnyObjectiveIsUsingZoneId
+global function Objectives_AnyObjectiveIsUsingZoneIds
+global function Objectives_AnyObjectiveIsUsingZoneGroup
+global function Objectives_GetCountTotal
+global function Objectives_GetCountComplete
+
+//
+global function DEV_GetObjective
+global function DEV_LaunchObjective
+global function DEV_LaunchObjectiveFarAway
+global function DEV_LaunchObjectiveCount
+global function DEV_ClearAllObjectives
+
+#if DEV
+global function DEV_ObjEntReport
+#endif // DEV
+#endif // SERVER
+
+global function PlayerIsMarkedAsInsideObjectiveIndex
+
+#if CLIENT
+global function SCB_ObjectiveAnnounceDiscoveryYouDiscovered
+global function SCB_ObjectiveAnnounceDiscoveryToAll
+global function SCB_ObjectiveAnnounceFinishedToNearby
+global function SCB_ObjectiveAnnounceFinishedToAll
+
+//
+global function Waypoints_GetObjectiveIndexFor
+
+//
+global function HookUpWaypointRuiForObjectiveRelevance
+#endif // CLIENT
+
+
+
+global enum eObjectiveState
+{
+	UNDISCOVERED
+	REVEALED
+	COMPLETED
+
+	_count
+}
+
+#if SERVER
+global enum eAmbientOverrideType
+{
+	NONE
+	RESTRICTED
+	BLOCKED
+
+	_count
+}
+
+global struct ObjectiveLaunchData
+{
+	string objectiveType
+	array<int> homeZones
+	array<string> zoneGroups
+	vector defaultOrigin
+	float objectiveActivateRadius
+
+	int ambientOverrideType
+
+	struct
+	{
+		ResourceCollection res
+		table<string, int> intVars
+		table<string, vector> vecVars
+	} custom
+}
+
+global struct ObjectiveInstance
+{
+	string objectiveType
+	ObjectiveLaunchData& launchData
+
+	int objectiveIndex
+	int objectiveState		// eObjectiveState
+	float objectiveStateCompletedTime
+
+	SkitInstance& skitInstance
+
+	entity tasklist
+
+	array<int> currentZones
+
+	array<entity> latestPlayers
+
+	entity wpMain
+
+	entity beaconEffectHandle
+}
+
+global struct ObjectiveRegistrationInfo
+{
+	string title
+	asset icon = $"rui/hud/objectives/generic_icon_b"
+
+	void functionref( array<ObjectiveLaunchData> )		func_onGatherPossibleLaunches =		null
+	void functionref( SkitInstance )					func_runtime
+	void functionref( SkitInstance )					func_onRuntimeFinished
+	void functionref( ObjectiveInstance )				func_onObjectiveDelete
+	bool functionref( entity, ObjectiveInstance )		func_playerIsInsideOfObjective
+}
+#endif // SERVER
+
+
+// not-global:
+
+const int TASKLIST_WAYPOINT_INDEX = 0
+
+#if SERVER
+struct ObjectiveDef
+{
+	string title
+	asset icon
+
+	void functionref (array<ObjectiveLaunchData> )		func_onGatherPossibleLaunches
+	void functionref( SkitInstance )					func_runtime
+	void functionref( SkitInstance )					func_onRuntimeFinished
+	void functionref( ObjectiveInstance )				func_onObjectiveDelete
+	bool functionref( entity, ObjectiveInstance )		func_playerIsInsideOfObjective
+}
+table<string, ObjectiveDef> s_defMap
+
+
+void function ObjectiveSystem_RegisterType( string objectiveType, ObjectiveRegistrationInfo info )
+{
+	Assert( !(objectiveType in s_defMap), format( "An objective type with id '%s' has already been registered.", objectiveType ) )
+
+	ObjectiveDef newDef
+	s_defMap[objectiveType] <- newDef
+
+	Assert( info.title.len() > 0 )
+	Assert( info.func_onGatherPossibleLaunches != null )
+	Assert( info.func_runtime != null )
+
+	newDef.title = info.title
+	newDef.icon = info.icon
+	newDef.func_onGatherPossibleLaunches = info.func_onGatherPossibleLaunches
+	newDef.func_runtime = info.func_runtime
+	newDef.func_onRuntimeFinished = info.func_onRuntimeFinished
+	newDef.func_onObjectiveDelete = info.func_onObjectiveDelete
+	newDef.func_playerIsInsideOfObjective = info.func_playerIsInsideOfObjective
+}
+
+void function LaunchInstanceAndMonitor_Thread( ObjectiveDef def, ObjectiveInstance oi )
+{
+	//Assert( oi.skitInstance == null )
+	SkitInstance si = Skit_AllocInstance( def.func_runtime, def.func_onRuntimeFinished )
+	oi.skitInstance = si
+
+	EndSignal( si, SIG_SKIT_SHUTDOWN_COMPLETE )
+	OnThreadEnd(
+		function() : ( si, oi )
+		{
+			Assert( si.lifeState == eSkitLifeState.SHUT_DOWN )
+
+			if ( oi.objectiveState < eObjectiveState.COMPLETED )
+				Objectives_MarkObjectiveAsComplete( oi )
+		}
+	)
+
+	Skit_LaunchInstance( si )
+	WaitForever()
+}
+
+array<ObjectiveInstance> s_instances
+ObjectiveInstance function ObjectiveSystem_LaunchInstance( ObjectiveLaunchData ld )
+{
+	ObjectiveDef def = s_defMap[ld.objectiveType]
+	ObjectiveInstance oi
+	oi.objectiveType = ld.objectiveType
+	oi.objectiveIndex = s_instances.len()
+	s_instances.append( oi )
+
+	//
+	oi.launchData = (clone ld)
+
+	// by default, assign us to the zones we were launched with:
+	oi.currentZones = ld.homeZones
+
+	//
+	oi.wpMain = CreateWaypoint_ObjectiveIndicator()
+	Waypoint_Objectives_BindToObjective( oi.wpMain, oi )
+	Waypoint_Objectives_SetFadeWhenInside( oi.wpMain )
+	SetObjectiveIcon( oi, $"rui/hud/objectives/undiscovered" )
+	// by default, put waypoint at center of starting homezones:
+	oi.wpMain.SetOrigin( oi.launchData.defaultOrigin )
+
+	//
+	oi.tasklist = CreatePlayerTasklist()
+	oi.tasklist.SetTasklistCustomInt( oi.objectiveIndex + 1 ) // count starts at 1
+	oi.wpMain.SetWaypointEntity( TASKLIST_WAYPOINT_INDEX, oi.tasklist )
+
+	//
+	oi.beaconEffectHandle = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( OBJECTIVE_BEACON_EFFECT_HANDLE ), oi.launchData.defaultOrigin - <0,0,1000>, <0, 0, 0> + <90, 0, 0> )
+
+	//
+	//SetObjectiveState( oi, eObjectiveState.UNDISCOVERED )
+	SetObjectiveState( oi, eObjectiveState.REVEALED )
+	SetObjectiveIcon( oi, def.icon )
+	SetObjectiveTitle( oi, def.title )
+
+	printf( "%s() - Launching objective #%i, an instance of '%s'.", FUNC_NAME(), oi.objectiveIndex, ld.objectiveType )
+	thread LaunchInstanceAndMonitor_Thread( def, oi )
+	//def.callback_OnLaunchObjectiveInstance( oi, ld )
+	return oi
+}
+
+array<ObjectiveLaunchData> function ObjectiveSystem_GetLaunchOptionsForType( string objectiveType )
+{
+	ObjectiveDef def = s_defMap[objectiveType]
+
+	array<ObjectiveLaunchData> results
+	def.func_onGatherPossibleLaunches( results )
+	return results
+}
+
+ObjectiveInstance function ObjectiveSystem_GetObjectiveForSkit( SkitInstance si )
+{
+	foreach( oi in s_instances )
+	{
+		if ( oi.skitInstance == si )
+			return oi
+	}
+
+	Assert( false, format( "No objective has a main skit instance matching [%s].", string( si ) ) )
+	return s_instances[0]
+}
+
+array<string> function ObjectiveSystem_GetAllTypes()
+{
+	array<string> results
+	foreach( string objectiveType, ObjectiveDef def in s_defMap )
+		results.append( objectiveType )
+	return results
+}
+////////
+
+
+ObjectiveInstance function DEV_GetObjective( int index )
+{
+	return s_instances[index]
+}
+
+float function GetSortScoreForDevLaunch( ObjectiveLaunchData ld )
+{
+	const float MY_MAX_DIST = 99999.0
+	float bestDist = MY_MAX_DIST
+	foreach ( entity player in GetPlayerArray_AliveConnected() )
+	{
+		vector pos = player.GetOrigin()
+		foreach( int zoneId in ld.homeZones )
+		{
+			entity trigger = MapZones_GetTriggerForZone( zoneId )
+			if ( !IsValid( trigger ) )
+				continue
+			float dist = Distance( trigger.GetCenter(), pos )
+			bestDist = min( dist, bestDist )
+		}
+	}
+
+	return (1.0 - (bestDist / MY_MAX_DIST))
+}
+
+int function DevLaunchObjectiveSort_( ObjectiveLaunchData ll, ObjectiveLaunchData rr, bool doReverse )
+{
+	float llRank = GetSortScoreForDevLaunch( ll )
+	float rrRank = GetSortScoreForDevLaunch( rr )
+
+	if ( llRank < rrRank )
+		return (doReverse ? -1 : 1)
+	if ( llRank > rrRank )
+		return (doReverse ? 1 : -1)
+	return 0
+}
+int function DevLaunchObjectiveSort( ObjectiveLaunchData ll, ObjectiveLaunchData rr )
+{
+	return DevLaunchObjectiveSort_( ll, rr, false )
+}
+int function DevLaunchObjectiveSortReverse( ObjectiveLaunchData ll, ObjectiveLaunchData rr )
+{
+	return DevLaunchObjectiveSort_( ll, rr, true )
+}
+
+ObjectiveInstance ornull function DEV_LaunchObjective_( string objectiveType, int functionref(ObjectiveLaunchData, ObjectiveLaunchData) sortFunc )
+{
+	if ( (objectiveType == "") || !(objectiveType in s_defMap) )
+	{
+		printf( "%s() - objectiveType '%s' not valid. The %d valid types are:", FUNC_NAME(), objectiveType, s_defMap.len() )
+		foreach( key,value in s_defMap )
+		{
+			printf( "  [\"%s\"] -> %s,  launchfunc:%s", key, value.title, string( value.func_runtime ) )
+		}
+		printf( "" )
+		Assert( false, "Unknown objective type. See console log." )
+		return null
+	}
+
+	array<ObjectiveLaunchData> options = ObjectiveSystem_GetLaunchOptionsForType( objectiveType )
+	printf( "%s() - Found %d launch options.", FUNC_NAME(), options.len() )
+	if ( options.len() == 0 )
+		return null
+
+	options.randomize()
+	options.sort( sortFunc )
+
+	ObjectiveInstance result = ObjectiveSystem_LaunchInstance( options[0] )
+	return result
+}
+
+ObjectiveInstance ornull function DEV_LaunchObjective( string objectiveType )
+{
+	return DEV_LaunchObjective_( objectiveType, DevLaunchObjectiveSort )
+}
+
+ObjectiveInstance ornull function DEV_LaunchObjectiveFarAway( string objectiveType )
+{
+	return DEV_LaunchObjective_( objectiveType, DevLaunchObjectiveSortReverse )
+}
+
+void function DEV_LaunchObjectiveCount( string objectiveType, int count )
+{
+	int idx
+	for ( idx = 0; idx < count; ++idx )
+	{
+		array<ObjectiveLaunchData> options = ObjectiveSystem_GetLaunchOptionsForType( objectiveType )
+		if ( options.len() == 0 )
+			break
+
+		options.randomize()
+		ObjectiveSystem_LaunchInstance( options[0] )
+	}
+
+	printf( "%s() - Launched '%s' %d of %d times.", FUNC_NAME(), objectiveType, idx, count )
+}
+
+bool function ListsHaveAMatch( array<string> aa, array<string> bb )
+{
+	foreach ( entry in aa )
+	{
+		if ( bb.contains( entry ) )
+			return true
+	}
+	return false
+}
+
+float function GetSortScoreForLaunch( ObjectiveLaunchData ld )
+{
+	vector ldCenter = MapZones_GetAveragePositionOfZones( ld.homeZones )
+
+	const float MY_MAX_DIST = 99999.0
+	float bestDist = MY_MAX_DIST
+	foreach( ObjectiveInstance oi in s_instances)
+	{
+		vector thisCenter = MapZones_GetAveragePositionOfZones( oi.launchData.homeZones )
+		float dist = Distance( thisCenter, ldCenter )
+		bestDist = min( dist, bestDist )
+	}
+
+	return (1.0 - (bestDist / MY_MAX_DIST))
+}
+
+float function GetBestDistanceSqr2D( vector org, array<vector> hotspots )
+{
+	float bestDistSqr = (999999.0 * 999999.0)
+	foreach( spot in hotspots )
+	{
+		float distSqr = Distance2DSqr( org, spot )
+		if ( distSqr < bestDistSqr )
+			bestDistSqr = distSqr
+	}
+	return bestDistSqr
+}
+int function CalcLaunchObjectiveSortWithHotSpots( ObjectiveLaunchData ll, ObjectiveLaunchData rr, array<vector> hotspots )
+{
+	float llRank = GetSortScoreForLaunch( ll )
+	float rrRank = GetSortScoreForLaunch( rr )
+
+	vector llCenter = MapZones_GetAveragePositionOfZones( ll.homeZones )
+	vector rrCenter = MapZones_GetAveragePositionOfZones( rr.homeZones )
+	float llDistSqr = GetBestDistanceSqr2D( llCenter, hotspots )
+	float rrDistSqr = GetBestDistanceSqr2D( rrCenter, hotspots )
+
+	if ( llDistSqr > rrDistSqr )
+		return -1
+	if ( llDistSqr < rrDistSqr )
+		return 1
+	return 0
+}
+
+float function GetDistanceToClosestObjectiveCenter( ObjectiveLaunchData ld )
+{
+	vector ldCenter = MapZones_GetAveragePositionOfZones( ld.homeZones )
+
+	const float MY_MAX_DIST = 99999.0
+	float bestDist = MY_MAX_DIST
+	foreach( ObjectiveInstance oi in s_instances)
+	{
+		vector thisCenter = MapZones_GetAveragePositionOfZones( oi.launchData.homeZones )
+		float dist = Distance( thisCenter, ldCenter )
+		bestDist = min( dist, bestDist )
+	}
+
+	return bestDist
+}
+
+
+ObjectiveInstance ornull function Objectives_LaunchObjective( string objectiveType, array<string> zoneGroupsToAvoid )
+{
+	array<ObjectiveLaunchData> options = ObjectiveSystem_GetLaunchOptionsForType( objectiveType )
+	printf( "%s() - Found %d launch options.", FUNC_NAME(), options.len() )
+	if ( options.len() == 0 )
+		return null
+
+	array<ObjectiveLaunchData> filtered
+	foreach( ld in options )
+	{
+		if ( ListsHaveAMatch( ld.zoneGroups, zoneGroupsToAvoid ) )
+			continue
+
+		float bestDist = GetDistanceToClosestObjectiveCenter( ld )
+		if ( bestDist < 20000 )
+			continue
+
+		filtered.append( ld )
+	}
+	if ( filtered.len() == 0 )
+		return null
+
+	//array<vector> hotspots
+	//foreach( string group in zoneGroupsToAvoid )
+	//{
+	//	array<int> zoneIds = MapZones_GetZoneIdsForZoneGroup( group )
+	//	vector center = MapZones_GetAveragePositionOfZones( zoneIds )
+	//	hotspots.append( center )
+	//}
+	//foreach( ObjectiveInstance oi in s_instances)
+	//{
+	//	vector center = MapZones_GetAveragePositionOfZones( oi.launchData.homeZones )
+	//	hotspots.append( center )
+	//}
+	//
+	//options.randomize()
+	//filtered.sort( int function( ObjectiveLaunchData ll, ObjectiveLaunchData rr ) : (hotspots)
+	//{
+	//	return CalcLaunchObjectiveSortWithHotSpots( ll, rr, hotspots )
+	//})
+
+	ObjectiveLaunchData ld = filtered.getrandom()
+	ObjectiveInstance result = ObjectiveSystem_LaunchInstance( ld )
+	return result
+}
+
+void function DEV_ClearAllObjectives()
+{
+	foreach( ObjectiveInstance oi in s_instances )
+	{
+		if ( oi.skitInstance.lifeState == eSkitLifeState.RUNNING )
+		{
+			Sk_KillSkit( oi.skitInstance )
+		}
+
+		if ( IsValid( oi.tasklist ) )
+		{
+			oi.tasklist.Destroy()
+			oi.tasklist = null
+		}
+
+		if ( IsValid( oi.wpMain ) )
+		{
+			oi.wpMain.Destroy()
+			oi.wpMain = null
+		}
+
+		ObjectiveDef def = s_defMap[oi.objectiveType]
+		if ( def.func_onObjectiveDelete != null)
+			def.func_onObjectiveDelete( oi )
+	}
+
+	s_instances.clear()
+}
+
+
+#if DEV
+//global function DEV_Skits_ToggleOverlay
+#endif // DEV
+
+#endif // #if SERVER
+
+
+void function InitObjectiveTypes()
+{
+	InitObjectiveType_NightrunExample()
+                     
+                                                    
+       
+
+	                          
+	InitObjectiveType_DropDownFight()
+       
+
+                     
+                                   
+                           
+
+	                                                   
+	InitObjectiveType_ShackAttack()
+       
+
+                  
+                               
+                                   
+                                  
+                                      
+                                     
+                               
+                                  
+                                 
+                               
+                                   
+                        
+}
+
+const asset OBJECTIVE_BEACON_EFFECT_HANDLE = $"P_ar_objective_zone_far"
+
+bool isInitialized = false
+
+void function ObjectiveSystem_Init()
+{
+	if( isInitialized )
+	{
+		#if DEV
+			printf( "Objective System is already initialized" )
+		#endif
+		return
+	}
+	isInitialized = true
+
+	bool isFinale = GetCurrentPlaylistVarBool( "freelance_mode_s05ending", false )
+	if ( !isFinale )
+	InitObjectiveTypes()
+
+	PrecacheParticleSystem( OBJECTIVE_BEACON_EFFECT_HANDLE )
+
+#if SERVER
+
+	AddCallback_GameStateEnter( eGameState.Playing, OnGameStateEnterPlaying )
+
+	svGlobal.onTooManyNPCsCallbacks.append( OnTooManyNPCs )
+
+	thread UpdatePlayerPopulationsInObjectives_Thread()
+#endif // #if SERVER
+
+#if CLIENT
+	AddCallback_OnClientScriptInit( OnClientScriptInit )
+	Waypoints_RegisterCustomType( WAYPOINTTYPE_OBJECTIVE_INDICATOR, InstanceWPObjectiveIndicator )
+
+	AddCallback_OnDialoguePopupCreated( DialoguePopupCreatedCallback )
+	AddCallback_OnDialoguePopupDestroyed( DialoguePopupDestroyedCallback )
+	//
+	//SetMapFeatureItem( 400, "#MAPKEY_OBJECTIVE", "#MAPKEY_OBJECTIVE_DESC", $"rui/hud/objectives/undiscovered" )
+	//SetMapFeatureItem( 300, "#MAPKEY_SIDEQUEST", "#MAPKEY_SIDEQUEST_DESC", SIDEQUEST_MAP_ICON )
+
+	//SetMapFeatureItem( 300, "Objective in Progress", "", $"rui/hud/objectives/frame_example" )
+	//SetMapFeatureItem( 200, "Complete Objective", "", $"rui/hud/objectives/completed" )
+#endif // #CLIENT
+}
+
+const string NVAR_InsideObjectiveFields = "NVAR_InsideObjectiveFields"
+const string FUNCNAME_ObjectiveAnnounceDiscoveryYouDiscovered = "SCB_ObjectiveAnnounceDiscoveryYouDiscovered"
+const string FUNCNAME_ObjectiveAnnounceDiscoveryToAll = "SCB_ObjectiveAnnounceDiscoveryToAll"
+const string FUNCNAME_ObjectiveAnnounceFinishedToNearby = "SCB_ObjectiveAnnounceFinishedToNearby"
+const string FUNCNAME_ObjectiveAnnounceFinishedToAll = "SCB_ObjectiveAnnounceFinishedToAll"
+
+void function ObjectiveSystem_RegisterNetworking()
+{
+	RegisterNetworkedVariable( NVAR_InsideObjectiveFields, SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, -1 )
+	#if CLIENT
+		RegisterNetVarIntChangeCallback( NVAR_InsideObjectiveFields, OnVarChanged_InsideObjectiveFields )
+	#endif
+
+	Remote_RegisterClientFunction( FUNCNAME_ObjectiveAnnounceDiscoveryYouDiscovered, "int", -1, 256 )
+	Remote_RegisterClientFunction( FUNCNAME_ObjectiveAnnounceDiscoveryToAll, "int", -1, 255 )
+	Remote_RegisterClientFunction( FUNCNAME_ObjectiveAnnounceFinishedToNearby )
+	Remote_RegisterClientFunction( FUNCNAME_ObjectiveAnnounceFinishedToAll, "int", -1, 256 )
+
+	#if CLIENT
+		Waypoints_RegisterCustomType( WAYPOINTTYPE_OBJSPLASHMSG, InstanceObjectiveSplashMessage )
+	#endif // #CLIENT
+}
+////////////////////
+
+
+//
+#if CLIENT
+void function OnVarChanged_InsideObjectiveFields( entity player, int newVal )
+{
+	if ( !(newVal in s_objectiveMainWPMap) )
+		return
+
+	entity wp = s_objectiveMainWPMap[newVal]
+	if ( !IsValid( wp ) )
+		return
+
+	entity tl = wp.GetWaypointEntity( TASKLIST_WAYPOINT_INDEX )
+	Assert( IsValid( tl ), "Objective waypoint is missing tasklist entity." )
+
+	const int HUD_SLOT_NUMBER_0 = 0
+	string prefix = format("obj%d", HUD_SLOT_NUMBER_0)
+	//
+	var rui = s_hudRui
+	RuiSetInt( rui, (prefix + "ObjectiveIndex"), newVal )
+	RuiTrackInt( rui, (prefix + "Status"), wp, RUI_TRACK_WAYPOINT_INT, INT_INDEX_MAINWAYPOINT_OBJECTIVESTATE )
+	RuiTrackString( rui, (prefix + "Title"), wp, RUI_TRACK_WAYPOINT_STRING, STRING_INDEX_MAINWAYPOINT_OBJECTIVETITLE )
+	RuiTrackImage( rui, (prefix + "Icon"), wp, RUI_TRACK_WAYPOINT_IMAGE, ASSET_INDEX_MAINWAYPOINT_ICON )
+	//
+	RuiTrackString( rui, (prefix + "task0String"), tl, RUI_TRACK_TASKLIST_ITEM_STRING, 0 )
+	RuiTrackString( rui, (prefix + "task1String"), tl, RUI_TRACK_TASKLIST_ITEM_STRING, 1 )
+	RuiTrackString( rui, (prefix + "task2String"), tl, RUI_TRACK_TASKLIST_ITEM_STRING, 2 )
+	RuiTrackString( rui, (prefix + "task3String"), tl, RUI_TRACK_TASKLIST_ITEM_STRING, 3 )
+	RuiTrackString( rui, (prefix + "task4String"), tl, RUI_TRACK_TASKLIST_ITEM_STRING, 4 )
+	RuiTrackInt( rui, (prefix + "task0Fields"), tl, RUI_TRACK_TASKLIST_ITEM_PACKEDFIELDS, 0 )
+	RuiTrackInt( rui, (prefix + "task1Fields"), tl, RUI_TRACK_TASKLIST_ITEM_PACKEDFIELDS, 1 )
+	RuiTrackInt( rui, (prefix + "task2Fields"), tl, RUI_TRACK_TASKLIST_ITEM_PACKEDFIELDS, 2 )
+	RuiTrackInt( rui, (prefix + "task3Fields"), tl, RUI_TRACK_TASKLIST_ITEM_PACKEDFIELDS, 3 )
+	RuiTrackInt( rui, (prefix + "task4Fields"), tl, RUI_TRACK_TASKLIST_ITEM_PACKEDFIELDS, 4 )
+
+}
+#endif // #CLIENT
+
+
+bool function PlayerIsMarkedAsInsideObjectiveIndex( entity player, int index )
+{
+	int fields = player.GetPlayerNetInt( NVAR_InsideObjectiveFields )
+	//if ( (fields & (1 << index)) != 0 )
+	//	return true
+	if ( fields == index )
+		return true
+	return false
+}
+
+#if SERVER
+void function OnGameStateEnterPlaying()
+{
+#if DEV
+	//thread DebugFrameThread()
+#endif // DEV
+}
+
+bool function PlayerIsInsideOfObjectiveInstance( entity player, ObjectiveInstance oi )
+{
+	ObjectiveDef def = s_defMap[oi.objectiveType]
+	if ( def.func_playerIsInsideOfObjective != null)
+		return def.func_playerIsInsideOfObjective( player, oi )
+
+	// DEFAULT: consider inside if in any of the objectives' current zones
+	{
+		foreach( int zoneId in oi.currentZones )
+		{
+			if ( zoneId == player.p.currentZoneId )
+				return true
+		}
+		return false
+	}
+}
+
+void function UpdatePlayerPopulationsInObjectives_Thread()
+{
+	WaitQuotaItem wq = WaitFrameQuota_Init( 8 )
+
+	wait 1.0
+	for ( ;; )
+	{
+		array<ObjectiveInstance> instances = clone( s_instances )
+		table<entity, array<ObjectiveInstance> > mapPlayersToOIs
+		table<ObjectiveInstance, array<entity> > mapOIsToPlayers
+
+		array<entity> players = GetPlayerArray()
+		foreach ( player in players )
+		{
+			if ( !IsValid( player ) )
+				continue
+
+			mapPlayersToOIs[player] <- []
+
+			foreach( ObjectiveInstance oi in instances )
+			{
+				if ( (oi.objectiveState == eObjectiveState.COMPLETED) && ((Time() - oi.objectiveStateCompletedTime) > 8.0) )
+					continue
+
+				if ( PlayerIsInsideOfObjectiveInstance( player, oi ) )
+				{
+					mapPlayersToOIs[player].append( oi )
+
+					if ( !(oi in mapOIsToPlayers) )
+						mapOIsToPlayers[oi] <- []
+					mapOIsToPlayers[oi].append( player )
+				}
+
+				WaitFrameQuota( wq )
+				if ( !IsValid( player ) )
+					break
+			}
+		}
+
+		foreach( player, arr in mapPlayersToOIs )
+		{
+			if ( !IsValid( player ) )
+				continue
+
+			int newVal = -1
+			if ( arr.len() == 1 )
+				newVal = arr[0].objectiveIndex
+			else if ( arr.len() > 1 )
+				Warning( "%s() - Player '%s' is in more than one objective. RUI & script need to be updated to support this.", FUNC_NAME(), string( player ) )
+			player.SetPlayerNetInt( NVAR_InsideObjectiveFields, newVal )
+		}
+
+		foreach( oi, arr in mapOIsToPlayers )
+		{
+			oi.latestPlayers.clear()
+			oi.latestPlayers.extend( arr )
+
+			if ( (oi.objectiveState == eObjectiveState.UNDISCOVERED) && (arr.len() > 0) )
+			{
+				int teamToCredit = IsValid( arr[0] ) ? arr[0].GetTeam() : -1
+				MarkObjectiveAsRevealed( oi, teamToCredit )
+			}
+		}
+
+		//
+		WaitFrameQuota_Reset( wq )
+		WaitFrame()
+	}
+}
+
+void function MarkObjectiveAsRevealed( ObjectiveInstance oi, int teamToCredit )
+{
+	SetObjectiveState( oi, eObjectiveState.REVEALED )
+
+	SetObjectiveIcon( oi, s_defMap[oi.objectiveType].icon )
+
+	// Big announce to nearby players:
+	array<entity> inOrNear = Objectives_GetPlayersInOrNearObjective( oi )
+	foreach( player in inOrNear )
+		Remote_CallFunction_Replay( player, FUNCNAME_ObjectiveAnnounceDiscoveryYouDiscovered, oi.objectiveIndex )
+
+	// Small announce to all players:
+	foreach( player in GetPlayerArray() )
+		Remote_CallFunction_Replay( player, FUNCNAME_ObjectiveAnnounceDiscoveryToAll, teamToCredit )
+}
+
+int function Objectives_GetCountTotal()
+{
+	return s_instances.len()
+}
+
+int function Objectives_GetCountComplete()
+{
+	int result
+	foreach( oi in s_instances )
+	{
+		if ( oi.objectiveState >= eObjectiveState.COMPLETED )
+			++result
+	}
+	return result
+}
+
+bool function AllObjectivesAreComplete()
+{
+	int countTotal = Objectives_GetCountTotal()
+	int countDone = Objectives_GetCountComplete()
+	return ((countDone > 0) && (countDone == countTotal))
+}
+
+void function Objectives_MarkObjectiveAsComplete( ObjectiveInstance oi )
+{
+	Assert( oi.objectiveState != eObjectiveState.COMPLETED )
+
+	// Big announce to nearby players:
+//	array<entity> inOrNear = Objectives_GetPlayersInOrNearObjective( oi )
+//	foreach( player in inOrNear )
+//		Remote_CallFunction_Replay( player, FUNCNAME_ObjectiveAnnounceFinishedToNearby )
+//
+//	// Small announce to all players:
+//	foreach( player in GetPlayerArray() )
+//		Remote_CallFunction_Replay( player, FUNCNAME_ObjectiveAnnounceFinishedToAll, oi.objectiveIndex )
+
+	SetObjectiveIcon( oi, $"rui/hud/objectives/completed" )
+
+	SetObjectiveState( oi, eObjectiveState.COMPLETED )
+	oi.objectiveStateCompletedTime = Time()
+
+	if ( IsPVEMode() && (FreelanceMode_GetCurrentPhase() < eFreelanceModePhase.GetToTheLZ) )
+		ClientMusic_PlayCustomTrackToObjective( eMusicTrack.ObjectiveComplete, oi )
+
+	if ( IsValid( oi.beaconEffectHandle ) )
+	{
+		EffectStop( oi.beaconEffectHandle );
+		oi.beaconEffectHandle.Destroy()
+	}
+
+	// All completed announce:
+	//if ( AllObjectivesAreComplete() )
+	//	delaythread( 6.0 ) DoFreelanceModeSplashToAll( eModeSplash.AllObjectivesCleared )
+}
+
+bool function PlayerIsMarkedAsInsideObjective( entity player, ObjectiveInstance oi )
+{
+	return PlayerIsMarkedAsInsideObjectiveIndex( player, oi.objectiveIndex )
+}
+
+array<entity> function Objectives_GetPlayersInObjective( ObjectiveInstance oi )
+{
+	array<entity> results
+	foreach( player in GetPlayerArray_AliveConnected() )
+	{
+		if ( PlayerIsMarkedAsInsideObjective( player, oi ) )
+			results.append( player )
+	}
+	return results
+}
+
+array<entity> function Objectives_GetPlayersInOrNearObjective( ObjectiveInstance oi )
+{
+	array<entity> insiders
+	array<entity> outsiders
+	foreach( player in GetPlayerArray_AliveConnected() )
+	{
+		if ( PlayerIsMarkedAsInsideObjective( player, oi ) )
+			insiders.append( player )
+		else
+			outsiders.append( player )
+	}
+	array<entity> results = clone insiders
+
+	// In the zones or neighbor zones?
+	{
+		array<int> neighborZones = MapZones_GetNeighborZonesForZones( oi.currentZones )
+		array<entity> outsidersCopy = clone outsiders
+		foreach( outsider in outsidersCopy )
+		{
+			if ( oi.currentZones.contains( outsider.p.currentZoneId ) || neighborZones.contains( outsider.p.currentZoneId ) )
+			{
+				results.append( outsider )
+				outsiders.removebyvalue( outsider )
+				continue
+			}
+		}
+	}
+
+	// Close to someone already marked?
+	{
+		const float CLOSE_TO_INSIDER_THRESHOLD = 3000.0
+
+		array<entity> outsidersCopy = clone outsiders
+		foreach( outsider in outsidersCopy )
+		{
+			vector pos = outsider.GetOrigin()
+			foreach( insider in insiders )
+			{
+				float dist = Distance( pos, insider.GetOrigin() )
+				if ( dist < CLOSE_TO_INSIDER_THRESHOLD )
+				{
+					results.append( outsider )
+					outsiders.removebyvalue( outsider )
+					break
+				}
+			}
+		}
+	}
+
+	return results
+}
+
+table<int, array<entity> > function Objectives_GetTeamsInOrNearObjective( ObjectiveInstance oi )
+{
+	table<int, array<entity> > teamPlayersMap
+
+	array<entity> playersInOrNear = Objectives_GetPlayersInOrNearObjective( oi )
+	foreach( entity player in playersInOrNear )
+	{
+		int team = player.GetTeam()
+		if ( !(team in teamPlayersMap) )
+			teamPlayersMap[team] <- []
+		teamPlayersMap[team].append( player )
+	}
+
+	return teamPlayersMap
+}
+
+void function OnTooManyNPCs()
+{
+	printf( "%s() - In callback.", FUNC_NAME() )
+}
+
+/////
+// Debug Stuffs
+
+/*
+string function GetNameForLifestate( int lifeState )
+{
+	foreach( string key, int val in eSkitLifeState )
+	{
+		if ( lifeState == val )
+			return key
+	}
+
+	Assert( false )
+	return ""
+}
+
+string function SkDebug_GetDebugLineForSkit( SkitInstance si )
+{
+	return format( "#%d (%s) T:%.1f NPCs:%d threads:%d resources:%d runtimeFunc:%s startedBy:%s", si.skitId, GetNameForLifestate( si.lifeState ), si.dbg_startTime, si._gc_npcs.len(), si.subThreads.len(), si._gc_resources._total, string( si.runtimeFunc ), si.dbg_invokedBy )
+}
+void function DEV_PrintAllSkits()
+{
+
+	foreach( int skitId, SkitInstance si in s_skitRegistry )
+	{
+		Assert( skitId == si.skitId )
+		printt( SkDebug_GetDebugLineForSkit( si ) )
+	}
+}
+*/
+/////
+//
+
+/*
+#if DEV
+bool s_debugDrawFrame = false
+void function DEV_Skits_ToggleOverlay()
+{
+	s_debugDrawFrame = !s_debugDrawFrame
+}
+
+void function DebugFrameThread()
+{
+	while ( true )
+	{
+		if ( s_debugDrawFrame )
+		{
+			DebugDrawFrame()
+		}
+		WaitFrame()
+	}
+}
+
+void function DebugDrawFrame()
+{
+	int subthreadCount = 0
+	foreach( int skitId, SkitInstance si in s_skitRegistry )
+	{
+		vector pos = si.dbgFunc_GetPos( si )
+		DebugDrawText( pos, si.dbgFunc_GetHUDDesc( si ), false, 0.1 )
+
+		subthreadCount += si.subThreads.len()
+	}
+
+	//
+	{
+		string promptText = format(
+					""
+					+"Skits Running: %d\n"
+					+"Skits Allocated: %d\n"
+					+"Subthreads: %d\n",
+			s_skitRunningCount,
+			s_skitRegistry.len(),
+			subthreadCount
+		)
+
+		DebugDrawScreenText( 0.01, 0.55, promptText )
+	}
+}
+#endif // DEV
+*/
+
+/////
+// Skit Utils
+
+#endif // #if SERVER
+
+
+
+//////////////
+///////// Utils
+//////////////
+
+#if SERVER
+bool function Objectives_AnyObjectiveIsUsingZoneId( int zoneId )
+{
+	foreach( ObjectiveInstance oi in s_instances )
+	{
+		if ( oi.currentZones.contains( zoneId ) )
+			return true
+	}
+
+	return false
+}
+
+bool function Objectives_AnyObjectiveIsUsingZoneIds( array<int> zoneIds )
+{
+	foreach( zoneId in zoneIds )
+	{
+		if ( Objectives_AnyObjectiveIsUsingZoneId( zoneId ) )
+			return true
+	}
+	return false
+}
+
+bool function Objectives_AnyObjectiveIsUsingZoneGroup( string zoneGroup )
+{
+	foreach ( ObjectiveInstance oi in s_instances )
+	{
+		foreach ( int zoneId in oi.currentZones )
+		{
+			if ( MapZones_GetZoneGroupForZone( zoneId ) == zoneGroup )
+				return true
+		}
+	}
+
+	return false
+}
+#endif // SERVER
+
+
+//////////////
+//
+
+const string WAYPOINTTYPE_OBJECTIVE_INDICATOR = "wayp_obj_indicator"
+
+#if SERVER
+entity function CreateWaypoint_ObjectiveIndicator()
+{
+	entity wp = CreateWaypoint_Custom( WAYPOINTTYPE_OBJECTIVE_INDICATOR )
+	return wp
+}
+
+
+#endif // SERVER
+
+
+#if CLIENT
+array<entity> s_mainWaypoints
+table<int, entity> s_objectiveMainWPMap
+void function InstanceWPObjectiveIndicator( entity wp )
+{
+	const int SORT_KEY = 250
+	const float MINIMAP_ICON_SIZE = 40.0
+	const float FULLMAP_ICON_SIZE = 12.0
+
+	// hud:
+	{
+		// No hud RUI
+
+		// Hook up:
+		{
+			// objective index
+			int fields = wp.GetWaypointObjectivePackedInt()
+			int objectiveIndex = (fields & MAX_OBJECTIVE_MASK)
+			s_objectiveMainWPMap[objectiveIndex] <- wp
+		}
+	}
+
+	// minimap:
+	{
+		//$"ui/minimap_square_simple.rpak"
+		var rui = AddLocationPingToMinimapNoClamp( wp, $"", MINIMAP_ICON_SIZE, <1,1,0> )
+		RuiTrackImage( rui, "iconImage", wp, RUI_TRACK_WAYPOINT_IMAGE, 0 )
+		HookUpWaypointRuiForObjectiveRelevance( wp, rui )
+		wp.wp.ruiMinimap = rui
+	}
+
+	// fullmap:
+	{
+		//$"ui/in_world_minimap_square_simple.rpak"
+		var rui = AddLocationPingToFullmap( wp, $"", FULLMAP_ICON_SIZE, <1,1,0> )
+		Fullmap_AddRui( rui )
+		RuiTrackImage( rui, "iconImage", wp, RUI_TRACK_WAYPOINT_IMAGE, 0 )
+		RuiTrackFloat3( rui, "playerPos", GetLocalViewPlayer(), RUI_TRACK_ABSORIGIN_FOLLOW )
+		HookUpWaypointRuiForObjectiveRelevance( wp, rui )
+		wp.wp.ruiFullmap = rui
+	}
+
+	s_mainWaypoints.append( wp )
+	AddEntityDestroyedCallback( wp, WPObjectiveIndicator_OnDestroyed )
+}
+void function WPObjectiveIndicator_OnDestroyed( entity wp )
+{
+	s_mainWaypoints.removebyvalue( wp )
+}
+
+void function MainWaypointsUpdateThread()
+{
+	for( ;; )
+	{
+		WaitFrame()
+
+		entity player = GetLocalViewPlayer()
+
+		int bestIndex = -1
+		float bestDistance = 99999999.0
+		if ( IsAlive( player ) )
+		{
+			vector playerOrigin = player.GetOrigin()
+			foreach( entity wp in s_mainWaypoints )
+			{
+				int state = wp.GetWaypointInt( INT_INDEX_MAINWAYPOINT_OBJECTIVESTATE )
+				if ( state == eObjectiveState.COMPLETED )
+					continue
+
+				float dist = Distance( playerOrigin, wp.GetOrigin() )
+				if ( dist > bestDistance )
+					continue
+
+				int index = (wp.GetWaypointObjectivePackedInt() & MAX_OBJECTIVE_MASK)
+				bestIndex = index
+				bestDistance = dist
+			}
+		}
+
+		if ( IsPVEMode() && (FreelanceMode_GetCurrentPhase() >= eFreelanceModePhase.GetToTheLZ) )
+			bestIndex = -1
+		else if ( (bestIndex >= 0) && PlayerIsMarkedAsInsideObjectiveIndex( player, bestIndex ) )
+			bestIndex = -1
+
+		foreach( entity wp in s_mainWaypoints )
+		{
+			int index = (wp.GetWaypointObjectivePackedInt() & MAX_OBJECTIVE_MASK)
+			bool doDrawLine = (index == bestIndex)
+			RuiSetBool( wp.wp.ruiMinimap, "drawLine", doDrawLine )
+			RuiSetBool( wp.wp.ruiFullmap, "drawLine", doDrawLine )
+		}
+	}
+}
+#endif // CLIENT
+
+
+
+/////////
+
+const int MAX_OBJECTIVE_BITS = (8)
+const int MAX_OBJECTIVE_MASK = ((1 << MAX_OBJECTIVE_BITS) - 1)
+const int MAX_OBJECTIVE_COUNT = (1 << MAX_OBJECTIVE_BITS)
+const int HIDE_WHEN_IN_OBJECTIVE_FLAG =			(1 << (0 + MAX_OBJECTIVE_BITS))
+const int HIDE_WHEN_OUT_OF_OBJECTIVE_FLAG =		(1 << (1 + MAX_OBJECTIVE_BITS))
+const int FADE_WHEN_IN_OBJECTIVE_FLAG =			(1 << (2 + MAX_OBJECTIVE_BITS))
+const int FADE_WHEN_OUT_OF_OBJECTIVE_FLAG =		(1 << (3 + MAX_OBJECTIVE_BITS))
+
+const int SENTINEL_FLAG =						(1 << 30)
+
+
+#if SERVER
+void function Waypoint_Objectives_BindToObjective( entity wp, ObjectiveInstance oi )
+{
+	int oldVal = wp.GetWaypointObjectivePackedInt()
+	Assert( !IsBitFlagSet( oldVal, SENTINEL_FLAG ), format( "Waypoint [%s] is already bound to an objective.", string( wp ) ) )
+
+	Assert( oi.objectiveIndex < MAX_OBJECTIVE_COUNT )
+	int newVal = (SENTINEL_FLAG | oi.objectiveIndex)
+	wp.SetWaypointObjectivePackedInt( newVal )
+}
+
+void function SetObjFlag( entity wp, int flag, bool doSetOn )
+{
+	int oldVal = wp.GetWaypointObjectivePackedInt()
+	Assert( ((oldVal & SENTINEL_FLAG) != 0), format( "Waypoint [%s] is not bound to an objective.", string( wp ) ) )
+	int newVal = (doSetOn ? (oldVal | flag) : (oldVal & ~flag) )
+	wp.SetWaypointObjectivePackedInt( newVal )
+}
+void function Waypoint_Objectives_SetHideWhenInside( entity wp )
+{
+	SetObjFlag( wp, HIDE_WHEN_IN_OBJECTIVE_FLAG, true )
+}
+void function Waypoint_Objectives_SetHideWhenOutside( entity wp )
+{
+	SetObjFlag( wp, HIDE_WHEN_OUT_OF_OBJECTIVE_FLAG, true )
+}
+void function Waypoint_Objectives_SetFadeWhenInside( entity wp )
+{
+	SetObjFlag( wp, FADE_WHEN_IN_OBJECTIVE_FLAG, true )
+}
+void function Waypoint_Objectives_SetFadeWhenOutside( entity wp )
+{
+	SetObjFlag( wp, FADE_WHEN_OUT_OF_OBJECTIVE_FLAG, true )
+}
+
+#else // SERVER
+
+void function HookUpWaypointRuiForObjectiveRelevance( entity wp, var rui )
+{
+	RuiTrackInt( rui, "objectiveRelevanceData", wp, RUI_TRACK_WAYPOINT_OBJECTIVE_PACKED_INT )
+	RuiTrackInt( rui, "localPlayerObjectiveFields", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( NVAR_InsideObjectiveFields ) )
+}
+
+#endif // #else // SERVER
+
+
+
+
+
+// Tasklist
+
+/////////////////////
+
+
+const int INT_INDEX_MAINWAYPOINT_OBJECTIVESTATE = 6
+const int STRING_INDEX_MAINWAYPOINT_OBJECTIVETITLE = 1
+const int ASSET_INDEX_MAINWAYPOINT_ICON = 0
+
+#if SERVER
+void function SetObjectiveState( ObjectiveInstance oi, int state )
+{
+	oi.objectiveState = state
+	oi.wpMain.SetWaypointInt( INT_INDEX_MAINWAYPOINT_OBJECTIVESTATE, state )
+}
+
+void function SetObjectiveTitle( ObjectiveInstance oi, string title )
+{
+	oi.wpMain.SetWaypointString( STRING_INDEX_MAINWAYPOINT_OBJECTIVETITLE, title )
+}
+
+void function SetObjectiveIcon( ObjectiveInstance oi, asset icon )
+{
+	oi.wpMain.SetWaypointAsset( ASSET_INDEX_MAINWAYPOINT_ICON, icon )
+}
+
+#endif // SERVER
+
+
+#if CLIENT
+var s_hudRui = null
+void function OnClientScriptInit( entity player )
+{
+	s_hudRui = CreateCockpitPostFXRui( $"ui/objectives_hud.rpak", HUD_Z_BASE )
+	RuiTrackInt( s_hudRui, "localPlayerObjectiveFields", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( NVAR_InsideObjectiveFields ) )
+
+	thread MainWaypointsUpdateThread()
+}
+
+int function Waypoints_GetObjectiveIndexFor( entity wp )
+{
+	int fields = wp.GetWaypointObjectivePackedInt()
+	if ( !IsBitFlagSet( fields, SENTINEL_FLAG ) )
+		return -1
+
+	int result = (fields & MAX_OBJECTIVE_MASK)
+	return result
+}
+
+string function GetTitleForObjective( int index )
+{
+	if ( !(index in s_objectiveMainWPMap) )
+		return ""
+
+	entity wp = s_objectiveMainWPMap[index]
+	if ( !IsValid( wp ) )
+	{
+		//Warning( "%s() - Couldn't get a main waypoint for objective #%d.", FUNC_NAME(), index )
+		return ""
+	}
+	return wp.GetWaypointString( STRING_INDEX_MAINWAYPOINT_OBJECTIVETITLE )
+}
+
+void function DialoguePopupCreatedCallback()
+{
+	RuiSetGameTime( s_hudRui, "dialogueChangeTime", Time() )
+	RuiSetBool( s_hudRui, "dialogueActive", true )
+}
+
+void function DialoguePopupDestroyedCallback()
+{
+	RuiSetGameTime( s_hudRui, "dialogueChangeTime", Time() )
+	RuiSetBool( s_hudRui, "dialogueActive", false )
+}
+
+#endif // #if CLIENT
+
+
+
+#if CLIENT
+void function SCB_ObjectiveAnnounceDiscoveryYouDiscovered( int index )
+{
+	vector titleColor = < 242.0 / 255.0, 101.0 / 255.0, 34.0 / 255.0 >
+	asset icon = $""
+	string soundAlias = SFX_HUD_ANNOUNCE_QUICK
+	float duration = 5.0
+	string details = GetTitleForObjective( index )
+	if ( details.len() == 0 )
+		return
+	AnnouncementMessageSweep( GetLocalViewPlayer(), "#OBJECTIVE_ANNOUNCE_DISCOVERED_YOU", details, titleColor, icon, soundAlias, duration )
+}
+void function SCB_ObjectiveAnnounceDiscoveryToAll( int team )
+{
+	entity localPlayer = GetLocalViewPlayer()
+	bool sameTeam = (IsValid( localPlayer ) && (localPlayer.GetTeam() == team))
+
+	//void function AnnouncementMessageRight( entity player, string messageText, string subText = "", vector titleColor = <1,1,1>, asset icon = $"", float customDuration = 0.0 )
+	Obituary_Print_Localized( Localize( sameTeam ? "#OBJECTIVE_ANNOUNCE_DISCOVERED_ALL_YOURSQUAD" : "#OBJECTIVE_ANNOUNCE_DISCOVERED_ALL_OTHERSQUAD" ), <255,128,0> )
+	//AnnouncementMessageRight( localPlayer, Localize( sameTeam ? "#OBJECTIVE_ANNOUNCE_DISCOVERED_ALL_YOURSQUAD" : "#OBJECTIVE_ANNOUNCE_DISCOVERED_ALL_OTHERSQUAD" ), "", <255,128,0> )
+}
+
+void function SCB_ObjectiveAnnounceFinishedToNearby()
+{
+	vector titleColor = < 0 / 255.0, 191.0 / 255.0, 243.0 / 255.0 >
+	asset icon = $""
+	string soundAlias = SFX_HUD_ANNOUNCE_QUICK
+	float duration = 5.0
+	string details = ""
+	AnnouncementMessageSweep( GetLocalViewPlayer(), "#OBJECTIVE_ANNOUNCE_COMPLETE_SPLASH", details, titleColor, icon, soundAlias, duration )
+}
+void function SCB_ObjectiveAnnounceFinishedToAll( int index )
+{
+	string details = GetTitleForObjective( index )
+	if ( details.len() == 0 )
+		return
+	Obituary_Print_Localized( Localize( "#OBJECTIVE_ANNOUNCE_COMPLETE_OBIT", Localize( details ) ), <255,128,0> )
+	//AnnouncementMessageRight( GetLocalViewPlayer(), Localize( "#OBJECTIVE_ANNOUNCE_COMPLETE_OBIT", Localize( details ) ), "", <255,128,0> )
+}
+
+#endif // CLIENT
+
+
+#if SERVER
+void function PlayRadioDialogueToObjective( string alias, ObjectiveInstance oi )
+{
+	array<entity> inOrNear = Objectives_GetPlayersInOrNearObjective( oi )
+	PlayRadioDialogueToPlayers( alias, inOrNear, eDialogueFlags.MUTE_PLAYER_PING_DIALOGUE_FOR_DURATION )
+}
+
+void function PlayRadioDialogueToObjectiveAndWait( string alias, ObjectiveInstance oi, array<entity> ornull players = null )
+{
+	//HACK: need a cleaner way to waitthread on playing dialogue, both radio and otherwise
+	array<entity> playersNearObjective
+	if ( players == null )
+		playersNearObjective = Objectives_GetPlayersInOrNearObjective( oi )
+	else
+		playersNearObjective = expect array<entity> ( players )
+
+	for ( int i = playersNearObjective.len() - 1; i >= 0; i-- )
+	{
+		if ( i == 0 )
+			waitthread PlayDialogueForPlayer( alias, playersNearObjective[i], playersNearObjective[i], 0, eDialogueFlags.MUTE_PLAYER_PING_DIALOGUE_FOR_DURATION )
+		else
+			thread PlayDialogueForPlayer( alias, playersNearObjective[i], playersNearObjective[i], 0, eDialogueFlags.MUTE_PLAYER_PING_DIALOGUE_FOR_DURATION )
+	}
+}
+
+void function PlayCharacterDialogueToObjective( string alias, ObjectiveInstance oi )
+{
+	table<int, array<entity> > teamPlayersMap = Objectives_GetTeamsInOrNearObjective( oi )
+
+	array<array<entity> > playerSets
+	foreach( int team, array<entity> players in teamPlayersMap )
+		playerSets.append( players )
+	PlayCharacterOrRadioDialogueToSetsOfPlayers( alias, playerSets, eDialogueFlags.MUTE_PLAYER_PING_DIALOGUE_FOR_DURATION )
+}
+
+void function PlayCharacterDialogueToPlayer( string alias, entity player )
+{
+	PlayCharacterOrRadioDialogueToSetsOfPlayers( alias, [[player]], eDialogueFlags.MUTE_PLAYER_PING_DIALOGUE_FOR_DURATION )
+}
+
+table<int, array<entity> > function GetTeamsToPlayersMap()
+{
+	table<int, array<entity> > result
+	foreach( entity player in GetPlayerArray() )
+	{
+		int team = player.GetTeam()
+		if ( !(team in result) )
+			result[team] <- []
+		result[team].append( player )
+	}
+
+	return result
+}
+
+void function PlayCharacterDialogueToEveryone( string alias )
+{
+	table<int, array<entity> > teamPlayersMap = GetTeamsToPlayersMap()
+	array<array<entity> > playerSets
+	foreach( int team, array<entity> players in teamPlayersMap )
+		playerSets.append( players )
+
+	PlayCharacterOrRadioDialogueToSetsOfPlayers( alias, playerSets, eDialogueFlags.MUTE_PLAYER_PING_DIALOGUE_FOR_DURATION )
+}
+
+void function ClientMusic_PlayCustomTrackToObjective( int musicTrack, ObjectiveInstance oi )
+{
+	array<entity> inOrNear = Objectives_GetPlayersInOrNearObjective( oi )
+	foreach ( player in inOrNear )
+		ClientMusic_PlayCustomTrackOnClient( player, musicTrack )
+}
+
+#endif // SERVER
+
+
+
+//////////////
+// Splash Message
+
+const string WAYPOINTTYPE_OBJSPLASHMSG = "objective_splash_message"
+
+#if SERVER
+void function ObjectiveSplashMessage( ObjectiveInstance oi, string messageText, string subText )
+{
+	thread function() : (oi, messageText, subText)
+	{
+		entity wp = CreateWaypoint_Custom( WAYPOINTTYPE_OBJSPLASHMSG )
+		wp.SetWaypointInt( 0, oi.objectiveIndex )
+		wp.SetWaypointString( 0, messageText )
+		wp.SetWaypointString( 1, subText )
+
+		wait 1.0
+		wp.Destroy()
+	}()
+}
+#endif // SERVER
+
+#if CLIENT
+void function InstanceObjectiveSplashMessage( entity wp )
+{
+	int objectiveIndex = wp.GetWaypointInt( 0 )
+	if ( !PlayerIsMarkedAsInsideObjectiveIndex( GetLocalViewPlayer(), objectiveIndex ) )
+		return
+
+	string messageText = wp.GetWaypointString( 0 )
+	string subText = wp.GetWaypointString( 1 )
+	vector titleColor = < 242.0 / 255.0, 101.0 / 255.0, 34.0 / 255.0 >
+	asset icon = $""
+	string soundAlias = SFX_HUD_ANNOUNCE_QUICK
+	float duration = 5.0
+	AnnouncementMessageSweep( GetLocalViewPlayer(), messageText, subText, titleColor, icon, soundAlias, duration )
+}
+#endif // CLIENT
+
+
+
+
+//////////////
+// Utils
+
+#if DEV
+#if SERVER
+string function GetScriptGroup( entity ent )
+{
+	if ( !ent.HasKey( "script_group" ) )
+		return ""
+
+	return ent.GetValueForKey( "script_group" )
+}
+
+void function DEV_ObjEntReport()
+{
+	/*
+	int totalEnts = 0
+	for ( int locId = 0; locId < eMyLocations._count; ++locId )
+	{
+		MyLaunchInfo li = GetLaunchInfoForSpot( locId )
+
+		printf( "locId:%d", locId )
+		foreach( string name in li.harvesterNames )
+		{
+			array<entity> group = GetEntArrayByScriptName( name )
+			printf( "  %3d - '%s'", group.len(), name )
+			totalEnts += group.len()
+		}
+		foreach( string name in li.cableNames )
+		{
+			array<entity> group = GetEntArrayByScriptName( name )
+			printf( "  %3d - '%s'", group.len(), name )
+			totalEnts += group.len()
+		}
+		foreach( string name in li.generatorNames )
+		{
+			array<entity> group = GetEntArrayByScriptName( name )
+			printf( "  %3d - '%s'", group.len(), name )
+			totalEnts += group.len()
+		}
+		foreach( string name in li.cableFxEntNames )
+		{
+			array<entity> group = GetEntArrayByScriptName( name )
+			printf( "  %3d - '%s'", group.len(), name )
+			totalEnts += group.len()
+		}
+	}
+	printf( "\n%d = total ents\n---------------------------\n\n", totalEnts )
+	*/
+
+
+	printf( "\n\n" )
+
+	//array<entity> infoTargets = GetEntArrayByClass_Expensive( "info_target" )
+	//printf( "infoTargets: %d", infoTargets.len() )
+	int total = 0
+	//foreach( int idx, entity it in infoTargets )
+	for( int idx = 0; idx < 16384; ++idx )
+	{
+		entity it = GEBI( idx )
+		if ( !IsValid( it ) )
+		{
+			printf( "  #%d (null)", idx )
+			continue
+		}
+		//string ec = GetEditorClass( it )
+		//if ( ec.find( "resource_" ) < 0)
+		//	continue
+		printf( "  #%d - cn:'%s'  sn:'%s'  tn:'%s'  ec:'%s'  sg:'%s'  parents:%d %s  %s", idx, it.GetClassName(), it.GetScriptName(), it.GetTargetName(), GetEditorClass( it ), GetScriptGroup( it ), it.GetLinkParentArray().len(), ((it.GetLinkParentArray().len() > 0 ) ? string( it.GetLinkParentArray()[0] ) : ""), string( it.GetOrigin() ) )
+		++total
+	}
+	printf( "And this total: %d", total )
+}
+
+#endif // SERVER
+#endif // DEV
+ 

@@ -153,7 +153,7 @@ void function UpdatePlayerWeaponReactiveEffects( entity weapon, int updateType )
 	ItemFlavor weaponSkin = GetItemFlavorByNetworkIndex_DEPRECATED( weapon.GetGrade() )
 
 	int numKills = WeaponReactiveKillTracking_GetKillsForPlayerWithWeapon( player, weapon )
-	int reactiveKillLevel = WeaponSkin_GetReactToKillsLevelIndexForKillCount( weaponSkin, numKills )
+	int reactiveKillLevel = 0//WeaponSkin_GetReactToKillsLevelIndexForKillCount( weaponSkin, numKills )
 
 	WeaponReactiveKillEffects_ClearPersistentFX( weapon )
 	WeaponReactiveKillEffects_StopPersistentSounds( weapon, weaponSkin)

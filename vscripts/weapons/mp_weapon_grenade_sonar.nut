@@ -19,7 +19,7 @@ const asset FLASHEFFECT    = $"wpn_grenade_sonar_impact"
 void function SonarGrenade_Init()
 {
 	PrecacheParticleSystem( $"wpn_grenade_sonar_impact" )
-	
+
 	if( Gamemode() == eGamemodes.fs_spieslegends )
 	{
 		SONAR_GRENADE_RADIUS = 500
@@ -44,27 +44,26 @@ void function ClSonarGrenade_Init()
 void function OnProjectileCollision_weapon_grenade_sonar( entity projectile, vector pos, vector normal, entity hitEnt, int hitbox, bool isCritical )
 {
 	#if SERVER
-	
+
 	if( !IsValid( projectile ) )
 		return
-	
+
 	DeployableCollisionParams collisionParams
 
-	
+
 	collisionParams.pos = pos
 
-	
+
 	collisionParams.normal = normal
 
-	
+
 	collisionParams.hitEnt = hitEnt
 
-	
+
 	collisionParams.hitBox = hitbox
 
-	
-	projectile.SetScriptName( "grenadeSonarProjectile" )
-	AddToTrackedEnts_Level( projectile )
+
+
 
 	bool result = PlantStickyEntity( projectile, collisionParams )
 	projectile.SetAngles(projectile.GetAngles() + <90,0,0>)
@@ -80,7 +79,7 @@ void function OnProjectileCollision_weapon_grenade_sonar( entity projectile, vec
 
 	projectile.GrenadeIgnite()
 	#endif
-	
+
 }
 
 
@@ -166,7 +165,7 @@ void function SonarGrenadeThink( entity projectile )
 	}
 
 	float endTime = Time() + SONAR_GRENADE_PULSE_DURATION
-	
+
 	while ( IsValid( projectile ) && Time() < endTime )
 	{
 		pulseOrigin = projectile.GetOrigin()
@@ -200,7 +199,7 @@ void function OnSonarTriggerEnter( entity trigger, entity ent )
 
 	if ( ent.e.sonarTriggers.contains( trigger ) )
 		return
-		
+
 	if ( trigger.e.sonarConeDetections == 0 )
 	{
 		// play targer acquisition "start" sound here
@@ -209,7 +208,7 @@ void function OnSonarTriggerEnter( entity trigger, entity ent )
 
 	if ( IsHostileSonarTarget( trigger.GetOwner(), ent ) && ent.GetTeam() != TEAM_TICK ) //Hardcoded check, we don't want ticks to show up as hostile but we do want them to be highlighted
 		trigger.GetOwner().e.sonarConeDetections++
-	
+
 	ent.e.sonarTriggers.append( trigger )
 	SonarStart( ent, trigger.GetOrigin(), trigger.GetTeam(), trigger.GetOwner() )
 }

@@ -262,14 +262,6 @@ void function CodeCallback_MapSpawn() // original script entry point
 	//#endif
 
 	SV_CL_Shared_Init()
-	Warning("" + GetUnixTimestamp())
-	Warning("" + GetUnixTimestamp())
-	Warning("" + GetUnixTimestamp())
-	Warning("" + GetUnixTimestamp())
-	Warning("" + GetUnixTimestamp())
-	Warning("" + GetUnixTimestamp())
-	Warning("" + GetUnixTimestamp())
-	Warning("" + GetUnixTimestamp())
 }
 
 void function PrecacheLegendAssets()

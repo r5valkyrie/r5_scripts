@@ -5747,6 +5747,20 @@ string function GetBaseWeaponRef( string weaponRef )
 	return weaponRef
 }
 
+//This is a list of locked sets that will be removed from floor loot by crafting
+//Do not add your locked set to this list if you want it to appear alongside crafting
+array<string> function GetLockedSetsDisabledByCrafting()
+{
+	array<string> sets
+
+	sets.append( WEAPON_LOCKEDSET_SUFFIX_WHITESET )
+	sets.append( WEAPON_LOCKEDSET_SUFFIX_BLUESET )
+	sets.append( WEAPON_LOCKEDSET_SUFFIX_PURPLESET )
+	sets.append( WEAPON_LOCKEDSET_SUFFIX_GOLD )
+
+	return sets
+}
+
 bool function AttachmentPointSupported( string attachmentPoint, string weaponName )
 {
 	LootData weaponData = SURVIVAL_Loot_GetLootDataByRef( weaponName )
@@ -5995,6 +6009,11 @@ array<entity> function GetPlayerArrayOfTeam_AliveConnected( int team )
 	return GetFilteredArray_Connected( GetPlayerArrayOfTeam_Alive( team ) )
 }
 
+
+array<entity> function GetPlayerArrayOfTeam_AliveNotBleedingOut( int team )
+{
+	return GetFilteredArray_NotBleedingOut( GetPlayerArrayOfTeam_Alive( team ) )
+}
 array<entity> function GetPlayerArrayOfTeam_Connected( int team )
 {
 	return GetFilteredArray_Connected( GetPlayerArrayOfTeam( team ) )
@@ -6014,6 +6033,20 @@ array<entity> function GetFilteredArray_Connected( array<entity> playerArray )
 			if ( IsDisconnected( player ) )
 				continue
 		#endif
+		results.append( player )
+	}
+
+	return results
+}
+
+
+array<entity> function GetFilteredArray_NotBleedingOut( array<entity> playerArray )
+{
+	array<entity> results
+	foreach ( player in playerArray )
+	{
+		Bleedout_IsBleedingOut( player )
+		continue
 		results.append( player )
 	}
 
@@ -6340,6 +6373,25 @@ bool function PlayersInSameParty( entity player1, entity player2 )
 	return (player1.GetPartyLeaderClientIndex() == player2.GetPartyLeaderClientIndex())
 }
 
+table< var, array< entity > > function GetAllMatchReservationParties()
+{
+	Assert( !IsLobby(), FUNC_NAME()+" is only to be used to get pre-reserved parties in a match" )
+
+	table< var, array< entity > > out
+
+	foreach( entity player in GetPlayerArray() )
+	{
+		var leaderIndex = player.GetPartyLeaderClientIndex()
+		if( leaderIndex < 0 )
+			out[ player.GetPlayerIndex() ] <- [ player ]
+		else if( leaderIndex in out )
+			out[leaderIndex].append( player )
+		else
+			out[leaderIndex] <- [ player ]
+	}
+
+	return out
+}
 
 Point function CreatePoint( vector origin, vector angles )
 {

@@ -1231,8 +1231,6 @@ int function GetPlaylistAvailabilityByRef( array< string > refs )
 			return eItemFlavorPlaylistAvailability.HIDDEN
 
 		string playlistVar = GetCurrentPlaylistVarString( ref, "none" ).tolower()
-		if ( playlistVar != "none" )
-			printt( "DEBUG: Playlist var '" + ref + "' = '" + playlistVar + "'" )
 
 		// for legacy reasons, we keep the characters working by ref (for now), and check ref & GUID string for characters ONLY
 		if ( refs.len() == 1 && playlistVar == "none" )

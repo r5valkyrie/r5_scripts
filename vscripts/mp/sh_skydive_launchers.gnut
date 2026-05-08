@@ -4,9 +4,9 @@ global function Sh_SkydiveLaunchers_Init
 	global function CreateSkydiveLauncher
 	global function IsTooCloseToSkydiveLauncher
 	global function SkydiveLauncher_SetDefaultMapInitializationFunction
-
-	// global function Ziprail_GetSkyDiveLauncherForHitEnt
-
+	                
+	global function Ziprail_GetSkyDiveLauncherForHitEnt
+       
 	const float SKYDIVE_TRIGGER_RADIUS = 36
 #endif //SERVER
 
@@ -15,10 +15,16 @@ global enum eSkydiveLauncherType
 {
 	DEFAULT,
 	SHORT_HEIGHT,
-	GRAVITY_CANNON,
-	GRAVITY_MINI,
-	IMC_ARMORY,
-	ZIPRAIL,
+	                      
+		GRAVITY_CANNON,
+       
+		GRAVITY_MINI,
+	                      
+		IMC_ARMORY,
+       
+	                
+		ZIPRAIL,
+       
 	//add more variants as needed
 }
 
@@ -100,12 +106,12 @@ struct
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Assets are blank unless we actually include the precache script in the specific level rson
 /////////////////////////////////////////////////////////////////////////////////////////////
-global asset FX_SKYDIVE_LAUNCHER_LOOP_DEFAULT = $"P_launchpad_winter"
-global asset FX_SKYDIVE_LAUNCHER_LOOP_NO_SNOW = $"P_launchpad_winter_AR"
+global asset FX_SKYDIVE_LAUNCHER_LOOP_DEFAULT = $""
+global asset FX_SKYDIVE_LAUNCHER_LOOP_NO_SNOW = $""
 global asset FX_SKYDIVE_LAUNCHER_GRAVITY_MINI_IDLE = $""
 #if SERVER
-	global asset MODEL_SKYDIVE_LAUNCHER_DEFAULT = $"mdl/s2s/s2s_hullhatch_tube_lift.rmdl"
-	global asset FX_SKYDIVE_LAUNCHER_LAUNCH = $"P_launchpad_winter_engage"
+	global asset MODEL_SKYDIVE_LAUNCHER_DEFAULT = $""
+	global asset FX_SKYDIVE_LAUNCHER_LAUNCH = $""
 	global asset MODEL_SKYDIVE_LAUNCHER_GRAVITY_MINI = $""
 	global asset FX_SKYDIVE_LAUNCHER_GRAVITY_MINI_LAUNCH = $""
 	global asset FX_SKYDIVE_LAUNCHER_GRAVITY_ZIPRAIL_LAUNCH = $""
@@ -121,8 +127,10 @@ void function Sh_SkydiveLaunchers_Init()
 
 	#if SERVER
 		AddSpawnCallbackEditorClass( "script_ref", "script_skydive_launcher", OnSpawnedSkydiveLauncherEditorClass )
+	                      
 		AddSpawnCallbackEditorClass( "script_ref", "script_gravity_cannon", OnSpawnedGravityCannonEditorClass )
 		AddCallback_EntitiesDidLoad( EntitiesDidLoad )
+       
 		AddCallback_GameStateEnter( eGameState.Playing, OnGamestateStartPlaying_SkydiveLaunchers )
 
 		if ( file.skydiveLauncherMapInitializationFunction == null )
@@ -255,65 +263,65 @@ void function CreateSkydiveLauncherFromEditorClass_Thread( entity ent )
 		}
 	}
 
-	// printt( "idk trigger created at", ent.GetOrigin() )
-	// if ( launcherType == eSkydiveLauncherType.ZIPRAIL || launchUpToZipline )
-	// {
-		// thread CreateMoonSkydiveLaunchers_Thread( ent.GetOrigin(), ent.GetAngles(), launchVelocityScale, triggerRadius )
-	// }
-	// else
+	                
+	if ( launcherType == eSkydiveLauncherType.ZIPRAIL || launchUpToZipline )
+	{
+		thread CreateMoonSkydiveLaunchers_Thread( ent.GetOrigin(), ent.GetAngles(), launchVelocityScale, triggerRadius )
+	}
+	else
        
-	// {
+	{
 		CreateSkydiveLauncher( ent.GetOrigin(), ent.GetAngles(), launcherType, launchVelocityScale, triggerRadius, skydiveEnabled, <0, 0, 0>, defaultLauncherData )
-	// }
+	}
 	ent.Destroy() //no need to hang onto the reference spawner ent
 }
 
 
                 
-// void function CreateMoonSkydiveLaunchers_Thread( vector origin, vector angles, float launchVelocityScale, float triggerRadius )
-// {
-	// float waitTime = RandomFloatRange(2, 3)
-	// wait waitTime
-	// //start a bit off the ground to make sure that we don't risk hitting the terrain with the trace
-	// vector startPoint = origin + <0,0,3*METERS_TO_INCHES>
-	// vector endPoint = startPoint + ( GetMapName() == "mp_rr_divided_moon_mu1" ? <0,0,100*METERS_TO_INCHES> : <0,0,30*METERS_TO_INCHES> ) // Temporary fix for extending range of ziprail checks for mu1
-	// vector ziplinePos = GetClosestPointOnZiplineWithinRange( startPoint, endPoint, 5*METERS_TO_INCHES, null )
+void function CreateMoonSkydiveLaunchers_Thread( vector origin, vector angles, float launchVelocityScale, float triggerRadius )
+{
+	float waitTime = RandomFloatRange(2, 3)
+	wait waitTime
+	//start a bit off the ground to make sure that we don't risk hitting the terrain with the trace
+	vector startPoint = origin + <0,0,3*METERS_TO_INCHES>
+	vector endPoint = startPoint + ( GetMapName() == "mp_rr_divided_moon_mu1" ? <0,0,100*METERS_TO_INCHES> : <0,0,30*METERS_TO_INCHES> ) // Temporary fix for extending range of ziprail checks for mu1
+	vector ziplinePos = <0,0,0>//GetClosestPointOnZiplineWithinRange( startPoint, endPoint, 5*METERS_TO_INCHES, null )
 
-	// float gravityScale = GetGlobalSettingsFloat( DEFAULT_PILOT_SETTINGS, "gravityScale" )
-	// float GRAVITY      = 750 * gravityScale // adjusted for new gravity scale
-	// float height
+	float gravityScale = GetGlobalSettingsFloat( DEFAULT_PILOT_SETTINGS, "gravityScale" )
+	float GRAVITY      = 750 * gravityScale // adjusted for new gravity scale
+	float height
 
-	// if ( ziplinePos ==  <0,0,0> )
-	// {
-		// ////DebugDrawCylinder( startPoint, <-90, 0, 0 >, 5*METERS_TO_INCHES, 30*METERS_TO_INCHES, <255, 0, 0>, true, 200.0 )
-		// ziplinePos = < origin.x, origin.y, origin.z + 10*METERS_TO_INCHES >
-	// }
-	// else
-	// {
-		// //DebugDrawLine( origin, < origin.x, origin.y, ziplinePos.z >, <0, 255, 0>, true, 20.0 )
-		// height = ziplinePos.z - origin.z - GetBoundsMax( HULL_HUMAN ).z + 3.0
-		// launchVelocityScale = sqrt(2 * GRAVITY * height)
-	// }
+	if ( ziplinePos ==  <0,0,0> )
+	{
+		//DebugDrawCylinder( startPoint, <-90, 0, 0 >, 5*METERS_TO_INCHES, 30*METERS_TO_INCHES, COLOR_RED, true, 200.0 )
+		ziplinePos = < origin.x, origin.y, origin.z + 10*METERS_TO_INCHES >
+	}
+	else
+	{
+		//DebugDrawLine( origin, < origin.x, origin.y, ziplinePos.z >, COLOR_GREEN, true, 20.0 )
+		height = ziplinePos.z - origin.z - GetBoundsMax( HULL_HUMAN ).z + 3.0
+		launchVelocityScale = sqrt(2 * GRAVITY * height)
+	}
 
-	// ziplinePos = < origin.x, origin.y, ziplinePos.z - fabs( (origin.z - ziplinePos.z) * 0.1 ) >
+	ziplinePos = < origin.x, origin.y, ziplinePos.z - fabs( (origin.z - ziplinePos.z) * 0.1 ) >
 
-	// entity launcher = CreateSkydiveLauncher( origin, angles, eSkydiveLauncherType.ZIPRAIL, launchVelocityScale, triggerRadius, false, ziplinePos )
-	// TraceResults tr = TraceLine( startPoint, origin - < 0, 0, 10*METERS_TO_INCHES >, null, TRACE_MASK_VISIBLE, TRACE_COLLISION_GROUP_NONE, launcher, true )
-	// if (tr.hitEnt != null && tr.hitEnt.GetScriptName() == "ziprail_launcher_prop" )
-		// file.skydiveLauncherEntityToDataMap[ launcher ].launcherGeo = tr.hitEnt
-	// else
-		// Warning("WARNING Couldn't find Ziprail launcher Geo for launcher at " + origin)
-// }
+	entity launcher = CreateSkydiveLauncher( origin, angles, eSkydiveLauncherType.ZIPRAIL, launchVelocityScale, triggerRadius, false, ziplinePos )
+	TraceResults tr = TraceLine( startPoint, origin - < 0, 0, 10*METERS_TO_INCHES >, null, TRACE_MASK_VISIBLE, TRACE_COLLISION_GROUP_NONE, launcher )
+	if (tr.hitEnt != null && tr.hitEnt.GetScriptName() == "ziprail_launcher_prop" )
+		file.skydiveLauncherEntityToDataMap[ launcher ].launcherGeo = tr.hitEnt
+	else
+		Warning("WARNING Couldn't find Ziprail launcher Geo for launcher at " + origin)
+}
 
-// entity function Ziprail_GetSkyDiveLauncherForHitEnt ( entity hitEnt )
-// {
-	// foreach ( launcher, data in file.skydiveLauncherEntityToDataMap )
-	// {
-		// if ( data.launcherGeo != null &&  data.launcherGeo == hitEnt )
-			// return launcher
-	// }
-	// return null
-// }
+entity function Ziprail_GetSkyDiveLauncherForHitEnt ( entity hitEnt )
+{
+	foreach ( launcher, data in file.skydiveLauncherEntityToDataMap )
+	{
+		if ( data.launcherGeo != null &&  data.launcherGeo == hitEnt )
+			return launcher
+	}
+	return null
+}
 
       
 
@@ -566,9 +574,9 @@ entity function CreateSkydiveLauncher( vector origin, vector angles, int skydive
 	{
 		launcherModel.SetScriptName( launcherScriptName )
 		//if ( launcherScriptName == "district_launcher_vertical" )
-		//	DebugDrawSphere( launcherModel.GetOrigin(), 40, <255, 0, 0>, true, 150 )
+		//	DebugDrawSphere( launcherModel.GetOrigin(), 40, COLOR_RED, true, 150 )
 		//if ( launcherScriptName == "district_launcher_horizontal" )
-		//	DebugDrawSphere( launcherModel.GetOrigin(), 40, <255, 255, 0>, true, 150 )
+		//	DebugDrawSphere( launcherModel.GetOrigin(), 40, COLOR_YELLOW, true, 150 )
 	}
 
 	AddSonarDetectionForPropScript( launcherModel )
@@ -582,6 +590,7 @@ entity function CreateSkydiveLauncher( vector origin, vector angles, int skydive
 		if ( skydiveLauncherType == eSkydiveLauncherType.ZIPRAIL && endPoint != < 0,0,0 > )
 			EffectSetControlPointVector( fxLauncherLoop, 1, endPoint )
 		else
+        
 			EffectSetControlPointVector( fxLauncherLoop, 1, <32,255,128> )
 	}
 
@@ -631,7 +640,7 @@ entity function CreateSkydiveLauncher( vector origin, vector angles, int skydive
 	trigger.SetOwner( launcherModel )
 	SetTargetName( trigger, "skydive_launcher_trigger" )
 	trigger.SetScriptName( skydiveLauncherType.tostring() )
-	trigger.SetRadius( triggerRadius )
+	trigger.SetCylinderRadius( triggerRadius )
 	trigger.SetAboveHeight( 32 )
 	if( skydiveLauncherType == eSkydiveLauncherType.IMC_ARMORY )
 		trigger.SetBelowHeight( 20 )
@@ -643,13 +652,13 @@ entity function CreateSkydiveLauncher( vector origin, vector angles, int skydive
 	trigger.SetLaunchScaleValues( launchScaleValue, launchMultiplierValue )
 	trigger.SetViewPunchValues( launcherViewPunchSoft, launcherViewPunchHard, launcherViewPunchRand )
 	trigger.SetLaunchDir( launchDirection )
-	// trigger.SetEnableDoubleJump( doubleJumpEnabled )
-	// if ( setTargetPosition )
-		// trigger.SetLaunchTargetLocation( targetPosition )
-	// if ( airControl == eSkydiveLauncherAirControlType.FULL )
-		// trigger.SetLaunchAirControlParams( airMoveSpeed, airMoveAccel )
-	// else if ( airControl == eSkydiveLauncherAirControlType.LIMITED )
-		// trigger.SetLimitedAirControl( true )
+	//trigger.SetEnableDoubleJump( doubleJumpEnabled )
+	//if ( setTargetPosition )
+		//trigger.SetLaunchTargetLocation( targetPosition )
+	//if ( airControl == eSkydiveLauncherAirControlType.FULL )
+		//trigger.SetLaunchAirControlParams( airMoveSpeed, airMoveAccel )
+	//else if ( airControl == eSkydiveLauncherAirControlType.LIMITED )
+	//	trigger.SetLimitedAirControl( true )
 	trigger.UsePointCollision()
 	if( shouldLaunchProjectiles )
 		trigger.kv.triggerFilterNonCharacter = "1"
@@ -670,13 +679,13 @@ entity function CreateSkydiveLauncher( vector origin, vector angles, int skydive
 	trigger.SetParent( launcherModel )
 
 	                      
-	// bool DEBUG_SHOULD_DRAW = false
-	// if ( DEBUG_SHOULD_DRAW )
-	// {
-		// if ( shouldLaunchProjectiles )
-			// thread DrawVortexSphere( launcherVortexSphere )
-		// thread DrawTriggerCylinder( origin, trigger )
-	// }
+	bool DEBUG_SHOULD_DRAW = false
+	if ( DEBUG_SHOULD_DRAW )
+	{
+		if ( shouldLaunchProjectiles )
+			thread DrawVortexSphere( launcherVortexSphere )
+		thread DrawTriggerCylinder( origin, trigger )
+	}
        
 
 	SkydiveLauncherData data
@@ -719,7 +728,7 @@ void function DrawTriggerCylinder( vector origin, entity trigger )
 {
 	while ( true )
 	{
-		 //DebugDrawCylinder( origin, AnglesCompose( trigger.GetAngles(), < -90, 0, 0 > ), trigger.GetRadius(), trigger.GetAboveHeight(), <255, 0, 0>, true, FrameTime() * 1.5 )
+
 		WaitFrame()
 	}
 }
@@ -728,7 +737,7 @@ void function DrawVortexSphere( entity trigger )
 {
 	while ( true )
 	{
-		//DebugDrawSphere( trigger.GetOrigin(), float(trigger.kv.radius), <255, 0, 0>, true, FrameTime() * 1.5 )
+
 		WaitFrame()
 	}
 }
@@ -748,7 +757,7 @@ void function OnGamestateStartPlaying_SkydiveLaunchers()
 	{
 		entity wp = CreateWaypoint_BasicLocation( launcherModel.GetOrigin() + <0, 0, 64>, ePingType.SKYDIVE_LAUNCHER )
 		wp.SetParent( launcherModel, "", true, 0.0 )
-		// wp.SetWaypointGroupFlags( WPGF_NO_CREATE_MINIMAP_ICONS | WPGF_DO_SIMPLE_MAXDRAWDIST_CHECK )
+		wp.SetWaypointGroupFlags( WPGF_NO_CREATE_MINIMAP_ICONS | WPGF_DO_SIMPLE_MAXDRAWDIST_CHECK )
 	}
 }
 #endif //SERVER
@@ -838,7 +847,7 @@ void function PlayerLaunched( entity player, SkydiveLauncherData data, entity tr
 	player.Signal( "JumpPadStart" )
 	player.EndSignal( "JumpPadStart" )
 	                
-	// player.EndSignal( "ZiprailAttach" )
+	player.EndSignal( "ZiprailAttach" )
        
 	player.EnableSlowMo()
 
@@ -850,25 +859,25 @@ void function PlayerLaunched( entity player, SkydiveLauncherData data, entity tr
 	if ( file.holsterWeaponsOnAscent )
 		HolsterAndDisableWeapons( player )
 
-	// RemoveDoubleJump ( player )
+	RemoveDoubleJump ( player )
 
 	if( IsValid( trigger ))
 	{
 		EmitSoundOnEntityExceptToPlayer( trigger, player, data.sfxLaunchPlayer3p )
-		EmitSoundOnEntityOnlyToPlayer( trigger, player, data.sfxLaunchPlayer3p )
+		//EmitSoundOnEntityOnlyToPlayer_PredictedByPlayer( trigger, player, data.sfxLaunchPlayer3p )
 	}
 	else
 	{
 		EmitSoundOnEntityExceptToPlayer( player, player, data.sfxLaunchPlayer3p )
-		EmitSoundOnEntityOnlyToPlayer( player, player, data.sfxLaunchPlayer3p )
+		//EmitSoundOnEntityOnlyToPlayer_PredictedByPlayer( player, player, data.sfxLaunchPlayer3p )
 	}
 	EmitSoundOnEntityExceptToPlayer( player, player, data.sfxAirborneMvmt3p )
 	// play for spectators
-	EmitSoundOnEntityOnlyToPlayer( player, player, data.sfxAirborneMvmt3p )
+	//EmitSoundOnEntityOnlyToPlayer_PredictedByPlayer( player, player, data.sfxAirborneMvmt3p )
 
 	bool shouldSnapViewVector = false
 	if ( shouldSnapViewVector )
-		Remote_CallFunction_ByRef( player, "ServerCallback_FlashScreenForPlayer" )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_FlashScreenForPlayer" )
 
 	/*
 	if ( PlayerHasPassive( player, ePassives.PAS_OCTANE ) )
@@ -880,12 +889,12 @@ void function PlayerLaunched( entity player, SkydiveLauncherData data, entity tr
 	array<entity> jumpJetFXs
 	array<string> attachments = [ "vent_left", "vent_right" ]
 
-	CreateJumpJetEffects( player, jumpJetFXs, attachments )
+	//CreateJumpJetEffects( player, jumpJetFXs, attachments )
 
 	OnThreadEnd(
 		function() : ( jumpJetFXs, player, data )
 		{
-			DestroyJumpJetEffects( jumpJetFXs )
+			//DestroyJumpJetEffects( jumpJetFXs )
 
 			if ( IsValid( player ) )
 			{
@@ -905,11 +914,11 @@ void function PlayerLaunched( entity player, SkydiveLauncherData data, entity tr
 	                
 	if ( data.launcherType == eSkydiveLauncherType.ZIPRAIL )
 	{
-		// AddCallback_ZiplineMount ( CheckForZiprailMount )
+		AddCallback_ZiplineMount ( CheckForZiprailMount )
 		OnThreadEnd(
 			function ():()
 			{
-				// RemoveCallback_ZiplineMount ( CheckForZiprailMount )
+				RemoveCallback_ZiplineMount ( CheckForZiprailMount )
 			}
 		)
 	}
@@ -923,10 +932,10 @@ void function PlayerLaunched( entity player, SkydiveLauncherData data, entity tr
 	while( !player.IsOnGround() )
 	{
 		//restart or destroy jump jets
-		if ( player.IsPhaseShifted() )
-			DestroyJumpJetEffects( jumpJetFXs )
-		else if ( jumpJetFXs.len() <= 0 )
-			CreateJumpJetEffects( player, jumpJetFXs, attachments )
+		//if ( player.IsPhaseShifted() )
+		//	DestroyJumpJetEffects( jumpJetFXs )
+		//else if ( jumpJetFXs.len() <= 0 )
+		//	CreateJumpJetEffects( player, jumpJetFXs, attachments )
 
 		//break out if at apex of jump
 		float speedZ
@@ -954,14 +963,14 @@ void function PlayerLaunched( entity player, SkydiveLauncherData data, entity tr
 		{
 			if ( speedZ < speedThresholdToStartSkydive )
 			{
-				DestroyJumpJetEffects( jumpJetFXs )
+				//DestroyJumpJetEffects( jumpJetFXs )
 				break
 			}
 		} else if ( data.thresholdType == eSkydiveLauncherThreshold.CEILING )
 		{
 			if ( speedZ >= speedThresholdToStartSkydive )
 			{
-				DestroyJumpJetEffects( jumpJetFXs )
+				//DestroyJumpJetEffects( jumpJetFXs )
 				break
 			}
 		}
@@ -978,58 +987,27 @@ void function PlayerLaunched( entity player, SkydiveLauncherData data, entity tr
 	if ( data.shouldTransitionInertiaIntoSkydive )
 	{
 		                        
-			// Control_PrintSkydiveDebug( player, " PlayerLaunched shouldTransitionInertiaIntoSkydive going to trigger PlayerSkydiveFromCurrentPositionWithInitVelocity" )
+			Control_PrintSkydiveDebug( player, " PlayerLaunched shouldTransitionInertiaIntoSkydive going to trigger PlayerSkydiveFromCurrentPositionWithInitVelocity" )
                                 
-		// PlayerSkydiveFromCurrentPositionWithInitVelocity( player, player.GetVelocity() * 0.85 )
-		#if DEVELOPER
-		printt( " PlayerLaunched shouldTransitionInertiaIntoSkydive going to trigger PlayerSkydiveFromCurrentPositionWithInitVelocity FIXME. Cafe" )
-		#endif
+		PlayerSkydiveFromCurrentPositionWithInitVelocity( player, player.GetVelocity() * 0.85 )
 	}
 	else if ( data.shouldSkyDive )
 	{
 		                        
-			// Control_PrintSkydiveDebug( player, " PlayerLaunched shouldSkyDive going to trigger PlayerSkydiveFromCurrentPosition" )
+			Control_PrintSkydiveDebug( player, " PlayerLaunched shouldSkyDive going to trigger PlayerSkydiveFromCurrentPosition" )
                                 
 		PlayerSkydiveFromCurrentPosition( player )
 	}
 }
 
-void function CreateJumpJetEffects( entity player, array<entity> jumpJetFXs, array<string> attachments )
+                
+void function CheckForZiprailMount(entity player, entity ziprail)
 {
-	int team = player.GetTeam()
-	foreach ( attachment in attachments )
-	{
-		int friendlyID    = GetParticleSystemIndex( TEAM_JUMPJET_DBL )
-		entity friendlyFX = StartParticleEffectOnEntity_ReturnEntity( player, friendlyID, FX_PATTACH_POINT_FOLLOW, player.LookupAttachment( attachment ) )
-		friendlyFX.SetOwner( player )
-		SetTeam( friendlyFX, team )
-		friendlyFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
-		jumpJetFXs.append( friendlyFX )
-
-		int enemyID    = GetParticleSystemIndex( ENEMY_JUMPJET_DBL )
-		entity enemyFX = StartParticleEffectOnEntity_ReturnEntity( player, enemyID, FX_PATTACH_POINT_FOLLOW, player.LookupAttachment( attachment ) )
-		SetTeam( enemyFX, team )
-		enemyFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
-		jumpJetFXs.append( enemyFX )
-	}
+	//if ( !IsValid(player) && ziprail.Zipline_IsCurvedZipline() )
+	//	player.Signal("ZiprailAttach")
 }
+      
 
-void function DestroyJumpJetEffects( array<entity> jumpJetFXs )
-{
-	foreach ( fx in jumpJetFXs )
-	{
-		if ( IsValid( fx ) )
-			fx.Destroy()
-	}
-
-	jumpJetFXs.clear()
-}
-
-// void function CheckForZiprailMount(entity player, entity ziprail)
-// {
-	// if ( !IsValid(player) && ziprail.Zipline_IsCurvedZipline() )
-		// player.Signal("ZiprailAttach")
-// }
 #endif //SERVER
 
 #if SERVER
@@ -1038,13 +1016,13 @@ bool function ShouldSkydiveFromCurrentPosition( entity player )
 	if ( player.IsOnGround() )
 		return false
 
-	if ( player.p.isSkydiving )
+	if ( player.Player_IsSkydiving() )
 		return false
 
 	if ( player.GetParent() )
 		return false
 
-	if ( StatusEffect_GetSeverity( player, eStatusEffect.placing_phase_tunnel ) > 0.0 )
+	if ( StatusEffect_HasSeverity( player, eStatusEffect.placing_phase_tunnel ) )
 		return false
 
 	vector playerOrigin = player.GetOrigin() + <0, 0, 16>
@@ -1269,12 +1247,12 @@ void function Cl_ManageAmbientSound_Thread( entity trigger, entity clientAG )
 	OnThreadEnd(
 		function () : ( trigger, clientAG )
 		{
-			#if DEVELOPER
+			#if DEV
 				printf( "mini gravity skydive launcher thread end" )
 			#endif
 			if ( IsValid( clientAG ) )
 			{
-				#if DEVELOPER
+				#if DEV
 					printf( "DESTROYING AG" )
 				#endif
 				clientAG.SetEnabled( false )
@@ -1326,8 +1304,8 @@ void function SkydiveLauncher_OnProjectileHitVortexTrigger( entity weapon, entit
 
 	//printt( projectile )
 
-	//DebugDrawLine( origin, origin + ( posToTarget * JUMP_PAD_PUSH_PROJECTILE_RADIUS ), <255, 0, 0>, true, 5.0 )
-	//DebugDrawLine( origin, origin + ( surfaceNormal * JUMP_PAD_PUSH_PROJECTILE_RADIUS ), <0, 255, 0>, true, 5.0 )
+	//DebugDrawLine( origin, origin + ( posToTarget * JUMP_PAD_PUSH_PROJECTILE_RADIUS ), COLOR_RED, true, 5.0 )
+	//DebugDrawLine( origin, origin + ( surfaceNormal * JUMP_PAD_PUSH_PROJECTILE_RADIUS ), COLOR_GREEN, true, 5.0 )
 
 	//printt( dot )
 	//printt( accuracyScalar )
@@ -1368,9 +1346,10 @@ void function Launcher_PushProjectileAway( entity projectile, vector velocity )
 	vector result = velocity // + projectile.GetVelocity()
 	//result.z = max( 200, fabs( velocity.z ) )
 	projectile.SetVelocity( result )
-	//DebugDrawLine( projectile.GetOrigin(), projectile.GetOrigin() + result * 5, <255, 0, 0>, true, 5.0 )
+	//DebugDrawLine( projectile.GetOrigin(), projectile.GetOrigin() + result * 5, COLOR_RED, true, 5.0 )
 }
       
 
 #endif //SERVER
 
+ 

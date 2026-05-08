@@ -1,4 +1,4 @@
-  
+//
 
 #if SERVER || CLIENT || UI
 global function CustomizeCommon_Init
@@ -113,98 +113,107 @@ table< int, table< int, string > > equipSoundMap = {
 		[eRarityTier.COMMON] = "UI_Menu_LegenedSkin_Equip_Common",
 		[eRarityTier.RARE] = "UI_Menu_LegendSkin_Equip_Rare",
 		[eRarityTier.EPIC] = "UI_Menu_LegendSkin_Equip_Epic",
-		[eRarityTier.LEGENDARY] = "UI_Menu_LegendSkin_Equip_Legendary"
+		[eRarityTier.LEGENDARY] = "UI_Menu_LegendSkin_Equip_Legendary",
+		[eRarityTier.ICONIC] = "UI_Menu_LegendSkin_Equip_Legendary",
 	},
 	[eItemType.character_execution] = {
 		[eRarityTier.COMMON] = "UI_Menu_Finisher_Equip_Common",
 		[eRarityTier.RARE] = "UI_Menu_Finisher_Equip_Rare",
 		[eRarityTier.EPIC] = "UI_Menu_Finisher_Equip_Epic",
-		[eRarityTier.LEGENDARY] = "UI_Menu_Finisher_Equip_Legendary"
+		[eRarityTier.LEGENDARY] = "UI_Menu_Finisher_Equip_Legendary",
+		[eRarityTier.ICONIC] = "UI_Menu_Finisher_Equip_Legendary",
 	},
 	[eItemType.gladiator_card_frame] = {
 		[eRarityTier.COMMON] = "UI_Menu_Banner_Equip_Common",
 		[eRarityTier.RARE] = "UI_Menu_Banner_Equip_Rare",
 		[eRarityTier.EPIC] = "UI_Menu_Banner_Equip_Epic",
-		[eRarityTier.LEGENDARY] = "UI_Menu_Banner_Equip_Legendary"
+		[eRarityTier.LEGENDARY] = "UI_Menu_Banner_Equip_Legendary",
+		[eRarityTier.ICONIC] = "UI_Menu_Banner_Equip_Legendary",
 	},
 	[eItemType.gladiator_card_stance] = {
 		[eRarityTier.COMMON] = "UI_Menu_Banner_Equip_Common",
 		[eRarityTier.RARE] = "UI_Menu_Banner_Equip_Rare",
 		[eRarityTier.EPIC] = "UI_Menu_Banner_Equip_Epic",
-		[eRarityTier.LEGENDARY] = "UI_Menu_Banner_Equip_Legendary"
+		[eRarityTier.LEGENDARY] = "UI_Menu_Banner_Equip_Legendary",
+		[eRarityTier.ICONIC] = "UI_Menu_Banner_Equip_Legendary",
 	},
 	[eItemType.gladiator_card_badge] = {
 		[eRarityTier.COMMON] = "UI_Menu_Banner_Equip_Common",
 		[eRarityTier.RARE] = "UI_Menu_Banner_Equip_Rare",
 		[eRarityTier.EPIC] = "UI_Menu_Banner_Equip_Epic",
-		[eRarityTier.LEGENDARY] = "UI_Menu_Banner_Equip_Legendary"
+		[eRarityTier.LEGENDARY] = "UI_Menu_Banner_Equip_Legendary",
+		[eRarityTier.ICONIC] = "UI_Menu_Banner_Equip_Legendary",
 	},
 	[eItemType.gladiator_card_stat_tracker] = {
 		[eRarityTier.COMMON] = "UI_Menu_Banner_Equip_Common",
 		[eRarityTier.RARE] = "UI_Menu_Banner_Equip_Rare",
 		[eRarityTier.EPIC] = "UI_Menu_Banner_Equip_Epic",
-		[eRarityTier.LEGENDARY] = "UI_Menu_Banner_Equip_Legendary"
+		[eRarityTier.LEGENDARY] = "UI_Menu_Banner_Equip_Legendary",
+		[eRarityTier.ICONIC] = "UI_Menu_Banner_Equip_Legendary",
 	},
 	[eItemType.gladiator_card_intro_quip] = {
 		[eRarityTier.COMMON] = "UI_Menu_Quip_Equip_Common",
 		[eRarityTier.RARE] = "UI_Menu_Quip_Equip_Rare",
 		[eRarityTier.EPIC] = "UI_Menu_Quip_Equip_Epic",
-		[eRarityTier.LEGENDARY] = "UI_Menu_Quip_Equip_Legendary"
+		[eRarityTier.LEGENDARY] = "UI_Menu_Quip_Equip_Legendary",
+		[eRarityTier.ICONIC] = "UI_Menu_Quip_Equip_Legendary",
 	},
 	[eItemType.gladiator_card_kill_quip] = {
 		[eRarityTier.COMMON] = "UI_Menu_Quip_Equip_Common",
 		[eRarityTier.RARE] = "UI_Menu_Quip_Equip_Rare",
 		[eRarityTier.EPIC] = "UI_Menu_Quip_Equip_Epic",
-		[eRarityTier.LEGENDARY] = "UI_Menu_Quip_Equip_Legendary"
+		[eRarityTier.LEGENDARY] = "UI_Menu_Quip_Equip_Legendary",
+		[eRarityTier.ICONIC] = "UI_Menu_Quip_Equip_Legendary",
 	},
 	[eItemType.weapon_skin] = {
 		[eRarityTier.COMMON] = "UI_Menu_WeaponSkin_Equip_Common",
 		[eRarityTier.RARE] = "UI_Menu_WeaponSkin_Equip_Rare",
 		[eRarityTier.EPIC] = "UI_Menu_WeaponSkin_Equip_Epic",
-		[eRarityTier.LEGENDARY] = "UI_Menu_WeaponSkin_Equip_Legendary"
+		[eRarityTier.LEGENDARY] = "UI_Menu_WeaponSkin_Equip_Legendary",
+		[eRarityTier.ICONIC] = "UI_Menu_WeaponSkin_Equip_Legendary",
 	}
 }
 #endif
 
 const array<vector> skydiveSmokeColors = [
-	<110, 49, 1>,               
-	<10, 88, 106>,          
-	<6, 131, 149>,           
-	                           
-	<27, 71, 105>,          
-	<31, 84, 205>,          
-	                          
-	<68, 42, 96>,          
-	<110, 44, 111>,            
-	                           
-	<173, 45, 119>,            
-	                         
-	<176, 28, 81>,          
-	                          
-	<195, 0, 11>,          
-	<197, 67, 32>,       
-	<120, 30, 19>,            
-	<159, 59, 13>,           
-	<119, 75, 0>,           
-	<204, 121, 19>,            
-	<150, 125, 0>,           
-	                         
-	<133, 147, 10>,           
-	<73, 88, 3>,           
-	<112, 151, 67>,           
-	<57, 137, 52>,           
-	<47, 90, 26>,           
-	                          
-	<0, 116, 88>           
+	<110, 49, 1>, // Dark Orange
+	<10, 88, 106>, // Blue 2
+	<6, 131, 149>, //  Blue 1
+	//<24, 102, 162>, // Blue 3
+	<27, 71, 105>, // Blue 4
+	<31, 84, 205>, // Blue 5
+	//<68, 62, 150>, // Blue 6
+	<68, 42, 96>, // Blue 7
+	<110, 44, 111>, // Purple 1
+	//<96, 23, 78>, // Purple 2
+	<173, 45, 119>, // Purple 3
+	//<145, 0, 44>, // Pink 1
+	<176, 28, 81>, // Pink 2
+	//<210, 36, 89>, // Pink 3
+	<195, 0, 11>, // Pink 4
+	<197, 67, 32>, // Red
+	<120, 30, 19>, // Orange 1
+	<159, 59, 13>, // Brown 1
+	<119, 75, 0>, // Brown 2
+	<204, 121, 19>, // Orange 2
+	<150, 125, 0>, // Green 1
+	//<90, 80, 0>, // Green 2
+	<133, 147, 10>, // Green 3
+	<73, 88, 3>, // Green 4
+	<112, 151, 67>, // Green 5
+	<57, 137, 52>, // Green 6
+	<47, 90, 26>, // Green 7
+	//<3, 113, 34>, // Green 8
+	<0, 116, 88> // Green 9
 ]
 global function GetSkydiveSmokeColorForTeam
 
 
-                         
-                         
-                         
-                         
-                         
+/////////////////////////
+/////////////////////////
+//// Initialiszation ////
+/////////////////////////
+/////////////////////////
 
 #if SERVER || CLIENT || UI
 void function CustomizeCommon_Init()
@@ -230,11 +239,11 @@ void function OnInputModeChanged( bool controllerModeActive )
 
 
 
-                          
-                          
-                          
-                          
-                          
+//////////////////////////
+//////////////////////////
+//// Global functions ////
+//////////////////////////
+//////////////////////////
 
 vector function GetSkydiveSmokeColorForTeam( int team )
 {
@@ -256,7 +265,7 @@ void functionref( var ) middleClickOverrideFunc = null
 )
 {
 	Assert( !(button in fileLevel.activeCustomizeButtons) )
-	#if DEVELOPER
+	#if DEV
 		foreach ( var buttonIter, CustomizeButtonContext cbcIter in fileLevel.activeCustomizeButtons )
 		{
 			Assert( Hud_GetParent( button ) == Hud_GetParent( buttonIter ), "Customize buttons from different parents were active at the same time!" )
@@ -652,11 +661,11 @@ int function CanEquipCanBuyCharacterItemCheck( ItemFlavor flav )
 
 
 
-                   
-                   
-                   
-                   
-                   
+///////////////////
+///////////////////
+//// Internals ////
+///////////////////
+///////////////////
 
 #if UI
 void function CustomizeButton_OnClick( var button )
@@ -666,13 +675,17 @@ void function CustomizeButton_OnClick( var button )
 	PlayPreviewSound( cbc.itemFlavor )
 	PreviewCustomizeButtonItem( cbc )
 
-	if ( ItemFlavor_GetType( cbc.itemFlavor ) == eItemType.gladiator_card_badge || ItemFlavor_GetType( cbc.itemFlavor ) == eItemType.gladiator_card_stat_tracker )
+	int itemType = ItemFlavor_GetType( cbc.itemFlavor )
+
+	// Items that don't need a preview-mode
+                      
+                                                                                                       
+     
+	if ( itemType == eItemType.gladiator_card_badge || itemType == eItemType.gladiator_card_stat_tracker || itemType == eItemType.sticker )
+      
 	{
-		                                                                                                        
 		if ( !Hud_IsLocked( button ) )
-		{
 			CustomizeButton_OnRightOrDoubleClick( cbc.button )
-		}
 	}
 }
 #endif
@@ -683,9 +696,14 @@ void function CustomizeButton_OnRightClick( var button )
 {
 	CustomizeButtonContext cbc = fileLevel.activeCustomizeButtons[button]
 
-	if ( cbc.loadoutEntries.len() > 1 || ItemFlavor_GetType( cbc.itemFlavor ) == eItemType.sticker )
+                      
+                                                                                                 
+     
+	// The special case for stickers is because only 1 sticker can be applied to the health injector, but more can be applied to the other health items.
+	if ( cbc.loadoutEntries.len() > 1 || (cbc.loadoutEntries.len() == 1 && ItemFlavor_GetType( cbc.itemFlavor ) == eItemType.sticker) )
+      
 	{
-		                                   
+		// special case right click - clear
 		bool wasEquipped = false
 		foreach ( loadoutEntry in cbc.loadoutEntries )
 		{
@@ -792,8 +810,7 @@ void function CustomizeButton_OnMiddleClick( var button )
 		return
 	}
 
-	if ( CalcCanEquipCanBuyStatus( cbc ) == eItemCanEquipCanBuyStatus.CAN_EQUIP_CAN_BUY
-	|| CalcCanEquipCanBuyStatus( cbc ) == eItemCanEquipCanBuyStatus.CAN_EQUIP_CANNOT_BUY )
+	if ( CalcCanEquipCanBuyStatus( cbc ) == eItemCanEquipCanBuyStatus.CAN_EQUIP_CAN_BUY || CalcCanEquipCanBuyStatus( cbc ) == eItemCanEquipCanBuyStatus.CAN_EQUIP_CANNOT_BUY )
 	{
 		array<ItemFlavor> favorites = LoadoutSlot_GetFavorites( LocalClientEHI(), entry )
 
@@ -812,7 +829,7 @@ void function CustomizeButton_OnMiddleClick( var button )
 			{
 				PlayEquipSound( cbc.itemFlavor )
 				if ( !CustomizeMenus_HasFavorites() )
-					PreviewCustomizeButtonItem( cbc )                                                           
+					PreviewCustomizeButtonItem( cbc ) // if this is our first favorite, automatically preview it
 				RequestSetItemFlavorFavoritesSlot( LocalClientEHI(), entry, cbc.itemFlavor, favorites.len() )
 				if ( IsTopLevelCustomizeContextValid() )
 					PIN_Customization( GetTopLevelCustomizeContext(), cbc.itemFlavor, "add_favorite" )
@@ -826,7 +843,7 @@ void function CustomizeButton_OnMiddleClick( var button )
 				ConfirmDialogData dialogData
 				dialogData.headerText = "#FAVORITES_FULL_TITLE"
 				dialogData.messageText = Localize( "#FAVORITES_FULL_HINT", entry.maxFavoriteCount )
-				                                                        
+				//dialogData.contextImage = $"rui/menu/buttons/favorite"
 
 				OpenOKDialogFromData( dialogData )
 			}
@@ -845,14 +862,12 @@ void function CustomizeButton_AddOrClearFavoredQuip( var button )
 	EHI playerEHI = LocalClientEHI()
 
 	ItemFlavor character = GetTopLevelCustomizeContext()
-	array<LoadoutEntry> slotsForFavoredQuips = Loadout_FavoredQuipArrayForCharacter( character )
 
 	array<ItemFlavor> favorites = ItemFlavor_GetFavoredQuipArrayForCharacter( character )
 
 	ItemFlavor currQuip = cbc.itemFlavor
 
-	if ( CalcCanEquipCanBuyStatus( cbc ) == eItemCanEquipCanBuyStatus.CAN_EQUIP_CAN_BUY
-			|| CalcCanEquipCanBuyStatus( cbc ) == eItemCanEquipCanBuyStatus.CAN_EQUIP_CANNOT_BUY )
+	if ( CalcCanEquipCanBuyStatus( cbc ) == eItemCanEquipCanBuyStatus.CAN_EQUIP_CAN_BUY || CalcCanEquipCanBuyStatus( cbc ) == eItemCanEquipCanBuyStatus.CAN_EQUIP_CANNOT_BUY )
 	{
 
 		if ( favorites.contains( currQuip ) )
@@ -874,7 +889,7 @@ void function CustomizeButton_AddOrClearFavoredQuip( var button )
 				ConfirmDialogData dialogData
 				dialogData.headerText = "#FAVORITES_FULL_TITLE"
 				dialogData.messageText = Localize( "#FAVORITE_QUIPS_FULL_HINT", MAX_FAVORED_QUIPS )
-				                                                        
+				//dialogData.contextImage = $"rui/menu/buttons/favorite"
 
 				OpenOKDialogFromData( dialogData )
 			}
@@ -890,11 +905,15 @@ void function PreviewCustomizeButtonItem( CustomizeButtonContext cbc )
 	Newness_IfNecessaryMarkItemFlavorAsNoLongerNewAndInformServer( cbc.itemFlavor )
 	Hud_SetNew( cbc.button, false )
 
-	if ( ItemFlavor_GetType( cbc.itemFlavor ) == eItemType.gladiator_card_badge || ItemFlavor_GetType( cbc.itemFlavor ) == eItemType.gladiator_card_stat_tracker )
-	{
-		                                                                                                        
+	int itemType = ItemFlavor_GetType( cbc.itemFlavor )
+
+	// Items that don't need a preview-mode
+                      
+                                                                                                       
+     
+	if ( itemType == eItemType.gladiator_card_badge || itemType == eItemType.gladiator_card_stat_tracker || itemType == eItemType.sticker )
+      
 		return
-	}
 
 	foreach ( var b, CustomizeButtonContext cbcIter in fileLevel.activeCustomizeButtons )
 		Hud_SetSelected( b, cbc == cbcIter )
@@ -963,8 +982,7 @@ void function PlayerClickedToEquipThing_Part1_UnlockDialog( CustomizeButtonConte
 {
 	int canEquipCanBuyStatus = CalcCanEquipCanBuyStatus( cbc )
 
-	if ( canEquipCanBuyStatus == eItemCanEquipCanBuyStatus.CAN_EQUIP_CAN_BUY
-	|| canEquipCanBuyStatus == eItemCanEquipCanBuyStatus.CAN_EQUIP_CANNOT_BUY )
+	if ( canEquipCanBuyStatus == eItemCanEquipCanBuyStatus.CAN_EQUIP_CAN_BUY || canEquipCanBuyStatus == eItemCanEquipCanBuyStatus.CAN_EQUIP_CANNOT_BUY )
 	{
 		PlayerClickedToEquipThing_Part2_SlotPicker( cbc )
 		return
@@ -987,7 +1005,7 @@ void function PlayerClickedToEquipThing_Part1_UnlockDialog( CustomizeButtonConte
 			RuiSetBool( Hud_GetRui( cbc.button ), "isLoading", false )
 
 			if ( !wasPurchaseSuccessful )
-				return   
+				return //
 
 			PlayerClickedToEquipThing_Part2_SlotPicker( cbc )
 		}
@@ -995,10 +1013,10 @@ void function PlayerClickedToEquipThing_Part1_UnlockDialog( CustomizeButtonConte
 		return
 	}
 
-	                                                                                     
+	//Assert( canEquipCanBuyStatus == eItemCanEquipCanBuyStatus.CANNOT_EQUIP_CANNOT_BUY )
 
-	                                                                
-	  	                                 
+	//foreach ( int unused, string previewSound in previewSoundMap )
+	//	StopUISoundByName( previewSound )
 
 	EmitUISound( "UI_Menu_Deny" )
 
@@ -1014,7 +1032,11 @@ void function PlayerClickedToEquipThing_Part2_SlotPicker( CustomizeButtonContext
 	if ( IsTopLevelCustomizeContextValid() )
 		tlcc = GetTopLevelCustomizeContext()
 
+                      
+                                                                                                 
+     
 	if ( cbc.loadoutEntries.len() > 1 )
+      
 	{
 		OpenSelectSlotDialog( cbc.loadoutEntries, cbc.itemFlavor, tlcc, void function( int slotIndex ) : ( cbc, tlcc ) {
 			PlayerClickedToEquipThing_Part3_ConfirmationDialog( cbc, tlcc, slotIndex )
@@ -1094,7 +1116,7 @@ void function UpdateCustomizeItemButton( CustomizeButtonContext cbc, bool justAd
 	SeasonStyleData seasonStyle = GetSeasonStyle()
 	var rui = Hud_GetRui( cbc.button )
 
-	                         
+	// Name, icon and quality
 	string name = Localize( "#EMPTY" )
 	if ( cbc.useShortName )
 		name = Localize( ItemFlavor_GetShortName( cbc.itemFlavor ) )
@@ -1102,20 +1124,7 @@ void function UpdateCustomizeItemButton( CustomizeButtonContext cbc, bool justAd
 		name = Localize( ItemFlavor_GetLongName( cbc.itemFlavor ) )
 	int quality = ItemFlavor_HasQuality( cbc.itemFlavor ) ? ItemFlavor_GetQuality( cbc.itemFlavor ) : 0
 
-	bool isFavorite = false
-
-	if ( cbc.loadoutEntries.len() == 1 )
-	{
-		LoadoutEntry entry     = cbc.loadoutEntries[0]
-		array<ItemFlavor> favs = LoadoutSlot_GetFavorites( LocalClientEHI(), entry )
-		isFavorite = favs.contains( cbc.itemFlavor )
-	}
-	else if ( cbc.loadoutEntries.len() > 1 && Loadout_IsCharacterQuipLoadoutEntry( cbc.loadoutEntries[0] ) )
-	{
-		ItemFlavor character = GetTopLevelCustomizeContext()
-		array<ItemFlavor> favs = ItemFlavor_GetFavoredQuipArrayForCharacter( character )
-		isFavorite = favs.contains( cbc.itemFlavor )
-	}
+	bool isFavorite = IsBitFlagSet( cbc.itemFlavor.loadoutSortPriority, eLoadoutSortPriority.FAVORITE )
 
 	RuiSetBool( rui, "isFavorite", isFavorite )
 	RuiSetString( rui, "buttonText", name )
@@ -1123,23 +1132,31 @@ void function UpdateCustomizeItemButton( CustomizeButtonContext cbc, bool justAd
 	RuiSetInt( rui, "quality", quality )
 	RuiSetImage( rui, "sourceIcon", ItemFlavor_GetSourceIcon( cbc.itemFlavor ) )
 
+	if( ItemFlavor_GetType( cbc.itemFlavor ) == eItemType.weapon_skin )
+	{
+		RuiSetBool( rui, "displayShimmer", IsBitFlagSet( cbc.itemFlavor.loadoutSortPriority, eLoadoutSortPriority.WEAPON_REACTIVE ) )
+	}
+	else
+	{
+		RuiSetBool( rui, "displayShimmer", false )
+	}
 
-	          
-	                        
-	   
-	  	                       
-	  	                                                                        
-	  	                           
-	  	                                             
-	   
+	// Tooltip
+	//if ( cbc.showTooltip )
+	//{
+	//	ToolTipData toolTipData
+	//	toolTipData.titleText = Localize( ItemFlavor_GetName( cbc.itemFlavor ) )
+	//	//toolTipData.descText = ""
+	//	Hud_SetToolTipData( cbc.button, toolTipData )
+	//}
 
-	          
-	                                                   
+	// Newness
+	// todo(dw): make new and locked mutually exclusive
 	bool isNew = Newness_IsItemFlavorNew( cbc.itemFlavor )
 	Hud_SetNew( cbc.button, isNew )
 	RuiSetColorAlpha( rui, "seasonColor", SrgbToLinear( seasonStyle.seasonNewColor ), 1.0 )
-	                      
-	bool isEquipped = IsItemInCBCEquipped( cbc )
+	// Selected / equipped
+	bool isEquipped = IsBitFlagSet( cbc.itemFlavor.loadoutSortPriority, eLoadoutSortPriority.EQUIPPED )
 
 	if ( justAdded )
 		Hud_SetSelected( cbc.button, false )
@@ -1160,42 +1177,46 @@ void function UpdateCustomizeItemButton( CustomizeButtonContext cbc, bool justAd
 
 	RuiSetBool( rui, "isEquipped", isEquipped )
 
-	                
+	// Purchase info
 	bool isOwned = false
-	if ( ItemFlavor_GetGRXMode( cbc.itemFlavor ) == GRX_ITEMFLAVORMODE_NONE )
+	foreach ( loadoutEntry in cbc.loadoutEntries )
 	{
-		foreach ( loadoutEntry in cbc.loadoutEntries )
-			isOwned = isOwned || IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), loadoutEntry, cbc.itemFlavor, false, true )
+		if ( IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), loadoutEntry, cbc.itemFlavor, false, true ) )
+		{
+			isOwned = true
+			break
+		}
 	}
-	else            
+
+	if ( !isOwned && ItemFlavor_GetGRXMode( cbc.itemFlavor ) != GRX_ITEMFLAVORMODE_NONE )
 	{
 		if ( !GRX_AreOffersReady() || !GRX_IsInventoryReady() )
 		{
-			                 
+			// GRX is loading
 			Hud_SetEnabled( cbc.button, false )
 			RuiSetBool( rui, "isLoading", true )
-			return                                      
+			return // don't update until loading is done
 		}
 
-		                 
-		Hud_SetEnabled( cbc.button, true )
-		RuiSetBool( rui, "isLoading", false )
-		                
+		// Do we own it?
 		isOwned = GRX_IsItemOwnedByPlayer( cbc.itemFlavor )
 
 		if ( !isOwned )
 		{
 			ItemFlavorPurchasabilityInfo ifpi = GRX_GetItemPurchasabilityInfo( cbc.itemFlavor )
-			                                            
+			//Assert( ifpi.craftingOfferOrNull != null )
 			if ( ifpi.craftingOfferOrNull != null )
 			{
-				int craftingPrice = 0 // GRX_GetCraftingPriceFromPurchasabilityInfo not available
+				GRXScriptOffer offer = GRX_ScriptOfferFromCraftingOffer( expect GRXScriptCraftingOffer(ifpi.craftingOfferOrNull) )
+				Assert( offer.prices.len() == 1 )
+				Assert( offer.prices[0].flavors[0] == GRX_CURRENCIES[GRX_CURRENCY_CRAFTING] )
+
+				// How much does it cost?
+				int craftingPrice = offer.prices[0].quantities[0]
 				RuiSetInt( rui, "craftingPrice", craftingPrice )
 
-				ItemFlavorBag price
-				price.flavors.append( GRX_CURRENCIES[GRX_CURRENCY_CRAFTING] )
-				price.quantities.append( craftingPrice )
-				RuiSetBool( rui, "canAfford", GRX_CanAfford( price, 1 ) )
+				// Can we afford it?
+				RuiSetBool( rui, "canAfford", GRX_CanAfford( offer.prices[0], 1 ) )
 			}
 			else
 			{
@@ -1205,6 +1226,8 @@ void function UpdateCustomizeItemButton( CustomizeButtonContext cbc, bool justAd
 		}
 	}
 
+	Hud_SetEnabled( cbc.button, true )
+	RuiSetBool( rui, "isLoading", false )
 	Hud_SetLocked( cbc.button, !isOwned )
 
 	if ( cbc.customButtonUpdateFunc != null )
@@ -1242,27 +1265,24 @@ void function OnLoadoutSlotContentsChanged( EHI playerEHI, ItemFlavor contents )
 #if UI
 void function CustomizeMenus_UpdateActionContext( var button )
 {
-	if ( button in fileLevel.activeCustomizeButtons )
+	if ( IsControllerModeActive() )
+	{
+		foreach ( var b, CustomizeButtonContext cbc in fileLevel.activeCustomizeButtons )
+		{
+			if ( Hud_IsSelected( b ) )
+			{
+				fileLevel.actionContext = fileLevel.activeCustomizeButtons[b]
+				break
+			}
+		}
+	}
+	else if ( button in fileLevel.activeCustomizeButtons )
 	{
 		fileLevel.actionContext = fileLevel.activeCustomizeButtons[button]
 	}
 	else
 	{
-		if ( IsControllerModeActive() )
-		{
-			foreach ( var b, CustomizeButtonContext cbc in fileLevel.activeCustomizeButtons )
-			{
-				if ( Hud_IsSelected( b ) )
-				{
-					fileLevel.actionContext = fileLevel.activeCustomizeButtons[b]
-					break
-				}
-			}
-		}
-		else
-		{
-			fileLevel.actionContext = null
-		}
+		fileLevel.actionContext = null
 	}
 
 	UpdateActionButton()
@@ -1344,6 +1364,9 @@ void function UpdateActionButton()
 	if ( fileLevel.actionButton == null )
 		return
 
+	if ( !GRX_IsInventoryReady() )
+		return
+
 	CustomizeButtonContext ornull cbc = GetActionContext()
 	if ( cbc == null && fileLevel.isParentItemOwned )
 	{
@@ -1363,7 +1386,7 @@ void function UpdateActionButton()
 	bool isVisible              = !fileLevel.isParentItemOwned || !isOwned || (isOwned && !isEquipped)
 
 	if ( Mythics_IsItemFlavorMythicSkin( item ) )
-		isVisible = (isOwned && !isEquipped)
+		isVisible = (isOwned && (!isEquipped || !fileLevel.isParentItemOwned))
 
 	Hud_SetVisible( fileLevel.actionButton, isVisible )
 
@@ -1399,56 +1422,33 @@ array<LoadoutEntry> function GetAppropriateLoadoutSlotsForItemFlavor( ItemFlavor
 	{
 		case eItemType.character_skin:
 			return [ Loadout_CharacterSkin( CharacterSkin_GetCharacterFlavor( itemFlav ) ) ]
-			break
 
 		case eItemType.weapon_skin:
 			return [ Loadout_WeaponSkin( WeaponSkin_GetWeaponFlavor( itemFlav ) ) ]
-			break
 
 		case eItemType.gladiator_card_frame:
 			if ( GladiatorCardFrame_IsSharedBetweenCharacters( itemFlav ) )
-			{
 				return []
-				break
-			}
 
-			ItemFlavor ornull charOrNull = GladiatorCardFrame_GetCharacterFlavor( itemFlav )
-			if ( charOrNull == null )
-				return []
-			ItemFlavor charFlav = expect ItemFlavor( charOrNull )
-			return [ Loadout_GladiatorCardFrame( charFlav ) ]
-			break
+			return [ Loadout_GladiatorCardFrame( expect ItemFlavor( GladiatorCardFrame_GetCharacterFlavor( itemFlav ) ) ) ]
 
 		case eItemType.gladiator_card_stance:
 			return [ Loadout_GladiatorCardStance( GladiatorCardStance_GetCharacterFlavor( itemFlav ) ) ]
-			break
 
 		case eItemType.character_execution:
 			return [ Loadout_CharacterExecution( CharacterExecution_GetCharacterFlavor( itemFlav ) ) ]
-			break
 
 		case eItemType.gladiator_card_intro_quip:
 			return [ Loadout_CharacterIntroQuip( CharacterIntroQuip_GetCharacterFlavor( itemFlav ) ) ]
-			break
 
 		case eItemType.gladiator_card_kill_quip:
 			return [ Loadout_CharacterKillQuip( CharacterKillQuip_GetCharacterFlavor( itemFlav ) ) ]
-			break
 
 		case eItemType.gladiator_card_stat_tracker:
 			if ( GladiatorCardStatTracker_IsSharedBetweenCharacters( itemFlav ) )
-			{
-				return []
-				break
-			}
-
-			ItemFlavor ornull characterOrNull = GladiatorCardStatTracker_GetCharacterFlavor( itemFlav )
-			if ( characterOrNull == null )
 				return []
 
-			expect ItemFlavor( characterOrNull )
-			ItemFlavor character = characterOrNull
-
+			ItemFlavor character = expect ItemFlavor( GladiatorCardStatTracker_GetCharacterFlavor( itemFlav ) )
 			array<LoadoutEntry> slots
 			for ( int trackerIdx = 0; trackerIdx < GLADIATOR_CARDS_NUM_TRACKERS; trackerIdx++ )
 			{
@@ -1459,19 +1459,20 @@ array<LoadoutEntry> function GetAppropriateLoadoutSlotsForItemFlavor( ItemFlavor
 				}
 			}
 			return slots
-			break
 
 		case eItemType.melee_skin:
+                           
+			if ( !MeleeSkin_HasSpecificCharacterFlavor( itemFlav ) )
+				return [ Loadout_MeleeSkin( LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() ) ) ]
+      
+
 			return [ Loadout_MeleeSkin( MeleeSkin_GetCharacterFlavor( itemFlav ) ) ]
-			break
 
 		case eItemType.music_pack:
 			return [ Loadout_MusicPack() ]
-			break
 
 		case eItemType.loadscreen:
 			return [ Loadout_Loadscreen() ]
-			break
 	}
 
 	return []
@@ -1521,22 +1522,21 @@ void function EquipItemFlavorInAppropriateLoadoutSlot( ItemFlavor itemFlav )
 string function GetLocalizedItemFlavorDescriptionForOfferButton( ItemFlavor itemFlav, bool withQuality )
 {
 	ItemFlavor ornull associatedFlav = GetItemFlavorAssociatedCharacterOrWeapon( itemFlav )
-
 	string qualityName       = (withQuality && ItemFlavor_HasQuality( itemFlav )) ? ItemFlavor_GetQualityName( itemFlav ) : ""
 	string assocatedFlavName = associatedFlav != null ? ItemFlavor_GetShortName( expect ItemFlavor( associatedFlav ) ) : ""
 	string typeName          = ItemFlavor_GetTypeName( itemFlav )
 
-	if ( GetCurrentPlaylistVarBool( "item_flavor_loc_desc_nostrip", true  ) )                        
+	if ( qualityName == "" && assocatedFlavName == "" )
 	{
-		return Localize( "#OFFER_ITEM_DESC", Localize( qualityName ), Localize( assocatedFlavName ), Localize( typeName ) )
+		return Localize( "#OFFER_ITEM_DESC_N_1", Localize( typeName ) )
+	}
+	else if ( qualityName == "" )
+	{
+		return Localize( "#OFFER_ITEM_DESC_N_2", Localize( assocatedFlavName ), Localize( typeName ) )
 	}
 	else
 	{
-		return strip( Localize( "#OFFER_ITEM_DESC",
-			Localize( qualityName ),
-			Localize( assocatedFlavName ),
-			Localize( typeName )
-		) )
+		return Localize( "#OFFER_ITEM_DESC", Localize( qualityName ), Localize( assocatedFlavName ), Localize( typeName ) )
 	}
 	unreachable
 }
@@ -1573,6 +1573,8 @@ asset function CustomizeMenu_GetRewardButtonImage( ItemFlavor flavor )
 			}
 			break
 
+		case eItemType.battlepass:
+		case eItemType.image_2d:
 		case eItemType.skydive_emote:
 		case eItemType.character_execution:
 		case eItemType.voucher:
@@ -1610,6 +1612,10 @@ asset function CustomizeMenu_GetRewardButtonImage( ItemFlavor flavor )
 				ItemFlavor weapon = WeaponSkin_GetWeaponFlavor( flavor )
 				buttonImage = ItemFlavor_GetIcon( weapon )
 			}
+			break
+
+		case eItemType.skydive_trail:
+			buttonImage = $"rui/menu/buttons/weapon_categories/more_skydive_trails"
 			break
 
 		case eItemType.gladiator_card_frame:
@@ -1663,7 +1669,16 @@ asset function CustomizeMenu_GetRewardButtonImage( ItemFlavor flavor )
 		case eItemType.sticker:
 			buttonImage = $"rui/menu/buttons/battlepass/sticker"
 			break
-
+                       
+		case eItemType.event_ability:
+			buttonImage = ItemFlavor_GetIcon( flavor )
+			break
+      
+                    
+		case eItemType.artifact_component_deathbox:
+			buttonImage = $"rui/menu/buttons/battlepass/icon_deathbox"
+			break
+      
 		default:
 			Warning( "Unknown item type passed to CustomizeMenu_GetRewardButtonImage() " + DEV_GetEnumStringSafe( "eItemType", itemType ) )
 			break
@@ -1674,7 +1689,7 @@ asset function CustomizeMenu_GetRewardButtonImage( ItemFlavor flavor )
 
 	return buttonImage
 }
-asset function CustomizeMenu_GetGenericRewardButtonImage( ItemFlavor flavor )                                                                     
+asset function CustomizeMenu_GetGenericRewardButtonImage( ItemFlavor flavor ) //This Version always returns the default character and weapon icon.
 {
 	int itemType      = ItemFlavor_GetType( flavor )
 	asset buttonImage = $""
@@ -1689,6 +1704,8 @@ asset function CustomizeMenu_GetGenericRewardButtonImage( ItemFlavor flavor )
 			}
 			break
 
+		case eItemType.battlepass:
+		case eItemType.battlepass_presale_voucher:
 		case eItemType.skydive_emote:
 		case eItemType.character_execution:
 		case eItemType.voucher:
@@ -1819,4 +1836,4 @@ void function RefreshCharacterAfterPurchase()
 	fileLevel.characterToRefresh = null
 	RemoveCallback_OnGRXInventoryStateChanged( RefreshCharacterAfterPurchase )
 }
-#endif
+#endif 

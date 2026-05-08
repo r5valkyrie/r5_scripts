@@ -1239,10 +1239,8 @@ bool function WIP_CharacterClass_ShouldTrackStats( ItemFlavor character )
 }
 
 #if SERVER || CLIENT || UI
-ItemFlavor ornull function CharacterClass_GetRandomNonGRXCharacter()
+ItemFlavor function CharacterClass_GetRandomNonGRXCharacter()
 {
-	if ( fileLevel.nonGRXCharacters.len() == 0 )
-		return null
 	return ( fileLevel.nonGRXCharacters.getrandom() )
 }
 #endif

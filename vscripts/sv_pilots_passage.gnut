@@ -1,8 +1,247 @@
-// stub script
+// Pilot's Passage!
 
 global function PilotsPassage_Init
 
+global enum ePassageEventType
+{
+	GAME_STARTED,
+	GAME_CIRCLE_UPDATE,
+	GAME_AIRDROP_UPDATE,
+
+	LOOT_INIT,
+	PLAYER_INIT,
+	AIRDROP_INIT,
+	TITAN_INIT,
+
+	GENERIC_POSITION,
+	GENERIC_DELETE,
+
+	PLAYER_DROPPOD_LANDED,
+	PLAYER_MORPHED,
+	PLAYER_FIRED_BULLET,
+	PLAYER_ACTIVITY_BEGIN,
+	PLAYER_ACTIVITY_UPDATE,
+	PLAYER_LOOT_PICKEDUP,
+	PLAYER_LOOT_UPDATE,
+	PLAYER_LOOT_DROPPED,
+	PLAYER_TOOK_DAMAGE,
+	PLAYER_DIED,
+	PLAYER_OUTSIDE_CIRCLE,
+	PLAYER_ENTERED_CIRCLE,
+
+	FLEXSCREEN_HACKED,
+}
+
 void function PilotsPassage_Init()
 {
+	if ( GetCurrentPlaylistVarInt( "enable_pilots_passage", 0 ) == 0 )
+	{
+		return
+	}
+	TimeParts timeParts = GetUnixTimeParts( GetUnixTimestamp() )
+	string hour     = string( timeParts.hour )
+	if ( hour.len() == 1 )
+		hour = "0" + hour
+	string minute = string( timeParts.minute )
+	if ( minute.len() == 1 )
+		minute = "0" + minute
+	SpamLog( "### PILOT PASSAGE START " + timeParts.year + "-" + timeParts.month + "-" + timeParts.day + " " + hour + ":" + minute + " " + GetMapName() + " ###\n" )
 
+	AddSpawnCallback( "player", PilotsPassage_OnPlayerCreated ) //PLAYER_INIT,
+	AddCallback_GameStateEnter( eGameState.Playing, PilotsPassage_GameState_Playing ) // GAME_STARTED
+	AddCallback_OnWeaponAttack( PilotsPassage_OnWeaponAttack )
+}
+
+
+void function PilotsPassage_GameState_Playing()
+{
+	AddCallback_OnPlayerKilled( PilotsPassage_OnPlayerKilled ) //PLAYER_DIED,
+}
+
+
+void function PilotsPassage_OnPlayerCreated( entity player )
+{
+	thread PilotsPassage_WatchPlayerState( player )
+}
+
+
+void function PilotsPassage_WatchPlayerState( entity player )
+{
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "OnDeath" )
+
+	OnThreadEnd(
+		function() : ( player )
+		{
+			PilotsPassage_OnPlayerKilled( player, null, null )
+		}
+	)
+
+	float positionUpdateTolerance   = 0.2
+	float positionUpdateMinInterval = 0.09
+
+	vector prevPos          = <0, 0, 0>
+	float prevPosUpdateTime = 0.0
+	while( true )
+	{
+		WaitFrame()
+
+		if ( Time() > prevPosUpdateTime + positionUpdateMinInterval )
+		{
+			vector pos = player.GetWorldSpaceCenter()
+			if ( Length( prevPos - pos ) > positionUpdateTolerance )
+			{
+				PilotsPassage_Record_GenericPosition( player )
+
+				prevPos = pos
+				prevPosUpdateTime = Time()
+			}
+		}
+	}
+	unreachable
+}
+
+
+void function PilotsPassage_OnWeaponAttack( entity player, entity weapon, string weaponName, int ammoUsed, vector attackOrigin, vector attackDir )
+{
+	// todo: hook into a bullet/projectile outcome callback instead so we can get the hit location and hit target
+	TraceResults attackTrace = TraceLine( attackOrigin, attackOrigin + attackDir * 10000, player, TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_NONE )
+
+	PilotsPassage_Record_PlayerFiredBullet( player, weapon, weaponName, ammoUsed, attackOrigin, attackDir, attackTrace.endPos )
+}
+
+
+void function PilotsPassage_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
+{
+
+}
+
+
+void function PilotsPassage_Record_GenericPosition( entity ent )
+{
+	RecordEvent_BeginEnt( ent, ePassageEventType.GENERIC_POSITION )
+	RecordEvent_FragmentVector( "p", ent.GetWorldSpaceCenter() )
+	RecordEvent_End()
+}
+
+
+void function PilotsPassage_Record_PlayerInit( entity player )
+{
+	RecordEvent_BeginEnt( player, ePassageEventType.PLAYER_INIT )
+	RecordEvent_Fragment( "name", player.GetPlayerName() )
+	RecordEvent_End()
+}
+
+
+void function PilotsPassage_Record_PlayerDroppodLanded( entity player )
+{
+	RecordEvent_BeginEnt( player, ePassageEventType.PLAYER_DROPPOD_LANDED )
+	RecordEvent_Fragment( "class", string( player.GetPlayerSettings() ) )
+	RecordEvent_End()
+}
+
+
+void function PilotsPassage_Record_PlayerMorphed( entity player )
+{
+	RecordEvent_BeginEnt( player, ePassageEventType.PLAYER_MORPHED )
+	RecordEvent_Fragment( "form", player.IsTitan() ? "titan" : "pilot" )
+	RecordEvent_End()
+}
+
+
+void function PilotsPassage_Record_PlayerFiredBullet( entity player, entity weapon, string weaponName, int ammoUsed, vector attackOrigin, vector attackDir, vector attackEnd )
+{
+	RecordEvent_BeginEnt( player, ePassageEventType.PLAYER_FIRED_BULLET )
+	RecordEvent_FragmentVector( "as", attackOrigin )
+	//RecordEvent_FragmentVector( "ad", attackDir )
+	RecordEvent_FragmentVector( "ae", attackEnd )
+	RecordEvent_End()
+}
+
+
+void function PilotsPassage_Record_PlayerActivityBegin( entity ent )
+{
+	RecordEvent_BeginEnt( ent, ePassageEventType.PLAYER_ACTIVITY_BEGIN )
+	RecordEvent_End()
+}
+
+
+void function PilotsPassage_Record_PlayerActivityUpdate( entity ent )
+{
+	RecordEvent_BeginEnt( ent, ePassageEventType.PLAYER_ACTIVITY_UPDATE )
+	RecordEvent_End()
+}
+
+
+void function PilotsPassage_Record_PlayerLootPickedUp( entity ent )
+{
+	RecordEvent_BeginEnt( ent, ePassageEventType.PLAYER_LOOT_PICKEDUP )
+	RecordEvent_End()
+}
+
+
+void function PilotsPassage_Record_PlayerLootUpdate( entity ent )
+{
+	RecordEvent_BeginEnt( ent, ePassageEventType.PLAYER_LOOT_UPDATE )
+	RecordEvent_End()
+}
+
+
+void function PilotsPassage_Record_PlayerLootDropped( entity ent )
+{
+	RecordEvent_BeginEnt( ent, ePassageEventType.PLAYER_LOOT_DROPPED )
+	RecordEvent_End()
+}
+
+
+void function PilotsPassage_Record_LootInit( entity ent )
+{
+	RecordEvent_BeginEnt( ent, ePassageEventType.LOOT_INIT )
+	RecordEvent_End()
+}
+
+
+void function RecordEvent_BeginEnt( entity ent, int eventType )
+{
+	SpamLog( "### {" )
+	RecordEvent_Fragment( "_", string( eventType ) )
+	RecordEvent_Fragment( "t", string( Time() ) )
+	RecordEvent_Fragment( "i", string( ent.GetEntIndex() ) )
+}
+
+
+void function RecordEvent_Begin( int eventType )
+{
+	SpamLog( "### {" )
+	RecordEvent_Fragment( "_", string( eventType ) )
+}
+
+
+void function RecordEvent_Fragment( string key, string value )
+{
+	SpamLog( key )
+	SpamLog( ":" )
+	SpamLog( value )
+	SpamLog( "," )
+}
+
+
+void function RecordEvent_FragmentVector( string key, vector value )
+{
+	SpamLog( key )
+	SpamLog( ":" )
+	SpamLog( "[" )
+	SpamLog( string( value.x ) )
+	SpamLog( "," )
+	SpamLog( string( value.y ) )
+	SpamLog( "," )
+	SpamLog( string( value.z ) )
+	SpamLog( "]" )
+	SpamLog( "," )
+}
+
+
+void function RecordEvent_End()
+{
+	SpamLog( "},\n" )
 }

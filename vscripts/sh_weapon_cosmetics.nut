@@ -678,8 +678,8 @@ void function WeaponCosmetics_Apply( entity ent, ItemFlavor ornull skinOrNull, I
 {
 	if ( skinOrNull != null )
 	{
-		if( ent.IsWeaponX() )
-			ent.ClearReactiveEffects()
+		//if( ent.IsWeaponX() )
+		//	ent.ClearReactiveEffects()
 
 		ItemFlavor skin = expect ItemFlavor( skinOrNull )
 		Assert( ItemFlavor_GetType( skin ) == eItemType.weapon_skin )
@@ -688,7 +688,7 @@ void function WeaponCosmetics_Apply( entity ent, ItemFlavor ornull skinOrNull, I
 
 		if( ent.IsWeaponX() )
 		{
-			ent.UpdateReactiveEffects()
+		//	ent.UpdateReactiveEffects()
 			#if SERVER
 			Remote_CallFunction_NonReplay( ent.GetOwner(), "ServerCallback_UpdatePlayerWeaponEffects", ent )
 			#endif
@@ -710,11 +710,11 @@ void function WeaponCosmetics_Apply( entity ent, ItemFlavor ornull skinOrNull, I
 				if ( CHARM_DEBUG )
 					printt( "CHARM_DEBUG: Setting weapon charm " + string(ItemFlavor_GetAsset( charm )) + " for weapon " + ent + "( " + ent.GetModelName() + ") owned by player " + ent.GetWeaponOwner() + "(server)" )
 
-				ent.SetWeaponCharmOrArtifactBladeGUID( ent.e.charmItemFlavorGUID )
-				if ( charmModel != "" )
-					ent.SetWeaponCharm( charmModel, attachmentName )
-				else
-					ent.ClearWeaponCharm()
+				//ent.SetWeaponCharmOrArtifactBladeGUID( ent.e.charmItemFlavorGUID )
+				//if ( charmModel != "" )
+				//	ent.SetWeaponCharm( charmModel, attachmentName )
+				//else
+				//	ent.ClearWeaponCharm()
 			}
 			else if ( ent.GetNetworkedClassName() != "prop_survival" )
 			{

@@ -190,20 +190,7 @@ void function SetupHeirloom( int heirloomIndex )
 
 void function UnEquipMelee( bool allplayers = false)
 {
-	entity player = gp()[0]
-	if ( !IsValid( player ) )
-		return
 
-	player.TakeOffhandWeapon(OFFHAND_MELEE)
-	player.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
-
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
-	ItemFlavor meleeSkin = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_MeleeSkin( character ) )
-	string meleePrimary = MeleeSkin_GetMainWeaponClassname( meleeSkin )
-	string meleeOffhand = MeleeSkin_GetOffhandWeaponClassname( meleeSkin )
-
-	player.GiveWeapon( meleePrimary, WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
-	player.GiveOffhandWeapon( meleeOffhand, OFFHAND_MELEE, [] )
 }
 #endif
 

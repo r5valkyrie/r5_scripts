@@ -1,0 +1,427 @@
+global function DropDownModeInit
+
+#if SERVER
+#if DEV
+//global function DEV_DropDownMode_ForceFail
+#endif // DEV
+
+struct ModeDef
+{
+	string resourceSetName
+}
+
+struct ModeConfig
+{
+	bool _isReady = false
+
+	vector playareaCenter
+	float playareaRadius
+
+	Point dropshipIntro
+	Point dropshipEvac
+}
+
+const string SIG_OBJECTIVE_WAS_FINISHED = "OBJ_WAS_FINISHED"
+
+void function BuildModeConfigFromDef( ModeDef def, ModeConfig config )
+{
+	ResourceCollection coll = ORS_Find_( ORS_GetGlobalGroup(), eSearchFlags.NONE, [], [def.resourceSetName], [] )
+
+	PointOfInterest introSpot = ORS_GetPOIByKeyword( coll.pois, "dropship_intro_spot" )
+	config.dropshipIntro.origin = introSpot.core.spawnOrigin
+	config.dropshipIntro.angles = introSpot.core.spawnAngles
+
+	PointOfInterest evacSpot = ORS_GetPOIByKeyword( coll.pois, "dropship_evac_spot" )
+	config.dropshipEvac.origin = evacSpot.core.spawnOrigin
+	config.dropshipEvac.angles = evacSpot.core.spawnAngles
+
+	// Playarea:
+	{
+		PointOfInterest playareaCenter = ORS_GetPOIByKeyword( coll.pois, "playarea_center" )
+		config.playareaCenter = playareaCenter.core.spawnOrigin
+		config.playareaRadius = GetCurrentPlaylistVarFloat( "deathfield_radius_2", -1.0 )
+
+		//string playlistCircle = GetCurrentPlaylistVarString( "cull_entity_spawn_circle", "none" );
+		//string currentCircle = config.playareaCenter + " " + config.playareaRadius;
+		//if ( playlistCircle != currentCircle )
+		//{
+		//	Warning( "playlist cull_entity_spawn_circle: " + playlistCircle )
+		//	Warning( "current  cull_entity_spawn_circle: " + currentCircle )
+		//}
+
+		const float FINAL_CRICLE_TINY_RADIUS = 10.0  //real radius in playlist...this just ensures it will be precise within 10 units
+		const bool DO_FORCE_PRECISE_FINAL_CIRCLE_LOC = true
+		SURVIVAL_AddOverrideCircleLocation( config.playareaCenter, FINAL_CRICLE_TINY_RADIUS, DO_FORCE_PRECISE_FINAL_CIRCLE_LOC )
+	}
+
+	config._isReady = true
+}
+#endif // SERVER
+
+void function DropDownModeInit()
+{
+	ShTreasureExtractionInit()
+
+	//RegisterCSVDialogue( $"datatable/dialogue/nightrun_dialogue.rpak" )
+
+#if CLIENT
+	CircleAnnouncementsEnable( false )
+	SetChampionScreenRuiAsset( subbedChampionScreeen )
+	SetChampionScreenRuiAssetExtraFunc( ChampionScreenSetExtraInfo )
+#endif // CLIENT
+
+#if SERVER
+	RegisterSignal( SIG_DROPSHIP_DEPARTED )
+
+	ModeDef def
+	const string PLAYLIST_RESOURCE_VAR_NAME = "mode_resource_set_name"
+	def.resourceSetName = GetCurrentPlaylistVarString( PLAYLIST_RESOURCE_VAR_NAME, "" )
+	Assert( (def.resourceSetName.len() > 0), format( "Playlist has not defined var '%s'.", PLAYLIST_RESOURCE_VAR_NAME ) )
+	ModeConfig config
+	AddCallback_ResourceSystemIsReady( void function() : (def, config)
+	{
+		BuildModeConfigFromDef( def, config )
+		OpenAndLockAllScriptDoors() //ai doesn't know how to deal with these yet
+	} )
+
+	//SetCustomIntroCameraSettingsFunction( void function( entity player, IntroCameraSettings view ) : (config)
+	//{
+	//	Assert( config._isReady )
+	//	view.origin = config.introCamera.origin
+	//	view.angles = config.introCamera.angles
+//
+	//	if ( config.introCameraFov != 0.0 )
+	//		view.fov = config.introCameraFov
+	//} )
+
+	AddCallback_GameStateEnter( eGameState.Playing, void function() : ( config )
+	{
+		//SpawnLootForObjective( config )
+		thread ModeThread( config )
+	} )
+
+	Survival_AddCallback_OnSquadEliminated( void function( int team ) : ()
+	{
+		if ( !IsSquadReallyEliminated( team ) )
+			return
+
+		if ( GamePlayingOrSuddenDeath() )
+			ClientMusic_PlayCustomTrackToAll( eMusicTrack.DropshipMissed )
+		thread HandleGameOver_Thread( false )
+	} )
+
+	FreelanceMode_SetCommentaryDisables()
+
+	//
+#endif // SERVER
+}
+
+#if CLIENT
+const asset subbedChampionScreeen = $"ui/champion_screen_nightrun.rpak"
+void function ChampionScreenSetExtraInfo( var rui )
+{
+	RuiSetBool( rui, "isMissionSuccess", FreelanceMode_GetIsVictoryForAll() )
+}
+#endif // CLIENT
+
+#if SERVER
+
+struct ModeThreadVars
+{
+	float evacShipDeadlineTime
+	entity evacShip
+	bool evacShipDeparted
+	array<entity> playersThatExtracted
+}
+
+const string SIG_DROPSHIP_DEPARTED = "dropshipdeparted"
+
+void function ModeThread( ModeConfig config )
+{
+	Assert( config._isReady )
+
+	ModeThreadVars vars
+
+	ObjectiveInstance mainObjective = RunObjectiveType_DropdownFight( config.playareaCenter, config.dropshipEvac.origin )
+	//MissionCheckpoints_SetGlobalRespawnPoint( "Intro Dropoff", config.dropshipIntro.origin, config.dropshipIntro.angles )
+
+	/////////////////////////////
+	// Bring the players in:
+	waitthread function() : ( config )
+	{
+		foreach ( player in GetPlayerArray() )
+		{
+			player.p.respawnCount = 1	// to skip some spawn checks
+			DisableEntityOutOfBounds( player )
+			//player.DeathfieldFXDisabledOn()
+
+			const int SOLO_PLAYER_EXTRA_LIVES = 2
+			if ( GetPlayerArrayOfTeam( player.GetTeam() ).len() == 1 )
+				MissionCheckpoints_SetRespawnsLeftForPlayer( player, SOLO_PLAYER_EXTRA_LIVES )
+		}
+
+		if ( FreelanceMode_GetCurrentPhase() < eFreelanceModePhase.Insertion )
+			FreelanceMode_SetCurrentPhase( eFreelanceModePhase.Insertion, 0 )
+
+		for ( int idx = 0; idx < MAX_SQUADS; ++idx )
+		{
+			int team = GetTeamFromSquadID( idx )
+			vector viewAngles = <15.0, config.dropshipIntro.angles.y, 0>
+
+			bool doSkydiveIntro = GetCurrentPlaylistVarBool( "mode_dropship_intro_skydive", false )
+			if ( doSkydiveIntro )
+			{
+				vector dropshipOrg = <config.dropshipIntro.origin.x, config.dropshipIntro.origin.y, 15000.0>
+				FreelanceMode_StartTeamInsertionThread_Skydive( team, dropshipOrg, config.dropshipIntro.angles, viewAngles )
+			}
+			else
+			{
+				FreelanceMode_StartTeamInsertionThread_Dropoff( team, config.dropshipIntro.origin, config.dropshipIntro.angles, viewAngles )
+			}
+		}
+
+		// Intro dialogue:
+		thread function() : ()
+		{
+			wait ( 5.0 )
+			PlayCharacterDialogueToEveryone( "ob_dropdown_intro1" )
+			wait ( 8.0 )
+			PlayCharacterDialogueToEveryone( "ob_dropdown_intro2" )
+			PlayCharacterDialogueToEveryone( "ob_dropdown_intro3" )
+		}()
+
+		// Spin off a thread to stop the intro music early:
+		//thread function() : ()
+		//{
+		//	wait ( 13.5 )
+		//	foreach( entity player in GetPlayerArray() )
+		//	{
+		//		string music = GetMusicForJump( player )
+		//		if ( music.len() > 0 )
+		//			StopMusicOnPlayer( player, music )
+		//	}
+		//}()
+
+		wait ( 1.5 )
+		foreach ( player in GetPlayerArray() )
+			player.p.survivalLandedOnGround = false
+
+		DoFreelanceModeSplashToAll( eModeSplash.Initial_NightRun )
+	}()
+
+	//////
+	// Prologue.
+	{
+		float delta = GetCurrentPlaylistVarFloat( "freelance_mode_seconds_prologue", 30.0 )
+		//delaythread( 2.0 ) PlayRadioDialogueToAll( "ObMatchStart_GoExplore" )
+		FreelanceMode_ModeWait( delta, [] )
+		foreach( player in GetPlayerArray() )
+		{
+			while( !player.p.survivalLandedOnGround )
+				wait 0.1
+			//player.DeathfieldFXDisabledOff()
+			EnableEntityOutOfBounds( player )
+		}
+	}
+
+	//////
+	// Time is on the hud.
+	{
+		float maxTimeAllowed = GetCurrentPlaylistVarFloat( "freelance_mode_seconds_exploration", 901.0 )
+		FreelanceMode_SetCurrentPhase( eFreelanceModePhase.Exploration, (Time() + maxTimeAllowed) )
+
+		//	delaythread( RandomFloatRange( 2.0, 2.5 ) ) PlayBattleChatterLineOnEachSquadAfterDelay( "bc_thIntro" )
+
+		FreelanceMode_SignalWhenObjectiveCompletes( mainObjective, SIG_OBJECTIVE_WAS_FINISHED )
+		//FreelanceMode_ModeWait( 999999, [SIG_OBJECTIVE_WAS_FINISHED, SIG_MODE_START_ENDING_TIMER] )
+
+		float phaseStartTime = Time()
+		FreelanceMode_ModeWait( maxTimeAllowed, [SIG_OBJECTIVE_WAS_FINISHED] )
+		float duration = (Time() - phaseStartTime)
+		if ( duration >= maxTimeAllowed )
+		{
+			foreach( player in GetPlayerArray() )
+				DoFreelanceModeSplashToPlayer( player, eModeSplash.Failed_RanOutOfTime )
+			wait( 1.5 )
+			HandleGameOver_Thread( false )
+			WaitForever()
+		}
+	}
+
+	//////
+	// Wait for the objective to tell us it's time for the finale:
+	{
+		//FreelanceMode_SetCurrentPhase( eFreelanceModePhase.WaitForObjective, 0 )
+		//FreelanceMode_SignalWhenObjectiveCompletes( mainObjective, SIG_OBJECTIVE_WAS_FINISHED )
+		//FreelanceMode_ModeWait( 999999, [SIG_OBJECTIVE_WAS_FINISHED, SIG_MODE_START_ENDING_TIMER] )
+	}
+
+	//////
+	// The ending.
+	{
+		// Dropship spawning thread:
+		DoDropShipExtractionWaitAndSpawnThread( config, vars )
+		FreelanceMode_SignalEndingDropshipArrival()
+
+		const float SMALL_DELAY = 2.0
+		float maxTimeAllowed = GetCurrentPlaylistVarFloat( "freelance_mode_seconds_getontheship", 85.0 )	//65.0, 85.0
+		vars.evacShipDeadlineTime = (Time() + maxTimeAllowed + SMALL_DELAY)
+		wait( SMALL_DELAY )
+		FreelanceMode_SetCurrentPhase( eFreelanceModePhase.NeedTheDropship, vars.evacShipDeadlineTime )
+		if ( GetCurrentPlaylistVarFloat( "freelance_mode_seconds_getontheship", 65 ) > 65 )
+			ClientMusic_PlayCustomTrackToAll( eMusicTrack.GetOnTheDropshipLong )
+		else
+			ClientMusic_PlayCustomTrackToAll( eMusicTrack.GetOnTheDropship )
+		FreelanceMode_ModeWait( maxTimeAllowed, [SIG_DROPSHIP_DEPARTED] )
+
+		// We might have run out the timer, but the ship hasn't quite left yet. Wait for it to say it has:
+		if ( IsValid( vars.evacShip ) && !vars.evacShipDeparted )
+			FreelanceMode_ModeWait( 999999, [SIG_DROPSHIP_DEPARTED] )
+	}
+
+	bool isVictory = (vars.playersThatExtracted.len() > 0)
+
+	// You made it, or you missed your ride:
+	foreach( player in GetPlayerArray() )
+	{
+		if ( vars.playersThatExtracted.contains( player ) )
+		{
+			ClientMusic_PlayCustomTrackOnClient( player, eMusicTrack.DropshipSafe )
+		}
+		else
+		{
+			ClientMusic_PlayCustomTrackOnClient( player, eMusicTrack.DropshipMissed )
+		}
+	}
+
+	//
+	wait( 1.5 )
+	HandleGameOver_Thread( isVictory )
+}
+
+bool function IsAnyoneAliveAndNotBoardedYet( entity evacShip )
+{
+	array <entity> passengers = GetEvacShipPassengers( evacShip )
+	foreach( alivePlayer in GetPlayerArray_Alive() )
+	{
+		if ( !passengers.contains( alivePlayer ) )
+			return true
+	}
+
+	return false
+}
+
+void function WatchForAllPlayersOnBoardEarlyDeparture( entity evacShip, ModeThreadVars vars )
+{
+	thread function() : (evacShip, vars)
+	{
+		for ( ;; )
+		{
+			WaitFrame()
+
+			array <entity> passengers = GetEvacShipPassengers( evacShip )
+			if ( passengers.len() == 0 )
+				continue
+			if ( IsAnyoneAliveAndNotBoardedYet( evacShip ) )
+				continue
+			break
+		}
+
+		float timeRemaining = (vars.evacShipDeadlineTime - Time())
+		printf( "%s() - All alive players are on board, with %.2f seconds left.", FUNC_NAME(), timeRemaining )
+		float delayTime = min( timeRemaining, 4.0 )
+		if ( delayTime < 1.0 )
+			return
+		wait delayTime
+		EvacShipForceEarlyDeparture( evacShip )
+	}()
+}
+
+void function DoDropShipExtractionWaitAndSpawnThread( ModeConfig config, ModeThreadVars vars )
+{
+	thread function() : (config, vars)
+	{
+		FreelanceMode_ModeWait( 999999, [SIG_MODE_START_ENDING_DROPSHIP] )
+
+		// If we're so very close to time running out, don't bring the plane in:
+		float timeRemaining = (vars.evacShipDeadlineTime - Time())
+		if ( timeRemaining < 8.0 )
+			return
+
+		vector evacPos = config.dropshipEvac.origin
+		vector evacAng = config.dropshipEvac.angles
+		const float EVAC_RADIUS = 256.0
+		const float DROPSHIP_FLYIN_DURATION = 5.0
+		float timeToDepart = (timeRemaining - DROPSHIP_FLYIN_DURATION)
+		const bool DO_DISPLAY_EVAC_WAYPOINT_TO_ALL = true
+		entity evacShip = CreateEvacShipSequence( evacPos, evacAng, EVAC_RADIUS, eNpcTeam.FRIENDLY, DROPSHIP_FLYIN_DURATION, timeToDepart, true, DO_DISPLAY_EVAC_WAYPOINT_TO_ALL )
+		EvacShipUseAltAttachments( evacShip )
+		vars.evacShip = evacShip
+
+		Wait( 2.0 )
+		FreelanceMode_SetCurrentPhase( eFreelanceModePhase.GetOnTheDropship, vars.evacShipDeadlineTime )
+
+		// Callback for Players Boarding:
+		AddEntityCallback_OnEvacShipPlayerBoarded( evacShip, void function ( entity playerWhoBoarded, entity evacShip ) : (vars)
+		{
+			FreelanceMode_PostGame_MarkPlayerAsExtracted( playerWhoBoarded )
+			vars.playersThatExtracted.append( playerWhoBoarded )
+		} )
+
+		// Signal when ship departs:
+		AddEntityCallback_OnEvacShipDeparted( evacShip, void function ( entity evacShip ) : (vars)
+		{
+			vars.evacShipDeparted = true
+			FreelanceMode_Signal( SIG_DROPSHIP_DEPARTED )
+		} )
+
+		//
+		WatchForAllPlayersOnBoardEarlyDeparture( evacShip, vars )
+	}()
+}
+
+void function HandleGameOver_Thread( bool isVictory )
+{
+	if ( !GamePlayingOrSuddenDeath() )
+		return
+
+	if ( isVictory )
+		FreelanceMode_MarkMissionSuccessForGivenPlayers( GetPlayerArray() )
+
+	FreelanceMode_SetIsVictoryForAll( isVictory )
+	FreelanceMode_SetCurrentPhase( eFreelanceModePhase.GameOver, Time() )
+	SetGameState( eGameState.WinnerDetermined )
+	foreach( player in GetPlayerArray() )
+	{
+		ScreenFadeToBlackForever( player, GetWinnerDeterminedWait() )
+		player.SetInvulnerable()
+	}
+
+	while( GetGameState() < eGameState.Resolution )
+		WaitFrame()
+	WaitFrame()
+
+	foreach( player in GetPlayerArray() )
+	{
+		player.SetNoTarget( true )
+		player.FreezeControlsOnServer()
+	}
+
+	//foreach( player in GetPlayerArray() )
+	//	Remote_CallFunction_NonReplay( player, "ServerCallback_ShowDeathScreen" )
+
+	while( GetGameState() < eGameState.Postmatch )
+		WaitFrame()
+}
+
+#if DEV
+void function DEV_DropDownMode_ForceFail()
+{
+	if ( GamePlayingOrSuddenDeath() )
+		ClientMusic_PlayCustomTrackToAll( eMusicTrack.DropshipMissed )
+	thread HandleGameOver_Thread( false )
+}
+#endif // DEV
+
+#endif // SERVER
+ 

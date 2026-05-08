@@ -2015,7 +2015,7 @@ void function TropicsWildlife_InitializeNPCDependencies()
 {
 	FreelanceNPCs_Init()
 	#if SERVER
-		//NPCGarbageCollection_InitForGameMode()
+		NPCGarbageCollection_InitForGameMode()
 	#endif
 }
 

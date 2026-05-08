@@ -6,21 +6,6 @@
 
 global const string SNIPERULT_WEAPON_NAME = "mp_ability_sniper_ult" // Vantage sniper ultimate (S14+)
 
-// ======================== STRUCTS ========================
-
-global struct CancelPlayerStatesData
-{
-	bool cancelZipline = false
-	bool cancelGrapple = false
-	bool cancelPhaseTunnel = false
-	bool cancelPhaseWalk = false
-	bool cancelRevive = false
-	bool cancelCryptoDrone = false
-	bool cancelTotem = false
-	bool cancelMainOrAltHandAbility = false
-	bool cancelHuntMode = false // S22: used by firing range challenges
-	bool cancelBleedOut = false // S22: used by firing range challenges
-}
 
 // ======================== GLOBAL FUNCTION DECLARATIONS ========================
 
@@ -75,9 +60,6 @@ global function GetPlayerArrayIncludingSpectators
 // These use SERVER-only entity methods (SetHealth, SetShieldHealth, etc.)
 global function SetHealthAndShieldByPercentage
 #endif
-#if SERVER || CLIENT
-global function GetNearbyPlayers
-#endif
 
 // ======================== FUNCTION IMPLEMENTATIONS ========================
 
@@ -95,23 +77,6 @@ entity function MapNode_TakeAvailableAirdropLocation() { return null }
 // Only GetAllianceTeamsScore/SetAllianceTeamsScore remain as stubs (not part of alliance proximity file)
 int function GetAllianceTeamsScore( int alliance ) { return 0 }
 void function SetAllianceTeamsScore( int alliance, int score ) {}
-
-#if SERVER || CLIENT
-array<entity> function GetNearbyPlayers( vector pos, float maxDist )
-{
-	array<entity> players = GetPlayerArray()
-	array<entity> nearbyPlayers
-	foreach ( player in players )
-	{
-		if ( !IsAlive( player ) )
-			continue
-		if ( Distance( pos, player.GetOrigin() ) > maxDist )
-			continue
-		nearbyPlayers.append( player )
-	}
-	return nearbyPlayers
-}
-#endif
 
 // --- Shared-scope function stubs (declared without #if above) ---
 int function GetEndTimeForPlaylistInRotation( string playlistName ) { return 0 }

@@ -153,5 +153,8 @@
 	shadow_form
 	spawnkilling_detected
 	mrb_carrier
+	mirage_detected
+	castle_wall_emp
+	translocation_visual_effect
 /////////////////////////////
 //}

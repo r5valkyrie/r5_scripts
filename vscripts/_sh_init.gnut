@@ -181,7 +181,7 @@ void function SV_CL_Init()
 	Sh_Ranked_ItemRegistrationInit() //Needs to be before ItemRegistration ends
 
 	                     
-	//	Sh_ArenasRanked_ItemRegistrationInit() //Needs to be before ItemRegistration ends
+		Sh_ArenasRanked_ItemRegistrationInit() //Needs to be before ItemRegistration ends
        
 
                         
@@ -193,7 +193,7 @@ void function SV_CL_Init()
 	ShQuips_LevelInit()
 	ShSkydiveEmotes_LevelInit()
 	                         
-		//ShSkydiveEmoteProjector_LevelInit()
+		ShSkydiveEmoteProjector_LevelInit()
        
 	ShStickers_LevelInit()
 	ShMythics_LevelInit()
@@ -204,7 +204,7 @@ void function SV_CL_Init()
 	ShBattlepassPurchasableXP_LevelInit()
 	Sh_Boosts_Init()
 	                       
-		//ShEventAbilities_Init()
+		ShEventAbilities_Init()
 		ShPassiveLootHighlight_Init()
 		//ShPassiveKnockAdrenaline_Init()
 		//ShPassiveSquadwipeBoost_Init()
@@ -212,10 +212,10 @@ void function SV_CL_Init()
 	ShMusic_LevelInit()
 	ShBattlePass_LevelInit()
                  
-	//ShCups_LevelInit()
+	ShCups_LevelInit()
                       
                      
-	//ShRankedRumble_Init()
+	ShRankedRumble_Init()
                           
 	                   
 	VendingMachine_LevelInit()
@@ -263,11 +263,11 @@ void function SV_CL_Init()
 	ShStats_LevelInit()
 	ShChallenges_LevelInit_PostStats()
                  
-		//ShCups_LevelInit_PostStats()
+		ShCups_LevelInit_PostStats()
                       
 	Sh_Ranked_Init() //Needs to be after Stats because some of the initalization logic in persistence needs stats to be initialized.
 	                     
-		//Sh_ArenasRanked_Init() //Needs to be after Stats because some of the initalization logic in persistence needs stats to be initialized.
+		Sh_ArenasRanked_Init() //Needs to be after Stats because some of the initalization logic in persistence needs stats to be initialized.
        
 	ShDoors_Init()
 	PlayerWaypoints_Init()
@@ -352,13 +352,13 @@ void function SV_CL_Init()
                    
                           
                          
-		//ShSpectreChatter_MP_Init()
+		ShSpectreChatter_MP_Init()
 
 	ShLootBin_Init()
 	ShFlyers_Init()
 	GamemodeUtility_Init()
 
-	//ShLootCreeps_Init()
+	ShLootCreeps_Init()
 
                          
                          
@@ -410,7 +410,7 @@ void function SV_CL_Init()
                         
        
 
-	//Nessie_Init()
+	Nessie_Init()
 	
 	                             
 		ShAbilityShadowZombie_Init()
@@ -514,7 +514,7 @@ void function SV_CL_Init()
        
 
 	                      
-		//SpectreShacks_MapInit()
+		SpectreShacks_MapInit()
        
 
 	//NET_TraceRoute_Init()
@@ -575,8 +575,8 @@ void function SV_CL_Init()
                          
 
 
-	//Odl_SmokeTestInit()
-	//SkinMetrics_Init()
+	Odl_SmokeTestInit()
+	SkinMetrics_Init()
 
 	//ThunderdomeSkull_Init()
 
@@ -690,7 +690,7 @@ void function Server_Init()
 
 	HoverTank_Init()
 	ThreatTracker_Init()
-	//HealingFXRequest_Init()
+	HealingFXRequest_Init()
 	Utility_MP_Init()
 	//Stats_Init()
 	MenuCallbacks_Init()
@@ -795,14 +795,14 @@ void function Server_Init()
 	
 	LootHelper_Init()
 
-	//ShEpilogue_Init()
+	ShEpilogue_Init()
 
                                      
                          
        
 
 	                 
-		//SvCups_Init()
+		SvCups_Init()
                        
 
                 
@@ -857,7 +857,7 @@ void function Client_Init()
 	CLGoblinDropship_Init()
 	ClPlayer_Init()
 	ClMainHud_Init()
-	//ClKillReplayFX_Init()
+	ClKillReplayFX_Init()
 	ClWeaponStatus_Init()
 	ClCustomUsePrompt_Init()
 	ClScreenfade_Init()
@@ -891,7 +891,7 @@ void function Client_Init()
 	ClGameState_Init()
 	ClRingWarning_Init()
 
-	//CLUI_Ranked_Init()
+	CLUI_Ranked_Init()
 
 	ClMinimap_Init()
 	Cl_FullmapInit()
@@ -903,10 +903,10 @@ void function Client_Init()
                    
                           
                          
-		//Tasklist_ClientInit()
+		Tasklist_ClientInit()
 	ClRadialMenu_Init()
 	CLTrackingVision_Init()
-	//CLPassiveAdrenaline_Init()
+	CLPassiveAdrenaline_Init()
                  
                           
        
@@ -933,11 +933,11 @@ void function Client_Init()
 		ClRisingWalls_Init()
        
 
-	//ShEpilogue_Init()
+	ShEpilogue_Init()
 
 	CL_Staging_Area_EE_Init()
 
-	//ReleaseAllTempMutes()
+	ReleaseAllTempMutes()
 } // end Client_Init()
 #endif // CLIENT
 
@@ -983,7 +983,7 @@ void function Shared_Lobby_Init()
 	ShItems_LevelInit_Begin()
 	ShGRX_LevelInit()
 	#if SERVER
-		//SV_RankedGRX_Init()
+		SV_RankedGRX_Init()
 	#endif
 	Entitlements_LevelInit()
 	ShLoadouts_LevelInit_Begin()
@@ -1037,7 +1037,7 @@ void function Shared_Lobby_Init()
 	StoryChallengeEvents_Init()
 	Sh_Ranked_ItemRegistrationInit() //Needs to be before ItemRegistration ends
 	                     
-		//Sh_ArenasRanked_ItemRegistrationInit() //Needs to be before ItemRegistration ends
+		Sh_ArenasRanked_ItemRegistrationInit() //Needs to be before ItemRegistration ends
        
 	ShWeapons_LevelInit()
 	ShWeaponCosmetics_LevelInit()
@@ -1052,16 +1052,16 @@ void function Shared_Lobby_Init()
 	ShBattlepassPresaleVoucher_LevelInit()
 	ShBattlepassPurchasableXP_LevelInit()
 	                       
-		//ShEventAbilities_Init()
+		ShEventAbilities_Init()
        
 	Sh_Boosts_Init()
 	ShMusic_LevelInit()
 	ShBattlePass_LevelInit()
                  
-	//ShCups_LevelInit()
+	ShCups_LevelInit()
                       
                      
-	//ShRankedRumble_Init()
+	ShRankedRumble_Init()
                           
              
              
@@ -1098,14 +1098,14 @@ void function Shared_Lobby_Init()
 	ShStats_LevelInit()
 	ShChallenges_LevelInit_PostStats()
                  
-		//ShCups_LevelInit_PostStats()
+		ShCups_LevelInit_PostStats()
                       
 	Sh_Ranked_Init() //Needs to be after Stats because some of the initalization logic in persistence needs stats to be initialized.
 	#if CLIENT
-		//CLUI_Ranked_Init()
+		CLUI_Ranked_Init()
 	#endif
 	                     
-		//Sh_ArenasRanked_Init() //Needs to be after Stats because some of the initalization logic in persistence needs stats to be initialized.
+		Sh_ArenasRanked_Init() //Needs to be after Stats because some of the initalization logic in persistence needs stats to be initialized.
        
 
 	//SvDevStats_LevelInit()
@@ -1125,7 +1125,7 @@ void function Shared_Lobby_Init()
 		Client_Lobby_Init()
 	#endif
 
-	//MpWeaponEmoteProjector_Init()
+	MpWeaponEmoteProjector_Init()
 	ShEmotes_Lobby_Init()
                        
                            

@@ -303,8 +303,8 @@ void function RemoteFunctions_Init_Begin()
 	int coreFunctionCount = SetupRemoteFuncAliases()
 	
 	// Enable external registration phase for mods
-	file.allowExternalRegistration = true
-	printw( "[REMOTE] External remote function registration enabled. Mods can now register functions." )
+	file.allowExternalRegistration = false
+	//printw( "[REMOTE] External remote function registration enabled. Mods can now register functions." )
 	
 	// Initial registration with core functions only - will be updated in Init_Finish
 	int functionsMax = coreFunctionCount + 100  // Reserve space for external functions
@@ -632,7 +632,6 @@ void function RemoteFunctions_Init_Begin()
 	Waypoints_RegisterNetworking() //2 client, registered cleanly with enum max.
 	RespawnBeacons_RegisterNetworking()
 
-	Gamemode_ShadowSquad_RegisterNetworking()
 	ShArenas_RegisterNetworking()
 
 	MapZones_RegisterNetworking() //1 func

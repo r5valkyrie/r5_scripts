@@ -7,79 +7,88 @@ global function GetGrenadeThrowSound_3p
 global function GetGrenadeDeploySound_3p
 global function GetGrenadeProjectileSound
 global function Grenade_OnWeaponToss
-global function Grenade_OnWeaponReady_Halo
 
-#if CLIENT
-	global function Grenade_SetLastActive
-#endif
+             
+                                                                                                          
+                      
 
 const DEFAULT_FUSE_TIME = 2.25
 global const float DEFAULT_MAX_COOK_TIME = 99999.9 //Longer than an entire day. Really just an arbitrarily large number
 
-global function Grenade_OnWeaponTossReleaseAnimEvent_Halo
 global function Grenade_OnWeaponTossReleaseAnimEvent
 global function Grenade_OnWeaponTossCancelDrop
 global function Grenade_OnWeaponDeactivate
 global function Grenade_OnWeaponTossPrep
 global function Grenade_OnProjectileIgnite
+global function Grenade_UpdateStats
+global function Grenade_OnWeaponActivate
+global function Grenade_OnProjectileCollision
 
-global function OnProjectileCollision_weapon_impulse_grenade
 #if SERVER
-	global function Grenade_OnPlayerNPCTossGrenade_Common
-	global function ProxMine_Triggered
-	global function EnableTrapWarningSound
-	global function AddToProximityTargets
-	global function ProximityMineThink
-
-	global function AddToTrackedEnts_Level
-	global function CleanupLevelTrackedEnts
-	global function GetTrackedEnts_Level
+global function Grenade_OnPlayerNPCTossGrenade_Common
+              
+                                       
+                                  
+                                     
+      
+global function AddToProximityTargets
 #endif
 global function Grenade_Init
 global function Grenade_Launch
 
+                                          
+          
+                                      
+                                         
+      
+                                                
+
 const EMP_MAGNETIC_FORCE = 1600
 const MAG_FLIGHT_SFX_LOOP = "Explo_MGL_MagneticAttract"
-const float HALO_GRENADE_COOLDOWN = 0.85
+
 global const vector GRENADE_ANG_VEL_DEFAULT = <10, -1600, 10>
 global const vector GRENADE_ANG_VEL_DISC = <0, 30, -2200>
 
 //Proximity Mine Settings
-global const PROXIMITY_MINE_EXPLOSION_DELAY = 1.2
-global const PROXIMITY_MINE_ARMING_DELAY = 1.0
+                                              
+                                                          
+                                              
+      
 const TRIGGERED_ALARM_SFX = "Weapon_ProximityMine_CloseWarning"
 global const THERMITE_GRENADE_FX = $"P_grenade_thermite"
 global const CLUSTER_BASE_FX = $"P_wpn_meteor_exp"
+global const string FUNCNAME_GRENADE_TOGGLE_PLACEABLE = "Grenade_TogglePlaceable"
+global const string PLACEABLE_MOD_NAME = "placeable"
 
 global const ProximityTargetClassnames = {
-	[ "npc_soldier_shield" ]	= true,
-	[ "npc_soldier_heavy" ] 	= true,
-	[ "npc_soldier" ] 			= true,
-	[ "npc_spectre" ] 			= true,
-	[ "npc_drone" ] 			= true,
-	[ "npc_titan" ] 			= true,
-	[ "npc_marvin" ] 			= true,
-	[ "player" ] 				= true,
-	[ "npc_turret_mega" ]		= true,
-	[ "npc_turret_sentry" ]		= true,
-	[ "npc_dropship" ]			= true,
+	[ "npc_soldier_shield" ] = true,
+	[ "npc_soldier_heavy" ] = true,
+	[ "npc_soldier" ] = true,
+	[ "npc_spectre" ] = true,
+	[ "npc_drone" ] = true,
+	[ "npc_titan" ] = true,
+	[ "npc_marvin" ] = true,
+	[ "player" ] = true,
+	[ "npc_turret_mega" ] = true,
+	[ "npc_turret_sentry" ] = true,
+	[ "npc_dropship" ] = true,
 }
 
 const SOLDIER_ARC_STUN_ANIMS = [
-		"pt_react_ARC_fall",
-		"pt_react_ARC_kneefall",
-		"pt_react_ARC_sidefall",
-		"pt_react_ARC_slowfall",
-		"pt_react_ARC_scream",
-		"pt_react_ARC_stumble_F",
-		"pt_react_ARC_stumble_R" ]
+	"pt_react_ARC_fall",
+	"pt_react_ARC_kneefall",
+	"pt_react_ARC_sidefall",
+	"pt_react_ARC_slowfall",
+	"pt_react_ARC_scream",
+	"pt_react_ARC_stumble_F",
+	"pt_react_ARC_stumble_R" ]
 
 struct
 {
-	#if CLIENT
-		entity lastWeapon
-	#endif
-
+               
+                               
+                                
+       
 } file
 
 void function Grenade_FileInit()
@@ -88,9 +97,12 @@ void function Grenade_FileInit()
 
 	RegisterSignal( "ThrowGrenade" )
 	RegisterSignal( "WeaponDeactivateEvent" )
-	RegisterSignal(	"OnEMPPilotHit" )
+	RegisterSignal( "OnEMPPilotHit" )
 	RegisterSignal( "StopGrenadeClientEffects" )
 	RegisterSignal( "DisableTrapWarningSound" )
+               
+                                        
+       
 
 	//Globalize( MagneticFlight )
 
@@ -101,19 +113,20 @@ void function Grenade_FileInit()
 	#if SERVER
 		level._empForcedCallbacks <- {}
 		level._proximityTargetArrayID <- CreateScriptManagedEntArray()
-		level._trackedEntsLevelArrayID <- CreateScriptManagedEntArray()
 
-	    //AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_proximity_mine, ProxMine_Triggered )
 		AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_thermite_grenade, Thermite_DamagedPlayerOrNPC )
 		AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_frag_grenade, Frag_DamagedPlayerOrNPC )
 
-		level._empForcedCallbacks[eDamageSourceId.mp_weapon_grenade_emp] <- true
-		//level._empForcedCallbacks[eDamageSourceId.mp_weapon_arc_blade] <- true
-		//level._empForcedCallbacks[eDamageSourceId.mp_weapon_proximity_mine] <- true
+		level._empForcedCallbacks[eDamageSourceId.mp_ability_crypto_drone_emp] <- true
 
 		PrecacheParticleSystem( THERMITE_GRENADE_FX )
 	#endif
+
+               
+                                                                   
+       
 }
+
 
 void function Grenade_OnWeaponTossPrep( entity weapon, WeaponTossPrepParams prepParams )
 {
@@ -133,24 +146,40 @@ void function Grenade_OnWeaponTossPrep( entity weapon, WeaponTossPrepParams prep
 	#endif
 }
 
-#if CLIENT
-	void function Grenade_SetLastActive( entity weapon )
-	{
-		file.lastWeapon = weapon
-	}
-#endif
+
+void function Grenade_OnWeaponActivate( entity weapon )
+{
+               
+                                                    
+         
+
+                                  
+                                                                                                   
+         
+
+                                                                                
+                                      
+       
+}
 
 void function Grenade_OnWeaponDeactivate( entity weapon )
 {
 	weapon.Signal( "WeaponDeactivateEvent" )
 }
 
+
 void function Grenade_OnProjectileIgnite( entity weapon )
 {
-	#if DEVELOPER
-		printt( "Grenade_OnProjectileIgnite() callback." )
+	printt( "Grenade_OnProjectileIgnite() callback." )
+}
+
+void function Grenade_UpdateStats( entity projectile )
+{
+	#if SERVER
+		StatsHook_GrenadeDistanceThrown( projectile.GetOwner(), projectile )
 	#endif
 }
+
 
 void function Grenade_Init( entity grenade, entity weapon )
 {
@@ -192,114 +221,25 @@ void function Grenade_Init( entity grenade, entity weapon )
 		grenade.s.originalOwner <- weaponOwner  // for later in damage callbacks, to skip damage vs friendlies but not for og owner or his enemies
 }
 
-void function Grenade_OnWeaponReady_Halo( entity weapon )
-{
-	entity weaponOwner = weapon.GetWeaponOwner()
-	var weaponName = weapon.GetWeaponClassName()
-	string weaponNameString
-
-	if( !IsValid( weaponOwner ) )
-		return
-
-	if( weaponOwner.ContextAction_IsActive() || weaponOwner.PlayerMelee_IsAttackActive() )
-	{
-		#if SERVER
-			entity latestDeployedWeapon      = weaponOwner.GetLatestPrimaryWeapon( eActiveInventorySlot.mainHand )
-			weaponOwner.SetActiveWeaponByName( eActiveInventorySlot.mainHand, latestDeployedWeapon.GetWeaponClassName() )
-		#endif
-
-		return
-	}
-
-	#if DEVELOPER
-		Warning( "Halo nade On Activate. Next Weapon Allowed Attack Time: " + weapon.GetNextAttackAllowedTime() + " - Current Time: " + Time() )
-	#endif
-	if( weaponName != null )
-		weaponNameString = expect string( weaponName )
-
-	if( !SURVIVAL_GetAllPlayerOrdnance( weaponOwner ).contains( weaponNameString ) )
-	{
-		// #if CLIENT
-			// SwitchToLastUsedWeapon( weaponOwner )
-		// #endif
-		#if SERVER
-			entity latestDeployedWeapon      = weaponOwner.GetLatestPrimaryWeapon( eActiveInventorySlot.mainHand )
-			weaponOwner.SetActiveWeaponByName( eActiveInventorySlot.mainHand, latestDeployedWeapon.GetWeaponClassName() )
-
-			weaponOwner.TakeWeaponByEnt( weaponOwner.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN ) )
-		#endif
-		return
-	}
-
-	if( Time() < weaponOwner.p.haloGrenadeAttackTime + HALO_GRENADE_COOLDOWN )
-	{
-		#if DEVELOPER
-			Warning( "In Cooldown " + weapon.IsInCooldown() + " - " + ( weaponOwner.p.haloGrenadeAttackTime - Time() ) )
-		#endif
-
-		// #if CLIENT
-			// SwitchToLastUsedWeapon( weaponOwner ) //From client sucks
-		// #endif
-		#if SERVER
-			entity latestDeployedWeapon      = weaponOwner.GetLatestPrimaryWeapon( eActiveInventorySlot.mainHand )
-			weaponOwner.SetActiveWeaponByName( eActiveInventorySlot.mainHand, latestDeployedWeapon.GetWeaponClassName() )
-		#endif
-
-		return
-	}
-
-	// weapon.StartCustomActivity( "ACT_VM_TOSS", WCAF_NONE )
-
-	// #if SERVER
-	// entity vm = weapon.GetWeaponViewmodel()
-
-	// try{
-	// vm.Anim_PlayOnly("animseq/weapons/grenades/ptpov_gibraltar_beacon/beacon_toss_seq.rseq")
-	// }catch(e420){}
-	// #endif
-
-	weaponOwner.p.haloGrenadeAttackTime = Time()
-	weapon.OverrideNextAttackTime( Time() + HALO_GRENADE_COOLDOWN )
-	weapon.SetNextAttackAllowedTime( Time() + HALO_GRENADE_COOLDOWN )
-
-	WeaponPrimaryAttackParams attackParams
-
-	attackParams.dir = weaponOwner.GetViewVector()
-	attackParams.pos = weaponOwner.UseableEyePosition( weaponOwner )
-
-	bool bFirstTimePredicted = false
-
-	#if CLIENT
-		if( InPrediction() && IsFirstTimePredicted() )
-			bFirstTimePredicted = true
-	#endif
-
-	attackParams.firstTimePredicted = bFirstTimePredicted
-
-	float directionScale = 1.0
-	Grenade_OnWeaponToss_Halo( weapon, attackParams, directionScale )
-
-	//Not required anymore since grenade are being cleaned up in AddCallback_OnPlayerUsedOffhandWeapon( SURVIVAL_RemoveOffhandFromInventory ) _survival_loot.gnut which is executed in PlayerUsedOffhand. Cafe
-	//SURVIVAL_RemoveFromPlayerInventory( weaponOwner, weaponNameString, 1 )
-}
 
 int function Grenade_OnWeaponToss( entity weapon, WeaponPrimaryAttackParams attackParams, float directionScale )
 {
 	weapon.EmitWeaponSound_1p3p( GetGrenadeThrowSound_1p( weapon ), GetGrenadeThrowSound_3p( weapon ) )
-	#if SERVER
-		Grenadier_MaybePlayFuseThrowSounds( weapon )
-	#endif
-	bool projectilePredicted = PROJECTILE_PREDICTED
+	bool projectilePredicted      = PROJECTILE_PREDICTED
 	bool projectileLagCompensated = PROJECTILE_LAG_COMPENSATED
-#if SERVER
-	if ( weapon.IsForceReleaseFromServer() )
-	{
-		projectilePredicted = false
-		projectileLagCompensated = false
-	}
-#endif
-	entity grenade = Grenade_Launch( weapon, attackParams.pos, (attackParams.dir * directionScale), projectilePredicted, projectileLagCompensated )
+	#if SERVER
+		if ( weapon.IsForceReleaseFromServer() )
+		{
+			projectilePredicted = false
+			projectileLagCompensated = false
+		}
+	#endif
+	entity grenade     = Grenade_Launch( weapon, attackParams.pos, (attackParams.dir * directionScale), projectilePredicted, projectileLagCompensated )
 	entity weaponOwner = weapon.GetWeaponOwner()
+
+	if ( !IsValid( weaponOwner ) )
+		return weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
+
 	weaponOwner.Signal( "ThrowGrenade" )
 
 	PlayerUsedOffhand( weaponOwner, weapon, true, grenade ) // intentionally here and in Hack_DropGrenadeOnDeath - accurate for when cooldown actually begins
@@ -307,265 +247,167 @@ int function Grenade_OnWeaponToss( entity weapon, WeaponPrimaryAttackParams atta
 	if ( IsValid( grenade ) )
 		grenade.proj.savedDir = weaponOwner.GetViewForward()
 
-#if SERVER
-
-	#if BATTLECHATTER_ENABLED
+	#if SERVER
 		TryPlayWeaponBattleChatterLine( weaponOwner, weapon )
 	#endif
 
-#endif
-
-	return weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
-}
-
-int function Grenade_OnWeaponToss_Halo( entity weapon, WeaponPrimaryAttackParams attackParams, float directionScale )
-{
-	weapon.EmitWeaponSound_1p3p( GetGrenadeThrowSound_1p( weapon ), GetGrenadeThrowSound_3p( weapon ) )
-	bool projectilePredicted = false //PROJECTILE_PREDICTED
-	bool projectileLagCompensated = false //PROJECTILE_LAG_COMPENSATED
-#if SERVER
-	if ( weapon.IsForceReleaseFromServer() )
-	{
-		projectilePredicted = false
-		projectileLagCompensated = false
-	}
-#endif
-	entity grenade = Grenade_Launch( weapon, attackParams.pos, (attackParams.dir * directionScale), projectilePredicted, projectileLagCompensated )
-	entity weaponOwner = weapon.GetWeaponOwner()
-	weaponOwner.Signal( "ThrowGrenade" )
-
-	PlayerUsedOffhand( weaponOwner, weapon, true, grenade ) // intentionally here and in Hack_DropGrenadeOnDeath - accurate for when cooldown actually begins
-
-	if ( IsValid( grenade ) )
-		grenade.proj.savedDir = weaponOwner.GetViewForward()
-
-#if SERVER
-
-	// #if BATTLECHATTER_ENABLED
-		// TryPlayWeaponBattleChatterLine( weaponOwner, weapon )
-	// #endif
-#endif
-
-// #if CLIENT
-	// SwitchToLastUsedWeapon( weaponOwner )
-// #endif
-
 	#if SERVER
-	entity latestDeployedWeapon      = weaponOwner.GetLatestPrimaryWeapon( eActiveInventorySlot.mainHand )
-	weaponOwner.SetActiveWeaponByName( eActiveInventorySlot.mainHand, latestDeployedWeapon.GetWeaponClassName() )
+                                            
+                                                  
+                                                  
 
-	thread function () : ( weaponOwner, weapon ) //Don't allow weapon activation while in cooldown. Cafe
-	{
-		EndSignal( weapon, "OnDestroy" )
-		weapon.AllowUse( false )
-		wait HALO_GRENADE_COOLDOWN + 0.1
-		weapon.AllowUse( true )
-	}()
-	// weaponOwner.TakeWeaponByEnt( weaponOwner.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN ) )
+		                      
+		if ( IsValid( grenade ) && ( weapon.GetWeaponClassName() == "mp_weapon_throwingknife" ))
+		{
+			grenade.SetIgnorePredictedTriggerTypes( TT_JUMP_PAD | TT_GRAVITY_LIFT | TT_BLACKHOLE )
+		}
+        
+		LiveAPI_SendOnePlayerLinkedEntityEvent( eLiveAPI_EventTypes.grenadeThrown, weaponOwner, weapon )
 	#endif
 
+	#if SERVER
+	if ( weaponOwner.IsPlayer() && PlayerHasPassive( weaponOwner, ePassives.PAS_FUSE ) )
+	{
+		array<float> recentTimes = weaponOwner.p.recentGrenadeThrowTimes
+		array<float> validTimes
+		float maxTimeWindow = 10
+		float currentTime = Time()
+		float oldestTimeWindow = currentTime - maxTimeWindow
+
+		foreach ( float time in recentTimes )
+		{
+			if ( time >= oldestTimeWindow )
+			{
+				validTimes.append( time )
+			}
+		}
+
+		validTimes.append( currentTime )
+
+		if ( validTimes.len() >= 5 )
+		{
+			StatsHook_FuseGrenadeBarrage( weaponOwner )
+			validTimes.clear()
+		}
+
+		weaponOwner.p.recentGrenadeThrowTimes = validTimes
+	}
+	#endif // SERVER
 
 	return weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
 }
 
-#if SERVER
-void function Grenadier_MaybePlayFuseThrowSounds( entity weapon )//Shitty hack fix, throw sounds do not work with weapon mods? - Kral
-{
-	if ( !IsValid( weapon ) )
-		return
-
-	entity owner = weapon.GetWeaponOwner()
-	if ( !IsValid( owner ) || !owner.IsPlayer() )
-		return
-
-	if ( !PlayerHasPassive( owner, ePassives.PAS_FUSE ) )
-		return
-
-	array mods = owner.GetExtraWeaponMods()
-	if ( !mods.contains( GRENADIER_PASSIVE_WEAPON_MOD ) )
-		return
-
-	switch ( weapon.GetWeaponClassName() )
-	{
-		case "mp_weapon_thermite_grenade":
-			Grenadier_PlayFuseThrowSounds( owner, "Fuse_Ord_Launcher_Throw_Thermite_1P", "Fuse_Ord_Launcher_Throw_Thermite_3P" )
-			break
-
-		case "mp_weapon_frag_grenade":
-			Grenadier_PlayFuseThrowSounds( owner, "Fuse_Ord_Launcher_Throw_FragGrenade_1P", "Fuse_Ord_Launcher_Throw_FragGrenade_3P" )
-			break
-
-		case "mp_weapon_grenade_emp":
-			Grenadier_PlayFuseThrowSounds( owner, "Fuse_Ord_Launcher_Throw_ArcStar_1P", "Fuse_Ord_Launcher_Throw_ArcStar_3P" )
-			break
-	}
-}
-
-void function Grenadier_PlayFuseThrowSounds( entity owner, string sound1p, string sound3p )
-{
-	if ( sound1p != "" )
-		EmitSoundOnEntityOnlyToPlayer( owner, owner, sound1p )
-
-	if ( sound3p != "" )
-		EmitSoundOnEntityExceptToPlayer( owner, owner, sound3p )
-}
-#endif
-
-
-#if CLIENT
-void function SwitchToLastUsedWeapon( entity weaponOwner )
-{
-	if( IsValid( file.lastWeapon ) )
-	{
-		if( weaponOwner == file.lastWeapon.GetWeaponOwner() )
-		{
-			int slot = GetSlotForWeapon( weaponOwner, file.lastWeapon )
-
-			string cmd
-			switch( slot )
-			{
-				case WEAPON_INVENTORY_SLOT_PRIMARY_0:
-					cmd = "weaponSelectPrimary0"
-				break
-
-				case WEAPON_INVENTORY_SLOT_PRIMARY_1:
-					cmd = "weaponSelectPrimary1"
-				break
-
-				case WEAPON_INVENTORY_SLOT_PRIMARY_2:
-					cmd = "weaponSelectPrimary2"
-				break
-
-				default:
-					cmd = "weaponSelectPrimary1"
-				break
-			}
-
-			weaponOwner.ClientCommand( cmd )
-		}
-	}
-}
-#endif
-
-void function OnProjectileCollision_weapon_impulse_grenade( entity projectile, vector pos, vector normal, entity hitEnt, int hitbox, bool isCritical )
-{
-	entity player = projectile.GetOwner()
-	entity weapon = projectile.GetWeaponSource()
-
-	if ( IsValid( hitEnt ) && hitEnt.IsPlayer() )
-		return
-
-	DeployableCollisionParams collisionParams
-
-
-	collisionParams.pos = pos
-
-
-	collisionParams.normal = normal
-
-
-	collisionParams.hitEnt = hitEnt
-
-
-	collisionParams.hitBox = hitbox
-
-
-	bool result = PlantStickyEntityOnWorldThatBouncesOffWalls( projectile, collisionParams, 0.7 )
-
-	// #if SERVER
-		// thread ArcCookSound( projectile )
-	// #endif
-
-	if( result && IsValid( projectile ) && !projectile.GrenadeHasIgnited() )
-	{
-		thread function () : ( player, projectile, weapon )
-		{
-			float radius = projectile.GetDamageRadius()
-			vector origin = projectile.GetWorldSpaceCenter()
-
-			wait 1
-
-			if( IsValid( projectile ) && !projectile.GrenadeHasIgnited() )
-			{
-				projectile.GrenadeIgnite()
-			}
-
-			foreach( sPlayer in GetPlayerArray() )
-			{
-				#if DEVELOPER
-					printt( sPlayer, Distance( origin, sPlayer.GetOrigin() ) )
-				#endif
-
-				if( Distance( origin, sPlayer.GetOrigin() ) < radius )
-				{
-					#if DEVELOPER
-						printt( "player should knockback" )
-					#endif
-
-					#if SERVER
-						thread PushPlayerApart( sPlayer, origin, 1500 )
-					#endif
-				}
-			}
-		}()
-	}
-}
-
-#if SERVER
-void function PushPlayerApart( entity target, vector dmgOrigin, float speed )
-{
-	EndSignal( target, "OnDeath" )
-	EndSignal( target, "OnDestroy" )
-
-	array<string> attachments = [ "vent_left", "vent_right" ]
-	array<entity> fxs
-	foreach ( attachment in attachments )
-	{
-		int enemyID    = GetParticleSystemIndex( $"P_enemy_jump_jet_ON_trails" )
-
-		if( target.LookupAttachment( attachment ) == 0 )
-			continue
-		entity fx = StartParticleEffectOnEntity_ReturnEntity( target, enemyID, FX_PATTACH_POINT_FOLLOW, target.LookupAttachment( attachment ) )
-		fx.SetOwner( target )
-		fx.kv.VisibilityFlags = (ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY)
-
-		fxs.append( fx )
-	}
-
-	OnThreadEnd(
-		function() : ( fxs )
-		{
-			foreach( fx in fxs )
-				if( IsValid( fx ) )
-					fx.Destroy()
-		}
-	)
-
-	vector dif = Normalize( target.GetOrigin() - dmgOrigin )
-	dif *= speed
-	vector result = dif
-	result.z = max( 800, fabs( dif.z ) )
-	target.SetVelocity( result )
-
-	WaitFrame()
-
-	while( IsValid( target ) && !target.IsOnGround() )
-		WaitFrame()
-
-}
-#endif
 
 var function Grenade_OnWeaponTossReleaseAnimEvent( entity weapon, WeaponPrimaryAttackParams attackParams )
 {
+               
+                                 
+                                                                                        
+  
+                                                   
+   
+                                             
+                                          
+       
+                                           
+   
+  
+       
 	var result = Grenade_OnWeaponToss( weapon, attackParams, 1.0 )
 	return result
 }
 
-var function Grenade_OnWeaponTossReleaseAnimEvent_Halo( entity weapon, WeaponPrimaryAttackParams attackParams )
-{
-	var result = Grenade_OnWeaponToss_Halo( weapon, attackParams, 1.0 )
-	return result
-}
+                                          
+          
+                                                                               
+ 
+                                                                                  
+    
+                                                 
+     
+                                                 
+         
+     
+    
+
+                                   
+                                        
+                                         
+                                                  
+ 
+                
+                                                
+
+                                          
+          
+                                                                         
+ 
+                                         
+
+                                                    
+  
+                                                 
+     
+                                                
+      
+                              
+
+                                 
+                                                                                                                                             
+      
+     
+  
+ 
+                
+                                                
+
+                                          
+          
+                                                                                  
+ 
+                                                          
+       
+ 
+                
+                                                
+
+             
+                                                                                  
+                                                                                                                         
+ 
+                                                                              
+              
+ 
+
+                                                                                                                               
+ 
+                                                                                                    
+                                                     
+                                                           
+           
+                                          
+   
+                              
+                                   
+   
+       
+
+                                             
+                                         
+  
+                                                                                                              
+                                                                                                                                                        
+  
+                                     
+
+
+           
+                                                       
+       
+
+                                                              
+ 
+                      
 
 var function Grenade_OnWeaponTossCancelDrop( entity weapon, WeaponPrimaryAttackParams attackParams )
 {
@@ -588,12 +430,12 @@ entity function Grenade_Launch( entity weapon, vector attackPos, vector throwVel
 		weapon.w.startChargeTime = currentTime
 
 	// Note that fuse time of 0 means the grenade won't explode on its own, instead it depends on OnProjectileCollision() functions to be defined and explode there.
-	float fuseTime = weapon.GetGrenadeFuseTime()
+	float fuseTime         = weapon.GetGrenadeFuseTime()
 	bool startFuseOnLaunch = bool( weapon.GetWeaponInfoFileKeyField( "start_fuse_on_launch" ) )
 
 	if ( fuseTime > 0 && !startFuseOnLaunch )
 	{
-		fuseTime = fuseTime - ( currentTime - weapon.w.startChargeTime )
+		fuseTime = fuseTime - (currentTime - weapon.w.startChargeTime)
 		if ( fuseTime <= 0 )
 			fuseTime = 0.001
 	}
@@ -632,7 +474,6 @@ entity function Grenade_Launch( entity weapon, vector attackPos, vector throwVel
 				frag.RemoveFromAllRealms()
 				frag.AddToOtherEntitysRealms( owner )
 			}
-			AddToTrackedEnts( owner, frag )
 		}
 	#endif
 
@@ -640,7 +481,7 @@ entity function Grenade_Launch( entity weapon, vector attackPos, vector throwVel
 	{
 		Assert( !frag.IsMarkedForDeletion(), "Frag before .SetAngles() is marked for deletion." )
 
-		frag.SetAngles( <8,0,0> )  // pitch the disc slightly for more visible flight
+		frag.SetAngles( <8, 0, 0> )  // pitch the disc slightly for more visible flight
 
 		if ( frag.IsMarkedForDeletion() )
 		{
@@ -655,12 +496,11 @@ entity function Grenade_Launch( entity weapon, vector attackPos, vector throwVel
 	return frag
 }
 
+
 void function Grenade_OnPlayerNPCTossGrenade_Common( entity weapon, entity frag )
 {
 	Grenade_Init( frag, weapon )
 	#if SERVER
-		thread TrapExplodeOnDamage( frag, 20, 0.0, 0.0 )
-
 		string projectileSound = GetGrenadeProjectileSound( weapon )
 		if ( projectileSound != "" )
 			EmitSoundOnEntity( frag, projectileSound )
@@ -670,7 +510,8 @@ void function Grenade_OnPlayerNPCTossGrenade_Common( entity weapon, entity frag 
 		frag.InitMagnetic( EMP_MAGNETIC_FORCE, MAG_FLIGHT_SFX_LOOP )
 }
 
-struct CookGrenadeStruct //Really just a convenience struct so we can read the changed value of a bool in an OnThreadEnd
+struct CookGrenadeStruct
+//Really just a convenience struct so we can read the changed value of a bool in an OnThreadEnd
 {
 	bool shouldOverrideFuseTime = false
 }
@@ -705,7 +546,7 @@ void function HACK_CookGrenade( entity weapon, entity weaponOwner )
 		}
 	)*/
 
-	wait( maxCookTime )
+	wait(maxCookTime)
 
 	if ( !IsValid( weapon.GetWeaponOwner() ) )
 		return
@@ -735,23 +576,24 @@ void function HACK_DropGrenadeOnDeath( entity weapon, entity weaponOwner )
 	if ( !IsValid( weaponOwner ) || !IsValid( weapon ) || IsAlive( weaponOwner ) )
 		return
 
-	float elapsedTime = Time() - weapon.w.startChargeTime
+	float elapsedTime  = Time() - weapon.w.startChargeTime
 	float baseFuseTime = weapon.GetGrenadeFuseTime()
-	float fuseDelta = (baseFuseTime - elapsedTime)
+	float fuseDelta    = (baseFuseTime - elapsedTime)
 
 	if ( (baseFuseTime == 0.0) || (fuseDelta > -0.1) )
 	{
 		float forwardScale = weapon.GetWeaponSettingFloat( eWeaponVar.grenade_death_drop_velocity_scale )
-		vector velocity = weaponOwner.GetForwardVector() * forwardScale
+		vector velocity    = weaponOwner.GetForwardVector() * forwardScale
 		velocity.z += weapon.GetWeaponSettingFloat( eWeaponVar.grenade_death_drop_velocity_extraUp )
-		vector angularVelocity = <0,0,0>
-		float fuseTime = baseFuseTime ? baseFuseTime - elapsedTime : baseFuseTime
+		vector angularVelocity = <0, 0, 0>
+		float fuseTime         = baseFuseTime != 0 ? baseFuseTime - elapsedTime : baseFuseTime
 
 		if ( weapon.GetWeaponPrimaryClipCountMax() > 0 )
 		{
 			int primaryClipCount = weapon.GetWeaponPrimaryClipCount()
-			int ammoPerShot = weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
-			weapon.SetWeaponPrimaryClipCountAbsolute( maxint( 0, primaryClipCount - ammoPerShot ) )
+			int ammoPerShot      = weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
+			int remainingAmmo = primaryClipCount - ammoPerShot
+			weapon.SetWeaponPrimaryClipCountAbsolute( maxint( 0, remainingAmmo ) )
 		}
 
 		PlayerUsedOffhand( weaponOwner, weapon ) // intentionally here and in ReleaseAnimEvent - for cases where grenade is dropped on death
@@ -762,42 +604,6 @@ void function HACK_DropGrenadeOnDeath( entity weapon, entity weaponOwner )
 
 
 #if SERVER
-void function ProxMine_Triggered( entity ent, var damageInfo )
-{
-	if ( !IsValid( ent ) )
-		return
-
-	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_DOOMED_HEALTH_LOSS )
-		return
-
-	entity attacker = DamageInfo_GetAttacker( damageInfo )
-
-	if ( !IsValid( attacker ) )
-		return
-
-	if ( attacker == ent )
-		return
-
-	//if ( ent.IsPlayer() || ent.IsNPC() )
-		//thread ShowProxMineTriggeredIcon( ent )
-
-	//If this feature is good, we should add this to NPCs as well. Currently script errors if applied to an NPC.
-	//if ( ent.IsPlayer() )
-	//	thread ProxMine_ShowOnMinimapTimed( ent, GetOtherTeam( ent.GetTeam() ), PROX_MINE_MARKER_TIME )
-}
-
-/*
-function ProxMine_ShowOnMinimapTimed( ent, teamToDisplayEntTo, duration )
-{
-	ent.Minimap_AlwaysShow( teamToDisplayEntTo, null )
-	Minimap_CreatePingForTeam( teamToDisplayEntTo, ent.GetOrigin(), $"vgui/HUD/titanFiringPing", 1.0 )
-
-	wait duration
-
-	if ( IsValid( ent ) && ent.IsPlayer() )
-		ent.Minimap_DisplayDefault( teamToDisplayEntTo, ent )
-}
-*/
 
 void function Thermite_DamagedPlayerOrNPC( entity ent, var damageInfo )
 {
@@ -824,150 +630,266 @@ void function ClientDestroyCallback_GrenadeDestroyed( entity grenade )
 }
 #endif // CLIENT
 
-#if SERVER
-void function EnableTrapWarningSound( entity trap, float delay = 0, string warningSound = "" )
+              
+          
+                                                      
+ 
+                         
+        
+
+                                                                        
+
+                           
+        
+
+                           
+        
+
+                                                         
+        
+
+                                                   
+        
+
+                                           
+                                        
+     
+                                     
+ 
+      
+      
+
+void function Grenade_OnProjectileCollision( entity projectile, vector pos, vector normal, entity hitEnt, int hitBox, bool isCritical, bool isPassthrough )
 {
-	trap.EndSignal( "OnDestroy" )
-	trap.EndSignal( "DisableTrapWarningSound" )
+               
+           
+                                                       
+         
 
-	if ( delay > 0 )
-		wait delay
+                           
+         
 
-	float DISTANCE_TO_GET_TRAP_SOUND = 500.0 //(cafe) tune it if necessary
+                                      
 
-	while ( IsValid( trap ) )
-	{
-		foreach( player in GetPlayerArray() )
-		{
-			if( Distance2D( player.GetOrigin(), trap.GetOrigin() ) <= DISTANCE_TO_GET_TRAP_SOUND )
-				EmitSoundOnEntityOnlyToPlayer( trap, player, warningSound )
-		}
+                                             
+         
 
-		wait 2.0
-	}
+                                                                                      
+         
+
+                                                                                             
+         
+
+                                                                                                            
+         
+
+                                                       
+         
+
+                                           
+                           
+                                 
+                                 
+                                 
+                                         
+
+                                                                                                           
+   
+                                    
+                           
+                                               
+   
+      
+   
+                                                                   
+   
+
+                                       
+         
+
+                                                               
+                                                                                                       
+                                  
+   
+                                     
+                                     
+   
+
+                           
+                    
+                  
+                           
+                                             
+       
+       
 }
 
+#if SERVER
 void function AddToProximityTargets( entity ent )
 {
 	AddToScriptManagedEntArray( level._proximityTargetArrayID, ent )
 }
 
-void function AddToTrackedEnts_Level( entity ent )
-{
-	AddToScriptManagedEntArray( level._trackedEntsLevelArrayID, ent )
-}
+                                                                                                        
+                                                                                   
+ 
+                                        
 
-array<entity> function GetTrackedEnts_Level()
-{
-	return GetScriptManagedEntArray( level._trackedEntsLevelArrayID )
-}
+             
+                                
+   
+                                  
+                           
+   
+  
+                                                      
+                                                                      
 
-void function CleanupLevelTrackedEnts( )
-{
-	array<entity> traps = GetScriptManagedEntArray( level._trackedEntsLevelArrayID )
+                                                                
 
-	foreach( trap in traps )
-	{
-		if( trap.GetScriptName() == "flowstateTurret" )
-		{
-			foreach(entity part in trap.e.turretparts)
-			{
-				if(IsValid(part))
-					part.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 5000 )
-			}
-		}
+                                 
 
-		if( IsValid( trap ) )
-			trap.Destroy()
-	}
-}
+                                                               
+                       
+               
+  
+                                            
+                                             
+                              
+                                                      
+   
+                                                          
+                                                                                                                                                           
+    
+                          
+                     
+     
+                                                  
+                     
+     
+         
+    
+   
 
-void function RemoveFromLevelTrackedEnts( entity ent )
-{
-	RemoveFromScriptManagedEntArray( level._trackedEntsLevelArrayID, ent )
-}
+                                 
+        
 
+          
+  
 
-void function ProximityMineThink( entity proximityMine, entity owner )
-{
-	proximityMine.EndSignal( "OnDestroy" )
+                                                                    
+                                                          
+                                             
 
-	OnThreadEnd(
-		function() : ( proximityMine )
-		{
-			if ( IsValid( proximityMine ) )
-				proximityMine.Destroy()
-		}
-	)
-	thread TrapExplodeOnDamage( proximityMine, 50 )
+                                                    
+                                                            
+                                                           
+                              
+                                
+                                
 
-	wait PROXIMITY_MINE_ARMING_DELAY
+                                                                                                                                                                                   
+                                                               
+                           
+                                                                                
 
-	int teamNum = proximityMine.GetTeam()
-	float explodeRadius = proximityMine.GetDamageRadius()
-	float triggerRadius = ( ( explodeRadius * 0.75 ) + 0.5 )
-	float lastTimeNPCsChecked = 0
-	float NPCTickRate = 0.5
-	float PlayerTickRate = 0.2
+                                                                     
 
-	// Wait for someone to enter proximity
-	while ( IsValid( proximityMine ) && IsValid( owner ) )
-	{
-		if ( lastTimeNPCsChecked + NPCTickRate <= Time() )
-		{
-			array<entity> nearbyNPCs = GetNPCArrayEx( "any", TEAM_ANY, teamNum, proximityMine.GetOrigin(), triggerRadius )
-			foreach ( ent in nearbyNPCs )
-			{
-				if ( ShouldSetOffProximityMine( proximityMine, ent ) )
-				{
-					ProximityMine_Explode( proximityMine )
-					return
-				}
-			}
-			lastTimeNPCsChecked = Time()
-		}
+             
+                        
+   
+                          
+                       
+   
+  
 
-		array<entity> nearbyPlayers = GetPlayerArrayEx( "any", TEAM_ANY, teamNum, proximityMine.GetOrigin(), triggerRadius )
-		foreach ( ent in nearbyPlayers )
-		{
-			if ( ShouldSetOffProximityMine( proximityMine, ent ) )
-			{
-				ProximityMine_Explode( proximityMine )
-				return
-			}
-		}
+                                       
+                                                          
+  
+                                                    
+   
+                                                                                                                  
+                                
+    
+                                                          
+     
+                                                                      
+                                               
+           
+     
+    
+                               
+   
 
-		wait PlayerTickRate
-	}
-}
+                                                                                                                
+                                  
+   
+                                                         
+    
+                                                                     
+                                              
 
-void function ProximityMine_Explode( entity proximityMine )
-{
-	float explodeTime = Time() + PROXIMITY_MINE_EXPLOSION_DELAY
-	EmitSoundOnEntity( proximityMine, TRIGGERED_ALARM_SFX )
+                           
+                        
 
-	wait PROXIMITY_MINE_EXPLOSION_DELAY
+          
+    
+   
 
-	if ( IsValid( proximityMine ) )
-	{
-		proximityMine.GrenadeExplode( proximityMine.GetForwardVector() )
-	}
-}
+                            
+  
+ 
 
-bool function ShouldSetOffProximityMine( entity proximityMine, entity ent )
-{
-	if ( !IsAlive( ent ) )
-		return false
+                                                                                      
+ 
+                                                        
 
-	if ( ent.IsPhaseShifted() )
-		return false
+                                                                                                                                     
+                                                                       
 
-	TraceResults results = TraceLine( proximityMine.GetOrigin(), ent.EyePosition(), proximityMine, (TRACE_MASK_SHOT | CONTENTS_BLOCKLOS), TRACE_COLLISION_GROUP_NONE )
-	if ( results.fraction >= 1 || results.hitEnt == ent )
-		return true
+                                                                                                                                                                                                             
+                                
+                                                   
+                                     
 
-	return false
-}
+              
+
+                                
+  
+                             
+                          
+
+                                                       
+                                                          
+
+                                               
+   
+                                     
+                                          
+                                                      
+   
+      
+   
+                                                                   
+   
+  
+ 
+
+                                                                           
+ 
+                                                                
+              
+
+                            
+              
+
+                                                                                                                                                                   
+                                                      
+             
+
+             
+ 
+      
 #endif // SERVER
 
 
@@ -981,27 +903,33 @@ float function GetMaxCookTime( entity weapon )
 	return cookTime
 }
 
+
 string function GetGrenadeThrowSound_1p( entity weapon )
 {
-	return expect string( weapon.GetWeaponInfoFileKeyField( "sound_throw_1p" ) ? weapon.GetWeaponInfoFileKeyField( "sound_throw_1p" ) : "" )
+	return weapon.GetWeaponSettingString( eWeaponVar.sound_throw_1p )
 }
+
 
 string function GetGrenadeDeploySound_1p( entity weapon )
 {
-	return expect string( weapon.GetWeaponInfoFileKeyField( "sound_deploy_1p" ) ? weapon.GetWeaponInfoFileKeyField( "sound_deploy_1p" ) : "" )
+	return weapon.GetWeaponSettingString( eWeaponVar.sound_deploy_1p )
+
 }
+
 
 string function GetGrenadeThrowSound_3p( entity weapon )
 {
-	return expect string( weapon.GetWeaponInfoFileKeyField( "sound_throw_3p" ) ? weapon.GetWeaponInfoFileKeyField( "sound_throw_3p" ) : "" )
+	return weapon.GetWeaponSettingString( eWeaponVar.sound_throw_3p )
 }
+
 
 string function GetGrenadeDeploySound_3p( entity weapon )
 {
-	return expect string( weapon.GetWeaponInfoFileKeyField( "sound_deploy_3p" ) ? weapon.GetWeaponInfoFileKeyField( "sound_deploy_3p" ) : "" )
+	return weapon.GetWeaponSettingString( eWeaponVar.sound_deploy_3p )
 }
+
 
 string function GetGrenadeProjectileSound( entity weapon )
 {
-	return expect string( weapon.GetWeaponInfoFileKeyField( "sound_grenade_projectile" ) ? weapon.GetWeaponInfoFileKeyField( "sound_grenade_projectile" ) : "" )
-}
+	return weapon.GetWeaponSettingString( eWeaponVar.sound_grenade_projectile )
+} 

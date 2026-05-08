@@ -77,7 +77,6 @@ global const int INVALID_SOUND_SELECTOR = 128
 global const string SILENT_PLAYER_VOICE = ""
 global const string PHASE_DOOR_TELEPORT_SIGNAL = "PhaseDoor_Teleport"
 global const string MOBILE_SHIELD_SCRIPTNAME = "mobile_shield"
-global const string NESSIE_SPIDER_SCRIPT_NAME = "nessie_spider"
 global const int SOLID_NONE = 0
 
 global const int CAMO_SKIN_COUNT = 800

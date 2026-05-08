@@ -38,11 +38,7 @@ WeaponData
 
 	"charge_effect_1p"								"stim_window_viscous"
 	"charge_effect_attachment"						"FX_IMPACT"
-	"OnWeaponAttemptOffhandSwitch"					"OnWeaponAttemptOffhandSwitch_ability_heal"
-	"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_ability_heal"
-	"OnWeaponChargeBegin"							"OnWeaponChargeBegin_ability_heal"
-	"OnWeaponChargeEnd"								"OnWeaponChargeEnd_ability_heal"
-	"OnWeaponRegenEnd"                              "OnWeaponRegenEndGeneric"
+
 	"leveled_pickup"								"1"
 	"dev_menu_type"									"offhand" // fire_mode isn't readable from script
 

@@ -7,7 +7,6 @@ global function IsLootRoller
 global function LootRollerSpawned
 
 #if SERVER
-global function Flowstate_ReturnDroneLootForCurrentTier
 global function Flowstate_StartRollerLootLoop
 global function Flowstate_BuildLootForDrone
 global function Pathtt_StartRollerLootLoop
@@ -40,7 +39,6 @@ struct LootRollerClientData
 	entity rollerModel
 	array<int> eyeFXEnts
 	int lootTier = 1
-	bool hasVaultKey
 }
 #endif
 
@@ -103,7 +101,6 @@ void function LootRollerSpawned( entity ent )
 	}
 
 	data.lootTier = 0
-	data.hasVaultKey = false
 
 	SetLootRollerClientData( data )
 	#endif
@@ -150,104 +147,23 @@ void function Flowstate_BuildLootForDrone( entity roller, bool isMirageRoller = 
 	}
 
 	#if SERVER
-	roller.e.hasVaultKey = RandomIntRangeInclusive(1, 10) < 3
 	#endif
 }
 
 #if SERVER
 void function Flowstate_StartRollerLootLoop( entity roller, int tier = 2, int max_tier = 4, bool isMirageRoller = false )
 {
-	float timeToWait
 
-	while ( IsValid( roller ) && IsValid( roller.GetParent() ) )
-	{
-		roller.e.currentTier = tier
-		foreach( player in GetPlayerArray() )
-			Remote_CallFunction_NonReplay( player, "ServerCallback_SetLootRollerLootTierFX", roller.GetEncodedEHandle(), tier, roller.e.hasVaultKey )
-
-		switch( roller.e.currentTier )
-		{
-			case 2:
-				timeToWait = 4
-			break
-			case 3:
-				timeToWait = 2
-			break
-			case 4:
-				timeToWait = 0.5
-			break
-		}
-
-		wait timeToWait
-
-		if( tier == 2 )
-			tier = 4
-		else if( tier == 4 )
-			tier = 3
-		else if( tier == 3 )
-			tier = 2
-	}
-
-	if( isMirageRoller )
-	{
-		roller.e.currentTier = tier
-		foreach( player in GetPlayerArray() )
-			Remote_CallFunction_NonReplay( player, "ServerCallback_SetLootRollerLootTierFX", roller.GetEncodedEHandle(), tier, roller.e.hasVaultKey )
-	}
 }
 
 void function Pathtt_StartRollerLootLoop( entity roller, int tier = 3, int max_tier = 5 )
 {
-	roller.e.currentTier = RandomIntRange( tier, max_tier )
-	roller.e.hasVaultKey = false
-	foreach( player in GetPlayerArray() )
-		Remote_CallFunction_NonReplay( player, "ServerCallback_SetLootRollerLootTierFX", roller.GetEncodedEHandle(), roller.e.currentTier, roller.e.hasVaultKey )
+
 }
 
-array< string > function Flowstate_ReturnDroneLootForCurrentTier( entity roller )
-{
-	#if DEVELOPER
-		printt("A loot roller destroyed, loot tier:" + roller.e.currentTier)
-	#endif
-	if ( GetMapName() == "mp_rr_olympus_tt" )
-	{
-		if ( roller.e.currentTier == 3 )
-			return SURVIVAL_GetMultipleWeightedItemsFromGroup( "flyer_deathbox_all_purple", 5 )
-
-		if ( roller.e.currentTier == 4 )
-			return SURVIVAL_GetMultipleWeightedItemsFromGroup( "flyer_deathbox_all_gold", 4 )
-	}
-	array< string > accumulatedLoot
-
-	for(int j = 1; j < roller.e.currentTier + 1; j++)
-	{
-		accumulatedLoot.extend( file.allLootRollers[ roller ][ j ] )
-	}
-
-	if( roller.e.hasVaultKey )
-		accumulatedLoot.append( "data_knife" )
-
-	return accumulatedLoot
-}
 
 #endif
-// void function OnLootRollerDamaged( entity roller, var damageInfo )
-// {
-	// int health = roller.GetHealth()
-	// float damage = DamageInfo_GetDamage( damageInfo )
-	// int remainingHealth = (health - int(damage))
-	// if( remainingHealth <= 0 )
-	// {
-		// #if CLIENT
-		// LootRollerClientData clientData = GetLootRollerClientDataFromEnt( roller )
 
-		// foreach( eye in clientData.eyeFXEnts )
-		// {
-			// EffectStop( eye, false, true )
-		// }
-		// #endif // CLIENT
-	// }
-// }
 
 bool function IsLootRoller( entity ent )
 {
@@ -279,57 +195,11 @@ LootRollerClientData function GetLootRollerClientDataFromEnt( entity ent )
 //////////////////////////
 void function ServerCallback_SetLootRollerLootTierFX( int rollerHandle, int tier, bool hasVaultKey )
 {
-	entity roller = GetEntityFromEncodedEHandle( rollerHandle )
 
-	if ( !IsValid( roller ) )
-		return
-
-	if( Gamemode() == eGamemodes.fs_aimtrainer )
-		return
-
-	vector tierColor = GetFXRarityColorForTier( tier )
-	string tierColorString = format("%f %f %f", tierColor.x, tierColor.y, tierColor.z )
-	roller.kv.rendercolor = tierColorString
-
-	LootRollerClientData rollerData = GetLootRollerClientDataFromEnt( roller )
-	rollerData.lootTier = tier
-	rollerData.hasVaultKey = hasVaultKey
-
-	foreach (fx in rollerData.eyeFXEnts )
-	{
-		EffectSetControlPointColorById( fx, 1, COLORID_FX_LOOT_TIER0 + rollerData.lootTier )
-	}
-
-	int fxCount = GetCurrentPlaylistVarInt( "loot_rollers_vault_key_fx_hints", 1 )
-
-	if ( fxCount > 0 && rollerData.hasVaultKey && rollerData.eyeFXEnts.len() > 0 )
-	{
-		array<int> randomEyes
-		int eyeCount = rollerData.eyeFXEnts.len()
-		fxCount = minint( fxCount, eyeCount )
-		for ( int i = 0; i < fxCount; i++ )
-		{
-			int randomIdx = RandomInt( rollerData.eyeFXEnts.len() - 1 )
-			randomEyes.append( randomIdx )
-		}
-
-		foreach ( idx in randomEyes )
-		{
-			int randEye = rollerData.eyeFXEnts[ idx ]
-			EffectSetControlPointColorById( randEye, 1, COLORID_FX_LOOT_TIER0 + 5 )
-		}
-	}
 }
 
 void function ServerCallback_StopLootRollerFX( int rollerHandle )
 {
-	entity roller = GetEntityFromEncodedEHandle( rollerHandle )
 
-	if ( !IsValid( roller ) )
-		return
-
-	LootRollerClientData rollerData = GetLootRollerClientDataFromEnt( roller )
-	foreach ( fx in rollerData.eyeFXEnts )
-		EffectStop( fx, false, true )
 }
 #endif // CLIENT

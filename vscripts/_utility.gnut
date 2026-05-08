@@ -12,6 +12,8 @@ globalize_all_functions
 int functionref( bool = false ) ornull te = null
 int EntTracker = 0
 
+const asset FLASH_BANG_BLIND_TEMP_FX = $"P_emp_body_human"
+
 global const C_PLAYFX_SINGLE	= 0
 global const C_PLAYFX_MULTIPLE	= 1
 global const C_PLAYFX_LOOP		= 2
@@ -26,6 +28,7 @@ global const GAMEMODE_SP 		= "solo"
 
 global const string SIGNAL_TELEPORTED = "Teleported"
 
+global array<string> DEPLOYABLE_ABILITY_NAMES = []
 global struct ZipLine
 {
 	entity start
@@ -47,7 +50,28 @@ global struct ShieldDamageModifier
 	bool  normalizeShieldDamage = false
 	float damageScale = 1.0
 }
+global const vector INVALID_DROP_RESULT = <0, 0, 0>
 
+global struct CancelPlayerStatesData
+{
+	bool cancelZipline = true
+	bool cancelGrapple = true
+	bool cancelPhaseTunnel = true
+	bool cancelPhaseWalk = true
+	bool cancelRevive = true
+	bool cancelCryptoDrone = true
+	bool cancelTotem = true
+	bool cancelMainOrAltHandAbility = true
+	bool cancelHuntMode = false
+	bool cancelBleedOut = false
+}
+
+struct LimitedObjectList
+{
+	int max
+	array<entity> objects
+}
+typedef OneLegendsLimitedObjects table<string, LimitedObjectList >
 struct
 {
 	table<string, void functionref(entity)> dynamicEntCleanupFuncs_Parented_Targetname
@@ -63,6 +87,8 @@ struct
 	bool isSkyboxView = false
 	
 	bool ignoreKillPlayersUnderMap = false
+
+	table< entity, OneLegendsLimitedObjects > allLegendsLimitedObjects
 } file
 
 enum eChargeStorageType
@@ -89,8 +115,7 @@ void function Utility_Init()
 	RegisterSignal( "InventoryChanged" )
 	RegisterSignal( "StopCheckingForIntersectingGeo" )
 	RegisterSignal( SIGNAL_TELEPORTED )
-	
-	//AddClientCommandCallback( "OnDevnetBugScreenshot", ClientCommand_OnDevnetBugScreenshot )
+	DEPLOYABLE_ABILITY_NAMES = [ ECHO_LOCATOR_SCRIPT_NAME, BLACK_MARKET_SCRIPTNAME, DIRTY_BOMB_TARGETNAME, GIBRALTAR_DOME_SCRIPTNAME, BLACKHOLE_PROP_SCRIPTNAME, SPACE_ELEVATOR_SCRIPTNAME, TROPHY_SYSTEM_NAME, TESLA_TRAP_NAME, JUMP_PAD_SCRIPTNAME, DEATH_TOTEM_TARGETNAME, BASE_WALL_SCRIPT_NAME, MOUNTED_TURRET_PLACEABLE_SCRIPT_NAME, DEATH_TOTEM_TARGETNAME, SILENCE_MOVER_SCRIPTNAME, ARMORED_LEAP_SHIELD_ANCHOR_SCRIPTNAME ]
 	#if DEVELOPER
 		FlagInit( "AimAssistSwitchTest_Enabled" )
 		AddClientCommandCallback( "toggleconsole", ClientCommand_ToggleConsole )
@@ -116,7 +141,128 @@ void function KillAllBadguys()
 		n.Die()
 	}
 }
+#endif // DEV
 
+const bool DEBUG_LIMITED_LEGEND_OBJECTS = false
+
+void function AddNewLimitedLegendObject( entity player, entity object, int maxNum )
+{
+	string scriptName = object.GetScriptName()
+
+	Assert( scriptName != "", "LimitedLegendObject: Object's Scriptname can't be blank. Player: " + player + " Object: " + object )
+
+	if ( !( player in file.allLegendsLimitedObjects ) )
+	{
+		table< string, LimitedObjectList > emptyTable
+		file.allLegendsLimitedObjects[player] <- emptyTable
+	}
+
+	OneLegendsLimitedObjects thisLegendsObjects = file.allLegendsLimitedObjects[player]
+	if ( !(scriptName in thisLegendsObjects )  )
+	{
+		LimitedObjectList listOfObjects
+		thisLegendsObjects[scriptName] <- listOfObjects
+	}
+
+	Assert( (scriptName in thisLegendsObjects ), "" )
+
+	thisLegendsObjects[scriptName].max = maxNum
+
+	thisLegendsObjects[scriptName].objects.insert( 0, object )
+
+	if ( DEBUG_LIMITED_LEGEND_OBJECTS )
+	{
+		int newTotal = thisLegendsObjects[scriptName].objects.len()
+		printt( "LimitedLegendObject: Adding new object " + object + " of type '" + scriptName + "', new total: " + newTotal + " max: " + maxNum )
+		if ( newTotal > maxNum )
+			printt( "\t-OverLimit, will be removing " + (newTotal-maxNum) + "" )
+	}
+
+	thread DestroyOverlimitObjectsThread( thisLegendsObjects, scriptName, player )
+}
+
+void function DestroyOverlimitObjectsThread( OneLegendsLimitedObjects thisLegendsObjects, string scriptName, entity player )
+{
+	int loops = 0
+	while ( thisLegendsObjects[scriptName].objects.len() > thisLegendsObjects[scriptName].max )
+	{
+		entity entToDelete = thisLegendsObjects[scriptName].objects.top()
+		if ( IsValid( entToDelete ) )
+		{
+			entToDelete.Destroy()
+		}
+		loops++
+		if ( loops > 30 )
+		{
+			#if DEV
+			ServerCommand( "edict_dump_distribution" )
+			DEV_DumpAllLimitedLegendObjects( )
+			Assert( false, "LimitedLegendObject: Too many iterations trying to remove extra elements from the list. Player: " + player )
+			#endif
+			break
+		}
+		WaitFrame()
+	}
+}
+
+
+bool function RemoveLimitedLegendObject( entity player, entity object )
+{
+	bool ret = false
+	Assert( ( player in file.allLegendsLimitedObjects ), "LimitedLegendObject: Player " + player + " hasnt added any Limited Objects. Must call 'AddNewLimitedLegendObject' first.")
+
+	OneLegendsLimitedObjects thisLegendsObjects = file.allLegendsLimitedObjects[player]
+
+	string scriptName = object.GetScriptName()
+
+	//if ( scriptName == "" )
+	//{
+	//	Warning( "Attempting to remove a legend object but it has no Scriptname?? player: " + player + " object: " + object  )
+	//	DEV_DumpLimitedLegendObjects(player)
+	//	return ret
+	//}
+	Assert( scriptName != "", "LimitedLegendObject: Objects Scriptname can't be blank. Player: " + player + " Object: " + object )
+
+	Assert( (scriptName in thisLegendsObjects ), "LimitedLegendObject: No array set up for Player: " + player + " for objects with ScriptName: " + scriptName )
+
+	if ( thisLegendsObjects[scriptName].objects.contains( object ) )
+	{
+		ret = true
+		thisLegendsObjects[scriptName].objects.removebyvalue( object )
+	}
+	return ret
+}
+#if DEV
+void function DEV_DumpAllLimitedLegendObjects(  )
+{
+	printt( "---- LimitedLegendObjects PRINTING ALL ----")
+	foreach( player, objectArray in file.allLegendsLimitedObjects )
+	{
+		DEV_DumpLimitedLegendObjects( player )
+	}
+	printt( "---- LimitedLegendObjects PRINTING DONE ----")
+
+}
+void function DEV_DumpLimitedLegendObjects( entity player )
+{
+	if (  player in file.allLegendsLimitedObjects )
+	{
+		printt( "LimitedLegendObjects for Player: " + player )
+		OneLegendsLimitedObjects thisLegendsObjects = file.allLegendsLimitedObjects[player]
+		foreach( scriptName, objectList in thisLegendsObjects )
+		{
+			printt( "-- ScriptName: " + scriptName + " Total: " + objectList.objects.len() )
+			foreach( object in objectList.objects )
+			{
+				if ( IsValid(object) )
+					printt("   - " + object + " pos: " + object.GetOrigin() )
+				else
+					printt( "   - " + object )
+			}
+		}
+	}
+}
+#endif
 bool function ClientCommand_ToggleConsole( entity player, array<string> args )
 {
 	ShDevConsole_Init()
@@ -144,7 +290,7 @@ bool function ClientCommand_ToggleConsole( entity player, array<string> args )
 
 // 	return true
 // }
-#endif
+
 
 entity function CreateEntity( string name )
 {
@@ -2050,6 +2196,120 @@ entity function CreateTriggerCylinderNetworked_BlockAllObjectPlacement( vector o
 	return trigger
 }
 
+#if SERVER
+void function SpawnAmmoForCurrentWeapon( entity victim, var attackerDamageInfo = null, float ammoCountMultiplier = 1.0  )
+{
+	if ( SURVIVAL_Loot_IsAmmoSpawningDisabled() )
+		return
+
+	LootThrowData throwData
+	throwData.throwAngle = 0
+	throwData.throwScale = 1
+	vector throwOrigin = victim.GetOrigin()
+
+	if ( attackerDamageInfo != null )
+	{
+		entity attacker = DamageInfo_GetAttacker( attackerDamageInfo )
+		if ( !IsValid( attacker ) )
+		{
+			return
+		}
+		entity damageWeapon = SURVIVAL_GetLastActiveWeapon( attacker )
+		//entity damageWeapon = DamageInfo_GetWeapon( attackerDamageInfo )
+		if ( IsValid( damageWeapon ) && damageWeapon.GetActiveAmmoSource() == AMMOSOURCE_POOL )
+		{
+			string ammoType = GetWeaponAmmoTypeFromWeaponEnt( damageWeapon )
+
+			int dropCount = 1
+
+			for ( int i = 0; i < dropCount; i++ )
+			{
+				int countPerDrop = int( floor( SURVIVAL_Loot_GetLootDataByRef( ammoType ).countPerDrop ) )
+				countPerDrop = int ( countPerDrop * ammoCountMultiplier )
+
+				entity itemEnt = SpawnGenericLoot( ammoType, throwOrigin, < -1, -1, -1 >, countPerDrop )
+
+				if ( victim.IsPlayer() )
+				{
+					SetItemSpawnSource( itemEnt, eSpawnSource.PLAYER_DEATH, victim )
+				}
+				else {
+					SetItemSpawnSource( itemEnt, eSpawnSource.NPC_DEATH, victim )
+				}
+				vector throwDir = <sin( throwData.throwAngle ), cos( throwData.throwAngle ), 0>
+				float speed     = throwData.throwScale * sqrt( RandomFloatRange( 0.75, 1.0 ) ) * 150
+				vector vel      = throwDir * speed
+				thread FakePhysicsThrow( victim, itemEnt, <vel.x, vel.y, 200>, true )
+				throwData = SURVIVAL_DropLoot_IncrementThrowAngle( throwData )
+			}
+		}
+	}
+}
+
+void function SpawnAmmoForRandomWeapon( entity victim, var attackerDamageInfo = null, float ammoCountMultiplier = 1.0, bool spawnLootInSafeLocation = false )
+{
+	if ( SURVIVAL_Loot_IsAmmoSpawningDisabled() )
+		return
+
+	LootThrowData throwData
+	throwData.throwAngle = RandomFloat( 360 )
+	throwData.throwScale = 1
+	vector throwOrigin = victim.GetOrigin()
+	if ( spawnLootInSafeLocation )
+	{
+		throwOrigin = GetSafeLocation( throwOrigin )
+		//adding in some vertical height, so that the ammo can disperse naturally
+		throwOrigin += <0, 0, 32>
+	}
+
+	int stowedWeaponAmmoSpawnPct = GetPlaylistVarInt( GetCurrentPlaylistName(), "armory_second_ammo_stowed_weapon_pct", 75 )
+
+	if ( attackerDamageInfo != null )
+	{
+		entity attacker = DamageInfo_GetAttacker( attackerDamageInfo )
+		if ( !IsValidPlayer( attacker ) )
+		{
+			return
+		}
+		entity randomWeapon = SURVIVAL_GetLastActiveWeapon( attacker )
+		entity otherWeapon = GetOtherWeapon ( randomWeapon, attacker )
+
+		if( IsValid( otherWeapon ) && RandomInt( 100 ) > stowedWeaponAmmoSpawnPct )
+		{
+			randomWeapon = otherWeapon
+		}
+
+		//entity randomWeapon = DamageInfo_GetWeapon( attackerDamageInfo )
+		// Shicks: Changed from Ammo Pool to anything BUT stockpile to enable Ballistic Ult'd legends to trigger this
+		if ( IsValid( randomWeapon ) && randomWeapon.GetActiveAmmoSource() != AMMOSOURCE_STOCKPILE )
+		{
+			string ammoType = GetWeaponAmmoTypeFromWeaponEnt( randomWeapon )
+
+			int dropCount = 1
+
+			for ( int i = 0; i < dropCount; i++ )
+			{
+				int countPerDrop = int( floor( SURVIVAL_Loot_GetLootDataByRef( ammoType ).countPerDrop ) )
+				countPerDrop = int ( countPerDrop * ammoCountMultiplier )
+
+				entity itemEnt = SpawnGenericLoot( ammoType, throwOrigin, < -1, -1, -1 >, countPerDrop )
+
+				if ( victim.IsPlayer() )
+				{
+					SetItemSpawnSource( itemEnt, eSpawnSource.PLAYER_DEATH, victim )
+				}
+				else {
+					SetItemSpawnSource( itemEnt, eSpawnSource.NPC_DEATH, victim )
+				}
+				vector throwDir = <sin( throwData.throwAngle ), cos( throwData.throwAngle ), 0>
+				float speed     = throwData.throwScale * sqrt( RandomFloatRange( 0.75, 1.0 ) ) * 150
+				vector vel      = throwDir * speed
+				thread FakePhysicsThrow( victim, itemEnt, <vel.x, vel.y, 200>, true )
+				throwData = SURVIVAL_DropLoot_IncrementThrowAngle( throwData )
+			}
+		}
+	}
+}
 // Spawn loot on an entity and return an array of the loot that got spawned
 array <entity> function SpawnAndThrowItems_ReturnItems( entity itemSource, string itemName, int itemCount, float throwStrength, int spawnSource, vector throwOriginOffset = < 0, 0, 0 > )
 {
@@ -2080,6 +2340,7 @@ array <entity> function SpawnAndThrowItems_ReturnItems( entity itemSource, strin
 	return spawnedItems
 }
 
+#endif
 //-----------------------------------------------------------
 // SpawnBullseye() - creates a npc_bullseye and attaches it to an entity
 //------------------------------------------------------------
@@ -2182,18 +2443,6 @@ string function CreateOriginAnglesString_CC( string name, vector origin, vector 
 {		
 	string returnStr = name + ": NewLocPair( < " + origin.x + ", " + origin.y + ", " + origin.z + " >, < " + angles.x + ", " + angles.y + ", " + angles.z + " > ),";
 	return returnStr
-}
-
-void function POS_CC( entity player, string name )
-{	
-	table playerPos = GetPlayerPos( player )
-	vector origin = expect vector( playerPos.origin )
-	vector angles = expect vector( playerPos.angles )
-
-	string returnStr = CreateOriginAnglesString_CC( player.GetPlayerName() + " addspawn name: " + name, origin, <angles.x, angles.y, angles.z> )
-	
-	Message( player, "SAVED SPAWN: " + name , returnStr)
-	printt( format( "Pos: %s", returnStr ) )
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -4024,7 +4273,6 @@ bool function TitanHasRegenningShield( entity soul )
 
 void function DelayShieldDecayTime( entity soul, float delay )
 {
-	soul.e.nextShieldDecayTime = Time() + delay
 }
 
 void function HighlightWeapon( entity weapon )
@@ -5524,6 +5772,91 @@ void function RunSettingsChangedFuncs( entity player, asset settings )
 	}
 }
 
+
+bool function CheckPlayersIntersectingEntity( entity ent, int safeDist )
+{
+	Assert( safeDist > 0 )
+
+	array<entity> playerList = GetPlayerArray()
+	vector origin            = ent.GetOrigin()
+
+	// Multiplying the bounds by 1.42 to ensure this encloses the droppod when it's rotated 45 degrees
+	vector mins       = ent.GetBoundingMins() * 1.42 + origin
+	vector maxs       = ent.GetBoundingMaxs() * 1.42 + origin
+	int safeRadiusSqr = safeDist * safeDist
+
+	foreach ( player in playerList )
+	{
+		vector playerOrigin = player.GetOrigin()
+
+		if ( DistanceSqr( origin, playerOrigin ) > safeRadiusSqr )
+			continue
+
+		vector playerMins = player.GetBoundingMins() + playerOrigin
+		vector playerMaxs = player.GetBoundingMaxs() + playerOrigin
+
+		if ( BoxIntersectsBox( mins, maxs, playerMins, playerMaxs ) )
+			return true
+	}
+
+	return false
+}
+
+void function Thread_CheckForGeoIntersection( entity ent, entity mover, float heightOffset = 0.0, int threadLifetime = 10 )
+{
+	Assert ( IsNewThread(), "Must be threaded off." )
+	ent.EndSignal( "OnDestroy" )
+	mover.EndSignal( "StopCheckingForIntersectingGeo" )
+
+	vector mins = ent.GetBoundingMins()
+	vector maxs = ent.GetBoundingMaxs()
+
+	float startTime = Time()
+
+	float hullDepth = max( maxs.x, 5 )
+	float hullWidth = hullDepth
+	float hullHeight = max( maxs.z, 20 ) + heightOffset
+
+	vector lastOrigin
+
+	#if DEV
+	OnThreadEnd(
+		function():(mover)
+		{
+			printt ( "Finished checking intersections for: " + mover.GetModelName() )
+		}
+	)
+	#endif
+
+	while ( Time() - startTime < threadLifetime )
+	{
+		array<entity> ignoreEnts = GetPlayerArray_Alive()
+		ignoreEnts.append( ent )
+		ignoreEnts.append( mover )
+
+		vector pos = < ent.GetOrigin().x, ent.GetOrigin().y, ent.GetOrigin().z >
+
+		TraceResults results = TraceHull( pos, pos, <-hullWidth, -hullDepth,0>, <hullWidth, hullDepth, hullHeight>, ignoreEnts, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER )
+		//DebugDrawBox( pos, <-hullWidth,-hullDepth,0>, <hullWidth,hullDepth,hullHeight>, COLOR_GREEN, 1, 10.0 )
+		//PrintTraceResults( results )
+
+		if ( results.startSolid || results.fraction != 1 )
+		{
+			entity hitEnt = results.hitEnt
+			if ( IsValid( hitEnt ) )
+			{
+				string hitEntClassname = hitEnt.GetClassName()
+
+				if ( hitEntClassname == "worldspawn" || hitEntClassname == "phys_bone_follower" || hitEntClassname == "func_brush" || hitEntClassname == "script_mover" || hitEntClassname == "func_brush_lightweight" || hitEntClassname == "prop_dynamic" )
+				{
+					DeactivateDeployableAbility ( ent )
+				}
+			}
+		}
+		wait 0.1
+	}
+
+}
 array<entity> function GetLinkedEntsByClassName( entity ent, string className )
 {
 	array<entity> linkedEnts = ent.GetLinkEntArray()
@@ -5911,6 +6244,21 @@ bool function PlayerHasTitan( entity player )
 	return false
 }
 
+vector function DropSpawnToFloor( vector point, int hullType )
+{
+	vector mins        = GetBoundsMin( hullType )
+	vector maxs        = GetBoundsMax( hullType )
+	vector startPoint  = (point + <0, 0, 50>)
+	vector endPoint    = (point - <0, 0, 99999>)
+	TraceResults trace = TraceHull( startPoint, endPoint, mins, maxs, null, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER )
+	if ( trace.startSolid )
+		return INVALID_DROP_RESULT
+	if ( trace.fraction > 0.9999 )
+		return INVALID_DROP_RESULT
+	return trace.endPos
+}
+
+
 entity function CreateDeathBox( vector origin, vector angles, string targetName = DEATH_BOX_TARGETNAME, int fadeDistance = 100000 )
 //Simple create deathbox function that just creates the prop_dynamic. Survivial, Training, etc all add functionality on top of this.
 {
@@ -6109,6 +6457,36 @@ void function AvoidBeingPutInsideDoorFromCrush( entity door, entity pushed )
 	}
 }
 
+void function FlashBang_Flash( entity victim, float flashScalar, float duration, float fadeTime, float delay = 0.2 )
+{
+	victim.EndSignal( "OnDeath" )
+	victim.EndSignal( "OnDestroy" )
+
+	wait delay
+
+	int flashAlpha = int ( 255 * flashScalar )
+	ScreenFade( victim, 255, 255, 255, flashAlpha, fadeTime, duration, FFADE_IN | FFADE_PURGE )
+
+	if ( flashScalar >= 0.5 )
+	{
+		int attachmentID = victim.LookupAttachment( "CHESTFOCUS" )
+		int fxID = GetParticleSystemIndex( FLASH_BANG_BLIND_TEMP_FX )
+		entity fx = StartParticleEffectOnEntity_ReturnEntity ( victim, fxID, FX_PATTACH_POINT_FOLLOW, attachmentID )
+
+		OnThreadEnd(
+			function() : ( fx )
+			{
+				if ( IsValid( fx ) )
+					EffectStop( fx )
+			}
+		)
+	}
+
+	wait duration
+
+}
+
+
 bool function PlayerRespawnEnabled()
 {
 	return GetRespawnStyle() != eRespawnStyle.NONE
@@ -6144,65 +6522,6 @@ array<entity> function ArrayEntSphere(vector origin, float radius) {
         ent = Entities_FindInSphere( ent, origin, radius)
     }
     return entities
-}
-
-entity function Create_Invis_Button(vector pos, vector ang, bool up)
-{
-    string prompt = "%use% Back"
-    if (up) {
-        prompt = "%use% Next"
-    }
-    entity button = CreateEntity("prop_dynamic")
-    button.kv.solid = 0
-    button.SetValueForModelKey($"mdl/props/global_access_panel_button/global_access_panel_button_console_w_stand.rmdl")
-    button.SetOrigin(pos)
-    button.SetAngles(ang)
-    DispatchSpawn(button)
-    button.SetUsable()
-    button.SetUsableByGroup("pilot")
-    button.MakeInvisible()
-    button.SetUsePrompts(prompt, prompt)
-    return button
-}
-
-void function Invis_Button(vector pos, vector ang, bool up, vector destination, vector direction, string message = "", string submessage = "", int type = 4, float duration = 5.0, string token = "#FS_STRING_VAR", bool addToArray = false ) {
-    // arrow
-    vector offset_pos = <0,0,100>
-    vector offset_angle = <90,-90,0>
-    if (up) {
-        offset_pos = <0,0,-25>
-        offset_angle = <-90, 90, 0>
-    }
-
-    entity arrow = MapEditor_CreateProp( $"mdl/Weapons/bullets/damage_arrow.rmdl", pos + offset_pos, ang + offset_angle, false, 300, -1, 10)
-
-    // button
-    entity panel = Create_Invis_Button(pos, ang, up)
-
-    AddCallback_OnUseEntity( panel, void function(entity panel, entity ent, int input) : (destination, direction, message, submessage, type, duration, token)
-    {
-        if (!IsValid(ent) || !ent.IsPlayer())
-            return
-
-        if (ent.p.isTimerActive) 
-		{
-			LocalMsg( ent, token, "", type, duration, "Can't use it while timer is running" ) //make this string a token
-			return
-        }
-
-        ent.SetOrigin(destination)
-        ent.SetAngles(direction)
-        ent.SetVelocity(<0, 0, 0>)
-
-        if (message.len() || submessage.len())
-			LocalMsg(ent, token, "", type, duration, message, submessage, "" )
-    })
-
-	if ( addToArray )
-	{
-		MapEditorEnts.append( arrow )
-		MapEditorEnts.append( panel )
-	}
 }
 
 void function RegisterDynamicEntCleanupItem_Parented_Scriptname( string scriptname, void functionref(entity) func = null )
@@ -6617,9 +6936,6 @@ void function DEV_ToggleInfiniteAmmo_Internal( entity player, array<entity> weap
 			SetupPlayerReserveAmmo( player, weapon )
 		}
 	}
-	
-	if( bMsg )
-		Message( player, format( "Infinite ammo %s", toggle ? "Enabled" : "Disabled" ) )
 }
 
 void function AutoGiveInfinite( entity player, entity pickup, entity weapon )
@@ -6717,6 +7033,98 @@ void function SetupInfiniteAmmoForWeapon( entity player, entity weapon )
 		player.AmmoPool_SetCapacity( 65535 )
 		player.AmmoPool_SetCount( ammoType, 65535 )
 	}
+}
+
+bool function IsDeployableAbility ( entity ent )
+{
+	return DEPLOYABLE_ABILITY_NAMES.contains( ent.GetScriptName() )
+}
+
+void function DeactivateDeployableAbility ( entity ent )
+{
+	if ( !IsValid(ent) || !IsDeployableAbility( ent ) )
+		return
+
+	switch ( ent.GetScriptName() )
+	{
+		case BLACK_MARKET_SCRIPTNAME:
+			ForceKillBlackMarket ( ent )
+			break
+		case DIRTY_BOMB_TARGETNAME:
+			//DirtyBomb_Destruction ( ent )
+			RemoveCausticDirtyBomb ( ent, null )
+			break
+		case DEATH_TOTEM_TARGETNAME:
+			thread DeathTotem_RemoveTotem ( ent, null )
+			break
+                                
+                                
+                                               
+        
+      
+		case ECHO_LOCATOR_SCRIPT_NAME:
+		case TROPHY_SYSTEM_NAME:
+		case TESLA_TRAP_NAME:
+		case JUMP_PAD_SCRIPTNAME:
+		case BLACKHOLE_PROP_SCRIPTNAME:
+		             
+		case TRANSPORT_PORTAL_RECEIVER_SCRIPTNAME:
+        
+			ent.TakeDamage( 9999, null, null, {} )
+			break
+		case BASE_WALL_SCRIPT_NAME:
+			DestroyWallFX( ent, null )
+			ent.Destroy()
+			break
+		case MOUNTED_TURRET_PLACEABLE_SCRIPT_NAME:
+			MountedTurretPlaceable_ForceDestroy ( ent )
+			break
+		case SPACE_ELEVATOR_SCRIPTNAME:
+		case GIBRALTAR_DOME_SCRIPTNAME:
+		case SILENCE_MOVER_SCRIPTNAME:
+		case ARMORED_LEAP_SHIELD_ANCHOR_SCRIPTNAME:
+			ent.Signal ( "OnDestroy" )
+			break
+	}
+}
+
+void function SwapToLastEquippedPrimaryFromAbility ( entity ent )
+{
+	bool shouldSwap = true
+	array <entity> activeWeapons = ent.GetAllActiveWeapons()
+
+	array< string > abilitiesToCancel = [
+		"mp_weapon_grenade_bangalore",
+		"mp_ability_silence",
+		"mp_ability_gibraltar_shield",
+		"mp_ability_phase_walk",
+		"mp_ability_phase_tunnel",
+		"mp_weapon_zipline",
+		HEARTBEAT_SENSOR_WEAPON_NAME,
+		"mp_ability_consumable"
+	]
+
+	if ( activeWeapons.len() > 0 )
+	{
+		entity activeWeapon = activeWeapons[0]
+		if ( IsValid( activeWeapon ) )
+		{
+			shouldSwap = IsBitFlagSet( activeWeapon.GetWeaponTypeFlags(), WPT_TACTICAL ) || IsBitFlagSet( activeWeapon.GetWeaponTypeFlags(), WPT_ULTIMATE )
+		}
+
+		if ( activeWeapons.len() > 1 )
+		{
+			entity offhandWeapon = activeWeapons[1]
+			if ( IsValid( offhandWeapon ) )
+			{
+				if ( abilitiesToCancel.contains( offhandWeapon.GetWeaponClassName() ) )
+					ent.ClearOffhand( eActiveInventorySlot.altHand )
+			}
+		}
+	}
+
+	if ( shouldSwap )
+		SwapToLastEquippedPrimary( ent )
 }
 
 #if SERVER
@@ -7116,10 +7524,6 @@ bool function IsOrientationMatch()
 bool function IsBallisticUltActive( entity player )
 {
 	return false
-}
-
-void function AddCallback_OnCodeDoorBroken( void functionref( entity, entity, vector, var ) callbackFunc )
-{
 }
 
 void function SetPlayerBotQueueGraduation( entity player, int state )

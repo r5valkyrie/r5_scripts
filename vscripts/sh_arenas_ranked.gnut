@@ -1,0 +1,1655 @@
+global function Sh_ArenasRanked_Init
+global function Sh_ArenasRanked_ItemRegistrationInit
+
+global function GetCurrentArenasRankedDivisionFromScoreAndLadderPosition
+global function GetCurrentArenasRankedDivisionFromScore
+global function GetNextArenasRankedDivisionFromScore
+global function GetPlayerArenasRankScore
+global function IsArenasRankedPersistenceValid
+global function IsArenasRankedInSeason
+global function GetArenasRankedPersistenceData
+
+global function ArenasRanked_GetTiers
+global function ArenasRanked_GetRankedDivisionDataForTier
+global function ArenasRanked_GetNextTierData
+global function ArenasRanked_GetLadderPosition
+
+global function ArenasRanked_GetHistoricalRankScore
+global function ArenasRanked_GetHistoricalFirstSplitRankScore
+global function ArenasRanked_GetHistoricalRankedDivisionFromScore
+global function ArenasRanked_GetHistoricalLadderPosition
+global function ArenasRanked_GetHistoricalLadderOnlyDivision
+
+global function ArenasRanked_PeriodHasLadderOnlyDivision
+
+global function ArenasRanked_UpdateEHIRankScore
+global function ArenasRanked_UpdateEHIRankedLadderPosition
+global function ArenasRanked_GetNumPlayersOnLadder
+global function ArenasRanked_GetStryderLadderNameForLatestRankedPeriod // #TODO ARENASRANKED - waiting for code before this needs to be globalized
+
+global function ArenasRanked_GetHistoricalRankedDivisionFromScoreAndLadderPosition
+global function ArenasRanked_GetTierOfThresholdForRankedPartyDifferences
+global function ArenasRanked_GetPlacementWinsAsArray
+
+global function ArenasRanked_GetFinalRankedPeriod
+
+#if CLIENT || UI
+global function PopulateRuiWithArenasRankedBadgeDetails
+global function CreateNestedArenasRankedRui
+#endif
+
+#if SERVER || CLIENT
+global function ArenasRanked_IsPlayerAbandoning
+global function ArenasRanked_DidPlayerEverHaveAFullTeam
+#endif
+
+#if SERVER
+global function ArenasRanked_SeedScoreFromMMR
+global function ArenasRanked_OnPlayerRankedLadderPositionFound // #TODO ARENASRANKED - This will be called from CodeCallback_PlayerArenasRankedPosFound when it exists.
+global function ArenasRanked_OnStryderConfirmEndSeasonOrSplitScore
+global function ArenasRanked_ComputeMMRScoreMapping
+global function ArenasRanked_ComputeScoreDiffFromPlayer
+global function ArenasRanked_ComputeScoreDiff
+global function SetPlayerArenasRankScore
+/*
+global function CodeCallback_BotMimicPlayerArenasRanked	#TODO ARENASRANKED - not sure if this will be required for arenas.
+*/
+#endif
+
+global function ArenasRanked_GetNumPlacementMatchesRequired
+global function ArenasRanked_GetNumPlacementMatchesCompleted
+global function ArenasRanked_HasFinishedPlacementMatches
+
+#if SERVER && DEV
+global function ArenasRanked_MapScoreToMMR
+#endif
+
+#if CLIENT
+global function ShArenasRanked_RegisterNetworkFunctions
+#endif
+
+#if UI
+global function ArenasRanked_SetupMenuGladCardForUIPlayer
+global function ArenasRanked_SetupMenuGladCardFromCommunityUserInfo		// #TODO ARENASRANKED - waiting for userInfo data to be updated by code
+global function ArenasRanked_ManageDialogFlow
+global function ArenasRanked_ShouldUpdateWithComnunityUserInfo
+global function ArenasRanked_PartyMeetsRankedDifferenceRequirements
+global function ArenasRanked_HasBeenInitialized
+global function ArenasRanked_ConstructSingleRankBadgeForStatsCard
+global function ArenasRanked_ConstructDoubleRankBadgeForStatsCard
+global function ArenasRanked_IsShowingMatchSummary
+#endif
+
+const ARENAS_RANKED_SEASON_10_GUIDSTRING = "SAID00926519318"
+const ARENAS_RANKED_SEASON_15_GUIDSTRING = "SAID00058416642"
+
+global const int ARENAS_RANKED_MIN_SCORE = 1 // Bronze IV starts here
+global const int ARENAS_RANKED_PLACEMENT_SCORE = 0
+global const int ARENAS_RANKED_NUM_PLACEMENT_MATCHES = 10
+global const int ARENAS_RANKED_SPLIT_NUM_PLACEMENT_MATCHES = 5
+
+const int ARENAS_RANKED_ABANDON_AP_LOSS = 15
+
+const string ARENAS_RANKED_RECHECK_SEASONS_STARTING_WITH = "SAID00781342567" // Season 11 --> always recheck rewards for seasons after this one
+
+global struct ArenasRankedPostGameScoringStruct
+{
+	bool wasAbandoned
+	bool lossForgiveness
+	int  kills
+	int  damage
+	int  placement
+	int  placementScore
+	int  penaltyPointsForAbandoning
+	int  tierDerankingProtectionAdjustment
+	int  lossProtectionAdjustment
+	int  currentScore
+	int  previousScore
+}
+
+struct ArenasRankedResetStruct
+{
+	string previousDivisionName
+	string currentDivisionName
+}
+
+struct
+{
+	bool                                               initialized = false
+	bool                                               itemRegistrationInitialized = false
+	array<SharedRankedTierData>                        rankedTiers
+	array<SharedRankedDivisionData>                    rankedDivisions
+	SharedRankedDivisionData ornull                    ladderOnlyDivision = null
+	int                                                numPlayersOnLadder = 0
+	table<string, int >                                historicalNumPlayersOnLadder
+	table<string, SharedRankedDivisionData >           historicalLadderOnlyDivision
+	table< string, array < SharedRankedTierData > >    historicalRankedTiers
+	table< string, array< SharedRankedDivisionData > > historicalRankedDivisions
+
+	SharedRankedDivisionData& topRankedDivisionData
+
+	table<string, string > stryderLadderNameToPeriodGUIDStringTable
+
+
+	#if SERVER
+		table<EHI, int> playerToMaxTeamSizeThisGameTable
+	#endif
+
+	#if SERVER
+		table<entity, int>                              oldAPScore
+		table<entity, bool>                             arenasRankedPlayerGRXStateIsUpdated
+		table<string, int>                              arenasRankedTierNamesToBadgeAwardStaticLevelTable
+		table<string, int>                              arenasRankedTierNamesToBadgeAwardAnimatedLevelTable
+		table<entity, array< ArenasRankedResetStruct> > playersThatResetArenasRankOnConnect
+		table<entity, array<string> >                   playersToSetArenasBadgeStatsOnConnect
+		array< string > 					            rankedPeriodGUIDsToRecheck
+	#endif
+
+	#if UI
+		string              arenasRankedPeriodToAcknowledgeRewards
+		string              arenasRankedSplitResetAcknowledgePersistenceField
+		table<string, bool> arenasRankedPeriodsWithRewardsNotified
+	#endif
+
+} file
+
+void function Sh_ArenasRanked_Init()
+// Note that Sh_ArenasRanked_ItemRegistrationInit and is separate! Needs to be separate from Sh_ArenasRanked_Init() because Items need to be initialized before stats and stats need to be initialized before persistence
+{
+	if ( !file.initialized ) //Put things in here that need to be done in server, client and UI, but only once in UI.
+	{
+		RegisterSignal( "ArenasRanked_NotifyRankedPeriodScoreChanged" ) // singal used to stop
+		file.initialized = true
+	}
+
+	#if SERVER
+		//These all run even if it's not a ranked game
+		AddCallback_OnClientDisconnected( ArenasRanked_OnPlayerDisconnected )
+
+		ArenasRanked_InitRankedTierNamesToBadgeAwardsLevelTable()
+
+		#if DEV
+			AddCallback_GeneratePDef( GenerateArenasRanked_PDef )
+		#endif // DEV
+
+	#endif
+}
+
+
+void function Sh_ArenasRanked_ItemRegistrationInit()
+//Needs to be separate from Sh_ArenasRanked_Init() because Items need to be initialized before stats and stats need to be initialized before persistence
+{
+	if ( !file.itemRegistrationInitialized ) // Put things in here that need to be done in server, client and UI, but only once in UI.
+	{
+		AddCallback_OnItemFlavorRegistered( eItemType.calevent_arenas_ranked_period, OnArenasRankedRegistered )
+		AddCallbackOrMaybeCallNow_OnAllItemFlavorsRegistered( ArenasRanked_AllItemFlavorsRegistered )
+		file.itemRegistrationInitialized = true
+	}
+}
+
+
+void function OnArenasRankedRegistered( ItemFlavor calEventArenasRanked )
+{
+	array< SharedRankedTierData > tierData // we can get away with useing regular ranked structs for arenas ranked I think.
+	array< SharedRankedDivisionData  > divisionData
+
+	foreach ( var tierBlock in IterateSettingsAssetArray( ItemFlavor_GetAsset( calEventArenasRanked ), "tiers" ) )
+	{
+		SharedRankedTierData tier
+		tier.name                  = GetSettingsBlockString( tierBlock, "name" )
+		tier.icon                  = GetSettingsBlockAsset( tierBlock, "icon" )
+		tier.bgImage               = GetSettingsBlockAsset( tierBlock, "bgImage" )
+		tier.levelUpRuiAsset       = GetSettingsBlockStringAsAsset( tierBlock, "levelUpRuiAsset" )
+		tier.iconRuiAsset          = GetSettingsBlockStringAsAsset( tierBlock, "iconRuiAsset" )
+		tier.promotionAnnouncement = string( GetSettingsBlockStringAsAsset( tierBlock, "promotionAnnouncement" ) )
+
+		tier.scoreMin = 99999999
+		foreach ( var divBlock in IterateSettingsArray( GetSettingsBlockArray( tierBlock, "divisions" ) ) )
+		{
+			SharedRankedDivisionData data
+			data.divisionName      = GetSettingsBlockString( divBlock, "name" )
+			data.emblemText        = GetSettingsBlockString( divBlock, "emblemText" )
+			data.scoreMin          = GetSettingsBlockInt( divBlock, "scoreMin" )
+			data.emblemDisplayMode = SharedRanked_GetEmblemDisplayModeFromEmblemText( data.emblemText )
+			data.tier              = tier
+
+			if ( data.scoreMin < tier.scoreMin )
+				tier.scoreMin = data.scoreMin
+
+			divisionData.append( data )
+		}
+
+		foreach ( var rewardBlock in IterateSettingsArray( GetSettingsBlockArray( tierBlock, "rewards" ) ) )
+		{
+			SharedRankedReward data
+			data.previewName        = GetSettingsBlockString( rewardBlock, "previewName" )
+			data.previewIcon        = GetSettingsBlockAsset( rewardBlock, "previewIcon" )
+			data.previewIconShowBox = GetSettingsBlockBool( rewardBlock, "previewIconShowBox" )
+			data.previewImage       = GetSettingsBlockAsset( rewardBlock, "previewImage" )
+			data.rewardAsset        = GetSettingsBlockAsset( rewardBlock, "flavor" )
+
+			tier.rewards.append( data )
+		}
+
+		tier.index = tierData.len()
+
+		tierData.append( tier )
+	}
+
+	divisionData.sort( SharedRanked_CompareDivision )
+	for ( int i = 0; i < divisionData.len(); i++ )
+	{
+		SharedRankedDivisionData data = divisionData[i]
+		data.index = i
+	}
+
+	int ladderOnlyTiers = 0
+
+	foreach ( var tierBlock in IterateSettingsAssetArray( ItemFlavor_GetAsset( calEventArenasRanked ), "ladderOnlyTier" ) ) //Note that we don't add ladderOnlyTiers and divisions to the rest of the tier data!
+	{
+		Assert( ladderOnlyTiers == 0 ) //Make sure at most 1 ladder only tier
+		++ladderOnlyTiers
+
+		SharedRankedTierData ladderOnlyTier
+		ladderOnlyTier.name                  = GetSettingsBlockString( tierBlock, "name" )
+		ladderOnlyTier.icon                  = GetSettingsBlockAsset( tierBlock, "icon" )
+		ladderOnlyTier.bgImage               = GetSettingsBlockAsset( tierBlock, "bgImage" )
+		ladderOnlyTier.levelUpRuiAsset       = GetSettingsBlockStringAsAsset( tierBlock, "levelUpRuiAsset" )
+		ladderOnlyTier.iconRuiAsset          = GetSettingsBlockStringAsAsset( tierBlock, "iconRuiAsset" )
+		ladderOnlyTier.promotionAnnouncement = string( GetSettingsBlockStringAsAsset( tierBlock, "promotionAnnouncement" ) )
+		ladderOnlyTier.isLadderOnlyTier      = true
+		ladderOnlyTier.index                 = tierData.len()
+
+		int ladderOnlyDivisions = 0
+
+		string rpGUIDString = ItemFlavor_GetGUIDString( calEventArenasRanked )
+
+		foreach ( var divBlock in IterateSettingsArray( GetSettingsBlockArray( tierBlock, "divisions" ) ) )
+		{
+			Assert( ladderOnlyDivisions == 0 ) //Make sure only 1 ladder only division
+			++ladderOnlyDivisions
+
+			SharedRankedDivisionData data
+			data.divisionName         = GetSettingsBlockString( divBlock, "name" )
+			data.emblemText           = GetSettingsBlockString( divBlock, "emblemText" )
+			data.scoreMin             = GetSettingsBlockInt( divBlock, "scoreMin" )
+			data.emblemDisplayMode    = SharedRanked_GetEmblemDisplayModeFromEmblemText( data.emblemText )
+			Assert( data.emblemDisplayMode == emblemDisplayMode.DISPLAY_LADDER_POSITION )
+			data.tier                 = ladderOnlyTier
+			data.isLadderOnlyDivision = true
+			data.index                = divisionData.len()
+			ladderOnlyTier.scoreMin   = data.scoreMin
+
+			file.historicalNumPlayersOnLadder[ rpGUIDString ]  <- GetSettingsBlockInt( divBlock, "numPlayersOnLadder" )
+			file.historicalLadderOnlyDivision[ rpGUIDString  ] <- data
+		}
+
+		Assert( ladderOnlyDivisions == 1 ) ////Make sure only 1 ladder only division
+
+		foreach ( var rewardBlock in IterateSettingsArray( GetSettingsBlockArray( tierBlock, "rewards" ) ) )
+		{
+			SharedRankedReward data
+			data.previewName        = GetSettingsBlockString( rewardBlock, "previewName" )
+			data.previewIcon        = GetSettingsBlockAsset( rewardBlock, "previewIcon" )
+			data.previewIconShowBox = GetSettingsBlockBool( rewardBlock, "previewIconShowBox" )
+			data.previewImage       = GetSettingsBlockAsset( rewardBlock, "previewImage" )
+			data.rewardAsset        = GetSettingsBlockAsset( rewardBlock, "flavor" )
+
+			ladderOnlyTier.rewards.append( data )
+		}
+	}
+
+	string rankedPeriodGUID = ItemFlavor_GetGUIDString( calEventArenasRanked )
+	file.historicalRankedTiers[ rankedPeriodGUID ] <- tierData
+	file.historicalRankedDivisions[ rankedPeriodGUID ] <- divisionData
+
+	if ( SharedRankedPeriod_HasSplits( calEventArenasRanked ) )
+	{
+		string stryderFirstSplitLadderName = ArenasRanked_GetStryderLadderNameForHistoricalRankedPeriod( calEventArenasRanked, true )
+		file.stryderLadderNameToPeriodGUIDStringTable[ stryderFirstSplitLadderName ] <- rankedPeriodGUID
+		string stryderSecondSplitLadderName = ArenasRanked_GetStryderLadderNameForHistoricalRankedPeriod( calEventArenasRanked, false )
+		file.stryderLadderNameToPeriodGUIDStringTable[ stryderSecondSplitLadderName ] <- rankedPeriodGUID
+	}
+	else
+	{
+		string stryderLadderName = ArenasRanked_GetStryderLadderNameForHistoricalRankedPeriod( calEventArenasRanked, false )
+		file.stryderLadderNameToPeriodGUIDStringTable[ stryderLadderName ] <- rankedPeriodGUID
+	}
+}
+
+
+void function ArenasRanked_AllItemFlavorsRegistered()
+{
+	string latestRankedPeriodGUID = ARENAS_RANKED_SEASON_15_GUIDSTRING
+	file.rankedTiers     = file.historicalRankedTiers[ latestRankedPeriodGUID ]
+	file.rankedDivisions = file.historicalRankedDivisions[ latestRankedPeriodGUID ]
+
+	if ( latestRankedPeriodGUID in file.historicalLadderOnlyDivision )
+	{
+		file.ladderOnlyDivision    = file.historicalLadderOnlyDivision[ latestRankedPeriodGUID  ]
+		file.topRankedDivisionData = file.historicalLadderOnlyDivision[ latestRankedPeriodGUID  ]
+		file.numPlayersOnLadder    = file.historicalNumPlayersOnLadder[ latestRankedPeriodGUID ]
+	}
+	else
+	{
+		file.topRankedDivisionData = file.rankedDivisions.top()
+	}
+}
+
+ItemFlavor function ArenasRanked_GetFinalRankedPeriod()
+{
+	return GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( ARENAS_RANKED_SEASON_15_GUIDSTRING ) )
+}
+
+
+int function ArenasRanked_GetNumPlayersOnLadder()
+{
+	ItemFlavor latestRankedPeriod = ArenasRanked_GetFinalRankedPeriod()
+	string playlistOverrideVar    = SharedRanked_GetNumPlayerOnLaddersOverridePlaylistVar( latestRankedPeriod )
+	return GetCurrentPlaylistVarInt( playlistOverrideVar, file.numPlayersOnLadder )
+}
+
+
+SharedRankedTierData function ArenasRanked_GetHighestHistoricalTierAcrossSplitsForPlayer( entity player, ItemFlavor rankedPeriod )
+{
+	Assert( SharedRankedPeriod_HasSplits( rankedPeriod ) )
+
+	string rankedPeriodGUID = ItemFlavor_GetGUIDString( rankedPeriod )
+
+	int firstSplitRankedScore                 = ArenasRanked_GetHistoricalFirstSplitRankScore( player, rankedPeriodGUID )
+	int firstSplitLadderPosition              = ArenasRanked_GetHistoricalLadderPosition( player, rankedPeriodGUID, true )
+	SharedRankedTierData firstSplitRankedTier = ArenasRanked_GetHistoricalRankedDivisionFromScoreAndLadderPosition( firstSplitRankedScore, firstSplitLadderPosition, rankedPeriodGUID ).tier
+
+	int secondSplitRankedScore                 = ArenasRanked_GetHistoricalRankScore ( player, rankedPeriodGUID )
+	int secondSplitLadderPosition              = ArenasRanked_GetHistoricalLadderPosition( player, rankedPeriodGUID, false )
+	SharedRankedTierData secondSplitRankedTier = ArenasRanked_GetHistoricalRankedDivisionFromScoreAndLadderPosition( secondSplitRankedScore, secondSplitLadderPosition, rankedPeriodGUID ).tier
+
+	SharedRankedTierData highestTierAchieved = ArenasRanked_GetHigherOfTwoTiers( firstSplitRankedTier, secondSplitRankedTier )
+
+	return highestTierAchieved
+}
+
+
+bool function ArenasRanked_NeedToCheckWithStryderForEndRankedSplitOrPeriod( entity player, string rankedPeriodGUID )
+{
+	if ( !GetCurrentPlaylistVarBool( "arenas_ranked_end_series_stryder_check", true ) )
+		return false
+
+	int numberOfRankedGames = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.arenas_rankedperiod_games_played, rankedPeriodGUID ) )
+	if ( numberOfRankedGames == 0 )
+		return false
+
+	return true
+}
+
+
+SharedRankedTierData function ArenasRanked_GetHigherOfTwoTiers( SharedRankedTierData firstTier, SharedRankedTierData secondTier )
+//Split out to its own function mainly because comparing indexes is fragile but there isn't a quick, better way to do this now
+{
+	SharedRankedTierData highestTierAchieved = firstTier.index > secondTier.index ? firstTier : secondTier
+	return highestTierAchieved
+}
+
+
+string function ArenasRanked_GetStryderLadderNameForLatestRankedPeriod()
+//Note this is latest arenas ranked period, not active! If there is an active period that means it is also the latest, but if there is no active period the latest is the last one that was
+{
+	ItemFlavor latestPeriod = ArenasRanked_GetFinalRankedPeriod()
+
+	string baseLadderName = ItemFlavor_GetCalEventRef( latestPeriod )
+
+	if ( !SharedRankedPeriod_HasSplits( latestPeriod ) )
+		return baseLadderName
+
+	if ( SharedRankedPeriod_IsFirstSplitActive( latestPeriod ) )
+		return baseLadderName + SHARED_RANKED_SPLIT_1_STRYDER_SUFFIX
+	else //Not checking for RankedPeriod_IsSecondSplitActive since it's correct to return second split in the case where we are past the active ranked period. This normally only comes up in dev when we set time so far ahead we don't have a next ranked period definition set yet.
+		return baseLadderName + SHARED_RANKED_SPLIT_2_STRYDER_SUFFIX
+
+	unreachable
+}
+
+
+string function ArenasRanked_GetStryderLadderNameForHistoricalRankedPeriod( ItemFlavor rankedPeriod, bool isFirstSplit )
+{
+	Assert( ItemFlavor_GetType( rankedPeriod ) == eItemType.calevent_arenas_ranked_period )
+
+	string baseLadderName = ItemFlavor_GetCalEventRef( rankedPeriod )
+
+	if ( !SharedRankedPeriod_HasSplits( rankedPeriod ) )
+		return baseLadderName
+
+	if ( isFirstSplit )
+		return baseLadderName + SHARED_RANKED_SPLIT_1_STRYDER_SUFFIX
+	else
+		return baseLadderName + SHARED_RANKED_SPLIT_2_STRYDER_SUFFIX
+
+	unreachable
+}
+
+
+string function ArenasRanked_GetSeasonGUIDStringFromStryderLadderName( string stryderLadderName )
+{
+	return file.stryderLadderNameToPeriodGUIDStringTable[ stryderLadderName ]
+}
+
+
+bool function ArenasRanked_PeriodHasLadderOnlyDivision( string rankedPeriodGUIDString )
+{
+	return rankedPeriodGUIDString in file.historicalLadderOnlyDivision
+}
+
+
+SharedRankedDivisionData function ArenasRanked_GetHistoricalLadderOnlyDivision( string rankedPeriodGUIDString )
+{
+	Assert( rankedPeriodGUIDString in file.historicalLadderOnlyDivision )
+	return file.historicalLadderOnlyDivision[ rankedPeriodGUIDString  ]
+}
+
+
+int function ArenasRanked_GetHistoricalNumPlayersOnLadder( string rankedPeriodGUIDString )
+{
+	Assert( rankedPeriodGUIDString in file.historicalNumPlayersOnLadder )
+	ItemFlavor historicalRankedPeriod = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( rankedPeriodGUIDString ) )
+	string playlistOverrideVar        = SharedRanked_GetNumPlayerOnLaddersOverridePlaylistVar( historicalRankedPeriod )
+	return  GetCurrentPlaylistVarInt( playlistOverrideVar, file.historicalNumPlayersOnLadder[ rankedPeriodGUIDString ] )
+}
+
+
+#if CLIENT
+void function ShArenasRanked_RegisterNetworkFunctions() {}
+#endif
+
+
+SharedRankedDivisionData function GetCurrentArenasRankedDivisionFromScoreAndLadderPosition( int score, int ladderPosition )
+{
+	int numPlayersOnLadder = ArenasRanked_GetNumPlayersOnLadder()
+	if ( (ladderPosition != SHARED_RANKED_INVALID_LADDER_POSITION) && (numPlayersOnLadder > 0) && (ladderPosition <= numPlayersOnLadder) )
+	{
+		SharedRankedDivisionData ladderDivisionData = expect SharedRankedDivisionData ( file.ladderOnlyDivision )
+		#if DEV
+			if ( ladderDivisionData.scoreMin > score ) //We probably got here from a persistence reset in dev, so persistence and stryder don't match up anymore!
+				return GetCurrentArenasRankedDivisionFromScore( score )
+		#endif
+
+		Assert( ladderDivisionData.scoreMin <= score )
+		return (ladderDivisionData)
+	}
+
+	return GetCurrentArenasRankedDivisionFromScore( score )
+
+}
+
+
+SharedRankedDivisionData function GetCurrentArenasRankedDivisionFromScore( int score )
+{
+	if ( score <= ARENAS_RANKED_PLACEMENT_SCORE )
+	{
+		Assert( file.rankedDivisions.len() > 0 )
+		Assert( file.rankedDivisions[ 0 ].scoreMin == ARENAS_RANKED_PLACEMENT_SCORE )
+		return file.rankedDivisions[ 0 ]
+	}
+
+	bool foundRank = false
+	SharedRankedDivisionData data
+
+	for ( int i = 0; i < file.rankedDivisions.len(); i++ )
+	{
+		if ( file.rankedDivisions[i].scoreMin > score )
+			break
+
+		foundRank = true
+
+		data = file.rankedDivisions[ i ]
+	}
+
+	Assert( foundRank )
+	return data
+}
+
+
+SharedRankedDivisionData ornull function GetNextArenasRankedDivisionFromScore( int score )
+{
+	bool foundRank = false
+	SharedRankedDivisionData data
+
+	// Still placing, there is no next rank
+	if ( score <= ARENAS_RANKED_PLACEMENT_SCORE )
+		return null
+
+	score = maxint( score, ARENAS_RANKED_MIN_SCORE )
+
+	int i = 0
+	for ( ; i < file.rankedDivisions.len(); i++ )
+	{
+		if ( file.rankedDivisions[i].scoreMin > score )
+			break
+
+		foundRank = true
+
+		data = file.rankedDivisions[ i ]
+	}
+
+	if ( i >= file.rankedDivisions.len() )
+	{
+		return null
+	}
+
+	data = file.rankedDivisions[ i ]
+
+	if ( data.isLadderOnlyDivision )
+		return null
+
+	Assert( foundRank )
+
+	return data
+}
+
+int function ArenasRanked_GetNumPlacementMatchesRequired()
+{
+	int currentUnixTime                  = GetUnixTimestamp()
+	ItemFlavor latestRankedPeriod = ArenasRanked_GetFinalRankedPeriod()
+
+	if( SharedRankedPeriod_HasSplits( latestRankedPeriod ) && SharedRankedPeriod_IsSecondSplitActive( latestRankedPeriod ) )
+		return GetCurrentPlaylistVarInt( "arenas_ranked_split_num_placement_matches", ARENAS_RANKED_SPLIT_NUM_PLACEMENT_MATCHES )
+
+	return GetCurrentPlaylistVarInt( "arenas_ranked_num_placement_matches", ARENAS_RANKED_NUM_PLACEMENT_MATCHES )
+}
+
+int function ArenasRanked_GetNumPlacementMatchesCompleted( entity player )
+{
+#if UI
+	if ( !IsFullyConnected() )
+		return 0
+#endif
+
+#if CLIENT
+	if ( !IsConnected() )
+		return 0
+#endif
+
+	return expect int( GetArenasRankedPersistenceData( player, "arenasRankedPlacementMatchesCompleted" ) )
+}
+
+bool function ArenasRanked_HasFinishedPlacementMatches( entity player )
+{
+	return ArenasRanked_GetNumPlacementMatchesCompleted( player ) >= ArenasRanked_GetNumPlacementMatchesRequired()
+}
+
+#if SERVER
+void function ArenasRanked_SetPlacementWin( entity player, int numGame, bool wonGame )
+{
+	Assert( numGame >= 0 && numGame < ARENAS_RANKED_NUM_PLACEMENT_MATCHES )
+
+	int placementWins = player.GetPersistentVarAsInt( "placementWins" )
+
+	// Default is 0 but clear bit on a loss just in case
+	if( wonGame )
+		placementWins = placementWins | (1 << numGame )
+	else
+		placementWins = placementWins & ~(1 << numGame )
+
+	player.SetPersistentVar( "placementWins", placementWins )
+}
+
+void function ArenasRanked_ClearPlacementWins( entity player )
+{
+	player.SetPersistentVar( "placementWins", 0 )
+}
+
+#endif
+
+array<bool> function ArenasRanked_GetPlacementWinsAsArray( entity player )
+{
+	#if DEV
+	if ( DEV_ShouldIgnorePersistence() )
+		return []
+	#endif
+
+	#if UI
+	if ( !IsFullyConnected() )
+		return []
+	#endif
+
+	#if CLIENT
+	if ( !IsConnected() )
+		return []
+	#endif
+
+	int placementWins = 0
+
+	#if UI
+		placementWins = GetPersistentVarAsInt( "placementWins" )
+	#else
+		placementWins = player.GetPersistentVarAsInt( "placementWins" )
+	#endif
+
+	array<bool> placementWinArray = []
+	for( int i = 0; i < ARENAS_RANKED_NUM_PLACEMENT_MATCHES; ++i )
+		placementWinArray.append( (placementWins & (1 << i)) != 0 )
+
+	return placementWinArray
+}
+
+#if SERVER
+const int ARENAS_SCOREMAX = 8000
+const float ARENAS_MMRMAX = 50.0
+
+int function ArenasRanked_ComputeMMRScoreMapping( float mmr )
+{
+	int ScoreMax = ARENAS_SCOREMAX // should be data driven, map to master, keep in sync with Stryder
+	int ScoreMin = 1 // should be data driven
+
+	float mmrMin = 0 // tunable, keep in sync with Stryder
+	float mmrMax = ARENAS_MMRMAX // tunable, keep in sync with Stryder
+
+	return int( ScoreMin + ( ( mmr - mmrMin ) / ( mmrMax - mmrMin ) ) * ( ScoreMax - ScoreMin ) )
+}
+
+float function ArenasRanked_MapScoreToMMR( int score )
+{
+	int ScoreMax = ARENAS_SCOREMAX // should be data driven, map to master, keep in sync with Stryder
+	int ScoreMin = 1 // should be data driven
+
+	float mmrMin = 0 // tunable, keep in sync with Stryder
+	float mmrMax = ARENAS_MMRMAX // tunable, keep in sync with Stryder
+
+	return (mmrMin + ((float( score - ScoreMin ) / float( ScoreMax - ScoreMin )) * ( mmrMax - mmrMin )))
+}
+
+int function ArenasRanked_ComputeScoreDiffFromPlayer( entity player )
+{
+	return 0
+}
+
+int function ArenasRanked_ComputeScoreDiff( float mmr, bool isWinner, int score, float win_p )
+{
+	// on Carlos suggestion: base can be a number based on win probability to reflect unbalanced match
+	// Pierse will do some maths around win probability to get a linear scale
+	float base = GetCurrentPlaylistVarFloat( "arenas_ranked_score_min", 12 ) // minimum value, won or lost, tunable
+
+	float spread = GetCurrentPlaylistVarFloat( "arenas_ranked_score_spread", 2000 ) // max difference between scoreMmr and score to get the full bonus, tunable
+	float bonus = GetCurrentPlaylistVarFloat( "arenas_ranked_score_bonus", 96 ) // maximum extra AP won/lost based on player AP and MMR difference
+
+	float bonusP = GetCurrentPlaylistVarFloat( "arenas_ranked_score_bonus_p", 48 ) // maximum value won/lost based on predicted winrate
+	float spreadP = GetCurrentPlaylistVarFloat( "arenas_ranked_score_spread_p", 0.4 ) // how far from 50% should winrate be to earn max bonus above
+
+	float mmrSpread = GetCurrentPlaylistVarFloat( "arenas_ranked_mmr_spread", 5.0 ) // Used when above max score to scale loss amount off MMR below cap
+
+	float maxAPLoss = GetCurrentPlaylistVarFloat( "arenas_ranked_max_score_loss", 30 ) // Most a player can lose in a single match (doesn't include abandon penalty)
+
+	// Remove bonus when near max MMR and at AP cap
+	// This prevents high AP players from being dragged back down to score cap, and lets them grind ladder pos
+	bool useScoreSpread = score < ARENAS_SCOREMAX
+
+	//
+	int factorWin = 1
+	if ( isWinner == false )
+		factorWin = -1
+
+	int scoreMMR = ArenasRanked_ComputeMMRScoreMapping( mmr )
+	float spreadRange = useScoreSpread ? ( scoreMMR - score ) / spread : 0.0
+	float spreadPRange = ( 0.5 - win_p ) / spreadP
+
+	if( isWinner )
+	{
+		spreadRange = clamp( spreadRange, 0, 1 )
+		spreadPRange = clamp( spreadPRange, 0, 1 )
+	}
+	else
+	{
+		// Only apply MMR spread bonus on a loss. No bonus for a win when above max score
+		if( !useScoreSpread )
+			spreadRange = ( mmr - ARENAS_MMRMAX ) / mmrSpread
+
+		spreadRange = clamp( spreadRange, -1, 0 )
+		spreadPRange = clamp( spreadPRange, -1, 0 )
+	}
+
+	float scoreDiff = base * factorWin + bonus * spreadRange + bonusP * spreadPRange
+	return int( max( -maxAPLoss, scoreDiff ) )
+}
+
+int function ArenasRanked_SeedScoreFromMMR( entity player, array<float> mmrs )
+{
+	// 0: playerMean, 1: playerVariance, 2:teamMean, 3:teamVariance
+	int score = ArenasRanked_ComputeMMRScoreMapping( mmrs[0] )
+
+	int numDivisionsToStartBack = GetCurrentPlaylistVarInt( "arenas_ranked_num_div_reset_after_placement", 6 )
+	int divisionIndex = file.rankedDivisions.len() - numDivisionsToStartBack
+	for ( int i = numDivisionsToStartBack; i < file.rankedDivisions.len(); i++ )
+	{
+		if ( file.rankedDivisions[i].scoreMin >= score )
+		{
+			divisionIndex = i - numDivisionsToStartBack
+			break
+		}
+	}
+
+	if( divisionIndex <= 0 || divisionIndex >= file.rankedDivisions.len() )
+		return ARENAS_RANKED_MIN_SCORE
+
+	return file.rankedDivisions[ divisionIndex ].scoreMin
+}
+
+#endif
+
+int function ArenasRanked_GetPenaltyPointsForAbandon( SharedRankedDivisionData currentDivision )
+{
+	SharedRankedTierData tierData = currentDivision.tier
+	int tierIndex                 = tierData.index
+	string playlistVarString      = "arenasRanked_abandon_cost_" + tierIndex
+	return GetCurrentPlaylistVarInt( playlistVarString, ARENAS_RANKED_ABANDON_AP_LOSS )    // #TODO ARENASRANKED - reasses once we know the arenas rank up system better
+}
+
+
+int function ArenasRanked_GetHistoricalRankScore( entity player, string rankedSeasonGUID )
+{
+#if UI
+	if ( !IsFullyConnected() )
+		return ARENAS_RANKED_PLACEMENT_SCORE
+#endif
+
+#if CLIENT
+	if ( !IsConnected() )
+		return ARENAS_RANKED_PLACEMENT_SCORE
+#endif
+
+	#if CLIENT
+		Assert ( player == GetLocalClientPlayer() )
+	#endif
+
+	#if UI
+		Assert ( player == GetLocalClientPlayer() )
+	#endif
+
+	var score = ArenasRanked_GetHistoricalRankedPersistenceData( player, "highestArenasRankedScore", rankedSeasonGUID )
+	if ( score == null )
+		return ARENAS_RANKED_PLACEMENT_SCORE
+
+	return expect int( score )
+}
+
+
+int function ArenasRanked_GetHistoricalFirstSplitRankScore( entity player, string rankedSeasonGUID )
+//Only used for stats page currently now.
+{
+#if UI
+	if ( !IsFullyConnected() )
+		return ARENAS_RANKED_PLACEMENT_SCORE
+#endif
+
+#if CLIENT
+	if ( !IsConnected() )
+		return ARENAS_RANKED_PLACEMENT_SCORE
+#endif
+
+	#if CLIENT
+		Assert ( player == GetLocalClientPlayer() )
+	#endif
+
+	#if UI
+		Assert ( player == GetLocalClientPlayer() )
+	#endif
+
+	var score = ArenasRanked_GetHistoricalRankedPersistenceData( player, "firstSplitRankedScore", rankedSeasonGUID )
+
+	if ( score == null )
+		return ARENAS_RANKED_PLACEMENT_SCORE
+
+	return expect int( score )
+}
+
+
+SharedRankedDivisionData function ArenasRanked_GetHistoricalRankedDivisionFromScore( int rankScore, string rankedSeasonGUID )
+{
+	Assert( rankedSeasonGUID in file.historicalRankedDivisions )
+
+	array< SharedRankedDivisionData > historicalRankedDivisionData = file.historicalRankedDivisions[ rankedSeasonGUID  ]
+
+	if ( rankScore <= ARENAS_RANKED_PLACEMENT_SCORE )
+	{
+		Assert( historicalRankedDivisionData.len() > 0 )
+		Assert( historicalRankedDivisionData[ 0 ].scoreMin == ARENAS_RANKED_PLACEMENT_SCORE )
+		return historicalRankedDivisionData[ 0 ]
+	}
+
+	bool foundRank = false
+	SharedRankedDivisionData data
+
+	for ( int i = 0; i < historicalRankedDivisionData.len(); i++ )
+	{
+		if ( historicalRankedDivisionData[i].scoreMin > rankScore )
+			break
+
+		foundRank = true
+
+		data = historicalRankedDivisionData[ i ]
+	}
+
+	Assert( foundRank )
+	return data
+}
+
+
+int function ArenasRanked_GetTierOfThresholdForRankedPartyDifferences()
+{
+	array<SharedRankedTierData> tiers = ArenasRanked_GetTiers()
+	foreach ( rankTier in tiers )
+	{
+		if ( rankTier.name == "#ARENAS_RANKED_TIER_PLATINUM" ) // this seems pretty strange?
+			return rankTier.index
+	}
+
+	return tiers.len() + 1 //No tiers are subject to ranked party difference check if we get here
+}
+
+
+SharedRankedDivisionData function ArenasRanked_GetHistoricalRankedDivisionFromScoreAndLadderPosition( int rankScore, int ladderPosition, string rankedSeasonGUID )
+{
+	if ( ArenasRanked_PeriodHasLadderOnlyDivision( rankedSeasonGUID ) )
+	{
+		int historicalNumPlayersOnLadder = ArenasRanked_GetHistoricalNumPlayersOnLadder( rankedSeasonGUID )
+		if ( ladderPosition != SHARED_RANKED_INVALID_LADDER_POSITION && ladderPosition > 0 && ladderPosition <= historicalNumPlayersOnLadder ) //Need to explicitly check for 0 since 0 is default in persistence :(
+			return ArenasRanked_GetHistoricalLadderOnlyDivision( rankedSeasonGUID )
+	}
+
+	return ArenasRanked_GetHistoricalRankedDivisionFromScore( rankScore, rankedSeasonGUID )
+
+	unreachable
+}
+
+
+int function ArenasRanked_GetHistoricalLadderPosition( entity player, string rankedSeasonGUID, bool forFirstSplit = false )
+{
+	Assert( rankedSeasonGUID in file.historicalRankedDivisions )
+	ItemFlavor historicalRankedPeriod = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( rankedSeasonGUID ) )
+
+	if ( !SharedRankedPeriod_HasSplits( historicalRankedPeriod ) || !forFirstSplit )
+		return expect int ( ArenasRanked_GetHistoricalRankedPersistenceData( player, "endSeriesLadderPosition", rankedSeasonGUID ) )
+
+	if ( SharedRankedPeriod_HasSplits( historicalRankedPeriod ) && forFirstSplit )
+		return expect int ( ArenasRanked_GetHistoricalRankedPersistenceData( player, "endFirstSplitLadderPosition", rankedSeasonGUID ) )
+
+	unreachable
+}
+
+
+var function ArenasRanked_GetHistoricalRankedPersistenceData( entity player, string persistenceField, string rankedSeasonGUID )
+{
+	#if DEV
+		if ( DEV_ShouldIgnorePersistence() )
+			return null
+	#endif
+
+	Assert( rankedSeasonGUID in file.historicalRankedTiers )
+	#if UI
+		return GetPersistentVar( "arenasRankedData[" + rankedSeasonGUID + "]." + persistenceField )
+	#else
+		return player.GetPersistentVar( "arenasRankedData[" + rankedSeasonGUID + "]." + persistenceField )
+	#endif
+}
+
+
+int function GetPlayerArenasRankScore( entity player )
+{
+#if UI
+	if ( !IsFullyConnected() )
+		return ARENAS_RANKED_PLACEMENT_SCORE
+#endif
+
+#if CLIENT
+	if ( !IsConnected() )
+		return ARENAS_RANKED_PLACEMENT_SCORE
+#endif
+
+	#if SERVER
+		var score = GetArenasRankedPersistenceData( player, "currentArenasRankedScore" )
+		if ( score == null || score < ARENAS_RANKED_PLACEMENT_SCORE )
+			return ARENAS_RANKED_PLACEMENT_SCORE
+
+		return expect int( score )
+	#endif
+
+	#if CLIENT
+		Assert( !IsLobby() )
+		EHI playerEHI = ToEHI( player )
+		return GetEHIScriptStruct( playerEHI ).arenasRankScore
+	#endif
+
+	#if UI
+		if ( !IsLobby() )
+		{
+			EHI playerEHI = ToEHI( player )
+			return GetEHIScriptStruct( playerEHI ).arenasRankScore
+		}
+		else
+		{
+			Assert( player == GetLocalClientPlayer() )
+			var score = GetArenasRankedPersistenceData( player, "currentArenasRankedScore" )
+			if ( score == null || score < ARENAS_RANKED_PLACEMENT_SCORE )
+				return ARENAS_RANKED_PLACEMENT_SCORE
+
+			return expect int( score )
+		}
+	#endif
+
+	unreachable
+}
+
+
+#if SERVER || CLIENT
+bool function ArenasRanked_IsPlayerAbandoning( entity player )
+//Needs to run on both server and client!
+{
+	return false
+}
+
+bool function ArenasRanked_DidPlayerEverHaveAFullTeam( entity player )
+//Has to run on both server and client for menu warning, so use a net var. Functioned off to make it easier to rewrite ArenasRanked_IsPlayerAbandoning in the future
+{
+	// #TODO ARENASRANKED - This should be merge with the one in ranked since they are using the same net var.
+
+	return player.GetPlayerNetBool( "rankedDidPlayerEverHaveAFullTeam" )
+}
+
+bool function ArenasRanked_IsMatchOverForPlayer( entity player )
+{
+                        
+                                
+             
+
+                                                   
+             
+       
+
+	return false
+}
+
+
+bool function ArenasRanked_HasPlayerWaitedTooLongAfterBannerWasPickedUp( entity player )
+{
+	if ( IsAlive( player ) )
+		return false
+
+	if ( PlayerMatchState_GetFor( player ) < ePlayerMatchState.NORMAL )
+		return false
+
+	if ( player.GetPlayerNetInt( "respawnStatus" ) !=  eRespawnStatus.WAITING_FOR_DELIVERY )
+		return false
+
+	Assert( player.GetPlayerNetTime( "respawnBannerPickedUpTime" ) > -1 )
+	float timeSinceBeaconPickedUp = Time() - player.GetPlayerNetTime( "respawnBannerPickedUpTime" )
+
+	return (timeSinceBeaconPickedUp > GetCurrentPlaylistVarFloat( "arenas_ranked_respawn_banner_pickedup_timeout", 150.0 ))
+
+}
+#endif // SERVER || CLIENT
+
+
+var function GetArenasRankedPersistenceData( entity player, string persistenceField )
+{
+	#if DEV
+		if ( DEV_ShouldIgnorePersistence() )
+			return null
+	#endif
+
+	string ornull currentSeasonRefOrNull = GetCurrentStatRankedPeriodRefOrNullByType( eItemType.calevent_arenas_ranked_period )
+
+	if ( currentSeasonRefOrNull != null )
+	{
+		expect string( currentSeasonRefOrNull )
+
+		#if UI
+			return GetPersistentVar( "arenasRankedData[" + currentSeasonRefOrNull + "]." + persistenceField )
+		#else
+			return player.GetPersistentVar( "arenasRankedData[" + currentSeasonRefOrNull + "]." + persistenceField )
+		#endif
+	}
+
+	return 0
+}
+
+#if SERVER
+
+#if DEV
+void function GenerateArenasRanked_PDef()
+{
+	DEV_PDefGen_BeginStruct( "sArenasRankedData", "Data for Arenas Ranked." )
+	{
+		DEV_PDefGen_AddField_Bool( "arenasRankedInitialized" )                        //
+		DEV_PDefGen_AddField_Int( "currentArenasRankedScore" )                        // This is AP (arenas ranked points) we keep track of that, and Samy handles MMR.
+		DEV_PDefGen_AddField_Int( "highestArenasRankedScore" )                        // might be used for rewarding at end of season.
+		DEV_PDefGen_AddField_Int( "firstSplitRankedScore" )                            //
+		DEV_PDefGen_AddField_Int( "endFirstSplitLadderPosition" )                    //
+		DEV_PDefGen_AddField_Int( "endSeriesLadderPosition" )                        //
+		DEV_PDefGen_AddField_Int( "arenasRankedPlacementMatchesCompleted" )            //
+	}
+	DEV_PDefGen_EndStruct()
+
+	DEV_PDefGen_BeginFieldGroup( "Arenas Ranked Vars" )
+	{
+		DEV_PDefGen_AddField_StructArray_EnumKey( "sArenasRankedData", "arenasRankedData", "eArenasRankedPeriodFlavor" )
+		DEV_PDefGen_AddField_Bool( "showArenasRankedSummary" )
+		DEV_PDefGen_AddField_Int( "placementWins" ) // Used as bitfield
+	}
+	DEV_PDefGen_EndFieldGroup()
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+#endif //if dev
+
+
+void function ArenasRanked_FindLadderPositionsForCharSelect() {}
+
+void function SetPlayerArenasRankScore( entity player, int score )
+{
+	if ( !IsArenasRankedInSeason() )
+		return
+
+	SetArenasRankedPersistenceData( player, "currentArenasRankedScore", score )
+
+                       
+                                                                                                                                                                                                                
+      
+
+	int highest = expect int ( GetArenasRankedPersistenceData( player, "highestArenasRankedScore" ) )
+
+	if ( score > highest )
+	{
+		SetArenasRankedPersistenceData( player, "highestArenasRankedScore", score )
+	}
+}
+
+void function SetArenasRankedPersistenceData( entity player, string persistenceField, var data )
+{
+	int currentUnixTime                  = GetUnixTimestamp()
+	ItemFlavor ornull arenasRankedPeriod = null
+
+	if ( arenasRankedPeriod != null )
+	{
+		string preriodRef = ItemFlavor_GetGUIDString( expect ItemFlavor(arenasRankedPeriod) )
+		player.SetPersistentVar( "arenasRankedData[" + preriodRef + "]." + persistenceField, data )
+	}
+}
+
+
+void function ArenasRanked_SetHistoricalRankedPersistenceData( entity player, string persistenceField, var data, string rankedPeriodRef )
+{
+	player.SetPersistentVar( "arenasRankedData[" + rankedPeriodRef + "]." + persistenceField, data )
+}
+
+
+// #TODO ARENASRANKED - Need arenas version of CodeCallback_PlayerRankedPosFound()
+void function ArenasRanked_OnPlayerRankedLadderPositionFound( entity player, string rankedPeriodName, int rankPos ) {}
+
+void function ArenasRanked_OnStryderConfirmEndSeasonOrSplitScore( entity player, string stryderLadderName, int rankScore, int rankPos, bool doRankedReset = true ) {}
+
+void function ArenasRanked_OnPlayerDisconnected( entity player )
+{
+	if ( IsLobby() )
+	{
+		if ( player in file.oldAPScore )
+			delete file.oldAPScore[ player ]
+
+		if ( player in file.arenasRankedPlayerGRXStateIsUpdated )
+			delete file.arenasRankedPlayerGRXStateIsUpdated[ player ]
+
+		if ( player in file.playersThatResetArenasRankOnConnect )
+			delete file.playersThatResetArenasRankOnConnect[ player ]
+
+		if ( player in file.playersToSetArenasBadgeStatsOnConnect )
+			delete file.playersToSetArenasBadgeStatsOnConnect[ player ]
+	}
+}
+
+
+bool function ArenasRanked_ShouldCheckLadderPositionForPlayer( entity player )
+{
+	//TODO(chin): Need to do historical ladder position look up.
+	int rankScore = GetPlayerArenasRankScore( player )
+	if ( file.ladderOnlyDivision != null )
+		return rankScore >= expect SharedRankedDivisionData ( file.ladderOnlyDivision ).scoreMin
+
+	if ( file.topRankedDivisionData.emblemDisplayMode == emblemDisplayMode.DISPLAY_LADDER_POSITION )
+		return rankScore >= file.topRankedDivisionData.scoreMin
+
+	return false
+}
+
+
+void function ArenasRanked_MarkPlayerForSetBadgeStatsOnConnect( entity player, string rankedPeriodGUID )
+{
+	if ( player in file.playersToSetArenasBadgeStatsOnConnect )
+	{
+		file.playersToSetArenasBadgeStatsOnConnect[ player ].append( rankedPeriodGUID )
+	}
+	else
+	{
+		file.playersToSetArenasBadgeStatsOnConnect[ player ] <- [ rankedPeriodGUID ]
+	}
+}
+
+
+void function ArenasRanked_MarkPlayerForRankedResetPinEvent( entity player, string previousDivisionName, string currentDivisionName )
+//Hacky: when persistence is being initialized, PIN isn't available yet, so save off this data to fire off pin events later.
+//Most times this will not actually run since we need to wait till Stryder confirms the AP before we reset.
+{
+	ArenasRankedResetStruct dataStruct
+	dataStruct.previousDivisionName = previousDivisionName
+	dataStruct.currentDivisionName  = currentDivisionName
+
+	if ( player in file.playersThatResetArenasRankOnConnect )
+	{
+		file.playersThatResetArenasRankOnConnect[ player ].append( dataStruct )
+	}
+	else
+	{
+		file.playersThatResetArenasRankOnConnect[ player ]<- [ dataStruct ]
+	}
+}
+
+
+void function ArenasRanked_InitRankedTierNamesToBadgeAwardsLevelTable()
+{
+	//Hard coded, but this should be fine to be constant across Ranked Periods; even if we change the rank tier structure by adding tiers etc we're not going to be changing names to not mean the same thing etc.
+	file.arenasRankedTierNamesToBadgeAwardStaticLevelTable[ "#ARENAS_RANKED_PLACEMENT"  ] <- sharedRankedBadgeAwardLevel.NONE
+	file.arenasRankedTierNamesToBadgeAwardStaticLevelTable[ "#ARENAS_RANKED_TIER_BRONZE"  ] <- sharedRankedBadgeAwardLevel.BRONZE_STATIC
+	file.arenasRankedTierNamesToBadgeAwardStaticLevelTable[ "#ARENAS_RANKED_TIER_SILVER"  ] <- sharedRankedBadgeAwardLevel.SILVER_STATIC
+	file.arenasRankedTierNamesToBadgeAwardStaticLevelTable[ "#ARENAS_RANKED_TIER_GOLD"  ] <- sharedRankedBadgeAwardLevel.GOLD_STATIC
+	file.arenasRankedTierNamesToBadgeAwardStaticLevelTable[ "#ARENAS_RANKED_TIER_PLATINUM"  ] <- sharedRankedBadgeAwardLevel.PLATINUM_STATIC
+	file.arenasRankedTierNamesToBadgeAwardStaticLevelTable[ "#ARENAS_RANKED_TIER_DIAMOND"  ] <- sharedRankedBadgeAwardLevel.DIAMOND_STATIC
+	file.arenasRankedTierNamesToBadgeAwardStaticLevelTable[ "#ARENAS_RANKED_TIER_MASTER"  ] <- sharedRankedBadgeAwardLevel.MASTER_STATIC
+	file.arenasRankedTierNamesToBadgeAwardStaticLevelTable[ "#ARENAS_RANKED_TIER_APEX_PREDATOR"  ] <- sharedRankedBadgeAwardLevel.APEX_STATIC
+
+	file.arenasRankedTierNamesToBadgeAwardAnimatedLevelTable[ "#ARENAS_RANKED_PLACEMENT"  ] <- sharedRankedBadgeAwardLevel.NONE
+	file.arenasRankedTierNamesToBadgeAwardAnimatedLevelTable[ "#ARENAS_RANKED_TIER_BRONZE"  ] <- sharedRankedBadgeAwardLevel.BRONZE_ANIMATED
+	file.arenasRankedTierNamesToBadgeAwardAnimatedLevelTable[ "#ARENAS_RANKED_TIER_SILVER"  ] <- sharedRankedBadgeAwardLevel.SILVER_ANIMATED
+	file.arenasRankedTierNamesToBadgeAwardAnimatedLevelTable[ "#ARENAS_RANKED_TIER_GOLD"  ] <- sharedRankedBadgeAwardLevel.GOLD_ANIMATED
+	file.arenasRankedTierNamesToBadgeAwardAnimatedLevelTable[ "#ARENAS_RANKED_TIER_PLATINUM"  ] <- sharedRankedBadgeAwardLevel.PLATINUM_ANIMATED
+	file.arenasRankedTierNamesToBadgeAwardAnimatedLevelTable[ "#ARENAS_RANKED_TIER_DIAMOND"  ] <- sharedRankedBadgeAwardLevel.DIAMOND_ANIMATED
+	file.arenasRankedTierNamesToBadgeAwardAnimatedLevelTable[ "#ARENAS_RANKED_TIER_MASTER"  ] <- sharedRankedBadgeAwardLevel.MASTER_ANIMATED
+	file.arenasRankedTierNamesToBadgeAwardAnimatedLevelTable[ "#ARENAS_RANKED_TIER_APEX_PREDATOR"  ] <- sharedRankedBadgeAwardLevel.APEX_ANIMATED
+}
+
+
+int function ArenasRanked_CalculateBadgeAwardLevelStat( entity player, int rankedScore, ItemFlavor rankedPeriod, bool isFirstSplit )
+{
+	//Note: Make switch statement based on Ranked Period if we change rank tier structure post Ranked Season 04
+	string rankedPeriodGUIDString        = ItemFlavor_GetGUIDString( rankedPeriod )
+	int ladderPosition                   = ArenasRanked_GetHistoricalLadderPosition( player, rankedPeriodGUIDString, isFirstSplit )
+	SharedRankedTierData splitRankedTier = ArenasRanked_GetHistoricalRankedDivisionFromScoreAndLadderPosition( rankedScore, ladderPosition, rankedPeriodGUIDString ).tier
+
+	string tierName = splitRankedTier.name
+	Assert( tierName in file.arenasRankedTierNamesToBadgeAwardStaticLevelTable )
+
+	if ( !SharedRankedPeriod_HasSplits( rankedPeriod ) || isFirstSplit )
+		return file.arenasRankedTierNamesToBadgeAwardStaticLevelTable[ tierName ]
+
+	if ( SharedRankedPeriod_HasSplits( rankedPeriod ) && (!isFirstSplit) ) //Technically this is just the else part of the earlier ( !RankedPeriod_HasSplits( rankedPeriod ) || !isSecondSplit ) check but doing it explicitly
+	{
+		int previousArenasRankedScore             = ArenasRanked_GetHistoricalFirstSplitRankScore( player, rankedPeriodGUIDString )
+		int firstSplitLadderPosition              = ArenasRanked_GetHistoricalLadderPosition( player, rankedPeriodGUIDString, true )
+		SharedRankedTierData firstSplitRankedTier = ArenasRanked_GetHistoricalRankedDivisionFromScoreAndLadderPosition( previousArenasRankedScore, firstSplitLadderPosition, rankedPeriodGUIDString ).tier
+		if ( firstSplitRankedTier == splitRankedTier )
+		{
+			Assert( tierName in file.arenasRankedTierNamesToBadgeAwardAnimatedLevelTable )
+			return file.arenasRankedTierNamesToBadgeAwardAnimatedLevelTable[ tierName ]
+		}
+		else
+		{
+			SharedRankedTierData higherTierAchieved = ArenasRanked_GetHigherOfTwoTiers( firstSplitRankedTier, splitRankedTier )
+			Assert( higherTierAchieved.name in file.arenasRankedTierNamesToBadgeAwardStaticLevelTable )
+			return file.arenasRankedTierNamesToBadgeAwardStaticLevelTable[ higherTierAchieved.name ]
+		}
+	}
+
+	unreachable
+}
+#endif //if SERVER
+
+#if CLIENT
+void function OnArenasRankedScoreChanged( entity player, int new )
+{
+	if ( IsLobby() )
+		return
+
+	if ( new == SHARED_RANKED_INVALID_RANK_SCORE ) //Unfortunately first time we get netint values from other client actuallyChanged is false.
+		return
+
+	EHI playerEHI = ToEHI( player )
+	ArenasRanked_UpdateEHIRankScore( playerEHI, new )
+	RunUIScript( "ArenasRanked_UpdateEHIRankScore", playerEHI, new )
+
+	if ( player != GetLocalViewPlayer() )
+		return
+
+	SetGamestateArenasRankedIcon( new, ArenasRanked_GetLadderPosition( player ) )
+}
+#endif
+
+#if CLIENT
+void function OnArenasRankedLadderPositionChanged( entity player, int new )
+{
+	if ( IsLobby() )
+		return
+
+	if ( new == SHARED_RANKED_INVALID_LADDER_POSITION ) //Unfortunately first time we get netint values from other client actuallyChanged is false.
+		return
+
+	EHI playerEHI = ToEHI( player )
+	ArenasRanked_UpdateEHIRankedLadderPosition( playerEHI, new )
+	RunUIScript( "ArenasRanked_UpdateEHIRankedLadderPosition", playerEHI, new )
+
+	if ( player != GetLocalViewPlayer() )
+		return
+
+	SetGamestateArenasRankedIcon( GetPlayerArenasRankScore( player ), new )
+}
+#endif
+
+#if CLIENT
+void function UpdateGamestateArenasRankedIcon()
+{
+	entity viewPlayer = GetLocalViewPlayer()
+	if ( viewPlayer == null )
+		return
+
+	// we only show the ranks of players that are in a party with me.
+
+	bool showRankedBadge = IsInMyParty( viewPlayer.GetUserID() )
+	var rui              = ClGameState_GetRui()
+	RuiSetBool( rui, "showRanked", showRankedBadge )
+
+	if ( showRankedBadge )
+	{
+		int score     = GetPlayerArenasRankScore( viewPlayer )
+		int ladderPos = ArenasRanked_GetLadderPosition( viewPlayer )
+		SetGamestateArenasRankedIcon( score, ladderPos )
+	}
+}
+#endif
+
+#if CLIENT
+void function SetGamestateArenasRankedIcon( int score, int ladderPos )
+{
+	var rui = ClGameState_GetRui()
+
+	if ( rui == null )
+		return
+
+	if ( score < 0 )
+		return
+
+	SharedRankedDivisionData data = GetCurrentArenasRankedDivisionFromScoreAndLadderPosition( score, ladderPos )
+	PopulateRuiWithArenasRankedBadgeDetails( rui, score, ladderPos )
+
+	// not used in Arenas Ranked
+	//if ( GetLocalViewPlayer() != null )
+	//{
+	//RuiTrackInt( rui, "inMatchRankScoreProgress", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "inMatchRankScoreProgress" ) )
+	//RuiTrackInt( rui, "arenasRankedKillAssistMultiplier", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "arenasRankedKillAssistMultiplier" ) )
+	//}
+}
+#endif
+
+#if CLIENT
+void function ArenasRanked_OnSpectateTargetChanged( entity spectatingPlayer, entity prevSpectatorTarget, entity newSpectatorTarget )
+{
+	if ( IsValid( newSpectatorTarget ) && newSpectatorTarget.IsPlayer() )
+		UpdateGamestateArenasRankedIcon()
+}
+#endif
+
+bool function IsArenasRankedPersistenceValid()
+{
+	#if DEV
+		if ( DEV_ShouldIgnorePersistence() )
+			return false
+	#endif
+
+	return IsArenasRankedInSeason()
+}
+
+
+bool function IsArenasRankedInSeason()
+{
+	string ornull currentSeasonRefOrNull = GetCurrentStatRankedPeriodRefOrNullByType( eItemType.calevent_arenas_ranked_period )
+
+	if ( currentSeasonRefOrNull == null )
+		return false
+
+	return true
+}
+
+#if CLIENT
+void function OnScoreboardCreated()
+{
+	UpdateGamestateArenasRankedIcon()
+}
+#endif
+
+#if CLIENT
+void function OnGameStateChanged( int newVal )
+{
+	if ( IsLobby() )
+		return
+
+	// okirkham: need this to make this file compile, unsure why we have HAS_ARENAS_RANKED on while HAS_GAMEMODE_ARENAS is off
+                       
+                                                                      
+     
+	Assert( false, "arenas ranked code being called when HAS_GAMEMODE_ARENAS is false!" )
+      
+
+	int gameState = newVal
+	if ( gameState >= eGameState.Prematch )
+	{
+		UpdateGamestateArenasRankedIcon()
+	}
+}
+#endif
+
+array<SharedRankedTierData> function ArenasRanked_GetTiers()
+{
+	return file.rankedTiers
+}
+
+
+SharedRankedTierData ornull function ArenasRanked_GetNextTierData( SharedRankedTierData data )
+{
+	if ( data.isLadderOnlyTier )
+		return null
+
+	if ( data.index + 1 < file.rankedTiers.len() )
+		return file.rankedTiers[ data.index + 1 ]
+
+	return null
+}
+
+
+array< SharedRankedDivisionData > function ArenasRanked_GetRankedDivisionDataForTier( SharedRankedTierData tier )
+{
+	if ( tier.isLadderOnlyTier )
+	{
+		Assert( file.ladderOnlyDivision != null )
+		return [ expect SharedRankedDivisionData( file.ladderOnlyDivision ) ]
+	}
+
+	array< SharedRankedDivisionData > data
+
+	for ( int i = 0; i < file.rankedDivisions.len(); i++ )
+	{
+		if ( file.rankedDivisions[ i ].tier == tier )
+			data.append( file.rankedDivisions[ i ] )
+	}
+
+	return data
+}
+
+
+void function ArenasRanked_UpdateEHIRankScore( EHI playerEHI, int rankScore )
+//Function exists on server, client and UI, basically called there to make sure the ehiss ranked stuff is in sync on all 3 vms.
+{
+	EHIScriptStruct ehiss = GetEHIScriptStruct( playerEHI )
+	ehiss.arenasRankScore = rankScore
+}
+
+
+void function ArenasRanked_UpdateEHIRankedLadderPosition( EHI playerEHI, int rankedLadderPosition )
+//Function exists on server, client and UI, basically called there to make sure the ehiss ranked stuff is in sync on all 3 vms.
+{
+	EHIScriptStruct ehiss = GetEHIScriptStruct( playerEHI )
+	ehiss.arenasRankedLadderPosition = rankedLadderPosition
+}
+
+
+int function ArenasRanked_GetLadderPosition( entity player )
+{
+	return 0
+}
+
+#if UI
+void function ArenasRanked_SetupMenuGladCardForUIPlayer()
+{
+	entity player = GetLocalClientPlayer()
+	ArenasRanked_SetupMenuGladCard_internal( ArenasRanked_GetLadderPosition( player ), GetPlayerArenasRankScore( player ) )
+}
+
+
+void function ArenasRanked_SetupMenuGladCardFromCommunityUserInfo( CommunityUserInfo userInfo ) {}
+
+
+void function ArenasRanked_SetupMenuGladCard_internal( int ladderPos, int rankScore )
+{
+                       
+                                                                                                                                         
+                                                                                                              
+                                                                                                             
+      
+}
+
+bool function ArenasRanked_ManageDialogFlow( bool rankedSplitChangeAudioPlayed = false )
+{
+	return false
+}
+
+
+bool function ArenasRanked_HasRankedPeriodMarkedForRewardAcknowledgement()
+{
+	return false
+}
+
+
+string function ArenasRanked_GetRankedPeriodToAcknowledgReward()
+{
+	return file.arenasRankedPeriodToAcknowledgeRewards
+}
+
+
+bool function ArenasRanked_NeedToNotifySplitReset()
+{
+	return false
+}
+
+
+string function ArenasRanked_GetSplitResetAcknowledgePersistenceField()
+{
+	return file.arenasRankedSplitResetAcknowledgePersistenceField
+}
+
+bool function ArenasRanked_ShouldUpdateWithComnunityUserInfo( int score, int ladderPosition )
+{
+	return false
+}
+
+
+bool function ArenasRanked_PartyMeetsRankedDifferenceRequirements()
+{
+	return false
+}
+
+
+bool function ArenasRanked_HasBeenInitialized()
+{
+	return false
+}
+
+
+bool function ArenasRanked_HasNotifiedRankedRewardsGiven( string rankedPeriodGUID )
+{
+	return (rankedPeriodGUID in file.arenasRankedPeriodsWithRewardsNotified)
+}
+
+
+void function ArenasRanked_MarkRankedRewardsGivenNotified( string rankedPeriodGUID )
+//Mainly used to make sure we don't get stuck in an infinite loop in DialogFlow() when persistence is not being set correctly, see TryDialogFlowPersistenceQuery()
+{
+	if ( rankedPeriodGUID in file.arenasRankedPeriodsWithRewardsNotified )
+		return
+
+	file.arenasRankedPeriodsWithRewardsNotified[ rankedPeriodGUID  ] <- true
+}
+
+
+void function ArenasRanked_ConstructSingleRankBadgeForStatsCard( var badgeRui, entity player, string rankedPeriodRef )
+{
+	int score                     = ArenasRanked_GetHistoricalRankScore( player, rankedPeriodRef )
+	SharedRankedDivisionData data = ArenasRanked_GetHistoricalRankedDivisionFromScore( score, rankedPeriodRef )
+
+	if ( rankedPeriodRef == GetCurrentStatRankedPeriodRefOrNullByType( eItemType.calevent_arenas_ranked_period ) )
+	{
+		PopulateRuiWithArenasRankedBadgeDetails( badgeRui, score, ArenasRanked_GetLadderPosition( GetLocalClientPlayer() ) )
+	}
+	else
+	{
+		int historicalLadderPosition = ArenasRanked_GetHistoricalLadderPosition( player, rankedPeriodRef, false )
+		PopulateRuiWithHistoricalArenasRankedBadgeDetails( badgeRui, score, historicalLadderPosition, rankedPeriodRef )
+	}
+
+	RuiSetInt( badgeRui, "score", score )
+	RuiSetInt( badgeRui, "scoreMax", 0 )
+	RuiSetFloat( badgeRui, "scoreFrac", 1.0 )
+	RuiSetString( badgeRui, "rankName", data.divisionName )
+}
+
+
+void function ArenasRanked_ConstructDoubleRankBadgeForStatsCard( var firstSplitBadgeRui, var secondSplitBadgeRui, entity player, string rankedPeriodRef )
+{
+	int firstSplitScore                        = ArenasRanked_GetHistoricalFirstSplitRankScore( player, rankedPeriodRef )
+	SharedRankedDivisionData firstSplitDivData = ArenasRanked_GetHistoricalRankedDivisionFromScore( firstSplitScore, rankedPeriodRef )
+	int firstSplitLadderPos                    = ArenasRanked_GetHistoricalLadderPosition( player, rankedPeriodRef, true )
+
+	PopulateRuiWithHistoricalArenasRankedBadgeDetails( firstSplitBadgeRui, firstSplitScore, firstSplitLadderPos, rankedPeriodRef )
+	RuiSetInt( firstSplitBadgeRui, "score", firstSplitScore )
+	RuiSetInt( firstSplitBadgeRui, "scoreMax", 0 )
+	RuiSetFloat( firstSplitBadgeRui, "scoreFrac", 1.0 )
+	RuiSetString( firstSplitBadgeRui, "rankName", firstSplitDivData.divisionName )
+
+	int secondSplitSplitScore                   = ArenasRanked_GetHistoricalRankScore( player, rankedPeriodRef )
+	SharedRankedDivisionData secondSplitDivData = ArenasRanked_GetHistoricalRankedDivisionFromScore( secondSplitSplitScore, rankedPeriodRef )
+
+	if ( rankedPeriodRef == GetCurrentStatRankedPeriodRefOrNullByType( eItemType.calevent_arenas_ranked_period ) )
+	{
+		PopulateRuiWithArenasRankedBadgeDetails( secondSplitBadgeRui, secondSplitSplitScore, ArenasRanked_GetLadderPosition( GetLocalClientPlayer() ) )
+	}
+	else
+	{
+		int historicalLadderPosition = ArenasRanked_GetHistoricalLadderPosition( player, rankedPeriodRef, false )
+		PopulateRuiWithHistoricalArenasRankedBadgeDetails( secondSplitBadgeRui, secondSplitSplitScore, historicalLadderPosition, rankedPeriodRef )
+	}
+
+	RuiSetInt( secondSplitBadgeRui, "score", secondSplitSplitScore )
+	RuiSetInt( secondSplitBadgeRui, "scoreMax", 0 )
+	RuiSetFloat( secondSplitBadgeRui, "scoreFrac", 1.0 )
+	RuiSetString( secondSplitBadgeRui, "rankName", secondSplitDivData.divisionName )
+}
+
+bool function ArenasRanked_IsShowingMatchSummary()
+{
+	return GetPersistentVarAsInt( "showArenasRankedSummary" ) != 0
+}
+
+#endif //UI
+
+#if CLIENT || UI
+void function PopulateRuiWithArenasRankedBadgeDetails( var rui, int rankScore, int ladderPosition, bool isNested = false )
+{
+	SharedRankedDivisionData currentRank = GetCurrentArenasRankedDivisionFromScoreAndLadderPosition( rankScore, ladderPosition )
+	//printt( "CurrentRank: " + currentRank.divisionName  )
+	SharedRankedTierData currentTier     = currentRank.tier
+	RuiSetImage( rui, "rankedIcon", currentTier.icon )
+	if ( currentTier.isLadderOnlyTier ) //Hack, need to do this to satisfy color offset logic
+	{
+		SharedRankedTierData tierByScore = GetCurrentArenasRankedDivisionFromScore( rankScore ).tier
+		RuiSetInt( rui, "rankedIconState", tierByScore.index + 1 )
+	}
+	else
+	{
+		RuiSetInt( rui, "rankedIconState", currentTier.index )
+	}
+
+	SharedRanked_FillInRuiEmblemText( rui, currentRank, rankScore, ladderPosition )
+
+	if ( !isNested )
+	{
+		RuiDestroyNestedIfAlive( rui, "rankedBadgeHandle" )
+		CreateNestedArenasRankedRui( rui, currentRank.tier, "rankedBadgeHandle", rankScore, ladderPosition )
+	}
+}
+
+
+void function PopulateRuiWithHistoricalArenasRankedBadgeDetails( var rui, int rankScore, int ladderPosition, string rankedSeasonGUID, bool isNested = false )
+{
+	Assert( rankedSeasonGUID in file.historicalRankedDivisions )
+	SharedRankedDivisionData historicalRank = ArenasRanked_GetHistoricalRankedDivisionFromScoreAndLadderPosition( rankScore, ladderPosition, rankedSeasonGUID )
+	SharedRankedTierData historicalTier     = historicalRank.tier
+
+	if( historicalTier.scoreMin != ARENAS_RANKED_PLACEMENT_SCORE )
+	{
+		RuiSetImage( rui, "rankedIcon", historicalTier.icon )
+
+		//RuiSetInt( rui, "rankedIconState", historicalTier.index )
+
+		if ( historicalTier.isLadderOnlyTier ) //Hack, need to do this to satisfy color offset logic
+		{
+			SharedRankedTierData tierByScore = ArenasRanked_GetHistoricalRankedDivisionFromScore( rankScore, rankedSeasonGUID ).tier
+			RuiSetInt( rui, "rankedIconState", tierByScore.index + 1 )
+		}
+		else
+		{
+			RuiSetInt( rui, "rankedIconState", historicalTier.index )
+		}
+
+		SharedRanked_FillInRuiEmblemText( rui, historicalRank, rankScore, ladderPosition )
+	}
+
+	if ( !isNested )
+	{
+		RuiDestroyNestedIfAlive( rui, "rankedBadgeHandle" )
+		CreateNestedHistoricalArenasRankedRui( rui, historicalRank.tier, rankedSeasonGUID, "rankedBadgeHandle", rankScore, ladderPosition )
+	}
+}
+
+
+var function CreateNestedArenasRankedRui( var pRui, SharedRankedTierData tier, string varName, int score, int ladderPosition )
+{
+	var rui = RuiCreateNested( pRui, varName, tier.iconRuiAsset )
+
+	if( tier.scoreMin == ARENAS_RANKED_PLACEMENT_SCORE )
+	{
+		int completedMatches = ArenasRanked_GetNumPlacementMatchesCompleted( GetLocalClientPlayer() )
+		int startPip = 0 // Splits use 5 placement matches, so use a disabled color for the first half of pips
+
+		int currentUnixTime = GetUnixTimestamp()
+		ItemFlavor latestRankedPeriod = ArenasRanked_GetFinalRankedPeriod()
+
+		if( SharedRankedPeriod_HasSplits( latestRankedPeriod ) && SharedRankedPeriod_IsSecondSplitActive( latestRankedPeriod ) )
+		{
+			completedMatches += ARENAS_RANKED_NUM_PLACEMENT_MATCHES - ARENAS_RANKED_SPLIT_NUM_PLACEMENT_MATCHES
+			startPip = ARENAS_RANKED_NUM_PLACEMENT_MATCHES - ARENAS_RANKED_SPLIT_NUM_PLACEMENT_MATCHES
+		}
+
+		RuiSetInt( rui, "placementProgress", completedMatches )
+		RuiSetInt( rui, "startPip", startPip )
+
+		array<bool> placementWins = ArenasRanked_GetPlacementWinsAsArray( GetLocalClientPlayer() )
+		for( int i = startPip; i < placementWins.len(); ++i )
+			RuiSetBool( rui, "wonGame" + i, placementWins[i - startPip] )
+	}
+	else
+		PopulateRuiWithArenasRankedBadgeDetails( rui, score, ladderPosition, true )
+
+	return rui
+}
+
+
+var function CreateNestedHistoricalArenasRankedRui( var pRui, SharedRankedTierData tier, string rankedSeasonGUID, string varName, int score, int ladderPosition )
+{
+	var rui = RuiCreateNested( pRui, varName, tier.iconRuiAsset )
+
+	PopulateRuiWithHistoricalArenasRankedBadgeDetails( rui, score, ladderPosition, rankedSeasonGUID, true )
+
+	return rui
+}
+#endif // CLIENT || UI
+ 

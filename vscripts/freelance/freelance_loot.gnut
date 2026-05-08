@@ -1,0 +1,670 @@
+global function PVELoot_InitForGameMode
+global function LootDrop
+global function LootDropChance
+global function AmmoDrop
+global function AmmoDropChance
+global function GetAdditionalLootRefsForLootSpawn
+global function GetLootRefFromModelName
+global function GetWeaponAttachmentTypeFromString
+global function GetAttachmentLootRefForWeapon
+global function CreateLegendDeathbox
+global function RollAmmoDropsForPlayer
+
+
+
+const string STRING_ATTACHMENT_MAG = "attachment_mag"
+const string STRING_ATTACHMENT_SCOPE = "attachment_scope"
+const string STRING_ATTACHMENT_BARREL = "attachment_barrel"
+const string STRING_ATTACHMENT_STOCK = "attachment_stock"
+const string STRING_ATTACHMENT_HOPUP = "attachment_hopup"
+
+struct LootWeaponAttachments
+{
+	array<string> attachmentRefsBarrel
+	array<string> attachmentRefsMag
+	array<string> attachmentRefsHopups
+	array<string> attachmentRefsScopes
+	array<string> attachmentRefsGrip
+}
+
+global enum eLegendType
+{
+	CHARACTER_BANGALORE
+	CHARACTER_BLOODHOUND
+	CHARACTER_CAUSTIC
+	CHARACTER_GIBRALTER
+	CHARACTER_LIFELINE
+	CHARACTER_MIRAGE
+	CHARACTER_OCTANE
+	CHARACTER_PATHFINDER
+	CHARACTER_WATTSON
+	CHARACTER_CRYPTO
+	CHARACTER_REVENANT
+	CHARACTER_LOBA
+}
+
+void function PVELoot_InitForGameMode()
+{
+	if ( Freelance_IsHubLevel() )
+		return
+
+	AddCallback_GameStateEnter( eGameState.Playing, OnGameStateEnterPlaying )
+}
+
+void function OnGameStateEnterPlaying()
+{
+	thread PVELootGarbageCollectionThread()
+
+}
+
+// --------------------------------------------------------------------------------------
+//
+//	Loot drops
+//
+// --------------------------------------------------------------------------------------
+
+array<entity> function LootDrop_( vector dropOrg, string refOrGroup, float chance, int countOverride )
+{
+	string ref = GetRefOrRefFromGroup( refOrGroup.tolower() )
+	if ( ref == "blank" )
+		return []
+
+	if ( chance < 1.0 )
+	{
+		float roll = RandomFloat( 1.0 )
+		if ( roll > chance )
+			return []
+	}
+
+	int countPerDropRaw = SURVIVAL_Loot_GetLootDataByRef( ref ).countPerDrop
+	int totalCount = ((countOverride >= 0) ? countOverride : countPerDropRaw)
+	int countPerDrop = minint( countPerDropRaw, totalCount )
+	int numDrops = ceil( totalCount.tofloat() / countPerDrop.tofloat() ).tointeger()
+
+	array<entity> results
+	for( int i = 0; i < numDrops; i++ )
+	{
+		vector vel = RandomVec( 150 )
+		vel = Normalize( <vel.x,vel.y,250> )
+		entity lootEnt = SURVIVAL_ThrowLootFromPoint( dropOrg, vel, ref, countPerDrop, null, null )
+		MarkLootForGarbageCollection( lootEnt, Time() )
+		results.append( lootEnt )
+	}
+	return results
+}
+
+array<entity> function LootDrop( vector origin, string refOrGroup )
+{
+	return LootDrop_( origin, refOrGroup, 1.0, -1 )
+}
+
+array<entity> function LootDropChance( vector origin, string refOrGroup, float chance )
+{
+	return LootDrop_( origin, refOrGroup, chance, -1 )
+}
+
+array<entity> function AmmoDrop( vector origin, string refOrGroup, int count )
+{
+	return LootDrop_( origin, refOrGroup, 1.0, count )
+}
+array<entity> function AmmoDropChance( vector origin, string refOrGroup, int count, float chance )
+{
+	return LootDrop_( origin, refOrGroup, chance, count )
+}
+
+////
+
+void function RollAmmoDropsForPlayer( vector org, float chance, entity player )
+{
+	                             
+		if ( IsPlayerShadowZombie( player ) )
+			return
+                                    
+
+	array<string> ammoTypes = GetAmmoPoolTypesUsedByPlayer( player )
+	ammoTypes.randomize()
+	foreach( int index, string ammoType in ammoTypes )
+	{
+		if ( index >= 2 )
+			break
+		AmmoDropChance( org, ammoType, -1, chance )
+	}
+}
+
+// --------------------------------------------------------------------------------------
+//
+//	Loot garbage collection
+//
+// --------------------------------------------------------------------------------------
+struct LootItem
+{
+	entity ent
+	float timeDropped
+}
+
+const float PVE_LOOT_DESPAWN_TIME = 180.0
+
+
+array<LootItem> s_pveLootCollectionArray
+
+void function PVELootGarbageCollectionThread()
+{
+	for ( ;; )
+	{
+#if DEV
+		float preFrameTime = Time()
+#endif
+
+		PVELootGarbageCollection()
+
+#if DEV
+		float postFrameTime = Time()
+		Assert( preFrameTime == postFrameTime, format( "PVELootGarbageCollection() stalled for %.2f seconds. Should have no waits.", (postFrameTime - preFrameTime) ) )
+#endif
+
+		wait 0.2
+	}
+}
+
+void function PVELootGarbageCollection()
+{
+	if ( s_pveLootCollectionArray.len() <= 0 )
+		return
+
+	LootItem item = s_pveLootCollectionArray[0]
+
+	if ( Time() > item.timeDropped + PVE_LOOT_DESPAWN_TIME )
+	{
+		printf( "Garbage collecting PVE loot item %s.", string( item ) )
+		s_pveLootCollectionArray.remove( 0 )
+		if ( IsValid( item.ent ) )
+			item.ent.Destroy()
+	}
+
+	return
+}
+
+//could insertion sort, but just gonna assume
+void function MarkLootForGarbageCollection( entity ent , float timeDropped )
+{
+	LootItem item
+	item.ent = ent
+	item.timeDropped = timeDropped
+	s_pveLootCollectionArray.append( item )
+}
+
+entity function CreateLegendDeathbox( SkitInstance si, vector origin, vector angles, array<string> lootRefs, int character, string flagToSpawn = "" )
+{
+	array<entity> items
+	foreach( lootRef in lootRefs )
+	{
+		LootData data = SURVIVAL_Loot_GetLootDataByRef( lootRef )
+		entity item   = SpawnGenericLoot( data.ref, origin, < -1, -1, -1 >, data.countPerDrop )
+		items.append( item )
+	}
+
+	//Hack...need a better way to do this
+	string playerName
+	int characterIndex
+	//9 - pathfinder
+	//10 - wraith
+	//11 - wattson
+	//12 - crypto
+	//13 - revenant
+	//14 - loba
+
+
+	if ( character == eLegendType.CHARACTER_OCTANE )
+	{
+		playerName = "Octane"
+		characterIndex = 8
+	}
+	else if ( character == eLegendType.CHARACTER_WATTSON )
+	{
+		playerName = "Wattson"
+		characterIndex = 11
+	}
+	else
+		playerName = "#INITIAL_PLAYER_NAME"
+
+	string hint = "#DEATHBOX_HINT"
+	//hint = Localize( hint, playerName )
+	entity box = CreateUtilityDeathBox( origin, angles, items, hint )
+	box.SetNetInt( "ownerEHI", 0 )
+	//box.SetNetInt( "overrideRUIType", 2 )
+	box.SetNetInt( "characterIndex", characterIndex )
+	box.SetCustomOwnerName( playerName )
+
+	if ( flagToSpawn != "" )
+	{
+		box.MakeInvisible()
+		box.NotSolid()
+		thread FakeAnimateDeathBoxOnFlag( si, box, flagToSpawn )
+	}
+
+	return box
+}
+
+void function FakeAnimateDeathBoxOnFlag( SkitInstance si, entity box, string flag )
+{
+	AssertIsNewThread()
+	SkFlagWait( si, flag )
+
+	vector origin = box.GetOrigin()
+	vector angles = box.GetAngles()
+	vector restPos = origin
+	vector fallPos = restPos + < 0, 0, 54 >
+	entity mover = CreateScriptMover( "fakeanimatedeathboxonflag_mover", restPos, angles, 0 )
+	box.SetParent( mover, "", true )
+	box.MakeVisible()
+	box.Solid()
+	mover.NonPhysicsMoveTo( fallPos, 0.5, 0.0, 0.5 )
+	wait 0.5
+	mover.NonPhysicsMoveTo( restPos, 0.5, 0.5, 0.0 )
+	wait 0.5
+	if ( IsValid( box ) )
+		box.ClearParent()
+	mover.Destroy()
+}
+
+string function GetLootRefFromModelName( asset modelAsset, int lootLevel = 0, string targetedLootRef = "" )
+{
+	//LevelEd resource ents use the actual model to visually represent the loot placed in-world
+	string lootRef
+	bool isWeaponAttachment = false
+
+	switch( modelAsset )
+	{
+		case $"mdl/weapons_r5/loot/w_loot_wep_iso_health_main_large.rmdl":
+			lootRef = "health_pickup_health_large"
+			break
+		case $"mdl/weapons_r5/loot/w_loot_wep_iso_health_main_small.rmdl":
+			lootRef = "health_pickup_health_small"
+			break
+		case $"mdl/weapons_r5/loot/w_loot_wep_iso_shield_battery_large.rmdl":
+			lootRef = "health_pickup_combo_large"
+			break
+		case $"mdl/weapons_r5/loot/w_loot_wep_iso_shield_battery_small.rmdl":
+			lootRef = "health_pickup_combo_small"
+			break
+		case $"mdl/weapons_r5/loot/w_loot_wep_iso_phoenix_kit_v1.rmdl":
+			lootRef = "health_pickup_combo_full"
+			break
+		case $"mdl/weapons_r5/loot/w_loot_wep_iso_ultimate_accelerant.rmdl":
+			lootRef = "health_pickup_ultimate"
+			break
+		case $"mdl/weapons_r5/loot/_master/w_loot_wep_ammo_sc.rmdl":
+			lootRef = BULLET_AMMO
+			break
+		case $"mdl/weapons_r5/loot/_master/w_loot_wep_ammo_hc.rmdl":
+			lootRef = HIGHCAL_AMMO
+			break
+		case $"mdl/weapons_r5/loot/_master/w_loot_wep_ammo_shg.rmdl":
+			lootRef = SHOTGUN_AMMO
+			break
+		case $"mdl/weapons_r5/loot/_master/w_loot_wep_ammo_sniper.rmdl":
+			lootRef = SNIPER_AMMO
+			break
+		case $"mdl/weapons_r5/loot/_master/w_loot_wep_ammo_nrg.rmdl":
+			lootRef = SPECIAL_AMMO
+			break
+		case $"mdl/humans_r5/loot/w_loot_char_backpack_heavy.rmdl":
+			lootRef = "backpack_pickup_lv1"
+			break
+			//Shields
+		case $"mdl/weapons_r5/loot/_master/w_loot_cha_shield_upgrade_body.rmdl":
+			lootRef = "armor_pickup_lv1"
+			break
+		case $"mdl/weapons_r5/loot/_master/w_loot_cha_shield_upgrade_head.rmdl":
+			lootRef = "helmet_pickup_lv1"
+			break
+		case $"mdl/weapons_r5/loot/w_loot_wep_iso_shield_down_v1.rmdl":
+			lootRef = "incapshield_pickup_lv1"
+			break
+
+			//Grenades
+		case $"mdl/weapons/grenades/w_thermite_grenade.rmdl":
+			lootRef = "mp_weapon_thermite_grenade"
+			break
+		case $"mdl/weapons/grenades/w_loot_m20_f_grenade_projectile.rmdl":
+			lootRef = "mp_weapon_frag_grenade"
+			break
+		case $"mdl/weapons_r5/loot/w_loot_wep_iso_shuriken.rmdl":
+			lootRef = GRENADE_EMP_WEAPON_NAME
+			break
+
+			//Pistols
+		case $"mdl/Weapons/pstl_sa3/w_pstl_sa3.rmdl":
+			lootRef = "mp_weapon_shotgun_pistol"
+			break
+		case $"mdl/Weapons/p2011/w_p2011.rmdl":
+			lootRef = "mp_weapon_semipistol"
+			break
+		case $"mdl/Weapons/p2011_auto/w_p2011_auto.rmdl":
+			lootRef = "mp_weapon_autopistol"
+			break
+		case $"mdl/Weapons/b3wing/w_b3wing.rmdl":
+			lootRef = "mp_weapon_wingman"
+			break
+
+			//SMGs
+		case $"mdl/Weapons/alternator_smg/w_alternator_smg.rmdl":
+			lootRef = "mp_weapon_alternator_smg"
+			break
+		case $"mdl/Weapons/r97/w_r97.rmdl":
+			lootRef = "mp_weapon_r97"
+			break
+		case $"mdl/techart/mshop/weapons/class/smg/prowler/prowler_base_w.rmdl":
+			lootRef = "mp_weapon_pdw"
+			break
+
+			//Shotguns
+		case $"mdl/Weapons/w1128/w_w1128.rmdl":
+			lootRef = "mp_weapon_shotgun"
+			break
+		case $"mdl/Weapons/peacekeeper/w_peacekeeper.rmdl":
+			lootRef = "mp_weapon_energy_shotgun"
+			break
+
+
+			//Assault rifles
+		case $"mdl/Weapons/beam_ar/w_beam_ar.rmdl":
+			lootRef = "mp_weapon_energy_ar"
+			break
+		case $"mdl/Weapons/rspn101/w_rspn101.rmdl":
+			lootRef = "mp_weapon_rspn101"
+			break
+		case $"mdl/techart/mshop/weapons/class/assault/flatline/flatline_base_w.rmdl":
+			lootRef = "mp_weapon_vinson"
+			break
+		case $"mdl/Weapons/m1a1_hemlok/w_hemlok.rmdl":
+			lootRef = "mp_weapon_hemlok"
+			break
+		case $"mdl/techart/mshop/weapons/class/assault/g7/g7_base_w.rmdl":
+			lootRef = "mp_weapon_g2"
+			break
+		case $"mdl/Weapons/lmg_hemlok/w_lmg_hemlok.rmdl":
+			lootRef = "mp_weapon_lmg"
+			break
+		case $"mdl/Weapons/lstar/w_lstar.rmdl":
+			lootRef = "mp_weapon_lstar"
+			break
+
+			//Sniper
+		case $"mdl/Weapons/doubletake/w_doubletake.rmdl":
+			lootRef = "mp_weapon_doubletake"
+			break
+		case $"mdl/Weapons/rspn101_dmr/w_rspn101_dmr.rmdl":
+			lootRef = "mp_weapon_dmr"
+			break
+		case $"mdl/Weapons/defender/w_defender.rmdl":
+			lootRef = "mp_weapon_defender"
+			break
+		case $"mdl/Weapons/sentinel/w_sentinel.rmdl":
+			lootRef = "mp_weapon_sentinel"
+			break
+
+			//Legendary
+		case $"mdl/Weapons/hemlock_br/w_hemlock_br.rmdl":
+			lootRef = "mp_weapon_esaw"
+			break
+		case $"mdl/techart/mshop/weapons/class/shotgun/mastiff/mastiff_base_w.rmdl":
+			lootRef = "mp_weapon_mastiff"
+			break
+		case $"mdl/Weapons/kraber_ap_r1/w_kraber_ap_r1.rmdl":
+			lootRef = KRABER_WEAPON_NAME
+			break
+
+		//Attachments - special case (loot resource targets the weapon it wants to be an attachment of in LevelEd)
+		case $"mdl/weapons_r5/loot/_master/w_loot_wep_mods_mag_v2b.rmdl":
+			return STRING_ATTACHMENT_MAG
+			break
+		case $"mdl/weapons_r5/loot/_master/w_loot_wep_mods_optic_cq_hcog_r1.rmdl":
+			return STRING_ATTACHMENT_SCOPE
+			break
+		case $"mdl/weapons_r5/loot/_master/w_loot_wep_mods_suppr_v2b.rmdl":
+			return STRING_ATTACHMENT_BARREL
+			break
+		case $"mdl/weapons_r5/loot/w_loot_wep_iso_stock_folded_regular.rmdl":
+			return STRING_ATTACHMENT_STOCK
+			break
+		case $"mdl/weapons_r5/loot/_master/w_loot_wep_mods_chip.rmdl":
+			return STRING_ATTACHMENT_HOPUP
+			break
+
+		default:
+			Warning( "%s() - Unhandled asset name: '%s'", FUNC_NAME(), string( modelAsset ) )
+			lootRef = ""
+	}
+
+	if ( lootRef != "" && lootLevel > 0 && !isWeaponAttachment )
+		lootRef = GetTieredLootRef( lootRef, lootLevel )
+
+	if ( lootRef != "" )
+		Assert( SURVIVAL_Loot_IsRefValid( lootRef ), "Invalid loot ref: " + lootRef )
+
+	return lootRef
+}
+
+int function GetWeaponAttachmentTypeFromString( string ref )
+{
+	if ( ref == STRING_ATTACHMENT_MAG )
+		return eWeaponAttachmentType.MAG
+	if ( ref == STRING_ATTACHMENT_SCOPE )
+		return eWeaponAttachmentType.SCOPE
+	if ( ref == STRING_ATTACHMENT_BARREL )
+		return eWeaponAttachmentType.BARREL
+	if ( ref == STRING_ATTACHMENT_HOPUP )
+		return eWeaponAttachmentType.HOPUP
+	if ( ref == STRING_ATTACHMENT_STOCK)
+		return eWeaponAttachmentType.STOCK
+
+	Assert( false, "Unhandled string: " + ref )
+
+	unreachable
+}
+string function GetTieredLootRef( string lootRef, int lootLevel )
+{
+	//Backpacks
+	if ( lootRef == "backpack_pickup_lv1" )
+	{
+		if ( lootLevel == 0 || lootLevel == 1 )
+			return lootRef
+		else if ( lootLevel == 2 )
+			return "backpack_pickup_lv2"
+		else if ( lootLevel == 3 )
+			return "backpack_pickup_lv3"
+		else
+			return "backpack_pickup_lv4_revive_boost"
+	}
+
+	//Body shields
+	if ( lootRef == "armor_pickup_lv1" )
+	{
+		if ( lootLevel == 0 || lootLevel == 1 )
+			return lootRef
+		else if ( lootLevel == 2 )
+			return "armor_pickup_lv2"
+		else if ( lootLevel == 3 )
+			return "armor_pickup_lv3"
+		else
+			return "armor_pickup_lv4_all_fast"
+	}
+
+
+	//Helmet
+	if ( lootRef == "helmet_pickup_lv1" )
+	{
+		if ( lootLevel == 0 || lootLevel == 1 )
+			return lootRef
+		else if ( lootLevel == 2 )
+			return "helmet_pickup_lv2"
+		else if ( lootLevel == 3 )
+			return "helmet_pickup_lv3"
+		else
+			return "helmet_pickup_lv4_abilities"
+	}
+
+	//Knockdown shields
+	if ( lootRef == "incapshield_pickup_lv1" )
+	{
+		if ( lootLevel == 0 || lootLevel == 1 )
+			return lootRef
+		else if ( lootLevel == 2 )
+			return "incapshield_pickup_lv2"
+		else if ( lootLevel == 3 )
+			return "incapshield_pickup_lv3"
+		else
+			return "incapshield_pickup_lv4_selfrevive"
+	}
+
+	//Weapons
+	if ( lootLevel == 4 )
+	{
+		//return the "gold" variant if it exists for level 4
+		string lootRefCandidate = lootRef + WEAPON_LOCKEDSET_SUFFIX_GOLD
+		if ( SURVIVAL_Loot_IsRefValid( lootRefCandidate ) )
+			return lootRefCandidate
+	}
+
+	return lootRef
+}
+
+LootWeaponAttachments function GetAllAttachmentsForWeapon( string weaponRef, int lootLevel )
+{
+	Assert ( weaponRef.find( "mp_weapon" ) >= 0, "Invalid mp_weapon name: " + weaponRef )
+
+	//Get all supported attachments of the specified tier and return a random assortment, one for each slot
+	int maxTier = lootLevel
+	int minTier = lootLevel
+	if ( lootLevel == 4 )
+		minTier = 3 //if a weapon doesn't have a gold attachment, still want at least a purple to spawn
+
+	array<LootData> lootAttachmentData = SURVIVAL_Loot_GetByType_InLevel( eLootType.ATTACHMENT, maxTier, minTier )
+	LootWeaponAttachments weaponAttachments
+	array<LootData> validAttachments
+
+	foreach( LootData data in lootAttachmentData )
+	{
+		//no inval;id attachments
+		if ( !CanAttachToWeapon( data.ref, weaponRef ) )
+			continue
+
+		//no dupes
+		if ( validAttachments.contains( data ) )
+			continue
+
+		//add to appropriate array
+		if ( data.attachmentStyle.find( "sight" ) >= 0 )
+			weaponAttachments.attachmentRefsScopes.append( data.ref )
+
+		else if ( data.attachmentStyle.find( "mag" ) >= 0 )
+			weaponAttachments.attachmentRefsMag.append( data.ref )
+
+		else if ( data.attachmentStyle.find( "barrel" ) >= 0 )
+			weaponAttachments.attachmentRefsBarrel.append( data.ref )
+
+		else if ( data.attachmentStyle.find( "stock" ) >= 0 )
+			weaponAttachments.attachmentRefsGrip.append( data.ref )
+
+		else if ( data.attachmentStyle.find( "hopup" ) >= 0 )
+			weaponAttachments.attachmentRefsHopups.append( data.ref )
+
+		else if ( data.attachmentStyle.find( "hopupMulti_a" ) >= 0 )
+			weaponAttachments.attachmentRefsHopups.append( data.ref )
+
+		else if ( data.attachmentStyle.find( "hopupMulti_b" ) >= 0 )
+			weaponAttachments.attachmentRefsHopups.append( data.ref )
+
+		else
+			printf( "%s() -Unhandled attachementStyle %s", FUNC_NAME(), data.attachmentStyle )
+
+		//add to processed attachments so we dont dupe
+		validAttachments.append( data )
+	}
+
+	return weaponAttachments
+}
+
+string function GetAttachmentLootRefForWeapon( int attachmentType, string weaponRef, int lootLevel )
+{
+	Assert ( weaponRef.find( "mp_weapon" ) >= 0 )
+	//Get all supported attachments of the specified tier and return a random assortment, one for each slot
+	int maxTier = lootLevel
+	int minTier = lootLevel
+	array<LootData> lootAttachmentData = SURVIVAL_Loot_GetByType_InLevel( eLootType.ATTACHMENT, maxTier, minTier )
+	LootWeaponAttachments weaponAttachments = GetAllAttachmentsForWeapon( weaponRef, lootLevel )
+
+	array<string> attachments
+	if ( attachmentType == eWeaponAttachmentType.MAG )
+		attachments = weaponAttachments.attachmentRefsMag
+	if ( attachmentType == eWeaponAttachmentType.STOCK )
+		attachments = weaponAttachments.attachmentRefsGrip
+	if ( attachmentType == eWeaponAttachmentType.BARREL )
+		attachments = weaponAttachments.attachmentRefsBarrel
+	if ( attachmentType == eWeaponAttachmentType.SCOPE )
+		attachments = weaponAttachments.attachmentRefsScopes
+	if ( attachmentType == eWeaponAttachmentType.HOPUP )
+		attachments = weaponAttachments.attachmentRefsHopups
+
+	if ( attachments.len() > 0 )
+		return attachments.getrandom()
+	else
+		return ""
+
+	unreachable
+}
+
+array<string> function GetAdditionalLootRefsForLootSpawn( LootSpawn lootSpawn, int maxAttachments = -1 )
+{
+	//Some loot spawners want additonal loot to always spawn with them
+	//EXAMPLE: I put a level-2 R-301 in the level, I would like it to spawn with a random collection of valid attachments of that level
+
+	string lootRef = lootSpawn.lootRef
+	int lootLevel = lootSpawn.lootLevel
+	array<string> additionalRefs
+
+	//currently only care about spawning weapon attachments
+	if ( lootRef.find( "mp_weapon" ) != 0 )
+		return additionalRefs
+
+	//no attachments needed for level 0 weapons
+	if ( lootLevel == 0 )
+		return additionalRefs
+
+	//Gold weapon (and other locked sets), no need to spawn additional attachments
+	if ( WeaponLootRefIsLockedSet( lootRef ) )
+		return additionalRefs
+
+	//check if any supported attachments at all for weapon
+	LootData weaponData = SURVIVAL_Loot_GetLootDataByRef( lootRef )
+	if ( weaponData.supportedAttachments.len() == 0 )
+		return additionalRefs
+
+	//Get all supported attachments of the specified tier and return a random assortment, one for each slot
+	LootWeaponAttachments weaponAttachments = GetAllAttachmentsForWeapon( lootRef, lootLevel )
+
+	if ( weaponAttachments.attachmentRefsBarrel.len() > 0 )
+		additionalRefs.append( weaponAttachments.attachmentRefsBarrel.getrandom() )
+
+	if ( weaponAttachments.attachmentRefsMag.len() > 0 )
+		additionalRefs.append( weaponAttachments.attachmentRefsMag.getrandom() )
+
+	if ( weaponAttachments.attachmentRefsHopups.len() > 0 )
+		additionalRefs.append( weaponAttachments.attachmentRefsHopups.getrandom() )
+
+	if ( weaponAttachments.attachmentRefsScopes.len() > 0 )
+		additionalRefs.append( weaponAttachments.attachmentRefsScopes.getrandom() )
+
+	if ( weaponAttachments.attachmentRefsGrip.len() > 0 )
+		additionalRefs.append( weaponAttachments.attachmentRefsGrip.getrandom() )
+
+	additionalRefs.randomize()
+
+	if ( maxAttachments > 0 && maxAttachments < additionalRefs.len() )
+		additionalRefs.resize( maxAttachments )
+
+	return additionalRefs
+
+}
+ 

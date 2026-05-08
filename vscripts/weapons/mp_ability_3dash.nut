@@ -94,8 +94,7 @@ void function OnWeaponChargeEnd_ability_3dash( entity weapon )
 		{
 			StatusEffect_Stop( player, effect )
 		}
-		if ( player.IsMantling() || player.IsWallRunning() || player.p.isSkydiving )
-			weapon.SetWeaponPrimaryClipCount( 0 ) //Defensive fix for the fact that primary fire isn't triggered when climbing.
+
 
 	#endif
 }

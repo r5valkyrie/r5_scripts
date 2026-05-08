@@ -3,9 +3,6 @@
 // Organized by system/feature within each preprocessor block
 // ============================================================================
 
-global function SkitSystem_Init
-global function Ziprail_GetSkyDiveLauncherForHitEnt
-
 // ============================================================================
 //  GLOBAL SCOPE - Constants, Enums, Structs (all VMs)
 // ============================================================================
@@ -66,10 +63,6 @@ global const int GRX_OFFERITEMTYPE_BONUS = 1
 //  GLOBAL SCOPE - Function Declarations (all VMs)
 // ============================================================================
 
-// === Ranked/Rumble ===
-global function RankedRumble_IsRunningRankedRumble
-global function Ranked_GetCurrentPeriodGUIDString
-
 // === Character/Playlist ===
 global function GetItemFlavorPlaylistOpinion
 
@@ -89,11 +82,9 @@ global function ShadowArmy_IsPlayerInShadowForm
 // === Freelance Systems ===
 global function FreelanceSystemsAreEnabled
 
+global function Ranked_GetCurrentPeriodGUIDString
+
 // === Freelance/PVE Systems ===
-global function ObjectiveSystem_Init
-global function EncounterSystem_Init
-global function NPCGarbageCollection_InitForGameMode
-global function PVELoot_InitForGameMode
 global function LTM_AnnouncementSplash
 global function ShadowArmy_GetCurrentRank
 global function UseLTMPodiumBanner
@@ -107,7 +98,6 @@ global function PutEntityInSomewhatSafeSpot
 global function CalcWorldToLocalOrigin_Entity
 global function ShGameModeExplore_GetPlanePassNumber
 global function IsValidArrayIndex
-global function SkydiveEmoteProjector_CancelProjector
 global function HoverVehicle_CreateAndAddPlayers
 global function DropPod_OnUse
 global function isFreefallEnabled
@@ -128,7 +118,6 @@ global function SetChampion
 global function Flowstate_CheckForLv4MagazinesAndRefillAmmo
 global function FS_GetWeaponsThatUseThisAmmo
 global function GrantPathfinderCooldownReduction
-global function CheckPlayersIntersectingEntity
 global function HoverVehicle_WakeVehiclesIntersectingEntity
 global function Octane_GetPassiveRegenRate
 global function Octane_GetPassiveRegenDelay
@@ -170,7 +159,6 @@ global function RefreshChallenges
 // === Shared scope declarations (visible to all VMs) ===
 global function ShadowArmy_IsPlayerOnShadowArmy
 global function ForcedSpawn_Init
-global function ObjectiveResourceSystem_Init
 global function Sh_Rank_InitGameSummary
 // SetPlayerCanGroundEmote — now in sh_emotes.nut (S22)
 global function ShadowArmy_ShouldEnterBleedout
@@ -247,7 +235,6 @@ global function MedBay_IsOnCooldown
 global function PassiveAssassinsInstinct_EntityShouldBeHighlighted
 global function CastleWall_EntityShouldBeHighlighted
 global function ArmoredLeap_TargetEntityShouldBeHighlighted
-global function Nessie_GetHighlightDist
 global function IsValidStickerInstance
 global function DestroyStickerInstance
 global function RequestLoadStickerPak
@@ -274,7 +261,6 @@ global function DebuffZone_GetOverheatDuration
 global function TryPingBlockingFunction
 global function CanLaunchToCompanion
 global function HookUpWaypointRuiForObjectiveRelevance
-global function PlayerIsMarkedAsInsideObjectiveIndex
 global function Survival_SetPilotHudVisible
 global function ServerCallback_DestroyEndAnnouncement
 global function ServerCallback_RefreshDeathBoxHighlight
@@ -304,7 +290,6 @@ global function IsTeamInAlliance
 global function GetGroundPositionOpenToSky
 global function ShadowArmy_RespawnBeacon_CanBeaconBeUsed
 global function ShadowArmy_RespawnBeacon_CanBeaconBeUsedByPlayer
-global function Trophy_GetShieldsPercentRemaining
 global function MedBay_GetHealsPercentRemaining
 global function TreasureHunt_InstanceObjectivePing
 global function Waypoints_GetObjectiveIndexFor
@@ -317,7 +302,6 @@ global function WaypointFocusTracking_Register
 global function WaypointFocusTracking_SetDisabled
 global function WaypointFocusTracking_TrackPos
 #endif
-global function SURVIVAL_ResetAllDoors
 global function POIPlayerSpawning_Exists
 global function POIPlayerSpawning_SpawnPlayers
 global function ForcedSpawn_SpawnAllPlayers
@@ -330,7 +314,6 @@ global function Sh_Respawn_Token_IsPlayerRespawnDisabled
 global function SpawnGroupSkydive_IsSquadEliminated
 global function Ranked_UpdateRankedScoreProgressForAllPlayers
 global function Achievements_OnPlayerMatchParticipationEnded
-global function Cups_OnPlayerMatchParticipationEnded
 global function Ranked_HasFinishedProvisionalMatches
 global function MMR_GetInteractionsForPlayer
 global function SendPlayerMatchResult
@@ -432,7 +415,6 @@ global function FiringRangeHasDynamicStats
 global function TogglePlayerVoiceAndTextMute
 
 // === Game Mode Features ===
-global function MissionCheckpoints_GetRespawnsLeftForPlayer
 global function PIN_FiringRange_Settings
 global function PIN_FiringRange_SessionDuration
 global function PIN_FiringRange_DynamicStats_TimeBetweenResets
@@ -451,9 +433,6 @@ global function IsInvalidButMemberVarsStillValid
 
 // === Crossplay ===
 global function IsUserOnSamePlatform
-
-// === Doors ===
-global function SURVIVAL_ResetAllDoorsInRealm
 
 // === NavMesh ===
 global function NavMesh_GetClosestPoint
@@ -476,8 +455,6 @@ global function IsReinforced
 global function HoverVehicle_AttachEntToNearestAbilityAttachment
 global function DebuffZone_GetAllowableStickyEnts
 global function IsForgedShadowsShield
-global function Nessie_SpawnNPC
-global function ClearFollowBehavior
 global function ShadowShield_IsAllowedStickyEnt
 global function MobileShield_IsAllowedStickyEnt
 global function StunWhenInterruptable
@@ -488,9 +465,7 @@ global function PlantSuperStickyGrenade
 global function Player_DetonateSatchels
 global function AllowPlayersToTalkToThemselves
 global function EvaluateSoundSelector
-global function GetLockedSetsDisabledByCrafting
 global function GoldenHorse_TicksEnabled
-global function TeslaTrap_MakeEntityRealTimeObstructor
 global function TitanSword_Super_BlockAction
 global function GiveBounty
 global function IsBountyHuntEnabled
@@ -505,8 +480,6 @@ global function TitanSword_TryMultiAttack
 global function TitanSword_VictimHitOverride
 
 // === Ranked/Rumble ===
-global function RankedRumble_IsLatestGameRankedRumble
-global function RankedRumble_IsRunningRankedRumbleCached
 global function DEV_script_ranked_debug
 global function IsServerNetworkAlertTriggered
 global function PrepareGameSummaryForPointCalculation
@@ -793,17 +766,6 @@ bool function SquadMuteLegendSelectEnabled()
 	return GetCurrentPlaylistVarBool( "squad_mute_legend_select_enable", true )
 }
 
-void function SkitSystem_Init()
-{
-	Warning( "STUB: SkitSystem_Init" )
-}
-
-
-entity function Ziprail_GetSkyDiveLauncherForHitEnt( entity hitEnt )
-{
-	Warning( "STUB: Ziprail_GetSkyDiveLauncherForHitEnt" )
-	return null
-}
 
 #if CLIENT || UI
 void function PopulateRuiWithRankedBadgeDetails( var rui, int rankScore, int ladderPosition, bool isNested = false )
@@ -2370,12 +2332,6 @@ float function GetFovScalar( entity player )
 }
 #endif
 
-float function Nessie_GetHighlightDist()
-{
-	return GetCurrentPlaylistVarFloat( "nessie_highlight_distance", 2000 )
-}
-
-
 bool function FerroWall_BlockScan( vector startPos, vector endPos )
 {
 	Warning( "STUB: FerroWall_BlockScan\n" )
@@ -2409,12 +2365,6 @@ int function CanLaunchToCompanion( entity player, entity companion )
 void function HookUpWaypointRuiForObjectiveRelevance( entity wp, var rui )
 {
 	Warning( "STUB: HookUpWaypointRuiForObjectiveRelevance\n" )
-}
-
-bool function PlayerIsMarkedAsInsideObjectiveIndex( entity player, int index )
-{
-	Warning( "STUB: PlayerIsMarkedAsInsideObjectiveIndex\n" )
-	return false
 }
 
 void function Survival_SetPilotHudVisible( bool visible )
@@ -2521,7 +2471,6 @@ vector function GetGroundPositionOpenToSky( vector origin ) { return origin }
 // Remote_CallFunction_NonReplay — native
 bool function ShadowArmy_RespawnBeacon_CanBeaconBeUsedByPlayer( entity beacon, entity player ) { return true }
 bool function ShadowArmy_RespawnBeacon_CanBeaconBeUsed( entity beacon ) { return true }
-int function Trophy_GetShieldsPercentRemaining( entity ent ) { return 100 }
 int function MedBay_GetHealsPercentRemaining( entity ent = null ) { return 100 }
 void function TreasureHunt_InstanceObjectivePing( entity wp ) { Warning( "STUB: TreasureHunt_InstanceObjectivePing" ) }
 #if SERVER
@@ -2546,13 +2495,6 @@ int function Waypoints_GetObjectiveIndexFor( entity wp ) { return -1 }
 void function TogglePlayerVoiceAndTextMute( entity player )
 {
 	Warning( "WORKAROUND: TogglePlayerVoiceAndTextMute() called - not implemented" )
-}
-
-// stub
-int function MissionCheckpoints_GetRespawnsLeftForPlayer( entity player )
-{
-	Warning( "WORKAROUND: MissionCheckpoints_GetRespawnsLeftForPlayer() called - not implemented" )
-	return 0
 }
 
 // stubs - PIN Telemetry (no telemetry in r5reloaded)
@@ -2660,8 +2602,6 @@ bool function IsReinforced( entity ent ) { Warning("STUB: IsReinforced"); return
 bool function HoverVehicle_AttachEntToNearestAbilityAttachment( entity ent, entity vehicle, bool a, bool b, vector offset ) { Warning( "STUB: HoverVehicle_AttachEntToNearestAbilityAttachment" ); return false }
 bool function DebuffZone_GetAllowableStickyEnts( entity ent ) { Warning("STUB: DebuffZone_GetAllowableStickyEnts"); return false }
 bool function IsForgedShadowsShield( entity ent ) { Warning("STUB: IsForgedShadowsShield"); return false }
-entity function Nessie_SpawnNPC( int team, entity owner, vector origin, vector angles ) { Warning( "STUB: Nessie_SpawnNPC" ); return null }
-void function ClearFollowBehavior( entity npc ) { Warning("STUB: ClearFollowBehavior") }
 bool function ShadowShield_IsAllowedStickyEnt( entity ent, entity stickyEnt, string weaponClassName ) { Warning("STUB: ShadowShield_IsAllowedStickyEnt"); return true }
 bool function MobileShield_IsAllowedStickyEnt( entity ent, entity stickyEnt, string weaponClassName ) { Warning("STUB: MobileShield_IsAllowedStickyEnt"); return true }
 void function StunWhenInterruptable( entity ent, var damageInfo ) { Warning( "STUB: StunWhenInterruptable" ) }
@@ -2672,29 +2612,16 @@ bool function PlantSuperStickyGrenade( entity projectile, vector pos, vector nor
 void function Player_DetonateSatchels( entity player ) { Warning("STUB: Player_DetonateSatchels") }
 bool function AllowPlayersToTalkToThemselves() { return false }
 int function EvaluateSoundSelector( string alias ) { Warning("STUB: EvaluateSoundSelector"); return 0 }
-array<string> function GetLockedSetsDisabledByCrafting() { Warning("STUB: GetLockedSetsDisabledByCrafting"); return [] }
 bool function GoldenHorse_TicksEnabled() { return false }
-void function TeslaTrap_MakeEntityRealTimeObstructor( entity ent ) { Warning("STUB: TeslaTrap_MakeEntityRealTimeObstructor") }
 bool function TitanSword_Super_BlockAction( entity player, string action = "" ) { Warning("STUB: TitanSword_Super_BlockAction"); return false }
 // UpgradeSelectionMenu_TryClose -- now in sh_upgrade_selection_menu.nut
 void function GiveBounty( entity player, int amount ) { Warning("STUB: GiveBounty") }
 bool function IsBountyHuntEnabled() { return false }
 
-// === Doors ===
-
-void function SURVIVAL_ResetAllDoorsInRealm( int realm )
-{
-	Warning( "WORKAROUND: SURVIVAL_ResetAllDoorsInRealm() called - not implemented" )
-}
-
 // === Melee/Combat ===
 
 void function SetObjectCanBeMeleed( entity ent, bool value )
 {
-	Assert( !ent.IsPlayer(), ent + " should not be a player. This is for non-player, non-NPC entities." )
-	Assert( !ent.IsNPC(), ent + " should not be an NPC. This is for non-player, non-NPC entities." )
-
-	ent.e.canBeMeleed = value
 }
 
 // stub
@@ -2715,21 +2642,6 @@ bool function TitanSword_VictimHitOverride( entity meleeWeapon, entity attacker,
 {
 	Warning( "WORKAROUND: TitanSword_VictimHitOverride() called - not implemented" )
 	return false // No override
-}
-
-// === Ranked/Rumble ===
-
-// RankedRumble stubs
-bool function RankedRumble_IsLatestGameRankedRumble( entity player )
-{
-	Warning( "WORKAROUND: RankedRumble_IsLatestGameRankedRumble() called - not implemented" )
-	return false
-}
-
-bool function RankedRumble_IsRunningRankedRumbleCached( entity player )
-{
-	Warning( "WORKAROUND: RankedRumble_IsRunningRankedRumbleCached() called - not implemented" )
-	return false
 }
 
 // stub
@@ -3003,13 +2915,6 @@ bool function FiringRangeHasDynamicStats()
 	return GetCurrentPlaylistVarBool( "has_fr_dynamic_stats", true )
 }
 
-// === Ranked/Rumble ===
-
-bool function RankedRumble_IsRunningRankedRumble()
-{
-	return false
-}
-
 // === Character/Playlist ===
 
 // Return UNLOCKED for all characters - no playlist restrictions
@@ -3082,7 +2987,7 @@ string function replace( string original, string search, string replacement )
 
 string function Ranked_GetCurrentPeriodGUIDString()
 {
-	return ""
+	return "SAID00969954275"
 }
 
 asset function WORKAROUND_AssetAppend( string s1, string s2 )
@@ -3109,26 +3014,6 @@ bool function FreelanceSystemsAreEnabled()
 }
 
 // === Freelance/PVE Systems ===
-
-void function ObjectiveSystem_Init()
-{
-	Warning( "STUB: ObjectiveSystem_Init" )
-}
-
-void function EncounterSystem_Init()
-{
-	Warning( "STUB: EncounterSystem_Init" )
-}
-
-void function NPCGarbageCollection_InitForGameMode()
-{
-	Warning( "STUB: NPCGarbageCollection_InitForGameMode" )
-}
-
-void function PVELoot_InitForGameMode()
-{
-	Warning( "STUB: PVELoot_InitForGameMode" )
-}
 
 void function LTM_AnnouncementSplash( entity player )
 {
@@ -3288,14 +3173,6 @@ void function SurvivalCommentary_KilledPlayerAnnounce( int bucket, entity player
 	Warning( "STUB: SurvivalCommentary_KilledPlayerAnnounce" )
 }
 
-
-
-void function SkydiveEmoteProjector_CancelProjector( entity player )
-{
-	Warning( "STUB: SkydiveEmoteProjector_CancelProjector" )
-}
-
-
 bool function GoldenHorse_ModifyCarePackageSpawnDistance()
 {
 	Warning( "STUB: GoldenHorse_ModifyCarePackageSpawnDistance" )
@@ -3333,12 +3210,6 @@ array<entity> function FS_GetWeaponsThatUseThisAmmo( entity player, string ammoR
 void function GrantPathfinderCooldownReduction( entity player )
 {
 	Warning( "STUB: GrantPathfinderCooldownReduction" )
-}
-
-bool function CheckPlayersIntersectingEntity( entity ent, float radius )
-{
-	Warning( "STUB: CheckPlayersIntersectingEntity" )
-	return false
 }
 
 void function HoverVehicle_WakeVehiclesIntersectingEntity( entity ent )
@@ -3399,13 +3270,6 @@ bool function Respawn_Token_IsPlayerEliminated( entity player )
 void function ForcedSpawn_Init()
 {
 	Warning( "STUB: ForcedSpawn_Init" )
-}
-
-
-
-void function ObjectiveResourceSystem_Init()
-{
-	Warning( "STUB: ObjectiveResourceSystem_Init" )
 }
 
 void function Sh_Rank_InitGameSummary()
@@ -3469,11 +3333,6 @@ bool function Bleedout_GetShouldAlliancePlayerBleedout( entity player )
 	return true
 }
 
-void function SURVIVAL_ResetAllDoors()
-{
-	Warning( "STUB: SURVIVAL_ResetAllDoors" )
-}
-
 bool function POIPlayerSpawning_Exists()
 {
 	return false
@@ -3533,11 +3392,6 @@ void function Ranked_UpdateRankedScoreProgressForAllPlayers()
 void function Achievements_OnPlayerMatchParticipationEnded( entity player )
 {
 	Warning( "STUB: Achievements_OnPlayerMatchParticipationEnded" )
-}
-
-void function Cups_OnPlayerMatchParticipationEnded( entity player )
-{
-	Warning( "STUB: Cups_OnPlayerMatchParticipationEnded" )
 }
 
 bool function Ranked_HasFinishedProvisionalMatches( entity player )
@@ -3791,115 +3645,3 @@ void function PlayerStopSpectating( entity player )
 	player.StopObserverMode()
 	#endif
 }
-
-void function Flowstate_AssignUniqueCharacterForPlayer( entity player, bool lock )
-{
-#if SERVER
-	array< ItemFlavor > characters = clone GetAllCharacters()
-
-	for ( int i = characters.len() - 1; i >= 0; i-- )
-	{
-		int playlistOpinion = GetItemFlavorPlaylistOpinion( ItemFlavor_GetHumanReadableRef( characters[ i ] ) )
-		if( playlistOpinion == eItemFlavorPlaylistOpinion.LOCKED )
-			characters.remove( i )
-	}
-
-	bool quit
-	for ( int i = characters.len() - 1; i >= 0; i-- )
-	{
-		quit = false
-		foreach ( squadMate in GetPlayerArrayOfTeam( player.GetTeam() ) )
-		{
-			if( quit )
-				continue
-
-			if( squadMate == player )
-				continue
-
-			ItemFlavor mateCharacter = LoadoutSlot_GetItemFlavor( ToEHI( squadMate ), Loadout_Character() )
-			if( mateCharacter == characters[ i ] )
-			{
-				characters.remove( i )
-				quit = true
-			}
-		}
-	}
-
-	ItemFlavor initialCharacter
-
-	if( characters.len() == 0 )
-		initialCharacter = GetAllCharacters().getrandom()
-	else
-		initialCharacter = characters.getrandom()
-
-	player.SetPlayerNetInt( CHARACTER_SELECT_NETVAR_FOCUS_CHARACTER_GUID, ItemFlavor_GetGUID( initialCharacter ) )
-	CharacterSelect_AssignCharacter( player, initialCharacter )
-
-	if( !lock || IsDevGamemode() || Gamemode() == eGamemodes.WINTEREXPRESS )
-		player.SetPlayerNetBool( "hasLockedInCharacter", false )
-#endif
-}
-
-void function Flowstate_SetAssignedCustomModelToPlayer( entity player, int index )
-{
-#if SERVER
-	thread function () : ( index, player )
-	{
-		EndSignal( player, "OnDestroy" )
-		WaitEndFrame()
-		switch( index )
-		{
-			case 1:
-			player.SetBodyModelOverride( $"mdl/Humans/pilots/w_blisk.rmdl" )
-			player.SetArmsModelOverride( $"mdl/Humans/pilots/pov_blisk.rmdl" )
-			break
-			case 2:
-			player.SetBodyModelOverride( $"mdl/Humans/pilots/w_phantom.rmdl" )
-			player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_phantom.rmdl" )
-			break
-			case 3:
-			player.SetBodyModelOverride( $"mdl/Humans/pilots/w_amogino.rmdl" )
-			player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_amogino.rmdl" )
-			break
-			case 4:
-			player.SetBodyModelOverride( $"mdl/Humans/pilots/w_rhapsody.rmdl" )
-			player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_rhapsody.rmdl" )
-			break
-			case 5:
-			player.SetBodyModelOverride( $"mdl/Humans/pilots/w_ash_legacy.rmdl" )
-			player.SetArmsModelOverride( $"mdl/Humans/pilots/pov_ash_legacy.rmdl" )
-			break
-			case 6:
-			player.SetBodyModelOverride( $"mdl/Humans/pilots/w_jackcooper.rmdl" )
-			player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_jackcooper.rmdl" )
-			break
-			case 7:
-			player.SetBodyModelOverride( $"mdl/Humans/pilots/pilot_medium_loba.rmdl" )
-			player.SetArmsModelOverride( $"mdl/Humans/pilots/pov_pilot_medium_loba.rmdl" )
-			break
-			case 8:
-			player.SetBodyModelOverride( $"mdl/Humans/pilots/pilot_heavy_revenant.rmdl" )
-			player.SetArmsModelOverride( $"mdl/Humans/pilots/pov_pilot_heavy_revenant.rmdl" )
-			break
-			case 9:
-			player.SetBodyModelOverride( $"mdl/Humans/pilots/ballistic_base_w.rmdl" )
-			player.SetArmsModelOverride( $"mdl/Humans/pilots/ballistic_base_v.rmdl" )
-			break
-			case 10:
-			player.SetBodyModelOverride( $"mdl/flowstate_custom/w_marvin.rmdl" )
-			player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_amogino.rmdl" )
-			break
-			case 11:
-			player.SetBodyModelOverride( $"mdl/flowstate_custom/w_pete_mri.rmdl" )
-			player.SetArmsModelOverride( $"mdl/flowstate_custom/ptpov_pete_mri.rmdl" )
-			break
-		}
-	}()
-#endif
-}
-
-void function Flowstate_ApplyModifiedMovementToPlayer( entity player )
-{
-	Warning( "Flowstate_ApplyModifiedMovementToPlayer - stub (movement system not loaded)" )
-}
-

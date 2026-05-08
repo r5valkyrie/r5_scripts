@@ -1,0 +1,531 @@
+global function Nessie_Init
+
+global function Nessie_IsNessieSwappable
+global function Nessie_IsSpiderSwappable
+global function Nessie_IsProwlerSwappable
+global function Nessie_GetHighlightDist
+
+#if SERVER
+global function Nessie_SpawnNPC
+#endif
+
+#if CLIENT
+global function ServerToClient_OnEnterNessieTrigger
+global function ServerToClient_OnLeaveNessieTrigger
+#endif
+
+const string NESSIE_AUDIO_PLAYLIST_VAR = "use_nessie_schedule_audio"
+const string NESSIE_SWAP_PLAYLIST_VAR = "nessie_swap_enabled"
+const string NESSIE_DEATH_CONFETTI_PLAYLIST_VAR = "nessie_enable_confetti"
+const string NESSIE_HIGHLIGHT_DISTANCE_PLAYLIST_VAR = "nessie_highlight_dist"
+
+const string NESSIE_SPIDER_SWAP_PLAYLIST_VAR = "nessie_spider_swap"
+const string NESSIE_NESSIE_SWAP_PLAYLIST_VAR = "nessie_nessie_swap"
+const string NESSIE_PROWLER_SWAP_PLAYLIST_VAR = "nessie_prowler_swap"
+
+const string SIG_NESSIE_OUT_OF_RANGE = "NessieOutOfRange"
+const string SIG_NESSIE_STATE_CHANGED = "NessieStateChanged"
+
+global const asset MDL_NESSIE_SWAP = $"mdl/props/nessie/nessie_april_fools.rmdl"
+
+global const float NESSIE_SPIDER_SCALE = 2.4// 5.5
+const vector NESSIE_SPIDER_OFFSET = <0, 0, 0> //<0, 0, 11>
+const vector NESSIE_SPIDER_ANGLES = <0, 0, 0>
+
+const float NESSIE_PROWLER_SCALE = 5//12
+const vector NESSIE_PROWLER_OFFSET = <0, 0, 0>//<0, 0, 23>
+const vector NESSIE_PROWLER_ANGLES = <0, 0, 0>
+
+const int NESSIE_SCHEDULE_WAKEUP_DIST = 2600
+
+const float NESSIE_DOOR_TRIGGE_RADIUS = 96
+
+global const string NESSIE_SPIDER_SCRIPT_NAME = "nessie_spider_script"
+const string NESSIE_PROWLER_SCRIPT_NAME = "nessie_prowler_script"
+const string NESSIE_TRIGGER_SCRIPT_NAME = "nessie_trigger_script"
+
+//VFX!
+const asset VFX_NESSIE_DEATH = $"ball_confetti"
+
+//AUDIO!
+const string SFX_NESSIE_WALK_LOOP = "AFLTM_FootstepCluster_Wander"
+const string SFX_NESSIE_RUN_LOOP = "AFLTM_FootstepCluster_Chase"
+const string SFX_NESSIE_ATTACK_A = "AFLTM_Vocal_AttackTell"
+const string SFX_NESSIE_ATTACK_B = "AFLTM_Vocal_AttackTell_VoxOnly"
+const string SFX_NESSIE_ATTACK_C = "AFLTM_Vocal_AttackTell_Charge"
+const string SFX_NESSIE_DEFAULT_SQUEAK = "AFLTM_Vocal_Wander"
+const string SFX_NESSIE_DEATH = "AFLTM_Vocal_Death"
+
+enum eNessieState {
+	IDLE,
+	ATTACK,
+	RANGED_ATTACK,
+	LUNGE,
+	ROAR,
+	WALK,
+	RUN,
+	SKIP
+}
+
+struct{
+	#if SERVER
+		table<entity, array<entity> > playersInNessieTrigger
+	#endif
+}file
+
+bool function IsNessieSwap()
+{
+	return GetCurrentPlaylistVarBool( NESSIE_SWAP_PLAYLIST_VAR, true )
+}
+
+
+bool function UseEventScheduleAudio()
+{
+	return GetCurrentPlaylistVarBool( NESSIE_AUDIO_PLAYLIST_VAR, true )
+}
+
+
+bool function UseNessieConfetti()
+{
+	return GetCurrentPlaylistVarBool( NESSIE_DEATH_CONFETTI_PLAYLIST_VAR, true )
+}
+
+
+bool function Nessie_IsNessieSwappable()
+{
+	return GetCurrentPlaylistVarBool( NESSIE_NESSIE_SWAP_PLAYLIST_VAR, true )
+}
+
+
+bool function Nessie_IsSpiderSwappable()
+{
+	return GetCurrentPlaylistVarBool( NESSIE_SPIDER_SWAP_PLAYLIST_VAR, false )
+}
+
+
+bool function Nessie_IsProwlerSwappable()
+{
+	return GetCurrentPlaylistVarBool( NESSIE_PROWLER_SWAP_PLAYLIST_VAR, false )
+}
+
+
+float function Nessie_GetHighlightDist()
+{
+	return GetCurrentPlaylistVarFloat( NESSIE_HIGHLIGHT_DISTANCE_PLAYLIST_VAR, 2000 )
+}
+
+void function Nessie_Init()
+{
+	PrecacheScriptString( NESSIE_TRIGGER_SCRIPT_NAME )
+	PrecacheScriptString( NESSIE_SPIDER_SCRIPT_NAME )
+	PrecacheScriptString( NESSIE_PROWLER_SCRIPT_NAME )
+
+	Remote_RegisterClientFunction( "ServerToClient_OnEnterNessieTrigger", "entity" )
+	Remote_RegisterClientFunction( "ServerToClient_OnLeaveNessieTrigger", "entity" )
+
+	#if CLIENT
+		if ( IsNessieSwap() )
+		{
+			RegisterSignal( SIG_NESSIE_OUT_OF_RANGE )
+			RegisterSignal( SIG_NESSIE_STATE_CHANGED )
+		}
+	#endif
+
+	#if SERVER
+		////Need these available so build will pick it up
+		NPCPrecache_Nessie()
+		PrecacheModel( MDL_NESSIE_SWAP )
+		PrecacheParticleSystem( VFX_NESSIE_DEATH )
+		////
+
+		if ( IsNessieSwap() )
+		{
+			if ( Nessie_IsSpiderSwappable() || Nessie_IsNessieSwappable() )
+			{
+				AddSpawnCallback( "npc_spider", Spider_OnSpawned )
+				AddSpawnCallback( "npc_spider_ranged", Spider_OnSpawned )
+			}
+			if ( Nessie_IsProwlerSwappable() )
+			{
+				AddSpawnCallback( "npc_prowler", Prowler_OnSpawned )
+			}
+			RegisterSignal( SIG_NESSIE_OUT_OF_RANGE )
+		}
+	#endif
+}
+
+//Nessie Swap
+#if SERVER
+void function Spider_OnSpawned( entity npc )
+{
+	//If we can't swap either, don't bother
+	if ( !Nessie_IsSpiderSwappable() && !Nessie_IsNessieSwappable() )
+		return
+
+	//If we can't swap nessies and the npc is a nessie
+	if ( npc.GetAISettingsName() == "npc_nessie" )
+	{
+		if ( !Nessie_IsNessieSwappable() )
+			return
+	}
+	else if ( !Nessie_IsSpiderSwappable() ) //Otherwise it's a spider, so check if we can swap spiders
+		return
+
+	CreateNessieSwap( npc, NESSIE_SPIDER_SCALE, "#BABY_NESSIE_TITLE", NESSIE_SPIDER_SCRIPT_NAME, NESSIE_SPIDER_OFFSET, NESSIE_SPIDER_ANGLES )
+}
+
+
+void function Prowler_OnSpawned( entity npc )
+{
+	CreateNessieSwap( npc, NESSIE_PROWLER_SCALE, "#NESSIE_TITLE", NESSIE_PROWLER_SCRIPT_NAME, NESSIE_PROWLER_OFFSET, NESSIE_PROWLER_ANGLES )
+}
+
+
+entity function CreateNessieSwap( entity npc, float scale, string title, string scriptName, vector offset, vector angles )
+{
+	if ( !IsCreature( npc ) )
+		return null
+
+	entity nessie = CreatePropDynamic( MDL_NESSIE_SWAP, npc.GetOrigin() + offset, npc.GetAngles() + angles, SOLID_NONE )
+
+	nessie.SetParent( npc, "CHESTFOCUS", true )
+	nessie.SetModelScale( scale )
+	nessie.SetScriptName( scriptName )
+
+	nessie.DisableGrappleAttachment()
+	//nessie.DisallowObjectPlacement()
+	nessie.DisallowZiplines()
+
+	//Highlights
+	nessie.Highlight_Enable()
+	nessie.Highlight_SetInheritHighlight( true )
+	//nessie.EnableEntScopeHighlight()
+
+	SetForceDrawWhileParented( nessie, true )
+	npc.SetVisibilityFlags( ENTITY_VISIBLE_TO_NOBODY )
+	npc.SetTitle( title )
+
+	AddEntityCallback_OnKilled( npc, Nessie_OnKilled )
+
+	if ( UseEventScheduleAudio() )
+	{
+		entity trigger = CreateEntity( "trigger_cylinder" )
+		trigger.SetCylinderRadius( NESSIE_SCHEDULE_WAKEUP_DIST )
+
+		float halfHeight = NESSIE_SCHEDULE_WAKEUP_DIST * 0.5
+		trigger.SetAboveHeight( halfHeight )
+		trigger.SetBelowHeight( halfHeight )
+		trigger.SetOrigin( npc.GetOrigin() )
+		trigger.SetAngles( <0, 0, 0> )
+		trigger.SetParent( npc )
+		trigger.kv.triggerFilterPlayer = "all"
+		DispatchSpawn( trigger )
+
+		trigger.SetEnterCallback( OnPlayerEnterNessieTrigger )
+		trigger.SetLeaveCallback( OnPlayerLeaveNessieTrigger )
+		AddEntityDestroyedCallback( trigger, OnNessieTriggerDestroyed )
+		trigger.SetScriptName( NESSIE_TRIGGER_SCRIPT_NAME )
+
+		array<entity> players
+		file.playersInNessieTrigger[trigger] <- players
+	}
+
+	return nessie
+}
+
+void function Nessie_OnKilled( entity npc, var damageInfo )
+{
+	EmitSoundAtPosition( TEAM_ANY, npc.GetOrigin(), SFX_NESSIE_DEATH, npc )
+
+
+	if ( UseNessieConfetti() )
+	{
+		int fxIndex = GetParticleSystemIndex( VFX_NESSIE_DEATH )
+		StartParticleEffectInWorld( fxIndex, npc.GetOrigin(), <0, 0, 0> )
+	}
+
+	foreach ( entity child in npc.GetChildren() )
+	{
+		if ( child.GetScriptName() == NESSIE_SPIDER_SCRIPT_NAME || child.GetScriptName() == NESSIE_PROWLER_SCRIPT_NAME )
+		{
+			child.Dissolve( ENTITY_DISSOLVE_CORE, <0,0,0>, 500 )
+		}
+	}
+}
+
+void function OnNessieTriggerDestroyed( entity trigger )
+{
+	delete file.playersInNessieTrigger[trigger]
+}
+
+void function OnPlayerEnterNessieTrigger( entity trigger, entity player )
+{
+	if ( !IsValidPlayer( player ) )
+		return
+
+	if ( trigger in file.playersInNessieTrigger )
+	{
+		file.playersInNessieTrigger[trigger].append( player )
+	}
+	else
+	{
+		array<entity> players = [ player ]
+		file.playersInNessieTrigger[trigger] <- players
+	}
+
+	entity npc = GetNPCFromTrigger( trigger )
+	Remote_CallFunction_NonReplay( player, "ServerToClient_OnEnterNessieTrigger", npc)
+}
+
+void function OnPlayerLeaveNessieTrigger( entity trigger, entity player )
+{
+	if ( !IsValidPlayer( player ) )
+		return
+
+	if ( trigger in file.playersInNessieTrigger && file.playersInNessieTrigger[trigger].contains( player ) )
+	{
+		file.playersInNessieTrigger[trigger].fastremovebyvalue( player )
+	}
+
+	entity npc = GetNPCFromTrigger( trigger )
+	Remote_CallFunction_NonReplay( player, "ServerToClient_OnLeaveNessieTrigger", npc )
+}
+
+entity function GetNPCFromTrigger( entity trigger )
+{
+	return trigger.GetParent()
+}
+
+void function SetupDoorCollision( entity spider )
+{
+	entity trigger = CreateEntity( "trigger_cylinder" )
+	trigger.SetCylinderRadius( NESSIE_DOOR_TRIGGE_RADIUS )
+
+	float halfHeight = NESSIE_DOOR_TRIGGE_RADIUS * 0.5
+	trigger.SetAboveHeight( halfHeight )
+	trigger.SetBelowHeight( halfHeight )
+	trigger.SetOrigin( spider.GetOrigin() )
+	trigger.SetAngles( <0, 0, 0> )
+	trigger.kv.triggerFilterPlayer = "all"
+	DispatchSpawn( trigger )
+	trigger.SetParent( spider )
+	trigger.SetEnterCallback( OnEnterDoorTrigger )
+	trigger.SearchForNewTouchingEntity()
+}
+
+void function OnEnterDoorTrigger( entity trigger, entity ent )
+{
+	if ( !IsValid( ent ) )
+		return
+
+	entity door = ent
+
+                     
+                                
+  
+                        
+  
+      
+
+	if ( door.GetScriptName() == "survival_door_plain" && !IsDoorBreachable( ent ) )
+	{
+		OpenDoor( door, null )
+	}
+}
+
+                     
+                                              
+ 
+                                                                                                                                                                   
+ 
+      
+#endif
+
+#if CLIENT
+void function ServerToClient_OnEnterNessieTrigger( entity npc )
+{
+	if ( IsValid( npc ) )
+		thread Nessie_Sound_Thread( npc )
+}
+
+void function ServerToClient_OnLeaveNessieTrigger( entity npc )
+{
+	if ( IsValid( npc ) )
+		Signal( npc, SIG_NESSIE_OUT_OF_RANGE )
+}
+
+
+void function Nessie_Sound_Thread( entity npc )
+{
+	npc.EndSignal( "OnDestroy" )
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( SIG_NESSIE_OUT_OF_RANGE )
+
+	string currSequence = ""
+	int prevState = -1
+	while ( IsValid( npc ) )
+	{
+		if ( npc.GetCurrentSequenceName() != currSequence )
+		{
+			currSequence = npc.GetCurrentSequenceName()
+			int currState = GetCurrentNessieState ( currSequence )
+			if ( currState != prevState )
+			{
+				Signal( npc, SIG_NESSIE_STATE_CHANGED )
+			}
+			switch( currState )
+			{
+				case eNessieState.ATTACK: //MELEE ATTACK
+				EmitSoundOnEntity( npc, SFX_NESSIE_ATTACK_A )
+				break
+
+				case eNessieState.LUNGE: //MELEE ATTACK
+				EmitSoundOnEntity( npc, SFX_NESSIE_ATTACK_C )
+				break
+
+				case eNessieState.ROAR: //ROAR
+				EmitSoundOnEntity( npc, SFX_NESSIE_ATTACK_B )
+				break
+
+				case eNessieState.RANGED_ATTACK: //SPIT ATTACK
+				EmitSoundOnEntity( npc, SFX_NESSIE_ATTACK_B )
+				break
+
+				//MOVEMENT
+
+				case eNessieState.RUN:
+					thread NessieMovementSound_Thread( npc, SFX_NESSIE_RUN_LOOP )
+					thread GenericNessieVocals_Thread( npc )
+					break
+				case eNessieState.WALK:
+					thread NessieMovementSound_Thread( npc, SFX_NESSIE_WALK_LOOP )
+					thread GenericNessieVocals_Thread( npc )
+					break
+
+				case eNessieState.IDLE: //Standing still
+					thread GenericNessieVocals_Thread( npc )
+				break;
+
+				case eNessieState.SKIP: //Playing audio from a different event, don't play anything
+					break;
+
+				default: //Catch all squeak for prowler movements
+				EmitSoundOnEntity( npc, SFX_NESSIE_DEFAULT_SQUEAK )
+				break;
+			}
+			prevState = currState
+		}
+		WaitFrame()
+	}
+}
+
+int function GetCurrentNessieState( string sequence )
+{
+	if(sequence.find("spdr_idle") >= 0)
+		return eNessieState.IDLE
+
+	if(sequence.find("spdr_traverse") >= 0)
+		return eNessieState.RUN
+
+	if ( sequence.find( "attack" ) >= 0 )
+	{
+		//Prevent double play on lunge audio
+		if ( sequence.find( "success" ) >= 0)
+			return eNessieState.SKIP
+		if ( sequence.find( "failure" ) >= 0)
+			return eNessieState.SKIP
+
+		if ( sequence.find( "lunge" ) >= 0 )
+			return eNessieState.LUNGE
+		if ( sequence.find( "idle" ) >= 0)
+			return eNessieState.ROAR
+
+		return eNessieState.ATTACK
+	}
+
+	if ( sequence.find( "ranged_spit" ) >= 0 )
+		return eNessieState.RANGED_ATTACK
+
+	if ( sequence.find( "melee" ) >= 0 )
+		return eNessieState.ATTACK
+
+	if ( sequence.find( "taunt" ) >= 0 )
+		return eNessieState.ROAR
+
+	if ( sequence.find( "threat" ) >= 0 )
+		return eNessieState.ROAR
+
+	if ( sequence.find( "run" ) >= 0)
+		return eNessieState.RUN
+
+	if ( sequence.find( "sprint" ) >= 0)
+		return eNessieState.RUN
+
+	if ( sequence.find( "walk" ) >= 0)
+		return eNessieState.WALK
+
+	if ( sequence.find( "trot" ) >= 0)
+		return eNessieState.WALK
+
+	return -1
+}
+
+void function NessieMovementSound_Thread( entity npc, string loop )
+{
+	npc.EndSignal( "OnDestroy" )
+	npc.EndSignal( "OnDeath" )
+	EndSignal( npc, SIG_NESSIE_OUT_OF_RANGE )
+	EndSignal( npc, SIG_NESSIE_STATE_CHANGED )
+	StopSoundOnEntityByName( npc, SFX_NESSIE_WALK_LOOP )
+	StopSoundOnEntityByName( npc, SFX_NESSIE_RUN_LOOP )
+
+	OnThreadEnd(
+		function() : ( npc )
+		{
+			StopSoundOnEntityByName( npc, SFX_NESSIE_WALK_LOOP )
+			StopSoundOnEntityByName( npc, SFX_NESSIE_RUN_LOOP )
+		}
+	)
+
+	EmitSoundOnEntity( npc, loop )
+	while( true )
+	{
+		WaitFrame()
+	}
+}
+
+void function GenericNessieVocals_Thread( entity npc )
+{
+	npc.EndSignal( "OnDestroy" )
+	npc.EndSignal( "OnDeath" )
+	EndSignal( npc, SIG_NESSIE_OUT_OF_RANGE )
+	EndSignal( npc, SIG_NESSIE_STATE_CHANGED )
+
+	while( true )
+	{
+		EmitSoundOnEntity( npc, SFX_NESSIE_DEFAULT_SQUEAK )
+		wait RandomIntRange( 1, 3 )
+	}
+}
+#endif
+
+#if SERVER
+entity function Nessie_SpawnNPC( int team, entity owner = null, vector origin = <0, 0, 0>, vector angles = <0, 0, 0> )
+{
+	entity nessie = CreateNPCFromAISettings( "npc_nessie", team, origin, angles )
+	if ( IsValid( owner ) )
+		nessie.SetBossPlayer( owner )
+
+	nessie.kv.spawnflags = (SF_NPC_NO_PLAYER_PUSHAWAY)
+	//These are settings originally in ol' nessie
+	//Better to do it here so we can curate any player spawned npc nessie
+	nessie.e.noOwnerFriendlyFire = true
+	//nessie.DisableTauntSchedule()
+	nessie.SetChanceToHitEnabled( true )
+	SetupDoorCollision( nessie ) //Hack door collision since we are no longer curating where spiders go
+
+	DispatchSpawn( nessie )
+
+	return nessie
+}
+#endif 

@@ -104,7 +104,8 @@ const asset FX_HEAL_HEALED_FP = $"P_heal_loop_screen"
 
 const float LOOTBIN_SPAWN_TIME = 0.65
 
-// LEGEND_REALM and SHADOW_REALM are engine-native constants
+global const int LEGEND_REALM = 1 // Used by Evac Ship and Shadow Form Logic enough that it should be defined outside of one or the other
+global const int SHADOW_REALM = 2 // Used by Evac Ship and Shadow Form Logic enough that it should be defined outside of one or the other
 #endif // SERVER
 
 #if CLIENT || SERVER

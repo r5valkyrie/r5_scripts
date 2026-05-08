@@ -1,0 +1,1953 @@
+
+#if SERVER && DEV
+global function DEV_ResourceToggleDrawGroups
+global function DEV_ResourceToggleDrawSpawns
+global function DEV_ResourceToggleDrawProwlerSpawns
+global function DEV_ResourceToggleDrawPOIs
+global function DEV_ResourceToggleDrawTextDetails
+global function DEV_PrintObjectiveEntsReport
+global function DEV_PrintGroup
+global function DEV_PrintCollection
+#endif // SERVER && DEV
+
+global function ObjectiveResourceSystem_Init
+
+#if SERVER
+global function ORS_AddDoorToResourceSystem
+
+// Queries:
+global function ORS_GetGlobalGroup
+global function ORS_GetGroupForMapZone
+global function ORS_GetGroupForResource
+global function ORS_GetGroupsWithMatchingKeywords
+global function ORS_Find_
+global function ORS_FindBasic
+
+// Marking:
+global function ORS_MarkInUse
+global function ORS_Free
+global function ORS_IsInUse
+global function ORS_GetNumberOfTimesUsed
+
+//
+global function ORS_AddResourceToCollection
+global function ORS_RemoveResourceFromCollection
+
+//
+global function ORS_GetTopParentZoneIdForResource
+global function ORS_GetLongDesc
+
+
+global function ORS_GetInfantrySpawnsFromGroups
+global function ORS_GetOutdoorInfantrySpawnsFromGroups
+global function ORS_GetProwlerSpawnsFromGroups
+global function ORS_GetDroppodSpawnsFromGroups
+global function ORS_GetDoorResourcesFromGroups
+global function ORS_GetCandyBoxSpawnsFromGroups
+global function ORS_GetPOIResourcesFromGroups
+global function ORS_GetWallButtonResourcesFromGroups
+
+
+global function ORS_GetResourceGroupsMatchingKeywordArrays
+global function ORS_GetPOIByKeyword
+global function ORS_GetPOIsInRadiusByKeywords
+global function ORS_GetLootSpawnsInRadiusByKeywords
+
+global function ORS_GetProwlerSpawnsInRadius
+
+global function ORS_GetLinkedResources
+global function ORS_GetLinkedEntsArray
+
+global function ORS_IsValidPOI
+//
+global function AddCallback_ResourceSystemIsReady
+
+#endif // SERVER
+
+
+#if SERVER
+
+global typedef ResourceSystemIsReadyCallbackType void functionref()
+
+global string RES_KEYWORD_INDOORS = "indoor_spawn"
+global string RES_KEYWORD_ROOM = "room"
+global string RES_KEYWORD_BUILDING = "building"
+
+global enum eSearchFlags
+{
+	NONE = 0
+	RETURN_INUSE_RESOURCES =		(1 << 0)
+	TRAVERSE_INUSE_GROUPS =			(1 << 1)
+	MATCH_ALL_INCLUDE_KEYWORDS =	(1 << 2)
+}
+
+global enum eORType
+{
+	GROUP,
+	//
+	POI,
+	LOOT_SPAWN,
+	//
+	INFANTRY_SPAWN,
+	PROWLER_SPAWN,
+	DROPPOD_SPAWN,
+	SNIPER_NEST,
+	//
+	CANDYBOX,
+	//
+	WALLBUTTON_SPAWNER,
+	//
+	PATROL_ROUTE,
+	DOOR,
+
+	_count
+}
+
+global struct ORTokenCollection
+{
+	array<int>[eORType._count] forType
+}
+
+global const int NULL_TOKEN = 0
+
+global struct ResourceCore
+{
+	int orType = -1		// eORType
+	int internalIndexForType = -1
+
+	int parentGroupIndex = -1
+
+	vector spawnOrigin
+	vector spawnAngles
+
+	int linkedResourcesIndex = 0
+	array<entity> linkedEnts
+
+	/////
+	int groupIndex = -1		// ActionGroup
+	array<string> keywords	// ""
+
+	int usageCurrentCount = 0
+	int usageLifetimeCount = 0
+
+	struct
+	{
+		array<string> childGUIDs
+	} _setup
+}
+
+global struct PatrolRouteNode
+{
+	vector nodeOrigin
+	array<string> childGUIDs
+	array<PatrolRouteNode> parentLinks
+	array<PatrolRouteNode> childLinks
+	int visits
+	float weight
+	float assault_tolerance
+}
+global struct PatrolRoute
+{
+	ResourceCore           core
+	array<PatrolRouteNode> startNodeArray
+}
+
+global struct ResourceGroup
+{
+	ResourceCore core
+
+	array<entity> otherEnts
+
+	//
+	struct
+	{
+		float gatherRadius = 0.0
+	} _setup
+}
+
+global struct PointOfInterest
+{
+	ResourceCore core
+	float scriptRadius
+	float scriptHeight
+	table<string, string> kvs
+	entity trigger
+}
+
+global struct InfantrySpawn
+{
+	ResourceCore core
+}
+
+global struct DroppodSpawn
+{
+	ResourceCore core
+}
+
+global struct LootSpawn
+{
+	ResourceCore core
+	string lootRef
+	int lootLevel
+	int minPlayers
+	bool spawned
+}
+
+global struct ProwlerSpawn
+{
+	ResourceCore core
+}
+
+global struct SniperNest
+{
+	ResourceCore core
+}
+
+global struct CandyBox
+{
+	ResourceCore core
+}
+
+global struct WallButtonSpawner
+{
+	ResourceCore core
+	entity panel
+}
+
+global struct ResourceDoor
+{
+	ResourceCore core
+
+	array<entity> doorEnts
+}
+
+global struct ResourceCollection
+{
+	array<ResourceGroup>		groups					// eORType.GROUP
+	array<PointOfInterest>		pois					// eORType.POI
+	array<LootSpawn>			lootSpawns				// eORType.LOOT_SPAWN
+	array<InfantrySpawn>		infantrySpawns			// eORType.INFANTRY_SPAWN
+	array<ProwlerSpawn>			prowlerSpawns			// eORType.PROWLER_SPAWN
+	array<DroppodSpawn>			droppodSpawns			// eORType.DROPPOD_SPAWN
+	array<SniperNest>			sniperNests				// eORType.SNIPER_NEST
+	array<CandyBox>				candyBoxes				// eORType.CANDYBOX
+	array<WallButtonSpawner>	wallButtonSpawners		// eORType.WALLBUTTON_SPAWNER
+	array<PatrolRoute>			patrolRoutes			// eORType.PATROL_ROUTE
+	array<ResourceDoor>			doors					// eORType.DOOR
+
+	array<ResourceCore>[eORType._count] _listByType
+	int _total
+}
+ResourceCollection s_all
+
+array<ResourceCollection > s_linkedResourceCollections
+
+
+global const string RESOURCE_INFOENT_BASECLASS = "info_target"
+//
+
+
+#endif // SERVER
+
+
+void function ObjectiveResourceSystem_Init()
+{
+	ORSPrecache_WallButtons()
+
+#if SERVER
+	//
+	{
+		ResourceCollection empty
+		s_linkedResourceCollections.append( empty )
+	}
+
+	FlagInit( "ResourceSystemReady" )
+	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
+	AddCallback_OnEntityLinkingFinished( OnEntityLinkingFinished )
+	Groups_Init()
+
+	AddCallback_OnScriptOnlyEntPreSpawn( OnScriptOnlyEntPreSpawn )
+
+	AddCallback_GameStateEnter( eGameState.Playing, OnGameStateEnterPlaying )
+#endif // SERVER
+}
+
+#if SERVER
+
+void function OnScriptOnlyEntPreSpawn( table<string, string> kvs )
+{
+	if ( KVGet_ClassName( kvs ) != RESOURCE_INFOENT_BASECLASS )
+		return
+
+	string ec = KVGet_EditorClass( kvs )
+	if ( ec.len() == 0 )
+		return
+
+	if ( ec.find("resource_") == -1 )
+		return
+
+	switch ( ec )
+	{
+		case "resource_group":
+		case "resource_group_script_only":
+			SpawnCallback_ResourceGroup( kvs )
+			break
+		case "resource_poi":
+			SpawnCallback_POI( kvs )
+			break
+		case "resource_loot":
+			SpawnCallback_LootSpawner( kvs )
+			break
+		case "resource_infantryspawn":
+		case "resource_infantryspawn_script_only":
+			SpawnCallback_InfantrySpawn( kvs )
+			break
+		case "resource_prowlerspawn":
+			SpawnCallback_ProwlerSpawn( kvs )
+			break
+		case "resource_droppodspawn":
+			SpawnCallback_DroppodSpawn( kvs )
+			break
+		case "resource_snipernest":
+			SpawnCallback_SniperNest( kvs )
+			break
+		case "resource_candybox":
+			SpawnCallback_CandyBox( kvs )
+			break
+		case "resource_wallbutton_spawner":
+			SpawnCallback_WallButtonSpawner( kvs )
+			break
+		case "resource_patrolroute":
+			SpawnCallback_PatrolRoute( kvs )
+			break
+		case "resource_pathnode":
+			SpawnCallback_PathNode( kvs )
+			break
+		case "resource_door":
+		case "resource_door_finder_script_only":
+			SpawnCallback_DoorResource( kvs )
+			break
+
+		// defunct, should be removed or replaced in the map if at all possible, but to avoid error messaging I'm catching them here.
+		case "resource_patrolnode":
+			break
+
+		default:
+			Warning( "%s() - Unhandled type '%s' at " + KVGet_Origin( kvs ), FUNC_NAME(), ec )
+			break
+	}
+}
+
+void function OnGameStateEnterPlaying()
+{
+#if DEV
+	thread DebugFrameThread()
+#endif //DEV
+}
+
+void function AddToRCInternal( ResourceCollection coll, ResourceCore core )
+{
+	coll._listByType[core.orType].append( core )
+	coll._total++
+}
+
+void function AddToRC_Group( ResourceCollection coll, ResourceGroup group )
+{
+	// eORType.GROUP
+	coll.groups.append( group )
+	AddToRCInternal( coll, group.core )
+}
+void function AddToRC_POI( ResourceCollection coll, PointOfInterest res )
+{
+	// eORType.POI
+	coll.pois.append( res )
+	AddToRCInternal( coll, res.core )
+}
+void function AddToRC_LootSpawn( ResourceCollection coll, LootSpawn res )
+{
+	// eORType.LOOT_SPAWN
+	coll.lootSpawns.append( res )
+	AddToRCInternal( coll, res.core )
+}
+void function AddToRC_InfantrySpawn( ResourceCollection coll, InfantrySpawn res )
+{
+	// eORType.INFANTRY_SPAWN
+	coll.infantrySpawns.append( res )
+	AddToRCInternal( coll, res.core )
+}
+void function AddToRC_ProwlerSpawn( ResourceCollection coll, ProwlerSpawn res )
+{
+	// eORType.PROWLER_SPAWN
+	coll.prowlerSpawns.append( res )
+	AddToRCInternal( coll, res.core )
+}
+void function AddToRC_DroppodSpawn( ResourceCollection coll, DroppodSpawn res )
+{
+	// eORType.DROPPOD_SPAWN
+	coll.droppodSpawns.append( res )
+	AddToRCInternal( coll, res.core )
+}
+void function AddToRC_SniperNest( ResourceCollection coll, SniperNest res )
+{
+	// eORType.SNIPER_NEST
+	coll.sniperNests.append( res )
+	AddToRCInternal( coll, res.core )
+}
+void function AddToRC_CandyBox( ResourceCollection coll, CandyBox res )
+{
+	// eORType.CANDYBOX
+	coll.candyBoxes.append( res )
+	AddToRCInternal( coll, res.core )
+}
+void function AddToRC_WallButtonSpawner( ResourceCollection coll, WallButtonSpawner res )
+{
+	// eORType.WALLBUTTON_SPAWNER
+	coll.wallButtonSpawners.append( res )
+	AddToRCInternal( coll, res.core )
+}
+void function AddToRC_PatrolRoute( ResourceCollection coll, PatrolRoute res )
+{
+	// eORType.PATROL_ROUTE
+	coll.patrolRoutes.append( res )
+	AddToRCInternal( coll, res.core )
+}
+void function AddToRC_Door( ResourceCollection coll, ResourceDoor res )
+{
+	// eORType.DOOR
+	coll.doors.append( res )
+	AddToRCInternal( coll, res.core )
+}
+
+//
+ResourceGroup function CastTo_Group( ResourceCore core )
+{
+	Assert( core.orType == eORType.GROUP )
+	return s_all.groups[core.internalIndexForType]
+}
+PointOfInterest function CastTo_POI( ResourceCore core )
+{
+	Assert( core.orType == eORType.POI )
+	return s_all.pois[core.internalIndexForType]
+}
+LootSpawn function CastTo_LootSpawn( ResourceCore core )
+{
+	Assert( core.orType == eORType.LOOT_SPAWN )
+	return s_all.lootSpawns[core.internalIndexForType]
+}
+InfantrySpawn function CastTo_InfantrySpawn( ResourceCore core )
+{
+	Assert( core.orType == eORType.INFANTRY_SPAWN )
+	return s_all.infantrySpawns[core.internalIndexForType]
+}
+ProwlerSpawn function CastTo_ProwlerSpawn( ResourceCore core )
+{
+	Assert( core.orType == eORType.PROWLER_SPAWN )
+	return s_all.prowlerSpawns[core.internalIndexForType]
+}
+DroppodSpawn function CastTo_DroppodSpawn( ResourceCore core )
+{
+	Assert( core.orType == eORType.DROPPOD_SPAWN )
+	return s_all.droppodSpawns[core.internalIndexForType]
+}
+SniperNest function CastTo_SniperNest( ResourceCore core )
+{
+	Assert( core.orType == eORType.SNIPER_NEST )
+	return s_all.sniperNests[core.internalIndexForType]
+}
+CandyBox function CastTo_CandyBox( ResourceCore core )
+{
+	Assert( core.orType == eORType.CANDYBOX )
+	return s_all.candyBoxes[core.internalIndexForType]
+}
+WallButtonSpawner function CastTo_WallButtonSpawner( ResourceCore core )
+{
+	Assert( core.orType == eORType.WALLBUTTON_SPAWNER )
+	return s_all.wallButtonSpawners[core.internalIndexForType]
+}
+PatrolRoute function CastTo_PatrolRoute( ResourceCore core )
+{
+	Assert( core.orType == eORType.PATROL_ROUTE )
+	return s_all.patrolRoutes[core.internalIndexForType]
+}
+ResourceDoor function CastTo_Door( ResourceCore core )
+{
+	Assert( core.orType == eORType.DOOR )
+	return s_all.doors[core.internalIndexForType]
+}
+
+//
+void function ORS_AddResourceToCollection( ResourceCollection coll, ResourceCore core )
+{
+	Assert( coll != s_all )
+	switch( core.orType )
+	{
+		case eORType.GROUP:
+			AddToRC_Group( coll, CastTo_Group( core ) )
+			break
+		case eORType.POI:
+			AddToRC_POI( coll, CastTo_POI( core ) )
+			break
+		case eORType.LOOT_SPAWN:
+			AddToRC_LootSpawn( coll, CastTo_LootSpawn( core ) )
+			break
+		case eORType.INFANTRY_SPAWN:
+			AddToRC_InfantrySpawn( coll, CastTo_InfantrySpawn( core ) )
+			break
+		case eORType.PROWLER_SPAWN:
+			AddToRC_ProwlerSpawn( coll, CastTo_ProwlerSpawn( core ) )
+			break
+		case eORType.DROPPOD_SPAWN:
+			AddToRC_DroppodSpawn( coll, CastTo_DroppodSpawn( core ) )
+			break
+		case eORType.SNIPER_NEST:
+			AddToRC_SniperNest( coll, CastTo_SniperNest( core ) )
+			break
+		case eORType.CANDYBOX:
+			AddToRC_CandyBox( coll, CastTo_CandyBox( core ) )
+			break
+		case eORType.WALLBUTTON_SPAWNER:
+			AddToRC_WallButtonSpawner( coll, CastTo_WallButtonSpawner( core ) )
+			break
+		case eORType.PATROL_ROUTE:
+			AddToRC_PatrolRoute( coll, CastTo_PatrolRoute( core ) )
+			break
+		case eORType.DOOR:
+			AddToRC_Door( coll, CastTo_Door( core ) )
+			break
+		default:
+			Assert( false, "Unhandled orType: " + core.orType )
+	}
+}
+
+void function ORS_RemoveResourceFromCollection( ResourceCollection coll, ResourceCore core )
+{
+	Assert( coll != s_all )
+	switch( core.orType )
+	{
+		case eORType.GROUP:
+			coll.groups.removebyvalue( CastTo_Group( core ) )
+			break
+		case eORType.POI:
+			coll.pois.removebyvalue( CastTo_POI( core ) )
+			break
+		case eORType.LOOT_SPAWN:
+			coll.lootSpawns.removebyvalue( CastTo_LootSpawn( core ) )
+			break
+		case eORType.INFANTRY_SPAWN:
+			coll.infantrySpawns.removebyvalue( CastTo_InfantrySpawn( core ) )
+			break
+		case eORType.PROWLER_SPAWN:
+			coll.prowlerSpawns.removebyvalue( CastTo_ProwlerSpawn( core ) )
+			break
+		case eORType.DROPPOD_SPAWN:
+			coll.droppodSpawns.removebyvalue( CastTo_DroppodSpawn( core ) )
+			break
+		case eORType.SNIPER_NEST:
+			coll.sniperNests.removebyvalue( CastTo_SniperNest( core ) )
+			break
+		case eORType.CANDYBOX:
+			coll.candyBoxes.removebyvalue( CastTo_CandyBox( core ) )
+			break
+		case eORType.WALLBUTTON_SPAWNER:
+			coll.wallButtonSpawners.removebyvalue( CastTo_WallButtonSpawner( core ) )
+			break
+		case eORType.PATROL_ROUTE:
+			coll.patrolRoutes.removebyvalue( CastTo_PatrolRoute( core ) )
+			break
+		case eORType.DOOR:
+			coll.doors.removebyvalue( CastTo_Door( core ) )
+			break
+		default:
+			Assert( false, "Unhandled orType: " + core.orType )
+	}
+
+	coll._total--
+	coll._listByType[core.orType].removebyvalue( core )
+}
+
+string function GetTypeName( int orType )
+{
+	foreach( string key, int val in eORType )
+	{
+		if ( val == orType )
+			return key
+	}
+
+	Assert( false, ("Unhandled type #" + orType) )
+	return ""
+}
+
+/////////////
+
+table<string, ResourceCore> s_setup_mapGUIDsToCores
+table<string, PatrolRouteNode> s_setup_mapGUIDsToPathNodes
+
+bool s_cleanupHappened = false
+void function CleanUpSetupEnts()
+{
+	Assert( !s_cleanupHappened )
+	s_setup_mapGUIDsToCores.clear()
+	s_setup_mapGUIDsToPathNodes.clear()
+	s_cleanupHappened = true
+}
+
+void function OnEntityLinkingFinished()
+{
+	FinalizeGroupGUIDs()
+	FinalizePatrolPaths()
+}
+
+void function EntitiesDidLoad()
+{
+	Groups_Finalize()
+
+	// Door fixups:
+	{
+		array<entity> doorEnts = GetAllDoorEnts()
+		foreach( doorRes in s_all.doors )
+		{
+			doorRes.doorEnts = GetEntsFromArrayInRange( doorRes.core.spawnOrigin, 128.0, doorEnts )
+			if ( doorRes.doorEnts.len() == 0 )
+			{
+				//double check that we are maybe near one of the giant script doors which, if in it's open state, may be further away than 128 units
+				if ( GetClosestScriptDoorToPos( doorRes.core.spawnOrigin, 256.0 ) == null )
+				{
+					// this warning spams when we delete doors that are outside the circle.
+					//Warning( "%s() - Door resource at %s isn't near any existing doors.", FUNC_NAME(), string( doorRes.core.spawnOrigin ) )
+				}
+			}
+		}
+	}
+
+	CleanUpSetupEnts()
+}
+
+void function InitCore( ResourceCore core, int orType, int internalIndexForType, table<string, string> kvs )
+{
+	core.orType = orType
+	core.internalIndexForType = internalIndexForType
+
+	//
+	core.spawnOrigin = KVGet_Origin( kvs )
+	core.spawnAngles = KVGet_Angles( kvs )
+	core.keywords = GetKeywordsFromKV( kvs )
+
+	foreach( key, val in kvs )
+	{
+		if ( key.find( "link_to_guid_" ) == 0 )
+			core._setup.childGUIDs.append( val )
+	}
+
+	Assert( !s_cleanupHappened )
+	string guid = KVGet_ValString( kvs, "link_guid" )
+	if ( guid.len() > 0 )
+		s_setup_mapGUIDsToCores[guid] <- core
+}
+
+array<string> function GetKeywordsFromRawString( string rawStr )
+{
+	array<string> result = split( rawStr, WHITESPACE_CHARACTERS + ".,;:?" )
+	for ( int idx = 0; idx < result.len(); ++idx )
+		result[idx] = result[idx].tolower()
+
+	return result
+}
+
+array<string> function GetKeywordsFromKV( table<string, string> kvs )
+{
+	string keywordsValue = KVGet_ValString( kvs, "resource_tags" )
+	return GetKeywordsFromRawString( keywordsValue )
+}
+
+//////////////////////////////////
+
+void function SpawnCallback_POI( table<string, string> kvs )
+{
+	PointOfInterest newRes
+	//
+	InitCore( newRes.core, eORType.POI, s_all.pois.len(), kvs )
+
+	//
+	newRes.scriptRadius = KVGet_ValFloat( kvs, "script_radius" )
+	newRes.scriptHeight = KVGet_ValFloat( kvs, "script_height" )
+
+	// newRes.kvs:
+	foreach( string key, string val in kvs )
+	{
+		if ( key.find( "link_to_guid_" ) == 0 )
+			continue
+
+		switch( key )
+		{
+			case "link_guid":
+			case "save_model_kv":
+			case "save_radius_kv":
+			case "save_height_kv":
+			case "script_radius":
+			case "script_height":
+			case "editorclass":
+			case "inherit":
+			case "scale":
+			case "origin":
+			case "angles":
+			case "classname":
+				// don't keep
+				break
+			case "model":
+				if ( val != "mdl/dev/editor_ref.rmdl" )
+					newRes.kvs[key] <- val
+				break
+			default:
+				newRes.kvs[key] <- val
+		}
+	}
+
+	AddToRC_POI( s_all, newRes )
+}
+
+void function SpawnCallback_InfantrySpawn( table<string, string> kvs )
+{
+	InfantrySpawn newRes
+
+	if ( !IsInfantrySpawnValid( KVGet_Origin( kvs ) ) )
+		return
+
+	//
+	InitCore( newRes.core, eORType.INFANTRY_SPAWN, s_all.infantrySpawns.len(), kvs )
+	AddToRC_InfantrySpawn( s_all, newRes )
+
+	if ( KVGet_ValString( kvs, RES_KEYWORD_INDOORS ) == "1" )
+		newRes.core.keywords.append( RES_KEYWORD_INDOORS )
+}
+
+
+void function SpawnCallback_LootSpawner( table<string, string> kvs )
+{
+	LootSpawn newRes
+
+	newRes.lootLevel = KVGet_ValInt( kvs, "loot_level" )
+	newRes.minPlayers = KVGet_ValInt( kvs, "min_players" ) //will not spawn this loot unless min_players is met
+	if ( newRes.minPlayers == 0 )
+		newRes.minPlayers = 1
+	asset modelName = KVGet_Model( kvs )
+	Assert( modelName != $"", "resource_loot has no loot model defined at " + KVGet_Origin( kvs ) )
+	newRes.lootRef = GetLootRefFromModelName( modelName, newRes.lootLevel )
+
+	if ( newRes.lootRef == "" )
+	{
+		Warning( "%s() - resource_loot has unhandled loot model asset at %s: %s", FUNC_NAME(), VectorToStr( KVGet_Origin( kvs ) ), string( modelName ) )
+		return
+	}
+
+	InitCore( newRes.core, eORType.LOOT_SPAWN, s_all.lootSpawns.len(), kvs )
+	AddToRC_LootSpawn( s_all, newRes )
+}
+
+void function SpawnCallback_ProwlerSpawn( table<string, string> kvs )
+{
+	ProwlerSpawn newRes
+
+	if ( !IsProwlerSpawnValid( KVGet_Origin( kvs ) ) )
+		return
+
+	//
+	InitCore( newRes.core, eORType.PROWLER_SPAWN, s_all.prowlerSpawns.len(), kvs )
+	AddToRC_ProwlerSpawn( s_all, newRes )
+
+	if ( KVGet_ValString( kvs, RES_KEYWORD_INDOORS ) == "1" )
+		newRes.core.keywords.append( RES_KEYWORD_INDOORS )
+}
+
+void function SpawnCallback_DroppodSpawn( table<string, string> kvs )
+{
+	DroppodSpawn newRes
+
+	//
+	InitCore( newRes.core, eORType.DROPPOD_SPAWN, s_all.droppodSpawns.len(), kvs )
+	AddToRC_DroppodSpawn( s_all, newRes )
+}
+
+void function SpawnCallback_SniperNest( table<string, string> kvs )
+{
+	SniperNest newRes
+	//
+	InitCore( newRes.core, eORType.SNIPER_NEST, s_all.sniperNests.len(), kvs )
+	AddToRC_SniperNest( s_all, newRes )
+}
+
+void function SpawnCallback_CandyBox( table<string, string> kvs )
+{
+	CandyBox newRes
+	//
+	InitCore( newRes.core, eORType.CANDYBOX, s_all.candyBoxes.len(), kvs )
+	AddToRC_CandyBox( s_all, newRes )
+}
+
+void function SpawnCallback_WallButtonSpawner( table<string, string> kvs )
+{
+	WallButtonSpawner newRes
+	//
+	InitCore( newRes.core, eORType.WALLBUTTON_SPAWNER, s_all.wallButtonSpawners.len(), kvs )
+	AddToRC_WallButtonSpawner( s_all, newRes )
+}
+
+///
+void function SpawnCallback_PatrolRoute( table<string, string> kvs )
+{
+	PatrolRoute newRes
+	//
+	InitCore( newRes.core, eORType.PATROL_ROUTE, s_all.patrolRoutes.len(), kvs )
+	AddToRC_PatrolRoute( s_all, newRes )
+}
+
+void function SpawnCallback_PathNode( table<string, string> kvs )
+{
+	PatrolRouteNode node
+	node.nodeOrigin = KVGet_Origin( kvs )
+	node.weight = KVGet_ValFloat( kvs, "weight", 1.0 )
+	node.assault_tolerance = KVGet_ValFloat( kvs, "script_assault_tolerance", 0 )
+
+	foreach( key, val in kvs )
+	{
+		if ( key.find( "link_to_guid_" ) == 0 )
+			node.childGUIDs.append( val )
+	}
+
+	Assert( !s_cleanupHappened )
+	string guid = KVGet_ValString( kvs, "link_guid" )
+	if ( guid.len() > 0 )
+		s_setup_mapGUIDsToPathNodes[guid] <- node
+}
+
+void function SpawnCallback_DoorResource( table<string, string> kvs )
+{
+	ResourceDoor newRes
+	//
+	InitCore( newRes.core, eORType.DOOR, s_all.doors.len(), kvs )
+	AddToRC_Door( s_all, newRes )
+}
+
+void function ORS_AddDoorToResourceSystem( entity spawnEnt )
+{
+	// Unused
+}
+
+/////////////////////////////////////////////////
+
+table<ResourceGroup, ResourceCollection> s_mapGroupsToChildren
+table<int, ResourceGroup> s_mapZonesToGroups
+table<ResourceGroup, int> s_mapGroupsToZones
+ResourceGroup s_globalGroup
+bool s_globalGroupIsInitialized = false
+
+void function Groups_Init()
+{
+	InitNewGroup( s_globalGroup, {} )
+	Assert( s_globalGroup.core.internalIndexForType == 0 )
+
+	// Pointing to itself as the parent:
+	s_globalGroup.core.parentGroupIndex = 0
+	s_globalGroup.core.keywords.append( "global_group" )
+
+	s_globalGroupIsInitialized = true
+}
+
+void function Groups_Finalize()
+{
+	MapZones_PerZoneCallback( CreateGroupForMapZone )
+	FinalizeOrphanedGroups()
+
+#if DEV
+	SanityCheckGroups()
+#endif // DEV
+
+	//finalize loot_resources
+	FinalizeLootResources()
+	FlagSet( "ResourceSystemReady" )
+	foreach( func in s_resourceSystemIsReadyCallbacks )
+		func()
+}
+
+array<ResourceSystemIsReadyCallbackType> s_resourceSystemIsReadyCallbacks
+void function AddCallback_ResourceSystemIsReady( ResourceSystemIsReadyCallbackType func )
+{
+	s_resourceSystemIsReadyCallbacks.append( func )
+}
+
+#if DEV
+void function SanityCheckGroups()
+{
+	foreach ( ResourceGroup group in s_all.groups )
+	{
+		Assert( group.core.parentGroupIndex != -1 )
+	}
+}
+#endif // DEV
+
+ResourceGroup function ORS_GetGlobalGroup()
+{
+	Assert( s_globalGroupIsInitialized )
+	return s_globalGroup
+}
+
+
+void function CreateGroupForMapZone( int zoneId )
+{
+	ResourceGroup newGroup = CreateNewGroup( {} )
+
+	// Zone-specific stuff:
+	s_mapZonesToGroups[zoneId] <- newGroup
+	s_mapGroupsToZones[newGroup] <- zoneId
+	AssignResourceToGroup( newGroup.core, s_globalGroup )
+
+	entity trigger = MapZones_GetTriggerForZone( zoneId )
+	newGroup.core.spawnOrigin = trigger.GetOrigin()
+	newGroup.core.keywords.append( MapZones_GetTriggerNameForZone( zoneId ) )
+}
+
+ResourceGroup function ORS_GetGroupForMapZone( int zoneId )
+{
+	return s_mapZonesToGroups[zoneId]
+}
+int function GetZoneIdForGroup( ResourceGroup group )
+{
+	return s_mapGroupsToZones[group]
+}
+bool function GroupIsAMapZoneGroup( ResourceGroup group )
+{
+	return (group in s_mapGroupsToZones)
+}
+
+void function InitNewGroup( ResourceGroup group, table<string, string> kvs )
+{
+	InitCore( group.core, eORType.GROUP, s_all.groups.len(), kvs )
+	AddToRC_Group( s_all, group )
+
+	const string GATHER_RADIUS_KEYNAME = "subgroup_radius"
+	group._setup.gatherRadius = KVGet_ValFloat( kvs, GATHER_RADIUS_KEYNAME )
+
+	ResourceCollection children
+	s_mapGroupsToChildren[group] <- children
+}
+
+ResourceGroup function CreateNewGroup( table<string, string> kvs )
+{
+	ResourceGroup newRes
+	InitNewGroup( newRes, kvs )
+	return newRes
+}
+
+void function SpawnCallback_ResourceGroup( table<string, string> kvs )
+{
+	CreateNewGroup( kvs )
+}
+
+void function AssignResourceToGroup( ResourceCore core, ResourceGroup group )
+{
+	Assert( core.parentGroupIndex == -1, "Unable to AssignResourceToGroup for resource at " + core.spawnOrigin + ". It may already belong to an existing group." )
+	core.parentGroupIndex = group.core.internalIndexForType
+	ORS_AddResourceToCollection( GetChildrenForGroup( group ), core )
+}
+
+ResourceCollection function GetChildrenForGroup( ResourceGroup group )
+{
+	return s_mapGroupsToChildren[group]
+}
+
+void function FinalizeGroupGUIDs()
+{
+	foreach( int index, ResourceGroup group in s_all.groups )
+	{
+		foreach ( string guid in group.core._setup.childGUIDs )
+		{
+			if ( guid in s_setup_mapGUIDsToCores )
+			{
+				ResourceCore core = s_setup_mapGUIDsToCores[guid]
+				AssignResourceToGroup( core, group )
+			}
+			else
+			{
+				entity ent = GetEntityForGUID( guid )
+				if ( IsValid( ent ) )
+					group.otherEnts.append( ent )
+			}
+		}
+	}
+
+	foreach ( int resType, array<ResourceCore> typeList in s_all._listByType )
+	{
+		foreach( ResourceCore core in typeList )
+		{
+			ResourceCollection newCol
+			foreach ( string guid in core._setup.childGUIDs )
+			{
+				if ( guid in s_setup_mapGUIDsToCores )
+				{
+					ResourceCore childCore = s_setup_mapGUIDsToCores[guid]
+					ORS_AddResourceToCollection( newCol, childCore )
+				}
+				if ( guid in s_setup_mapGUIDsToPathNodes )
+				{
+					PatrolRouteNode node = s_setup_mapGUIDsToPathNodes[guid]
+					FinalizePatrolRoute( core, node )
+				}
+				else
+				{
+					entity ent = GetEntityForGUID( guid )
+					if ( IsValid( ent ) )
+						core.linkedEnts.append( ent )
+				}
+			}
+
+			if ( newCol._total > 0 )
+			{
+				core.linkedResourcesIndex = s_linkedResourceCollections.len()
+				s_linkedResourceCollections.append( newCol )
+			}
+
+			core._setup.childGUIDs.clear()
+		}
+	}
+}
+
+void function FinalizeLootResources()
+{
+	array<LootSpawn> lootSpawnresources = ORS_Find_( ORS_GetGlobalGroup(), eSearchFlags.NONE, [ eORType.LOOT_SPAWN ], [], [] ).lootSpawns
+
+	foreach( lootSpawn in lootSpawnresources)
+	{
+
+		if ( lootSpawn.lootRef.find( "attachment" ) >= 0 )
+		{
+			/////////////////////////////////////
+			// weapon attachments - special case
+			/////////////////////////////////////
+			// (in levelEd, they will be targeting the intended weapon to be used with)
+
+			array<LootSpawn> targetedLoot = ORS_GetLinkedResources( lootSpawn.core ).lootSpawns
+			Assert( targetedLoot.len() == 1, "resource_loot attachment at " + lootSpawn.core.spawnOrigin + " isn't targeting a weapon to determine what attachment to spawn" )
+			targetedLoot[0].spawned = true //don't spawn the targeted weapon
+			string weaponRef = targetedLoot[0].lootRef
+			int attachmentType = GetWeaponAttachmentTypeFromString( lootSpawn.lootRef )
+			lootSpawn.lootRef = GetAttachmentLootRefForWeapon( attachmentType, weaponRef, lootSpawn.lootLevel )
+
+			//if no attachment of that style or level, spawn weapon ammo as a fallback
+			if ( lootSpawn.lootRef == "" )
+				lootSpawn.lootRef = GetWeaponAmmoType( weaponRef )
+
+			//if no ammo type (gold weapon, etc) spawn a shield cell
+			if ( lootSpawn.lootRef == "" )
+				lootSpawn.lootRef = "health_pickup_combo_small"
+		}
+	}
+}
+
+void function FinalizeOrphanedGroups()
+{
+	array<ResourceGroup> groupsWithGatherRadius
+	foreach( ResourceGroup group in s_all.groups )
+	{
+		if ( group._setup.gatherRadius > 0.001 )
+			groupsWithGatherRadius.append( group )
+	}
+
+	// Smallest to largest:
+	groupsWithGatherRadius.sort( int function( ResourceGroup aa, ResourceGroup bb )
+	{
+		if ( aa._setup.gatherRadius < bb._setup.gatherRadius )
+			return -1
+		if ( aa._setup.gatherRadius > bb._setup.gatherRadius )
+			return 1
+		return 0
+	})
+
+	// For groups w/ GATHER_RADIUS_KEYNAME, grab any orphaned groups in range.
+	// (Sad hack for not having deep-linking into instances feature, yet.)
+	foreach( ResourceGroup gatherGroup in groupsWithGatherRadius )
+	{
+		int findCount = 0
+
+		float radius = gatherGroup._setup.gatherRadius
+		float radiusSq = (radius * radius)
+		foreach( ResourceGroup group in s_all.groups )
+		{
+			if ( group.core.parentGroupIndex >= 0 )
+				continue
+			if ( group == gatherGroup )
+				continue
+			float distSq = DistanceSqr( group.core.spawnOrigin, gatherGroup.core.spawnOrigin )
+			if ( distSq > radiusSq )
+				continue
+
+			++findCount
+			AssignResourceToGroup( group.core, gatherGroup )
+		}
+
+		if ( findCount == 0 )
+			Warning( "%s() - Found no orphaned subgroups in given %.2f radius for resource group: %s", FUNC_NAME(), radius, ORS_GetLongDesc( gatherGroup.core ) )
+		//printf( "%s() - Found %d orphans in radius %.2f for: %s", FUNC_NAME(), findCount, radius, ORS_GetLongDesc( gatherGroup.core ) )
+	}
+
+	// Assign orphaned resources to groups:
+	for ( int orType = 0; orType < eORType._count; ++orType )
+	{
+		foreach ( ResourceCore core in s_all._listByType[orType] )
+		{
+			if ( core.parentGroupIndex >= 0 )
+				continue
+
+			int zoneId = MapZones_GetZoneForOrigin( core.spawnOrigin )
+			ResourceGroup group = ((zoneId == -1) ? s_globalGroup : s_mapZonesToGroups[zoneId])
+			AssignResourceToGroup( core, group )
+		}
+	}
+}
+
+void function FinalizePatrolRoute( ResourceCore resCore, PatrolRouteNode pathNode  )
+{
+	PatrolRoute patrolRoute
+	foreach( PatrolRoute res in s_all.patrolRoutes )
+	{
+		if ( res.core == resCore )
+			patrolRoute = res
+	}
+
+	foreach( string guid in resCore._setup.childGUIDs )
+	{
+		if ( guid in s_setup_mapGUIDsToPathNodes )
+			patrolRoute.startNodeArray.append( s_setup_mapGUIDsToPathNodes[guid] )
+	}
+}
+
+void function FinalizePatrolPaths()
+{
+	// parse all path nodes and store the connections for later use.
+	foreach( PatrolRouteNode node in s_setup_mapGUIDsToPathNodes )
+	{
+		foreach( string guid in node.childGUIDs )
+		{
+			if ( !( guid in s_setup_mapGUIDsToPathNodes ) )
+			{
+				//s_setup_mapGUIDsToCores we could store link to cores here as well.
+				continue
+			}
+			PatrolRouteNode childNode = s_setup_mapGUIDsToPathNodes[guid]
+
+			childNode.parentLinks.append( node )
+			node.childLinks.append( childNode )
+		}
+	}
+}
+
+bool function IsInfantrySpawnValid( vector origin )
+{
+	// Check if spawn intersects any geo
+	const int TOUCHING_GROUND_FORGIVENESS = 10
+	const int TRACE_POINT_HEIGHT = 70
+	vector lowerPoint = origin + <0, 0, TOUCHING_GROUND_FORGIVENESS>
+	vector upperPoint = origin + <0, 0, TOUCHING_GROUND_FORGIVENESS + TRACE_POINT_HEIGHT>
+	TraceResults traceDown = TraceLine( upperPoint, lowerPoint, [], TRACE_MASK_NPCWORLDSTATIC )
+	if ( traceDown.startSolid || traceDown.hitEnt != null )
+	{
+		//printf( "INVALID Infantry spawn at %s. Detected intersecting geo.", VectorToStr( origin ) )
+		//DebugDrawRotatedBox( origin, <-16, -16, 0>, <16, 16, 72>, ent.GetAngles(), COLOR_RED, true, 99999 )
+		return false
+	}
+	TraceResults traceUp = TraceLine( lowerPoint, upperPoint, [], TRACE_MASK_NPCWORLDSTATIC )
+	if ( traceUp.startSolid || traceUp.hitEnt != null )
+	{
+		//printf( "INVALID Infantry spawn at %s. Detected intersecting geo.", VectorToStr( origin ) )
+		//DebugDrawRotatedBox( origin, <-16, -16, 0>, <16, 16, 72>, ent.GetAngles(), COLOR_RED, true, 99999 )
+		return false
+	}
+
+	return true
+}
+
+bool function IsProwlerSpawnValid( vector origin )
+{
+	// For now just:
+	return IsInfantrySpawnValid( origin )
+}
+
+/////////////////////////////////////////////
+// Searching
+
+
+struct SearchParams
+{
+	bool includeTypesAll = true				// if true, "includeTypes" are ignored (assumed all true)
+	bool[eORType._count] includeTypes		//
+
+	//
+	array<string> includeKeywords
+	array<string> excludeKeywords
+
+	ResourceCollection results
+
+	int searchFlags = eSearchFlags.NONE
+	int allowedDepth = 99
+
+	//
+	//bool allowResultsCurrentlyInUse = false
+}
+
+bool function CompareKeywordListsForMatchAny( array<string> arg1, array<string> arg2 )
+{
+	int size1 = arg1.len()
+	int size2 = arg2.len()
+	array<string> aa = ((size1 < size2) ? arg1 : arg2)
+	array<string> bb = ((size1 < size2) ? arg2 : arg1)
+
+	if ( bb.len() == 0 )
+		return false
+
+	foreach( string str in aa )
+	{
+		if ( bb.contains( str ) )
+			return true
+	}
+
+	return false
+}
+
+bool function CompareKeywordListsForMatchAll( array<string> arg1, array<string> arg2 )
+{
+	int size1 = arg1.len()
+	int size2 = arg2.len()
+	array<string> aa = ((size1 < size2) ? arg1 : arg2)
+	array<string> bb = ((size1 < size2) ? arg2 : arg1)
+
+	if ( bb.len() == 0 )
+		return false
+
+	if ( aa.len() == 0 )
+		return false
+
+	foreach( string str in aa )
+	{
+		if ( !bb.contains( str ) )
+			return false
+	}
+
+	return true
+}
+
+void function RecursiveFind( ResourceCollection scope, SearchParams params, int depth )
+{
+	const int SANITY_DEPTH_CHECK = 20
+	Assert( (depth < SANITY_DEPTH_CHECK), "Infinite loop?" )
+
+	for ( int orType = 0; orType < eORType._count ; ++orType )
+	{
+		if ( !(params.includeTypesAll || params.includeTypes[orType]) )
+			continue
+
+		array<ResourceCore> arr = scope._listByType[orType]
+		for ( int itemIdx = 0; itemIdx < arr.len(); ++itemIdx )
+		{
+			ResourceCore core = arr[itemIdx]
+
+			if ( !IsBitFlagSet( params.searchFlags, eSearchFlags.RETURN_INUSE_RESOURCES) )
+			{
+				if ( ORS_IsInUse( core ) )
+					continue
+			}
+
+			if ( params.includeKeywords.len() > 0 )
+			{
+				if ( IsBitFlagSet( params.searchFlags, eSearchFlags.MATCH_ALL_INCLUDE_KEYWORDS ) )
+				{
+					if ( !CompareKeywordListsForMatchAll( params.includeKeywords, core.keywords ) )
+						continue
+				}
+				else
+				{
+					if ( !CompareKeywordListsForMatchAny( params.includeKeywords, core.keywords ) )
+						continue
+				}
+			}
+
+			if ( params.excludeKeywords.len() > 0 )
+			{
+				if ( CompareKeywordListsForMatchAny( params.excludeKeywords, core.keywords ) )
+					continue
+			}
+
+			ORS_AddResourceToCollection( params.results, core )
+		}
+	}
+
+	if ( depth >= params.allowedDepth )
+		return
+
+	foreach( ResourceGroup childGroup in scope.groups )
+	{
+		if ( !IsBitFlagSet( params.searchFlags, eSearchFlags.TRAVERSE_INUSE_GROUPS) )
+		{
+			if ( ORS_IsInUse( childGroup.core ) )
+				continue
+		}
+
+		RecursiveFind( GetChildrenForGroup( childGroup ), params, (depth+1) )
+	}
+}
+
+array<string> function MakeLowercaseCloneOfStringArray( array<string> strArray )
+{
+	array<string> result
+	foreach( string str in strArray )
+		result.append( str.tolower() )
+	return result
+}
+
+ResourceCollection function ORS_Find_( ResourceGroup groupScope, int searchFlags, array<int> typesToInclude, array<string> keywordsToInclude, array<string> keywordsToExclude )
+{
+	SearchParams params
+
+	params.includeTypesAll = (typesToInclude.len() == 0)
+	foreach ( int eoType in typesToInclude )
+		params.includeTypes[eoType] = true
+
+	params.includeKeywords = MakeLowercaseCloneOfStringArray( keywordsToInclude )
+	params.excludeKeywords = MakeLowercaseCloneOfStringArray( keywordsToExclude )
+	params.searchFlags = searchFlags
+
+	RecursiveFind( GetChildrenForGroup( groupScope ), params, 0 )
+
+	return params.results
+}
+
+ResourceCollection function ORS_FindBasic( ResourceGroup groupScope, string keyWord )
+{
+	return ORS_Find_( groupScope, eSearchFlags.NONE, [], [keyWord], [] )
+}
+
+array<ResourceGroup> function ORS_GetGroupsWithMatchingKeywords( ResourceGroup groupScope, array<string> keywords )
+{
+	ResourceCollection coll = ORS_Find_( groupScope, eSearchFlags.NONE, [eORType.GROUP], keywords, [] )
+	return coll.groups
+}
+
+ResourceGroup function ORS_GetGroupForResource( ResourceCore core )
+{
+	return s_all.groups[core.parentGroupIndex]
+}
+
+int function ORS_GetTopParentZoneIdForResource( ResourceCore core )
+{
+	ResourceGroup group = ORS_GetGroupForResource( core )
+	for( ;; )
+	{
+		ResourceGroup nextGroup = ORS_GetGroupForResource( group.core )
+		if ( nextGroup == s_globalGroup )
+			break
+		group = nextGroup
+	}
+
+	if ( GroupIsAMapZoneGroup( group ) )
+		return GetZoneIdForGroup( group )
+
+	return -1
+}
+
+ResourceCollection function ORS_GetLinkedResources( ResourceCore core )
+{
+	return s_linkedResourceCollections[core.linkedResourcesIndex]
+}
+
+array<entity> function ORS_GetLinkedEntsArray( ResourceCore core )
+{
+	return core.linkedEnts
+}
+
+
+/////////
+// Marking In-Use
+
+void function ORS_MarkInUse( ResourceCore core )
+{
+	Assert( core.usageCurrentCount == 0 )
+	core.usageCurrentCount++
+	core.usageLifetimeCount++
+}
+
+void function ORS_Free( ResourceCore core )
+{
+	Assert( core.usageCurrentCount > 0 )
+	core.usageCurrentCount = maxint( 0, (core.usageCurrentCount - 1) )
+}
+
+bool function ORS_IsInUse( ResourceCore core )
+{
+	return (core.usageCurrentCount > 0)
+}
+
+int function ORS_GetNumberOfTimesUsed( ResourceCore core )
+{
+	return core.usageLifetimeCount
+}
+
+
+/////////
+// Debug Utils
+///
+string function GetKeywordsDescString( array<string> keywords )
+{
+	if ( keywords.len() == 0 )
+		return ""
+
+	string result = ""
+	foreach ( string keyword in keywords )
+		result += ("'" + keyword + "' ")
+	return result
+}
+string function VectorToStr( vector org )
+{
+	return format( "<%.1f, %.1f, %.1f>", org.x, org.y, org.z )
+}
+string function GetCommonDescString( ResourceCore core )
+{
+	string keyWordsStr = ""
+	{
+		string desc = GetKeywordsDescString( core.keywords )
+		if ( desc.len() > 0 )
+			keyWordsStr = " keywords:[" + desc + "]"
+	}
+
+	return format( "org:%s  %s", VectorToStr( core.spawnOrigin ), keyWordsStr )
+}
+
+string function GetTypeDescString( ResourceCore core )
+{
+	switch( core.orType )
+	{
+		case eORType.GROUP:
+		{
+			if ( core.internalIndexForType == 0 )
+				return "(GLOBAL_GROUP)"
+
+			ResourceGroup group = s_all.groups[core.internalIndexForType]
+			if ( GroupIsAMapZoneGroup( group ) )
+			{
+				int zoneId = GetZoneIdForGroup( group )
+				return format( "(Zone '%s')", GetDevNameForZoneId( zoneId ) )
+			}
+		}
+	}
+
+	return ""
+}
+
+string function GetUsageDescString( ResourceCore core )
+{
+	string inner = (core.usageCurrentCount == 0) ? " " : (core.usageCurrentCount == 1) ? "*" : string( core.usageCurrentCount )
+	string result = format( "[%s:%d] ", inner, core.usageLifetimeCount )
+	return result
+}
+
+void function PrintResourceCollection( ResourceCollection coll, string label )
+{
+	printf( "========================================" )
+	printf( "==   %s", label )
+	printf( "" )
+
+	for ( int orType = 0; orType < eORType._count; ++orType )
+	{
+		printf( "%3d  - %s",	coll._listByType[orType].len(), GetTypeName( orType ) )
+	}
+
+	printf( "========================================" )
+}
+
+string function GetStrForDepthPrint( int depth )
+{
+	// I regret nothing.
+	switch( depth )
+	{
+		case 0:
+			return ""
+		case 1:
+			return "  "
+		case 2:
+			return "    "
+		case 3:
+			return "      "
+		case 4:
+			return "        "
+		case 5:
+			return "          "
+		case 6:
+			return "            "
+		case 7:
+			return "              "
+		case 8:
+			return "                "
+		case 9:
+			return "                  "
+	}
+
+	return "         ..."
+}
+
+string function ORS_GetLongDesc( ResourceCore core )
+{
+	return format( "%s (#%d) %s %s %s", GetTypeName( core.orType ), core.internalIndexForType, GetUsageDescString( core ), GetTypeDescString( core ), GetCommonDescString( core ) )
+}
+
+void function PrintItemRecursive( ResourceCore core, int depth, int maxDepth )
+{
+	printf( "%s%s", GetStrForDepthPrint( depth ), ORS_GetLongDesc( core ) )
+
+	if ( (core.orType == eORType.GROUP) && (depth < maxDepth) )
+	{
+		ResourceGroup group = s_all.groups[core.internalIndexForType]
+		ResourceCollection coll = s_mapGroupsToChildren[group]
+
+		for ( int orType = (eORType._count - 1); orType >= 0 ; --orType )
+		{
+			array<ResourceCore> arr = coll._listByType[orType]
+			for ( int itemIdx = 0; itemIdx < arr.len(); ++itemIdx )
+				PrintItemRecursive( arr[itemIdx], (depth + 1), maxDepth )
+		}
+
+		foreach( int index, entity ent in group.otherEnts )
+		{
+			printf( "%s.otherEnts[%d] - %s", GetStrForDepthPrint( depth + 1 ), index, string( ent ) )
+		}
+	}
+}
+
+void function PrintCollection( ResourceCollection coll )
+{
+	for ( int orType = 0; orType < eORType._count; ++orType )
+	{
+		array<ResourceCore> thisType = coll._listByType[orType]
+		if ( thisType.len() == 0 )
+			continue
+
+		printf( "" )
+		printf( "%s (%d)", GetTypeName( orType ), thisType.len() )
+		foreach ( int index, ResourceCore core in thisType )
+			printf( "#%d group:%d %s %s %s", index, core.parentGroupIndex, GetUsageDescString( core ), GetTypeDescString( core ), GetCommonDescString( core ) )
+	}
+}
+
+array<ProwlerSpawn> function ORS_GetProwlerSpawnsFromGroups( array<ResourceGroup> resourceGroups, array<string> keywordsToInclude = [], array<string> keywordsToExclude = [] )
+{
+	array<ProwlerSpawn> spawns
+	int searchFlags                 = 0
+	array<int> typesToInclude       = [eORType.PROWLER_SPAWN]
+
+	foreach( group in resourceGroups )
+		spawns.extend( ORS_Find_( group, 0, typesToInclude, keywordsToInclude, keywordsToExclude ).prowlerSpawns )
+
+	return spawns
+}
+
+array<InfantrySpawn> function ORS_GetInfantrySpawnsFromGroups( array<ResourceGroup> resourceGroups, array<string> keywordsToInclude = [], array<string> keywordsToExclude = [] )
+{
+	array<InfantrySpawn> spawns
+	int searchFlags                 = 0
+	array<int> typesToInclude       = [eORType.INFANTRY_SPAWN]
+
+	foreach( group in resourceGroups )
+		spawns.extend( ORS_Find_( group, 0, typesToInclude, keywordsToInclude, keywordsToExclude ).infantrySpawns )
+
+	return spawns
+}
+array<InfantrySpawn> function ORS_GetOutdoorInfantrySpawnsFromGroups( array<ResourceGroup> groups, array<string> keywordsToInclude = [], array<string> keywordsToExclude = [] )
+{
+	array<string> exclude = clone( keywordsToExclude )
+	exclude.append( RES_KEYWORD_INDOORS )
+	return ORS_GetInfantrySpawnsFromGroups( groups, keywordsToInclude, exclude )
+}
+
+array<DroppodSpawn> function ORS_GetDroppodSpawnsFromGroups( array<ResourceGroup> resourceGroups, array<string> keywordsToInclude = [], array<string> keywordsToExclude = [] )
+{
+	array<DroppodSpawn> spawns
+	int searchFlags                 = 0
+	array<int> typesToInclude       = [eORType.DROPPOD_SPAWN]
+
+	foreach( group in resourceGroups )
+		spawns.extend( ORS_Find_( group, 0, typesToInclude, keywordsToInclude, keywordsToExclude ).droppodSpawns )
+
+	return spawns
+}
+
+array<CandyBox> function ORS_GetCandyBoxSpawnsFromGroups( array<ResourceGroup> resourceGroups, array<string> keywordsToInclude = [], array<string> keywordsToExclude = [] )
+{
+	array<CandyBox> results
+	int searchFlags                 = 0
+	array<int> typesToInclude       = [eORType.CANDYBOX]
+
+	foreach( group in resourceGroups )
+		results.extend( ORS_Find_( group, 0, typesToInclude, keywordsToInclude, keywordsToExclude ).candyBoxes )
+
+	return results
+}
+
+
+array<ResourceDoor> function ORS_GetDoorResourcesFromGroups( array<ResourceGroup> resourceGroups, array<string> keywordsToInclude = [], array<string> keywordsToExclude = [] )
+{
+	array<ResourceDoor> doorResources
+	int searchFlags                 = 0
+	array<int> typesToInclude       = [eORType.DOOR]
+
+	foreach( group in resourceGroups )
+		doorResources.extend( ORS_Find_( group, 0, typesToInclude, keywordsToInclude, keywordsToExclude ).doors )
+
+	return doorResources
+}
+
+array<PointOfInterest> function ORS_GetPOIResourcesFromGroups( array<ResourceGroup> resourceGroups, array<string> keywordsToInclude = [], array<string> keywordsToExclude = [] )
+{
+
+	array<PointOfInterest> POIresources
+	int searchFlags                 = 0
+	array<int> typesToInclude       = [eORType.POI]
+
+	foreach( group in resourceGroups )
+		POIresources.extend( ORS_Find_( group, 0, typesToInclude, keywordsToInclude, keywordsToExclude ).pois )
+
+	return POIresources
+}
+
+array<WallButtonSpawner> function ORS_GetWallButtonResourcesFromGroups( array<ResourceGroup> resourceGroups, array<string> keywordsToInclude = [], array<string> keywordsToExclude = [] )
+{
+	array<WallButtonSpawner> wallButtonresources
+	int searchFlags                 = 0
+	array<int> typesToInclude       = [eORType.WALLBUTTON_SPAWNER]
+
+	foreach( group in resourceGroups )
+		wallButtonresources.extend( ORS_Find_( group, 0, typesToInclude, keywordsToInclude, keywordsToExclude ).wallButtonSpawners )
+
+	return wallButtonresources
+}
+
+array <ResourceGroup> function ORS_GetResourceGroupsMatchingKeywordArrays( array<array<string> > resGroupKeywordArrays )
+{
+	//get resource groups defined by different combinations of keywords
+	array <ResourceGroup> arrayOfResoureGroupsToReturn
+
+	if ( resGroupKeywordArrays.len() == 0 )
+		return arrayOfResoureGroupsToReturn
+
+	ResourceGroup groupScope 			= ORS_GetGlobalGroup()
+	int searchFlags 					= eSearchFlags.MATCH_ALL_INCLUDE_KEYWORDS
+	array<int> typesToInclude 			= [eORType.GROUP]
+
+	foreach( keywordArray in resGroupKeywordArrays )
+	{
+		array<string> keywordsToInclude = keywordArray
+		array<string> keywordsToExclude = []
+		ResourceCollection resources = ORS_Find_( groupScope, searchFlags, typesToInclude, keywordsToInclude, keywordsToExclude )
+		if ( resources.groups.len() == 0  )
+		{
+			string invalidKeywords = ""
+			foreach( word in keywordsToInclude )
+				invalidKeywords = invalidKeywords + word + ", "
+			Assert( false, "No resource groups found. Keyword(s) may be invalid: " + invalidKeywords )
+		}
+		arrayOfResoureGroupsToReturn.extend( resources.groups )
+	}
+
+	Assert( arrayOfResoureGroupsToReturn.len() > 0 )
+
+	return arrayOfResoureGroupsToReturn
+}
+
+PointOfInterest function ORS_GetPOIByKeyword( array<PointOfInterest> pois, string keyword )
+{
+	foreach( poi in pois )
+	{
+		if ( poi.core.keywords.contains( keyword ) )
+			return poi
+	}
+
+	Assert( false, format( "Couldn't find any poi in array[%d] with keyword: '%s'", pois.len(), keyword ) )
+	PointOfInterest blank
+	return blank
+}
+
+
+bool function ORS_IsValidPOI( PointOfInterest poi )
+{
+	if ( poi.core.spawnOrigin == <0, 0, 0> )
+		return false
+
+	return true
+}
+
+
+#if SERVER
+array<ProwlerSpawn> function ORS_GetProwlerSpawnsInRadius( vector center, float radius )
+{
+	array<ProwlerSpawn> prowlerSpawnCandidates = ORS_Find_( ORS_GetGlobalGroup(), eSearchFlags.NONE, [], [], [] ).prowlerSpawns
+	array<ProwlerSpawn> prowlerSpawns
+
+
+	float maxDist2DSq = ( radius * radius )
+
+	foreach( spawner in prowlerSpawnCandidates )
+	{
+		if ( Distance2DSqr( spawner.core.spawnOrigin, center ) < maxDist2DSq )
+			prowlerSpawns.append( spawner )
+	}
+
+	return prowlerSpawns
+
+}
+#endif // SERVER
+
+
+
+#if SERVER
+array<PointOfInterest> function ORS_GetPOIsInRadiusByKeywords( vector center, float radius, array<string> keywords )
+{
+	array<PointOfInterest> POIresourcesCandidates = ORS_Find_( ORS_GetGlobalGroup(), eSearchFlags.NONE, [], keywords, [] ).pois
+	array<PointOfInterest> POIresources
+
+	float maxDist2DSq = ( radius * radius )
+
+	foreach( poi in POIresourcesCandidates )
+	{
+		if ( Distance2DSqr( poi.core.spawnOrigin, center ) < maxDist2DSq )
+			POIresources.append( poi )
+	}
+
+	return POIresources
+
+}
+#endif // SERVER
+
+
+#if SERVER
+array<LootSpawn> function ORS_GetLootSpawnsInRadiusByKeywords( vector center, float radius, array<string> keywords = [] )
+{
+	array<LootSpawn> LootSpawnresourcesCandidates = ORS_Find_( ORS_GetGlobalGroup(), eSearchFlags.NONE, [ eORType.LOOT_SPAWN ], keywords, [] ).lootSpawns
+	array<LootSpawn> LootSpawnresources
+
+	float maxDist2DSq = ( radius * radius )
+
+	foreach( lootSpawn in LootSpawnresourcesCandidates )
+	{
+		if ( Distance2DSqr( lootSpawn.core.spawnOrigin, center ) < maxDist2DSq )
+			LootSpawnresources.append( lootSpawn )
+	}
+
+	return LootSpawnresources
+
+}
+#endif // SERVER
+
+#if DEV
+bool s_debugDrawFrame = false
+bool s_debugDrawTextDetails = false
+bool s_debugDrawGroups = false
+bool s_debugDrawSpawns = false
+bool s_debugDrawProwlerSpawns = false
+bool s_debugDrawPOIs = false
+void function DEV_ResourceUpdateDrawFrame()
+{
+	if ( s_debugDrawGroups || s_debugDrawSpawns || s_debugDrawProwlerSpawns || s_debugDrawPOIs )
+		s_debugDrawFrame = true
+	else
+		s_debugDrawFrame = false
+}
+
+void function DEV_ResourceToggleDrawGroups()
+{
+	s_debugDrawGroups = !s_debugDrawGroups
+	DEV_ResourceUpdateDrawFrame()
+}
+
+void function DEV_ResourceToggleDrawSpawns()
+{
+	s_debugDrawSpawns = !s_debugDrawSpawns
+	DEV_ResourceUpdateDrawFrame()
+}
+
+void function DEV_ResourceToggleDrawProwlerSpawns()
+{
+	s_debugDrawProwlerSpawns = !s_debugDrawProwlerSpawns
+	DEV_ResourceUpdateDrawFrame()
+}
+
+void function DEV_ResourceToggleDrawPOIs()
+{
+	s_debugDrawPOIs = !s_debugDrawPOIs
+	DEV_ResourceUpdateDrawFrame()
+}
+
+void function DEV_ResourceToggleDrawTextDetails()
+{
+	s_debugDrawTextDetails = !s_debugDrawTextDetails
+}
+
+void function DebugFrameThread()
+{
+	while ( true )
+	{
+		if ( s_debugDrawFrame )
+			DebugDrawFrame()
+		wait 0.5
+	}
+}
+
+void function DebugDrawFrame()
+{
+	if ( s_debugDrawGroups )
+	{
+		foreach ( ResourceCore core in s_all._listByType[eORType.GROUP] )
+		{
+			vector pos = core.spawnOrigin
+			vector color = <0, 128, 255>
+			float size = 50.0
+			if ( MapZones_GetZoneForOrigin( pos ) < 0 )
+			{
+				color = <255, 32, 32>
+				size = 500.0
+			}
+			if ( s_debugDrawTextDetails )
+				DebugDrawText( pos + <0, 0, 60>, format( "Group -- keywords [ %s ]", GetKeywordsDescString( core.keywords ) ), true, 0.6 )
+			//DebugDrawCube( pos, size, color, false, 0.6 )
+			DebugDrawMark( pos, size, color, true, 0.6 )
+		}
+	}
+
+	if ( s_debugDrawSpawns )
+	{
+		foreach ( ResourceCore core in s_all._listByType[eORType.INFANTRY_SPAWN] )
+		{
+			vector pos = core.spawnOrigin
+			vector angles = core.spawnAngles
+			vector forward = AnglesToForward( angles )
+			if ( s_debugDrawTextDetails )
+				DebugDrawText( pos + <0, 0, 80>, format( "Infantry Spawn -- keywords [ %s ]", GetKeywordsDescString( core.keywords ) ), true, 0.6 )
+			DebugDrawRotatedBox( pos, <-15, -15, 0>, <15, 15, 60>, angles, COLOR_RED, false, 0.6 )
+			DebugDrawArrow( pos + <0, 0, 30>, pos + <0, 0, 30> + forward * 20, 10, COLOR_RED, false, 0.6 )
+		}
+	}
+
+	if ( s_debugDrawProwlerSpawns )
+	{
+		foreach ( ResourceCore core in s_all._listByType[eORType.PROWLER_SPAWN] )
+		{
+			vector pos = core.spawnOrigin
+			vector angles = core.spawnAngles
+			vector forward = AnglesToForward( angles )
+			if ( s_debugDrawTextDetails )
+				DebugDrawText( pos + <0, 0, 80>, format( "Prowler Spawn -- keywords [ %s ]", GetKeywordsDescString( core.keywords ) ), true, 0.6 )
+			DebugDrawRotatedBox( pos, <-15, -15, 0>, <15, 15, 60>, angles, COLOR_RED, false, 0.6 )
+			DebugDrawArrow( pos + <0, 0, 30>, pos + <0, 0, 30> + forward * 20, 10, COLOR_RED, false, 0.6 )
+		}
+	}
+
+	if ( s_debugDrawPOIs )
+	{
+		foreach ( ResourceCore core in s_all._listByType[eORType.POI] )
+		{
+			vector pos = core.spawnOrigin
+			vector angles = core.spawnAngles
+			vector forward = AnglesToForward( angles )
+			if ( s_debugDrawTextDetails )
+				DebugDrawText( pos + <0, 0, 30>, format( "POI -- keywords [ %s ]", GetKeywordsDescString( core.keywords ) ), true, 0.6 )
+			DebugDrawRotatedBox( pos, <-15, -15, 0>, <15, 15, 15>, angles, COLOR_WHITE, false, 0.6 )
+			DebugDrawArrow( pos + <0, 0, 15>, pos + <0, 0, 15> + forward * 10, 5, COLOR_WHITE, false, 0.6 )
+		}
+	}
+}
+
+void function DEV_PrintObjectiveEntsReport( bool verbose )
+{
+	printf( "" )
+	PrintResourceCollection( s_all, ("Resources: '" + GetMapName() + "'") )
+	if ( verbose )
+	{
+		printf( "" )
+		printf( "==   Details (flat)" )
+		PrintCollection( s_all )
+
+		printf( "" )
+		printf( "==   Details (nested)" )
+		PrintItemRecursive( s_globalGroup.core, 0, 999 )
+	}
+	printf( "" )
+}
+
+//
+void function DEV_PrintCollection( ResourceCollection coll )
+{
+	printf( "" )
+	printf( "==   Details for collection" )
+	PrintCollection( coll )
+	printf( "" )
+}
+
+void function DEV_PrintGroup( ResourceGroup group, int maxDepth = 999 )
+{
+	printf( "" )
+	printf( "==   Details for group (maxDepth=%d)", maxDepth )
+	PrintItemRecursive( group.core, 0, maxDepth )
+	printf( "" )
+}
+#endif // DEV
+
+#if DEV
+void function ZZZ_TestInternal()
+{
+	WaitFrame()
+	//
+/*
+	int tokenA = GetTokenForResource( eORType.HACK_PANEL, 1 )
+	int tokenB = GetTokenForResource( eORType.HACK_PANEL, 3 )
+
+	HackPanel panelA = ORT_GetResource_HackPanel( tokenA )
+	printf( "Panel A keywords: " + GetKeywordsDescString( panelA.core.keywords ) )
+
+	printf( "" )
+	array<int> tokensA = ORT_FindTokensOfType( eORType.CAPTURE_ZONE )
+	foreach ( int token in tokensA )
+	{
+		array<string> sss = ORT_GetKeywordsForToken( token )
+		printf( "tokensA: ", sss.len() )
+	}
+
+	printf( "" )
+	array<int> tokensB = ORT_FindTokensOfTypeWithAnyKeywords( eORType.CAPTURE_ZONE, "BLUE", "PINK" )
+	foreach ( int token in tokensB )
+	{
+		array<string> sss = ORT_GetKeywordsForToken( token )
+		printf( "tokensB: ", sss.len() )
+	}
+
+	printf( "" )
+	ORTokenCollection collA = ORT_FindTokensWithKeywords( "red", "purple" )
+	PrintTokenCollection( collA, "collA" )
+
+	printf( "" )
+	{
+		array<int> parkingSpots = ORT_FindTokensOfType( eORType.TITAN_PARKING_SPOT )
+		ORTokenCollection coll = ORT_FindTokensInSameGroupAs( parkingSpots[0] )
+		PrintTokenCollection( coll, "collB" )
+	}
+
+	printf( "" )
+	{
+		array<int> parkingSpots = ORT_FindTokensOfType( eORType.TITAN_PARKING_SPOT )
+		ORTokenCollection coll = ORT_FindTokensInSameGroupAs( collA.hackPanels[0] )
+		PrintTokenCollection( coll, "collC" )
+	}
+*/
+
+}
+
+void function ZZZ_Test()
+{
+	thread ZZZ_TestInternal()
+}
+
+#endif // DEV
+#endif // #if SERVER
+ 

@@ -40,7 +40,7 @@ struct
 	#if CLIENT
 		int colorCorrectionGas
 	#endif //CLIENT
-	
+
 	// Y aquí es cuando esto se vuelve shared lol
 	table< entity, table<entity, bool> > highlightedPlayersInSmoke
 	float highlightFalloffDistance = 10 * METERS_TO_INCHES
@@ -267,8 +267,7 @@ void function OnProjectileIgnite_weapon_grenade_bangalore_single( entity project
 		entity smokeGrenade = Bangalore_CreateSmokeGrenade( origin, normal )
 		smokeGrenade.RemoveFromAllRealms()
 		smokeGrenade.AddToOtherEntitysRealms( projectile )
-		AddToTrackedEnts_Level( smokeGrenade )
-		
+
 		float throwSpeed = 530
 		if ( index == 0 )
 			throwSpeed = 256
@@ -509,13 +508,13 @@ void function Cafe_SmokesHighlights( entity player )
 
 	table< entity, bool > highlightedPlayers
 	file.highlightedPlayersInSmoke[player] <- highlightedPlayers
-	
+
 	OnThreadEnd(
 		function() : ( player, highlightedPlayers )
 		{
 			if( player in file.highlightedPlayersInSmoke )
 				delete file.highlightedPlayersInSmoke[player]
-			
+
 			foreach ( entity otherPlayer, bool isHightlighted in highlightedPlayers )
 			{
 				ManageHighlightEntity( otherPlayer )
@@ -527,9 +526,9 @@ void function Cafe_SmokesHighlights( entity player )
 	{
 		array< entity > playersToHighlight
 		array< entity > playersToNotHighlight
-		
+
 		BangSmoke_GetPlayersToHighlight( player, playersToHighlight, playersToNotHighlight )
-		
+
 		foreach( entity otherPlayer in playersToHighlight )
 		{
 			if ( !( otherPlayer in highlightedPlayers ) )
@@ -555,13 +554,13 @@ void function Cafe_SmokesHighlights( entity player )
 					continue
 
 				highlightedPlayers[otherPlayer] = false
-				
+
 				ManageHighlightEntity( otherPlayer )
 			}
 		}
 
 		WaitFrame()
-	}	
+	}
 }
 #endif
 
@@ -585,7 +584,7 @@ void function BangSmoke_GetPlayersToHighlight( entity player, array<entity> outP
 
 		if( !otherPlayer.DoesShareRealms( player ) ) // missing check. Cafe
 			continue
-		
+
 		if ( !IsEnemyTeam( playerTeam, otherPlayer.GetTeam() ) )
 			continue
 

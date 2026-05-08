@@ -160,7 +160,6 @@ const string CC_QueueRadioPlayRewardGranting = "ClientCallback_QueueRadioPlayRew
 
 void function SeasonQuest_SharedInit()
 {
-	printt("Quest system registered")
 	#if SERVER || CLIENT
 		Remote_RegisterServerFunction( CC_TreasureBoxDisplayAcknowledged, "int", INT_MIN, INT_MAX )
 		Remote_RegisterServerFunction( CC_QuestStartedAcknowledged, "int", INT_MIN, INT_MAX )
@@ -190,13 +189,11 @@ void function SeasonQuest_SharedInit()
 
 void function OnQuestRegistered( ItemFlavor quest )
 {
-	//printt( "DEBUG: OnQuestRegistered called for:", string( quest ) )
 	array<ItemFlavor> comicPages = RegisterReferencedItemFlavorsFromArray( quest, "comicPages", "flavor" )
 	file.questComicPages[ quest ] <- comicPages
 
 	array<ItemFlavor> missions = RegisterReferencedItemFlavorsFromArray( quest, "missions", "flavor" )
 	file.questMissions[ quest ] <- missions
-	//printt( "DEBUG: OnQuestRegistered - missions count:", missions.len() )
 
 	foreach( int idx, ItemFlavor mission in missions )
 	{
@@ -208,8 +205,8 @@ void function OnQuestRegistered( ItemFlavor quest )
 		}
 	}
 
-	//RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_sentinel/s05_quest_mission_dummy.rpak" )
-	//RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_sentinel/s06_quest_comic_dummy.rpak" )
+	RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_sentinel/s05_quest_mission_dummy.rpak" )
+	RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_sentinel/s06_quest_comic_dummy.rpak" )
 
 	#if SERVER || CLIENT
 		// was used in season 5
@@ -933,7 +930,6 @@ bool function DisplayQuestFinalRewards()
 ItemFlavor ornull function SeasonQuest_GetActiveSeasonQuest( int timeNow )
 {
 	ItemFlavor ornull season = GetActiveSeason( timeNow )
-	printt( "DEBUG SeasonQuest_GetActiveSeasonQuest: season =", season != null ? string( season ) : "null" )
 	if ( season == null )
 		return null
 	expect ItemFlavor( season )

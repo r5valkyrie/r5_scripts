@@ -412,7 +412,7 @@ void function SetupTrain()
 				continue
 
 			string scriptName = linkEnt.GetScriptName()
-			
+
 			#if PRINT_TRAIN_DEBUG
 				printt( "TRAIN Linked ENt has script name: " + scriptName )
 			#endif
@@ -574,10 +574,10 @@ void function SetupTracks()
 
 				if ( !IsValid( data.binModel ) )
 				{
-					#if PRINT_TRAIN_DEBUG 
+					#if PRINT_TRAIN_DEBUG
 						Warning( "A train station loot bin was deleted as part of loot initialization at: " + data.mover.GetOrigin() )
 					#endif
-					
+
 					if ( IsValid( data.mover ) )
 						data.mover.Destroy()
 
@@ -619,7 +619,7 @@ void function OnTrainStopPanelActivate( entity panel, entity player, int useInpu
 	#if PRINT_TRAIN_DEBUG
 		printt( "Attempting to emergency brake. Train current state is: %s", GetNameForEnum( eTrainStates, file.trainCurrentState ) )
 	#endif
-	
+
 	// TODO: defensive fix for R5DEV-109051 with adding Train_IsMovingToTrainNode()
 	if ( file.trainCurrentState == eTrainStates.ABLE_TO_MANUALLY_DECELERATE && file.train.Train_IsMovingToTrainNode() )
 		TrainInitiateEmergencyStop()
@@ -768,10 +768,10 @@ void function TrainFollowPathForward( bool shouldGetNewPath )
 	TrainSound_AccelerateStart()
 			TrainAnnouncer_PlaySingle( "Train_DepartNow" )
 
-	                      
+
 	if ( Gamemode() == eGamemodes.WINTEREXPRESS )
 		return
-       
+
 
 	string destinationNoteworthy = endNode.GetValueForKey( "script_noteworthy" )
 	TrainAnnouncer_PlaySingle( "Train_NextStop", 2.0 )
@@ -1035,7 +1035,7 @@ void function TrainWait_Stopped()
 	{
 		entity startNode = file.currentPathNodes[0]
 		entity endNode   = file.currentPathNodes.top()
-		
+
 		#if PRINT_TRAIN_DEBUG
 			printt( "Train path start node pos: %f, %f, %f", startNode.GetOrigin().x, startNode.GetOrigin().y, startNode.GetOrigin().z )
 			printt( "Train path end node pos: %f, %f, %f", endNode.GetOrigin().x, endNode.GetOrigin().y, endNode.GetOrigin().z )
@@ -1416,8 +1416,8 @@ void function TrainAnnouncer_PlaySingle( string dialogueAlias, float delay = 0.0
 
 	foreach ( entity player in GetPlayerArray() )
 	{
-		if ( player.p.isSkydiving )
-			continue
+		//if ( player.p.isSkydiving )
+		//	continue
 
 		if ( player.GetPlayerNetBool( "playerInPlane" ) )
 			continue

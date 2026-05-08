@@ -1,0 +1,618 @@
+global function QuestS05EndInit
+#if CLIENT
+global function SCB_HatchOpenMoment
+global function SCB_EntranceStingerMoment
+#endif // CLIENT
+
+#if SERVER
+#endif // SERVER
+
+const string SIG_GOT_NEAR_HATCH = "got_near_hatch"
+const string SIG_GOT_INTO_BUNKER = "got_into_bunker"
+
+void function QuestS05EndInit()
+{
+	RegisterCSVDialogue( $"datatable/dialogue/nightrun_dialogue.rpak" )
+
+	PrecacheScriptString( USE_POINT_SCRIPTNAME )
+
+	UsePoint_Init()
+
+	#if CLIENT
+		//SetChampionScreenRuiAsset( subbedChampionScreeen )
+		//SetChampionScreenRuiAssetExtraFunc( ChampionScreenSetExtraInfo )
+		#if CLIENT
+			Waypoints_RegisterCustomType( WAYPOINTTYPE_WHISPERS, InstanceWhispers )
+		#endif
+	#endif // CLIENT
+
+	Remote_RegisterClientFunction( "SCB_HatchOpenMoment" )
+	Remote_RegisterClientFunction( "SCB_EntranceStingerMoment" )
+
+	#if SERVER
+		RegisterSignal( SIG_GOT_NEAR_HATCH )
+		RegisterSignal( SIG_GOT_INTO_BUNKER )
+
+		AddCallback_ResourceSystemIsReady( void function() : ()
+		{
+		} )
+
+		SetCustomIntroCameraSettingsFunction( void function( entity player, IntroCameraSettings view ) : ()
+		{
+			//Assert( config._isReady )
+			//view.origin = config.introCamera.origin
+			//view.angles = config.introCamera.angles
+			//
+			//if ( config.introCameraFov != 0.0 )
+			//	view.fov = config.introCameraFov
+		} )
+
+		AddCallback_GameStateEnter( eGameState.Playing, void function() : ()
+		{
+			thread ModeThread()
+		} )
+
+		//AddCallback_GameStatePostEnter( eGameState.Prematch, void function() : ( config, def )
+		//{
+		//	//need to hide some ugliness flying through geo in some cases
+		//	foreach( player in GetPlayerArray() )
+		//		thread ScreenFadeToBlackForeverDelayed( player, 0.0, 1.75 )
+		//} )
+
+		//
+	#endif // SERVER
+}
+
+#if CLIENT
+const asset subbedChampionScreeen = $"ui/champion_screen_nightrun.rpak"
+void function ChampionScreenSetExtraInfo( var rui )
+{
+	RuiSetBool( rui, "isMissionSuccess", FreelanceMode_GetIsVictoryForAll() )
+}
+
+void function SCB_EntranceStingerMoment()
+{
+	MapZones_ZoneIntroTextFullscreenWithSubtext( GetLocalViewPlayer(), "#ZONE_NAME_SQ05_FINALE_TITLE", 5, "#ZONE_NAME_SQ05_FINALE_SUBTITLE" )
+}
+
+void function SCB_HatchOpenMoment()
+{
+	entity emitter = GetClosest( GetEntArrayByScriptName( "Canyonlands_Mu2_Emit_OminousHatch" ), GetLocalViewPlayer().GetOrigin() )
+	if ( IsValid( emitter ) )
+		emitter.SetEnabled( true )
+}
+#endif // CLIENT
+
+#if SERVER
+
+//const vector START_ORIGIN = <-28384.2637, 26050.5313, 3248.0>
+//const vector START_ANGLES = <0, -72.0, 0>
+//const vector START_ORIGIN = <-26216.0, 26153.0, 3008.0>
+//const vector START_ANGLES = <0, -72.0, 0>
+const vector START_ORIGIN = <-25796.95, 26263.80, 2988.0>
+const vector START_ANGLES = <0, -114.65, 0>
+
+void function ModeThread()
+{
+	RunStayInTheAreaThread()
+	RunHatchOpenThread()
+	RunBunkerEntranceThread()
+	RunObjectPickupThread()
+
+	/////////////////////////////
+	waitthread function() : ()
+	{
+		foreach ( player in GetPlayerArray() )
+		{
+			player.p.respawnCount = 1	// to skip some spawn checks
+			//DisableEntityOutOfBounds( player )
+
+			player.SetOrigin( START_ORIGIN )
+			player.SetAngles( START_ANGLES )
+			PVE_CommonPlayerRespawn( player )
+			player.TakeOffhandWeapon( OFFHAND_ULTIMATE )
+			ScreenFadeFromBlack( player, 2.0, 3.0 )
+			FreelanceMode_FinalizeMatchDataForPlayer( player )
+		}
+
+		if ( FreelanceMode_GetCurrentPhase() < eFreelanceModePhase.Insertion )
+			FreelanceMode_SetCurrentPhase( eFreelanceModePhase.Insertion, 0 )
+
+
+		//for ( int idx = 0; idx < MAX_PVE_SQUADS; ++idx )
+		//{
+		//	int team = GetTeamFromSquadID( idx )
+		//	vector viewAngles = <15.0, config.introDropoff.angles.y, 0>
+		//	StartTeamInsertionThread_Dropoff( team, config.introDropoff.origin, config.introDropoff.angles, viewAngles )
+		//}
+
+		//wait ( 3.5 )
+		//foreach ( player in GetPlayerArray() )
+		//	ScreenFadeFromBlack( player, 2.0, 2.0 )
+	}()
+
+	Wait( RandomFloatRange( 5.0, 6.0 ) )
+	PlayCharacterDialogueToEveryone( "s5_10_intro1" )
+
+	FreelanceMode_SetCurrentPhase( eFreelanceModePhase.Exploration, 0 )
+
+	//
+	WaitForever()
+}
+
+
+entity s_wpHatch
+void function RunWaypointThread( entity theHatch )
+{
+	thread function() : (theHatch)
+	{
+		EndSignal( svGlobal.levelEnt, SIG_GOT_NEAR_HATCH )
+
+		Wait( 15.0 )
+		s_wpHatch = CreateWaypoint_ObjectivePos( (theHatch.GetOrigin() + <0, 0, 0>), "#QUEST_OBJECTIVE_MARKER_NAME" )
+		Wait( RandomFloatRange( 0.5, 1.0 ) )
+		PlayCharacterDialogueToEveryone( "s5_10_intro2" )
+	}()
+}
+
+void function RunStayInTheAreaThread()
+{
+	thread function() : ()
+	{
+		const vector KEY_POSITION = <-28668.9629, 23029.6543, 2037.41187>
+		const float MAX_DISTANCE = 7000.0
+		const float MAX_DISTANCE_NAG = 5000.0
+
+		bool didNag = false
+		for ( ;; )
+		{
+			WaitFrame()
+			array<entity> players = GetPlayerArray_Alive()
+			if ( players.len() == 0 )
+				continue
+
+			entity player = GetClosest( players, KEY_POSITION )
+			float dist = Distance2D( player.GetOrigin(), KEY_POSITION )
+			//printf( "%s() - dist: %.2f", FUNC_NAME(), dist )
+
+			if ( !didNag && (dist > MAX_DISTANCE_NAG) )
+			{
+				PlayCharacterDialogueToEveryone( "s5_10_toofar1" )
+				didNag = true
+			}
+			if ( dist < MAX_DISTANCE )
+				continue
+
+			printf( "%s() - Player '%s' went too far away. Dist: %.2f / %.2f", FUNC_NAME(), string( player ), dist, MAX_DISTANCE )
+			waitthread function() : (player, dist)
+			{
+				player.EndSignal( "OnDestroy" )
+
+				PlayCharacterDialogueToEveryone( "s5_10_toofar2" )
+
+				player.DisableWeaponTypes( WPT_ULTIMATE | WPT_TACTICAL )
+				Survival_SetInventoryEnabled( player, false )
+				Wait( 3.0 )
+				ScreenFadeToBlackForever( player )
+				MuteAll( player, 2 )
+				Wait( 2.0 )
+				player.FreezeControlsOnServer()
+				Wait( 1.0 )
+				//
+
+				player.SetOrigin( START_ORIGIN )
+				player.SetAngles( START_ANGLES )
+				Survival_SetInventoryEnabled( player, true )
+				player.EnableWeaponTypes( WPT_ULTIMATE | WPT_TACTICAL )
+				ScreenFadeFromBlack( player, 2.0, 3.0 )
+				Wait( 1.0 )
+				player.UnfreezeControlsOnServer()
+				UnMuteAll( player )
+
+			}()
+
+			didNag = false
+		}
+
+		//
+	}()
+}
+
+void function RunHatchOpenThread()
+{
+	thread function() : ()
+	{
+		const vector KEY_POSITION = <-28668.9629, 23029.6543, 2037.41187>
+		const float MIN_DISTANCE_CLOSE = 800.0
+		const float MIN_DISTANCE = 250.0
+
+		entity theHatch = GetEntByScriptName( "hatch_bunker_exit_model_z12_treasure" )
+
+		RunWaypointThread( theHatch )
+
+		bool didGetClose = false
+		entity triggeredPlayer = null
+		for ( ;; )
+		{
+			WaitFrame()
+			array<entity> players = GetPlayerArray_Alive()
+			if ( players.len() == 0 )
+				continue
+
+			entity player = GetClosest( players, theHatch.GetOrigin() )
+			float dist = Distance( player.GetOrigin(), theHatch.GetOrigin() )
+			//printf( "Dist: %.2f", dist )
+
+			if ( !didGetClose && (dist < MIN_DISTANCE_CLOSE) )
+			{
+				Signal( svGlobal.levelEnt, SIG_GOT_NEAR_HATCH )
+				PlayCharacterDialogueToEveryone( "s5_10_hatch1" )
+				didGetClose = true
+			}
+			if ( dist > MIN_DISTANCE )
+				continue
+
+			triggeredPlayer = player
+			break
+		}
+
+		// Sound:
+		Remote_CallFunction_NonReplay( triggeredPlayer, "SCB_HatchOpenMoment" )
+		ClientMusic_PlayCustomTrackToAll( eMusicTrack.QuestBunker_HatchOpen )
+
+		//foreach ( HatchData data in GetHatchDataGroupsById( "12_treasure" ) )
+		{
+		//	if ( !data.isEntranceHatch )
+		//		thread OpenCanyonlandsBunkerHatch( data, false )
+		}
+
+		Wait( RandomFloatRange( 2.0, 2.5 ) )
+		PlayCharacterDialogueToEveryone( "s5_10_hatch2" )
+
+		EndSignal( svGlobal.levelEnt, SIG_GOT_INTO_BUNKER )
+		Wait( 15.0 )
+		PlayCharacterDialogueToEveryone( "s5_10_hatch3" )
+		Wait( 10.0 )
+		PlayCharacterDialogueToEveryone( "s5_10_hatch4" )
+		PlayCharacterDialogueToEveryone( "s5_10_hatch5" )
+		PlayCharacterDialogueToEveryone( "s5_10_hatch6" )
+	}()
+}
+
+void function RunBunkerEntranceThread()
+{
+	thread function() : ()
+	{
+		for ( ;; )
+		{
+			entity trigger = GetEntByScriptName( "th_s5_entry_trig_01" )
+			table results = trigger.WaitSignal( "OnTrigger" )
+			entity player = expect entity( results.activator )
+			if ( !IsAlive( player ) )
+				continue
+
+			Signal( svGlobal.levelEnt, SIG_GOT_INTO_BUNKER )
+			if ( IsValid( s_wpHatch ) )
+				s_wpHatch.Destroy()
+			ClientMusic_PlayCustomTrackToAll( eMusicTrack.QuestBunker_1stFloor )
+			Remote_CallFunction_NonReplay( player, "SCB_EntranceStingerMoment" )
+			StatusEffect_AddEndless( player, eStatusEffect.move_slow, 0.1 )
+			AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD_INSTANT )
+			AddCinematicFlag( player, CE_FLAG_HIDE_PERMANENT_HUD )
+			DisableOffhandWeapons( player )
+			DisableScoreboardForPlayer( player )
+			player.SetPlayerNetBool( "pingEnabled", false )
+			StartTheWhispers()
+			delaythread( RandomFloatRange( 6.0, 6.2 ) ) PlayCharacterDialogueToEveryone( "s5_10_inside1" )
+			break
+		}
+
+		// 1
+		for ( ;; )
+		{
+			const vector KEY_POSITION = <-27745.0684, 23473.0352, 64.03125>
+			const float MIN_DISTANCE = 100.0
+
+			WaitFrame()
+			array<entity> players = GetPlayerArray_Alive()
+			if ( players.len() == 0 )
+				continue
+
+			entity player = GetClosest( players, KEY_POSITION )
+			float dist = Distance( player.GetOrigin(), KEY_POSITION )
+			if ( dist > MIN_DISTANCE )
+				continue
+
+			delaythread( RandomFloatRange( 2.0, 3.0 ) ) PlayCharacterDialogueToEveryone( "s5_10_inside2" )
+			break
+		}
+
+		// 2
+		for ( ;; )
+		{
+			const vector KEY_POSITION = <-27753.1152, 22583.373, 64.03125>
+			const float MIN_DISTANCE = 100.0
+
+			WaitFrame()
+			array<entity> players = GetPlayerArray_Alive()
+			if ( players.len() == 0 )
+				continue
+
+			entity player = GetClosest( players, KEY_POSITION )
+			float dist = Distance( player.GetOrigin(), KEY_POSITION )
+			if ( dist > MIN_DISTANCE )
+				continue
+
+			delaythread( RandomFloatRange( 1.5, 2.5 ) ) PlayCharacterDialogueToEveryone( "s5_10_inside3" )
+			break
+		}
+
+		for ( ;; )
+		{
+			entity trigger = GetEntByScriptName( "th_s5_entry_trig_02" )
+			table results = trigger.WaitSignal( "OnTrigger" )
+			entity player = expect entity( results.activator )
+			if ( !IsAlive( player ) )
+				continue
+
+			if ( IsValid( s_wpHatch ) )
+				s_wpHatch.Destroy()
+			//Remote_CallFunction_NonReplay( player, "SCB_EntranceStingerMoment" )
+			ClientMusic_PlayCustomTrackToAll( eMusicTrack.QuestBunker_2ndFloor )
+			StatusEffect_AddEndless( player, eStatusEffect.move_slow, 0.25 )
+			//DisableOffhandWeapons( player )
+			//player.SetPlayerNetBool( "pingEnabled", false )
+			break
+		}
+
+	}()
+}
+
+struct SequenceVars
+{
+	entity animRef
+	entity targetSpotRef
+	entity usePoint
+
+	entity propTop
+	entity propBottom
+}
+void function RunObjectPickupThread()
+{
+	thread function() : ()
+	{
+		SequenceVars vars
+		vars.animRef = GetEntByScriptName( "hb_th_end_anim_ref_node" )
+		vars.targetSpotRef = GetEntByScriptName( "th_s5_spawn_loc_01" )
+		vars.propBottom = CreatePropDynamic( GetObjectiveAsset_Model( "S05_FINALE_PROP_BOTTOM" ), vars.animRef.GetOrigin(), vars.animRef.GetAngles(), 0, 3000.0 )
+		thread PlayAnimOnly( vars.propBottom, "obj_body_quest_se05_idle" )
+
+		entity player = null
+		entity usePoint = CreateUsePoint( vars.targetSpotRef.GetOrigin(), vars.targetSpotRef.GetAngles() )
+		for( ;; )
+		{
+			table result = WaitSignal( usePoint, "OnPlayerUse" )
+			entity user = expect entity( result.player )
+			if ( !IsAlive( user ) )
+				continue
+			player = user
+			break
+		}
+
+		printf( "Player pressed the button: '%s'", string( player ) )
+		usePoint.UnsetUsable()
+		StopTheWhispers()
+		ClientMusic_PlayCustomTrackToAll( eMusicTrack.QuestBunker_EndAnim )
+		RunFinalSequence( player, vars )
+	}()
+}
+
+void function RunFinalSequence( entity player, SequenceVars vars )
+{
+	player.EndSignal( "OnDestroy" )
+
+	entity animRef = CreateOwnedScriptMover( vars.animRef )
+
+	vars.propTop = CreatePropDynamic( GetObjectiveAsset_Model( "S05_FINALE_PROP_TOP" ) )
+	for ( int idx = 0; idx < 9; ++idx )
+		vars.propTop.SetBodygroupModelByIndex( idx, 1 )
+
+	FirstPersonSequenceStruct seq
+	seq.attachment = "ref"
+	seq.blendTime = 0
+	seq.teleport = true
+	seq.firstPersonAnim = "ptpov_quest_se05"	//"ptpov_OG_grave" // "ptpov_timeshift_device_equip_sequence"
+	//seq.thirdPersonAnim = "pilot_quest_se05"	// "pt_timeshift_device_equip_sequence"
+	seq.viewConeFunction = void function( entity player )
+	{
+		if ( !player.IsPlayer() )
+			return
+		player.PlayerCone_SetLerpTime( 0.2 )
+		player.PlayerCone_FromAnim()
+		player.PlayerCone_SetMinYaw( 0 )
+		player.PlayerCone_SetMaxYaw( 0 )
+		player.PlayerCone_SetMinPitch( 0 )
+		player.PlayerCone_SetMaxPitch( 0 )
+	}
+
+	player.SetAnimNearZ( 1 )
+	HolsterAndDisableWeapons( player )
+
+	// Force a call to the .viewConeFunction:
+	thread function() : (player, seq)
+	{
+		player.EndSignal( "OnDestroy" )
+		WaitFrame()
+		seq.viewConeFunction( player )
+	}()
+
+	//
+	thread function() : (player)
+	{
+		player.EndSignal( "OnDestroy" )
+	}()
+
+	thread PlayAnimTeleport( vars.propTop, "prop_quest_se05", animRef )
+	thread PlayAnimTeleport( vars.propBottom, "obj_body_quest_se05", animRef )
+	waitthread FirstPersonSequence( seq, player, animRef )
+
+	#if DEV
+		if ( GetBugReproNum() == 555 )
+		{
+			printf( "%s() - Not ending the level, b/c of dev toggle.", FUNC_NAME() )
+			vars.propTop.Destroy()
+			WaitFrame()
+			RunFinalSequence( player, vars )
+			WaitForever()
+		}
+	#endif // DEV
+
+	ScreenFadeFromBlack( player, 60.0, 300.0 )
+	player.ClearAnimNearZ()
+
+	// Mark that we're all done, and successful:
+	{
+		FreelanceMode_MarkMissionSuccessForGivenPlayers( [player] )
+		FreelanceMode_PostGame_MarkPlayerAsExtracted( player )
+		FreelanceMode_FinalizeMatchDataForPlayer( player )
+		if ( player.p.hasMatchParticipationStarted && !player.p.hasMatchParticipationEnded )
+			OnPlayerMatchParticipationEnded( player, false )
+	}
+
+	Wait( 5.0 )
+	Freelance_MissionEnd( player.GetTeam() )
+	WaitForever()
+}
+
+#endif // SERVER
+
+
+/////////////
+// Usable Point
+
+const string USE_POINT_SCRIPTNAME = "s5_end_usepoint"
+
+#if SERVER
+entity function CreateUsePoint( vector origin, vector angles )
+{
+	entity ent = CreatePropDynamic_NoDispatchSpawn( $"mdl/dev/empty_model.rmdl", origin, angles )
+	ent.SetOrigin( origin )
+	ent.SetAngles( angles)
+	ent.SetScriptName( USE_POINT_SCRIPTNAME )
+	DispatchSpawn( ent )
+	return ent
+}
+#endif // SERVER
+
+void function UsePoint_Init()
+{
+	#if SERVER
+		AddSpawnCallback_ScriptName( USE_POINT_SCRIPTNAME, OnCreate_UsePoint )
+	#endif //SERVER
+
+	#if CLIENT
+		AddCreateCallback( "prop_dynamic", OnCreate_UsePoint )
+	#endif //SERVER
+}
+
+void function OnCreate_UsePoint( entity usePoint )
+{
+	if ( usePoint.GetScriptName() != USE_POINT_SCRIPTNAME )
+		return
+
+	#if SERVER
+		usePoint.SetUsable()
+		usePoint.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_CAN_USE_OVERRIDE | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
+		usePoint.SetUsablePriority( USABLE_PRIORITY_HIGH )
+		usePoint.SetUsePrompts( "#QUEST_END_USE_PROMPT", "#QUEST_END_USE_PROMPT" )
+		usePoint.MakeInvisible()
+
+		//thread function() : (usePoint)
+		//{
+		//	for ( ;; )
+		//	{
+		//		WaitFrame()
+		//		DebugDrawAxis( usePoint.GetOrigin(), usePoint.GetAngles(), 0.1, 10.0 )
+		//	}
+		//}()
+
+	#endif
+
+	SetCallback_CanUseEntityCallback( usePoint, CanUse_UsePoint )
+	//AddCallback_OnUseEntity_ClientServer( usePoint, OnUsePointUse )
+}
+
+bool function CanUse_UsePoint( entity user, entity usePoint, int useFlags )
+{
+	if ( Bleedout_IsBleedingOut( user ) )
+		return false
+	if ( user.ContextAction_IsActive() )
+		return false
+	entity activeWeapon = user.GetActiveWeapon( eActiveInventorySlot.mainHand )
+	if ( IsValid( activeWeapon ) && activeWeapon.IsWeaponOffhand() )
+		return false
+	if ( user.IsCrouched() )
+		return false
+
+	vector buttonForward = usePoint.GetForwardVector()
+	vector buttonToUser = Normalize( user.UseableEyePosition( usePoint ) - usePoint.GetOrigin() )
+	float dot = buttonForward.Dot( buttonToUser )
+	if ( dot < DOT_60DEGREE )
+		return false
+
+	return true
+}
+//
+////////////
+
+
+
+//////////////
+// Whispers in the Dark
+
+const string WAYPOINTTYPE_WHISPERS = "end_area_whispers"
+
+#if SERVER
+entity s_whispersEnt
+void function StartTheWhispers()
+{
+	s_whispersEnt = CreateWaypoint_Custom( WAYPOINTTYPE_WHISPERS )
+	s_whispersEnt.SetOrigin( GetEntByScriptName( "th_s5_spawn_loc_01" ).GetOrigin() )
+}
+void function StopTheWhispers()
+{
+	if ( IsValid( s_whispersEnt ) )
+		s_whispersEnt.Destroy()
+}
+#endif // SERVER
+
+#if CLIENT
+void function InstanceWhispers( entity wp )
+{
+	printf( "%s(): %s", FUNC_NAME(), string( wp ) )
+
+	thread function() : ( wp )
+	{
+		wp.EndSignal( "OnDestroy" )
+
+		wait RandomFloatRange( 3.0, 4.0 )
+		int cycleCnt = 0
+		for ( ;; )
+		{
+			int num = (1 + (cycleCnt % 16))
+
+			const string FIRST_LOOP_PRE_SOUND = "diag_mp_questTBG_assembleRelic_relicAi_sys_stinger2"
+			EmitSoundAtPosition( TEAM_ANY, wp.GetOrigin(), FIRST_LOOP_PRE_SOUND )
+			wait RandomFloatRange( 2.5, 3.5 )
+
+			string eventName = format( "diag_mp_questtbg_assemblerelic_relicai_%02d_3p", num )
+			var handle = EmitSoundAtPosition( TEAM_ANY, wp.GetOrigin(), eventName )
+			if ( handle != null )
+				WaitSignal( handle, "OnSoundFinished" )
+			wait RandomFloatRange( 3.0, 5.5 )
+			++cycleCnt
+		}
+	}()
+}
+#endif // CLIENT
+ 

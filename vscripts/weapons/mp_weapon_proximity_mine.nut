@@ -84,7 +84,7 @@ var function OnWeaponTossReleaseAnimEvent_weapon_proximity_mine( entity weapon, 
 		proximityMine.SetOwner( player )
 		file.allTraps.append( proximityMine )
 		CleanUpOldestTrap( player )
-		AddToTrackedEnts_Level( proximityMine )
+
 		EmitSoundOnEntityExceptToPlayer( player, player, "weapon_proximitymine_throw" )
 		ProximityCharge_PostFired_Init( proximityMine, player )
 		thread ProximityMineThink( proximityMine, player )

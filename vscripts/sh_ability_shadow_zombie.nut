@@ -71,7 +71,7 @@ void function ShAbilityShadowZombie_Init()
         
 	#endif
 
-	ShPrecacheShadowSquadAssets()
+	PrecacheScriptString( STRING_SHADOW_SOUNDS )
 	PrecacheWeapon( $"melee_shadowsquad_hands" )
 	PrecacheWeapon( $"melee_shadowroyale_hands" )
 	PrecacheWeapon( $"mp_weapon_shadow_squad_hands_primary" )

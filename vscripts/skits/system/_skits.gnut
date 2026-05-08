@@ -29,9 +29,9 @@ global function HighlightEntsForDuration
 global function BroadcastTestMsg
 global function BroadcastHudSplashToRadius
 
-#if DEVELOPER
+#if DEV
 global function DEV_Skits_ToggleOverlay
-#endif // DEVELOPER
+#endif // DEV
 
 
 ////////////////////
@@ -86,7 +86,7 @@ global struct SkitInstance
 	table<string, var> subThreads
 
 	// Garbage collection:
-	//ResourceCollection _gc_resources
+	ResourceCollection _gc_resources
 	array<entity> _gc_npcs
 }
 
@@ -110,7 +110,7 @@ void function SkitSystem_Init()
 {
 	if ( isInitialized )
 	{
-		#if DEVELOPER
+		#if DEV
 			printf( "Skit System is already initialized" )
 		#endif
 		return
@@ -140,14 +140,14 @@ void function SkitSystem_Init()
 #if SERVER
 vector function DefaultDbgGetPos( SkitInstance si )
 {
-	/*if ( si._gc_resources.groups.len() > 0 )
+	if ( si._gc_resources.groups.len() > 0 )
 	{
 		vector sum
 		foreach( ResourceGroup group in si._gc_resources.groups )
 			sum += group.core.spawnOrigin
 		vector result = (sum / float( si._gc_resources.groups.len() ))
 		return (result + <0, 0, (2.0 * (si.skitId % 64))>)
-	}*/
+	}
 
 	if ( si._gc_npcs.len() > 0 )
 	{
@@ -228,7 +228,7 @@ void function Skit_FreeInstance( SkitInstance si )
 		si.cleanupFunc( si )
 
 	// GC resources:
-	/*if ( si._gc_resources._total > 0 )
+	if ( si._gc_resources._total > 0 )
 	{
 		for ( int orType = 0; orType < eORType._count; ++orType )
 		{
@@ -238,7 +238,7 @@ void function Skit_FreeInstance( SkitInstance si )
 			list.clear()
 		}
 		si._gc_resources._total = 0
-	}*/
+	}
 
 	// GC NPCs:
 	printf( "%s() - NPCs to be released: %d", FUNC_NAME(), si._gc_npcs.len() )
@@ -277,9 +277,9 @@ void function Skit_LaunchInstance( SkitInstance si )
 
 void function OnGameStateEnterPlaying()
 {
-#if DEVELOPER
+#if DEV
 	thread DebugFrameThread()
-#endif // DEVELOPER
+#endif // DEV
 }
 
 /////
@@ -299,7 +299,7 @@ string function GetNameForLifestate( int lifeState )
 
 string function SkDebug_GetDebugLineForSkit( SkitInstance si )
 {
-	return "e"//format( "#%d (%s) T:%.1f NPCs:%d threads:%d resources:%d runtimeFunc:%s startedBy:%s", si.skitId, GetNameForLifestate( si.lifeState ), si.dbg_startTime, si._gc_npcs.len(), si.subThreads.len(), si._gc_resources._total, string( si.runtimeFunc ), si.dbg_invokedBy )
+	return format( "#%d (%s) T:%.1f NPCs:%d threads:%d resources:%d runtimeFunc:%s startedBy:%s", si.skitId, GetNameForLifestate( si.lifeState ), si.dbg_startTime, si._gc_npcs.len(), si.subThreads.len(), si._gc_resources._total, string( si.runtimeFunc ), si.dbg_invokedBy )
 }
 string function SkDebug_GetDebugLineForSubthreadsTable( SkitInstance si )
 {
@@ -346,7 +346,7 @@ void function DEV_PrintAllSkits()
 /////
 //
 
-#if DEVELOPER
+#if DEV
 bool s_debugDrawFrame = false
 void function DEV_Skits_ToggleOverlay()
 {
@@ -391,7 +391,7 @@ void function DebugDrawFrame()
 		DebugDrawScreenText( 0.01, 0.55, promptText )
 	}
 }
-#endif // DEVELOPER
+#endif // DEV
 
 
 /////
@@ -476,13 +476,13 @@ void function SkRes_MarkResourceInUse( ResourceCore core, SkitInstance si )
 {
 	Assert( !ORS_IsInUse( core ) )
 	ORS_MarkInUse( core )
-	//ORS_AddResourceToCollection( si._gc_resources, core )
+	ORS_AddResourceToCollection( si._gc_resources, core )
 }
 
 void function SkRes_FreeResource( ResourceCore core, SkitInstance si )
 {
 	Assert( ORS_IsInUse( core ) )
-	//ORS_RemoveResourceFromCollection( si._gc_resources, core )
+	ORS_RemoveResourceFromCollection( si._gc_resources, core )
 	ORS_Free( core )
 }
 
@@ -674,3 +674,4 @@ void function Instance_BroadcastHudSplashToRadius( entity wp )
 	AnnouncementMessageSweep( GetLocalClientPlayer(), messageText, subText, <220,220,220>, $"", SFX_HUD_ANNOUNCE_QUICK, duration )
 }
 #endif // CLIENT
+ 
