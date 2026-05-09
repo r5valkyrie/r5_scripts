@@ -177,7 +177,7 @@ void function SV_CL_Init()
 	Sh_Ranked_ItemRegistrationInit() 
 
 
-		//Sh_ArenasRanked_ItemRegistrationInit() 
+		Sh_ArenasRanked_ItemRegistrationInit() 
 
 
 
@@ -200,7 +200,7 @@ void function SV_CL_Init()
 	ShBattlepassPurchasableXP_LevelInit()
 	Sh_Boosts_Init()
 
-		//ShEventAbilities_Init()
+		ShEventAbilities_Init()
 		ShPassiveLootHighlight_Init()
 		//ShPassiveKnockAdrenaline_Init()
 		//ShPassiveSquadwipeBoost_Init()
@@ -208,10 +208,10 @@ void function SV_CL_Init()
 	ShMusic_LevelInit()
 	ShBattlePass_LevelInit()
 
-	//ShCups_LevelInit()
+	ShCups_LevelInit()
 
 
-	//ShRankedRumble_Init()
+	ShRankedRumble_Init()
 
 
 	VendingMachine_LevelInit()
@@ -248,9 +248,9 @@ void function SV_CL_Init()
 
 
 	AutogenStats_Init()
-	//Sh_Kepler_Init()
+	Sh_Kepler_Init()
 
-	//ShRewardSetTracker_LevelInit()
+	ShRewardSetTracker_LevelInit()
 
 	ShItems_LevelInit_Finish()
 	ShItemPerPlayerState_LevelInit()
@@ -259,7 +259,7 @@ void function SV_CL_Init()
 	ShStats_LevelInit()
 	ShChallenges_LevelInit_PostStats()
 
-	//	ShCups_LevelInit_PostStats()
+		ShCups_LevelInit_PostStats()
 
 	Sh_Ranked_Init() 
 
@@ -1034,7 +1034,7 @@ void function Shared_Lobby_Init()
 	StoryChallengeEvents_Init()
 	Sh_Ranked_ItemRegistrationInit() 
 
-		//Sh_ArenasRanked_ItemRegistrationInit() 
+		Sh_ArenasRanked_ItemRegistrationInit() 
 
 	ShWeapons_LevelInit()
 	ShWeaponCosmetics_LevelInit()
@@ -1049,23 +1049,23 @@ void function Shared_Lobby_Init()
 	ShBattlepassPresaleVoucher_LevelInit()
 	ShBattlepassPurchasableXP_LevelInit()
 
-		//ShEventAbilities_Init()
+		ShEventAbilities_Init()
 
 	Sh_Boosts_Init()
 	ShMusic_LevelInit()
 	ShBattlePass_LevelInit()
 
-	//ShCups_LevelInit()
+	ShCups_LevelInit()
 
 
-	//ShRankedRumble_Init()
+	ShRankedRumble_Init()
 
 
 
 
 	TreasureBox_SharedInit()
 	SeasonQuest_SharedInit()
-//	EventRefresh_SharedInit()
+	EventRefresh_SharedInit()
 	MenuCamera_Init()
 	MenuScene_Init()
 	ShSceneCapture_LevelInit()
@@ -1084,9 +1084,9 @@ void function Shared_Lobby_Init()
 
 
 	LootBoxCeremony_SharedInit()
-	//Sh_Kepler_Init()
+	Sh_Kepler_Init()
 
-//	ShRewardSetTracker_LevelInit()
+	ShRewardSetTracker_LevelInit()
 
 	ShItems_LevelInit_Finish()
 	ShItemPerPlayerState_LevelInit()
@@ -1095,14 +1095,14 @@ void function Shared_Lobby_Init()
 	ShStats_LevelInit()
 	ShChallenges_LevelInit_PostStats()
 
-		//ShCups_LevelInit_PostStats()
+		ShCups_LevelInit_PostStats()
 
 	Sh_Ranked_Init() 
 
-		//CLUI_Ranked_Init()
+		CLUI_Ranked_Init()
 
 
-		//Sh_ArenasRanked_Init() 
+		Sh_ArenasRanked_Init() 
 
 
 	
@@ -1122,7 +1122,7 @@ void function Shared_Lobby_Init()
 		Client_Lobby_Init()
 
 
-	//MpWeaponEmoteProjector_Init()
+	MpWeaponEmoteProjector_Init()
 	ShEmotes_Lobby_Init()
 
 

@@ -904,14 +904,14 @@ void function UIFullyConnectedInitialization()
 	StoryChallengeEvents_Init()
 	Sh_Ranked_ItemRegistrationInit()
 	Sh_Ranked_Init()
-	//CLUI_Ranked_Init()
+	CLUI_Ranked_Init()
 
 
-		//Sh_ArenasRanked_ItemRegistrationInit()
+		Sh_ArenasRanked_ItemRegistrationInit()
 
 
 
-		//Sh_ArenasRanked_Init()
+		Sh_ArenasRanked_Init()
 
 	ShWeapons_LevelInit()
 	ShWeaponCosmetics_LevelInit()
@@ -931,10 +931,10 @@ void function UIFullyConnectedInitialization()
 	ShMusic_LevelInit()
 	ShBattlePass_LevelInit()
 
-	//ShCups_LevelInit()
+	ShCups_LevelInit()
 
 
-	//ShRankedRumble_Init()
+	ShRankedRumble_Init()
 
 
 
@@ -956,7 +956,7 @@ void function UIFullyConnectedInitialization()
 
 
 	AutogenStats_Init()
-	//Sh_Kepler_Init()
+	Sh_Kepler_Init()
 
 	ShRewardSetTracker_LevelInit()
 
@@ -970,7 +970,7 @@ void function UIFullyConnectedInitialization()
 	Sh_RankedTrials_Init() 
 	ShChallenges_LevelInit_PostStats()
 
-		//ShCups_LevelInit_PostStats()
+		ShCups_LevelInit_PostStats()
 
 	ShPlaylist_Init()
 
