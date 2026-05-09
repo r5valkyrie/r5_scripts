@@ -428,6 +428,7 @@ void function RemoteFunctions_Init_Begin()
 	RegisterNetworkedVariableSafe( "ownerEHI", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
 
 	RegisterNetworkedVariableSafe( "hasDeathFieldImmunity", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "hasExpiredBannerPerk", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 			//RegisterNetworkedVariableSafe( "isMapZoneDisplayTextDisabled", SNDC_GLOBAL, SNVT_BOOL, false )
 			//RegisterNetworkedVariableSafe( "pickLoadoutGamestateStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
 			//RegisterNetworkedVariableSafe( "pickLoadoutGamestateEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )

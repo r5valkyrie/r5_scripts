@@ -178,7 +178,8 @@ void function SetGameState( int newState )
 	SetGameStateChangeTime( Time() )
 	SetGlobalNonRewindNetInt("gameState", newState)
 
-	Signal( svGlobal.levelEnt, "GameStateChanged", { newState = newState } )
+	try { Signal( svGlobal.levelEnt, "GameStateChanged", { newState = newState } ) }
+	catch (e) {}
 
 	foreach ( callbackFunc in svGlobal.gameStateEnterCallbacks[ newState ] )
 	{

@@ -35,21 +35,28 @@ void function RegisterNetworkedVariableSafe(name, category, type, ...)
 	if (SDKIsOverflowVar(name))
 		return
 
-	// Non-overflow: engine registers normally
-	switch (vargc)
+	// Non-overflow: engine registers normally. try/catch handles capacity overflow.
+	try
 	{
-		case 0:
-			RegisterNetworkedVariable(name, category, type)
-			break
-		case 1:
-			RegisterNetworkedVariable(name, category, type, vargv[0])
-			break
-		case 2:
-			RegisterNetworkedVariable(name, category, type, vargv[0], vargv[1])
-			break
-		case 3:
-			RegisterNetworkedVariable(name, category, type, vargv[0], vargv[1], vargv[2])
-			break
+		switch (vargc)
+		{
+			case 0:
+				RegisterNetworkedVariable(name, category, type)
+				break
+			case 1:
+				RegisterNetworkedVariable(name, category, type, vargv[0])
+				break
+			case 2:
+				RegisterNetworkedVariable(name, category, type, vargv[0], vargv[1])
+				break
+			case 3:
+				RegisterNetworkedVariable(name, category, type, vargv[0], vargv[1], vargv[2])
+				break
+		}
+	}
+	catch (e)
+	{
+		printf("WARNING: RegisterNetworkedVariable overflow for '%s': %s\n", string(name), string(e))
 	}
 }
 
@@ -99,13 +106,27 @@ void function SetGlobalNetFloatSafe(string name, value)
 void function SetGlobalNetTimeSafe(string name, value)
 {
 	float fval = expect float(value)
-	float oldValue = GetGlobalNetTime(name)
 	if (SDKIsOverflowVar(name))
+	{
+		float oldValue = SDKGetGlobalNetTime(name)
 		SDKSetGlobalNetTime(name, fval)
+		if (oldValue != fval)
+			SDKNotifyFloatVarChanged(name, oldValue, fval)
+	}
 	else
-		SetGlobalNetTime(name, value)
-	if (oldValue != fval)
-		SDKNotifyFloatVarChanged(name, oldValue, fval)
+	{
+		try
+		{
+			float oldValue = GetGlobalNetTime(name)
+			SetGlobalNetTime(name, value)
+			if (oldValue != fval)
+				SDKNotifyFloatVarChanged(name, oldValue, fval)
+		}
+		catch (e)
+		{
+			printf("WARNING: SetGlobalNetTimeSafe failed for '%s': %s\n", name, string(e))
+		}
+	}
 }
 
 void function SetGlobalNetEntSafe(string name, entity ent)
@@ -143,7 +164,8 @@ float function GetGlobalNetTimeSafe(string name)
 {
 	if (SDKIsOverflowVar(name))
 		return SDKGetGlobalNetTime(name)
-	return GetGlobalNetTime(name)
+	try { return GetGlobalNetTime(name) }
+	catch (e) { return -1.0 }
 }
 
 entity function GetGlobalNetEntSafe(string name)
@@ -187,7 +209,8 @@ float function GetGlobalNetTimeSafe(string name)
 {
 	if (SDKIsOverflowVar(name))
 		return SDKGetGlobalNetTime(name)
-	return GetGlobalNetTime(name)
+	try { return GetGlobalNetTime(name) }
+	catch (e) { return -1.0 }
 }
 
 entity function GetGlobalNetEntSafe(string name)
@@ -231,7 +254,8 @@ float function GetGlobalNetTimeSafe(string name)
 {
 	if (SDKIsOverflowVar(name))
 		return SDKGetGlobalNetTime(name)
-	return GetGlobalNetTime(name)
+	try { return GetGlobalNetTime(name) }
+	catch (e) { return -1.0 }
 }
 
 // In UI VM, entity = EHI (integer handle). SDKGetGlobalNetEntity returns the

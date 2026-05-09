@@ -5258,7 +5258,21 @@ void function Survival_PlayerCharacterSetup( entity player, ItemFlavor character
 	}
 
 
+	printf( "[BRIDGE-SPAWN] SetPlayerSettingsWithMods setFile='%s' mods=%s\n", string( setFile ), string( existingMods ) )
+	printf( "[BRIDGE-SPAWN] pre-SPWM: team=%d health=%d playerSettings='%s'\n", player.GetTeam(), player.GetHealth(), string( player.GetPlayerSettings() ) )
 	player.SetPlayerSettingsWithMods( setFile, existingMods )
+	printf( "[BRIDGE-SPAWN] post-SPWM: playerSettings='%s' mainWeapons=%d\n", string( player.GetPlayerSettings() ), player.GetMainWeapons().len() )
+	// Test: can we give ANY weapon at all?
+	try
+	{
+		player.GiveWeapon( "mp_weapon_melee_survival", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
+		entity testMelee = player.GetMainWeapons().len() > 0 ? player.GetMainWeapons()[0] : null
+		printf( "[BRIDGE-SPAWN] test melee give: %s\n", testMelee != null ? string(testMelee) : "NULL" )
+	}
+	catch (e)
+	{
+		printf( "[BRIDGE-SPAWN] test melee give FAILED: %s\n", string(e) )
+	}
 
 	// camo and skin are set elsewhere
 
@@ -5301,8 +5315,17 @@ void function Survival_PlayerCharacterSetup( entity player, ItemFlavor character
 	// tactical
 	{
 		ItemFlavor tacticalAbility = CharacterClass_GetTacticalAbility( character )
-		player.GiveOffhandWeapon( CharacterAbility_GetWeaponClassname( tacticalAbility ), OFFHAND_TACTICAL, [] )
+		string tacticalClassname = CharacterAbility_GetWeaponClassname( tacticalAbility )
+		printf( "[BRIDGE-SPAWN] tactical classname='%s' for character setFile='%s' player=%s\n", tacticalClassname, string( setFile ), string( player ) )
+		player.GiveOffhandWeapon( tacticalClassname, OFFHAND_TACTICAL, [] )
 		entity tacticalWeapon = player.GetOffhandWeapon( OFFHAND_TACTICAL )
+		printf( "[BRIDGE-SPAWN] tactical result: weapon=%s\n", tacticalWeapon == null ? "NULL" : string( tacticalWeapon ) )
+		if ( tacticalWeapon == null )
+		{
+			printf( "WARNING: tacticalWeapon is null for %s after GiveOffhandWeapon\n", string( player ) )
+		}
+		else
+		{
 		tacticalWeapon.SetWeaponPrimaryClipCount( tacticalWeapon.GetWeaponPrimaryClipCountMax() ) // give tactical straight away
 		if ( GetCurrentPlaylistVarBool( "survival_give_tactical_on_first_land", true ) )
 		{
@@ -5311,35 +5334,46 @@ void function Survival_PlayerCharacterSetup( entity player, ItemFlavor character
 		}
 
 		Remote_CallFunction_Replay( player, "ServerCallback_UpdateHudWeaponData", tacticalWeapon )
+		}
 	}
 
 	// ultimate
 	{
 		ItemFlavor ultimateAbility = CharacterClass_GetUltimateAbility( character )
-		player.GiveOffhandWeapon( CharacterAbility_GetWeaponClassname( ultimateAbility ), OFFHAND_ULTIMATE, [] )
+		string ultimateClassname = CharacterAbility_GetWeaponClassname( ultimateAbility )
+		printf( "[BRIDGE-SPAWN] ultimate classname='%s'\n", ultimateClassname )
+		player.GiveOffhandWeapon( ultimateClassname, OFFHAND_ULTIMATE, [] )
 
 		entity ultimateWeapon = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
+		printf( "[BRIDGE-SPAWN] ultimate result: weapon=%s\n", ultimateWeapon == null ? "NULL" : string( ultimateWeapon ) )
 
-		float fireDuration = ultimateWeapon.GetWeaponSettingFloat( eWeaponVar.fire_duration )
-		player.p.lastPilotOffhandUseTime[ OFFHAND_INVENTORY ] = Time() - fireDuration // track ultimate usage
-		player.p.lastPilotClipFrac[ OFFHAND_INVENTORY ]       = 0.0
-
-		// If we haven't landed and begun the game yet, let the ultimate charge faster (staging)
-		if ( GetGameState() <= eGameState.WaitingForPlayers )
+		if ( ultimateWeapon == null )
 		{
-			if ( GetCurrentPlaylistVarBool( "staging_ultimates_enabled", false ) )
-			{
-				if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
-					ultimateWeapon.AddMod( "survival_ammo_regen_staging" )
-			}
-			else
-			{
-				ultimateWeapon.AddMod( "survival_ammo_regen_paused" )
-			}
+			printf( "WARNING: ultimateWeapon is null for %s after GiveOffhandWeapon\n", string( player ) )
 		}
+		else
+		{
+			float fireDuration = ultimateWeapon.GetWeaponSettingFloat( eWeaponVar.fire_duration )
+			player.p.lastPilotOffhandUseTime[ OFFHAND_INVENTORY ] = Time() - fireDuration // track ultimate usage
+			player.p.lastPilotClipFrac[ OFFHAND_INVENTORY ]       = 0.0
 
-		if ( !player.p.survivalLandedOnGround && !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
-			ultimateWeapon.AddMod( "survival_ammo_regen_paused" )
+			// If we haven't landed and begun the game yet, let the ultimate charge faster (staging)
+			if ( GetGameState() <= eGameState.WaitingForPlayers )
+			{
+				if ( GetCurrentPlaylistVarBool( "staging_ultimates_enabled", false ) )
+				{
+					if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+						ultimateWeapon.AddMod( "survival_ammo_regen_staging" )
+				}
+				else
+				{
+					ultimateWeapon.AddMod( "survival_ammo_regen_paused" )
+				}
+			}
+
+			if ( !player.p.survivalLandedOnGround && !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+				ultimateWeapon.AddMod( "survival_ammo_regen_paused" )
+		}
 	}
 
 

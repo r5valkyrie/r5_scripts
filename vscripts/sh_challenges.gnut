@@ -2312,7 +2312,6 @@ void function Challenges_LobbyAddStatCallbacks( entity player )
 
 void function Challenges_OnPlayerConnectedThread( entity player, bool isReconnecting )
 {
-	return
 	if ( !IsValid( player ) )
 		return
 
