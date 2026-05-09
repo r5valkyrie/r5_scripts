@@ -97,6 +97,12 @@ int function GetBodyTypeIndexFromVictim( entity victim )
 	if ( IsProwler( victim ) )
 		return eBodyTypes.NPC_PROWLER
 
+	if ( IsSpider( victim ) )
+		return eBodyTypes.NPC_SPIDER
+
+	if ( IsNessie( victim ) )
+		return eBodyTypes.NPC_SPIDER
+
 	if ( IsSuperSpectre( victim ) )
 		return eBodyTypes.NPC_SUPER_SPECTRE
 

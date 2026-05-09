@@ -114,6 +114,13 @@ global enum eGradeFlags
 	IS_LOCKED = (1 << 3),
 }
 
+global enum eEntitiesDidLoadPriority
+{
+	// This must be ordered from lowest to highest
+	LOW,
+	MEDIUM,
+	HIGH
+}
 const array<string> ALLOWED_SCRIPT_PARENT_ENTS = [
 	"hatch_bunker_entrance_model_z16",
 	"hatch_bunker_entrance_model_z6",
@@ -132,7 +139,8 @@ struct
 {
 	array<entity>                 invalidEntsForPlacingPermanentsOnto
 	table<entity, RefEntAreaData> invalidAreasRelativeToEntForPlacingPermanentsOnto
-	//int functionref()            getNumTeamsRemainingCallback
+
+	int functionref()            getNumTeamsRemainingCallback
 	float functionref()			 getDeathCamTimeOverride
 	float functionref()			 getDeathCamSpectateTimeOverride
 	array<string>				 nonInstalledModsTracked
@@ -3345,39 +3353,6 @@ bool function IsPilotEliminationBased()
 	return true
 }
 
-void function __WarpInDropPodEffectShared( vector origin, vector angles, string sfx, float preWaitOverride = -1.0, entity ornull vehicle = null )
-{
-	float preWait = 2.0
-	float sfxWait = 0.1
-	float totalTime = WARPINFXTIME
-
-	if ( sfx == "" )
-		sfx = "dropship_warpin"
-
-	if ( preWaitOverride >= 0.0 )
-		wait preWaitOverride
-	else
-		wait preWait  //this needs to go and the const for warpin fx time needs to change - but not this game - the intro system is too dependent on it
-
-	#if CLIENT
-		int fxIndex = GetParticleSystemIndex( FX_GUNSHIP_CRASH_EXPLOSION )
-		StartParticleEffectInWorld( fxIndex, origin, angles )
-	#else
-		entity fx = PlayFX( FX_GUNSHIP_CRASH_EXPLOSION, origin, angles )
-		fx.FXEnableRenderAlways()
-		fx.DisableHibernation()
-		if ( IsValid( vehicle ) )
-		{
-			fx.RemoveFromAllRealms()
-			fx.AddToOtherEntitysRealms( expect entity ( vehicle ) )
-		}
-	#endif //
-
-	wait sfxWait
-	EmitSoundAtPosition( TEAM_UNASSIGNED, origin, sfx )
-
-	wait totalTime - preWait - sfxWait
-}
 
 void function __WarpInEffectShared( vector origin, vector angles, string sfx, entity vehicle, float preWaitOverride = -1.0 )
 {
@@ -3974,7 +3949,11 @@ bool function GameTeams_TeamHasDeadPlayers( int team )
 }
 
 typedef EntitiesDidLoadCallbackType void functionref()
-array<EntitiesDidLoadCallbackType> _EntitiesDidLoadTypedCallbacks
+struct EntityDidLoadCallback {
+	EntitiesDidLoadCallbackType callbackFunc
+	int priority
+}
+array< EntityDidLoadCallback > _EntitiesDidLoadTypedCallbacks
 
 void function RunCallbacks_EntitiesDidLoad()
 {
@@ -3982,17 +3961,38 @@ void function RunCallbacks_EntitiesDidLoad()
 	if ( "forcedReloading" in level )
 		return
 
+	// Sort the array so that higher priority is earlier
+	_EntitiesDidLoadTypedCallbacks.sort( int function( EntityDidLoadCallback a, EntityDidLoadCallback b ){
+		if ( a.priority > b.priority )
+			return -1
+		else if (  a.priority < b.priority )
+			return 1
+		return 0
+	} )
+
 	foreach ( callback in _EntitiesDidLoadTypedCallbacks )
 	{
-		thread callback()
+		thread callback.callbackFunc()
 	}
 }
 
-void function AddCallback_EntitiesDidLoad( EntitiesDidLoadCallbackType callback )
+
+// IMPORTANT: You should only set the priority if you know you need to. It is to make sure files that precache/setup assets during entities did load
+// run before files that may spawn the entity during entitiesdidload. If you are unsure whether or not you need to adjust the priority, chat with the
+// World Systems team (short answer, you probably don't need to)
+void function AddCallback_EntitiesDidLoad( EntitiesDidLoadCallbackType callbackFunc, int priority = eEntitiesDidLoadPriority.LOW )
 {
+	EntityDidLoadCallback callback
+	callback.callbackFunc = callbackFunc
+	callback.priority = priority
+
 	_EntitiesDidLoadTypedCallbacks.append( callback )
 }
 
+void function AddCallback_GetNumTeamsRemaining( int functionref() callbackFunc )
+{
+	file.getNumTeamsRemainingCallback = callbackFunc
+}
 bool function IsTitanNPC( entity ent )
 {
 	return ent.IsTitan() && ent.IsNPC()
@@ -5958,6 +5958,10 @@ array<int> function GetTeamsForPlayers( array<entity> playersToUse )
 
 int function GetNumTeamsRemaining()
 {
+	if ( file.getNumTeamsRemainingCallback != null )
+	{
+		return file.getNumTeamsRemainingCallback()
+	}
 	return GetTeamsForPlayers( GetPlayerArray_AliveConnected() ).len()
 }
 
@@ -6726,11 +6730,14 @@ void function RemoveRefEntAreaFromInvalidOriginsForPlacingPermanentsOnto( entity
 }
 
 
-bool function IsOriginInvalidForPlacingPermanentOnto( vector origin )
+bool function IsOriginInvalidForPlacingPermanentOnto( vector origin, entity realmEnt )
 {
 	foreach ( entity refEnt, RefEntAreaData data in file.invalidAreasRelativeToEntForPlacingPermanentsOnto )
 	{
 		if ( !IsValid( refEnt ) )
+			continue
+
+		if( IsValid( realmEnt ) && !refEnt.DoesShareRealms( realmEnt ) )
 			continue
 
 		vector localPos = WorldPosToLocalPos_NoEnt( origin, refEnt.GetOrigin(), refEnt.GetAngles() )

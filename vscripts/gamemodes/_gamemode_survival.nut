@@ -585,21 +585,20 @@ void function GamemodeSurvival_Init()
 	RegisterSignal( "FiringRange_CharacterChanged" )
 
 	#if DEVELOPER
-		AddClientCommandCallback( "Sur_SetActiveWeapon", bool function( entity player, array<string> args ) { ClientCommand_Sur_SetActiveWeapon( player, args ); return true } ) // dev
+		AddClientCommandCallback( "Sur_SetActiveWeapon", ClientCommand_Sur_SetActiveWeapon ) // dev
 	#endif
 
-	AddClientCommandCallback( "GoToMapPoint", bool function( entity player, array<string> args ) { ClientCommand_GoToMapPoint( player, args ); return true } ) // cheat
+	AddClientCommandCallback( "GoToMapPoint", ClientCommand_GoToMapPoint ) // cheat
 
 	#if DEVELOPER
-		AddClientCommandCallback( "dev_sur_force_spawn_character", bool function( entity player, array<string> args ) { ClientCommand_dev_sur_force_spawn_character( player, args ); return true } ) // dev
+		AddClientCommandCallback( "dev_sur_force_spawn_character", ClientCommand_dev_sur_force_spawn_character ) // dev
 		AddCallback_BotRecordStart( Survival_BotRecordStart )
 		AddCallback_BotPlaybackStart( void function( entity playbackBot ) {
 			Survival_BotPlaybackStart( playbackBot )
 		} )
-		AddClientCommandCallback( "dev_give_random_inventory", bool function( entity player, array<string> args ) {
+		AddClientCommandCallback( "dev_give_random_inventory", void function( entity player, array<string> args ) {
 			// dev
 			GiveRandomStartingLoot( player )
-			return true
 		} )
 	#endif
 

@@ -1780,7 +1780,7 @@ bool function PlantStickyEntity( entity ent, DeployableCollisionParams cp, vecto
 		}
 	}
 
-	if ( IsOriginInvalidForPlacingPermanentOnto( plantPosition ) )
+	if ( IsOriginInvalidForPlacingPermanentOnto( plantPosition, ent ) )
 		return false
 
 	#if SERVER

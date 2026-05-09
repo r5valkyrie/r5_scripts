@@ -138,12 +138,13 @@ struct
 
 void function MpWeaponCoverWall_Init()
 {
+	Remote_RegisterServerFunction( "ClientCallback_TryPickupCoverWall", "typed_entity", "prop_script" )
+
 	#if SERVER
 		AddCallback_OnPassThrough( AmpedWallPassThroughFX )
 
 		RegisterDynamicEntCleanupItem_Parented_Scriptname( BASE_WALL_SCRIPT_NAME )
 		RegisterDynamicEntCleanupItem_Area_Scriptname( BASE_WALL_SCRIPT_NAME )
-		AddClientCommandCallback( "ClientCallback_TryPickupCoverWall", ClientCommand_ClientCallback_TryPickupCoverWall )
 	#endif
 
 	#if CLIENT
@@ -151,17 +152,25 @@ void function MpWeaponCoverWall_Init()
 
 		AddCallback_UseEntGainFocus( CoverWall_OnGainFocus )
 		AddCallback_UseEntLoseFocus( CoverWall_OnLoseFocus )
+
+
+		RegisterMinimapPackage( "prop_script", eMinimapObject_prop_script.RAMPART_WALL, MINIMAP_OBJECT_RUI, MinimapPackage_RampartWall, FULLMAP_OBJECT_RUI, MinimapPackage_RampartWall )
 	#endif
 
-	#if SERVER || CLIENT
+	                    
+		#if SERVER || CLIENT
 		RegisterSignal( "FastReloadsUpgradeEnd" )
 		Remote_RegisterClientFunction( "ServerToClient_CoverWallUpgrade_StartFastReload" )
 		Remote_RegisterClientFunction( "ServerToClient_CoverWallUpgrade_EndFastReload" )
-	#endif
+		#endif
 
-	#if CLIENT
-		COCKPIT_FAST_RELOAD_SCREEN_FX = PrecacheParticleSystem( FAST_RELOAD_UPGRADE_1P_SCREEN_FX )
-	#endif
+		#if SERVER
+			AddCallback_OnPassiveChanged( ePassives.PAS_PAS_UPGRADE_TWO, CoverWallUpgrade_FastReloads_OnUpgradeChanged )
+		#endif
+
+		#if CLIENT
+			COCKPIT_FAST_RELOAD_SCREEN_FX = PrecacheParticleSystem( FAST_RELOAD_UPGRADE_1P_SCREEN_FX )
+		#endif
 
 	file.ampedWallMaxHealth = GetRampartAmpedShieldHealth()
 
@@ -1077,32 +1086,15 @@ void function PlayIncomingDamageFX_Thread( entity shieldFX )
 }
 
 #if SERVER
-bool function ClientCommand_ClientCallback_TryPickupCoverWall( entity player, array<string> args )
+void function ClientCallback_TryPickupCoverWall( entity player, entity device )
 {
-	if ( args.len() < 1 )
-		return false
-
-	int entIndex = int( args[0] )
-	entity useEnt = GetEntityFromEncodedEHandle( entIndex )
-
-	if ( !IsValid( useEnt ) || useEnt.GetScriptName() != BASE_WALL_SCRIPT_NAME )
-		return true
-
-	if ( !SURVIVAL_PlayerAllowedToPickup( player ) )
-		return true
-
-	thread PickupCoverWall( player, useEnt )
-	return true
-}
-
-void function ClientCallback_TryPickupCoverWall( entity device )
-{
-	entity player = device.GetOwner()
-
 	if ( !SURVIVAL_PlayerAllowedToPickup( player ) )
 		return
 
 	if ( !IsValid( device ) || device.GetScriptName() != BASE_WALL_SCRIPT_NAME )
+		return
+
+	if ( device != player.GetUseEntity() )
 		return
 
 	PickupCoverWall( player, device )

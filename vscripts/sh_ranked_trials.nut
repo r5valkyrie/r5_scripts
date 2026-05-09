@@ -18,7 +18,7 @@ global function RankedTrials_HasDualStatSecondaryTrial
 
 // Persistence accessors
 global function RankedTrials_PlayerHasAssignedTrial
-//global function RankedTrials_GetAssignedTrial // Moved to workarounds.gnut
+global function RankedTrials_GetAssignedTrial
 global function RankedTrials_GetNetLP
 global function RankedTrials_GetSecondaryStatMatchComboStatProgress
 global function RankedTrials_GetGamesPlayedInTrialsState
@@ -26,7 +26,7 @@ global function RankedTrials_GetGamesAllowedInTrialsState
 global function RankedTrials_GetTimesFailedTrial
 global function RankedTrials_GetProgressValueForStatByIndex
 global function RankedTrials_GetTrialState
-//global function RankedTrials_PlayerHasIncompleteTrial // Moved to workarounds.gnut
+global function RankedTrials_PlayerHasIncompleteTrial
 
 #if CLIENT || UI
 global function RankedTrials_GetDescription
@@ -454,14 +454,18 @@ bool function RankedTrials_PlayerHasAssignedTrial( entity player )
 	return ( IsValidItemFlavorGUID( guid, eValidation.DONT_ASSERT ) )
 }
 
-// Moved to workarounds.gnut for load order
-//ItemFlavor function RankedTrials_GetAssignedTrial( entity player )
-//{
-//	string platformId = GetMergedPlatformIdForPlayer( player )
-//	int guid = player.GetPersistentVarAsInt( format( PERSISTENCE_KEY_FORMAT_STRING, platformId, PERSISTENCE_KEY_GUID ) )
-//	Assert( IsValidItemFlavorGUID( guid, eValidation.ASSERT ) )
-//	return GetItemFlavorByGUID( guid )
-//}
+ItemFlavor function RankedTrials_GetAssignedTrial( entity player )
+{
+	string platformId = GetMergedPlatformIdForPlayer( player )
+	#if UI
+	int guid = GetPersistentVarAsInt( format( PERSISTENCE_KEY_FORMAT_STRING, platformId, PERSISTENCE_KEY_GUID ) )
+	#else
+	int guid = player.GetPersistentVarAsInt( format( PERSISTENCE_KEY_FORMAT_STRING, platformId, PERSISTENCE_KEY_GUID ) )
+	#endif
+
+	Assert( IsValidItemFlavorGUID( guid, eValidation.ASSERT ) )
+	return GetItemFlavorByGUID( guid )
+}
 
 int function RankedTrials_GetNetLP( entity player )
 {
@@ -498,11 +502,10 @@ int function RankedTrials_GetTrialState( entity player )
 	return state
 }
 
-// Moved to workarounds.gnut for load order
-//bool function RankedTrials_PlayerHasIncompleteTrial( entity player )
-//{
-//	return RankedTrials_PlayerHasAssignedTrial( player ) && RankedTrials_GetTrialState( player ) == eRankedTrialState.INCOMPLETE
-//}
+bool function RankedTrials_PlayerHasIncompleteTrial( entity player )
+{
+	return RankedTrials_PlayerHasAssignedTrial( player ) && RankedTrials_GetTrialState( player ) == eRankedTrialState.INCOMPLETE
+}
 
 #if CLIENT || UI
 bool function RankedTrials_NextRankHasTrial( SharedRankedDivisionData currentDivision, SharedRankedDivisionData ornull nextDivision )
@@ -640,10 +643,9 @@ void function RankedTrials_OnPlayerConnected( entity player, bool isReconnecting
 	if ( !RankedTrials_PlayerHasAssignedTrial( player ) )
 		return
 
-	// NOTE: hasRankedTrialsStatsCallbacksAdded not in S3 ServerPlayerStruct
-	// Assert( ( !isReconnecting && !player.p.hasRankedTrialsStatsCallbacksAdded ) || isReconnecting )
-	// if ( isReconnecting && player.p.hasRankedTrialsStatsCallbacksAdded )
-	// 	return
+	Assert( ( !isReconnecting && !player.p.hasRankedTrialsStatsCallbacksAdded ) || isReconnecting )
+	if ( isReconnecting && player.p.hasRankedTrialsStatsCallbacksAdded )
+		return
 
 	// RESET Trial Completion due Success or Failure based on *PREVIOUS* Match. We store state and keep data in the Lobby so UI can use it.
 	if ( RankedTrials_GetTrialState( player ) == eRankedTrialState.SUCCESS || RankedTrials_GetTrialState( player ) == eRankedTrialState.FAILURE )
@@ -666,7 +668,7 @@ void function RankedTrials_OnPlayerConnected( entity player, bool isReconnecting
 				Callback_OnStatChanged_Int( player, statEntry, oldValue, newValue )
 		} )
 	}
-	// player.p.hasRankedTrialsStatsCallbacksAdded = true // Not in S3 struct
+	player.p.hasRankedTrialsStatsCallbacksAdded = true
 }
 
 int function RankedTrials_UpdateTrialCompletion( entity player, ItemFlavor rankedTrial )

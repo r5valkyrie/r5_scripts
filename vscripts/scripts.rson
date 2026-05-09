@@ -328,7 +328,6 @@ Scripts:
 	sh_network_marker.gnut
 	sh_timer.gnut
 	sh_doors.nut
-	sh_capturemode.gnut
 	sh_timed_event_utility.nut
 	sh_player_objects.gnut
 	weapons/_arc_cannon.nut
@@ -572,7 +571,6 @@ Scripts:
 	_anim.gnut
 	_bubble_shield.gnut
 	_codecallbacks_common.gnut
-	_clientcommands.gnut
 	_codecallbacks_player_input.gnut
 	_control_panel.gnut
 	sv_live_api.gnut
@@ -708,8 +706,6 @@ Scripts:
 
 	mp/_mobility_experiments.gnut
 	mp/_model_viewer.nut
-
-	mp/_base_cmds.gnut
 ]
 
 When: "SERVER || CLIENT"
@@ -1296,6 +1292,7 @@ When: "SERVER"
 Scripts:
 [
 	_loot_helper.gnut
+	sv_ranked_bonus.nut
 	sv_ranked_grx.nut
 	sh_arenas_ranked.gnut
 	_odl_smoke.gnut

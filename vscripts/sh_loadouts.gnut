@@ -3586,7 +3586,7 @@ void function ClientCallback_favorites_set( entity player, int favIndex, int ent
 void function ClientCallback_loadouts_set( entity player, int entryIndex, int slotContentsIndex )
 {
 	EHI playerEHI = ToEHI( player )
-
+	Warning("player requesting ClientCallback_loadouts_set")
 	if ( !(entryIndex >= 0 && entryIndex < fileLevel.loadoutSlotEntries.len()) )
 	{
 		Assert( false, "'loadouts_set' had invalid entry index (got " + entryIndex + ", valid range 0-" + (fileLevel.loadoutSlotEntries.len() - 1) + ")." )

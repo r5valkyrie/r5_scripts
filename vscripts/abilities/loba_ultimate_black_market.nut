@@ -310,7 +310,7 @@ PlacementInfo function GetPlacementInfo( entity player )
 
 	if ( info.success )
 	{
-		if ( IsOriginInvalidForPlacingPermanentOnto( downResults.endPos ) )
+		if ( IsOriginInvalidForPlacingPermanentOnto( downResults.endPos, player ) )
 		{
 			info.success = false
 		}
@@ -398,7 +398,7 @@ PlacementInfo function GetPlacementInfo( entity player )
 
 	if ( info.success )
 	{
-		if ( IsOriginInvalidForPlacingPermanentOnto( info.origin ) )
+		if ( IsOriginInvalidForPlacingPermanentOnto( info.origin, player ) )
 		{
 			info.success = false
 			info.failReason = "#PLAYER_DEPLOY_FAIL_HINT_OBSTRUCTED"
@@ -1124,43 +1124,39 @@ void function WarpBeamFXThread( entity blackMarket, vector startPos, vector endP
 
 
 #if SERVER
-bool function ClientCallback_OpenBlackMarket( entity player, array<string> args )
+void function ClientCallback_OpenBlackMarket( entity player, array<string> args )
 {
 	if ( args.len() < 1 )
-		return true
+		return
 
 	entity grabber = GetEntByIndex( args[0].tointeger() )
 
 	if ( !IsBlackMarketDevice( grabber ) || !IsValid( player ) || !player.IsPlayer() )
-		return true
+		return
 
 	//if ( grabber.IncrementPlayersGrabbingLoot != null )
 		//grabber.IncrementPlayersGrabbingLoot()
 	file.playersToBlackMarketMap[ player ] <- grabber
-
-	return true
 }
 #endif
 
 
 #if SERVER
-bool function ClientCallback_CloseBlackMarket( entity player, array<string> args )
+void function ClientCallback_CloseBlackMarket( entity player, array<string> args )
 {
 	if ( args.len() < 1 )
-		return true
+		return
 
 	entity grabber = GetEntByIndex( args[0].tointeger() )
 
 	if ( !IsBlackMarketDevice( grabber ) || !IsValid( player ) || !player.IsPlayer() )
-		return true
+		return
 
 	//if ( grabber.DecrementPlayersGrabbingLoot != null )
 		//grabber.DecrementPlayersGrabbingLoot()
 
 	if ( player in file.playersToBlackMarketMap )
 		delete file.playersToBlackMarketMap[ player ]
-
-	return true
 }
 #endif
 
@@ -1280,24 +1276,24 @@ void function OnCharacterButtonPressed( entity player )
 
 
 #if SERVER
-bool function ClientCallback_TryPickupBlackMarket( entity player, array<string> args )
+void function ClientCallback_TryPickupBlackMarket( entity player, array<string> args )
 {
 	if ( args.len() < 1 )
-		return false
+		return
 
 	entity device = GetEntByIndex( args[0].tointeger() )
 
 	if ( !SURVIVAL_PlayerAllowedToPickup( player ) )
-		return false
+		return
 
 	if ( !IsBlackMarketDevice( device ) )
-		return false
+		return
 
 	if ( device != player.GetUseEntity() )
-		return false
+		return
 
 	if ( GradeFlagsHas( device, eGradeFlags.IS_BUSY ) )
-		return false
+		return
 
 	GradeFlagsSet( device, eGradeFlags.IS_BUSY )
 
@@ -1310,8 +1306,6 @@ bool function ClientCallback_TryPickupBlackMarket( entity player, array<string> 
 			device.e.highlightProxy.Destroy()
 		waitthread PlayAnim( device, "mp_prop_lootcane_destroy" )
 	})()
-
-	return true
 }
 #endif
 

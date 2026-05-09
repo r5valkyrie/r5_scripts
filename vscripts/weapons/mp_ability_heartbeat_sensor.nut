@@ -153,10 +153,8 @@ void function PassiveHeartbeatSensor_Init()
 	PrecacheParticleSystem( FX_HEARTBEAT_SENSOR_SONAR_PULSE )
 	PrecacheParticleSystem( FX_HEARTBEAT_SENSOR_SONAR_PULSE_NO_INTRO )
 
-	#if SERVER
-	AddClientCommandCallback( "HeartbeatSensor_Toggle", ClientCallback_ToggleHeartbeatSensor )
-	AddClientCommandCallback( "HeartbeatSensor_UpdateStat", ClientCallback_UpdateHeartbeatsHeardStat )
-	#endif
+	Remote_RegisterServerFunction( "ClientCallback_ToggleHeartbeatSensor" )
+	Remote_RegisterServerFunction( "ClientCallback_UpdateHeartbeatsHeardStat", "int", INT_MIN, INT_MAX )
 
 	AddCallback_OnPassiveChanged( ePassives.PAS_PARIAH, HeartbeatSensor_OnPassiveChanged )
 	AddCallback_OnPlayerZoomIn( PlayerZoomInCallback )
@@ -478,27 +476,27 @@ void function HeartbeatSensorTogglePressed( entity player )
 
 	if ( activeWeapon.IsWeaponAdsButtonPressed() || activeWeapon.IsWeaponInAds() )
 	{
-		player.ClientCommand( "HeartbeatSensor_Toggle" )
+		Remote_ServerCallFunction( "ClientCallback_ToggleHeartbeatSensor" )
 	}
 }
 #endif // #if CLIENT
 
 #if SERVER
-bool function ClientCallback_ToggleHeartbeatSensor( entity player, array<string> args )
+void function ClientCallback_ToggleHeartbeatSensor( entity player )
 {
 	if ( !IsAlive( player ) )
-		return false
+		return
 
 	if ( !PlayerHasPassive( player, ePassives.PAS_PARIAH ) )
-		return false
+		return
 
 	entity weapon = player.GetOffhandWeapon( HEARTBEAT_SENSOR_OFFHAND_INDEX )
 
 	if ( !IsValid( weapon ) )
-		return false
+		return
 
 	if ( weapon.GetWeaponClassName() != HEARTBEAT_SENSOR_WEAPON_NAME )
-		return false
+		return
 
 	array<string> mods = weapon.GetMods()
 
@@ -508,7 +506,6 @@ bool function ClientCallback_ToggleHeartbeatSensor( entity player, array<string>
 		mods.append( "disabled" )
 
 	weapon.SetMods( mods )
-	return true
 }
 
 void function AddMoveSpeedWeaponModForMelee( entity player )

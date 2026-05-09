@@ -1,8 +1,2783 @@
-// stub script
 
 global function ScriptToys_Init
 
-void function ScriptToys_Init()
+//creature cages
+global function CreatureCageSpawn
+global function CreatureCageDespawn
+global function CreatureCageDespawnAll
+global function CreatureCageDestroy
+global function CreatureCageDestroyAll
+global function GetCreatureCageByInstanceName
+global function GetClosestCreatureCage
+global function GetAllCreaturesInsideCageBounds
+global function CreatureCageOpen
+global function CreatureSetStateFree
+global function CreatureSetStateCaged
+global function CreatureIsCaged
+global function IsGoliathCage
+global function LockCreatureCage
+global function UnlockCreatureCage
+global function GetCreatureCageIdleAnimsForType
+global const string SIGNAL_CREATURE_CAGE_OPENED = "CreatureCageOpened"
+
+global function SpawnCreaturesInCage
+
+//fire blockers
+global function FireBlockerActivate
+global function FireBlockerActivateAll
+global function GetFireBlockersByScriptNoteworthy
+const asset FIRE_BLOCKER_FIRE = $"P_fire_hallway_LG"
+//const asset FIRE_BLOCKER_FIRE = $"P_fire_loop_MD"
+//global function FireBlockerDeactivate
+
+global function GetDoorNavmeshSeparatorByScriptNoteworthy
+
+
+//breakables
+global function BreakableSpawn
+global function BreakableSpawnByInstanceName
+global function BreakableSpawnByType
+global function BreakableDespawn
+global function BreakableDespawnByInstanceName
+global function GetBreakableByInstanceName
+global function BreakableSetFlagOnDestroyed
+global function GetBreakableByControlNode
+global function GetDefendSpawnsForBreakable
+global const string SIGNAL_BREAKABLE_DESTROYED = "BreakableDestroyed"
+
+//harvesters
+global function HarvesterSpawn
+global function HarvesterSpawnByInstanceName
+global function HarvesterDespawn
+global function HarvesterDespawnByInstanceName
+global function GetHarvesterByInstanceName
+global function HarvesterSetFlagOnDestroyed
+global function ButtonWaitForActivateOrReset
+global function GetDefendSpawnsForHarvester
+global const string SIGNAL_HARVESTER_DESTROYED = "HarvesterDestroyed"
+global const string SIGNAL_HARVESTER_BLOWING_UP = "HarvesterBlowingUp"
+
+//Breakables - Generator
+const asset FX_EXPLOSION_GENERATOR = $"P_generator_exp"
+const asset FX_FIRE_END_GENERATOR = $"P_fire_small_FULL"
+const asset FX_SPARKS_END_GENERATOR = $"P_sparks_dir_SM_LOOP"
+const asset FX_STEAM_END_GENERATOR = $"env_steam_shoot_SM"
+const float BREAKABLE_HEALTH_GENERATOR = 200
+const asset MODEL_GENERATOR = $"mdl/beacon/charge_generator_01_glass.rmdl"
+const asset MODEL_GENERATOR_DESTROYED = $"mdl/beacon/charge_generator_01_destroyed.rmdl"
+
+//Breakables - Console
+const asset FX_EXPLOSION_CONSOLE = $"xo_exp_death" //P_meteor_trap_EXP
+const asset FX_FIRE_END_CONSOLE = $"P_fire_hatch_01"
+const asset FX_SPARKS_END_CONSOLE = $"P_sparks_dir_SM_LOOP"
+const asset FX_STEAM_END_CONSOLE = $"env_steam_shoot_SM"
+const float BREAKABLE_HEALTH_CONSOLE = 85
+const asset MODEL_CONSOLE = $"mdl/beacon/crane_room_monitor_console_static.rmdl"
+const asset MODEL_CONSOLE_DESTROYED = $"mdl/beacon/crane_room_monitor_console_static_off.rmdl"
+
+//Breakable - Creature Gas
+const asset FX_EXPLOSION_CREATURE_GAS = $"xo_exp_death"
+const asset FX_FIRE_END_CREATURE_GAS = $"P_fire_small_FULL"
+const asset FX_STEAM_END_CREATURE_GAS = $"env_steam_shoot_SM"
+//const asset FX_IDLE_FX_CREATURE_GAS = $"P_CreatureBait_sm" //$"P_road_flare"
+const float BREAKABLE_HEALTH_CREATURE_GAS = 20
+const asset MODEL_CREATURE_GAS = $"mdl/props/caustic_gas_tank/caustic_gas_tank.rmdl"
+const asset MODEL_CREATURE_GAS_DESTROYED = $"mdl/Weapons/caustic_gas_tank/w_caustic_gas_tank.rmdl"
+
+
+
+
+//Harvesters
+const vector HARVESTER_COLOR_FULL			= <126,188,236>
+const vector HARVESTER_COLOR_MED			= <242,172,50>
+const vector HARVESTER_COLOR_LOW			= <255,74,44>
+const asset MODEL_HARVESTER_TOWER_RINGS 	= $"mdl/props/generator_coop/generator_coop_rings_animated.rmdl"
+const asset FX_HARVESTER_BEAM				= $"P_harvester_beam_hld"
+//const asset FX_HARVESTER_BEAM				= $"P_tw_harvester_beam_endcap"
+const asset FX_HARVESTER_HEALTH_LOW 		= $"P_tw_harvester_damaged"
+const asset FX_HARVESTER_FIRE				= $"P_fire_loop_XL"
+const asset FX_HARVESTER_DUST				= $"P_impact_dpod_default"
+const asset FX_HARVESTER_EXPLOSION			= $"xo_exp_death"
+
+global enum eBreakbleType
 {
+	GENERATOR,
+	CONSOLE,
+	CREATURE_GAS
+}
+
+global enum eCageButtonType
+{
+	CONSOLE,
+	HACKPANEL,
+	SHOOTABLELOCK
+}
+
+global struct CreatureCage
+{
+	int cageButtonType
+	entity cageModel
+	entity cageAntennaModel
+	asset cageModelAsset
+	string cageInstanceName
+	vector cageModelOrigin
+	vector cageModelAngles
+	asset cageAntennaModelAsset
+	vector cageAntennaModelOrigin
+	vector cageAntennaModelAngles
+	array<entity> cageFx
+	array<entity> propCreatures
+	array<entity> creatures
+	entity controlPanel
+	entity door
+	entity dangerousAreaEnt
+	bool isOpen
+	array<entity> cageNavmeshSeperators
+	entity cageDoorNavmeshSeperator
+	entity button
+	bool isSpawned
+	entity shootableLock
+	bool hasCreatures
+	entity cageClip
+	entity cageRoofNavmeshSeperator
+	string exitAnimation
+	bool isLocked
+	entity lastPlayerToOpen
 
 }
+
+
+global struct Breakable
+{
+	int breakableType
+	entity controlNode
+	entity model
+	entity modelDestroyed
+	asset modelAsset
+	asset modelAssetDestroyed
+	entity navmeshSeperator
+	string instanceName
+	vector origin
+	vector angles
+	bool isDestroyed
+	bool isSpawned
+	array <entity> fx
+	array <string> flags
+	array <entity> poweredItems
+	entity killer
+	float lastTimeAttacked
+	entity lastTimeAttacker
+}
+
+
+global struct Harvester
+{
+	entity model
+	asset modelAsset
+	array <entity> navmeshSeperators
+	array <entity> generatorControlNodes
+	string instanceName
+	vector origin
+	vector angles
+	bool isDestroyed
+	bool isSpawned
+	array <entity> fx
+	array <string> flagsToSetOnDestroy
+	int numberOfGeneratorsDestroyed
+	array <entity> generatorModels
+	entity shield
+	string ambientSFX
+	string damageSFX
+	entity ringEnt
+	string ringAnim
+	entity harvesterBeamFX
+	entity fxControlPointEnt
+	entity damageFX
+	entity killer
+
+}
+
+
+struct
+{
+	array<CreatureCage>  creatureCages
+	array<entity> fireBlockers
+	array<entity> doorNavmeshSeperators
+	array<Breakable> breakables
+	array<entity> breakableControlNodes
+	array<Harvester> harvesters
+
+	array<entity> infoTextPanels
+
+} file
+
+void function ScriptToys_Init()
+{
+	AddSpawnCallback( "info_particle_system", ParticleSystemInit )
+
+	AddSpawnCallbackEditorClass( "func_brush", 					"func_brush_navmesh_separator", NavmeshSeparatorThink )
+	AddSpawnCallbackEditorClass( "script_mover_lightweight", 	"script_soundeffect", 			ScriptedSoundEffectThink )
+
+	AddSpawnCallback( "prop_dynamic", PlayEditorDefaultAnim )
+	RegisterSignal( "StopEditorDefaultAnim" )
+
+	#if DEV
+		AddSpawnCallbackEditorClass( "info_target", 				"info_text_panel", 				InfoTextPanelSpawnCallback )
+		AddSpawnCallbackEditorClass( "info_target", 				"info_debug_text", 				DevDebugText )
+	#endif
+
+	#if DEV
+	thread InfoTextPanelsCreate()
+	#endif
+
+                   
+                          
+                                
+                          
+                                               
+                                                 
+                                                              
+                                               
+                                           
+
+                                                                   
+                                                                       
+                                                                   
+                                                                    
+                                             
+
+                                                                   
+                                                                            
+                                                                   
+                                                                                   
+
+                               
+                                     
+                                
+                          
+                                                  
+                                                 
+                                                   
+                                                  
+                                  
+                                            
+
+                        
+                                                
+                                               
+                                                 
+                                                
+                                
+                                          
+
+                             
+                                                     
+                                                    
+                                                     
+                                                     
+                                     
+                                               
+
+                                                                        
+                                              
+
+                               
+                                     
+                                
+                                                                        
+                                              
+                                               
+                                              
+                                             
+                                                   
+                                             
+                                             
+                                                  
+                         
+}
+
+void function NavmeshSeparatorThink( entity separator )
+{
+	bool connected = true
+	if ( separator.HasKey( "startDisconnected" ) && separator.kv.startDisconnected == "1" )
+		connected = false
+
+	ToggleNPCPathsForEntity( separator, connected )
+	if ( connected )
+		separator.NotSolid()
+	else
+		separator.Solid()
+
+	if ( separator.HasKey( "script_flag" ) && separator.kv.script_flag != "" )
+	{
+		string flag = string( separator.kv.script_flag )
+		FlagInit( flag, connected )
+
+		while ( IsValid( separator ) )
+		{
+			if ( connected )
+				FlagWaitClear( flag )
+			else
+				FlagWait( flag )
+
+			connected = !connected
+			ToggleNPCPathsForEntity( separator, connected )
+			if ( connected )
+				separator.NotSolid()
+			else
+				separator.Solid()
+		}
+	}
+}
+
+void function ParticleSystemInit( entity particleSystem )
+{
+	// Effects are often played at long distances and many effects were not showing up once hibernation was turned on by default
+	particleSystem.DisableHibernation()
+
+	if ( IsConnectedToTriggerActivate( particleSystem ) )
+	{
+		thread ParticleSystemTriggerActivate( particleSystem )
+		return
+	}
+
+	if ( !particleSystem.HasKey( "script_flag" ) )
+		return
+
+	string flag = string( particleSystem.kv.script_flag )
+	if ( flag == "" )
+		return
+
+	bool startActive = false
+	if ( particleSystem.HasKey( "start_active" ) )
+		startActive = particleSystem.kv.start_active == "1"
+
+	FlagInit( flag, startActive )
+
+	thread ParticleSystemFlagThink( particleSystem, flag, startActive )
+}
+
+void function ParticleSystemFlagThink( entity particleSystem, string flag, bool startActive )
+{
+	bool playEndCap = false
+	if ( particleSystem.HasKey( "playEndCap" ) )
+		playEndCap = particleSystem.kv.playEndCap == "1"
+
+	float lifetime = 0.0
+	if ( particleSystem.HasKey( "lifetime" ) )
+		lifetime = float( particleSystem.kv.lifetime )
+
+	bool hasLifetime = lifetime > 0.0
+
+	float startDelay = 0
+	if ( particleSystem.HasKey( "start_delay" ) )
+		startDelay = float( particleSystem.kv.start_delay )
+
+	float stopDelay = 0
+	if ( particleSystem.HasKey( "stop_delay" ) )
+		stopDelay = float( particleSystem.kv.stop_delay )
+
+	bool flagReverse = false
+	if ( particleSystem.HasKey( "flag_reverse" ) )
+		flagReverse = particleSystem.kv.flag_reverse == "1"
+
+	if ( hasLifetime && startActive && IsValid( particleSystem ) )
+	{
+		wait lifetime
+		waitthread ParticleSystemStop( particleSystem, playEndCap, stopDelay )
+	}
+
+	while ( IsValid( particleSystem ) )
+	{
+		if ( !Flag( flag ) )
+		{
+			FlagWait( flag )
+			if ( flagReverse && !hasLifetime )
+			{
+				waitthread ParticleSystemStop( particleSystem, playEndCap, stopDelay )
+			}
+			else
+			{
+				waitthread ParticleSystemStart( particleSystem, startDelay )
+				if ( hasLifetime )
+				{
+					wait lifetime
+					waitthread ParticleSystemStop( particleSystem, playEndCap, stopDelay )
+				}
+			}
+		}
+
+		if ( Flag( flag ) )
+		{
+			FlagWaitClear( flag )
+			if ( flagReverse )
+			{
+				waitthread ParticleSystemStart( particleSystem, startDelay )
+				if ( hasLifetime )
+				{
+					wait lifetime
+					waitthread ParticleSystemStop( particleSystem, playEndCap, stopDelay )
+				}
+			}
+			else if ( !hasLifetime )
+			{
+				waitthread ParticleSystemStop( particleSystem, playEndCap, stopDelay )
+			}
+		}
+	}
+}
+
+void function ParticleSystemTriggerActivate( entity particleSystem )
+{
+	particleSystem.EndSignal( "OnDestroy" )
+
+	waitthread WaitForTriggerActivate( particleSystem )
+	ParticleSystemStart( particleSystem, 0.0 )
+}
+
+void function ParticleSystemStart( entity particleSystem, float delay )
+{
+	if ( delay > 0 )
+		wait delay
+	EntFireByHandle( particleSystem, "Start", "", 0, null, null )
+}
+
+void function ParticleSystemStop( entity particleSystem, bool playEndCap, float delay )
+{
+	if ( delay > 0 )
+		wait delay
+
+	if ( playEndCap )
+		EntFireByHandle( particleSystem, "StopPlayEndCap", "", 0, null, null )
+	else
+		EntFireByHandle( particleSystem, "Stop", "", 0, null, null )
+}
+
+void function ScriptedSoundEffectThink( entity ent )
+{
+	EndSignal( ent, "OnDestroy" )
+
+	string flag
+	bool startActive = ent.HasKey( "start_active" ) && ent.kv.start_active == "1"
+	string soundAlias = string( ent.kv.soundName )
+	float fadeinDuration = float( ent.kv.fadein_duration )
+	float fadeoutDuration = float( ent.kv.fadeout_duration )
+
+	Assert( soundAlias != "" )
+
+	if ( ent.HasKey( "script_flag" ) && ent.kv.script_flag != "" )
+	{
+		flag = string( ent.kv.script_flag )
+		FlagInit( flag, startActive )
+	}
+
+	wait 0.2
+
+	if ( startActive && flag == "" )
+		EmitSoundOnEntity( ent, soundAlias )
+
+	if ( IsConnectedToTriggerActivate( ent ) )
+	{
+		waitthread WaitForTriggerActivate( ent )
+		EmitSoundOnEntity( ent, soundAlias )
+		return
+	}
+
+	if ( flag == "" )
+		return
+
+	float startDelay = 0
+	if ( ent.HasKey( "start_delay" ) )
+		startDelay = float( ent.kv.start_delay )
+
+	while ( IsValid( ent ) )
+	{
+		if ( Flag( flag ) )
+		{
+			wait startDelay
+			EmitSoundOnEntity( ent, soundAlias )
+			FlagWaitClear( flag )
+		}
+		else
+		{
+			if ( fadeoutDuration > 0 )
+				FadeOutSoundOnEntity( ent, soundAlias, fadeoutDuration )
+			else
+				StopSoundOnEntity( ent, soundAlias )
+			FlagWait( flag )
+		}
+	}
+}
+
+void function InfoTextPanelsCreate()
+{
+	while ( GetPlayerArray().len() == 0 )
+		WaitFrame()
+
+	int max_remote_calls_per_frame = 10
+	int num_remote_calls_this_frame = 0
+
+	foreach ( entity ent in file.infoTextPanels )
+	{
+		// Build the message on the client
+		string titleText = ""
+		if ( ent.HasKey( "title" ) )
+			titleText = ent.GetValueForKey( "title" )
+
+		string mainText = ""
+		if ( ent.HasKey( "text" ) )
+			mainText = ent.GetValueForKey( "text" )
+
+		for ( int textIndex = 2; ent.HasKey( "text" + textIndex ); textIndex++ )
+		{
+			string line = ent.GetValueForKey( "text" + textIndex )
+			if ( line != "" )
+				mainText += "\n" + ent.GetValueForKey( "text" + textIndex )
+		}
+
+		vector origin = ent.GetOrigin()
+		vector angles = AnglesCompose( ent.GetAngles(), <0,180,0> )
+		bool showPin = ( ent.HasKey( "show_pin" ) && ent.GetValueForKey( "show_pin" ) == "1" )
+		float textScale = 1.0
+		foreach ( entity player in GetPlayerArray() )
+		{
+			if ( !IsValid( player ) )
+				continue
+
+			Remote_CallFunction_NonReplay( player, "Dev_CreateTextInfoPanel", origin, angles, showPin, textScale )
+
+			num_remote_calls_this_frame++
+			//printt( "Dev_BuildTextInfoPanel", num_remote_calls_this_frame )
+			if ( num_remote_calls_this_frame >= max_remote_calls_per_frame )
+			{
+				num_remote_calls_this_frame = 0
+				//printt( "Dev_BuildTextInfoPanel PAUSE" )
+				WaitFrame()
+			}
+		}
+
+		WaitFrame()
+	}
+}
+
+void function PlayEditorDefaultAnim( entity ent )
+{
+	if ( !ent.HasKey( "DefaultAnim" ) )
+		return
+
+	string animStr = expect string( ent.kv.DefaultAnim )
+	if ( animStr == "" )
+		return
+
+	thread PlayEditorDefaultAnim_Think( ent, animStr )
+}
+
+void function PlayEditorDefaultAnim_Think( entity ent, string animStr )
+{
+	ent.EndSignal( "OnDestroy" )
+	ent.EndSignal( "NewFirstPersonSequence" )
+	ent.EndSignal( "StopEditorDefaultAnim" )
+
+	OnThreadEnd(
+	function() : ( ent )
+		{
+			if ( IsValid( ent ) )
+				ent.Anim_Stop()
+		}
+	)
+
+	while ( true )
+	{
+		ent.Anim_Play( animStr )
+		if ( ent.HasKey( "DefaultCycle" ) )
+		{
+			string defaultCycleString = expect string( ent.kv.DefaultCycle )
+			float defaultCycleFloat = float( defaultCycleString )
+			ent.SetCycle( defaultCycleFloat )
+		}
+		WaittillAnimDone( ent )
+	}
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/*
+
+##     ##    ###    ########  ##     ## ########  ######  ######## ######## ########
+##     ##   ## ##   ##     ## ##     ## ##       ##    ##    ##    ##       ##     ##
+##     ##  ##   ##  ##     ## ##     ## ##       ##          ##    ##       ##     ##
+######### ##     ## ########  ##     ## ######    ######     ##    ######   ########
+##     ## ######### ##   ##    ##   ##  ##             ##    ##    ##       ##   ##
+##     ## ##     ## ##    ##    ## ##   ##       ##    ##    ##    ##       ##    ##
+##     ## ##     ## ##     ##    ###    ########  ######     ##    ######## ##     ##
+
+*/
+/////////////////////////////////////////////////////////////////////////////////////////
+
+                  
+                                                          
+ 
+                                                             
+                                 
+                                     
+
+                             
+  
+                                           
+   
+                                                                                                                                                                                             
+                                  
+   
+  
+
+                                      
+
+                                                       
+                                                                                                                      
+
+                    
+                                 
+                                                     
+                                                
+                                      
+                                              
+                                              
+                              
+                           
+                                                                               
+
+                                    
+                                               
+ 
+                        
+
+void function HarvesterDespawn( Harvester harvester )
+{
+	WaitFrame() //ensure we are running after generic navmesh_separator and door scripts
+
+	Assert( harvester.isSpawned, "Trying to despawn a harvester that has not been spawned at " + harvester.origin )
+	harvester.isSpawned = false
+	foreach( navmeshSeparator in harvester.navmeshSeperators )
+	{
+		ToggleNPCPathsForEntity( navmeshSeparator, true )
+		navmeshSeparator.NotSolid()
+	}
+
+	foreach( generatorControlNode in harvester.generatorControlNodes )
+	{
+		Breakable breakableGenerator = expect Breakable( GetBreakableByControlNode( generatorControlNode ) )
+		if ( breakableGenerator.isSpawned )
+			BreakableDespawn( breakableGenerator )
+	}
+
+	foreach ( flag in harvester.flagsToSetOnDestroy )
+	{
+		if ( Flag( flag ) )
+			FlagClear( flag )
+	}
+
+
+	WaitFrame()
+
+
+	if ( IsValid( harvester.ringEnt ) )
+		harvester.ringEnt.Destroy()
+
+	if ( IsValid( harvester.fxControlPointEnt ) )
+		harvester.fxControlPointEnt.Destroy()
+
+	if ( IsValid( harvester.harvesterBeamFX ) )
+	{
+		bool playEndCap = false
+		ParticleSystemStop( harvester.harvesterBeamFX, playEndCap, 0 )
+		if ( IsValid( harvester.harvesterBeamFX ) )
+			harvester.harvesterBeamFX.Destroy()
+	}
+
+	if ( IsValid( harvester.damageFX ) )
+	{
+		harvester.damageFX.SetStopType( "destroyImmediately" )
+		harvester.damageFX.Destroy()
+	}
+
+	foreach( fx in harvester.fx )
+	{
+		if ( IsValid( fx ) )
+		{
+			fx.SetStopType( "destroyImmediately" )
+			fx.Destroy()
+		}
+	}
+
+	if ( IsValid( harvester.model ) )
+		harvester.model.Destroy()
+
+}
+
+void function HarvesterDespawnByInstanceName( string instanceName )
+{
+	WaitFrame() //ensure we are running after generic navmesh_separator and door scripts
+
+	Harvester harvester = expect Harvester( GetHarvesterByInstanceName( instanceName ) )
+	HarvesterDespawn( harvester )
+
+}
+
+Harvester function HarvesterSpawn( Harvester harvester)
+{
+	Assert( !harvester.isSpawned, "Trying to spawn a harvester that has already been spawned: " + harvester.instanceName )
+	Assert( !IsValid( harvester.model ), "Trying to spawn a new harvester model that already exists: " + harvester.instanceName )
+
+	harvester.isSpawned = true
+	harvester.model = CreatePropScript( harvester.modelAsset, harvester.origin, harvester.angles, SOLID_VPHYSICS )
+	harvester.model.kv.instance_name = harvester.instanceName
+	harvester.numberOfGeneratorsDestroyed = 0
+
+	foreach( navmeshSeparator in harvester.navmeshSeperators )
+	{
+		ToggleNPCPathsForEntity( navmeshSeparator, false )
+		navmeshSeparator.NotSolid()
+	}
+
+	if ( harvester.generatorControlNodes.len() == 0 )
+	{
+		harvester.generatorControlNodes = HarvesterGetClosestGeneratorNodes( harvester.origin )
+	}
+	Assert( harvester.generatorControlNodes.len() == 4 )
+
+	foreach( generatorControlNode in harvester.generatorControlNodes )
+	{
+		Breakable breakableGenerator = expect Breakable( GetBreakableByControlNode( generatorControlNode ) )
+		if ( !breakableGenerator.isSpawned )
+			BreakableSpawn( breakableGenerator )
+	}
+
+	harvester.model.DisableHibernation()
+
+	// spawn harvester ring model
+	int attachID = harvester.model.LookupAttachment( "ref" )
+	vector attachOrg = harvester.model.GetAttachmentOrigin( attachID )
+	vector attachAng = harvester.model.GetAttachmentAngles( attachID )
+	harvester.ringEnt = CreatePropDynamic( MODEL_HARVESTER_TOWER_RINGS, attachOrg, attachAng, 0 )
+	harvester.ringEnt.DisableHibernation()
+
+	// spawn fx control point
+	harvester.fxControlPointEnt = CreateEntity( "info_placement_helper" )
+	SetTargetName( harvester.fxControlPointEnt, UniqueString( "breakableGenerator_fx_colors" ) )
+	DispatchSpawn( harvester.fxControlPointEnt )
+
+	thread HarvesterThink( harvester )
+
+	return harvester
+}
+
+void function HarvesterThink( Harvester harvester )
+{
+	harvester.model.EndSignal( "OnDestroy" )
+
+	OnThreadEnd(
+		function() : ( harvester )
+		{
+			printf( "%s() - Harvester at " + harvester.origin + "stopping think fuction now", FUNC_NAME() )
+		}
+	)
+
+	foreach ( generatorControlNode in harvester.generatorControlNodes )
+		thread HarvesterGeneratorThink( harvester, generatorControlNode )
+
+
+	HarvesterStartAmbientSFX( harvester, "Coop_Generator_Ambient_Healthy" )
+	harvester.fxControlPointEnt.SetOrigin( <100,100,123> )
+	harvester.fxControlPointEnt.DisableHibernation()
+	harvester.harvesterBeamFX = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( FX_HARVESTER_BEAM ), harvester.origin, <0,0,0> )
+	harvester.harvesterBeamFX.SetStopType( "destroyImmediately" )
+	harvester.harvesterBeamFX.DisableHibernation()
+	EffectSetControlPointEntity( harvester.harvesterBeamFX, 1, harvester.fxControlPointEnt )
+
+	bool firstDamageStateTriggered = false
+	bool secondDamageStateTriggered = false
+	bool thirdDamageStateTriggered = false
+
+	HarvesterStartAmbientSFX( harvester, "Coop_Generator_Ambient_Healthy" )
+	thread HarvesterRingsPlayAnim( harvester, "generator_cycle_fast" )
+
+	while( true )
+	{
+		WaitFrame()
+
+		HarvesterUpdateFXColorControlPoint( harvester )
+
+		//-------------------------------------------------------
+		// has the whole harvester (all 4 generators) been destroyed?
+		//-------------------------------------------------------
+		if ( harvester.numberOfGeneratorsDestroyed > 3 )
+		{
+
+			break //we're done here
+		}
+
+		//----------------------
+		//3 generators destroyed
+		//----------------------
+		if ( harvester.numberOfGeneratorsDestroyed > 2 && !thirdDamageStateTriggered )
+		{
+			thirdDamageStateTriggered = true
+			HarvesterStartDmgFX( harvester, FX_HARVESTER_HEALTH_LOW )
+			HarvesterStartAmbientSFX( harvester, "Coop_Generator_Ambient_Critical" )
+			thread HarvesterRingsPlayAnim( harvester, "generator_cycle_slow" )
+		}
+
+		//----------------------
+		// 2 generators destroyed
+		//----------------------
+		else if ( harvester.numberOfGeneratorsDestroyed > 1 && !secondDamageStateTriggered )
+		{
+			secondDamageStateTriggered = true
+			//play smoke?
+		}
+		//----------------------
+		// 1 generator destroyed
+		//----------------------
+		else if ( harvester.numberOfGeneratorsDestroyed > 0 && !firstDamageStateTriggered )
+		{
+			firstDamageStateTriggered = true
+			HarvesterStartAmbientSFX( harvester, "Coop_Generator_Ambient_Damaged" )
+			thread HarvesterRingsPlayAnim( harvester, "generator_cycle_fast" )
+		}
+
+	}
+
+	//-----------------------------------
+	// Harvester alarm, fire, ready to blow up
+	//-----------------------------------
+	harvester.model.Signal( SIGNAL_HARVESTER_BLOWING_UP )
+
+	entity fireLoopFX = PlayLoopFX( FX_HARVESTER_FIRE, harvester.origin, <0, 0, 0> )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, harvester.origin, "Canyonlands_Generic_Emit_Fire_Medium_A", harvester.model )
+	EmitSoundOnEntity( harvester.model, "TitanWar_Harvester_ShieldAlarm" )
+	wait 1.75
+	EmitSoundOnEntity( harvester.model, "TitanWar_Harvester_ShieldAlarm" )
+	wait 1.75
+
+	//-----------------------------------
+	// Harvester actual destruction effects, etc
+	//-----------------------------------
+
+	//set any user defined flags for harvester destruction
+	foreach ( flag in harvester.flagsToSetOnDestroy )
+	{
+		if ( !Flag( flag ) )
+			FlagSet( flag )
+	}
+
+	/*
+	RadiusDamage(
+		harvester.origin,					// origin
+		svGlobal.worldspawn,				// owner
+		harvester.model,		 			// inflictor
+		1000,								// pilot damage
+		2000,								// heavy armor damage
+		200,								// inner radius
+		400,								// outer radius
+		SF_ENVEXPLOSION_NO_NPC_SOUND_EVENT,	// explosion flags
+		0, 									// distanceFromAttacker
+		1000, 								// explosionForce
+		DF_SKIPS_DOOMED_STATE,				// damage flags
+		eDamageSourceId.exploding_barrel	// damage source id
+	)
+	*/
+	//Be sure to damage any nearby enemies heavily
+	array<entity> npcs = GetNPCArrayEx( "any", TEAM_ANY, eNpcTeam.FRIENDLY, harvester.origin, 325 )
+	foreach( npc in npcs )
+	{
+		if ( !IsAlive( npc ) )
+			continue
+		Assert( !npc.IsPlayer() )
+		int scriptTypeMask = damageTypes.dissolve// | DF_STOPS_TITAN_REGEN
+		npc.TakeDamage( npc.GetHealth() + 1, svGlobal.worldspawn, svGlobal.worldspawn, { origin = npc.GetOrigin(), scriptType = scriptTypeMask, damageSourceId = eDamageSourceId.exploding_barrel } )
+	}
+
+	PlayFX( FX_HARVESTER_DUST, harvester.origin,  <0, 0, 0> )
+	PlayFX( FX_HARVESTER_EXPLOSION, harvester.origin,  <0, 0, 0> )
+	harvester.fx.append( fireLoopFX )
+	AI_CreateDangerousArea_Static( svGlobal.worldspawn, null, 128, TEAM_INVALID, true, true, harvester.origin )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, harvester.origin, "titan_death_explode", harvester.model)
+	EmitSoundAtPosition( TEAM_UNASSIGNED, harvester.origin, "Coop_Generator_Destroyed", harvester.model)
+
+	CreateShake( harvester.origin, 16, 1, 4, 4000 )
+
+	harvester.model.Signal( SIGNAL_HARVESTER_DESTROYED )
+	harvester.ringEnt.EndSignal( "OnDestroy" )
+
+	if ( IsValid_ThisFrame( harvester.harvesterBeamFX ) )
+	{
+		bool playEndCap = false
+		ParticleSystemStop( harvester.harvesterBeamFX, playEndCap, 0 )
+	}
+
+	//Fade out harvester sounds.
+	HarvesterFadeAmbientSFX( harvester )
+
+	HarvesterRingsPlayAnim( harvester, "generator_fall" )
+	harvester.ringEnt.Hide()
+	thread HarvesterRingsPlayAnim( harvester, "generator_idle" )
+
+}
+
+void function HarvesterStartDmgFX( Harvester harvester, asset fxAsset )
+{
+	if ( IsValid( harvester.damageFX ) )
+		StopFX( harvester.damageFX )
+
+	if ( harvester.damageSFX != "" )
+		StopSoundOnEntity( harvester.model, harvester.damageSFX )
+
+	harvester.damageFX = PlayFXWithControlPoint( fxAsset, harvester.origin, harvester.fxControlPointEnt, -1, null, null, C_PLAYFX_LOOP )
+	harvester.damageFX.DisableHibernation()
+
+	harvester.damageSFX = "Coop_Generator_Electrical_Arcs"
+	EmitSoundOnEntity( harvester.model, harvester.damageSFX )
+}
+
+void function HarvesterUpdateFXColorControlPoint( Harvester harvester )
+{
+	if ( harvester.numberOfGeneratorsDestroyed == 4 )
+		return
+
+	float healthRatio = float( 4 - harvester.numberOfGeneratorsDestroyed ) / 4.0
+
+	float blendStartFrac 	= 0.95
+	float midFrac 			= 0.6
+	float blendEndFrac 		= 0.2
+
+	vector color
+
+	if ( healthRatio > midFrac )
+	{
+		color.x = GraphCapped( healthRatio, blendStartFrac, midFrac, HARVESTER_COLOR_FULL.x, HARVESTER_COLOR_MED.x )
+		color.y = GraphCapped( healthRatio, blendStartFrac, midFrac, HARVESTER_COLOR_FULL.y, HARVESTER_COLOR_MED.y )
+		color.z = GraphCapped( healthRatio, blendStartFrac, midFrac, HARVESTER_COLOR_FULL.z, HARVESTER_COLOR_MED.z )
+	}
+	else
+	{
+		color.x = GraphCapped( healthRatio, midFrac, blendEndFrac, HARVESTER_COLOR_MED.x, HARVESTER_COLOR_LOW.x )
+		color.y = GraphCapped( healthRatio, midFrac, blendEndFrac, HARVESTER_COLOR_MED.y, HARVESTER_COLOR_LOW.y )
+		color.z = GraphCapped( healthRatio, midFrac, blendEndFrac, HARVESTER_COLOR_MED.z, HARVESTER_COLOR_LOW.z )
+	}
+
+	//printt( color )
+
+	harvester.fxControlPointEnt.SetOrigin( color )
+}
+
+void function HarvesterStartAmbientSFX( Harvester harvester, string soundAlias )
+{
+	if ( harvester.ambientSFX != "" && harvester.ambientSFX == soundAlias )
+		return
+
+	HarvesterFadeAmbientSFX( harvester )
+
+	EmitSoundOnEntity( harvester.model, soundAlias )
+	harvester.ambientSFX = soundAlias
+}
+
+void function HarvesterFadeAmbientSFX( Harvester harvester )
+{
+	if ( harvester.ambientSFX == "" )
+		return
+
+	FadeOutSoundOnEntity( harvester.model, harvester.ambientSFX, 1.0 )
+	harvester.ambientSFX = ""
+}
+
+void function HarvesterRingsPlayAnim( Harvester harvester, string animAlias )
+{
+	if ( harvester.ringAnim != "" && harvester.ringAnim != animAlias )
+	{
+		harvester.ringEnt.Anim_Stop()
+		harvester.ringAnim = ""
+	}
+
+	harvester.ringAnim = animAlias
+	PlayAnim( harvester.ringEnt, animAlias )
+}
+
+void function HarvesterGeneratorThink( Harvester harvester, entity generatorControlNode )
+{
+	harvester.model.EndSignal( "OnDestroy" )
+
+	Breakable breakableGenerator = expect Breakable( GetBreakableByControlNode( generatorControlNode ) )
+	generatorControlNode.WaitSignal( SIGNAL_BREAKABLE_DESTROYED )
+	harvester.model.Signal( SIGNAL_BREAKABLE_DESTROYED )
+	harvester.numberOfGeneratorsDestroyed++
+	if ( harvester.numberOfGeneratorsDestroyed == 4 )
+		harvester.killer = breakableGenerator.killer
+}
+
+Harvester function HarvesterSpawnByInstanceName( string instanceName )
+{
+	Harvester harvester = expect Harvester( GetHarvesterByInstanceName( instanceName ) )
+	harvester = HarvesterSpawn( harvester )
+
+	return harvester
+}
+
+Harvester ornull function GetHarvesterByInstanceName( string instanceName )
+{
+	foreach( harvester in file.harvesters )
+	{
+		if ( harvester.instanceName == instanceName )
+			return harvester
+	}
+	printf( "%s() - There is no harvester with instance_name: " + instanceName, FUNC_NAME() )
+	return null
+}
+
+void function HarvesterSetFlagOnDestroyed( Harvester harvester, string flagToSet )
+{
+	if ( !FlagExists( flagToSet ) )
+		FlagInit( flagToSet )
+	foreach ( flag in harvester.flagsToSetOnDestroy )
+	{
+		if ( flag == flagToSet )
+			Assert( false, flagToSet + "flag has already been added to harvester flags at " + harvester.origin )
+	}
+
+	harvester.flagsToSetOnDestroy.append( flagToSet )
+}
+
+array <entity> function HarvesterGetClosestGeneratorNodes( vector origin )
+{
+
+	array <entity> generatorControlNodes = ArrayClosestWithinDistance( file.breakableControlNodes, origin, 512 )
+	Assert( generatorControlNodes.len() > 3 )
+	if ( generatorControlNodes.len() != 4 )
+		generatorControlNodes = [ generatorControlNodes[0], generatorControlNodes[1], generatorControlNodes[2], generatorControlNodes[3] ]
+
+	return generatorControlNodes
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/*
+
+########  ########  ########    ###    ##    ##    ###    ########  ##       ########  ######
+##     ## ##     ## ##         ## ##   ##   ##    ## ##   ##     ## ##       ##       ##    ##
+##     ## ##     ## ##        ##   ##  ##  ##    ##   ##  ##     ## ##       ##       ##
+########  ########  ######   ##     ## #####    ##     ## ########  ##       ######    ######
+##     ## ##   ##   ##       ######### ##  ##   ######### ##     ## ##       ##             ##
+##     ## ##    ##  ##       ##     ## ##   ##  ##     ## ##     ## ##       ##       ##    ##
+########  ##     ## ######## ##     ## ##    ## ##     ## ########  ######## ########  ######
+
+*/
+/////////////////////////////////////////////////////////////////////////////////////////
+
+                  
+                                                          
+ 
+
+                                                           
+                          
+                  
+
+                     
+  
+                                 
+                                          
+                                                  
+        
+                               
+                                        
+                                                
+        
+                                    
+                                             
+                                                     
+        
+          
+                                                                                                          
+  
+
+                                                             
+                        
+                   
+                             
+  
+                                                                                               
+   
+                    
+   
+
+                                           
+   
+                         
+   
+  
+
+                                                                                                                                                      
+                                                                                                                                                      
+
+                                                                
+                                   
+  
+                                             
+                                        
+                              
+  
+                                                                                                                                                                                                                                     
+
+                    
+                                 
+                                    
+                                  
+                                                    
+                                              
+                                               
+                                              
+                                              
+                              
+                           
+                                        
+
+                                    
+                                                 
+                                                        
+ 
+                        
+
+array< table <string, vector> > function GetDefendSpawnsForBreakable( Breakable breakable, float additionalOffset = 0, float additionalOffsetAngled = 0 )
+{
+	array< table <string, vector> > spawnTable
+	array< table <string, vector> > spawnTableToReturn
+	vector originBreakable = breakable.origin
+	vector anglesBreakable = breakable.angles
+
+	switch( breakable.breakableType )
+	{
+		case eBreakbleType.GENERATOR:
+		case eBreakbleType.CONSOLE: //todo
+			float baseOffset = 48 + additionalOffset
+			float baseOffsetAngled = 46 + additionalOffsetAngled
+			//on all four sides
+			spawnTable.append( { origin = PositionOffsetFromOriginAngles( originBreakable, anglesBreakable, 0, baseOffset, 10 ), angles = AnglesCompose( anglesBreakable, <0, -90, 0>  ) } )
+			spawnTable.append( { origin = PositionOffsetFromOriginAngles( originBreakable, anglesBreakable, 0, -(baseOffset), 10 ), angles = AnglesCompose( anglesBreakable, <0, 90, 0>  ) } )
+			spawnTable.append( { origin = PositionOffsetFromOriginAngles( originBreakable, anglesBreakable, baseOffset, 0, 10 ), angles = AnglesCompose( anglesBreakable, <0, 0, 0>  ) } )
+			spawnTable.append( { origin = PositionOffsetFromOriginAngles( originBreakable, anglesBreakable, -(baseOffset), 0, 10 ), angles = AnglesCompose( anglesBreakable, <0, 180, 0>  ) } )
+			//on all four corners
+			spawnTable.append( { origin = PositionOffsetFromOriginAngles( originBreakable, anglesBreakable, baseOffsetAngled, baseOffsetAngled, 10 ), angles = AnglesCompose( anglesBreakable, <0, -45, 0>  ) } )
+			spawnTable.append( { origin = PositionOffsetFromOriginAngles( originBreakable, anglesBreakable, -(baseOffsetAngled), -(baseOffsetAngled), 10 ), angles = AnglesCompose( anglesBreakable, <0, 135, 0>  ) } )
+			spawnTable.append( { origin = PositionOffsetFromOriginAngles( originBreakable, anglesBreakable, baseOffsetAngled, -(baseOffsetAngled), 10 ), angles = AnglesCompose( anglesBreakable, <0, 45, 0>  ) } )
+			spawnTable.append( { origin = PositionOffsetFromOriginAngles( originBreakable, anglesBreakable, -(baseOffsetAngled), baseOffsetAngled, 10 ), angles = AnglesCompose( anglesBreakable, <0, -135, 0>  ) } )
+			break
+		default:
+			Assert( false, "Unhandled eBreakbleType: " + breakable.breakableType )
+	}
+
+                    
+                                             
+                                                                                      
+                           
+                                                                                                 
+                                            
+                            
+                                                                   
+                        
+                
+
+                                                  
+  
+                                         
+                                         
+                              
+                              
+                                   
+   
+                                             
+   
+
+  
+                     
+                          
+
+	return spawnTableToReturn
+}
+
+array< table <string, vector> > function GetDefendSpawnsForHarvester( Harvester harvester )
+{
+	array< table <string, vector> > spawnTableToReturn
+
+	foreach( generatorNode in harvester.generatorControlNodes )
+	{
+		Breakable generator = expect Breakable( GetBreakableByControlNode( generatorNode ) )
+		GetBreakableByControlNode( generatorNode )
+		float additionalDefenderOffset = 56 //push some of these guys outside the bubble shield so they can shoot
+		float additionalDefenderOffsetCorner = 56
+		array< table <string, vector> > spawnTable = GetDefendSpawnsForBreakable( generator, additionalDefenderOffset, additionalDefenderOffsetCorner )
+		spawnTableToReturn.extend( spawnTable )
+	}
+
+	return spawnTableToReturn
+}
+
+void function BreakableDespawn( Breakable breakable )
+{
+	WaitFrame() //ensure we are running after generic navmesh_separator and door scripts
+
+	Assert( breakable.isSpawned, "Trying to despawn a breakable that has not been spawned at " + breakable.origin )
+	breakable.isSpawned = false
+	ToggleNPCPathsForEntity( breakable.navmeshSeperator , true )
+	breakable.navmeshSeperator.NotSolid()
+	WaitFrame()
+	foreach( fx in breakable.fx )
+	{
+		if ( IsValid( fx ) )
+			fx.Destroy()
+	}
+
+	if ( IsValid( breakable.model ) )
+		breakable.model.Destroy()
+
+	if ( IsValid( breakable.modelDestroyed ) )
+		breakable.modelDestroyed.Destroy()
+
+	foreach ( flag in breakable.flags )
+		FlagClear( flag )
+
+	foreach( ent in breakable.poweredItems )
+	{
+		if ( IsValid( ent ) )
+			ent.Destroy()
+	}
+
+}
+
+void function BreakableDespawnByInstanceName( string instanceName )
+{
+	WaitFrame() //ensure we are running after generic navmesh_separator and door scripts
+
+	Breakable breakable = expect Breakable( GetBreakableByInstanceName( instanceName ) )
+	BreakableDespawn( breakable )
+
+}
+
+Breakable function BreakableSpawn( Breakable breakable )
+{
+	Assert( !breakable.isSpawned, "Trying to spawn a breakable that has already been spawned: " + breakable.instanceName )
+	Assert( !IsValid( breakable.model ), "Trying to spawn a new breakable model that already exists: " + breakable.instanceName )
+
+	float health
+	string usePrompt
+	string idleSound
+	asset idleFx
+	string idleFxTag
+
+	switch ( breakable.breakableType )
+	{
+		case eBreakbleType.CONSOLE:
+			health = BREAKABLE_HEALTH_CONSOLE
+			usePrompt = "#PVE_HINT_DESTROY_CONSOLE"
+			break
+		case eBreakbleType.GENERATOR:
+			health = BREAKABLE_HEALTH_GENERATOR
+			usePrompt = "#PVE_HINT_DESTROY_GENERATOR"
+			break
+		case eBreakbleType.CREATURE_GAS:
+			health = BREAKABLE_HEALTH_CREATURE_GAS
+			usePrompt = "#PVE_HINT_DESTROY_CREATURE_GAS"
+			idleSound = "canyonlands_generic_emit_steam_medium"
+			//idleFx = FX_IDLE_FX_CREATURE_GAS
+			//idleFxTag = "fx_top"
+			break
+		default:
+			Assert( false, "Unhandled breakable type at " + breakable.origin )
+	}
+
+	breakable.isSpawned = true
+	breakable.model = CreatePropScript( breakable.modelAsset, breakable.origin, breakable.angles, SOLID_VPHYSICS )
+	breakable.model.kv.instance_name = breakable.instanceName
+	if ( IsValid( breakable.navmeshSeperator ) )
+	{
+		breakable.navmeshSeperator.NotSolid()
+		ToggleNPCPathsForEntity( breakable.navmeshSeperator, false )
+	}
+
+
+	if ( idleSound != "" )
+		EmitSoundOnEntity( breakable.model, idleSound )
+
+	if ( idleFx != $"" )
+		PlayLoopFXOnEntity( idleFx, breakable.model, idleFxTag  )
+
+	SetTeam( breakable.model, eNpcTeam.LEGION )
+	Highlight_SetNeutralHighlight( breakable.model, "enemy_sonar" )
+	Highlight_SetFriendlyHighlight( breakable.model, "enemy_sonar" )
+	Highlight_SetEnemyHighlight( breakable.model, "enemy_sonar" )
+	breakable.model.SetUsable()
+	breakable.model.SetUsePrompts( usePrompt, usePrompt )
+
+	breakable.model.SetCanBeMeleed( true )
+	SetVisibleEntitiesInConeQueriableEnabled( breakable.model, true )
+	breakable.model.SetTakeDamageType( DAMAGE_EVENTS_ONLY )
+	breakable.model.SetDamageNotifications( true )
+	breakable.model.SetMaxHealth( health )
+	breakable.model.SetHealth( health )
+	breakable.model.DisableHibernation()
+	breakable.controlNode.SetParent( breakable.model )
+
+	AddEntityCallback_OnDamaged( breakable.model,
+		void function ( entity breakableModel, var damageInfo ) : ( breakable )
+		{
+			if ( !IsValid( breakableModel ) )
+			{
+				// sometimes OnDamage gets called twice in the same frame, ( scorch's fire )
+				// and first call destroys breakable in BreakableDestroy()
+				return
+			}
+
+			entity attacker = DamageInfo_GetAttacker( damageInfo )
+			if ( !IsValid( attacker ) )
+				return
+
+			if ( !attacker.IsPlayer() )
+				return
+
+			float damage = DamageInfo_GetDamage( damageInfo )
+
+			int health = breakableModel.GetHealth()
+			health -= int( damage )
+
+			breakable.lastTimeAttacked = Time()
+			breakable.lastTimeAttacker = attacker
+			if ( health <= 0 )
+				BreakableDestroy( breakable, attacker )
+			else
+				breakableModel.SetHealth( health )
+		}
+	)
+
+	breakable.poweredItems = []
+
+	return breakable
+}
+
+Breakable function BreakableSpawnByInstanceName( string instanceName )
+{
+	Breakable breakable = expect Breakable( GetBreakableByInstanceName( instanceName ) )
+	breakable = BreakableSpawn( breakable )
+	return breakable
+}
+
+Breakable function BreakableSpawnByType( int breakableType, vector origin, vector angles )
+{
+	//HACK: placeholder to spawn a breakable for Halloween until I can refactor
+	Breakable breakable
+	breakable.controlNode = CreateInfoTarget( origin, angles )
+	breakable.modelAsset = MODEL_CREATURE_GAS
+	breakable.modelAssetDestroyed = MODEL_CREATURE_GAS_DESTROYED
+	breakable.origin = origin
+	breakable.angles = angles
+	breakable.isDestroyed = false
+	breakable.isSpawned = false
+	breakable.breakableType = breakableType
+
+	return BreakableSpawn( breakable )
+}
+
+void function BreakableDestroy( Breakable breakable, entity attacker )
+{
+	entity breakableModel = breakable.model
+	breakable.modelDestroyed = CreatePropDynamic( breakable.modelAssetDestroyed, breakable.origin, breakable.angles, SOLID_VPHYSICS )
+	if ( breakableModel.GetParent() )
+		breakable.modelDestroyed.SetToSameParentAs( breakableModel )
+
+	breakableModel.Signal( SIGNAL_BREAKABLE_DESTROYED )
+	breakable.controlNode.Signal( SIGNAL_BREAKABLE_DESTROYED )
+
+	breakable.killer = attacker
+	breakable.isDestroyed = true
+	breakable.modelDestroyed.AllowMantle()
+	breakable.modelDestroyed.DisableHibernation()
+	vector origin = breakableModel.GetOrigin()
+	vector up = breakableModel.GetUpVector()
+	vector upAngles = VectorToAngles( up )
+
+	string sfxExplosion
+	string sfxSparksEnd01
+	string sfxSparksEnd02
+	asset fxExplosion
+	asset fxFireEnd
+	asset fxSparksEnd
+	asset fxSteamEnd
+	float shakeAmplitude
+	float shakeFrequency
+	float shakeDuration
+	float shakeRadius
+	vector sparkEndOrigin
+	vector sparkEndAngles
+	vector steamOrigin
+	vector steamAngles
+	vector fireEndOrigin
+	vector fireEndAngles
+
+	switch ( breakable.breakableType )
+	{
+		case eBreakbleType.CONSOLE:
+			sfxExplosion = "ai_reaper_explo_3p"
+			sfxSparksEnd01 = "spectre_vs_spectre_execution_zap_sparks_3p"
+			sfxSparksEnd02 = "sewers_emit_intermittentsparks"
+			fxExplosion = FX_EXPLOSION_CONSOLE
+			fxFireEnd = FX_FIRE_END_CONSOLE
+			fxSparksEnd = FX_SPARKS_END_CONSOLE
+			fxSteamEnd = FX_STEAM_END_CONSOLE
+			shakeAmplitude = 7
+			shakeFrequency = 0.15
+			shakeDuration = 1.2
+			shakeRadius = 512
+			sparkEndOrigin = PositionOffsetFromEnt( breakableModel, -6, 4, 20 ) + ( up * 30 )
+			sparkEndAngles = upAngles
+			steamOrigin = PositionOffsetFromEnt( breakableModel, -16, 0, 12 ) + ( up * 40 )
+			steamAngles = upAngles
+			fireEndOrigin = PositionOffsetFromEnt( breakableModel, 16, 10, 48 )
+			fireEndAngles = breakable.angles
+			break
+		case eBreakbleType.GENERATOR:
+			sfxExplosion = "BatteryCrate_Explosion"
+			sfxSparksEnd01 = "spectre_vs_spectre_execution_zap_sparks_3p"
+			sfxSparksEnd02 = "sewers_emit_intermittentsparks"
+			fxExplosion = FX_EXPLOSION_GENERATOR
+			fxFireEnd = FX_FIRE_END_GENERATOR
+			fxSparksEnd = FX_SPARKS_END_GENERATOR
+			fxSteamEnd = FX_STEAM_END_GENERATOR
+			shakeAmplitude = 7
+			shakeFrequency = 0.15
+			shakeDuration = 2
+			shakeRadius = 2048
+			sparkEndOrigin = origin + ( up * 30 )
+			sparkEndAngles = upAngles
+			steamOrigin = origin + ( up * 40 )
+			steamAngles = upAngles
+			fireEndOrigin = steamOrigin + <0, 0, -16>
+			fireEndAngles = <0, 0, 0>
+			break
+		case eBreakbleType.CREATURE_GAS:
+			sfxExplosion = "ai_reaper_explo_3p"
+			fxSteamEnd = FX_STEAM_END_CREATURE_GAS
+			fxExplosion = FX_EXPLOSION_CREATURE_GAS
+			fxFireEnd = FX_FIRE_END_CREATURE_GAS
+			shakeAmplitude = 7
+			shakeFrequency = 0.15
+			shakeDuration = 1.2
+			steamOrigin = origin + <0, 0, 4>
+			steamAngles = upAngles
+			shakeRadius = 512
+			fireEndOrigin = origin + <0, 0, 4>
+			fireEndAngles = <0,0,0>
+			break
+		default:
+			Assert( false, "Unhandled breakable type at " + breakable.origin )
+	}
+
+	EmitSoundOnEntity( breakable.modelDestroyed, sfxExplosion )
+	StartParticleEffectOnEntity( breakable.modelDestroyed, GetParticleSystemIndex( fxExplosion ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
+	CreateShake( breakable.origin, shakeAmplitude, shakeFrequency, shakeDuration, shakeRadius )
+
+	if ( fxSparksEnd != "" )
+		breakable.fx.append( PlayFX( fxSparksEnd, sparkEndOrigin, sparkEndAngles ) )
+
+	if ( fxSteamEnd != "" )
+		breakable.fx.append( PlayFX( fxSteamEnd, steamOrigin, steamAngles ) )
+
+	if ( fxFireEnd != "" )
+		breakable.fx.append( PlayFX( fxFireEnd, fireEndOrigin, fireEndAngles ) )
+
+	if ( sfxSparksEnd01 != "" )
+		EmitSoundAtPosition( TEAM_UNASSIGNED, sparkEndOrigin, sfxSparksEnd01, breakable.modelDestroyed)
+
+	if ( sfxSparksEnd02 != "" )
+		EmitSoundAtPosition( TEAM_UNASSIGNED, sparkEndOrigin, sfxSparksEnd02, breakable.modelDestroyed )
+
+	//SpawnMatchCandyForPlayer( attacker, 110, breakable.origin )
+
+	foreach ( flag in breakable.flags )
+		FlagSet( flag )
+
+	foreach( ent in breakable.poweredItems )
+	{
+		if ( IsValid( ent ) )
+			ent.Destroy()
+	}
+	breakableModel.Destroy()
+}
+
+Breakable ornull function GetBreakableByInstanceName( string instanceName )
+{
+	foreach( breakable in file.breakables )
+	{
+		if ( breakable.instanceName == instanceName )
+			return breakable
+	}
+	printf( "%s() - There is no breakable with instance_name: " + instanceName, FUNC_NAME() )
+
+	return null
+}
+
+Breakable ornull function GetBreakableByControlNode( entity controlNode )
+{
+	foreach( breakable in file.breakables )
+	{
+		if ( breakable.controlNode == controlNode )
+			return breakable
+	}
+	return null
+}
+
+void function BreakableSetFlagOnDestroyed( Breakable breakable, string flagToSet )
+{
+	if ( !FlagExists( flagToSet ) )
+		FlagInit( flagToSet )
+	foreach ( flag in breakable.flags )
+	{
+		if ( flag == flagToSet )
+			Assert( false, flagToSet + "flag has already been added to breakable flags at " + breakable.origin )
+	}
+
+	breakable.flags.append( flagToSet )
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+
+########   #######   #######  ########        ##    ##    ###    ##     ## ##     ## ########  ######  ##     ##       ########  #######   ######    ######   ##       ########
+##     ## ##     ## ##     ## ##     ##       ###   ##   ## ##   ##     ## ###   ### ##       ##    ## ##     ##          ##    ##     ## ##    ##  ##    ##  ##       ##
+##     ## ##     ## ##     ## ##     ##       ####  ##  ##   ##  ##     ## #### #### ##       ##       ##     ##          ##    ##     ## ##        ##        ##       ##
+##     ## ##     ## ##     ## ########        ## ## ## ##     ## ##     ## ## ### ## ######    ######  #########          ##    ##     ## ##   #### ##   #### ##       ######
+##     ## ##     ## ##     ## ##   ##         ##  #### #########  ##   ##  ##     ## ##             ## ##     ##          ##    ##     ## ##    ##  ##    ##  ##       ##
+##     ## ##     ## ##     ## ##    ##        ##   ### ##     ##   ## ##   ##     ## ##       ##    ## ##     ##          ##    ##     ## ##    ##  ##    ##  ##       ##
+########   #######   #######  ##     ##       ##    ## ##     ##    ###    ##     ## ########  ######  ##     ##          ##     #######   ######    ######   ######## ########
+
+*/
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                  
+                                                                 
+ 
+                                                       
+                                                                                                                                                                                                                             
+                                                                                                                                                                                     
+
+                                               
+                                                                                                                                                                                                                                           
+
+                                                      
+ 
+                        
+
+
+entity function GetDoorNavmeshSeparatorByScriptNoteworthy( string scriptNoteworthy )
+{
+	entity doorNavmeshSeparator
+	foreach( ent in file.doorNavmeshSeperators )
+	{
+		if ( ent.kv.script_noteworthy == scriptNoteworthy )
+			return ent
+	}
+
+	Assert( false, "Unable to find any doorNavmeshSeparator with script_noteworthy: " + scriptNoteworthy )
+
+	unreachable
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/*
+
+######## #### ########  ########       ########  ##        #######   ######  ##    ## ######## ########   ######
+##        ##  ##     ## ##             ##     ## ##       ##     ## ##    ## ##   ##  ##       ##     ## ##    ##
+##        ##  ##     ## ##             ##     ## ##       ##     ## ##       ##  ##   ##       ##     ## ##
+######    ##  ########  ######         ########  ##       ##     ## ##       #####    ######   ########   ######
+##        ##  ##   ##   ##             ##     ## ##       ##     ## ##       ##  ##   ##       ##   ##         ##
+##        ##  ##    ##  ##             ##     ## ##       ##     ## ##    ## ##   ##  ##       ##    ##  ##    ##
+##       #### ##     ## ########       ########  ########  #######   ######  ##    ## ######## ##     ##  ######
+
+*/
+/////////////////////////////////////////////////////////////////////////////////////////
+
+                  
+                                                        
+ 
+                                                                            
+                                                                                                                                                                                                                                      
+
+                              
+                    
+  
+                                                               
+                              
+                 
+                            
+        
+  
+
+                                                    
+                              
+                                                                                                                                                                                            
+
+                                                                   
+                   
+  
+                             
+                                                   
+                                              
+  
+ 
+                        
+
+array <entity> function FireBlockerActivate( string scriptNoteworthy )
+{
+	array <entity> fireBlockerNavmeshSeparators = GetFireBlockersByScriptNoteworthy( scriptNoteworthy )
+	foreach( fireBlockerNavmeshSeparator in fireBlockerNavmeshSeparators )
+	{
+		ToggleNPCPathsForEntity( fireBlockerNavmeshSeparator, false )
+		array <entity> fireNodes = fireBlockerNavmeshSeparator.GetLinkEntArray()
+		foreach( node in fireNodes )
+		{
+			FireblockerCreateFire( node )
+			AI_CreateDangerousArea_Static( svGlobal.worldspawn, node, 128, TEAM_INVALID, true, true, node.GetOrigin() )
+
+		}
+
+	}
+	return fireBlockerNavmeshSeparators
+}
+
+void function FireBlockerActivateAll()
+{
+	foreach( ent in file.fireBlockers )
+		FireBlockerActivate( expect string( ent.kv.script_noteworthy ) )
+}
+
+void function FireblockerCreateFire( entity node )
+{
+	//TODO - temp workaround for heavy proto fire fx
+	int effectIndex = GetParticleSystemIndex( FIRE_BLOCKER_FIRE )
+	entity fx = PlayLoopFX( FIRE_BLOCKER_FIRE, node.GetOrigin(), AnglesCompose( node.GetAngles(), <0, 90, 0> ) )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, node.GetOrigin(), "Canyonlands_Generic_Emit_Fire_Medium_A", node )
+	entity trigger = SpawnRadiusTrigger( node.GetOrigin(), 60, 60 )
+	FireTriggerInit( trigger )
+}
+
+
+/*
+void function FireBlockerDeactivate( string scriptNoteworthy )
+{
+	//TODO: need to determine best way to reliably destroy spawned fire and dangerous areas. Deleting the actual ent doesn't seem to work properly
+	array <entity> fireBlockerNavmeshSeparators = GetFireBlockersByScriptNoteworthy( scriptNoteworthy )
+	foreach( fireBlockerNavmeshSeparator in fireBlockerNavmeshSeparators )
+	{
+		ToggleNPCPathsForEntity( fireBlockerNavmeshSeparator, true )
+		array <entity> fireNodes = fireBlockerNavmeshSeparator.GetLinkEntArray()
+
+		foreach( originalNode in fireNodes )
+		{
+			entity replacementNode = CreateInfoTarget( originalNode.GetOrigin(), originalNode.GetAngles() )
+			fireBlockerNavmeshSeparator.LinkToEnt( replacementNode )
+			originalNode.Destroy()
+		}
+	}
+}
+*/
+
+array <entity> function GetFireBlockersByScriptNoteworthy( string scriptNoteworthy )
+{
+	array <entity> fireBlockerNavmeshSeparators
+	foreach( ent in file.fireBlockers )
+	{
+		if ( ent.kv.script_noteworthy == scriptNoteworthy )
+			fireBlockerNavmeshSeparators.append( ent )
+	}
+
+	Assert( fireBlockerNavmeshSeparators.len() > 0, "Unable to find any fireBlockers with script_noteworthy: " + scriptNoteworthy )
+
+	return fireBlockerNavmeshSeparators
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/*
+
+ ######  ########  ########    ###    ######## ##     ## ########  ########        ######     ###     ######   ########  ######
+##    ## ##     ## ##         ## ##      ##    ##     ## ##     ## ##             ##    ##   ## ##   ##    ##  ##       ##    ##
+##       ##     ## ##        ##   ##     ##    ##     ## ##     ## ##             ##        ##   ##  ##        ##       ##
+##       ########  ######   ##     ##    ##    ##     ## ########  ######         ##       ##     ## ##   #### ######    ######
+##       ##   ##   ##       #########    ##    ##     ## ##   ##   ##             ##       ######### ##    ##  ##             ##
+##    ## ##    ##  ##       ##     ##    ##    ##     ## ##    ##  ##             ##    ## ##     ## ##    ##  ##       ##    ##
+ ######  ##     ## ######## ##     ##    ##     #######  ##     ## ########        ######  ##     ##  ######   ########  ######
+
+*/
+/////////////////////////////////////////////////////////////////////////////////////////
+
+                  
+                                                  
+ 
+                                                                                     
+                 
+              
+                 
+                                                  
+                                                 
+                                                 
+                                                                                                                                
+                                                        
+                                                                                                                   
+                                                                                                                                                                            
+            
+              
+                     
+                        
+                                                         
+                                    
+                    
+                   
+                            
+                              
+                              
+                
+                                
+
+                                           
+  
+
+                                                                                                 
+   
+                          
+                                                     
+                                                   
+                                                   
+           
+   
+
+                                                    
+   
+                   
+           
+   
+
+                                                                                       
+   
+                       
+                                                  
+           
+   
+
+                                                                                                         
+   
+
+                                       
+                                                                                                      
+                                                             
+           
+   
+
+                                                 
+   
+                                                                                                                                                                                                                  
+                                            
+           
+   
+
+                                                         
+   
+                           
+           
+   
+
+                                                       
+   
+                                                             
+    
+                      
+            
+
+    
+       
+    
+                             
+            
+    
+   
+
+                                                          
+   
+                               
+           
+   
+  
+                                                                                                                                                         
+                                                                                                                    
+                                                                                                                                                                              
+                                                                                                                                                             
+                                                                                                                                                       
+                                                    
+                                                                                                                                            
+
+                   
+  
+                                                                
+                                                               
+                                                                 
+                   
+                              
+                                      
+                                          
+                                        
+                                        
+                                     
+                                                    
+                                                      
+                                                      
+                                  
+                  
+                                          
+                     
+                                                                
+                                    
+                           
+                                                    
+                                                          
+                      
+                          
+                                                          
+
+                                                               
+
+                                              
+  
+     
+  
+                                          
+                                                 
+                                          
+                       
+                       
+                                    
+                    
+                                    
+                
+                  
+                            
+                        
+
+                                                       
+                             
+  
+ 
+                        
+
+CreatureCage ornull function CreatureCageSpawn( SkitInstance ornull si, string instanceName, int ornull eNpcType = null, int minToSpawn = 0, int maxToSpawn = 0, int cageButtonType = eCageButtonType.CONSOLE )
+{
+	CreatureCage cage = expect CreatureCage( GetCreatureCageByInstanceName( instanceName ) )
+
+	Assert( !cage.isSpawned, "Trying to spawn a creature cage that has already been spawned: " + instanceName )
+	Assert( !IsValid( cage.cageModel ), "Trying to spawn a new creature cage model that already exists: " + instanceName )
+	Assert( !IsValid( cage.cageAntennaModel ), "Trying to spawn a new creature cage antenna model that already exists: " + instanceName )
+	Assert( !cage.isOpen, "Trying to spawn a creature cage but it's door was left open last time it was deleted" )
+
+	if ( si == null )
+	{
+		Warning( "CreatureCageSpawn used without a skit instance, this is no longer valid! Bailing out." )
+		return null
+	}
+	expect SkitInstance( si )
+
+	//---------------------
+	// respawn models
+	//----------------------
+	cage.cageModel = CreatePropDynamic( cage.cageModelAsset, cage.cageModelOrigin, cage.cageModelAngles, SOLID_VPHYSICS )
+	cage.cageModel.AllowMantle()
+	cage.cageAntennaModel = CreatePropDynamic( cage.cageAntennaModelAsset, cage.cageAntennaModelOrigin, cage.cageAntennaModelAngles, SOLID_VPHYSICS )
+
+	//---------------------
+	// unhide other elements
+	//----------------------
+	cage.door.MakeVisible()
+	cage.door.Solid()
+
+	if ( cageButtonType == eCageButtonType.HACKPANEL )
+	{
+
+		cage.controlPanel.MakeVisible()
+		cage.controlPanel.Solid()
+		cage.controlPanel.SetUsable()
+	}
+	else if ( cageButtonType == eCageButtonType.SHOOTABLELOCK )
+	{
+		cage.shootableLock.MakeVisible()
+		cage.shootableLock.Solid()
+		ScriptToyChangeStatusLights( cage.shootableLock, $"runway_light_red" )
+		Highlight_SetNeutralHighlight( cage.shootableLock, "sp_interact_object" )
+		Highlight_SetFriendlyHighlight( cage.shootableLock, "sp_interact_object" )
+		Highlight_SetEnemyHighlight( cage.shootableLock, "sp_interact_object" )
+	}
+	else //standard console button
+	{
+		cage.button.MakeVisible()
+		cage.button.Solid()
+		cage.button.SetUsable()
+	}
+
+	cage.cageButtonType = cageButtonType
+
+	ToggleNPCPathsForEntity( cage.cageRoofNavmeshSeperator, true ) //enable the roof navmesh
+	ToggleNPCPathsForEntity( cage.cageDoorNavmeshSeperator, false ) //disable navmesh that door covers
+	cage.cageDoorNavmeshSeperator.Solid()
+
+	foreach( navblocker in cage.cageNavmeshSeperators )
+	{
+		ToggleNPCPathsForEntity( navblocker, false )
+		//navblocker.Solid()
+	}
+
+
+	//-----------------
+	// Antenna lights
+	//-----------------
+	CreatureCageLightsToggle( cage )
+
+	//---------------------
+	// spawn creatures
+	//----------------------
+	if ( eNpcType != null )
+		SpawnCreaturesInCage( si, cage, expect int( eNpcType ), minToSpawn, maxToSpawn )
+
+
+	cage.isSpawned = true
+	cage.isLocked = false
+
+	thread CreatureCageThink( cage )
+
+	return cage
+}
+
+void function CreatureCageOpen( CreatureCage cage )
+{
+
+	if ( cage.cageButtonType  == eCageButtonType.HACKPANEL )
+		cage.controlPanel.Signal( "PanelReprogram_Success" )
+	else
+		cage.button.Signal( "SwitchActivate" )
+
+}
+
+array <entity> function GetAllCreaturesInsideCageBounds( CreatureCage cage )
+{
+	vector cageOrg = cage.dangerousAreaEnt.GetOrigin()
+	float radiusToCheck = 300
+	if ( IsGoliathCage( cage.cageModelAsset ) )
+		radiusToCheck = 700
+
+
+	array <entity> creatures = GetNPCArrayEx( "any", -1, -1, cageOrg, radiusToCheck )
+	array <entity> creaturesInsideCage
+
+	vector cageMins = cage.cageModel.GetBoundingMins()
+	vector cageMaxs = cage.cageModel.GetBoundingMaxs()
+	foreach( npc in creatures )
+	{
+		if ( !IsAlive( npc ) )
+			continue
+
+		if ( !IsCreature( npc  ) )
+			continue
+
+		vector npcOrigin = npc.GetOrigin() + <0, 0, 72>
+		vector localPos = WorldPosToLocalPos( npcOrigin, cage.cageModel )
+		bool insideCage = PointIsWithinBounds( localPos, cageMins, cageMaxs )
+		if ( !insideCage )
+			continue
+
+		creaturesInsideCage.append( npc )
+	}
+
+	return creaturesInsideCage
+}
+
+
+void function CreatureCageLightsToggle( CreatureCage cage )
+{
+	foreach( fx in cage.cageFx )
+	{
+		if ( IsValid( fx ) )
+			fx.Destroy()
+	}
+
+	int fxIndex
+	vector antennaLightOrigin = cage.cageAntennaModelOrigin + <0, 0, 350>
+
+	if ( cage.isOpen )
+		fxIndex = GetParticleSystemIndex( $"runway_light_green" )
+	else
+		fxIndex = GetParticleSystemIndex( $"runway_light_red" )
+
+	entity fxLights = StartParticleEffectInWorld_ReturnEntity( fxIndex, antennaLightOrigin, <0, 0, 0> )
+	cage.cageFx.append( fxLights )
+
+}
+
+void function SpawnCreaturesInCage( SkitInstance si, CreatureCage cage, int npcType, int minToSpawn = -1, int maxToSpawn = -1 )
+{
+	Assert( minToSpawn <= maxToSpawn, format( "%s() -- min to spawn (%d) must be <= max to spawn (%d)", FUNC_NAME(), minToSpawn, maxToSpawn ) )
+
+	array <entity> creatures
+	array< table<string, vector> > animOffsets = GetCreatureCageAnimOffsetsForType( npcType )
+	array <string> idleAnims = GetCreatureCageIdleAnimsForType( npcType )
+	vector spawnOrigin = cage.cageModel.GetOrigin()
+	vector cageOrigin = cage.cageModelOrigin
+	vector cageAngles = cage.cageModelAngles
+
+	float xOffset = 0
+	float yOffset = 0
+	float zOffset = 0
+	//HACK - additional offsets to get these guys idling the right spot until we get legit anims playing off a proper cage attachment
+	switch( npcType )
+	{
+                  
+                   
+                 
+               
+        
+                        
+
+                    
+                     
+                 
+                
+        
+                          
+
+                   
+		case eNPC.PROWLER:
+			//need to fix base anims
+			xOffset = -100
+			yOffset = -140
+			break
+                         
+
+                   
+                    
+                 
+        
+                         
+		default:
+			break
+
+	}
+	vector cageOriginAdjusted = PositionOffsetFromOriginAngles( cageOrigin, cageAngles, xOffset, yOffset, zOffset )
+
+	int animNumber = 0
+	int spawnGoal = animOffsets.len()
+	int criticalGoal
+	if ( maxToSpawn >= 0 )
+		spawnGoal = minint( spawnGoal, maxToSpawn )
+	if ( minToSpawn >= 0 )
+		criticalGoal = minint( spawnGoal, minToSpawn )
+	else
+		criticalGoal = spawnGoal
+
+	for ( int i = 0; i < spawnGoal; i++ )
+	{
+
+		//vector origin = cageOrigin + animOffsets[i]["origin"]
+		vector origin = PositionOffsetFromOriginAngles( cageOriginAdjusted, cageAngles, animOffsets[i]["origin"].x, animOffsets[i]["origin"].y, animOffsets[i]["origin"].z )
+		vector angles = AnglesCompose( cageAngles, animOffsets[i]["angles"] )
+
+		//DebugDrawText( origin + <0,0,72>, (animOffsets[i]["origin"].x).tostring(), true, 9999999 )
+		if ( animNumber > idleAnims.len() - 1 )
+			animNumber = 0
+
+		bool isCritical = false
+		if ( i < criticalGoal )
+			isCritical = true
+
+		thread ScriptCageCreatureThink( si, cage, npcType, origin, angles, idleAnims[ animNumber ], isCritical )
+		animNumber++
+	}
+}
+
+array <string> function GetCreatureCageIdleAnimsForType( int eNpcType )
+{
+	array <string> idleAnims
+	switch( eNpcType )
+	{
+                  
+                   
+                                       
+        
+                        
+
+                    
+                     
+                                                   
+                                                   
+                                                   
+                                                   
+                                                   
+                                                   
+        
+                          
+
+                   
+		case eNPC.PROWLER:
+			idleAnims.append( "pr_pve_caged_small_aggro_01" )
+			idleAnims.append( "pr_pve_caged_small_aggro_02" )
+			idleAnims.append( "pr_pve_caged_small_aggro_03" )
+			idleAnims.append( "pr_pve_caged_small_aggro_04" )
+			break
+                         
+
+                   
+                    
+                                       
+        
+                         
+
+		default:
+			Assert( false, "Unhandled eNpcType" )
+	}
+
+	return idleAnims
+}
+
+
+array< table<string, vector> > function GetCreatureCageAnimOffsetsForType( int eNpcType )
+{
+	array< table<string, vector> > animOffsets
+
+	switch ( eNpcType )
+	{
+                  
+                   
+                                                                                               
+                                                                                                
+                                                                                                     
+                                                                                                      
+                                                                                                      
+                                                                                                        
+                                                                                                        
+                                                                                                      
+        
+                        
+
+                    
+                     
+                                                                                                          
+                                                                                                         
+                                                                                                    
+                                                                                                     
+                                                                                                        
+                                                                                                   
+                                                                                                     
+                                                                                                    
+                                                                                                     
+        
+                          
+
+                   
+		case eNPC.PROWLER:
+			animOffsets.append( { origin = <0, 0, 0>, angles = <0, 269.991394, 0> } )
+			animOffsets.append( { origin = <0, 0, 0>, angles = <0, 89.9913788, 0> } )
+			animOffsets.append( { origin = <0, 0, 0>, angles = <0, 179.991379, 0> } )
+			animOffsets.append( { origin = <0, 0, 0>, angles = <0, 89.9913788, 0> } )
+			break
+                         
+
+                   
+                    
+                                                                           
+        
+                         
+		default:
+			Assert( false, "Unhandled eNpcType" )
+	}
+
+	return animOffsets
+}
+
+
+bool function IsGoliathCage( asset cageModelAsset )
+{
+	if ( cageModelAsset == $"mdl/containers/portable_holding_cell_massive_open.rmdl" )
+		return true
+	return false
+}
+
+CreatureCage ornull function GetCreatureCageByInstanceName( string instanceName )
+{
+	foreach( cage in file.creatureCages )
+	{
+		if ( cage.cageInstanceName == instanceName )
+			return cage
+	}
+	printf( "%s() - There is no creature cage with instance_name: " + instanceName, FUNC_NAME() )
+
+	return null
+}
+
+CreatureCage ornull function GetClosestCreatureCage( vector origin )
+{
+	if ( file.creatureCages.len() == 0 )
+	{
+		printf( "%s() - There are no creature cages spawned at all" )
+		return null
+	}
+	float dist = 99999999
+	float newDist
+	CreatureCage ornull cageToReturn = null
+	foreach( cage in file.creatureCages )
+	{
+		if ( !IsValid( cage.cageAntennaModel ) )
+			continue
+		newDist = Distance( origin, cage.cageAntennaModel.GetOrigin() )
+		if ( newDist < dist )
+		{
+			dist = newDist
+			cageToReturn = cage
+		}
+	}
+
+	return cageToReturn
+}
+
+void function CreatureCageDespawnAll()
+{
+	//deletes creature cages but can be respawned
+	foreach( cage in file.creatureCages )
+		CreatureCageDespawn( cage.cageInstanceName )
+}
+
+void function CreatureCageDestroyAll()
+{
+	//permanently deletes creature cages, cannot respawn
+	foreach( cage in file.creatureCages )
+		CreatureCageDestroy( cage.cageInstanceName )
+}
+
+void function CreatureCageCloseDoorAndDisable( entity door, entity navmeshSeparator )
+{
+
+	Assert( IsValid( door ) )
+	Assert( IsValid( navmeshSeparator ) )
+	door.EndSignal( "OnDestroy" )
+
+	Signal( door, "CloseDoor" )
+	float animLength = door.GetSequenceDuration( "close" )
+	wait animLength
+	door.MakeInvisible()
+	door.NotSolid()
+	navmeshSeparator.Hide()
+	navmeshSeparator.NotSolid()
+	ToggleNPCPathsForEntity( navmeshSeparator, true )
+
+}
+
+void function CreatureCageDespawn( string instanceName )
+{
+	WaitFrame() //ensure we are running after generic navmesh_separator and door scripts
+
+	CreatureCage cage = expect CreatureCage( GetCreatureCageByInstanceName( instanceName ) )
+	Assert( cage.isSpawned, "Trying to despawn a creature cage that has not been spawned: " + instanceName )
+
+	cage.isSpawned = false
+
+	//reset all to original state
+	Signal( cage.cageModel, "CreatureCageDespawned" )
+
+	if ( cage.isOpen )
+	{
+		if ( cage.cageButtonType == eCageButtonType.CONSOLE )
+			Signal( cage.button, "SwitchReset" )
+		thread CreatureCageCloseDoorAndDisable( cage.door, cage.cageDoorNavmeshSeperator )
+		cage.isOpen = false
+	}
+	foreach( creature in cage.creatures )
+	{
+		if ( IsAlive( creature ) )
+			creature.Destroy()
+	}
+	foreach( prop in cage.propCreatures )
+	{
+		if ( IsValid( prop ) )
+			prop.Destroy()
+	}
+	foreach( fx in cage.cageFx )
+	{
+		if ( IsValid( fx ) )
+			fx.Destroy()
+	}
+
+	if ( IsValid ( cage.cageRoofNavmeshSeperator ) )
+	{
+		ToggleNPCPathsForEntity( cage.cageRoofNavmeshSeperator, false ) //disable the roof navmesh
+	}
+
+	if ( IsValid ( cage.cageDoorNavmeshSeperator ) )
+	{
+		ToggleNPCPathsForEntity( cage.cageDoorNavmeshSeperator, true )
+		cage.cageDoorNavmeshSeperator.NotSolid()
+	}
+
+	if ( cage.cageNavmeshSeperators.len() > 0 )
+	{
+		foreach( navblocker in cage.cageNavmeshSeperators )
+		{
+			ToggleNPCPathsForEntity( navblocker, true )
+			navblocker.NotSolid()
+		}
+	}
+
+	WaitFrame()
+	cage.cageModel.Destroy()
+	cage.cageAntennaModel.Destroy()
+
+	cage.door.MakeInvisible()
+	cage.door.NotSolid()
+	if ( IsValid( cage.button ) )
+	{
+		cage.button.MakeInvisible()
+		cage.button.NotSolid()
+		cage.button.UnsetUsable()
+		Entity_StopFXArray( cage.button )
+	}
+
+	if ( IsValid( cage.shootableLock ) )
+	{
+		cage.shootableLock.MakeInvisible()
+		cage.shootableLock.NotSolid()
+		cage.shootableLock.UnsetUsable()
+		Entity_StopFXArray( cage.shootableLock )
+	}
+	if ( IsValid( cage.controlPanel ) )
+	{
+		cage.controlPanel.MakeInvisible()
+		cage.controlPanel.NotSolid()
+		cage.controlPanel.UnsetUsable()
+	}
+}
+
+void function CreatureCageDestroy( string instanceName )
+{
+	CreatureCage cage = expect CreatureCage( GetCreatureCageByInstanceName( instanceName ) )
+	Assert( cage.isSpawned, "Trying to despawn a creature cage that has not been spawned: " + instanceName )
+	CreatureCageDespawn( instanceName ) //deletes and disables some elements, normally to be later respawned
+
+	//-------------------------------------------------------------
+	// Destroy every additional element, never to be spawned again
+	//--------------------------------------------------------------
+	//Remove from file.creatureCages array
+	for ( int i = file.creatureCages.len() - 1; i >= 0; i-- )
+	{
+		if ( file.creatureCages[ i ].cageInstanceName == instanceName )
+			file.creatureCages.remove( i )
+	}
+
+	//Destroy everything else
+	if ( IsValid ( cage.cageDoorNavmeshSeperator ) )
+	{
+		ToggleNPCPathsForEntity( cage.cageDoorNavmeshSeperator, true )
+		cage.cageDoorNavmeshSeperator.NotSolid()
+		cage.cageDoorNavmeshSeperator.Destroy()
+	}
+
+	if ( cage.cageNavmeshSeperators.len() > 0 )
+	{
+		foreach( navblocker in cage.cageNavmeshSeperators )
+		{
+			ToggleNPCPathsForEntity( navblocker, true )
+			navblocker.NotSolid()
+			navblocker.Destroy()
+		}
+	}
+
+	if ( IsValid( cage.door ) )
+		cage.door.Destroy()
+
+	if ( IsValid( cage.controlPanel ) )
+		cage.controlPanel.Destroy()
+
+	if ( IsValid( cage.button ) )
+		cage.button.Destroy()
+
+	if ( IsValid( cage.dangerousAreaEnt ) )
+		cage.dangerousAreaEnt.Destroy()
+
+	if ( cage.creatures.len() > 0 )
+	{
+		foreach( npc in cage.creatures )
+		{
+			if ( IsAlive( npc ) )
+				npc.Destroy()
+		}
+	}
+}
+
+void function CreatureCageThink( CreatureCage cage )
+{
+	Assert( IsNewThread(), "Must be threaded off." )
+	//----------------------------------------
+	// Dangerous areas to push creatures out
+	//----------------------------------------
+	float dangerousAreaSize
+	if ( IsGoliathCage( cage.cageModelAsset ) )
+		dangerousAreaSize = 204.0
+	else
+		dangerousAreaSize = 92.0
+
+	cage.cageModel.EndSignal( "OnDestroy" )
+	cage.cageModel.EndSignal( "CreatureCageDespawned" )
+	vector buttonPos
+	if ( cage.cageButtonType == eCageButtonType.HACKPANEL )
+		buttonPos = cage.controlPanel.GetOrigin()
+	else if ( cage.cageButtonType == eCageButtonType.SHOOTABLELOCK )
+		buttonPos = cage.shootableLock.GetOrigin()
+	else //standard console button
+		buttonPos = cage.button.GetOrigin()
+
+	while( true )
+	{
+		//Cage is LOCKED
+		if ( cage.isLocked && cage.cageButtonType == eCageButtonType.CONSOLE )
+		{
+			Entity_StopFXArray( cage.button ) //HACK: should do this in global script for button
+			cage.button.SetSkin( 0 ) //Hack: swapping console skin to show it's locked
+		}
+		while ( cage.isLocked )
+			wait 0.1
+
+
+		if ( cage.cageButtonType == eCageButtonType.HACKPANEL )
+		{
+			cage.controlPanel.SetUsable()
+		}
+		else if ( cage.cageButtonType == eCageButtonType.CONSOLE )
+		{
+			cage.button.SetUsable()
+			cage.button.SetSkin( 1 ) //Hack: swapping console skin to show it's unlocked
+		}
+		else //shootable lock
+		{
+
+		}
+
+
+		//-------------------------------------------------------
+		// Wait for panel or switch to be activated, open/close door
+		//-------------------------------------------------------
+		if ( cage.isOpen )
+		{
+			if ( cage.cageButtonType == eCageButtonType.HACKPANEL )
+				SetControlPanelUsePrompts( cage.controlPanel, "#PVEOBJECTIVE_CLOSE_CREATURE_CAGE", "#PVEOBJECTIVE_CLOSE_CREATURE_CAGE" )
+
+			if ( cage.cageButtonType == eCageButtonType.CONSOLE )
+				cage.button.SetUsePrompts( "#PVEOBJECTIVE_CLOSE_CREATURE_CAGE", "#PVEOBJECTIVE_CLOSE_CREATURE_CAGE" )
+		}
+
+		else
+		{
+			if ( cage.cageButtonType == eCageButtonType.HACKPANEL )
+				SetControlPanelUsePrompts( cage.controlPanel, "#PVEOBJECTIVE_OPEN_CREATURE_CAGE", "#PVEOBJECTIVE_OPEN_CREATURE_CAGE" )
+
+			if ( cage.cageButtonType == eCageButtonType.CONSOLE )
+				cage.button.SetUsePrompts( "#PVEOBJECTIVE_OPEN_CREATURE_CAGE", "#PVEOBJECTIVE_OPEN_CREATURE_CAGE" )
+		}
+
+		//------------------------------------------
+		// Wait till Control panel or button used
+		//------------------------------------------
+		if ( cage.cageButtonType == eCageButtonType.HACKPANEL )
+		{
+			cage.controlPanel.WaitSignal( "PanelReprogram_Success" )
+		}
+		else if ( cage.cageButtonType == eCageButtonType.SHOOTABLELOCK )
+		{
+			waitthread ButtonWaitForActivateOrReset( cage.shootableLock )
+		}
+		else //standard console button
+		{
+			waitthread ButtonWaitForActivateOrReset( cage.button )
+		}
+
+		//hack: need a cleaner way to get player directly from button press or console hack
+		cage.lastPlayerToOpen = GetClosest( GetPlayerArray_AliveConnected(), buttonPos )
+
+		//----------------------
+		// Open/Close the door
+		//-----------------------
+		if ( cage.isOpen )
+		{
+			Signal( cage.door, "CloseDoor" )
+			cage.isOpen = false
+		}
+		else
+		{
+			Signal( cage.door, "OpenDoor" )
+			cage.cageModel.Signal( SIGNAL_CREATURE_CAGE_OPENED )
+			cage.isOpen = true
+		}
+
+		//-------------------------------
+		// Toggle locked antenna lights
+		//-------------------------------
+		CreatureCageLightsToggle( cage )
+
+
+		//----------------------------------------------
+		// Create dangerous area to make creatures exit
+		//----------------------------------------------
+		if ( cage.hasCreatures )
+		{
+			cage.hasCreatures = false
+			//TODO: dangerous area causes creatures to freeze since they are missing dodge anims
+			//thread CreatureCageCreateTemporaryDangerousArea( cage.dangerousAreaEnt.GetOrigin(), dangerousAreaSize )
+		}
+
+		//-------------------------------
+		// Button/panel unusable for a moment
+		//-------------------------------
+		WaitFrame()
+		if ( cage.cageButtonType == eCageButtonType.HACKPANEL )
+			cage.controlPanel.UnsetUsable()
+		else if ( cage.cageButtonType == eCageButtonType.CONSOLE )
+			cage.button.UnsetUsable()
+		else //shootable lock
+		{
+			ScriptToyChangeStatusLights( cage.shootableLock, $"runway_light_green" )
+			Highlight_ClearNeutralHighlight( cage.shootableLock )
+			Highlight_ClearFriendlyHighlight( cage.shootableLock )
+			Highlight_ClearEnemyHighlight( cage.shootableLock )
+			break
+		}
+
+		wait 2
+
+	}
+
+}
+
+
+void function ButtonWaitForActivateOrReset( entity button )
+{
+	if ( !IsValid( button ) )
+		return
+	button.EndSignal( "OnDestroy" )
+	button.EndSignal( "SwitchActivate" )
+	button.EndSignal( "SwitchReset" )
+
+	WaitForever()
+}
+
+
+void function CreatureCageCreateTemporaryDangerousArea( vector dangerousAreaEntPos, float dangerousAreaSize )
+{
+	entity tempDangerousAreaEnt = CreateInfoTarget( dangerousAreaEntPos, <0, 0, 0> )
+	AI_CreateDangerousArea_Static( tempDangerousAreaEnt, null, dangerousAreaSize, TEAM_INVALID, true, true, dangerousAreaEntPos )
+	wait 3
+	tempDangerousAreaEnt.Destroy()
+
+}
+
+void function ScriptCageCreatureThink( SkitInstance si, CreatureCage cage, int npcType, vector origin, vector angles, string animIdle, bool isCritical )
+{
+	Assert( IsNewThread(), "Must be threaded off." )
+
+	//--------------------------------------------
+	// use prop dynamics to show creatures before door opens
+	//--------------------------------------------
+	/*CreatureSetStateCaged( creature )
+	MakeInvincible( creature )
+	creature.SetNoTarget( true )
+	creature.SetNoTargetSmartAmmo( true )
+	float initialTime = RandomFloatRange( 0, creature.GetSequenceDuration( animIdle ) )
+
+	thread PlayAnimTeleport( creature, animIdle, origin, angles, initialTime )*/
+	asset propModel
+	bool hasPropModel = false
+	entity prop
+	switch ( npcType )
+	{
+                  
+                   
+                                                         
+                      
+        
+                        
+
+                    
+                     
+                                                           
+                      
+        
+                          
+
+                   
+		case eNPC.PROWLER:
+			propModel = GetNPCAsset( eNPC.PROWLER, eNPCAsset.BODY )
+			hasPropModel = true
+			break
+                         
+
+                   
+                    
+                                                          
+                      
+        
+                             
+
+		default:
+			Warning( "%s() -- no prop model specified for NPC type %d; no prop will be spawned!", FUNC_NAME(), npcType )
+			break
+	}
+	if ( hasPropModel )
+	{
+		prop = CreatePropDynamic( propModel, origin, angles, 0, 2000 )
+		float initialTime = RandomFloatRange( 0, prop.GetSequenceDuration( animIdle ) )
+		thread PlayAnimTeleport( prop, animIdle, origin, angles, initialTime )
+		cage.propCreatures.append( prop )
+	}
+
+	//--------------------------------------------
+	// //TODO - Creatures swap anims and get agitated when player close
+	//--------------------------------------------
+
+	//--------------------------------------------
+	// Door opened, creatures become real AI
+	//--------------------------------------------
+	cage.cageModel.WaitSignal( SIGNAL_CREATURE_CAGE_OPENED )
+
+	/*ClearInvincible( creature )
+	creature.Anim_Stop()
+	CreatureSetStateFree( creature )
+	thread CreatureAnimateOutOfCage( creature, cage )
+	wait 1
+	creature.SetNoTargetSmartAmmo( false )
+	creature.SetNoTarget( false )*/
+
+	if ( prop != null )
+	{
+		cage.propCreatures.fastremovebyvalue( prop )
+		prop.Destroy()
+	}
+
+                  
+                                           
+                       
+	bool isGoliath = false
+                                
+
+	string squadName = "cageCreatures_" + UniqueString()
+	entity creature
+	if ( isCritical )
+		creature = SkNPC_SpawnNPC( si, npcType, origin, angles )
+	else
+	{
+		entity ornull creatureRaw = SkNPC_SpawnNonCriticalNPC( si, npcType, origin, angles )
+		if ( creatureRaw == null )
+			return
+		creature = expect entity( creatureRaw )
+	}
+
+	if ( !isGoliath )
+		creature.SetSquad( squadName )
+
+	CreatureSetStateFree( creature )
+	thread CreatureAnimateOutOfCage( creature, cage )
+
+	cage.creatures.append( creature )
+	cage.hasCreatures = true
+}
+
+void function CreatureSetStateCaged( entity npc )
+{
+	if ( !IsAlive( npc ) )
+		return
+
+	npc.e.isOpen = false
+}
+
+void function CreatureAnimateOutOfCage( entity npc, CreatureCage cage )
+{
+	if ( !IsAlive( npc ) )
+		return
+
+	npc.EndSignal( "OnDeath" )
+	string classname = npc.GetClassName()
+	if ( classname != "npc_goliath" )
+		return
+
+	if ( cage.exitAnimation != "" )
+		waitthread PlayAnimTeleport( npc, cage.exitAnimation, npc.GetOrigin(), npc.GetAngles() )
+	DropToGround( npc )
+}
+
+void function CreatureSetStateFree( entity npc )
+{
+	if ( !IsAlive( npc ) )
+		return
+
+	npc.e.isOpen = true
+}
+
+bool function CreatureIsCaged( entity npc )
+{
+	if ( !IsAlive( npc ) )
+		return false
+
+	return !npc.e.isOpen
+}
+
+void function LockCreatureCage( CreatureCage cage )
+{
+	//Assert( !cage.isOpen, "Cannot LockCreatureCage unless it is closed: " + cage.cageModelOrigin )
+	if ( cage.cageButtonType == eCageButtonType.HACKPANEL )
+		cage.controlPanel.UnsetUsable()
+	else
+		cage.button.UnsetUsable()
+
+	cage.isLocked = true
+
+}
+
+void function UnlockCreatureCage( CreatureCage cage )
+{
+	//Assert( !cage.isOpen, "Cannot UnlockCreatureCage unless it is closed: " + cage.cageModelOrigin )
+	if ( cage.cageButtonType == eCageButtonType.HACKPANEL )
+		cage.controlPanel.SetUsable()
+	else
+		cage.button.SetUsable()
+	cage.isLocked = false
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/*
+
+██████╗ ███████╗██╗   ██╗
+██╔══██╗██╔════╝██║   ██║
+██║  ██║█████╗  ██║   ██║
+██║  ██║██╔══╝  ╚██╗ ██╔╝
+██████╔╝███████╗ ╚████╔╝
+╚═════╝ ╚══════╝  ╚═══╝
+
+*/
+/////////////////////////////////////////////////////////////////////////////////////////
+
+#if DEV
+void function DevDebugText( entity node )
+{
+	Assert( node.HasKey( "text" ) && node.kv.text != "", "info_debug_text at " + node.GetOrigin() + " doesn't have text set on it." )
+	// Debug text doesn't work right away becuase of code, this delay makes them show up
+	wait 3.0
+	DebugDrawText( node.GetOrigin(), string( node.kv.text ), true, 999999.9 )
+}
+
+void function InfoTextPanelSpawnCallback( entity ent )
+{
+	file.infoTextPanels.append( ent )
+}
+#endif

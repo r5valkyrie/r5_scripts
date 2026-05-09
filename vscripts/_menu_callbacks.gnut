@@ -12,9 +12,9 @@ void function MenuCallbacks_Init()
 {
 	if ( GetDeveloperLevel() > 0 )
 	{
-		AddClientCommandCallbackVoid( "ToggleBubbleShield", ClientCommand_ToggleBubbleShield ) // dev
-		AddClientCommandCallbackVoid( "ToggleHUD", ClientCommand_ToggleHUD ) // dev
-		AddClientCommandCallbackVoid( "ToggleOffhandLowRecharge", ClientCommand_ToggleOffhandLowRecharge ) // dev
+		AddClientCommandCallback( "ToggleBubbleShield", ClientCommand_ToggleBubbleShield ) // dev
+		AddClientCommandCallback( "ToggleHUD", ClientCommand_ToggleHUD ) // dev
+		AddClientCommandCallback( "ToggleOffhandLowRecharge", ClientCommand_ToggleOffhandLowRecharge ) // dev
 	}
 }
 

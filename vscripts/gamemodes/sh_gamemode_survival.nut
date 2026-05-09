@@ -280,7 +280,7 @@ bool function HasFastIntro()
 	if ( GetCurrentPlaylistVarBool( "fast_intro", false ) )
 		return true
 
-	return false // ConVar "fast_intro" not in S3
+	return GetConVarBool( "fast_intro" )
 }
 
 //
@@ -362,7 +362,6 @@ void function GamemodeSurvivalShared_Init()
 
 		Remote_RegisterServerFunction( "ClientCallback_TPPromptGoToMapPoint", "float", -FLT_MAX, FLT_MAX, 32, "float", -FLT_MAX, FLT_MAX, 32 )
 		RegisterNetworkedVariableSafe( "numberOfAirdropRoundsLeft", SNDC_GLOBAL, SNVT_INT, 0 )
-		RegisterNetworkedVariableSafe( "ringOpacityOverride", SNDC_GLOBAL, SNVT_FLOAT_RANGE, 1.0, 0.0, 1.0 )
 
 		#if CLIENT
 			// Callbacks must be registered during the registration window (before EndRegisteringFunctions)

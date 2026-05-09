@@ -711,7 +711,7 @@ TeslaTrapPlacementInfo function TeslaTrap_GetPlacementInfoFromTraceResults_New( 
 	entity placementParent = weapon.GetParent()
 	bool success = false//weapon.ObjectPlacementHasValidSpot()
 
-	if ( success && IsOriginInvalidForPlacingPermanentOnto( placementPosition ) )
+	if ( success && IsOriginInvalidForPlacingPermanentOnto( placementPosition, proxy ) )
 		success = false
 
 	TeslaTrapPlacementInfo placementInfo
@@ -1036,7 +1036,7 @@ TeslaTrapPlacementInfo function TeslaTrap_GetPlacementInfoFromTraceResults( enti
 
 	if ( success )
 	{
-		if ( IsOriginInvalidForPlacingPermanentOnto( hullTraceResults.endPos ) )
+		if ( IsOriginInvalidForPlacingPermanentOnto( hullTraceResults.endPos, proxy ) )
 			success = false
 	}
 

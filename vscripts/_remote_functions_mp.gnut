@@ -328,81 +328,6 @@ void function RemoteFunctions_Init_Begin()
 	//RegisterNetworkedVariableSafe( "upgradeCount", SNDC_TITAN_SOUL, SNVT_INT, 0 )
 
 	Remote_RegisterServerFunction( "ClientCallback_ViewedModes" )
-
-	//Custom gamemodes
-	switch ( Gamemode() )
-	{
-		case eGamemodes.ARENAS:
-			// Arenas: Server to Client
-			ScriptRemote_RegisterClientFunction( "ServerCallback_ShowWinningSquadSequence" )
-			ScriptRemote_RegisterClientFunction( "ServerCallback_EnableDeathScreenBanner" )
-			ScriptRemote_RegisterClientFunction( "ServerCallback_DisplayArenasPrematch", "int", 0, 30, "int", 0, 30, "int", 0, 5000, "int", 0, 100, "int", 0, 100 )
-			ScriptRemote_RegisterClientFunction( "ServerCallback_DisplayRoundLost" )
-			ScriptRemote_RegisterClientFunction( "ServerCallback_DisplayRoundWon", "int", 0, 4 ) // eArenasRoundWonDescriptor.MAX_COUNT
-			ScriptRemote_RegisterClientFunction( "ServerCallback_Arenas_AnnounceResourcesCollected", "int", 0, 255 )
-			ScriptRemote_RegisterClientFunction( "ServerCallback_Arenas_UpdateAirdropPreview", "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX )
-			ScriptRemote_RegisterClientFunction( "ServerCallback_Arenas_AnnounceRoundStart", "int", 0, 255 )
-
-			// Arenas Buy System: Server to Client
-			ScriptRemote_RegisterClientFunction( "ServerCallback_RefreshMenu" )
-			ScriptRemote_RegisterClientFunction( "OnCurrentCashChanged", "entity" )
-			ScriptRemote_RegisterClientFunction( "ServerCallback_FinishedProcessingClickEvent" )
-
-			// Arenas Cash Station: Server to Client
-			ScriptRemote_RegisterClientFunction( "ServerToClient_CashStationStartUse", "entity", "int", TEAM_ANY, INT_MAX )
-			ScriptRemote_RegisterClientFunction( "ServerToClient_CashStationStopUse", "entity" )
-			ScriptRemote_RegisterClientFunction( "ServerToClient_OnUseCashStationSmall", "entity", "int", 0, 500 )
-
-			// Arenas Networked Variables
-			RegisterNetworkedVariableSafe( "arenas_numties", SNDC_GLOBAL, SNVT_INT, 0 )
-			RegisterNetworkedVariableSafe( "arenas_lastWonTeam", SNDC_GLOBAL, SNVT_INT, 0 )
-			RegisterNetworkedVariableSafe( "arenas_buyMenuStartTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
-			break
-
-		case eGamemodes.freedm:
-		case eGamemodes.freedm_tdm:
-		case eGamemodes.freedm_gungame:
-			// FreeDM network vars
-			RegisterNetworkedVariableSafe( "isMapZoneDisplayTextDisabled", SNDC_GLOBAL, SNVT_BOOL, false )
-			break
-
-		case eGamemodes.CUSTOM_CTF:
-			// CTF: Server to Client
-			
-			ScriptRemote_RegisterClientFunction( "ServerCallback_CTF_AddPointIcon", "entity", "entity", "int", 0, 255)
-			ScriptRemote_RegisterClientFunction( "ServerCallback_CTF_RecaptureFlag", "int", 0, 999, "float", 0.0, 999.0, 32, "float", 0.0, 999.0, 32, "bool")
-			ScriptRemote_RegisterClientFunction("ServerCallback_CTF_FlagCaptured", "entity", "int", 0, 255)
-			ScriptRemote_RegisterClientFunction( "ServerCallback_CTF_CustomMessages", "entity", "int", 0, 255 )
-			ScriptRemote_RegisterClientFunction( "ServerCallback_CTF_PickedUpFlag", "entity", "bool" )
-			ScriptRemote_RegisterClientFunction( "ServerCallback_CTF_SetSelectedLocation", "int", 0, 255)
-			ScriptRemote_RegisterClientFunction( "ServerCallback_CTF_SetPointIconHint", "int", 0, 255, "int", 0, 255 )
-			ScriptRemote_RegisterClientFunction("ServerCallback_CTF_DoAnnouncement", "float", 0.0, 256.0, 32, "int", 0, 255, "float", 0.0, 1000000.0, 32)
-			ScriptRemote_RegisterClientFunction( "ServerCallback_CTF_OpenCTFRespawnMenu", "vector", -32000.0, 32000.0, 32, "int", 0, 255, "int", 0, 255, "entity", "int", 0, 255)
-			ScriptRemote_RegisterClientFunction( "ServerCallback_CTF_SetObjectiveText", "int", 0, 255)
-			ScriptRemote_RegisterClientFunction( "ServerCallback_CTF_UpdatePlayerStats", "int", 0, 255)
-			ScriptRemote_RegisterClientFunction("ServerCallback_CTF_SetScreen", "int", 0, 255, "int", 0, 255, "int", 0, 255, "int", 0, 255)
-			ScriptRemote_RegisterClientFunction("ServerCallback_CTF_SetVoteMenuOpen", "bool", "int", 0, 255)
-			ScriptRemote_RegisterClientFunction("ServerCallback_CTF_UpdateVotingMaps", "int", 0, 255, "int", 0, 255, "int", 0, 255, "int", 0, 255)
-			ScriptRemote_RegisterClientFunction("ServerCallback_CTF_UpdateMapVotesClient", "int", 0, 255, "int", 0, 255, "int", 0, 255, "int", 0, 255)
-			ScriptRemote_RegisterClientFunction("FSDM_CustomWinnerScreen_Start", "int", INT_MIN, INT_MAX, "int", 0, 10)
-			
-			RegisterNetworkedVariableSafe( "FSDM_GameState", SNDC_GLOBAL, SNVT_INT, -1 )
-			RegisterNetworkedVariableSafe( "flowstate_DMStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-			RegisterNetworkedVariableSafe( "flowstate_DMRoundEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-			RegisterNetworkedVariableSafe( "imcFlag", SNDC_GLOBAL, SNVT_ENTITY )
-			RegisterNetworkedVariableSafe( "milFlag", SNDC_GLOBAL, SNVT_ENTITY )
-			RegisterNetworkedVariableSafe( "FSIntro_StartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-			RegisterNetworkedVariableSafe( "FSIntro_EndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-			RegisterNetworkedVariableSafe( "FSVoteTeam_EndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-			
-			ScriptRemote_RegisterClientFunction("ServerCallback_FS_OpenVoteTeamMenu", "bool")
-			ScriptRemote_RegisterClientFunction("ServerCallback_AddClientThatVotedToTeam", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
-			ScriptRemote_RegisterClientFunction("ServerCallback_RemoveClientThatVotedFromTeam", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
-
-			RegisterNetworkedVariableSafe( "captures", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
-			RegisterNetworkedVariableSafe( "returns", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
-			break					
-	}
 	
 	//TF2 leftovers + Survival base gamemode
 	RegisterSignal("OnChangedPlayerClass")
@@ -437,7 +362,6 @@ void function RemoteFunctions_Init_Begin()
 	RegisterEntityVar_AllSyncedEntity( "weaponx", "weaponLockedSet", 0 )
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_UpdateMarker", "int", 0, 31 )//Audit 2-22-2025
-	ScriptRemote_RegisterClientFunction( "ServerToClient_DisplayToggleThrowPowerHintForPlayer" )
 	
 	ScriptRemote_RegisterUIFunction( "DisablePrecacheErrors" ) 
 	ScriptRemote_RegisterUIFunction( "RestorePrecacheErrors" )
@@ -474,9 +398,9 @@ void function RemoteFunctions_Init_Begin()
 	RegisterNetworkedVariableSafe( "switchedSides", SNDC_GLOBAL, SNVT_INT, -1 ) // waste of bits, should really be a bool but the null state is used
 	RegisterNetworkedVariableSafe( "replayDisabled", SNDC_GLOBAL, SNVT_BOOL, false )
 	//Round Winning Kill replay related
-	RegisterNetworkedVariableSafe( "roundWinningKillReplayEnabled", SNDC_GLOBAL, SNVT_BOOL, false )
-	RegisterNetworkedVariableSafe( "roundWinningKillReplayPlaying", SNDC_GLOBAL, SNVT_BOOL, false )
-	RegisterNetworkedVariableSafe( "roundScoreLimitComplete", SNDC_GLOBAL, SNVT_BOOL, false )
+	//RegisterNetworkedVariableSafe( "roundWinningKillReplayEnabled", SNDC_GLOBAL, SNVT_BOOL, false )
+	//RegisterNetworkedVariableSafe( "roundWinningKillReplayPlaying", SNDC_GLOBAL, SNVT_BOOL, false )
+	//RegisterNetworkedVariableSafe( "roundScoreLimitComplete", SNDC_GLOBAL, SNVT_BOOL, false )
 
 	RegisterServerVar( "roundWinningKillReplayEntHealthFrac", 0.0 )
 
@@ -504,22 +428,36 @@ void function RemoteFunctions_Init_Begin()
 	RegisterNetworkedVariableSafe( "ownerEHI", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
 
 	RegisterNetworkedVariableSafe( "hasDeathFieldImmunity", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
-	RegisterNetworkedVariableSafe( "displayMapzoneText", SNDC_GLOBAL, SNVT_BOOL, true )
+			//RegisterNetworkedVariableSafe( "isMapZoneDisplayTextDisabled", SNDC_GLOBAL, SNVT_BOOL, false )
+			//RegisterNetworkedVariableSafe( "pickLoadoutGamestateStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+			//RegisterNetworkedVariableSafe( "pickLoadoutGamestateEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+			RegisterNetworkedVariableSafe( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER, SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+			RegisterNetworkedVariableSafe( CHARACTER_SELECT_NETVAR_LOCKED_IN_CHARACTER_TIME, SNDC_PLAYER_GLOBAL, SNVT_TIME, -1 )
+			RegisterNetworkedVariableSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX, SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
+			RegisterNetworkedVariableSafe( CHARACTER_SELECT_NETVAR_FOCUS_CHARACTER_GUID, SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, -1 )
+			RegisterNetworkedVariableSafe( "characterSelectFocusSkinGUID", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, -1 )
+			RegisterNetworkedVariableSafe( "characterSelectionReady", SNDC_GLOBAL, SNVT_BOOL, false )
+			RegisterNetworkedVariableSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, SNDC_GLOBAL, SNVT_INT, -1 )
+			RegisterNetworkedVariableSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_START_TIME, SNDC_GLOBAL, SNVT_TIME, -1 )
+			RegisterNetworkedVariableSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME, SNDC_GLOBAL, SNVT_TIME, -1 )
+			RegisterNetworkedVariableSafe( "characterSelectPicksEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+			RegisterNetworkedVariableSafe( "allSquadsPresentationStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+			RegisterNetworkedVariableSafe( "squadPresentationStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+			RegisterNetworkedVariableSafe( "mvpPresentationStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+			//RegisterNetworkedVariableSafe( "championSquadPresentationStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+			ScriptRemote_RegisterClientFunction( "ServerCallback_CharacterLockRejected" )
+			ScriptRemote_RegisterClientFunction( "ServerCallback_ForceCharacterLockFeedback", "entity", "bool" )
 
-	RegisterNetworkedVariableSafe( "hasLockedInCharacter", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
-	RegisterNetworkedVariableSafe( "lockedInCharacterTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, -1 )
-	RegisterNetworkedVariableSafe( "characterSelectLockstepPlayerIndex", SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
-	RegisterNetworkedVariableSafe( "characterSelectFocusCharacterGUID", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, -1 )
-	RegisterNetworkedVariableSafe( "characterSelectFocusSkinGUID", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, -1 )
+
+
+	RegisterNetworkedVariableSafe( "displayMapzoneText", SNDC_GLOBAL, SNVT_BOOL, true )
 	
 
 
 
-	RegisterNetworkedVariableSafe( "championEEH", SNDC_GLOBAL, SNVT_BIG_INT, EncodedEHandle_null )
-	RegisterNetworkedVariableSafe( "championSquad1EEH", SNDC_GLOBAL, SNVT_BIG_INT, EncodedEHandle_null )
-	RegisterNetworkedVariableSafe( "championSquad2EEH", SNDC_GLOBAL, SNVT_BIG_INT, EncodedEHandle_null )
-	ScriptRemote_RegisterClientFunction( "ServerCallback_CharacterLockRejected" )
-	ScriptRemote_RegisterClientFunction( "ServerCallback_ForceCharacterLockFeedback", "entity", "bool" )
+	//RegisterNetworkedVariableSafe( "championEEH", SNDC_GLOBAL, SNVT_BIG_INT, EncodedEHandle_null )
+	//RegisterNetworkedVariableSafe( "championSquad1EEH", SNDC_GLOBAL, SNVT_BIG_INT, EncodedEHandle_null )
+	//RegisterNetworkedVariableSafe( "championSquad2EEH", SNDC_GLOBAL, SNVT_BIG_INT, EncodedEHandle_null )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_Mirage_DecoysDeployed", "bool" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_MatchEndAnnouncement", "bool", "int", TEAM_INVALID, 127 ) //Audit 2-22-2025
 	
@@ -537,7 +475,7 @@ void function RemoteFunctions_Init_Begin()
 		"float", 0.0, 1.0, 32, "float", 0.0, 86400.0, 32,
 		"int", -1, INT_MAX, "int", -1, 16 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DeathRecapDataUpdated", "bool", "int", EHANDLE_MIN, EHANDLE_MAX ) //Audit 2-22-2025
-	RegisterNetworkedVariableSafe( "titanEjectEnabled", SNDC_GLOBAL, SNVT_BOOL, true )
+	//RegisterNetworkedVariableSafe( "titanEjectEnabled", SNDC_GLOBAL, SNVT_BOOL, true )
 
 			// S3 engine limit: max 10 params per Remote_CallFunction. Split 16-param
 			// AddWinningSquadData into two 8-param calls (Base + Extra).
@@ -1017,17 +955,17 @@ void function ByRef_ConsistencyCheck()
 #endif
 
 #if SERVER 
-	bool function ClientCommand_CheckByRefConsistency( entity player, array<string> args )
+	void function ClientCommand_CheckByRefConsistency( entity player, array<string> args )
 	{
 		if( args.len() < 1 )
-			return true
+			return
 			
 		string param = args[ 0 ]
 		
 		if( !IsStringNumeric( param ) )
 		{
 			KickPlayerById( player.GetPlatformUID(), "Invalid byref consistency check data" )
-			return true
+			return
 		}
 			
 		int clientCount = int( param )
@@ -1038,6 +976,6 @@ void function ByRef_ConsistencyCheck()
 			KickPlayerById( player.GetPlatformUID(), info )
 		}
 		
-		return true
+		return
 	}	
 #endif

@@ -1242,34 +1242,32 @@ void function CodeCallback_GravityCannonLaunch( entity trigger, int numLaunched 
 	}
 }
 
-bool function ClientCommand_SetGravityCannonVelocity( entity player, array<string> args )
+void function ClientCommand_SetGravityCannonVelocity( entity player, array<string> args )
 {
 	if ( args.len() < 1 )
 	{
 		printt( "Usage: SetGravityCannonVelocity <velocity>" )
 		printt( "Current: GRAVITY_CANNON_LAUNCH_VELOCITY = " + GRAVITY_CANNON_LAUNCH_VELOCITY )
-		return false
+		return
 	}
 
 	float velocity = float( args[0] )
 	GRAVITY_CANNON_LAUNCH_VELOCITY = velocity
 	printt( "GRAVITY_CANNON_LAUNCH_VELOCITY set to: " + velocity )
-	return true
 }
 
-bool function ClientCommand_SetGravityCannonVerticalMult( entity player, array<string> args )
+void function ClientCommand_SetGravityCannonVerticalMult( entity player, array<string> args )
 {
 	if ( args.len() < 1 )
 	{
 		printt( "Usage: SetGravityCannonVerticalMult <multiplier>" )
 		printt( "Current: GRAVITY_CANNON_VERTICAL_MULTIPLIER = " + GRAVITY_CANNON_VERTICAL_MULTIPLIER )
-		return false
+		return
 	}
 
 	float mult = float( args[0] )
 	GRAVITY_CANNON_VERTICAL_MULTIPLIER = mult
 	printt( "GRAVITY_CANNON_VERTICAL_MULTIPLIER set to: " + mult )
-	return true
 }
 #endif
 

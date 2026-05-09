@@ -52,7 +52,6 @@ global function AddCallback_OnTouchHealthKit
 global function AddCallback_OnPlayerAssist
 global function AddCallback_OnPlayerUsedOffhandWeapon
 global function AddClientCommandCallback
-global function AddClientCommandCallbackVoid
 global function AddPlayerDropScriptedItemsCallback
 global function AddCallback_OnPlayerInventoryChanged
 
@@ -740,16 +739,10 @@ void function AddCallback_OnPlayerUsedOffhandWeapon( void functionref( entity pl
 	svGlobal.onPlayerUsedOffhandCallbacks.append( callbackFunc )
 }
 
-void function AddClientCommandCallback( string commandString, bool functionref( entity player, array<string> args ) callbackFunc )
+void function AddClientCommandCallback( string commandString, void functionref( entity player, array<string> args ) callbackFunc )
 {
 	Assert( !( commandString in svGlobal.clientCommandCallbacks ), "Already added " + commandString + " with AddClientCommandCallback" )
 	svGlobal.clientCommandCallbacks[ commandString ] <- callbackFunc
-}
-
-void function AddClientCommandCallbackVoid( string commandString, void functionref( entity player, array<string> args ) callbackFunc )
-{
-	Assert( !( commandString in svGlobal.clientCommandCallbacksVoid ), "Already added " + commandString + " with AddClientCommandCallbackVoid" )
-	svGlobal.clientCommandCallbacksVoid[ commandString ] <- callbackFunc
 }
 
 void function AddPlayerDropScriptedItemsCallback( void functionref(entity player) callbackFunc )

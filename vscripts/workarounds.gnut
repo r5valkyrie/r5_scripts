@@ -106,7 +106,6 @@ global function DeregisterNavMesh_EntityMemory
 global function RegisterNavMesh_EntityMemory
 global function OnProjectileCollision_weapon_deployable_crypto
 global function FakePhysicsThrow_NewTest
-global function ClientCommand_Flowstate_AssignCustomCharacterFromMenu
 global function ReturnCarePackagesNewArray
 global function SurvivalCommentary_HostAnnounce
 global function GetRoundCommentaryBucket
@@ -159,7 +158,6 @@ global function RefreshChallenges
 // === Shared scope declarations (visible to all VMs) ===
 global function ShadowArmy_IsPlayerOnShadowArmy
 global function ForcedSpawn_Init
-global function Sh_Rank_InitGameSummary
 // SetPlayerCanGroundEmote — now in sh_emotes.nut (S22)
 global function ShadowArmy_ShouldEnterBleedout
 global function ShadowArmy_StorePlayersOriginalCharacterSelection
@@ -169,11 +167,8 @@ global function ShadowArmy_GetLegendSpawnGroupsNumber
 global function ShadowArmy_GetLegendMatchStartSpawnLocations
 global function ShadowArmy_GetLegendMatchStartSpawnRadius
 global function ShadowArmy_IsSquadReallyEliminated
-global function Ranked_UpdateRankedScoreProgressForPlayer
 global function Bleedout_GetShouldAlliancePlayerBleedout
 global function SquadMuteLegendSelectEnabled
-global function RankedTrials_PlayerHasIncompleteTrial
-global function RankedTrials_GetAssignedTrial
 #if CLIENT
 global function ClearCustomPlayerInfoTreatment
 global function ClearCustomPlayerInfoCharacterIcon
@@ -312,9 +307,7 @@ global function StopAllSoundsOnEntity
 global function Strikeout_IsPlayerRespawnDisabled
 global function Sh_Respawn_Token_IsPlayerRespawnDisabled
 global function SpawnGroupSkydive_IsSquadEliminated
-global function Ranked_UpdateRankedScoreProgressForAllPlayers
 global function Achievements_OnPlayerMatchParticipationEnded
-global function Ranked_HasFinishedProvisionalMatches
 global function MMR_GetInteractionsForPlayer
 global function SendPlayerMatchResult
 global function GetPlayerGameDuration
@@ -329,7 +322,6 @@ global function TitanSword_Super_IsActive
 global function TitanSword_DamageSourceIsTitanSword
 global function TitanSword_Slam_DeathboxOverride
 global array<string> SQUAD_TEAM_HIGHLIGHTS = ["PVE_multisquad_0", "PVE_multisquad_1", "PVE_multisquad_2", "PVE_multisquad_3"]
-global function SurvivalRank_ProcessParticiation
 
 // ============================================================================
 //  #if UI - Struct Definitions & Declarations
@@ -482,7 +474,6 @@ global function TitanSword_VictimHitOverride
 // === Ranked/Rumble ===
 global function DEV_script_ranked_debug
 global function IsServerNetworkAlertTriggered
-global function PrepareGameSummaryForPointCalculation
 global function Ranked_ConstructSingleRankBadgeForStatsCard
 global function ArenasRanked_ConstructSingleRankBadgeForStatsCard
 global function Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2
@@ -2651,12 +2642,6 @@ bool function IsServerNetworkAlertTriggered()
 	return false
 }
 
-// stub
-void function PrepareGameSummaryForPointCalculation( entity player )
-{
-	Warning( "WORKAROUND: PrepareGameSummaryForPointCalculation() called - not implemented" )
-}
-
 // Debug print wrapper
 void function DEV_script_ranked_debug( string msg )
 {
@@ -3144,12 +3129,6 @@ void function FakePhysicsThrow_NewTest( entity victim, entity obj1, entity obj2,
 	Warning( "STUB: FakePhysicsThrow_NewTest" )
 }
 
-bool function ClientCommand_Flowstate_AssignCustomCharacterFromMenu( entity player, array<string> args )
-{
-	Warning( "STUB: ClientCommand_Flowstate_AssignCustomCharacterFromMenu" )
-	return true
-}
-
 array<entity> function ReturnCarePackagesNewArray()
 {
 	Warning( "STUB: ReturnCarePackagesNewArray" )
@@ -3271,12 +3250,6 @@ void function ForcedSpawn_Init()
 {
 	Warning( "STUB: ForcedSpawn_Init" )
 }
-
-void function Sh_Rank_InitGameSummary()
-{
-	Warning( "STUB: Sh_Rank_InitGameSummary" )
-}
-
 // SetPlayerCanGroundEmote — now in sh_emotes.nut (S22)
 void function PIN_EmoteUse( entity player, string emoteRef, vector pos, string action, ... ) { Warning( "STUB: PIN_EmoteUse" ) }
 
@@ -3321,11 +3294,6 @@ bool function ShadowArmy_IsSquadReallyEliminated( int team )
 {
 	Warning( "STUB: ShadowArmy_IsSquadReallyEliminated" )
 	return false
-}
-
-void function Ranked_UpdateRankedScoreProgressForPlayer( entity player )
-{
-	Warning( "STUB: Ranked_UpdateRankedScoreProgressForPlayer" )
 }
 
 bool function Bleedout_GetShouldAlliancePlayerBleedout( entity player )
@@ -3383,32 +3351,9 @@ bool function SpawnGroupSkydive_IsSquadEliminated( int team )
 	return false
 }
 
-void function Ranked_UpdateRankedScoreProgressForAllPlayers()
-{
-	Warning( "STUB: Ranked_UpdateRankedScoreProgressForAllPlayers" )
-}
-
-
 void function Achievements_OnPlayerMatchParticipationEnded( entity player )
 {
 	Warning( "STUB: Achievements_OnPlayerMatchParticipationEnded" )
-}
-
-bool function Ranked_HasFinishedProvisionalMatches( entity player )
-{
-	return true
-}
-
-bool function RankedTrials_PlayerHasIncompleteTrial( entity player )
-{
-	return false
-}
-
-ItemFlavor function RankedTrials_GetAssignedTrial( entity player )
-{
-	Warning( "STUB: RankedTrials_GetAssignedTrial" )
-	ItemFlavor dummy
-	return dummy
 }
 
 var function MMR_GetInteractionsForPlayer( entity player, int functionref(entity) rankFunc )
@@ -3492,19 +3437,6 @@ void function ArrayRandomizeSeeded( array arr, int seed )
 		arr[j] = temp
 	}
 }
-
-
-
-
-void function SurvivalRank_ProcessParticiation( entity killer, entity victim )
-{
-	Warning( "STUB: SurvivalRank_ProcessParticiation" )
-}
-
-
-
-
-
 
 
 array<vector> function ShuffleVectorArray( array<vector> arr )

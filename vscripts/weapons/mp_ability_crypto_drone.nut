@@ -205,7 +205,7 @@ void function MpAbilityCryptoDrone_Init()
 		RegisterSignal( "ExitCameraView" )
 		RegisterSignal( "FinishDroneRecall" )
 		//AddDamageCallback( "player", OnPlayerTookDamage ) //(mk): commented, added when entering drone view
-		AddClientCommandCallbackVoid( "ShouldExitDrone", ClientCommand_ShouldExitDrone )
+		AddClientCommandCallback( "ShouldExitDrone", ClientCommand_ShouldExitDrone )
 		file.neurolinkRegisteredPropScriptsArrayID = CreateScriptManagedEntArray()
 		file.empDamageArrayID = CreateScriptManagedEntArray()
 		file.empDestroyArrayID = CreateScriptManagedEntArray()
@@ -638,31 +638,30 @@ void function ServerCallback_ShouldExitDrone()
 #endif // CLIENT
 
 #if SERVER
-bool function ClientCommand_AttemptDroneRecall(entity player, array < string > args)
+void function ClientCommand_AttemptDroneRecall(entity player, array < string > args)
 {
 	if( !IsValid( player ) || !player.IsPlayer() )
-		return false
+		return 
 
 	if ( !IsAlive( player ) )
-		return false
+		return
 
 	if ( !PlayerHasPassive( player, ePassives.PAS_CRYPTO ) )
-		return false
+		return
 
 	if ( !IsValid( player.p.cryptoActiveCamera ) )
-		return false
+		return
 
 	if ( StatusEffect_GetSeverity( player, eStatusEffect.crypto_camera_is_emp ) > 0 )
-		return false
+		return
 
 	if ( StatusEffect_GetSeverity( player, eStatusEffect.crypto_camera_is_recalling ) > 0  )
-		return false
+		return
 
 	if ( !(StatusEffect_GetSeverity( player, eStatusEffect.crypto_has_camera ) > 0 ) )
-		return false
+		return
 
 	Drone_RecallDrone( player )
-	return true
 }
 
 void function ClientCommand_ShouldExitDrone( entity player, array<string> args )

@@ -313,7 +313,6 @@ void function WinterExpress_Init()
 		SurvivalFreefall_Init()
 		Sh_ArenaDeathField_Init()
 		ShApexScreens_Init()
-		AddClientCommandCallback("Flowstate_AssignCustomCharacterFromMenu", ClientCommand_Flowstate_AssignCustomCharacterFromMenu)
 
 		SetCallback_ObserverThreadOverride( WinterExpress_StartObserving )
 		PrecacheParticleSystem( $"P_ar_cylinder_radius_CP_1x1" )

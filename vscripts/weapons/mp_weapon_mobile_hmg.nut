@@ -385,26 +385,8 @@ void function OnWeaponZoomFOVToggle_weapon_mobile_hmg( entity weapon, float targ
 #if SERVER
 void function MobileHMG_RegisterNetworkFunctions()
 {
-	AddClientCommandCallback( "ClientCallback_ToggleMobileHMGPlacementMode", ClientCommand_ToggleMobileHMGPlacementMode )
-	AddClientCommandCallback( "ClientCallback_ForceCooldown", ClientCommand_ForceCooldown )
-}
-
-bool function ClientCommand_ToggleMobileHMGPlacementMode( entity player, array<string> args )
-{
-	if ( !IsValid( player ) )
-		return false
-
-	ClientCallback_ToggleMobileHMGPlacementMode( player )
-	return true
-}
-
-bool function ClientCommand_ForceCooldown( entity player, array<string> args )
-{
-	if ( !IsValid( player ) )
-		return false
-
-	ClientCallback_ForceCooldown( player )
-	return true
+	Remote_RegisterServerFunction( "ClientCallback_ToggleMobileHMGPlacementMode" )
+	Remote_RegisterServerFunction( "ClientCallback_ForceCooldown" )
 }
 
 void function MobileHMG_WeaponActiveThreadServer( entity weapon )
@@ -693,9 +675,9 @@ void function PlacementModeTogglePressed( entity player )
 	entity ultWeapon = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
 	entity placementWeapon = player.GetOffhandWeapon( OFFHAND_RIGHT )
 	if( activeWeapon == ultWeapon && ultWeapon.GetWeaponClassName() == MOBILE_HMG_WEAPON_NAME )
-		player.ClientCommand( "ClientCallback_ToggleMobileHMGPlacementMode" )
+		Remote_ServerCallFunction( "ClientCallback_ToggleMobileHMGPlacementMode" )
 	else if( activeWeapon == placementWeapon && placementWeapon.GetWeaponClassName() == MOUNTED_TURRET_PLACEABLE_WEAPON_NAME )
-		player.ClientCommand( "ClientCallback_ToggleMobileHMGPlacementMode" )
+		Remote_ServerCallFunction( "ClientCallback_ToggleMobileHMGPlacementMode" )
 }
 
 void function ForceCooldownPressed( entity player )
@@ -710,9 +692,9 @@ void function ForceCooldownPressed( entity player )
 	entity ultWeapon = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
 	entity placementWeapon = player.GetOffhandWeapon( OFFHAND_RIGHT )
 	if( activeWeapon == ultWeapon && ultWeapon.GetWeaponClassName() == MOBILE_HMG_WEAPON_NAME )
-		player.ClientCommand( "ClientCallback_ForceCooldown" )
+		Remote_ServerCallFunction( "ClientCallback_ForceCooldown" )
 	else if( activeWeapon == placementWeapon && placementWeapon.GetWeaponClassName() == MOUNTED_TURRET_PLACEABLE_WEAPON_NAME )
-		player.ClientCommand( "ClientCallback_ForceCooldown" )
+		Remote_ServerCallFunction( "ClientCallback_ForceCooldown" )
 }
 #endif // CLIENT
 

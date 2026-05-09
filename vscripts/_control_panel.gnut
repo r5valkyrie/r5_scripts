@@ -540,7 +540,7 @@ void function PlayerProgramsControlPanel( entity panel, entity player, string ha
 		return
 
 	if ( !player.Anim_HasSequence( animData.playerAnimation3pStart ) )
-		Warning("Player does not have third person beacon anims")
+		return
 
 	player.SetAnimNearZ( 1 )
 

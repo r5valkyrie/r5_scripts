@@ -1925,17 +1925,17 @@ void function ResetQuestPersistence()
 #if SERVER
 void function RegisterDevCommands()
 {
-	AddClientCommandCallbackVoid( CMD_GIVETREASUREBOX_1, void function ( entity player, array<string> args ) // dev
+	AddClientCommandCallback( CMD_GIVETREASUREBOX_1, void function ( entity player, array<string> args ) // dev
 	{
 		TreasureBox_Dev_GrantTreasureBoxPickupsTo( player, 1 )
 	} )
 
-	AddClientCommandCallbackVoid( CMD_GIVETREASUREBOX_5, void function ( entity player, array<string> args ) // dev
+	AddClientCommandCallback( CMD_GIVETREASUREBOX_5, void function ( entity player, array<string> args ) // dev
 	{
 		TreasureBox_Dev_GrantTreasureBoxPickupsTo( player, 5 )
 	} )
 
-	AddClientCommandCallbackVoid( CMD_FINISHMISSION, void function ( entity player, array<string> args ) // dev
+	AddClientCommandCallback( CMD_FINISHMISSION, void function ( entity player, array<string> args ) // dev
 	{
 		ItemFlavor ornull quest = SeasonQuest_GetActiveSeasonQuest( GetUnixTimestamp() )
 		if ( quest == null )

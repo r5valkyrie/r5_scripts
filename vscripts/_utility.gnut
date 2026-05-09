@@ -103,10 +103,8 @@ void function Utility_Init()
 	te = TotalEnts
 	EntTracker = 0
 
-	#document( "SetDeathFuncName", "Sets the name of a function that runs when the NPC dies." )
 	#document( "CenterPrint", "Print to the screen" )
 	#document( "GetAllSoldiers", "Get all living soldiers." )
-	#document( "ClearDeathFuncName", "Clears the script death function." )
 
 	HUMAN_RAGDOLL_IMPACT_TABLE_IDX = PrecacheImpactEffectTable( "ragdoll_human" )
 
@@ -115,11 +113,14 @@ void function Utility_Init()
 	RegisterSignal( "InventoryChanged" )
 	RegisterSignal( "StopCheckingForIntersectingGeo" )
 	RegisterSignal( SIGNAL_TELEPORTED )
+
+	PrecacheParticleSystem( FLASH_BANG_BLIND_TEMP_FX )
+
 	DEPLOYABLE_ABILITY_NAMES = [ ECHO_LOCATOR_SCRIPT_NAME, BLACK_MARKET_SCRIPTNAME, DIRTY_BOMB_TARGETNAME, GIBRALTAR_DOME_SCRIPTNAME, BLACKHOLE_PROP_SCRIPTNAME, SPACE_ELEVATOR_SCRIPTNAME, TROPHY_SYSTEM_NAME, TESLA_TRAP_NAME, JUMP_PAD_SCRIPTNAME, DEATH_TOTEM_TARGETNAME, BASE_WALL_SCRIPT_NAME, MOUNTED_TURRET_PLACEABLE_SCRIPT_NAME, DEATH_TOTEM_TARGETNAME, SILENCE_MOVER_SCRIPTNAME, ARMORED_LEAP_SHIELD_ANCHOR_SCRIPTNAME ]
 	#if DEVELOPER
 		FlagInit( "AimAssistSwitchTest_Enabled" )
-		AddClientCommandCallback( "toggleconsole", ClientCommand_ToggleConsole )
-		AddClientCommandCallbackVoid( "+opendevmenu", ClientCommand_OpenDevMenu ) // dev
+
+		AddClientCommandCallback( "+opendevmenu", ClientCommand_OpenDevMenu ) // dev
 	#endif
 }
 
@@ -263,47 +264,18 @@ void function DEV_DumpLimitedLegendObjects( entity player )
 	}
 }
 #endif
-bool function ClientCommand_ToggleConsole( entity player, array<string> args )
-{
-	ShDevConsole_Init()
-	return true
-}
-
-// bool function ClientCommand_DoomTitan( entity player, array<string> args )
-// {
-// 	entity titan
-// 	if ( player.IsTitan() )
-// 		titan = player
-// 	else
-// 		titan = player.GetPetTitan()
-
-// 	if ( !IsAlive( titan ) )
-// 		return true
-
-// 	if ( GetDoomedState( titan ) )
-// 		return true
-
-// 	entity soul = titan.GetTitanSoul()
-// 	soul.SetShieldHealth( 0 )
-
-// 	//titan.TakeDamage( titan.GetHealth(), null, null, { damageSourceId=damagedef_suicide, scriptType = DF_SKIP_DAMAGE_PROT } )
-
-// 	return true
-// }
-
 
 entity function CreateEntity( string name )
 {
-	if ( name == "npc_titan" )
-	{
-		DumpStack(3)
-	}
-//	if ( name == "info_particle_system" )
-//	{
-//		printl( " " )
-		// DumpStack(3)
-//	}
-	
+	//	if ( name == "npc_titan" )
+	//	{
+	//		printt( "%s", GetStack() )
+	//	}
+	//	if ( name == "info_particle_system" )
+	//	{
+	//		printl( " " )
+	//		printt( "%s", GetStack() )
+	//	}
 	return Entities_CreateByClassname( name )
 }
 

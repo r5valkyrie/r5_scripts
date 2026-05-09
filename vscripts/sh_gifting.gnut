@@ -513,10 +513,3 @@ void function ShowGiftErrorDialogue( string optionalMessage = "" )
 	OpenOKDialogFromData( data )
 }
 #endif
-
-
-
-
-
-
- 

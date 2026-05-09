@@ -325,7 +325,10 @@ void function Sh_ArenaDeathField_Init()
 	file.usePreciseRingFx = GetCurrentPlaylistVarBool( "deathfield_usePreciseRingFx", true )
 
 	file.ringOpacityOverrideEnabled = GetCurrentPlaylistVarBool( "deathfield_ringOpacityOverrideEnabled", true )
-	// ringOpacityOverride is registered in sh_gamemode_survival.nut during the registration window
+	if ( file.ringOpacityOverrideEnabled )
+	{
+		RegisterNetworkedVariableSafe( "ringOpacityOverride", SNDC_GLOBAL, SNVT_FLOAT_RANGE, 1.0, 0.0, 1.0 )
+	}
 
 	PrecacheParticleSystem( DEATHFIELD_EFFECT )
 	PrecacheParticleSystem( OBSERVER_DEATHFIELD_EFFECT )
@@ -345,7 +348,7 @@ void function Sh_ArenaDeathField_Init()
 		FlagInit( "Deathfield_ForceOverridePos" )
 		FlagInit( "DeathFieldCalculationComplete" )
 
-		AddCallback_EntitiesDidLoad( EntitiesDidLoad_DeathField )
+		AddCallback_EntitiesDidLoad( EntitiesDidLoad_DeathField, eEntitiesDidLoadPriority.MEDIUM )
 		AddCallback_GameStateEnter( eGameState.Playing, SurveyBeacons_RandomizeLocations )
 
 		AddCallback_GameStateEnter( eGameState.Resolution, Deathfield_Destroy )
@@ -412,13 +415,16 @@ void function Sh_ArenaDeathField_Init()
 			Assert( distanceToSound.len() > 0 )
 		}
 
-		if ( file.ringOpacityOverrideEnabled && GetCurrentPlaylistVarBool( "deathfield_opacity_override", true ) )
+		if ( GetCurrentPlaylistVarBool( "deathfield_opacity_override", true ) )
 		{
 			if ( GetCurrentPlaylistVarFloat( "deathfield_ringOpacityOverrideValue", 1.0 ) != 1.0 )
 			{
 				file.ringOpacityOverrideValue = GetCurrentPlaylistVarFloat( "deathfield_ringOpacityOverrideValue", 1.0 )
 			}
-			// ringOpacityOverride callback registered in sh_gamemode_survival.nut (registration window)
+			else
+			{
+				RegisterNetVarFloatChangeCallback( "ringOpacityOverride", Cl_Deathfield_SetOpacityOverride )
+			}
 		}
 
 		if ( file.ringOpacityOverrideEnabled )
@@ -1638,31 +1644,30 @@ void function DeathFieldDamage( DeathFieldData data, entity deathField )
 	}
 }
 
-bool function ClientCommand_UpdateCirclePos( entity player, array<string> args )
+void function ClientCommand_UpdateCirclePos( entity player, array<string> args )
 {
 	if ( args.len() < 2 )
-		return true
+		return
 
 	bool cheatsEnabled = GetConVarBool( "sv_cheats" )
 	if ( !cheatsEnabled )
 	{
 		BigWarningLog( "UpdateCirclePos - disabled (server cheats are off): " + player )
-		return true
+		return
 	}
 	if ( !Flag( "AllowDeathFieldUpdate" ) )
 	{
 		BigWarningLog( "UpdateCirclePos - no longer allowed to change circle pos" )
-		return true
+		return
 	}
 
 	float argX    = float( args[0] )
 	float argY    = float( args[1] )
 	vector newPos = <argX, argY, 0>
 
-	#if DEVELOPER
+	#if DEV
 		thread DEV_ForceDeathFieldPosition( newPos )
-	#endif // DEVELOPER
-	return true
+	#endif // DEV
 }
 
 #if DEVELOPER

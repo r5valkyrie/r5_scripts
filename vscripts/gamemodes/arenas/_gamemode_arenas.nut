@@ -163,13 +163,7 @@ void function Arenas_ServerGamemode_Init()
 	AddCallback_GameStateEnter( eGameState.Playing, Arenas_OnGameStatePlaying )
 
 	// Buy system client commands
-	AddClientCommandCallback( "Arenas_Select", ClientCommand_Arenas_Select )
-	AddClientCommandCallback( "Arenas_Unselect", ClientCommand_Arenas_Unselect )
-	AddClientCommandCallback( "Arenas_SetOptic", ClientCommand_Arenas_SetOptic )
-	AddClientCommandCallback( "Arenas_ChangeWeaponTab", ClientCommand_Arenas_ChangeWeaponTab )
-	AddClientCommandCallback( "Arenas_OnBuyMenuOpen", ClientCommand_Arenas_OnBuyMenuOpen )
-	AddClientCommandCallback( "Arenas_OnBuyMenuClose", ClientCommand_Arenas_OnBuyMenuClose )
-	AddClientCommandCallback( "next_round", ClientCommand_Arenas_ForceNextRound )
+
 
 	// Register editorclass spawn callbacks for all arenas entity types
 	AddSpawnCallbackEditorClass( "script_ref", "info_arenas_spawn_location", Arenas_OnSpawnLocationCreated )
