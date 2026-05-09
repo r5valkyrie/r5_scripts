@@ -303,6 +303,7 @@ void function RunClientConnectScriptsThreaded( entity player )
 	ExecuteNetBufferedCallbacks()
 
 	TriggerGlobalChangeCallbacks()
+
 	RunCallbacks_EntitiesDidLoad()
 
 	FlagSet( "EntitiesDidLoad" )

@@ -2152,17 +2152,17 @@ void function DialogFlow()
 
 		DialogFlow_DidCausePotentiallyInterruptingPopup()
 	}
-	else if ( Ranked_ManageDialogFlow(file.rankedSplitChangeAudioPlayed) )
-	{
+	//else if ( Ranked_ManageDialogFlow(file.rankedSplitChangeAudioPlayed) )
+	//{
 		
-		file.rankedSplitChangeAudioPlayed = true
-	}
+		//file.rankedSplitChangeAudioPlayed = true
+	//}
 
-	else if ( ArenasRanked_ManageDialogFlow(file.rankedSplitChangeAudioPlayed) )
-	{
+	//else if ( ArenasRanked_ManageDialogFlow(file.rankedSplitChangeAudioPlayed) )
+	//{
 		
-		file.rankedSplitChangeAudioPlayed = true
-	}
+		//file.rankedSplitChangeAudioPlayed = true
+	//}
 
 
 

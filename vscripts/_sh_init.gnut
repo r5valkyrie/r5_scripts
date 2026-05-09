@@ -189,7 +189,7 @@ void function SV_CL_Init()
 	ShQuips_LevelInit()
 	ShSkydiveEmotes_LevelInit()
 
-		//ShSkydiveEmoteProjector_LevelInit()
+		ShSkydiveEmoteProjector_LevelInit()
 
 	ShStickers_LevelInit()
 	ShMythics_LevelInit()
@@ -510,7 +510,7 @@ void function SV_CL_Init()
 
 
 
-		//SpectreShacks_MapInit()
+		SpectreShacks_MapInit()
 
 
 	//NET_TraceRoute_Init()
@@ -855,7 +855,7 @@ void function Client_Init()
 	CLGoblinDropship_Init()
 	ClPlayer_Init()
 	ClMainHud_Init()
-	//ClKillReplayFX_Init()
+	ClKillReplayFX_Init()
 	ClWeaponStatus_Init()
 	ClCustomUsePrompt_Init()
 	ClScreenfade_Init()
@@ -889,7 +889,7 @@ void function Client_Init()
 	ClGameState_Init()
 	ClRingWarning_Init()
 
-	//CLUI_Ranked_Init()
+	CLUI_Ranked_Init()
 
 	ClMinimap_Init()
 	Cl_FullmapInit()
@@ -901,10 +901,10 @@ void function Client_Init()
 
 
 
-		//Tasklist_ClientInit()
+		Tasklist_ClientInit()
 	ClRadialMenu_Init()
 	CLTrackingVision_Init()
-	//CLPassiveAdrenaline_Init()
+	CLPassiveAdrenaline_Init()
 
 
 
@@ -931,11 +931,11 @@ void function Client_Init()
 		ClRisingWalls_Init()
 
 
-	//ShEpilogue_Init()
+	ShEpilogue_Init()
 
 	CL_Staging_Area_EE_Init()
 
-	//ReleaseAllTempMutes()
+	ReleaseAllTempMutes()
 } 
 
 

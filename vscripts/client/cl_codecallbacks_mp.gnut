@@ -190,35 +190,28 @@ void function ClientCodeCallback_OnCoreChargeExpireTimeChanged( entity titansoul
 
 void function ClientCodeCallback_OnEntityCreation( entity ent )
 {
-	printt("ClientCodeCallback_OnEntityCreation starting")
 	if ( !IsValid( ent ) )
 		return
-	printt("ClientCodeCallback_OnEntityCreation passed isvalid")
 
 	if ( ent.IsPlayer() )
 		ShEHI_OnPlayerCreated( ent )
-	printt("ClientCodeCallback_OnEntityCreation passed isplayer")
 
-	string className = PLAYER_CLASSNAME//expect string( ent.GetNetworkedClassName() )
+	string className = expect string( ent.GetNetworkedClassName() )
 	if ( IsLobby() )
 	{
-		printt("ClientCodeCallback_OnEntityCreation passed islobby")
 		if ( className == PLAYER_WAYPOINT_CLASSNAME || className == PLAYER_CLASSNAME ) 
 		{
 			foreach ( callbackFunc in clGlobal.onCreateCallbacks[ className ] )
 			{
 				callbackFunc( ent )
-
-				printt("ClientCodeCallback_OnEntityCreation passed className == PLAYER_CLASSNAME")
 			}
 		}
 
-		//if ( ent.GetNetworkedClassName() != PLAYER_CLASSNAME )
-		//	return
-		printt("ClientCodeCallback_OnEntityCreation passed className == PLAYER_CLASSNAME")
+		if ( ent.GetNetworkedClassName() != PLAYER_CLASSNAME )
+			return
+
 		if ( ent == GetLocalClientPlayer() )
 			Lobby_AddLocalPlayer()
-		printt("ClientCodeCallback_OnEntityCreation passed Lobby_AddLocalPlayer")
         return
 	}
 
@@ -275,7 +268,7 @@ void function ClientCodeCallback_OnDeath( entity ent )
 {
 	
 
-	string className = PLAYER_CLASSNAME//expect string( ent.GetNetworkedClassName() )
+	string className = expect string( ent.GetNetworkedClassName() )
 
 	ent.Signal( "OnDeath" )
 

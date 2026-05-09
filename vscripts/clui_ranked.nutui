@@ -316,7 +316,6 @@ int function SharedRanked_GetMaxPartyMatchmakingDelay()
 
 bool function Ranked_ManageDialogFlow( bool rankedSplitChangeAudioPlayed = false )
 {
-return false
 	bool result = false
 
 	ItemFlavor currentRankedPeriod = expect ItemFlavor( Ranked_GetCurrentActiveRankedPeriod() )
@@ -358,7 +357,6 @@ return false
 
 bool function Ranked_HasRankedPeriodMarkedForRewardAcknowledgement()
 {
-return false
 	if ( IsFeatureSuppressed( eFeatureSuppressionFlags.RANKED_DIALOG ) )
 		return false
 
@@ -385,7 +383,6 @@ string function Ranked_GetRankedPeriodToAcknowledgReward()
 
 string function Ranked_MostRecentRankedPeriodWithRewardsNotAcknowledged()
 {
-return ""
 	string rankedPeriodResult = ""
 
 	if ( !IsPersistenceAvailable() )

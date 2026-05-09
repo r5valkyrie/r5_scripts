@@ -630,6 +630,7 @@ PropDynamicMinimapData ornull function Minimap_TryGetPropDynamicMinimapData( ent
 void function MinimapObjectThread( entity ent )
 
 {
+	return
 	Assert( IsValid( ent ) )
 
 	string className = GetEntityMinimapClassName( ent )
