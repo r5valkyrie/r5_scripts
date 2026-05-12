@@ -63,7 +63,6 @@ Scripts:
 	sh_playlists.gnut
 	sh_networkvars.gnut
 	sh_netvar_callbacks.gnut
-	sh_sndc_callbacks.gnut
 	sh_items.gnut
 	sh_passives.gnut
 	sh_entitystructs.gnut

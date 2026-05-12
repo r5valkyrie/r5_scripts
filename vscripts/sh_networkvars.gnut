@@ -409,7 +409,7 @@ void function RegisterNetVarBoolChangeCallback( string varName, void functionref
 	{
 		file._netVarBoolChangeCallbacks[varName] <- []
 
-		RegisterNetworkedVariableChangeCallback_boolSafe( varName, void function( entity player, bool oldVal, bool newVal, bool valuevalue ) : (varName) {
+		RegisterNetworkedVariableChangeCallback_bool( varName, void function( entity player, bool oldVal, bool newVal, bool valuevalue ) : (varName) {
 			if( !IsNetVarCallbackAvailable() )
 			{
 				RegisterBufferedCallback( varName, player, newVal, SNVT_BOOL )
@@ -441,7 +441,7 @@ void function RegisterNetVarEntityChangeCallback( string varName, void functionr
 	{
 		file._netVarEntityChangeCallbacks[varName] <- []
 
-		RegisterNetworkedVariableChangeCallback_entSafe( varName, void function( entity player, entity oldVal, entity newVal, bool something ) : (varName) {
+		RegisterNetworkedVariableChangeCallback_ent( varName, void function( entity player, entity oldVal, entity newVal, bool something ) : (varName) {
 			if( !IsNetVarCallbackAvailable() )
 			{
 				RegisterBufferedCallback( varName, player, newVal, SNVT_ENTITY )

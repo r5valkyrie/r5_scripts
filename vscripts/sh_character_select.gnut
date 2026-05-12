@@ -493,13 +493,13 @@ void function CharacterSelectMenu_Init()
 		RegisterSignal( "CloseCharacterSelectMenuAtTime" )
 
 		// NonRewind callbacks — use SDK event-driven system
-		RegisterNetworkedVariableChangeCallback_intSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, void function( entity ent, int oldVal, int newVal, bool changed ) { OnLockStepPickIndexChanged( ent, newVal ) } )
-		RegisterNetworkedVariableChangeCallback_timeSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_START_TIME, void function( entity ent, float oldVal, float newVal, bool changed ) { OnLockStepPickTimeChanged( ent, newVal ) } )
-		RegisterNetworkedVariableChangeCallback_timeSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME, void function( entity ent, float oldVal, float newVal, bool changed ) { OnLockStepPickTimeChanged( ent, newVal ) } )
-		RegisterNetworkedVariableChangeCallback_boolSafe( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER, void function( entity ent, bool oldVal, bool newVal, bool changed ) { OnPlayerUpdatedCharacterLock( ent, newVal ) } )
-		RegisterNetworkedVariableChangeCallback_timeSafe( CHARACTER_SELECT_NETVAR_LOCKED_IN_CHARACTER_TIME, void function( entity ent, float oldVal, float newVal, bool changed ) { OnPlayerUpdatedCharacterLockTime( ent, newVal ) } )
+		RegisterNetworkedVariableChangeCallback_int( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, void function( entity ent, int oldVal, int newVal, bool changed ) { OnLockStepPickIndexChanged( ent, newVal ) } )
+		RegisterNetworkedVariableChangeCallback_time( CHARACTER_SELECT_NETVAR_LOCK_STEP_START_TIME, void function( entity ent, float oldVal, float newVal, bool changed ) { OnLockStepPickTimeChanged( ent, newVal ) } )
+		RegisterNetworkedVariableChangeCallback_time( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME, void function( entity ent, float oldVal, float newVal, bool changed ) { OnLockStepPickTimeChanged( ent, newVal ) } )
+		RegisterNetworkedVariableChangeCallback_bool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER, void function( entity ent, bool oldVal, bool newVal, bool changed ) { OnPlayerUpdatedCharacterLock( ent, newVal ) } )
+		RegisterNetworkedVariableChangeCallback_time( CHARACTER_SELECT_NETVAR_LOCKED_IN_CHARACTER_TIME, void function( entity ent, float oldVal, float newVal, bool changed ) { OnPlayerUpdatedCharacterLockTime( ent, newVal ) } )
 
-		RegisterNetworkedVariableChangeCallback_intSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX, void function( entity ent, int oldVal, int newVal, bool changed ) { OnLockStepPlayerIndexChanged( ent, newVal ) } )
+		RegisterNetworkedVariableChangeCallback_int( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX, void function( entity ent, int oldVal, int newVal, bool changed ) { OnLockStepPlayerIndexChanged( ent, newVal ) } )
 		RegisterNetVarIntChangeCallback( CHARACTER_SELECT_NETVAR_FOCUS_CHARACTER_GUID, OnPlayerUpdatedCharacterFocus, SNDC_PLAYER_GLOBAL )
 
 		AddCallback_FullUpdate( Client_FullUpdate )

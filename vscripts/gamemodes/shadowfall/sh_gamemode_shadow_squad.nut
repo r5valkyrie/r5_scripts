@@ -211,7 +211,7 @@ void function Gamemode_ShadowSquad_RegisterNetworking()
 	RegisterNetworkedVariable( "shadowsWonTheMode", SNDC_GLOBAL, SNVT_BOOL, false )
 
 	#if CLIENT
-		RegisterNetworkedVariableChangeCallback_intSafe( "shadowSquadGamePhase", OnGamePhaseChanged )
+		RegisterNetworkedVariableChangeCallback_int( "shadowSquadGamePhase", OnGamePhaseChanged )
 	#endif
 }
 

@@ -33,7 +33,7 @@ void function PlayerMatchState_RegisterNetworking()
 	RegisterNetworkedVariable( NV_PLAYERMATCHSTATE, SNDC_PLAYER_EXCLUSIVE, SNVT_INT, ePlayerMatchState.NORMAL )
 
 	#if CLIENT
-		RegisterNetworkedVariableChangeCallback_intSafe( NV_PLAYERMATCHSTATE, OnPlayerMatchStateChanged )
+		RegisterNetworkedVariableChangeCallback_int( NV_PLAYERMATCHSTATE, OnPlayerMatchStateChanged )
 	#endif // CLIENT
 }
 

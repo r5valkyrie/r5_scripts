@@ -174,7 +174,7 @@ void function Cl_DeathScreen_Init()
 	AddCallback_GameStateEnter( eGameState.Playing, DeathScreen_OnPlaying )
 	AddCallback_GameStateEnter( eGameState.Resolution, DeathScreen_OnGameStateChanged )
 
-	RegisterNetworkedVariableChangeCallback_intSafe( "spectatorTargetCount", DeathScreen_SpectatorTargetCountChanged )
+	RegisterNetworkedVariableChangeCallback_int( "spectatorTargetCount", DeathScreen_SpectatorTargetCountChanged )
 
 	SetAllowGladCard( true )
 

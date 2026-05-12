@@ -501,15 +501,15 @@ void function WinterExpress_RegisterNetworking()
 	//ScriptRemote_RegisterClientFunction( "ServerCallback_Survival_CreateBeaconWorldIcon", "entity", "entity" )
 
 	#if CLIENT
-		RegisterNetworkedVariableChangeCallback_intSafe( "WinterExpress_RoundState", OnServerVarChanged_RoundState )
-		RegisterNetworkedVariableChangeCallback_intSafe( "WinterExpress_ObjectiveState", OnServerVarChanged_ObjectiveState )
-		RegisterNetworkedVariableChangeCallback_intSafe( "WinterExpress_ObjectiveOwner", OnServerVarChanged_ObjectiveOwner )
-		RegisterNetworkedVariableChangeCallback_intSafe( "connectedPlayerCount", OnServerVarChanged_ConnectedPlayers )
-		RegisterNetworkedVariableChangeCallback_timeSafe( "WinterExpress_TrainArrivalTime", OnServerVarChanged_TrainArrival )
-		RegisterNetworkedVariableChangeCallback_timeSafe( "WinterExpress_TrainTravelTime", OnServerVarChanged_TrainTravelTime )
-		RegisterNetworkedVariableChangeCallback_boolSafe( "WinterExpress_IsOvertime", OnServerVarChanged_OvertimeChanged )
+		RegisterNetworkedVariableChangeCallback_int( "WinterExpress_RoundState", OnServerVarChanged_RoundState )
+		RegisterNetworkedVariableChangeCallback_int( "WinterExpress_ObjectiveState", OnServerVarChanged_ObjectiveState )
+		RegisterNetworkedVariableChangeCallback_int( "WinterExpress_ObjectiveOwner", OnServerVarChanged_ObjectiveOwner )
+		RegisterNetworkedVariableChangeCallback_int( "connectedPlayerCount", OnServerVarChanged_ConnectedPlayers )
+		RegisterNetworkedVariableChangeCallback_time( "WinterExpress_TrainArrivalTime", OnServerVarChanged_TrainArrival )
+		RegisterNetworkedVariableChangeCallback_time( "WinterExpress_TrainTravelTime", OnServerVarChanged_TrainTravelTime )
+		RegisterNetworkedVariableChangeCallback_bool( "WinterExpress_IsOvertime", OnServerVarChanged_OvertimeChanged )
 	// DISABLED: incomplete callback call
-        RegisterNetworkedVariableChangeCallback_timeSafe( "WinterExpress_CaptureEndTime", OnServerVarChanged_CaptureEndTime )
+        RegisterNetworkedVariableChangeCallback_time( "WinterExpress_CaptureEndTime", OnServerVarChanged_CaptureEndTime )
 
 		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_Character(), OnPlayerLoadoutChanged )
 		RegisterSignal( "FSDM_EndTimer" )

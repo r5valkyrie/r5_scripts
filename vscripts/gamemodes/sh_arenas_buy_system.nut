@@ -171,15 +171,15 @@ void function ShArenasBuy_RegisterNetworkingV2()
 	RegisterNetworkedVariable( "passiveCharges", SNDC_PLAYER_GLOBAL, SNVT_INT, 1 )
 	RegisterNetworkedVariable( "ultimateCooldown", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, 1 )
 #if(CLIENT)
-	RegisterNetworkedVariableChangeCallback_intSafe( "passiveCharges", OnBuyScreenVarUpdate )
-	RegisterNetworkedVariableChangeCallback_intSafe( "ultimateCooldown", OnBuyScreenVarUpdate )
+	RegisterNetworkedVariableChangeCallback_int( "passiveCharges", OnBuyScreenVarUpdate )
+	RegisterNetworkedVariableChangeCallback_int( "ultimateCooldown", OnBuyScreenVarUpdate )
 #endif
 
 	int startingCash = GetCurrentPlaylistVarInt( "arenas_round_0_currency", ARENAS_STARTING_CASH )
 	printt( "[Arenas BuySystem] Registering arenas_current_cash netvar, startingCash:", startingCash )
 	RegisterNetworkedVariable( "arenas_current_cash", SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, startingCash )
 	#if(CLIENT)
-		RegisterNetworkedVariableChangeCallback_intSafe( "arenas_current_cash",
+		RegisterNetworkedVariableChangeCallback_int( "arenas_current_cash",
 			void function( entity player, int oldVal, int newVal, bool actuallyChanged ) : ()
 			{
 				OnCurrentCashChanged( player )

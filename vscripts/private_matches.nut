@@ -231,12 +231,12 @@ void function PrivateMatch_RegisterNetworking()
 
 	#if CLIENT
 		// NonRewind callbacks — SDK event-driven system
-		RegisterNetworkedVariableChangeCallback_intSafe( "selectedPlaylistIndex", void function( entity ent, int oldVal, int newVal, bool changed ) { OnSelectedPlaylistIndexChanged( ent, newVal ) } )
-		RegisterNetworkedVariableChangeCallback_intSafe( "startCountdown", void function( entity ent, int oldVal, int newVal, bool changed ) { OnStartCountdownChanged( ent, newVal ) } )
-		RegisterNetworkedVariableChangeCallback_boolSafe( NV_OBSERVER_HIGHLIGHT_ENABLED, void function( entity ent, bool oldVal, bool newVal, bool changed ) { ObserverHighlightEnableChanged( ent, newVal ) } )
+		RegisterNetworkedVariableChangeCallback_int( "selectedPlaylistIndex", void function( entity ent, int oldVal, int newVal, bool changed ) { OnSelectedPlaylistIndexChanged( ent, newVal ) } )
+		RegisterNetworkedVariableChangeCallback_int( "startCountdown", void function( entity ent, int oldVal, int newVal, bool changed ) { OnStartCountdownChanged( ent, newVal ) } )
+		RegisterNetworkedVariableChangeCallback_bool( NV_OBSERVER_HIGHLIGHT_ENABLED, void function( entity ent, bool oldVal, bool newVal, bool changed ) { ObserverHighlightEnableChanged( ent, newVal ) } )
 
 		AddCallback_OnGameStateChanged( PrivateMatch_OnGameStateChanged )
-		RegisterNetworkedVariableChangeCallback_intSafe( "lastSquadEliminated", void function( entity ent, int oldVal, int newVal, bool changed ) { PrivateMatch_ClientOnSquadEliminated( ent, newVal ) } )
+		RegisterNetworkedVariableChangeCallback_int( "lastSquadEliminated", void function( entity ent, int oldVal, int newVal, bool changed ) { PrivateMatch_ClientOnSquadEliminated( ent, newVal ) } )
 	#endif
 }
 

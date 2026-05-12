@@ -1,10 +1,10 @@
 //=============================================================================//
 //
-// Purpose: ScriptNetData - Networked Variable Change Callback System
+// Purpose: S21-style netvar change callback registration
 //
-// Uses native engine callbacks via the Safe wrappers in sh_sndc_callbacks.gnut.
-// Non-overflow vars: engine DT-driven callbacks (immediate).
-// Overflow vars: SDK callback system (fired on NET_ScriptMessage receive).
+// Bridges the S21 script API (RegisterNetVarBoolChangeCallback with 2-arg
+// callback) to the S3 engine native (RegisterNetworkedVariableChangeCallback_bool
+// with 4-arg callback). On SERVER: no-ops (callbacks fire on CLIENT only).
 //
 //=============================================================================//
 
@@ -25,7 +25,7 @@ void function NetVarCallbacks_Init()
 
 void function RegisterNetVarBoolChangeCallback( string varName, void functionref( entity, bool ) callback, int category = 0 )
 {
-	RegisterNetworkedVariableChangeCallback_boolSafe( varName,
+	RegisterNetworkedVariableChangeCallback_bool( varName,
 		void function( entity ent, bool oldVal, bool newVal, bool changed ) : ( callback )
 		{ if ( changed ) callback( ent, newVal ) }
 	)
@@ -33,7 +33,7 @@ void function RegisterNetVarBoolChangeCallback( string varName, void functionref
 
 void function RegisterNetVarIntChangeCallback( string varName, void functionref( entity, int ) callback, int category = 0 )
 {
-	RegisterNetworkedVariableChangeCallback_intSafe( varName,
+	RegisterNetworkedVariableChangeCallback_int( varName,
 		void function( entity ent, int oldVal, int newVal, bool changed ) : ( callback )
 		{ if ( changed ) callback( ent, newVal ) }
 	)
@@ -41,7 +41,7 @@ void function RegisterNetVarIntChangeCallback( string varName, void functionref(
 
 void function RegisterNetVarFloatChangeCallback( string varName, void functionref( entity, float ) callback, int category = 0 )
 {
-	RegisterNetworkedVariableChangeCallback_floatSafe( varName,
+	RegisterNetworkedVariableChangeCallback_float( varName,
 		void function( entity ent, float oldVal, float newVal, bool changed ) : ( callback )
 		{ if ( changed ) callback( ent, newVal ) }
 	)
@@ -49,7 +49,7 @@ void function RegisterNetVarFloatChangeCallback( string varName, void functionre
 
 void function RegisterNetVarTimeChangeCallback( string varName, void functionref( entity, float ) callback, int category = 0 )
 {
-	RegisterNetworkedVariableChangeCallback_timeSafe( varName,
+	RegisterNetworkedVariableChangeCallback_time( varName,
 		void function( entity ent, float oldVal, float newVal, bool changed ) : ( callback )
 		{ if ( changed ) callback( ent, newVal ) }
 	)
@@ -57,7 +57,7 @@ void function RegisterNetVarTimeChangeCallback( string varName, void functionref
 
 void function RegisterNetVarEntChangeCallback( string varName, void functionref( entity, entity ) callback, int category = 0 )
 {
-	RegisterNetworkedVariableChangeCallback_entSafe( varName,
+	RegisterNetworkedVariableChangeCallback_ent( varName,
 		void function( entity ent, entity oldVal, entity newVal, bool changed ) : ( callback )
 		{ if ( changed ) callback( ent, newVal ) }
 	)

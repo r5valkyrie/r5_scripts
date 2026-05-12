@@ -160,14 +160,14 @@ void function Cl_CustomCTF_Init()
 
 void function CL_FSCTF_RegisterNetworkFunctions()
 {
-	RegisterNetworkedVariableChangeCallback_timeSafe( "FSIntro_StartTime", Flowstate_IntroTimeChanged )
-	RegisterNetworkedVariableChangeCallback_timeSafe( "FSIntro_EndTime", Flowstate_IntroEndTimeChanged )
-	// RegisterNetworkedVariableChangeCallback_timeSafe( "FSVoteTeam_StartTime", Flowstate_VoteTeamTimeChanged )
-	RegisterNetworkedVariableChangeCallback_timeSafe( "FSVoteTeam_EndTime", Flowstate_VoteTeamEndTimeChanged )
-	RegisterNetworkedVariableChangeCallback_timeSafe( "flowstate_DMStartTime", Flowstate_CTFStartTimeChanged )
-	RegisterNetworkedVariableChangeCallback_timeSafe( "flowstate_DMRoundEndTime", Flowstate_CTFRoundEndTimeChanged )
-	RegisterNetworkedVariableChangeCallback_entSafe( "imcFlag", CTF_FlagEntChangedImc )
-	RegisterNetworkedVariableChangeCallback_entSafe( "milFlag", CTF_FlagEntChangedMil )
+	RegisterNetworkedVariableChangeCallback_time( "FSIntro_StartTime", Flowstate_IntroTimeChanged )
+	RegisterNetworkedVariableChangeCallback_time( "FSIntro_EndTime", Flowstate_IntroEndTimeChanged )
+	// RegisterNetworkedVariableChangeCallback_time( "FSVoteTeam_StartTime", Flowstate_VoteTeamTimeChanged )
+	RegisterNetworkedVariableChangeCallback_time( "FSVoteTeam_EndTime", Flowstate_VoteTeamEndTimeChanged )
+	RegisterNetworkedVariableChangeCallback_time( "flowstate_DMStartTime", Flowstate_CTFStartTimeChanged )
+	RegisterNetworkedVariableChangeCallback_time( "flowstate_DMRoundEndTime", Flowstate_CTFRoundEndTimeChanged )
+	RegisterNetworkedVariableChangeCallback_ent( "imcFlag", CTF_FlagEntChangedImc )
+	RegisterNetworkedVariableChangeCallback_ent( "milFlag", CTF_FlagEntChangedMil )
 }
 
 void function CTF_FlagEntChangedImc( entity player, entity oldFlag, entity newFlag, bool actuallyChanged )

@@ -640,7 +640,7 @@ void function RemoteFunctions_Init_Begin()
 		if ( Gamemode() == eGamemodes.CUSTOM_CTF )
 		{
 			CL_FSCTF_RegisterNetworkFunctions()
-			RegisterNetworkedVariableChangeCallback_intSafe( "FSDM_GameState", FSCTF_GameStateChanged )
+			RegisterNetworkedVariableChangeCallback_int( "FSDM_GameState", FSCTF_GameStateChanged )
 		}
 
 		RegisterNetVarBoolChangeCallback( "playerInPlane", PlayerPlaneStatusChanged )
@@ -650,10 +650,10 @@ void function RemoteFunctions_Init_Begin()
 		RegisterNetVarBoolChangeCallback( "freefallEmoteAvailable", PlayerFreefallEmoteAvailableChanged )
 		RegisterNetVarBoolChangeCallback( "skydiveFreelookActive", SkydiveFreelookActiveChanged )
 		RegisterNetVarEntChangeCallback( "skydiveFollowPlayer", SkydiveFollowPlayerChanged )
-		RegisterNetworkedVariableChangeCallback_intSafe( "healingKitTypeCurrentlyBeingUsed", OnInUseHealingKitTypeChanged )
+		RegisterNetworkedVariableChangeCallback_int( "healingKitTypeCurrentlyBeingUsed", OnInUseHealingKitTypeChanged )
 		RegisterNetVarIntChangeCallback( "selectedHealthPickupType", OnHealthPickupTypeChanged )
-		RegisterNetworkedVariableChangeCallback_intSafe( "playerPrimaryWeapon0", OnPlayerEquippedWeaponChanged )
-		RegisterNetworkedVariableChangeCallback_intSafe( "playerPrimaryWeapon1", OnPlayerEquippedWeaponChanged )
+		RegisterNetworkedVariableChangeCallback_int( "playerPrimaryWeapon0", OnPlayerEquippedWeaponChanged )
+		RegisterNetworkedVariableChangeCallback_int( "playerPrimaryWeapon1", OnPlayerEquippedWeaponChanged )
 	#endif
 
 	LoadoutSelection_RegisterNetworking()
@@ -764,7 +764,7 @@ void function RemoteFunctions_Init_Begin()
 
 	// // Test overflow callback (event-driven via NET_ScriptMessage)
 	// #if CLIENT
-	// RegisterNetworkedVariableChangeCallback_intSafe( "sndcTestExt1", void function( entity ent, int oldVal, int newVal, bool changed ) {
+	// RegisterNetworkedVariableChangeCallback_int( "sndcTestExt1", void function( entity ent, int oldVal, int newVal, bool changed ) {
 		// print( "[SNDC_CALLBACK_OVF] sndcTestExt1: " + oldVal + " -> " + newVal + "\n" )
 	// } )
 	// #endif

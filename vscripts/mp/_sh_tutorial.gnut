@@ -88,7 +88,7 @@ void function ShTutorial_Init()
 		AddCallback_OnClientScriptInit( OnLocalClientConnected )
 		AddCallback_FullUpdate( OnFullUpdate )
 		AddCallback_OnSettingsUpdated( UpdateTutorialWhenOptionsChange )
-		RegisterNetworkedVariableChangeCallback_intSafe( "tutorialContext", OnTutorialContextChanged )
+		RegisterNetworkedVariableChangeCallback_int( "tutorialContext", OnTutorialContextChanged )
 	#endif
 
 	for( int i = eTutorialContext.NONE ; i < eTutorialContext._count ; i++ )
