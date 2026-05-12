@@ -2682,7 +2682,7 @@ void function InstanceLocationPing_Thread( entity wp )
 
 	if ( IsValid( owner ) && owner.IsPlayer() )
 	{
-		RuiTrackBool( rui, "ownerIsJumpmaster", owner, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndexSafe( "isJumpmaster" ) )
+		RuiTrackBool( rui, "ownerIsJumpmaster", owner, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "isJumpmaster" ) )
 		RuiTrackInt( rui, "ownerTeamMemberIndex", owner, RUI_TRACK_PLAYER_TEAM_MEMBER_INDEX )
 	}
 
@@ -2899,7 +2899,7 @@ void function InstanceObjectivePing( entity wp )
 
 	if ( IsValid( owner ) && owner.IsPlayer() )
 	{
-		RuiTrackBool( rui, "ownerIsJumpmaster", owner, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndexSafe( "isJumpmaster" ) )
+		RuiTrackBool( rui, "ownerIsJumpmaster", owner, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "isJumpmaster" ) )
 		RuiTrackInt( rui, "ownerTeamMemberIndex", owner, RUI_TRACK_PLAYER_TEAM_MEMBER_INDEX )
 	}
 

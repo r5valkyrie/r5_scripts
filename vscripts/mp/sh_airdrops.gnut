@@ -550,7 +550,7 @@ void function AirdropLogic()
 			dropIndex++
 	}
 
-	SetGlobalNetIntSafe( "numberOfAirdropRoundsLeft", file.airdropData.len() - dropIndex )
+	SetGlobalNetInt( "numberOfAirdropRoundsLeft", file.airdropData.len() - dropIndex )
 
 	if ( GetCurrentPlaylistVarBool( "airdrop_pregame_enabled", false ) )
 	{
@@ -643,7 +643,7 @@ void function AirdropLogic()
 			waitthread Survival_LaunchAirdropsFromAirdropData( aData )
 
 			dropIndex += 1
-			SetGlobalNetIntSafe( "numberOfAirdropRoundsLeft", file.airdropData.len() - dropIndex )
+			SetGlobalNetInt( "numberOfAirdropRoundsLeft", file.airdropData.len() - dropIndex )
 		}
 		else
 		{

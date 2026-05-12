@@ -396,7 +396,7 @@ void function PrivateMatch_SpectCharSelect_ConfigurePlayerButton( var button, en
 		return
 	}
 
-	int lockStepIndex = GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX )
+	int lockStepIndex = GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX )
 	int playerLockStepIndex = player.GetPlayerNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX )
 
 	if ( lockStepIndex > -1 )
@@ -486,7 +486,7 @@ void function TryEnablePrivateMatchSpectCharSelectMenu( entity player )
 
 	Chroma_BeginCharacterSelect()
 
-	while( GetGlobalNetBoolSafe( "characterSelectionReady" ) == false )
+	while( GetGlobalNetBool( "characterSelectionReady" ) == false )
 		WaitFrame()
 
 	RunUIScript( "EnablePrivateMatchSpectCharSelectMenu", true )
@@ -505,7 +505,7 @@ void function TryEnablePrivateMatchSpectCharSelectMenu( entity player )
 
 	thread FlashScreenWhite()
 
-	float gameStartTime = GetGlobalNetTimeSafe( "pickLoadoutGamestateEndTime" )
+	float gameStartTime = GetGlobalNetTime( "pickLoadoutGamestateEndTime" )
 	thread CloseCharacterSelectMenuAtTime( gameStartTime )
 
 	bool isShowingAllSquadsGladCardIntro = GetCurrentPlaylistVarBool( "survival_enable_all_squads_intro", false )
@@ -514,7 +514,7 @@ void function TryEnablePrivateMatchSpectCharSelectMenu( entity player )
 	bool isShowingMVPGladCardIntro = GetCurrentPlaylistVarBool( "survival_enable_mvp_intros", false )
 
 
-	while( Time() < GetGlobalNetTimeSafe( "allSquadsPresentationStartTime" ) )
+	while( Time() < GetGlobalNetTime( "allSquadsPresentationStartTime" ) )
 		WaitFrame()
 
 	RunUIScript( "PrivateMatchSpectCharSelectMenu_HideScoreboard" )
@@ -594,11 +594,11 @@ void function CloseCharacterSelectMenuAtTime( float closeTimeStamp )
                                  
 void function OnPrivateMatchSpectCharSelectMenuThink()
 {
-	file.lockStepIndex = GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX )
+	file.lockStepIndex = GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX )
 
 	while ( true )
 	{
-		if ( GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) != file.lockStepIndex )
+		if ( GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) != file.lockStepIndex )
 		{
 			if( file.isButtonMappped == false )
 			{
@@ -606,7 +606,7 @@ void function OnPrivateMatchSpectCharSelectMenuThink()
 				PrivateMatch_SpectCharSelect_TeamRoster_Update()
 			}
 
-			file.lockStepIndex = GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX )
+			file.lockStepIndex = GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX )
 			SpecOnLockStepPickIndexChanged()
 		}
 
@@ -621,13 +621,13 @@ void function OnPrivateMatchSpectCharSelectMenuThink()
 #if CLIENT
 void function PrivateMatch_PopulateFooterThink()
 {
-	file.lockStepIndex = GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX )
+	file.lockStepIndex = GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX )
 
 	while ( true )
 	{
-		if ( GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) != file.lockStepIndex )
+		if ( GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) != file.lockStepIndex )
 		{
-			file.lockStepIndex = GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX )
+			file.lockStepIndex = GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX )
 
 			if ( file.enableMenu != false )
 				UpdateFooterRui()
@@ -649,12 +649,12 @@ void function UpdateFooterRui()
 		var rui = file.progressBarRuis[i]
 
 		RuiSetInt( rui, "numPlayers", file.maxTeamSize )
-		RuiSetGameTime( rui, "countdownEndTime", GetGlobalNetTimeSafe( "pickLoadoutGamestateStartTime" ) )
+		RuiSetGameTime( rui, "countdownEndTime", GetGlobalNetTime( "pickLoadoutGamestateStartTime" ) )
 
 		if ( i == file.lockStepIndex )
 		{
-			RuiSetGameTime( rui, "selectingStartTime" , GetGlobalNetTimeSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_START_TIME ) )
-			RuiSetGameTime( rui, "selectingEndTime", GetGlobalNetTimeSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME ) )
+			RuiSetGameTime( rui, "selectingStartTime" , GetGlobalNetTime( CHARACTER_SELECT_NETVAR_LOCK_STEP_START_TIME ) )
+			RuiSetGameTime( rui, "selectingEndTime", GetGlobalNetTime( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME ) )
 		}
 		else if ( i < file.lockStepIndex )
 		{

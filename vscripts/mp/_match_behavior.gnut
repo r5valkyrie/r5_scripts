@@ -394,10 +394,10 @@ void function MatchBehaviorPlayer_Ended( entity player, bool wasUnexpectedDiscon
 	if ( GetGameState() == eGameState.PickLoadout )
 	{
 		// player disconnected during character selection; check if someone picked their favorite already
-		if ( Time() < GetGlobalNetTimeSafe( "allSquadsPresentationStartTime" ) )
+		if ( Time() < GetGlobalNetTime( "allSquadsPresentationStartTime" ) )
 		{
 			int pickIndex = player.GetPlayerNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX )
-			if ( pickIndex > 0 && GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) > 0 && WasFavoriteTaken( player ) )
+			if ( pickIndex > 0 && GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) > 0 && WasFavoriteTaken( player ) )
 				MatchBehaviorPlayer_SetFlag( player, eMatchBehaviorFlags.FAVORITE_TAKEN )
 		}
 		else

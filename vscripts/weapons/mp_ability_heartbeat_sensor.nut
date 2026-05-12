@@ -1483,8 +1483,8 @@ void function CL_HeartSeekerRUIThread( entity player, entity weapon )
 	RuiSetFloat2( file.heartbeatSensorRui, "screenSize", <screenSize.width, screenSize.height, 0> )
 
 	RuiTrackGameTime( file.heartbeatSensorRui, "lastFireTime", weapon, RUI_TRACK_WEAPON_LAST_PRIMARY_ATTACK_TIME )
-	RuiTrackFloat( file.heartbeatSensorRui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
-	RuiTrackFloat( file.heartbeatSensorRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "reviveEndTime" ) )
+	RuiTrackFloat( file.heartbeatSensorRui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
+	RuiTrackFloat( file.heartbeatSensorRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
 
 	bool lastTargetsInRange = false
 

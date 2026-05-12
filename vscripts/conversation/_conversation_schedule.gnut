@@ -267,7 +267,7 @@ void function CodeDialogue_ManDown( entity guy )
 
 void function SetGlobalForcedDialogueOnly( bool value )
 {
-	level.nv.forcedDialogueOnly = value
+	SetGlobalNonRewindNetBool( "forcedDialogueOnly", value )
 }
 
 void function SetPlayerForcedDialogueOnly( entity player, bool value )

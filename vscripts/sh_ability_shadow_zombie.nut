@@ -125,7 +125,7 @@ void function Ability_Shadow_Zombie_RegisterNetworking()
 	if ( !ShadowZombie_IsEnabled() )
 		return
 
-	RegisterNetworkedVariableSafe( "isPlayerShadowZombie", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariable( "isPlayerShadowZombie", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_ShadowAbilitiesClientEffectsEnable", "entity", "bool" )
 
 	#if CLIENT

@@ -1955,7 +1955,7 @@ void function UpdateFullmapRuiTracks()
 	RuiSetBool( viewPlayerRui, "useShadowFormFrame", viewPlayer.IsShadowForm() && !isPlayerShadow )
 
 
-	//	RuiTrackBool( viewPlayerRui, "hasAltStatus", viewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndexSafe( EXPIRED_BANNER_RECOVERY_NETVAR ) )
+	//	RuiTrackBool( viewPlayerRui, "hasAltStatus", viewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( EXPIRED_BANNER_RECOVERY_NETVAR ) )
 
 
 	if ( IsValid( clientPlayer ) )
@@ -2069,17 +2069,17 @@ void function UpdateFullmapRuiTracks()
 	string playlistUiRules = GetPlaylistVarString( playlist, "ui_rules", "" )
 	RuiSetBool( file.fullmap_legendRui, "rulesEnabled", playlistUiRules != "" )
 	RuiSetBool( file.fullmap_legendRui, "isObserver", GetLocalClientPlayer().IsObserver() && GetLocalClientPlayer().GetTeam() == TEAM_SPECTATOR )
-	RuiTrackBool( file.fullmap_legendRui, "pingEnabled", viewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndexSafe( "pingEnabled" ) )
+	RuiTrackBool( file.fullmap_legendRui, "pingEnabled", viewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "pingEnabled" ) )
 
 	
 	int roundNumber = SURVIVAL_GetCurrentDeathFieldStage() + 1
 	if ( roundNumber < 1 )
 		return
 
-	float circleStartTime = GetGlobalNetTimeSafe( "nextCircleStartTime" )
+	float circleStartTime = GetGlobalNetTime( "nextCircleStartTime" )
 	RuiSetGameTime( file.fullmap_gamestateRui, "circleStartTime", circleStartTime )
 
-	float circleCloseTime = GetGlobalNetTimeSafe( "circleCloseTime" )
+	float circleCloseTime = GetGlobalNetTime( "circleCloseTime" )
 	RuiSetGameTime( file.fullmap_gamestateRui, "circleCloseTime", circleCloseTime )
 
 	RuiSetInt( file.fullmap_gamestateRui, "roundNumber", roundNumber )

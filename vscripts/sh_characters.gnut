@@ -905,7 +905,7 @@ bool function Survival_HasPlayerLockedInCharacter( EHI playerEHI )
 		if ( player == null || !IsValid( player ) )
 			return false
 
-		if ( Time() > GetGlobalNetTimeSafe( "allSquadsPresentationStartTime" ) && GetGlobalNetTimeSafe( "allSquadsPresentationStartTime" ) != -1 )
+		if ( Time() > GetGlobalNetTime( "allSquadsPresentationStartTime" ) && GetGlobalNetTime( "allSquadsPresentationStartTime" ) != -1 )
 			return true
 
 		return player.GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER )

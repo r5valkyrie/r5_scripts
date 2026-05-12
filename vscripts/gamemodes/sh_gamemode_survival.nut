@@ -361,7 +361,7 @@ void function GamemodeSurvivalShared_Init()
 		Remote_RegisterServerFunction( "ClientCallback_Sur_CancelHeal" )
 
 		Remote_RegisterServerFunction( "ClientCallback_TPPromptGoToMapPoint", "float", -FLT_MAX, FLT_MAX, 32, "float", -FLT_MAX, FLT_MAX, 32 )
-		RegisterNetworkedVariableSafe( "numberOfAirdropRoundsLeft", SNDC_GLOBAL, SNVT_INT, 0 )
+		RegisterNetworkedVariable( "numberOfAirdropRoundsLeft", SNDC_GLOBAL, SNVT_INT, 0 )
 
 		#if CLIENT
 			// Callbacks must be registered during the registration window (before EndRegisteringFunctions)

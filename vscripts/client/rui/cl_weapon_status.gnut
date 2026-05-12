@@ -234,8 +234,8 @@ void function ClWeaponStatus_AddClient( entity player )
 	{
 		
 		var rui = CreateCockpitPostFXRui( $"ui/tactical_ability_hud.rpak", HUD_Z_BASE )
-		RuiTrackFloat( rui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
-		RuiTrackFloat( rui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "reviveEndTime" ) )
+		RuiTrackFloat( rui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
+		RuiTrackFloat( rui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
 
 		file.ability_center_hud = rui
 	}
@@ -248,16 +248,16 @@ void function ClWeaponStatus_AddClient( entity player )
 		else
 			rui = CreateCockpitPostFXRui( $"ui/ability_hud.rpak", HUD_Z_BASE )
 
-		RuiTrackFloat( rui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
-		RuiTrackFloat( rui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "reviveEndTime" ) )
+		RuiTrackFloat( rui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
+		RuiTrackFloat( rui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
 		file.ability_left_hud = rui
 	}
 
 	{
 		
 		var rui = CreateCockpitRui( $"ui/ability_hud.rpak", HUD_Z_BASE )
-		RuiTrackFloat( rui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
-		RuiTrackFloat( rui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "reviveEndTime" ) )
+		RuiTrackFloat( rui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
+		RuiTrackFloat( rui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
 		file.ability_right_hud = rui
 	}
 
@@ -272,8 +272,8 @@ void function ClWeaponStatus_AddClient( entity player )
 		if  ( WeaponHudIsDisabled() )
 			RuiSetBool( rui, "isVisible", false )
 
-		RuiTrackFloat( rui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "reviveEndTime" ) )
-		RuiTrackFloat( rui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
+		RuiTrackFloat( rui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
+		RuiTrackFloat( rui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
 		file.weapon_hud_rui = rui
 		UpdateWeaponStatusOnBindingChange()
 	}
@@ -1759,7 +1759,7 @@ void function InitWeaponRuiTracks( var rui, entity player, entity weapon )
 	RuiTrackFloat( rui, "remainingAmmoFrac", weapon, RUI_TRACK_WEAPON_REMAINING_AMMO_FRACTION )
 	RuiTrackFloat( rui, "lifetimeShots", weapon, RUI_TRACK_WEAPON_LIFETIME_SHOTS )
 	RuiTrackFloat( rui, "ammoRegenRate", weapon, RUI_TRACK_WEAPON_AMMO_REGEN_RATE )
-	RuiTrackFloat( rui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
+	RuiTrackFloat( rui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
 
 	if ( weapon.HasMod( WARLORDS_IRE_MOD_NAME ) )
 	{

@@ -658,8 +658,8 @@ void function InitSlingPassiveRui( entity player )
        
 	RuiSetBool( file.slingPassiveRui, "isVisible", isVisible )
 	RuiSetBool( file.slingPassiveRui, "isGroundListOpen", Survival_IsGroundlistOpen() )
-	RuiTrackFloat( file.slingPassiveRui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
-	RuiTrackFloat( file.slingPassiveRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "reviveEndTime" ) )
+	RuiTrackFloat( file.slingPassiveRui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
+	RuiTrackFloat( file.slingPassiveRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
 }
 
 void function SlingSetIsGroundListMenuOpen()

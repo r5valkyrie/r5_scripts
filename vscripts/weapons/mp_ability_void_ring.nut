@@ -854,7 +854,7 @@ void function VoidRingActiveThread( entity projectile, int team, float duration 
 		if ( SURVIVAL_IsFinalDeathFieldStage( ))
 		{
 			float now                 = Time()
-			float nextCircleStartTime = GetGlobalNetTimeSafe( "nextCircleStartTime" )
+			float nextCircleStartTime = GetGlobalNetTime( "nextCircleStartTime" )
 
 			if ( (nextCircleStartTime - now) <= 0.0 )
 			{

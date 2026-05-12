@@ -148,7 +148,7 @@ void function MpWeaponEchoLocator_Init()
 
 	RegisterSignal( "EchoLocator_Exit" )
 	RegisterSignal( "EchoLocatorShuttingDown" )
-	RegisterNetworkedVariableSafe( ECHO_LOCATOR_PLAYER_HAS_MOVEMENT_INPUT_NETVAR, SNDC_PLAYER_GLOBAL, SNVT_BOOL )
+	RegisterNetworkedVariable( ECHO_LOCATOR_PLAYER_HAS_MOVEMENT_INPUT_NETVAR, SNDC_PLAYER_GLOBAL, SNVT_BOOL )
 
 	file.echoLocatorRadius           = GetEchoLocatorRadius()
 	file.echoLocatorRadiusSqr        = int( pow( file.echoLocatorRadius, 2 ) )
@@ -1186,8 +1186,8 @@ void function EchoLocatorRUI_Thread( entity echoLocator )
 
 	int attachment = echoLocator.LookupAttachment( "ref" )
 	RuiTrackFloat3( rui, "pos", echoLocator, RUI_TRACK_ABSORIGIN_FOLLOW )
-	RuiTrackFloat( rui, "bleedoutEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
-	RuiTrackFloat( rui, "reviveEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "reviveEndTime" ) )
+	RuiTrackFloat( rui, "bleedoutEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
+	RuiTrackFloat( rui, "reviveEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
 
 	OnThreadEnd(
 		function () : ( echoLocator )

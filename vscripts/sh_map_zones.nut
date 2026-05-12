@@ -1198,7 +1198,7 @@ int function MapZones_GetRandomZoneFromPlayers( array<entity> playersOrig )
 var s_zoneIntroRui = null
 void function MapZones_ZoneIntroText_( entity player, string zoneDisplayName, int zoneTier, string zoneDisplaySubText, bool doFullscreenRui )
 {
-	if ( GetGlobalNetBoolSafe( "isMapZoneDisplayTextDisabled" ) )
+	if ( GetGlobalNetBool( "isMapZoneDisplayTextDisabled" ) )
 		return
 
 	if ( s_zoneIntroRui != null )

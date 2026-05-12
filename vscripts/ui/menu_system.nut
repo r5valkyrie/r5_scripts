@@ -420,7 +420,7 @@ bool function ShouldDisplayOptInOptions()
 	if ( GRX_IsInventoryReady() && (GRX_HasItem( GRX_DEV_ITEM ) || GRX_HasItem( GRX_QA_ITEM )) )
 		return true
 
-	return GetGlobalNetBoolSafe( "isOptInServer" )
+	return GetGlobalNetBool( "isOptInServer" )
 }
 
 

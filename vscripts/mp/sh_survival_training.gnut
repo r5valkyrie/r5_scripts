@@ -279,9 +279,9 @@ void function GetWeaponNames (entity player)
 void function ShSurvivalTraining_Init()
 {
 	return
-	RegisterNetworkedVariableSafe( "TrainingEndTime", SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, -1 )
+	RegisterNetworkedVariable( "TrainingEndTime", SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, -1 )
 	// "tutorialContext" already registered in _remote_functions_mp.gnut
-	//RegisterNetworkedVariableSafe( "tutorialContext", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, -1 )
+	//RegisterNetworkedVariable( "tutorialContext", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, -1 )
 
 	RegisterCSVDialogue( $"datatable/dialogue/survival_training.rpak" )
 

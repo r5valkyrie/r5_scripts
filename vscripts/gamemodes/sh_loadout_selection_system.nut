@@ -401,8 +401,8 @@ void function LoadoutSelection_RegisterNetworking()
 	Remote_RegisterServerFunction( "ClientCallback_LoadoutSelection_OnLoadoutSelectMenuLoadoutSelected", "int", 0, LOADOUTSELECTION_MAX_TOTAL_LOADOUT_SLOTS + 1 )
 	Remote_RegisterServerFunction( "ClientCallback_LoadoutSelection_SetOpticPreference", "int", 0, LOADOUTSELECTION_MAX_TOTAL_LOADOUT_SLOTS + 1, "int", 0, 2, "int", 0, LOADOUTSELECTION_MAX_SCOPE_INDEX + 1 )
 
-	RegisterNetworkedVariableSafe( NETVAR_LOADOUT_CURRENT_MANUAL_ROTATION_INDEX_NAME, SNDC_GLOBAL, SNVT_INT, 0)
-	RegisterNetworkedVariableSafe( NETVAR_TIME_SINCE_EVENT_STARTED_NAME, SNDC_GLOBAL, SNVT_BIG_INT, 0)
+	RegisterNetworkedVariable( NETVAR_LOADOUT_CURRENT_MANUAL_ROTATION_INDEX_NAME, SNDC_GLOBAL, SNVT_INT, 0)
+	RegisterNetworkedVariable( NETVAR_TIME_SINCE_EVENT_STARTED_NAME, SNDC_GLOBAL, SNVT_BIG_INT, 0)
 }
 #endif // CLIENT || SERVER
 
@@ -1300,7 +1300,7 @@ array< string > function LoadoutSelection_GetConsumableLoadoutByLoadoutSlotIndex
 void function LoadoutSelection_SetUnixTimeSinceEventStarted()
 {
 	int loadoutIndex = RandomInt( file.maxLoadoutsPerCategory )
-	SetGlobalNetIntSafe( NETVAR_LOADOUT_CURRENT_MANUAL_ROTATION_INDEX_NAME, loadoutIndex )
+	SetGlobalNetInt( NETVAR_LOADOUT_CURRENT_MANUAL_ROTATION_INDEX_NAME, loadoutIndex )
 	string unixTimeEventStartString = GetCurrentPlaylistVarString( "loadoutselection_rotation_start", "2021-07-21 10:00:00 -08:00" )
 	int unixTimeNow = GetUnixTimestamp()
 
@@ -1309,7 +1309,7 @@ void function LoadoutSelection_SetUnixTimeSinceEventStarted()
 	expect int( unixTimeEventStart )
 
 	int unixTimeSinceEventStarted = ( unixTimeNow - unixTimeEventStart )
-	SetGlobalNetIntSafe( NETVAR_TIME_SINCE_EVENT_STARTED_NAME, unixTimeSinceEventStarted )
+	SetGlobalNetInt( NETVAR_TIME_SINCE_EVENT_STARTED_NAME, unixTimeSinceEventStarted )
 }
 #endif // SERVER
 
@@ -1324,9 +1324,9 @@ void function LoadoutSelection_ShuffleLoadoutRotation()
 	{
 		loadoutIndices.append(i)
 	}
-	loadoutIndices.remove(GetGlobalNetIntSafe( NETVAR_LOADOUT_CURRENT_MANUAL_ROTATION_INDEX_NAME ))
+	loadoutIndices.remove(GetGlobalNetInt( NETVAR_LOADOUT_CURRENT_MANUAL_ROTATION_INDEX_NAME ))
 	int selectedLoadoutIndex = loadoutIndices.getrandom()
-	SetGlobalNetIntSafe( NETVAR_LOADOUT_CURRENT_MANUAL_ROTATION_INDEX_NAME, selectedLoadoutIndex )
+	SetGlobalNetInt( NETVAR_LOADOUT_CURRENT_MANUAL_ROTATION_INDEX_NAME, selectedLoadoutIndex )
 	LoadoutSelection_RepopulateLoadouts()
 	foreach( player in GetPlayerArray() )
 	{
@@ -1372,7 +1372,7 @@ string function LoadoutSelection_GetActiveLoadoutForCategory( LoadoutSelectionCa
 
 	if ( loadoutRotation == eLoadoutSelectionRotationStyle.MANUAL )
 	{
-		int indexToUse = GetGlobalNetIntSafe( NETVAR_LOADOUT_CURRENT_MANUAL_ROTATION_INDEX_NAME )
+		int indexToUse = GetGlobalNetInt( NETVAR_LOADOUT_CURRENT_MANUAL_ROTATION_INDEX_NAME )
 		while (indexToUse >= loadoutCategory.loadoutContentNames.len())
 			indexToUse -= loadoutCategory.loadoutContentNames.len()
 
@@ -1408,7 +1408,7 @@ string function LoadoutSelection_GetActiveLoadoutForCategory( LoadoutSelectionCa
 	}
 
 	//remainder of categories are based on rotations
-	int unixTimeSinceEventStarted = GetGlobalNetIntSafe( NETVAR_TIME_SINCE_EVENT_STARTED_NAME )
+	int unixTimeSinceEventStarted = GetGlobalNetInt( NETVAR_TIME_SINCE_EVENT_STARTED_NAME )
 	int hourQuartersSinceEventStarted = int( floor( unixTimeSinceEventStarted / ( SECONDS_PER_HOUR * 0.25 ) ) )
 	int hoursSinceEventStarted = int( floor( unixTimeSinceEventStarted / SECONDS_PER_HOUR ) )
 	int daysSinceEventStarted =  int( floor( unixTimeSinceEventStarted / SECONDS_PER_DAY ) )

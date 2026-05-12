@@ -284,8 +284,8 @@ void function VantageCompanion_Init()
 
 	Remote_RegisterServerFunction( "ClientCallback_VantageCompanion_Recall" )
 
-	RegisterNetworkedVariableSafe( VANTAGE_COMPANION_STATE_NETINT, SNDC_PLAYER_EXCLUSIVE, SNVT_INT , eCompanionState.UNKNOWN )
-	RegisterNetworkedVariableSafe( VANTAGE_COMPANION_ENT_NETVAR, SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
+	RegisterNetworkedVariable( VANTAGE_COMPANION_STATE_NETINT, SNDC_PLAYER_EXCLUSIVE, SNVT_INT , eCompanionState.UNKNOWN )
+	RegisterNetworkedVariable( VANTAGE_COMPANION_ENT_NETVAR, SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
 
 
 #if CLIENT
@@ -2364,8 +2364,8 @@ void function UpdateVantageTacticalRui()
 	if ( IsValid( localViewPlayer ) )
 	{
 		//RuiTrackFloat( file.vantageTacticalRui, "recallFrac", localViewPlayer, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.crypto_camera_is_recalling )
-		RuiTrackFloat( rui, "bleedoutEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
-		RuiTrackFloat( rui, "reviveEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "reviveEndTime" ) )
+		RuiTrackFloat( rui, "bleedoutEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
+		RuiTrackFloat( rui, "reviveEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
 
 		entity offhandWeapon = localViewPlayer.GetOffhandWeapon( OFFHAND_TACTICAL )
 		if ( IsValid( offhandWeapon ) )

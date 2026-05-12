@@ -83,7 +83,7 @@ void function PassiveVoidVision_Init()
 
 	SetupTuning()
 
-	RegisterNetworkedVariableSafe( PORTAL_EXIT_NETVAR, SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
+	RegisterNetworkedVariable( PORTAL_EXIT_NETVAR, SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
 
 	Remote_RegisterClientFunction( VOID_VISION_PORTAL_CHANGED_FUNC )
 

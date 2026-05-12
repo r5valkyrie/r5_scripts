@@ -151,7 +151,7 @@ void function CreateScoreRUI()
 {
 	var rui = CreatePermanentCockpitPostFXRui( GetGameStateAsset(), MINIMAP_Z_BASE - 1 )
 
-	RuiTrackFloat( rui, "jumpEndTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndexSafe( "PlaneDoorsOpenTime" ) )
+	RuiTrackFloat( rui, "jumpEndTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndex( "PlaneDoorsOpenTime" ) )
 
 	RuiTrackBool( rui, "netIssuePacketLoss", null, RUI_TRACK_NET_ISSUE_PACKETLOSS )
 	RuiTrackBool( rui, "netIssueCongestion", null, RUI_TRACK_NET_ISSUE_CONGESTION )
@@ -299,8 +299,8 @@ void function UpdateGamestateRuiTracking( entity player )
 
 void function UpdateCommonScoreRuiTracking( var rui, entity player )
 {
-	RuiTrackInt( rui, "killCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "kills" ) )
-	RuiTrackInt( rui, "damageDealt", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "damageDealt" ) )
+	RuiTrackInt( rui, "killCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "kills" ) )
+	RuiTrackInt( rui, "damageDealt", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "damageDealt" ) )
 
 	bool isValidMode = true
 
@@ -309,12 +309,12 @@ void function UpdateCommonScoreRuiTracking( var rui, entity player )
 
 	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) && isValidMode )
 	{
-		RuiTrackInt( rui, "participationCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "kill_participation" ) )
+		RuiTrackInt( rui, "participationCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "kill_participation" ) )
 	}
 
 	
-	RuiTrackBool( rui, "hasDeathFieldImmunity", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndexSafe( "hasDeathFieldImmunity" ) )
-	RuiTrackInt( rui, "assistCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "assists" ) )
+	RuiTrackBool( rui, "hasDeathFieldImmunity", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "hasDeathFieldImmunity" ) )
+	RuiTrackInt( rui, "assistCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "assists" ) )
 
 
 		RuiTrackFloat( rui, "cameraViewFrac", player, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.camera_view )
@@ -324,7 +324,7 @@ void function UpdateCommonScoreRuiTracking( var rui, entity player )
 		if ( Crafting_IsEnabled() )
 		{
 			if ( !Crafting_IsDispenserCraftingEnabled() )
-				RuiTrackInt( ClGameState_GetRui(), "craftingMaterials", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "craftingMaterials" ) )
+				RuiTrackInt( ClGameState_GetRui(), "craftingMaterials", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "craftingMaterials" ) )
 		}
 
 }
@@ -912,7 +912,7 @@ void function UpdateKillLeaderOnGameStateRui( var rui )
 	if ( rui == null )
 		return
 
-	entity killLeader = GetGlobalNetEntSafe( "killLeader" )
+	entity killLeader = GetGlobalNetEnt( "killLeader" )
 
 	RuiSetBool( rui, "isPlayerKillLeader", GetLocalViewPlayer() == killLeader )
 }

@@ -238,14 +238,14 @@ void function CTF_FlagEntChanged( int team, entity newFlag )
 
 void function Cl_OnResolutionChanged()
 {
-	if( GetGlobalNetIntSafe( "FSDM_GameState" ) != 0 )
+	if( GetGlobalNetInt( "FSDM_GameState" ) != 0 )
 	{
 		ShowScoreRUI( false )
 		// Flowstate_ShowRoundEndTimeUI( -1 )
 		return
 	}
 
-	// Flowstate_ShowRoundEndTimeUI( GetGlobalNetTimeSafe( "flowstate_DMRoundEndTime" ) )
+	// Flowstate_ShowRoundEndTimeUI( GetGlobalNetTime( "flowstate_DMRoundEndTime" ) )
 	ShowScoreRUI( true )
 }
 
@@ -307,7 +307,7 @@ void function Flowstate_VoteTeamEndTimeChanged( entity player, float old, float 
 	{
 		thread VoteTeamUpdateUIVoteTimer( new )
 
-		while( Time() < GetGlobalNetTimeSafe( "FSVoteTeam_EndTime" ) )
+		while( Time() < GetGlobalNetTime( "FSVoteTeam_EndTime" ) )
 			WaitFrame()
 
 		ServerCallback_FS_OpenVoteTeamMenu( false )
@@ -347,14 +347,14 @@ void function Flowstate_CTFRoundEndTimeChanged( entity player, float old, float 
 
 void function CTFNotifyRingTimer()
 {
-	// if( GetGlobalNetTimeSafe( "flowstate_DMRoundEndTime" ) < Time() || GetGlobalNetIntSafe( "FSDM_GameState" ) != eTDMState.IN_PROGRESS || GetGlobalNetTimeSafe( "flowstate_DMRoundEndTime" ) == -1 )
+	// if( GetGlobalNetTime( "flowstate_DMRoundEndTime" ) < Time() || GetGlobalNetInt( "FSDM_GameState" ) != eTDMState.IN_PROGRESS || GetGlobalNetTime( "flowstate_DMRoundEndTime" ) == -1 )
 	// {
 		// ShowScoreRUI( false )
 		// // Flowstate_ShowRoundEndTimeUI( -1 )
 		// return
 	// }
 
-	// Flowstate_ShowRoundEndTimeUI( GetGlobalNetTimeSafe( "flowstate_DMRoundEndTime" ) )
+	// Flowstate_ShowRoundEndTimeUI( GetGlobalNetTime( "flowstate_DMRoundEndTime" ) )
 	ShowScoreRUI( true )
 }
 
@@ -637,7 +637,7 @@ void function CTF_StartBuildingTeamsScoreOnHud()
 	string str_localscore = ""
 	string str_enemyscore = ""
 
-	while( GetGlobalNetIntSafe( "FSDM_GameState" ) == 0 )
+	while( GetGlobalNetInt( "FSDM_GameState" ) == 0 )
 	{
 		localscore = GameRules_GetTeamScore( player.GetTeam() )
 		enemyscore = GameRules_GetTeamScore( player.GetTeam() == TEAM_IMC ? TEAM_MILITIA : TEAM_IMC )
@@ -1330,7 +1330,7 @@ void function FS_CreateIntroScreen()
 			AddIntroScreenSquadData( player )
 		}
 
-		while( Time() < GetGlobalNetTimeSafe( "FSIntro_StartTime" ) )
+		while( Time() < GetGlobalNetTime( "FSIntro_StartTime" ) )
 			WaitFrame()
 
 		if( FlagRUI.IMCpointicon != null )
@@ -1353,7 +1353,7 @@ void function FSIntro_StartIntroScreen()
 	float stime = Time()
 	FSIntro_Destroy()
 
-	if( Flowstate_IsHaloMode() && !IsValid( GetGlobalNetEntSafe( "imcFlag" ) ) || GetCurrentPlaylistVarBool( "is_halo_gamemode", false ) && !IsValid( GetGlobalNetEntSafe( "milFlag" ) ) )
+	if( Flowstate_IsHaloMode() && !IsValid( GetGlobalNetEnt( "imcFlag" ) ) || GetCurrentPlaylistVarBool( "is_halo_gamemode", false ) && !IsValid( GetGlobalNetEnt( "milFlag" ) ) )
 		return
 
 	entity player = GetLocalClientPlayer()
@@ -1365,7 +1365,7 @@ void function FSIntro_StartIntroScreen()
 	{
 		if( player.GetTeam() == TEAM_IMC )
 		{
-			file.victorySequencePosition = GetGlobalNetEntSafe( "imcFlag" ).GetOrigin()
+			file.victorySequencePosition = GetGlobalNetEnt( "imcFlag" ).GetOrigin()
 
 			// rui = FS_InWorldPic( file.victorySequencePosition + <0, 0, 15>, file.victorySequenceAngles, "rui/flowstate_custom/flowstatepresents", true, 500, 282, 1)
 
@@ -1387,7 +1387,7 @@ void function FSIntro_StartIntroScreen()
 			}
 		} else if( player.GetTeam() == TEAM_MILITIA )
 		{
-			file.victorySequencePosition = GetGlobalNetEntSafe( "milFlag" ).GetOrigin()
+			file.victorySequencePosition = GetGlobalNetEnt( "milFlag" ).GetOrigin()
 
 			// rui = FS_InWorldPic( file.victorySequencePosition + <0, 0, 15>, file.victorySequenceAngles, "rui/flowstate_custom/flowstatepresents", true, 500, 282, 1)
 
@@ -1483,7 +1483,7 @@ void function FSIntro_StartIntroScreen()
 
 	player.SetMenuCameraEntityWithAudio( camera )
 
-	vector polePos = player.GetTeam() == TEAM_IMC ? GetGlobalNetEntSafe( "imcFlag" ).GetOrigin() : GetGlobalNetEntSafe( "milFlag" ).GetOrigin()
+	vector polePos = player.GetTeam() == TEAM_IMC ? GetGlobalNetEnt( "imcFlag" ).GetOrigin() : GetGlobalNetEnt( "milFlag" ).GetOrigin()
 
 	cleanupEnts.append( camera )
 	cleanupEnts.append( cameraMover )

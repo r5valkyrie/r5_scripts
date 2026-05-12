@@ -5883,13 +5883,13 @@ array<entity> function GetParentLinkedEntsByEditorClass( entity ent, string edit
 
 void function PilotAbilitySelectMenu_SetEnabled( bool isEnabled )
 {
-	int currState = GetGlobalNetIntSafe( "PilotAbilitySelectMenu_Enabled" )
+	int currState = GetGlobalNetInt( "PilotAbilitySelectMenu_Enabled" )
 	if ( isEnabled )
 		currState++
 	else
 		currState--
 
-	SetGlobalNetIntSafe( "PilotAbilitySelectMenu_Enabled", currState )
+	SetGlobalNetInt( "PilotAbilitySelectMenu_Enabled", currState )
 }
 
 void function DisableMantle( entity player )

@@ -722,7 +722,7 @@ bool function ShouldShowSprintVisuals( entity player )
 void function Cl_Survival_AddClient( entity player )
 {
 	file.dpadMenuRui = CreateCockpitPostFXRui( SURVIVAL_HUD_DPAD_RUI, HUD_Z_BASE )
-	RuiTrackFloat( file.dpadMenuRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "reviveEndTime" ) )
+	RuiTrackFloat( file.dpadMenuRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
 
 
 
@@ -772,7 +772,7 @@ void function Cl_Survival_AddClient( entity player )
 		{
 			file.compassRui = CreatePermanentCockpitRui( $"ui/compass_flat.rpak", HUD_Z_BASE )
 			RuiTrackFloat3( file.compassRui, "playerAngles", player, RUI_TRACK_CAMANGLES_FOLLOW )
-			RuiTrackInt( file.compassRui, "gameState", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndexSafe( "gameState" ) )
+			RuiTrackInt( file.compassRui, "gameState", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "gameState" ) )
 		}
 	}
 
@@ -1360,9 +1360,9 @@ void function CLSurvival_RegisterNetworkFunctions()
 
 void function ScorebarInitTracking( entity player, var statusRui )
 {
-	RuiTrackInt( statusRui, "connectedPlayerCount", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndexSafe( "connectedPlayerCount" ) )
-	RuiTrackInt( statusRui, "livingPlayerCount", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndexSafe( "livingPlayerCount" ) )
-	RuiTrackInt( statusRui, "squadsRemainingCount", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndexSafe( "squadsRemainingCount" ) )
+	RuiTrackInt( statusRui, "connectedPlayerCount", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "connectedPlayerCount" ) )
+	RuiTrackInt( statusRui, "livingPlayerCount", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "livingPlayerCount" ) )
+	RuiTrackInt( statusRui, "squadsRemainingCount", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "squadsRemainingCount" ) )
 	RuiTrackFloat( statusRui, "deathfieldDistance", player, RUI_TRACK_DEATHFIELD_DISTANCE )
 	RuiTrackInt( statusRui, "teamMemberIndex", player, RUI_TRACK_PLAYER_TEAM_MEMBER_INDEX )
 
@@ -2072,7 +2072,7 @@ void function EquipmentChanged( entity player, string equipSlot, int new )
 				{
 					RuiSetBool( file.pilotRui, "evoShieldDoubleDisplayAmount", EvolvingArmor_ExceedsMaxIntLimit( data ) )
 					RuiSetBool( file.pilotRui, "isEvolvingShield", isEvo )
-					RuiTrackInt( file.pilotRui, "evolvingShieldKillCounter", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( NV_EVOLVING_ARMOR_KILL_COUNT ) )
+					RuiTrackInt( file.pilotRui, "evolvingShieldKillCounter", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( NV_EVOLVING_ARMOR_KILL_COUNT ) )
 				}
 
 
@@ -2187,9 +2187,9 @@ void function OnPilotCockpitCreated( entity cockpit, entity player )
 
 	if ( player == GetLocalViewPlayer() )
 	{
-		RuiTrackBool( file.dpadMenuRui, "inventoryEnabled", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndexSafe( "inventoryEnabled" ) )
-		RuiTrackInt( file.dpadMenuRui, "selectedHealthPickup", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "selectedHealthPickupType" ) )
-		RuiTrackFloat( file.dpadMenuRui, "bleedoutEndTime", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
+		RuiTrackBool( file.dpadMenuRui, "inventoryEnabled", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "inventoryEnabled" ) )
+		RuiTrackInt( file.dpadMenuRui, "selectedHealthPickup", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "selectedHealthPickupType" ) )
+		RuiTrackFloat( file.dpadMenuRui, "bleedoutEndTime", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
 
 		EquipmentSlot es = Survival_GetEquipmentSlotDataByRef( "backpack" )
 		RuiSetImage( file.dpadMenuRui, "backpackIcon", es.emptyImage )
@@ -2873,7 +2873,7 @@ void function Survival_RunCharacterSelection_Thread()
 	if ( !Survival_CharacterSelectEnabled() )
 		return
 
-	while( GetGlobalNetBoolSafe( "characterSelectionReady" ) == false )
+	while( GetGlobalNetBool( "characterSelectionReady" ) == false )
 		WaitFrame()
 
 	entity player = GetLocalClientPlayer()
@@ -2899,7 +2899,7 @@ void function Survival_RunCharacterSelection_Thread()
 	OpenCharacterSelectMenu()
 
 
-	while( Time() < GetGlobalNetTimeSafe( "allSquadsPresentationStartTime" ) )
+	while( Time() < GetGlobalNetTime( "allSquadsPresentationStartTime" ) )
 		WaitFrame()
 
 
@@ -2997,7 +2997,7 @@ void function TryStartIntroPodiumSequence()
 					{
 						if (shouldPickChampionSquad)
 						{
-							entity championPlayer = FromEHI( GetGlobalNetIntSafe( "championEEH" ) )
+							entity championPlayer = FromEHI( GetGlobalNetInt( "championEEH" ) )
 
 							if (IsValid( championPlayer ))
 							{
@@ -4210,7 +4210,7 @@ void function ShowMatchStartSequence( int teamOrAlliance, float camera_move_dura
 		entity mvp
 
 		if (isChampionTeam)
-			mvp = FromEHI( GetGlobalNetIntSafe( "championEEH" ) )
+			mvp = FromEHI( GetGlobalNetInt( "championEEH" ) )
 		else
 			mvp = PickMVP(localTeamPlayersArray)
 

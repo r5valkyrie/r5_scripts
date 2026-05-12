@@ -2060,7 +2060,7 @@ void function ActualUpdateNestedGladiatorCard( NestedGladiatorCardHandle handle 
 		{
 			RuiSetBool( handle.cardRui, "showPrevRank", Ranked_ShouldShowPreRankedBadge ()  )
 			RuiSetInt( handle.cardRui, "teamMemberIndex", -1 )
-			RuiSetBool( handle.cardRui, "isChampion", (handle.currentOwnerEHI == GetGlobalNetIntSafe( "championEEH" )) )
+			RuiSetBool( handle.cardRui, "isChampion", (handle.currentOwnerEHI == GetGlobalNetInt( "championEEH" )) )
 		}
 
 		for ( int badgeIndex = 0; badgeIndex < GLADIATOR_CARDS_NUM_BADGES; badgeIndex++ )

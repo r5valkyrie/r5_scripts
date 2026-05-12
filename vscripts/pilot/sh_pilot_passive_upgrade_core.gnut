@@ -608,9 +608,9 @@ void function UpgradeCore_InitTuningValues()
 
 void function ShPassiveUpgradeCore_NetvarsInit()
 {
-	RegisterNetworkedVariableSafe( UPGRADE_CORE_XP_NETINT, SNDC_PLAYER_GLOBAL, SNVT_BIG_INT , 0.0 )
-	RegisterNetworkedVariableSafe( UPGRADE_CORE_SELECTED_UPGRADES, SNDC_PLAYER_GLOBAL, SNVT_INT , 0.0 )
-	RegisterNetworkedVariableSafe( UPGRADE_CORE_HARVESTER_ACTIVATION_TIME, SNDC_GLOBAL, SNVT_TIME , 0.0 )
+	RegisterNetworkedVariable( UPGRADE_CORE_XP_NETINT, SNDC_PLAYER_GLOBAL, SNVT_BIG_INT , 0.0 )
+	RegisterNetworkedVariable( UPGRADE_CORE_SELECTED_UPGRADES, SNDC_PLAYER_GLOBAL, SNVT_INT , 0.0 )
+	RegisterNetworkedVariable( UPGRADE_CORE_HARVESTER_ACTIVATION_TIME, SNDC_GLOBAL, SNVT_TIME , 0.0 )
 }
 
 void function ShPassiveUpgradeCore_LobbyInit()
@@ -3294,7 +3294,7 @@ bool function UpgradeCore_CanUseConsole( entity player, entity console, bool che
 	if ( !IsValid( player ) || !player.IsPlayer() )
 		return false
 
-	if( checkTime && Time() < GetGlobalNetTimeSafe( UPGRADE_CORE_HARVESTER_ACTIVATION_TIME ) )
+	if( checkTime && Time() < GetGlobalNetTime( UPGRADE_CORE_HARVESTER_ACTIVATION_TIME ) )
 		return false
 
 	return true //GetUseState not in S3
@@ -3332,7 +3332,7 @@ void function UpgradeCore_StartEvoHarvestersEnable_Thread()
 			waitTime += 5
 		}
 
-		SetGlobalNetTimeSafe( UPGRADE_CORE_HARVESTER_ACTIVATION_TIME, waitTime )
+		SetGlobalNetTime( UPGRADE_CORE_HARVESTER_ACTIVATION_TIME, waitTime )
 		wait tunings.evoHarvesterTimegateDuration
 	}
 
@@ -4158,14 +4158,14 @@ void function UpgradeCore_SetUpConsole_Thread( entity console  )
 		CL_SetHarvesterState( console, eHarvesterState.FULL )
 	}
 
-	if( GetGlobalNetTimeSafe( UPGRADE_CORE_HARVESTER_ACTIVATION_TIME ) <= 0 )
+	if( GetGlobalNetTime( UPGRADE_CORE_HARVESTER_ACTIVATION_TIME ) <= 0 )
 	{
 		clGlobal.levelEnt.WaitSignal( "UpdateEvoHarvesterState" )
 	}
 
 	if( tunings.harvestersNotAccessibleBeforeAnnounce )
 	{
-		if( Time() < GetGlobalNetTimeSafe( UPGRADE_CORE_HARVESTER_ACTIVATION_TIME ) )
+		if( Time() < GetGlobalNetTime( UPGRADE_CORE_HARVESTER_ACTIVATION_TIME ) )
 		{
 			if( IsValid( ambGen ) )
 			{
@@ -4175,8 +4175,8 @@ void function UpgradeCore_SetUpConsole_Thread( entity console  )
 		}
 	}
 
-	if( Time() < GetGlobalNetTimeSafe( UPGRADE_CORE_HARVESTER_ACTIVATION_TIME ) )
-		wait GetGlobalNetTimeSafe( UPGRADE_CORE_HARVESTER_ACTIVATION_TIME ) - Time()
+	if( Time() < GetGlobalNetTime( UPGRADE_CORE_HARVESTER_ACTIVATION_TIME ) )
+		wait GetGlobalNetTime( UPGRADE_CORE_HARVESTER_ACTIVATION_TIME ) - Time()
 
 	if( !UpgradeCore_CanUseConsole( GetLocalViewPlayer(), console, false ) )
 	{
@@ -4434,7 +4434,7 @@ string function GetUpgradeConsoleHoldUseTextOverride( entity ent )
 	bool canUse = UpgradeCore_CanUseConsole( player, ent )
 	if( !canUse )
 	{
-		if( Time() < GetGlobalNetTimeSafe( UPGRADE_CORE_HARVESTER_ACTIVATION_TIME )  )
+		if( Time() < GetGlobalNetTime( UPGRADE_CORE_HARVESTER_ACTIVATION_TIME )  )
 		{
 			return Localize( "#LEGEND_UPGRADE_STATIONS_USE_PROMPT_DENY_INACTIVE" ) //"Station Time Locked. Try Again Later."
 		}

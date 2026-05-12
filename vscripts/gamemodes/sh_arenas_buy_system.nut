@@ -168,8 +168,8 @@ void function ShArenasBuy_RegisterNetworkingV2()
 {
 	printt( "[Arenas BuySystem] RegisterNetworkingV2 called" )
 
-	RegisterNetworkedVariableSafe( "passiveCharges", SNDC_PLAYER_GLOBAL, SNVT_INT, 1 )
-	RegisterNetworkedVariableSafe( "ultimateCooldown", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, 1 )
+	RegisterNetworkedVariable( "passiveCharges", SNDC_PLAYER_GLOBAL, SNVT_INT, 1 )
+	RegisterNetworkedVariable( "ultimateCooldown", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, 1 )
 #if(CLIENT)
 	RegisterNetworkedVariableChangeCallback_intSafe( "passiveCharges", OnBuyScreenVarUpdate )
 	RegisterNetworkedVariableChangeCallback_intSafe( "ultimateCooldown", OnBuyScreenVarUpdate )
@@ -177,7 +177,7 @@ void function ShArenasBuy_RegisterNetworkingV2()
 
 	int startingCash = GetCurrentPlaylistVarInt( "arenas_round_0_currency", ARENAS_STARTING_CASH )
 	printt( "[Arenas BuySystem] Registering arenas_current_cash netvar, startingCash:", startingCash )
-	RegisterNetworkedVariableSafe( "arenas_current_cash", SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, startingCash )
+	RegisterNetworkedVariable( "arenas_current_cash", SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, startingCash )
 	#if(CLIENT)
 		RegisterNetworkedVariableChangeCallback_intSafe( "arenas_current_cash",
 			void function( entity player, int oldVal, int newVal, bool actuallyChanged ) : ()
@@ -189,7 +189,7 @@ void function ShArenasBuy_RegisterNetworkingV2()
 
 	for( int i = 0; i < ARENAS_MAX_EQUIPMENT; ++i )
 	{
-		RegisterNetworkedVariableSafe( "arenas_available_equipment_" + i, SNDC_GLOBAL, SNVT_INT, -1 )
+		RegisterNetworkedVariable( "arenas_available_equipment_" + i, SNDC_GLOBAL, SNVT_INT, -1 )
 	}
 }
 
@@ -544,12 +544,12 @@ int function Arenas_GetShopButtonIndex( entity player, string entVar )
 	else if( entVar.find( "arenas_player_tactical" ) != -1 )
 	{
 		branch = "player_tactical"
-		result = GetGlobalNetIntSafe( "arenas_available_equipment_1" )
+		result = GetGlobalNetInt( "arenas_available_equipment_1" )
 	}
 	else if( entVar.find( "arenas_player_ultimate" ) != -1 )
 	{
 		branch = "player_ultimate"
-		result = GetGlobalNetIntSafe( "arenas_available_equipment_2" )
+		result = GetGlobalNetInt( "arenas_available_equipment_2" )
 	}
 	else if ( entVar.find( "arenas_available_weapon_" ) != -1 )
 	{
@@ -559,7 +559,7 @@ int function Arenas_GetShopButtonIndex( entity player, string entVar )
 	else
 	{
 		branch = "equipment_netvar"
-		result = GetGlobalNetIntSafe( entVar )
+		result = GetGlobalNetInt( entVar )
 	}
 
 	printt( "[Arenas BuySystem] GetShopButtonIndex entVar:", entVar, "branch:", branch, "result:", result )

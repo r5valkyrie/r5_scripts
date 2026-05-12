@@ -504,10 +504,10 @@ void function GameStateEnter_SwitchingSides_threaded() //Threaded off primarily 
 	else
 		SetSwitchedSides( 1 )
 
-	int attackingTeam = GetGlobalNetIntSafe( "attackingTeam" )
+	int attackingTeam = GetGlobalNetInt( "attackingTeam" )
 
 	if ( attackingTeam != TEAM_UNASSIGNED )
-		SetGlobalNetIntSafe( "attackingTeam", GetOtherTeam( attackingTeam ) )
+		SetGlobalNetInt( "attackingTeam", GetOtherTeam( attackingTeam ) )
 
 	array<entity> players = GetPlayerArray()
 	foreach ( player in players )
@@ -1077,7 +1077,7 @@ void function GameRulesThink_WaitingForPlayers()
 
 void function GameRulesThink_PickLoadout()
 {
-	float pickLoadoutEndTime = GetGlobalNetTimeSafe( "pickLoadoutGamestateEndTime" )
+	float pickLoadoutEndTime = GetGlobalNetTime( "pickLoadoutGamestateEndTime" )
 	if ( pickLoadoutEndTime < 0 )
 		return
 

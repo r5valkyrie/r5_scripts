@@ -69,7 +69,7 @@ void function ClScoreboard_Init()
 
 void function Scoreboard_RegisterNetworking()
 {
-	RegisterNetworkedVariableSafe( "isScoreboardEnabled", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
+	RegisterNetworkedVariable( "isScoreboardEnabled", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
 
 	#if CLIENT
 		RegisterNetVarBoolChangeCallback( "isScoreboardEnabled", EnableScoreboardStatusChanged )

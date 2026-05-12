@@ -96,7 +96,7 @@ void function PopulateCharacterRui( var rui, entity player, int i, string side )
 		RuiSetImage( rui, "portraitBackground_" + side + (i+1), CharacterClass_GetGalleryPortraitBackground( character ) )
 		RuiSetString( rui, "portraitText_" + side + (i+1), player.GetPlayerName() )
 		RuiTrackInt( rui, "portraitTeamMemberIndex_" + side + (i+1), player, RUI_TRACK_PLAYER_TEAM_MEMBER_INDEX )
-		RuiTrackInt( rui, "respawnStatus_" + side + (i+1), player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "respawnStatus" ) )
+		RuiTrackInt( rui, "respawnStatus_" + side + (i+1), player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "respawnStatus" ) )
 	}
 	else
 	{

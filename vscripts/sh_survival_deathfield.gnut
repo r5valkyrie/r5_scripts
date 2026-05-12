@@ -327,7 +327,7 @@ void function Sh_ArenaDeathField_Init()
 	file.ringOpacityOverrideEnabled = GetCurrentPlaylistVarBool( "deathfield_ringOpacityOverrideEnabled", true )
 	if ( file.ringOpacityOverrideEnabled )
 	{
-		RegisterNetworkedVariableSafe( "ringOpacityOverride", SNDC_GLOBAL, SNVT_FLOAT_RANGE, 1.0, 0.0, 1.0 )
+		RegisterNetworkedVariable( "ringOpacityOverride", SNDC_GLOBAL, SNVT_FLOAT_RANGE, 1.0, 0.0, 1.0 )
 	}
 
 	PrecacheParticleSystem( DEATHFIELD_EFFECT )
@@ -1101,7 +1101,7 @@ void function SURVIVAL_RunArenaDeathField()
 		}
 
 		float startTime = file.deathFieldData[ allRealms[0] ].startTime
-		SetGlobalNetTimeSafe( "nextCircleStartTime", startTime - MARGIN_WAIT_TIME )
+		SetGlobalNetTime( "nextCircleStartTime", startTime - MARGIN_WAIT_TIME )
 
 		foreach ( void functionref( int, float ) callback in file.onSurvivalDeathFieldStageChangedCallbacks )
 			thread callback( deathFieldStage, startTime - MARGIN_WAIT_TIME )
@@ -1172,7 +1172,7 @@ void function SURVIVAL_RunArenaDeathField()
 				{
 					printt( "reset net time" )
 					data.startTime = Time() + MARGIN_WAIT_TIME
-					SetGlobalNetTimeSafe( "nextCircleStartTime", data.startTime - MARGIN_WAIT_TIME )
+					SetGlobalNetTime( "nextCircleStartTime", data.startTime - MARGIN_WAIT_TIME )
 					data.endTime = data.startTime + stage.shrinkDuration
 				}
 			#endif // DEVELOPER
@@ -1241,7 +1241,7 @@ void function SURVIVAL_RunArenaDeathField()
 		}
 
 		// time when circle stops moving.
-		SetGlobalNetTimeSafe( "circleCloseTime", Time() + file.deathFieldStages[ allRealms[0] ][deathFieldStage].shrinkDuration )
+		SetGlobalNetTime( "circleCloseTime", Time() + file.deathFieldStages[ allRealms[0] ][deathFieldStage].shrinkDuration )
 
 		waitthread DeathFieldShrinkThink_Thread( file.deathFieldData, deathFields )
 
@@ -1257,9 +1257,9 @@ void function SURVIVAL_RunArenaDeathField()
 
 		// only change these settings if we dev-skipped the previous circle since it will send an unwated message
 		#if DEVELOPER
-			if ( Time() < GetGlobalNetTimeSafe( "nextCircleStartTime" ) + MARGIN_WAIT_TIME + file.deathFieldStages[ allRealms[0] ][deathFieldStage].shrinkDuration - 1.0 )
+			if ( Time() < GetGlobalNetTime( "nextCircleStartTime" ) + MARGIN_WAIT_TIME + file.deathFieldStages[ allRealms[0] ][deathFieldStage].shrinkDuration - 1.0 )
 			{
-				SetGlobalNetTimeSafe( "nextCircleStartTime", Time() - (file.deathFieldStages[ allRealms[0] ][deathFieldStage].shrinkDuration + file.deathFieldStages[ allRealms[0] ][deathFieldStage].preShrinkDuration) )
+				SetGlobalNetTime( "nextCircleStartTime", Time() - (file.deathFieldStages[ allRealms[0] ][deathFieldStage].shrinkDuration + file.deathFieldStages[ allRealms[0] ][deathFieldStage].preShrinkDuration) )
 			}
 		#endif // DEVELOPER
 
@@ -2953,7 +2953,7 @@ int function SURVIVAL_GetCirclesCompleted()
 
 void function SetCurrentDeathFieldStage( int stage )
 {
-	SetGlobalNetIntSafe( "currentDeathFieldStage", stage )
+	SetGlobalNetInt( "currentDeathFieldStage", stage )
 	OBSERVER_UpdateSurveyRegion( stage )
 }
 
@@ -3645,7 +3645,7 @@ void function Cl_DeathFieldThink( entity deathField )
 
 		int dIndex 		= GetLocalViewPlayer().DeathFieldIndex()
 		int stage       = SURVIVAL_GetCurrentDeathFieldStage()
-		float startTime = GetGlobalNetTimeSafe( "nextCircleStartTime" ) + MARGIN_WAIT_TIME
+		float startTime = GetGlobalNetTime( "nextCircleStartTime" ) + MARGIN_WAIT_TIME
 
 		if ( currentDeathFieldStage != stage )
 		{
@@ -3654,7 +3654,7 @@ void function Cl_DeathFieldThink( entity deathField )
 				thread callback( currentDeathFieldStage, startTime )
 		}
 
-		float duration  = GetGlobalNetTimeSafe( "circleCloseTime" ) - startTime
+		float duration  = GetGlobalNetTime( "circleCloseTime" ) - startTime
 		float unclampedFrac = -1
 		float frac          = 0
 
@@ -3947,7 +3947,7 @@ void function DEV_OnDummyCircleWpInstanced( entity wp )
 
 int function SURVIVAL_GetCurrentDeathFieldStage()
 {
-	return GetGlobalNetIntSafe( "currentDeathFieldStage" )
+	return GetGlobalNetInt( "currentDeathFieldStage" )
 }
 
 
@@ -4053,7 +4053,7 @@ float function Cl_SURVIVAL_GetDeathFieldCurrentRadius()
 		if ( i == -1 )
 			return startRadius
 
-		float startTime = GetGlobalNetTimeSafe( "nextCircleStartTime" ) + MARGIN_WAIT_TIME
+		float startTime = GetGlobalNetTime( "nextCircleStartTime" ) + MARGIN_WAIT_TIME
 		DeathFieldStageData data = file.deathFieldStageData[i]
 		if ( i > 0 )
 		{

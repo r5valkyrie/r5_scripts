@@ -668,11 +668,11 @@ void function Crafting_RegisterNetworking()
 
 	if ( !Crafting_IsDispenserCraftingEnabled() )
 	{
-		RegisterNetworkedVariableSafe( "craftingMaterials", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
-		RegisterNetworkedVariableSafe( "Crafting_NumHarvesters", SNDC_GLOBAL, SNVT_INT, 0 )
+		RegisterNetworkedVariable( "craftingMaterials", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
+		RegisterNetworkedVariable( "Crafting_NumHarvesters", SNDC_GLOBAL, SNVT_INT, 0 )
 	}
 
-	RegisterNetworkedVariableSafe( "Crafting_StartTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
+	RegisterNetworkedVariable( "Crafting_StartTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
 
 #if SERVER || CLIENT
 	Remote_RegisterClientFunction( "ServerCallback_CL_MaterialsChanged", "int", -1, INT_MAX, "int", -1, INT_MAX, "int", 0, eWildLifeCampType.Count, "entity", "bool" )
@@ -1211,7 +1211,7 @@ void function RandomizeHarvesterLocations()
 	file.harvesterArray.clear()
 	file.harvesterArray = clone distributedHarvesters
 
-	SetGlobalNetIntSafe( "Crafting_NumHarvesters", file.harvesterArray.len() )
+	SetGlobalNetInt( "Crafting_NumHarvesters", file.harvesterArray.len() )
 }
 
 
@@ -1344,7 +1344,7 @@ void function RandomizeClusterLocations_Thread( bool shouldLinkHarvesters )
 
 	if ( !Crafting_IsDispenserCraftingEnabled() )
 	{
-		SetGlobalNetIntSafe( "Crafting_NumHarvesters", file.harvesterArray.len() )
+		SetGlobalNetInt( "Crafting_NumHarvesters", file.harvesterArray.len() )
 	}
 }
 
@@ -1936,10 +1936,10 @@ void function Crafting_OnEntitiesDidLoad()
 {
 	if ( !Crafting_IsDispenserCraftingEnabled() )
 	{
-		SetGlobalNetIntSafe( "Crafting_NumHarvesters", file.harvesterArray.len() )
+		SetGlobalNetInt( "Crafting_NumHarvesters", file.harvesterArray.len() )
 	}
 
-	SetGlobalNetTimeSafe( "Crafting_StartTime", float(file.matchStartTime) )
+	SetGlobalNetTime( "Crafting_StartTime", float(file.matchStartTime) )
 }
 
 entity function CreateMaterialHarvester( asset model, vector ornull origin = null, vector ornull angles = null, int solidType = 0, float fadeDist = -1, bool dispatchSpawn = true )
@@ -4950,13 +4950,13 @@ CraftingBundle function GetBundleForCategory( CraftingCategory categoryToCheck )
 	int unixTimeNow
 	#if SERVER
 		if ( file.isNetworkingRegistered )
-			unixTimeNow = GetUnixTimestamp()//int(GetGlobalNetTimeSafe( "Crafting_StartTime" ))
+			unixTimeNow = GetUnixTimestamp()//int(GetGlobalNetTime( "Crafting_StartTime" ))
 		else
 			unixTimeNow = file.matchStartTime
 	#endif
 	#if CLIENT
 		if ( !IsLobby() )
-			unixTimeNow = GetUnixTimestamp()//int(GetGlobalNetTimeSafe( "Crafting_StartTime" ))
+			unixTimeNow = GetUnixTimestamp()//int(GetGlobalNetTime( "Crafting_StartTime" ))
 		else
 			unixTimeNow = GetUnixTimestamp()
 	#endif
@@ -5615,7 +5615,7 @@ void function OnGameStartedPlaying_Client()
 	if ( !Crafting_IsDispenserCraftingEnabled() )
 	{
 		file.fullmapRui.append( RuiCreate( $"ui/crafting_fullmap.rpak", clGlobal.topoFullscreenFullMap, FULLMAP_RUI_DRAW_LAYER, 20 ) )
-		RuiTrackInt( file.fullmapRui[0], "craftingMaterials", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "craftingMaterials" ) )
+		RuiTrackInt( file.fullmapRui[0], "craftingMaterials", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "craftingMaterials" ) )
 
 		for ( int i = 0; i < 6; i++ )
 		{

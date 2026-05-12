@@ -1348,8 +1348,8 @@ void function ShowPassiveGasProtectionOnHUD_Internal( entity player )
 
 	var rui = CreateCockpitRui( $"ui/gas_protection_icon.rpak" )
 	RuiSetImage( rui, "icon", $"rui/hud/passive_icons/passive_caustic" )
-	RuiTrackBool( rui, "playerInPlane", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndexSafe( "playerInPlane" ) )
-	RuiTrackBool( rui, "freefallActive", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndexSafe( "freefallActive" ) )
+	RuiTrackBool( rui, "playerInPlane", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "playerInPlane" ) )
+	RuiTrackBool( rui, "freefallActive", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "freefallActive" ) )
 
 	OnThreadEnd(
 		function () : ( rui )

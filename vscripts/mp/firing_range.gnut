@@ -719,17 +719,17 @@ void function FR_Init_NetVars_And_PVars()
 
 	// --------- Register Netvars
 	// ----- RANGEMASTER EHI
-	RegisterNetworkedVariableSafe( NETVAR_FR_RANGEMASTER_EHI, SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, -1 )
+	RegisterNetworkedVariable( NETVAR_FR_RANGEMASTER_EHI, SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, -1 )
 
 	// Shared Int Settings ( All Team members can see, only Party Leader can change. )
 	for( int settingNDX = frIntSettings_NDX_Start; settingNDX < frIntSettings_NDX_End; settingNDX++ )
 	{
-		RegisterNetworkedVariableSafe( frIntSettings_NetVars[ settingNDX ], SNDC_PLAYER_EXCLUSIVE, SNVT_INT, frIntSettings_Defaults[ settingNDX ])
+		RegisterNetworkedVariable( frIntSettings_NetVars[ settingNDX ], SNDC_PLAYER_EXCLUSIVE, SNVT_INT, frIntSettings_Defaults[ settingNDX ])
 	}
 
 	// Settings PackedBools
-	RegisterNetworkedVariableSafe( NETVAR_FRPS_PACKEDBOOLS, SNDC_PLAYER_EXCLUSIVE, SNVT_UNSIGNED_INT, 3 ) // Show RUI & Show Dyn Stats default TRUE.
-	RegisterNetworkedVariableSafe( NETVAR_FRSS_PACKEDBOOLS, SNDC_PLAYER_EXCLUSIVE, SNVT_UNSIGNED_INT, 0 )
+	RegisterNetworkedVariable( NETVAR_FRPS_PACKEDBOOLS, SNDC_PLAYER_EXCLUSIVE, SNVT_UNSIGNED_INT, 3 ) // Show RUI & Show Dyn Stats default TRUE.
+	RegisterNetworkedVariable( NETVAR_FRSS_PACKEDBOOLS, SNDC_PLAYER_EXCLUSIVE, SNVT_UNSIGNED_INT, 0 )
 
 	#if CLIENT
 		// ----- NetVar Change Callbacks

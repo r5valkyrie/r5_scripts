@@ -933,7 +933,7 @@ void function Control_Init()
 		RegisterDisabledBattleChatterEvents( CONTROL_DISABLED_BATTLE_CHATTER_EVENTS )
 		QuickChat_RegisterDisabledCommsActions( CONTROL_DISABLED_COMMS_ACTIONS )
 
-		SetGlobalNetBoolSafe( "isMapZoneDisplayTextDisabled", true )
+		SetGlobalNetBool( "isMapZoneDisplayTextDisabled", true )
 
 		RegisterSignal( "Control_PlayerRespawning" )
 		RegisterSignal( "Control_NewEXPLeaderFound" )
@@ -1079,14 +1079,14 @@ void function Control_RegisterNetworking()
 
 
 
-	RegisterNetworkedVariableSafe( "control_WaveStartTime", SNDC_GLOBAL, SNVT_TIME, 0.0 )
-	RegisterNetworkedVariableSafe( "control_WaveSpawnTime", SNDC_GLOBAL, SNVT_TIME, 0.0 )
-	RegisterNetworkedVariableSafe( "control_IsPlayerOnSpawnSelectScreen", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
-	RegisterNetworkedVariableSafe( "control_IsPlayerExemptFromWaveSpawn", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
-	RegisterNetworkedVariableSafe( "control_ObjectiveIndex", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, -1)
-	RegisterNetworkedVariableSafe( "control_PersonalScore", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
-	RegisterNetworkedVariableSafe( "control_CurrentExpTotal", SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, 0 )
-	RegisterNetworkedVariableSafe( "control_CurrentExpTier", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, 0 )
+	RegisterNetworkedVariable( "control_WaveStartTime", SNDC_GLOBAL, SNVT_TIME, 0.0 )
+	RegisterNetworkedVariable( "control_WaveSpawnTime", SNDC_GLOBAL, SNVT_TIME, 0.0 )
+	RegisterNetworkedVariable( "control_IsPlayerOnSpawnSelectScreen", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	RegisterNetworkedVariable( "control_IsPlayerExemptFromWaveSpawn", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	RegisterNetworkedVariable( "control_ObjectiveIndex", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, -1)
+	RegisterNetworkedVariable( "control_PersonalScore", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
+	RegisterNetworkedVariable( "control_CurrentExpTotal", SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, 0 )
+	RegisterNetworkedVariable( "control_CurrentExpTier", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, 0 )
 
 	Remote_RegisterServerFunction( "ClientCallback_Control_ProcessRespawnChoice", "int", 0, eControlWaypointTypeIndex._count )
 	Remote_RegisterServerFunction( "ClientCallback_Control_PlayerRespawningFromMenu" )
@@ -1119,7 +1119,7 @@ void function Control_RegisterNetworking()
 	Remote_RegisterClientFunction( "ServerCallback_PlayPodiumMusic" )
 	Remote_RegisterClientFunction( "ServerCallback_Control_DisplayLockoutUnavailableWarning" )
 
-	RegisterNetworkedVariableSafe( PLAYER_WITH_MRB_NET_NAME, SNDC_GLOBAL, SNVT_ENTITY )
+	RegisterNetworkedVariable( PLAYER_WITH_MRB_NET_NAME, SNDC_GLOBAL, SNVT_ENTITY )
 	Remote_RegisterClientFunction( "ServerCallback_Control_MRBTimedEvent_OnMRBPickedUp" )
 
 	Remote_RegisterUIFunction( "Control_RemoveAllButtonSpawnIcons" )
@@ -6555,7 +6555,7 @@ void function Control_RunPlayerCountDependantLogic()
 // Test if leaver penalties should be turned off due to unfair player counts
 void function Control_TryEndLeaverPenaltyForMatch()
 {
-	if ( GetGameState() == eGameState.Playing && GetGlobalNetBoolSafe( "mixtape_isLeaverPenaltyEnabledForMatch" ) )
+	if ( GetGameState() == eGameState.Playing && GetGlobalNetBool( "mixtape_isLeaverPenaltyEnabledForMatch" ) )
 	{
 		// Check if player counts make a fair match (for leaver penalty)
 		int ACount = AllianceProximity_GetNumPlayersInAlliance( ALLIANCE_A, false )
@@ -6570,7 +6570,7 @@ void function Control_TryEndLeaverPenaltyForMatch()
 		int playerCountTarget = int( GetCurrentPlaylistVarInt( "max_players", CONTROL_DEFAULT_MAX_PLAYERS ) * (2.0 / 3.0) )
 		bool isPlayerCountLow = ACount + BCount <= playerCountTarget
 
-		SetGlobalNetBoolSafe( "mixtape_isLeaverPenaltyEnabledForMatch", ( !areAlliancesUneven && !isPlayerCountLow ) )
+		SetGlobalNetBool( "mixtape_isLeaverPenaltyEnabledForMatch", ( !areAlliancesUneven && !isPlayerCountLow ) )
 	}
 }
 #endif // SERVER
@@ -6931,8 +6931,8 @@ void function Control_ManageWaveSpawnIntervals_Thread( )
 	{
 		float currentTime = Time()
 		float waveInterval = Control_GetRespawnWaveInterval()
-		SetGlobalNetTimeSafe( "control_WaveStartTime", currentTime )
-		SetGlobalNetTimeSafe( "control_WaveSpawnTime", currentTime + waveInterval )
+		SetGlobalNetTime( "control_WaveStartTime", currentTime )
+		SetGlobalNetTime( "control_WaveSpawnTime", currentTime + waveInterval )
 
 		foreach ( player in GetPlayerArray() )
 		{
@@ -9939,8 +9939,8 @@ void function Control_SetWaveSpawnTimerTime()
 
 		if ( IsValid( rui ) )
 		{
-			float startTime = GetGlobalNetTimeSafe( "control_WaveStartTime" )
-			float endTime =  GetGlobalNetTimeSafe( "control_WaveSpawnTime" )
+			float startTime = GetGlobalNetTime( "control_WaveStartTime" )
+			float endTime =  GetGlobalNetTime( "control_WaveSpawnTime" )
 			RuiSetGameTime( rui, "respawnStartTime", startTime )
 			RuiSetGameTime( rui, "respawnEndTime", endTime )
 		}
@@ -10028,8 +10028,8 @@ void function ServerCallback_Control_DisplayWaveSpawnBarStatusMessage( bool isSh
 		{
 			RuiSetBool( rui, "spawnSelected", true )
 
-			float startTime = GetGlobalNetTimeSafe( "control_WaveStartTime" )
-			float endTime =  GetGlobalNetTimeSafe( "control_WaveSpawnTime" )
+			float startTime = GetGlobalNetTime( "control_WaveStartTime" )
+			float endTime =  GetGlobalNetTime( "control_WaveSpawnTime" )
 			RunUIScript("SetRespawnOverlayTime", startTime, endTime)
 
 			string spawnChoice
@@ -14845,7 +14845,7 @@ entity ornull function Control_MRBTimedEvent_GetCurrentMRBOwner()
 	#endif // SERVER
 
 	#if CLIENT
-		return GetGlobalNetEntSafe( PLAYER_WITH_MRB_NET_NAME )
+		return GetGlobalNetEnt( PLAYER_WITH_MRB_NET_NAME )
 	#endif // CLIENT
 }
 #endif // CLIENT || SERVER

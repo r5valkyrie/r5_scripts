@@ -358,7 +358,7 @@ void function DisplayFrontierRank( bool isFirstBoot = true )
 
 	bool firstBootDisplay
 	//if ( GameRules_GetGameMode() == FD )
-		//firstBootDisplay = isFirstBoot || !GetGlobalNetBoolSafe( "FD_waveActive" )
+		//firstBootDisplay = isFirstBoot || !GetGlobalNetBool( "FD_waveActive" )
 //	else
 		firstBootDisplay = true
 
@@ -1585,7 +1585,7 @@ void function LinkCoreHint( entity soul )
 	if ( file.coreHintRui == null )
 		return
 
-	RuiTrackFloat( file.coreHintRui, "coreFrac", soul, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "coreAvailableFrac" ) )
+	RuiTrackFloat( file.coreHintRui, "coreFrac", soul, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "coreAvailableFrac" ) )
 }
 
 
@@ -1641,7 +1641,7 @@ var function Scorch_CreateHotstreakBar()
 
 	file.scorchHotstreakRui = CreateFixedTitanCockpitRui( $"ui/scorch_hotstreak_bar.rpak" )
 
-	RuiTrackFloat( file.scorchHotstreakRui, "coreMeterMultiplier", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "coreMeterModifier" ) )
+	RuiTrackFloat( file.scorchHotstreakRui, "coreMeterMultiplier", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "coreMeterModifier" ) )
 
 	return file.scorchHotstreakRui
 }

@@ -64,7 +64,7 @@ void function MpAbilityValkJets_Init()
 	RegisterSignal( "ValkFlightReveal" )
 	RegisterSignal( "ValkTeammateStartTracking" )
 
-	RegisterNetworkedVariableSafe( "valkTrackingActive", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariable( "valkTrackingActive", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 
 	#if SERVER
 		Survival_AddCallback_PlayerFreefallBegin( ValkUlt_FreefallBegin )
@@ -219,8 +219,8 @@ void function Valk_CreateJetPackRui( entity player )
 		file.jetPackRui = CreateCockpitRui( $"ui/valk_jets_meter.rpak" )
 
 		RuiTrackFloat( file.jetPackRui, "chargeFrac", player, RUI_TRACK_GLIDE_METER_FRACTION )
-		RuiTrackFloat( file.jetPackRui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
-		RuiTrackFloat( file.jetPackRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "reviveEndTime" ) )
+		RuiTrackFloat( file.jetPackRui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
+		RuiTrackFloat( file.jetPackRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
 	}
 }
 

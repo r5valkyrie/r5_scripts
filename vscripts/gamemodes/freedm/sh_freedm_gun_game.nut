@@ -113,9 +113,9 @@ void function GunGame_Init()
 	Remote_RegisterClientFunction( "ServerCallback_GunGame_SetSummaryScreen" )
 	Remote_RegisterServerFunction( "ClientCallback_UpdateWeaponPreviewHUD" )
 	for( int i = 0; i < MAX_TEAMS; ++i )
-		RegisterNetworkedVariableSafe( GUNGAME_SQUAD_WEAPON_INDEX + i, SNDC_GLOBAL, SNVT_INT, -1 )
+		RegisterNetworkedVariable( GUNGAME_SQUAD_WEAPON_INDEX + i, SNDC_GLOBAL, SNVT_INT, -1 )
 
-	RegisterNetworkedVariableSafe( GUNGAME_PLAYERSCORE, SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
+	RegisterNetworkedVariable( GUNGAME_PLAYERSCORE, SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 
 #if CLIENT
 	AddCallback_LocalClientPlayerSpawned( Client_OnPlayerSpawned )
@@ -147,7 +147,7 @@ void function EntitiesDidLoad()
 	LootData lootData = SURVIVAL_Loot_GetLootDataByRef( file.weaponRefs[0] )
 
 	for( int i = 0; i < MAX_TEAMS; ++i )
-		SetGlobalNetIntSafe( GUNGAME_SQUAD_WEAPON_INDEX + i, lootData.index )
+		SetGlobalNetInt( GUNGAME_SQUAD_WEAPON_INDEX + i, lootData.index )
 }
 
 const asset GUNGAME_WEAPON_LIST_DATATABLE = $"datatable/freedm/gungame_weapon_list.rpak"
@@ -561,7 +561,7 @@ void function UpdateSquadWeaponIndex( int team )
 	LootData lootData = SURVIVAL_Loot_GetLootDataByRef( file.weaponRefs[ teamScore ] )
 
 	int squadArrayIndex = Squads_GetArrayIndexForTeam( team )
-	SetGlobalNetIntSafe( GUNGAME_SQUAD_WEAPON_INDEX + squadArrayIndex, lootData.index )
+	SetGlobalNetInt( GUNGAME_SQUAD_WEAPON_INDEX + squadArrayIndex, lootData.index )
 }
 
 void function OnPlayerPostRespawned( entity player )
@@ -1075,7 +1075,7 @@ void function DisplayGunGameScore_thread()
 				EmitSoundOnEntity( localViewPlayer, GUNGAME_FINAL_WEAPON_SOUND )
 			}
 
-			int squadWeaponIndex = GetGlobalNetIntSafe( GUNGAME_SQUAD_WEAPON_INDEX + Squads_GetArrayIndexForTeam( team ) )
+			int squadWeaponIndex = GetGlobalNetInt( GUNGAME_SQUAD_WEAPON_INDEX + Squads_GetArrayIndexForTeam( team ) )
 			RuiSetInt( rui, "score_" + (reorderedIndex + 1), teamScore )
 
 			if( SURVIVAL_Loot_IsLootIndexValid( squadWeaponIndex ) && teamScore < file.scorePipRUIs.len()-1 )
@@ -1248,7 +1248,7 @@ void function GunGame_ScoreboardUpdateHeader( var headerRui, var frameRui, int t
 		int teamScore = GameRules_GetTeamScore( team )
 
 		RuiSetString( headerRui, "headerText", Localize( Squads_GetSquadName( squadIndex ) ) )
-		int squadWeaponIndex = GetGlobalNetIntSafe( GUNGAME_SQUAD_WEAPON_INDEX + Squads_GetArrayIndexForTeam( team ) )
+		int squadWeaponIndex = GetGlobalNetInt( GUNGAME_SQUAD_WEAPON_INDEX + Squads_GetArrayIndexForTeam( team ) )
 
 		if( SURVIVAL_Loot_IsLootIndexValid( squadWeaponIndex ) && GetGameState() >= eGameState.Playing )
 		{

@@ -2917,7 +2917,7 @@ int function GameScore_GetScore( int team )
 
 bool function TitanEjectIsDisabled()
 {
-	return (GetGlobalNetBoolSafe( "titanEjectEnabled" ) == false)
+	return (GetGlobalNetBool( "titanEjectEnabled" ) == false)
 }
 
 bool function IsHitEffectiveVsTitan( entity victim, int damageType )
@@ -5354,7 +5354,7 @@ bool function IsTitanPrimeTitan( entity titan )
 
 bool function IsPilotAbilitySelectMenuEnabled()
 {
-	return GetGlobalNetIntSafe( "PilotAbilitySelectMenu_Enabled" ) >= 1
+	return GetGlobalNetInt( "PilotAbilitySelectMenu_Enabled" ) >= 1
 }
 
 string function GetEditorClass( entity ent )
@@ -6827,7 +6827,7 @@ bool function Tracker_IsStatsReadyFor( entity player )
 
 int function GetConnectedPlayerCount()
 {
-	return GetGlobalNetIntSafe( "connectedPlayerCount" )
+	return GetGlobalNetInt( "connectedPlayerCount" )
 }
 
 vector function MapAngleToRadius( float angle, float radius )

@@ -151,7 +151,7 @@ bool function ClientCommand_DropFlag(entity player, array<string> args)
 bool function ClientCommand_NextRound(entity player, array<string> args)
 {
 	file.ctfState = eCTFState.WINNER_DECIDED
-	SetGlobalNetIntSafe( "FSDM_GameState", file.ctfState )
+	SetGlobalNetInt( "FSDM_GameState", file.ctfState )
 	return true
 }
 #endif
@@ -290,7 +290,7 @@ void function StartRound()
 	thread ResetIMCFlag()
 
 	if( Flowstate_IsHaloMode() )
-		while( !IsValid( GetGlobalNetEntSafe( "imcFlag" ) ) )
+		while( !IsValid( GetGlobalNetEnt( "imcFlag" ) ) )
 			WaitFrame()
 
 	int milCount
@@ -350,7 +350,7 @@ void function StartRound()
 
 					break
 				}
-				vector startingpoint = OffsetPointRelativeToVector( GetGlobalNetEntSafe( "imcFlag" ).GetOrigin(), <0, 115, 8>, AnglesToForward( angles ) )
+				vector startingpoint = OffsetPointRelativeToVector( GetGlobalNetEnt( "imcFlag" ).GetOrigin(), <0, 115, 8>, AnglesToForward( angles ) )
 				player.SetOrigin( FSIntro_GetVictorySquadFormationPosition( startingpoint, angles, imcCount ) )
 				player.SetAngles( angles )
 				imcCount++
@@ -370,7 +370,7 @@ void function StartRound()
 
 					break
 				}
-				vector startingpoint = OffsetPointRelativeToVector( GetGlobalNetEntSafe( "milFlag" ).GetOrigin(), <0, 115, 8>, AnglesToForward( angles ) )
+				vector startingpoint = OffsetPointRelativeToVector( GetGlobalNetEnt( "milFlag" ).GetOrigin(), <0, 115, 8>, AnglesToForward( angles ) )
 				player.SetOrigin( FSIntro_GetVictorySquadFormationPosition( startingpoint, angles, milCount ) )
 				player.SetAngles( angles )
 				milCount++
@@ -408,10 +408,10 @@ void function StartRound()
 
 	if( !debugging && Flowstate_IsHaloMode() )
 	{
-		SetGlobalNetTimeSafe( "FSIntro_StartTime", Time() + 3 )
-		SetGlobalNetTimeSafe( "FSIntro_EndTime", Time() + 7 + max( GetPlayerArrayOfTeam(TEAM_IMC).len(), GetPlayerArrayOfTeam(TEAM_MILITIA).len() ) * 2 )
+		SetGlobalNetTime( "FSIntro_StartTime", Time() + 3 )
+		SetGlobalNetTime( "FSIntro_EndTime", Time() + 7 + max( GetPlayerArrayOfTeam(TEAM_IMC).len(), GetPlayerArrayOfTeam(TEAM_MILITIA).len() ) * 2 )
 
-		while( Time() < GetGlobalNetTimeSafe( "FSIntro_EndTime" ) )
+		while( Time() < GetGlobalNetTime( "FSIntro_EndTime" ) )
 			WaitFrame()
 
 		foreach(player in GetPlayerArray())
@@ -426,7 +426,7 @@ void function StartRound()
 	wait 1.5
 	// set
 	SetGameState(eGameState.Playing)
-	SetGlobalNetTimeSafe( "flowstate_DMStartTime", Time() + 3 )
+	SetGlobalNetTime( "flowstate_DMStartTime", Time() + 3 )
 
 	foreach(player in GetPlayerArray())
 	{
@@ -481,9 +481,9 @@ void function StartRound()
 
 	float endTime = Time() + CTF_ROUNDTIME
 
-	SetGlobalNetTimeSafe( "flowstate_DMRoundEndTime", endTime )
+	SetGlobalNetTime( "flowstate_DMRoundEndTime", endTime )
 	file.ctfState = eCTFState.IN_PROGRESS
-	SetGlobalNetIntSafe( "FSDM_GameState", file.ctfState )
+	SetGlobalNetInt( "FSDM_GameState", file.ctfState )
 
 	array<entity> winners = []
 
@@ -492,8 +492,8 @@ void function StartRound()
 		if( Time() > endTime - 1 )
 		{
 			file.ctfState = eCTFState.WINNER_DECIDED
-			if( GetGlobalNetIntSafe( "FSDM_GameState" ) != eCTFState.WINNER_DECIDED )
-				SetGlobalNetIntSafe( "FSDM_GameState", file.ctfState )
+			if( GetGlobalNetInt( "FSDM_GameState" ) != eCTFState.WINNER_DECIDED )
+				SetGlobalNetInt( "FSDM_GameState", file.ctfState )
 		}
 
 		if( file.ctfState == eCTFState.WINNER_DECIDED )
@@ -780,9 +780,9 @@ void function StartRound()
 		WaitFrame()
 	}
 
-	SetGlobalNetTimeSafe( "flowstate_DMRoundEndTime", -1 )
+	SetGlobalNetTime( "flowstate_DMRoundEndTime", -1 )
 	file.ctfState = eCTFState.WINNER_DECIDED
-	SetGlobalNetIntSafe( "FSDM_GameState", file.ctfState )
+	SetGlobalNetInt( "FSDM_GameState", file.ctfState )
 
 	#if TRACKER //todo: Add roundend callbacks
 		if( winners.len() )
@@ -1201,7 +1201,7 @@ void function CaptureFlag(entity ent, int team, CTFPoint teamflagpoint)
 			thread EmitSoundOnEntityOnlyToPlayer( player, player, "diag_ap_aiNotify_winnerFound" )
 		}
 		file.ctfState = eCTFState.WINNER_DECIDED
-		SetGlobalNetIntSafe( "FSDM_GameState", file.ctfState )
+		SetGlobalNetInt( "FSDM_GameState", file.ctfState )
 		file.winnerTeam = TEAM_IMC
 	} else if( GameRules_GetTeamScore( TEAM_MILITIA ) >= CTF_SCORE_GOAL_TO_WIN )
 	{
@@ -1213,7 +1213,7 @@ void function CaptureFlag(entity ent, int team, CTFPoint teamflagpoint)
 			thread EmitSoundOnEntityOnlyToPlayer( player, player, "diag_ap_aiNotify_winnerFound" )
 		}
 		file.ctfState = eCTFState.WINNER_DECIDED
-		SetGlobalNetIntSafe( "FSDM_GameState", file.ctfState )
+		SetGlobalNetInt( "FSDM_GameState", file.ctfState )
 		file.winnerTeam = TEAM_MILITIA
 	}
 }
@@ -1408,10 +1408,10 @@ void function _OnPlayerConnected(entity player)
 
 void function _OnPlayerDisconnected(entity player)
 {
-	if( GetGlobalNetEntSafe( "imcFlag" ) == player )
+	if( GetGlobalNetEnt( "imcFlag" ) == player )
 		thread ResetIMCFlag()
 
-	if( GetGlobalNetEntSafe( "milFlag" ) == player )
+	if( GetGlobalNetEnt( "milFlag" ) == player )
 		thread ResetMILITIAFlag()
 }
 
@@ -1679,9 +1679,9 @@ void function ResetFlagForTeam( int team )
 
 void function CheckPlayerForFlag(entity victim)
 {
-	if( GetGlobalNetEntSafe( "imcFlag" ) == victim )
+	if( GetGlobalNetEnt( "imcFlag" ) == victim )
 		thread PlayerThrowFlag(victim, TEAM_IMC, IMCPoint)
-	else if( GetGlobalNetEntSafe( "milFlag" ) == victim )
+	else if( GetGlobalNetEnt( "milFlag" ) == victim )
 		thread PlayerThrowFlag(victim, TEAM_MILITIA, MILITIAPoint)
 }
 

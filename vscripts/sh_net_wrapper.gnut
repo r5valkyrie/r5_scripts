@@ -1,7 +1,7 @@
 //(mk): Stuff to help track down and organize net registration.													//mkos
 untyped
 
-global function ScriptRegisterNetworkedVariable 					//wrapper for RegisterNetworkedVariableSafe
+global function ScriptRegisterNetworkedVariable 					//wrapper for RegisterNetworkedVariable
 global function ScriptRemote_RegisterClientFunction 				//wrapper for Remote_RegisterClientFunction
 global function ScriptRemote_RegisterUIFunction 					//wrapper for Remote_RegisterUIFunction
 global function ScriptRemote_RegisterUntypedFunction_deprecated 	//wrapper for Remote_RegisterUntypedFunction_deprecated
@@ -448,7 +448,7 @@ void function ScriptRegisterNetworkedVariable( ... )
 	for ( int j = iterOffset; j < vargc; j++ )
 		params.append( vargv[ j ] )
 
-	RegisterNetworkedVariableSafe.acall( params )
+	RegisterNetworkedVariable.acall( params )
 }
 
 void function ScriptRemote_RegisterClientFunction( ... )
@@ -811,13 +811,13 @@ void function ScriptRemote_RegisterUntypedFunction_deprecated( ... )
 			
 			#if TEST_NATIVE
 				if( TEST_VARTYPE == 7 )
-					RegisterNetworkedVariableSafe( varName, TEST_CATEGORY, TEST_VARTYPE )
+					RegisterNetworkedVariable( varName, TEST_CATEGORY, TEST_VARTYPE )
 				else if( TEST_VARTYPE == 0 )
-					RegisterNetworkedVariableSafe( varName, TEST_CATEGORY, TEST_VARTYPE, false )
+					RegisterNetworkedVariable( varName, TEST_CATEGORY, TEST_VARTYPE, false )
 				else if( TEST_VARTYPE == 4 || TEST_VARTYPE == 5 )
-					RegisterNetworkedVariableSafe( varName, TEST_CATEGORY, TEST_VARTYPE, 0.0, 0.0, 1.0 )
+					RegisterNetworkedVariable( varName, TEST_CATEGORY, TEST_VARTYPE, 0.0, 0.0, 1.0 )
 				else
-					RegisterNetworkedVariableSafe( varName, TEST_CATEGORY, TEST_VARTYPE, 0 )
+					RegisterNetworkedVariable( varName, TEST_CATEGORY, TEST_VARTYPE, 0 )
 			#else
 				if( TEST_VARTYPE == 7 )
 					ScriptRegisterNetworkedVariable( varName, TEST_CATEGORY, TEST_VARTYPE )

@@ -220,7 +220,7 @@ void function Highlight_Init()
 
 	Remote_RegisterClientFunction( "ServerCallback_ManageHighlights" )
 
-	RegisterNetworkedVariableSafe( NV_OBSERVER_HIGHLIGHT_ENABLED, SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariable( NV_OBSERVER_HIGHLIGHT_ENABLED, SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 
 	#if CLIENT
 		// RegisterConCommandTriggeredCallback( "toggle_obs_highlight", Highlight_ToggleObserverHighlights ) // ConCommand not in S3
@@ -1346,7 +1346,7 @@ var function ReconScan_ShowHudForTarget( entity player, entity enemy, bool pinTo
 
 	if ( enemy.IsPlayer() )
 	{
-		RuiTrackFloat( rui, "bleedoutEndTime", enemy, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
+		RuiTrackFloat( rui, "bleedoutEndTime", enemy, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
 	}
 
 	                        
