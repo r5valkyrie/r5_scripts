@@ -115,14 +115,14 @@ void function OnPlayerDash( entity player )
 {
 	// printw( "ASH DASH, OnPlayerDash" )
 	
-	Remote_CallFunction_ByRef( player, "ServerCallback_Ash_OnPlayerDash" )
+	//Remote_CallFunction_ByRef( player, "ServerCallback_Ash_OnPlayerDash" )
 }
 
 void function OnPlayerLanded( entity player )
 {
 	// printw( "ASH DASH, OnPlayerLanded" )
 
-	Remote_CallFunction_ByRef( player, "ServerCallback_Ash_OnPlayerLanded" )
+	//Remote_CallFunction_ByRef( player, "ServerCallback_Ash_OnPlayerLanded" )
 }
 #endif
 

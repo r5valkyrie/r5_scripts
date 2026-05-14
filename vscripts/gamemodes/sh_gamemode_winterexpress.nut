@@ -2450,8 +2450,7 @@ void function WinterExpress_OnPlayerRespawnedThread( entity player, bool startin
 
 	EndSignal( player, "OnDeath" )
 
-	//Remote_CallFunction_NonReplay( player, "ServerCallback_ClearHints" )
-	Remote_CallFunction_ByRef( player, "ServerCallback_ClearHints" )
+	Remote_CallFunction_NonReplay( player, "ServerCallback_ClearHints" )
 
 	PlayerMatchState_Set( player, ePlayerMatchState.NORMAL )
 

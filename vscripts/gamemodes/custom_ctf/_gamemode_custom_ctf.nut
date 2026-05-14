@@ -416,7 +416,7 @@ void function StartRound()
 
 		foreach(player in GetPlayerArray())
 		{
-			Remote_CallFunction_ByRef(player, "FSIntro_ForceEnd")
+			//Remote_CallFunction_ByRef(player, "FSIntro_ForceEnd")
 		}
 	}
 
@@ -442,9 +442,9 @@ void function StartRound()
 
 		if( GetMapName() == "mp_rr_arena_empty" )
 			//Remote_CallFunction_NonReplay(player, "Minimap_DisableDraw_Internal")
-			Remote_CallFunction_ByRef( player, "Minimap_DisableDraw_Internal" )
+			//Remote_CallFunction_ByRef( player, "Minimap_DisableDraw_Internal" )
 		else
-			Remote_CallFunction_ByRef( player, "Minimap_EnableDraw_Internal" )
+			//Remote_CallFunction_ByRef( player, "Minimap_EnableDraw_Internal" )
 			//Remote_CallFunction_NonReplay(player, "Minimap_EnableDraw_Internal")
 
 
@@ -1295,7 +1295,7 @@ void function GiveBackWeapons(entity player)
 		return
 
 	// Needs to check and set legend change before taking weapons
-	Remote_CallFunction_ByRef(player, "ServerCallback_CTF_CheckUpdatePlayerLegend")
+	//Remote_CallFunction_ByRef(player, "ServerCallback_CTF_CheckUpdatePlayerLegend")
 
 	TakeAllWeapons(player)
 
@@ -1706,7 +1706,7 @@ void function _OnPlayerDied(entity victim, entity attacker, var damageInfo)
 			{
 				if( !Flowstate_IsHaloMode() )
 				{
-					Remote_CallFunction_ByRef( victim, "ServerCallback_CTF_HideCustomUI" )
+					//Remote_CallFunction_ByRef( victim, "ServerCallback_CTF_HideCustomUI" )
 
 					wait 4 // so we dont go straight to respawn menu
 
@@ -1759,7 +1759,7 @@ void function _HandleRespawn(entity player, bool forceGive = false)
 	if( player.IsObserver() )
 	{
 		player.StopObserverMode()
-		Remote_CallFunction_ByRef( player, "ServerCallback_KillReplayHud_Deactivate" )
+		//Remote_CallFunction_ByRef( player, "ServerCallback_KillReplayHud_Deactivate" )
 		//Remote_CallFunction_NonReplay(player, "ServerCallback_KillReplayHud_Deactivate")
 	}
 
@@ -1964,7 +1964,7 @@ void function FS_StartIntroScreen()
 	foreach( player in GetPlayerArray() )
 	{
 		player.MakeInvisible()
-		Remote_CallFunction_ByRef(player, "FS_CreateIntroScreen")
+		//Remote_CallFunction_ByRef(player, "FS_CreateIntroScreen")
 	}
 }
 

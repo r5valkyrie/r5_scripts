@@ -6189,9 +6189,7 @@ void function UpdateHeroStatsForPlayer( entity player )
 {
 	if ( !IsValid( player ) )
 		return
-	
-	Remote_CallFunction_ByRef( player, "ServerCallback_UpdateHeroStats" )
-	//Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateHeroStats" )
+	Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateHeroStats" )
 }
 
 void function TestDeathFall()
@@ -6648,13 +6646,6 @@ void function RefreshOrdnanceSlot( entity player, string item )
 		}
 	}
 }
-
-#if SERVER
-	void function Remote_CallFunction_ByRef( entity player, string funcName )
-	{
-		Remote_CallFunction_NonReplay( player, "Remote_CallFunction_ByRef_internal", FindFuncID_ByRef( funcName ) )
-	}
-#endif
 
 void function StoreUltimateChargeForPlayer( entity victim, entity attacker, var attackerDamageInfo)
 {

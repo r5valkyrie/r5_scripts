@@ -463,7 +463,7 @@ void function LegendIsDied( entity player, entity enemy )
 
 	player.SetPlayerNetInt( "respawnStatus", eRespawnStatus.WAITING_FOR_DELIVERY )
 	//Remote_CallFunction_NonReplay( player, "ServerCallback_ShowDeathScreen" )
-	Remote_CallFunction_ByRef( player, "ServerCallback_ShowDeathScreen" )
+	//Remote_CallFunction_ByRef( player, "ServerCallback_ShowDeathScreen" )
 
 	EmitSoundOnEntityOnlyToPlayer( player, player, "Music_LTM_31_RespawnAndDrop" )
 

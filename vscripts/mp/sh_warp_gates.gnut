@@ -932,8 +932,8 @@ void function MovePlayerThroughWarpGate( entity trigger, entity player )
 			}
 		#endif
 
-		Remote_CallFunction_ByRef( player, "ServerCallback_FlashScreenForPlayer" )
-		Remote_CallFunction_ByRef( player, "ServerCallback_PlayPhaseGateSoundSuite" )
+		//Remote_CallFunction_ByRef( player, "ServerCallback_FlashScreenForPlayer" )
+		//Remote_CallFunction_ByRef( player, "ServerCallback_PlayPhaseGateSoundSuite" )
 		EmitSoundOnEntityExceptToPlayer( mover, player, PHASE_GATE_TRAVEL_3P )
 
 		// Warp from node to node
@@ -954,7 +954,7 @@ void function MovePlayerThroughWarpGate( entity trigger, entity player )
 				// TODO: COMMENTED OUT TO PREVENT COMPILE SRE
 				if ( data.screenFlashIndexes[ idx_startTrig ][ idx_chain ].contains( idx_node ) )
 				{
-					Remote_CallFunction_ByRef( player, "ServerCallback_FlashScreenForPlayer" )
+					//Remote_CallFunction_ByRef( player, "ServerCallback_FlashScreenForPlayer" )
 
 					// If it's a flash node that's not first or last
 					if ( !AreWarpTunnelIndecesFirstNode( idx_chain, idx_node ) && !AreWarpTunnelIndecesLastNode( idx_chain, idx_node, warpTunnelData ) )
@@ -1031,7 +1031,7 @@ void function MovePlayerThroughWarpGate( entity trigger, entity player )
 		}
 	#endif
 
-	Remote_CallFunction_ByRef( player, "ServerCallback_FlashScreenForPlayer" )
+	//Remote_CallFunction_ByRef( player, "ServerCallback_FlashScreenForPlayer" )
 	EmitSoundAtPosition( TEAM_ANY, warpExitPos, PHASE_GATE_EXIT_3P, player )
 
 	player.Signal( "WarpGates_PlayerExitPortal" )
