@@ -3091,39 +3091,7 @@ entity function SpawnGenericLoot( string ref, vector origin, vector overrideAngl
 			}
 		}
 
-		if ( mods.len() == 0 )
-		{
-			ent.SetWeaponMods( mods )
-		}
-		else
-		{
-			// Try setting mods one at a time to identify which ones are valid
-			array<string> validMods = []
-			foreach ( mod in mods )
-			{
-				try
-				{
-					ent.SetWeaponMods( [ mod ] )
-					validMods.append( mod )
-				}
-				catch ( modEx )
-				{
-					Warning( "SpawnGenericLoot: Mod '" + mod + "' is invalid for weapon '" + baseWeapon + "': " + modEx )
-				}
-			}
-
-			if ( validMods.len() > 0 )
-			{
-				try
-				{
-					ent.SetWeaponMods( validMods )
-				}
-				catch ( ex2 )
-				{
-					Warning( "SpawnGenericLoot: Failed to set valid mods [" + validMods.join( ", " ) + "] for weapon '" + baseWeapon + "': " + ex2 )
-				}
-			}
-		}
+		ent.SetWeaponMods( mods )
 		// TEMP HACK
 		//okay then, let's un-hack it? - johodgson
 		if ( !GetWeaponInfoFileKeyField_GlobalBool( baseWeapon, "uses_ammo_pool" ) )

@@ -865,12 +865,12 @@ bool function UpgradeCore_ShowUpgradesUnitframe()
 
 bool function UpgradeCore_IsEnabled()
 {
-	return false// s16 rui does not have upgrade core rui stuff tunings.isEnabled
+	return tunings.isEnabled
 }
 
 bool function UpgradeCore_ArmorTiedToUpgrades()
 {
-	return false// s16 rui does not have upgrade core rui stuff tunings.isEnabled
+	return tunings.armorTiedToUpgrades
 }
 
 bool function UpgradeCore_UsePersonalObituaryNotifications()
@@ -2934,11 +2934,7 @@ int function UpgradeCore_GetPlayerLevel( entity player )
 		return 0
 	}
 
-	#if SERVER || CLIENT
 	int currentScore = player.GetPlayerNetInt( UPGRADE_CORE_XP_NETINT )
-	#else
-	int currentScore = GetPlayerNetInt( player, UPGRADE_CORE_XP_NETINT )
-	#endif
 	int currentLevel = 0
 
 	array<int> levelThresholds = UpgradeCore_GetLevelXpThresholds()
@@ -3008,11 +3004,7 @@ int function UpgradeCore_GetXPAmountToEvoPlayerToLevel( entity player, bool shou
 
 array<UpgradeCoreChoice> function UpgradeCore_GetSelectedUpgrades( entity player )
 {
-	#if SERVER || CLIENT
 	int selectedUpgradesInt = player.GetPlayerNetInt( UPGRADE_CORE_SELECTED_UPGRADES )
-	#else
-	int selectedUpgradesInt = GetPlayerNetInt( player, UPGRADE_CORE_SELECTED_UPGRADES )
-	#endif
 	array<UpgradeCoreChoice> upgrades = UpgradeCore_GetUpgradesForPlayer( player )
 	array<UpgradeCoreChoice> selectedUpgrades
 	for( int i=0; i < UPGRADE_CORE_NUM_EXPECTED_UPGRADES; i++ )
@@ -3030,11 +3022,7 @@ bool function UpgradeCore_IsUpgradeSelectable( entity player, int index, bool ch
 {
 	if ( !UpgradeCore_IsEnabled() )
 		 return false
-	#if SERVER || CLIENT
 	int upgradesBitFlag = player.GetPlayerNetInt( UPGRADE_CORE_SELECTED_UPGRADES )
-	#else
-	int upgradesBitFlag = GetPlayerNetInt( player, UPGRADE_CORE_SELECTED_UPGRADES )
-	#endif
 
 	if( checkLevel )
 	{
@@ -3050,11 +3038,7 @@ bool function UpgradeCore_IsUpgradeSelectable( entity player, int index, bool ch
 
 bool function UpgradeCore_IsUpgradeSelected( entity player, int index )
 {
-	#if SERVER || CLIENT
 	int upgradesBitFlag = player.GetPlayerNetInt( UPGRADE_CORE_SELECTED_UPGRADES )
-	#else
-	int upgradesBitFlag = GetPlayerNetInt( player, UPGRADE_CORE_SELECTED_UPGRADES )
-	#endif
 	return IsBitFlagSet( upgradesBitFlag, ( 1 << index )  )
 }
 
@@ -3662,8 +3646,24 @@ void function UpgradeCore_UpdateTeammatesXp( entity player, int newXp )
 
 void function UpgradeCore_UpdateXpRui( var rui, entity player )
 {
-	// S3 RUI doesn't expose progressCurrent/progressTarget/currentRating/currentTierColor
-	Warning( "STUB: UpgradeCore_UpdateXpRui - RUI args not in S3\n" )
+	array<int> evoRequired = UpgradeCore_GetXpRequiredForNextLevel( player )
+	int curXp = player.GetPlayerNetInt( UPGRADE_CORE_XP_NETINT )
+	if( evoRequired.len() == 0 )
+	{
+		RuiSetInt( rui, "progressCurrent", 0 )
+		RuiSetInt( rui, "progressTarget", 0 )
+	}
+	else
+	{
+		RuiSetInt( rui, "progressTarget", evoRequired[1] - evoRequired[0] )
+		int currentTierExp =  curXp - evoRequired[0]
+		RuiSetInt( rui, "progressCurrent", minint( currentTierExp, evoRequired[1] - evoRequired[0] ) )
+	}
+
+	int level = UpgradeCore_GetPlayerLevel( player )
+	int tierColor = UpgradeCore_GetPlayerArmorTier( player, false )
+	RuiSetInt( rui, "currentRating", level )
+	RuiSetInt( rui, "currentTierColor", tierColor )
 }
 
 void function ResetLevelUpMessage_Thread()
