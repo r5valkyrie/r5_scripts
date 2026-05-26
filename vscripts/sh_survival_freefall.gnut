@@ -760,13 +760,13 @@ void function PlayerSkyDive( 	entity player, vector driverViewVector, array<enti
 				if ( IsValid( player.GetParent() ) && IsValid( leaderPlayer ) )
 				{
 					player.ClearParent()
-					PutEntityInSomewhatSafeSpot( player, null, null, leaderPlayer.GetOrigin(), player.GetOrigin() )
+					//PutEntityInSomewhatSafeSpot( player, null, null, leaderPlayer.GetOrigin(), player.GetOrigin() )
 				}
 				else
 				{
 					player.ClearParent()
-					if ( !player.IsZiplining() )
-						PutEntityInSomewhatSafeSpot( player, null, null, player.GetOrigin(), player.GetOrigin() )
+					//if ( !player.IsZiplining() )
+					//	PutEntityInSomewhatSafeSpot( player, null, null, player.GetOrigin(), player.GetOrigin() )
 				}
 
 				thread DisableSkydiveThirdPerson( player, jumpingFromPlane )

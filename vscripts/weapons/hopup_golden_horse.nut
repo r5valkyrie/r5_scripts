@@ -218,13 +218,7 @@ bool function HasMod( entity weapon, string mod, string color )
 
 bool function ProjectileHasMod( entity projectile, string mod, string color )
 {
-	// HasWeaponMod not available on CLIENT in S3
-	#if SERVER
-		return projectile.HasWeaponMod( mod + color )
-	#else
-		Warning( "ProjectileHasMod: HasWeaponMod not available on CLIENT" )
-		return false
-	#endif
+	return projectile.HasWeaponMod( mod + color )
 }
 
 bool function IsValidProjectileWithMod( entity projectile, string mod, string color )
@@ -1566,8 +1560,7 @@ entity function CreateSummonNPC( vector origin, vector angles, int team, entity 
 		return null
 
 	//probably a smarter way to do this
-	array<entity> children = [] //GetChildren not in S3
-	foreach ( entity child in children )
+	foreach ( entity child in GetChildren( summon ) )
 	{
 		if ( child.GetScriptName() == NESSIE_SPIDER_SCRIPT_NAME )
 			child.SetModel( MDL_GOLDEN_HORSE_NESSIE )

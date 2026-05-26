@@ -1945,6 +1945,7 @@ void function OutOfBoundsHolster( entity player )
 
 void function UpdateEntOutOfBoundsStatus( entity ent )
 {
+	return
 	OutOfBoundsDataStruct outOfBoundsData = file.entOutOfBoundsMap[ent]
 
 	bool isOutOfBounds = false

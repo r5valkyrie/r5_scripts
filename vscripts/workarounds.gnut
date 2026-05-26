@@ -445,7 +445,6 @@ global function GetTriggersByClassesInRealms
 global function HasBoundaryWall
 global function IsReinforced
 global function HoverVehicle_AttachEntToNearestAbilityAttachment
-global function DebuffZone_GetAllowableStickyEnts
 global function IsForgedShadowsShield
 global function ShadowShield_IsAllowedStickyEnt
 global function MobileShield_IsAllowedStickyEnt
@@ -2591,7 +2590,6 @@ array<entity> function GetTriggersByClassesInRealms( ... ) { return [] }
 bool function HasBoundaryWall() { Warning("STUB: HasBoundaryWall"); return false }
 bool function IsReinforced( entity ent ) { Warning("STUB: IsReinforced"); return false }
 bool function HoverVehicle_AttachEntToNearestAbilityAttachment( entity ent, entity vehicle, bool a, bool b, vector offset ) { Warning( "STUB: HoverVehicle_AttachEntToNearestAbilityAttachment" ); return false }
-bool function DebuffZone_GetAllowableStickyEnts( entity ent ) { Warning("STUB: DebuffZone_GetAllowableStickyEnts"); return false }
 bool function IsForgedShadowsShield( entity ent ) { Warning("STUB: IsForgedShadowsShield"); return false }
 bool function ShadowShield_IsAllowedStickyEnt( entity ent, entity stickyEnt, string weaponClassName ) { Warning("STUB: ShadowShield_IsAllowedStickyEnt"); return true }
 bool function MobileShield_IsAllowedStickyEnt( entity ent, entity stickyEnt, string weaponClassName ) { Warning("STUB: MobileShield_IsAllowedStickyEnt"); return true }
@@ -3318,10 +3316,7 @@ void function ForcedSpawn_SpawnAllPlayers()
 
 array<vector> function NavMesh_GetClosestPoints( vector origin, int numPoints )
 {
-	Warning( "STUB: NavMesh_GetClosestPoints" )
-	array<vector> result
-	result.append( origin )
-	return result
+	return [<0,0,0>, <0,0,0>]
 }
 
 // Highlight_SetGameModeEnemyHighlight — now in sh_highlight.gnut (S22)
