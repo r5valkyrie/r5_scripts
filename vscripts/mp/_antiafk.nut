@@ -130,7 +130,7 @@ void function CheckAfkKickThread(entity player)
 						Gamemode1v1_ForceRest( player )
 					}
 					else
-						mAssert( false, "Playlist has afk_to_rest enabled, but mode has rest disabled internally. Try using Gamemode1v1_SetRestEnabled()" )
+						Assert( false, "Playlist has afk_to_rest enabled, but mode has rest disabled internally. Try using Gamemode1v1_SetRestEnabled()" )
 						//(mk): We WANT to assert here, because otherwise, this condition will always run with no effect. 
 				}
 				else 
@@ -140,7 +140,7 @@ void function CheckAfkKickThread(entity player)
 				break
 				
 			default:
-				mAssert( false, "No valid afk rest state returned" )
+				Assert( false, "No valid afk rest state returned" )
 				//Scripter issue.
 				break
 		}

@@ -1,495 +1,474 @@
 //
-//
+// (dw): Remember to wrap your stuff in #if SERVER/#endif to prevent it from being shipped in client builds.
 
-#if CLIENT || UI 
+#if SERVER || CLIENT || UI
 global function SneakPeek_Init
 #endif
 
-#if CLIENT || UI 
+#if SERVER || CLIENT || UI
 void function SneakPeek_Init()
 {
-	#if(false)
-
-
-
-
-#endif
+	#if SERVER
+	AddCallback_EntitiesDidLoad( OnEntitiesDidLoad )
+	#endif
 }
 #endif
 
 
-#if(false)
-
-
-
-
-
+#if SERVER
+void function OnEntitiesDidLoad()
+{
+	if ( WirelinePreviewEnabled() )
+		CreateCharacterPreviewWirelines()
+}
 #endif
 
 
-#if(false)
+#if SERVER
+void function CreateCharacterPreviewWirelines()
+{
+	if ( GetMapName() == "mp_rr_canyonlands_64k_x_64k" || GetMapName() == "mp_rr_canyonlands_mu1" ) //Should be redundant with playlist check
+	{
+		int randInt = RandomIntRange( 1, 19 )
+		switch ( randInt )
+		{
+			case 1:
+				//ARTILLERY TUNNEL
+				Point pointA1
+				pointA1.origin = <-1356.74292, 28914.959, 4789.85205>
+				pointA1.angles = <-0, 90, -0>
 
+				Point pointA2
+				pointA2.origin = <-1469.69336, 29026.459, 4783.03125>
+				pointA2.angles = <-0, 90, 0>
 
-//
+				array<Point> pointsA = [ pointA1, pointA2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsA, false )
 
-//
-//
-//
-//
+				Point pointB1
+				pointB1.origin = <-1536.11975, 29087.5625, 4783.03125>
+				pointB1.angles = <0, 90, 0>
 
+				Point pointB2
+				pointB2.origin = <-1998.22131, 29485.3809, 4775.03125>
+				pointB2.angles = <-0, 90, -0>
 
+				array<Point> pointsB = [ pointB1, pointB2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsB, false )
 
+				Point pointC1
+				pointC1.origin = <-2023.25623, 29499.8223, 4832.03125>
+				pointC1.angles = <-0, 90, -0>
 
+				Point pointC2
+				pointC2.origin = <-2225.87451, 29665.4355, 4832.03125>
+				pointC2.angles = <0, 90, 0>
+
+				array<Point> pointsC = [ pointC1, pointC2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsC, false )
+				break
+
+			case 2:
+				//CANYON RESPAWN BEACON
+				Point pointA1
+				pointA1.origin = <4137.24463, 3972.53027, 4942.58887>
+				pointA1.angles = <353.789398, 90.34095, -3.13000154>
+
+				Point pointA2
+				pointA2.origin = <4000.15527, 3674.87598, 4946.86963>
+				pointA2.angles = <4.76492214, 90.1120224, 1.34371567>
+
+				array<Point> pointsA = [ pointA1, pointA2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsA, false )
+
+				Point pointB1
+				pointB1.origin = <4266.68311, 5291.83887, 4749.9375>
+				pointB1.angles = <354.207916, 91.6518631, -15.8641386>
+
+				Point pointB2
+				pointB2.origin = <4071.89111, 5758.19336, 4752.18652>
+				pointB2.angles = <353.199585, 92.6429749, -21.1408043>
+
+				array<Point> pointsB = [ pointB1, pointB2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsB, false )
+				break
+
+			case 3:
+				//BUNKER TUNNEL
+				Point pointA1
+				pointA1.origin = <-7199.12891, 4783.89551, 2398.03125>
+				pointA1.angles = <-0, 90, 0>
+
+				Point pointA2
+				pointA2.origin = <-7198.20654, 4558.88135, 2398.03125>
+				pointA2.angles = <0, 90, 0>
+
+				array<Point> pointsA = [ pointA1, pointA2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsA, false )
+
+				Point pointB1
+				pointB1.origin = <-10722.3066, 4936.03125, 2847.03125>
+				pointB1.angles = <0, 90, 0>
+
+				Point pointB2
+				pointB2.origin = <-10725.7607, 5175.96875, 2847.03125>
+				pointB2.angles = <0, 90, 0>
+
+				array<Point> pointsB = [ pointB1, pointB2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsB, false )
+				break
+
+			case 4:
+				//CAVE 1
+				Point pointA1
+				pointA1.origin = <1723.73315, -6653.91064, 3130.82104>
+				pointA1.angles = <353.611969, 89.4950867, 4.50054693>
+
+				Point pointA2
+				pointA2.origin = <1796.63513, -6996.14209, 3097.72266>
+				pointA2.angles = <3.24346614, 90.2530899, 4.45699644>
+
+				Point pointA3
+				pointA3.origin = <1536.01343, -7290.36572, 3133.78906>
+				pointA3.angles = <3.53182268, 89.8978348, -1.65472102>
+
+				array<Point> pointsA = [ pointA1, pointA2, pointA3 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsA, false )
+				break
+
+			case 5:
+				//CAVE 2
+				Point pointA1
+				pointA1.origin = <4654.28125, -5387.3584, 2847.81787>
+				pointA1.angles = <359.486298, 90.0209885, -2.34109092>
+
+				Point pointA2
+				pointA2.origin = <4673.82324, -5800.63721, 2915.26636>
+				pointA2.angles = <14.2982941, 90.0037003, 0.0145366751>
+
+				array<Point> pointsA = [ pointA1, pointA2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsA, false )
+
+				Point pointB1
+				pointB1.origin = <5977.3291, -5622.94385, 2868.53784>
+				pointB1.angles = <346.368317, 89.2546387, 3.07045841>
+
+				Point pointB2
+				pointB2.origin = <6173.66699, -6190.01465, 2826.89111>
+				pointB2.angles = <359.584076, 89.9847107, 2.1054461>
+
+				array<Point> pointsB = [ pointB1, pointB2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsB, false )
+				break
+
+			case 6:
+				//AIR BASE
+				Point pointA1
+				pointA1.origin = <-23658.8262, -1486.43726, 2512.03125>
+				pointA1.angles = <0, 90, 0>
+
+				Point pointA2
+				pointA2.origin = <-24110.0078, -1491.99707, 2512.03125>
+				pointA2.angles = <-0, 90, 0>
+
+				array<Point> pointsA = [ pointA1, pointA2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsA, false )
+
+				Point pointB1
+				pointB1.origin = <-24089.1953, -2084.85425, 2512.03125>
+				pointB1.angles = <-0, 90, 0>
+
+				Point pointB2
+				pointB2.origin = <-23683.5566, -2084.85425, 2512.03125>
+				pointB2.angles = <0, 90, 0>
+
+				array<Point> pointsB = [ pointB1, pointB2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsB, false )
+				break
+
+			case 7:
+				//THE PIT
+				Point pointA1
+				pointA1.origin = <-17225.6152, 14163.2256, 3715.88647>
+				pointA1.angles = <0.398690194, 90.0022736, 0.327459335>
+
+				Point pointA2
+				pointA2.origin = <-17549.6738, 14546.334, 3715.97192>
+				pointA2.angles = <0.243070126, 90.0019226, 0.455099046>
+
+				array<Point> pointsA = [ pointA1, pointA2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsA, false )
+
+				Point pointB1
+				pointB1.origin = <-17171.1465, 16313.2979, 3715.8877>
+				pointB1.angles = <359.580536, 89.9978027, 0.300362706>
+
+				Point pointB2
+				pointB2.origin = <-17534.7422, 15894.7891, 3715.89355>
+				pointB2.angles = <359.756622, 89.9980698, 0.454896152>
+
+				array<Point> pointsB = [ pointB1, pointB2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsB, false )
+				break
+
+			case 8:
+				//WATCH TOWER TUNNEL
+				Point pointA1
+				pointA1.origin = <4973.26709, 26140.6875, 4900.03125>
+				pointA1.angles = <-0, 90, 0>
+
+				Point pointA2
+				pointA2.origin = <4626.03564, 26472.0039, 4900.03125>
+				pointA2.angles = <0, 90, 0>
+
+				array<Point> pointsA = [ pointA1, pointA2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsA, false )
+
+				Point pointB1
+				pointB1.origin = <4562.7207, 26567.9941, 4964.03125>
+				pointB1.angles = <-0, 90, 0>
+
+				Point pointB2
+				pointB2.origin = <4488.65381, 26629.3379, 4964.03125>
+				pointB2.angles = <0, 90, 0>
+
+				array<Point> pointsB = [ pointB1, pointB2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsB, false )
+				break
+
+			case 9:
+				//HYDRO TUNNEL
+				Point pointA1
+				pointA1.origin = <21047.5078, -5561.36719, 4352.04297>
+				pointA1.angles = <-0, 90, 0>
+
+				Point pointA2
+				pointA2.origin = <21030.4648, -5930.9585, 4352.04297>
+				pointA2.angles = <-0, 90, 0>
+
+				Point pointA3
+				pointA3.origin = <21047.5078, -6298.7124, 4352.03662>
+				pointA3.angles = <359.995575, 90, 0.00541668804>
+
+				array<Point> pointsA = [ pointA1, pointA2, pointA3 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsA, false )
+				break
+
+			case 10:
+				//CASCADES HILL
+				Point pointA1
+				pointA1.origin = <-4676.59033, 10438.5342, 3129.07227>
+				pointA1.angles = <22.4049816, 94.2175674, 10.1144409>
+
+				Point pointA2
+				pointA2.origin = <-5001.10596, 10962.5684, 3009.51685>
+				pointA2.angles = <16.3887711, 94.3107071, 14.3364258>
+
+				Point pointA3
+				pointA3.origin = <-5616.26416, 11200.084, 3088.77222>
+				pointA3.angles = <23.0035114, 96.7780075, 15.5357656>
+
+				array<Point> pointsA = [ pointA1, pointA2, pointA3 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsA, false )
+				break
+
+			case 11:
+				//BRIDGES CANYON CUT THROUGH
+				Point pointA1
+				pointA1.origin = <10684.0625, 4254.0127, 5750.55225>
+				pointA1.angles = <351.698334, 89.888092, 0.766881466>
+
+				Point pointA2
+				pointA2.origin = <10493.0586, 4261.21484, 5729.38965>
+				pointA2.angles = <349.511169, 90.1447525, -0.781799555>
+
+				Point pointA3
+				pointA3.origin = <10308.5566, 4315.17236, 5782.90088>
+				pointA3.angles = <350.295868, 86.7830505, 18.1674614>
+
+				array<Point> pointsA = [ pointA1, pointA2, pointA3 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsA, false )
+				break
+
+			case 12:
+				//BRIDGES
+				Point pointA1
+				pointA1.origin = <7426.37305, -2990.49243, 2627.3811>
+				pointA1.angles = <4.6828084, 90.2780685, 3.39065123>
+
+				Point pointA2
+				pointA2.origin = <6930.83301, -2634.63281, 2627.44141>
+				pointA2.angles = <1.2460674, 90.0195465, 0.898385882>
+
+				array<Point> pointsA = [ pointA1, pointA2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsA, false )
+
+				Point pointB1
+				pointB1.origin = <9198.44824, -4552.95996, 2732.45508>
+				pointB1.angles = <3.79436779, 90.2391586, 3.60137868>
+
+				Point pointB2
+				pointB2.origin = <8754.89941, -4134.26074, 2732.48462>
+				pointB2.angles = <4.05948257, 90.274025, 3.85535574>
+
+				array<Point> pointsB = [ pointB1, pointB2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsB, false )
+				break
+
+			case 13:
+				//BRIDGES SMALL CAVE
+				Point pointA1
+				pointA1.origin = <6671.09375, -9166.99902, 3018.53101>
+				pointA1.angles = <351.741821, 87.9899597, 13.5857582>
+
+				Point pointA2
+				pointA2.origin = <7094.89111, -9104.66992, 2925.27588>
+				pointA2.angles = <355.509827, 89.2803726, 9.0865202>
+
+				array<Point> pointsA = [ pointA1, pointA2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsA, false )
+
+				Point pointB1
+				pointB1.origin = <7384.66455, -9411.09668, 2837.16748>
+				pointB1.angles = <349.739685, 88.4975891, 8.24161434>
+
+				Point pointB2
+				pointB2.origin = <7160.11182, -9710.09473, 2824.53711>
+				pointB2.angles = <350.763336, 88.3598633, 9.98200035>
+
+				array<Point> pointsB = [ pointB1, pointB2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsB, false )
+				break
+
+			case 14:
+				//SKULL TOWN PLAZA
+				Point pointA1
+				pointA1.origin = <-11432.9551, -15980.9199, 3111.98145>
+				pointA1.angles = <0, 90, 0>
+
+				Point pointA2
+				pointA2.origin = <-10936.1953, -16372.9717, 3104.03125>
+				pointA2.angles = <0, 90, 0>
+
+				array<Point> pointsA = [ pointA1, pointA2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsA, false )
+
+				Point pointB1
+				pointB1.origin = <-10249.626, -15152.0439, 3111.98145>
+				pointB1.angles = <-0, 90, 0>
+
+				Point pointB2
+				pointB2.origin = <-10908.4697, -15046.0186, 3104.03125>
+				pointB2.angles = <0, 90, 0>
+
+				array<Point> pointsB = [ pointB1, pointB2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsB, false )
+				break
+
+			case 15:
+				//CANYON NEAR MARKET
+				Point pointA1
+				pointA1.origin = <4274.03857, -13115.1797, 2643.15112>
+				pointA1.angles = <353.507721, 88.294136, 14.6594238>
+
+				Point pointA2
+				pointA2.origin = <4460.74219, -13598.4033, 2495.41333>
+				pointA2.angles = <356.303558, 89.261467, 11.2829065>
+
+				Point pointA3
+				pointA3.origin = <4526.91455, -13931.0625, 2476.40405>
+				pointA3.angles = <1.32262456, 90.238205, 10.2081366>
+
+				array<Point> pointsA = [ pointA1, pointA2, pointA3 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsA, false )
+				break
+
+			case 16:
+				//MARKET STAIRS
+				Point pointA1
+				pointA1.origin = <4968.24609, -12172.2686, 2880.03125>
+				pointA1.angles = <0, 90, 0>
+
+				Point pointA2
+				pointA2.origin = <4975.67432, -11615.3496, 2880.03125>
+				pointA2.angles = <0, 90, 0>
+
+				Point pointA3
+				pointA3.origin = <5233.82129, -11215.7988, 2880.03125>
+				pointA3.angles = <0, 90, 0>
+
+				array<Point> pointsA = [ pointA1, pointA2, pointA3 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsA, false )
+				break
+
+			case 17:
+				//SHORT CAVE NEAR BIG CAVE
+				Point pointA1
+				pointA1.origin = <-707.723877, -4466.60498, 2828.14111>
+				pointA1.angles = <6.03931999, 89.1718903, -7.77882814>
+
+				Point pointA2
+				pointA2.origin = <-1229.3064, -4829.36377, 2823.89185>
+				pointA2.angles = <2.14867783, 89.785553, -5.69683027>
+
+				Point pointA3
+				pointA3.origin = <-1764.9624, -4947.56787, 2778.29541>
+				pointA3.angles = <8.08438396, 89.7047424, -2.07768869>
+
+				array<Point> pointsA = [ pointA1, pointA2, pointA3 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsA, false )
+				break
+
+			case 18:
+				//SKULL TOWN EASTERN ARM
+				Point pointA1
+				pointA1.origin = <-6588.16553, -14182.8174, 3104.03125>
+				pointA1.angles = <0, 90, 0>
+
+				Point pointA2
+				pointA2.origin = <-6839.76074, -13851.3135, 3104.0354>
+				pointA2.angles = <359.977173, 89.9999924, 0.00273641618>
+
+				array<Point> pointsA = [ pointA1, pointA2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsA, false )
+
+				Point pointB1
+				pointB1.origin = <-8486.23535, -14761.9785, 3104.03125>
+				pointB1.angles = <0, 90, 0>
+
+				Point pointB2
+				pointB2.origin = <-8021.68408, -14927.4326, 3104.03125>
+				pointB2.angles = <0, 90, 0>
+
+				array<Point> pointsB = [ pointB1, pointB2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsB, false )
+				break
+
+			case 19:
+				//WATCH TOWER ZIPLINE TUNNELS
+				Point pointA1
+				pointA1.origin = <14180.1826, -17794.3574, 2224.03125>
+				pointA1.angles = <0, 90, 0>
+
+				Point pointA2
+				pointA2.origin = <14381.3486, -18102.4238, 2224.03125>
+				pointA2.angles = <-0, 90, -0>
+
+				array<Point> pointsA = [ pointA1, pointA2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsA, false )
+
+				Point pointB1
+				pointB1.origin = <-524.174805, 20988.4766, 2528.03125>
+				pointB1.angles = <-0, 90, 0>
+
+				Point pointB2
+				pointB2.origin = <-257.852295, 20734.6074, 2528.03125>
+				pointB2.angles = <-0, 90, 0>
+
+				array<Point> pointsB = [ pointB1, pointB2 ]
+				TeslaTrap_CreateWorldOwnedTrapsFromArrayOfPoints( pointsB, false )
+				break
+		}
+	}
+}
 #endif
-
-
-#if(false)
-
-
-//
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#endif
-
-

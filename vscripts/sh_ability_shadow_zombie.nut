@@ -126,7 +126,7 @@ void function Ability_Shadow_Zombie_RegisterNetworking()
 		return
 
 	RegisterNetworkedVariable( "isPlayerShadowZombie", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
-	ScriptRemote_RegisterClientFunction( "ServerCallback_ShadowAbilitiesClientEffectsEnable", "entity", "bool" )
+	Remote_RegisterClientFunction( "ServerCallback_ShadowAbilitiesClientEffectsEnable", "entity", "bool" )
 
 	#if CLIENT
 	//	RegisterNetworkedVariableChangeCallback_bool( "isPlayerShadowZombie", OnServerVarChanged_IsPlayerShadowZombie )

@@ -393,7 +393,7 @@ void function UpdateUnitFrameIndices()
 
 asset function GetUnitFrameAssetForGameMode()
 {
-	if ( IsFallLTM() || GetCurrentPlaylistVarBool( "minified_unitframes_enabled", false ) || Gamemode() == eGamemodes.fs_prophunt  || Gamemode() == eGamemodes.fs_duckhunt )
+	if ( IsFallLTM() || GetCurrentPlaylistVarBool( "minified_unitframes_enabled", false ))
 		return $"ui/unitframe_shadow_squad.rpak"
 
 	return $"ui/unitframe_survival_v3.rpak"
@@ -631,29 +631,7 @@ void function DeleteUnitFrameForDisconnectedPlayer()
 
 bool function PlayerShouldHaveUnitFrame( entity player )
 {
-	entity viewer  = GetLocalViewPlayer()
-	int playerTeam = player.GetTeam()
-	entity client = GetLocalClientPlayer()
 
-	
-	if ( player == viewer && ( !IsSpectating() || IsAlive( player ) ) )
-		return false
-
-
-	if ( playerTeam == TEAM_UNASSIGNED )
-		return false
-
-	if ( playerTeam == TEAM_SPECTATOR )
-		return false
-
-	if ( playerTeam != viewer.GetTeam() )
-		return false
-	int gameState = GetGameState()
-	if ( gameState < eGameState.Playing && !IsFiringRangeGameMode() )
-	{
-		if( !( gameState == eGameState.Prematch && GetCurrentPlaylistVarBool( "show_teamunitframes_in_prematch", false ) ) )
-			return false
-	}
 
 	return true
 }

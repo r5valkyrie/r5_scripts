@@ -793,7 +793,7 @@ bool function Sur_CanUseZipline( entity player, entity zipline, vector ziplineCl
 		if ( allowZipAttachFromUpdraft )
 		{
 			//if ( player.Player_IsSkydiveAnticipating() && player.Skydive_IsFromUpdraft() )
-				allowedDuringWeaponDisable = true
+			//	allowedDuringWeaponDisable = true
 		}
 
 		return allowedDuringWeaponDisable
@@ -1119,8 +1119,8 @@ int function Survival_GetCurrentRank( entity player )
 
 
 
-		if( GameMode_IsActive( eGameModes.FREEDM ) )
-			return FreeDM_GetCurrentRank( player )
+		//if( GameMode_IsActive( eGameModes.FREEDM ) )
+		//	return FreeDM_GetCurrentRank( player )
 
 
 

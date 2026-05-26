@@ -490,7 +490,7 @@ void function GameModes_Init()
 		GameModeVariant_SetPlaylistFlag( eGameModeVariants.FREEDM_TDM, "freedm_tdm_active" )
 		GameModeVariant_SetDevName( eGameModeVariants.FREEDM_TDM, TEAM_DEATHMATCH )
 		#if CLIENT || SERVER
-			GameModeVariant_AddSharedInit( eGameModeVariants.FREEDM_TDM, TDM_Init )
+			//GameModeVariant_AddSharedInit( eGameModeVariants.FREEDM_TDM, TDM_Init )
 		#endif
 
 		#if UI
@@ -511,7 +511,7 @@ void function GameModes_Init()
 		GameModeVariant_Create( eGameModeVariants.FREEDM_GUNGAME, eGameModes.FREEDM )
 		GameModeVariant_SetPlaylistFlag( eGameModeVariants.FREEDM_GUNGAME, "freedm_gun_game_active" )
 		#if CLIENT || SERVER
-			GameModeVariant_AddSharedInit( eGameModeVariants.FREEDM_GUNGAME, GunGame_Init )
+			//GameModeVariant_AddSharedInit( eGameModeVariants.FREEDM_GUNGAME, GunGame_Init )
 		#endif
        
 

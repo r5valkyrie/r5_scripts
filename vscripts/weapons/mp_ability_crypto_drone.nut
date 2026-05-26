@@ -242,7 +242,7 @@ void function MpAbilityCryptoDrone_Init()
 	#endif
 
 	if ( AutoReloadWhileInCryptoDroneCameraView() )
-		ScriptRemote_RegisterClientFunction( "ServerToClient_CryptoDroneAutoReloadDone", "entity" )
+		Remote_RegisterClientFunction( "ServerToClient_CryptoDroneAutoReloadDone", "entity" )
 
 	//testing different method for confirming immediate camera access
 	RegisterSignal( "Crypto_Immediate_Camera_Access_Confirmed" )

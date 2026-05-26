@@ -1573,7 +1573,7 @@ array< string > function LootHelper_GetAttachmentRefs_OfType_OfTier( int attachm
 			{
 				if ( ld.tier == tier )
 				{
-					if ( Gamemode() == eGamemodes.SURVIVAL )
+					if( GameMode_IsActive( eGameModes.SURVIVAL ) )
 					{
 						if ( !excludeList.contains( ld.ref ) )
 						{
@@ -1603,7 +1603,7 @@ array< string > function LootHelper_GetAttachmentRefs_OfType_OfTier_Filtered( in
 	{
 		case eWeaponAttachmentType.MAG:
 			candidate = GetLootString_CompatibleMag_ByTier( weaponRef, tier )
-			if( Gamemode() == eGamemodes.SURVIVAL )
+			if( GameMode_IsActive( eGameModes.SURVIVAL ) )
 			{
 				if ( !excludeList.contains( candidate ) )
 				{
@@ -1617,7 +1617,7 @@ array< string > function LootHelper_GetAttachmentRefs_OfType_OfTier_Filtered( in
 			break
 		case eWeaponAttachmentType.STOCK:
 			candidate = GetLootString_CompatibleStock_ByTier( weaponRef, tier )
-			if( Gamemode() == eGamemodes.SURVIVAL )
+			if( GameMode_IsActive( eGameModes.SURVIVAL ) )
 			{
 				if ( !excludeList.contains( candidate ) )
 				{
@@ -1639,7 +1639,7 @@ array< string > function LootHelper_GetAttachmentRefs_OfType_OfTier_Filtered( in
 				{
 					if( ld.tier == tier)
 					{
-						if( Gamemode() == eGamemodes.SURVIVAL )
+						if( GameMode_IsActive( eGameModes.SURVIVAL ) )
 						{
 							if ( !excludeList.contains( ld.ref ) )
 							{
@@ -1772,7 +1772,7 @@ array< string > function LootHelper_GetAttachmentRefs_OfType_AllTiers( int attac
 		if ( ld.attachmentType != attachmentType )
 			continue
 
-		if ( Gamemode() == eGamemodes.SURVIVAL )
+		if( GameMode_IsActive( eGameModes.SURVIVAL ) )
 		{
 			if ( !excludeList.contains( ld.ref ) )
 				returnRefs.append( ld.ref )

@@ -249,7 +249,7 @@ void function Bleedout_StartPlayerBleedout( entity player, entity attacker, var 
 	if ( Bleedout_GetDeathOnTeamBleedout( player ) )
 		CheckForTeamBleedout( player.GetTeam() )
 
-//	GameRules_OnPlayerGotDowned( player, attacker )
+	//GameRules_OnPlayerGotDowned( player, attacker )
 	// Do the callbacks after we put player into bleedout state so the callback functions have bleedout info
 	foreach ( callbackFunc in file.Callbacks_OnPlayerStartBleedout )
 	{

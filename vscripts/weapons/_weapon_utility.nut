@@ -7142,104 +7142,52 @@ void function AddActiveThermiteBurn( entity ent )
 
 #if SERVER
 void function EMPGrenade_EffectsPlayer( entity player, var damageInfo )
-
 {
-
-	if( Flowstate_IsHaloMode() )
-
-		return
-
-
-
 	player.Signal( "OnEMPPilotHit" )
-
 	player.EndSignal( "OnEMPPilotHit" )
 
-
-
 	if ( player.IsPhaseShifted() )
-
 		return
 
-
-
 	entity inflictor   = DamageInfo_GetInflictor( damageInfo )
-
 	float dist         = Distance( DamageInfo_GetDamagePosition( damageInfo ), player.GetWorldSpaceCenter() )
-
 	float damageRadius = 128
 
 	if ( inflictor instanceof CBaseGrenade )
-
 		damageRadius = inflictor.GetDamageRadius()
 
 	float frac            = GraphCapped( dist, damageRadius * 0.5, damageRadius, 1.0, 0.0 )
-
 	float strength        = EMP_GRENADE_PILOT_SCREEN_EFFECTS_MIN + ((EMP_GRENADE_PILOT_SCREEN_EFFECTS_MAX - EMP_GRENADE_PILOT_SCREEN_EFFECTS_MIN) * frac)
-
 	float fadeoutDuration = EMP_GRENADE_PILOT_SCREEN_EFFECTS_FADE * frac
-
 	float duration        = EMP_GRENADE_PILOT_SCREEN_EFFECTS_DURATION_MIN + ((EMP_GRENADE_PILOT_SCREEN_EFFECTS_DURATION_MAX - EMP_GRENADE_PILOT_SCREEN_EFFECTS_DURATION_MIN) * frac) - fadeoutDuration
-
 	//vector origin = inflictor.GetOrigin()
 
-
-
 	int dmgSource = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-
 	//if ( dmgSource == eDamageSourceId.mp_weapon_proximity_mine || dmgSource == eDamageSourceId.mp_titanweapon_stun_laser )
-
 		//strength *= 0.1
 
-
-
 	if( dmgSource == eDamageSourceId.mp_weapon_tesla_trap )
-
 		duration = 3
 
-
-
 	if ( player.IsTitan() )
-
 	{
-
 		// Hit player should do EMP screen effects locally
-
 		Remote_CallFunction_Replay( player, "ServerCallback_TitanCockpitEMP", duration )
 
-
-
 		EMPGrenade_AffectsShield( player, damageInfo )
-
 	}
-
 	else
-
 	{
-
 		if ( IsCloaked( player ) )
-
 			player.SetCloakFlicker( 0.5, duration )
 
-
-
 		// duration = 0
-
 		// fadeoutDuration = 0
-
-
-
 		//DamageInfo_SetDamage( damageInfo, 0 )
-
 	}
 
-
-
 	StatusEffect_AddTimed( player, eStatusEffect.emp, strength, duration, fadeoutDuration )
-
 	GiveEMPStunStatusEffects( player, (duration + fadeoutDuration), fadeoutDuration )
-
-
 
 	EmitSoundOnEntityOnlyToPlayer( player, player, "Arcstar_visualimpair" )
 

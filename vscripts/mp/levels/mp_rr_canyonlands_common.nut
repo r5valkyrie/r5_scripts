@@ -146,7 +146,7 @@ void function Canyonlands_MapInit_Common()
 
         AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_pvpcurrency_container", OnPvpCurrencyContainerSpawned )
         AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_upgrade_station", OnSurvivalUpgradeStationSpawned )
-		if (Playlist() == ePlaylists.survival_firingrange || Playlist() == ePlaylists.survival_training)
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) && GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_TRAINING ) )
 		{
 			AddCallback_GameStateEnter( eGameState.WaitingForPlayers, StagingArea_MoveSkybox )
 			AddCallback_GameStateEnter( eGameState.PickLoadout, StagingArea_ResetSkybox )
@@ -191,7 +191,7 @@ void function Canyonlands_MapInit_Common()
 #if SERVER
 void function OnPvpCurrencyContainerSpawned(entity ent)
 {
-    if( Gamemode() != eGamemodes.FREELANCE )
+    if ( GameModeVariant_IsActive( eGameModeVariants.FREELANCE ) )
 	{
         if(IsValid(ent))
             ent.Destroy()
@@ -200,7 +200,7 @@ void function OnPvpCurrencyContainerSpawned(entity ent)
 
 void function OnSurvivalUpgradeStationSpawned(entity ent)
 {
-    if( Gamemode() != eGamemodes.FREELANCE )
+    if ( GameModeVariant_IsActive( eGameModeVariants.FREELANCE ) )
 	{
         if(IsValid(ent))
             ent.Destroy()

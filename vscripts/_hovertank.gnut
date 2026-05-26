@@ -723,11 +723,7 @@ HoverTank function SpawnHoverTankFromScript( string instanceName, string assigne
 
 	// Create a dummy turret
 	vector angleOffset = <0,0,0>
-	if ( Gamemode() == eGamemodes.WINTEREXPRESS ) //instanceName.find( "holiday" ) != -1 )
-	{
-		printf( "WINTER EXPRESS: Adding offset to turret" )
-		angleOffset = < 0,45, 0 >  //rotate 45 degrees to the left if holiday
-	}
+
 	turret = CreatePropDynamic( HOVER_TANK_TURRET_MODEL, flightMover.GetOrigin(), flightMover.GetAngles() , SOLID_VPHYSICS, -1 ) //, true )
 	turret.DisableHibernation()
 

@@ -280,7 +280,7 @@ void function EntitiesDidLoad()
 
 	FillLootTable()
 
-	if( Gamemode() == eGamemodes.SURVIVAL && GetMapName() != "mp_rr_desertlands_64k_x_64k_tt" )
+	if ( GameMode_IsActive( eGameModes.SURVIVAL ) && GetMapName() != "mp_rr_desertlands_64k_x_64k_tt" )
 	{
 		thread function () : ()
 		{

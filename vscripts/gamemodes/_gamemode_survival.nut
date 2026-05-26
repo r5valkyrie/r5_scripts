@@ -566,7 +566,7 @@ void function GamemodeSurvival_Init()
 
 	SetEndRoundPlayerState( ENDROUND_FREE )
 
-	AddCallback_EntitiesDidLoad( EntitiesDidLoad_Survival )
+	AddCallback_EntitiesDidLoad( EntitiesDidLoad_Survival, eEntitiesDidLoadPriority.MEDIUM )
 
 	AddDamageCallback( "player", OnPlayerTookDamage )
 	AddHeadshotCallback( "player", OnPlayerTookHeadshot )
@@ -2819,7 +2819,12 @@ void function OpenAndClosePlaneDoor( entity plane, float openDelay, float openDu
 }
 
 
-
+void function UpdatePlayerCounts()
+{
+	SetGlobalNetInt( "connectedPlayerCount", GetPlayerArray_ConnectedNotSpectatorTeam().len() )
+	SetGlobalNetInt( "livingPlayerCount", Survival_GetLivingPlayerCount() )
+	SetGlobalNetInt( "squadsRemainingCount", Survival_GetRemainingSquadsCount() )
+}
 
 
 
@@ -2904,13 +2909,6 @@ void function Survival_OverrideGetRemainingSquadsFunction( int functionref() fun
 	Assert( func != null, "Tried setting Survival_OverrideGetRemainingSquadsFunction with a null function!" )
 	if ( func != null )
 		file.getRemainingSquadsFunction = func
-}
-
-void function UpdatePlayerCounts()
-{
-	SetGlobalNetInt( "connectedPlayerCount", GetPlayerArray_ConnectedNotSpectatorTeam().len() )
-	SetGlobalNetInt( "livingPlayerCount", Survival_GetLivingPlayerCount() )
-	SetGlobalNetInt( "squadsRemainingCount", Survival_GetRemainingSquadsCount() )
 }
 
 void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
@@ -5085,8 +5083,8 @@ void function SurvivalPlayerRespawnedInit( entity player )
 
 	Ultimates_OnPlayerRespawned( player )
 
-	// player.GiveOffhandWeapon( HOLO_PROJECTOR_WEAPON_NAME, HOLO_PROJECTOR_INDEX ) // offhand slot 6 not in S3
-	// player.GiveOffhandWeapon( GENERIC_OFFHAND_WEAPON_NAME, GENERIC_OFFHAND_INDEX ) // offhand slot 7 not in S3
+	player.GiveOffhandWeapon( HOLO_PROJECTOR_WEAPON_NAME, HOLO_PROJECTOR_INDEX )
+	player.GiveOffhandWeapon( GENERIC_OFFHAND_WEAPON_NAME, GENERIC_OFFHAND_INDEX )
 
 
 	player.DisableIdLights()
@@ -5230,7 +5228,8 @@ void function Survival_PlayerCharacterSetup( entity player, ItemFlavor character
 
 	player.TakeOffhandWeapon( OFFHAND_TACTICAL )
 	player.TakeOffhandWeapon( OFFHAND_ULTIMATE )
-	// OFFHAND_GENERIC (7) not in S3 — range is 0-5
+		//Swap chatacter fix for the Copycat Kit
+		player.TakeOffhandWeapon( OFFHAND_GENERIC )
 	TakeAllPassives( player )
 
 	// clear all mods (b/c we added a passive weapon mod, we have to

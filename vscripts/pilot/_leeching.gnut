@@ -256,18 +256,12 @@ void function TryLeechAbortCallback( entity self, entity leecher )
 
 void function DataKnifeSuccessSounds( entity player )
 {
-	if( Gamemode() != eGamemodes.fs_spieslegends )
-		EmitDifferentSoundsOnEntityForPlayerAndWorld( "dataknife_complete", "dataknife_complete_3p", player, player )
-	else
-		EmitSoundOnEntityOnlyToPlayer( player, player, "dataknife_complete" ) //don't play 3p sound for players in spies legends
+	EmitDifferentSoundsOnEntityForPlayerAndWorld( "dataknife_complete", "dataknife_complete_3p", player, player )
 }
 
 void function DataKnifeCanceledSounds( entity player )
 {
-	if( Gamemode() != eGamemodes.fs_spieslegends )
-		EmitDifferentSoundsOnEntityForPlayerAndWorld( "dataknife_aborted", "dataknife_aborted_3p", player, player )
-	else
-		EmitSoundOnEntityOnlyToPlayer( player, player, "dataknife_aborted" ) //don't play 3p sound for players in spies legends
+	EmitDifferentSoundsOnEntityForPlayerAndWorld( "dataknife_aborted", "dataknife_aborted_3p", player, player )
 }
 
 void function PathfinderBeaconSuccessSounds( entity player )

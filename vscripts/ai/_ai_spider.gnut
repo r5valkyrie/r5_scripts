@@ -1,8 +1,0 @@
-// stub script
-
-global function AiSpider_Init
-
-void function AiSpider_Init()
-{
-
-}

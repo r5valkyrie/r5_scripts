@@ -6,7 +6,8 @@
 // ============================================================================
 //  GLOBAL SCOPE - Constants, Enums, Structs (all VMs)
 // ============================================================================
-
+global const string GUNGAME_SQUAD_WEAPON_INDEX = "FreeDM_WeaponIndexSquad_"
+global const string GUNGAME_THROWING_KNIFE_WEAPON_NAME = "mp_weapon_throwingknife"
 // === Constants ===
 global const asset FIRINGRANGE_ITEM_RESPAWN_PARTICLE = $"P_impact_shieldbreaker_sparks"
 global const int PLAYER_MELEE_STATE_KICK_ATTACK = 1
@@ -72,18 +73,24 @@ global function IsValidItemFlavorNetworkIndex_DEPRECATED
 // === Utilities ===
 global function replace
 global function WORKAROUND_AssetAppend
-
+global function SetAllianceTeamsScore
+global function IsRevTakeover
+global function GetAllianceTeamsScore
+global function ForceScriptError
+global function Vehicle_KickPlayer_ForOtherReason
+global function HoverVehicle_IsPlayerInAnyVehicle
 // === Gamestate ===
 global function SetIsPermanentEntity
-
+global function GetPlayerArrayIncludingSpectators
 // === Shadow Army Gamemode ===
 global function ShadowArmy_IsPlayerInShadowForm
-
+global function GameRules_IsTeamIndexValid
 // === Freelance Systems ===
 global function FreelanceSystemsAreEnabled
 
 global function Ranked_GetCurrentPeriodGUIDString
-
+global function CircleCullScriptName
+global function CircleCullClassName
 // === Freelance/PVE Systems ===
 global function LTM_AnnouncementSplash
 global function ShadowArmy_GetCurrentRank
@@ -167,8 +174,6 @@ global function ShadowArmy_GetLegendSpawnGroupsNumber
 global function ShadowArmy_GetLegendMatchStartSpawnLocations
 global function ShadowArmy_GetLegendMatchStartSpawnRadius
 global function ShadowArmy_IsSquadReallyEliminated
-global function Bleedout_GetShouldAlliancePlayerBleedout
-global function SquadMuteLegendSelectEnabled
 #if CLIENT
 global function ClearCustomPlayerInfoTreatment
 global function ClearCustomPlayerInfoCharacterIcon
@@ -180,8 +185,6 @@ global function TitanSword_GetFuelRui
 
 global function PlayerStopSpectating
 global function TakeLoadoutRelatedWeapons
-global function GiveLoadoutRelatedWeapons
-global function GiveLoadoutRelatedWeapons_HaloMod
 global function Flowstate_AssignUniqueCharacterForPlayer
 global function Flowstate_SetAssignedCustomModelToPlayer
 global function Flowstate_ApplyModifiedMovementToPlayer
@@ -437,8 +440,6 @@ global function TitanSword_ForceStopLootAnim
 global function PassiveAxiom_OnItemDropped
 global function GoldenHorse_UpdateLootHighlight
 global function PIN_ItemGrantedByScript
-global function Armor_ShieldRegen_IsUsingShieldRegen
-global function Armor_ShieldRegen_RechargePlayerShields_Thread
 global function TrackingVision_CreatePOIForPickedUpLoot
 global function GetTriggersByClassesInRealms_HullSize
 global function GetTriggersByClassesInRealms
@@ -751,11 +752,6 @@ global function UISafeGetPersistentVarAsInt
 // ============================================================================
 //  #if CLIENT || UI - Implementations
 // ============================================================================
-bool function SquadMuteLegendSelectEnabled()
-{
-	return GetCurrentPlaylistVarBool( "squad_mute_legend_select_enable", true )
-}
-
 
 #if CLIENT || UI
 void function PopulateRuiWithRankedBadgeDetails( var rui, int rankScore, int ladderPosition, bool isNested = false )
@@ -2582,8 +2578,6 @@ string function GoldenHorse_UpdateLootHighlight( entity prop, string ref, int ti
 	return highlight
 }
 void function PIN_ItemGrantedByScript( entity player, ... ) { Warning("STUB: PIN_ItemGrantedByScript") }
-bool function Armor_ShieldRegen_IsUsingShieldRegen() { Warning("STUB: Armor_ShieldRegen_IsUsingShieldRegen"); return false }
-void function Armor_ShieldRegen_RechargePlayerShields_Thread( entity player, bool fullRecharge = true ) { Warning( "STUB: Armor_ShieldRegen_RechargePlayerShields_Thread" ) }
 void function TrackingVision_CreatePOIForPickedUpLoot( entity player, int lootType, string ref, vector pos, int team, entity source ) { Warning("STUB: TrackingVision_CreatePOIForPickedUpLoot") }
 array<entity> function GetTriggersByClassesInRealms_HullSize( ... ) { return [] }
 array<entity> function GetTriggersByClassesInRealms( ... ) { return [] }
@@ -3294,11 +3288,6 @@ bool function ShadowArmy_IsSquadReallyEliminated( int team )
 	return false
 }
 
-bool function Bleedout_GetShouldAlliancePlayerBleedout( entity player )
-{
-	return true
-}
-
 bool function POIPlayerSpawning_Exists()
 {
 	return false
@@ -3494,76 +3483,6 @@ void function TakeLoadoutRelatedWeapons( entity player )
 #endif
 }
 
-void function GiveLoadoutRelatedWeapons( entity player )
-{
-#if SERVER
-	TakeLoadoutRelatedWeapons(player)
-
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
-	ItemFlavor tactical = CharacterClass_GetTacticalAbility( character )
-	ItemFlavor ultimate = CharacterClass_GetUltimateAbility( character )
-	array<ItemFlavor> passives = CharacterClass_GetPassiveAbilities( character )
-
-	player.GiveOffhandWeapon( CONSUMABLE_WEAPON_NAME, OFFHAND_SLOT_FOR_CONSUMABLES, [] )
-	player.GiveOffhandWeapon( CharacterAbility_GetWeaponClassname( tactical ), OFFHAND_TACTICAL, [] )
-	player.GiveOffhandWeapon( CharacterAbility_GetWeaponClassname( ultimate ), OFFHAND_ULTIMATE, [] )
-
-	if( !Safe_is1v1EnabledAndAllowed() || Safe_isScenariosMode() )
-	{
-		player.GiveWeapon( "mp_weapon_melee_survival", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
-		player.GiveOffhandWeapon( "melee_pilot_emptyhanded", OFFHAND_MELEE, [] )
-	}
-
-	if( !Flowstate_GivePassive() || !Flowstate_PassivesAllowedForMode() )
-		return
-
-	foreach ( ItemFlavor passive in passives )
-	{
-		GivePassive( player, CharacterAbility_GetPassiveIndex( passive ) )
-
-		string passiveWeaponMod = CharacterAbility_GetPassiveWeaponMod( passive )
-		if ( passiveWeaponMod != "" )
-			GiveExtraWeaponMod( player, passiveWeaponMod )
-	}
-
-	if( ItemFlavor_GetHumanReadableRef( character ) == "character_caustic" || ItemFlavor_GetHumanReadableRef( character ) == "character_gibraltar" )
-	{
-		if( !PlayerHasPassive( player, ePassives.PAS_FORTIFIED) )
-			GivePassive( player, ePassives.PAS_FORTIFIED )
-	}
-	else if( ItemFlavor_GetHumanReadableRef( character ) == "character_crypto" )
-	{
-		if( !PlayerHasPassive( player, ePassives.PAS_CRYPTO ) )
-			GivePassive( player, ePassives.PAS_CRYPTO )
-	}
-
-	if( ItemFlavor_GetHumanReadableRef( character ) == "character_lifeline" ||
-		ItemFlavor_GetHumanReadableRef( character ) == "character_gibraltar" ||
-		ItemFlavor_GetHumanReadableRef( character ) == "character_mirage" )
-	{
-		if( !PlayerHasPassive( player, ePassives.PAS_SUPPORT ) )
-			GivePassive( player, ePassives.PAS_SUPPORT )
-
-		if( !PlayerHasPassive( player, ePassives.PAS_BONUS_SMALL_HEAL ) )
-			GivePassive( player, ePassives.PAS_BONUS_SMALL_HEAL )
-	}
-#endif
-}
-
-void function GiveLoadoutRelatedWeapons_HaloMod( entity player )
-{
-#if SERVER
-	TakeLoadoutRelatedWeapons(player)
-
-	player.GiveOffhandWeapon( CONSUMABLE_WEAPON_NAME, OFFHAND_SLOT_FOR_CONSUMABLES, [] )
-	player.GiveWeapon( "mp_weapon_melee_survival", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
-	player.GiveOffhandWeapon( "melee_pilot_emptyhanded_halo", OFFHAND_MELEE, [] )
-	player.GiveOffhandWeapon( "mp_ability_grapple_master_chief", OFFHAND_TACTICAL )
-	player.GiveOffhandWeapon( "mp_weapon_bubble_bunker_master_chief", OFFHAND_ULTIMATE )
-	GivePassive( player, ePassives.PAS_BATTERY_POWERED )
-#endif
-}
-
 void function PlayerStopSpectating( entity player )
 {
 	#if SERVER
@@ -3572,3 +3491,15 @@ void function PlayerStopSpectating( entity player )
 	player.StopObserverMode()
 	#endif
 }
+
+bool function GameRules_IsTeamIndexValid( int teamIndex ) { return teamIndex >= 0 && teamIndex < GetCurrentPlaylistVarInt( "max_teams", 20 ) + 2 }
+array<entity> function GetPlayerArrayIncludingSpectators() { return GetPlayerArray() }
+bool function HoverVehicle_IsPlayerInAnyVehicle( entity player ) { return false }
+void function Vehicle_KickPlayer_ForOtherReason( entity player ) {}
+void function ForceScriptError( string message ) { ScriptError( message ) }
+// Only GetAllianceTeamsScore/SetAllianceTeamsScore remain as stubs (not part of alliance proximity file)
+int function GetAllianceTeamsScore( int alliance ) { return 0 }
+void function SetAllianceTeamsScore( int alliance, int score ) {}
+bool function IsRevTakeover() { return false }
+void function CircleCullClassName( string className ) {}
+void function CircleCullScriptName( string scriptName ) {}

@@ -186,8 +186,7 @@ void function ExtraShields_OnExtraShieldDurationChanged( entity player, float ne
 		file.extraShieldDurationRui = CreateCockpitPostFXRui( $"ui/extra_shield_indicator.rpak", HUD_Z_BASE )
 		RuiSetFloat( file.extraShieldDurationRui, "timeTotal", file.totalShieldDuration )
 		RuiSetInt( file.extraShieldDurationRui, "state", eArcFlashState.ACTIVE )
-		// RUI_TRACK_EXTRA_SHIELD_TIER_INT not available in S3
-		//RuiTrackInt( file.extraShieldDurationRui, "tierColor", player, RUI_TRACK_EXTRA_SHIELD_TIER_INT )
+		RuiTrackInt( file.extraShieldDurationRui, "tierColor", player, RUI_TRACK_EXTRA_SHIELD_TIER_INT )
 	}
 
 	RuiTrackFloat( file.extraShieldDurationRui, "timeRemaining", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( EXTRA_SHIELDS_DURATION_NETFLOAT ) )

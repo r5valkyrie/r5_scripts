@@ -29,9 +29,9 @@ const string FUNCNAME_DoPanicHealFeedback = "SCB_DoPanicHealFeedback"
 const string FUNCNAME_DoPanicSkydiveFeedback = "SCB_DoPanicSkydiveFeedback"
 void function PanicButton_Init()
 {
-	ScriptRemote_RegisterClientFunction( FUNCNAME_BroadcastPanicButtonCast, "entity", "int", 0, ePanicButton._count, "int", 0, 128 )
-	ScriptRemote_RegisterClientFunction( FUNCNAME_DoPanicHealFeedback )
-	ScriptRemote_RegisterClientFunction( FUNCNAME_DoPanicSkydiveFeedback )
+	Remote_RegisterClientFunction( FUNCNAME_BroadcastPanicButtonCast, "entity", "int", 0, ePanicButton._count, "int", 0, 128 )
+	Remote_RegisterClientFunction( FUNCNAME_DoPanicHealFeedback )
+	Remote_RegisterClientFunction( FUNCNAME_DoPanicSkydiveFeedback )
 
 	PrecacheParticleSystem( FX_HEAL_HEALED3P )
 	PrecacheParticleSystem( FX_HEAL_RADIUS )

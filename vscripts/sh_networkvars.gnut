@@ -82,8 +82,8 @@ int _currentStringIndex = MIN_REGISTERED_STRING_INDEX
 
 void function RegisterString( string thestring )
 {
-	mAssert( _RegisteringFunctions, "Cannot register string outside of _remote_functions.nut" )
-	mAssert( thestring.find( "#" ) == 0, "Cannot register unlocalized string \"" + thestring + "\"" )
+	Assert( _RegisteringFunctions, "Cannot register string outside of _remote_functions.nut" )
+	Assert( thestring.find( "#" ) == 0, "Cannot register unlocalized string \"" + thestring + "\"" )
 
 	int index = _currentStringIndex
 
@@ -346,7 +346,7 @@ bool function DoesCallbackRequireValidEntParam( string varName )
 {
 	int varCategory = GetNetworkedVariableCategory( varName )
 
-	bool isGlobalCategory = (varCategory == SNDC_GLOBAL) || (varCategory == SNDC_GLOBAL)
+	bool isGlobalCategory = (varCategory == SNDC_GLOBAL) || (varCategory == SNDC_GLOBAL_NON_REWIND)
 	return !isGlobalCategory
 }
 

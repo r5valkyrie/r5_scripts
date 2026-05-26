@@ -1597,57 +1597,7 @@ void function InitGamepadConfigs()
 
 void function UILevelLoadCallback()
 {
-	if( Gamemode() == eGamemodes.fs_aimtrainer)
-	{
-		var weaponselector = GetMenu("FRChallengesSettingsWpnSelector")
 
-		UIPos wepSelectorBasePos = REPLACEHud_GetBasePos( weaponselector )
-		Hud_SetPos( weaponselector, wepSelectorBasePos.x, wepSelectorBasePos.y )
-
-		var wepmenu = Hud_GetChild( weaponselector, "Title" )
-		Hud_SetColor( wepmenu, 191, 13, 13, 255 )
-
-		UIPos wepmenuBasePos = REPLACEHud_GetBasePos( wepmenu )
-		Hud_SetPos( wepmenu, wepmenuBasePos.x, wepmenuBasePos.y )
-		Hud_SetText( wepmenu, "FLOWSTATE AIM TRAINER" )
-
-		var titletext = Hud_GetChild( weaponselector, "TitleWeaponSelector" )
-		Hud_SetColor( titletext, 252, 198, 3, 255 )
-	}
-	else if( g_bIs1v1GameType() )
-	{
-		var weaponselector = GetMenu("FRChallengesSettingsWpnSelector")
-
-		UIPos wepSelectorBasePos = REPLACEHud_GetBasePos( weaponselector )
-		Hud_SetPos( weaponselector, wepSelectorBasePos.x, wepSelectorBasePos.y + 100 )
-
-		var wepmenu = Hud_GetChild( weaponselector, "Title" )
-		Hud_SetColor( wepmenu, 171, 132, 14, 220 )
-
-		UIPos wepmenuBasePos = REPLACEHud_GetBasePos( wepmenu )
-		Hud_SetPos( wepmenu, wepmenuBasePos.x - 30, wepmenuBasePos.y - 40 )
-		Hud_SetText( wepmenu, "Flowstate 1v1" )
-
-		var titletext = Hud_GetChild( weaponselector, "TitleWeaponSelector" )
-		Hud_SetColor( titletext, 180, 114, 41, 255 )
-	}
-	else if( Playlist() == ePlaylists.fs_movementrecorder )
-	{
-		var weaponselector = GetMenu("FRChallengesSettingsWpnSelector")
-
-		UIPos wepSelectorBasePos = REPLACEHud_GetBasePos( weaponselector )
-		Hud_SetPos( weaponselector, wepSelectorBasePos.x, wepSelectorBasePos.y + 100 )
-
-		var wepmenu = Hud_GetChild( weaponselector, "Title" )
-		Hud_SetColor( wepmenu, 171, 132, 14, 220 )
-
-		UIPos wepmenuBasePos = REPLACEHud_GetBasePos( wepmenu )
-		Hud_SetPos( wepmenu, wepmenuBasePos.x - 30, wepmenuBasePos.y - 40 )
-		Hud_SetText( wepmenu, "FS Movement Recorder" )
-
-		var titletext = Hud_GetChild( weaponselector, "TitleWeaponSelector" )
-		Hud_SetColor( titletext, 180, 114, 41, 255 )
-	}
 }
 
 void function InitMenus()

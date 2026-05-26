@@ -192,12 +192,6 @@ void function OnSurvivalInventoryMenu_Open()
 		SetTabBaseWidth( tabdef, 160 )
 	}
                          
-	if ( IsFiringRangeGameMode() )
-	{
-		TabDef tabdef = AddTab( file.menu, Hud_GetChild( file.menu, "FiringRangeSettingsPanel" ), "#BUTTON_RANGE_CUSTOMIZE" )
-		tabdef.hideSubtabPips = true                                                                                      
-		SetTabBaseWidth( tabdef, 320 )
-	}
       
 	{
 		TabDef tabdef = AddTab( file.menu, Hud_GetChild( file.menu, "CharacterDetailsPanel" ), "#LEGEND" )

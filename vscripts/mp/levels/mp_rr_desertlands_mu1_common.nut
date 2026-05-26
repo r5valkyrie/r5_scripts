@@ -124,7 +124,7 @@ void function EntitiesDidLoad()
 
 	FillLootTable()
 
-	if( Gamemode() == eGamemodes.SURVIVAL && GetMapName() != "mp_rr_desertlands_64k_x_64k_tt" )
+	if( GameMode_IsActive( eGameModes.SURVIVAL ) && GetMapName() != "mp_rr_desertlands_64k_x_64k_tt" )
 	{
 		thread function () : ()
 		{
@@ -536,9 +536,6 @@ vector function ClampVelocity(vector velocity, float maxSpeed)
 #if SERVER
 void function AddTrainToMinimap( entity mover )
 {
-	if( Flowstate_IsHaloMode() && Playlist() != ePlaylists.fs_haloMod_survival )
-		return
-
 	entity minimapObj = CreatePropScript( $"mdl/dev/empty_model.rmdl", mover.GetOrigin() )
 	minimapObj.Minimap_SetCustomState( eMinimapObject_prop_script.TRAIN )
 	minimapObj.SetParent( mover )

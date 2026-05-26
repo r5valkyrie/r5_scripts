@@ -256,9 +256,6 @@ void function GamemodeUtility_RegisterNetworking()
 	if ( !IsEliminationBased() )
 		RegisterNetworkedVariable( "deaths", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 
-	// Leaver penalty tracking — did this player ever have a full team
-	RegisterNetworkedVariable( "rankedDidPlayerEverHaveAFullTeam", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
-
 #endif // CLIENT || SERVER
 
 	// Manage JIP player logic ( first spawn, end of game )
@@ -1765,7 +1762,7 @@ void function GamemodeUtility_ManageJIPAvailability_Thread()
 
 	// Disable JIP either when playlist rotates or we've reached max allowed time
 	float allowedJIPTime = matchTimeLimit - GamemodeUtility_GetMaxTimeRemaningBeforeDisableJIP()
-	int endTime = GetEndTimeForPlaylistInRotation( GetCurrentPlaylistName() )
+	int endTime = 0//GetEndTimeForPlaylistInRotation( GetCurrentPlaylistName() )
 	if( endTime > 0 )
 	{
 		int timeRemaining = endTime - GetUnixTimestamp()
@@ -2134,9 +2131,9 @@ void function GamemodeUtility_GamemodeSetWinnerCommon_Thread( int winningTeamOrA
 		if ( IsValid( player ) )
 		{
 
-			if ( IsNessieEEActive() )
+			//if ( IsNessieEEActive() )
 			{
-				Wattson_TT_Check_Victory( player )
+				//Wattson_TT_Check_Victory( player )
 			}
 
 
@@ -2436,7 +2433,7 @@ void function GamemodeUtility_CheckForMidMatchLegendChange( entity player )
 		{
 			array<string> legendClassesOffered
 			legendClassesOffered = GetStringArrayAvailableClassesForPlayer( player )
-			PIN_PlayerClassMidMatchChange( player, legendClassesOffered )
+			//PIN_PlayerClassMidMatchChange( player, legendClassesOffered )
 			file.playerToLastUsedLegendClass[ player ] = currentLegend
 		}
 	}
@@ -2841,10 +2838,26 @@ LootData function GamemodeUtility_GetPlayerArmorData( entity player )
 		{
 			shieldsContainedInArmor = EvolvingArmor_GetEvolvingArmorHealthForTier( armorData.tier )
 		}
+		else if( UpgradeCore_IsEquipmentArmorCore( armorData.ref ) )
+		{
+			int level = UpgradeCore_GetPlayerArmorTier( player )
+			int savedShieldLevel = EvolvingArmor_GetCharacterShieldHealthMaxForArmorTier( player, level ) + GetPlayerExtraShields( player )
+
+			shieldsContainedInArmor = savedShieldLevel
+		}
 
 		armorData.extraData[ eExtraDataType.INT_ARMOR_SHIELDS ] <- shieldsContainedInArmor
 	}
 
+	// Update the string name for how many shields they had
+	{
+		                    
+		if( UpgradeCore_IsEquipmentArmorCore( armorData.ref ) )
+		{
+			armorData.ref = UpgradeCore_GetPlayerShieldCoreRefFromAmount( player )
+		}
+                            
+	}
 	return armorData
 }
 #endif // SERVER

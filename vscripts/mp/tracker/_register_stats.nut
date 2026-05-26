@@ -75,7 +75,7 @@ void function Tracker_ResyncAllForPlayer( entity playerToSync )
 void function Tracker_ResyncStatForPlayer( entity playerToSync, string statKey )
 {
 	int statKeyLen = statKey.len()
-	mAssert( statKeyLen <= 9, "Cannot transmit statkey len > 9 chars for resync" )//for now (uses a single remote call this way)
+	Assert( statKeyLen <= 9, "Cannot transmit statkey len > 9 chars for resync" )//for now (uses a single remote call this way)
 	
 	foreach( player in GetPlayerArray() )
 	{
@@ -196,69 +196,6 @@ void function Script_RegisterAllStats()
 		//Tracker_RegisterStat( "test_int_array", null, TrackerStats_TestIntArray, STORE_STAT )
 		//Tracker_RegisterStat( "test_float_array", null, TrackerStats_TestFloatArray )
 	#endif 
-	
-	//Reporting
-	if( Flowstate_EnableReporting() )
-	{	
-		Tracker_RegisterStat( "cringe_reports", null, TrackerStats_CringeReports, STORE_STAT )
-		Tracker_RegisterStat( "was_reported_cringe", null, TrackerStats_WasReportedCringe, STORE_STAT  )
-	}
-		
-	//Conditional by playlist stats
-	switch( Playlist() )
-	{
-		case ePlaylists.fs_scenarios:
-			Tracker_RegisterStat( "scenarios_kills", null, TrackerStats_ScenariosKills )
-			Tracker_RegisterStat( "scenarios_deaths", null, TrackerStats_ScenariosDeaths )
-			Tracker_RegisterStat( "scenarios_score", null, TrackerStats_ScenariosScore )
-			Tracker_RegisterStat( "scenarios_downs", null, TrackerStats_ScenariosDowns )
-			Tracker_RegisterStat( "scenarios_team_wipe", null, TrackerStats_ScenariosTeamWipe )
-			Tracker_RegisterStat( "scenarios_team_wins", null, TrackerStats_ScenariosTeamWins )
-			Tracker_RegisterStat( "scenarios_solo_wins", null, TrackerStats_ScenariosSoloWins )
-			Tracker_RegisterStat( "previous_score", null, TrackerStats_ScenariosRecentScore )
-			AddCallback_PlayerDataFullyLoaded( Callback_HandleScenariosStats )
-		break 
-
-		case ePlaylists.fs_dm_fast_instagib:
-			//Tracker_RegisterStat( "shots_hit", null, Tracker_ReturnHits )
-			Tracker_RegisterStat( "shots_fired", null, Tracker_ReturnShots )
-			Tracker_RegisterStat( "instagib_deaths", null, Tracker_ReturnDeaths )
-			Tracker_RegisterStat( "instagib_railjumptimes", null, TrackerStats_FSDMRailjumps, STORE_STAT )
-			Tracker_RegisterStat( "instagib_gamesplayed", null, TrackerStats_GamesCompleted )
-			Tracker_RegisterStat( "instagib_wins", null, TrackerStats_FSDMWins )	
-		break
-
-		case ePlaylists.fs_haloMod:
-			Tracker_RegisterStat( "halo_dm_kills", null, Tracker_ReturnKills )
-			Tracker_RegisterStat( "halo_dm_deaths", null, Tracker_ReturnDeaths )
-			Tracker_RegisterStat( "halo_dm_gamesplayed", null, TrackerStats_GamesCompleted )
-			Tracker_RegisterStat( "halo_dm_wins", null, TrackerStats_FSDMWins )
-		break
-		
-		case ePlaylists.fs_haloMod_oddball:
-			Tracker_RegisterStat( "halo_oddball_kills", null, Tracker_ReturnKills )
-			Tracker_RegisterStat( "halo_oddball_deaths", null, Tracker_ReturnDeaths )
-			Tracker_RegisterStat( "halo_oddball_heldtime", null, TrackerStats_OddballHeldTime, STORE_STAT )
-			Tracker_RegisterStat( "halo_oddball_gamesplayed", null, TrackerStats_GamesCompleted )
-		break
-
-		case ePlaylists.fs_haloMod_ctf:
-
-			Tracker_RegisterStat( "halo_ctf_flags_captured", null, TrackerStats_CtfFlagsCaptured, STORE_STAT )
-			Tracker_RegisterStat( "halo_ctf_flags_returned", null, TrackerStats_CtfFlagsReturned, STORE_STAT )
-			Tracker_RegisterStat( "halo_ctf_gamesplayed", null, TrackerStats_GamesCompleted )
-			Tracker_RegisterStat( "halo_ctf_wins", null, TrackerStats_CtfWins, STORE_STAT )
-		break 
-		
-		case ePlaylists.fs_realistic_ttv:
-			Tracker_RegisterStat( "realistic_kills", null, Tracker_ReturnKills )
-			Tracker_RegisterStat( "realistic_deaths", null, Tracker_ReturnDeaths )
-			Tracker_RegisterStat( "realistic_portals", null, TrackerStats_GetPortalPlacements, STORE_STAT )
-			Tracker_RegisterStat( "realistic_kidnaps", null, TrackerStats_GetPortalKidnaps, STORE_STAT )
-		break
-		
-		//case :
-	}
 }
 
 ////////////////////
@@ -495,19 +432,6 @@ void function Script_RegisterAllPlayerDataCallbacks()
 	////////////////////////////////////////////////////////////////////
 	
 	Chat_RegisterPlayerData()
-	
-	if( file.bStatsIs1v1Type && Playlist() != ePlaylists.fs_scenarios ) //todo clean up intertwinedness.. 
-		Gamemode1v1_PlayerDataCallbacks()
-		
-	switch( Playlist() )
-	{
-		case ePlaylists.fs_scenarios:
-			Scenarios_PlayerDataCallbacks()
-		break
-		
-		default:
-			break
-	}
 	
 	if( Flowstate_EnableReporting() )
 		AddCallback_PlayerData( "cringe_report_data" )

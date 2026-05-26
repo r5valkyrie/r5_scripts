@@ -58,9 +58,6 @@ struct
 ////////////////////////
 void function ShLootRollers_Init()
 {
-	if( Gamemode() == eGamemodes.fs_aimtrainer )
-		return
-
 	#if SERVER
 	AddSpawnCallback( "prop_physics", LootRollerSpawned )
 	AddSpawnCallback( "prop_dynamic", LootRollerSpawned )

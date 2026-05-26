@@ -1700,7 +1700,7 @@ bool function PingVaultUnderAim( entity vault )
 		return false
 
 	if( VaultPanels_PingFromMap_Enabled() )
-		ScriptRemote_RegisterClientFunction( FUNCNAME_PingVaultFromMap, vault ) //const string FUNCNAME_PingVaultFromMap = "VaultPanel_ClientToServer_PingVaultFromMap"
+		Remote_RegisterClientFunction( FUNCNAME_PingVaultFromMap, vault ) //const string FUNCNAME_PingVaultFromMap = "VaultPanel_ClientToServer_PingVaultFromMap"
 
 	EmitSoundOnEntity( GetLocalViewPlayer(), PING_SOUND_LOCAL_CONFIRM )
 

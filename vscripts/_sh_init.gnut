@@ -505,7 +505,7 @@ void function SV_CL_Init()
 	//Sh_TrackingVision_Init()
       
 
-	//Armor_ShieldRegen_Init()
+	Armor_ShieldRegen_Init()
 	HealthRegen_Init()
 	SuicideSpectres_Init()
 
@@ -536,7 +536,7 @@ void function SV_CL_Init()
        
 
 	                      
-		//Candy_Init()
+		Candy_Init()
 		//RevShell_Init()
        
 

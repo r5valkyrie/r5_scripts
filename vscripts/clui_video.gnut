@@ -105,7 +105,7 @@ int function ReserveVideoChannelInternal( bool calledFromUI )
 		return channelIndex
 	}
 
-	mAssert( false, "No free video channels." )
+	Assert( false, "No free video channels." )
 	unreachable
 }
 #endif

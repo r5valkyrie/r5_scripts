@@ -348,7 +348,7 @@ void function HandleDeathPackage( entity ent, var damageInfo )
 		return	// handled in SuperSpectreDeath
 	}
 
-	if ( (dpFlags & DF_HEADSHOT) && IsHumanSized( ent ) && !ent.IsHologram() && Gamemode() != eGamemodes.fs_aimtrainer )
+	if ( (dpFlags & DF_HEADSHOT) && IsHumanSized( ent ) && !ent.IsHologram() )
 		TryHeadshotDeathFX( ent )
 
 	if ( dpFlags & DF_INSTANT )

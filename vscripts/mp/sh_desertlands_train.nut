@@ -275,7 +275,7 @@ void function DesertlandsTrain_PreMapInit()
 
 void function DesertlandsTrain_OnNetworkRegistration()
 {
-	ScriptRemote_RegisterClientFunction( "SCB_DLandsTrain_SetCustomSpeakerIdx", "int", 0, NUM_TOTAL_DIALOGUE_QUEUES )
+	Remote_RegisterClientFunction( "SCB_DLandsTrain_SetCustomSpeakerIdx", "int", 0, NUM_TOTAL_DIALOGUE_QUEUES )
 }
 
 #if CLIENT
@@ -372,8 +372,7 @@ void function DesertlandsTrain_Init()
 		printt( "TRAIN INITIALIZED" )
 	#endif
 
-	if( Gamemode() != eGamemodes.WINTEREXPRESS )
-		thread DesertlandsTrain_InitMovement()
+	thread DesertlandsTrain_InitMovement()
 }
 
 void function DesertlandsTrain_InitMovement()
@@ -769,10 +768,6 @@ void function TrainFollowPathForward( bool shouldGetNewPath )
 			TrainAnnouncer_PlaySingle( "Train_DepartNow" )
 
 
-	if ( Gamemode() == eGamemodes.WINTEREXPRESS )
-		return
-
-
 	string destinationNoteworthy = endNode.GetValueForKey( "script_noteworthy" )
 	TrainAnnouncer_PlaySingle( "Train_NextStop", 2.0 )
 	string stationAlias = TrainAnnouncer_GetAliasForStationNoteworthy( endNode.GetValueForKey( "script_noteworthy" ) )
@@ -810,9 +805,6 @@ void function TrainBeginDeceleration()
 	thread TrainWaitPlayStoppedSound()
 
 	if ( file.emergencyStopEngaged )
-		return
-
-	if ( Gamemode() == eGamemodes.WINTEREXPRESS )
 		return
 
 	entity endNode = file.currentPathNodes.top()
@@ -1040,7 +1032,7 @@ void function TrainWait_Stopped()
 			printt( "Train path start node pos: %f, %f, %f", startNode.GetOrigin().x, startNode.GetOrigin().y, startNode.GetOrigin().z )
 			printt( "Train path end node pos: %f, %f, %f", endNode.GetOrigin().x, endNode.GetOrigin().y, endNode.GetOrigin().z )
 			printt( "Train current state: %s", GetNameForEnum( eTrainStates, file.trainCurrentState ) )
-			mAssert( false, "Train stopped for unknown reason. It should only stop at stations or because of the emergency brake." )
+			Assert( false, "Train stopped for unknown reason. It should only stop at stations or because of the emergency brake." )
 		#endif
 	}
 }

@@ -1142,8 +1142,8 @@ int function AllianceProximity_GetAllianceScoreDifference()
 	// If we only have 2 alliances compare the highest score from one to the lowest score from the other
 	if ( allAlliances.len() == 2 )
 	{
-		int allianceAScore = GetAllianceTeamsScore( ALLIANCE_A )
-		int allianceBScore = GetAllianceTeamsScore( ALLIANCE_B )
+		int allianceAScore = 0//GetAllianceTeamsScore( ALLIANCE_A )
+		int allianceBScore = 0//GetAllianceTeamsScore( ALLIANCE_B )
 		scoreDifference = maxint( allianceAScore, allianceBScore ) - minint( allianceAScore, allianceBScore )
 	}
 	else // If we don't have 2 alliances, go through all the alliances to figure out the highest and lowest scores then subtract them
@@ -1154,7 +1154,7 @@ int function AllianceProximity_GetAllianceScoreDifference()
 
 		foreach( alliance in allAlliances )
 		{
-			currentAllianceScore = GetAllianceTeamsScore( alliance )
+			currentAllianceScore = 0//GetAllianceTeamsScore( alliance )
 			lowestScore = currentAllianceScore < lowestScore || lowestScore == -1 ? currentAllianceScore : lowestScore
 			highestScore = currentAllianceScore > highestScore ? currentAllianceScore : highestScore
 		}

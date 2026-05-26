@@ -2075,7 +2075,7 @@ bool function BuildEnumLookup( string enumName, bool assertOnDuplicates = true )
 	{
 		if ( key in lookup )
 		{
-			mAssert( !assertOnDuplicates, "Enum '" + enumName + "' has two keys with value '" + key + "'" )
+			Assert( !assertOnDuplicates, "Enum '" + enumName + "' has two keys with value '" + key + "'" )
 			return false
 		}
 		lookup[ key ] <- value
@@ -2416,11 +2416,6 @@ bool function IsSurvivalTraining()
 	// TODO:
 	// return true
 	return GetCurrentPlaylistVarBool( "survival_training", false )
-}
-
-bool function IsFiringRangeGameMode()
-{
-	return Playlist() == ePlaylists.survival_firingrange
 }
 
 bool function IsLobbyEvent1Active()
@@ -3400,7 +3395,7 @@ entity function SafeCallFunctionEntity( string functionName, entity defaultValue
 
 bool function IsArenaMode()
 {
-	return Playlist() == ePlaylists.survival_arenas
+	return false
 }
 
 #if SERVER || CLIENT
@@ -4111,7 +4106,7 @@ bool function IsStringNumber2( string str )
 array<float> s_unitTestArr1
 void function RegExpUnitTest( string str )
 {
-	mAssert( IsThreadTop(), "Thread this function" )
+	Assert( IsThreadTop(), "Thread this function" )
 	
 	int iter = 0	
 	bool test
@@ -4148,7 +4143,7 @@ void function RegExpUnitTest( string str )
 array<float> s_unitTestArr2
 void function RegExpUnitTest2( string str )
 {
-	mAssert( IsThreadTop(), "Thread this function" )
+	Assert( IsThreadTop(), "Thread this function" )
 	
 	int iter = 0	
 	bool test
@@ -4184,7 +4179,7 @@ void function RegExpUnitTest2( string str )
 array<float> s_unitTestArr3
 void function StringUnitTest( string str )
 {
-	mAssert( IsThreadTop(), "Thread this function" )
+	Assert( IsThreadTop(), "Thread this function" )
 	
 	int iter = 0	
 	bool test
@@ -4272,6 +4267,16 @@ bool function IsFloat( string str, float min = INT_MAX, float limit = INT_MIN ) 
 	return ( num >= min && num <= limit )
 }
 
+bool function IsEqualVector( vector a, vector b )
+{
+	return DistanceSqr( a, b) <= FLT_EPSILON
+}
+
+bool function IsEqualFloat( float left, float right )
+{
+	return fabs( left - right ) < FLT_EPSILON
+}
+
 string function LineBreak( string str, int interval = 80 )
 {
 	string output = ""
@@ -4327,7 +4332,7 @@ bool function IsStringBool( string str )
 
 bool function StringToBool( string str )
 {
-	mAssert( IsStringBool( str ), "Tried to convert \"%s\" to bool", str )
+	Assert( IsStringBool( str ), "Tried to convert \"%s\" to bool", str )
 	
 	switch( str )
 	{
@@ -4376,7 +4381,7 @@ bool function IsSafeString( string str, int strlen = -1, string pattern = "" )
 function MakeFunctionRefFromString( string funcName )
 {
 	if( funcName == "" )
-		mAssert( 0, "funcName cannot be empty" )
+		Assert( 0, "funcName cannot be empty" )
 		
 	local funcRef = null
 	string wrapperCode = format( "%s()", funcName )
@@ -4387,7 +4392,7 @@ function MakeFunctionRefFromString( string funcName )
 	}
 	catch( e )
 	{
-		mAssert( 0, "Function \"%s\" does not exist in this context. Make sure it is global for the relevant VM", funcName )
+		Assert( 0, "Function \"%s\" does not exist in this context. Make sure it is global for the relevant VM", funcName )
 	}
 	
     return funcRef

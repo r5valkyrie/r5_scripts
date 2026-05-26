@@ -1,0 +1,293 @@
+global function ReinforceAI_CreateNewInstance
+global function ReinforceAI_ShutDownInstance
+global function ReinforceAI_Frame
+global function ReinforceAI_SpawnOneOrMore
+global function ReinforceAI_SetSpawnGoalsForType
+global function ReinforceAI_SetSpawnGoalsClearAll
+global function ReinforceAI_SetOnNewEntFunc
+global function ReinforceAI_ResetInitialSpawnGoals
+global function ReinforceAI_SetDropPodSpawnPoints
+
+
+global struct ReinforceAIData
+{
+	struct
+	{
+		vector defensivePoint = <0,0,0>
+		int[eNPC._count] spawnGoalsInitial
+		int[eNPC._count] spawnGoalsMinimum
+		int[eNPC._count] spawnGoalsCountPerSpawn
+		int[eNPC._count] spawnGoalsLifetimeLimit
+		array<entity> functionref( array<entity functionref( int, vector, vector, table )>,array<table>,table )[eNPC._count] customMethodFunc
+		table[eNPC._count] customMethodParams
+
+		void functionref( entity npc, ReinforceAIData data )			onNewEntFunc = null
+		void functionref( entity )										onReleaseEntForShutdown = null
+
+		array<entity> droppodSpawns
+	} params
+
+	int[eNPC._count] spawnsCurrent
+	int[eNPC._count] spawnsPending
+	int[eNPC._count] spawnsEver
+
+	array<entity> ents = []
+
+	float latestDropPodSpawnTime = -60.0
+
+	bool finishedInitialSpawns = false
+
+	ShuffleData droppodSpawnsShuffleData
+
+	bool isShutDown = false
+}
+
+
+
+///////////////////
+// REINFORCEMENTS
+
+ReinforceAIData function ReinforceAI_CreateNewInstance( vector focusOrigin )
+{
+	ReinforceAIData data
+
+	// Defaults:
+	data.params.defensivePoint = focusOrigin
+	ReinforceAI_SetOnReleaseEntForShutdownFunc( data, ObjectiveFinishedReleaseReinforcementEnt )
+
+	return data
+}
+table<entity,ReinforceAIData> s_EntityToReinforcementsMap
+
+void function ReinforceAI_ShutDownInstance( ReinforceAIData data )
+{
+	Assert( data.isShutDown == false )
+
+	foreach ( entity ent in data.ents )
+	{
+		if ( data.params.onReleaseEntForShutdown != null )
+			data.params.onReleaseEntForShutdown( ent )
+
+		Reinforcements_RemoveFromEntMap( ent )
+	}
+	data.ents.clear()
+	data.isShutDown = true
+}
+
+void function ReinforceAI_SetOnReleaseEntForShutdownFunc( ReinforceAIData data, void functionref( entity ) func )
+{
+	data.params.onReleaseEntForShutdown = func
+}
+
+void function ReinforceAI_SetOnNewEntFunc( ReinforceAIData data, void functionref( entity npc, ReinforceAIData data ) onNewEntFunc )
+{
+	data.params.onNewEntFunc = onNewEntFunc
+}
+
+void function ReinforceAI_SetSpawnGoalsForType( ReinforceAIData data, int npcType, int initial, int minimum, int countPerSpawn, int lifetimeLimit, array<entity> functionref( array<entity functionref( int, vector, vector, table )>,array<table>,table ) customMethodFunc = null, table customMethodParams = {} )
+{
+	data.params.spawnGoalsInitial[npcType] = initial
+	data.params.spawnGoalsMinimum[npcType] = minimum
+	data.params.spawnGoalsCountPerSpawn[npcType] = countPerSpawn
+	data.params.spawnGoalsLifetimeLimit[npcType] = lifetimeLimit
+	data.params.customMethodFunc[npcType] 		= customMethodFunc
+	data.params.customMethodParams[npcType] 	= customMethodParams
+}
+
+void function ReinforceAI_SetSpawnGoalsClearAll( ReinforceAIData data )
+{
+	for ( int st = 0; st < eNPC._count; ++st )
+	{
+		data.params.spawnGoalsInitial[st] = 0
+		data.params.spawnGoalsMinimum[st] = 0
+		data.params.spawnGoalsCountPerSpawn[st] = 0
+		data.params.spawnGoalsLifetimeLimit[st] = 0
+	}
+}
+
+void function ReinforceAI_ResetInitialSpawnGoals( ReinforceAIData data )
+{
+	data.finishedInitialSpawns = false
+
+	for ( int idx = 0; idx < eNPC._count; ++idx )
+		data.spawnsEver[idx] = data.spawnsCurrent[idx]
+}
+
+void function ReinforceAI_SetDropPodSpawnPoints( ReinforceAIData data, array<entity> droppodSpawns )
+{
+	data.params.droppodSpawns = droppodSpawns
+	Shuffle_Init( data.droppodSpawnsShuffleData, droppodSpawns.len() )
+}
+
+//droppodTargets
+
+void function ReinforceAI_Frame( ReinforceAIData data )
+{
+	if ( !data.finishedInitialSpawns )
+	{
+		const float MIN_WAIT_BETWEEN_POD_DROPS = 0.75
+		const float RANDOM_CHANCE_TO_SPAWN_POD = 0.75
+		ReinforceAI_FrameTryToSpawn( data, MIN_WAIT_BETWEEN_POD_DROPS, RANDOM_CHANCE_TO_SPAWN_POD, data.spawnsEver, data.params.spawnGoalsInitial )
+	}
+	else
+	{
+		const float MIN_WAIT_BETWEEN_POD_DROPS = 5.0
+		const float RANDOM_CHANCE_TO_SPAWN_POD = 0.5
+		ReinforceAI_FrameTryToSpawn( data, MIN_WAIT_BETWEEN_POD_DROPS, RANDOM_CHANCE_TO_SPAWN_POD, data.spawnsCurrent, data.params.spawnGoalsMinimum )
+	}
+}
+
+void function ReinforceAI_FrameTryToSpawn( ReinforceAIData data, float minWaitBetweenSpawns, float randomChanceToSpawn, int[eNPC._count] bankedSpawns, int[eNPC._count] spawnGoals )
+{
+	float timeNow = Time()
+	float timeSinceLastDropPod = (timeNow - data.latestDropPodSpawnTime)
+
+	for ( int idx = 0; idx < eNPC._count; ++idx )
+	{
+		int have = (bankedSpawns[idx] + data.spawnsPending[idx])
+		int remain = (spawnGoals[idx] - have)
+		int perSpawn = data.params.spawnGoalsCountPerSpawn[idx]
+		int lifetimeLimit = data.params.spawnGoalsLifetimeLimit[idx]
+		int waveSize
+		if ( lifetimeLimit > 0 )
+		{
+			int spawnsEver = data.spawnsEver[idx]
+			waveSize = minint( perSpawn, (lifetimeLimit - spawnsEver) )
+		}
+		else
+		{
+			waveSize = perSpawn
+		}
+
+		if ( (waveSize > 0) && (remain >= waveSize) )
+		{
+			if ( timeSinceLastDropPod < minWaitBetweenSpawns )
+				return
+			float diceRoll = RandomFloat( 1.0 )
+			if ( diceRoll > randomChanceToSpawn )
+				return
+
+			ReinforceAI_SpawnOneOrMore( idx, waveSize, data )
+			data.latestDropPodSpawnTime = timeNow
+			return
+		}
+	}
+
+	if ( !data.finishedInitialSpawns )
+		data.finishedInitialSpawns = true
+}
+
+void function ObjectiveFinishedReleaseReinforcementEnt( entity ent )
+{
+	if ( !IsAlive( ent ) )
+		return
+	GarbageCollection_MarkNPC( ent )
+}
+
+void function Reinforcements_AddToEntMap( entity npc, ReinforceAIData data )
+{
+	s_EntityToReinforcementsMap[npc] <- data
+	AddEntityCallback_OnKilled( npc, Reinforcements_OnNPCKilled )
+}
+
+ReinforceAIData function Reinforcements_RemoveFromEntMap( entity npc )
+{
+	ReinforceAIData data = s_EntityToReinforcementsMap[npc]
+	delete s_EntityToReinforcementsMap[npc]
+	RemoveEntityCallback_OnKilled( npc, Reinforcements_OnNPCKilled )
+	return data
+}
+
+void function Reinforcements_OnNPCKilled( entity victim, var damageInfo )
+{
+	ReinforceAIData data = Reinforcements_RemoveFromEntMap( victim )
+	data.ents.fastremovebyvalue( victim )
+	data.spawnsCurrent[victim.ai.npcType] -= 1
+}
+
+void function ReinforceAI_SpawnOneOrMore( int npcType, int waveSize, ReinforceAIData data )
+{
+	thread ReinforceAI_DropPodSpawnTHREAD( npcType, waveSize, data )
+}
+
+entity function DropPodSpawnWrapper( int team, vector origin, vector angles, table spawnInfo )
+{
+	Assert( team == TEAM_ANY )
+	entity result = SpawnNPC( expect int(spawnInfo.npcType), origin, angles )
+	return result
+}
+
+void function ReinforceAI_AddNPCToAccounting( entity ent, ReinforceAIData data )
+{
+	if ( data.isShutDown )
+	{
+		if ( data.params.onNewEntFunc != null )
+			data.params.onNewEntFunc( ent, data )
+
+		if ( data.params.onReleaseEntForShutdown != null )
+			data.params.onReleaseEntForShutdown( ent )
+		return
+	}
+
+	Assert( ent.ai.npcType >= 0 )
+
+	data.ents.append( ent )
+	data.spawnsCurrent[ent.ai.npcType] += 1
+	data.spawnsEver[ent.ai.npcType] += 1
+
+	Reinforcements_AddToEntMap( ent, data )
+
+	//
+	if ( data.params.onNewEntFunc != null )
+		data.params.onNewEntFunc( ent, data )
+}
+
+void function ReinforceAI_DropPodSpawnTHREAD( int npcType, int entityCount, ReinforceAIData data )
+{
+	entity drop = GetNextShuffledDroppodSpawn( data )
+	if ( !IsValid( drop ) )
+		return
+	if ( drop.e.spawnPointInUse )
+		return
+
+	data.spawnsPending[npcType] += entityCount
+
+	//
+	{
+		table spawnInfo
+		spawnInfo.npcType <- npcType
+
+		array<entity functionref( int, vector, vector, table )> spawnfuncs
+		array<table> customData
+		spawnfuncs.resize( entityCount, DropPodSpawnWrapper )
+		customData.resize( entityCount, spawnInfo )
+
+		array<entity> spawnedEnts
+		if ( data.params.customMethodFunc[npcType] != null )
+		{
+			spawnedEnts = data.params.customMethodFunc[npcType]( spawnfuncs, customData, data.params.customMethodParams[npcType] )
+		}
+		else
+		{
+			int podFlags = eDropPodFlag.DISSOLVE_AFTER_DISEMBARKS
+			waitthread Spawn_DropPodSquadCustom( spawnfuncs, customData, spawnedEnts, TEAM_ANY, drop, podFlags, 0 )
+		}
+
+		foreach ( newEnt in spawnedEnts )
+		{
+			if ( !IsAlive( newEnt ) )
+				continue
+			ReinforceAI_AddNPCToAccounting( newEnt, data )
+		}
+	}
+
+	data.spawnsPending[npcType] -= entityCount
+}
+
+entity function GetNextShuffledDroppodSpawn( ReinforceAIData data )
+{
+	int index = Shuffle_GetNextIndex( data.droppodSpawnsShuffleData )
+	entity drop = data.params.droppodSpawns[index]
+	return drop
+}
+ 

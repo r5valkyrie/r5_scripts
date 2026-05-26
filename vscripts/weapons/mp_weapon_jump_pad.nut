@@ -58,8 +58,6 @@ void function OnWeaponTossPrep_weapon_jump_pad( entity weapon, WeaponTossPrepPar
 void function OnJumpPadPlanted( entity projectile, DeployableCollisionParams collisionParams )
 {
 	#if SERVER
-	//string gameMode = GameRules_GetGameMode()
-	int gameMode = Gamemode()
 
 	Assert( IsValid( projectile ) )
 
@@ -103,13 +101,6 @@ void function OnJumpPadPlanted( entity projectile, DeployableCollisionParams col
 	newProjectile.AddToOtherEntitysRealms( projectile )
 	projectile.Destroy()
 
-	if( gameMode != eGamemodes.fs_dm )
-	{
-		newProjectile.SetTakeDamageType( DAMAGE_YES )
-		newProjectile.SetMaxHealth( 100 )
-		newProjectile.SetHealth( 100 )
-	}
-	else
 		newProjectile.SetTakeDamageType( DAMAGE_NO )
 
 	SetVisibleEntitiesInConeQueriableEnabled( newProjectile, true )
@@ -120,26 +111,6 @@ void function OnJumpPadPlanted( entity projectile, DeployableCollisionParams col
 	DispatchSpawn( newProjectile )
 	newProjectile.EndSignal( "OnDestroy" )
 	newProjectile.SetScriptName("jump_pad")
-
-	if( gameMode != eGamemodes.fs_dm )
-	{
-		thread function () : ( newProjectile, owner )
-		{
-			EndSignal( newProjectile, "OnDestroy" )
-			EndSignal( owner, "CleanUpPlayerAbilities" )
-
-			OnThreadEnd( function() : ( newProjectile )
-				{
-					if( IsValid( newProjectile ) )
-					{
-						newProjectile.Destroy()
-					}
-				}
-			)
-
-			WaitForever()
-		}()
-	}
 
 	if ( IsValid( traceResult.hitEnt ) )
 	{
@@ -168,13 +139,6 @@ void function OnJumpPadPlanted( entity projectile, DeployableCollisionParams col
 	jumpPadProxy.Hide()
 	jumpPadProxy.SetParent( newProjectile )
 	jumpPadProxy.SetOwner( owner )
-
-
-	if( gameMode == eGamemodes.fs_dm )
-	{
-		thread JumpPadWatcher(newProjectile)
-	}
-
 	#endif
 }
 

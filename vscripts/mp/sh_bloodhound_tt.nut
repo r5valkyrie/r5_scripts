@@ -257,7 +257,7 @@ void function ClBloodhound_TT_Init()
 
 void function Bloodhound_TT_RegisterNetworking()
 {
-	ScriptRemote_RegisterClientFunction( "SCB_BloodTT_SetCustomSpeakerIdx", "int", 0, NUM_TOTAL_DIALOGUE_QUEUES )
+	Remote_RegisterClientFunction( "SCB_BloodTT_SetCustomSpeakerIdx", "int", 0, NUM_TOTAL_DIALOGUE_QUEUES )
 	//Remote_RegisterUntypedFunction_deprecated( "ClientCallback_BloodTT_StoryPropDialogueAborted" ) //Audit 2-22-2025 never called
 }
 

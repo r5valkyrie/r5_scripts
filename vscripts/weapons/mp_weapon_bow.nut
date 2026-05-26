@@ -161,7 +161,7 @@ void function MpWeaponBow_Init()
 		file.fxLightAssets1p[optic] <- fxLightArr
 	}
 
-	//ScriptRemote_RegisterClientFunction( "Remote_CancelCharge" )
+	//Remote_RegisterClientFunction( "Remote_CancelCharge" )
 
 	#if CLIENT
 		RegisterConCommandTriggeredCallback( "+weaponcycle", AttemptCancelCharge )

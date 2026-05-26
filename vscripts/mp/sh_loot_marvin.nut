@@ -153,7 +153,7 @@ struct
 
 void function ShLootMarvin_Init()
 {
-	if( Gamemode() != eGamemodes.SURVIVAL )
+	if( !GameMode_IsActive( eGameModes.SURVIVAL ) )
 	{
 		#if SERVER
 			// enable this callback so we can delete the dummy props already in the map
@@ -189,7 +189,7 @@ void function ShLootMarvin_Init()
 
 void function EntitiesDidLoad()
 {
-	if( Gamemode() != eGamemodes.SURVIVAL )
+	if( !GameMode_IsActive( eGameModes.SURVIVAL ) )
 		return
 
 	int maxNumMarvins      = GetCurrentPlaylistVarInt( "marvins_max_num", MAX_NUM_MARVINS )
@@ -252,7 +252,7 @@ void function EntitiesDidLoad()
 #if SERVER
 void function LootMarvin_OnScriptTargetSpawned( entity ent )
 {
-	if( Gamemode() != eGamemodes.SURVIVAL )
+	if( !GameMode_IsActive( eGameModes.SURVIVAL ) )
 	{
 		ent.Destroy()
 		return

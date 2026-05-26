@@ -124,27 +124,7 @@ struct
 	
 	///
 	
-	
-	Command Callback for "!rest":
-	
-		void function cmd_rest( string tag, array<string> args, entity activator )
-		{
-			if( !Gamemode1v1_IsRestEnabled() )
-				return
-				
-			switch( Playlist() )
-			{
-				case ePlaylists.fs_scenarios:
-					
-					FS_Scenarios_ClientCommand_Rest( activator, args )
-					break
-					
-				case ePlaylists.fs_1v1:
-				
-					ClientCommand_Maki_SoloModeRest( activator, args )	
-					break
-			}
-		}
+
 */
 
 ///////////////////////////////////////////////////////
@@ -153,7 +133,7 @@ struct
 
 void function Commands_Register( string cmd, CommandCallback ornull handlerFunctionOrNull = null, array<string> aliases = [], bool bRequiresCommandsEnabled = true ) 
 {
-	mAssert( !empty( cmd ), "Cannot register empty command" )
+	Assert( !empty( cmd ), "Cannot register empty command" )
 	
 	if ( !Commands_DoesExist( cmd ) )
 	{
@@ -203,7 +183,7 @@ bool function Commands_CmdAliasPointsTo( string alias, string cmd )
 	if( !Commands_DoesExist( cmd ) )
 	{
 		#if DEVELOPER
-			mAssert( false, "cmd \"" + cmd + "\" doesn't exist." )
+			Assert( false, "cmd \"" + cmd + "\" doesn't exist." )
 		#endif 
 		
 		return false
@@ -237,7 +217,7 @@ bool function Commands_RequiresPlayersCommandsEnabled( string cmd )
 	#if DEVELOPER
 		if ( !( cmd in file.commandHandlers ) )
 		{
-			mAssert( false, "Command \"" + cmd + "\" does not exist. Calling function should be checking." ) //reduce check trains
+			Assert( false, "Command \"" + cmd + "\" does not exist. Calling function should be checking." ) //reduce check trains
 			return false 
 		}
 	#endif
@@ -274,7 +254,7 @@ void function __CmdAliasTable_CheckSlot( string alias, string cmd )
 	}
 	#if DEVELOPER
 	else
-		mAssert( false, "Tried to insert a key in command table twice. Duplicate cmd aliases running?" )
+		Assert( false, "Tried to insert a key in command table twice. Duplicate cmd aliases running?" )
 	#endif
 }
 
@@ -293,7 +273,7 @@ void function __CmdAliasTable_CheckSlot( string alias, string cmd )
 
 void function Commands_SetupArg( string arg, array<string> aliases = [] )
 {
-	mAssert( !empty( arg ), "Cannot register empty arg" )
+	Assert( !empty( arg ), "Cannot register empty arg" )
 	
 	if ( !Commands_ArgDoesExist( arg ) ) 
 	{
@@ -379,7 +359,7 @@ void function __ArgAliasTable_CheckAndCreateSlot( string alias, string arg )
 	}
 	#if DEVELOPER
 	else 
-		mAssert( false, "Tried to insert a key in arg alias table twice. Duplicate arg aliases running?" )
+		Assert( false, "Tried to insert a key in arg alias table twice. Duplicate arg aliases running?" )
 		
 	#endif
 }

@@ -176,7 +176,7 @@ void function ShWarpGates_Init()
         
 	#endif // SERVER
 
-	ScriptRemote_RegisterClientFunction( "ServerCallback_StartWarpGateExitSequence", "float", 0.0, 100.0, 8 )
+	Remote_RegisterClientFunction( "ServerCallback_StartWarpGateExitSequence", "float", 0.0, 100.0, 8 )
 
 	RegisterSignal( "WarpGates_PlayerExitPortal" )
 }

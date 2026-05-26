@@ -246,7 +246,7 @@ void function CleanupEnt( entity ent )
 
 void function InitWarpGateTrigger( entity ent )
 {
-	if( Gamemode() != eGamemodes.SURVIVAL )
+	if( !GameMode_IsActive( eGameModes.SURVIVAL ) )
 		return
 
 	WarpTunnel_SetupEnterTrigger( ent )

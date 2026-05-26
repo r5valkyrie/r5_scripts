@@ -5666,19 +5666,13 @@ bool function TakeSidearmWeapon( entity player )
 
 void function TakeAllWeapons( entity ent )
 {
-try{
 	if ( ent.IsPlayer() )
-	{	
-		if( FlowState_GiveTactical() )
-		{
-			ent.TakeOffhandWeapon(OFFHAND_TACTICAL)
-		}
-		
+	{
 		ent.RemoveAllItems()
 		array<entity> weapons = ent.GetMainWeapons()
 		foreach ( weapon in weapons )
 		{
-			Assert( 0, ent + " still has weapon " + weapon.GetWeaponClassName() + " after doing takeallweapons" )
+			Assert( false, ent + " still has weapon " + weapon.GetWeaponClassName() + " after doing takeallweapons" )
 		}
 	}
 	else
@@ -5693,7 +5687,6 @@ try{
 		}
 		TakeWeaponsForArray( ent, weapons )
 	}
-	}catch(e){}
 }
 
 
@@ -6105,6 +6098,100 @@ int function GiveHealthAndShieldToPlayer( entity player, int amountPossible )
 	return gave
 }
 
+// Heal the specified health amount and shield amount at the same time. Unlike GiveHealthAndShieldToPlayer the amount of healing given to health does not affect the amount of healing given to shields.
+// Returns the combined total of both health healing and shield healing that took place
+int function GiveHealthAndShieldToPlayerSimultaneously( entity player, int healthAmount, int shieldAmount )
+{
+	if ( !IsAlive( player ) )
+		return 0
+
+	int healthHealed = 0
+	int shieldHealed = 0
+
+	// Health:
+	if ( healthAmount > 0 )
+	{
+		int currentHealth  = player.GetHealth()
+		int maxHealth  = player.GetMaxHealth()
+		int missingHealth = maxHealth - currentHealth
+		if ( missingHealth > 0 )
+		{
+			int healthToGive = minint( healthAmount, missingHealth )
+			player.SetHealth( currentHealth + healthToGive )
+			healthHealed = healthToGive
+		}
+	}
+
+	// Shield:
+	if ( shieldAmount > 0 )
+	{
+		int currentShield  = player.GetShieldHealth()
+		int shieldMax  = player.GetShieldHealthMax()
+		int missingShield = shieldMax - currentShield
+		if ( missingShield > 0 )
+		{
+			int shieldToGive = minint( shieldAmount, missingShield )
+			player.SetShieldHealth( currentShield + shieldToGive )
+			shieldHealed = shieldToGive
+		}
+	}
+
+	return healthHealed + shieldHealed
+}
+
+// Heal Health and Shield up to a set Percentage.
+bool function SetHealthAndShieldByPercentage( entity player, float healthPercent, float shieldPercent, bool shouldAllowHealthLoss )
+{
+	bool didHeal = false
+
+	if ( !IsValid( player ) )
+		return didHeal
+
+	if ( healthPercent >= 0.0 )
+	{
+		#if DEV
+			if ( shouldAllowHealthLoss && healthPercent == 0.0 )
+				printf( "SetHealthAndShieldByPercentage is being used to set health to 0; if players are dying unexpectedly this could be the cause." )
+		#endif // DEV
+
+		int healthMax = player.GetMaxHealth()
+		int currentHealth = player.GetHealth()
+		int targetHealth = int( healthMax * healthPercent )
+		// If shouldAllowHealthLoss is true we don't care what the current health values are, otherwise we only use values that will increase health
+		int setHealthAmount = shouldAllowHealthLoss ? targetHealth : maxint( targetHealth, currentHealth )
+
+		if ( setHealthAmount != currentHealth )
+		{
+			player.SetHealth( setHealthAmount )
+			didHeal = true
+		}
+
+	}
+
+	if ( healthPercent > 0.0 && didHeal )
+	{
+		HealthRegen_OnPlayerHealingEnded( player )
+	}
+
+	if ( shieldPercent >= 0.0 )
+	{
+		int shieldMax = player.GetShieldHealthMax()
+		int currentShield = player.GetShieldHealth()
+		int targetShieldHealth = int( shieldMax * shieldPercent )
+		// If shouldAllowHealthLoss is true we don't care what the current shield values are, otherwise we only use values that will increase shield
+		int setShieldAmount = shouldAllowHealthLoss ? targetShieldHealth : maxint( targetShieldHealth, currentShield )
+
+		if ( setShieldAmount != currentShield )
+		{
+			player.SetShieldHealth( setShieldAmount )
+			didHeal = true
+		}
+	}
+
+	return didHeal
+}
+
+
 void function DisableAllWeaponsExceptHandsOrIncap( entity player )
 {
 	// DumpStack()
@@ -6424,6 +6511,119 @@ void function AvoidBeingPutInsideDoorFromCrush( entity door, entity pushed )
 			default:
 				break
 		}
+	}
+}
+
+void function CancelPlayerStates( entity player, CancelPlayerStatesData data )
+{
+	if ( !IsValid( player ) )
+		return
+
+	if ( data.cancelZipline )
+	{
+		if ( player.IsZiplining() )
+			player.Zipline_Stop()
+	}
+
+	if ( data.cancelGrapple )
+		player.GrappleDetach()
+
+	if ( data.cancelPhaseTunnel && StatusEffect_HasSeverity( player, eStatusEffect.placing_phase_tunnel ) )
+		player.Signal( "PhaseTunnel_CancelPlacement" )
+
+	if ( data.cancelPhaseWalk && player.IsPhaseShiftedOrPending() )
+		player.PhaseShiftCancel()
+
+	if ( data.cancelRevive )
+		Bleedout_ReviveForceStop( player )
+
+	if ( data.cancelHuntMode )
+		player.Signal("HuntMode_ForceAbilityStop")
+
+	//if crypto in flying around in his drone, get out
+	if ( data.cancelCryptoDrone && !player.IsBot() && IsValid( player.p.cryptoActiveCamera ) )
+		player.p.cryptoActiveCamera.Destroy()
+
+	if ( data.cancelTotem )
+		CancelDeathTotemForPlayer( player )
+
+                                
+                        
+                                       
+      
+
+	if( data.cancelBleedOut )
+	{
+		Bleedout_ForceStop( player )
+		BleedoutState_SetPlayerBleedoutState( player, BS_NOT_BLEEDING_OUT )
+	}
+
+	// cancel any currently active ability
+	array <entity> activeWeapons = player.GetAllActiveWeapons()
+
+	if ( activeWeapons.len() > 0 && data.cancelMainOrAltHandAbility )
+	{
+		array<string> mainHandWeaponsToCheck
+		mainHandWeaponsToCheck.append( CAUSTIC_DIRTY_BOMB_WEAPON_CLASS_NAME )
+		mainHandWeaponsToCheck.append( "mp_weapon_grenade_gas" )
+		mainHandWeaponsToCheck.append( "mp_weapon_grenade_creeping_bombardment" )
+		mainHandWeaponsToCheck.append( "mp_weapon_grenade_defensive_bombardment" )
+                     
+                                                                             
+                                                                
+        
+		mainHandWeaponsToCheck.append( "mp_weapon_deployable_medic" )
+		mainHandWeaponsToCheck.append( "mp_ability_care_package" )
+		mainHandWeaponsToCheck.append( "mp_weapon_zipline" )
+		mainHandWeaponsToCheck.append( "mp_weapon_tesla_trap" )
+		mainHandWeaponsToCheck.append( "mp_weapon_trophy_defense_system" )
+		mainHandWeaponsToCheck.append( BUBBLE_BUNKER_WEAPON_NAME )
+		//mainHandWeaponsToCheck.append( "mp_weapon_phase_tunnel" )
+		//mainHandWeaponsToCheck.append( "mp_ability_phase_walk" )
+
+		array<string> altHandWeaponsToCheck
+		altHandWeaponsToCheck.append( "mp_weapon_grenade_bangalore" )
+		altHandWeaponsToCheck.append( "mp_ability_silence" )
+		altHandWeaponsToCheck.append( "mp_ability_gibraltar_shield" )
+		altHandWeaponsToCheck.append( HEARTBEAT_SENSOR_WEAPON_NAME )
+
+		bool shouldClearOffhand = false
+		int inventorySlot = eActiveInventorySlot.mainHand
+		entity mainWeapon = activeWeapons[0]
+
+		if ( IsValid( mainWeapon ) )
+		{
+			foreach ( string weaponClassName in mainHandWeaponsToCheck )
+			{
+				if ( mainWeapon.GetWeaponClassName() == weaponClassName )
+				{
+					shouldClearOffhand = true
+					inventorySlot = eActiveInventorySlot.mainHand
+					break
+				}
+			}
+		}
+
+		if ( activeWeapons.len() > 1 && !shouldClearOffhand )
+		{
+			entity offhandWeapon = activeWeapons[1]
+
+			if ( IsValid( offhandWeapon ) )
+			{
+				foreach ( string weaponClassName in altHandWeaponsToCheck )
+				{
+					if ( offhandWeapon.GetWeaponClassName() == weaponClassName )
+					{
+						shouldClearOffhand = true
+						inventorySlot = eActiveInventorySlot.altHand
+						break
+					}
+				}
+			}
+		}
+
+		if ( shouldClearOffhand )
+			player.ClearOffhand( inventorySlot )
 	}
 }
 
@@ -7385,6 +7585,58 @@ float function GetSoundDuration( string soundAlias )
 {
 	return 1.0
 }
+
+void function Remote_CallFunction_QueueForNoKillCam( entity player, string functionName, ...  )
+{
+	//Remote_CallFunction_NonReplay( player, "ShGameMode_GlowZones_ServerCallback_AnnouncementSplash" )
+	//void Remote_CallFunction_NonReplay( player, functionName, [param1], [param2], [param3], ... )    ParameterMask:[.es]
+
+	array< var > params
+	for ( int i = 0; i < vargc; i++ )
+	{
+		params.append( vargv[i] )
+	}
+
+	thread QueueForNoKillCam_thread( player, functionName, params )
+}
+
+void function QueueForNoKillCam_thread( entity player, string functionName, array< var > params )
+{
+	player.EndSignal( "OnDestroy" )
+
+	if ( player.IsWatchingKillReplay() )
+	{
+		player.WaitSignal( "KillreplayFinished" )
+	}
+	
+	QueueForNoKillCam_CallFunction( player, functionName, params )
+}
+
+void function QueueForNoKillCam_CallFunction( entity player, string functionName, array< var > params )
+{
+	switch( params.len() )
+	{
+		case 0:
+			Remote_CallFunction_NonReplay( player, functionName )
+			break
+
+		case 1:
+			Remote_CallFunction_NonReplay( player, functionName, params[0] )
+			break
+
+		case 2:
+			Remote_CallFunction_NonReplay( player, functionName, params[0], params[1] )
+			break
+
+		case 3:
+			Remote_CallFunction_NonReplay( player, functionName, params[0], params[1], params[2] )
+			break
+
+		default:
+			Assert( false, "Remote_CallFunction_QueueForNoKillCam called with too many parameter, extend the switch statement in QueueForNoKillCam_CallFunction to handle this many. Num Params = " + params.len() )
+	}
+}
+
 
 bool function GenericPropCanUse( entity player )
 {
