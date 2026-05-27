@@ -85,22 +85,13 @@ void function ShAbilityShadowZombie_Init()
 
 bool function ShadowZombie_IsEnabled()
 {
-	                            
-		/*if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
-			return true
-       
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
+		return true
 
-                  
-                                                                            
-              
-       
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ROYALE ) )
+		return true
 
-	                              
-		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ROYALE ) )
-			return true*/
-       
-
-	return true
+	return false
 }
 
 //SHARED

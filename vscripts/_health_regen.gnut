@@ -114,6 +114,9 @@ void function HealthRegen_Init()
 
 void function HealthRegen_RegisterNetworking()
 {
+	if ( !GetPlaylistVar_IsModeRegenActive() )
+		return
+
 	RegisterNetworkedVariable( NETVAR_PLAYER_REGEN_DAMAGE_TIME, SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, TIME_PLAYER_REGEN_START_INVALID )
 	RegisterNetworkedVariable( NETVAR_PLAYER_REGEN_START_DELAY, SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, TIME_PLAYER_REGEN_START_INVALID )
 
