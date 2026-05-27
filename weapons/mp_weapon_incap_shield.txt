@@ -1,0 +1,238 @@
+"WeaponData"
+{
+	// val unk: 70
+	"printname" "#WPN_DEPLOYABLE_INCAP_SHIELD"
+	// val unk: 74
+	"shortprintname" "#WPN_DEPLOYABLE_INCAP_SHIELD_SHORT"
+	// val unk: 82
+	"description" "#WPN_DEPLOYABLE_INCAP_SHIELD_DESC"
+	// val unk: 66
+	"longdesc" "#WPN_DEPLOYABLE_INCAP_SHIELD_LONGDESC"
+	// val unk: 58
+	"menu_icon" "rui/hud/gametype_icons/survival/sur_incapshield_icon"
+	// val unk: 80
+	"hud_icon" "rui/hud/gametype_icons/survival/sur_incapshield_icon"
+	// val unk: 29
+	"readymessage" "#HUD_BURNMETER_READY_BUBBLE_BUNKER"
+	// val unk: 59
+	"readyhint" "#HUD_BURNMETER_READY_BUBBLE_BUNKER_HINT"
+	// val unk: 72
+	"zoom_effects" "0"
+	// val unk: 22
+	"weapon_type_flags" "WPT_INCAP_SHIELD"
+	// val unk: 33
+	"fire_mode" "automatic"
+	// val unk: 34
+	"is_semi_auto" "1"
+	// val unk: 75
+	"minimap_reveal_distance" "32000"
+	// val unk: 83
+	"fast_swap_to" "1"
+	// val unk: 45
+	"does_not_interrupt_cloak" "1"
+	// val unk: 60
+	"allow_gibraltar_shield" "0"
+	// val unk: 67
+	"charge_require_input" "1"
+	// val unk: 8
+	"OnWeaponOwnerChanged" "OnWeaponOwnerChanged_weapon_incap_shield"
+	// val unk: 61
+	"OnWeaponChargeBegin" "OnWeaponChargeBegin_weapon_incap_shield"
+	// val unk: 53
+	"OnWeaponChargeEnd" "OnWeaponChargeEnd_weapon_incap_shield"
+	// val unk: 81
+	"OnWeaponPrimaryAttack" "OnWeaponPrimaryAttack_incap_shield"
+	// val unk: 43
+	"OnWeaponDeactivate" "OnWeaponDeactivate_incap_shield"
+	// val unk: 6
+	"OnWeaponActivate" "OnWeaponActivate_incap_shield"
+	// val unk: 39
+	"OnCreateChargeEffect" "OnCreateChargeEffect_incap_shield"
+	// val unk: 62
+	"projectile_ignores_vortex" "fall_vortex"
+	// val unk: 27
+	"viewmodel" "mdl/weapons/empty_handed/ptpov_downed_shield.rmdl"
+	// val unk: 77
+	"playermodel" "mdl/weapons/empty_handed/w_empty_handed_human.rmdl"
+	// val unk: 57
+	"offhand_default_inventory_slot" "1"
+	// val unk: 54
+	"sound_trigger_pull" "Weapon_ChargeRifle_TriggerOn"
+	// val unk: 14
+	"sound_trigger_release" "Weapon_ChargeRifle_TriggerOff"
+	// val unk: 10
+	"sound_zoom_in" "Weapon_ChargeRifle_ADS_In"
+	// val unk: 4
+	"sound_zoom_out" "Weapon_ChargeRifle_ADS_Out"
+	// val unk: 48
+	"sound_pickup" "wpn_pickup_ATWeapon_1P"
+	// val unk: 35
+	"fire_sound_1_player_1p" "Weapon_ChargeRifle_Fire_1P"
+	// val unk: 71
+	"fire_sound_1_player_3p" "Weapon_ChargeRifle_Fire_3P"
+	// val unk: 5
+	"fire_sound_1_npc" "Weapon_ChargeRifle_Fire_NPC"
+	// val unk: 64
+	"ammo_clip_size" "18446744073709551615"
+	// val unk: 55
+	"ammo_default_total" "100"
+	// val unk: 73
+	"ammo_stockpile_max" "100"
+	// val unk: 20
+	"ammo_suck_behavior" "offhand_weapons"
+	// val unk: 11
+	"fire_rate" "1"
+	// val unk: 40
+	"holster_time" "0.150000"
+	// val unk: 17
+	"deploy_time" "0.250000"
+	// val unk: 9
+	"lower_time" "0.250000"
+	// val unk: 47
+	"raise_time" "0.250000"
+	// val unk: 56
+	"allow_empty_fire" "0"
+	// val unk: 63
+	"allow_empty_click" "0"
+	// val unk: 12
+	"reload_enabled" "0"
+	// val unk: 2
+	"empty_reload_only" "0"
+	// val unk: 13
+	"trigger_snipercam" "0"
+	// val unk: 16
+	"allow_headshots" "0"
+	// val unk: 19
+	"bypass_semiauto_hold_protection" "1"
+	// val unk: 51
+	"enable_hud_alert" "0"
+	// val unk: 26
+	"aimassist_disable_hipfire" "1"
+	// val unk: 25
+	"aimassist_disable_ads" "1"
+	// val unk: 50
+	"charge_time" "18446744073709551615"
+	// val unk: 38
+	"charge_cooldown_time" "1.000000"
+	// val unk: 1
+	"charge_cooldown_delay" "0.100000"
+	// val unk: 7
+	"charge_allow_melee" "0"
+	// val unk: 37
+	"charge_sound_1p" ""
+	// val unk: 30
+	"charge_sound_3p" ""
+	// val unk: 46
+	"charge_sound_stop_when_full" "0"
+	// val unk: 0
+	"charge_sound_seek_to_charge_fraction" "1"
+	// val unk: 41
+	"charge_drain_sound_1p" ""
+	// val unk: 28
+	"charge_drain_sound_3p" ""
+	// val unk: 15
+	"charge_drain_sound_stop_when_empty" "1"
+	// val unk: 32
+	"charge_drain_sound_seek_to_charge_fraction" "1"
+	// val unk: 78
+	"charge_effect_1p" "P_down_shield_CP"
+	// val unk: 23
+	"charge_effect_3p" ""
+	// val unk: 3
+	"charge_effect_attachment" "muzzle_flash"
+	// val unk: 24
+	"charge_effect2_3p" ""
+	// val unk: 44
+	"charge_effect2_attachment" ""
+	// val unk: 31
+	"charge_rumble_min" "0"
+	// val unk: 42
+	"charge_rumble_max" "1"
+	// val unk: 69
+	"viewmodel_offset_hip" "0 -3 -0"
+	// val unk: 18
+	"viewmodel_offset_ads" "0 -3 -0"
+	// val unk: 52
+	"sound_dryfire" "titan_dryfire"
+	// val unk: 76
+	"npc_reload_enabled" "0"
+	// val unk: 65
+	"sprintcycle_time" "0.550000"
+	// val unk: 36
+	"arc_switch_activator" "1"
+	// val unk: 68
+	"bodygroup5_name" "proscreen"
+	// val unk: 49
+	"bodygroup5_set" "0"
+	// val unk: 21
+	"active_crosshair_count" "1"
+	// val unk: 79
+	"rui_crosshair_index" "0"
+
+	// child unk: 0
+	"Mods"
+	{
+
+		// child unk: 0
+		"incap_lvl_0"
+		{
+			// val unk: 0
+			"charge_time" "0"
+			// val unk: 2
+			"viewmodel" "mdl/weapons/empty_handed/ptpov_emptyhand.rmdl"
+			// val unk: 1
+			"activitymodifier3p" "incap_lvl_0"
+
+		}
+
+		// child unk: 1
+		"passive_revive_incap_shield_mod"
+		{
+			// val unk: 0
+			"charge_require_input" "0"
+
+		}
+	}
+
+	// child unk: 1
+	"RUI_CrosshairData"
+	{
+
+		// child unk: 0
+		"DefaultArgs"
+		{
+			// val unk: 5
+			"adjustedSpread" "weapon_spread"
+			// val unk: 6
+			"isSprinting" "player_is_sprinting"
+			// val unk: 4
+			"isReloading" "weapon_is_reloading"
+			// val unk: 0
+			"teamColor" "crosshair_team_color"
+			// val unk: 2
+			"isAmped" "weapon_is_amped"
+			// val unk: 1
+			"crosshairMovementX" "crosshair_movement_x"
+			// val unk: 3
+			"crosshairMovementY" "crosshair_movement_y"
+
+		}
+
+		// child unk: 1
+		"Crosshair_1"
+		{
+			// val unk: 1
+			"ui" "ui/crosshair_dot"
+			// val unk: 0
+			"base_spread" "0"
+
+			// child unk: 0
+			"Args"
+			{
+				// val unk: 0
+				"isFiring" "weapon_is_firing"
+
+			}
+		}
+	}
+}

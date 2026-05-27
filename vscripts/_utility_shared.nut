@@ -533,7 +533,7 @@ void function InitAbilityScripts()
 	//MpAbilitySpikeStrip_Init()							// Catalyst Tac
 	//MpWeaponFerroWall_Init()							// Catalyst Ult
 	//ShPassiveSling_Init()								// Ballistic Passive
-	//MpWeaponDebuffZone_Init()							// Ballistic Tac
+	MpWeaponDebuffZone_Init()							// Ballistic Tac
 	//MpAbilityPortableAutoLoader_Init()					// Ballistic Ult
 	//MpAbilityExectioner_Init()							// Revenant Reborn Passive
 	//MpAbilityShadowPounceFree_Init()					// Revenant Reborn Tac

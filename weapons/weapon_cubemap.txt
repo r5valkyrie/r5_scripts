@@ -1,0 +1,32 @@
+"WeaponData"
+{
+	// val unk: 5
+	"printname" "dev cubemap tool"
+	// val unk: 10
+	"shortprintname" "dev cubemap tool"
+	// val unk: 9
+	"description" ""
+	// val unk: 7
+	"viewmodel" "mdl/dev/envballs.rmdl"
+	// val unk: 2
+	"playermodel" "mdl/dev/envballs.rmdl"
+	// val unk: 11
+	"bucket" "5"
+	// val unk: 4
+	"bucket_position" "19"
+	// val unk: 3
+	"weapon_type_flags" "WPT_OTHER"
+	// val unk: 1
+	"weaponClass" "cube"
+	// val unk: 6
+	"give_command_forced_inventory_slot" "3"
+	// val unk: 0
+	"allow_empty_fire" "1"
+	// val unk: 8
+	"weight" "0"
+	// val unk: 12
+	"item_flags" "0"
+	// val unk: 13
+	"flyoutEnabled" "0"
+
+}

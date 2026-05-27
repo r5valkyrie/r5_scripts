@@ -202,8 +202,8 @@ void function SV_CL_Init()
 
 		ShEventAbilities_Init()
 		ShPassiveLootHighlight_Init()
-		//ShPassiveKnockAdrenaline_Init()
-		//ShPassiveSquadwipeBoost_Init()
+		ShPassiveKnockAdrenaline_Init()
+		ShPassiveSquadwipeBoost_Init()
 
 	ShMusic_LevelInit()
 	ShBattlePass_LevelInit()
@@ -221,7 +221,7 @@ void function SV_CL_Init()
 
 
 
-		//ShPassiveBattleSense_Init()
+		ShPassiveBattleSense_Init()
 
 
 
@@ -263,7 +263,7 @@ void function SV_CL_Init()
 
 	Sh_Ranked_Init() 
 
-		//Sh_ArenasRanked_Init() 
+		Sh_ArenasRanked_Init() 
 
 	ShDoors_Init()
 	PlayerWaypoints_Init()
@@ -306,10 +306,10 @@ void function SV_CL_Init()
 
 
 	ShFiringRangeStoryEvents_Init()
-	//ShFiringRangeChallenges_Init()
-	//ShFRC_G7Scout_Init()
-	//ShFRC_Bow_Init()
-	//ShFRC_p2020_Init()
+	ShFiringRangeChallenges_Init()
+	ShFRC_G7Scout_Init()
+	ShFRC_Bow_Init()
+	ShFRC_p2020_Init()
 	PanicButton_Init()
 
 
@@ -328,7 +328,7 @@ void function SV_CL_Init()
 
 
 	ChargePylons_Init()
-	//ShDrones_Init()
+	ShDrones_Init()
 	ShLootRollers_Init()
 
 
@@ -348,13 +348,13 @@ void function SV_CL_Init()
 
 
 
-		//ShSpectreChatter_MP_Init()
+		ShSpectreChatter_MP_Init()
 
 	ShLootBin_Init()
 	ShFlyers_Init()
 	GamemodeUtility_Init()
 
-	//ShLootCreeps_Init()
+	ShLootCreeps_Init()
 
 
 
@@ -406,7 +406,7 @@ void function SV_CL_Init()
 
 
 
-	//Nessie_Init()
+	Nessie_Init()
 
 
 		ShAbilityShadowZombie_Init()
@@ -428,18 +428,18 @@ void function SV_CL_Init()
 		CharacterLoadouts_Init()
 
 
-	//	RollingRespawn_Init()
+		RollingRespawn_Init()
 
 
-	//Sh_Respawn_Token_Init()
+	Sh_Respawn_Token_Init()
 
-	//WaveSpawningOnSquad_Init()
+	WaveSpawningOnSquad_Init()
 
-	//ShSpawnNearSquad_Init()
-	//ShSpawnSquadSkyDive_Init()
+	ShSpawnNearSquad_Init()
+	ShSpawnSquadSkyDive_Init()
 
 
-	//	HoverVehicle_Init()
+		HoverVehicle_Init()
 
 
 
@@ -467,10 +467,10 @@ void function SV_CL_Init()
 	LoadoutSelection_Init()
 
 	
-//	CryptoTT_Init()
+	CryptoTT_Init()
 
 
-		//Wattson_TT_Init()
+		Wattson_TT_Init()
 
 
 
@@ -482,8 +482,8 @@ void function SV_CL_Init()
 
 
 
-		//LifelineTT_Init()
-	//	MedBay_Init()
+		LifelineTT_Init()
+		MedBay_Init()
 
 
 
@@ -498,10 +498,10 @@ void function SV_CL_Init()
 	Sh_SkydiveLaunchers_Init()
 
 
-	//Sh_TrackingVision_Init()
+	Sh_TrackingVision_Init()
 
 
-	//Armor_ShieldRegen_Init()
+	Armor_ShieldRegen_Init()
 	HealthRegen_Init()
 	SuicideSpectres_Init()
 
@@ -513,10 +513,10 @@ void function SV_CL_Init()
 		SpectreShacks_MapInit()
 
 
-	//NET_TraceRoute_Init()
+	NET_TraceRoute_Init()
 
 
-		//MapMetrics_Init()
+		MapMetrics_Init()
 
 
 	Sh_Squads_Init()
@@ -532,8 +532,8 @@ void function SV_CL_Init()
 
 
 
-		//Candy_Init()
-		//RevShell_Init()
+		Candy_Init()
+		RevShell_Init()
 
 
 
@@ -548,7 +548,7 @@ void function SV_CL_Init()
 		CrowdNoiseMeter_Init()
 
 
-	//POIPlayerSpawning_Init()
+	POIPlayerSpawning_Init()
 
 
 
@@ -571,10 +571,10 @@ void function SV_CL_Init()
 
 
 
-	//Odl_SmokeTestInit()
-	//SkinMetrics_Init()
+	Odl_SmokeTestInit()
+	SkinMetrics_Init()
 
-	//ThunderdomeSkull_Init()
+	ThunderdomeSkull_Init()
 
 
 

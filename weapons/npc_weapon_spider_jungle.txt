@@ -1,0 +1,138 @@
+"WeaponData"
+{
+	// val unk: 59
+	"printname" "#NPC_SPIDER_RANGED_ATTACK"
+	// val unk: 32
+	"shortprintname" "#NPC_SPIDER_RANGED_ATTACK"
+	// val unk: 39
+	"description" "#NPC_SPIDER_RANGED_ATTACK"
+	// val unk: 49
+	"longdesc" ""
+	// val unk: 37
+	"weaponClass" "other"
+	// val unk: 22
+	"weapon_type_flags" "WPT_PRIMARY"
+	// val unk: 31
+	"projectile_launch_speed" "2250"
+	// val unk: 64
+	"projectile_gravity_scale" "0.050000"
+	// val unk: 45
+	"projectile_drag_coefficient" "0.000000"
+	// val unk: 38
+	"projectile_lifetime" "4.000000"
+	// val unk: 58
+	"damage_flags" "DF_BULLET | DF_NO_SELF_DAMAGE"
+	// val unk: 10
+	"damage_type" "none"
+	// val unk: 55
+	"trophy_system_ignores" "always"
+	// val unk: 19
+	"OnWeaponNpcPrimaryAttack" "OnWeaponNpcPrimaryAttack_Weapon_Spider_Jungle"
+	// val unk: 27
+	"playermodel" "mdl/weapons/empty_handed/w_empty_handed_human.rmdl"
+	// val unk: 33
+	"projectilemodel" "mdl/dev/empty_model.rmdl"
+	// val unk: 7
+	"holster_type" ""
+	// val unk: 35
+	"projectile_trail_effect_0_1p" "P_spider_web_proj"
+	// val unk: 20
+	"projectile_trail_effect_0_3p" "P_spider_web_proj"
+	// val unk: 54
+	"fx_muzzle_flash_view" "P_spider_web_muzzle_flash"
+	// val unk: 41
+	"fx_muzzle_flash_world" "P_spider_web_muzzle_flash"
+	// val unk: 63
+	"fx_muzzle_flash_attach" "P_spider_web_muzzle_flash"
+	// val unk: 57
+	"impact_effect_table" "spider_web"
+	// val unk: 29
+	"projectile_adjust_to_gun_barrel" "0"
+	// val unk: 16
+	"vortex_impact_sound_1p" "SpdrJungle_Projectile_Damage_1p"
+	// val unk: 50
+	"vortex_impact_sound_3p" "SpdrJungle_Projectile_Damage_3p"
+	// val unk: 5
+	"looping_sounds" "0"
+	// val unk: 13
+	"fire_sound_1_npc" "SpdrJungle_AttackRanged"
+	// val unk: 36
+	"projectile_flight_sound" "SpdrJungle_Projectile_WhizBy"
+	// val unk: 30
+	"bolt_hitsize" "1.250000"
+	// val unk: 43
+	"bolt_gravity_enabled" "1"
+	// val unk: 2
+	"bolt_zero_distance" "480"
+	// val unk: 18
+	"chance_for_bonus_last_shot_in_clip" "0"
+	// val unk: 42
+	"critical_hit" "0"
+	// val unk: 66
+	"allow_headshots" "1"
+	// val unk: 48
+	"headshot_distance" "600"
+	// val unk: 14
+	"bodygroup1_name" "sight_on"
+	// val unk: 34
+	"bodygroup1_set" "1"
+	// val unk: 17
+	"npc_damage_near_value" "8"
+	// val unk: 24
+	"npc_damage_far_value" "6"
+	// val unk: 25
+	"npc_damage_near_value_titanarmor" "6"
+	// val unk: 12
+	"npc_damage_far_value_titanarmor" "4"
+	// val unk: 1
+	"npc_damage_near_distance" "208"
+	// val unk: 60
+	"npc_damage_far_distance" "600"
+	// val unk: 21
+	"npc_min_engage_range" "208"
+	// val unk: 0
+	"npc_max_engage_range" "832"
+	// val unk: 40
+	"npc_min_engage_range_heavy_armor" "208"
+	// val unk: 56
+	"npc_max_engage_range_heavy_armor" "832"
+	// val unk: 4
+	"npc_min_range" "208"
+	// val unk: 23
+	"npc_max_range" "832"
+	// val unk: 65
+	"npc_spread_cone_min_precision" "0"
+	// val unk: 3
+	"npc_spread_cone_max_precision" "0"
+	// val unk: 11
+	"npc_lead_projectiles" "1"
+	// val unk: 47
+	"npc_lead_projectiles_fraction_min_precision" "0.250000"
+	// val unk: 26
+	"npc_lead_projectiles_fraction_max_precision" "0.750000"
+	// val unk: 46
+	"npc_min_burst" "1"
+	// val unk: 61
+	"npc_max_burst" "3"
+	// val unk: 51
+	"fire_rate" "0.667000"
+	// val unk: 15
+	"burst_fire_delay" "1.500000"
+	// val unk: 44
+	"npc_min_burst_min_precision" "1"
+	// val unk: 28
+	"npc_min_burst_max_precision" "1"
+	// val unk: 6
+	"npc_max_burst_min_precision" "3"
+	// val unk: 52
+	"npc_max_burst_max_precision" "3"
+	// val unk: 62
+	"npc_min_rest_time_between_bursts_min_precision" "1.500000"
+	// val unk: 8
+	"npc_max_rest_time_between_bursts_min_precision" "1.500000"
+	// val unk: 53
+	"npc_min_rest_time_between_bursts_max_precision" "1.900000"
+	// val unk: 9
+	"npc_max_rest_time_between_bursts_max_precision" "1.900000"
+
+}

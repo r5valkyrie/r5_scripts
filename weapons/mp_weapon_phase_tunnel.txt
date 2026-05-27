@@ -1,0 +1,492 @@
+"WeaponData"
+{
+	// val unk: 131
+	"printname" "#WPN_PHASE_TUNNEL"
+	// val unk: 105
+	"shortprintname" "#WPN_PHASE_TUNNEL_SHORT"
+	// val unk: 9
+	"description" "#WPN_PHASE_TUNNEL_DESC"
+	// val unk: 40
+	"longdesc" "#WPN_PHASE_TUNNEL_LONGDESC"
+	// val unk: 43
+	"menu_icon" "rui/pilot_loadout/suit/light"
+	// val unk: 136
+	"hud_icon" "rui/hud/ultimate_icons/ultimate_wraith"
+	// val unk: 147
+	"weaponType" "tactical"
+	// val unk: 142
+	"fire_mode" "offhand"
+	// val unk: 61
+	"offhand_default_inventory_slot" "0"
+	// val unk: 159
+	"offhand_keep_primary_in_hand" "0"
+	// val unk: 26
+	"offhand_holster_primary" "1"
+	// val unk: 111
+	"hide_holstered_sidearm_when_active" "1"
+	// val unk: 19
+	"offhand_interupts_weapon_anims" "1"
+	// val unk: 175
+	"zoom_effects" "0"
+	// val unk: 133
+	"OnWeaponAttemptOffhandSwitch" "OnWeaponAttemptOffhandSwitch_weapon_phase_tunnel"
+	// val unk: 107
+	"OnWeaponPrimaryAttack" "OnWeaponPrimaryAttack_ability_phase_tunnel"
+	// val unk: 162
+	"OnWeaponNpcPrimaryAttack" "OnWeaponNPCPrimaryAttack_ability_phase_tunnel"
+	// val unk: 31
+	"OnWeaponChargeBegin" "OnWeaponChargeBegin_weapon_phase_tunnel"
+	// val unk: 28
+	"OnWeaponChargeEnd" "OnWeaponChargeEnd_weapon_phase_tunnel"
+	// val unk: 172
+	"OnWeaponActivate" "OnWeaponActivate_weapon_phase_tunnel"
+	// val unk: 60
+	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_phase_tunnel"
+	// val unk: 157
+	"OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
+	// val unk: 126
+	"viewmodel" "mdl/weapons/empty_handed/ptpov_wraith_phasetunnel.rmdl"
+	// val unk: 6
+	"playermodel" "mdl/weapons/empty_handed/w_empty_handed_human.rmdl"
+	// val unk: 102
+	"stat_damage" "90"
+	// val unk: 58
+	"stat_range" "100"
+	// val unk: 97
+	"stat_accuracy" "50"
+	// val unk: 145
+	"stat_rof" "40"
+	// val unk: 82
+	"impact_effect_table" "exp_rocket_dumbfire"
+	// val unk: 146
+	"projectile_trail_effect_0_1p" "Rocket_Smoke_SMALL_Titan_2"
+	// val unk: 76
+	"projectile_trail_effect_0_3p" "Rocket_Smoke_SMALL_Titan_2"
+	// val unk: 184
+	"projectile_trail_attachment" "exhaust"
+	// val unk: 108
+	"vortex_absorb_effect" "wpn_vortex_projectile_rocket_FP"
+	// val unk: 13
+	"vortex_absorb_effect_third_person" "wpn_vortex_projectile_rocket"
+	// val unk: 153
+	"vortex_absorb_sound" "Vortex_Shield_AbsorbRocket"
+	// val unk: 11
+	"vortex_absorb_sound_1p_vs_3p" "Vortex_Shield_AbsorbRocket_1P_VS_3P"
+	// val unk: 14
+	"projectile_adjust_to_gun_barrel" "0"
+	// val unk: 73
+	"player_hands_attachment" "R_FOREARM"
+	// val unk: 170
+	"player_hands_effect" "P_ps_gauntlet_amb_loop_R"
+	// val unk: 85
+	"damage_type" "burn"
+	// val unk: 171
+	"explosion_inner_radius" "50"
+	// val unk: 38
+	"explosionradius" "120"
+	// val unk: 75
+	"impulse_force" "1"
+	// val unk: 137
+	"locks_weapon_change" "1"
+	// val unk: 155
+	"cooldown_type" "ammo_instant"
+	// val unk: 52
+	"ammo_display" "count"
+	// val unk: 167
+	"ammo_clip_size" "180"
+	// val unk: 8
+	"ammo_default_total" "0"
+	// val unk: 163
+	"ammo_min_to_fire" "180"
+	// val unk: 34
+	"ammo_per_shot" "180"
+	// val unk: 57
+	"ammo_stockpile_max" "180"
+	// val unk: 7
+	"ammo_drains_to_empty_on_fire" "1"
+	// val unk: 139
+	"ammo_no_remove_from_clip" "0"
+	// val unk: 4
+	"regen_ammo_refill_rate" "1"
+	// val unk: 79
+	"regen_ammo_refill_start_delay" "1.000000"
+	// val unk: 12
+	"charge_time" "-1.000000"
+	// val unk: 135
+	"charge_cooldown_time" "1.000000"
+	// val unk: 143
+	"charge_cooldown_delay" "0.000000"
+	// val unk: 95
+	"charge_end_forces_fire" "1"
+	// val unk: 32
+	"charge_require_input" "0"
+	// val unk: 27
+	"charge_remain_full_when_fired" "0"
+	// val unk: 101
+	"charge_allow_melee" "0"
+	// val unk: 5
+	"charge_maintained_until_fired" "1"
+	// val unk: 114
+	"charge_allow_midway_charge" "0"
+	// val unk: 55
+	"charge_effect_show_during_drain" "0"
+	// val unk: 69
+	"fire_rate" "1.000000"
+	// val unk: 91
+	"fire_duration" "0.100000"
+	// val unk: 62
+	"zoom_time_in" "0.010000"
+	// val unk: 173
+	"zoom_time_out" "0.010000"
+	// val unk: 189
+	"zoom_fov" "50"
+	// val unk: 15
+	"reload_time" "0"
+	// val unk: 42
+	"holster_time" "0.150000"
+	// val unk: 83
+	"deploy_time" "0.800000"
+	// val unk: 110
+	"lower_time" "0.500000"
+	// val unk: 65
+	"raise_time" "0.800000"
+	// val unk: 63
+	"vortex_refire_behavior" "rocket"
+	// val unk: 25
+	"allow_empty_fire" "0"
+	// val unk: 115
+	"reload_enabled" "0"
+	// val unk: 104
+	"allow_empty_click" "1"
+	// val unk: 96
+	"empty_reload_only" "0"
+	// val unk: 169
+	"trigger_snipercam" "1"
+	// val unk: 160
+	"allow_headshots" "0"
+	// val unk: 183
+	"offhand_allow_swap_to_on_zipline" "0"
+	// val unk: 77
+	"spread_stand_hip" "0"
+	// val unk: 16
+	"spread_stand_ads" "0"
+	// val unk: 84
+	"ammo_suck_behavior" "offhand_weapons"
+	// val unk: 56
+	"viewkick_spring" "pistol"
+	// val unk: 116
+	"viewkick_pitch_base" "-2.500000"
+	// val unk: 92
+	"viewkick_pitch_random" "0.500000"
+	// val unk: 140
+	"viewkick_pitch_softScale" "0.500000"
+	// val unk: 158
+	"viewkick_pitch_hardScale" "0.500000"
+	// val unk: 2
+	"viewkick_yaw_base" "0"
+	// val unk: 30
+	"viewkick_yaw_random" "0.500000"
+	// val unk: 49
+	"viewkick_yaw_softScale" "1.500000"
+	// val unk: 117
+	"viewkick_yaw_hardScale" "0.250000"
+	// val unk: 45
+	"viewkick_roll_base" "0.000000"
+	// val unk: 166
+	"viewkick_roll_randomMin" "0.600000"
+	// val unk: 53
+	"viewkick_roll_randomMax" "0.800000"
+	// val unk: 66
+	"viewkick_roll_softScale" "0.200000"
+	// val unk: 177
+	"viewkick_roll_hardScale" "1.000000"
+	// val unk: 59
+	"viewkick_hipfire_weaponFraction" "0.400000"
+	// val unk: 188
+	"viewkick_hipfire_weaponFraction_vmScale" "0.500000"
+	// val unk: 178
+	"viewkick_ads_weaponFraction" "0.000000"
+	// val unk: 87
+	"viewkick_ads_weaponFraction_vmScale" "0.000000"
+	// val unk: 18
+	"fire_rumble" "rumble_pistol"
+	// val unk: 168
+	"viewdrift_hipfire_stand_scale_pitch" "0.325000"
+	// val unk: 165
+	"viewdrift_hipfire_crouch_scale_pitch" "0.275000"
+	// val unk: 185
+	"viewdrift_hipfire_air_scale_pitch" "0.500000"
+	// val unk: 118
+	"viewdrift_hipfire_stand_scale_yaw" "0.120000"
+	// val unk: 161
+	"viewdrift_hipfire_crouch_scale_yaw" "0.100000"
+	// val unk: 37
+	"viewdrift_hipfire_air_scale_yaw" "0.220000"
+	// val unk: 23
+	"viewdrift_hipfire_speed_pitch" "0.600000"
+	// val unk: 22
+	"viewdrift_hipfire_speed_yaw" "1.220000"
+	// val unk: 98
+	"sway_rotate_attach" "SWAY_ROTATE"
+	// val unk: 81
+	"sway_min_x" "-0.500000"
+	// val unk: 29
+	"sway_min_y" "-0.500000"
+	// val unk: 100
+	"sway_min_z" "-0.600000"
+	// val unk: 50
+	"sway_max_x" "0.500000"
+	// val unk: 41
+	"sway_max_y" "0.500000"
+	// val unk: 1
+	"sway_max_z" "0.600000"
+	// val unk: 68
+	"sway_min_pitch" "18446744073709551613"
+	// val unk: 119
+	"sway_min_yaw" "-2.500000"
+	// val unk: 86
+	"sway_min_roll" "18446744073709551612"
+	// val unk: 182
+	"sway_max_pitch" "3"
+	// val unk: 47
+	"sway_max_yaw" "2.500000"
+	// val unk: 51
+	"sway_max_roll" "4"
+	// val unk: 128
+	"sway_translate_gain" "2.500000"
+	// val unk: 129
+	"sway_rotate_gain" "5"
+	// val unk: 109
+	"sway_move_forward_translate_x" "-0.100000"
+	// val unk: 78
+	"sway_move_forward_translate_z" "-0.500000"
+	// val unk: 0
+	"sway_move_back_translate_x" "0.200000"
+	// val unk: 164
+	"sway_move_back_translate_z" "-0.200000"
+	// val unk: 150
+	"sway_move_left_translate_y" "18446744073709551615"
+	// val unk: 71
+	"sway_move_left_translate_z" "-0.500000"
+	// val unk: 156
+	"sway_move_left_rotate_roll" "18446744073709551612"
+	// val unk: 113
+	"sway_move_right_translate_y" "1"
+	// val unk: 127
+	"sway_move_right_translate_z" "-0.500000"
+	// val unk: 89
+	"sway_move_right_rotate_roll" "4"
+	// val unk: 33
+	"sway_move_up_translate_z" "18446744073709551615"
+	// val unk: 151
+	"sway_move_down_translate_z" "1"
+	// val unk: 120
+	"sway_turn_left_rotate_yaw" "-2.500000"
+	// val unk: 122
+	"sway_turn_right_rotate_yaw" "2.500000"
+	// val unk: 35
+	"sway_turn_left_translate_y" "0.500000"
+	// val unk: 123
+	"sway_turn_right_translate_y" "-0.500000"
+	// val unk: 36
+	"sway_turn_up_translate_z" "0.200000"
+	// val unk: 94
+	"sway_turn_down_translate_z" "-0.200000"
+	// val unk: 144
+	"sway_turn_up_translate_x" "0.100000"
+	// val unk: 112
+	"sway_turn_down_translate_x" "-0.100000"
+	// val unk: 21
+	"sway_turn_left_rotate_roll" "4"
+	// val unk: 149
+	"sway_turn_right_rotate_roll" "18446744073709551612"
+	// val unk: 154
+	"sway_turn_up_rotate_pitch" "3"
+	// val unk: 3
+	"sway_turn_down_rotate_pitch" "18446744073709551613"
+	// val unk: 187
+	"sway_turn_up_rotate_roll" "-0.800000"
+	// val unk: 125
+	"sway_turn_down_rotate_roll" "0.800000"
+	// val unk: 39
+	"bob_cycle_time" "0.300000"
+	// val unk: 48
+	"bob_max_speed" "400"
+	// val unk: 99
+	"bob_vert_dist" "0.190000"
+	// val unk: 148
+	"bob_horz_dist" "0.100000"
+	// val unk: 121
+	"bob_pitch" "1.500000"
+	// val unk: 106
+	"bob_yaw" "-2.800000"
+	// val unk: 181
+	"bob_roll" "1.600000"
+	// val unk: 74
+	"npc_min_range" "0"
+	// val unk: 124
+	"npc_max_range" "8000"
+	// val unk: 130
+	"npc_min_burst" "1"
+	// val unk: 72
+	"npc_max_burst" "1"
+	// val unk: 93
+	"npc_rest_time_between_bursts_min" "8.000000"
+	// val unk: 174
+	"npc_rest_time_between_bursts_max" "12.000000"
+	// val unk: 17
+	"proficiency_poor_additional_rest" "20"
+	// val unk: 103
+	"proficiency_average_additional_rest" "16"
+	// val unk: 138
+	"proficiency_good_additional_rest" "6"
+	// val unk: 24
+	"proficiency_very_good_additional_rest" "2"
+	// val unk: 67
+	"npc_use_check_type" "while_moving"
+	// val unk: 88
+	"sway_turn_angle_factor" "0.800000"
+	// val unk: 70
+	"sway_turn_origin_factor" "0.200000"
+	// val unk: 90
+	"sway_turn_angle_factor_zoomed" "1.500000"
+	// val unk: 10
+	"sway_turn_origin_factor_zoomed" "0.200000"
+	// val unk: 44
+	"sway_move_angle_factor" "18446744073709551614"
+	// val unk: 134
+	"sway_move_origin_factor" "-0.200000"
+	// val unk: 186
+	"sway_move_angle_factor_zoomed" "0"
+	// val unk: 176
+	"sway_move_origin_factor_zoomed" "0.030000"
+	// val unk: 179
+	"sway_gain" "15.000000"
+	// val unk: 46
+	"charge_full_sound_1p" "Wraith_PhaseGate_GauntletArcs_1p"
+	// val unk: 141
+	"charge_full_sound_3p" "Wraith_PhaseGate_GauntletArcs_3p"
+	// val unk: 180
+	"weapon_type_flags" "WPT_ULTIMATE"
+	// val unk: 64
+	"OnWeaponRegenBegin" "Ultimate_OnWeaponRegenBegin"
+	// val unk: 80
+	"sound_disabledfire" "Survival_UI_Ability_NotReady_Silenced"
+	// val unk: 152
+	"sound_dryfire" "Survival_UI_Ability_NotReady"
+	// val unk: 54
+	"sound_weapon_ready" "Survival_UI_Ultimate_Ready"
+	// val unk: 20
+	"drops_on_death" "0"
+	// val unk: 132
+	"offhand_match_player_skin" "1"
+
+	// child unk: 0
+	"MP_BASE"
+	{
+		// val unk: 3
+		"damage_near_distance" "800"
+		// val unk: 5
+		"damage_far_distance" "1200"
+		// val unk: 2
+		"damage_near_value" "900"
+		// val unk: 4
+		"damage_far_value" "900"
+		// val unk: 0
+		"explosion_damage" "100"
+		// val unk: 1
+		"explosion_damage_heavy_armor" "250"
+
+	}
+
+	// child unk: 2
+	"SP_BASE"
+	{
+		// val unk: 3
+		"damage_near_distance" "800"
+		// val unk: 5
+		"damage_far_distance" "1200"
+		// val unk: 2
+		"damage_near_value" "900"
+		// val unk: 4
+		"damage_far_value" "900"
+		// val unk: 0
+		"explosion_damage" "100"
+		// val unk: 1
+		"explosion_damage_heavy_armor" "250"
+
+	}
+
+	// child unk: 1
+	"Mods"
+	{
+
+		// child unk: 6
+		"survival_armor_cooldown_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.25"
+
+		}
+
+		// child unk: 7
+		"upgrade_core_ult_cooldown_reduction"
+		{
+			// val unk: 2
+			"ammo_clip_size" "120"
+			// val unk: 1
+			"ammo_min_to_fire" "120"
+			// val unk: 0
+			"ammo_per_shot" "120"
+
+		}
+
+		// child unk: 3
+		"ultimates_charge_over_time_disabled"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "0"
+
+		}
+
+		// child unk: 0
+		"copycat_mod"
+		{
+			// val unk: 0
+			"weapon_type_flags" "WPT_SURVIVAL"
+
+		}
+
+		// child unk: 4
+		"survival_armor_cooldown_extra_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.5"
+
+		}
+
+		// child unk: 2
+		"survival_ammo_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 5
+		"ability_in_effect_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 1
+		"survival_ammo_regen_staging"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*5.0"
+
+		}
+	}
+}

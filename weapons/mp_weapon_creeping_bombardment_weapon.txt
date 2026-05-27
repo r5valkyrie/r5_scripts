@@ -1,0 +1,127 @@
+"WeaponData"
+{
+	// val unk: 40
+	"printname" "#WPN_CREEPING_BOMBARDMENT"
+	// val unk: 10
+	"description" "#WPN_CREEPING_BOMBARDMENT"
+	// val unk: 43
+	"shortprintname" "#WPN_CREEPING_BOMBARDMENT"
+	// val unk: 34
+	"longdesc" "#WPN_CREEPING_BOMBARDMENT"
+	// val unk: 30
+	"menu_icon" ""
+	// val unk: 23
+	"hud_icon" ""
+	// val unk: 20
+	"weapon_type_flags" "WPT_ULTIMATE"
+	// val unk: 7
+	"weaponType" "shoulder"
+	// val unk: 12
+	"fire_mode" "offhand"
+	// val unk: 42
+	"minimap_reveal_distance" "32000"
+	// val unk: 14
+	"offhand_keep_primary_in_hand" "1"
+	// val unk: 16
+	"projectile_launch_speed" "12000"
+	// val unk: 35
+	"uses_indirect_fire" "1"
+	// val unk: 46
+	"trophy_system_intercept_large" "1"
+	// val unk: 39
+	"aimassist_disable_hipfire" "1"
+	// val unk: 49
+	"aimassist_disable_ads" "1"
+	// val unk: 26
+	"OnWeaponAttemptOffhandSwitch" "OnWeaponAttemptOffhandSwitch_Never"
+	// val unk: 15
+	"OnProjectileCollision" "OnProjectileCollision_WeaponCreepingBombardmentWeapon"
+	// val unk: 19
+	"projectilemodel" "mdl/weapons_r5/misc_bangalore_rockets/bangalore_rockets_projectile.rmdl"
+	// val unk: 41
+	"marker_effect" "P_ar_evac_droppoint"
+	// val unk: 8
+	"impact_effect_table" "exp_creeping_barrage_land"
+	// val unk: 4
+	"projectile_trail_effect_0_1p" "P_projectile_bBomb_trail_OPT"
+	// val unk: 31
+	"projectile_trail_effect_0_3p" "P_projectile_bBomb_trail_OPT"
+	// val unk: 24
+	"projectile_trail_attachment" "exhaust"
+	// val unk: 37
+	"vortex_absorb_effect" "wpn_vortex_projectile_rocket_FP"
+	// val unk: 5
+	"vortex_absorb_effect_third_person" "wpn_vortex_projectile_rocket"
+	// val unk: 45
+	"vortex_absorb_sound" "Vortex_Shield_AbsorbRocket"
+	// val unk: 6
+	"vortex_absorb_sound_1p_vs_3p" "Vortex_Shield_AbsorbRocket_1P_VS_3P"
+	// val unk: 9
+	"vortex_drain" "0.000000"
+	// val unk: 38
+	"projectile_adjust_to_gun_barrel" "0"
+	// val unk: 28
+	"grenade_orient_to_velocity" "1"
+	// val unk: 1
+	"critical_hit" "0"
+	// val unk: 17
+	"stick_pilot" "0"
+	// val unk: 22
+	"stick_npc" "0"
+	// val unk: 21
+	"stick_drone" "0"
+	// val unk: 44
+	"sound_incoming_first" "Bangalore_Ultimate_Activate"
+	// val unk: 2
+	"damage_type" "burn"
+	// val unk: 0
+	"damage_near_distance" "0"
+	// val unk: 48
+	"damage_far_distance" "0"
+	// val unk: 25
+	"damage_near_value" "0"
+	// val unk: 27
+	"damage_far_value" "0"
+	// val unk: 32
+	"explosion_damage" "0"
+	// val unk: 29
+	"explosion_damage_heavy_armor" "0"
+	// val unk: 3
+	"explosion_inner_radius" "350"
+	// val unk: 36
+	"explosionradius" "350"
+	// val unk: 47
+	"impulse_force" "30000"
+	// val unk: 50
+	"vortex_refire_behavior" "rocket"
+	// val unk: 18
+	"projectile_chasecamForceOffsetUp" "20"
+	// val unk: 11
+	"projectile_chasecamOffsetForward" "18446744073709551586"
+	// val unk: 13
+	"projectile_chasecamOffsetUp" "40.000000"
+	// val unk: 33
+	"projectile_chasecamDistanceMax" "20.000000"
+
+	// child unk: 1
+	"SP_BASE"
+	{
+		// val unk: 0
+		"enable_highlight_networking_on_creation" "1"
+
+	}
+
+	// child unk: 2
+	"MP_BASE"
+	{
+		// val unk: 0
+		"enable_highlight_networking_on_creation" "<KEEP_DEFAULT>"
+
+	}
+
+	// child unk: 0
+	"Mods"
+	{
+
+	}
+}

@@ -1,0 +1,101 @@
+"WeaponData"
+{
+	// val unk: 32
+	"printname" "#WPN_EARTHSHAKER"
+	// val unk: 10
+	"shortprintname" "#WPN_EARTHSHAKER_SHORT"
+	// val unk: 35
+	"description" "#WPN_EARTHSHAKER_DESC"
+	// val unk: 26
+	"longdesc" "#WPN_EARTHSHAKER_LONGDESC"
+	// val unk: 19
+	"menu_icon" ""
+	// val unk: 16
+	"hud_icon" ""
+	// val unk: 7
+	"weapon_type_flags" "WPT_ULTIMATE"
+	// val unk: 11
+	"weaponType" "shoulder"
+	// val unk: 34
+	"fire_mode" "offhand"
+	// val unk: 12
+	"minimap_reveal_distance" "32000"
+	// val unk: 31
+	"offhand_keep_primary_in_hand" "1"
+	// val unk: 22
+	"uses_indirect_fire" "1"
+	// val unk: 15
+	"OnWeaponAttemptOffhandSwitch" "OnWeaponAttemptOffhandSwitch_Never"
+	// val unk: 33
+	"projectilemodel" "mdl/props/gibraltar_bubbleshield/gibraltar_bubbleshield.rmdl"
+	// val unk: 8
+	"grenade_ignition_time" "62.000000"
+	// val unk: 4
+	"marker_effect" "P_ar_evac_droppoint"
+	// val unk: 27
+	"impact_effect_table" "mm_ball_pcs_initialimpact"
+	// val unk: 20
+	"projectile_trail_effect_0_1p" ""
+	// val unk: 29
+	"projectile_trail_effect_0_3p" ""
+	// val unk: 5
+	"projectile_trail_attachment" "origin"
+	// val unk: 37
+	"vortex_absorb_effect" "wpn_vortex_projectile_rocket_FP"
+	// val unk: 6
+	"vortex_absorb_effect_third_person" "wpn_vortex_projectile_rocket"
+	// val unk: 9
+	"vortex_absorb_sound" "Vortex_Shield_AbsorbRocket"
+	// val unk: 30
+	"vortex_absorb_sound_1p_vs_3p" "Vortex_Shield_AbsorbRocket_1P_VS_3P"
+	// val unk: 24
+	"vortex_drain" "0.000000"
+	// val unk: 2
+	"projectile_adjust_to_gun_barrel" "0"
+	// val unk: 18
+	"grenade_orient_to_velocity" "1"
+	// val unk: 17
+	"critical_hit" "0"
+	// val unk: 36
+	"damage_type" "burn"
+	// val unk: 1
+	"damage_near_distance" "0"
+	// val unk: 0
+	"damage_far_distance" "0"
+	// val unk: 21
+	"damage_near_value" "0"
+	// val unk: 23
+	"damage_far_value" "0"
+	// val unk: 25
+	"explosion_damage" "0"
+	// val unk: 3
+	"explosion_damage_heavy_armor" "0"
+	// val unk: 28
+	"explosion_inner_radius" "350"
+	// val unk: 13
+	"explosionradius" "350"
+	// val unk: 14
+	"impulse_force" "30000"
+
+	// child unk: 1
+	"SP_BASE"
+	{
+		// val unk: 0
+		"enable_highlight_networking_on_creation" "1"
+
+	}
+
+	// child unk: 2
+	"MP_BASE"
+	{
+		// val unk: 0
+		"enable_highlight_networking_on_creation" "<KEEP_DEFAULT>"
+
+	}
+
+	// child unk: 0
+	"Mods"
+	{
+
+	}
+}

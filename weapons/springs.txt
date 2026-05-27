@@ -1,0 +1,3243 @@
+"WeaponSprings"
+{
+
+	// child unk: 82
+	"sniper"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "15.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "4.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "40.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "6.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "15000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "25.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "5.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "28.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "5.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "28000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "10.000000"
+
+	}
+
+	// child unk: 56
+	"semisniper"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "90.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "70.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "300.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "90.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "20.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "70.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "350.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 24
+	"g2"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "80.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "10.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "65.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "10.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "300.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "160.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "20.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "70.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "350.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 27
+	"g2_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "80.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "10.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "65.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "10.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "300.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "90.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "20.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "70.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "350.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 43
+	"g2_vkp"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "50.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "40.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "6.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "400.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "190.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "25.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "150.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "20.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "30000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "25.000000"
+
+	}
+
+	// child unk: 60
+	"g2_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "40.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "25.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "30.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "12.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "10.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "65.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "90.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "25.000000"
+
+	}
+
+	// child unk: 73
+	"g2_vkp_double_tap_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "20.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "25.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "15.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "12.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "20.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "65.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "10.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "90.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "25.000000"
+
+	}
+
+	// child unk: 35
+	"g2_viewmodel_jolt"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "80.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "85.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "1100.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "30.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "900.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "30.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "450.000000"
+		// val unk: 7
+		"ADS_roll_damping" "25.000000"
+
+	}
+
+	// child unk: 15
+	"g2_scoped_viewmodel_jolt"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "80.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "85.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "1100.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "30.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "1200.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "30.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "450.000000"
+		// val unk: 7
+		"ADS_roll_damping" "25.000000"
+
+	}
+
+	// child unk: 32
+	"dmr"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "90.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "70.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "300.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "90.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "20.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "70.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "350.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 25
+	"sentinel"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "90.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "70.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "7500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "190.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "22.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "145.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "18.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "10000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "25.000000"
+
+	}
+
+	// child unk: 17
+	"sentinel_fullscreen"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "90.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "70.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "7500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "110.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "22.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "90.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "18.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "10000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "25.000000"
+
+	}
+
+	// child unk: 28
+	"doubletake"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "75.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "110.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "80.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "10.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "55.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "14.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "65.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "12.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "180.000000"
+		// val unk: 7
+		"ADS_roll_damping" "10.000000"
+
+	}
+
+	// child unk: 95
+	"lstar"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "60.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "95.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "250.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "75.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "20.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "95.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "20.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "220.000000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 4
+	"lstar_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "60.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "95.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "250.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "75.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "95.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "220.000000"
+		// val unk: 7
+		"ADS_roll_damping" "18.000000"
+
+	}
+
+	// child unk: 26
+	"lstar_vkp"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "80.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "85.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "95.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "60.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "18.000000"
+
+	}
+
+	// child unk: 101
+	"lstar_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "0.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "35.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "0.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "35.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "25000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "20.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "0.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "45.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "50.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "18.000000"
+
+	}
+
+	// child unk: 12
+	"hailstorm"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "80.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "85.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "95.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "60.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "18.000000"
+
+	}
+
+	// child unk: 8
+	"hailstorm_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "0.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "35.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "0.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "35.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "25000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "20.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "0.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "45.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "50.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "18.000000"
+
+	}
+
+	// child unk: 67
+	"rspn101"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "80.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "85.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "115.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "20.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "95.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "240.000000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 23
+	"rspn101_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "50.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "70.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "70.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "105.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "260.000000"
+		// val unk: 7
+		"ADS_roll_damping" "22.000000"
+
+	}
+
+	// child unk: 79
+	"rspn101_vkp"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "40.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "45.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "20.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "22.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "115.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "20.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "95.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 7
+	"rspn101_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "40.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "45.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "20.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "22.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "0.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "60.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "20.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 93
+	"rspn101_highcal_vkp"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "60.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "60.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "9.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "400.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "210.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "25.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "180.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "20.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "30000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "25.000000"
+
+	}
+
+	// child unk: 10
+	"rspn101_highcal_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "40.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "25.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "30.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "12.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "8.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "40.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "90.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "25.000000"
+
+	}
+
+	// child unk: 22
+	"autofire_viewmodel_jolt"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "80.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "85.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "1100.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "30.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "900.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "30.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "450.000000"
+		// val unk: 7
+		"ADS_roll_damping" "25.000000"
+
+	}
+
+	// child unk: 106
+	"vkp_zero"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "50.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "70.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "0.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "60.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "260.000000"
+		// val unk: 7
+		"ADS_roll_damping" "22.000000"
+
+	}
+
+	// child unk: 45
+	"constant_test"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "50.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "70.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "250.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "20.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 68
+	"flatline"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "80.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "85.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "50.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "10.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "60.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "350.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 71
+	"flatline_loose"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "50.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "70.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "40.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "50.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "250.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 102
+	"flatline_vkp"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "80.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "85.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "95.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "60.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "18.000000"
+
+	}
+
+	// child unk: 69
+	"flatline_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "0.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "35.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "0.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "35.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "25000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "20.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "0.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "45.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "50.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "18.000000"
+
+	}
+
+	// child unk: 65
+	"flatline_highcal_vkp"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "60.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "60.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "9.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "400.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "190.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "25.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "150.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "20.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "30000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "25.000000"
+
+	}
+
+	// child unk: 85
+	"flatline_highcal_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "40.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "25.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "30.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "12.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "12.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "45.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "90.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "25.000000"
+
+	}
+
+	// child unk: 66
+	"hemlok"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "50.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "40.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "6.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "400.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "170.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "95.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "20.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "220.000000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 18
+	"hemlok_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "50.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "40.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "6.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "350.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "190.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "75.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "12.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "240.000000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 92
+	"hemlok_vkp"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "50.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "40.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "6.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "400.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "170.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "20.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "95.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "20.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "25.000000"
+
+	}
+
+	// child unk: 86
+	"hemlok_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "40.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "25.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "30.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "12.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "0.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "45.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "36.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "25.000000"
+
+	}
+
+	// child unk: 21
+	"smg"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "55.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "8.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "45.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "7.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "16000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "20.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "85.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "85.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "16000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 103
+	"r97"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "60.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "60.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "20.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "400.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "20.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "50.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "10.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "85.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "400.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 13
+	"r97_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "50.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "50.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "20.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "350.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "20.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "40.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "10.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "75.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "350.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 91
+	"r97_vkp"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "80.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "45.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "20.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "22.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "115.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "20.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "95.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 49
+	"r97_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "40.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "60.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "45.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "60.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "22.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "0.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "120.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "120.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 78
+	"alternator"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "65"
+		// val unk: 10
+		"hipfire_pitch_damping" "15"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "200"
+		// val unk: 11
+		"hipfire_yaw_damping" "15"
+		// val unk: 5
+		"hipfire_roll_springConstant" "250"
+		// val unk: 6
+		"hipfire_roll_damping" "10"
+		// val unk: 9
+		"ADS_pitch_springConstant" "60.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "18.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "120.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "20.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "250.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 104
+	"alternator_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "40"
+		// val unk: 10
+		"hipfire_pitch_damping" "10"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "180"
+		// val unk: 11
+		"hipfire_yaw_damping" "15"
+		// val unk: 5
+		"hipfire_roll_springConstant" "250"
+		// val unk: 6
+		"hipfire_roll_damping" "10"
+		// val unk: 9
+		"ADS_pitch_springConstant" "60.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "90.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "20.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "225.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 107
+	"alternator_vkp"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "80.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "45.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "20.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "22.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "115.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "20.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "95.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 5
+	"alternator_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "30.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "45.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "20.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "22.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "0.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "30.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "30.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 96
+	"volt"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "65"
+		// val unk: 10
+		"hipfire_pitch_damping" "15"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "200"
+		// val unk: 11
+		"hipfire_yaw_damping" "15"
+		// val unk: 5
+		"hipfire_roll_springConstant" "250"
+		// val unk: 6
+		"hipfire_roll_damping" "10"
+		// val unk: 9
+		"ADS_pitch_springConstant" "75.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "18.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "120.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "18.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "250.000000"
+		// val unk: 7
+		"ADS_roll_damping" "18.000000"
+
+	}
+
+	// child unk: 90
+	"volt_vkp"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "95.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "35.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "18.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "18.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "135.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "22.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "85.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "16.000000"
+
+	}
+
+	// child unk: 48
+	"volt_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "50.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "65.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "35.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "50.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "18.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "0.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "120.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "120.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "16.000000"
+
+	}
+
+	// child unk: 105
+	"car"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "40.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "45.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "20.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "22.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "115.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "20.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "95.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 81
+	"car_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "45.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "50.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "45.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "40.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "22.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "0.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "80.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "60.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "22000"
+		// val unk: 7
+		"ADS_roll_damping" "18.000000"
+
+	}
+
+	// child unk: 64
+	"pdw"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "195"
+		// val unk: 10
+		"hipfire_pitch_damping" "20"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "250"
+		// val unk: 11
+		"hipfire_yaw_damping" "20"
+		// val unk: 5
+		"hipfire_roll_springConstant" "250"
+		// val unk: 6
+		"hipfire_roll_damping" "10"
+		// val unk: 9
+		"ADS_pitch_springConstant" "75.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "95.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "250.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 31
+	"pdw_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "195"
+		// val unk: 10
+		"hipfire_pitch_damping" "20"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "250"
+		// val unk: 11
+		"hipfire_yaw_damping" "20"
+		// val unk: 5
+		"hipfire_roll_springConstant" "250"
+		// val unk: 6
+		"hipfire_roll_damping" "10"
+		// val unk: 9
+		"ADS_pitch_springConstant" "60.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "90.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "220.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 6
+	"pdw_vkp"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "160"
+		// val unk: 10
+		"hipfire_pitch_damping" "20"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "250"
+		// val unk: 11
+		"hipfire_yaw_damping" "20"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000"
+		// val unk: 6
+		"hipfire_roll_damping" "15"
+		// val unk: 9
+		"ADS_pitch_springConstant" "140.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "40.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "140.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "40.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15"
+
+	}
+
+	// child unk: 41
+	"pdw_burst_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "0"
+		// val unk: 10
+		"hipfire_pitch_damping" "90"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "0"
+		// val unk: 11
+		"hipfire_yaw_damping" "90"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000"
+		// val unk: 6
+		"hipfire_roll_damping" "15"
+		// val unk: 9
+		"ADS_pitch_springConstant" "0.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "90"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "90"
+		// val unk: 3
+		"ADS_roll_springConstant" "22000"
+		// val unk: 7
+		"ADS_roll_damping" "18"
+
+	}
+
+	// child unk: 80
+	"pdw_auto_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "0"
+		// val unk: 10
+		"hipfire_pitch_damping" "100"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "0"
+		// val unk: 11
+		"hipfire_yaw_damping" "100"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000"
+		// val unk: 6
+		"hipfire_roll_damping" "15"
+		// val unk: 9
+		"ADS_pitch_springConstant" "0.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "80"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "60"
+		// val unk: 3
+		"ADS_roll_springConstant" "22000"
+		// val unk: 7
+		"ADS_roll_damping" "18"
+
+	}
+
+	// child unk: 20
+	"pdw_burst_viewmodel_jolt"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "80.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "85.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "1100.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "30.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "900.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "30.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "1200.000000"
+		// val unk: 7
+		"ADS_roll_damping" "30.000000"
+
+	}
+
+	// child unk: 94
+	"energy_AR"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "65"
+		// val unk: 10
+		"hipfire_pitch_damping" "20"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "65"
+		// val unk: 11
+		"hipfire_yaw_damping" "20"
+		// val unk: 5
+		"hipfire_roll_springConstant" "200"
+		// val unk: 6
+		"hipfire_roll_damping" "10"
+		// val unk: 9
+		"ADS_pitch_springConstant" "105"
+		// val unk: 8
+		"ADS_pitch_damping" "15"
+		// val unk: 2
+		"ADS_yaw_springConstant" "90"
+		// val unk: 0
+		"ADS_yaw_damping" "20"
+		// val unk: 3
+		"ADS_roll_springConstant" "150"
+		// val unk: 7
+		"ADS_roll_damping" "12"
+
+	}
+
+	// child unk: 1
+	"energy_AR_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "65"
+		// val unk: 10
+		"hipfire_pitch_damping" "20"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "65"
+		// val unk: 11
+		"hipfire_yaw_damping" "20"
+		// val unk: 5
+		"hipfire_roll_springConstant" "200"
+		// val unk: 6
+		"hipfire_roll_damping" "10"
+		// val unk: 9
+		"ADS_pitch_springConstant" "105"
+		// val unk: 8
+		"ADS_pitch_damping" "20"
+		// val unk: 2
+		"ADS_yaw_springConstant" "90"
+		// val unk: 0
+		"ADS_yaw_damping" "20"
+		// val unk: 3
+		"ADS_roll_springConstant" "200"
+		// val unk: 7
+		"ADS_roll_damping" "18"
+
+	}
+
+	// child unk: 3
+	"energy_AR_vkp"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "65"
+		// val unk: 10
+		"hipfire_pitch_damping" "20"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "65"
+		// val unk: 11
+		"hipfire_yaw_damping" "20"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000"
+		// val unk: 6
+		"hipfire_roll_damping" "20"
+		// val unk: 9
+		"ADS_pitch_springConstant" "105"
+		// val unk: 8
+		"ADS_pitch_damping" "15"
+		// val unk: 2
+		"ADS_yaw_springConstant" "90"
+		// val unk: 0
+		"ADS_yaw_damping" "20"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000"
+		// val unk: 7
+		"ADS_roll_damping" "20"
+
+	}
+
+	// child unk: 33
+	"energy_AR_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "0.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "40"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "0.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "40"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000"
+		// val unk: 6
+		"hipfire_roll_damping" "20"
+		// val unk: 9
+		"ADS_pitch_springConstant" "0.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "40"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "40"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000"
+		// val unk: 7
+		"ADS_roll_damping" "20"
+
+	}
+
+	// child unk: 97
+	"lmg"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "35.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "12.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "35.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "12.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "220.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "85.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "65.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "220.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 30
+	"lmg_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "55.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "18.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "45.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "18.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "250.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "20.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "85.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "65.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "14.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "220.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 76
+	"lmg_vkp"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "80.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "85.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "95.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "60.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "18.000000"
+
+	}
+
+	// child unk: 88
+	"lmg_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "0.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "35.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "0.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "35.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "25000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "20.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "0.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "45.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "50.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "18.000000"
+
+	}
+
+	// child unk: 11
+	"esaw"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "60.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "60.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "150.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "20.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "65.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "40.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "900.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 54
+	"esaw_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "100.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "120.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "600.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "20.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "58.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "115.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "750.000000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 29
+	"esaw_vkp"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "65"
+		// val unk: 10
+		"hipfire_pitch_damping" "20"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "65"
+		// val unk: 11
+		"hipfire_yaw_damping" "20"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000"
+		// val unk: 6
+		"hipfire_roll_damping" "20"
+		// val unk: 9
+		"ADS_pitch_springConstant" "105"
+		// val unk: 8
+		"ADS_pitch_damping" "15"
+		// val unk: 2
+		"ADS_yaw_springConstant" "90"
+		// val unk: 0
+		"ADS_yaw_damping" "20"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000"
+		// val unk: 7
+		"ADS_roll_damping" "20"
+
+	}
+
+	// child unk: 44
+	"esaw_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "0.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "40"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "0.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "40"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000"
+		// val unk: 6
+		"hipfire_roll_damping" "20"
+		// val unk: 9
+		"ADS_pitch_springConstant" "0.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "40"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "40"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000"
+		// val unk: 7
+		"ADS_roll_damping" "20"
+
+	}
+
+	// child unk: 63
+	"dragon_lmg_vkp"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "70.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "75.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "17.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "400.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "16.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "85.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "13.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "50.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "13.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "400.000000"
+		// val unk: 7
+		"ADS_roll_damping" "16.000000"
+
+	}
+
+	// child unk: 84
+	"dragon_lmg_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "0.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "30.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "0.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "30.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "16.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "0.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "35.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "40.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "16.000000"
+
+	}
+
+	// child unk: 46
+	"3030_vkp"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "45.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "12.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "40.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "6.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "400.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "115.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "22.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "120.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "18.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "30000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "25.000000"
+
+	}
+
+	// child unk: 9
+	"3030_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "30.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "25.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "30.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "12.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "0"
+		// val unk: 8
+		"ADS_pitch_damping" "35.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "60.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "25.000000"
+
+	}
+
+	// child unk: 40
+	"3030_viewmodel_jolt"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "80.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "85.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "1000.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "30.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "900.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "30.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "450.000000"
+		// val unk: 7
+		"ADS_roll_damping" "25.000000"
+
+	}
+
+	// child unk: 72
+	"burstenergyar_vkp"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "40.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "45.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "20.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "22.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "115.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "20.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "95.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 75
+	"burstenergyar_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "40.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "45.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "20.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "22.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "35.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "50.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "15.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "40.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 19
+	"shotgun"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "350.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "22.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "350.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "18.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "350.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "75.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "20.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "45.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "10.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "350.000000"
+		// val unk: 7
+		"ADS_roll_damping" "22.000000"
+
+	}
+
+	// child unk: 36
+	"shotgun_double_tap"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "350.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "22.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "350.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "18.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "350.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "150.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "27.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "85.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "16.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "350.000000"
+		// val unk: 7
+		"ADS_roll_damping" "22.000000"
+
+	}
+
+	// child unk: 52
+	"shotgun_pistol"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "350.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "22.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "350.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "18.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "350.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "175.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "22.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "150.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "18.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "350.000000"
+		// val unk: 7
+		"ADS_roll_damping" "22.000000"
+
+	}
+
+	// child unk: 57
+	"energy_shotgun"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "45.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "12.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "45.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "300.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "45.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "45.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "300.000000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 62
+	"mastiff"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "80.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "85.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "100.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "20.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "150.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "50.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "350.000000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 38
+	"mastiff_2"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "45.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "12.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "55.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "60.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "100.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "25.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "350.000000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 100
+	"pistol"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "80.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "60.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "20.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "15000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "20.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "55.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "10.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "50.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "10.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "100.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 42
+	"pistol_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "80.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "60.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "20.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "15000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "20.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "45.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "10.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "45.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "10.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "100.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 53
+	"autopistol"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "65.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "55.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "20.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "16000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "20.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "90.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "105.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "150.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 74
+	"autopistol_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "65.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "55.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "20.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "16000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "20.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "90.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "10.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "95.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "10.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "150.000000"
+		// val unk: 7
+		"ADS_roll_damping" "10.000000"
+
+	}
+
+	// child unk: 0
+	"autopistol_vkp"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "280.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "60.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "220.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "20.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "22000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "22.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "380.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "60.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "350.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "45.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "22000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 16
+	"autopistol_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "60.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "60.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "20.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "22000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "22.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "0.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "80.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "80.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "22000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 55
+	"wingman"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "120.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "30.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "60.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "30.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "150.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "30.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "100.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "25.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "55.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "25.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "150.000000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	// child unk: 34
+	"volt_vkp"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "120"
+		// val unk: 10
+		"hipfire_pitch_damping" "20"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "220"
+		// val unk: 11
+		"hipfire_yaw_damping" "20"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000"
+		// val unk: 6
+		"hipfire_roll_damping" "15"
+		// val unk: 9
+		"ADS_pitch_springConstant" "150.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "40.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "145.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "40.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15"
+
+	}
+
+	// child unk: 59
+	"volt_vkp_hot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "0"
+		// val unk: 10
+		"hipfire_pitch_damping" "100"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "0"
+		// val unk: 11
+		"hipfire_yaw_damping" "100"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000"
+		// val unk: 6
+		"hipfire_roll_damping" "15"
+		// val unk: 9
+		"ADS_pitch_springConstant" "0.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "80"
+		// val unk: 2
+		"ADS_yaw_springConstant" "0.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "60"
+		// val unk: 3
+		"ADS_roll_springConstant" "22000"
+		// val unk: 7
+		"ADS_roll_damping" "18"
+
+	}
+
+	// child unk: 61
+	"bow"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "90.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "70.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "7500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "155.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "20.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "100.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "18.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "10000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "27.000000"
+
+	}
+
+	// child unk: 98
+	"bow_shatter"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "260.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "185.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "18.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "7500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "195.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "20.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "130.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "18.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "10000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "27.000000"
+
+	}
+
+	// child unk: 51
+	"launcher"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "30.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "9.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "40.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "9.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "6000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "65.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "9.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "65.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "9.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 99
+	"low_springconstant_launcher"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "20.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "5.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "40.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "5.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "10000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "45.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "9.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "45.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "9.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 58
+	"titan_xo16"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "55.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "8.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "80.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "20000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "55.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "8.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "45.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "7.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "20000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 77
+	"titan_launcher"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "65.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "20.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "20.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "19000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "85.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "20.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "20.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "20.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "19000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 83
+	"titan_40mm"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "60"
+		// val unk: 10
+		"hipfire_pitch_damping" "27.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "20.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "13.500000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "19000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "50.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "20.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "40.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "13.500000"
+		// val unk: 3
+		"ADS_roll_springConstant" "19000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 39
+	"titan_leadwall"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "300"
+		// val unk: 10
+		"hipfire_pitch_damping" "30"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "300"
+		// val unk: 11
+		"hipfire_yaw_damping" "30"
+		// val unk: 5
+		"hipfire_roll_springConstant" "16000"
+		// val unk: 6
+		"hipfire_roll_damping" "15"
+		// val unk: 9
+		"ADS_pitch_springConstant" "300"
+		// val unk: 8
+		"ADS_pitch_damping" "30"
+		// val unk: 2
+		"ADS_yaw_springConstant" "300"
+		// val unk: 0
+		"ADS_yaw_damping" "30"
+		// val unk: 3
+		"ADS_roll_springConstant" "16000"
+		// val unk: 7
+		"ADS_roll_damping" "15"
+
+	}
+
+	// child unk: 89
+	"titan_arc"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "60"
+		// val unk: 10
+		"hipfire_pitch_damping" "27.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "20.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "13.500000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "16000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "7.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "50.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "17.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "40.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "13.500000"
+		// val unk: 3
+		"ADS_roll_springConstant" "16000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "7.000000"
+
+	}
+
+	// child unk: 70
+	"titan_railgun"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "35.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "9.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "30.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "9.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "19000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "35.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "9.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "30.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "9.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "19000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 87
+	"melee"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "65.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "9.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "65.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "9.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "5000.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "65.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "9.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "65.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "9.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "5000.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 14
+	"punch_pilot"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "65.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "9.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "65.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "9.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "65.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "9.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "65.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "9.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "65.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "9.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "65.000000"
+		// val unk: 7
+		"ADS_roll_damping" "9.000000"
+
+	}
+
+	// child unk: 50
+	"punch_titan_stryder"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "35.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "9.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "35.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "9.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "35.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "9.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "35.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "9.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "35.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "9.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "35.000000"
+		// val unk: 7
+		"ADS_roll_damping" "9.000000"
+
+	}
+
+	// child unk: 2
+	"punch_titan_atlas"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "65.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "15.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "65.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "65.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "15.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "65.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "15.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "65.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "15.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "65.000000"
+		// val unk: 7
+		"ADS_roll_damping" "15.000000"
+
+	}
+
+	// child unk: 37
+	"punch_titan_ogre"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "95.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "30.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "95.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "30.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "95.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "30.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "95.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "30.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "95.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "30.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "95.000000"
+		// val unk: 7
+		"ADS_roll_damping" "30.000000"
+
+	}
+
+	// child unk: 47
+	"super_tight"
+	{
+		// val unk: 4
+		"hipfire_pitch_springConstant" "80.000000"
+		// val unk: 10
+		"hipfire_pitch_damping" "20.000000"
+		// val unk: 1
+		"hipfire_yaw_springConstant" "85.000000"
+		// val unk: 11
+		"hipfire_yaw_damping" "15.000000"
+		// val unk: 5
+		"hipfire_roll_springConstant" "500.000000"
+		// val unk: 6
+		"hipfire_roll_damping" "25.000000"
+		// val unk: 9
+		"ADS_pitch_springConstant" "5000.000000"
+		// val unk: 8
+		"ADS_pitch_damping" "30.000000"
+		// val unk: 2
+		"ADS_yaw_springConstant" "300.000000"
+		// val unk: 0
+		"ADS_yaw_damping" "25.000000"
+		// val unk: 3
+		"ADS_roll_springConstant" "300.000000"
+		// val unk: 7
+		"ADS_roll_damping" "20.000000"
+
+	}
+}

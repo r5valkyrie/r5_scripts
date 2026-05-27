@@ -1,0 +1,188 @@
+"WeaponData"
+{
+	// val unk: 34
+	"printname" "#WPN_PARTY_BOX"
+	// val unk: 14
+	"shortprintname" "#WPN_PARTY_BOX_SHORT"
+	// val unk: 30
+	"description" "#WPN_PARTY_BOX_DESC"
+	// val unk: 44
+	"longdesc" "#WPN_PARTY_BOX_LONGDESC"
+	// val unk: 56
+	"menu_icon" "rui/titan_loadout/passive/legion_lightweight_alloys"
+	// val unk: 35
+	"hud_icon" "rui/hud/ultimate_icons/ultimate_lifeline"
+	// val unk: 52
+	"readymessage" "BUG IT"
+	// val unk: 42
+	"readyhint" "BUG IT"
+	// val unk: 50
+	"fire_mode" "offhandHybrid"
+	// val unk: 6
+	"is_toss_weapon" "0"
+	// val unk: 36
+	"offhand_default_inventory_slot" "4"
+	// val unk: 24
+	"offhand_interupts_weapon_anims" "1"
+	// val unk: 33
+	"viewmodel" "mdl/weapons/clacker_detonator/ptpov_proximity_detonator.rmdl"
+	// val unk: 10
+	"OnWeaponPrimaryAttack" "OnWeaponPrimaryAttack_party_box"
+	// val unk: 53
+	"OnWeaponActivate" "OnWeaponActivate_care_package"
+	// val unk: 8
+	"OnWeaponDeactivate" "OnWeaponDeactivate_care_package"
+	// val unk: 4
+	"OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
+	// val unk: 46
+	"ammo_clip_size" "360"
+	// val unk: 11
+	"ammo_default_total" "0"
+	// val unk: 31
+	"ammo_display" "count"
+	// val unk: 5
+	"ammo_min_to_fire" "360"
+	// val unk: 61
+	"ammo_per_shot" "360"
+	// val unk: 13
+	"ammo_stockpile_max" "0"
+	// val unk: 37
+	"ammo_drains_to_empty_on_fire" "0"
+	// val unk: 51
+	"ammo_no_remove_from_clip" "0"
+	// val unk: 55
+	"ammo_no_remove_from_stockpile" "0"
+	// val unk: 45
+	"offhand_switch_force_draw" "1"
+	// val unk: 32
+	"regen_ammo_refill_rate" "1"
+	// val unk: 2
+	"regen_ammo_refill_start_delay" "0.000000"
+	// val unk: 21
+	"damage_type" "none"
+	// val unk: 19
+	"explosion_damage_heavy_armor" "0"
+	// val unk: 27
+	"damage_near_distance" "0"
+	// val unk: 38
+	"damage_far_distance" "0"
+	// val unk: 60
+	"damage_near_value" "0"
+	// val unk: 57
+	"damage_far_value" "0"
+	// val unk: 12
+	"zoom_effects" "0"
+	// val unk: 49
+	"rumble" "18446744073709551615"
+	// val unk: 22
+	"fire_rate" "10000.000000"
+	// val unk: 1
+	"fire_duration" "14.000000"
+	// val unk: 7
+	"fire_anim_rate" "1.000000"
+	// val unk: 18
+	"holster_time" "0.150000"
+	// val unk: 23
+	"deploy_time" "0.250000"
+	// val unk: 47
+	"lower_time" "0.250000"
+	// val unk: 0
+	"raise_time" "0.400000"
+	// val unk: 40
+	"allow_empty_fire" "0"
+	// val unk: 25
+	"reload_enabled" "0"
+	// val unk: 16
+	"empty_reload_only" "0"
+	// val unk: 3
+	"allow_empty_click" "0"
+	// val unk: 59
+	"trigger_snipercam" "0"
+	// val unk: 29
+	"allow_headshots" "0"
+	// val unk: 20
+	"breaks_cloak" "0"
+	// val unk: 39
+	"primary_fire_does_not_block_sprint" "1"
+	// val unk: 43
+	"aimassist_disable_hipfire" "1"
+	// val unk: 41
+	"aimassist_disable_ads" "1"
+	// val unk: 54
+	"cooldown_type" "ammo"
+	// val unk: 58
+	"weapon_type_flags" "WPT_ULTIMATE"
+	// val unk: 26
+	"OnWeaponRegenBegin" "Ultimate_OnWeaponRegenBegin"
+	// val unk: 17
+	"sound_disabledfire" "Survival_UI_Ability_NotReady_Silenced"
+	// val unk: 9
+	"sound_dryfire" "Survival_UI_Ability_NotReady"
+	// val unk: 48
+	"sound_weapon_ready" "Survival_UI_Ultimate_Ready"
+	// val unk: 28
+	"drops_on_death" "0"
+	// val unk: 15
+	"offhand_match_player_skin" "1"
+
+	// child unk: 0
+	"Mods"
+	{
+
+		// child unk: 5
+		"ultimates_charge_over_time_disabled"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "0"
+
+		}
+
+		// child unk: 6
+		"copycat_mod"
+		{
+			// val unk: 0
+			"weapon_type_flags" "WPT_SURVIVAL"
+
+		}
+
+		// child unk: 1
+		"survival_armor_cooldown_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.25"
+
+		}
+
+		// child unk: 2
+		"survival_armor_cooldown_extra_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.5"
+
+		}
+
+		// child unk: 3
+		"survival_ammo_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 0
+		"ability_in_effect_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 4
+		"survival_ammo_regen_staging"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*5.0"
+
+		}
+	}
+}

@@ -1,0 +1,172 @@
+"WeaponData"
+{
+	// val unk: 15
+	"printname" ""
+	// val unk: 49
+	"shortprintname" ""
+	// val unk: 5
+	"description" ""
+	// val unk: 27
+	"longdesc" ""
+	// val unk: 39
+	"weapon_type_flags" "WPT_TACTICAL"
+	// val unk: 46
+	"weaponType" "shoulder"
+	// val unk: 9
+	"fire_mode" "offhand"
+	// val unk: 35
+	"offhand_active_slot" "altHand"
+	// val unk: 14
+	"offhand_activates_on_zoom" "1"
+	// val unk: 31
+	"offhand_deploy_requires_input" "1"
+	// val unk: 53
+	"althand_allow_mainhand_on_zipline" "1"
+	// val unk: 51
+	"menu_icon" "rui/hud/passive_icons/passive_seer"
+	// val unk: 54
+	"hud_icon" "rui/hud/passive_icons/passive_seer"
+	// val unk: 58
+	"OnWeaponPrimaryAttack" "OnWeaponPrimaryAttack_ability_heartbeat_sensor"
+	// val unk: 26
+	"OnWeaponAttemptOffhandSwitch" "OnWeaponAttemptOffhandSwitch_ability_heartbeat_sensor"
+	// val unk: 60
+	"OnWeaponActivate" "OnWeaponActivate_ability_heartbeat_sensor"
+	// val unk: 6
+	"OnWeaponDeactivate" "OnWeaponDeactivate_ability_heartbeat_sensor"
+	// val unk: 11
+	"clear_fx_on_new_view_model" "0"
+	// val unk: 37
+	"viewmodel" "mdl/weapons/empty_handed/ptpov_pariah_heartbeat_sensor.rmdl"
+	// val unk: 47
+	"playermodel" "mdl/weapons/empty_handed/w_empty_handed_human.rmdl"
+	// val unk: 12
+	"ammo_stockpile_max" "4500"
+	// val unk: 59
+	"ammo_clip_size" "18446744073709551615"
+	// val unk: 24
+	"ammo_default_total" "4500"
+	// val unk: 13
+	"cooldown_type" "vortex_drain"
+	// val unk: 38
+	"charge_time" "-1.000000"
+	// val unk: 28
+	"charge_cooldown_time" "0"
+	// val unk: 52
+	"charge_cooldown_delay" "0"
+	// val unk: 33
+	"charge_end_forces_fire" "0"
+	// val unk: 4
+	"fire_rate" "20.000000"
+	// val unk: 25
+	"holster_time" "0.900000"
+	// val unk: 57
+	"deploy_time" "0.500000"
+	// val unk: 2
+	"lower_time" "0.900000"
+	// val unk: 7
+	"raise_time" "0.500000"
+	// val unk: 44
+	"play_offhand_charging_anim" "0"
+	// val unk: 8
+	"offhand_blocks_sprint" "1"
+	// val unk: 48
+	"allow_empty_fire" "1"
+	// val unk: 19
+	"allow_empty_click" "1"
+	// val unk: 18
+	"empty_reload_only" "0"
+	// val unk: 20
+	"r_trig_custom_mode" "100"
+	// val unk: 1
+	"bob_cycle_time_zoomed" "0.400000"
+	// val unk: 22
+	"bob_vert_dist_zoomed" "0.027500"
+	// val unk: 36
+	"bob_horz_dist_zoomed" "0.065000"
+	// val unk: 0
+	"bob_max_speed_zoomed" "155"
+	// val unk: 29
+	"bob_yaw_zoomed" "-0.010000"
+	// val unk: 41
+	"bob_roll_zoomed" "0.250000"
+	// val unk: 40
+	"sway_rotate_attach_zoomed" "SWAY_ROTATE_ZOOMED"
+	// val unk: 3
+	"sway_rotate_attach_blend_time_zoomed" "0.200000"
+	// val unk: 10
+	"sway_rotate_gain_zoomed" "5"
+	// val unk: 55
+	"sway_min_yaw_zoomed" "-0.027500"
+	// val unk: 61
+	"sway_max_yaw_zoomed" "0.027500"
+	// val unk: 32
+	"sway_turn_left_rotate_yaw_zoomed" "-0.085000"
+	// val unk: 34
+	"sway_turn_right_rotate_yaw_zoomed" "0.085000"
+	// val unk: 50
+	"sway_min_roll_zoomed" "18446744073709551615"
+	// val unk: 30
+	"sway_max_roll_zoomed" "1"
+	// val unk: 45
+	"sway_turn_left_rotate_roll_zoomed" "18446744073709551615"
+	// val unk: 56
+	"sway_turn_right_rotate_roll_zoomed" "1"
+	// val unk: 17
+	"sway_move_right_rotate_roll_zoomed" "0.200000"
+	// val unk: 42
+	"sway_move_left_rotate_roll_zoomed" "-0.200000"
+	// val unk: 23
+	"sway_min_pitch_zoomed" "-0.006500"
+	// val unk: 43
+	"sway_max_pitch_zoomed" "0.008000"
+	// val unk: 21
+	"sway_turn_up_rotate_pitch_zoomed" "0.070000"
+	// val unk: 16
+	"sway_turn_down_rotate_pitch_zoomed" "-0.070000"
+
+	// child unk: 0
+	"MP_BASE"
+	{
+		// val unk: 0
+		"enable_highlight_networking_on_creation" "<KEEP_DEFAULT>"
+
+	}
+
+	// child unk: 2
+	"SP_BASE"
+	{
+		// val unk: 0
+		"enable_highlight_networking_on_creation" "1"
+
+	}
+
+	// child unk: 1
+	"Mods"
+	{
+
+		// child unk: 2
+		"disabled"
+		{
+			// val unk: 0
+			"offhand_activates_on_zoom" "0"
+
+		}
+
+		// child unk: 1
+		"heirloom_equipped"
+		{
+			// val unk: 0
+			"activitymodifier1P" "fist_blades"
+
+		}
+
+		// child unk: 0
+		"artifact_equipped"
+		{
+			// val unk: 0
+			"activitymodifier1P" "artifact_equipped"
+
+		}
+	}
+}
