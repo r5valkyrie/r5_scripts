@@ -1,16 +1,9 @@
 global function PrivateMatch_Init
 global function IsPrivateMatchLobby
 global function PrivateMatch_RegisterNetworking
-global function PrivateMatch_GetSelectedPlaylistName
 
 #if SERVER || CLIENT
-global function PrivateMatch_CanAssignPlayers
-global function PrivateMatch_CanAssignSelf
-global function PrivateMatch_CanRenameTeam
 global function PrivateMatch_GetMaxTeamsForSelectedGamemode
-
-                 
-global function PrivateMatch_IsObserverHighlightEnabled
 #endif
 
 #if SERVER
@@ -20,6 +13,7 @@ global function PrivateMatch_GetTeamFinalPlacement
 
 //Match Functions
 global function PrivateMatch_Match_Init
+
 global function ClientCallback_PrivateMatchChangeObserverTarget
 global function ClientCallback_PrivateMatchToggleSurveyRing
 global function ClientCallback_PrivateMatchRefreshSurveyRing
@@ -34,17 +28,6 @@ global function ClientCallback_PrivateMatchEndMatchEarly
 global function ClientCallback_PrivateMatchToggleAimAssist
 global function ClientCallback_PrivateMatchToggleAnonymousMode
 
-global function ClientCallback_PrivateMatchToggleStartMatch
-global function ClientCallback_PrivateMatchSetStartMatch
-global function ClientCallback_PrivateMatchToggleReady
-global function ClientCallback_PrivateMatchSetReady
-global function ClientCallback_PrivateMatchSetPreloading
-global function ClientCallback_PrivateMatchToggleAssignSelf
-global function ClientCallback_PrivateMatchToggleTeamRenaming
-global function ClientCallback_PrivateMatchToggleAdminOnlyChat
-global function ClientCallback_PrivateMatchToggleObserverHighlights
-// ClientCallback_RefreshObserverHighlights — moved to sh_highlight.gnut (S22)
-
 #endif
 
 
@@ -54,20 +37,20 @@ global function PrivateMatch_GetPlayerTeamStats
 global function PrivateMatch_GetTeamName
 
 global function ServerCallback_EnableGameStatusMenu
-global function ServerCallback_PrivateMatch_ManageHighlights
 global function ServerCallback_PrivateMatch_SquadEliminated
 global function PrivateMatch_OpenGameStatusMenu
-global function PrivateMatch_ToggleHighlights
 global function PrivateMatch_SortPlayersByName
 global function PrivateMatch_ToggleSurveyRing
 
-global function PrivateMatch_BeginStartMatch
-
 global function PrivateMatch_ClientOnSquadEliminated
+#if DEV
+global function DEV_ShowSpectatorButtonHints
+#endif//DEV
 #endif
 
 #if UI
 global function PrivateMatch_CreateMatchEndEarlyDialog
+global function PrivateMatch_SetSelectedPlaylist
 #endif
 
 global const string MAX_PLAYERS_PLAYLIST_VAR = "max_players"
@@ -99,9 +82,7 @@ global const int TEAM_SPECTATOR_MAX_PLAYERS = 10
 
 const asset PM_CHAMPION_SCREEN = $"ui/private_match_champion_screen.rpak"
 
-           
-const string NV_OBSERVER_HIGHLIGHT_ENABLED = "PrivateMatch_Observer_HighlightEnabled"
-const string NV_OBSERVER_SURVERY_RING_ENABLED = "PrivateMatch_Observer_SurveyRingEnabled"
+//Observers
 const float PM_OBSERVER_HIGHLIGHT_TOGGLE_DEBOUNCE = 0.5
 
 global struct RosterStruct
@@ -154,7 +135,7 @@ void function PrivateMatch_Init()
 		AddCallback_GameStateEnter( eGameState.Playing, PrivateMatch_OnPlaying )
 		AddCallback_GameStatePostEnter( eGameState.WinnerDetermined, PrivateMatch_OnWinnerDetermined )
 
-		//Survival_AddCallback_OnSquadEliminated( OnSquadEliminated ) // native not available
+		Survival_AddCallback_OnSquadEliminated( OnSquadEliminated )
 
 		//AddCallback_OnPlayerMatchStateChanged( PrivateMatch_OnPlayerMatchStateChanged )
 	#endif //SERVER
@@ -164,9 +145,9 @@ void function PrivateMatch_Init()
 		AddOnSpectatorTargetChangedCallback( OnSpectatorTargetChanged )
 		AddFreeCamSpectateStartedCallback( OnSpectatorModeChanged )
 		AddFreeCamSpectateEndedCallback( OnSpectatorModeChanged )
-		RegisterConCommandTriggeredCallback( "toggle_obs_highlight", PrivateMatch_ToggleHighlights )
 		RegisterConCommandTriggeredCallback( "toggle_obs_ring_survey", PrivateMatch_ToggleSurveyRing )
 		AddCallback_GameStateEnter( eGameState.Playing, OnSpectatorStarted )
+		AddCallback_GameStateEnter( eGameState.Resolution, PrivateMatch_OnResolution )
 		AddFirstPersonSpectateStartedCallback( OnFPSSpectatorStarted )
 		AddThirdPersonSpectateStartedCallback( OnTPSSpectatorStarted )
 		AddFreeCamSpectateStartedCallback( OnFreecamSpectatorStarted )
@@ -174,31 +155,20 @@ void function PrivateMatch_Init()
 		
 	#if CLIENT || SERVER
 	
-		              
-		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchKickPlayer", "entity" )
-		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchSetPlayerTeam", "entity", "int", TEAM_UNASSIGNED, TEAM_MULTITEAM_LAST )
-		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchToggleStartMatch" )
-		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchSetStartMatch", "bool" )
-		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchToggleReady" )
-		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchSetReady", "bool" )
-		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchSetPreloading", "bool" )
-		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchToggleAssignSelf" )
-		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchToggleTeamRenaming" )
-		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchToggleAdminOnlyChat" )
+		// admin logic
+		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchKickPlayer", "typed_entity", "player" )
+		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchSetPlayerTeam", "typed_entity", "player", "int", TEAM_UNASSIGNED, TEAM_MULTITEAM_LAST )
 		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchToggleAimAssist" )
 		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchToggleAnonymousMode" )
-		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchSetTeamName", "int", 0, INT_MAX, "string" )
-		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchSetPlaylist", "string" )
-		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchSetAdminConfig", "int", 0, INT_MAX, "bool" )
+		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchSetPlaylist", "int", 0, GetPlaylistCount() - 1 )
+		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchSetAdminConfig", "int", 0, ACM_COUNT, "bool" )
 		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchEndMatchEarly" )
 	
-		                 
-		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchChangeObserverTarget", "entity" )
-		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchToggleObserverHighlights" )
+		// observer logic
+		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchChangeObserverTarget", "typed_entity", "player" )
 		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchToggleSurveyRing" )
 		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchRefreshSurveyRing" )
 		Remote_RegisterServerFunction( "ClientCallback_PrivateMatchReportObserverTargetChanged" )
-		Remote_RegisterServerFunction( "ClientCallback_RefreshObserverHighlights" )
 	#endif
 
 	int maxTeams
@@ -206,70 +176,31 @@ void function PrivateMatch_Init()
 
 void function PrivateMatch_RegisterNetworking()
 {
-	RegisterNetworkedVariable( "canAssignPlayers", SNDC_GLOBAL, SNVT_BOOL, false )
-	RegisterNetworkedVariable( "canAssignSelf", SNDC_GLOBAL, SNVT_BOOL, true )
-	RegisterNetworkedVariable( "adminOnlyChat", SNDC_GLOBAL, SNVT_BOOL, true )
-	RegisterNetworkedVariable( "canPlayersRenameTeams", SNDC_GLOBAL, SNVT_BOOL, false )
-	RegisterNetworkedVariable( "readiness", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
-	RegisterNetworkedVariable( "selectedPlaylistIndex", SNDC_GLOBAL, SNVT_INT, -1 )
-	RegisterNetworkedVariable( "startCountdown", SNDC_GLOBAL, SNVT_INT, -1 )
 	RegisterNetworkedVariable( "lastSquadEliminated", SNDC_GLOBAL, SNVT_INT, -1 )
 
 	Remote_RegisterClientFunction( "ServerCallback_EnableGameStatusMenu", "bool" )
-	Remote_RegisterClientFunction( "ServerCallback_PrivateMatch_ManageHighlights" )
 	Remote_RegisterClientFunction( "ServerCallback_PrivateMatch_SquadEliminated", "int", TEAM_INVALID, 60, "int", 0, 60 )
-	RegisterNetworkedVariable( NV_OBSERVER_HIGHLIGHT_ENABLED, SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 
 
 	#if CLIENT || SERVER
 		RegisterNetworkedVariable( NV_OBSERVER_SURVERY_RING_ENABLED, SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 	#endif
 
-	#if SERVER
-		// Additional netvars not needed
-	#endif
-
 	#if CLIENT
-		// NonRewind callbacks — SDK event-driven system
-		RegisterNetworkedVariableChangeCallback_int( "selectedPlaylistIndex", void function( entity ent, int oldVal, int newVal, bool changed ) { OnSelectedPlaylistIndexChanged( ent, newVal ) } )
-		RegisterNetworkedVariableChangeCallback_int( "startCountdown", void function( entity ent, int oldVal, int newVal, bool changed ) { OnStartCountdownChanged( ent, newVal ) } )
-		RegisterNetworkedVariableChangeCallback_bool( NV_OBSERVER_HIGHLIGHT_ENABLED, void function( entity ent, bool oldVal, bool newVal, bool changed ) { ObserverHighlightEnableChanged( ent, newVal ) } )
-
 		AddCallback_OnGameStateChanged( PrivateMatch_OnGameStateChanged )
-		RegisterNetworkedVariableChangeCallback_int( "lastSquadEliminated", void function( entity ent, int oldVal, int newVal, bool changed ) { PrivateMatch_ClientOnSquadEliminated( ent, newVal ) } )
+		RegisterNetVarIntChangeCallback( "lastSquadEliminated", PrivateMatch_ClientOnSquadEliminated )
 	#endif
 }
 
 #if CLIENT
-
+// Note value passed in needs to be a Team, if an alliance is passed in the logic breaks
 string function PrivateMatch_GetTeamName( int teamIndex )
 {
-	Assert( teamIndex >= TEAM_MULTITEAM_FIRST )
+	Assert( teamIndex > TEAM_INVALID ) // Make sure team is not invalid
 	string teamName = GameRules_GetTeamName( teamIndex )
 	string defaultTeamName = ( AllianceProximity_IsUsingAlliances() )?Localize( "#TEAM_NUMBERED", AllianceProximity_GetAllianceFromTeam( teamIndex ) + 1 ) :Localize( "#TEAM_NUMBERED", teamIndex - 1 )
 
 	return teamName != "" ? teamName : defaultTeamName
-}
-
-void function PrivateMatch_BeginStartMatch()
-{
-	if( !true /* HasMatchAdminRole() S3 stub */ || PrivateMatch_IsCountdownRunning() )
-		return
-
-	                                                                                    
-	                                                                  
-	  	                                                                             
-	int maxTeams = PrivateMatch_GetMaxTeamsForSelectedGamemode()
-	for ( int i = TEAM_MULTITEAM_FIRST; i < TEAM_MULTITEAM_FIRST + maxTeams; ++i )
-	{
-		if( PrivateMatch_GetTeamName( i ) != GameRules_GetTeamName( i ) )
-		{
-			Remote_ServerCallFunction( "ClientCallback_PrivateMatchSetTeamName", i, PrivateMatch_GetTeamName( i ) )
-		}
-	}
-
-	if( !PrivateMatch_IsCountdownRunning() )
-		Remote_ServerCallFunction( "ClientCallback_PrivateMatchToggleStartMatch" )
 }
 
 int function PrivateMatch_SortPlayersByName( entity a, entity b )
@@ -347,14 +278,6 @@ void function PrivateMatch_OpenGameStatusMenu()
 		RunUIScript( "OpenPrivateMatchGameStatusMenu", null )
 }
 
-void function PrivateMatch_ToggleHighlights( entity player )
-{
-	if ( player.GetTeam() == TEAM_SPECTATOR )
-	{
-		Remote_ServerCallFunction( "ClientCallback_PrivateMatchToggleObserverHighlights" )
-	}
-}
-
 void function PrivateMatch_ToggleSurveyRing( entity player )
 {
 	if( player.GetTeam() == TEAM_SPECTATOR )
@@ -364,7 +287,7 @@ void function PrivateMatch_ToggleSurveyRing( entity player )
 	}
 }
 
-#endif         
+#endif //CLIENT
 
 #if SERVER
 void function PrivateMatch_KickPlayersInBadTeams( string playlistName )
@@ -385,13 +308,13 @@ void function PrivateMatch_SetUpTeamRosters( string playlistName )
 	file.playlistMaxTeams = GetPlaylistVarInt( file.selectedPlaylist, MAX_TEAMS_PLAYLIST_VAR, 20 )
 	file.playlistTeamSize = maxPlayers / file.playlistMaxTeams
 
-	// #if SERVER
-	// 	int lastTeamIdx = (TEAM_MULTITEAM_FIRST + file.playlistMaxTeams) <= ABSOLUTE_MAX_TEAMS ? (TEAM_MULTITEAM_FIRST + file.playlistMaxTeams) : ABSOLUTE_MAX_TEAMS
-	// 	for ( int i = TEAM_MULTITEAM_FIRST; i < lastTeamIdx; i++ )
-	// 		GameRules_SetTeamName( i, "" ) // native not available
-	// #endif
+	#if SERVER
+		int lastTeamIdx = (TEAM_MULTITEAM_FIRST + file.playlistMaxTeams) <= ABSOLUTE_MAX_TEAMS ? (TEAM_MULTITEAM_FIRST + file.playlistMaxTeams) : ABSOLUTE_MAX_TEAMS
+		for ( int i = TEAM_MULTITEAM_FIRST; i < lastTeamIdx; i++ )
+			GameRules_SetTeamName( i, "" )
+	#endif
 
-	                                                                                                                                      
+	//printf( "PrivateMatchLobbyDebug: Rosters initialized: %i players per team, %i teams", file.playlistTeamSize, file.playlistMaxTeams )
 }
 
 
@@ -400,9 +323,9 @@ void function PrivateMatch_OnPlayerConnecting( entity player )
 {
 	Assert( IsPrivateMatchLobby() )
 
-	if ( true /* player.HasMatchAdminRole() S3 stub */ )
-		SetTeam( player, TEAM_SPECTATOR )
-	else
+	//if ( player.HasMatchAdminRole() )
+	//	SetTeam( player, TEAM_SPECTATOR )
+	//else
 		SetTeam( player, TEAM_UNASSIGNED )
 }
 
@@ -411,10 +334,11 @@ void function PrivateMatch_OnPlayerConnecting( entity player )
 void function PrivateMatch_OnPlayerConnected( entity player )
 {
 	Assert( IsPrivateMatchLobby() )
-
-	if ( true /* player.HasMatchAdminRole() S3 stub */ )
-		SetTeam( player, TEAM_SPECTATOR )
-	else
+	
+	// TODO: This is where we would need to load from the private match settings JSON
+	//if ( player.HasMatchAdminRole() )
+	//	SetTeam( player, TEAM_SPECTATOR )
+	//else
 		SetTeam( player, TEAM_UNASSIGNED )
 }
 
@@ -430,14 +354,19 @@ void function PrivateMatch_EntitiesDidLoad()
 	PrivateMatch_InitPostGameStats()
 }
 
-void function ClientCallback_PrivateMatchSetPlaylist( entity player, string playlistName )
+void function ClientCallback_PrivateMatchSetPlaylist( entity player, int playlistIndex )
 {
 	if ( !IsPrivateMatchLobby() )
 		return
 
-	if ( !true /* player.HasMatchAdminRole() S3 stub */ )
+	//if ( !player.HasMatchAdminRole() )
 		return
 
+	Assert( 0 <= playlistIndex && playlistIndex < GetPlaylistCount(), "Invalid playlistIndex passed through callback, did the playlist count change since registration?"  )
+	string playlistName = expect string( GetPlaylistName( playlistIndex ) )
+
+	// this seems weird, but the index here isn't the same as the above, this is from
+	// as script defined cache, where as the one passed in is the global one from the playlist interface
 	if ( GetPlaylistIndexForName( playlistName ) < 0 )
 		return
 
@@ -468,6 +397,7 @@ void function ClientCallback_PrivateMatchSetPlayerTeam( entity player, entity re
 
 void function ClientCallback_PrivateMatchSetTeamName( entity player, int teamIndex, string newTeamName )
 {
+	Assert(1 == 0, "ClientCallback_PrivateMatchSetTeamName is legacy code and not expected to be used, fix usage of string in rpc to use")
 	if ( !IsPrivateMatchLobby() )
 		return
 
@@ -499,11 +429,13 @@ void function StartMatch()
 			}
 		}
 
+		// TODO: Matchmaking teams and code/script teams seem to disagree
 		int desiredTeamIndex = teamPlayer.GetTeam()
 		SetTeam( teamPlayer, TEAM_UNASSIGNED )
 		SetTeam( teamPlayer, desiredTeamIndex )
 	}
 
+	// TODO: Temp hack to transfer team names from lobby
 	printt( "SetPrivateMatchStats - MaxTeams = "+ ( file.playlistMaxTeams + TEAM_MULTITEAM_FIRST ) + "\nCallstack:\n" + GetStack() )
 	for ( int teamIndex = TEAM_MULTITEAM_FIRST; teamIndex < file.playlistMaxTeams + TEAM_MULTITEAM_FIRST; teamIndex++ )
 	{
@@ -512,104 +444,25 @@ void function StartMatch()
 		printf( "PrivateMatchLobbyDebug: Setting team name for team %i to %s", teamIndex, privateMatchStats.teamName )
 		SetPrivateMatchStats( teamIndex, privateMatchStats )
 	}
-
+	// TODO: End temp hack
+		
 	LaunchPrivateMatchPlaylist( file.selectedPlaylist )
 
+	// If the aim assist configurations differ, set the global aim assist value to match the
+	// private match configuration.
 	bool aimAssistConfig = GetConVarBool( CUSTOM_AIM_ASSIST_CONVAR_NAME )
 	bool globalAimAssistConfig = GetConVarBool( GLOBAL_AIM_ASSIST_CONVAR_NAME )
 	if ( aimAssistConfig != globalAimAssistConfig )
 	{
 		SetConVarBool( GLOBAL_AIM_ASSIST_CONVAR_NAME, aimAssistConfig )
 	}
+	// Store the global state here
 	file.cachedAimAssistOverride = globalAimAssistConfig
-}
-
-void function ClientCallback_PrivateMatchToggleStartMatch( entity player )
-{
-	if ( !IsPrivateMatchLobby() || !true /* player.HasMatchAdminRole() S3 stub */ )
-		return
-
-	if ( PrivateMatch_IsCountdownRunning() )
-		SetGlobalNetInt( "startCountdown", -1 )
-	else
-		thread StartMatch()
-}
-
-void function ClientCallback_PrivateMatchSetStartMatch( entity player, bool doStart )
-{
-	if ( !IsPrivateMatchLobby() || !true /* player.HasMatchAdminRole() S3 stub */ )
-		return
-
-	if ( doStart )
-		thread StartMatch()
-	else
-		SetGlobalNetInt( "startCountdown", -1 )
-}
-
-void function ClientCallback_PrivateMatchToggleReady( entity player )
-{
-	if ( !IsPrivateMatchLobby() )
-		return
-
-	int readiness = player.GetPlayerNetInt( "readiness" )
-	bool isReady = (readiness & PRIVATEMATCH_ISREADY_BIT) != 0
-	if ( isReady )
-		player.SetPlayerNetInt( "readiness", readiness & ~PRIVATEMATCH_ISREADY_BIT )
-	else
-		player.SetPlayerNetInt( "readiness", readiness | PRIVATEMATCH_ISREADY_BIT )
-}
-
-void function ClientCallback_PrivateMatchSetReady( entity player, bool ready )
-{
-	if ( !IsPrivateMatchLobby() )
-		return
-
-	int readiness = player.GetPlayerNetInt( "readiness" )
-	if ( ready )
-		player.SetPlayerNetInt( "readiness", readiness | PRIVATEMATCH_ISREADY_BIT )
-	else
-		player.SetPlayerNetInt( "readiness", readiness & ~PRIVATEMATCH_ISREADY_BIT )
-}
-
-void function ClientCallback_PrivateMatchSetPreloading( entity player, bool preloading )
-{
-	if ( !IsPrivateMatchLobby() )
-		return
-
-	int readiness = player.GetPlayerNetInt( "readiness" )
-	if ( preloading )
-		player.SetPlayerNetInt( "readiness", readiness | PRIVATEMATCH_ISPRELOADING_BIT )
-	else
-		player.SetPlayerNetInt( "readiness", readiness & ~PRIVATEMATCH_ISPRELOADING_BIT )
-}
-
-void function ClientCallback_PrivateMatchToggleAssignSelf( entity player )
-{
-	if ( !IsPrivateMatchLobby() || !true /* player.HasMatchAdminRole() S3 stub */ )
-		return
-
-	SetGlobalNetBool( "canAssignSelf", !GetGlobalNetBool( "canAssignSelf" ) )
-}
-
-void function ClientCallback_PrivateMatchToggleTeamRenaming( entity player )
-{
-	if ( !IsPrivateMatchLobby() || !true /* player.HasMatchAdminRole() S3 stub */ )
-		return
-
-	SetGlobalNetBool( "canPlayersRenameTeams", !GetGlobalNetBool( "canPlayersRenameTeams" ) )
-}
-
-void function ClientCallback_PrivateMatchToggleAdminOnlyChat( entity player )
-{
-	if ( !IsPrivateMatchLobby() || !true /* player.HasMatchAdminRole() S3 stub */ )
-		return
-
-	SetGlobalNetBool( "adminOnlyChat", !GetGlobalNetBool( "adminOnlyChat" ) )
 }
 
 void function ClientCallback_PrivateMatchToggleAimAssist( entity player )
 {
-	if ( !IsPrivateMatchLobby() || !true /* player.HasMatchAdminRole() S3 stub */ )
+	if ( !IsPrivateMatchLobby())// || !player.HasMatchAdminRole() )
 		return
 
 	bool newAimAssistSetting = !GetConVarBool( CUSTOM_AIM_ASSIST_CONVAR_NAME )
@@ -618,7 +471,7 @@ void function ClientCallback_PrivateMatchToggleAimAssist( entity player )
 
 void function ClientCallback_PrivateMatchToggleAnonymousMode( entity player )
 {
-	if ( !IsPrivateMatchLobby() || !true /* player.HasMatchAdminRole() S3 stub */ )
+	if ( !IsPrivateMatchLobby())// || !player.HasMatchAdminRole() )
 		return
 
 	bool anonymize = !GetConVarBool( CUSTOM_ANONYMOUS_MODE_CONVAR_NAME )
@@ -636,13 +489,13 @@ void function ClientCallback_PrivateMatchChangeObserverTarget( entity player, en
 	if ( player.GetTeam() != TEAM_SPECTATOR )
 		return
 
-	printf( "Observer: User %s switched to spectating %s", player.GetPlayerName(), target.GetPlayerName() )
+	printf( "Observer: User %s switched to spectating %s", player.GetPINNucleusPid(), target.GetPINNucleusPid() )
 	player.SetObserverTarget( target )
 }
 
 void function ClientCallback_PrivateMatchSetAdminConfig( entity player, int chatMode, bool spectatorChat )
 {
-	if ( !true /* player.HasMatchAdminRole() S3 stub */ )
+	//if ( !player.HasMatchAdminRole() )
 		return
 
 	if ( player.GetTeam() != TEAM_SPECTATOR )
@@ -684,7 +537,7 @@ void function ClientCallback_PrivateMatchEndMatchEarly( entity player )
 		return
 	}
 
-	if ( !true /* player.HasMatchAdminRole() S3 stub */ )
+	//if ( !player.HasMatchAdminRole() )
 	{
 		printf( "Attempting to end match early from none admin player" )
 		return
@@ -704,12 +557,12 @@ void function ClientCallback_PrivateMatchEndMatchEarly( entity player )
 
 void function ClientCallback_PrivateMatchKickPlayer( entity player, entity kickPlayer )
 {
-	if ( !true /* player.HasMatchAdminRole() S3 stub */ )
+	//if ( !player.HasMatchAdminRole() )
 		return
-
+		
 	if ( !IsValid( kickPlayer ) )
 		return
-
+		
 	PrivateMatchKickPlayer( kickPlayer )
 }
 
@@ -719,9 +572,19 @@ void function PrivateMatch_OnWinnerDetermined()
 	if ( !IsPrivateMatch() )
 		return
 
+	                        
+	if ( GameMode_IsActive( eGameModes.CONTROL ) )
+		return
+       
+
+	                        
+	if ( GameModeVariant_IsActive( eGameModeVariants.FREEDM_GUNGAME ) ) //TODO: Remove this an set up post game stats for private matches
+		return
+       
+
 	if ( IsRoundBased() )
 	{
-		if( !GetGlobalNetBool("roundScoreLimitComplete") )
+		if( !GetGlobalNonRewindNetBool("roundScoreLimitComplete") )
 		{
 			return
 		}
@@ -733,7 +596,7 @@ void function PrivateMatch_OnWinnerDetermined()
 		thread PrivateMatch_StoreStats()
 	}
 
-	string endReason = GameRules_GetTeamName( GetWinningTeam() ) == "Unassigned" ? "Private Match Ended Early" : "Private Match Ended"
+	string endReason = GameRules_GetTeamName( GetWinningTeam() ) ==  "Unassigned" ? "Private Match Ended Early" : "Private Match Ended"
 	foreach ( entity player in GetPlayerArray() )
 	{
 		if ( player.GetTeam() == TEAM_SPECTATOR )
@@ -741,13 +604,15 @@ void function PrivateMatch_OnWinnerDetermined()
 			Remote_CallFunction_Replay( player, "ServerCallback_EnableGameStatusMenu", false )
 		}
 
-		PIN_PlayerLeft( player, endReason )
+		//PIN_PlayerLeft( player, endReason, false )
 	}
 }
 
 
 void function PrivateMatch_OnPickLoadout()
 {
+	                         
+	//PrivateMatch_ClearStats()
 	int maxTeams = PrivateMatch_GetMaxTeamsForSelectedGamemode()
 	bool hasSpawnPointSelection = ForcedSpawn_UseForcedSpawning()
 
@@ -756,18 +621,20 @@ void function PrivateMatch_OnPickLoadout()
 		string currentTeamName = GameRules_GetTeamName(teamIndex)
 		if ( hasSpawnPointSelection && currentTeamName.len() > 1)
 		{
+			// We expect team names to be something like "MyTeam @ 52" indicating
 			array<string> parts = GetTrimmedSplitString( currentTeamName, "@" )
 
 			int selectedIndex = 0
-			if ( parts.len() > 1 && parts[1].len() > 0 )
+			//if ( parts.len() > 1 && parts[1].isnumeric() )
 			{
-				selectedIndex = parts[1].tointeger() - 1
+				//selectedIndex = ConvertStringToInt( parts[1] ) - 1
 
 				printt("Team", currentTeamName, "request Spawn #", selectedIndex)
-				ForcedSpawn_TrySetTeamSpawnFromLocationIndex( teamIndex, selectedIndex )
+				//ForcedSpawn_TrySetTeamSpawnFromLocationIndex( teamIndex, selectedIndex )
 			}
 		}
 	}
+                                
 }
 
 
@@ -787,9 +654,10 @@ void function PrivateMatch_OnPlaying()
 	{
 		if ( player.GetTeam() == TEAM_SPECTATOR )
 		{
-			Remote_CallFunction_Replay( player, "ServerCallback_PrivateMatch_ManageHighlights" )
+			Remote_CallFunction_Replay( player, "ServerCallback_ManageHighlights" )
 			Highlight_RefreshObserverHighlights( player )
 
+			//PutPlayerInObserverMode( player, OBS_MODE_IN_EYE )
 			Remote_CallFunction_Replay( player, "ServerCallback_EnableGameStatusMenu", true )
 		}
 	}
@@ -799,6 +667,7 @@ void function PrivateMatch_OnPlaying()
 void function PrivateMatch_ClearStats()
 {
 	printf( "PrivateMatch_ClearStats()" )
+	printt( "SetPrivateMatchStats - MaxTeams = "+ ( GetCurrentPlaylistVarInt( "maxTeams", 20 ) + TEAM_MULTITEAM_FIRST ) + "\nCallstack:\n" + GetStack() )
 	for ( int teamIndex = TEAM_MULTITEAM_FIRST; teamIndex < GetCurrentPlaylistVarInt( "maxTeams", 20 ) + TEAM_MULTITEAM_FIRST; teamIndex++ )
 	{
 		PrivateMatchStatsStruct pmss
@@ -820,13 +689,56 @@ int function PrivateMatch_GetTeamFinalPlacement( int teamIndex )
 
 void function PrivateMatch_StoreStats()
 {
-	WaitFrame()
+	WaitFrame() // Need to wait a frame so kill callbacks and complete (game goes into WinnerDetermined gamestate before kill callback is even finished)
 
 	int winningTeamIndex = GetWinningTeam()
 	file.teamFinalPlacementArray.insert( 0, winningTeamIndex )
 
-	// Stub: GameSummary_GetTeamDataOrNull always returns null, so this loop is disabled.
 	int playerIndex = 0
+	for ( int teamIndex = TEAM_MULTITEAM_FIRST; teamIndex < TEAM_MULTITEAM_LAST; teamIndex++ )
+	{
+		table< int, GameSummarySquadData > ornull squadDataMap = GameSummary_GetTeamDataOrNull( teamIndex )
+
+		if ( squadDataMap == null )
+		{
+			continue
+		}
+
+		expect table<int, GameSummarySquadData>( squadDataMap )
+
+		int rank = file.teamFinalPlacementArray.find( teamIndex ) + 1
+		printt( "PrivateMatch_StoreStats", teamIndex, rank )
+
+		printt( "SetPrivateMatchStats - squadDataMap.Len = " + squadDataMap.len() + "\nCallstack:\n" + GetStack() )
+		foreach ( teamMemberIndex, playerSummaryData in squadDataMap )
+		{
+			PrivateMatchStatsStruct privateMatchStats
+			privateMatchStats.playerName = playerSummaryData.playerName
+			privateMatchStats.characterName = ItemFlavor_GetCharacterRef( playerSummaryData.character )
+			privateMatchStats.kills = playerSummaryData.kills
+			privateMatchStats.assists = playerSummaryData.assists
+			privateMatchStats.knockdowns = playerSummaryData.knockdowns
+			privateMatchStats.damageDealt = playerSummaryData.damageDealt
+			privateMatchStats.shots = playerSummaryData.shots
+			privateMatchStats.hits = playerSummaryData.hits
+			privateMatchStats.headshots = playerSummaryData.headshots
+			privateMatchStats.revivesGiven = playerSummaryData.revivesGiven
+			privateMatchStats.respawnsGiven = playerSummaryData.respawnsGiven
+			privateMatchStats.survivalTime = playerSummaryData.survivalTime
+			privateMatchStats.hardware = playerSummaryData.hardware
+			privateMatchStats.platformUid = playerSummaryData.platformUid
+			privateMatchStats.teamName = GameRules_GetTeamName( teamIndex )
+			privateMatchStats.teamPlacement = rank
+			privateMatchStats.teamNum = teamIndex
+			entity player = GetEntityFromEncodedEHandle( playerSummaryData.eHandle )
+			privateMatchStats.alive = player ? player.IsEntAlive() : false
+
+			printt( "PrivateMatch_StoreStats: Team %i Player %i: Name: %s, kills: %i, team name: %s, team placement: %i", teamIndex, teamMemberIndex, privateMatchStats.playerName, privateMatchStats.kills, privateMatchStats.teamName, privateMatchStats.teamPlacement )
+			SetPrivateMatchStats( playerIndex, privateMatchStats )
+
+			playerIndex++
+		}
+	}
 
 	if ( !IsPrivateMatch() )
 	{
@@ -837,10 +749,62 @@ void function PrivateMatch_StoreStats()
 }
 
 
+PrivateMatchStatsStruct function MOCK_GetPrivateMatchStats( int index )
+{
+	var randomSeed = CreateRandomSeed( index )
+	PrivateMatchStatsStruct privateMatchStats
+	if ( index < 60 )
+	{
+		privateMatchStats.playerName = "PlayerName" + index
+		privateMatchStats.kills = RandomIntSeeded( randomSeed, 20 )
+		privateMatchStats.assists = RandomIntSeeded( randomSeed, 10 )
+		privateMatchStats.damageDealt = RandomIntSeeded( randomSeed, 800 )
+		privateMatchStats.survivalTime = RandomIntSeeded( randomSeed, 900 )
+		privateMatchStats.hardware = "hardware" + index
+		privateMatchStats.platformUid = "platformUID" + index
+		privateMatchStats.teamName = "TeamName" + (TEAM_MULTITEAM_FIRST + (index % 20))
+		privateMatchStats.teamPlacement = RandomIntSeeded( randomSeed, 19 )
+		privateMatchStats.teamNum = TEAM_MULTITEAM_FIRST + (index % 20)
+	}
+
+	return privateMatchStats
+}
+
+
+void function PrivateMatch_DumpStats()
+{
+	for ( int playerIndex = 0; playerIndex < ABSOLUTE_MAX_TEAMS; playerIndex++ )
+	{
+		PrivateMatchStatsStruct privateMatchStats = GetPrivateMatchStats( playerIndex )
+		if ( privateMatchStats.teamName == "" )
+			continue
+
+		printt( "privateMatchStats.playerName", privateMatchStats.playerName )
+		printt( "privateMatchStats.kills", privateMatchStats.kills )
+		printt( "privateMatchStats.assists", privateMatchStats.assists )
+		printt( "privateMatchStats.damageDealt", privateMatchStats.damageDealt )
+		printt( "privateMatchStats.survivalTime", privateMatchStats.survivalTime )
+		printt( "privateMatchStats.hardware", privateMatchStats.hardware )
+		printt( "privateMatchStats.platformUid", privateMatchStats.platformUid )
+		printt( "privateMatchStats.teamName", privateMatchStats.teamName )
+		printt( "privateMatchStats.teamPlacement", privateMatchStats.teamPlacement )
+		printt( "privateMatchStats.teamNum", privateMatchStats.teamNum )
+		printt( "" )
+	}
+}
+
+
 void function PrivateMatch_InitPostGameStats()
 {
 	for ( int playerIndex = 0; playerIndex < ABSOLUTE_MAX_TEAMS; playerIndex++ )
 	{
+		/*
+				{
+					PrivateMatchStatsStruct tempStats = MOCK_GetPrivateMatchStats( playerIndex )
+					SetPrivateMatchStats( playerIndex, tempStats )
+				}
+		*/
+
 		PrivateMatchStatsStruct privateMatchStats = GetPrivateMatchStats( playerIndex )
 		if ( privateMatchStats.teamName == "" )
 		{
@@ -882,46 +846,20 @@ void function OnSquadEliminated( int teamIndex )
 		if ( player.GetTeam() == TEAM_SPECTATOR )
 			Remote_CallFunction_NonReplay( player, "ServerCallback_PrivateMatch_SquadEliminated", teamIndex, PrivateMatch_GetTeamFinalPlacement( teamIndex ) )
 }
-
-void function ClientCallback_PrivateMatchToggleObserverHighlights( entity player )
-{
-	if ( player.GetTeam() != TEAM_SPECTATOR )
-		return
-
-	bool current = player.GetPlayerNetBool( NV_OBSERVER_HIGHLIGHT_ENABLED )
-	player.SetPlayerNetBool( NV_OBSERVER_HIGHLIGHT_ENABLED, !current )
-}
-
-// ClientCallback_RefreshObserverHighlights — moved to sh_highlight.gnut (S22)
-
 #endif //SERVER
-
-
-
-string function PrivateMatch_GetSelectedPlaylistName()
-{
-	int playlistIndex = GetGlobalNetInt( "selectedPlaylistIndex" )
-	if ( playlistIndex > 0 )
-	{
-		string ornull playlistName = GetPlaylistName( playlistIndex )
-		return playlistName != null ? expect string( playlistName ) : ""
-	}
-
-	return ""
-}
 
 
 bool function IsPrivateMatchLobby()
 {
 	#if UI
-		                                
+		//Defensive fix for R5DEV-131893
 		if ( !IsConnected() )
 			return false
 	#endif
 
 	if ( !IsPrivateMatch() )
 	{
-		if ( GetCurrentPlaylistName() != "private_match" )                
+		if ( GetCurrentPlaylistName() != "private_match" ) // TODO: R5DEV-
 			return false
 	}
 
@@ -936,70 +874,11 @@ bool function IsPrivateMatchLobby()
 	return IsLobbyMapName( mapName )
 }
 
-#if SERVER || CLIENT
-bool function PrivateMatch_IsCountdownRunning()
-{
-	return GetGlobalNetInt( "startCountdown" ) >= 0
-}
-
-bool function PrivateMatch_CanAssignPlayers( entity player )
-{
-	if( PrivateMatch_IsCountdownRunning() )
-		return false
-
-	if ( true /* player.HasMatchAdminRole() S3 stub */ )
-		return true
-
-	return GetGlobalNetBool( "canAssignPlayers" )
-}
-
-bool function PrivateMatch_CanAssignSelf( entity player )
-{
-	if( PrivateMatch_IsCountdownRunning() )
-		return false
-
-	if ( true /* player.HasMatchAdminRole() S3 stub */ )
-		return true
-
-	return GetGlobalNetBool( "canAssignSelf" )
-}
-
-bool function PrivateMatch_CanRenameTeam( entity player, int teamIndex )
-{
-	if ( true /* player.HasMatchAdminRole() S3 stub */ )
-		return true
-
-	if ( player.GetTeam() != teamIndex )
-		return false
-
-	return GetGlobalNetBool( "canPlayersRenameTeams" )
-}
-#endif
-
-#if CLIENT
-void function OnSelectedPlaylistIndexChanged( entity player, int newIndex )
-{
-	if ( !IsPrivateMatchLobby() )
-		return
-
-	                                                                                     
-	RunUIScript( "PrivateMatch_PlaylistNameChanged" )
-}
-
-void function OnStartCountdownChanged( entity player, int newVal )
-{
-	if ( !IsPrivateMatchLobby() )
-		return
-		
-	RunUIScript( "PrivateMatch_RefreshStartCountdown", newVal )
-}
-#endif         
-
-                                                                                                              
-  
-                                    
-  
-                                                                                                              
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Private Match Non-Lobby Functions
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #if SERVER
 void function PrivateMatch_Match_Init()
@@ -1026,6 +905,7 @@ void function PrivateMatch_Match_Init()
 		}
 	}
 
+	//Used to update Game Status Menu
 	AddCallback_OnClientConnectionRestored( PrivateMatch_OnClientConnectionRestored )
 }
 
@@ -1063,29 +943,12 @@ void function ClientCallback_PrivateMatchReportObserverTargetChanged( entity obs
 	if ( !newTarget.IsPlayer() )
 		return
 
-	if ( newTarget.IsNPC() )
+	if ( newTarget.IsBot() )
 		return
 
-	printf( "PrivateMatchObserver: Observer %s changed target to %s (%s)", observer.GetPlayerName(), newTarget.GetPlayerName(), newTarget.GetPlayerName() )
+	printf( "PrivateMatchObserver: Observer %s changed target to %s (%s)", observer.GetPINNucleusPid(), newTarget.GetPINNucleusPid(), newTarget.GetPlayerName() )
 }
 #endif //SERVER
-
-
-#if SERVER || CLIENT
-bool function PrivateMatch_IsObserverHighlightEnabled( entity observer )
-{
-	if ( !IsValid( observer ) )
-		return false
-
-	if ( !observer.IsPlayer() )
-		return false
-
-	if ( observer.GetTeam() != TEAM_SPECTATOR )
-		return false
-
-	return observer.GetPlayerNetBool( NV_OBSERVER_HIGHLIGHT_ENABLED )
-}
-#endif
 
 #if UI
 void function PrivateMatch_CreateMatchEndEarlyDialog()
@@ -1101,26 +964,34 @@ void function PrivateMatch_CreateMatchEndEarlyDialog()
 }
 #endif
 
-#if CLIENT
-void function ObserverHighlightEnableChanged( entity observer, bool newValue )
+#if UI
+void function PrivateMatch_SetSelectedPlaylist( string playlistName )
 {
-	if ( observer.GetTeam() != TEAM_SPECTATOR )
-		return
-
-	if ( observer == GetLocalClientPlayer() )
+	// to avoid passing string across network, find the index for this playlist name
+	// possible TODO: refactor system so the index is used through out, and name is only found when need to be displayed
+	int playlistCount = GetPlaylistCount()
+	int playlistIndex = -1
+	for( playlistIndex = 0; playlistIndex < playlistCount; playlistIndex++ )
 	{
-		if ( newValue == true )
-			Obituary_Print_Localized( Localize( "#TOURNAMENT_OBSERVER_HIGHLIGHT_ENABLED" ) )
-		else if ( newValue == false )
-			Obituary_Print_Localized( Localize( "#TOURNAMENT_OBSERVER_HIGHLIGHT_DISABLED" ) )
+		if( playlistName == GetPlaylistName( playlistIndex ) )
+			break
 	}
 
-	array<entity> players = GetPlayerArray_Alive()
-	foreach ( player in players )
+	if( playlistIndex < playlistCount )
 	{
-		ManageHighlightEntity( player )
+		Remote_ServerCallFunction( "ClientCallback_PrivateMatchSetPlaylist", playlistIndex )
 	}
 }
+#endif
+
+#if CLIENT
+#if DEV
+void function DEV_ShowSpectatorButtonHints()
+{
+	OnSpectatorStarted()
+	OnToggleButtonHintsVisibility( KEY_B )
+}
+#endif//DEV
 
 void function OnSpectatorStarted()
 {
@@ -1128,15 +999,15 @@ void function OnSpectatorStarted()
 
 	entity localClientPlayer = GetLocalClientPlayer()
 
-	                                          
+	// we create the hints only the first time
 	if ( !file.buttonHintsCreated && localClientPlayer.GetTeam() == TEAM_SPECTATOR )
 	{
-		                    
-		file.buttonHints.push(CreatePermanentCockpitPostFXRui( $"ui/observer_panel_hints.rpak", MINIMAP_Z_FRAME ) )
-		file.buttonHints.push(CreatePermanentCockpitPostFXRui( $"ui/observer_controller_hints.rpak",  MINIMAP_Z_FRAME) )
-		file.buttonHints.push(CreatePermanentCockpitPostFXRui( $"ui/observer_keyboard_hints.rpak", MINIMAP_Z_FRAME ) )
-		file.buttonHints.push(CreatePermanentCockpitPostFXRui( $"ui/observer_dpads_hints.rpak",  MINIMAP_Z_FRAME ) )
-		file.buttonHints.push(CreatePermanentCockpitPostFXRui( $"ui/observer_camera_controls_hints.rpak", MINIMAP_Z_FRAME ) )
+		// creating the ruis
+		file.buttonHints.push(CreateFullscreenPostFXRui( $"ui/observer_panel_hints.rpak", RUI_SORT_SCREENFADE + 1 ) )
+		file.buttonHints.push(CreateFullscreenPostFXRui( $"ui/observer_controller_hints.rpak",  RUI_SORT_SCREENFADE + 1) )
+		file.buttonHints.push(CreateFullscreenPostFXRui( $"ui/observer_keyboard_hints.rpak", RUI_SORT_SCREENFADE + 1 ) )
+		file.buttonHints.push(CreateFullscreenPostFXRui( $"ui/observer_dpads_hints.rpak",  RUI_SORT_SCREENFADE + 1 ) )
+		file.buttonHints.push(CreateFullscreenPostFXRui( $"ui/observer_camera_controls_hints.rpak", RUI_SORT_SCREENFADE + 1 ) )
 
 #if NX_PROG || PC_PROG_NX_UI		
 		RuiSetString( file.buttonHints[1], "yButtonLabel", "#OBSERVER_CONTROLLER_X_BUTTON" )
@@ -1158,10 +1029,10 @@ void function OnSpectatorStarted()
 		RuiSetString( file.buttonHints[1], "aButtonDescLabel", "#OBSERVER_CONTROLLER_A_BUTTON_DESC" )
 #endif
 
-		                                                                       
+		// just setting this so we use it to verify if the HUD has been created
 		file.buttonHintsCreated = true
 
-		                                                                        
+		// allow players to toggle button hints visibility by pressing B or Back
 		RegisterButtonPressedCallback( KEY_B, OnToggleButtonHintsVisibility )
 		RegisterConCommandTriggeredCallback( "toggle_observer_btn_hints", OnToggleButtonHintsVisibility )
 	}
@@ -1248,26 +1119,20 @@ void function OnToggleButtonHintsVisibility( var button )
 	file.buttonHintsHidden = !file.buttonHintsHidden
 }
 
-                                                             
-   
-  	                                        
-  	                                           
-  		      
-  
-  	                                                               
-  	                                                                     
-   
-
-void function ServerCallback_PrivateMatch_ManageHighlights()
+void function PrivateMatch_OnResolution()
 {
-	printf( "ObserverHighlightDebug: Managing observer highlights for observer %s", GetLocalClientPlayer().GetPlayerName() )
-
-	array<entity> players = GetPlayerArray_Alive()
-	foreach ( player in players )
-	{
-		ManageHighlightEntity( player )
-	}
+	Signal( clGlobal.levelEnt, "GameModes_CompletedResolutionCleanup" )
 }
+
+//void function ServerCallback_PrivateMatch_ApplyHighlights()
+//{
+//	entity observer = GetLocalClientPlayer()
+//	if ( observer.GetTeam() != TEAM_SPECTATOR )
+//		return
+//
+//	observer.ClientCommand( "PrivateMatchToggleObserverHighlight" )
+//	//RefreshObserverHighlights( observer, observer.GetObserverTarget() )
+//}
 
 void function ServerCallback_PrivateMatch_SquadEliminated( int teamIdx, int placement )
 {
@@ -1279,32 +1144,13 @@ void function OnSpectatorTargetChanged( entity observer, entity prevTarget, enti
 	if ( observer.GetTeam() != TEAM_SPECTATOR )
 		return
 
-	bool showTeamName = true
-                       
-	if (IsGunGameActive())
-		showTeamName = false
-      
-                      
-	if (WinterExpress_IsModeEnabled())
-		showTeamName = false
-      
-
-	if ( IsValid( newTarget ) && ( newTarget.IsPlayer() || newTarget.IsNPC() ) && (newTarget != prevTarget) && showTeamName)
+	if ( IsValid( newTarget ) && newTarget.IsPlayer() && (newTarget != prevTarget) )
 	{
-		printf( "PrivateMatchObserver: Observer %s changed target to %s", observer.GetPlayerName(), newTarget.GetPlayerName() )
+		printf( "PrivateMatchObserver: Observer %s changed target to %s", observer.GetPINNucleusPid(), newTarget.GetPINNucleusPid() )
 		Remote_ServerCallFunction( "ClientCallback_PrivateMatchReportObserverTargetChanged" )
 		Remote_ServerCallFunction( "ClientCallback_PrivateMatchRefreshSurveyRing" )
 		PrivateMatch_UpdateChatTarget()
-		ShowTeamNameInHud()
 	}
-	else
-	{
-		HideTeamNameInHud()
-	}
-
-	Remote_ServerCallFunction( "ClientCallback_RefreshObserverHighlights" )
-
-	                                                  
 }
 
 void function OnSpectatorModeChanged( entity observer )
@@ -1319,7 +1165,7 @@ entity function GetObserverPresetTarget()
 	{
 		foreach( entity player in GetPlayerArray() )
 		{
-			if( player.GetPlayerName() /* GetHashedEadpUserIdStr S3 stub */ == presetPlayerHash )
+			if( player.GetHashedEadpUserIdStr() == presetPlayerHash )
 				return player
 		}
 	}
@@ -1349,7 +1195,7 @@ void function PrivateMatch_OnGameStateChanged( int newVal )
 	if( newVal == eGameState.Playing )
 	{
 		entity observerTarget = GetObserverPresetTarget()
-		if( observerTarget != null )
+		if ( observerTarget != null && observerTarget.IsPlayer() )
 			Remote_ServerCallFunction( "ClientCallback_PrivateMatchChangeObserverTarget", observerTarget )
 	}
 	else if ( newVal == eGameState.WinnerDetermined )
@@ -1363,10 +1209,10 @@ void function PrivateMatch_OnGameStateChanged( int newVal )
 	else if ( newVal == eGameState.Resolution )
 	{
 		DeathScreenCreateNonMenuBlackBars()
-		                                                                                                                 
+		// If the game was ended by the host, display a special message letting the players know the game was ended early
 		if ( GameRules_GetTeamName( GetWinningTeam() ) == "Unassigned" )
 		{
-			                                                            
+			// Need to wait for mode script to first cleanup any open UI
 			thread function() : ( )
 			{
 				WaitSignal( clGlobal.levelEnt, "GameModes_CompletedResolutionCleanup" )
@@ -1379,8 +1225,8 @@ void function PrivateMatch_OnGameStateChanged( int newVal )
 			}()
 		}
 
-		                                                                     
-		                                                   
+		// If the cached aim assist override (the value we want to revert to)
+		// is different to what we already have, change it.
 		bool aimAssistConfig = GetConVarBool( CUSTOM_AIM_ASSIST_CONVAR_NAME )
 		if ( aimAssistConfig != file.cachedAimAssistOverride )
 		{
@@ -1401,9 +1247,14 @@ void function ChampionScreenSetWinningTeamName( var rui )
 	if ( !IsPrivateMatch() )
 		return
 
-	RuiSetString( rui, "winningTeamName", PrivateMatch_GetTeamName( GetWinningTeam() ).toupper() )
+	int winningTeamOrAlliance = GamemodeUtility_GetWinningTeamOrAlliance( true )
+	if( winningTeamOrAlliance != TEAM_INVALID )
+	{
+		int winningTeamIndex = AllianceProximity_IsUsingAlliances() ? AllianceProximity_GetRepresentativeTeamForAlliance( winningTeamOrAlliance ) : winningTeamOrAlliance
+		RuiSetString( rui, "winningTeamName", PrivateMatch_GetTeamName( winningTeamIndex ).toupper() )
+	}
 }
-#endif         
+#endif //CLIENT
 
 #if SERVER || CLIENT
 int function PrivateMatch_GetMaxTeamsForSelectedGamemode()

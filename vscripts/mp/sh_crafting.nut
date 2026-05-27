@@ -672,7 +672,7 @@ void function Crafting_RegisterNetworking()
 		RegisterNetworkedVariable( "Crafting_NumHarvesters", SNDC_GLOBAL, SNVT_INT, 0 )
 	}
 
-	RegisterNetworkedVariable( "Crafting_StartTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
+	RegisterNetworkedVariable( "Crafting_StartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
 
 #if SERVER || CLIENT
 	Remote_RegisterClientFunction( "ServerCallback_CL_MaterialsChanged", "int", -1, INT_MAX, "int", -1, INT_MAX, "int", 0, eWildLifeCampType.Count, "entity", "bool" )
@@ -722,8 +722,7 @@ bool function Crafting_PlaylistVar_IsEnabled()
 
 bool function Crafting_IsDispenserCraftingEnabled()
 {
-	//return( GetCurrentPlaylistVarBool( "crafting_dispensers_enabled", false ))
-	return false//force disabled due to rui for this does not exist in s16
+	return( GetCurrentPlaylistVarBool( "crafting_dispensers_enabled", true ))
 }
 
 int function Crafting_DispenserAmmoMulitplier()

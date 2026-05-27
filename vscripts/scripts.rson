@@ -340,6 +340,7 @@ Scripts:
 	weapons/mp_weapon_dragon_lmg.nut
 	weapons/mp_weapon_nemesis.nut
 	weapons/mp_weapon_cluster_bomb_launcher.nut
+	weapons/mp_weapon_revenant_scythe_primary.nut
 	weapons/mp_weapon_car.nut
 	weapons/mp_weapon_mobile_hmg.nut
 

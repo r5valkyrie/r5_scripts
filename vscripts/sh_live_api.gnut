@@ -5,8 +5,8 @@ global function LiveAPI_GetPlayerIdentity
 global function LiveAPI_GetPlayerIdentityTable
 global function LiveAPI_GetWritableData
 
-#if !SERVER
-global enum eLiveAPI_EventTypes
+#if SERVER
+global enum eLiveAPI_EventTypesNEW
 {
 	init
 	customEvent
@@ -42,10 +42,10 @@ global enum eLiveAPI_EventTypes
 #endif
 
 const table< int, array< string > > EVENT_FIELD_NAMES = {
-	[eLiveAPI_EventTypes.playerAssist] = [ "assistant", "victim" ],
-	[eLiveAPI_EventTypes.observerSwitched] = [ "observer", "target","targetTeam" ],
-	[eLiveAPI_EventTypes.playerRevive] = [ "player", "revived" ],
-	[eLiveAPI_EventTypes.bannerCollected] = [ "player", "collected" ]
+	[eLiveAPI_EventTypesNEW.playerAssist] = [ "assistant", "victim" ],
+	[eLiveAPI_EventTypesNEW.observerSwitched] = [ "observer", "target","targetTeam" ],
+	[eLiveAPI_EventTypesNEW.playerRevive] = [ "player", "revived" ],
+	[eLiveAPI_EventTypesNEW.bannerCollected] = [ "player", "collected" ]
 }
 
 // limited set so that we can avoid passing strings across the network
@@ -180,32 +180,32 @@ string function LiveAPI_GetPlayerIdentity( entity player )
 
 string function LiveAPI_GetEventNameFromEnum( int enumVal )
 {
-    return GetEnumString( "eLiveAPI_EventTypes", enumVal )
+    return GetEnumString( "eLiveAPI_EventTypesNEW", enumVal )
 }
 
 void function LiveAPI_RegisterNetworking()
 {
-	Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_OnePlayer",       "int", INT_MIN, eLiveAPI_EventTypes.MAX, "entity" )
-    Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_OnePlayerAndEnt", "int", INT_MIN, eLiveAPI_EventTypes.MAX, "entity", "entity" )
-    Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_TwoPlayer",       "int", INT_MIN, eLiveAPI_EventTypes.MAX, "entity", "entity" )
+	Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_OnePlayer",       "int", INT_MIN, eLiveAPI_EventTypesNEW.MAX, "entity" )
+    Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_OnePlayerAndEnt", "int", INT_MIN, eLiveAPI_EventTypesNEW.MAX, "entity", "entity" )
+    Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_TwoPlayer",       "int", INT_MIN, eLiveAPI_EventTypesNEW.MAX, "entity", "entity" )
 
-    Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_CombatInstance",  "int", INT_MIN, eLiveAPI_EventTypes.MAX, "entity", "entity", "entity", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
-    Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_CombatInstanceUnawarded",  "int", 0, eLiveAPI_EventTypes.MAX, "entity", "entity", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
-    Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_OnePlayerItem",   "int", 0, eLiveAPI_EventTypes.MAX, "entity", "int", -1, INT_MAX )
-	Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_Int",             "int", 0, eLiveAPI_EventTypes.MAX, "int", INT_MIN, INT_MAX )
+    Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_CombatInstance",  "int", INT_MIN, eLiveAPI_EventTypesNEW.MAX, "entity", "entity", "entity", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
+    Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_CombatInstanceUnawarded",  "int", 0, eLiveAPI_EventTypesNEW.MAX, "entity", "entity", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
+    Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_OnePlayerItem",   "int", 0, eLiveAPI_EventTypesNEW.MAX, "entity", "int", -1, INT_MAX )
+	Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_Int",             "int", 0, eLiveAPI_EventTypesNEW.MAX, "int", INT_MIN, INT_MAX )
 
 	Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_PlayerIntStatChanged", "entity" /*player*/, "int", 0, eStatNames._Count -  1 /*statName as enum*/, "int", INT_MIN, INT_MAX /*newValue*/ )
 
 	Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_RespawnTeam",     "entity", "int", 1, INT_MAX )
 
     // args: Event Type, Player, Item Ref, Quantity
-	Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_InventoryActionNoEnt", "int", 0, eLiveAPI_EventTypes.MAX, "entity" /*player*/, "int", 0, INT_MAX /*itemData.index*/, "int", INT_MIN, INT_MAX /* Quantity */ )
-	Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_InventoryAction", "int", 0, eLiveAPI_EventTypes.MAX, "entity" /*player*/, "int", 0, INT_MAX /*itemData.index*/, "entity" /*itemEntity*/, "int", INT_MIN, INT_MAX /* Quantity */ )
+	Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_InventoryActionNoEnt", "int", 0, eLiveAPI_EventTypesNEW.MAX, "entity" /*player*/, "int", 0, INT_MAX /*itemData.index*/, "int", INT_MIN, INT_MAX /* Quantity */ )
+	Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_InventoryAction", "int", 0, eLiveAPI_EventTypesNEW.MAX, "entity" /*player*/, "int", 0, INT_MAX /*itemData.index*/, "entity" /*itemEntity*/, "int", INT_MIN, INT_MAX /* Quantity */ )
 
-	Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_UpgradeCoreEvent", "entity", "int", 0, eLiveAPI_EventTypes.MAX, "int", 0, UPGRADE_CORE_MAX_EXPECTED_UPGRADES )
+	Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_UpgradeCoreEvent", "entity", "int", 0, eLiveAPI_EventTypesNEW.MAX, "int", 0, UPGRADE_CORE_MAX_EXPECTED_UPGRADES )
 	Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_AmmoChanged", "entity", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
 
-	Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_ArenasBuyMenu",	"int", 0, eLiveAPI_EventTypes.MAX, "entity", "int", 0, INT_MAX )
+	Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_ArenasBuyMenu",	"int", 0, eLiveAPI_EventTypesNEW.MAX, "entity", "int", 0, INT_MAX )
 
 	Remote_RegisterClientFunction( "ServerCallback_LiveAPI_LogNetwork_MatchSetup" )
 

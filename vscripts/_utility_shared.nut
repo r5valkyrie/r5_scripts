@@ -305,8 +305,8 @@ void function InitWeaponScripts()
 	MpWeaponGibraltarClubPrimary_Init()
 	MeleeRampartWrench_Init()
 	MpWeaponRampartWrenchPrimary_Init()
-	MeleeRevenantScythe_Init()
-	MpWeaponRevenantScythePrimary_Init()*/
+	MeleeRevenantScythe_Init()*/
+	MpWeaponRevenantScythePrimary_Init()
 
 		MeleeShadowsquadHands_Init()
 		MpWeaponShadowsquadHandsPrimary_Init()

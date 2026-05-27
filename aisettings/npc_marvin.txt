@@ -24,7 +24,7 @@ npc_marvin
 
 	leechAnimSet					marvin
 
-	DefaultModelName				"mdl/robots/marvin/marvin.rmdl"
+	DefaultModelName				"mdl/robots/marvin/marvin_base_v2.rmdl"
 	DefaultWeapon					""
 
 	Health							100 [$sp]

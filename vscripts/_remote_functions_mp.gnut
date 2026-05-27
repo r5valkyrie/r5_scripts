@@ -313,7 +313,7 @@ void function RemoteFunctions_Init_Begin()
 			Ultimates_RegisterNetworking()
 			ClientMusic_RegisterNetworking()
 
-			//LiveAPI_RegisterNetworking()
+			LiveAPI_RegisterNetworking()
 
 			RegisterNetworkedVariable( "currentDeathFieldStage", SNDC_GLOBAL, SNVT_INT, -1 )
 			RegisterNetworkedVariable( "nextCircleStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
