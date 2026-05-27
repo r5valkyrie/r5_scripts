@@ -200,7 +200,7 @@ void function MirageVoyage_Init()
 
 	PrecacheParticleSystem( MIRAGE_DECOY_FX )
 	PrecacheParticleSystem( LOOT_LAUNCHER_FX )
-	AddSpawnCallback_ScriptName( "partyball_rotator", OnSpawnPartyBallRotator )
+	PrecacheScriptString( MIRAGE_VOYAGE_DECOY_SCRIPT_NAME )
 
 	FlagInit( FLAG_MIRAGE_VOYAGE_BUTTON_ENABLED )
 	FlagInit( FLAG_MIRAGE_VOYAGE_MAIN_FX )
@@ -597,8 +597,8 @@ void function SetMirageVoyagePartyActive( entity button, bool activatedFromPlane
 
 				launcher.SetModel( LOOT_LAUNCHER_MODEL_OFF )
 
-				entity launchRoller = SpawnLootRoller_DispatchSpawn( launcher.GetOrigin(), launcher.GetAngles() )
-				thread LaunchLootRoller( launchRoller, <0, 0, 1>, 1200.0 )
+				LootRollerData launchRoller = LootRollers_CreateLootRoller( launcher.GetOrigin(), launcher.GetAngles(), 3 )
+				LaunchLootRoller( launchRoller, <0, 0, 1>, 1200.0 )
 			}
 
 			file.partyLootBallsDeployed = true

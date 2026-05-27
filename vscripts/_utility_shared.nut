@@ -5960,14 +5960,15 @@ array<entity> function GetPlayerArray_ConnectedNotSpectatorTeam()
 	return results
 }
 
-entity function GetJumpmasterForTeam( int team )
+entity function GetJumpmasterForTeam( int team, bool mustBeAlive = true )
 {
 	entity jumpMaster
 
-	array<entity> teammates = GetPlayerArrayOfTeam_Alive( team )
-	foreach( entity player in teammates )
+	array<entity> teammates = mustBeAlive ? GetPlayerArrayOfTeam_Alive( team ) : GetPlayerArrayOfTeam( team )
+
+	foreach ( entity player in teammates )
 	{
-		if ( !player.GetPlayerNetBool( "playerInPlane" ) )
+		if ( !player.GetPlayerNetBool( "playerInPlane" ) && Survival_RequireJumpmasterInPlane() )
 			continue
 
 		if ( !player.GetPlayerNetBool( "isJumpingWithSquad" ) )
@@ -5980,13 +5981,14 @@ entity function GetJumpmasterForTeam( int team )
 	return jumpMaster
 }
 
+
 int function GetNumPlayersJumpingWithSquad( int team, bool mustBeAlive = true  )
 {
 	int count               = 0
 	array<entity> teammates = mustBeAlive ? GetPlayerArrayOfTeam_Alive( team ) : GetPlayerArrayOfTeam( team )
 	foreach ( entity player in teammates )
 	{
-		if ( !player.GetPlayerNetBool( "playerInPlane" ) )
+		if ( !player.GetPlayerNetBool( "playerInPlane" ) && Survival_RequireJumpmasterInPlane() )
 			continue
 
 		if ( !player.GetPlayerNetBool( "isJumpingWithSquad" ) )
@@ -5996,6 +5998,12 @@ int function GetNumPlayersJumpingWithSquad( int team, bool mustBeAlive = true  )
 	}
 
 	return count
+}
+
+
+bool function HasEntWithScriptName( string scriptName )
+{
+	return GetEntArrayByScriptName( scriptName ).len() > 0
 }
 
 

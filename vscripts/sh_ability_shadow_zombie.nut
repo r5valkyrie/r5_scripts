@@ -14,21 +14,22 @@ global function AreTeammatesShadowZombiesOrRespawning
 	global function ShadowZombie_SetCallback_GetMaxHealthValueToSetForShadows
 
 	global function ResetCharacterSkin
-
-	global function DEV_GiveShadowZombieAbilities
-	bool Dev_Shadow_Squad_Initialized = false
+	#if DEVELOPER
+		global function DEV_GiveShadowZombieAbilities
+		bool Dev_Shadow_Squad_Initialized = false
+	#endif //DEV
 #endif
 
 
 #if CLIENT
 	global function ServerCallback_ShadowAbilitiesClientEffectsEnable
-	asset SHADOW_SCREEN_FX = $"P_Bshadow_screen"
+	global asset SHADOW_SCREEN_FX = $"P_Bshadow_screen"
 #endif
 
 const string STRING_SHADOW_SOUNDS = "ShadowSounds"
 const string STRING_SHADOW_FX = "ShadowFX"
-asset FX_SHADOW_TRAIL = $"P_Bshadow_body"
-asset FX_SHADOW_FORM_EYEGLOW = $"P_BShadow_eye"
+global asset FX_SHADOW_TRAIL = $"P_Bshadow_body"
+global asset FX_SHADOW_FORM_EYEGLOW = $"P_BShadow_eye"
 
 #if SERVER
 global asset DEATH_FX_SHADOW_SQUAD = $"P_Bshadow_death"
@@ -63,11 +64,11 @@ void function ShAbilityShadowZombie_Init()
 		file.shadowModsArray = DEFAULT_SHADOW_MODS_ARRAY
 
 		                            
-			/*if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
+			if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
 			{
 				PrecacheWeapon( $"mp_ability_rise_from_the_ashes" )
 				file.shadowModsArray = [ "shadow_squad", "revarmy_shadow_audio" ]
-			}*/
+			}
         
 	#endif
 
@@ -86,7 +87,7 @@ void function ShAbilityShadowZombie_Init()
 bool function ShadowZombie_IsEnabled()
 {
 	                            
-		/*if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
 			return true
        
 
@@ -97,10 +98,10 @@ bool function ShadowZombie_IsEnabled()
 
 	                              
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ROYALE ) )
-			return true*/
+			return true
        
 
-	return true
+	return false
 }
 
 //SHARED
@@ -129,8 +130,7 @@ void function Ability_Shadow_Zombie_RegisterNetworking()
 	Remote_RegisterClientFunction( "ServerCallback_ShadowAbilitiesClientEffectsEnable", "entity", "bool" )
 
 	#if CLIENT
-	//	RegisterNetworkedVariableChangeCallback_bool( "isPlayerShadowZombie", OnServerVarChanged_IsPlayerShadowZombie )
-	//RegisterNetworkedVariableChangeCallback_bool(  // incomplete call - disabled
+		RegisterNetVarBoolChangeCallback( "isPlayerShadowZombie", OnServerVarChanged_IsPlayerShadowZombie )
 	#endif
 }
 //END SHARED
@@ -139,17 +139,17 @@ void function Ability_Shadow_Zombie_RegisterNetworking()
 void function ServerCallback_ShadowAbilitiesClientEffectsEnable( entity player, bool enableFx )
 {
 	thread ShadowAbilitiesClientEffectsEnable( player, enableFx )
-	
-	ClearCustomPlayerInfoColor(player)
-	ClearCustomPlayerInfoTreatment(player)
-	ClearCustomPlayerInfoCharacterIcon(player)
 }
 #endif //CLIENT
 
 #if CLIENT
 void function OnServerVarChanged_IsPlayerShadowZombie( entity player, bool new )
 {
-	                                       
+	                            
+		// We use the abilities of Shadows in Rev Army mode but don't want to affect sounds or unit frames
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
+			return
+                                   
 
 	// Using whatever was made for Revenants shadow form. This was all after we did the shadowfall mode.
 	// It's more subtle, but it works for temamate unitframes as well
@@ -206,8 +206,7 @@ void function ShadowAbilitiesClientEffectsEnable( entity player, bool enableFx, 
 			if ( !IsValid( cockpit ) )
 				return
 
-			int fxHandle = StartParticleEffectOnEntity( cockpit, PrecacheParticleSystem( SHADOW_SCREEN_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
-			player.p.shadowFxHandles.append(fxHandle)
+			int fxHandle = StartParticleEffectOnEntity( cockpit, GetParticleSystemIndex( SHADOW_SCREEN_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
 			EffectSetIsWithCockpit( fxHandle, true )
 			vector controlPoint = <1,1,1>
 			EffectSetControlPointVector( fxHandle, 1, controlPoint )
@@ -217,12 +216,7 @@ void function ShadowAbilitiesClientEffectsEnable( entity player, bool enableFx, 
 				file.playerShadowZombieClientFxHandles[ playerTeam ] <- []
 			file.playerShadowZombieClientFxHandles[playerTeam].append( fxHandle )
 
-			// Set HUD elements for local player only
-			SetCustomPlayerInfoCharacterIcon( player, $"rui/gamemodes/shadow_squad/generic_shadow_character" )
-			SetCustomPlayerInfoTreatment( player, $"rui/gamemodes/shadow_squad/player_info_custom_treatment" )
-			SetCustomPlayerInfoColor( player, <245, 81, 35 > )
 		}
-
 
 		/////////////////////
 		// Non-players only
@@ -352,18 +346,18 @@ void function SetShadowAbilitiesSkin( entity player )
 }
 #endif //SERVER
 
-#if SERVER
+#if SERVER && DEVELOPER
 void function DEV_GiveShadowZombieAbilities( entity player )
 {
 	if ( !Dev_Shadow_Squad_Initialized )
 	{
-		/*array<entity> nonCodeDoors = GetAllNonCodeDoorEnts()
+		array<entity> nonCodeDoors = GetAllNonCodeDoorEnts()
 		foreach ( door in nonCodeDoors )
 		{
 			door.AddUsableValue( USABLE_CAN_USE_OVERRIDE )
-		}*/
+		}
 
-		/*array<entity> ziplines = GetEntArrayByClass_Expensive( "zipline" )
+		array<entity> ziplines = GetEntArrayByClass_Expensive( "zipline" )
 		foreach ( zipline in ziplines )
 		{
 			zipline.AddUsableValue( USABLE_CAN_USE_OVERRIDE )
@@ -372,11 +366,9 @@ void function DEV_GiveShadowZombieAbilities( entity player )
 		foreach ( bin in lootBins )
 		{
 			bin.AddUsableValue( USABLE_CAN_USE_OVERRIDE )
-		}*/
+		}
 		Dev_Shadow_Squad_Initialized = true
 	}
-
-	player.SetHealth( 30 )
 
 	GiveShadowZombieAbilities( player )
 	ShadowSquadApplyCharacterSkin( player )
@@ -410,7 +402,12 @@ void function ShadowZombie_SetCallback_GetMaxHealthValueToSetForShadows( float f
 #if SERVER
 float function GetMaxHealthValueToSetForShadows()
 {
-	return GetCurrentPlaylistVarFloat( "shadow_health", 30 )
+	// If we have an override function to set a different value for shadow health use it
+	if ( file.GetMaxShadowHealth_Callback != null )
+		return file.GetMaxShadowHealth_Callback()
+
+	// Otherwise use the playlist var
+	return GetCurrentPlaylistVarFloat( "shadow_health", 60 )
 }
 #endif // SERVER
 
@@ -476,7 +473,7 @@ void function GiveShadowZombieAbilities( entity player )
 			trap.Destroy()
 	}
 
-	/*CancelPlayerStatesData states
+	CancelPlayerStatesData states
 	states.cancelZipline = true
 	states.cancelGrapple = true
 	states.cancelPhaseTunnel = true
@@ -486,7 +483,7 @@ void function GiveShadowZombieAbilities( entity player )
 	states.cancelTotem = true
 	states.cancelMainOrAltHandAbility = true
 
-	CancelPlayerStates( player, states )*/
+	CancelPlayerStates( player, states )
 
 
 	//////////////////////////////////////
@@ -513,28 +510,47 @@ void function GiveShadowZombieAbilities( entity player )
 	player.GiveWeapon( "mp_weapon_shadow_squad_hands_primary", WEAPON_INVENTORY_SLOT_PRIMARY_2 )
 	string melee_hands_weapon = "melee_shadowsquad_hands"
 
-	                             
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ROYALE ) )
+			melee_hands_weapon = "melee_shadowroyale_hands"
        
 
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
+		{
+			player.GiveOffhandWeapon( "mp_ability_revenant_shadow_pounce_free", OFFHAND_TACTICAL )
+
+			entity tacticalAbility = player.GetOffhandWeapon( OFFHAND_TACTICAL )
+			if ( tacticalAbility.GetWeaponClassName() == "mp_ability_revenant_shadow_pounce_free" )
+			{
+				array<string> currentTacMods = tacticalAbility.GetMods()
+				if ( !currentTacMods.contains( "shadow_form_active" ) )
+				{
+					currentTacMods.append( "shadow_form_active" )
+					tacticalAbility.SetMods( currentTacMods )
+				}
+			}
+			
+			melee_hands_weapon = "melee_shadowroyale_hands"
+			player.GiveOffhandWeapon( "mp_ability_rise_from_the_ashes", OFFHAND_ULTIMATE )
+		}
 
 	player.GiveOffhandWeapon( melee_hands_weapon, OFFHAND_MELEE )
-	GivePlayerSettingsMods( player, [ "enable_wallrun", "shadow_squad" ] )
-	/*if ( player.GetTeam() != TEAM_SPECTATOR )
+	GivePlayerSettingsMods( player, file.shadowModsArray )
+	if ( player.GetTeam() != TEAM_SPECTATOR )
 	{
-		GivePlayerSettingsMods( player, [ "disable_targetinfo" ] )
-	}*/
+		GivePlayerSettingsMods( player, [ "targetinfo_alliance" ] )
+	}
 	player.EnterShadowForm()
 	bool playerAlreadyHasHealthCallback = false
-	/*foreach ( func in player.e.entOnShadowHealthExhaustedCallbacks )
+	foreach ( func in player.e.entOnShadowHealthExhaustedCallbacks )
 	{
 		if ( func == Outlands_OnShadowHealthExhausted )
 		{
 			playerAlreadyHasHealthCallback = true
 			break
 		}
-	}*/
-	//if ( !playerAlreadyHasHealthCallback )
-		//AddEntityCallback_OnShadowHealthExhausted( player, Outlands_OnShadowHealthExhausted )
+	}
+	if ( !playerAlreadyHasHealthCallback )
+		AddEntityCallback_OnShadowHealthExhausted( player, Outlands_OnShadowHealthExhausted )
 	float shadowHealth = GetMaxHealthValueToSetForShadows()
 	player.SetMaxHealth( shadowHealth )
 	player.SetHealth( shadowHealth )
@@ -553,7 +569,17 @@ void function GiveShadowZombieAbilities( entity player )
 	//////////////////////////////
 	bool shouldApplyShadowFX = true
 	                            
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
+		{
+			// Set the default character skin for now. Once we have it, we will apply a specific skin here
+			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
+			ItemFlavor skin = GetDefaultItemFlavorForLoadoutSlot( ToEHI( player ), Loadout_CharacterSkin( character ) )
+			CharacterSkin_Apply( player, skin )
 
+			// Don't want the VFX and Audio for Shadows. Just the abilities
+			shouldApplyShadowFX = false
+		}
+       
 	
 	if ( shouldApplyShadowFX )
 	{
@@ -565,17 +591,17 @@ void function GiveShadowZombieAbilities( entity player )
 	if ( GetCurrentPlaylistVarBool( "shadow_health_regen", true ) )
 	{
 		//health regen
-		/*int regenSource = eRegenSource.MODE
+		int regenSource = eRegenSource.MODE
 		float regenHealthPerSec = GetPlaylistVar_ShadowHealthRegenPerSec()
 		float regenShieldPerSec = GetPlaylistVar_ShadowHealthRegenPerSec()
 		float regenStartDelay = GetPlaylistVar_ShadowHealthRegenDelay()
 
-		thread HealthRegen_Thread( player, regenSource, regenHealthPerSec, regenShieldPerSec, regenStartDelay, false )*/
+		thread HealthRegen_Thread( player, regenSource, regenHealthPerSec, regenShieldPerSec, regenStartDelay, false )
 	}
 	else
 	{
 		//Disable regen health for octane
-		//HealthRegen_End( player )
+		HealthRegen_End( player )
 	}
 }
 #endif
@@ -587,7 +613,7 @@ void function RemoveShadowZombieAbilities( entity player )
 	if ( !IsValid( player ) )
 		return
 
-/*	if ( !IsPlayerShadowZombie( player ) )
+	if ( !IsPlayerShadowZombie( player ) )
 	{
 		Warning( "%s() - Trying to call RemoveShadowZombieAbilities on a non-shadow player: '%s'", FUNC_NAME(), string( player ) )
 		return
@@ -599,11 +625,11 @@ void function RemoveShadowZombieAbilities( entity player )
 		//too many unresolved issues doing player state change, particularly with heirlooms
 		Bleedout_ForceStop( player )
 		Bleedout_ReviveForceStop( player )
-	}*/
+	}
 
 	EmitSoundOnEntity( player, "ShadowLegend_Shadow_Regen" )
 	RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
-	TakePlayerSettingsMods( player,[ "enable_wallrun", "shadow_squad" ] )
+	TakePlayerSettingsMods( player, file.shadowModsArray )
 	//player.TargetInfoDisableOn()
 	ForceAutoSprintOff( player )
 	player.LeaveShadowForm()
@@ -612,30 +638,14 @@ void function RemoveShadowZombieAbilities( entity player )
 	//SurvivalPlayerRespawnedInit( player ) //reset everything
 	player.TakeOffhandWeapon( OFFHAND_MELEE )
 	player.p.respawnPodLanded = true
-	//SurvivalPlayerRespawnedInit( player )
-	ResetCharacterSkin( player )
+	SurvivalPlayerRespawnedInit( player )
+	ShadowSquadCancelCharacterSkin( player )
 	player.p.respawnPodLanded = false
 	if ( player.GetPlayerNetBool( "isPlayerShadowZombie" ) )
 		player.SetPlayerNetBool( "isPlayerShadowZombie", false )
 
 	if ( IsAlive( player ) )
 		player.SetHealth( player.GetMaxHealth() )
-		
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
-		
-	player.TakeOffhandWeapon( OFFHAND_MELEE )
-	player.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
-	player.GiveWeapon( "mp_weapon_melee_survival", WEAPON_INVENTORY_SLOT_PRIMARY_2 )
-	string melee_hands_weapon = "melee_pilot_emptyhanded"
-	
-	ItemFlavor ultimateAbility = CharacterClass_GetUltimateAbility( character )
-	ItemFlavor tacticalAbility = CharacterClass_GetTacticalAbility( character )
-	
-	player.GiveOffhandWeapon(CharacterAbility_GetWeaponClassname(tacticalAbility), OFFHAND_TACTICAL )	
-	player.GiveOffhandWeapon( CharacterAbility_GetWeaponClassname( ultimateAbility ), OFFHAND_ULTIMATE )
-
-
-	player.GiveOffhandWeapon( melee_hands_weapon, OFFHAND_MELEE )
 }
 #endif //#if SERVER
 
@@ -661,7 +671,7 @@ void function ShadowAbilitiesStartFxAndSound( entity player )
 
 	//shadow form
 	string smokeAttachment = "CHESTFOCUS"
-	entity fxHandleShadow = StartParticleEffectOnEntity_ReturnEntity( player, PrecacheParticleSystem( FX_SHADOW_TRAIL ), FX_PATTACH_POINT_FOLLOW, player.LookupAttachment( smokeAttachment ) )
+	entity fxHandleShadow = StartParticleEffectOnEntity_ReturnEntity( player, GetParticleSystemIndex( FX_SHADOW_TRAIL ), FX_PATTACH_POINT_FOLLOW, player.LookupAttachment( smokeAttachment ) )
 	fxHandleShadow.SetOwner( player )
 	fxHandleShadow.SetParent( player, smokeAttachment )
 	fxHandleShadow.kv.VisibilityFlags = (ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY)
@@ -708,6 +718,10 @@ void function ShadowZombieOnDeath( entity player )
 	//////////////////
 
 	bool shouldPlayDeathVFX = true
+	                            
+		// Don't want shadow VFX in Rev Army mode
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
+			shouldPlayDeathVFX = false
        
 
 	if ( shouldPlayDeathVFX )
@@ -767,9 +781,9 @@ void function ShadowAbilitiesApplyCharacterSkin( entity player )
 		if ( LoadoutSlot_IsReady( ToEHI( player ), skinSlot ) )
 		{
 			ItemFlavor skin = LoadoutSlot_GetItemFlavor( ToEHI( player ), skinSlot )
-			//player.p.skinIndex = player.GetSkin()
-			//player.p.camoIndex = CharacterSkin_GetCamoIndex( skin )
-			//player.p.loadoutSkin = skin
+			player.p.skinIndex = player.GetSkin()
+			player.p.camoIndex = CharacterSkin_GetCamoIndex( skin )
+			player.p.loadoutSkin = skin
 		}
 	}
 
@@ -783,7 +797,7 @@ void function ShadowAbilitiesApplyCharacterSkin( entity player )
 	// Apply the shadow skin material if we have it
 	//////////////////////////////////////
 
-	//SetShadowAbilitiesSkin( player )
+	SetShadowAbilitiesSkin( player )
 }
 #endif //SERVER
 
@@ -830,7 +844,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 		return
 	}
 
-	TakePlayerSettingsMods( victim, [ "enable_wallrun", "shadow_squad" ] )
+	TakePlayerSettingsMods( victim, file.shadowModsArray )
 }
 #endif //SERVER
 
@@ -847,7 +861,7 @@ bool function AreTeammatesShadowZombiesOrRespawning( entity player )
 		if ( guy == player )
 			continue
 
-		if ( guy.GetPlayerNetInt( "respawnStatus" ) == eRespawnStatus.WAITING_FOR_DROPPOD )
+		if ( guy.GetPlayerNetInt( "respawnStatus" ) == eRespawnStatus.WAITING_FOR_RESPAWN )
 			continue
 
 		if ( !IsPlayerShadowZombie( guy ) )

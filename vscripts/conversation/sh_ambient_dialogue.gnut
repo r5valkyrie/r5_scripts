@@ -1,0 +1,952 @@
+global function ShAmbientDialogue_Init
+global function GetAllAmbientDialogue
+
+#if SERVER
+global function TryPlayNonTriggerAmbientConversation
+global function TryPlayAmbientConversation
+global function RegisterTriggerByNameForAmbientConversation
+global function RegisterTriggerByNameForAmbientConversationArray
+                 
+                                                   
+      
+#endif
+
+#if SERVER && DEV
+	global function DEV_SetupForAmbientConversation
+#endif
+#if CLIENT
+	global function DEV_SetCharacterForAmbientDialogue
+                 
+                                                          
+      
+#endif
+
+// Given a rarity of 1 in 5, and 3 attempts, comes out to ~48% chance
+const int AMBIENT_DIALOGUE_FAIL_RANDOM_RETRY_ATTEMPTS = 3
+                 
+                                                
+      
+const bool VERBOSE_PRINT_DEBUG = false
+
+const string SPECIAL_CHARACTER_STRING = "npc"
+
+global struct AmbientDialogueData
+{
+	string eventName
+	ItemFlavor& speakingLegendFlav
+	bool npc = false
+}
+
+global struct AmbientConversationData
+{
+	string							convoName
+	string							triggerScriptName
+	array<AmbientDialogueData> 		convoSequence
+	array<int> 						spokenBySquads			// Team number of squads who've said this
+	table<int, int>					numDiceRollAttemptsMadeByTeam	// Team number of squads who've tried to say this. They have a number of retries before they can't do it
+	array<ItemFlavor> 				requiredLegendFlavs
+	array<ItemFlavor> 				forbiddenLegendFlavs		// These legends must not be on the squad (alive + connected) for the dialogue to play
+	int 							repeatType
+	float 							rarity
+	bool 							allLegendsRequired
+	array<string>					exclusiveConversations		// If A and C are exclusive, only one can play in a match. You must mark in both A and C that they are exclusive with each other.
+	float							activationTime
+                  
+                       
+       
+}
+
+struct
+{
+	table < string, AmbientConversationData > ambDialogMap
+	table < entity, array<void functionref( entity, entity )> > triggerCallbackMap
+	table < entity, array<int> > triggerUsedBySquadMap
+	table < int, array<string> > excludedConversationsForSquad		// Tracks mutually exclusive conversations for squads
+	table < string, array<entity> > convoTriggerMap // used for teleporting during debug
+} file
+
+void function ShAmbientDialogue_Init()
+{
+	if ( !GetCurrentPlaylistVarBool( "ambient_dialogue_enabled", true ) )
+	{
+		printt( "Ambient dialogue disabled. Check playlist var ambient_dialogue_enabled to enable it" )
+		return
+	}
+	#if SERVER || CLIENT
+		// Register the voice lines themselves
+		RegisterCSVDialogue( $"datatable/ambient_dialogue.rpak" )
+	#endif
+
+	// Process ambient dialogue specific data from same table
+	RegisterAmbientDialogueConversations( $"datatable/ambient_dialogue.rpak" )
+
+	#if SERVER
+		AddCallback_EntitiesDidLoad( EntitiesDidLoad )
+	#endif
+}
+
+void function RegisterAmbientDialogueConversations( asset dt )
+{
+	var dataTable = GetDataTable( dt )
+
+	int columnName              = GetDataTableColumnByName( dataTable, "name" )
+	int columnMapName           = GetDataTableColumnByName( dataTable, "map" )
+	int columnTriggerScriptName = GetDataTableColumnByName( dataTable, "trigger" )
+	int columnConversationName  = GetDataTableColumnByName( dataTable, "conversation" )
+	int columnSpeakingLegend    = GetDataTableColumnByName( dataTable, "speakLegend" )
+	int columnRequiredLegend    = GetDataTableColumnByName( dataTable, "reqLegends" )
+	int columnForbiddenLegend   = GetDataTableColumnByName( dataTable, "forbidLegends" )
+	int columnRarityOverride    = GetDataTableColumnByName( dataTable, "rarityOverride" )
+	int columnOrder             = GetDataTableColumnByName( dataTable, "order" )
+	int columnRepeatType        = GetDataTableColumnByName( dataTable, "repeatType" )
+	int columnAllLegendsReqd    = GetDataTableColumnByName( dataTable, "allSpeakersRequired" )
+	int columnMutuallyExclusive = GetDataTableColumnByName( dataTable, "mutualExclusiveConvos" )
+                  
+                                                                           
+       
+	int columnActivationTimestamp = GetDataTableColumnByName ( dataTable, "activationTimestamp" )
+
+	int numRows = GetDataTableRowCount( dataTable )
+	string currentConversation = ""
+	for ( int idx_row = 0; idx_row < numRows; idx_row++ )
+	{
+		string conversationName = GetDataTableString( dataTable, idx_row, columnConversationName )
+		if ( conversationName != "" && currentConversation != conversationName )
+		{
+			AmbientConversationData newConversation
+
+			newConversation.convoName = GetDataTableString( dataTable, idx_row, columnConversationName )
+			string mapName =   GetDataTableString( dataTable, idx_row, columnMapName )
+			if ( mapName == "" )
+			{
+				#if SERVER && DEV
+					Warning( "Could not register ambient dialogue conversation '%s' - no map specified" )
+				#endif
+				continue
+			}
+
+			#if UI
+			if ( GetActiveLevel() != mapName )
+			#else
+			if ( GetMapName() != mapName )
+			#endif
+			{
+				#if DEV
+					if ( VERBOSE_PRINT_DEBUG )
+					#if UI
+						printt( "Skipping register ambient dialogue conversation " + GetDataTableString( dataTable, idx_row, columnName ) + " required map( " + mapName + ") != current map(" +  GetActiveLevel() + ")")
+					#else
+						printt( "Skipping register ambient dialogue conversation " + GetDataTableString( dataTable, idx_row, columnName ) + " required map( " + mapName + ") != current map(" +  GetMapName() + ")")
+					#endif
+				#endif
+				continue
+			}
+
+			int activationTimestamp = GetDataTableInt( dataTable, idx_row, columnActivationTimestamp )
+			int now = GetUnixTimestamp()
+			if ( activationTimestamp > 0 && activationTimestamp > now)
+			{
+				#if DEV
+					if ( VERBOSE_PRINT_DEBUG )
+						printt( "Skipping register ambient dialogue conversation " + GetDataTableString( dataTable, idx_row, columnName ) + " activation timestamp(" + activationTimestamp + ") < current time(" + now + ")specified is not active")
+				#endif
+				continue
+			}
+
+
+			newConversation.triggerScriptName =   GetDataTableString( dataTable, idx_row, columnTriggerScriptName )
+			//if ( newConversation.triggerScriptName == "" )
+			//{
+			//	#if SERVER && DEV
+			//		Warning( "Could not register ambient dialogue conversation '%s' - no trigger volume specified" )
+			//	#endif
+			//	continue
+			//}
+
+			array<string> requiredLegendRefs = split( GetDataTableString( dataTable, idx_row, columnRequiredLegend ), ";" )
+			array<string> forbiddenLegendRefs = split( GetDataTableString( dataTable, idx_row, columnForbiddenLegend ), ";" )
+			string speakingLegendRef = GetDataTableString( dataTable, idx_row, columnSpeakingLegend )
+
+			if ( !requiredLegendRefs.contains( speakingLegendRef ) && speakingLegendRef != SPECIAL_CHARACTER_STRING )
+			{
+				#if SERVER && DEV
+					Warning( "Could not register ambient dialogue conversation '%s', required legend refs for: " + GetDataTableString( dataTable, idx_row, columnName ) + " doesn't contain the speaking ref!", GetDataTableString( dataTable, idx_row, columnName ) )
+				#endif
+				continue
+			}
+
+			if ( requiredLegendRefs.len() == 0 )
+			{
+				#if SERVER && DEV
+					Warning( "Could not register ambient dialogue conversation '%s', no required legends given. The speaker should always be given as a required legend", GetDataTableString( dataTable, idx_row, columnName ) )
+				#endif
+				continue
+			}
+
+			array<ItemFlavor> requiredLegendFlavs
+			array<ItemFlavor> forbiddenLegendFlavs
+			bool didErrorOccur
+
+			// Convert ref arrays to flav arrays. Track if an error happened
+			didErrorOccur = AmbientDialogue_ProcessRefArray( requiredLegendFlavs, requiredLegendRefs, forbiddenLegendRefs, GetDataTableString( dataTable, idx_row, columnName ) )
+			didErrorOccur = AmbientDialogue_ProcessRefArray( forbiddenLegendFlavs, forbiddenLegendRefs, requiredLegendRefs, GetDataTableString( dataTable, idx_row, columnName ) ) ? true : didErrorOccur
+
+			// Error = skip this entry. It'll throw warnings when called but won't crash.
+			if ( didErrorOccur )
+				continue
+
+			newConversation.requiredLegendFlavs = requiredLegendFlavs
+			newConversation.forbiddenLegendFlavs = forbiddenLegendFlavs
+
+			newConversation.repeatType 			= GetDataTableInt( dataTable, idx_row, columnRepeatType )
+
+			// Rarity can be overridden with a playlist var float, following the formula amb_diag_rarity_override_<conversation name>
+			newConversation.rarity  = GetDataTableFloat( dataTable, idx_row, columnRarityOverride )
+			string rarityOverridePlaylistVar = format( "amb_diag_rarity_override_%s", conversationName )
+			float rarityPlaylistOverride = GetCurrentPlaylistVarFloat( rarityOverridePlaylistVar, -1.0 )
+			if ( rarityPlaylistOverride >= 0 )
+				newConversation.rarity = rarityPlaylistOverride
+
+			newConversation.allLegendsRequired = GetDataTableBool( dataTable, idx_row, columnAllLegendsReqd )
+
+			newConversation.exclusiveConversations = split( GetDataTableString( dataTable, idx_row, columnMutuallyExclusive ), ";" )
+
+                    
+                                                                                        
+         
+
+			int curOrder = -1
+			// Nested loop to go through the conversation itself, pop out when it finds a new conversation name
+			for( int idx_rowsWithinConvo = idx_row; idx_rowsWithinConvo < numRows; idx_rowsWithinConvo++ )
+			{
+				string newConvoName = GetDataTableString( dataTable, idx_rowsWithinConvo, columnConversationName )
+				if ( newConvoName != "" && conversationName != newConvoName )
+				{
+					// Fix idx_row so we don't skip an entry
+					idx_row = idx_rowsWithinConvo - 1
+					break
+				}
+
+				// Create ambient dialogue entry, handle order if it's not the first line in the convo
+				int order               = GetDataTableInt( dataTable, idx_rowsWithinConvo, columnOrder )
+				if ( order > curOrder )
+				{
+					AmbientDialogueData newDialogue
+					newDialogue.eventName 			= GetDataTableString( dataTable, idx_rowsWithinConvo, columnName )
+					string speakingLegend = GetDataTableString( dataTable, idx_rowsWithinConvo, columnSpeakingLegend )
+					if ( speakingLegend == SPECIAL_CHARACTER_STRING )
+					{
+						newDialogue.npc = true
+					}
+					else
+					{
+						newDialogue.speakingLegendFlav 	= GetCharacterFlavorFromTableName( speakingLegend )
+					}
+					newConversation.convoSequence.append( newDialogue )
+					curOrder = order
+				}
+				else if ( order <= curOrder )
+				{
+					Warning( "Warning! Incorrect order while parsing a conversation. Order should always go up. Event name: %s, Current order: %i, Attempted new order: %i", GetDataTableString( dataTable, idx_row, columnName ), curOrder, order )
+				}
+			}
+
+
+			file.ambDialogMap[ conversationName ] <- newConversation
+		}
+	}
+}
+
+#if SERVER
+void function EntitiesDidLoad()
+{
+	foreach ( conversationName, conversation in file.ambDialogMap)
+	{
+		if ( conversation.triggerScriptName != "" )
+			RegisterTriggerByNameForAmbientConversations_Internal( conversation.triggerScriptName, [ conversationName ], true )
+	}
+}
+#endif
+
+bool function AmbientDialogue_ProcessRefArray( array<ItemFlavor> arrayToPopulate, array<string> refArray, array<string> mutuallyExclusiveRefArray, string convoNameForDebug )
+{
+	bool didErrorOccur = false
+	foreach( string ref in refArray )
+	{
+		if( mutuallyExclusiveRefArray.contains( ref ) )
+		{
+			#if SERVER && DEV
+				Warning( "Could not register ambient dialogue '%s', because the legend '%s' is listed as both required and forbidden.", convoNameForDebug, ref )
+			#endif
+			didErrorOccur = true
+			continue
+		}
+
+		#if CLIENT || SERVER
+		if ( !GetValidVoices().contains( ref ) && ref != SPECIAL_CHARACTER_STRING )
+		{
+			#if SERVER && DEV
+				Warning( "Could not register ambient dialogue '%s', because '%s' not in valid voices. Check for typos and make sure that the voice is registered" +
+				" to a character setting in Bakery.", convoNameForDebug, ref )
+			#endif
+			didErrorOccur = true
+			continue
+		}
+		#endif
+
+		if ( ref == SPECIAL_CHARACTER_STRING )
+			continue
+
+		arrayToPopulate.append( GetCharacterFlavorFromTableName( ref ) )
+	}
+
+	return didErrorOccur
+}
+
+#if SERVER
+// This function is called from an anonymous function callback, created in RegisterTriggerByNameForAmbientConversations_Internal
+// Safety checks for whether this should be called or not happen in there.
+void function TryPlayAmbientConversation( string conversationName, int team, entity touchingEnt, entity trig )
+{
+	if ( !( conversationName in file.ambDialogMap ) )
+	{
+		Warning( "WARNING! Attempted to play unregistered conversation:", conversationName )
+		return
+	}
+
+	array<entity> squad = GetPlayerArrayOfTeam_AliveConnected( team )
+	AmbientConversationData convoData = file.ambDialogMap[ conversationName ]
+
+	if ( !AmbientConversation_CanSquadPlay( convoData, squad, team, touchingEnt, trig ) )
+		return
+
+	entity firstSpeakingPlayer
+	int numLinesInConvo = convoData.convoSequence.len()
+	for( int i; i < numLinesInConvo; i++ )
+	{
+		AmbientDialogueData dialogueData = convoData.convoSequence[ i ]
+		if ( !dialogueData.npc )
+		{
+			entity speakingPlayer = GetSpeakingPlayerInSquadForAmbientDialogue( dialogueData, squad )
+			PlayAmbientDialogueLineToSpeakerAndTeamThatBlocksLowerPriorityLines( speakingPlayer, dialogueData.eventName )
+
+			if ( i == 0 || !IsValid( firstSpeakingPlayer ) )
+				firstSpeakingPlayer = speakingPlayer
+		}
+		else
+		{
+			foreach( entity player in GetPlayerArrayOfTeam( team ) )
+			{
+				if ( dialogueData.eventName == "" )
+					continue
+
+				if ( !IsAlive( player ) )
+					continue
+
+				if ( !IsBattleChatterAllowedBasedOnGameState( dialogueData.eventName ) )
+					continue
+
+				if ( !IsBattleChatterLineEnabled( dialogueData.eventName ) )
+					continue
+
+				if ( !IsBattleChatterEnabled() )
+					continue
+
+				PlayRadioDialogueToPlayer( dialogueData.eventName, player, eDialogueFlags.BLOCK_LOWER_PRIORITY_QUEUE_ITEMS | eDialogueFlags.AMBIENT_DIALOGUE )
+			}
+		}
+	}
+
+	if ( team in file.excludedConversationsForSquad )
+		file.excludedConversationsForSquad[ team ].extend( convoData.exclusiveConversations )
+	else
+		file.excludedConversationsForSquad[ team ] <- convoData.exclusiveConversations
+
+	convoData.spokenBySquads.append( team )
+	if ( trig in file.triggerUsedBySquadMap )
+		file.triggerUsedBySquadMap[ trig ].append( team )
+	else
+		file.triggerUsedBySquadMap[ trig ] <- [ team ]
+
+	array<string> speakingLegends
+	foreach( ItemFlavor legend in convoData.requiredLegendFlavs )
+	{
+		speakingLegends.append( ItemFlavor_GetCharacterRef( legend ) )
+	}
+
+	//PIN_AmbDiag( firstSpeakingPlayer, "ambientDialogueStart", conversationName, speakingLegends, firstSpeakingPlayer, firstSpeakingPlayer.GetOrigin() )
+}
+
+// This is manually called for ambients without triggers.
+bool function TryPlayNonTriggerAmbientConversation( string conversationName, int team, array<entity> squad )
+{
+	if ( !( conversationName in file.ambDialogMap ) )
+	{
+		Warning( "WARNING! Attempted to play unregistered conversation:", conversationName )
+		return false
+	}
+
+	AmbientConversationData convoData = file.ambDialogMap[ conversationName ]
+	if ( !NonTriggerAmbientConversation_CanSquadPlay( convoData, squad, team ) )
+		return false
+
+	entity firstSpeakingPlayer
+	int numLinesInConvo = convoData.convoSequence.len()
+	for( int i; i < numLinesInConvo; i++ )
+	{
+		AmbientDialogueData dialogueData = convoData.convoSequence[ i ]
+		entity speakingPlayer = GetSpeakingPlayerInSquadForAmbientDialogue( dialogueData, squad )
+		PlayAmbientDialogueLineToSpeakerAndTeamThatBlocksLowerPriorityLines( speakingPlayer, dialogueData.eventName )
+
+		if ( i == 0 )
+			firstSpeakingPlayer = speakingPlayer
+	}
+
+	if ( team in file.excludedConversationsForSquad )
+		file.excludedConversationsForSquad[ team ].extend( convoData.exclusiveConversations )
+	else
+		file.excludedConversationsForSquad[ team ] <- convoData.exclusiveConversations
+
+	convoData.spokenBySquads.append( team )
+
+	array<string> speakingLegends
+	foreach( ItemFlavor legend in convoData.requiredLegendFlavs )
+	{
+		speakingLegends.append( ItemFlavor_GetCharacterRef( legend ) )
+	}
+
+	//PIN_AmbDiag( firstSpeakingPlayer, "ambientDialogueStart", conversationName, speakingLegends, firstSpeakingPlayer, firstSpeakingPlayer.GetOrigin() )
+	return true
+}
+
+
+void function RegisterTriggerByNameForAmbientConversation( string trigName, string conversationName, bool randomizeCallbacks = true )
+{
+	RegisterTriggerByNameForAmbientConversations_Internal( trigName, [conversationName], randomizeCallbacks )
+}
+
+void function RegisterTriggerByNameForAmbientConversationArray( string trigName, array<string> conversationNames, bool randomizeCallbacks = true )
+{
+	RegisterTriggerByNameForAmbientConversations_Internal( trigName, conversationNames, randomizeCallbacks )
+}
+
+void function RegisterTriggerByNameForAmbientConversations_Internal( string trigName, array<string> conversationNames, bool randomizeCallbacks )
+{
+	array<entity> foundTrigs = GetEntArrayByScriptName( trigName )
+	if ( foundTrigs.len() == 0 )
+	{
+		Warning( "!!! WARNING !!! No triggers found with name" + trigName + " for ambient dialog!" )
+		return
+	}
+
+	foreach( entity trig in foundTrigs )
+	{
+		if ( trig.HasKey( "triggerFilterTeamOther" ) && trig.GetValueForKey( "triggerFilterTeamOther" ) == "0" )
+			Warning( "Warning! Trigger at coords: " + trig.GetOrigin() + " has trigger filter team other set to 0! You won't get enter callbacks! Is the checkbox triggerFilterTeamOther checked in your trigger_multiple?" )
+
+		if ( !( trig in file.triggerCallbackMap ) )
+		{
+			file.triggerCallbackMap[ trig ] <- []
+			trig.SetEnterCallback(
+				void function( entity trig, entity ent ) : ()
+				{
+					array< void functionref( entity, entity ) > savedCallbacks = file.triggerCallbackMap[ trig ]
+					int numCallbacks = savedCallbacks.len()
+
+					for( int i; i < numCallbacks; i++ )
+					{
+						// The array conversationNames (below) will be provided when this function is called (provided when appending the funcref).
+						savedCallbacks[ i ]( trig, ent )
+					}
+				}
+			)
+		}
+
+		file.triggerCallbackMap[ trig ].append(
+			void function( entity trig, entity ent ) : ( conversationNames )
+			{
+				// Prevent players placed in the map during char select / prematch from calling ambient dialogue
+				if ( GetGameState() < eGameState.Playing && !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+					return
+
+				if( !IsValid( ent ) || !ent.IsPlayer() || !IsAlive( ent ) || Bleedout_IsBleedingOut( ent ) )
+					return
+
+				string convoName = conversationNames.getrandom()
+                     
+                                                                  
+                                                                           
+        
+          
+					TryPlayAmbientConversation( convoName, ent.GetTeam(), ent, trig )
+			}
+		)
+
+		// For debug menu teleporting
+		foreach (string convoName in conversationNames)
+		{
+			if (!(convoName in file.convoTriggerMap))
+			{
+				file.convoTriggerMap [ convoName ] <- [trig]
+			}
+			else
+			{
+				file.convoTriggerMap [ convoName ].append(trig)
+			}
+		}
+
+
+		// Randomize callbacks so that register order doesn't force A to always play in front of B, given that both can be played.
+		if (randomizeCallbacks)
+			file.triggerCallbackMap[ trig ].randomize()
+	}
+}
+#endif
+
+ItemFlavor function GetCharacterFlavorFromTableName( string dtName )
+{
+	return GetItemFlavorByCharacterRef( "character_" + dtName )
+}
+
+entity function GetSpeakingPlayerInSquadForAmbientDialogue( AmbientDialogueData data, array<entity> squad )
+{
+	foreach( entity player in squad )
+	{
+		ItemFlavor playerLegendFlav = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
+		if ( playerLegendFlav == data.speakingLegendFlav )
+			return player
+	}
+
+	unreachable
+}
+
+#if CLIENT || SERVER
+bool function AmbientConversation_CanSquadPlay( AmbientConversationData convoData, array<entity> squad, int team, entity touchingEnt, entity trig )
+{
+	// Has the squad said this line? If no repeats, exit.
+	if ( convoData.repeatType == 0 && convoData.spokenBySquads.contains( team ) && ( GetBugReproNum() != 16661 ) )
+		return false
+
+	if ( ( trig in file.triggerUsedBySquadMap ) && file.triggerUsedBySquadMap[ trig ].contains( team ) && ( GetBugReproNum() != 16661 ) )
+		return false
+
+	if ( ( team in file.excludedConversationsForSquad ) && ( file.excludedConversationsForSquad[ team ].contains( convoData.convoName ) ) )
+		return false
+
+	bool squadOutOfRetries = team in convoData.numDiceRollAttemptsMadeByTeam && convoData.numDiceRollAttemptsMadeByTeam[ team ] >= AMBIENT_DIALOGUE_FAIL_RANDOM_RETRY_ATTEMPTS
+	if ( convoData.repeatType == 0 && squadOutOfRetries )
+		return false
+
+	int numLegendReqs                 = convoData.requiredLegendFlavs.len()
+	int numAliveConnectedSquadMembers = squad.len()
+	if ( numLegendReqs > numAliveConnectedSquadMembers )
+		return false
+
+	array<entity> squadMembersWithRequiredLegendFlav
+	array<ItemFlavor> requiredFlavsRemaining = clone convoData.requiredLegendFlavs
+	for( int i; i < numAliveConnectedSquadMembers; i++ )
+	{
+		ItemFlavor squadMemberFlav = LoadoutSlot_GetItemFlavor( ToEHI( squad[ i ] ), Loadout_Character() )
+
+		if ( requiredFlavsRemaining.contains( squadMemberFlav ) )
+		{
+			squadMembersWithRequiredLegendFlav.append( squad[ i ] )
+			requiredFlavsRemaining.fastremovebyvalue( squadMemberFlav )
+		}
+
+		if ( convoData.forbiddenLegendFlavs.contains( squadMemberFlav ) )
+			return false
+	}
+
+	// Are any required legends not present
+	if ( requiredFlavsRemaining.len() > 0 )
+	{
+		return false
+	}
+
+	ItemFlavor firstSpeakerFlav = convoData.convoSequence[ 0 ].speakingLegendFlav
+
+	foreach( entity player in squadMembersWithRequiredLegendFlav )
+	{
+		if( !IsValid( player ) || !IsAlive( player ) || Bleedout_IsBleedingOut( player ) )
+			return false
+	}
+
+	bool requiredLegendsTouching = true
+	bool firstSpeakerTouching = true
+	foreach( entity player in squadMembersWithRequiredLegendFlav )
+	{
+		if ( !trig.IsTouching( player ) )
+		{
+			requiredLegendsTouching = false
+
+			if ( LoadoutSlot_GetItemFlavor( ToEHI( touchingEnt ), Loadout_Character() ) == firstSpeakerFlav )
+			{
+				firstSpeakerTouching = false
+			}
+		}
+	}
+
+	if ( convoData.allLegendsRequired && !requiredLegendsTouching )
+		return false
+
+	// We check for first speaker when any speaker touches trigger, in case it's an "all legends required" conversation. If it is, the speaker may have touched the trigger already.
+	// If they have, this will trigger the conversation to start
+	if ( !firstSpeakerTouching )
+		return false
+
+	if ( GetBugReproNum() == 16661 )
+		return true
+
+	// Skip rarity only
+	if ( GetBugReproNum() == 16662 )
+		return true
+
+	// Changing this so the dice roll is last. Don't spend random rolls if someone doesn't qualify. Only count failed attempts if the dice roll fails.
+                 
+                                                                                                                     
+     
+	if ( RandomFloat( 1.0 ) > convoData.rarity )
+      
+	{
+
+		if ( team in convoData.numDiceRollAttemptsMadeByTeam )
+			convoData.numDiceRollAttemptsMadeByTeam[ team ]++
+		else
+			convoData.numDiceRollAttemptsMadeByTeam[ team ] <- 1
+
+		return false
+	}
+
+	return true
+}
+
+//BA TODO: This is ugly, remove after 14.0 - talk to writing about not doing ambients like this.
+bool function NonTriggerAmbientConversation_CanSquadPlay( AmbientConversationData convoData, array<entity> squad, int team )
+{
+	// Has the squad said this line? If no repeats, exit.
+	if ( convoData.repeatType == 0 && convoData.spokenBySquads.contains( team ) && ( GetBugReproNum() != 16661 ) )
+		return false
+
+	if ( ( team in file.excludedConversationsForSquad ) && ( file.excludedConversationsForSquad[ team ].contains( convoData.convoName ) ) )
+		return false
+
+	bool squadOutOfRetries = team in convoData.numDiceRollAttemptsMadeByTeam && convoData.numDiceRollAttemptsMadeByTeam[ team ] >= AMBIENT_DIALOGUE_FAIL_RANDOM_RETRY_ATTEMPTS
+	if ( convoData.repeatType == 0 && squadOutOfRetries )
+		return false
+
+	int numLegendReqs                 = convoData.requiredLegendFlavs.len()
+	int numAliveConnectedSquadMembers = squad.len()
+	if ( numLegendReqs > numAliveConnectedSquadMembers )
+		return false
+
+	array<entity> squadMembersWithRequiredLegendFlav
+	array<ItemFlavor> requiredFlavsRemaining = clone convoData.requiredLegendFlavs
+	for( int i; i < numAliveConnectedSquadMembers; i++ )
+	{
+		ItemFlavor squadMemberFlav = LoadoutSlot_GetItemFlavor( ToEHI( squad[ i ] ), Loadout_Character() )
+
+		if ( requiredFlavsRemaining.contains( squadMemberFlav ) )
+		{
+			squadMembersWithRequiredLegendFlav.append( squad[ i ] )
+			requiredFlavsRemaining.fastremovebyvalue( squadMemberFlav )
+		}
+
+		if ( convoData.forbiddenLegendFlavs.contains( squadMemberFlav ) )
+			return false
+	}
+
+	// Are any required legends not present
+	if ( requiredFlavsRemaining.len() > 0 )
+	{
+		return false
+	}
+
+	ItemFlavor firstSpeakerFlav = convoData.convoSequence[ 0 ].speakingLegendFlav
+
+	if ( GetBugReproNum() == 16661 )
+		return true
+
+	// Skip rarity only
+	if ( GetBugReproNum() == 16662 )
+		return true
+
+	// Changing this so the dice roll is last. Don't spend random rolls if someone doesn't qualify. Only count failed attempts if the dice roll fails.
+                  
+                                                                                                                     
+	     
+	if ( RandomFloat( 1.0 ) > convoData.rarity )
+       
+	{
+
+	if ( team in convoData.numDiceRollAttemptsMadeByTeam )
+		convoData.numDiceRollAttemptsMadeByTeam[ team ]++
+	else
+		convoData.numDiceRollAttemptsMadeByTeam[ team ] <- 1
+
+	return false
+	}
+
+	return true
+}
+
+#endif
+
+array<AmbientConversationData> function GetAllAmbientDialogue()
+{
+	#if UI
+		if (file.ambDialogMap.len() < 1)
+			ShAmbientDialogue_Init()
+	#endif
+
+	array<AmbientConversationData> result = []
+	foreach ( key, val in file.ambDialogMap)
+	{
+		result.append(val)
+	}
+	return result
+}
+
+#if SERVER && DEV
+void function DEV_SetupForAmbientConversation(string playerUID, string conversationName)
+{
+	if (conversationName in file.ambDialogMap)
+	{
+		entity player = GetPlayerFromUID( playerUID )
+		if (player != null)
+		{
+			// reset the bots on the team, if we leave them hanging around it may trip 'legend forbid' conditions
+			ServerCommand("kick_all_bots")
+
+			entity trig = file.convoTriggerMap[conversationName][0]
+			AmbientConversationData convoData = file.ambDialogMap[ conversationName ]
+
+			array<entity> squad = GetPlayerArrayOfTeam_AliveConnected( player.GetTeam() )
+			if (convoData.requiredLegendFlavs.len() > 0)
+			{
+				for (int i = 0; i < convoData.requiredLegendFlavs.len(); i++ )
+				{
+					if (squad.len() - 1 >= i)
+					{
+						ItemFlavor playerFlav = LoadoutSlot_GetItemFlavor( ToEHI( squad[i] ), Loadout_Character() )
+						if (playerFlav !=  convoData.requiredLegendFlavs[i])
+						{
+							Remote_CallFunction_NonReplay(squad[i], "DEV_SetCharacterForAmbientDialogue", convoData.requiredLegendFlavs[i].guid, false)
+						}
+					}
+					else
+						Remote_CallFunction_NonReplay(player, "DEV_SetCharacterForAmbientDialogue", convoData.requiredLegendFlavs[i].guid, true)
+				}
+
+				// get the squad again, now that bot teammates have been spawned
+				squad = GetPlayerArrayOfTeam_AliveConnected( player.GetTeam() )
+
+				vector target = trig.GetOrigin()
+				player.SetOrigin(<target.x, target.y, target.z + 5000 >)
+				thread PlayerSkyDive(player, <0,0,0>, squad, player)
+
+				for (int i = 1; i < squad.len(); i++ )
+				{
+					squad[i].SetOrigin( <target.x, target.y, target.z + 5000 > )
+					thread PlayerSkyDive(squad[i], <0,0,0>, squad, player)
+				}
+			}
+		}
+	}
+	else
+	{
+		Assert( conversationName in file.ambDialogMap, "Attempted to set up for the ambient conversation " + conversationName + " but couldn't find it in the ambDiagMap." )
+	}
+}
+#endif
+
+#if CLIENT
+void function DEV_SetCharacterForAmbientDialogue (SettingsAssetGUID characterItemFlavorGuid, bool spawnBot)
+{
+	#if DEV
+	if( !IsValidItemFlavorGUID( characterItemFlavorGuid ) )
+		return
+
+	string characterName = ItemFlavor_GetCharacterRef( GetItemFlavorByGUID( characterItemFlavorGuid ) )
+	entity player = GetLocalClientPlayer()
+	if (!spawnBot)
+	{
+		string command ="loadouts_devset "+ Loadout_Character().id + " " + characterName
+		player.ClientCommand( command )
+	}
+	else
+	{
+		string command = "dev_sur_force_spawn_character " + characterName
+		player.ClientCommand( command )
+		player.ClientCommand( "bot -myteam" )
+		player.ClientCommand( "bot_follow 1" )
+	}
+	#endif
+}
+#endif
+
+                 
+                                      
+ 
+                                                                           
+ 
+
+                                                       
+ 
+                                                                          
+                                 
+             
+
+             
+ 
+
+          
+                                                                                                                   
+ 
+                                                                         
+                                                    
+        
+
+                                                                  
+                                                                          
+
+                                                                                      
+        
+
+                           
+                                                    
+                           
+  
+                                                                 
+                                                                                           
+                                                                                                               
+                                      
+  
+     
+        
+
+                                                                                                                          
+                                                  
+                                                                                       
+     
+                                                                                
+
+                                        
+                                          
+                                                   
+     
+                                                
+
+                              
+                                                              
+  
+                                                                
+  
+
+                                              
+
+                           
+  
+                                                                 
+                                                                                           
+                                                                                                                 
+  
+ 
+
+                                                                                         
+ 
+                                                                            
+
+                                                                                    
+                              
+        
+
+
+                                                                              
+                                                                          
+                                                    
+
+                                           
+  
+                                                                 
+                                                                                           
+                                                                                                               
+  
+
+                                              
+ 
+
+      
+
+          
+                                                                                
+ 
+                                                                            
+
+                                                 
+                                                                           
+                                                                 
+                                                                     
+
+               
+
+                                                                 
+                                                                                                                                                  
+     
+ 
+
+                                                                                               
+ 
+                                                             
+  
+                                                                          
+
+                                                     
+         
+
+                                                                                        
+  
+ 
+      
+
+                    
+                                                                     
+ 
+                             
+          
+                                           
+  
+                              
+   
+                         
+        
+   
+     
+  
+
+                              
+                                                                                        
+
+                        
+ 
+
+                                                                    
+ 
+                          
+                                           
+  
+                               
+        
+
+                     
+  
+
+                                                    
+                                                                                             
+
+                         
+ 
+                          
+
+      
+ 

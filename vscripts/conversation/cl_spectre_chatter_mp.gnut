@@ -1,11 +1,14 @@
 global function ServerCallback_PlaySpectreChatterMP
 
-void function ServerCallback_PlaySpectreChatterMP( int conversationIndex, int spectreEHandle )
+void function ServerCallback_PlaySpectreChatterMP( int conversationIndex, entity spectre )
 {
-	entity spectre = GetEntityFromEncodedEHandle( spectreEHandle )
+	table< string, int> convoTable = GetConversationToIndexTable()
+	if( conversationIndex >= convoTable.len() )
+		return
+
 	string conversationName = GetConversationName( conversationIndex )
 
-	//Seperate below functionality out into its own function if we have client intiated spectre chatter
+	
 	bool printDebug = GetDialogueDebugLevel() > 0
 
 	if ( printDebug )
@@ -18,7 +21,6 @@ void function ServerCallback_PlaySpectreChatterMP( int conversationIndex, int sp
 
 	int priority = GetConversationPriority( conversationName )
 
-	//For spectre chatter conversationName is same as alias
-	PlayOneLinerConversationOnEntWithPriority( conversationName, conversationName, spectre, priority ) //Could just do an EmitSound here without worrying about priority etc, but done for the sake of consistency
+	
+	PlayOneLinerConversationOnEntWithPriority( conversationName, conversationName, spectre, priority ) 
 }
-

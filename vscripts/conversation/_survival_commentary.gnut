@@ -171,30 +171,84 @@ void function SurvivalCommentary_Init()
 	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_bloodhound_axe_primary )
 	heirloomDamageSourceIds.append( eDamageSourceId.melee_lifeline_baton )
 	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_lifeline_baton_primary )
-	// Heirloom damage sources not available in current build
-	// heirloomDamageSourceIds.append( eDamageSourceId.melee_pathfinder_gloves )
-	// heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_pathfinder_gloves_primary )
-	// heirloomDamageSourceIds.append( eDamageSourceId.melee_octane_knife )
-	// heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_octane_knife_primary )
-	// heirloomDamageSourceIds.append( eDamageSourceId.melee_mirage_statue )
-	// heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_mirage_statue_primary )
-	// heirloomDamageSourceIds.append( eDamageSourceId.melee_caustic_hammer )
-	// heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_caustic_hammer )
-	// heirloomDamageSourceIds.append( eDamageSourceId.melee_bangalore_heirloom )
-	// heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_bangalore_heirloom )
+	heirloomDamageSourceIds.append( eDamageSourceId.melee_pathfinder_gloves )
+	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_pathfinder_gloves_primary )
+	heirloomDamageSourceIds.append( eDamageSourceId.melee_octane_knife )
+	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_octane_knife_primary )
+	heirloomDamageSourceIds.append( eDamageSourceId.melee_mirage_statue )
+	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_mirage_statue_primary )
+	heirloomDamageSourceIds.append( eDamageSourceId.melee_caustic_hammer )
+	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_caustic_hammer )
+	heirloomDamageSourceIds.append( eDamageSourceId.melee_bangalore_heirloom )
+	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_bangalore_heirloom )
 
 
-	// Additional heirloom damage sources not available in current build
-	// melee_wattson_gadget, melee_crypto_heirloom, melee_valkyrie_spear,
-	// melee_loba_heirloom, melee_seer_heirloom, melee_wraith_kunai_rt01,
-	// melee_ash_heirloom, melee_horizon_heirloom, melee_revenant_scythe_rt01,
-	// melee_fuse_heirloom
+	heirloomDamageSourceIds.append( eDamageSourceId.melee_wattson_gadget )
+	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_wattson_gadget_primary )
 
-	// Remaining heirloom damage sources not available in current build:
-	// melee_artifact_dagger, melee_artifact_sword, melee_crypto_heirloom_rt01,
-	// melee_octane_knife_rt01, melee_gibraltar_club, mp_weapon_gibraltar_club,
-	// melee_revenant_scythe, mp_weapon_revenant_scythe,
-	// melee_rampart_wrench, mp_weapon_rampart_wrench_primary
+	heirloomDamageSourceIds.append( eDamageSourceId.melee_crypto_heirloom )
+	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_crypto_heirloom )
+	
+	heirloomDamageSourceIds.append( eDamageSourceId.melee_valkyrie_spear )
+	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_valkyrie_spear )
+
+	heirloomDamageSourceIds.append( eDamageSourceId.melee_loba_heirloom )
+	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_loba_heirloom )
+
+	heirloomDamageSourceIds.append( eDamageSourceId.melee_seer_heirloom )
+	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_seer_heirloom )
+
+	heirloomDamageSourceIds.append( eDamageSourceId.melee_wraith_kunai_rt01 )
+	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_wraith_kunai_primary_rt01 )
+
+	heirloomDamageSourceIds.append( eDamageSourceId.melee_ash_heirloom )
+	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_ash_heirloom )
+
+	heirloomDamageSourceIds.append( eDamageSourceId.melee_horizon_heirloom )
+	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_horizon_heirloom_primary )
+
+	heirloomDamageSourceIds.append( eDamageSourceId.melee_revenant_scythe_rt01 )
+	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_revenant_scythe_rt01 )
+
+	heirloomDamageSourceIds.append( eDamageSourceId.melee_fuse_heirloom)
+	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_fuse_heirloom_primary )
+
+	heirloomDamageSourceIds.append( eDamageSourceId.melee_artifact_dagger)
+	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_artifact_dagger_primary )
+
+	                    
+		heirloomDamageSourceIds.append( eDamageSourceId.melee_artifact_sword)
+		heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_artifact_sword_primary )
+       
+
+                          
+                                                                           
+                                                                                        
+       
+
+	                    
+		heirloomDamageSourceIds.append( eDamageSourceId.melee_crypto_heirloom_rt01)
+		heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_crypto_heirloom_rt01_primary )
+       
+
+	                    
+		heirloomDamageSourceIds.append( eDamageSourceId.melee_octane_knife_rt01)
+		heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_octane_knife_rt01_primary )
+       
+	
+                     
+                                                                   
+                                                                               
+       
+
+	heirloomDamageSourceIds.append( eDamageSourceId.melee_gibraltar_club )
+	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_gibraltar_club )
+
+	heirloomDamageSourceIds.append( eDamageSourceId.melee_revenant_scythe )
+	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_revenant_scythe )
+
+	heirloomDamageSourceIds.append( eDamageSourceId.melee_rampart_wrench )
+	heirloomDamageSourceIds.append( eDamageSourceId.mp_weapon_rampart_wrench_primary )
 
 
                      

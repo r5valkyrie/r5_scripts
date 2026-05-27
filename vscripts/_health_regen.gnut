@@ -282,6 +282,7 @@ void function HealthRegen_SetLastDamageTime( entity player )
 	if ( player.GetPlayerNetTime( NETVAR_PLAYER_REGEN_DAMAGE_TIME ) != player.GetLastTimeDamaged() )
 	{
 		float regenStartDelay = file.playersHealInfo[ player ].regenStartDelay
+
 		player.SetPlayerNetTime( NETVAR_PLAYER_REGEN_DAMAGE_TIME, player.GetLastTimeDamaged() )
 		player.SetPlayerNetTime( NETVAR_PLAYER_REGEN_START_DELAY, regenStartDelay )
 	}
@@ -473,7 +474,7 @@ void function HealthRegen_HealPlayerShield_Thread( entity player )
 		int maxShieldHealth =  player.GetShieldHealthMax()
 		int curShieldHealth = player.GetShieldHealth()
 		int shieldHealThisTick = int( file.playersHealInfo[ player ].shieldHeal )
-		int newShieldHealth = int( min( maxShieldHealth, curShieldHealth + shieldHealThisTick ))
+		int newShieldHealth = int(min( maxShieldHealth, curShieldHealth + shieldHealThisTick ))
 
 		if ( regenSource == eRegenSource.SHIELD_PASSIVE )
 		{
@@ -528,9 +529,9 @@ void function HealthRegen_HealingFXPlay( entity player )
 	SetTeam( healingFX, player.GetTeam() )
 	healingFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
 
-	//RecoveryHealingFXRequest healingFXRequest = Player3pHealFXAddRequest( player, eHealingRequestType.ShieldRegen ) // S3: not available
-	//healingFXRequest.requestHealthFX = true
-	//file.playersHealInfo[ player ].healingFXRequest = healingFXRequest
+	RecoveryHealingFXRequest healingFXRequest = Player3pHealFXAddRequest( player, eHealingRequestType.ShieldRegen )
+	healingFXRequest.requestHealthFX = true
+	file.playersHealInfo[ player ].healingFXRequest = healingFXRequest
 
 	EmitSoundOnEntityOnlyToPlayer( player, player, SOUND_HEALTH_REGEN_1P )
 	EmitSoundOnEntityExceptToPlayer( player, player, SOUND_HEALTH_REGEN_3P )
@@ -551,8 +552,8 @@ void function HealthRegen_HealingFXStop( entity player )
 		EffectStop( healingFX )
 	}
 
-	//RecoveryHealingFXRequest healingFXRequest = file.playersHealInfo[ player ].healingFXRequest
-	//Player3pHealFXRemoveRequest( player, healingFXRequest ) // S3: not available
+	RecoveryHealingFXRequest healingFXRequest = file.playersHealInfo[ player ].healingFXRequest
+	Player3pHealFXRemoveRequest( player, healingFXRequest )
 
 	StopSoundOnEntity( player, SOUND_HEALTH_REGEN_1P )
 	StopSoundOnEntity( player, SOUND_HEALTH_REGEN_3P )

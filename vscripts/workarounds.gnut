@@ -132,7 +132,6 @@ global function Campfire_IsPlayerInCampfire
 global function BeginAOEHeal
 global function EndAOEHeal
 global function EmitSoundOnEntityExceptToPlayers
-global function ShAmbientDialogue_Init
 global function Respawn_Token_IsPlayerEliminated
 global function ShuffleVectorArray
 global function AirdropExtravaganza_GetClusterEntities
@@ -164,7 +163,6 @@ global function RefreshChallenges
 
 // === Shared scope declarations (visible to all VMs) ===
 global function ShadowArmy_IsPlayerOnShadowArmy
-global function ForcedSpawn_Init
 // SetPlayerCanGroundEmote — now in sh_emotes.nut (S22)
 global function ShadowArmy_ShouldEnterBleedout
 global function ShadowArmy_StorePlayersOriginalCharacterSelection
@@ -174,37 +172,6 @@ global function ShadowArmy_GetLegendSpawnGroupsNumber
 global function ShadowArmy_GetLegendMatchStartSpawnLocations
 global function ShadowArmy_GetLegendMatchStartSpawnRadius
 global function ShadowArmy_IsSquadReallyEliminated
-#if CLIENT
-global function ClearCustomPlayerInfoTreatment
-global function ClearCustomPlayerInfoCharacterIcon
-global function IsBallisticUltActive
-
-global function GetTeamJIPUnitFrames
-global function GetConduitShieldRui
-global function TitanSword_GetFuelRui
-
-global function PlayerStopSpectating
-global function TakeLoadoutRelatedWeapons
-global function Flowstate_AssignUniqueCharacterForPlayer
-global function Flowstate_SetAssignedCustomModelToPlayer
-global function Flowstate_ApplyModifiedMovementToPlayer
-
-#if SERVER
-#endif
-global function PrintTeamChatMessageLocally
-global function PIN_DynamicDialogue
-global function CreateDialogPopup
-global function EmitSoundOnEntityWithSelector
-global function ForcedSpawn_UseForcedSpawning
-global function Respawn_Token_CanLocalPlayerRespawnOrIsRespawning
-global function OpenSurvivalGroundListRetail
-global function LootBin_IsOpen
-global function Announcements_SetVisible
-global function WillCelebrateNEEVictory
-global function DoNEECelebration_Thread
-global function TryEnableDeathScreenRequeue
-#endif
-global function ForcedSpawn_GetEnemyPingDisplayTime
 global function HoverVehicle_GetVehicleOccupiedByPlayer
 global function PIN_EmoteUse
 global function Valentines_S15_ILoveYouEasterEggEnabled
@@ -302,7 +269,6 @@ global function WaypointFocusTracking_TrackPos
 #endif
 global function POIPlayerSpawning_Exists
 global function POIPlayerSpawning_SpawnPlayers
-global function ForcedSpawn_SpawnAllPlayers
 global function NavMesh_GetClosestPoints
 
 global function Lifesteal_PlayerDealtDamage
@@ -319,7 +285,6 @@ global function TitanSword_ActiveWeaponIsTitanSword
 global function ArrayRandomizeSeeded
 global function ArrayGetRandomSeeded
 global function TrackingVision_CreatePOIForDroppedLoot
-global function GetCryptoTTAssetsToPrecache
 global function GetLifelineTTAssetsToPrecache
 global function TitanSword_Super_IsActive
 global function TitanSword_DamageSourceIsTitanSword
@@ -2133,12 +2098,6 @@ int function EmitSoundOnEntityWithSelector( entity ent, string soundAlias, int s
 
 // PushLockFOV / PopLockFOV — native CLIENT functions, no stub needed
 
-bool function ForcedSpawn_UseForcedSpawning()
-{
-	Warning( "STUB: ForcedSpawn_UseForcedSpawning" )
-	return false
-}
-
 bool function Respawn_Token_CanLocalPlayerRespawnOrIsRespawning()
 {
 	Warning( "STUB: Respawn_Token_CanLocalPlayerRespawnOrIsRespawning" )
@@ -2212,12 +2171,6 @@ void function SetFirstTimePlayerState( int state )
 bool function ShadowArmy_IsPlayerOnShadowArmy( entity player )
 {
 	return false
-}
-
-float function ForcedSpawn_GetEnemyPingDisplayTime()
-{
-	Warning( "STUB: ForcedSpawn_GetEnemyPingDisplayTime" )
-	return 6.0
 }
 
 void function SkydiveEmoteProjector_ActivateEmoteProjector( entity player, ItemFlavor quip ) { Warning( "STUB: SkydiveEmoteProjector_ActivateEmoteProjector" ) }
@@ -3227,22 +3180,12 @@ void function EmitSoundOnEntityExceptToPlayers( entity soundEnt, array<entity> e
 	#endif
 }
 
-void function ShAmbientDialogue_Init()
-{
-	Warning( "STUB: ShAmbientDialogue_Init" )
-}
-
 bool function Respawn_Token_IsPlayerEliminated( entity player )
 {
 	Warning( "STUB: Respawn_Token_IsPlayerEliminated" )
 	return false
 }
 
-void function ForcedSpawn_Init()
-{
-	Warning( "STUB: ForcedSpawn_Init" )
-}
-// SetPlayerCanGroundEmote — now in sh_emotes.nut (S22)
 void function PIN_EmoteUse( entity player, string emoteRef, vector pos, string action, ... ) { Warning( "STUB: PIN_EmoteUse" ) }
 
 bool function ShadowArmy_ShouldEnterBleedout( entity player )
@@ -3296,11 +3239,6 @@ bool function POIPlayerSpawning_Exists()
 void function POIPlayerSpawning_SpawnPlayers()
 {
 	Warning( "STUB: POIPlayerSpawning_SpawnPlayers" )
-}
-
-void function ForcedSpawn_SpawnAllPlayers()
-{
-	Warning( "STUB: ForcedSpawn_SpawnAllPlayers" )
 }
 
 array<vector> function NavMesh_GetClosestPoints( vector origin, int numPoints )
@@ -3370,12 +3308,6 @@ bool function TitanSword_ActiveWeaponIsTitanSword( entity player )
 void function TrackingVision_CreatePOIForDroppedLoot( entity pickup, int lootType, string ref, vector origin, int team, entity player )
 {
 	Warning( "STUB: TrackingVision_CreatePOIForDroppedLoot" )
-}
-
-bool function GetCryptoTTAssetsToPrecache( array<string> models, array<string> particles )
-{
-	Warning( "STUB: GetCryptoTTAssetsToPrecache" )
-	return false
 }
 
 bool function GetLifelineTTAssetsToPrecache( array<string> models, array<string> particles )

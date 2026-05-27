@@ -1,11 +1,12 @@
+global function CryptoTT_Init
 global function InitCryptoMap
-global function CryptoTT_PreMapInit
+global function CryptoTT_OnNetworkRegistration
+global function IsCryptoTTEnabled
 
 #if SERVER
-global function PrecacheCryptoMapAssets
 global function InitCryptoSquadTVs
-global function AnimateCryptoTTSatellite
-	#if DEVELOPER
+global function GetCryptoTTAssetsToPrecache
+	#if DEV
 	global function DEV_SpawnBotsRandomlyForCryptoTT
 	global function DEV_TestSatelliteBlendMatrix
 	global function DEV_TestFireCryptoSatellite_Thread
@@ -40,6 +41,8 @@ const float CRYPTO_TT_ENEMY_MINIMAP_ICON_TIME_BEFORE_FADE = 10.0
 const float CRYPTO_TT_ENEMY_MINIMAP_ICON_FADE_TIME = 10.0
 const float CRYPTO_TT_TINT_DURATION = CRYPTO_TT_ENEMY_MINIMAP_ICON_TIME_BEFORE_FADE + CRYPTO_TT_ENEMY_MINIMAP_ICON_FADE_TIME
 
+const string CRYPTO_TT_MAP_MOVER_SCRIPTNAME = "crypto_tt_map_mover"
+
 #if SERVER
 
 // Satellite animation
@@ -69,29 +72,36 @@ const float CRYPTO_TT_HOLO_MAP_DEATHFIELD_MAX_DRAW_SIZE = CRYPTO_MAP_WORLD_SCAN_
 const vector CRYPTO_TT_HOLO_MAP_DEATHFIELD_COLOR = < 255, 160, 20 >
 
 // Drawing circle on the holo map
-const float CIRCLE_FX_SEGMENT_LEN_DEG = 360.0 / 64.0
+const float CIRCLE_FX_SEGMENT_LEN_DEG = 360.0 / 1.0  // 360.0 / 64.0 - setting to /1.0 to only draw 1 set of FX
 const float CIRCLE_FX_SEPARATION_LEN_DEG = 0.0
 const vector CRYPTO_TT_CIRCLE_DEFAULT_OFFSET = < 0, 0, 32 >
 
-const array<asset> CRYPTO_MAP_PIECES = [ $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_01.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_02.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_03.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_04.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_05.rmdl" ]
+const array< string > CRYPTO_MAP_PIECES = [ "mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_01.rmdl",
+	"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_02.rmdl",
+	"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_03.rmdl",
+	"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_04.rmdl",
+	"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_05.rmdl" ]
 
-const array<asset> CRYPTO_MAP_PIECES_MU3 = [ $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_01_mu3.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_03_mu3.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_04_mu3.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_05_mu3.rmdl" ]
+const array< string > CRYPTO_MAP_PIECES_MU3 = [ "mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_01_mu3.rmdl",
+	"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_03_mu3.rmdl",
+	"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_04_mu3.rmdl",
+	"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_05_mu3.rmdl" ]
+	
+const array< string > CRYPTO_MAP_PIECES_HU = [ "mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_hu_01.rmdl",
+	"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_hu_02.rmdl",
+	"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_hu_03.rmdl",
+	"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_hu_04.rmdl",
+	"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_hu_05.rmdl" ]
 
-const asset CRYPTO_MAP_PIECE_02_MU3 		= $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_02_mu3.rmdl"
-const asset CRYPTO_MAP_PIECE_02_MU3_TT		= $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_02_mu3_b.rmdl"
+const string CRYPTO_MAP_PIECE_02_MU3 		= "mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_02_mu3.rmdl"
+const string CRYPTO_MAP_PIECE_02_MU3_TT		= "mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_02_mu3_b.rmdl"
+const string CRYPTO_MAP_PIECE_02_HU	 		= "mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_hu_02.rmdl"
 
-const asset CRYPTO_MAP_CIRCLE_FX 			= $"P_holo_ar_radius_pc64_CP_1x20"
-const asset CRYPTO_MAP_NEXT_CIRCLE_FX 		= $"P_map_holo_ring_CP"
-const asset CRYPTO_MAP_PLAYER_FX 			= $"P_map_player_pt_enemy" //enemy
-const asset CRYPTO_MAP_ACTIVATOR_SQUAD_FX	= $"P_map_player_pt_team" //team
-const asset CRYPTO_MAP_SCAN_FX 				= $"P_crypto_holo_sat_scan"
+const string CRYPTO_MAP_CIRCLE_FX 			= "P_holo_ar_radius_pc64_CP_1x20"
+const string CRYPTO_MAP_NEXT_CIRCLE_FX 		= "P_map_holo_ring_CP"
+const string CRYPTO_MAP_PLAYER_FX 			= "P_map_player_pt_enemy" //enemy
+const string CRYPTO_MAP_ACTIVATOR_SQUAD_FX	= "P_map_player_pt_team" //team
+const string CRYPTO_MAP_SCAN_FX 			= "P_crypto_holo_sat_scan"
 #endif
 
 #if CLIENT
@@ -202,50 +212,30 @@ struct
 	#endif
 } file
 
-void function CryptoTT_PreMapInit()
-{
-	AddCallback_OnNetworkRegistration( OnNetworkRegistration )
-}
-
-void function OnNetworkRegistration()
+void function CryptoTT_OnNetworkRegistration()
 {
 	Remote_RegisterClientFunction( "SCB_DisplayEnemiesOnMinimap_CryptoTT", "float", 0.0, 9999.9, 32 )
 	Remote_RegisterClientFunction( "SCB_PlayFullAndMinimapSequence_CryptoTT", "bool", "float", 0.0, 9999.9, 32 )
 	Remote_RegisterClientFunction( "SCB_ShowSatelliteChargeRUI", "float", 0.0, 9999.9, 32 )
 }
 
-#if SERVER
-void function PrecacheCryptoMapAssets()
-{
-	if ( GetMapName() == "mp_rr_canyonlands_mu3" )
-	{
-		file.cryptoMapPieces = CRYPTO_MAP_PIECES_MU3
-
-		PrecacheModel( CRYPTO_MAP_PIECE_02_MU3 )
-		PrecacheModel( CRYPTO_MAP_PIECE_02_MU3_TT )
-	}
-	else
-		file.cryptoMapPieces = CRYPTO_MAP_PIECES
-
-	for( int i; i < file.cryptoMapPieces.len(); i++ )
-	{
-		PrecacheModel( file.cryptoMapPieces[ i ] )
-	}
-
-	PrecacheParticleSystem( CRYPTO_MAP_CIRCLE_FX )
-	PrecacheParticleSystem( CRYPTO_MAP_PLAYER_FX )
-	PrecacheParticleSystem( CRYPTO_MAP_ACTIVATOR_SQUAD_FX )
-	PrecacheParticleSystem( CRYPTO_MAP_NEXT_CIRCLE_FX )
-	PrecacheParticleSystem( CRYPTO_MAP_SCAN_FX )
-}
-#endif
-
 #if CLIENT
 void function RegisterCLCryptoCallbacks()
 {
-	AddCreateCallback( "trigger_cylinder", OnCryptoTTHoloMapRoomTriggerCreated )
+
+	AddCreateCallback( "trigger_cylinder", OnCryptoTTHoloMapRoomTriggerCreated ) //SHAWBS - Changed from heavy trigger to normal trigger to fix drone enter bug.
 }
 #endif
+
+void function CryptoTT_Init()
+{
+	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
+
+	#if CLIENT
+		ClCryptoTVsInit()
+		RegisterCLCryptoCallbacks()
+	#endif
+}
 
 ////====================================================================================================================
 //
@@ -262,6 +252,9 @@ void function RegisterCLCryptoCallbacks()
 #if SERVER
 void function InitCryptoSquadTVs()
 {
+	if ( !GetCurrentPlaylistVarBool( "enable_apex_screens", true ) )
+		return
+
 	array<entity> cryptoProxyEnterTrig_Raw = GetEntArrayByScriptName( "crypto_tt_proximity_enter_trig" )
 	array<entity> cryptoProxyExitTrig_Raw = GetEntArrayByScriptName( "crypto_tt_proximity_exit_trig" )
 	if ( cryptoProxyEnterTrig_Raw.len() != 1 && cryptoProxyExitTrig_Raw.len() != 1 )
@@ -272,6 +265,41 @@ void function InitCryptoSquadTVs()
 
 	cryptoProxyEnterTrig_Raw[ 0 ].SetEnterCallback( OnPlayerEnterSquadTVRange )
 	cryptoProxyExitTrig_Raw[ 0 ].SetLeaveCallback( OnPlayerLeaveSquadTVRange )
+}
+
+array< string > function GetMapPieces()
+{
+	if ( GetMapName() == "mp_rr_canyonlands_mu3" )
+	{
+		return CRYPTO_MAP_PIECES_MU3
+	}
+	else if ( GetMapName() == "mp_rr_canyonlands_hu" )
+	{
+		return CRYPTO_MAP_PIECES_HU
+	}
+	
+	return CRYPTO_MAP_PIECES
+}
+
+bool function GetCryptoTTAssetsToPrecache( array< string > models, array< string > particles )
+{
+	if ( IsCryptoTTEnabled() == false )
+		return false
+
+	array< string > mapPieces = GetMapPieces()
+
+	foreach ( string mapPiece in mapPieces )
+	{
+		models.append( mapPiece )
+	}
+
+	particles.append( CRYPTO_MAP_CIRCLE_FX )
+	particles.append( CRYPTO_MAP_NEXT_CIRCLE_FX )
+	particles.append( CRYPTO_MAP_PLAYER_FX )
+	particles.append( CRYPTO_MAP_ACTIVATOR_SQUAD_FX )
+	particles.append( CRYPTO_MAP_SCAN_FX )
+
+	return true
 }
 
 void function OnPlayerEnterSquadTVRange( entity trigger, entity player )
@@ -348,12 +376,12 @@ int function CryptoTT_GetModifiedSquadNumber()
 
 void function InitCryptoMap()
 {
-	#if SERVER
-		if ( IsCausticTTEnabled() )
-			file.cryptoMapPieces.append( CRYPTO_MAP_PIECE_02_MU3_TT )
-		//else
-			//file.cryptoMapPieces.append( CRYPTO_MAP_PIECE_02_MU3 )
-	#endif // SERVER
+//	#if SERVER
+//		if ( IsCausticTTEnabled() )
+//			file.cryptoMapPieces.append( CRYPTO_MAP_PIECE_02_MU3_TT )
+//		else
+//			file.cryptoMapPieces.append( CRYPTO_MAP_PIECE_02_MU3 )
+//	#endif // SERVER
 
 	// Dev safeties
 	array<entity> cryptoHoloMapEnt_Raw = GetEntArrayByScriptName( "crypto_tt_holo_map_center" )
@@ -362,7 +390,7 @@ void function InitCryptoMap()
 		Warning( "!!! Warning !!! Missing ent for crypto holo map " + cryptoHoloMapEnt_Raw.len() )
 		foreach( entity mapEnt in cryptoHoloMapEnt_Raw )
 		{
-			DebugDrawSphere( mapEnt.GetOrigin(), 4, 255, 0, 0, true, 10.0 )
+			//DebugDrawSphere( mapEnt.GetOrigin(), 4, COLOR_RED, true, 10.0 )
 			printt( "!!! Entity:", mapEnt )
 		}
 		return
@@ -409,7 +437,7 @@ void function InitCryptoMap()
 		// RUIs for hatch bunkers
 		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_Character(), CryptoTT_OnPlayerChangeLoadout )
 
-		/*if ( IsCanyonlandsBunkersEnabled() )
+		if ( IsCanyonlandsBunkersEnabled() )
 		{
 			foreach ( string id in HATCH_ZONE_IDS )
 			{
@@ -421,16 +449,16 @@ void function InitCryptoMap()
 					ruiTarget = GetEntByScriptName( format( HATCH_DOOR_ENTRANCE_SCRIPTNAME, id ) )
 
 				vector origin          = WorldToCryptoMapPos( ruiTarget.GetOrigin() ) + < 0, 0, 64 >
-				bool bunkerIsUnlocked  = false//IsHatchBunkerUnlocked( id )
+				bool bunkerIsUnlocked  = IsHatchBunkerUnlocked( id )
 				HoloMapRUIData ruiData = CryptoTT_CreateAndRegisterHoloMapRUIData( origin, CryptoTT_GetIconAssetForBunker( id ), CryptoTT_GetColorIdxForBunker( id ), !isQuestHatch && bunkerIsUnlocked )
 				RuiSetBool( ruiData.rui, "isLocked", !bunkerIsUnlocked )
 				ruiData.hatchId = id
 				CryptoTT_UpdateHoloMapRUIText( ruiData, id, false )
 			}
-		}*/
+		}
 
 		vector uRHereOrigin = WorldToCryptoMapPos( file.cryptoHoloMapOrigin ) + < 0, 0, 64 >
-		file.holoMap_YouAreHere = CryptoTT_CreateAndRegisterHoloMapRUIData( uRHereOrigin, $"rui/hud/crypto_tt_holo_map/icon_crypto_tt_holomap_u_r_here", eCryptoRUIColorIdxs.U_R_HERE, false )
+		file.holoMap_YouAreHere = CryptoTT_CreateAndRegisterHoloMapRUIData( uRHereOrigin, GetAssetFromString( "rui/hud/crypto_tt_holo_map/icon_crypto_tt_holomap_u_r_here" ), eCryptoRUIColorIdxs.U_R_HERE, false )
 		RuiSetFloat( file.holoMap_YouAreHere.rui, "unfocusedOpacity", 0.75 )
 		RuiSetString( file.holoMap_YouAreHere.rui, "collapsedText", "" )
 		CryptoTT_HoloMap_OrientHoloRuis( GetLocalViewPlayer() )
@@ -445,11 +473,16 @@ void function InitCryptoMap()
 		CryptoTTScan_SetUnusable( cryptoTTSwitch )
 	#endif
 
+	#if CLIENT
+	if ( GetCurrentPlaylistVarBool( "crypto_map_scan_enabled", true ) )
+		AddCreateCallback( "prop_dynamic", HoloMapPodiumSpawned )
+	#endif
+
 	#if SERVER
 		file.cryptoSatProp = cryptoSatelliteRaw[ 0 ]
 		entity hackTestScriptMover = CreateExpensiveScriptMover( file.cryptoSatProp.GetOrigin(), file.cryptoSatProp.GetAngles(), SOLID_VPHYSICS )
 		file.cryptoSatProp.SetParent( hackTestScriptMover )
-		//file.cryptoSatProp.SetNetworkDistanceCull( false )
+		// file.cryptoSatProp.SetNetworkDistanceCullForBoneFollowers( false )
 		thread PlayAnim( file.cryptoSatProp, "crypto_satellite_dish_idle" )
 
 		thread DrawDeathFieldOnCryptoTTMap()
@@ -460,7 +493,7 @@ void function InitCryptoMap()
 		{
 			SetTargetName( holoMapRoomTrigger, "ctt_holo_room_trig" )
 			holoMapRoomTrigger.SetOwner( file.cryptoHoloMapEnt )
-			holoMapRoomTrigger.SetRadius( CRYPTO_TT_TRIGGER_RADIUS )
+			holoMapRoomTrigger.SetCylinderRadius( CRYPTO_TT_TRIGGER_RADIUS )
 			holoMapRoomTrigger.SetAboveHeight( 704 )
 			holoMapRoomTrigger.SetBelowHeight( 16 )
 			holoMapRoomTrigger.SetOrigin( file.cryptoHoloMapOrigin )
@@ -469,6 +502,38 @@ void function InitCryptoMap()
 		}
 		DispatchSpawn( holoMapRoomTrigger )
 	#endif
+}
+
+void function EntitiesDidLoad()
+{
+	if ( !IsCryptoTTEnabled() )
+		return
+
+	PrecacheScriptString( CRYPTO_TT_MAP_MOVER_SCRIPTNAME )
+
+	#if SERVER
+		array< string > cryptoMapPieces = GetMapPieces()
+
+		for ( int i = 0; i < cryptoMapPieces.len(); i++ )
+		{
+			file.cryptoMapPieces.append( GetAssetFromString( cryptoMapPieces[i] ) )
+		}
+	#endif
+
+	InitCryptoMap()
+	#if SERVER
+		InitCryptoSquadTVs()
+	#endif
+
+}
+
+void function HoloMapPodiumSpawned( entity panel )
+{
+
+	if( panel.GetScriptName() != "crypto_map_switch")
+		return
+
+	CryptoTT_HoloMap_SetButtonUsable(panel)
 }
 
 #if CLIENT
@@ -526,7 +591,7 @@ void function CryptoTT_HoloMap_SetButtonUsable_Server( entity switchEnt )
 
 void function HoloMap_OnUse( entity panel, entity user, int useInputFlags )
 {
-	if ( !(useInputFlags & USE_INPUT_LONG) )
+	if ( !IsBitFlagSet( useInputFlags, USE_INPUT_LONG ) )
 		return
 
 	ExtendedUseSettings settings
@@ -554,6 +619,7 @@ void function HoloMap_OnUse( entity panel, entity user, int useInputFlags )
 		settings.setUsableOnSuccess = false
 		settings.movementDisable = true
 		settings.holsterWeapon = true
+		settings.holsterViewModelOnly = true
 	#endif //SERVER
 
 	thread ExtendedUse( panel, user, settings )
@@ -578,7 +644,7 @@ void function DisplayHoldUseRUIForCryptoTTSatellite_Internal( var rui, asset ico
 
 #if SERVER
 
-#if DEVELOPER
+#if DEV
 	void function DEV_TestFireCryptoSatellite_Thread()
 	{
 		ExtendedUseSettings blankSettings
@@ -587,7 +653,7 @@ void function DisplayHoldUseRUIForCryptoTTSatellite_Internal( var rui, asset ico
 		wait CRYPTO_TT_BUTTON_USE_TIME
 		CryptoTTScan_UseSuccess( GP( 0 ), GetEntByScriptName( "crypto_map_switch" ), blankSettings )
 	}
-#endif // DEVELOPER
+#endif // DEV
 
 void function CryptoTTScan_UseStart( entity button, entity player, ExtendedUseSettings settings )
 {
@@ -598,8 +664,8 @@ void function CryptoTTScan_UseStart( entity button, entity player, ExtendedUseSe
 
 	vector intSoundOrg = CryptoTT_GetInteriorSoundEmitOrigin()
 	vector extSoundOrg = CryptoTT_GetExteriorStatelliteSoundEmitOrigin()
-	EmitSoundAtPosition( TEAM_UNASSIGNED, intSoundOrg, "Canyonlands_Cryto_TT_Warmup_Sequence" )
-	EmitSoundAtPosition( TEAM_UNASSIGNED, extSoundOrg, "Canyonlands_Cryto_TT_Warmup_Sequence_Exterior" )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, intSoundOrg, "Canyonlands_Cryto_TT_Warmup_Sequence", button )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, extSoundOrg, "Canyonlands_Cryto_TT_Warmup_Sequence_Exterior", button )
 }
 
 vector function CryptoTT_GetExteriorStatelliteSoundEmitOrigin()
@@ -618,13 +684,13 @@ void function CryptoTTScan_UseFailure( entity button, entity player, ExtendedUse
 	vector intSoundOrg = CryptoTT_GetInteriorSoundEmitOrigin()
 	vector extSoundOrg = CryptoTT_GetExteriorStatelliteSoundEmitOrigin()
 
-	EmitSoundAtPosition( TEAM_UNASSIGNED, intSoundOrg, "Canyonlands_Cryto_TT_Warmup_Sequence_Interrupt" )
-	EmitSoundAtPosition( TEAM_UNASSIGNED, extSoundOrg, "Canyonlands_Cryto_TT_Warmup_Sequence_Exterior_Interrupt" )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, intSoundOrg, "Canyonlands_Cryto_TT_Warmup_Sequence_Interrupt", button )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, extSoundOrg, "Canyonlands_Cryto_TT_Warmup_Sequence_Exterior_Interrupt", button )
 
 	CryptoTT_SetSatelliteBlendValueTarget( CRYPTO_TT_SAT_BLEND_BASE )
 }
 
-#if DEVELOPER
+#if DEV
 void function DEV_CryptoTT_FakeReturningToIdle()
 {
 	CryptoTT_SetSatelliteBlendValueTarget( CRYPTO_TT_SAT_BLEND_BASE )
@@ -699,7 +765,7 @@ void function CryptoTT_SatelliteWarmupPoseParamsThink( float initialPoseOverride
 	file.satelliteBlendThinkActive = false
 }
 
-#if DEVELOPER
+#if DEV
 void function DEV_TestSatelliteBlendMatrix()
 {
 	if ( file.satelliteBlendThinkActive )
@@ -742,7 +808,7 @@ void function DEV_TestSatelliteBlendMatrix()
 	printt( "    | ---- Finally, base..." )
 	CryptoTT_SetSatelliteBlendValueTarget( CRYPTO_TT_SAT_BLEND_BASE )
 }
-#endif // DEVELOPER
+#endif // DEV
 #endif
 
 void function CryptoTTScan_UseSuccess( entity button, entity player, ExtendedUseSettings settings )
@@ -797,7 +863,7 @@ void function CryptoTTScan_UseSuccess_Thread( entity button, entity player )
 	EndSignal( button, "OnDestroy" )
 
 	vector intSoundOrg = CryptoTT_GetInteriorSoundEmitOrigin()
-	EmitSoundAtPosition( TEAM_UNASSIGNED, intSoundOrg, "Canyonlands_Scr_Cryto_TT_Prefire_Sequence" )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, intSoundOrg, "Canyonlands_Scr_Cryto_TT_Prefire_Sequence", button )
 	thread AnimateCryptoTTSatellite()
 	CryptoTTScan_SetUnusable( button )
 
@@ -810,8 +876,8 @@ void function CryptoTTScan_UseSuccess_Thread( entity button, entity player )
 	wait CRYPTO_TT_PREFIRE_TIME
 
 	StopSoundAtPosition( intSoundOrg, "Canyonlands_Scr_Cryto_TT_Prefire_Sequence" )
-	EmitSoundAtPosition( TEAM_UNASSIGNED, intSoundOrg, "Canyonlands_Scr_Cryto_TT_Fire_Sequence_3P" )
-	EmitSoundAtPosition( TEAM_UNASSIGNED, CryptoTT_GetExteriorStatelliteSoundEmitOrigin(), "Canyonlands_Scr_Cryto_TT_Fired_Distant" )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, intSoundOrg, "Canyonlands_Scr_Cryto_TT_Fire_Sequence_3P", button )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, CryptoTT_GetExteriorStatelliteSoundEmitOrigin(), "Canyonlands_Scr_Cryto_TT_Fired_Distant", button )
 
 
 	if ( IsValid( player ) )
@@ -828,29 +894,29 @@ void function CryptoTTScan_UseSuccess_Thread( entity button, entity player )
 	deathField 									  = deathfieldStages[ int( min( currentDeathFieldStageValue + 1, deathfieldStages.len() - 1 ) ) ]
 
 	// Map pulse
-	int mapPulseFX = GetParticleSystemIndex( CRYPTO_MAP_SCAN_FX )
+	int mapPulseFX = GetParticleSystemIndex( GetAssetFromString( CRYPTO_MAP_SCAN_FX ) )
 	vector fxOrigin = WorldToCryptoMapPos( button.GetOrigin() )
 	file.holoMapFXForClearnup.append( StartParticleEffectInWorld_ReturnEntity( mapPulseFX, fxOrigin, < 0, 0, 0 > ) )
-	EmitSoundAtPosition( TEAM_UNASSIGNED, fxOrigin, "Canyonlands_Scr_Cryto_TT_Pulse_Expands" )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, fxOrigin, "Canyonlands_Scr_Cryto_TT_Pulse_Expands", button )
 
 	// Next circle
-	HoloMapFXCircleData fxCircleData = CreateWorldCircleOnCryptoMap( deathField.endPos, deathField.endRadius, CRYPTO_HOLO_MAP_CIRCLE_NEXT_COLOR, CRYPTO_TT_CIRCLE_DEFAULT_OFFSET, CRYPTO_MAP_NEXT_CIRCLE_FX )
+	HoloMapFXCircleData fxCircleData = CreateWorldCircleOnCryptoMap( deathField.endPos, deathField.endRadius, CRYPTO_HOLO_MAP_CIRCLE_NEXT_COLOR, CRYPTO_TT_CIRCLE_DEFAULT_OFFSET, GetAssetFromString( CRYPTO_MAP_NEXT_CIRCLE_FX ) )
 	thread DeleteHolomapFX_Delayed( fxCircleData, file.enemyDisplayTimeOnMap )
 	vector soundOrigin = WorldToCryptoMapPos( deathField.endPos )
-	EmitSoundAtPosition( TEAM_UNASSIGNED, soundOrigin, "Canyonlands_Scr_Cryto_TT_Next_Circle" )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, soundOrigin, "Canyonlands_Scr_Cryto_TT_Next_Circle", button )
 
 	thread CryptoTTScan_SetUsableAfterDelay( button, file.mapScanCooldown )
 
 	wait 5.0
-	EmitSoundAtPosition( TEAM_UNASSIGNED, intSoundOrg, "Canyonlands_Scr_Cryto_TT_Cooldown" )
-	EmitSoundAtPosition( TEAM_UNASSIGNED, CryptoTT_GetExteriorStatelliteSoundEmitOrigin(), "Canyonlands_Scr_Cryto_TT_Cooldown_Exterior" )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, intSoundOrg, "Canyonlands_Scr_Cryto_TT_Cooldown", button )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, CryptoTT_GetExteriorStatelliteSoundEmitOrigin(), "Canyonlands_Scr_Cryto_TT_Cooldown_Exterior", button )
 }
 
 void function DrawDeathFieldOnCryptoTTMap()
 {
 	FlagWait( "DeathFieldCalculationComplete" )
 
-	DeathFieldData dfData = SURVIVAL_GetDeathFieldData( 0 )
+	DeathFieldData dfData = SURVIVAL_GetDeathFieldData( Survival_Loot_GetDefaultRealm() )
 	float radius = DeathField_GetRadiusForTimeForIndex( Time(), dfData.codeIndex )
 
 	// Don't draw deathfield until it's within a more reasonable size
@@ -864,7 +930,7 @@ void function DrawDeathFieldOnCryptoTTMap()
 
 	while ( true )
 	{
-		dfData = SURVIVAL_GetDeathFieldData( 0 )
+		dfData = SURVIVAL_GetDeathFieldData( Survival_Loot_GetDefaultRealm() )
 		radius = DeathField_GetRadiusForTimeForIndex( Time(), dfData.codeIndex )
 
 		UpdateWorldCircleOnCryptoMap( fxCircleData, dfData.center, radius )
@@ -919,11 +985,11 @@ HoloMapFXCircleData function CreateWorldCircleOnCryptoMap( vector worldOrigin, f
 	HoloMapFXCircleData newData
 
 	if ( fxOverride == $"" )
-		newData.fxIdx = GetParticleSystemIndex( CRYPTO_MAP_CIRCLE_FX )
+		newData.fxIdx = GetParticleSystemIndex( GetAssetFromString( CRYPTO_MAP_CIRCLE_FX ) )
 	else
-		newData.fxIdx = GetParticleSystemIndex( fxOverride)
+		newData.fxIdx = GetParticleSystemIndex( fxOverride )
 
-	newData.fxMover = CreateScriptMover_NEW()
+	newData.fxMover = CreateScriptMover( CRYPTO_TT_MAP_MOVER_SCRIPTNAME )
 	newData.moverOffset = fxOffset
 
 	int circleFXIdx = newData.fxIdx
@@ -937,7 +1003,7 @@ HoloMapFXCircleData function CreateWorldCircleOnCryptoMap( vector worldOrigin, f
 	{
 		// Spawn and angle the full circle, but leave them hidden
 		float targetAngle = ( CIRCLE_FX_SEPARATION_LEN_DEG + ( CIRCLE_FX_SEGMENT_LEN_DEG * i ) ) % 360.0
-		entity newFxEnt = StartParticleEffectOnEntityWithPos_ReturnEntity( newData.fxMover, circleFXIdx, FX_PATTACH_ABSORIGIN_FOLLOW, -1, newData.fxMover.GetOrigin(), < 0, targetAngle, 0 > )
+		entity newFxEnt = StartParticleEffectOnEntityWithPos_ReturnEntity( newData.fxMover, circleFXIdx, FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, newData.fxMover.GetOrigin(), < 0, targetAngle, 0 > )
 		EffectSetControlPointVector( newFxEnt, 1, color )
 		EffectSetControlPointVector( newFxEnt, 4, < 0.0, 0, 0 > )
 		newData.fxEnts.append( newFxEnt )
@@ -966,8 +1032,8 @@ void function DisplayCircleOnCryptoMap( HoloMapFXCircleData fxCircleData, vector
 
 	if ( debug )
 	{
-		DebugDrawCircle( origin, < 0, 0, 0 >, radius, 255, 255, 0, true, 1.0, 32 )
-		DebugDrawCircle( file.cryptoHoloProjBasinOrigin, < 0, 0, 0 >, projectionRadius, 255, 0, 0, true, 1.0, 32 )
+		//DebugDrawCircle( origin, < 0, 0, 0 >, radius, COLOR_YELLOW, true, 1.0, 32 )
+		//DebugDrawCircle( file.cryptoHoloProjBasinOrigin, < 0, 0, 0 >, projectionRadius, COLOR_RED, true, 1.0, 32 )
 	}
 
 	if ( IsCircleAEncompassingCircleB( origin, radius, file.cryptoHoloProjBasinOrigin, projectionRadius ) )
@@ -1102,8 +1168,8 @@ void function CryptoTT_DisplayPlayersOnHoloMap( entity activatingPlayer = null )
 
 	array<PlayerOnCryptoMapData> allPlayersOnMapData
 
-	int playerFXIdx = GetParticleSystemIndex( CRYPTO_MAP_PLAYER_FX )
-	int activatorSquadFXIdx = GetParticleSystemIndex( CRYPTO_MAP_ACTIVATOR_SQUAD_FX )
+	int playerFXIdx = GetParticleSystemIndex( GetAssetFromString( CRYPTO_MAP_PLAYER_FX ) )
+	int activatorSquadFXIdx = GetParticleSystemIndex( GetAssetFromString( CRYPTO_MAP_ACTIVATOR_SQUAD_FX ) )
 	int fxIdxToUse = playerFXIdx
 	for( int i; i < numPlayers; i++ )
 	{
@@ -1237,7 +1303,7 @@ void function CryptoTT_RevealPlayerOnMinimapAndStartSonar( PlayerOnCryptoMapData
 	EffectSetControlPointVector( newFxEnt, 1, playerData.color )
 	EffectSetControlPointVector( newFxEnt, 3, < playerData.alpha, 0, 0 > )
 
-	EmitSoundAtPosition( TEAM_UNASSIGNED, playerData.fxOrg, "Canyonlands_Scr_Cryto_TT_Players_Indicator" )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, playerData.fxOrg, "Canyonlands_Scr_Cryto_TT_Players_Indicator", newFxEnt )
 
 	file.holoMapFXForClearnup.append( newFxEnt )
 	if ( ( playerData.player.GetTeam() != playerData.activatingTeam ) && ( playerData.distFromCryptoTT < CRYPTO_MAP_SCAN_NOTIFICATION_DIST ) )
@@ -1283,11 +1349,11 @@ void function CryptoTT_CleanUpSoundByName( string soundName )
 	delete file.audioForCleanup[ soundName ]
 }
 
-#if DEVELOPER
+#if DEV
 const int DEV_NUM_BOTS_TO_SPAWN = 30
 void function DEV_SpawnBotsRandomlyForCryptoTT()
 {
-	/*int playerArrayLastIdx = GetPlayerArray().len() - 1
+	int playerArrayLastIdx = GetPlayerArray().len() - 1
 	ServerCommand( "bots " + DEV_NUM_BOTS_TO_SPAWN )
 
 	array<entity> allPlayers = GetPlayerArray()
@@ -1299,9 +1365,9 @@ void function DEV_SpawnBotsRandomlyForCryptoTT()
 
 		vector randomPoint = OriginToGround( GetRandomPointInCircle( < 0, 0, 10000 >, 25000 ) ) + < 0, 0, 256.0 >
 		allPlayers[ i ].SetOrigin( randomPoint )
-	}*/
+	}
 }
-#endif // DEVELOPER
+#endif // DEV
 #endif // SERVER
 
 vector function WorldToCryptoMapPos( vector origin )
@@ -1398,6 +1464,10 @@ void function CryptoTT_DisplayEnemiesOnMinimap_Thread( float endTime )
 
 void function CryptoTT_PlayerEnterRoomTrig( entity trigger, entity player )
 {
+	//SHAWBS - Jump out if drone entering trigger, fixes a crash.
+	if( !player.IsPlayer() )
+		return
+
 	if ( !file.playerInHoloRoom )
 	{
 		CryptoTT_SetPlayerInHoloRoom( true )
@@ -1605,13 +1675,13 @@ void function CryptoTT_HoloMap_ExpandRUIThink( entity trigger, entity player, bo
 
 				if ( debug )
 				{
-					vector debugColor = < 255, 0, 0 >
+					vector debugColor = COLOR_RED
 					if ( isActivatedPanel )
-						debugColor = < 0, 255, 0 >
-					DebugDrawFOVCircle( viewTargetOrigin, player.CameraPosition(), fovTarget, int( debugColor.x ), int( debugColor.y ), int( debugColor.z ), true, 0.1 )
-					DebugDrawFOVCircle( viewTargetOrigin, player.CameraPosition(), fovBlockTarget, 255, 255, 0, true, 0.1 )
-					if ( isActivatedPanel )
-						DebugDrawSphere( ruiData.originExpanded, 4, 255, 255, 255, true, 0.1 )
+						debugColor = COLOR_GREEN
+					//DebugDrawFOVCircle( viewTargetOrigin, player.CameraPosition(), fovTarget, debugColor, true, 0.1 )
+					//DebugDrawFOVCircle( viewTargetOrigin, player.CameraPosition(), fovBlockTarget, COLOR_YELLOW, true, 0.1 )
+					//if ( isActivatedPanel )
+					//	DebugDrawSphere( ruiData.originExpanded, 4, COLOR_WHITE, true, 0.1 )
 				}
 
 				// Of all targets player is looking at (looking within FOV range), get the closest to look direction, and closest to the player.
@@ -1850,12 +1920,12 @@ void function CryptoTT_UpdateHoloMapRUIText( HoloMapRUIData ruiData, string hatc
 	}
 
 
-	//if ( !IsHatchBunkerUnlocked( hatchId ) )
+	if ( !IsHatchBunkerUnlocked( hatchId ) )
 	{
 		descText = "#CTT_BUNKER_DESC_LOCKED"
 	}
-	//else if ( !isCrypto )
-	//	descText = "#CTT_BUNKER_DESC_NONCRYPTO"
+	else if ( !isCrypto )
+		descText = "#CTT_BUNKER_DESC_NONCRYPTO"
 
 	RuiSetString( ruiData.rui, "collapsedText", Localize( titleText ) )
 	RuiSetString( ruiData.rui, "expandedTitleText", Localize( "#CTT_BUNKER_TITLE" ) )
@@ -1865,7 +1935,7 @@ void function CryptoTT_UpdateHoloMapRUIText( HoloMapRUIData ruiData, string hatc
 
 asset function CryptoTT_GetIconAssetForBunker( string hatchId )
 {
-	//if ( !IsHatchBunkerUnlocked( hatchId ) )
+	if ( !IsHatchBunkerUnlocked( hatchId ) )
 		return $"rui/hud/crypto_tt_holo_map/icon_crypto_tt_holomap_bunker_locked"
 
 	switch( hatchId )
@@ -1885,9 +1955,9 @@ asset function CryptoTT_GetIconAssetForBunker( string hatchId )
 
 int function CryptoTT_GetColorIdxForBunker( string hatchId )
 {
-	//if ( IsHatchBunkerUnlocked( hatchId ) )
-	//	return eCryptoRUIColorIdxs.NEUTRAL
-	//else
+	if ( IsHatchBunkerUnlocked( hatchId ) )
+		return eCryptoRUIColorIdxs.NEUTRAL
+	else
 		return eCryptoRUIColorIdxs.LOCKED
 
 	unreachable
@@ -1903,3 +1973,14 @@ vector function CryptoTT_GetRuiOriginToUse( HoloMapRUIData ruiData )
 	unreachable
 }
 #endif
+
+//CHECK IF THE TT EXISTS IN THE MAP
+bool function IsCryptoTTEnabled()
+{
+	if ( GetCurrentPlaylistVarBool( "crypto_map_scan_enabled", true ) )
+	{
+		return HasEntWithScriptName( "crypto_tt_holo_map_center" )
+	}
+
+	return false
+}

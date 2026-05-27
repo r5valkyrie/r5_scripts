@@ -1,0 +1,352 @@
+                  
+global function Wattson_TT_Init
+global function Wattson_TT_Register_Networking
+global function IsNessieEEActive
+
+#if SERVER
+global function Wattson_TT_Check_Victory
+global function Wattson_TT_ChargePylon
+#endif
+
+#if CLIENT
+global function ServertoClient_SetInitialValuesForBolts
+global function ServertoClient_Set_Wattson_TT_HasNessie
+global function WillCelebrateNEEVictory
+global function DoNEECelebration_Thread
+#endif
+
+const asset VFX_NESSIE_DEATH = $"ball_confetti"
+const string SFX_NESSIE_DEFAULT_SQUEAK = "AFLTM_Vocal_Wander"
+
+const vector NESSIE_ORIGIN_A = <9009.124023, -17154.052734, 1609.412476>
+const vector NESSIE_ORIGIN_B = <9484.957031, -17906.435547, 1564.604980>
+const vector NESSIE_ORIGIN_C = <8593.604492, -17282.080078, 1599.850342>
+const vector NESSIE_ANGLES_A = <7.111723, -138.221268, 0.000000>
+const vector NESSIE_ANGLES_B = <-0.791794, 79.916199, 0.000000>
+const vector NESSIE_ANGLES_C = <10.361488, 10.796261, 0.000000>
+
+const string WATTSON_TT_BOLT_SCRIPTNAME = "wattson_tt_bolts"
+const string WATTSON_TT_SMALL_BOLT_SCRIPTNAME = "wattson_tt_bolts_small"
+const string WATTSON_TT_MOVER_SCRIPTNAME = "wattson_tt_mover"
+
+struct
+{
+#if CLIENT
+	bool 		hasNessie = false
+#endif
+#if SERVER
+	table<entity, bool>		 needToPlace
+#endif
+
+} file
+
+void function Wattson_TT_Init()
+{
+	RegisterSignal( "PodiumVictoryFinished" )
+	RegisterSignal( "WattsonTTPylonStart" )
+
+	#if SERVER
+	AddCallback_EntitiesDidLoad( OnEntitiesDidLoad )
+	AddCallback_OnClientConnected( OnClientConnected )
+	AddCallback_OnDeathBoxSpawned( NEE_OnDeathboxSpawned )
+	AddCallback_OnPlayerKilled( NEE_OnPlayerKilled )
+	#endif
+}
+
+void function Wattson_TT_Register_Networking()
+{
+	Remote_RegisterClientFunction("ServertoClient_Set_Wattson_TT_HasNessie")
+	Remote_RegisterClientFunction("ServertoClient_SetInitialValuesForBolts", "entity")
+}
+
+#if SERVER
+void function OnEntitiesDidLoad()
+{
+	if ( !IsWattsonTTEnabled() )
+		return
+
+	if ( IsNessieEEActive() )
+	{
+		Spawn_Wattson_TT_Nessies( NESSIE_ORIGIN_A, NESSIE_ANGLES_A )
+		Spawn_Wattson_TT_Nessies( NESSIE_ORIGIN_B, NESSIE_ANGLES_B )
+		Spawn_Wattson_TT_Nessies( NESSIE_ORIGIN_C, NESSIE_ANGLES_C )
+
+		PrecacheParticleSystem( VFX_NESSIE_DEATH )
+	}
+}
+
+entity function Spawn_Wattson_TT_Nessies( vector origin, vector angles )
+{
+	string lootRef = "fr_nessie"
+
+	entity lootEnt = SpawnGenericLoot( lootRef, origin, angles, 1 )
+	lootEnt.SetNetworkDistanceCull( false )
+
+	return lootEnt
+}
+
+void function Wattson_TT_Check_Victory( entity winningplayer )
+{
+	if ( DoesPlayerHaveNessieInInventory( winningplayer ) )
+	{
+		if ( GetCurrentPlaylistVarBool( "wattson_tt_nessie_all_celebrate", true ) )
+		{
+			foreach ( player in GetPlayerArray() )
+			{
+				if ( IsValid ( player ) )
+					Remote_CallFunction_NonReplay( player, "ServertoClient_Set_Wattson_TT_HasNessie" )
+			}
+		}
+		else
+		{
+			Remote_CallFunction_NonReplay( winningplayer, "ServertoClient_Set_Wattson_TT_HasNessie" )
+		}
+	}
+}
+
+bool function DoesPlayerHaveNessieInInventory( entity player )
+{
+	if ( !IsValid( player ) )
+		return false
+
+	array<ConsumableInventoryItem> playerInventory = SURVIVAL_GetPlayerInventory( player )
+
+	foreach ( ConsumableInventoryItem invItem in playerInventory )
+	{
+		LootData data = SURVIVAL_Loot_GetLootDataByIndex( invItem.type )
+
+		if ( data.ref == "fr_nessie" )
+			return true
+	}
+	return false
+}
+
+void function SpawnNessie_OnDeathbox( entity deathbox )
+{
+	if (!IsValid( deathbox ))
+		return
+
+	string lootRef = "fr_nessie"
+	vector originOffset = <0,0,28>
+	vector anglesOffset = <0,15,0>
+
+	int fxIndex = GetParticleSystemIndex( VFX_NESSIE_DEATH )
+
+	entity nessieEnt = SpawnGenericLoot( lootRef, deathbox.GetOrigin() + originOffset, deathbox.GetAngles() + anglesOffset, 1 )
+
+	nessieEnt.SetParent( deathbox )
+	EmitSoundOnEntity( nessieEnt, SFX_NESSIE_DEFAULT_SQUEAK )
+
+	StartParticleEffectInWorld( fxIndex, nessieEnt.GetOrigin(), <0, 0, 0> )
+}
+
+void function NEE_OnDeathboxSpawned( entity deathbox, entity attacker, int damageSourceID )
+{
+	if ( !IsNessieEEActive() )
+		return
+
+	entity victim = deathbox.GetOwner()
+
+	if ( victim in file.needToPlace )
+	{
+		if ( file.needToPlace[ victim ] )
+		{
+			thread SpawnNessie_OnDeathbox( deathbox )
+		}
+
+		delete file.needToPlace[ victim ]
+	}
+}
+
+void function NEE_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
+{
+	if ( !IsNessieEEActive() )
+		return
+
+	if ( !IsValid( victim ) )
+		return
+
+	if ( DoesPlayerHaveNessieInInventory ( victim ) )
+	{
+		SURVIVAL_RemoveSpecificItemFromPlayerInventory( victim, "fr_nessie", 1 )
+		file.needToPlace [ victim ] <- true
+	}
+}
+#endif
+
+#if CLIENT
+void function ServertoClient_Set_Wattson_TT_HasNessie()
+{
+	file.hasNessie = true
+}
+
+bool function WillCelebrateNEEVictory()
+{
+	return file.hasNessie
+}
+
+void function DoNEECelebration_Thread( vector origin, vector angles )
+{
+	entity player = GetLocalViewPlayer()
+
+	EndSignal( player, "PodiumVictoryFinished" )
+
+	vector startPos = origin + < -45, -15, 120 >
+
+	if ( GetCurrentPlaylistVarBool( "wattson_tt_big_nessie", true ) )
+		startPos = origin + < -25, -5, -75 >
+
+	entity mover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", startPos, angles )
+	entity model = CreateClientSidePropDynamic( startPos, angles, $"mdl/props/nessie/nessie_april_fools.rmdl" )
+
+	OnThreadEnd( void function() : ( mover, model  ) {
+		model.Destroy()
+		mover.Destroy()
+	} )
+
+	if ( GetCurrentPlaylistVarBool( "wattson_tt_big_nessie", true ) )
+	{
+		model.SetModelScale( 5 )
+
+		float moveTime = 6.5
+		float blendTime = moveTime / 2.0
+		vector finalPos = startPos + < 0, 0, 55 >
+
+		model.SetParent( mover, "", false  )
+
+		mover.NonPhysicsMoveTo( finalPos, moveTime, 0, blendTime )
+	}
+	else
+	{
+		model.SetModelScale( 1.5 )
+
+		float moveTime = 6.5
+		float blendTime = moveTime / 2.0
+		vector finalPos = startPos + < 0, 0, -120 >
+
+		model.SetParent( mover, "", false  )
+
+		mover.NonPhysicsRotate( <0,0,1>, 45.0 )
+		mover.NonPhysicsMoveTo( finalPos, moveTime, 0, blendTime )
+	}
+
+}
+#endif
+
+bool function IsWattsonTTEnabled()
+{
+	if ( GetCurrentPlaylistVarBool( "wattson_tt_enabled", true ) )
+	{
+		return HasEntWithScriptName( WATTSON_TT_BOLT_SCRIPTNAME )
+	}
+
+	return false
+}
+
+bool function IsNessieEEActive()
+{
+	if ( GetCurrentPlaylistVarBool( "wattson_tt_ee_enabled", true ) )
+	{
+		return IsWattsonTTEnabled()
+	}
+
+	return false
+}
+////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////// CHARGE PYLON ///////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////
+
+#if SERVER
+void function OnClientConnected( entity player )
+{
+	array<entity> allBolts = GetEntArrayByScriptName( WATTSON_TT_BOLT_SCRIPTNAME )
+	if ( HasEntWithScriptName( WATTSON_TT_SMALL_BOLT_SCRIPTNAME ) )
+		allBolts.append( GetEntByScriptName( WATTSON_TT_SMALL_BOLT_SCRIPTNAME ) )
+
+	foreach ( bolt in allBolts )
+	{
+		Remote_CallFunction_NonReplay( player, "ServertoClient_SetInitialValuesForBolts", bolt )
+	}
+}
+
+void function Wattson_TT_ChargePylon( entity panel )
+{
+	if ( !IsWattsonTTEnabled() )
+		return
+
+	array<entity> allBolts = GetEntArrayByScriptName( WATTSON_TT_BOLT_SCRIPTNAME )
+	if ( HasEntWithScriptName( WATTSON_TT_SMALL_BOLT_SCRIPTNAME ) )
+		allBolts.append( GetEntByScriptName( WATTSON_TT_SMALL_BOLT_SCRIPTNAME ) )
+
+	if ( allBolts.len() == 0 )
+		return
+
+	array<entity> nearbyBolts = GetEntsFromArrayInRange( panel.GetOrigin(), 300, allBolts)
+	if ( nearbyBolts.len() > 0 )
+	{
+		foreach ( bolt in nearbyBolts )
+		{
+			vector origin = bolt.GetOrigin()
+			Wattson_TT_Start( bolt, origin )
+		}
+	}
+}
+
+void function Wattson_TT_Start( entity bolt, vector boltOrigin )
+{
+	Signal( bolt, "WattsonTTPylonStart" )
+	thread Wattson_TT_ChargePylon_Think_Thread( bolt, CHARGE_PYLON_RAISE_TIME, boltOrigin )
+}
+
+void function Wattson_TT_ChargePylon_Think_Thread( entity bolt, float pylonRaiseTime, vector boltOrigin )
+{
+	EndSignal( bolt, "WattsonTTPylonStart" )
+
+	if ( !IsValid ( bolt ) )
+		return
+
+	entity mover = CreateScriptMover( WATTSON_TT_MOVER_SCRIPTNAME, bolt.GetOrigin() )
+	bolt.SetParent( mover )
+
+	OnThreadEnd(
+		function() : ( bolt, mover )
+		{
+			if ( IsValid( bolt ) )
+			{
+				bolt.ClearParent()
+			}
+
+			if ( IsValid( mover ) )
+			{
+				mover.Destroy()
+			}
+		}
+	)
+
+	int offSet = -165
+	if ( bolt.GetScriptName() == WATTSON_TT_SMALL_BOLT_SCRIPTNAME )
+	{
+		offSet = -80
+	}
+
+	vector startPos = boltOrigin + < 0, 0, offSet >
+	float blendTime = 0.1
+
+	mover.NonPhysicsMoveTo( startPos, 0.2, 0.2, 0 )
+	wait 0.2
+
+	mover.NonPhysicsMoveTo( boltOrigin, pylonRaiseTime, blendTime, blendTime )
+	wait pylonRaiseTime
+}
+#endif
+
+#if CLIENT
+void function ServertoClient_SetInitialValuesForBolts( entity bolt )
+{
+	if ( !IsValid ( bolt ) )
+		return
+
+	bolt.kv.intensity = 4.8
+}
+#endif
+       

@@ -559,11 +559,11 @@ void function RemoteFunctions_Init_Begin()
       
 
                   
-			//Wattson_TT_Register_Networking()
+			Wattson_TT_Register_Networking()
       
 
 			Rampart_TT_RegisterNetworking()
-			//CryptoTT_OnNetworkRegistration()
+			CryptoTT_OnNetworkRegistration()
 			Bloodhound_TT_RegisterNetworking()
 			ShEpilogue_RegisterNetworking()
 			Armor_ShieldRegen_RegisterNetworking()

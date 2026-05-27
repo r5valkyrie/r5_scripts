@@ -4249,7 +4249,6 @@ void function DelayShieldDecayTime( entity soul, float delay )
 
 void function HighlightWeapon( entity weapon )
 {
-#if HAS_WEAPON_PICKUP_HIGHLIGHT
 	if ( weapon.IsLoadoutPickup() )
 	{
 		Highlight_SetOwnedHighlight( weapon, "sp_loadout_pickup" )
@@ -4260,7 +4259,6 @@ void function HighlightWeapon( entity weapon )
 		Highlight_SetOwnedHighlight( weapon, "weapon_drop_active" )
 		Highlight_SetNeutralHighlight( weapon, "weapon_drop_normal" )
 	}
-#endif // #if HAS_WEAPON_PICKUP_HIGHLIGHT
 }
 
 void function WaitTillLookingAt( entity player, entity ent, bool doTrace, float degrees, float minDist = 0, float timeOut = 0, entity trigger = null, string failsafeFlag = "" )
@@ -4745,10 +4743,10 @@ void function SetSquad( entity guy, string squadName )
 		return
 
 	// we only want squads containing NPCs of the same class
-	#if HAS_AI_SQUAD_LIMITS
-	Assert( SquadValidForClass( squadName, guy.GetClassName() ), "Can't put AI " + guy + " in squad " + squadName + ", because it contains one or more AI with a different class." )
-	Assert( SquadCanAcceptNewMembers( guy, squadName ), "Can't add AI " + guy + " to squad " + squadName + ", because that squad already has " + SQUAD_SIZE + " slots filled or reserved." )
-	#endif
+	//#if HAS_AI_SQUAD_LIMITS
+	//Assert( SquadValidForClass( squadName, guy.GetClassName() ), "Can't put AI " + guy + " in squad " + squadName + ", because it contains one or more AI with a different class." )
+	//Assert( SquadCanAcceptNewMembers( guy, squadName ), "Can't add AI " + guy + " to squad " + squadName + ", because that squad already has " + SQUAD_SIZE + " slots filled or reserved." )
+	//#endif
 
 	guy.SetSquad( squadName )
 }
@@ -7703,15 +7701,6 @@ void function FinalizePrivateMatchStats()
 }
 
 void function ShowTeamNameInHud()
-{
-}
-
-bool function ForcedSpawn_UseForcedSpawning()
-{
-	return false
-}
-
-void function ForcedSpawn_TrySetTeamSpawnFromLocationIndex( int teamIndex, int locationIndex )
 {
 }
 

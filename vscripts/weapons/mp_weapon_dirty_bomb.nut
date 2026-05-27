@@ -1172,7 +1172,7 @@ var function OnWeaponTossReleaseAnimEvent_weapon_dirty_bomb( entity weapon, Weap
 			weapon.w.lastProjectileFired = deployable
 		#endif
 
-		#if BATTLECHATTER_ENABLED && SERVER
+		#if SERVER
 			TryPlayWeaponBattleChatterLine( player, weapon )
 		#endif
 

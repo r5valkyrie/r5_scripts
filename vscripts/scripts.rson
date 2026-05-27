@@ -100,7 +100,6 @@ Scripts:
 When: "SERVER || CLIENT || UI"
 Scripts:
 [
-	sh_consts_mp.gnut
 	sh_loadouts.gnut
 	reward_campaign.nut
 	mp/sh_artifacts.nut
@@ -266,23 +265,6 @@ Scripts:
 	_remote_functions_mp.gnut
 ]
 
-//must be before sh_damage_types.nut
-// www.r5r.dev Tracker
-When: "SERVER"
-Scripts:
-[
-	mp/tracker/commands.nut
-
-	mp/tracker/_internal.nut
-	mp/tracker/_register_stats.nut
-]
-
-When: "CLIENT"
-Scripts:
-[
-	mp/tracker/cl_stats.nut
-]
-
 When: "SERVER || CLIENT"
 Scripts:
 [
@@ -423,7 +405,7 @@ When: "SERVER || CLIENT"
 Scripts:
 [
 	sh_character_loadouts.nut
-	conversation/sh_grunt_chatter_mp.gnut
+	conversation/sh_ambient_dialogue.gnut
 	conversation/sh_spectre_chatter_mp.gnut
 	conversation/sh_survival_commentary.gnut
 	sh_crowd_noise_meter.nut
@@ -455,13 +437,29 @@ Scripts:
 	mp/sh_mirage_voyage.nut  //World's Edge MU1
 	mp/sh_gondola_mover.nut  //World's Edge MU3
 	mp/sh_caustic_tt.nut  //King's Canyon MU2TT/MU3
+	mp/levels/sh_crypto_tt_common.nut
 	mp/sh_canyonlands_caustic_lore.nut
 	mp/sh_sniper_tower.nut
 	sh_mp_utility.gnut
 	mp/sh_crafting.nut
 	sh_score.gnut
+	mp/_loot_rollers.nut
+	mp/sh_loot_rollers.nut
+	worldsystems/sh_drones.nut
+	worldsystems/_drones.nut
+	worldsystems/_drones_broadcast.nut
+	worldsystems/_drones_loot.nut
+	worldsystems/sh_drones_broadcast.nut
+	worldsystems/sh_drones_blimp.nut
+	worldsystems/_drones_blimp.nut
+	worldsystems/_drones_ad.nut
+	worldsystems/sh_drones_ad.nut
 	worldsystems/sh_explosive_loot_hold.nut
-
+	worldsystems/sh_drones_loot.nut
+	worldsystems/sh_forced_spawning.nut
+	worldsystems/sv_loot_spawn_utils.gnut
+	worldsystems/sh_breakable_crystals.nut
+	worldsystems/tts/sh_wattson_tt.gnut
 	gamemodes/sh_gamemode_recruit.nut
 ]
 
@@ -521,8 +519,6 @@ Scripts:
 
 	sh_loot_vault_panel.nut
 	mp/sh_charge_pylons.gnut
-	mp/sh_loot_drones.nut
-	mp/sh_loot_rollers.nut
 
 	_ultimates.gnut
 	sh_survival_persistentdamagelayer.gnut
@@ -648,7 +644,6 @@ Scripts:
 	ai/_droppod.gnut
 	ai/_ai_loot.gnut
 	conversation/_conversation_schedule.gnut
-	mp/_ai_superspectre.nut
 	
 	mp/_base_gametype.gnut
 	mp/_changemap.nut
@@ -656,12 +651,9 @@ Scripts:
 	mp/_gamestate.nut
 	mp/_goblin_dropship.nut
 	//mp/_loadout_crate.nut
-	mp/_music.gnut
 	mp/_threat_detection.gnut
-	mp/_sniper_spectres.nut
 	mp/_spawn_functions.nut
 	mp/_spectre_rack.nut
-	mp/_loot_rollers.nut
 	mp/_vr.nut
 	mp/player_cloak.nut
 	_hovertank.gnut
@@ -683,7 +675,6 @@ Scripts:
 	weapons/_cloaker.gnut
 	weapons/_particle_wall.gnut
 
-	mp/_mobility_experiments.gnut
 	mp/_model_viewer.nut
 ]
 
@@ -698,7 +689,6 @@ Scripts:
 [
 	lobby/_lobby.gnut
 	lobby/sh_lobby.gnut
-	mp/_ai_mp.gnut
 	_xp.gnut
 	_achievements.gnut
 	
@@ -708,7 +698,6 @@ Scripts:
 	mp/_score.nut
 	mp/_gamestate_mp.nut
 	mp/pintelemetry.gnut
-	conversation/_grunt_chatter_mp.gnut
 	conversation/_spectre_chatter_mp.gnut
 	conversation/_survival_commentary.gnut
 
@@ -917,14 +906,6 @@ Scripts:
 [
 	gamemodes/sh_gamemode_winterexpress.nut
 ]
-
-// Arenas
-When: "SERVER || CLIENT"
-Scripts:
-[
-	mp/sh_cash_station.gnut
-]
-
 
 // FreeDM Gamemodes (DM, Gun Game, TDM)
 // Load stubs + utility for all VMs so UI VM has access to shared functions

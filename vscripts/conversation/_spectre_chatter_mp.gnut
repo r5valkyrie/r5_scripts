@@ -1,14 +1,83 @@
-// stub script
-
 global function SpectreChatter_MP_Init
+global function PlaySpectreChatterMPLineAfterDelay
 global function PlaySpectreChatterMPLine
+
 
 void function SpectreChatter_MP_Init()
 {
-    
+	AddCallback_OnPlayerKilled( SpectreChatter_MP_OnPlayerKilled )
+	AddCallback_OnNPCKilled( SpectreChatter_MP_OnNPCKilled )
 }
 
-void function PlaySpectreChatterMPLine( entity guy, string diag )
+void function SpectreChatter_MP_OnPlayerKilled( entity playerKilled, entity attacker, var damageInfo )
 {
-    
+	if ( !IsSpectre( attacker ) )
+		return
+
+	if ( playerKilled.IsTitan() )
+		thread PlaySpectreChatterMPLineAfterDelay( attacker, "diag_imc_spectre_gs_gruntkillstitan_02_1" )
+	else
+		thread PlaySpectreChatterMPLineAfterDelay( attacker, "diag_imc_spectre_gs_killenemypilot_01_1" )
+}
+
+void function SpectreChatter_MP_OnNPCKilled( entity npcKilled, entity attacker, var damageInfo )
+{
+	if ( IsSpectre( npcKilled ) )
+	{
+		string deadGuySquadName = expect string( npcKilled.kv.squadname )
+		if ( deadGuySquadName == "" )
+			return
+
+		array<entity> squad = GetNPCArrayBySquad( deadGuySquadName )
+
+		entity speakingSquadMate = null
+
+		foreach ( squadMate in squad )
+		{
+			if ( IsSpectre( squadMate ) )
+			{
+				speakingSquadMate = squadMate
+				break
+			}
+		}
+		if ( speakingSquadMate == null )
+			return
+
+		if ( squad.len() == 1 )
+			thread PlaySpectreChatterMPLineAfterDelay( speakingSquadMate, "diag_imc_spectre_gs_squaddeplete_01_1" )
+		else if ( squad.len() > 0 )
+			thread PlaySpectreChatterMPLineAfterDelay( speakingSquadMate, "diag_imc_spectre_gs_allygrundown_05_1" )
+	}
+	else
+	{
+		if ( !IsSpectre( attacker ) )
+			return
+
+		if ( npcKilled.IsTitan() )
+			thread PlaySpectreChatterMPLineAfterDelay( attacker, "diag_imc_spectre_gs_gruntkillstitan_02_1" )
+	}
+}
+
+void function PlaySpectreChatterMPLineAfterDelay( entity spectre, string chatterLine, float delay = 0.3 )
+{
+	wait delay
+
+	if ( !IsAlive( spectre ) ) //Really this is just an optimization thing, if the spectre is dead no point in running the same check for every player nearby in ShouldPlaySpectreChatterMPLine
+		return
+
+	PlaySpectreChatterMPLine( spectre, chatterLine )
+}
+
+void function PlaySpectreChatterMPLine( entity spectre, string chatterLine ) //A lot of this might be overkill considering spectre chatter is literally beeps and boops, (i.e. we could literally just do emitsoundonentity) but doing for the sake of consistency with the rest of the MP chatter systems
+{
+	foreach ( player in GetPlayerArray() )
+	{
+		if ( !ShouldPlaySpectreChatterMPLine( chatterLine, player, spectre ) )
+			continue
+
+		//SetConversationLastPlayedTime( chatterLine, Time() ) //not keeping track of debounce on server
+
+		int conversationID = GetConversationIndex( chatterLine )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_PlaySpectreChatterMP", conversationID, spectre )
+	}
 }

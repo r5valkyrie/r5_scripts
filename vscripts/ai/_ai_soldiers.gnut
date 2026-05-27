@@ -6,7 +6,6 @@ global const STANDARDGOALRADIUS = 100
 
 global function AiSoldiers_Init
 
-global function MakeSquadName
 global function GetPlayerSpectreSquadName
 global function disable_npcs
 global function disable_new_npcs
@@ -16,7 +15,6 @@ global function Disable_MILITIA
 global function CommonMinionInit
 global function DisableMinionUsesHeavyWeapons
 global function SetupMinionForRPGs
-global function IsNPCSpawningEnabled
 global function EnableAutoPopulate
 global function DisableAutoPopulate
 global function OnEnemyChanged_MinionSwitchToHeavyArmorWeapon
@@ -41,6 +39,11 @@ global function onlymilitia    // debug
 
 global function SetGlobalNPCHealth //debug
 
+                      
+                             
+                                    
+                                     
+      
 
 //=========================================================
 // MP ai soldier
@@ -53,21 +56,18 @@ struct
 	array<string> militiaTitles
 } file
 
-function AiSoldiers_Init()
+void function AiSoldiers_Init()
 {
 	level.COOP_AT_WEAPON_RATES <- {}
 	level.COOP_AT_WEAPON_RATES[ "mp_weapon_rocket_launcher" ] <- 0.5
 	level.COOP_AT_WEAPON_RATES[ "mp_weapon_smr" ] <- 0.4
 	level.COOP_AT_WEAPON_RATES[ "mp_weapon_mgl" ] <- 0.1
 
-	PrecacheSprite( $"sprites/glow_05.vmt" )
 	FlagInit( "disable_npcs" )
 	FlagInit( "Disable_IMC" )
 	FlagInit( "Disable_MILITIA" )
 
 	level.onlySpawn <- null
-
-	//level.spectreSpawnStyle <- eSpectreSpawnStyle.MORE_FOR_ENEMY_TITANS
 
 	FlagInit( "AllSpectre" )
 	FlagInit( "AllSpectreIMC" )
@@ -81,16 +81,15 @@ function AiSoldiers_Init()
 
 	AddCallback_OnClientConnecting( AiSoldiers_InitPlayer )
 
-	//if ( GetDeveloperLevel() > 0 )
-		//AddClientCommandCallback( "SpawnViewGrunt", ClientCommand_SpawnViewGrunt )
-
+	if ( GetDeveloperLevel() > 0 )
+		AddClientCommandCallback( "SpawnViewGrunt", ClientCommand_SpawnViewGrunt ) // dev
 }
 
-bool function ClientCommand_SpawnViewGrunt( entity player, array<string> args )
+void function ClientCommand_SpawnViewGrunt( entity player, array<string> args )
 {
-	int team = args[0].tointeger()
+	int team = int( args[0] )
 	if ( GetDeveloperLevel() < 1 )
-		return true
+		return
 
 	vector origin = player.EyePosition()
 	vector angles = player.EyeAngles()
@@ -101,18 +100,17 @@ bool function ClientCommand_SpawnViewGrunt( entity player, array<string> args )
 
 	entity guy = CreateSoldier( team, result.endPos, angles )
 	DispatchSpawn( guy )
-	return true
 }
 
 // debug commands
-function onlyimc()
+void function onlyimc()
 {
 	level.onlySpawn = TEAM_IMC
 	printt( "Only spawning IMC AI" )
 }
 
 // debug commands
-function onlymilitia()
+void function onlymilitia()
 {
 	level.onlySpawn = TEAM_MILITIA
 	printt( "Only spawning Militia AI" )
@@ -128,58 +126,31 @@ void function AiSoldiers_InitPlayer( entity player )
 }
 
 //////////////////////////////////////////////////////////
-string function MakeSquadName( int team, string msg )
-{
-	string teamStr
-
-	if ( team == TEAM_IMC )
-		teamStr = "imc"
-	else if ( team == TEAM_MILITIA )
-		teamStr = "militia"
-	else
-		teamStr = "default"
-
-	return "squad_" + teamStr + msg
-}
-
-//////////////////////////////////////////////////////////
-
-
-//////////////////////////////////////////////////////////
 // common init for grunts and spectres
 void function CommonMinionInit( entity npc )
 {
-	//RandomizeHead( npc )
+	RandomizeHead( npc )
 
-	if ( IsMultiplayer() )
-	{
-		npc.kv.alwaysAlert = 1
-		npc.EnableNPCFlag( NPC_STAY_CLOSE_TO_SQUAD | NPC_NEW_ENEMY_FROM_SOUND )
-		npc.DisableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE )
-	}
-
-	//npc.s.cpState <- eNPCStateCP.NONE
+	npc.kv.alwaysAlert = 1
+	npc.EnableNPCFlag( NPC_STAY_CLOSE_TO_SQUAD )
+	npc.DisableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE )
 
 	if ( npc.kv.alwaysalert.tointeger() == 1 )
 		npc.SetDefaultSchedule( "SCHED_ALERT_SCAN" )
 }
 
-function SetupMinionForRPGs( entity soldier )
+void function SetupMinionForRPGs( entity soldier )
 {
 	soldier.SetEnemyChangeCallback( OnEnemyChanged_MinionSwitchToHeavyArmorWeapon )
 }
-
 
 void function OnSoldierSeeEnemy( entity guy )
 {
 	guy.EndSignal( "OnDeath" )
 
-	if ( NPC_GruntChatterSPEnabled( guy ) )
-		return
-
 	while ( true )
 	{
-		var results = WaitSignal( guy, "OnSeeEnemy" )
+		table results = WaitSignal( guy, "OnSeeEnemy" )
 
 		if ( !IsValid( guy ) )
 			return
@@ -192,9 +163,6 @@ void function TryFriendlyPassingNearby( entity grunt )
 {
 	grunt.EndSignal( "OnDeath" )
 
-	if ( NPC_GruntChatterSPEnabled( grunt ) )
-		return
-
 	while ( true )
 	{
 		wait 5
@@ -204,21 +172,16 @@ void function TryFriendlyPassingNearby( entity grunt )
 
 		#if GRUNT_CHATTER_MP_ENABLED
 		// only do this a minute into the match
-		if ( Time() > 60.0 && TryFriendlyCallout( grunt, "pilot", "bc_reactFriendlyPilot" , 500 ) )
+		//if ( Time() > 60.0 && TryFriendlyCallout( grunt, "pilot", "bc_reactFriendlyPilot", 500 ) )
+		//	continue
+		if ( TryFriendlyCallout( grunt, "npc_super_spectre", "bc_reactReaperFriendlyArrives", 500 ) )
 			continue
-		if ( TryFriendlyCallout( grunt, "titan", "bc_reactTitanfallFriendlyArrives" , 500 ) )
-			continue
-		if ( TryFriendlyCallout( grunt, "npc_super_spectre", "bc_reactReaperFriendlyArrives" , 500 ) )
-			continue
-		if ( TryFriendlyCallout( grunt, "npc_frag_drone", "bc_reactTickSpawnFriendly" , 500 ) )
+		if ( TryFriendlyCallout( grunt, "npc_frag_drone", "bc_reactTickSpawnFriendly", 500 ) )
 			continue
 		if ( IsAlive( grunt.GetEnemy() ) )
 		{
 			entity enemy = grunt.GetEnemy()
-			if ( enemy.IsTitan() )
-				PlayGruntChatterMPLine( grunt, "bc_generalCombatTitan" )
-			else
-				PlayGruntChatterMPLine( grunt, "bc_generalCombat" )
+			PlayGruntChatterMPLine( grunt, "bc_generalCombat" )
 		}
 		else
 		{
@@ -236,7 +199,7 @@ bool function TryFriendlyCallout( entity grunt, string npcClassname, string call
 	if ( npcClassname == "pilot" )
 	{
 		array<entity> players = GetPlayerArrayOfTeam_AlivePilots( grunt.GetTeam() )
-		foreach( p in players )
+		foreach ( p in players )
 		{
 			if ( DistanceSqr( p.GetOrigin(), grunt.GetOrigin() ) > distSq )
 				continue
@@ -247,7 +210,7 @@ bool function TryFriendlyCallout( entity grunt, string npcClassname, string call
 	{
 		nearbyFriendlies = GetNPCArrayEx( "npc_titan", grunt.GetTeam(), TEAM_ANY, grunt.GetOrigin(), dist )
 		array<entity> players = GetPlayerArrayOfTeam_Alive( grunt.GetTeam() )
-		foreach( p in players )
+		foreach ( p in players )
 		{
 			if ( !p.IsTitan() )
 				continue
@@ -275,7 +238,7 @@ bool function TryFriendlyCallout( entity grunt, string npcClassname, string call
 
 	return false
 }
-#endif
+#endif // GRUNT_CHATTER_MP_ENABLED
 
 void function OnSpectreSeeEnemy( entity guy )
 {
@@ -283,12 +246,11 @@ void function OnSpectreSeeEnemy( entity guy )
 
 	while ( true )
 	{
-		var results = WaitSignal( guy, "OnGainEnemyLOS" )
+		table results = WaitSignal( guy, "OnGainEnemyLOS" )
 
 		TrySpottedCallout( guy, expect entity( results.activator ) )
 	}
 }
-
 
 //////////////////////////////////////////////////////////
 bool function IsValidRocketTarget( entity enemy )
@@ -297,7 +259,7 @@ bool function IsValidRocketTarget( entity enemy )
 }
 
 //////////////////////////////////////////////////////////
-function DisableMinionUsesHeavyWeapons( entity soldier )
+void function DisableMinionUsesHeavyWeapons( entity soldier )
 {
 	soldier.SetEnemyChangeCallback( OnEnemyChanged_MinionUpdateAimSettingsForEnemy )
 }
@@ -341,7 +303,7 @@ void function OnEnemyChanged_TryHeavyArmorWeapon( entity npc )
 	array<entity> weapons = npc.GetMainWeapons()
 
 	// do we have a weapon to switch to?
-	if ( !weapons.len() )
+	if ( weapons.len() == 0 )
 		return
 
 	entity activeWeapon = npc.GetActiveWeapon( eActiveInventorySlot.mainHand )
@@ -382,37 +344,12 @@ void function TrySpottedCallout( entity guy, entity enemy )
 
 	if ( enemy.IsTitan() )
 	{
-		if ( IsSpectre( guy ) ) //Spectre callouts
-		{
-			#if SPECTRE_CHATTER_MP_ENABLED
-				PlaySpectreChatterMPLine( guy, "diag_imc_spectre_gs_spotclosetitancall_01" )
-			#else
-				if ( isClose )
-					PlaySpectreChatterToAll( "spectre_gs_spotclosetitancall_01", guy )
-				else
-					PlaySpectreChatterToAll( "spectre_gs_spotfartitan_1_1", guy )
-			#endif
-
-		}
-		else //Grunt callouts
-		{
-			#if GRUNT_CHATTER_MP_ENABLED
-				PlayGruntChatterMPLine( guy, "bc_enemytitanspotcall" )
-			#endif
-		}
 	}
 	else if ( enemy.IsPlayer() )
 	{
 		if ( IsSpectre( guy ) ) //Spectre callouts
 		{
-			#if SPECTRE_CHATTER_MP_ENABLED
-				PlaySpectreChatterMPLine( guy, "diag_imc_spectre_gs_engagepilotenemy_01_1" )
-			#else
-				if ( isClose )
-					PlaySpectreChatterToAll( "spectre_gs_engagepilotenemy_01_1", guy )
-				else
-					PlaySpectreChatterToAll( "spectre_gs_spotenemypilot_01_1", guy )
-			#endif
+			PlaySpectreChatterMPLine( guy, "diag_imc_spectre_gs_engagepilotenemy_01_1" )
 		}
 		else //Grunt callouts
 		{
@@ -573,7 +510,7 @@ void function InitMilitiaTitles()
 }
 
 //////////////////////////////////////////////////////////
-function disable_npcs()
+void function disable_npcs()
 {
 	FlagSet( "disable_npcs" )
 	printl( "disabling_npcs" )
@@ -590,9 +527,10 @@ function disable_npcs()
 		guy.Destroy()
 	}
 }
+
 //////////////////////////////////////////////////////////
 // //hack - we want to toggle new AI on and off through the dev menu even though playlist defaults to use them all the time
-function disable_new_npcs()
+void function disable_new_npcs()
 {
 	array<entity> guys = GetNPCArray()
 	foreach ( guy in guys )
@@ -608,7 +546,7 @@ function disable_new_npcs()
 	}
 }
 
-function ResetNPCs()
+void function ResetNPCs()
 {
 	array<entity> guys = GetNPCArray()
 	foreach ( guy in guys )
@@ -628,7 +566,7 @@ function ResetNPCs()
 }
 
 //////////////////////////////////////////////////////////
-function Disable_IMC()
+void function Disable_IMC()
 {
 	DisableAutoPopulate( TEAM_IMC )
 	printl( "Disable_IMC" )
@@ -640,9 +578,8 @@ function Disable_IMC()
 	}
 }
 
-
 //////////////////////////////////////////////////////////
-function Disable_MILITIA()
+void function Disable_MILITIA()
 {
 	DisableAutoPopulate( TEAM_MILITIA )
 	printl( "Disable_MILITIA" )
@@ -655,21 +592,8 @@ function Disable_MILITIA()
 }
 
 //////////////////////////////////////////////////////////
-function IsNPCSpawningEnabled()
-{
-	// if ( Riff_AllowNPCs() != eAllowNPCs.Default )
-	// {
-	// 	if ( Riff_AllowNPCs() == eAllowNPCs.None )
-	// 		return false
 
-	// 	return true
-	// }
-
-	return true
-}
-
-
-function DisableAutoPopulate( team )
+void function DisableAutoPopulate( int team )
 {
 	switch ( team )
 	{
@@ -682,12 +606,12 @@ function DisableAutoPopulate( team )
 			break
 
 		default:
-			Assert( 0, "team number " + team + " not setup for autoPopulation.")
+			Assert( false, "team number " + team + " not setup for autoPopulation." )
 			break
 	}
 }
 
-function EnableAutoPopulate( team )
+void function EnableAutoPopulate( int team )
 {
 	switch ( team )
 	{
@@ -700,21 +624,16 @@ function EnableAutoPopulate( team )
 			break
 
 		default:
-			Assert( 0, "team number " + team + " not setup for autoPopulation.")
+			Assert( false, "team number " + team + " not setup for autoPopulation." )
 			break
 	}
 }
 
-//////////////////////////////////////////////////////////
-
-
-function GuyTeleportsOnPathFail( guy, origin )
+void function GuyTeleportsOnPathFail( entity guy, vector origin )
 {
-	expect entity( guy )
-
 	guy.EndSignal( "OnFailedToPath" )
 
-	local e = {}
+	table e
 	e.waited <- false
 	OnThreadEnd(
 		function() : ( guy, origin, e )
@@ -771,10 +690,9 @@ void function SendAIToAssaultPoint( entity guy, vector origin, vector angles, fl
 	guy.AssaultPoint( origin )
 	guy.AssaultSetGoalRadius( radius )
 	guy.WaitSignal( "OnFinishedAssault" )
-
 }
 
-function SetGlobalNPCHealth( healthValue ) //Debug, for trailer team
+void function SetGlobalNPCHealth( int healthValue ) //Debug, for trailer team
 {
 	array<entity> npcArray = GetNPCArray()
 
@@ -785,3 +703,41 @@ function SetGlobalNPCHealth( healthValue ) //Debug, for trailer team
 	}
 }
 
+                      
+
+                                                     
+ 
+               
+
+                        
+                 
+                                 
+                     
+     
+                     
+
+                                
+ 
+
+                                                      
+ 
+                                       
+              
+
+                              
+              
+
+                                                         
+              
+                                                 
+              
+
+            
+ 
+
+                                    
+ 
+                                                                
+ 
+
+ 
