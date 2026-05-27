@@ -1,0 +1,266 @@
+untyped
+global function PassiveAdrenaline_Init
+global function PassiveAdrenaline_Start
+
+#if DEV
+global function DEV_PassiveAdrenaline_ForceStart
+#endif //DEV
+
+const float PASSIVE_ADRENALINE_VORTEX_TRIGGER_RADIUS = 198.0
+const float PASSIVE_ADRENALINE_EFFECT_DURATION = 2.0
+                    
+const float PASSIVE_ADRENALINE_UPGRADE_PING_DEBOUNCE = 3.0
+const float PASSIVE_ADRENALINE_EFFECT_DURATION_INCREASE = 0.75
+global const int SE_INVALID_HANDLE = -1
+      
+
+struct AdrenalineStatusEffectIndexes
+{
+	int speedBoostID = SE_INVALID_HANDLE
+	int adrenalineVisualsID = SE_INVALID_HANDLE
+}
+
+struct
+{
+	table<entity, AdrenalineStatusEffectIndexes> playerStatusEffects
+	                    
+	table<entity, float> pasLastPingTime
+       
+} file
+
+//Passive detects when player is getting shot at and gives player a slight speed boost, passive healing, and reload speed boost.
+void function PassiveAdrenaline_Init()
+{
+	RegisterSignal( "passive_adrenaline_stop_plane_wait" )
+	RegisterSignal( "passive_adrenaline_stop_ability" )
+	AddCallback_OnPassiveChanged( ePassives.PAS_ADRENALINE, PassiveAdrenaline_OnPassiveChanged )
+}
+
+void function PassiveAdrenaline_OnPassiveChanged( entity player, int passive, bool didHave, bool nowHas )
+{
+	if ( didHave )
+	{
+		player.Signal( "passive_adrenaline_stop_plane_wait" )
+		player.Signal( "passive_adrenaline_stop_ability" )
+	}
+
+	if ( nowHas )
+		thread PassiveAdrenaline_WaitForPlaneJump( player )
+}
+
+void function PassiveAdrenaline_WaitForPlaneJump( entity player )
+{
+	Assert ( IsNewThread(), "Must be threaded off" )
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "passive_adrenaline_stop_plane_wait" )
+
+	while ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) && !Survival_HasPlayerJumpedOutOfPlane( player ) )
+	{
+		if ( !player.HasPassive( ePassives.PAS_ADRENALINE ) )
+			return
+
+		WaitFrame()
+	}
+
+	thread PassiveAdrenaline_CreateDetectionVortex( player )
+
+}
+
+void function PassiveAdrenaline_CreateDetectionVortex( entity player )
+{
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "passive_adrenaline_stop_ability" )
+
+	//------------------------------
+	// Vortex to detect bullets, projectiles, and mortars entering our defensive perimiter.
+	//------------------------------
+	entity vortexSphere = CreateEntity( "vortex_sphere" )
+
+	//vortexSphere.kv.spawnflags = SF_BLOCK_OWNER_WEAPON
+	vortexSphere.kv.enabled = 0
+	vortexSphere.kv.radius = PASSIVE_ADRENALINE_VORTEX_TRIGGER_RADIUS
+	vortexSphere.kv.height = PASSIVE_ADRENALINE_VORTEX_TRIGGER_RADIUS
+	vortexSphere.kv.bullet_fov = 360
+	vortexSphere.kv.physics_pull_strength = 0//25
+	vortexSphere.kv.physics_side_dampening = 0//6
+	vortexSphere.kv.physics_fov = 360
+	vortexSphere.kv.physics_max_mass = 0//2
+	vortexSphere.kv.physics_max_size = 0//6
+
+	vortexSphere.SetAngles( <0,0,0> ) // viewvec?
+	vortexSphere.SetOrigin( player.GetWorldSpaceCenter() )
+	vortexSphere.RemoveFromAllRealms()
+	vortexSphere.AddToOtherEntitysRealms( player )
+	vortexSphere.SetParent( player, "", true )
+	vortexSphere.SetMaxHealth( 100 )
+	vortexSphere.SetHealth( 100 )
+
+	DispatchSpawn( vortexSphere )
+
+	vortexSphere.SetOwner( player )
+
+	//HACK: Until we get a better way to do this use the vortex's target name to specify that it is a vortex trigger that
+	//will run a set callback when a projectile or bullet hits it instead of preforming its normal vortex logic.
+	Vortex_ConvertToVortexTriggerArea( vortexSphere )
+	SetCallback_VortexSphereTriggerOnBulletHit( vortexSphere, PassiveAdrenaline_OnBulletHitVortexTrigger )
+	SetCallback_VortexSphereTriggerOnProjectileHit( vortexSphere, PassiveAdrenaline_OnProjectileHitVortexTrigger )
+
+	vortexSphere.Fire( "Enable" )
+	vortexSphere.SetInvulnerable() // make particle wall invulnerable to weapon damage. It will still drain over time
+
+	AdrenalineStatusEffectIndexes statusEffectIndexes
+	file.playerStatusEffects[ player ] <- statusEffectIndexes
+
+	OnThreadEnd(
+		function() : ( vortexSphere )
+		{
+			if ( IsValid( vortexSphere ) )
+				vortexSphere.Destroy()
+		}
+	)
+
+	WaitForever()
+}
+
+void function PassiveAdrenaline_OnBulletHitVortexTrigger( entity weapon, entity vortexSphere, var damageInfo )
+{
+	//printt( "BULLET HIT VORTEX TRIGGER" )
+
+	entity playerOwner = vortexSphere.GetParent()
+	if ( !IsValid( playerOwner ) )
+		return
+
+	if ( !playerOwner.IsSprinting() )
+		return
+
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	if ( !IsValid( attacker ) )
+		return
+
+	int playerTeam = playerOwner.GetTeam()
+	int attackerTeam = attacker.GetTeam()
+
+	if ( IsFriendlyTeam( playerTeam, attackerTeam ) )
+		return
+
+	PassiveAdrenaline_Start( playerOwner )
+
+	                    
+		if( PlayerHasPassive( playerOwner, ePassives.PAS_PAS_UPGRADE_TWO ) ) // upgrade_bangalore_pas_ping_enemy
+		{
+			if( PassiveAdrenaline_ShouldPingTarget( playerOwner ) )
+				PassiveAdrenaline_PingTarget( playerOwner, attacker )
+		}
+       
+}
+
+void function PassiveAdrenaline_OnProjectileHitVortexTrigger( entity weapon, entity vortexSphere, entity attacker, entity projectile, vector contactPos )
+{
+	if ( !IsValid( projectile ) )
+		return
+
+	//printt( "PROJECTILE REFIRE: " + projectile.proj.hasBouncedOffVortex )
+
+	entity playerOwner = vortexSphere.GetParent()
+	if ( !IsValid( playerOwner ) )
+		return
+
+	if ( !IsValid( attacker ) )
+		return
+
+	if ( !playerOwner.IsSprinting() )
+		return
+
+	int playerTeam = playerOwner.GetTeam()
+	int attackerTeam = attacker.GetTeam()
+	if ( IsFriendlyTeam( playerTeam, attackerTeam ) )
+		return
+
+	PassiveAdrenaline_Start( playerOwner )
+
+	                    
+		if( PlayerHasPassive( playerOwner, ePassives.PAS_PAS_UPGRADE_TWO ) ) // upgrade_bangalore_pas_ping_enemy
+		{
+			if( PassiveAdrenaline_ShouldPingTarget( playerOwner ) )
+				PassiveAdrenaline_PingTarget( playerOwner, attacker )
+		}
+       
+
+}
+
+void function PassiveAdrenaline_Start( entity player )
+{
+	// no need to check both status effect, since he should never have one without the other.
+	if ( StatusEffect_GetTimeRemaining( player, eStatusEffect.speed_boost ) > 0 )
+	{
+		StatusEffect_SetDuration( player, file.playerStatusEffects[ player ].adrenalineVisualsID, PassiveAdrenaline_GetAdrenalineDuration( player ) )
+		StatusEffect_SetDuration( player, file.playerStatusEffects[ player ].speedBoostID, PassiveAdrenaline_GetAdrenalineDuration( player ) )
+	}
+	else
+	{
+		PlayBattleChatterLineToSpeakerAndTeam( player, "bc_bangalore_passive" )
+
+		file.playerStatusEffects[ player ].adrenalineVisualsID = StatusEffect_AddTimed( player, eStatusEffect.adrenaline_visuals, 1, PassiveAdrenaline_GetAdrenalineDuration( player ), PASSIVE_ADRENALINE_EFFECT_DURATION )
+		file.playerStatusEffects[ player ].speedBoostID = StatusEffect_AddTimed( player, eStatusEffect.speed_boost, 0.15, PassiveAdrenaline_GetAdrenalineDuration( player ), 0.25 )
+		thread StatsHook_TrackAdrenalineDistance( player )
+	}
+}
+
+float function PassiveAdrenaline_GetAdrenalineDuration( entity player )
+{
+	float duration = PASSIVE_ADRENALINE_EFFECT_DURATION
+	                    
+		if( PlayerHasPassive( player, ePassives.PAS_PAS_UPGRADE_ONE ) )
+			duration += PASSIVE_ADRENALINE_EFFECT_DURATION_INCREASE
+       
+	return duration
+}
+
+                    
+bool function PassiveAdrenaline_ShouldPingTarget( entity player )
+{
+	bool shouldPing = true
+	if( player in file.pasLastPingTime )
+	{
+		if( Time() < file.pasLastPingTime[player] )
+		{
+			shouldPing = false
+		}
+	}
+
+	return shouldPing
+}
+
+void function PassiveAdrenaline_PingTarget( entity player, entity attacker )
+{
+	if( IsValid( player ) && IsValid( attacker ) )
+	{
+		entity wpTarget = CreateWaypoint_BasicPos( attacker.GetOrigin() + <0,0,96>, "", $"rui/hud/ping/icon_ping_enemy" )
+
+		file.pasLastPingTime[player] <- Time() + PASSIVE_ADRENALINE_UPGRADE_PING_DEBOUNCE
+
+		int team = player.GetTeam()
+		wpTarget.SetOnlyTransmitToSingleTeam( team )
+
+		thread DelayedDestroyWP( wpTarget )
+	}
+}
+
+void function DelayedDestroyWP( entity wp )
+{
+	wp.EndSignal( "OnDestroy" )
+
+	wait 3.0
+
+	wp.Destroy()
+}
+      
+
+#if DEV
+void function DEV_PassiveAdrenaline_ForceStart( entity player )
+{
+	PassiveAdrenaline_Start( player )
+}
+#endif //DEV 

@@ -39,7 +39,6 @@ const asset DEATH_TOTEM_SHADOW_DEATH_FX = $"P_BShadow_death"
 const asset DEATH_TOTEM_SHADOW_TIMER_FX = $"P_Bshadow_timer"
 const asset DEATH_TOTEM_FX = $"P_death_totem"
 const asset DEATH_TOTEM_FLASH_FX = $"P_death_totem_flash"
-const string SIGNAL_TELEPORTED = "Teleported"
 // HIGHLIGHT_FRIENDLY_PLAYER_DECOY — now in sh_highlight.gnut (S22)
 const asset DEATH_TOTEM_GROUND_FX = $"P_death_totem_ground"
 

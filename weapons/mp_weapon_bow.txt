@@ -536,7 +536,7 @@
 			"shortprintname"						"#CUPID_BOW_TITLE_SHORT"
 			"description" 							"#CUPID_BOW_DESC"
 
-			// "lifesteal_heal_percent"                "0.5"
+			"custom_float_0"                        "0.5" // S3 engine slot for S21 lifesteal_heal_percent
 		}
         
 

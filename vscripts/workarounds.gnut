@@ -6,31 +6,16 @@
 // ============================================================================
 //  GLOBAL SCOPE - Constants, Enums, Structs (all VMs)
 // ============================================================================
-global const string GUNGAME_SQUAD_WEAPON_INDEX = "FreeDM_WeaponIndexSquad_"
-global const string GUNGAME_THROWING_KNIFE_WEAPON_NAME = "mp_weapon_throwingknife"
 // === Constants ===
 global const asset FIRINGRANGE_ITEM_RESPAWN_PARTICLE = $"P_impact_shieldbreaker_sparks"
 global const int PLAYER_MELEE_STATE_KICK_ATTACK = 1
 global const int PLAYER_MELEE_STATE_SLAM_ATTACK = 2
-global const int SHADOWARMY_VICTORY_FLAGS_EVAC = 4
-global const int SHADOWARMY_LEGEND_ALLIANCE = 0
 global const int TT_GRAVITY_LIFT = 0
 global const int TT_BLACKHOLE = 0
 global const int PLAYER_MELEE_STATE_EXECUTION = 3
 global const int PLAYER_ARMORED_LEAP_PHASE_NONE = 0
-global const float SHADOWARMY_LEGEND_SPAWN_FADE_FROM_BLACK_HOLD_DURATION = 0.0
-global const float SHADOWARMY_LEGEND_SPAWN_FADE_FROM_BLACK_FADE_DURATION = 0.0
 global const int CODE_REDEMPTION_RESULT_SUCCESS = 0
 global const int playedApexFalse = 0
-
-global enum eCanLaunchResult
-{
-	SUCCESS,
-	INVALID,
-	PLAYER_STATE,
-	NO_OFF_SCREEN,
-	NO_LOS_FAIL
-}
 
 // Asset download status constants (used by image_pak_load.nut)
 global const int ASSET_DOWNLOAD_STATUS_UP_TO_DATE = 0
@@ -77,13 +62,10 @@ global function SetAllianceTeamsScore
 global function IsRevTakeover
 global function GetAllianceTeamsScore
 global function ForceScriptError
-global function Vehicle_KickPlayer_ForOtherReason
-global function HoverVehicle_IsPlayerInAnyVehicle
 // === Gamestate ===
 global function SetIsPermanentEntity
 global function GetPlayerArrayIncludingSpectators
 // === Shadow Army Gamemode ===
-global function ShadowArmy_IsPlayerInShadowForm
 global function GameRules_IsTeamIndexValid
 // === Freelance Systems ===
 global function FreelanceSystemsAreEnabled
@@ -93,8 +75,6 @@ global function CircleCullScriptName
 global function CircleCullClassName
 // === Freelance/PVE Systems ===
 global function LTM_AnnouncementSplash
-global function ShadowArmy_GetCurrentRank
-global function UseLTMPodiumBanner
 global function UseMixtapePodiumBanner
 global function VectorWithinBounds
 global function GiveBasicSurvivalItems
@@ -103,9 +83,7 @@ global function SPL_GetRandomEndRingPosition_Slow
 // BroadcastCommsActionToTeam — now in sh_quickchat.gnut (S22)
 global function PutEntityInSomewhatSafeSpot
 global function CalcWorldToLocalOrigin_Entity
-global function ShGameModeExplore_GetPlanePassNumber
 global function IsValidArrayIndex
-global function HoverVehicle_CreateAndAddPlayers
 global function DropPod_OnUse
 global function isFreefallEnabled
 // PlayerIsInCombat — now in sh_quickchat.gnut (S22)
@@ -117,26 +95,13 @@ global function ReturnCarePackagesNewArray
 global function SurvivalCommentary_HostAnnounce
 global function GetRoundCommentaryBucket
 global function SurvivalCommentary_KilledPlayerAnnounce
-global function GoldenHorse_ModifyCarePackageSpawnDistance
-global function GoldenHorse_SwordCarePackageEnabled
-global function DeleteCarepackagePerkLinks
 global function SetChampion
 global function Flowstate_CheckForLv4MagazinesAndRefillAmmo
 global function FS_GetWeaponsThatUseThisAmmo
 global function GrantPathfinderCooldownReduction
 global function HoverVehicle_WakeVehiclesIntersectingEntity
-global function Octane_GetPassiveRegenRate
-global function Octane_GetPassiveRegenDelay
-global function Campfire_IsEnabled
-global function Campfire_IsPlayerInCampfire
-global function BeginAOEHeal
-global function EndAOEHeal
 global function EmitSoundOnEntityExceptToPlayers
-global function Respawn_Token_IsPlayerEliminated
 global function ShuffleVectorArray
-global function AirdropExtravaganza_GetClusterEntities
-global function AirdropExtravaganza_GetTrackedAirdropPods
-global function AirdropExtravaganazaCleanupPod
 global function DebugDrawScreenText
 global function DebugDrawScreenTextWithColor
 global function MetersToInches
@@ -161,45 +126,16 @@ global function PlayLobbyCharacterDialogue
 // === Challenges ===
 global function RefreshChallenges
 
-// === Shared scope declarations (visible to all VMs) ===
-global function ShadowArmy_IsPlayerOnShadowArmy
-// SetPlayerCanGroundEmote — now in sh_emotes.nut (S22)
-global function ShadowArmy_ShouldEnterBleedout
-global function ShadowArmy_StorePlayersOriginalCharacterSelection
-global function ShadowArmy_GetShouldLegendsSpawnOnGround_MatchStart
-global function ShadowArmy_GetNumRevSquadsForMatchStart
-global function ShadowArmy_GetLegendSpawnGroupsNumber
-global function ShadowArmy_GetLegendMatchStartSpawnLocations
-global function ShadowArmy_GetLegendMatchStartSpawnRadius
-global function ShadowArmy_IsSquadReallyEliminated
-global function HoverVehicle_GetVehicleOccupiedByPlayer
 global function PIN_EmoteUse
-global function Valentines_S15_ILoveYouEasterEggEnabled
 global function RuiIsAlive
-global function TransportPortal_CancelUse
-global function DeathboxNetwork_CanPlayerUse
-global function DeathboxNetwork_UntrackIfTracking
-global function DeathboxNetwork_TrackBoxTargets
-global function DeathboxNetwork_UntrackBoxTargets
-global function PassiveReinforce_BlockControllerHolster
-global function TitanSword_WeaponIsTitanSword
-global function GetArcFlashState
 global function SetUnitFrameConsumableData
 global function GetPlayerNameByEntIndex
 global function GetCachedObsfuscatedNameByName
 global function Obituary_Print_Control_ObjectivePing
 global function Obituary_Print_Control_Ping
-global function SkydiveEmoteProjector_ActivateEmoteProjector
 global function ContextAction_IsBeingRevived
 global function ContextAction_IsInVehicle
 global function ContextAction_IsReviving
-global function HoverVehicle_IsHostileToTeam
-global function HoverVehicle_IsVehicleEmpty
-global function MedBay_IsDisabled
-global function MedBay_IsOnCooldown
-global function PassiveAssassinsInstinct_EntityShouldBeHighlighted
-global function CastleWall_EntityShouldBeHighlighted
-global function ArmoredLeap_TargetEntityShouldBeHighlighted
 global function IsValidStickerInstance
 global function DestroyStickerInstance
 global function RequestLoadStickerPak
@@ -213,19 +149,9 @@ global function GetPlayerHardware
 global function GetFovScalar
 #endif
 
-// Dummy struct for SERVER/UI — real definition is #if CLIENT in sh_gladiator_cards.nut
-#if SERVER || UI
-global struct NestedGladiatorCardHandle { }
-global struct PakHandle { string rpakPath = "" }
-#endif
 // Sticker enums/functions now properly in mp/sh_stickers.nut (s22-server version)
 
-global function FerroWall_BlockScan
-global function SniperUlt_GetMarkedDuration
-global function DebuffZone_GetOverheatDuration
 global function TryPingBlockingFunction
-global function CanLaunchToCompanion
-global function HookUpWaypointRuiForObjectiveRelevance
 global function Survival_SetPilotHudVisible
 global function ServerCallback_DestroyEndAnnouncement
 global function ServerCallback_RefreshDeathBoxHighlight
@@ -240,10 +166,7 @@ global function ServerCallback_SkydiveTrailEnd
 global function ServerCallback_Survival_PathfinderSurveyNotifications
 global function ServerCallback_Survival_CreateBeaconWorldIcon
 global function ServerCallback_PromptWelcome
-global function TransportPortal_GetReceiverPlayerIsLookingAt
-global function TreasureHunt_GetStarterPingFromTraceBlockerPing
 global function Zipline_IsCurvedZipline
-global function GetWhiteRavenPingTarget
 global function GetZiplinePingEntity
 global function GetZiplinePingPosition
 global function HasZiplinePingInRange
@@ -253,11 +176,6 @@ global function IsZiprail
 global function Player_IsSkywardLaunching
 global function IsTeamInAlliance
 global function GetGroundPositionOpenToSky
-global function ShadowArmy_RespawnBeacon_CanBeaconBeUsed
-global function ShadowArmy_RespawnBeacon_CanBeaconBeUsedByPlayer
-global function MedBay_GetHealsPercentRemaining
-global function TreasureHunt_InstanceObjectivePing
-global function Waypoints_GetObjectiveIndexFor
 #if SERVER
 // These are CLIENT natives — only need stubs on SERVER
 global function Highlight_PopPingedState
@@ -267,101 +185,22 @@ global function WaypointFocusTracking_Register
 global function WaypointFocusTracking_SetDisabled
 global function WaypointFocusTracking_TrackPos
 #endif
-global function POIPlayerSpawning_Exists
-global function POIPlayerSpawning_SpawnPlayers
 global function NavMesh_GetClosestPoints
 
-global function Lifesteal_PlayerDealtDamage
 global function StopAllSoundsOnEntity
-global function Strikeout_IsPlayerRespawnDisabled
-global function Sh_Respawn_Token_IsPlayerRespawnDisabled
-global function SpawnGroupSkydive_IsSquadEliminated
 global function Achievements_OnPlayerMatchParticipationEnded
-global function MMR_GetInteractionsForPlayer
 global function SendPlayerMatchResult
 global function GetPlayerGameDuration
 global function SmokeTest_IsActive
-global function TitanSword_ActiveWeaponIsTitanSword
 global function ArrayRandomizeSeeded
 global function ArrayGetRandomSeeded
-global function TrackingVision_CreatePOIForDroppedLoot
-global function GetLifelineTTAssetsToPrecache
-global function TitanSword_Super_IsActive
-global function TitanSword_DamageSourceIsTitanSword
-global function TitanSword_Slam_DeathboxOverride
-global array<string> SQUAD_TEAM_HIGHLIGHTS = ["PVE_multisquad_0", "PVE_multisquad_1", "PVE_multisquad_2", "PVE_multisquad_3"]
-
 // ============================================================================
 //  #if UI - Struct Definitions & Declarations
 // ============================================================================
-#if UI
-// === Server/Debug ===
-global function GetServerDebugId
-global function Squads_GetMax
-global function Squads_GetSquadColor
-global function Squads_GetSquadName
-#endif
 
 // ============================================================================
 //  #if CLIENT - Declarations
 // ============================================================================
-#if CLIENT
-// === Asset Loading/Precaching ===
-global function PrecacheOnDemandLoadModel
-global function PrecacheSkinName
-global function ODL_FindAsset
-global function ODL_IsLoaded
-global function GetFileDownloadStatus
-
-// === Audio ===
-global function StopUISoundByName
-
-// === Props/Models ===
-global function CreateClientSidePropDynamicCharm
-
-// === Game Mode Checks ===
-global function IsGunGameActive
-global function IsShadowRoyaleMode
-global function BattleRush_StopCharSelectMusic
-global function BattleRush_ServerCallback_PlayJumpMusic
-
-// === Shadow Army (CLIENT-only declarations) ===
-global function ShadowArmy_GetEnemySquadPlayersForAllianceIntro
-global function ShadowArmy_PlayIntroBannerSoundForLegends_Thread
-
-// === HUD/UI Display ===
-global function ShowTeamNameInHud
-global function HideTeamNameInHud
-global function GetScreenScaleFrac
-global function ForceDestroyBlackBarRui
-// GetFocus, GetMouseFocus, SetCursorPosition, GetCursorPosition are now native functions in SDK
-
-// === Input ===
-
-// === Player Info ===
-global function Script_UserHasEAAccess
-global function GetPlayerUID
-global function GetPlayerNameFromEHI
-global function GetObfuscatedIdFromPlayer
-global function IsInBleedoutOrRevive
-
-// === Character Abilities ===
-global function GetCurrentArmoredLeapPhase
-global function GetAllResinShards
-
-// === Ranked ===
-global function ShRanked_RegisterNetworkFunctions
-global function IsRankedGame
-global function IsArenasRankedGame
-
-// === Squad Cards ===
-global function DoAnimatedSquadCardsPresentation
-global function DoAnimatedChampionSquadCardsPresentation
-
-// === First Time Player (also in UI) ===
-global function GetFirstTimePlayerState
-global function SetFirstTimePlayerState
-#endif
 
 // ============================================================================
 //  #if SERVER || CLIENT - Declarations
@@ -382,11 +221,6 @@ global function PIN_FiringRange_Loot_Pickup_Source
 global function PIN_FiringRangeChallengeCompleted
 // PIN_Record_CustomizeRangeSettings, PIN_Record_CustomizeRangeSettings_ForMenuClose,
 // PIN_CCB_Record_DynamicStats_TimeBetweenResets — declared and implemented in firing_range.gnut
-#if SERVER
-#endif
-global const string TITAN_SWORD_WEAPON_REF = "mp_weapon_titan_sword"
-global function IsGoldenHorse_FR
-global function TitanSword_WeaponRefIsTitanSword
 global function IsFacing
 global function IsFacingPoint
 global function IsInvalidButMemberVarsStillValid
@@ -399,32 +233,17 @@ global function NavMesh_GetClosestPoint
 global function NavMesh_SearchForOpenAreas
 
 // === Weapon Stubs ===
-global function TitanSword_ForceStopLootAnim
 
 // === Gamemode Stubs ===
-global function PassiveAxiom_OnItemDropped
-global function GoldenHorse_UpdateLootHighlight
 global function PIN_ItemGrantedByScript
-global function TrackingVision_CreatePOIForPickedUpLoot
 global function GetTriggersByClassesInRealms_HullSize
 global function GetTriggersByClassesInRealms
-global function HasBoundaryWall
-global function IsReinforced
-global function HoverVehicle_AttachEntToNearestAbilityAttachment
-global function IsForgedShadowsShield
-global function ShadowShield_IsAllowedStickyEnt
-global function MobileShield_IsAllowedStickyEnt
 global function StunWhenInterruptable
 global function IsNessie
-global function GetEffectiveTeamNumForVehicle
-global function DoesPlayerHaveAutoLoaderBuff
 global function PlantSuperStickyGrenade
 global function Player_DetonateSatchels
 global function AllowPlayersToTalkToThemselves
 global function EvaluateSoundSelector
-global function GoldenHorse_TicksEnabled
-global function TitanSword_Super_BlockAction
-global function GiveBounty
 global function IsBountyHuntEnabled
 
 // === Spawn Safety ===
@@ -432,24 +251,15 @@ global function CanPutPlayerInSafeSpot
 
 // === Melee/Combat ===
 global function SetObjectCanBeMeleed
-global function IsRebuiltDoor
-global function TitanSword_TryMultiAttack
-global function TitanSword_VictimHitOverride
 
 // === Ranked/Rumble ===
-global function DEV_script_ranked_debug
 global function IsServerNetworkAlertTriggered
 global function Ranked_ConstructSingleRankBadgeForStatsCard
-global function ArenasRanked_ConstructSingleRankBadgeForStatsCard
 global function Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2
 global function Ranked_ConstructDoubleRankBadgeForStatsCard
-global function ArenasRanked_ConstructDoubleRankBadgeForStatsCard
 
 // === Persistence ===
 #if SERVER
-global function SafeGetPersistentVarAsInt
-global function SafeSetPersistentVar
-#elseif CLIENT
 global function SafeGetPersistentVarAsInt
 global function SafeSetPersistentVar
 #endif
@@ -474,10 +284,6 @@ global function HasCallback_OnPartyMemberRemoved
 // Declarations visible in ALL VMs - implementations per-VM below
 
 // Ranked badge functions needed in CLIENT and UI
-#if CLIENT || UI
-global function PopulateRuiWithRankedBadgeDetails
-global function PopulateRuiWithPreviousSeasonRankedBadgeDetails
-#endif
 
 global function GetPlaylistModCount
 global function GetPlaylistModName
@@ -488,248 +294,11 @@ global function EffectSetEmitSound
 // ============================================================================
 
 global function PCPlat_IsSteam
-#if UI
-// === Workarounds/Utilities ===
-global function WORKAROUND_AnimAssetToAnimString
-global function WORKAROUND_PreventScriptErrors
-global function LocalizeNumber
-global function GetDaysHoursRemainingLoc
-global function FormatNumber
-global function GetFakeTimeInSeconds
-
-// === Server/Connection ===
-global function IsConnectedServerInfo
-global function ResetReconnectParameters
-
-// === Playlist/Map Rotation ===
-global function GetPlaylistActiveMapRotationTimeLeft
-global function GetPlaylistRotationNameFromPlaylist
-global function GetNextPlaylistFromRotationAndUISlotAndSkip
-global function IsRankedPlaylist
-
-// === Playlist Native Functions ===
-
-
-// === Platform/Hardware ===
-global function GetUnspoofedPlayerHardware
-global function PCPlat_IsOrigin
-global function PCPlat_IsOverlayAvailable
-global function PCPlat_IsEnabled
-global function PCPlat_IsOnline
-global function PCPlat_IsUpToDate
-global function PCPlat_IsReady
-global function PCPlat_RegisterEAAccount
-global function PCPlat_IsWaitingForEARegistration
-global function PCPlat_GetEALinkErrorLevel
-global function IsPlayerLoggedInToMultipleMachines
-global function GetPlayerUnSpoofedUID
-global function IsUserOnSamePlatform
-
-// === Custom Match ===
-global function CustomMatch_CreateLobby
-global function CustomMatch_JoinLobby
-global function CustomMatch_HasHiddenPlaylistAccess
-global function CustomMatch_HasSpecialAccess
-global function CustomMatch_UpdateSettings
-global function CustomMatch_SetTeam
-global function CustomMatch_KickPlayer
-global function CustomMatch_LeaveLobby
-global function CustomMatch_SetReady
-global function CustomMatch_SetMatchmaking
-global function CustomMatch_IsInCustomMatch
-global function CustomMatch_LiveAPI_SendPlayers
-global function CustomMatch_GetMatchStats
-global function CustomMatch_SetTeamName
-
-// === Menu/UI ===
-global function IsSelfClosingMenu
-global function ToolTips_SetMenuTooltipVisible
-global function SpectatorNextTarget
-global function ShowBlockPlayerDialog
-global function OpenClubLeaveDialog
-global function RefreshEaTwoFactorAuthenticationStatus
-
-// === EADP Social ===
-global function EADP_SocialEnabled
-global function EADP_IsTfaEnabled
-global function EADP_SocialCanRun
-global function EADP_SearchByName
-global function EADP_IsBlockedByEAID
-global function EADP_IsFriendByEAID
-global function EADP_InviteFriendByEAID
-global function EADP_UnBlockByEAID
-global function EADP_UnFriendByEAID
-global function EADP_IsCodeRedemptionEnabled
-global function EADP_RedeemCode
-global function EADP_GetPresenceForAccount
-global function EADP_GetFriendRequestList
-global function EADP_GetEadpIdFromFirstPartyID
-global function EADP_FriendsDoQuery
-global function EADP_GetFriendsList
-global function EADP_GetFriendsListWithOffline
-global function EADP_GetPresenceForUser
-global function EADP_RejectFriendRequestByEAID
-global function EADP_AcceptFriendRequestByEAID
-global function EADP_BlockByEAID
-global function EADP_GetInviteToPlayList
-global function EADP_AcceptInvitToPlay
-global function EADP_RejectInviteToPlay
-global function EADP_InviteToPlayByEAID
-global function EADP_InvitationAllowed
-
-// === Audio ===
-global function EmitUIMusic
-global function IsSoundStillPlaying
-
-// === GRX/Store ===
-global function GRX_SetEventCurrency
-global function GRX_GetItemTier
-global function GRX_PurchaseOfferV2
-global function GRX_UpdateSmartMerchandisingData
-global function GRX_MarkGiftItemsAsSeen
-global function GRX_MarkContainerAsSeen_Internal
-global function GRX_GetCurrencyBalances
-global function GRX_HasUpToDateBundleOffers
-global function IsStoreEmpty
-global function GRX_GetOffer
-
-// === Persistence ===
-global function PersistenceGetVarHandle
-global function HasCallback_OnPartyMemberRemoved
-
-// === Ranked ===
-global function Ranked_ConstructSingleRankBadgeForStatsCard
-global function ArenasRanked_ConstructSingleRankBadgeForStatsCard
-global function Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2
-global function Ranked_ConstructDoubleRankBadgeForStatsCard
-global function ArenasRanked_ConstructDoubleRankBadgeForStatsCard
-global function Ranked_SetupMenuGladCardForUIPlayer
-global function ArenasRanked_SetupMenuGladCardForUIPlayer
-global function Ranked_SetupMenuGladCardFromCommunityUserInfo
-global function ArenasRanked_SetupMenuGladCardFromCommunityUserInfo
-global function Ranked_SetupMenuGladCard
-global function Ranked_ShouldUpdateWithComnunityUserInfo
-global function Ranked_GetDisplayNumberForRuiBadge
-global function Ranked_PartyMeetsRankedDifferenceRequirements
-global function Ranked_HasBeenInitialized
-global function SharedRanked_PartyHasRankedLevelAccess
-global function SharedRanked_GetMaxPartyMatchmakingDelay
-global function SharedRanked_GetMatchmakingDelayFromCommunityUserInfo
-
-// === Party/Social ===
-global function Party_JoinUserPartyGame
-global function Party_LeaveParty
-global function Eadp_GetPrivacyData
-global function CreateEADPDataFromEAID
-global function IsPartyAllowedCrossplay
-
-// === Cross Progression ===
-global function CrossProgression_IsRequestingUserMigrateStatus
-global function CrossProgression_QueryUserMigrateStatusIfNeeded
-
-// === Clubs ===
-global function AreClubInvitesEnabled
-global function ClubGetInvitedClubsList
-global function ClubInviteDecline
-global function ClubGetChatLog
-global function ClubGetEventLog
-global function ClubGetJoinRequests
-global function ClubGetMemberNameByID
-global function ClubGetMemberRankByID
-global function ClubGetSearchResults
-global function ClubGetStickyNote
-global function ClubInviteQueryClubsList
-global function ClubIsAllowedTag
-global function ClubIsMemberOnDifferentHardware
-global function ClubIsValidName
-global function ClubIsValidTag
-global function ClubJoinRequestsCount
-global function ClubChatSend
-global function ClubChatStickyNote
-
-// === Dialog Flow ===
-global function GetDialogFlowTablesValueOrPersistence
-global function SetDialogFlowPersistenceTables
-global function IncrementNumDialogFlowDialogsDisplayed
-global function DataDialog_AddCallback_OnClose
-
-// === Events ===
-global function EventsPanel_SetOpenPageIndex
-global function JumpToEventTab
-global function DoesUserHaveTwitchDrops
-
-// === Squads ===
-
-// === Communication/Mute ===
-global function CommunicationBlockGetBlockTime
-global function IsPlayerVoiceAndTextMutedForUID
-global function TogglePlayerVoiceAndTextMuteForUID
-global function GetCommunicationBlockWarningText
-global function GetCommunicationBlockStateID
-
-global function GetIsDSTActive
-global function RLocalDateTime
-global function RLocalTime
-
-// === Datacenter ===
-global function GetDatacenterRealName
-
-// === First Time Player ===
-global function GetFirstTimePlayerState
-global function SetFirstTimePlayerState
-
-// === Settings/Options ===
-global function GamepadCustomSettingsAreEnabled
-global function VideoOptions_SpotShadowDetailChanged
-global function SoundOptions_SetupChannelConfigOptions
-global function SoundOptions_SetupOutputDeviceOptions
-global function SoundOptions_SetupVoiceInputDeviceOptions
-global function SoundOptions_DeviceSwitchingAvailable
-
-// === Stickers ===
-// GetAllStickerObjectTypes, GetStickerObjectName, GetStickerPresentationType moved to mp/sh_stickers.nut
-global function StickersPanel_InitPreviewStyle
-global function StickersPanel_SetConsumable
-global function StickersPanel_Update
-global function StickersPanel_OnShow
-global function StickersPanel_OnHide
-global function StickersPanel_OnFocusChanged
-global function StickersPanel_TogglePreviewStyle
-global function StickersPanel_GetCurrentConsumable
-
-// === Reconnect/Spectate ===
-global function TryLoadSpectateParameters
-global function TryLoadReconnectFromLocalStorage
-global function StartReconnectFromParameters
-global function GetReconnectDelay
-global function Reconnect_IsLiveSpectateLoaded
-
-// === Misc ===
-global function OpenLangAoCDialog
-
-// === Nested #if UI ===
-global function GetKeyValueAsAsset
-#if UI
-global function UISafeGetPersistentVarAsInt
-#endif
-#endif
 
 // ============================================================================
 //  #if CLIENT || UI - Implementations
 // ============================================================================
 
-#if CLIENT || UI
-void function PopulateRuiWithRankedBadgeDetails( var rui, int rankScore, int ladderPosition, bool isNested = false )
-{
-	Warning( "WORKAROUND: PopulateRuiWithRankedBadgeDetails() called - not implemented" )
-}
-
-void function PopulateRuiWithPreviousSeasonRankedBadgeDetails( var rui, int rankScore, int ladderPosition, bool isNested = false )
-{
-	Warning( "WORKAROUND: PopulateRuiWithPreviousSeasonRankedBadgeDetails() called - not implemented" )
-}
-
-#endif
 
 bool function PCPlat_IsSteam()
 {
@@ -754,1474 +323,20 @@ void function EffectSetEmitSound( int effectHandle, string soundName )
 // ============================================================================
 //  #if UI - Implementations
 // ============================================================================
-#if UI
-
-// === Workarounds/Utilities ===
-
-string function WORKAROUND_AnimAssetToAnimString( asset animAsset )
-{
-	string assetAsString = string( animAsset )
-	return assetAsString.slice( 2, assetAsString.len() - 1 )
-}
-
-void function WORKAROUND_PreventScriptErrors()
-{
-}
-
-string function LocalizeNumber( ... )
-{
-	if ( vargc > 0 )
-		return "" + vargv[0]
-	return "0"
-}
-
-string function FormatNumber( string format, var number )
-{
-	return FormatAndLocalizeNumber( format, number, false )
-}
-
-int function GetFakeTimeInSeconds()
-{
-	Warning( "WORKAROUND: GetFakeTimeInSeconds() called - not implemented" )
-	return 0
-}
-
-string function GetDaysHoursRemainingLoc( int days, int hours )
-{
-	string dateFormat = "#DAYS_HOURS_REMAINING"
-
-	if ( hours == 1 )
-	{
-		dateFormat = "#DAYS_HOUR_REMAINING"
-	}
-	if ( days == 1 )
-	{
-		if ( hours == 1 )
-		{
-			dateFormat = "#DAY_HOUR_REMAINING"
-		}
-		else
-		{
-			dateFormat = "#DAY_HOURS_REMAINING"
-		}
-	}
-
-	return dateFormat
-}
-
-// === Server/Connection ===
-
-bool function IsConnectedServerInfo()
-{
-	//Warning( "WORKAROUND: IsConnectedServerInfo() called - not implemented" )
-	return true
-}
-
-void function ResetReconnectParameters()
-{
-	Warning( "WORKAROUND: ResetReconnectParameters() called - not implemented" )
-}
-
-// === Playlist/Map Rotation ===
-
-int function GetPlaylistActiveMapRotationTimeLeft( string playlist )
-{
-	Warning( "WORKAROUND: GetPlaylistActiveMapRotationTimeLeft() called - not implemented" )
-	return 0
-}
-
-string function GetPlaylistRotationNameFromPlaylist( string playlist )
-{
-	Warning( "WORKAROUND: GetPlaylistRotationNameFromPlaylist() called - not implemented" )
-	return ""
-}
-
-string function GetNextPlaylistFromRotationAndUISlotAndSkip( string playlist, string slot, int skip )
-{
-	Warning( "WORKAROUND: GetNextPlaylistFromRotationAndUISlotAndSkip() called - not implemented" )
-	return ""
-}
-
-bool function IsRankedPlaylist( string playlist )
-{
-	return GetPlaylistVarBool( playlist, "is_ranked_game", false )
-}
-
-// === Platform/Hardware ===
-
-string function GetUnspoofedPlayerHardware()
-{
-	return "PC"
-}
-
-int function GetHardwareFromName( string name )
-{
-	switch ( name )
-	{
-		case "PC":
-			return HARDWARE_PC
-		case "PC_STEAM":
-			return HARDWARE_PC_STEAM
-		case "PS4":
-			return HARDWARE_PS4
-		case "PS5":
-			return HARDWARE_PS5
-		case "X1":
-			return HARDWARE_XBOXONE
-		case "XB5":
-			return HARDWARE_XB5
-		case "NX":
-			return HARDWARE_NX
-	}
-	return HARDWARE_PC
-}
-
-string function GetNameFromHardware( int hardware )
-{
-	switch ( hardware )
-	{
-		case HARDWARE_PC:
-			return "PC"
-		case HARDWARE_PC_STEAM:
-			return "PC_STEAM"
-		case HARDWARE_PS4:
-			return "PS4"
-		case HARDWARE_PS5:
-			return "PS5"
-		case HARDWARE_XBOXONE:
-			return "X1"
-		case HARDWARE_XB5:
-			return "XB5"
-		case HARDWARE_NX:
-			return "NX"
-	}
-	return "PC"
-}
-
-string function GetMergedPlatformIdForPlayer( entity player )
-{
-	return "pc"
-}
-
-bool function IsDirectX12Beta()
-{
-	Warning( "WORKAROUND: IsDirectX12Beta() called - not implemented" )
-	return false
-}
-
-bool function IsTakeHomeBuild()
-{
-	return true
-}
-
-bool function PCPlat_IsOrigin()
-{
-	return false
-}
-
-bool function PCPlat_IsOverlayAvailable()
-{
-	Warning( "WORKAROUND: PCPlat_IsOverlayAvailable() called - not implemented" )
-	return false
-}
-
-bool function PCPlat_IsEnabled()
-{
-	return true
-}
-
-bool function PCPlat_IsOnline()
-{
-	return true
-}
-
-bool function PCPlat_IsUpToDate()
-{
-	return true
-}
-
-void function PCPlat_RegisterEAAccount()
-{
-	Warning( "WORKAROUND: PCPlat_RegisterEAAccount() called - not implemented" )
-}
-
-bool function PCPlat_IsReady()
-{
-	return true
-}
-
-bool function PCPlat_IsWaitingForEARegistration()
-{
-	Warning( "WORKAROUND: PCPlat_IsWaitingForEARegistration() called - not implemented" )
-	return false
-}
-
-int function PCPlat_GetEALinkErrorLevel()
-{
-	Warning( "WORKAROUND: PCPlat_GetEALinkErrorLevel() called - not implemented" )
-	return 0
-}
-
-bool function IsPlayerLoggedInToMultipleMachines()
-{
-	Warning( "WORKAROUND: IsPlayerLoggedInToMultipleMachines() called - not implemented" )
-	return false
-}
-
-string function GetPlayerUnSpoofedUID()
-{
-	return GetPlayerUID()
-}
-
-bool function IsUserOnSamePlatform( string hardware )
-{
-	return hardware == "PC"
-}
-
-// === Custom Match ===
-
-void function CustomMatch_CreateLobby()
-{
-	Warning( "WORKAROUND: CustomMatch_CreateLobby() called - not implemented" )
-}
-
-void function CustomMatch_JoinLobby( string code )
-{
-	Warning( "WORKAROUND: CustomMatch_JoinLobby() called - not implemented" )
-}
-
-bool function CustomMatch_HasHiddenPlaylistAccess()
-{
-	Warning( "WORKAROUND: CustomMatch_HasHiddenPlaylistAccess() called - not implemented" )
-	return false
-}
-
-bool function CustomMatch_HasSpecialAccess()
-{
-	Warning( "WORKAROUND: CustomMatch_HasSpecialAccess() called - not implemented" )
-	return false
-}
-
-void function CustomMatch_UpdateSettings( CustomMatch_SettingsForUpdate update )
-{
-	Warning( "WORKAROUND: CustomMatch_UpdateSettings() called - not implemented" )
-}
-
-void function CustomMatch_SetTeam( int teamIndex, string hardware, string uid )
-{
-	Warning( "WORKAROUND: CustomMatch_SetTeam() called - not implemented" )
-}
-
-void function CustomMatch_KickPlayer( string hardware, string uid )
-{
-	Warning( "WORKAROUND: CustomMatch_KickPlayer() called - not implemented" )
-}
-
-void function CustomMatch_LeaveLobby()
-{
-	Warning( "WORKAROUND: CustomMatch_LeaveLobby() called - not implemented" )
-}
-
-void function CustomMatch_SetReady( bool ready )
-{
-	Warning( "WORKAROUND: CustomMatch_SetReady() called - not implemented" )
-}
-
-void function CustomMatch_SetMatchmaking( bool matchmaking )
-{
-	Warning( "WORKAROUND: CustomMatch_SetMatchmaking() called - not implemented" )
-}
-
-bool function CustomMatch_IsInCustomMatch()
-{
-	Warning( "WORKAROUND: CustomMatch_IsInCustomMatch() called - not implemented" )
-	return false
-}
-
-void function CustomMatch_LiveAPI_SendPlayers( array<CustomMatch_LobbyPlayer> players )
-{
-	Warning( "WORKAROUND: CustomMatch_LiveAPI_SendPlayers() called - not implemented" )
-}
-
-void function CustomMatch_GetMatchStats( int endTime )
-{
-	Warning( "WORKAROUND: CustomMatch_GetMatchStats() called - not implemented" )
-}
-
-void function CustomMatch_SetTeamName( int teamIndex, string name )
-{
-	Warning( "WORKAROUND: CustomMatch_SetTeamName() called - not implemented" )
-}
-
-// === Menu/UI ===
-bool function IsSelfClosingMenu( var menu )
-{
-	Warning( "WORKAROUND: IsSelfClosingMenu() called - not implemented" )
-	return false
-}
-
-void function ToolTips_SetMenuTooltipVisible( var panel, bool visible )
-{
-	Warning( "WORKAROUND: ToolTips_SetMenuTooltipVisible() called - not implemented" )
-}
-
-void function SpectatorNextTarget()
-{
-	Warning( "WORKAROUND: SpectatorNextTarget() called - not implemented" )
-}
-
-void function ShowBlockPlayerDialog( string name, string eaid, void functionref( int, string ) callback )
-{
-	Warning( "WORKAROUND: ShowBlockPlayerDialog() called - not implemented" )
-}
-
-void function OpenClubLeaveDialog()
-{
-	Warning( "WORKAROUND: OpenClubLeaveDialog() called - not implemented" )
-}
-
-void function RefreshEaTwoFactorAuthenticationStatus()
-{
-	Warning( "WORKAROUND: Hud_ClearAllToolTips() called - not implemented" )
-}
-
-// === EADP Social ===
-bool function EADP_IsTfaEnabled()
-{
-	Warning( "WORKAROUND: EADP_IsTfaEnabled() called - not implemented" )
-	return false
-}
-
-bool function EADP_SocialEnabled()
-{
-	Warning( "WORKAROUND: EADP_SocialEnabled() called - not implemented" )
-	return false
-}
-
-bool function EADP_SocialCanRun()
-{
-	Warning( "WORKAROUND: EADP_SocialCanRun() called - not implemented" )
-	return false
-}
-
-void function EADP_SearchByName( string name )
-{
-	Warning( "WORKAROUND: EADP_SearchByName() called - not implemented" )
-}
-
-bool function EADP_IsBlockedByEAID( string eaid )
-{
-	return false
-}
-
-bool function EADP_IsFriendByEAID( string eaid )
-{
-	Warning( "WORKAROUND: EADP_IsFriendByEAID() called - not implemented" )
-	return false
-}
-
-void function EADP_InviteFriendByEAID( string eaid )
-{
-	Warning( "WORKAROUND: EADP_InviteFriendByEAID() called - not implemented" )
-}
-
-void function EADP_UnBlockByEAID( string eaid )
-{
-	Warning( "WORKAROUND: EADP_UnBlockByEAID() called - not implemented" )
-}
-
-void function EADP_UnFriendByEAID( string eaid )
-{
-	Warning( "WORKAROUND: EADP_UnFriendByEAID() called - not implemented" )
-}
-
-bool function EADP_IsCodeRedemptionEnabled()
-{
-	Warning( "WORKAROUND: EADP_IsCodeRedemptionEnabled() called - not implemented" )
-	return false
-}
-
-void function EADP_RedeemCode( string code )
-{
-	Warning( "WORKAROUND: EADP_RedeemCode() called - not implemented" )
-}
-
-array<EadpPresenceData> function EADP_GetPresenceForAccount( string eaid )
-{
-	Warning( "WORKAROUND: EADP_GetPresenceForAccount() called - not implemented" )
-	array<EadpPresenceData> list
-	return list
-}
-
-EadpPeopleList function EADP_GetFriendRequestList()
-{
-	Warning( "WORKAROUND: EADP_GetFriendRequestList() called - not implemented" )
-	EadpPeopleList list
-	return list
-}
-
-string function EADP_GetEadpIdFromFirstPartyID( string id, int hardware )
-{
-	Warning( "WORKAROUND: EADP_GetEadpIdFromFirstPartyID() called - not implemented" )
-	return ""
-}
-
-bool function EADP_FriendsDoQuery()
-{
-	Warning( "WORKAROUND: EADP_FriendsDoQuery() called - not implemented" )
-	return false
-}
-
-EadpPeopleList function EADP_GetFriendsList()
-{
-	Warning( "WORKAROUND: EADP_GetFriendsList() called - not implemented" )
-	EadpPeopleList list
-	return list
-}
-
-EadpPeopleList function EADP_GetFriendsListWithOffline()
-{
-	Warning( "WORKAROUND: EADP_GetFriendsListWithOffline() called - not implemented" )
-	EadpPeopleList list
-	return list
-}
-
-EadpPresenceData function EADP_GetPresenceForUser( string memberID, int memberHardware )
-{
-	Warning( "WORKAROUND: EADP_GetPresenceForUser() called - not implemented" )
-	EadpPresenceData data
-	return data
-}
-
-void function EADP_RejectFriendRequestByEAID( string eaid )
-{
-	Warning( "WORKAROUND: EADP_RejectFriendRequestByEAID() called - not implemented" )
-}
-
-void function EADP_AcceptFriendRequestByEAID( string eaid )
-{
-	Warning( "WORKAROUND: EADP_AcceptFriendRequestByEAID() called - not implemented" )
-}
-
-void function EADP_BlockByEAID( string eaid )
-{
-	Warning( "WORKAROUND: EADP_BlockByEAID() called - not implemented" )
-}
-
-EadpInviteToPlayList function EADP_GetInviteToPlayList()
-{
-	Warning( "WORKAROUND: EADP_GetInviteToPlayList() called - not implemented" )
-	EadpInviteToPlayList list
-	return list
-}
-
-void function EADP_AcceptInvitToPlay( string eventID )
-{
-	Warning( "WORKAROUND: EADP_AcceptInvitToPlay() called - not implemented" )
-}
-
-void function EADP_RejectInviteToPlay( string eventID )
-{
-	Warning( "WORKAROUND: EADP_RejectInviteToPlay() called - not implemented" )
-}
-
-void function EADP_InviteToPlayByEAID( string eaid, int reason )
-{
-	Warning( "WORKAROUND: EADP_InviteToPlayByEAID() called - not implemented" )
-}
-
-bool function EADP_InvitationAllowed()
-{
-	return false
-}
-
-// === Audio ===
-
-void function EmitUIMusic( string musicName )
-{
-	EmitUISound( musicName )
-}
-
-bool function IsSoundStillPlaying( var handle )
-{
-	Warning( "WORKAROUND: IsSoundStillPlaying() called - not implemented" )
-	return false
-}
-
-void function PlayLobbyCharacterDialogue( ... )
-{
-	Warning( "WORKAROUND: PlayLobbyCharacterDialogue() called - not implemented" )
-}
-
-// === GRX/Store ===
-
-void function GRX_SetEventCurrency( string grxAlias )
-{
-	Warning( "WORKAROUND: GRX_SetEventCurrency() called - not implemented" )
-}
-
-int function GRX_GetItemTier( ... )
-{
-	Warning( "WORKAROUND: GRX_GetItemTier() called - not implemented" )
-	return 0
-}
-
-void function GRX_PurchaseOfferV2( int opId, int queryGoal, string offerAlias, int craftingItemIdx, int quantity, string priceAlias, array<int> price )
-{
-	Warning( "WORKAROUND: GRX_PurchaseOfferV2() called - not implemented" )
-}
-
-void function GRX_UpdateSmartMerchandisingData( array<int> smartMerchInts )
-{
-	Warning( "WORKAROUND: GRX_UpdateSmartMerchandisingData() called - not implemented" )
-}
-
-void function GRX_MarkGiftItemsAsSeen( int timestamp, array<int> itemIndices )
-{
-	Warning( "WORKAROUND: GRX_MarkGiftItemsAsSeen() called - not implemented" )
-}
-
-void function GRX_MarkContainerAsSeen_Internal( string containerId )
-{
-	Warning( "WORKAROUND: GRX_MarkContainerAsSeen_Internal() called - not implemented" )
-}
-
-void function GRX_GetOffer( string offerAlias, int hardwareId, string nucleus_pid )
-{
-	Warning( "WORKAROUND: GRX_GetOffer() called - not implemented" )
-}
-
-void function GRX_GetCurrencyBalances()
-{
-	Warning( "WORKAROUND: GRX_GetCurrencyBalances() called - not implemented" )
-}
-
-bool function GRX_HasUpToDateBundleOffers()
-{
-	return false
-}
-
-bool function IsStoreEmpty()
-{
-	return true
-}
-
-// === Persistence ===
-
-int function PersistenceGetVarHandle( string key )
-{
-	return -1 // no persistence var handle caching
-}
-
-bool function HasCallback_OnPartyMemberRemoved( void functionref() callbackFunc )
-{
-	return false
-}
-
-var function GetDialogFlowTablesValueOrPersistence( string persistenceVar, bool useScriptTable = false, float timeBeforeDialogFlowTableValuesAreOutdated = 5.0 )
-{
-	if ( !IsPersistenceAvailable() )
-		return 0
-	return GetPersistentVar( persistenceVar )
-}
-
-void function SetDialogFlowPersistenceTables( string persistenceVar, var value )
-{
-	Warning( "WORKAROUND: SetDialogFlowPersistenceTables() called - not implemented" )
-}
-
-void function IncrementNumDialogFlowDialogsDisplayed()
-{
-	Warning( "WORKAROUND: IncrementNumDialogFlowDialogsDisplayed() called - not implemented" )
-}
-
-void function DataDialog_AddCallback_OnClose( void functionref() callback )
-{
-	Warning( "WORKAROUND: DataDialog_AddCallback_OnClose() called - not implemented" )
-}
-
-// === Ranked ===
-
-void function Ranked_ConstructSingleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef )
-{
-	Warning( "WORKAROUND: Ranked_ConstructSingleRankBadgeForStatsCard() called - not implemented" )
-}
-
-void function ArenasRanked_ConstructSingleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef )
-{
-	Warning( "WORKAROUND: ArenasRanked_ConstructSingleRankBadgeForStatsCard() called - not implemented" )
-}
-
-void function Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2( var rui1, var rui2, entity player, string rankedPeriodRef )
-{
-	Warning( "WORKAROUND: Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2() called - not implemented" )
-}
-
-void function Ranked_ConstructDoubleRankBadgeForStatsCard( var rui1, var rui2, entity player, string rankedPeriodRef )
-{
-	Warning( "WORKAROUND: Ranked_ConstructDoubleRankBadgeForStatsCard() called - not implemented" )
-}
-
-void function ArenasRanked_ConstructDoubleRankBadgeForStatsCard( var rui1, var rui2, entity player, string rankedPeriodRef )
-{
-	Warning( "WORKAROUND: ArenasRanked_ConstructDoubleRankBadgeForStatsCard() called - not implemented" )
-}
-
-void function Ranked_SetupMenuGladCardForUIPlayer()
-{
-	Warning( "WORKAROUND: Ranked_SetupMenuGladCardForUIPlayer() called - not implemented" )
-}
-
-void function ArenasRanked_SetupMenuGladCardForUIPlayer()
-{
-	Warning( "WORKAROUND: ArenasRanked_SetupMenuGladCardForUIPlayer() called - not implemented" )
-}
-
-void function Ranked_SetupMenuGladCardFromCommunityUserInfo( CommunityUserInfo userInfo )
-{
-	Warning( "WORKAROUND: Ranked_SetupMenuGladCardFromCommunityUserInfo() called - not implemented" )
-}
-
-void function ArenasRanked_SetupMenuGladCardFromCommunityUserInfo( CommunityUserInfo userInfo )
-{
-	Warning( "WORKAROUND: ArenasRanked_SetupMenuGladCardFromCommunityUserInfo() called - not implemented" )
-}
-
-void function Ranked_SetupMenuGladCard( entity player )
-{
-	Warning( "WORKAROUND: Ranked_SetupMenuGladCard() called - not implemented" )
-}
-
-bool function Ranked_ShouldUpdateWithComnunityUserInfo( int score, int ladderPosition )
-{
-	return false
-}
-
-int function Ranked_GetDisplayNumberForRuiBadge( entity player )
-{
-	return 0
-}
-
-bool function Ranked_PartyMeetsRankedDifferenceRequirements()
-{
-	return true
-}
-
-bool function Ranked_HasBeenInitialized()
-{
-	return true
-}
-
-bool function SharedRanked_PartyHasRankedLevelAccess()
-{
-	return true
-}
-
-int function SharedRanked_GetMaxPartyMatchmakingDelay()
-{
-	return 0
-}
-
-int function SharedRanked_GetMatchmakingDelayFromCommunityUserInfo( CommunityUserInfo userInfo )
-{
-	return 0
-}
-
-// === Party/Social ===
-
-void function Party_JoinUserPartyGame()
-{
-	Warning( "WORKAROUND: Party_JoinUserPartyGame() called - not implemented" )
-}
-
-void function Party_LeaveParty()
-{
-	Warning( "WORKAROUND: Party_LeaveParty() called - not implemented" )
-}
-
-EadpPrivacySetting function Eadp_GetPrivacyData()
-{
-	EadpPrivacySetting settings
-	return settings
-}
-
-EadpPeopleData function CreateEADPDataFromEAID( string eaid )
-{
-	// we use this to save the eaid inside the instance of a Friend struct.
-	EadpPeopleData eadpData
-	eadpData.eaid = eaid
-	return eadpData
-}
-
-bool function IsPartyAllowedCrossplay()
-{
-	return true
-}
-
-bool function CanPromptUserToSpectatePartyInGame()
-{
-	return false
-}
-
-bool function CanPromptUserToJoinPartyInFiringRange()
-{
-	return false
-}
-
-string function LocalizePresenceState( PresenceState presenceState )
-{
-	return ""
-}
-
-// === Cross Progression ===
-
-bool function CrossProgression_IsRequestingUserMigrateStatus()
-{
-	Warning( "WORKAROUND: CrossProgression_IsRequestingUserMigrateStatus() called - not implemented" )
-	return false // stub
-}
-
-bool function CrossProgression_QueryUserMigrateStatusIfNeeded( string nucleusId )
-{
-	Warning( "WORKAROUND: CrossProgression_QueryUserMigrateStatusIfNeeded() called - not implemented" )
-	return false // stub
-}
-
-// === Clubs ===
-
-bool function AreClubInvitesEnabled()
-{
-	return false
-}
-
-array<ClubInvite> function ClubGetInvitedClubsList()
-{
-	array<ClubInvite> list
-	return list
-}
-
-void function ClubInviteDecline( string eventID )
-{
-	Warning( "WORKAROUND: ClubInviteDecline() called - not implemented" )
-}
-
-array<ClubEvent> function ClubGetChatLog()
-{
-	array<ClubEvent> log
-	return log
-}
-
-array<ClubEvent> function ClubGetEventLog()
-{
-	array<ClubEvent> log
-	return log
-}
-
-array<ClubJoinRequest> function ClubGetJoinRequests()
-{
-	array<ClubJoinRequest> list
-	return list
-}
-
-string function ClubGetMemberNameByID( string memberID )
-{
-	return ""
-}
-
-int function ClubGetMemberRankByID( string memberID )
-{
-	return 0
-}
-
-array<ClubHeader> function ClubGetSearchResults()
-{
-	array<ClubHeader> list
-	return list
-}
-
-ClubEvent function ClubGetStickyNote()
-{
-	ClubEvent note
-	return note
-}
-
-void function ClubInviteQueryClubsList( int offset, int count )
-{
-	Warning( "WORKAROUND: ClubInviteQueryClubsList() called - not implemented" )
-}
-
-bool function ClubIsAllowedTag( string tag )
-{
-	return true
-}
-
-bool function ClubIsMemberOnDifferentHardware()
-{
-	return false
-}
-
-bool function ClubIsValidName( string name )
-{
-	return true
-}
-
-bool function ClubIsValidTag( string tag )
-{
-	return true
-}
-
-int function ClubJoinRequestsCount()
-{
-	return 0
-}
-
-bool function ClubChatSend( string message )
-{
-	return false
-}
-
-void function ClubChatStickyNote( string message )
-{
-	Warning( "WORKAROUND: ClubChatStickyNote() called - not implemented" )
-}
-
-// === Events ===
-
-void function EventsPanel_SetOpenPageIndex( int pageIndex )
-{
-	Warning( "WORKAROUND: EventsPanel_SetOpenPageIndex() called - not implemented" )
-}
-
-void function JumpToEventTab( string tabName )
-{
-	Warning( "WORKAROUND: JumpToEventTab() called - not implemented" )
-}
-
-bool function DoesUserHaveTwitchDrops( string ref )
-{
-	return false
-}
-
-// === Communication/Mute ===
-
-int function CommunicationBlockGetBlockTime()
-{
-	return 0
-}
-
-bool function IsPlayerVoiceAndTextMutedForUID( string uid, string hardware )
-{
-	return false
-}
-
-void function TogglePlayerVoiceAndTextMuteForUID( string uid, string hardware, string eadpid )
-{
-	Warning( "WORKAROUND: TogglePlayerVoiceAndTextMuteForUID() called - not implemented" )
-}
-
-string function GetCommunicationBlockWarningText( int warningId )
-{
-	return ""
-}
-
-int function GetCommunicationBlockStateID()
-{
-	return 0
-}
-
-// === Time ===
-
-
-bool function GetIsDSTActive()
-{
-	return false
-}
-
-string function RLocalDateTime( int unixTime )
-{
-	return GetDateTimeString( unixTime )
-}
-
-string function RLocalTime( int unixTime )
-{
-	return GetDateTimeString( unixTime )
-}
-
-// === Datacenter ===
-
-string function GetDatacenterRealName()
-{
-	Warning( "WORKAROUND: GetDatacenterRealName() called - not implemented" )
-	return ""
-}
-
-// === First Time Player ===
-
-int function GetFirstTimePlayerState()
-{
-	Warning( "WORKAROUND: GetFirstTimePlayerState() called - not implemented" )
-	return eNewPlayerState.FIRST_MATCH_PLAYED
-}
-
-void function SetFirstTimePlayerState( int state )
-{
-	Warning( "WORKAROUND: SetFirstTimePlayerState() called - not implemented" )
-}
-
-// === Lobby/Misc ===
-
-
-
-void function RefreshChallenges()
-{
-	Warning( "WORKAROUND: RefreshChallenges() called - not implemented" )
-}
-
-// === Settings/Options ===
-
-bool function GamepadCustomSettingsAreEnabled()
-{
-	Warning( "WORKAROUND: GamepadCustomSettingsAreEnabled() called - not implemented" )
-	return false
-}
-
-void function VideoOptions_SpotShadowDetailChanged( var panel )
-{
-	Warning( "WORKAROUND: VideoOptions_SpotShadowDetailChanged() called - not implemented" )
-}
-
-int function SoundOptions_SetupChannelConfigOptions( var panel, string childName )
-{
-	Warning( "WORKAROUND: SoundOptions_SetupChannelConfigOptions() called - not implemented" )
-	return 0
-}
-
-int function SoundOptions_SetupOutputDeviceOptions( var panel, string childName )
-{
-	Warning( "WORKAROUND: SoundOptions_SetupOutputDeviceOptions() called - not implemented" )
-	return 0
-}
-
-int function SoundOptions_SetupVoiceInputDeviceOptions( var panel, string childName )
-{
-	Warning( "WORKAROUND: SoundOptions_SetupVoiceInputDeviceOptions() called - not implemented" )
-	return 0
-}
-
-bool function SoundOptions_DeviceSwitchingAvailable()
-{
-	Warning( "WORKAROUND: SoundOptions_DeviceSwitchingAvailable() called - not implemented" )
-	return false
-}
-
-// === Stickers ===
-// GetAllStickerObjectTypes, GetStickerObjectName, GetStickerPresentationType implementations in mp/sh_stickers.nut
-void function StickersPanel_InitPreviewStyle( var panel )
-{
-	Warning( "WORKAROUND: StickersPanel_InitPreviewStyle() called - not implemented" )
-}
-
-void function StickersPanel_SetConsumable( var panel, int consumable )
-{
-	Warning( "WORKAROUND: StickersPanel_SetConsumable() called - not implemented" )
-}
-
-void function StickersPanel_Update( var panel )
-{
-	Warning( "WORKAROUND: StickersPanel_Update() called - not implemented" )
-}
-
-void function StickersPanel_OnShow( var panel )
-{
-	Warning( "WORKAROUND: StickersPanel_OnShow() called - not implemented" )
-}
-
-void function StickersPanel_OnHide( var panel )
-{
-	Warning( "WORKAROUND: StickersPanel_OnHide() called - not implemented" )
-}
-
-void function StickersPanel_OnFocusChanged( var panel, var oldFocus, var newFocus )
-{
-	Warning( "WORKAROUND: StickersPanel_OnFocusChanged() called - not implemented" )
-}
-
-void function StickersPanel_TogglePreviewStyle( var panel )
-{
-	Warning( "WORKAROUND: StickersPanel_TogglePreviewStyle() called - not implemented" )
-}
-
-int function StickersPanel_GetCurrentConsumable( var panel )
-{
-	Warning( "WORKAROUND: StickersPanel_GetCurrentConsumable() called - not implemented" )
-	return 0
-}
-
-// === Reconnect/Spectate ===
-bool function TryLoadSpectateParameters()
-{
-	Warning( "WORKAROUND: TryLoadSpectateParameters() called - not implemented" )
-	return false
-}
-
-bool function TryLoadReconnectFromLocalStorage()
-{
-	Warning( "WORKAROUND: TryLoadReconnectFromLocalStorage() called - not implemented" )
-	return false
-}
-
-void function StartReconnectFromParameters()
-{
-	Warning( "WORKAROUND: StartReconnectFromParameters() called - not implemented" )
-}
-
-int function GetReconnectDelay()
-{
-	Warning( "WORKAROUND: GetReconnectDelay() called - not implemented" )
-	return 0
-}
-
-bool function Reconnect_IsLiveSpectateLoaded()
-{
-	Warning( "WORKAROUND: Reconnect_IsLiveSpectateLoaded() called - not implemented" )
-	return false
-}
-
-// === Misc ===
-void function OpenLangAoCDialog()
-{
-	Warning( "WORKAROUND: OpenLangAoCDialog() called - not implemented" )
-}
-
-// === GetKeyValueAsAsset ===
-asset function GetKeyValueAsAsset( table kvTable, string key )
-{
-	Warning( "WORKAROUND: GetKeyValueAsAsset() called - not implemented, using custom script version" )
-	if ( key in kvTable )
-		return GetAssetFromString( string( kvTable[key] ) )
-	return $""
-}
-
-#if UI
-
-int function UISafeGetPersistentVarAsInt( string key )
-{
-	if ( IsConnected() )
-		return GetPersistentVarAsInt( key )
-	return 0
-}
-
-string function GetServerDebugId()
-{
-	return ""
-}
-
-int function Squads_GetMax()
-{
-	return 20
-}
-
-vector function Squads_GetSquadColor( int squadIndex, bool isWinterExpress = false )
-{
-	return <1.0, 1.0, 1.0>
-}
-
-string function Squads_GetSquadName( int squadIndex, bool isWinterExpress = false )
-{
-	return "Squad " + squadIndex
-}
-#endif
-
-#endif // UI
 
 // ============================================================================
 //  #if CLIENT - Implementations
 // ============================================================================
-#if CLIENT
 
-// === Asset Loading/Precaching ===
-
-// ODL (On Demand Loading) not available, stub
-void function PrecacheOnDemandLoadModel( int odlType, string pak, asset model, asset loadingModel )
-{
-	Warning( "WORKAROUND: PrecacheOnDemandLoadModel() called - not implemented" )
-}
-
-// stub
-void function PrecacheSkinName( string skinName )
-{
-	Warning( "WORKAROUND: PrecacheSkinName() called - not implemented" )
-}
-
-// ODL (On-Demand Loading) not available, stubs
-int function ODL_FindAsset( int odlType, asset model )
-{
-	return -1  // -1 = not found, skips ODL wait loops
-}
-
-bool function ODL_IsLoaded( int odlType, int handle )
-{
-	return true  // Always report as loaded
-}
-
-int function GetFileDownloadStatus( string rpakName )
-{
-	// no asset streaming, always up to date
-	return ASSET_DOWNLOAD_STATUS_UP_TO_DATE
-}
-
-// === Audio ===
-
-// stub
-void function StopUISoundByName( string soundName )
-{
-	Warning( "WORKAROUND: StopUISoundByName() called - not implemented" )
-}
-
-// === Props/Models ===
-
-// CreateClientSidePropDynamicCharm not available, use regular prop dynamic
-entity function CreateClientSidePropDynamicCharm( vector origin, vector angles, asset model )
-{
-	return CreateClientSidePropDynamic( origin, angles, model )
-}
-
-// === Game Mode Checks ===
-
-// stub
-bool function IsGunGameActive()
-{
-	Warning( "WORKAROUND: IsGunGameActive() called - not implemented" )
-	return false
-}
-
-// stub
-bool function IsShadowRoyaleMode()
-{
-	Warning( "WORKAROUND: IsShadowRoyaleMode() called - not implemented" )
-	return false
-}
-
-// Battle Rush stubs
-void function BattleRush_StopCharSelectMusic()
-{
-	Warning( "WORKAROUND: BattleRush_StopCharSelectMusic() called - not implemented" )
-}
-
-void function BattleRush_ServerCallback_PlayJumpMusic()
-{
-	Warning( "WORKAROUND: BattleRush_ServerCallback_PlayJumpMusic() called - not implemented" )
-}
-
-
-array<entity> function ShadowArmy_GetEnemySquadPlayersForAllianceIntro( int alliance )
-{
-	Warning( "WORKAROUND: ShadowArmy_GetEnemySquadPlayersForAllianceIntro() called - not implemented" )
-	return []
-}
-
-void function ShadowArmy_PlayIntroBannerSoundForLegends_Thread()
-{
-	Warning( "WORKAROUND: ShadowArmy_PlayIntroBannerSoundForLegends_Thread() called - not implemented" )
-}
-
-// === HUD/UI Display ===
-
-// stubs
-void function ShowTeamNameInHud()
-{
-	Warning( "WORKAROUND: ShowTeamNameInHud() called - not implemented" )
-}
-
-void function HideTeamNameInHud()
-{
-	Warning( "WORKAROUND: HideTeamNameInHud() called - not implemented" )
-}
-
-// stub
-float function GetScreenScaleFrac()
-{
-	Warning( "WORKAROUND: GetScreenScaleFrac() called - not implemented" )
-	return 1.0  // Default scale
-}
-
-// stub
-void function ForceDestroyBlackBarRui()
-{
-	Warning( "WORKAROUND: ForceDestroyBlackBarRui() called - not implemented" )
-}
-
-
-// === Player Info ===
-
-// stub
-bool function Script_UserHasEAAccess()
-{
-	Warning( "WORKAROUND: Script_UserHasEAAccess() called - not implemented" )
-	return false
-}
-
-// GetPlayerUID is UI-only native, CLIENT uses GetPlatformUID on entity
-string function GetPlayerUID()
-{
-	entity player = GetLocalClientPlayer()
-	if ( IsValid( player ) )
-		return player.GetPlatformUID()
-	return ""
-}
-
-// Wraps existing function
-// Note: Using int instead of EHI because EHI typedef isn't defined yet at load time
-string function GetPlayerNameFromEHI( int ehi )
-{
-	return GetDisplayablePlayerNameFromEHI( ehi )
-}
-
-// stub - privacy/anonymization not available
-string function GetObfuscatedIdFromPlayer( entity player )
-{
-	Warning( "WORKAROUND: GetObfuscatedIdFromPlayer() called - not implemented" )
-	return ""
-}
-
-// Checks if player is in bleedout or being revived
-bool function IsInBleedoutOrRevive( entity player )
-{
-	if ( !IsValid( player ) )
-		return false
-	if ( Bleedout_IsBleedingOut( player ) )
-		return true
-	if ( player.ContextAction_IsReviving() || player.ContextAction_IsBeingRevived() )
-		return true
-	return false
-}
-
-// === Character Abilities ===
-
-// Ballistic's armored leap ability - character not available
-int function GetCurrentArmoredLeapPhase( entity player )
-{
-	Warning( "WORKAROUND: GetCurrentArmoredLeapPhase() called - not implemented" )
-	return PLAYER_ARMORED_LEAP_PHASE_NONE
-}
-
-// GetAllResinShards used by cl_damage_indicator.gnut for trace ignore
-// Catalyst character ability not available - return empty array
-array<entity> function GetAllResinShards()
-{
-	array<entity> empty
-	return empty
-}
-
-// === Ranked ===
-
-// stub
-void function ShRanked_RegisterNetworkFunctions()
-{
-	Warning( "WORKAROUND: ShRanked_RegisterNetworkFunctions() called - not implemented" )
-}
-
-// Ranked game checks
-bool function IsRankedGame()
-{
-	return GetCurrentPlaylistVarBool( "ranked_game", false )
-}
-
-bool function IsArenasRankedGame()
-{
-	Warning( "WORKAROUND: IsArenasRankedGame() called - not implemented" )
-	return false
-}
-
-// === Network ===
-// GetGlobalNonRewindNetBool - now a native function, removed stub
-
-// === Custom Player Info ===
-void function ClearCustomPlayerInfoTreatment( entity player )
-{
-	Warning( "STUB: ClearCustomPlayerInfoTreatment" )
-}
-
-void function ClearCustomPlayerInfoCharacterIcon( entity player )
-{
-	Warning( "STUB: ClearCustomPlayerInfoCharacterIcon" )
-}
-
-bool function IsBallisticUltActive( entity player )
-{
-	Warning( "STUB: IsBallisticUltActive" )
-	return false
-}
-
-// GetWeaponTypeFlags_Safe removed — use weapon.GetWeaponTypeFlags() directly
-
-table function GetTeamJIPUnitFrames()
-{
-	return {}
-}
-
-var function GetConduitShieldRui()
-{
-	return null
-}
-
-// PrecacheModel stub not needed — handled differently
-
-var function TitanSword_GetFuelRui()
-{
-	return null
-}
-
-
-void function PrintTeamChatMessageLocally( entity player, string text )
-{
-	Warning( "STUB: PrintTeamChatMessageLocally: " + text )
-}
-
-void function PIN_DynamicDialogue( ... )
-{
-	Warning( "STUB: PIN_DynamicDialogue" )
-}
-
-var function CreateDialogPopup( string title, float duration, asset portraitImage, string displayText )
-{
-	Warning( "STUB: CreateDialogPopup" )
-	return null
-}
-
-int function EmitSoundOnEntityWithSelector( entity ent, string soundAlias, int selector )
-{
-	Warning( "STUB: EmitSoundOnEntityWithSelector - falling back to EmitSoundOnEntity" )
-	EmitSoundOnEntity( ent, soundAlias )
-	return 0
-}
-
-// PushLockFOV / PopLockFOV — native CLIENT functions, no stub needed
-
-bool function Respawn_Token_CanLocalPlayerRespawnOrIsRespawning()
-{
-	Warning( "STUB: Respawn_Token_CanLocalPlayerRespawnOrIsRespawning" )
-	return false
-}
-
-void function OpenSurvivalGroundListRetail( entity player, entity vendingMachine, int groundListBehavior = 0, int groundListType = 0 )
-{
-	Warning( "STUB: OpenSurvivalGroundListRetail -> OpenSurvivalGroundList" )
-	OpenSurvivalGroundList( player, vendingMachine, groundListBehavior, groundListType )
-}
-
-bool function LootBin_IsOpen( entity lootBin )
-{
-	Warning( "STUB: LootBin_IsOpen -> LootBin_IsOpenAtAll" )
-	return LootBin_IsOpenAtAll( lootBin )
-}
-
-void function Announcements_SetVisible( bool visible )
-{
-	Warning( "STUB: Announcements_SetVisible" )
-}
-
-bool function WillCelebrateNEEVictory()
-{
-	Warning( "STUB: WillCelebrateNEEVictory" )
-	return false
-}
-
-void function DoNEECelebration_Thread( vector pos, vector angles )
-{
-	Warning( "STUB: DoNEECelebration_Thread" )
-}
-
-void function TryEnableDeathScreenRequeue()
-{
-	Warning( "STUB: TryEnableDeathScreenRequeue" )
-}
-
-// PerformFavoredQuipAtSlot — now in sh_comms_menu.nut (S22)
-
-// === Squad Cards ===
-
-// Wraps standard function with defaults
-void function DoAnimatedSquadCardsPresentation()
-{
-	DoSquadCardsPresentation()  // Uses default params
-}
-
-// Wraps standard function with defaults
-void function DoAnimatedChampionSquadCardsPresentation()
-{
-	DoChampionSquadCardsPresentation()  // Uses default params
-}
-
-// === First Time Player (also defined in UI block) ===
-int function GetFirstTimePlayerState()
-{
-	Warning( "WORKAROUND: GetFirstTimePlayerState() called - not implemented" )
-	return eNewPlayerState.FIRST_MATCH_PLAYED
-}
-
-void function SetFirstTimePlayerState( int state )
-{
-	Warning( "WORKAROUND: SetFirstTimePlayerState() called - not implemented" )
-}
-
-#endif
-
-// === Shadow Army (shared scope) ===
-bool function ShadowArmy_IsPlayerOnShadowArmy( entity player )
-{
-	return false
-}
-
-void function SkydiveEmoteProjector_ActivateEmoteProjector( entity player, ItemFlavor quip ) { Warning( "STUB: SkydiveEmoteProjector_ActivateEmoteProjector" ) }
-bool function Valentines_S15_ILoveYouEasterEggEnabled() { return false }
 bool function RuiIsAlive( var rui ) { return rui != null }
-void function TransportPortal_CancelUse() { Warning( "STUB: TransportPortal_CancelUse" ) }
-bool function DeathboxNetwork_CanPlayerUse( entity player, entity ent ) { return false }
-void function DeathboxNetwork_UntrackIfTracking() { }
-void function DeathboxNetwork_TrackBoxTargets( entity box ) { }
-void function DeathboxNetwork_UntrackBoxTargets( entity box ) { }
-bool function PassiveReinforce_BlockControllerHolster( entity player, entity useEnt ) { return false }
-bool function TitanSword_WeaponIsTitanSword( entity weapon ) { return false }
-int function GetArcFlashState( entity player ) { return 0 }
 void function SetUnitFrameConsumableData( var rui, entity player ) { }
 string function GetPlayerNameByEntIndex( int entIdx ) { return "" }
 string function GetCachedObsfuscatedNameByName( string name ) { return name }
 void function Obituary_Print_Control_ObjectivePing( entity subjectEnt, string locText, vector playerColor, vector subjectColor = <255,255,255>, vector secondaryColor = <255,255,255>, vector bgColor = <0,0,0>, float bgAlpha = 0.0 ) { Warning( "STUB: Obituary_Print_Control_ObjectivePing" ) }
 void function Obituary_Print_Control_Ping( string locText, bool isAlliancePing = false, vector altColor1 = <255,255,255>, vector altColor2 = <255,255,255>, vector altColor3 = <255,255,255>, vector bgColor = <255,255,255>, float bgAlpha = 0.0 ) { Warning( "STUB: Obituary_Print_Control_Ping" ) }
-
-entity function HoverVehicle_GetVehicleOccupiedByPlayer( entity player )
-{
-	Warning( "STUB: HoverVehicle_GetVehicleOccupiedByPlayer" )
-	return null
-}
 bool function ContextAction_IsBeingRevived( entity player ) { return false }
 bool function ContextAction_IsInVehicle( entity player ) { return false }
 bool function ContextAction_IsReviving( entity player ) { return false }
-
-bool function HoverVehicle_IsHostileToTeam( entity vehicle, int team ) { return false }
-bool function HoverVehicle_IsVehicleEmpty( entity vehicle ) { return true }
-bool function MedBay_IsDisabled( entity ent = null ) { return false }
-bool function MedBay_IsOnCooldown( entity ent = null ) { return false }
-
-
-bool function PassiveAssassinsInstinct_EntityShouldBeHighlighted( entity viewPlayer, entity target )
-{
-	Warning( "STUB: PassiveAssassinsInstinct_EntityShouldBeHighlighted" )
-	return false
-}
-
-bool function CastleWall_EntityShouldBeHighlighted( entity ent )
-{
-	Warning( "STUB: CastleWall_EntityShouldBeHighlighted" )
-	return false
-}
-
-bool function ArmoredLeap_TargetEntityShouldBeHighlighted( entity ent )
-{
-	Warning( "STUB: ArmoredLeap_TargetEntityShouldBeHighlighted" )
-	return false
-}
 
 bool function IsValidStickerInstance( int instance )
 {
@@ -2271,39 +386,10 @@ float function GetFovScalar( entity player )
 }
 #endif
 
-bool function FerroWall_BlockScan( vector startPos, vector endPos )
-{
-	Warning( "STUB: FerroWall_BlockScan\n" )
-	return false
-}
-
-float function SniperUlt_GetMarkedDuration()
-{
-	Warning( "STUB: SniperUlt_GetMarkedDuration\n" )
-	return 10.0
-}
-
-float function DebuffZone_GetOverheatDuration()
-{
-	Warning( "STUB: DebuffZone_GetOverheatDuration\n" )
-	return 12.0
-}
-
 bool function TryPingBlockingFunction( entity player, string context )
 {
 	Warning( "STUB: TryPingBlockingFunction\n" )
 	return false
-}
-
-int function CanLaunchToCompanion( entity player, entity companion )
-{
-	Warning( "STUB: CanLaunchToCompanion\n" )
-	return eCanLaunchResult.INVALID
-}
-
-void function HookUpWaypointRuiForObjectiveRelevance( entity wp, var rui )
-{
-	Warning( "STUB: HookUpWaypointRuiForObjectiveRelevance\n" )
 }
 
 void function Survival_SetPilotHudVisible( bool visible )
@@ -2378,25 +464,12 @@ void function ServerCallback_PromptWelcome()
 	Warning( "STUB: ServerCallback_PromptWelcome\n" )
 }
 
-entity function TransportPortal_GetReceiverPlayerIsLookingAt( entity player )
-{
-	Warning( "STUB: TransportPortal_GetReceiverPlayerIsLookingAt" )
-	return null
-}
-
-entity function TreasureHunt_GetStarterPingFromTraceBlockerPing( entity pingedEnt, int playerTeam )
-{
-	Warning( "STUB: TreasureHunt_GetStarterPingFromTraceBlockerPing" )
-	return null
-}
-
 bool function Zipline_IsCurvedZipline( entity zipline )
 {
 	Warning("STUB: Zipline_IsCurvedZipline")
 	return false
 }
 
-entity function GetWhiteRavenPingTarget( entity player ) { return null }
 entity function GetZiplinePingEntity( entity player, entity hitEnt, vector hitPos ) { return null }
 vector function GetZiplinePingPosition( entity player, entity hitEnt, vector hitPos ) { return hitPos }
 bool function HasZiplinePingInRange( entity player, entity hitEnt, vector hitPos ) { return false }
@@ -2408,10 +481,6 @@ bool function Player_IsSkywardLaunching( entity player ) { return false }
 bool function IsTeamInAlliance( int team, int alliance ) { return false }
 vector function GetGroundPositionOpenToSky( vector origin ) { return origin }
 // Remote_CallFunction_NonReplay — native
-bool function ShadowArmy_RespawnBeacon_CanBeaconBeUsedByPlayer( entity beacon, entity player ) { return true }
-bool function ShadowArmy_RespawnBeacon_CanBeaconBeUsed( entity beacon ) { return true }
-int function MedBay_GetHealsPercentRemaining( entity ent = null ) { return 100 }
-void function TreasureHunt_InstanceObjectivePing( entity wp ) { Warning( "STUB: TreasureHunt_InstanceObjectivePing" ) }
 #if SERVER
 // CLIENT natives — stubs only needed on SERVER
 void function Highlight_PopPingedState( entity ent ) {}
@@ -2421,8 +490,6 @@ void function WaypointFocusTracking_Register( entity wp, entity ent = null ) {}
 void function WaypointFocusTracking_SetDisabled( entity wp, bool disabled ) {}
 void function WaypointFocusTracking_TrackPos( entity wp, vector pos ) {}
 #endif
-int function Waypoints_GetObjectiveIndexFor( entity wp ) { return -1 }
-
 // ============================================================================
 //  #if SERVER || CLIENT - Implementations
 // ============================================================================
@@ -2466,18 +533,6 @@ void function PIN_FiringRangeChallengeCompleted( entity player, ... )
 // implemented in firing_range.gnut
 
 // stubs - Golden Horse / Titan Sword (S22 feature, not in S3)
-bool function IsGoldenHorse_FR()
-{
-	//Warning( "WORKAROUND: IsGoldenHorse_FR() called - not implemented" )
-	return false
-}
-
-bool function TitanSword_WeaponRefIsTitanSword( string ref )
-{
-	//Warning( "WORKAROUND: TitanSword_WeaponRefIsTitanSword() called - not implemented" )
-	return false
-}
-
 #if SERVER
 #endif
 
@@ -2510,48 +565,16 @@ array<vector> function NavMesh_SearchForOpenAreas( int hullType, float idealTile
 	return []
 }
 
-void function TitanSword_ForceStopLootAnim( entity ent )
-{
-	Warning( "STUB: TitanSword_ForceStopLootAnim" )
-}
-
-void function PassiveAxiom_OnItemDropped( entity player, string ref, entity dropEnt )
-{
-	Warning( "STUB: PassiveAxiom_OnItemDropped" )
-}
-
-string function GoldenHorse_UpdateLootHighlight( entity prop, string ref, int tier, string highlight )
-{
-	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_GOLDEN_HORSE ) )
-		return highlight
-
-	if ( ref == "hopup_golden_horse_green" )
-		highlight = "survival_item_gh"
-
-	return highlight
-}
 void function PIN_ItemGrantedByScript( entity player, ... ) { Warning("STUB: PIN_ItemGrantedByScript") }
-void function TrackingVision_CreatePOIForPickedUpLoot( entity player, int lootType, string ref, vector pos, int team, entity source ) { Warning("STUB: TrackingVision_CreatePOIForPickedUpLoot") }
 array<entity> function GetTriggersByClassesInRealms_HullSize( ... ) { return [] }
 array<entity> function GetTriggersByClassesInRealms( ... ) { return [] }
-bool function HasBoundaryWall() { Warning("STUB: HasBoundaryWall"); return false }
-bool function IsReinforced( entity ent ) { Warning("STUB: IsReinforced"); return false }
-bool function HoverVehicle_AttachEntToNearestAbilityAttachment( entity ent, entity vehicle, bool a, bool b, vector offset ) { Warning( "STUB: HoverVehicle_AttachEntToNearestAbilityAttachment" ); return false }
-bool function IsForgedShadowsShield( entity ent ) { Warning("STUB: IsForgedShadowsShield"); return false }
-bool function ShadowShield_IsAllowedStickyEnt( entity ent, entity stickyEnt, string weaponClassName ) { Warning("STUB: ShadowShield_IsAllowedStickyEnt"); return true }
-bool function MobileShield_IsAllowedStickyEnt( entity ent, entity stickyEnt, string weaponClassName ) { Warning("STUB: MobileShield_IsAllowedStickyEnt"); return true }
 void function StunWhenInterruptable( entity ent, var damageInfo ) { Warning( "STUB: StunWhenInterruptable" ) }
 bool function IsNessie( entity ent ) { Warning("STUB: IsNessie"); return false }
-int function GetEffectiveTeamNumForVehicle( entity ent ) { return ent.GetTeam() }
-bool function DoesPlayerHaveAutoLoaderBuff( entity player ) { Warning("STUB: DoesPlayerHaveAutoLoaderBuff"); return false }
 bool function PlantSuperStickyGrenade( entity projectile, vector pos, vector normal, entity hitEnt, int hitbox ) { Warning("STUB: PlantSuperStickyGrenade"); return false }
 void function Player_DetonateSatchels( entity player ) { Warning("STUB: Player_DetonateSatchels") }
 bool function AllowPlayersToTalkToThemselves() { return false }
 int function EvaluateSoundSelector( string alias ) { Warning("STUB: EvaluateSoundSelector"); return 0 }
-bool function GoldenHorse_TicksEnabled() { return false }
-bool function TitanSword_Super_BlockAction( entity player, string action = "" ) { Warning("STUB: TitanSword_Super_BlockAction"); return false }
 // UpgradeSelectionMenu_TryClose -- now in sh_upgrade_selection_menu.nut
-void function GiveBounty( entity player, int amount ) { Warning("STUB: GiveBounty") }
 bool function IsBountyHuntEnabled() { return false }
 
 // === Melee/Combat ===
@@ -2561,25 +584,6 @@ void function SetObjectCanBeMeleed( entity ent, bool value )
 }
 
 // stub
-bool function IsRebuiltDoor( entity ent )
-{
-	Warning( "WORKAROUND: IsRebuiltDoor() called - not implemented" )
-	return false
-}
-
-// stub
-bool function TitanSword_TryMultiAttack( entity attacker, entity meleeWeapon, int impactTableOverride )
-{
-	Warning( "WORKAROUND: TitanSword_TryMultiAttack() called - not implemented" )
-	return false // Normal melee attack path
-}
-
-bool function TitanSword_VictimHitOverride( entity meleeWeapon, entity attacker, entity target, vector pushBackVelocity )
-{
-	Warning( "WORKAROUND: TitanSword_VictimHitOverride() called - not implemented" )
-	return false // No override
-}
-
 // stub
 bool function IsServerNetworkAlertTriggered()
 {
@@ -2588,21 +592,9 @@ bool function IsServerNetworkAlertTriggered()
 }
 
 // Debug print wrapper
-void function DEV_script_ranked_debug( string msg )
-{
-	#if DEVELOPER
-	printt( "[RANKED_DEBUG] " + msg )
-	#endif
-}
-
 void function Ranked_ConstructSingleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef )
 {
 	Warning( "WORKAROUND: Ranked_ConstructSingleRankBadgeForStatsCard() called - not implemented" )
-}
-
-void function ArenasRanked_ConstructSingleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef )
-{
-	Warning( "WORKAROUND: ArenasRanked_ConstructSingleRankBadgeForStatsCard() called - not implemented" )
 }
 
 void function Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2( var rui, entity player, string rankedPeriodRef1, string rankedPeriodRef2, bool isActive )
@@ -2613,11 +605,6 @@ void function Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2( var rui, enti
 void function Ranked_ConstructDoubleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef1, string rankedPeriodRef2 )
 {
 	Warning( "WORKAROUND: Ranked_ConstructDoubleRankBadgeForStatsCard() called - not implemented" )
-}
-
-void function ArenasRanked_ConstructDoubleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef1, string rankedPeriodRef2 )
-{
-	Warning( "WORKAROUND: ArenasRanked_ConstructDoubleRankBadgeForStatsCard() called - not implemented" )
 }
 
 // === Persistence ===
@@ -2635,16 +622,6 @@ void function SafeSetPersistentVar( entity player, string key, var value )
 }
 
 
-#elseif CLIENT
-int function SafeGetPersistentVarAsInt( entity player, string key )
-{
-	return player.GetPersistentVarAsInt( key )
-}
-
-void function SafeSetPersistentVar( entity player, string key, var value )
-{
-	// CLIENT cannot set persistence - no-op
-}
 #endif
 
 // === Audio ===
@@ -2762,16 +739,6 @@ bool function IsTakeHomeBuild()
 }
 
 // === Gifting ===
-
-bool function CanLocalPlayerGift()
-{
-	return false
-}
-
-void function GetGiftOfferEligibility( ... )
-{
-	Warning( "WORKAROUND: GetGiftOfferEligibility() called - not implemented" )
-}
 
 // === Lobby/Misc ===
 
@@ -2930,13 +897,6 @@ void function SetIsPermanentEntity( entity ent, bool isPermanent )
 	Warning( "STUB: SetIsPermanentEntity" )
 }
 
-// === Shadow Army Gamemode ===
-bool function ShadowArmy_IsPlayerInShadowForm( entity player )
-{
-	Warning( "STUB: ShadowArmy_IsPlayerInShadowForm" )
-	return false
-}
-
 // === Freelance Systems ===
 bool function FreelanceSystemsAreEnabled()
 {
@@ -2948,16 +908,6 @@ bool function FreelanceSystemsAreEnabled()
 void function LTM_AnnouncementSplash( entity player )
 {
 	Warning( "STUB: LTM_AnnouncementSplash" )
-}
-int function ShadowArmy_GetCurrentRank( entity player )
-{
-	Warning( "STUB: ShadowArmy_GetCurrentRank" )
-	return 0
-}
-
-bool function UseLTMPodiumBanner()
-{
-	return ( GetCurrentPlaylistVarString( "gamemode_logo", "BATTLE_ROYALE" ) == "LTM" )
 }
 
 bool function UseMixtapePodiumBanner()
@@ -3012,31 +962,12 @@ vector function CalcWorldToLocalOrigin_Entity( entity moveParent, vector worldPo
 	vector right = AnglesToRight( moveParent.GetAngles() )
 	vector up = AnglesToUp( moveParent.GetAngles() )
 	return < offset.Dot( forward ), offset.Dot( right ), offset.Dot( up ) >
-	#else
-	return worldPos
 	#endif
-}
-
-int function ShGameModeExplore_GetPlanePassNumber()
-{
-	Warning( "STUB: ShGameModeExplore_GetPlanePassNumber" )
-	return 1
 }
 
 bool function IsValidArrayIndex( int index, int arrayLen )
 {
 	return index >= 0 && index < arrayLen
-}
-
-entity function HoverVehicle_CreateAndAddPlayers( vector pos, array<entity> players )
-{
-	#if SERVER
-	Warning( "STUB: HoverVehicle_CreateAndAddPlayers" )
-	entity mover = CreateScriptMover( "hover_vehicle_stub", pos )
-	return mover
-	#else
-	return players[0]
-	#endif
 }
 
 bool function DropPod_OnUse( entity airdrop, entity player, int useFlags )
@@ -3097,23 +1028,6 @@ void function SurvivalCommentary_KilledPlayerAnnounce( int bucket, entity player
 	Warning( "STUB: SurvivalCommentary_KilledPlayerAnnounce" )
 }
 
-bool function GoldenHorse_ModifyCarePackageSpawnDistance()
-{
-	Warning( "STUB: GoldenHorse_ModifyCarePackageSpawnDistance" )
-	return false
-}
-
-bool function GoldenHorse_SwordCarePackageEnabled()
-{
-	Warning( "STUB: GoldenHorse_SwordCarePackageEnabled" )
-	return false
-}
-
-void function DeleteCarepackagePerkLinks()
-{
-	Warning( "STUB: DeleteCarepackagePerkLinks" )
-}
-
 void function SetChampion( entity player )
 {
 	Warning( "STUB: SetChampion" )
@@ -3141,36 +1055,6 @@ void function HoverVehicle_WakeVehiclesIntersectingEntity( entity ent )
 	Warning( "STUB: HoverVehicle_WakeVehiclesIntersectingEntity" )
 }
 
-float function Octane_GetPassiveRegenRate()
-{
-	return GetCurrentPlaylistVarFloat( "octane_health_regen_amount", 1.5 )
-}
-
-float function Octane_GetPassiveRegenDelay()
-{
-	return GetCurrentPlaylistVarFloat( "octane_health_regen_delay", 6.0 )
-}
-
-bool function Campfire_IsEnabled()
-{
-	return false
-}
-
-bool function Campfire_IsPlayerInCampfire( entity player )
-{
-	return false
-}
-
-void function BeginAOEHeal( entity player )
-{
-	Warning( "STUB: BeginAOEHeal" )
-}
-
-void function EndAOEHeal( entity player )
-{
-	Warning( "STUB: EndAOEHeal" )
-}
-
 void function EmitSoundOnEntityExceptToPlayers( entity soundEnt, array<entity> excludePlayers, string soundName )
 {
 	#if SERVER
@@ -3180,66 +1064,7 @@ void function EmitSoundOnEntityExceptToPlayers( entity soundEnt, array<entity> e
 	#endif
 }
 
-bool function Respawn_Token_IsPlayerEliminated( entity player )
-{
-	Warning( "STUB: Respawn_Token_IsPlayerEliminated" )
-	return false
-}
-
 void function PIN_EmoteUse( entity player, string emoteRef, vector pos, string action, ... ) { Warning( "STUB: PIN_EmoteUse" ) }
-
-bool function ShadowArmy_ShouldEnterBleedout( entity player )
-{
-	return true
-}
-
-void function ShadowArmy_StorePlayersOriginalCharacterSelection( entity player, ItemFlavor character )
-{
-	Warning( "STUB: ShadowArmy_StorePlayersOriginalCharacterSelection" )
-}
-
-bool function ShadowArmy_GetShouldLegendsSpawnOnGround_MatchStart()
-{
-	return false
-}
-
-int function ShadowArmy_GetNumRevSquadsForMatchStart()
-{
-	return 0
-}
-
-int function ShadowArmy_GetLegendSpawnGroupsNumber()
-{
-	return 1
-}
-
-array<vector> function ShadowArmy_GetLegendMatchStartSpawnLocations( int groupsNum )
-{
-	Warning( "STUB: ShadowArmy_GetLegendMatchStartSpawnLocations" )
-	array<vector> result
-	return result
-}
-
-float function ShadowArmy_GetLegendMatchStartSpawnRadius()
-{
-	return 0.0
-}
-
-bool function ShadowArmy_IsSquadReallyEliminated( int team )
-{
-	Warning( "STUB: ShadowArmy_IsSquadReallyEliminated" )
-	return false
-}
-
-bool function POIPlayerSpawning_Exists()
-{
-	return false
-}
-
-void function POIPlayerSpawning_SpawnPlayers()
-{
-	Warning( "STUB: POIPlayerSpawning_SpawnPlayers" )
-}
 
 array<vector> function NavMesh_GetClosestPoints( vector origin, int numPoints )
 {
@@ -3248,40 +1073,14 @@ array<vector> function NavMesh_GetClosestPoints( vector origin, int numPoints )
 
 // Highlight_SetGameModeEnemyHighlight — now in sh_highlight.gnut (S22)
 
-void function Lifesteal_PlayerDealtDamage( entity player, entity victim, entity weapon, int healthDamage, int shieldDamage, int absorbedDamage, int damageType )
-{
-	Warning( "STUB: Lifesteal_PlayerDealtDamage" )
-}
-
 void function StopAllSoundsOnEntity( entity ent )
 {
 	Warning( "STUB: StopAllSoundsOnEntity" )
 }
 
-bool function Strikeout_IsPlayerRespawnDisabled( entity player )
-{
-	return false
-}
-
-bool function Sh_Respawn_Token_IsPlayerRespawnDisabled( entity player )
-{
-	return false
-}
-
-bool function SpawnGroupSkydive_IsSquadEliminated( int team )
-{
-	return false
-}
-
 void function Achievements_OnPlayerMatchParticipationEnded( entity player )
 {
 	Warning( "STUB: Achievements_OnPlayerMatchParticipationEnded" )
-}
-
-var function MMR_GetInteractionsForPlayer( entity player, int functionref(entity) rankFunc )
-{
-	Warning( "STUB: MMR_GetInteractionsForPlayer" )
-	return null
 }
 
 void function SendPlayerMatchResult( entity player )
@@ -3296,41 +1095,6 @@ int function GetPlayerGameDuration( entity player )
 
 bool function SmokeTest_IsActive()
 {
-	return false
-}
-
-bool function TitanSword_ActiveWeaponIsTitanSword( entity player )
-{
-	Warning( "STUB: TitanSword_ActiveWeaponIsTitanSword" )
-	return false
-}
-
-void function TrackingVision_CreatePOIForDroppedLoot( entity pickup, int lootType, string ref, vector origin, int team, entity player )
-{
-	Warning( "STUB: TrackingVision_CreatePOIForDroppedLoot" )
-}
-
-bool function GetLifelineTTAssetsToPrecache( array<string> models, array<string> particles )
-{
-	Warning( "STUB: GetLifelineTTAssetsToPrecache" )
-	return false
-}
-
-bool function TitanSword_Super_IsActive( entity player )
-{
-	Warning( "STUB: TitanSword_Super_IsActive" )
-	return false
-}
-
-bool function TitanSword_DamageSourceIsTitanSword( int damageSourceId )
-{
-	Warning( "STUB: TitanSword_DamageSourceIsTitanSword" )
-	return false
-}
-
-bool function TitanSword_Slam_DeathboxOverride( entity box, entity attacker, entity playerOwner )
-{
-	Warning( "STUB: TitanSword_Slam_DeathboxOverride" )
 	return false
 }
 
@@ -3368,29 +1132,6 @@ array<vector> function ShuffleVectorArray( array<vector> arr )
 	return result
 }
 
-
-
-
-
-array<entity> function AirdropExtravaganza_GetClusterEntities()
-{
-	Warning( "STUB: AirdropExtravaganza_GetClusterEntities" )
-	array<entity> result
-	return result
-}
-
-array<entity> function AirdropExtravaganza_GetTrackedAirdropPods()
-{
-	Warning( "STUB: AirdropExtravaganza_GetTrackedAirdropPods" )
-	array<entity> result
-	return result
-}
-
-void function AirdropExtravaganazaCleanupPod( entity pod, float delay = 0.0 )
-{
-	Warning( "STUB: AirdropExtravaganazaCleanupPod" )
-}
-
 // Custom loadout/spectating/character assignment implementations
 void function TakeLoadoutRelatedWeapons( entity player )
 {
@@ -3426,8 +1167,6 @@ void function PlayerStopSpectating( entity player )
 
 bool function GameRules_IsTeamIndexValid( int teamIndex ) { return teamIndex >= 0 && teamIndex < GetCurrentPlaylistVarInt( "max_teams", 20 ) + 2 }
 array<entity> function GetPlayerArrayIncludingSpectators() { return GetPlayerArray() }
-bool function HoverVehicle_IsPlayerInAnyVehicle( entity player ) { return false }
-void function Vehicle_KickPlayer_ForOtherReason( entity player ) {}
 void function ForceScriptError( string message ) { ScriptError( message ) }
 // Only GetAllianceTeamsScore/SetAllianceTeamsScore remain as stubs (not part of alliance proximity file)
 int function GetAllianceTeamsScore( int alliance ) { return 0 }

@@ -1,11 +1,119 @@
 global function TrackingVision_GetPriorityForPOIType
 global function TrackingVision_GetOffsetForPOI
+                                              
+#if SERVER
+global function TrackingVision_OnBirdPointerUsed
+global function TrackingVision_CreateWhiteRavenInFlight
+global function TrackingVision_IsEntWhiteRaven
+                        
+                                                
+      
+global function TrackingVision_TriggerBirdFromScan
+global function TrackingVision_HasActiveWhiteRaven
+global function GetRavenCloseEnemyDistance
+#endif
+#if CLIENT
+global function TrackingVision_DisplayEnemyDirection_ServerCallback
+global function ServerToClient_ActivateWhiteRavenIconRUI
+global function ServerToClient_ActivateWhiteRavenPerchedFX
+global function ServerToClient_DeactivateWhiteRavenPerchedFX
+global function GetWhiteRavenPingTarget
+#endif
+global function Sh_TrackingVision_Init
+      
 
 const vector TRACKING_ICON_OFFSET = <0,0,16>
 const vector TRACKING_ICON_OFFSET_SHORT = <0,0,8>
-const vector TRACKING_ICON_DEATH_OFFSET = <0,0,40> //
+const vector TRACKING_ICON_DEATH_OFFSET = <0,0,40> //Death boxes were hiding the icon
 global const TRACKING_DAMAGE_SOURCE_INDEX = 2	// 0 and 1 are used by CODE
 global const TRACKING_DIST_INDEX = 3			// 0 and 1 are used by CODE
+
+                                              
+//DEBUG//
+const bool DEBUG_WHITE_RAVEN_DRAW 			= false
+const bool DEBUG_WHITE_RAVEN_SPAWN_DRAW 	= false
+const bool DEBUG_WHITE_RAVEN_FLIGHT_DRAW 	= false
+
+//GAMEPLAY TUNING//
+const bool WHITE_RAVEN_PERCH_AT_TARGET 		= false
+const bool WHITE_RAVEN_USE_OFFSET_BIRDCALL_AUDIO = false
+
+global const string TRACKING_VISION_BIRD_SCRIPTNAME 			= "bloodhound_tracking_white_raven"
+global const string TRACKING_VISION_BIRD_PING_SCRIPTNAME 		= "bloodhound_tracking_white_raven_ping_blocker"
+const string TRACKING_VISION_BIRD_MOVER_SCRIPTNAME 				= "bloodhound_tracking_mover"
+
+global const float WHITE_RAVEN_MAX_ENEMY_DETECTION_RANGE	= 40000	// Max Range an enemy can be to spawn a White Raven
+const float WHITE_RAVEN_CLOSE_ENEMY_DISTANCE 				= 7000 	// Enemies within this range will prevent White Raven from spawning
+const float WHITE_RAVEN_CLOSE_BREADCRUMB_DISTANCE 			= 2000 	// Breadbrumbs within this range will prevent White Raven from spawning
+
+const vector WHITE_RAVEN_PERCH_HULL_MINS 					= <-10,-10, 0>
+const vector WHITE_RAVEN_PERCH_HULL_MAXS 					= < 10, 10, 20>
+
+const float WHITE_RAVEN_PERCH_MIN_SPAWN_RANGE 				= 1800
+const float WHITE_RAVEN_PERCH_MAX_SPAWN_RANGE 				= 3000
+const float WHITE_RAVEN_PERCH_OFF_SPAWN_HEIGHT				= 200
+
+const float WHITE_RAVEN_NATURAL_SPAWN_TIME 					= 15.0
+const float WHITE_RAVEN_DEATHBOX_DISCOVERY_RANGE 			= 5000
+const float WHITE_RAVEN_FLY_AHEAD_DISTANCE 					= 150.0
+const float WHITE_RAVEN_FLY_AHEAD_TIME						= 1.0
+
+const float WHITE_RAVEN_FLIGHT_SPAWN_HEIGHT_OFFSET 			= 60.0
+const float WHITE_RAVEN_FLIGHT_SPAWN_DIST_OFFSET			= 10.0
+const float WHITE_RAVEN_FLIGHT_HEIGHT_MIN 					= 150.0
+const float WHITE_RAVEN_PING_DIST_MAX						= 7500.0
+
+const float WHITE_RAVEN_BIRD_LIFETIME_LONG 					= 60.0
+const float WHITE_RAVEN_BIRD_LIFETIME_SHORT					= 30.0
+const float WHITE_RAVEN_BIRD_REFRESH_TIME 					= 30.0
+const float WHITE_RAVEN_REFRESH_DISTANCE 					= WHITE_RAVEN_PERCH_MAX_SPAWN_RANGE + 1000
+
+const bool WHITE_RAVEN_GIVES_TAC_CHARGE 					= true
+const bool WHITE_RAVEN_GIVES_ULT_CHARGE 					= true
+const float WHITE_RAVEN_TACTICAL_REFUND_FRAC 				= 0.25
+const float WHITE_RAVEN_ULTIMATE_REFUND_FRAC 				= 0.20
+
+const float WHITE_RAVEN_FLIGHT_TIME 						= 7.5
+const float WHITE_RAVEN_PING_DELAY 							= 5.0
+const float WHITE_RAVEN_PING_OFFSET_HEIGHT_MAX 				= 500
+const float WHITE_RAVEN_MIN_DIST_TO_FLIGHT_TARGET 			= 200
+const float WHITE_RAVEN_FLY_AHEAD_WALL_TEST_DIST 			= 100
+
+const float WHITE_RAVEN_BASE_SPEED							= 450
+const float WHITE_RAVEN_MAX_SPEED 							= 800
+const float WHITE_RAVEN_INIT_HEIGHT_OFFSET					= 200
+const int	WHITE_RAVEN_DEFAULT_MAX_PATH_LENGTH				= 200
+const float WHITE_RAVEN_MIN_HEIGHT							= 50
+const float WHITE_RAVEN_PATHFIND_MAX_LENGTH_RATIO			= 5.0 //1.6
+const float WHITE_RAVEN_PATHFIND_MAX_TIME_DIFF				= 5.0 //1.8
+
+const float WHITE_RAVEN_MAX_SPEED_RANGE 					= 25 * METERS_TO_INCHES	//Determines when to move at MAX SPEED
+const float WHITE_RAVEN_BASE_SPEED_RANGE					= 15 * METERS_TO_INCHES	//Dertermines when to move at BASE SPEED
+const float WHITE_RAVEN_SLOW_SPEED_RANGE					= 8 * METERS_TO_INCHES	//
+
+const float WHITE_RAVEN_ANG_ACCEL_MAX_SPEED 				= 360
+const float WHITE_RAVEN_ANG_ACCEL_LOW_SPEED 				= 180
+const float WHITE_RAVEN_LOW_SPEED_THRESHOLD 				= 75
+
+const float WHITE_RAVEN_ETHEREAL_AUDIO_RANGE 				= 700
+
+//ASSETS//
+const string WHITE_RAVEN_FLY_SFX							= "EvidenceMarker_Raven_FlyAway_Interact"					//EvidenceMarker_Raven_FlyAway //"S10E04_EvidenceMarker_Raven_FlyAway"
+const string WHITE_RAVEN_FLY_ULTIMATE_SFX					= "EvidenceMarker_Raven_FlyAway_Ult"
+const string WHITE_RAVEN_FLY_IN_SFX							= "EvidenceMarker_Raven_FlyIn"
+const string WHITE_RAVEN_AMBIENT_CAW_SFX					= "EvidenceMarker_Raven_Stationary"
+const string WHITE_RAVEN_AMBIENT_ETHEREAL_SFX				= "EvidenceMarker_Raven_Stationary_EtherealLoop"
+const string WHITE_RAVEN_AMBIENT_ETHEREAL_DISSIPATE_SFX		= "EvidenceMarker_Raven_FlyAway_Stinger"
+const string BLOODHOUND_DIAG_FOLLOW_RAVEN_1P				= "diag_mp_bloodhound_bc_passiveInteract_1p" //"diag_mp_bloodhound_ping_spottarget_calmfar_1p" //
+const string BLOODHOUND_DIAG_FOLLOW_RAVEN_3P				= "diag_mp_bloodhound_bc_passiveInteract_3p" //""diag_mp_bloodhound_ping_spottarget_calmfar_3p"
+
+const asset TRACKING_VISION_BIRD_DISSOLVE 					= $"P_aether_raven_death"
+const asset TRACKING_VISION_BIRD_TRAIL						= $"p_wRaven_trail"
+const asset TRACKING_VISION_BIRD_PERCH_MIST					= $"P_wRaven_pillar"
+const asset TRACKING_VISION_WHITE_RAVEN_ICON 				= $"rui/hud/poi_icons/poi_white_raven"
+const asset TRACKING_VISION_DIRECTION_ICON 					= $"vgui/HUD/pc_arrow_dn"
+const float TRACKING_VISION_DIRECTION_LIFETIME 				= 5.0
+      
 
 //Enum defining the various types of points of intrest for tracking vision.
 //Tracking events must be added to the activeTrackingEvents table in _pilot_tracking_vision.gnut before they will be networked to client.
@@ -33,8 +141,6 @@ global enum eTrackingVisionNetworkedPOITypes
 	PLAYER_TRAVERSAL_FOOTPRINT,
 	PLAYER_TRAVERSAL_SLIDE,
 	PLAYER_TRAVERSAL_MANTLE,
-	PLAYER_TRAVERSAL_SUPERGLIDE,
-	PLAYER_TRAVERSAL_WALLJUMP,
 	PLAYER_TRAVERSAL_JUMP_DOWN_START,
 	PLAYER_TRAVERSAL_JUMP_DOWN_STOP,
 	PLAYER_TRAVERSAL_LAUNCH_PAD,
@@ -52,15 +158,23 @@ global enum eTrackingVisionNetworkedPOITypes
 	PLAYER_LOOT_PICKUP_HEALTH,
 	PLAYER_LOOT_PICKUP_HELMET,
 	PLAYER_LOOT_PICKUP_BACKPACK,
+                  
+                              
+      
 	PLAYER_LOOT_PICKUP_INCAPSHIELD,
+                      
+	PLAYER_LOOT_PICKUP_DATAKNIFE,
+      
 	//PLAYER_LOOT_PICKUP_TITAN_REPAIR,
 	//PLAYER_LOOT_PICKUP_TITAN_AMMO,
-	PLAYER_LOOT_PICKUP_DATAKNIFE,
 	PLAYER_LOOT_EXCHANGE_ARMOR,
 	PLAYER_LOOT_EXCHANGE_WEAPON,
 	PLAYER_LOOT_EXCHANGE_JUMPKIT,
 	PLAYER_LOOT_EXCHANGE_HELMET,
 	PLAYER_LOOT_EXCHANGE_BACKPACK,
+                  
+                                
+      
 	PLAYER_LOOT_EXCHANGE_INCAPSHIELD,
 	PLAYER_LOOT_DROP,
 	PLAYER_LOOT_DROP_AMMO,
@@ -72,10 +186,15 @@ global enum eTrackingVisionNetworkedPOITypes
 	PLAYER_LOOT_DROP_HEALTH,
 	PLAYER_LOOT_DROP_HELMET,
 	PLAYER_LOOT_DROP_BACKPACK,
+                  
+                            
+      
 	PLAYER_LOOT_DROP_INCAPSHIELD,
+                      
+	PLAYER_LOOT_DROP_DATAKNIFE,
+      
 	//PLAYER_LOOT_DROP_TITAN_REPAIR,
 	//PLAYER_LOOT_DROP_TITAN_AMMO,
-	PLAYER_LOOT_DROP_DATAKNIFE,
 
 	PLAYER_ABILITY_DIRTY_BOMB,
 	PLAYER_ABILITY_DEPLOYABLE_MEDIC,
@@ -83,7 +202,13 @@ global enum eTrackingVisionNetworkedPOITypes
 	PLAYER_ABILITY_BUBBLE_BUNKER,
 	PLAYER_ABILITY_TESLA_TRAP,
 	PLAYER_ABILITY_TROPHY_SYSTEM,
+               
+                            
+      
 	PLAYER_ABILITY_PHASE_GATE,
+               
+                              
+      
 	PLAYER_ABILITY_TRANSLOCATION_TOSS,
 	PLAYER_ABILITY_TRANSLOCATION_TELEPORT,
 	PLAYER_ABILITY_BLACK_MARKET,
@@ -105,10 +230,59 @@ global enum eTrackingVisionNetworkedPOITypes
 	PLAYER_ABILITY_VALK_TACTICAL,
 	PLAYER_ABILITY_VALK_ULTIMATE_START,
 	PLAYER_ABILITY_VALK_ULTIMATE_END,
-              
 	PLAYER_ABILITY_FOCUS_OF_ATTENTION,
 	PLAYER_ABILITY_ECHO_LOCATOR,
-      
+	PLAYER_ABILITY_MAGGIE_RIOT_DRILL_START,
+	PLAYER_ABILITY_MAGGIE_RIOT_DRILL_END,
+	PLAYER_ABILITY_MAGGIE_WRECKING_BALL_START,
+	PLAYER_ABILITY_MAGGIE_WRECKING_BALL_PATH,
+	PLAYER_ABILITY_MAGGIE_WRECKING_BALL_END,
+	PLAYER_ABILITY_ASH_DATAKNIFE_USED,
+	PLAYER_ABILITY_ASH_ENEMY_TETHERED,
+	PLAYER_ABILITY_ASH_PORTAL_ENTER,
+	PLAYER_ABILITY_ASH_PORTAL_EXIT,
+	PLAYER_ABILITY_NEWCASTLE_ARMORED_LEAP_START,
+	PLAYER_ABILITY_NEWCASTLE_ARMORED_LEAP_END,
+	PLAYER_ABILITY_NEWCASTLE_MOBILE_SHIELD_START,
+	PLAYER_ABILITY_NEWCASTLE_MOBILE_SHIELD_END,
+	PLAYER_ABILITY_VANTAGE_JETDRIVE_START,
+	PLAYER_ABILITY_VANTAGE_JETDRIVE_END,
+	PLAYER_ABILITY_VANTAGE_ULTIMATE_FIRED,
+	PLAYER_ABILITY_CATALYST_BARRICADE,
+	PLAYER_ABILITY_CATALYST_SPIKES,
+	PLAYER_ABILITY_CATALYST_DARK_VEIL_START,
+	PLAYER_ABILITY_CATALYST_DARK_VEIL_END,
+
+                         
+                            
+       
+
+	                             
+	PLAYER_ABILITY_REDEPLOY_BALLOON,
+       
+
+                      
+                             
+       
+
+	PLAYER_ABILITY_BALLISTIC_DEBUFF_ZONE,
+	PLAYER_ABILITY_BALLISTIC_PORTABLE_AUTO_LOADER,
+
+	PLAYER_ABILITY_REVENANT_POUNCE_START,
+	PLAYER_ABILITY_REVENANT_POUNCE_LAND,
+	PLAYER_ABILITY_REVENANT_FORGED_SHADOWS,
+
+	               
+	PLAYER_ABILITY_CONDUIT_TACTICAL,
+	PLAYER_ABILITY_CONDUIT_ULTIMATE_DAMAGE,
+       
+
+	             
+	PLAYER_ABILITY_ALTER_ULTIMATE_PLACED,
+	PLAYER_ABILITY_ALTER_ULTIMATE_USED,
+	PLAYER_ABILITY_ALTER_TACTICAL_USED,
+	PLAYER_ABILITY_ALTER_PASSIVE_USED,
+       
 
 	_count,
 }
@@ -122,9 +296,80 @@ global enum eTrackingVisionNetworkedPOITypes
 //	VERY_HIGH,
 //	MAX,
 //}
+                                              
+struct WhiteRavenInfo
+{
+	bool whiteRavenActive
+	entity whiteRavenFlight
+	entity whiteRavenPerched
+	entity target
+	vector targetPos
+	vector perchPos
+	float perchInitTime
+	array<entity> wRavenTrailPOIs
+}
+
+struct PerchInfo
+{
+	bool validPerch
+	vector perchPos
+}
+
+global enum eWhiteRavenTargetType
+{
+	POI,
+	ENEMY,
+	DEATHBOX,
+}
+
+struct
+{
+	table< entity, WhiteRavenInfo > whiteRavenPlayerData
+	table< entity, entity >	closestWhiteRavenTargetEnt
+	table< entity, CompanionData > companionData
+	#if CLIENT
+	table< entity, bool > whiteRavenPingActive
+	#endif
+} file
+      
+
+                                              
+void function Sh_TrackingVision_Init()
+{
+	PrecacheScriptString( TRACKING_VISION_BIRD_SCRIPTNAME )
+	PrecacheScriptString( TRACKING_VISION_BIRD_MOVER_SCRIPTNAME )
+	PrecacheScriptString( TRACKING_VISION_BIRD_PING_SCRIPTNAME )
+	
+	PrecacheParticleSystem ( TRACKING_VISION_BIRD_DISSOLVE )
+	PrecacheParticleSystem ( TRACKING_VISION_BIRD_TRAIL )
+	PrecacheParticleSystem ( TRACKING_VISION_BIRD_PERCH_MIST )
+
+	RegisterSignal( "OnEnd_WhiteRavenTracking" )
+	RegisterSignal( "OnReset_SpawnTracking" )
+	RegisterSignal( "OnActivate_WhiteRaven" )
+	RegisterSignal( "BirdFly" )
+	RegisterSignal( "WhiteRaven_OnEndClientHUD")
+
+	AddCallback_OnPassiveChanged( ePassives.PAS_TRACKING_VISION, Bloodhound_PassiveToggle )
+	#if CLIENT
+	AddCallback_OnPingCreatedByAnyPlayer( OnPingCreatedByAnyPlayer_WhiteRaven )
+	#endif
+
+	Remote_RegisterClientFunction( "ServerToClient_ActivateWhiteRavenIconRUI", "entity", "entity" )
+	Remote_RegisterClientFunction( "ServerToClient_ActivateWhiteRavenPerchedFX", "entity", "entity" )
+	Remote_RegisterClientFunction( "ServerToClient_DeactivateWhiteRavenPerchedFX", "entity", "entity" )
+
+#if CLIENT
+	AddCreateCallback( "prop_script", TrackingVision_OnBirdPointerCreated )
+#endif
+}
+      
 
 int function TrackingVision_GetPriorityForPOIType( int poiEventID )
 {
+                                       
+                                   
+      
 	switch ( poiEventID )
 	{
 		case eTrackingVisionNetworkedPOITypes.DROPPOD:
@@ -160,9 +405,39 @@ int function TrackingVision_GetPriorityForPOIType( int poiEventID )
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_TACTICAL:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_ULTIMATE_START:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_ULTIMATE_END:
-              
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_FOCUS_OF_ATTENTION:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ECHO_LOCATOR:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MAGGIE_RIOT_DRILL_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MAGGIE_RIOT_DRILL_END:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MAGGIE_WRECKING_BALL_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MAGGIE_WRECKING_BALL_END:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_NEWCASTLE_ARMORED_LEAP_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_NEWCASTLE_ARMORED_LEAP_END:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_NEWCASTLE_MOBILE_SHIELD_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_NEWCASTLE_MOBILE_SHIELD_END:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VANTAGE_JETDRIVE_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VANTAGE_JETDRIVE_END:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VANTAGE_ULTIMATE_FIRED:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CATALYST_BARRICADE:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CATALYST_SPIKES:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CATALYST_DARK_VEIL_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CATALYST_DARK_VEIL_END:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BALLISTIC_DEBUFF_ZONE:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BALLISTIC_PORTABLE_AUTO_LOADER:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ASH_PORTAL_ENTER:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ASH_PORTAL_EXIT:
+
+                             
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_REDEPLOY_BALLOON:
+      
+
+                        
+                                                                   
+      
+
+                     
+                                                                    
+      
 			return eTrackingPOIPriority.MAX
 
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_SPACE_ELEVATOR:
@@ -172,6 +447,10 @@ int function TrackingVision_GetPriorityForPOIType( int poiEventID )
 		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_ZIPLINE_STOP:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_HEAL:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_STARTBLEEDOUT:
+             
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ALTER_TACTICAL_USED:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ALTER_ULTIMATE_USED:
+      
 			return eTrackingPOIPriority.VERY_HIGH
 
 		case eTrackingVisionNetworkedPOITypes.PLAYER_RELOAD:
@@ -182,18 +461,37 @@ int function TrackingVision_GetPriorityForPOIType( int poiEventID )
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_ELEVATOR_ENTER:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_ELEVATOR_EXIT:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_REVENANT_POUNCE_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_REVENANT_POUNCE_LAND:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_REVENANT_FORGED_SHADOWS:
+               
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CONDUIT_TACTICAL:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CONDUIT_ULTIMATE_DAMAGE:
+      
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MAGGIE_WRECKING_BALL_PATH:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ASH_ENEMY_TETHERED:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ASH_DATAKNIFE_USED:
+             
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ALTER_ULTIMATE_PLACED:
+      
 			return eTrackingPOIPriority.HIGH
 
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_ARMOR:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_WEAPON:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_JUMPKIT:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_BACKPACK:
+                  
+                                                                     
+      
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_INCAPSHIELD:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_ARMOR:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_WEAPON:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_JUMPKIT:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_HELMET:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_BACKPACK:
+                  
+                                                                       
+      
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_INCAPSHIELD:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_ARMOR:
@@ -201,14 +499,18 @@ int function TrackingVision_GetPriorityForPOIType( int poiEventID )
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_JUMPKIT:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_HELMET:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_BACKPACK:
+                  
+                                                                   
+      
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_INCAPSHIELD:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_PASSIVE_START:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_PASSIVE_END:
+             
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ALTER_PASSIVE_USED:
+      
 			return eTrackingPOIPriority.NORMAL
 
 		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_MANTLE:
-		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_SUPERGLIDE:
-		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_WALLJUMP:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_JUMP_DOWN_STOP:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_LAUNCH_PAD:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITIES_PHASE_DASH_START:
@@ -218,11 +520,14 @@ int function TrackingVision_GetPriorityForPOIType( int poiEventID )
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_GRENADE:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_HEALTH:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_HELMET:
+                      
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_DATAKNIFE:
+      
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_AMMO:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_ATTACHMENT:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_GRENADE:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_HEALTH:
+                      
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_DATAKNIFE:
       
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_GADGET:
@@ -238,7 +543,7 @@ int function TrackingVision_GetPriorityForPOIType( int poiEventID )
 			return eTrackingPOIPriority.VERY_LOW
 
 		default:
-			Assert( 0, "Point of intrest event ID is not registered in eTrackingVisionNetworkedPOITypes" )
+			Assert( false, "Point of intrest event ID is not registered in eTrackingVisionNetworkedPOITypes" )
 			break
 	}
 	unreachable
@@ -267,17 +572,20 @@ vector function TrackingVision_GetOffsetForPOI( int poiEventID )
 
 		case eTrackingVisionNetworkedPOITypes.PLAYER_DEATH:
 			return TRACKING_ICON_DEATH_OFFSET
+
 		case eTrackingVisionNetworkedPOITypes.TITANFALL:
 		case eTrackingVisionNetworkedPOITypes.DOOR_USE:
 		case eTrackingVisionNetworkedPOITypes.DOOR_DESTROYED:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_DEPLOYABLE_MEDIC:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ASH_ENEMY_TETHERED:
+             
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ALTER_TACTICAL_USED:
+      
 			return <0,0,0>
 
 		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_FOOTPRINT:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_SLIDE:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_MANTLE:
-		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_SUPERGLIDE:
-		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_WALLJUMP:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_JUMP_DOWN_START:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_JUMP_DOWN_STOP:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_LAUNCH_PAD:
@@ -295,13 +603,21 @@ vector function TrackingVision_GetOffsetForPOI( int poiEventID )
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_HEALTH:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_HELMET:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_BACKPACK:
+                  
+                                                                     
+      
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_INCAPSHIELD:
+                      
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_DATAKNIFE:
+      
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_ARMOR:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_WEAPON:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_JUMPKIT:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_HELMET:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_BACKPACK:
+                  
+                                                                       
+      
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_INCAPSHIELD:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_AMMO:
@@ -313,7 +629,11 @@ vector function TrackingVision_GetOffsetForPOI( int poiEventID )
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_HEALTH:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_HELMET:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_BACKPACK:
+                  
+                                                                   
+      
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_INCAPSHIELD:
+                      
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_DATAKNIFE:
       
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TRANSLOCATION_TOSS:
@@ -324,6 +644,9 @@ vector function TrackingVision_GetOffsetForPOI( int poiEventID )
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BLACK_MARKET:
 			return < 0, 0, 54.0 >
 
+               
+                                                                     
+      
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BUBBLE_BUNKER:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_COVER_WALL:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TURRET:
@@ -331,13 +654,49 @@ vector function TrackingVision_GetOffsetForPOI( int poiEventID )
                
                                                                    
       
-
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_ABILITY_VOID_RING:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_GADGET:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_GADGET:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_GADGET:
-              
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ECHO_LOCATOR:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MAGGIE_RIOT_DRILL_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MAGGIE_RIOT_DRILL_END:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MAGGIE_WRECKING_BALL_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MAGGIE_WRECKING_BALL_PATH:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MAGGIE_WRECKING_BALL_END:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_NEWCASTLE_ARMORED_LEAP_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_NEWCASTLE_ARMORED_LEAP_END:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_NEWCASTLE_MOBILE_SHIELD_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_NEWCASTLE_MOBILE_SHIELD_END:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VANTAGE_JETDRIVE_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VANTAGE_JETDRIVE_END:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VANTAGE_ULTIMATE_FIRED:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CATALYST_SPIKES:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CATALYST_DARK_VEIL_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CATALYST_DARK_VEIL_END:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BALLISTIC_DEBUFF_ZONE:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BALLISTIC_PORTABLE_AUTO_LOADER:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_REVENANT_POUNCE_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_REVENANT_POUNCE_LAND:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_REVENANT_FORGED_SHADOWS:
+               
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CONDUIT_TACTICAL:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CONDUIT_ULTIMATE_DAMAGE:
+      
+                             
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_REDEPLOY_BALLOON:
+      
+                        
+                                                                   
+      
+                     
+                                                                    
+      
+             
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ALTER_ULTIMATE_PLACED:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ALTER_ULTIMATE_USED:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ALTER_PASSIVE_USED:
+      
 			return < 0, 0, 24.0 >
 
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BLACK_HOLE:
@@ -353,20 +712,2540 @@ vector function TrackingVision_GetOffsetForPOI( int poiEventID )
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_PASSIVE_END:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_TACTICAL:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_ULTIMATE_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ASH_DATAKNIFE_USED:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ASH_PORTAL_ENTER:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ASH_PORTAL_EXIT:
 			return < 0, 0, 32.0 >
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_ULTIMATE_END:
 			return < 0, 0, 48.0 >
-			
-              
+
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_FOCUS_OF_ATTENTION:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CATALYST_BARRICADE:
 			return < 0, 0, 0.0 >
-      
+
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TROPHY_SYSTEM:
 			return < 0, 0, 8.0 >
 
 		default:
-			Assert( 0, "Point of intrest event ID is not registered in eTrackingVisionNetworkedPOITypes" )
+			Assert( false, "Point of intrest event ID is not registered in eTrackingVisionNetworkedPOITypes" )
 			break
 	}
 	unreachable
 }
+
+                                              
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////// WHITE RAVEN PROTOTYPE///////////////////////////////////////////////////////////////////////////
+
+void function Bloodhound_PassiveToggle( entity player, int passive, bool didHave, bool nowHas )
+{
+	if ( !IsAlive( player ) )
+		return
+	//
+	if ( didHave )
+	{
+		Signal( player, "OnEnd_WhiteRavenTracking" )
+	}
+
+	if ( nowHas )
+	{
+		#if SERVER
+			thread TrackingVision_WhiteRavenSpawnTracking_Thread( player )
+		#endif
+	}
+}
+
+#if SERVER
+void function TrackingVision_WhiteRavenSpawnTracking_Thread( entity player )
+{
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+	EndSignal( player, "OnEnd_WhiteRavenTracking" )
+	EndSignal( player, "OnReset_SpawnTracking" )
+
+	OnThreadEnd(
+		function() : ( player )
+		{
+		}
+	)
+
+	wait GetRavenNaturalSpawnTime( player )
+
+	while ( true )
+	{
+		if( !IsValid( player ) )
+			return
+
+		if( TrackingVision_CanSpawnWhiteRaven( player ) )
+		{
+			PerchInfo perchData = WhiteRaven_GetBestSpawnLocationData( player )
+			if( perchData.validPerch )
+			{
+				thread TrackingVision_CreateWhiteRavenPerched_Thread( player, perchData.perchPos, WHITE_RAVEN_BIRD_LIFETIME_SHORT )
+				return
+			}
+		}
+
+		//Check to Spawn White Raven on Deathbox Discovery
+		//Todo: Special Case Deathbox Spawn into the spawn logic
+
+		//array< entity > deathboxArray = GetAllDeathBoxes()
+		//vector origin = player.GetOrigin()
+		//
+		//foreach ( deathbox in deathboxArray)
+		//{
+		//	if( !IsValid( deathbox ) )
+		//		continue
+		//
+		//	float distToBox = Distance( origin, deathbox.GetOrigin() )
+		//	if( distToBox < WHITE_RAVEN_DEATHBOX_DISCOVERY_RANGE )
+		//	{
+		//		if( CanSpawnWhiteRaven( player ) )
+		//		{
+		//			TrackingVision_OnAttemptActivateWhiteRaven( player, eWhiteRavenTargetType.DEATHBOX )
+		//			break
+		//		}
+		//	}
+		//}
+
+		wait 1 //We don't need this every frame
+	}
+}
+#endif
+
+#if SERVER
+bool function TrackingVision_CanSpawnWhiteRaven( entity player )
+{
+	if( !IsValid( player ) )
+		return false
+
+	if ( !PlayerHasPassive( player, ePassives.PAS_TRACKING_VISION ) )
+		return false
+	if ( Bleedout_IsBleedingOut( player ) )
+		return false
+	if ( player.ContextAction_IsActive() )
+		return false
+	if ( player.Player_IsSkywardLaunching() || player.Player_IsSkywardFollowing() )
+		return false
+
+	int team 					= player.GetTeam()
+	vector origin 				= player.GetOrigin()
+	entity closestEnemy
+	float closestEnemyDistance	= WHITE_RAVEN_MAX_ENEMY_DETECTION_RANGE
+
+	#if DEV
+	if( DEBUG_WHITE_RAVEN_SPAWN_DRAW )
+	{
+		DebugDrawCircle( origin, <0,0,0>, GetRavenCloseBreadcrumbDistance( player ), COLOR_RED, true, 0.1 )
+		DebugDrawCircle( origin, <0,0,0>, GetRavenCloseEnemyDistance( player ), COLOR_YELLOW, true, 0.1 )
+		DebugDrawCircle( origin, <0,0,0>, WHITE_RAVEN_MAX_ENEMY_DETECTION_RANGE, COLOR_ORANGE, true, 0.1 )
+	}
+	#endif
+
+	//Check to make sure we don't already have an Active Raven
+	if( player in file.whiteRavenPlayerData )
+		if( file.whiteRavenPlayerData[player].whiteRavenActive )
+			return false
+
+	//Check for nearby breadcrumbs
+	array< entity > poiArray = TrackingVision_GetAllValidTrackingPOIs()
+	foreach ( poi in poiArray )
+	{
+		if( !(IsValid( poi ) ) )
+			continue
+
+		int poiTeam		= poi.GetTeam()
+
+		if( poiTeam == team )
+			continue
+
+		#if DEV
+			if( DEBUG_WHITE_RAVEN_SPAWN_DRAW )
+			{
+				//printt( "POI detected!   | TEAM:  " + poiTeam )
+				//DebugDrawSphere( poi.GetOrigin() + <0, 0, 10> , 10, COLOR_RED, true, 2.0 )
+			}
+		#endif
+
+		float distToPlayer = Distance2D( poi.GetOrigin(), origin )
+		if( distToPlayer <= GetRavenCloseBreadcrumbDistance( player ) )
+			return false
+	}
+
+
+	//Check for nearby enemies && enemies in White Raven Range
+	array<entity> enemyArray = GetPlayerArrayOfEnemies_Alive( team )
+
+	foreach( enemy in enemyArray )
+	{
+		if( !IsValid( enemy ) )
+			continue
+
+		float distToPlayer = Distance2D( enemy.GetOrigin(), origin )
+		if( distToPlayer <= GetRavenCloseEnemyDistance( player ) )
+		{
+			#if DEV
+				if( DEBUG_WHITE_RAVEN_SPAWN_DRAW )
+				{
+					printt( "Nearby Enemy Detected - DO NOT SPAWN WHITE RAVEN" )
+					DebugDrawSphere( enemy.GetOrigin() + <0, 0, 10> , 10, COLOR_RED, true, 10.0 )
+				}
+			#endif
+
+			return false
+		}
+	}
+
+	return true
+}
+#endif //SERVER
+
+#if SERVER
+
+PerchInfo function WhiteRaven_GetBestSpawnLocationData( entity player )
+{
+	vector origin 				= player.GetOrigin()
+	vector perchPos				= <0,0,0>
+
+	int anglePerOffset = 10
+	int maxNumTests = 90 / anglePerOffset
+	float curOffsetAngle = 0
+	vector fwd = FlattenVec( player.GetViewVector() )
+	array<entity> ignoreArray = GetPlayerArray()
+
+	bool hasValidPos = false
+
+	//Test for Deathbox Perch Points
+	entity closestDeathbox
+	float closestDeathboxDist = WHITE_RAVEN_DEATHBOX_DISCOVERY_RANGE //Slightly farther than normal range?
+
+	array< entity > deathboxArray = GetAllDeathBoxes()
+	foreach ( deathbox in deathboxArray)
+	{
+		if( !IsValid( deathbox ) )
+			continue
+
+		vector deathboxOrigin = deathbox.GetOrigin()
+		if( !SURVIVAL_PosInsideDeathField( Survival_Loot_GetDefaultRealm(), deathboxOrigin ) )
+			continue
+
+		float distToBox = Distance( origin, deathboxOrigin )
+		if( distToBox < WHITE_RAVEN_PERCH_MIN_SPAWN_RANGE / 2 ) // too close
+			continue
+
+		if( distToBox < closestDeathboxDist )
+		{
+			closestDeathboxDist = distToBox
+			closestDeathbox = deathbox
+		}
+	}
+
+	if( IsValid( closestDeathbox ) )
+	{
+		perchPos = closestDeathbox.GetOrigin()
+		hasValidPos = true
+	}
+
+	if( !hasValidPos )
+	{
+		for (int i=0; i<maxNumTests; i++)
+		{
+
+			vector dir = VectorRotate( fwd, <0, curOffsetAngle, 0> )
+
+			vector TraceStart = player.EyePosition()
+			vector TraceEnd   = ( player.EyePosition() + <0,0,WHITE_RAVEN_PERCH_OFF_SPAWN_HEIGHT> ) + dir * WHITE_RAVEN_PERCH_MAX_SPAWN_RANGE
+
+			TraceResults traceResults = TraceLine( TraceStart, TraceEnd, ignoreArray, (TRACE_MASK_PLAYERSOLID | TRACE_MASK_TITANSOLID | CONTENTS_NOAIRDROP), TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+			if ( Distance2D( origin, traceResults.endPos) > WHITE_RAVEN_PERCH_MIN_SPAWN_RANGE )
+			{
+				perchPos = traceResults.endPos
+				hasValidPos = true
+				break
+			}
+
+			if ( i > 0 ) //after our first check, we want to do a second on the opposite side
+			{
+				dir = VectorRotate( fwd, <0, -curOffsetAngle, 0> )
+				TraceEnd   = player.EyePosition() + dir * WHITE_RAVEN_PERCH_MAX_SPAWN_RANGE
+
+				traceResults = TraceLine( TraceStart, TraceEnd, ignoreArray, (TRACE_MASK_PLAYERSOLID | TRACE_MASK_TITANSOLID | CONTENTS_NOAIRDROP), TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+				if ( Distance2D( origin, traceResults.endPos) > WHITE_RAVEN_PERCH_MIN_SPAWN_RANGE )
+				{
+					perchPos = traceResults.endPos
+					hasValidPos = true
+					break
+				}
+			}
+
+			curOffsetAngle = curOffsetAngle + anglePerOffset
+
+		}
+	}
+
+
+	vector targetPos = perchPos
+
+	if( hasValidPos )
+	{
+		targetPos = WhiteRaven_GetValidPerchPos( player, perchPos )
+
+		if( targetPos == perchPos ) //No ground point found
+			hasValidPos = false
+	}
+
+	PerchInfo perchData
+	perchData.validPerch = hasValidPos
+	perchData.perchPos = targetPos //perchPos
+
+	return perchData
+}
+#endif
+
+#if SERVER
+entity function WhiteRaven_GetNearestEnemyTarget( entity player, bool allowCloseEnemy = true )
+{
+	int team 					= player.GetTeam()
+	vector origin 				= player.GetOrigin()
+	entity closestEnemy
+	float closestEnemyDistance	= WHITE_RAVEN_MAX_ENEMY_DETECTION_RANGE
+
+	//Check for nearby enemies && enemies in White Raven Range
+	array<entity> enemyArray = GetPlayerArrayOfEnemies_Alive( team )
+
+	foreach( enemy in enemyArray )
+	{
+		if( !IsValid( enemy ) )
+			continue
+
+		float distToPlayer = Distance2D( enemy.GetOrigin(), origin )
+		if( distToPlayer <= GetRavenCloseEnemyDistance( player ) && !allowCloseEnemy )
+			continue
+
+		if( distToPlayer > closestEnemyDistance )
+			continue
+
+		closestEnemy = enemy
+		closestEnemyDistance = distToPlayer
+	}
+
+	return closestEnemy
+}
+#endif
+
+#if SERVER
+vector function WhiteRaven_GetValidPerchPos( entity player, vector targetPos )
+{
+	const float WHITE_RAVEN_PERCH_DOWNCAST_HEIGHT 	= 800
+	const float WHITE_RAVEN_PERCH_DOWNCAST_RADIUS	= 128 //64
+
+	array< vector > perchPositions
+	array<entity> ignoreArray = GetPlayerArray()
+
+	vector traceOrigin = targetPos + <0,0,WHITE_RAVEN_PERCH_DOWNCAST_HEIGHT>
+	vector traceEndPos = targetPos + <0,0,-10000>
+
+	//If we can't see the Trace Origin, we might be in a cave and bird could spawn inside the ceiling.
+	//Use the original cast height instead - if that fails, use the target height to guarentee a visible result
+	TraceResults eyeTrace = TraceLine( player.EyePosition(), traceOrigin, ignoreArray, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
+	if( eyeTrace.fraction < 0.99 )
+	{
+		traceOrigin = targetPos + <0,0,WHITE_RAVEN_PERCH_OFF_SPAWN_HEIGHT>
+		TraceResults eyeTraceLow = TraceLine( player.EyePosition(), traceOrigin, ignoreArray, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
+		if( eyeTraceLow.fraction < 0.99 )
+			traceOrigin = targetPos
+	}
+
+	//Set the targetPos to the Ground
+	vector perchPos = targetPos
+	TraceResults groundTrace = TraceLine( targetPos, traceEndPos, ignoreArray, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
+	if( groundTrace.fraction < 0.99 )
+	{
+		if( TrackingVision_IsValidRavenHull( groundTrace.endPos, player ) )
+		{
+			perchPos = groundTrace.endPos
+			perchPositions.append( perchPos )
+		}
+	}
+
+	//Check for Perch above the target
+	TraceResults downTrace = TraceLine( traceOrigin, traceEndPos, ignoreArray, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
+	if( !downTrace.startSolid && downTrace.endPos != perchPos && downTrace.fraction < 0.99 )
+	{
+		if( TrackingVision_IsValidRavenHull( downTrace.endPos, player ) )
+			perchPositions.append( downTrace.endPos )
+	}
+
+	//Sample nearby points for potential Perch Locations
+	array<vector> ridgeTraceVectorArray = [ <1, 0, 0>, <-0.5, 0.86, 0>, <-0.5, -0.86, 0>, <0, 1, 0>, <0.86, -0.5, 0>, <-0.86, -0.5, 0> ] //Hex Sample
+	foreach ( traceVector in ridgeTraceVectorArray )
+	{
+		vector ridgeTraceStart = traceOrigin + traceVector * WHITE_RAVEN_PERCH_DOWNCAST_RADIUS
+		vector ridgeTraceEnd   = traceEndPos + traceVector * WHITE_RAVEN_PERCH_DOWNCAST_RADIUS
+
+		TraceResults ridgeTrace = TraceLine( ridgeTraceStart, ridgeTraceEnd, ignoreArray, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
+		if ( !ridgeTrace.startSolid && ridgeTrace.fraction < 0.99 && DotProduct( ridgeTrace.surfaceNormal, UP_VECTOR ) > 0.85 )
+		{
+			//Test against deathfield placement
+			bool isInRing                 = SURVIVAL_PosInsideDeathField( Survival_Loot_GetDefaultRealm(), ridgeTrace.endPos )
+			if( isInRing )
+			{
+				//Is this position on the other side of a wall from the original position?
+				vector offsetPerchPos = < perchPos.x, perchPos.y, ridgeTrace.endPos.z > //
+				TraceResults backLineTrace = TraceLine( ridgeTrace.endPos, offsetPerchPos, ignoreArray, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
+				if( backLineTrace.fraction > 0.98 )
+				{
+					if( TrackingVision_IsValidRavenHull( ridgeTrace.endPos, player ) )
+						perchPositions.append( ridgeTrace.endPos )
+				}
+			}
+		}
+	}
+
+	//Choose the highest position amidst our samples to perch at. Birds like to be high.
+	vector bestPos	= perchPos
+	float bestHeight = perchPos.z
+	foreach( pos in perchPositions )
+	{
+		#if DEV
+			if( DEBUG_WHITE_RAVEN_SPAWN_DRAW )
+			{
+				DebugDrawSphere( pos + <0, 0, 5> , 12, COLOR_ORANGE, true, 15.0 )
+			}
+		#endif
+
+		float height = pos.z
+		if( height > bestHeight )
+		{
+			bestHeight = height
+			bestPos = pos
+		}
+	}
+
+	#if DEV
+		if( DEBUG_WHITE_RAVEN_SPAWN_DRAW )
+		{
+			if( bestPos == targetPos )
+				DebugDrawSphere( bestPos + <0, 0, 15> , 10, COLOR_RED, true, 15.0 )
+			else
+				DebugDrawSphere( bestPos + <0, 0, 15> , 10, COLOR_GREEN, true, 15.0 )
+		}
+	#endif
+
+	return bestPos
+}
+#endif
+
+#if SERVER
+bool function TrackingVision_IsValidRavenHull( vector hullPos, entity player )
+{
+	array<entity> ignoreArray = GetPlayerArray()
+
+	vector hullOffset = <0,0,5> //Offset Hull slightly from ground to allow slope clearance (He has little feet. It's fine)
+	hullPos = hullPos + hullOffset
+
+	#if DEV
+		if( DEBUG_WHITE_RAVEN_SPAWN_DRAW )
+		{
+			DebugDrawBox( hullPos, WHITE_RAVEN_PERCH_HULL_MINS, WHITE_RAVEN_PERCH_HULL_MAXS, COLOR_RED, 1, 15 )
+		}
+	#endif
+
+	TraceResults hullTrace = TraceHull( hullPos, hullPos + hullOffset, WHITE_RAVEN_PERCH_HULL_MINS, WHITE_RAVEN_PERCH_HULL_MAXS, ignoreArray, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
+	if( hullTrace.fraction < 1 )
+		return false
+
+	// Disallow Raven Spawn in Kill Volumes
+	//foreach ( entity trigger in GetTriggersByClassesInRealms(
+	//	["trigger_hurt"],
+	//	hullPos, hullPos,
+	//	player.GetRealms(), TRACE_MASK_PLAYERSOLID ) )
+	//{
+	//	int damageSourceId = (trigger.HasKey( "damageSourceId" ) ? int(trigger.kv.damageSourceId) : eDamageSourceId.damagedef_unknown)
+	//	if (  damageSourceId == eDamageSourceId.damagedef_crush || damageSourceId == eDamageSourceId.fall || damageSourceId == eDamageSourceId.splat )
+	//	{
+	//		// don't allow bird to spawn in kill triggers
+	//		return false
+	//	}
+	//}
+	return true
+}
+#endif
+
+
+
+#if SERVER
+entity function TrackingVision_SpawnWhiteRaven( entity player, vector birdOrigin, vector birdAngles, bool isPerched = false )
+{
+	if( !IsValid( player ) )
+		return null
+
+	//key stuff to create the bird (model, team, script name, enemy to point to
+	entity bird = CreatePropScript( $"mdl/creatures/bird/bird.rmdl", birdOrigin, birdAngles, SOLID_VPHYSICS ) //OriginToGround( origin )
+	bird.SetSkin( 2 )
+	bird.SetOwner( player )
+	SetTeam( bird, player.GetTeam() )
+	bird.SetScriptName( TRACKING_VISION_BIRD_SCRIPTNAME )
+	//bird.e.lastAttacker = enemyTarget	//bit hacky, but there shouldn't be a "last attacker" here anyway
+
+	//basically make the bird a figment of imagination
+	bird.e.isDoorBlocker = false
+	bird.SetPhysics( MOVETYPE_FLY )
+	bird.SetTakeDamageType( DAMAGE_NO )
+	bird.SetVisibilityFlags( ENTITY_VISIBLE_TO_OWNER ) //ENTITY_VISIBLE_TO_OWNER
+	bird.SetCanBeMeleed( false )
+	bird.NotSolid()
+
+	//Temporary Solution. Might need to create a new WP and new RUI that has a rui that acts like a POI rui but has the funcitonality to be used as a Basic WP rui
+	//float pingRadius = 20.0
+	//vector pingOrigin = bird.GetOrigin() + <0,0,15>
+	//entity traceBlocker = CreateTraceBlockerVolume( pingOrigin, pingRadius, false, CONTENTS_BLOCK_PING, player.GetTeam(), TRACKING_VISION_BIRD_PING_SCRIPTNAME )
+	////DebugDrawCircle( birdOrigin, <0,0,0>, pingRadius, COLOR_AQUA, true, 30 )
+	//traceBlocker.RemoveFromAllRealms()
+	//traceBlocker.AddToOtherEntitysRealms( bird )
+	//traceBlocker.SetParent( bird )
+
+	Highlight_SetFriendlyHighlight( bird, "sp_interact_object" )
+
+	AddSonarDetectionForPropScript( bird )
+
+	Remote_CallFunction_NonReplay( player, "ServerToClient_ActivateWhiteRavenIconRUI", player, bird )
+
+	if( isPerched )
+	{
+		//usable by players - check to see if the prompt appears even if you can't use it (i.e. not Bloodhound)
+		bird.SetUsable()
+		bird.SetUsableByGroup( "pilot" )
+		bird.SetUsePrompts( "#GEAR_TRACKING_VISION_OBJECT_BIRD_POINTER_USE", "#GEAR_TRACKING_VISION_OBJECT_BIRD_POINTER_USE" )
+		SetCallback_CanUseEntityCallback( bird, TrackingVision_CanUseBirdPointerEntityCallback )
+		AddCallback_OnUseEntity_ClientServer( bird, TrackingVision_OnBirdPointerUsed )
+
+		Remote_CallFunction_NonReplay( player, "ServerToClient_ActivateWhiteRavenPerchedFX", player, bird )
+	}
+
+	//play an animation
+	bird.Anim_Play( "Bird_casual_idle" )
+
+	#if DEV
+	if( DEBUG_WHITE_RAVEN_DRAW )
+		DebugDrawSphere( bird.GetOrigin() + <0, 0, 10> , 10, COLOR_DARK_GREEN, true, 10.0 )
+	#endif
+	return bird
+}
+#endif //SERVER
+
+
+#if SERVER
+WhiteRavenInfo function TrackingVision_CreateWhiteRavenData( entity ent, entity bird, vector targetPos, entity enemyTarget = null )
+{
+	WhiteRavenInfo whiteRavenData
+	whiteRavenData.whiteRavenActive = true
+	whiteRavenData.whiteRavenFlight = bird
+	whiteRavenData.perchInitTime = Time()
+
+	vector perchPos = WhiteRaven_GetValidPerchPos( ent, targetPos )
+	whiteRavenData.perchPos			= perchPos
+
+	if( IsValid( enemyTarget ) )
+		whiteRavenData.target 		= enemyTarget
+
+	return whiteRavenData
+}
+#endif //SERVER
+
+
+#if SERVER
+void function TrackingVision_CreateWhiteRavenInFlight( entity player, int targetType, bool fromUlt = false )
+{
+	if( !IsValid( player ) )
+		return
+
+	Signal( player, "OnActivate_WhiteRaven" )
+	thread TrackingVision_CreateWhiteRavenInFlight_Thread( player, targetType, fromUlt )
+}
+
+void function TrackingVision_CreateWhiteRavenInFlight_Thread( entity player, int targetType, bool fromUlt )
+{
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+	EndSignal( player, "OnActivate_WhiteRaven" )
+	EndSignal( player, "OnEnd_WhiteRavenTracking" )
+
+	OnThreadEnd(
+		function() : ( player )
+		{
+			if( player in file.whiteRavenPlayerData )
+			{
+				WhiteRavenInfo whiteRavenData = file.whiteRavenPlayerData[player]
+
+				entity flightBird 	= whiteRavenData.whiteRavenFlight
+				entity perchBird	= whiteRavenData.whiteRavenPerched
+				if( IsValid( flightBird ) )
+					flightBird.Destroy()
+
+				if( IsValid( perchBird ) )
+					perchBird.Destroy()
+
+				if( player in file.whiteRavenPlayerData && !WHITE_RAVEN_PERCH_AT_TARGET )
+					delete file.whiteRavenPlayerData[ player ]
+			}
+		}
+	)
+
+	WhiteRavenInfo whiteRavenData
+	if( !( player in file.whiteRavenPlayerData ) )
+		file.whiteRavenPlayerData[player] <- whiteRavenData
+
+	entity target
+	vector targetPos
+
+
+	if( targetType == eWhiteRavenTargetType.POI )
+	{
+		PerchInfo perchData = WhiteRaven_GetBestSpawnLocationData( player )
+		if( !perchData.validPerch )
+			return
+
+		targetPos = perchData.perchPos
+	}
+
+	if ( targetType == eWhiteRavenTargetType.ENEMY )
+	{
+		target = WhiteRaven_GetNearestEnemyTarget( player )
+		if( !IsValid(target) )
+			return
+
+		targetPos = target.GetOrigin()
+	}
+
+	//todo: Deathbox flyout TBD - Will investigate what the right deathbox version is after initial trials
+	//if( targetType == eWhiteRavenTargetType.DEATHBOX )
+	//{
+	//	entity closestDeathbox
+	//	float closestDeathboxDist = WHITE_RAVEN_DEATHBOX_DISCOVERY_RANGE
+	//	vector origin = player.GetOrigin()
+	//
+	//	array< entity > deathboxArray = GetAllDeathBoxes()
+	//	foreach ( deathbox in deathboxArray)
+	//	{
+	//		if( !IsValid( deathbox ) )
+	//			continue
+	//
+	//		float distToBox = Distance( origin, deathbox.GetOrigin() )
+	//		if( distToBox < 100 ) // too close
+	//			continue
+	//
+	//		if( distToBox < closestDeathboxDist )
+	//		{
+	//			closestDeathboxDist = distToBox
+	//			closestDeathbox = deathbox
+	//		}
+	//	}
+	//
+	//	target 				= closestDeathbox
+	//	targetPos			= closestDeathbox.GetOrigin()
+	//}
+
+	////////////////////////////////////
+	//Spawn a White Raven in Flight
+	vector dir 			= Normalize( FlattenVec( player.GetViewVector() ) )
+	vector birdOrigin 	= player.GetOrigin() + <0,0,WHITE_RAVEN_FLIGHT_SPAWN_HEIGHT_OFFSET>
+	birdOrigin = birdOrigin - dir * WHITE_RAVEN_FLIGHT_SPAWN_DIST_OFFSET
+	vector birdAngles	= player.GetAngles()
+
+	entity bird = TrackingVision_SpawnWhiteRaven( player, birdOrigin, birdAngles, false )
+
+	//This means that if we do our tac, we won't try and "use" the bird as it has already been used (IE its in flight,  flying towards a target, we don't want to give any tac/ult ammo refunds etc)
+	bird.e.isBusy = true
+
+	whiteRavenData = TrackingVision_CreateWhiteRavenData( player, bird, targetPos, target )
+	file.whiteRavenPlayerData[ player ] <- whiteRavenData
+
+	#if DEV
+		if( DEBUG_WHITE_RAVEN_DRAW )
+			printt( "SPAWN WHITE RAVEN  -> In Flight" )
+	#endif
+
+	TrackingVision_CreateWhiteRavenPingPath( player, whiteRavenData )
+
+	file.whiteRavenPlayerData[player].perchInitTime = Time() //Reset Perch Init to restart Spawn Tracking Timer
+
+	waitthread WhiteRaven_FlyToTarget_Thread( player, bird, whiteRavenData.perchPos, false, fromUlt )
+
+	if( !IsValid( player ) )
+		return
+
+	///////////////////////////////////
+	//Spawn the Perched White Raven
+
+	if( WHITE_RAVEN_PERCH_AT_TARGET )
+		waitthread TrackingVision_CreateWhiteRavenPerched_Thread( player, whiteRavenData.perchPos, WHITE_RAVEN_BIRD_LIFETIME_LONG )
+	else
+	{
+		Signal( player, "OnReset_SpawnTracking" )
+		thread TrackingVision_WhiteRavenSpawnTracking_Thread( player )
+	}
+
+}
+
+void function TrackingVision_CreateWhiteRavenPerched_Thread( entity player, vector perchPos, float birdLifetime )
+{
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+	EndSignal( player, "OnActivate_WhiteRaven" )
+	EndSignal( player, "OnEnd_WhiteRavenTracking" )
+
+	if( !IsValid(player) )
+		return
+	///////////////////////////////////
+	//Spawn the Perched White Raven
+
+	vector birdOrigin = perchPos
+	vector birdAngles = VectorToAngles( FlattenVec( player.GetOrigin() - birdOrigin ) )
+	entity perchedBird = TrackingVision_SpawnWhiteRaven( player, birdOrigin, birdAngles, true )
+
+	if( !( player in file.whiteRavenPlayerData ) )
+	{
+		WhiteRavenInfo whiteRavenData = TrackingVision_CreateWhiteRavenData( player, perchedBird, perchPos, null )
+		file.whiteRavenPlayerData[ player ] <- whiteRavenData
+	}
+
+	waitthread WhiteRaven_Perched_Idle_Thread( player, perchedBird, birdLifetime )
+
+}
+#endif //SERVER
+
+
+#if SERVER
+CompanionFlightParams function GetWhiteRavenCompanionFlightData()
+{
+	CompanionFlightParams flightData = GetDefaultFlightParams()
+
+	flightData.entSpeed				= WHITE_RAVEN_BASE_SPEED
+	flightData.initHeightOffset		= WHITE_RAVEN_INIT_HEIGHT_OFFSET
+	flightData.maxPathLength		= WHITE_RAVEN_DEFAULT_MAX_PATH_LENGTH
+	flightData.maxLengthRatio 		= WHITE_RAVEN_PATHFIND_MAX_LENGTH_RATIO
+	flightData.maxTimeDiff 			= WHITE_RAVEN_PATHFIND_MAX_TIME_DIFF
+	flightData.eBailCondition		= ePathfindingBailCondition.TIME_AND_RATIO
+
+	return flightData
+}
+#endif
+
+const float UPDATE_RATE = 1.0
+
+#if SERVER
+void function WhiteRaven_FlyToTarget_Thread( entity player, entity bird, vector perchPos, bool isPerched = false, bool fromUlt = false )
+{
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+	EndSignal( bird, "OnDestroy" )
+	EndSignal( player, "OnActivate_WhiteRaven" )
+	EndSignal( player, "OnEnd_WhiteRavenTracking" )
+
+	if( !IsValid( player ) )
+		return
+
+	vector playerViewVec = FlattenVec( Normalize( player.GetViewVector() ) )
+	vector birdPos = bird.GetOrigin()
+	vector birdAngles
+	vector targetPos = perchPos
+
+	if( !isPerched )
+		birdAngles = VectorToAngles( playerViewVec )
+	else
+		birdAngles = bird.GetAngles()
+
+	#if DEV
+		if( DEBUG_WHITE_RAVEN_DRAW )
+		{
+			DebugDrawSphere( birdPos , 15, COLOR_AQUA, true, 2.0 )
+			DebugDrawSphere( perchPos , 20, COLOR_CYAN, true, 2.0 )
+		}
+	#endif
+
+
+	///////////// CREATE BIRD MOVER
+	entity mover = CreateScriptMover( TRACKING_VISION_BIRD_MOVER_SCRIPTNAME, birdPos, birdAngles )
+	mover.RemoveFromAllRealms()
+	mover.AddToOtherEntitysRealms( bird )
+	bird.SetParent( mover )
+	bird.UnsetUsable()
+	bird.SetUsePrompts( "#EMPTY_STRING", "#EMPTY_STRING" )
+
+	RegisterNavMesh_EntityMemory( mover, HULL_HUMAN )
+
+	EndSignal( mover, "OnDestroy" )
+
+	array< entity > fxArray
+
+	//Trail FX
+	int fxId = GetParticleSystemIndex( TRACKING_VISION_BIRD_TRAIL )
+	entity fx_dissolve = StartParticleEffectOnEntity_ReturnEntity( bird, fxId, FX_PATTACH_ABSORIGIN_FOLLOW, bird.LookupAttachment( "ORIGIN" ) )
+	fx_dissolve.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
+	fx_dissolve.SetOwner( bird.GetOwner() )
+	fxArray.append( fx_dissolve )
+
+	// Fly-Out Sound Call //
+	if( fromUlt )
+	{
+		EmitSoundOnEntityOnlyToPlayer( bird, player, WHITE_RAVEN_FLY_ULTIMATE_SFX )
+	}
+	else
+		EmitSoundOnEntityOnlyToPlayer( bird, player, WHITE_RAVEN_FLY_SFX )
+
+	//Adjust the Flight Position to the Ping Position//
+	vector pingPos = TrackingVision_GetWhiteRavenPingPos( player, perchPos )
+
+	OnThreadEnd(
+		function() : ( bird, mover, player, fxArray )
+		{
+			if ( IsValid( bird ) )
+				bird.Destroy()
+
+			if ( IsValid( mover ) )
+			{
+				DeregisterNavMesh_EntityMemory( mover )
+				mover.Destroy()
+			}
+
+			foreach( fx in fxArray )
+			{
+				if( IsValid( fx ) )
+					EffectStop( fx )
+			}
+
+		}
+	)
+	//bird.e.isBusy = true
+	//bird.Signal( "BirdFly" )
+
+	vector forwardDir 		= mover.GetForwardVector()
+	vector rightDir			= mover.GetRightVector()
+	vector movementVector 	= perchPos - birdPos
+
+	mover.SetAbsForwardVector( movementVector )
+
+	if( !isPerched && fromUlt)
+	{
+		/////////////////////////////////////////////////////// FLY FORWARD
+		bird.Anim_Play( "Bird_fly_cycle_long_no_root_motion" ) //"Bird_react_fly_small" )
+
+		vector curVel = player.GetVelocity()
+		float curSpeed = Length(curVel)
+		float initPosMultiplier = GraphCapped( curSpeed, 125, 300, 1.75, 10 ) //Walk = 173 // Run = 260
+		vector initFlightPos = birdPos + playerViewVec * WHITE_RAVEN_FLY_AHEAD_DISTANCE * initPosMultiplier
+		array<entity> ignoreArray = GetPlayerArray()
+
+		TraceResults trLOS = TraceLine( player.EyePosition(), initFlightPos, ignoreArray, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+		if ( trLOS.fraction < 0.95 ) //We're looking at a wall or a hill
+		{
+			printt( DotProduct( UP_VECTOR, trLOS.surfaceNormal ) )
+			if( DotProduct( UP_VECTOR, trLOS.surfaceNormal ) > 0.85 ) //We're on a hill. Let's try pushing the point up and use that end.
+			{
+				initFlightPos.z += WHITE_RAVEN_FLIGHT_HEIGHT_MIN*3
+				TraceResults trHighLOS = TraceLine( player.EyePosition(), initFlightPos, ignoreArray, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+
+				initFlightPos = trHighLOS.endPos //either it's a new wall off the hill, or it's blue sky. Either way better, and we don't need perfection.
+			}
+			else // Just use where it hit, bird will correct immediately with pathing.
+				initFlightPos = trLOS.endPos
+		}
+
+		mover.NonPhysicsRotateTo( VectorToAngles( playerViewVec ), 0.1, 0, 0  )
+		mover.NonPhysicsMoveTo( initFlightPos, WHITE_RAVEN_FLY_AHEAD_TIME, 0.7, 0.0 )
+
+		#if DEV
+			if( DEBUG_WHITE_RAVEN_FLIGHT_DRAW )
+			{
+				printt( "WHITE RAVEN FLYING FORWARD" )
+				DebugDrawSphere( initFlightPos, 3, COLOR_YELLOW, true, 5 )
+				DebugDrawSphere( mover.GetOrigin(), 3, COLOR_RED, true, 5 )
+			}
+		#endif
+
+		//new - Wall Detection
+		float flyAheadEndTime = Time() + WHITE_RAVEN_FLY_AHEAD_TIME
+
+		while( Time() < flyAheadEndTime )
+		{
+			if( !IsValid( bird ) )
+				return
+			if( !IsValid( mover ) )
+				return
+			if( !IsValid( player ) )
+				return
+
+			//Wall Check
+			ignoreArray = GetPlayerArray()
+			vector fwdPos = mover.GetOrigin() + Normalize( FlattenVec( mover.GetForwardVector() ) ) * WHITE_RAVEN_FLY_AHEAD_WALL_TEST_DIST
+			TraceResults trFwd = TraceLine( mover.GetOrigin(), fwdPos, ignoreArray, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+			if( trFwd.startSolid || trFwd.fraction < 1 )
+				break
+
+			WaitFrame()
+		}
+
+		///////////////////////////////////////////////////// FLY-TURN TO PERCH POS
+		if( !IsValid( bird ) )
+			return
+		if( !IsValid( mover ) )
+			return
+		if( !IsValid( player ) )
+			return
+
+		#if DEV
+			if( DEBUG_WHITE_RAVEN_FLIGHT_DRAW )
+			{
+				printt( "WHITE RAVEN TURNING" )
+				DebugDrawSphere( initFlightPos, 3, COLOR_YELLOW, true, 0.2 )
+				DebugDrawSphere( mover.GetOrigin(), 3, COLOR_RED, true, 0.2 )
+			}
+		#endif
+
+		birdPos 				= mover.GetOrigin()
+		forwardDir 				= mover.GetForwardVector()
+		rightDir				= mover.GetRightVector()
+		movementVector 			= perchPos - birdPos
+
+		float dotDir 			= DotProduct( FlattenVec( Normalize( forwardDir ) ), FlattenVec( Normalize( movementVector ) ) )
+		bool destIsLeft			= DotProduct( FlattenVec( Normalize( rightDir ) ), FlattenVec( Normalize( movementVector ) ) ) < 0
+
+		float travelTime		= 0.5
+		float bailTime 			= Time() + 5.0 //failsafe to exit the loop
+
+
+		//Flight Turn Loop
+		while( Time() < bailTime && dotDir < 0.9 )
+		{
+			if( !IsValid( bird ) )
+				return
+			if( !IsValid( mover ) )
+				return
+			if( !IsValid( player ) )
+				return
+
+			////Update the Bird Position/DirToTarget
+			//printt( "DorDir:  " + dotDir )
+			birdPos 			= mover.GetOrigin()
+
+			//Wall Check
+			ignoreArray = GetPlayerArray()
+			vector fwdPos = mover.GetOrigin() + FlattenVec( Normalize( mover.GetForwardVector() ) ) * WHITE_RAVEN_FLY_AHEAD_WALL_TEST_DIST
+			TraceResults trFwd = TraceLine( mover.GetOrigin(), fwdPos, ignoreArray, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+
+			if( trFwd.startSolid || trFwd.fraction < 1 )
+				break
+
+			//We're close enough
+			vector fadePos = perchPos
+			entity targetEnt
+
+			if( player in file.whiteRavenPlayerData )
+			{
+				targetEnt = file.whiteRavenPlayerData[player].target
+				if( IsValid( targetEnt ) )
+					fadePos = targetEnt.GetOrigin()
+			}
+
+			if( Distance2D( birdPos, fadePos ) < WHITE_RAVEN_MIN_DIST_TO_FLIGHT_TARGET )
+				break
+
+			if( Distance2D( birdPos, perchPos ) < WHITE_RAVEN_MIN_DIST_TO_FLIGHT_TARGET )
+				break
+
+			vector destination 	= WhiteRaven_GetNextValidPos( mover, birdPos )
+			destination = destination + FlattenVec( Normalize( mover.GetForwardVector() ) ) * WHITE_RAVEN_FLY_AHEAD_WALL_TEST_DIST
+			mover.NonPhysicsMoveTo( destination, travelTime, 0.0, 0.0 )
+
+			movementVector 	= perchPos - birdPos
+			mover.NonPhysicsRotateTo( VectorToAngles(movementVector), 0.4, 0.2, 0.0 )
+
+			#if DEV
+				if( DEBUG_WHITE_RAVEN_FLIGHT_DRAW )
+				{
+					DebugDrawSphere( birdPos, 3, COLOR_CYAN, true, 1 )
+					DebugDrawSphere( destination, 5, COLOR_YELLOW, true, 1 )
+				}
+			#endif
+
+			WaitFrame()
+
+			if( !IsValid( mover ) )
+				return
+
+			birdPos 		= mover.GetOrigin()
+			forwardDir		= mover.GetForwardVector()
+			movementVector 	= perchPos - birdPos
+			dotDir 			= DotProduct( FlattenVec(Normalize(forwardDir)), FlattenVec(Normalize(movementVector) ) )
+
+			#if DEV
+				if( DEBUG_WHITE_RAVEN_FLIGHT_DRAW )
+				{
+					const float DEBUG_WHITE_RAVEN_ARROW_SIZE = 5
+					DebugDrawArrow( mover.GetOrigin(), mover.GetOrigin() + forwardDir * 50, DEBUG_WHITE_RAVEN_ARROW_SIZE, COLOR_RED, true, 0.3 )
+					DebugDrawArrow( mover.GetOrigin(), mover.GetOrigin() + movementVector * 50, DEBUG_WHITE_RAVEN_ARROW_SIZE, COLOR_BLUE, true, 0.3 )
+				}
+			#endif
+
+		}
+	}
+
+
+	if( !IsValid( bird ) )
+		return
+	if( !IsValid( mover ) )
+		return
+	if( !IsValid( player ) )
+		return
+
+	////////////////////////////////////////////////////// FLY TO PERCH
+	#if DEV
+		if( DEBUG_WHITE_RAVEN_FLIGHT_DRAW )
+			printt( "WHITE RAVEN - FLY TO PERCH" )
+	#endif
+
+	//Set White Raven Flight Params//
+	CompanionFlightParams flightData = GetWhiteRavenCompanionFlightData()
+
+	birdPos 		= mover.GetOrigin()
+	forwardDir		= mover.GetForwardVector()
+	movementVector 	= perchPos - birdPos
+
+	vector birdClosestNavMeshPos = birdPos //WhiteRaven_GetBestNavMeshPos( birdPos )
+	vector destClosestNavMeshPos = WhiteRaven_GetBestNavMeshPos( perchPos )
+
+	if( destClosestNavMeshPos == perchPos )
+	{
+		destClosestNavMeshPos = WhiteRaven_GetBestNavMeshPos( targetPos )
+	}
+
+
+	#if DEV
+		if( DEBUG_WHITE_RAVEN_FLIGHT_DRAW )
+		{
+			DebugDrawSphere( birdClosestNavMeshPos, 10, COLOR_CYAN, true, 10 )
+			DebugDrawSphere( destClosestNavMeshPos, 10, COLOR_YELLOW, true, 10 )
+		}
+	#endif
+
+	if( isPerched )
+		mover.NonPhysicsRotateTo( VectorToAngles( movementVector ), 4.5, 0.5, 0.5  )
+	else
+		mover.NonPhysicsRotateTo( VectorToAngles( movementVector ), 0.3, 0.0, 0.0  )
+
+	if( isPerched )
+		bird.Anim_Play( "Bird_fly_cycle_long_no_root_motion" )
+
+	//Create the PathData to determine if we have a valid path
+	CompanionPathData pathData = GetCompanionPathData( mover, birdPos, destClosestNavMeshPos, birdPos.z, flightData )
+
+	//Choose Pathfinding Type//
+	if( !pathData.isValidFullPath )
+	{
+		waitthread WhiteRaven_DoBasicFlight_Thread( player, bird, mover, perchPos, fromUlt )
+	}
+	else
+	{
+		waitthread WhiteRaven_DoPathfindingFlight_Thread( player, bird, mover, perchPos, pathData, flightData, fromUlt )
+	}
+
+	waitthread WhiteRaven_FadeBird( bird )
+
+}
+#endif // SERVER
+
+#if SERVER
+void function WhiteRaven_DoBasicFlight_Thread( entity player, entity bird, entity mover, vector perchPos, bool fromUlt = false )
+{
+
+	if( !IsValid( bird ) )
+		return
+	if( !IsValid( mover ) )
+		return
+	if( !IsValid( player ) )
+		return
+
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+	EndSignal( player, "OnActivate_WhiteRaven" )
+	EndSignal( player, "OnEnd_WhiteRavenTracking" )
+	EndSignal( bird, "OnDestroy" )
+	EndSignal( mover, "OnDestroy" )
+
+	float flyTime = Time() + WHITE_RAVEN_FLIGHT_TIME
+	float travelTime = 5 								//Travel time to next point - allows for a "mock" accelleration
+
+	if( fromUlt )
+		travelTime = 0.2
+
+	// Original Simple Bird Flight - Flies ahead towards perchPos direction every frame following terrain//
+	while( Time() < flyTime )
+	{
+		if( !IsValid( bird ) )
+			return
+		if( !IsValid( mover ) )
+			return
+		if( !IsValid( player ) )
+			return
+
+
+		if( travelTime < 0.2 )
+			travelTime = 0.2
+
+		////Update the Bird Position/DirToTarget
+		vector birdPos 			= mover.GetOrigin()
+
+		//We're close enough
+		if( Distance2D( birdPos, perchPos ) < WHITE_RAVEN_MIN_DIST_TO_FLIGHT_TARGET )
+			break
+
+		vector destination 	= WhiteRaven_GetNextValidPos( mover, birdPos, true )
+		mover.NonPhysicsMoveTo( destination, travelTime, 0.0, 0.0 )
+
+		vector movementVector 	= perchPos - birdPos
+		mover.NonPhysicsRotateTo( VectorToAngles(movementVector), 0.3, 0.2, 0.0 )
+
+		travelTime = travelTime - 1
+
+		#if DEV
+			if( DEBUG_WHITE_RAVEN_FLIGHT_DRAW )
+			{
+				DebugDrawSphere( birdPos, 3, COLOR_CYAN, true, 1 )
+				DebugDrawSphere( destination, 5, COLOR_YELLOW, true, 1 )
+			}
+		#endif
+
+		WaitFrame()
+
+		if( !IsValid( mover ) )
+			return
+
+		birdPos 		= mover.GetOrigin()
+		movementVector 	= perchPos - birdPos
+
+	}
+
+}
+
+#endif //SERVER
+
+#if SERVER
+void function WhiteRaven_DoPathfindingFlight_Thread( entity player, entity bird, entity mover, vector perchPos, CompanionPathData pathData, CompanionFlightParams flightData, bool fromUlt )
+{
+
+	if( !IsValid( bird ) )
+		return
+	if( !IsValid( mover ) )
+		return
+	if( !IsValid( player ) )
+		return
+
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+	EndSignal( player, "OnActivate_WhiteRaven" )
+	EndSignal( player, "OnEnd_WhiteRavenTracking" )
+	EndSignal( bird, "OnDestroy" )
+	EndSignal( mover, "OnDestroy" )
+
+	//Set Nodes & Adjust Height//
+	printt( "NumPathNodes:   " + pathData.pathPoints.len() )
+
+	vector birdPos = mover.GetOrigin()
+	vector startPos = birdPos
+	vector echoPrevPos = birdPos
+
+	//////////// Setup the CompanionData based on the chosen path //////////////////
+
+	CompanionData currentCompanionData
+	file.companionData[player] <- currentCompanionData
+
+	currentCompanionData.orderRoute = pathData.pathPoints
+	currentCompanionData.remainingPathNodes = (pathData.pathPoints.len() - 1)
+	currentCompanionData.startedMovingCloser = false
+
+	//Get the Ground Height for Path Points
+	array<float> groundHeightArray = GetGroundHeightArrayForPath( pathData.pathPoints, pathData.pathPoints.len() )
+
+	currentCompanionData.orderRoute[currentCompanionData.orderRoute.len() - 1] = perchPos
+	currentCompanionData.indexHeightAdjusted.resize( currentCompanionData.orderRoute.len(), false )
+	currentCompanionData.indexHeightAdjusted[currentCompanionData.orderRoute.len() - 1] = true
+
+	//Adjust the Height of Path Points
+	thread Companion_AdjustHeight_Thread( player, mover, perchPos, currentCompanionData, groundHeightArray, flightData )
+
+	currentCompanionData.orderDidPathfinding = true
+
+	TraceResults initTrace = TraceLine( currentCompanionData.orderRoute[0], birdPos, null, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT ) //TRACE_MASK_SHOT_HULL TRACE_MASK_SOLID
+	if( initTrace.startSolid || initTrace.fraction < 0.98)
+	{
+		//Can occasionally target false navMesh below the terrain, as bird can perch on rocks that imbed through the ground with nav-generating geo.
+		//Altering the first point if this happens to prevent diving into the earth. Should this be added to the groundHeightArray?
+		if( currentCompanionData.orderRoute[0].z < birdPos.z )
+			currentCompanionData.orderRoute[0] = <currentCompanionData.orderRoute[0].x, currentCompanionData.orderRoute[0].y, birdPos.z> //Can only set components on local vars - have to feed a full vector
+	}
+
+	vector toNextPoint  = (currentCompanionData.orderRoute[0] - birdPos)
+	currentCompanionData.distanceToNextPoint = Length(toNextPoint)
+	if ( currentCompanionData.distanceToNextPoint > 0.0 )
+		currentCompanionData.dirToNextPoint = toNextPoint/currentCompanionData.distanceToNextPoint
+	else
+		currentCompanionData.dirToNextPoint = ZERO_VECTOR
+
+
+	//////// Setup Complete ///////////
+
+	if( !fromUlt )
+		mover.NonPhysicsMoveTo( birdPos + UP_VECTOR * 50 , 1, 0.2, 0.2 )
+	wait 0.5 //Give NavMesh a Chance
+
+	if( !IsValid( player ) || !IsValid( bird ) || !(IsValid( mover )))
+		return
+
+	//////// Begin Flight ////////////
+
+	const float WHITE_RAVEN_TAKEOFF_ACCEL_TIME = 1.0
+	float flyTime 	= Time() + WHITE_RAVEN_FLIGHT_TIME
+	float accelTime	= Time() + WHITE_RAVEN_TAKEOFF_ACCEL_TIME
+	while( Time() < flyTime )
+	{
+		if ( !IsValid( bird ) )
+			return
+		if ( !IsValid( mover ) )
+			return
+		if ( !IsValid( player ) )
+			return
+
+		birdPos = mover.GetOrigin()
+		vector currentVel        = mover.GetVelocity()
+		float currentSpeed       = Length( currentVel )
+		float angAccelMultiplier = 1
+
+		//We're close enough
+		if( Distance2D( birdPos, perchPos ) < WHITE_RAVEN_MIN_DIST_TO_FLIGHT_TARGET )
+			break
+
+		/////////// Pathfinding //////////////
+		waitthread DoCompanionPathfinding( player, mover, perchPos, currentCompanionData )
+		//////////////////////////////////////////////
+
+		//we're keeping the turn rate consistent for the last step of pathfinding
+		if ( currentCompanionData.orderDidPathfinding )
+		{
+			angAccelMultiplier = 3
+		}
+
+		//Set Destination of Next Node
+		vector toGoalPos
+		vector nextNode
+		if( currentCompanionData.remainingPathNodes > 0 )
+		{
+			toGoalPos = currentCompanionData.orderRoute[currentCompanionData.currentPathNode] - birdPos
+		}
+		else
+		{
+			toGoalPos = perchPos - birdPos
+		}
+
+		//Figure out our speed
+		float distance 			= Length( toGoalPos )
+		float desiredSpeed 	= WHITE_RAVEN_BASE_SPEED
+
+		if ( distance > WHITE_RAVEN_BASE_SPEED_RANGE )
+		{
+			desiredSpeed = GraphCapped( distance, WHITE_RAVEN_BASE_SPEED_RANGE, WHITE_RAVEN_MAX_SPEED_RANGE, WHITE_RAVEN_BASE_SPEED, WHITE_RAVEN_MAX_SPEED )
+		}
+		else if ( distance < WHITE_RAVEN_SLOW_SPEED_RANGE )
+		{
+			float minSpeed = 0
+			if ( currentCompanionData.remainingPathNodes > 0 )
+			{
+				vector previousGoalToCurrentGoal
+				int currentNode = currentCompanionData.currentPathNode
+				if ( currentNode > 0 )
+				{
+					previousGoalToCurrentGoal = Normalize(currentCompanionData.orderRoute[currentNode] - currentCompanionData.orderRoute[currentNode - 1])
+				}
+				else
+				{
+					previousGoalToCurrentGoal = Normalize(currentCompanionData.orderRoute[currentNode] - birdPos)
+				}
+				vector currentGoalToNextGoal = Normalize(currentCompanionData.orderRoute[currentCompanionData.currentPathNode + 1] - currentCompanionData.orderRoute[currentCompanionData.currentPathNode])
+
+				float currentToNextDot = DotProduct( previousGoalToCurrentGoal, currentGoalToNextGoal )
+				if ( currentToNextDot < 0.25 )
+				{
+					//if we always use this speed, echo won't stop at final position, so only use this speed when not at end of path
+					minSpeed = WHITE_RAVEN_BASE_SPEED * 0.25
+					desiredSpeed = GraphCapped( distance, 0.0, WHITE_RAVEN_SLOW_SPEED_RANGE, minSpeed, WHITE_RAVEN_BASE_SPEED )
+				}
+			}
+			else
+			{
+				desiredSpeed = GraphCapped( distance, 0.0, WHITE_RAVEN_SLOW_SPEED_RANGE, minSpeed, WHITE_RAVEN_BASE_SPEED )
+			}
+		}
+
+		//Take-Off Speed Adjust
+		if( Time() < accelTime )
+		{
+			float timeFrac = Time() / accelTime
+			desiredSpeed = GraphCapped( timeFrac, 0, 1, desiredSpeed*0.25, desiredSpeed )
+		}
+
+
+		//Determine our Forward Direction & Actual Speed
+		vector toGoalNorm = Normalize( toGoalPos )
+		vector newFwd   = Normalize( SlerpVector( mover.GetForwardVector(), toGoalNorm, 0.5 ) )
+		if ( currentSpeed <= WHITE_RAVEN_LOW_SPEED_THRESHOLD )
+		{
+			mover.SetAbsForwardVector( newFwd  )
+		}
+
+		vector companionFwd 	= mover.GetForwardVector()
+		float dot         		= DotProduct( companionFwd, toGoalNorm )
+		float degreesToTarget 	= (acos( dot ) * 180 / PI)
+
+		float angAccel = GraphCapped( desiredSpeed, 0.0, WHITE_RAVEN_BASE_SPEED, WHITE_RAVEN_ANG_ACCEL_MAX_SPEED, WHITE_RAVEN_ANG_ACCEL_LOW_SPEED )
+		angAccel *= angAccelMultiplier
+
+		float lerpFrac = 0
+		if ( degreesToTarget > 0 )
+		{
+			lerpFrac  = min( (angAccel * UPDATE_RATE) / degreesToTarget, 1.0)
+		}
+
+		float lowSpeed    = min( WHITE_RAVEN_BASE_SPEED*0.5, desiredSpeed*0.5)
+		float actualSpeed = GraphCapped( degreesToTarget, 0, 90, desiredSpeed, lowSpeed )
+
+		vector newDir   = Normalize( SlerpVector( companionFwd, toGoalNorm, lerpFrac ) )
+
+		//Move the White Raven
+		mover.NonPhysicsMoveWithGravity( newDir * actualSpeed, < 0, 0, 0 > )
+
+		// This bit flattens out our trajectory
+		if ( actualSpeed <= WHITE_RAVEN_LOW_SPEED_THRESHOLD )
+		{
+			newDir = FlattenVec( newDir )
+		}
+		mover.SetAbsForwardVector( newDir  )
+
+		wait UPDATE_RATE
+	}
+
+}
+#endif //SERVER
+
+#if SERVER
+void function WhiteRaven_Perched_Idle_Thread( entity player, entity bird, float birdLifetime )
+{
+	EndSignal( bird, "BirdFly", "OnDestroy" )
+	EndSignal( player, "OnDeath", "OnDestroy" )
+	EndSignal( player, "OnActivate_WhiteRaven" )
+	EndSignal( player, "OnEnd_WhiteRavenTracking" )
+
+	#if DEV
+		if( DEBUG_WHITE_RAVEN_DRAW )
+			printt( "BIRD IDLE" )
+	#endif
+
+	vector perchPos = bird.GetOrigin()
+
+	OnThreadEnd(
+		function() : ( player, bird, perchPos )
+		{
+			#if DEV
+				if( DEBUG_WHITE_RAVEN_DRAW )
+					printt( "BIRD IDLE COMPLETE" )
+			#endif
+
+			if ( IsValid( bird ) )
+			{
+				StopSoundOnEntity( bird, WHITE_RAVEN_AMBIENT_ETHEREAL_SFX )
+				if( IsValid( player ) )
+					EmitSoundAtPositionOnlyToPlayer( TEAM_UNASSIGNED, perchPos, player, WHITE_RAVEN_AMBIENT_ETHEREAL_DISSIPATE_SFX )
+			}
+
+			if ( IsValid( bird ) && !bird.e.isBusy )
+				bird.Destroy()
+
+			if( player in file.whiteRavenPlayerData )
+				delete file.whiteRavenPlayerData[player]
+
+			if( IsValid( player ) )
+			{
+				Signal( player, "OnReset_SpawnTracking" )
+				thread TrackingVision_WhiteRavenSpawnTracking_Thread( player )
+			}
+		}
+	)
+
+	if( player in file.whiteRavenPlayerData )
+	{
+		file.whiteRavenPlayerData[ player ].perchInitTime = Time()
+		file.whiteRavenPlayerData[ player ].whiteRavenPerched = bird
+	}
+
+	bird.e.isBusy = false
+
+	//play an animation
+	bird.Anim_Play( "Bird_casual_idle" )
+
+	//Emit initial Caw SFX
+	EmitSoundOnEntityOnlyToPlayer( bird, player, WHITE_RAVEN_FLY_IN_SFX )
+
+	bool showMapIcon = false
+	bool iconActive = false
+
+	array<entity> teamArray
+	float birdDeathTime = Time() + birdLifetime
+	float previousDist	= 100000
+	float lastPulseTime = 0
+	float prevTime = Time()
+	bool firstTime = true
+
+	                    
+		if( UpgradeCore_IsEnabled() && PlayerHasPassive( player, ePassives.PAS_AUTO_WHITE_RAVEN_SPAWN ) )
+		{
+			thread TrackingVision_AutoDetectEnemyTracking_Thread( player, bird )
+		}
+       
+	while ( Time() < birdDeathTime )
+	{
+		if( !IsValid( player ) )
+			return
+
+		if( !IsValid( bird ) )
+			return
+
+		vector origin 		= player.GetOrigin()
+		vector birdOrigin	= bird.GetOrigin()
+		float distToBird = Distance2D( origin, birdOrigin )
+
+		//Destroy Birds in Deathfield
+		DeathFieldData deathFieldData = SURVIVAL_GetDeathFieldData( Survival_Loot_GetDefaultRealm() )
+		bool isInRing                 = SURVIVAL_PosInsideDeathField( Survival_Loot_GetDefaultRealm(), birdOrigin )
+		if( !isInRing )
+			return
+
+		if( distToBird < GetRavenRefreshDistance( player ) )
+		{
+			birdDeathTime = birdDeathTime + ( Time() - prevTime )
+			#if DEV
+				if( DEBUG_WHITE_RAVEN_DRAW )
+				{
+					printt( "BIRD IDLE -> PLAYER NEARBY, DO NOT DESTROY:   " + birdDeathTime  )
+					DebugDrawCircle( birdOrigin, <0,0,0>, GetRavenRefreshDistance( player ), COLOR_AQUA, true, 0.1 )
+				}
+			#endif
+		}
+
+		if( Time() > lastPulseTime && !showMapIcon )
+		{
+			vector dirToBird		= Normalize( FlattenVec( birdOrigin - origin ) )
+			vector pingPos 			= origin + dirToBird * WHITE_RAVEN_PING_DIST_MAX
+
+			if( distToBird <  WHITE_RAVEN_PING_DIST_MAX )
+				pingPos = birdOrigin
+
+			//Ping Pulse to indicate Bird Audio position
+			Minimap_RingPulseForPlayer( player, birdOrigin, 300 , TRACKING_VISION_DIRECTION_LIFETIME, 1, TEAM_COLOR_FRIENDLY / 255.0 ) //COLOR_ORANGE
+			Minimap_RingPulseForPlayer( player, birdOrigin, 30 , TRACKING_VISION_DIRECTION_LIFETIME, 4, TEAM_COLOR_FRIENDLY / 255.0)
+
+			// Bird Call Audio
+			if( WHITE_RAVEN_USE_OFFSET_BIRDCALL_AUDIO )
+			{
+				//Ideally, we just have the Audio come from the source object and the falloff is perfect.
+				//Given the temp audio, I have hacked in a positional call that beckons you in the direction of the source to hint at this for now.
+				const float WHITE_RAVEN_AUDIO_DIRECTIONAL_CALL_RANGE = 700
+
+				//Ideally we can just make the bird call from the source. Needs audio support - for now, we fake it.
+				vector sfxPos			= player.EyePosition() + dirToBird * WHITE_RAVEN_AUDIO_DIRECTIONAL_CALL_RANGE
+				vector offsetSoundPos = sfxPos
+				if( distToBird < WHITE_RAVEN_AUDIO_DIRECTIONAL_CALL_RANGE )
+					offsetSoundPos = birdOrigin
+
+				#if DEV
+					if( DEBUG_WHITE_RAVEN_DRAW )
+					{
+						DebugDrawSphere( offsetSoundPos, 5, COLOR_AQUA, true, 15 )
+					}
+				#endif
+
+				EmitSoundAtPosition( TEAM_UNASSIGNED, offsetSoundPos, WHITE_RAVEN_AMBIENT_CAW_SFX )
+			}
+			else
+			{
+				if( !firstTime )
+					EmitSoundOnEntityOnlyToPlayer( bird, player, WHITE_RAVEN_AMBIENT_CAW_SFX )
+
+				firstTime = false
+			}
+
+
+			lastPulseTime = Time() + TRACKING_VISION_DIRECTION_LIFETIME + 5
+		}
+
+		prevTime = Time()
+
+		WaitFrame()
+	}
+
+	bird.UnsetUsable()
+	bird.SetUsePrompts( "#EMPTY_STRING", "#EMPTY_STRING" )
+
+	waitthread WhiteRaven_FadeBird( bird )
+}
+#endif
+
+#if SERVER
+vector function WhiteRaven_GetBestNavMeshPos( vector targetPos )
+{
+	vector bestPos = targetPos
+
+	//todo: If we can get Pathfinding Movement to work - figure out how to find this WEDGE point instead.
+	//vector and desiredPosition | vector & wedgePosition
+	//int birdClosestNavMeshNode = NavMeshNode_GetBestNodeForPosInWedge( destDir, birdDir, 180, 90, 90, 5, 0, 0 )
+
+	int closestNavMeshNode = NavMeshNode_GetNearestNodeToPos( targetPos )
+	if ( closestNavMeshNode == -1 )
+	{
+		//DebugDrawLine( origin, origin + <0,0,100>, COLOR_RED, true, 5.0 )
+		targetPos = OriginToGround( targetPos )
+		closestNavMeshNode = NavMeshNode_GetNearestNodeToPos( targetPos )
+
+		if ( closestNavMeshNode == -1 )
+		{
+				return bestPos
+		}
+	}
+
+	bestPos = NavMeshNode_GetNodePos( closestNavMeshNode )
+	return bestPos
+}
+#endif
+
+#if SERVER
+vector function WhiteRaven_GetNextValidPos(entity mover, vector pos, bool isDirectFlight = false )
+{
+	vector nextValidPos = pos
+	entity owner = mover.GetOwner()
+	array<entity> ignoreArray 	= GetPlayerArray()
+
+	vector dir = mover.GetForwardVector()
+	dir = Normalize( FlattenVec( dir ) )
+
+	const float WHITE_RAVEN_STEP_DIST 				= 64.0
+	const float WHITE_RAVEN_STEP_DIST_DIRECT		= 128.0
+	const float WHITE_RAVEN_CLIMB_HEIGHT			= 128.0
+
+	vector newPos = pos + dir * WHITE_RAVEN_STEP_DIST
+	if( isDirectFlight )
+		newPos = pos + dir * WHITE_RAVEN_STEP_DIST_DIRECT
+
+	vector traceStart = pos
+	vector traceEndUnder = <newPos.x, newPos.y, traceStart.z >
+	vector traceEndOver = <newPos.x, newPos.y, traceStart.z + WHITE_RAVEN_CLIMB_HEIGHT>
+
+	TraceResults forwardTrace = TraceLine( traceStart, traceEndUnder, ignoreArray, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT ) //TRACE_MASK_SHOT_HULL TRACE_MASK_SOLID
+	if( !isDirectFlight )
+		nextValidPos = forwardTrace.endPos
+	else
+		nextValidPos = newPos // Go forward, even through walls //
+
+	if ( forwardTrace.fraction == 1.0 && !forwardTrace.startSolid ) //Found NOTHING ahead!
+	{
+		//Check for too close to ground
+		TraceResults downTrace = TraceLine( forwardTrace.endPos, forwardTrace.endPos + <0.0, 0.0, -WHITE_RAVEN_FLIGHT_HEIGHT_MIN>, ignoreArray, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+		if ( downTrace.fraction < 1.0 ) //FOUND A CLIFF
+			nextValidPos = downTrace.endPos + <0,0,WHITE_RAVEN_FLIGHT_HEIGHT_MIN>
+	}
+	else // FOUND A WALL - Test for Step-Up
+	{
+
+		TraceResults upwardTrace = TraceLine( traceStart, traceEndOver, ignoreArray, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+		if ( upwardTrace.fraction > 0.5 ) //We can climb this...
+		{
+			//Check for too close to ground
+			TraceResults downTrace = TraceLine( forwardTrace.endPos, forwardTrace.endPos + <0.0, 0.0, -WHITE_RAVEN_FLIGHT_HEIGHT_MIN>, ignoreArray, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+			if ( downTrace.fraction < 1.0 ) //FOUND A CLIFF
+				nextValidPos = downTrace.endPos + <0,0,WHITE_RAVEN_FLIGHT_HEIGHT_MIN/2>
+		}
+	}
+
+	return nextValidPos
+}
+#endif // SERVER
+
+
+#if SERVER
+void function WhiteRaven_FadeBird( entity bird )
+{
+	//cool dissolve FX
+	int fxId = GetParticleSystemIndex( TRACKING_VISION_BIRD_DISSOLVE )
+	entity fx_dissolve = StartParticleEffectOnEntity_ReturnEntity( bird, fxId, FX_PATTACH_ABSORIGIN_FOLLOW, bird.LookupAttachment( "ORIGIN" ) )
+	fx_dissolve.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
+	fx_dissolve.SetOwner( bird.GetOwner() )
+
+	float fadeStartTime = Time()
+	float fadeEndTime = fadeStartTime + 0.4
+	bird.kv.rendermode = 4 //Rendmode TransAlpha
+	while ( ( Time() <= fadeEndTime ) && IsValid( bird ) )
+	{
+		float alphaResult = GraphCapped( Time(), fadeStartTime, fadeEndTime, 255, 0 )
+		bird.kv.renderamt = alphaResult
+		WaitFrame()
+	}
+
+	if( IsValid( bird ) )
+		bird.Destroy()
+}
+#endif
+
+
+bool function TrackingVision_CanUseBirdPointerEntityCallback( entity player, entity bird, int useFlags )
+{
+
+	if ( !PlayerHasPassive( player, ePassives.PAS_TRACKING_VISION ) )
+		return false
+	if ( Bleedout_IsBleedingOut( player ) )
+		return false
+	if ( player.ContextAction_IsActive() )
+		return false
+	if ( player.Player_IsSkywardLaunching() || player.Player_IsSkywardFollowing() )
+		return false
+	if ( !PlayerCommonItemPickupCheck( player ) )
+		return false
+	if ( !IsFriendlyTeam( player.GetTeam(), bird.GetTeam() ) )
+		return false
+
+	return true
+}
+
+void function TrackingVision_OnBirdPointerUsed( entity bird, entity player, int useFlags )
+{
+
+                       
+                                              
+        
+      
+#if CLIENT
+	if ( !InPrediction() || !IsFirstTimePredicted() )
+		return
+#endif
+
+#if SERVER
+	if( IsValid( bird ) && IsValid( player ) )
+	{
+		#if DEV
+			if( DEBUG_WHITE_RAVEN_DRAW )
+				printt( "BIRD POINTER USED" )
+		#endif
+		thread TrackingVision_OnBirdPointerUsed_Thread( player, bird )
+	}
+#endif
+
+}
+
+#if SERVER
+void function TrackingVision_OnBirdPointerUsed_Thread( entity player, entity bird, bool wasScanned = false, bool shouldRefundTac = false )
+{
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+	EndSignal( player, "OnActivate_WhiteRaven" )
+	EndSignal( player, "OnEnd_WhiteRavenTracking" )
+
+	OnThreadEnd(
+		function() : ( player, bird )
+		{
+			if( IsValid( player ) )
+			{
+				if( player in file.whiteRavenPlayerData  && !WHITE_RAVEN_PERCH_AT_TARGET )
+					delete file.whiteRavenPlayerData[player]
+			}
+		}
+	)
+
+	bird.e.isBusy = true 		//ensure's bird won't be destroyed when perched thread ends
+	bird.Signal( "BirdFly" )
+	Remote_CallFunction_NonReplay( player, "ServerToClient_DeactivateWhiteRavenPerchedFX", player, bird )
+
+	//If we have old Raven Data - Clear it
+	if( player in file.whiteRavenPlayerData )
+		delete file.whiteRavenPlayerData[player]
+
+	thread TrackingVision_GiveAbilityRefunds_Thread( player, shouldRefundTac )
+
+	WhiteRavenInfo whiteRavenData
+	entity closestEnemy = WhiteRaven_GetNearestEnemyTarget( player )
+
+	if( IsValid(closestEnemy) )
+	{
+		#if DEV
+			if( DEBUG_WHITE_RAVEN_DRAW )
+			{
+				printt( "WHITE RAVEN [POINTER] >> FLY TO ENEMY TARGET! " )
+				DebugDrawSphere( closestEnemy.GetOrigin() + <0, 0, 15> , 10, COLOR_RED, true, 10.0 )
+			}
+		#endif
+
+
+		whiteRavenData = TrackingVision_CreateWhiteRavenData( player, bird, closestEnemy.GetOrigin(), closestEnemy )
+		file.whiteRavenPlayerData[ player ] <- whiteRavenData
+
+		TrackingVision_CreateWhiteRavenPingPath( player, whiteRavenData, wasScanned )
+
+
+		waitthread WhiteRaven_FlyToTarget_Thread( player, bird, whiteRavenData.perchPos, true, false )
+
+		if( !IsValid( player ) )
+			return
+
+		if( WHITE_RAVEN_PERCH_AT_TARGET )
+			waitthread TrackingVision_CreateWhiteRavenPerched_Thread( player, whiteRavenData.perchPos, WHITE_RAVEN_BIRD_LIFETIME_LONG )
+		else
+		{
+			Signal( player, "OnReset_SpawnTracking" )
+			thread TrackingVision_WhiteRavenSpawnTracking_Thread( player )
+		}
+
+	}
+	else
+	{
+		#if DEV
+			if( DEBUG_WHITE_RAVEN_DRAW )
+			{
+				printt( "THERE WERE NO ENEMIES..." )
+			}
+		#endif
+
+		waitthread WhiteRaven_FadeBird( bird )
+	}
+
+}
+#endif
+
+vector function TrackingVision_GetWhiteRavenPingPos( entity player, vector perchPos )
+{
+	if( !IsValid( player ) )
+		return perchPos
+
+	//Find the Ping Pos
+	vector playerOrigin 		= player.GetOrigin()
+	vector dirToPerch			= Normalize( FlattenVec( perchPos - playerOrigin ) )
+	vector pingPos 				= playerOrigin + dirToPerch * WHITE_RAVEN_PING_DIST_MAX
+	float distToPerchPos 		= Distance2D( playerOrigin, perchPos )
+
+	if( distToPerchPos <  WHITE_RAVEN_PING_DIST_MAX )
+		pingPos = perchPos
+
+	//Adjust Height of the PingPos
+	float pingOffset = 0
+	TraceResults pingDownTrace = TraceLine( pingPos, pingPos + <0.0, 0.0, -300>, GetPlayerArray(), TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+	if( pingDownTrace.fraction < 0.98 )
+		pingOffset = GraphCapped( pingDownTrace.fraction, 0, 1, WHITE_RAVEN_PING_OFFSET_HEIGHT_MAX, 0 )
+
+	return pingPos + <0,0,pingOffset>
+}
+
+#if SERVER
+void function TrackingVision_CreateWhiteRavenPingPath( entity player, WhiteRavenInfo whiteRavenData, bool wasScanned = false )
+{
+
+	foreach ( teammate in GetPlayerArrayOfTeam( player.GetTeam() ) )
+	{
+		if( !IsValid( teammate ) )
+			continue
+
+		vector pingPos = TrackingVision_GetWhiteRavenPingPos( teammate, whiteRavenData.perchPos )
+
+		Remote_CallFunction_NonReplay( teammate, "TrackingVision_DisplayEnemyDirection_ServerCallback", whiteRavenData.perchPos, pingPos, VectorToAngles( -(whiteRavenData.perchPos - teammate.GetOrigin()) ) )
+
+		entity bird = whiteRavenData.whiteRavenFlight
+		thread TrackingVision_DelayedWhiteRavenPing_Thread( player, teammate, bird, pingPos, wasScanned )
+	}
+
+}
+#endif //SERVER
+
+#if SERVER
+void function TrackingVision_DelayedWhiteRavenPing_Thread( entity player, entity teammate, entity bird, vector pingPos, bool wasScanned )
+{
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+	EndSignal( player, "OnActivate_WhiteRaven" )
+
+	//Delay the call to allow Bloodhound a moment to watch & follow the Raven flyoff and comprehend.
+	float waitTime = Time() + WHITE_RAVEN_PING_DELAY
+	while ( Time() < waitTime )
+	{
+		if( !IsValid(bird) ) //If the bird reached its destination early, we can bail out of the delay
+			break
+
+		WaitFrame()
+	}
+
+	if( !IsValid( player ) || !IsValid( teammate ) )
+		return
+
+	if( teammate == player )
+	{
+		EmitSoundOnEntityOnlyToPlayer( player, teammate, BLOODHOUND_DIAG_FOLLOW_RAVEN_1P )
+		TrackingVision_CreateWhiteRavenWaypoint( player, pingPos )
+	}
+	else
+	{
+		EmitSoundOnEntityOnlyToPlayer( player, teammate, BLOODHOUND_DIAG_FOLLOW_RAVEN_3P )
+	}
+	
+}
+
+#endif
+
+#if SERVER
+void function TrackingVision_CreateWhiteRavenWaypoint( entity owner, vector pingPos )
+{
+	if ( !IsValid( owner ) )
+		return
+
+	EndSignal( owner, "OnActivate_WhiteRaven" )
+
+	entity wp = CreateWaypoint_BasicLocation( pingPos, ePingType.BLOODHOUND_WHITE_RAVEN_TARGET_LOC ) //AREA_VISITED //WE_GO
+	wp.SetVisibilityFlags( ENTITY_VISIBLE_TO_FRIENDLY )
+	wp.SetOwner( owner )
+	wp.SetOnlyTransmitToSingleTeam( owner.GetTeam() )
+
+	OnThreadEnd(
+		function() : ( wp )
+		{
+			wp.Destroy()
+		}
+	)
+
+	wait 15
+
+}
+#endif
+
+#if SERVER
+void function TrackingVision_GiveAbilityRefunds_Thread( entity player, bool shouldRefundTac )
+{
+
+	WaitFrame() //Ensures Tactical ammo is used first
+
+	if( IsValid( player ) )
+	{
+		//refresh Tactical on Bird Scan
+		if( WHITE_RAVEN_GIVES_TAC_CHARGE )
+		{
+			entity tacticalWeapon = player.GetOffhandWeapon( OFFHAND_TACTICAL )
+
+			if( IsValid( tacticalWeapon ) )
+			{
+				float tacCharge = tacticalWeapon.GetWeaponPrimaryClipCount().tofloat()
+
+				int curTacAmmo       	= tacticalWeapon.GetWeaponPrimaryClipCount()
+				int maxTacAmmo          = tacticalWeapon.GetWeaponPrimaryClipCountMax()
+
+				if( shouldRefundTac )
+				{
+					tacticalWeapon.SetWeaponPrimaryClipCountNoRegenReset( maxTacAmmo )
+				}
+				else if ( maxTacAmmo > 0 )
+				{
+					float tacRefund = maxTacAmmo.tofloat() * WHITE_RAVEN_TACTICAL_REFUND_FRAC
+					tacCharge = curTacAmmo + tacRefund
+					tacticalWeapon.SetWeaponPrimaryClipCountNoRegenReset( minint( tacCharge.tointeger(), maxTacAmmo)  )
+				}
+			}
+		}
+
+		bool giveUltCharge = WHITE_RAVEN_GIVES_ULT_CHARGE
+		                    
+		if( UpgradeCore_IsEnabled() )
+		{
+			giveUltCharge = PlayerHasPassive( player, ePassives.PAS_PAS_UPGRADE_TWO ) // upgrade_bloodhound_white_raven_ult_charge
+		}
+        
+
+		//refresh Ultimate on Bird Scan
+		if( giveUltCharge )
+		{
+			entity ultWeapon = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
+
+			if( IsValid( ultWeapon ) )
+			{
+				float ultCharge = ultWeapon.GetWeaponPrimaryClipCount().tofloat()
+
+				int curUltAmmo       	= ultWeapon.GetWeaponPrimaryClipCount()
+				int maxUltAmmo          = ultWeapon.GetWeaponPrimaryClipCountMax()
+
+				if ( maxUltAmmo > 0 )
+				{
+					float ultRefund = maxUltAmmo.tofloat() * WHITE_RAVEN_ULTIMATE_REFUND_FRAC
+					ultCharge = curUltAmmo + ultRefund
+					ultWeapon.SetWeaponPrimaryClipCountNoRegenReset( minint( ultCharge.tointeger(), maxUltAmmo)  )
+				}
+			}
+
+
+		}
+	}
+}
+#endif
+
+                    
+#if SERVER
+void function TrackingVision_AutoDetectEnemyTracking_Thread( entity player, entity bird )
+{
+	EndSignal( player, "OnActivate_WhiteRaven" )
+	EndSignal( player, "OnDestroy" )
+	EndSignal( player, "OnDeath" )
+	EndSignal( bird, "OnDestroy" )
+	EndSignal( bird, "BirdFly" )
+
+	const float WHITE_RAVEN_AUTO_RAVEN_COOLDOWN_TIME = 60.0
+
+	bool enemiesWereClose = false
+	float lastWhiteRavenSpawn = -60
+	while( IsValid( player ) && IsValid( bird ) )
+	{
+		if( bird.e.isBusy ) // bird's already in flight - bail
+			return
+
+		int myTeam = player.GetTeam()
+		array< entity > players = GetPlayerArray_Alive()
+		float closeThreshold = GetRavenCloseEnemyDistance( player )
+		bool enemyInCloseRange = false
+
+		foreach( otherPlayer in players )
+		{
+			if( otherPlayer.GetTeam() == myTeam )
+				continue
+
+			float distSqr = DistanceSqr( otherPlayer.GetOrigin(), player.GetOrigin() )
+			if( distSqr < ( closeThreshold * closeThreshold ) )
+			{
+				enemyInCloseRange = true
+			}
+		}
+
+		if( enemyInCloseRange != enemiesWereClose )
+		{
+			float curTime = Time()
+			if( enemyInCloseRange && ( curTime - lastWhiteRavenSpawn ) >  WHITE_RAVEN_AUTO_RAVEN_COOLDOWN_TIME )
+			{
+				thread TrackingVision_OnBirdPointerUsed_Thread( player, bird, false, false )
+				lastWhiteRavenSpawn = curTime
+			}
+			enemiesWereClose = enemyInCloseRange
+		}
+
+		Wait( .5 )
+	}
+}
+#endif
+      
+
+#if CLIENT
+void function TrackingVision_OnBirdPointerCreated( entity ent )
+{
+	if ( ent.GetScriptName() != TRACKING_VISION_BIRD_SCRIPTNAME )
+		return
+
+	ClearCallback_CanUseEntityCallback( ent )
+	SetCallback_CanUseEntityCallback( ent, TrackingVision_CanUseBirdPointerEntityCallback )
+}
+
+void function TrackingVision_DisplayEnemyDirection_ServerCallback( vector enemyPos, vector pingPos, vector angles )
+{
+	entity player = GetLocalClientPlayer()
+	if( !IsValid( player ) )
+		return
+
+	Signal( player, "WhiteRaven_OnEndClientHUD" )
+	thread TrackingVision_DisplayEnemyDirection_Thread( enemyPos, pingPos, angles )
+}
+
+void function TrackingVision_DisplayEnemyDirection_Thread( vector enemyPos, vector pingPos, vector angles )
+{
+	entity player = GetLocalViewPlayer()
+	if ( !IsValid( player ) )
+		return
+
+	EndSignal( player, "WhiteRaven_OnEndClientHUD" ) //todo: Needs to send signal to client if when the bird is removed.
+
+	const int	TRACKING_VISION_CHEVRON_MAX				= 6
+	const float TRACKING_VISION_CHEVRON_INIT_DELAY		= 1.5
+	const float TRACKING_VISION_CHEVRON_MIN_DIST		= 500
+	const float TRACKING_VISION_CHEVRON_INTERVAL_DIST	= 750
+	const float TRACKING_VISION_CHEVRON_INTERVAL_TIME	= 0.25
+
+	wait TRACKING_VISION_CHEVRON_INIT_DELAY
+	if( !IsValid( player ) )
+		return
+
+	vector pPos 		= player.GetOrigin()
+	vector pDir			= Normalize( pPos - pingPos )
+	float lineDist		= Distance2D( pPos, enemyPos )
+	vector firstPoint 	= pingPos + pDir * TRACKING_VISION_CHEVRON_INTERVAL_DIST * 3 //  Ensure the first Chevron doesn't crowd the "ping" marker
+	vector lineDir		= Normalize( pPos - firstPoint )
+	bool allowChevrons 	= DotProduct( pDir, lineDir ) > 0
+
+	// Create Path Points for Chevrons
+	array<vector> linePoints
+	linePoints.append( firstPoint ) //Always add the first point.
+	vector lastPoint = firstPoint
+
+	if ( lineDist > TRACKING_VISION_CHEVRON_MIN_DIST && allowChevrons )
+	{
+		for (int i=0; i<TRACKING_VISION_CHEVRON_MAX; i++)
+		{
+			vector newPoint = lastPoint + pDir * TRACKING_VISION_CHEVRON_INTERVAL_DIST
+			vector pointDir	= Normalize( pPos - newPoint )
+
+			if ( Distance2D( newPoint, pPos) < TRACKING_VISION_CHEVRON_MIN_DIST  || DotProduct( pDir, pointDir ) < 0 )
+				break
+
+			linePoints.append( newPoint )
+			lastPoint = newPoint
+		}
+	}
+
+	//Walk through the array and create a Map Chevron for each point in the path
+	if( linePoints.len() > 0 )
+	{
+		int count = linePoints.len()
+		while ( count > 0 )
+		{
+			if( !IsValid( player ) )
+				return
+
+			vector nextChevronPos = linePoints[ count-1 ]
+			thread TrackingVision_CreateChevron_Thread( player, nextChevronPos, angles ) //position needs to be the number in the array
+			count--
+
+			#if DEV
+				if( DEBUG_WHITE_RAVEN_DRAW )
+				{
+					printt( "Count is:   " + count + "   | New Position is: " + nextChevronPos )
+					DebugDrawSphere( nextChevronPos , 25, COLOR_RED, true, 10.0 )
+				}
+			#endif
+
+			wait TRACKING_VISION_CHEVRON_INTERVAL_TIME
+		}
+
+	}
+
+}
+
+void function TrackingVision_CreateChevron_Thread( entity player, vector nextChevronPos, vector angles)
+{
+	if( !IsValid( player ) )
+		return
+	if( GetLocalViewPlayer() != player )
+		return
+
+	EndSignal( player, "WhiteRaven_OnEndClientHUD" ) //todo: Needs to send signal to client if when the bird is removed.
+
+	const float BASE_ICON_SCALE = 1.5
+	asset icon = TRACKING_VISION_DIRECTION_ICON
+//enemy.GetAngles() + <0, -90, 0>
+	vector iconColor = GetKeyColor( COLORID_ENEMY ) * ( 1.0 / 255.0 )
+	var minimapRui = Minimap_AddIconAtPosition( nextChevronPos, angles, icon, BASE_ICON_SCALE, iconColor )
+	
+#if NX_PROG || PC_PROG_NX_UI
+	var fullmapRui = FullMap_AddIconAtPos( nextChevronPos, angles + <0, -90, 0>, icon, 24.0, iconColor )
+#else
+	var fullmapRui = FullMap_AddIconAtPos( nextChevronPos, angles + <0, -90, 0>, icon, 6.0, iconColor )
+#endif
+
+	OnThreadEnd(
+		function() : ( minimapRui, fullmapRui )
+		{
+			Minimap_CommonCleanup( minimapRui )
+			Fullmap_RemoveRui( fullmapRui )
+			RuiDestroy( fullmapRui )
+		}
+	)
+
+	float minimapIconEndTime = Time() + TRACKING_VISION_DIRECTION_LIFETIME
+	float scale = BASE_ICON_SCALE * 3.0
+	while ( Time() < minimapIconEndTime )
+	{
+		if( !IsValid( player ) )
+			return
+
+		if ( scale > BASE_ICON_SCALE )
+		{
+			scale -= 0.1
+			RuiSetFloat2( minimapRui, "iconScale", < scale, scale, 0 > )
+		}
+
+		WaitFrame()
+	}
+
+	wait TRACKING_VISION_DIRECTION_LIFETIME
+}
+
+#endif
+
+#if SERVER
+
+                        
+                                                                          
+ 
+                      
+              
+
+                                                             
+              
+
+            
+ 
+      
+
+bool function TrackingVision_IsEntWhiteRaven( entity owner, entity ent )
+{
+	if( !IsValid( ent ) )
+		return false
+
+	if ( IsEnemyTeam( owner.GetTeam(), ent.GetTeam() ) )
+		return false
+
+	if( ent.GetScriptName() != TRACKING_VISION_BIRD_SCRIPTNAME  )
+		return false
+
+	return true
+
+}
+
+void function TrackingVision_TriggerBirdFromScan( entity owner, entity bird, bool shouldRefundTac )
+{
+	if( IsValid( bird ) && IsValid( owner ) )
+	{
+		thread TrackingVision_OnBirdPointerUsed_Thread( owner, bird, true, shouldRefundTac ) //shouldRefund
+	}
+}
+
+bool function TrackingVision_HasActiveWhiteRaven( entity player )
+{
+	if( !IsValid( player ) )
+		return false
+
+	if ( player in file.whiteRavenPlayerData )
+	{
+		WhiteRavenInfo whiteRavenData = file.whiteRavenPlayerData[player]
+		if( whiteRavenData.whiteRavenActive || whiteRavenData.whiteRavenPerched.e.isBusy )
+			return true
+	}
+
+	return false
+}
+
+float function GetRavenCloseEnemyDistance( entity player )
+{
+	float dist = WHITE_RAVEN_CLOSE_ENEMY_DISTANCE
+	                    
+	if( IsValid( player ) && player.HasPassive( ePassives.PAS_PAS_UPGRADE_ONE ) ) // upgrade_bloodhound_raven_spawn_range
+		dist = 500
+       
+	return dist
+}
+
+float function GetRavenCloseBreadcrumbDistance( entity player )
+{
+	float dist = WHITE_RAVEN_CLOSE_BREADCRUMB_DISTANCE
+	                    
+	//if( IsValid( player ) && player.HasPassive( ePassives.PAS_PAS_UPGRADE_ONE ) ) // increased white ravens
+	//	dist *= 0.5
+       
+	return dist
+}
+
+float function GetRavenNaturalSpawnTime( entity player )
+{
+	float spawnTime = WHITE_RAVEN_NATURAL_SPAWN_TIME
+	                    
+	//if( IsValid( player ) && player.HasPassive( ePassives.PAS_PAS_UPGRADE_ONE ) ) // increased white ravens
+	//	spawnTime = 10.0
+       
+	return spawnTime
+}
+
+float function GetRavenRefreshDistance( entity player )
+{
+	float dist = WHITE_RAVEN_REFRESH_DISTANCE
+	                    
+	//if( IsValid( player ) && player.HasPassive( ePassives.PAS_PAS_UPGRADE_ONE ) ) // increased white ravens
+	//	dist = 2500
+       
+	return dist
+}
+#endif
+
+#if CLIENT
+void function ServerToClient_ActivateWhiteRavenIconRUI( entity player, entity bird )
+{
+	if ( player != GetLocalClientPlayer() )
+		return
+
+	thread TrackingVision_WhiteRavenIconRUI_Thread( player, bird )
+}
+#endif // CLIENT
+
+#if CLIENT
+void function TrackingVision_WhiteRavenIconRUI_Thread( entity player, entity bird )
+{
+	if ( player != GetLocalClientPlayer() )
+		return
+
+	if( !IsValid( player ) )
+		return
+
+	if( !IsValid( bird ) )
+		return
+
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+	EndSignal( bird, "OnDestroy" )
+
+	float wpOffset = 25
+	vector pos = bird.GetOrigin() + <0,0,wpOffset>
+
+	array< var > ruiArray
+
+	OnThreadEnd(
+		function() : ( ruiArray )
+		{
+			foreach ( rui in ruiArray )
+			{
+				if( rui != null )
+					RuiDestroyIfAlive( rui )
+			}
+		}
+	)
+
+	const float WHITE_RAVEN_RUI_TIME_UNTIL_OLD 	= 150
+	const float WHITE_RAVEN_RUI_LOST_LOS_BUFFER = 1.0
+	bool shouldUseStartTime = true
+	bool shouldLockTime 	= false
+	float startTime 		= Time()
+	float lockTime 			= Time() + WHITE_RAVEN_RUI_TIME_UNTIL_OLD
+	float bufferTime 		= Time() + WHITE_RAVEN_RUI_LOST_LOS_BUFFER
+	vector lastKnownPos = pos
+
+	bool shouldHide = false
+
+	while ( true )
+	{
+		if ( !IsValid( player ) )
+			return
+		if ( !IsValid( bird ) )
+			return
+
+		pos = bird.GetOrigin() + <0,0,wpOffset>
+		bool birdMoved = pos != lastKnownPos
+		vector playerEyePos = player.EyePosition()
+
+		if( Time() > lockTime )
+			shouldLockTime = true
+
+		TraceResults losResults = TraceLine( playerEyePos, pos, [player], TRACE_MASK_VISIBLE, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+
+		if( player in file.whiteRavenPingActive )
+			shouldHide = file.whiteRavenPingActive[player]
+
+		//The Breadcrumb RUI does not handle visibility in the internal logic.
+		//As a result, we have to create and destroy the rui mnaually when desired LOS limits have ended
+		if ( shouldHide )
+		{
+			if( ruiArray.len() > 0 )
+			{
+				foreach( rui in ruiArray )
+				{
+					if( rui != null )
+					{
+						ruiArray.fastremovebyvalue(rui)
+						RuiDestroyIfAlive( rui )
+
+						shouldUseStartTime = true
+					}
+				}
+			}
+		}
+		else if( ruiArray.len() == 0 ) //No Rui. Let's see if we can make one.
+		{
+			if( losResults.fraction > 0.95 || birdMoved )
+			{
+				var rui = TrackingVision_CreateWhiteRavenRUI( player, bird, wpOffset )
+				ruiArray.append(rui)
+
+				if( shouldUseStartTime ) //Ensure we use the true start time if Raven created out of LoS
+				{
+					RuiSetGameTime( rui, "startTime", startTime )
+					shouldUseStartTime = false
+				}
+				else if( shouldLockTime ) //Ensure Raven Time doesn't exceed bar maximum (Old Age)
+				{
+					RuiSetGameTime( rui, "startTime", Time() - WHITE_RAVEN_RUI_TIME_UNTIL_OLD )
+				}
+			}
+		}
+		else //We have a rui, let's check to see if we've lost LOS
+		{
+			if( losResults.fraction < 0.95 && !birdMoved)
+			{
+				//We lost sight of the target. Maintain for buffer time
+				if( Time() > bufferTime )
+				{
+					//We've lost track of the target for too long. Destroy the RUI
+					foreach( rui in ruiArray )
+					{
+						if( rui != null )
+						{
+							ruiArray.fastremovebyvalue(rui)
+							RuiDestroyIfAlive( rui )
+
+							shouldUseStartTime = true
+						}
+					}
+				}
+			}
+			else
+			{
+				//Have sight and have rui. Reset buffer & update if in focus ( Will this play nice with other pings? )
+				bool inViewFocus = TrackingVision_GetIsBirdInViewFocus( player, pos )
+				foreach( rui in ruiArray)
+				{
+					RuiSetBool( rui, "inViewFocus", inViewFocus ) //This simply tells the RUI to change from pure icon to offset Line element
+
+					if( birdMoved ) //Allows icon to be visibly tracked during flight regardless of LOS
+					{
+						RuiSetGameTime( rui, "startTime", Time() )
+					}
+					else if( shouldLockTime )
+					{
+						RuiSetGameTime( rui, "startTime", Time() - WHITE_RAVEN_RUI_TIME_UNTIL_OLD )
+					}
+				}
+
+				bufferTime = Time() + 2.0
+			}
+		}
+
+		lastKnownPos = pos
+		WaitFrame()
+	}
+
+}
+#endif //CLIENT
+
+#if CLIENT
+var function TrackingVision_CreateWhiteRavenRUI( entity player, entity bird, float wpOffset )
+{
+	float drawDist 		= WHITE_RAVEN_MAX_ENEMY_DETECTION_RANGE
+	string displayText 	= "#GEAR_TRACKING_VISION_OBJECT_BIRD_POINTER"
+	asset icon 			= $"rui/hud/poi_icons/poi_white_raven"
+
+	vector pos 			= bird.GetOrigin() + <0,0,wpOffset>
+
+	var rui = CreateTransientFullscreenRui( $"ui/tracking_vision_object_icons.rpak", RuiCalculateDistanceSortKey( player.EyePosition(), pos ) )
+
+	// INITIAL SETTINGS //
+	RuiSetGameTime( rui, "startTime", Time() )
+	RuiSetGameTime( rui, "iconCreationTime", Time() )
+	RuiSetFloat( rui, "duration", 30 )
+	RuiSetFloat( rui, "iconHotClueDuration", 90 )
+	RuiSetFloat( rui, "iconHotClueDurationExt", 150 )
+	RuiTrackFloat3( rui, "pos", bird, RUI_TRACK_OVERHEAD_FOLLOW )
+	RuiKeepSortKeyUpdated( rui, true, "pos" )
+	RuiSetInt( rui, "teamRelation", 0 )
+	RuiSetFloat( rui, "iconDrawDist", drawDist )
+	RuiSetString( rui, "objectText", displayText )
+	RuiSetImage( rui, "iconImage", icon )
+	RuiSetBool( rui, "highlightWaypoint", true ) //Makes it GOLD!
+
+
+	// Get Bird is in View Area //
+	bool inViewFocus = TrackingVision_GetIsBirdInViewFocus( player, pos )
+	RuiSetBool( rui, "inViewFocus", inViewFocus )
+
+	return rui
+}
+#endif
+
+bool function TrackingVision_GetIsBirdInViewFocus( entity player, vector pos ) //entity bird )
+{
+	bool inViewFocus = false
+	vector playerEyePos = player.EyePosition()
+	vector playerEyeDir = player.GetViewVector()
+
+	vector dir = Normalize(playerEyeDir)
+	vector dirToTarget = Normalize( pos - playerEyePos )
+
+	float dotRangeToTarget = DotProduct( dir, dirToTarget )
+
+	if( dotRangeToTarget > 0.995 )
+	{
+		TraceResults losResults = TraceLine( playerEyePos, pos, [player], TRACE_MASK_VISIBLE, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+		if( losResults.fraction > 0.95 )
+			inViewFocus = true
+	}
+
+	return inViewFocus
+}
+
+#if CLIENT
+void function ServerToClient_ActivateWhiteRavenPerchedFX( entity player, entity bird )
+{
+	if ( player != GetLocalClientPlayer() )
+		return
+
+	thread TrackingVision_SpawnCLPerchedFX_Thread( player, bird )
+}
+#endif // CLIENT
+
+#if CLIENT
+void function ServerToClient_DeactivateWhiteRavenPerchedFX( entity player, entity bird )
+{
+	if ( player != GetLocalClientPlayer() )
+		return
+
+	if( IsValid( bird ) )
+		Signal( bird, "BirdFly" )
+}
+#endif // CLIENT
+
+#if CLIENT
+void function TrackingVision_SpawnCLPerchedFX_Thread( entity player, entity bird )
+{
+	if ( player != GetLocalClientPlayer() )
+		return
+
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+
+	if( !IsValid( bird ) || bird == null )
+		return
+
+	EndSignal( bird, "OnDestroy" )
+	EndSignal( bird, "BirdFly" )
+
+	int attachmentID = bird.LookupAttachment( "ORIGIN" )
+	vector birdPos 	 = bird.GetOrigin()
+	vector newAngles = RotateAnglesAboutAxis( bird.GetAngles(), bird.GetRightVector(), 90 )
+
+	int fxid         = GetParticleSystemIndex( TRACKING_VISION_BIRD_PERCH_MIST )
+	int fxHandle 	 = StartParticleEffectInWorldWithHandle( fxid, birdPos, newAngles )
+
+	OnThreadEnd(
+		function() : ( fxHandle )
+		{
+			if ( EffectDoesExist( fxHandle ) )
+				EffectStop( fxHandle, false, true )
+		}
+	)
+
+	bool sfxOn = false
+
+	while( true )
+	{
+
+		if( !IsValid( bird ) || !IsValid( player ) )
+			break
+
+		bool inEtherealRange = Distance( bird.GetOrigin(), player.GetOrigin() ) < WHITE_RAVEN_ETHEREAL_AUDIO_RANGE
+
+		//Audio wants this sound to be active only when within a certain distance. It is naturally too quiet to not get culled at the bird's natural spawn range.
+		if( inEtherealRange && !sfxOn )
+		{
+			EmitSoundOnEntity( bird, WHITE_RAVEN_AMBIENT_ETHEREAL_SFX )
+			sfxOn = true
+		}
+		else if( !inEtherealRange && sfxOn )
+		{
+			StopSoundOnEntity( bird, WHITE_RAVEN_AMBIENT_ETHEREAL_SFX )
+			sfxOn = false
+		}
+
+		WaitFrame()
+	}
+}
+#endif //CLIENT
+
+#if CLIENT
+entity function GetWhiteRavenPingTarget( entity player )
+{
+	entity whiteRaven
+
+	array<entity> potentialTargets = GetEntArrayByScriptName( TRACKING_VISION_BIRD_SCRIPTNAME )
+
+	foreach( ent in potentialTargets )
+	{
+		if( !IsValid(ent) )
+			continue
+
+		if( ent.GetOwner() == player )
+		{
+			if ( TrackingVision_GetIsBirdInViewFocus( player, ent.GetOrigin() ) )
+				whiteRaven = ent
+		}
+	}
+
+	return whiteRaven
+}
+#endif
+
+#if CLIENT
+void function OnPingCreatedByAnyPlayer_WhiteRaven( entity pingingPlayer, int pingType, entity focusEnt, vector pingLoc, entity wayPoint )
+{
+	if ( pingingPlayer != GetLocalClientPlayer() || !(IsValid( pingingPlayer) ) )
+		return
+
+	if( ! PlayerHasPassive( pingingPlayer, ePassives.PAS_TRACKING_VISION ) )
+		return
+
+	if( pingType != ePingType.BLOODHOUND_WHITE_RAVEN )
+		return
+
+	file.whiteRavenPingActive[pingingPlayer] <- true
+
+	thread TrackingVision_TrackWhiteRavenPing_Thread( pingingPlayer, focusEnt, wayPoint )
+
+}
+
+void function TrackingVision_TrackWhiteRavenPing_Thread( entity player, entity bird, entity waypoint )
+{
+	if ( player != GetLocalClientPlayer() )
+		return
+
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+
+	OnThreadEnd(
+		function() : ( player )
+		{
+			if ( IsValid( player ) )
+			{
+				if ( player in file.whiteRavenPingActive )
+				{
+					file.whiteRavenPingActive[ player ] <- false
+				}
+			}
+		}
+	)
+
+	if( !IsValid( bird ) || bird == null )
+		return
+	EndSignal( bird, "OnDestroy" )
+
+	while( true )
+	{
+		if( !IsValid( waypoint ) )
+			return
+		WaitFrame()
+	}
+}
+#endif

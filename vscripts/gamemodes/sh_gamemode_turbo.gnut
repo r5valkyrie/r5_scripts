@@ -1,0 +1,563 @@
+#if SERVER || CLIENT
+global function Sh_Survival_BattleRush_Init
+#endif
+
+#if SERVER
+global function BattleRush_PlayEndMusic
+global function BattleRush_ClientCallback_StopMusic
+global function BattleRush_ClientCallback_PlayJumpMusic
+
+const int MUSIC_BATTLERUSH_RAMP_PLAYERCOUNT_STAGE_0 = 21
+const int MUSIC_BATTLERUSH_RAMP_PLAYERCOUNT_STAGE_1 = 15
+const int MUSIC_BATTLERUSH_RAMP_PLAYERCOUNT_STAGE_2 = 12
+const int MUSIC_BATTLERUSH_RAMP_PLAYERCOUNT_STAGE_3 = 9
+const int MUSIC_BATTLERUSH_RAMP_PLAYERCOUNT_STAGE_4 = 6
+#endif
+
+const string MUSIC_BATTLERUSH_JUMP = "Music_Turbo_Jump"
+#if CLIENT
+
+global function BattleRush_ServerCallback_PlayMatchEndMusic
+global function BattleRush_ServerCallback_UpdateMusicRampLevel
+global function BattleRush_ServerCallback_PlayGameplayMusic
+global function BattleRush_ServerCallback_PlayJumpMusic
+global function BattleRush_StopCharSelectMusic
+global function AutoCards_ServerCallback_RetrievalNotice
+
+// MUSIC
+const string MUSIC_BATTLERUSH_GAMEPLAY = "Music_Turbo_Gameplay"
+const string MUSIC_BATTLERUSH_VICTORY = "Music_Turbo_Victory"
+const string MUSIC_BATTLERUSH_DEFEAT = "Music_Turbo_Loss"
+const string MUSIC_BATTLERUSH_LOAD = "Music_Turbo_Load"
+const string MUSIC_BATTLERUSH_CHARSELECT = "Music_Turbo_CharacterSelect"
+const string MUSIC_BATTLERUSH_PODIUM = "Music_Turbo_Podium"
+const array< float > MUSIC_BATTLERUSH_RAMPUP_CONTROLLER_VALUES = [50.0, 100.0, 150.0, 200.0] // Indexed by eBattleRushMusicRampLevels, these are the controller values for the corresponding music levels
+const int MUSIC_RAMPUP_LEVEL_NOT_SET = -1
+#endif
+
+#if SERVER || CLIENT
+const int MUSIC_RAMP_MIN = 0
+const int MUSIC_RAMP_MAX = 4
+#endif
+
+#if CLIENT
+enum eBattleRushMusicRampLevels
+{
+	STAGE_1,
+	STAGE_2,
+	STAGE_3,
+	STAGE_FINAL,
+	_count
+}
+#endif //CLIENT
+
+struct
+{
+#if SERVER
+	bool firstFreefall
+#endif
+#if CLIENT
+	// Ramp up Music
+	entity musicEntity // Music entity used to play ramp up music as the match progresses
+	int musicRampUpLevel = MUSIC_RAMPUP_LEVEL_NOT_SET
+#endif
+} file
+
+#if SERVER || CLIENT
+void function Sh_Survival_BattleRush_Init()
+{
+	Sh_Survival_BattleRush_RegisterNetworking()
+
+#if CLIENT
+	AddCallback_ClientOnPlayerConnectionStateChanged( BattleRush_OnPlayerConnectionStateChanged )
+	SURVIVAL_AddCallback_OnDeathFieldStartShrink(OnDeathFieldStartShrink_Client)
+	AddCallback_OnCharacterSelectMenuOpened( OnCharacterSelectOpened )
+	AddCallback_GameStateEnter( eGameState.Resolution, Client_OnResolution )
+	AddCallback_GameStateEnter( eGameState.WaitingForPlayers, OnWaitingForPlayers_Client )
+	AddCallback_GameStateEnter( eGameState.PickLoadout, OnPickLoadout_Client )
+	AddCallback_OnPlayerDisconnected( OnPlayerDisconnected )
+
+#endif
+
+#if SERVER
+	Survival_AddCallback_PlayerFreefallBegin( OnPlayerFreefallBegin )
+	AddCallback_OnDeathBoxSpawned( AutoGrabBanners )
+	AddCallback_OnPlayerKilled( OnPlayerKilled )
+	file.firstFreefall = true
+#endif
+
+}
+#endif
+
+#if SERVER || CLIENT
+void function Sh_Survival_BattleRush_RegisterNetworking()
+{
+	Remote_RegisterClientFunction( "BattleRush_ServerCallback_PlayGameplayMusic" )
+	Remote_RegisterClientFunction( "BattleRush_ServerCallback_PlayMatchEndMusic", "bool" )
+	Remote_RegisterClientFunction( "BattleRush_ServerCallback_UpdateMusicRampLevel", "int", MUSIC_RAMP_MIN, MUSIC_RAMP_MAX )
+	Remote_RegisterClientFunction( "AutoCards_ServerCallback_RetrievalNotice" )
+	Remote_RegisterServerFunction( "BattleRush_ClientCallback_StopMusic" )
+	Remote_RegisterServerFunction( "BattleRush_ClientCallback_PlayJumpMusic" )
+
+}
+#endif //SERVER / CLIENT
+
+
+#if SERVER
+void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
+{
+	array<entity> players
+	players = GetPlayerArray_Alive()
+
+	int alivePlayers = players.len()
+
+	switch ( alivePlayers )
+	{
+		case MUSIC_BATTLERUSH_RAMP_PLAYERCOUNT_STAGE_0:
+			BattleRush_UpdateMusicRampForPlayers(0)
+			break
+		case MUSIC_BATTLERUSH_RAMP_PLAYERCOUNT_STAGE_1:
+			BattleRush_UpdateMusicRampForPlayers(1)
+			break
+		case MUSIC_BATTLERUSH_RAMP_PLAYERCOUNT_STAGE_2:
+			BattleRush_UpdateMusicRampForPlayers(2)
+			break
+		case MUSIC_BATTLERUSH_RAMP_PLAYERCOUNT_STAGE_3:
+			BattleRush_UpdateMusicRampForPlayers(3)
+			break
+		case MUSIC_BATTLERUSH_RAMP_PLAYERCOUNT_STAGE_4:
+			BattleRush_UpdateMusicRampForPlayers(4)
+			break
+		default:
+			return
+	}
+}
+#endif // SERVER
+
+#if SERVER
+void function OnPlayerTouchGround( entity player )
+{
+	if( !IsValidPlayer( player ) )
+		return
+
+	StopSoundOnEntity( player, MUSIC_BATTLERUSH_JUMP )
+	Remote_CallFunction_NonReplay( player, "BattleRush_ServerCallback_PlayGameplayMusic")
+	RemovePlayerMovementEventCallback( player, ePlayerMovementEvents.TOUCH_GROUND, OnPlayerTouchGround )
+}
+#endif //SERVER
+
+#if SERVER
+void function BattleRushSetWinnerFunctionality( int winningAlliance )
+{
+	// Play a different stinger depending on if the player won or lost and then trigger victory music based on the winning Alliance
+	array < entity > allPlayerAndSpectatorArray = GetPlayerArrayIncludingSpectators()
+	foreach( entity player in allPlayerAndSpectatorArray )
+	{
+		if ( IsValid( player ) )
+		{
+			StopAllMusicOnPlayer( player )
+			bool didLegendsWin = winningAlliance == player.GetTeam()
+			Remote_CallFunction_NonReplay( player, "BattleRush_ServerCallback_PlayMatchEndMusic", didLegendsWin )
+		}
+	}
+}
+#endif // SERVER
+
+#if SERVER
+void function OnPlayerFreefallBegin (entity player)
+{
+	if (file.firstFreefall == false)
+		return
+
+	AddPlayerMovementEventCallback( player, ePlayerMovementEvents.TOUCH_GROUND, OnPlayerTouchGround )
+	string music = MUSIC_BATTLERUSH_JUMP
+	if ( music.len() > 0 )
+	{
+		SignalSoundOnEntity( player, music )
+	}
+
+	file.firstFreefall = false
+}
+#endif // SERVER
+
+
+#if CLIENT
+void function BattleRush_OnPlayerConnectionStateChanged( entity player )
+{
+	if ( IsValid( player ) && player == GetLocalClientPlayer() )
+	{
+		// This function runs for connnects and disconnects, we only care about a reconnect
+		if ( player.IsConnectionActive() )
+		{
+			ResetMusicRampUpAtLevelForClient()
+		}
+	}
+}
+#endif // CLIENT
+
+#if CLIENT
+void function OnCharacterSelectOpened()
+{
+	entity player = GetLocalClientPlayer()
+	if ( IsValid( player ) )
+	{
+		BattleRush_PlayCharSelectMusic()
+	}
+}
+#endif // CLIENT
+
+#if CLIENT
+void function AutoCards_ServerCallback_RetrievalNotice()
+{
+	entity player = GetLocalClientPlayer()
+	if ( !IsValid( player ) )
+		return
+
+	AnnouncementData announcement = Announcement_Create( "#WAR_GAMESMODE_AUTO_CARDS_NOTICE" )
+	announcement.drawOverScreenFade = true
+	Announcement_SetHideOnDeath( announcement, true )
+	Announcement_SetDuration( announcement, 8.0 )
+	Announcement_SetPurge( announcement, true )
+	Announcement_SetStyle( announcement, ANNOUNCEMENT_STYLE_QUICK )
+	Announcement_SetSoundAlias( announcement, "" )
+	Announcement_SetTitleColor( announcement, GetKeyColor( COLORID_HUD_HEAL_COLOR ) )
+	AnnouncementFromClass( player, announcement )
+}
+#endif
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// AUDIO AND COMMENTARY
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#if CLIENT
+void function CreateMusicEntityIfNotValid()
+{
+	if ( !IsValid( file.musicEntity ) )
+	{
+		file.musicEntity = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", <0,0,10000>, <0, 0, 0> )
+		file.musicRampUpLevel = MUSIC_RAMPUP_LEVEL_NOT_SET
+	}
+}
+#endif // CLIENT
+
+
+#if CLIENT
+void function BattleRush_ServerCallback_PlayJumpMusic()
+{
+	Remote_ServerCallFunction( "BattleRush_ClientCallback_PlayJumpMusic")
+}
+#endif // CLIENT
+
+#if CLIENT
+void function OnWaitingForPlayers_Client()
+{
+	EmitUISound( "TurboBR_Intro_SraightShot_Seq" )
+}
+#endif // CLIENT
+
+#if CLIENT
+void function OnPickLoadout_Client()
+{
+	StopUISoundByName( "TurboBR_Intro_SraightShot_Seq" )
+}
+#endif // CLIENT
+
+
+#if CLIENT
+void function OnPlayerDisconnected( entity player )
+{
+	StopUISoundByName( "TurboBR_Intro_SraightShot_Seq" )
+}
+#endif
+
+#if CLIENT
+void function BattleRush_PlayCharSelectMusic()
+{
+	CreateMusicEntityIfNotValid()
+
+	if ( !IsValid( file.musicEntity ) )
+		return
+
+	EmitSoundOnEntity( file.musicEntity, MUSIC_BATTLERUSH_CHARSELECT )
+}
+#endif // CLIENT
+
+#if CLIENT
+void function BattleRush_StopCharSelectMusic()
+{
+	if ( !IsValid( file.musicEntity ) )
+		return
+
+	StopSoundOnEntity( file.musicEntity, MUSIC_BATTLERUSH_CHARSELECT )
+}
+#endif // CLIENT
+
+#if CLIENT
+void function BattleRush_ServerCallback_PlayGameplayMusic()
+{
+	UpdateMusicRampUpLevel(MUSIC_RAMPUP_LEVEL_NOT_SET)
+}
+#endif // CLIENT
+
+
+#if CLIENT
+// Stop music playing on ramp up music entity
+void function BattleRush_StopRampUpMusic()
+{
+	if ( IsValid( file.musicEntity ) )
+	{
+		StopSoundOnEntity( file.musicEntity, MUSIC_BATTLERUSH_GAMEPLAY )
+	}
+
+	file.musicRampUpLevel = MUSIC_RAMPUP_LEVEL_NOT_SET
+}
+#endif // CLIENT
+
+
+#if CLIENT
+void function UpdateMusicRampUpLevel( int newLevel )
+{
+	entity localPlayer = GetLocalClientPlayer()
+
+	if ( !IsValid( localPlayer ) )
+		return
+
+	CreateMusicEntityIfNotValid()
+	if ( !IsValid( file.musicEntity ) )
+		return
+
+	// Only change the level if the ramp is going up
+	if ( newLevel > file.musicRampUpLevel && newLevel < MUSIC_BATTLERUSH_RAMPUP_CONTROLLER_VALUES.len() )
+	{
+		// If setting for first time, start playing the music
+		if ( file.musicRampUpLevel == MUSIC_RAMPUP_LEVEL_NOT_SET )
+		{
+			EmitSoundOnEntity( file.musicEntity, MUSIC_BATTLERUSH_GAMEPLAY )
+			file.musicEntity.UnsetSoundCodeControllerValue()
+		}
+
+		float controllerValue = MUSIC_BATTLERUSH_RAMPUP_CONTROLLER_VALUES[ newLevel ]
+		file.musicEntity.SetSoundCodeControllerValue( controllerValue )
+		file.musicRampUpLevel = newLevel
+	}
+}
+#endif // CLIENT
+
+
+#if CLIENT
+// This is used when a player reconnects to a match
+// We reset the music entity and then trigger it at the appropriate level
+void function ResetMusicRampUpAtLevelForClient()
+{
+	// We only play ramp up music during the playing gamestate
+	if ( GetGameState() != eGameState.Playing )
+		return
+
+	entity localPlayer = GetLocalClientPlayer()
+
+	if ( !IsValid( localPlayer ) )
+		return
+
+	// Reset ramp up music level so when the ramp up is triggered we start playing the right music track
+	BattleRush_StopRampUpMusic()
+
+	// Set the music ramp to the appropriate level
+	int currentRing = SURVIVAL_GetCurrentDeathFieldStage()
+	if ( currentRing == 1 )
+		UpdateMusicRampUpLevel( eBattleRushMusicRampLevels.STAGE_1 )
+	else if ( currentRing == 2 )
+		UpdateMusicRampUpLevel( eBattleRushMusicRampLevels.STAGE_2 )
+	else if ( currentRing == 3 )
+		UpdateMusicRampUpLevel( eBattleRushMusicRampLevels.STAGE_3 )
+	else if ( currentRing == 4 )
+		UpdateMusicRampUpLevel( eBattleRushMusicRampLevels.STAGE_FINAL )
+
+}
+#endif // CLIENT
+
+#if CLIENT
+// Trigger a win or lose stinger when the match ends and then play music depending on which alliance won
+void function BattleRush_ServerCallback_PlayMatchEndMusic( bool didSquadWin )
+{
+	entity localPlayer = GetLocalClientPlayer()
+
+	if ( !IsValid( localPlayer ) )
+		return
+
+	// Stop ramp up music
+	BattleRush_StopRampUpMusic()
+
+	// Play match end music
+	//if ( didLocalAllianceWin )
+		// TODO replace with turbo stingers Shicks
+		//EmitUISound( SFX_SHADOWARMY_MATCH_WIN_STINGER )
+	//else
+	//	EmitUISound( SFX_SHADOWARMY_MATCH_LOSE_STINGER )
+
+	CreateMusicEntityIfNotValid()
+	if ( !IsValid( file.musicEntity ) )
+		return
+
+	// Victory music doesn't care about if your alliance won or lost, it is just dependant on which alliance won
+	if ( didSquadWin )
+		EmitSoundOnEntity( file.musicEntity, MUSIC_BATTLERUSH_VICTORY )
+	else
+		EmitSoundOnEntity( file.musicEntity, MUSIC_BATTLERUSH_DEFEAT )
+}
+#endif // CLIENT
+
+
+#if CLIENT
+void function OnDeathFieldStartShrink_Client( DeathFieldStageData deathFieldData )
+{
+	int currentRing = SURVIVAL_GetCurrentDeathFieldStage()
+	switch ( currentRing )
+	{
+		case 0:
+			break
+		case 1:
+			UpdateMusicRampUpLevel( eBattleRushMusicRampLevels.STAGE_1 )
+			break
+		case 2:
+			UpdateMusicRampUpLevel( eBattleRushMusicRampLevels.STAGE_2 )
+			break
+		case 3:
+			UpdateMusicRampUpLevel( eBattleRushMusicRampLevels.STAGE_3 )
+			break
+		case 4:
+			UpdateMusicRampUpLevel( eBattleRushMusicRampLevels.STAGE_FINAL )
+			break
+		default:
+			return
+	}
+}
+#endif //CLIENT
+
+#if CLIENT
+void function BattleRush_ServerCallback_UpdateMusicRampLevel ( int rampLevel )
+{
+	switch ( rampLevel )
+	{
+		case 0:
+			break
+		case 1:
+			UpdateMusicRampUpLevel( eBattleRushMusicRampLevels.STAGE_1 )
+			break
+		case 2:
+			UpdateMusicRampUpLevel( eBattleRushMusicRampLevels.STAGE_2 )
+			break
+		case 3:
+			UpdateMusicRampUpLevel( eBattleRushMusicRampLevels.STAGE_3 )
+			break
+		case 4:
+			UpdateMusicRampUpLevel( eBattleRushMusicRampLevels.STAGE_FINAL )
+			break
+		default:
+			return
+	}
+}
+#endif //CLIENT
+
+#if CLIENT
+void function Client_OnResolution( )
+{
+	entity localPlayer = GetLocalViewPlayer()
+	if ( IsValid( localPlayer ) )
+		EmitSoundOnEntity( localPlayer, MUSIC_BATTLERUSH_PODIUM)
+}
+#endif // CLIENT
+
+
+#if SERVER
+void function BattleRush_PlayEndMusic( int winningSquad )
+{
+	array < entity > allPlayerAndSpectatorArray = GetPlayerArrayIncludingSpectators()
+	foreach( entity player in allPlayerAndSpectatorArray )
+	{
+		if ( IsValid( player ) )
+		{
+			bool didSquadWin = winningSquad == player.GetTeam()
+			StopAllMusicOnPlayer( player )
+			Remote_CallFunction_NonReplay( player, "BattleRush_ServerCallback_PlayMatchEndMusic", didSquadWin )
+		}
+
+	}
+}
+#endif //SERVER
+
+// Jump music needs to be started server side to allow us to 'signal' the track on jump - shicks
+#if SERVER
+void function BattleRush_ClientCallback_PlayJumpMusic( entity player )
+{
+	if ( !IsValid( player ) )
+		return
+	EmitSoundOnEntityOnlyToPlayer( player, player, MUSIC_BATTLERUSH_JUMP )
+
+}
+#endif // SERVER
+
+#if SERVER
+void function BattleRush_UpdateMusicRampForPlayers(int rampLevel)
+{
+	foreach ( player in GetPlayerArray() )
+		Remote_CallFunction_NonReplay( player, "BattleRush_ServerCallback_UpdateMusicRampLevel", rampLevel)
+}
+#endif //SERVER
+
+
+#if SERVER
+void function BattleRush_ClientCallback_StopMusic(entity player)
+{
+	if( !IsValidPlayer( player ) )
+		return
+	StopAllMusicOnPlayer(player)
+}
+#endif //SERVER
+
+#if SERVER
+// Automatically pick up banners from deathboxes, Use with AddCallback_OnDeathBoxSpawned()
+void function AutoGrabBanners(entity deathbox, entity attacker, int damageSourceID )
+{
+	if ( !GetCurrentPlaylistVarBool( "has_auto_banners", false ) )
+		return
+
+	entity owner = deathbox.GetOwner()
+	entity dna = deathbox.e.utilityEnt
+
+	if ( !IsValid( dna ) )
+		return
+
+	if ( IsValid( owner ) )
+	{
+		array < entity > teammates = GetPlayerArrayOfTeam_Alive( owner.GetTeam() )
+
+		if ( teammates.len() != 0 )
+		{
+			entity squadMember = teammates[0]
+			owner.SetPlayerNetInt( "respawnStatus", eRespawnStatus.WAITING_FOR_DELIVERY )
+			owner.SetPlayerNetTime( "respawnStatusEndTime", 0 )
+			owner.SetPlayerNetTime( "respawnBannerPickedUpTime", Time() )
+			SetTeam( deathbox, TEAM_UNASSIGNED )
+
+			PingNearestRespawnBeacon( owner, squadMember.GetOrigin() )
+
+			                    
+				UpgradeCore_OnBannerPickup( squadMember, owner )
+         
+
+			PlayBattleChatterLineToSpeakerAndTeam( squadMember, "bc_gotFriendlyBanner" )
+
+			PIN_PlayerBannerPickup( squadMember, dna )
+
+			if( IsValid(dna) )
+				dna.Destroy()
+
+			Remote_CallFunction_NonReplay( squadMember, "AutoCards_ServerCallback_RetrievalNotice" )
+		}
+	}
+}
+#endif // SERVER
+ 

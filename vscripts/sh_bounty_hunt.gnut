@@ -1,0 +1,1831 @@
+                  
+global function BountyHunt_Init
+global function GetTheHuntStartWaitTime
+#if SERVER
+global function GiveBounty
+global function Bounty_TrackRavenSpawn
+#endif
+
+#if CLIENT
+global function ServerToClient_HandleShowEnemyLocation
+global function ServerToClient_Bounty_ActivateWhiteRavenIconRUI
+global function ServerToClient_DisplayHuntStart
+global function ServerToClient_SendHuntAnnouncement
+global function ServerToClient_ActivateDataPadFX
+global function ServerToClient_ApplyHunterVFX
+global function ServerToClient_ClientHuntEndSignal
+global function Bounty_CreateNestedHuntHud
+global function Bounty_UpdateHudInfoFromState
+global function Bounty_UpdateThreatLevelHud
+#endif
+
+global enum eBountyHuntState
+{
+	NONE,
+	AVAILABLE,
+	HUNTER_INTRO,
+	HUNTER_PULSE,
+	HUNTER_LOW_TIME,
+	PREY
+}
+
+global enum eBountyHuntThreatLevel
+{
+	NONE,
+	LOW,
+	MEDIUM,
+	HIGH
+}
+
+global enum eBountyHuntWidgetId
+{
+	NONE,
+	INTRO,
+	TRANSITION,
+	HUNTER_INTRO,
+	HUNTER_PULSE,
+	HUNTER_OUTRO,
+	PREY_INTRO,
+	PREY_PULSE,
+	PREY_OUTRO
+}
+
+global enum eBountyHuntAnnouncements
+{
+	SKYDIVE,
+	HUNTS_AVAILABLE,
+	HUNTER_START,
+	HUNTER_MARK_ELIMINATED,
+	HUNTER_MARK_POACHED,
+	HUNTER_EXPIRED,
+	HUNTER_POACHED,
+	HUNTER_SUCCESS,
+	PREY_START,
+	PREY_SUCCESS,
+	PREY_KILLED_HUNTERS,
+	COUNT
+}
+
+#if CLIENT
+global struct BountyHuntStateData
+{
+	string objectiveText = ""
+	string subObjectiveText = ""
+
+	int widgetId = 0
+
+	// For changing widget id after a delay
+	int delayedWidgetId = eBountyHuntWidgetId.NONE
+	float timeBeforeUsingDelayedWidget = 0
+
+	bool displayNothing = false
+
+	vector widgetTopColor = <1, 1, 1>
+	vector widgetBottomTimeColor = <0, 0, 0>
+}
+
+global struct BountyHuntAnnouncementData
+{
+	string 	header = ""
+	string 	subHeader = ""
+	float 	duration = 3.0
+	int 	style = ANNOUNCEMENT_STYLE_GENERIC_WARNING
+	asset 	icon = $""
+	int 	priority = 0
+	string 	soundAlias = SFX_HUD_ANNOUNCE_STANDARD
+
+	vector logoColor = <1, 1, 1>
+	vector objectiveTextColor = <1, 1, 1>
+	vector subObjectiveTextColor = <1, 1, 1>
+}
+#endif
+
+struct
+{
+	//1st int is Hunter team, 2nd int is prey team
+	table < int, int > hunterTeamsRecord
+	//1st int is prey team, 2nd int is Hunter team
+	table < int, int > preyTeamsRecord
+
+	array< string > lootRefs = [
+		"health_pickup_combo_large",
+		"health_pickup_combo_large",
+		"health_pickup_combo_large",
+		"health_pickup_health_large",
+		"health_pickup_health_large",
+		"health_pickup_health_large",
+		"backpack_pickup_lv3"
+	]
+
+	table < entity , int > effectRecord
+	bool canGetHunt = false
+	table < int, bool > diedTeams
+	#if CLIENT
+		var nestedHuntTrackerRui
+		bool huntTrackerHudCreated = false
+		int currentBountyHuntState = eBountyHuntState.NONE
+		int currentThreatLevel = eBountyHuntThreatLevel.NONE
+		float lastStateChangeTime = 0
+		int preyRemaining = 0
+		int totalPrey = 0
+		float bountyHuntEndTime = 0
+		table < int, BountyHuntStateData > bountyHuntStateDataTable = {}
+		table < int, BountyHuntAnnouncementData > bountyHuntAnnouncementData = {}
+	#endif
+}file
+
+global float BOUNTY_DURATION 					= 360
+global const float CLOSE_DISTANCE_SQR			= ( 100 * METERS_TO_INCHES ) * ( 100 * METERS_TO_INCHES )
+global const float FAR_DISTANCE_SQR				= ( 700 * METERS_TO_INCHES ) * ( 700 * METERS_TO_INCHES )
+global const float MAX_DISTANCE_ALLOWED_SQR 	= ( 800 * METERS_TO_INCHES ) * ( 800 * METERS_TO_INCHES )
+global const float PREY_DETECT_RANGE_CLOSE		= 100 * METERS_TO_INCHES
+global const float PREY_DETECT_RANGE_CLOSE_SQR	= PREY_DETECT_RANGE_CLOSE * PREY_DETECT_RANGE_CLOSE
+global const float PREY_DETECT_RANGE_MID		= 200 * METERS_TO_INCHES
+global const float PREY_DETECT_RANGE_MID_SQR	= PREY_DETECT_RANGE_MID * PREY_DETECT_RANGE_MID
+global const float PREY_SCAN_TIME 				= 25
+global const float HUNTER_SCAN_TIME				= 1.0
+global const string BOUNTY_END_SIGNAL			= "BountyHuntEnd"
+global const float BOUNTY_SPAWN_INTERVAL 		= 20
+global const string HUNT_DATAPAD_TARGETNAME     = "Hunt"
+global const asset MINIMAP_PREY_ICON			= $"rui/hud/minimap/compass_icon_hunt_prey"
+
+const asset TEMP_HUNT_PAD 						= $"mdl/props/ultimate_accelerant/ultimate_accelerant.rmdl"
+const string ANIM_THE_HUNT_PICK_UP 				= "ptpov_hunt_card_activate_seq"
+const asset VFX_HUNT_LOOTTICK_SPAWN             = $"P_loot_tick_hunt_appear"
+const asset VFX_HUNT_DATAPAD_IDEL				= $"P_hunt_inf_card"
+const asset VFX_THE_HUNT_LOCK_ON				= $"P_revNade_lockon_sprite"
+
+const string HUNT_HUNT_AVAILABLE_SOUND			= "Hunt_InnerBeast_UI_Status_Generic_Hunt_Available"
+const string HUNT_TIME_RUNNING_OUT_SOUND 		= "Hunt_InnerBeast_UI_Status_Generic_TimeRunningOut"
+const string HUNT_HUNTER_START_SOUND 			= "Hunt_InnerBeast_UI_Status_Hunters_Hunt_Start"
+const string HUNT_HUNTER_SUCCESS_SOUND 			= "Hunt_InnerBeast_UI_Status_Hunters_Hunt_End_Success"
+const string HUNT_HUNTER_FAIL_SOUND 			= "Hunt_InnerBeast_UI_Status_Hunters_Hunt_End_Failure"
+const string HUNT_PREY_START_SOUND 				= "Hunt_InnerBeast_UI_Status_Prey_Hunt_Start"
+const string HUNT_PREY_SUCCESS_SOUND 			= "Hunt_InnerBeast_UI_Status_Prey_Hunt_End_Success"
+const string HUNT_LOOT_TICK_SPAWN_SOUND			= "Hunt_InnerBeast_LootTick_Spawn"
+const string HUNT_DATAPAD_SPAWN_SOUND			= "Hunt_InnerBeast_Datapad_Spawn"
+
+const float HUNT_ANNOUNCEMENT_DURATION 			= 5.0
+
+// Colors
+const vector HUNT_ANNOUNCEMENT_NEUTRAL_COLOR			= <1, 1, 1>
+const vector HUNT_ANNOUNCEMENT_HUNTER_LOGO_COLOR 		= <111.0, 41.0, 255.0> / 255.0
+const vector HUNT_ANNOUNCEMENT_HUNTER_OBJTEXT_COLOR 	= <126.0, 52.0, 217.0> / 255.0
+const vector HUNT_ANNOUNCEMENT_HUNTER_SUBOBJTEXT_COLOR 	= <28.0, 5.0, 52.0> / 255.0
+const vector HUNT_ANNOUNCEMENT_PREY_LOGO_COLOR 			= <255.0, 86.0, 41.0> / 255.0
+const vector HUNT_ANNOUNCEMENT_PREY_OBJTEXT_COLOR 		= <255.0, 69.0, 20.0> / 255.0
+const vector HUNT_ANNOUNCEMENT_PREY_SUBOBJTEXT_COLOR 	= <128.0, 23.0, 0.0> / 255.0
+
+const vector HUNT_WIDGET_HUNTER_MAIN			= <111.0, 41.0, 255.0> / 255.0
+const vector HUNT_WIDGET_HUNTER_TIME			= <192.0, 106.0, 229.0> / 255.0
+const vector HUNT_WIDGET_PREY_MAIN				= <255.0, 86.0, 41.0> / 255.0
+const vector HUNT_WIDGET_PREY_TIME				= <247.0, 130.0, 99.0> / 255.0
+
+const vector HUNT_WIDGET_PREY_THREAT_PIP_FULL	= <192.0, 40.0, 0.0> / 255.0
+const vector HUNT_WIDGET_PREY_THREAT_PIP_EMPTY	= <1, 1, 1>
+
+// Net Vars
+const string HUNT_NETVAR_STATE 					= "currentBountyHuntState"
+const string HUNT_NETVAR_THREAT_LEVEL			= "currentBountyHuntThreatLevel"
+const string HUNT_NETVAR_PREY_REMAINING 		= "bountyHuntPreyRemaining"
+const string HUNT_NETVAR_TOTAL_PREY				= "bountyHuntTotalPrey"
+const string HUNT_NETVAR_END_TIME				= "bountyHuntEndTime"
+
+void function BountyHunt_Init()
+{
+	PrecacheModel( TEMP_HUNT_PAD )
+	PrecacheParticleSystem( VFX_HUNT_LOOTTICK_SPAWN )
+	PrecacheParticleSystem( VFX_HUNT_DATAPAD_IDEL )
+	PrecacheParticleSystem( VFX_THE_HUNT_LOCK_ON )
+
+	RegisterSignal( BOUNTY_END_SIGNAL )
+
+	RegisterNetworkedVariable( HUNT_NETVAR_STATE, SNDC_PLAYER_EXCLUSIVE, SNVT_INT, eBountyHuntState.NONE )
+	RegisterNetworkedVariable( HUNT_NETVAR_THREAT_LEVEL, SNDC_PLAYER_EXCLUSIVE, SNVT_INT, eBountyHuntThreatLevel.NONE )
+	RegisterNetworkedVariable( HUNT_NETVAR_PREY_REMAINING, SNDC_PLAYER_EXCLUSIVE, SNVT_INT, 0 )
+	RegisterNetworkedVariable( HUNT_NETVAR_TOTAL_PREY, SNDC_PLAYER_EXCLUSIVE, SNVT_INT, 0 )
+	RegisterNetworkedVariable( HUNT_NETVAR_END_TIME, SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, -1 )
+
+	#if CLIENT
+		RegisterNetVarIntChangeCallback( HUNT_NETVAR_STATE, OnBountyHuntStateChanged_Client )
+		RegisterNetVarIntChangeCallback( HUNT_NETVAR_THREAT_LEVEL, OnBountyHuntThreatLevelChanged_Client )
+		RegisterNetVarIntChangeCallback( HUNT_NETVAR_PREY_REMAINING, OnBountyHuntPreyRemainingChanged_Client )
+		RegisterNetVarIntChangeCallback( HUNT_NETVAR_TOTAL_PREY, OnBountyHuntTotalPreyChanged_Client )
+		RegisterNetVarTimeChangeCallback( HUNT_NETVAR_END_TIME, OnBountyHuntEndTimeChanged_Client )
+	#endif
+
+	Remote_RegisterClientFunction( "ServerToClient_HandleShowEnemyLocation", "entity", "entity" )
+	Remote_RegisterClientFunction( "ServerToClient_ActivateDataPadFX", "entity", "entity" )
+	Remote_RegisterClientFunction( "ServerToClient_Bounty_ActivateWhiteRavenIconRUI", "entity", "entity" )
+	Remote_RegisterClientFunction( "ServerToClient_DisplayHuntStart", "entity" )
+	Remote_RegisterClientFunction( "ServerToClient_SendHuntAnnouncement", "int", 0, eBountyHuntAnnouncements.COUNT )
+	Remote_RegisterClientFunction( "ServerToClient_ApplyHunterVFX", "entity", "int", 0, ABSOLUTE_MAX_TEAMS + 1 )
+	Remote_RegisterClientFunction( "ServerToClient_ClientHuntEndSignal", "entity" )
+#if SERVER
+
+
+	AddCallback_OnPlayerKilled( Bounty_OnPlayerKill )
+	AddCallback_OnPlayerRespawned( Bounty_OnPlayerRespawned )
+	AddCallback_OnSurvivalDeathFieldStageChanged( OnDeathfieldStageChanged )
+#endif
+
+#if CLIENT
+	Hunt_OverrideGameState()
+	Hunt_CreateStateDataTable()
+	Hunt_CreateAnnouncementDataTable()
+	AddCallback_GameStateEnter( eGameState.Playing, Bounty_CreateNestedHuntHud )
+#endif
+
+	RegisterCustomItemPickupAction( "sh_bounty_hunt", Bounty_ItemPickup )
+}
+
+#if SERVER
+void function GiveBounty( entity player )
+{
+	if ( !IsValid( player ) )
+		return
+
+	int hunterTeam = player.GetTeam()
+
+	if ( hunterTeam in file.hunterTeamsRecord || hunterTeam in file.preyTeamsRecord )
+		return
+
+	array < int > availablePreyTeams
+	array < int > teams = GetAllValidPlayerTeams()
+	int aliveTeamsCount = 0
+
+	foreach ( playerTeam in teams )
+	{
+		if ( GetPlayerArrayOfTeam_Alive( playerTeam ).len() >= 1 )
+		{
+			aliveTeamsCount++
+		}
+	}
+
+	if ( aliveTeamsCount <= 2 )
+	{
+		return
+	}
+
+	foreach ( team in teams )
+	{
+		if ( team != hunterTeam && GetPlayerArrayOfTeam_Alive( team ).len() >= 1 && !( team in file.preyTeamsRecord ) && !( team in file.hunterTeamsRecord ) )
+		{
+			availablePreyTeams.append( team )
+		}
+	}
+
+	//does not allow prey team to hunt its hunter
+	if ( hunterTeam in file.preyTeamsRecord )
+	{
+		availablePreyTeams.removebyvalue( file.preyTeamsRecord[hunterTeam] )
+	}
+
+	int closesPreyTeam = -1
+	float closesDistance = FLT_MAX
+
+	foreach ( preyTeam in availablePreyTeams )
+	{
+		array < entity > preyPlayers = GetPlayerArrayOfTeam_Alive( preyTeam )
+
+		float distanceSqr = DistanceSqr( player.GetOrigin(), preyPlayers[0].GetOrigin() )
+
+		if ( distanceSqr < closesDistance )
+		{
+			closesPreyTeam = preyTeam
+			closesDistance = distanceSqr
+		}
+	}
+
+	thread PlayFirstPersonAnimation( player, ANIM_THE_HUNT_PICK_UP )
+
+	if ( closesPreyTeam != -1 )
+	{
+		//int preyTeam = availablePreyTeams[RandomInt( availablePreyTeams.len() )]
+		file.hunterTeamsRecord[ hunterTeam ] <- closesPreyTeam
+		file.preyTeamsRecord[ closesPreyTeam ] <- hunterTeam
+		if ( closesDistance <= CLOSE_DISTANCE_SQR )
+		{
+			BOUNTY_DURATION = 240
+		}
+		else if	( closesDistance >= FAR_DISTANCE_SQR )
+		{
+			BOUNTY_DURATION = 480
+		}
+		else
+		{
+			BOUNTY_DURATION = 360
+		}
+		HuntStart( player, hunterTeam, closesPreyTeam )
+	}
+}
+
+void function PingPreyLocation( entity attacker, entity victim )
+{
+	CreateWaypoint_Ping_Location( attacker, ePingType.THE_HUNT_AREA_HUNTER, victim, victim.GetOrigin(), -1, false, true )
+}
+
+void function PingHunterLocation( entity attacker, entity victim )
+{
+	CreateWaypoint_Ping_Location( attacker, ePingType.THE_HUNT_AREA_PREY, victim, victim.GetOrigin(), -1, false, true )
+}
+
+void function HuntStart( entity hunter, int hunterTeam, int preyTeam )
+{
+	thread TrackHunt_Thread( hunter, hunterTeam, preyTeam )
+	thread Bounty_PingTeams_Thread( hunterTeam, preyTeam )
+	thread Bounty_UpdatePreyThreatMeter_Thread( hunterTeam, preyTeam )
+	Bounty_HandleBountyStatusEffect_Start( hunterTeam, preyTeam )
+
+	array< entity > hunterTeamPlayers = GetPlayerArrayOfTeam_Alive( hunterTeam )
+	array< entity > preyTeamPlayers = GetPlayerArrayOfTeam_Alive( preyTeam )
+
+	foreach ( hunterPlayer in hunterTeamPlayers )
+	{
+		PlayBattleChatterLineToPlayer( "bc_Hunt_BeginHunter", hunterPlayer, hunterPlayer )
+	}
+
+	foreach ( preyPlayer in preyTeamPlayers )
+	{
+		Remote_CallFunction_NonReplay( preyPlayer, "ServerToClient_ApplyHunterVFX", preyPlayer, hunterTeam )
+		PlayBattleChatterLineToPlayer( "bc_Hunt_BeginPrey", preyPlayer, preyPlayer )
+	}
+
+
+}
+
+void function TrackHunt_Thread( entity hunter, int hunterTeam, int preyTeam )
+{
+	float bailTime = Time() + BOUNTY_DURATION
+
+	OnThreadEnd(
+		function() : ( hunterTeam, preyTeam )
+		{
+			array< entity > hunterTeamPlayers = GetPlayerArrayOfTeam_Alive( hunterTeam )
+			array< entity > preyTeamPlayers = GetPlayerArrayOfTeam_Alive( preyTeam )
+
+			if ( hunterTeam in file.hunterTeamsRecord )
+			{
+				if ( hunterTeamPlayers.len() >= 1 && preyTeamPlayers.len() >= 1 )
+				{
+					foreach ( hunter in hunterTeamPlayers )
+					{
+						Remote_CallFunction_NonReplay( hunter, "ServerToClient_SendHuntAnnouncement", eBountyHuntAnnouncements.HUNTER_EXPIRED )
+						PlayBattleChatterLineToPlayer( "bc_Hunt_FailHunter", hunter, hunter )
+						hunter.SetPlayerNetInt( HUNT_NETVAR_STATE, eBountyHuntState.AVAILABLE )
+					}
+				}
+			}
+
+			if ( preyTeam in file.preyTeamsRecord )
+			{
+				Bounty_HuntFinish( hunterTeam, preyTeam )
+				if ( preyTeamPlayers.len() >= 1 && hunterTeamPlayers.len() >= 1 )
+				{
+					foreach ( prey in preyTeamPlayers )
+					{
+						Remote_CallFunction_NonReplay( prey, "ServerToClient_SendHuntAnnouncement", eBountyHuntAnnouncements.PREY_SUCCESS )
+						Remote_CallFunction_NonReplay( prey, "ServerToClient_ClientHuntEndSignal", prey )
+						prey.SetPlayerNetInt( HUNT_NETVAR_STATE, eBountyHuntState.AVAILABLE )
+						PlayBattleChatterLineToPlayer( "bc_Hunt_FailPrey", prey, prey )
+						UpgradeCore_IncrementXP( prey, 200, false, eUpgradeXPActions.HUNTSURVIVED, true )
+					}
+				}
+			}
+		}
+	)
+
+	bool hasNotifiedHuntersOfLowTime = false
+	while ( Time() < bailTime )
+	{
+		if ( GetPlayerArrayOfTeam_Alive( hunterTeam ).len() <= 0 )
+		{
+			break
+		}
+		if ( GetPlayerArrayOfTeam_Alive( preyTeam ).len() <= 0 )
+		{
+			break
+		}
+
+		// If our remaining time is low, we update the Hunter UI state to show low time
+		if ( !hasNotifiedHuntersOfLowTime )
+		{
+			float timeRemaining = bailTime - Time()
+			if ( timeRemaining <= SECONDS_PER_MINUTE )
+			{
+				hasNotifiedHuntersOfLowTime = true
+
+				array< entity > hunterTeamPlayers = GetPlayerArrayOfTeam_Alive( hunterTeam )
+				foreach ( hunterPlayer in hunterTeamPlayers )
+				{
+					hunterPlayer.SetPlayerNetInt( HUNT_NETVAR_STATE, eBountyHuntState.HUNTER_LOW_TIME )
+					EmitSoundOnEntityOnlyToPlayer( hunterPlayer, hunterPlayer, HUNT_TIME_RUNNING_OUT_SOUND )
+				}
+			}
+		}
+
+		wait 1
+	}
+}
+
+void function Bounty_PingTeams_Thread( int hunterTeam, int preyTeam )
+{
+	while ( hunterTeam in file.hunterTeamsRecord )
+	{
+		array< entity > preyPlayers = GetPlayerArrayOfTeam_Alive( preyTeam )
+		foreach ( target in preyPlayers )
+		{
+			Assert( IsValid( target ) )
+			if ( IsAlive( target  ) )
+			{
+				array < entity > hunterPlayers = GetPlayerArrayOfTeam_Alive( hunterTeam )
+				foreach ( hunterPlayer in hunterPlayers )
+				{
+					Remote_CallFunction_NonReplay( hunterPlayer, "ServerToClient_HandleShowEnemyLocation", hunterPlayer, target )
+					float distanceSqr = DistanceSqr( hunterPlayer.GetOrigin(), target.GetOrigin() )
+					if ( distanceSqr >= PREY_DETECT_RANGE_CLOSE_SQR )
+					{
+						PingPreyLocation( hunterPlayer, target )
+					}
+					else
+					{
+						PingPreyLocation( hunterPlayer, target )
+						PingHunterLocation( target, hunterPlayer )
+					}
+				}
+			}
+		}
+
+		wait PREY_SCAN_TIME
+	}
+}
+
+void function Bounty_UpdatePreyThreatMeter_Thread( int hunterTeam, int preyTeam )
+{
+	while ( hunterTeam in file.hunterTeamsRecord )
+	{
+		array< entity > preyPlayers = GetPlayerArrayOfTeam_Alive( preyTeam )
+		foreach ( target in preyPlayers )
+		{
+			Assert( IsValid( target ) )
+			if ( IsAlive( target ) )
+			{
+				float closestDistance = FLT_MAX
+				array< entity > hunterPlayers = GetPlayerArrayOfTeam_Alive( hunterTeam )
+				foreach ( hunterPlayer in hunterPlayers )
+				{
+					float distance = DistanceSqr( hunterPlayer.GetOrigin(), target.GetOrigin() )
+					if ( distance < closestDistance )
+						closestDistance = distance
+				}
+
+				// If no hunters are left alive and we just haven't been updated about it yet, let's not set the state
+				if ( hunterPlayers.len() > 0 )
+				{
+					// Set High/Medium/Low here
+					int threatLevel = eBountyHuntThreatLevel.LOW
+
+					if ( closestDistance >= PREY_DETECT_RANGE_MID_SQR )
+					{
+						threatLevel = eBountyHuntThreatLevel.LOW
+					}
+					else if ( closestDistance >= PREY_DETECT_RANGE_CLOSE_SQR && closestDistance < PREY_DETECT_RANGE_MID_SQR )
+					{
+						threatLevel = eBountyHuntThreatLevel.MEDIUM
+					}
+					else
+					{
+						threatLevel = eBountyHuntThreatLevel.HIGH
+					}
+
+					// Set the threat state for the prey player
+					target.SetPlayerNetInt( HUNT_NETVAR_THREAT_LEVEL, threatLevel )
+				}
+			}
+		}
+
+		wait HUNTER_SCAN_TIME
+	}
+}
+
+void function Bounty_HuntFinish( int hunterTeam, int preyTeam )
+{
+	//Bounty_HandleBountyStatusEffect_End( hunterTeam, preyTeam )
+
+	delete file.hunterTeamsRecord[hunterTeam]
+	delete file.preyTeamsRecord[preyTeam]
+}
+
+void function SpawnBountyReward( entity player, vector location )
+{
+	array< string > rewards = SURVIVAL_GetMultipleWeightedItemsFromGroup( "crate_weapons_earlygame", 1 )
+	foreach ( thing in file.lootRefs )
+	{
+		rewards.append( thing )
+	}
+	vector spawnLocation = location + <RandomInt( 75 ), RandomInt( 75 ), 0>
+	vector safeSpotOnNavmesh = NavMesh_GetClosestPoint( spawnLocation )
+
+	entity tick = LootTicks_SpawnLootTickAtOrigin( safeSpotOnNavmesh, <0, 0, 0>, rewards, 5 )
+	tick.SetSkin( 108 )
+	PutEntityInSafeSpot( tick, null, null, safeSpotOnNavmesh, safeSpotOnNavmesh )
+
+	EmitSoundOnEntity( tick, HUNT_LOOT_TICK_SPAWN_SOUND )
+
+	int fxIndex = GetParticleSystemIndex( VFX_HUNT_LOOTTICK_SPAWN )
+
+	thread CreateLootBeam( tick )
+
+	StartParticleEffectInWorld( fxIndex, safeSpotOnNavmesh, <0, 0, 0> )
+}
+
+void function CreateLootBeam( entity tick )
+{
+	tick.EndSignal( "OnDeath" )
+	tick.EndSignal( "OnDestroy" )
+
+	int beamIndex = GetParticleSystemIndex( FX_AIRDROP_BEAM_CP )
+	entity beamFx = StartParticleEffectInWorld_ReturnEntity( beamIndex, tick.GetOrigin(), tick.GetAngles() + <0, 180, 0> )
+	EffectSetControlPointColorById( beamFx, 1, COLORID_HUD_LOOT_TIER_SPECIAL )
+	OnThreadEnd(
+		function() : ( beamFx )
+		{
+			if ( IsValid( beamFx ) )
+				beamFx.Destroy()
+		}
+	)
+	WaitForever()
+}
+
+bool function Bounty_CheckForTeamBleedout( int team )
+{
+	array<entity> teamPlayers = GetPlayerArrayOfTeam( team )
+	foreach ( entity teamPlayer in teamPlayers )
+	{
+		if ( IsAlive( teamPlayer ) && !Bleedout_IsBleedingOut( teamPlayer ) )
+			return false
+
+		if ( IsAlive( teamPlayer ) && Bleedout_IsBleedingOut( teamPlayer ) && ( Bleedout_GetSelfResEnabled( teamPlayer ) || Bleedout_IsPlayerGettingFirstAid( teamPlayer ) ) )
+			return false
+	}
+
+	return true
+}
+
+void function Bounty_OnPlayerKill( entity victim, entity attacker, var damageInfo )
+{
+	if ( IsValid( victim ) && IsValid( attacker ) )
+	{
+		int attackTeam = attacker.GetTeam()
+		int victimTeam = victim.GetTeam()
+
+		if ( victimTeam in file.diedTeams )
+			return
+
+		if ( Bounty_CheckForTeamBleedout( victimTeam ) )
+		{
+			//check if hunter killed prey
+			if ( attackTeam in file.hunterTeamsRecord )
+			{
+				if ( file.hunterTeamsRecord[attackTeam] == victimTeam )
+				{
+					array< entity > hunterPlayers = GetPlayerArrayOfTeam_Alive( attackTeam )
+					foreach ( hunter in hunterPlayers )
+					{
+						UpgradeCore_IncrementXP( hunter, 500, false, eUpgradeXPActions.HUNTSUCCESS, true )
+						Remote_CallFunction_NonReplay( hunter, "ServerToClient_SendHuntAnnouncement", eBountyHuntAnnouncements.HUNTER_SUCCESS )
+						PlayBattleChatterLineToPlayer( "bc_Hunt_SuccessHunter", hunter, hunter )
+						hunter.SetPlayerNetInt( HUNT_NETVAR_STATE, eBountyHuntState.AVAILABLE )
+					}
+					SpawnBountyReward( attacker, victim.GetOrigin() )
+					file.diedTeams[ victimTeam ] <- true
+				}
+			}
+			//check if prey killed hunter
+			if ( attackTeam in file.preyTeamsRecord )
+			{
+				if ( file.preyTeamsRecord[attackTeam] == victimTeam )
+				{
+					array< entity > preyPlayers = GetPlayerArrayOfTeam_Alive( attackTeam )
+					foreach ( prey in preyPlayers )
+					{
+						UpgradeCore_IncrementXP( prey, 500, false, eUpgradeXPActions.HUNTSUCCESS, true )
+						Remote_CallFunction_NonReplay( prey, "ServerToClient_SendHuntAnnouncement", eBountyHuntAnnouncements.PREY_KILLED_HUNTERS )
+						PlayBattleChatterLineToPlayer( "bc_Hunt_FailPrey", prey, prey )
+						prey.SetPlayerNetInt( HUNT_NETVAR_STATE, eBountyHuntState.AVAILABLE )
+						Remote_CallFunction_NonReplay( prey, "ServerToClient_ClientHuntEndSignal", prey )
+					}
+					SpawnBountyReward( attacker, victim.GetOrigin() )
+					file.diedTeams[ victimTeam ] <- true
+				}
+			}
+			//if a hunter team died by some other reason
+			if ( victimTeam in file.hunterTeamsRecord )
+			{
+				if ( file.hunterTeamsRecord[victimTeam] != attackTeam )
+				{
+					int preyTeam = file.hunterTeamsRecord[victimTeam]
+					array< entity > preyPlayers = GetPlayerArrayOfTeam_Alive( preyTeam )
+					foreach ( prey in preyPlayers )
+					{
+						UpgradeCore_IncrementXP( prey, 200, false, eUpgradeXPActions.HUNTSURVIVED, true )
+						Remote_CallFunction_NonReplay( prey, "ServerToClient_SendHuntAnnouncement", eBountyHuntAnnouncements.PREY_SUCCESS )
+						prey.SetPlayerNetInt( HUNT_NETVAR_STATE, eBountyHuntState.AVAILABLE )
+						Remote_CallFunction_NonReplay( prey, "ServerToClient_ClientHuntEndSignal", prey )
+					}
+					file.diedTeams[ victimTeam ] <- true
+				}
+			}
+			//if a prey team died by some other reason
+			if ( victimTeam in file.preyTeamsRecord )
+			{
+				if ( file.preyTeamsRecord[victimTeam] != attackTeam )
+				{
+					int hunterTeam = file.preyTeamsRecord[victimTeam]
+					array< entity > hunterPlayer = GetPlayerArrayOfTeam_Alive( hunterTeam )
+					foreach ( hunter in hunterPlayer )
+					{
+						Remote_CallFunction_NonReplay( hunter, "ServerToClient_SendHuntAnnouncement", eBountyHuntAnnouncements.HUNTER_POACHED )
+						PlayBattleChatterLineToPlayer( "bc_Hunt_FailHunter", hunter, hunter )
+						hunter.SetPlayerNetInt( HUNT_NETVAR_STATE, eBountyHuntState.AVAILABLE )
+					}
+				}
+				file.diedTeams[ victimTeam ] <- true
+			}
+		}
+		else
+		{
+			// If any targets are stil alive, we need to update the Hunter's HUD showing how many players are still alive
+			//check if hunter killed prey
+			if ( attackTeam in file.hunterTeamsRecord )
+			{
+				if ( file.hunterTeamsRecord[attackTeam] == victimTeam )
+				{
+					int totalPreyCount = GetPlayerArrayOfTeam( victimTeam ).len()
+					int remainingPreyCount = GetPlayerArrayOfTeam_Alive( victimTeam ).len()
+					array< entity > hunterPlayers = GetPlayerArrayOfTeam_Alive( attackTeam )
+					foreach ( hunter in hunterPlayers )
+					{
+						// Update that player's remaining prey count & flash the status update bar
+						hunter.SetPlayerNetInt( HUNT_NETVAR_TOTAL_PREY, totalPreyCount )
+						hunter.SetPlayerNetInt( HUNT_NETVAR_PREY_REMAINING, remainingPreyCount )
+						// TODO We may bring this splash back, currently being discussed
+						//Remote_CallFunction_NonReplay( hunter, "ServerToClient_SendHuntAnnouncement", eBountyHuntAnnouncements.HUNTER_MARK_ELIMINATED )
+						hunter.SetPlayerNetInt( HUNT_NETVAR_STATE, eBountyHuntState.HUNTER_PULSE )
+					}
+				}
+			}
+
+			//if a prey died by some other reason
+			if ( victimTeam in file.preyTeamsRecord )
+			{
+				if ( file.preyTeamsRecord[victimTeam] != attackTeam )
+				{
+					int totalPreyCount = GetPlayerArrayOfTeam( victimTeam ).len()
+					int remainingPreyCount = GetPlayerArrayOfTeam_Alive( victimTeam ).len()
+					int hunterTeam = file.preyTeamsRecord[victimTeam]
+					array< entity > hunterPlayer = GetPlayerArrayOfTeam_Alive( hunterTeam )
+					foreach ( hunter in hunterPlayer )
+					{
+						// Update that player's remaining prey count & flash the status update bar
+						hunter.SetPlayerNetInt( HUNT_NETVAR_TOTAL_PREY, totalPreyCount )
+						hunter.SetPlayerNetInt( HUNT_NETVAR_PREY_REMAINING, remainingPreyCount )
+						// TODO We may bring this splash back, currently being discussed
+						//Remote_CallFunction_NonReplay( hunter, "ServerToClient_SendHuntAnnouncement", eBountyHuntAnnouncements.HUNTER_MARK_POACHED )
+						hunter.SetPlayerNetInt( HUNT_NETVAR_STATE, eBountyHuntState.HUNTER_PULSE )
+					}
+				}
+			}
+		}
+	}
+}
+
+void function Bounty_OnPlayerRespawned( entity player )
+{
+	if ( IsValid( player ) )
+	{
+		// Check if the player is on a prey team
+		int playerTeam = player.GetTeam()
+		if ( playerTeam in file.preyTeamsRecord )
+		{
+			// Get prey team player counts
+			int totalPreyCount = GetPlayerArrayOfTeam( playerTeam ).len()
+			int remainingPreyCount = GetPlayerArrayOfTeam_Alive( playerTeam ).len()
+
+			int hunterTeam = file.preyTeamsRecord[playerTeam]
+			array< entity > hunterPlayer = GetPlayerArrayOfTeam_Alive( hunterTeam )
+			foreach ( hunter in hunterPlayer )
+			{
+				// Update that player's remaining prey count & flash the status update bar
+				hunter.SetPlayerNetInt( HUNT_NETVAR_TOTAL_PREY, totalPreyCount )
+				hunter.SetPlayerNetInt( HUNT_NETVAR_PREY_REMAINING, remainingPreyCount )
+				hunter.SetPlayerNetInt( HUNT_NETVAR_STATE, eBountyHuntState.HUNTER_PULSE )
+			}
+		}
+		else
+		{
+			player.SetPlayerNetInt( HUNT_NETVAR_STATE, eBountyHuntState.AVAILABLE )
+		}
+
+	}
+}
+
+void function OnDeathfieldStageChanged( int stage, float nextCircleStartTime )
+{
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_THE_HUNT ) )
+	{
+		if ( file.canGetHunt == false )
+		{
+			file.canGetHunt = true
+			//delay it a bit allow all players to land before start the hunt
+			thread PlayHuntAvaiableCommentary_thread()
+		}
+	}
+}
+
+void function PlayHuntAvaiableCommentary_thread()
+{
+	wait GetTheHuntStartWaitTime()
+	array< entity > playerArray = GetPlayerArray()
+	foreach ( player in playerArray )
+	{
+		if ( IsValid( player ) )
+		{
+			if ( IsAlive( player ) )
+			{
+				thread Bounty_TrackRavenSpawn( player )
+				player.SetPlayerNetInt( HUNT_NETVAR_STATE, eBountyHuntState.NONE )
+				WaitFrame()
+				if ( IsValid( player ) )
+				{
+					player.SetPlayerNetInt( HUNT_NETVAR_STATE, eBountyHuntState.AVAILABLE )
+					Remote_CallFunction_NonReplay( player, "ServerToClient_SendHuntAnnouncement", eBountyHuntAnnouncements.HUNTS_AVAILABLE )
+				}
+
+			}
+		}
+	}
+	thread PlayCommentaryLineToAllPlayers( PickCommentaryLineFromBucket( eSurvivalCommentaryBucket.HUNT_AVAIABLE ) )
+}
+
+void function Bounty_HandleBountyStatusEffect_Start( int hunterTeam, int preyTeam )
+{
+	array< entity > hunterPlayers = GetPlayerArrayOfTeam( hunterTeam )
+	array< entity > preyPlayers = GetPlayerArrayOfTeam( preyTeam )
+
+	// Get the prey team counts for the Hunter HUD
+	int totalPreyCount = GetPlayerArrayOfTeam( preyTeam ).len()
+	int remainingPreyCount = preyPlayers.len()
+
+	float bountyEndTime = Time() + BOUNTY_DURATION
+
+	foreach ( hunterPlayer in hunterPlayers )
+	{
+		if ( IsValid( hunterPlayer ) )
+		{
+			//int effectHandle = StatusEffect_AddTimed( hunterPlayer, eStatusEffect.has_active_bounty, 1.0, BOUNTY_DURATION, 0.0 )
+			//file.effectRecord[hunterPlayer] <- effectHandle
+
+			// Send the prey counts to the hunter
+			hunterPlayer.SetPlayerNetInt( HUNT_NETVAR_TOTAL_PREY, totalPreyCount )
+			hunterPlayer.SetPlayerNetInt( HUNT_NETVAR_PREY_REMAINING, remainingPreyCount )
+
+			// Set the end time for the UI
+			hunterPlayer.SetPlayerNetTime( HUNT_NETVAR_END_TIME, bountyEndTime )
+
+			// Send hunter messaging
+			Remote_CallFunction_NonReplay( hunterPlayer, "ServerToClient_SendHuntAnnouncement", eBountyHuntAnnouncements.HUNTER_START )
+			hunterPlayer.SetPlayerNetInt( HUNT_NETVAR_STATE, eBountyHuntState.HUNTER_INTRO )
+		}
+	}
+
+	foreach ( preyPlayer in preyPlayers )
+	{
+		if ( IsValid( preyPlayer ) )
+		{
+			//int effectHandle = StatusEffect_AddTimed( preyPlayer, eStatusEffect.has_active_bounty, 1.0, BOUNTY_DURATION, 0.0 )
+			//file.effectRecord[preyPlayer] <- effectHandle
+
+			// Set the end time for the UI
+			preyPlayer.SetPlayerNetTime( HUNT_NETVAR_END_TIME, bountyEndTime )
+
+			// Send prey messaging
+			Remote_CallFunction_NonReplay( preyPlayer, "ServerToClient_SendHuntAnnouncement", eBountyHuntAnnouncements.PREY_START )
+			preyPlayer.SetPlayerNetInt( HUNT_NETVAR_THREAT_LEVEL, eBountyHuntThreatLevel.NONE )
+			preyPlayer.SetPlayerNetInt( HUNT_NETVAR_STATE, eBountyHuntState.PREY )
+		}
+	}
+}
+
+void function Bounty_HandleBountyStatusEffect_End( int hunterTeam, int preyTeam )
+{
+	array< entity > hunterPlayers = GetPlayerArrayOfTeam( hunterTeam )
+	array< entity > preyPlayers = GetPlayerArrayOfTeam( preyTeam )
+
+	foreach ( hunterPlayer in hunterPlayers )
+	{
+		if ( hunterPlayer in file.effectRecord )
+		{
+			if ( IsValid( hunterPlayer ) )
+			{
+				StatusEffect_Stop( hunterPlayer, file.effectRecord[hunterPlayer] )
+			}
+		}
+	}
+
+	foreach ( preyPlayer in preyPlayers )
+	{
+		if ( preyPlayer in file.effectRecord )
+		{
+			if ( IsValid( preyPlayer ) )
+			{
+				StatusEffect_Stop( preyPlayer, file.effectRecord[preyPlayer] )
+			}
+
+		}
+	}
+}
+#endif //SERVER
+
+#if CLIENT
+
+void function ServerToClient_ClientHuntEndSignal( entity player )
+{
+	Signal( player, BOUNTY_END_SIGNAL )
+}
+
+void function ServerToClient_DisplayHuntStart( entity player )
+{
+	string xpSound = "WXpress_Train_Update_Small"
+	AnnouncementMessageSweep( GetLocalViewPlayer(), "Hunt are avaiable, look for Datapads near you to grab Hunt" , "", <255, 227, 46>, $"", xpSound, 8.0 )
+}
+
+void function ServerToClient_HandleShowEnemyLocation( entity player, entity prey )
+{
+	thread Bounty_ShowEnemyLocation_Thread( player, prey )
+}
+
+void function Bounty_ShowEnemyLocation_Thread( entity player, entity prey )
+{
+	array< var > fullMapRuis
+	array< var > minimapRuis
+
+	float endTime = Time() + PREY_SCAN_TIME
+	float timeToStartFade = Time() + (PREY_SCAN_TIME / 2) //CRYPTO_TT_ENEMY_MINIMAP_ICON_TIME_BEFORE_FADE
+	float timeToEndFade = endTime//timeToStartFade + CRYPTO_TT_ENEMY_MINIMAP_ICON_FADE_TIME
+
+	OnThreadEnd(
+		function() : ( fullMapRuis, minimapRuis )
+		{
+			foreach ( var ruiToDestroy in fullMapRuis )
+			{
+				Fullmap_RemoveRui( ruiToDestroy )
+				RuiDestroyIfAlive( ruiToDestroy )
+			}
+
+			foreach ( var ruiToDestroy in minimapRuis )
+			{
+				Minimap_CommonCleanup( ruiToDestroy )
+			}
+		}
+	)
+
+	//full map
+	var fRui = FullMap_AddHuntPreyLocation( prey )
+	fullMapRuis.append( fRui )
+
+	// MiniMap
+	var mRui = Minimap_AddEnemyToMinimap( prey, MINIMAP_PREY_ICON )
+	minimapRuis.append( mRui )
+	RuiSetGameTime( mRui, "fadeStartTime", timeToStartFade )
+	RuiSetGameTime( mRui, "fadeEndTime", timeToEndFade )
+
+	while ( Time() < endTime ) //timeToWait > 0 )
+	{
+		if ( !IsValid( player ) )
+			break
+
+		WaitFrame()
+	}
+}
+#endif // client
+
+#if SERVER
+
+void function Bounty_CleanUp( entity dataPad )
+{
+	if ( IsValid( dataPad ) )
+	{
+		entity mover = dataPad.GetParent()
+
+		if ( IsValid( mover ) )
+			mover.Destroy()
+
+		if ( IsValid( dataPad ) )
+			dataPad.Destroy()
+	}
+}
+
+void function Bounty_TrackRavenSpawn( entity player )
+{
+	EndSignal( player, "OnDestroy" )
+	EndSignal( player, "OnDeath" )
+
+	int spawnOrder = 0
+	int playerTeam = player.GetTeam()
+	array< entity > players = GetPlayerArrayOfTeam_Alive( playerTeam )
+	vector spawnLocation = player.GetOrigin() + <RandomInt( 75 ), RandomInt( 75 ), 0>
+	vector safeSpotOnNavmesh = NavMesh_GetClosestPoint( spawnLocation )
+	entity hunt
+	if ( Bounty_ShouldSpawnHunt( player ) )
+	{
+		if ( players.len() > 0 )
+		{
+			if ( player.entindex() == players[spawnOrder].entindex() )
+			{
+				hunt = Bounty_SpawnWhiteRaven( player, safeSpotOnNavmesh, < 90, 90, 90 >, players )
+			}
+
+			spawnOrder++
+			if ( spawnOrder >= players.len() )
+			{
+				spawnOrder = 0
+			}
+		}
+	}
+
+	OnThreadEnd(
+		function() : ( hunt )
+		{
+			Bounty_CleanUp( hunt )
+		}
+	)
+
+	while ( IsValid( player ) )
+	{
+		wait BOUNTY_SPAWN_INTERVAL
+
+		Bounty_CleanUp( hunt )
+
+		if ( Bounty_ShouldSpawnHunt( player ) )
+		{
+			players = GetPlayerArrayOfTeam_Alive( playerTeam )
+
+			if ( players.len() > 0 && spawnOrder < players.len() )
+			{
+				if ( player.entindex() == players[spawnOrder].entindex() )
+				{
+					spawnLocation = player.GetOrigin() + < RandomInt( 75 ), RandomInt( 75 ), 0 >
+					safeSpotOnNavmesh = NavMesh_GetClosestPoint( spawnLocation )
+					hunt = Bounty_SpawnWhiteRaven( player, safeSpotOnNavmesh, < 90, 90, 90 >, players )
+				}
+				spawnOrder++
+				if ( spawnOrder >= players.len() )
+				{
+					spawnOrder = 0
+				}
+			}
+			else
+			{
+				spawnOrder = 0
+				if ( player.entindex() == players[spawnOrder].entindex() )
+				{
+					spawnLocation = player.GetOrigin() + < RandomInt( 75 ), RandomInt( 75 ), 0 >
+					safeSpotOnNavmesh = NavMesh_GetClosestPoint( spawnLocation )
+					hunt = Bounty_SpawnWhiteRaven( player, safeSpotOnNavmesh, < 90, 90, 90 >, players )
+				}
+				spawnOrder++
+				if ( spawnOrder >= players.len() )
+				{
+					spawnOrder = 0
+				}
+			}
+		}
+	}
+}
+
+bool function Bounty_ShouldSpawnHunt( entity player )
+{
+	if ( !IsValid( player ) )
+		return false
+
+	int hunterTeam = player.GetTeam()
+
+	if ( hunterTeam in file.hunterTeamsRecord || hunterTeam in file.preyTeamsRecord )
+		return false
+
+	array< int > availablePreyTeams
+	array< int > teams = GetAllValidPlayerTeams()
+	int aliveTeamsCount = 0
+
+	foreach ( playerTeam in teams )
+	{
+		if ( GetPlayerArrayOfTeam_Alive( playerTeam ).len() >= 1 )
+		{
+			aliveTeamsCount++
+		}
+	}
+
+	if ( aliveTeamsCount <= 2 )
+	{
+		return false
+	}
+
+	foreach ( team in teams )
+	{
+		if ( team != hunterTeam && GetPlayerArrayOfTeam_Alive( team ).len() >= 1 && !( team in file.preyTeamsRecord ) && !( team in file.hunterTeamsRecord ) )
+		{
+			availablePreyTeams.append( team )
+		}
+	}
+
+	//does not allow prey team to hunt its hunter
+	if ( hunterTeam in file.preyTeamsRecord )
+	{
+		availablePreyTeams.removebyvalue( file.preyTeamsRecord[hunterTeam] )
+	}
+
+	int closesPreyTeam = -1
+	float closesDistance = FLT_MAX
+
+	foreach ( preyTeam in availablePreyTeams )
+	{
+		array< entity > preyPlayers = GetPlayerArrayOfTeam_Alive( preyTeam )
+
+		float distanceSqr = DistanceSqr( player.GetOrigin(), preyPlayers[0].GetOrigin() )
+
+		if ( distanceSqr < closesDistance && distanceSqr < MAX_DISTANCE_ALLOWED_SQR )
+		{
+			closesPreyTeam = preyTeam
+			closesDistance = distanceSqr
+		}
+
+	}
+
+	if ( closesPreyTeam != -1 )
+	{
+		return true
+	}
+
+	return false
+}
+
+entity function Bounty_SpawnWhiteRaven( entity player, vector birdOrigin, vector birdAngles, array< entity > players )
+{
+	if ( !IsValid( player ) )
+		return null
+
+	entity dataPad = SpawnGenericLoot( "sh_bounty_hunt", birdOrigin + < 0, 0, 25 >, birdAngles, 1 )
+	dataPad.SetSkin( 3 )
+	dataPad.SetOwner( player )
+	SetTeam( dataPad, player.GetTeam() )
+	EmitSoundOnEntity( dataPad, HUNT_DATAPAD_SPAWN_SOUND )
+	//bird.SetScriptName( TRACKING_VISION_BIRD_SCRIPTNAME )
+	//dataPad.SetVisibilityFlags( ENTITY_VISIBLE_TO_OWNER )
+
+	foreach ( friendlyPlayer in players )
+	{
+		Remote_CallFunction_NonReplay( friendlyPlayer, "ServerToClient_Bounty_ActivateWhiteRavenIconRUI", friendlyPlayer, dataPad )
+		Remote_CallFunction_NonReplay( friendlyPlayer, "ServerToClient_ActivateDataPadFX", friendlyPlayer, dataPad )
+	}
+
+	entity mover = CreateScriptMover( "hunt_datapad_rotator", birdOrigin, birdAngles )
+	dataPad.SetParent( mover )
+
+	thread Rotate_DataPad_Thread( dataPad, mover, player )
+
+	return dataPad
+}
+
+void function Rotate_DataPad_Thread( entity dataPad, entity mover, entity owner )
+{
+	EndSignal( dataPad, "OnDestroy" )
+	EndSignal( mover, "OnDestroy" )
+
+	const float interval = 1.0 // I suggest tweaking this to affect rotation speed
+	const vector angleDelta = < 0.0, 0.0, 179.0 >
+
+	while ( IsValid( dataPad ) && IsValid( mover ) )
+	{
+		mover.NonPhysicsRotateTo( mover.GetAngles() + angleDelta, interval, 0.0, 0.0 )
+
+		wait interval
+
+		if ( !Bounty_ShouldSpawnHunt( owner ) )
+		{
+			dataPad.Destroy()
+			mover.Destroy()
+		}
+	}
+}
+
+#endif // server
+
+bool function Bounty_ItemPickup( entity pickup, entity player, int pickupFlags, entity deathBox, int ornull desiredCount, LootData data )
+{
+	#if SERVER
+		GiveBounty( player )
+	#endif
+
+	return true
+}
+
+#if CLIENT
+
+void function ServerToClient_ApplyHunterVFX( entity player, int hunterTeam )
+{
+	if ( player != GetLocalClientPlayer() )
+		return
+
+	thread Bounty_TrackHunterVFX_Thread( player, hunterTeam )
+}
+
+void function Bounty_TrackHunterVFX_Thread( entity player, int hunterTeam )
+{
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+	EndSignal( player, BOUNTY_END_SIGNAL )
+
+	array< entity > aliveHunterPlayers = GetPlayerArrayOfTeam_Alive( hunterTeam )
+	table< entity, int > hunterEffectHandle
+	array< int > effectHandles
+
+	int fxIndex = GetParticleSystemIndex( VFX_THE_HUNT_LOCK_ON )
+
+	OnThreadEnd(
+		function() : ( effectHandles )
+		{
+			foreach ( fx in effectHandles )
+			{
+				if ( EffectDoesExist( fx ) )
+				{
+					EffectStop( fx, true, true )
+				}
+			}
+		}
+	)
+
+	foreach ( hunterPlayer in aliveHunterPlayers )
+	{
+		int attachIdx = hunterPlayer.LookupAttachment( "CHESTFOCUS" )
+		Assert( attachIdx != 0, "Attachment index is 0 for some reason, consider checking IsPlayer()" )
+		if ( attachIdx <= 0 )
+		{
+			return
+		}
+
+		hunterEffectHandle[ hunterPlayer ] <- StartParticleEffectOnEntity( hunterPlayer, fxIndex, FX_PATTACH_POINT_FOLLOW, attachIdx )
+		effectHandles.append( hunterEffectHandle[ hunterPlayer ] )
+	}
+
+	while ( IsValid( player ) )
+	{
+		aliveHunterPlayers = GetPlayerArrayOfTeam_Alive( hunterTeam )
+
+		if ( aliveHunterPlayers.len() <= 0 )
+		{
+			break
+		}
+
+		foreach ( hunterPlayer in aliveHunterPlayers )
+		{
+			if ( (hunterPlayer in hunterEffectHandle) == false )
+			{
+				int attachIdx = hunterPlayer.LookupAttachment( "CHESTFOCUS" )
+				Assert( attachIdx != 0, "Attachment index is 0 for some reason, consider checking IsPlayer()" )
+				if ( attachIdx <= 0 )
+				{
+					return
+				}
+
+				hunterEffectHandle[ hunterPlayer ] <- StartParticleEffectOnEntity( hunterPlayer, fxIndex, FX_PATTACH_POINT_FOLLOW, attachIdx )
+				effectHandles.append( hunterEffectHandle[ hunterPlayer ] )
+			}
+
+			vector pos = hunterPlayer.EyePosition()
+			vector playerEyePos = player.EyePosition()
+
+			float distanceSqr = DistanceSqr( hunterPlayer.GetOrigin(), player.GetOrigin() )
+
+			if ( distanceSqr >= PREY_DETECT_RANGE_CLOSE_SQR )
+			{
+				EffectSleep( hunterEffectHandle[hunterPlayer] )
+			}
+			else
+			{
+				TraceResults losResults = TraceLine( playerEyePos, pos, [player], TRACE_MASK_VISIBLE, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+				if ( losResults.fraction < 1.0 )
+				{
+					EffectSleep( hunterEffectHandle[hunterPlayer] )
+				}
+				else
+				{
+					EffectWake( hunterEffectHandle[hunterPlayer] )
+				}
+			}
+		}
+
+		WaitFrame()
+	}
+}
+
+void function ServerToClient_ActivateDataPadFX( entity player, entity dataPad )
+{
+	if ( player != GetLocalClientPlayer() )
+		return
+
+	thread Bounty_SpawnHuntDataPadFX_Thread( player, dataPad )
+}
+
+void function Bounty_SpawnHuntDataPadFX_Thread( entity player, entity dataPad )
+{
+	if ( player != GetLocalClientPlayer() )
+		return
+
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+
+	if ( !IsValid( dataPad ) || dataPad == null )
+		return
+
+	EndSignal( dataPad, "OnDestroy" )
+	EndSignal( dataPad, "BirdFly" )
+
+	int attachmentID = dataPad.LookupAttachment( "ORIGIN" )
+	vector birdPos 	 = dataPad.GetOrigin()
+	vector newAngles = RotateAnglesAboutAxis( dataPad.GetAngles(), dataPad.GetRightVector(), 90 )
+
+	int fxid         = GetParticleSystemIndex( VFX_HUNT_DATAPAD_IDEL )
+	int fxHandle 	 = StartParticleEffectInWorldWithHandle( fxid, birdPos, newAngles )
+
+	OnThreadEnd(
+		function() : ( fxHandle )
+		{
+			if ( EffectDoesExist( fxHandle ) )
+				EffectStop( fxHandle, false, true )
+		}
+	)
+
+	while ( true )
+	{
+		if ( !IsValid( dataPad ) || !IsValid( player ) )
+			break
+
+		WaitFrame()
+	}
+}
+
+void function ServerToClient_Bounty_ActivateWhiteRavenIconRUI( entity player, entity bird )
+{
+	if ( player != GetLocalClientPlayer() )
+		return
+
+	// Set the animation time again, which will restart the current animation, which should be the intro animation again
+	if ( file.nestedHuntTrackerRui != null )
+	{
+		RuiSetFloat( file.nestedHuntTrackerRui, "animationStartTime", ClientTime() )
+	}
+
+	thread Bounty_WhiteRavenIconRUI_Thread( player, bird )
+}
+
+void function Bounty_WhiteRavenIconRUI_Thread( entity player, entity bird )
+{
+	if ( player != GetLocalClientPlayer() )
+		return
+
+	if ( !IsValid( player ) )
+		return
+
+	if ( !IsValid( bird ) )
+		return
+
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+	EndSignal( bird, "OnDestroy" )
+
+	float wpOffset = 25
+	vector pos = bird.GetOrigin() + <0,0,wpOffset>
+
+	array< var > ruiArray
+
+	OnThreadEnd(
+		function() : ( ruiArray )
+		{
+			foreach ( rui in ruiArray )
+			{
+				if ( rui != null )
+					RuiDestroyIfAlive( rui )
+			}
+		}
+	)
+
+	const float WHITE_RAVEN_RUI_TIME_UNTIL_OLD 	= 150
+	const float WHITE_RAVEN_RUI_LOST_LOS_BUFFER = 1.0
+	bool shouldUseStartTime = true
+	bool shouldLockTime 	= false
+	float startTime 		= Time()
+	float lockTime 			= Time() + WHITE_RAVEN_RUI_TIME_UNTIL_OLD
+	float bufferTime 		= Time() + WHITE_RAVEN_RUI_LOST_LOS_BUFFER
+	vector lastKnownPos = pos
+
+	bool shouldHide = false
+
+	while ( true )
+	{
+		if ( !IsValid( player ) )
+			return
+		if ( !IsValid( bird ) )
+			return
+
+		pos = bird.GetOrigin() + < 0, 0, wpOffset >
+		bool birdMoved = pos != lastKnownPos
+		vector playerEyePos = player.EyePosition()
+
+		if ( Time() > lockTime )
+			shouldLockTime = true
+
+		TraceResults losResults = TraceLine( playerEyePos, pos, [player], TRACE_MASK_VISIBLE, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+
+		//The Breadcrumb RUI does not handle visibility in the internal logic.
+		//As a result, we have to create and destroy the rui mnaually when desired LOS limits have ended
+		if ( shouldHide )
+		{
+			if ( ruiArray.len() > 0 )
+			{
+				foreach ( rui in ruiArray )
+				{
+					if ( rui != null )
+					{
+						ruiArray.fastremovebyvalue(rui)
+						RuiDestroyIfAlive( rui )
+
+						shouldUseStartTime = true
+					}
+				}
+			}
+		}
+		else if ( ruiArray.len() == 0 ) //No Rui. Let's see if we can make one.
+		{
+			if ( losResults.fraction >= 1.0 || birdMoved )
+			{
+				var rui = Bounty_CreateWhiteRavenRUI( player, bird, wpOffset )
+				ruiArray.append( rui )
+
+				if ( shouldUseStartTime ) //Ensure we use the true start time if Raven created out of LoS
+				{
+					RuiSetGameTime( rui, "startTime", startTime )
+					shouldUseStartTime = false
+				}
+				else if ( shouldLockTime ) //Ensure Raven Time doesn't exceed bar maximum (Old Age)
+				{
+					RuiSetGameTime( rui, "startTime", Time() - WHITE_RAVEN_RUI_TIME_UNTIL_OLD )
+				}
+			}
+		}
+		else //We have a rui, let's check to see if we've lost LOS
+		{
+			if ( losResults.fraction < 1.0 && !birdMoved )
+			{
+				//We lost sight of the target. Maintain for buffer time
+				if ( Time() > bufferTime )
+				{
+					//We've lost track of the target for too long. Destroy the RUI
+					foreach ( rui in ruiArray )
+					{
+						if ( rui != null )
+						{
+							ruiArray.fastremovebyvalue( rui )
+							RuiDestroyIfAlive( rui )
+
+							shouldUseStartTime = true
+						}
+					}
+				}
+			}
+			else
+			{
+				//Have sight and have rui. Reset buffer & update if in focus ( Will this play nice with other pings? )
+				bool inViewFocus = Bounty_GetIsBirdInViewFocus( player, pos )
+				foreach ( rui in ruiArray)
+				{
+					RuiSetBool( rui, "inViewFocus", inViewFocus ) //This simply tells the RUI to change from pure icon to offset Line element
+
+					if ( birdMoved ) //Allows icon to be visibly tracked during flight regardless of LOS
+					{
+						RuiSetGameTime( rui, "startTime", Time() )
+					}
+					else if ( shouldLockTime )
+					{
+						RuiSetGameTime( rui, "startTime", Time() - WHITE_RAVEN_RUI_TIME_UNTIL_OLD )
+					}
+				}
+
+				bufferTime = Time() + 2.0
+			}
+		}
+
+		lastKnownPos = pos
+		WaitFrame()
+	}
+
+}
+
+var function Bounty_CreateWhiteRavenRUI( entity player, entity bird, float wpOffset )
+{
+	float drawDist 		= WHITE_RAVEN_MAX_ENEMY_DETECTION_RANGE
+	string displayText 	= "#THE_HUNT"
+	asset icon 			= $"rui/hud/poi_icons/poi_hunt_datapad"
+
+	vector pos 			= bird.GetOrigin() + <0,0,wpOffset>
+
+	var rui = CreateTransientFullscreenRui( $"ui/tracking_vision_object_icons.rpak", RuiCalculateDistanceSortKey( player.EyePosition(), pos ) )
+
+	// INITIAL SETTINGS //
+	RuiSetGameTime( rui, "startTime", Time() )
+	RuiSetGameTime( rui, "iconCreationTime", Time() )
+	RuiSetFloat( rui, "duration", 20 )
+	RuiSetFloat( rui, "iconHotClueDuration", 20 )
+	RuiSetFloat( rui, "iconHotClueDurationExt", 20 )
+	RuiTrackFloat3( rui, "pos", bird, RUI_TRACK_OVERHEAD_FOLLOW )
+	RuiKeepSortKeyUpdated( rui, true, "pos" )
+	RuiSetInt( rui, "teamRelation", 0 )
+	RuiSetFloat( rui, "iconDrawDist", drawDist )
+	RuiSetString( rui, "objectText", displayText )
+	RuiSetImage( rui, "iconImage", icon )
+	RuiSetBool( rui, "useColorOverride", true )
+	RuiSetFloat3( rui, "colorOverride", SrgbToLinear( <1.0, 0.42, 0.42> ) )
+
+
+	// Get Bird is in View Area //
+	bool inViewFocus = Bounty_GetIsBirdInViewFocus( player, pos )
+	RuiSetBool( rui, "inViewFocus", inViewFocus )
+
+	return rui
+}
+
+#endif // Client
+
+bool function Bounty_GetIsBirdInViewFocus( entity player, vector pos ) //entity bird )
+{
+	bool inViewFocus = false
+	vector playerEyePos = player.EyePosition()
+	vector playerEyeDir = player.GetViewVector()
+
+	vector dir = Normalize( playerEyeDir )
+	vector dirToTarget = Normalize( pos - playerEyePos )
+
+	float dotRangeToTarget = DotProduct( dir, dirToTarget )
+
+	if ( dotRangeToTarget > 0.995 )
+	{
+		TraceResults losResults = TraceLine( playerEyePos, pos, [player], TRACE_MASK_VISIBLE, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+		if ( losResults.fraction >= 1.0 )
+			inViewFocus = true
+	}
+
+	return inViewFocus
+}
+
+float function GetTheHuntStartWaitTime()
+{
+	return GetCurrentPlaylistVarFloat( "the_hunt_start_wait_time", 30.0 )
+}
+
+#if CLIENT
+/// UI
+void function Hunt_OverrideGameState()
+{
+	ClGameState_RegisterGameStateAsset( $"ui/gamestate_info_hunt.rpak" )
+	ClGameState_RegisterGameStateFullmapAsset( $"ui/gamestate_info_fullmap_hunt.rpak" )
+}
+
+void function Bounty_CreateNestedHuntHud()
+{
+	var rui = ClGameState_GetRui()
+	if ( rui != null )
+	{
+		RuiDestroyNestedIfAlive( rui, "huntTrackerHudHandle" )
+		file.huntTrackerHudCreated = false
+
+		var nestedHuntTrackerRui = RuiCreateNested( rui, "huntTrackerHudHandle", $"ui/hunt_tracker_hud.rpak" )
+
+		file.nestedHuntTrackerRui = nestedHuntTrackerRui
+		file.huntTrackerHudCreated = true
+
+		OnBountyHuntStateChanged_Client( GetLocalClientPlayer(), eBountyHuntState.NONE )
+	}
+}
+
+// TODO Probably would be good to move this bakery, but for a rough first pass, it works
+void function Hunt_CreateStateDataTable()
+{
+	/// NONE
+	BountyHuntStateData none
+	none.displayNothing = true
+	file.bountyHuntStateDataTable[ eBountyHuntState.NONE ] <- none
+
+	// AVAILABLE STATE
+	BountyHuntStateData availableData
+	availableData.objectiveText = "#HUNT_PICKUP_BOUNTY"
+	availableData.widgetId = eBountyHuntWidgetId.INTRO
+	availableData.widgetTopColor = HUNT_WIDGET_HUNTER_MAIN
+	file.bountyHuntStateDataTable[ eBountyHuntState.AVAILABLE ] <- availableData
+
+	// HUNTER INTRO
+	BountyHuntStateData hunterIntroData
+	hunterIntroData.objectiveText = "#HUNT_VIEW_MARKS"
+	hunterIntroData.subObjectiveText = "#HUNT_ELIMINATE"
+	hunterIntroData.widgetId = eBountyHuntWidgetId.HUNTER_INTRO
+	hunterIntroData.widgetTopColor = HUNT_WIDGET_HUNTER_MAIN
+	file.bountyHuntStateDataTable[ eBountyHuntState.HUNTER_INTRO ] <- hunterIntroData
+
+	// HUNTER PULSE
+	BountyHuntStateData hunterPulseData
+	hunterPulseData.objectiveText = "#HUNT_VIEW_MARKS"
+	hunterPulseData.subObjectiveText = "#HUNT_ELIMINATE"
+	hunterPulseData.widgetId = eBountyHuntWidgetId.HUNTER_PULSE
+	hunterPulseData.widgetTopColor = HUNT_WIDGET_HUNTER_MAIN
+	file.bountyHuntStateDataTable[ eBountyHuntState.HUNTER_PULSE ] <- hunterPulseData
+
+	// HUNTER LOW_TIME
+	BountyHuntStateData hunterLowTimeData
+	hunterLowTimeData.objectiveText = "#HUNT_VIEW_MARKS"
+	hunterLowTimeData.subObjectiveText = "#HUNT_ELIMINATE"
+	hunterLowTimeData.widgetId = eBountyHuntWidgetId.HUNTER_PULSE
+	hunterLowTimeData.widgetTopColor = HUNT_WIDGET_HUNTER_MAIN
+	hunterLowTimeData.widgetBottomTimeColor = HUNT_WIDGET_HUNTER_TIME
+	file.bountyHuntStateDataTable[ eBountyHuntState.HUNTER_LOW_TIME ] <- hunterLowTimeData
+
+	// PREY INTRO
+	BountyHuntStateData preyIntroData
+	preyIntroData.objectiveText = "#HUNT_MARKED"
+	preyIntroData.widgetId = eBountyHuntWidgetId.PREY_INTRO
+	preyIntroData.delayedWidgetId = eBountyHuntWidgetId.PREY_PULSE
+	preyIntroData.timeBeforeUsingDelayedWidget = 4.0
+	preyIntroData.widgetBottomTimeColor = HUNT_WIDGET_PREY_TIME
+	preyIntroData.widgetTopColor = HUNT_WIDGET_PREY_MAIN
+	file.bountyHuntStateDataTable[ eBountyHuntState.PREY ] <- preyIntroData
+}
+
+// TODO Probably would be good to move this bakery, but for a rough first pass, it works
+void function Hunt_CreateAnnouncementDataTable()
+{
+	// Skydive
+	BountyHuntAnnouncementData skydive
+	file.bountyHuntAnnouncementData[ eBountyHuntAnnouncements.SKYDIVE ] <- skydive
+
+	/// Hunt Pads Available
+	BountyHuntAnnouncementData huntsAvailable
+	huntsAvailable.header = "#HUNT_PADS_AVAILABLE_TITLE"
+	huntsAvailable.subHeader = "#HUNT_PADS_AVAILABLE_DESC"
+	huntsAvailable.logoColor = HUNT_ANNOUNCEMENT_NEUTRAL_COLOR
+	huntsAvailable.objectiveTextColor = HUNT_ANNOUNCEMENT_NEUTRAL_COLOR
+	huntsAvailable.subObjectiveTextColor = HUNT_ANNOUNCEMENT_NEUTRAL_COLOR
+	huntsAvailable.duration = HUNT_ANNOUNCEMENT_DURATION
+	huntsAvailable.style = ANNOUNCEMENT_STYLE_GENERIC_WARNING
+	huntsAvailable.soundAlias = HUNT_HUNT_AVAILABLE_SOUND
+	huntsAvailable.priority = 10
+	file.bountyHuntAnnouncementData[ eBountyHuntAnnouncements.HUNTS_AVAILABLE ] <- huntsAvailable
+
+	/// Hunter Announcements
+	BountyHuntAnnouncementData hunterStart
+	hunterStart.header = "#HUNT_HUNTER_START_TITLE"
+	hunterStart.subHeader = "#HUNT_HUNTER_START_DESC"
+	hunterStart.logoColor = HUNT_ANNOUNCEMENT_HUNTER_LOGO_COLOR
+	hunterStart.objectiveTextColor = HUNT_ANNOUNCEMENT_HUNTER_OBJTEXT_COLOR
+	hunterStart.subObjectiveTextColor = HUNT_ANNOUNCEMENT_HUNTER_SUBOBJTEXT_COLOR
+	hunterStart.duration = HUNT_ANNOUNCEMENT_DURATION
+	hunterStart.style = ANNOUNCEMENT_STYLE_GENERIC_WARNING
+	hunterStart.soundAlias = HUNT_HUNTER_START_SOUND
+	hunterStart.priority = 10
+	file.bountyHuntAnnouncementData[ eBountyHuntAnnouncements.HUNTER_START ] <- hunterStart
+
+	BountyHuntAnnouncementData hunterKilledPrey
+	hunterKilledPrey.header = "#HUNT_HUNTER_PREY_KILLED"
+	hunterKilledPrey.logoColor = HUNT_ANNOUNCEMENT_HUNTER_LOGO_COLOR
+	hunterKilledPrey.objectiveTextColor = HUNT_ANNOUNCEMENT_HUNTER_OBJTEXT_COLOR
+	hunterKilledPrey.subObjectiveTextColor = HUNT_ANNOUNCEMENT_HUNTER_SUBOBJTEXT_COLOR
+	hunterKilledPrey.duration = HUNT_ANNOUNCEMENT_DURATION
+	hunterKilledPrey.style = ANNOUNCEMENT_STYLE_GENERIC_WARNING
+	hunterKilledPrey.priority = 10
+	file.bountyHuntAnnouncementData[ eBountyHuntAnnouncements.HUNTER_MARK_ELIMINATED ] <- hunterKilledPrey
+
+	BountyHuntAnnouncementData preyPoached
+	preyPoached.header = "#HUNT_HUNTER_PREY_POACHED"
+	preyPoached.logoColor = HUNT_ANNOUNCEMENT_HUNTER_LOGO_COLOR
+	preyPoached.objectiveTextColor = HUNT_ANNOUNCEMENT_HUNTER_OBJTEXT_COLOR
+	preyPoached.subObjectiveTextColor = HUNT_ANNOUNCEMENT_HUNTER_SUBOBJTEXT_COLOR
+	preyPoached.duration = HUNT_ANNOUNCEMENT_DURATION
+	preyPoached.style = ANNOUNCEMENT_STYLE_GENERIC_WARNING
+	preyPoached.priority = 0
+	file.bountyHuntAnnouncementData[ eBountyHuntAnnouncements.HUNTER_MARK_POACHED ] <- preyPoached
+
+	BountyHuntAnnouncementData hunterExpired
+	hunterExpired.header = "#HUNT_HUNTER_EXPIRED_TITLE"
+	hunterExpired.subHeader = "#HUNT_HUNTER_EXPIRED_DESC"
+	hunterExpired.logoColor = HUNT_ANNOUNCEMENT_HUNTER_LOGO_COLOR
+	hunterExpired.objectiveTextColor = HUNT_ANNOUNCEMENT_HUNTER_OBJTEXT_COLOR
+	hunterExpired.subObjectiveTextColor = HUNT_ANNOUNCEMENT_HUNTER_SUBOBJTEXT_COLOR
+	hunterExpired.duration = HUNT_ANNOUNCEMENT_DURATION
+	hunterExpired.style = ANNOUNCEMENT_STYLE_GENERIC_WARNING
+	hunterExpired.soundAlias = HUNT_HUNTER_FAIL_SOUND
+	hunterExpired.priority = 0
+	file.bountyHuntAnnouncementData[ eBountyHuntAnnouncements.HUNTER_EXPIRED ] <- hunterExpired
+
+	BountyHuntAnnouncementData hunterPoached
+	hunterPoached.header = "#HUNT_HUNTER_POACHED_TITLE"
+	hunterPoached.subHeader = "#HUNT_HUNTER_POACHED_DESC"
+	hunterPoached.logoColor = HUNT_ANNOUNCEMENT_HUNTER_LOGO_COLOR
+	hunterPoached.objectiveTextColor = HUNT_ANNOUNCEMENT_HUNTER_OBJTEXT_COLOR
+	hunterPoached.subObjectiveTextColor = HUNT_ANNOUNCEMENT_HUNTER_SUBOBJTEXT_COLOR
+	hunterPoached.duration = HUNT_ANNOUNCEMENT_DURATION
+	hunterPoached.style = ANNOUNCEMENT_STYLE_GENERIC_WARNING
+	hunterPoached.soundAlias = HUNT_HUNTER_FAIL_SOUND
+	hunterPoached.priority = 10
+	file.bountyHuntAnnouncementData[ eBountyHuntAnnouncements.HUNTER_POACHED ] <- hunterPoached
+
+	BountyHuntAnnouncementData hunterSuccess
+	hunterSuccess.header = "#HUNT_HUNTER_SUCCESS_TITLE"
+	hunterSuccess.subHeader = "#HUNT_HUNTER_SUCCESS_DESC"
+	hunterSuccess.logoColor = HUNT_ANNOUNCEMENT_HUNTER_LOGO_COLOR
+	hunterSuccess.objectiveTextColor = HUNT_ANNOUNCEMENT_HUNTER_OBJTEXT_COLOR
+	hunterSuccess.subObjectiveTextColor = HUNT_ANNOUNCEMENT_HUNTER_SUBOBJTEXT_COLOR
+	hunterSuccess.duration = HUNT_ANNOUNCEMENT_DURATION
+	hunterSuccess.style = ANNOUNCEMENT_STYLE_GENERIC_WARNING
+	hunterSuccess.soundAlias = HUNT_HUNTER_SUCCESS_SOUND
+	hunterSuccess.priority = 10
+	file.bountyHuntAnnouncementData[ eBountyHuntAnnouncements.HUNTER_SUCCESS ] <- hunterSuccess
+	/// Hunter Announcements
+	
+	/// Prey Announcements
+	BountyHuntAnnouncementData preyStart
+	preyStart.header = "#HUNT_PREY_START_TITLE"
+	preyStart.subHeader = "#HUNT_PREY_START_DESC"
+	preyStart.logoColor = HUNT_ANNOUNCEMENT_PREY_LOGO_COLOR
+	preyStart.objectiveTextColor = HUNT_ANNOUNCEMENT_PREY_OBJTEXT_COLOR
+	preyStart.subObjectiveTextColor = HUNT_ANNOUNCEMENT_PREY_SUBOBJTEXT_COLOR
+	preyStart.duration = HUNT_ANNOUNCEMENT_DURATION
+	preyStart.style = ANNOUNCEMENT_STYLE_GENERIC_WARNING
+	preyStart.soundAlias = HUNT_PREY_START_SOUND
+	file.bountyHuntAnnouncementData[ eBountyHuntAnnouncements.PREY_START ] <- preyStart
+
+	BountyHuntAnnouncementData preySuccess
+	preySuccess.header = "#HUNT_PREY_SURVIVED_TITLE"
+	preySuccess.subHeader = "#HUNT_PREY_SURVIVED_DESC"
+	preySuccess.logoColor = HUNT_ANNOUNCEMENT_NEUTRAL_COLOR
+	preySuccess.objectiveTextColor = HUNT_ANNOUNCEMENT_NEUTRAL_COLOR
+	preySuccess.subObjectiveTextColor = HUNT_ANNOUNCEMENT_NEUTRAL_COLOR
+	preySuccess.duration = HUNT_ANNOUNCEMENT_DURATION
+	preySuccess.style = ANNOUNCEMENT_STYLE_GENERIC_WARNING
+	preySuccess.soundAlias = HUNT_PREY_SUCCESS_SOUND
+	file.bountyHuntAnnouncementData[ eBountyHuntAnnouncements.PREY_SUCCESS ] <- preySuccess
+
+	BountyHuntAnnouncementData preyKilledHunters
+	preyKilledHunters.header = "#HUNT_PREY_KILLED_HUNTERS_TITLE"
+	preyKilledHunters.subHeader = "#HUNT_PREY_KILLED_HUNTERS_DESC"
+	preyKilledHunters.logoColor = HUNT_ANNOUNCEMENT_HUNTER_LOGO_COLOR
+	preyKilledHunters.objectiveTextColor = HUNT_ANNOUNCEMENT_HUNTER_OBJTEXT_COLOR
+	preyKilledHunters.subObjectiveTextColor = HUNT_ANNOUNCEMENT_HUNTER_SUBOBJTEXT_COLOR
+	preyKilledHunters.duration = HUNT_ANNOUNCEMENT_DURATION
+	preyKilledHunters.style = ANNOUNCEMENT_STYLE_GENERIC_WARNING
+	preyKilledHunters.soundAlias = HUNT_PREY_SUCCESS_SOUND
+	file.bountyHuntAnnouncementData[ eBountyHuntAnnouncements.PREY_KILLED_HUNTERS ] <- preyKilledHunters
+	/// Prey Announcements
+}
+
+void function OnBountyHuntStateChanged_Client( entity player, int huntState )
+{
+	file.currentBountyHuntState = huntState
+	file.lastStateChangeTime = ClientTime()
+	Bounty_UpdateHudInfoFromState()
+}
+
+void function OnBountyHuntThreatLevelChanged_Client( entity player, int threatLevel )
+{
+	file.currentThreatLevel = threatLevel
+	Bounty_UpdateThreatLevelHud()
+}
+
+void function OnBountyHuntPreyRemainingChanged_Client( entity player, int preyRemaining )
+{
+	file.preyRemaining = preyRemaining
+	Bounty_UpdateHudInfoFromState()
+}
+
+void function OnBountyHuntTotalPreyChanged_Client( entity player, int totalPrey )
+{
+	file.totalPrey = totalPrey
+	Bounty_UpdateHudInfoFromState()
+}
+
+void function OnBountyHuntEndTimeChanged_Client( entity player, float time )
+{
+	file.bountyHuntEndTime = time
+	Bounty_UpdateHudInfoFromState()
+}
+
+void function Bounty_UpdateHudInfoFromState()
+{
+	if ( file.nestedHuntTrackerRui != null )
+	{
+		// Get the current state entry
+		BountyHuntStateData currentState = file.bountyHuntStateDataTable[ file.currentBountyHuntState ]
+
+		// If we have a delayed widget, check if we need to use that one
+		int visibleWidgetId = currentState.widgetId
+		if ( currentState.delayedWidgetId != eBountyHuntWidgetId.NONE )
+		{
+			float elapsedTimeInState = ClientTime() - file.lastStateChangeTime
+			if ( elapsedTimeInState > currentState.timeBeforeUsingDelayedWidget )
+				visibleWidgetId = currentState.delayedWidgetId
+		}
+
+		// Set Rui Args
+		RuiSetInt( file.nestedHuntTrackerRui, "visibleWidgetId", visibleWidgetId )
+
+		RuiSetFloat( file.nestedHuntTrackerRui, "animationStartTime", ClientTime() )
+
+		RuiSetString( file.nestedHuntTrackerRui, "widgetTopCopy", Localize( currentState.objectiveText ).toupper() )
+		RuiSetString( file.nestedHuntTrackerRui, "widgetBottomCopy", Localize( currentState.subObjectiveText ).toupper() )
+		RuiSetString( file.nestedHuntTrackerRui, "preyCount", Localize( "#X/Y", file.preyRemaining, file.totalPrey ) )
+
+		RuiSetBool( file.nestedHuntTrackerRui, "displayNothing", currentState.displayNothing )
+
+		RuiSetColorAlpha( file.nestedHuntTrackerRui, "widgetTopColor", currentState.widgetTopColor, 1.0 )
+		RuiSetColorAlpha( file.nestedHuntTrackerRui, "widgetBottomTimeColor", currentState.widgetBottomTimeColor, 1.0 )
+
+		RuiSetGameTime( file.nestedHuntTrackerRui, "huntEndTime", file.bountyHuntEndTime )
+	}
+}
+
+void function Bounty_UpdateThreatLevelHud()
+{
+	if ( file.nestedHuntTrackerRui != null )
+	{
+		// Get the current state entry
+		BountyHuntStateData currentState = file.bountyHuntStateDataTable[ file.currentBountyHuntState ]
+
+		// If we have a delayed widget, check if we need to use that one
+		int visibleWidgetId = currentState.widgetId
+		if ( currentState.delayedWidgetId != eBountyHuntWidgetId.NONE )
+		{
+			float elapsedTimeInState = ClientTime() - file.lastStateChangeTime
+			if ( elapsedTimeInState > currentState.timeBeforeUsingDelayedWidget )
+				visibleWidgetId = currentState.delayedWidgetId
+		}
+
+		RuiSetInt( file.nestedHuntTrackerRui, "visibleWidgetId", visibleWidgetId )
+
+		RuiSetFloat( file.nestedHuntTrackerRui, "animationStartTime", ClientTime() )
+
+		vector lowPipColor = HUNT_WIDGET_PREY_THREAT_PIP_FULL
+		float lowPipAlpha = 1
+
+		bool isAtLeastMedium = file.currentThreatLevel >= eBountyHuntThreatLevel.MEDIUM
+		vector medPipColor = isAtLeastMedium ? HUNT_WIDGET_PREY_THREAT_PIP_FULL : HUNT_WIDGET_PREY_THREAT_PIP_EMPTY
+		float medPipAlpha = isAtLeastMedium ? 1.0 : 0.1
+
+		bool isAtLeastHigh = file.currentThreatLevel >= eBountyHuntThreatLevel.HIGH
+		vector highPipColor = isAtLeastHigh ? HUNT_WIDGET_PREY_THREAT_PIP_FULL : HUNT_WIDGET_PREY_THREAT_PIP_EMPTY
+		float highPipAlpha = isAtLeastHigh ? 1.0 : 0.1
+
+		RuiSetColorAlpha( file.nestedHuntTrackerRui, "meterLowColor", lowPipColor, lowPipAlpha )
+		RuiSetColorAlpha( file.nestedHuntTrackerRui, "meterMediumColor", medPipColor, medPipAlpha )
+		RuiSetColorAlpha( file.nestedHuntTrackerRui, "meterHighColor", highPipColor, highPipAlpha )
+
+		string subObjectiveText = "#HUNT_LOW_THREAT"
+		if ( isAtLeastHigh )
+			subObjectiveText = "#HUNT_HIGH_THREAT"
+		else if ( isAtLeastMedium )
+			subObjectiveText = "#HUNT_MEDIUM_THREAT"
+
+		RuiSetString( file.nestedHuntTrackerRui, "widgetBottomCopy", Localize( subObjectiveText ).toupper() )
+	}
+}
+
+// Announcements
+void function ServerToClient_SendHuntAnnouncement( int announcementIndex )
+{
+	BountyHuntAnnouncementData announcementData = file.bountyHuntAnnouncementData[ announcementIndex ]
+
+	entity localViewPlayer = GetLocalViewPlayer()
+
+	AnnouncementData announcement = Announcement_Create( announcementData.header )
+	announcement.subText = announcementData.subHeader
+	announcement.duration = announcementData.duration
+	announcement.soundAlias = announcementData.soundAlias
+	announcement.useColorOnAnnouncementText = true
+	announcement.titleColor = announcementData.logoColor
+	announcement.useColorOnSubtext = true
+	announcement.icon = announcementData.icon
+	announcement.priority =	announcementData.priority
+	announcement.announcementStyle = ANNOUNCEMENT_STYLE_HUNT
+
+	AnnouncementFromClass( localViewPlayer, announcement )
+}
+
+#endif // client
+
+                        
+ 

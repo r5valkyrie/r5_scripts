@@ -75,8 +75,6 @@ global const int ENERGIZE_ENERGIZING = 1
 global const int ENERGIZE_ENERGIZED = 2
 global const int INVALID_SOUND_SELECTOR = 128
 global const string SILENT_PLAYER_VOICE = ""
-global const string PHASE_DOOR_TELEPORT_SIGNAL = "PhaseDoor_Teleport"
-global const string MOBILE_SHIELD_SCRIPTNAME = "mobile_shield"
 global const int SOLID_NONE = 0
 
 global const int CAMO_SKIN_COUNT = 800
@@ -98,29 +96,6 @@ global const int GRX_OFFERTYPE_PYS = 2
 global const int GRX_OFFERITEMTYPE_CORE = 0
 
 global const int HIGHLIGHT_INVALID_ID = -1
-global const string SPIKE_STRIP_WEAPON_NAME = "mp_ability_spike_strip"
-global const string TRANSPORT_PORTAL_WEAPON_NAME = "mp_ability_transport_portal"
-
-// Golden Horse constants (from sh_gamemode_golden_horse.nut)
-global const int GOLDEN_HORSE_SPECIAL_EVENT_LOOT_TIER = 107
-global const string GOLDEN_HORSE_LOOT_TICK_SCRIPT_NAME = "loot_tick_golden_horse"
-
-global const string PASSIVE_REINFORCE_REBUILT_DOOR_SCRIPT_NAME = "rebuilt_door"
-global const string SPIKE_STRIP_CORE_SPIKE_NAME = "core_spike_target_name"
-global const string ARMORED_LEAP_SHIELD_ANCHOR_SCRIPTNAME = "al_shield_anchor"
-global const string FERRO_WALL_SEGMENT_TARGET_NAME = "ferro_wall_segment"
-global const string HUNT_DATAPAD_TARGETNAME = "Hunt"
-global const string MEDBAY_PING_SCRIPT_NAME = "medical_bay_ping"
-global const string PHASE_DOOR_ROOT_ENT_SCRIPTNAME = "phase_door_root_ent"
-global const string PHASE_DOOR_WARMUP_ENT_SCRIPTNAME = "phase_door_warmup_ent"
-global const string REV_SHELL_TARGETNAME = "Rev_shell"
-global const string SHIELD_MINE_PROP_SCRIPTNAME = "conduit_shield_mine"
-global const string SHIELD_THROW_SCRIPTNAME = "shield_throw"
-global const string TRACKING_VISION_BIRD_PING_SCRIPTNAME = "bloodhound_tracking_white_raven_ping_blocker"
-global const string TRANSPORT_PORTAL_ALLY_PORTAL_SCRIPTNAME = "alter_ult_ally_portal"
-global const string TRANSPORT_PORTAL_RECEIVER_SCRIPTNAME = "alter_ult_receiver"
-global const string TRANSPORT_PORTAL_TRANSLOCATOR_TRACE_BLOCKER_SCRIPTNAME = "alter_ult_translocator_trace_blocker"
-global const string TREASUREHUNT_OBJECTIVE_SCRIPTNAME = "treasurehunt_objective"
 
 global enum eEventsPanelPage
 {
@@ -131,18 +106,6 @@ global enum eEventsPanelPage
 		COLLECTION = 3
 		EVENT_SHOP = 4
 }
-
-global enum eArcFlashState
-{
-	NONE,
-	CHARGE,
-	ACTIVE,
-	DECAY,
-	COUNT
-}
-
-global const string SHADOWARMY_MAP_EVAC_AREA = "shadowarmy_evac_area"
-global const string SHADOWARMY_LEGEND_START_AREA = "shadowarmy_legend_start_area"
 
 // Minimap flags (engine constants not in S3)
 global const int MINIMAP_FLAG_VISIBILITY_SHOW = 0x1

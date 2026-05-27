@@ -1,0 +1,1059 @@
+global function ShSpawnNearSquad_Init
+
+//no respawns after circle closes on this round, can also use playlist var respawn_circle_to_stop_respawning
+const int CIRCLE_STAGE_TO_STOP_RESPAWNS = 5
+const float MIN_SPAWN_DIST_FROM_RING = 768
+const float MIN_SPAWN_DIST_FROM_ENEMY = 1200
+const float MAX_SPAWN_DIST_FROM_ENEMY = 10000
+const float MIN_SPAWN_DIST_FROM_FRIENDLY = 2500
+const float MAX_SPAWN_DIST_FROM_FRIENDLY = 10000
+const float MIN_PET_SPAWN_DIST_FROM_ENEMY = 1100
+const float MIN_PET_SPAWN_DIST_FROM_FRIENDLY = 2000
+const float MAX_PET_SPAWN_DIST_FROM_FRIENDLY = 11000
+
+global const array<string> SPAWN_NEAR_SQUAD_DISABLED_LINES = [
+	"bc_twoSquaddiesLeft", ]
+
+// TODO Justin Moon: Change invalid spawn point origin/angle to FLT_MAX
+global const vector SPAWN_NEAR_SQUAD_INVALID_SPAWN_POINT_ORIGIN = <0, 0, 0>
+global const vector SPAWN_NEAR_SQUAD_INVALID_SPAWN_POINT_ANGLE = <0, 0, 0>
+
+#if SERVER
+	enum eSpawnType
+	{
+		PLAYER,
+		PROWLER
+	}
+
+	global function IsSpawnNearSquadActive
+	global function GetSpawnNearSquadSpawnpoints
+	global function GetSpawnNearSquadEndingStage
+	global function GetRandomSpawnPointNearPos
+	global function GetRandomPetSpawnPointNearPos
+	global function IsSpawnQueueBusy
+	global function WaitTillSpawnQueueFree
+
+	global function SetupPlayerForSpawnNearSquad
+	global function PlayerSpawnsNearSquadAfterDelay
+	global function RespawnNearSquad_SetCallback_GetSpawnDelay
+	global function RespawnNearSquad_SetCallback_CanRespawnPlayer
+	global function RespawnNearSquad_SetCallback_GetBestRespawnPoint
+	global function RespawnNearSquad_GetMinDistFromFriendlyForValidSpawn
+	global function RespawnNearSquad_GetMaxDistFromFriendlyForValidSpawn
+	global function RespawnNearSquad_GetMinDistFromEnemyForValidSpawn
+	global function RespawnNearSquad_GetMaxDistFromEnemyForValidSpawn
+
+	#if DEV
+		global function DEV_DrawSpawnNearSquadLocations
+	#endif //DEV
+
+#endif //SERVER
+
+struct
+{
+	#if SERVER
+		array <Point> spawnPoints
+		array <Point> spawnPointsPets
+		bool isSpawnNearSquadActive
+		float functionref( entity ) GetSpawnDelay_Callback
+		bool functionref( entity ) ShouldRespawnPlayer_Callback
+		Point functionref( entity, vector, bool ) GetBestAvailablePlayerRespawnPoint_Callback
+	#endif //SERVER
+} file
+
+void function ShSpawnNearSquad_Init()
+{
+	if ( GetRespawnStyle() != eRespawnStyle.SPAWN_NEAR_SQUAD )
+		return
+
+	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
+	RegisterDisabledBattleChatterEvents( SPAWN_NEAR_SQUAD_DISABLED_LINES )
+
+	#if SERVER
+		RegisterSignal( "SpawnNearSquad_PlayerRespawned" )
+
+		FlagInit( "SpawnQueueBusy" )
+		file.isSpawnNearSquadActive = true
+		AddCallback_OnPlayerKilled( OnPlayerKilled )
+		SURVIVAL_AddCallback_OnDeathFieldStartShrink( OnDeathFieldStartShrink )
+
+		if( IsEliminationBased() )
+			Survival_AddCallback_OnSquadEliminated( OnSquadEliminated )
+	#endif // SERVER
+}
+
+//SHARED
+void function EntitiesDidLoad()
+{
+	#if SERVER
+		thread InitMapSpawnPoints()
+	#endif // SERVER
+}
+//END SHARED
+
+/*
+#if SERVER
+void function OnPrematch()
+{
+	//right before plane launch
+
+}
+#endif //SERVER
+*/
+
+#if SERVER
+array<Point> function GetSpawnNearSquadSpawnpoints()
+{
+	return file.spawnPoints
+}
+#endif //SERVER
+
+
+#if SERVER
+void function InitMapSpawnPoints()
+{
+	//////////////////////////////////////////////////////////////////
+	// generate a collection of spawns from loot and lootbin locations,
+	// respawn beacons and manually placed resource_infantryspawns
+	//////////////////////////////////////////////////////////////////
+
+	AssertIsNewThread()
+	Assert( file.spawnPoints.len() == 0, "Can only initialize spawnpoints once at the start of the match" )
+
+	array <Point> spawnPoints
+	float minDistFromOtherSpawns = 256
+
+	//////////////////////////////////
+	// spawnpoints - manually placed
+	//////////////////////////////////
+
+	//pilot spawn ents, info_spawnpoint_human, etc
+	//NOTE: these aren't very useful in most maps as they are often just clumped together in one spot
+	if( GetUseManuallyPlacedSpawnPoints() )
+	{
+		array<entity> spawnPointEntities = SpawnPoints_GetPilot()
+		foreach ( ent in spawnPointEntities )
+		{
+			Point newPoint
+			newPoint.origin = ent.GetOrigin()
+			newPoint.angles = ent.GetAngles()
+			spawnPoints.append( newPoint )
+		}
+	}
+
+	//////////////////////////////////////
+	// spawnpoints - pos in front of lootbins
+	//////////////////////////////////////
+	vector verticalOffset = <0, 0, 512>
+	foreach ( bin in GetAllLootBins() )
+	{
+		Point spawnPoint
+		spawnPoint.origin = PositionOffsetFromEnt( bin, 64, 0, 24 )
+		spawnPoint.angles = <0, bin.GetAngles().y, 0>
+		spawnPoints.append( spawnPoint )
+	}
+
+	/////////////////////////////////////////////////
+	// spawnpoints - pos on respawn beacon locations
+	//////////////////////////////////////////////////
+	foreach( org in GetRespawnBeaconLocations() )
+	{
+		Point spawnPoint
+		spawnPoint.origin = PositionOffsetFromOriginAngles( org, <0, 0, 0>, 0, 0, 96 )
+		spawnPoint.angles = <0, 0, 0>
+		spawnPoints.append( spawnPoint )
+	}
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Store off spawnpoints while remaining ones are built (from loot and script-only resources placed in LevelEd
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	file.spawnPoints = clone spawnPoints
+	file.spawnPointsPets = clone spawnPoints
+
+	/////////////////////////////////////////////////////////
+	// spawnpoints - script-only resources placed in LevelEd
+	//////////////////////////////////////////////////////////
+	FlagWait( "ResourceSystemReady" )
+
+	//these are efficient as they are zero entity count and can place as many as you need for large maps
+
+	//grab the resource_group node(s) with this keyword targets all the resource_infantryspawnss we want
+	array<ResourceGroup> resourceGroupsGamemodeSpawners = ORS_GetGroupsWithMatchingKeywords( ORS_GetGlobalGroup(), [ "spawners_generic" ] )
+	array <InfantrySpawn> infantrySpawns = ORS_GetInfantrySpawnsFromGroups( resourceGroupsGamemodeSpawners )
+	foreach( spawner in infantrySpawns )
+	{
+		Point newPoint
+		newPoint.origin = spawner.core.spawnOrigin
+		newPoint.angles = spawner.core.spawnAngles
+		spawnPoints.append( newPoint )
+	}
+
+	//store off spawnpoints again while ground loot spawns (since it's slow as balls)
+	file.spawnPoints = clone spawnPoints
+	file.spawnPointsPets = clone spawnPoints
+
+	////////////////////////////////////////////////////////////////
+	// spawnpoints - ambient loot locations
+	///////////////////////////////////////////////////////////////
+
+	foreach( group, spawnList in SURVIVAL_GetGroupLootSpawnLocations() )
+	{
+		foreach( spawnPoint in spawnList )
+		{
+			if ( spawnPoint.bin )
+			{
+				//printf( "SPAWN NEAR SQUAD: " + spawnPoint.pos + " is actually a bin, skipping" )
+				continue
+			}
+
+			vector org = spawnPoint.pos
+
+			if ( SURVIVAL_GetMovingGeoLootOriginalLocations().contains( org ) )
+				continue
+
+			org = OriginToGround( spawnPoint.pos + <0, 0, 16> ) + <0, 0, 24>
+
+			//Check in solid
+			org = DropSpawnToFloor( org, HULL_HUMAN )
+			if ( org == INVALID_DROP_RESULT )
+			{
+				//printf( "SPAWN NEAR SQUAD: " + org + " invalid drop result, skipping" )
+				continue
+			}
+
+			//in leviathan feet, etc
+			if ( IsOriginInNoSpawnArea( org, TEAM_ANY ) )
+			{
+				//printf( "SPAWN NEAR SQUAD: " + org + " in no spawn area, skipping" )
+				continue
+			}
+
+			Point newPoint
+			newPoint.origin = org
+
+			//disregard if we're getting too clumped with other points
+			if ( spawnPoints.len() > 0 && PointWithinDistOfAnyPoint( newPoint, spawnPoints, minDistFromOtherSpawns ) )
+			{
+				//printf( "SPAWN NEAR SQUAD: " + org + " too close to other spawns, skipping" )
+				continue
+			}
+
+
+			if ( GetCurrentPlaylistVarBool( "respawn_spawnpoints_calculate_angles", false ) == true )
+			{
+				//use lifeline's shield check to get decent spawn angles for surrounding space
+				WaitFrame() //generating good angles prob bad to do all on same frame
+				vector ornull angles = GetBestShieldDeployAngles( org, <0, 0, 0> )
+				if ( angles == null )
+					continue
+
+				newPoint.angles = expect vector( angles )
+			}
+			else
+			{
+				newPoint.angles = <0, 0, 0>
+			}
+
+			//All good, add it to the group
+			spawnPoints.append( newPoint )
+		}
+	}
+
+	FlagWait( "DeathFieldCalculationComplete" )
+
+
+	////////////////////////////////////
+	// Final in-solid check to be safe
+	//////////////////////////////////////
+	array<Point> spawnPointsVetted
+	vector mins = GetBoundsMin( HULL_HUMAN )
+	vector maxs = GetBoundsMax( HULL_HUMAN )
+	int solidMask            = TRACE_MASK_PLAYERSOLID
+	int collisionGroup       = TRACE_COLLISION_GROUP_PLAYER
+
+	foreach( point in spawnPoints )
+	{
+		TraceResults result
+		result = TraceHull( point.origin, point.origin + <0, 0, 1>, mins, maxs, [], solidMask, collisionGroup )
+
+		if ( result.startSolid )
+			continue
+
+		spawnPointsVetted.append( point )
+	}
+	Assert( spawnPointsVetted.len() > 0 )
+	spawnPointsVetted.randomize()
+
+	file.spawnPoints = spawnPointsVetted
+
+	if ( GetCurrentPlaylistVarBool( "squad_pet_use_all_spawnpoints", true ) )
+		file.spawnPointsPets = spawnPointsVetted
+
+	#if DEV
+		//thread DEV_DrawSpawnNearSquadLocations()
+	#endif
+}
+#endif // SERVER
+
+#if SERVER
+void function UpdateMapSpawnPoints()
+{
+	//exclude ones outside circle, etc
+	array <Point> spawnPointsInsideCircle
+	float minDistFromFrontier
+	foreach ( Point point in file.spawnPoints  )
+	{
+		//outside circle
+		if ( SURVIVAL_GetDistanceInsideDeathField( Survival_Loot_GetDefaultRealm(), point.origin ) < MIN_SPAWN_DIST_FROM_RING )
+			continue
+
+		spawnPointsInsideCircle.append( point )
+	}
+
+	file.spawnPoints = spawnPointsInsideCircle
+
+	if ( GetCurrentPlaylistVarBool( "squad_pet_use_all_spawnpoints", true ) )
+		file.spawnPointsPets = spawnPointsInsideCircle
+
+}
+#endif // SERVER
+
+
+#if SERVER
+bool function IsSpawnNearSquadActive()
+{
+	return file.isSpawnNearSquadActive
+}
+#endif // SERVER
+
+
+#if SERVER
+void function OnPlayerKilled( entity player, entity attacker, var damageInfo )
+{
+	SetupPlayerForSpawnNearSquad( player )
+}
+#endif // SERVER
+
+#if SERVER
+// Determine if the player should be respawned
+// Allow other modes to use their own criteria to determine this through a callback function
+bool function ShouldRespawnPlayer( entity player )
+{
+	bool shouldRespawnPlayer = false
+
+	if ( file.ShouldRespawnPlayer_Callback != null )
+	{
+		shouldRespawnPlayer = file.ShouldRespawnPlayer_Callback( player )
+	}
+	else
+	{
+		int deathFieldStage = SURVIVAL_GetCurrentDeathFieldStage()
+
+		if ( !IsSpawnNearSquadActive() && GetRespawnShouldCheckSquadActive() )
+		{
+			player.SetPlayerNetInt( "respawnsRemaining", 0 )
+			player.SetPlayerNetInt( "respawnStatus", eRespawnStatus.PLAYER_ELIMINATED )
+			return shouldRespawnPlayer
+		}
+
+		if ( !IsTeamAlive( player.GetTeam() ) && IsEliminationBased() )
+		{
+			player.SetPlayerNetInt( "respawnsRemaining", 0 )
+			return shouldRespawnPlayer
+		}
+
+		                                                           
+			if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) && AreTeammatesShadowZombies( player ) )
+				return shouldRespawnPlayer
+        
+
+		int numRespawnsForMode = GetStartingRespawnCount() //-1 = infinite respawns
+		if ( numRespawnsForMode == -1 )
+		{
+			player.SetPlayerNetInt( "respawnsRemaining", -1 )
+			shouldRespawnPlayer = true
+		}
+		else if ( GetTotalNumberOfDeaths( player ) > ( numRespawnsForMode - 1 ) )
+		{
+			player.SetPlayerNetInt( "respawnsRemaining", 0 )
+			player.SetPlayerNetInt( "respawnStatus", eRespawnStatus.PLAYER_ELIMINATED )
+			return shouldRespawnPlayer
+		}
+		else
+		{
+			player.SetPlayerNetInt( "respawnsRemaining", ( numRespawnsForMode - GetTotalNumberOfDeaths( player ) ) - 1 )
+			shouldRespawnPlayer = true
+		}
+	}
+
+	return shouldRespawnPlayer
+}
+#endif // SERVER
+
+#if SERVER
+// Allow other modes to set different functions to check if a player is ready to respawn
+void function RespawnNearSquad_SetCallback_CanRespawnPlayer( bool functionref( entity ) func )
+{
+	Assert( file.ShouldRespawnPlayer_Callback == null )
+	file.ShouldRespawnPlayer_Callback = func
+}
+#endif //SERVER
+
+#if SERVER
+void function SetupPlayerForSpawnNearSquad( entity player )
+{
+	if ( ShouldRespawnPlayer( player ) )
+	{
+		player.SetPlayerNetInt( "respawnStatus", eRespawnStatus.WAITING_FOR_RESPAWN )
+		thread PlayerSpawnsNearSquadAfterDelay( player )
+	}
+}
+#endif // SERVER
+
+#if SERVER
+void function OnSquadEliminated( int team )
+{
+	foreach ( entity player in GetPlayerArrayOfTeam( team ) )
+		player.SetPlayerNetInt( "respawnStatus", eRespawnStatus.SQUAD_ELIMINATED )
+}
+#endif // SERVER
+
+#if SERVER && DEV
+void function DEV_DrawSpawnNearSquadLocations()
+{
+	AssertIsNewThread()
+
+	while( true )
+	{
+		foreach( point in file.spawnPoints )
+		{
+			DrawAngledBox( point.origin, point.angles, <-16, -16, 0>, <16, 16, 72>, COLOR_GREEN, true, 1.1 )
+			 DebugDrawArrow( point.origin, point.origin + AnglesToForward( point.angles ) * 16, 8, COLOR_GREEN, true, 1.1 )
+		}
+		wait 1
+	}
+
+}
+#endif // SERVER
+
+#if SERVER
+float function GetSpawnNearSquadCoolDown( entity player )
+{
+	if ( !IsValid( player ) )
+		return 0
+
+	if ( file.GetSpawnDelay_Callback != null )
+		return file.GetSpawnDelay_Callback( player )
+
+	int playerDeaths = GetTotalNumberOfDeaths( player )
+
+	float baseCooldown = GetCurrentPlaylistVarFloat( "respawn_cooldown", 5.0 )
+	float maxCooldown = GetCurrentPlaylistVarFloat( "respawn_cooldown_max", 60 )
+	float cooldownMultiplier = GetCurrentPlaylistVarFloat( "respawn_cooldown_perPlayerDeath", 5 )
+	float additionalCooldown = 0
+
+	int deathFieldStage = SURVIVAL_GetCurrentDeathFieldStage()
+
+	if ( deathFieldStage < 1 )
+		baseCooldown = baseCooldown
+
+	// Increase cooldown depending on round
+	if ( deathFieldStage == 1 )
+		baseCooldown = GetCurrentPlaylistVarFloat( "respawn_cooldown_deathfield_1", baseCooldown )
+
+	if ( deathFieldStage == 2 )
+		baseCooldown = GetCurrentPlaylistVarFloat( "respawn_cooldown_deathfield_2", baseCooldown )
+
+	if ( deathFieldStage == 3 )
+		baseCooldown = GetCurrentPlaylistVarFloat( "respawn_cooldown_deathfield_3", baseCooldown )
+
+	if ( deathFieldStage == 4 )
+		baseCooldown = GetCurrentPlaylistVarFloat( "respawn_cooldown_deathfield_4", baseCooldown )
+
+	if ( deathFieldStage == 5 )
+		baseCooldown = GetCurrentPlaylistVarFloat( "respawn_cooldown_deathfield_5", baseCooldown )
+
+	if ( deathFieldStage == 6 )
+		baseCooldown = GetCurrentPlaylistVarFloat( "respawn_cooldown_deathfield_6", baseCooldown )
+
+	if ( deathFieldStage == 7 )
+		baseCooldown = GetCurrentPlaylistVarFloat( "respawn_cooldown_deathfield_7", baseCooldown )
+
+	//increase cooldown based on player deaths so far
+	if ( playerDeaths > 1 && cooldownMultiplier > 0 )
+		additionalCooldown =  ( playerDeaths * cooldownMultiplier )
+
+	if ( additionalCooldown > 0 )
+		baseCooldown = ( baseCooldown + additionalCooldown )
+
+	//dont allow cooldown to be ridiculous (if player has died a ton, cap it)
+	if ( baseCooldown > maxCooldown )
+		baseCooldown = maxCooldown
+
+
+	return baseCooldown
+}
+#endif // SERVER
+
+#if SERVER
+// Allow other modes to set different functions to grab the spawn delay
+void function RespawnNearSquad_SetCallback_GetSpawnDelay( float functionref( entity ) func )
+{
+	Assert( file.GetSpawnDelay_Callback == null )
+	file.GetSpawnDelay_Callback = func
+}
+#endif // SERVER
+
+#if SERVER
+void function PlayerSpawnsNearSquadAfterDelay( entity player )
+{
+	if ( !IsValid( player ) )
+		return
+
+	player.EndSignal( "OnDestroy" )
+
+	float respawnCooldown = GetSpawnNearSquadCoolDown( player )
+	float respawnStatusEndTime = Time() + respawnCooldown
+	player.SetPlayerNetTime( "respawnStatusEndTime", respawnStatusEndTime )
+	player.SetPlayerNetTime( "hackStartTime", Time() )
+	WaitFrame()
+
+	if ( !IsValid( player ) )
+		return
+
+	if ( Bleedout_IsBleedingOut( player ) )
+	{
+		//Temp hack till permanent fix for R5DEV-157040
+		Bleedout_ForceStop( player )
+		BleedoutState_SetPlayerBleedoutState( player, BS_NOT_BLEEDING_OUT )
+	}
+
+	Remote_CallFunction_NonReplay( player, "ServerCallback_RespawnPodStarted", respawnStatusEndTime )
+
+	wait respawnCooldown
+
+	if ( GetCurrentPlaylistVarBool( "respawn_queue_active", true ) )
+	{
+		float timeout = GetCurrentPlaylistVarFloat( "respawn_wait_for_queue_timeout", 1.0 )
+		waitthread WaitTillSpawnQueueFree( timeout )
+	}
+
+	// In modes that allow changing characters between spawns, wait to respawn until a character is selected
+	waitthread _WaitForCharacterReselect( player )
+
+	if ( !IsValid( player ) )
+		return
+
+	if ( !IsTeamAlive( player.GetTeam() ) && IsEliminationBased() )
+		return
+
+	if ( GetGameState() != eGameState.Playing )
+		return
+
+	vector deathPos = player.p.deathOrigin
+
+	DoCommonRespawnForPlayer( player )
+	player.p.respawnPodLanded = false // this is weird but necessary
+	player.SetPlayerNetInt( "respawnStatus", eRespawnStatus.NONE )
+	PlayerMatchState_Set( player, ePlayerMatchState.NORMAL )
+
+	player.Signal( "SpawnNearSquad_PlayerRespawned" )
+
+	vector posToSpawnOn = deathPos
+	bool shouldOverrideBestTeammateSelection = false
+	bool shouldSpawnOnVehicleIfPossible = false
+	Point spawnPoint
+	entity vehicle
+
+	if ( shouldSpawnOnVehicleIfPossible )
+	{
+		if ( IsValid( vehicle )
+			 && VehicleHasRoomForNormalOccupants( vehicle )
+			 && !HoverVehicle_IsHostileToTeam( vehicle, player.GetTeam() )
+			 && !HoverVehicle_IsPlayerInAnyVehicleOrRecentlyKicked( player ))
+			//vehicle.HoverVehicle_AddPlayerImmediate( player, false )
+
+		WaitFrame()
+
+		if ( HoverVehicle_IsPlayerInAnyVehicle( player ) )
+			return
+	}
+
+	// the above DoCommonRespawnForPlayer call should have respawned the player at a manually place
+	// spawn point - if they exist, so we don't want to overwrite the position if we want the best manual location
+	vector spawnOrigin = player.GetOrigin()
+	if( !GetUseManuallyPlacedSpawnPoints() )
+	{
+		if ( file.GetBestAvailablePlayerRespawnPoint_Callback != null )
+			spawnPoint = file.GetBestAvailablePlayerRespawnPoint_Callback( player, posToSpawnOn, shouldOverrideBestTeammateSelection )
+		else
+			spawnPoint = GetBestAvailablePlayerRespawnPoint( player, posToSpawnOn, shouldOverrideBestTeammateSelection )
+
+		printf( "RespawnNearSquad: Attempting to spawn player at " + spawnPoint.origin )
+
+		if ( spawnPoint.origin != <0, 0, 0> )
+		{
+			//////////////////////////////////////
+			// Respawn at vetted ground position
+			//////////////////////////////////////
+			spawnOrigin = spawnPoint.origin
+			PutPlayerInSafeSpot( player, null, null, spawnOrigin, spawnOrigin )
+			player.SetAbsAngles( spawnPoint.angles )
+		}
+		else
+		{
+			/////////////////////////////////////////////////////////////
+			// Failsafe skydive at circle edge if no decent respawn found
+			/////////////////////////////////////////////////////////////
+
+			Point skydiveSpawnPoint = GetSkydiveSpawnNearSquad( player )
+			spawnOrigin = skydiveSpawnPoint.origin
+			player.SetOrigin( skydiveSpawnPoint.origin )
+			player.SetAbsAngles( skydiveSpawnPoint.angles )
+			                        
+				Control_PrintSkydiveDebug( player, " PlayerSpawnsNearSquadAfterDelay going to trigger PlayerSkydiveFromCurrentPosition" )
+                                 
+			PlayerSkydiveFromCurrentPosition( player )
+		}
+	}
+
+	ScreenFadeFromBlack( player, 1.0, 0.5 )
+
+	if ( !SURVIVAL_PosInsideDeathField( Survival_Loot_GetDefaultRealm(), spawnOrigin ) )
+		Warning( "%s() - Respawn point outside deathfield: %s", FUNC_NAME(), VectorToString( spawnOrigin ) )
+
+	if ( ShouldPlayRespawnBattlechatter( player ) )
+		PlayBattleChatterLineToSpeakerAndTeam( player, "bc_returnFromRespawn" )
+}
+#endif // SERVER
+
+#if SERVER
+bool function ShouldPlayRespawnBattlechatter( entity player )
+{
+	                              
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
+			return false
+       
+
+	return true
+}
+#endif // SERVER
+
+#if SERVER
+Point function GetSkydiveSpawnNearSquad( entity player )
+{
+	vector center = SURVIVAL_GetSafeZoneCenter( Survival_GetPlayerRealm( player ) )
+	Assert( -MAX_WORLD_COORD_BUFFER < center.x && center.x < MAX_WORLD_COORD_BUFFER, "Center should be in world coord. center.x: " + center.x )
+	Assert( -MAX_WORLD_COORD_BUFFER < center.y && center.y < MAX_WORLD_COORD_BUFFER, "Center should be in world coord. center.y: " + center.y )
+
+	float skydiveHeight = SURVIVAL_GetPlaneHeight()
+	float radius
+	int deathFieldStage = SURVIVAL_GetCurrentDeathFieldStage()
+	if ( deathFieldStage < 0 )
+		radius = 10000
+	else
+		radius = SURVIVAL_GetSafeZoneRadius( Survival_Loot_GetDefaultRealm() )
+
+	radius = max( 0, ( radius - 256 ) ) //don't want to be right at the edge of the circle
+
+	// reduce radius if the circle is out of world coord
+	if ( center.x + radius > MAX_WORLD_COORD_BUFFER )
+		radius = MAX_WORLD_COORD_BUFFER - center.x
+	if ( center.x - radius < -MAX_WORLD_COORD_BUFFER )
+		radius = MAX_WORLD_COORD_BUFFER + center.x
+	if ( center.y + radius > MAX_WORLD_COORD_BUFFER )
+		radius = MAX_WORLD_COORD_BUFFER - center.y
+	if ( center.y - radius < -MAX_WORLD_COORD_BUFFER )
+		radius = MAX_WORLD_COORD_BUFFER + center.y
+
+	Assert( radius > 0, "Spawn radius is 0 or smaller" )
+
+	array<vector> spawnCandidates = GetPointsOnCircle( center + < 0, 0, skydiveHeight>, <0,0,0>, radius, 64 )
+	array<entity> teamMates = GetPlayerArrayOfTeam_AliveConnected( player.GetTeam() )
+	vector skydivePos = <0, 0, 0>
+	if ( teamMates.len() > 1 )
+	{
+		foreach ( entity teammate in teamMates )
+		{
+			if ( teammate == player )
+				continue
+
+			int idx = GetClosestVectorIndex( spawnCandidates, teammate.GetOrigin() )
+			skydivePos = spawnCandidates[ idx ]
+			break
+		}
+	}
+
+	if ( skydivePos == <0, 0, 0> )
+		skydivePos = spawnCandidates.getrandom()
+
+	skydivePos = <skydivePos.x, skydivePos.y, skydiveHeight>
+	vector skydiveAng = VectorToAngles( SURVIVAL_GetSafeZoneCenter( Survival_GetPlayerRealm( player ) ) - skydivePos )
+	skydiveAng = <88.0, skydiveAng.y, 0.0>
+
+	Point skydiveRespawnPoint
+	skydiveRespawnPoint.origin = skydivePos
+	skydiveRespawnPoint.angles = skydiveAng
+
+	return skydiveRespawnPoint
+}
+#endif // SERVER
+
+#if SERVER
+Point function GetBestAvailablePlayerRespawnPoint( entity player, vector deathPos, bool shouldOverrideBestTeammateSelection )
+{
+	Point spawnPoint
+
+	array<entity> playersOnMyTeam = GetPlayerArrayOfTeam_Alive( player.GetTeam() )
+	array<entity> teammates
+	foreach ( entity guy in playersOnMyTeam )
+	{
+		if ( guy == player )
+			continue
+
+		teammates.append( guy )
+	}
+
+	////////////////////////////////////////////////////
+	// No teammates...use deathpos to find a spawnpoint
+	////////////////////////////////////////////////////
+	if ( teammates.len() == 0 || shouldOverrideBestTeammateSelection )
+		return GetRandomSpawnPointNearPos( player, deathPos )
+
+	//////////////////////////////////////////////
+	// OR - Spawn near teammate with most health
+	//////////////////////////////////////////////
+	if ( teammates.len() == 1 )
+		return GetRandomSpawnPointNearPos( player, OriginToGround( teammates[ 0 ].GetOrigin() ) )
+
+	entity bestTeammate
+	int highestHealth = 0
+	foreach( guy in teammates )
+	{
+		int health = ( guy.GetHealth() + guy.GetShieldHealth() )
+		if ( health > highestHealth )
+		{
+			bestTeammate = guy
+			highestHealth = health
+		}
+	}
+
+	return GetRandomSpawnPointNearPos( player, OriginToGround( bestTeammate.GetOrigin() ) )
+}
+#endif // SERVER
+
+#if SERVER
+// Allow other modes to set different functions to grab the best spawn point
+void function RespawnNearSquad_SetCallback_GetBestRespawnPoint( Point functionref( entity, vector, bool ) func )
+{
+	Assert( file.GetBestAvailablePlayerRespawnPoint_Callback == null )
+	file.GetBestAvailablePlayerRespawnPoint_Callback = func
+}
+#endif //SERVER
+
+
+#if SERVER
+bool function DebugSpawnNearSquad()
+{
+	if ( GetBugReproNum() == 1979 )
+		return true
+
+	return false
+}
+#endif //SERVER
+
+
+#if SERVER
+Point function GetRandomPetSpawnPointNearPos( entity player, vector pos )
+{
+	return GetRandomSpawnPointNearPos( player, pos, eSpawnType.PROWLER )
+
+}
+#endif //SERVER
+
+
+
+#if SERVER
+bool function IsSpawnQueueBusy()
+{
+	return Flag( "SpawnQueueBusy" )
+}
+#endif //SERVER
+
+
+#if SERVER
+void function WaitTillSpawnQueueFree( float timeout = 2.0 )
+{
+	AssertIsNewThread()
+	float startTime = Time()
+	while( IsSpawnQueueBusy() || Time() > ( startTime + timeout ) )
+		WaitFrame()
+
+	if ( Time() > ( startTime + timeout ) )
+		Warning( "%s() - Waiting too long for busy spawn queue, falling back on timeout: %s seconds", FUNC_NAME(), timeout )
+}
+#endif //SERVER
+
+#if SERVER
+void function _WaitForCharacterReselect( entity player )
+{
+	while( IsPlayerReselectingCharacter( player ) )
+		wait 0.1
+}
+#endif //SERVER
+
+#if SERVER
+void function LockSpawnQueue()
+{
+	if ( !Flag( "SpawnQueueBusy" ) )
+		FlagSet( "SpawnQueueBusy" )
+}
+#endif //SERVER
+
+
+#if SERVER
+void function UnlockSpawnQueue()
+{
+	if ( Flag( "SpawnQueueBusy" ) )
+		FlagClear( "SpawnQueueBusy" )
+}
+#endif //SERVER
+
+
+#if SERVER
+Point function GetRandomSpawnPointNearPos( entity player, vector pos, int spawnType = eSpawnType.PLAYER )
+{
+	if ( GetCurrentPlaylistVarBool( "respawn_queue_active", true ) )
+	{
+		// if you want to call this func only one customer-at-a-time (for performance gains),
+		// you'll need to check IsSpawnQueueBusy() before calling it or do waitthread WaitTillSpawnQueueFree()
+		// not a rigid policy...may get instances of multiple customers but checking to see if it's busy reduces the potential load
+		if ( Flag( "SpawnQueueBusy" ) )
+			Warning( "%s() - Spawn queue is busy. Check IsSpawnQueueBusy() or WaitTillSpawnQueueFree() beforce calling", FUNC_NAME() )
+	}
+
+	LockSpawnQueue()
+
+	int playerTeam = player.GetTeam()
+	Point bestSpawnPoint
+	bestSpawnPoint.origin = SPAWN_NEAR_SQUAD_INVALID_SPAWN_POINT_ORIGIN
+	bestSpawnPoint.angles = SPAWN_NEAR_SQUAD_INVALID_SPAWN_POINT_ANGLE
+
+	array <Point> spawnPoints
+	if ( spawnType == eSpawnType.PROWLER )
+		spawnPoints = clone file.spawnPointsPets //fluctuating array based on circle
+	else
+		spawnPoints = clone file.spawnPoints //fluctuating array based on circle
+
+
+	float minDistToFriendly
+	float maxDistToFriendly
+	float minDistToEnemy
+	if ( spawnType == eSpawnType.PROWLER )
+	{
+		minDistToFriendly = GetCurrentPlaylistVarFloat( "pet_respawn_min_dist_from_friendly", MIN_PET_SPAWN_DIST_FROM_FRIENDLY )
+		maxDistToFriendly = GetCurrentPlaylistVarFloat( "pet_respawn_max_dist_from_friendly", MAX_PET_SPAWN_DIST_FROM_FRIENDLY )
+		minDistToEnemy = GetCurrentPlaylistVarFloat( "pet_respawn_min_dist_from_enemy", MIN_PET_SPAWN_DIST_FROM_ENEMY )
+	}
+	else
+	{
+		minDistToFriendly = RespawnNearSquad_GetMinDistFromFriendlyForValidSpawn()
+		maxDistToFriendly = RespawnNearSquad_GetMaxDistFromFriendlyForValidSpawn()
+		minDistToEnemy = RespawnNearSquad_GetMinDistFromEnemyForValidSpawn()
+	}
+
+	//PerfStart( PerfIndexServer.GetRandomSpawnPoint )
+
+	if ( GetCurrentPlaylistVarBool( "spawnpoints_cull_by_dist", true ) )
+	{
+		//reduce the number of spawn points we will need to order from closest to furthest
+		array<Point> spawnPointsCulled
+		float maxDistCull = maxDistToFriendly
+		float maxDistCullSq = maxDistCull * maxDistCull
+		foreach( point in spawnPoints )
+		{
+			if ( Distance2DSqr( point.origin, pos ) < maxDistCullSq )
+				spawnPointsCulled.append( point )
+		}
+		spawnPoints = spawnPointsCulled
+	}
+
+	if ( spawnPoints.len() == 0 )
+	{
+		Warning( "%s() - No respawn points available, returning SPAWN_NEAR_SQUAD_INVALID_SPAWN_POINT_ORIGIN (skydive)", FUNC_NAME() )
+		bestSpawnPoint.origin = SPAWN_NEAR_SQUAD_INVALID_SPAWN_POINT_ORIGIN
+		bestSpawnPoint.angles = SPAWN_NEAR_SQUAD_INVALID_SPAWN_POINT_ANGLE
+		UnlockSpawnQueue()
+		return bestSpawnPoint
+	}
+
+	//turn off sorting of spawnpoints from closest to furthest if we need performance gains
+	bool sortSpawnPoints = true
+	if ( spawnType == eSpawnType.PROWLER )
+		sortSpawnPoints = GetCurrentPlaylistVarBool( "squad_pets_sort_spawnpoints", true )
+	else
+		sortSpawnPoints = GetCurrentPlaylistVarBool( "squad_sort_spawnpoints", true )
+
+	if ( sortSpawnPoints )
+		spawnPoints = ArrayClosestPoint( spawnPoints, pos )
+	else
+		spawnPoints.randomize()
+
+	//create a temp spawnpoint to use to check validity of spawn candidate locations
+	entity spawnPointDummy = CreateEntity( "info_player_teamspawn" )
+	DispatchSpawn( spawnPointDummy )
+	spawnPointDummy.SetOrigin( pos )
+	spawnPointDummy.SetAngles( <0, 0, 0> )
+
+	foreach( point in spawnPoints )
+	{
+		//outside ring? (or too close for comfort)
+		if ( spawnType != eSpawnType.PROWLER && SURVIVAL_GetDistanceInsideDeathField( Survival_Loot_GetDefaultRealm(), point.origin ) < MIN_SPAWN_DIST_FROM_RING )
+			continue
+
+		//temp "info_player_teamspawn" to do validity checks on the spot
+		spawnPointDummy.SetOrigin( point.origin )
+		spawnPointDummy.SetAngles( point.angles )
+
+		//spawnPointDummy.ForceUpdateTeamData( playerTeam ) //need to do this to allow spawn points to update multiple times in one frame
+
+		//Use NearbyEnemyDistance and NearbyAllyDistance on the moving dummy spawnpoint
+
+		//too close to an enemy?
+		float nearEnemyDist = spawnPointDummy.NearbyEnemyDistance( playerTeam, "pilot" )
+		if ( nearEnemyDist < minDistToEnemy )
+			continue
+
+		//too close/far from a friendly?
+		float dist = spawnPointDummy.NearbyAllyDistance( playerTeam, "pilot" )
+
+		if ( dist < minDistToFriendly )
+			continue
+
+		if ( dist > maxDistToFriendly )
+			continue
+
+		//occupied, near grenade, etc?
+		if ( !IsSpawnpointValid( spawnPointDummy, playerTeam ) )
+			continue
+
+		bestSpawnPoint = point
+		break
+	}
+
+	spawnPointDummy.Destroy()
+
+	//PerfEnd( PerfIndexServer.GetRandomSpawnPoint )
+
+	if ( bestSpawnPoint.origin != SPAWN_NEAR_SQUAD_INVALID_SPAWN_POINT_ORIGIN )
+	{
+		if ( GetCurrentPlaylistVarBool( "respawn_point_faces_squad", true ) == true )
+		{
+			//generate better
+			array<entity> squadMates = GetPlayerArrayOfTeam_AliveConnected( playerTeam )
+			array<entity> squadMateCandidates
+			vector squadMatePos
+			foreach( squadMate in squadMates )
+			{
+				if ( !IsValid( squadMate ) )
+					continue
+
+				if ( squadMate == player )
+					continue
+
+				squadMateCandidates.append( squadMate )
+			}
+
+			if ( squadMateCandidates.len() > 0 )
+			{
+				entity closestSquadMate = GetClosest( squadMateCandidates, bestSpawnPoint.origin )
+				if ( IsValid( closestSquadMate ) )
+				{
+					vector newSpawnPointAngles = VectorToAngles( closestSquadMate.GetOrigin() - bestSpawnPoint.origin )
+					newSpawnPointAngles = <0.0, newSpawnPointAngles.y, 0.0>
+					bestSpawnPoint.angles = newSpawnPointAngles
+				}
+			}
+		}
+
+		UnlockSpawnQueue()
+		return bestSpawnPoint
+
+	}
+
+	////////////////////////////////////////////////////
+	// Unable to find a decent spawn, return <0, 0, 0>
+	////////////////////////////////////////////////////
+	Warning( "%s() - Couldn't find a safe respawn point, returning SPAWN_NEAR_SQUAD_INVALID_SPAWN_POINT_ORIGIN (skydive)", FUNC_NAME() )
+	bestSpawnPoint.origin = SPAWN_NEAR_SQUAD_INVALID_SPAWN_POINT_ORIGIN
+	bestSpawnPoint.angles = SPAWN_NEAR_SQUAD_INVALID_SPAWN_POINT_ANGLE
+
+	UnlockSpawnQueue()
+	return bestSpawnPoint
+}
+#endif // SERVER
+
+#if SERVER
+float function RespawnNearSquad_GetMinDistFromFriendlyForValidSpawn()
+{
+	return GetCurrentPlaylistVarFloat( "respawn_min_dist_from_friendly", MIN_SPAWN_DIST_FROM_FRIENDLY )
+}
+#endif //SERVER
+
+#if SERVER
+float function RespawnNearSquad_GetMaxDistFromFriendlyForValidSpawn()
+{
+	return GetCurrentPlaylistVarFloat( "respawn_max_dist_from_friendly", MAX_SPAWN_DIST_FROM_FRIENDLY )
+}
+#endif //SERVER
+
+#if SERVER
+float function RespawnNearSquad_GetMinDistFromEnemyForValidSpawn()
+{
+	return GetCurrentPlaylistVarFloat( "respawn_min_dist_from_enemy", MIN_SPAWN_DIST_FROM_ENEMY )
+}
+#endif //SERVER
+
+#if SERVER
+float function RespawnNearSquad_GetMaxDistFromEnemyForValidSpawn()
+{
+	return GetCurrentPlaylistVarFloat( "respawn_max_dist_from_enemy", MAX_SPAWN_DIST_FROM_ENEMY )
+}
+#endif //SERVER
+
+#if SERVER
+void function OnDeathFieldStartShrink( table<int,DeathFieldData> deathFieldData )
+{
+	UpdateMapSpawnPoints()
+
+	// No more respawns in final stages
+	if ( !IsSpawnNearSquadActive() )
+		return
+
+	int deathFieldStage = SURVIVAL_GetCurrentDeathFieldStage()
+	if ( deathFieldStage == GetSpawnNearSquadEndingStage() || SURVIVAL_IsFinalDeathFieldStage() )
+		file.isSpawnNearSquadActive = false
+}
+#endif //SERVER
+
+#if SERVER
+int function GetSpawnNearSquadEndingStage()
+{
+	return GetCurrentPlaylistVarInt( "respawn_round_to_stop", CIRCLE_STAGE_TO_STOP_RESPAWNS )
+}
+#endif //SERVER
+
+#if SERVER
+bool function GetUseManuallyPlacedSpawnPoints()
+{
+	return GetCurrentPlaylistVarBool( "use_manual_spawn_points", false )
+}
+#endif //SERVER
+
+#if SERVER
+bool function GetRespawnShouldCheckSquadActive()
+{
+	return GetCurrentPlaylistVarBool( "respawn_should_check_squad_active", true )
+}
+#endif //SERVER
+ 

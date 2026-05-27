@@ -3,7 +3,6 @@ global function OnSpawnConveyorCrateMover
 #if DEVELOPER
 global function DEBUG_Conveyor_DestroyDeployables
 #endif
-global array<string> DEPLOYABLE_ABILITY_NAMES = []
 
 struct {
 	asset model

@@ -1,0 +1,438 @@
+#if SERVER || CLIENT
+global function InitHatchBunkers
+global function GetHatchDataGroupsById
+global function GetHatchDataGroupByDoorModel
+global function GetAllHatchDataGroups
+global function IsCanyonlandsBunkersEnabled
+global function IsHatchBunkerUnlocked
+#endif
+
+#if SERVER
+global function OpenCanyonlandsBunkerHatch
+#endif
+
+#if SERVER || CLIENT
+global const array<string> HATCH_ZONE_IDS = ["16", "6", "5", "12", "12_treasure"]
+
+global const string HATCH_DOOR_ENTRANCE_SCRIPTNAME = "hatch_bunker_entrance_model_z%s"
+global const string HATCH_DOOR_LEAVE_SCRIPTNAME = "hatch_bunker_exit_model_z%s"
+const string HATCH_PANEL_SCRIPTNAME = "bunker_hatch_panel_model"
+
+const string ZIPLINE_TARGET_SCRIPTNAME = "hatch_special_zipline_start_target"
+#endif // SERVER || CLIENT
+
+#if SERVER
+const asset FX_HATCH_STEAM = $"P_env_steam_bunker_128"
+const asset FX_HATCH_STEAM_SMALL = $"P_env_steam_bunker_64"
+
+const string ZIPLINE_ATTACHMENT_ENTRANCE = "ATT_ROPE_02"
+const string ZIPLINE_ATTACHMENT_LEAVE = "ATT_ROPE"
+const float ZIPLINE_FALL_SPEED = 640.0
+const string ZIPLINE_DEPLOY_SFX = "Canyonlands_Scr_Bunker_Hatch_Zipline_Drop"
+#endif
+
+
+#if SERVER || CLIENT
+global enum eHatchState
+{
+	LOCKED,
+	UNLOCKED,
+	COUNTDOWN,
+	OPEN
+}
+#endif
+
+
+#if SERVER || CLIENT
+global struct HatchData
+{
+	string zoneId
+	bool   isEntranceHatch = false
+	int    hatchState
+
+	entity doorModel
+	entity panelModel
+
+	#if SERVER
+		array<vector> specialZiplineStartOrigins
+	#endif
+}
+#endif
+
+struct
+{
+	array<string> hatchIdsToCountdown
+	array<string> hatchIdsUnlocked
+	int           countdownTargetUnixTime
+
+
+	table <string, array<HatchData> > hatchIdDataGroups
+	table <entity, HatchData >        hatchModelDataGroups
+} file
+
+
+// =================================================================================================================================
+// =================================================================================================================================
+// =================================================================================================================================
+// =================================================================================================================================
+//
+//  #### ##    ## #### ########
+//   ##  ###   ##  ##     ##
+//   ##  ####  ##  ##     ##
+//   ##  ## ## ##  ##     ##
+//   ##  ##  ####  ##     ##
+//   ##  ##   ###  ##     ##
+//  #### ##    ## ####    ##
+//
+// =================================================================================================================================
+// =================================================================================================================================
+// =================================================================================================================================
+// =================================================================================================================================
+
+
+#if SERVER || CLIENT
+void function InitHatchBunkers()
+{
+	#if SERVER
+		PrecacheParticleSystem( FX_HATCH_STEAM )
+		PrecacheParticleSystem( FX_HATCH_STEAM_SMALL )
+	#endif
+
+	file.hatchIdsUnlocked = HATCH_ZONE_IDS
+
+	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
+}
+#endif // SERVER || CLIENT
+
+#if SERVER || CLIENT
+void function EntitiesDidLoad()
+{
+	if ( !IsCanyonlandsBunkersEnabled() )
+		return
+
+	// gather data for entrance and exit hatches
+	array<HatchData> hatchEntranceDatas
+	array<HatchData> hatchLeaveDatas
+	foreach ( int hatchIndex, string id in HATCH_ZONE_IDS )
+	{
+		HatchData entranceHatchData
+		HatchData leaveHatchData
+		bool isQuestHatch = id == "12_treasure"
+
+		if ( !isQuestHatch )
+		{
+			entranceHatchData.doorModel = GetEntByScriptName( format( HATCH_DOOR_ENTRANCE_SCRIPTNAME, id ) )
+			entranceHatchData.zoneId = id
+			entranceHatchData.isEntranceHatch = true
+		}
+
+		leaveHatchData.doorModel = GetEntByScriptName( format( HATCH_DOOR_LEAVE_SCRIPTNAME, id ) )
+		leaveHatchData.zoneId = id
+		leaveHatchData.isEntranceHatch = false
+
+		#if SERVER
+			leaveHatchData.doorModel.SetSkin( 1 )
+		#endif
+
+		if ( !isQuestHatch )
+			hatchEntranceDatas.append( entranceHatchData )
+
+		hatchLeaveDatas.append( leaveHatchData )
+
+		#if SERVER
+			// Spawn unique treasure
+			if ( (!isQuestHatch && file.hatchIdsUnlocked.contains( id )) || id == "16" )
+			{
+				entity lootSpawnTarget = GetEntByScriptName( format( "hb_loot_spawn_%s", id ) )
+				array<string> itemRefsToSpawn
+				// One hopup
+				itemRefsToSpawn.append( SURVIVAL_GetWeightedItemFromGroup( "attachments_hopups_only" ) )
+
+				// One POI_High item
+				itemRefsToSpawn.append( SURVIVAL_GetWeightedItemFromGroup( "POI_High" ) )
+
+				// Each bunker gets a corresponding item from the gold_weapons table. Should be the same weapon/bunker combo through the season.
+
+				array<string> goldWeaponRefs = SURVIVAL_GetAllRefsInLootGroup( "gold_weapons" )
+				string weaponRef = goldWeaponRefs[ hatchIndex % goldWeaponRefs.len() ]
+
+				if ( SURVIVAL_Loot_IsRefDisabled( weaponRef ) )
+					weaponRef = SURVIVAL_GetWeightedItemFromGroup( "gold_weapons" )
+
+				vector weaponRefOrigin = OriginToGround( lootSpawnTarget.GetOrigin() + < 0, 0, 16 > )
+				SpawnWeaponAndAmmo( weaponRef, weaponRefOrigin )
+
+				foreach ( string ref in itemRefsToSpawn )
+					SURVIVAL_ThrowLootFromPoint( lootSpawnTarget.GetOrigin(), RandomVecInDomeWithFOV( < 0, 1, 0 >, 45 ), ref )
+			}
+		#endif // SERVER
+
+		array<HatchData> hatchDataArray
+		file.hatchIdDataGroups[ id ] <- hatchDataArray
+	}
+
+	array<HatchData> allHatchDatas
+	allHatchDatas.extend( hatchEntranceDatas )
+	allHatchDatas.extend( hatchLeaveDatas )
+
+	// setup all the hatches and their linked ents
+	foreach ( HatchData data in allHatchDatas )
+	{
+		// set the initial closed animation
+		#if SERVER
+		data.doorModel.Anim_PlayWithRefPoint( "bunker_hatch_close_idle", data.doorModel.GetOrigin(), data.doorModel.GetAngles(), 0.0 )
+		#endif
+
+		array<entity> linkEnts = data.doorModel.GetLinkEntArray()
+
+		foreach ( entity doorLinkEnt in linkEnts )
+		{
+			string linkEntScriptName = doorLinkEnt.GetScriptName()
+
+			if ( linkEntScriptName == HATCH_PANEL_SCRIPTNAME )
+			{
+				data.panelModel = doorLinkEnt
+			}
+			else if ( linkEntScriptName == ZIPLINE_TARGET_SCRIPTNAME )
+			{
+				#if SERVER
+					data.specialZiplineStartOrigins.append( doorLinkEnt.GetOrigin() )
+					doorLinkEnt.Destroy()
+				#endif
+			}
+		}
+
+		if ( IsValid( data.panelModel ) )
+		{
+			#if SERVER
+				data.panelModel.SetSkin( 1 )
+				data.panelModel.AllowMantle()
+				data.panelModel.SetForceVisibleInPhaseShift( true )
+				data.panelModel.SetUsable()
+				data.panelModel.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
+				data.panelModel.SetUsablePriority( USABLE_PRIORITY_LOW )
+
+				if ( !data.isEntranceHatch )
+					data.panelModel.SetModelScale( 1.25 )
+			#endif
+
+			if ( data.isEntranceHatch )
+			{
+				if ( file.hatchIdsUnlocked.contains( data.zoneId ) )
+				{
+					data.hatchState = eHatchState.UNLOCKED
+
+					#if SERVER
+						data.panelModel.SetSkin( 0 )
+					#endif
+				}
+				else if ( file.hatchIdsToCountdown.contains( data.zoneId ) )
+				{
+					data.hatchState = eHatchState.COUNTDOWN
+				}
+				else
+				{
+					data.hatchState = eHatchState.LOCKED
+				}
+			}
+			else
+			{
+				data.hatchState = eHatchState.UNLOCKED
+
+				#if SERVER
+					data.panelModel.SetSkin( 0 )
+				#endif
+			}
+
+			#if CLIENT
+				AddEntityCallback_GetUseEntOverrideText( data.panelModel, CreateHatchPanelOverrideTextFunc( data ) )
+			#endif
+
+			if ( data.hatchState == eHatchState.UNLOCKED )
+				AddCallback_OnUseEntity_ClientServer( data.panelModel, CreateHatchPanelFunc( data ) )
+		}
+
+		file.hatchIdDataGroups[ data.zoneId ].append( data )
+		file.hatchModelDataGroups[ data.doorModel ] <- data
+	}
+}
+#endif // SERVER || CLIENT
+
+
+// =================================================================================================================================
+// =================================================================================================================================
+// =================================================================================================================================
+// =================================================================================================================================
+//
+//  ##     ##    ###    #### ##    ##
+//  ###   ###   ## ##    ##  ###   ##
+//  #### ####  ##   ##   ##  ####  ##
+//  ## ### ## ##     ##  ##  ## ## ##
+//  ##     ## #########  ##  ##  ####
+//  ##     ## ##     ##  ##  ##   ###
+//  ##     ## ##     ## #### ##    ##
+//
+// =================================================================================================================================
+// =================================================================================================================================
+// =================================================================================================================================
+// =================================================================================================================================
+
+
+#if CLIENT
+string functionref( entity panel ) function CreateHatchPanelOverrideTextFunc( HatchData data )
+{
+	return string function( entity panel ) : ( data )
+	{
+		if ( data.hatchState == eHatchState.UNLOCKED )
+		{
+			return "#BUNKER_PANEL_UNLOCKED_HINT"
+		}
+		else if ( data.hatchState == eHatchState.COUNTDOWN )
+		{
+			int currentUnixTime  = GetUnixTimestamp()
+			int timeDelta        = file.countdownTargetUnixTime - currentUnixTime
+			string timeString    = GetDaysHoursMinutesSecondsString( timeDelta )
+			string displayString = Localize( "#BUNKER_PANEL_COUNTDOWN_HINT", timeString )
+
+			return displayString
+		}
+
+		return "#BUNKER_PANEL_DISABLED_HINT"
+	}
+}
+#endif // CLIENT
+
+
+#if SERVER || CLIENT
+void functionref( entity panel, entity player, int useInputFlags ) function CreateHatchPanelFunc( HatchData data )
+{
+	return void function( entity panel, entity player, int useInputFlags ) : ( data )
+	{
+		thread OnHatchPanelActivate( data )
+
+		#if SERVER
+			PIN_Interact( player, "hb_open", data.doorModel.GetOrigin() )
+		#endif
+	}
+}
+#endif // SERVER || CLIENT
+
+
+#if SERVER || CLIENT
+void function OnHatchPanelActivate( HatchData data )
+{
+	#if SERVER
+		data.panelModel.UnsetUsable()
+		data.panelModel.SetSkin( 1 )
+	#endif
+
+	data.hatchState = eHatchState.OPEN
+
+	#if SERVER
+		// create auxillary ziplines
+		foreach ( vector ziplineStartOrigin in data.specialZiplineStartOrigins )
+			thread CreateHatchZipline( ziplineStartOrigin , data.panelModel)
+
+		OpenCanyonlandsBunkerHatch( data, true )
+	#endif // SERVER
+}
+#endif // SERVER || CLIENT
+
+
+#if SERVER
+void function OpenCanyonlandsBunkerHatch( HatchData data, bool createZiplines )
+{
+	// fx
+	asset particleAsset = data.isEntranceHatch ? FX_HATCH_STEAM : FX_HATCH_STEAM_SMALL
+	vector fxOffset     = data.isEntranceHatch ? < 0, 0, -128 > : < 0, 0, -64 >
+
+	StartParticleEffectOnEntityWithPos( data.doorModel, GetParticleSystemIndex( particleAsset ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, fxOffset, < 0, 0, 0 > )
+
+	// animate hatch open
+	PlayAnim( data.doorModel, "bunker_hatch_open" )
+	data.doorModel.Anim_PlayWithRefPoint( "bunker_hatch_open_idle", data.doorModel.GetOrigin(), data.doorModel.GetAngles(), 0.0 )
+
+	// deploy zipline from hatch itself
+	if ( createZiplines )
+	{
+		string attachment   = data.isEntranceHatch ? ZIPLINE_ATTACHMENT_ENTRANCE : ZIPLINE_ATTACHMENT_LEAVE
+		int ropeAttachIndex = data.doorModel.LookupAttachment( attachment )
+		vector attachOrg    = data.doorModel.GetAttachmentOrigin( ropeAttachIndex )
+		thread CreateHatchZipline( attachOrg, data.doorModel )
+	}
+}
+#endif
+
+
+#if SERVER
+void function CreateHatchZipline( vector startPoint, entity panelModel )
+{
+	vector endPos
+	TraceResults tr = TraceLine( startPoint + < 0, 0, -16 >, startPoint + < 0, 0, -10000 >, null, TRACE_MASK_NPCWORLDSTATIC, TRACE_COLLISION_GROUP_NONE )
+	endPos = startPoint + < 0, 0, -16 > + < 0, 0, -10000 * tr.fraction >
+	float dropTime = (startPoint.z - endPos.z) / ZIPLINE_FALL_SPEED
+	thread DeployZipline( dropTime, startPoint, endPos + < 0, 0, 64 >, false, <0,0,0> )
+	EmitSoundAtPosition( TEAM_ANY, startPoint, ZIPLINE_DEPLOY_SFX, panelModel )
+}
+#endif // SERVER
+
+
+#if SERVER || CLIENT
+array<HatchData> function GetHatchDataGroupsById( string zoneId )
+{
+	Assert( zoneId in file.hatchIdDataGroups, "Zone id not contained in any hatch data." )
+
+	return file.hatchIdDataGroups[ zoneId ]
+}
+#endif // SERVER || CLIENT
+
+
+#if SERVER || CLIENT
+HatchData function GetHatchDataGroupByDoorModel( entity model )
+{
+	Assert( model in file.hatchModelDataGroups, "Model not contained in any hatch data." )
+
+	return file.hatchModelDataGroups[ model ]
+}
+#endif // SERVER || CLIENT
+
+
+#if SERVER || CLIENT
+table <string, array<HatchData> > function GetAllHatchDataGroups()
+{
+	return file.hatchIdDataGroups
+}
+#endif // SERVER || CLIENT
+
+
+#if SERVER || CLIENT
+bool function IsCanyonlandsBunkersEnabled()
+{
+	if ( GetCurrentPlaylistVarBool( "canyonlands_bunkers_enabled", true ) )
+	{
+		foreach ( string zoneId in HATCH_ZONE_IDS )
+		{
+			array<entity> entranceHatches = GetEntArrayByScriptName( format( HATCH_DOOR_ENTRANCE_SCRIPTNAME, zoneId ) )
+			array<entity> leaveHatches    = GetEntArrayByScriptName( format( HATCH_DOOR_LEAVE_SCRIPTNAME, zoneId ) )
+
+			if ( zoneId != "12_treasure" && entranceHatches.len() != 1 )
+				return false
+
+			if ( leaveHatches.len() != 1 )
+				return false
+		}
+
+		return true
+	}
+
+	return false
+}
+
+bool function IsHatchBunkerUnlocked( string hatchId )
+{
+	if ( hatchId == "12_treasure" )
+		return false
+
+	return file.hatchIdsUnlocked.contains( hatchId )
+}
+#endif // SERVER || CLIENT 

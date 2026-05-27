@@ -6,7 +6,6 @@
 global function CodeCallback_MapSpawn
 global function RegisterGeoFixAsset
 global function PlaylistDeathTrigger_OnEnter
-global function IsInForgedShadows
 global int ATTACHMENTID_INVALID = -1
 
 global table _ClientCommandCallbacks = {}
@@ -381,15 +380,4 @@ void function PlaylistOOBTriggerFix() //Note: This will work on playlists with m
 
 		CreateTriggerCylinderNetworked_OutOfBounds( triggerOrigin, triggerRadius, triggerAboveHeight, triggerbelowHeight, triggerAngles )
 	}
-}
-
-bool function IsInForgedShadows( entity player )
-{
-	if ( !IsValid( player ) )
-		return false
-
-	if ( StatusEffect_HasSeverity( player, eStatusEffect.shadow_form ) )
-		return true
-
-	return false
 }

@@ -136,7 +136,6 @@ void function FragDroneDeath( entity spectre, var damageInfo )
 	FragDroneDeath_Think( spectre, damageInfo )
 }
 
-const int VALENTINES_SPECIAL_EVENT_LOOT_TIER = 6
 // for reloadscripts
 void function FragDroneDeath_Think( entity tick, var damageInfo )
 {

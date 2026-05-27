@@ -393,7 +393,7 @@ void function FollowUp_Start( entity player, float duration )
 {
 	// no need to check both status effect, since he should never have one without the other.
 
-	/*if ( file.playerStatusEffects[player].speedBoostID != SE_INVALID_HANDLE && StatusEffect_GetTimeRemaining_WithHandle( player, file.playerStatusEffects[ player ].speedBoostID ) > 0 )
+	/*if ( file.playerStatusEffects[player].speedBoostID != SE_INVALID_HANDLE > 0 )
 	{
 		StatusEffect_SetDuration( player, file.playerStatusEffects[ player ].followUpVisualsID, duration )
 		StatusEffect_SetDuration( player, file.playerStatusEffects[ player ].speedBoostID, duration )

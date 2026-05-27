@@ -206,8 +206,8 @@ void function SV_CL_Init()
 	                       
 		ShEventAbilities_Init()
 		ShPassiveLootHighlight_Init()
-		//ShPassiveKnockAdrenaline_Init()
-		//ShPassiveSquadwipeBoost_Init()
+		ShPassiveKnockAdrenaline_Init()
+		ShPassiveSquadwipeBoost_Init()
        
 	ShMusic_LevelInit()
 	ShBattlePass_LevelInit()
@@ -225,7 +225,7 @@ void function SV_CL_Init()
        
 	
 	                            
-		//ShPassiveBattleSense_Init()
+		ShPassiveBattleSense_Init()
        
 
               
@@ -310,10 +310,10 @@ void function SV_CL_Init()
                                              
        
 	ShFiringRangeStoryEvents_Init()
-	//ShFiringRangeChallenges_Init()
-	//ShFRC_G7Scout_Init()
-	//ShFRC_Bow_Init()
-	//ShFRC_p2020_Init()
+	ShFiringRangeChallenges_Init()
+	ShFRC_G7Scout_Init()
+	ShFRC_Bow_Init()
+	ShFRC_p2020_Init()
 	PanicButton_Init()
 
                     
@@ -332,7 +332,7 @@ void function SV_CL_Init()
        
 
 	ChargePylons_Init()
-	//ShDrones_Init()
+	ShDrones_Init()
 	ShLootRollers_Init()
 
 	                
@@ -432,18 +432,18 @@ void function SV_CL_Init()
 		CharacterLoadouts_Init()
 
 	                       
-		//RollingRespawn_Init()
+		RollingRespawn_Init()
        
 
-	//Sh_Respawn_Token_Init()
+	Sh_Respawn_Token_Init()
 	
-	//WaveSpawningOnSquad_Init()
+	WaveSpawningOnSquad_Init()
 
-	//ShSpawnNearSquad_Init()
-	//ShSpawnSquadSkyDive_Init()
+	ShSpawnNearSquad_Init()
+	ShSpawnSquadSkyDive_Init()
 
 	                     
-		//HoverVehicle_Init()
+		HoverVehicle_Init()
        
 
                       
@@ -471,10 +471,10 @@ void function SV_CL_Init()
 	LoadoutSelection_Init()
 
 	// Town Takeovers
-	//CryptoTT_Init()
+	CryptoTT_Init()
 
 	                  
-		//Wattson_TT_Init()
+		Wattson_TT_Init()
        
 
 	                  
@@ -486,8 +486,8 @@ void function SV_CL_Init()
        
 
 	                   
-	//LifelineTT_Init()
-	//	MedBay_Init()
+		LifelineTT_Init()
+		MedBay_Init()
        
 
 	               
@@ -502,7 +502,7 @@ void function SV_CL_Init()
 	Sh_SkydiveLaunchers_Init()
 
                                               
-	//Sh_TrackingVision_Init()
+	Sh_TrackingVision_Init()
       
 
 	Armor_ShieldRegen_Init()
@@ -517,10 +517,10 @@ void function SV_CL_Init()
 		SpectreShacks_MapInit()
        
 
-	//NET_TraceRoute_Init()
+	NET_TraceRoute_Init()
 
 	                   
-		//MapMetrics_Init()
+		MapMetrics_Init()
        
 
 	Sh_Squads_Init()
@@ -537,7 +537,7 @@ void function SV_CL_Init()
 
 	                      
 		Candy_Init()
-		//RevShell_Init()
+		RevShell_Init()
        
 
                      
@@ -552,7 +552,7 @@ void function SV_CL_Init()
 		CrowdNoiseMeter_Init()
        
 
-	//POIPlayerSpawning_Init()
+	POIPlayerSpawning_Init()
 
                     
                     
@@ -578,7 +578,7 @@ void function SV_CL_Init()
 	Odl_SmokeTestInit()
 	SkinMetrics_Init()
 
-	//ThunderdomeSkull_Init()
+	ThunderdomeSkull_Init()
 
                              
                             
@@ -597,7 +597,7 @@ void function SV_CL_Init()
        
 
 	#if DEVELOPER
-	//	SpawnDebugger_Init()
+		SpawnDebugger_Init()
 	#endif
 } // end SV_CL_Init()
 
@@ -621,7 +621,7 @@ void function Server_Init()
 	CodeCallback_Init()
 	SvCodeCallbacksCommon_Init()
 	Utility_Init()
-	//MMR_Init()
+	MMR_Init()
 	Anim_Init()
 	Viewcone_Init()
 	UIVars_Init()
@@ -635,7 +635,7 @@ void function Server_Init()
 
 		if( GetIsUnifiedRandomizerEnabled() )
 		{
-		//	MapPropPlacementUtilities_Init()
+			MapPropPlacementUtilities_Init()
 		}
 
 	                                              
@@ -702,14 +702,14 @@ void function Server_Init()
 
 	TrackingVision_Init()
 	PassiveGasGear_Init()
-	//PassiveAdrenaline_Init()
+	PassiveAdrenaline_Init()
 
                 
                       
        
-	//PassiveBatteryPowered_Init()
+	PassiveBatteryPowered_Init()
 
-	//PassiveExtraMedInv_Init()
+	PassiveExtraMedInv_Init()
 
                  
                          
@@ -724,6 +724,7 @@ void function Server_Init()
                  
                            
        
+
 	PassiveSoftLandings_Init()
 
                        
@@ -759,10 +760,10 @@ void function Server_Init()
 
 	PilotsPassage_Init()
 	SneakPeek_Init()
-	//ExtendedUse_Init()
+	ExtendedUse_Init()
 
-	//Drones_InitDrones()
-	//LootRollers_Init()
+	Drones_InitDrones()
+	LootRollers_Init()
 	LootTicks_Init()
 	                      
 		GunRacks_Init()
@@ -773,7 +774,7 @@ void function Server_Init()
 
 	#if DEVELOPER
 		SmokeTest_Init()
-		//BandwidthStress_Init()
+		BandwidthStress_Init()
 	#endif // DEV
 
                     
@@ -783,6 +784,7 @@ void function Server_Init()
 	// Town Takeovers
 	                 
 		MirageVoyage_Init()
+       
 
 	                     
 		Bloodhound_TT_Init()
@@ -814,7 +816,7 @@ void function Server_Init()
        
 
 	                   
-		//NessieHunt_Init()
+		NessieHunt_Init()
                           
 
                           
@@ -822,9 +824,9 @@ void function Server_Init()
                                 
 
 	#if DEVELOPER
-		//SPL_Init()
+		SPL_Init()
 	#endif
-	//BreakableCrystals_Init()
+	BreakableCrystals_Init()
 } // end Server_Init()
 #endif // SERVER
 

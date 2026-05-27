@@ -1,0 +1,507 @@
+global function BandwidthStress_Init
+
+global function BandwidthStress_Begin
+global function BandwidthStress_End
+
+global function BandwidthStressReliable_Blast
+global function BandwidthStressReliable_Begin
+global function BandwidthStressReliable_End
+
+const float	ENT_SPAWN_RADIUS = 1000
+const int	ENT_SPAWN_RATE = 20
+const asset	STRESS_MDL = $"mdl/creatures/prowler/prowler_apex.rmdl"
+
+const array< string > STRESS_MDL_ANIMS =
+[
+	"pr_idle_scan",
+	"pr_idle_lay",
+	//"pr_combat_idle_01",
+	//"pr_combat_idle_04",
+	//"pr_signal_acknowledge",
+]
+
+struct
+{
+	array< entity > stressEnts
+	int entsLimit
+} file
+
+void function BandwidthStress_Init()
+{
+	//AddCallback_EntitiesDidLoad( EntitiesDidLoadSmokeTest )
+
+	PrecacheModel( STRESS_MDL )
+
+	RegisterSignal( "BandwidthStressKill" )
+	RegisterSignal( "BandwidthStressReliableKill" )
+}
+
+// ------------------------------------------------------------------------------------------------------------------
+//
+// ######## ##    ## ######## #### ######## ##    ##     ######  ######## ########  ########  ######   ######
+// ##       ###   ##    ##     ##     ##     ##  ##     ##    ##    ##    ##     ## ##       ##    ## ##    ##
+// ##       ####  ##    ##     ##     ##      ####      ##          ##    ##     ## ##       ##       ##
+// ######   ## ## ##    ##     ##     ##       ##        ######     ##    ########  ######    ######   ######
+// ##       ##  ####    ##     ##     ##       ##             ##    ##    ##   ##   ##             ##       ##
+// ##       ##   ###    ##     ##     ##       ##       ##    ##    ##    ##    ##  ##       ##    ## ##    ##
+// ######## ##    ##    ##    ####    ##       ##        ######     ##    ##     ## ########  ######   ######
+//
+// ------------------------------------------------------------------------------------------------------------------
+
+entity function BandwidthStress_SpawnStressEnt( vector spawnAreaPos )
+{
+	// Spawn randomly inside a cube
+	float offsetX = RandomFloatRange( -ENT_SPAWN_RADIUS, ENT_SPAWN_RADIUS )
+	float offsetY = RandomFloatRange( -ENT_SPAWN_RADIUS, ENT_SPAWN_RADIUS )
+	float offsetZ = RandomFloatRange( -ENT_SPAWN_RADIUS, ENT_SPAWN_RADIUS )
+	vector offsetPos = < offsetX, offsetY, offsetZ >
+
+	entity stressEnt = CreatePropScript( STRESS_MDL, spawnAreaPos + offsetPos, <0,0,0> )
+	file.stressEnts.append( stressEnt )
+
+	thread function() : ( stressEnt )
+	{
+		stressEnt.EndSignal( "OnDestroy" )
+
+		vector angleInc = <0,0,0>//GetRandomUnitVector() * 5
+		int throttle = 0;
+
+		while ( true )
+		{
+			vector newPos = stressEnt.GetOrigin() + (<0,0,0> * 10.0)
+			stressEnt.SetOrigin( newPos )
+
+			if ( (throttle % 2) == 0 )
+			{
+				//vector newAngles = <0,0,0> * 180
+				vector newAngles = stressEnt.GetAngles() + angleInc
+				stressEnt.SetAngles( newAngles )
+			}
+
+			if ( (throttle % 4) == 0 )
+			{
+				string animToPlay = STRESS_MDL_ANIMS.getrandom()
+				thread PlayAnimOnly( stressEnt, animToPlay )
+			}
+
+			throttle += RandomIntRangeInclusive( 1, 1 )
+			WaitFrame()
+		}
+	}()
+
+	return stressEnt
+}
+
+void function BandwidthStress_Begin( int entLimit = 110 )
+{
+	file.entsLimit = entLimit
+
+	thread function() : ()
+	{
+		entity world = svGlobal.worldspawn
+		world.Signal( "BandwidthStressKill" )
+		world.EndSignal( "BandwidthStressKill" )
+
+		OnThreadEnd( function () : ()
+			{
+				printt( "Ending", FUNC_NAME(), "thread" )
+			}
+		)
+
+		while ( true )
+		{
+			array<entity> players = GetPlayerArray()
+			entity playerZero = players[0]
+			if ( IsValid( playerZero ) )
+			{
+				vector spawnAreaPos = playerZero.GetOrigin() + < 0, 0, 2 * ENT_SPAWN_RADIUS >
+
+				int spawnCount = file.entsLimit - file.stressEnts.len()
+				if ( spawnCount >= 0 )
+				{
+					spawnCount = minint( spawnCount, ENT_SPAWN_RATE )
+
+					for ( int spawnIdx = 0; spawnIdx < spawnCount; ++spawnIdx )
+					{
+						BandwidthStress_SpawnStressEnt( spawnAreaPos )
+					}
+
+					if ( spawnCount > 0 && file.entsLimit == file.stressEnts.len() )
+					{
+						printt( "BandwidthStress - Finished spawning", file.entsLimit, "stress ents" )
+					}
+				}
+				else
+				{
+					printt( "BandwidthStress - Destroying", abs( spawnCount ), "stress ents" )
+
+					// Too many stress ents, destroy some
+					while ( file.stressEnts.len() > file.entsLimit )
+					{
+						entity toDestroy = file.stressEnts.pop()
+						toDestroy.Destroy()
+					}
+				}
+			}
+
+			wait 1
+		}
+	}()
+}
+
+void function BandwidthStress_End()
+{
+	entity world = svGlobal.worldspawn
+	world.Signal( "BandwidthStressKill" )
+
+	foreach ( entity ent in file.stressEnts )
+	{
+		ent.Destroy()
+	}
+
+	file.stressEnts = []
+
+	file.entsLimit = 0
+}
+
+// ------------------------------------------------------------------------------------------------------------------
+//
+// ##     ## ########  ######   ######     ###     ######   ########     ######  ######## ########  ########  ######   ######
+// ###   ### ##       ##    ## ##    ##   ## ##   ##    ##  ##          ##    ##    ##    ##     ## ##       ##    ## ##    ##
+// #### #### ##       ##       ##        ##   ##  ##        ##          ##          ##    ##     ## ##       ##       ##
+// ## ### ## ######    ######   ######  ##     ## ##   #### ######       ######     ##    ########  ######    ######   ######
+// ##     ## ##             ##       ## ######### ##    ##  ##                ##    ##    ##   ##   ##             ##       ##
+// ##     ## ##       ##    ## ##    ## ##     ## ##    ##  ##          ##    ##    ##    ##    ##  ##       ##    ## ##    ##
+// ##     ## ########  ######   ######  ##     ##  ######   ########     ######     ##    ##     ## ########  ######   ######
+//
+// ------------------------------------------------------------------------------------------------------------------
+
+void function BandwidthStressReliable_Blast( entity player, int magnitude = 5 )
+{
+	if ( !IsValid( player ) )
+		return
+
+	string pVarName = "currentEliteStreak" // This var is unused
+
+	int toggleVal = player.GetPersistentVarAsInt( pVarName )
+	toggleVal = ClampInt( toggleVal, 0, 1 )
+
+	for ( int magIter = 0; magIter < magnitude; magIter++ )
+	{
+		toggleVal = 1 - toggleVal
+		player.SetPersistentVar( pVarName, toggleVal )
+	}
+}
+
+void function BandwidthStressReliable_Begin( int magnitude = 5 )
+{
+	thread function() : ( magnitude )
+	{
+		entity world = svGlobal.worldspawn
+		world.Signal( "BandwidthStressReliableKill" )
+		world.EndSignal( "BandwidthStressReliableKill" )
+
+		OnThreadEnd( function () : ()
+			{
+				printt( "Ending", FUNC_NAME(), "thread" )
+			}
+		)
+
+		while ( true )
+		{
+			array<entity> players = GetPlayerArray()
+			foreach ( entity player in players )
+			{
+				BandwidthStressReliable_Blast( player, magnitude )
+			}
+
+			wait 1
+		}
+	}()
+}
+
+void function BandwidthStressReliable_End()
+{
+	entity world = svGlobal.worldspawn
+	world.Signal( "BandwidthStressReliableKill" )
+}
+
+/*
+From `net_dump_server_classes CScriptProp`
+077 CScriptProp 274 props
+
+0000: DT_BaseEntity:m_localAngles - DPT_Vector
+0001: m_flPoseParameter/0000 - DPT_Float
+0002: m_flPoseParameter/0001 - DPT_Float
+0003: m_flPoseParameter/0002 - DPT_Float
+0004: m_flPoseParameter/0003 - DPT_Float
+0005: m_flPoseParameter/0004 - DPT_Float
+0006: m_flPoseParameter/0005 - DPT_Float
+0007: m_flPoseParameter/0006 - DPT_Float
+0008: m_flPoseParameter/0007 - DPT_Float
+0009: m_flPoseParameter/0008 - DPT_Float
+0010: m_flPoseParameter/0009 - DPT_Float
+0011: m_flPoseParameter/0010 - DPT_Float
+0012: m_flPoseParameter/0011 - DPT_Float
+0013: m_flPoseParameter/0012 - DPT_Float
+0014: m_flPoseParameter/0013 - DPT_Float
+0015: DT_ServerAnimationData:m_animStartTime - DPT_Time
+0016: DT_ServerAnimationData:m_animStartCycle - DPT_Float
+0017: DT_ServerAnimationData:m_animSequence - DPT_Int
+0018: DT_BaseAnimating:m_animPlaybackRate - DPT_Float
+0019: DT_BaseEntity:m_cellX - DPT_Int
+0020: DT_BaseEntity:m_cellY - DPT_Int
+0021: DT_BaseEntity:m_cellZ - DPT_Int
+0022: DT_BaseEntity:m_localOrigin - DPT_Vector
+0023: DT_AnimRelativeData:m_animInitialCorrectPos - DPT_Vector
+0024: DT_AnimRelativeData:m_animInitialCorrectRot - DPT_Quaternion
+0025: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerStartCycle - DPT_Ticks
+0026: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerSequence - DPT_Int
+0027: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerPlaybackRate - DPT_Float
+0028: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerStartTime - DPT_Time
+0029: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerStartCycle - DPT_Ticks
+0030: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerSequence - DPT_Int
+0031: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerPlaybackRate - DPT_Float
+0032: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerStartTime - DPT_Time
+0033: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerStartCycle - DPT_Ticks
+0034: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerSequence - DPT_Int
+0035: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerPlaybackRate - DPT_Float
+0036: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerStartTime - DPT_Time
+0037: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerStartCycle - DPT_Ticks
+0038: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerSequence - DPT_Int
+0039: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerPlaybackRate - DPT_Float
+0040: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerStartTime - DPT_Time
+0041: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerStartCycle - DPT_Ticks
+0042: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerSequence - DPT_Int
+0043: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerPlaybackRate - DPT_Float
+0044: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerStartTime - DPT_Time
+0045: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerStartCycle - DPT_Ticks
+0046: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerSequence - DPT_Int
+0047: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerPlaybackRate - DPT_Float
+0048: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerStartTime - DPT_Time
+0049: DT_SequenceTransitioner:m_sequenceTransitionerLayerCount - DPT_Int
+0050: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerActive - DPT_Int
+0051: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerFadeOutDuration - DPT_Ticks
+0052: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerActive - DPT_Int
+0053: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerFadeOutDuration - DPT_Ticks
+0054: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerActive - DPT_Int
+0055: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerFadeOutDuration - DPT_Ticks
+0056: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerActive - DPT_Int
+0057: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerFadeOutDuration - DPT_Ticks
+0058: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerActive - DPT_Int
+0059: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerFadeOutDuration - DPT_Ticks
+0060: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerActive - DPT_Int
+0061: DT_SequenceTransitionerLayer:m_sequenceTransitionerLayerFadeOutDuration - DPT_Ticks
+0062: DT_BaseAnimating:m_nNewSequenceParity - DPT_Int
+0063: DT_PredictedAnimEventData:m_predictedAnimEventTarget - DPT_Int
+0064: DT_BaseEntity:m_hOwnerEntity - DPT_Int
+0065: DT_BaseEntity:m_dissolveEffectEntityHandle - DPT_Int
+0066: DT_BaseEntity:moveparent - DPT_Int
+0067: DT_BaseEntity:m_bossPlayer - DPT_Int
+0068: DT_BaseAnimating:m_syncingWithEntity - DPT_Int
+0069: DT_CollisionProperty:m_triggerBloat - DPT_Int
+0070: DT_CollisionProperty:m_collisionDetailLevel - DPT_Int
+0071: DT_CollisionProperty:m_vecSpecifiedSurroundingMins - DPT_Vector
+0072: DT_CollisionProperty:m_vecSpecifiedSurroundingMaxs - DPT_Vector
+0073: DT_PredictableId:m_PredictableID - DPT_Int
+0074: m_spottedByTeams/0000 - DPT_Int64
+0075: m_spottedByTeams/0001 - DPT_Int64
+0076: m_spottedByTeams/0002 - DPT_Int64
+0077: m_spottedByTeams/0003 - DPT_Int64
+0078: HighlightSettings/m_highlightParams/0000 - DPT_Vector
+0079: HighlightSettings/m_highlightParams/0003 - DPT_Vector
+0080: HighlightSettings/m_highlightParams/0001 - DPT_Vector
+0081: HighlightSettings/m_highlightParams/0002 - DPT_Vector
+0082: DT_ServerAnimationData:m_nResetEventsParity - DPT_Int
+0083: HighlightSettings/m_highlightTeamBits/0003 - DPT_Int
+0084: HighlightSettings/m_highlightParams/0011 - DPT_Vector
+0085: HighlightSettings/m_highlightParams/0012 - DPT_Vector
+0086: HighlightSettings/m_highlightParams/0013 - DPT_Vector
+0087: HighlightSettings/m_highlightParams/0014 - DPT_Vector
+0088: HighlightSettings/m_highlightTeamBits/0004 - DPT_Int
+0089: HighlightSettings/m_highlightTeamBits/0005 - DPT_Int
+0090: HighlightSettings/m_highlightParams/0015 - DPT_Vector
+0091: HighlightSettings/m_highlightParams/0016 - DPT_Vector
+0092: HighlightSettings/m_highlightParams/0017 - DPT_Vector
+0093: HighlightSettings/m_highlightParams/0018 - DPT_Vector
+0094: HighlightSettings/m_highlightTeamBits/0006 - DPT_Int
+0095: HighlightSettings/m_highlightTeamBits/0007 - DPT_Int
+0096: HighlightSettings/m_highlightParams/0019 - DPT_Vector
+0097: HighlightSettings/m_highlightParams/0020 - DPT_Vector
+0098: HighlightSettings/m_highlightParams/0021 - DPT_Vector
+0099: HighlightSettings/m_highlightFunctionBits/0000 - DPT_Int
+0100: HighlightSettings/m_highlightTeamBits/0008 - DPT_Int
+0101: HighlightSettings/m_highlightTeamBits/0009 - DPT_Int
+0102: HighlightSettings/m_highlightFunctionBits/0001 - DPT_Int
+0103: HighlightSettings/m_highlightFunctionBits/0002 - DPT_Int
+0104: HighlightSettings/m_highlightFunctionBits/0003 - DPT_Int
+0105: HighlightSettings/m_highlightFunctionBits/0004 - DPT_Int
+0106: HighlightSettings/m_highlightTeamBits/0010 - DPT_Int
+0107: HighlightSettings/m_highlightServerFadeBases/0000 - DPT_Float
+0108: HighlightSettings/m_highlightFunctionBits/0005 - DPT_Int
+0109: HighlightSettings/m_highlightFunctionBits/0006 - DPT_Int
+0110: HighlightSettings/m_highlightFunctionBits/0007 - DPT_Int
+0111: HighlightSettings/m_highlightFunctionBits/0008 - DPT_Int
+0112: HighlightSettings/m_highlightServerFadeBases/0001 - DPT_Float
+0113: HighlightSettings/m_highlightServerFadeStartTimes/0000 - DPT_Time
+0114: HighlightSettings/m_highlightFunctionBits/0009 - DPT_Int
+0115: HighlightSettings/m_highlightFunctionBits/0010 - DPT_Int
+0116: HighlightSettings/m_highlightTeamBits/0000 - DPT_Int
+0117: HighlightSettings/m_highlightTeamBits/0001 - DPT_Int
+0118: HighlightSettings/m_highlightServerFadeStartTimes/0001 - DPT_Time
+0119: HighlightSettings/m_highlightTeamBits/0002 - DPT_Int
+0120: DT_AnimRelativeData:m_animInitialPos - DPT_Vector
+0121: DT_AnimRelativeData:m_animInitialVel - DPT_Vector
+0122: DT_AnimRelativeData:m_animInitialRot - DPT_Quaternion
+0123: HighlightSettings/m_highlightParams/0009 - DPT_Vector
+0124: HighlightSettings/m_highlightParams/0010 - DPT_Vector
+0125: DT_AnimRelativeData:m_animEntityToRefOffset - DPT_Vector
+0126: DT_AnimRelativeData:m_animEntityToRefRotation - DPT_Quaternion
+0127: DT_AnimRelativeData:m_animBlendBeginTime - DPT_Time
+0128: DT_AnimRelativeData:m_animBlendEndTime - DPT_Time
+0129: DT_AnimRelativeData:m_animScriptSequence - DPT_Int
+0130: DT_AnimRelativeData:m_animScriptModel - DPT_Int
+0131: DT_AnimRelativeData:m_animIgnoreParentRot - DPT_Int
+0132: DT_AnimRelativeData:m_animMotionMode - DPT_Int
+0133: m_predictedAnimEventData/m_predictedAnimEventTimes/0000 - DPT_Time
+0134: m_predictedAnimEventData/m_predictedAnimEventTimes/0001 - DPT_Time
+0135: m_predictedAnimEventData/m_predictedAnimEventTimes/0002 - DPT_Time
+0136: m_predictedAnimEventData/m_predictedAnimEventTimes/0003 - DPT_Time
+0137: m_predictedAnimEventData/m_predictedAnimEventTimes/0004 - DPT_Time
+0138: m_predictedAnimEventData/m_predictedAnimEventTimes/0005 - DPT_Time
+0139: m_predictedAnimEventData/m_predictedAnimEventTimes/0006 - DPT_Time
+0140: m_predictedAnimEventData/m_predictedAnimEventTimes/0007 - DPT_Time
+0141: m_predictedAnimEventData/m_predictedAnimEventIndices/0000 - DPT_Int
+0142: m_predictedAnimEventData/m_predictedAnimEventIndices/0001 - DPT_Int
+0143: m_predictedAnimEventData/m_predictedAnimEventIndices/0002 - DPT_Int
+0144: m_predictedAnimEventData/m_predictedAnimEventIndices/0003 - DPT_Int
+0145: m_predictedAnimEventData/m_predictedAnimEventIndices/0004 - DPT_Int
+0146: m_predictedAnimEventData/m_predictedAnimEventIndices/0005 - DPT_Int
+0147: m_predictedAnimEventData/m_predictedAnimEventIndices/0006 - DPT_Int
+0148: m_predictedAnimEventData/m_predictedAnimEventIndices/0007 - DPT_Int
+0149: DT_PredictedAnimEventData:m_predictedAnimEventCount - DPT_Int
+0150: HighlightSettings/m_highlightServerFadeEndTimes/0001 - DPT_Time
+0151: DT_PredictedAnimEventData:m_predictedAnimEventSequence - DPT_Int
+0152: DT_PredictedAnimEventData:m_predictedAnimEventModel - DPT_Int
+0153: DT_PredictedAnimEventData:m_predictedAnimEventsReadyToFireTime - DPT_Time
+0154: m_minimapData/visibilityDefaultFlag/0000 - DPT_Int64
+0155: m_minimapData/visibilityDefaultFlag/0001 - DPT_Int64
+0156: m_minimapData/visibilityDefaultFlag/0002 - DPT_Int64
+0157: m_minimapData/visibilityDefaultFlag/0003 - DPT_Int64
+0158: m_minimapData/visibilityShowFlag/0000 - DPT_Int64
+0159: m_minimapData/visibilityShowFlag/0001 - DPT_Int64
+0160: m_minimapData/visibilityShowFlag/0002 - DPT_Int64
+0161: m_minimapData/visibilityShowFlag/0003 - DPT_Int64
+0162: DT_MinimapBaseEntityData:flags - DPT_Int
+0163: DT_MinimapBaseEntityData:zOrder - DPT_Int
+0164: DT_MinimapBaseEntityData:customState - DPT_Int
+0165: DT_MinimapBaseEntityData:objectScale - DPT_Float
+0166: HighlightSettings/m_highlightParams/0005 - DPT_Vector
+0167: HighlightSettings/m_highlightParams/0006 - DPT_Vector
+0168: HighlightSettings/m_highlightParams/0007 - DPT_Vector
+0169: HighlightSettings/m_highlightParams/0008 - DPT_Vector
+0170: DT_BaseEntity:m_nModelIndex - DPT_Int
+0171: DT_BaseEntity:m_nRenderFX - DPT_Int
+0172: DT_BaseEntity:m_nRenderMode - DPT_Int
+0173: DT_BaseEntity:m_fEffects - DPT_Int
+0174: DT_BaseEntity:m_clrRender - DPT_Int
+0175: DT_BaseEntity:m_clIntensity - DPT_Int
+0176: DT_BaseEntity:m_bRenderWithViewModels - DPT_Int
+0177: DT_BaseEntity:m_iTeamNum - DPT_Int
+0178: DT_BaseEntity:m_teamMemberIndex - DPT_Int
+0179: DT_BaseEntity:m_squadID - DPT_Int
+0180: DT_BaseEntity:m_grade - DPT_Int
+0181: DT_BaseEntity:m_ignorePredictedTriggerFlags - DPT_Int
+0182: DT_BaseEntity:m_passThroughFlags - DPT_Int
+0183: DT_BaseEntity:m_passThroughThickness - DPT_Int
+0184: DT_BaseEntity:m_passThroughDirection - DPT_Float
+0185: DT_BaseEntity:m_CollisionGroup - DPT_Int
+0186: DT_BaseEntity:m_contents - DPT_Int
+0187: DT_BaseEntity:m_collideWithOwner - DPT_Int
+0188: DT_HighlightSettings:m_highlightServerContextID - DPT_Int
+0189: DT_CollisionProperty:m_vecMaxs - DPT_Vector
+0190: DT_CollisionProperty:m_nSolidType - DPT_Int
+0191: DT_BaseEntity:m_parentAttachmentIndex - DPT_Int
+0192: DT_BaseEntity:m_parentAttachmentModel - DPT_Int
+0193: DT_BaseEntity:m_attachmentLerpStartTime - DPT_Time
+0194: DT_BaseEntity:m_attachmentLerpEndTime - DPT_Time
+0195: DT_BaseEntity:m_attachmentLerpStartOrigin - DPT_Vector
+0196: DT_BaseEntity:m_attachmentLerpStartAngles - DPT_Vector
+0197: DT_BaseEntity:m_iName - DPT_String
+0198: DT_BaseEntity:m_scriptNameIndex - DPT_Int
+0199: DT_BaseEntity:m_instanceNameIndex - DPT_Int
+0200: DT_BaseEntity:m_holdUsePrompt - DPT_String
+0201: DT_BaseEntity:m_pressUsePrompt - DPT_String
+0202: DT_BaseEntity:m_iSignifierName - DPT_String
+0203: DT_BaseEntity:movetype - DPT_Int
+0204: DT_BaseEntity:movecollide - DPT_Int
+0205: DT_CollisionProperty:m_vecMins - DPT_Vector
+0206: DT_BaseEntity:m_fadeDist - DPT_Float
+0207: DT_BaseEntity:m_visibilityFlags - DPT_Int
+0208: DT_CollisionProperty:m_usSolidFlags - DPT_Int
+0209: DT_BaseEntity:m_usableType - DPT_Int
+0210: DT_BaseEntity:m_usablePriority - DPT_Int
+0211: DT_BaseEntity:m_usableDistanceOverride - DPT_Float
+0212: DT_BaseEntity:m_usableFOV - DPT_Float
+0213: DT_BaseEntity:m_usePromptSize - DPT_Float
+0214: DT_BaseEntity:m_phaseShiftFlags - DPT_Int
+0215: DT_BaseEntity:m_baseTakeDamage - DPT_Int
+0216: DT_BaseEntity:m_invulnerableToDamageCount - DPT_Int
+0217: DT_BaseEntity:m_shieldHealth - DPT_Int
+0218: DT_BaseEntity:m_shieldHealthMax - DPT_Int
+0219: DT_BaseEntity:m_firstChildEntityLink - DPT_Int
+0220: DT_BaseEntity:m_firstParentEntityLink - DPT_Int
+0221: DT_BaseEntity:m_bIsSoundCodeControllerValueSet - DPT_Int
+0222: DT_BaseEntity:m_flSoundCodeControllerValue - DPT_Float
+0223: DT_BaseEntity:m_networkedFlags - DPT_Int
+0224: DT_BaseEntity:m_realmsBitMask - DPT_Int64
+0225: DT_BaseAnimating:m_nForceBone - DPT_Int
+0226: DT_BaseAnimating:m_vecForce - DPT_Vector
+0227: DT_BaseAnimating:m_nSkin - DPT_Int
+0228: DT_BaseAnimating:m_skinMod - DPT_Int
+0229: DT_BaseAnimating:m_nBody - DPT_Int
+0230: DT_BaseAnimating:m_camoIndex - DPT_Int
+0231: DT_BaseAnimating:m_flModelScale - DPT_Float
+0232: DT_BaseAnimating:m_animModelIndex - DPT_Int
+0233: DT_BaseAnimating:m_bSequenceFinished - DPT_Int
+0234: DT_BaseAnimating:m_lockedAnimDeltaYaw - DPT_Float
+0235: HighlightSettings/m_highlightParams/0004 - DPT_Vector
+0236: DT_BaseAnimating:m_animFrozen - DPT_Int
+0237: DT_BaseAnimating:m_bClientSideRagdoll - DPT_Int
+0238: DT_BaseAnimating:m_nRagdollImpactFXTableId - DPT_Int
+0239: DT_BaseAnimating:m_flSkyScaleStartValue - DPT_Float
+0240: DT_BaseAnimating:m_flSkyScaleEndValue - DPT_Float
+0241: DT_BaseAnimating:m_flSkyScaleStartTime - DPT_Time
+0242: DT_BaseAnimating:m_flSkyScaleEndTime - DPT_Time
+0243: HighlightSettings/m_highlightServerFadeEndTimes/0000 - DPT_Time
+0244: DT_BaseAnimating:m_passDamageToParent - DPT_Int
+0245: DT_BaseAnimating:m_flEstIkOffset - DPT_Float
+0246: DT_BaseAnimating:m_animActive - DPT_Int
+0247: DT_BaseAnimating:m_animCollisionEnabled - DPT_Int
+0248: DT_BaseAnimating:m_animRelativeToGroundEnabled - DPT_Int
+0249: DT_BaseAnimating:m_animPlantingEnabled - DPT_Int
+0250: DT_BaseAnimating:m_animNetworkFlags - DPT_Int
+0251: DT_CollisionProperty:m_nSurroundType - DPT_Int
+0252: DT_DynamicProp:m_bUseHitboxesForRenderBox - DPT_Int
+0253: DT_DynamicProp:m_bAnimateInStaticShadow - DPT_Int
+0254: DT_DynamicProp:m_wantsScopeHighlight - DPT_Int
+0255: DT_DynamicProp:m_lifeState - DPT_Int
+0256: DT_DynamicProp:m_iTeamNum - DPT_Int
+0257: DT_ScriptProp:m_title - DPT_String
+0258: DT_ScriptProp:m_footstepType - DPT_String
+0259: DT_ScriptProp:m_networkedFlags - DPT_Int
+0260: DT_ScriptProp:m_nameVisibilityFlags - DPT_Int
+0261: DT_ScriptProp:m_iHealth - DPT_Int
+0262: DT_ScriptProp:m_iMaxHealth - DPT_Int
+0263: DT_ScriptProp:m_cloakEndTime - DPT_Float
+0264: DT_ScriptProp:m_cloakFadeInEndTime - DPT_Time
+0265: DT_ScriptProp:m_cloakFadeOutStartTime - DPT_Float
+0266: DT_ScriptProp:m_cloakFadeInDuration - DPT_Float
+0267: DT_ScriptProp:m_cloakFlickerAmount - DPT_Float
+0268: DT_ScriptProp:m_cloakFlickerEndTime - DPT_Time
+0269: DT_ScriptProp:m_renderColorFriendlyIsValid - DPT_Int
+0270: DT_ScriptProp:m_renderColorFriendly - DPT_Int
+0271: DT_ScriptProp:m_armorType - DPT_Int
+0272: DT_ScriptProp:m_scriptPropFlags - DPT_Int
+0273: DT_ScriptProp:m_scriptPropSmartAmmoLockType - DPT_Int
+*/ 

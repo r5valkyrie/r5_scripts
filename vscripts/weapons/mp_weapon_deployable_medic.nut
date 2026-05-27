@@ -62,15 +62,15 @@ global const string DEPLOYABLE_MEDIC_DEPLOY_SOUND 		= ""
 const vector DRONE_MINS = <-9, -9, -10>
 const vector DRONE_MAXS = <9, 9, 10>
 
-const FX_DRONE_MEDIC_OPEN				= $"P_LL_med_drone_open"
-const FX_DRONE_MEDIC_JET_CTR			= $"P_LL_med_drone_jet_ctr_loop"
-const FX_DRONE_MEDIC_EYE				= $"P_LL_med_drone_eye"
-const FX_DRONE_MEDIC_JET_LOOP			= $"P_LL_med_drone_jet_loop"
+const FX_DRONE_MEDIC_OPEN = $"P_LL_med_drone_open"
+const FX_DRONE_MEDIC_JET_CTR = $"P_LL_med_drone_jet_ctr_loop"
+const FX_DRONE_MEDIC_EYE = $"P_LL_med_drone_eye"
+const FX_DRONE_MEDIC_JET_LOOP = $"P_LL_med_drone_jet_loop"
 
 const FX_DRONE_MEDIC_HEAL_COCKPIT_FX	= $"P_heal_loop_screen"
 const vector DRONE_VEHICLE_OFFSET = <0,0,10>
 
-struct HealRopeData
+global struct HealRopeData
 {
 	entity ropeStartEnt
 	entity playerRope
@@ -94,6 +94,11 @@ struct SignalStruct
 enum ePopulationMethod
 {
 	INSIDE_TRIGGER,
+
+                     
+	SHARING_VEHICLE,
+                           
+
 	_count
 }
 struct PopulationInfoForTarget
@@ -1371,7 +1376,8 @@ void function DeployableMedic_DeployHealRope( HealRopeData ropeData, entity play
 
 	wait ROPE_SHOOT_OUT_TIME
 
-	if ( IsSurvivalTraining() )
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_TRAINING ) )
+      
 	{
 		EmitSoundOnEntity( player, DEPLOYABLE_MEDIC_ATTACH_SOUND_3P )
 		Signal( player, "DeployableMedic_Attached" )
@@ -1494,12 +1500,13 @@ void function DeployableMedic_HealVisualsEnabled( entity ent, int statusEffect, 
 	Assert( !EffectDoesExist( file.healFxHandle ), "tried to start a second screen fx" )
 
 	int fxID = GetParticleSystemIndex( FX_DRONE_MEDIC_HEAL_COCKPIT_FX )
-	file.healFxHandle = StartParticleEffectOnEntity( cockpit, fxID, FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
-	EffectSetIsWithCockpit( file.healFxHandle, true )
+	int healFxHandle = StartParticleEffectOnEntity( cockpit, fxID, FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
+	EffectSetIsWithCockpit( healFxHandle, true )
+	file.healFxHandle = healFxHandle
 
 	Chroma_StartHealingDroneEffect()
-	
-	thread DeployableMedic_HealVisualsThread( player, file.healFxHandle, statusEffect )
+
+	thread DeployableMedic_HealVisualsThread( player, healFxHandle, statusEffect )
 }
 
 void function DeployableMedic_HealVisualsDisabled( entity ent, int statusEffect, bool actuallyChanged )

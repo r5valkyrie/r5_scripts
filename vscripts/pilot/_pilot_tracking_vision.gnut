@@ -1,146 +1,1119 @@
-global function GetAllTrackingPlayers
-global function HeatMapStat
-global function TrackingVision_CreatePOI
 global function TrackingVision_Init
+global function TrackingVision_CreatePOI
+global function TrackingVision_CreatePOIForPickedUpLoot
+global function TrackingVision_CreatePOIForDroppedLoot
+global function GetAllTrackingPlayers
+global function TrackingVision_PlayerUsedLaunchPad
+
+                                              
+global function TrackingVision_GetAllValidTrackingPOIs
+      
+
+#if DEV
+global function DEV_ForceAddTrackingVision
+#endif //DEV
+
+const float TRACKING_VISION_WEAPON_FIRE_POI_DBOUNCE = 1.5 //The D-Bounce interval for weapon fire points of intrest.
+                                       
+                                                        
+                                                                 
+      
+
+const float TRACKING_VISION_DAMAGE_POI_HEALTH_FRAC = 0.05	//Only send a player damaged Point of Intrest a single attack does more than this fraction of the player's health.
+
+const float TRACKING_VISION_TRAVERSAL_POI_FOOTPRINT_DISTANCE	= 384.0 //Distance interval at which players will crate a footprint POI.
+const float TRACKING_VISION_TRAVERSAL_POI_JUMP_DOWN_DIST		= 98.0 //Distance player must fall to leave a jumped down POI.
+const float TRACKING_VISION_TRAVERSAL_LAUNCH_PAD_MAX_TIME		= 6.0 //Landing within this time intervall will create a LANDED POI after launch pad use
+
+//MACRO POINT OF INTREST CATAGORIES
+const bool TRACKING_VISION_ENABLE_POI_PLAYER_ACTIONS 	= true	//Create Point of Intrest when player preforms action unrelated to loot.
+const bool TRACKING_VISION_ENABLE_POI_PLAYER_ELIMINATED = true	//Create Point of Intrest when player is killed
+const bool TRACKING_VISION_ENABLE_POI_PLAYER_TRAVERSAL	= true 	//Create Point of Intrest when player performs a traversal action.
+const bool TRACKING_VISION_ENABLE_POI_PLAYER_ABILITIES	= true	//Create Point of Intrest when player preforms a non-deployable ability.
+const bool TRACKING_VISION_ENABLE_POI_LOOT_PICKUP 		= true	//Create Point of Intrest when player picks up loot.
+const bool TRACKING_VISION_ENABLE_POI_LOOT_EXCHANGE 	= true	//Create Point of Intrest when player exchanges one piece of loot for another of the same type.
+const bool TRACKING_VISION_ENABLE_POI_LOOT_DROP 		= true  //Create Point of Intrest when player discards a piece of loot from their inventory.
+
+//MICRO POINT OF INTREST CATAGORIES
+const bool TRACKING_VISION_ENABLE_POI_LOOT_AMMO			= true  //Create Point of Intrest when player interacts with ammo loot.
+const bool TRACKING_VISION_ENABLE_POI_LOOT_ARMOR		= true  //Create Point of Intrest when player interacts with armor loot.
+const bool TRACKING_VISION_ENABLE_POI_LOOT_ATTACHMENT	= true  //Create Point of Intrest when player interacts with attachment loot.
+const bool TRACKING_VISION_ENABLE_POI_LOOT_WEAPON		= true 	//Create Point of Intrest when player interacts with weapon loot.
+const bool TRACKING_VISION_ENABLE_POI_LOOT_GRENADE		= true 	//Create Point of Intrest when player interacts with grenade loot.
+const bool TRACKING_VISION_ENABLE_POI_LOOT_JUMPKIT		= true 	//Create Point of Intrest when player interacts with jumpkit loot.
+const bool TRACKING_VISION_ENABLE_POI_LOOT_HEALTH		= true 	//Create Point of Intrest when player interacts with health loot.
+const bool TRACKING_VISION_ENABLE_POI_LOOT_BACKPACK		= true 	//Create Point of Intrest when player interacts with backpack loot.
+                  
+                                                                                                                                
+      
+const bool TRACKING_VISION_ENABLE_POI_LOOT_GADGET		= true 	//Create Point of Intrest when player interacts with gadget loot.
+const bool TRACKING_VISION_ENABLE_POI_LOOT_HELMET		= true 	//Create Point of Intrest when player interacts with helmet loot.
+const bool TRACKING_VISION_ENABLE_POI_LOOT_TITAN		= true 	//Create Point of Intrest when player interacts with titan loot.
+const bool TRACKING_VISION_ENABLE_POI_LOOT_INCAPSHIELD	= true	//Create Point of Interest when player interacts with incap shields.
+                      
+const bool TRACKING_VISION_ENABLE_POI_LOOT_DATAKNIFE	= true	//Create Point of Interest when player interacts with data knives.
+      
+
+struct TrackingVisionData
+{
+	entity owner
+	int statusID
+}
+
+                                              
+struct POIData //could add more to this struct if needed
+{
+	entity poi
+	int type
+}
+      
+
+struct
+{
+	array < entity > registeredPlayers
+	table < entity, TrackingVisionData > trackingVisionData
+	table < int, bool > activePOIEvents //Tracking events will only be sent to clients if they are included in this list.
+	table < entity, float > lastWeaponFireTime
+	table < entity, vector > lastGroundTouchPos
+	table < entity, vector > footprintLastPos
+	table < entity, float > footprintDist
+	table < entity, bool > ziplined
+	table < entity, bool > launchPadUsed
+                                              
+	array< POIData > poiDataArray
+      
+
+	bool trackingVision_ENABLE_POI_PLAYER_ACTIONS 		= TRACKING_VISION_ENABLE_POI_PLAYER_ACTIONS
+	bool trackingVision_ENABLE_POI_PLAYER_ELIMINATED 	= TRACKING_VISION_ENABLE_POI_PLAYER_ELIMINATED
+	bool trackingVision_ENABLE_POI_PLAYER_TRAVERSAL		= TRACKING_VISION_ENABLE_POI_PLAYER_TRAVERSAL
+	bool trackingVision_ENABLE_POI_PLAYER_ABILITIES		= TRACKING_VISION_ENABLE_POI_PLAYER_ABILITIES
+	bool trackingVision_ENABLE_POI_LOOT_PICKUP 			= TRACKING_VISION_ENABLE_POI_LOOT_PICKUP
+	bool trackingVision_ENABLE_POI_LOOT_EXCHANGE 		= TRACKING_VISION_ENABLE_POI_LOOT_EXCHANGE
+	bool trackingVision_ENABLE_POI_LOOT_DROP 			= TRACKING_VISION_ENABLE_POI_LOOT_DROP
+
+	table< entity, array<entity> > playerToActivePOISTable
+} file
 
 void function TrackingVision_Init()
 {
 	BirdClusterSharedInit()
-	
-	AddCallback_OnClientConnected( TrackingVision_OnPlayerConnected )
-	RegisterSignal( "SuperglideDetectionReset" )
+
+                                       
+                                                        
+                                                         
+                                                        
+                                                         
+                                                      
+                                                       
+                                                    
+      
+
+	TrackingVision_SetActivePOIEventTypes()
+
+	AddCallback_OnPassiveChanged( ePassives.PAS_TRACKING_VISION, TrackingVision_OnPassiveChanged )
+	AddCallback_OnPilotBecomesTitan( TrackingVision_OnPilotBecomesTitan )
+	AddCallback_OnTitanBecomesPilot( TrackingVision_OnTitanBecomesPilot )
+	AddCallback_ZiplineStart( TrackingVision_OnZiplineStart )
+	AddCallback_ZiplineStop( TrackingVision_OnZiplineStop )
+
+	Bleedout_AddCallback_OnPlayerStartBleedout( TrackingVision_OnPlayerStartBleedout )
+	Bleedout_AddCallback_OnPlayerGotFirstAid( TrackingVision_OnPlayerGotFirstAid )
+
+	AddCallback_OnClientConnected( TrackingVision_OnClientConnected )
+	AddCallback_OnClientDisconnected( TrackingVision_OnClientDisconnected )
+	AddCallback_OnPlayerReload( TrackingVision_OnPlayerReload )
+
+	AddCallback_OnPlayerKilled( TrackingVision_OnPlayerKilled )
+
+	AddCallback_OnWeaponAttack( TrackingVision_OnWeaponAttack )
+	AddPostDamageCallback( "player", TrackingVision_OnPlayerPostDamage )
+
+	AddSpawnCallback( "prop_script", TrackingVision_OnPropScriptCreated )
+	AddSpawnCallback( "prop_loot_grabber", TrackingVision_OnPropScriptCreated )
+
+	AddCallback_GameStateEnter( eGameState.WaitingForPlayers, TrackingVision_OnGameStateEnter_WaitingForPlayers )
 }
 
-
-void function TrackingVision_OnPlayerConnected( entity player ) 
+void function TrackingVision_OnClientConnected( entity player )
 {
-	thread Flowstate_TrackingVision_PlayerFootprintsThread( player )
+	if ( file.registeredPlayers.contains( player ) )
+		return
+
+	file.registeredPlayers.append( player )
+	file.lastWeaponFireTime[ player ] <- Time()
+	file.lastGroundTouchPos[ player ] <- <0,0,0>
+	file.footprintLastPos[ player ] <- <0,0,0>
+	file.footprintDist[ player ] <- 0
+	file.ziplined[ player ] <- false
+	file.launchPadUsed[ player ] <- false
+	AddPlayerMovementEventCallback( player, ePlayerMovementEvents.MANTLE, TrackingVision_OnPlayerMantle )
+	AddPlayerMovementEventCallback( player, ePlayerMovementEvents.LEAVE_GROUND, TrackingVision_OnPlayerLeaveGround )
+	AddPlayerMovementEventCallback( player, ePlayerMovementEvents.TOUCH_GROUND, TrackingVision_OnPlayerTouchGround )
 }
 
-void function Flowstate_TrackingVision_SuperglideDetection( entity player ) 
+void function TrackingVision_OnClientDisconnected( entity player )
 {
-	thread Flowstate_TrackingVision_TryToTrackSuperglide( player )
+	if ( !file.registeredPlayers.contains( player ) )
+		return
+
+	file.registeredPlayers.fastremovebyvalue( player )
+
+	RemovePlayerMovementEventCallback( player, ePlayerMovementEvents.MANTLE, TrackingVision_OnPlayerMantle )
+	RemovePlayerMovementEventCallback( player, ePlayerMovementEvents.LEAVE_GROUND, TrackingVision_OnPlayerLeaveGround )
+	RemovePlayerMovementEventCallback( player, ePlayerMovementEvents.TOUCH_GROUND, TrackingVision_OnPlayerTouchGround )
+
+	if ( player in file.lastWeaponFireTime )
+		delete file.lastWeaponFireTime[ player ]
+	if ( player in file.lastGroundTouchPos )
+		delete file.lastGroundTouchPos[ player ]
+	if ( player in file.footprintLastPos )
+		delete file.footprintLastPos[ player ]
+	if ( player in file.footprintDist )
+		delete file.footprintDist[ player ]
+	if ( player in file.ziplined )
+		delete file.ziplined[ player ]
 }
 
-void function Flowstate_TrackingVision_WalljumpDetection( entity player ) 
+void function TrackingVision_SetActivePOIEventTypes()
 {
-	//todo work a bit more on this, do a vel check? Colombia
-	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_WALLJUMP, player, player.GetOrigin(), player.GetTeam(), player )
-}
+	//PLAYER ACTION POI EVENT TYPES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.DROPPOD ] 							<- file.trackingVision_ENABLE_POI_PLAYER_ACTIONS
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.TITANFALL ] 							<- file.trackingVision_ENABLE_POI_PLAYER_ACTIONS
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.TITAN_EMBARK ] 						<- file.trackingVision_ENABLE_POI_PLAYER_ACTIONS
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.TITAN_DISEMBARK ]					<- file.trackingVision_ENABLE_POI_PLAYER_ACTIONS
+                                       
+                                                                                                                                     
+     
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.DOOR_USE ]							<- file.trackingVision_ENABLE_POI_PLAYER_ACTIONS
+      
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.DOOR_DESTROYED ]						<- file.trackingVision_ENABLE_POI_PLAYER_ACTIONS
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_CLASS_DEPLOYABLE ]			<- file.trackingVision_ENABLE_POI_PLAYER_ACTIONS
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_DEATH ]						<- file.trackingVision_ENABLE_POI_PLAYER_ELIMINATED
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_KILLER ]						<- file.trackingVision_ENABLE_POI_PLAYER_ELIMINATED
+                                       
+                                                                                                                                       
+     
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_HEAL ]						<- file.trackingVision_ENABLE_POI_PLAYER_ACTIONS
+      
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_RELOAD ]						<- file.trackingVision_ENABLE_POI_PLAYER_ACTIONS
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_STARTBLEEDOUT ]				<- file.trackingVision_ENABLE_POI_PLAYER_ACTIONS
+                                       
+                                                                                                                                              
+     
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_TOOK_DAMAGE ]					<- file.trackingVision_ENABLE_POI_PLAYER_ACTIONS
+      
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_FIRE_WEAPON_BULLET ]			<- file.trackingVision_ENABLE_POI_PLAYER_ACTIONS
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_FIRE_WEAPON_GRENADE ]			<- file.trackingVision_ENABLE_POI_PLAYER_ACTIONS
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_OPENDROPPOD ]					<- file.trackingVision_ENABLE_POI_PLAYER_ACTIONS
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOTBIN_USED ]				<- file.trackingVision_ENABLE_POI_PLAYER_ACTIONS
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_ABILITY_VOID_RING ]		<- file.trackingVision_ENABLE_POI_PLAYER_ACTIONS
 
-void function Flowstate_TrackingVision_TryToTrackSuperglide( entity player )
-{
-	Signal( player, "SuperglideDetectionReset" )
-	EndSignal( player, "SuperglideDetectionReset" )
-	
-	float TimeNow
-	float playerVel
-	vector playerVelV
-	float airtime
-	bool wasmantle
-	float lastmantle
-	float endTime = Time() + 5
+	//PLAYER TRAVERSAL ACTION EVENT TYPES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_ZIPLINE_START ]		<- file.trackingVision_ENABLE_POI_PLAYER_TRAVERSAL
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_ZIPLINE_STOP ]		<- file.trackingVision_ENABLE_POI_PLAYER_TRAVERSAL
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_FOOTPRINT ]			<- file.trackingVision_ENABLE_POI_PLAYER_TRAVERSAL
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_SLIDE ]				<- file.trackingVision_ENABLE_POI_PLAYER_TRAVERSAL
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_MANTLE ]			<- file.trackingVision_ENABLE_POI_PLAYER_TRAVERSAL
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_JUMP_DOWN_START ]	<- file.trackingVision_ENABLE_POI_PLAYER_TRAVERSAL
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_JUMP_DOWN_STOP ]	<- file.trackingVision_ENABLE_POI_PLAYER_TRAVERSAL
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_LAUNCH_PAD ]		<- file.trackingVision_ENABLE_POI_PLAYER_TRAVERSAL
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_ELEVATOR_ENTER ] 	<- file.trackingVision_ENABLE_POI_PLAYER_TRAVERSAL
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_ELEVATOR_EXIT ] 	<- file.trackingVision_ENABLE_POI_PLAYER_TRAVERSAL
 
-	while( IsValid( player ) && !player.IsObserver() && Time() < endTime)
+	//PLAYER ABILITIES EVENT TYPES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITIES_PHASE_DASH_START ]	<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITIES_PHASE_DASH_STOP ]	<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITIES_SMOKE ]				<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITIES_GAS ]				<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_DIRTY_BOMB ] 			<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_DEPLOYABLE_MEDIC ] 	<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BUBBLE_BUNKER ]		<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_JUMP_PAD ] 			<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_PHASE_GATE ] 			<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BLACK_HOLE ] 			<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_SPACE_ELEVATOR ] 		<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MORTAR_RING_START ] 	<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MORTAR_RING_END ] 	<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_KNUCKLE_CLUSTER ] 	<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_PASSIVE_START ] 	<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_PASSIVE_END ] 	<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_TACTICAL ] 		<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_ULTIMATE_START ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_ULTIMATE_END ] 	<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+
+                
+                                                                                                                                           
+                          
+                
+                                                                                                                                         
+                          
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TESLA_TRAP ] 			<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TROPHY_SYSTEM ] 		<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TRANSLOCATION_TOSS ]	<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TRANSLOCATION_TELEPORT ]	<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BLACK_MARKET ]		<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_COVER_WALL ] 			<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TURRET ] 				<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_FOCUS_OF_ATTENTION ] 	<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ECHO_LOCATOR ] 	<- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MAGGIE_RIOT_DRILL_START ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MAGGIE_RIOT_DRILL_END ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MAGGIE_WRECKING_BALL_START ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MAGGIE_WRECKING_BALL_PATH ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MAGGIE_WRECKING_BALL_END ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+
+
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_NEWCASTLE_ARMORED_LEAP_START ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_NEWCASTLE_ARMORED_LEAP_END ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_NEWCASTLE_MOBILE_SHIELD_START ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_NEWCASTLE_MOBILE_SHIELD_END ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VANTAGE_JETDRIVE_START ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VANTAGE_JETDRIVE_END ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VANTAGE_ULTIMATE_FIRED ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CATALYST_BARRICADE ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CATALYST_SPIKES ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CATALYST_DARK_VEIL_START ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CATALYST_DARK_VEIL_END ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BALLISTIC_DEBUFF_ZONE ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BALLISTIC_PORTABLE_AUTO_LOADER ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_REVENANT_POUNCE_START ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_REVENANT_POUNCE_LAND ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_REVENANT_FORGED_SHADOWS ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+
+	               
+		file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CONDUIT_TACTICAL ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+		file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CONDUIT_ULTIMATE_DAMAGE ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+       
+
+	             
+		file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ALTER_ULTIMATE_PLACED ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+		file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ALTER_ULTIMATE_USED ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+		file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ALTER_TACTICAL_USED ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+		file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ALTER_PASSIVE_USED ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+       
+
+	                             
+		file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_REDEPLOY_BALLOON ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+       
+
+                         
+                                                                                                                                         
+       
+
+                      
+                                                                                                                                          
+       
+
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ASH_DATAKNIFE_USED ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ASH_ENEMY_TETHERED ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ASH_PORTAL_ENTER ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+	file.activePOIEvents[  eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ASH_PORTAL_EXIT ] <- file.trackingVision_ENABLE_POI_PLAYER_ABILITIES
+
+	//LOOT PICKUP POI EVENT TYPES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP ]					<- file.trackingVision_ENABLE_POI_LOOT_PICKUP
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_AMMO ]			<- file.trackingVision_ENABLE_POI_LOOT_PICKUP && TRACKING_VISION_ENABLE_POI_LOOT_AMMO
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_ARMOR ]			<- file.trackingVision_ENABLE_POI_LOOT_PICKUP && TRACKING_VISION_ENABLE_POI_LOOT_ARMOR
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_ATTACHMENT ]		<- file.trackingVision_ENABLE_POI_LOOT_PICKUP && TRACKING_VISION_ENABLE_POI_LOOT_ATTACHMENT
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_WEAPON ]			<- file.trackingVision_ENABLE_POI_LOOT_PICKUP && TRACKING_VISION_ENABLE_POI_LOOT_WEAPON
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_GRENADE ]			<- file.trackingVision_ENABLE_POI_LOOT_PICKUP && TRACKING_VISION_ENABLE_POI_LOOT_GRENADE
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_JUMPKIT ]			<- file.trackingVision_ENABLE_POI_LOOT_PICKUP && TRACKING_VISION_ENABLE_POI_LOOT_JUMPKIT
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_HEALTH ]			<- file.trackingVision_ENABLE_POI_LOOT_PICKUP && TRACKING_VISION_ENABLE_POI_LOOT_HEALTH
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_BACKPACK ]		<- file.trackingVision_ENABLE_POI_LOOT_PICKUP && TRACKING_VISION_ENABLE_POI_LOOT_BACKPACK
+                   
+                                                                                                                                                                                  
+       
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_GADGET ]			<- file.trackingVision_ENABLE_POI_LOOT_PICKUP && TRACKING_VISION_ENABLE_POI_LOOT_GADGET
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_HELMET ]			<- file.trackingVision_ENABLE_POI_LOOT_PICKUP && TRACKING_VISION_ENABLE_POI_LOOT_HELMET
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_INCAPSHIELD ]		<- file.trackingVision_ENABLE_POI_LOOT_PICKUP && TRACKING_VISION_ENABLE_POI_LOOT_INCAPSHIELD
+	                      
+		file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_DATAKNIFE ]	<- file.trackingVision_ENABLE_POI_LOOT_PICKUP && TRACKING_VISION_ENABLE_POI_LOOT_DATAKNIFE
+       
+
+	//LOOT EXCHANGE POI EVENT TYPES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_ARMOR ]			<- file.trackingVision_ENABLE_POI_LOOT_EXCHANGE && TRACKING_VISION_ENABLE_POI_LOOT_ARMOR
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_WEAPON ]		<- file.trackingVision_ENABLE_POI_LOOT_EXCHANGE && TRACKING_VISION_ENABLE_POI_LOOT_WEAPON
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_JUMPKIT ]		<- file.trackingVision_ENABLE_POI_LOOT_EXCHANGE && TRACKING_VISION_ENABLE_POI_LOOT_JUMPKIT
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_BACKPACK ]		<- file.trackingVision_ENABLE_POI_LOOT_EXCHANGE && TRACKING_VISION_ENABLE_POI_LOOT_BACKPACK
+                   
+                                                                                                                                                                                      
+       
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_GADGET ]		<- file.trackingVision_ENABLE_POI_LOOT_EXCHANGE && TRACKING_VISION_ENABLE_POI_LOOT_GADGET
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_HELMET ]		<- file.trackingVision_ENABLE_POI_LOOT_EXCHANGE && TRACKING_VISION_ENABLE_POI_LOOT_HELMET
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_INCAPSHIELD ]	<- file.trackingVision_ENABLE_POI_LOOT_EXCHANGE && TRACKING_VISION_ENABLE_POI_LOOT_INCAPSHIELD
+
+	//LOOT DROPPED POI EVENT TYPES
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP ]					<- file.trackingVision_ENABLE_POI_LOOT_DROP
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_AMMO ]				<- file.trackingVision_ENABLE_POI_LOOT_DROP && TRACKING_VISION_ENABLE_POI_LOOT_AMMO
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_ARMOR ]				<- file.trackingVision_ENABLE_POI_LOOT_DROP && TRACKING_VISION_ENABLE_POI_LOOT_ARMOR
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_ATTACHMENT ]		<- file.trackingVision_ENABLE_POI_LOOT_DROP && TRACKING_VISION_ENABLE_POI_LOOT_ATTACHMENT
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_WEAPON ]			<- file.trackingVision_ENABLE_POI_LOOT_DROP && TRACKING_VISION_ENABLE_POI_LOOT_WEAPON
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_GRENADE ]			<- file.trackingVision_ENABLE_POI_LOOT_DROP && TRACKING_VISION_ENABLE_POI_LOOT_GRENADE
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_JUMPKIT ]			<- file.trackingVision_ENABLE_POI_LOOT_DROP && TRACKING_VISION_ENABLE_POI_LOOT_JUMPKIT
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_HEALTH ]			<- file.trackingVision_ENABLE_POI_LOOT_DROP && TRACKING_VISION_ENABLE_POI_LOOT_HEALTH
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_BACKPACK ]			<- file.trackingVision_ENABLE_POI_LOOT_DROP && TRACKING_VISION_ENABLE_POI_LOOT_BACKPACK
+                   
+                                                                                                                                                                               
+       
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_GADGET ]			<- file.trackingVision_ENABLE_POI_LOOT_DROP && TRACKING_VISION_ENABLE_POI_LOOT_GADGET
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_HELMET ]			<- file.trackingVision_ENABLE_POI_LOOT_DROP && TRACKING_VISION_ENABLE_POI_LOOT_HELMET
+	file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_INCAPSHIELD ]		<- file.trackingVision_ENABLE_POI_LOOT_DROP && TRACKING_VISION_ENABLE_POI_LOOT_INCAPSHIELD
+	                      
+		file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_DATAKNIFE ]		<- file.trackingVision_ENABLE_POI_LOOT_DROP && TRACKING_VISION_ENABLE_POI_LOOT_DATAKNIFE
+       
+
+	#if DEV
+	//If we are running in DEV mode validate our POIType entries to ensure all of them have been registered as active or inactive.
+	foreach( int eventType in eTrackingVisionNetworkedPOITypes )
 	{
-		if ( IsValid( player ) )
-		{	
-			TimeNow = Time()
-			playerVelV = player.GetVelocity()
-			playerVel = playerVelV.Length()
-		
-			if( !player.IsOnGround() && !player.ContextAction_IsZipline() )
-				airtime += 0.025
-			else if( player.IsOnGround() )
-				airtime = 0.0
-
-			if(player.IsMantling())
-			{
-				wasmantle = true
-				lastmantle = TimeNow
-			}
-			
-			if(wasmantle == true && !player.IsOnGround() && playerVel > 480 &&  player.IsSliding() && airtime <= 0.5)
-			{
-				#if DEVELOPER
-				printt( "Superglide detected for player " + player.GetPlayerName() + " at " + player.GetOrigin() )
-				#endif
-				TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_SUPERGLIDE, player, player.GetOrigin(), player.GetTeam(), player )	
-				break
-			}
-			
-			if (TimeNow - lastmantle > 0.25)
-			{
-				lastmantle = 0.0
-				wasmantle = false
-			}
-		}
-		
-		WaitFrame()
+		if ( eventType != eTrackingVisionNetworkedPOITypes._count )
+			Assert( eventType in file.activePOIEvents, "POI Event Type " + DEV_GetEnumStringSafe( "eTrackingVisionNetworkedPOITypes", eventType ) + " has not been registered active or inactive." )
 	}
+	#endif
 }
 
-void function Flowstate_TrackingVision_PlayerFootprintsThread( entity player )
+bool function TrackingVision_IsPOIEventTypeEnabled( int eventType )
 {
-	EndSignal( player, "OnDestroy" )
-	EndSignal( player, "OnDeath" )
-	
-	int poiTypeToUse
-	vector vel
+	Assert( eventType in file.activePOIEvents, "POI Event Type " + eventType + " has not been registered active or inactive." )
 
-	while( IsValid( player ) )
+	if ( GetCurrentPlaylistVarString( "character_bloodhound", "" ) == "locked" )
+		return false
+
+	return file.activePOIEvents[ eventType ]
+}
+
+void function TrackingVision_CreatePOI( int type, entity ent, vector origin, int teamOwner, entity realmsEntity )
+{
+	if ( GetGameState() >= eGameState.WinnerDetermined )
+		return
+
+	//Don't transmit disabled POI event types to the client.
+	if ( !TrackingVision_IsPOIEventTypeEnabled( type ) )
+		return
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+		return
+
+	bool entIsPlayer = ent.IsPlayer()
+
+	if ( entIsPlayer && !file.registeredPlayers.contains( ent ) )
+		return
+
+                     
+                                
+        
+      
+
+	//If this ent is a player, reset the footprint distance interval.
+	//We don't need footprints if the player is generating other POIs.
+	if ( ent.IsPlayer() )
+		file.footprintDist[ ent ] = 0
+
+	vector offset = TrackingVision_GetOffsetForPOI( type )
+
+	entity poi = CreateBasicPOIAndReturnEntity( type, (origin + offset), ent, teamOwner, TrackingVision_GetPriorityForPOIType( type ), realmsEntity )
+	if( poi != null )
 	{
-		wait 1
-		
-		poiTypeToUse = eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_FOOTPRINT
-		vel = player.GetVelocity()
+		poi.wp.waypointCreatedTime = Time()
+                                        
+                                                                                                
+       
 
-		if( vel.Length() == 0 )
-			continue
+	                                              
+		POIData poiData = TrackingVision_CreatePOIData( poi, type )
+		file.poiDataArray.append( poiData )
+       
+	}
 
-		if( !player.IsOnGround() )
-			continue
+	if ( IsRoundBased() )
+		MarkEntForCleanupOnRoundEnd( poi )
+	else
+		MarkEntForCleanupOnWinnerDetermined( poi )
 
-		if( player.IsPhaseShifted() )
-			continue
+	if ( TrackingVision_ShouldCleanupPOISOnDeath() )
+		TrackingVision_MarkPOIForPostDeathCleanup( poi, ent )
+}
 
-		if( player.IsSliding() )
-		{
-			poiTypeToUse = eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_SLIDE
-		}
 
-		TrackingVision_CreatePOI( poiTypeToUse, player, player.GetOrigin(), player.GetTeam(), player )	
+// only used by TrackingVision_OnPlayerKilled
+entity function TrackingVision_CreatePOIAndReturnEntity( int type, entity ent, vector origin, int teamOwner, entity realmsEntity, entity otherEntity )
+{
+	if ( GetGameState() >= eGameState.WinnerDetermined )
+		return null
+
+	//Don't transmit disabled POI event types to the client.
+	if ( !TrackingVision_IsPOIEventTypeEnabled( type ) )
+		return null
+
+	if ( ent.IsPlayer() && !file.registeredPlayers.contains( ent ) )
+		return null
+
+	//If this ent is a player, reset the footprint distance interval.
+	//We don't need footprints if the player is generating other POIs.
+	if ( ent.IsPlayer() )
+		file.footprintDist[ ent ] = 0
+
+	vector offset = TrackingVision_GetOffsetForPOI( type )
+	entity poi = CreateBasicPOIAndReturnEntity( type, (origin + offset), ent, teamOwner, TrackingVision_GetPriorityForPOIType( type ), realmsEntity )
+
+	if(poi != null)
+	{
+		poi.wp.waypointCreatedTime = Time()
+
+		                                              
+			POIData poiData = TrackingVision_CreatePOIData( poi, type )
+			file.poiDataArray.append( poiData )
+        
+	}
+
+	if ( IsRoundBased() )
+		MarkEntForCleanupOnRoundEnd( poi )
+	else
+		MarkEntForCleanupOnWinnerDetermined( poi )
+	return poi
+}
+
+void function TrackingVision_OnPropScriptCreated( entity ent )
+{
+	thread TrackingVision_OnPropScriptCreated_Internal( ent )
+}
+
+void function TrackingVision_OnPropScriptCreated_Internal( entity ent )
+{
+	WaitFrame() //Have to wait a frame so script name can be set because it's set after Dispatch Spawn on most of these
+
+	if ( GetGameState() >= eGameState.WinnerDetermined )
+		return
+
+	if ( !IsValid( ent ) )
+		return
+
+	int poiType;
+
+	switch ( ent.GetScriptName() )
+	{
+		case "dirty_bomb":
+			poiType = eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_DIRTY_BOMB
+			break
+		case "jump_pad":
+			poiType = eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_JUMP_PAD
+			break
+
+               
+                        
+                                                                          
+        
+                         
+
+               
+                     
+                                                                        
+        
+                         
+
+		/*
+		case "tesla_trap":
+			poiType = eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TESLA_TRAP
+			break
+
+		case "trophy_system":
+			poiType = eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TROPHY_SYSTEM
+			break
+		*/
+
+		case BLACK_MARKET_SCRIPTNAME:
+			poiType = eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BLACK_MARKET
+			break
+
+		default:
+			return;
+	}
+
+
+	vector offset = TrackingVision_GetOffsetForPOI( poiType )
+	entity poi = CreateBasicPOIAndReturnEntity( poiType, (ent.GetOrigin() + offset), ent, ent.GetTeam(), TrackingVision_GetPriorityForPOIType( poiType ), ent )
+	                                              
+		POIData poiData = TrackingVision_CreatePOIData( poi, poiType )
+		file.poiDataArray.append( poiData )
+       
+	if ( IsRoundBased() )
+		MarkEntForCleanupOnRoundEnd( poi )
+	else
+		MarkEntForCleanupOnWinnerDetermined( poi )
+}
+
+void function TrackingVision_CreatePOIForPickedUpLoot( entity ent, int lootType, string ref, vector origin, int teamOwner, entity realmsEntity )
+{
+	int poiType = -1
+	switch ( lootType )
+	{
+	case eLootType.AMMO:
+		poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_AMMO
+		break
+	case eLootType.ARMOR:
+		poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_ARMOR
+		break
+	case eLootType.ATTACHMENT:
+		poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_ATTACHMENT
+		break
+	case eLootType.GADGET:
+	case eLootType.ORDNANCE:
+		poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_GRENADE
+		break
+	case eLootType.JUMPKIT:
+		poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_JUMPKIT
+		break
+	case eLootType.HEALTH:
+		poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_HEALTH
+		break
+	case eLootType.HELMET:
+		poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_HELMET
+		break
+	case eLootType.BACKPACK:
+		poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_BACKPACK
+		break
+
+	case eLootType.INCAPSHIELD:
+		poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_INCAPSHIELD
+		break
+
+                      
+		case eLootType.DATAKNIFE:
+			poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_DATAKNIFE
+			break
+      
+
+	case eLootType.CUSTOMPICKUP:
+		return
+
+                       
+                           
+        
+      
+
+	case eLootType.LOCKBOX:
+		return
+
+                   
+	case eLootType.MARVIN_ARM:
+		return
+      
+
+                   
+                            
+        
+
+                            
+        
+      
+                  
+	case eLootType.COLLECTABLE_NESSIE:
+		return
+      
+                      
+		case eLootType.CANDY_PICKUP:
+			return
+      
+                    
+		case eLootType.EVO_CACHE:
+			return
+      
+
+                         
+                              
+        
+      
+	}
+
+	if ( poiType == -1 )
+	{
+		Warning( "Cannot Create Loot Pickup POI for invalid loot type: " + lootType + " with ref " + ref  )
+		return
+	}
+
+	TrackingVision_CreatePOI( poiType, ent, origin, teamOwner, realmsEntity )
+}
+
+void function TrackingVision_CreatePOIForDroppedLoot( entity lootEnt, int lootType, string ref, vector origin, int teamOwner, entity realmsEntity )
+{
+	int poiType = -1
+	switch ( lootType )
+	{
+		case eLootType.AMMO:
+			poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_AMMO
+			break
+		case eLootType.ARMOR:
+			poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_ARMOR
+			break
+		case eLootType.ATTACHMENT:
+			poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_ATTACHMENT
+			break
+		case eLootType.ORDNANCE:
+			poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_GRENADE
+			break
+		case eLootType.JUMPKIT:
+			poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_JUMPKIT
+			break
+
+		case eLootType.HEALTH:
+			poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_HEALTH
+			break
+
+		case eLootType.HELMET:
+			poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_HELMET
+			break
+
+		case eLootType.BACKPACK:
+			poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_BACKPACK
+			break
+
+		case eLootType.INCAPSHIELD:
+			poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_INCAPSHIELD
+			break
+
+                      
+		case eLootType.DATAKNIFE:
+			poiType = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_DATAKNIFE
+			break
+      
+
+		case eLootType.CUSTOMPICKUP:
+			return
+
+                       
+                            
+         
+      
+
+		case eLootType.LOCKBOX:
+			return
+
+                   
+		case eLootType.MARVIN_ARM:
+			return
+      
+
+                  
+		case eLootType.COLLECTABLE_NESSIE:
+			return
+      
+                      
+		case eLootType.CANDY_PICKUP:
+			return
+      
+	}
+
+	if ( poiType == -1 )
+	{
+		Warning( "Cannot Create Loot Drop POI for invalid loot type: " + lootType + " with ref " + ref )
+		return
+	}
+
+	TrackingVision_CreatePOI( poiType, lootEnt, origin, teamOwner, realmsEntity )
+}
+
+void function TrackingVision_OnPassiveChanged( entity player, int passive, bool didHave, bool nowHas )
+{
+	if ( didHave )
+	{
+		Assert ( player in file.trackingVisionData, "Player does not have tracking passive, but we are trying to remove it." )
+		StatusEffect_Stop( player, file.trackingVisionData[ player ].statusID )
+		delete file.trackingVisionData[ player ]
+	}
+	if ( nowHas )
+	{
+		int statusID = StatusEffect_AddEndless( player, eStatusEffect.tracking_vision, 1.0 )
+
+		TrackingVisionData data
+		data.owner 		= player
+		data.statusID 	= statusID
+		file.trackingVisionData[ player ] <- data
+
+                        
+                                                                     
+                                                                                 
+        
 	}
 }
 
 array<entity> function GetAllTrackingPlayers()
 {
-	array<entity> players
-	
-	foreach( player in GetPlayerArray() )
-		if( PlayerHasPassive( player, ePassives.PAS_TRACKING_VISION ) )
-			players.append( player )
-		
-	return players
-}
-
-void function HeatMapStat( entity player, string id, vector origin )
-{
-
-}
-
-entity function TrackingVision_CreatePOI( int poiType, entity target, vector position, int team, entity player )
-{
-	if( !IsValid( player ) || !IsValid( target ) )
-		return null
-	
-	entity poiEntity = CreatePlayerPOIAndReturnEntity( eWaypoint.BASIC_POI, poiType, position, target, team, TrackingVision_GetPriorityForPOIType( poiType ), player)
-
-	if ( IsValid( poiEntity ) )
+	array<entity> list = []
+	foreach( entity player, TrackingVisionData unused in file.trackingVisionData )
 	{
-		poiEntity.RemoveFromAllRealms()
-		poiEntity.AddToOtherEntitysRealms( player )
+		if ( IsAlive( player ) )
+			list.append( player )
 	}
-	
-	return poiEntity
+	return list
+}
+
+void function TrackingVision_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
+{
+	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	int dist = int( Distance(victim.GetOrigin(), attacker.GetOrigin() ) )
+
+	entity victimWaypoint = TrackingVision_CreatePOIAndReturnEntity( eTrackingVisionNetworkedPOITypes.PLAYER_DEATH, victim, victim.GetOrigin(), victim.GetTeam(), victim, attacker )
+	if ( IsValid( victimWaypoint ) )
+	{
+		victimWaypoint.SetWaypointInt( TRACKING_DAMAGE_SOURCE_INDEX, damageSourceID )
+		victimWaypoint.SetWaypointInt( TRACKING_DIST_INDEX, dist )
+	}
+
+	if ( !TrackingVision_ShouldShowAttackerPOI( attacker, damageSourceID ) )
+		return
+
+	entity attackerWaypoint = TrackingVision_CreatePOIAndReturnEntity( eTrackingVisionNetworkedPOITypes.PLAYER_KILLER, attacker, attacker.GetOrigin(), attacker.GetTeam(), attacker, victim )
+	if ( IsValid( attackerWaypoint ) )
+	{
+		attackerWaypoint.SetWaypointInt( TRACKING_DAMAGE_SOURCE_INDEX, damageSourceID )
+		attackerWaypoint.SetWaypointInt( TRACKING_DIST_INDEX, dist )
+	}
+
+	// If we cleanup POI's on death, clean them up now ( but leave the death POI )
+	if ( TrackingVision_ShouldCleanupPOISOnDeath() && victim in file.playerToActivePOISTable )
+	{
+		array <entity> pois = clone file.playerToActivePOISTable[ victim ]
+		foreach( poi in pois )
+		{
+			if ( IsValid( poi ) )
+				poi.Destroy()
+		}
+		delete file.playerToActivePOISTable[ victim ]
+	}
+}
+
+bool function TrackingVision_ShouldShowAttackerPOI( entity attacker, int damageSourceID )
+{
+	if ( !attacker.IsPlayer() )
+		return false
+
+	switch( damageSourceID )
+	{
+		case eDamageSourceId.bleedout:
+		case eDamageSourceId.bombardment:
+		case eDamageSourceId.damagedef_grenade_gas:
+		case eDamageSourceId.damagedef_gas_exposure:
+			return false
+	}
+
+	return true
+}
+
+void function TrackingVision_OnWeaponAttack( entity player, entity weapon, string weaponName, int ammoUsed, vector attackOrigin, vector attackDir )
+{
+	if ( ammoUsed == 0 )
+		return
+
+	int flags = weapon.GetWeaponDamageFlags()
+	/*
+	printt( weaponName + ", FLAGS: " + flags )
+	printt( "DF_BULLET: " + bool ( flags & DF_BULLET ) )
+	printt( "DF_SHOTGUN: " + bool ( flags & DF_SHOTGUN ) )
+	printt( "DF_EXPLOSION: " + bool ( flags & DF_EXPLOSION ) )
+	printt( "IS OFFHAND: " + weapon.IsWeaponOffhand() )
+	printt( "IS TOSS: " + weapon.IsTossWeapon() )
+	printt( "AMMO USED: " + ammoUsed )
+	*/
+
+	//Debounce our weapon fire POI events.
+	if ( Time() < file.lastWeaponFireTime[ player ] )
+		return
+
+		float poiDebounceTime = TRACKING_VISION_WEAPON_FIRE_POI_DBOUNCE
+                                        
+                                                                  
+       
+
+	//Weapon Fired Markers - Now include energy weapons
+	if ( !IsBitFlagSet( flags, DF_EXPLOSION ) && !weapon.IsWeaponOffhand() && !weapon.IsTossWeapon() )
+	{
+		vector origin = OriginToGround( player.GetOrigin() + <0,0,1> )
+		TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_FIRE_WEAPON_BULLET, player, origin, player.GetTeam(), player )
+		file.lastWeaponFireTime[ player ] = Time() + poiDebounceTime
+	}
+	//Non-Offhand Weapons that explode and are tossed should leave grenade pins.
+	else if ( !IsBitFlagSet( flags, ( DF_BULLET | DF_SHOTGUN ) ) && IsBitFlagSet( flags, DF_EXPLOSION ) && !weapon.IsWeaponOffhand() && weapon.IsTossWeapon() )
+	{
+		vector origin = OriginToGround( player.GetOrigin() + <0,0,1> )
+		TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_FIRE_WEAPON_GRENADE, player, origin, player.GetTeam(), player )
+		file.lastWeaponFireTime[ player ] = Time() + poiDebounceTime
+	}
+}
+
+void function TrackingVision_OnPlayerPostDamage( entity victim, var damageInfo )
+{
+
+	//printt( victim.GetHealth() )
+
+	//Don't create damage POI for dead players.
+	if ( !IsAlive( victim ) )
+		return
+
+	//We don't create POIs for titan damage.
+	if ( victim.IsTitan() )
+		return
+
+	//Don't create damage POI for players who will be killed by this damage.
+	float damage = DamageInfo_GetDamage( damageInfo )
+	int health = victim.GetHealth()
+	if ( damage >= health )
+		return
+
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+
+	//Only create damage POI for attacks from valid attacker.
+	if ( !IsValid( attacker ) )
+		return
+
+	int maxHealth = victim.GetMaxHealth()
+
+	//printt( DamageInfo_GetDamageType( damageInfo ), DamageInfo_GetDamageFlags( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ) )
+
+	//If this attack did more damage that our specified health fraction, create a damage Point of Intrest.
+	if ( damage >= ( maxHealth * TRACKING_VISION_DAMAGE_POI_HEALTH_FRAC ) )
+	{
+		vector origin = OriginToGround( victim.GetOrigin() + <0,0,1> )
+		TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_TOOK_DAMAGE, victim, origin, victim.GetTeam(), victim )
+	}
+}
+
+void function TrackingVision_OnPilotBecomesTitan( entity player, entity titan )
+{
+	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.TITAN_EMBARK, player, player.GetOrigin(), player.GetTeam(), player )
+}
+
+void function TrackingVision_OnTitanBecomesPilot( entity player, entity titan )
+{
+	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.TITAN_DISEMBARK, player, player.GetOrigin(), player.GetTeam(), player )
+}
+
+void function TrackingVision_OnPlayerMantle( entity player )
+{
+                
+                                                                          
+                                                      
+         
+       
+
+	//int attachment = player.LookupAttachment( "L_HAND" )
+	vector origin = player.GetCenter()//= player.GetAttachmentOrigin( attachment )
+	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_MANTLE, player, origin, player.GetTeam(), player )
+}
+
+void function TrackingVision_PlayerUsedLaunchPad( entity player )
+{
+	file.launchPadUsed[ player ] = true
+	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_LAUNCH_PAD, player, player.GetOrigin(), player.GetTeam(), player )
+}
+
+void function TrackingVision_OnPlayerLeaveGround( entity player )
+{
+	file.lastGroundTouchPos[ player ] = player.GetOrigin()
+}
+
+void function TrackingVision_OnPlayerTouchGround( entity player )
+{
+	vector lastTouchPos = file.lastGroundTouchPos[ player ]
+
+                
+                                                                          
+                                                      
+         
+       
+
+	bool didLand = lastTouchPos.z > (player.GetOrigin().z + TRACKING_VISION_TRAVERSAL_POI_JUMP_DOWN_DIST) || file.launchPadUsed[player]
+
+	if ( didLand )
+		 TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_JUMP_DOWN_STOP, player, player.GetOrigin(), player.GetTeam(), player )
+
+	bool didFallOfLedge = !file.ziplined[ player ] || file.launchPadUsed[player]
+	if ( didFallOfLedge  )
+		TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_JUMP_DOWN_START, player, lastTouchPos, player.GetTeam(), player )
+
+	file.launchPadUsed[player] = false
+	file.ziplined[ player ] = false
+}
+
+void function TrackingVision_OnPlayerReload( entity player )
+{
+	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_RELOAD, player, player.GetOrigin(), player.GetTeam(), player )
+}
+
+void function TrackingVision_OnPlayerStartBleedout( entity player, entity attacker, var damageInfo )
+{
+	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_STARTBLEEDOUT, player, player.GetOrigin(), player.GetTeam(), player )
+}
+
+void function TrackingVision_OnPlayerGotFirstAid( entity player, entity reviver )
+{
+	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_HEAL, player, player.GetOrigin(), player.GetTeam(), player )
+}
+
+
+void function TrackingVision_OnZiplineStart( entity player, entity zipline )
+{
+                
+                                                                          
+                                                      
+         
+       
+
+	int attachment = player.LookupAttachment( "L_HAND" )
+	vector origin  = player.GetAttachmentOrigin( attachment )
+	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_ZIPLINE_START, zipline, origin, player.GetTeam(), player )
+	file.ziplined[ player ] = true
+}
+
+void function TrackingVision_OnZiplineStop( entity player )
+{
+                
+                                                                          
+                                                      
+         
+       
+
+	entity zipline = player.Zipline_GetLastZipline()
+	if ( !IsValid( zipline ) )
+		return
+
+	int attachment = player.LookupAttachment( "L_HAND" )
+	vector origin = player.GetAttachmentOrigin( attachment )
+	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_ZIPLINE_STOP, zipline, origin, player.GetTeam(), player )
+}
+
+void function TrackingVision_OnGameStateEnter_WaitingForPlayers()
+{
+	thread TrackingVision_PlayerFootprintUpdate()
+}
+
+void function TrackingVision_PlayerFootprintUpdate()
+{
+	Assert ( IsNewThread(), "Must be threaded off." )
+
+	while ( GetGameState() <= eGameState.Playing )
+	{
+		WaitFrame()
+
+		foreach ( entity player in GetPlayerArray_Alive() )
+		{
+                  
+                                                                            
+                                                        
+             
+         
+
+			if ( player.IsPhaseShifted() )
+				continue
+
+			                     
+			if ( HoverVehicle_IsPlayerInAnyVehicle( player ) )
+				continue
+                              
+
+			vector playerVel = player.GetVelocity()
+			vector playerPos = player.GetOrigin()
+			if ( player.IsOnGround() && playerVel != <0, 0, 0> )
+			{
+				float deltaLength = Length ( file.footprintLastPos[ player ] - playerPos )
+				float velLength	= Length ( playerVel )
+				file.footprintDist[ player ] += deltaLength
+
+				if ( file.footprintDist[ player ] >= TRACKING_VISION_TRAVERSAL_POI_FOOTPRINT_DISTANCE )
+				{
+					file.footprintDist[ player ] = 0
+
+					//if the player is bleeding out leave a blood trail
+					if ( Bleedout_IsBleedingOut( player ) )
+					{
+						TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_TOOK_DAMAGE, player, player.GetOrigin(), player.GetTeam(), player )
+					}
+					else if ( player.IsSliding() )
+					{
+						TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_SLIDE, player, player.GetOrigin(), player.GetTeam(), player )
+					}
+					//Only leave footprints if the player is running.
+					else
+					{
+						TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_FOOTPRINT, player, player.GetOrigin(), player.GetTeam(), player )
+					}
+				}
+			}
+			file.footprintLastPos[ player ] = playerPos
+		}
+	}
+}
+
+                                              
+array< entity > function TrackingVision_GetAllValidTrackingPOIs( )
+{
+	array< entity > poiArray
+
+	foreach( dataArray in file.poiDataArray )
+	{
+		entity poi 	= dataArray.poi
+		int type 	= dataArray.type
+
+		//If there's no actual POI entity, remove
+		if( !IsValid( poi ) )
+		{
+			file.poiDataArray.fastremovebyvalue( dataArray )
+			continue
+		}
+		poiArray.append( poi )
+	}
+
+	return poiArray
+}
+
+POIData function TrackingVision_CreatePOIData( entity poi, int type )
+{
+	//Add more components in here if necessary later, ownerTeam, realms etc.
+	POIData poiData
+	poiData.poi = poi
+	poiData.type = type
+
+	return poiData
+}
+      
+
+#if DEV
+void function DEV_ForceAddTrackingVision( entity player )
+{
+	if ( player in file.trackingVisionData )
+	{
+		StatusEffect_Stop( player, file.trackingVisionData[ player ].statusID )
+		delete file.trackingVisionData[ player ]
+	}
+
+	int statusID = StatusEffect_AddEndless( player, eStatusEffect.tracking_vision, 1.0 )
+
+	TrackingVisionData data
+	data.owner 		= player
+	data.statusID 	= statusID
+	file.trackingVisionData[ player ] <- data
+}
+#endif //DEV
+
+bool function TrackingVision_ShouldCleanupPOISOnDeath()
+{
+	return GetCurrentPlaylistVarBool( "trackingvision_cleanup_pois_ondeath", false )
+}
+
+void function TrackingVision_MarkPOIForPostDeathCleanup( entity poi, entity player )
+{
+	array<entity> playerPOIs
+
+	if ( player in file.playerToActivePOISTable )
+		playerPOIs = file.playerToActivePOISTable[ player ]
+
+	playerPOIs.append( poi )
+	file.playerToActivePOISTable[ player ] <- playerPOIs
 }

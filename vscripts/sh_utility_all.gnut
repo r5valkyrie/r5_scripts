@@ -694,6 +694,30 @@ bool function IsLastPlaylistSolo( entity player )
 	return GetPersistentLastGameTypeFlag( player, eGameType.SOLO )
 }
 
+bool function IsNightMap()
+{
+	string mapName
+	#if UI
+		mapName = GetActiveLevel()
+	#else
+		mapName = GetMapName()
+	#endif
+
+	switch ( mapName )
+	{
+		case "mp_rr_olympus_mu1_night":
+		case "mp_rr_canyonlands_mu1_night":
+		case "mp_rr_desertlands_night":
+			return true
+			break
+		default:
+			break
+	}
+
+	return false
+}
+
+
 bool function IsPVEMode()
 {
 	#if UI
@@ -713,20 +737,62 @@ bool function IsPVEMode()
 	#endif //
 }
 
-bool function UseSoloModeIntroPresentation()
+
+
+bool function IsNightMapMode()
 {
-	return GetCurrentPlaylistVarInt( "solo_mode_intro_presentation", 0 ) ? true : false
+	return GetCurrentPlaylistVarBool( "night_map_mode", false )
 }
 
-bool function UseSoloModeInGamePresentation()
+
+bool function IsAlwaysBeClosingMode()
 {
-	return GetCurrentPlaylistVarInt( "solo_mode_ingame_presentation", 0 ) ? true : false
+	return GetCurrentPlaylistVarBool( "always_be_closing_mode", false )
 }
 
-bool function UseSoloModePostGamePresentation()
+
+bool function IsGoldRushMode()
 {
-	return GetCurrentPlaylistVarInt( "solo_mode_postgame_presentation", 0 ) ? true : false
+	return GetCurrentPlaylistVarBool( "gold_rush_mode", false )
 }
+
+
+bool function IsDummieMode()
+{
+	return GetCurrentPlaylistVarBool( "dummie_mode", false )
+}
+
+bool function HasBoundaryWall()
+{
+	return GetCurrentPlaylistVarBool( "has_boundary_wall", false )
+}
+
+                                       
+                                                       
+ 
+                                                                                   
+ 
+      
+
+                                              
+                                                    
+ 
+                                                                               
+ 
+      
+
+                       
+bool function BigTDM_IsModeEnabled()
+{
+	return GetCurrentPlaylistVarBool( "freedm_big_tdm_active", false )
+}
+                            
+
+bool function UseLTMPodiumBanner()
+{
+	return ( GetCurrentPlaylistVarString( "gamemode_logo", "BATTLE_ROYALE" ) == "LTM" )
+}
+
 #if SERVER
 void function SetupDecorativeBalloon( entity balloon )
 {
@@ -3911,6 +3977,11 @@ bool function InfiniteAmmoEnabled()
 }
 #endif
 
+void function SetConVarFloatFromPlaylist( string varName, float floatVal )
+{
+	SetConVarFloat( varName, GetCurrentPlaylistVarFloat( varName, floatVal ) )
+}
+
 bool function IsSpectator( entity player )
 {
 	if ( !IsValid( player ) )
@@ -4225,6 +4296,297 @@ int function stringcmp( string a, string b )
 
     return 0
 }
+
+#if SERVER || CLIENT
+const float ROG_MIN_VERT_DISTRIB 		= 1024.0 * 4.0 // ROG stands for random oriented grid
+const float ROG_MAX_VERT_DISTRIB 		= 1024.0 * 6.0
+const float ROG_MIN_HORIZ_DISTRIBUTION			= 1024 * 12.0
+const float ROG_DEFAULT_GRID_HALF_SIZE			= 64000.0
+const int ROG_MAX_SPAWN_POOL_BEFORE_REDUCTION	= 100
+const float ROG_MAX_SPAWN_TO_POOL_SATURATION	= 0.5
+
+// Method: Using provided entities, create an irregular grid at a random orientation over the map. Pick closest entities to randonly selected grid vertices.
+// Search area is centered at <0, 0, 0>
+// Sorry for the weird formatting, want to comment each param
+array<entity> function RandomOrientedGridDistribution(
+			array<entity> possibleLocationEnts,						// Array of spawn points. Returns a selection of these spawn points.
+			int numDesiredSpawns,									// Number of desired selected spawn points
+			float defaultGridHalfSize = ROG_DEFAULT_GRID_HALF_SIZE,		// The default half size of the maximum grid search area. This will determine the start of the vertical axis. If too small, you could have lots of spawns clumped *before* the start of the vert search axis
+			float minDesiredVertSpacingParam = ROG_MIN_VERT_DISTRIB,					// Minimum spacing for vertical selection interval. Smaller = vertical distribution can be closer together
+			float maxDesiredVertSpacingParam = ROG_MAX_VERT_DISTRIB,					// Maximum spacing for vert selection interval. Larger = vert distribution can be more spread out.
+			float minDesiredHorizSpacing = ROG_MIN_HORIZ_DISTRIBUTION,					// Larger = force more horizontal difference from one vertical interval to the next. Too large can force algo to go pure random.
+			int maxNumSpawnsBeforeReduction = ROG_MAX_SPAWN_POOL_BEFORE_REDUCTION,		// If more spawns than this number, start coin-flipping whether to use a spawn or not.
+			float maxSpawnSaturationBeforeRandomPick = ROG_MAX_SPAWN_TO_POOL_SATURATION 	// If you desire 100 spawns in a pool of 150.. do you need a fancy algo? Set the saturation ratio. If above ratio, this'll do random pick.
+		)
+{
+	// Get random orientation
+	int numSpawnPoints       	= possibleLocationEnts.len()
+	int numSpawnsToReturn = numDesiredSpawns
+
+	if ( (numSpawnPoints == 0) || (numSpawnsToReturn == 0) )
+	{
+		array<entity> empty
+		return empty
+	}
+
+	float desiredToLocationRatio = float( numSpawnsToReturn / numSpawnPoints )
+	if ( desiredToLocationRatio > maxSpawnSaturationBeforeRandomPick )
+	{
+		if ( numSpawnsToReturn > numSpawnPoints )
+			numSpawnsToReturn = numSpawnPoints
+
+		printt( "!!! WARNING !!! Ratio of desired tick spawns to available locations too high to be worth it! Randomizing and returning results!", desiredToLocationRatio )
+		possibleLocationEnts.randomize()
+		return possibleLocationEnts.slice( 0, numSpawnsToReturn )
+	}
+
+	vector verticalAxis   = Normalize( < RandomFloatRange( -1, 1 ), RandomFloatRange( -1, 1 ), 0 > )
+	vector horizAxis      = CrossProduct( verticalAxis, < 0, 0, 1 > )
+	vector vertAxisOrigin = verticalAxis * -defaultGridHalfSize
+
+	bool verbosePrint = GetCurrentPlaylistVarInt( "debug_loot_ticks", 0 ) == 1
+
+	//---------------------
+	// First, get valid spawn ents. For each ent store their distance along the vertical and horizontal axis. This is used as a position on the oriented grid.
+	// Set min/max width, and how long the vertical axis is, based on the given spawn points
+	//---------------------
+	array<table> selectedSpawnPositions
+	float closestSpawnOriginToVertAxisOrigin  = defaultGridHalfSize
+	float furthestSpawnOriginToVertAxisOrigin = 0
+	float minWidth                            = defaultGridHalfSize
+	float maxWidth                            = -defaultGridHalfSize
+	bool shouldDiscardSomeCandidates          = numSpawnPoints > maxNumSpawnsBeforeReduction // This is for optimization
+	int numSelectedSpawnEnts
+	foreach( spawnEnt in possibleLocationEnts )
+	{
+		if ( !IsValid( spawnEnt ) )
+			continue
+
+		// Omit half of the ents - lower resolution, but save on dot products. Don't yet need a majillion options.
+		if ( shouldDiscardSomeCandidates && CoinFlip() )
+			continue
+
+		numSelectedSpawnEnts++
+
+		vector vertAxisOriginToEnt      = spawnEnt.GetOrigin() - vertAxisOrigin
+		float distToVertAxisOrigin      = DotProduct2D( vertAxisOriginToEnt, verticalAxis )
+		float horizDistToVertAxisOrigin = DotProduct2D( vertAxisOriginToEnt, horizAxis )
+		selectedSpawnPositions.append( { ent = spawnEnt, vertDist = distToVertAxisOrigin, horizDist = horizDistToVertAxisOrigin } )
+
+		// Only positive values, vert distance is 0 - max
+		if ( distToVertAxisOrigin > furthestSpawnOriginToVertAxisOrigin )
+			furthestSpawnOriginToVertAxisOrigin = distToVertAxisOrigin
+		else if ( distToVertAxisOrigin < closestSpawnOriginToVertAxisOrigin )
+			closestSpawnOriginToVertAxisOrigin = distToVertAxisOrigin
+
+		// Width is positive to negative
+		if ( horizDistToVertAxisOrigin > maxWidth )
+			maxWidth = horizDistToVertAxisOrigin
+		else if( horizDistToVertAxisOrigin < minWidth )
+			minWidth = horizDistToVertAxisOrigin
+	}
+
+	selectedSpawnPositions.sort( SortSpawnPositionsByVertDist )
+
+	if ( numSelectedSpawnEnts < numSpawnsToReturn )
+		numSpawnsToReturn = numSelectedSpawnEnts
+
+	//---------------------
+	// At this stage, we have an oriented vertical/horizontal axis, and some information on the max/min width.
+	// The next step is to build the grid. We start by adding more vertical splits (each split represents a horizontal gridline), by walking from the start of the vertical axis to the end.
+	// We do some safety checks here to make sure that there's always a spawn position between these newly-made horizontal gridlines.
+	//
+	// The number of horizontal gridlines generated has to do with the min and max distribution distance.
+	// After we generate these, we'll select a few of them, depending on how many desired spawns there are.
+	//---------------------
+	Assert( maxDesiredVertSpacingParam > minDesiredVertSpacingParam, "Max loottick distribution distance is smaller than min distribution! Fix it!" )
+
+	float vertAxisSpawnRange     = furthestSpawnOriginToVertAxisOrigin - closestSpawnOriginToVertAxisOrigin
+	float maxDesiredSpawnSpacing = ( vertAxisSpawnRange * 0.9 ) / numSpawnsToReturn		// The most spread out they can possibly be is still within spawn ent bounds
+	float minDesiredSpawnSpacing = minDesiredVertSpacingParam
+	if ( maxDesiredSpawnSpacing > maxDesiredVertSpacingParam )
+		maxDesiredSpawnSpacing = maxDesiredVertSpacingParam
+
+	if ( maxDesiredSpawnSpacing < minDesiredVertSpacingParam )
+		minDesiredSpawnSpacing = maxDesiredSpawnSpacing - 1
+
+	float verticalDistanceTraveled = closestSpawnOriginToVertAxisOrigin			// Start making horizontal divisions at one end of the bin point cloud
+	int numVertSplits              = 0
+	int lastSafetyCheckedSpawnEnt  = 0
+	array<float> generatedVertSplits	// These are the distances along the vertical axis at which generated horizontal splits occur
+	while( true )
+	{
+		float newVerticalDistanceTraveled = RandomFloatRange( minDesiredSpawnSpacing, maxDesiredSpawnSpacing )
+		verticalDistanceTraveled += newVerticalDistanceTraveled
+
+		if ( verticalDistanceTraveled > furthestSpawnOriginToVertAxisOrigin )
+			break
+
+		// Check to see how many spawn ents are between this new horizontal axis and the last one
+		int numSpawnEntsBetweenLastAndCurrentSelection
+		for( int i = lastSafetyCheckedSpawnEnt; i < numSelectedSpawnEnts; i++ )
+		{
+			float curVertDist = expect float( selectedSpawnPositions[ i ].vertDist )
+			if ( curVertDist > verticalDistanceTraveled )
+				break
+
+			numSpawnEntsBetweenLastAndCurrentSelection = i - lastSafetyCheckedSpawnEnt
+		}
+
+		// If there isn't a spawn ent between this axis and the last one, then move this horiz gridline to be at next spawn ent (along vertical axis) + a buffer. The buffer won't accidentally include another spawn ent.
+		if ( numSpawnEntsBetweenLastAndCurrentSelection == 0 )
+		{
+			float vertDistMidpointToNext = FLT_MAX
+			float nextSpawnEntVertDist   = expect float( selectedSpawnPositions[ lastSafetyCheckedSpawnEnt + 1 ].vertDist ) // Because max dist is multiplied by 0.9, it is guaranteed there is at least ONE more spawn ent
+			if ( ( lastSafetyCheckedSpawnEnt + 2 ) < numSelectedSpawnEnts )
+			{
+				float spawnEntAfterNext_vertDist = expect float( selectedSpawnPositions[ lastSafetyCheckedSpawnEnt + 2 ].vertDist )
+				vertDistMidpointToNext = ( spawnEntAfterNext_vertDist - nextSpawnEntVertDist ) * 0.5
+			}
+
+			float safetyBuffer 			= min( 128, vertDistMidpointToNext )
+			lastSafetyCheckedSpawnEnt 	+= 1
+			verticalDistanceTraveled 	= nextSpawnEntVertDist + safetyBuffer
+		}
+		else
+			lastSafetyCheckedSpawnEnt += numSpawnEntsBetweenLastAndCurrentSelection
+
+		numVertSplits++
+		generatedVertSplits.append( verticalDistanceTraveled )
+	}
+
+	if ( verbosePrint )
+		printt( "Num generated vert splits:", generatedVertSplits.len(), "num div selections:", numSpawnsToReturn )
+
+	// Now that we've generated a number of new horizontal axes along the vertical axis, we randomly select some of these from the generated set. The amount we take is the number of spawns we want.
+	// If there are more desired spawns than generated axes, no problem, we'll just take all the generated axes.
+	int numVertSplitsToUse = minint( numSpawnsToReturn, numVertSplits )
+	generatedVertSplits.randomize()
+	// Remember, these are just distances along the vertical axis at which horiz splits occur
+	array<float> vertSplitsToUse = generatedVertSplits.slice( 0, numVertSplitsToUse )
+	vertSplitsToUse.sort( SortLowestFloat )
+
+	//---------------------
+	// At this point, we've generated vertical splits along the vertical axis. Then we selected a few of these for our oriented grid.
+	// You can think of the position of a vertical split (let's say it's 1500) as the distance along the vertical axis at which a horizontal gridline occurs.
+	// We can then think of our spawn ents as divided by the horizontal regions between these horizontal gridlines.
+	//
+	//		  1. 			2.						3. 			4.
+	//		  |	 x			|						|		   x|
+	//		x |				|		x		 x		|			|
+	//	----------------------------------------------------------------------		<< Vertical axis
+	//		  |				|						|			|
+	//		  |		 	x	|						|			|	<< This horiz gridline line crosses the vertical axis AT the vertical split
+	//		  |				|			x			|		x	|
+	//												_____________ << This is the horizontal region for horizontal gridline 4. Region corresponds to the gridline ahead of it.
+	//
+	//		x = One of our spawn points
+	//
+	// Now we're going to walk along each spawn ent according to where they sit along the vertical axis, divided by the vertical splits, from start to finish.
+	// For each horizontal region, we pick a target position along the horizontal axis. Then we select the spawn ent in the region that is the closest (vertically and horizontally) to that target position.
+	// This selected spawn point is added to our list of spawn points to return.
+	// Once we walk past the last spawn point in a given region, we generate the next target position for the next region (unless we're at the end).
+	//---------------------
+	array<entity> spawnSelections
+	int idx_vertSplit
+	float horizTarget = RandomFloatRange( minWidth, maxWidth )
+	int curAxisBestSpawnEntChoice
+	float curBestChoiceDistSQ = defaultGridHalfSize * defaultGridHalfSize
+
+	for( int i = 0; i < numSelectedSpawnEnts; i++ )
+	{
+		entity spawnEnt        = expect entity( selectedSpawnPositions[ i ].ent )
+		float spawnEntVertDist = expect float( selectedSpawnPositions[ i ].vertDist )
+		float curVerticalSplit = vertSplitsToUse[ idx_vertSplit ]
+
+		if ( ( spawnEntVertDist < curVerticalSplit ) && ( spawnEntVertDist - curVerticalSplit ) < minDesiredSpawnSpacing )
+		{
+			float spawnEntHorizDist = expect float( selectedSpawnPositions[ i ].horizDist )
+			float vertDistDiff      = curVerticalSplit - spawnEntVertDist
+			float horizDistDiff     = fabs( horizTarget - spawnEntHorizDist )
+			float distSQ            = ( vertDistDiff * vertDistDiff ) + ( horizDistDiff * horizDistDiff )
+			if ( distSQ < curBestChoiceDistSQ )
+			{
+				// In rare cases, the last selection can be the best for this new coordinate. Ensure we don't double-select a spawn ent.
+				bool curBestChoiceIsLastAxisSelection = ( idx_vertSplit > 0 ) && ( spawnEnt == spawnSelections.top() )
+				if ( ( idx_vertSplit == 0 ) || !curBestChoiceIsLastAxisSelection )
+				{
+					curBestChoiceDistSQ       = distSQ
+					curAxisBestSpawnEntChoice = i
+				}
+			}
+
+			int nextSpawnEntIdx      = i + 1
+			bool moreSpawnEntsRemain = nextSpawnEntIdx < numSelectedSpawnEnts
+			entity selectedEnt = expect entity( selectedSpawnPositions[ curAxisBestSpawnEntChoice ].ent )
+
+			if ( moreSpawnEntsRemain )
+			{
+				float nextVertDist                = expect float( selectedSpawnPositions[ nextSpawnEntIdx ].vertDist )
+				bool moreSpawnEntsInVerticalSplit = nextVertDist <= curVerticalSplit
+				if ( !moreSpawnEntsInVerticalSplit )
+				{
+					if ( !spawnSelections.contains( selectedEnt ) )
+					{
+						spawnSelections.append( selectedEnt )
+						idx_vertSplit++
+					}
+
+					// Generate new horiz target, use minDesiredHorizSpacing to make sure two selected spawns aren't too near each other, horizontally speaking.
+					bool shouldChooseNewHorizTarget = idx_vertSplit < numVertSplitsToUse
+					if ( shouldChooseNewHorizTarget )
+					{
+						curBestChoiceDistSQ = defaultGridHalfSize * defaultGridHalfSize
+
+						array<float> newHorizTargetChoices
+						float selectedSpawnHorizPosition = expect float( selectedSpawnPositions[ curAxisBestSpawnEntChoice ].horizDist )
+						float horizTargetLowEndStart     = selectedSpawnHorizPosition - minDesiredHorizSpacing
+
+						if ( horizTargetLowEndStart > minWidth )
+							newHorizTargetChoices.append( RandomFloatRange( minWidth, horizTargetLowEndStart ) )
+
+						float horizTargetHighEndStart = selectedSpawnHorizPosition + minDesiredHorizSpacing
+						if ( horizTargetHighEndStart < maxWidth )
+							newHorizTargetChoices.append( RandomFloatRange( maxWidth, horizTargetHighEndStart ) )
+
+						if ( newHorizTargetChoices.len() == 0 )
+						{
+							newHorizTargetChoices.append( RandomFloatRange( minWidth, maxWidth ) )
+							Warning( "Warning! Had to select random horiz axis location for next loot tick spawn. minDesiredHorizDistributionDist (" + minDesiredHorizSpacing + ") too large, or loot bin area too narrow (" + ( maxWidth - minWidth ) + ")" )
+						}
+
+						// There is a chance of a crash here. If the total selection width is less than minDesiredHorizDistributionDist.
+						horizTarget = newHorizTargetChoices.getrandom()
+
+						// Re-check the current spawn ent against the next vertical split. This avoids rare off-by-one errors.
+						i--
+					}
+					// No more vert splits remain, break out
+					else
+						break
+				}
+			}
+			else if ( !moreSpawnEntsRemain && !spawnSelections.contains( selectedEnt ) )
+				spawnSelections.append( selectedEnt )
+		}
+	}
+
+	return spawnSelections
+}
+
+int function SortSpawnPositionsByVertDist( table a, table b )
+{
+	float vertDistA = expect float( a.vertDist )
+	float vertDistB = expect float( b.vertDist )
+
+	if ( vertDistA > vertDistB )
+		return 1
+	else if ( vertDistB > vertDistA )
+		return -1
+
+	return 0
+}
+#endif
 
 bool function IsStringNumeric( string str, int ornull min = null, int ornull max = null )
 {
@@ -4593,9 +4955,4 @@ bool function UpgradeCore_IsCorrectGameState()
 			)
 
 	return isGameStateCorrect
-}
-
-bool function BigTDM_IsModeEnabled()
-{
-	return GetCurrentPlaylistVarBool( "freedm_big_tdm_active", false )
 }

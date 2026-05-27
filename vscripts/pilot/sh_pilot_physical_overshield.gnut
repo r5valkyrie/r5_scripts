@@ -1,0 +1,546 @@
+global function PhysicalOvershield_Init
+
+#if SERVER
+global function PhysicalOvershield_Start
+global function PhysicalOvershield_Stop
+#endif
+
+#if CLIENT
+global function PhysicalOvershield_PopulateRui
+global function ServerToClient_PhysicalOvershield_UpdateDamageRUI
+
+const asset SHADOW_FORM_SHADOW_SCREEN_FX = $"p_rev_reborn_FP_ult_screen_base"
+const asset SHADOW_FORM_SHIELD_HIT_FX_1P = $"P_armor_FP_Hit_rev"
+const asset SHADOW_FORM_SHIELD_HIT_FX2_1P = $"P_health_hex_rev_fast"
+#endif
+const asset SHADOW_FORM_SHIELD_COLLISION_MODEL = $"mdl/fx/forged_shadows_shield_physX.rmdl"
+const vector SHADOW_FORM_SHIELD_ORIGIN_OFFSET= < 0, 0, -5 >
+const asset SHADOW_FORM_SHIELD_FX_3P = $"P_rev_reborn_shield_colored"
+const asset SHADOW_FORM_SHIELD_ACTIVATION_FX_3P = $"P_rev_reborn_shield_start"
+const string SHADOW_FORM_SHIELD_CHARGED_SOUND_1P = "DeathProtection_Reborn_Shield_Charged_1P"
+const string SHADOW_FORM_SHIELD_CHARGED_SOUND_3P = "DeathProtection_Reborn_Shield_Charged_3P"
+const string SHADOW_FORM_SHIELD_HIT_SOUND_1P = "DeathProtection_Reborn_Shield_Damage_1P"
+const string SHADOW_FORM_SHIELD_HIT_SOUND_3P = "DeathProtection_Reborn_Shield_Damage_3P"
+const asset SHADOW_FORM_SHIELD_HIT_FX_3P = $"P_rev_reborn_shield_dmg"
+
+global enum eOvershieldSourceIndex
+{
+	ZIPLINE_UPGRADE,
+	PHASE_BREACH_UPGRADE,
+	COUNT
+}
+
+#if SERVER
+array<vector> OVERSHIELD_COLORS = [<50, 140, 255>, <150, 50, 255>]
+
+
+struct  PhysicalOvershieldData
+{
+	entity shield
+	entity shieldFx
+	int statusId
+	array<int> overshieldSources
+}
+
+#endif
+struct
+{
+	#if SERVER
+		table< entity, PhysicalOvershieldData > overshieldDataTable
+	#endif
+	#if CLIENT
+		int colorCorrection
+		float mitigatedDamageRemaining = 0.0
+		float maxMitigatedDamage
+		bool enableDmgFlash = false
+		int overshieldType
+	#endif
+} file
+
+void function PhysicalOvershield_Init()
+{
+
+	#if CLIENT
+		file.colorCorrection = ColorCorrection_Register( "materials/correction/ability_silence.raw_hdr" )
+		StatusEffect_RegisterEnabledCallback( eStatusEffect.physical_overshield, ShadowForm_StartClient )
+		StatusEffect_RegisterDisabledCallback( eStatusEffect.physical_overshield, ShadowForm_StopClient )
+	#endif
+
+	PrecacheParticleSystem( SHADOW_FORM_SHIELD_FX_3P )
+
+	Remote_RegisterClientFunction( "ServerToClient_PhysicalOvershield_UpdateDamageRUI", "float", 0.0, 32000.0, 32, "float", 0.0, 32000.0, 32, "int", 0, eOvershieldSourceIndex.COUNT  )
+
+}
+
+#if SERVER
+int function PhysicalOvershield_GetTotalShield( PhysicalOvershieldData data )
+{
+	int result = 0
+	foreach( int source in data.overshieldSources )
+		result += source
+	return result
+}
+
+int function PhysicalOvershield_GetPrimaryType( PhysicalOvershieldData data )
+{
+	for( int i =0; i < data.overshieldSources.len(); i++ )
+	{
+		if( data.overshieldSources[i] == 0 )
+			continue
+		return i
+	}
+	return eOvershieldSourceIndex.COUNT
+}
+
+vector function PhysicalOvershield_GetShieldColor( PhysicalOvershieldData data )
+{
+	for( int i =0; i < data.overshieldSources.len(); i++ )
+	{
+		if( data.overshieldSources[i] == 0 )
+			continue
+		return OVERSHIELD_COLORS[i]
+	}
+	return <0,0,0>
+}
+
+void function PhysicalOvershield_UpdateHealth( entity player, PhysicalOvershieldData data, int addedHealth = 0 )
+{
+	int totalShield = PhysicalOvershield_GetTotalShield( data )
+	if( totalShield == 0 )
+	{
+		data.shield.Destroy()
+		return
+	}
+	data.shield.SetMaxHealth( totalShield )
+	int newHealth = minint( data.shield.GetHealth() + addedHealth, totalShield )
+	data.shield.SetHealth( newHealth )
+	vector shieldColor = PhysicalOvershield_GetShieldColor( data )
+	EffectSetControlPointVector( data.shieldFx, 1, shieldColor )
+	int primaryType = PhysicalOvershield_GetPrimaryType( data )
+	Remote_CallFunction_Replay( player, "ServerToClient_PhysicalOvershield_UpdateDamageRUI", newHealth, totalShield, primaryType )
+}
+
+void function PhysicalOvershield_Start( entity player, int shieldHealth, int shieldSource )
+{
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+
+	if( player in file.overshieldDataTable )
+	{
+		PhysicalOvershieldData data = file.overshieldDataTable[player]
+		data.overshieldSources[shieldSource] = shieldHealth
+		PhysicalOvershield_UpdateHealth( player, data, shieldHealth )
+		return
+	}
+
+	entity shadowShield = CreatePropScript( SHADOW_FORM_SHIELD_COLLISION_MODEL, player.GetAttachmentOrigin( player.LookupAttachment( "CHESTFOCUS" ) ), player.GetAngles(), SOLID_VPHYSICS )
+	SetTeam( shadowShield, player.GetTeam() )
+	shadowShield.SetParent( player, "CHESTFOCUS", false )
+	shadowShield.SetOwner( player )
+	shadowShield.SetTakeDamageType( DAMAGE_YES )
+	shadowShield.SetDamageNotifications( true )
+	shadowShield.SetBlocksRadiusDamage( false )
+	shadowShield.SetMaxHealth( shieldHealth )
+	shadowShield.SetHealth( shieldHealth )
+	shadowShield.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+	shadowShield.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS
+	shadowShield.kv.rendercolor = <175, 50, 25>
+	shadowShield.EnableAttackableByAI( 5, 0, AI_AP_FLAG_NONE )
+	//shadowShield.DisallowObjectPlacement()
+	shadowShield.e.preventStickyEnts = true
+	//shadowShield.SetCanBeMeleedByOwner( false )
+	shadowShield.SetCanBeMeleed( true )
+	//shadowShield.SetIgnoreMoveParentRotation()
+	shadowShield.SetLocalOrigin( SHADOW_FORM_SHIELD_ORIGIN_OFFSET )
+
+	shadowShield.EndSignal( "OnDestroy" )
+
+	CopyRealmsFromTo( player, shadowShield )
+	SetTargetName( shadowShield, FORGED_SHADOWS_SHIELD_NAME )
+	shadowShield.SetScriptName( FORGED_SHADOWS_SHIELD_NAME )
+
+	AddEntityCallback_OnPostDamaged( shadowShield, Shield_OnPostDamaged )
+
+	AddEMPDamageDevice( shadowShield )
+	AddWreckingBallEMPDamageDevice( shadowShield )
+
+	PhysicalOvershieldData data
+	for( int i=0; i < eOvershieldSourceIndex.COUNT; i++ )
+	{
+		data.overshieldSources.append( 0 )
+	}
+	data.overshieldSources[shieldSource] = shieldHealth
+	data.shield = shadowShield
+	//player.SetShadowShieldIsActive( true )
+
+	data.statusId = StatusEffect_AddEndless( player, eStatusEffect.physical_overshield, 1.0 )
+
+	// Forged Shadows Shield FX
+	entity shadowShieldFX = StartParticleEffectOnEntity_ReturnEntity( shadowShield, GetParticleSystemIndex( SHADOW_FORM_SHIELD_FX_3P ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
+	shadowShieldFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY
+	shadowShieldFX.SetOwner( player )
+	shadowShieldFX.SetParent( shadowShield )
+	CopyRealmsFromTo( player, shadowShieldFX )
+	EffectSetControlPointVector( shadowShieldFX, 5, <1,0,0> )
+	vector color = PhysicalOvershield_GetShieldColor( data )
+	EffectSetControlPointVector( shadowShieldFX, 1, color )
+
+	data.shieldFx = shadowShieldFX
+	file.overshieldDataTable[player] <- data
+
+	// Shadow Form Activation Burst
+	entity activationBurstFX = StartParticleEffectOnEntity_ReturnEntity( shadowShield, GetParticleSystemIndex( SHADOW_FORM_SHIELD_ACTIVATION_FX_3P ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
+	activationBurstFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY
+	activationBurstFX.SetOwner( player )
+	CopyRealmsFromTo( player, activationBurstFX )
+
+	EmitSoundOnEntityOnlyToPlayer( player, player, SHADOW_FORM_SHIELD_CHARGED_SOUND_1P )
+	EmitSoundOnEntityExceptToPlayer( player, player, SHADOW_FORM_SHIELD_CHARGED_SOUND_3P )
+
+	int primaryType = PhysicalOvershield_GetPrimaryType( data )
+	Remote_CallFunction_Replay( player, "ServerToClient_PhysicalOvershield_UpdateDamageRUI", shieldHealth, shieldHealth, primaryType )
+
+	OnThreadEnd(
+		function() : ( player, activationBurstFX )
+		{
+			if( IsValid( player ) )
+			{
+				if ( player in file.overshieldDataTable )
+				{
+					PhysicalOvershieldData data = file.overshieldDataTable[player]
+					if( IsValid( data.shield ) )
+					{
+						Shield_CleanUp( data.shield )
+						data.shield.Destroy()
+					}
+					if( IsValid( data.shieldFx ) )
+						EffectStop( data.shieldFx )
+					StatusEffect_Stop( player, data.statusId )
+					delete file.overshieldDataTable[player]
+				}
+				//player.SetShadowShieldIsActive( false )
+			}
+
+			if( IsValid( activationBurstFX ) )
+			{
+				EffectStop( activationBurstFX )
+				activationBurstFX.Destroy()
+			}
+		}
+	)
+
+	while( true )
+	{
+		bool playerIsCloakedOrShifted = player.IsPhaseShifted() || player.IsCloaked( true )
+
+		if( player in file.overshieldDataTable )
+		{
+			data = file.overshieldDataTable[player]
+			if( IsValid( data.shield ) )
+			{
+				data.shield.SetAbsAngles( VectorToAngles( player.GetForwardVector() * -1.0 ) )
+				if( playerIsCloakedOrShifted )
+				{
+					data.shield.SetCollisionAllowed( false )
+				}
+				else
+				{
+					data.shield.SetCollisionAllowed( true )
+				}
+			}
+
+			if( IsValid( data.shieldFx ) )
+			{
+				data.shieldFx.SetAbsAngles( VectorToAngles( player.GetForwardVector() * -1.0 ) )
+				if( playerIsCloakedOrShifted )
+				{
+					data.shieldFx.SetVisibilityFlags( ENTITY_VISIBLE_TO_NOBODY )
+				}
+				//else if( player.IsPlayerCameraInThirdPerson() )
+				//{
+				//	data.shieldFx.SetVisibilityFlags( ENTITY_VISIBLE_TO_EVERYONE )
+				//}
+				else
+				{
+					data.shieldFx.SetVisibilityFlags( ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY )
+				}
+			}
+		}
+
+		WaitFrame()
+	}
+}
+
+bool function PhysicalOvershield_Stop( entity player, int source )
+{
+	if( !( player in file.overshieldDataTable ) )
+		return false
+	PhysicalOvershieldData data = file.overshieldDataTable[player]
+	data.overshieldSources[source] = 0
+	PhysicalOvershield_UpdateHealth( player, data )
+	return true
+}
+
+void function Shield_OnPostDamaged( entity shadowShield, var damageInfo )
+{
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	entity damageInflictor = DamageInfo_GetInflictor( damageInfo )
+	int damageSourceIdentifier = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	float damageScale = 1.0
+	float damage = DamageInfo_GetDamage( damageInfo )
+	entity owner = shadowShield.GetOwner()
+
+	if ( damage <= 0 )
+		return
+
+	thread Shield_DamageFX_Thread( owner, shadowShield )
+
+	float maxShieldHealth = 75.0
+	int primaryType = eOvershieldSourceIndex.COUNT
+	if( owner in file.overshieldDataTable )
+	{
+		PhysicalOvershieldData data = file.overshieldDataTable[owner]
+		int damageToDeduct = int( damage )
+		for( int i=0; i < data.overshieldSources.len() && damageToDeduct > 0; i++ )
+		{
+			if( data.overshieldSources[i] == 0 )
+				continue
+			int amountToDeduct = minint( damageToDeduct, data.overshieldSources[i] )
+			damageToDeduct -= amountToDeduct
+			data.overshieldSources[i] -= amountToDeduct
+		}
+		maxShieldHealth = float( PhysicalOvershield_GetTotalShield( data ) )
+		primaryType = PhysicalOvershield_GetPrimaryType( data )
+
+		vector color = PhysicalOvershield_GetShieldColor( data )
+		EffectSetControlPointVector( data.shieldFx, 1, color )
+	}
+
+	Server_Broadcast_DamageIndicator( owner, attacker, damageSourceIdentifier )
+
+	// Damage Feedback
+	if ( attacker.IsPlayer() )
+	{
+		DamageInfo_AddCustomDamageType( damageInfo, DF_SOUR )
+		DamageInfo_AddCustomDamageType( damageInfo, DAMAGEFLAG_VICTIM_HAS_VORTEX )
+
+		attacker.NotifyDidDamage( shadowShield, 0, DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ),
+			DamageInfo_GetDamage( damageInfo ), DamageInfo_GetDamageFlags( damageInfo ) | DF_NO_HITBEEP,
+			DamageInfo_GetHitGroup( damageInfo ), DamageInfo_GetWeapon( damageInfo ), DamageInfo_GetDistFromAttackOrigin( damageInfo ) )
+	}
+
+	if( IsAlive( owner ) )
+		Remote_CallFunction_Replay( owner, "ServerToClient_PhysicalOvershield_UpdateDamageRUI", Clamp( shadowShield.GetHealth() - DamageInfo_GetDamage( damageInfo ), 0.0, maxShieldHealth ), maxShieldHealth, primaryType )
+
+}
+
+void function Shield_DamageFX_Thread( entity player, entity shadowShield )
+{
+	Assert ( IsNewThread(), "Must be threaded off" )
+	if ( !IsAlive( player ) )
+		return
+
+	EndSignal( player, "OnDeath", "OnDestroy", "ExitShadowForm" )
+
+	array< entity > hitEffects
+	OnThreadEnd(
+		function() : ( hitEffects )
+		{
+			foreach( hitEffect in hitEffects)
+			{
+				if( IsValid( hitEffect ) )
+				{
+					EffectStop( hitEffect )
+					hitEffect.Destroy()
+				}
+			}
+		}
+	)
+
+	EmitSoundOnEntityOnlyToPlayer( player, player, SHADOW_FORM_SHIELD_HIT_SOUND_1P )
+	EmitSoundOnEntityExceptToPlayer( player, player, SHADOW_FORM_SHIELD_HIT_SOUND_3P )
+
+	// Hit Effects 3P
+	array< entity > hitEffects3P
+	hitEffects3P.append( StartParticleEffectOnEntity_ReturnEntity( shadowShield, GetParticleSystemIndex( SHADOW_FORM_SHIELD_HIT_FX_3P ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID ) )
+	foreach( hitEffect3P in hitEffects3P )
+	{
+		hitEffect3P.SetOwner( player )
+		hitEffect3P.SetParent( shadowShield )
+		hitEffect3P.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE | ENTITY_VISIBLE_EXCLUDE_PARENT_PLAYER
+		CopyRealmsFromTo( player, hitEffect3P )
+	}
+	hitEffects.extend( hitEffects3P )
+
+	if( player in file.overshieldDataTable )
+	{
+		if( IsValid( file.overshieldDataTable[player].shieldFx ) )
+		{
+			float shieldFrac = GetHealthFrac( shadowShield )
+			EffectSetControlPointVector( file.overshieldDataTable[player].shieldFx, 5, <shieldFrac, 0, 0> )
+		}
+	}
+
+	wait 0.2
+}
+
+void function Shield_CleanUp( entity shadowShield )
+{
+	if( IsValid( shadowShield ) )
+	{
+		array<entity> shieldChildren = shadowShield.GetChildren()
+
+		foreach( child in shieldChildren )
+		{
+			if( !IsValid(child) )
+				continue
+
+			if( child.GetClassName() == "info_particle_system" ) //Don't unparent VFX
+				continue
+
+			child.ClearParent() //Allows Grenades / Sticky Abilities to DROP when the shield goes down.
+		}
+	}
+}
+
+void function Server_Broadcast_DamageIndicator( entity player, entity attacker, int damageSourceId )
+{
+	Remote_CallFunction_Replay( player, "ServerToClient_DoShadowShieldDamageIndicator", player, attacker, damageSourceId )
+}
+#endif
+
+#if CLIENT
+void function ShadowForm_StartClient( entity ent, int statusEffect, bool actuallyChanged )
+{
+	if ( !actuallyChanged && GetLocalViewPlayer() == GetLocalClientPlayer() )
+		return
+
+	if ( ent != GetLocalViewPlayer() )
+		return
+
+	thread ShadowForm_FXThink( ent )
+}
+
+void function ShadowForm_StopClient( entity ent, int statusEffect, bool actuallyChanged )
+{
+	if ( !actuallyChanged && GetLocalViewPlayer() == GetLocalClientPlayer() )
+		return
+
+	if ( ent != GetLocalViewPlayer() )
+		return
+
+	ent.Signal( "ShadowForm_EndShadowScreenFx" )
+}
+
+void function ShadowForm_FXThink( entity player )
+{
+	if( !IsValid( player ) )
+		return
+	entity cockpit = player.GetCockpit()
+	if( !IsValid( cockpit ) )
+		return
+
+	EndSignal( player, "OnDeath", "OnDestroy", "BleedOut_OnStartDying", "ShadowForm_EndShadowScreenFx" )
+
+	int fxHandle = StartParticleEffectOnEntity( cockpit, GetParticleSystemIndex( SHADOW_FORM_SHADOW_SCREEN_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
+	EffectSetIsWithCockpit( fxHandle, true )
+	vector controlPoint = <1, 1, 1>
+	EffectSetControlPointVector( fxHandle, 1, controlPoint )
+
+	thread ColorCorrection_LerpWeight( file.colorCorrection, 0, 1, 0.25 )
+
+	OnThreadEnd(
+		function() : ( player, fxHandle )
+		{
+			if ( EffectDoesExist( fxHandle ) )
+				EffectStop( fxHandle, true, true )
+
+			thread ColorCorrection_LerpWeight( file.colorCorrection, 1, 0, 1 )
+		}
+	)
+
+	WaitForever()
+}
+
+void function PhysicalOvershield_PopulateRui( entity player, var bottomRui, var mainRui )
+{
+	if( bottomRui != null )
+	{
+		RuiSetFloat( bottomRui, "mitigatedDamageRemaining", file.mitigatedDamageRemaining )
+		RuiSetFloat( bottomRui, "maxMitigatedDamage", file.maxMitigatedDamage )
+		RuiSetBool( bottomRui, "enableDmgFlash", file.enableDmgFlash )
+
+		switch( file.overshieldType )
+		{
+			case eOvershieldSourceIndex.ZIPLINE_UPGRADE:
+				RuiSetString( mainRui, "lockMessage", "#UPGRADE_PATHFINDER_ZIPLINE_SHIELD" )
+				break
+		}
+	}
+}
+
+void function ServerToClient_PhysicalOvershield_UpdateDamageRUI( float curHealth, float maxHealth, int shieldType )
+{
+	entity player = GetLocalViewPlayer()
+
+	if( curHealth < file.mitigatedDamageRemaining )
+		thread DamageTakenFlash( player )
+
+	file.mitigatedDamageRemaining = curHealth
+	file.maxMitigatedDamage = maxHealth
+	file.overshieldType = shieldType
+}
+
+void function DamageTakenFlash( entity player )
+{
+	if( !IsValid( player ) )
+		return
+	entity viewPlayer = GetLocalViewPlayer()
+	if( player != viewPlayer )
+		return
+
+	player.Signal( "EndDamageFlash" )
+	EndSignal( player, "EndDamageFlash" )
+
+	int shieldDamageFx = StartParticleEffectOnEntity( viewPlayer, GetParticleSystemIndex( SHADOW_FORM_SHIELD_HIT_FX_1P ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
+	EffectSetIsWithCockpit( shieldDamageFx, true )
+	int shieldDamageHexFx = StartParticleEffectOnEntity( viewPlayer, GetParticleSystemIndex( SHADOW_FORM_SHIELD_HIT_FX2_1P ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
+	EffectSetIsWithCockpit( shieldDamageHexFx, true )
+
+	OnThreadEnd(
+		function() : ( player, shieldDamageFx, shieldDamageHexFx )
+		{
+			if( IsAlive( player ) )
+				file.enableDmgFlash = true
+
+			if( EffectDoesExist( shieldDamageFx ) )
+				EffectStop( shieldDamageFx, true, true )
+
+			if( EffectDoesExist( shieldDamageHexFx ) )
+				EffectStop( shieldDamageHexFx, true, true )
+		}
+	)
+
+	file.enableDmgFlash = false
+
+	wait 0.2
+
+	return
+}
+
+void function ColorCorrection_LerpWeight( int colorCorrection, float startWeight, float endWeight, float lerpTime = 0 )
+{
+	float startTime = Time()
+	float endTime = startTime + lerpTime
+	ColorCorrection_SetExclusive( colorCorrection, true )
+
+	while ( Time() <= endTime )
+	{
+		WaitFrame()
+		float weight = GraphCapped( Time(), startTime, endTime, startWeight, endWeight )
+		ColorCorrection_SetWeight( colorCorrection, weight )
+	}
+
+	ColorCorrection_SetWeight( colorCorrection, endWeight )
+}
+#endif 

@@ -1,5 +1,9 @@
 global function ExtendedUse
 
+#if SERVER
+global function ExtendedUse_Init
+#endif
+
 #if CLIENT
 global function DefaultExtendedUseRui
 global function ExtendedUseTextOverride
@@ -11,19 +15,21 @@ global enum eExtendedUseRuiType
 	FULLSCREEN,
 	NONE
 }
+
 global struct ExtendedUseSettings
 {
 	void functionref( entity ent, entity player, ExtendedUseSettings settings ) successFunc
 	void functionref( entity ent, entity player, ExtendedUseSettings settings ) failureFunc
 	void functionref( entity ent, entity player, ExtendedUseSettings settings ) startFunc
 	void functionref( entity ent, entity player, ExtendedUseSettings settings ) endFunc
+
 	int    useInputFlag = IN_USE_LONG
 	string loopSound
 	string successSound
-	float duration = 1.0
+	float  duration = 1.0
 	float jumpstartTime = 0.0
 	entity entityArg = null
-	bool requireMatchingUseEnt = false
+	bool   requireMatchingUseEnt = false
 	int    disableWeaponTypes = 0 // WPT_*
 	float serverStartTime = 0.0
 	#if CLIENT
@@ -47,12 +53,20 @@ global struct ExtendedUseSettings
 
 struct
 {
-#if CLIENT
-	var extendedUseRui
-#endif
+	#if CLIENT
+		var extendedUseRui
+	#endif
 } file
 
-void function ExtendedUse( entity ent, entity player, ExtendedUseSettings settings )
+#if SERVER
+void function ExtendedUse_Init()
+{
+	RegisterSignal( "ExtendedUseHolster" )
+}
+#endif
+
+
+void function ExtendedUse( entity ent, entity player, ExtendedUseSettings settings, bool shouldSetBusy = true )
 {
 	ent.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnContinousUseStopped" )
@@ -65,47 +79,75 @@ void function ExtendedUse( entity ent, entity player, ExtendedUseSettings settin
 	if ( ent.e.isBusy )
 		return
 
-	ent.e.isBusy = true
+	if ( shouldSetBusy )
+		ent.e.isBusy = true
 	player.p.isInExtendedUse = true
+	player.p.lastExtededUseEnt = ent
 
 	if ( settings.startFunc != null )
 		settings.startFunc( ent, player, settings )
 
 	#if CLIENT
-	var rui = CreateCockpitRui( settings.displayRui )
-	settings.displayRuiFunc( ent, player, rui, settings )
-	file.extendedUseRui = rui
-	entity localViewPlayer = GetLocalViewPlayer()
-
-	OnThreadEnd(
-		function() : ( rui )
+		if ( settings.displayRuiType != eExtendedUseRuiType.NONE )
 		{
-			file.extendedUseRui = null
-			RuiDestroy( rui )
+			var rui
+			if ( settings.displayRuiType == eExtendedUseRuiType.FULLSCREEN )
+			{
+				rui = CreateFullscreenRui( settings.displayRui )
+			}
+			else
+			{
+				rui = CreateCockpitRui( settings.displayRui )
+			}
+
+			settings.displayRuiFunc( ent, player, rui, settings )
+			file.extendedUseRui = rui
+
+			OnThreadEnd(
+				function() : ( rui )
+				{
+					file.extendedUseRui = null
+					RuiDestroy( rui )
+				}
+			)
 		}
-	)
+
+		entity localViewPlayer = GetLocalViewPlayer()
 	#endif
 
-	table<string,bool> e
+	table<string, bool> e
 	e["success"] <- false
 
 	#if CLIENT
-	if ( settings.loopSound != "" && ( !IsValid( localViewPlayer ) || localViewPlayer.DoesShareRealms( player ) ) )
-		EmitSoundOnEntity( ent, settings.loopSound )
+		if ( settings.loopSound != "" && (!IsValid( localViewPlayer ) || localViewPlayer.DoesShareRealms( player )) )
+			EmitSoundOnEntity( ent, settings.loopSound )
 	#endif
 
 	int oldUsableValue
+	int startingStanceHandle
 
 	#if SERVER
 		oldUsableValue = ent.GetUsableValue()
 
 		if ( settings.holsterWeapon )
 		{
-			HolsterAndDisableWeapons( player )
+			player.Signal( "ExtendedUseHolster" )
+			if( settings.holsterViewModelOnly )
+				HolsterViewModelAndDisableWeapons( player )
+			else
+				HolsterAndDisableWeapons( player )
 		}
 		if ( settings.movementDisable )
 		{
-			player.MovementDisable()
+			if( !player.IsStanding() )
+			{
+				startingStanceHandle = player.PushForcedStance( FORCE_STANCE_CROUCH )
+			}
+			else
+			{
+				startingStanceHandle = player.PushForcedStance( FORCE_STANCE_STAND )
+			}
+			MovementDisable( player )
 		}
 		if ( settings.exclusiveUse )
 		{
@@ -113,26 +155,29 @@ void function ExtendedUse( entity ent, entity player, ExtendedUseSettings settin
 		}
 	#endif
 
+	//if ( settings.disableWeaponTypes )
+	//	player.SetExtendedUseDisabledWeaponTypes( settings.disableWeaponTypes )
+
 	OnThreadEnd(
-		function() : ( e, ent, player, settings, oldUsableValue )
+		function() : ( e, ent, player, settings, oldUsableValue, startingStanceHandle )
 		{
 			if ( settings.endFunc != null )
 				settings.endFunc( ent, player, settings )
 
 			if ( IsValid( ent ) )
 			{
-				if ( ent.GetScriptName() != "charge_pylon_button" || ent.GetScriptName() == "charge_pylon_button" && !e["success"] )
-					ent.e.isBusy = false
-
+				ent.e.isBusy = false
 				if ( settings.loopSound != "" )
 					StopSoundOnEntity( ent, settings.loopSound )
 			}
 
 			if ( IsValid( player ) )
+			{
 				thread TryClearPlayerExtendedUse( player, settings.useInputFlag )
+			}
 
 			#if SERVER
-				if ( IsAlive( player ) )
+				if ( IsValid( player ) )
 				{
 					if ( settings.holsterWeapon )
 					{
@@ -140,12 +185,9 @@ void function ExtendedUse( entity ent, entity player, ExtendedUseSettings settin
 					}
 					if ( settings.movementDisable )
 					{
-						player.MovementEnable()
+						player.RemoveForcedStance( startingStanceHandle )
+						MovementEnable( player )
 					}
-					// if(GameRules_GetGameMode() == "fs_snd")
-					// {
-						// Highlight_ClearFriendlyHighlight( player )
-					// }
 				}
 
 				if ( settings.exclusiveUse )
@@ -154,6 +196,7 @@ void function ExtendedUse( entity ent, entity player, ExtendedUseSettings settin
 					{
 						if ( e["success"] && !settings.setUsableOnSuccess )
 							return
+
 						ent.SetUsable()
 						ent.SetUsableByGroup( "pilot" )
 						ent.AddUsableValue( oldUsableValue )
@@ -169,12 +212,7 @@ void function ExtendedUse( entity ent, entity player, ExtendedUseSettings settin
 		}
 	)
 
-	waitthread ExtendedUse_TrackContinuousUse( player, ent, settings.duration, settings.useInputFlag, settings.requireMatchingUseEnt )
-
-	if ( ent.GetScriptName() == "charge_pylon_button" )
-	{
-		thread SetButtonNoBusyDelayed( ent, player )
-	}
+	waitthread ExtendedUse_TrackContinuousUse( player, ent, settings.duration, settings.jumpstartTime, settings.useInputFlag, settings.requireMatchingUseEnt )
 
 	if ( settings.successFunc != null )
 		thread settings.successFunc( ent, player, settings )
@@ -191,45 +229,40 @@ void function ExtendedUse( entity ent, entity player, ExtendedUseSettings settin
 #endif
 #if SERVER
 	if ( settings.successSound != "" )
-		EmitSoundAtPosition( TEAM_UNASSIGNED, ent.GetOrigin(), settings.successSound, player )
+		EmitSoundAtPositionOnlyToPlayer( TEAM_UNASSIGNED, ent.GetOrigin(), player, settings.successSound )
 #endif
 
-#if CLIENT
-	if ( settings.successPlayPickupEffect )
-		PlayLootPickupFeedbackFX( ent )
-#endif // CLIENT
+	#if CLIENT
+		if ( settings.successPlayPickupEffect )
+			PlayLootPickupFeedbackFX( ent )
+	#endif // CLIENT
 
 	e["success"] = true
 }
 
-void function ExtendedUse_TrackContinuousUse( entity player, entity useTarget, float useTime, int inputFlags, bool requireMatchingUseEnt )
+
+void function ExtendedUse_TrackContinuousUse( entity player, entity useTarget, float useTime, float jumpStartTime, int inputFlags, bool requireMatchingUseEnt )
 {
-	player.EndSignal( "OnDeath" )
-	useTarget.EndSignal( "OnDeath" )
-	useTarget.EndSignal( "OnDestroy" )
+	player.EndSignal( "OnDeath", "OnDestroy" )
+	useTarget.EndSignal( "OnDeath", "OnDestroy" )
 
 	table result = {}
 	result.success <- false
 
-	float maxDist2 = DistanceSqr( player.GetOrigin(), useTarget.GetOrigin() ) + (64*64)
-
+	float maxDist2 = DistanceSqr( player.GetOrigin(), useTarget.GetOrigin() ) + (64 * 64)
 	OnThreadEnd
 	(
-		function() : ( player, result ) //useTarget, 
+		function() : ( player, result )
 		{
 			if ( !result.success )
 			{
-				//#if SERVER
-				//if( IsVaultPanel( useTarget ) )
-				//	SetVaultPanelState( useTarget, ePanelState.LOCKED )
-				//#endif
 				player.Signal( "OnContinousUseStopped" )
 			}
 		}
 	)
 
 	float endTime = Time() + useTime
-	while ( Time() < endTime )
+	while ( Time() + jumpStartTime < endTime )
 	{
 		if ( !UseHeld( player, inputFlags ) )
 			return
@@ -237,13 +270,32 @@ void function ExtendedUse_TrackContinuousUse( entity player, entity useTarget, f
 		if ( player.IsPhaseShifted() )
 			return
 
-		vector eyePos = player.UseableEyePosition( useTarget )
-		vector eyePos2D = <eyePos.x, eyePos.y, 0.0>
-		vector useOrigin = useTarget.GetOrigin()
-		vector useOrigin2D = <useOrigin.x, useOrigin.y, 0.0>
-		float vertDist = player.GetOrigin().z - useTarget.GetOrigin().z
-		if ( (DistanceSqr( eyePos2D, useOrigin2D ) > maxDist2) || ((vertDist * vertDist) > (64*64)) )
-			return
+		if ( GetCurrentPlaylistVarBool( "interrupted_stops_extended_use", false ) )
+		{
+			if ( StatusEffect_HasSeverity( player, eStatusEffect.interrupted ) )
+			{
+				return
+			}
+		}
+
+		bool checkMoveDistance = !IsBitFlagSet(useTarget.GetUsableValue(), USABLE_FROM_EXTENDED_RANGE)
+
+		                                
+			if ( !checkMoveDistance && useTarget.GetNetworkedClassName() == "prop_death_box"  )
+			{
+				checkMoveDistance = IsPlayerWithinStandardDeathBoxUseDistance( player, useTarget )
+			}
+        
+		if ( checkMoveDistance )
+		{
+			vector eyePos      = player.UseableEyePosition( useTarget )
+			vector eyePos2D    = <eyePos.x, eyePos.y, 0.0>
+			vector useOrigin   = useTarget.GetOrigin()
+			vector useOrigin2D = <useOrigin.x, useOrigin.y, 0.0>
+			float vertDist     = player.GetOrigin().z - useTarget.GetOrigin().z
+			if ( (DistanceSqr( eyePos2D, useOrigin2D ) > maxDist2) || ((vertDist * vertDist) > maxDist2) )
+				return
+		}
 
 		if ( requireMatchingUseEnt && player.GetUseEntity() != useTarget )
 			return

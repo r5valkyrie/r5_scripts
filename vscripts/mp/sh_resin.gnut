@@ -1,0 +1,421 @@
+global function ShResin_Init
+#if SERVER
+global function ApplyResinToDoor
+global function CreateResinShard
+global function GetResinShardsByTeam
+global function GetResinStructureRoot
+#if DEV
+global function DEV_ClearResinShards
+#endif
+#endif
+global function GetResinStructureFromRoot
+global function GetResinStructureLeaf
+
+global function GetAllResinShards
+global function IsResinShard
+
+const asset RESIN_DOOR_SHARD_MODEL = $"mdl/fx/ferrofluid_slab_charged.rmdl"
+
+global const string RESIN_HARDEN_1P_SOUND = "CryoGrenade_Freeze_1p"
+global const string RESIN_HARDEN_3P_SOUND = "Catalyst_Tactical_Activate_FerroFluid_3p"
+const string RESIN_BREAK_3P_SOUND = "CryoGrenade_Ice_Block_Break"
+global const string RESIN_CRUMBLE_3P_SOUND = "CryoGrenade_Ice_Block_Dissolve"
+global const string RESIN_IMPACT_3P_SOUND = "CryoGrenade_Ice_Block_Impact"
+global const asset RESIN_REINFORCE_DOOR_FX = $"P_ferro_pas_prop"
+global const asset RESIN_REINFORCE_PROP_FX = $"P_ferro_tac_idle"
+
+const float RESIN_HEALTH_MAX = 100
+const bool RESIN_HIGHLIGHT_ENABLED = false
+global const float RESIN_DOOR_Z_OFFSET = -8
+global const float RESIN_DOOR_HALF_WIDTH = 30
+const float RESIN_DOOR_DURATION = 60
+const float RESIN_BUFF_DAMAGE_SCALE = 0.15
+const bool RESIN_HEALTH_RUI_ENABLED = false
+const float RESIN_HEALTH_RUI_HEIGHT = 60
+const float RESIN_HEALTH_RUI_SIZE_MIN = 35
+const float RESIN_HEALTH_RUI_SIZE_MAX = 45
+
+global const string RESIN_SHARD_SCRIPT_NAME = "resin_shard"
+
+struct
+{
+#if SERVER
+	int resinScriptManagedArray
+	table< int, array< entity > > resinTeamArray
+#endif
+}file
+
+
+void function ShResin_Init()
+{
+	PrecacheModel( RESIN_DOOR_SHARD_MODEL )
+	PrecacheParticleSystem( RESIN_REINFORCE_DOOR_FX )
+	PrecacheParticleSystem( RESIN_REINFORCE_PROP_FX )
+	PrecacheScriptString( RESIN_SHARD_SCRIPT_NAME )
+#if SERVER
+	file.resinScriptManagedArray = CreateScriptManagedEntArray()
+#endif
+
+#if CLIENT
+	//AddTargetNameCreateCallback( RESIN_SHARD_SCRIPT_NAME, ResinCreatedClient )
+	AddCallback_ModifyDamageFlyoutForScriptName( RESIN_SHARD_SCRIPT_NAME, ResinShard_OffsetDamageNumbersLower )
+#endif
+}
+
+#if SERVER
+void function ApplyResinToDoor( entity door, int team, float duration = -1 )
+{
+	//if( door.GetDoorIsReinforced() )
+	//	return
+
+	thread ResinDoorThread2( door, team, duration )
+
+	entity oppositeDoor = door.GetOppositeDoor()
+	if ( IsValid( oppositeDoor )  )
+	{
+		//if ( !oppositeDoor.GetDoorIsReinforced()  && !oppositeDoor.IsDoorOpen() && !door.IsDoorOpen() )
+		{
+		//	thread ResinDoorThread2( oppositeDoor, team, duration )
+		}
+	}
+}
+
+void function ResinDoorThread( entity door, int team, float duration )
+{
+	Assert ( IsNewThread(), "Must be threaded off" )
+
+	door.EndSignal( "OnDestroy" )
+
+	vector angles = door.GetAngles()
+	vector goalAngles = angles
+	bool destroyed = false
+	vector position = door.GetOrigin() - ( door.GetRightVector() * RESIN_DOOR_HALF_WIDTH ) + < 0, 0, RESIN_DOOR_Z_OFFSET >
+
+	entity resin = CreateResinShard( RESIN_DOOR_SHARD_MODEL, position, goalAngles, team )
+	resin.SetParent( door )
+	resin.NotSolid()
+	resin.SetCanBeMeleed( false )
+	resin.SetCollisionAllowed( false )
+
+	EmitSoundOnEntity( resin, RESIN_HARDEN_3P_SOUND )
+
+	//Freezing a door is similar to locking the door.  This is the easiest way to make it not work while frozen.  No status effect required.
+	ReinforceDoor( door )
+
+	resin.EndSignal( "OnDestroy" )
+
+	OnThreadEnd(
+		function () : ( resin, door, destroyed )
+		{
+			if ( IsValid( resin ) )
+			{
+				resin.Destroy()
+			}
+
+			if ( IsValid( door ) )
+			{
+				if ( !destroyed )
+				{
+					EmitSoundOnEntity( door, RESIN_CRUMBLE_3P_SOUND )
+				}
+				UnReinforceDoor( door )
+			}
+		}
+	)
+
+	if( duration > 0 )
+		wait duration
+	else
+		WaitForever()
+
+	destroyed = true
+	resin.Dissolve( ENTITY_DISSOLVE_CORE, <0,0,0>, 500 )
+	EmitSoundOnEntity( door, RESIN_CRUMBLE_3P_SOUND )
+}
+
+void function ResinDoorThread2( entity door, int team, float duration )
+{
+	Assert ( IsNewThread(), "Must be threaded off" )
+
+	door.EndSignal( "OnDestroy" )
+
+	entity endFX = StartParticleEffectOnEntityWithPos_ReturnEntity( door, GetParticleSystemIndex( RESIN_REINFORCE_DOOR_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, < 0, 30, 48 >, ZERO_VECTOR )
+
+	EmitSoundOnEntity( door, RESIN_HARDEN_3P_SOUND )
+
+	SetReinforced( door )
+	ReinforceDoor( door )
+
+	door.EndSignal( "OnDestroy" )
+
+	OnThreadEnd(
+		function () : ( endFX, door)
+		{
+			if ( IsValid( endFX ) )
+			{
+				EffectStop( endFX )
+			}
+
+			if ( IsValid( door ) )
+			{
+				UnReinforceDoor( door )
+			}
+		}
+	)
+
+	if( duration > 0 )
+		wait duration
+	else
+		WaitForever()
+
+	EmitSoundOnEntity( door, RESIN_CRUMBLE_3P_SOUND )
+}
+
+entity function CreateResinShard( asset model, vector position, vector angles, int team, float health = RESIN_HEALTH_MAX, int contents = CONTENTS_SOLID, bool createUI = true, float destroyDelay = -1, entity owner = null, bool highlight = RESIN_HIGHLIGHT_ENABLED )
+{
+	entity resin = CreateFerroProp( model, position, angles, SOLID_VPHYSICS, 100000 )
+	resin.SetTakeDamageType( DAMAGE_EVENTS_ONLY )
+	resin.e.isDoorBlocker = true
+	resin.e.noOwnerFriendlyFire = false
+	resin.e.noFriendlyFireProtection = true
+	resin.e.canBurn = true
+	resin.SetTouchTriggers( true )
+	resin.SetMaxHealth( health )
+	resin.SetHealth( health )
+	resin.SetPhysics( MOVETYPE_NONE )
+	resin.SetScriptName( RESIN_SHARD_SCRIPT_NAME )
+	resin.SetDamageNotifications( true )
+	resin.kv.contents = contents
+	AddToScriptManagedEntArray( file.resinScriptManagedArray, resin )
+	resin.Solid()
+	resin.AllowMantle()
+	resin.SetForceVisibleInPhaseShift( true )
+	if( team > TEAM_INVALID )
+	{
+		SetTeam( resin, team )
+		if( team in file.resinTeamArray )
+		{
+			file.resinTeamArray[ team ].append( resin )
+		}
+		else
+		{
+			file.resinTeamArray[ team ] <- [ resin ]
+		}
+	}
+
+	//if( createUI )
+	//	SetTargetName( resin, RESIN_SHARD_SCRIPT_NAME )
+
+	PlayerObjects_CommonInit( owner, resin, false, highlight ? "sp_friendly_hero" : "", false, false, false )
+
+	//AddEntityCallback_OnPostDamaged( resin, OnResinDamaged )
+	//EmitSoundOnEntity( resin, RESIN_HARDEN_3P_SOUND )
+
+	resin.e.trapSetTeamFunc = Resin_SetTeam
+
+	return resin
+}
+
+entity function CreateFerroProp( asset model, vector ornull origin = null, vector ornull angles = null, int solidType = 0, float fadeDist = -1, bool dispatchSpawn = true )
+{
+	entity prop_script = CreateEntity( "prop_ferro_prop" )
+	prop_script.SetValueForModelKey( model )
+	prop_script.kv.fadedist = fadeDist
+	prop_script.kv.renderamt = 255
+	prop_script.kv.rendercolor = "255 255 255"
+	prop_script.kv.solid = solidType // 0 = no collision, 2 = bounding box, 6 = use vPhysics, 8 = hitboxes only
+	if ( origin )
+	{
+		// hack: Setting origin twice. SetOrigin needs to happen before DispatchSpawn, otherwise the prop may not touch triggers
+		prop_script.SetOrigin( expect vector( origin ) )
+		if ( angles )
+			prop_script.SetAngles( expect vector( angles ) )
+	}
+
+	if ( dispatchSpawn )
+		DispatchSpawn( prop_script )
+
+	if ( origin )
+	{
+		// hack: Setting origin twice. SetOrigin needs to happen after DispatchSpawn, otherwise origin is snapped to nearest whole unit
+		prop_script.SetOrigin( expect vector( origin ) )
+		if ( angles )
+			prop_script.SetAngles( expect vector( angles ) )
+	}
+
+	prop_script.SetFadeDistance( fadeDist )
+
+	return prop_script
+}
+
+
+void function Resin_SetTeam( entity trap, int newTeam )
+{
+	//todo: populate this function
+}
+
+array< entity > function GetResinShardsByTeam( int team )
+{
+	if( team in file.resinTeamArray )
+	{
+		return clone file.resinTeamArray[ team ]
+	}
+	 return []
+}
+
+void function OnResinDamaged( entity resin, var damageInfo )
+{
+	float damage = DamageInfo_GetDamage( damageInfo )
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	vector pos = resin.GetOrigin()
+
+	if ( damage > 0 )
+	{
+		if ( IsValid( attacker ) && IsAlive( attacker ) && attacker.IsPlayer() )
+		{
+			int damageFlags = DamageInfo_GetCustomDamageType( damageInfo )
+			if ( IsBitFlagSet( damageFlags, DF_MELEE ) )
+			{
+				if( IsFriendlyTeam( resin.GetTeam(), attacker.GetTeam() ) )
+				{
+					DamageInfo_SetDamage( damageInfo, resin.GetMaxHealth() )
+				}
+				DamageInfo_AddCustomDamageType( damageInfo, DF_CRITICAL )
+			}
+			else if( resin.e.lockdownBuff )
+			{
+				DamageInfo_ScaleDamage( damageInfo, RESIN_BUFF_DAMAGE_SCALE )
+			}
+
+			DamageInfo_AddCustomDamageType( damageInfo, DAMAGEFLAG_VICTIM_HAS_VORTEX )
+			attacker.NotifyDidDamage( resin, 0, DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ),
+				DamageInfo_GetDamage( damageInfo ), DamageInfo_GetDamageFlags( damageInfo ) | DF_NO_HITBEEP,
+				DamageInfo_GetHitGroup( damageInfo ), DamageInfo_GetWeapon( damageInfo ), DamageInfo_GetDistFromAttackOrigin( damageInfo ) )
+		}
+		EmitSoundAtPosition( TEAM_ANY, resin.GetOrigin(), RESIN_IMPACT_3P_SOUND, resin )
+	}
+
+	damage = DamageInfo_GetDamage( damageInfo )
+
+	if( damage >= resin.GetHealth() )
+	{
+		StartParticleEffectInWorld( GetParticleSystemIndex( $"P_debris_blast_vert" ), pos, ZERO_VECTOR )
+		EmitSoundOnEntity( resin, RESIN_CRUMBLE_3P_SOUND )
+	}
+}
+#if DEV
+void function DEV_ClearResinShards()
+{
+	array<entity> resinShards = GetAllResinShards()
+	foreach( entity resin in resinShards )
+	{
+		if( IsValid( resin ) )
+			resin.Destroy()
+	}
+}
+#endif
+#endif
+
+#if CLIENT
+vector function ResinShard_OffsetDamageNumbersLower( entity shard, vector damageFlyoutPosition )
+{
+	return ( damageFlyoutPosition - < 0, 0, shard.GetBoundingMaxs().z/2.0 > )
+}
+
+void function ResinCreatedClient( entity resin )
+{
+	if( RESIN_HEALTH_RUI_ENABLED )
+		thread ResinUIThread( resin )
+}
+
+void function ResinUIThread( entity resin )
+{
+	entity localClientPlayer = GetLocalClientPlayer()
+	resin.EndSignal( "OnDestroy" )
+
+	if( GetLocalViewPlayer().GetTeam() != resin.GetTeam() )
+		return
+
+	vector pos = resin.GetOrigin() + ( resin.GetUpVector() * RESIN_HEALTH_RUI_HEIGHT )
+	var rui = CreateCockpitRui( $"ui/cover_wall_marker_icons.rpak", RuiCalculateDistanceSortKey( localClientPlayer.EyePosition(), pos ) )
+	RuiTrackFloat( rui, "healthFrac", resin, RUI_TRACK_HEALTH )
+	//RuiTrackFloat3( rui, "pos", resin, RUI_TRACK_OVERHEAD_FOLLOW )
+	RuiSetFloat( rui, "sizeMin", RESIN_HEALTH_RUI_SIZE_MIN )
+	RuiSetFloat( rui, "sizeMax", RESIN_HEALTH_RUI_SIZE_MAX )
+	RuiKeepSortKeyUpdated( rui, true, "pos" )
+
+	OnThreadEnd(
+		function() : ( rui )
+		{
+			RuiDestroy( rui )
+		}
+	)
+
+	while( true )
+	{
+		RuiSetFloat3( rui, "pos", resin.GetOrigin() + ( resin.GetUpVector() * RESIN_HEALTH_RUI_HEIGHT ) )
+		WaitFrame()
+	}
+
+	WaitForever()
+}
+#endif
+
+array<entity> function GetAllResinShards()
+{
+	#if SERVER
+		return GetScriptManagedEntArray( file.resinScriptManagedArray )
+	#elseif CLIENT
+		return GetEntArrayByScriptName( RESIN_SHARD_SCRIPT_NAME )
+	#endif
+}
+bool function IsResinShard( entity ent )
+{
+	if( !IsValid( ent ) )
+		return false
+
+	return ent.GetScriptName() == RESIN_SHARD_SCRIPT_NAME
+}
+
+entity function GetResinStructureRoot( entity ent )
+{
+	if( !IsResinShard( ent ) )
+		return ent
+
+	entity root = ent
+	while( IsResinShard( root.GetParent() ) )
+		root = root.GetParent()
+
+	return root
+}
+
+entity function GetResinStructureLeaf( entity ent )
+{
+	entity leaf = ent
+	array< entity > children = ent.GetChildren()
+	foreach ( child in children )
+	{
+		if ( IsResinShard( child ) )
+		{
+			leaf = GetResinStructureLeaf( child )
+			break
+		}
+	}
+
+	return IsResinShard( leaf )  ? leaf : null
+}
+
+void function GetResinStructureFromRoot( entity root, array< entity > shards )
+{
+	if( IsValid( root ) && IsResinShard( root ) )
+		shards.append( root )
+
+	array< entity > children = root.GetChildren()
+	foreach( child in children )
+	{
+		if( IsValid( child ) && IsResinShard( child ) )
+		{
+			GetResinStructureFromRoot( child, shards )
+		}
+	}
+} 

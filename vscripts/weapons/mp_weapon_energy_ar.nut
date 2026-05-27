@@ -74,12 +74,10 @@ void function MpWeaponEnergyAR_Init()
 void function OnWeaponActivate_Energy_AR( entity weapon )
 {
 	OnWeaponActivate_RUIColorSchemeOverrides( weapon )
-	OnWeaponActivate_ReactiveKillEffects( weapon )
 }
 
 void function OnWeaponDeactivate_Energy_AR( entity weapon )
 {
-	OnWeaponDeactivate_ReactiveKillEffects( weapon )
 }
 
 bool function CanFire_EnergyAR( entity weapon )

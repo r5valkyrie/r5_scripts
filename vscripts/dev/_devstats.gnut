@@ -1,6 +1,225 @@
 global function SvDevStats_LevelInit
+global function HeatMapStat
+
+#if DEV
+const int HEATMAP_VERSION = 3    // DONT CHANGE THIS UNLESS YOUR NAME IS CHAD G AND YOU ALSO CHANGE PARSER SOURCE CODE
+global const string HEATMAP_SEPARATOR = ";"
+#endif //DEV
+
+struct
+{
+	array<entity> playersWhoLootedMainWeapon
+} file
+
 
 void function SvDevStats_LevelInit()
 {
+	#if DEV
+		AddCallback_OnPlayerRespawned( OnPlayerRespawned )
+		Loot_AddCallback_OnPlayerLootPickup( LootPickedUp )
+		Bleedout_AddCallback_OnPlayerStartBleedout( OnPlayerStartBleedout )
+		Loot_AddCallback_OnLootSpawn( OnLootSpawn )
+		AddCallback_OnPlayerKilled( OnPlayerKilled )
+	#endif
+}
 
+
+/*
+███████╗██╗   ██╗███████╗███╗   ██╗████████╗     ██████╗ █████╗ ██╗     ██╗     ██████╗  █████╗  ██████╗██╗  ██╗███████╗
+██╔════╝██║   ██║██╔════╝████╗  ██║╚══██╔══╝    ██╔════╝██╔══██╗██║     ██║     ██╔══██╗██╔══██╗██╔════╝██║ ██╔╝██╔════╝
+█████╗  ██║   ██║█████╗  ██╔██╗ ██║   ██║       ██║     ███████║██║     ██║     ██████╔╝███████║██║     █████╔╝ ███████╗
+██╔══╝  ╚██╗ ██╔╝██╔══╝  ██║╚██╗██║   ██║       ██║     ██╔══██║██║     ██║     ██╔══██╗██╔══██║██║     ██╔═██╗ ╚════██║
+███████╗ ╚████╔╝ ███████╗██║ ╚████║   ██║       ╚██████╗██║  ██║███████╗███████╗██████╔╝██║  ██║╚██████╗██║  ██╗███████║
+╚══════╝  ╚═══╝  ╚══════╝╚═╝  ╚═══╝   ╚═╝        ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝╚═════╝ ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝
+*/
+
+#if DEV
+void function OnPlayerRespawned( entity player )
+{
+	if ( player.IsBot() )
+		return
+
+	thread HeatmapPlayerMovement( player )
+}
+
+void function HeatmapPlayerMovement( entity player )
+{
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+
+	while( true )
+	{
+		if ( player.IsTitan() )
+			HeatMapStat( player, "TitanMovement", player.GetOrigin() )
+		else
+			HeatMapStat( player, "PilotMovement", player.GetOrigin() )
+
+		wait 0.5
+	}
+}
+
+void function LootPickedUp( entity player, entity pickup, string ref, int unitsPickedUp, bool willDestroy, entity deathBox, int pickupFlags )
+{
+	LootData data = SURVIVAL_Loot_GetLootDataByRef( ref )
+
+	// Heatmap loot pickup
+	string heatmapString  = "Sur_LootPickup_"
+	string lootTypeString = Survival_GetLootTypeForStatString( data )
+	if ( lootTypeString != "" )
+	{
+		heatmapString += lootTypeString
+		heatmapString += "_tier" + string(data.tier)
+		HeatMapStat( player, heatmapString, pickup.GetOrigin() )
+	}
+}
+
+
+void function OnPlayerStartBleedout( entity player, entity attacker, var damageInfo )
+{
+	string weaponString           = ""
+	string ornull weaponClassName = GetWeaponClassNameFromDamageInfo( damageInfo )
+	if ( weaponClassName != null )
+		weaponString = string( weaponClassName )
+	float dist = -1
+	if ( IsValid( player ) && IsValid( attacker ) )
+		dist = Distance( player.GetOrigin(), attacker.GetOrigin() )
+
+	if ( IsValid( player ) )
+	{
+		HeatMapStat( player, "sur_downed_victim", player.GetOrigin() )
+
+		float distToTeammate = GetDistanceToNearestTeammate( player )
+		if ( distToTeammate >= 2000 )
+			HeatMapStat( player, "sur_downed_victim_gt_2000_from_team", player.GetOrigin() )
+		else if ( distToTeammate >= 0 && distToTeammate < 2000 )
+			HeatMapStat( player, "sur_downed_victim_lt_2000_from_team", player.GetOrigin() )
+
+		if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.deathField
+				|| (Bleedout_IsBleedingOut( player ) && Bleedout_GetBleedoutDamageSourceId( player ) == eDamageSourceId.deathField) )
+			HeatMapStat( player, "sur_downed_by_circle", player.GetOrigin() )
+	}
+
+	if ( IsValid( player ) && IsValid( attacker ) && attacker.IsPlayer() )
+	{
+		float attackDist = Distance( player.GetOrigin(), attacker.GetOrigin() )
+		if ( attackDist < 256 )
+			HeatMapStat( player, "sur_downed_victim_attacker_lt_256", player.GetOrigin() )
+		else if ( attackDist < 512 )
+			HeatMapStat( player, "sur_downed_victim_attacker_lt_512", player.GetOrigin() )
+		else if ( attackDist < 3000 )
+			HeatMapStat( player, "sur_downed_victim_attacker_lt_3000", player.GetOrigin() )
+		else if ( attackDist >= 3000 )
+			HeatMapStat( player, "sur_downed_victim_attacker_gt_3000", player.GetOrigin() )
+	}
+
+	if ( IsValid( attacker ) && attacker.IsPlayer() )
+	{
+		HeatMapStat( player, "sur_downed_attacker", player.GetOrigin() )
+	}
+}
+
+
+void function OnLootSpawn( entity ent, LootData data, int count )
+{
+	HeatMapStat( ent, "Sur_LootDrop_All", ent.GetOrigin() )
+	HeatMapStat( ent, "Sur_LootDrop_All_tier" + string(data.tier), ent.GetOrigin() )
+	if ( data.lootType == eLootType.MAINWEAPON )
+		HeatMapStat( ent, "Sur_LootDrop_Weapons_All", ent.GetOrigin() )
+
+	string heatmapString  = "Sur_LootDrop_"
+	string lootTypeString = Survival_GetLootTypeForStatString( data )
+	if ( lootTypeString == "" )
+		return
+
+	heatmapString += lootTypeString
+	heatmapString += "_tier" + string(data.tier)
+
+	HeatMapStat( ent, heatmapString, ent.GetOrigin() )
+}
+
+
+void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
+{
+	if ( !IsValid( victim ) )
+		return
+
+	// ???: Passed in attacker is immediately overwritten
+	attacker = DamageInfo_GetAttacker( damageInfo )
+
+	if ( GameMode_IsActive( eGameModes.SURVIVAL ) )
+	{
+		if ( victim.IsPlayer() && !Survival_HasPlayerJumpedOutOfPlane( victim ) )
+			return
+		if ( attacker.IsPlayer() && !Survival_HasPlayerJumpedOutOfPlane( attacker ) )
+			return
+	}
+
+	// Death
+	if ( victim.IsPlayer() && victim.IsTitan() )
+		HeatMapStat( victim, "TitanDeath", victim.GetOrigin() )
+	else if ( victim.IsPlayer() )
+		HeatMapStat( victim, "PilotDeath", victim.GetOrigin() )
+	else
+		HeatMapStat( attacker, "NPCDeath", victim.GetOrigin() )
+
+	// Kill Spot
+	if ( IsValid( attacker ) )
+	{
+		if ( victim.IsPlayer() )
+			HeatMapStat( attacker, "PlayerKilledPlayer", attacker.GetOrigin() )
+		else
+			HeatMapStat( attacker, "PlayerKilledNPC", attacker.GetOrigin() )
+	}
+}
+#endif //DEV
+
+/*
+██╗  ██╗███████╗ █████╗ ████████╗███╗   ███╗ █████╗ ██████╗ ███████╗
+██║  ██║██╔════╝██╔══██╗╚══██╔══╝████╗ ████║██╔══██╗██╔══██╗██╔════╝
+███████║█████╗  ███████║   ██║   ██╔████╔██║███████║██████╔╝███████╗
+██╔══██║██╔══╝  ██╔══██║   ██║   ██║╚██╔╝██║██╔══██║██╔═══╝ ╚════██║
+██║  ██║███████╗██║  ██║   ██║   ██║ ╚═╝ ██║██║  ██║██║     ███████║
+╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝     ╚══════╝
+*/
+
+void function HeatMapStat( entity player, string heatmapType, vector position, array<int> values = [] )
+{
+	#if DEV
+		if ( !ShouldSendDevStats() )
+			return
+
+		if ( GetGameState() != eGameState.Playing )
+			return
+
+		if ( IsValid( player ) && player.IsPlayer() && player.IsBot() )
+			return
+
+		string platform      = (IsValid( player ) && player.IsPlayer()) ? player.GetPlayerPlatformName() : "unknown"
+		string statPrintLine = "#heatmap"
+
+		// Common info for all stats
+		statPrintLine += HEATMAP_SEPARATOR + "ver=" + HEATMAP_VERSION
+		statPrintLine += HEATMAP_SEPARATOR + "game=r5"
+		statPrintLine += HEATMAP_SEPARATOR + "platform=" + platform
+		statPrintLine += HEATMAP_SEPARATOR + "map=" + GetMapName()
+		statPrintLine += HEATMAP_SEPARATOR + "mode=" + GameRules_GetGameMode()
+		statPrintLine += HEATMAP_SEPARATOR + "unixTime=" + GetUnixTimestamp()
+		statPrintLine += HEATMAP_SEPARATOR + "matchID=" + lstrip( rstrip( GameRules_GetUniqueMatchID() ) )
+		statPrintLine += HEATMAP_SEPARATOR + "playlist=" + lstrip( rstrip( GetCurrentPlaylistName() ) )
+
+		// Heatmap specific info
+		statPrintLine += HEATMAP_SEPARATOR + "heatmapType=" + heatmapType
+		statPrintLine += HEATMAP_SEPARATOR + "posX=" + floor( position.x + 0.5 )
+		statPrintLine += HEATMAP_SEPARATOR + "posY=" + floor( position.y + 0.5 )
+		statPrintLine += HEATMAP_SEPARATOR + "posZ=" + floor( position.z + 0.5 )
+
+		if ( values.len() > 0 )
+			statPrintLine += HEATMAP_SEPARATOR + "value0=" + values[0]
+		if ( values.len() > 1 )
+			statPrintLine += HEATMAP_SEPARATOR + "value1=" + values[1]
+		if ( values.len() > 2 )
+			statPrintLine += HEATMAP_SEPARATOR + "value2=" + values[2]
+
+		printl_spamLog( statPrintLine )
+	#endif
 }

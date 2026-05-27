@@ -13,78 +13,52 @@ void function ClientCommands_Init()
 	AddClientCommandCallback( "finite_ammo", ClientCommand_finite_ammo )
 	AddClientCommandCallback( "ToggleThirdPerson", ClientCommand_ToggleThirdPerson )
 	AddClientCommandCallback( "ToggleHUD", ClientCommand_ToggleHUD )
-	AddClientCommandCallback( "ShadowForm", ClientCommand_ShadowForm )
 	AddClientCommandCallback( "recharge", ClientCommand_recharge )
 	AddClientCommandCallback( "demigod", ClientCommand_demigod )
 }
 
-bool function ClientCommand_noclip( entity player, array<string> args )
+void function ClientCommand_noclip( entity player, array<string> args )
 {
 	if ( GetConVarInt( "sv_cheats" ) != 1 )
-		return true
+		return
 	
 	if ( IsValid( player.GetParent() ) )
-		return false
+		return
 				
 	if ( player.IsPhaseShifted() )
-		return false
+		return
 
 	if ( player.IsNoclipping() )
 		player.SetPhysics( MOVETYPE_WALK )
 	else
 		player.SetPhysics( MOVETYPE_NOCLIP )
-			
-	return true
 }
 
-bool function ClientCommand_demigod( entity player, array<string> args )
+void function ClientCommand_demigod( entity player, array<string> args )
 {
 	if ( GetConVarInt( "sv_cheats" ) != 1 )
-		return true
+		return
 	
 	if ( IsDemigod(player) )
 		DisableDemigod(player)
 	else
 		EnableDemigod(player)
-			
-	return true
 }
 
-bool function ClientCommand_ShadowForm( entity player, array<string> args )
+void function ClientCommand_ToggleThirdPerson( entity player, array<string> args )
 {
 	if ( GetConVarInt( "sv_cheats" ) != 1 )
-		return true
-	
-	if ( IsValid( player.GetParent() ) )
-		return false
-				
-	if ( player.IsPhaseShifted() )
-		return false
-
-	if ( !IsPlayerShadowZombie( player ) )
-		DEV_GiveShadowZombieAbilities( player )
-	else
-		RemoveShadowZombieAbilities(player)
-			
-	return true
-}
-
-bool function ClientCommand_ToggleThirdPerson( entity player, array<string> args )
-{
-	if ( GetConVarInt( "sv_cheats" ) != 1 )
-		return false
+		return
 	if ( player.IsThirdPersonShoulderModeOn() )
 		player.SetThirdPersonShoulderModeOff() 	
 	else
 		player.SetThirdPersonShoulderModeOn() 	
-			
-	return true
 }
 
-bool function ClientCommand_ToggleHUD( entity player, array<string> args )
+void function ClientCommand_ToggleHUD( entity player, array<string> args )
 {
 	if( !IsValid( player ) )
-		return true
+		return
 
 	if ( !( "hudVisible" in player.s ) )
 		player.s.hudVisible <- true
@@ -105,18 +79,16 @@ bool function ClientCommand_ToggleHUD( entity player, array<string> args )
 		foreach ( flag in flagsForHudVisibilityControl )
 			AddCinematicFlag( player, flag )
 	}
-
-	return true
 }
 
 // Gives a gun infinite reloads
-bool function ClientCommand_infinite_ammo( entity player, array<string> args )
+void function ClientCommand_infinite_ammo( entity player, array<string> args )
 {
 	if( !IsValid( player ) )
-		return false
+		return
 
 	if ( GetConVarInt( "sv_cheats" ) != 1 )
-		return false
+		return
 
 	foreach( entity weapon in GetEntArrayByClass_Expensive("weaponx") ) 
 	{
@@ -125,35 +97,31 @@ bool function ClientCommand_infinite_ammo( entity player, array<string> args )
 		else
 			weapon.AddMod( "survival_infinite_ammo" )
 	}
-	
-	return true
 }
 
-bool function ClientCommand_finite_ammo( entity player, array<string> args )
+void function ClientCommand_finite_ammo( entity player, array<string> args )
 {
 	if( !IsValid( player ) )
-		return false
+		return
 
 	if ( GetConVarInt( "sv_cheats" ) != 1 )
-		return false
+		return
 		
 	foreach( entity weapon in GetEntArrayByClass_Expensive("weaponx") ) 
 	{
 		if( !weapon.HasMod( "survival_finite_ammo" ) )
 			weapon.AddMod( "survival_finite_ammo" )
 	}
-	
-	return true
 }
 
 // Instantly fills a player's abilities
-bool function ClientCommand_recharge( entity player, array<string> args )
+void function ClientCommand_recharge( entity player, array<string> args )
 {
 	if( !IsValid( player ) )
-		return false
+		return
 
 	if ( GetConVarInt( "sv_cheats" ) != 1 )
-		return false
+		return
     
 	if(IsValid(player.GetOffhandWeapon( OFFHAND_INVENTORY )))
 		player.GetOffhandWeapon( OFFHAND_INVENTORY ).SetWeaponPrimaryClipCount( player.GetOffhandWeapon( OFFHAND_INVENTORY ).GetWeaponPrimaryClipCountMax() )
@@ -163,6 +131,4 @@ bool function ClientCommand_recharge( entity player, array<string> args )
 		//Fix for grapple not recharging after grappling server created props
 		player.SetSuitGrapplePower(100)
 	}
-	
-	return true
 }

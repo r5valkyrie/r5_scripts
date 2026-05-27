@@ -156,5 +156,18 @@
 	mirage_detected
 	castle_wall_emp
 	translocation_visual_effect
+	reinforced_blocked
+	reinforced
+	physical_overshield
+	titan_sword_dash_sickness
+	in_campfire_radius
+	shields_repairing
+	revealed_by_ash
+	revealing_enemies
+	ferro_darkvision
+	ferro_darkvision_team
+	assassins_instinct
+	phase_door_teleport_visual_effect
+	red_revenant_revealed
 /////////////////////////////
 //}

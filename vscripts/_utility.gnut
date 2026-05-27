@@ -29,6 +29,14 @@ global const GAMEMODE_SP 		= "solo"
 global const string SIGNAL_TELEPORTED = "Teleported"
 
 global array<string> DEPLOYABLE_ABILITY_NAMES = []
+global const IntSet fallTriggerDamageSourceIdSet = {
+	[eDamageSourceId.fall] = IN_SET,
+	[eDamageSourceId.splat] = IN_SET,
+	[eDamageSourceId.submerged] = IN_SET,
+	[eDamageSourceId.turbine] = IN_SET,
+	[eDamageSourceId.lasergrid] = IN_SET,
+	[eDamageSourceId.damagedef_crush] = IN_SET,
+}
 global struct ZipLine
 {
 	entity start
@@ -87,6 +95,9 @@ struct
 	bool isSkyboxView = false
 	
 	bool ignoreKillPlayersUnderMap = false
+	
+	table< string, array<void functionref( entity, entity )> > callbacks_OnTakeOffhandEquipment
+	table< string, array<void functionref( entity, entity )> > callbacks_OnGiveOffhandEquipment
 
 	table< entity, OneLegendsLimitedObjects > allLegendsLimitedObjects
 } file
@@ -2394,7 +2405,7 @@ bool function IsDisconnected( entity player )
 table function GetPlayerPos( entity player = null )
 {
 	if ( !player )
-		player = gp()[0]
+		player = GetPlayerArray()[0]
 
 	vector org = player.GetOrigin()
 	vector vec = player.GetViewVector()
@@ -3642,7 +3653,7 @@ void function __SetSignalDelayedThread( entity ent, string signal, float delay )
 table function GetPlayerPos( entity player = null )
 {
 	if ( !player )
-		player = gp()[0]
+		player = GetPlayerArray()[0]
 
 	vector org = player.GetOrigin()
 	vector vec = player.GetViewVector()
@@ -4452,7 +4463,7 @@ array<vector> function GetEvenlySpacedPointsAroundCircle( vector origin, vector 
 #if DEVELOPER
 void function TeleportEnemyBotToView()
 {
-	entity player = gp()[0]
+	entity player = GetPlayerArray()[0]
 
 	TraceResults traceResults = PlayerViewTrace( player )
 
@@ -4472,7 +4483,7 @@ void function TeleportEnemyBotToView()
 
 void function TeleportEntityToView( entity ent )
 {
-	entity player = gp()[0]
+	entity player = GetPlayerArray()[0]
 
 	TraceResults traceResults = PlayerViewTrace( player )
 
@@ -4485,7 +4496,7 @@ void function TeleportEntityToView( entity ent )
 
 void function TeleportFriendlyBotToView()
 {
-	entity player = gp()[0]
+	entity player = GetPlayerArray()[0]
 
 	TraceResults traceResults = PlayerViewTrace( player )
 
@@ -4505,7 +4516,7 @@ void function TeleportFriendlyBotToView()
 
 void function TeleportBotToAbove()
 {
-	entity player = gp()[0]
+	entity player = GetPlayerArray()[0]
 
 	array<entity> players = GetPlayerArray_AlivePilots()
 	foreach ( enemy in players )
@@ -7427,6 +7438,38 @@ void function GRX_ForcePackResults( entity player, array<int> results )
 {
 }
 
+
+void function RegisterPlayerUsingScriptAnimModifier( entity player, int passive )
+{
+	#if ASSERTS
+		Assert( !(player in file.playersUsingScriptAnimModifier) )
+
+		file.playersUsingScriptAnimModifier[player] <- passive
+	#endif
+}
+
+void function UnregisterPlayerUsingScriptAnimModifier( entity player, int passive )
+{
+	#if ASSERTS
+		Assert( player in file.playersUsingScriptAnimModifier )
+		Assert( file.playersUsingScriptAnimModifier[player] == passive )
+
+		delete file.playersUsingScriptAnimModifier[player]
+	#endif
+
+	//just to make sure it doesn't miss getting reset
+	player.SetEnableScriptAnimModifier( false )
+}
+
+void function SetPlayerScriptAnimModifierValue( entity player, bool value, int passive )
+{
+#if ASSERTS
+	Assert( (player in file.playersUsingScriptAnimModifier) && file.playersUsingScriptAnimModifier[player] == passive )
+#endif
+
+	player.SetEnableScriptAnimModifier( value )
+}
+
 void function GRX_DEV_GiveItem( entity player, int grxIndex )
 {
 }
@@ -7725,11 +7768,6 @@ bool function IsOrientationMatch()
 	return false
 }
 
-bool function IsBallisticUltActive( entity player )
-{
-	return false
-}
-
 void function SetPlayerBotQueueGraduation( entity player, int state )
 {
 }
@@ -7761,10 +7799,6 @@ void function AddUICallback_InputModeChanged( void functionref( bool ) callbackF
 {
 }
 
-bool function IsGoldRushMode()
-{
-	return false
-}
 
 bool function IsStormPoint()
 {
@@ -7895,6 +7929,46 @@ vector function GetRandomPointFromListWithMinDistFromPoints( array<vector> avail
 	return bestFailPoint
 }
 
+
+entity function GivePlayerOffhandEquipment( entity player, string equipmentWeaponName, bool cacheExistingWeapon = false, array< string > mods = [] )
+{
+	entity weapon = player.GetOffhandWeapon( OFFHAND_EQUIPMENT )
+
+	if ( IsValid( weapon ) )
+	{
+		if ( weapon.GetWeaponClassName() == equipmentWeaponName )
+			return weapon
+
+		if ( cacheExistingWeapon )
+		{
+			player.p.cachedEquipmentWeapon = weapon.GetWeaponClassName()
+		}
+
+		if ( player.p.cachedEquipmentWeapon in file.callbacks_OnTakeOffhandEquipment )
+		{
+			foreach ( callback in file.callbacks_OnTakeOffhandEquipment[player.p.cachedEquipmentWeapon] )
+			{
+				callback( player, weapon )
+			}
+		}
+
+		player.TakeOffhandWeapon( OFFHAND_EQUIPMENT )
+	}
+
+	player.GiveOffhandWeapon( equipmentWeaponName, OFFHAND_EQUIPMENT, mods )
+	weapon = player.GetOffhandWeapon( OFFHAND_EQUIPMENT )
+
+	if ( equipmentWeaponName in file.callbacks_OnGiveOffhandEquipment )
+	{
+		foreach ( callback in file.callbacks_OnGiveOffhandEquipment[equipmentWeaponName] )
+		{
+			callback( player, weapon )
+		}
+	}
+
+	return weapon
+}
+
 bool function IsPointWithinDistanceFromAnotherPoint( vector p, array<vector> points, float dist )
 {
 	if ( dist <= 0.0 )
@@ -7921,6 +7995,75 @@ float function GetClosestDistanceFromPointToPoints( vector p, array<vector> poin
 			closestDist = d
 	}
 	return closestDist
+}
+
+void function TakePlayerOffhandEquipment( entity player, string equipmentWeaponName, bool restoreCachedWeapon = false )
+{
+	entity weapon = player.GetOffhandWeapon( OFFHAND_EQUIPMENT )
+	if ( IsValid( weapon ) )
+	{
+		if ( weapon.GetWeaponClassName() == equipmentWeaponName )
+		{
+			if ( equipmentWeaponName in file.callbacks_OnTakeOffhandEquipment )
+			{
+				foreach ( callback in file.callbacks_OnTakeOffhandEquipment[equipmentWeaponName] )
+				{
+					callback( player, weapon )
+				}
+			}
+
+			player.TakeOffhandWeapon( OFFHAND_EQUIPMENT )
+		}
+
+		Assert( weapon.GetWeaponClassName() == equipmentWeaponName, "Trying to take equipment weapon, " + equipmentWeaponName + " but we still have, " + weapon.GetWeaponClassName() + " in the OFFHAND_EQUIPMENT slot.")
+	}
+
+	if ( restoreCachedWeapon )
+	{
+		if ( player.p.cachedEquipmentWeapon != "" )
+		{
+			player.GiveOffhandWeapon( player.p.cachedEquipmentWeapon, OFFHAND_EQUIPMENT, [] )
+			weapon = player.GetOffhandWeapon( OFFHAND_EQUIPMENT )
+
+			if ( player.p.cachedEquipmentWeapon in file.callbacks_OnGiveOffhandEquipment )
+			{
+				foreach ( callback in file.callbacks_OnGiveOffhandEquipment[player.p.cachedEquipmentWeapon] )
+				{
+					callback( player, weapon )
+				}
+			}
+
+			player.p.cachedEquipmentWeapon = ""
+		}
+		else
+		{
+			//Nothing to restore.
+		}
+	}
+}
+
+void function AddCallback_OnGiveOffhandEquipment( string weaponName, void functionref( entity, entity ) func  )
+{
+	if ( !(weaponName in file.callbacks_OnGiveOffhandEquipment ) )
+	{
+		file.callbacks_OnGiveOffhandEquipment[weaponName] <- []
+	}
+
+	Assert( !file.callbacks_OnGiveOffhandEquipment[weaponName].contains( func ), "Callback already added!" )
+
+	file.callbacks_OnGiveOffhandEquipment[weaponName].append( func )
+}
+
+void function AddCallback_OnTakeOffhandEquipment( string weaponName, void functionref( entity, entity ) func  )
+{
+	if ( !(weaponName in file.callbacks_OnTakeOffhandEquipment ) )
+	{
+		file.callbacks_OnTakeOffhandEquipment[weaponName] <- []
+	}
+
+	Assert( !file.callbacks_OnTakeOffhandEquipment[weaponName].contains( func ), "Callback already added!" )
+
+	file.callbacks_OnTakeOffhandEquipment[weaponName].append( func )
 }
 
 #endif

@@ -1,0 +1,252 @@
+global function WaveSpawningOnSquad_Init
+
+#if SERVER
+global function TryToRespawnPlayerOnAttackerKill
+#endif // SERVER
+
+void function WaveSpawningOnSquad_Init()
+{
+	#if SERVER
+		// Don't require the respawn style to be spawn on squad in order to allow respawns of squadmate on kill functionality ( so we can support modes that have regular respawns and also support spawn on kill )
+		if ( GetIsSpawnOnKillRuleSet() )
+			AddCallback_OnPlayerKilled( OnPlayerKilledRespawnSquadmate )
+	#endif // SERVER
+
+	if ( GetRespawnStyle() != eRespawnStyle.WAVE_SPAWN_ON_SQUAD )
+		return
+
+	#if SERVER
+		AddCallback_OnPlayerKilled( OnPlayerKilled )
+		SURVIVAL_AddCallback_OnDeathFieldStartShrink( OnDeathFieldStartShrink )
+		AddCallback_OnSurvivalDeathFieldStageChanged( OnDeathfieldStageChanged )
+		Survival_AddCallback_OnSquadEliminated( OnSquadEliminated )
+		Survival_AddCallback_IsSquadReallyEliminated( IsTeamEliminated )
+	#endif // SERVER
+}
+
+#if SERVER
+bool function GetIsSpawnOnKillRuleSet()
+{
+	return GetCurrentPlaylistVarBool( "wave_spawn_on_squad_spawn_on_kill", false )
+}
+#endif // SERVER
+
+#if SERVER
+void function OnPlayerKilled( entity player, entity attacker, var damageInfo )
+{
+	if ( SURVIVAL_IsFinalDeathFieldStage() )
+		return
+
+	if ( IsTeamEliminated( player.GetTeam() ) )
+		return
+
+	player.SetPlayerNetInt( "respawnStatus", eRespawnStatus.WAITING_FOR_RESPAWN )
+
+	if ( SURVIVAL_GetCurrentDeathFieldStage() == -1 )
+		return
+
+	//player.SetPlayerNetTime( "respawnStatusEndTime", GetGlobalNetTime( "circleCloseTime" ) )
+}
+
+// If we use the spawn on kill ruleset, respawn a player on the attacker's team if they are dead
+void function OnPlayerKilledRespawnSquadmate( entity player, entity attacker, var damageInfo )
+{
+	if ( IsTeamEliminated( player.GetTeam() ) )
+		return
+
+	TryToRespawnPlayerOnAttackerKill( attacker, player )
+}
+
+void function OnDeathFieldStartShrink( table< int, DeathFieldData> deathFieldStageData )
+{
+	array<entity> players = GetPlayerArray()
+	foreach( player in players )
+	{
+		if ( IsTeamEliminated( player.GetTeam() ) )
+			continue
+		if ( IsAlive( player ) )
+			continue
+		if ( GetRespawnStatus( player ) != eRespawnStatus.WAITING_FOR_RESPAWN )
+			continue
+
+		//player.SetPlayerNetTime( "respawnStatusEndTime", GetGlobalNetTime( "circleCloseTime" ) )
+	}
+}
+
+void function OnSquadEliminated( int team )
+{
+	foreach ( entity player in GetPlayerArrayOfTeam( team ) )
+		player.SetPlayerNetInt( "respawnStatus", eRespawnStatus.SQUAD_ELIMINATED )
+}
+
+void function OnDeathfieldStageChanged( int stage, float nextCircleStartTime )
+{
+	if ( stage <= 0 )
+		return
+
+	RespawnAllValidPlayersInSkydiveAboveSquad()
+}
+
+
+entity function GetBestTeammateToRespawnAboveFor( entity player )
+{
+	array<entity> teammates = GetPlayerArrayOfTeam_Alive( player.GetTeam() )
+
+	entity bestResult = null
+	foreach ( entity teammate in teammates )
+	{
+		if ( teammate == player )
+			continue
+
+		bestResult = teammate
+	}
+
+	return bestResult
+}
+
+vector function GetBestSkydiveRespawnPositionFor( entity player )
+{
+	vector rawPos = (player.p.deathOrigin != <0.0, 0.0, 0.0>) ? player.p.deathOrigin : player.GetOrigin()
+	{
+		entity bestTeammate = GetBestTeammateToRespawnAboveFor( player )
+		if ( IsValid( bestTeammate ) )
+			rawPos = bestTeammate.GetOrigin()
+	}
+
+	float planeHeight = SURVIVAL_GetPlaneHeight()
+	return <rawPos.x, rawPos.y, planeHeight>
+}
+
+string function GetSkydiveRespawnLoadoutString()
+{
+	const string DEFAULT_LOADOUT_LOW = "mp_weapon_semipistol, bullet, armor_pickup_lv1"
+	const string DEFAULT_LOADOUT_HIGH = "mp_weapon_rspn101, bullet, bullet, armor_pickup_lv2"
+
+	switch( SURVIVAL_GetCurrentDeathFieldStage() )
+	{
+		case 0:
+			return GetCurrentPlaylistVarString( "skydive_respawn_loadout_stage_0", DEFAULT_LOADOUT_LOW )
+		case 1:
+			return GetCurrentPlaylistVarString( "skydive_respawn_loadout_stage_1", DEFAULT_LOADOUT_LOW )
+		case 2:
+			return GetCurrentPlaylistVarString( "skydive_respawn_loadout_stage_2", DEFAULT_LOADOUT_HIGH )
+		case 3:
+			return GetCurrentPlaylistVarString( "skydive_respawn_loadout_stage_3", DEFAULT_LOADOUT_HIGH )
+		case 4:
+			return GetCurrentPlaylistVarString( "skydive_respawn_loadout_stage_4", DEFAULT_LOADOUT_HIGH )
+		case 5:
+			return GetCurrentPlaylistVarString( "skydive_respawn_loadout_stage_5", DEFAULT_LOADOUT_HIGH )
+		case 6:
+			return GetCurrentPlaylistVarString( "skydive_respawn_loadout_stage_6", DEFAULT_LOADOUT_HIGH )
+		case 7:
+			return GetCurrentPlaylistVarString( "skydive_respawn_loadout_stage_7", DEFAULT_LOADOUT_HIGH )
+	}
+
+	return ""
+}
+
+vector function GetBestSkydiveRespawnAnglesFor( entity player, vector position )
+{
+	vector ang = VectorToAngles( SURVIVAL_GetSafeZoneCenter( Survival_GetPlayerRealm( player ) ) - position )
+	return <88.0, ang.y, 0.0>
+}
+
+void function RespawnPlayerInSkydiveAboveSquad( entity player )
+{
+	vector pos = GetBestSkydiveRespawnPositionFor( player )
+	vector ang = GetBestSkydiveRespawnAnglesFor( player, pos )
+
+	DoCommonRespawnForPlayer( player )
+	player.p.respawnPodLanded = false // bad magic
+	player.SetPlayerNetInt( "respawnStatus", eRespawnStatus.NONE )
+
+	player.SetOrigin( pos )
+	player.SetAngles( ang )
+	                        
+		Control_PrintSkydiveDebug( player, " RespawnPlayerInSkydiveAboveSquad going to trigger PlayerSkydiveFromCurrentPosition" )
+                               
+	PlayerSkydiveFromCurrentPosition( player )
+	ScreenFadeFromBlack( player, 2.5, 0.5 )
+
+	// Loadout:
+	{
+		array<string> itemNames = split( GetSkydiveRespawnLoadoutString(), ", " )
+		foreach( itemName in itemNames )
+			GiveLoot( player, itemName )
+	}
+
+	PlayBattleChatterLineToSpeakerAndTeam( player, "bc_returnFromRespawn" )
+}
+
+void function RespawnAllValidPlayersInSkydiveAboveSquad()
+{
+	thread function() : ()
+	{
+		wait 2.0
+
+		array<entity> players = GetPlayerArray()
+		foreach( player in players )
+		{
+			if ( !IsValid( player ) )
+				continue
+			if ( IsAlive( player ) )
+				continue
+			if ( IsTeamEliminated( player.GetTeam() ) )
+				continue
+
+			RespawnPlayerInSkydiveAboveSquad( player )
+			WaitFrame()
+		}
+	}()
+}
+#endif // SERVER
+
+#if SERVER
+// If we are playing with the spawn on kill rule set, try to spawn a dead player from the attackers squad
+void function TryToRespawnPlayerOnAttackerKill( entity attacker, entity victim )
+{
+	// Break out if the attacker is not valid for this
+	if ( !IsValid( attacker ) || !IsValid( victim ) || !attacker.IsPlayer() || attacker == victim )
+		return
+
+	// Final breakout check, make sure the victim and attacker are not friendly with each other
+	int attackerTeam = attacker.GetTeam()
+	int victimTeam = victim.GetTeam()
+	if ( IsFriendlyTeam( attackerTeam, victimTeam ) )
+		return
+
+	// See if there are any teammates on the attackers team that should be respawned
+	array < entity > attackerTeamPlayers = GetPlayerArrayOfTeam( attackerTeam )
+	entity teammateToRespawn = null
+	float oldestTeammateDeathTime = -1
+
+	foreach ( attackerTeamPlayer in attackerTeamPlayers )
+	{
+		if ( attackerTeamPlayer == attacker )
+			continue
+
+		int attackerTeamPlayerRespawnStatus = attackerTeamPlayer.GetPlayerNetInt( "respawnStatus" )
+
+		// We allow this logic to run alongside normal respawn logic if a mode has it enabled. So allow the player to be in a variety of respawn states
+		if (  attackerTeamPlayerRespawnStatus == eRespawnStatus.WAITING_FOR_RESPAWN || attackerTeamPlayerRespawnStatus == eRespawnStatus.WAITING_FOR_PICKUP || attackerTeamPlayerRespawnStatus == eRespawnStatus.WAITING_FOR_DELIVERY || attackerTeamPlayerRespawnStatus == eRespawnStatus.PICKUP_DESTROYED )
+		{
+			float teamPlayerDeathTime = attackerTeamPlayer.p.postDeathThreadStartTime
+
+			// Figure out which teammate died first and respawn that teammate first
+			if ( oldestTeammateDeathTime < 0 || oldestTeammateDeathTime > teamPlayerDeathTime )
+			{
+				oldestTeammateDeathTime = teamPlayerDeathTime
+				teammateToRespawn = attackerTeamPlayer
+			}
+		}
+	}
+
+	// We have a player to respawn
+	if ( teammateToRespawn != null && IsValid( teammateToRespawn ) )
+	{
+		// Do final checks before respawn
+		if ( !IsAlive( teammateToRespawn ) && !IsTeamEliminated( attackerTeam ) )
+			RespawnPlayerInSkydiveAboveSquad( teammateToRespawn )
+	}
+}
+#endif // SERVER 

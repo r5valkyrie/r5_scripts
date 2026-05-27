@@ -289,19 +289,6 @@ void function ApplyDelayedMoveSpeedModifier_Thread( entity player, entity weapon
 }
 #endif
 
-float function GetHeartbeatSensorRange( entity player )
-{
-	float result = GetCurrentPlaylistVarFloat( "seer_passive_range", HEARTBEAT_SENSOR_NATURAL_RANGE ) / INCHES_TO_METERS
-
-	if( !IsValid( player ) )
-		return result
-
-	if( !player.IsPlayer() )
-		return result
-
-	return result
-}
-
 #if CLIENT
 void function DoHeartbeatSensorUI_Thread( entity player, entity weapon )
 {

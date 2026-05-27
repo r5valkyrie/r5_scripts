@@ -1,0 +1,345 @@
+global function ShPassiveConduit_Init
+
+#if SERVER
+
+#if DEV
+global function DEV_PassiveConduitAdrenaline_ForceStart
+#endif //DEV
+
+const float PASSIVE_CONDUIT_ADRENALINE_EFFECT_DURATION = 2.0
+
+const bool PASSIVE_CONDUIT_ADRENALINE_DEBUG = false
+
+struct AdrenalineStatusEffectIndexes
+{
+	int speedBoostID = SE_INVALID_HANDLE
+	int speedBoostAudioID = SE_INVALID_HANDLE
+	int adrenalineVisualsID = SE_INVALID_HANDLE
+}
+
+struct
+{
+	table<entity, AdrenalineStatusEffectIndexes> playerStatusEffects
+} file
+
+#endif
+
+global const string CONDUIT_PASSIVE_BEST_TARGET_NETVAR = "conduit_passive_bestTarget"
+global const string CONDUIT_PASSIVE_CHARGE_END_NETVAR = "conduit_passive_chargeEndTime"
+
+//Passive detects when player is getting shot at and gives player a slight speed boost, passive healing, and reload speed boost.
+void function ShPassiveConduit_Init()
+{
+	RegisterNetworkedVariable( CONDUIT_PASSIVE_BEST_TARGET_NETVAR, SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
+	RegisterNetworkedVariable( CONDUIT_PASSIVE_CHARGE_END_NETVAR, SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, -1 )
+
+	#if SERVER
+
+		RegisterSignal( "passive_conduit_adrenaline_stop_plane_wait" )
+		RegisterSignal( "passive_conduit_adrenaline_stop_ability" )
+		AddCallback_OnPassiveChanged( ePassives.PAS_CONDUIT, PassiveConduitAdrenaline_OnPassiveChanged )
+
+		                    
+			RegisterSignal( "passive_conduit_adrenaline_upgrade_stop" )
+			AddCallback_OnPassiveChanged( ePassives.PAS_PAS_UPGRADE_ONE, PassiveConduitAdrenaline_UpgradeShieldRegen_OnPassiveChanged )
+        
+
+	#endif
+}
+
+#if SERVER
+void function PassiveConduitAdrenaline_OnPassiveChanged( entity player, int passive, bool didHave, bool nowHas )
+{
+	if ( didHave )
+	{
+		player.Signal( "passive_conduit_adrenaline_stop_plane_wait" )
+		player.Signal( "passive_conduit_adrenaline_stop_ability" )
+	}
+
+	if ( nowHas )
+		thread PassiveTeammateAdrenaline_WaitForPlaneJump( player )
+}
+
+                    
+void function PassiveConduitAdrenaline_UpgradeShieldRegen_OnPassiveChanged( entity player, int passive, bool didHave, bool nowHas )
+{
+	if ( didHave )
+	{
+		player.Signal( "passive_conduit_adrenaline_upgrade_stop" )
+	}
+
+	if ( nowHas )
+		thread PassiveConduitAdrenaline_UpgradeShieldRegen_Thread( player )
+}
+
+void function PassiveConduitAdrenaline_UpgradeShieldRegen_Thread( entity player )
+{
+	Assert ( IsNewThread(), "Must be threaded off" )
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "passive_conduit_adrenaline_upgrade_stop" )
+
+	float lastActivePassiveTime = -100
+	while( true )
+	{
+		if( player in file.playerStatusEffects )
+		{
+			float curTime = Time()
+			int statusEffectHandle = file.playerStatusEffects[player].adrenalineVisualsID
+			bool passiveActive = statusEffectHandle != SE_INVALID_HANDLE
+			if( passiveActive )
+			{
+				int newShieldHealth = minint( player.GetShieldHealth() + 1, player.GetShieldHealthMax() )
+				player.SetShieldHealth( newShieldHealth )
+			}
+		}
+		wait( 1.0 )
+	}
+}
+      
+
+void function PassiveTeammateAdrenaline_WaitForPlaneJump( entity player )
+{
+	Assert ( IsNewThread(), "Must be threaded off" )
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "passive_conduit_adrenaline_stop_plane_wait" )
+
+	while ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) && !Survival_HasPlayerJumpedOutOfPlane( player ) )
+	{
+		if ( !player.HasPassive( ePassives.PAS_CONDUIT ) )
+			return
+
+		WaitFrame()
+	}
+
+	//thread PassiveAdrenaline_CreateDetectionVortex( player )
+
+	AdrenalineStatusEffectIndexes statusEffectIndexes
+	file.playerStatusEffects[ player ] <- statusEffectIndexes
+
+	player.Signal( "passive_conduit_adrenaline_stop_ability" )
+	thread PassiveConduitAdrenaline_DetectTriggerCase( player )
+
+}
+
+
+void function PassiveConduitAdrenaline_DetectTriggerCase( entity player )
+{
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "passive_conduit_adrenaline_stop_ability" )
+
+	thread PassiveConduitAdrenaline_TrackDistance( player )
+	OnThreadEnd(
+		function() : (  )
+		{
+		}
+	)
+
+	float timeRunning = 0.0
+	const float MIN_TIME_TO_TRIGGER = 2.0
+	bool wasRunningToTeammate = false
+	while( true )
+	{
+		// The UI needs to know if there's a "target" even if we're not running towards them
+		entity target = PassiveConduitAdrenaline_GetTarget( player )
+		player.SetPlayerNetEnt( CONDUIT_PASSIVE_BEST_TARGET_NETVAR, target )
+		//printt( "Setting passive target to: " + target )
+
+		// Determine if we're running towards a valid target
+		bool isRunningToTeammate = IsValid( target ) && PassiveConduitAdrenaline_IsRunningTowards( player, target )
+		if ( isRunningToTeammate )
+		{
+			if ( !wasRunningToTeammate )
+			{
+				// The UI needs to know when the charge ends, to fill the bar
+				player.SetPlayerNetTime( CONDUIT_PASSIVE_CHARGE_END_NETVAR, Time() + MIN_TIME_TO_TRIGGER - timeRunning )
+			}
+
+			if ( timeRunning >= MIN_TIME_TO_TRIGGER )
+			{
+				player.SetSoundCodeControllerValue( 1.0 )
+				PassiveConduitAdrenaline_Start( player )
+			}
+
+			timeRunning = min( timeRunning + 0.1, MIN_TIME_TO_TRIGGER )
+		}
+		else
+		{
+			if ( wasRunningToTeammate )
+			{
+				player.SetPlayerNetTime( CONDUIT_PASSIVE_CHARGE_END_NETVAR, -1 )
+			}
+
+			timeRunning = max( 0.0, timeRunning - 0.1 )
+
+			if ( !StatusEffect_HasSeverity( player, eStatusEffect.adrenaline_visuals ) )
+			{
+				player.SetSoundCodeControllerValue(0.0)
+			}
+		}
+
+		wasRunningToTeammate = isRunningToTeammate
+
+		if ( PASSIVE_CONDUIT_ADRENALINE_DEBUG )
+		{
+			DebugDrawScreenText( 0.22,0.81, "IsRunningToTeammate: " + isRunningToTeammate + " time: " + timeRunning )
+		}
+
+		WaitFrame()
+	}
+}
+
+void function PassiveConduitAdrenaline_TrackDistance( entity player )
+{
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "passive_conduit_adrenaline_stop_ability" )
+
+	table<string, float > e
+	e["distanceAccumulated"] <- 0.0
+	OnThreadEnd(
+		function() : ( player, e )
+		{
+			if ( e["distanceAccumulated"] > 0.0 )
+			{
+				if ( IsValid( player ) )
+					StatsHook_ConduitBoostedDistanceCovered( player, int( e["distanceAccumulated"] ) )
+			}
+		}
+	)
+
+	float distanceAccumulated = 0.0
+	vector prevPos = player.GetOrigin()
+	while ( true )
+	{
+		if ( StatusEffect_HasSeverity( player, eStatusEffect.adrenaline_visuals ) )
+		{
+			if ( e["distanceAccumulated"] > 0.0 )
+			{
+				e["distanceAccumulated"] += Distance( player.GetOrigin(), prevPos ) * INCHES_TO_METERS
+			}
+			else
+			{
+				e["distanceAccumulated"] = 0.1
+			}
+		}
+		else
+		{
+			StatsHook_ConduitBoostedDistanceCovered( player, int( e["distanceAccumulated"] ) )
+			//printt( "distanceAccumulated " + distanceAccumulated )
+			e["distanceAccumulated"] = 0.0
+		}
+
+		prevPos = player.GetOrigin()
+		wait 0.5
+	}
+}
+bool function PassiveConduit_IsValidPassiveTarget( entity ally, entity conduit )
+{
+	if ( !IsFriendlyTeam( ally.GetTeam(), conduit.GetTeam() ) )
+		return false
+
+	return true
+}
+
+entity function PassiveConduitAdrenaline_GetTarget( entity player )
+{
+	if ( !IsValid(player) )
+		return null
+
+
+	bool passiveIncludeAlliances = GetCurrentPlaylistVarBool( "conduit_passive_includes_alliances", false )
+
+	array<entity> allies = GetArrayOfPossibleAlliesForPlayer( player, passiveIncludeAlliances )
+
+	entity tacWeapon = player.GetOffhandWeapon( OFFHAND_TACTICAL )
+	if ( IsValid( tacWeapon ) )
+	{
+		float EFFECTIVE_RANGE_SQR = ARC_FLASH_MAX_RANGE * ARC_FLASH_MAX_RANGE
+
+		string reason = "No teammates"
+		entity bestPassiveTarget = null
+		float bestDot = -1
+		foreach ( ally in allies )
+		{
+			if ( player == ally )
+				continue
+
+			if ( !PassiveConduit_IsValidPassiveTarget( ally, player ) )
+				continue
+
+			if ( PASSIVE_CONDUIT_ADRENALINE_DEBUG )
+				reason = "In range r: " + (Distance( player.GetOrigin(), ally.GetOrigin() ) * INCHES_TO_METERS) + "m"
+
+			float distanceSqr = DistanceSqr( player.GetOrigin(), ally.GetOrigin() )
+			if ( distanceSqr < EFFECTIVE_RANGE_SQR )
+				continue
+
+			const float MIN_LOOK_DOT = DOT_45DEGREE
+			vector playerToTeammate = Normalize( ally.GetWorldSpaceCenter() - player.EyePosition() )
+			float dot = DotProduct( playerToTeammate , player.GetViewVector() )
+			if ( PASSIVE_CONDUIT_ADRENALINE_DEBUG )
+				reason = "Not looking (dot: " + dot + " < minDot: " + MIN_LOOK_DOT + " )"
+			if ( dot < MIN_LOOK_DOT )
+				continue
+
+			reason = "YES"
+
+			if ( dot > bestDot )
+			{
+				bestDot = dot
+				bestPassiveTarget = ally
+			}
+		}
+		
+		if ( PASSIVE_CONDUIT_ADRENALINE_DEBUG )
+		{
+			DebugDrawScreenTextWithColor( 0.22,0.83, "Has Target: " + reason, COLOR_LIGHT_RED )
+		}
+
+		return bestPassiveTarget
+	}
+
+	return null
+}
+
+bool function PassiveConduitAdrenaline_IsRunningTowards( entity player, entity target )
+{
+	if ( !IsValid( player ) || !IsValid( target ) )
+		return false
+
+	if ( player.Player_IsSkydiving() || player.ContextAction_IsInVehicle() || Bleedout_IsBleedingOut( player ) )
+		return false
+
+	const float MIN_SPEED_SQR = 200 * 200
+	vector playerVelXY = FlattenVec( player.GetVelocity() )
+	if ( LengthSqr( playerVelXY ) < MIN_SPEED_SQR )
+		return false
+
+	const float MIN_VEL_DOT = DOT_45DEGREE
+	vector playerToTeammate = Normalize( target.GetWorldSpaceCenter() - player.EyePosition() )
+	vector playerXYVelNorm = FlattenNormalizeVec( playerVelXY )
+	float velDot = DotProduct( playerToTeammate, playerXYVelNorm )
+	if ( velDot < MIN_VEL_DOT )
+		return false
+
+	return true
+}
+
+void function PassiveConduitAdrenaline_Start( entity player )
+{
+	// no need to check both status effect, since he should never have one without the other.
+
+}
+
+#if DEV
+void function DEV_PassiveConduitAdrenaline_ForceStart( entity player )
+{
+	PassiveConduitAdrenaline_Start( player )
+}
+#endif //DEV
+
+
+#endif 

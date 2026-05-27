@@ -1,0 +1,455 @@
+global function MMR_Init
+global function MMR_GetInteractionsForPlayer
+global function MMR_ComputePairWinRateProbability
+global function CodeCallback_MMRPlayerRefresh
+global function ClientCallback_Dev_SetPlayerMMR
+global function ClientCallback_Dev_PrintTeamsMMR
+global function SetPlayerMmrUtil
+global function IsPlayerOnTeamWithBotPairing
+
+#if DEV
+global function MMR_PrintTeams
+global function MMR_DebugAddInteraction
+#endif
+
+struct MMR_teamEntry
+{
+	bool isInit
+	int placement
+	float mean
+	float variance
+	float adjustment
+	table<int, bool> interactions
+}
+
+struct
+{
+	bool isTracking
+	array<MMR_teamEntry> teams
+	bool isMMRPlacementFinal = false
+} file
+
+void function ClientCallback_Dev_SetPlayerMMR( entity player, float playerMean, float playerVariance, float teamMean, float teamVariance )
+{
+#if DEV
+	//SetPlayerMMR( player, playerMean, playerVariance, teamMean, teamVariance, 0, 0 )
+#endif
+}
+
+void function SetPlayerMmrUtil ( entity player, float mmr, float variance, float d = 0, float teamAdjust = 0 )
+{
+	int teamID = player.GetTeam()
+	float teamMMR = TestComputeTeamMean ( player , mmr )
+	float teamVariance = TestComputeTeamVariance ( player, variance )
+
+	MMR_OnPlayerConnected ( player ) //init file.teams
+
+#if DEV
+	DEV_script_ranked_debug ( "\t\tTeamID " + teamID )
+	DEV_script_ranked_debug ( "\t\tSetting MMR: " + mmr )
+	DEV_script_ranked_debug ( "\t\tSetting variance: " + variance )
+	DEV_script_ranked_debug ( "\t\tSetting teamMMR: " + teamMMR )
+	DEV_script_ranked_debug ( "\t\tSetting teamVariance: " + teamVariance )
+	DEV_script_ranked_debug ( "\t\tSetting d: " + d )
+	DEV_script_ranked_debug ( "\t\tSetting teamAdjust: " + teamAdjust )
+#endif
+
+	//SetPlayerMMR( player, mmr, variance, teamMMR, teamVariance, d, teamAdjust )
+}
+
+bool function IsPlayerOnTeamWithBotPairing ( entity player )
+{
+	return ( GetPlayerMMR( player )[6] == TEAM_MMR_BOT_PAIRING_OVERRIDE )
+}
+
+float function TestComputeTeamMean ( entity player , float playerMean )
+{		
+	int teamID = player.GetTeam()
+
+	array < entity > squad = GetPlayerArrayOfTeam ( teamID )
+
+	if ( squad.len() <= 1  )
+		return playerMean
+
+	float teamSum = playerMean
+
+	foreach ( member in squad)
+	{
+		if ( member != player )
+		{
+			if( !HasPlayerMMR( member ) )
+			{
+				if ( GetConVarBool( "ranked_assert_on_invalid_client_data" ) )
+					Assert ( false, "TestComputeTeamMean member has no MMR data:  " + member.GetPlayerName() )
+			}
+
+			teamSum += GetPlayerMMR( member )[0]
+		}
+	}
+
+	return teamSum / float ( squad.len() )
+}
+
+
+float function TestComputeTeamVariance ( entity player, float playerVarance )
+{
+	int teamID = player.GetTeam()
+
+	array < entity > squad = GetPlayerArrayOfTeam ( teamID )
+
+	if ( squad.len() <= 1  )
+		return playerVarance
+
+	float teamSum = playerVarance
+
+	foreach ( member in squad )
+	{
+		if ( member != player )
+		{
+			if( !HasPlayerMMR( member ) )
+			{
+				if ( GetConVarBool( "ranked_assert_on_invalid_client_data" ) )
+					Assert ( false, "TestComputeTeamVariance member has no MMR data:  " + member.GetPlayerName() )
+			}
+
+			teamSum += GetPlayerMMR( member )[1]
+		}
+	}
+
+	return teamSum / float ( squad.len() )
+}
+
+
+void function CodeCallback_MMRPlayerRefresh( entity player )
+{
+	int teamIdx = player.GetTeam()
+
+	//if( !file.teams.isvalidindex(teamIdx) )
+	//{
+	//	file.teams.resize( teamIdx + 1 )
+	//	file.teams[ teamIdx ].isInit = true
+	//	file.teams[ teamIdx ].placement = -1
+	//}
+
+	array< float > mmrs = GetPlayerMMR( player )
+	file.teams[ teamIdx ].mean = mmrs[2]
+	file.teams[ teamIdx ].variance = mmrs[3]
+	file.teams[ teamIdx ].adjustment = mmrs[5]
+}
+
+void function ClientCallback_Dev_PrintTeamsMMR( entity player )
+{
+	#if DEV
+		printt("ClientCallback_Dev_PrintTeamsMMR")
+
+		array<string> printTeamBuffer
+		MMR_ComputePrintTeams( player, printTeamBuffer )
+
+		foreach(string line in printTeamBuffer)
+		{
+			RemotePrint( player, line + "\n" )
+		}
+	#endif
+}
+
+// Warning!!! this function is not authoritative! Tunables can change on Stryder making the computation wrong
+// real probabilities used by matchmaking are computed on Stryder and not exposed to server
+float function MMR_ComputePairWinRateProbability( float partyIMean, float partyIVariance, float partyQMean, float partyQVariance )
+{
+	float variancePerformance = pow( 25/6, 2 )
+
+	float tempCiq = partyIVariance + partyQVariance + 2 * variancePerformance
+
+	float cIq = sqrt( tempCiq )
+	float pDe = exp( partyIMean / cIq ) + exp( partyQMean / cIq )
+	float pIq = exp( partyIMean / cIq ) / pDe
+
+	return pIq
+}
+
+#if DEV
+void function MMR_PrintTeams()
+{
+	printt("MMR_PrintTeams")
+
+	array<string> printTeamBuffer
+	MMR_ComputePrintTeams( null, printTeamBuffer )
+
+	foreach(string line in printTeamBuffer)
+	{
+		printt(line)
+	}
+}
+
+void function MMR_ComputePrintTeams( entity playerFocus, array<string> printTeamBuffer )
+{
+	float teamMean = 0
+	float teamVariance = 0
+
+	if( playerFocus )
+	{
+		int teamIdx = playerFocus.GetTeam()
+
+		//if( file.teams.isvalidindex( teamIdx ) )
+		//{
+		//	teamMean = file.teams[ teamIdx ].mean
+		//	teamVariance = file.teams[ teamIdx ].variance
+		//}
+	}
+
+	int idx = 0
+	foreach(MMR_teamEntry entry in file.teams)
+	{
+		idx = idx + 1
+		if( !entry.isInit )
+			continue
+
+		int teamIdx = idx - 1
+
+		string teamStr = "mmr: TeamIdx:" + string( teamIdx ) + ", Placement:" + string( entry.placement ) + ", Mean/Variance:" + string( entry.mean ) + "/" + string( entry.variance )
+		if( teamVariance > 0 )
+		{
+			float winProb = MMR_ComputePairWinRateProbability( teamMean, teamVariance, entry.mean, entry.variance )
+			teamStr += " Win:" + string( winProb )
+		}
+
+		printTeamBuffer.append( teamStr )
+
+		array<entity> teamMembers = GetPlayerArrayOfTeam( teamIdx )
+		foreach( entity player in teamMembers )
+		{
+			// 0: playerMean, 1: playerVariance, 2:teamMean, 3:teamVariance
+			array< float > mmrs = GetPlayerMMR( player )
+			printTeamBuffer.append("mmr: TeamIdx:" + string( teamIdx ) + " Player:" + player.GetPlayerName() + ", Mean/Variance:" + string( mmrs[0] ) + "/" + string( mmrs[1] ) )
+		}
+
+		string interactions = "mmr: TeamIdx:" + string( teamIdx )
+		foreach(int teamInteractIdx, bool _ in entry.interactions)
+		{
+			interactions += ", " + string( teamInteractIdx )
+		}
+		printTeamBuffer.append( interactions )
+	}
+}
+
+void function MMR_DebugAddInteraction( int teamA, int teamB )
+{
+	//if( !file.teams.isvalidindex( teamA ) )
+	//{
+	//	file.teams.resize( teamA + 1 )
+	//}
+
+	file.teams[ teamA ].isInit = true
+	file.teams[ teamA ].placement = teamA + 50
+	file.teams[ teamA ].mean = 61.1 + teamA
+	file.teams[ teamA ].variance = 20.1 + teamA
+
+	//if( !file.teams.isvalidindex( teamB ) )
+	//{
+	//	file.teams.resize( teamB + 1 )
+	//}
+
+	file.teams[ teamB ].isInit = true
+	file.teams[ teamB ].placement = teamB + 50
+	file.teams[ teamB ].mean = 61.1 + teamB
+	file.teams[ teamB ].variance = 20.1 + teamB
+
+	file.teams[ teamA ].interactions[ teamB ] <- true
+	file.teams[ teamB ].interactions[ teamA ] <- true
+
+	{
+		array<entity> teamMembers = GetPlayerArrayOfTeam( teamA )
+		foreach ( entity player in teamMembers )
+		{
+			if( !HasPlayerMMR( player ) )
+			{
+				//SetPlayerMMR( player, 10, 20, file.teams[ teamA ].mean, file.teams[ teamA ].variance, 0, 0 )
+			}
+		}
+	}
+
+	{
+		array<entity> teamMembers = GetPlayerArrayOfTeam( teamB )
+		foreach ( entity player in teamMembers )
+		{
+			if( !HasPlayerMMR( player ) )
+			{
+				//SetPlayerMMR( player, 10, 20, file.teams[ teamB ].mean, file.teams[ teamB ].variance, 0, 0 )
+			}
+		}
+	}
+}
+#endif // #if DEV
+
+void function MMR_Init()
+{
+	file.isTracking = false
+
+	if( !GetConVarBool( "match_trackMMR" ) )
+		return
+
+	if ( IsLobby() )
+		return
+
+	if( IsPrivateMatch() )
+		return
+
+	file.isTracking = true
+
+	AddCallback_OnClientConnected( MMR_OnPlayerConnected )
+	AddCallback_OnPlayerKilled( MMR_OnPlayerKilled )
+	Bleedout_AddCallback_OnPlayerStartBleedout( MMR_OnPlayerStartBleedout )
+}
+
+
+array< float > function MMR_GetInteractionsForPlayer( entity player, int functionref ( entity player ) getRank )
+{
+	array< float > interactions
+
+	if( !file.isTracking )
+		return interactions
+
+	if( !HasPlayerMMR( player ) )
+		return interactions
+
+	int teamIdx = player.GetTeam()
+	//Assert( file.teams.isvalidindex( teamIdx ) )
+
+	bool gameModeIsElimination = IsEliminationBased() // true for traditional BR aka Survival & BR-based LTMs
+	bool isMatchComplete = GetGameState() >= eGameState.WinnerDetermined
+
+	// for NON-elimination rules, if the match is complete we can get everyone's rank
+	if( !gameModeIsElimination && isMatchComplete && !file.isMMRPlacementFinal )
+	{
+		// update rank of any players that still exist
+		array< entity > allPlayers = GetPlayerArray()
+		foreach( p in allPlayers )
+		{
+			if ( !HasPlayerMMR( p ) )
+				continue
+
+			int team = p.GetTeam()
+			//if ( !file.teams.isvalidindex( team ) ) // R5DEV-446487: defensive fix for bad team indexes with non-survival modes with Bot-teams
+			//{
+			//	Warning( "MMR: MMR_GetInteractionsForPlayer - found an invalid index in the MMR Team list; this is *likely* because of Bot teams not updating the index here properly." )
+			//	MMR_OnPlayerConnected( p ) // will stick an entry into the table for this player/team
+			//}
+			file.teams[ team ].placement = getRank( p )
+		}
+		file.isMMRPlacementFinal = true
+	}
+	else // traditional BR or non-elimination game isn't complete yet
+	{
+		file.teams[ teamIdx ].placement = getRank( player ) // if player leaves we mark their rank, but we will update at match complete if team-members remain
+	}
+
+	int interactionIdx = 0
+	interactions.resize( file.teams[ teamIdx ].interactions.len() * 3 )
+
+	// we do not need accurate placement for all teams as long rank1 < rank2 is verified
+	foreach( k,v in file.teams[ teamIdx ].interactions ) // it is a set
+	{
+		// TODO: early leavers should ignore interactions
+		if ( ( !gameModeIsElimination && isMatchComplete ) || ( gameModeIsElimination && !IsTeamAlive( k ) ) )
+		{
+			Assert( !gameModeIsElimination || file.teams[ k ].placement != -1, "MMR_GetInteractionsForPlayer_Elimination is not assigning rank to an interaction correctly, it's expected that placement for this team is already filled" )
+			interactions[interactionIdx++] = float(file.teams[ k ].placement)
+		}
+		else
+		{
+			interactions[interactionIdx++] = float(-1) // I quit early so everyone is better than me
+		}
+
+		interactions[interactionIdx++] = file.teams[ k ].mean
+		interactions[interactionIdx++] = file.teams[ k ].variance
+	}
+
+	return interactions
+}
+
+void function MMR_OnPlayerConnected( entity player )
+{
+	if( !HasPlayerMMR( player ) )
+	{
+		printt("MMR_OnPlayerConnected player has no MMR data", player)
+		#if DEV
+			DEV_script_ranked_debug (  "MMR_OnPlayerConnected player has no MMR data" )
+		#endif
+		return
+	}
+
+	int teamIdx = player.GetTeam()
+
+	//if( !file.teams.isvalidindex( teamIdx ) )
+	//{
+	//	file.teams.resize( teamIdx + 1 )
+	//}
+
+	if( !file.teams[ teamIdx ].isInit )
+	{
+		#if DEV
+			DEV_script_ranked_debug (  "MMR_OnPlayerConnected init team" )
+		#endif
+		// grab team MMR, we suppose team MMR will not change for the duration of a game
+		// obviously does not work if team composition is dynamic
+		file.teams[ teamIdx ].isInit = true
+
+		// 0: playerMean, 1: playerVariance, 2:teamMean, 3:teamVariance
+		array< float > mmrs = GetPlayerMMR( player )
+
+		file.teams[ teamIdx ].placement = -1
+		file.teams[ teamIdx ].mean = mmrs[2]
+		file.teams[ teamIdx ].variance = mmrs[3]
+		file.teams[ teamIdx ].adjustment = mmrs[5]
+	}
+}
+
+void function MMR_OnInteraction( entity victim, entity attacker )
+{
+	if( !file.isTracking )
+		return
+
+	if( !IsValid( victim ) )
+		return
+
+	if( !IsValid( attacker ) )
+		return
+
+	if ( !attacker.IsPlayer() )
+		return
+
+	if ( !victim.IsPlayer() )
+		return
+
+	if( !HasPlayerMMR( victim ) )
+		return
+
+	if( !HasPlayerMMR( attacker ) )
+		return
+
+	int teamIdxAttacker = attacker.GetTeam()
+	int teamIdxVictim = victim.GetTeam()
+
+	if( teamIdxAttacker == teamIdxVictim )
+		return
+
+	//Assert( file.teams.isvalidindex(teamIdxAttacker) )
+	//Assert( file.teams.isvalidindex(teamIdxVictim) )
+
+	// interactions are symmetric, we could save space ...
+	// we use the table as a set
+	file.teams[ teamIdxAttacker ].interactions[ teamIdxVictim ] <- true
+	file.teams[ teamIdxVictim ].interactions[ teamIdxAttacker ] <- true
+
+	printt("MMR_OnInteraction", teamIdxAttacker, teamIdxVictim, file.teams[ teamIdxAttacker ].interactions.len(), file.teams[ teamIdxVictim ].interactions.len() )
+}
+
+void function MMR_OnPlayerStartBleedout( entity victim, entity attacker, var damageInfo )
+{
+	MMR_OnInteraction( victim, attacker )
+}
+
+void function MMR_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
+{
+	MMR_OnInteraction( victim, attacker )
+} 

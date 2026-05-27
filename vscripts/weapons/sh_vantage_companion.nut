@@ -188,7 +188,6 @@ array<string> sPlayerLaunchStateStrings =
 ]
 #endif
 
-global const vector ECHO_INITIAL_DEPLOY_OFFSET = <30, -15, 80>
 struct EchoCompanionData
 {
 	int    playerLaunchState

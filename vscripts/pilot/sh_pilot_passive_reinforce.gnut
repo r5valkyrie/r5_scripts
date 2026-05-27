@@ -1,0 +1,1371 @@
+global function PassiveReinforce_Init
+global function IsReinforced
+global function IsRebuiltDoor
+#if SERVER
+global function SetReinforced
+global function GetRebuiltDoorArray
+global function BreakRebuiltDoor
+global function PasReinforce_OnDoorDestroyed
+#endif
+#if CLIENT
+global function PassiveReinforce_BlockControllerHolster
+#endif
+
+//Assets
+const asset PASSIVE_REINFORCE_LINK_FX = $"P_ferro_pas_link"
+const asset PASSIVE_REINFORCE_DESTROY_FX = $"P_ferro_pas_destroyed"
+const asset PASSIVE_REINFORCE_REINFORCE_DOOR_FX = $"P_ferro_pas_locked"
+const asset PASSIVE_REINFORCE_REBUILD_DOOR_FX = $"P_ferro_pas_locked"
+const asset PASSIVE_REINFORCE_REBUILT_DOOR_MODEL = $"mdl/door/canyonlands_door_single_02.rmdl"
+const asset PASSIVE_REINFORCE_PREVIEW_FX = $"P_ferro_pas_preview"
+const asset PASSIVE_REINFORCE_TRANSITION_FX = $"P_ferro_pas_charging"
+
+//Sounds
+const string PASSIVE_REINFORCE_USE_LOOP_SFX = "Catalyst_Passive_Ticker_1p"
+const string PASSIVE_REINFORCE_REINFORCED_SFX = "Catalyst_Passive_Reinforce_MetalDoor_3p"
+const string PASSIVE_REINFORCE_REBUILT_SFX = "Catalyst_Passive_Reinforce_EmptyDoor_3p"
+const string PASSIVE_REINFORCE_OPEN_REINFORCED_SFX = "Door_Metal_Open_Catalyst_Dissolve_3p"
+const string PASSIVE_REINFORCE_BREAK_REBUILT_SFX = "Door_FerroDoor_Open_Catalyst_Dissolve_3p"
+global const string PASSIVE_REINFORCE_REINFORCED_IMPACT_SFX = "Door_Impact_Breach_Kick_MetalDoor_FerroLayer_Catalyst_3p"
+const string PASSIVE_REINFORCE_REBUILT_IMPACT_SFX = "Door_Impact_Breach_Kick_FerroDoor_Catalyst_3p"
+global const string PASSIVE_REINFORCE_DESTROY_REINFORCEMENT_SFX = "Door_Metal_Impact_FerroFluidReinforce_Break_3p"
+const string PASSIVE_REINFORCE_DESTROY_REBUILT_SFX = "Door_FerroDoor_Impact_Catalyst_FerroFluidReinforce_Break_3p"
+const string PASSIVE_REINFORCE_IDLE_SFX = "Catalyst_Passive_Reinforce_Idle_3p"
+
+
+//Signals
+const string PASSIVE_REINFORCE_REMOVED_SIGNAL = "PassiveReinforceRemoved"
+const string PASSIVE_REINFORCE_KILL_PREVIEW_SIGNAL = "PassiveReinforceKillPreview"
+const string PASSIVE_REINFORCE_RESET_REBUILT_DOOR_SIGNAL = "PassiveReinforceResetRebuiltDoor"
+const string PASSIVE_REINFORCE_KILL_CLIENT_THREAD = "PassiveReinforceKillClientThread"
+const string PASSIVE_REINFORCE_KILL_AMBIENT_GENERIC = "PassiveReinforceKillAmbientGeneric"
+
+//String consts
+const string PASSIVE_REINFORCE_USE_END = "PassiveReinforceUseEnd"
+const string PASSIVE_REINFORCE_USE_FAIL = "PassiveReinforceUseFail"
+global const string PASSIVE_REINFORCE_REBUILT_DOOR_SCRIPT_NAME = "rebuilt_door"
+global const string  PASSIVE_REINFORCE_WEAPON_NAME = "mp_ability_reinforce"
+
+//Tuneables
+const float PASSIVE_REINFORCE_USE_DURATION = 0.4
+const float PASSIVE_REINFORCE_ANIM_DURATION = 0.8
+const float PASSIVE_REINFORCE_PREVIEW_RADIUS = 300
+const float PASSIVE_REINFORCE_PREVIEW_RADIUS_SQR = PASSIVE_REINFORCE_PREVIEW_RADIUS * PASSIVE_REINFORCE_PREVIEW_RADIUS
+const bool PASSIVE_REINFORCE_PREVIEW_ENABLED = false
+const vector PASSIVE_REINFORCE_FRIENDLY_DOOR_COLOR = <80, 210, 255>
+const vector PASSIVE_REINFORCE_ENEMY_DOOR_COLOR = <255, 70, 10>
+const float PASSIVE_REINFORCE_DELAY_UNTIL_REINFORCEABLE = 3.0
+const int PASSIVE_REINFORCE_MAX_DOORWAYS = 2
+const bool PASSIVE_REINFORCE_IDLE_USES_AMBIENT_GENERIC = true
+global const int PASSIVE_REINFORCE_DOOR_KICK_MULTIPLIER = 2
+
+struct
+{
+#if SERVER
+	int rebuiltDoorScriptManagedArray
+	table< entity, array< entity > > reinforcedDoors
+#endif
+#if CLIENT
+	entity previewDoor1
+	entity previewDoor2
+#endif
+
+	//live tuning
+	float useDuration
+	float animDuration
+	float postDestroyReinforcementDelay
+	bool  idleUsesAmbientGeneric
+	int maxDoorways
+
+}file
+
+void function PassiveReinforce_Init()
+{
+	#if SERVER
+		AddSpawnCallback( "prop_door", OnDoorSpawned )
+		InitRebuiltDoorArray()
+	#endif
+	#if CLIENT
+		AddCreateCallback( "prop_door", OnDoorSpawned )
+		AddTargetNameCreateCallback( PASSIVE_REINFORCE_REBUILT_DOOR_SCRIPT_NAME, OnRebuiltDoorSpawned )
+		AddCallback_PlayerClassChanged( PassiveReinforce_OnPlayerClassChanged )
+		StatusEffect_RegisterEnabledCallback( eStatusEffect.reinforced, Reinforce_StartEffect )
+		StatusEffect_RegisterDisabledCallback( eStatusEffect.reinforced, Reinforce_StopEffect )
+	#endif
+
+	RegisterSignal( PASSIVE_REINFORCE_REMOVED_SIGNAL )
+	RegisterSignal( PASSIVE_REINFORCE_USE_END )
+	RegisterSignal( PASSIVE_REINFORCE_USE_FAIL )
+	RegisterSignal( PASSIVE_REINFORCE_RESET_REBUILT_DOOR_SIGNAL )
+	RegisterSignal( PASSIVE_REINFORCE_KILL_PREVIEW_SIGNAL )
+	RegisterSignal( PASSIVE_REINFORCE_KILL_CLIENT_THREAD )
+	RegisterSignal( PASSIVE_REINFORCE_KILL_AMBIENT_GENERIC )
+	PrecacheParticleSystem( PASSIVE_REINFORCE_LINK_FX )
+	PrecacheParticleSystem( PASSIVE_REINFORCE_DESTROY_FX )
+	PrecacheParticleSystem( PASSIVE_REINFORCE_REINFORCE_DOOR_FX )
+	PrecacheParticleSystem( PASSIVE_REINFORCE_REBUILD_DOOR_FX )
+	PrecacheParticleSystem( PASSIVE_REINFORCE_PREVIEW_FX )
+	PrecacheParticleSystem( PASSIVE_REINFORCE_TRANSITION_FX )
+	PrecacheModel( PASSIVE_REINFORCE_REBUILT_DOOR_MODEL )
+	AddCallback_OnPassiveChanged( ePassives.PAS_LOCKDOWN, PassiveReinforce_Toggle )
+
+	//Live tuning
+	file.useDuration					= GetCurrentPlaylistVarFloat( "catalyst_barricade_useDuration", PASSIVE_REINFORCE_USE_DURATION )
+	file.animDuration					= GetCurrentPlaylistVarFloat( "catalyst_barricade_animDuration", PASSIVE_REINFORCE_ANIM_DURATION )
+	file.postDestroyReinforcementDelay	= GetCurrentPlaylistVarFloat( "catalyst_barricade_postDestroyReinforcementDelay", PASSIVE_REINFORCE_DELAY_UNTIL_REINFORCEABLE )
+	file.idleUsesAmbientGeneric			= GetCurrentPlaylistVarBool( "catalyst_barricade_idleUsesAmbientGeneric", PASSIVE_REINFORCE_IDLE_USES_AMBIENT_GENERIC )
+	file.maxDoorways					= GetCurrentPlaylistVarInt( "catalyst_barricade_maxDoorways", PASSIVE_REINFORCE_MAX_DOORWAYS )
+}
+
+#if SERVER || CLIENT
+void function PassiveReinforce_Toggle( entity player, int passive, bool didHave, bool nowHas )
+{
+	if ( !IsAlive( player ) )
+		return
+
+
+	if ( didHave )
+	{
+		player.Signal( PASSIVE_REINFORCE_REMOVED_SIGNAL )
+	}
+
+	if ( nowHas )
+	{
+		#if CLIENT
+			file.previewDoor1 = null
+			file.previewDoor2 = null
+		#endif
+	}
+}
+#endif
+
+#if CLIENT
+void function PassiveReinforce_OnPlayerClassChanged( entity player )
+{
+	if ( player != GetLocalViewPlayer()  )
+		return
+
+	player.Signal( PASSIVE_REINFORCE_KILL_CLIENT_THREAD )
+	thread PassiveReinforce_ClientThread( player )
+}
+void function PassiveReinforce_Client( entity player )
+{
+	player.Signal( PASSIVE_REINFORCE_KILL_CLIENT_THREAD )
+	thread PassiveReinforce_ClientThread( player )
+}
+
+bool function PassiveReinforce_BlockControllerHolster( entity player, entity usePromptEnt )
+{
+	if ( CanPlayerReinforce( player ) && ( IsReinforceable( usePromptEnt ) || IsRebuildableDoor( usePromptEnt ) )  )
+	{
+		return true
+	}
+
+	return false
+}
+
+void function PassiveReinforce_ClientThread( entity player )
+{
+	EndSignal( player, "OnDestroy" )
+	EndSignal( player, PASSIVE_REINFORCE_KILL_CLIENT_THREAD )
+
+	var rui = CreateCockpitPostFXRui( $"ui/passive_barricade_hud.rpak" )
+
+	OnThreadEnd( void function() : ( player, rui ) {
+		RuiDestroyIfAlive( rui )
+	} )
+
+	while ( true )
+	{
+		//Update Door RUI
+		string hintText    = ""
+		entity usePromptEnt = player.GetUsePromptEntity()
+		if( IsValid( usePromptEnt ) )
+		{
+			if( IsCodeDoor( usePromptEnt ) )
+			{
+				if ( CanPlayerReinforce( player )  )
+				{
+					if( IsReinforceable( usePromptEnt ) )
+					{
+						hintText = Localize( "#ABL_REINFORCE_USE_TEXT" )
+					}
+					else if( !IsReinforced( usePromptEnt ) )
+					{
+						int tr = int( ceil( StatusEffect_GetTimeRemaining( usePromptEnt, eStatusEffect.reinforced_blocked ) ) )
+						if( tr > 0 )
+						{
+							hintText = Localize( "#ABL_REINFORCE_REINFORCE_DELAY", tr )
+						}
+					}
+				}
+			}
+			else if( usePromptEnt.GetTargetName() == PASSIVE_REINFORCE_REBUILT_DOOR_SCRIPT_NAME )
+			{
+				if ( CanPlayerReinforce( player ) && IsRebuildableDoor( usePromptEnt ) )
+				{
+					if( IsReinforceable( usePromptEnt ) )
+					{
+						if( PlayerHasPassive( player, ePassives.PAS_PAS_UPGRADE_ONE ) ) // upgrade_catalyst_pas_rebuild_door
+							hintText = Localize( "#ABL_REINFORCE_REBUILD_UPGRADE" )
+						else
+							hintText = Localize( "#ABL_REINFORCE_REBUILD" )
+					}
+					else if( !IsReinforced( usePromptEnt ) )
+					{
+						int tr = int( ceil( StatusEffect_GetTimeRemaining( usePromptEnt, eStatusEffect.reinforced_blocked ) ) )
+						if( tr > 0.0 )
+						{
+							hintText = Localize( "#ABL_REINFORCE_REBUILD_DELAY", tr )
+						}
+					}
+				}
+				else if( IsReinforced( usePromptEnt ) && !IsEnemyTeam( usePromptEnt.GetTeam(), player.GetTeam() ) )
+				{
+					hintText = Localize( "#ABL_REINFORCE_BREAK_REBUILT" )
+				}
+			}
+
+		}
+		RuiSetString( rui, "hintText", hintText )
+
+		//Update preview doors
+		if( PASSIVE_REINFORCE_PREVIEW_ENABLED && CanPlayerReinforce( player ) )
+		{
+			entity bestDoor = GetClosestDoorinLOS( player )
+			if( IsValid( bestDoor ) )
+			{
+				if(  bestDoor != file.previewDoor1 && bestDoor != file.previewDoor2 )
+				{
+					if( IsValid( file.previewDoor1 ) )
+					{
+						file.previewDoor1.Signal( PASSIVE_REINFORCE_KILL_PREVIEW_SIGNAL )
+					}
+					file.previewDoor1 = bestDoor
+					thread PreviewDoorFX( bestDoor )
+
+					if( IsValid( file.previewDoor2 ) )
+					{
+						file.previewDoor2.Signal( PASSIVE_REINFORCE_KILL_PREVIEW_SIGNAL )
+					}
+					file.previewDoor2 = null
+					entity oppDoor = bestDoor.GetOppositeDoor()
+					if( IsValid( oppDoor ) )
+					{
+						file.previewDoor2 = oppDoor
+						thread PreviewDoorFX( oppDoor )
+					}
+				}
+			}
+			else
+			{
+				if( IsValid( file.previewDoor1 ) )
+				{
+					file.previewDoor1.Signal( PASSIVE_REINFORCE_KILL_PREVIEW_SIGNAL )
+				}
+				if( IsValid( file.previewDoor2 ) )
+				{
+					file.previewDoor2.Signal( PASSIVE_REINFORCE_KILL_PREVIEW_SIGNAL )
+				}
+				file.previewDoor1 = null
+				file.previewDoor2 = null
+			}
+		}
+
+		WaitFrame()
+	}
+}
+
+void function PreviewDoorFX( entity door )
+{
+	Assert ( IsNewThread(), "Must be threaded off" )
+	EndSignal( door, "OnDestroy" )
+	EndSignal( door, PASSIVE_REINFORCE_KILL_PREVIEW_SIGNAL )
+
+	bool effectAwake = true
+	int fxHandle = StartParticleEffectOnEntityWithPos( door, GetParticleSystemIndex( PASSIVE_REINFORCE_PREVIEW_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, < 30, 0, 48 >, door.GetAngles() )
+
+	OnThreadEnd(
+		function () : ( fxHandle )
+		{
+			EffectStop( fxHandle, false, true )
+		}
+	)
+	while( true )
+	{
+		bool reinforceAble = IsReinforceable( door )
+		if(  !reinforceAble && effectAwake )
+		{
+			EffectSleep( fxHandle )
+			effectAwake = false
+		}
+		else if( reinforceAble && !effectAwake )
+		{
+			EffectWake( fxHandle )
+			effectAwake = true
+		}
+		WaitFrame()
+	}
+}
+
+entity function GetClosestDoorinLOS( entity player )
+{
+	vector playerOrigin = player.GetOrigin()
+	array< entity > doors = GetEntArrayByClassAndTargetname( "prop_door", "" )
+	entity bestDoor = null
+	float closestDistanceSqr = PASSIVE_REINFORCE_PREVIEW_RADIUS_SQR
+
+	foreach( door in doors )
+	{
+		float distSqr = DistanceSqr( playerOrigin, door.GetOrigin() )
+		if( IsCodeDoor( door )  && distSqr < closestDistanceSqr && PlayerCanSeePos( player, door.GetWorldSpaceCenter(), false, 70 ) )
+		{
+			bestDoor = door
+			closestDistanceSqr = distSqr
+		}
+	}
+
+	return bestDoor
+}
+
+void function Reinforce_StartEffect( entity ent, int statusEffect, bool actuallyChanged )
+{
+	if ( !file.idleUsesAmbientGeneric || !actuallyChanged )
+		return
+
+	if( IsValid( ent ) && ( IsCodeDoor( ent ) || ent.GetTargetName() == PASSIVE_REINFORCE_REBUILT_DOOR_SCRIPT_NAME ) )
+		thread StartReinforceAbmientGeneric( ent )
+}
+
+void function Reinforce_StopEffect( entity ent, int statusEffect, bool actuallyChanged )
+{
+	if ( !file.idleUsesAmbientGeneric || !actuallyChanged )
+		return
+
+	if( IsValid( ent ) && ( IsCodeDoor( ent ) || ent.GetTargetName() == PASSIVE_REINFORCE_REBUILT_DOOR_SCRIPT_NAME ) )
+		ent.Signal( PASSIVE_REINFORCE_KILL_AMBIENT_GENERIC )
+}
+
+void function StartReinforceAbmientGeneric( entity ent )
+{
+	EndSignal( ent, "OnDestroy" )
+	EndSignal( ent, PASSIVE_REINFORCE_KILL_AMBIENT_GENERIC )
+
+	entity localPlayer = GetLocalViewPlayer()
+	if( !IsValid( localPlayer ) )
+		return
+	EndSignal( localPlayer, "OnDestroy" )
+
+	entity clientAG = CreateClientSideAmbientGeneric( ent.GetOrigin(), PASSIVE_REINFORCE_IDLE_SFX, 0 )
+	clientAG.RemoveFromAllRealms()
+	clientAG.AddToOtherEntitysRealms( ent )
+	clientAG.SetParent( ent, "", true )
+	SetTeam( clientAG, ent.GetTeam() )
+
+	OnThreadEnd(
+		function() : ( clientAG )
+		{
+			if ( IsValid( clientAG ) )
+			{
+				clientAG.Destroy()
+			}
+		}
+	)
+
+	WaitForever()
+}
+
+
+#endif // #if CLIENT
+
+bool function IsReinforceable( entity ent )
+{
+	if( !IsValid( ent ) )
+		return false
+
+	if( !IsBarricadableDoor( ent ) && !IsRebuildableDoor( ent ) )
+		return false
+
+	if( StatusEffect_GetTimeRemaining( ent, eStatusEffect.reinforced_blocked) > 0.0 )
+		return false
+
+	return true
+}
+
+bool function IsBarricadableDoor( entity door )
+{
+	//if( IsValid( door ) )
+	//	return IsCodeDoor( door ) && !door.GetDoorIsReinforced() && ! door.GetDoorIsLocked()
+
+	return false
+}
+
+bool function IsRebuildableDoor( entity door )
+{
+	if( IsValid( door ) )
+		return ( door.GetTargetName() == PASSIVE_REINFORCE_REBUILT_DOOR_SCRIPT_NAME && !IsReinforced( door ) )
+
+	return false
+}
+
+bool function IsRebuiltDoor( entity door )
+{
+	if( IsValid( door ) )
+		return ( door.GetTargetName() == PASSIVE_REINFORCE_REBUILT_DOOR_SCRIPT_NAME && IsReinforced( door ) )
+
+	return false
+}
+
+bool function CanPlayerReinforce( entity player )
+{
+	if( !IsValid( player ) || !player.IsPlayer() || !PlayerHasPassive( player, ePassives.PAS_LOCKDOWN ) || Bleedout_IsBleedingOut( player ) )
+		return false
+
+	return true
+}
+
+void function OnDoorSpawned( entity ent )
+{
+	//AddEntityDestroyedCallback( ent, OnDoorDestroyed )
+	AddCallback_OnUseEntity_ClientServer( ent, OnCodeDoorUsed )
+}
+
+void function OnRebuiltDoorSpawned( entity ent )
+{
+	//AddEntityDestroyedCallback( ent, OnDoorDestroyed )
+	AddCallback_OnUseEntity_ClientServer( ent, OnRebuiltDoorUsed )
+}
+
+#if SERVER
+entity function PasReinforce_OnDoorDestroyed( entity ent )
+{
+	if( ent.e.lastDeathTime <= 0 )
+		return null
+
+	vector angles = ent.e.spawnAngles
+	vector pos = ent.GetOrigin()
+
+	entity doorProxy = CreatePropScript( PASSIVE_REINFORCE_REBUILT_DOOR_MODEL, pos, angles, SOLID_VPHYSICS )
+	doorProxy.RemoveFromAllRealms()
+	doorProxy.AddToOtherEntitysRealms( ent )
+	OnRebuiltDoorSpawned( doorProxy )
+	SetTargetName( doorProxy, PASSIVE_REINFORCE_REBUILT_DOOR_SCRIPT_NAME )
+	doorProxy.e.spawnAngles = angles
+	doorProxy.e.noFriendlyFireProtection = true
+	doorProxy.DisableHibernation()
+	doorProxy.SetUsable()
+	doorProxy.AllowMantle()
+	doorProxy.SetUsableByGroup( "pilot" )
+	doorProxy.AddUsableValue( USABLE_NO_FOV_REQUIREMENTS )
+	doorProxy.e.canBurn = true
+	doorProxy.SetTouchTriggers( true )
+	AddEntityCallback_OnPostDamaged( doorProxy, RebuiltDoor_OnDamage )
+	MarkEntForCleanupOnRoundEnd( doorProxy )
+	AddToRebuiltDoorArray( doorProxy )
+	doorProxy.SetScriptPropFlags( SPF_BLOCKS_AI_NAVIGATION )
+
+	entity oppoDoor = PassiveReinforce_GetOppositeDoor( ent )
+	if( IsValid( oppoDoor ) )
+	{
+		oppoDoor.e.oppositeDoorForReinforcement = doorProxy
+		doorProxy.e.oppositeDoorForReinforcement = oppoDoor
+	}
+
+	ResetRebuiltDoor( doorProxy )
+
+	return doorProxy
+}
+#endif
+
+void function OnCodeDoorUsed( entity door, entity player, int useInputFlags )
+{
+	if( player.p.isInExtendedUse )
+		return
+
+	if( IsBitFlagSet( useInputFlags, USE_INPUT_ALT ) && CanPlayerReinforce( player ) && IsReinforceable( door ) )
+		DoExtendedUseForReinforce( door, player, useInputFlags )
+	//else if( IsBitFlagSet( ( useInputFlags, USE_INPUT_DEFAULT ) && IsReinforced( door ) &&  !IsEnemyTeam( player.GetTeam(), door.GetTeam() ) )
+	//	BreakReinforcement( door, player, useInputFlags )
+}
+
+void function DoExtendedUseForReinforce( entity door, entity player, int useInputFlags )
+{
+	thread (void function() : ( door, player ) {
+		ExtendedUseSettings settings
+		settings.duration = file.useDuration
+		settings.disableWeaponTypes = WPT_TACTICAL | WPT_ULTIMATE | WPT_CONSUMABLE
+		settings.loopSound = PASSIVE_REINFORCE_USE_LOOP_SFX
+		settings.successSound = ""
+		settings.useInputFlag = IN_USE_ALT
+		#if SERVER
+			settings.successFunc = void function( entity door, entity player, ExtendedUseSettings settings )
+			{
+				CompleteReinforceDoor( player, door, player.GetTeam() )
+			}
+
+			settings.failureFunc = void function( entity door, entity player, ExtendedUseSettings settings )
+			{
+				StopSoundOnEntity( door, GetReinforcementSound( door ) )
+				entity oppositeDoor = PassiveReinforce_GetOppositeDoor( door )
+				if ( IsValid( oppositeDoor ) && !IsReinforced( oppositeDoor ) )
+				{
+					StopSoundOnEntity( oppositeDoor, GetReinforcementSound( door )  )
+				}
+				if( IsValid( player ) )
+					player.Signal( PASSIVE_REINFORCE_USE_FAIL )
+			}
+
+			settings.startFunc = void function( entity door, entity player, ExtendedUseSettings settings )
+			{
+				player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, PASSIVE_REINFORCE_WEAPON_NAME )
+				thread SwapBackDelay( player )
+				EmitSoundOnEntity( door, GetReinforcementSound( door )  )
+				entity oppositeDoor = PassiveReinforce_GetOppositeDoor( door )
+				if ( IsValid( oppositeDoor ) && !IsReinforced( oppositeDoor ) )
+				{
+					EmitSoundOnEntity( oppositeDoor, GetReinforcementSound( door )  )
+				}
+				thread LinkFX( player, door )
+			}
+
+			settings.endFunc = void function( entity door, entity player, ExtendedUseSettings settings )
+			{
+				if( IsValid( player ) )
+				{
+					player.Signal( PASSIVE_REINFORCE_USE_END )
+				}
+			}
+		#elseif CLIENT
+			settings.displayRui = $"ui/extended_use_hint.rpak"
+			settings.holdHint = "%use_alt%"
+			settings.displayRuiFunc = void function( entity door, entity player, var rui, ExtendedUseSettings settings )
+			{
+				RuiSetString( rui, "holdButtonHint", settings.holdHint )
+				RuiSetString( rui, "hintText", settings.hint )
+				RuiSetGameTime( rui, "startTime", Time() )
+				RuiSetGameTime( rui, "endTime", Time() + settings.duration )
+			}
+			settings.icon = $""
+			settings.hint = GetReinforcementUseText( door )
+		#endif
+
+		#if CLIENT
+			EndSignal( clGlobal.levelEnt, "ClearSwapOnUseThread" )
+		#endif
+		EndSignal( door, "OnDestroy" )
+		EndSignal( player, PASSIVE_REINFORCE_REMOVED_SIGNAL )
+		EndSignal( player, "BleedOut_OnStartDying" )
+		waitthread ExtendedUse( door, player, settings )
+	})()
+}
+
+void function BreakReinforcement( entity door )
+{
+	#if SERVER
+		UnsetReinforced( door )
+		if( door.GetTargetName() == PASSIVE_REINFORCE_REBUILT_DOOR_SCRIPT_NAME )
+		{
+			EmitSoundOnEntity( door, PASSIVE_REINFORCE_BREAK_REBUILT_SFX )
+			door.Signal( PASSIVE_REINFORCE_RESET_REBUILT_DOOR_SIGNAL )
+		}
+	#endif
+}
+
+string function GetReinforcementSound( entity door )
+{
+	if( IsValid( door ) && IsCodeDoor( door ) )
+		return PASSIVE_REINFORCE_REINFORCED_SFX
+
+	return PASSIVE_REINFORCE_REBUILT_SFX
+}
+
+string function GetReinforcementUseText( entity door )
+{
+	if( IsValid( door ) && IsCodeDoor( door ) )
+		return "#ABL_REINFORCE_USE_LONG"
+
+	return "#ABL_REINFORCE_USE_REBUILD"
+}
+
+bool function IsReinforced( entity ent )
+{
+	if( !IsValid( ent ) )
+		return false
+
+	return ( StatusEffect_HasSeverity( ent, eStatusEffect.reinforced ) )
+}
+
+void function OnRebuiltDoorUsed( entity door, entity player, int useInputFlags )
+{
+	if( player.p.isInExtendedUse )
+		return
+
+	if( IsBitFlagSet( useInputFlags, USE_INPUT_ALT ) && CanPlayerReinforce( player ) && IsReinforceable( door ) )
+		DoExtendedUseForReinforce( door, player, useInputFlags )
+	else if( IsBitFlagSet( useInputFlags, USE_INPUT_DEFAULT ) && IsReinforced( door ) &&  !IsEnemyTeam( player.GetTeam(), door.GetTeam() ) )
+	{
+	#if SERVER
+		BreakRebuiltDoor( door )
+	#endif
+	}
+#if CLIENT
+	//Make sure we can reload on controller if we are not able to 'use' the door
+	else if( IsBitFlagSet( useInputFlags, USE_INPUT_DEFAULT ) && ( !IsReinforced( door ) || IsEnemyTeam( player.GetTeam(), door.GetTeam() ) ) )
+	{
+
+			if ( IsControllerModeActive() )
+			{
+				thread IssueReloadCommand( player )
+			}
+
+	}
+#endif
+}
+
+#if SERVER
+void function BreakRebuiltDoor( entity door )
+{
+	BreakReinforcement( door )
+	entity oppositeDoor = PassiveReinforce_GetOppositeDoor( door )
+	if ( IsValid( oppositeDoor ) && IsReinforced( oppositeDoor ) && oppositeDoor.GetTargetName() == PASSIVE_REINFORCE_REBUILT_DOOR_SCRIPT_NAME  )
+	{
+		BreakReinforcement( oppositeDoor )
+	}
+}
+void function SwapBackDelay( entity player )
+{
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+	EndSignal( player, "BleedOut_OnStartDying" )
+	EndSignal( player, PASSIVE_REINFORCE_USE_FAIL )
+
+	OnThreadEnd( void function() : ( player ) {
+		if( IsValid( player ) )
+		{
+			SwapToLastEquippedPrimary( player )
+		}
+	} )
+
+	wait file.animDuration
+}
+
+void function BlockReinforcementOnDoorway( entity door )
+{
+	if( IsValid( door ) )
+	{
+		StatusEffect_StopAllOfType( door, eStatusEffect.reinforced_blocked )
+		StatusEffect_AddTimed( door, eStatusEffect.reinforced_blocked, 1.0, file.postDestroyReinforcementDelay, 0.0 )
+
+		entity oppositeDoor = PassiveReinforce_GetOppositeDoor( door )
+		if( IsValid( oppositeDoor ) )
+		{
+			StatusEffect_StopAllOfType( oppositeDoor, eStatusEffect.reinforced_blocked )
+			StatusEffect_AddTimed( oppositeDoor, eStatusEffect.reinforced_blocked, 1.0, file.postDestroyReinforcementDelay, 0.0 )
+		}
+	}
+}
+
+void function ManageReinforcedDoors( entity player, entity door )
+{
+	if( !IsValid( player ) || !IsValid( door ) )
+		return
+
+	if( !( player in file.reinforcedDoors ) )
+		file.reinforcedDoors[ player ] <- []
+
+	entity oppoDoor = PassiveReinforce_GetOppositeDoor( door )
+	if( file.reinforcedDoors[ player ].contains( door ) )
+		return
+
+	file.reinforcedDoors[ player ].append( door )
+
+	for ( int i = file.reinforcedDoors[ player ].len() - 1; i >= 0 ; i-- )
+	{
+		entity loopDoor = file.reinforcedDoors[ player ][ i ]
+		if( !IsValid( loopDoor ) || !IsReinforced( loopDoor ) )
+		{
+			file.reinforcedDoors[ player ].remove( i )
+		}
+	}
+
+	int doorwayCount = 0
+	array< entity > excluded
+	for( int i = 0; i < file.reinforcedDoors[ player ].len(); i++ )
+	{
+		entity loopDoor = file.reinforcedDoors[ player ][ i ]
+		entity loopOppoDoor = PassiveReinforce_GetOppositeDoor( loopDoor )
+		if( IsValid( loopDoor ) && !excluded.contains( loopDoor ) )
+		{
+			doorwayCount++
+			if( loopOppoDoor != null )
+				excluded.append( loopOppoDoor )
+		}
+	}
+
+	if( doorwayCount > file.maxDoorways )
+	{
+		entity loopDoor = file.reinforcedDoors[ player ][ 0 ]
+		BreakReinforcement( loopDoor )
+		entity loopOppoDoor = PassiveReinforce_GetOppositeDoor( loopDoor )
+		if( IsValid( loopOppoDoor ) )
+			BreakReinforcement( loopOppoDoor )
+	}
+}
+
+entity function PassiveReinforce_GetOppositeDoor( entity door )
+{
+	if( !IsValid( door ) && !IsInvalidButMemberVarsStillValid( door ) )
+		return null
+
+	if( IsValid( door.e.oppositeDoorForReinforcement ) )
+	{
+		return door.e.oppositeDoorForReinforcement
+	}
+	else if( IsCodeDoor( door ) )
+	{
+		entity oppoDoor = door.GetOppositeDoor()
+		if( IsValid( oppoDoor ) )
+		{
+			return oppoDoor
+		}
+	}
+
+	return null
+}
+
+void function InitRebuiltDoorArray()
+{
+	file.rebuiltDoorScriptManagedArray = CreateScriptManagedEntArray()
+}
+
+void function AddToRebuiltDoorArray( entity ent )
+{
+	AddToScriptManagedEntArray( file.rebuiltDoorScriptManagedArray, ent )
+}
+
+array< entity > function GetRebuiltDoorArray()
+{
+	return GetScriptManagedEntArray( file.rebuiltDoorScriptManagedArray )
+}
+
+void function LinkFX( entity player, entity ent )
+{
+	EndSignal( player, "OnDestroy" )
+	EndSignal( ent, "OnDestroy" )
+	EndSignal( player, PASSIVE_REINFORCE_REMOVED_SIGNAL )
+	EndSignal( player, PASSIVE_REINFORCE_USE_END )
+
+	int teamId = player.GetTeam()
+	int attach    = player.LookupAttachment( "CHESTFOCUS" )
+	vector chestOrigin = player.GetAttachmentOrigin( attach )
+	string stopType = "destroyImmediately"
+	entity linkFX = StartParticleEffectOnEntity_ReturnEntity( player, GetParticleSystemIndex( PASSIVE_REINFORCE_LINK_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, attach )
+	linkFX.SetStopType( stopType )
+	entity linkFX2 = null
+	entity friendlytransitionFX = null
+	entity friendlytransitionFX2 = null
+	entity enemytransitionFX = null
+	entity enemytransitionFX2 = null
+	entity oppositeDoor = null
+	if( IsCodeDoor( ent ) || IsRebuildableDoor( ent ))
+	{
+
+		friendlytransitionFX = StartParticleEffectOnEntityWithPos_ReturnEntity( ent, GetParticleSystemIndex( PASSIVE_REINFORCE_TRANSITION_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, < 0, 30, 48 >, ZERO_VECTOR )
+		friendlytransitionFX.SetStopType( stopType )
+		EffectSetControlPointVector( friendlytransitionFX, 2, PASSIVE_REINFORCE_FRIENDLY_DOOR_COLOR )
+		friendlytransitionFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+		SetTeam( friendlytransitionFX, teamId )
+
+		enemytransitionFX = StartParticleEffectOnEntityWithPos_ReturnEntity( ent, GetParticleSystemIndex( PASSIVE_REINFORCE_TRANSITION_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, < 0, 30, 48 >, ZERO_VECTOR )
+		enemytransitionFX.SetStopType( stopType )
+		EffectSetControlPointVector( enemytransitionFX, 2, PASSIVE_REINFORCE_ENEMY_DOOR_COLOR )
+		enemytransitionFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
+		SetTeam( enemytransitionFX, teamId )
+
+
+		oppositeDoor = PassiveReinforce_GetOppositeDoor( ent )
+		if ( IsValid( oppositeDoor ) && !IsReinforced( oppositeDoor ) )
+		{
+			linkFX2 = StartParticleEffectOnEntity_ReturnEntity( player, GetParticleSystemIndex( PASSIVE_REINFORCE_LINK_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, attach )
+			linkFX2.SetStopType( stopType )
+			friendlytransitionFX2 = StartParticleEffectOnEntityWithPos_ReturnEntity( oppositeDoor, GetParticleSystemIndex( PASSIVE_REINFORCE_TRANSITION_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, < 0, 30, 48 >, ZERO_VECTOR )
+			friendlytransitionFX2.SetStopType( stopType )
+			EffectSetControlPointVector( friendlytransitionFX2, 2, PASSIVE_REINFORCE_FRIENDLY_DOOR_COLOR )
+			friendlytransitionFX2.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+			SetTeam( friendlytransitionFX2, teamId )
+
+			enemytransitionFX2 = StartParticleEffectOnEntityWithPos_ReturnEntity( oppositeDoor, GetParticleSystemIndex( PASSIVE_REINFORCE_TRANSITION_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, < 0, 30, 48 >, ZERO_VECTOR )
+			enemytransitionFX2.SetStopType( stopType )
+			EffectSetControlPointVector( enemytransitionFX2, 2, PASSIVE_REINFORCE_ENEMY_DOOR_COLOR )
+			enemytransitionFX2.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
+			SetTeam( enemytransitionFX2, teamId )
+		}
+	}
+
+	OnThreadEnd( void function() : ( player, linkFX, linkFX2, friendlytransitionFX, friendlytransitionFX2, enemytransitionFX, enemytransitionFX2, ent ) {
+		string stopType = "playEndcap"
+		bool reinforced = IsReinforced( ent )
+
+		if( IsValid( linkFX ) )
+		{
+			if( reinforced )
+			{
+				linkFX.SetStopType( stopType )
+				thread DelayedDestroy( linkFX, 0.01 )
+			}
+			else
+			{
+				EffectStop( linkFX )
+			}
+		}
+		if( IsValid( linkFX2 ) )
+		{
+			if( reinforced )
+			{
+				linkFX2.SetStopType( stopType )
+				thread DelayedDestroy( linkFX2, 0.01 )
+			}
+			else
+			{
+				EffectStop( linkFX2 )
+			}
+		}
+		if( IsValid( friendlytransitionFX ) )
+		{
+			if( reinforced )
+			{
+				friendlytransitionFX.SetStopType( stopType )
+				thread DelayedDestroy( friendlytransitionFX, 0.01 )
+			}
+			else
+			{
+				EffectStop( friendlytransitionFX )
+			}
+		}
+		if( IsValid( friendlytransitionFX2 ) )
+		{
+			if( reinforced )
+			{
+				friendlytransitionFX2.SetStopType( stopType )
+				thread DelayedDestroy( friendlytransitionFX2, 0.01 )
+			}
+			else
+			{
+				EffectStop( friendlytransitionFX2 )
+			}
+		}
+		if( IsValid( enemytransitionFX ) )
+		{
+			if( reinforced )
+			{
+				enemytransitionFX.SetStopType( stopType )
+				thread DelayedDestroy( enemytransitionFX, 0.01 )
+			}
+			else
+			{
+				EffectStop( enemytransitionFX )
+			}
+		}
+		if( IsValid( enemytransitionFX2 ) )
+		{
+			if( reinforced )
+			{
+				enemytransitionFX2.SetStopType( stopType )
+				thread DelayedDestroy( enemytransitionFX2, 0.01 )
+			}
+			else
+			{
+				EffectStop( enemytransitionFX2 )
+			}
+		}
+	} )
+
+	while( true )
+	{
+		if( IsValid( linkFX ) )
+		{
+			if( IsCodeDoor( ent )  )
+			{
+				EffectSetControlPointVector( linkFX, 1, ent.GetOrigin() + ( ent.GetUpVector() * 55 )  + ( ent.GetRightVector() * 1 ) )
+				EffectSetControlPointVector( linkFX, 2, ent.GetOrigin() + ( ent.GetUpVector() * 55 )  + ( ent.GetRightVector() * -60 ) )
+				if( IsValid( linkFX2 )  && IsValid( oppositeDoor ) )
+				{
+					EffectSetControlPointVector( linkFX2, 1, oppositeDoor.GetOrigin() + ( oppositeDoor.GetUpVector() * 55 )  + ( oppositeDoor.GetRightVector() * 1 ) )
+					EffectSetControlPointVector( linkFX2, 2, oppositeDoor.GetOrigin() + ( oppositeDoor.GetUpVector() * 55 )  + ( oppositeDoor.GetRightVector() * -60 ) )
+				}
+			}
+			else if( ent.GetTargetName() == PASSIVE_REINFORCE_REBUILT_DOOR_SCRIPT_NAME )
+			{
+				EffectSetControlPointVector( linkFX, 1, ent.GetOrigin() + ( ent.GetUpVector() * 55 )  + ( ent.GetRightVector() * 1 ) )
+				EffectSetControlPointVector( linkFX, 2, ent.GetOrigin() + ( ent.GetUpVector() * 55 )  + ( ent.GetRightVector() * -60 ) )
+			}
+			else if( ent.GetScriptName() == BASE_WALL_SCRIPT_NAME )
+			{
+				EffectSetControlPointVector( linkFX, 1, ent.GetOrigin() + ( ent.GetUpVector() * 35 ) )
+			}
+			else if( ent.GetScriptName() == TROPHY_SYSTEM_NAME )
+			{
+				EffectSetControlPointVector( linkFX, 1, ent.GetOrigin() + ( ent.GetUpVector() * 30 ) )
+			}
+			else
+			{
+				EffectSetControlPointVector( linkFX, 1, ent.GetOrigin() + ( ent.GetUpVector() * 50 ) )
+			}
+		}
+
+		WaitFrame()
+	}
+}
+void function SetReinforced( entity ent )
+{
+	if( !IsValid( ent ) )
+		return
+
+	StatusEffect_AddEndless( ent, eStatusEffect.reinforced, 1.0 )
+}
+
+void function UnsetReinforced( entity ent )
+{
+	if( !IsValid( ent ) )
+		return
+
+	StatusEffect_StopAllOfType( ent, eStatusEffect.reinforced )
+}
+
+void function ReinforceProp( entity ent )
+{
+	if( !IsValid( ent ) )
+		return
+
+	EndSignal( ent,"OnDestroy" )
+
+	SetReinforced( ent )
+	vector offset
+	if( ent.GetScriptName() == BASE_WALL_SCRIPT_NAME )
+		offset = < 0, 0, 35 >
+	else if( ent.GetScriptName() == TROPHY_SYSTEM_NAME )
+		offset = < 0, 0, 30 >
+	else if( ent.GetScriptName() == BLACK_MARKET_SCRIPTNAME )
+		offset = < 0, 0, 50 >
+
+
+	entity endFX = StartParticleEffectOnEntityWithPos_ReturnEntity( ent, GetParticleSystemIndex( RESIN_REINFORCE_PROP_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, offset, ZERO_VECTOR )
+
+	EmitSoundOnEntity( ent, PASSIVE_REINFORCE_REINFORCED_SFX )
+	OnThreadEnd(
+		function () : ( ent, endFX )
+		{
+			if ( IsValid( endFX ) )
+			{
+				EffectStop( endFX )
+			}
+			if ( IsValid( ent ) )
+			{
+				UnsetReinforced( ent )
+			}
+		}
+	)
+
+	WaitForever()
+}
+
+entity function RebuildRealDoor( entity player, entity door, int team, entity otherDoor = null )
+{
+	entity newDoor = ReplaceDoor( door, otherDoor )
+
+	if ( !IsValid( newDoor ) )
+		return null
+
+	entity oppositeDoor = door.e.oppositeDoorForReinforcement
+	newDoor.e.oppositeDoorForReinforcement = oppositeDoor
+	if ( IsValid( oppositeDoor ) )
+		oppositeDoor.e.oppositeDoorForReinforcement = newDoor
+
+	door.Destroy()
+
+	thread ReinforceDoorThread( player, newDoor, team )
+
+	return newDoor
+}
+
+void function RebuildDoorThread( entity player, entity door, int team )
+{
+	Assert ( IsNewThread(), "Must be threaded off" )
+
+	EndSignal( door, "OnDestroy" )
+	EndSignal( player, "SquadEliminated" )
+	EndSignal( player, "OnDestroy" )
+
+	entity friendlyFX = StartParticleEffectOnEntityWithPos_ReturnEntity( door, GetParticleSystemIndex( PASSIVE_REINFORCE_REBUILD_DOOR_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, < 0, 30, 48 >, ZERO_VECTOR )
+	EffectSetControlPointVector( friendlyFX, 2, PASSIVE_REINFORCE_FRIENDLY_DOOR_COLOR )
+	SetForceDrawWhileParented( friendlyFX, true )
+	friendlyFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+	SetTeam( friendlyFX, team )
+
+	entity enemyFX = StartParticleEffectOnEntityWithPos_ReturnEntity( door, GetParticleSystemIndex( PASSIVE_REINFORCE_REBUILD_DOOR_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, < 0, 30, 48 >, ZERO_VECTOR )
+	EffectSetControlPointVector( enemyFX, 2, PASSIVE_REINFORCE_ENEMY_DOOR_COLOR )
+	SetForceDrawWhileParented( enemyFX, true )
+	enemyFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
+	SetTeam( enemyFX, team )
+
+
+
+	//EmitSoundOnEntity( door, PASSIVE_REINFORCE_REBUILT_SFX )
+	SetReinforced( door )
+	SetTeam( door, team )
+	door.SetCanBeMeleed( true )
+	SetVisibleEntitiesInConeQueriableEnabled( door, true )
+	door.Solid()
+	door.SetTakeDamageType( DAMAGE_EVENTS_ONLY )
+	door.EnableAttackableByAI( AI_PRIORITY_NO_THREAT, 0, AI_AP_FLAG_NONE )
+
+	EndSignal( door, "OnDestroy" )
+	EndSignal( door, PASSIVE_REINFORCE_RESET_REBUILT_DOOR_SIGNAL )
+
+	if( !file.idleUsesAmbientGeneric )
+		EmitSoundOnEntity( door, PASSIVE_REINFORCE_IDLE_SFX )
+
+	ManageReinforcedDoors( player, door )
+
+	OnThreadEnd(
+		function () : ( player, friendlyFX, enemyFX, door )
+		{
+			if ( IsValid( friendlyFX ) )
+			{
+				EffectStop( friendlyFX )
+			}
+
+			if ( IsValid( enemyFX ) )
+			{
+				EffectStop( enemyFX )
+			}
+
+			if( IsValid( door ) )
+			{
+				if( !file.idleUsesAmbientGeneric )
+					StopSoundOnEntity( door, PASSIVE_REINFORCE_IDLE_SFX )
+				StartParticleEffectOnEntityWithPos_ReturnEntity( door, GetParticleSystemIndex( PASSIVE_REINFORCE_DESTROY_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, < 0, 30, 48 >, ZERO_VECTOR )
+				ResetRebuiltDoor( door )
+				door.DisableAttackableByAI()
+			}
+
+			if( IsValid( player ) && file.reinforcedDoors[ player ].contains( door ) )
+				file.reinforcedDoors[ player ].removebyvalue( door )
+		}
+	)
+
+	WaitForever()
+}
+
+void function ReinforceCodeDoor( entity door, int team )
+{
+	if( !IsReinforceable( door ) )
+		return
+
+	thread ReinforceDoorThread( null, door, team )
+
+	entity oppositeDoor = door.GetOppositeDoor()
+	if ( IsValid( oppositeDoor ) && IsReinforceable( oppositeDoor )  )
+	{
+		thread ReinforceDoorThread( null, oppositeDoor, team )
+	}
+}
+
+void function CompleteReinforceDoor( entity player, entity door, int team )
+{
+	if( !IsReinforceable( door ) )
+		return
+
+	if( !IsValid( player ) )
+		return
+
+	entity newDoor = null
+	if( IsCodeDoor( door ) )
+	{
+		thread ReinforceDoorThread( player, door, team )
+	}
+	else if( IsRebuildableDoor( door ) )
+	{
+		if( PlayerHasPassive( player, ePassives.PAS_PAS_UPGRADE_ONE ) ) // upgrade_catalyst_pas_rebuild_door
+			newDoor = RebuildRealDoor( player, door, team )
+		else
+			thread RebuildDoorThread( player, door, team )
+	}
+
+	entity oppositeDoor = PassiveReinforce_GetOppositeDoor( door )
+	if ( IsValid( oppositeDoor ) && IsReinforceable( oppositeDoor )  )
+	{
+		if( IsCodeDoor( oppositeDoor ) )
+		{
+			thread ReinforceDoorThread( player, oppositeDoor, team )
+		}
+		else if( IsRebuildableDoor( oppositeDoor ) )
+		{
+			if( PlayerHasPassive( player, ePassives.PAS_PAS_UPGRADE_ONE ) ) // upgrade_catalyst_pas_rebuild_door
+				entity newOppositeDoor = RebuildRealDoor( player, oppositeDoor, team, newDoor )
+			else
+				thread RebuildDoorThread( player, oppositeDoor, team )
+		}
+	}
+
+	vector poiOrigin = door.GetOrigin() - ( AnglesToRight( door.e.spawnAngles ) * 27 ) + ( AnglesToUp( door.e.spawnAngles ) * 32 )
+	if( IsValid( oppositeDoor ) )
+	{
+		poiOrigin = door.GetOrigin() - ( AnglesToRight( door.e.spawnAngles ) * 60 ) + ( AnglesToUp( door.e.spawnAngles ) * 32 )
+	}
+	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CATALYST_BARRICADE, player, poiOrigin, team, player )
+}
+
+void function ReinforceDoorThread( entity player, entity door, int team )
+{
+	Assert ( IsNewThread(), "Must be threaded off" )
+
+	EndSignal( door, "OnDoorReset" )
+	EndSignal( door, "OnDestroy" )
+	EndSignal( player, "SquadEliminated" )
+	EndSignal( player, "OnDestroy" )
+
+	entity friendlyFX = StartParticleEffectOnEntityWithPos_ReturnEntity( door, GetParticleSystemIndex( PASSIVE_REINFORCE_REINFORCE_DOOR_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, < 0, 30, 48 >, ZERO_VECTOR )
+	EffectSetControlPointVector( friendlyFX, 2, PASSIVE_REINFORCE_FRIENDLY_DOOR_COLOR )
+	friendlyFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+	SetTeam( friendlyFX, team )
+
+	entity enemyFX = StartParticleEffectOnEntityWithPos_ReturnEntity( door, GetParticleSystemIndex( PASSIVE_REINFORCE_REINFORCE_DOOR_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, < 0, 30, 48 >, ZERO_VECTOR )
+	EffectSetControlPointVector( enemyFX, 2, PASSIVE_REINFORCE_ENEMY_DOOR_COLOR )
+	enemyFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
+	SetTeam( enemyFX, team )
+
+	SetReinforced( door )
+	ReinforceDoor( door )
+	SetTeam( door, team )
+
+	if( !file.idleUsesAmbientGeneric )
+		EmitSoundOnEntity( door, PASSIVE_REINFORCE_IDLE_SFX )
+
+	ManageReinforcedDoors( player, door )
+
+	StatsHook_CatalystDoorsBarricaded( player )
+
+	OnThreadEnd(
+		function () : ( player, friendlyFX, enemyFX, door )
+		{
+			if ( IsValid( friendlyFX ) )
+			{
+				EffectStop( friendlyFX )
+			}
+
+			if ( IsValid( enemyFX ) )
+			{
+				EffectStop( enemyFX )
+			}
+
+			if ( IsValid( door ) )
+			{
+				if( !file.idleUsesAmbientGeneric )
+					StopSoundOnEntity( door, PASSIVE_REINFORCE_IDLE_SFX )
+				EmitSoundOnEntity( door, PASSIVE_REINFORCE_OPEN_REINFORCED_SFX )
+				SetTeam( door, TEAM_UNASSIGNED )
+				UnReinforceDoor( door )
+				UnsetReinforced( door )
+				BlockReinforcementOnDoorway( door )
+			}
+
+			if( IsValid( player ) && file.reinforcedDoors[ player ].contains( door ) )
+				file.reinforcedDoors[ player ].removebyvalue( door )
+		}
+	)
+
+	while( true )
+	{
+		if( !IsReinforced( door ) )
+			break
+		WaitFrame()
+	}
+
+	StartParticleEffectOnEntityWithPos_ReturnEntity( door, GetParticleSystemIndex( PASSIVE_REINFORCE_DESTROY_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, < 0, 30, 48 >, ZERO_VECTOR )
+}
+
+void function RebuiltDoor_OnDamage( entity door, var damageInfo )
+{
+	entity attacker				= DamageInfo_GetAttacker( damageInfo )
+	entity inflictor			= DamageInfo_GetInflictor( damageInfo )
+	float damageInflicted		= DamageInfo_GetDamage( damageInfo )
+	entity weapon				= DamageInfo_GetWeapon( damageInfo )
+	int damageSourceId 			= DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	bool isMeleeDamage			= bool(DamageInfo_GetCustomDamageType( damageInfo ) & DF_MELEE)
+	bool damagedByExplosives	= false
+	bool destroyOtherDoor		= false
+	bool damageOtherDoor		= false
+
+	if ( IsValid( attacker ) && attacker.IsNPC() && isMeleeDamage && damageInflicted > 0.0 )
+	{
+		if (attacker == inflictor)
+		{
+			damageInflicted = float( door.GetMaxHealth() ) / 3
+			damageOtherDoor = true
+		}
+	}
+	else if ( GetCurrentPlaylistVarBool( "blockable_door_can_be_hurt_by_special_kick", true ) && IsValid( weapon ) && weapon.HasMod( "proto_door_kick" ) )
+	{
+		int guaranteedKickCount = GetCurrentPlaylistVarInt( "blockable_door_guaranteed_kick_kill_count", 2 )
+		damageInflicted = float( door.GetMaxHealth() ) / (float( guaranteedKickCount ) - 0.5)
+
+
+                           
+                                                                  
+    
+                                                  
+                           
+    
+        
+
+		if ( IsPVEMode() )
+		{
+			if ( IsDoorBreachable( door ) )
+			{
+				//if it's locked and breachable, destroy it
+				damageInflicted = float( door.GetMaxHealth() )
+				destroyOtherDoor = true
+			}
+			else if ( door.GetDoorIsLocked() )
+			{
+				//if it's locked and not breachable, don't allow it to open (in PVE at least)
+				DamageInfo_SetDamage( damageInfo, 0 )
+				return
+			}
+		}
+	}
+	else if ( ShouldDestroyDoor( attacker, weapon, door, damageInflicted ) )
+	{
+		damageInflicted = float( door.GetMaxHealth() )
+		destroyOtherDoor = true
+	}
+	else if ( isMeleeDamage && GetCurrentPlaylistVarBool( "blockable_door_can_be_hurt_by_melee", false ) )
+	{
+		int guaranteedMeleeCount = GetCurrentPlaylistVarInt( "blockable_door_guaranteed_melee_kill_count", 2 )
+		damageInflicted = float( door.GetMaxHealth() ) / (float( guaranteedMeleeCount ) - 0.5)
+	}
+                                                         
+	else if ( IsPlayerShadowZombie( attacker ))
+	{
+		damageInflicted = float( door.GetMaxHealth() / 2 )
+	}
+      
+	else if ( bool(DamageInfo_GetCustomDamageType( damageInfo ) & DF_EXPLOSION) )
+	{
+		damageInflicted *= GetCurrentPlaylistVarFloat( "blockable_door_explosive_damage_mutiplier", 1.0 )
+		damagedByExplosives = true
+
+		if ( bool(DamageInfo_GetCustomDamageType( damageInfo ) & DF_GIB) )
+		{
+			damageInflicted = float( door.GetMaxHealth() )
+		}
+	}
+	else if ( bool(DamageInfo_GetDamageType( damageInfo ) & DMG_BURN ) )
+	{
+		damagedByExplosives = true
+	}
+	else if ( !GetCurrentPlaylistVarBool( "blockable_door_can_be_hurt_by_normal_weapons", false ) )
+	{
+
+		if ( IsValid( weapon ) )
+		{
+			var weaponName = DamageInfo_GetWeapon( damageInfo ).GetWeaponClassName()
+			if ( weaponName == "mp_weapon_dragon_lmg" )
+			{
+				if ( weapon.HasMod( DRAGON_LMG_ENERGIZED_MOD ) )
+				{
+					damageInflicted = float( door.GetMaxHealth() / 3 )
+					DamageInfo_SetDamage( damageInfo, damageInflicted )
+				}
+
+				else
+				{
+					damageInflicted = 0
+				}
+			}
+			else
+			{
+				damageInflicted = 0
+			}
+		}
+		else
+		{
+			damageInflicted = 0
+		}
+	}
+
+	DamageInfo_SetDamage( damageInfo, damageInflicted )
+	if ( damageInflicted <= 0 )
+		return // Early out if damage was nullified
+
+	if ( damagedByExplosives && damageInflicted >= door.GetHealth() && door.GetHealth() > 1 )
+	{
+		damageInflicted = float( door.GetHealth() - 1 )
+		if ( damageInflicted < 0 )
+			damageInflicted = 0
+		DamageInfo_SetDamage( damageInfo, damageInflicted )
+		// delay the last point of damage one frame so that the door blocks damage to other entities
+		thread FinishDoorExplosiveDamage( door, damageInfo )
+	}
+
+	float newHealth = door.GetHealth() - damageInflicted
+
+	vector doorAlong  = -door.GetRightVector()
+	vector doorPerp   = door.GetForwardVector()
+	vector doorUp     = door.GetUpVector()
+	vector doorCenter = door.GetOrigin() + 30.0 * doorAlong + 54.0 * doorUp
+	vector damageDir = DamageInfo_GetDamageForceDirection( damageInfo )
+	if ( damageDir.LengthSqr() == 0 && IsValid( attacker ) )
+		damageDir = DamageInfo_GetDamagePosition( damageInfo ) - (IsValid( inflictor ) ? inflictor : attacker).EyePosition()
+	vector effectDir = doorPerp * (DotProduct( doorPerp, damageDir ) > 0 ? 1.0 : -1.0)
+
+	if ( newHealth > 0 )
+	{
+		//StartParticleEffectInWorld( GetParticleSystemIndex( BLOCKABLE_DOOR_DAMAGED_FX ), doorCenter, VectorToAngles( effectDir ) )
+
+		if( damageSourceId == eDamageSourceId.mp_weapon_concussive_breach )
+		{
+			EmitSoundOnEntity( door, "Door_Impact_Breach_Maggie_Drill" )
+		}
+		else
+		{
+			EmitSoundOnEntity( door, PASSIVE_REINFORCE_REBUILT_IMPACT_SFX )
+		}
+		door.SetHealth( newHealth )
+
+		entity otherDoor = PassiveReinforce_GetOppositeDoor( door )
+		if ( damageOtherDoor && IsValid( otherDoor ) )
+		{
+			otherDoor.TakeDamage( damageInflicted, attacker, door, { force = effectDir, scriptType = DF_MELEE } )
+		}
+	}
+	else
+	{
+		//StartParticleEffectInWorld( GetParticleSystemIndex( BLOCKABLE_DOOR_DESTRUCTION_FX ), doorCenter, VectorToAngles( effectDir ) )
+
+		EmitSoundAtPosition( TEAM_ANY, door.GetOrigin(), PASSIVE_REINFORCE_DESTROY_REBUILT_SFX, door )
+		door.Signal( PASSIVE_REINFORCE_RESET_REBUILT_DOOR_SIGNAL )
+
+		entity otherDoor = PassiveReinforce_GetOppositeDoor( door )
+		if ( destroyOtherDoor && IsValid( otherDoor ) && (!IsCodeDoor(door) || !otherDoor.IsDoorOpen()) )
+		{
+			otherDoor.TakeDamage( otherDoor.GetMaxHealth(), attacker, attacker, { force = effectDir, weapon = weapon } )
+		}
+		else if ( damageOtherDoor && IsValid( otherDoor ) )
+		{
+			otherDoor.TakeDamage( damageInflicted, attacker, door, { force = effectDir, scriptType = DF_MELEE } )
+		}
+	}
+}
+void function ResetRebuiltDoor( entity door )
+{
+	door.NotSolid()
+	door.Hide()
+	door.SetMaxHealth( GetCurrentPlaylistVarInt( "blockable_door_health", 30 ) )
+	door.SetHealth( door.GetMaxHealth() )
+	door.SetTakeDamageType( DAMAGE_NO )
+	UnsetReinforced( door )
+	BlockReinforcementOnDoorway( door )
+}
+#endif 

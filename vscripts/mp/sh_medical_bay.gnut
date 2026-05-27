@@ -1,0 +1,1708 @@
+                   
+global function MedBay_Init
+global function MedBay_NetworkRegistration
+global function IsMedBayEnabled
+
+#if CLIENT
+global function ServerToClient_MedBayHealVisualsEnabled
+global function ServerToClient_MedBayHealVisualsDisabled
+global function ServerToClient_MedBayEyeTriggerEnter
+global function ServerToClient_MedBayEyeTriggerLeave
+global function ServerToClient_MedBayRuiTriggerEnter
+global function ServerToClient_MedBayRuiTriggerLeave
+#endif
+
+#if SERVER
+global function MedBay_GetHealsPercentRemaining
+#if DEV
+global function DEV_TestMedBayRing
+#endif
+#endif
+
+#if SERVER || CLIENT
+global function MedBay_IsOnCooldown
+global function MedBay_IsDisabled
+#endif
+
+//Playlist Vars
+const string MEDBAY_PLAYLIST_ENABLED = "medbay_enabled"
+const string MEDBAY_DISABLE_OUTSIDE_RING = "medbay_disable_outside_ring"
+const string MEDBAY_PLAYLIST_COOLDOWN_TIME = "medbay_cooldown_time_sec"
+const string MEDBAY_PLAYLIST_HEAL_POOL = "medbay_heal_pool"
+const string MEDBAY_PLAYLIST_IDLE_TIME = "medbay_idle_time_sec"
+const string MEDBAY_PLAYLIST_HEAL_PER_SEC = "medbay_heal_per_sec"
+const string MEDBAY_PLAYLIST_EYE_ENABLED = "medbay_eye_enabled"
+
+//Script Names
+const string MEDBAY_TRIGGER_SCRIPT_NAME = "medical_bay_trigger"
+const string MEDBAY_DOC_SCRIPT_NAME = "medical_bay_doc"
+const string MEDBAY_INDICATOR_EXT_SCRIPT_NAME = "medical_bay_indicator"
+const string MEDBAY_INDICATOR_INT_SCRIPT_NAME = "medical_bay_indicator_interior"
+const string MEDBAY_INDICATOR_PROP_SCRIPT_NAME = "medical_bay_indicator_prop"
+const string MEDBAY_INDICATOR_PROP_SCRIPT_NAME_INTERIOR = "medical_bay_indicator_prop_int"
+const string MEDBAY_FLOOR_SCRIPT_NAME = "medical_bay_floor"
+const string MEDBAY_CENTER_TARGET_NAME = "medical_bay_center"
+global const string MEDBAY_PING_SCRIPT_NAME = "medical_bay_ping"
+const string MEDBAY_EYE_JOINT_SCRIPT_NAME = "medical_bay_eye_joint"
+const string MEDBAY_EYE_STALK_SCRIPT_NAME = "medical_bay_eye_stalk"
+const string MEDBAY_EYE_TRIGGER_SCRIPT_NAME = "medical_bay_eye_trigger"
+const string MEDBAY_RUI_TRIGGER_SCRIPT_NAME = "medical_bay_rui_trigger"
+const string MEDBAY_DOC_SOUND_SPAWN_SCRIPT_NAME = "medical_bay_sound_point"
+
+//Signals
+const string SIG_LEFT_MEDBAY_TRIGGER = "MedBay_LeftHealing"
+const string SIG_OUT_OF_HEALING = "MedBay_OutOfHealing"
+const string SIG_PLAYER_ENTER_MEDBAY = "MedBay_PlayerEnterMedBay"
+const string SIG_NO_ONE_IN_MEDBAY = "MedBay_NoOneInMedBay"
+const string SIG_PLAYER_FULL_HEALTH = "MedBay_PlayerFullHealth"
+const string SIG_OUT_OF_RING = "MedBay_OutsideRing"
+const string SIG_OUT_OF_EYE_RANGE = "MedBay_OutsideEyeRange"
+const string SIG_OUT_OF_RUI_RANGE = "MedBay_OutsideRuiRange"
+
+//MATH
+const int MEDBAY_CENTER_RADIUS = 256
+const int MEDBAY_CENTER_HALF_HEIGHT = 125
+
+const int MEDBAY_EYE_TRIGGER_RADIUS = 2200
+const int MEDBAY_EYE_TRIGGER_RADIUS_SQR = MEDBAY_EYE_TRIGGER_RADIUS * MEDBAY_EYE_TRIGGER_RADIUS
+const int MEDBAY_EYE_TRIGGER_HALF_HEIGHT = 400
+
+const int MEDBAY_RUI_TRIGGER_RADIUS = 10000
+const int MEDBAY_RUI_TRIGGER_RADIUS_SQR = MEDBAY_RUI_TRIGGER_RADIUS * MEDBAY_RUI_TRIGGER_RADIUS
+const int MEDBAY_RUI_TRIGGER_HALF_HEIGHT = 2000
+
+//COMMON HEAL
+const float MEDBAY_COOLDOWN_TICK_SEC = 0.1
+
+//REGEN
+const float MEDBAY_REGEN_COOLDOWN_TIME_SEC = 7
+const int MEDBAY_REGEN_HEAL_POOL = 300
+const float MEDBAY_HEAL_PER_SEC = 20
+const float MEDBAY_REGEN_IDLE_RECHARGE_DELAY_SEC = 3
+const float MEDBAY_OUT_OF_RING_TEST_SEC = 1
+const float MEDBAY_OUT_OF_RING_EMPTY_DOC_TIME_SEC = 5
+
+//ROPE
+const MEDBAY_MIN_ROPE_DIST = 240
+const MEDBAY_MAX_ROPE_DIST = 340
+const MEDBAY_MIN_ROPE_LENGTH = 340//200
+const MEDBAY_MAX_ROPE_LENGTH = 500//320
+const MEDBAY_ROPE_NODE_COUNT = 10
+const MEDBAY_ROPE_SHOOT_OUT_TIME = 0.25
+const MEDBAY_ROPE_REEL_IN_TIME = 0.25
+const MEDBAY_ROPE_FADE_DISTANCE = 2200
+
+//Doc
+const float MEDBAY_DOC_SCALE = 7.0
+
+//Indicators
+const float MEDBAY_INDICATOR_ORIGIN_OFFSET_INTERIOR = -10
+const vector MEDBAY_INDICATOR_ANGLE_OFFSET = < 0, 90, 0>
+const float MEDBAY_INDICATOR_SCALE = 2
+const float MEDBAY_INDICATOR_SCALE_INTERIOR = 1.7
+const int MEDBAY_INDICATOR_FADE_DISTANCE = 3000
+const float MEDBAY_INDICATOR_RUI_RADIUS = 200
+const float MEDBAY_INDICATOR_RUI_RADIUS_INTERIOR = 170
+const vector MEDBAY_INDICATOR_RUI_OFFSET = <0, 1, 0>
+const vector MEDBAY_INDICATOR_RUI_OFFSET_INTERIOR = <0, 1, 0>
+
+//Floor Ring
+const vector MEDBAY_RING_POS_OFFSET = <0, 0, 0>
+const float MEDBAY_RING_SCALE = 2.75
+
+//Colors
+const vector MEDBAY_IDLE_COLOR = <142, 246, 255>//<102, 230, 255>//<169, 208, 250>//<238, 255, 255>//<36, 123, 200>//"36 123 160"//"0 250 150"
+const vector MEDBAY_CHARGING_COLOR = <255, 224, 102>//"0 255 255"
+const vector MEDBAY_HEALING_COLOR = <36, 189, 107>//<36, 200, 123> //<20, 199, 182> //0 250 150"//"0 255 0"
+const vector MEDBAY_COOLDOWN_COLOR = <245, 74, 80>//<242, 95, 92>//"255 0 0"
+
+const float RUI_LUMINOSITY = 0.4
+const float RUI_COLOR_DIVISOR = 255.0 * RUI_LUMINOSITY
+const vector RUI_IDLE_COLOR = MEDBAY_IDLE_COLOR / RUI_COLOR_DIVISOR
+const vector RUI_HEALING_COLOR = MEDBAY_HEALING_COLOR / RUI_COLOR_DIVISOR
+const vector RUI_COOLDOWN_COLOR = MEDBAY_COOLDOWN_COLOR / RUI_COLOR_DIVISOR
+
+//RUI
+const string RUI_MEDBAY_INDICATOR_RING = "ui/medbay_cooldown.rpak"
+
+//Props
+global const string MDL_MEDBAY_RING = "mdl/fx/LifelineTT_medbay_ring.rmdl"
+global const string MDL_MEDBAY_EYE_JOINT = "mdl/olympus/olympus_ll_tt_building_interior_medbay_eye_01.rmdl"
+global const string MDL_MEDBAY_EYE_STALK = "mdl/olympus/olympus_ll_tt_building_interior_medbay_eye_02.rmdl"
+
+//VFX
+global const string VFX_MEDBAY_HEAL_COCKPIT_1P = "P_heal_loop_screen"
+global const string VFX_MEDBAY_SPARKS = "P_lifelineTT_medbay_sparks"
+global const string VFX_MEDBAY_PLATFORM = "P_LifelineTT_medbay_platform"
+global const string VFX_MEDBAY_CROSS = "P_LifelineTT_medbay_cross"
+global const string VFX_MEDBAY_CROSS_PULSE = "P_LifelineTT_medbay_cross_pulse"
+
+//SOUND -- REGEN
+const string SFX_MEDBAY_REGEN_POWER_DOWN = "Olympus_LifelineTT_MedBay_PowerDown"
+const string SFX_MEDBAY_REGEN_ENTER_POINT = "Olympus_LifelineTT_MedBay_Enter"
+const string SFX_MEDBAY_REGEN_LEAVE_POINT = "Olympus_LifelineTT_MedBay_Leave"
+const string SFX_MEDBAY_REGEN_CHARGE_START = "Olympus_LifelineTT_MedBay_Charge_Start"
+const string SFX_MEDBAY_REGEN_CHARGE_LOOP = "Olympus_LifelineTT_MedBay_Charge_Loop"
+const string SFX_MEDBAY_REGEN_CHARGE_END = "Olympus_LifelineTT_MedBay_Charge_End"
+const string SFX_MEDBAY_SPARKS = "Olympus_LifelineTT_MedBay_Sparks"
+
+//SOUND -- ROPE
+const string SFX_MEDBAY_DEPLOY_ROPE_SOUND = "Olympus_LifelineTT_MedBay_Cable_Deploy"
+const string SFX_MEDBAY_ATTACH_SOUND_1P = "Olympus_LifelineTT_MedBay_Cable_Attach_1P"
+const string SFX_MEDBAY_ATTACH_SOUND_3P = "Olympus_LifelineTT_MedBay_Cable_Attach_3P"
+const string SFX_MEDBAY_DETACH_SOUND_1P = "Olympus_LifelineTT_MedBay_Cable_Detach_1P"
+const string SFX_MEDBAY_DETACH_SOUND_3P = "Olympus_LifelineTT_MedBay_Cable_Detach_3P"
+const string SFX_MEDBAY_MEDIC_HEAL_LOOP_SOUND_1P = "Olympus_LifelineTT_MedBay_Healing_1P" //Plays on the player when being healed.
+const string SFX_MEDBAY_MEDIC_HEAL_LOOP_SOUND_3P = "Olympus_LifelineTT_MedBay_Healing_3P" //Plays on the drone when healing someone.
+
+
+enum eMedBayState
+{
+	IDLE = 0,
+	CHARGING = 1,
+	HEALING = 2,
+	COOLDOWN = 3,
+	OFF = 4
+}
+
+enum eMedBayTrigger
+{
+	TRIGGER,
+	BUTTON,
+}
+
+global struct MedBayData
+{
+	#if SERVER
+		entity                       trigger
+		entity                       pingProp
+		entity                       audioController
+		array<entity>                glowingEntities
+		array<entity>                crossVFX
+		array<entity>                crossPulseVFX
+		entity                       platformVFX
+		int                          currState = eMedBayState.IDLE
+		int                          prevState = eMedBayState.IDLE
+		int                          healAmount = MEDBAY_REGEN_HEAL_POOL
+		int                          maxHealAmount = MEDBAY_REGEN_HEAL_POOL
+		array< entity >              playersInTrigger
+		table<entity, int>           playerHandles
+		bool                         isOutOfRing = false
+	#endif
+}
+
+struct SignalStruct
+{
+	entity droneMedic
+	entity player
+}
+
+struct
+{
+	#if SERVER
+		array< MedBayData >                 allMedBays
+		table<entity, int>                  playersInHealTriggers
+		array<SignalStruct>                 signalStructArray
+
+		float healPerSec = MEDBAY_HEAL_PER_SEC
+		float cooldownTimeSec = MEDBAY_REGEN_COOLDOWN_TIME_SEC
+		float idleTimeSec = MEDBAY_REGEN_IDLE_RECHARGE_DELAY_SEC
+	#endif
+
+	#if CLIENT
+		int    healFxHandle
+		entity eyeRotatorJoint
+		entity eyeRotatorStalk
+		bool   inEyeRange = false
+		bool   inRuiRange = false
+	#endif
+
+	//Simplifying RUI tracking for singular medbay
+	#if CLIENT || SERVER
+		entity waypointTracker
+	#endif
+} file
+
+//INITIALIZE
+void function MedBay_NetworkRegistration()
+{
+	Remote_RegisterClientFunction( "ServerToClient_MedBayHealVisualsEnabled", "entity" )
+	Remote_RegisterClientFunction( "ServerToClient_MedBayHealVisualsDisabled", "entity" )
+	Remote_RegisterClientFunction( "ServerToClient_MedBayEyeTriggerEnter" )
+	Remote_RegisterClientFunction( "ServerToClient_MedBayEyeTriggerLeave" )
+	Remote_RegisterClientFunction( "ServerToClient_MedBayRuiTriggerEnter" )
+	Remote_RegisterClientFunction( "ServerToClient_MedBayRuiTriggerLeave" )
+}
+
+void function MedBay_Init()
+{
+	if ( GetCurrentPlaylistVarBool( MEDBAY_PLAYLIST_ENABLED, true ) )
+	{
+		#if SERVER || CLIENT
+			AddCallback_EntitiesDidLoad( EntitiesDidLoad )
+		#endif
+
+		RegisterSignal( SIG_OUT_OF_RUI_RANGE )
+		RegisterSignal( SIG_LEFT_MEDBAY_TRIGGER )
+		RegisterSignal( SIG_PLAYER_ENTER_MEDBAY )
+		RegisterSignal( SIG_PLAYER_FULL_HEALTH )
+		RegisterSignal( SIG_OUT_OF_HEALING )
+		RegisterSignal( SIG_NO_ONE_IN_MEDBAY )
+		RegisterSignal( SIG_OUT_OF_RING )
+		RegisterSignal( SIG_OUT_OF_EYE_RANGE )
+
+		#if SERVER
+			AddCallback_GameStateEnter( eGameState.Playing, OnGameStatePlaying )
+		#endif
+
+		#if CLIENT
+			AddCreateCallback( PLAYER_WAYPOINT_CLASSNAME, OnWaypointCreated )
+			AddOnSpectatorTargetChangedCallback( OnSpectatorTargetChanged )
+		#endif
+	}
+}
+
+#if SERVER || CLIENT
+void function EntitiesDidLoad()
+{
+	if ( !IsMedBayEnabled() )
+	{
+		return
+	}
+	
+	PrecacheScriptString( MEDBAY_PING_SCRIPT_NAME )
+	PrecacheScriptString( MEDBAY_EYE_TRIGGER_SCRIPT_NAME )
+	PrecacheScriptString( MEDBAY_RUI_TRIGGER_SCRIPT_NAME )
+	PrecacheScriptString( MEDBAY_INDICATOR_PROP_SCRIPT_NAME )
+	PrecacheScriptString( MEDBAY_INDICATOR_PROP_SCRIPT_NAME_INTERIOR )
+
+	#if SERVER
+		file.allMedBays.clear()
+		file.playersInHealTriggers.clear()
+		file.signalStructArray.clear()
+
+		file.cooldownTimeSec = GetCurrentPlaylistVarFloat( MEDBAY_PLAYLIST_COOLDOWN_TIME, MEDBAY_REGEN_COOLDOWN_TIME_SEC )
+		file.idleTimeSec = GetCurrentPlaylistVarFloat( MEDBAY_PLAYLIST_IDLE_TIME, MEDBAY_REGEN_IDLE_RECHARGE_DELAY_SEC )
+		file.healPerSec = GetCurrentPlaylistVarFloat( MEDBAY_PLAYLIST_HEAL_PER_SEC, MEDBAY_HEAL_PER_SEC )
+	#endif
+
+	#if SERVER
+		foreach ( entity medBay in GetEntArrayByScriptName( MEDBAY_TRIGGER_SCRIPT_NAME ) )
+		{
+			thread InitMedBay_Thread( medBay )
+		}
+	#endif
+
+	#if CLIENT
+		MedBay_InitEye()
+	#endif
+}
+#endif
+
+#if SERVER
+void function OnGameStatePlaying()
+{
+	foreach ( MedBayData data in file.allMedBays )
+	{
+		MedBay_StartRingTest( data )
+	}
+}
+#endif
+
+#if CLIENT
+void function OnWaypointCreated( entity ent )
+{
+	int wpType = ent.GetWaypointType()
+
+	if ( wpType == eWaypoint.MEDBAY_STATE )
+		file.waypointTracker = ent
+}
+
+
+void function OnSpectatorTargetChanged( entity player, entity prevTarget, entity newTarget )
+{
+	if ( !IsValid( file.waypointTracker ) )
+		return
+
+	//Turn it off
+	ServerToClient_MedBayRuiTriggerLeave()
+	ServerToClient_MedBayEyeTriggerLeave()
+
+	if ( IsValid( newTarget ) )
+	{
+		//Check if we're close enough to turn it back on
+		float dist = Distance2DSqr( newTarget.GetOrigin(), file.waypointTracker.GetOrigin() )
+		if ( dist < MEDBAY_RUI_TRIGGER_RADIUS_SQR )
+		{
+			ServerToClient_MedBayRuiTriggerEnter()
+		}
+
+		if ( dist < MEDBAY_EYE_TRIGGER_RADIUS_SQR )
+		{
+			ServerToClient_MedBayEyeTriggerEnter()
+		}
+	}
+}
+#endif
+void function InitMedBay_Thread( entity instance )
+{
+	#if SERVER
+		MedBayData mbData
+
+		mbData.healAmount = GetCurrentPlaylistVarInt( MEDBAY_PLAYLIST_HEAL_POOL, MEDBAY_REGEN_HEAL_POOL )
+
+		mbData.maxHealAmount = mbData.healAmount
+
+		array< entity > linkedTrigEnts = instance.GetLinkEntArray()
+
+		vector docOrigin = <0, 0, 0>
+		vector docAngles = <0, 0, 0>
+
+		array<entity> indicators
+
+		foreach ( linkedEnt in linkedTrigEnts )
+		{
+			if ( linkedEnt.GetScriptName() == MEDBAY_FLOOR_SCRIPT_NAME )
+			{
+				if ( instance.GetTargetName() == MEDBAY_CENTER_TARGET_NAME )
+				{
+					MedBay_InitPlatformVFX( mbData, linkedEnt.GetOrigin(), linkedEnt.GetAngles() )
+				}
+
+				linkedEnt.Destroy()
+			}
+			else if ( linkedEnt.GetScriptName() == MEDBAY_INDICATOR_EXT_SCRIPT_NAME || linkedEnt.GetScriptName() == MEDBAY_INDICATOR_INT_SCRIPT_NAME )
+			{
+				entity indicator = MedBay_InitIndicatorComplex( mbData, linkedEnt.GetCenter(), linkedEnt.GetAngles(), linkedEnt.GetScriptName() == MEDBAY_INDICATOR_EXT_SCRIPT_NAME )
+				indicators.append( indicator )
+				linkedEnt.Destroy()
+			}
+			else if ( linkedEnt.GetScriptName() == MEDBAY_DOC_SCRIPT_NAME )
+			{
+				docOrigin = linkedEnt.GetCenter()
+				docAngles = linkedEnt.GetAngles()
+
+				linkedEnt.Destroy()
+			}
+			else if ( linkedEnt.GetScriptName() == MEDBAY_DOC_SOUND_SPAWN_SCRIPT_NAME )
+			{
+				MedBay_InitAudioController( mbData, linkedEnt.GetOrigin(), linkedEnt.GetAngles() )
+				linkedEnt.Destroy()
+			}
+		}
+
+		//Create Trigger
+		if ( instance.GetTargetName() == MEDBAY_CENTER_TARGET_NAME )
+		{
+			entity trigger = CreateEntity( "trigger_cylinder" )
+			trigger.SetCylinderRadius( MEDBAY_CENTER_RADIUS )
+			trigger.SetAboveHeight( MEDBAY_CENTER_HALF_HEIGHT )
+			trigger.SetBelowHeight( MEDBAY_CENTER_HALF_HEIGHT )
+			trigger.SetOrigin( instance.GetCenter() )
+			trigger.SetAngles( <0, 0, 0> )
+			trigger.kv.triggerFilterPlayer = "all"
+			trigger.SetPhaseShiftCanTouch( false )
+			DispatchSpawn( trigger )
+
+			MedBay_InitRing( mbData, trigger.GetCenter(), <0, 0, 0> )
+
+			mbData.trigger = trigger
+
+			instance.Destroy()
+		}
+		else
+		{
+			mbData.trigger = instance
+		}
+
+		MedBay_InitEyeTrigger( docOrigin )
+		entity ruiTrigger = MedBay_InitRuiTrigger( docOrigin )
+		MedBay_InitPings( mbData, docOrigin, docAngles )
+		MedBay_CreateTrackingWaypoint ( docOrigin, docAngles, mbData.maxHealAmount, indicators )
+
+		mbData.currState = eMedBayState.COOLDOWN
+		MedBay_ChangeDataState( mbData, eMedBayState.IDLE )
+
+		mbData.trigger.SetEnterCallback( OnEnterHealTrigger )
+		mbData.trigger.SetLeaveCallback( OnLeaveHealTrigger )
+
+		file.allMedBays.append( mbData )
+	#endif
+}
+
+#if SERVER //DOC
+void function MedBay_InitPings( MedBayData data, vector origin, vector angles )
+{
+	entity pingProp = CreatePropScript( EMPTY_MODEL, origin, angles, SOLID_VPHYSICS )
+
+	pingProp.Hide()
+	pingProp.kv.contents = CONTENTS_BLOCK_PING
+	pingProp.Highlight_Enable()
+	pingProp.SetScriptName( MEDBAY_PING_SCRIPT_NAME )
+	pingProp.SetMaxHealth( data.healAmount )
+	pingProp.SetHealth( data.healAmount )
+	pingProp.SetModelScale( MEDBAY_DOC_SCALE )
+
+	entity traceBlocker = CreateTraceBlockerVolume( origin, 86.0, false, CONTENTS_BLOCK_PING, TEAM_MILITIA, MEDBAY_PING_SCRIPT_NAME )
+	traceBlocker.SetTouchTriggers( true )
+	traceBlocker.SetOwner( pingProp )
+
+	data.pingProp = pingProp
+}
+#endif //DOC
+
+#if SERVER //AUDIO
+void function MedBay_InitAudioController( MedBayData data, vector origin, vector angles )
+{
+	entity audioController = CreatePropDynamic( EMPTY_MODEL, origin, angles, SOLID_NONE )
+
+	data.audioController = audioController
+}
+
+void function MedBay_UpdateAudioController( MedBayData data )
+{
+	float val = float(data.healAmount) / float( data.maxHealAmount )
+	val = max( val, 0.0 )
+	data.audioController.SetSoundCodeControllerValue( val )
+}
+#endif
+
+//RUI TRIGGER
+#if SERVER
+void function MedBay_InitRuiTrigger( vector origin )
+{
+	//Create Trigger for Rui
+	entity ruiTrigger = CreateEntity( "trigger_cylinder" )
+	ruiTrigger.SetCylinderRadius( MEDBAY_RUI_TRIGGER_RADIUS )
+	ruiTrigger.SetAboveHeight( MEDBAY_RUI_TRIGGER_HALF_HEIGHT )
+	ruiTrigger.SetBelowHeight( MEDBAY_RUI_TRIGGER_HALF_HEIGHT )
+	ruiTrigger.SetOrigin( origin )
+	ruiTrigger.SetAngles( <0, 0, 0> )
+	ruiTrigger.kv.triggerFilterPlayer = "all"
+	ruiTrigger.SetScriptName( MEDBAY_RUI_TRIGGER_SCRIPT_NAME )
+	DispatchSpawn( ruiTrigger )
+
+	ruiTrigger.SetEnterCallback( OnEnterRuiTrigger )
+	ruiTrigger.SetLeaveCallback( OnLeaveRuiTrigger )
+}
+
+void function OnEnterRuiTrigger( entity trigger, entity ent )
+{
+	if ( !IsValid( ent ) || !ent.IsPlayer() )
+		return
+	Remote_CallFunction_Replay( ent, "ServerToClient_MedBayRuiTriggerEnter" )
+}
+
+void function OnLeaveRuiTrigger( entity trigger, entity ent )
+{
+	if ( !IsValid( ent ) || !ent.IsPlayer() )
+		return
+	Remote_CallFunction_Replay( ent, "ServerToClient_MedBayRuiTriggerLeave" )
+}
+#endif
+
+//SWIVEL EYE
+#if SERVER
+void function MedBay_InitEyeTrigger( vector origin )
+{
+	if ( !GetCurrentPlaylistVarBool( MEDBAY_PLAYLIST_EYE_ENABLED, true ) )
+		return
+
+	//Create Trigger for Eye
+	entity eyeTrigger = CreateEntity( "trigger_cylinder" )
+	eyeTrigger.SetCylinderRadius( MEDBAY_EYE_TRIGGER_RADIUS )
+	eyeTrigger.SetAboveHeight( MEDBAY_EYE_TRIGGER_HALF_HEIGHT )
+	eyeTrigger.SetBelowHeight( MEDBAY_EYE_TRIGGER_HALF_HEIGHT )
+	eyeTrigger.SetOrigin( origin )
+	eyeTrigger.SetAngles( <0, 0, 0> )
+	eyeTrigger.kv.triggerFilterPlayer = "all"
+	eyeTrigger.SetScriptName( MEDBAY_EYE_TRIGGER_SCRIPT_NAME )
+	DispatchSpawn( eyeTrigger )
+
+	eyeTrigger.SetEnterCallback( OnEnterEyeTrigger )
+	eyeTrigger.SetLeaveCallback( OnLeaveEyeTrigger )
+}
+
+void function OnEnterEyeTrigger( entity trigger, entity ent )
+{
+	if ( !IsValid( ent ) || !ent.IsPlayer() )
+		return
+	Remote_CallFunction_Replay( ent, "ServerToClient_MedBayEyeTriggerEnter" )
+}
+
+void function OnLeaveEyeTrigger( entity trigger, entity ent )
+{
+	if ( !IsValid( ent ) || !ent.IsPlayer() )
+		return
+	Remote_CallFunction_Replay( ent, "ServerToClient_MedBayEyeTriggerLeave" )
+}
+#endif
+
+#if CLIENT
+void function MedBay_InitEye()
+{
+	if ( !GetCurrentPlaylistVarBool( MEDBAY_PLAYLIST_EYE_ENABLED, true ) )
+		return
+
+#if DEV
+	//We're running the survival preprocess right now, assets might not be precached yet
+	if ( Dev_CommandLineHasParm( "-survival_preprocess" ) )
+		return
+#endif
+
+	entity eyeJoint
+	entity eyeStalk
+	array<entity> eyes = GetEntArrayByScriptName( MEDBAY_EYE_JOINT_SCRIPT_NAME )
+	if ( eyes.len() == 1 )
+	{
+		entity target = eyes[0]
+		eyeJoint = CreateClientSidePropDynamic( target.GetOrigin(), target.GetAngles(), GetAssetFromString( MDL_MEDBAY_EYE_JOINT ) )
+		eyeJoint.SetFadeDistance( MEDBAY_EYE_TRIGGER_RADIUS )
+		target.Destroy()
+	}
+
+	eyes = GetEntArrayByScriptName( MEDBAY_EYE_STALK_SCRIPT_NAME )
+	if ( eyes.len() == 1 )
+	{
+		entity target = eyes[0]
+		eyeStalk = CreateClientSidePropDynamic( target.GetOrigin(), target.GetAngles(), GetAssetFromString( MDL_MEDBAY_EYE_STALK ) )
+		eyeStalk.SetFadeDistance( MEDBAY_EYE_TRIGGER_RADIUS )
+		target.Destroy()
+	}
+
+	if ( !IsValid( eyeJoint ) || !IsValid( eyeStalk ) )
+		return
+
+	entity eyeRotatorJoint = CreateClientsideScriptMover( EMPTY_MODEL, eyeJoint.GetOrigin() + <0, 0, 0>, <0, 0, 0> )
+	eyeRotatorJoint.NonPhysicsSetRotateModeLocal( true )
+	eyeJoint.SetParent( eyeRotatorJoint )
+
+	entity eyeRotatorStalk = CreateClientsideScriptMover( EMPTY_MODEL, eyeStalk.GetOrigin(), <0, 0, 0> )
+	eyeRotatorStalk.NonPhysicsSetRotateModeLocal( true )
+	eyeStalk.SetParent( eyeRotatorStalk )
+
+	eyeRotatorStalk.SetParent( eyeRotatorJoint )
+
+	file.eyeRotatorJoint = eyeRotatorJoint
+	file.eyeRotatorStalk = eyeRotatorStalk
+}
+
+void function ServerToClient_MedBayEyeTriggerEnter()
+{
+	entity player = GetLocalViewPlayer()
+
+	if ( !IsPilot( player ) )
+		return
+
+	if ( !file.inEyeRange )
+	{
+		file.inEyeRange = true
+		thread MedBay_Eye_Thread( player )
+	}
+}
+
+void function ServerToClient_MedBayEyeTriggerLeave()
+{
+	entity player = GetLocalViewPlayer()
+
+	if ( !IsPilot( player ) )
+		return
+
+	file.inEyeRange = false
+	player.Signal( SIG_OUT_OF_EYE_RANGE )
+}
+
+void function MedBay_Eye_Thread( entity player )
+{
+	if ( !IsValid( file.eyeRotatorStalk ) || !IsValid( file.eyeRotatorJoint ) || !IsValid( player ) )
+		return
+
+	file.eyeRotatorStalk.EndSignal( "OnDeath" )
+	file.eyeRotatorStalk.EndSignal( "OnDestroy" )
+	file.eyeRotatorJoint.EndSignal( "OnDeath" )
+	file.eyeRotatorJoint.EndSignal( "OnDestroy" )
+	file.waypointTracker.EndSignal( "OnDeath" )
+	file.waypointTracker.EndSignal( "OnDestroy" )
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( SIG_OUT_OF_EYE_RANGE )
+
+	vector previousJointAngles = <0, 0, 0>
+	vector previousStalkAngles = <0, 0, 0>
+
+	bool extended = true
+	while( true )
+	{
+		/*if ( IsOnCooldown() || IsDisabled() )
+		{
+			if ( extended )
+			{
+				//we animate here
+				wait 2
+				extended = false
+			}
+		}
+		else //Follow Player
+		{
+			if ( !extended )
+			{
+				//we animate here
+				wait 2
+				extended = true
+			}*/
+		vector jointAngles = VectorToAngles( Normalize( player.EyePosition() - file.eyeRotatorJoint.GetOrigin() ) )
+		if ( jointAngles != previousJointAngles )
+		{
+			file.eyeRotatorJoint.NonPhysicsRotateTo( <0, jointAngles.y, jointAngles.z>, 0.75, 0, 0.35 )
+		}
+
+		vector stalkAngles = VectorToAngles( Normalize( player.EyePosition() - file.eyeRotatorStalk.GetOrigin() ) )
+		if ( stalkAngles != previousStalkAngles )
+		{
+			file.eyeRotatorStalk.NonPhysicsRotateTo( <stalkAngles.x, 0, 0>, 0.75, 0, 0.35 )
+		}
+		//}
+		wait 0.75
+	}
+}
+#endif //SWIVEL EYE
+
+//GLOWY STUFF
+#if SERVER
+void function MedBay_InitPlatformVFX( MedBayData data, vector origin, vector angles )
+{
+	data.platformVFX = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( GetAssetFromString( VFX_MEDBAY_PLATFORM ) ), origin, angles )
+}
+
+entity function MedBay_InitIndicatorSimple( MedBayData data, vector origin, vector angles, bool exterior )
+{
+	return CreatePropDynamic( EMPTY_MODEL, origin, angles, SOLID_VPHYSICS, MEDBAY_INDICATOR_FADE_DISTANCE )
+}
+
+entity function Medbay_InitIndicatorVFX( MedBayData data, vector origin, vector angles, vector forward, bool exterior, bool pulse )
+{
+	float scale = MEDBAY_INDICATOR_SCALE
+	angles += MEDBAY_INDICATOR_ANGLE_OFFSET
+	if ( !exterior )
+	{
+		scale = MEDBAY_INDICATOR_SCALE_INTERIOR
+		angles.z += 180
+		origin += forward * MEDBAY_INDICATOR_ORIGIN_OFFSET_INTERIOR
+	}
+
+	asset pvfx = GetAssetFromString( VFX_MEDBAY_CROSS )
+	if ( pulse )
+		pvfx = GetAssetFromString( VFX_MEDBAY_CROSS_PULSE )
+
+	entity vfx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( pvfx ), origin, angles )
+
+	EffectSetControlPointVector( vfx, 1, MEDBAY_IDLE_COLOR )
+	EffectSetControlPointVector( vfx, 2, <scale, scale, scale> )
+
+	if ( pulse )
+	{
+		data.crossPulseVFX.append( vfx )
+	}
+	else
+	{
+		data.crossVFX.append( vfx )
+	}
+
+	return vfx
+}
+
+void function MedBay_ToggleIndicatorPulse( MedBayData data, bool pulse )
+{
+	foreach ( vfx in data.crossVFX )
+	{
+		if ( pulse )
+			EffectSleep( vfx )
+		else
+			EffectWake( vfx )
+	}
+	foreach ( vfx in data.crossPulseVFX )
+	{
+		if ( pulse )
+			EffectWake( vfx )
+		else
+			EffectSleep( vfx )
+	}
+}
+
+entity function MedBay_InitIndicatorComplex( MedBayData data, vector origin, vector angles, bool exterior )
+{
+	entity indicator = MedBay_InitIndicatorSimple( data, origin, angles, exterior )
+
+	if ( exterior )
+		indicator.SetScriptName( MEDBAY_INDICATOR_PROP_SCRIPT_NAME )
+	else
+		indicator.SetScriptName( MEDBAY_INDICATOR_PROP_SCRIPT_NAME_INTERIOR )
+
+	entity indicatorVFX      = Medbay_InitIndicatorVFX( data, origin, angles, indicator.GetForwardVector(), exterior, false )
+	entity indicatorPulseVFX = Medbay_InitIndicatorVFX( data, origin, angles, indicator.GetForwardVector(), exterior, true )
+
+	indicator.SetAngles( indicator.GetAngles() + MEDBAY_INDICATOR_ANGLE_OFFSET )
+
+	MedBay_ToggleIndicatorPulse( data, false )
+
+	return indicator
+}
+
+void function MedBay_InitRing( MedBayData data, vector origin, vector angles )
+{
+	entity ring = CreatePropDynamic( GetAssetFromString( MDL_MEDBAY_RING ), origin + MEDBAY_RING_POS_OFFSET, angles, SOLID_NONE, MEDBAY_INDICATOR_FADE_DISTANCE )
+
+	ring.SetModelScale( MEDBAY_RING_SCALE )
+	data.glowingEntities.append( ring )
+}
+
+void function MedBay_UpdateColor( MedBayData data )
+{
+	vector color = MEDBAY_IDLE_COLOR
+	switch( data.currState )
+	{
+		case eMedBayState.IDLE:
+			color = MEDBAY_IDLE_COLOR
+			break;
+
+		case eMedBayState.CHARGING:
+			color = MEDBAY_CHARGING_COLOR
+			break;
+
+		case eMedBayState.HEALING:
+			color = MEDBAY_HEALING_COLOR
+			break;
+
+		case eMedBayState.OFF:
+		case eMedBayState.COOLDOWN:
+			color = MEDBAY_COOLDOWN_COLOR
+			break;
+	}
+	string colorString = color.x + " " + color.y + " " + color.z
+	foreach ( chunk in data.glowingEntities )
+	{
+		if ( IsValid( chunk ) )
+		{
+			chunk.kv.rendercolor = colorString
+		}
+	}
+	foreach ( chunk in data.crossVFX )
+	{
+		if ( IsValid( chunk ) )
+		{
+			EffectSetControlPointVector( chunk, 1, color )
+		}
+	}
+	foreach ( chunk in data.crossPulseVFX )
+	{
+		if ( IsValid( chunk ) )
+		{
+			EffectSetControlPointVector( chunk, 1, color )
+		}
+	}
+	if ( IsValid( data.platformVFX ) )
+	{
+		EffectSetControlPointVector( data.platformVFX, 1, color )
+	}
+}
+#endif //GLOWY STUFF
+
+//RUI Waypoint
+#if SERVER
+void function MedBay_CreateTrackingWaypoint( vector origin, vector angles, int healResource, array<entity> indicators )
+{
+	//We already have a waypoint tracker
+	if ( IsValid( file.waypointTracker ) )
+		return
+
+	entity wp = CreatePlayerWaypoint( eWaypoint.MEDBAY_STATE )
+	wp.SetOrigin( origin )
+	wp.SetAngles( angles )
+	wp.SetWaypointInt( 0, healResource )
+	wp.SetWaypointInt( 1, healResource )
+	wp.SetWaypointInt( 2, eMedBayState.IDLE )
+
+	//We can have up to 8
+	for ( int i = 0; i < indicators.len(); ++i )
+		wp.SetWaypointEntity( i, indicators[i] )
+
+	wp.SetWaypointGametime( 0, Time() )
+	wp.wp.waypointCreatedTime = Time()
+	file.waypointTracker      = wp
+}
+
+void function MedBay_UpdateWaypointTracker( MedBayData data )
+{
+	if ( IsValid( file.waypointTracker ) )
+	{
+		file.waypointTracker.SetWaypointInt( 2, data.currState )
+	}
+}
+
+void function EmptyWaypoint_Thread( MedBayData data, float time )
+{
+	//We don't need to show an empty animation if there is no cooldown
+	if ( file.cooldownTimeSec == 0 || !IsValid( file.waypointTracker ) )
+		return
+
+	file.waypointTracker.EndSignal( "OnDestroy" )
+
+	const float healTickSec = 0.125
+
+	float totalTicks  = time / healTickSec
+	int damagePerTick = int(ceil( data.maxHealAmount / totalTicks ) )
+
+	while( data.healAmount > 0 )
+	{
+		wait healTickSec
+		data.healAmount -= damagePerTick
+		if ( data.healAmount < 0 )
+		{
+			data.healAmount = 0
+		}
+
+		MedBay_UpdateAudioController( data )
+		file.waypointTracker.SetWaypointInt( 0, data.healAmount )
+	}
+}
+
+void function RefillWaypoint_Thread( MedBayData data )
+{
+	if ( file.cooldownTimeSec == 0 || !IsValid( file.waypointTracker ) )
+		return
+
+	EndSignal( data.pingProp, SIG_OUT_OF_RING )
+	data.pingProp.EndSignal( "OnDeath" )
+	data.pingProp.EndSignal( "OnDestroy" )
+	file.waypointTracker.EndSignal( "OnDestroy" )
+
+	float totalTicks = file.cooldownTimeSec / MEDBAY_COOLDOWN_TICK_SEC
+	int healPerTick  = int(ceil( data.maxHealAmount / totalTicks ))
+
+	while( data.healAmount < data.maxHealAmount )
+	{
+		wait MEDBAY_COOLDOWN_TICK_SEC
+		data.healAmount += healPerTick
+		if ( data.healAmount > data.maxHealAmount )
+		{
+			data.healAmount = data.maxHealAmount
+		}
+
+		MedBay_UpdateAudioController( data )
+		file.waypointTracker.SetWaypointInt( 0, data.healAmount )
+	}
+}
+#endif //RUI Waypoint
+
+//RUI
+#if CLIENT
+void function ServerToClient_MedBayRuiTriggerEnter()
+{
+	entity player = GetLocalViewPlayer()
+
+	if ( !IsPilot( player ) )
+		return
+
+	if ( !file.inRuiRange )
+	{
+		file.inRuiRange = true
+		thread MedBay_RUIThink_Thread( player )
+	}
+}
+
+void function ServerToClient_MedBayRuiTriggerLeave()
+{
+	entity player = GetLocalViewPlayer()
+
+	if ( !IsPilot( player ) )
+		return
+
+	file.inRuiRange = false
+	player.Signal( SIG_OUT_OF_RUI_RANGE )
+}
+
+void function MedBay_RUIThink_Thread( entity player )
+{
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( SIG_OUT_OF_RUI_RANGE )
+	file.waypointTracker.EndSignal( "OnDestroy" )
+
+	array<var> topos
+	array<var> ruis
+
+	for ( int i = 0; i < 8; ++i )
+	{
+		entity ent = file.waypointTracker.GetWaypointEntity( i )
+
+		if ( !IsValid( ent ) )
+			continue
+
+		bool exterior = ent.GetScriptName() == MEDBAY_INDICATOR_PROP_SCRIPT_NAME
+		float radius  = exterior ? MEDBAY_INDICATOR_RUI_RADIUS : MEDBAY_INDICATOR_RUI_RADIUS_INTERIOR
+
+		float width  = radius
+		float height = radius
+		vector right = <0, 0, 1> * height * 0.5
+		vector down  = <1, 0, 0> * width * 0.5
+		vector org   = exterior ? MEDBAY_INDICATOR_RUI_OFFSET : MEDBAY_INDICATOR_RUI_OFFSET_INTERIOR
+
+		var topo = RuiTopology_CreatePlane( org - right * 0.5 - down * 0.5, right, down, true )
+		RuiTopology_SetParent( topo, ent )
+
+		topos.append( topo )
+
+		var rui = RuiCreate( GetAssetFromString( RUI_MEDBAY_INDICATOR_RING ), topo, RUI_DRAW_WORLD, 1 )
+		ruis.append( rui )
+
+		if ( IsValid( file.waypointTracker ) )
+		{
+			MedBay_RuiTrack( rui, file.waypointTracker )
+		}
+	}
+
+	OnThreadEnd(
+		function() : ( topos, ruis )
+		{
+			foreach ( r in ruis )
+			{
+				RuiDestroyIfAlive( r )
+			}
+			foreach ( t in topos )
+			{
+				RuiTopology_Destroy( t )
+			}
+		}
+	)
+
+	WaitForever()
+}
+
+void function MedBay_RuiTrack( var rui, entity ent )
+{
+	RuiSetFloat3( rui, "colorIdle", RUI_IDLE_COLOR )
+	RuiSetFloat3( rui, "colorHealing", RUI_HEALING_COLOR )
+	RuiSetFloat3( rui, "colorCooldown", RUI_COOLDOWN_COLOR )
+
+	RuiTrackInt( rui, "currentHeals", ent, RUI_TRACK_WAYPOINT_INT, 0 )
+	RuiTrackInt( rui, "totalHeals", ent, RUI_TRACK_WAYPOINT_INT, 1 )
+	RuiTrackInt( rui, "currentState", ent, RUI_TRACK_WAYPOINT_INT, 2 )
+}
+#endif //RUI
+
+//Heal Sequence
+#if SERVER
+void function MedBay_ChangeDataState( MedBayData data, int newState )
+{
+	data.prevState = data.currState
+	data.currState = newState
+	MedBay_UpdateWaypointTracker( data )
+	MedBay_UpdateColor( data )
+}
+
+void function OnEnterHealTrigger( entity trigger, entity ent )
+{
+	if ( !IsValid( ent ) || !ent.IsPlayer() )
+		return
+
+	if ( ent in file.playersInHealTriggers )
+	{
+		file.playersInHealTriggers[ ent ]++
+	}
+	else
+	{
+		file.playersInHealTriggers[ ent ] <- 1
+	}
+
+	if ( file.playersInHealTriggers[ ent ] == 1 )
+	{
+		MedBayData data = GetMedBayDataFromTrigger( trigger )
+
+		bool isEmpty = data.playersInTrigger.len() == 0
+		data.playersInTrigger.append( ent )
+
+		MedBayRegen_OnEnterHealTrigger( data, ent, isEmpty )
+	}
+}
+
+
+void function OnLeaveHealTrigger( entity trigger, entity ent )
+{
+	if ( !IsValid( ent ) || !ent.IsPlayer() )
+		return
+
+	if ( !(ent in file.playersInHealTriggers) )
+	{
+		Warning( "Warning!!! Player leaving heal trigger, but they were never added!", ent.GetEntIndex() )
+	}
+
+	file.playersInHealTriggers[ ent ]--
+
+	MedBayData data = GetMedBayDataFromTrigger( trigger )
+	if ( data.playersInTrigger.contains( ent ) )
+	{
+		data.playersInTrigger.fastremovebyvalue( ent )
+		SignalSignalStruct( data.pingProp, ent, SIG_LEFT_MEDBAY_TRIGGER )
+
+		MedBayRegen_OnExitHealTrigger( data, ent )
+	}
+	else
+		Assert( false, "Attempted to remove player from heal trigger that wasn't stored in array!" )
+}
+
+void function MedBay_AddHealIndicator( MedBayData data, entity player )
+{
+	if ( IsValid( player ) && player.IsPlayer() )
+	{
+		Remote_CallFunction_NonReplay( player, "ServerToClient_MedBayHealVisualsEnabled", player )
+	}
+}
+
+void function MedBay_RemoveHealIndicator( MedBayData data, entity player )
+{
+	if ( IsValid( player ) && player.IsPlayer() )
+	{
+		Remote_CallFunction_NonReplay( player, "ServerToClient_MedBayHealVisualsDisabled", player )
+	}
+}
+#endif //Heal Sequence
+
+//HEAL ROPE FX
+#if SERVER
+HealRopeData function MedBay_CreateHealRope( entity droneMedic )
+{
+	HealRopeData ropeData
+
+	ropeData.ropeStartEnt = droneMedic
+
+	return ropeData
+}
+
+void function MedBay_DeployHealRope_Thread( HealRopeData ropeData, entity player, SignalStruct signalStruct )
+{
+	Assert( IsValid( ropeData.ropeStartEnt ) )
+
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+	EndSignal( signalStruct, SIG_LEFT_MEDBAY_TRIGGER )
+
+	int droneAttchmentId = ropeData.ropeStartEnt.LookupAttachment( "rope" )
+
+	//probably don't need to track this since thread contains data
+	/*if ( !(player in file.playerRopes) )
+		file.playerRopes[player] <- []
+	if ( !(player in file.otherRopes) )
+		file.otherRopes[player] <- []*/
+
+	// player rope
+	ropeData.playerRopeEndEnt = CreateExpensiveScriptMover( ropeData.ropeStartEnt.GetOrigin() )
+	ropeData.playerRopeEndEnt.RenderWithViewModels( true )
+	SetForceDrawWhileParented( ropeData.playerRopeEndEnt, true )
+	ropeData.playerRopeEndEnt.SetParent( player, "CHESTFOCUS" )
+
+	vector playerOrigin = <0, 0, 0>
+	vector localOrigin  = <0, 0, 0>
+
+	entity playerRope = CreateRope( <0, 0, 0>, <0, 0, 0>, MEDBAY_MAX_ROPE_LENGTH, ropeData.ropeStartEnt, ropeData.playerRopeEndEnt, droneAttchmentId, 0, 2, "models/cable/drone_medic_cable", MEDBAY_ROPE_NODE_COUNT )
+	ropeData.playerRope           = playerRope
+	HealRopeInit( playerRope, player, true )
+	playerRope.kv.VisibilityFlags = (player.IsPlayer() && player.ContextAction_IsInVehicle()) ? ENTITY_VISIBLE_TO_NOBODY : ENTITY_VISIBLE_TO_OWNER
+
+	// other rope
+	ropeData.otherRopeEndEnt = CreateExpensiveScriptMover( ropeData.ropeStartEnt.GetOrigin() )
+	SetForceDrawWhileParented( ropeData.otherRopeEndEnt, true )
+	ropeData.otherRopeEndEnt.SetParent( player, "CHESTFOCUS", true, 0.0 )
+
+	entity rope = CreateRope( <0, 0, 0>, <0, 0, 0>, MEDBAY_MAX_ROPE_LENGTH, ropeData.ropeStartEnt, ropeData.otherRopeEndEnt, droneAttchmentId, 0, 2, "models/cable/drone_medic_cable", MEDBAY_ROPE_NODE_COUNT )
+	ropeData.otherRope      = rope
+	HealRopeInit( rope, player, true )
+	rope.kv.VisibilityFlags = (player.IsPlayer() && player.ContextAction_IsInVehicle()) ? ENTITY_VISIBLE_TO_EVERYONE : ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY
+	rope.SetFadeDistance( MEDBAY_ROPE_FADE_DISTANCE )
+
+	SetRopeLength( player, ropeData.ropeStartEnt, ropeData )
+
+	ropeData.playerRopeEndEnt.NonPhysicsMoveInWorldSpaceToLocalPos( playerOrigin, MEDBAY_ROPE_SHOOT_OUT_TIME, 0, MEDBAY_ROPE_SHOOT_OUT_TIME )
+	ropeData.otherRopeEndEnt.NonPhysicsMoveInWorldSpaceToLocalPos( localOrigin, MEDBAY_ROPE_SHOOT_OUT_TIME, 0, MEDBAY_ROPE_SHOOT_OUT_TIME )
+
+	//file.playerRopes[player].append( playerRope )
+	//file.otherRopes[player].append( rope )
+
+	wait MEDBAY_ROPE_SHOOT_OUT_TIME
+
+	EmitSoundOnEntityOnlyToPlayer( player, player, SFX_MEDBAY_ATTACH_SOUND_1P )
+	EmitSoundOnEntityExceptToPlayer( player, player, SFX_MEDBAY_ATTACH_SOUND_3P )
+}
+
+void function SetRopeLength( entity player, entity droneMedic, HealRopeData ropeData )
+{
+	// update rope length to avoid it looking like it's connecting to the crotch of the player when the drone is close.
+	vector chestOrigin = player.GetAttachmentOrigin( player.LookupAttachment( "CHESTFOCUS" ) )
+	float dist         = Distance( ropeData.ropeStartEnt.GetOrigin(), chestOrigin )
+	float ropeLength   = GraphCapped( dist, MEDBAY_MIN_ROPE_DIST, MEDBAY_MAX_ROPE_DIST, MEDBAY_MIN_ROPE_LENGTH, MEDBAY_MAX_ROPE_LENGTH )
+	ropeData.playerRope.Rope_SetLength( ropeLength )
+	ropeData.otherRope.Rope_SetLength( ropeLength )
+}
+
+SignalStruct function CreateSignalStruct( entity droneMedic, entity player )
+{
+	SignalStruct signalStruct
+	signalStruct.player     = player
+	signalStruct.droneMedic = droneMedic
+	file.signalStructArray.append( signalStruct )
+	return signalStruct
+}
+
+void function DestroySignalStruct( SignalStruct signalStruct )
+{
+	file.signalStructArray.fastremovebyvalue( signalStruct )
+}
+
+void function SignalSignalStruct( entity droneMedic, entity player, string signal )
+{
+	foreach ( signalStruct in file.signalStructArray )
+	{
+		if ( (signalStruct.droneMedic == droneMedic) && (signalStruct.player == player) )
+			Signal( signalStruct, signal )
+	}
+}
+
+void function UpdateHealRope_Thread( entity docProp, entity player, SignalStruct signalStruct )
+{
+	HealRopeData ropeData = MedBay_CreateHealRope( docProp )
+	EndSignal( signalStruct, SIG_LEFT_MEDBAY_TRIGGER )
+	EndSignal( player, SIG_PLAYER_FULL_HEALTH )
+	docProp.EndSignal( "OnDeath" )
+	docProp.EndSignal( "OnDestroy" )
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+
+	EmitSoundOnEntity( docProp, SFX_MEDBAY_DEPLOY_ROPE_SOUND )
+	thread MedBay_DeployHealRope_Thread( ropeData, player, signalStruct )
+
+	OnThreadEnd( function() : ( ropeData, signalStruct )
+	{
+		thread MedBay_RetractHealRope_Thread( ropeData )
+		DestroySignalStruct( signalStruct )
+	} )
+
+	while ( true )
+	{
+		SetRopeLength( player, docProp, ropeData )
+		WaitFrame()
+	}
+}
+
+void function MedBay_RetractHealRope_Thread( HealRopeData ropeData )
+{
+	if ( IsValid( ropeData.ropeStartEnt ) && IsValid( ropeData.playerRope ) && IsValid( ropeData.otherRope ) )
+	{
+		entity player = ropeData.playerRopeEndEnt.GetParent()
+		if ( IsValid( player ) && player.IsPlayer() )
+		{
+			EmitSoundOnEntityOnlyToPlayer( player, player, SFX_MEDBAY_DETACH_SOUND_1P )
+			EmitSoundOnEntityExceptToPlayer( player, player, SFX_MEDBAY_DETACH_SOUND_3P )
+		}
+
+		Assert( IsValid( ropeData.playerRopeEndEnt ) )
+		Assert( IsValid( ropeData.otherRopeEndEnt ) )
+
+		ropeData.playerRope.RopeWiggle( MEDBAY_MAX_ROPE_LENGTH, 0.01, 10, MEDBAY_ROPE_REEL_IN_TIME, MEDBAY_ROPE_REEL_IN_TIME / 2 )    // rope length, magnitude, speed, DURATION, fade DURATION
+		ropeData.playerRopeEndEnt.ClearParent()
+		ropeData.playerRopeEndEnt.NonPhysicsMoveTo( ropeData.ropeStartEnt.GetOrigin(), MEDBAY_ROPE_REEL_IN_TIME, 0, MEDBAY_ROPE_REEL_IN_TIME / 2 )
+		ropeData.playerRope.Rope_SetGravityEnabled( false )
+		ropeData.playerRope.Rope_SetLength( 5 )
+
+		ropeData.otherRope.RopeWiggle( MEDBAY_MAX_ROPE_LENGTH, 0.01, 10, MEDBAY_ROPE_REEL_IN_TIME, MEDBAY_ROPE_REEL_IN_TIME / 2 )    // rope length, magnitude, speed, DURATION, fade DURATION
+		ropeData.otherRopeEndEnt.ClearParent()
+		ropeData.otherRopeEndEnt.NonPhysicsMoveTo( ropeData.ropeStartEnt.GetOrigin(), MEDBAY_ROPE_REEL_IN_TIME, 0, MEDBAY_ROPE_REEL_IN_TIME / 2 )
+		ropeData.otherRope.Rope_SetGravityEnabled( false )
+		ropeData.otherRope.Rope_SetLength( 5 )
+
+		wait MEDBAY_ROPE_REEL_IN_TIME
+	}
+
+	if ( IsValid( ropeData.playerRope ) )
+		ropeData.playerRope.Destroy()
+	if ( IsValid( ropeData.playerRopeEndEnt ) )
+		ropeData.playerRopeEndEnt.Destroy()
+
+	if ( IsValid( ropeData.otherRope ) )
+		ropeData.otherRope.Destroy()
+	if ( IsValid( ropeData.otherRopeEndEnt ) )
+		ropeData.otherRopeEndEnt.Destroy()
+}
+#endif //HEAL ROPE FX
+
+//CLIENT FX
+#if CLIENT
+void function ServerToClient_MedBayHealVisualsEnabled( entity player )
+{
+	if ( player != GetLocalViewPlayer() )
+		return
+
+	entity cockpit = player.GetCockpit()
+	if ( !IsValid( cockpit ) )
+		return
+
+	Assert( !EffectDoesExist( file.healFxHandle ), "tried to start a second screen fx" )
+
+	int fxID = GetParticleSystemIndex( GetAssetFromString( VFX_MEDBAY_HEAL_COCKPIT_1P ) )
+	file.healFxHandle = StartParticleEffectOnEntity( cockpit, fxID, FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
+	EffectSetIsWithCockpit( file.healFxHandle, true )
+
+	Chroma_StartHealingDroneEffect()
+}
+
+
+void function ServerToClient_MedBayHealVisualsDisabled( entity player )
+{
+	if ( player != GetLocalViewPlayer() )
+		return
+
+	if ( !EffectDoesExist( file.healFxHandle ) )
+		return
+
+	EffectStop( file.healFxHandle, false, true )
+
+	Chroma_EndHealingDroneEffect()
+}
+#endif //CLIENT FX
+
+//HELPERS
+#if SERVER
+MedBayData function GetMedBayDataFromTrigger( entity trigger )
+{
+	foreach ( MedBayData data in file.allMedBays )
+	{
+		if ( data.trigger == trigger )
+			return data
+	}
+
+	Assert( false, "Warning!! Searching for heal trigger with no corresponding data!!" )
+	unreachable
+}
+
+
+MedBayData function GetMedBayDataFromPlayer( entity player )
+{
+	foreach ( MedBayData data in file.allMedBays )
+	{
+		if ( data.playersInTrigger.contains( player ) )
+			return data
+	}
+
+	Assert( false, "Warning!! Searching for medbay player with no corresponding data!!" )
+	unreachable
+}
+
+MedBayData ornull function GetMedBayDataFromEntity( entity ent )
+{
+	foreach ( MedBayData data in file.allMedBays )
+	{
+		if ( data.pingProp == ent )
+			return data
+	}
+	return null
+}
+
+int function MedBay_GetHealsPercentRemaining( entity ent )
+{
+	MedBayData ornull data = GetMedBayDataFromEntity( ent )
+
+	if ( data == null )
+		return 0
+
+	expect MedBayData( data )
+
+	return int( (float(data.healAmount) / float( data.maxHealAmount )) * 100 )
+}
+
+bool function PlayerHealthDamaged( entity player )
+{
+	return player.GetHealth() != player.GetMaxHealth()
+}
+
+bool function PlayerCanBeHealed( entity player )
+{
+	//Rules - we have to be injured and we can't already be bleeding out
+	if ( player.IsTitan() )
+		return false
+
+	if ( player.IsPhaseShifted() )
+		return false
+
+	if ( IsGasCausingDamage( player ) )
+		return false
+
+	if ( Bleedout_IsBleedoutLogicActive() && Bleedout_IsBleedingOut( player ) )
+		return false
+
+	if ( player.IsPlayer() && (player.ContextAction_IsMeleeExecution() || player.ContextAction_IsMeleeExecutionTarget()) )
+		return false
+
+	                             
+		if ( IsPlayerShadowZombie( player ) )
+			return false
+                                    
+
+	if ( player.IsShadowForm() )
+		return false
+
+	return PlayerHealthDamaged( player )
+}
+#endif //HELPERS
+
+// REGEN VARIANT
+#if SERVER
+void function MedBayRegen_OnEnterHealTrigger( MedBayData data, entity player, bool previouslyEmpty )
+{
+	switch( data.currState )
+	{
+		case eMedBayState.IDLE:
+			Signal( data.pingProp, SIG_PLAYER_ENTER_MEDBAY )
+			MedBayRegen_StartSequence ( data )
+			break;
+	}
+}
+
+
+void function MedBayRegen_OnExitHealTrigger( MedBayData data, entity player )
+{
+	MedBay_RemoveHealIndicator( data, player )
+	switch( data.currState )
+	{
+		case eMedBayState.HEALING:
+			if ( data.playersInTrigger.len() == 0 )
+			{
+				Signal( data.pingProp, SIG_NO_ONE_IN_MEDBAY )
+				thread MedBayRegenIdleRecharge_Thread( data )
+			}
+			break;
+	}
+}
+
+void function MedBayRegen_StartSequence( MedBayData data )
+{
+	thread MedBayRegenSequence_Thread( data )
+}
+
+void function MedBayRegenSequence_Thread( MedBayData data )
+{
+	if ( !IsValid ( data.audioController ) || !IsValid ( data.pingProp ) )
+		return
+
+	file.waypointTracker.EndSignal( "OnDeath" )
+	file.waypointTracker.EndSignal( "OnDestroy" )
+	data.audioController.EndSignal( "OnDeath" )
+	data.audioController.EndSignal( "OnDestroy" )
+	data.pingProp.EndSignal( "OnDeath" )
+	data.pingProp.EndSignal( "OnDestroy" )
+	EndSignal( data.pingProp, SIG_OUT_OF_RING )
+	EndSignal( data.pingProp, SIG_NO_ONE_IN_MEDBAY )
+
+	OnThreadEnd(
+		function() : (data)
+		{
+			bool audioValid = IsValid( data.audioController )
+			//If we are out of the ring, stop the sounds and let the out of ring animation take over
+			if ( data.isOutOfRing )
+			{
+				if ( audioValid )
+					StopSoundOnEntity( data.audioController, SFX_MEDBAY_MEDIC_HEAL_LOOP_SOUND_3P )
+			}
+			else if ( data.playersInTrigger.len() != 0 )
+			{
+				//If someone is in the trigger when it goes off cooldown, restart the sequence
+				MedBayRegen_StartSequence ( data )
+			}
+			else
+			{
+				if ( audioValid )
+					StopSoundOnEntity( data.audioController, SFX_MEDBAY_MEDIC_HEAL_LOOP_SOUND_3P )
+				if ( data.currState != eMedBayState.COOLDOWN )
+				{
+					if ( audioValid )
+						EmitSoundOnEntity( data.audioController, SFX_MEDBAY_REGEN_LEAVE_POINT )
+				}
+				MedBay_ChangeDataState( data, eMedBayState.IDLE )
+			}
+		}
+	)
+
+	EmitSoundOnEntity( data.audioController, SFX_MEDBAY_REGEN_ENTER_POINT )
+
+	//HEALING
+	MedBay_ChangeDataState( data, eMedBayState.HEALING )
+	waitthread MedBayRegen_Healing_Thread( data )
+
+	//COOLDOWN
+	MedBay_ChangeDataState( data, eMedBayState.COOLDOWN )
+	foreach ( player in data.playersInTrigger )
+	{
+		SignalSignalStruct( data.pingProp, player, SIG_LEFT_MEDBAY_TRIGGER )
+	}
+
+	StopSoundOnEntity( data.audioController, SFX_MEDBAY_MEDIC_HEAL_LOOP_SOUND_3P )
+	waitthread RegenCooldownSound_Thread( data.audioController )
+
+	waitthread RefillWaypoint_Thread( data )
+
+	//IDLE
+	StopSoundOnEntity( data.audioController, SFX_MEDBAY_REGEN_CHARGE_START )
+	StopSoundOnEntity( data.audioController, SFX_MEDBAY_REGEN_CHARGE_LOOP )
+	EmitSoundOnEntity( data.audioController, SFX_MEDBAY_REGEN_CHARGE_END )
+}
+
+void function MedBayRegen_Healing_Thread( MedBayData data )
+{
+	data.pingProp.EndSignal( "OnDeath" )
+	data.pingProp.EndSignal( "OnDestroy" )
+	EndSignal( data.pingProp, SIG_OUT_OF_RING )
+	EndSignal( data.pingProp, SIG_NO_ONE_IN_MEDBAY )
+	EndSignal( data.pingProp, SIG_OUT_OF_HEALING )
+
+	bool playingHealLoop = false
+	while( true )
+	{
+		foreach ( player in data.playersInTrigger )
+		{
+			//If we hit all the criteria, try to heal the player
+			if ( IsValid( player ) && !(player in data.playerHandles) && PlayerCanBeHealed( player ) )
+			{
+				thread UpdatePlayerRegen_Thread( data, player )
+			}
+		}
+
+		if ( data.playerHandles.len() > 0 && !playingHealLoop )
+		{
+			EmitSoundOnEntity( data.audioController, SFX_MEDBAY_MEDIC_HEAL_LOOP_SOUND_3P )
+			playingHealLoop = true
+		}
+		else if ( data.playerHandles.len() == 0 && playingHealLoop )
+		{
+			StopSoundOnEntity( data.audioController, SFX_MEDBAY_MEDIC_HEAL_LOOP_SOUND_3P )
+			playingHealLoop = false
+		}
+		WaitFrame()
+	}
+}
+
+//Proto thread to simulate the cooldown sound - to be replaced with real audio
+void function RegenCooldownSound_Thread( entity audioController )
+{
+	EmitSoundOnEntity( audioController, SFX_MEDBAY_REGEN_POWER_DOWN )
+	wait 3 //2.87 magic number for prototype sound
+	EmitSoundOnEntity( audioController, SFX_MEDBAY_REGEN_CHARGE_START )
+	EmitSoundOnEntity( audioController, SFX_MEDBAY_REGEN_CHARGE_LOOP )
+}
+
+void function MedBayRegenIdleRecharge_Thread( MedBayData data )
+{
+	if ( file.idleTimeSec == -1 || data.healAmount == data.maxHealAmount )
+		return
+	EndSignal( data.pingProp, SIG_OUT_OF_RING )
+	EndSignal( data.pingProp, SIG_PLAYER_ENTER_MEDBAY )
+
+	OnThreadEnd( function() : ( data )
+	{
+		//StopSoundAtPosition( data.docSoundOrigin, SFX_MEDBAY_REGEN_CHARGE_LOOP )
+		MedBay_ToggleIndicatorPulse( data, false )
+	} )
+
+	MedBay_ToggleIndicatorPulse( data, true )
+
+	wait file.idleTimeSec
+
+	MedBay_ToggleIndicatorPulse( data, false )
+
+	//EmitSoundAtPosition( TEAM_UNASSIGNED, data.docSoundOrigin, SFX_MEDBAY_REGEN_CHARGE_LOOP )
+	waitthread RefillWaypoint_Thread( data )
+	//EmitSoundAtPosition( TEAM_UNASSIGNED, data.docSoundOrigin, SFX_MEDBAY_REGEN_CHARGE_END )
+}
+
+void function UpdatePlayerRegen_Thread( MedBayData data, entity player )
+{
+	SignalStruct signalStruct = CreateSignalStruct( data.pingProp, player )
+
+	EndSignal( signalStruct, SIG_LEFT_MEDBAY_TRIGGER )
+	EndSignal( player, SIG_PLAYER_FULL_HEALTH )
+	EndSignal( data.pingProp, SIG_OUT_OF_RING )
+
+	data.pingProp.EndSignal( "OnDeath" )
+	data.pingProp.EndSignal( "OnDestroy" )
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+	file.waypointTracker.EndSignal( "OnDestroy" )
+
+	MedBay_AddHealIndicator( data, player )
+
+	EmitSoundOnEntityOnlyToPlayer( player, player, SFX_MEDBAY_MEDIC_HEAL_LOOP_SOUND_1P )
+
+	//Just set it to the max heal amount so we're never going to run out of heals
+	float duration = file.cooldownTimeSec == 0 ? 1000000.0 : data.maxHealAmount / file.healPerSec
+	data.playerHandles[player] <- EntityHealResource_Add( player, duration, file.healPerSec, 0, "medical_bay", player )
+
+	int currentResource  = EntityHealResource_GetRemainingHeals( player, data.playerHandles[player] )
+	int previousResource = currentResource
+
+	OnThreadEnd( function() : ( data, player )
+	{
+		MedBay_RemoveHealIndicator( data, player )
+		StopSoundOnEntity( player, SFX_MEDBAY_MEDIC_HEAL_LOOP_SOUND_1P )
+		EntityHealResource_Remove( player, data.playerHandles[player] )
+		delete data.playerHandles[player]
+	} )
+
+	thread UpdateHealRope_Thread( data.pingProp, player, signalStruct )
+
+	//Player healing
+	while ( true )
+	{
+		//Wait a frame first for the resource to fire off
+		WaitFrame()
+		previousResource = currentResource
+		currentResource  = EntityHealResource_GetRemainingHeals( player, data.playerHandles[player] )
+		int difference = previousResource - currentResource
+
+		if ( file.cooldownTimeSec != 0 )
+		{
+			data.healAmount -= difference
+
+			file.waypointTracker.SetWaypointInt( 0, data.healAmount )
+			MedBay_UpdateAudioController( data )
+
+			if ( data.healAmount <= 0 )
+			{
+				data.healAmount = 0
+				Signal( data.pingProp, SIG_OUT_OF_HEALING )
+			}
+		}
+
+		if ( !PlayerHealthDamaged( player ) )
+		{
+			Signal( player, SIG_PLAYER_FULL_HEALTH )
+		}
+	}
+}
+#endif //REGEN
+
+#if SERVER //RING CHECK
+void function MedBay_StartRingTest( MedBayData data )
+{
+	if ( GetCurrentPlaylistVarBool( MEDBAY_DISABLE_OUTSIDE_RING, true ) )
+	{
+		thread MedBayRingTest_Thread( data )
+	}
+}
+
+void function MedBayRingTest_Thread( MedBayData data )
+{
+	if ( !IsValid( data.pingProp ) )
+		return
+
+	data.pingProp.EndSignal( "OnDeath" )
+	data.pingProp.EndSignal( "OnDestroy" )
+
+	OnThreadEnd( function() : ( data )
+	{
+		MedBay_OutOfRing( data )
+	} )
+
+	vector origin = data.pingProp.GetOrigin()
+
+	while( SURVIVAL_PosInsideDeathField( Survival_Loot_GetDefaultRealm(), origin ) )
+	{
+		wait MEDBAY_OUT_OF_RING_TEST_SEC
+	}
+}
+
+void function MedBay_OutOfRing( MedBayData data )
+{
+	if ( !IsValid( data.pingProp ) || !IsValid( data.trigger ) || !IsValid( data.audioController ) )
+		return
+
+	data.isOutOfRing = true
+	Signal( data.pingProp, SIG_OUT_OF_RING )
+
+	MedBay_ChangeDataState( data, eMedBayState.OFF )
+	data.trigger.Disable()
+
+	//Stop Audio just in case of a state change
+	StopSoundOnEntity( data.audioController, SFX_MEDBAY_REGEN_CHARGE_START )
+	StopSoundOnEntity( data.audioController, SFX_MEDBAY_REGEN_CHARGE_LOOP )
+
+	thread EmptyWaypoint_Thread( data, MEDBAY_OUT_OF_RING_EMPTY_DOC_TIME_SEC )
+	thread MedBayDisableAnimation_Thread( data.pingProp, data.audioController )
+}
+
+void function MedBayDisableAnimation_Thread( entity doc, entity audioController )
+{
+	doc.EndSignal( "OnDeath" )
+	doc.EndSignal( "OnDestroy" )
+
+	vector origin = doc.GetOrigin()
+
+	EmitSoundOnEntity( audioController, SFX_MEDBAY_REGEN_POWER_DOWN )
+
+	//Just playing a bunch of sparks to sell it
+	PlaySparks ( doc, origin )
+	wait 1
+	PlaySparks ( doc, origin )
+	wait 2
+	PlaySparks ( doc, origin )
+	wait 1
+	PlaySparks ( doc, origin )
+	wait 0.5
+	PlaySparks ( doc, origin )
+	wait 1.5
+	PlaySparks ( doc, origin )
+}
+
+void function PlaySparks( entity doc, vector origin )
+{
+	StartParticleEffectInWorld( GetParticleSystemIndex( GetAssetFromString( VFX_MEDBAY_SPARKS ) ), origin, <0, 0, 0> )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, origin, SFX_MEDBAY_SPARKS, doc )
+}
+
+#if DEV
+void function DEV_TestMedBayRing()
+{
+	MedBayData data = file.allMedBays[0]
+	MedBay_OutOfRing( data )
+}
+#endif
+#endif //RING CHECK
+
+//PINGS
+#if SERVER || CLIENT
+bool function MedBay_IsOnCooldown()
+{
+	if ( !IsValid( file.waypointTracker ) )
+		return false
+	return file.waypointTracker.GetWaypointInt( 2 ) == eMedBayState.COOLDOWN
+}
+
+bool function MedBay_IsDisabled()
+{
+	if ( !IsValid( file.waypointTracker ) )
+		return false
+	return file.waypointTracker.GetWaypointInt( 2 ) == eMedBayState.OFF
+}
+#endif
+
+bool function IsMedBayEnabled()
+{
+	if ( GetCurrentPlaylistVarBool( MEDBAY_PLAYLIST_ENABLED, true ) )
+	{
+		#if SERVER
+			return HasEntWithScriptName( MEDBAY_DOC_SCRIPT_NAME )
+		#endif
+
+		#if CLIENT
+			return HasEntWithScriptName( MEDBAY_EYE_STALK_SCRIPT_NAME )
+		#endif
+	}
+
+	return false
+}
+
+                         
