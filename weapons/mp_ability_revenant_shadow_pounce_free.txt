@@ -1,0 +1,244 @@
+"WeaponData"
+{
+	// val unk: 63
+	"printname" "#ABL_SHADOW_POUNCE"
+	// val unk: 45
+	"shortprintname" "#ABL_SHADOW_POUNCE_SHORT"
+	// val unk: 7
+	"description" "#ABL_SHADOW_POUNCE_DESC"
+	// val unk: 48
+	"longdesc" "#ABL_SHADOW_POUNCE_LONGDESC"
+	// val unk: 65
+	"hud_icon" "rui/hud/tactical_icons/tactical_revenant_rework"
+	// val unk: 59
+	"OnWeaponDeactivate" "OnWeaponDeactivate_shadow_pounce_free"
+	// val unk: 13
+	"OnWeaponTossPrep" "OnWeaponTossPrep_shadow_pounce_free"
+	// val unk: 38
+	"OnWeaponTossCancel" "OnWeaponTossCancel_shadow_pounce_free"
+	// val unk: 47
+	"OnWeaponToss" "OnWeaponToss_shadow_pounce_free"
+	// val unk: 11
+	"OnWeaponTossReleaseAnimEvent" "OnWeaponTossReleaseAnimEvent_shadow_pounce_free"
+	// val unk: 28
+	"OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
+	// val unk: 36
+	"OnWeaponAttemptOffhandSwitch" "OnWeaponAttemptOffhandSwitch_shadow_pounce_free"
+	// val unk: 64
+	"OnWeaponOwnerChanged" "OnWeaponOwnerChanged_shadow_pounce_free"
+	// val unk: 49
+	"zoom_effects" "0"
+	// val unk: 62
+	"viewmodel" "mdl/weapons/empty_handed/ptpov_revenant_shadowpounce.rmdl"
+	// val unk: 30
+	"playermodel" "mdl/weapons/empty_hands/ptpov_empty_hands.rmdl"
+	// val unk: 43
+	"leveled_pickup" "1"
+	// val unk: 39
+	"bone_merge_world_model" "1"
+	// val unk: 41
+	"play_offhand_charging_anim" "0"
+	// val unk: 34
+	"play_offhand_start_end_anim" "0"
+	// val unk: 42
+	"fast_swap_from" "1"
+	// val unk: 60
+	"is_toss_weapon" "1"
+	// val unk: 4
+	"toss_has_post_loop" "1"
+	// val unk: 71
+	"instant_swap_to" "1"
+	// val unk: 24
+	"fire_rate" "1.500000"
+	// val unk: 12
+	"fire_anim_rate" "1.500000"
+	// val unk: 37
+	"holster_time" "0.400000"
+	// val unk: 18
+	"deploy_time" "0"
+	// val unk: 66
+	"lower_time" "0.400000"
+	// val unk: 33
+	"raise_time" "0"
+	// val unk: 20
+	"toss_pullout_time" "0.900000"
+	// val unk: 44
+	"toss_time" "1"
+	// val unk: 9
+	"toss_overhead_time" "0"
+	// val unk: 61
+	"reload_enabled" "0"
+	// val unk: 2
+	"empty_reload_only" "0"
+	// val unk: 54
+	"allow_empty_click" "0"
+	// val unk: 50
+	"breaks_cloak" "0"
+	// val unk: 56
+	"primary_fire_does_not_block_sprint" "1"
+	// val unk: 17
+	"aimassist_disable_hipfire" "1"
+	// val unk: 67
+	"aimassist_disable_ads" "1"
+	// val unk: 15
+	"cooldown_type" "ammo_instant"
+	// val unk: 14
+	"fire_mode" "offhand"
+	// val unk: 55
+	"offhand_cancelled_by_melee" "1"
+	// val unk: 1
+	"offhand_default_inventory_slot" "1"
+	// val unk: 52
+	"offhand_toss_hold_is_resumable" "0"
+	// val unk: 32
+	"offhand_keep_primary_in_hand" "0"
+	// val unk: 35
+	"offhand_holster_primary" "1"
+	// val unk: 31
+	"hide_holstered_sidearm_when_active" "1"
+	// val unk: 0
+	"offhand_interrupt_climbing" "1"
+	// val unk: 26
+	"ammo_suck_behavior" "offhand_weapons"
+	// val unk: 8
+	"ammo_display" "count"
+	// val unk: 23
+	"ammo_clip_size" "25"
+	// val unk: 22
+	"ammo_default_total" "25"
+	// val unk: 10
+	"ammo_min_to_fire" "25"
+	// val unk: 70
+	"ammo_per_shot" "25"
+	// val unk: 3
+	"ammo_stockpile_max" "25"
+	// val unk: 19
+	"regen_ammo_refill_rate" "1"
+	// val unk: 69
+	"regen_ammo_refill_start_delay" "0.000000"
+	// val unk: 58
+	"damage_type" "none"
+	// val unk: 53
+	"explosion_damage_heavy_armor" "0"
+	// val unk: 6
+	"damage_near_distance" "0"
+	// val unk: 25
+	"damage_far_distance" "0"
+	// val unk: 29
+	"damage_near_value" "0"
+	// val unk: 16
+	"damage_far_value" "0"
+	// val unk: 27
+	"rumble" "18446744073709551615"
+	// val unk: 46
+	"weaponType" "tactical"
+	// val unk: 40
+	"weapon_type_flags" "WPT_TACTICAL"
+	// val unk: 68
+	"sound_disabledfire" "Survival_UI_Ability_NotReady_Silenced"
+	// val unk: 51
+	"sound_dryfire" "Survival_UI_Ability_NotReady"
+	// val unk: 21
+	"sound_weapon_ready" "survival_ui_tactical_ready"
+	// val unk: 57
+	"update_player_last_fire_time" "0"
+	// val unk: 5
+	"offhand_match_player_skin" "1"
+
+	// child unk: 0
+	"Mods"
+	{
+
+		// child unk: 2
+		"survival_armor_cooldown_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.25"
+
+		}
+
+		// child unk: 8
+		"shadow_form_active"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "3"
+
+		}
+
+		// child unk: 9
+		"survival_finite_ordnance"
+		{
+
+		}
+
+		// child unk: 5
+		"shadow_pounce_target_indicator"
+		{
+			// val unk: 2
+			"grenade_arc_indicator_show_from_hip" "1"
+			// val unk: 0
+			"grenade_arc_indicator_effect" "P_arc_light_blue_bounce"
+			// val unk: 3
+			"grenade_arc_impact_indicator_effect" "P_van_tac_echo_AR_ping_ground"
+			// val unk: 1
+			"grenade_arc_indicator_show_floor_impact" "0"
+
+		}
+
+		// child unk: 0
+		"upgrade_tac_one"
+		{
+			// val unk: 3
+			"ammo_clip_size" "20"
+			// val unk: 4
+			"ammo_default_total" "20"
+			// val unk: 1
+			"ammo_min_to_fire" "20"
+			// val unk: 2
+			"ammo_per_shot" "20"
+			// val unk: 0
+			"ammo_stockpile_max" "20"
+
+		}
+
+		// child unk: 4
+		"copycat_mod"
+		{
+			// val unk: 0
+			"weapon_type_flags" "WPT_SURVIVAL"
+
+		}
+
+		// child unk: 6
+		"survival_armor_cooldown_extra_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.5"
+
+		}
+
+		// child unk: 1
+		"survival_ammo_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 3
+		"ability_in_effect_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 7
+		"survival_ammo_regen_staging"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*5.0"
+
+		}
+	}
+}

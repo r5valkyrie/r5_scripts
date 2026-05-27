@@ -1,0 +1,566 @@
+"WeaponData"
+{
+	// val unk: 23
+	"printname" "CONSUMABLE_PROTO"
+	// val unk: 43
+	"shortprintname" "CONSUMABLE_PROTO"
+	// val unk: 27
+	"description" "CONSUMABLE_PROTO_DESC"
+	// val unk: 16
+	"longdesc" "CONSUMABLE_PROTO_LONGDESC"
+	// val unk: 76
+	"menu_icon" "rui/hud/gametype_icons/survival/health_pack_sml"
+	// val unk: 14
+	"hud_icon" ""
+	// val unk: 35
+	"weapon_type_flags" "WPT_CONSUMABLE"
+	// val unk: 73
+	"fire_mode" "offhandHybrid"
+	// val unk: 91
+	"offhand_cancelled_by_melee" "1"
+	// val unk: 36
+	"is_toss_weapon" "0"
+	// val unk: 33
+	"offhand_default_inventory_slot" "2"
+	// val unk: 39
+	"offhand_interupts_weapon_anims" "1"
+	// val unk: 52
+	"fast_swap_to" "1"
+	// val unk: 28
+	"is_consumable" "1"
+	// val unk: 59
+	"OnWeaponActivate" "OnWeaponActivate_Consumable"
+	// val unk: 17
+	"OnWeaponDeactivate" "OnWeaponDeactivate_Consumable"
+	// val unk: 57
+	"OnWeaponRaise" "OnWeaponRaise_Consumable"
+	// val unk: 44
+	"OnWeaponAttemptOffhandSwitch" "OnWeaponAttemptOffhandSwitch_Consumable"
+	// val unk: 29
+	"OnWeaponPrimaryAttack" "OnWeaponPrimaryAttack_Consumable"
+	// val unk: 74
+	"OnWeaponChargeBegin" "OnWeaponChargeBegin_Consumable"
+	// val unk: 61
+	"OnWeaponChargeEnd" "OnWeaponChargeEnd_Consumable"
+	// val unk: 42
+	"OnWeaponOwnerChanged" "OnWeaponOwnerChanged_Consumable"
+	// val unk: 10
+	"OnCreateChargeEffect" "OnCreateChargeEffect_Consumable"
+	// val unk: 32
+	"OnCreateMuzzleFlashEffect" "OnCreateMuzzleFlashEffect_Consumable"
+	// val unk: 60
+	"viewmodel" "mdl/weapons/shield_battery/ptpov_shield_battery_held.rmdl"
+	// val unk: 7
+	"playermodel" "mdl/Weapons/shield_battery/w_shield_battery.rmdl"
+	// val unk: 4
+	"leveled_pickup" "1"
+	// val unk: 54
+	"offhand_keep_primary_in_hand" "0"
+	// val unk: 11
+	"zoom_effects" "0"
+	// val unk: 8
+	"ammo_suck_behavior" "offhand_weapons"
+	// val unk: 40
+	"charge_time" "3.000000"
+	// val unk: 5
+	"charge_cooldown_time" "1.000000"
+	// val unk: 79
+	"charge_cooldown_delay" "0.000000"
+	// val unk: 30
+	"charge_end_forces_fire" "1"
+	// val unk: 13
+	"charge_require_input" "0"
+	// val unk: 18
+	"charge_remain_full_when_fired" "1"
+	// val unk: 46
+	"charge_allow_anim_updates" "0"
+	// val unk: 21
+	"entity_color_from_charge" "1"
+	// val unk: 80
+	"damage_type" "none"
+	// val unk: 58
+	"explosion_damage_heavy_armor" "0"
+	// val unk: 77
+	"damage_near_distance" "0"
+	// val unk: 49
+	"damage_far_distance" "0"
+	// val unk: 48
+	"damage_near_value" "0"
+	// val unk: 6
+	"damage_far_value" "0"
+	// val unk: 53
+	"rumble" "18446744073709551615"
+	// val unk: 31
+	"offhand_blocks_sprint" "1"
+	// val unk: 81
+	"fire_rate" "100"
+	// val unk: 75
+	"fire_anim_rate" "1.000000"
+	// val unk: 41
+	"play_offhand_charging_anim" "1"
+	// val unk: 70
+	"play_offhand_fire_anim" "1"
+	// val unk: 2
+	"play_offhand_start_end_anim" "1"
+	// val unk: 65
+	"raise_time" "1.000000"
+	// val unk: 82
+	"allow_empty_fire" "1"
+	// val unk: 67
+	"reload_enabled" "0"
+	// val unk: 93
+	"empty_reload_only" "0"
+	// val unk: 12
+	"allow_empty_click" "0"
+	// val unk: 34
+	"trigger_snipercam" "0"
+	// val unk: 20
+	"breaks_cloak" "0"
+	// val unk: 83
+	"primary_fire_does_not_block_sprint" "1"
+	// val unk: 25
+	"aimassist_disable_hipfire" "1"
+	// val unk: 24
+	"aimassist_disable_ads" "1"
+	// val unk: 66
+	"ammo_no_remove_from_clip" "1"
+	// val unk: 1
+	"ammo_clip_size" "1"
+	// val unk: 84
+	"ammo_default_total" "1"
+	// val unk: 63
+	"ammo_min_to_fire" "1"
+	// val unk: 55
+	"ammo_per_shot" "1"
+	// val unk: 0
+	"ammo_stockpile_max" "1"
+	// val unk: 72
+	"regen_ammo_refill_rate" "0"
+	// val unk: 78
+	"regen_ammo_refill_start_delay" "0.000000"
+	// val unk: 92
+	"cooldown_type" "ammo_instant"
+	// val unk: 85
+	"activitymodifier3p" "mp_ability_consumable"
+	// val unk: 87
+	"bob_cycle_time" "0.400000"
+	// val unk: 88
+	"bob_vert_dist" "0.100000"
+	// val unk: 37
+	"bob_horz_dist" "0.100000"
+	// val unk: 22
+	"bob_max_speed" "100"
+	// val unk: 71
+	"bob_pitch" "0.750000"
+	// val unk: 3
+	"bob_yaw" "-1.700000"
+	// val unk: 50
+	"bob_roll" "1.200000"
+	// val unk: 90
+	"sway_rotate_attach" "SWAY_ROTATE"
+	// val unk: 38
+	"sway_min_x" "-0.500000"
+	// val unk: 64
+	"sway_min_y" "-0.500000"
+	// val unk: 86
+	"sway_min_z" "-0.600000"
+	// val unk: 47
+	"sway_max_x" "0.500000"
+	// val unk: 51
+	"sway_max_y" "0.500000"
+	// val unk: 89
+	"sway_max_z" "0.600000"
+	// val unk: 45
+	"sway_min_pitch" "18446744073709551613"
+	// val unk: 26
+	"sway_min_yaw" "-2.500000"
+	// val unk: 19
+	"sway_min_roll" "18446744073709551612"
+	// val unk: 69
+	"sway_max_pitch" "3"
+	// val unk: 62
+	"sway_max_yaw" "2.500000"
+	// val unk: 9
+	"sway_max_roll" "4"
+	// val unk: 56
+	"sway_translate_gain" "2.500000"
+	// val unk: 68
+	"sway_rotate_gain" "7"
+	// val unk: 15
+	"ui1_enable" "0"
+
+	// child unk: 0
+	"Mods"
+	{
+
+		// child unk: 6
+		"health_small"
+		{
+			// val unk: 4
+			"viewmodel" "mdl/weapons/health_injector/ptpov_health_injector.rmdl"
+			// val unk: 11
+			"playermodel" "mdl/Weapons/health_injector/w_health_injector.rmdl"
+			// val unk: 13
+			"printname" "#SURVIVAL_PICKUP_HEALTH_SMALL"
+			// val unk: 5
+			"charge_time" "4.000000"
+			// val unk: 17
+			"charge_sound_1p" "Health_Syringe_Charge_Short"
+			// val unk: 9
+			"charge_sound_3p" "Health_Syringe_Charge_Short_3p"
+			// val unk: 14
+			"hud_icon" "rui/hud/loot/loot_stim_health_small"
+			// val unk: 15
+			"activitymodifier3p" "health_prop"
+			// val unk: 6
+			"charge_effect_attachment" "muzzle_flash"
+			// val unk: 3
+			"charge_effect_1p" "P_health_inj_charge_FP"
+			// val unk: 12
+			"charge_effect_3p" "P_health_inj_charge"
+			// val unk: 7
+			"fire_sound_1_player_1p" "Health_Syringe_Primary"
+			// val unk: 1
+			"fire_sound_2_player_1p" "Health_Syringe_Holster"
+			// val unk: 0
+			"fire_sound_1_player_3p" "Health_Syringe_Holster_3p"
+			// val unk: 16
+			"fx_muzzle_flash_view" "P_health_inj_mflash_FP"
+			// val unk: 2
+			"fx_muzzle_flash_world" "P_health_inj_mflash"
+			// val unk: 21
+			"fx_muzzle_flash_attach" "muzzle_flash"
+			// val unk: 20
+			"dof_nearDepthStart" "0.100000"
+			// val unk: 8
+			"dof_nearDepthEnd" "1.000000"
+			// val unk: 19
+			"dof_zoom_nearDepthStart" "1.000000"
+			// val unk: 18
+			"dof_zoom_nearDepthEnd" "12.000000"
+			// val unk: 10
+			"is_twohanded_consumable" "1"
+
+		}
+
+		// child unk: 2
+		"health_large"
+		{
+			// val unk: 4
+			"viewmodel" "mdl/weapons/health_injector/ptpov_health_injector.rmdl"
+			// val unk: 11
+			"playermodel" "mdl/Weapons/health_injector/w_health_injector.rmdl"
+			// val unk: 13
+			"printname" "#SURVIVAL_PICKUP_HEALTH_LARGE"
+			// val unk: 5
+			"charge_time" "7.000000"
+			// val unk: 17
+			"charge_sound_1p" "Health_Syringe_Charge"
+			// val unk: 9
+			"charge_sound_3p" "Health_Syringe_Charge_3p"
+			// val unk: 14
+			"hud_icon" "rui/hud/loot/loot_stim_health_large"
+			// val unk: 15
+			"activitymodifier3p" "health_prop"
+			// val unk: 6
+			"charge_effect_attachment" "muzzle_flash"
+			// val unk: 3
+			"charge_effect_1p" "P_health_inj_charge_FP"
+			// val unk: 12
+			"charge_effect_3p" "P_health_inj_charge"
+			// val unk: 7
+			"fire_sound_1_player_1p" "Health_Syringe_Primary"
+			// val unk: 1
+			"fire_sound_2_player_1p" "Health_Syringe_Holster"
+			// val unk: 0
+			"fire_sound_1_player_3p" "Health_Syringe_Holster_3p"
+			// val unk: 16
+			"fx_muzzle_flash_view" "P_health_inj_mflash_FP"
+			// val unk: 2
+			"fx_muzzle_flash_world" "P_health_inj_mflash"
+			// val unk: 21
+			"fx_muzzle_flash_attach" "muzzle_flash"
+			// val unk: 20
+			"dof_nearDepthStart" "0.100000"
+			// val unk: 8
+			"dof_nearDepthEnd" "1.000000"
+			// val unk: 19
+			"dof_zoom_nearDepthStart" "1.000000"
+			// val unk: 18
+			"dof_zoom_nearDepthEnd" "12.000000"
+			// val unk: 10
+			"is_twohanded_consumable" "1"
+
+		}
+
+		// child unk: 3
+		"shield_small"
+		{
+			// val unk: 12
+			"viewmodel" "mdl/weapons/shield_battery/ptpov_shield_battery_small_held.rmdl"
+			// val unk: 4
+			"playermodel" "mdl/Weapons/shield_battery/w_shield_battery_small.rmdl"
+			// val unk: 14
+			"printname" "#SURVIVAL_PICKUP_HEALTH_COMBO_SMALL"
+			// val unk: 16
+			"charge_time" "2.000000"
+			// val unk: 5
+			"charge_sound_1p" "shield_battery_charge_short"
+			// val unk: 8
+			"charge_sound_3p" "shield_battery_charge_short_3p"
+			// val unk: 17
+			"hud_icon" "rui/hud/loot/loot_stim_shield_small"
+			// val unk: 18
+			"activitymodifier3p" "shield_prop"
+			// val unk: 13
+			"charge_effect_1p" "P_shield_battery_LRG_FP"
+			// val unk: 6
+			"charge_effect_3p" ""
+			// val unk: 11
+			"charge_effect_attachment" "FX_CENTER"
+			// val unk: 3
+			"charge_effect2_1p" "P_shield_battery_glow_FP"
+			// val unk: 15
+			"charge_effect2_3p" "P_shield_battery_glow"
+			// val unk: 7
+			"charge_effect2_attachment" "muzzle_flash"
+			// val unk: 1
+			"fire_sound_1_player_1p" "shield_battery_primary"
+			// val unk: 0
+			"fire_sound_2_player_1p" "shield_battery_holster"
+			// val unk: 19
+			"fire_sound_1_player_3p" "Shield_Battery_Holster_3p"
+			// val unk: 2
+			"fx_muzzle_flash_view" "P_shield_battery_flash_FP"
+			// val unk: 20
+			"fx_muzzle_flash_world" "P_shield_battery_flash"
+			// val unk: 10
+			"fx_muzzle_flash_attach" "muzzle_flash"
+			// val unk: 9
+			"is_twohanded_consumable" "1"
+
+		}
+
+		// child unk: 5
+		"shield_large"
+		{
+			// val unk: 12
+			"viewmodel" "mdl/weapons/shield_battery/ptpov_shield_battery_held.rmdl"
+			// val unk: 4
+			"playermodel" "mdl/Weapons/shield_battery/w_shield_battery.rmdl"
+			// val unk: 14
+			"printname" "#SURVIVAL_PICKUP_HEALTH_COMBO_LARGE"
+			// val unk: 16
+			"charge_time" "4.000000"
+			// val unk: 5
+			"charge_sound_1p" "shield_battery_charge"
+			// val unk: 8
+			"charge_sound_3p" "shield_battery_charge_3p"
+			// val unk: 17
+			"hud_icon" "rui/hud/loot/loot_stim_shield_large"
+			// val unk: 18
+			"activitymodifier3p" "shield_prop"
+			// val unk: 13
+			"charge_effect_1p" "P_shield_battery_LRG_FP"
+			// val unk: 6
+			"charge_effect_3p" ""
+			// val unk: 11
+			"charge_effect_attachment" "FX_CENTER"
+			// val unk: 3
+			"charge_effect2_1p" "P_shield_battery_glow_FP"
+			// val unk: 15
+			"charge_effect2_3p" "P_shield_battery_glow"
+			// val unk: 7
+			"charge_effect2_attachment" "muzzle_flash"
+			// val unk: 1
+			"fire_sound_1_player_1p" "shield_battery_primary"
+			// val unk: 0
+			"fire_sound_2_player_1p" "shield_battery_holster"
+			// val unk: 19
+			"fire_sound_1_player_3p" "Shield_Battery_Holster_3p"
+			// val unk: 2
+			"fx_muzzle_flash_view" "P_shield_battery_flash_FP"
+			// val unk: 20
+			"fx_muzzle_flash_world" "P_shield_battery_flash"
+			// val unk: 10
+			"fx_muzzle_flash_attach" "muzzle_flash"
+			// val unk: 9
+			"is_twohanded_consumable" "1"
+
+		}
+
+		// child unk: 4
+		"phoenix_kit"
+		{
+			// val unk: 10
+			"viewmodel" "mdl/weapons/shield_battery/ptpov_shield_battery_held.rmdl"
+			// val unk: 12
+			"playermodel" "mdl/Weapons/shield_battery/w_shield_battery.rmdl"
+			// val unk: 14
+			"printname" "#SURVIVAL_PICKUP_HEALTH_COMBO_FULL"
+			// val unk: 16
+			"charge_time" "9.000000"
+			// val unk: 13
+			"hud_icon" "rui/hud/loot/loot_stim_combo_full"
+			// val unk: 6
+			"activitymodifier3p" "shield_prop"
+			// val unk: 17
+			"charge_effect_1p" "P_shield_battery_LRG_FP"
+			// val unk: 18
+			"charge_effect_3p" ""
+			// val unk: 11
+			"charge_effect_attachment" "FX_CENTER"
+			// val unk: 4
+			"charge_effect2_1p" "P_shield_battery_glow_FP"
+			// val unk: 9
+			"charge_effect2_3p" "P_shield_battery_glow"
+			// val unk: 3
+			"charge_effect2_attachment" "muzzle_flash"
+			// val unk: 15
+			"charge_sound_1p" "PhoenixKit_Charge"
+			// val unk: 5
+			"charge_sound_3p" "PhoenixKit_Charge_3p"
+			// val unk: 1
+			"fire_sound_1_player_1p" "PhoenixKit_Primary"
+			// val unk: 0
+			"fire_sound_2_player_1p" "shield_battery_holster"
+			// val unk: 19
+			"fire_sound_1_player_3p" "Shield_Battery_Holster_3p"
+			// val unk: 2
+			"fx_muzzle_flash_view" "P_shield_battery_flash_FP"
+			// val unk: 20
+			"fx_muzzle_flash_world" "P_shield_battery_flash"
+			// val unk: 8
+			"fx_muzzle_flash_attach" "muzzle_flash"
+			// val unk: 7
+			"is_twohanded_consumable" "1"
+
+		}
+
+		// child unk: 9
+		"ultimate_battery"
+		{
+			// val unk: 6
+			"viewmodel" "mdl/weapons/ultimate_accelerant/ptpov_ultimate_accelerant_held.rmdl"
+			// val unk: 8
+			"playermodel" "mdl/Weapons/ultimate_accelerant/w_ultimate_accelerant.rmdl"
+			// val unk: 9
+			"printname" "#SURVIVAL_PICKUP_HEALTH_ULTIMATE"
+			// val unk: 7
+			"charge_time" "6.000000"
+			// val unk: 4
+			"hud_icon" "rui/hud/loot/loot_health_ultimate"
+			// val unk: 3
+			"activitymodifier3p" "ultimate_battery"
+			// val unk: 5
+			"charge_sound_1p" "Ult_Acc_Charge"
+			// val unk: 10
+			"charge_sound_3p" "Ult_Acc_Charge_3p"
+			// val unk: 1
+			"fire_sound_1_player_1p" "Ult_Acc_Primary"
+			// val unk: 0
+			"fire_sound_1_player_3p" "Ult_Acc_end_3p"
+			// val unk: 2
+			"ui1_enable" "1"
+
+		}
+
+		// child unk: 0
+		"ultimate_battery_fast"
+		{
+			// val unk: 7
+			"viewmodel" "mdl/weapons/ultimate_accelerant/ptpov_ultimate_accelerant_held.rmdl"
+			// val unk: 9
+			"playermodel" "mdl/Weapons/ultimate_accelerant/w_ultimate_accelerant.rmdl"
+			// val unk: 10
+			"printname" "#SURVIVAL_PICKUP_HEALTH_ULTIMATE"
+			// val unk: 8
+			"charge_time" "3.000000"
+			// val unk: 4
+			"hud_icon" "rui/hud/loot/loot_health_ultimate"
+			// val unk: 3
+			"activitymodifier3p" "ultimate_battery"
+			// val unk: 6
+			"activitymodifier1p" "fast_charge"
+			// val unk: 5
+			"charge_sound_1p" "Ult_Acc_Charge_Upgraded"
+			// val unk: 11
+			"charge_sound_3p" "Ult_Acc_Charge_Upgraded_3p"
+			// val unk: 1
+			"fire_sound_1_player_1p" "Ult_Acc_Primary"
+			// val unk: 0
+			"fire_sound_1_player_3p" "Ult_Acc_end_3p"
+			// val unk: 2
+			"ui1_enable" "1"
+
+		}
+
+		// child unk: 8
+		"ultimate_battery_supercharged_fx"
+		{
+			// val unk: 0
+			"charge_effect_1p" "P_watt_UA_charge"
+			// val unk: 2
+			"charge_effect_3p" ""
+			// val unk: 1
+			"charge_effect_attachment" "muzzle_flash"
+
+		}
+
+		// child unk: 1
+		"quick_heal"
+		{
+			// val unk: 0
+			"charge_time" "*0.85"
+			// val unk: 2
+			"raise_time" "*0.85"
+			// val unk: 1
+			"holster_time" "*0.85"
+
+		}
+
+		// child unk: 7
+		"fast_heal"
+		{
+			// val unk: 0
+			"charge_time" "*0.5"
+			// val unk: 3
+			"raise_time" "*0.5"
+			// val unk: 2
+			"holster_time" "*0.5"
+			// val unk: 1
+			"activitymodifier1p" "fast_charge"
+
+		}
+	}
+
+	// child unk: 2
+	"UiData1"
+	{
+		// val unk: 1
+		"ui" "ui/ultimate_accelerant_screen"
+		// val unk: 0
+		"mesh" "models/weapons/attachments/ultimate_accelerant_rui"
+
+		// child unk: 0
+		"Args"
+		{
+
+		}
+	}
+
+	// child unk: 1
+	"RUI_CrosshairData"
+	{
+
+		// child unk: 0
+		"DefaultArgs"
+		{
+			// val unk: 0
+			"crosshairMovementX" "crosshair_movement_x"
+			// val unk: 1
+			"crosshairMovementY" "crosshair_movement_y"
+
+		}
+	}
+}

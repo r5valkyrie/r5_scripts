@@ -1,0 +1,140 @@
+"WeaponData"
+{
+	// val unk: 41
+	"printname" "#CONTROLLER_FLAG_NAME_LONG"
+	// val unk: 21
+	"shortprintname" "#CONTROLLER_FLAG_NAME_SHORT"
+	// val unk: 9
+	"description" "#CONTROLLER_FLAG_DESC_LONG"
+	// val unk: 16
+	"longdesc" "#CONTROLLER_FLAG_DESC_SHORT"
+	// val unk: 37
+	"menu_icon" "rui/hud/gametype_icons/survival/mobile_respawn_beacon_icon"
+	// val unk: 51
+	"hud_icon" "rui/hud/gametype_icons/survival/mobile_respawn_beacon_icon"
+	// val unk: 42
+	"readymessage" "BUG IT"
+	// val unk: 59
+	"readyhint" "BUG IT"
+	// val unk: 49
+	"weapon_type_flags" "WPT_SURVIVAL"
+	// val unk: 57
+	"weaponType" "gadget"
+	// val unk: 6
+	"fire_mode" "automatic"
+	// val unk: 43
+	"is_semi_auto" "1"
+	// val unk: 31
+	"is_toss_weapon" "0"
+	// val unk: 40
+	"is_clacker" "1"
+	// val unk: 14
+	"offhand_default_inventory_slot" "4"
+	// val unk: 60
+	"offhand_interupts_weapon_anims" "1"
+	// val unk: 10
+	"battle_chatter_event" "bc_respawnBeaconDeploy"
+	// val unk: 4
+	"viewmodel" "mdl/weapons/clacker_detonator/ptpov_proximity_detonator.rmdl"
+	// val unk: 53
+	"playermodel" "mdl/Weapons/clacker_detonator/clacker_w.rmdl"
+	// val unk: 15
+	"projectilemodel" "mdl/titans/medium/titan_medium_battery_static.rmdl"
+	// val unk: 38
+	"OnWeaponPrimaryAttack" "OnWeaponPrimaryAttack_mobile_respawn"
+	// val unk: 5
+	"OnWeaponActivate" "OnWeaponActivate_mobile_respawn"
+	// val unk: 20
+	"OnWeaponDeactivate" "OnWeaponDeactivate_mobile_respawn"
+	// val unk: 11
+	"OnWeaponPrimaryAttackAnimEvent" "OnWeaponPrimaryAttackAnimEvent_mobile_respawn"
+	// val unk: 44
+	"ammo_clip_size" "1"
+	// val unk: 58
+	"ammo_default_total" "1"
+	// val unk: 8
+	"ammo_display" "count"
+	// val unk: 52
+	"ammo_min_to_fire" "1"
+	// val unk: 39
+	"ammo_per_shot" "1"
+	// val unk: 62
+	"ammo_stockpile_max" "0"
+	// val unk: 2
+	"ammo_drains_to_empty_on_fire" "0"
+	// val unk: 28
+	"ammo_no_remove_from_clip" "0"
+	// val unk: 26
+	"ammo_no_remove_from_stockpile" "0"
+	// val unk: 34
+	"offhand_switch_force_draw" "1"
+	// val unk: 45
+	"regen_ammo_refill_rate" "0"
+	// val unk: 18
+	"regen_ammo_refill_start_delay" "0.000000"
+	// val unk: 17
+	"damage_type" "none"
+	// val unk: 56
+	"explosion_damage_heavy_armor" "0"
+	// val unk: 29
+	"damage_near_distance" "0"
+	// val unk: 1
+	"damage_far_distance" "0"
+	// val unk: 7
+	"damage_near_value" "0"
+	// val unk: 25
+	"damage_far_value" "0"
+	// val unk: 30
+	"zoom_effects" "0"
+	// val unk: 54
+	"rumble" "18446744073709551615"
+	// val unk: 0
+	"fire_rate" "10000.000000"
+	// val unk: 47
+	"fire_duration" "1.000000"
+	// val unk: 32
+	"fire_anim_rate" "1.000000"
+	// val unk: 23
+	"holster_time" "0.150000"
+	// val unk: 3
+	"deploy_time" "0.250000"
+	// val unk: 36
+	"lower_time" "0.250000"
+	// val unk: 13
+	"raise_time" "0.200000"
+	// val unk: 27
+	"allow_empty_fire" "1"
+	// val unk: 46
+	"reload_enabled" "0"
+	// val unk: 50
+	"empty_reload_only" "0"
+	// val unk: 19
+	"allow_empty_click" "0"
+	// val unk: 48
+	"trigger_snipercam" "0"
+	// val unk: 61
+	"allow_headshots" "0"
+	// val unk: 33
+	"breaks_cloak" "0"
+	// val unk: 24
+	"primary_fire_does_not_block_sprint" "1"
+	// val unk: 12
+	"aimassist_disable_hipfire" "1"
+	// val unk: 55
+	"aimassist_disable_ads" "1"
+	// val unk: 35
+	"cooldown_type" "ammo"
+	// val unk: 22
+	"activitymodifier1p" "mobile_respawn_beacon"
+
+	// child unk: 0
+	"Mods"
+	{
+
+		// child unk: 0
+		"survival_finite_ordnance"
+		{
+
+		}
+	}
+}

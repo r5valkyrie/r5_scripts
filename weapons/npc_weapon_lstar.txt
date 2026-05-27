@@ -1,0 +1,322 @@
+"WeaponData"
+{
+	// val unk: 95
+	"printname" "#WPN_LSTAR"
+	// val unk: 77
+	"shortprintname" "#WPN_LSTAR_SHORT"
+	// val unk: 26
+	"description" "#WPN_LSTAR_DESC"
+	// val unk: 53
+	"longdesc" "#WPN_LSTAR_LONGDESC"
+	// val unk: 114
+	"weaponClass" "human"
+	// val unk: 23
+	"body_type" "stalker"
+	// val unk: 55
+	"fire_mode" "automatic"
+	// val unk: 57
+	"weapon_type_flags" "WPT_PRIMARY"
+	// val unk: 67
+	"cooldown_type" "chargeFrac"
+	// val unk: 117
+	"cooldown_time" "0.400000"
+	// val unk: 35
+	"charge_time" "2.400000"
+	// val unk: 17
+	"charge_cooldown_time" "2.450000"
+	// val unk: 85
+	"charge_cooldown_delay" "0.050000"
+	// val unk: 82
+	"charge_overheat_cooldown_time" "2.450000"
+	// val unk: 63
+	"charge_overheat_cooldown_delay" "0.050000"
+	// val unk: 102
+	"charge_overheats_when_full" "1"
+	// val unk: 111
+	"charge_weapon_fires_while_charging" "1"
+	// val unk: 98
+	"charge_remain_full_when_fired" "1"
+	// val unk: 47
+	"projectile_launch_speed" "1500"
+	// val unk: 101
+	"projectile_gravity_scale" "0.050000"
+	// val unk: 56
+	"projectile_drag_coefficient" "0.000000"
+	// val unk: 115
+	"projectile_lifetime" "4.000000"
+	// val unk: 51
+	"damage_flags" "DF_BULLET | DF_GIB"
+	// val unk: 43
+	"OnWeaponActivate" "OnWeaponActivate_weapon_lstar"
+	// val unk: 22
+	"OnWeaponPrimaryAttack" "OnWeaponPrimaryAttack_weapon_lstar"
+	// val unk: 12
+	"OnWeaponNpcPrimaryAttack" "OnWeaponNpcPrimaryAttack_weapon_lstar"
+	// val unk: 112
+	"OnWeaponCooldown" "OnWeaponCooldown_weapon_lstar"
+	// val unk: 32
+	"playermodel" "mdl/weapons/lstar/w_lstar.rmdl"
+	// val unk: 6
+	"projectilemodel" "mdl/dev/empty_model.rmdl"
+	// val unk: 105
+	"holster_type" "rifle"
+	// val unk: 54
+	"projectile_trail_effect_0_1p" "P_projectile_lstar_burn"
+	// val unk: 19
+	"projectile_trail_effect_0_3p" "P_projectile_lstar_burn"
+	// val unk: 108
+	"fx_muzzle_flash_view" "P_muz_lstar_FP_burn"
+	// val unk: 33
+	"fx_muzzle_flash_world" "P_muz_lstar_burn"
+	// val unk: 15
+	"fx_muzzle_flash_attach" "muzzle_flash"
+	// val unk: 76
+	"impact_effect_table" "lstar"
+	// val unk: 10
+	"projectile_adjust_to_gun_barrel" "1"
+	// val unk: 59
+	"vortex_impact_sound_1p" "vortex_shield_deflect_amped"
+	// val unk: 24
+	"vortex_impact_sound_3p" "vortex_shield_deflect_amped"
+	// val unk: 81
+	"vortex_impact_effect" "P_impact_xo_shield_cp"
+	// val unk: 92
+	"looping_sounds" "1"
+	// val unk: 45
+	"burst_or_looping_fire_sound_start_npc" "Weapon_LSTAR_FirstShot_3P_npc_a"
+	// val unk: 73
+	"burst_or_looping_fire_sound_middle_npc" "Weapon_LSTAR_Loop_3P_npc_a"
+	// val unk: 29
+	"burst_or_looping_fire_sound_end_npc" "Weapon_LSTAR_LoopEnd_3P_npc_a"
+	// val unk: 109
+	"fire_sound_2_npc" "weapon_lstar_secondshot_3p_npc_a"
+	// val unk: 70
+	"bolt_hitsize" "0.750000"
+	// val unk: 7
+	"bolt_gravity_enabled" "1"
+	// val unk: 88
+	"ammo_suck_behavior" "primary_weapons"
+	// val unk: 103
+	"ammo_clip_size" "60"
+	// val unk: 25
+	"ammo_clip_reload_max" "60"
+	// val unk: 116
+	"ammo_min_to_fire" "1"
+	// val unk: 11
+	"ammo_no_remove_from_clip" "1"
+	// val unk: 86
+	"ammo_no_remove_from_stockpile" "1"
+	// val unk: 68
+	"chance_for_bonus_last_shot_in_clip" "0"
+	// val unk: 46
+	"critical_hit" "1"
+	// val unk: 89
+	"reload_alt_anim" "0"
+	// val unk: 90
+	"npc_damage_near_value" "15"
+	// val unk: 61
+	"npc_damage_far_value" "15"
+	// val unk: 100
+	"npc_damage_near_value_titanarmor" "15"
+	// val unk: 2
+	"npc_damage_far_value_titanarmor" "15"
+	// val unk: 31
+	"npc_damage_near_distance" "850"
+	// val unk: 60
+	"npc_damage_far_distance" "1750"
+	// val unk: 84
+	"npc_min_engage_range" "100"
+	// val unk: 41
+	"npc_max_engage_range" "1200"
+	// val unk: 9
+	"npc_min_engage_range_heavy_armor" "500"
+	// val unk: 91
+	"npc_max_engage_range_heavy_armor" "1750"
+	// val unk: 66
+	"npc_min_range" "0"
+	// val unk: 110
+	"npc_max_range" "1750"
+	// val unk: 27
+	"npc_burst_radius_min_precision" "15.000000"
+	// val unk: 5
+	"npc_burst_radius_max_precision" "5.000000"
+	// val unk: 107
+	"npc_spread_cone_min_precision" "2.000000"
+	// val unk: 30
+	"npc_spread_cone_max_precision" "1.250000"
+	// val unk: 37
+	"npc_burst_radius_distribution_bias_min_precision" "-0.500000"
+	// val unk: 38
+	"npc_burst_radius_distribution_bias_max_precision" "0.500000"
+	// val unk: 1
+	"npc_lead_projectiles" "1"
+	// val unk: 13
+	"npc_lead_projectiles_fraction_min_precision" "0.300000"
+	// val unk: 72
+	"npc_lead_projectiles_fraction_max_precision" "0.900000"
+	// val unk: 79
+	"npc_min_burst_min_precision" "8"
+	// val unk: 34
+	"npc_max_burst_min_precision" "9"
+	// val unk: 104
+	"npc_min_burst_max_precision" "10"
+	// val unk: 0
+	"npc_max_burst_max_precision" "12"
+	// val unk: 58
+	"npc_min_rest_time_between_bursts_min_precision" "2.000000"
+	// val unk: 97
+	"npc_max_rest_time_between_bursts_min_precision" "3.000000"
+	// val unk: 52
+	"npc_min_rest_time_between_bursts_max_precision" "1.250000"
+	// val unk: 4
+	"npc_max_rest_time_between_bursts_max_precision" "2"
+	// val unk: 14
+	"proficiency_poor_spreadscale" "6.000000"
+	// val unk: 36
+	"proficiency_average_bias" "0.300000"
+	// val unk: 113
+	"proficiency_average_spreadscale" "5.000000"
+	// val unk: 16
+	"proficiency_good_bias" "0.500000"
+	// val unk: 83
+	"proficiency_good_spreadscale" "4.000000"
+	// val unk: 42
+	"proficiency_very_good_bias" "0.500000"
+	// val unk: 3
+	"proficiency_very_good_spreadscale" "3.000000"
+	// val unk: 65
+	"fire_rate" "12.000000"
+	// val unk: 50
+	"reload_time" "3.260000"
+	// val unk: 40
+	"reloadempty_time" "3.260000"
+	// val unk: 39
+	"deployfirst_time" "1.450000"
+	// val unk: 64
+	"deploy_time" "0.900000"
+	// val unk: 78
+	"holster_time" "0.400000"
+	// val unk: 69
+	"lower_time" "0.350000"
+	// val unk: 71
+	"raise_time" "0.750000"
+	// val unk: 99
+	"vortex_drain" "0.000000"
+	// val unk: 28
+	"vortex_refire_behavior" "absorb"
+	// val unk: 62
+	"allow_empty_fire" "0"
+	// val unk: 96
+	"reload_enabled" "1"
+	// val unk: 18
+	"allow_empty_click" "1"
+	// val unk: 74
+	"empty_reload_only" "0"
+	// val unk: 94
+	"trigger_snipercam" "0"
+	// val unk: 80
+	"allow_headshots" "1"
+	// val unk: 44
+	"headshot_distance" "2500"
+	// val unk: 93
+	"primary_fire_does_not_block_sprint" "0"
+	// val unk: 87
+	"ads_move_speed_scale" "0.500000"
+	// val unk: 20
+	"aimassist_disable_hipfire" "0"
+	// val unk: 75
+	"aimassist_disable_ads" "0"
+	// val unk: 8
+	"aimassist_disable_hipfire_titansonly" "0"
+	// val unk: 48
+	"aimassist_disable_ads_titansonly" "0"
+	// val unk: 49
+	"sprint_fractional_anims" "0"
+	// val unk: 106
+	"bodygroup1_name" "sight_on"
+	// val unk: 21
+	"bodygroup1_set" "1"
+
+	// child unk: 0
+	"Mods"
+	{
+
+		// child unk: 0
+		"death_spectre"
+		{
+			// val unk: 22
+			"projectile_launch_speed" "3000"
+			// val unk: 6
+			"fire_rate" "30.000000"
+			// val unk: 11
+			"bolt_hitsize" "0.500000"
+			// val unk: 35
+			"projectile_trail_effect_0_1p" "P_plasma_proj_SM"
+			// val unk: 5
+			"projectile_trail_effect_0_3p" "P_plasma_proj_SM"
+			// val unk: 27
+			"projectile_trail_effect_1_1p" "P_plasma_proj_SM"
+			// val unk: 31
+			"projectile_trail_effect_1_3p" "P_plasma_proj_SM"
+			// val unk: 10
+			"looping_sounds" "0"
+			// val unk: 8
+			"fire_sound_1_npc" "weapon_havoc_altfire_singleshot_3p_intbase"
+			// val unk: 21
+			"fire_sound_2_npc" "weapon_havoc_altfire_singleshot_3p_intbase"
+			// val unk: 13
+			"npc_damage_near_value" "15"
+			// val unk: 26
+			"npc_damage_far_value" "15"
+			// val unk: 1
+			"npc_damage_near_value_titanarmor" "15"
+			// val unk: 2
+			"npc_damage_far_value_titanarmor" "15"
+			// val unk: 19
+			"npc_burst_radius_min_precision" "8.000000"
+			// val unk: 16
+			"npc_burst_radius_max_precision" "6.000000"
+			// val unk: 14
+			"npc_spread_cone_min_precision" "1.250000"
+			// val unk: 4
+			"npc_spread_cone_max_precision" "0.850000"
+			// val unk: 29
+			"npc_burst_radius_distribution_bias_min_precision" "-0.250000"
+			// val unk: 34
+			"npc_burst_radius_distribution_bias_max_precision" "0.750000"
+			// val unk: 3
+			"npc_lead_projectiles_fraction_min_precision" "0.700000"
+			// val unk: 18
+			"npc_lead_projectiles_fraction_max_precision" "1.000000"
+			// val unk: 24
+			"npc_min_burst_min_precision" "3"
+			// val unk: 12
+			"npc_max_burst_min_precision" "3"
+			// val unk: 28
+			"npc_min_burst_max_precision" "3"
+			// val unk: 33
+			"npc_max_burst_max_precision" "3"
+			// val unk: 7
+			"npc_min_rest_time_between_bursts_min_precision" "1.000000"
+			// val unk: 32
+			"npc_max_rest_time_between_bursts_min_precision" "1.500000"
+			// val unk: 23
+			"npc_min_rest_time_between_bursts_max_precision" "0.600000"
+			// val unk: 15
+			"npc_max_rest_time_between_bursts_max_precision" "0.800000"
+			// val unk: 17
+			"npc_min_engage_range" "200"
+			// val unk: 30
+			"npc_max_engage_range" "2000"
+			// val unk: 0
+			"npc_min_engage_range_heavy_armor" "500"
+			// val unk: 25
+			"npc_max_engage_range_heavy_armor" "2000"
+			// val unk: 9
+			"npc_min_range" "0"
+			// val unk: 20
+			"npc_max_range" "2000"
+
+		}
+	}
+}

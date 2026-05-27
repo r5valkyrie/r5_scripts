@@ -1,0 +1,206 @@
+"WeaponData"
+{
+	// val unk: 37
+	"printname" "#WPN_CARE_PACKAGE"
+	// val unk: 17
+	"shortprintname" "#WPN_CARE_PACKAGE_SHORT"
+	// val unk: 33
+	"description" "#WPN_CARE_PACKAGE_DESC"
+	// val unk: 47
+	"longdesc" "#WPN_CARE_PACKAGE_LONGDESC"
+	// val unk: 59
+	"menu_icon" "rui/titan_loadout/passive/legion_lightweight_alloys"
+	// val unk: 38
+	"hud_icon" "rui/hud/ultimate_icons/ultimate_lifeline"
+	// val unk: 55
+	"readymessage" "BUG IT"
+	// val unk: 45
+	"readyhint" "BUG IT"
+	// val unk: 53
+	"fire_mode" "offhandHybrid"
+	// val unk: 6
+	"offhand_cancelled_by_melee" "1"
+	// val unk: 39
+	"is_toss_weapon" "0"
+	// val unk: 27
+	"is_clacker" "1"
+	// val unk: 36
+	"offhand_default_inventory_slot" "4"
+	// val unk: 12
+	"offhand_interupts_weapon_anims" "1"
+	// val unk: 56
+	"viewmodel" "mdl/weapons/clacker_detonator/ptpov_proximity_detonator.rmdl"
+	// val unk: 8
+	"playermodel" "mdl/Weapons/clacker_detonator/clacker_w.rmdl"
+	// val unk: 4
+	"OnWeaponPrimaryAttack" "OnWeaponPrimaryAttack_care_package_medic"
+	// val unk: 49
+	"OnWeaponActivate" "OnWeaponActivate_care_package"
+	// val unk: 13
+	"OnWeaponDeactivate" "OnWeaponDeactivate_care_package"
+	// val unk: 9
+	"OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
+	// val unk: 34
+	"ammo_clip_size" "210"
+	// val unk: 5
+	"ammo_min_to_fire" "210"
+	// val unk: 64
+	"ammo_per_shot" "210"
+	// val unk: 16
+	"ammo_default_total" "0"
+	// val unk: 40
+	"ammo_display" "count"
+	// val unk: 54
+	"ammo_stockpile_max" "0"
+	// val unk: 58
+	"ammo_drains_to_empty_on_fire" "0"
+	// val unk: 48
+	"ammo_no_remove_from_clip" "0"
+	// val unk: 35
+	"ammo_no_remove_from_stockpile" "0"
+	// val unk: 2
+	"offhand_switch_force_draw" "1"
+	// val unk: 22
+	"regen_ammo_refill_rate" "1"
+	// val unk: 24
+	"regen_ammo_refill_start_delay" "0.000000"
+	// val unk: 30
+	"damage_type" "none"
+	// val unk: 41
+	"explosion_damage_heavy_armor" "0"
+	// val unk: 63
+	"damage_near_distance" "0"
+	// val unk: 60
+	"damage_far_distance" "0"
+	// val unk: 15
+	"damage_near_value" "0"
+	// val unk: 14
+	"damage_far_value" "0"
+	// val unk: 52
+	"zoom_effects" "0"
+	// val unk: 25
+	"rumble" "18446744073709551615"
+	// val unk: 1
+	"fire_rate" "10000.000000"
+	// val unk: 7
+	"fire_duration" "14.000000"
+	// val unk: 23
+	"fire_anim_rate" "1.000000"
+	// val unk: 26
+	"holster_time" "0.150000"
+	// val unk: 50
+	"deploy_time" "0.250000"
+	// val unk: 0
+	"lower_time" "0.250000"
+	// val unk: 43
+	"raise_time" "0.400000"
+	// val unk: 28
+	"allow_empty_fire" "0"
+	// val unk: 19
+	"reload_enabled" "0"
+	// val unk: 3
+	"empty_reload_only" "0"
+	// val unk: 62
+	"allow_empty_click" "0"
+	// val unk: 32
+	"trigger_snipercam" "0"
+	// val unk: 11
+	"allow_headshots" "0"
+	// val unk: 21
+	"breaks_cloak" "0"
+	// val unk: 42
+	"primary_fire_does_not_block_sprint" "1"
+	// val unk: 46
+	"aimassist_disable_hipfire" "1"
+	// val unk: 44
+	"aimassist_disable_ads" "1"
+	// val unk: 57
+	"cooldown_type" "ammo"
+	// val unk: 61
+	"weapon_type_flags" "WPT_ULTIMATE"
+	// val unk: 29
+	"OnWeaponRegenBegin" "Ultimate_OnWeaponRegenBegin"
+	// val unk: 20
+	"sound_disabledfire" "Survival_UI_Ability_NotReady_Silenced"
+	// val unk: 10
+	"sound_dryfire" "Survival_UI_Ability_NotReady"
+	// val unk: 51
+	"sound_weapon_ready" "Survival_UI_Ultimate_Ready"
+	// val unk: 31
+	"drops_on_death" "0"
+	// val unk: 18
+	"offhand_match_player_skin" "1"
+
+	// child unk: 0
+	"Mods"
+	{
+
+		// child unk: 6
+		"upgrade_core_ult_cooldown_reduction"
+		{
+			// val unk: 2
+			"ammo_clip_size" "180"
+			// val unk: 1
+			"ammo_min_to_fire" "180"
+			// val unk: 0
+			"ammo_per_shot" "180"
+
+		}
+
+		// child unk: 7
+		"ultimates_charge_over_time_disabled"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "0"
+
+		}
+
+		// child unk: 2
+		"copycat_mod"
+		{
+			// val unk: 0
+			"weapon_type_flags" "WPT_SURVIVAL"
+
+		}
+
+		// child unk: 3
+		"survival_armor_cooldown_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.25"
+
+		}
+
+		// child unk: 4
+		"survival_armor_cooldown_extra_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.5"
+
+		}
+
+		// child unk: 1
+		"survival_ammo_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 5
+		"ability_in_effect_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 0
+		"survival_ammo_regen_staging"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*5.0"
+
+		}
+	}
+}

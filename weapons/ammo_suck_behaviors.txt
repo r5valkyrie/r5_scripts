@@ -1,0 +1,57 @@
+"WeaponAmmoSuckBehaviors"
+{
+
+	// child unk: 3
+	"primary_weapons"
+	{
+		// val unk: 3
+		"rifle" "1"
+		// val unk: 2
+		"pistol" "1"
+		// val unk: 0
+		"anti-titan" "1"
+		// val unk: 1
+		"FORCE_SAME_WEAPON" "1"
+
+	}
+
+	// child unk: 0
+	"special_weapons"
+	{
+		// val unk: 1
+		"special" "1"
+		// val unk: 0
+		"FORCE_SAME_WEAPON" "1"
+
+	}
+
+	// child unk: 1
+	"offhand_weapons"
+	{
+		// val unk: 2
+		"ordnance" "1"
+		// val unk: 0
+		"tactical" "0"
+		// val unk: 1
+		"FORCE_SAME_WEAPON" "1"
+
+	}
+
+	// child unk: 4
+	"melee_weapons"
+	{
+		// val unk: 1
+		"melee" "0"
+		// val unk: 0
+		"FORCE_SAME_WEAPON" "1"
+
+	}
+
+	// child unk: 2
+	"disabled"
+	{
+		// val unk: 0
+		"FORCE_NO_SUCK" "1"
+
+	}
+}

@@ -263,7 +263,7 @@ void function SV_CL_Init()
 
 	Sh_Ranked_Init() 
 
-		//Sh_ArenasRanked_Init() 
+		Sh_ArenasRanked_Init() 
 
 	ShDoors_Init()
 	PlayerWaypoints_Init()
@@ -348,13 +348,13 @@ void function SV_CL_Init()
 
 
 
-		//ShSpectreChatter_MP_Init()
+		ShSpectreChatter_MP_Init()
 
 	ShLootBin_Init()
 	ShFlyers_Init()
 	GamemodeUtility_Init()
 
-	//ShLootCreeps_Init()
+	ShLootCreeps_Init()
 
 
 
@@ -406,7 +406,7 @@ void function SV_CL_Init()
 
 
 
-	//Nessie_Init()
+	Nessie_Init()
 
 
 		ShAbilityShadowZombie_Init()
@@ -501,7 +501,7 @@ void function SV_CL_Init()
 	//Sh_TrackingVision_Init()
 
 
-	//Armor_ShieldRegen_Init()
+	Armor_ShieldRegen_Init()
 	HealthRegen_Init()
 	SuicideSpectres_Init()
 
@@ -532,7 +532,7 @@ void function SV_CL_Init()
 
 
 
-		//Candy_Init()
+		Candy_Init()
 		//RevShell_Init()
 
 
@@ -571,8 +571,8 @@ void function SV_CL_Init()
 
 
 
-	//Odl_SmokeTestInit()
-	//SkinMetrics_Init()
+	Odl_SmokeTestInit()
+	SkinMetrics_Init()
 
 	//ThunderdomeSkull_Init()
 

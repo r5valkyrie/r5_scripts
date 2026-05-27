@@ -1,0 +1,190 @@
+"WeaponData"
+{
+	// val unk: 35
+	"printname" "#WPN_CONCUSSIVE_BREACH"
+	// val unk: 15
+	"shortprintname" "#WPN_CONCUSSIVE_BREACH_SHORT"
+	// val unk: 31
+	"description" "#WPN_CONCUSSIVE_BREACH_DESC"
+	// val unk: 45
+	"longdesc" "#WPN_CONCUSSIVE_BREACH_LONGDESC"
+	// val unk: 57
+	"menu_icon" "rui/pilot_loadout/suit/hardcover"
+	// val unk: 36
+	"hud_icon" "rui/menu/boosts/boost_icon_shield"
+	// val unk: 53
+	"readymessage" "BUG IT"
+	// val unk: 43
+	"readyhint" "BUG IT"
+	// val unk: 51
+	"fire_mode" "offhandHybrid"
+	// val unk: 6
+	"is_toss_weapon" "0"
+	// val unk: 37
+	"offhand_default_inventory_slot" "4"
+	// val unk: 25
+	"offhand_interupts_weapon_anims" "1"
+	// val unk: 34
+	"viewmodel" "mdl/weapons/clacker_detonator/ptpov_proximity_detonator.rmdl"
+	// val unk: 10
+	"projectilemodel" "mdl/weapons/caustic_gas_tank/w_caustic_gas_tank.rmdl"
+	// val unk: 54
+	"OnWeaponPrimaryAttack" "OnWeaponPrimaryAttack_concussive_breach"
+	// val unk: 8
+	"OnWeaponActivate" "OnWeaponActivate_concussive_breach"
+	// val unk: 4
+	"OnWeaponDeactivate" "OnWeaponDeactivate_concussive_breach"
+	// val unk: 47
+	"OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
+	// val unk: 11
+	"ammo_clip_size" "120"
+	// val unk: 32
+	"ammo_default_total" "0"
+	// val unk: 5
+	"ammo_display" "count"
+	// val unk: 62
+	"ammo_min_to_fire" "120"
+	// val unk: 14
+	"ammo_per_shot" "120"
+	// val unk: 38
+	"ammo_stockpile_max" "0"
+	// val unk: 52
+	"ammo_drains_to_empty_on_fire" "0"
+	// val unk: 56
+	"ammo_no_remove_from_clip" "0"
+	// val unk: 46
+	"ammo_no_remove_from_stockpile" "0"
+	// val unk: 33
+	"offhand_switch_force_draw" "1"
+	// val unk: 2
+	"regen_ammo_refill_rate" "1"
+	// val unk: 22
+	"regen_ammo_refill_start_delay" "0.000000"
+	// val unk: 20
+	"damage_type" "none"
+	// val unk: 28
+	"explosion_damage_heavy_armor" "0"
+	// val unk: 39
+	"damage_near_distance" "0"
+	// val unk: 61
+	"damage_far_distance" "0"
+	// val unk: 58
+	"damage_near_value" "0"
+	// val unk: 12
+	"damage_far_value" "0"
+	// val unk: 50
+	"zoom_effects" "0"
+	// val unk: 23
+	"rumble" "18446744073709551615"
+	// val unk: 1
+	"fire_rate" "10000.000000"
+	// val unk: 7
+	"fire_duration" "2.000000"
+	// val unk: 19
+	"fire_anim_rate" "1.000000"
+	// val unk: 24
+	"holster_time" "0.150000"
+	// val unk: 48
+	"deploy_time" "0.250000"
+	// val unk: 0
+	"lower_time" "0.250000"
+	// val unk: 41
+	"raise_time" "0.400000"
+	// val unk: 26
+	"allow_empty_fire" "0"
+	// val unk: 17
+	"reload_enabled" "0"
+	// val unk: 3
+	"empty_reload_only" "0"
+	// val unk: 60
+	"allow_empty_click" "0"
+	// val unk: 30
+	"trigger_snipercam" "0"
+	// val unk: 21
+	"allow_headshots" "0"
+	// val unk: 40
+	"breaks_cloak" "0"
+	// val unk: 44
+	"primary_fire_does_not_block_sprint" "1"
+	// val unk: 13
+	"aimassist_disable_hipfire" "1"
+	// val unk: 42
+	"aimassist_disable_ads" "1"
+	// val unk: 55
+	"cooldown_type" "ammo"
+	// val unk: 59
+	"weapon_type_flags" "WPT_ULTIMATE"
+	// val unk: 27
+	"OnWeaponRegenBegin" "Ultimate_OnWeaponRegenBegin"
+	// val unk: 18
+	"sound_disabledfire" "Survival_UI_Ability_NotReady_Silenced"
+	// val unk: 9
+	"sound_dryfire" "Survival_UI_Ability_NotReady"
+	// val unk: 49
+	"sound_weapon_ready" "Survival_UI_Ultimate_Ready"
+	// val unk: 29
+	"drops_on_death" "0"
+	// val unk: 16
+	"offhand_match_player_skin" "1"
+
+	// child unk: 0
+	"Mods"
+	{
+
+		// child unk: 5
+		"ultimates_charge_over_time_disabled"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "0"
+
+		}
+
+		// child unk: 6
+		"copycat_mod"
+		{
+			// val unk: 0
+			"weapon_type_flags" "WPT_SURVIVAL"
+
+		}
+
+		// child unk: 1
+		"survival_armor_cooldown_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.25"
+
+		}
+
+		// child unk: 2
+		"survival_armor_cooldown_extra_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.5"
+
+		}
+
+		// child unk: 3
+		"survival_ammo_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 0
+		"ability_in_effect_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 4
+		"survival_ammo_regen_staging"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*5.0"
+
+		}
+	}
+}
