@@ -462,7 +462,7 @@ void function InitWeaponScripts()
 void function InitAbilityScripts()
 {
 	// Released
-	//MpAbilityNone_Init()								// No Ability
+	MpAbilityNone_Init()								// No Ability
 	MpAbilityShifter_Init() 							// Phasing
 	MpAbilitySharedSilence_Init()						// Silence
 	ShShellShock_Init()									// Shellshock
@@ -482,7 +482,7 @@ void function InitAbilityScripts()
 	MpAbilityMirageUltimate_Init()						// Mirage Ult
 	MpWeaponDirtyBomb_Init()							// Caustic Tac
 	MpWeaponGrenadeGas_Init()							// Caustic Ult
-	//PassiveOctane_Init()								// Octane Passive
+	PassiveOctane_Init()								// Octane Passive
 	Sh_JumpPad_Init()									// Octane Ult
 	MpWeaponTeslaTrap_Init()							// Wattson Tac
 	MpWeaponTrophy_Init()								// Wattson Ult
@@ -491,7 +491,7 @@ void function InitAbilityScripts()
 	MpAbilitySilence_Init()								// Old Revenant Tac
 	MpAbilityRevenantDeathTotem_Init()					// Old Revenant Ult
 	ShLobaPassiveEyeForQuality_LevelInit()				// Loba Passive
-	//LobaTacticalTranslocation_LevelInit()				// Loba Tac
+	LobaTacticalTranslocation_LevelInit()				// Loba Tac
 	LobaUltimateBlackMarket_LevelInit()					// Loba Ult
 	PassiveGunner_Init()								// Rampart Passive
 	MpWeaponCoverWall_Init()							// Rampart Tac
@@ -511,66 +511,287 @@ void function InitAbilityScripts()
 	PassiveHeartbeatSensor_Init()						// Seer Passive
 	MpAbilitySonicBlast_Init()							// Seer Tac
 	MpWeaponEchoLocator_Init()							// Seer Ult
-	//MpWeaponAshDataknife_Init()							// Ash Passive
+	MpWeaponAshDataknife_Init()							// Ash Passive
 	MpWeaponArcBolt_Init()								// Ash Tac
 	MpWeaponPhaseBreach_Init()							// Ash Ult
 	MpMaggieCommon_Init()								// Mad Maggie
 	ShPassiveWarlordsIre_Init()							// Mad Maggie Passive
 	MpWeaponRiotDrill_Init()							// Mad Maggie Tac
 	MpAbilityWreckingBall_Init()						// Mad Maggie Ult
-	//MpWeaponReviveShield_Init()							// Newcastle Passive
-	//MpAbilityShieldThrow_Init()							// Newcastle Tac
-	//MpAbilityArmoredLeap_Init()							// Newcastle Ult
-	//PassiveVantage_Init()								// Vantage Passive
-	//SniperRecon_Init()									// Vantage Passive
-	//Companion_Launch_Init()								// Vantage Tac
-	//VantageCompanion_Init()								// Vantage Tac
-	//MpWeaponVantageRecall_Init()						// Vantage Tac
-	//SniperUlt_Init()									// Vantage Ult
-	//ShResin_Init()										// Catalyst
-	//MpAbilityReinforce_Init()							// Catalyst Passive
-	//PassiveReinforce_Init()								// Catalyst Passive
-	//MpAbilitySpikeStrip_Init()							// Catalyst Tac
-	//MpWeaponFerroWall_Init()							// Catalyst Ult
-	//ShPassiveSling_Init()								// Ballistic Passive
+	MpWeaponReviveShield_Init()							// Newcastle Passive
+	MpAbilityShieldThrow_Init()							// Newcastle Tac
+	MpAbilityArmoredLeap_Init()							// Newcastle Ult
+	PassiveVantage_Init()								// Vantage Passive
+	SniperRecon_Init()									// Vantage Passive
+	Companion_Launch_Init()								// Vantage Tac
+	VantageCompanion_Init()								// Vantage Tac
+	MpWeaponVantageRecall_Init()						// Vantage Tac
+	SniperUlt_Init()									// Vantage Ult
+	ShResin_Init()										// Catalyst
+	MpAbilityReinforce_Init()							// Catalyst Passive
+	PassiveReinforce_Init()								// Catalyst Passive
+	MpAbilitySpikeStrip_Init()							// Catalyst Tac
+	MpWeaponFerroWall_Init()							// Catalyst Ult
+	ShPassiveSling_Init()								// Ballistic Passive
 	MpWeaponDebuffZone_Init()							// Ballistic Tac
-	//MpAbilityPortableAutoLoader_Init()					// Ballistic Ult
-	//MpAbilityExectioner_Init()							// Revenant Reborn Passive
-	//MpAbilityShadowPounceFree_Init()					// Revenant Reborn Tac
-	//MpAbilityShadowForm_Init()							// Revenant Reborn Ult
-		//ShPassiveConduit_Init()							// Conduit Passive
-		//MpAbilityConduitArcFlash_Init()					// Conduit Tac
-		//Mp_ability_shield_mines_init()					// Conduit Ult
-		//Mp_ability_shield_mines_line_init()				// Conduit Ult
-		ExtraShields_Init()
-		ShPassiveUpgradeCore_Init()
-		//ShPassiveTacCooldownExtra_Init()
-		//ShPassiveExplosiveSpeedBoost_Init()
-		//ShPassiveAirborneHealthRegen_Init()
-		//ShPassiveBoostedHealthRegen_Init()
-		//ShPassiveSquadwipeSquadCount_Init()
-		//ShPassiveKnockShotgunAutoReload_Init()
-		//ShPassiveZiplineShield_Init()
-		//PhysicalOvershield_Init()
-		//ShPassiveKnockTacReset_Init()
-		//ShPassiveFasterTacWindup_Init()
+	MpAbilityPortableAutoLoader_Init()					// Ballistic Ult
+	MpAbilityExectioner_Init()							// Revenant Reborn Passive
+	MpAbilityShadowPounceFree_Init()					// Revenant Reborn Tac
+	MpAbilityShadowForm_Init()							// Revenant Reborn Ult
+	               
+		ShPassiveConduit_Init()							// Conduit Passive
+		MpAbilityConduitArcFlash_Init()					// Conduit Tac
+		Mp_ability_shield_mines_init()					// Conduit Ult
+		Mp_ability_shield_mines_line_init()				// Conduit Ult
+       
 
-		//UpgradedClusterMissile_Init()
-		//UpgradedJets_Init()
+	                    
+		ExtraShields_Init()
+
+		ShPassiveUpgradeCore_Init()
+		ShPassiveTacCooldownExtra_Init()
+		ShPassiveExplosiveSpeedBoost_Init()
+		ShPassiveAirborneHealthRegen_Init()
+		ShPassiveBoostedHealthRegen_Init()
+		ShPassiveSquadwipeSquadCount_Init()
+		ShPassiveKnockShotgunAutoReload_Init()
+		ShPassiveZiplineShield_Init()
+		PhysicalOvershield_Init()
+		ShPassiveKnockTacReset_Init()
+		ShPassiveFasterTacWindup_Init()
+
+		UpgradedClusterMissile_Init()
+		UpgradedJets_Init()
 
 		//AutoWhiteRavens_Init()
 
 		UpgradeSelectionMenu_Init()
+       
+
+                 
+                   
+                            
+                             
+                               
+       
+
+                                 
+                      
+                        
+                               
+                         
+                              
+                             
+                               
+                         
+                                   
+                                
+                             
+                           
+                             
+                            
+                         
+                            
+                         
+                                  
+                          
+                          
+                           
+                            
+                              
+                          
+                              
+                                  
+                                
+                             
+                                 
+       
+
 	// Old Protos
+                    
+                                         
+                                
+       
+                          
+                             
+       
+                
+                            
+                              
+                                      
+                                  
+       
+                
+                           
+                               
+       
+                
+                        
+                              
+       
+              
+                             
+                               
+       
+                 
+                                   
+                               
+                                     
+       
+                 
+                               
+                            
+                            
+       
+              
+                               
+                             
+       
+                 
+                                
+       
+               
+                             
+                             
+                            
+       
+               
+                           
+                           
+                            
+       
+               
+                                  
+                                
+                               
+                                                                 
+                                
+       
+
+                       
+                      
+       
 
 	// Active Protos
-		//AlterExtraScript_Init()
-		//MpAbilityPhaseDoor_Init()
-		//MpAbilityTransportPortal_Init()
-		//MpAbilityTransportPortalDatapad_Init()
-		PassiveRemoteDeathboxInteract_Init()
-		PassiveVoidVision_Init()
+                                  
+                        
+       
+                                 
+                                 
+       
 
+                        
+                            
+                            
+                               
+                                    
+                                
+                         
+                            
+                         
+                                    
+                            
+                      
+       
+               
+                        
+                             
+                              
+                             
+       
+                
+                         
+                        
+                         
+       
+              
+                       
+                              
+                                  
+                               
+                          
+                          
+       
+                         
+                                
+       
+                
+                             
+                              
+                         
+                                  
+                         
+                        
+                                
+                          
+                               
+                         
+                              
+       
+                
+                             
+       
+                
+                         
+                  
+                           
+                         
+                         
+       
+             
+                            
+                           
+                      
+                           
+                            
+                           
+                               
+       
+                
+                 
+                       
+                         
+                           
+                               
+       
+                  
+                           
+                                  
+                               
+       
+	             
+		AlterExtraScript_Init()
+		MpAbilityPhaseDoor_Init()
+		MpAbilityTransportPortal_Init()
+		MpAbilityTransportPortalDatapad_Init()
+       
+                
+                         
+       
+	                                
+		PassiveRemoteDeathboxInteract_Init()
+       
+	                   
+		PassiveVoidVision_Init()
+       
+                 
+                          
+                           
+                           
+       
+                         
+                              
+       
+             
+                              
+       
+                 
+                          
+                          
+                                           
+                                      
+                            
+       
 }
 
 
