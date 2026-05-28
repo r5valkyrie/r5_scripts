@@ -181,7 +181,7 @@ void function InitWeaponScripts()
 	//		PrecacheProjectileEntity( "crossbow_bolt" )
 	//	#endif
 
-	//Lifesteal_Init()
+	Lifesteal_Init()
 
 
 
@@ -204,7 +204,7 @@ void function InitWeaponScripts()
 
 
 	//MpWeaponDefender_Init()
-	//MpWeaponDefenderRailgun_Init()
+	MpWeaponDefenderRailgun_Init()
 
 
 
@@ -238,15 +238,15 @@ void function InitWeaponScripts()
 
 
 
-	//	MpWeaponTitanSword_Init()
+		MpWeaponTitanSword_Init()
 
 	MpWeaponAlternatorSMG_Init()
-	//MpWeaponShotgun_Init()
+	MpWeaponShotgun_Init()
 
 
 
 	MpWeaponThermiteGrenade_Init()
-	/*MeleeWraithKunai_Init()
+	MeleeWraithKunai_Init()
 	MpWeaponWraithKunaiPrimary_Init()
 	MeleeBloodhoundAxe_Init()
 	MpWeaponBloodhoundAxePrimary_Init()
@@ -306,15 +306,15 @@ void function InitWeaponScripts()
 	MpWeaponGibraltarClubPrimary_Init()
 	MeleeRampartWrench_Init()
 	MpWeaponRampartWrenchPrimary_Init()
-	MeleeRevenantScythe_Init()*/
+	MeleeRevenantScythe_Init()
 	MpWeaponRevenantScythePrimary_Init()
 
 		MeleeShadowsquadHands_Init()
 		MpWeaponShadowsquadHandsPrimary_Init()
 
 
-		//MeleeBoxingRing_Init()
-		//MpWeaponMeleeBoxingRing_Init()
+		MeleeBoxingRing_Init()
+		MpWeaponMeleeBoxingRing_Init()
 
 
 	MpWeaponEmoteProjector_Init()
@@ -336,7 +336,7 @@ void function InitWeaponScripts()
 
 
 
-	//	MpAbilityRiseFromTheAshes_Init()
+		MpAbilityRiseFromTheAshes_Init()
 
 
 
@@ -391,7 +391,7 @@ void function InitWeaponScripts()
 
 
 	MpWeaponBasicBolt_Init()
-	//MpWeaponLmg_Init()
+	MpWeaponLmg_Init()
 
 	#if SERVER
 		BallLightning_Init()

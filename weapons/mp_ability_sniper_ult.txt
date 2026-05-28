@@ -47,6 +47,25 @@
 	// val unk: 226
 	"hud_icon_mastered" "rui/hud/ultimate_icons/ultimate_vantage"
 	// val unk: 227
+	"OnWeaponActivate" "OnWeaponActivate_ability_sniper_ult"
+	// val unk: 282
+	"OnWeaponDeactivate" "OnWeaponDeactivate_ability_sniper_ult"
+	// val unk: 269
+	"OnWeaponPrimaryAttack" "OnWeaponPrimaryAttack_ability_sniper_ult"
+	// val unk: 103
+	"OnWeaponAttemptOffhandSwitch" "OnWeaponAttemptOffhandSwitch_ability_sniper_ult"
+	// val unk: 124
+	"OnWeaponStartZoomIn" "OnWeaponStartZoomIn_ability_sniper_ult"
+	// val unk: 4
+	"OnWeaponStartZoomOut" "OnWeaponStartZoomOut_ability_sniper_ult"
+	// val unk: 268
+	"OnWeaponZoomFOVToggle" "OnWeaponZoomFOVToggle_ability_sniper_ult"
+	// val unk: 242
+	"OnProjectileCollision" "OnProjectileCollision_sniper_ult"
+	// val unk: 261
+	"OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
+	// val unk: 245
+	"OnClientAnimEvent" "OnClientAnimEvent_ability_sniper_ult"
 	// val unk: 283
 	"viewmodel" "mdl/weapons/misc_vantage_ultimate/ptpov_misc_vantage_ultimate.rmdl"
 	// val unk: 285
@@ -410,7 +429,7 @@
 	// val unk: 82
 	"targeting_laser_beam_length_3p_enemy" "30000"
 	// val unk: 80
-	//"activitymodifier1p" "sniper_zoom"
+	"activitymodifier1p" "sniper_zoom"
 	// val unk: 110
 	"projectilemodel" "mdl/weapons/bullets/projectile_20mm.rmdl"
 	// val unk: 145
@@ -571,6 +590,136 @@
 	// child unk: 0
 	"Mods"
 	{
+
+		// child unk: 0
+		"ultimate_active"
+		{
+
+		}
+
+		// child unk: 7
+		"arenas_tac_max_cooldown"
+		{
+			// val unk: 0
+			"ammo_regen_takes_from_stockpile" "1"
+			// val unk: 2
+			"ammo_default_total" "200"
+			// val unk: 1
+			"ammo_stockpile_max" "200"
+
+		}
+
+		// child unk: 8
+		"ultimates_charge_over_time_disabled"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "0"
+
+		}
+
+		// child unk: 3
+		"copycat_mod"
+		{
+			// val unk: 0
+			//"weapon_type_flags" "WPT_SURVIVAL"
+
+		}
+
+		// child unk: 4
+		"survival_armor_cooldown_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.25"
+
+		}
+
+		// child unk: 1
+		"survival_armor_cooldown_extra_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.5"
+
+		}
+
+		// child unk: 5
+		"survival_ammo_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 9
+		"ability_in_effect_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 2
+		"survival_ammo_regen_staging"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*5.0"
+
+		}
+
+		// child unk: 10
+		"amped_damage"
+		{
+			// val unk: 2
+			"sustained_laser_damage_scale" "*0.83333"
+			// val unk: 9
+			"damage_near_value" "*1.2"
+			// val unk: 6
+			"damage_far_value" "*1.2"
+			// val unk: 4
+			"damage_very_far_value" "*1.2"
+			// val unk: 1
+			"damage_near_value_titanarmor" "*1.2"
+			// val unk: 3
+			"damage_far_value_titanarmor" "*1.2"
+			// val unk: 5
+			"damage_very_far_value_titanarmor" "*1.2"
+			// val unk: 8
+			"projectile_trail_effect_0_1p" "P_tracer_proj_smg_shield_breaker"
+			// val unk: 7
+			"projectile_trail_effect_0_3p" "P_tracer_proj_smg_shield_breaker"
+			// val unk: 0
+			"impact_effect_table" "hammer_point_bullet"
+
+		}
+
+		// child unk: 6
+		"auto_loader"
+		{
+			// val unk: 8
+			"reload_time" "*0.60"
+			// val unk: 9
+			"reload_time_late1" "*0.60"
+			// val unk: 10
+			"reload_time_late2" "*0.60"
+			// val unk: 11
+			"reload_time_late3" "*0.60"
+			// val unk: 1
+			"reload_time_late4" "*0.60"
+			// val unk: 2
+			"reload_time_late5" "*0.60"
+			// val unk: 3
+			"reloadempty_time" "*0.60"
+			// val unk: 4
+			"reloadempty_time_late1" "*0.60"
+			// val unk: 5
+			"reloadempty_time_late2" "*0.60"
+			// val unk: 6
+			"reloadempty_time_late3" "*0.60"
+			// val unk: 0
+			"reloadempty_time_late4" "*0.60"
+			// val unk: 7
+			"reloadempty_time_late5" "*0.60"
+
+		}
 	}
 
 	// child unk: 1

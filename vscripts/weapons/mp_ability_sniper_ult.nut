@@ -322,7 +322,7 @@ bool function OnWeaponAttemptOffhandSwitch_ability_sniper_ult( entity weapon )
 }
 
 
-void function OnProjectileCollision_sniper_ult( entity projectile, vector pos, vector normal, entity hitEnt, int hitbox, bool isCritical, bool isPassthrough )
+void function OnProjectileCollision_sniper_ult( entity projectile, vector pos, vector normal, entity hitEnt, int hitbox, bool isCritical )
 {
 		// If we hit a person then find geo and plant the dome there.
 		if ( !IsValid( hitEnt ) )

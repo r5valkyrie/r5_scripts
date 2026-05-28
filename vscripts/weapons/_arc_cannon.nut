@@ -12,7 +12,6 @@ global function ArcCannon_HideIdleEffect
 #if SERVER
 	global function AddToArcCannonTargets
 	global function RemoveArcCannonTarget
-	global function ConvertTitanShieldIntoBonusCharge
 #endif
 global function GetArcCannonChargeFraction
 
@@ -89,7 +88,6 @@ global const ArcCannonTargetClassnames = {
 	[ "npc_dropship" ] 			= true,
 	[ "npc_marvin" ] 			= true,
 	[ "npc_prowler" ]			= true,
-	[ "npc_spider" ]			= true,
 	[ "npc_soldier" ] 			= true,
 	[ "npc_soldier_heavy" ] 	= true,
 	[ "npc_soldier_shield" ]	= true,
@@ -166,18 +164,6 @@ void function ArcCannon_Stop( entity weapon, entity player = null )
 
 void function ArcCannon_ChargeBegin( entity weapon )
 {
-	#if SERVER
-		if ( weapon.HasMod( "overcharge" ) )
-		{
-			entity weaponOwner = weapon.GetWeaponOwner()
-			if ( weaponOwner.IsTitan() )
-			{
-				entity soul = weaponOwner.GetTitanSoul()
-				thread ConvertTitanShieldIntoBonusCharge( soul, weapon )
-			}
-		}
-	#endif
-
 	#if CLIENT
 		if ( !weapon.ShouldPredictProjectiles() )
 			return
@@ -209,12 +195,6 @@ void function ArcCannon_ChargeEnd( entity weapon, entity player = null )
 		}
 	#endif
 }
-
-#if SERVER
-void function ConvertTitanShieldIntoBonusCharge( entity soul, entity weapon )
-{
-}
-#endif
 
 int function FireArcCannon( entity weapon, WeaponPrimaryAttackParams attackParams )
 {
@@ -848,7 +828,7 @@ array<entity> function GetArcCannonTargets( vector origin, int team )
 {
 	array<entity> targets = GetScriptManagedEntArrayWithinCenter( level._arcCannonTargetsArrayID, team, origin, ARC_CANNON_TITAN_RANGE_CHAIN )
 
-	if ( ARC_CANNON_TARGETS_MISSILES )
+	if ( ARC_CANNON_TARGETS_MISSILES != 0 )
 		targets.extend( GetProjectileArrayEx( "rpg_missile", TEAM_ANY, team, origin, ARC_CANNON_TITAN_RANGE_CHAIN ) )
 
 	return targets

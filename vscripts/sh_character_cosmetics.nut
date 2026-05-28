@@ -498,6 +498,11 @@ void function CharacterSkin_Apply( entity ent, ItemFlavor skin )
 		skinIndex = 0
 		camoIndex = 0
 	}
+	
+	if ( camoIndex == -1 )
+	{
+		camoIndex = 0
+	}
 
 	ent.SetSkin( skinIndex )
 	ent.SetCamo( camoIndex )

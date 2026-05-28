@@ -19,13 +19,15 @@
 	// val unk: 45
 	"holstermodel" "mdl/Props/horizon_heirloom/horizon_heirloom.rmdl"
 	// val unk: 31
-
+	"OnWeaponActivate" "OnWeaponActivate_melee_horizon_heirloom"
+	// val unk: 19
+	"OnWeaponDeactivate" "OnWeaponDeactivate_melee_horizon_heirloom"
 	// val unk: 33
 	"is_heirloom" "1"
 	// val unk: 28
 	"impact_effect_table" "melee_morning_star"
 	// val unk: 51
-	//"activitymodifier3P" "blackhole"
+	"activitymodifier3P" "blackhole"
 	// val unk: 17
 	"weapon_type_flags" "WPT_MELEE"
 	// val unk: 4
@@ -63,7 +65,7 @@
 	// val unk: 7
 	"zoom_effects" "0"
 	// val unk: 6
-	//"melee_anim_1p" "ACT_VM_MELEE_ATTACK2"
+	"melee_anim_1p" "ACT_VM_MELEE_ATTACK2"
 	// val unk: 46
 	"ammo_suck_behavior" "melee_weapons"
 	// val unk: 16

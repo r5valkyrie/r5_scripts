@@ -25,7 +25,9 @@
 	// val unk: 70
 	"holster_angles_offset" "-93 0 -3"
 	// val unk: 22
-
+	"OnWeaponActivate" "OnWeaponActivate_weapon_horizon_heirloom_primary"
+	// val unk: 39
+	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_horizon_heirloom_primary"
 	// val unk: 93
 	"is_heirloom" "1"
 	// val unk: 15
@@ -35,7 +37,7 @@
 	// val unk: 61
 	"deployfirst_time" "2.460000"
 	// val unk: 42
-	//"activitymodifier3P" "blackhole"
+	"activitymodifier3P" "blackhole"
 	// val unk: 64
 	"bob_cycle_time" "0.400000"
 	// val unk: 84

@@ -11,21 +11,21 @@
 	// val unk: 65
 	"hud_icon" "rui/hud/tactical_icons/tactical_revenant_rework"
 	// val unk: 59
-	// "OnWeaponDeactivate" "OnWeaponDeactivate_shadow_pounce_free"
+	"OnWeaponDeactivate" "OnWeaponDeactivate_shadow_pounce_free"
 	// val unk: 13
-	// "OnWeaponTossPrep" "OnWeaponTossPrep_shadow_pounce_free"
+	"OnWeaponTossPrep" "OnWeaponTossPrep_shadow_pounce_free"
 	// val unk: 38
-	// "OnWeaponTossCancel" "OnWeaponTossCancel_shadow_pounce_free"
+	"OnWeaponTossCancel" "OnWeaponTossCancel_shadow_pounce_free"
 	// val unk: 47
-	// "OnWeaponToss" "OnWeaponToss_shadow_pounce_free"
+	"OnWeaponToss" "OnWeaponToss_shadow_pounce_free"
 	// val unk: 11
-	// "OnWeaponTossReleaseAnimEvent" "OnWeaponTossReleaseAnimEvent_shadow_pounce_free"
+	"OnWeaponTossReleaseAnimEvent" "OnWeaponTossReleaseAnimEvent_shadow_pounce_free"
 	// val unk: 28
-	// "OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
+	"OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
 	// val unk: 36
-	// "OnWeaponAttemptOffhandSwitch" "OnWeaponAttemptOffhandSwitch_shadow_pounce_free"
+	"OnWeaponAttemptOffhandSwitch" "OnWeaponAttemptOffhandSwitch_shadow_pounce_free"
 	// val unk: 64
-	// "OnWeaponOwnerChanged" "OnWeaponOwnerChanged_shadow_pounce_free"
+	"OnWeaponOwnerChanged" "OnWeaponOwnerChanged_shadow_pounce_free"
 	// val unk: 49
 	"zoom_effects" "0"
 	// val unk: 62

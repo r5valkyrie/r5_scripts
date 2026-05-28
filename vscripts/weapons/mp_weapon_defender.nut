@@ -1,19 +1,30 @@
-global function MpWeaponDefender_Init
+global function MpWeaponDefenderRailgun_Init
 global function OnWeaponActivate_weapon_defender_railgun
 global function OnWeaponReload_weapon_defender_railgun
 global function OnWeaponPrimaryAttack_weapon_defender_railgun
 global function OnWeaponChargeBegin_weapon_defender_railgun
 
-
+//VFX
 const asset DEFENDER_FX_RELOAD_1P = $"P_wpn_defender_reload_FP"
 const asset DEFENDER_FX_RELOAD_3P = $"P_wpn_defender_reload"
+//temp_precache
+const asset DEFENDER_FX_OW = $"P_wpn_defender_beam_ow"
+const asset DEFENDER_FX_CHRG_OW = $"P_wpn_defender_charge_ow"
+const asset DEFENDER_FX_ARC_OW = $"P_wpn_defender_charge_arc_ow"
+const asset DEFENDER_FX_BEAM_OW = $"P_wpn_defender_beam_ow_loop"
 
-
-void function MpWeaponDefender_Init()
+void function MpWeaponDefenderRailgun_Init()
 {
 	PrecacheParticleSystem( DEFENDER_FX_RELOAD_1P )
 	PrecacheParticleSystem( DEFENDER_FX_RELOAD_3P )
+
+	//temp_precache
+	PrecacheParticleSystem( DEFENDER_FX_OW )
+	PrecacheParticleSystem( DEFENDER_FX_CHRG_OW )
+	PrecacheParticleSystem( DEFENDER_FX_ARC_OW )
+	PrecacheParticleSystem( DEFENDER_FX_BEAM_OW )
 }
+
 
 void function OnWeaponActivate_weapon_defender_railgun( entity weapon )
 {
@@ -25,6 +36,7 @@ void function OnWeaponReload_weapon_defender_railgun( entity weapon, int milesto
 	weapon.PlayWeaponEffect( DEFENDER_FX_RELOAD_1P, DEFENDER_FX_RELOAD_3P, "shell" )
 	weapon.PlayWeaponEffect( DEFENDER_FX_RELOAD_1P, DEFENDER_FX_RELOAD_3P, "shell2" )
 }
+
 
 var function OnWeaponPrimaryAttack_weapon_defender_railgun( entity weapon, WeaponPrimaryAttackParams attackParams )
 {

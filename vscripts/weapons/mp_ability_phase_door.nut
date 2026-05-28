@@ -389,10 +389,17 @@ void function OnCreateClientOnlyModel_ability_phase_door( entity weapon, entity 
 	const vector COLOR_DEPTH_MID 		= <255, 210, 73>
 	const vector COLOR_DEPTH_END 		= <255, 255, 255>
 
-	vector entranceOrigin = ZERO_VECTOR//weapon.GetObjectPlacementOrigin()
-	vector entranceAngles = ZERO_VECTOR//weapon.GetObjectPlacementAngles()
+	vector entranceOrigin = weapon.GetObjectPlacementOrigin()
+	vector entranceAngles = weapon.GetObjectPlacementAngles()
 	vector exitOrigin = weapon.GetObjectPlacementSpecialOrigin()
 	vector exitAngles = weapon.GetObjectPlacementSpecialAngles()
+	
+	printt("GetObjectPlacementOrigin = " + weapon.GetObjectPlacementOrigin())
+	printt("GetObjectPlacementAngles = " + weapon.GetObjectPlacementAngles())
+	printt("exitOrigin = " + weapon.GetObjectPlacementSpecialOrigin())
+	printt("exitAngles = " + weapon.GetObjectPlacementSpecialAngles())
+	//printt("result = " + weapon.GetObjectPlacementSpecialPlacementResult())
+	return
 
 	int result = weapon.GetObjectPlacementSpecialPlacementResult()
 
@@ -562,19 +569,30 @@ void function OnViewPlayerChanged( entity player )
 
 var function OnWeaponTossReleaseAnimEvent_ability_phase_door( entity weapon, WeaponPrimaryAttackParams attackParams )
 {
-	vector origin = ZERO_VECTOR//weapon.GetObjectPlacementOrigin()
-	vector surfaceNormal = ZERO_VECTOR//AnglesToForward( weapon.GetObjectPlacementAngles() )
-	entity entranceParent = weapon.GetParent()
-	vector exitOrigin = ZERO_VECTOR//weapon.GetObjectPlacementSpecialOrigin()
-	vector exitSurfaceNormal = ZERO_VECTOR//AnglesToForward( weapon.GetObjectPlacementSpecialAngles() )
-	entity exitParent = weapon.GetParent()
+	vector origin = weapon.GetObjectPlacementOrigin()
+	vector surfaceNormal = AnglesToForward( weapon.GetObjectPlacementAngles() )
+	entity entranceParent = weapon.GetObjectPlacementParent()
+	vector exitOrigin = weapon.GetObjectPlacementSpecialOrigin()
+	vector exitSurfaceNormal = AnglesToForward( weapon.GetObjectPlacementSpecialAngles() )
+	entity exitParent = weapon.GetObjectPlacementSpecialParent()
+	
+	
+	printt("GetObjectPlacementOrigin = " + weapon.GetObjectPlacementOrigin())
+	printt("GetObjectPlacementAngles = " + weapon.GetObjectPlacementAngles())
+	printt("entranceParent = " + weapon.GetObjectPlacementParent())
+	printt("exitOrigin = " + weapon.GetObjectPlacementSpecialOrigin())
+	printt("exitAngles = " + weapon.GetObjectPlacementSpecialAngles())
+	//printt("result = " + weapon.GetObjectPlacementSpecialPlacementResult())
+	printt("exitParent = " + weapon.GetObjectPlacementSpecialParent())
 
 	// Check for valid spot
-	//if ( !weapon.ObjectPlacementHasValidSpot() )
-	//{
-	//	weapon.StartCustomActivity( "ACT_VM_MISSCENTER", WCAF_PLAYRAISEONCOMPLETE )
-	//	return 0
-	//}
+	
+	return
+	if ( !weapon.ObjectPlacementHasValidSpot() )
+	{
+		weapon.StartCustomActivity( "ACT_VM_MISSCENTER", WCAF_PLAYRAISEONCOMPLETE )
+		return 0
+	}
 
 	entity ownerPlayer = weapon.GetWeaponOwner()
 	#if CLIENT
@@ -617,7 +635,7 @@ var function OnWeaponTossReleaseAnimEvent_ability_phase_door( entity weapon, Wea
 	return ammoReq
 }
 
-void function OnProjectileCollision_ability_phase_door( entity projectile, vector pos, vector normal, entity hitEnt, int hitBox, bool isCritical, bool isPassthrough )
+void function OnProjectileCollision_ability_phase_door( entity projectile, vector pos, vector normal, entity hitEnt, int hitBox, bool isCritical )
 {
 	if ( !IsValid( projectile ) )
 	{
@@ -976,12 +994,12 @@ void function MonitorForMoversBlockingPortalOrParentMoving_Thread( vector origin
 			#endif
 			break
 		}
-		//if ( ObjectPlacementSpecial_TraceForMoverBlocking( origin, surfaceNormal, portalRootEnt ) )
+		if ( ObjectPlacementSpecial_TraceForMoverBlocking( origin, surfaceNormal, portalRootEnt ) )
 		{
-			//#if DEV
-			//printf("Destroying Portal due to trace")
-			//#endif
-			//break
+			#if DEV
+			printf("Destroying Portal due to trace")
+			#endif
+			break
 		}
 	}
 
@@ -1251,7 +1269,11 @@ void function TeleportPlayerFromPortalTrigger( entity trigger, entity player )
 		return
 
 	//this basically should only happen if you land a loba tac right on a portal trigger
-
+	if ( player.IsTeleporting() )
+	{
+		thread DelayTriggerEnter_Thread( trigger, player )
+		return
+	}
 
 	if ( player in file.playerLastPhaseDoorEnteredData )
 	{
@@ -1318,15 +1340,15 @@ void function TeleportPlayerFromPortalTrigger( entity trigger, entity player )
 
 	player.Signal( PHASE_DOOR_TELEPORT_SIGNAL )
 
+	player.StartTeleport()
 
-
-	//PlayerMelee_ClearPlayerAsLungeTarget( player, true )
+	PlayerMelee_ClearPlayerAsLungeTarget( player, true )
 	//player.Server_InvalidateMeleeLungeLagCompensationRecords() // EXTREMELY DANGEROUS - Talk to Code before using!!!
 
 	Assert( endTrigger in file.portalExitDir, "Trigger isn't in map??" )
 	vector outDir = ( endTrigger in file.portalExitDir ) ? file.portalExitDir[endTrigger] : endTrigger.GetRightVector()
 
-	int exitPortalOrientation = 0//GetObjectPlacementSpecialOrientationFromAngles( outDir )
+	int exitPortalOrientation = GetObjectPlacementSpecialOrientationFromAngles( outDir )
 	float exitPositionOffset = (exitPortalOrientation == ePhaseDoorOrientation.PHASE_DOOR_ORIENTATION_CEILING_OR_FLOOR_DOWN ) ? 82.0 : 10.0
 	float verticalOffset = (exitPortalOrientation == ePhaseDoorOrientation.PHASE_DOOR_ORIENTATION_WALL ) ? 32.0 : 0.0
 	vector endPos = endTrigger.GetCenter() + ( outDir * exitPositionOffset ) - <0,0, verticalOffset>
@@ -1350,8 +1372,8 @@ void function TeleportPlayerFromPortalTrigger( entity trigger, entity player )
 
 	entity entranceRootEnt = trigger.GetParent()
 	entity exitRootEnt = endTrigger.GetParent()
-	StartParticleEffectInWorld( GetParticleSystemIndex( PHASE_DOOR_ENTER_FX ), entranceRootEnt.GetOrigin(), entranceRootEnt.GetAngles()+ <0, 0, 90> )
-	StartParticleEffectInWorld( GetParticleSystemIndex( PHASE_DOOR_EXIT_FX ), exitRootEnt.GetOrigin(), exitRootEnt.GetAngles()+ <0, 0, 90> )
+	StartParticleEffectInWorldForRealms( GetParticleSystemIndex( PHASE_DOOR_ENTER_FX ), entranceRootEnt.GetOrigin(), entranceRootEnt.GetAngles()+ <0, 0, 90>, player )
+	StartParticleEffectInWorldForRealms( GetParticleSystemIndex( PHASE_DOOR_EXIT_FX ), exitRootEnt.GetOrigin(), exitRootEnt.GetAngles()+ <0, 0, 90>, player )
 
 	EmitSoundAtPositionExceptToPlayer( player.GetTeam(), currentPos, player,PHASE_DOOR_WARPIN_SOUND_3P )
 	EmitSoundAtPositionExceptToPlayer( player.GetTeam(), endPos, player,PHASE_DOOR_WARPOUT_SOUND_3P )
@@ -1413,7 +1435,7 @@ void function TeleportPlayerFromPortalTrigger( entity trigger, entity player )
 		printf( "PHASE DOOR - Player Vel Post TP: " + (velocityDirection * outputPlayerSpeed) )
 	#endif
 
-	//player.EndTeleport()
+	player.EndTeleport()
 
 	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ALTER_TACTICAL_USED, player, endTrigger.GetCenter(), player.GetTeam(), player )
 	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ALTER_TACTICAL_USED, player, trigger.GetCenter(), player.GetTeam(), player )

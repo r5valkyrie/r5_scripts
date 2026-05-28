@@ -10,7 +10,6 @@ global function Lifesteal_PlayerDealtDamage
 
 //Names
 const string LIFESTEAL_WEAPON_VAR = "lifesteal_heal_percent"
-const int LIFESTEAL_HEAL_PERCENT_WEAPON_VAR = eWeaponVar.custom_float_0
 
 //Variables
 const float VALENTINES_HEAL_DEBOUNCE_SEC = 10
@@ -145,7 +144,7 @@ void function Lifesteal_PlayerDealtDamage( entity attacker, entity victim, entit
 	//if ( !IsWeaponKeyFieldDefined( weapon.GetWeaponClassName(), LIFESTEAL_WEAPON_VAR ) )
 	//	return
 
-	float healSteal = weapon.GetWeaponSettingFloat( LIFESTEAL_HEAL_PERCENT_WEAPON_VAR )
+	float healSteal = weapon.GetWeaponSettingFloat( eWeaponVar.lifesteal_heal_percent )
 	if ( healSteal <= 0.0 )
 		return
 

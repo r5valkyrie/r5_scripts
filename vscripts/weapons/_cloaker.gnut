@@ -6,12 +6,12 @@ global function CloakerShouldCloakGuy
 global function CloakerCloaksGuy
 global function CloakerDeCloaksGuy
 
-function CloakerThink( entity cloaker, float radius, array<string> ents = [ "any" ], vector offset = Vector(0,0,0), var shouldCloakGuyFunc = null, float waitTime = 0.25 )
+void function CloakerThink( entity cloaker, float radius, array<string> ents = [ "any" ], vector offset = <0,0,0>, bool functionref( entity, entity ) shouldCloakGuyFunc = null, float waitTime = 0.25 )
 {
 	OnThreadEnd(
 		function() : ( cloaker )
 		{
-			local cloakList = clone cloaker.s.cloakList
+			table cloakList = expect table( clone cloaker.s.cloakList )
 			foreach ( entity guy, value in cloakList )
 			{
 				if ( !IsAlive( guy ) )
@@ -25,7 +25,7 @@ function CloakerThink( entity cloaker, float radius, array<string> ents = [ "any
 	cloaker.s.cloakList <- {}
 	cloaker.s.decloakList <- {}
 
-	while( 1 )
+	while ( true )
 	{
 		vector origin = cloaker.GetOrigin() + offset
 		array<entity> guys
@@ -37,7 +37,7 @@ function CloakerThink( entity cloaker, float radius, array<string> ents = [ "any
 				case "player":
 				case "players":
 					guys.extend( GetPlayerArrayEx( "any", cloaker.GetTeam(), TEAM_ANY, origin, radius ) )
-					break;
+					break
 				default:
 					guys.extend( GetNPCArrayEx( entType, cloaker.GetTeam(), TEAM_ANY, origin, radius ) )
 					break
@@ -63,14 +63,14 @@ function CloakerThink( entity cloaker, float radius, array<string> ents = [ "any
 			bool shouldCloakGuy = CloakerShouldCloakGuy( cloaker, guy )
 
 			if ( shouldCloakGuy )
-				shouldCloakGuy = expect bool( shouldCloakGuyFunc( cloaker, guy ) )
+				shouldCloakGuy = shouldCloakGuyFunc( cloaker, guy )
 
 			if ( shouldCloakGuy )
 			{
 				if ( guy in cloaker.s.decloakList )
 					delete cloaker.s.decloakList[ guy ]
 
-				if ( IsCloaked( guy ) )
+				if ( guy.IsCloaked( true ) )
 					continue
 
 				cloakList[ guy ] <- true
@@ -95,7 +95,7 @@ function CloakerThink( entity cloaker, float radius, array<string> ents = [ "any
 	}
 }
 
-void function CloakerCloaksGuy( guy )
+void function CloakerCloaksGuy( entity guy )
 {
 	guy.SetCloakDuration( 2.0, -1, 0 )
 	EmitSoundOnEntity( guy, CLOAKED_DRONE_CLOAK_START_SFX )
@@ -104,7 +104,7 @@ void function CloakerCloaksGuy( guy )
 	guy.Minimap_Hide( TEAM_MILITIA, null )
 }
 
-void function CloakerDeCloaksGuy( guy )
+void function CloakerDeCloaksGuy( entity guy )
 {
 	guy.SetCloakDuration( 0, 0, 1.5 )
 	StopSoundOnEntity( guy, CLOAKED_DRONE_CLOAK_LOOP_SFX )
