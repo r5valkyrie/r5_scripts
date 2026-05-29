@@ -191,7 +191,7 @@ void function MpAbilityCryptoDrone_Init()
 
 	//PrecacheParticleSystem( CRYPTO_DRONE_RANGE_NO_INTRO )
 	//PrecacheParticleSystem( $"lootpoint_far_beam_close_small" )
-	Remote_RegisterServerFunction( "ClientCallback_AttemptDroneRecall" )
+	// Remote_RegisterServerFunction( "ClientCallback_AttemptDroneRecall" )
 
 	file.neurolinkRange = GetCurrentPlaylistVarFloat( "crypto_neurolink_range", EMP_RANGE )
 	file.droneHealth = GetCurrentPlaylistVarInt( "crypto_drone_health", CRYPTO_DRONE_HEALTH_PROJECTILE )

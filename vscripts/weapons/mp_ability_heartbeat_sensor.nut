@@ -152,10 +152,9 @@ void function PassiveHeartbeatSensor_Init()
 	PrecacheParticleSystem( FX_HEARTBEAT_SENSOR_EYEGLOW_FOE )
 	PrecacheParticleSystem( FX_HEARTBEAT_SENSOR_SONAR_PULSE )
 	PrecacheParticleSystem( FX_HEARTBEAT_SENSOR_SONAR_PULSE_NO_INTRO )
-	
-	//Revisit
-	//Remote_RegisterServerFunction( "ClientCallback_ToggleHeartbeatSensor" )
-	//Remote_RegisterServerFunction( "ClientCallback_UpdateHeartbeatsHeardStat", "int", INT_MIN, INT_MAX )
+
+	Remote_RegisterServerFunction( "ClientCallback_ToggleHeartbeatSensor" )
+	Remote_RegisterServerFunction( "ClientCallback_UpdateHeartbeatsHeardStat", "int", INT_MIN, INT_MAX )
 
 	AddCallback_OnPassiveChanged( ePassives.PAS_PARIAH, HeartbeatSensor_OnPassiveChanged )
 	AddCallback_OnPlayerZoomIn( PlayerZoomInCallback )

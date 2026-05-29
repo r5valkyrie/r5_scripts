@@ -82,10 +82,10 @@ struct
 void function MpWeapon_Mortar_Ring_Init()
 {
 
-	Remote_RegisterServerFunction( CMDNAME_CLEARANCE_ENABLED )
+	/*Remote_RegisterServerFunction( CMDNAME_CLEARANCE_ENABLED )
 	Remote_RegisterServerFunction( CMDNAME_CLEARANCE_DISABLED )
 	Remote_RegisterServerFunction( CMDNAME_ARC_ENABLED )
-	Remote_RegisterServerFunction( CMDNAME_ARC_DISABLED )
+	Remote_RegisterServerFunction( CMDNAME_ARC_DISABLED )*/
 
 	RegisterSignal( "MortarRingDeactivate" )
 
@@ -313,12 +313,12 @@ void function WeaponActiveThread_Client( entity owner, entity weapon )
 		if( newInRange )
 		{
 			if( firstLoop || newInRange != lastInRange )
-				Remote_ServerCallFunction( CMDNAME_ARC_ENABLED )
+				//Remote_ServerCallFunction( CMDNAME_ARC_ENABLED )
 
 			if( newClearance )
 			{
-				if( firstLoop || newClearance != lastClearance || newInRange != lastInRange )
-					Remote_ServerCallFunction( CMDNAME_CLEARANCE_ENABLED )
+				//if( firstLoop || newClearance != lastClearance || newInRange != lastInRange )
+					//Remote_ServerCallFunction( CMDNAME_CLEARANCE_ENABLED )
 
 				if( EffectDoesExist( ringFX ) )
 					EffectSetControlPointVector( ringFX, 1, DEFAULT_COLOR )
@@ -327,8 +327,8 @@ void function WeaponActiveThread_Client( entity owner, entity weapon )
 			}
 			else
 			{
-				if( firstLoop || newClearance != lastClearance || newInRange != lastInRange )
-					Remote_ServerCallFunction( CMDNAME_CLEARANCE_DISABLED )
+				//if( firstLoop || newClearance != lastClearance || newInRange != lastInRange )
+					//Remote_ServerCallFunction( CMDNAME_CLEARANCE_DISABLED )
 
 				if( EffectDoesExist( ringFX ) )
 					EffectSetControlPointVector( ringFX, 1, CLEARANCE_COLOR )
@@ -342,7 +342,7 @@ void function WeaponActiveThread_Client( entity owner, entity weapon )
 		else
 		{
 			if( firstLoop || newInRange != lastInRange )
-				Remote_ServerCallFunction( CMDNAME_ARC_DISABLED )
+				//Remote_ServerCallFunction( CMDNAME_ARC_DISABLED )
 
 			if( EffectDoesExist( ringFX ) )
 				EffectSetControlPointVector( ringFX, 1, OUT_OF_RANGE_COLOR )

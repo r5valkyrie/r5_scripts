@@ -125,13 +125,14 @@ void function LobaUltimateBlackMarket_LevelInit()
 			"int", 0, 4096, // int lootRefCount
 			"int", 0, 255 // int maxUseCount
 		)
-		
-		Remote_RegisterServerFunction( BLACK_MARKET_OPEN_CMD, "typed_entity", "prop_loot_grabber" )
-		Remote_RegisterServerFunction( BLACK_MARKET_CLOSE_CMD, "typed_entity", "prop_loot_grabber" )
-		Remote_RegisterServerFunction( "ClientCallback_TryPickupBlackMarket", "typed_entity", "prop_loot_grabber" )
+
 	#endif
 
 	#if SERVER
+		AddClientCommandCallback( BLACK_MARKET_OPEN_CMD, ClientCallback_OpenBlackMarket )
+		AddClientCommandCallback( BLACK_MARKET_CLOSE_CMD, ClientCallback_CloseBlackMarket )
+		AddClientCommandCallback( BLACK_MARKET_TRY_PICKUP_CMD, ClientCallback_TryPickupBlackMarket )
+
 		Loot_AddCallback_OnPlayerLootPickup( OnPlayerLootPickup )
 		RegisterDynamicEntCleanupItem_Parented_Scriptname( BLACK_MARKET_SCRIPTNAME, ForceKillBlackMarket )
 		RegisterDynamicEntCleanupItem_Area_Scriptname( BLACK_MARKET_SCRIPTNAME, ForceKillBlackMarket )
@@ -1123,8 +1124,13 @@ void function WarpBeamFXThread( entity blackMarket, vector startPos, vector endP
 
 
 #if SERVER
-void function ClientCallback_OpenBlackMarket( entity player, entity grabber )
+void function ClientCallback_OpenBlackMarket( entity player, array<string> args )
 {
+	if ( args.len() < 1 )
+		return
+
+	entity grabber = GetEntByIndex( args[0].tointeger() )
+
 	if ( !IsBlackMarketDevice( grabber ) || !IsValid( player ) || !player.IsPlayer() )
 		return
 
@@ -1136,8 +1142,13 @@ void function ClientCallback_OpenBlackMarket( entity player, entity grabber )
 
 
 #if SERVER
-void function ClientCallback_CloseBlackMarket( entity player, entity grabber )
+void function ClientCallback_CloseBlackMarket( entity player, array<string> args )
 {
+	if ( args.len() < 1 )
+		return
+
+	entity grabber = GetEntByIndex( args[0].tointeger() )
+
 	if ( !IsBlackMarketDevice( grabber ) || !IsValid( player ) || !player.IsPlayer() )
 		return
 
@@ -1265,8 +1276,13 @@ void function OnCharacterButtonPressed( entity player )
 
 
 #if SERVER
-void function ClientCallback_TryPickupBlackMarket( entity player, entity device )
+void function ClientCallback_TryPickupBlackMarket( entity player, array<string> args )
 {
+	if ( args.len() < 1 )
+		return
+
+	entity device = GetEntByIndex( args[0].tointeger() )
+
 	if ( !SURVIVAL_PlayerAllowedToPickup( player ) )
 		return
 

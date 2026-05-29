@@ -161,7 +161,7 @@ void function MpWeaponBow_Init()
 		file.fxLightAssets1p[optic] <- fxLightArr
 	}
 
-	Remote_RegisterServerFunction( "Remote_CancelCharge" )
+	//Remote_RegisterClientFunction( "Remote_CancelCharge" )
 
 	#if CLIENT
 		RegisterConCommandTriggeredCallback( "+weaponcycle", AttemptCancelCharge )
@@ -663,7 +663,7 @@ void function AttemptCancelCharge( entity player )
 	if ( !weapon.IsWeaponCharging() )
 		return
 
-	Remote_ServerCallFunction( "Remote_CancelCharge" )
+	//thread Remote_CancelCharge( player )
 }
 #endif
 

@@ -328,8 +328,8 @@ void function MpWeaponRiotDrill_Init()
 		AddTargetNameCreateCallback( RIOT_DRILL_DANGERZONE_TARGETNAME, RiotDrill_AddThreatIndicator )
 	#endif //CLIENT
 
-	Remote_RegisterServerFunction( "ClientCallback_DrillError_On" )
-	Remote_RegisterServerFunction( "ClientCallback_DrillError_Off" )
+	//Remote_RegisterServerFunction( "ClientCallback_DrillError_On" )
+	//Remote_RegisterServerFunction( "ClientCallback_DrillError_Off" )
 
 	Remote_RegisterClientFunction( "ServerCallback_CancelPlacement", "entity" )
 }
