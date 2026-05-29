@@ -1138,7 +1138,8 @@ var function CodeCallback_ClientCommand( entity player, array<string> args )
 {
 	// returned bool means if a function hook has been found / not
 	// nothing to do with error propagation
-	PrintDebugClientCommand( player, args )
+
+	// PrintDebugClientCommand( player, args )
 
 	if ( !player.hasConnected )
 		return false
@@ -1147,12 +1148,10 @@ var function CodeCallback_ClientCommand( entity player, array<string> args )
 
 	if ( commandString in svGlobal.clientCommandCallbacks  )
 	{
-		printt( "CodeCallback_ClientCommand: running registered command", commandString )
 		svGlobal.clientCommandCallbacks[commandString]( player, args )
 		return true
 	}
 
-	printt( "ALERT:", commandString, "isn't a registered client command but was forwarded to CodeCallback_ClientCommand." )
 	return false
 }
 

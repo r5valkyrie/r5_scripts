@@ -5083,8 +5083,8 @@ void function SurvivalPlayerRespawnedInit( entity player )
 
 	Ultimates_OnPlayerRespawned( player )
 
-	player.GiveOffhandWeapon( HOLO_PROJECTOR_WEAPON_NAME, HOLO_PROJECTOR_INDEX )
-	player.GiveOffhandWeapon( GENERIC_OFFHAND_WEAPON_NAME, GENERIC_OFFHAND_INDEX )
+	//player.GiveOffhandWeapon( HOLO_PROJECTOR_WEAPON_NAME, HOLO_PROJECTOR_INDEX )
+	//player.GiveOffhandWeapon( GENERIC_OFFHAND_WEAPON_NAME, GENERIC_OFFHAND_INDEX )
 
 
 	player.DisableIdLights()
