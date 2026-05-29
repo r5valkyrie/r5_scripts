@@ -53,7 +53,7 @@ const bool VISOR_THREAT_DETECTION							= true
 const bool CASTLE_WALL_STOPS_GRENADES						= true
 
 
-#if DEV
+#if DEVELOPER
 const bool DEBUG_ARMORED_LEAP_TARGETING_DRAW 				= false
 const bool DEBUG_SNAKE_DRAW 								= false
 const bool DEBUG_DEV_TEST_FLAG								= false		
@@ -381,7 +381,7 @@ struct FindOffsetPosStruct
 	vector position
 }
 
-#if DEV
+#if DEVELOPER
 const table<int,string> armoredLeapPhaseToStringMap = {
 	[ PLAYER_ARMORED_LEAP_PHASE_NONE ] = "PLAYER_ARMORED_LEAP_PHASE_NONE",
 	[ PLAYER_ARMORED_LEAP_PHASE_PREP ] = "PLAYER_ARMORED_LEAP_PHASE_PREP",
@@ -2090,7 +2090,7 @@ void function CodeCallback_ArmoredLeapPhaseChange( entity player, int newArmored
 	if ( !IsValid( player ) )
 		return
 
-#if DEV
+#if DEVELOPER
 	if ( DEBUG_PHASE_CHANGES )
 		printt( FUNC_NAME() + " got code callback for player: " + player.GetPlayerName() + " phase is: " + armoredLeapPhaseToStringMap[newArmoredLeapPhase] + " old phase is: " + armoredLeapPhaseToStringMap[oldArmoredLeapPhase] )
 #endif
@@ -2126,7 +2126,7 @@ void function ArmoredLeapPhaseChangeQueueProcessor_Thread( entity player )
 				int oldArmoredLeapPhase = phaseChangeToProcess.oldPhase
 				int newArmoredLeapPhase = phaseChangeToProcess.newPhase
 
-#if DEV
+#if DEVELOPER
 				if ( DEBUG_PHASE_CHANGES )
 					printt( FUNC_NAME() + " OldPhase: " + oldArmoredLeapPhase + " NewPhase: " + newArmoredLeapPhase )
 #endif
@@ -2365,7 +2365,7 @@ void function ArmoredLeap_CheckForUpdraft_Thread( entity player )
 }
 
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -3145,7 +3145,7 @@ void function ArmoredLeap_AR_Placement_Thread( entity weapon )
 		else
 			info = GetArmoredLeapTargetInfo( player )
 
-#if DEV
+#if DEVELOPER
 		if ( DoAdditionalAirPosChecks() )
 		{
 			if ( DEBUG_BETTER_AIR_POS )
@@ -3164,7 +3164,7 @@ void function ArmoredLeap_AR_Placement_Thread( entity weapon )
 			break
 		}
 
-#if DEV
+#if DEVELOPER
 			if( DEBUG_ARMORED_LEAP_TARGETING_DRAW )
 			{
 				DebugDrawLine( player.GetOrigin(), info.airPos , <0, 200, 200>, true, 0.1 )
@@ -4121,7 +4121,7 @@ ArmoredLeapTargetInfo function GetArmoredLeapTargetInfo( entity ent )
 		return info
 	}
 
-#if DEV
+#if DEVELOPER
 		if( DEBUG_ARMORED_LEAP_TARGETING_DRAW )
 		{
 			
@@ -4249,7 +4249,7 @@ ArmoredLeapTargetInfo function GetArmoredLeapTargetInfo( entity ent )
 			TraceResults ledgeTrace = TraceHull( ledgeTraceStart, ledgeTraceStart + <0, 0, -200>, ent.GetPlayerMins(), ent.GetPlayerMaxs(), ignoreArray, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
 
 
-#if DEV
+#if DEVELOPER
 				if( DEBUG_ARMORED_LEAP_TARGETING_DRAW )
 				{
 					DebugDrawSphere( ledgeTraceStart, 8.0, COLOR_YELLOW, true, 0.1 ) 
@@ -4289,7 +4289,7 @@ ArmoredLeapTargetInfo function GetArmoredLeapTargetInfo( entity ent )
 				}
 			}
 
-#if DEV
+#if DEVELOPER
 				if( DEBUG_ARMORED_LEAP_TARGETING_DRAW )
 				{
 					DebugDrawSphere( downTrace.endPos, 5.0, COLOR_GREEN, false, 0.1 ) 
@@ -4328,7 +4328,7 @@ ArmoredLeapTargetInfo function GetArmoredLeapTargetInfo( entity ent )
 						foundValidEnd = true
 					}
 				}
-#if DEV
+#if DEVELOPER
 					if( DEBUG_ARMORED_LEAP_TARGETING_DRAW )
 					{
 						DebugDrawSphere( intersect, 8.0, <255, 0, 250>, false, 0.1 ) 
@@ -4337,7 +4337,7 @@ ArmoredLeapTargetInfo function GetArmoredLeapTargetInfo( entity ent )
 #endif
 			}
 
-#if DEV
+#if DEVELOPER
 				if( DEBUG_ARMORED_LEAP_TARGETING_DRAW )
 				{
 					DebugDrawSphere( lowAirTrace.endPos, 5.0, <100, 0, 50>, true, 0.1 ) 
@@ -4403,7 +4403,7 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 		float airHeight           = info.airPos == ZERO_VECTOR ? ARMORED_LEAP_MAX_AIR_HEIGHT : info.airPos.z - info.finalPos.z
 		TraceResults traceUp      = TraceHull( info.finalPos, info.finalPos + <0, 0, airHeight>, player.GetPlayerMins(), player.GetPlayerMaxs(), ignoreArray, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
 
-#if DEV
+#if DEVELOPER
 		if ( DEBUG_BETTER_AIR_POS )
 		{
 			DebugDrawText( info.eyeHitPos, "info.eyeHitPos", true, 0.1 )
@@ -4435,7 +4435,7 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 			
 			if ( iterationTrace.fraction >= 0.99 )
 			{
-#if DEV
+#if DEVELOPER
 				if ( DEBUG_BETTER_AIR_POS )
 				{
 					DebugDrawMark( iterationTrace.endPos, 10, COLOR_GREEN, true, 0.1 )
@@ -4458,7 +4458,7 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 			}
 			else
 			{
-#if DEV
+#if DEVELOPER
 				if ( DEBUG_BETTER_AIR_POS )
 				{
 					DebugDrawLine( playerPos, traceTarget, COLOR_RED, true, 0.1 )
@@ -4479,7 +4479,7 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 			vector walkBackDir = Normalize( aboveDest - abovePlayer )
 			float walkBackDistTotal = Distance( aboveDest, abovePlayer )
 
-#if DEV
+#if DEVELOPER
 			if ( DEBUG_BETTER_AIR_POS )
 			{
 				DebugDrawMark( abovePlayer, 10, COLOR_YELLOW, true, 0.1 )
@@ -4513,7 +4513,7 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 
 				if ( traceToWalkbackPos.fraction >= 0.99 )
 				{
-#if DEV
+#if DEVELOPER
 						if ( DEBUG_BETTER_AIR_POS )
 						{
 							DebugDrawLine( player.GetOrigin(), traceToWalkbackPos.endPos, COLOR_GREEN, true, 0.1 )
@@ -4526,7 +4526,7 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 
 					if ( traceFinalPos.fraction >= 0.99 )
 					{
-#if DEV
+#if DEVELOPER
 							if ( DEBUG_BETTER_AIR_POS )
 							{
 								DebugDrawLine( walkBackIterationPos, traceFinalPos.endPos, COLOR_GREEN, true, 0.1 )
@@ -4561,7 +4561,7 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 					}
 					else
 					{
-#if DEV
+#if DEVELOPER
 							if ( DEBUG_BETTER_AIR_POS )
 							{
 								DebugDrawLine( walkBackIterationPos, info.finalPos, COLOR_RED, true, 0.1 )
@@ -4573,7 +4573,7 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 				}
 				else
 				{
-#if DEV
+#if DEVELOPER
 						if ( DEBUG_BETTER_AIR_POS )
 						{
 							DebugDrawLine( player.GetOrigin(), walkBackIterationPos, COLOR_RED, true, 0.1 )
@@ -4589,7 +4589,7 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 		{
 			info.airPos = goodAirPos
 
-#if DEV
+#if DEVELOPER
 			if ( DEBUG_BETTER_AIR_POS )
 			{
 				float drawTime = 0.1
@@ -4605,7 +4605,7 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 		}
 		else
 		{
-#if DEV
+#if DEVELOPER
 			if ( DEBUG_BETTER_AIR_POS )
 			{
 				DebugDrawText( player.GetWorldSpaceCenter(), "foundGoodAirPos NOT found!", true, 0.1 )
@@ -4636,7 +4636,7 @@ FindOffsetPosStruct function GetBetterAirPos_FindOffsetPos( entity player, array
 
 		if ( destinationTrace.fraction >= 0.99 )
 		{
-#if DEV
+#if DEVELOPER
 			if ( DEBUG_BETTER_AIR_POS )
 			{
 				DebugDrawMark( destinationTrace.endPos, 10, COLOR_GREEN, true, 0.1 )
@@ -4651,7 +4651,7 @@ FindOffsetPosStruct function GetBetterAirPos_FindOffsetPos( entity player, array
 		}
 		else
 		{
-#if DEV
+#if DEVELOPER
 			if ( DEBUG_BETTER_AIR_POS )
 			{
 				DebugDrawMark( destinationTrace.endPos, 10, COLOR_RED, true, 0.1 )
@@ -5011,7 +5011,7 @@ bool function ArmoredLeap_IsValidPosition( entity player, vector position, entit
 			if ( ! file.allowEndOnMovers )
 				return false
 
-#if DEV
+#if DEVELOPER
 				if ( DEBUG_DRAW_PUSHER_MOVEMENT )
 				{
 					vector pusherVelAtPoint = pusher.GetAbsVelocityAtPoint(position)
@@ -6133,7 +6133,7 @@ vector function SnakeWall_GetBestDownTracePosition( vector nextValidPos, vector 
 	{
 		TraceResults downCliffTrace = TraceLine( tracePos, tracePos + < 0.0, 0.0, -CASTLE_SNAKE_DROP_TEST_HEIGHT_MAX >, ignoreArray, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
 
-#if DEV
+#if DEVELOPER
 			if( DEBUG_SNAKE_DRAW )
 			{
 				DebugDrawSphere( downCliffTrace.endPos, 6.0, COLOR_RED, true, 15.0, 8 )
@@ -6184,7 +6184,7 @@ vector function SnakeWall_GetBestDownTracePosition( vector nextValidPos, vector 
 						return nextValidPos
 					}
 
-#if DEV
+#if DEVELOPER
 					if( DEBUG_SNAKE_DRAW )
 					{
 						DebugDrawSphere( ledgeBendTrace.endPos, 6.0, COLOR_RED, true, 15.0 )
@@ -8382,7 +8382,7 @@ void function DoCastleWallThreatIndicatorAndSound_Thread( entity player, int shi
 			}
 		}
 
-#if DEV
+#if DEVELOPER
 		if ( DEBUG_THREAT_INDICATORS )
 		{
 			DebugDrawMark( closestPositionEnt.GetOrigin(), 20, COLOR_RED, true, 0.1 )
@@ -8481,7 +8481,7 @@ array<CastleWallThreatIndicatorLine> function BuildThreatLines( entity startingA
 			line.endPos = endPos
 			results.append( line )
 
-#if DEV
+#if DEVELOPER
 			if ( DEBUG_THREAT_INDICATORS )
 			{
 				 DebugDrawArrow( line.startPos, line.endPos, 10, COLOR_GREEN, true, 0.1 )

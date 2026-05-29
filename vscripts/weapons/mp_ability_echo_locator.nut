@@ -59,7 +59,7 @@ global const string ECHO_LOCATOR_WEAPON_NAME = "mp_ability_echo_locator"
 const string ECHO_LOCATOR_DESTRUCTION_SOUND = "Seer_Ultimate_Dome_Destroy"
 const string ECHO_LOCATOR_PLAYER_HAS_MOVEMENT_INPUT_NETVAR = "echoLocatorPlayerHasMovementInput"
 
-#if DEV
+#if DEVELOPER
 const bool ECHO_LOCATOR_DEBUG = false
 #endif
 
@@ -1800,7 +1800,7 @@ void function EchoLocatorFootstepVFX_Thread( entity echoLocator )
 
 		foreach ( entity potentialVictim in validTouchingEnts )
 		{
-#if DEV
+#if DEVELOPER
 			string playerName = potentialVictim.IsPlayer() ? potentialVictim.GetPlayerName() : "DECOY" + potentialVictim.GetEntIndex()
 #endif
 
@@ -1869,7 +1869,7 @@ void function EchoLocatorFootstepVFX_Thread( entity echoLocator )
 						waitTime = max( weaponCheckResult.totalFireTime, WEAPON_FIRE_FX_MIN_WAIT_TIME )
 					}
 
-#if DEV
+#if DEVELOPER
 						if ( ECHO_LOCATOR_DEBUG )
 						{
 							printt("EcholocateEnemy_Thread() wait time: " + waitTime + " deltaTime: " + deltaTime + " player name: " + playerName + " player speed: " + playerSpeed + " max speed: " + MAX_SPRINT_SPEED + " fraction: " + GraphCapped( playerSpeed, CROUCH_WALK_SPEED, MAX_SPRINT_SPEED, 0.0, 1.0 ) )
@@ -1890,7 +1890,7 @@ void function EchoLocatorFootstepVFX_Thread( entity echoLocator )
 				if ( wasInAir[potentialVictim] )
 				{
 					
-#if DEV
+#if DEVELOPER
 						if ( ECHO_LOCATOR_DEBUG )
 						{
 							printt( "EcholocateEnemy_Thread " + playerName + " Landed." )
@@ -1919,7 +1919,7 @@ void function EchoLocatorFootstepVFX_Thread( entity echoLocator )
 				if ( !wasInAir[potentialVictim] )
 				{
 					
-#if DEV
+#if DEVELOPER
 						if ( ECHO_LOCATOR_DEBUG )
 						{
 							printt( "EcholocateEnemy_Thread " + playerName + " Jumped." )

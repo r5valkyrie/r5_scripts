@@ -536,6 +536,7 @@ var function FerroWallAttack_Common( entity weapon, WeaponPrimaryAttackParams at
 		if( weapon.ObjectPlacementHasValidSpot() && ( !IsValid( placementParent ) || !ignoreArray.contains( placementParent ) ) )
 		{
 			targetOrigin = weapon.GetObjectPlacementOrigin()
+			printt("Ferrofluid targetorigin hasvalidspot" + weapon.GetObjectPlacementOrigin())
 		}
 		else
 		{
@@ -550,6 +551,7 @@ var function FerroWallAttack_Common( entity weapon, WeaponPrimaryAttackParams at
 				return 0
 			}
 			targetOrigin = downTrace.endPos
+			printt("Ferrofluid targetorigin hasnotvalidspot" + targetOrigin )
 		}
 
 		vector angles = < 0, startAngles.y, 0 >

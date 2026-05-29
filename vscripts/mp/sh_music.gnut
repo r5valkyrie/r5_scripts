@@ -174,7 +174,7 @@ void function OnRegisterRootItemFlavors()
 
 	LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "music_pack_selection", eLoadoutEntryClass.ACCOUNT )
 	entry.networkTo = eLoadoutNetworking.PLAYER_EXCLUSIVE
-#if DEV
+#if DEVELOPER
 		entry.DEV_name       = "Music Pack"
 #endif
 	fileLevel.musicPackSelectionSlot = entry

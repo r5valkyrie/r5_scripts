@@ -1701,7 +1701,7 @@ bool function LootBin_CanBeClosed( entity lootBin )
 
 bool function IsInfiniteLootBinsEnabled()
 {
-#if DEV
+#if DEVELOPER
 		if ( GetBugReproNum() == 50 )
 			return true
 #endif

@@ -431,7 +431,7 @@ void function LoadoutSelection_RegisterLoadoutData()
 		bool isSlotDisabled = GetCurrentPlaylistVarBool( "loadoutselection_dt_override_" + item.loadoutSlot + "_disable", false )
 		if ( isSlotDisabled )
 		{
-#if DEV
+#if DEVELOPER
 				printt( "LOADOUT SELECTION: RegisterLoadoutData skipping " + item.loadoutSlot + " because it is disabled through playlist vars" )
 #endif
 
@@ -442,7 +442,7 @@ void function LoadoutSelection_RegisterLoadoutData()
 		string loadoutSlotToUseAsOverride = GetCurrentPlaylistVarString( "loadoutselection_dt_override_" + item.loadoutSlot + "_loadouts", "" )
 		if ( loadoutSlotToUseAsOverride != "" )
 		{
-#if DEV
+#if DEVELOPER
 				printt( "LOADOUT SELECTION: Overriding Loadout Slot: " + item.loadoutSlot + " with " + loadoutSlotToUseAsOverride )
 #endif
 
@@ -466,7 +466,7 @@ void function LoadoutSelection_RegisterLoadoutData()
 			string loadoutToUseAsOverride = GetCurrentPlaylistVarString( "loadoutselection_dt_override_loadout_" + loadout, "" )
 			if ( loadoutToUseAsOverride != "" )
 			{
-#if DEV
+#if DEVELOPER
 					printt( "LOADOUT SELECTION: Overriding Loadout: " + loadout + " with " + loadoutToUseAsOverride )
 #endif
 
@@ -485,7 +485,7 @@ void function LoadoutSelection_RegisterLoadoutData()
 		index++
 	}
 
-#if DEV
+#if DEVELOPER
 		printt( "LOADOUT SELECTION: RegisterLoadoutData Completed" )
 #endif
 }
@@ -502,7 +502,7 @@ void function LoadoutSelection_RegisterLoadoutDistribution()
 
 	foreach ( item in file.loadoutCategories )
 	{
-#if DEV
+#if DEVELOPER
 			printt( "LOADOUT SELECTION: Getting datatable for loadout " + item.loadoutSlot )
 #endif
 
@@ -783,7 +783,7 @@ void function LoadoutSelection_InitWeaponData()
 				supportedAttachmentOverrides = GetCurrentPlaylistVarString( "loadoutselection_" + weaponRef + "_supported_attachment_override", supportedAttachmentOverrides )
 				if ( supportedAttachmentOverrides != "" )
 				{
-#if DEV
+#if DEVELOPER
 						printt( "LOADOUT SELECTION: Overriding supported attachments for " + weaponRef )
 #endif
 					LoadoutSelection_OverrideSupportedWeaponAttachmentsForWeaponRef( weaponRef, supportedAttachmentOverrides )
@@ -1376,7 +1376,7 @@ string function LoadoutSelection_GetActiveLoadoutForCategory( LoadoutSelectionCa
 		if ( LoadoutSelection_ShouldAvoidDuplicateWeaponsInLoadoutRotation() )
 			indexToUse = LoadoutSelection_GetLoadoutForCategoryWithoutDupeWeapons( indexToUse, loadoutCategory )
 
-#if DEV
+#if DEVELOPER
 			printt( "LOADOUT SELECTION: loadout rotation is set to manual, using loadout index: " + indexToUse + " for category: " + loadoutCategory.loadoutSlot )
 #endif
 
@@ -1394,7 +1394,7 @@ string function LoadoutSelection_GetActiveLoadoutForCategory( LoadoutSelectionCa
 		if ( loadoutCategory.loadoutContentNames.len() > 1 && LoadoutSelection_ShouldAvoidDuplicateWeaponsInLoadoutRotation() )
 			rotationIndex = LoadoutSelection_GetLoadoutForCategoryWithoutDupeWeapons( rotationIndex, loadoutCategory )
 
-#if DEV
+#if DEVELOPER
 			printt( "LOADOUT SELECTION: loadout rotation is set to permanent, using loadout index: " + rotationIndex + " for category: " + loadoutCategory.loadoutSlot )
 #endif
 
@@ -1432,7 +1432,7 @@ string function LoadoutSelection_GetActiveLoadoutForCategory( LoadoutSelectionCa
 	if ( LoadoutSelection_ShouldAvoidDuplicateWeaponsInLoadoutRotation() )
 		rotationIndex = LoadoutSelection_GetLoadoutForCategoryWithoutDupeWeapons( rotationIndex, loadoutCategory )
 
-#if DEV
+#if DEVELOPER
 		printt( "LOADOUT SELECTION: loadouts using a rotation, loadout index: " + rotationIndex + " for category: " + loadoutCategory.loadoutSlot )
 #endif
 

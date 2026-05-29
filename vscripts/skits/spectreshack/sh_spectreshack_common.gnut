@@ -121,7 +121,7 @@ void function SpectreShacks_Bootstrap()
 		return
 
 
-#if DEV
+#if DEVELOPER
 			printf( "spectre shacks bootstrap()" )
 #endif
 		SpectreShacks_InitGlobalDependencies()
@@ -155,7 +155,7 @@ bool function MapContainsArmories()
 
 	if( mapName.find( "mp_rr_tropic_island" ) > -1 )
 		return true
-#if DEV
+#if DEVELOPER
 	else if( mapName.find( "mp_rr_spectreshack_actionblock_02" ) > -1 )
 		return true
 	printt( "ARMORIES | map does not contain armories" )
@@ -394,7 +394,7 @@ void function MinimapPackage_SpectreShack( entity ent, var rui )
 
 void function SpectreShack_Init_Client()
 {
-#if DEV
+#if DEVELOPER
 		printf( "ARMORY: SpectreShack_Init_Client()" )
 #endif
 	
@@ -404,7 +404,7 @@ void function SpectreShack_Init_Client()
 
 void function Cl_SpectreShack_OnProximityTriggerEnter( entity wp )
 {
-#if DEV
+#if DEVELOPER
 	printf( "CLIENT: Cl_SpectreShack_OnProximityTriggerEnter() was called" )
 #endif
 
@@ -423,7 +423,7 @@ void function Cl_SpectreShack_OnProximityTriggerEnter( entity wp )
 
 void function Cl_SpectreShack_OnProximityTriggerLeave( entity wp )
 {
-#if DEV
+#if DEVELOPER
 	printf( "CLIENT: Cl_SpectreShack_OnProximityTriggerLeave() was called" )
 #endif
 

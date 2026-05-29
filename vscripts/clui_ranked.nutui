@@ -525,7 +525,7 @@ bool function Ranked_HasBeenInitialized()
 	if ( !IsPersistenceAvailable() )
 		return false
 
-#if DEV
+#if DEVELOPER
 		if( GetConVarBool( "script_ranked_debug" ) )
 		{
 			return true

@@ -202,7 +202,7 @@ const array<string> SHADOWARMY_DISABLED_BATTLE_CHATTER_EVENTS = [
 
 
 const bool SHADOW_ARMY_SHOW_DETAILED_DEBUG = true
-#if DEV
+#if DEVELOPER
 const bool SHADOWARMY_DISPLAY_PLAYERSPAWN_DEBUG_DRAWS = false
 const float SHADOWARMY_DEBUG_DRAW_DISPLAY_TIME = 20.0
 const float SHADOWARMY_SPAWN_DEBUG_DRAW_RADIUS = 150.0
@@ -3066,7 +3066,7 @@ const float REPEAT_INTERVAL = 2.0
 
 void function RunRepeatingEnemyMapScans_Thread()
 {
-#if DEV
+#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 #endif
 
@@ -3666,7 +3666,7 @@ void function RunRepeatingEnemyMapScans_Thread()
 
 void function ObjectiveEvac_ManageHUDMessaging_Thread()
 {
-#if DEV
+#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 #endif
 
@@ -4029,7 +4029,7 @@ VictorySoundPackage function GetVictorySoundPackage()
 const float SFX_DELAY = 2.5
 void function ShadowArmy_PlayIntroBannerSoundForLegends_Thread()
 {
-#if DEV
+#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 #endif
 
@@ -4894,7 +4894,7 @@ void function ShowAnnouncementMessage( int messageIndex, int messageType )
 			obitText = "#SHADOW_ARMY_EVAC_LOCATION_REVEALED"
 			break
 		default:
-#if DEV
+#if DEVELOPER
 				Assert( false, "Shadow Army: Unhandled messageIndex: " + messageIndex )
 #endif
 			break
@@ -4951,7 +4951,7 @@ void function ShadowArmy_ServerCallback_ShowHinttMessage( int hintIndex, int opt
 			messageText = "#SHADOW_ARMY_FULL_REV_CRITERIA_NO_DAM_HINT"
 			break
 		default:
-#if DEV
+#if DEVELOPER
 				Assert( false, "Shadow Army: Unhandled hintIndex: " + hintIndex )
 #endif
 			shouldDisplayHint = false
@@ -4983,7 +4983,7 @@ void function OnPlayerLifeStateChanged_Client( entity player, int oldState, int 
 const float HUD_UPDATE_DELAY = 0.5
 void function UpdatePlayerHUDOnDelay_Thread( entity player )
 {
-#if DEV
+#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 #endif
 
@@ -5054,7 +5054,7 @@ void function ShadowArmy_OnPlayerConnectionStateChanged( entity player )
 const int EVAC_AREA_ICON_PRIORITY = 1100
 void function RunPostAllianceAssignmentCompleteLogic_Thread( entity localPlayer )
 {
-#if DEV
+#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 #endif
 

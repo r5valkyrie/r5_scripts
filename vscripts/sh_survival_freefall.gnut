@@ -248,7 +248,7 @@ const CONSTRAINEDDIVE_RADIUS_DEFAULT = 984.252
 
 void function SurvivalFreefall_Init()
 {
-#if DEV
+#if DEVELOPER
 		if ( IsCaptureCameraEnabled() ) 
 		{
 			SKYDIVE_THIRD_PERSON_START_HEIGHT = -50.0
@@ -2245,7 +2245,7 @@ void function LerpCameraDistOverTime( entity player, float dist, float lerpDurat
 
 void function LerpCameraHeightOverTime( entity player, float dist, float lerpDuration, float functionref( float ) tweenFunc )
 {
-#if DEV
+#if DEVELOPER
 		if ( IsCaptureCameraEnabled() )
 			return
 #endif
@@ -2713,7 +2713,7 @@ void function Freefall_OnPlayerCreated_threaded( entity skyDivingPlayer )
 
 
 
-#if DEV
+#if DEVELOPER
 bool function IsCaptureCameraEnabled()
 {
 	return GetBugReproNum() == 333

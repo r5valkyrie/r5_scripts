@@ -92,7 +92,7 @@ void function RegisterEquippableQuipsForCharacter( ItemFlavor characterClass, ar
 	{
 		LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "quips_" + quipIndex + "_for_" + ItemFlavor_GetGUIDString( characterClass ), eLoadoutEntryClass.CHARACTER )
 		entry.category     = eLoadoutCategory.CHARACTER_QUIPS
-#if DEV
+#if DEVELOPER
 			entry.pdefSectionKey = "character " + ItemFlavor_GetGUIDString( characterClass )
 			entry.DEV_name       = ItemFlavor_GetCharacterRef( characterClass ) + " Quip " + quipIndex
 #endif
@@ -151,7 +151,7 @@ void function RegisterEquippableQuipsForCharacter( ItemFlavor characterClass, ar
 	{
 		LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "favoredQuip_" + favQuipIndex + "_for_" + ItemFlavor_GetGUIDString( characterClass ), eLoadoutEntryClass.CHARACTER )
 		entry.category     = eLoadoutCategory.CHARACTER_FAVORED_QUIPS
-#if DEV
+#if DEVELOPER
 			entry.pdefSectionKey = "character " + ItemFlavor_GetGUIDString( characterClass )
 			entry.DEV_name       = ItemFlavor_GetCharacterRef( characterClass ) + " Favored Quip " + favQuipIndex
 #endif
@@ -320,7 +320,7 @@ var function CharacterQuip_SelectWeightedAnimFlourish3p( ItemFlavor flavor )
 	var flourishSettingsArray = GetSettingsBlockArray( GetSettingsBlockForAsset( ItemFlavor_GetAsset( flavor ) ), "flourishSequences" )
 	int flourishCount = GetSettingsArraySize( flourishSettingsArray )
 
-#if DEV
+#if DEVELOPER
 	int forceIdx = GetConVarInt( "force_sequence_index" )
 
 	if ( forceIdx >= 0 && forceIdx < flourishCount )

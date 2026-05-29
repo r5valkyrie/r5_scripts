@@ -81,7 +81,7 @@ void function InitPostGameBattlePassMenu( var newMenuArg )
 	var menuHeaderRui = Hud_GetRui( Hud_GetChild( menu, "MenuHeader" ) )
 	RuiSetString( menuHeaderRui, "menuName", "#MATCH_SUMMARY" )
 
-#if DEV
+#if DEVELOPER
 	AddMenuThinkFunc( newMenuArg, PostGameBattlePassAutomationThink )
 #endif
 }
@@ -106,7 +106,7 @@ void function OpenPostGameBattlePassMenu( bool firstTime )
 
 	bool forceFirstTime = false
 
-#if DEV
+#if DEVELOPER
 		forceFirstTime = GetBugReproNum() == 100
 #endif
 
@@ -165,7 +165,7 @@ void function OnPostGameBattlePassMenu_Show()
 	thread ShowChallengeProgression( battlepass )
 }
 
-#if DEV
+#if DEVELOPER
 void function PostGameBattlePassAutomationThink( var menu )
 {
 	if (AutomateUi())
@@ -212,7 +212,7 @@ void function ShowChallengeProgression( ItemFlavor battlePass )
 	
 	Hud_SetVisible( Hud_GetChild( file.menu, "ContinueButton" ), false )
 
-#if DEV
+#if DEVELOPER
 		wait 0.5 
 #endif
 
@@ -544,7 +544,7 @@ void function UpdateChallengeProgressbutton( entity player, var button, Challeng
 	RuiSetBool( rui, "challengeIsIndented", challengeIsIndented )
 	RuiSetString( rui, "challengeTierDesc", Challenge_GetDescription( challengeFlav, activeTier, isAlt ) )
 
-#if DEV
+#if DEVELOPER
 		bool doDebug = (InputIsButtonDown( KEY_LSHIFT ) && InputIsButtonDown( KEY_LCONTROL )) || (InputIsButtonDown( BUTTON_TRIGGER_LEFT_FULL ) && InputIsButtonDown( BUTTON_B ))
 		if ( doDebug )
 		{

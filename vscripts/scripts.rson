@@ -561,7 +561,7 @@
 		ui/menu_lang_aoc_warn.nutui
 		ui/download_aoc_notice.nutui
 	]
-	When: DEV
+	When: "DEV && UI"
 	Scripts:
 	[
 		ai/sh_dev_npc_settings.gnutui
@@ -590,13 +590,6 @@
 	Scripts:
 	[
 		gamemodes/sh_gamemode_utility.gnutui
-	]
-	When: DEV
-	Scripts:
-	[
-		sh_dev_tests.gnutui
-		sh_dev_utility.nutui
-		sh_dev_items.gnutui
 	]
 	When: UI
 	Scripts:
@@ -1475,7 +1468,7 @@
 		skits/spectreshack/sh_spectreshack_common.gnut
 		skits/spectreshack/_skit_spectreshack_robonightmare.nut
 	]
-	When: DEV
+	When: "DEV && CLIENT"
 	Scripts:
 	[
 		skits/examples/sk_example_simple.nut
@@ -1524,7 +1517,7 @@
 	Scripts:
 	[
 	]
-	When: DEV
+	When: "DEV"
 	Scripts:
 	[
 		sh_dev_tests.gnut

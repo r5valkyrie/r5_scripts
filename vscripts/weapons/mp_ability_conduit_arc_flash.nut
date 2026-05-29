@@ -111,7 +111,7 @@ global enum eArcFlashState
 }
 
 
-#if DEV
+#if DEVELOPER
 array<string> sArcFlashStateStrings =
 [
 	"NONE"
@@ -167,7 +167,7 @@ void function MpAbilityConduitArcFlash_Init()
 
 
 
-#if DEV
+#if DEVELOPER
 	Assert( eArcFlashState.COUNT == sArcFlashStateStrings.len(), "Must define a string for each state." )
 #endif
 
@@ -1579,7 +1579,7 @@ void function ArcFlash_ShieldsRepairingThread( entity player )
 
 
 
-#if DEV
+#if DEVELOPER
 void function DebugScreenInfo( entity player, array<entity> allyList, entity bestTarget )
 {
 	

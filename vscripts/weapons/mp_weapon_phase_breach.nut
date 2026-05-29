@@ -13,7 +13,7 @@ global function ServerToClient_PhaseBreachPortalCancelled
     global function ServerToClient_NotifyAshCooldownReduction
 
 
-#if DEV
+#if DEVELOPER
 global function DEV_ClearTargetingData
 global function DEV_ToggleAshValidation
 #endif
@@ -131,7 +131,7 @@ struct
 
 	bool breachPersistsWhenAshDies
 
-#if DEV
+#if DEVELOPER
 		int numTargetingRuns
 		int newTargetingHits
 		int oldTargetingHits
@@ -804,7 +804,7 @@ PhaseBreachTargetInfo function GetPhaseBreachTargetInfo( entity player )
 	
 	PhaseBreachTraceResults eyeTrace = DoEyeTrace( eyePos, eyeDir, rangeEffective, ignoredEnts, mins, maxs )
 
-#if DEV
+#if DEVELOPER
 	if ( DEBUG_DRAW_TARGETING )
 	{
 		vector debugColor = eyeTrace.results.fraction < 1.0 ? COLOR_GREEN : COLOR_RED
@@ -839,7 +839,7 @@ PhaseBreachTargetInfo function GetPhaseBreachTargetInfo( entity player )
 	{
 		vector lowerEyeDir = VectorRotateAxis( eyeDir, player.GetRightVector(), -1 )
 		PhaseBreachTraceResults lowerEyeTrace = DoEyeTrace( eyePos, lowerEyeDir, rangeEffective, ignoredEnts, mins, maxs )
-#if DEV
+#if DEVELOPER
 			if ( DEBUG_DRAW_TARGETING )
 			{
 				DebugDrawText( eyeTrace.results.endPos, "Lower", false, 0.1 )
@@ -1388,7 +1388,7 @@ void function PhaseBreachCrosshair_Thread( entity weapon )
 
 void function DrawDebugSphereIfDebugging( vector origin, int r, int g, int b )
 {
-#if DEV
+#if DEVELOPER
 		if ( DEBUG_DRAW_PLACEMENT_TRACES )
 			DebugDrawSphere( origin, 5.0, <r, g, b>, false, 0.1 )
 #endif
@@ -1553,7 +1553,7 @@ void function PhaseBreachPlacement_Thread( entity weapon )
 
 
 
-#if DEV
+#if DEVELOPER
 
 void function DEV_ValidateAgainstOldTargeting( entity player, PhaseBreachTargetInfo info )
 {

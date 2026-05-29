@@ -85,7 +85,7 @@ const vector MOBILE_SHIELD_DRONE_VEHICLE_LEAVE_OFFSET = <0,0,20>
 const vector DRONE_MINS = <-9, -9, -10>
 const vector DRONE_MAXS = <9, 9, 10>
 
-#if DEV
+#if DEVELOPER
 const bool DEBUG_CODE_SCRIPT_MOVER_TRAVERSAL = false
 const bool DEBUG_WALL_CHECK = false
 const bool DEBUG_THROW_CHECK = false
@@ -333,7 +333,7 @@ entity function ThrowShield( entity weapon, WeaponPrimaryAttackParams attackPara
 	
 	TraceResults tr = TraceHull( player.EyePosition(), attackPos, DRONE_MINS, DRONE_MAXS, [player], TRACE_MASK_PLAYERSOLID_BRUSHONLY, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
 
-#if DEV
+#if DEVELOPER
 	if ( DEBUG_THROW_CHECK )
 	{
 		DebugDrawMark( attackPos, 5, COLOR_RED, true, 5.0 )
@@ -344,7 +344,7 @@ entity function ThrowShield( entity weapon, WeaponPrimaryAttackParams attackPara
 
 	if ( tr.fraction < 1.0 )
 	{
-#if DEV
+#if DEVELOPER
 		if ( DEBUG_THROW_CHECK )
 			DebugDrawMark( attackPos, 5, COLOR_GREEN, true, 5.0 )
 #endif

@@ -50,7 +50,7 @@ global function PartyHasPlaylistAccountLevelRequired
 global int rotationDurationMoreThanDayCount = 0
 
 
-#if DEV
+#if DEVELOPER
 global function PrintPlaylists
 #endif
 
@@ -683,7 +683,7 @@ asset function GetImageFromImageMap( string keyName )
 			imageAsset = GAMEMODE_IMAGE_MAP[keyName]
 		else
 		{
-#if DEV
+#if DEVELOPER
 				if ( GetConVarBool( "ui_automation_enabled" ) )
 					return imageAsset 
 #endif
@@ -703,7 +703,7 @@ asset function GetThumbnailImageFromImageMap( string keyName )
 			imageAsset = GAMEMODE_THUMBNAIL_IMAGE_MAP[keyName]
 		else
 		{
-#if DEV
+#if DEVELOPER
 				if ( GetConVarBool( "ui_automation_enabled" ) )
 					return imageAsset 
 #endif
@@ -737,7 +737,7 @@ asset function GetGamemodeLogoFromImageMap( string keyName )
 
 		if ( !foundLogo )
 		{
-#if DEV
+#if DEVELOPER
 				if ( GetConVarBool( "ui_automation_enabled" ) )
 					return imageAsset 
 #endif
@@ -1359,7 +1359,7 @@ array<int> function GetEmblemColor( string playlistName )
 }
 
 
-#if DEV
+#if DEVELOPER
 
 const DEV_SecondsPerRotation = 3600
 #endif
@@ -1368,7 +1368,7 @@ const DEV_SecondsPerRotation = 3600
 string function GetPlaylistRotationGroup()
 {
 	string rotationGroup = GetDefaultPlaylistRotationGroup()
-#if DEV
+#if DEVELOPER
 		if ( rotationGroup == "" )
 		{
 			
@@ -1387,7 +1387,7 @@ int function GetPlaylistRotationNextTime( string rotationName = "" )
 {
 	int nextTime = GetNamedPlaylistRotationNextTime( rotationName )
 
-#if DEV
+#if DEVELOPER
 		if ( nextTime == 0 )
 			nextTime = (GetUnixTimestamp() / DEV_SecondsPerRotation ) * DEV_SecondsPerRotation + DEV_SecondsPerRotation 
 #endif
@@ -1635,7 +1635,7 @@ bool function PartyHasPlaylistAccountLevelRequired( string playlistName )
 
 
 
-#if DEV
+#if DEVELOPER
 void function PrintPlaylists()
 {
 	printt( "=== PLAYLIST NAMES: ===" )

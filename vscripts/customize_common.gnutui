@@ -265,7 +265,7 @@ void functionref( var ) middleClickOverrideFunc = null
 )
 {
 	Assert( !(button in fileLevel.activeCustomizeButtons) )
-#if DEV
+#if DEVELOPER
 		foreach ( var buttonIter, CustomizeButtonContext cbcIter in fileLevel.activeCustomizeButtons )
 		{
 			Assert( Hud_GetParent( button ) == Hud_GetParent( buttonIter ), "Customize buttons from different parents were active at the same time!" )

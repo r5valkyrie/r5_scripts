@@ -1,7 +1,7 @@
 global function InitPersonalizedStore
 global function RTKPersonalizedStore_OnInitialize
 global function RTKPersonalizedOfferButton_OnInitialize
-#if DEV
+#if DEVELOPER
 global function DEV_ResetRevealStatus
 #endif
 
@@ -333,7 +333,7 @@ void function UpdateTabsPersonalizedStore()
 	UpdateHotDropsTab()
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_ResetRevealStatus()
 {
 	array<bool> slotRevealed

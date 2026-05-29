@@ -29,7 +29,7 @@ global function RefreshUnitframesForPlayer
 global function SquadMemberIndexSort
 global function ClientCodeCallback_OnMatchJipChanged
 
-#if DEV
+#if DEVELOPER
 global function PrintUnitFrames
 global function PrintTeammates
 #endif
@@ -1048,7 +1048,7 @@ entity function UnitFrame_GetOwnerByIndex( int index )
 	return null
 }
 
-#if DEV
+#if DEVELOPER
 void function PrintUnitFrames()
 {
 	printt( "file.teamUnitFrames size:", file.teamUnitFrames.len() )

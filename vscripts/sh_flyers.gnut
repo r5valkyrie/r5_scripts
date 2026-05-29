@@ -67,7 +67,7 @@ global const string CAGED_FLYER_SCRIPT_NAME = "cagedFlyer"
 
 
 
-#if DEV
+#if DEVELOPER
 struct TestFlyerSpawnDataStruct
 {
 	vector origin
@@ -125,7 +125,7 @@ struct
 
 
 
-#if DEV
+#if DEVELOPER
 		int                               currentTestFlyerSpawnIndex = -1 
 		array< TestFlyerSpawnDataStruct > testflyerSpawnData
 		bool flyerSpawnDataSorted = false

@@ -169,7 +169,7 @@ int function BeaconEntToScanType( entity beacon )
 	return eBeaconScanType.DEFAULT
 }
 
-#if DEV
+#if DEVELOPER
 bool function SurveyBeacon_IgnoreCanUseCheck()
 {
 	return GetCurrentPlaylistVarBool( "survey_beacon_ignore_can_use_check", false )
@@ -198,7 +198,7 @@ bool function SurveyBeacon_CanActivate( entity player, entity beacon )
 	table<int, SurveyBeaconData> usableBeacons = file.surveyBeaconData[ player ]
 
 
-#if DEV
+#if DEVELOPER
 	if( !SurveyBeacon_IgnoreCanUseCheck() )
 #endif
 	{

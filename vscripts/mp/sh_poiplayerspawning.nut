@@ -63,7 +63,7 @@ const vector 	GROUNDMARKER_CENTER_FX_COLOR = < 19, 219, 190 >
 const string	POISPAWN_SKYDIVEDESTWP_NAME = "poispawn_wp"
 const int		POISPAWN_SKYDIVEDESTWP_NDX_TEAM = 0
 
-#if DEV
+#if DEVELOPER
 const FORCEDEBUG = false
 #endif
 
@@ -509,7 +509,7 @@ struct
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEVSphere( bool debugParm, vector center, float radius, vector color, bool bShowThruGeo, float showTime, int segments = 4 )
 {
 	bool doDebug = debugParm || FORCEDEBUG

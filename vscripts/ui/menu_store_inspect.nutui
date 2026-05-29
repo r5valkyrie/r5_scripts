@@ -9,7 +9,7 @@ global function StoreInspectMenu_EquipOwnedItem
 global function CanPlayerAffordWithEscrow
 global function ShouldShowGiftDisclaimer
 
-#if DEV
+#if DEVELOPER
 global function DEV_PrintInspectedOffer
 global function DEV_DisplayAllInspectElements
 global function DEV_AddFakeItemToOffer
@@ -901,7 +901,7 @@ void function OnStoreGridItemHover( var panel, var button, int index )
 {
 	ItemFlavor itemFlav = s_inspectOffers.itemFlavors[index]
 
-#if DEV
+#if DEVELOPER
 	if ( ItemFlavor_GetType( itemFlav ) == eItemType.melee_skin )
 	{
 		int menuHeirloomOverrideGUID = DEV_GetMenuHeirloomOverrideGUID()
@@ -1346,7 +1346,7 @@ bool function StoreInspectMenu_IsItemTypeEquippable( int itemType )
 	return true
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_PrintInspectedOffer()
 {
 	if ( s_inspectOffers.currentOffers.len() == 0 )

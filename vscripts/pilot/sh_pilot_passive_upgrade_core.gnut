@@ -638,7 +638,7 @@ void function UpgradeCore_RegisterUpgradesForCharacter( ItemFlavor character, ar
 {
 	array<ItemFlavor> characterUpgrades
 
-#if DEV
+#if DEVELOPER
 
 	array<int> distinctPassives
 
@@ -670,7 +670,7 @@ void function UpgradeCore_RegisterUpgradesForCharacter( ItemFlavor character, ar
 		file.passiveFlavorToUpgradeData[upgrade] <- parsedUpgrade
 		characterUpgrades.append( upgrade )
 
-#if DEV
+#if DEVELOPER
 
 		if( passiveIndex != ePassives.PAS_MOD_UPGRADE_ONLY )
 		{
@@ -3890,7 +3890,7 @@ void function UpgradeCore_UpgradeReminderThread( entity player )
 			timeWithUnspentUpgrade -= reminderHintDelay
 			
 
-#if DEV
+#if DEVELOPER
 			
 			if ( GetConVarInt( "mp_enablematchending" ) != 0 )
 #endif

@@ -131,7 +131,7 @@ void function RegisterAmbientDialogueConversations( asset dt )
 
 
 			{
-#if DEV
+#if DEVELOPER
 					if ( VERBOSE_PRINT_DEBUG )
 
 						printt( "Skipping register ambient dialogue conversation " + GetDataTableString( dataTable, idx_row, columnName ) + " required map( " + mapName + ") != current map(" +  GetActiveLevel() + ")")
@@ -146,7 +146,7 @@ void function RegisterAmbientDialogueConversations( asset dt )
 			int now = GetUnixTimestamp()
 			if ( activationTimestamp > 0 && activationTimestamp > now)
 			{
-#if DEV
+#if DEVELOPER
 					if ( VERBOSE_PRINT_DEBUG )
 						printt( "Skipping register ambient dialogue conversation " + GetDataTableString( dataTable, idx_row, columnName ) + " activation timestamp(" + activationTimestamp + ") < current time(" + now + ")specified is not active")
 #endif

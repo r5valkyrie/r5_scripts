@@ -5,7 +5,7 @@
 global function GunGame_Init
 global function GunGame_GetPlayerScore
 global function GunGame_IsPlayerAhead
-#if DEV
+#if DEVELOPER
 
 
 
@@ -1324,7 +1324,7 @@ int function GetScorePerGun()
 	return GetCurrentPlaylistVarInt( "gun_game_score_per_gun", 1 )
 }
 
-#if DEV
+#if DEVELOPER
 
 
 

@@ -398,7 +398,7 @@ void function RTKApexCupsOverview_ButtonState( bool showButton, bool buttonActiv
 		ItemFlavor cupItemFlav = cupData.containerItemFlavor
 		int lockState = RTKGameModeSelectApexCups_GetLockState( cupItemFlav )
 
-#if DEV
+#if DEVELOPER
 			printt( "RTKApexCupsOverview_ButtonState", lockState )
 #endif
 
@@ -447,7 +447,7 @@ SettingsAssetGUID function RTKApexCupsOverview_GetCupID( )
 
 void function RTKApexCupsOverview_OnCupsServerMessage( SettingsAssetGUID cupID, string squadID )
 {
-#if DEV
+#if DEVELOPER
 	printt( "RTKApexCupsOverview_OnCupsServerMessage", cupID, " ", squadID, " ", file.cupId )
 #endif
 	if( cupID != file.cupId )

@@ -50,7 +50,7 @@ void function InitConfirmDialog( var newMenuArg )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, ConfirmDialog_OnClose )
 	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, ConfirmDialog_OnNavigateBack )
 
-#if DEV
+#if DEVELOPER
 	AddMenuThinkFunc( newMenuArg, ConfirmDialogAutomationThink )
 #endif
 }
@@ -68,7 +68,7 @@ void function InitOKDialog( var newMenuArg )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, ConfirmDialog_OnClose )
 	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, ConfirmDialog_OnNavigateBack )
 
-#if DEV
+#if DEVELOPER
 	AddMenuThinkFunc( newMenuArg, ConfirmDialogAutomationThink )
 #endif
 }
@@ -84,7 +84,7 @@ void function InitTextEntryDialog( var menu )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, ConfirmDialog_OnClose )
 	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, ConfirmDialog_OnNavigateBack )
 
-#if DEV
+#if DEVELOPER
 	AddMenuThinkFunc( menu, ConfirmDialogAutomationThink )
 #endif
 }
@@ -211,7 +211,7 @@ void function Dialog_OnOpen()
 	}
 }
 
-#if DEV
+#if DEVELOPER
 void function ConfirmDialogAutomationThink( var menu )
 {
 	if (AutomateUi())

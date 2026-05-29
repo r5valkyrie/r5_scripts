@@ -1,7 +1,7 @@
 
 global function ScriptCompilerTest
 
-#if DEV
+#if DEVELOPER
 
 
 global typedef GlobalTypedefTest int
@@ -702,7 +702,7 @@ void function TestTypes()
 
 void function ScriptCompilerTest()
 {
-#if DEV
+#if DEVELOPER
 		ScriptCompilerTestDev()
 		if ( Dev_CommandLineHasParm( "-scriptdocs" ) )
 			DumpConstTable( expect table( getroottable().originalConstTable ) )
@@ -714,7 +714,7 @@ void function ScriptCompilerTest()
 
 
 
-#if DEV
+#if DEVELOPER
 
 
 struct ConstTableEntry

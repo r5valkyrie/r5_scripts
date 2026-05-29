@@ -34,7 +34,7 @@ global function GetWeaponThatCharmIsCurrentlyEquippedToForPlayer
 global function WeaponCosmetics_Apply
 global function WeaponCosmetics_ApplyModelAndSkin
 
-#if DEV
+#if DEVELOPER
 global function DEV_TestWeaponSkinData
 global function DEV_GetCharmForCurrentWeapon
 global function DEV_SetCharmForCurrentWeapon
@@ -143,7 +143,7 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 
 		LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "weapon_skin_for_" + ItemFlavor_GetGUIDString( weaponFlavor ), eLoadoutEntryClass.WEAPON )
 		entry.category     = eLoadoutCategory.WEAPON_SKINS
-#if DEV
+#if DEVELOPER
 			entry.pdefSectionKey = "weapon " + ItemFlavor_GetGUIDString( weaponFlavor )
 			entry.DEV_name       = DEV_ItemFlavor_GetCleanedAssetPath( weaponFlavor ) + " Skin"
 #endif
@@ -190,7 +190,7 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 
 		LoadoutEntry charmEntry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "weapon_charm_for_" + ItemFlavor_GetGUIDString( weaponFlavor ), eLoadoutEntryClass.WEAPON )
 		charmEntry.category     = eLoadoutCategory.WEAPON_CHARMS
-#if DEV
+#if DEVELOPER
 			charmEntry.pdefSectionKey = "weapon " + ItemFlavor_GetGUIDString( weaponFlavor )
 			charmEntry.DEV_name       = DEV_ItemFlavor_GetCleanedAssetPath( weaponFlavor ) + " Charm"
 #endif
@@ -408,7 +408,7 @@ int function WeaponSkin_GetSortOrdinal( ItemFlavor flavor )
 	return fileLevel.cosmeticFlavorSortOrdinalMap[flavor]
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_SetCharmForCurrentWeapon( asset charmModel, string attachmentName )
 {
 	entity player = GetLocalClientPlayer()
@@ -885,7 +885,7 @@ void function AddCallback_UpdatePlayerWeaponEffects( void functionref( entity pl
 	file.callback_UpdatePlayerWeaponEffects.append( callbackFunc )
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_TestWeaponSkinData()
 {
 	entity model = CreateClientSidePropDynamic( <0, 0, 0>, <0, 0, 0>, $"mdl/dev/empty_model.rmdl" )

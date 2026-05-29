@@ -38,7 +38,7 @@ global function Bleedout_CanSelfResFromUpgrade
 
 
 
-#if DEV
+#if DEVELOPER
 global function Bleedout_OverrideBleedoutTime
 #endif
 
@@ -484,7 +484,7 @@ bool function Bleedout_GetIsBleedoutDamageBlocked()
 	return GetCurrentPlaylistVarBool( "bleedout_downedplayers_invulnerable", false )
 }
 
-#if DEV
+#if DEVELOPER
 void function Bleedout_OverrideBleedoutTime( entity player, float time )
 {
 	int type = player.GetPlayerNetInt( "bleedoutType" )

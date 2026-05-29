@@ -7,7 +7,7 @@ global function GamemodeSelect_SetFeaturedSlot
 global function GameModeSelect_GetPlaylists
 global function GameModeSelect_OnPartyChanged
 
-#if DEV
+#if DEVELOPER
 global function ShippingPlaylistCheck
 #endif
 
@@ -176,7 +176,7 @@ void function ModeSelectorHighlight()
 	{
 		if ( button in file.selectButtonPlaylistNameMap )
 		{
-#if DEV
+#if DEVELOPER
 				printt("ModeSelectorHighlight", file.selectButtonPlaylistNameMap[button])
 #endif
 			bool shouldShowHighlight = HasGamemodeSelector() && file.selectButtonPlaylistNameMap[button] == selectedPlaylist
@@ -289,7 +289,7 @@ void function UpdateOpenModeSelectDialog()
 	file.selectButtonPlaylistNameMap.clear()
 	UpdateGameModes()
 	UpdateCrafting()
-#if DEV
+#if DEVELOPER
 		ShippingPlaylistCheck()
 #endif
 
@@ -533,7 +533,7 @@ void function OnCloseButton_Activate( var button )
 
 
 
-#if DEV
+#if DEVELOPER
 void function ShippingPlaylistCheck()
 {
 

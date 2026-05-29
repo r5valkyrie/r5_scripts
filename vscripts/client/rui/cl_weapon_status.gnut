@@ -37,7 +37,7 @@ global function GetTacticalRui
 global function GetUltimateRui
 global function InitWeaponStatusRuis
 global function Weapon_UpdateAltAmmoRui
-#if DEV
+#if DEVELOPER
 global function DEV_TestUltimateStates
 #endif
 global function UpdateOffhandRuiCommon
@@ -89,7 +89,7 @@ struct
 
 	array<vector> firingModeIndicatorColorOverrides
 
-#if DEV
+#if DEVELOPER
 		bool devTestingUltimateStates
 #endif
 } file
@@ -2423,7 +2423,7 @@ void function UltimateWeaponStatusUpdate( entity player, var rui, int slot )
 	
 	
 
-#if DEV
+#if DEVELOPER
 		if ( file.devTestingUltimateStates )
 			return
 #endif
@@ -2553,7 +2553,7 @@ void function UltimateReadyVideoFinished( int channel )
 	Signal( clGlobal.levelEnt, "ultimate_video_finished" )
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_TestUltimateStates()
 {
 	thread DEV_TestUltimateStatesThread()

@@ -57,7 +57,7 @@ global function TitanSword_GetFuelRui
 global function TitanSword_ClientPredictCheck
 
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -944,7 +944,7 @@ void function TitanSword_LaunchEntity( entity victim, vector velocity )
 
 }
 
-#if DEV
+#if DEVELOPER
 
 
 

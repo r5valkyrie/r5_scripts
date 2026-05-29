@@ -42,7 +42,7 @@ global function DeathScreenGetHeader
 
 global function InitDeathScreenPanelFooter
 
-#if DEV
+#if DEVELOPER
 global function ShowBanner
 #endif
 
@@ -180,7 +180,7 @@ void function InitDeathScreenPanelFooter( var panel, int panelID )
 			unreachable
 	}
 
-#if DEV
+#if DEVELOPER
 	AddMenuThinkFunc( Hud_GetParent( panel ), DeathScreenPanelFooterAutomationThink )
 #endif
 
@@ -331,7 +331,7 @@ void function DeathScreenMenuOnOpen()
 	RegisterButtonPressedCallback( BUTTON_TRIGGER_LEFT, ChangeLegend_OnActivate )
 	RegisterButtonPressedCallback( BUTTON_TRIGGER_RIGHT, ChangeLoadout_OnActivate )
 
-#if DEV
+#if DEVELOPER
 		RegisterButtonPressedCallback( KEY_PAD_ENTER, DevExit )
 #endif
 
@@ -383,7 +383,7 @@ void function DeathScreenMenuOnClose()
 	DeregisterButtonPressedCallback( BUTTON_TRIGGER_LEFT, ChangeLegend_OnActivate )
 	DeregisterButtonPressedCallback( BUTTON_TRIGGER_RIGHT, ChangeLoadout_OnActivate )
 
-#if DEV
+#if DEVELOPER
 		DeregisterButtonPressedCallback( KEY_PAD_ENTER, DevExit )
 #endif
 
@@ -1271,7 +1271,7 @@ void function UI_FullmapChallengeCategoryRight( var unused )
 	RunClientScript( "FullmapChallengeCategoryRight", null )
 }
 
-#if DEV
+#if DEVELOPER
 void function DevExit( var button )
 {
 	CloseActiveMenu()
@@ -1287,7 +1287,7 @@ void function ShowBanner()
 #endif
 
 
-#if DEV
+#if DEVELOPER
 void function DeathScreenPanelFooterAutomationThink( var menu )
 {
 	if ( AutomateUi() && !AutomateUiWaitForPostmatch() && DeathScreenShowLobbyButton() )

@@ -93,7 +93,7 @@ global function Melee_RemoveModsForLegendAbilities
 
 
 
-#if DEV
+#if DEVELOPER
 global function DEV_SetMenuHeirloomOverrideGUID
 global function DEV_GetMenuHeirloomOverrideGUID
 #endif
@@ -166,7 +166,7 @@ struct FileStruct_LifetimeLevel
 
 
 
-#if DEV
+#if DEVELOPER
 	int menuHeirloomOverrideGUID = -1
 #endif
 }
@@ -280,7 +280,7 @@ void function OnAllItemFlavorsRegistered_Melee_Weapon()
 
 		LoadoutEntry skinEntry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "character_meleeskin_for_" + ItemFlavor_GetGUIDString( character ), eLoadoutEntryClass.CHARACTER )
 		skinEntry.category     = eLoadoutCategory.CHARACTER_MELEESKINS
-#if DEV
+#if DEVELOPER
 			skinEntry.pdefSectionKey = "character " + ItemFlavor_GetGUIDString( character )
 			skinEntry.DEV_name       = ItemFlavor_GetCharacterRef( character ) + " Melee Skin"
 #endif
@@ -306,7 +306,7 @@ void function OnAllItemFlavorsRegistered_Melee_Weapon()
 
 			LoadoutEntry boxEntry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "character_deathbox_for_" + ItemFlavor_GetGUIDString( character ), eLoadoutEntryClass.CHARACTER )
 			boxEntry.category     = eLoadoutCategory.DEATHBOX
-#if DEV
+#if DEVELOPER
 				boxEntry.pdefSectionKey = "character " + ItemFlavor_GetGUIDString( character )
 				boxEntry.DEV_name       = ItemFlavor_GetCharacterRef( character ) + " Death Box"
 #endif
@@ -1643,7 +1643,7 @@ void function Melee_Attack( entity attacker, entity meleeAttackWeapon, int impac
 		}
 
 
-#if DEV
+#if DEVELOPER
 			const bool DEBUG_MELEE_KNOCKBACK = false
 			if ( DEBUG_MELEE_KNOCKBACK )
 			{
@@ -1780,7 +1780,7 @@ bool function ClientCodeCallback_ShowMeleePrompt( entity player )
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_SetMenuHeirloomOverrideGUID( int guid )
 {
 	fileLevel.menuHeirloomOverrideGUID = guid

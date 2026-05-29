@@ -26,7 +26,7 @@ global function ServerCallback_SetTacticalHudVis
 global function ServerCallback_SetUltimateHudVis
 global function ServerCallback_SetDpadMenuVis
 
-#if DEV
+#if DEVELOPER
 global function Dev_SetDefaultHUD
 #endif
 
@@ -790,7 +790,7 @@ void function ClientHudInit( entity player )
 {
 	Assert( player == GetLocalClientPlayer() )
 
-#if DEV
+#if DEVELOPER
 		HudElement( "Dev_Info1" ).Hide()
 		HudElement( "Dev_Info2" ).Hide()
 		HudElement( "Dev_Info3" ).Hide()
@@ -1041,7 +1041,7 @@ bool function ShouldMainHudBeVisible( entity player )
 			return false
 	}
 
-#if DEV
+#if DEVELOPER
 		if ( IsModelViewerActive() )
 			return false
 
@@ -1140,7 +1140,7 @@ bool function ShouldPermanentHudBeVisible( entity player )
 	if ( ShouldHideHudForDeadPlayer( player ) && !GameMode_IsActive( eGameModes.CONTROL ) )
 		return false
 
-#if DEV
+#if DEVELOPER
 		if ( IsModelViewerActive() )
 			return false
 
@@ -1245,7 +1245,7 @@ void function SetAllHudVisExceptMinimap( bool toggle )
 	Obituary_ClearObituary()
 }
 
-#if DEV
+#if DEVELOPER
 
 void function Dev_SetDefaultHUD( bool toggle )
 {

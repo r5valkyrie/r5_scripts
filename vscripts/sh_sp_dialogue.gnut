@@ -87,7 +87,7 @@ global function DevDialogueWithoutSoundAlias
 
 
 
-#if DEV
+#if DEVELOPER
 global function ShouldTryToReplaceMissingVoiceWithTempVoice
 #endif
 
@@ -218,7 +218,7 @@ struct
 
 	array<string> validVoices
 
-#if DEV
+#if DEVELOPER
 		
 		
 		
@@ -1829,7 +1829,7 @@ string function SpecifyAliasFromGeneric( DialogueData data, string alias, entity
 
 	if ( milesAlias.find( "%perspective%" ) >= 0 )
 	{
-#if DEV
+#if DEVELOPER
 			Assert( specifiedPerspective != "", "Dialogue with generic perspective specified in CSV alias without specifying intended perspective!" )
 #endif
 
@@ -1842,7 +1842,7 @@ string function SpecifyAliasFromGeneric( DialogueData data, string alias, entity
 	if ( milesAlias.find( "%voice%" ) >= 0 )
 		milesAlias = replace( milesAlias, "%voice%", voice )
 
-#if DEV
+#if DEVELOPER
 		if ( ShouldTryToReplaceMissingVoiceWithTempVoice() )
 		{
 			if ( !DoesAliasExist( milesAlias ) )
@@ -1965,7 +1965,7 @@ void function SetUseDialogueVDU( bool useVDU )
 }
 
 
-#if DEV
+#if DEVELOPER
 bool function ShouldTryToReplaceMissingVoiceWithTempVoice()
 {
 	return (GetCurrentPlaylistVarInt( "vo_fallback_to_temp", 0 ) == 1)

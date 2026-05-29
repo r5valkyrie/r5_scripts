@@ -23,7 +23,7 @@ global function Cups_CalculatePositionPercentageDisplay
 global function Cups_GetProperTabTitleName
 
 
-#if DEV
+#if DEVELOPER
 global function Cups_GrantAllCupRewards
 global function Cups_UnregisterFromCup
 global function Cups_UnregisterFromAllCups
@@ -93,7 +93,7 @@ array< CupEntry > ornull function Cups_GetAllUserCupData()
 int function Cups_GetUserCupMMRBucketForContainer( SettingsAssetGUID containerID )
 {
 
-#if DEV
+#if DEVELOPER
 			if ( File.dev_MMRBucket != CUPS_MMR_BUCKET_INVALID )
 				return File.dev_MMRBucket
 #endif
@@ -463,7 +463,7 @@ string function Cups_GetProperTabTitleName()
 }
 
 
-#if DEV
+#if DEVELOPER
 bool function Cups_GrantAllCupRewards( SettingsAssetGUID cupID )
 {
 	if( !GetConVarBool( "cups_enabled" ) ) return false

@@ -12,7 +12,7 @@ global function ShLoadouts_OnPlayerEHICreated
 
 
 
-#if DEV
+#if DEVELOPER
 global function DEV_DumpLoadoutEntries
 #endif
 
@@ -81,7 +81,7 @@ global function IsLoadoutSlotActive
 
 
 
-#if DEV
+#if DEVELOPER
 global function DEV_RequestSetItemFlavorLoadoutSlot
 #endif
 
@@ -253,7 +253,7 @@ global struct LoadoutEntry
 	int    category = eLoadoutCategory.OTHER
 	int    stryderCharDataArrayIndex = ePlayerStryderCharDataArraySlots.INVALID 
 
-#if DEV
+#if DEVELOPER
 		string pdefSectionKey = LOADOUT_TREE_TOP_TIER 
 		string DEV_name       = "?" 
 
@@ -735,7 +735,7 @@ void function ShLoadouts_LevelInit_Finish()
 
 	}
 
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			printt( "LoadoutsDbg: dev_loadouts_ignore_persistence is enabled" )
 #endif
@@ -1296,7 +1296,7 @@ void function RequestClearFavoredQuip( ItemFlavor quipToClear )
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_RequestSetItemFlavorLoadoutSlot( EHI playerEHI, LoadoutEntry entry, ItemFlavor itemFlavor )
 {
 	string commandString = "loadouts_devset " + entry.id + " " + DEV_ItemFlavor_GetCleanedAssetPath( itemFlavor )
@@ -2040,7 +2040,7 @@ int function GetLoadoutSlotContentsIndexFromPersistence( EHI playerEHI, LoadoutE
 		DEV_LoadoutsDebug( entry )
 #endif
 
-#if DEV
+#if DEVELOPER
 	if ( DEV_ShouldIgnorePersistence() )
 	{
 		if ( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
@@ -3499,7 +3499,7 @@ bool function IsLoadoutSlotLocked( EHI playerEHI, LoadoutEntry entry )
 	if ( entry.isSlotLocked == null )
 		return false
 
-#if DEV
+#if DEVELOPER
 		if ( GetCurrentPlaylistVarBool( "dev_loadout_changeable_at_any_time", false ) )
 			return false
 #endif
@@ -3634,7 +3634,7 @@ bool function IsLoadoutSlotLocked( EHI playerEHI, LoadoutEntry entry )
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_LoadoutsDebug( LoadoutEntry entry )
 {
 		string func1 = expect string( expect table( getstackinfos( 3 ) ).func ) 
@@ -3771,7 +3771,7 @@ void function DEV_LoadoutsDebug( LoadoutEntry entry )
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_DumpLoadoutEntries()
 {
 	string fmtStr = "%s,%s,%s,%s,%s"

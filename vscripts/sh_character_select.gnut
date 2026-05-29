@@ -166,7 +166,7 @@ global function IsCharacterReselectEnabled
 
 
 
-#if DEV
+#if DEVELOPER
 global function Dev_CharacterSelectClearCamera
 global function Dev_CharacterSelectRefreshLighting
 #endif
@@ -5165,7 +5165,7 @@ bool function IsCharacterReselectEnabled()
 	return GetCurrentPlaylistVarBool( "character_reselect_enabled", false )
 }
 
-#if DEV
+#if DEVELOPER
 void function Dev_CharacterSelectClearCamera()
 {
 	vector nodeOrigin = fileLevel.characterNode.GetOrigin() + fileLevel.characterNode.GetForwardVector() * 128 + <0,0,64>

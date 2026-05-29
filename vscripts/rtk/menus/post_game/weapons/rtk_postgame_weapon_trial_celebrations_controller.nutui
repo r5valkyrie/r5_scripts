@@ -1,6 +1,6 @@
 global function RTKPostGameWeaponTrialCelebrations_OnInitialize
 global function RTKPostGameWeaponTrialCelebrations_OnDestroy
-#if DEV
+#if DEVELOPER
 global function DEV_TestWeaponTrialCelebrationSounds
 #endif
 
@@ -408,7 +408,7 @@ void function RTKPostGameWeaponTrialCelebrations_OnDestroy( rtk_behavior self )
 	RTKFooters_Update()
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_TestWeaponTrialCelebrationSounds( int weaponLevel )
 {
 	thread DEV_TestWeaponTrialCelebrationSoundsThread( weaponLevel )

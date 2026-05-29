@@ -312,7 +312,7 @@ bool function HasLocalPlayerCompletedNewPlayerOrientation()
 	if ( !GetVisiblePlaylistNames().contains( PLAYLIST_NEW_PLAYER_ORIENTATION ) )
 		return true
 
-#if DEV
+#if DEVELOPER
 		if ( GetConVarBool( "skip_training" ) )
 			return true 
 #endif

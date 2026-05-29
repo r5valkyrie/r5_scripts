@@ -16,7 +16,7 @@ global function IsValidItemFlavorSettingsAsset
 global function GetItemFlavorByAsset
 global function IsValidItemFlavorType
 global function DescribeItemFlavorType
-#if DEV
+#if DEVELOPER
 global function GetAllItemFlavors
 global function DEV_IsValidItemFlavorHumanReadableRef_Slow
 global function DEV_GetItemFlavorByHumanReadableRef_Slow
@@ -27,7 +27,7 @@ global function GetAllItemFlavorsOfType
 global function GetItemFlavorAssociatedCharacterOrWeapon
 global function ItemFlavor_GetGUID
 global function ItemFlavor_GetGUIDString
-#if DEV
+#if DEVELOPER
 global function DEV_ItemFlavor_GetCleanedAssetPath
 #endif
 global function ItemFlavor_GetHumanReadableRefForPIN_Slow
@@ -121,7 +121,7 @@ global function IsCalEvent
 
 global function DEV_DescItemFlavor
 
-#if DEV
+#if DEVELOPER
 global function DEV_GetAllItemFlavors
 #endif
 
@@ -468,7 +468,7 @@ struct ItemTypeInfo
 struct FileStruct_LifetimeLevel
 {
 	array<ItemTypeInfo>                   itemTypeInfoList
-#if DEV
+#if DEVELOPER
 	array<ItemFlavor>                     itemFlavorListAll 
 #endif
 	array<ItemFlavor>					  itemFlavorListCosmetic
@@ -486,7 +486,7 @@ struct FileStruct_LifetimeLevel
 	bool hasChallengeMetaData = true
 	bool hasTimestampMetaData = true
 
-#if DEV
+#if DEVELOPER
 		bool DEV_hasItemRegistrationStarted = false
 #endif
 
@@ -522,7 +522,7 @@ void function ShItems_LevelInit_Begin()
 	Assert( ITEM_FLAV_PREFIX.len() == ITEM_FLAV_PREFIX_LEN )
 	Assert( ITEM_FLAV_SUFFIX.len() == ITEM_FLAV_SUFFIX_LEN )
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -579,7 +579,7 @@ void function ShItems_CacheEntitlementForPSPlusAndXBGold()
 
 					if ( firstPartyRewardType == eFirstPartyRewardType.PS_PLUS )
 					{
-#if DEV
+#if DEVELOPER
 							Assert( ItemFlavor_HasExclusiveFunc( rewardFlav ), "PSPLUS reward " + string( ItemFlavor_GetAsset( rewardFlav )) + " must select the exclusive checkbox" )
 							string exclusiveFuncString = GetGlobalSettingsString( ItemFlavor_GetAsset( rewardFlav ), "exclusiveFunc" )
 							Assert( exclusiveFuncString == "psplus_or_xbgold", "PSPLUS reward " + string( ItemFlavor_GetAsset( rewardFlav )) + " must set the exclusiveFunc to psplus_or_xbgold " )
@@ -589,7 +589,7 @@ void function ShItems_CacheEntitlementForPSPlusAndXBGold()
 					}
 					else if ( firstPartyRewardType == eFirstPartyRewardType.XBOX_GOLD )
 					{
-#if DEV
+#if DEVELOPER
 							Assert( ItemFlavor_HasExclusiveFunc( rewardFlav ), "XBOX_GOLD reward " + string( ItemFlavor_GetAsset( rewardFlav )) + " must select the exclusive checkbox" )
 							string exclusiveFuncString = GetGlobalSettingsString( ItemFlavor_GetAsset( rewardFlav ), "exclusiveFunc" )
 							Assert( exclusiveFuncString == "psplus_or_xbgold", "XBOX_GOLD reward " + string( ItemFlavor_GetAsset( rewardFlav )) + " must set the exclusiveFunc to psplus_or_xbgold " )
@@ -646,7 +646,7 @@ string function GetCleanAssetPathForItemFlavor( ItemFlavor flavor )
 	return assetPath
 }
 
-#if DEV
+#if DEVELOPER
 array<ItemFlavor> function DEV_GetAllItemFlavors()
 {
 	Assert( IsItemFlavorRegistrationFinished(), "Can't ask for all itemflavors before they are all registered" )
@@ -715,7 +715,7 @@ array<asset> function GetBaseItemFlavorsFromArray( string arrayFieldName )
 
 void function AddCallback_RegisterRootItemFlavors( RegisterItemFlavorsCallbackType cb )
 {
-#if DEV
+#if DEVELOPER
 	Assert( !fileLevel.DEV_hasItemRegistrationStarted )
 #endif
 	Assert( !fileLevel.registerRootItemFlavorsCallbacks.contains( cb ), "Callback already registered" )
@@ -725,7 +725,7 @@ void function AddCallback_RegisterRootItemFlavors( RegisterItemFlavorsCallbackTy
 
 void function AddCallback_OnItemFlavorRegistered( int itemType, OnItemFlavorRegisteredCallbackType cb )
 {
-#if DEV
+#if DEVELOPER
 	Assert( !fileLevel.DEV_hasItemRegistrationStarted )
 #endif
 
@@ -763,7 +763,7 @@ bool function IsValidItemFlavorGUID( SettingsAssetGUID guid, int validationBehav
 {
 	bool good = (guid in fileLevel.guidItemFlavorMap)
 
-#if DEV
+#if DEVELOPER
 		if ( DELETED_GUIDS_LIST.contains( guid ) )
 		{
 			return false
@@ -861,7 +861,7 @@ array< ItemFlavor > function GetAllLegendaryItems()
 }
 
 
-#if DEV
+#if DEVELOPER
 array<ItemFlavor> function GetAllItemFlavors()
 {
 	Assert( fileLevel.isItemRegistrationFinished )
@@ -995,7 +995,7 @@ string function ItemFlavor_GetLongName( ItemFlavor flavor )
 	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
 	string localizationKey = GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "localizationKey_NAME" )
-#if DEV
+#if DEVELOPER
 		if ( localizationKey != "" && localizationKey.slice( 0, 1 ) != "#" )
 			localizationKey = format( "%s !UNLOCALIZED!", localizationKey )
 #endif
@@ -1010,7 +1010,7 @@ string function ItemFlavor_GetShortName( ItemFlavor flavor )
 	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
 	string localizationKey = GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "localizationKey_NAME_SHORT" )
-#if DEV
+#if DEVELOPER
 		if ( localizationKey != "" && localizationKey.slice( 0, 1 ) != "#" )
 			localizationKey = format( "%s !UNLOCALIZED!", localizationKey )
 #endif
@@ -1026,7 +1026,7 @@ string function ItemFlavor_GetLongDescription( ItemFlavor flavor )
 
 	string localizationKey = GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "localizationKey_DESCRIPTION_LONG" )
 
-#if DEV
+#if DEVELOPER
 		if ( localizationKey != "" && localizationKey.slice( 0, 1 ) != "#" )
 			localizationKey = format( "%s !UNLOCALIZED!", localizationKey )
 #endif
@@ -1042,7 +1042,7 @@ string function ItemFlavor_GetShortDescription( ItemFlavor flavor )
 
 	string localizationKey = GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "localizationKey_DESCRIPTION_SHORT" )
 
-#if DEV
+#if DEVELOPER
 		if ( localizationKey != "" && localizationKey.slice( 0, 1 ) != "#" )
 			localizationKey = format( "%s !UNLOCALIZED!", localizationKey )
 #endif
@@ -1561,7 +1561,7 @@ array<ItemFlavor> function RegisterReferencedItemFlavorsFromArray( ItemFlavor pa
 			ItemFlavor childFlavor =  expect ItemFlavor(childFlavorOrNull)
 			loaded.append( childFlavor )
 
-#if DEV
+#if DEVELOPER
 				if ( ItemFlavor_GetType( parentFlavor ) == eItemType.character )
 				{
 					if ( parentFlavor == GetItemFlavorByAsset( CHARACTER_RANDOM ) )
@@ -1686,7 +1686,7 @@ void function MakeItemFlavorSet( array<ItemFlavor> list, table<ItemFlavor, int> 
 ItemFlavor ornull function RegisterItemFlavorFromSettingsAsset( asset settingsAsset )
 {
 	Assert( settingsAsset != $"" )
-#if DEV
+#if DEVELOPER
 		fileLevel.DEV_hasItemRegistrationStarted = true
 #endif
 
@@ -1724,7 +1724,7 @@ ItemFlavor ornull function RegisterItemFlavorFromSettingsAsset( asset settingsAs
 	int availability = flavor.typeIndex == eItemType.character ? GetPlaylistAvailabilityByRef( [ humanReadableRef, guidString ] ) : GetPlaylistAvailabilityByRef( [ guidString ] )
 	if ( availability == eItemFlavorPlaylistAvailability.DISABLED )
 	{
-#if DEV
+#if DEVELOPER
 			printt( "Item flavor disabled by dev-only playlist vars: " + humanReadableRef + " | " + guidString )
 #else
 			Warning( "Item flavor disabled by dev-only playlist vars: " + humanReadableRef + " | " + guidString )
@@ -1792,7 +1792,7 @@ ItemFlavor ornull function RegisterItemFlavorFromSettingsAsset( asset settingsAs
 		format( "Duplicate item GUID: %d (%s and %s)", flavor.guid, string(ItemFlavor_GetAsset( fileLevel.guidItemFlavorMap[flavor.guid] )), string(settingsAsset) ) )
 	fileLevel.guidItemFlavorMap[flavor.guid] <- flavor
 
-#if DEV
+#if DEVELOPER
 		fileLevel.itemFlavorListAll.append( flavor )
 #endif
 

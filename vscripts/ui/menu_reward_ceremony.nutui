@@ -4,7 +4,7 @@ global function InitRewardCeremonyMenu
 global function ShowRewardCeremonyDialog
 global function ShowGiftCeremonyDialog
 
-#if DEV
+#if DEVELOPER
 global function DEV_TestRewardCeremonyDialog
 #endif
 
@@ -62,7 +62,7 @@ void function InitRewardCeremonyMenu( var newMenuArg )
 
 	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
 
-#if DEV
+#if DEVELOPER
 	AddMenuThinkFunc( newMenuArg, PassAwardsDialogAutomationThink )
 #endif
 
@@ -110,7 +110,7 @@ void function ShowRewardCeremonyDialog( string headerText, string titleText, str
 	MilestoneEvent_DecrementMilestoneRewardCeremonyCount()
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_TestRewardCeremonyDialog( array<string> grxRefs, string headerText = "HEADER", string titleText = "TITLE", string descText = "DESC" )
 {
 	array<BattlePassReward> rewards
@@ -345,7 +345,7 @@ void function TrackDpadInput()
 	}
 }
 
-#if DEV
+#if DEVELOPER
 void function PassAwardsDialogAutomationThink( var menu )
 {
 	if (AutomateUi())

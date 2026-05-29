@@ -267,7 +267,7 @@ void function WeaponCharmsPanel_Update( var panel )
 
 void function PreviewWeaponCharm( ItemFlavor charmFlavor )
 {
-#if DEV
+#if DEVELOPER
 		if ( InputIsButtonDown( KEY_LSHIFT ) )
 		{
 			string locedName = Localize( ItemFlavor_GetLongName( charmFlavor ) )

@@ -3,7 +3,7 @@ global function LoreReaderMenu_OpenTo
 global function LoreReaderMenu_OpenToWithNavigateBack
 global function LoadLorePagesFromDataTable
 global function LoreReader_GetLastOpenedDataAsset
-#if DEV
+#if DEVELOPER
 global function LoreReaderMenu_TestOpen
 #endif
 
@@ -158,7 +158,7 @@ asset function CastStringToAsset( string val )
 	return GetKeyValueAsAsset( { kn = val }, "kn" )
 }
 
-#if DEV
+#if DEVELOPER
 void function LoreReaderMenu_TestOpen( string seqPathName )
 {
 	string assetPath = format( "datatable/lore_sequence/%s.rpak", seqPathName )

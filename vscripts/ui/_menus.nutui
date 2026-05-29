@@ -180,7 +180,7 @@ global function IncrementNumDialogFlowDialogsDisplayed
 
 
 
-#if DEV
+#if DEVELOPER
 global function OpenDevMenu
 global function DEV_SetLoadScreenFinished
 global function AutomateUi
@@ -232,7 +232,7 @@ struct
 	var activeMenu = null
 	var activeOverlay = null
 
-#if DEV
+#if DEVELOPER
 	float uiAutomationLastTime = 0
 	float uiAutomationExpiredTime = 0
 	var uiAutomationCurrentMenu = null
@@ -832,7 +832,7 @@ void function UIFullyConnectedInitialization_ForLevel( string levelname )
 
 void function UIFullyConnectedInitialization()
 {
-#if DEV
+#if DEVELOPER
 		ShDevUtility_Init()
 #endif
 
@@ -980,7 +980,7 @@ void function UIFullyConnectedInitialization()
 
 	SURVIVAL_Loot_All_InitShared()
 
-#if DEV
+#if DEVELOPER
 		UpdatePrecachedSPWeapons()
 #endif
 
@@ -1954,14 +1954,14 @@ void function ShowGameSummaryIfNeeded()
 
 	if ( GetPersistentVar( "showGameSummary" ) && IsPostGameMenuValid( true ) && IsPlayPanelCurrentlyTopLevel() )
 	{
-#if DEV
+#if DEVELOPER
 			printt( "Postgame menu debug: Calling OpenPostGameMenu()" )
 #endif
 		OpenPostGameMenu( null )
 
 		if ( GetActiveBattlePass() != null )
 		{
-#if DEV
+#if DEVELOPER
 				printt( "Postgame menu debug: Calling OpenPostGameBattlePassMenu( true )" )
 #endif
 			OpenPostGameBattlePassMenu( true )
@@ -1970,7 +1970,7 @@ void function ShowGameSummaryIfNeeded()
 
 		if ( weaponTrialsBecameUnlockedOrCompleted )
 		{
-#if DEV
+#if DEVELOPER
 				printt( "Postgame menu debug: Calling OpenPostGameWeaponTrialCelebrationsMenu()" )
 #endif
 			OpenPostGameWeaponTrialCelebrationsMenu()
@@ -1981,7 +1981,7 @@ void function ShowGameSummaryIfNeeded()
 		bool showCupSummary = Cups_ShowCupSummary()
 		if ( showRankedSummary && !showCupSummary )
 		{
-#if DEV
+#if DEVELOPER
 				printt( "Postgame menu debug: Calling OpenRankedSummary( true )" )
 #endif
 			OpenRankedSummary( true )
@@ -1989,7 +1989,7 @@ void function ShowGameSummaryIfNeeded()
 
 		if ( showCupSummary && Cups_IsCupForLatestMatchActive( GetLocalClientPlayer() ) )
 		{
-#if DEV
+#if DEVELOPER
 				printt( "Postgame menu debug: Calling OpenCupsSummary()" )
 #endif
 			OpenCupsSummary()
@@ -2014,7 +2014,7 @@ bool function IsLoadScreenFinished()
 	return file.loadScreenFinished
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_AdvanceToBattlePassMilestoneMenu()
 {
 
@@ -2026,7 +2026,7 @@ void function DEV_AdvanceToBattlePassMilestoneMenu()
 }
 #endif
 
-#if DEV
+#if DEVELOPER
 void function DEV_SetLoadScreenFinished()
 {
 	file.loadScreenFinished = true
@@ -3042,7 +3042,7 @@ void function InitMenus()
 
 
 
-#if DEV
+#if DEVELOPER
 		
 		AddMenu( "DevMenu", $"resource/ui/menus/dev.menu", InitDevMenu, "Dev" )
 #endif
@@ -3630,7 +3630,7 @@ void function UpdateActiveMenuThink()
 			foreach ( func in uiGlobal.menuData[ menu ].thinkFuncs )
 				func( menu )
 
-#if DEV
+#if DEVELOPER
 			AddNetPanelDiagnostics()
 #endif
 		}
@@ -3640,13 +3640,13 @@ void function UpdateActiveMenuThink()
 }
 
 
-#if DEV
+#if DEVELOPER
 void function AddNetPanelDiagnostics()
 {
-	AddNetPanelText( "uiAutomationCount = " + file.uiAutomationCount )
-	AddNetPanelText( "uiAutomationExpiredTime = " + file.uiAutomationExpiredTime )
+	//AddNetPanelText( "uiAutomationCount = " + file.uiAutomationCount )
+	//AddNetPanelText( "uiAutomationExpiredTime = " + file.uiAutomationExpiredTime )
 
-	AddNetPanelText( "menuStack:" );
+	//AddNetPanelText( "menuStack:" );
 	array<var> menuStack = MenuStack_GetCopy()
 	foreach ( index, menu in menuStack )
 	{
@@ -3667,10 +3667,10 @@ void function AddNetPanelDiagnostics()
 		{
 			text += "(active) "
 		}
-		AddNetPanelText( text );
+		//AddNetPanelText( text );
 	}
 
-	AddNetPanelText( "uiGlobal.activePanels:");
+	//AddNetPanelText( "uiGlobal.activePanels:");
 	foreach ( var panel in uiGlobal.activePanels )
 	{
 		var parentMenu = GetParentMenu( panel )
@@ -3684,7 +3684,7 @@ void function AddNetPanelDiagnostics()
 		{
 			text += "(isCurrentlyShown) "
 		}
-		AddNetPanelText( text )
+		//AddNetPanelText( text )
 	}
 }
 #endif
@@ -3832,7 +3832,7 @@ void function InviteFriends()
 
 
 
-#if DEV
+#if DEVELOPER
 void function OpenDevMenu( var button )
 {
 	AdvanceMenu( GetMenu( "DevMenu" ) )
@@ -4356,7 +4356,7 @@ void function TEMP_CircularReferenceCleanup()
 	collectgarbage()
 }
 
-#if DEV
+#if DEVELOPER
 bool function AutomateUi(float delayFactor = 1)
 {
 	if ( !GetConVarBool( "ui_automation_enabled" ) )

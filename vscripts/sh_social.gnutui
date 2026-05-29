@@ -19,7 +19,7 @@ global function ClientToUI_ShowBlockPlayerDialog
 global function ShowBlockPlayerDialog
 
 
-#if DEV
+#if DEVELOPER
 global function Dev_ToggleInvalidFriendData
 global function Dev_SetFillerFriends
 #endif
@@ -84,7 +84,7 @@ FriendsData function GetFriendsData( bool groupByStatus = false )
 	FriendsData returnData
 	returnData.isValid = friendInfo.isValid
 
-#if DEV
+#if DEVELOPER
 		if ( file.invalidFriendData )
 			returnData.isValid = false
 
@@ -288,7 +288,7 @@ bool function HasCommunityUserPlayedApex( CommunityUserInfo cui )
 
 
 
-#if DEV
+#if DEVELOPER
 array<string> friendNames = [ "Anderson", "Alavi", "Vinson", "Armstrong", "Perera", "Moy", "Messerly", "Davis", "McCord", "Keating",
 	"Grenier", "Abrahamson", "Sanchez", "Medina", "McCoy", "Horn", "Cavallari", "McCandlish", "Alderman", "DeRose" ]
 
@@ -309,7 +309,7 @@ CommunityFriendsData function Dev_GetFakeFriendData()
 #endif
 
 
-#if DEV
+#if DEVELOPER
 void function Dev_ToggleInvalidFriendData()
 {
 	file.invalidFriendData = !file.invalidFriendData
@@ -317,7 +317,7 @@ void function Dev_ToggleInvalidFriendData()
 #endif
 
 
-#if DEV
+#if DEVELOPER
 void function Dev_SetFillerFriends( int count )
 {
 	file.fillerFriends = count

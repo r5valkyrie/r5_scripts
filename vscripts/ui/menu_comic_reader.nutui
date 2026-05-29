@@ -10,7 +10,7 @@ global function InitComicReaderMenu
 global function ComicReaderMenu_OpenTo
 
 
-#if DEV
+#if DEVELOPER
 global function ComicReaderMenu_TestOpen
 global function ComicReaderMenu_ReloadCurrent
 #endif
@@ -147,7 +147,7 @@ struct
 		
 		float pin_viewStartTime
 
-#if DEV
+#if DEVELOPER
 			bool                  panelEditMode = false
 			bool                  panelEditModeRegistered = false
 			int                   panelEdit_currentLineIndex = 0
@@ -194,7 +194,7 @@ void function InitComicReaderMenu( var newMenuArg )
 	AddMenuFooterOption( menu, LEFT, BUTTON_A, true, "#A_BUTTON_NEXT", "#A_BUTTON_NEXT" )
 	AddMenuFooterOption( menu, LEFT, BUTTON_X, true, "#X_BUTTON_PREVIOUS", "#X_BUTTON_PREVIOUS", null, HasPreviousPanel )
 
-#if DEV
+#if DEVELOPER
 		AddMenuFooterOption( menu, LEFT, BUTTON_STICK_RIGHT, true, "EDIT MODE", "EDIT MODE", TggleEditMode )
 #endif
 }
@@ -227,7 +227,7 @@ void function RegisterButtons()
 {
 	if ( !file.s_registeredButtons )
 	{
-#if DEV
+#if DEVELOPER
 			if ( file.panelEditMode && !file.panelEditModeRegistered )
 			{
 				file.panelEditModeRegistered = true
@@ -244,7 +244,7 @@ void function RegisterButtons()
 
 		foreach ( button in CONTINUE_BUTTONS )
 		{
-#if DEV
+#if DEVELOPER
 				if ( file.panelEditMode )
 				{
 					if ( EDIT_BUTTONS.contains( button ) )
@@ -256,7 +256,7 @@ void function RegisterButtons()
 		}
 		foreach ( button in PREV_BUTTONS )
 		{
-#if DEV
+#if DEVELOPER
 				if ( file.panelEditMode )
 				{
 					if ( EDIT_BUTTONS.contains( button ) )
@@ -350,7 +350,7 @@ void function UpdateReaderRuiZOrders()
 
 
 
-#if DEV
+#if DEVELOPER
 asset function CastStringToAsset( string val )
 {
 	return GetKeyValueAsAsset( { kn = val }, "kn" )
@@ -401,7 +401,7 @@ void function DeregisterButtons()
 	{
 		foreach ( button in CONTINUE_BUTTONS )
 		{
-#if DEV
+#if DEVELOPER
 				if ( file.panelEditMode )
 				{
 					if ( EDIT_BUTTONS.contains( button ) )
@@ -413,7 +413,7 @@ void function DeregisterButtons()
 		}
 		foreach ( button in PREV_BUTTONS )
 		{
-#if DEV
+#if DEVELOPER
 				if ( file.panelEditMode )
 				{
 					if ( EDIT_BUTTONS.contains( button ) )
@@ -470,7 +470,7 @@ void function OnPressedNext( var button )
 	thread OnClickedToAdvance( true )
 }
 
-#if DEV
+#if DEVELOPER
 void function OnEditButtonPressed( var button, int key )
 {
 	bool widthMode  = InputIsButtonDown( KEY_LALT )
@@ -949,7 +949,7 @@ void function InitPagesForMenuOpen()
 	file.s_transitionStartTime = 0
 	file.s_transitionQueue = QUEUE_CLEAR
 
-#if DEV
+#if DEVELOPER
 		if ( file.panelEditMode )
 		{
 			PanelEdit_SetLine( 0 )
@@ -1116,7 +1116,7 @@ void function UpdateBackgroundRui( int panelIndex )
 	{
 		expect ItemFlavor( quest )
 		RuiSetString( file.backgroundRui, "titleText", Localize( ItemFlavor_GetShortName( quest ) ) )
-#if DEV
+#if DEVELOPER
 			if ( file.panelEditMode )
 				RuiSetString( file.backgroundRui, "titleText", "EDIT MODE!!!" )
 #endif
@@ -1200,7 +1200,7 @@ void function UpdatePanelRuiLines( int panelIndex, var rui )
 {
 	ComicPanel panel = file.s_panels[panelIndex]
 
-#if DEV
+#if DEVELOPER
 		if ( file.panelEditMode )
 			printt( "--------------------------------" )
 #endif
@@ -1218,7 +1218,7 @@ void function UpdatePanelRuiLines( int panelIndex, var rui )
 			asset nestedAsset = $"ui/basic_speech_bubble.rpak"
 			if ( dialogue.bubbleType == eBubbleType.SFX )
 				nestedAsset = $"ui/sfx_text.rpak"
-#if DEV
+#if DEVELOPER
 				if ( file.panelEditMode )
 				{
 					BubbleDialogue dialogueEdit = file.panelEdit_data[ lineIndex ]
@@ -1242,11 +1242,11 @@ void function UpdatePanelRuiLines( int panelIndex, var rui )
 			RuiSetColorAlpha( nestedRui, "fillColor", <1, 1, 1>, 1 )
 			RuiSetColorAlpha( nestedRui, "textColor", <0, 0, 0>, 1 )
 			RuiSetFloat2( nestedRui, "panelImageSize", <panel.imageWidth, panel.imageHeight, 0> )
-#if DEV
+#if DEVELOPER
 				RuiSetBool( nestedRui, "isEditMode", file.panelEditMode )
 #endif
 
-#if DEV
+#if DEVELOPER
 				if ( file.panelEditMode )
 				{
 					BubbleDialogue dialogueEdit = file.panelEdit_data[ lineIndex ]
@@ -1264,7 +1264,7 @@ void function UpdatePanelRuiLines( int panelIndex, var rui )
 		}
 	}
 
-#if DEV
+#if DEVELOPER
 		if ( file.panelEditMode )
 		{
 			printt( "--------------------------------" )
@@ -1463,7 +1463,7 @@ void function OnClickedToAdvance( bool isForward )
 
 		
 
-#if DEV
+#if DEVELOPER
 			if ( file.panelEditMode )
 			{
 				PanelEdit_SetLine( 0 )
@@ -1549,7 +1549,7 @@ void function OnClickedToAdvance( bool isForward )
 			}
 		}
 
-#if DEV
+#if DEVELOPER
 			int prevMinPanelToLoad = wantPanelIndex - 1
 			int maxSupportedPanels = file.readerRuis.len()
 			int numPanels = prevMinPanelToLoad - minPanelIndexToLoad
@@ -1606,7 +1606,7 @@ void function AddComicPinEvent( int pageIndex, int panelIndex, int previousPageI
 }
 
 
-#if DEV
+#if DEVELOPER
 void function PanelEdit_SetLine( int line )
 {
 	file.panelEdit_currentLineIndex = line

@@ -16,7 +16,7 @@ global function ClientCodeCallback_ToggleOutsourceCubemapSpheres
 global function ClientCodeCallback_ToggleCharacterSelectMenu
 global function ClientCodeCallback_ToggleOutsourceGladCard
 
-#if DEV
+#if DEVELOPER
 global function OutsourceViewer_IsActive
 
 const string OUTSOURCE_VIEWER_NODES_SCRIPT_NAME = "Outsource_Viewer_Node"
@@ -471,7 +471,7 @@ void function RefreshAssetItemFlavorsForType( int type )
 		availableAssetNames.append( assetName )
 	}
 
-	UpdateOVAssetUI( ARTVIEWER_PROPERTIES_ASSET, availableAssetNames, file.currentAsset )
+	//UpdateOVAssetUI( ARTVIEWER_PROPERTIES_ASSET, availableAssetNames, file.currentAsset )
 
 	if ( file.currentAssetType == eAssetType.ASSETTYPE_WEAPON )
 		UpdateCurrentWeaponClassname();
@@ -525,7 +525,7 @@ void function RefreshSkinItemFlavorsForCurrentAsset()
 		currentAssetSkinNamesAndTiers.append( skinDetails )
 	}
 
-	UpdateOVAssetUI( ARTVIEWER_PROPERTIES_SKIN, currentAssetSkinNamesAndTiers, file.currentAssetSkin )
+	//UpdateOVAssetUI( ARTVIEWER_PROPERTIES_SKIN, currentAssetSkinNamesAndTiers, file.currentAssetSkin )
 }
 
 void function RefreshCharmItemFlavors()
@@ -552,7 +552,7 @@ void function RefreshCharmItemFlavors()
 		availableCharmNames.append( charmName )
 	}
 
-	UpdateOVAssetUI( ARTVIEWER_PROPERTIES_CHARM, availableCharmNames, file.currentCharm )
+	//UpdateOVAssetUI( ARTVIEWER_PROPERTIES_CHARM, availableCharmNames, file.currentCharm )
 }
 
 void function RefreshAssetItemFlavors()
@@ -1152,7 +1152,7 @@ void function UpdateBaseSkinModel()
 
 void function UpdateCurrentWeaponClassname()
 {
-	OVSetCurrentWeaponClassname( GetGlobalSettingsString( ItemFlavor_GetAsset( file.availableAssets[ file.currentAsset ] ), "entityClassname" ) )
+	//OVSetCurrentWeaponClassname( GetGlobalSettingsString( ItemFlavor_GetAsset( file.availableAssets[ file.currentAsset ] ), "entityClassname" ) )
 }
 
 void function UpdateModelViewerSkin()
@@ -1199,7 +1199,7 @@ void function UpdateModelViewerSkin()
 	file.showBaseSkinSideBySide = oldSideBySide
 	UpdateBaseSkinModel()
 
-	OVPostModelUpdate()
+	//OVPostModelUpdate()
 
 	SetupCamZoom( file.shouldResetCameraOnModelUpdate )
 	if ( file.shouldResetCameraOnModelUpdate )
@@ -1329,43 +1329,12 @@ void function InitArtViewerEnvironments()
 	}
 
 	printf( "Art Viewer - Environment init complete, found %i environments.", file.spawnNodes.len() )
-	InitOutsourceUI_EnvironmentNodes( spawnNodeNames )
+	//InitOutsourceUI_EnvironmentNodes( spawnNodeNames )
 }
 
 void function OVSpawnModels( vector pos, vector ang )
 {
-	file.currentAssetType	= eAssetType.ASSETTYPE_CHARACTER
-	file.currentAsset		= 0
-	file.currentAssetSkin	= 0
-	file.currentCharm		= 0
 
-	file.modelMover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", pos, ang + <0, 180, 0> ) 
-	file.viewerBaseSkinModelMover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", pos, ang + <0, 180, 0> )
-	file.viewerModel = CreateOVClientSideEntity( pos, ang + <0, 180, 0>, $"mdl/dev/empty_model.rmdl" )
-	file.viewerBaseSkinModel = CreateClientSidePropDynamic( pos, ang + <0, 180, 0>, $"mdl/dev/empty_model.rmdl" )
-	ArtViewer_SetEntityOrigin( pos )
-
-	if ( !IsValid( file.modelMover ) || !IsValid( file.viewerModel ) || !IsValid( file.viewerBaseSkinModel ) )
-	{
-		Warning( "Art Viewer - Error: Failed on model spawning, shutting down." )
-		OVShutdown()
-		return
-	}
-
-	file.viewerModel.SetFadeDistance( MODEL_FADE_DIST )
-	file.viewerCameraFOV = DEFAULT_FOV
-	file.viewerCameraEntity = CreateClientSidePointCamera( <0, 0, 0>, <0, 0, 0>, file.viewerCameraFOV )
-	file.cubemapSpheres = CreateClientSidePropDynamic( < 0, 0, 0 >, < 0, 0, 0 >, $"mdl/dev/envballs.rmdl" )
-	file.cubemapSpheres.SetParent( file.viewerCameraEntity )
-	file.cubemapSpheres.Hide()
-	GetLocalClientPlayer().SetMenuCameraEntityWithAudio( file.viewerCameraEntity )
-
-	RefreshAssetItemFlavors()
-	file.shouldResetCameraOnModelUpdate = true
-	ClientCodeCallback_UpdateOutsourceModel( ARTVIEWER_PROPERTIES_ASSETTYPE, 0 )
-
-	OutsourceViewer_ResetView()
-	UpdateSunAngles( ang )
 }
 
 void function OVStart()
@@ -1439,7 +1408,7 @@ void function OVShutdown()
 
 void function ServerCallback_OVToggle()
 {
-#if DEV
+#if DEVELOPER
 	if ( !file.outsourceViewerRunning )
 	{
 		OVStart()
@@ -1453,7 +1422,7 @@ void function ServerCallback_OVToggle()
 
 void function ServerCallback_OVUpdateModelBounds( vector min, vector max )
 {
-#if DEV
+#if DEVELOPER
 	file.hasCurrentModelBounds = true
 	table<string, vector> tab = { mins = min, maxs = max }
 	file.modelBounds = tab
@@ -1468,21 +1437,21 @@ void function ServerCallback_OVUpdateModelBounds( vector min, vector max )
 
 void function ClientCodeCallback_ResetCamera()
 {
-#if DEV
+#if DEVELOPER
 	OutsourceViewer_ResetView()
 #endif
 }
 
 void function ClientCodeCallback_ResetModel()
 {
-#if DEV
+#if DEVELOPER
 	ResetViewerModelOriginAndAngles()
 #endif
 }
 
 void function ClientCodeCallback_SwitchOutsourceEnv( int envNum )
 {
-#if DEV
+#if DEVELOPER
 	if ( envNum < 0 || envNum >= file.spawnNodes.len() )
 	{
 		Warning( "Art Viewer - Error: Tried to switch to an invalid node" )
@@ -1502,100 +1471,18 @@ void function ClientCodeCallback_SwitchOutsourceEnv( int envNum )
 
 void function ClientCodeCallback_UpdateOutsourceModel( int pickerProperty, int updatedValue )
 {
-#if DEV
-	switch ( pickerProperty )
-	{
-		case ARTVIEWER_PROPERTIES_ASSETTYPE:
-			if ( updatedValue >= eAssetType._count )
-				return
-
-			file.currentAssetType = updatedValue
-			file.currentAsset = 0
-			file.currentAssetSkin = 0
-			file.shouldResetCameraOnModelUpdate = true
-
-			if ( file.currentAssetType != eAssetType.ASSETTYPE_CHARM && file.currentAssetType != eAssetType.ASSETTYPE_WEAPON )
-				file.currentCharm = 0
-
-			RefreshAssetItemFlavors()
-			break
-		case ARTVIEWER_PROPERTIES_ASSET:
-			if ( updatedValue >= file.availableAssets.len() )
-				return
-
-			if ( file.currentAssetType == eAssetType.ASSETTYPE_CHARM )
-				file.currentCharm = updatedValue
-			else
-				file.currentAsset = updatedValue
-
-			file.currentAssetSkin = 0
-			RefreshAssetItemFlavors()
-			break
-		case ARTVIEWER_PROPERTIES_SKIN:
-			if ( updatedValue >= file.availableAssetSkins.len() )
-				return
-
-			file.currentAssetSkin = updatedValue
-			break
-		case ARTVIEWER_PROPERTIES_CHARM:
-			if ( updatedValue >= file.availableCharms.len() )
-				return
-
-			file.currentCharm = updatedValue
-			break
-		case ARTVIEWER_PROPERTIES_WORLDMODEL:
-			file.useWorldModel = bool( updatedValue )
-			break
-		default:
-			return
-			break
-	}
-
-	file.hasCurrentModelBounds = false
-	string modelName
-	ItemFlavor currentSkin
-	switch ( file.currentAssetType )
-	{
-		case eAssetType.ASSETTYPE_CHARACTER:
-			if ( file.availableAssetSkins.len() == 0  )
-				return
-
-			currentSkin = file.availableAssetSkins[ file.currentAssetSkin ]
-			modelName = string( CharacterSkin_GetBodyModel( currentSkin ) )
-			break
-		case eAssetType.ASSETTYPE_WEAPON:
-			if ( file.availableAssetSkins.len() == 0  )
-				return
-
-			currentSkin = file.availableAssetSkins[ file.currentAssetSkin ]
-			modelName = string( WeaponSkin_GetWorldModel( currentSkin ) )
-			break
-		case eAssetType.ASSETTYPE_CHARM:
-			UpdateModelViewerSkin()
-			return
-			break
-		default:
-			return
-			break
-	}
-
-	if ( modelName != "" )
-	{
-		Remote_ServerCallFunction( "ClientCallback_GetModelBounds", file.currentAssetType, currentSkin.guid )
-	}
-#endif
 }
 
 void function ClientCodeCallback_SetAxisLockedFlags( int flags )
 {
-#if DEV
+#if DEVELOPER
 	file.axisLockedFlags = flags
 #endif
 }
 
 void function ClientCodeCallback_UpdateMousePos( float posX, float posY, bool imGuiFocused )
 {
-#if DEV
+#if DEVELOPER
 	if ( IsControllerModeActive() )
 		return
 
@@ -1621,21 +1508,21 @@ void function ClientCodeCallback_UpdateMousePos( float posX, float posY, bool im
 
 void function ClientCodeCallback_InputMouseScrolledUp()
 {
-#if DEV
+#if DEVELOPER
 	file.mouseWheelNewValue++
 #endif
 }
 
 void function ClientCodeCallback_InputMouseScrolledDown()
 {
-#if DEV
+#if DEVELOPER
 	file.mouseWheelNewValue--
 #endif
 }
 
 void function ClientCodeCallback_SetMoveModel( bool moveModel )
 {
-#if DEV
+#if DEVELOPER
 	file.tumbleModeActive = !moveModel
 
 	file.rotationVel[0] = 0
@@ -1644,7 +1531,7 @@ void function ClientCodeCallback_SetMoveModel( bool moveModel )
 }
 void function ClientCodeCallback_ToggleModelInShadow( bool inShadow )
 {
-#if DEV
+#if DEVELOPER
 	file.shouldBeInShadow = inShadow
 	UpdateSunAngles( file.spawnNodes[ file.currentNode ].ang )
 #endif
@@ -1652,7 +1539,7 @@ void function ClientCodeCallback_ToggleModelInShadow( bool inShadow )
 
 void function ClientCodeCallback_UpdateOutsourceBaseModel( bool enableBaseModel, bool sideBySide )
 {
-#if DEV
+#if DEVELOPER
 	if ( file.showCharacterSelectMenu )
 	{
 		characterSelectMenu.restoreShowBaseSkin = enableBaseModel
@@ -1678,7 +1565,7 @@ void function ClientCodeCallback_UpdateOutsourceBaseModel( bool enableBaseModel,
 
 void function ClientCodeCallback_ToggleOutsourceCubemapSpheres( bool enableCubemapSpheres )
 {
-#if DEV
+#if DEVELOPER
 	if ( enableCubemapSpheres )
 	{
 		file.cubemapSpheres.Show()
@@ -1692,7 +1579,7 @@ void function ClientCodeCallback_ToggleOutsourceCubemapSpheres( bool enableCubem
 
 void function ClientCodeCallback_ToggleCharacterSelectMenu( bool enableCharacterSelectMenu )
 {
-#if DEV
+#if DEVELOPER
 		entity player = GetLocalClientPlayer()
 		if ( enableCharacterSelectMenu )
 		{
@@ -1742,7 +1629,7 @@ void function ClientCodeCallback_ToggleCharacterSelectMenu( bool enableCharacter
 
 void function ClientCodeCallback_ToggleOutsourceGladCard( bool showGladCard )
 {
-#if DEV
+#if DEVELOPER
 	RuiSetVisible( file.gladCardRui, showGladCard )
 #endif
 }

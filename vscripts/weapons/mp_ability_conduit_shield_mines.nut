@@ -7,7 +7,7 @@ global function OnWeaponOwnerChanged_ability_shield_mines
 
 global function OnWeaponAttemptOffhandSwitch_ability_shield_mines
 
-#if DEV
+#if DEVELOPER
 global function DEV_ShieldMineLaunchDebug
 
 
@@ -464,7 +464,7 @@ void function WeaponArcPreviewThread_Client( entity owner, entity weapon )
 
 		float distanceToTarget = Distance( weapon.GetAttackPosition(), impactPos )
 
-#if DEV
+#if DEVELOPER
 		if ( SHIELD_MINES_AIRBURST_DEBUG == eDebugStage.INITIAL_TARGET_AIR_POS )
 		{
 			DebugDrawSphere( impactPos, 5, COLOR_RED, false, 0.1 )
@@ -525,7 +525,7 @@ void function WeaponArcPreviewThread_Client( entity owner, entity weapon )
 		
 		
 
-#if DEV
+#if DEVELOPER
 		if ( SHIELD_MINES_AIRBURST_DEBUG == eDebugStage.SIMULATED_ARC_END_POS )
 		{
 			DebugDrawSphere( arcEndPos, 8, COLOR_GREEN, false, 0.1 )
@@ -556,7 +556,7 @@ void function WeaponArcPreviewThread_Client( entity owner, entity weapon )
 
 		vector start = owner.CameraPosition() + (owner.GetViewForward() * 10) + (owner.GetViewRight() * -5)
 
-#if DEV
+#if DEVELOPER
 		if ( SHIELD_MINES_POSE_PARAM_DEBUG )
 		{
 			DebugDrawArrow( start, start + (aimDirection * 20), 2, COLOR_GREEN, false, 0.1 )
@@ -575,7 +575,7 @@ void function WeaponArcPreviewThread_Client( entity owner, entity weapon )
 
 		array<vector> mineLocations = GenerateMineLocations( shieldMineLineWeapon, arcEndPos, directionRight, SHIELD_MINES_AIRBURST_DEBUG == eDebugStage.DRAW_GENERATED_MINE_LOCS )
 
-#if DEV
+#if DEVELOPER
 		
 		
 		
@@ -759,7 +759,7 @@ float function GetShieldMineMaxRange( entity player )
 	return result
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_ShieldMineLaunchDebug( int stage = -1 )
 {
 	int desiredStage = (SHIELD_MINES_AIRBURST_DEBUG + 1)

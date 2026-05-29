@@ -8,7 +8,7 @@ global function IsSocialPopupActive
 global function TryUpdatePartyInvitePresence
 global function SocialEvent_RemoveActiveClubInvite
 
-#if DEV
+#if DEVELOPER
 global function SocialEvent_AddDevEvent
 global function DevDumpFakeLists
 global function DevRemoveFakeData
@@ -330,7 +330,7 @@ void function UpdateSocialEventRui( SocialEvent event )
 			HudElem_SetRuiArg( file.contentPanel, "eventActionHint3", "#POPUP_BUTTON_BLOCK" )
 			RuiSetArgByType( Hud_GetRui( file.contentPanel ), "lineColor", BAR_COLOR_PARTY / 255.0, eRuiArgType.COLOR )
 
-#if DEV
+#if DEVELOPER
 			if ( GetBugReproNum() == 1970 )
 			{
 
@@ -454,7 +454,7 @@ void function AutoRejectPartyInvite( SocialEvent event )
 
 	EADP_RejectInviteToPlay( event.eventID )
 
-#if DEV
+#if DEVELOPER
 		DevRemoveFakeData( event.eventID, event.eventType )
 #endif
 	SocialEventMarkCompleted( event, 1 )
@@ -462,7 +462,7 @@ void function AutoRejectPartyInvite( SocialEvent event )
 }
 
 
-#if DEV
+#if DEVELOPER
 int function GetRandomPartyInviteReason()
 {
 	return RandomIntRange(1, eInviteReason._count)
@@ -512,7 +512,7 @@ void function UpdateFriendRequestCache()
 	if ( !requestData.isValid )
 		return
 
-#if DEV
+#if DEVELOPER
 		if ( GetBugReproNum() == 1970 )
 		{
 			requestData.people.extend( DevGetFakeFriendList() )
@@ -583,7 +583,7 @@ void function UpdatePartyInviteCache()
 	if ( !IsLobby() )
 		return
 
-#if DEV
+#if DEVELOPER
 		if ( GetBugReproNum() == 1970 )
 		{
 			inviteToPlayList.invitations.extend( DevGetFakePartyList() )
@@ -862,7 +862,7 @@ bool function EventFriendRequest_HandleInput( int inputID )
 
 		}
 
-#if DEV
+#if DEVELOPER
 			DevRemoveFakeData( event.eventID, event.eventType )
 #endif
 		SocialEventMarkCompleted( event, 0 )
@@ -890,7 +890,7 @@ bool function EventFriendRequest_HandleInput( int inputID )
 
 		}
 
-#if DEV
+#if DEVELOPER
 			DevRemoveFakeData( event.eventID, event.eventType )
 #endif
 		SocialEventMarkCompleted( event, 1 )
@@ -977,7 +977,7 @@ void function SocialEventBlockPlayerDialog( SocialEvent event )
 			else if ( event.eventType == eSocialEventType.PARTY )
 				EADP_RejectInviteToPlay( eaid )
 
-#if DEV
+#if DEVELOPER
 				DevRemoveFakeData( event.eventID, event.eventType )
 #endif
 
@@ -1077,7 +1077,7 @@ bool function PartyInviteShouldCycle( EadpPresenceData presence )
 
 
 
-#if DEV
+#if DEVELOPER
 array< EadpPeopleData > devFriendList
 array< EadpInviteToPlayData > devPartyList
 array< ClubInvite > devClubList

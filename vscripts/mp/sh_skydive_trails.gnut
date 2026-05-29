@@ -311,7 +311,7 @@ void function RegisterSkydiveTrails()
 
 	LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "skydive_trail", eLoadoutEntryClass.ACCOUNT )
 	entry.category     = eLoadoutCategory.SKYDIVE_TRAIL
-#if DEV
+#if DEVELOPER
 		entry.DEV_name       = "Skydive Trail"
 #endif
 	entry.defaultItemFlavor   = trailFlavs[0]

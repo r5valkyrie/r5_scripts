@@ -782,7 +782,7 @@ bool function ShouldShowProjectileHitDot( int damageType, entity weapon )
 		return false
 
 
-#if DEV
+#if DEVELOPER
 		
 		if ( GetCurrentPlaylistVarBool( "hud_projectile_hit_dots_disabled", false ) )
 			return false

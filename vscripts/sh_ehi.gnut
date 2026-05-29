@@ -872,7 +872,7 @@ string function GetKillerNameFromEHI( EHI playerEHI )
 	string playerName = EHI_GetName( playerEHI )
 	if ( (ShouldPlayerNameBeAnonymized( playerEHI ) || !DisplayKillerName()) && playerEHI != LocalClientEHI() && EHI_GetTeam( playerEHI ) != EHI_GetTeam( LocalClientEHI() ) )
 	{
-#if DEV
+#if DEVELOPER
 		printt( "GetKillerNameFrom ShouldPlayerNameBeAnonymized[" + ShouldPlayerNameBeAnonymized( playerEHI ) + "]  ---"  + playerName)
 		printt( "GetKillerNameFrom DisplayKillerName[" + DisplayKillerName() + "]")
 		printt( "GetKillerNameFrom EHI_GetTeam[" + EHI_GetTeam( playerEHI )  + "]")
@@ -923,7 +923,7 @@ string function GetDisplayablePlayerNameFromEHI( EHI playerEHI )
 
 	if ( isSetToObsfuscatedName && !isPlayerEHISameAsLocalClientEHI && !IsFriendlyTeam( playerTeam, localPlayerTeam ) )
 	{
-#if DEV
+#if DEVELOPER
 		printt( "GetPlayerNameFromEHI DisplayObituaryName[" + DisplayObituaryName() + "] ------- " + playerName)
 		printt( "GetPlayerNameFromEHI ShouldPlayerNameBeAnonymized( playerEHI )[" + ShouldPlayerNameBeAnonymized( playerEHI ) + "]")
 		printt( "GetPlayerNameFromEHI isSetToObsfuscatedName[" + isSetToObsfuscatedName + "]")

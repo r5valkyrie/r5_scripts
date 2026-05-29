@@ -96,7 +96,7 @@ global function CaptureObjectivePing_AddCallback_OnObjectivePingCoundChanged
 
 
 
-#if DEV
+#if DEVELOPER
 global function DEV_PingAllLoot_Client
 #endif
 
@@ -1343,7 +1343,7 @@ PingTraceResults function DoPingTrace( entity player )
 	}
 	result.tr = tr
 
-#if DEV
+#if DEVELOPER
 		printf( "PING (%s) -  Dist:%.1f, %s, pos:%s, norm:%s, contents:0x%x", (IsServer() ? "SERVER" : "CLIENT"), result.hitDist, (IsValid( result.hitEnt ) ? ("[" + result.hitEnt + "]   '" + result.hitEnt.GetScriptName() + "'") : ""), string( tr.endPos ), string( tr.surfaceNormal ), tr.contents )
 #endif
 
@@ -5474,7 +5474,7 @@ int function GetCommsActionForPing( entity pingingPlayer, int pingType, entity p
 	{
 		case ePingType.LOCATION:
 		case ePingType.LOCATION_TRAINING:
-#if DEV
+#if DEVELOPER
 		case ePingType.MULTILOCATION:
 #endif
 			return eCommsAction.PING_LOCATION
@@ -7887,7 +7887,7 @@ void function UpdateOnscreenPromptHintAfterDelay( float delay, string commandRef
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_Ping_devPrintsOn( bool isOn = true )
 {
 	printt( "***** sh_ping: DEV Printing Set To " + isOn )
@@ -8748,7 +8748,7 @@ void function CaptureObjectivePing_SetObjectivePing( entity player, entity objec
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_PingAllLoot_Client( entity player )
 {
 	thread DEV_PingAllLoot_Thread( player )

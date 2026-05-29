@@ -76,7 +76,7 @@ void function InitPostGameRankedMenu( var newMenuArg )
 
 	RegisterSignal( "OnPostGameRankedMenu_Close" )
 
-#if DEV
+#if DEVELOPER
 	AddMenuThinkFunc( file.menu, PostGameRankedMenuAutomationThink )
 #endif
 }
@@ -86,7 +86,7 @@ void function InitPostGameRankedSummaryPanel( var panel )
 	
 }
 
-#if DEV
+#if DEVELOPER
 void function PostGameRankedMenuAutomationThink( var menu )
 {
 	if (AutomateUi())

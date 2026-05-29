@@ -564,7 +564,7 @@ void function LoadLPBreakdownFromPersistance ( RankLadderPointsBreakdown breakdo
 		breakdown.assistUnique        		= GetRankedGameData ( player, "lastGameAssistUnique" )
 
 
-#if DEV
+#if DEVELOPER
 		PrintRankLadderPointsBreakdown (breakdown, 1, "LoadLPBreakdownFromPersistance" )
 #endif
 }

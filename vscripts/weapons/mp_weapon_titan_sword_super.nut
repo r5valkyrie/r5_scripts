@@ -18,7 +18,7 @@ global function ServerToClient_TitanSword_AddChargeFx
 
 
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -907,7 +907,7 @@ vector function GetSuperColor( float frac )
 
 
 
-#if DEV
+#if DEVELOPER
 
 
 

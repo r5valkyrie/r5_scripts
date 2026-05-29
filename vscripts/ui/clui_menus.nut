@@ -14,7 +14,7 @@ global function LocalizeNumeral
 
 global function IsTenThousandOrMore
 
-#if DEV
+#if DEVELOPER
 global function DEV_UnitTestShortenNumber
 #endif
 
@@ -537,7 +537,7 @@ bool function IsTenThousandOrMore( var value )
 	return value >= 10000
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_UnitTestShortenNumber()
 {
 	table< array< int >, string > intTestCases = {

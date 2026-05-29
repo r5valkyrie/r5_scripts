@@ -47,7 +47,7 @@ global function DismissGamemodeSelector
 global function DismissGamemodeSelectorModal
 global function HasGamemodeSelector
 
-#if DEV
+#if DEVELOPER
 global function DEV_PrintPartyInfo
 global function DEV_PrintUserInfo
 global function Lobby_MovePopupMessage
@@ -404,7 +404,7 @@ void function InitPlayPanel( var panel )
 	AddCallback_LobbyPlaylist_OnSelectedPlaylistChanged( Callback_PlayPanel_SetSelectedPlaylist )
 	AddCallback_LobbyPlaylist_OnSelectedPlaylistModsChanged( Callback_PlayPanel_SetSelectedPlaylistMods )
 
-#if DEV
+#if DEVELOPER
 	AddMenuThinkFunc( Hud_GetParent( file.panel ), LobbyAutomationThink )
 #endif
 }
@@ -2741,7 +2741,7 @@ void function UpdateFillButton()
 	Hud_SetLocked( file.fillButton, shouldLockFillButton )
 }
 
-#if DEV
+#if DEVELOPER
 void function FillButton_Toggle()
 {
 	FillButton_OnActivate( file.fillButton )
@@ -3737,7 +3737,7 @@ void function PlayPanelUpdate()
 }
 
 
-#if DEV
+#if DEVELOPER
 void function LobbyAutomationThink( var menu )
 {
 	const float delayFactor = 2		
@@ -3790,7 +3790,7 @@ void function ServerCallback_SetPlaylistById( int playlistId )
 }
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_PrintPartyInfo()
 {
 	Party party = GetParty()
@@ -4487,7 +4487,7 @@ bool function Lobby_ShowBattlePassPopup( bool forceShow = false )
 		popupLevelMarkers_intArray = GetRewardPromptLevelArray( activeBattlePass )
 	}
 
-#if DEV
+#if DEVELOPER
 	{ 
 		foreach (int i in popupLevelMarkers_intArray )
 		{

@@ -40,7 +40,7 @@ global function RegisterCustomItemPromptUpdate
 
 global function ShouldOpenQuickswap
 
-#if DEV
+#if DEVELOPER
 global function DEV_ToggleLootRefs
 #endif
 
@@ -102,7 +102,7 @@ struct {
 	bool greyTierEnabled = false
 	bool checkWeaponDisableForLootPingPrompt = false
 
-#if DEV
+#if DEVELOPER
 		bool devShowLootRefs = false
 #endif
 } file
@@ -1152,7 +1152,7 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 	RuiSetFloat2( rui, "iconScale", iconScale )
 
 	RuiSetString( rui, "titleText", Localize( data.pickupString ).toupper() )
-#if DEV
+#if DEVELOPER
 		if ( file.devShowLootRefs )
 			RuiSetString( rui, "titleText", Localize( data.pickupString ).toupper() + " | " + data.ref )
 #endif
@@ -1271,7 +1271,7 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 	if ( (data.lootType == eLootType.HEALTH || data.lootType == eLootType.AMMO || data.lootType == eLootType.ORDNANCE ) && lootRef.count > 1 )
 	{
 		RuiSetString( rui, "titleText", Localize( "#SURVIVAL_PICKUP_STACK_COUNT", Localize( data.pickupString ).toupper(), lootRef.count ) )
-#if DEV
+#if DEVELOPER
 			if ( file.devShowLootRefs )
 				RuiSetString( rui, "titleText", Localize( "#SURVIVAL_PICKUP_STACK_COUNT", Localize( data.pickupString ).toupper(), lootRef.count ) + " | " + data.ref )
 #endif
@@ -2247,7 +2247,7 @@ entity function GetEntityPlayerIsLookingAt( entity player, array<entity> ents, f
 		lootItem.playerViewDot = dot
 		finalLootEnts.append( lootItem )
 
-#if DEV
+#if DEVELOPER
 			
 			
 #endif
@@ -2317,7 +2317,7 @@ entity function GetDeathboxPlayerIsLookingAt( entity player, float degrees = 8.0
 		lootItem.playerViewDot = dot
 		finalLootEnts.append( lootItem )
 
-#if DEV
+#if DEVELOPER
 			
 			
 #endif
@@ -2788,7 +2788,7 @@ void function ApplyEquipmentColorAndFXOverrides( entity prop )
 	}
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_ToggleLootRefs()
 {
 	file.devShowLootRefs = !(file.devShowLootRefs)

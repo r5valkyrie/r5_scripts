@@ -40,7 +40,7 @@ global function ClientCodeCallback_GetPlayerThreatLevel
 
 
 
-#if DEV
+#if DEVELOPER
 global function DEV_ReloadCommsTable
 const bool DEBUG_PLAYER_IS_IN_COMBAT = false
 #endif
@@ -261,7 +261,7 @@ void function ShQuickchat_Init()
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_ReloadCommsTable()
 {
 
@@ -727,7 +727,7 @@ bool function PlayerIsInCombat( entity player )
 
 	if ( GetEffectiveDeltaSince( player.GetLastTimeDamagedByOtherPlayer() ) < LAST_DAMAGED_BY_PLAYER_OR_NPC )
 	{
-#if DEV
+#if DEVELOPER
 		if ( DEBUG_PLAYER_IS_IN_COMBAT )
 			printt( "PlayerIsInCombat: [YES] <- Player was damaged by other player within " + LAST_DAMAGED_BY_PLAYER_OR_NPC + "s" )
 #endif
@@ -736,7 +736,7 @@ bool function PlayerIsInCombat( entity player )
 
 	if ( GetEffectiveDeltaSince( player.GetLastTimeDamagedByNPC() ) < LAST_DAMAGED_BY_PLAYER_OR_NPC )
 	{
-#if DEV
+#if DEVELOPER
 		if ( DEBUG_PLAYER_IS_IN_COMBAT )
 			printt( "PlayerIsInCombat: [YES] <- Player was last damaged by NPC within " + LAST_DAMAGED_BY_PLAYER_OR_NPC + "s" )
 #endif
@@ -746,7 +746,7 @@ bool function PlayerIsInCombat( entity player )
 	
 	if ( GetEffectiveDeltaSince( player.GetLastTimeDidDamageToOtherPlayer() ) < LAST_DID_DAMAGE_TO_PLAYER_OR_NPC )
 	{
-#if DEV
+#if DEVELOPER
 		if ( DEBUG_PLAYER_IS_IN_COMBAT )
 			printt( "PlayerIsInCombat: [YES] <- This player did damage to another player within " + LAST_DID_DAMAGE_TO_PLAYER_OR_NPC + "s" )
 #endif
@@ -755,7 +755,7 @@ bool function PlayerIsInCombat( entity player )
 
 	if ( GetEffectiveDeltaSince( player.GetLastTimeDidDamageToNPC() ) < LAST_DID_DAMAGE_TO_PLAYER_OR_NPC )
 	{
-#if DEV
+#if DEVELOPER
 		if ( DEBUG_PLAYER_IS_IN_COMBAT )
 			printt( "PlayerIsInCombat: [YES] <- This player did damage to NPC within " + LAST_DID_DAMAGE_TO_PLAYER_OR_NPC + "s" )
 #endif
@@ -769,7 +769,7 @@ bool function PlayerIsInCombat( entity player )
 	if ( Waypoint_AnyEnemySpottedNearPoint( player.EyePosition(), TEAMMATE_NEAR_SPOTTED_ENEMY ) )
 
 	{
-#if DEV
+#if DEVELOPER
 		if ( DEBUG_PLAYER_IS_IN_COMBAT )
 			printt( "PlayerIsInCombat [YES] <- A teammate is near spotted enemy" )
 #endif
@@ -791,7 +791,7 @@ bool function PlayerDeliveryShouldBeUrgent( entity player, vector subjectPos, in
 
 	if ( IsBitFlagSet( commsFlags, eCommsFlags.FORCE_URGENT ) )
 	{
-#if DEV
+#if DEVELOPER
 			if ( DEBUG_PLAYER_DELIVERY )
 				printt( "PlayerDeliveryShouldBeUrgent: [YES] <- eCommsFlags.FORCE_URGENT" )
 #endif
@@ -822,7 +822,7 @@ bool function PlayerDeliveryShouldBeUrgent( entity player, vector subjectPos, in
 	if ( Waypoint_AnyEnemySpottedNearPoint( subjectPos, SUBJECT_NEAR_SPOTTED_ENEMY ) )
 
 	{
-#if DEV
+#if DEVELOPER
 			if ( DEBUG_PLAYER_DELIVERY )
 				printt( "PlayerDeliveryShouldBeUrgent: [YES] <- Waypoint near spotted enemy" )
 #endif
@@ -835,7 +835,7 @@ bool function PlayerDeliveryShouldBeUrgent( entity player, vector subjectPos, in
 		float stormDist = DeathField_PointDistanceFromFrontier( eyePos, player.DeathFieldIndex() )
 		if ( stormDist < START_PLAYING_DIST )
 		{
-#if DEV
+#if DEVELOPER
 				if ( DEBUG_PLAYER_DELIVERY )
 					printt( "PlayerDeliveryShouldBeUrgent: [YES] <- Inside deathfield" )
 #endif
@@ -847,7 +847,7 @@ bool function PlayerDeliveryShouldBeUrgent( entity player, vector subjectPos, in
 	float stim = StatusEffect_GetSeverity( player, eStatusEffect.stim_visual_effect )
 	if ( stim > 0.001 )
 	{
-#if DEV
+#if DEVELOPER
 			if ( DEBUG_PLAYER_DELIVERY )
 				printf( "PlayerDeliveryShouldBeUrgent: [YES] <- Stim (%0.2f)", stim )
 #endif
@@ -1676,7 +1676,7 @@ string function GetPlayerDialogSound( entity player, entity subjectEnt, CommsAct
 			result = GetBattleChatterAlias1P3P( player, (subAlias + ext), options.isFirstPerson )
 	}
 
-#if DEV
+#if DEVELOPER
 		if ( ShouldTryToReplaceMissingVoiceWithTempVoice() )
 		{
 			if ( !DoesAliasExist( result ) )

@@ -1092,7 +1092,7 @@ var function CreateNestedNetGraph( var rui )
 	RuiTrackInt( nestedGraphRui, "netGraphDataBlockSize", null, RUI_TRACK_NETGRAPH_DATABLOCK_SIZE )
 	RuiTrackInt( nestedGraphRui, "netGraphDataBlockPercentDone", null, RUI_TRACK_NETGRAPH_DATABLOCK_PERCENT_DONE )
 
-#if DEV
+#if DEVELOPER
 		RuiSetBool( nestedGraphRui, "isDEV", true )
 #endif
 

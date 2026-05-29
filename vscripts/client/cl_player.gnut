@@ -51,7 +51,7 @@ global function ClientPlayerClassChanged
 global function GetHideCrosshairHitIndicatorOverride
 global function SetHideCrosshairHitIndicatorOverride
 
-#if DEV
+#if DEVELOPER
 global function BloodSprayDecals_Toggle
 #endif
 
@@ -1067,7 +1067,7 @@ BloodDecalParams function BloodDecal_GetParams( float damageAmount, bool isHeadS
 	return params
 }
 
-#if DEV
+#if DEVELOPER
 string function BloodSprayDecals_Toggle()
 {
 	string returnStr = ""

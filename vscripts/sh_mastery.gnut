@@ -27,13 +27,13 @@ global function Sh_Mastery_Init
 
 
 
-#if DEV
+#if DEVELOPER
 global function DEV_RefreshMasteryDevMenuInternal
 global function DEV_ToggleWeaponMasteryDebugWindow
 global function DEV_SetWeaponDebugWindowStyle
 #endif
 
-#if DEV
+#if DEVELOPER
 global function DEV_MasteryUIInterfaceTest
 global function DEV_TestGetSpecialInfo
 #endif
@@ -172,7 +172,7 @@ global struct StatInstance
 	int    xpIndex = -1
 	bool   isModified = false
 	
-#if DEV
+#if DEVELOPER
 		string description
 		bool   hideDebugInfo = false
 #endif
@@ -194,7 +194,7 @@ global struct TrialConfig
 	int goal
 	StatInstance& statInstance
 
-#if DEV
+#if DEVELOPER
 		string statParam
 #endif
 	array<MasteryReward> rewards
@@ -214,7 +214,7 @@ global struct XPModifierConfig
 	int   specialModifier = eSpecialModifierType.None
 	StatInstance& statInstance
 
-#if DEV
+#if DEVELOPER
 		string statParam
 #endif
 	string action
@@ -243,7 +243,7 @@ global struct MasteryTrialData
 	int  currentValue
 	bool isUnlocked
 	bool isCompleted
-#if DEV
+#if DEVELOPER
 		int statInternalValue
 		bool isStatUnlocked
 #endif
@@ -419,7 +419,7 @@ global struct MasteryWeapon_MatchTrialPerWeapon
 
 
 
-#if DEV
+#if DEVELOPER
 var DEV_screenInfoRui = null
 bool DEV_menuStyle_hideStatDetail = false
 
@@ -497,7 +497,7 @@ int DEV_latestInfoPtr
 
 
 
-#if DEV
+#if DEVELOPER
 void function OnPlayerWeaponSwitched( entity player, entity newWeapon, entity oldWeapon )
 {
 	if ( player == GetLocalClientPlayer() )
@@ -505,7 +505,7 @@ void function OnPlayerWeaponSwitched( entity player, entity newWeapon, entity ol
 }
 #endif
 
-#if DEV
+#if DEVELOPER
 void function DEV_RefreshMasteryDevMenuInternal( string weaponGuid = "" )
 {
 	if ( DEV_screenInfoRui == null )
@@ -535,7 +535,7 @@ void function DEV_RefreshMasteryDevMenuInternal( string weaponGuid = "" )
 }
 #endif
 
-#if DEV
+#if DEVELOPER
 void function DEV_ToggleWeaponMasteryDebugWindow()
 {
 	if ( !fileLevel.isMasteryEnabled )
@@ -559,7 +559,7 @@ void function DEV_SetWeaponDebugWindowStyle( bool hideStatDetail )
 }
 #endif
 
-#if DEV
+#if DEVELOPER
 void function DEV_SetSingleWeaponRui( var rui, entity player, ItemFlavor ornull weaponFlavorOrNull, int index )
 {
 	string postfix = "_" + index
@@ -643,7 +643,7 @@ void function DEV_SetStatUpdateInfo()
 }
 #endif
 
-#if DEV
+#if DEVELOPER
 void function DEV_MasteryUIInterfaceTest()
 {
 	printf( "[Mastery] ----Trial query result----" )
@@ -694,7 +694,7 @@ void function DEV_MasteryUIInterfaceTest()
 }
 #endif
 
-#if DEV
+#if DEVELOPER
 string function DEV_GetWeaponName( ItemFlavor weapon )
 {
 	return DEV_ItemFlavor_GetCleanedAssetPath( weapon ).slice( 17 )
@@ -916,7 +916,7 @@ void function Sh_Mastery_Init()
 
 
 
-#if DEV
+#if DEVELOPER
 		AddCallback_OnPlayerWeaponSwitched( OnPlayerWeaponSwitched )
 		RegisterSignal( "CloseDebugMenu" )
 #endif
@@ -1010,7 +1010,7 @@ void function InitPlayerInfo( entity player, MasteryPlayerInfo playerInfo )
 			MasteryWeaponData weaponData
 			playerInfo.weaponDataCache[weapon] <- weaponData
 		}
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 		{
 			playerInfo.weaponDataCache[weapon].startXP = 1000
@@ -1129,11 +1129,11 @@ void function InitPlayerInfo( entity player, MasteryPlayerInfo playerInfo )
 					trialData.currentValue = minint( trialConfig.goal, player.GetPersistentVarAsInt( BuildPDefKey_TrialStat( weapon, trialConfig.tierLevel ) ) )
 					trialData.isCompleted = trialData.currentValue == trialConfig.goal
 					trialData.isUnlocked = IsTrialUnlocked( level, trialConfig.tierLevel )
-#if DEV
+#if DEVELOPER
 						if ( GetConVarBool( "mastery_unlock_all_trials" ) )
 							trialData.isUnlocked = true
 #endif
-#if DEV
+#if DEVELOPER
 						
 						trialData.isStatUnlocked = IsTrialUnlocked( level, trialConfig.tierLevel ) && !trialData.isCompleted
 						if ( GetConVarBool( "mastery_unlock_all_trials" ) )
@@ -1402,7 +1402,7 @@ void function LoadConfig()
 				trialConfig.name = name
 
 
-#if DEV
+#if DEVELOPER
 				trialConfig.statParam = format( "%s %s %s", statBehavior, statValidation, statParams )
 #endif
 
@@ -1450,7 +1450,7 @@ void function LoadConfig()
 					xpModifierConfig.actionText = GetActionTextFromTag( action )
 
 
-#if DEV
+#if DEVELOPER
 					xpModifierConfig.statParam = format( "%s %s %s", statBehavior, statValidation, statParams )
 
 
@@ -1814,7 +1814,7 @@ TrialConfig function AddTrial( ItemFlavor weapon, int tierLevel, int goal, strin
 	}
 	TrialConfig trialConfig
 	trialConfig.statInstance = CreateStatInstance( ItemFlavor_GetGUID( weapon ), BuildPDefKey_TrialStat( weapon, tierLevel ), statBehavior, statValidation, statParams, eMasteryStatType.Trial )
-#if DEV
+#if DEVELOPER
 		trialConfig.statInstance.description = format( "<WEAPON:%s--TRIAL:LEVEL %d index[%d]>", DEV_GetWeaponName( weapon ), ConvertTierLevelToDisplayLevel( tierLevel ), tierLevel )
 #endif
 	
@@ -1835,7 +1835,7 @@ XPModifierConfig function AddXPModifier( ItemFlavor weapon, int index, float wei
 	}
 	XPModifierConfig xpModifierConfig
 	xpModifierConfig.statInstance = CreateStatInstance( ItemFlavor_GetGUID( weapon ), BuildPDefKey_XPModifierStat( weapon, index ), statBehavior, statValidation, statParams, eMasteryStatType.XPModifier )
-#if DEV
+#if DEVELOPER
 		xpModifierConfig.statInstance.description = format( "<WEAPON:%s--XP:index[%d]>", DEV_GetWeaponName( weapon ), index )
 #endif
 	xpModifierConfig.weight = weight
@@ -1861,7 +1861,7 @@ StatInstance function CreateStatInstance( int targetTag, string pdefKey, string 
 	statInstance.persistenceKey = pdefKey
 	statInstance.statType = statType
 
-#if DEV
+#if DEVELOPER
 	statInstance.cacheIndex = fileLevel.allStatsList.len()
 	fileLevel.allStatsList.append( statInstance )
 #endif
@@ -1989,7 +1989,7 @@ bool function Mastery_IsTrialCompleted( entity player, ItemFlavor weapon, TrialC
 	return currentStat >= trialConfig.goal
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_TestGetSpecialInfo()
 {
 	array<MasteryWeapon_BaseQueryResult> allWeaponData
@@ -2047,7 +2047,7 @@ MasteryWeapon_BaseQueryResult ornull function Mastery_GetWeaponBaseData( ItemFla
 {
 	if ( !(weapon in fileLevel.weaponConfigMap) )
 	{
-#if DEV
+#if DEVELOPER
 			printf( "[Mastery] Can't find request weapon:" + DEV_ItemFlavor_GetCleanedAssetPath( weapon ) )
 #endif
 		return null
@@ -2064,7 +2064,7 @@ array<MasteryWeapon_TrialQueryResult> ornull function Mastery_GetWeaponTrialList
 {
 	if ( !(weapon in fileLevel.weaponConfigMap) )
 	{
-#if DEV
+#if DEVELOPER
 			printf( "[Mastery] Can't find request weapon:" + DEV_ItemFlavor_GetCleanedAssetPath( weapon ) )
 #endif
 		return null
@@ -2096,7 +2096,7 @@ array<MasteryWeapon_TrialQueryResult> ornull function Mastery_GetWeaponTrialList
 {
 	if ( !(weapon in fileLevel.weaponConfigMap) )
 	{
-#if DEV
+#if DEVELOPER
 			printf( "[Mastery] Can't find request weapon:" + DEV_ItemFlavor_GetCleanedAssetPath( weapon ) )
 #endif
 		return null
@@ -2113,7 +2113,7 @@ array<MasteryWeapon_TrialQueryResult> ornull function Mastery_GetWeaponTrialList
 		trialData.currentValue = trialDataList[i].currentValue
 		trialData.isUnlocked   = trialDataList[i].isUnlocked
 		trialData.isCompleted  = trialDataList[i].isCompleted
-#if DEV
+#if DEVELOPER
 			trialData.statInternalValue = trialDataList[i].statInternalValue
 			trialData.isStatUnlocked = trialDataList[i].isStatUnlocked
 #endif
@@ -2161,7 +2161,7 @@ MasteryWeapon_FinalRewardResult ornull function Mastery_GetWeaponFinalReward( It
 	Assert( rewardType != eFinalRewardType.None && rewardType < eFinalRewardType.COUNT, "[Mastery] Weapon final reward type invalid, " + rewardType )
 	if ( !(weapon in fileLevel.weaponConfigMap) )
 	{
-#if DEV
+#if DEVELOPER
 			printf( "[Mastery] Can't find request weapon:" + DEV_ItemFlavor_GetCleanedAssetPath( weapon ) )
 #endif
 		return null
@@ -2331,7 +2331,7 @@ int function Mastery_GetWeaponXP( ItemFlavor weapon )
 
 	if ( !(weapon in fileLevel.weaponConfigMap) )
 	{
-#if DEV
+#if DEVELOPER
 			printf( "[Mastery] Can't find request weapon:" + DEV_ItemFlavor_GetCleanedAssetPath( weapon ) )
 #endif
 		return 0
@@ -2345,7 +2345,7 @@ int function Mastery_GetWeaponLevel( ItemFlavor weapon )
 {
 	if ( !(weapon in fileLevel.weaponConfigMap) )
 	{
-#if DEV
+#if DEVELOPER
 			printf( "[Mastery] Can't find request weapon:" + DEV_ItemFlavor_GetCleanedAssetPath( weapon ) )
 #endif
 		return 0

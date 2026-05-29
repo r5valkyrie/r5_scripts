@@ -2725,7 +2725,7 @@ void function TrackingVision_DisplayEnemyDirection_Thread( vector enemyPos, vect
 			thread TrackingVision_CreateChevron_Thread( player, nextChevronPos, angles ) 
 			count--
 
-#if DEV
+#if DEVELOPER
 				if( DEBUG_WHITE_RAVEN_DRAW )
 				{
 					printt( "Count is:   " + count + "   | New Position is: " + nextChevronPos )

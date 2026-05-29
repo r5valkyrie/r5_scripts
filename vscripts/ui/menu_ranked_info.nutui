@@ -2,7 +2,7 @@ global function InitRankedInfoMenu
 global function OpenRankedInfoPage
 global function InitRankedScoreBarRui
 
-#if DEV
+#if DEVELOPER
 global function TestScoreBar
 #endif
 

@@ -11,7 +11,7 @@ global function Odl_ClientValidateAllSkins
 
 
 
-#if DEV
+#if DEVELOPER
 global function OdlStressSwitchChar
 global function OdlStressDoForceReload
 global function OdlStressDoRandomSkin
@@ -577,7 +577,7 @@ void function Odl_SmokeTestInit()
 
 	Remote_RegisterServerFunction( "Odl_ServerClientFinishedValidatingAllSkins" )
 
-#if DEV
+#if DEVELOPER
 
 
 

@@ -2,7 +2,7 @@ global function Lobby_AddLocalPlayer
 global function AddCallback_OnPlayerAddedToLobby
 global function Lobby_SetBannerSkin
 global function ToggleHighlightOnRadioPlayProp
-#if DEV
+#if DEVELOPER
 global function DEV_SetLobbyBannerSkin
 #endif
 
@@ -45,7 +45,7 @@ struct
 
 	array<entity> lobbyBanners
 	array<entity> lobbyReskinProps
-#if DEV
+#if DEVELOPER
 		bool overrideLobbyBanner = false
 #endif
 
@@ -192,7 +192,7 @@ void function Lobby_SetBannerSkin( string playlist )
 	else if ( GetPlaylistVarString( playlistName, "ui_slot", "" ) == "mixtape" )
 		skinIndex =  LOBBY_BANNER_MIXTAPE_SKIN_INDEX
 
-#if DEV
+#if DEVELOPER
 		if ( file.overrideLobbyBanner )
 			return
 #endif
@@ -219,7 +219,7 @@ void function Lobby_SetBannerSkinInternal( int skinIndex )
 	}
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_SetLobbyBannerSkin( int i )
 {
 	if ( i == -1 )

@@ -1173,7 +1173,7 @@ void function ShowMapRui()
 
 bool function MapDevCheatsAreActive()
 {
-#if DEV
+#if DEVELOPER
 		if ( !GetConVarBool( "sv_cheats" ) )
 			return false
 		if ( InputIsButtonDown( KEY_LSHIFT ) || InputIsButtonDown( BUTTON_STICK_LEFT ) )
@@ -1766,7 +1766,7 @@ void function Fullmap_HandleAimInput_Common()
 
 bool function Fullmap_HandleKeyInput( int key )
 {
-#if DEV
+#if DEVELOPER
 	if ( MapDevCheatsAreActive() )
 	{
 		switch ( key )
@@ -1870,7 +1870,7 @@ bool function Fullmap_HandleKeyInput( int key )
 
 		case BUTTON_SHOULDER_LEFT:
 		case MOUSE_MIDDLE:
-#if DEV
+#if DEVELOPER
 			bool hasALGSSpectator = GetCurrentPlaylistVarBool( "has_extended_observer_controls", true )
 #else
 			bool hasALGSSpectator = GetCurrentPlaylistVarBool( "has_extended_observer_controls", false )

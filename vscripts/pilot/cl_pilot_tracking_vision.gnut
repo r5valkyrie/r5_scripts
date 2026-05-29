@@ -51,7 +51,7 @@ struct TrackingVisionDrawInfo
 
 struct FootstepParticleData
 {
-#if DEV
+#if DEVELOPER
 	entity  debugEntity
 #endif
 	int 	fxHandle = -1
@@ -205,7 +205,7 @@ void function TrackingVisionUpdatePlayerConnected( entity player )
 		particleData.active = false
 		particleData.update = false
 
-#if DEV
+#if DEVELOPER
 		particleData.debugEntity = player
 #endif
 
@@ -237,7 +237,7 @@ void function TrackingVisionUpdate( entity player )
 			particleData.active = false
 			particleData.update = false
 
-#if DEV
+#if DEVELOPER
 			particleData.debugEntity = enemy
 #endif
 
@@ -432,7 +432,7 @@ void function TrackingVision_UpdateWaypointPOIDrawing( entity waypoint )
 	if ( !IsValid( localViewPlayer ) )
 		return
 
-#if DEV
+#if DEVELOPER
 	if ( localViewPlayer != file.currentTracker )
 	{
 		ResetWaypointVisibilities()

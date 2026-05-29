@@ -112,7 +112,7 @@ global function OnWeaponTryEnergize
 
 global function OnWeaponAttemptOffhandSwitch_Never
 
-#if DEV
+#if DEVELOPER
 global function DEV_DumpStickinessTable
 global function DevPrintAllStatusEffectsOnEnt
 #endif
@@ -1522,7 +1522,7 @@ bool function HitEntIsValidToStick( hitEnt )
 	return false
 }
 
-#if DEV
+#if DEVELOPER
 const bool DEBUG_SURFACE_TEST = false
 const float DEBUG_SURFACE_TEST_TIME = 20
 #endif
@@ -1541,7 +1541,7 @@ bool function PlantStickyEntityOnConsistentSurface( entity projectile, Deployabl
 	vector surfaceAngles = AnglesOnSurface( collisionParams.normal, forward )
 	vector right         = AnglesToRight( surfaceAngles )
 
-#if DEV
+#if DEVELOPER
 		if ( DEBUG_SURFACE_TEST )
 		{
 			
@@ -1559,7 +1559,7 @@ bool function PlantStickyEntityOnConsistentSurface( entity projectile, Deployabl
 		vector origin    = collisionParams.pos + collisionParams.normal * size
 		vector endOrigin = origin + forward * testPos.x * size + right * testPos.y * size - collisionParams.normal * SURFACE_TEST_TRACE_LENGTH
 
-#if DEV
+#if DEVELOPER
 			if ( DEBUG_SURFACE_TEST )
 			{
 				DebugDrawArrow( origin, endOrigin, 5, COLOR_CYAN, true, DEBUG_SURFACE_TEST_TIME )
@@ -1573,7 +1573,7 @@ bool function PlantStickyEntityOnConsistentSurface( entity projectile, Deployabl
 			if ( dot < consistentDotThreshold )
 			{
 				surfaceIsConsistent = false
-#if DEV
+#if DEVELOPER
 					if ( DEBUG_SURFACE_TEST )
 					{
 						DebugDrawArrow( traceResult.endPos, traceResult.endPos + traceResult.surfaceNormal * 20, 5, <255, 100, 0>, true, DEBUG_SURFACE_TEST_TIME )
@@ -1583,7 +1583,7 @@ bool function PlantStickyEntityOnConsistentSurface( entity projectile, Deployabl
 			else
 			{
 				goodHitCount++
-#if DEV
+#if DEVELOPER
 					if ( DEBUG_SURFACE_TEST )
 					{
 						DebugDrawArrow( traceResult.endPos, traceResult.endPos + traceResult.surfaceNormal * 20, 5, <100, 255, 0>, true, DEBUG_SURFACE_TEST_TIME )
@@ -1656,7 +1656,7 @@ bool function PlantStickyEntityThatBouncesOffWalls( entity projectile, Deployabl
 }
 
 
-#if DEV
+#if DEVELOPER
 const bool DEBUG_DRAW_PLANT_STICKY = false
 #endif
 
@@ -1682,7 +1682,7 @@ bool function PlantStickyEntity( entity ent, DeployableCollisionParams cp, vecto
 	}
 	else
 	{
-#if DEV
+#if DEVELOPER
 		if ( DEBUG_DRAW_PLANT_STICKY )
 		{
 			DebugDrawSphere( cp.pos, 5, COLOR_YELLOW, false, 60 )
@@ -1718,7 +1718,7 @@ bool function PlantStickyEntity( entity ent, DeployableCollisionParams cp, vecto
 		{
 			plantPosition = trace.endPos
 
-#if DEV
+#if DEVELOPER
 			if ( DEBUG_DRAW_PLANT_STICKY )
 			{
 				DebugDrawSphere( plantPosition, 3, COLOR_RED, false, 60 )
@@ -1729,7 +1729,7 @@ bool function PlantStickyEntity( entity ent, DeployableCollisionParams cp, vecto
 		{
 			plantPosition = cp.pos
 
-#if DEV
+#if DEVELOPER
 			if ( DEBUG_DRAW_PLANT_STICKY )
 			{
 				DebugDrawSphere( plantPosition, 3, COLOR_BLUE, false, 60 )
@@ -2025,7 +2025,7 @@ bool function EntityCanHaveStickyEnts( entity stickyEnt, entity ent )
 	return true
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_DumpStickinessTable()
 {
 	bool dumpedEnts = false
@@ -2069,7 +2069,7 @@ bool function IsEntParentedToObjectOfScriptname( entity ent, string scriptname )
 	return false
 }
 
-#if DEV
+#if DEVELOPER
 void function ShowExplosionRadiusOnExplode( entity ent )
 {
 	ent.WaitSignal( "OnDestroy" )
@@ -2841,7 +2841,7 @@ void function GiveEMPStunStatusEffects( entity target, float duration, float fad
 
 }
 
-#if DEV
+#if DEVELOPER
 string ornull function FindEnumNameForValue( table searchTable, int searchVal )
 {
 	foreach ( string keyname, int value in searchTable )
@@ -4534,7 +4534,7 @@ bool function OnWeaponAttemptOffhandSwitch_Never( entity weapon )
 
 void function ServerCallback_SetWeaponPreviewState( bool newState )
 {
-#if DEV
+#if DEVELOPER
 		entity player = GetLocalClientPlayer()
 
 		if ( newState )

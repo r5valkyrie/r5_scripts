@@ -30,7 +30,7 @@ global function Entitlement_GetSKUStoreApexCoinCardBaseImage
 
 
 
-#if DEV
+#if DEVELOPER
 global function DEV_OpenHijackedEntitlementRedeemPopup
 #endif
 
@@ -1121,7 +1121,7 @@ void function ServerToUI_EntitlementInitialized()
 }
 
 
-#if DEV
+#if DEVELOPER
 
 void function DEV_OpenHijackedEntitlementRedeemPopup( string entitlementEnumName )
 {

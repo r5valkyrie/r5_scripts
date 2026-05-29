@@ -47,7 +47,7 @@ global function GRXPack_GetStickerCompletionRewardSequence
 global function GRXPack_PlayerOwnsAllItemsInPack
 global function GRXPack_GetStickerCompletionRewardPack
 
-#if DEV
+#if DEVELOPER
 global function DEV_GetItemFlavorByGRXRef
 global function DEV_IsValidGRXRef
 #endif
@@ -227,7 +227,7 @@ global function GRXPack_GetCustomColor
 global function GRXPack_GetCustomCountTextCol
 
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -758,7 +758,7 @@ struct FileStruct_LifetimeLevel
 	array<ItemFlavor> stickerPacksWithRewards
 	table< int, int > multiOwnershipUnlockMap
 
-#if DEV
+#if DEVELOPER
 		table<string, ItemFlavor> grxRefItemFlavorMap
 #endif
 
@@ -971,7 +971,7 @@ void function ShGRX_RegisterItemFlavor( ItemFlavor flavor )
 
 		fileLevel.grxIndexItemFlavorMap[flavor.grxIndex] <- flavor
 		fileLevel.grxRefToGRXIndexMap[grxRef] <- flavor.grxIndex
-#if DEV
+#if DEVELOPER
 			bool duplicateGRXRefFound = grxRef in fileLevel.grxRefItemFlavorMap
 			Assert( !duplicateGRXRefFound, "Duplicate GRX ref found. Already used by " + string(ItemFlavor_GetAsset( fileLevel.grxRefItemFlavorMap[grxRef] )) )
 			fileLevel.grxRefItemFlavorMap[grxRef] <- flavor
@@ -1000,7 +1000,7 @@ void function ShGRX_RegisterItemFlavor( ItemFlavor flavor )
 
 		foreach ( reqFlav in ownershipRequirementsList )
 		{
-#if DEV
+#if DEVELOPER
 				bool duplicateGRXRefFoundInMultiple = reqFlav.guid in fileLevel.multiOwnershipUnlockMap
 				Assert( !duplicateGRXRefFoundInMultiple, "Duplicate GRX ref in multiple unlock mapping found. Already used by " + string( ItemFlavor_GetAsset( GetItemFlavorByGUID( fileLevel.multiOwnershipUnlockMap[ reqFlav.guid ] ) ) ) )
 #endif
@@ -1068,14 +1068,14 @@ ItemFlavor function GetItemFlavorByGRXIndex( int index )
 
 
 
-#if DEV
+#if DEVELOPER
 ItemFlavor function DEV_GetItemFlavorByGRXRef( string grxRef )
 {
 	return fileLevel.grxRefItemFlavorMap[ grxRef ]
 }
 #endif
 
-#if DEV
+#if DEVELOPER
 bool function DEV_IsValidGRXRef( string grxRef )
 {
 	return (grxRef in fileLevel.grxRefItemFlavorMap)
@@ -3222,7 +3222,7 @@ bool function GRXPack_PlayerOwnsAllItemsInPack( entity player, ItemFlavor pack )
 
 
 
-#if DEV
+#if DEVELOPER
 ItemFlavorBag ornull DEV_GRX_ForcePackResults_resultsOrNull
 void function DEV_GRX_ForcePackResults( int packError, ... )
 {
@@ -5039,7 +5039,7 @@ void function UIToClient_GRXInventoryCleanStateChange( bool isClean, int marketp
 
 
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -6249,7 +6249,7 @@ void function ClientCodeCallback_GRXPackOpened( array<int> balanceDiffs, array<i
 #endif
 	}
 
-#if DEV
+#if DEVELOPER
 		int menuHeirloomOverrideGUID = DEV_GetMenuHeirloomOverrideGUID()
 
 		if ( menuHeirloomOverrideGUID >= 0 )
@@ -7091,7 +7091,7 @@ bool function GRX_IsItemCoveredByOfferRestrictions( ItemFlavor flav )
 
 
 
-#if DEV
+#if DEVELOPER
 
 
 

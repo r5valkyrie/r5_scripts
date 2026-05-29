@@ -21,39 +21,37 @@ struct
 	float dev_finisherFOV = 0.0
 } file
 
-
 void function ShDevUtility_Init()
 {
 	RegisterSignal( "DevSignal1" )
 	RegisterSignal( "DevSignal2" )
 
-
+	#if SERVER || CLIENT
 		PrecacheScriptString( "DEV_CreateCrow" )
-		PrecacheModel( $"mdl/Humans/class/medium/pilot_medium_empty.rmdl" ) 
+		PrecacheModel( $"mdl/Humans/class/medium/pilot_medium_empty.rmdl" ) // for spectator players
+	#endif
 
+	#if SERVER
+		AddClientCommandCallback( "respawn", ClientCommand_Respawn ) // dev
+		AddClientCommandCallback( "set_respawn_override", ClientCommand_SetRespawnOverride ) // dev
+	#endif
 
-
-
-
-
-
-
+	#if CLIENT
 		RegisterSignal( "DEV_PreviewScreenRUI" )
 		RegisterSignal( "DEV_PreviewWorldRUI" )
-
+	#endif
 }
 
 
-
-
+#if SERVER || CLIENT
 entity function GEBI( int entIndex )
 {
 	return GetEntByIndex( entIndex )
 }
+#endif
 
 
-
-
+#if SERVER || CLIENT
 entity function GP( int playerIndex = 0 )
 {
 	array<entity> players = GetPlayerArray()
@@ -62,20 +60,20 @@ entity function GP( int playerIndex = 0 )
 
 	return players[playerIndex]
 }
+#endif
 
 
-
-
+#if SERVER || CLIENT
 entity function GPAW( int playerIndex = 0 )
 {
-	entity player = GP( playerIndex )
+	entity player = GetLocalClientPlayer()
 	entity result = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
 	return result
 }
+#endif
 
 
-
-
+#if SERVER || CLIENT
 entity function GBOT( int botIndex = 0 )
 {
 	array<entity> bots
@@ -107,17 +105,17 @@ entity function GBOT_LAST()
 
 	return bots[bots.len()-1]
 }
+#endif
 
 
-
-
+#if SERVER || CLIENT
 void function PrintEntArray( array<entity> arr )
 {
 	printf( "%s() - len:%d  %s", FUNC_NAME(), arr.len(), string( arr ) )
 	foreach ( int index, entity ent in arr )
 		printf( " [%d] - %s %s", index, string( ent ), string( ent.GetOrigin() ) )
 }
-
+#endif // SERVER || CLIENT
 
 void function PrintStringArray( array<string> arr )
 {
@@ -142,30 +140,30 @@ void function PrintFloatArray( array<float> arr )
 }
 
 
-
-
-
+// short cut for the console
+// script gp()[0].Die( gp()[1] )
+#if SERVER || CLIENT
 array<entity> function gp()
 {
 	return GetPlayerArray()
 }
+#endif
 
-
-
+#if SERVER || CLIENT
 array<entity> function getnpcs( entity player )
 {
 	return GetNPCArrayOfTeam( player.GetTeam() )
 }
+#endif
 
 
-
-
+#if SERVER || CLIENT
 entity function ge( int ornull index = null )
 {
 	if ( index != null )
 		return GetEntByIndex( expect int( index ) )
 
-	entity player = gp()[0]
+	entity player = GetLocalClientPlayer()
 
 	vector traceStart = player.EyePosition()
 	vector traceDir   = player.GetViewVector()
@@ -175,10 +173,10 @@ entity function ge( int ornull index = null )
 
 	return results.hitEnt
 }
+#endif
 
 
-
-
+#if SERVER || CLIENT
 vector function EyeTraceVec( entity player = null, bool debugDraws = false, int traceMask = 0, int traceGroup = 0, float debugDrawTime = 120 )
 {
 	if ( player == null )
@@ -190,35 +188,35 @@ vector function EyeTraceVec( entity player = null, bool debugDraws = false, int 
 
 	TraceResults results = TraceLine( traceStart, traceEnd, player, traceMask, traceGroup )
 
-#if DEV
+	#if DEVELOPER
 		if( debugDraws )
 		{
 			DrawStar( results.endPos, 16,debugDrawTime, true )
 		}
-#endif
+	#endif
 
 	return results.endPos
 }
+#endif
 
 
-
-
+#if SERVER || CLIENT
 void function PrintLoc()
 {
 	vector origin    = GetPlayerArray()[0].GetOrigin()
-	
+	//vector origin = GetPlayerCrosshairOriginRaw( GetPlayerArray()[0] )
 	vector eyeAngles = GetPlayerArray()[0].EyeAngles()
 	eyeAngles.x = 0
 	printt( "xxx: " + origin + ", " + eyeAngles + "" )
 }
+#endif
 
-
-
-
-
-
-
-
+//////////////////////////
+//////////////////////////
+//// Random Dev Stuff ////
+//////////////////////////
+//////////////////////////
+#if CLIENT
 void function BatchClientsideExecutionTest( vector refPoint, vector ang, array<ItemFlavor> characterPool )
 {
 	int count = 0
@@ -229,7 +227,7 @@ void function BatchClientsideExecutionTest( vector refPoint, vector ang, array<I
 		{
 			ItemFlavor victimCharacter = characterPool.getrandom()
 			ItemFlavor victimSkin      = GetValidItemFlavorsForLoadoutSlot( EHI_null, Loadout_CharacterSkin( victimCharacter ) ).getrandom()
-			
+			//delaythread(1.0 + count * 0.15)
 			delaythread(1.1) ClientsideExecutionTest( refPoint + count * AnglesToForward( ang ) * 180, attackerCharacter, attackerSkin, victimCharacter, victimSkin, execution )
 			count++
 		}
@@ -241,10 +239,10 @@ void function ClientsideExecutionTestInspiration( vector refPoint, entity attack
 	ItemFlavor attackerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( attackerInspiration ), Loadout_Character() )
 	ItemFlavor attackerSkin      = LoadoutSlot_GetItemFlavor( ToEHI( attackerInspiration ), Loadout_CharacterSkin( attackerCharacter ) )
 	ItemFlavor victimCharacter, victimSkin
-
+	
 	if ( victimInspiration == null )
 	{
-		if ( weight == "manual" ) 
+		if ( weight == "manual" ) // Use a random other player in world
 		{
 			array<entity> players = GetPlayerArray()
 			players.fastremovebyvalue( GetLocalClientPlayer() )
@@ -260,24 +258,24 @@ void function ClientsideExecutionTestInspiration( vector refPoint, entity attack
 				return
 			}
 		}
-		else 
+		else // Create a dummy on the fly
 		{
 			array<ItemFlavor> characters = GetAllCharacters()
 			array<ItemFlavor> sizedCharacters = []
 			array<ItemFlavor> sizedSkins = []
-
+			
 			foreach ( character in characters )
 			{
 				asset setFile = CharacterClass_GetSetFile( character )
 				string rigWeight = GetGlobalSettingsString( setFile, "bodyModelRigWeight" )
-
+				
 				if ( ( rigWeight == weight || weight == "random" ) )
 				{
 					ItemFlavor sizedSkin = GetValidItemFlavorsForLoadoutSlot( EHI_null, Loadout_CharacterSkin( character ) ).getrandom()
 					asset bodyModel = CharacterSkin_GetBodyModel( sizedSkin )
 					asset armsModel = CharacterSkin_GetArmsModel( sizedSkin )
-
-					
+				
+					// Some dev characters don't have models yet!
 					if ( bodyModel != "" && armsModel != "" )
 					{
 						sizedCharacters.append( character )
@@ -285,7 +283,7 @@ void function ClientsideExecutionTestInspiration( vector refPoint, entity attack
 					}
 				}
 			}
-
+			
 			if ( sizedCharacters.len() > 0 )
 			{
 				int randomIndex = RandomIntRange( 0, sizedCharacters.len() )
@@ -304,7 +302,7 @@ void function ClientsideExecutionTestInspiration( vector refPoint, entity attack
 		victimCharacter = LoadoutSlot_GetItemFlavor( ToEHI( victimInspiration ), Loadout_Character() )
 		victimSkin = LoadoutSlot_GetItemFlavor( ToEHI( victimInspiration ), Loadout_CharacterSkin( victimCharacter ) )
 	}
-
+	
 	ItemFlavor attackerExecution = LoadoutSlot_GetItemFlavor( ToEHI( attackerInspiration ), Loadout_CharacterExecution( attackerCharacter ) )
 	ClientsideExecutionTest( refPoint, attackerCharacter, attackerSkin, victimCharacter, victimSkin, attackerExecution, whichCamera )
 }
@@ -331,7 +329,7 @@ ItemFlavor attackerExecution, string whichCamera = "none" )
 	CharacterSkin_Apply( victim, victimSkin )
 
 	float fov = 70.0
-
+	
 	if ( whichCamera == "attacker" || whichCamera == "victim" )
 	{
 		fov = file.dev_finisherFOV
@@ -341,7 +339,7 @@ ItemFlavor attackerExecution, string whichCamera = "none" )
 			Warning( "Using default fov = 70 - Type into console: script_client dev_finisherfov( x ) ... x = AE_SV_FOV in the animation event in bakery" )
 		}
 	}
-
+	
 	switch( whichCamera )
 	{
 		case "attacker":
@@ -361,7 +359,7 @@ ItemFlavor attackerExecution, string whichCamera = "none" )
 		case "orbit":
 		{
 			camera = CreateClientSidePointCamera( attacker.GetOrigin(), attacker.GetAngles(), fov )
-			
+			//camera.SetParent( attacker, "ref", false, 0.0 )
 			break
 		}
 	}
@@ -398,7 +396,7 @@ ItemFlavor attackerExecution, string whichCamera = "none" )
 		GetLocalClientPlayer().SetMenuCameraEntity( camera )
 	}
 
-	if ( whichCamera == "delay" ) 
+	if ( whichCamera == "delay" ) // lol
 		wait 2.2
 
 	attacker.Anim_PlayWithRefPoint( attackerAnimSeq, refPoint, <0, 0, 0>, 0.0 )
@@ -439,275 +437,275 @@ ItemFlavor attackerExecution, string whichCamera = "none" )
 	}
 	wait 0.25
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#endif
+
+
+#if SERVER
+void function DEV_ModelScaleTest()
+{
+	entity ent = CreateEntity( "prop_physics" )
+	ent.SetValueForModelKey( $"mdl/weapons/grenades/m20_f_grenade_projectile.rmdl" )
+	ent.SetModelScale( 10.0 )
+	ent.SetOrigin( gp()[0].GetOrigin() + <0, 0, 300> )
+	DispatchSpawn( ent )
+	ent.SetModelScale( 10.0 )
+}
+#endif
+
+//////////////////////////////
+//////////////////////////////
+//// Dev Respawn Commands ////
+//////////////////////////////
+//////////////////////////////
+#if SERVER
+struct {
+	string behaviourOverride = "off"
+} devRespawnState
+
+bool ornull function DevRespawnGetPlayerEliminationOverride( entity player )
+{
+	switch( devRespawnState.behaviourOverride )
+	{
+		case "allow":
+			return false // not eliminated
+
+		case "deny":
+			return true // eliminated
+
+		case "bots":
+			if ( player.IsBot() )
+			{
+				return false // not eliminated
+			}
+			break
+	}
+	return null // don't override
+}
+
+void function DevRespawnPlayer( entity player, bool shouldForce, void functionref( entity, int ) devCallbackFunc = null, int devIndex = -1 )
+{
+	if ( shouldForce && IsAlive( player ) )
+	{
+		player.SetHealth( 0 )
+		wait 1.0
+	}
+	if ( !IsAlive( player ) )
+	{
+		player.p.DEV_hasDevRespawned = true // pretend this is a valid survival respawn
+		player.p.respawnPodLanded = true // pretend this is a valid survival respawn
+		thread _DelayUnsetRespawnPodLanded( player )
+		player.p.hasMatchParticipationEnded = false // they're still going!
+		player.p.lastDeathTime = -1.0
+		ClearPlayerEliminated( player )
+		if ( shouldForce )
+		{
+			RespawnTitanPilot( player )
+		}
+		else
+		{
+			DecideRespawnPlayer( player, false )
+		}
+	}
+
+	if ( devCallbackFunc != null )
+		devCallbackFunc( player, devIndex )
+}
+
+void function _DelayUnsetRespawnPodLanded( entity player )
+{
+	player.EndSignal( "OnDestroy" )
+	WaitEndFrame()
+	player.p.respawnPodLanded = false
+}
+
+void function DEV_RespawnPlayersBySpecifiers( array<string> specifiers, entity primaryPlayer = null, void functionref( entity, int ) devCallbackFunc = null )
+{
+	if ( specifiers.len() == 0 )
+	{
+		specifiers.append( "me" )
+	}
+	if ( primaryPlayer == null )
+		primaryPlayer = GetPlayerArray()[0]
+
+	array<entity> playersToRespawnList = []
+	foreach ( string specifier in specifiers )
+	{
+		switch( specifier )
+		{
+			case "me":
+				playersToRespawnList.append( primaryPlayer )
+				break
+
+			case "all":
+				foreach ( entity player in GetPlayerArray() )
+				{
+					playersToRespawnList.append( player )
+				}
+				break
+
+			case "alldead":
+				foreach ( entity player in GetPlayerArray() )
+				{
+					if ( !IsAlive( player ) )
+					{
+						playersToRespawnList.append( player )
+					}
+				}
+				break
+
+			case "random":
+				array<entity> randomCandidates = []
+				foreach ( entity player in GetPlayerArray() )
+				{
+					if ( !playersToRespawnList.contains( player ) )
+					{
+						randomCandidates.append( player )
+					}
+				}
+				if ( randomCandidates.len() > 0 )
+				{
+					playersToRespawnList.append( randomCandidates[ RandomInt( randomCandidates.len() ) ] )
+				}
+				break
+
+			case "randomdead":
+				array<entity> randomCandidates = []
+				foreach ( entity player in GetPlayerArray() )
+				{
+					if ( !IsAlive( player ) && !playersToRespawnList.contains( player ) )
+					{
+						randomCandidates.append( player )
+					}
+				}
+				if ( randomCandidates.len() > 0 )
+				{
+					playersToRespawnList.append( randomCandidates[ RandomInt( randomCandidates.len() ) ] )
+				}
+				break
+
+			case "bots":
+				foreach ( entity player in GetPlayerArray() )
+				{
+					if ( player.IsBot() )
+					{
+						playersToRespawnList.append( player )
+					}
+				}
+				break
+
+			case "deadbots":
+				foreach ( entity player in GetPlayerArray() )
+				{
+					if ( !IsAlive( player ) && player.IsBot() )
+					{
+						playersToRespawnList.append( player )
+					}
+				}
+				break
+
+			case "allies":
+				foreach ( entity player in GetPlayerArrayOfTeam( primaryPlayer.GetTeam() ) )
+				{
+					playersToRespawnList.append( player )
+				}
+				break
+
+			case "enemies":
+				foreach ( entity player in GetPlayerArrayOfEnemies( primaryPlayer.GetTeam() ) )
+				{
+					playersToRespawnList.append( player )
+				}
+				break
+
+			default:
+				Assert( false , "Invalid usage of respawn - please specify zero or more of: me, all, alldead, random, randomdead, bots, deadbots, allies, enemies" )
+		}
+	}
+	array<entity> uniquePlayersToRespawnList = []
+	table<entity, bool> playersAlreadyRespawned
+	foreach ( entity player in playersToRespawnList )
+	{
+		if ( !(player in playersAlreadyRespawned) )
+		{
+			playersAlreadyRespawned[player] <- true
+			uniquePlayersToRespawnList.append( player )
+			thread DevRespawnPlayer( player, true, devCallbackFunc, uniquePlayersToRespawnList.len() )
+		}
+	}
+	//return uniquePlayersToRespawnList
+}
+void function DEV_RespawnAllPlayersAndPutThemInALineAndGiveRandomSurvivalStuff( bool circle = false )
+{
+	entity primaryPlayer = GetPlayerArray()[0]
+	vector pos           = primaryPlayer.GetOrigin()
+	vector dir           = AnglesToForward( primaryPlayer.EyeAngles() )
+	dir.z = 0
+	dir = Normalize( dir )
+	DEV_RespawnPlayersBySpecifiers( [ "all" ], null, void function( entity ply, int i ) : ( pos, dir, circle ) {
+		svGlobal.levelEnt.Signal( "SlowMo" )
+		if ( circle )
+		{
+			float r = float(i) / float(GetPlayerArray().len()) * 2 * PI
+			ply.SetOrigin( pos + 500.0 * <sin( r ), cos( r ), 0.0> )
+		}
+		else
+		{
+			ply.SetOrigin( pos + 120.0 * i * dir )
+		}
+		//GiveSurvivalClass( ply, RandomIntRange( 0, GetNumPilotLoadouts() ) )
+		// todo(dw): give random survival class
+		// todo(dw): give random weapon with random mods with appropriate ammo
+	} )
+}
+
+void function ClientCommand_Respawn( entity commandPlayer, array<string> argList )
+{
+	thread DEV_RespawnPlayersBySpecifiers( argList, commandPlayer )
+}
+
+void function ClientCommand_SetRespawnOverride( entity commandPlayer, array<string> al )
+{
+	if ( al.len() != 1 || !(al[0] == "off" || al[0] == "allow" || al[0] == "deny" || al[0] == "bots") )
+	{
+		printt( "Invalid usage of set_respawn_override: please pass one of: off, allow, deny, bots" )
+		return
+	}
+	devRespawnState.behaviourOverride = al[0]
+	foreach ( entity player in GetPlayerArray() )
+	{
+		thread DevRespawnPlayer( player, false ) // check to see if dead players should be respawned using new rules
+	}
+}
+
+void function DEV_HurtAllPlayers( int minDamage = 25, int maxDamage = -1 )
+{
+	array<entity> alivePlayers = GetPlayerArray_Alive()
+	foreach ( entity victim in alivePlayers )
+	{
+		Assert( IsAlive( victim ) )
+
+		entity attacker = alivePlayers.getrandom()
+
+		int damage         = maxDamage == -1 ? minDamage : RandomIntRangeInclusive( minDamage, maxDamage )
+		int damageSourceId = RandomIntRangeInclusive( eDamageSourceId.damagedef_unknown, eDamageSourceId._count - 1 )
+		victim.TakeDamage( damage, attacker, attacker, { damageSourceId = damageSourceId } )
+	}
+}
+
+void function DEV_SetMeToTeam( int teamNum = 5 )
+{
+	SetTeam( GP(), teamNum )
+}
+
+#endif
+
+
+///////////////////////////////
+///////////////////////////////
+//// Screen Alignment Tool ////
+///////////////////////////////
+///////////////////////////////
+#if CLIENT
 var DEV_screenAlignmentTopo = null
 var DEV_screenAlignmentRui = null
 var function DEV_ToggleScreenAlignmentTool()
@@ -729,30 +727,30 @@ var function DEV_ToggleScreenAlignmentTool()
 	RuiSetResolution( DEV_screenAlignmentRui, float( screenSize.width ), float( screenSize.height ) )
 	return DEV_screenAlignmentRui
 }
+#endif
 
 
 
 
 
+///////////////////////////
+///////////////////////////
+//// RUI Preview Setup ////
+///////////////////////////
+///////////////////////////
+// Usage:
+//     script_client thread DEV_PreviewScreenRUI( $"ui/gcard_badge_warlord.rpak", [255,255,255,125] )
+//     script_client DEV_HidePreviewRUIs()
 
-
-
-
-
-
-
-
-
-
-
+#if CLIENT
 void function DEV_HidePreviewRUIs()
 {
 	Signal( clGlobal.levelEnt, "DEV_PreviewScreenRUI" )
 	Signal( clGlobal.levelEnt, "DEV_PreviewWorldRUI" )
 }
+#endif
 
-
-
+#if CLIENT
 void function DEV_PreviewScreenRUI( asset ruiAsset, array<int> bgCol )
 {
 	Signal( clGlobal.levelEnt, "DEV_PreviewScreenRUI" )
@@ -778,13 +776,13 @@ void function DEV_PreviewScreenRUI( asset ruiAsset, array<int> bgCol )
 	}
 	try
 	{
-		
+		//	RuiCreateNested( nestedRui, "doubleNestedInstance", $"ui/double_nested_instance.rpak" )
 	}
 	catch ( e2 )
 	{
-		
+		//
 	}
-	
+	//RuiSetResolution( rui, float( screenSize.width ), float( screenSize.height ) )
 
 	OnThreadEnd( function() : ( topo, rui, nestedRui ) {
 		RuiDestroyNestedIfAlive( rui, "instance" )
@@ -794,9 +792,9 @@ void function DEV_PreviewScreenRUI( asset ruiAsset, array<int> bgCol )
 
 	WaitForever()
 }
+#endif
 
-
-
+#if CLIENT
 void function DEV_PreviewWorldRUI( asset ruiAsset, float width = 100, float height = 100 )
 {
 	Signal( clGlobal.levelEnt, "DEV_PreviewWorldRUI" )
@@ -861,9 +859,9 @@ void function DEV_PreviewWorldRUI( asset ruiAsset, float width = 100, float heig
 
 	WaitForever()
 }
+#endif
 
-
-
+#if CLIENT
 void function DEV_PreviewCurvedRUI( asset ruiAsset )
 {
 	Signal( clGlobal.levelEnt, "DEV_PreviewScreenRUI" )
@@ -897,7 +895,7 @@ void function DEV_PreviewCurvedRUI( asset ruiAsset )
 		Announcement_SetPurge( announcement, true )
 		AnnouncementFromClass( GetLocalClientPlayer(), announcement )
 	}
-	
+	//RuiSetResolution( rui, float( screenSize.width ), float( screenSize.height ) )
 
 	OnThreadEnd( function() : ( topo, rui, nestedRui ) {
 		RuiDestroyNestedIfAlive( rui, "instance" )
@@ -907,18 +905,18 @@ void function DEV_PreviewCurvedRUI( asset ruiAsset )
 
 	WaitForever()
 }
+#endif
 
 
 
 
 
-
-
-
-
-
-
-
+/////////////////////////////////
+/////////////////////////////////
+//// Player Debug Lines Tool ////
+/////////////////////////////////
+/////////////////////////////////
+#if CLIENT
 bool isPlayerDebugLinesToolRunning = false
 void function DEV_TogglePlayerDebugLinesTool()
 {
@@ -950,10 +948,10 @@ void function DEV_PlayerDebugLinesTool_Thread( entity localClientPlayer )
 		WaitFrame()
 	}
 }
+#endif
 
 
-
-
+#if CLIENT
 void function DEV_DumpItems()
 {
 	string fmtStr = "%s,%s,%s,%s,\"%s\",\"%s\"\n"
@@ -1079,176 +1077,176 @@ void function DEV_DrawBoundingBox()
 		boxMaxs.x, boxMaxs.y, boxMaxs.z
 	)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#endif // #if CLIENT
+
+
+#if SERVER
+entity function DEV_SpawnEntAtCursor( string classname, asset model )
+{
+	entity player = GetLocalClientPlayer()
+	entity ent    = CreateEntity( classname )
+	ent.SetModel( model )
+	ent.kv.solid = SOLID_VPHYSICS
+	DispatchSpawn( ent )
+	ent.SetOrigin( EyeTraceVec( player ) )
+	ent.SetFadeDistance( 100000 )
+	ent.Solid()
+	ent.DisableHibernation()
+	return ent
+}
+#endif
+
+#if SERVER
+void function DEV_GiveGuns( string weaponName = "mp_weapon_rspn101" )
+{
+	// "mp_weapon_g2",
+
+	int weaponSlot = WEAPON_INVENTORY_SLOT_PRIMARY_0
+
+	array< entity > players = GetPlayerArray_Alive()
+	foreach ( entity player in players )
+	{
+		player.TakeNormalWeaponByIndexNow( weaponSlot )
+		entity newWeapon = player.GiveWeapon( weaponName, weaponSlot )
+		if ( IsValid( newWeapon ) )
+		{
+			int ammoPoolType = newWeapon.GetWeaponAmmoPoolType()
+			int ammoCap = player.AmmoPool_GetCapacity()
+			player.AmmoPool_SetCount( ammoPoolType, ammoCap / 2 )
+
+			player.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, weaponSlot )
+		}
+	}
+}
+
+void function DEV_GodPlayers( bool makeInvulnerable = true )
+{
+	array< entity > players = GetPlayerArray_Alive()
+
+	foreach ( entity player in players )
+	{
+		if ( makeInvulnerable )
+		{
+			player.SetInvulnerable()
+		}
+		else
+		{
+			player.ClearInvulnerable()
+		}
+	}
+}
+
+void function DEV_ShowPlayerInvulnerableState( entity player, float showTime = 30.0 )
+{
+	if( !IsValidPlayer( player ))
+		return
+
+	thread function() : (player, showTime)
+	{
+		player.EndSignal( "OnDeath" )
+		player.EndSignal( "OnDisconnecting" )
+
+		float timePassed
+		const float TIME_SLICE = 0.1
+
+		while(( timePassed < showTime ) && IsValidPlayer( player ))
+		{
+			vector devColor = player.IsInvulnerable() ? COLOR_GREEN : COLOR_RED
+			//DebugDrawSphere( player.GetOrigin(), 128, devColor, true, TIME_SLICE )
+			wait TIME_SLICE
+			timePassed += TIME_SLICE
+		}
+	}()
+}
+
+// Shows all the players on the Map as green dots and as red cylinders in the world.
+void function DEV_ShowAllPlayerLocs( float duration = 10 )
+{
+	array< entity > allPlayers = GetPlayerArray()
+	array< vector > allPlayerLocs
+
+	foreach(player in allPlayers )
+	{
+		if( !IsValid( player ) )
+			continue
+
+		vector playerLoc = player.GetOrigin()
+		//DebugDrawCylinder( playerLoc, < -90, 0, 0 >, 32, 64, COLOR_RED, true, duration )
+		allPlayerLocs.append( player.GetOrigin() )
+	}
+
+	thread DEV_Show_Locs_OnMiniMap_Thread( allPlayerLocs, eMinimapObject_prop_script.RESPAWN_DNA, duration )
+}
+
+void function DEV_ShowAllPlayersMoving( float duration = 10 )
+{
+	thread DEV_ShowAllPlayersMoving_Thread( duration )
+}
+
+void function DEV_ShowAllPlayersMoving_Thread( float duration = 10 )
+{
+	array< entity > allPlayers = GetPlayerArray()
+	array< entity > allPlayerMarkers
+
+	foreach(player in allPlayers )
+	{
+		if( !IsValid( player ) )
+			continue
+
+		if( !IsAlive( player ) )
+			continue
+
+		vector playerLoc = player.GetOrigin()
+		entity marker = DEV_Create_MapObj( player.GetOrigin(), eMinimapObject_prop_script.RESPAWN_DNA )
+		marker.SetParent( player )
+		allPlayerMarkers.append( marker )
+		//DebugDrawCylinder( playerLoc, < -90, 0, 0 >, 32, 64, COLOR_RED, true, duration )
+	}
+
+	wait( duration )
+
+	foreach( marker in allPlayerMarkers )
+	{
+		if( IsValid( marker ) )
+		{
+			marker.Destroy()
+		}
+	}
+}
+
+void function DEV_Show_Locs_OnMiniMap_Thread( array< vector > locations, int type, float duration = 60, float scale = 1, int visibleTeam = TEAM_UNASSIGNED, vector objColor = < -1, -1, -1 > )
+{
+	array< entity > mapObjs
+	foreach( loc in locations )
+	{
+		entity newObj = DEV_Create_MapObj( loc, type, objColor, visibleTeam, scale )
+		mapObjs.append( newObj )
+	}
+
+	wait duration
+	foreach( obj in mapObjs )
+	{
+		obj.Destroy()
+	}
+}
+
+entity function DEV_Create_MapObj( vector loc, int type, vector objColor = COLOR_YELLOW, int visibleTeam = TEAM_UNASSIGNED, float scale = 1)
+{
+	entity minimapObj = CreatePropScript( $"mdl/dev/empty_model.rmdl", loc )
+	minimapObj.Minimap_SetCustomState( type )
+	minimapObj.Minimap_SetObjectScale( scale )
+	minimapObj.Minimap_SetAlignUpright( true )
+	SetTargetName( minimapObj, "devMapMarker" )
+	minimapObj.Minimap_AlwaysShow( visibleTeam, null )
+	minimapObj.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
+	minimapObj.DisableHibernation()
+	return minimapObj
+}
+
+#endif // SERVER
+
+
+#if SERVER || CLIENT
 array<entity> function DEV_PrintChildren( entity ent )
 {
 	array<entity> children = []
@@ -1352,7 +1350,7 @@ void function DEV_DumpPlayers( string filter = "", float drawDuration = 60 )
 		if ( player.IsBot() )
 			playerPrefix = " BOT"
 
-
+		#if CLIENT
 			if ( player == GetLocalViewPlayer() && player == GetLocalClientPlayer() )
 				playerPrefix = "LCVP"
 			else if ( player == GetLocalViewPlayer() )
@@ -1362,15 +1360,15 @@ void function DEV_DumpPlayers( string filter = "", float drawDuration = 60 )
 
 			vector randomOffset = 10 * GetRandomUnitVector()
 			DebugDrawText( player.GetOrigin() + randomOffset, string( player.GetEntIndex() ), false, drawDuration )
-
+		#endif
 
 		printf( "  %s [%3d] %-20s", playerPrefix, player.GetEntIndex(), player.GetPlayerName() )
 	}
 }
+#endif
 
 
-
-
+#if CLIENT
 void function DEV_FreeCamBasedOnSun( vector toSunDir, entity target, float horzDist, float elevation, float fov )
 {
 	entity ply = GetLocalClientPlayer()
@@ -1385,358 +1383,357 @@ void function DEV_FreeCamBasedOnSun( vector toSunDir, entity target, float horzD
 
 	ply.ClientCommand( format( "set fov %f", fov ) )
 }
+#endif
+
+#if SERVER
+void function Capture_CreateCrow( vector origin, vector angles )
+{
+	entity crow = CreatePropScript( $"mdl/creatures/bird/bird.rmdl", origin, angles  )
+	crow.SetScriptName( "DEV_CreateCrow" )
+	crow.SetSkin(2)
+	crow.SetFadeDistance( 100000 )
+	thread PlayAnim( crow, "Bird_casual_idle_s10e04" )
+}
+
+void function Capture_TriggerCrowLeave( float waitTime = 5.0, vector angles = <0,0,0>)
+{
+	array < entity > ravenArray = GetEntArrayByScriptName( "DEV_CreateCrow" )
+	if ( ravenArray.len() != 1 )
+	{
+		return
+	}
+
+	entity bird = ravenArray[0]
+
+	thread function() : ( bird, waitTime, angles )
+	{
+		bird.EndSignal( "OnDestroy" )
+		OnThreadEnd(
+			function() : ( bird )
+			{
+				if ( IsValid( bird ) )
+					bird.Destroy()
+			}
+		)
+
+		thread PlayAnim( bird, "Bird_react_fly_small_s10e04", bird.GetOrigin(), angles, 0.7 )
+		wait waitTime
+		waitthread Capture_fadeModelAlphaOutOverTime( bird, 0.4 )
+	}()
+}
+
+
+void function Capture_fadeModelAlphaOutOverTime( entity model, float duration )
+{
+	EndSignal( model, "OnDestroy" )
+
+	float startTime = Time()
+	float endTime = startTime + duration
+	int startAlpha = 255
+	int endAlpha = 0
+
+	model.kv.rendermode = 4 //Rendmode TransAlpha
+
+	while ( Time() <= endTime )
+	{
+		float alphaResult = GraphCapped( Time(), startTime, endTime, startAlpha, endAlpha )
+		model.kv.renderamt = alphaResult
+		WaitFrame()
+	}
+}
+
+// Records player animation for given secs, then saves it under given name.
+void function AnimRecordPlayer_Thread( int secs, string name, bool usePlayerCoords = false, vector posParm = < 0, 0, 0 >, vector anglesParm = < 0, 0, 0 > )
+{
+	entity player = GetLocalClientPlayer()
+	vector pos
+	vector ang
+
+	if( !usePlayerCoords )
+	{
+		pos = posParm
+		ang = anglesParm
+	}
+	else
+	{
+		pos = player.GetOrigin()
+		ang = player.GetAngles()
+	}
+
+	// countdown
+	for( int i = 5; i >= 0; i -- )
+	{
+		printt( format( "%s(): Record Countdown: %s ", FUNC_NAME(), string( i )))
+		wait( 1 )
+	}
+
+	printt( format( "%s(): *** RECORDING STARTED for %s.", FUNC_NAME(), name))
+
+	player.StartRecordingAnimation( pos, ang )
+	for( int i = secs; i >= 0; i -- )
+	{
+		printt( format( "%s(): Record Time Left: %s ", FUNC_NAME(), string( i )))
+		wait 1
+	}
+
+	SaveRecordedAnimation( player.StopRecordingAnimation(), name )
+
+	printt( format( "%s(): *** RECORDING ENDED for %s.", FUNC_NAME(), name))
+}
+
+void function DBC_ApplyLobaSkin( entity loba, int level )
+{
+	ItemFlavor ornull skin
+	switch( level )
+	{
+		// Gardens
+		case 0:
+			skin = GetItemFlavorOrNullByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID01015578696" ) )
+			break
+		case 2:
+			skin = GetItemFlavorOrNullByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID01982638257" ) )
+			break
+		case 3:
+			skin = GetItemFlavorOrNullByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID02056656383" ) )
+			break
+		case 4:
+			skin = GetItemFlavorOrNullByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID00796934363" ) )
+			break
+	}
+
+	if ( skin == null )
+		return
 
+	expect ItemFlavor( skin )
+	CharacterSkin_Apply( loba, skin )
+}
 
+void function DBC_Cinematic_HeroMoment1_Thread( vector origin, vector angles, int level )
+{
+	entity loba = CreatePropDynamic( $"mdl/Humans/class/medium/pilot_medium_loba.rmdl", origin, angles, SOLID_BBOX, 99999 )
 
+	DBC_ApplyLobaSkin( loba, level )
+
+	entity rev = CreatePropDynamic( $"mdl/humans/class/heavy/revenant_v23_revarmy_w.rmdl", origin, angles, SOLID_BBOX, 99999 )
 
+	DBC_SetCinematicEntToStartedFadedOut( loba )
+	DBC_SetCinematicEntToStartedFadedOut( rev )
 
+	thread PlayAnim( loba, "loba_igc_yos1_heromoment01" )
+	waitthread PlayAnim( rev, "revenant_igc_yos1_heromoment01" )
+
+	loba.Destroy()
+	rev.Destroy()
+}
+
+void function DBC_Cinematic_HeroMoment2_Thread( vector origin, vector angles, int level  )
+{
+	entity loba = CreatePropDynamic( $"mdl/Humans/class/medium/pilot_medium_loba.rmdl", origin, angles, SOLID_BBOX, 99999 )
+	entity rev = CreatePropDynamic( $"mdl/humans/class/heavy/revenant_v23_revarmy_w.rmdl", origin, angles, SOLID_BBOX, 99999 )
+	entity rev2 = CreatePropDynamic( $"mdl/humans/class/heavy/revenant_v23_revarmy_w.rmdl", origin, angles, SOLID_BBOX, 99999 )
 
+	DBC_ApplyLobaSkin( loba, level )
 
+	DBC_SetCinematicEntToStartedFadedOut( loba )
+	DBC_SetCinematicEntToStartedFadedOut( rev )
+	DBC_SetCinematicEntToStartedFadedOut( rev2 )
+
+
+	thread PlayAnim( rev, "revenant_igc_yos1_heromoment02" )
+	thread PlayAnim( rev2, "revenant02_igc_yos1_heromoment02" )
+	waitthread PlayAnim( loba, "loba_igc_yos1_heromoment02" )
+
+
+	loba.Destroy()
+	rev.Destroy()
+	rev2.Destroy()
+}
+
+void function DBC_Cinematic_HeroMoment3_Thread( vector origin, vector angles, int level  )
+{
+	entity loba = CreatePropDynamic( $"mdl/Humans/class/medium/pilot_medium_loba.rmdl", origin, angles, SOLID_BBOX, 99999 )
+	entity rev = CreatePropDynamic( $"mdl/humans/class/heavy/revenant_v23_revarmy_w.rmdl", origin, angles, SOLID_BBOX, 99999 )
+
+	DBC_ApplyLobaSkin( loba, level )
+
+	DBC_SetCinematicEntToStartedFadedOut( loba )
+	DBC_SetCinematicEntToStartedFadedOut( rev )
+
+	thread PlayAnim( loba, "loba_igc_yos1_heromoment03" )
+	waitthread PlayAnim( rev, "revenant_igc_yos1_heromoment03" )
+
+	loba.Destroy()
+	rev.Destroy()
+}
+
+void function DBC_SetCinematicEntToStartedFadedOut( entity ent )
+{
+	ent.kv.rendermode = 4
+	ent.kv.renderamt = 0
+}
 
+void function DBC_OpeningCinematicTest( int level )
+{
+    vector origin =	<34683.0547, 8913.93164, 36019.8281>
+	vector angle =	<0, 0, 0>
+
+	SetConVarBool( "sv_voiceenable", false )
 
+	entity lobaBot = Bots_Spawn( origin, angle, GetCurrentPlaylistVarInt("camerabot_spawn_team", 22), "loba", false )
+	ItemFlavor character = GetItemFlavorByAsset( $"settings/itemflav/character/loba.rpak" )
+	lobaBot.SetScriptName( "CameraBot" )
+	DoCommonRespawnForPlayer( lobaBot )
 
+	SetItemFlavorLoadoutSlot( ToEHI( lobaBot ), Loadout_Character(), character )
+	DBC_ApplyLobaSkin( lobaBot, level )
+
+	ResetPlayerInventory( lobaBot )
+
+	entity meleeWeapon = lobaBot.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
+	string meleeSkinName
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
+	if ( meleeWeapon != null )
+		meleeSkinName = meleeWeapon.GetWeaponClassName()
+
+	if ( meleeSkinName != "mp_weapon_melee_survival" )
+	{
+		lobaBot.TakeWeaponNow( meleeSkinName )
+		lobaBot.GiveWeapon( "mp_weapon_melee_survival", WEAPON_INVENTORY_SLOT_PRIMARY_2 )
+	}
+
+	lobaBot.SetPhysics( MOVETYPE_NOCLIP )
+
+	Highlight_ClearFriendlyHighlight( lobaBot )
+	lobaBot.DisableWeaponTypes( WPT_ALL_EXCEPT_VIEWHANDS )
+
+	foreach ( player in GetPlayerArray()  )
+	{
+		if ( IsValid( player ) )
+		{
+			ScreenFade( player, 0, 0, 0, 255, 1.0, 0, FFADE_OUT | FFADE_STAYOUT | FFADE_NOT_IN_REPLAY)
+		}
+	}
+
+	wait 3.0
+
+	entity valk = CreatePropDynamic( $"mdl/humans/class/medium/pilot_medium_valkyrie.rmdl", origin, angle, SOLID_NONE, 99999 )
+	entity lifeline = CreatePropDynamic( $"mdl/humans/class/light/pilot_light_lifeline.rmdl", origin, angle, SOLID_NONE, 99999 )
+	entity madmaggie = CreatePropDynamic( $"mdl/techart/mshop/characters/legends/madmaggie/madmaggie_base_w.rmdl", origin, angle, SOLID_NONE, 99999 )
+	entity octane = CreatePropDynamic( $"mdl/Humans/class/medium/pilot_medium_stim.rmdl", origin, angle, SOLID_NONE, 99999 )
+	octane.SetScriptName( "OctaneTest" )
+	entity dropship = CreatePropDynamic( $"mdl/props/goblin_interior/goblin_interior_w.rmdl", origin, angle, SOLID_VPHYSICS, 99999 )
+	entity rev = CreatePropDynamic( $"mdl/humans/class/heavy/revenant_v23_revarmy_w.rmdl", origin, angle, SOLID_NONE, 99999 )
+
+	lobaBot.SetOrigin( origin )
+	lobaBot.SetAngles( angle )
+
+	lobaBot.SetGroundEntity( dropship )
+
+	AddCinematicFlag( lobaBot, CE_FLAG_HIDE_MAIN_HUD_INSTANT )
+	AddCinematicFlag( lobaBot, CE_FLAG_HIDE_PERMANENT_HUD )
+
+	FirstPersonSequenceStruct attackSequence
+	attackSequence.thirdPersonCameraAttachments = ["VDU"]
+	attackSequence.thirdPersonAnim = "loba_cine_yos1_dropship"
+	foreach ( player in GetPlayerArray()  )
+	{
+		if ( IsValid( player ) && !player.IsBot() )
+		{
+			player.SetObserverTarget( lobaBot )
+			PutPlayerInObserverMode( player, OBS_MODE_IN_EYE )
+		}
+	}
+
+	FirstPersonSequenceStruct targetSequence
+	targetSequence.attachment = "ref"
+	targetSequence.teleport = true
+	targetSequence.enableCollision = false
+
+	thread PlayAnim( dropship, "goblin_interior_cine_yos1_dropship" )
+
+	targetSequence.thirdPersonAnim = "valk_cine_yos1_dropship"
+	thread FirstPersonSequence( targetSequence, valk )
+
+	targetSequence.thirdPersonAnim = "lifeline_cine_yos1_dropship"
+	thread FirstPersonSequence( targetSequence, lifeline )
+
+	targetSequence.thirdPersonAnim = "octane_cine_yos1_dropship"
+	thread FirstPersonSequence( targetSequence, octane )
+
+	targetSequence.thirdPersonAnim = "maggie_cine_yos1_dropship"
+	thread FirstPersonSequence( targetSequence, madmaggie )
+
+	targetSequence.thirdPersonAnim = "revenant_cine_yos1_dropship"
+	thread FirstPersonSequence( targetSequence, rev )
+
+	thread FirstPersonSequence( attackSequence, lobaBot )
+
+	wait 1.0
+
+	foreach ( player in GetPlayerArray()  )
+	{
+		if ( IsValid( player ) )
+		{
+			ScreenFadeFromBlack( player, 1.0, 1.0 )
+		}
+	}
+
+	wait 62.0
+
+	foreach ( player in GetPlayerArray()  )
+	{
+		if ( IsValid( player ) )
+		{
+			ScreenFadeToBlackForever( player, 1.0 )
+		}
+	}
+
+	wait 4.0
+
+	valk.Destroy()
+	lifeline.Destroy()
+	madmaggie.Destroy()
+	octane.Destroy()
+	dropship.Destroy()
+	rev.Destroy()
+
+	foreach ( player in GetPlayerArray() )
+	{
+		if ( IsValid( player ) && !player.IsBot() )
+		{
+			PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED )
+			player.SetSpecReplayDelay( 0.0 )
+			RemoveCinematicFlag( player, CE_FLAG_HIDE_PERMANENT_HUD )
+			RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD_INSTANT )
+		}
+	}
+
+	Bots_Kick( lobaBot )
+	SetConVarBool( "sv_voiceenable", true )
+}
+
+#endif //#if SERVER
+
+
+#if SERVER
+void function DBC_KeyArtTest( entity player )
+{
+	FirstPersonSequenceStruct attackSequence
+	attackSequence.noParent = true
+	attackSequence.playerPushable = false
+	attackSequence.enableCollision = false
+	attackSequence.enableRelativeToGround = true
+	attackSequence.teleport = true
+	attackSequence.thirdPersonAnim = "rampart_s20KeyArt"
+	attackSequence.thirdPersonCameraAttachments = ["VDU"]
+
+	waitthread FirstPersonSequence( attackSequence, player )
+
+	OnThreadEnd(
+		function() : ( player )
+		{
+			ClearPlayerAnimViewEntity( player )
+		}
+	)
+}
+#endif

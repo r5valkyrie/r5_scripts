@@ -113,7 +113,7 @@ global function SCB_DoGotTreasurePackNotify
 
 
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -1408,7 +1408,7 @@ int function SeasonQuest_GetTreasurePacksLatestPickupTimeForPlayer( entity playe
 
 int function SeasonQuest_GetTreasurePacksCountForPlayer( entity player, ItemFlavor quest )
 {
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return 0
 #endif
@@ -1876,7 +1876,7 @@ ItemFlavorBag function SeasonQuestMission_GetRewards( ItemFlavor quest, ItemFlav
 
 
 
-#if DEV
+#if DEVELOPER
 const string CMD_GIVETREASUREBOX_1 = "seasonquest_give_treasurebox_1"
 const string CMD_GIVETREASUREBOX_5 = "seasonquest_give_treasurebox_5"
 const string CMD_FINISHMISSION = "seasonquest_finish_mission"

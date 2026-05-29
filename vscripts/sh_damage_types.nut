@@ -692,7 +692,7 @@ void function DamageTypes_Init()
 
 	PrecacheWeapon( $"mp_weapon_rspn101" ) 
 
-#if DEV
+#if DEVELOPER
 
 		int numDamageDefs        = DamageDef_GetCount()
 		table damageSourceIdEnum = expect table( getconsttable().eDamageSourceId )
@@ -1011,7 +1011,7 @@ void function DamageTypes_Init()
 
 	}
 
-#if DEV
+#if DEVELOPER
 		
 		file.damageSourceIDToName[ eDamageSourceId.damagedef_unknownBugIt ] = "UNKNOWN! BUG IT!"
 		file.damageSourceIDToName[ eDamageSourceId.damagedef_unknown ] = "Unknown"

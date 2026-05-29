@@ -24,7 +24,7 @@ global function VoidVision_GetPlayersToHighlight
 global function ServerToClient_VoidVisionChanged
 
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -647,7 +647,7 @@ int function VoidVision_GetHighlightModeForPlayer( entity player, entity otherPl
 
 
 
-#if DEV
+#if DEVELOPER
 
 
 

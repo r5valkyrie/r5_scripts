@@ -47,7 +47,7 @@ const int SONIC_BLAST_RADIUS_FX_SPACING = 200
 
 
 
-#if DEV
+#if DEVELOPER
 const bool SONIC_BLAST_DEBUG = false
 const bool SONIC_BLAST_AUDIO_DEBUG = false
 #endif
@@ -1014,7 +1014,7 @@ void function ServerToClient_ShowHealthRUI_Thread( entity owner, entity victim, 
 	float endTime = Time() + duration
 	bool visible = true
 
-#if DEV
+#if DEVELOPER
 	if ( SONIC_BLAST_DEBUG )
 	{
 		printt("ServerToClient_ShowHealthRUI_Thread - Showing HP Bars for " + victim.GetPlayerName())
@@ -1088,7 +1088,7 @@ void function DoClientSideDetonationSound_Thread( float detonationTime, vector s
 		deltaTime = detonationTime - Time()
 	}
 
-#if DEV
+#if DEVELOPER
 	if ( SONIC_BLAST_DEBUG )
 	{
 		printt(FUNC_NAME() + " deltaTime for blast: " + deltaTime )
@@ -1097,7 +1097,7 @@ void function DoClientSideDetonationSound_Thread( float detonationTime, vector s
 
 	wait deltaTime
 
-#if DEV
+#if DEVELOPER
 	if ( SONIC_BLAST_DEBUG )
 	{
 		printt( FUNC_NAME() + " Sonic Blast Detonation at: " + Time() )

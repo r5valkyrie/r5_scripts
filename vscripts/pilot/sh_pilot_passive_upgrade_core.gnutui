@@ -638,7 +638,7 @@ void function UpgradeCore_RegisterUpgradesForCharacter( ItemFlavor character, ar
 {
 	array<ItemFlavor> characterUpgrades
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -670,7 +670,7 @@ void function UpgradeCore_RegisterUpgradesForCharacter( ItemFlavor character, ar
 		file.passiveFlavorToUpgradeData[upgrade] <- parsedUpgrade
 		characterUpgrades.append( upgrade )
 
-#if DEV
+#if DEVELOPER
 
 
 

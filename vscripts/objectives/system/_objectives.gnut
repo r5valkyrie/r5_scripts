@@ -569,7 +569,7 @@ void function ObjectiveSystem_Init()
 {
 	if( isInitialized )
 	{
-#if DEV
+#if DEVELOPER
 			printf( "Objective System is already initialized" )
 #endif
 		return
@@ -1481,7 +1481,7 @@ void function InstanceObjectiveSplashMessage( entity wp )
 
 
 
-#if DEV
+#if DEVELOPER
 
 
 

@@ -29,7 +29,7 @@ const string SNIPER_RECON_TARGET_ACQUIRED_SOUND = "Vantage_Passive_TargetAquire_
 global const string SNIPER_RECON_UI_START_SOUND = "Vantage_Passive_UI_1p"
 
 
-#if DEV
+#if DEVELOPER
 int dbg_TraceCount = 0
 #endif
 
@@ -822,13 +822,13 @@ string function GetDisplayName( entity displayObject )
 			default:
 				notFound = true
 				displayName = "#HUD_UNKNOWN"
-#if DEV
+#if DEVELOPER
 				printt( "Unknown display name for scriptname: " + scriptName + " for entity: " + displayObject )
 #endif
 		}
 	}
 
-#if DEV
+#if DEVELOPER
 	if ( displayName == "" )
 	{
 		printt( "Unknown display name for entity: " + displayObject + " ,scriptname: "  + scriptName )

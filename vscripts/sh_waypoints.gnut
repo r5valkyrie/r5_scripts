@@ -2320,7 +2320,7 @@ void function InstanceLocationPing_Thread( entity wp )
 		return
 	}
 
-#if DEV
+#if DEVELOPER
 		if ( viewPlayer.GetTeamMemberIndex() < 0 )
 			Warning( "%s(): team member index was invalid.", FUNC_NAME() )
 #endif

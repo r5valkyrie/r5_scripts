@@ -1298,7 +1298,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 
 		LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "gcard_frame_for_" + ItemFlavor_GetGUIDString( characterClass ), eLoadoutEntryClass.CHARACTER )
 		entry.category     = eLoadoutCategory.GCARD_FRAMES
-#if DEV
+#if DEVELOPER
 			entry.pdefSectionKey = "character " + ItemFlavor_GetGUIDString( characterClass )
 			entry.DEV_name       = ItemFlavor_GetCharacterRef( characterClass ) + " GCard Frame"
 #endif
@@ -1324,7 +1324,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 
 		LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "gcard_stance_for_" + ItemFlavor_GetGUIDString( characterClass ), eLoadoutEntryClass.CHARACTER	)
 		entry.category     = eLoadoutCategory.GCARD_STANCES
-#if DEV
+#if DEVELOPER
 			entry.pdefSectionKey = "character " + ItemFlavor_GetGUIDString( characterClass )
 			entry.DEV_name       = ItemFlavor_GetCharacterRef( characterClass ) + " GCard Stance"
 #endif
@@ -1388,7 +1388,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 	{
 		LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "gcard_badge_" + badgeIndex + "_for_" + ItemFlavor_GetGUIDString( characterClass ), eLoadoutEntryClass.CHARACTER )
 		entry.category     = eLoadoutCategory.GCARD_BADGES
-#if DEV
+#if DEVELOPER
 			entry.pdefSectionKey = "character " + ItemFlavor_GetGUIDString( characterClass )
 			entry.DEV_name       = ItemFlavor_GetCharacterRef( characterClass ) + " GCard Badge " + badgeIndex
 #endif
@@ -1455,7 +1455,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 
 		LoadoutEntry tierEntry = RegisterLoadoutSlot( eLoadoutEntryType.INTEGER, "gcard_badge_" + badgeIndex + "_tier_for_" + ItemFlavor_GetGUIDString( characterClass ), eLoadoutEntryClass.CHARACTER )
 		tierEntry.category     = eLoadoutCategory.GCARD_BADGE_TIER
-#if DEV
+#if DEVELOPER
 			tierEntry.pdefSectionKey = "character " + ItemFlavor_GetGUIDString( characterClass )
 			tierEntry.DEV_name       = ItemFlavor_GetCharacterRef( characterClass ) + " GCard Badge" + badgeIndex + " Tier"
 #endif
@@ -1506,7 +1506,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 	{
 		LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "gcard_tracker_" + trackerIndex + "_for_" + ItemFlavor_GetGUIDString( characterClass ), eLoadoutEntryClass.CHARACTER )
 		entry.category     = eLoadoutCategory.GCARD_TRACKERS
-#if DEV
+#if DEVELOPER
 			entry.pdefSectionKey = "character " + ItemFlavor_GetGUIDString( characterClass )
 			entry.DEV_name       = ItemFlavor_GetCharacterRef( characterClass ) + " GCard Tracker " + trackerIndex
 #endif
@@ -1526,7 +1526,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 
 		LoadoutEntry valueEntry = RegisterLoadoutSlot( eLoadoutEntryType.INTEGER, "gcard_tracker_" + trackerIndex + "_value_for_" + ItemFlavor_GetGUIDString( characterClass ), eLoadoutEntryClass.CHARACTER )
 		valueEntry.category     = eLoadoutCategory.GCARD_TRACKER_TIER
-#if DEV
+#if DEVELOPER
 			valueEntry.pdefSectionKey = "character " + ItemFlavor_GetGUIDString( characterClass )
 			valueEntry.DEV_name       = ItemFlavor_GetCharacterRef( characterClass ) + " GCard Tracker" + trackerIndex + " Value"
 #endif

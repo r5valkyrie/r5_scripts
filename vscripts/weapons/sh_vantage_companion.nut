@@ -135,7 +135,7 @@ const string VANTAGE_COMPANION_ENT_NETVAR = "vantage_companion_ent"
 
 
 
-#if DEV
+#if DEVELOPER
 global function DEV_VantageCompanion_SetDebugDraw
 global function DEV_VantageCompanion_SetOrderDebugDraw
 
@@ -158,7 +158,7 @@ global enum eCompanionState
 	COUNT
 }
 
-#if DEV
+#if DEVELOPER
 array<string> sCompanionStateStrings =
 [
 	"Unknown"
@@ -179,7 +179,7 @@ global enum ePlayerLaunchState
 	COUNT
 }
 
-#if DEV
+#if DEVELOPER
 array<string> sPlayerLaunchStateStrings =
 [
 	"None"
@@ -277,7 +277,7 @@ void function VantageCompanion_Init()
 	file.TUNING_VANTAGE_COMPANION_UPGRADED_RANGE = GetCurrentPlaylistVarFloat( "vantage_tactical_upgraded_range_bonus", 10 * METERS_TO_INCHES )
 
 
-#if DEV
+#if DEVELOPER
 	Assert( eCompanionState.COUNT == sCompanionStateStrings.len(), "Must define a string for each state." )
 	Assert( ePlayerLaunchState.COUNT == sPlayerLaunchStateStrings.len(), "Must define a string for each state." )
 #endif
@@ -350,7 +350,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 
 
 
-#if DEV
+#if DEVELOPER
 		int devTraces = 0 
 #endif
 
@@ -362,7 +362,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 
 	TraceResults trInitial = TraceLine( startTraceInitial, endTraceInitial, [ player ], TRACE_MASK_PLAYERSOLID , ECHO_ORDER_TRACE_COL_GRP, player )
 
-#if DEV
+#if DEVELOPER
 	if ( VANTAGE_COMPANION_ORDER_DEBUG_DRAW )
 	{
 		DebugDrawLine( startTraceInitial, endTraceInitial, COLOR_YELLOW, false, 5.0 )
@@ -374,7 +374,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 	}
 #endif
 
-#if DEV
+#if DEVELOPER
 		devTraces++
 #endif
 
@@ -389,7 +389,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 		vector startHullTrace = trInitial.endPos + (trInitial.surfaceNormal * boundsAdj) + (playerViewVector * -boundsAdj)
 
 		TraceResults trHull = TraceHull( startHullTrace, trInitial.endPos, VANTAGE_COMPANION_BOUND_MINS*1.5, VANTAGE_COMPANION_BOUND_MAXS*1.5, [ player ], TRACE_MASK_PLAYERSOLID , ECHO_ORDER_TRACE_COL_GRP, UP_VECTOR, player )
-#if DEV
+#if DEVELOPER
 			devTraces++
 
 			if ( VANTAGE_COMPANION_ORDER_DEBUG_DRAW )
@@ -400,7 +400,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 
 		if ( trHull.startSolid )
 		{
-#if DEV
+#if DEVELOPER
 				if ( VANTAGE_COMPANION_ORDER_DEBUG_DRAW )
 				{
 					DebugDrawText( startHullTrace, "startsolid (red)", false, 5.0 )
@@ -409,7 +409,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 #endif
 			
 			TraceResults trInitialHullRedo = TraceHull( startTraceInitial, endTraceInitial, VANTAGE_COMPANION_BOUND_MINS*1.5, VANTAGE_COMPANION_BOUND_MAXS*1.5, [ player ], ECHO_ORDER_TRACE_COL_MASK , ECHO_ORDER_TRACE_COL_GRP, UP_VECTOR, player )
-#if DEV
+#if DEVELOPER
 				devTraces++
 #endif
 
@@ -420,7 +420,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 
 				trHull = TraceHull( startHullTrace, trInitialHullRedo.endPos, VANTAGE_COMPANION_BOUND_MINS * 1.5, VANTAGE_COMPANION_BOUND_MAXS * 1.5, [ player ], ECHO_ORDER_TRACE_COL_MASK, ECHO_ORDER_TRACE_COL_GRP, UP_VECTOR, player )
 
-#if DEV
+#if DEVELOPER
 					devTraces++
 
 					if ( VANTAGE_COMPANION_ORDER_DEBUG_DRAW )
@@ -439,7 +439,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 		float upDotAbs  = fabs( upDot )
 		bool normalIsFlat = upDotAbs < DOT_45DEGREE
 
-#if DEV
+#if DEVELOPER
 			if ( VANTAGE_COMPANION_ORDER_DEBUG_DRAW )
 			{
 				int g = normalIsFlat ? 50 : 255
@@ -462,7 +462,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 			vector traceUpEnd = traceUpStart + (UP_VECTOR * ECHO_ORDER_LEDGE_CHECK_UP )
 			TraceResults trUp = TraceLine( traceUpStart, traceUpEnd, [ player ], ECHO_ORDER_TRACE_COL_MASK , ECHO_ORDER_TRACE_COL_GRP, player )
 
-#if DEV
+#if DEVELOPER
 				devTraces++
 
 				if ( VANTAGE_COMPANION_ORDER_DEBUG_DRAW )
@@ -480,7 +480,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 				vector traceBackEnd = traceBackStart - (flatNormal * ECHO_ORDER_LEDGE_CHECK_BACK * 1.5 )
 				TraceResults trBack = TraceLine( traceBackStart, traceBackEnd, [ player ], ECHO_ORDER_TRACE_COL_MASK , ECHO_ORDER_TRACE_COL_GRP, player )
 
-#if DEV
+#if DEVELOPER
 					devTraces++
 
 					if ( VANTAGE_COMPANION_ORDER_DEBUG_DRAW )
@@ -497,7 +497,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 					
 					TraceResults trLedge = TraceHull( ledgeStartTrace, ledgeEndTrace, VANTAGE_COMPANION_BOUND_MINS, VANTAGE_COMPANION_BOUND_MAXS, [ player ], ECHO_ORDER_TRACE_COL_MASK, ECHO_ORDER_TRACE_COL_GRP, UP_VECTOR, player )
 
-#if DEV
+#if DEVELOPER
 						devTraces++
 
 						if ( VANTAGE_COMPANION_ORDER_DEBUG_DRAW )
@@ -509,7 +509,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 					if ( !trLedge.startSolid && trLedge.fraction < 0.99 )
 					{
 						
-#if DEV
+#if DEVELOPER
 							if ( VANTAGE_COMPANION_ORDER_DEBUG_DRAW )
 							{
 								DebugDrawText( trLedge.endPos,"CornerPos", false, 5.0 )
@@ -581,7 +581,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 
 	Assert( orderPosData.orderType != eOrderType.NONE, "FindEchoOrderPos: Tried to find a position but orderType was NONE" )
 
-#if DEV
+#if DEVELOPER
 		if ( VANTAGE_COMPANION_DEBUG_DRAW || VANTAGE_COMPANION_ORDER_DEBUG_DRAW )
 		{
 			float distanceMeters = Distance( player.GetOrigin(), orderPosData.orderPos ) * INCHES_TO_METERS
@@ -871,7 +871,7 @@ vector function AdjustCompanionPosForHeight( vector proposedCompanionPos , entit
 		adjustedPoint = trHullUp.endPos 
 	}
 
-#if DEV
+#if DEVELOPER
 		if ( VANTAGE_COMPANION_ORDER_DEBUG_DRAW )
 		{
 			float drawTime = 5.0
@@ -1930,7 +1930,7 @@ vector function Launch_CalcLaunchToPos( entity player, entity echoEnt )
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_VantageCompanion_SetDebugDraw( bool enabled )
 {
 	VANTAGE_COMPANION_DEBUG_DRAW = enabled
@@ -2206,7 +2206,7 @@ void function VantageCompanion_CreateHUDMarker( entity echoEnt )
 				RuiSetInt( rui, "companionState", companionState )
 
 
-#if DEV
+#if DEVELOPER
 				if ( VANTAGE_COMPANION_DEBUG_DRAW )
 				{
 					vector color = <0, 200, 50>

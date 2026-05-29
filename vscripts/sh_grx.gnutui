@@ -6,7 +6,7 @@ global function ShGRX_RegisterItemFlavor
 
 
 global function ShGRX_LevelShutdown
-#if DEV
+#if DEVELOPER
 global function PrintItemPurchasabilityForGRXRef
 #endif
 
@@ -47,7 +47,7 @@ global function GRXPack_GetStickerCompletionRewardSequence
 global function GRXPack_PlayerOwnsAllItemsInPack
 global function GRXPack_GetStickerCompletionRewardPack
 
-#if DEV
+#if DEVELOPER
 global function DEV_GetItemFlavorByGRXRef
 global function DEV_IsValidGRXRef
 #endif
@@ -102,7 +102,7 @@ global function GRX_GetPostGameRewards
 global function GRX_MarkRewardAcknowledged
 global function GRX_IsLegendOffer
 
-#if DEV
+#if DEVELOPER
 global function PrintSortedStoreSectionData
 global function DEV_TestUpdateSmartMerchandisingData
 global function DEV_PrintSmartMerchandisingData
@@ -227,7 +227,7 @@ global function GRXPack_GetCustomColor
 global function GRXPack_GetCustomCountTextCol
 
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -731,7 +731,7 @@ struct FileStruct_LifetimeVM
 
 	bool WORKAROUND_wasUserInfoUpdatedBeforeLevelInit = false
 
-#if DEV
+#if DEVELOPER
 		string grxStorePreviewItem = ""
 #endif
 }
@@ -758,7 +758,7 @@ struct FileStruct_LifetimeLevel
 	array<ItemFlavor> stickerPacksWithRewards
 	table< int, int > multiOwnershipUnlockMap
 
-#if DEV
+#if DEVELOPER
 		table<string, ItemFlavor> grxRefItemFlavorMap
 #endif
 
@@ -971,7 +971,7 @@ void function ShGRX_RegisterItemFlavor( ItemFlavor flavor )
 
 		fileLevel.grxIndexItemFlavorMap[flavor.grxIndex] <- flavor
 		fileLevel.grxRefToGRXIndexMap[grxRef] <- flavor.grxIndex
-#if DEV
+#if DEVELOPER
 			bool duplicateGRXRefFound = grxRef in fileLevel.grxRefItemFlavorMap
 			Assert( !duplicateGRXRefFound, "Duplicate GRX ref found. Already used by " + string(ItemFlavor_GetAsset( fileLevel.grxRefItemFlavorMap[grxRef] )) )
 			fileLevel.grxRefItemFlavorMap[grxRef] <- flavor
@@ -1000,7 +1000,7 @@ void function ShGRX_RegisterItemFlavor( ItemFlavor flavor )
 
 		foreach ( reqFlav in ownershipRequirementsList )
 		{
-#if DEV
+#if DEVELOPER
 				bool duplicateGRXRefFoundInMultiple = reqFlav.guid in fileLevel.multiOwnershipUnlockMap
 				Assert( !duplicateGRXRefFoundInMultiple, "Duplicate GRX ref in multiple unlock mapping found. Already used by " + string( ItemFlavor_GetAsset( GetItemFlavorByGUID( fileLevel.multiOwnershipUnlockMap[ reqFlav.guid ] ) ) ) )
 #endif
@@ -1068,14 +1068,14 @@ ItemFlavor function GetItemFlavorByGRXIndex( int index )
 
 
 
-#if DEV
+#if DEVELOPER
 ItemFlavor function DEV_GetItemFlavorByGRXRef( string grxRef )
 {
 	return fileLevel.grxRefItemFlavorMap[ grxRef ]
 }
 #endif
 
-#if DEV
+#if DEVELOPER
 bool function DEV_IsValidGRXRef( string grxRef )
 {
 	return (grxRef in fileLevel.grxRefItemFlavorMap)
@@ -1862,7 +1862,7 @@ int function GRXOffer_GetOriginalPremiumPriceQuantity( GRXScriptOffer offer )
 	}
 
 	ItemFlavorBag bag = expect ItemFlavorBag( offer.originalPrice )
-#if DEV
+#if DEVELOPER
 		Assert( bag.flavors.len() > 0, "No Flavor was found for the original price of offer." )
 #endif
 	if ( bag.flavors.len() < 1 )
@@ -3112,7 +3112,7 @@ void function RemoveCallback_OnGRXAccountAttributesUpdated( void functionref() c
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_GRX_PrintStoreOfferLocations()
 {
 	foreach ( ItemFlavor itemLocation, ItemFlavorPurchasabilityInfo ifpi in fileLevel.itemFlavorPurchasabilityInfoMap )
@@ -3160,7 +3160,7 @@ void function DEV_GRX_TestOpenPack( string ref = "pack_cosmetic_rare" )
 #endif
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_GRX_TestPurchase( string ref = "pack_cosmetic_rare", array<int> price = [1, 0, 0, 0, 0], int qty = 1 )
 {
 	ItemFlavor flav = DEV_GetItemFlavorByGRXRef( ref )
@@ -5012,7 +5012,7 @@ void function UICodeCallback_GRXGetOfferCompleted( GRXGetOfferInfo getOfferInfo 
 {
 	GiftingDialog_UpdateEligibilityInformation( getOfferInfo )
 
-#if DEV
+#if DEVELOPER
 		printt( "GET OFFER COMPLETED" )
 		if ( getOfferInfo.isEligible == true )
 			printt("is eligible")
@@ -5039,7 +5039,7 @@ void function UICodeCallback_GRXCheckForGiftsCompleted( int batchCounter, int to
 }
 
 
-#if DEV
+#if DEVELOPER
 
 void function DEV_GRX_PreviewStoreItem( string grxRef )
 {
@@ -5304,7 +5304,7 @@ void function GRX_InitScriptOfferFromStoreOffer( GRXStoreOffer codeOffer, GRXScr
 	}
 
 	ItemFlavor flav = GetItemFlavorByGRXIndex( scriptOffer.items[0].itemIdx )
-#if DEV
+#if DEVELOPER
 		if ( fileVM.grxStorePreviewItem != "" )
 			flav = DEV_GetItemFlavorByGRXRef( fileVM.grxStorePreviewItem )
 #endif
@@ -5413,7 +5413,7 @@ void function GRX_InitScriptOfferFromStoreOffer( GRXStoreOffer codeOffer, GRXScr
 }
 
 
-#if DEV
+#if DEVELOPER
 void function PrintItemPurchasabilityForGRXRef( string ref )
 {
 	foreach ( int grxIndex, ItemFlavor flav in fileLevel.grxIndexItemFlavorMap )
@@ -5941,7 +5941,7 @@ table<int, StoreSectionInfo> function GetSortedStoreSectionData()
 	return fileLevel.storeSectionInfoMap
 }
 
-#if DEV
+#if DEVELOPER
 void function PrintSortedStoreSectionData()
 {
 	table<int, StoreSectionInfo> sortedStoreSectionData = GetSortedStoreSectionData()
@@ -6777,7 +6777,7 @@ array<ItemFlavor> function GRX_GetStickerPacksWithRewards()
 
 bool function Escrow_IsPlayerTrusted_Internal( entity player )
 {
-#if DEV
+#if DEVELOPER
 		if ( GetConVarBool( "escrow_is_player_trusted" ) )
 			return true
 #endif
@@ -7091,7 +7091,7 @@ int function GRX_GetGiftingLimitResetDate()
 }
 
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -7261,7 +7261,7 @@ void function UICodeCallback_GRXSmartMerchandisingDataUpdated( array<int> smartM
 
 
 
-#if DEV
+#if DEVELOPER
 
 
 

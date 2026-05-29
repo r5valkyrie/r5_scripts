@@ -101,7 +101,7 @@ global function GetRingTuningOverrideVar
 
 global function Cl_Deathfield_GetRadiusScale
 global function Cl_Deathfield_GetFXIDForRadius
-#if DEV
+#if DEVELOPER
 global function Cl_Deathfield_SetOpacityOverride
 #endif
 global function Cl_GetDeathFieldStage
@@ -186,7 +186,7 @@ global const float MARGIN_WAIT_TIME = 5.0
 const asset SURVEY_BEACON_MODEL = $"mdl/props/pathfinder_beacon_radar/pathfinder_beacon_radar_animated.rmdl"
 const asset NEXT_ZONE_SURVEY_BEACON_MODEL = $"mdl/communication/terminal_usable_imc_01.rmdl"
 
-#if DEV
+#if DEVELOPER
 const string DUMMY_ZONE_WP_NAME = "dev_dummy_circle"
 #endif
 
@@ -382,7 +382,7 @@ void function Sh_ArenaDeathField_Init()
 
 		AddCreatePilotCockpitCallback( TrackDeathfieldDistance )
 		AddLocalPlayerTookDamageTypeCallback( eDamageSourceId.deathField, Callback_OnPlayerTakeDeathFieldDamage )
-#if DEV
+#if DEVELOPER
 			Waypoints_RegisterCustomType( DUMMY_ZONE_WP_NAME, DEV_OnDummyCircleWpInstanced )
 #endif
 
@@ -3920,7 +3920,7 @@ void function OnViewPlayerChanged( entity viewPlayer )
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_OnDummyCircleWpInstanced( entity wp )
 {
 	float startTime = wp.GetWaypointFloat( 0 )

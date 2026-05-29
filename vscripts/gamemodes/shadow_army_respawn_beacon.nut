@@ -749,7 +749,7 @@ int function GetBeaconState( entity beacon )
 {
 	if ( !IsValid( beacon ) )
 	{
-#if DEV
+#if DEVELOPER
 			Assert( false, "Shadow Army Respawn Beacon: GetBeaconState is going to return eShadowArmyRespawnBeaconState.INVALID due to Invalid beacon" )
 #endif
 		return eShadowArmyRespawnBeaconState.INVALID
@@ -843,7 +843,7 @@ float function GetBeaconDurationForDurationType( entity beacon, int durationType
 
 	if ( durationType < 0 || durationType >= eShadowArmyRespawnBeaconDurationType._count )
 	{
-#if DEV
+#if DEVELOPER
 			Warning( "Shadow Army Respawn Beacon: Tried to run GetBeaconDurationForDurationType with an invalid duration type: " + durationType + " valid types are: " )
 			for ( int i = 0; i < eShadowArmyRespawnBeaconDurationType._count; i++ )
 			{
@@ -873,13 +873,13 @@ float function GetBeaconDurationForDurationType( entity beacon, int durationType
 				duration = beaconWaypoint.GetWaypointFloat( WAYPOINT_FLOAT_IDX_RESPAWN_BEACON_USE_DURATION )
 				break
 			default:
-#if DEV
+#if DEVELOPER
 					Warning( "Shadow Army Respawn Beacon: GetBeaconDurationForDurationType encountered an unsupported duration type in the switch statement: " + durationType )
 #endif
 				break
 		}
 	}
-#if DEV
+#if DEVELOPER
 	else
 	{
 		Warning( "Shadow Army Respawn Beacon: GetBeaconDurationForDurationType going to return UNSET_TIME because the Beacon Waypoint was not valid for durationType: " + GetEnumString( "eShadowArmyRespawnBeaconDurationType", durationType ) )
@@ -1335,7 +1335,7 @@ void function ShadowArmy_RespawnBeaconOnUse_Common( entity beacon, entity player
 const float POST_SIGNAL_DELAY = 0.1 
 void function ManageRespawnBeaconData_Thread( entity beacon, var rui )
 {
-#if DEV
+#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 #endif
 
@@ -1436,7 +1436,7 @@ void function ManageRespawnBeaconData_Thread( entity beacon, var rui )
 			default:
 				
 				UpdateMapIcons( beacon, $"" )
-#if DEV
+#if DEVELOPER
 					Assert( false, "Shadow Army Respawn Beacon: Unsupported beacon state: " + currentBeaconState + " for beacon: " + beacon + " in ManageRespawnBeaconData_Thread" )
 #endif
 				break
@@ -1514,7 +1514,7 @@ const float RESPAWN_BEACON_HOLO_EFFECT_HEIGHT = 75.0
 
 void function ManageRespawnBeaconHologramVFX_Thread( entity beacon )
 {
-#if DEV
+#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 #endif
 
@@ -1587,7 +1587,7 @@ string function RespawnBeacon_TextOverride( entity beacon )
 			hintString = "#SHADOW_ARMY_RESPAWNBEACON_DISABLED_TEMP"
 			break
 		default:
-#if DEV
+#if DEVELOPER
 				Assert( false, "Shadow Army Respawn Beacon: Unsupported beacon state: " + currentBeaconState + " for beacon: " + beacon + " in RespawnBeacon_TextOverride" )
 #endif
 			break
@@ -1732,7 +1732,7 @@ void function ShadowArmy_RespawnBeacon_ServerCallback_ShowBeaconHint( int hintIn
 			hintText = "#SHADOW_ARMY_RESPAWNBEACON_USE_HINT"
 			break
 		default:
-#if DEV
+#if DEVELOPER
 				Assert( false, "Shadow Army Respawn Beacon: Unhandled hintIndex: " + hintIndex )
 #endif
 			break

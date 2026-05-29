@@ -851,7 +851,7 @@ void function Cl_OnPlayerEmoteStateChanged( entity player, bool playerIsEmoting 
 
 	bool antiPeekEnabled = true
 
-#if DEV
+#if DEVELOPER
 		if ( GetBugReproNum() == 1234 )
 		{
 			antiPeekEnabled = false

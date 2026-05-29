@@ -783,7 +783,7 @@ void function LoadoutSelection_InitWeaponData()
 				supportedAttachmentOverrides = GetCurrentPlaylistVarString( "loadoutselection_" + weaponRef + "_supported_attachment_override", supportedAttachmentOverrides )
 				if ( supportedAttachmentOverrides != "" )
 				{
-#if DEV
+#if DEVELOPER
 						printt( "LOADOUT SELECTION: Overriding supported attachments for " + weaponRef )
 #endif
 					LoadoutSelection_OverrideSupportedWeaponAttachmentsForWeaponRef( weaponRef, supportedAttachmentOverrides )

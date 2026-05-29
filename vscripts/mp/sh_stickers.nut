@@ -38,7 +38,7 @@ global function Sticker_FlashOnLoadComplete
 
 
 
-#if DEV
+#if DEVELOPER
 global function DEV_TestCreateStickerMesh
 global function DEV_TestCreateStickerDecal
 global function DEV_StickerTestSetupForLocalPlayer
@@ -134,7 +134,7 @@ void function RegisterStickers()
 		{
 			LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, stickerObjectName + "_sticker_" + i, eLoadoutEntryClass.ACCOUNT )
 			entry.category     = eLoadoutCategory.STICKERS
-#if DEV
+#if DEVELOPER
 				entry.DEV_name       = "Sticker " + stickerObjectName + " " + i
 #endif
 			entry.defaultItemFlavor   = stickerItemList[0]
@@ -478,10 +478,10 @@ void function DEV_SetupStickerNetworking()
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_TestCreateStickerMesh( asset stickerMat )
 {
-	entity player = GP()
+	entity player = GetLocalClientPlayer()
 	vector origin = player.GetOrigin()
 	vector angles = <0, 0, 0>
 
@@ -493,7 +493,7 @@ void function DEV_TestCreateStickerDecal( asset stickerMat, float scale )
 {
 	asset test_model = $"mdl/weapons/shield_battery/ptpov_shield_battery_held.rmdl"
 
-	entity player = GP()
+	entity player = GetLocalClientPlayer()
 	vector origin = player.GetOrigin()
 	vector angles = <0, 0, 0>
 
@@ -617,7 +617,7 @@ void function Sticker_FlashOnLoadComplete( int stickerInstance )
 
 
 
-#if DEV
+#if DEVELOPER
 array<ItemFlavor>function DEV_ReturnRandomStickerFlavs( int numRandomStickers )
 {
 	array<ItemFlavor> stickers = GetAllItemFlavorsOfType( eItemType.sticker )

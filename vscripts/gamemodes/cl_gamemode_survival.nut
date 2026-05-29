@@ -124,7 +124,7 @@ global function GetDpadMenuRui
 
 global function EvolvingArmor_SetEvolutionRuiAnimTime
 
-#if DEV
+#if DEVELOPER
 global function Dev_ShowVictorySequence
 global function Dev_AdjustVictorySequence
 global function Dev_SpoofMatchData
@@ -727,7 +727,7 @@ void function Cl_Survival_AddClient( entity player )
 	getroottable().testRui <- file.dpadMenuRui
 	SetDpadMenuVisible()
 
-#if DEV
+#if DEVELOPER
 		if ( GetBugReproNum() == 1972 )
 			file.pilotRui = CreatePermanentCockpitPostFXRui( $"ui/survival_player_hud_editor_version.rpak", HUD_Z_BASE )
 		else
@@ -3802,7 +3802,7 @@ SquadSummaryData function GetWinnerSquadSummaryData()
 	return file.winnerSquadSummaryData
 }
 
-#if DEV
+#if DEVELOPER
 
 void function Dev_ShowVictorySequence()
 {
@@ -3869,7 +3869,7 @@ void function SetSquadDataToLocalTeam()
 
 	int maxTrackedSquadMembers = PersistenceGetArrayCount( "lastGameSquadStats" )
 
-#if DEV
+#if DEVELOPER
 		printt( "PD: Reading Match Summary Persistet Vars for", player, "and", maxTrackedSquadMembers, "maxTrackedSquadMembers" )
 #endif
 
@@ -3878,7 +3878,7 @@ void function SetSquadDataToLocalTeam()
 	{
 		int eHandle = player.GetPersistentVarAsInt( "lastGameSquadStats[" + i + "].eHandle" )
 
-#if DEV
+#if DEVELOPER
 			printt( "PD: ", i, "eHandle", player.GetPersistentVarAsInt( "lastGameSquadStats[" + i + "].eHandle" ) )
 #endif
 
@@ -3919,7 +3919,7 @@ void function SetSquadDataToLocalTeam()
 		else
 			PopulateSummaryDataStrings( data, expect string( player.GetPersistentVar( "lastGameMode" ) ) )
 
-#if DEV
+#if DEVELOPER
 			printt( "PD: ", i, "kills", player.GetPersistentVarAsInt( "lastGameSquadStats[" + i + "].kills" ) )
 			printt( "PD: ", i, "assists", player.GetPersistentVarAsInt( "lastGameSquadStats[" + i + "].assists" ) )
 			printt( "PD: ", i, "knockdowns", player.GetPersistentVarAsInt( "lastGameSquadStats[" + i + "].knockdowns" ) )
@@ -3943,7 +3943,7 @@ void function SetSquadDataToLocalTeam()
 	file.squadSummaryData.gameResultFlags = player.GetPersistentVarAsInt( "lastGameResultFlags" )
 	file.squadSummaryData.gameScoreFlags = player.GetPersistentVarAsInt( "lastGameScoreFlags" )
 
-#if DEV
+#if DEVELOPER
 		printt( "PD: squadPlacement", player.GetPersistentVarAsInt( "lastGameRank" ) )
 #endif
 
@@ -4189,7 +4189,7 @@ void function ShowMatchStartSequence( int teamOrAlliance, float camera_move_dura
 
 		array < entity > localTeamPlayersArray = GamemodeUtility_GetLocalTeamPlayers( isFriendly )
 
-#if DEV
+#if DEVELOPER
 			foreach( entity teamPlayer in localTeamPlayersArray )
 			{
 				int teamPlayerTeam = teamPlayer.GetTeam()
@@ -4258,7 +4258,7 @@ void function ShowMatchStartSequence( int teamOrAlliance, float camera_move_dura
 			cleanupEnts.append( characterModel )
 			file.eHandleToIntroPodiumCharacterModelTable[ eHandle ] <- characterModel
 
-#if DEV
+#if DEVELOPER
 				if ( GetBugReproNum() == 1111 )
 				{
 					var topo = CreateRUITopology_Worldspace( OffsetPointRelativeToVector( pos, < 0, -50, 0 >, characterModel.GetForwardVector() ), characterAngles + <0, 180, 0>, 1000, 500 )
@@ -4299,7 +4299,7 @@ void function ShowMatchStartSequence( int teamOrAlliance, float camera_move_dura
 				characterModel.Anim_SetInitialTime( initialTime )
 			}
 
-#if DEV
+#if DEVELOPER
 				if ( GetBugReproNum() == 1111 || GetBugReproNum() == 2222 )
 				{
 					playersOnPodium++
@@ -4392,7 +4392,7 @@ void function ShowMatchStartSequence( int teamOrAlliance, float camera_move_dura
 
 		wait camera_move_duration 
 
-#if DEV
+#if DEVELOPER
 			if ( placementMode )
 			{
 				if ( IsValid( platformModel ) )
@@ -4647,7 +4647,7 @@ void function ShowVictorySequence( bool placementMode = false, bool isDevTest = 
 
 			data.victoryScreenCharacterModel = characterModel
 
-#if DEV
+#if DEVELOPER
 				if ( GetBugReproNum() == 1111 )
 				{
 					var topo = CreateRUITopology_Worldspace( OffsetPointRelativeToVector( pos, < 0, -50, 0 >, characterModel.GetForwardVector() ), characterAngles + <0, 180, 0>, 1000, 500 )
@@ -4687,7 +4687,7 @@ void function ShowVictorySequence( bool placementMode = false, bool isDevTest = 
 				characterModel.Anim_SetInitialTime( initialTime )
 			}
 
-#if DEV
+#if DEVELOPER
 				if ( GetBugReproNum() == 1111 || GetBugReproNum() == 2222 )
 				{
 					playersOnPodium++
@@ -4783,7 +4783,7 @@ void function ShowVictorySequence( bool placementMode = false, bool isDevTest = 
 
 		wait camera_move_duration - 0.5
 
-#if DEV
+#if DEVELOPER
 			if ( placementMode )
 			{
 				if ( IsValid( platformModel ) )
@@ -4848,7 +4848,7 @@ void function ShowVictorySequence( bool placementMode = false, bool isDevTest = 
 	if ( displayChampionOnPodium && file.youAreChampionSplashRui != null )
 		RuiDestroyIfAlive( file.youAreChampionSplashRui )
 
-#if DEV
+#if DEVELOPER
 		if ( IsValid( player ) )
 			printt( "PD: IsSquadDataPersistenceEmpty", IsSquadDataPersistenceEmpty( player ) )
 #endif
@@ -6044,7 +6044,7 @@ bool function GameSateHudIsDisabled()
 
 void function ServerCallback_AnnounceDevRespawn()
 {
-#if DEV
+#if DEVELOPER
 	AnnouncementMessageSweep( GetLocalViewPlayer(), "Dev Respawn" )
 #endif
 }

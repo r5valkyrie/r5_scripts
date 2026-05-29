@@ -38,7 +38,7 @@ global function CanReportUser
 global function JoinMatchAsPartySpectatorDialog
 global function PIN_GetSocialSettings
 
-#if DEV
+#if DEVELOPER
 global function DebugDiscoverability
 #endif
 
@@ -995,7 +995,7 @@ void function UpdateDiscoverabilityWarning()
 	if ( myPrivacySettings.isValid == false )
 		doShowDiscoverabilityWarning = false
 
-#if DEV
+#if DEVELOPER
 		if( GetBugReproNum() == 7896188 )
 		{
 			printf( "-------- %s() --------", FUNC_NAME() )
@@ -1022,7 +1022,7 @@ void function UpdateDiscoverabilityWarning()
 	if ( myPrivacySettings.xboxTagDiscoverable == DISCOVERABLE_NOONE )
 		doShowDiscoverabilityWarning = true
 
-#if DEV
+#if DEVELOPER
 		if( GetBugReproNum() == 7896188 )
 		{
 			if ( doShowDiscoverabilityWarning )
@@ -1038,7 +1038,7 @@ void function UpdateDiscoverabilityWarning()
 	RuiSetBool( rui, "isVisible", doShowDiscoverabilityWarning )
 }
 
-#if DEV
+#if DEVELOPER
 void function DebugDiscoverability()
 {
 	EadpPrivacySetting myPrivacySettings = Eadp_GetPrivacyData()
@@ -1438,7 +1438,7 @@ void function FriendButton_Init( var button, Friend friend )
 	var rui = Hud_GetRui( button )
 
 	string friendName = friend.name
-#if DEV
+#if DEVELOPER
 		if ( FriendHasEAPDData( friend ) )
 			friendName = "*" + friendName
 #endif
@@ -2391,7 +2391,7 @@ void function PreviewFriendCosmetics( bool isForLocalPlayer, CommunityUserInfo o
 	else
 	{
 		CommunityUserInfo userInfo = expect CommunityUserInfo(userInfoOrNull)
-#if DEV
+#if DEVELOPER
 			DEV_PrintUserInfo( userInfo )
 #endif
 		previewedFriendID = userInfo.uid

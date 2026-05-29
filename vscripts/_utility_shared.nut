@@ -211,7 +211,7 @@ void function InitWeaponScripts()
 	
 	
 
-	//Lifesteal_Init()
+	Lifesteal_Init()
 
 
 
@@ -234,7 +234,7 @@ void function InitWeaponScripts()
 
 
 	
-	//MpWeaponDefenderRailgun_Init()
+	MpWeaponDefenderRailgun_Init()
 
 
 
@@ -268,15 +268,15 @@ void function InitWeaponScripts()
 
 
 
-		//MpWeaponTitanSword_Init()
+		MpWeaponTitanSword_Init()
 
 	MpWeaponAlternatorSMG_Init()
-	//MpWeaponShotgun_Init()
+	MpWeaponShotgun_Init()
 
 
 
 	MpWeaponThermiteGrenade_Init()
-	/*MeleeWraithKunai_Init()
+	MeleeWraithKunai_Init()
 	MpWeaponWraithKunaiPrimary_Init()
 	MeleeBloodhoundAxe_Init()
 	MpWeaponBloodhoundAxePrimary_Init()
@@ -337,14 +337,14 @@ void function InitWeaponScripts()
 	MeleeRampartWrench_Init()
 	MpWeaponRampartWrenchPrimary_Init()
 	MeleeRevenantScythe_Init()
-	MpWeaponRevenantScythePrimary_Init()*/
+	MpWeaponRevenantScythePrimary_Init()
 
 		MeleeShadowsquadHands_Init()
 		MpWeaponShadowsquadHandsPrimary_Init()
 
 
-		//MeleeBoxingRing_Init()
-		//MpWeaponMeleeBoxingRing_Init()
+		MeleeBoxingRing_Init()
+		MpWeaponMeleeBoxingRing_Init()
 
 
 	MpWeaponEmoteProjector_Init()
@@ -366,7 +366,7 @@ void function InitWeaponScripts()
 
 
 
-	//	MpAbilityRiseFromTheAshes_Init()
+		MpAbilityRiseFromTheAshes_Init()
 
 
 
@@ -421,7 +421,7 @@ void function InitWeaponScripts()
 
 
 	MpWeaponBasicBolt_Init()
-	//MpWeaponLmg_Init()
+	MpWeaponLmg_Init()
 
 
 
@@ -5000,7 +5000,7 @@ array< vector > function GetPointsAlongLine( vector start, vector end, int count
 		}
 	}
 
-#if DEV
+#if DEVELOPER
 		if( debugDraw )
 		{
 			for( int i = 0; i < result.len(); i++ )
@@ -7354,12 +7354,12 @@ void function ManageJitterVFX_Thread()
 		{
 			intervalA = RandomFloatRangeSeeded( seed, phaseOneSlow_Lower, phaseOneSlow_Upper )
 		}
-#if DEV
+#if DEVELOPER
 			
 #endif
 		SetConVarInt( "glitch_aberrationScale", 80 )
 		wait intervalB
-#if DEV
+#if DEVELOPER
 			
 #endif
 		intervalB = RandomFloatRangeSeeded( seed, phaseTwo_Lower, phaseTwo_Upper )

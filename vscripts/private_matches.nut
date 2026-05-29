@@ -43,7 +43,7 @@ global function PrivateMatch_SortPlayersByName
 global function PrivateMatch_ToggleSurveyRing
 
 global function PrivateMatch_ClientOnSquadEliminated
-#if DEV
+#if DEVELOPER
 global function DEV_ShowSpectatorButtonHints
 #endif
 
@@ -985,7 +985,7 @@ bool function IsPrivateMatchLobby()
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_ShowSpectatorButtonHints()
 {
 	OnSpectatorStarted()

@@ -88,7 +88,7 @@ global function Minimap_SetVisiblityConeColor
 
 global function Minimap_SetPlayerColorOverride
 
-#if DEV
+#if DEVELOPER
 global function DEV_Minimap_DumpEntHandles
 #endif
 
@@ -125,7 +125,7 @@ struct {
 
 	var minimap_indicator
 
-#if DEV
+#if DEVELOPER
 		table<int, entity> minimapHandles
 #endif
 
@@ -496,7 +496,7 @@ var function CreateMinimapRui( asset ruiAsset, int sortKey = 0 )
 	return rui
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_Minimap_DumpEntHandles()
 {
 	int index = 0
@@ -649,7 +649,7 @@ void function MinimapObjectThread( entity ent )
 			if ( file.countLimitedCounts[i] >= file.countLimitedMaxes[i] )
 			{
 				printt( "Warning: Tried to add mem-watched " + minimapAsset + "but hit count limit of " + file.countLimitedMaxes[i] )
-#if DEV
+#if DEVELOPER
 					Assert( false, "Asserting due to a spike in minimap ruis. Please report this to devnet or attach the TTY/output to http://jiratf.respawn.net:8080/browse/R5DEV-236455 or send to ehuel@respawn.com" )
 #endif
 
@@ -666,7 +666,7 @@ void function MinimapObjectThread( entity ent )
 		}
 	}
 
-#if DEV
+#if DEVELOPER
 		int eHandle = ent.GetEncodedEHandle()
 
 		{

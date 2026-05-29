@@ -8,7 +8,7 @@ const float CAREPACKAGE_HINT_NOTIFICATION_DIST = 20000
 const float FORWARD_CAST_RAY_LENGTH = 40000
 const float LOOKAT_HINT_COOLDOWN = 120
 
-#if DEV
+#if DEVELOPER
 const bool CARE_PACKAGE_INSIGHT_PERF_TESTING = false
 #endif
 
@@ -799,7 +799,7 @@ void function UpdateCarePackageLootAtReveal( entity player )
 			Wait( 1 )
 			continue
 		}
-#if DEV
+#if DEVELOPER
 		if( CARE_PACKAGE_INSIGHT_PERF_TESTING )
 		{
 			PerfStart( PerfIndexClient.CarePackagePerkLookatUpdate )
@@ -902,7 +902,7 @@ void function UpdateCarePackageLootAtReveal( entity player )
 			soundHandle = null
 		}
 
-#if DEV
+#if DEVELOPER
 		if( CARE_PACKAGE_INSIGHT_PERF_TESTING )
 		{
 			PerfEnd( PerfIndexClient.CarePackagePerkLookatUpdate )

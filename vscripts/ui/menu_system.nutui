@@ -7,7 +7,7 @@ global function EnableCharacterChangeInFiringRange
 global function SetFiringRangeChallengeInProgress
 global function IsOptInEnabled
 
-#if DEV
+#if DEVELOPER
 global function ToggleOptIn
 global function SetOptIn
 #endif
@@ -117,7 +117,7 @@ void function InitSystemMenu( var newMenuArg )
 
 	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
 
-#if DEV
+#if DEVELOPER
 		AddMenuFooterOption( menu, LEFT, BUTTON_Y, true, "#Y_BUTTON_DEV_MENU", "#DEV_MENU", OpenDevMenu )
 #else
 		if ( GetConVarBool( "cl_ezlaunch_button" ) )

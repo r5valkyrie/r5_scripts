@@ -97,7 +97,7 @@ global function ShouldBattlePassTabBeEnabled
 global function GetCurrentLegendToken_GRXScriptOffer
 #endif
 
-#if DEV
+#if DEVELOPER
 global function DEV_BattlePass
 #endif
 
@@ -582,7 +582,7 @@ int function GetPlayerBattlePassXPProgress( EHI playerEHI, ItemFlavor pass, bool
 		Assert( playerEHI == LocalClientEHI() )
 
 
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return 0
 #endif
@@ -612,7 +612,7 @@ int function GetPlayerBattlePassLastSeenXP( EHI playerEHI, ItemFlavor pass )
 		Assert( playerEHI == LocalClientEHI() )
 
 
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return 0
 #endif
@@ -633,7 +633,7 @@ int function GetPlayerBattlePassPurchasedXP( EHI playerEHI, ItemFlavor pass, boo
 		Assert( playerEHI == LocalClientEHI() )
 
 
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return 0
 #endif
@@ -657,7 +657,7 @@ int function GetPlayerBattlePassEarnedXP( EHI playerEHI, ItemFlavor pass, bool g
 		Assert( playerEHI == LocalClientEHI() )
 
 
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return 0
 #endif
@@ -675,7 +675,7 @@ bool function GetPlayerBattlePassLastSeenPremium( EHI playerEHI, ItemFlavor pass
 		Assert( playerEHI == LocalClientEHI() )
 
 
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return false
 #endif
@@ -692,7 +692,7 @@ bool function GetPlayerBattlePassLastSeenElite( EHI playerEHI, ItemFlavor pass )
 		Assert( playerEHI == LocalClientEHI() )
 
 
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return false
 #endif
@@ -709,7 +709,7 @@ int function GetPlayerBattlePassPurchasedLevels( EHI playerEHI, ItemFlavor pass 
 		Assert( playerEHI == LocalClientEHI() )
 
 
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return 0
 #endif
@@ -736,7 +736,7 @@ int function GetPlayerBattlePassPurchasedLevelsWithLegendTokens( EHI playerEHI, 
 		Assert( playerEHI == LocalClientEHI() )
 
 
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return 0
 #endif
@@ -1119,7 +1119,7 @@ array<BattlePassReward> function GetBattlePassLevelRewards( ItemFlavor pass, int
 		rowIndex++
 	}
 
-#if DEV
+#if DEVELOPER
 		foreach( BattlePassReward reward in rewardList )
 		{
 			Assert( reward.quantity > 0, "Invalid BattlePass reward quantity for level " + levelIndex )
@@ -1177,7 +1177,7 @@ int function GetBattlePassXPEventValue( entity player, int xpType )
 		return 0
 	expect ItemFlavor(activeBattlePass)
 
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return 0
 #endif
@@ -1191,7 +1191,7 @@ int function GetBattlePassXPEventValue( entity player, int xpType )
 
 int function GetBattlePassXPEventCount( entity player, int xpType )
 {
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return 0
 #endif
@@ -1854,7 +1854,7 @@ string function GetBattlePassXPEventValueDisplay( entity player, int xpType )
 
 
 
-#if DEV
+#if DEVELOPER
 ItemFlavor function DEV_BattlePass( EHI playerEHI = EHI_null )
 {
 

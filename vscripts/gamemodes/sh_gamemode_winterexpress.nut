@@ -61,7 +61,7 @@ global function WinterExpress_IsTeamWinning
 
 
 
-#if DEV
+#if DEVELOPER
 global function PickCommentaryLineFromBucket_WinterExpressCustom
 #endif
 

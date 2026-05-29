@@ -51,7 +51,7 @@ global function Boost_GetBonusPostGameMythicProgressBonus
 
 
 
-#if DEV
+#if DEVELOPER
 	global function DEV_Boost_PrintActiveBoosts
 	global function DEV_Boost_PrintPlaylistData
 	global function DEV_Boost_ResetPersistence
@@ -305,7 +305,7 @@ struct FileStruct_Boosts
 
 	int activePlaylistBoostVersion = DEFAULT_PLAYLIST_BOOST_VERSION
 
-#if DEV
+#if DEVELOPER
 		bool useDevBoosts = false
 #endif
 
@@ -330,7 +330,7 @@ void function Sh_Boosts_Init()
 {
 	FileStruct_Boosts newFileBoosts
 	file = newFileBoosts
-#if DEV
+#if DEVELOPER
 		file.useDevBoosts = GetConVarBool( "mtx_progression_modifier_dev_boosts_enabled" )
 
 
@@ -405,7 +405,7 @@ void function OnBoostsLoaded( entity player, BoostTable previousState )
 void function OnNewBoostDetected( entity player, int boostGuid )
 {
 
-#if DEV
+#if DEVELOPER
 			printf("\tOnNewBoostDetected: %i\n", boostGuid )
 #endif
 		Boost_UI_SetHasNewBoosts( true )
@@ -416,7 +416,7 @@ void function OnNewBoostDetected( entity player, int boostGuid )
 void function OnBoostStart( entity player, int boostGuid )
 {
 	
-#if DEV
+#if DEVELOPER
 		printf("\tOn Boost Start: %i\n", boostGuid )
 #endif
 }
@@ -425,7 +425,7 @@ void function OnBoostStart( entity player, int boostGuid )
 void function OnBoostEnd( entity player, int boostGuid )
 {
 	
-#if DEV
+#if DEVELOPER
 		printf("\tOn Boost End: %i\n", boostGuid )
 #endif
 }
@@ -480,7 +480,7 @@ void function CategorizeBoostEvent( BoostEvent boostEvent )
 
 void function ImportBoostTypes()
 {
-#if DEV
+#if DEVELOPER
 		if ( file.useDevBoosts )
 		{
 			DEV_GenerateBoostTypes()
@@ -490,7 +490,7 @@ void function ImportBoostTypes()
 
 void function ImportBoostEvents()
 {
-#if DEV
+#if DEVELOPER
 		if ( file.useDevBoosts )
 		{
 			DEV_GenerateBoostEvents()
@@ -566,7 +566,7 @@ void function ImportBoostTypeFromBakery( asset boostTypeAsset, ItemFlavor ornull
 
 	if ( GetGlobalSettingsBool( boostTypeAsset, "isDevType" ) )
 	{
-#if DEV
+#if DEVELOPER
 			if ( !file.useDevBoosts )
 			{
 				printf( "%s: Did not register boost type: %s", FUNC_NAME(),  GetGlobalSettingsString( boostTypeAsset, "typeId" ) )
@@ -742,7 +742,7 @@ void function ImportBoostEventFromBakery( asset boostEventAsset, ItemFlavor ornu
 
 	if ( GetGlobalSettingsBool( boostEventAsset, "isDevEvent" ) )
 	{
-#if DEV
+#if DEVELOPER
 			if ( !file.useDevBoosts )
 			{
 				printf( "%s: Did not register boost event: %s", FUNC_NAME(),  GetGlobalSettingsString( boostEventAsset, "eventId" ) )
@@ -1854,7 +1854,7 @@ bool function RegionConditionsMet( entity player, Boost boost, bool currentMatch
 	}
 
 	bool playerInRegion = IsClientRegionInList( player, boost.regionConditions )
-#if DEV
+#if DEVELOPER
 		string regions = ""
 		foreach ( string region in boost.regionConditions )
 		{
@@ -1884,7 +1884,7 @@ bool function PartyConditionMet( entity player, Boost boost, bool currentMatch )
 	}
 
 	int partySize = currentMatch ? PlayerPartySize( player ) : player.GetPersistentVarAsInt( "lastPartySize" )
-#if DEV
+#if DEVELOPER
 		printf( "%s(): LastPartySize (%s): %i", FUNC_NAME(), currentMatch ? "cur" : "prev", partySize )
 #endif
 	return partySize > 1
@@ -2071,7 +2071,7 @@ void function Debug_PrintBoosts( entity player )
 
 
 
-#if DEV
+#if DEVELOPER
 
 	
 	
@@ -2652,7 +2652,7 @@ array< Boost > function Boost_GetBoostsAffectingXPType( entity player, int xpTyp
 		}
 	}
 
-#if DEV
+#if DEVELOPER
 		printf( "%s: %i\n", FUNC_NAME(), xpType )
 		foreach ( Boost boost in affectingBoosts )
 		{
@@ -2749,7 +2749,7 @@ int function Boost_GetBonusPostGameMythicProgressBonus( entity player, int pIdx 
 	{
 		if ( PlayerBoostsNeedRefresh( GetLocalClientPlayer() ) )
 		{
-#if DEV
+#if DEVELOPER
 				print( "Refreshing boosts..." )
 #endif
 

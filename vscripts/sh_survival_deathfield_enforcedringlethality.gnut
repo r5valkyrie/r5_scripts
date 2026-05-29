@@ -843,7 +843,7 @@ void function CL_Manage_RingOutLoopSound_Thread()
 	if( !simplifiedLethality )
 		return
 
-#if DEV
+#if DEVELOPER
 		string playerName = player.GetPlayerName()
 		string debugStr_Play = format( "%s(): RingOut Loop Playing for Player: %s", FUNC_NAME(), playerName )
 		string debugStr_Stop = format( "%s(): RingOut Loop Stopping for Player: %s", FUNC_NAME(), playerName )

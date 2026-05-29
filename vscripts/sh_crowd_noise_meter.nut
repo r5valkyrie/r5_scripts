@@ -27,7 +27,7 @@ global function ToggleCrowdSoundOnEntity
 
 
 
-#if DEV
+#if DEVELOPER
 global function DEV_Cl_ToggleCrowdNoiseMeterOnPlayer
 global function DEV_Cl_ToggleCrowdNoiseMeterOnServer
 global function DEV_Cl_ToggleCrowdNoiseMeterDebug
@@ -196,7 +196,7 @@ struct
 
 	table < int, int > crowdSoundOdds
 
-#if DEV
+#if DEVELOPER
 		var meterRui														= null
 		bool isServerBroadcasting
 #endif
@@ -204,7 +204,7 @@ struct
 	bool isFirstTimeSpawned													= false
 
 
-#if DEV
+#if DEVELOPER
 	bool isDecayEnabled														= true
 #endif
 
@@ -222,7 +222,7 @@ void function CrowdNoiseMeter_Init()
 
 
 
-#if DEV
+#if DEVELOPER
 		file.isServerBroadcasting = GetCurrentPlaylistVarBool( "crowd_noise_meter_enable_server_broadcasting", false )
 #endif
 
@@ -511,7 +511,7 @@ void function CLIENT_SetCrowdNoiseMeterValue( float updatedCrowdNoiseMeterValue,
 
 	Sound_SetCrowdState( file.localNoiseMeterValue * 100, file.localNoiseMeterDeltaValue * 100 )
 
-#if DEV
+#if DEVELOPER
 		if ( IsValid( file.meterRui ) )
 		{
 			RuiSetFloat( file.meterRui, "progress", file.localNoiseMeterValue )
@@ -905,7 +905,7 @@ void function CLIENT_CrowdNoiseMeter_Think()
 	if ( !IsValid( player ) )
 		return
 
-#if DEV
+#if DEVELOPER
 		if ( !file.isServerBroadcasting )
 			return
 #endif
@@ -932,7 +932,7 @@ void function CLIENT_CrowdNoiseMeter_Think()
 		file.nextDecayUnixTimestamp = GetUnixTimestamp() + file.decayIntervalSeconds
 		wait file.decayIntervalSeconds
 
-#if DEV
+#if DEVELOPER
 			if ( !file.isDecayEnabled )
 				continue
 #endif
@@ -951,7 +951,7 @@ void function CLIENT_ScoreCheck_Thread()
 	if ( !IsValid( player ) || player.IsBot() )
 		return
 
-#if DEV
+#if DEVELOPER
 		if ( !file.isServerBroadcasting )
 			return
 #endif
@@ -1081,7 +1081,7 @@ void function CrowdNoiseMeter_PlayGameEndSound( entity player, bool isOnWinningT
 }
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_Cl_ToggleCrowdNoiseMeterOnPlayer()
 {
 	entity player = GetLocalClientPlayer()
@@ -1102,7 +1102,7 @@ void function DEV_Cl_ToggleCrowdNoiseMeterOnPlayer()
 }
 #endif
 
-#if DEV
+#if DEVELOPER
 void function DEV_Cl_ToggleCrowdNoiseMeterDebug()
 {
 	if ( IsValid( file.meterRui ) )
@@ -1118,7 +1118,7 @@ void function DEV_Cl_ToggleCrowdNoiseMeterDebug()
 }
 #endif
 
-#if DEV
+#if DEVELOPER
 void function DEV_Cl_ToggleCrowdNoiseMeterOnServer()
 {
 	Remote_ServerCallFunction( "ClientCallback_DevToggleCrowdNoiseMeterOnServer" )

@@ -7,7 +7,7 @@ void function SV_CL_Shared_Init()
 		ClMinimap_Pre_Init()
 
 
-#if DEV
+#if DEVELOPER
 		PrintDebugTimeDetails()
 #endif
 
@@ -110,7 +110,7 @@ void function SV_CL_Init()
 
 
 	GrappleWeaponInit()
-#if DEV
+#if DEVELOPER
 		ShDevUtility_Init()
 		test_init()
 #endif
@@ -592,7 +592,7 @@ void function SV_CL_Init()
 
 
 
-#if DEV
+#if DEVELOPER
 		SpawnDebugger_Init()
 #endif
 } 

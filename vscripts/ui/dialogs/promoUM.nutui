@@ -9,7 +9,7 @@ global function PromoDialog_OpenToPage
 global function PromoDialog_CanShow
 global function PromoDialog_GetAllGifts
 global function PromoDialog_RemoveFromCache
-#if DEV
+#if DEVELOPER
 global function DEV_SetHasViewedMOTDThisSession
 #endif
 
@@ -159,7 +159,7 @@ void function InitPromoDialogUM( var newMenuArg )
 
 	file.tabsBackground = Hud_GetChild( file.menu, "tabsBackground" )
 
-#if DEV
+#if DEVELOPER
 		AddMenuThinkFunc( file.menu, PromoDialogUMAutomationThink )
 #endif
 }
@@ -698,7 +698,7 @@ void function IncreaseAcceptableLoadTime()
 void function OnDLPromoPakLoaded()
 {
 	file.promoPaksLoaded++
-#if DEV
+#if DEVELOPER
 		printf( "%s: %i / %i paks loaded", FUNC_NAME(), file.promoPaksLoaded, file.promoPaksWanted )
 #endif
 	if( file.promoPaksLoaded >= file.promoPaksWanted )
@@ -812,7 +812,7 @@ void function PromoDialog_OpenHijackedUM( string titleText, string descText, str
 	}
 }
 
-#if DEV
+#if DEVELOPER
 void function PromoDialogUMAutomationThink( var menu )
 {
 	if ( AutomateUi() )
@@ -1214,7 +1214,7 @@ void function PromoDialog_RemoveFromCache( int viewedGifts )
 }
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_SetHasViewedMOTDThisSession( bool val )
 {
 	file.hasViewedMOTDThisSession = val

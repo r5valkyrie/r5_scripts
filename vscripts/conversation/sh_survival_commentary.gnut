@@ -68,7 +68,7 @@ global const int CHANCE_FOR_CHARACTER_COMMENT = 100
 global const int NUM_NEARBY_SPEAKERS_TO_PLAY_FROM = 2
 
 
-#if DEV
+#if DEVELOPER
 global const int CONDITIONAL_ALT_BUG_REPRO_NUM = 5401
 #endif
 global const string CONDITIONAL_ALT_WILD_CARD = "*"
@@ -652,7 +652,7 @@ void function RegisterConditionalAltDialogue( asset dt )
 		int now = GetUnixTimestamp()
 		if ( enableTimestamp != 0 && now < enableTimestamp )
 		{
-#if DEV
+#if DEVELOPER
 				printt("Not register conditional alt("+ baseEventName +") now("+ GetDateTimeString(now) +") < enableTimestamp("+ GetDateTimeString(enableTimestamp) +")")
 #endif
 			continue
@@ -660,7 +660,7 @@ void function RegisterConditionalAltDialogue( asset dt )
 
 		if ( disableTimestamp !=0 && now > disableTimestamp )
 		{
-#if DEV
+#if DEVELOPER
 				printt("Not register conditional alt("+ baseEventName +") now("+ GetDateTimeString(now) +") > disableTimestamp("+ GetDateTimeString(disableTimestamp) +")")
 #endif
 			continue
@@ -759,7 +759,7 @@ string function GetConditionalAltDialogue( string dialogueEventName, entity spea
 		{
 			if ( RandomFloat( 1.0 ) > CONDITIONAL_ALT_CHANCE_TO_PLAY )
 			{
-#if DEV
+#if DEVELOPER
 					if ( GetBugReproNum() == CONDITIONAL_ALT_BUG_REPRO_NUM )
 						printt( "CONDITIONAL ALT TESTING: Would have played con alt for " + dialogueEventName + " | speaker: " + speakingPlayerVoice + " | condPlayer: " + condPlayerVoice + ", but line is not marked force play and random roll failed." )
 #endif
@@ -768,7 +768,7 @@ string function GetConditionalAltDialogue( string dialogueEventName, entity spea
 
 			if ( Distance( speakingPlayer.GetOrigin(), condPlayer.GetOrigin() ) > CONDITIONAL_ALT_CONSIDERED_NEAR_DIST )
 			{
-#if DEV
+#if DEVELOPER
 					if ( GetBugReproNum() == CONDITIONAL_ALT_BUG_REPRO_NUM )
 						printt( "CONDITIONAL ALT TESTING: Would have played con alt for " + dialogueEventName + " | speaker: " + speakingPlayerVoice + " | condPlayer: " + condPlayerVoice + ", but line is not marked force play and players are too far away from each other." )
 #endif
@@ -801,7 +801,7 @@ string function GetConditionalAltMapOnlyDialogue( string dialogueEventName, enti
 		{
 			if ( RandomFloat( 1.0 ) > CONDITIONAL_ALT_CHANCE_TO_PLAY )
 			{
-#if DEV
+#if DEVELOPER
 					if ( GetBugReproNum() == CONDITIONAL_ALT_BUG_REPRO_NUM )
 						printt( "CONDITIONAL ALT TESTING: Would have played con alt for " + dialogueEventName + " | speaker: " + speakingPlayerVoice + " | condMap: " + GetMapName() + ", but line is not marked force play and random roll failed." )
 #endif
@@ -864,7 +864,7 @@ string function GetConditionalAltPingExtension( entity speakingPlayer, entity su
 	
 	if ( RandomFloat( 1.0 ) > CONDITIONAL_ALT_CHANCE_TO_PLAY && !forceConAlt )
 	{
-#if DEV
+#if DEVELOPER
 			if ( GetBugReproNum() == CONDITIONAL_ALT_BUG_REPRO_NUM && possibleNewExts.len() > 0 )
 				printt( "CONDITIONAL ALT TESTING: Con alt is registered for " + pingEventName + " | speaker: " + GetPlayerVoice( speakingPlayer ) + ", but line is not marked force play and random roll failed." )
 #endif

@@ -37,7 +37,7 @@ global function GoldenHorseRed_ShowRui
 global function GoldenHorseRed_HideRui
 
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -1970,7 +1970,7 @@ void function GoldenHorseRed_SummonRui_Thread( entity player )
 
 
 
-#if DEV
+#if DEVELOPER
 
 
 

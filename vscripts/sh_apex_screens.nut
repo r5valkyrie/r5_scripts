@@ -44,7 +44,7 @@ global function ClApexScreens_SetEventScreenOverride
 
 global function GetCurrentPlaylistVarAsset
 
-#if DEV
+#if DEVELOPER
 global function DEV_CreatePerfectApexScreen
 global function DEV_ToggleActiveApexScreenDebug
 #endif
@@ -1093,7 +1093,7 @@ void function ClApexScreens_OnStaticPropRuiVisibilityChange( array<int> newlyVis
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_ToggleActiveApexScreenDebug()
 {
 	file.DEV_activeScreenDebug = !file.DEV_activeScreenDebug
@@ -1645,7 +1645,7 @@ var function CreateApexScreenRUIElement( ApexScreenState screen )
 	var rui
 	if ( screen.magicId == -1 )
 	{
-#if DEV
+#if DEVELOPER
 			float aspectRatio = 1.0
 			float height      = screen.diagonalSize / sqrt( 1.0 + pow( aspectRatio, 2.0 ) )
 			float width       = aspectRatio * height
@@ -1763,7 +1763,7 @@ void function ClApexScreens_SetEventScreenOverride( int position, ScreenOverride
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_CreatePerfectApexScreen( vector origin, float diagonalSize, int screenPosition )
 {
 	ApexScreenState apexScreen

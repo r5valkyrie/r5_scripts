@@ -1029,7 +1029,7 @@ bool function PingLootTickUnderAim( entity tick )
 
 
 
-#if DEV
+#if DEVELOPER
 
 
 

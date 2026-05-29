@@ -266,7 +266,7 @@ void function RegisterGetFocusCallback( var button, ItemFlavor stickerItem )
 	void functionref( var button ) func = void function( var button ) : ( stickerItem ) {
 		file.focusedItem = stickerItem
 
-#if DEV
+#if DEVELOPER
 			if ( InputIsButtonDown( KEY_LSHIFT ) )
 				printt( "\"" + Localize( ItemFlavor_GetLongName( stickerItem ) ) + "\" grx ref is: " + GetGlobalSettingsString( ItemFlavor_GetAsset( stickerItem ), "grxRef" ) )
 #endif

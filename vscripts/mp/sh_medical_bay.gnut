@@ -544,7 +544,7 @@ void function MedBay_InitEye()
 	if ( !GetCurrentPlaylistVarBool( MEDBAY_PLAYLIST_EYE_ENABLED, true ) )
 		return
 
-#if DEV
+#if DEVELOPER
 	
 	if ( Dev_CommandLineHasParm( "-survival_preprocess" ) )
 		return

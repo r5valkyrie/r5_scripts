@@ -161,7 +161,7 @@ int function GetPlayerAccountXPProgress( EHI playerEHI )
 		Assert( playerEHI == LocalClientEHI() )
 
 
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return 0
 #endif
@@ -175,7 +175,7 @@ int function GetPlayerAccountXPPreviousProgress( EHI playerEHI )
 		Assert( playerEHI == LocalClientEHI() )
 
 
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return 0
 #endif

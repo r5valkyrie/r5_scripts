@@ -375,7 +375,7 @@ float function GamemodeUtility_GetMatchTimeLimit()
 {
 	float matchTimeLimit = GetCurrentPlaylistVarFloat( "match_time_limit", UNSET_PLAYLIST_VAR_FLOAT ) 
 
-#if DEV
+#if DEVELOPER
 		printt( "GAMEMODE UTILITY: Grabbing the match time limit playlist var: match_time_limit. It is returning: " + matchTimeLimit )
 #endif
 
@@ -802,7 +802,7 @@ const float POST_PULSE_WAIT = 1.0
 const float SCAN_FADE_DURATION = 1.5
 void function RunVictimSquadMapScan_Thread( int victimTeam )
 {
-#if DEV
+#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 #endif
 
@@ -3053,7 +3053,7 @@ float function GetPlaylistVar_DeathboxDuration()
 
 void function GamemodeUtility_ManageDVSTweakOnPlayer_Thread()
 {
-#if DEV
+#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 #endif
 

@@ -467,7 +467,7 @@ SharedRankedDivisionData function GetCurrentArenasRankedDivisionFromScoreAndLadd
 	if ( (ladderPosition != SHARED_RANKED_INVALID_LADDER_POSITION) && (numPlayersOnLadder > 0) && (ladderPosition <= numPlayersOnLadder) )
 	{
 		SharedRankedDivisionData ladderDivisionData = expect SharedRankedDivisionData ( file.ladderOnlyDivision )
-#if DEV
+#if DEVELOPER
 			if ( ladderDivisionData.scoreMin > score ) 
 				return GetCurrentArenasRankedDivisionFromScore( score )
 #endif
@@ -601,7 +601,7 @@ bool function ArenasRanked_HasFinishedPlacementMatches( entity player )
 
 array<bool> function ArenasRanked_GetPlacementWinsAsArray( entity player )
 {
-#if DEV
+#if DEVELOPER
 	if ( DEV_ShouldIgnorePersistence() )
 		return []
 #endif
@@ -877,7 +877,7 @@ int function ArenasRanked_GetHistoricalLadderPosition( entity player, string ran
 
 var function ArenasRanked_GetHistoricalRankedPersistenceData( entity player, string persistenceField, string rankedSeasonGUID )
 {
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return null
 #endif
@@ -989,7 +989,7 @@ bool function ArenasRanked_HasPlayerWaitedTooLongAfterBannerWasPickedUp( entity 
 
 var function GetArenasRankedPersistenceData( entity player, string persistenceField )
 {
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return null
 #endif
@@ -1302,7 +1302,7 @@ void function ArenasRanked_OnSpectateTargetChanged( entity spectatingPlayer, ent
 
 bool function IsArenasRankedPersistenceValid()
 {
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return false
 #endif

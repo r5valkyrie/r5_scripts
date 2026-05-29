@@ -232,7 +232,7 @@ void function InitInventoryFooter( var panel )
 	AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
 	AddPanelFooterOption( panel, RIGHT, BUTTON_START, true, "#HINT_SYSTEM_MENU_GAMEPAD", "#HINT_SYSTEM_MENU_KB", TryOpenSystemMenu )
 
-#if DEV
+#if DEVELOPER
 		AddPanelFooterOption( panel, LEFT, BUTTON_STICK_LEFT, true, "#LEFT_STICK_DEV_MENU", "#DEV_MENU", OpenDevMenu )
 #endif
 }
@@ -249,7 +249,7 @@ void function InitSquadFooter( var panel )
 		AddPanelFooterOption( panel, LEFT, KEY_TAB, false, "", "", TryCloseSurvivalInventory, PROTO_ShouldInventoryFooterHack )
 
 		AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
-#if DEV
+#if DEVELOPER
 			AddPanelFooterOption( panel, LEFT, BUTTON_STICK_LEFT, true, "#LEFT_STICK_DEV_MENU", "#DEV_MENU", OpenDevMenu )
 #endif
 		AddPanelFooterOption( panel, RIGHT, BUTTON_START, true, "#HINT_SYSTEM_MENU_GAMEPAD", "#HINT_SYSTEM_MENU_KB", TryOpenSystemMenu )
@@ -389,12 +389,12 @@ void function Delayed_SetCursorToOffsetInventoryPosition( float offset )
 	float width  = 1920
 	float height = 1080
 
-#if DEV
+#if DEVELOPER
 	if( !IsControllerModeActive() )
 	{
 		float screenSizeYFrac = GetScreenSize().height / 1080.0
 		
-		WarpMouseCursorDEV( <((width * 0.5) + offset) * screenSizeYFrac, (height * 0.5) * screenSizeYFrac, 0> )
+		//WarpMouseCursorDEV( <((width * 0.5) + offset) * screenSizeYFrac, (height * 0.5) * screenSizeYFrac, 0> )
 	}
 	else
 #endif

@@ -393,7 +393,7 @@ void function FriendName_OnChanged( var button )
 
 void function Gifting_SetupFriendButton( var button, GiftingFriend friend )
 {
-#if DEV
+#if DEVELOPER
 	Assert( !( button in file.activeFriendButtons ) )
 #endif
 	if ( button in file.activeFriendButtons )
@@ -405,7 +405,7 @@ void function Gifting_SetupFriendButton( var button, GiftingFriend friend )
 
 void function Gifting_RemoveFriendButton( var button )
 {
-#if DEV
+#if DEVELOPER
 	Assert( button in file.activeFriendButtons )
 #endif
 	if ( !( button in file.activeFriendButtons ) )

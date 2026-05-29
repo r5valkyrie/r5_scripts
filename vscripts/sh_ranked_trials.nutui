@@ -43,7 +43,7 @@ global function RankedTrials_NextRankHasTrial
 
 
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -134,7 +134,7 @@ const table< string, string > BAKERY_LABEL_TO_STAT_REF =
 	["NONE"] = "",
 }
 
-#if DEV
+#if DEVELOPER
 const string DEV_RUN_PLAYLIST_OVERRIDE_CHECK = "ranked_trials_dev_playlist_check"
 const int DEV_FORCE_COMPLETION_STATUS = -1 
 #endif
@@ -142,7 +142,7 @@ const int DEV_FORCE_COMPLETION_STATUS = -1
 void function Sh_RankedTrials_Init()
 {
 	_CacheStatEntries() 
-#if DEV
+#if DEVELOPER
 		Assert( PERSISTENCE_KEYS.find( PERSISTENCE_KEY_TIMES_FAILED_TRIAL ) == PERSISTENCE_KEYS.len() - 1 )
 		Assert( DEV_CheckPlaylistOverrides() )
 #endif
@@ -802,7 +802,7 @@ int function RankedTrials_GetProgressValueForStatByIndex( entity player, int sta
 
 
 
-#if DEV
+#if DEVELOPER
 bool function DEV_CheckPlaylistOverrides()
 {
 	if ( !GetCurrentPlaylistVarBool( DEV_RUN_PLAYLIST_OVERRIDE_CHECK, false ) )

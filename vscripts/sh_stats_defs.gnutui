@@ -1126,14 +1126,14 @@ void function ShStatsDefs_Init()
 		Assert( index < MAX_BIT_FIELD_SIZE, "Bitfield requested is too big! -- Please see Jira: https://jiratf.rspn.ad.ea.com/browse/R5DEV-587155" )
 		Assert( index < MAX_BIT_FIELD_SIZE - BITFIELD_SAFETY_WARNING_THRESHOLD, "Bitfield is nearing maximum supported size!! -- Please see Jira: https://jiratf.rspn.ad.ea.com/browse/R5DEV-587155")
 
-#if DEV
+#if DEVELOPER
 			printf("adding character guid %s to bitmask index %d", guid, index)
 #endif
 
 		file.characterGUIDToBitmask[ guid ] <- 1 << index
 	}
 
-#if DEV
+#if DEVELOPER
 		
 		print("CHARACTER_GUID_TO_BITMASK_MAP contents:\n")
 		foreach ( string guid, int bitmask in file.characterGUIDToBitmask )

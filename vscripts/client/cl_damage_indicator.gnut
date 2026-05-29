@@ -905,7 +905,7 @@ void function Create_DamageIndicatorHUD()
 
 void function TryAddGrenadeIndicator( entity grenade )
 {
-#if DEV
+#if DEVELOPER
 		if ( !level.clientScriptInitialized )
 			return
 #endif

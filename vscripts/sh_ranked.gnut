@@ -1279,7 +1279,7 @@ bool function Ranked_PlayerDeservesRewardsInPeriod(entity player, string rankedP
 
 var function Ranked_GetHistoricalRankedPersistenceData( entity player, string persistenceField, string rankedSeasonGUID )
 {
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return null
 #endif
@@ -1836,7 +1836,7 @@ int function Ranked_GetXProgMergedPersistenceData( entity player, string persist
 
 int function GetRankedPersistenceData( entity player, string persistenceField )
 {
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return 0
 #endif
@@ -1880,7 +1880,7 @@ int function GetRankedPersistenceData( entity player, string persistenceField )
 
 int function GetRankedGameData( entity player, string persistenceField )
 {
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return 0
 #endif

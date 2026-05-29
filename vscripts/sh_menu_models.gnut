@@ -4,7 +4,7 @@ global function Menu_GetCameraTarget
 global function UICallback_MenuModels_UIScriptHasReset
 global function OnReady_PLAY
 
-#if DEV
+#if DEVELOPER
 
 global function Menu_InitPresentationDataFromCameraSettings
 global function DEV_PlayLobbyIdle
@@ -325,7 +325,7 @@ struct
 
 		bool uiscriptHasReset
 
-#if DEV
+#if DEVELOPER
 			bool   DEV_previewSelfAsParty = false
 			string DEV_characterOffsetCharacter = ""
 			vector DEV_characterOffset = <0, 0, 0>
@@ -396,7 +396,7 @@ global function ShMenuModels_ClientToUI_OnMouseWheel
 
 global function FlashMenuModel
 
-#if DEV
+#if DEVELOPER
 global function DEV_SetPresentationDataFromString
 global function DEV_TweakPlayCamera
 global function DEV_TweakCharacterCamera
@@ -604,7 +604,7 @@ void function ApplyEventPositioning()
 		ent.SetOrigin( ent.GetOrigin() + EVENT_LOBBY_OFFSET )
 }
 
-#if DEV
+#if DEVELOPER
 void function ShowModelInfo()
 {
 	EndSignal( level, "StopShowingModelInfo" )
@@ -1864,7 +1864,7 @@ bool function IsEventLobbyActive()
 void function InitMenuEntities()
 {
 	printf( "InitMenuEntitiesDebug: InitMenuEntities() START" )
-#if DEV
+#if DEVELOPER
 		if ( BuildingCubeMaps() )
 			return
 #endif
@@ -2137,7 +2137,7 @@ void function UpdateMenuCharacterModelInternal( int overrideCharacterFlavorGUID 
 	else
 		character = GetItemFlavorByGUID( overrideCharacterFlavorGUID )
 
-#if DEV
+#if DEVELOPER
 		if ( GetBugReproNum() == 1747 ) 
 			character = GetItemFlavorByCharacterRef( "character_dummie"  )
 #endif
@@ -2152,7 +2152,7 @@ void function UpdateMenuCharacterModelInternal( int overrideCharacterFlavorGUID 
 		entity refEnt = ModelData_GetPoseEntity( expect MenuModelData( file.presentationData[ file.currentPresentationType ].modelData ) )
 		vector base   = refEnt.GetOrigin()
 		vector offset = CharacterClass_GetGalleryModelOffset( character )
-#if DEV
+#if DEVELOPER
 			if ( ItemFlavor_GetCharacterRef( character ) == file.DEV_characterOffsetCharacter )
 				offset = file.DEV_characterOffset
 #endif
@@ -2671,7 +2671,7 @@ void function TrackPartyMembersAndDisplayModelsThread()
 
 		bool realMember = true
 
-#if DEV
+#if DEVELOPER
 			if ( file.DEV_previewSelfAsParty )
 			{
 				realMember = false
@@ -2738,7 +2738,7 @@ void function TrackPartyMembersAndDisplayModelsThread()
 
 				ItemFlavor ornull characterOrNull = null
 				ItemFlavor ornull skinOrNull      = null
-#if DEV
+#if DEVELOPER
 					if ( file.DEV_previewSelfAsParty )
 					{
 						characterOrNull = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
@@ -4118,7 +4118,7 @@ void function UIToClient_PreviewStoreItem( SettingsAssetGUID itemFlavorGUID, boo
 
 	bool autoRotate = file.desiredPresentationType == ePresentationType.STORE_INSPECT
 
-#if DEV
+#if DEVELOPER
 		if ( InputIsButtonDown( KEY_LSHIFT ) )
 		{
 			string locedName = Localize( ItemFlavor_GetLongName( item ) )
@@ -4357,7 +4357,7 @@ void function ShowWeaponOverviewItem()
 	ClearStoreInspectItem()
 	ItemFlavor item = ModelData_GetSkinFlavor( file.weaponOverviewModelData)
 
-#if DEV
+#if DEVELOPER
 		if ( InputIsButtonDown( KEY_LSHIFT ) )
 		{
 			string locedName = Localize( ItemFlavor_GetLongName( item ) )
@@ -5000,7 +5000,7 @@ void function ModelData_SetAnim( MenuModelData modelData, string anim )
 	ModelData_GetModel( modelData ).Anim_Play( anim )
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_PlayLobbyIdle( string anim = "" )
 {
 	if ( file.currentPresentationType == ePresentationType.PLAY )
@@ -5372,7 +5372,7 @@ void function ShouldPauseMenuMouseWheelValues( bool shouldPause )
 	file.mouseWheelPauseInput = shouldPause
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_SetPresentationDataFromString( string presentationName, string presentationDataString )
 {
 	if ( presentationName.len() <= 6 || presentationName.slice(0, 6) != "LOBBY_" )
@@ -6012,7 +6012,7 @@ void function ApplyLightingConfigThread( string name )
 		
 
 		LightDef lightDef = file.lightingConfigs[name][index]
-#if DEV
+#if DEVELOPER
 			
 #endif
 
@@ -6062,7 +6062,7 @@ void function ApplyLightingConfigThread( string name )
 
 
 
-#if DEV
+#if DEVELOPER
 void function DrawLightDebug( vector origin, vector angles, vector color, float dist )
 {
 	vector endOrigin = origin + AnglesToForward( angles ) * dist

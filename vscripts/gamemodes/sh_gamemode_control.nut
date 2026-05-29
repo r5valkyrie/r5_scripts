@@ -165,7 +165,7 @@ const int CONTROL_DEFAULT_MAX_PLAYERS = 18
 
 
 
-#if DEV
+#if DEVELOPER
 	const bool CONTROL_SPAWN_DEBUGGING = false
 	const bool CONTROL_DISPLAY_DEBUG_DRAWS = false 
 	const float CONTROL_DEBUG_DRAW_DISPLAY_TIME = 1000.0
@@ -370,7 +370,7 @@ const float MRB_ICON_OFFSET = 10
 const float MRB_ICON_OFFSET_CARRIED = 100
 
 
-#if DEV
+#if DEVELOPER
 const float SPAWNPOINT_RADIUS = 20
 const float SPAWNPOINT_HEIGHT = 128
 const float SPAWNPOINT_DISPLAY_TIME = 60
@@ -5031,7 +5031,7 @@ void function Control_InstanceObjectivePing_Thread( entity wp )
 		return
 	}
 
-#if DEV
+#if DEVELOPER
 		if ( viewPlayer.GetTeamMemberIndex() < 0 )
 			Warning( "CONTROL: %s(): team member index was invalid.", FUNC_NAME() )
 #endif
@@ -5148,7 +5148,7 @@ void function ManageObjectiveVFX_Client_Thread( entity wp )
 	if ( !IsValid( objectiveFlag ) && !IsValid( objectiveBorder ) )
 		return
 
-#if DEV
+#if DEVELOPER
 		printt( "CONTROL: Setting up flare on objective ", scriptParent, " with flag ent ", objectiveFlag )
 #endif
 
@@ -15068,7 +15068,7 @@ CarePackagePlacementInfo function Control_MRBTimedEvent_MRBDeployPositionValidat
 	
 	if ( !IsValid( player ) )
 	{
-#if DEV
+#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: MRB Event, MRB Deployment failing because player is Invalid" )
 #endif
@@ -15107,7 +15107,7 @@ CarePackagePlacementInfo function Control_MRBTimedEvent_MRBDeployPositionValidat
 				int waypointTypeIndex = point.GetWaypointInt( INT_CONTROL_WAYPOINT_TYPE_INDEX )
 				if ( Control_IsSpawnWaypointIndexAnObjective( waypointTypeIndex ) )
 				{
-#if DEV
+#if DEVELOPER
 						if ( CONTROL_DISPLAY_DEBUG_DRAWS )
 							DebugDrawSphere( point.GetOrigin(), MIN_DIST_FROM_OBJECTIVES, COLOR_RED, true, 1.0 )
 #endif
@@ -15115,7 +15115,7 @@ CarePackagePlacementInfo function Control_MRBTimedEvent_MRBDeployPositionValidat
 					{
 						placementInfo.failed = true
 						placementState = eControlMRBPlacementState.NEAR_OBJECTIVE
-#if DEV
+#if DEVELOPER
 							if ( CONTROL_DETAILED_DEBUG )
 								printt( "CONTROL: MRB Event, MRB Deployment failing because of proximity to an Objective" )
 #endif
@@ -15129,7 +15129,7 @@ CarePackagePlacementInfo function Control_MRBTimedEvent_MRBDeployPositionValidat
 	
 	if ( placementInfo.failed && placementState == eControlMRBPlacementState.SUCCESS )
 	{
-#if DEV
+#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: MRB Event, MRB Deployment failing regular Airdrop tests" )
 #endif
@@ -15154,7 +15154,7 @@ int function Control_GetMRBPlacementStateFromHomeBasePositionChecks( int current
 	
 	foreach ( position in homebasePositions )
 	{
-#if DEV
+#if DEVELOPER
 			if ( CONTROL_DISPLAY_DEBUG_DRAWS )
 				DebugDrawSphere( position, minDistFromHomeBase, COLOR_RED, true, 1.0 )
 #endif
@@ -15163,7 +15163,7 @@ int function Control_GetMRBPlacementStateFromHomeBasePositionChecks( int current
 		{
 			placementState = isEnemyHomebase ? eControlMRBPlacementState.NEAR_HOMEBASE_ENEMY : eControlMRBPlacementState.NEAR_HOMEBASE
 
-#if DEV
+#if DEVELOPER
 				if ( CONTROL_DETAILED_DEBUG )
 				{
 					string debugHomeBaseString = isEnemyHomebase ? "Enemy" : "Friendly"

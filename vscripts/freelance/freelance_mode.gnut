@@ -52,7 +52,7 @@ global function FreelanceMode_GetIsVictoryForAll
 global function SCB_DoFreelanceModeSplash
 global function DoModeChangeSplash
 
-#if DEV
+#if DEVELOPER
 global function DEV_TestAllFreelanceModeSplashes
 #endif
 
@@ -2021,7 +2021,7 @@ void function SCB_DoFreelanceModeSplash_( int idx )
 			AnnouncementFromClass( player, dt )
 	}()
 }
-#if DEV
+#if DEVELOPER
 void function DEV_TestAllFreelanceModeSplashes()
 {
 	for( int idx = 0; idx < eModeSplash._count; ++idx )

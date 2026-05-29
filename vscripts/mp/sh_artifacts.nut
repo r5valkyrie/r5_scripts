@@ -102,7 +102,7 @@ global function Artifacts_IsBaseArtifactOwned
 global function Artifacts_ActivationEmote_GetVideo
 
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -332,7 +332,7 @@ const string ARTIFACT_EMISSIVE_FX_SIGNAL = "ArtifactsEmissiveFxSignal"
 
 const string LOADOUTS_ARTIFACT_INDEX_COMPONENT_TYPE = "artifact_%d_component_%s"
 const string LOADOUTS_ARTIFACT_COMPONENT_CHANGE = "artifact_configuration_component_change"
-#if DEV
+#if DEVELOPER
 const string LOADOUTS_DEV_ARTIFACT_COMPONENT_CHANGE_VERBOSE_PDEF_SECTION_KEY = "artifact configuration component change"
 const string LOADOUTS_DEV_ARTIFACT_COMPONENT_CHANGE_VERBOSE = "Artifact Configuration Componenent Change"
 const string LOADOUTS_DEV_ARTIFACT_CONFIGURATION_PDEF_SECTION_KEY = "artifact configuration %d"
@@ -517,7 +517,7 @@ void function ShArtifacts_LevelInit()
 
 void function RegisterArtifactComponentsForWeapon( ItemFlavor artifactWeapon )
 {
-#if DEV
+#if DEVELOPER
 		printf( "ArtifactsDebug: %s", FUNC_NAME() )
 #endif
 
@@ -610,7 +610,7 @@ void function RegisterArtifactComponentsForWeapon( ItemFlavor artifactWeapon )
 					Assert( currentTheme == "" || themeName == currentTheme )
 					currentTheme = themeName
 
-#if DEV
+#if DEVELOPER
 
 					switch( Artifacts_GetComponentType( component ) )
 					{
@@ -651,7 +651,7 @@ void function OnAllItemFlavorsRegistered_Artifact_Weapon()
 
 void function BuildLoadoutEntries_ArtifactWeapons()
 {
-#if DEV
+#if DEVELOPER
 		printf("ArtifactsDebug: %s", FUNC_NAME() )
 #endif
 
@@ -664,13 +664,13 @@ void function BuildLoadoutEntries_ArtifactWeapons()
 			if ( fileLevel.componentListsByType[ componentCounter ].len() == 0 )
 				continue 
 
-#if DEV
+#if DEVELOPER
 				printf( "ArtifactsDebug: %s - %s", FUNC_NAME(), ARTIFACT_COMPONENTS_TO_LOADOUT_NAMES_MAP[ componentCounter ] )
 #endif
 
 			LoadoutEntry componentEntry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, format( LOADOUTS_ARTIFACT_INDEX_COMPONENT_TYPE, artifactIdx, ARTIFACT_COMPONENTS_TO_LOADOUT_NAMES_MAP[ componentCounter ] ), eLoadoutEntryClass.ACCOUNT )
 			componentEntry.category = eLoadoutCategory.ARTIFACT_CONFIGURATIONS
-#if DEV
+#if DEVELOPER
 				componentEntry.pdefSectionKey = format( LOADOUTS_DEV_ARTIFACT_CONFIGURATION_PDEF_SECTION_KEY, artifactIdx )
 				componentEntry.DEV_name = format( LOADOUTS_DEV_ARTIFACT_CONFIGURATION_VERBOSE, artifactIdx )
 #endif
@@ -700,7 +700,7 @@ void function BuildLoadoutEntries_ArtifactWeapons()
 
 	LoadoutEntry componentEntry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, LOADOUTS_ARTIFACT_COMPONENT_CHANGE, eLoadoutEntryClass.ACCOUNT )
 	componentEntry.category = eLoadoutCategory.ARTIFACT_CONFIGURATIONS
-#if DEV
+#if DEVELOPER
 		componentEntry.pdefSectionKey = LOADOUTS_DEV_ARTIFACT_COMPONENT_CHANGE_VERBOSE_PDEF_SECTION_KEY
 		componentEntry.DEV_name = LOADOUTS_DEV_ARTIFACT_COMPONENT_CHANGE_VERBOSE
 #endif
@@ -1130,7 +1130,7 @@ ArtifactViewmodelData ornull function ClientCodeCallback_GetArtifactViewmodelDat
 
 void function Artifacts_Loadouts_SetupWeaponComponents( entity weapon, entity owner )
 {
-#if DEV
+#if DEVELOPER
 		if ( weapon.IsWeaponX() )
 			DEV_UpdatePlayerArtifactConfiguration( weapon, owner ) 
 #endif
@@ -1357,7 +1357,7 @@ int function Artifacts_Loadouts_GetEquippedTier( EHI playerEHI )
 	
 	
 
-#if DEV
+#if DEVELOPER
 		return GetConVarInt( "artifacts_tier_override" )
 #endif
 
@@ -1512,7 +1512,7 @@ void function Artifact_PrecacheDeathboxModelAndFX( ItemFlavor deathbox )
 	asset deathboxMdl = Artifacts_GetDeathboxModel( deathbox )
 	if ( deathboxMdl != $"" )
 	{
-#if DEV
+#if DEVELOPER
 			printf( "ArtifactsDebug: precaching Deathbox model %s", string(deathboxMdl) )
 #endif
 		PrecacheModel( deathboxMdl )
@@ -1521,7 +1521,7 @@ void function Artifact_PrecacheDeathboxModelAndFX( ItemFlavor deathbox )
 	asset particleFX = Artifacts_FX_GetDeathboxFX( deathbox )
 	if ( particleFX != $"" )
 	{
-#if DEV
+#if DEVELOPER
 			printf( "ArtifactsDebug: precaching Deathbox FX %s", string(particleFX) )
 #endif
 		PrecacheParticleSystem( particleFX )
@@ -2089,7 +2089,7 @@ asset function Artifacts_ActivationEmote_GetVideo( ItemFlavor emote )
 }
 
 
-#if DEV
+#if DEVELOPER
 
 
 

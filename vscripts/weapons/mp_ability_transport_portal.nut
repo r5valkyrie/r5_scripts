@@ -100,7 +100,7 @@ const asset TRANSPORT_PORTAL_RECEIVER_IMAGE = $"rui/hud/ultimate_icons/ultimate_
 const asset TRANSPORT_PORTAL_PORTAL_ICON = $"rui/hud/ping/icon_ping_phase_tunnel"
 
 const bool TRANSPORT_PORTAL_DATAPAD_DEBUG = true
-#if DEV
+#if DEVELOPER
 global const bool TRANSPORT_PORTAL_NAVMESH_PATH_DEBUG = false
 #endif
 

@@ -39,7 +39,7 @@ global const float DOT_85DEGREE =	0.0871557427477
 
 global const string WHITESPACE_CHARACTERS = "\r\n\t " 
 
-#if DEV
+#if DEVELOPER
 global const bool DEV_FORCE_LOAD_ALL_ENTITIES = false
 #endif
 
@@ -49,7 +49,7 @@ global const bool DEV_FORCE_LOAD_ALL_ENTITIES = false
 global typedef FXHandle int
 
 
-#if DEV
+#if DEVELOPER
 global enum eAssetType
 {
 	ASSETTYPE_CHARACTER,
@@ -282,7 +282,7 @@ void function CancelTimeoutIfAlive( Timeout to )
 
 void function print_dev( ... )
 {
-#if DEV
+#if DEVELOPER
 		if ( vargc <= 0 )
 			return
 
@@ -2011,7 +2011,7 @@ string function GetEnumStringSlow( table enumTbl, int value )
 }
 
 
-#if DEV
+#if DEVELOPER
 string function DEV_ArrayConcat( array<string> arr, string sep = "," )
 {
 	string out   = ""
@@ -2153,7 +2153,7 @@ WallToTopResults function TraceFromWallToTop(vector wallPos, vector wallNormal, 
 	else
 		trUp = TraceLine( traceUpStart, traceUpEnd, ignoreEnts, traceMask , collisionGroup )
 
-#if DEV
+#if DEVELOPER
 		if ( DEBUG_DRAW_TIME > 0.0 )
 		{
 			DebugDrawArrow( traceUpStart, trUp.endPos, 10, COLOR_ORANGE, false, DEBUG_DRAW_TIME )
@@ -2182,7 +2182,7 @@ WallToTopResults function TraceFromWallToTop(vector wallPos, vector wallNormal, 
 		else
 			trBack = TraceLine( traceBackStart, traceBackEnd, ignoreEnts, traceMask , collisionGroup )
 
-#if DEV
+#if DEVELOPER
 
 			if ( DEBUG_DRAW_TIME > 0.0 )
 			{
@@ -2220,7 +2220,7 @@ WallToTopResults function TraceFromWallToTop(vector wallPos, vector wallNormal, 
 			}
 
 
-#if DEV
+#if DEVELOPER
 
 				if ( DEBUG_DRAW_TIME > 0.0 )
 				{
@@ -2239,7 +2239,7 @@ WallToTopResults function TraceFromWallToTop(vector wallPos, vector wallNormal, 
 			if ( !trDownToLedge.startSolid && trDownToLedge.fraction < 1.0 && IsNormalVertical(trDownToLedge.surfaceNormal) )
 			{
 				
-#if DEV
+#if DEVELOPER
 					if ( DEBUG_DRAW_TIME > 0.0 )
 					{
 						DebugDrawSphere( trDownToLedge.endPos, 2,COLOR_LIGHT_GREEN,false, DEBUG_DRAW_TIME )
@@ -2381,7 +2381,7 @@ void function WaitForever()
 
 bool function IsLobbyEvent1Active()
 {
-#if DEV
+#if DEVELOPER
 		
 		int devLobby = GetCurrentPlaylistVarInt( "dev_force_lobby", -1 )
 		if ( devLobby != -1 )
@@ -2393,7 +2393,7 @@ bool function IsLobbyEvent1Active()
 
 bool function IsLobbyEvent2Active()
 {
-#if DEV
+#if DEVELOPER
 		
 		int devLobby = GetCurrentPlaylistVarInt( "dev_force_lobby", -1 )
 		if ( devLobby != -1 )
@@ -3145,7 +3145,7 @@ void function WaitForUnixTime( int unixTime )
 		if ( delay <= 0.0 )
 			break
 
-#if DEV
+#if DEVELOPER
 			wait min( 1.0, delay )
 #else
 			wait delay
@@ -3243,7 +3243,7 @@ entity function AssertLocalOrServerValidPlayer( entity player )
 
 bool function IsEverythingUnlocked()
 {
-#if DEV
+#if DEVELOPER
 		if ( GetCurrentPlaylistVarBool( "dev_force_everything_unlocked", false ) )
 			return true
 #endif
@@ -3532,7 +3532,7 @@ bool function VectorInWorldBounds( vector vec )
 }
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_LifetimeDebugTool( entity thing )
 {
 	while ( true )
@@ -3776,7 +3776,7 @@ void function _UIToClient_MenuExtendedUseEnded( bool success )
 
 bool function IsInfiniteAmmoEnabled()
 {
-#if DEV
+#if DEVELOPER
 		if ( GetConVarBool( "sv_infinite_ammo" ) )
 			return true
 #endif
@@ -4386,7 +4386,7 @@ bool function PlayerIsLinkedToDeathbox( entity player, entity deathbox )
 }
 
 
-#if DEV
+#if DEVELOPER
 bool function DEV_ForceLoadAllEntityTypes()
 {
 	return GetCurrentPlaylistVarBool( "dev_force_load_all_entity_types", DEV_FORCE_LOAD_ALL_ENTITIES )

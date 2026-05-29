@@ -164,7 +164,7 @@ global struct StatEnumStruct
 
 	array<string> choices 
 
-#if DEV
+#if DEVELOPER
 		string structName
 #endif
 }
@@ -197,7 +197,7 @@ global struct StatTemplate
 
 
 
-#if DEV
+#if DEVELOPER
 struct StatEnumStruct_Children
 {
 	array<StatEnumStruct> childEnumStructs
@@ -215,7 +215,7 @@ struct StatEnumStruct_Children
 struct FileStruct_LifetimeLevel
 {
 
-#if DEV
+#if DEVELOPER
 			StatEnumStruct_Children                        rootFieldsList 
 			table<StatEnumStruct, StatEnumStruct_Children> sesChildrenMap 
 #endif
@@ -244,7 +244,7 @@ const string STATS_PERSISTENCE_PREFIX_CURRENT = "stats"
 
 
 
-#if DEV
+#if DEVELOPER
 
 
 const string STATS_SAFEZONE_FILENAME_FILTER = "sh_stats"
@@ -388,7 +388,7 @@ int function GetStat_Int( entity player, StatEntry entry, int when = eStatGetWhe
 	if ( entry.behavior == eStatBehavior.BITFIELD && fetchMode != eStatFetchMode.BITFIELD_RAW )
 		return entry.calcFunc_Int( player, GetCalcSourceEntriesFromEntry( entry ), when )
 
-#if DEV
+#if DEVELOPER
 		
 		if ( DEV_ShouldIgnorePersistence() )
 			return 0
@@ -1024,7 +1024,7 @@ StatEnumStruct function RegisterStatEnumStruct( StatEnumStruct ornull parentSESO
 	ses.enumName = enumName
 	ses.choices = choices
 
-#if DEV
+#if DEVELOPER
 		if ( parentSESOrNull == null )
 		{
 			fileLevel.rootFieldsList.childEnumStructs.append( ses )
@@ -1072,7 +1072,7 @@ StatTemplate function InternalRegisterStatCommon( StatEnumStruct ornull parentSE
 		template.rootEntry.persistenceFullKey_Current = STATS_PERSISTENCE_PREFIX_CURRENT + "." + fieldName
 		if ( template.rootEntry.behavior != eStatBehavior.CALCULATED || template.rootEntry.shouldCache )
 		{
-#if DEV
+#if DEVELOPER
 			
 			if ( !DEV_ShouldIgnorePersistence() )
 #endif
@@ -1089,7 +1089,7 @@ StatTemplate function InternalRegisterStatCommon( StatEnumStruct ornull parentSE
 		template.rootEntry.indexWithinType = fileLevel.stats_Int.len()
 		fileLevel.stats_Int.append( template.rootEntry )
 
-#if DEV
+#if DEVELOPER
 			fileLevel.rootFieldsList.childStatTemplates.append( template )
 #endif
 
@@ -1099,7 +1099,7 @@ StatTemplate function InternalRegisterStatCommon( StatEnumStruct ornull parentSE
 	{
 		StatEnumStruct parentSES = expect StatEnumStruct(parentSESOrNull)
 
-#if DEV
+#if DEVELOPER
 			StatEnumStruct_Children sesChildren
 			if ( parentSES in fileLevel.sesChildrenMap )
 				sesChildren = fileLevel.sesChildrenMap[parentSES]
@@ -1163,7 +1163,7 @@ StatTemplateEnumKeyResolver function BuildStatTemplateEnumKeyResolversRecursive(
 
 			if ( entry.behavior != eStatBehavior.CALCULATED || entry.shouldCache )
 			{
-#if DEV
+#if DEVELOPER
 				
 				if ( !DEV_ShouldIgnorePersistence() )
 #endif

@@ -110,7 +110,7 @@ struct VaultData
 	entity openMinimapObj
 }
 
-#if DEV
+#if DEVELOPER
 struct SpecialVolumeDimensions
 {
 	vector center

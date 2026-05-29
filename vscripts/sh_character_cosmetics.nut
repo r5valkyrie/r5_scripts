@@ -60,7 +60,7 @@ global function CharacterSkin_GetPakFile
 global function CharacterSkin_ShouldHideIfLocked
 
 
-#if DEV
+#if DEVELOPER
 global function DEV_TestCharacterSkinData
 #endif
 
@@ -79,7 +79,7 @@ global function DEV_TestCharacterSkinData
 
 global const int MAX_FAVORITE_SKINS = 8
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -145,7 +145,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 
 		LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "character_skin_for_" + ItemFlavor_GetGUIDString( characterClass ), eLoadoutEntryClass.CHARACTER )
 		entry.category     = eLoadoutCategory.CHARACTER_SKINS
-#if DEV
+#if DEVELOPER
 			entry.pdefSectionKey = "character " + ItemFlavor_GetGUIDString( characterClass )
 			entry.DEV_name       = ItemFlavor_GetCharacterRef( characterClass ) + " Skin"
 #endif
@@ -183,7 +183,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 
 		LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "character_execution_for_" + ItemFlavor_GetGUIDString( characterClass ), eLoadoutEntryClass.CHARACTER )
 		entry.category     = eLoadoutCategory.CHARACTER_EXECUTIONS
-#if DEV
+#if DEVELOPER
 			entry.pdefSectionKey = "character " + ItemFlavor_GetGUIDString( characterClass )
 			entry.DEV_name       = ItemFlavor_GetCharacterRef( characterClass ) + " Execution"
 #endif
@@ -231,7 +231,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 
 		LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "character_intro_quip_for_" + ItemFlavor_GetGUIDString( characterClass ), eLoadoutEntryClass.CHARACTER )
 		entry.category     = eLoadoutCategory.CHARACTER_INTRO_QUIPS
-#if DEV
+#if DEVELOPER
 			entry.pdefSectionKey = "character " + ItemFlavor_GetGUIDString( characterClass )
 			entry.DEV_name       = ItemFlavor_GetCharacterRef( characterClass ) + " Intro Quip"
 #endif
@@ -256,7 +256,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 
 		LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "character_kill_quip_for_" + ItemFlavor_GetGUIDString( characterClass ), eLoadoutEntryClass.CHARACTER )
 		entry.category     = eLoadoutCategory.CHARACTER_KILL_QUIPS
-#if DEV
+#if DEVELOPER
 			entry.pdefSectionKey = "character " + ItemFlavor_GetGUIDString( characterClass )
 			entry.DEV_name       = ItemFlavor_GetCharacterRef( characterClass ) + " Kill Quip"
 #endif
@@ -377,7 +377,7 @@ void function PlayKillQuipThread( entity emitter, EHI playerEHI, entity exceptio
 
 
 	string quipAlias = CharacterKillQuip_GetVictimVoiceSoundEvent( quip )
-#if DEV
+#if DEVELOPER
 		entity player = FromEHI( playerEHI )
 		printt( format( "%s(): Kill Quip for %s using quip %s == %s", FUNC_NAME(), string( player ), string( quip ), quipAlias ) )
 #endif
@@ -943,7 +943,7 @@ string function HoloSpray_GetStoryBlurbBodyText( ItemFlavor flavor )
 	return GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "customSkinMenuBlurb" )
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_TestCharacterSkinData()
 {
 	entity model = CreateClientSidePropDynamic( <0, 0, 0>, <0, 0, 0>, $"mdl/dev/empty_model.rmdl" )

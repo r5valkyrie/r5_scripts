@@ -25,7 +25,7 @@ global function Pas_GetWattsonUltAccelExtraCount
 
 
 
-#if DEV
+#if DEVELOPER
 global function DEV_PrintAllPassives
 #endif
 
@@ -595,7 +595,7 @@ void function RemoveCallback_OnPassiveChanged( int passive, void functionref( en
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_PrintAllPassives( entity player )
 {
 	for ( int passiveIdx = 0; passiveIdx < ePassives._count; passiveIdx++ )

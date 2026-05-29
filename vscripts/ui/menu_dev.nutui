@@ -1,7 +1,7 @@
 untyped
 
 global function InitDevMenu
-#if DEV
+#if DEVELOPER
 global function DEV_InitLoadoutDevSubMenu
 global function SetupDevCommand 
 global function SetupDevFunc 
@@ -82,7 +82,7 @@ function Dummy_Untyped( param )
 void function InitDevMenu( var newMenuArg )
 
 {
-#if DEV
+#if DEVELOPER
 		var menu = GetMenu( "DevMenu" )
 
 		AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, OnOpenDevMenu )
@@ -117,9 +117,9 @@ void function InitDevMenu( var newMenuArg )
 
 void function AddLevelDevCommand( string label, string command )
 {
-#if DEV
+#if DEVELOPER
 		string codeDevMenuAlias = DEV_MENU_NAME + "/" + label
-		DevMenu_Alias_DEV( codeDevMenuAlias, command )
+		//DevMenu_Alias_DEV( codeDevMenuAlias, command )
 
 		DevCommand cmd
 		cmd.label = label
@@ -130,12 +130,12 @@ void function AddLevelDevCommand( string label, string command )
 
 void function ServerCallback_OpenDevMenu()
 {
-#if DEV
+#if DEVELOPER
 		AdvanceMenu( GetMenu( "DevMenu" ) )
 #endif
 }
 
-#if DEV
+#if DEVELOPER
 void function OnOpenDevMenu()
 {
 	file.pageHistory.clear()
@@ -178,8 +178,8 @@ void function DEV_InitCodeDevMenu_Internal()
 	}
 
 	file.initializingCodeDevMenu = true
-	DevMenu_Alias_DEV( DEV_MENU_NAME, "" )
-	DevMenu_Rm_DEV( DEV_MENU_NAME )
+	//DevMenu_Alias_DEV( DEV_MENU_NAME, "" )
+	//DevMenu_Rm_DEV( DEV_MENU_NAME )
 	OnOpenDevMenu()
 	file.initializingCodeDevMenu = false
 
@@ -191,8 +191,8 @@ void function DEV_InitCodeDevMenu_Internal()
 
 void function ClearCodeDevMenu()
 {
-	DevMenu_Alias_DEV( DEV_MENU_NAME, "" )
-	DevMenu_Rm_DEV( DEV_MENU_NAME )
+	//DevMenu_Alias_DEV( DEV_MENU_NAME, "" )
+	//DevMenu_Rm_DEV( DEV_MENU_NAME )
 
 	ClearFreelanceDevMenu()
 }
@@ -432,7 +432,7 @@ void function SetupDefaultDevCommandsMP()
 
 	SetupDevMenu_SeasonQuests()
 
-#if DEV
+#if DEVELOPER
 	if ( IsLobby() )
 		SetupDevMenu( "Override Menu Heirloom Models", SetDevMenu_OverrideMenuHeirloomModels )
 #endif
@@ -478,7 +478,7 @@ void function DEV_InitLoadoutDevSubMenu()
 	
 	
 	file.codeDevMenuPrefix += "Alter Loadout/"
-	DevMenu_Rm_DEV( file.codeDevMenuPrefix + "(Click to load this menu..)" )
+	//DevMenu_Rm_DEV( file.codeDevMenuPrefix + "(Click to load this menu..)" )
 	thread ChangeToThisMenu( SetupAlterLoadout )
 	file.codeDevMenuPrefix = codeDevMenuPrefix
 	file.initializingCodeDevMenu = false
@@ -490,7 +490,7 @@ void function SetDevMenu_AlterLoadout( var _ )
 	if ( file.initializingCodeDevMenu )
 	{
 		
-		DevMenu_Alias_DEV( file.codeDevMenuPrefix + "(Click to load this menu..)", "script_ui DEV_InitLoadoutDevSubMenu()" )
+		//DevMenu_Alias_DEV( file.codeDevMenuPrefix + "(Click to load this menu..)", "script_ui DEV_InitLoadoutDevSubMenu()" )
 	}
 	else
 	{
@@ -1035,7 +1035,7 @@ void function SetupDevCommand( string label, string command, bool canBeUsedInMat
 		string codeDevMenuAlias = file.codeDevMenuPrefix + label
 		
 		
-		DevMenu_Alias_DEV( codeDevMenuAlias, command )
+		//DevMenu_Alias_DEV( codeDevMenuAlias, command )
 	}
 }
 
@@ -1053,7 +1053,7 @@ void function SetupDevFunc( string label, void functionref( var ) func, var opPa
 		string codeDevMenuAlias   = file.codeDevMenuPrefix + label
 		string codeDevMenuCommand = format( "script_ui RunCodeDevCommandByAlias( \"%s\" )", codeDevMenuAlias )
 		file.codeDevMenuCommands[codeDevMenuAlias] <- cmd
-		DevMenu_Alias_DEV( codeDevMenuAlias, codeDevMenuCommand )
+		//DevMenu_Alias_DEV( codeDevMenuAlias, codeDevMenuCommand )
 	}
 }
 

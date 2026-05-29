@@ -49,7 +49,7 @@ global function MetaChallenge_GetStatRef
 global function MetaChallenge_GetParentFlav
 global function MetaChallenge_GetGoalVal
 global function GetCompletedChallengeCount
-#if DEV
+#if DEVELOPER
 global function PrintChallengePersistence
 #endif
 
@@ -69,7 +69,7 @@ global function SetRuiArgsForMythicSkinChallenge
 global function IsFavoriteChallenge
 global function GetFavoriteChallenges
 
-#if DEV
+#if DEVELOPER
 global function DEV_DumpFavoritePersistenceData
 #endif
 
@@ -126,7 +126,7 @@ global function DEV_DumpFavoritePersistenceData
 
 
 
-#if DEV
+#if DEVELOPER
 global function DEV_PrintAllChallenges
 #endif
 
@@ -567,7 +567,7 @@ void function Callback_OnChallengeRegistered( ItemFlavor challenge )
 
 void function ShChallenges_LevelInit_PostStats()
 {
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return
 #endif
@@ -1359,7 +1359,7 @@ array<ItemFlavor> function GetWeeklyChallengesSortedByProgress( entity player )
 		}
 	}
 	challengeSortArray.sort( Challenge_SortByProgress )
-#if DEV
+#if DEVELOPER
 		foreach ( ChallengeSortStruct sortStruct in challengeSortArray )
 		{
 			printt( DEV_ItemFlavor_GetCleanedAssetPath( sortStruct.challengeFlav ) + "\t" + sortStruct.progressFrac + "\t" + sortStruct.week )
@@ -1658,7 +1658,7 @@ bool function IsChallengeValidAsFavorite( entity player, ItemFlavor challengeFla
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_DumpFavoritePersistenceData()
 {
 	entity player = GetLocalClientPlayer()
@@ -2609,7 +2609,7 @@ void function InitPlayerChallengesStateFromPersistence( entity player, PlayerCha
 	if ( !IsValid( player ) )
 		return
 
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return
 #endif
@@ -4269,7 +4269,7 @@ ItemFlavor function OverrideChallengeIfNecessary( ItemFlavor challenge, entity p
 
 
 
-#if DEV
+#if DEVELOPER
 void function PrintChallengePersistence( entity player )
 {
 	printt( "---------------------------" )
@@ -4343,7 +4343,7 @@ void function PrintChallengePersistence( entity player )
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_PrintAllChallenges( bool assigned = false, bool currentBPOnly = true )
 {
 	
@@ -4874,7 +4874,7 @@ void function UpdateChallengeRowsRui( entity player, array<ItemFlavor> challenge
 
 		RuiSetString( rui, "challengeTierDesc", description )
 
-#if DEV
+#if DEVELOPER
 			bool doDebug = (InputIsButtonDown( KEY_LSHIFT ) && InputIsButtonDown( KEY_LCONTROL )) || (InputIsButtonDown( BUTTON_TRIGGER_LEFT_FULL ) && InputIsButtonDown( BUTTON_B ))
 			if ( doDebug )
 			{
@@ -6997,7 +6997,7 @@ array<ChallengeProgressData> function GetPlayerChallengesWithNewProgress( entity
 
 	progressDataArray.sort( PostMatchChallengeSort )
 
-#if DEV
+#if DEVELOPER
 		printt( "#CHALLENGE POST MATCH DATA" )
 		if ( fileLevel.currentSeason.expirationTimestamp < GetUnixTimestamp() )
 			RefreshCachedSeasonInfo()
@@ -7155,7 +7155,7 @@ int function ConvertSecondsToMinutes( int seconds )
 
 
 
-#if DEV
+#if DEVELOPER
 string function AddPadding( string str, int minWidth = 8 )
 {
 	int len = str.len()
@@ -7171,7 +7171,7 @@ string function AddPadding( string str, int minWidth = 8 )
 
 int function Challenge_GetCurrentTier( entity player, ItemFlavor flavor )
 {
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return 0
 #endif
@@ -7591,7 +7591,7 @@ int function Challenge_GetProgressValue( entity player, ItemFlavor challengeFlav
 	Assert( ItemFlavor_GetType( challengeFlav ) == eItemType.challenge )
 	Assert( tier >= 0 && tier < Challenge_GetTierCount( challengeFlav ) )
 
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return 0
 #endif

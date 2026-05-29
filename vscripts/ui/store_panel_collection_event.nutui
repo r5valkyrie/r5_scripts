@@ -429,7 +429,7 @@ void function UpdateFocusStuff( var focusedRewardButtonOrNull )
 	}
 	else if ( isCompletionReward )
 	{
-#if DEV
+#if DEVELOPER
 		int menuHeirloomOverrideGUID = DEV_GetMenuHeirloomOverrideGUID()
 		if ( menuHeirloomOverrideGUID >= 0 )
 			focusFlav = GetItemFlavorByGUID( menuHeirloomOverrideGUID )

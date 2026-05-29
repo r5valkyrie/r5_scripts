@@ -45,7 +45,7 @@ global function Sticker_GetDecalScale
 
 
 
-#if DEV
+#if DEVELOPER
 global function DEV_PrintStickerLoadout
 #endif
 
@@ -134,7 +134,7 @@ void function RegisterStickers()
 		{
 			LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, stickerObjectName + "_sticker_" + i, eLoadoutEntryClass.ACCOUNT )
 			entry.category     = eLoadoutCategory.STICKERS
-#if DEV
+#if DEVELOPER
 				entry.DEV_name       = "Sticker " + stickerObjectName + " " + i
 #endif
 			entry.defaultItemFlavor   = stickerItemList[0]
@@ -594,7 +594,7 @@ float function Sticker_GetDecalScale( ItemFlavor stickerItem, int stickerObjectT
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_PrintStickerLoadout()
 {
 	EHI playerEHI = ToEHI( GetLocalClientPlayer() )

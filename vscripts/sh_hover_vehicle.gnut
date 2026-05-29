@@ -170,7 +170,7 @@ bool function HoverVehiclesAreEnabledOnMap()
 		return true
 	else if ( GetMapName().find( "mp_rr_olympus" ) > -1 )
 		return true
-#if DEV
+#if DEVELOPER
 	else if( GetMapName().find( "mp_rr_box" ) > -1 )
 			return true
 #endif

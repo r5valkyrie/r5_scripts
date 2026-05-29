@@ -7,7 +7,7 @@ global function ClientMusic_StopCustomTrackOnClient
 
 global function ClientMusic_RequestStingerForNewZone
 
-#if DEV
+#if DEVELOPER
 global function ClientMusic_PrintStatus
 #endif
 
@@ -439,7 +439,7 @@ void function ClientMusicFRAME()
 	}
 
 	
-#if DEV
+#if DEVELOPER
 	if ( GetConVarInt( "pve_debug" ) != 0 )
 	{
 		string text = GetClientMusicStatusLine()
@@ -490,7 +490,7 @@ void function ClientMusicFrameThread()
 
 	while ( true )
 	{
-#if DEV
+#if DEVELOPER
 		float preFrameTime = Time()
 #endif
 
@@ -499,7 +499,7 @@ void function ClientMusicFrameThread()
 		ClientMusicFRAME()
 		s_inFrame = false
 
-#if DEV
+#if DEVELOPER
 		float postFrameTime = Time()
 		Assert( preFrameTime == postFrameTime, format( "ClientMusicFRAME() stalled for %.2f seconds. Should have no waits.", (postFrameTime - preFrameTime) ) )
 #endif
@@ -510,7 +510,7 @@ void function ClientMusicFrameThread()
 	}
 }
 
-#if DEV
+#if DEVELOPER
 void function ClientMusic_PrintStatus()
 {
 	printf( "running: %s, mid-frame: %s, in-waitframe: %s, startTime: %.2f, lastFrameTime: %.2f, timeNow: %.2f", (s_isRunning ? "yes" : "no"), (s_inFrame ? "yes" : "no"), (s_inLoopWaitFrame ? "yes" : "no"), s_startTime, s_lastFrameTime, Time() )
@@ -538,7 +538,7 @@ string function GetDebugNameForMusicTrack( int musicTrack )
 	return ""
 }
 
-#if DEV
+#if DEVELOPER
 string function GetClientMusicStatusLine()
 {
 	

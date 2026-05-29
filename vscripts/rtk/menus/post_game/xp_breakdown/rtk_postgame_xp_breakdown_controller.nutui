@@ -89,7 +89,7 @@ struct
 const float AUTOSKIPOPUP_DELAY = 1.5
 const float AUTOFADEBADGE_DELAY = 1.0
 
-#if DEV
+#if DEVELOPER
 	global function DEV_SetPostMatchFakeBonusXP
 	int DEV_BonusXP = 0
 #endif
@@ -400,7 +400,7 @@ void function BuildPostGameTotalXpBreakdownModel( rtk_struct postGameXpModel )
 	int currentAccountXP  = GetPersistentVarAsInt( "xp" )
 	int baseXP = (currentAccountXP - file.bonusXP) - previousAccountXP
 	int totalXP = currentAccountXP - previousAccountXP
-#if DEV
+#if DEVELOPER
 		totalXP = (currentAccountXP + DEV_BonusXP) - previousAccountXP
 #endif
 
@@ -460,7 +460,7 @@ AccountXPData function GetAccountXPDataFromPersistanceVar( string persitanceVar,
 	accountData.accountXP = GetPersistentVarAsInt( persitanceVar )
 	if ( !isBoosted )
 		accountData.accountXP -= file.bonusXP
-#if DEV
+#if DEVELOPER
 	if ( persitanceVar == "xp" && isBoosted )
 		accountData.accountXP += DEV_BonusXP
 #endif
@@ -743,7 +743,7 @@ array<BadgeDisplayData> function GetPostMatchUnlockedBadges( entity player )
 	return unlockedBadgesData
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_SetPostMatchFakeBonusXP( int xp )
 {
 	DEV_BonusXP = xp

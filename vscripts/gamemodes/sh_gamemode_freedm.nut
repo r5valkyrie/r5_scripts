@@ -4,7 +4,7 @@ global function FreeDM_GamemodeInitShared
 global function FreeDM_GetOtherTeam
 global function FreeDM_SetAudioEvent
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -2535,7 +2535,7 @@ int function GetPlayMusicOnScore()
 
 
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -2551,7 +2551,7 @@ int function GetPlayMusicOnScore()
 
 #endif
 
-#if DEV
+#if DEVELOPER
 
 void function DEV_ScoreTrackAnimateIn()
 {

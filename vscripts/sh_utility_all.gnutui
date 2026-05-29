@@ -39,7 +39,7 @@ global const float DOT_85DEGREE =	0.0871557427477
 
 global const string WHITESPACE_CHARACTERS = "\r\n\t " 
 
-#if DEV
+#if DEVELOPER
 global const bool DEV_FORCE_LOAD_ALL_ENTITIES = false
 #endif
 
@@ -49,7 +49,7 @@ global const bool DEV_FORCE_LOAD_ALL_ENTITIES = false
 
 
 
-#if DEV
+#if DEVELOPER
 global enum eAssetType
 {
 	ASSETTYPE_CHARACTER,
@@ -282,7 +282,7 @@ void function CancelTimeoutIfAlive( Timeout to )
 
 void function print_dev( ... )
 {
-#if DEV
+#if DEVELOPER
 		if ( vargc <= 0 )
 			return
 
@@ -2011,7 +2011,7 @@ string function GetEnumStringSlow( table enumTbl, int value )
 }
 
 
-#if DEV
+#if DEVELOPER
 string function DEV_ArrayConcat( array<string> arr, string sep = "," )
 {
 	string out   = ""
@@ -2381,7 +2381,7 @@ void function WaitForever()
 
 bool function IsLobbyEvent1Active()
 {
-#if DEV
+#if DEVELOPER
 		
 		int devLobby = GetCurrentPlaylistVarInt( "dev_force_lobby", -1 )
 		if ( devLobby != -1 )
@@ -2393,7 +2393,7 @@ bool function IsLobbyEvent1Active()
 
 bool function IsLobbyEvent2Active()
 {
-#if DEV
+#if DEVELOPER
 		
 		int devLobby = GetCurrentPlaylistVarInt( "dev_force_lobby", -1 )
 		if ( devLobby != -1 )
@@ -3145,7 +3145,7 @@ void function WaitForUnixTime( int unixTime )
 		if ( delay <= 0.0 )
 			break
 
-#if DEV
+#if DEVELOPER
 			wait min( 1.0, delay )
 #else
 			wait delay
@@ -3243,7 +3243,7 @@ entity function AssertLocalOrServerValidPlayer( entity player )
 
 bool function IsEverythingUnlocked()
 {
-#if DEV
+#if DEVELOPER
 		if ( GetCurrentPlaylistVarBool( "dev_force_everything_unlocked", false ) )
 			return true
 #endif
@@ -3776,7 +3776,7 @@ void function _MenuExtendedUse_InternalThread( var focusElem, var holdToUseElem,
 
 bool function IsInfiniteAmmoEnabled()
 {
-#if DEV
+#if DEVELOPER
 		if ( GetConVarBool( "sv_infinite_ammo" ) )
 			return true
 #endif
@@ -4386,7 +4386,7 @@ bool function IsPlayerCharacter( entity player, string characterCheck )
 
 
 
-#if DEV
+#if DEVELOPER
 bool function DEV_ForceLoadAllEntityTypes()
 {
 	return GetCurrentPlaylistVarBool( "dev_force_load_all_entity_types", DEV_FORCE_LOAD_ALL_ENTITIES )

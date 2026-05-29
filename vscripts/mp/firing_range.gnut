@@ -128,7 +128,7 @@ const vector NOTIFY_DECREASE_COLOR = < 119, 119, 190 >
 
 global function FiringRangeGameMode_Init
 
-#if DEV
+#if DEVELOPER
 const bool DEBUG_MANTLING = false
 const bool DEBUG_RESPAWNING = false
 #endif
@@ -710,7 +710,7 @@ void function FR_Init_NetVars_And_PVars()
 	frDummie_Behavior_Defaults[ eDummieBehaviorType.CANCROUCH ] 	<- false
 	frDummie_Behavior_Defaults[ eDummieBehaviorType.RANDINTERVALS ] <- false
 
-#if DEV
+#if DEVELOPER
 		printt( format( "%s(): Dummie Movements Default PackedBool Int == %s ", FUNC_NAME(), string( dummie_PackedBoolInt_Default_Movements  )))
 		printt( format( "%s(): Dummie Modifiers Default PackedBool Int == %s ", FUNC_NAME(), string( dummie_PackedBoolInt_Default_Modifiers  )))
 
@@ -1432,7 +1432,7 @@ void function SCB_Broadcast_FRSetting_Changed_Bool( entity playerThatChanged, in
 
 	
 	vector baseColor = < 219, 219, 219 >
-#if DEV
+#if DEVELOPER
 		printt( format( "%s(): setting changed == %s", FUNC_NAME(), settingNameLocalized ) )
 #endif
 
@@ -4492,7 +4492,7 @@ void function NetVarCallback_Changed_Bool( entity player, bool newVal )
 
 void function NetVarCallback_Changed_Int( entity player, int newVal )
 {
-#if DEV
+#if DEVELOPER
 		printt( format( "*** %s(): Player == %s", FUNC_NAME(), player.GetPlayerName() ) )
 #endif
 	FRSettings_Client_Update()
@@ -4510,7 +4510,7 @@ void function FRSettings_Client_Update()
 	int settingType
 	bool settingOn
 
-#if DEV
+#if DEVELOPER
 		printt( format( "*** %s(): for %s",FUNC_NAME(), player.GetPlayerName()) )
 #endif
 
@@ -4600,7 +4600,7 @@ void function FRSettings_Client_Update()
 		Update_SettingsMenu_Bool( eFRSettingType.DUMMIEHIGHLIGHTSON )
 
 
-#if DEV
+#if DEVELOPER
 		printt( format( "*** Latest Player Settings: \n%s", player.p.frSettings_AllStrs ) )
 #endif
 }
@@ -4742,7 +4742,7 @@ void function SCB_Broadcast_FRBehavior_Change( entity playerThatChanged, int beh
 
 	
 	vector baseColor = < 219, 219, 219 >
-#if DEV
+#if DEVELOPER
 		printt( format( "%s(): setting changed == %s", FUNC_NAME(), settingNameLocalized ) )
 #endif
 	EmitSoundOnEntity( GetLocalViewPlayer(), SFX_SETTING_CHANGE_NOTIFY )

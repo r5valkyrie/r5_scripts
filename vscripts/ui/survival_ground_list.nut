@@ -85,7 +85,7 @@ struct PredictedLootActionData
 
 	bool actionIsFromVendingMachine = false
 
-#if DEV
+#if DEVELOPER
 		bool devMsgPrinted = false
 #endif
 }
@@ -671,7 +671,7 @@ void function UpdateSurvivalGroundList( SurvivalGroundListUpdateParams params )
 			RefreshQuickSwapIfOpen()
 		}
 
-#if DEV
+#if DEVELOPER
 			if ( !plad.devMsgPrinted )
 			{
 				plad.devMsgPrinted = true
@@ -1292,7 +1292,7 @@ bool function IsPlayerLoba( entity player )
 
 int function GetWeaponCategorySortNumber( DeathBoxEntryData entryData )
 {
-#if DEV
+#if DEVELOPER
 		printt( format( "%s(): Getting SortOrdinal Substring for: %s", FUNC_NAME(), entryData.key ) )
 #endif
 
@@ -1301,7 +1301,7 @@ int function GetWeaponCategorySortNumber( DeathBoxEntryData entryData )
 	if( specialAmmoNDX >= 0 )
 	{
 		string ammoType = entryData.lootFlav.ammoType
-#if DEV
+#if DEVELOPER
 			printt( format( "%s(): Crate Weapon! Ammo Type == %s", FUNC_NAME(), ammoType ) )
 #endif
 		return( StringHash( entryData.lootFlav.ammoType ) )

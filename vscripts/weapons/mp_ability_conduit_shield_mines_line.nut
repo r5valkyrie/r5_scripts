@@ -221,7 +221,7 @@ array<vector> function GenerateMineLocations( entity weapon, vector airBurstLoca
 			minePos = weapon.SimulateGrenadeImpactPos( airBurstLocation, launchVel , -1, 3 )
 		}
 
-#if DEV
+#if DEVELOPER
 		const float DRAW_TIME = 0.1
 		if ( DEBUG_DRAW )
 		{

@@ -10,7 +10,7 @@ global function PhaseDoor_CheckInvalidEnt
 global function OnCreateClientOnlyModel_ability_phase_door
 
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -83,7 +83,7 @@ const bool PHASE_DOOR_DEBUG_ENABLE_FF_SELF_CHECK = true
 
 global const bool PHASE_DOOR_PORTAL_EXTENSIONS_DEBUG_DRAW = false
 
-#if DEV
+#if DEVELOPER
 global const bool PHASE_DOOR_LOGGING = true
 #else
 global const bool PHASE_DOOR_LOGGING = false
@@ -178,7 +178,7 @@ struct
 
 } file
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -393,6 +393,12 @@ void function OnCreateClientOnlyModel_ability_phase_door( entity weapon, entity 
 	vector entranceAngles = weapon.GetObjectPlacementAngles()
 	vector exitOrigin = weapon.GetObjectPlacementSpecialOrigin()
 	vector exitAngles = weapon.GetObjectPlacementSpecialAngles()
+	
+	printt("GetObjectPlacementOrigin = " + weapon.GetObjectPlacementOrigin())
+	printt("GetObjectPlacementAngles = " + weapon.GetObjectPlacementAngles())
+	printt("exitOrigin = " + weapon.GetObjectPlacementSpecialOrigin())
+	printt("exitAngles = " + weapon.GetObjectPlacementSpecialAngles())
+	//printt("result = " + weapon.GetObjectPlacementSpecialPlacementResult())
 
 	int result = weapon.GetObjectPlacementSpecialPlacementResult()
 
@@ -569,6 +575,16 @@ var function OnWeaponTossReleaseAnimEvent_ability_phase_door( entity weapon, Wea
 	vector exitSurfaceNormal = AnglesToForward( weapon.GetObjectPlacementSpecialAngles() )
 	entity exitParent = weapon.GetObjectPlacementSpecialParent()
 
+		
+	printt("GetObjectPlacementOrigin = " + weapon.GetObjectPlacementOrigin())
+	printt("GetObjectPlacementAngles = " + weapon.GetObjectPlacementAngles())
+	printt("entranceParent = " + weapon.GetObjectPlacementParent())
+	printt("exitOrigin = " + weapon.GetObjectPlacementSpecialOrigin())
+	printt("exitAngles = " + weapon.GetObjectPlacementSpecialAngles())
+	//printt("result = " + weapon.GetObjectPlacementSpecialPlacementResult())
+	printt("exitParent = " + weapon.GetObjectPlacementSpecialParent())
+
+	// Check for valid spot
 	
 	if ( !weapon.ObjectPlacementHasValidSpot() )
 	{

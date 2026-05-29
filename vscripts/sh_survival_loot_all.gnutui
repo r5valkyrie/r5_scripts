@@ -52,7 +52,7 @@ global function SURVIVAL_Loot_IsUniqueAmmoWeapon
 
 
 
-#if DEV
+#if DEVELOPER
 global function DEV_PrintDisabledLoot
 #endif
 
@@ -1040,7 +1040,7 @@ void function SURVIVAL_Loot_AddDisabledRef( string ref )
 	}
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_PrintDisabledLoot()
 {
 	printf("Dumping Disabled Loot")

@@ -28,7 +28,7 @@ global function MarkAllItemsOfTypeAsViewed
 global function Newness_TEMP_MarkItemAsNewAndInformServer
 
 
-#if DEV
+#if DEVELOPER
 global function DEV_Newness_ReverseQueryTest
 global function DEV_Newness_DumpSparseList
 #endif
@@ -509,7 +509,7 @@ void function UpdateReverseQueryDependents( array<Newness_ReverseQuery> dependen
 
 void function OnPersistentDataReady( entity _unused )
 {
-#if DEV
+#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return
 #endif
@@ -580,7 +580,7 @@ void function ClientToUI_OnItemFlavorNewnessChanged( int guid, bool isNew )
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_Newness_ReverseQueryTest()
 {
 	Newness_ReverseQuery charactersRQ

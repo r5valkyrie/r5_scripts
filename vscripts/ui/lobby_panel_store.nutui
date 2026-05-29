@@ -30,7 +30,7 @@ global function GetBPPresaleOfferData
 global function JumpToBPPresaleStoreOffer
 global function OpenBPPresaleDialog
 
-#if DEV
+#if DEVELOPER
 global function DEV_OffersPanel_DoFakeOffers
 global function DEV_OffersPanel_DoFakeLayout
 #endif
@@ -93,7 +93,7 @@ struct
 	GRXScriptOffer& TEMP_FOR_RTK_TESTING
 	asset TEMP_FOR_RTK_TESTING2
 
-#if DEV
+#if DEVELOPER
 		string DEV_fakeOffers_grxRef = ""
 		string DEV_fakeOffers_seasonTag = ""
 		int[MAX_OFFER_COLUMNS] DEV_fakeOffers_columnCounts = [1, 1, 1, 1, 1]
@@ -1573,7 +1573,7 @@ void function InitOffers()
 		array<GRXScriptOffer> topRowOffers    = GRX_GetStoreOfferColumn( col, 0, storeLocation )
 		array<GRXScriptOffer> bottomRowOffers = GRX_GetStoreOfferColumn( col, 1, storeLocation )
 
-#if DEV
+#if DEVELOPER
 			if ( file.DEV_fakeOffers_grxRef != "" )
 			{
 				topRowOffers = []
@@ -1877,7 +1877,7 @@ void function ClearOffers()
 }
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_OffersPanel_DoFakeOffers( bool doIt = false, string itemRef = "character_skin_caustic_legendary_04", string seasonTag = "", int col0 = 1, int col1 = 1, int col2 = 1, int col3 = 1, int col4 = 1 )
 {
 	if ( !doIt )

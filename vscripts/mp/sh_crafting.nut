@@ -79,7 +79,7 @@ global function Crafting_IsPingMapIconEnabled
 
 
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -125,7 +125,7 @@ global function Crafting_GetCraftingIcon
 global function Crafting_GetSmallCraftingIcon
 global function Crafting_GetCraftingZoneIcon
 
-#if DEV
+#if DEVELOPER
 global function DEV_Crafting_TogglePreMatchRotation
 global function DEV_Crafting_PrintUsedHarvesterEHIs
 #endif
@@ -449,7 +449,7 @@ struct {
 	table<entity, WorkbenchData>	workbenchDataTable_Client
 	bool							playerIsCrafting = false
 
-#if DEV
+#if DEVELOPER
 	bool 							DEV_testingRotationRui
 #endif
 
@@ -490,7 +490,7 @@ struct {
 
 	bool crafting_obit_notify = true
 
-#if DEV
+#if DEVELOPER
 		bool devPrintsOn = false
 #endif
 } file
@@ -1712,7 +1712,7 @@ array<string> function GetItemNamesFromCraftingBundle( CraftingBundle craftedBun
 
 	foreach( string bundleString in craftedBundle.itemsInBundle )
 	{
-#if DEV
+#if DEVELOPER
 		DEV_Crafting_Print( format( "  ** crafting item bundlestring = %s", bundleString  ))
 #endif
 		arrayResults.append( bundleString )
@@ -2052,7 +2052,7 @@ void function OnHarvesterCreated( entity target )
 		return
 	}
 
-#if DEV
+#if DEVELOPER
 	DEV_Crafting_Print( format( "OnHarvesterCreated():  %s", string( target ) ))
 #endif
 
@@ -2157,7 +2157,7 @@ void function CL_SetHarvesterState( entity harvester, int harvesterState )
 
 void function OnHarvesterDestroyed( entity target )
 {
-#if DEV
+#if DEVELOPER
 		DEV_Crafting_Print( format( "OnHarvesterDestroyed():  %s", string( target ) ))
 #endif
 
@@ -2343,13 +2343,13 @@ void function HarvestCraftingMaterials( entity harvester, entity player, int pic
 
 void function Crafting_OnSpectateTargetChanged( entity spectatingPlayer, entity oldSpectatorTarget, entity newSpectatorTarget )
 {
-#if DEV
+#if DEVELOPER
 		DEV_Crafting_Print( format( " ********** Refreshing Local Harvesters"))
 #endif
 
 	entity player = GetLocalViewPlayer()
 
-#if DEV
+#if DEVELOPER
 		DEV_Crafting_Print( format( "*** SPECTATOR: ServerCallback_RefreshLocalHarvesters: "))
 		DEV_Crafting_Print( format( "*** SPECTATOR: Player == %s", string( player ) ))
 		EHI playerEHI = ToEHI( player )
@@ -2598,7 +2598,7 @@ void function ServerCallback_CL_HarvesterUsed( entity harvester, entity minimapO
 	if( !IsValid( harvester ) )
 		return
 
-#if DEV
+#if DEVELOPER
 		DEV_Crafting_Print( format( "ServerCallback_CL_HarvesterUsed():  %s", string( harvester ) ))
 #endif
 
@@ -5099,7 +5099,7 @@ bool function CheckCraftingRotation( int craftingRotation )
 
 
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -5420,7 +5420,7 @@ void function Crafting_OnLoseFocus( entity ent )
 		CustomUsePrompt_ClearForEntity( ent )
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_Crafting_TogglePreMatchRotation()
 {
 	if ( file.DEV_testingRotationRui )
@@ -5500,7 +5500,7 @@ void function GameStart_CleanupThread()
 		}
 	)
 
-#if DEV
+#if DEVELOPER
 	while ( file.DEV_testingRotationRui )
 	{
 		WaitFrame()
@@ -5631,7 +5631,7 @@ void function OnGameStartedPlaying_Client()
 		file.fullmapInitialized = true
 	}
 
-#if DEV
+#if DEVELOPER
 	DEV_Crafting_Print( format( "CLIENT: Player Started Playing: %s", string( GetLocalViewPlayer() ) ) )
 #endif
 

@@ -406,7 +406,7 @@ void function OnHudOptionsPanel_Show( var panel )
 
 
 	
-#if DEV
+#if DEVELOPER
 		bool showObserverControls = GetCurrentPlaylistVarBool( "private_match", false ) && GetCurrentPlaylistVarBool( "has_extended_observer_controls", true );
 #else
 		bool showObserverControls = GetCurrentPlaylistVarBool( "private_match", false ) && GetCurrentPlaylistVarBool( "has_extended_observer_controls", false );

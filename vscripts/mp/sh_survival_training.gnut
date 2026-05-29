@@ -264,7 +264,7 @@ struct
 
 } file
 
-#if DEV
+#if DEVELOPER
 void function GetWeaponNames (entity player)
 {
 	array<entity> weapons = player.GetAllActiveWeapons()
@@ -875,7 +875,7 @@ void function TrainingEndTimeChanged( entity player, float new )
 
 		if (plv_ftue_loads_into_firingrange && ( file.ftueTestOn || ( !AreWeMatchmaking() && Training_IsFTUEEnabled() )))
 		{
-#if DEV
+#if DEVELOPER
 				printt( format( "%s(): Match Making for Firing Range.", FUNC_NAME()) )
 #endif
 			StartMatchmakingStandard( PLAYLIST_FIRING_RANGE )

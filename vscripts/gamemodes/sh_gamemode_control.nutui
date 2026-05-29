@@ -165,7 +165,7 @@ global function Control_IsSpawnWaypointHomebaseForAlliance
 
 
 
-#if DEV
+#if DEVELOPER
 	const bool CONTROL_SPAWN_DEBUGGING = false
 	const bool CONTROL_DISPLAY_DEBUG_DRAWS = false 
 	const float CONTROL_DEBUG_DRAW_DISPLAY_TIME = 1000.0
@@ -370,7 +370,7 @@ global const int CONTROL_TEAMSCORE_LOCKOUTBROKEN = 50
 
 
 
-#if DEV
+#if DEVELOPER
 const float SPAWNPOINT_RADIUS = 20
 const float SPAWNPOINT_HEIGHT = 128
 const float SPAWNPOINT_DISPLAY_TIME = 60
