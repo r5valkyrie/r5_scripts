@@ -139,7 +139,8 @@ void function MpWeaponTitanSword_Super_Init()
 	PrecacheParticleSystem( VFX_TITAN_SWORD_SUPER_WEAPON_CONTINUOUS_3P )
 
 	RegisterNetworkedVariable( NETVAR_TITAN_SWORD_SUPER, SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, -2.0 )
-	Remote_RegisterServerFunction( "ClientCallback_TitanSword_SelectFirePressed" )
+	//Revisit
+	//Remote_RegisterServerFunction( "ClientCallback_TitanSword_SelectFirePressed" )
 	Remote_RegisterClientFunction( "ServerToClient_TitanSword_SuperReady", "entity" )
 	Remote_RegisterClientFunction( "ServerToClient_TitanSword_StartSuperFx" )
 	Remote_RegisterClientFunction( "ServerToClient_TitanSword_StopSuperFx" )

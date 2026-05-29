@@ -258,7 +258,7 @@ void function ClBloodhound_TT_Init()
 void function Bloodhound_TT_RegisterNetworking()
 {
 	Remote_RegisterClientFunction( "SCB_BloodTT_SetCustomSpeakerIdx", "int", 0, NUM_TOTAL_DIALOGUE_QUEUES )
-	//Remote_RegisterUntypedFunction_deprecated( "ClientCallback_BloodTT_StoryPropDialogueAborted" ) //Audit 2-22-2025 never called
+	Remote_RegisterServerFunction( "ClientCallback_BloodTT_StoryPropDialogueAborted" )
 }
 
 #if SERVER
@@ -1995,7 +1995,7 @@ void function OnAbortDialogue( string dialogueRefName )
 	if ( storyPropRefNames.contains( dialogueRefName ) )
 	{
 		Signal( player, SIGNAL_STORY_PROP_DIALOGUE_ABORTED )
-		//Remote_ServerCallFunction( "ClientCallback_BloodTT_StoryPropDialogueAborted" )
+		Remote_ServerCallFunction( "ClientCallback_BloodTT_StoryPropDialogueAborted" )
 	}
 }
 #endif

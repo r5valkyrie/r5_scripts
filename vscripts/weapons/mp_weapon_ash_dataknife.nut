@@ -117,8 +117,9 @@ void function MpWeaponAshDataknife_Init()
 	}
 	else
 	{
-		Remote_RegisterServerFunction( FUNCNAME_TryActivate, "typed_entity", "prop_death_box" )
-		Remote_RegisterServerFunction( FUNCNAME_PingDeathboxFromMap, "typed_entity", "prop_death_box" )
+		//Revisit
+		//Remote_RegisterServerFunction( FUNCNAME_TryActivate, "typed_entity", "prop_death_box" )
+		//Remote_RegisterServerFunction( FUNCNAME_PingDeathboxFromMap, "typed_entity", "prop_death_box" )
 		Remote_RegisterClientFunction( FUNCNAME_DevForceUsable )
 		                    
 		Remote_RegisterClientFunction( "DeathboxNetwork_ServerToClient_TrackTargetOverTime", "entity", "int", 0, ABSOLUTE_MAX_TEAMS )
