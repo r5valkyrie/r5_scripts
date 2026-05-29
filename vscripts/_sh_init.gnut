@@ -9,9 +9,10 @@ void function SV_CL_Shared_Init()
 
 	#if DEVELOPER
 		PrintDebugTimeDetails()
-		#if SERVER
-		ClientCommands_Init()
-		#endif
+	#endif
+
+	#if SERVER
+	ClientCommands_Init()
 	#endif
 
 	#if SERVER
