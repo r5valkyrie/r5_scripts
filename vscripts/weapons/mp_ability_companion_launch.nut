@@ -349,7 +349,7 @@ var function OnWeaponPrimaryAttack_companion_launch( entity weapon, WeaponPrimar
 				vector toEcho = FlattenNormalizeVec(companionEnt.GetOrigin() - player.GetOrigin())
 				vector toEchoLeft = CrossProduct(toEcho, UP_VECTOR )
 
-				// DebugDrawArrow( companionEnt.GetOrigin(), companionEnt.GetOrigin() + 30*toEcho, 10, COLOR_GREEN, false, 5.0 )
+				// //DebugDrawArrow( companionEnt.GetOrigin(), companionEnt.GetOrigin() + 30*toEcho, 10, COLOR_GREEN, false, 5.0 )
 				//DebugDrawArrow( companionEnt.GetOrigin(), companionEnt.GetOrigin() + 30*toEchoLeft, 10, <0,50,255>, false, 5.0 )
 				vector echoToOrderPos = FlattenNormalizeVec(file.cachedOrderPos[player] - companionEnt.GetOrigin() )
 				float dot = DotProduct( toEcho, echoToOrderPos )
@@ -681,7 +681,7 @@ int function CanLaunchToCompanion( entity player, entity companion )
 		vector startTrace = player.EyePosition()
 		vector endTrace = companion.GetOrigin()
 		TraceResults tr = TraceLine( startTrace, endTrace , [],TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER, player )
-		//DebugDrawSphere( endTrace, 10, (tr.fraction < 1.0) ? COLOR_RED : COLOR_GREEN,true, 0.1)
+		//DebugDrawSphere( endTrace, 10, ((tr.fraction < 1.0) ? COLOR_RED : COLOR_GREEN).x, ((tr.fraction < 1.0) ? COLOR_RED : COLOR_GREEN).y, ((tr.fraction < 1.0) ? COLOR_RED : COLOR_GREEN).z, true, 0.1 )
 		if ( tr.fraction < 1.0 )
 		{
 			//Try another
@@ -690,12 +690,12 @@ int function CanLaunchToCompanion( entity player, entity companion )
 				vector offset = (player.GetViewRight()*METERS_TO_INCHES*0.5)
 				startTrace = player.EyePosition() + offset + (UP_VECTOR*METERS_TO_INCHES*0.5)
 				tr = TraceLine( startTrace, endTrace , [],TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER, player )
-				//DebugDrawLine( startTrace, endTrace, (tr.fraction < 1.0) ? COLOR_RED : COLOR_GREEN,true, 0.1)
+				//DebugDrawLine( startTrace, endTrace, ((tr.fraction < 1.0) ? COLOR_RED.x : COLOR_GREEN.x), ((tr.fraction < 1.0) ? COLOR_RED.y : COLOR_GREEN.y), ((tr.fraction < 1.0) ? COLOR_RED.z : COLOR_GREEN.z), true, 0.1 )
 				if ( tr.fraction < 1.0 )
 				{
 					startTrace = player.EyePosition()  - offset + (UP_VECTOR*METERS_TO_INCHES*0.5)
 					tr = TraceLine( startTrace, endTrace , [],TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER, player )
-					//DebugDrawLine(startTrace, endTrace, (tr.fraction < 1.0) ? COLOR_RED : COLOR_GREEN,true, 0.1)
+					//DebugDrawLine( startTrace, endTrace, ((tr.fraction < 1.0) ? COLOR_RED.x : COLOR_GREEN.x), ((tr.fraction < 1.0) ? COLOR_RED.y : COLOR_GREEN.y), ((tr.fraction < 1.0) ? COLOR_RED.z : COLOR_GREEN.z), true, 0.1 )
 					if ( tr.fraction < 1.0 )
 					{
 						return eCanLaunchResult.NO_LOS_FAIL
@@ -1005,10 +1005,10 @@ void function DEV_DebugDrawPathPoints( array<vector> pathPoints, float time = 5 
 	vector prevPathPoint = ZERO_VECTOR
 	foreach( point in pathPoints )
 	{
-		//DebugDrawSphere( point, 10, COLOR_YELLOW, false, time )
+		DebugDrawSphere( point, 10, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), false, time )
 		if ( prevPathPoint != ZERO_VECTOR )
 		{
-			//DebugDrawLine( point, prevPathPoint, <100,255,0>,false, time )
+			DebugDrawLine( point, prevPathPoint, 100, 255, 0, false, time )
 		}
 		prevPathPoint = point
 	}

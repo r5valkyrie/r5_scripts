@@ -219,8 +219,8 @@ bool function Bleedout_CanRevivePlayer( entity reviver, entity victim, int useFl
 
 	if ( DEBUG_REVIVE_RANGE )
 	{
-		//DebugDrawLine( revivorEyePos, victimPos, <DEBUG_REVIVE_COLOR_R, DEBUG_REVIVE_COLOR_G, DEBUG_REVIVE_COLOR_B>, true, 0.3 )
-		//DebugDrawLine( reviverPos, victimPos, <DEBUG_REVIVE_COLOR_R, DEBUG_REVIVE_COLOR_G, DEBUG_REVIVE_COLOR_B>, true, 0.3 )
+		DebugDrawLine( revivorEyePos, victimPos, DEBUG_REVIVE_COLOR_R, DEBUG_REVIVE_COLOR_G, DEBUG_REVIVE_COLOR_B, true, 0.3 )
+		DebugDrawLine( reviverPos, victimPos, DEBUG_REVIVE_COLOR_R, DEBUG_REVIVE_COLOR_G, DEBUG_REVIVE_COLOR_B, true, 0.3 )
 	}
 
 	// players want to do executions much less than revives, so we do a stricter check for executions
@@ -247,9 +247,9 @@ bool function Bleedout_CanRevivePlayer( entity reviver, entity victim, int useFl
 		{
 			//DebugDrawArrow( revivorEyePos, revivorEyePos + reviver.GetUpVector() * DEBUG_REVIVE_VECTOR_LENGTH, DEBUG_REVIVE_ARROW_SIZE, DEBUG_REVIVE_COLOR_R, DEBUG_REVIVE_COLOR_G, DEBUG_REVIVE_COLOR_B, true, 0.3 )
 			//DebugDrawArrow( revivorEyePos, revivorEyePos + reviverViewForward * DEBUG_REVIVE_VECTOR_LENGTH, DEBUG_REVIVE_ARROW_SIZE, DEBUG_REVIVE_COLOR_R, DEBUG_REVIVE_COLOR_G, DEBUG_REVIVE_COLOR_B, true, 0.3 )
-			DebugDrawArrow( revivorEyePos, revivorEyePos + reviverEyeToVictimOntoForwardUpPlaneNormalized * DEBUG_REVIVE_VECTOR_LENGTH, DEBUG_REVIVE_ARROW_SIZE, <200, 50, 50>, true, 0.3 )
-			DebugDrawArrow( revivorEyePos, revivorEyePos + reviverEyeToVictimOntoXYPlaneNormalized * DEBUG_REVIVE_VECTOR_LENGTH, DEBUG_REVIVE_ARROW_SIZE, <50, 200, 50>, true, 0.3 )
-			DebugDrawArrow( revivorEyePos, revivorEyePos + reviverViewForwardOntoXYNormalized * DEBUG_REVIVE_VECTOR_LENGTH, DEBUG_REVIVE_ARROW_SIZE, <50, 200, 50>, true, 0.3 )
+			//DebugDrawArrow( revivorEyePos, revivorEyePos + reviverEyeToVictimOntoForwardUpPlaneNormalized * DEBUG_REVIVE_VECTOR_LENGTH, DEBUG_REVIVE_ARROW_SIZE, <200, 50, 50>, true, 0.3 )
+			//DebugDrawArrow( revivorEyePos, revivorEyePos + reviverEyeToVictimOntoXYPlaneNormalized * DEBUG_REVIVE_VECTOR_LENGTH, DEBUG_REVIVE_ARROW_SIZE, <50, 200, 50>, true, 0.3 )
+			//DebugDrawArrow( revivorEyePos, revivorEyePos + reviverViewForwardOntoXYNormalized * DEBUG_REVIVE_VECTOR_LENGTH, DEBUG_REVIVE_ARROW_SIZE, <50, 200, 50>, true, 0.3 )
 		}
 
 		float distanceFrac              = 1 - reviverToVictimSq / EXECUTION_RANGE_SQ // this makes it so that the fraction doesn't scale linearly with distance, but that works out pretty well for this case
@@ -274,7 +274,9 @@ bool function Bleedout_CanRevivePlayer( entity reviver, entity victim, int useFl
 		float reviveRange     = reviveRangeFrac * REVIVE_RANGE
 
 		if ( DEBUG_REVIVE_RANGE )
+		{
 			//DebugDrawTrigger( victimPos, reviveRange, <DEBUG_REVIVE_COLOR_R, DEBUG_REVIVE_COLOR_G, DEBUG_REVIVE_COLOR_B>, 0.3, true )
+		}
 
 		if ( !Bleedout_CheckPlayerUseTargetDist( reviver, victim ) )
 			return false

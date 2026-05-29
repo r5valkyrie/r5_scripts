@@ -463,7 +463,7 @@ void function AreaSonarScan_CheckandScanValidTarget( entity owner, entity ent )
 	file.areaScanTargets[owner][file.areaScanIndex[owner]].push( ent )
 
 	//printt( "Sonar Start: " + ent )
-	//DebugDrawSphere( ent.GetOrigin(), 30, <255, 255, 0>,false, AreaSonarScan_GetDuration() )
+	//DebugDrawSphere( ent.GetOrigin(), 30, 255, 255, 0, false, AreaSonarScan_GetDuration() )
 	//DebugDrawText( ent.GetOrigin(), "sonar count: " + ent.e.inSonarTriggerCount, false, AreaSonarScan_GetDuration() )
 }
 

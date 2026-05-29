@@ -45,7 +45,7 @@ global function IsCodeDoor
 global function IsDoorOpen
 global function GetAllPropDoors
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 global function DEV_RestartAllDoorThinks
 #endif
 
@@ -123,7 +123,7 @@ void function ShDoors_Init()
 
 		file.propDoorArrayIndex = CreateScriptManagedEntArray()
 
-		#if DEV
+		#if DEVELOPER
 			RegisterSignal( "HaltDoorThink" )
 			AddClientCommandCallback( "dev_spawn_blockable_door", ClientCommand_dev_spawn_blockable_door ) // dev
 		#endif
@@ -191,7 +191,7 @@ array<entity> function GetAllPropDoors()
 	#endif //CLIENT
 }
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function ClientCommand_dev_spawn_blockable_door( entity player, array<string> args )
 {
 	TraceResults tr = TraceLine(
@@ -209,7 +209,7 @@ void function ClientCommand_dev_spawn_blockable_door( entity player, array<strin
 }
 #endif
 
-//#if SERVER && DEV
+//#if SERVER && DEVELOPER
 //void function CreateDoor( vector hingeEdgeBottomPos, vector angleToGap, entity existingEnt = null )
 //{
 //	//
@@ -627,7 +627,7 @@ int function GetDoorType( entity door )
 }
 #endif
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function DEV_RestartAllDoorThinks()
 {
 	foreach ( entity door, int doorType in file.allDoors )
@@ -798,7 +798,7 @@ void function SetupScriptDoorForNPCs( entity scriptDoor )
 	float triggerRadius = GetDoorTriggerRadius( scriptDoor )
 
 	entity dt = CreateEntity( "trigger_cylinder" )
-	#if DEV
+	#if DEVELOPER
 		dt.SetScriptName( FUNC_NAME() )
 	#endif
 	dt.SetCylinderRadius( triggerRadius )
@@ -949,7 +949,7 @@ void function SurvivalDoorThink( entity door, int doorType )
 	vector defaultAngles = door.GetAngles() //not used by SurvivalDoorPlainThink_Internal
 
 	door.EndSignal( "OnDestroy" )
-	#if DEV
+	#if DEVELOPER
 		door.EndSignal( "HaltDoorThink" )
 	#endif
 	OnThreadEnd( function() : ( door, doorType, defaultAngles ) {
@@ -1227,9 +1227,9 @@ vector function GetBlockableDoorSwingingEdgeFloorPos( entity door, vector angles
 	vector swingEdgeFloorPos             = hingeEdgeFloorPos + BLOCKABLE_DOOR_TEMP_HARDCODED_DOOR_LENGTH * hingeEdgeToClosedSwingEdgeDir
 
 	#if BLOCKABLE_DOOR_DEBUG
-		DebugDrawMark( hingeEdgeFloorPos, 40, <255, 128, 0>, true, 10.0 )
-		DebugDrawArrow( hingeEdgeFloorPos, swingEdgeFloorPos, 8, COLOR_RED, true, 5.0 )
-		DebugDrawArrow( swingEdgeFloorPos, swingEdgeFloorPos + 25.0 * closedSwingEdgeClockwiseDir, 8, <240, 40, 128>, true, 5.0 )
+		//DebugDrawMark( hingeEdgeFloorPos, 40, <255, 128, 0>, true, 10.0 )
+		//DebugDrawArrow( hingeEdgeFloorPos, swingEdgeFloorPos, 8, COLOR_RED, true, 5.0 )
+		//DebugDrawArrow( swingEdgeFloorPos, swingEdgeFloorPos + 25.0 * closedSwingEdgeClockwiseDir, 8, <240, 40, 128>, true, 5.0 )
 	#endif
 
 	return swingEdgeFloorPos
@@ -1249,7 +1249,7 @@ int function GetBlockableDoorNotchAt( entity door, vector currAngles )
 	//bool isClosed = (Distance( currSwingEdgeFloorPos, otherSwingEdgeFloorPos ) < (BLOCKABLE_DOOR_PLAYER_HULL_DIAMETER + BLOCKABLE_DOOR_TEMP_HARDCODED_DOOR_THICKNESS))
 	//printt( isClosed, Distance( currSwingEdgeFloorPos, otherSwingEdgeFloorPos ), (BLOCKABLE_DOOR_PLAYER_HULL_DIAMETER + BLOCKABLE_DOOR_TEMP_HARDCODED_DOOR_THICKNESS) )
 	//if ( BLOCKABLE_DOOR_DEBUG )
-	//	DebugDrawArrow( currSwingEdgeFloorPos, otherSwingEdgeFloorPos, 8, COLOR_RED, true, 5.0 )
+	//	//DebugDrawArrow( currSwingEdgeFloorPos, otherSwingEdgeFloorPos, 8, COLOR_RED, true, 5.0 )
 
 	if ( isClosed )
 		return eBlockableDoorNotch.CLOSED
@@ -1367,7 +1367,7 @@ void function OnCodeDoorUsed( entity door, entity player, int useInputFlags )
 void function BlockableDoorThink( entity door )
 {
 	door.EndSignal( "OnDestroy" )
-	#if DEV
+	#if DEVELOPER
 		door.EndSignal( "HaltDoorThink" )
 	#endif
 	OnThreadEnd( function() : ( door ) {
@@ -1458,7 +1458,7 @@ void function BlockableDoorThink( entity door )
 			}
 
 			#if BLOCKABLE_DOOR_DEBUG
-				DebugDrawMark( soundPosition, 20, <40, 60, 93>, true, 3.0 )
+				//DebugDrawMark( soundPosition, 20, <40, 60, 93>, true, 3.0 )
 			#endif
 
 			if ( newGoalNotch == eBlockableDoorNotch.CLOSED )
@@ -1560,7 +1560,7 @@ bool function BlockableDoorCanUseCheck( entity player, entity door, int useFlags
 	doorUseRange += GraphCapped( fabs( DotProduct( AnglesToRight( door.GetAngles() ), -playerToDoor ) ), 0.0, 1.0, 0.0, BLOCKABLE_DOOR_TEMP_HARDCODED_DOOR_LENGTH / 2.0 )
 
 	#if BLOCKABLE_DOOR_DEBUG
-		//DebugDrawLine( player.EyePosition(), doorUsePos, <200, 200, 50>, true, 0.3 )
+		//DebugDrawLine( player.EyePosition(), doorUsePos, 200, 200, 50, true, 0.3 )
 		DebugDrawTrigger( doorUsePos, doorUseRange, <200, 200, 50>, 0.3, true )
 	#endif
 
@@ -1578,8 +1578,8 @@ bool function BlockableDoorCanUseCheck( entity player, entity door, int useFlags
 			if ( moveIntersectOrNull != null )
 			{
 				#if BLOCKABLE_DOOR_DEBUG
-					DebugDrawArrow( sidePoint, sidePoint + 50.0 * moveIntention, 8, <0, 128, 255>, true, 0.3 )
-					DebugDrawMark( expect vector(moveIntersectOrNull), 40, <255, 128, 0>, true, 0.3 )
+					//DebugDrawArrow( sidePoint, sidePoint + 50.0 * moveIntention, 8, <0, 128, 255>, true, 0.3 )
+					//DebugDrawMark( expect vector(moveIntersectOrNull), 40, <255, 128, 0>, true, 0.3 )
 				#endif
 
 				if ( DotProduct( moveIntention, Normalize( (expect vector(moveIntersectOrNull)) - sidePoint ) ) > 0.0 )
@@ -1627,7 +1627,7 @@ void function OperateBlockableDoor( entity door, int goalNotch, entity operator,
 {
 	door.EndSignal( "OnDestroy" )
 	door.EndSignal( "DoorOperating" )
-	#if DEV
+	#if DEVELOPER
 		door.EndSignal( "HaltDoorThink" )
 	#endif
 
@@ -1810,14 +1810,14 @@ vector arcCornerIn, float arcRadius, float arcStartAng, float arcEndAng )
 	if ( DotProduct( startAngPlaneInnerDir, startAngPlaneCircleCenterDir ) < 0.0 && startAngPlaceCircleCenterDist > circleRadius )
 	{
 		#if BLOCKABLE_DOOR_DEBUG
-			DebugDrawLine( arcCornerIn, arcCornerIn + arcRadius * startAngPlaneAlongDir, <255, 120, 180>, true, 0.6 )
+			DebugDrawLine( arcCornerIn, arcCornerIn + arcRadius * startAngPlaneAlongDir, 255, 120, 180, true, 0.6 )
 		#endif
 		intersect = false
 	}
 	else
 	{
 		#if BLOCKABLE_DOOR_DEBUG
-			DebugDrawLine( arcCornerIn, arcCornerIn + arcRadius * startAngPlaneAlongDir, <120, 255, 180>, true, 0.6 )
+			DebugDrawLine( arcCornerIn, arcCornerIn + arcRadius * startAngPlaneAlongDir, 120, 255, 180, true, 0.6 )
 		#endif
 	}
 
@@ -1829,14 +1829,14 @@ vector arcCornerIn, float arcRadius, float arcStartAng, float arcEndAng )
 	if ( DotProduct( endAngPlaneInnerDir, endAngPlaneCircleCenterDir ) < 0.0 && endAngPlaceCircleCenterDist > circleRadius )
 	{
 		#if BLOCKABLE_DOOR_DEBUG
-			DebugDrawLine( arcCornerIn, arcCornerIn + arcRadius * endAngPlaneAlongDir, <255, 120, 30>, true, 0.6 )
+			DebugDrawLine( arcCornerIn, arcCornerIn + arcRadius * endAngPlaneAlongDir, 255, 120, 30, true, 0.6 )
 		#endif
 		intersect = false
 	}
 	else
 	{
 		#if BLOCKABLE_DOOR_DEBUG
-			DebugDrawLine( arcCornerIn, arcCornerIn + arcRadius * endAngPlaneAlongDir, <120, 255, 30>, true, 0.6 )
+			DebugDrawLine( arcCornerIn, arcCornerIn + arcRadius * endAngPlaneAlongDir, 120, 255, 30, true, 0.6 )
 		#endif
 	}
 
@@ -2118,7 +2118,7 @@ void function BlockableDoor_OnDamage( entity door, var damageInfo )
 	vector doorUp     = door.GetUpVector()
 	vector doorCenter = door.GetOrigin() + 30.0 * doorAlong + 54.0 * doorUp
 	#if BLOCKABLE_DOOR_DEBUG
-		DebugDrawLine( doorCenter, doorCenter + effectDir * 50.0, <200, 200, 50>, true, 3.0 )
+		DebugDrawLine( doorCenter, doorCenter + effectDir * 50.0, 200, 200, 50, true, 3.0 )
 	#endif
 	vector damageDir = DamageInfo_GetDamageForceDirection( damageInfo )
 	if ( damageDir.LengthSqr() == 0 && IsValid( attacker ) )
@@ -2339,7 +2339,7 @@ void function SurvivalDoorSliding_PlayAnimationAndResetSkin( entity doorModel, s
 #if SERVER
 void function SurvivalDoorSlidingThink( entity doorModel )
 {
-	#if DEV
+	#if DEVELOPER
 		doorModel.EndSignal( "HaltDoorThink" )
 	#endif
 
@@ -2507,7 +2507,7 @@ void function OnPlayerLeaveSlidingTrigger( entity trigger, entity ent )
 #if SERVER
 void function SurvivalDoorSlidingTriggerEnterThink( entity doorModel, entity trigger, int doorDataIndex )
 {
-	#if DEV
+	#if DEVELOPER
 		doorModel.EndSignal( "HaltDoorThink" )
 	#endif
 	trigger.EndSignal( "OnDeath" )
@@ -2535,7 +2535,7 @@ void function SurvivalDoorSlidingTriggerEnterThink( entity doorModel, entity tri
 #if SERVER
 void function SurvivalDoorSlidingTriggerLeaveThink( entity doorModel, entity trigger, int doorDataIndex )
 {
-	#if DEV
+	#if DEVELOPER
 		doorModel.EndSignal( "HaltDoorThink" )
 	#endif
 	trigger.EndSignal( "OnDeath" )
@@ -2583,7 +2583,7 @@ void function SurvivalDoorSlidingPostDamage( entity ent, var damageInfo )
 			entAngles.x += 180.0
 		}
 
-		// DebugDrawLine( ent.GetOrigin() + <0.0, 30.0, 40.0>, ent.GetOrigin() + <0.0, 30.0, 40.0> + AnglesToForward( entAngles ) * 500.0, <200, 200, 50>, true, 3.0 )
+		// DebugDrawLine( ent.GetOrigin() + <0.0, 30.0, 40.0>, ent.GetOrigin() + <0.0, 30.0, 40.0> + AnglesToForward( entAngles ) * 500.0, 200, 200, 50, true, 3.0 )
 		//StartParticleEffectInWorldForRealms( GetParticleSystemIndex( SURVIVAL_SLIDING_DOOR_DESTRUCTION_FX ), ent.GetOrigin() + <0.0, 30.0, 40.0>, entAngles, ent )
 	}
 }
@@ -2618,7 +2618,7 @@ bool function Survival_DoorSliding_CanUseFunction( entity playerUser, entity doo
 
 	if ( SURVIVAL_SLIDING_DOOR_DEBUG_DRAW )
 	{
-		DebugDrawLine( playerPos, doorModelPos, <200, 200, 50>, true, 1.0 )
+		DebugDrawLine( playerPos, doorModelPos, 200, 200, 50, true, 1.0 )
 		DebugDrawTrigger( doorModelPos, doorUseRange, <200, 200, 50>, 1.0, true )
 	}
 

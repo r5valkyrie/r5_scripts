@@ -11,7 +11,7 @@ global function ValentinesGetPartner
 global function Valentines_IsPairInRange
 global function ValentinesHandleSharedHealingTells_Thread
 global function Valentines_ShowRangeFX
-#if DEV
+#if DEVELOPER
 global function DEV_SpawnValentinesTick
 global function DEV_GetValentinesTickSpawnLocation
 #endif
@@ -317,8 +317,8 @@ void function MonitorTeamProximity_Thread( int team )
 		if ( isPairInRange )
 		{
 			#if CLIENT
-				//DebugDrawSphere( teammates[0].GetOrigin(), 5, COLOR_GREEN, false, .1 )
-				//DebugDrawSphere( teammates[1].GetOrigin(), 5, COLOR_GREEN, false, .1 )
+				//DebugDrawSphere( teammates[0].GetOrigin(), 5, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), false, .1 )
+				//DebugDrawSphere( teammates[1].GetOrigin(), 5, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), false, .1 )
 			#endif
 		}
 	}
@@ -1087,7 +1087,7 @@ void function CreateLootBeam( entity tick )
 	WaitForever()
 }
 
-#if DEV
+#if DEVELOPER
 const vector CROSSHAIR_OFFSET = <0, 0, -32>
 void function DEV_SpawnValentinesTick( entity player )
 {

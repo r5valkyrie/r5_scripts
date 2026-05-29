@@ -11,7 +11,7 @@ global function RegisterTriggerByNameForAmbientConversationArray
       
 #endif
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 	global function DEV_SetupForAmbientConversation
 #endif
 #if CLIENT
@@ -119,7 +119,7 @@ void function RegisterAmbientDialogueConversations( asset dt )
 			string mapName =   GetDataTableString( dataTable, idx_row, columnMapName )
 			if ( mapName == "" )
 			{
-				#if SERVER && DEV
+				#if SERVER && DEVELOPER
 					Warning( "Could not register ambient dialogue conversation '%s' - no map specified" )
 				#endif
 				continue
@@ -131,7 +131,7 @@ void function RegisterAmbientDialogueConversations( asset dt )
 			if ( GetMapName() != mapName )
 			#endif
 			{
-				#if DEV
+				#if DEVELOPER
 					if ( VERBOSE_PRINT_DEBUG )
 					#if UI
 						printt( "Skipping register ambient dialogue conversation " + GetDataTableString( dataTable, idx_row, columnName ) + " required map( " + mapName + ") != current map(" +  GetActiveLevel() + ")")
@@ -146,7 +146,7 @@ void function RegisterAmbientDialogueConversations( asset dt )
 			int now = GetUnixTimestamp()
 			if ( activationTimestamp > 0 && activationTimestamp > now)
 			{
-				#if DEV
+				#if DEVELOPER
 					if ( VERBOSE_PRINT_DEBUG )
 						printt( "Skipping register ambient dialogue conversation " + GetDataTableString( dataTable, idx_row, columnName ) + " activation timestamp(" + activationTimestamp + ") < current time(" + now + ")specified is not active")
 				#endif
@@ -157,7 +157,7 @@ void function RegisterAmbientDialogueConversations( asset dt )
 			newConversation.triggerScriptName =   GetDataTableString( dataTable, idx_row, columnTriggerScriptName )
 			//if ( newConversation.triggerScriptName == "" )
 			//{
-			//	#if SERVER && DEV
+			//	#if SERVER && DEVELOPER
 			//		Warning( "Could not register ambient dialogue conversation '%s' - no trigger volume specified" )
 			//	#endif
 			//	continue
@@ -169,7 +169,7 @@ void function RegisterAmbientDialogueConversations( asset dt )
 
 			if ( !requiredLegendRefs.contains( speakingLegendRef ) && speakingLegendRef != SPECIAL_CHARACTER_STRING )
 			{
-				#if SERVER && DEV
+				#if SERVER && DEVELOPER
 					Warning( "Could not register ambient dialogue conversation '%s', required legend refs for: " + GetDataTableString( dataTable, idx_row, columnName ) + " doesn't contain the speaking ref!", GetDataTableString( dataTable, idx_row, columnName ) )
 				#endif
 				continue
@@ -177,7 +177,7 @@ void function RegisterAmbientDialogueConversations( asset dt )
 
 			if ( requiredLegendRefs.len() == 0 )
 			{
-				#if SERVER && DEV
+				#if SERVER && DEVELOPER
 					Warning( "Could not register ambient dialogue conversation '%s', no required legends given. The speaker should always be given as a required legend", GetDataTableString( dataTable, idx_row, columnName ) )
 				#endif
 				continue
@@ -275,7 +275,7 @@ bool function AmbientDialogue_ProcessRefArray( array<ItemFlavor> arrayToPopulate
 	{
 		if( mutuallyExclusiveRefArray.contains( ref ) )
 		{
-			#if SERVER && DEV
+			#if SERVER && DEVELOPER
 				Warning( "Could not register ambient dialogue '%s', because the legend '%s' is listed as both required and forbidden.", convoNameForDebug, ref )
 			#endif
 			didErrorOccur = true
@@ -285,7 +285,7 @@ bool function AmbientDialogue_ProcessRefArray( array<ItemFlavor> arrayToPopulate
 		#if CLIENT || SERVER
 		if ( !GetValidVoices().contains( ref ) && ref != SPECIAL_CHARACTER_STRING )
 		{
-			#if SERVER && DEV
+			#if SERVER && DEVELOPER
 				Warning( "Could not register ambient dialogue '%s', because '%s' not in valid voices. Check for typos and make sure that the voice is registered" +
 				" to a character setting in Bakery.", convoNameForDebug, ref )
 			#endif
@@ -707,12 +707,12 @@ array<AmbientConversationData> function GetAllAmbientDialogue()
 	return result
 }
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function DEV_SetupForAmbientConversation(string playerUID, string conversationName)
 {
 	if (conversationName in file.ambDialogMap)
 	{
-		entity player = GetPlayerFromUID( playerUID )
+		entity player = GetPlayerArray()[0]
 		if (player != null)
 		{
 			// reset the bots on the team, if we leave them hanging around it may trip 'legend forbid' conditions
@@ -763,7 +763,7 @@ void function DEV_SetupForAmbientConversation(string playerUID, string conversat
 #if CLIENT
 void function DEV_SetCharacterForAmbientDialogue (SettingsAssetGUID characterItemFlavorGuid, bool spawnBot)
 {
-	#if DEV
+	#if DEVELOPER
 	if( !IsValidItemFlavorGUID( characterItemFlavorGuid ) )
 		return
 

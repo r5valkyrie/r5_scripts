@@ -2885,7 +2885,7 @@ Point function GetSkyDivePointCircularSpread( entity player )
 	spawnPoint.angles = VectorToAngles( Normalize( center - spawnPoint.origin ) )
 
 	#if DEVELOPER
-		//DebugDrawLine( spawnPoint.origin, center, <0, 255, 0>, true, 10 )
+		//DebugDrawLine( spawnPoint.origin, center, 0, 255, 0, true, 10 )
 	#endif
 
 	return spawnPoint
@@ -3057,7 +3057,7 @@ array<Point> function GetSpawnPointArrayForTeamAroundStation( int team, vector s
 		{
 			foreach ( p in navMeshPoints )
 			{
-				DebugDrawSphere( p.origin, 1024.0, 255, 0, 0, true, 300.0, 10 )
+				//DebugDrawSphere( p.origin, 1024.0, 255, 0, 0, true, 300.0, 10 )
 			}
 		}
 	#endif
@@ -3149,7 +3149,7 @@ bool function CanFindPathToGoal( vector origin, vector stationOrigin, int tryCou
 			// if ( drawSpawns )
 			// {
 				// DebugDrawText( origin + <0, 0, 16>, string( tryCount ), false, 2 )
-				// // DebugDrawLine( origin, stationOrigin, <255, 0, 192>, true, 2 )
+				// // DebugDrawLine( origin, stationOrigin, 255, 0, 192, true, 2 )
 				// DrawPath( meshPath.points, <255, 0, 0> )
 			// }
 		// #endif
@@ -3161,7 +3161,7 @@ bool function CanFindPathToGoal( vector origin, vector stationOrigin, int tryCou
 		// {
 			// if ( tryCount > 0 )
 			// {
-				// // DebugDrawLine( origin, stationOrigin, <0, 128, 0>, true, 2 )
+				// // DebugDrawLine( origin, stationOrigin, 0, 128, 0, true, 2 )
 				// DebugDrawText( origin + <0, 0, 16>, string( tryCount ), false, 2 )
 			// }
 			// else

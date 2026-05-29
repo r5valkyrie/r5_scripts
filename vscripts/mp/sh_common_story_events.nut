@@ -8,7 +8,7 @@ global function ClCommonStoryEvents_Init
 
                  
 #if SERVER
-#if DEV
+#if DEVELOPER
 global function CreateBlipAtIndex
 #endif
 #endif
@@ -259,7 +259,7 @@ void function OnCommonStoryEventPropCreated( entity ent )
                  
 int function GetTelTeasePhase()
 {
-	#if DEV
+	#if DEVELOPER
 		int overridePhase =	GetCurrentPlaylistVarInt( "dev_tel_tease_phase", -1 )
 		if ( overridePhase >= 0 && overridePhase < eTeleportPhase._count )
 			return overridePhase

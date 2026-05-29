@@ -1409,7 +1409,7 @@ void function OnProjectileCollision_weapon_riot_drill( entity projectile, vector
 		vector traceEnd	= traceStart + ( vel * 20.0 )
 
 		TraceResults traceResults = TraceLineHighDetail( traceStart, traceEnd, ignoreArray, TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_NONE, projectile.GetOwner() )
-		//DebugDrawLine( traceStart, traceEnd, <0, 250, 250>, true, 20 ) //green
+		//DebugDrawLine( traceStart, traceEnd, 0, 250, 250, true, 20 ) //green
 
 		//entity potentialTrophy = Trophy_GetTrophyInRangeOfEntity( projectile )
 		//if ( IsValid( potentialTrophy ) && Trophy_RemoteTryZapEntity( potentialTrophy, projectile ) )

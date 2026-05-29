@@ -14,7 +14,7 @@ global function SvApexScreens_QueueCustomScreenSequence
 global function SvApexScreens_SetLogoModeCenterOnly
 #endif
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 global function DEV_ApexScreens_SetMode
 global function DEV_ApexScreens_TogglePreviewMode
 global function DEV_ApexScreens_GladCardPreviewMode
@@ -44,7 +44,7 @@ global function ClApexScreens_SetEventScreenOverride
 
 global function GetCurrentPlaylistVarAsset
 
-#if CLIENT && DEV
+#if CLIENT && DEVELOPER
 global function DEV_CreatePerfectApexScreen
 global function DEV_ToggleActiveApexScreenDebug
 #endif
@@ -239,7 +239,7 @@ global struct ApexScreenSettingsGroup
 
 
 struct {
-	#if SERVER && DEV
+	#if SERVER && DEVELOPER
 		bool DEV_inDebugPreviewMode = false
 	#endif
 
@@ -539,7 +539,7 @@ ApexScreenState function ClApexScreens_GetCustomBannerScreen( string teaseScreen
 #if SERVER
 void function SvApexScreens_ForceShowSquad( EncodedEHandle ply0, EncodedEHandle ply1, EncodedEHandle ply2 )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( file.DEV_inDebugPreviewMode )
 			return
 	#endif
@@ -555,7 +555,7 @@ void function SvApexScreens_ForceShowSquad( EncodedEHandle ply0, EncodedEHandle 
 #if SERVER
 void function SvApexScreens_ShowCircleState()
 {
-	#if DEV
+	#if DEVELOPER
 		if ( file.DEV_inDebugPreviewMode )
 			return
 	#endif
@@ -571,7 +571,7 @@ void function SvApexScreens_ShowCircleState()
 #if SERVER
 void function SvApexScreens_HighlightPlayerForImpressiveKill( entity player, int damageSourceID, float distanceBetweenPlayers, int killedPlayerGrade, entity killedPlayer )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( file.DEV_inDebugPreviewMode )
 			return
 	#endif
@@ -594,7 +594,7 @@ void function SvApexScreens_HighlightPlayerForImpressiveKill( entity player, int
 #if SERVER
 void function SvApexScreens_HighlightPlayerForKillSpree()
 {
-	#if DEV
+	#if DEVELOPER
 		if ( file.DEV_inDebugPreviewMode )
 			return
 	#endif
@@ -667,7 +667,7 @@ void function ApexScreenMasterThink()
 	HaltApexScreenMasterThink()
 	svGlobal.levelEnt.EndSignal( "ApexScreenMasterThink" )
 
-	#if DEV
+	#if DEVELOPER
 		if ( file.DEV_inDebugPreviewMode )
 			return
 	#endif
@@ -863,7 +863,7 @@ void function _SetLogoDisplay()
 #endif
 
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function DEV_ApexScreens_TogglePreviewMode()
 {
 	file.DEV_inDebugPreviewMode = !file.DEV_inDebugPreviewMode
@@ -872,7 +872,7 @@ void function DEV_ApexScreens_TogglePreviewMode()
 #endif
 
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function DEV_ApexScreens_GladCardPreviewMode()
 {
 	file.DEV_inDebugPreviewMode = true
@@ -882,17 +882,17 @@ void function DEV_ApexScreens_GladCardPreviewMode()
 	HaltApexScreenMasterThink()
 
 	//ShowModeInternal( eApexScreenPosition.L, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.GCARD_FRONT_DETAILS, testArray[RandomIntRange( 0, testArray.len() )] )
-	//ShowModeInternal( eApexScreenPosition.C, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.GCARD_FRONT_DETAILS, gp()[0] )
+	//ShowModeInternal( eApexScreenPosition.C, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.GCARD_FRONT_DETAILS, GetPlayerArray()[0] )
 	//ShowModeInternal( eApexScreenPosition.R, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.GCARD_FRONT_DETAILS, testArray[RandomIntRange( 0, testArray.len() )] )
 
-	ShowModeInternal( eApexScreenPosition.L, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.PLAYER_NAME_KILLLEADER, gp()[0].GetEncodedEHandle() )
-	ShowModeInternal( eApexScreenPosition.C, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.GCARD_FRONT_CLEAN, gp()[0].GetEncodedEHandle() )
-	ShowModeInternal( eApexScreenPosition.R, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.GCARD_BACK, gp()[0].GetEncodedEHandle() )
+	ShowModeInternal( eApexScreenPosition.L, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.PLAYER_NAME_KILLLEADER, GetPlayerArray()[0].GetEncodedEHandle() )
+	ShowModeInternal( eApexScreenPosition.C, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.GCARD_FRONT_CLEAN, GetPlayerArray()[0].GetEncodedEHandle() )
+	ShowModeInternal( eApexScreenPosition.R, eApexScreenTransitionStyle.SLIDE, eApexScreenMode.GCARD_BACK, GetPlayerArray()[0].GetEncodedEHandle() )
 }
 #endif
 
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function DEV_ApexScreens_SetMode( var opt = "random" )
 {
     if ( !GetCurrentPlaylistVarBool( "enable_apex_screens", true ) )
@@ -1094,7 +1094,7 @@ void function ClApexScreens_OnStaticPropRuiVisibilityChange( array<int> newlyVis
 #endif
 
 
-#if CLIENT && DEV
+#if CLIENT && DEVELOPER
 void function DEV_ToggleActiveApexScreenDebug()
 {
 	file.DEV_activeScreenDebug = !file.DEV_activeScreenDebug
@@ -1646,7 +1646,7 @@ var function CreateApexScreenRUIElement( ApexScreenState screen )
 	var rui
 	if ( screen.magicId == -1 )
 	{
-		#if DEV
+		#if DEVELOPER
 			float aspectRatio = 1.0//0.38
 			float height      = screen.diagonalSize / sqrt( 1.0 + pow( aspectRatio, 2.0 ) )
 			float width       = aspectRatio * height
@@ -1764,7 +1764,7 @@ void function ClApexScreens_SetEventScreenOverride( int position, ScreenOverride
 #endif
 
 
-#if CLIENT && DEV
+#if CLIENT && DEVELOPER
 void function DEV_CreatePerfectApexScreen( vector origin, float diagonalSize, int screenPosition )
 {
 	ApexScreenState apexScreen

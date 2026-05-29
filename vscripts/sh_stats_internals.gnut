@@ -642,31 +642,29 @@ void function DEV_SetStatsMultiplier( float mul )
 
 
 #if SERVER && DEVELOPER
-bool function ClientCommand_stats_dump( entity player, array<string> args )
+void function ClientCommand_stats_dump( entity player, array<string> args )
 {
 	printt( "--", "stats dump for", player )
 
 	foreach ( int index, StatEntry entry in fileLevel.stats_Int )
 		printt( "--", "", entry.persistenceFullKey_Current, player.p.statValues_Int[index] )
-	return true
 }
 #endif
 
 
 #if SERVER && DEVELOPER
-bool function ClientCommand_stats_set( entity player, array<string> args )
+void function ClientCommand_stats_set( entity player, array<string> args )
 {
 	string statRef = args[0]
 
 	if ( !IsValidStatEntryRef( statRef ) )
 	{
 		printt( "invalid stat ref" )
-		return true
+		return
 	}
 
 	StatEntry entry = GetStatEntryByRef( statRef )
 	__SetStat_Int( player, entry, int(args[1]), true )
-	return true
 }
 #endif
 

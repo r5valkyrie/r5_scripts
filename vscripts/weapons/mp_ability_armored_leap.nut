@@ -53,7 +53,7 @@ const bool VISOR_THREAT_DETECTION							= true
 const bool CASTLE_WALL_STOPS_GRENADES						= true
       
 
-#if DEV
+#if DEVELOPER
 const bool DEBUG_ARMORED_LEAP_TARGETING_DRAW 				= false
 const bool DEBUG_SNAKE_DRAW 								= false
 const bool DEBUG_DEV_TEST_FLAG								= false		//Turn on in box when Bot-Recording - prevents endless walls.
@@ -380,16 +380,10 @@ struct FindOffsetPosStruct
 	bool success
 	vector position
 }
+global const int PLAYER_ARMORED_LEAP_PHASE_NONE = 0
+#if DEVELOPER
 
-#if DEV
 const table<int,string> armoredLeapPhaseToStringMap = {
-	[ PLAYER_ARMORED_LEAP_PHASE_NONE ] = "PLAYER_ARMORED_LEAP_PHASE_NONE",
-	[ PLAYER_ARMORED_LEAP_PHASE_PREP ] = "PLAYER_ARMORED_LEAP_PHASE_PREP",
-	[ PLAYER_ARMORED_LEAP_PHASE_TRAVEL_AIR ] = "PLAYER_ARMORED_LEAP_PHASE_TRAVEL_AIR",
-	[ PLAYER_ARMORED_LEAP_PHASE_TRAVEL_AIR_HOVER ] = "PLAYER_ARMORED_LEAP_PHASE_TRAVEL_AIR_HOVER",
-	[ PLAYER_ARMORED_LEAP_PHASE_TRAVEL_GROUND ] = "PLAYER_ARMORED_LEAP_PHASE_TRAVEL_GROUND",
-	[ PLAYER_ARMORED_LEAP_PHASE_ARRIVAL ] = "PLAYER_ARMORED_LEAP_PHASE_ARRIVAL",
-	[ PLAYER_ARMORED_LEAP_PHASE_INTERRUPTED ] = "PLAYER_ARMORED_LEAP_PHASE_INTERRUPTED"
 }
 #endif
 
@@ -1103,7 +1097,7 @@ void function ArmoredLeap_LaunchHoverPrep_Thread( entity player, vector endPoint
 				if ( !GetArmoredLeapUseCode() )
 				{
 					float curGravity = player.GetLocalGravityStrength()
-					#if DEV
+					#if DEVELOPER
 						if ( curGravity != 1 )
 							player.SetLocalGravityStrength( 1 )
 					#endif
@@ -1121,7 +1115,7 @@ void function ArmoredLeap_LaunchHoverPrep_Thread( entity player, vector endPoint
 		vector newVel = currentVel * ARMORED_LEAP_AIR_HOVER_VEL_SCALAR // addedVel //maybe just set to 0 - but likely want some float
 
 		//Set Gravity & Hover Speed
-		#if DEV
+		#if DEVELOPER
 		player.SetLocalGravityStrength( ARMORED_LEAP_AIR_HOVER_GRAVITY )
 		player.SetVelocity( newVel )
 		#endif
@@ -1233,7 +1227,7 @@ void function ArmoredLeap_LaunchToAirPosition( entity player, entity mover, vect
 		//player.SetTrackEntityOffsetHeightOverTime( ARMORED_LEAP_INITIAL_CAMERA_HEIGHT, ARMORED_LEAP_AIR_CAMERA_HEIGHT, lerpTime, THIRD_PERSON_CAMERA_LERP_MODE_EXPONENTIAL )
 		//player.SetTrackEntityOffsetRightOverTime( ARMORED_LEAP_INITIAL_CAMERA_RIGHT, ARMORED_LEAP_AIR_CAMERA_RIGHT, lerpTime, THIRD_PERSON_CAMERA_LERP_MODE_EXPONENTIAL )
 
-		#if DEV
+		#if DEVELOPER
 			if ( DEBUG_CAMERA_LERP )
 			{
 				printt( "Setting starting dist to: " + ARMORED_LEAP_INITIAL_CAMERA_DIST + " ending dist: " + ARMORED_LEAP_AIR_CAMERA_DIST + " over: " + lerpTime )
@@ -1314,7 +1308,7 @@ void function ArmoredLeap_SlamToGroundPosition( entity player, entity mover, vec
 			//player.SetTrackEntityOffsetDistanceOverTime( ARMORED_LEAP_INITIAL_CAMERA_DIST, ARMORED_LEAP_END_CAMERA_DIST, lerpTime, THIRD_PERSON_CAMERA_LERP_MODE_EXPONENTIAL )
 			//player.SetTrackEntityOffsetHeightOverTime( ARMORED_LEAP_INITIAL_CAMERA_HEIGHT, ARMORED_LEAP_END_CAMERA_HEIGHT, lerpTime, THIRD_PERSON_CAMERA_LERP_MODE_EXPONENTIAL )
 			//player.SetTrackEntityOffsetRightOverTime( ARMORED_LEAP_INITIAL_CAMERA_RIGHT, ARMORED_LEAP_END_CAMERA_RIGHT, lerpTime, THIRD_PERSON_CAMERA_LERP_MODE_EXPONENTIAL )
-			#if DEV
+			#if DEVELOPER
 				if ( DEBUG_CAMERA_LERP )
 				{
 					printt( "Setting starting height to: " + ARMORED_LEAP_INITIAL_CAMERA_HEIGHT + " ending height: " + ARMORED_LEAP_END_CAMERA_HEIGHT + " over: " + lerpTime )
@@ -1327,7 +1321,7 @@ void function ArmoredLeap_SlamToGroundPosition( entity player, entity mover, vec
 			//player.SetTrackEntityOffsetDistanceOverTime( ARMORED_LEAP_AIR_CAMERA_DIST, ARMORED_LEAP_END_CAMERA_DIST, lerpTime, THIRD_PERSON_CAMERA_LERP_MODE_EXPONENTIAL )
 			//player.SetTrackEntityOffsetHeightOverTime( ARMORED_LEAP_AIR_CAMERA_HEIGHT, ARMORED_LEAP_END_CAMERA_HEIGHT, lerpTime, THIRD_PERSON_CAMERA_LERP_MODE_EXPONENTIAL )
 			//player.SetTrackEntityOffsetRightOverTime( ARMORED_LEAP_AIR_CAMERA_RIGHT, ARMORED_LEAP_END_CAMERA_RIGHT, lerpTime, THIRD_PERSON_CAMERA_LERP_MODE_EXPONENTIAL )
-			#if DEV
+			#if DEVELOPER
 				if ( DEBUG_CAMERA_LERP )
 				{
 					printt( "Setting starting height to: " + ARMORED_LEAP_AIR_CAMERA_HEIGHT + " ending height: " + ARMORED_LEAP_END_CAMERA_HEIGHT + " over: " + lerpTime )
@@ -1550,7 +1544,7 @@ void function CodeCallback_ArmoredLeapPhaseChange( entity player, int newArmored
 	if ( !IsValid( player ) )
 		return
 
-	#if DEV
+	#if DEVELOPER
 	if ( DEBUG_PHASE_CHANGES )
 		printt( FUNC_NAME() + " got code callback for player: " + player.GetPlayerName() + " phase is: " + armoredLeapPhaseToStringMap[newArmoredLeapPhase] + " old phase is: " + armoredLeapPhaseToStringMap[oldArmoredLeapPhase] )
 	#endif
@@ -1586,7 +1580,7 @@ void function ArmoredLeapPhaseChangeQueueProcessor_Thread( entity player )
 				int oldArmoredLeapPhase = phaseChangeToProcess.oldPhase
 				int newArmoredLeapPhase = phaseChangeToProcess.newPhase
 
-				#if DEV
+				#if DEVELOPER
 				if ( DEBUG_PHASE_CHANGES )
 					printt( FUNC_NAME() + " OldPhase: " + oldArmoredLeapPhase + " NewPhase: " + newArmoredLeapPhase )
 				#endif
@@ -1766,7 +1760,7 @@ void function ArmoredLeap_CheckForUpdraft_Thread( entity player )
 }
 
 
-#if DEV
+#if DEVELOPER
 #if SERVER
 void function Debug_TrackPlayerInLeap_Thread( entity player, entity mover, vector endPoint, vector airPoint )
 {
@@ -2312,10 +2306,10 @@ void function ArmoredLeap_SetAllyTargetAndLKP( entity ent, ArmoredLeapTargetInfo
 			entity hitEnt = groundTrace.hitEnt
 			//ArmoredLeapTargetInfo info //info is passed in here - but as a formality. We're just using this to determine whether to set LKP on the server
 			allyEndPos = ArmoredLeap_GetBestAllyLandingPos( ent, groundTrace.endPos, Normalize(ent.GetViewVector()), info )  //groundTrace.endPos + < 0,0,5 >
-			//DebugDrawSphere( allyEndPos, 10.0, COLOR_YELLOW, true, 0.1 )
+			//DebugDrawSphere( allyEndPos, 10.0, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 0.1 )
 
 			foundValidEnd  = ArmoredLeap_HasValidLeapPos( ent, targetAlly, allyEndPos, hitEnt, info )
-			//DebugDrawSphere( info.finalPos, 20.0, <150, 0, 150>, true, 0.1 )
+			//DebugDrawSphere( info.finalPos, 20.0, 150, 0, 150, true, 0.1 )
 
 			if( foundValidEnd )
 			{
@@ -2404,8 +2398,8 @@ vector function ArmoredLeap_GetUpdatedLKP( entity player, vector airPoint, vecto
 
 	}
 
-	//DebugDrawLine( player.GetOrigin(), targetPos, COLOR_GREEN, true, 20 )
-	//DebugDrawSphere( targetPos, 50.0, <0, 150, 150>, true, 0.1 )
+	//DebugDrawLine( player.GetOrigin(), targetPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 20 )
+	//DebugDrawSphere( targetPos, 50.0, 0, 150, 150, true, 0.1 )
 	return targetPos
 }
 
@@ -2546,7 +2540,7 @@ void function ArmoredLeap_AR_Placement_Thread( entity weapon )
 		else
 			info = GetArmoredLeapTargetInfo( player )
 
-		#if DEV
+		#if DEVELOPER
 		if ( DoAdditionalAirPosChecks() )
 		{
 			if ( DEBUG_BETTER_AIR_POS )
@@ -2565,11 +2559,11 @@ void function ArmoredLeap_AR_Placement_Thread( entity weapon )
 			break
 		}
 
-		#if DEV
+		#if DEVELOPER
 			if( DEBUG_ARMORED_LEAP_TARGETING_DRAW )
 			{
-				DebugDrawLine( player.GetOrigin(), info.airPos , <0, 200, 200>, true, 0.1 )
-				DebugDrawLine( info.airPos, info.finalPos , <200, 200, 0>, true, 0.1 )
+				DebugDrawLine( player.GetOrigin(), info.airPos, 0, 200, 200, true, 0.1 )
+				DebugDrawLine( info.airPos, info.finalPos, 200, 200, 0, true, 0.1 )
 			}
 		#endif
 
@@ -3519,14 +3513,14 @@ ArmoredLeapTargetInfo function GetArmoredLeapTargetInfo( entity ent )
 		return info
 	}
 
-	#if DEV
+	#if DEVELOPER
 		if( DEBUG_ARMORED_LEAP_TARGETING_DRAW )
 		{
 			//InitialTrace  	= AQUA
 			//DownTraceEnd		= GREEN
 			//LedgeAbove		= YELLOW/ORANGE //Aiming at Wall - Look for Ledge Above
 			//LedgeBelow		= PINK/PURPLE/RED //Aiming at Air - Look for Ledge below
-			DebugDrawSphere( initialTrace.endPos, 5.0, <0, 150, 150>, false, 0.1 ) //AQUA (Initial Trace)
+			DebugDrawSphere( initialTrace.endPos, 5.0, 0, 150, 150, false, 0.1 ) //AQUA (Initial Trace)
 		}
 	#endif
 
@@ -3647,11 +3641,11 @@ ArmoredLeapTargetInfo function GetArmoredLeapTargetInfo( entity ent )
 			TraceResults ledgeTrace = TraceHull( ledgeTraceStart, ledgeTraceStart + <0, 0, -200>, ent.GetPlayerMins(), ent.GetPlayerMaxs(), ignoreArray, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
 
 
-			#if DEV
+			#if DEVELOPER
 				if( DEBUG_ARMORED_LEAP_TARGETING_DRAW )
 				{
-					DebugDrawSphere( ledgeTraceStart, 8.0, COLOR_YELLOW, true, 0.1 ) //YELLOW (LedgeStart)
-					DebugDrawSphere( ledgeTrace.endPos, 15.0, <255, 175, 0>, true, 0.1 ) //ORANGE (LedgeEnd)
+					DebugDrawSphere( ledgeTraceStart, 8.0, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 0.1 ) //YELLOW (LedgeStart)
+					DebugDrawSphere( ledgeTrace.endPos, 15.0, 255, 175, 0, true, 0.1 ) //ORANGE (LedgeEnd)
 					DebugDrawCircle( ledgeTrace.endPos, VectorToAngles(ledgeTrace.surfaceNormal), 64, <255, 175, 175>, true, 0.1, 3 )
 				}
 			#endif
@@ -3687,10 +3681,10 @@ ArmoredLeapTargetInfo function GetArmoredLeapTargetInfo( entity ent )
 				}
 			}
 
-			#if DEV
+			#if DEVELOPER
 				if( DEBUG_ARMORED_LEAP_TARGETING_DRAW )
 				{
-					DebugDrawSphere( downTrace.endPos, 5.0, COLOR_GREEN, false, 0.1 ) //GREEN (Downcast End)
+					DebugDrawSphere( downTrace.endPos, 5.0, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), false, 0.1 ) //GREEN (Downcast End)
 				}
 			#endif
 		}
@@ -3726,19 +3720,19 @@ ArmoredLeapTargetInfo function GetArmoredLeapTargetInfo( entity ent )
 						foundValidEnd = true
 					}
 				}
-				#if DEV
+				#if DEVELOPER
 					if( DEBUG_ARMORED_LEAP_TARGETING_DRAW )
 					{
-						DebugDrawSphere( intersect, 8.0, <255, 0, 250>, false, 0.1 ) //PINK (LedgeInset)
-						DebugDrawSphere( dropAirTrace.endPos, 15.0, <255, 0, 100>, true, 0.1 ) //RED (LedgeDropEnd)
+						DebugDrawSphere( intersect, 8.0, 255, 0, 250, false, 0.1 ) //PINK (LedgeInset)
+						DebugDrawSphere( dropAirTrace.endPos, 15.0, 255, 0, 100, true, 0.1 ) //RED (LedgeDropEnd)
 					}
 				#endif
 			}
 
-			#if DEV
+			#if DEVELOPER
 				if( DEBUG_ARMORED_LEAP_TARGETING_DRAW )
 				{
-					DebugDrawSphere( lowAirTrace.endPos, 5.0, <100, 0, 50>, true, 0.1 ) //PURPLE (LowAir)
+					DebugDrawSphere( lowAirTrace.endPos, 5.0, 100, 0, 50, true, 0.1 ) //PURPLE (LowAir)
 				}
 			#endif
 
@@ -3801,7 +3795,7 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 		float airHeight           = info.airPos == ZERO_VECTOR ? ARMORED_LEAP_MAX_AIR_HEIGHT : info.airPos.z - info.finalPos.z
 		TraceResults traceUp      = TraceHull( info.finalPos, info.finalPos + <0, 0, airHeight>, player.GetPlayerMins(), player.GetPlayerMaxs(), ignoreArray, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
 
-		#if DEV
+		#if DEVELOPER
 		if ( DEBUG_BETTER_AIR_POS )
 		{
 			DebugDrawText( info.eyeHitPos, "info.eyeHitPos", true, 0.1 )
@@ -3833,11 +3827,11 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 			//Had issues where taces to ground could come back with 0.996 etc.  Calling 0.99 "good enough" here.
 			if ( iterationTrace.fraction >= 0.99 )
 			{
-				#if DEV
+				#if DEVELOPER
 				if ( DEBUG_BETTER_AIR_POS )
 				{
-					DebugDrawMark( iterationTrace.endPos, 10, COLOR_GREEN, true, 0.1 )
-					DebugDrawLine( playerPos, traceTarget, COLOR_CYAN, true, 0.1 )
+					//DebugDrawMark( iterationTrace.endPos, 10, COLOR_GREEN, true, 0.1 )
+					DebugDrawLine( playerPos, traceTarget, int(COLOR_CYAN.x), int(COLOR_CYAN.y), int(COLOR_CYAN.z), true, 0.1 )
 					DebugDrawText( iterationTrace.endPos, "fraction: " + iterationTrace.fraction, true, 0.1 )
 				}
 				#endif //DEV
@@ -3856,11 +3850,11 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 			}
 			else
 			{
-				#if DEV
+				#if DEVELOPER
 				if ( DEBUG_BETTER_AIR_POS )
 				{
-					DebugDrawLine( playerPos, traceTarget, COLOR_RED, true, 0.1 )
-					DebugDrawMark( iterationTrace.endPos, 10, COLOR_RED, true, 0.1 )
+					DebugDrawLine( playerPos, traceTarget, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1 )
+					//DebugDrawMark( iterationTrace.endPos, 10, COLOR_RED, true, 0.1 )
 					DebugDrawText( iterationTrace.endPos, "fraction: " + iterationTrace.fraction, true, 0.1 )
 				}
 				#endif
@@ -3877,11 +3871,11 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 			vector walkBackDir = Normalize( aboveDest - abovePlayer )
 			float walkBackDistTotal = Distance( aboveDest, abovePlayer )
 
-			#if DEV
+			#if DEVELOPER
 			if ( DEBUG_BETTER_AIR_POS )
 			{
-				DebugDrawMark( abovePlayer, 10, COLOR_YELLOW, true, 0.1 )
-				DebugDrawMark( aboveDest, 10, COLOR_MAGENTA, true, 0.1 )
+				//DebugDrawMark( abovePlayer, 10, COLOR_YELLOW, true, 0.1 )
+				//DebugDrawMark( aboveDest, 10, COLOR_MAGENTA, true, 0.1 )
 			}
 			#endif
 
@@ -3911,10 +3905,10 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 
 				if ( traceToWalkbackPos.fraction >= 0.99 )
 				{
-					#if DEV
+					#if DEVELOPER
 						if ( DEBUG_BETTER_AIR_POS )
 						{
-							DebugDrawLine( player.GetOrigin(), traceToWalkbackPos.endPos, COLOR_GREEN, true, 0.1 )
+							DebugDrawLine( player.GetOrigin(), traceToWalkbackPos.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 )
 							DebugDrawText( traceToWalkbackPos.endPos, "fraction: " + traceToWalkbackPos.fraction, true, 0.1 )
 						}
 					#endif
@@ -3924,10 +3918,10 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 
 					if ( traceFinalPos.fraction >= 0.99 )
 					{
-						#if DEV
+						#if DEVELOPER
 							if ( DEBUG_BETTER_AIR_POS )
 							{
-								DebugDrawLine( walkBackIterationPos, traceFinalPos.endPos, COLOR_GREEN, true, 0.1 )
+								DebugDrawLine( walkBackIterationPos, traceFinalPos.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 )
 								//DebugDrawText( iterationTrace.endPos, "fraction: " + iterationTrace.fraction, true, 0.1 )
 							}
 						#endif
@@ -3959,11 +3953,11 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 					}
 					else
 					{
-						#if DEV
+						#if DEVELOPER
 							if ( DEBUG_BETTER_AIR_POS )
 							{
-								DebugDrawLine( walkBackIterationPos, info.finalPos, COLOR_RED, true, 0.1 )
-								DebugDrawMark( traceFinalPos.endPos, 25, COLOR_RED, true, 0.1 )
+								DebugDrawLine( walkBackIterationPos, info.finalPos, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1 )
+								//DebugDrawMark( traceFinalPos.endPos, 25, COLOR_RED, true, 0.1 )
 								DebugDrawText( traceFinalPos.endPos, "fraction: " + traceFinalPos.fraction, true, 0.1 )
 							}
 						#endif
@@ -3971,11 +3965,11 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 				}
 				else
 				{
-					#if DEV
+					#if DEVELOPER
 						if ( DEBUG_BETTER_AIR_POS )
 						{
-							DebugDrawLine( player.GetOrigin(), walkBackIterationPos, COLOR_RED, true, 0.1 )
-							DebugDrawMark( traceToWalkbackPos.endPos, 25, COLOR_RED, true, 0.1 )
+							DebugDrawLine( player.GetOrigin(), walkBackIterationPos, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1 )
+							//DebugDrawMark( traceToWalkbackPos.endPos, 25, COLOR_RED, true, 0.1 )
 							DebugDrawText( traceToWalkbackPos.endPos, "fraction: " + traceToWalkbackPos.fraction, true, 0.1 )
 						}
 					#endif
@@ -3987,7 +3981,7 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 		{
 			info.airPos = goodAirPos
 
-			#if DEV
+			#if DEVELOPER
 			if ( DEBUG_BETTER_AIR_POS )
 			{
 				float drawTime = 0.1
@@ -3995,15 +3989,15 @@ ArmoredLeapTargetInfo function GetBetterAirPos( entity player, ArmoredLeapTarget
 				drawTime = 5.0
 				#endif
 
-				DebugDrawMark( info.finalPos, 25, COLOR_YELLOW, true, drawTime )
-				DebugDrawMark( goodAirPos, 25, COLOR_CYAN, true, drawTime )
+				//DebugDrawMark( info.finalPos, 25, COLOR_YELLOW, true, drawTime )
+				//DebugDrawMark( goodAirPos, 25, COLOR_CYAN, true, drawTime )
 				DebugDrawText( player.GetWorldSpaceCenter(), "foundGoodAirPos found!", true, 0.1 )
 			}
 			#endif //DEV
 		}
 		else
 		{
-			#if DEV
+			#if DEVELOPER
 			if ( DEBUG_BETTER_AIR_POS )
 			{
 				DebugDrawText( player.GetWorldSpaceCenter(), "foundGoodAirPos NOT found!", true, 0.1 )
@@ -4034,11 +4028,11 @@ FindOffsetPosStruct function GetBetterAirPos_FindOffsetPos( entity player, array
 
 		if ( destinationTrace.fraction >= 0.99 )
 		{
-			#if DEV
+			#if DEVELOPER
 			if ( DEBUG_BETTER_AIR_POS )
 			{
-				DebugDrawMark( destinationTrace.endPos, 10, COLOR_GREEN, true, 0.1 )
-				DebugDrawLine( offsetTraceTarget, destinationTrace.endPos, COLOR_GREEN, true, 0.1 )
+				//DebugDrawMark( destinationTrace.endPos, 10, COLOR_GREEN, true, 0.1 )
+				DebugDrawLine( offsetTraceTarget, destinationTrace.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 )
 				DebugDrawText( offsetTraceTarget, "goodAirPos! fraction: " + destinationTrace.fraction, true, 0.1 )
 			}
 			#endif //DEV
@@ -4049,11 +4043,11 @@ FindOffsetPosStruct function GetBetterAirPos_FindOffsetPos( entity player, array
 		}
 		else
 		{
-			#if DEV
+			#if DEVELOPER
 			if ( DEBUG_BETTER_AIR_POS )
 			{
-				DebugDrawMark( destinationTrace.endPos, 10, COLOR_RED, true, 0.1 )
-				DebugDrawLine( offsetTraceTarget, destinationTrace.endPos, COLOR_RED, true, 0.1 )
+				//DebugDrawMark( destinationTrace.endPos, 10, COLOR_RED, true, 0.1 )
+				DebugDrawLine( offsetTraceTarget, destinationTrace.endPos, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1 )
 				DebugDrawText( offsetTraceTarget, "fraction: " + destinationTrace.fraction, true, 0.1 )
 			}
 			#endif //DEV
@@ -4102,18 +4096,18 @@ vector function ArmoredLeap_GetBestAllyLandingPos( entity ent, vector endPos, ve
 			float fraction          = ridgeTrace.fraction
 			if ( fraction == 1 )
 			{
-				//DebugDrawSphere( ridgeTrace.endPos, 5, COLOR_RED, true, 0.1 )
+				//DebugDrawSphere( ridgeTrace.endPos, 5, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1 )
 				continue
 			}
 
 			bestPos = ridgeTrace.endPos
 			if( ArmoredLeap_HasValidLandingRoom( ent, bestPos, info )  )
 			{
-				//DebugDrawSphere( ridgeTrace.endPos, 5, COLOR_GREEN, true, 0.1 )
+				//DebugDrawSphere( ridgeTrace.endPos, 5, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 )
 				return bestPos
 			}
 
-			//DebugDrawSphere( ridgeTrace.endPos, 5, COLOR_YELLOW, true, 0.1 )
+			//DebugDrawSphere( ridgeTrace.endPos, 5, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 0.1 )
 		}
 	}
 
@@ -4261,9 +4255,9 @@ bool function ArmoredLeap_HasValidLeapPos( entity ent, entity targetAlly, vector
 			if( zDist < ARMORED_LEAP_MIN_AIR_HEIGHT || newAirLeapTrace.fraction < 1 || !hasAirSpace)
 			{
 				//--Not enough clearance at Target Location
-				//DebugDrawSphere( newAirLeapPos, 5, <hasAirSpace ? 0 : 255, hasAirSpace ? 255 : 0, 0>, true, 0.1, 8 )
+				//DebugDrawSphere( newAirLeapPos, 5, hasAirSpace ? 0 : 255, hasAirSpace ? 255 : 0, 0, true, 0.1, 8 )
 				//DebugDrawBox( newAirLeapPos, ent.GetPlayerMins(), ent.GetPlayerMaxs(), COLOR_GREEN, 1, 0.1 )
-				//DebugDrawLine( newAirLeapPos, adjustedEndPos, COLOR_GREEN, true, 0.1 )
+				//DebugDrawLine( newAirLeapPos, adjustedEndPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 )
 
 				//Natrual Trajectory of Slam is Blocked - Try directly above
 				//This additional step solves for situations that would fail when the target ally was TOO CLOSE to cover and the angle of the slam would fail.
@@ -4280,7 +4274,7 @@ bool function ArmoredLeap_HasValidLeapPos( entity ent, entity targetAlly, vector
 					zDist = Distance( < 0, 0, newAirLeapPos.z>, < 0, 0, endPos.z >  )
 					if( zDist < ARMORED_LEAP_MIN_AIR_HEIGHT || newOverheadAirLeapTrace.fraction < 1 || !hasAirSpace )
 					{
-						//DebugDrawSphere( newAirLeapPos, 5, COLOR_RED, true, 0.1, 8 )
+						//DebugDrawSphere( newAirLeapPos, 5, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1, 8 )
 						info.failCase = eFailCase.BLOCKED_LANDING
 						return false
 					}
@@ -4351,12 +4345,12 @@ bool function ArmoredLeap_HasValidLeapPos( entity ent, entity targetAlly, vector
 
 								if( diveKickTrace.fraction < 1 || !hasAirSpace)
 								{
-									//DebugDrawSphere( superDashTrace.endPos, 25, COLOR_MAGENTA, true, 0.1, 8 )
+									//DebugDrawSphere( superDashTrace.endPos, 25, int(COLOR_MAGENTA.x), int(COLOR_MAGENTA.y), int(COLOR_MAGENTA.z), true, 0.1, 8 )
 									info.failCase = eFailCase.BLOCKED_LEAP
 									return false
 								}
 							}
-							//DebugDrawSphere( dashHighTrace.endPos, 25, COLOR_YELLOW, true, 0.1, 8 )
+							//DebugDrawSphere( dashHighTrace.endPos, 25, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 0.1, 8 )
 						}
 
 						//TraceResults dashHighToGroundTrace = TraceLine( airLeapTestPos, adjustedEndPos, ignoreArray, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT ) //TRACE_MASK_ABILITY
@@ -4596,7 +4590,7 @@ void function CastleWall_CastleManager_Thread( entity player, entity castle )
 	EndSignal( castle, "OnDestroy" )
 	EndSignal( castle, "CastleWall_CastleDestroyed" )
 
-	#if DEV
+	#if DEVELOPER
 		if( DEBUG_DEV_TEST_FLAG )
 		{
 			if( player.IsBot() ) //Allow Bot_Record to loop and not make endless walls until cap explodes
@@ -4816,12 +4810,12 @@ void function CastleWall_CreateMainWall_Thread( entity player, entity castle, ve
 
 		//Create LEFT Snake
 		vector sideDir = RotateVector(dir, <0,90,0> )
-		//DebugDrawLine( castle.GetOrigin(), castle.GetOrigin() + (sideDir) * 45, COLOR_GREEN, true, 20 )
+		//DebugDrawLine( castle.GetOrigin(), castle.GetOrigin() + (sideDir) * 45, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 20 )
 		thread CastleWall_CreateSnakeWall_Thread( player, castle, dir, originPos, sideDir, true, characterSkinName, characterCamo )
 
 		//Create RIGHT Snake
 		sideDir = RotateVector(dir, <0,-90,0> )
-		//DebugDrawLine( castle.GetOrigin(), castle.GetOrigin() + (sideDir) * 45, COLOR_GREEN, true, 20 )
+		//DebugDrawLine( castle.GetOrigin(), castle.GetOrigin() + (sideDir) * 45, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 20 )
 		thread CastleWall_CreateSnakeWall_Thread( player, castle, dir, originPos, sideDir, false, characterSkinName, characterCamo )
 	}
 
@@ -4954,7 +4948,7 @@ void function CastleWall_CreateSnakeWall_Thread( entity player, entity castle, v
 	}
 
 	//DebugDrawArrow( initPos + <0,0,64>, initPos + <0,0,-64>, 10, COLOR_RED, true, 15.0 )
-	// DebugDrawArrow( mover.GetOrigin(), initPos, 8, COLOR_GREEN, true, 15.0 )
+	// //DebugDrawArrow( mover.GetOrigin(), initPos, 8, COLOR_GREEN, true, 15.0 )
 
 	//we start on the side of the main anchor, so need to start rotating off the bat.
 	if ( saveEnts )
@@ -5070,11 +5064,11 @@ void function CastleWall_CreateSnakeWall_Thread( entity player, entity castle, v
 			destination = SnakeWall_GetNextValidPos( mover, mover.GetOrigin(), ignoreArray, snakeInfo )
 		}
 
-		#if DEV
+		#if DEVELOPER
 		if( DEBUG_SNAKE_DRAW )
 		{
-			DebugDrawSphere( mover.GetOrigin(), 3, COLOR_YELLOW, true, 0.2 )
-			DebugDrawSphere( destination, 5, COLOR_YELLOW, true, 1 )
+			DebugDrawSphere( mover.GetOrigin(), 3, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 0.2 )
+			DebugDrawSphere( destination, 5, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 1 )
 		}
 		#endif
 
@@ -5506,10 +5500,10 @@ vector function SnakeWall_GetBestDownTracePosition( vector nextValidPos, vector 
 	{
 		TraceResults downCliffTrace = TraceLine( tracePos, tracePos + < 0.0, 0.0, -CASTLE_SNAKE_DROP_TEST_HEIGHT_MAX >, ignoreArray, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
 
-		#if DEV
+		#if DEVELOPER
 			if( DEBUG_SNAKE_DRAW )
 			{
-				DebugDrawSphere( downCliffTrace.endPos, 6.0, COLOR_RED, true, 15.0, 8 )
+				DebugDrawSphere( downCliffTrace.endPos, 6.0, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 15.0, 8 )
 			}
 		#endif
 
@@ -5557,10 +5551,10 @@ vector function SnakeWall_GetBestDownTracePosition( vector nextValidPos, vector 
 						return nextValidPos
 					}
 
-					#if DEV
+					#if DEVELOPER
 					if( DEBUG_SNAKE_DRAW )
 					{
-						DebugDrawSphere( ledgeBendTrace.endPos, 6.0, COLOR_RED, true, 15.0 )//Show where we're checking around the circle
+						DebugDrawSphere( ledgeBendTrace.endPos, 6.0, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 15.0 )//Show where we're checking around the circle
 					}
 					#endif
 
@@ -6486,26 +6480,26 @@ void function CastleWall_CreateTriggerVolume( entity shieldWall, entity castle, 
 		trigger.SearchForNewTouchingEntity()
 	}
 
-	#if DEV
+	#if DEVELOPER
 		if( DEBUG_DRAW_DAMAGE_BARRIERS )
 		{
 			if( segmentType == eSegmentType.HIGH )
 			{
 				float widthHigh = CASTLE_SNAKE_WALL_DAMAGE_VOLUME_WIDTH_HIGH //40
-				DebugDrawLine( trigger.GetOrigin(), trigger.GetOrigin() + trigger.GetRightVector() * widthHigh, COLOR_GREEN, true, 60 )
-				DebugDrawLine( trigger.GetOrigin(), trigger.GetOrigin() - trigger.GetRightVector() * widthHigh, COLOR_GREEN, true, 60 )
-				DebugDrawSphere( trigger.GetOrigin() + trigger.GetRightVector() * widthHigh, 4.0, COLOR_GREEN, true, 60 )
-				DebugDrawSphere( trigger.GetOrigin() - trigger.GetRightVector() * widthHigh, 4.0, COLOR_GREEN, true, 60 )
+				DebugDrawLine( trigger.GetOrigin(), trigger.GetOrigin() + trigger.GetRightVector() * widthHigh, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 60 )
+				DebugDrawLine( trigger.GetOrigin(), trigger.GetOrigin() - trigger.GetRightVector() * widthHigh, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 60 )
+				DebugDrawSphere( trigger.GetOrigin() + trigger.GetRightVector() * widthHigh, 4.0, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 60 )
+				DebugDrawSphere( trigger.GetOrigin() - trigger.GetRightVector() * widthHigh, 4.0, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 60 )
 
 			}
 
 			if( segmentType == eSegmentType.LOW )
 			{
 				float widthLow = CASTLE_SNAKE_WALL_DAMAGE_VOLUME_WIDTH_LOW //15
-				DebugDrawLine( trigger.GetOrigin(), trigger.GetOrigin() + trigger.GetRightVector() * widthLow, <200, 200, 0>, true, 60 )
-				DebugDrawLine( trigger.GetOrigin(), trigger.GetOrigin() - trigger.GetRightVector() * widthLow, <200, 200, 0>, true, 60 )
-				DebugDrawSphere( trigger.GetOrigin() + trigger.GetRightVector() * widthLow, 4.0, COLOR_YELLOW, true, 60 )
-				DebugDrawSphere( trigger.GetOrigin() - trigger.GetRightVector() * widthLow, 4.0, <255, 255, 100>, true, 60 )
+				DebugDrawLine( trigger.GetOrigin(), trigger.GetOrigin() + trigger.GetRightVector() * widthLow, 200, 200, 0, true, 60 )
+				DebugDrawLine( trigger.GetOrigin(), trigger.GetOrigin() - trigger.GetRightVector() * widthLow, 200, 200, 0, true, 60 )
+				DebugDrawSphere( trigger.GetOrigin() + trigger.GetRightVector() * widthLow, 4.0, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 60 )
+				DebugDrawSphere( trigger.GetOrigin() - trigger.GetRightVector() * widthLow, 4.0, 255, 255, 100, true, 60 )
 			}
 		}
 	#endif
@@ -6774,10 +6768,10 @@ void function CastleWall_CreateSnakeWall_ArcSurfaceFX( entity castle, entity ent
 			break
 	}
 
-	#if DEV
+	#if DEVELOPER
 		if( DEBUG_DRAW_DAMAGE_BARRIERS )
 		{
-			DebugDrawArrow(  pos, pos + AnglesToForward( angles )*25, 10, <255,150,0>,false, 10)
+			//DebugDrawArrow(  pos, pos + AnglesToForward( angles )*25, 10, <255,150,0>,false, 10)
 		}
 	#endif
 
@@ -6862,10 +6856,10 @@ void function CastleWall_InterceptProjectiles( entity player, entity castle, ent
 	vector castleFwd 	= shieldAnchor.GetForwardVector()
 	vector vortexOrigin = ( shieldAnchor.GetOrigin() - castleFwd * CASTLE_WALL_INTERCEPT_FWD_OFFSET ) + <0, 0, CASTLE_WALL_INTERCEPT_Z_OFFSET>
 
-	#if DEV
+	#if DEVELOPER
 	if ( DEBUG_DRAW_ANTI_GRENADE_DEBUG )
 	{
-		DebugDrawSphere( vortexOrigin, INTERCEPT_RANGE_MAX + INTERCEPT_RANGE_MIN , <255, 255, 100>, true, 10 )
+		DebugDrawSphere( vortexOrigin, INTERCEPT_RANGE_MAX + INTERCEPT_RANGE_MIN, 255, 255, 100, true, 10 )
 	}
 	#endif
 
@@ -6985,10 +6979,10 @@ void function CastleWall_OnProjectileHitVortexTrigger( entity weapon, entity vor
 	if( closestWall == null )
 		return
 
-	#if DEV
+	#if DEVELOPER
 	if ( DEBUG_DRAW_ANTI_GRENADE_DEBUG )
 	{
-		DebugDrawSphere( closestWall.GetOrigin(), 30 , <255, 255, 255>, true, 5 )
+		DebugDrawSphere( closestWall.GetOrigin(), 30, 255, 255, 255, true, 5 )
 	}
 	#endif
 
@@ -7156,15 +7150,15 @@ bool function CastleWall_ShouldTargetProjectile( entity wallEnt, entity projecti
 
 	float rDist				= fabs( Distance2D( wallOrigin,  closestPoint ) )
 
-	#if DEV
+	#if DEVELOPER
 	if ( DEBUG_DRAW_ANTI_GRENADE_DEBUG )
 	{
 		//DebugDrawArrow( wallEnt.GetOrigin(), wallEnt.GetOrigin() + Normalize( dirToWall ) * 35, 10, <255, 150, 0>, false, 10 )
 		//DebugDrawArrow( rDirA, rDirB, 10, <0, 0, 255>, false, 10 )
 
-		//DebugDrawSphere( closestPoint, 3.0, <150, 0, 150>, true, 20.0 )
-		DebugDrawLine( rDirA, rDirA + <0,0,100>, COLOR_BLUE, true, 20.0 )
-		DebugDrawLine( rDirB, rDirB + <0,0,100>, COLOR_BLUE, true, 20.0 )
+		//DebugDrawSphere( closestPoint, 3.0, 150, 0, 150, true, 20.0 )
+		DebugDrawLine( rDirA, rDirA + <0,0,100>, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 20.0 )
+		DebugDrawLine( rDirB, rDirB + <0,0,100>, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 20.0 )
 	}
 	#endif
 
@@ -7229,11 +7223,11 @@ bool function CastleWall_HasLOSToTarget( entity trophy, entity target, entity ca
 	array<entity> ignoreArray = ArmoredLeapIgnoreArray(castle)
 
 	TraceResults results = TraceLineHighDetail( startOrigin, endOrigin, ignoreArray, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_BLOCK_WEAPONS, trophy )
-	#if DEV
+	#if DEVELOPER
 	if ( DEBUG_DRAW_ANTI_GRENADE_DEBUG )
 	{
-		DebugDrawLine( results.endPos, endOrigin, COLOR_RED, true, 20.0 )
-		DebugDrawLine( startOrigin, results.endPos, COLOR_GREEN, true, 20.0 )
+		DebugDrawLine( results.endPos, endOrigin, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 20.0 )
+		DebugDrawLine( startOrigin, results.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 20.0 )
 	}
 	#endif
 
@@ -7748,11 +7742,11 @@ void function DoCastleWallThreatIndicatorAndSound_Thread( entity player, int shi
 			}
 		}
 
-		#if DEV
+		#if DEVELOPER
 		if ( DEBUG_THREAT_INDICATORS )
 		{
-			DebugDrawMark( closestPositionEnt.GetOrigin(), 20, COLOR_RED, true, 0.1 )
-			DebugDrawMark( farthestPositionEnt.GetOrigin(), 10, COLOR_BLUE, true, 0.1 )
+			//DebugDrawMark( closestPositionEnt.GetOrigin(), 20, COLOR_RED, true, 0.1 )
+			//DebugDrawMark( farthestPositionEnt.GetOrigin(), 10, COLOR_BLUE, true, 0.1 )
 		}
 		#endif //DEV
 
@@ -7847,10 +7841,10 @@ array<CastleWallThreatIndicatorLine> function BuildThreatLines( entity startingA
 			line.endPos = endPos
 			results.append( line )
 
-			#if DEV
+			#if DEVELOPER
 			if ( DEBUG_THREAT_INDICATORS )
 			{
-				 DebugDrawArrow( line.startPos, line.endPos, 10, COLOR_GREEN, true, 0.1 )
+				 //DebugDrawArrow( line.startPos, line.endPos, 10, COLOR_GREEN, true, 0.1 )
 			}
 			#endif //DEV
 		}

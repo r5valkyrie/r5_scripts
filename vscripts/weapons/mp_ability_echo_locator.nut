@@ -614,7 +614,7 @@ void function CreateDroneCluster_Thread( entity owner, int ownerTeam, entity ech
 	#if DEVELOPER
 	if ( ECHO_LOCATOR_DEBUG )
 	{
-		//DebugDrawSphere( echoLocator.GetOrigin(), file.echoLocatorRadius, <255, 0, 0>, true, duration )
+		DebugDrawSphere( echoLocator.GetOrigin(), file.echoLocatorRadius, 255, 0, 0, true, duration )
 	}
 	#endif //DEV
 

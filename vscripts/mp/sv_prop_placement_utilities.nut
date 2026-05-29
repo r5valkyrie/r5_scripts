@@ -444,9 +444,9 @@ void function MapAnalysis_PropPlacementConflicts( string filterType = ePropPlace
 				{
 					foreach( entity linkedEnt in spawnParams.nodes[i].GetLinkEntArray() )
 					{
-						//DebugDrawSphere( spawnParams.nodes[i].GetOrigin(), 1024, debugColor, true, 100 )
-						//DebugDrawSphere( linkedEnt.GetOrigin(), 1024, debugColor, true, 100 )
-						//DebugDrawLine ( spawnParams.nodes[i].GetOrigin(), linkedEnt.GetOrigin(), debugColor, true, 100 )
+						DebugDrawSphere( spawnParams.nodes[i].GetOrigin(), 1024, int(debugColor.x), int(debugColor.y), int(debugColor.z), true, 100 )
+						DebugDrawSphere( linkedEnt.GetOrigin(), 1024, int(debugColor.x), int(debugColor.y), int(debugColor.z), true, 100 )
+						DebugDrawLine ( spawnParams.nodes[i].GetOrigin(), linkedEnt.GetOrigin(), int(debugColor.x), int(debugColor.y), int(debugColor.z), true, 100 )
 						//DebugDrawText( linkedEnt.GetOrigin(), spawnParams.propType, false, 100.0 )
 					}
 				}
@@ -459,9 +459,9 @@ void function MapAnalysis_PropPlacementConflicts( string filterType = ePropPlace
 					{
 						if ( DistanceSqr( spawnParams.nodes[i].GetOrigin(), spawnParams.nodes[j].GetOrigin() ) <= exclusionDistanceSquared )
 						{
-							//DebugDrawSphere( spawnParams.nodes[i].GetOrigin(), 1024, debugColor, true, 100 )
-							//DebugDrawSphere( spawnParams.nodes[j].GetOrigin(), 1024, debugColor, true, 100 )
-							//DebugDrawLine ( spawnParams.nodes[i].GetOrigin(), spawnParams.nodes[j].GetOrigin(), debugColor, true, 100 )
+							DebugDrawSphere( spawnParams.nodes[i].GetOrigin(), 1024, int(debugColor.x), int(debugColor.y), int(debugColor.z), true, 100 )
+							DebugDrawSphere( spawnParams.nodes[j].GetOrigin(), 1024, int(debugColor.x), int(debugColor.y), int(debugColor.z), true, 100 )
+							DebugDrawLine ( spawnParams.nodes[i].GetOrigin(), spawnParams.nodes[j].GetOrigin(), int(debugColor.x), int(debugColor.y), int(debugColor.z), true, 100 )
 							//DebugDrawText( spawnParams.nodes[j].GetOrigin(), spawnParams.propType, false, 100.0 )
 							//DebugDrawCircle( spawnParams.nodes[i].GetOrigin(), <0,0,0>, spawnParams.exclusionDistance, debugColor, true, 100 );
 						}
@@ -535,7 +535,7 @@ void function MapAnalysis_PropNodeFrequenciesThread( string filterType, int iter
 			{
 				int value = node_tallies[key]
 				printt( "DIST SIM: " + value )
-				//DebugDrawSphere( key.GetOrigin(), 2048 * (float(value)/iterationCount), (value > (0.8 * iterationCount)) ? COLOR_GREEN : (value > (0.4 * iterationCount)) ? COLOR_YELLOW : COLOR_RED, true, 100 )
+				DebugDrawSphere( key.GetOrigin(), 2048 * (float(value)/iterationCount), ((value > (0.8 * iterationCount)) ? COLOR_GREEN : (value > (0.4 * iterationCount)) ? COLOR_YELLOW : COLOR_RED).x, ((value > (0.8 * iterationCount)) ? COLOR_GREEN : (value > (0.4 * iterationCount)) ? COLOR_YELLOW : COLOR_RED).y, ((value > (0.8 * iterationCount)) ? COLOR_GREEN : (value > (0.4 * iterationCount)) ? COLOR_YELLOW : COLOR_RED).z, true, 100 )
 				//DebugDrawText( key.GetOrigin(), spawnParams.propType + ": " + (float(value)/(iterationCount * 0.01)) + "%", false, 100.0 )
 			}
 		}
@@ -557,7 +557,7 @@ void function MapAnalysis_ShowPropNodes( string filterType = ePropPlacementType.
 			vector debugColor = spawnParams.debugColor == <0,0,0> ? <RandomInt(256), RandomInt(256), RandomInt(256)> : spawnParams.debugColor
 			foreach ( node in spawnParams.nodes )
 			{
-				//DebugDrawSphere( node.GetOrigin(), 1024, debugColor, true, 100 )
+				DebugDrawSphere( node.GetOrigin(), 1024, int(debugColor.x), int(debugColor.y), int(debugColor.z), true, 100 )
 				//DebugDrawText( node.GetOrigin(), spawnParams.propType, false, 100.0 )
 				propCenter += node.GetOrigin()
 				propCount++
@@ -590,7 +590,7 @@ void function PropTool_ShowCurrentPropCombination( string propType )
 	{
 		foreach ( vector vec in currentCombo )
 		{
-			//DebugDrawSphere( vec, 1024, COLOR_RED, true, 100 )
+			DebugDrawSphere( vec, 1024, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 100 )
 		}
 	}
 }
@@ -605,7 +605,7 @@ void function PropTool_WalkCurrentCombination_thread( string propType, float del
 		foreach ( vector vec in currentCombo )
 		{
 			vec = vec - < 0.0, 100.0, 0.0 >
-			bool teleportedToNextProp = TeleportPlayerNoInterp( gp()[0], vec )
+			bool teleportedToNextProp = TeleportPlayerNoInterp( GetPlayerArray()[0], vec )
 			if ( !teleportedToNextProp )
 				printt( "propTool:  unable to teleport to location " + vec.x + " " + vec.y + " " + vec.z )
 			wait delay

@@ -670,4 +670,4 @@ void function SkydiveTrail_SetForAllPlayers( void functionref( entity player ) f
 	SetOnPlayerSkydiveCustomTrailsCallback( funcref  )
 }
 
-#endif //SERVER && DEV
+#endif //SERVER && DEVELOPER

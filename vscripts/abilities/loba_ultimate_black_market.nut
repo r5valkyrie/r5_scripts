@@ -268,11 +268,11 @@ PlacementInfo function GetPlacementInfo( entity player )
 	#if BLACK_MARKET_DEBUG_DRAW_PLACEMENT
 		//DebugDrawBox( fwdResults.endPos, BLACK_MARKET_BOUND_MINS, BLACK_MARKET_BOUND_MAXS, <0, 255, 0>, 1, 1.0 )
 		//DebugDrawBox( info.origin, BLACK_MARKET_BOUND_MINS, BLACK_MARKET_BOUND_MAXS, <0, 0, 255>, 1, 1.0 )
-		//DebugDrawLine( eyePos + viewVec * min( BLACK_MARKET_PLACEMENT_RANGE_MIN, range ), fwdResults.endPos, <0, 255, 0>, true, 1.0 )
-		//DebugDrawLine( fwdResults.endPos, eyePos + viewVec * range, <255, 0, 0>, true, 1.0 )
-		//DebugDrawLine( fwdResults.endPos, info.origin, <0, 0, 255>, true, 1.0 )
-		//DebugDrawLine( player.GetOrigin(), player.GetOrigin() + (AnglesToForward( angles ) * BLACK_MARKET_PLACEMENT_RANGE_MAX), <0, 255, 0>, true, 1.0 )
-		//DebugDrawLine( eyePos + <0, 0, 8>, eyePos + <0, 0, 8> + (viewVec * BLACK_MARKET_PLACEMENT_RANGE_MAX), <0, 255, 0>, true, 1.0 )
+		DebugDrawLine( eyePos + viewVec * min( BLACK_MARKET_PLACEMENT_RANGE_MIN, range ), fwdResults.endPos, 0, 255, 0, true, 1.0 )
+		DebugDrawLine( fwdResults.endPos, eyePos + viewVec * range, 255, 0, 0, true, 1.0 )
+		DebugDrawLine( fwdResults.endPos, info.origin, 0, 0, 255, true, 1.0 )
+		DebugDrawLine( player.GetOrigin(), player.GetOrigin() + (AnglesToForward( angles ) * BLACK_MARKET_PLACEMENT_RANGE_MAX), 0, 255, 0, true, 1.0 )
+		DebugDrawLine( eyePos + <0, 0, 8>, eyePos + <0, 0, 8> + (viewVec * BLACK_MARKET_PLACEMENT_RANGE_MAX), 0, 255, 0, true, 1.0 )
 	#endif
 
 	if ( info.success && downResults.fraction > 0.99 )
@@ -422,8 +422,8 @@ PlacementInfo function GetPlacementInfo( entity player )
 		]
 
 		#if BLACK_MARKET_DEBUG_DRAW_PLACEMENT
-			//DebugDrawLine( info.origin, info.origin + (osaRight * 64), <0, 255, 0>, true, 1.0 )
-			//DebugDrawLine( info.origin, info.origin + (osaForward * 64), <0, 0, 255>, true, 1.0 )
+			DebugDrawLine( info.origin, info.origin + (osaRight * 64), 0, 255, 0, true, 1.0 )
+			DebugDrawLine( info.origin, info.origin + (osaForward * 64), 0, 0, 255, true, 1.0 )
 		#endif
 
 		foreach ( vector testOffset in groundTestOffsets )
@@ -435,7 +435,7 @@ PlacementInfo function GetPlacementInfo( entity player )
 				ignoreEnts, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_NONE )
 
 			#if BLACK_MARKET_DEBUG_DRAW_PLACEMENT
-				//DebugDrawLine( testPos + (osaUp * BLACK_MARKET_PLACEMENT_MAX_GROUND_DIST), traceResult.endPos, <255, 0, 0>, true, 1.0 )
+				DebugDrawLine( testPos + (osaUp * BLACK_MARKET_PLACEMENT_MAX_GROUND_DIST), traceResult.endPos, 255, 0, 0, true, 1.0 )
 			#endif
 
 			if ( traceResult.fraction == 1.0 )

@@ -49,14 +49,14 @@ void function SvCups_Init()
 	FileStruct_LifetimeLevel newFileLevel
 	fileLevel = newFileLevel
 
-#if DEV && !SP
+#if DEVELOPER && !SP
 	AddCallback_GeneratePDef( Cups_GenerateCupsPDef )
 #endif
 	AddCallback_GameStateEnter( eGameState.Prematch, Cups_OnGameStateEnterPreMatch )
 }
 
 
-#if DEV && !SP
+#if DEVELOPER && !SP
 void function Cups_GenerateCupsPDef()
 {
 	DEV_PDefGen_BeginStruct( "sCupRegistrationData", "The data to save per registered cup" )
@@ -222,7 +222,7 @@ void function GrantCupRewards( entity player, SettingsAssetGUID cupID, int ladde
 	}
 	if( sequenceNumber == GRX_INVALID_SEQUENCE_NUMBER )
 	{
-		#if DEV
+		#if DEVELOPER
 			Assert( false, sequenceNumber + " is not a valid reward sequence" )
 		#endif
 		return
@@ -282,7 +282,7 @@ void function ClientCallback_SetCupMatchHistory( entity player, SettingsAssetGUI
 {
 	if( !GetConVarBool( "cups_enabled" ) ) return
 
-#if DEV
+#if DEVELOPER
 
 	if( !Cups_IsValidCupID( cupID ) )
 		return
@@ -293,7 +293,7 @@ void function ClientCallback_SetCupMatchHistory( entity player, SettingsAssetGUI
 
 	CupMatchSummary matchSummary = DEV_GenerateDummyMatchHistory(cupID, squadPlacement, [ player ] )
 
-	CupsSetMatchResultsData( player, cupID, matchSummary.squadCalculatedScore, matchNumber, matchSummary.playerSummaries )
+	//CupsSetMatchResultsData( player, cupID, matchSummary.squadCalculatedScore, matchNumber, matchSummary.playerSummaries )
 
 	string persistentDataKey = format( "cups[%d]", cupIndex )
 	int numMatchesPlayed = player.GetPersistentVarAsInt( persistentDataKey+".numMatches" )
@@ -325,13 +325,13 @@ void function ClientCallback_DeleteCupEntry( entity player, SettingsAssetGUID cu
 {
 	if( !GetConVarBool( "cups_enabled" ) ) return
 
-#if DEV
+#if DEVELOPER
 	int pDataIndex = Cups_GetPlayersPDataIndexForCupID( player, cupID )
 	if ( pDataIndex >= 0 )
 	{
 		string persistentDataKey = format( "cups[%d]", pDataIndex )
 		string squadID = expect string(player.GetPersistentVar( persistentDataKey + ".squadID" ))
-		CupsDeleteSquadEntry( player, cupID, squadID )
+		//CupsDeleteSquadEntry( player, cupID, squadID )
 		player.SetPersistentVar( persistentDataKey + ".active", false )
 	}
 #endif //DEV
@@ -346,7 +346,7 @@ void function Cups_ClearLastMatchPlayed( entity player )
 void function ClientCallback_DeleteCupsLastMatchPlayed( entity player )
 {
 	if( !GetConVarBool( "cups_enabled" ) ) return
-#if DEV
+#if DEVELOPER
 	Cups_ClearLastMatchPlayed( player )
 #endif //DEV
 }
@@ -783,7 +783,7 @@ void function ClientCallback_GrantAllCupRewards( entity player, SettingsAssetGUI
 	if( !GetConVarBool( "cups_enabled" ) || !Cups_IsValidCupID(cupID) )
 		return
 
-#if DEV
+#if DEVELOPER
 	CupBakeryAssetData cupData = Cups_GetCupBakeryAssetDataFromGUID( cupID )
 	ItemFlavor cupContainerFlav = CupFlavor_GetEvent( cupData.itemFlavor )
 

@@ -2434,7 +2434,7 @@ void function SetupSurvivalLoot( var categories )
 			continue
 
 		string displayString = CreateLootDevDisplayString( data )
-		RunUIScript( "SetupDevCommand", displayString, "script SpawnGenericLoot( \"" + data.ref + "\", gp()[0].GetOrigin(), <-1,-1,-1>, " + data.countPerDrop + " )" )
+		RunUIScript( "SetupDevCommand", displayString, "script SpawnGenericLoot( \"" + data.ref + "\", GetPlayerArray()[0].GetOrigin(), <-1,-1,-1>, " + data.countPerDrop + " )" )
 	}
 }
 

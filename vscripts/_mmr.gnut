@@ -7,7 +7,7 @@ global function ClientCallback_Dev_PrintTeamsMMR
 global function SetPlayerMmrUtil
 global function IsPlayerOnTeamWithBotPairing
 
-#if DEV
+#if DEVELOPER
 global function MMR_PrintTeams
 global function MMR_DebugAddInteraction
 #endif
@@ -31,7 +31,7 @@ struct
 
 void function ClientCallback_Dev_SetPlayerMMR( entity player, float playerMean, float playerVariance, float teamMean, float teamVariance )
 {
-#if DEV
+#if DEVELOPER
 	//SetPlayerMMR( player, playerMean, playerVariance, teamMean, teamVariance, 0, 0 )
 #endif
 }
@@ -44,7 +44,7 @@ void function SetPlayerMmrUtil ( entity player, float mmr, float variance, float
 
 	MMR_OnPlayerConnected ( player ) //init file.teams
 
-#if DEV
+#if DEVELOPER
 	DEV_script_ranked_debug ( "\t\tTeamID " + teamID )
 	DEV_script_ranked_debug ( "\t\tSetting MMR: " + mmr )
 	DEV_script_ranked_debug ( "\t\tSetting variance: " + variance )
@@ -139,7 +139,7 @@ void function CodeCallback_MMRPlayerRefresh( entity player )
 
 void function ClientCallback_Dev_PrintTeamsMMR( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		printt("ClientCallback_Dev_PrintTeamsMMR")
 
 		array<string> printTeamBuffer
@@ -167,7 +167,7 @@ float function MMR_ComputePairWinRateProbability( float partyIMean, float partyI
 	return pIq
 }
 
-#if DEV
+#if DEVELOPER
 void function MMR_PrintTeams()
 {
 	printt("MMR_PrintTeams")
@@ -279,7 +279,7 @@ void function MMR_DebugAddInteraction( int teamA, int teamB )
 		}
 	}
 }
-#endif // #if DEV
+#endif // #if DEVELOPER
 
 void function MMR_Init()
 {
@@ -372,7 +372,7 @@ void function MMR_OnPlayerConnected( entity player )
 	if( !HasPlayerMMR( player ) )
 	{
 		printt("MMR_OnPlayerConnected player has no MMR data", player)
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug (  "MMR_OnPlayerConnected player has no MMR data" )
 		#endif
 		return
@@ -387,7 +387,7 @@ void function MMR_OnPlayerConnected( entity player )
 
 	if( !file.teams[ teamIdx ].isInit )
 	{
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug (  "MMR_OnPlayerConnected init team" )
 		#endif
 		// grab team MMR, we suppose team MMR will not change for the duration of a game

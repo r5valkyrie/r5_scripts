@@ -833,7 +833,7 @@ bool function TrackingVision_CanSpawnWhiteRaven( entity player )
 	entity closestEnemy
 	float closestEnemyDistance	= WHITE_RAVEN_MAX_ENEMY_DETECTION_RANGE
 
-	#if DEV
+	#if DEVELOPER
 	if( DEBUG_WHITE_RAVEN_SPAWN_DRAW )
 	{
 		DebugDrawCircle( origin, <0,0,0>, GetRavenCloseBreadcrumbDistance( player ), COLOR_RED, true, 0.1 )
@@ -859,11 +859,11 @@ bool function TrackingVision_CanSpawnWhiteRaven( entity player )
 		if( poiTeam == team )
 			continue
 
-		#if DEV
+		#if DEVELOPER
 			if( DEBUG_WHITE_RAVEN_SPAWN_DRAW )
 			{
 				//printt( "POI detected!   | TEAM:  " + poiTeam )
-				//DebugDrawSphere( poi.GetOrigin() + <0, 0, 10> , 10, COLOR_RED, true, 2.0 )
+				//DebugDrawSphere( poi.GetOrigin() + <0, 0, 10>, 10, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 2.0 )
 			}
 		#endif
 
@@ -884,11 +884,11 @@ bool function TrackingVision_CanSpawnWhiteRaven( entity player )
 		float distToPlayer = Distance2D( enemy.GetOrigin(), origin )
 		if( distToPlayer <= GetRavenCloseEnemyDistance( player ) )
 		{
-			#if DEV
+			#if DEVELOPER
 				if( DEBUG_WHITE_RAVEN_SPAWN_DRAW )
 				{
 					printt( "Nearby Enemy Detected - DO NOT SPAWN WHITE RAVEN" )
-					DebugDrawSphere( enemy.GetOrigin() + <0, 0, 10> , 10, COLOR_RED, true, 10.0 )
+					DebugDrawSphere( enemy.GetOrigin() + <0, 0, 10>, 10, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 10.0 )
 				}
 			#endif
 
@@ -1107,10 +1107,10 @@ vector function WhiteRaven_GetValidPerchPos( entity player, vector targetPos )
 	float bestHeight = perchPos.z
 	foreach( pos in perchPositions )
 	{
-		#if DEV
+		#if DEVELOPER
 			if( DEBUG_WHITE_RAVEN_SPAWN_DRAW )
 			{
-				DebugDrawSphere( pos + <0, 0, 5> , 12, COLOR_ORANGE, true, 15.0 )
+				DebugDrawSphere( pos + <0, 0, 5>, 12, int(COLOR_ORANGE.x), int(COLOR_ORANGE.y), int(COLOR_ORANGE.z), true, 15.0 )
 			}
 		#endif
 
@@ -1122,13 +1122,17 @@ vector function WhiteRaven_GetValidPerchPos( entity player, vector targetPos )
 		}
 	}
 
-	#if DEV
+	#if DEVELOPER
 		if( DEBUG_WHITE_RAVEN_SPAWN_DRAW )
 		{
 			if( bestPos == targetPos )
-				DebugDrawSphere( bestPos + <0, 0, 15> , 10, COLOR_RED, true, 15.0 )
+			{
+				DebugDrawSphere( bestPos + <0, 0, 15>, 10, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 15.0 )
+			}
 			else
-				DebugDrawSphere( bestPos + <0, 0, 15> , 10, COLOR_GREEN, true, 15.0 )
+			{
+				DebugDrawSphere( bestPos + <0, 0, 15>, 10, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 15.0 )
+			}
 		}
 	#endif
 
@@ -1144,7 +1148,7 @@ bool function TrackingVision_IsValidRavenHull( vector hullPos, entity player )
 	vector hullOffset = <0,0,5> //Offset Hull slightly from ground to allow slope clearance (He has little feet. It's fine)
 	hullPos = hullPos + hullOffset
 
-	#if DEV
+	#if DEVELOPER
 		if( DEBUG_WHITE_RAVEN_SPAWN_DRAW )
 		{
 			DebugDrawBox( hullPos, WHITE_RAVEN_PERCH_HULL_MINS, WHITE_RAVEN_PERCH_HULL_MAXS, COLOR_RED, 1, 15 )
@@ -1226,9 +1230,11 @@ entity function TrackingVision_SpawnWhiteRaven( entity player, vector birdOrigin
 	//play an animation
 	bird.Anim_Play( "Bird_casual_idle" )
 
-	#if DEV
+	#if DEVELOPER
 	if( DEBUG_WHITE_RAVEN_DRAW )
-		DebugDrawSphere( bird.GetOrigin() + <0, 0, 10> , 10, COLOR_DARK_GREEN, true, 10.0 )
+	{
+		DebugDrawSphere( bird.GetOrigin() + <0, 0, 10>, 10, int(COLOR_DARK_GREEN.x), int(COLOR_DARK_GREEN.y), int(COLOR_DARK_GREEN.z), true, 10.0 )
+	}
 	#endif
 	return bird
 }
@@ -1361,7 +1367,7 @@ void function TrackingVision_CreateWhiteRavenInFlight_Thread( entity player, int
 	whiteRavenData = TrackingVision_CreateWhiteRavenData( player, bird, targetPos, target )
 	file.whiteRavenPlayerData[ player ] <- whiteRavenData
 
-	#if DEV
+	#if DEVELOPER
 		if( DEBUG_WHITE_RAVEN_DRAW )
 			printt( "SPAWN WHITE RAVEN  -> In Flight" )
 	#endif
@@ -1456,11 +1462,11 @@ void function WhiteRaven_FlyToTarget_Thread( entity player, entity bird, vector 
 	else
 		birdAngles = bird.GetAngles()
 
-	#if DEV
+	#if DEVELOPER
 		if( DEBUG_WHITE_RAVEN_DRAW )
 		{
-			DebugDrawSphere( birdPos , 15, COLOR_AQUA, true, 2.0 )
-			DebugDrawSphere( perchPos , 20, COLOR_CYAN, true, 2.0 )
+			DebugDrawSphere( birdPos, 15, int(COLOR_AQUA.x), int(COLOR_AQUA.y), int(COLOR_AQUA.z), true, 2.0 )
+			DebugDrawSphere( perchPos, 20, int(COLOR_CYAN.x), int(COLOR_CYAN.y), int(COLOR_CYAN.z), true, 2.0 )
 		}
 	#endif
 
@@ -1555,12 +1561,12 @@ void function WhiteRaven_FlyToTarget_Thread( entity player, entity bird, vector 
 		mover.NonPhysicsRotateTo( VectorToAngles( playerViewVec ), 0.1, 0, 0  )
 		mover.NonPhysicsMoveTo( initFlightPos, WHITE_RAVEN_FLY_AHEAD_TIME, 0.7, 0.0 )
 
-		#if DEV
+		#if DEVELOPER
 			if( DEBUG_WHITE_RAVEN_FLIGHT_DRAW )
 			{
 				printt( "WHITE RAVEN FLYING FORWARD" )
-				DebugDrawSphere( initFlightPos, 3, COLOR_YELLOW, true, 5 )
-				DebugDrawSphere( mover.GetOrigin(), 3, COLOR_RED, true, 5 )
+				DebugDrawSphere( initFlightPos, 3, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 5 )
+				DebugDrawSphere( mover.GetOrigin(), 3, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 5 )
 			}
 		#endif
 
@@ -1594,12 +1600,12 @@ void function WhiteRaven_FlyToTarget_Thread( entity player, entity bird, vector 
 		if( !IsValid( player ) )
 			return
 
-		#if DEV
+		#if DEVELOPER
 			if( DEBUG_WHITE_RAVEN_FLIGHT_DRAW )
 			{
 				printt( "WHITE RAVEN TURNING" )
-				DebugDrawSphere( initFlightPos, 3, COLOR_YELLOW, true, 0.2 )
-				DebugDrawSphere( mover.GetOrigin(), 3, COLOR_RED, true, 0.2 )
+				DebugDrawSphere( initFlightPos, 3, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 0.2 )
+				DebugDrawSphere( mover.GetOrigin(), 3, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.2 )
 			}
 		#endif
 
@@ -1661,11 +1667,11 @@ void function WhiteRaven_FlyToTarget_Thread( entity player, entity bird, vector 
 			movementVector 	= perchPos - birdPos
 			mover.NonPhysicsRotateTo( VectorToAngles(movementVector), 0.4, 0.2, 0.0 )
 
-			#if DEV
+			#if DEVELOPER
 				if( DEBUG_WHITE_RAVEN_FLIGHT_DRAW )
 				{
-					DebugDrawSphere( birdPos, 3, COLOR_CYAN, true, 1 )
-					DebugDrawSphere( destination, 5, COLOR_YELLOW, true, 1 )
+					DebugDrawSphere( birdPos, 3, int(COLOR_CYAN.x), int(COLOR_CYAN.y), int(COLOR_CYAN.z), true, 1 )
+					DebugDrawSphere( destination, 5, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 1 )
 				}
 			#endif
 
@@ -1679,12 +1685,12 @@ void function WhiteRaven_FlyToTarget_Thread( entity player, entity bird, vector 
 			movementVector 	= perchPos - birdPos
 			dotDir 			= DotProduct( FlattenVec(Normalize(forwardDir)), FlattenVec(Normalize(movementVector) ) )
 
-			#if DEV
+			#if DEVELOPER
 				if( DEBUG_WHITE_RAVEN_FLIGHT_DRAW )
 				{
 					const float DEBUG_WHITE_RAVEN_ARROW_SIZE = 5
-					DebugDrawArrow( mover.GetOrigin(), mover.GetOrigin() + forwardDir * 50, DEBUG_WHITE_RAVEN_ARROW_SIZE, COLOR_RED, true, 0.3 )
-					DebugDrawArrow( mover.GetOrigin(), mover.GetOrigin() + movementVector * 50, DEBUG_WHITE_RAVEN_ARROW_SIZE, COLOR_BLUE, true, 0.3 )
+					//DebugDrawArrow( mover.GetOrigin(), mover.GetOrigin() + forwardDir * 50, DEBUG_WHITE_RAVEN_ARROW_SIZE, COLOR_RED, true, 0.3 )
+					//DebugDrawArrow( mover.GetOrigin(), mover.GetOrigin() + movementVector * 50, DEBUG_WHITE_RAVEN_ARROW_SIZE, COLOR_BLUE, true, 0.3 )
 				}
 			#endif
 
@@ -1700,7 +1706,7 @@ void function WhiteRaven_FlyToTarget_Thread( entity player, entity bird, vector 
 		return
 
 	////////////////////////////////////////////////////// FLY TO PERCH
-	#if DEV
+	#if DEVELOPER
 		if( DEBUG_WHITE_RAVEN_FLIGHT_DRAW )
 			printt( "WHITE RAVEN - FLY TO PERCH" )
 	#endif
@@ -1721,11 +1727,11 @@ void function WhiteRaven_FlyToTarget_Thread( entity player, entity bird, vector 
 	}
 
 
-	#if DEV
+	#if DEVELOPER
 		if( DEBUG_WHITE_RAVEN_FLIGHT_DRAW )
 		{
-			DebugDrawSphere( birdClosestNavMeshPos, 10, COLOR_CYAN, true, 10 )
-			DebugDrawSphere( destClosestNavMeshPos, 10, COLOR_YELLOW, true, 10 )
+			DebugDrawSphere( birdClosestNavMeshPos, 10, int(COLOR_CYAN.x), int(COLOR_CYAN.y), int(COLOR_CYAN.z), true, 10 )
+			DebugDrawSphere( destClosestNavMeshPos, 10, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 10 )
 		}
 	#endif
 
@@ -1808,11 +1814,11 @@ void function WhiteRaven_DoBasicFlight_Thread( entity player, entity bird, entit
 
 		travelTime = travelTime - 1
 
-		#if DEV
+		#if DEVELOPER
 			if( DEBUG_WHITE_RAVEN_FLIGHT_DRAW )
 			{
-				DebugDrawSphere( birdPos, 3, COLOR_CYAN, true, 1 )
-				DebugDrawSphere( destination, 5, COLOR_YELLOW, true, 1 )
+				DebugDrawSphere( birdPos, 3, int(COLOR_CYAN.x), int(COLOR_CYAN.y), int(COLOR_CYAN.z), true, 1 )
+				DebugDrawSphere( destination, 5, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 1 )
 			}
 		#endif
 
@@ -2044,7 +2050,7 @@ void function WhiteRaven_Perched_Idle_Thread( entity player, entity bird, float 
 	EndSignal( player, "OnActivate_WhiteRaven" )
 	EndSignal( player, "OnEnd_WhiteRavenTracking" )
 
-	#if DEV
+	#if DEVELOPER
 		if( DEBUG_WHITE_RAVEN_DRAW )
 			printt( "BIRD IDLE" )
 	#endif
@@ -2054,7 +2060,7 @@ void function WhiteRaven_Perched_Idle_Thread( entity player, entity bird, float 
 	OnThreadEnd(
 		function() : ( player, bird, perchPos )
 		{
-			#if DEV
+			#if DEVELOPER
 				if( DEBUG_WHITE_RAVEN_DRAW )
 					printt( "BIRD IDLE COMPLETE" )
 			#endif
@@ -2131,7 +2137,7 @@ void function WhiteRaven_Perched_Idle_Thread( entity player, entity bird, float 
 		if( distToBird < GetRavenRefreshDistance( player ) )
 		{
 			birdDeathTime = birdDeathTime + ( Time() - prevTime )
-			#if DEV
+			#if DEVELOPER
 				if( DEBUG_WHITE_RAVEN_DRAW )
 				{
 					printt( "BIRD IDLE -> PLAYER NEARBY, DO NOT DESTROY:   " + birdDeathTime  )
@@ -2165,10 +2171,10 @@ void function WhiteRaven_Perched_Idle_Thread( entity player, entity bird, float 
 				if( distToBird < WHITE_RAVEN_AUDIO_DIRECTIONAL_CALL_RANGE )
 					offsetSoundPos = birdOrigin
 
-				#if DEV
+				#if DEVELOPER
 					if( DEBUG_WHITE_RAVEN_DRAW )
 					{
-						DebugDrawSphere( offsetSoundPos, 5, COLOR_AQUA, true, 15 )
+						DebugDrawSphere( offsetSoundPos, 5, int(COLOR_AQUA.x), int(COLOR_AQUA.y), int(COLOR_AQUA.z), true, 15 )
 					}
 				#endif
 
@@ -2210,7 +2216,7 @@ vector function WhiteRaven_GetBestNavMeshPos( vector targetPos )
 	int closestNavMeshNode = NavMeshNode_GetNearestNodeToPos( targetPos )
 	if ( closestNavMeshNode == -1 )
 	{
-		//DebugDrawLine( origin, origin + <0,0,100>, COLOR_RED, true, 5.0 )
+		//DebugDrawLine( targetPos, targetPos + <0,0,100>, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 5.0 )
 		targetPos = OriginToGround( targetPos )
 		closestNavMeshNode = NavMeshNode_GetNearestNodeToPos( targetPos )
 
@@ -2337,7 +2343,7 @@ void function TrackingVision_OnBirdPointerUsed( entity bird, entity player, int 
 #if SERVER
 	if( IsValid( bird ) && IsValid( player ) )
 	{
-		#if DEV
+		#if DEVELOPER
 			if( DEBUG_WHITE_RAVEN_DRAW )
 				printt( "BIRD POINTER USED" )
 		#endif
@@ -2381,11 +2387,11 @@ void function TrackingVision_OnBirdPointerUsed_Thread( entity player, entity bir
 
 	if( IsValid(closestEnemy) )
 	{
-		#if DEV
+		#if DEVELOPER
 			if( DEBUG_WHITE_RAVEN_DRAW )
 			{
 				printt( "WHITE RAVEN [POINTER] >> FLY TO ENEMY TARGET! " )
-				DebugDrawSphere( closestEnemy.GetOrigin() + <0, 0, 15> , 10, COLOR_RED, true, 10.0 )
+				DebugDrawSphere( closestEnemy.GetOrigin() + <0, 0, 15>, 10, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 10.0 )
 			}
 		#endif
 
@@ -2412,7 +2418,7 @@ void function TrackingVision_OnBirdPointerUsed_Thread( entity player, entity bir
 	}
 	else
 	{
-		#if DEV
+		#if DEVELOPER
 			if( DEBUG_WHITE_RAVEN_DRAW )
 			{
 				printt( "THERE WERE NO ENEMIES..." )
@@ -2725,11 +2731,11 @@ void function TrackingVision_DisplayEnemyDirection_Thread( vector enemyPos, vect
 			thread TrackingVision_CreateChevron_Thread( player, nextChevronPos, angles ) //position needs to be the number in the array
 			count--
 
-			#if DEV
+			#if DEVELOPER
 				if( DEBUG_WHITE_RAVEN_DRAW )
 				{
 					printt( "Count is:   " + count + "   | New Position is: " + nextChevronPos )
-					DebugDrawSphere( nextChevronPos , 25, COLOR_RED, true, 10.0 )
+					DebugDrawSphere( nextChevronPos, 25, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 10.0 )
 				}
 			#endif
 

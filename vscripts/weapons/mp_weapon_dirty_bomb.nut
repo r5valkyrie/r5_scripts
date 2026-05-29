@@ -1043,10 +1043,10 @@ DirtyBombPlacementInfo function GetDirtyBombPlacementInfo( entity player, entity
 	TraceResults fwdResults = TraceHull( fwdStart, eyePos + viewVec * maxRange, DIRTY_BOMB_BOUND_MINS, <30,30,1>, player, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_BLOCK_WEAPONS )
 	TraceResults downResults = TraceHull( fwdResults.endPos, fwdResults.endPos - DIRTY_BOMB_PLACEMENT_TRACE_OFFSET, DIRTY_BOMB_BOUND_MINS, DIRTY_BOMB_BOUND_MAXS, player, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_BLOCK_WEAPONS )
 
-	//DebugDrawLine( fwdStart, fwdResults.endPos, 255,0,0, true, 0.05 )
-	//DebugDrawLine( fwdStart, fwdResults.endPos, 255,0,0, true, 0.05 )
+	DebugDrawLine( fwdStart, fwdResults.endPos, 255,0,0, true, 0.05 )
+	DebugDrawLine( fwdStart, fwdResults.endPos, 255,0,0, true, 0.05 )
 	//DebugDrawSphere( fwdResults.endPos, 16, 255,0,0, true, 0.05 )
-	//DebugDrawLine( fwdResults.endPos, fwdResults.endPos - DIRTY_BOMB_PLACEMENT_TRACE_OFFSET, 255,0,0, true, 0.05 )
+	DebugDrawLine( fwdResults.endPos, fwdResults.endPos - DIRTY_BOMB_PLACEMENT_TRACE_OFFSET, 255,0,0, true, 0.05 )
 
 	DirtyBombPlacementInfo placementInfo = DirtyBomb_GetPlacementInfoFromTraceResults( player, bombModel, downResults, viewTraceResults, idealPos )
 

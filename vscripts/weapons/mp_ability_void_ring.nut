@@ -451,7 +451,7 @@ void function DeployVoidRing( entity projectile, float duration )
 	vector pingOrigin = projectile.GetOrigin() + <0,0,25>
 	entity traceBlocker = CreateTraceBlockerVolume( pingOrigin, 64.0, false, CONTENTS_BLOCK_PING, team, VOID_RING_PROP_SCRIPTNAME )
 	traceBlocker.SetParent( projectile )
-	//DebugDrawSphere( pingOrigin, 64, <0, 0, 255>, true, 10 )
+	//DebugDrawSphere( pingOrigin, 64, 0, 0, 255, true, 10 )
 
 	AddEMPDestroyDeviceNoDissolve( projectile )
 	AddEntToInvalidEntsForPlacingPermanentsOnto( projectile )
@@ -605,8 +605,8 @@ void function VoidRing_TrackState_Thread( entity projectile )
 		{
 			file.voidRingInRingFissure[projectile] <- isInFissure
 		}
-		//DebugDrawSphere( vrEdgePos, 20, <0, 0, 150>, true, 0.1 )
-		// DebugDrawArrow( flatCenter, origin, 8, <0, 255, 0>, true, 0.1 )
+		//DebugDrawSphere( vrEdgePos, 20, 0, 0, 150, true, 0.1 )
+		// //DebugDrawArrow( flatCenter, origin, 8, <0, 255, 0>, true, 0.1 )
 		//DebugDrawArrow( origin, vrEdgePos, 8, COLOR_CYAN, true, 0.1 )
 
 		bool voidRingActiveState =   !isInRing || isInFissure || isAlwaysActive || file.playerInVoidRing[projectile].len() > 0  || !isEdgeInRing
@@ -1153,10 +1153,10 @@ void function VoidRing_UpdateVisibleFXDome_Thread( entity projectile, entity shi
 			//#if DEVELOPER
 			//if( isInFissure )
 			//{
-			//	DebugDrawSphere( projectile.GetOrigin(), vRadius-20, <150, 0, 0>, true, 0.1 )
+			//	//DebugDrawSphere( projectile.GetOrigin(), vRadius-20, 150, 0, 0, true, 0.1 )
 			//}
 			//else
-			//	DebugDrawSphere( projectile.GetOrigin(), vRadius-30, <150, 150, 0>, true, 0.1 )
+			//	//DebugDrawSphere( projectile.GetOrigin(), vRadius-30, 150, 150, 0, true, 0.1 )
 			//#endif
 
 		}
@@ -1826,7 +1826,7 @@ void function ShowVoidRingRadius( entity weapon )
 	while( IsValid( fxHandle ) )
 	{
 		vector dropPosition = weapon.GetOrigin()
-		//DebugDrawSphere( dropPosition, VOID_RING_RADIUS, <0, 0, 120>, true, 0.1 )
+		//DebugDrawSphere( dropPosition, VOID_RING_RADIUS, 0, 0, 120, true, 0.1 )
 		EffectSetControlPointVector( fxHandle, 0, dropPosition )
 		WaitFrame()
 	}

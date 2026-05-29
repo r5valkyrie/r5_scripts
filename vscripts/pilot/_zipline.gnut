@@ -74,7 +74,8 @@ void function Zipline_Init()
 	level.MIN_ZIPLINE_HOOK_DIST_SQRD <- 256 * 256
 	level._info_spawnpoint_dropships <- {}
 	AddSpawnCallback( "info_spawnpoint_dropship", 		AddToSpawnpointDropships )
-
+	AddSpawnCallback( "zipline",						TryGameModeRemove )
+	AddSpawnCallback( "ziprail",						TryGameModeRemove )
 	PrecacheParticleSystem( $"hmn_mcorps_jump_jet_wallrun_full" )
 	PrecacheParticleSystem( $"hmn_imc_jump_jet_wallrun_full" )
 	PrecacheParticleSystem( $"P_Zipline_hld_1" )
@@ -128,7 +129,7 @@ void function GuyZiplinesToGround( entity guy, table Table )
 
 	expect vector( dropPos )
 
-	//DebugDrawLine( guy.GetOrigin(), dropPos, <255, 0, 0>, true, 8.0 )
+	//DebugDrawLine( guy.GetOrigin(), dropPos, 255, 0, 0, true, 8.0 )
 
 	vector attachOrigin = ship.GetAttachmentOrigin( Table.attachIndex )
 	vector nodeOrigin = dropPos
@@ -148,7 +149,7 @@ void function GuyZiplinesToGround( entity guy, table Table )
 
 	waitthread GuyRidesZiplineToGround( guy, Table, e, dropPos )
 
-	//DebugDrawLine( guy.GetOrigin(), dropPos, <255, 0, 135>, true, 5.0 )
+	//DebugDrawLine( guy.GetOrigin(), dropPos, 255, 0, 135, true, 5.0 )
 
 	if ( !( "forward" in Table ) )
 	{
@@ -304,7 +305,7 @@ void function GuyRidesZiplineToGround( entity guy, table zipline, table e, vecto
 	//wait 0.4 // some time to clear the lip
 
 	vector nodeOrigin = dropPos
-	//DebugDrawLine( guy.GetOrigin(), nodeOrigin, <200, 255, 50>, true, 8.0 )
+	//DebugDrawLine( guy.GetOrigin(), nodeOrigin, 200, 255, 50, true, 8.0 )
 
 	rideDist = Distance( guy.GetOrigin(), nodeOrigin )
 	rideDist -= 100 // for animation at end
@@ -319,7 +320,7 @@ void function GuyRidesZiplineToGround( entity guy, table zipline, table e, vecto
 		if ( Time() >= endTime )
 			return
 
-		//DebugDrawLine( guy.GetOrigin(), nodeOrigin, <255, 0, 0>, true, 0.15 )
+		DebugDrawLine( guy.GetOrigin(), nodeOrigin, 255, 0, 0, true, 0.15 )
 		DebugDrawText( nodeOrigin, ( endTime - Time() ) + "", true, 0.15 )
 		WaitFrame()
 	}*/
@@ -399,7 +400,7 @@ void function WaitUntilZiplinerNearsGround( entity guy, table zipline )
 		end += forward * dropDist
 		//TraceResults result = TraceLine( start, end, guy )
 		result = TraceHull( start, end, mins, maxs, guy, TRACE_MASK_NPCSOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
-		//DebugDrawLine( start, end, <255, 0, 0>, true, 0.2 )
+		//DebugDrawLine( start, end, 255, 0, 0, true, 0.2 )
 
 		if ( result.fraction < 1.0 )
 			break
@@ -412,10 +413,10 @@ void function WaitUntilZiplinerNearsGround( entity guy, table zipline )
 		zipForward *= 250
 
 		end = start + zipForward
-		//DebugDrawLine( start, end, <255, 0, 0>, true, 0.1 )
+		//DebugDrawLine( start, end, 255, 0, 0, true, 0.1 )
 
 		//result = TraceLine( start, end, guy )
-		//DebugDrawLine( start, end, <255, 150, 0>, true, 0.2 )
+		//DebugDrawLine( start, end, 255, 150, 0, true, 0.2 )
 		result = TraceHull( start, end, mins, maxs, guy, TRACE_MASK_NPCSOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
 
 		if ( result.fraction < 1.0 )
@@ -507,7 +508,7 @@ void function ZiplineRetracts( table zipline )
 		newMidPoint = mid * ( 1 - midRetractProgress ) + newMidPoint * midRetractProgress
 		//addOffset = mid_z_offset * ( 1 - midRetractProgress )
 		//newMidPoint.z -= addOffset
-		//DebugDrawLine( zipline.mid.GetOrigin(), newMidPoint, <255, 0, 0>, true, 0.2 )
+		//DebugDrawLine( zipline.mid.GetOrigin(), newMidPoint, 255, 0, 0, true, 0.2 )
 
 		if ( !IsValid( zipline.mid ) )
 		{
@@ -526,8 +527,8 @@ void function ZiplineRetracts( table zipline )
 		WaitFrame()
 	}
 
-	//DebugDrawLine( zipline.start.GetOrigin(), zipline.mid.GetOrigin(), <255, 100, 50>, true, 5.0 )
-	//DebugDrawLine( zipline.end.GetOrigin(), zipline.mid.GetOrigin(), <60, 100, 244>, true, 5.0 )
+	//DebugDrawLine( zipline.start.GetOrigin(), zipline.mid.GetOrigin(), 255, 100, 50, true, 5.0 )
+	//DebugDrawLine( zipline.end.GetOrigin(), zipline.mid.GetOrigin(), 60, 100, 244, true, 5.0 )
 	float moveTime = 0.4
 	ZiplineMover( expect entity( zipline.start ), expect entity( zipline.end ).GetOrigin(), moveTime )
 	ZiplineMover( expect entity( zipline.mid ), expect entity( zipline.end ).GetOrigin(), moveTime )
@@ -648,13 +649,13 @@ function GetHookOriginFromNode( vector origin, vector nodeOrigin, vector attachO
 	vector attachEnd = attachOrigin + dropVec * ( dropDist + 1500 ) // some buffer
 	TraceResults zipTrace = TraceLine( attachOrigin, attachEnd, null, TRACE_MASK_NPCWORLDSTATIC )
 
-	//DebugDrawLine( attachOrigin, zipTrace.endPos, <0, 255, 0>, true, 5.0 )
-	//DebugDrawLine( zipTrace.endPos, attachEnd, <255, 0, 0>, true, 5.0 )
+	//DebugDrawLine( attachOrigin, zipTrace.endPos, 0, 255, 0, true, 5.0 )
+	//DebugDrawLine( zipTrace.endPos, attachEnd, 255, 0, 0, true, 5.0 )
 
 	// zipline didn't connect with anything
 	if ( zipTrace.fraction == 1.0 )
 	{
-		//DebugDrawLine( attachOrigin, attachEnd, <255, 255, 0>, true, 5.0 )
+		//DebugDrawLine( attachOrigin, attachEnd, 255, 255, 0, true, 5.0 )
 		return null
 	}
 
@@ -775,7 +776,7 @@ void function CodeCallback_ZiplineMount( entity player, entity zipline )
 		EmitDifferentSoundsOnEntityForPlayerAndWorld( "pilot_vine_attach_1p", "pilot_vine_attach_3p", player, player )
 		EmitDifferentSoundsOnEntityForPlayerAndWorld( "pilot_vine_swing_1p", "pilot_vine_swing_3p", player, player )
 	}
-	else if ( IsValid( zipline ) && zipline.IsZipline() )
+	else if ( IsValid( zipline ) && zipline.IsZipline() && zipline.Zipline_IsCurvedZipline() )
 	{
 
 		EmitDifferentSoundsOnEntityForPlayerAndWorld( "Player_Ziprail_Attach", "3p_Ziprail_Attach", player, player )
@@ -823,7 +824,7 @@ void function CodeCallback_ZiplineStart( entity player, entity zipline )
 	else
 	{
 		CreateZiplineJetEffects( player )
-		if ( IsValid( zipline ) && zipline.IsZipline() && Zipline_IsCurvedZipline( zipline ) )
+		if ( IsValid( zipline ) && zipline.IsZipline() && zipline.Zipline_IsCurvedZipline() )
 			;	// Ziprails start playing looping sounds on mount
 		else
 			EmitDifferentSoundsOnEntityForPlayerAndWorld( "player_zipline_loop", "3p_zipline_loop", player, player )
@@ -889,7 +890,7 @@ void function CodeCallback_ZiplineStop( entity player )
 	{
 		EmitDifferentSoundsOnEntityForPlayerAndWorld( "pilot_vine_detach_1p", "pilot_vine_detach_3p", player, player )
 	}
-	else if ( IsValid( lastZipline ) && lastZipline.IsZipline() && Zipline_IsCurvedZipline( lastZipline ) )
+	else if ( IsValid( lastZipline ) && lastZipline.IsZipline() && lastZipline.Zipline_IsCurvedZipline() )
 	{
 		EmitDifferentSoundsOnEntityForPlayerAndWorld( "Player_Ziprail_Detach", "3p_Ziprail_Detach", player, player )
 	}

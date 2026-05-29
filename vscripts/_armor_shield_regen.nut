@@ -12,7 +12,7 @@ global function Armor_ShieldRegen_ServerCallback_RegenTriggerEvent
 global function Armor_ShieldRegen_ServerCallback_RegenCancelEvent
 #endif
 
-#if DEV
+#if DEVELOPER
 const bool SHIELD_REGEN_DEBUG = false
 #endif // DEV
 
@@ -63,7 +63,7 @@ struct
 
 void function Armor_ShieldRegen_Init()
 {
-	#if DEV
+	#if DEVELOPER
 		if ( SHIELD_REGEN_DEBUG )
 		{
 			printf("Armor_ShieldRegen_Init()")
@@ -72,7 +72,7 @@ void function Armor_ShieldRegen_Init()
 
 	if ( !Armor_ShieldRegen_IsUsingShieldRegen() )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( SHIELD_REGEN_DEBUG )
 			{
 				printf("Armor_ShieldRegen_Init: Shield Regen disabled. See playlist vars!")
@@ -113,7 +113,7 @@ void function Armor_ShieldRegen_RegisterNetworking()
 #if SERVER
 void function Armor_ShieldRegen_OnClientConnected( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( SHIELD_REGEN_DEBUG )
 			printf("Armor_ShieldRegen_OnClientConnected()")
 	#endif
@@ -127,7 +127,7 @@ void function Armor_ShieldRegen_OnClientConnected( entity player )
 
 void function Armor_ShieldRegen_OnClientDisconnected( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( SHIELD_REGEN_DEBUG )
 			printf("Armor_ShieldRegen_OnClientDisconnected()")
 	#endif
@@ -140,7 +140,7 @@ void function Armor_ShieldRegen_OnClientDisconnected( entity player )
 
 void function Armor_ShieldRegen_OnPlayerDamaged( entity player, var damageInfo )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( SHIELD_REGEN_DEBUG )
 			printf("Armor_ShieldRegen_OnPlayerDamaged()")
 	#endif
@@ -148,7 +148,7 @@ void function Armor_ShieldRegen_OnPlayerDamaged( entity player, var damageInfo )
 	// don't start regen when (A) damaged by direct health damage and full shields or, (B) no shields equip or, (C) a player is downed or dead
 	if ( ( player.GetShieldHealth() == player.GetShieldHealthMax() && IsBitFlagSet( DamageInfo_GetCustomDamageType( damageInfo ), DF_BYPASS_SHIELD ) ) )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( SHIELD_REGEN_DEBUG )
 				printf( "Armor_ShieldRegen_OnPlayerDamaged: Health damage. Sheilds full, returning." )
 		#endif
@@ -157,7 +157,7 @@ void function Armor_ShieldRegen_OnPlayerDamaged( entity player, var damageInfo )
 
 	if ( player.GetShieldHealthMax() == 0 )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( SHIELD_REGEN_DEBUG )
 				printf( "Armor_ShieldRegen_OnPlayerDamaged: Player has no shields, returning." )
 		#endif
@@ -166,7 +166,7 @@ void function Armor_ShieldRegen_OnPlayerDamaged( entity player, var damageInfo )
 
 	if ( !IsAlive( player ) || Bleedout_IsBleedingOut( player ) )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( SHIELD_REGEN_DEBUG )
 				printf( "Armor_ShieldRegen_OnPlayerDamaged: Player has no shields, returning." )
 		#endif
@@ -178,7 +178,7 @@ void function Armor_ShieldRegen_OnPlayerDamaged( entity player, var damageInfo )
 
 void function Armor_ShieldRegen_OnPlayerRevived( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( SHIELD_REGEN_DEBUG )
 			printf("Armor_ShieldRegen_OnPlayerRevived()")
 	#endif
@@ -188,7 +188,7 @@ void function Armor_ShieldRegen_OnPlayerRevived( entity player )
 
 void function Armor_ShieldRegen_RechargePlayerShields_Thread( entity player, bool skipDelay )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( SHIELD_REGEN_DEBUG )
 			printf("Armor_ShieldRegen_RechargePlayerShields()")
 	#endif
@@ -204,7 +204,7 @@ void function Armor_ShieldRegen_RechargePlayerShields_Thread( entity player, boo
 	Remote_CallFunction_NonReplay( player, "Armor_ShieldRegen_ServerCallback_RegenTriggerEvent", skipDelay )
 
 	OnThreadEnd( function() : ( player ) {
-		#if DEV
+		#if DEVELOPER
 			if ( SHIELD_REGEN_DEBUG )
 				printf("Armor_ShieldRegen_RechargePlayerShields: Thread End")
 		#endif
@@ -236,7 +236,7 @@ void function Armor_ShieldRegen_RechargePlayerShields_Thread( entity player, boo
 	                       
 		while ( StatusEffect_HasSeverity( player, eStatusEffect.healing_denied ) )
 		{
-			#if DEV
+			#if DEVELOPER
 				if ( SHIELD_REGEN_DEBUG )
 					printf( "healing_denied" + StatusEffect_GetSeverity( player, eStatusEffect.healing_denied ) + ", waiting...")
 			#endif
@@ -250,7 +250,7 @@ void function Armor_ShieldRegen_RechargePlayerShields_Thread( entity player, boo
 		healingRequest.requestShieldFX = true
 
 		OnThreadEnd( function() : ( healingRequest, player ) {
-			#if DEV
+			#if DEVELOPER
 				if ( SHIELD_REGEN_DEBUG )
 					printf("Armor_ShieldRegen_RechargePlayerShields: Thread End")
 			#endif
@@ -292,7 +292,7 @@ void function Armor_ShieldRegen_RechargePlayerShields_Thread( entity player, boo
 
 void function Armor_ShieldRegen_OnPlayerLootPickup( entity player, entity pickup, string ref, int unitsPickedUp, bool willDestroy, entity deathBox, int pickupFlags )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( SHIELD_REGEN_DEBUG )
 			printf("Armor_ShieldRegen_OnPlayerLootPickup() item string ref = " + ref)
 	#endif
@@ -311,7 +311,7 @@ void function Armor_ShieldRegen_OnPlayerLootPickup( entity player, entity pickup
 
 void function Armor_ShieldRegen_OnPlayerReconnected( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( SHIELD_REGEN_DEBUG )
 			printf( "DeathTrigger_OnPlayerReconnected()" )
 	#endif
@@ -339,7 +339,7 @@ void function Armor_ShieldRegen_OnPlayerReconnected_Thread( entity player )
 #if CLIENT
 void function Armor_ShieldRegen_OnPlayerSpawned( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( SHIELD_REGEN_DEBUG )
 			printf( "Armor_ShieldRegen_OnPlayerSpawned()" )
 	#endif
@@ -350,7 +350,7 @@ void function Armor_ShieldRegen_OnPlayerSpawned( entity player )
 
 void function Armor_ShieldRegen_OnPlayerDisconnected( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( SHIELD_REGEN_DEBUG )
 			printf("Armor_ShieldRegen_OnPlayerDisconnected()")
 	#endif
@@ -363,7 +363,7 @@ void function Armor_ShieldRegen_OnPlayerDisconnected( entity player )
 
 void function ShieldRegen_CreateShieldRegenUI()
 {
-	#if DEV
+	#if DEVELOPER
 		if ( SHIELD_REGEN_DEBUG )
 			printf("ShieldRegen_CreateShieldRegenUI()")
 	#endif
@@ -377,7 +377,7 @@ void function ShieldRegen_CreateShieldRegenUI()
 
 void function Armor_ShieldRegen_OnGameState_Ending()
 {
-	#if DEV
+	#if DEVELOPER
 		if ( SHIELD_REGEN_DEBUG )
 			printf("Armor_ShieldRegen_OnGameState_Ending()")
 	#endif
@@ -391,7 +391,7 @@ void function Armor_ShieldRegen_OnGameState_Ending()
 
 void function Armor_ShieldRegen_ServerCallback_RegenTriggerEvent( bool skipDelay )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( SHIELD_REGEN_DEBUG )
 			printf("Armor_ShieldRegen_ServerCallback_RegenTriggerEvent()")
 	#endif
@@ -401,7 +401,7 @@ void function Armor_ShieldRegen_ServerCallback_RegenTriggerEvent( bool skipDelay
 
 void function Armor_ShieldRegen_ServerCallback_RegenCancelEvent()
 {
-	#if DEV
+	#if DEVELOPER
 		if ( SHIELD_REGEN_DEBUG )
 			printf("Armor_ShieldRegen_ServerCallback_RegenCancelEvent()")
 	#endif
@@ -416,7 +416,7 @@ void function Armor_ShieldRegen_ServerCallback_RegenCancelEvent()
 
 void function ShieldRegen_RegenTriggerNotice_Thread( bool skipDelay )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( SHIELD_REGEN_DEBUG )
 			printf("ShieldRegen_RegenTriggerNotice_Thread()")
 	#endif
@@ -430,7 +430,7 @@ void function ShieldRegen_RegenTriggerNotice_Thread( bool skipDelay )
 	player.EndSignal( "Armor_ShieldRegen_OnDisconnect" )
 
 	OnThreadEnd( function() : ( ) {
-		#if DEV
+		#if DEVELOPER
 			if ( SHIELD_REGEN_DEBUG )
 				printf("ShieldRegen_RegenTriggerNotice: Thread End")
 		#endif

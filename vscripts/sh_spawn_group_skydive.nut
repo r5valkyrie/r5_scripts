@@ -18,11 +18,11 @@ const float MIN_SPAWN_DIST_FROM_RING = 768
 global function SpawnSquadSkyDive_GetRemainingRespawnsForAllPlayersInSquad
 global function SpawnGroupSkydive_ShouldTeamHavePoolOfRespawns
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 global function Dev_SpawnSquadSkyDive_AddSpawnPoint
 global function Dev_SpawnSquadSkyDive_DrawSpawnPoints
 global function DEV_DrawGroupSkyDiveSpawnLocations
-#endif //SERVER && DEV
+#endif //SERVER && DEVELOPER
 
 const int RESPAWN_ALL_DEAD_PLAYERS_TOGETHER_SPAWNGROUP_IDX = TEAM_INVALID
 
@@ -96,18 +96,20 @@ void function InitSpawnPoints()
 }
 #endif // SERVER
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function Dev_SpawnSquadSkyDive_AddSpawnPoint( vector spawnPointPos = <-16161.1, 14862.8, 0> )
 {
 	AddSpawnPointOnSafeSpot( spawnPointPos )
 }
 #endif
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function Dev_SpawnSquadSkyDive_DrawSpawnPoints()
 {
 	foreach ( location in file.spawnPoints )
-		DebugDrawSphere( location.GetOrigin(), 100, COLOR_RED, true, 20 )
+	{
+		DebugDrawSphere( location.GetOrigin(), 100, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 20 )
+	}
 }
 #endif
 
@@ -201,7 +203,7 @@ void function SetSquadEliminated( int team )
 }
 #endif // SERVER
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function DEV_DrawGroupSkyDiveSpawnLocations()
 {
 	AssertIsNewThread()
@@ -211,7 +213,7 @@ void function DEV_DrawGroupSkyDiveSpawnLocations()
 		foreach( point in file.spawnPoints )
 		{
 			DrawAngledBox( point.GetOrigin(), point.GetAngles(), <-16, -16, 0>, <16, 16, 72>, COLOR_GREEN, true, 1.1 )
-			DebugDrawArrow( point.GetOrigin(), point.GetOrigin() + AnglesToForward( point.GetAngles() ) * 16, 8, COLOR_GREEN, true, 1.1 )
+			//DebugDrawArrow( point.GetOrigin(), point.GetOrigin() + AnglesToForward( point.GetAngles() ) * 16, 8, COLOR_GREEN, true, 1.1 )
 		}
 		wait 1
 	}

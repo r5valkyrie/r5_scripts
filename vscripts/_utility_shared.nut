@@ -6961,6 +6961,49 @@ void function DEV_PrintClientCommands( table< string, void functionref( entity, 
 }
 
 #if SERVER
+void function ManageJitterVFX_Thread()
+{
+	return
+	float intervalA = 10.0
+	float intervalB = 0.2
+	int cycles = 0
+	int seedInt = 3910
+	var seed = CreateRandomSeed( seedInt )
+
+	string playlistName = GetCurrentPlaylistName()
+	float phaseOneFast_Lower = GetPlaylistVarFloat( playlistName, "phaseEngine_one_fast_lower",  0.05 )
+	float phaseOneFast_Upper = GetPlaylistVarFloat( playlistName, "phaseEngine_one_fast_upper",  0.2 )
+	float phaseOneSlow_Lower = GetPlaylistVarFloat( playlistName, "phaseEngine_one_slow_lower",  10.0 )
+	float phaseOneSlow_Upper = GetPlaylistVarFloat( playlistName, "phaseEngine_one_slow_upper",  20.0 )
+	float phaseTwo_Lower = GetPlaylistVarFloat( playlistName, "phaseEngine_two_lower",  0.1 )
+	float phaseTwo_Upper = GetPlaylistVarFloat( playlistName, "phaseEngine_two_upper",  0.4 )
+
+	while( true )
+	{
+		++cycles
+		SetConVarInt( "glitch_aberrationScale", 10 )
+		wait intervalA
+		if( cycles % 5 == 0 )
+		{
+			intervalA = RandomFloatRangeSeeded( seed, phaseOneFast_Lower, phaseOneFast_Upper )
+		}
+		else
+		{
+			intervalA = RandomFloatRangeSeeded( seed, phaseOneSlow_Lower, phaseOneSlow_Upper )
+		}
+		#if DEVELOPER
+			//printf( string(intervalA) )
+		#endif
+		SetConVarInt( "glitch_aberrationScale", 80 )
+		wait intervalB
+		#if DEVELOPER
+			//printf( string(intervalB) )
+		#endif
+		intervalB = RandomFloatRangeSeeded( seed, phaseTwo_Lower, phaseTwo_Upper )
+	}
+}
+
+
 	void function printm( ... )
 	{
 		if ( vargc <= 0 )

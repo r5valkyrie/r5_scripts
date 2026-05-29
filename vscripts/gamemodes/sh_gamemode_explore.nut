@@ -28,7 +28,7 @@ const string EXPLOREMODE_MOVER_SCRIPTNAME 		= "exploremode_mover"
 	const string EXPLOREMODESOUND_EXIT 				= "UI_InGame_KillLeader"
 #endif
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 
 #endif
 

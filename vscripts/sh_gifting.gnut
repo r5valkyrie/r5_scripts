@@ -21,9 +21,9 @@ global function AddGiftCacheMessages
 global function RemoveGiftCacheMessage
 global function ShowGiftErrorDialogue
 global function ShowGiftTimeOutDialogue
-#if DEV
+#if DEVELOPER
 global function DEV_PrintGiftingInboxMessages
-#endif // #if DEV
+#endif // #if DEVELOPER
 #endif
 
 #if SERVER
@@ -211,7 +211,7 @@ bool function HasFriendshipTenureBeenLongEnough( int friendshipCreationTime )
 		return false
 
 	int minFriendshipInDays = GetConVarInt( "mtx_giftingMinFriendshipInDays" )
-	#if DEV
+	#if DEVELOPER
 		if (minFriendshipInDays == 0)
 			return true
 	#endif
@@ -368,7 +368,7 @@ void function MarkNewGiftedItemsAsNew()
 }
 #endif // #if UI
 
-#if DEV && UI
+#if DEVELOPER && UI
 void function DEV_PrintGiftingInboxMessages()
 {
 	printt("Printing gifting inbox messages ---------------")
@@ -389,7 +389,7 @@ void function DEV_PrintGiftingInboxMessages()
 	}
 	printt("End of gifts ---------------")
 }
-#endif // #if DEV && UI
+#endif // #if DEVELOPER && UI
 #if UI
 string function GetFriendNameFromNucleusPId( string id, array<EadpPeopleData> friends )
 {

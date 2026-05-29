@@ -2457,11 +2457,11 @@ void function DoGladiatorCardCharacterCapture( CharacterCaptureState ccs )
 	ccs.camera.SetMonitorExposure( cameraExposure )
 
 	//float clippedVerticalCameraFOV = 2.0 * RAD_TO_DEG * atan( clippedVerticalCameraTanHalfFOV )
-	//DebugDrawLine( ccs.camera.GetOrigin(), ccs.camera.GetOrigin() - 6000.0 * AnglesToForward( AnglesCompose( ccs.camera.GetAngles(), <-croppedVerticalCameraFOV * 0.5, 0, 0> ) ), <255, 80, 40>, true, 20.0 )
-	//DebugDrawLine( ccs.camera.GetOrigin(), ccs.camera.GetOrigin() - 6000.0 * AnglesToForward( AnglesCompose( ccs.camera.GetAngles(), <croppedVerticalCameraFOV * 0.5, 0, 0> ) ), <255, 80, 40>, true, 20.0 )
+	//DebugDrawLine( ccs.camera.GetOrigin(), ccs.camera.GetOrigin() - 6000.0 * AnglesToForward( AnglesCompose( ccs.camera.GetAngles(), <-croppedVerticalCameraFOV * 0.5, 0, 0> ) ), 255, 80, 40, true, 20.0 )
+	//DebugDrawLine( ccs.camera.GetOrigin(), ccs.camera.GetOrigin() - 6000.0 * AnglesToForward( AnglesCompose( ccs.camera.GetAngles(), <croppedVerticalCameraFOV * 0.5, 0, 0> ) ), 255, 80, 40, true, 20.0 )
 	//
-	//DebugDrawLine( ccs.camera.GetOrigin(), ccs.camera.GetOrigin() - 6000.0 * AnglesToForward( AnglesCompose( ccs.camera.GetAngles(), <-clippedVerticalCameraFOV * 0.5, 0, 0> ) ), <40, 255, 80>, true, 20.0 )
-	//DebugDrawLine( ccs.camera.GetOrigin(), ccs.camera.GetOrigin() - 6000.0 * AnglesToForward( AnglesCompose( ccs.camera.GetAngles(), <clippedVerticalCameraFOV * 0.5, 0, 0> ) ), <40, 255, 80>, true, 20.0 )
+	//DebugDrawLine( ccs.camera.GetOrigin(), ccs.camera.GetOrigin() - 6000.0 * AnglesToForward( AnglesCompose( ccs.camera.GetAngles(), <-clippedVerticalCameraFOV * 0.5, 0, 0> ) ), 40, 255, 80, true, 20.0 )
+	//DebugDrawLine( ccs.camera.GetOrigin(), ccs.camera.GetOrigin() - 6000.0 * AnglesToForward( AnglesCompose( ccs.camera.GetAngles(), <clippedVerticalCameraFOV * 0.5, 0, 0> ) ), 40, 255, 80, true, 20.0 )
 
 	float farZ = 642.0
 

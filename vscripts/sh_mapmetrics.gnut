@@ -713,7 +713,7 @@ void function ShowWorldGrid( int gridSquareSideLength = -1, int gridHeight = 300
 		float y = -MAP_EXTENTS + (yIt * GRID_SQUARE_SIDE_LENGTH)
 		vector start = <-MAP_EXTENTS, y, GRID_HEIGHT>
 		vector end = <MAP_EXTENTS, y, GRID_HEIGHT>
-		//DebugDrawLine( start, end, COLOR_GREEN, true, displayTime )
+		DebugDrawLine( start, end, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, displayTime )
 	}
 
 	for ( float xIt = 0; xIt <= numIterations; xIt++ )
@@ -721,7 +721,7 @@ void function ShowWorldGrid( int gridSquareSideLength = -1, int gridHeight = 300
 		float x = -MAP_EXTENTS + (xIt * GRID_SQUARE_SIDE_LENGTH)
 		vector start = <x, -MAP_EXTENTS, GRID_HEIGHT>
 		vector end = <x, MAP_EXTENTS, GRID_HEIGHT>
-		//DebugDrawLine( start, end, COLOR_GREEN, true, displayTime )
+		DebugDrawLine( start, end, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, displayTime )
 	}
 }
 
@@ -741,8 +741,8 @@ void function ShowTracePositions( int gridSquareSideLength = GRID_SQUARE_SIDE_LE
 		vector start = <point.origin.x, point.origin.y, TRACE_START_HEIGHT>
 		vector end = point.origin
 
-		//DebugDrawLine( start, end, COLOR_GREEN, false, displayTime )
-		//DebugDrawSphere( end, 16.0, COLOR_YELLOW, false, displayTime, 4 )
+		DebugDrawLine( start, end, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), false, displayTime )
+		DebugDrawSphere( end, 16.0, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), false, displayTime, 4 )
 
 		prevPos = point.origin
 	}

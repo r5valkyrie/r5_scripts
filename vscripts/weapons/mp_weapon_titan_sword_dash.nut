@@ -387,7 +387,7 @@ void function ServerToClient_PlayRotatedImpactFxTable( entity owner, vector orig
 	TraceResults trace = TraceLineHighDetail( startPos, endPos, owner, TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_NONE, owner )
 
 	//DebugDrawCube( startPos, 3, COLOR_RED, true, 5.0 )
-	//DebugDrawSphere( endPos, 3, COLOR_RED, true, 5.0 )
+	//DebugDrawSphere( endPos, 3, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 5.0 )
 
 	vector finalEnd = trace.endPos
 
@@ -403,14 +403,14 @@ void function ServerToClient_PlayRotatedImpactFxTable( entity owner, vector orig
 	}
 
 	//DebugDrawCube( startPos, 3, COLOR_GREEN, true, 5.0 )
-	//DebugDrawSphere( endPos, 3, COLOR_GREEN, true, 5.0 )
+	//DebugDrawSphere( endPos, 3, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 5.0 )
 
 	if ( IsValid( trace.hitEnt ) )
 	{
 		vector normal = Normalize( startPos - (endPos + (fwd * .1)) )
 		localPlayer.DispatchImpactEffects( trace.hitEnt, startPos, finalEnd, normal, trace.surfaceProp, trace.staticPropID, DMG_MELEE_ATTACK, impactTableIndex, owner, 0 )
 
-		//DebugDrawLine( startPos, trace.endPos, COLOR_RED, true, 5.0 )
+		//DebugDrawLine( startPos, trace.endPos, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 5.0 )
 		//printt( "PlayImpactFXTable event collided with surfaceProp " + trace.surfaceProp + " on " + trace.hitEnt )
 	}
 }
@@ -532,7 +532,7 @@ bool function TitanSword_HasPlayerLOS( entity trigger, entity player )
 	TraceResults traceResults = TraceLine( traceStart, traceEnd, ignoreEnts, TRACE_MASK_SOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
 
 	#if TITAN_SWORD_LOS_DEBUG
-		DebugDrawLine( traceStart, traceEnd, <255, 1, 1>, true, 0.1 )
+		DebugDrawLine( traceStart, traceEnd, 255, 1, 1, true, 0.1 )
 	#endif
 
 	if ( traceResults.fraction < 1.0 )
@@ -540,14 +540,14 @@ bool function TitanSword_HasPlayerLOS( entity trigger, entity player )
 		traceEnd     = player.EyePosition()
 		traceResults = TraceLine( traceStart, traceEnd, ignoreEnts, TRACE_MASK_SOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
 		#if TITAN_SWORD_LOS_DEBUG
-			DebugDrawLine( traceStart, traceEnd, <255, 1, 1>, true, 0.1 )
+			DebugDrawLine( traceStart, traceEnd, 255, 1, 1, true, 0.1 )
 		#endif
 	}
 
 	if ( traceResults.fraction == 1.0 )
 	{
 		#if TITAN_SWORD_LOS_DEBUG
-			DebugDrawLine( traceStart, traceEnd, <1, 255, 1>, true, 10.0 )
+			DebugDrawLine( traceStart, traceEnd, 1, 255, 1, true, 10.0 )
 		#endif
 		return true
 	}

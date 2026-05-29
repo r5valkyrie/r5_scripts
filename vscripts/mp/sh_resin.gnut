@@ -4,7 +4,7 @@ global function ApplyResinToDoor
 global function CreateResinShard
 global function GetResinShardsByTeam
 global function GetResinStructureRoot
-#if DEV
+#if DEVELOPER
 global function DEV_ClearResinShards
 #endif
 #endif
@@ -303,7 +303,7 @@ void function OnResinDamaged( entity resin, var damageInfo )
 		EmitSoundOnEntity( resin, RESIN_CRUMBLE_3P_SOUND )
 	}
 }
-#if DEV
+#if DEVELOPER
 void function DEV_ClearResinShards()
 {
 	array<entity> resinShards = GetAllResinShards()

@@ -2835,7 +2835,7 @@ void function UpdateWaitingForPlayersMuteHint()
 
 	string muteString = ""
 	if ( SquadMuteIntroEnabled() && !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SOLOS ) )
-		muteString = Localize( IsSquadMuted() ? "#CHAR_SEL_BUTTON_UNMUTE" : "#CHAR_SEL_BUTTON_MUTE" )
+		muteString = Localize( IsSquadMuted() ? "#CHAR_SEL_BUTTON_UNMUTE" : "#CH_SEL_BUTTON_MUTE" )
 	RuiSetString( s_overlayRui, "squadMuteHint", muteString )
 }
 

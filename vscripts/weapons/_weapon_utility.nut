@@ -318,7 +318,6 @@ global function StartClusterExplosions
 #if SERVER
 global function WeaponAttackWave
 #endif
-global function FireExpandContractMissiles
 global function GetActiveThermiteBurnsWithinRadius
 global function GetPrimaryWeapons
 global function GetRadiusDamageDataFromProjectile
@@ -1216,7 +1215,7 @@ void function FireProjectileShotgunBlast( entity weapon, WeaponPrimaryAttackPara
 array<vector> function GetProjectileShotgunBlastVectors( vector pos, vector forward, vector right, float outerSpread, float innerSpead, int numSegments )
 {
 	#if DEBUG_PROJECTILE_BLAST
-		//DebugDrawLine( pos, pos + forward * 250, <255, 0, 0>, true, 3.0 )
+		DebugDrawLine( pos, pos + forward * 250, 255, 0, 0, true, 3.0 )
 		array<vector> outerVecs
 		array<vector> innerVecs
 	#endif
@@ -1264,14 +1263,14 @@ array<vector> function GetProjectileShotgunBlastVectors( vector pos, vector forw
 			vector i1 = pos + innerVecs[i] * 250
 			vector i2 = (i == numRadialSegments - 1) ? pos + innerVecs[0] * 250 : pos + innerVecs[i + 1] * 250
 
-			//DebugDrawLine( o1, o2, <255, 255, 0>, true, 3.0 )
-			//DebugDrawLine( i1, i2, <255, 255, 0>, true, 3.0 )
-			//DebugDrawLine( i1, o1, <255, 255, 0>, true, 3.0 )
+			DebugDrawLine( o1, o2, 255, 255, 0, true, 3.0 )
+			DebugDrawLine( i1, i2, 255, 255, 0, true, 3.0 )
+			DebugDrawLine( i1, o1, 255, 255, 0, true, 3.0 )
 		}
 
 		foreach ( vector vec in randVecs )
 		{
-			//DebugDrawSphere( pos + vec * 250, 1.0, <255, 0, 0>, true, 3.0, 3 )
+			DebugDrawSphere( pos + vec * 250, 1.0, 255, 0, 0, true, 3.0, 3 )
 		}
 	#endif
 
@@ -1358,7 +1357,7 @@ array<vector> function GetProjectileBlastPatternVectors( WeaponPrimaryAttackPara
 		patternVecs.append( vecToTarget )
 
 		#if DEBUG_PROJECTILE_BLAST
-			//DebugDrawLine( startPos, offsetPos, <255, 0, 0>, true, 3.0 )
+			DebugDrawLine( startPos, offsetPos, 255, 0, 0, true, 3.0 )
 		#endif
 	}
 
@@ -1607,7 +1606,7 @@ bool function PlantStickyEntityOnConsistentSurface( entity projectile, Deployabl
 				#if DEVELOPER
 					if ( DEBUG_SURFACE_TEST )
 					{
-						DebugDrawArrow( traceResult.endPos, traceResult.endPos + traceResult.surfaceNormal * 20, 5, <255, 100, 0>, true, DEBUG_SURFACE_TEST_TIME )
+						//DebugDrawArrow( traceResult.endPos, traceResult.endPos + traceResult.surfaceNormal * 20, 5, <255, 100, 0>, true, DEBUG_SURFACE_TEST_TIME )
 					}
 				#endif
 			}
@@ -1617,7 +1616,7 @@ bool function PlantStickyEntityOnConsistentSurface( entity projectile, Deployabl
 				#if DEVELOPER
 					if ( DEBUG_SURFACE_TEST )
 					{
-						DebugDrawArrow( traceResult.endPos, traceResult.endPos + traceResult.surfaceNormal * 20, 5, <100, 255, 0>, true, DEBUG_SURFACE_TEST_TIME )
+						//DebugDrawArrow( traceResult.endPos, traceResult.endPos + traceResult.surfaceNormal * 20, 5, <100, 255, 0>, true, DEBUG_SURFACE_TEST_TIME )
 					}
 				#endif
 			}
@@ -1716,7 +1715,7 @@ bool function PlantStickyEntity( entity ent, DeployableCollisionParams cp, vecto
 		#if DEVELOPER
 		if ( DEBUG_DRAW_PLANT_STICKY )
 		{
-			//DebugDrawSphere( cp.pos, 5, <255, 255, 0>, false, 60 )
+			DebugDrawSphere( cp.pos, 5, 255, 255, 0, false, 60 )
 			//DebugDrawArrow( cp.pos, cp.pos + cp.normal*20, 10, <255, 255, 0>, false, 60 )
 		}
 		#endif
@@ -1752,7 +1751,7 @@ bool function PlantStickyEntity( entity ent, DeployableCollisionParams cp, vecto
 			#if DEVELOPER
 			if ( DEBUG_DRAW_PLANT_STICKY )
 			{
-				//DebugDrawSphere( plantPosition, 3, <255, 0, 0>, false, 60 )
+				DebugDrawSphere( plantPosition, 3, 255, 0, 0, false, 60 )
 			}
 			#endif
 		}
@@ -1763,7 +1762,7 @@ bool function PlantStickyEntity( entity ent, DeployableCollisionParams cp, vecto
 			#if DEVELOPER
 			if ( DEBUG_DRAW_PLANT_STICKY )
 			{
-				//DebugDrawSphere( plantPosition, 3, <0, 0, 255>, false, 60 )
+				DebugDrawSphere( plantPosition, 3, 0, 0, 255, false, 60 )
 			}
 			#endif
 		}
@@ -2389,8 +2388,8 @@ function MissileRandomDrift( timeElapsed, timeStep, windiness, intensity )
 	local right = self.GetRightVector()
 	local up = self.GetUpVector()
 
-	//DebugDrawLine( self.GetOrigin(), self.GetOrigin() + right * 100, <255, 255, 255>, true, 0 )
-	//DebugDrawLine( self.GetOrigin(), self.GetOrigin() + up * 100, <255,128,255>, true, 0 )
+	DebugDrawLine( self.GetOrigin(), self.GetOrigin() + right * 100, 255, 255, 255, true, 0 )
+	DebugDrawLine( self.GetOrigin(), self.GetOrigin() + up * 100, 255, 128, 255, true, 0 )
 
 	local dir = self.GetVelocity()
 	float speed = Length( dir )
@@ -2454,8 +2453,8 @@ function MissileControlledDrift( timeElapsed, timeStep, windiness, intensity, pa
 			backToPathVel += self.s.startDir * (speed * (1.0 - pathDist / pathRadius))
 		}
 
-		//DebugDrawLine( org, org + vel * 0.1, <255, 255, 255>, true, 0 )
-		//DebugDrawLine( org, org + backToPathVel * intensity * lerp * 0.1, <128,255,128>, true, 0 )
+		DebugDrawLine( org, org + vel * 0.1, 255, 255, 255, true, 0 )
+		DebugDrawLine( org, org + backToPathVel * intensity * lerp * 0.1, 128, 255, 128, true, 0 )
 
 		vel += backToPathVel * (intensity * timeStep)
 		vel = Normalize( vel )
@@ -2756,7 +2755,7 @@ void function DebugDrawMissilePath( entity missile )
 		WaitFrame()
 		if ( !IsValid( missile ) )
 			return
-		//DebugDrawLine( lastPos, missile.GetOrigin(), <0, 255, 0>, true, 20.0 )
+		DebugDrawLine( lastPos, missile.GetOrigin(), 0, 255, 0, true, 20.0 )
 		lastPos = missile.GetOrigin()
 	}
 }
@@ -3312,7 +3311,7 @@ void function NpcEmpRebootPrototype( entity npc, var damageInfo, asset humanFx, 
 	groundPos += <0,0,32>
 
 
-	//DebugDrawLine(origin, groundPos, <255, 0, 0>, true, 15 )
+	DebugDrawLine( origin, groundPos, 255, 0, 0, true, 15 )
 
 	//thread AssaultOrigin( drone, groundPos, 16 )
 	//thread PlayAnim( drone, "idle" )
@@ -5254,8 +5253,8 @@ vector function CalcProjectileTrajectory( vector startPos, vector targetPos, flo
 	if ( debugDraw )
 	{
 		const float DRAW_TIME = 0.1
-		//DebugDrawSphere( startPos, 5, <255, 255, 0>, false, DRAW_TIME )
-		//DebugDrawSphere( targetPos, 5, <255, 255, 0>, false, DRAW_TIME )
+		DebugDrawSphere( startPos, 5, 255, 255, 0, false, DRAW_TIME )
+		DebugDrawSphere( targetPos, 5, 255, 255, 0, false, DRAW_TIME )
 		//DebugDrawArrow( startPos, startPos + launchVel, 10, <255, 255, 0>, false, DRAW_TIME )
 	}
 
@@ -5395,9 +5394,9 @@ CrosshairTargetData function GetCrosshairTargetDataAngles( entity player, float 
 
 	if ( DEBUG_AIRBUST_TARGET )
 	{
-		//DebugDrawLine( data.crosshairStart + <0, 0, 1>, crosshairEnd, COLOR_ORANGE, false, 0.1 )
-		//DebugDrawSphere( crosshairEnd, 5, COLOR_ORANGE, true, 0.1 )
-		//DebugDrawSphere( initialCameraTrace.endPos, 10, <0, 255, 0>, false, 0.1 )
+		DebugDrawLine( data.crosshairStart + <0, 0, 1>, crosshairEnd, int(COLOR_ORANGE.x), int(COLOR_ORANGE.y), int(COLOR_ORANGE.z), false, 0.1 )
+		DebugDrawSphere( crosshairEnd, 5, int(COLOR_ORANGE.x), int(COLOR_ORANGE.y), int(COLOR_ORANGE.z), true, 0.1 )
+		DebugDrawSphere( initialCameraTrace.endPos, 10, 0, 255, 0, false, 0.1 )
 	}
 
 	data.groundTarget = initialCameraTrace.endPos
@@ -5435,8 +5434,8 @@ CrosshairTargetData function GetCrosshairTargetDataAngles( entity player, float 
 			if ( DEBUG_AIRBUST_TARGET )
 			{
 				DebugDrawText( traceAbove.endPos, "Can see this point", false, 0.1 )
-				//DebugDrawLine( traceAbove.endPos, traceDown.endPos, <0, 255, 0>, false, 0.1)
-				//DebugDrawSphere( traceDown.endPos, 10, <0, 255, 0>, false, 0.1 )
+				DebugDrawLine( traceAbove.endPos, traceDown.endPos, 0, 255, 0, false, 0.1 )
+				DebugDrawSphere( traceDown.endPos, 10, 0, 255, 0, false, 0.1 )
 			}
 		}
 
@@ -5451,8 +5450,8 @@ CrosshairTargetData function GetCrosshairTargetDataAngles( entity player, float 
 
 		if ( DEBUG_AIRBUST_TARGET )
 		{
-			//DebugDrawLine( initialCameraTrace.endPos, traceDown.endPos, <0, 255, 0>, false, 0.1)
-			//DebugDrawSphere( traceDown.endPos, 10, <0, 255, 0>, false, 0.1 )
+			DebugDrawLine( initialCameraTrace.endPos, traceDown.endPos, 0, 255, 0, false, 0.1 )
+			DebugDrawSphere( traceDown.endPos, 10, 0, 255, 0, false, 0.1 )
 		}
 
 		////Make sure I can see the airburst
@@ -5470,7 +5469,7 @@ CrosshairTargetData function GetCrosshairTargetDataAngles( entity player, float 
 		//
 		//if ( DEBUG_AIRBUST_TARGET )
 		//{
-		//	DebugDrawLine(player.GetWorldSpaceCenter(), data.airburstTarget, COLOR_PURPLE, false, 0.1  )
+		//	DebugDrawLine( player.GetWorldSpaceCenter(), data.airburstTarget, int(COLOR_PURPLE.x), int(COLOR_PURPLE.y), int(COLOR_PURPLE.z), false, 0.1 )
 		//	printt( "GetCrosshairTargetDataAngles - heightMult needed: " + heightMult )
 		//}
 	}
@@ -5493,7 +5492,7 @@ CrosshairTargetData function GetCrosshairTargetDataAngles( entity player, float 
 
 		if ( DEBUG_AIRBUST_TARGET )
 		{
-			//DebugDrawLine(player.GetWorldSpaceCenter(), data.airburstTarget, COLOR_PURPLE, false, 0.1  )
+			DebugDrawLine( player.GetWorldSpaceCenter(), data.airburstTarget, int(COLOR_PURPLE.x), int(COLOR_PURPLE.y), int(COLOR_PURPLE.z), false, 0.1 )
 			printt( "GetCrosshairTargetDataAngles - heightMult needed: " + heightMult )
 		}
 	}
@@ -5505,11 +5504,11 @@ CrosshairTargetData function GetCrosshairTargetDataAngles( entity player, float 
 
 	if ( DEBUG_AIRBUST_TARGET )
 	{
-		//DebugDrawSphere( data.groundTarget , 5, COLOR_PURPLE, false, 0.1 )
+		DebugDrawSphere( data.groundTarget, 5, int(COLOR_PURPLE.x), int(COLOR_PURPLE.y), int(COLOR_PURPLE.z), false, 0.1 )
 		DebugDrawText( data.groundTarget, "ground", false, 0.1 )
-		//DebugDrawSphere( data.airburstTarget , 15, COLOR_PURPLE, false, 0.1 )
+		DebugDrawSphere( data.airburstTarget, 15, int(COLOR_PURPLE.x), int(COLOR_PURPLE.y), int(COLOR_PURPLE.z), false, 0.1 )
 		DebugDrawText( data.airburstTarget, "air", false, 0.1 )
-		//DebugDrawLine( data.groundTarget, data.airburstTarget, COLOR_PURPLE, false, 0.1  )
+		DebugDrawLine( data.groundTarget, data.airburstTarget, int(COLOR_PURPLE.x), int(COLOR_PURPLE.y), int(COLOR_PURPLE.z), false, 0.1 )
 	}
 
 	return data
@@ -7772,7 +7771,7 @@ void function WeaponAttackWave( entity ent, int projectileCount, entity inflicto
 
 
 
-		//DebugDrawLine( traceStart, traceEndUnder, 0, 255, 0, true, 25.0 )
+		DebugDrawLine( traceStart, traceEndUnder, 0, 255, 0, true, 25.0 )
 
 		array ignoreArray = []
 
@@ -7788,7 +7787,7 @@ void function WeaponAttackWave( entity ent, int projectileCount, entity inflicto
 
 		{
 
-			//DebugDrawLine( forwardTrace.endPos, forwardTrace.endPos + <0,0,-1000>, 255, 0, 0, true, 25.0 )
+			DebugDrawLine( forwardTrace.endPos, forwardTrace.endPos + <0,0,-1000>, 255, 0, 0, true, 25.0 )
 
 			TraceResults downTrace = TraceLine( forwardTrace.endPos, forwardTrace.endPos + <0, 0, -1000>, ignoreArray, TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_BLOCK_WEAPONS )
 
@@ -7838,7 +7837,7 @@ void function WeaponAttackWave( entity ent, int projectileCount, entity inflicto
 
 		TraceResults upwardTrace = TraceLine( traceStart, traceEndOver, ignoreArray, TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_BLOCK_WEAPONS )
 
-		//DebugDrawLine( traceStart, traceEndOver, 0, 0, 255, true, 25.0 )
+		DebugDrawLine( traceStart, traceEndOver, 0, 0, 255, true, 25.0 )
 
 		if ( upwardTrace.fraction < 1.0 )
 
@@ -7896,105 +7895,6 @@ void function WeaponAttackWave( entity ent, int projectileCount, entity inflicto
 
 }
 #endif // SERVER WeaponAttackWave
-
-
-array<entity> function FireExpandContractMissiles( entity weapon, WeaponPrimaryAttackParams attackParams, vector attackPos, vector attackDir, int damageType, int explosionDamageType, bool shouldPredict, int rocketsPerShot, missileSpeed, launchOutAng, launchOutTime, launchInAng, launchInTime, launchInLerpTime, launchStraightLerpTime, applyRandSpread, int burstFireCountOverride = -1, debugDrawPath = false )
-
-{
-
-	array<table> missileVecs = GetExpandContractRocketTrajectories( weapon, attackParams.burstIndex, attackPos, attackDir, rocketsPerShot, launchOutAng, launchInAng, burstFireCountOverride )
-
-	entity owner             = weapon.GetWeaponOwner()
-
-	array<entity> firedMissiles
-
-
-
-	vector missileEndPos = owner.EyePosition() + (attackDir * 5000)
-
-
-
-	for ( int i = 0; i < rocketsPerShot; i++ )
-
-	{
-
-		WeaponFireMissileParams fireMissileParams
-
-		fireMissileParams.pos = attackPos
-
-		fireMissileParams.dir = attackDir
-
-		fireMissileParams.speed = expect float( missileSpeed )
-
-		fireMissileParams.scriptTouchDamageType = damageType
-
-		fireMissileParams.scriptExplosionDamageType = explosionDamageType
-
-		fireMissileParams.doRandomVelocAndThinkVars = false
-
-		fireMissileParams.clientPredicted = shouldPredict
-
-		entity missile = weapon.FireWeaponMissile( fireMissileParams )
-
-
-
-		if ( missile )
-
-		{
-
-			/*
-
-			missile.s.flightData <- {
-
-								launchOutVec = missileVecs[i].outward,
-
-								launchOutTime = launchOutTime,
-
-								launchInLerpTime = launchInLerpTime,
-
-								launchInVec = missileVecs[i].inward,
-
-								launchInTime = launchInTime,
-
-								launchStraightLerpTime = launchStraightLerpTime,
-
-								endPos = missileEndPos,
-
-								applyRandSpread = applyRandSpread
-
-							}
-
-			*/
-
-
-
-			missile.InitMissileExpandContract( missileVecs[i].outward, missileVecs[i].inward, launchOutTime, launchInLerpTime, launchInTime, launchStraightLerpTime, missileEndPos, applyRandSpread )
-
-
-
-			if ( IsServer() && debugDrawPath )
-
-				thread DebugDrawMissilePath( missile )
-
-
-
-			//InitMissileForRandomDrift( missile, attackPos, attackDir )
-
-			missile.InitMissileForRandomDriftFromWeaponSettings( attackPos, attackDir )
-
-
-
-			firedMissiles.append( missile )
-
-		}
-
-	}
-
-
-
-	return firedMissiles
-
-}
 
 
 array<entity> function GetActiveThermiteBurnsWithinRadius( vector origin, float dist, int team = TEAM_ANY )
@@ -8254,257 +8154,3 @@ bool function IsValidSatchel( entity satchel )
 
 }
 #endif // SERVER SatchelThink + IsValidSatchel
-
-#if CLIENT
-void function ServerCallback_SatchelPlanted()
-{
-	entity player = GetLocalViewPlayer()
-	thread SatchelDetonationHint( player )
-}
-
-void function SatchelDetonationHint( entity player )
-
-{
-
-	player.EndSignal( "OnDeath" )
-
-	player.EndSignal( "DetonateSatchels" )
-
-
-
-	OnThreadEnd(
-
-		function() : ( player )
-
-		{
-
-			if ( IsValid( player ) )
-
-				SatchelDetonationHint_Destroy( player )
-
-		}
-
-	)
-
-
-
-	string satchelClassName = "mp_weapon_satchel"
-
-
-
-	if ( SHOW_SATCHEL_DETONATION_HINT_WITH_CLACKER )
-
-		SatchelDetonationHint_Show( player )
-
-
-
-	while ( PlayerHasWeapon( player, satchelClassName ) )
-
-	{
-
-		wait 0.1
-
-
-
-		if ( !SHOW_SATCHEL_DETONATION_HINT_WITH_CLACKER )
-
-		{
-
-			// only show when detonator isn't actively held
-
-			if ( player.GetActiveWeapon( OFFHAND_ORDNANCE ).GetWeaponClassName() != satchelClassName )
-
-			{
-
-				SatchelDetonationHint_Show( player )
-
-			}
-
-			else
-
-			{
-
-				SatchelDetonationHint_Destroy( player )
-
-			}
-
-		}
-
-	}
-
-}
-
-void function SatchelDetonationHint_Show( entity player )
-
-{
-
-	if ( file.satchelHintRUI != null )
-
-		return
-
-
-
-	SatchelDetonationHint_Destroy( player )
-
-
-
-	int sorting = 0
-
-	file.satchelHintRUI = RuiCreate( $"ui/satchel_detonation_hint.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, sorting )
-
-}
-
-void function SatchelDetonationHint_Destroy( entity player )
-
-{
-
-	if ( file.satchelHintRUI != null )
-
-		RuiDestroyIfAlive( file.satchelHintRUI )
-
-
-
-	file.satchelHintRUI = null
-
-}
-#endif // CLIENT
-
-
-array<table> function GetExpandContractRocketTrajectories( entity weapon, int burstIndex, vector attackPos, vector attackDir, int rocketsPerShot, launchOutAng, launchInAng, int burstFireCount = -1 )
-
-{
-
-	bool DEBUG_DRAW_MATH = false
-
-
-
-	if ( burstFireCount == -1 )
-
-		burstFireCount = weapon.GetWeaponBurstFireCount()
-
-
-
-	float additionalRotation = ((360.0 / rocketsPerShot) / burstFireCount) * burstIndex
-
-	//printt( "burstIndex:", burstIndex )
-
-	//printt( "rocketsPerShot:", rocketsPerShot )
-
-	//printt( "burstFireCount:", burstFireCount )
-
-
-
-	vector ang     = VectorToAngles( attackDir )
-
-	vector forward = AnglesToForward( ang )
-
-	vector right   = AnglesToRight( ang )
-
-	vector up      = AnglesToUp( ang )
-
-
-
-	if ( DEBUG_DRAW_MATH )
-
-		DebugDrawLine( attackPos, attackPos + (forward * 1000), 255, 0, 0, true, 30.0 )
-
-
-
-	// Create points on circle
-
-	float offsetAng = 360.0 / rocketsPerShot
-
-	for ( int i = 0; i < rocketsPerShot; i++ )
-
-	{
-
-		float a    = offsetAng * i + additionalRotation
-
-		vector vec = <0, 0, 0>
-
-		vec += up * deg_sin( a )
-
-		vec += right * deg_cos( a )
-
-
-
-		if ( DEBUG_DRAW_MATH )
-
-			DebugDrawLine( attackPos, attackPos + (vec * 50), 10, 10, 10, true, 30.0 )
-
-	}
-
-
-
-	// Create missile points
-
-	vector x  = right * deg_sin( launchOutAng )
-
-	vector y  = up * deg_sin( launchOutAng )
-
-	vector z  = forward * deg_cos( launchOutAng )
-
-	vector rx = right * deg_sin( launchInAng )
-
-	vector ry = up * deg_sin( launchInAng )
-
-	vector rz = forward * deg_cos( launchInAng )
-
-	array<table> missilePoints
-
-	for ( int i = 0; i < rocketsPerShot; i++ )
-
-	{
-
-		table points
-
-
-
-		// Outward vec
-
-		float a       = offsetAng * i + additionalRotation
-
-		float s       = deg_sin( a )
-
-		float c       = deg_cos( a )
-
-		vector vecOut = z + x * c + y * s
-
-		vecOut = Normalize( vecOut )
-
-		points.outward <- vecOut
-
-
-
-		// Inward vec
-
-		vector vecIn = rz + rx * c + ry * s
-
-		points.inward <- vecIn
-
-
-
-		// Add to array
-
-		missilePoints.append( points )
-
-
-
-		if ( DEBUG_DRAW_MATH )
-
-		{
-
-			DebugDrawLine( attackPos, attackPos + (vecOut * 50), 255, 255, 0, true, 30.0 )
-
-			DebugDrawLine( attackPos + vecOut * 50, attackPos + vecOut * 50 + (vecIn * 50), 255, 0, 255, true, 30.0 )
-
-		}
-
-	}
-
-
-
-	return missilePoints
-
-}
-

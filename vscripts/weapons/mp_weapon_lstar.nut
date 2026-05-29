@@ -162,7 +162,7 @@ void function OnProjectileCollision_lstar( entity projectile, vector pos, vector
 {
 	#if SERVER
 	if(IsValid(projectile)) projectile.SetAbsAngles(<RandomFloatRange(-90,90),RandomFloatRange(-90,90),RandomFloatRange(-90,90)>)
-	// CreateFlowStateDeathBoxForPlayer(gp()[0], projectile.GetOrigin() )
+	// CreateFlowStateDeathBoxForPlayer(GetPlayerArray()[0], projectile.GetOrigin() )
 	// return
 	//PlayImpactFXTable( projectile.GetOrigin(), projectile, "human_land_jetwash" )
 	

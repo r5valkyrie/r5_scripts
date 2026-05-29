@@ -350,8 +350,8 @@ void function SpawnLootbinCreep( int lootCreepType, entity lootbin, entity playe
 		animMotionDelta = VectorRotate( animMotionDelta, angles )
 		vector animEndPos = animStartPos + animMotionDelta + <0, 0, 40>
 
-		//DebugDrawSphere( animStartPos, 32, COLOR_GREEN, true, 10.0 )
-		//DebugDrawSphere( animEndPos, 32, COLOR_BLUE, true, 10.0 )
+		//DebugDrawSphere( animStartPos, 32, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 10.0 )
+		//DebugDrawSphere( animEndPos, 32, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 10.0 )
 
 		// If the point is in solid don't allow jump out anim
 		TraceResults result = TraceHull( animEndPos, animEndPos + <0, 0, 1>, <-32, -32, -32>, <32, 32, 32>, [], TRACE_MASK_NPCSOLID, TRACE_COLLISION_GROUP_NONE )

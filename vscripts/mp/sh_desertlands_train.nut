@@ -641,7 +641,9 @@ void function TrainInitiateEmergencyStop()
 
 	#if DEVELOPER
 		if ( file.devShowTrainPath )
+		{
 			DebugDrawSphere( file.train.GetOrigin(), 64.0, 128, 128, 255, false, 60.0 )
+		}
 	#endif
 }
 
@@ -1268,7 +1270,7 @@ void function DrawTrainPath( array<entity> nodes )
 {
 	for ( int idx = 0; idx < nodes.len(); idx++ )
 	{
-		if ( idx + 1 < nodes.len() )
+		//if ( idx + 1 < nodes.len() )
 			DebugDrawLine( nodes[idx].GetOrigin(), nodes[ idx + 1 ].GetOrigin(), 0, 0, 255, true, 5 )
 	}
 }

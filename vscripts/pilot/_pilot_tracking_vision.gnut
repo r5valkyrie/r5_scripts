@@ -9,7 +9,7 @@ global function TrackingVision_PlayerUsedLaunchPad
 global function TrackingVision_GetAllValidTrackingPOIs
       
 
-#if DEV
+#if DEVELOPER
 global function DEV_ForceAddTrackingVision
 #endif //DEV
 
@@ -370,7 +370,7 @@ void function TrackingVision_SetActivePOIEventTypes()
 		file.activePOIEvents[ eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_DATAKNIFE ]		<- file.trackingVision_ENABLE_POI_LOOT_DROP && TRACKING_VISION_ENABLE_POI_LOOT_DATAKNIFE
        
 
-	#if DEV
+	#if DEVELOPER
 	//If we are running in DEV mode validate our POIType entries to ensure all of them have been registered as active or inactive.
 	foreach( int eventType in eTrackingVisionNetworkedPOITypes )
 	{
@@ -1084,7 +1084,7 @@ POIData function TrackingVision_CreatePOIData( entity poi, int type )
 }
       
 
-#if DEV
+#if DEVELOPER
 void function DEV_ForceAddTrackingVision( entity player )
 {
 	if ( player in file.trackingVisionData )

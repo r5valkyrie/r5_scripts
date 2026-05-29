@@ -597,7 +597,7 @@ void function ForcedBreach_OpenPanel_Thread( entity panel )
 
 	//// Uncomment to debug.
 	//#if DEVELOPER
-	//	DebugDrawSphere( explosionPos, 32, <255, 0, 0>, true, 15 )
+	//	//DebugDrawSphere( explosionPos, 32, 255, 0, 0, true, 15 )
 	//#endif // DEVELOPER
 
 	PlayFX( EXPLOSIVE_HOLD_EXPLOSION_FX, explosionPos, panel.GetAngles(), null)

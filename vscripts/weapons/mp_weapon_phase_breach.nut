@@ -788,10 +788,10 @@ PhaseBreachTargetInfo function GetPhaseBreachTargetInfo( entity player )
 	if ( DEBUG_DRAW_TARGETING )
 	{
 		vector debugColor = eyeTrace.results.fraction < 1.0 ? <0, 255, 0> : <255, 0, 0>
-		DebugDrawSphere(  eyeTrace.results.endPos, 10,debugColor, false,0.1 )
+		DebugDrawSphere( eyeTrace.results.endPos, 10, int(debugColor.x), int(debugColor.y), int(debugColor.z), false, 0.1 )
 
 		vector adjustedColor = eyeTrace.foundValidEnd ? <0, 255, 0> : COLOR_ORANGE
-		DebugDrawSphere(  eyeTrace.adjustedEndPos,5, adjustedColor, false,0.1 )
+		DebugDrawSphere( eyeTrace.adjustedEndPos, 5, int(adjustedColor.x), int(adjustedColor.y), int(adjustedColor.z), false, 0.1 )
 
 		float distMeters = Distance( eyeTrace.results.endPos, player.GetOrigin() ) * INCHES_TO_METERS
 		string text = "Ash Ult: " +
@@ -824,10 +824,10 @@ PhaseBreachTargetInfo function GetPhaseBreachTargetInfo( entity player )
 			{
 				DebugDrawText( eyeTrace.results.endPos, "Lower", false, 0.1 )
 				vector debugColor = eyeTrace.results.fraction < 1.0 ? <0, 255, 0> : <255, 0, 0>
-				DebugDrawSphere(  eyeTrace.results.endPos, 10,debugColor, false,0.1 )
+				DebugDrawSphere( eyeTrace.results.endPos, 10, int(debugColor.x), int(debugColor.y), int(debugColor.z), false, 0.1 )
 
 				vector adjustedColor = eyeTrace.foundValidEnd ? <0, 255, 0> : COLOR_ORANGE
-				DebugDrawSphere(  eyeTrace.adjustedEndPos,5, adjustedColor, false,0.1 )
+				DebugDrawSphere( eyeTrace.adjustedEndPos, 5, int(adjustedColor.x), int(adjustedColor.y), int(adjustedColor.z), false, 0.1 )
 			}
 		#endif
 		if ( lowerEyeTrace.results.fraction < 1.0 )
@@ -1371,7 +1371,9 @@ void function DrawDebugSphereIfDebugging( vector origin, int r, int g, int b )
 {
 	#if DEVELOPER
 		if ( DEBUG_DRAW_PLACEMENT_TRACES )
-			DebugDrawSphere( origin, 5.0, <r, g, b>, false, 0.1 )
+		{
+			DebugDrawSphere( origin, 5.0, r, g, b, false, 0.1 )
+		}
 	#endif
 }
 
@@ -1558,7 +1560,7 @@ void function DEV_ValidateAgainstOldTargeting( entity player, PhaseBreachTargetI
 			if ( DEBUG_DRAW_VALIDATION )
 			{
 				Warning("Ash Ult: Old algorithm found a point and the new one failed to at all.")
-				//DebugDrawSphere( oldInfo.finalPos, 20, <255, 0, 0>, false, 0.1 )
+				DebugDrawSphere( oldInfo.finalPos, 20, 255, 0, 0, false, 0.1 )
 			}
 			if ( DEV_LogValidationCase( player, file.oldTargetingWins ) )
 			{
@@ -1597,7 +1599,7 @@ void function DEV_ValidateAgainstOldTargeting( entity player, PhaseBreachTargetI
 					if ( DEBUG_DRAW_VALIDATION )
 					{
 						Warning( "Ash Ult: Old algorithm found a point which scored better than the new one. Distance between them is " + newOldDistance + ". Dot between " + newOldDot + ". newDotScore: " + newScore + " oldDotScore: " + oldScore )
-						//DebugDrawSphere( oldInfo.finalPos, 20, <255, 0, 0>, false, 0.1 )
+						DebugDrawSphere( oldInfo.finalPos, 20, 255, 0, 0, false, 0.1 )
 					}
 					DEV_LogValidationCase( player, file.oldTargetingBetter )
 				}

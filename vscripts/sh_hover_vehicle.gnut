@@ -52,7 +52,7 @@ global function HoverVehicle_AddCallback_OnVehicleDisembarkStarted
 
 global function DestroyVehicle
 
-#if DEV
+#if DEVELOPER
 global function DEV_EnterClosestVehicle
 #endif // DEV
 
@@ -170,7 +170,7 @@ bool function HoverVehiclesAreEnabledOnMap()
 		return true
 	else if ( GetMapName().find( "mp_rr_olympus" ) > -1 )
 		return true
-	#if DEV
+	#if DEVELOPER
 	else if( GetMapName().find( "mp_rr_box" ) > -1 )
 			return true
 	#endif
@@ -1186,7 +1186,7 @@ entity function GetClosestVehicle( vector origin )
 	return vehicles[0]
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_EnterClosestVehicle( entity player, bool asDriver )
 {
 	entity vehicle = GetClosestVehicle( player.GetOrigin() )

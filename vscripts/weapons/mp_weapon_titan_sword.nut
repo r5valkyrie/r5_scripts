@@ -57,7 +57,7 @@ global function TitanSword_GetFuelRui
 global function TitanSword_ClientPredictCheck
 #endif
 
-#if DEV
+#if DEVELOPER
 #if SERVER
 global function DEV_TitanSword_GiveFuel
 global function DEV_TitanSword_InfiniteFuel
@@ -115,7 +115,7 @@ struct
 		var   fuelRui
 	#endif
 
-	#if DEV && SERVER
+	#if DEVELOPER && SERVER
 		bool infiniteFuel = false
 	#endif
 }file
@@ -744,7 +744,7 @@ bool function TitanSword_TryUseFuel( entity player, bool playMessage = false )
 		if ( IsValid( weapon ) )
 			TitanSword_UpdateFuelCrosshair( player, weapon )
 
-		#if DEV && SERVER
+		#if DEVELOPER && SERVER
 			if ( file.infiniteFuel )
 			{
 				TitanSword_FillFuel( player )
@@ -944,7 +944,7 @@ void function TitanSword_LaunchEntity( entity victim, vector velocity )
 #endif
 }
 
-#if DEV
+#if DEVELOPER
 #if SERVER
 void function DEV_TitanSword_GiveFuel( entity player )
 {

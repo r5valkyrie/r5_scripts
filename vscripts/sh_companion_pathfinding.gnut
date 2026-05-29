@@ -327,7 +327,7 @@ void function Companion_AdjustHeight_Thread( entity player, entity pathEnt, vect
 				if ( COMPANION_PATHFINDING_DEBUG_DRAW )
 				{
 					//Magenta are the actual points that we're trying to move to
-					//DebugDrawSphere( companionData.orderRoute[i], 10, COLOR_MAGENTA, false, 5 )
+					DebugDrawSphere( companionData.orderRoute[i], 10, int(COLOR_MAGENTA.x), int(COLOR_MAGENTA.y), int(COLOR_MAGENTA.z), false, 5 )
 					DebugDrawText( companionData.orderRoute[i], string(i), false, 5 )
 				}
 			#endif //#if DEVELOPER
@@ -363,11 +363,11 @@ void function DoCompanionPathfinding( entity player, entity pathEnt, vector goal
 				if ( COMPANION_PATHFINDING_DEBUG_DRAW )
 				{
 					//DebugDrawArrow( entCurrentPos, trHull.endPos, 2, <0, 255, 0>, false, 6 )
-					//DebugDrawSphere( trHull.endPos, 2, <0, 255, 0>, false, 6 )
+					DebugDrawSphere( trHull.endPos, 2, 0, 255, 0, false, 6 )
 
 					for( int i = currentCompanionData.currentPathNode; i < currentCompanionData.orderRoute.len(); i++ )
 					{
-						//DebugDrawSphere( currentCompanionData.orderRoute[i], 11, <255, 0, 0>, false, 4.5 )
+						DebugDrawSphere( currentCompanionData.orderRoute[i], 11, 255, 0, 0, false, 4.5 )
 					}
 				}
 			#endif //#if DEVELOPER
@@ -407,7 +407,7 @@ void function DoCompanionPathfinding( entity player, entity pathEnt, vector goal
 					if ( COMPANION_PATHFINDING_DEBUG_DRAW )
 					{
 						//DebugDrawArrow( entCurrentPos, currentCompanionData.orderRoute[nextNode], 2, COLOR_PURPLE, false, 1 )
-						//DebugDrawSphere( trHull.endPos, 2, <255, 0, 0>, false, 1 )
+						DebugDrawSphere( trHull.endPos, 2, 255, 0, 0, false, 1 )
 					}
 				#endif //#if DEVELOPER
 				break
@@ -417,10 +417,10 @@ void function DoCompanionPathfinding( entity player, entity pathEnt, vector goal
 				if ( COMPANION_PATHFINDING_DEBUG_DRAW )
 				{
 					//DebugDrawArrow( entCurrentPos, currentCompanionData.orderRoute[nextNode], 2, <0, 255, 0>, false, 1 )
-					//DebugDrawSphere( trHull.endPos, 2, <0, 255, 0>, false, 1 )
+					DebugDrawSphere( trHull.endPos, 2, 0, 255, 0, false, 1 )
 					//a red sphere is added around points we skip because we have LoS on the NEXT point, so we can skip the current one
-					//DebugDrawSphere( currentCompanionData.orderRoute[currentNode], 11, <255, 0, 0>, false, 3.5 )
-					//DebugDrawSphere( entCurrentPos, 2, <255, 0, 0>, false, 3.5 )
+					DebugDrawSphere( currentCompanionData.orderRoute[currentNode], 11, 255, 0, 0, false, 3.5 )
+					DebugDrawSphere( entCurrentPos, 2, 255, 0, 0, false, 3.5 )
 					DebugDrawText( entCurrentPos, "" + currentNode, false, 3.5 )
 				}
 			#endif //#if DEVELOPER
@@ -460,7 +460,7 @@ void function DoCompanionPathfinding( entity player, entity pathEnt, vector goal
 					if ( COMPANION_PATHFINDING_DEBUG_DRAW )
 					{
 						//A green sphere is added around points we've successfully moved to
-						//DebugDrawSphere( currentCompanionData.orderRoute[currentCompanionData.currentPathNode], 11, <0, 255, 0>, false, 3.5 )
+						DebugDrawSphere( currentCompanionData.orderRoute[currentCompanionData.currentPathNode], 11, 0, 255, 0, false, 3.5 )
 					}
 				#endif //#if DEVELOPER
 
@@ -485,7 +485,7 @@ void function DoCompanionPathfinding( entity player, entity pathEnt, vector goal
 				if ( COMPANION_PATHFINDING_DEBUG_DRAW )
 				{
 					//Orange sphere is drawn when echo stops pathfinding and transitions to just going straight to the
-					//DebugDrawSphere( entCurrentPos, 12, COLOR_ORANGE, false, 6 )
+					DebugDrawSphere( entCurrentPos, 12, int(COLOR_ORANGE.x), int(COLOR_ORANGE.y), int(COLOR_ORANGE.z), false, 6 )
 				}
 			#endif //#if DEVELOPER
 		}

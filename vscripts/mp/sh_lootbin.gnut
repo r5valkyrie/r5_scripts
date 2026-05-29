@@ -502,7 +502,7 @@ void function Thread_AttachMovingLootBinToGeo( entity lootBin, bool doTrace )
 		}
 
 		Warning( "Moving loot bin trace unable to attach to geo! " + lootBin.GetOrigin() )
-		//DebugDrawSphere( lootBin.GetOrigin(), 64, <255, 0, 0>, true, 100 )
+		DebugDrawSphere( lootBin.GetOrigin(), 64, 255, 0, 0, true, 100 )
 	}
 }
 #endif
@@ -537,7 +537,7 @@ void function InitLootBin( entity lootBin )
 	AddToScriptManagedEntArray( file.lootBinSMEA, lootBin )
 
 	#if SURVIVAL_DEBUG_LOOT_BINS
-		//DebugDrawLine( lootBin.GetOrigin(), lootBin.GetOrigin() + <0, 0, 1000>, <255, 255, 255>, true, 100.0 )
+		DebugDrawLine( lootBin.GetOrigin(), lootBin.GetOrigin() + <0, 0, 1000>, 255, 255, 255, true, 100.0 )
 	#endif
 
 	LootBinServerData lbsd
@@ -682,7 +682,7 @@ int function LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( entity lootB
 			continue
 
 		entity lootEnt = SpawnGenericLoot( lootToSpawn.lootData.ref, lootBin.GetWorldSpaceCenter(), lootBin.GetAngles(), lootToSpawn.count )
-		//DebugDrawLine( lootEnt.GetOrigin(), lootEnt.GetOrigin() + <0, 0, 9000>, <255, 0, 0>, true, 10.0 )
+		//DebugDrawLine( lootEnt.GetOrigin(), lootEnt.GetOrigin() + <0, 0, 9000>, 255, 0, 0, true, 10.0 )
 		CopyRealmsFromTo( lootBin, lootEnt )
 		lootEnt.SetParent( lootBin )
 		CopyRealmsFromTo( lootBin, lootEnt )
@@ -2201,8 +2201,8 @@ void function DEV_TakeMeToAnUnopenedLootBin( bool withSecretCompartment, string 
 				continue
 		}
 
-		GP().SetOrigin( OriginToGround( lootBin.GetOrigin() + 100.0 * lootBin.GetForwardVector() + 50.0 * lootBin.GetUpVector() ) + <0, 0, 8> )
-		GP().SetAngles( VectorToAngles( lootBin.GetWorldSpaceCenter() - GP().EyePosition() ) )
+		GetPlayerArray().SetOrigin( OriginToGround( lootBin.GetOrigin() + 100.0 * lootBin.GetForwardVector() + 50.0 * lootBin.GetUpVector() ) + <0, 0, 8> )
+		GetPlayerArray().SetAngles( VectorToAngles( lootBin.GetWorldSpaceCenter() - GetPlayerArray().EyePosition() ) )
 		printt( "Lootbin pos:", lootBin.GetOrigin() )
 		break
 	}
@@ -2221,8 +2221,8 @@ void function DEV_TakeMeToAnUnopenedCrowdedLootBin( bool withSecretCompartment )
 		if ( DEV_GetItemCountForLootBin( lootBin, false ) <= 5 )
 			continue
 
-		GP().SetOrigin( OriginToGround( lootBin.GetOrigin() + 100.0 * lootBin.GetForwardVector() + 50.0 * lootBin.GetUpVector() ) + <0, 0, 8> )
-		GP().SetAngles( VectorToAngles( lootBin.GetWorldSpaceCenter() - GP().EyePosition() ) )
+		GetPlayerArray().SetOrigin( OriginToGround( lootBin.GetOrigin() + 100.0 * lootBin.GetForwardVector() + 50.0 * lootBin.GetUpVector() ) + <0, 0, 8> )
+		GetPlayerArray().SetAngles( VectorToAngles( lootBin.GetWorldSpaceCenter() - GetPlayerArray().EyePosition() ) )
 		printt( "Lootbin pos:", lootBin.GetOrigin() )
 		break
 	}

@@ -30,7 +30,7 @@ global function Ranked_OnStryderPlayerRankedResultsComplete
 global function HasPlayerMMR
 global function GetPlayerMMR
 
-#if DEV
+#if DEVELOPER
 // exposed for debug
 global function SetPlayerRankedGameScoringData
 global function ValidateAndRecalculateBreakdown
@@ -54,7 +54,7 @@ global function GetProvisionalBonusMultiplier
 global function GetTierMMRWidth
 global function GetTierPointWidth
 global function PostGameCalculateLadderPointResult
-#endif // SERVER && DEV
+#endif // SERVER && DEVELOPER
 
 global const int   LP_TIER_RESET_TARGET = 5000
 
@@ -127,7 +127,7 @@ void function Sh_Rank_InitGameSummary()
 void function Rank_Scoring_GameStartedPlaying()
 {
 	//calculate MMR
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ("Rank_Scoring_GameStartedPlaying() because eGameState.Playing")
 	#endif
 	MMR_Rank_MatchMMRCalculate ()
@@ -136,7 +136,7 @@ void function Rank_Scoring_GameStartedPlaying()
 void function Sh_Ranked_Bonus_Init ()
 {
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ("Sh_Ranked_Bonus_Init() .....")
 	#endif
 
@@ -146,7 +146,7 @@ void function Sh_Ranked_Bonus_Init ()
                               
        
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ("Sh_Ranked_Bonus_Init() End ..... ")
 	#endif
 }
@@ -156,7 +156,7 @@ array < array < float  > > function Ranked_Init_ReadServerBonusDataTableFloat ( 
 
 	array < array < float > > result
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ("Ranked_Init_ReadServerBonusDataTableFloat() for :" + featureName + " ..... ")
 	#endif
 
@@ -168,19 +168,19 @@ array < array < float  > > function Ranked_Init_ReadServerBonusDataTableFloat ( 
 
 	int baseRow = GetDataTableRowMatchingStringValue( dataTable, col_feature , featureName )
 
-	#if DEV
+	#if DEVELOPER
 		Assert ( baseRow >= 0 , "baseRow for \""+ featureName + "\" not found" ) //mostly for dev
 	#endif
 
 	int rowCount = GetDataTableInt ( dataTable, baseRow, col_rowCount )
 	int columnCount = GetDataTableInt ( dataTable, baseRow, col_columnCount )
 
-	#if DEV
+	#if DEVELOPER
 	Assert ( rowCount >= 0 , "rowCount for \""+ featureName + "\" not found" ) //mostly for dev
 	Assert ( columnCount >= 0 , "columnCount for \""+ featureName + "\" not found" ) //mostly for dev
 	#endif
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug (
 			"\t" + featureName + " row on () "+ baseRow + "....." +
 			"\n\t" + featureName + " has "+ rowCount + " rows....." +
@@ -196,11 +196,11 @@ array < array < float  > > function Ranked_Init_ReadServerBonusDataTableFloat ( 
 			float cellValue = GetDataTableFloat ( dataTable,rowIdx + baseRow + 1 , colIdx + col_data0 )
 			rowValues.append(cellValue)
 
-			#if DEV
+			#if DEVELOPER
 				DEV_script_ranked_debug ( "\t\t [" + rowIdx + "][" + colIdx + "]: " + cellValue + "....." )
 			#endif
 		}
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ("\t\t--------------------------------------------")
 		#endif
 		result.append (rowValues)
@@ -228,7 +228,7 @@ int function Ranked_MMRToPoints ( float mmr , SharedRankedTierData tier )
 	float mmrWidth = GetTierMMRWidth ( tier ) //Tier of Master+ results in -1, since Master+ has no defined width
 	int pointWidth = GetTierPointWidth ( tier )
 
-	#if DEV
+	#if DEVELOPER
 		//DEV_script_ranked_debug ( mmrWidth + " : "  + pointWidth, 2 )
 	#endif
 
@@ -276,7 +276,7 @@ float function Ranked_Get_MMR_Overlap_Positive ()
 
 float function Ranked_PointsToMMR ( int points , SharedRankedTierData tier )
 {
-	#if DEV
+	#if DEVELOPER
 	DEV_script_ranked_debug ( "-----------------------------------------------------------------------" , 2 )
 	DEV_script_ranked_debug ( "------ Points to MMR: LP= " + points + " @ tier " + tier.name , 2 )
 	DEV_script_ranked_debug ( "-----------------------------------------------------------------------" ,2  )
@@ -314,7 +314,7 @@ float function Ranked_PointsToMMR ( int points , SharedRankedTierData tier )
 	if (scoreMin == 1) //rookie adjustment
 		scoreMin = 0
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( " - mmrWidth " + mmrWidth ,3  )
 		DEV_script_ranked_debug ( " - pointWidth " + pointWidth ,3  )
 		DEV_script_ranked_debug ( " - index " + index ,3  )
@@ -376,7 +376,7 @@ int function GetTierPointWidth ( SharedRankedTierData tier )
 
 void function MMR_Rank_MatchMMRCalculate ()
 {
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ("MMR  Recalculate start")
 	#endif
 
@@ -410,7 +410,7 @@ void function MMR_Rank_MatchMMRCalculate ()
 	}
 
 
-	#if DEV
+	#if DEVELOPER
 	if ( numPlayersWithMMR == 0 )
 	{
 		DEV_script_ranked_debug ( "MMR_Rank_MatchMMRCalculate - NumPlayerWithMMR = 0, Dev, thus skipping." )
@@ -448,7 +448,7 @@ void function MMR_Rank_MatchMMRCalculate ()
 	file.matchMMRInfo.variance = meanMMRVariance
 	file.matchMMRInfo.width = highestMMR - lowestMMR
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ("\tMMR_Rank_MatchMMRCalculate end: " )
 		DEV_script_ranked_debug ( "\t\tfile.matchMMRInfo.playerCount "  + file.matchMMRInfo.playerCount )
 		DEV_script_ranked_debug ( "\t\tfile.matchMMRInfo.standardDeviation " + file.matchMMRInfo.standardDeviation )
@@ -732,7 +732,7 @@ RankLadderPointsBreakdown function AdjustForEliminiations_S20 ( RankLadderPoints
 RankLadderPointsBreakdown function AdjustForEliminiations ( RankLadderPointsBreakdown breakdown , entity player )
 {
 
-	#if DEV
+	#if DEVELOPER
 		//Dev debugging
 		DEV_script_ranked_debug ( "-----------------------------------------------------------------------" )
 		DEV_script_ranked_debug ( "------AdjustForEliminiations for " + player.GetPlayerName() )
@@ -782,13 +782,13 @@ RankLadderPointsBreakdown function AdjustForEliminiations ( RankLadderPointsBrea
 	for (int i = 0; i < multiplier.len(); i++ )
 	{
 		float killValue = GetKillValue ( breakdown.placement, i + 1  )
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "Ascending Multipler["+i+"]: "  + multiplier[i] + " x \t\t\tkillValue["+ (i+1) +"]" + killValue, 2)
 		#endif
 		eliminationPoints += multiplier[i] * killValue
 	}
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( ">>>>> Elimination Bonus "  + eliminationPoints + " <<<<<", 2)
 	#endif
 
@@ -813,7 +813,7 @@ RankLadderPointsBreakdown function AdjustForEliminiations ( RankLadderPointsBrea
 float function GetEliminationBasedSkillDiffBonus ( RankLadderPointsBreakdown breakdown , entity player )
 {
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( "-----------------------------------------------------------------------" )
 		DEV_script_ranked_debug ( "------GetEliminationBasedSkillDiffBonus for " + player.GetPlayerName() )
 		DEV_script_ranked_debug ( "-----------------------------------------------------------------------" )
@@ -848,13 +848,13 @@ float function GetEliminationBasedSkillDiffBonus ( RankLadderPointsBreakdown bre
 	for (int i = 0; i < multiplier.len(); i++ )
 	{
 		float killValue = GetKillValue ( breakdown.placement, i + 1  )
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "Ascending Multipler["+i+"]: "  + multiplier[i] + " x \t\t\tkillValue["+ (i+1) +"]" + killValue, 2)
 		#endif
 		skillDiffAdjustment +=  multiplier[i]  * killValue
 	}
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( ">>>> skillDiffAdjustment Bonus "  + skillDiffAdjustment + "<<<<" , 2)
 	#endif
 
@@ -884,7 +884,7 @@ array < float > function GetEliminationMMRDelta ( entity player, array < float >
 		result.append( delta )
 	}
 
-	#if DEV
+	#if DEVELOPER
 		if( GetConVarBool( "script_ranked_debug" ) )
 		{
 			array <float> victimList
@@ -949,7 +949,7 @@ float function MMRDeltaToKillMultiplier ( float mmrDelta )
 RankLadderPointsBreakdown function AdjustForHighEndTiers ( RankLadderPointsBreakdown breakdown )
 {
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( "-----------------------------------------------------------------------" )
 		DEV_script_ranked_debug ( "------AdjustForHighEndTiers" )
 		DEV_script_ranked_debug ( "-----------------------------------------------------------------------" )
@@ -958,7 +958,7 @@ RankLadderPointsBreakdown function AdjustForHighEndTiers ( RankLadderPointsBreak
 	//if not high end, please leave OR if we are no longer adjusting for it with bonuses
 	if ( !breakdown.isHighTier || GetCurrentPlaylistVarBool ("Ranked_Scaling_EntryCost" , false ))
 	{
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "Not High Tier" , 1 )
 		#endif
 		return breakdown
@@ -969,7 +969,7 @@ RankLadderPointsBreakdown function AdjustForHighEndTiers ( RankLadderPointsBreak
 		breakdown.highEndAdjustment = int ( breakdown.netLP * ( GetHighEndLostMultiplier() - 1.0 ) )
 		breakdown.netLP = int ( float ( breakdown.netLP ) * GetHighEndLostMultiplier() )
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "startingLP: " + breakdown.startingLP , 1 )
 			DEV_script_ranked_debug ( "highEndAdjustment: " + breakdown.highEndAdjustment , 1 )
 			DEV_script_ranked_debug ( "net LP: " + breakdown.netLP , 1 )
@@ -987,7 +987,7 @@ RankLadderPointsBreakdown function AdjustForConvergence ( RankLadderPointsBreakd
 	if ( GetConVarBool( "ranked_disable_full_bonus_system" ) )
 		return breakdown
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( "-----------------------------------------------------------------------" )
 		DEV_script_ranked_debug ( "------AdjustForConvergence for " + player.GetPlayerName() )
 		DEV_script_ranked_debug ( "-----------------------------------------------------------------------" )
@@ -1002,7 +1002,7 @@ RankLadderPointsBreakdown function AdjustForConvergence ( RankLadderPointsBreakd
 	bool masterPlusConvergenceToggle = GetCurrentPlaylistVarBool( "ranked_tuning_var_harness", false )
 
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( "Player MMR: " + playerMMR , 1 )
 		DEV_script_ranked_debug ( "Player LP Starting: " +  breakdown.startingLP , 1 )
 		DEV_script_ranked_debug ( "Points As MMR: " + pointsInMMR , 1 )
@@ -1031,7 +1031,7 @@ RankLadderPointsBreakdown function AdjustForConvergence ( RankLadderPointsBreakd
 	float negativeMMRCutoff = GetCurrentPlaylistVarFloat( "ranked_tuning_var_reads_like_a_story", -1.0 )
 	float negativeMMRCutoffSecondary = GetCurrentPlaylistVarFloat( "ranked_tuning_var_who_cares", -0.5 )
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( "mmr_deltaLpToMMR " + mmr_deltaLpToMMR , 1 )
 		DEV_script_ranked_debug ( "positiveMMRCutoff" +  positiveMMRCutoff, 1 )
 		DEV_script_ranked_debug ( "positiveMMRCutoffSecondary" +  positiveMMRCutoffSecondary, 1 )
@@ -1065,7 +1065,7 @@ RankLadderPointsBreakdown function AdjustForConvergence ( RankLadderPointsBreakd
 			mmr_deltaLpToMMRAdjusted = max ( mmr_deltaLpToMMRAdjusted, 0 ) // from 1 to 1.5, will becomes negative.
 
 			float bonus_mutiplier = positiveMMRBase + mmr_deltaLpToMMRAdjusted * positiveMMRScalar
-			#if DEV
+			#if DEVELOPER
 				DEV_script_ranked_debug ( "positiveMMRScalar" +  positiveMMRScalar, 1 )
 				DEV_script_ranked_debug ( "positiveMMRBase" +  positiveMMRBase, 1 )
 				DEV_script_ranked_debug ( "mmr_deltaLpToMMRAdjusted" +  mmr_deltaLpToMMRAdjusted, 1 )
@@ -1082,7 +1082,7 @@ RankLadderPointsBreakdown function AdjustForConvergence ( RankLadderPointsBreakd
 				float winMultiplerCap = GetCurrentPlaylistVarFloat ( "ranked_tuning_var_wraith" , 1.5 )
 				bonus_mutiplier  = min (  bonus_mutiplier, winMultiplerCap)
 
-				#if DEV
+				#if DEVELOPER
 					DEV_script_ranked_debug ( "Positive Delta Winning case - amp gains", 1 )
 					DEV_script_ranked_debug ( "winMultiplerCap " + winMultiplerCap , 1 )
 					DEV_script_ranked_debug ( "bonus_mutiplier" +  bonus_mutiplier, 1 )
@@ -1113,14 +1113,14 @@ RankLadderPointsBreakdown function AdjustForConvergence ( RankLadderPointsBreakd
 				if ( oldRank.tier.isTopEnd )
 					highEndMultiplier *= GetCurrentPlaylistVarFloat ( "ranked_tuning_var_high_plus_negative" , 1.0 )
 
-				#if DEV
+				#if DEVELOPER
 					DEV_script_ranked_debug ( "Positive Delta Losing case - reduce loses", 1 )
 					DEV_script_ranked_debug ( "lostMultiplerCap " + lostMultiplerCap , 1 )
 					DEV_script_ranked_debug ( "bonus_mutiplier" +  bonus_mutiplier, 1 )
 				#endif
 			}
 
-			#if DEV
+			#if DEVELOPER
 				DEV_script_ranked_debug ( "highEndMultiplier" +  highEndMultiplier, 1 )
 			#endif
 
@@ -1147,7 +1147,7 @@ RankLadderPointsBreakdown function AdjustForConvergence ( RankLadderPointsBreakd
 			//all variables here are negatives. so we are using - to ensure signs
 			float reduction_mutiplier = negativeMMRBase - ( mmr_deltaLpToMMRAdjusted * negativeMMRScalar )
 
-			#if DEV
+			#if DEVELOPER
 				DEV_script_ranked_debug ( "Negative Case: "  )
 				DEV_script_ranked_debug ( "negativeMMRScalar" +  negativeMMRScalar, 1 )
 				DEV_script_ranked_debug ( "negativeMMRBase" +  negativeMMRBase, 1 )
@@ -1186,7 +1186,7 @@ RankLadderPointsBreakdown function AdjustForConvergence ( RankLadderPointsBreakd
 
 			}
 
-			#if DEV
+			#if DEVELOPER
 				DEV_script_ranked_debug ( "reduction_mutiplier" +  reduction_mutiplier, 1 )
 			#endif
 			// if we need to do some extra negative pull
@@ -1195,7 +1195,7 @@ RankLadderPointsBreakdown function AdjustForConvergence ( RankLadderPointsBreakd
 			float skillAmp = GetConvergenceMultiplerModNegative (mmr_deltaLpToMMR )
 			reduction_mutiplier *= skillAmp
 
-			#if DEV
+			#if DEVELOPER
 				DEV_script_ranked_debug ( "reduction_mutiplier post_skill" +  reduction_mutiplier, 1 )
 				DEV_script_ranked_debug ( "skillAmp" +  skillAmp, 1 )
 
@@ -1236,7 +1236,7 @@ RankLadderPointsBreakdown function AdjustForConvergence ( RankLadderPointsBreakd
 	}
        
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( "\t>>>>>convergenceBonus: " +  breakdown.convergenceBonus + " <<<<" )
 	#endif
 
@@ -1262,7 +1262,7 @@ int function GetResetLPTarget ( float playerTargetMMR )
 RankLadderPointsBreakdown function AdjustForTop5Streak( RankLadderPointsBreakdown breakdown, entity player )
 {
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( "-----------------------------------------------------------------------" )
 		DEV_script_ranked_debug ( "------AdjustForTop5Streak for " + player.GetPlayerName() )
 		DEV_script_ranked_debug ( "-----------------------------------------------------------------------" )
@@ -1282,7 +1282,7 @@ RankLadderPointsBreakdown function AdjustForTop5Streak( RankLadderPointsBreakdow
 	breakdown.top5Streak = streakCount
 	breakdown.top5StreakBonusValue = Ranked_GetTop5StreakBonusValueFromStreak ( streakCount )
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( "streakCount: " + streakCount, 1 )
 		DEV_script_ranked_debug ( "top5StreakBonusValue: " + breakdown.top5StreakBonusValue, 1 )
 	#endif
@@ -1309,7 +1309,7 @@ RankLadderPointsBreakdown function AdjustForHighSkillKill( RankLadderPointsBreak
 array< int > function Ranked_GetHighSkillKillBonus ( entity player, int rankScore , table< string, RankedVictimData >  killsPlayerByHwUID, table< string, RankedVictimData > assistsPlayerByHwUID, int placement)
 {
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( "-------------------------------------------" )
 		DEV_script_ranked_debug ( "Ranked_GetHighSkillKillBonus for player: " + player.GetPlayerName()  )
 		DEV_script_ranked_debug ( "-------------------------------------------"  )
@@ -1317,7 +1317,7 @@ array< int > function Ranked_GetHighSkillKillBonus ( entity player, int rankScor
 
 	int killValue = RankedGetPointsForKillsByPlacement ( placement )
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( "placement: " + placement , 1 )
 		DEV_script_ranked_debug ( "killValuer: " + killValue , 1 )
 	#endif
@@ -1334,7 +1334,7 @@ array< int > function Ranked_GetHighSkillKillBonus ( entity player, int rankScor
 	int highSkillKillCount = 0
 	int totalBonus = 0
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( "killsPlayerByHwUID.len: " + killsPlayerByHwUID.len() , 1 )
 		DEV_script_ranked_debug ( "assistsPlayerByHwUID.len: " + assistsPlayerByHwUID.len() , 1 )
 		DEV_script_ranked_debug ( "victimRP.len: " + victimRP.len() , 1 )
@@ -1356,7 +1356,7 @@ array< int > function Ranked_GetHighSkillKillBonus ( entity player, int rankScor
 	result.append ( highSkillKillCount )
 	result.append ( int ( valuePerHighSkillKill * highSkillKillCount * killValue ) )
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( "valuePerHighSkillKill: " + valuePerHighSkillKill , 1 )
 		DEV_script_ranked_debug ( "highSkillKillCount: " + highSkillKillCount , 1 )
 		DEV_script_ranked_debug ( "result[0]: " + result[0] , 1 )
@@ -1529,7 +1529,7 @@ int function GetLPResetTarget ()
 RankLadderPointsBreakdown function AdjustForProvisionalGames_S20 ( RankLadderPointsBreakdown breakdown, entity player )
 {
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( "-------------------------------------------" )
 		DEV_script_ranked_debug ( "AdjustForProvisionalGames_S20" + player.GetPlayerName()  )
 		DEV_script_ranked_debug ( "-------------------------------------------"  )
@@ -1561,7 +1561,7 @@ RankLadderPointsBreakdown function AdjustForProvisionalGames_S20 ( RankLadderPoi
 	Assert ( provisionalsGamesCompleted >= 0, "Number of provisionals games played should not be negative" )
 	Ranked_SetXProgMergedPersistenceData( player, RANKED_PROVISIONAL_MATCH_COUNT_PERSISTENCE_VAR_NAME, provisionalsGamesCompleted + 1 )
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( "increasing `rankedProvisionalMatchesCompleted` to :" + ( provisionalsGamesCompleted + 1 ), 1  )
 	#endif
 
@@ -1583,7 +1583,7 @@ RankLadderPointsBreakdown function AdjustForProvisionalGames_S20 ( RankLadderPoi
 		SharedRankedDivisionData oldDivison 			= Ranked_GetHistoricalRankedDivisionFromScore ( previousRankedScore, previousRankedPeriodRef )
 		SharedRankedDivisionData ornull currentDivision = FindRankDivisionWithSameNameInCurrentRankPeriod ( oldDivison.divisionName )
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "previousRankedScore " + previousRankedScore )
 			DEV_script_ranked_debug ( "oldDivison.divisionName " + oldDivison.divisionName )
 		#endif
@@ -1597,13 +1597,13 @@ RankLadderPointsBreakdown function AdjustForProvisionalGames_S20 ( RankLadderPoi
 			SharedRankedDivisionData newDivision 	= GetCurrentRankedDivisions()[resetIndex]
 			lastSeasonDivisionFloor 				= newDivision.scoreMin
 
-			#if DEV
+			#if DEVELOPER
 				DEV_script_ranked_debug ( "resetIndex " + resetIndex )
 				DEV_script_ranked_debug ( "newDivision.divisionName " + newDivision.divisionName )
 			#endif
 		}
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "lastSeasonDivisionFloor " + lastSeasonDivisionFloor )
 		#endif
 
@@ -1616,7 +1616,7 @@ RankLadderPointsBreakdown function AdjustForProvisionalGames_S20 ( RankLadderPoi
 		SharedRankedDivisionData resetRank 	= GetCurrentRankedDivisionFromScore( resetPoint )
 		breakdown.provisionalMatchBonus 	= resetRank.scoreMin
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "-finding new placement spot-" )
 			DEV_script_ranked_debug ( "playerMMR "  + playerMMR )
 			DEV_script_ranked_debug ( "mmrTierDrop "  + mmrTierDrop )
@@ -1661,7 +1661,7 @@ RankLadderPointsBreakdown function AdjustForProvisionalGames (RankLadderPointsBr
 	// - loses are fully forgiven
 	// Do not count placement match if player has loss forgiveness and also lost
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( "-------------------------------------------" )
 		DEV_script_ranked_debug ( "Adjusting for Provisional Game " + player.GetPlayerName()  )
 		DEV_script_ranked_debug ( "-------------------------------------------"  )
@@ -1674,7 +1674,7 @@ RankLadderPointsBreakdown function AdjustForProvisionalGames (RankLadderPointsBr
 		{
 			breakdown.convergenceBonus = 0
 
-			#if DEV
+			#if DEVELOPER
 				DEV_script_ranked_debug ( "convergenceBonus < 0, setting to zero " , 1  )
 			#endif
 		}
@@ -1683,7 +1683,7 @@ RankLadderPointsBreakdown function AdjustForProvisionalGames (RankLadderPointsBr
 		{
 			breakdown.skillDiffBonus = 0
 
-			#if DEV
+			#if DEVELOPER
 				DEV_script_ranked_debug ( "skillDiffBonus < 0, setting to zero" , 1  )
 			#endif
 		}
@@ -1701,7 +1701,7 @@ RankLadderPointsBreakdown function AdjustForProvisionalGames (RankLadderPointsBr
 
 		Ranked_SetXProgMergedPersistenceData( player, RANKED_PROVISIONAL_MATCH_COUNT_PERSISTENCE_VAR_NAME, provisionalsGamesCompleted + 1 )
 
-		#if DEV
+		#if DEVELOPER
 		DEV_script_ranked_debug ( "increasing `rankedProvisionalMatchesCompleted` to :" + provisionalsGamesCompleted + 1 , 1  )
 		#endif
 
@@ -1751,7 +1751,7 @@ RankLadderPointsBreakdown function AdjustForProvisionalGames (RankLadderPointsBr
 		provisionalConvergenceBonus += provisionalFlatBonus
 		provisionalConvergenceBonus += provisionalScalingBonus
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "---Provisional Convergence---" , 1 )
 			DEV_script_ranked_debug ( "Player MMR: " + playerMMR , 1 )
 			DEV_script_ranked_debug ( "Player LP Starting: " +  breakdown.startingLP , 1 )
@@ -1782,7 +1782,7 @@ RankLadderPointsBreakdown function AdjustForProvisionalGames (RankLadderPointsBr
 
 		breakdown.provisionalMatchBonus += provisionalConvergenceBonus
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "slightlyLessThanOne: " + slightlyLessThanOne , 1 )
 			DEV_script_ranked_debug ( "startingLP: " +  breakdown.startingLP , 1 )
 			DEV_script_ranked_debug ( "targetLP: " + targetLP , 1 )
@@ -1803,12 +1803,12 @@ RankLadderPointsBreakdown function AdjustForProvisionalGames (RankLadderPointsBr
 			int pityMax = GetCurrentPlaylistVarInt( "ranked_tuning_var_sadness", 90 )
 			int pityBonus = RandomIntRange ( pityMin , pityMax )
 			breakdown.provisionalMatchBonus += pityBonus
-			#if DEV
+			#if DEVELOPER
 				DEV_script_ranked_debug ( "pityBonus: " + pityBonus , 1 )
 			#endif
 		}
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( ">>>>>>breakdown.provisionalMatchBonus: " + breakdown.provisionalMatchBonus + " <<<<<<<<<<<" , 1 )
 		#endif
 	}
@@ -2173,7 +2173,7 @@ RankLadderPointsBreakdown function AdjustForGameAbandoned( RankLadderPointsBreak
 	//breakdown.convergenceBonus = 0
 	//breakdown.skillDiffBonus   = 0
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ("AdjustForGameAbandoned() start" )
 	#endif
 
@@ -2189,7 +2189,7 @@ RankLadderPointsBreakdown function AdjustForGameAbandoned( RankLadderPointsBreak
 		breakdown.penaltyPointsForAbandoning = int ( breakdown.penaltyPointsForAbandoning * ( GetHighEndLostMultiplier() ) )
 	}
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ("AdjustForGameAbandoned() After" )
 	#endif
 
@@ -2199,7 +2199,7 @@ RankLadderPointsBreakdown function AdjustForGameAbandoned( RankLadderPointsBreak
 RankLadderPointsBreakdown function AdjustForDemotion( RankLadderPointsBreakdown breakdown , entity player )
 {
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ("AdjustForDemotion() Start" + player.GetPlayerName() ,3 )
 		DEV_script_ranked_debug ( "breakdown.startingLP: " + breakdown.startingLP , 3 )
 		DEV_script_ranked_debug ( "breakdown.finalLP : " + breakdown.finalLP  , 3 )
@@ -2217,7 +2217,7 @@ RankLadderPointsBreakdown function AdjustForDemotion( RankLadderPointsBreakdown 
 
 		int bufferSize = GetDemotionProtectionBuffer ( player )
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "bufferSize : " + bufferSize  , 3 )
 			DEV_script_ranked_debug ( "breakdown.netLP: " + breakdown.netLP , 3 )
 		#endif
@@ -2232,7 +2232,7 @@ RankLadderPointsBreakdown function AdjustForDemotion( RankLadderPointsBreakdown 
 			breakdown.netLP += breakdown.demotionProtectionAdjustment
 			breakdown.finalLP                           = oldRank.scoreMin
 
-			#if DEV
+			#if DEVELOPER
 				DEV_script_ranked_debug ( "---------------PROTECTED CASE---------------------------" , 3 )
 				DEV_script_ranked_debug ( "breakdown.demotionProtectionAdjustment: " + breakdown.demotionProtectionAdjustment , 3 )
 				DEV_script_ranked_debug ( "breakdown.netLP: " + breakdown.netLP , 3 )
@@ -2248,7 +2248,7 @@ RankLadderPointsBreakdown function AdjustForDemotion( RankLadderPointsBreakdown 
 			breakdown.netLP   -= demotionalPenality
 			breakdown.finalLP -= demotionalPenality
 
-			#if DEV
+			#if DEVELOPER
 				DEV_script_ranked_debug ( "---------------DEMOTION ED CASE---------------------------" , 3 )
 				DEV_script_ranked_debug ( "breakdown.demotionPenality: " + breakdown.demotionPenality , 3 )
 				DEV_script_ranked_debug ( "breakdown.netLP: " + breakdown.netLP , 3 )
@@ -2303,13 +2303,13 @@ RankLadderPointsBreakdown function AdjustForTierPromotion( RankLadderPointsBreak
 	SharedRankedDivisionData oldRank = GetCurrentRankedDivisionFromScore( breakdown.startingLP ) //Deliberately only doing score, so will give us Master instead of Apex.
 	SharedRankedDivisionData newRank = GetCurrentRankedDivisionFromScore( breakdown.finalLP ) //Deliberately only doing score, so will give us Master instead of Apex.
 
-	#if DEV
+	#if DEVELOPER
 	if ( !IsLobby() )
 	{
 	#endif
 	Assert( player.p.placementStatsRecorded ) // final placements stats are required to properly evaluate performance
 
-	#if DEV
+	#if DEVELOPER
 	}
 	#endif
 	if ( RankedTrials_PlayerHasAssignedTrial( player ) )
@@ -2321,7 +2321,7 @@ RankLadderPointsBreakdown function AdjustForTierPromotion( RankLadderPointsBreak
 		{
 			case eRankedTrialState.INCOMPLETE:
 
-				#if DEV
+				#if DEVELOPER
 					DEV_script_ranked_debug ( "AdjustForPromotion: Ranked Trial - INCOMPLETE" )
 				#endif
 
@@ -2333,7 +2333,7 @@ RankLadderPointsBreakdown function AdjustForTierPromotion( RankLadderPointsBreak
 
 			case eRankedTrialState.SUCCESS:
 
-				#if DEV
+				#if DEVELOPER
 					DEV_script_ranked_debug ( "AdjustForPromotion: Ranked Trial - SUCCESS" )
 				#endif
 
@@ -2349,7 +2349,7 @@ RankLadderPointsBreakdown function AdjustForTierPromotion( RankLadderPointsBreak
 
 			case eRankedTrialState.FAILURE:
 
-				#if DEV
+				#if DEVELOPER
 					DEV_script_ranked_debug ( "AdjustForPromotion: Ranked Trial - FAILURE" )
 				#endif
 
@@ -2375,7 +2375,7 @@ RankLadderPointsBreakdown function AdjustForTierPromotion( RankLadderPointsBreak
 	bool tierUp 		= newRank.index > oldRank.index && newRank.tier != oldRank.tier
 	if ( tierUp && RankedTrials_PlayerShouldBePlacedIntoTrialForTier( player, nextRankTierIdx ) ) // they need to enter Trials State
 	{
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "AdjustForPromotion: Ranked Trial - ASSIGNED" )
 		#endif
 
@@ -2482,7 +2482,7 @@ void function Ranked_UpdateRankedScoreProgressForPlayer( entity player )
 		inProgressScore -= entryCost
 		inProgressScore += placementScore + combatScore + top5Streak + highSkillKill
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "!!!!!!!!!!!!!Ranked_UpdateRankedScoreProgressForPlayer " + player.GetPlayerName() , 3 )
 			DEV_script_ranked_debug ( "Ranked_UpdateRankedScoreProgress for entry cost " + entryCost, 3 )
 			DEV_script_ranked_debug ( "Ranked_UpdateRankedScoreProgress for combatScore " + combatScore, 3 )
@@ -2545,7 +2545,7 @@ int function RankedScoreProgress_CalculateCurrentHighSkillKillBonus ( entity pla
 //#matchend #matchending
 void function PrepareGameSummaryForPointCalculation( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( "-----------------------------------------------------------------------" )
 		DEV_script_ranked_debug ( "------Game Summary Score Calculation for " + player.GetPlayerName() )
 		DEV_script_ranked_debug ( "-----------------------------------------------------------------------" )
@@ -2587,11 +2587,11 @@ void function PrepareGameSummaryForPointCalculation( entity player )
 	breakdown.totalUniqueSquadKills = Ranked_GetTotalSquadKillsUniqueByPlayer ( player )
        
 
-	#if DEV // DEV simulates Ranked Match flow from Lobby
+	#if DEVELOPER // DEV simulates Ranked Match flow from Lobby
 	if ( GetCurrentPlaylistVarBool ( "ranked_premature_match_end" , true ) && !IsLobby() && GetGameState() < eGameState.Playing )
 	#else
 	if ( GetCurrentPlaylistVarBool ( "ranked_premature_match_end" , true ) && GetGameState() < eGameState.Playing )
-	#endif // #if DEV
+	#endif // #if DEVELOPER
 	{
 		breakdown.placement = GetCurrentPlaylistVarInt ( "ranked_early_quit_placement", 20 )
 	}
@@ -2620,7 +2620,7 @@ void function PrepareGameSummaryForPointCalculation( entity player )
 	breakdown.assistUnique = breakdown.assistsPlayerByHwUID.len()
 	breakdown.participationUnique = breakdown.participationPlayerByHwUID.len()
 
-	#if DEV
+	#if DEVELOPER
 		PrintRankLadderPointsBreakdown ( breakdown, 1, "PrepareGameSummaryForPointCalculation for " + player.GetPlayerName()  )
 	#endif
 
@@ -2648,7 +2648,7 @@ void function PostGameCalculateLadderPointResult( entity player, RankLadderPoint
                                                               
         
 
-		#if DEV
+		#if DEVELOPER
 			//QA tools
 			breakdown = AdjustForQAPlaylistOverrides ( breakdown, player )
 		#endif
@@ -2661,7 +2661,7 @@ void function PostGameCalculateLadderPointResult( entity player, RankLadderPoint
 		breakdown = AdjustForTierPromotion ( breakdown, player )
 	}
 
-	#if DEV
+	#if DEVELOPER
 		PrintRankLadderPointsBreakdown ( breakdown, 0 , "End of Ranked Adjustments" )
 	#endif
 	SetPlayerRankedGameScoringData( player, breakdown )
@@ -2672,7 +2672,7 @@ RankLadderPointsBreakdown function ValidateAndRecalculateBreakdown ( RankLadderP
 	//recheck and recaluclate final, and net LP gains
 	breakdown.placementScore = ( breakdown.wasAbandoned ) ? Ranked_GetPointsForPlacement ( 0 ) : Ranked_GetPointsForPlacement ( breakdown.placement )
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( "ValidateAndRecalculateBreakdown() start" )
 	#endif
 
@@ -2705,7 +2705,7 @@ RankLadderPointsBreakdown function ValidateAndRecalculateBreakdown ( RankLadderP
 		breakdown.finalLP                  = breakdown.startingLP
 		breakdown.netLP 				   = 0
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "Loss forgiven applied to scoring" )
 		#endif
 	}
@@ -2717,7 +2717,7 @@ RankLadderPointsBreakdown function ValidateAndRecalculateBreakdown ( RankLadderP
 		breakdown.finalLP                  = breakdown.startingLP
 		breakdown.netLP 				   = 0
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "Provisional loss forgiveneess applied" )
 		#endif
 	}
@@ -2729,7 +2729,7 @@ RankLadderPointsBreakdown function ValidateAndRecalculateBreakdown ( RankLadderP
 		breakdown.netLP += breakdown.lossProtectionAdjustment
 	}
 
-	#if DEV
+	#if DEVELOPER
 		PrintRankLadderPointsBreakdown ( breakdown )
 	#endif
 
@@ -2741,7 +2741,7 @@ void function SetPlayerRankedGameScoringData( entity player, RankLadderPointsBre
 {
 	WritePlayerPostgameResultInPersistence ( player , breakdown )
 
-		#if DEV
+		#if DEVELOPER
 		//it is possible to trigger this flow from the lobby for  testing, and we would want to stop here if that is the case
 		if ( IsLobby() )
 			return
@@ -2749,7 +2749,7 @@ void function SetPlayerRankedGameScoringData( entity player, RankLadderPointsBre
 
 	if ( IsRankedInSeason() )
 	{
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ("Ranked in season" )
 			DEV_script_ranked_debug ("breakdown.finalLP - breakdown.startingLP " + ( breakdown.finalLP - breakdown.startingLP) )
 		#endif
@@ -2761,7 +2761,7 @@ void function SetPlayerRankedGameScoringData( entity player, RankLadderPointsBre
 	}
 	else
 	{
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ("Ranked NOT in season" )
 		#endif
 
@@ -2770,7 +2770,7 @@ void function SetPlayerRankedGameScoringData( entity player, RankLadderPointsBre
 
 	if ( bool ( GetRankedGameData( player,  "lastGameRankedForgiveness" ) ) )
 	{
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ("Setting lastGameRankedForgiveness" )
 		#endif
 		//SetPlayerLossForgiveness( player, eLossForgivenessReason.TEAMMATE_ABANDON ) // TODO: Differentiate between this and not full party
@@ -2778,7 +2778,7 @@ void function SetPlayerRankedGameScoringData( entity player, RankLadderPointsBre
 
 	player.p.rankPointBreakdownCache = breakdown
 
-	#if DEV
+	#if DEVELOPER
 	PrintRankLadderPointsBreakdown ( breakdown, 1 , "This is going into SetPlayerMatchResult()" )
 	#endif
 
@@ -2893,7 +2893,7 @@ table< string, RankedVictimData > function Ranked_GetPlayerUniqueParticipationLi
 
 void function OnPlayerGameSummaryKill( entity player, entity victim, int increment )
 {
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( player.GetPlayerName() + "has KILLED " + victim.GetPlayerName() )
 	#endif
 
@@ -2919,7 +2919,7 @@ void function OnPlayerGameSummaryKill( entity player, entity victim, int increme
 
 		data.killsPlayerByHwUID[ victimHwUID ] <- v
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ("\t Victim found in participation list , moving to kills.")
 		#endif
 	}
@@ -2935,7 +2935,7 @@ void function OnPlayerGameSummaryKill( entity player, entity victim, int increme
 
 		data.killsPlayerByHwUID[ victimHwUID ] <- v
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ("\t - Victim found in assists list, moving to kills.")
 		#endif
 	}
@@ -2948,11 +2948,11 @@ void function OnPlayerGameSummaryKill( entity player, entity victim, int increme
 
 		data.killsPlayerByHwUID[ victimHwUID ] <- v
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ("\t - This is a unique kill.")
 		#endif
 	}
-	#if DEV
+	#if DEVELOPER
 	else
 	{
 		DEV_script_ranked_debug ( "This is duplicate kill" )
@@ -2963,7 +2963,7 @@ void function OnPlayerGameSummaryKill( entity player, entity victim, int increme
 
 void function OnPlayerGameSummaryAssist( entity player, entity victim, int increment )
 {
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( player.GetPlayerName() + "has ASSISTED in elimination of " + victim.GetPlayerName() )
 	#endif
 
@@ -2979,7 +2979,7 @@ void function OnPlayerGameSummaryAssist( entity player, entity victim, int incre
 
 	if ( inKills || inAssists )
 	{
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ("\tVictmFound in kills/assists, do nothing.")
 		#endif
 		return
@@ -2995,7 +2995,7 @@ void function OnPlayerGameSummaryAssist( entity player, entity victim, int incre
 
 		data.assistsPlayerByHwUID[ victimHwUID ] <- v
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ("\t - Victim found in participation list , moving to kills.")
 		#endif
 	}
@@ -3008,7 +3008,7 @@ void function OnPlayerGameSummaryAssist( entity player, entity victim, int incre
 
 		data.assistsPlayerByHwUID[ victimHwUID ] <- v
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "This is new assists" )
 		#endif
 	}
@@ -3021,7 +3021,7 @@ void function OnPlayerGameSummaryKillParticipation( entity player, entity victim
 	if ( !IsAlive(player) )
 		return
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( player.GetPlayerName() + "has participated in elimination of " + victim.GetPlayerName() )
 	#endif
 
@@ -3038,7 +3038,7 @@ void function OnPlayerGameSummaryKillParticipation( entity player, entity victim
 
 	if ( inKills || inAssists || inParticipation )
 	{
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "\t - participation is not unique. Do nothing." )
 		#endif
 
@@ -3053,7 +3053,7 @@ void function OnPlayerGameSummaryKillParticipation( entity player, entity victim
 
 		data.participationPlayerByHwUID[ victimHwUID ] <- v
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "\t - participation is unique." )
 		#endif
 	}
@@ -3062,7 +3062,7 @@ void function OnPlayerGameSummaryKillParticipation( entity player, entity victim
 
 void function OnPlayerGameSummaryKnockdown( entity player, entity victim, int increment, var damageInfo)
 {
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( player.GetPlayerName() + "has knocked down " + victim.GetPlayerName() )
 	#endif
 
@@ -3083,7 +3083,7 @@ void function OnPlayerGameSummaryKnockdown( entity player, entity victim, int in
 
 		data.knockdownPlayerByHwUID[ victimHwUID ] <- v
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "\tPreviously knocked down assisted, promotion to assists." )
 		#endif
 	}
@@ -3096,7 +3096,7 @@ void function OnPlayerGameSummaryKnockdown( entity player, entity victim, int in
 
 		data.knockdownPlayerByHwUID[ victimHwUID ] <- v
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "\tThis is a new knockdown." )
 		#endif
 	}
@@ -3111,7 +3111,7 @@ void function OnPlayerGameSummaryKnockdownAssist( entity player, entity victim, 
 
 	RankedGameSummarySquadData data = RankedGameSummary_GetPlayerData( player )
 
-	#if DEV
+	#if DEVELOPER
 		DEV_script_ranked_debug ( player.GetPlayerName() + "has assisted knocking down " + victim.GetPlayerName() )
 	#endif
 
@@ -3124,7 +3124,7 @@ void function OnPlayerGameSummaryKnockdownAssist( entity player, entity victim, 
 
 		data.knockdownAssistPlayerByHwUID[ victimHwUID ] <- v
 
-		#if DEV
+		#if DEVELOPER
 			DEV_script_ranked_debug ( "\tThis is a new knockdown assits." )
 		#endif
 	}

@@ -891,7 +891,7 @@ Scripts:
 	skits/spectreshack/sh_spectreshack_common.gnut
 	skits/spectreshack/_skit_spectreshack_robonightmare.nut
 ]
-When: "CLIENT"
+When: "DEV"
 Scripts:
 [
 	skits/examples/sk_example_simple.nut
@@ -965,14 +965,14 @@ Scripts:
 [
 	sv_pilots_passage.gnut
 ]
-When: "CLIENT"
+When: "SERVER && DEV"
 Scripts:
 [
 	sh_dev_tests.gnut
 	sh_dev_utility.nut
 	sh_dev_items.gnut
 ]
-When: "CLIENT"
+When: "DEV"
 Scripts:
 [
 	dev/_bandwidth_stress_test.gnut
@@ -1014,7 +1014,7 @@ Scripts:
 [
 	_sh_odl_utils.gnut
 ]
-When: "CLIENT"
+When: "DEV"
 Scripts:
 [
 	sh_safepositionlist.nut

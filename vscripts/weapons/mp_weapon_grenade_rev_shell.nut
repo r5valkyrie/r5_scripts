@@ -336,7 +336,7 @@ vector function GetNextWaypoint( vector currentPosition, PathingState pathingSta
 		skips++
 	}
 
-#if DEV
+#if DEVELOPER
 	if ( skips >= MAX_SKIPS_PER_FRAME )
 		printt( "REVGRENADE: Rev grenade had too many waypoints to skip!" )
 #endif
@@ -356,7 +356,7 @@ void function SampleTargetPosition( PathingState pathingState )
 			return
 	}
 
-	//DebugDrawSphere( nextPosition, 16.0, < 0, 255, 0 >, true, 5.0 )
+	//DebugDrawSphere( nextPosition, 16.0, 0, 255, 0, true, 5.0 )
 
 	pathingState.waypoints.append( nextPosition )
 }
@@ -390,7 +390,7 @@ void function FlyToTarget_Thread( entity target, vector initialPosition, entity 
 
 	vector currentPosition	= mover.GetOrigin()
 	vector targetPosition	= GetNextWaypoint( currentPosition, pathingState ) + HEIGHT_OFFSET
-	//DebugDrawSphere( targetPosition, 16.0, < 255, 0, 0 >, true, 20.0 )
+	//DebugDrawSphere( targetPosition, 16.0, 255, 0, 0, true, 20.0 )
 	vector movementVector 	= targetPosition - currentPosition
 	float travelTime		= Length( movementVector ) / pathingState.velocity
 	float bailTime 			= Time() + REV_SHELL_GIVE_UP_TIME // Grenade gives up
@@ -494,7 +494,7 @@ void function FlyToTarget_Thread( entity target, vector initialPosition, entity 
 				targetPosition = GetNextWaypoint( currentPosition, pathingState ) + HEIGHT_OFFSET
 
 			//DebugDrawText( targetPosition, string( Distance( currentPosition, targetPosition ) ), true, 0.0 )
-			//DebugDrawSphere( targetPosition, 16.0, < 255, 0, 0 >, true, travelTime )
+			//DebugDrawSphere( targetPosition, 16.0, 255, 0, 0, true, travelTime )
 		}
 
 		Assert( currentPosition != targetPosition )

@@ -1,4 +1,4 @@
-
+               
 global function PathTT_Init
 global function PathTT_OnNetworkRegistration
 global function IsPathTTEnabled
@@ -9,7 +9,6 @@ global function DEV_TestRapidRingEntryAndDeath
 global function PathTT_PlayAnnouncerLineForPlayersInRing
 global function PathTT_AddCallbackOnHologramChanged
 global function GetPathfinderTTAssetsToPrecache
-global function InitPathTTRingTVSystem
 #endif
 #if CLIENT
 global function ClInitPathTTRingTVEntities
@@ -98,9 +97,6 @@ struct
 	float lastBellDingTime
 
 	array< void functionref( int ) > OnHologramChangedCallbacks
-
-	entity hologramGlovesFX
-	entity hologramTextFX
 #endif
 
 #if CLIENT
@@ -119,12 +115,23 @@ void function PathTT_OnNetworkRegistration()
 	Remote_RegisterClientFunction( "SCB_PathTT_SetMessageIdxToCustomSpeakerIdx", "int", 0, NUM_TOTAL_DIALOGUE_QUEUES )
 	Remote_RegisterClientFunction( "SCB_PathTT_PlayRingAnnouncerDialogue", "int", 0, eRingAnnouncerLines._count )
 	RegisterNetworkedVariable( "PathTT_IsCrowdActive", SNDC_GLOBAL, SNVT_BOOL, false )
+
+	#if CLIENT
+		RegisterNetVarBoolChangeCallback( "PathTT_IsCrowdActive", OnIsCrowdActiveChanged )
+	#endif
 }
 
 void function PathTT_Init()
 {
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 
+	#if SERVER
+	InitPathTTRingTVSystem()
+	#endif
+
+	#if CLIENT
+	ClInitPathTTRingTVEntities()
+	#endif
 }
 
 void function EntitiesDidLoad()
@@ -133,14 +140,14 @@ void function EntitiesDidLoad()
 		return
 
 	RegisterCSVDialogue( RING_CSV_DIALOGUE )
-	RegisterSignal( "OnStartTouch" )
-	RegisterSignal( "OnEndTouch" )
 	PrecacheWeapon( $"mp_weapon_melee_boxing_ring" )
 	PrecacheWeapon( $"melee_boxing_ring" )
-	PrecacheParticleSystem( $"P_arena_hologram_text" )
-	PrecacheParticleSystem( $"P_arena_hologram_gloves" )
 
 	InitPathTTBoxingRing()
+
+	#if SERVER
+		InitPathTTRingTVSystemEntities()
+	#endif
 
 	InitPathTTBoxingRingEntities()
 }
@@ -154,6 +161,7 @@ void function InitPathTTBoxingRing()
 	Bleedout_AddCallback_OnPlayerStartBleedout( PathTT_OnPlayerBleedoutStarted )
 	AddDamageFinalCallback( "player", PathTT_OnPlayerDamaged )
 	AddCallback_OnClientConnected( OnPlayerConnectedOrReconnected )
+	AddCallback_OnClientConnectionRestored(OnPlayerConnectedOrReconnected)
 	file.customQueueIdx = RequestCustomDialogueQueueIndex()
 
 	RegisterSignal( "GivePathTTMeleeWeaponsToPlayer" )
@@ -163,6 +171,8 @@ void function InitPathTTBoxingRing()
 #if CLIENT
 	AddCallback_OnWeaponStatusUpdate( Boxing_WeaponStatusCheck )
 #endif
+
+	PrecacheScriptString( BOXING_RING_SCRIPTNAME )
 
 	FlagInit( FLAG_ARENA_LIGHTS_01 )
 	FlagInit( FLAG_ARENA_LIGHTS_02 )
@@ -226,6 +236,7 @@ void function InitPathTTBoxingRingEntities()
 			ambient.SetEnabled( false )
 			file.boxingRingCrowdAmbients_AudioPlaced.append( ambient )
 		}
+
 	#endif
 
 	#if SERVER
@@ -294,7 +305,6 @@ void function InitPathTTBoxingRingEntities()
 
 		PathTT_UpdateRingCrowdAudio()
 
-		PathTT_RegisterHologramParticles()
 		thread PathTT_AlternateHolograms()
 	#endif
 }
@@ -332,51 +342,17 @@ bool function GetPathfinderTTAssetsToPrecache( array< string > models, array< st
 #endif
 
 #if SERVER
-void function PathTT_RegisterHologramParticles()
-{
-	array<entity> pents = GetEntArrayByClass_Expensive( "info_particle_system" )
-	foreach ( entity p in pents )
-	{
-		if ( p.HasKey( "script_flag" ) )
-		{
-			var flag = p.kv.script_flag
-			if ( flag == FLAG_ARENA_TOP_GLOVES )
-			{
-				file.hologramGlovesFX = p
-				print( "Registered hologram gloves FX" )
-			}
-			else if ( flag == FLAG_ARENA_TOP_TEXT )
-			{
-				file.hologramTextFX = p
-				print( "Registered hologram text FX" )
-			}
-		}
-	}
-}
-
 void function PathTT_AlternateHolograms()
 {
+	array<string> flagsToSet = [ FLAG_ARENA_TOP_GLOVES, FLAG_ARENA_TOP_TEXT ]
 	int curIdx = 0
 	while ( true )
 	{
 		foreach( callFunc in file.OnHologramChangedCallbacks )
 			callFunc( curIdx )
 
-		if ( curIdx == 0 )
-		{
-			if ( IsValid( file.hologramGlovesFX ) )
-				EntFireByHandle( file.hologramGlovesFX, "Start", "", 0, null, null )
-			if ( IsValid( file.hologramTextFX ) )
-				EntFireByHandle( file.hologramTextFX, "Stop", "", 0, null, null )
-		}
-		else
-		{
-			if ( IsValid( file.hologramGlovesFX ) )
-				EntFireByHandle( file.hologramGlovesFX, "Stop", "", 0, null, null )
-			if ( IsValid( file.hologramTextFX ) )
-				EntFireByHandle( file.hologramTextFX, "Start", "", 0, null, null )
-		}
-
+		FlagSet( flagsToSet[ curIdx ] )
+		FlagClear( flagsToSet[ 1 - curIdx ] )
 		wait 5.0
 
 		curIdx = 1 - curIdx
@@ -390,7 +366,11 @@ void function PathTT_PlayAnnouncerLineForPlayersInRing( int lineId )
 	array<entity> players = GetPlayerArray_AliveConnected()
 	foreach( entity player in players )
 	{
-   		Remote_CallFunction_NonReplay(player, "SCB_PathTT_PlayRingAnnouncerDialogue", lineId )
+		                             
+			if (IsPlayerShadowZombie(player))
+				return
+                                     
+		Remote_CallFunction_NonReplay(player, "SCB_PathTT_PlayRingAnnouncerDialogue", lineId )
 	}
 }
 #endif
@@ -405,7 +385,7 @@ const array<string> RING_ANNOUNCER_LINES = [
 	"bc_OlyPathTTRing_flawless_win",
 	"bc_OlyPathTTRing_chain_kill"
 ]
-
+                              
 const array<string> RING_ANNOUNCER_LINES_REVENANT = [
 	"bc_OlyRevTTRing_recalibrate"
 	"SR_OlyRevTTRing_runsAway"
@@ -429,7 +409,7 @@ const array<string> RING_ANNOUNCER_LINES_REVENANT_EXT = [
 
 
 ]
-
+      
 
 const array<string> RING_ANNOUNCER_LINES_EXT  = [
 	"bc_OlyPathTTRing_recalibrate_ext",
@@ -441,6 +421,9 @@ const array<string> RING_ANNOUNCER_LINES_EXT  = [
 	"bc_OlyPathTTRing_flawless_win_ext",
 	"bc_OlyPathTTRing_chain_kill_ext"
 ]
+
+
+
 
 // NOTE!!
 // Order must match RING_ANNOUNCER_LINES
@@ -475,14 +458,14 @@ void function SCB_PathTT_PlayRingAnnouncerDialogue( int lineId )
 	}
 
 	string lineToPlay = file.isInStadium? RING_ANNOUNCER_LINES[ lineId ] : RING_ANNOUNCER_LINES_EXT[ lineId ]
-		if ( GetMapName() == "mp_rr_olympus_mu1_night" )
+		if ( IsNightMap() && UseNightRingAnnouncer() )
 			lineToPlay = file.isInStadium? RING_ANNOUNCER_LINES_REVENANT[ lineId ] : RING_ANNOUNCER_LINES_REVENANT_EXT[ lineId ]
 	float duration = GetSoundDuration( GetAnyDialogueAliasFromName( lineToPlay ) )
 	file.announcerLineFinishedPlayingTime = Time() + duration + ANNOUNCER_DEBOUNCE_TIME
 	file.currentlyPlayingLinePriority = lineId
 
 	int dialogueFlags = eDialogueFlags.USE_CUSTOM_QUEUE | eDialogueFlags.USE_CUSTOM_SPEAKERS | eDialogueFlags.BLOCK_LOWER_PRIORITY_QUEUE_ITEMS
-	thread PlayClientDialogue_Internal( GetAnyAliasIdForName( lineToPlay ), dialogueFlags, GetEntArrayByScriptName( "path_tt_announcer_speaker" ), <0,0,0>, file.customQueueIdx )
+	PlayDialogueOnCustomSpeakers( GetAnyAliasIdForName( lineToPlay ), dialogueFlags, file.customQueueIdx )
 }
 #endif
 
@@ -513,6 +496,9 @@ void function InitPathTTRingTVSystemEntities()
 
 void function PathTT_RingTVThink()
 {
+	if ( !GetCurrentPlaylistVarBool( "enable_apex_screens", true ) )
+		return
+
 	float stateEnterTime = Time()
 	float lockStateEndTime = 0.0
 	while ( true )
@@ -624,13 +610,10 @@ void function PathTT_SpawnLootRollers()
 #if SERVER
 void function PathTT_OnEnterPathTTRingTrigger( entity trigger, entity ent )
 {
-	if ( !IsValid( ent ) || !IsAlive( ent ) || !ent.IsPlayer()  || ent.Player_IsFreefalling()  )
+	if ( !IsValid( ent ) || !IsAlive( ent ) || !ent.IsPlayer() )
 	{
 		return
 	}
-
-	Signal( ent, "FreefallEnded" )
-	ent.SetPlayerNetBool( "freefallActive", false )
 
 	// Getting revived gets registered as a leave callback.
 	if ( Bleedout_IsPlayerGettingFirstAid( ent ) || Bleedout_IsPlayerSelfReviving( ent ) )
@@ -640,16 +623,28 @@ void function PathTT_OnEnterPathTTRingTrigger( entity trigger, entity ent )
 
 	BoxingRingPlayerData newPlayerData
 	newPlayerData.player = ent
+	newPlayerData.immunityStatusEffectHandle = StatusEffect_AddEndless( ent, eStatusEffect.immune_to_abilities, 1.0 )
+	newPlayerData.boxingStatusEffectHandle = StatusEffect_AddEndless( ent, eStatusEffect.is_boxing, 1.0 )
 
 	Signal( ent, "DeathTotem_ForceEnd" )
 	Signal( ent, "EndStim" )
 	Signal( ent, "PhaseTunnel_EndPlacement" )
 	Signal( ent, "HuntMode_ForceAbilityStop" )
-	//CancelPhaseShift( ent )
+	Signal( ent, "DeployableBreachChargePlacement_End" )
 	ChargeTactical_ForceEnd( ent )
 
 	GivePathTTMeleeWeaponsToPlayer( newPlayerData )
 	ent.DisableWeaponTypes( PATH_TT_DISABLED_WEAPON_TYPES )
+	// Allow switching between weapon tabs in hud while main weapons are disabled
+	//ent.Weapon_SetAllowHudSelectionWhileWeaponsDisabled( true )
+	if ( PlayerHasPassive( ent, ePassives.PAS_PARIAH ) )
+	{
+		WeaponModDisableHeartbeatSensorADSMelee( ent )
+	}
+	else if ( PlayerHasPassive( ent, ePassives.PAS_VANTAGE ) )
+	{
+		Vantage_EnableUnarmedADS( ent, false )
+	}
 
 	file.numPlayersInRing++
 	if ( file.numPlayersInRing >= 1 )
@@ -705,7 +700,7 @@ const int NUM_BOTS_TO_TEST = 30//55
 const float TEST_DURATION_RAPID_RING_ENTRY = 30
 void function DEV_TestRapidRingEntryAndDeath()
 {
-	/*#if DEVELOPER
+	#if DEVELOPER
 	ServerCommand( "kick_all_bots" )
 	int startNumPlayers = GetPlayerArray().len()
 	int numBots = NUM_BOTS_TO_TEST - startNumPlayers
@@ -781,7 +776,7 @@ void function DEV_TestRapidRingEntryAndDeath()
 		numBotsRemaining = devTestBots.len()
 		WaitFrame()
 	}
-	#endif*/
+	#endif
 }
 
 void function DEV_FinishOffBotToKill( entity botToKill )
@@ -865,8 +860,18 @@ void function PathTT_OnExitPathTTRingTrigger( entity trigger, entity ent )
 		StatusEffect_Stop( ent, playerData.immunityStatusEffectHandle )
 		StatusEffect_Stop( ent, playerData.boxingStatusEffectHandle )
 		ent.EnableWeaponTypes( PATH_TT_DISABLED_WEAPON_TYPES )
+		//ent.Weapon_SetAllowHudSelectionWhileWeaponsDisabled( false )
 		if ( IsAlive( ent ) )
 		{
+			if ( PlayerHasPassive( ent, ePassives.PAS_PARIAH ) )
+			{
+				WeaponModEnableHeartbeatSensorADSMelee( ent )
+			}
+			else if ( PlayerHasPassive( ent, ePassives.PAS_VANTAGE ) )
+			{
+				Vantage_EnableUnarmedADS( ent, true )
+			}
+
 			// Only return weapons to player if they're alive. If they're dead, the respawn sequence will handle weapons.
 			thread ReturnOriginalMeleeWeaponsToPlayer( playerData )
 			if ( prevNumTeamsInRing > file.numTeamsInRing && prevNumTeamsInRing > 1 )
@@ -905,7 +910,7 @@ void function PathTT_OnExitPathTTRingTrigger( entity trigger, entity ent )
 BoxingRingPlayerData ornull function PathTT_GetBoxingRingPlayerData( entity player )
 {
 	PathTT_CleanUpInvalidPlayerData()
-
+	
 	foreach( BoxingRingPlayerData playerData in file.allRingPlayerData )
 		if ( playerData.player == player )
 			return playerData
@@ -958,6 +963,7 @@ void function PathTT_PlayerPassThroughRingShieldCeremony( entity player )
 	#endif
 
 	#if CLIENT
+		Signal( player, "DeployableBreachChargePlacement_End" )
 		EmitSoundAtPosition( TEAM_UNASSIGNED, org, PLAYER_PASS_THROUGH_RING_SHIELD_SOUND )
 	#endif
 }
@@ -1058,6 +1064,14 @@ void function GivePathTTMeleeWeaponsToPlayer( BoxingRingPlayerData playerData )
 	if ( ArePathfinderGloves( meleeSkinName ) )
 		return
 
+                            
+                      
+            
+                        
+        
+                                                         
+       
+
 	entity offhandWeapon = player.GetOffhandWeapon( OFFHAND_MELEE )
 	string offhandWepName
 
@@ -1065,16 +1079,35 @@ void function GivePathTTMeleeWeaponsToPlayer( BoxingRingPlayerData playerData )
 	{
 		offhandWepName = offhandWeapon.GetWeaponClassName()
 		player.TakeWeaponNow( offhandWepName )
-		player.TakeOffhandWeapon(OFFHAND_MELEE)
-		player.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
 
-		StatusEffect_AddEndless( player, eStatusEffect.is_boxing, 1.0 )
+		if ( offhandWepName == "melee_boxing_ring" )
+		{
+			offhandWepName = Survival_GetOffhandMeleeWeaponName( player )
+		}
 	}
-
 	else
 	{
-		player.TakeOffhandWeapon(OFFHAND_MELEE)
-		player.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
+		offhandWepName = Survival_GetOffhandMeleeWeaponName( player )
+	}
+
+	if ( meleeWeapon == null )
+	{
+		meleeSkinName = Survival_GetMeleeWeaponName( player )
+
+		if ( ArePathfinderGloves( meleeSkinName ) )
+		{
+			player.GiveWeapon( meleeSkinName, WEAPON_INVENTORY_SLOT_PRIMARY_2 )
+			player.GiveOffhandWeapon( offhandWepName, OFFHAND_MELEE )
+			return
+		}
+
+	}
+	else
+	{
+		player.TakeWeaponNow( meleeSkinName )
+		
+		if ( meleeSkinName == "mp_weapon_melee_boxing_ring" )
+			meleeSkinName = Survival_GetMeleeWeaponName( player )
 	}
 
 	player.GiveWeapon( "mp_weapon_melee_boxing_ring", WEAPON_INVENTORY_SLOT_PRIMARY_2 )
@@ -1094,16 +1127,12 @@ void function SetMeleeWeaponToActiveSlot_Thread( entity player )
 	player.EndSignal( "ReturnOriginalMeleeWeaponsToPlayer" )
 	player.EndSignal( "GivePathTTMeleeWeaponsToPlayer" )
 
-	wait 0.1
-
 	while ( player.IsWeaponSlotDisabled( eActiveInventorySlot.mainHand ) )
 	{
-		WaitFrame()
+		WaitFrame();
 	}
-	DisableOffhandWeapons( player )
-	player.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_2 )
 
-	player.LockWeaponChange()
+	player.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_2 )
 }
 
 bool function ArePathfinderGloves( string meleeSkinName )
@@ -1131,13 +1160,6 @@ void function ReturnOriginalMeleeWeaponsToPlayer( BoxingRingPlayerData playerDat
 		player.TakeWeaponNow( "mp_weapon_melee_boxing_ring" )
 		player.TakeWeaponNow( "melee_boxing_ring" )
 
-		StatusEffect_StopAllOfType( player, eStatusEffect.is_boxing)
-
-		player.UnlockWeaponChange()
-		EnableOffhandWeapons( player )
-
-		player.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_0 )
-
 		while ( true )
 		{
 			int readyWeaponCount
@@ -1152,6 +1174,7 @@ void function ReturnOriginalMeleeWeaponsToPlayer( BoxingRingPlayerData playerDat
 				if ( IsValid ( playerData.meleeWeapons[ 1 ] ) )
 				{
 					player.GiveOffhandWeapon( playerData.meleeWeapons[ 1 ], OFFHAND_MELEE )
+					MeleeWeaponCosmetics_ApplyForWeapon( player, player.GetOffhandWeapon( OFFHAND_MELEE ) )
 				}
 				else
 					Warning( "%s Could not return Offhand weapon to player! Please bug!", FUNC_NAME() )
@@ -1171,6 +1194,7 @@ void function ReturnOriginalMeleeWeaponsToPlayer( BoxingRingPlayerData playerDat
 				if ( IsValid ( playerData.meleeWeapons[ 0 ] ) )
 				{
 					player.GiveWeapon( playerData.meleeWeapons[ 0 ], WEAPON_INVENTORY_SLOT_PRIMARY_2 )
+					MeleeWeaponCosmetics_ApplyForWeapon( player, player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_2 ) )
 				}
 				else
 					Warning( "%s Could not return Primary weapon to player! Please bug!", FUNC_NAME() )
@@ -1425,8 +1449,8 @@ void function DEV_SimulateThermiteTrace()
 	TraceResults traceResults = TraceLine( traceStart, traceEnd, ignoreArray, TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_BLOCK_WEAPONS )
 	float traceFrac = traceResults.fraction
 	vector hitPos = traceStart + ( traceVec * traceFrac )
-	//DebugDrawSphere( hitPos, 16, <255, 255, 0>, true, 10.0 )
-	//DebugDrawLine( traceStart, traceEnd, <0, 255, 0>, true, 10.0 )
+	DebugDrawSphere( hitPos, 16, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 10.0 )
+	DebugDrawLine( traceStart, traceEnd, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 10.0 )
 }
 #endif
 
@@ -1453,10 +1477,12 @@ void function Boxing_WeaponStatusCheck( entity player, var rui, int slot )
 //CHECK IF THE TT EXISTS IN THE MAP
 bool function IsPathTTEnabled()
 {
-	if ( GetMapName() == "mp_rr_olympus_tt" || GetMapName() == "mp_rr_olympus_mu1" || GetMapName() == "mp_rr_olympus_mu1_night" )
+	if ( GetCurrentPlaylistVarBool( "path_tt_enabled", true ) )
 	{
-		return true
+		return HasEntWithScriptName( "path_tt_jumbo_screen_ko" )
 	}
 
 	return false
 }
+
+                    

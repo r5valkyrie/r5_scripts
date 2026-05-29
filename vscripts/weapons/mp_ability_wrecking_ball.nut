@@ -837,7 +837,7 @@ void function WreckingBall_GetTheBallRolling( entity ball, vector dir )
 		#if DEVELOPER
 		if ( DEBUG_EMP_DAMAGE_DESTRUCTION )
 		{
-			DebugDrawArrow( ballPosLastFrame, ball.GetCenter(), 10, 0, 0, 255, true, 0.5 )
+			//DebugDrawArrow( ballPosLastFrame, ball.GetCenter(), 10, 0, 0, 255, true, 0.5 )
 		}
 		#endif
 
@@ -857,7 +857,7 @@ void function WreckingBall_GetTheBallRolling( entity ball, vector dir )
 			if ( DEBUG_EMP_DAMAGE_DESTRUCTION )
 			{
 				vector debugLineColor = ( distanceToProjection > WRECKING_BALL_DAMAGE_DEVICE_RANGE ) ? COLOR_ORANGE : <0, 255, 0>
-				DebugDrawLine( device.GetOrigin(), deviceProjectedPosition, debugLineColor.x, debugLineColor.y, debugLineColor.z, true, 0.1 )
+				DebugDrawLine( device.GetOrigin(), deviceProjectedPosition, int(debugLineColor.x), int(debugLineColor.y), int(debugLineColor.z), true, 0.1 )
 				DebugDrawText( device.GetOrigin(), "DistToBall: " + distanceToProjection, true, 0.1 )
 			}
 			#endif
@@ -895,7 +895,7 @@ void function WreckingBall_GetTheBallRolling( entity ball, vector dir )
 			if ( DEBUG_EMP_DAMAGE_DESTRUCTION )
 			{
 				vector debugLineColor = ( distanceToProjection > WRECKING_BALL_DAMAGE_DEVICE_RANGE ) ? COLOR_ORANGE : <0, 255, 0>
-				DebugDrawLine( device.GetOrigin(), deviceProjectedPosition, debugLineColor.x, debugLineColor.y, debugLineColor.z, true, 0.1 )
+				DebugDrawLine( device.GetOrigin(), deviceProjectedPosition, int(debugLineColor.x), int(debugLineColor.y), int(debugLineColor.z), true, 0.1 )
 				DebugDrawText( device.GetOrigin(), "DistToBall: " + distanceToProjection, true, 0.1 )
 			}
 			#endif
@@ -1580,7 +1580,7 @@ void function WreckingBall_SpawnRepulsorPropFromEntity( entity ent, vector throw
 		vector startPos = repulsorProp.GetCenter()
 		DebugDrawSphere( ent.GetCenter(), 15.0, 255, 0, 0, false, 10.0 )
 		DebugDrawSphere( startPos, 5.0, 0, 150, 255, false, 10.0 )
-		DebugDrawLine( startPos, startPos + ( vel ), 0, 200, 0, true, 10.0 )
+		//DebugDrawLine( startPos, startPos + ( vel ), 0, 200, 0, true, 10.0 )
 	}
 #endif
 

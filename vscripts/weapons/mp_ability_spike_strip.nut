@@ -703,8 +703,8 @@ void function GetAdjustedTestOffsets( entity mainSpike, array< vector > testOffs
 	{
 		TraceResults testTrace = TraceLine( pos , mainSpike.GetOrigin() + offset, mainSpike, TRACE_MASK_SHOT & ~CONTENTS_WATER, TRACE_COLLISION_GROUP_DEBRIS )
 		testOffsets.append( testTrace.endPos )
-		#if DEV && SPIKE_STRIP_DEBUG
-			DebugDrawSphere( testTrace.endPos, 5.0, COLOR_GREEN, true, 5.0 )
+		#if DEVELOPER && SPIKE_STRIP_DEBUG
+			DebugDrawSphere( testTrace.endPos, 5.0, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 5.0 )
 		#endif
 	}
 }
@@ -1002,8 +1002,8 @@ array<SpikeData> function CreateSpikeLineData2( entity owner, entity mainSpike, 
 		}
 		if ( downTrace.fraction == 1.0 || !lootBinCheck || ( IsValid( downTrace.hitEnt ) && downTrace.hitEnt.e.blocksThermite ) || downTrace.surfaceNormal.Dot( <0,0,1> ) < 0.75 || fabs( downTrace.endPos.z - pos.z ) > 100.0 ||  !CanDeployOnEnt( downTrace.hitEnt, downTrace.endPos ) )
 		{
-			#if DEV && SPIKE_STRIP_DEBUG
-				DebugDrawSphere( downTrace.endPos, 5.0, COLOR_RED, true, 5.0 )
+			#if DEVELOPER && SPIKE_STRIP_DEBUG
+				DebugDrawSphere( downTrace.endPos, 5.0, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 5.0 )
 			#endif
 			continue
 		}
@@ -1022,14 +1022,14 @@ array<SpikeData> function CreateSpikeLineData2( entity owner, entity mainSpike, 
 
 		if( !append )
 		{
-			#if DEV && SPIKE_STRIP_DEBUG
-				DebugDrawSphere( downTrace.endPos, 5.0, COLOR_BLUE, true, 5.0 )
+			#if DEVELOPER && SPIKE_STRIP_DEBUG
+				DebugDrawSphere( downTrace.endPos, 5.0, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 5.0 )
 			#endif
 			continue
 		}
 
-		#if DEV && SPIKE_STRIP_DEBUG
-			DebugDrawSphere( downTrace.endPos, 5.0, COLOR_YELLOW, true, 5.0 )
+		#if DEVELOPER && SPIKE_STRIP_DEBUG
+			DebugDrawSphere( downTrace.endPos, 5.0, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 5.0 )
 		#endif
 
 		segment.valid = true
@@ -1109,8 +1109,8 @@ array<SpikeData> function CreateSpikeLineData( entity owner, entity projectileHi
 			{
 				TraceResults upwardTrace = TraceLine( lastDownPos, traceStart, ignoreArray, TRACE_MASK_NPCSOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
 
-				#if DEV && SPIKE_STRIP_DEBUG
-					DebugDrawLine( lastDownPos, upwardTrace.endPos, COLOR_GREEN, true, 25.0 )
+				#if DEVELOPER && SPIKE_STRIP_DEBUG
+					DebugDrawLine( lastDownPos, upwardTrace.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 25.0 )
 				#endif
 
 				traceStart = upwardTrace.endPos
@@ -1120,8 +1120,8 @@ array<SpikeData> function CreateSpikeLineData( entity owner, entity projectileHi
 			traceEndOver = <newPos.x, newPos.y, traceStart.z + spacing * 0.57735056839> // The over height is to cover the case of a sheer surface that then continues gradually upwards (like mp_box)
 		}
 
-		#if DEV && SPIKE_STRIP_DEBUG
-			DebugDrawLine( traceStart, traceEndUnder, COLOR_GREEN, true, 25.0 )
+		#if DEVELOPER && SPIKE_STRIP_DEBUG
+			DebugDrawLine( traceStart, traceEndUnder, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 25.0 )
 		#endif
 
 		TraceResults forwardTrace = TraceLine( traceStart, traceEndUnder, ignoreArray, TRACE_MASK_NPCSOLID_BRUSHONLY, TRACE_COLLISION_GROUP_BLOCK_WEAPONS )
@@ -1133,8 +1133,8 @@ array<SpikeData> function CreateSpikeLineData( entity owner, entity projectileHi
 
 			TraceResults downTrace = TraceLine( downTraceStartPos, forwardTrace.endPos + <0,0,-100>, ignoreArray, TRACE_MASK_NPCSOLID_BRUSHONLY, TRACE_COLLISION_GROUP_BLOCK_WEAPONS )
 
-			#if DEV && SPIKE_STRIP_DEBUG
-				DebugDrawLine( downTraceStartPos, downTrace.endPos, COLOR_RED, true, 25.0 )
+			#if DEVELOPER && SPIKE_STRIP_DEBUG
+				DebugDrawLine( downTraceStartPos, downTrace.endPos, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 25.0 )
 			#endif
 
 			if ( downTrace.fraction == 1.0 )
@@ -1191,8 +1191,8 @@ array<SpikeData> function CreateSpikeLineData( entity owner, entity projectileHi
 		{
 			TraceResults upwardTrace = TraceLine( lastDownPos, traceStart, ignoreArray, TRACE_MASK_NPCSOLID_BRUSHONLY, TRACE_COLLISION_GROUP_BLOCK_WEAPONS )
 
-			#if DEV && SPIKE_STRIP_DEBUG
-				DebugDrawLine( lastDownPos, upwardTrace.endPos, COLOR_GREEN, true, 25.0 )
+			#if DEVELOPER && SPIKE_STRIP_DEBUG
+				DebugDrawLine( lastDownPos, upwardTrace.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 25.0 )
 			#endif
 
 			if ( upwardTrace.fraction < 1.0 )
@@ -1201,8 +1201,8 @@ array<SpikeData> function CreateSpikeLineData( entity owner, entity projectileHi
 
 		TraceResults upwardImpactTrace = TraceLine( traceStart, traceEndOver, ignoreArray, TRACE_MASK_NPCSOLID_BRUSHONLY, TRACE_COLLISION_GROUP_BLOCK_WEAPONS )
 
-		#if DEV && SPIKE_STRIP_DEBUG
-			DebugDrawLine( traceStart, traceEndOver, COLOR_BLUE, true, 25.0 )
+		#if DEVELOPER && SPIKE_STRIP_DEBUG
+			DebugDrawLine( traceStart, traceEndOver, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 25.0 )
 		#endif
 
 		if ( upwardImpactTrace.fraction < 1.0 )
@@ -1215,8 +1215,8 @@ array<SpikeData> function CreateSpikeLineData( entity owner, entity projectileHi
 			vector upwardImpactDownTraceEndPos = upwardImpactTrace.endPos + <0,0,-1000>
 			TraceResults downTrace = TraceLine( upwardImpactTrace.endPos, upwardImpactDownTraceEndPos, ignoreArray, TRACE_MASK_NPCSOLID_BRUSHONLY, TRACE_COLLISION_GROUP_BLOCK_WEAPONS )
 
-			#if DEV && SPIKE_STRIP_DEBUG
-				DebugDrawLine( upwardImpactTrace.endPos, downTrace.endPos, COLOR_RED, true, 25.0 )
+			#if DEVELOPER && SPIKE_STRIP_DEBUG
+				DebugDrawLine( upwardImpactTrace.endPos, downTrace.endPos, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 25.0 )
 			#endif
 
 			if ( downTrace.fraction == 1.0 )
@@ -1573,7 +1573,7 @@ void function SpikeTotemTriggerThread( entity totem, entity trigger, int teamId 
 			}
 		}
 
-		#if DEV && SPIKE_STRIP_DEBUG
+		#if DEVELOPER && SPIKE_STRIP_DEBUG
 		array< entity > linkedSpikes = totem.GetLinkEntArray()
 		foreach( spike in linkedSpikes )
 		{

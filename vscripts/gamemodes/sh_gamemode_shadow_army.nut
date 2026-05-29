@@ -55,7 +55,7 @@ global function ShadowArmy_GetLegendSpawnGroupsNumber
 global function ShadowArmy_PopulateAboutText
 #endif // UI
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 global function ShadowArmy_SetPlayerToFullRev_Dev
 global function ShadowArmy_TriggerEvacShipsAtAllLocations_Dev
 global function ShadowArmy_TriggerEvacPhase_Dev
@@ -202,7 +202,7 @@ const array<string> SHADOWARMY_DISABLED_BATTLE_CHATTER_EVENTS = [
 #endif // SERVER || CLIENT
 
 const bool SHADOW_ARMY_SHOW_DETAILED_DEBUG = true
-#if DEV
+#if DEVELOPER
 const bool SHADOWARMY_DISPLAY_PLAYERSPAWN_DEBUG_DRAWS = false
 const float SHADOWARMY_DEBUG_DRAW_DISPLAY_TIME = 20.0
 const float SHADOWARMY_SPAWN_DEBUG_DRAW_RADIUS = 150.0
@@ -968,7 +968,7 @@ void function EntitiesDidLoad()
 // Set where the final circle and evac location will be
 void function EvacDataInit()
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( !Flag( "FinalCircleEvacInitialized" ), "ShadowArmy: Initializing final circle twice" )
 	#endif // DEV
 
@@ -997,7 +997,7 @@ void function EvacDataInit()
 		}
 	}
 
-	#if DEV
+	#if DEVELOPER
 		Assert( didGetValidEvacPositions, "ShadowArmy: Didn't get valid Evac Positions" )
 	#endif // DEV
 
@@ -1016,7 +1016,7 @@ void function OnPlayerConnected( entity player )
 	if ( !IsValid( player ) )
 		return
 
-	#if DEV
+	#if DEVELOPER
 		if ( GetCurrentPlaylistVarBool( "dev_force_revenant", false ) )
 		{
 			AllianceProximity_SetTeamToAlliance_Dev( SHADOWARMY_REVENANT_ALLIANCE )
@@ -1067,7 +1067,7 @@ void function ShadowArmy_SetTeamsToRevAllianceOnMatchStart()
 	int revTeamCount = 0
 	int goalRevTeamCount = ShadowArmy_GetNumRevSquadsForMatchStart()
 
-	#if DEV
+	#if DEVELOPER
 		// Go through and remove teams that have been set to an alliance through Debug. Don't want to change them since it is something someone set for testing
 		array < int > teamsAddedToAllianceThroughDebug = AllianceProximity_GetTeamsSetToAllianceThroughDevCommand_Dev()
 		for ( int i = allTeamsSorted.len() - 1; i >= 0; i-- )
@@ -1167,7 +1167,7 @@ void function OnSkydiveCustomTrailsInitialized( entity player )
 const int EXPECTED_PLANE_COUNT = 2
 table < int, int > function ShadowArmy_GetAllianceToPlaneIndexAssignment( int numPlanes, array < vector > centerPos )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( numPlanes == EXPECTED_PLANE_COUNT, "ShadowArmy: Running ShadowArmy_GetAllianceToPlaneIndexAssignment with " + numPlanes + " but expect " + EXPECTED_PLANE_COUNT )
 		Assert( centerPos.len() >= EXPECTED_PLANE_COUNT, "ShadowArmy: Running ShadowArmy_GetAllianceToPlaneIndexAssignment with " + centerPos.len() + " center positions but need atleast " + EXPECTED_PLANE_COUNT )
 	#endif // DEV
@@ -1248,7 +1248,7 @@ void function ShadowArmy_SetupRevenantDropship( entity dropship )
 // Thread that spawns and cleans up custom Rev Dropship VFX
 void function ShadowArmy_ManageDropShipVFX_Thread( entity dropship )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -1361,7 +1361,7 @@ void function TryEndGameFromAllianceForfeit()
 // Get the location where we want to spawn Legends on match start
 array< vector > function ShadowArmy_GetLegendMatchStartSpawnLocations( int numSpawnLocations = 1 )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( Flag( "FinalCircleEvacInitialized" ), "ShadowArmy: Running ShadowArmy_GetLegendMatchStartSpawnLocations before setting up Evac Location" )
 	#endif // DEV
 	Assert( numSpawnLocations > 0, "The requested number of spawn locations must be greater than 0" )
@@ -1688,7 +1688,7 @@ int function GetNextPlayerRespawnForm( entity player, int previousForm )
 			nextForm = eShadowArmyRespawnForm.SHADOW
 			break
 		default:
-			#if DEV
+			#if DEVELOPER
 				Assert( false, "Shadow Army: Unsupported previous form passed in for player in GetNextPlayerRespawnForm" )
 			#endif // DEV
 			break
@@ -2040,9 +2040,11 @@ array< array<entity> > function GetLegendGroups( array<entity> legendPlayers )
 				if ( DistanceSqr( legendPlayers[playerIdx].GetOrigin(), legendGroup[groupIdx].GetOrigin() ) <= MAX_DISTANCE_IN_GROUP_SQR )
 				{
 					legendGroup.append( legendPlayers[playerIdx] )
-					#if DEV
+					#if DEVELOPER
 						if ( SHADOWARMY_DISPLAY_PLAYERSPAWN_DEBUG_DRAWS )
-							DebugDrawArrow( legendPlayers[playerIdx].GetOrigin(), legendGroup[groupIdx].GetOrigin(), 20, COLOR_BLUE, true, SHADOWARMY_DEBUG_DRAW_DISPLAY_TIME )
+						{
+							//DebugDrawArrow( legendPlayers[playerIdx].GetOrigin(), legendGroup[groupIdx].GetOrigin(), 20, COLOR_BLUE, true, SHADOWARMY_DEBUG_DRAW_DISPLAY_TIME )
+						}
 					#endif
 					legendPlayers.fastremove( playerIdx )
 				}
@@ -2102,9 +2104,11 @@ Point function ShadowArmy_GetRevRespawnPoint( entity player, vector deathPos, bo
 				total += legend.GetOrigin()
 			}
 			vector center = total / legendGroup.len()
-			#if DEV
+			#if DEVELOPER
 				if ( SHADOWARMY_DISPLAY_PLAYERSPAWN_DEBUG_DRAWS )
-					DebugDrawSphere( center, 20, COLOR_RED, true, SHADOWARMY_DEBUG_DRAW_DISPLAY_TIME )
+				{
+					DebugDrawSphere( center, 20, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, SHADOWARMY_DEBUG_DRAW_DISPLAY_TIME )
+				}
 			#endif
 
 			float farDistanceSqr = 0
@@ -2137,9 +2141,11 @@ Point function ShadowArmy_GetRevRespawnPoint( entity player, vector deathPos, bo
 				spawnPoint.origin = center + Normalize( safeZoneCenter - center ) * spawnRadius + spawnPoint.angles * spawnRadius
 			}
 
-			#if DEV
+			#if DEVELOPER
 				if ( SHADOWARMY_DISPLAY_PLAYERSPAWN_DEBUG_DRAWS )
-					DebugDrawSphere( spawnPoint.origin, spawnRadius, COLOR_PINK, true, SHADOWARMY_DEBUG_DRAW_DISPLAY_TIME )
+				{
+					DebugDrawSphere( spawnPoint.origin, spawnRadius, int(COLOR_PINK.x), int(COLOR_PINK.y), int(COLOR_PINK.z), true, SHADOWARMY_DEBUG_DRAW_DISPLAY_TIME )
+				}
 			#endif
 
 			entity closestLegend = ShadowArmy_GetClosestLegend( spawnPoint.origin )
@@ -2149,9 +2155,11 @@ Point function ShadowArmy_GetRevRespawnPoint( entity player, vector deathPos, bo
 
 			float closestSqr = DistanceSqr( closestLegend.GetOrigin(), spawnPoint.origin )
 
-			#if DEV
+			#if DEVELOPER
 				if ( SHADOWARMY_DISPLAY_PLAYERSPAWN_DEBUG_DRAWS )
-					DebugDrawSphere( closestLegend.GetOrigin(), 20, COLOR_GREEN, true, SHADOWARMY_DEBUG_DRAW_DISPLAY_TIME )
+				{
+					DebugDrawSphere( closestLegend.GetOrigin(), 20, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, SHADOWARMY_DEBUG_DRAW_DISPLAY_TIME )
+				}
 			#endif
 
 			bool foundValidSpawnPoint = false
@@ -2189,9 +2197,11 @@ Point function ShadowArmy_GetRevRespawnPoint( entity player, vector deathPos, bo
 			if ( foundValidSpawnPoint )
 			{
 				spawnPoint.origin = NavMesh_GetClosestPoint( spawnPoint.origin )
-				#if DEV
+				#if DEVELOPER
 					if ( SHADOWARMY_DISPLAY_PLAYERSPAWN_DEBUG_DRAWS )
-						DebugDrawArrow( closestLegend.GetOrigin(), spawnPoint.origin, 20, COLOR_YELLOW, true, SHADOWARMY_DEBUG_DRAW_DISPLAY_TIME )
+					{
+						//DebugDrawArrow( closestLegend.GetOrigin(), spawnPoint.origin, 20, COLOR_YELLOW, true, SHADOWARMY_DEBUG_DRAW_DISPLAY_TIME )
+					}
 
 					closestSqr = DistanceSqr( closestLegend.GetOrigin(), spawnPoint.origin )
 					if ( closestSqr < minDistSqr )
@@ -2424,9 +2434,11 @@ void function OnPlayerPostRespawned( entity player )
 				PlayCharacterOrRadioDialogueToPlayer( PickCommentaryLineFromBucketAndHost( eSurvivalCommentaryBucket.SHADOW_ARMY_LOBA_RESPAWNED, eSurvivalHostType.LOBA ), player, eDialogueFlags.MUTE_PLAYER_PING_DIALOGUE_FOR_DURATION )
 			}
 
-			#if DEV
+			#if DEVELOPER
 			if ( SHADOWARMY_DISPLAY_PLAYERSPAWN_DEBUG_DRAWS )
-				DebugDrawSphere( player.GetOrigin(), SHADOWARMY_SPAWN_DEBUG_DRAW_RADIUS, COLOR_BLUE, true, SHADOWARMY_DEBUG_DRAW_DISPLAY_TIME )
+			{
+				DebugDrawSphere( player.GetOrigin(), SHADOWARMY_SPAWN_DEBUG_DRAW_RADIUS, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, SHADOWARMY_DEBUG_DRAW_DISPLAY_TIME )
+			}
 			#endif // DEV
 			break
 		case eShadowArmyRespawnForm.FULL_REVENANT:
@@ -2442,9 +2454,11 @@ void function OnPlayerPostRespawned( entity player )
 			thread ManageFullRevLife_Thread( player )
 			thread ShadowArmy_FullRev_DelayedStatusEffectHandler( player )
 
-			#if DEV
+			#if DEVELOPER
 				if ( SHADOWARMY_DISPLAY_PLAYERSPAWN_DEBUG_DRAWS )
-					DebugDrawSphere( player.GetOrigin(), SHADOWARMY_SPAWN_DEBUG_DRAW_RADIUS, COLOR_RED, true, SHADOWARMY_DEBUG_DRAW_DISPLAY_TIME )
+				{
+					DebugDrawSphere( player.GetOrigin(), SHADOWARMY_SPAWN_DEBUG_DRAW_RADIUS, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, SHADOWARMY_DEBUG_DRAW_DISPLAY_TIME )
+				}
 			#endif // DEV
 			break
 		case eShadowArmyRespawnForm.SHADOW:
@@ -2456,9 +2470,11 @@ void function OnPlayerPostRespawned( entity player )
                                       
 
 			Remote_CallFunction_NonReplay( player, "ShadowArmy_ServerCallback_GivePlayerRepeatingEnemyMapScans" )
-			#if DEV
+			#if DEVELOPER
 				if ( SHADOWARMY_DISPLAY_PLAYERSPAWN_DEBUG_DRAWS )
-					DebugDrawSphere( player.GetOrigin(), SHADOWARMY_SPAWN_DEBUG_DRAW_RADIUS, COLOR_ORANGE, true, SHADOWARMY_DEBUG_DRAW_DISPLAY_TIME )
+				{
+					DebugDrawSphere( player.GetOrigin(), SHADOWARMY_SPAWN_DEBUG_DRAW_RADIUS, int(COLOR_ORANGE.x), int(COLOR_ORANGE.y), int(COLOR_ORANGE.z), true, SHADOWARMY_DEBUG_DRAW_DISPLAY_TIME )
+				}
 			#endif // DEV
 			// Just to be safe, clear Ult if player has one
 			entity ultimateWeapon = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
@@ -2466,7 +2482,7 @@ void function OnPlayerPostRespawned( entity player )
 				ultimateWeapon.SetWeaponPrimaryClipCount( 0 )
 			break
 		default:
-		#if DEV
+		#if DEVELOPER
 			Assert( false, "Shadow Army: Unsupported spawn form for player in OnPlayerPostRespawned" )
 		#endif // DEV
 			break
@@ -2485,7 +2501,7 @@ void function OnPlayerPostRespawned( entity player )
 const float SKYDIVE_AWARD_WEAPONS_DELAY = 1.5
 void function GivePlayerLoadout_Thread( entity player, bool isFirstSpawn )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -2558,7 +2574,7 @@ const float DIALOGUE_DELAY_1 = 10.0
 const float DIALOGUE_DELAY_2 = 3.0
 void function ManageLegendSpawnOnGroundIntroForPlayer_Thread( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 	
@@ -2608,7 +2624,7 @@ void function SetPlayerAsRevenant( entity player )
 
 	ItemFlavor ornull itemFlavor = GetItemFlavorOrNullByGUID( ConvertItemFlavorGUIDStringToGUID( REVENANT_GUID_STRING ) )
 
-	#if DEV
+	#if DEVELOPER
 		Assert( itemFlavor != null, "Shadow Army: Didn't get a valid itemFlavor from GUID in SetPlayerAsRevenant" )
 	#endif // DEV
 
@@ -2708,7 +2724,7 @@ void function ShadowArmy_AnnouncementSplash( entity player )
 // Manage choosing and setting the Red Eyed Rev on a cooldown
 void function ManageFullRevCooldownAndSelection_Thread( bool isMatchStart )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -2761,7 +2777,7 @@ void function ManageFullRevCooldownAndSelection_Thread( bool isMatchStart )
 	{
 		SetPlayerAsFullRevCandidate( bestFullRevCandidate )
 
-		#if DEV
+		#if DEVELOPER
 			// If the player is a bot, kill them so they respawn
 			if ( bestFullRevCandidate.IsBot() )
 				bestFullRevCandidate.TakeDamage( bestFullRevCandidate.GetHealth(), null, null, { scriptType = DF_BYPASS_SHIELD | DF_DOOMED_HEALTH_LOSS | DF_EXPLOSION, damageSourceId = eDamageSourceId.mp_weapon_shotgun_pistol } )
@@ -2828,7 +2844,7 @@ void function SetPlayerAsFullRevCandidate( entity player )
 #if SERVER
 void function ShadowArmy_FullRev_DelayedStatusEffectHandler( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -2857,7 +2873,7 @@ void function ShadowArmy_FullRev_DelayedStatusEffectHandler( entity player )
 // Manage the life of a player that is a full revenant ( highlights and keeping track of when they die )
 void function ManageFullRevLife_Thread( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -3065,7 +3081,7 @@ const float REPEAT_INTERVAL = 2.0
 // And repeat
 void function RunRepeatingEnemyMapScans_Thread()
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -3252,7 +3268,7 @@ void function ShadowArmy_OnResolution_Server()
 #if SERVER
 void function ManageEvacStart_Thread()
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -3282,7 +3298,7 @@ void function ManageEvacStart_Thread()
 const float EVAC_INCOMING_COMMENTARY_DELAY = 20.0
 void function ObjectiveEvac_Thread()
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -3665,7 +3681,7 @@ vector function GetNewEvacWaypointLocation( int ringStage )
 #if CLIENT
 void function ObjectiveEvac_ManageHUDMessaging_Thread()
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -3784,7 +3800,7 @@ bool function TryToDetermineWinner_Elimination()
 const float WINNER_DETERMINED_WAIT_DURATION = 4.0
 void function ShadowArmy_SetWinner( int winningAlliance, int winReason )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( GetConVarInt( "mp_enablematchending" ) == 0 )
 		{
 			printt( "Shadow Army: Set winner function triggered but ignoring because mp_enablematchending is set to false" )
@@ -3917,7 +3933,7 @@ int function ShadowArmy_GetFlagsetForVictoryCondition( int victoryCondition, int
 			else
 			{
 				victoryFlag = SHADOWARMY_VICTORY_FLAGS_UNKNOWN
-				#if DEV
+				#if DEVELOPER
 					Assert( false, "Shadow Army: ShadowArmy_GetFlagsetForVictoryCondition is running for victory condition eWinReason.OBJECTIVE_COMPLETED on an invalid alliance: " + winningAlliance + " Expect Rev Alliance: " + SHADOWARMY_REVENANT_ALLIANCE + " or Legend Alliance: " + SHADOWARMY_LEGEND_ALLIANCE )
 				#endif // DEV
 			}
@@ -4028,7 +4044,7 @@ VictorySoundPackage function GetVictorySoundPackage()
 const float SFX_DELAY = 2.5
 void function ShadowArmy_PlayIntroBannerSoundForLegends_Thread()
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -4090,14 +4106,14 @@ void function ShadowArmy_ServerCallback_UpdateEvacTargetCountOnHud( int targetCo
 const float DELAY_BETWEEN_CATCHUP_UPDATES = 60.0
 void function ManageCatchupMechanicLevels_Thread()
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
 	if ( !GetShouldUseCatchupMechanics() )
 		return
 
-	#if DEV
+	#if DEVELOPER
 		if ( GetConVarInt( "mp_enablematchending" ) == 0 )
 		{
 			printt( "Shadow Army: ManageCatchupMechanicLevels_Thread function triggered but breaking out because mp_enablematchending is set to false" )
@@ -4580,7 +4596,7 @@ void function DisplayRespawnBannerMessageForPlayer( entity player, int previousF
 				messageIndex = eShadowArmyMessageIndex.RESPAWNING_AS_SHADOW
 			break
 		default:
-			#if DEV
+			#if DEVELOPER
 				Assert( false, "Shadow Army: Unsupported previous form passed in for player in DisplayRespawnBannerMessageForPlayer" )
 			#endif // DEV
 			break
@@ -4595,7 +4611,7 @@ void function DisplayRespawnBannerMessageForPlayer( entity player, int previousF
 // Display a message after a delay
 void function AnnouncementSplashDelayed_Thread( entity player, int messageIndex, float delay, int messageType )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -4893,7 +4909,7 @@ void function ShowAnnouncementMessage( int messageIndex, int messageType )
 			obitText = "#SHADOW_ARMY_EVAC_LOCATION_REVEALED"
 			break
 		default:
-			#if DEV
+			#if DEVELOPER
 				Assert( false, "Shadow Army: Unhandled messageIndex: " + messageIndex )
 			#endif // DEV
 			break
@@ -4950,7 +4966,7 @@ void function ShadowArmy_ServerCallback_ShowHinttMessage( int hintIndex, int opt
 			messageText = "#SHADOW_ARMY_FULL_REV_CRITERIA_NO_DAM_HINT"
 			break
 		default:
-			#if DEV
+			#if DEVELOPER
 				Assert( false, "Shadow Army: Unhandled hintIndex: " + hintIndex )
 			#endif // DEV
 			shouldDisplayHint = false
@@ -4982,7 +4998,7 @@ void function OnPlayerLifeStateChanged_Client( entity player, int oldState, int 
 const float HUD_UPDATE_DELAY = 0.5
 void function UpdatePlayerHUDOnDelay_Thread( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -5053,7 +5069,7 @@ void function ShadowArmy_OnPlayerConnectionStateChanged( entity player )
 const int EVAC_AREA_ICON_PRIORITY = 1100
 void function RunPostAllianceAssignmentCompleteLogic_Thread( entity localPlayer )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -5240,7 +5256,7 @@ const float EXTRA_WAIT_DURATION = 30.0
 const float LEGEND_START_AREA_RADIUS = 24000.0
 void function ManageRevAllianceLegendStartWaypoint_Thread()
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -5334,7 +5350,7 @@ void function ShadowArmy_ServerCallback_DestroyLegendStartAreaMapFeature()
 
 
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 // Set the player inputting the command to be a full Rev or a random player
 void function ShadowArmy_SetPlayerToFullRev_Dev( bool shouldUseRandomPlayer = false )
 {
@@ -5346,7 +5362,7 @@ void function ShadowArmy_SetPlayerToFullRev_Dev( bool shouldUseRandomPlayer = fa
 	}
 	else
 	{
-		playerToRev = GP()
+		playerToRev = GetPlayerArray()
 	}
 
 	if ( IsValid( playerToRev ) )
@@ -5385,7 +5401,7 @@ void function ShadowArmy_SetPlayerToFullRev_Dev( bool shouldUseRandomPlayer = fa
 }
 #endif // DEV && SERVER
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 // Trigger Dropship sequences at all the Level Ed Placed Evac Ship Nodes
 void function ShadowArmy_TriggerEvacShipsAtAllLocations_Dev()
 {
@@ -5406,7 +5422,7 @@ void function ShadowArmy_TriggerEvacShipsAtAllLocations_Dev()
 }
 #endif // DEV && SERVER
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 // As long as we are not already in the Evac sequence, skip to it
 void function ShadowArmy_TriggerEvacPhase_Dev( bool isEmergencyEvac = false )
 {
@@ -5432,7 +5448,7 @@ void function ShadowArmy_TriggerEvacPhase_Dev( bool isEmergencyEvac = false )
 }
 #endif // DEV && SERVER
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 // As long as the match isn't already determining a match winner, set the winner now
 void function ShadowArmy_TriggerMatchEnd_Dev( int winningAlliance = SHADOWARMY_LEGEND_ALLIANCE, bool didWinByObjectiveCompletion = true )
 {

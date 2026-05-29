@@ -309,7 +309,7 @@ void function ProcessLevelEdMarvinNode( entity node, bool isStoryMarvin, bool ha
 #if SERVER && DEVELOPER
 void function CreateMarvin_Loot( bool hasDetachableArm = false )
 {
-	entity player             = gp()[0]
+	entity player             = GetPlayerArray()[0]
 	TraceResults traceResults = PlayerViewTrace( player, 90000 )
 	if ( traceResults.fraction >= 1.0 )
 		return
@@ -322,7 +322,7 @@ void function CreateMarvin_Loot( bool hasDetachableArm = false )
 #if SERVER && DEVELOPER
 void function CreateMarvin_Story()
 {
-	entity player             = gp()[0]
+	entity player             = GetPlayerArray()[0]
 	TraceResults traceResults = PlayerViewTrace( player, 90000 )
 	if ( traceResults.fraction >= 1.0 )
 		return
@@ -367,9 +367,9 @@ void function TeleportToRandomMarvinLocations()
 	array<entity> allMarvins = GetEntArrayByScriptName( LOOT_MARVIN_SCRIPTNAME )
 	entity marvin = allMarvins.getrandom()
 	{
-		gp()[0].SetOrigin(marvin.GetOrigin())
+		GetPlayerArray()[0].SetOrigin(marvin.GetOrigin())
 	}
-	printf( "Teleporting" + gp()[0] + "to Random Marvin Location" )
+	printf( "Teleporting" + GetPlayerArray()[0] + "to Random Marvin Location" )
 }
 #endif // SERVER && DEVELOPER
 

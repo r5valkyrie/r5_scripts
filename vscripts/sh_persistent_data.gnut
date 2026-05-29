@@ -389,10 +389,9 @@ void function DEV_CheckAndSaveDevPersistentPlayerDataDefinitionAutogenSection( b
 	#endif
 }
 
-bool function ClientCommand_dev_generate_pdef( entity player, array<string> args )
+void function ClientCommand_dev_generate_pdef( entity player, array<string> args )
 {
 	DEV_CheckAndSaveDevPersistentPlayerDataDefinitionAutogenSection( true )
-	return true
 }
 
 void function DEV_PDefGen_AddEnum( string name, array<string> keys, string comment = "", array<string> keyComments = [] )

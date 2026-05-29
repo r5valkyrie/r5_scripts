@@ -19,7 +19,7 @@ global function EmoteIcon_Waypoint_LinkPlayer
 global function AssignGUIDToHoloProjector
 global function ClientCallback_TryUseHoloSpray
 
-#if DEV
+#if DEVELOPER
 
 
 
@@ -279,7 +279,7 @@ void function OnEmoteProjectorPlanted( entity projectile, DeployableCollisionPar
 }
 #if SERVER
 
-#if DEV
+#if DEVELOPER
 
 
 

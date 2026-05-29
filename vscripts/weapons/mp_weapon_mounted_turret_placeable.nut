@@ -1369,10 +1369,10 @@ MountedTurretPlaceablePlacementInfo function MountedTurretPlaceable_GetPlacement
 
 	if ( MOUNTED_TURRET_PLACEABLE_DEBUG_DRAW_PLACEMENT )
 	{
-		//DebugDrawLine( fwdStart, fwdResults.endPos, <255, 0, 0>, true, 0.05 )
-		//DebugDrawLine( fwdStart, fwdResults.endPos, <255, 0, 0>, true, 0.05 )
-		//DebugDrawSphere( fwdResults.endPos, 16, <255, 0, 0>, true, 0.05 )
-		//DebugDrawLine( fwdResults.endPos, fwdResults.endPos - MOUNTED_TURRET_PLACEABLE_PLACEMENT_TRACE_OFFSET, <255, 0, 0>, true, 0.05 )
+		DebugDrawLine( fwdStart, fwdResults.endPos, 255, 0, 0, true, 0.05 )
+		DebugDrawLine( fwdStart, fwdResults.endPos, 255, 0, 0, true, 0.05 )
+		DebugDrawSphere( fwdResults.endPos, 16, 255, 0, 0, true, 0.05 )
+		DebugDrawLine( fwdResults.endPos, fwdResults.endPos - MOUNTED_TURRET_PLACEABLE_PLACEMENT_TRACE_OFFSET, 255, 0, 0, true, 0.05 )
 	}
 
 
@@ -1451,7 +1451,7 @@ MountedTurretPlaceablePlacementInfo function MountedTurretPlaceable_GetPlacement
 
 			if ( MOUNTED_TURRET_PLACEABLE_DEBUG_DRAW_PLACEMENT )
 			{
-				//DebugDrawLine( testPos, traceResult.endPos, <255, 0, 0>, true, 0.05 )
+				DebugDrawLine( testPos, traceResult.endPos, 255, 0, 0, true, 0.05 )
 			}
 
 			if ( traceResult.fraction == 1.0 )

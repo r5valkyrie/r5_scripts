@@ -60,7 +60,7 @@ global function ArenasRanked_GetNumPlacementMatchesRequired
 global function ArenasRanked_GetNumPlacementMatchesCompleted
 global function ArenasRanked_HasFinishedPlacementMatches
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 global function ArenasRanked_MapScoreToMMR
 #endif
 
@@ -168,7 +168,7 @@ void function Sh_ArenasRanked_Init()
 
 		ArenasRanked_InitRankedTierNamesToBadgeAwardsLevelTable()
 
-		#if DEV
+		#if DEVELOPER
 			AddCallback_GeneratePDef( GenerateArenasRanked_PDef )
 		#endif // DEV
 
@@ -467,7 +467,7 @@ SharedRankedDivisionData function GetCurrentArenasRankedDivisionFromScoreAndLadd
 	if ( (ladderPosition != SHARED_RANKED_INVALID_LADDER_POSITION) && (numPlayersOnLadder > 0) && (ladderPosition <= numPlayersOnLadder) )
 	{
 		SharedRankedDivisionData ladderDivisionData = expect SharedRankedDivisionData ( file.ladderOnlyDivision )
-		#if DEV
+		#if DEVELOPER
 			if ( ladderDivisionData.scoreMin > score ) //We probably got here from a persistence reset in dev, so persistence and stryder don't match up anymore!
 				return GetCurrentArenasRankedDivisionFromScore( score )
 		#endif
@@ -601,7 +601,7 @@ void function ArenasRanked_ClearPlacementWins( entity player )
 
 array<bool> function ArenasRanked_GetPlacementWinsAsArray( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 	if ( DEV_ShouldIgnorePersistence() )
 		return []
 	#endif
@@ -877,7 +877,7 @@ int function ArenasRanked_GetHistoricalLadderPosition( entity player, string ran
 
 var function ArenasRanked_GetHistoricalRankedPersistenceData( entity player, string persistenceField, string rankedSeasonGUID )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return null
 	#endif
@@ -989,7 +989,7 @@ bool function ArenasRanked_HasPlayerWaitedTooLongAfterBannerWasPickedUp( entity 
 
 var function GetArenasRankedPersistenceData( entity player, string persistenceField )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return null
 	#endif
@@ -1012,7 +1012,7 @@ var function GetArenasRankedPersistenceData( entity player, string persistenceFi
 
 #if SERVER
 
-#if DEV
+#if DEVELOPER
 void function GenerateArenasRanked_PDef()
 {
 	DEV_PDefGen_BeginStruct( "sArenasRankedData", "Data for Arenas Ranked." )
@@ -1302,7 +1302,7 @@ void function ArenasRanked_OnSpectateTargetChanged( entity spectatingPlayer, ent
 
 bool function IsArenasRankedPersistenceValid()
 {
-	#if DEV
+	#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return false
 	#endif

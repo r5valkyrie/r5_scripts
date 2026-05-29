@@ -875,7 +875,7 @@ void function DEV_TrialsUnitTest()
 				break
 
 			StatEntry statEntry = RankedTrials_GetTrialStatEntryByIndex( trial, statIdx )
-			AddCallback_StatChanged_Int( GP(), statEntry, void function( entity player, int oldValue, int newValue ) : ( statEntry ) {
+			AddCallback_StatChanged_Int( GetPlayerArray()[0], statEntry, void function( entity player, int oldValue, int newValue ) : ( statEntry ) {
 				Callback_OnStatChanged_Int( player, statEntry, oldValue, newValue )
 			} )
 		}

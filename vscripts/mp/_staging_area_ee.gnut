@@ -36,7 +36,7 @@ global const string BIG_NESSIE_SCRIPTNAME = "FiringRange_EE_1"
 global const string NESSIE_BALLOON_SCRIPTNAME = "FiringRange_EE_2"
       
 
-#if DEV
+#if DEVELOPER
 global function DEV_NessieTest
 #endif
 
@@ -288,7 +288,7 @@ void function FR_CleanupNessieForRealm( int realm )
 	printf("FIRING RANGE NESSIES - Cleanup for realm " + realm )
 	if ( !(realm in file.nessiesPerRealm) )
 	{
-		#if DEV
+		#if DEVELOPER
 			Assert( false, "Trying to reset nessies in a realm that wasn't setup!" )
 		#endif
 		return
@@ -737,7 +737,7 @@ void function FR_Nessie_EnterZone( entity player, int zoneID )
 
 	int realm = player.GetRealms()[0]
 
-	#if DEV
+	#if DEVELOPER
 		printf("FIRING RANGE ZONE: " + zoneID)
 	#endif
 	//tunnel 1
@@ -1101,13 +1101,13 @@ void function MoyNessieInit()
 	file.moyNessieLegends.append( "character_alter" )
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_NessieTest( entity player )
 {
 	printf( "Nessie Step " + file.blueNessieConditionsPerRealm[player.GetRealms()[0]].currentWeaponsBullseyed.len() )
 	//foreach ( entity balloon in file.nessieBalloonsPerRealm[player.GetRealms()[0]] )
 	//{
-	//	DebugDrawSphere( balloon.GetOrigin(), 400, COLOR_BLUE, false, 10 )
+	//	//DebugDrawSphere( balloon.GetOrigin(), 400, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), false, 10 )
 	//}
 
 	//thread BlueNessieSpawnSequenceThread(player.GetRealms()[0])
@@ -1484,7 +1484,7 @@ void function OnPlayerLootPickedUp( entity player, entity ent, string ref, int u
 					return
 				}
 
-				#if DEV
+				#if DEVELOPER
 					printf("FIRING RANGE NESSIES Pickup:" + ent.GetOrigin() + " " + ent.GetAngles() )
 				#endif
 

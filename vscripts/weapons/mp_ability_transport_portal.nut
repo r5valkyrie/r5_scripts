@@ -100,7 +100,7 @@ const asset TRANSPORT_PORTAL_RECEIVER_IMAGE = $"rui/hud/ultimate_icons/ultimate_
 const asset TRANSPORT_PORTAL_PORTAL_ICON = $"rui/hud/ping/icon_ping_phase_tunnel"
 
 const bool TRANSPORT_PORTAL_DATAPAD_DEBUG = true
-#if DEV
+#if DEVELOPER
 global const bool TRANSPORT_PORTAL_NAVMESH_PATH_DEBUG = false
 #endif
 
@@ -797,7 +797,7 @@ void function TransportPortal_Deploy( entity owner, vector origin, vector angles
 
 	entity traceBlocker = CreateTraceBlockerVolume( moveDest, 30, false, CONTENTS_BLOCK_PING | CONTENTS_NOGRAPPLE, translocator.GetTeam(), TRANSPORT_PORTAL_TRANSLOCATOR_TRACE_BLOCKER_SCRIPTNAME, translocator )
 	traceBlocker.SetParent( rootEnt )
-	//DebugDrawSphere( moveDest, 30, COLOR_BLUE, false, 10 )
+	//DebugDrawSphere( moveDest, 30, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), false, 10 )
 
 	entity minimapEnt = CreatePropScript( $"mdl/dev/empty_model.rmdl", origin, <0,0,0>, SOLID_NONE )
 	//SetTargetName( vars.minimapEnt, "SpectreDrop" )
@@ -1093,7 +1093,7 @@ void function MonitorForReceiverParentMoving_Thread( entity receiver )
 
 		if ( DistanceSqr(receiver.GetOrigin(), initialPos) > maxDistSqr )
 		{
-			#if DEV
+			#if DEVELOPER
 			printf("Destroying Receiver due to entity moving")
 			#endif
 			break
@@ -1928,7 +1928,7 @@ void function CreateChasePortal_Thread( entity rootEnt, entity player )
 	GeneratePathFromPlayerToRootEnt( rootEnt, player, null, allyPortalRootEnt )
 
 	//printf("ALTER - Teleporting from " + allyPortalRootEnt)
-	#if DEV
+	#if DEVELOPER
 	if (!TRANSPORT_PORTAL_NAVMESH_PATH_DEBUG)
 	#endif
 	{
@@ -1976,7 +1976,7 @@ void function CreateChasePortal_Thread( entity rootEnt, entity player )
 	if ( rootEnt in file.rootEntToDataMap )
 	{
 		array<entity> receiverUsers = file.rootEntToDataMap[rootEnt].teammatesWhoHaveUsedReceiver
-		#if DEV
+		#if DEVELOPER
 		if (!TRANSPORT_PORTAL_NAVMESH_PATH_DEBUG)
 		#endif
 		{
@@ -2173,7 +2173,7 @@ void function ChasePortalDoTeleport( entity allyPortalRootEnt, entity player )
 	if ( !IsValid( rootEnt ) )
 		return
 
-	#if DEV
+	#if DEVELOPER
 	if (!TRANSPORT_PORTAL_NAVMESH_PATH_DEBUG)
 	#endif
 	PhaseTunnelPortalData portalData = file.allyPortalToDataMap[allyPortalRootEnt].tunnelData
@@ -2250,7 +2250,7 @@ void function DoPhaseTravel_Thread( entity player, entity allyPortalRootEnt, Pha
 	waitthread PhaseTunnel_PhaseEntity( player, tunnelData.tunnelEnt, tunnelData, portalData, travelState )
 
 	SwapToLastEquippedPrimary( player )
-	#if DEV
+	#if DEVELOPER
 	printf("ALTER ult - Predicted: " + travelTime + ", Actual: " + (Time() - startTime))
 	#endif
 

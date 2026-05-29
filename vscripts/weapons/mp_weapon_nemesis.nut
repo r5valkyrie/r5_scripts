@@ -1,276 +1,421 @@
+                              
 global function MpWeaponNemesis_Init
-global function OnWeaponActivate_weapon_nemesis
-global function OnWeaponDeactivate_weapon_nemesis
-global function OnWeaponPrimaryAttack_weapon_nemesis
+global function OnWeaponActivate_Nemesis
+global function OnWeaponDeactivate_Nemesis
+global function OnWeaponHeatStateChanged_Nemesis
+#if CLIENT
+global function UpdatePlayerWeaponCosmetics_Nemesis
+#endif
 
-// (cafe): For visuals, not implemented atm
-// Can be used to play heated fx and anim, prob add a networked var and a callback to execute on client
-// #if SERVER || CLIENT
-// global function OnWeaponHeatStateChanged_weapon_nemesis
-// #endif
+const vector DEFAULT_UI_COLOR = <130, 130, 130> / 255.0
+const vector ENERGIZED_UI_LEFT_BAR_COLOR = <255, 119, 0> / 255.0
+const vector ENERGIZED_UI_RIGHT_BAR_COLOR = <150, 255, 30> / 255.0
 
-//Nemesis charge constants
-//Retail values - Update each season, calculate how many mods we need based on heat_per_bullet
-const float NEMESIS_CHARGE_PER_BURST = 0.1668	//16.68% charge per burst
-const float NEMESIS_DECAY_DELAY = 8.0			//8 seconds before decay starts
-const float NEMESIS_DECAY_RATE = 0.15			//15% per second decay rate
-const float NEMESIS_FULL_CHARGE = 1.0			//100% charge
-const float NEMESIS_CHARGE_EPSILON = 0.01		//Small value for float comparison
+//Idle VFX
+const asset NEMESIS_FX_IDLE_MAGNET_FP = $"P_wpn_nem_idle_magnet_FP"
+const asset NEMESIS_FX_IDLE_MAGNET_02_FP = $"P_wpn_nem_idle_magnet_02_FP"
+const asset NEMESIS_FX_IDLE_PANEL_FP = $"P_wpn_nem_idle_panel_FP"
+const asset NEMESIS_FX_IDLE_CENTER_FP = $"P_wpn_nem_idle_Center_FP"
+const asset NEMESIS_FX_IDLE_LATCH_L_FP = $"P_wpn_nem_idle_latch_L_FP"
+const asset NEMESIS_FX_IDLE_LATCH_R_FP = $"P_wpn_nem_idle_latch_R_FP"
+const asset NEMESIS_FX_IDLE_3P = $"P_wpn_nem_idle_3P"
+const asset NEMESIS_FX_IDLE_EMPTY = $"P_wpn_nem_empty_FP"
 
-//Charge level thresholds and corresponding mods
-const array<float> NEMESIS_CHARGE_THRESHOLDS = [0.1668, 0.3336, 0.5004, 0.6672, 0.8340, 1.0]
-const array<string> NEMESIS_CHARGE_MODS = ["nemesis_charge_1", "nemesis_charge_2", "nemesis_charge_3", "nemesis_charge_4", "nemesis_charge_5", "fully_heated"]
+const asset NEMESIS_FX_IDLE_CHARGED_FP = $"P_wpn_nem_charged_ribbon_FP"
 
-struct NemesisData
-{
-	float chargeLevel = 0.0
-	float lastFireTime = 0.0
-	int currentChargeMod = -1
-	int shotsInCurrentBurst = 0
-	bool decayThreadRunning = false
-}
+const float BARREL_CLOSE_SOUND_HEAT_VALUE = 0.05
 
-struct{
-	table<entity, NemesisData> nemesisDataTable
-} file
-
-//Table to store nemesis data per weapon
 void function MpWeaponNemesis_Init()
 {
-	
+	PrecacheParticleSystem( NEMESIS_FX_IDLE_MAGNET_FP )
+	PrecacheParticleSystem( NEMESIS_FX_IDLE_MAGNET_02_FP )
+	PrecacheParticleSystem( NEMESIS_FX_IDLE_PANEL_FP )
+	PrecacheParticleSystem( NEMESIS_FX_IDLE_CENTER_FP )
+	PrecacheParticleSystem( NEMESIS_FX_IDLE_3P )
+	PrecacheParticleSystem( NEMESIS_FX_IDLE_LATCH_L_FP )
+	PrecacheParticleSystem( NEMESIS_FX_IDLE_LATCH_R_FP )
+	PrecacheParticleSystem( NEMESIS_FX_IDLE_EMPTY )
+
+	PrecacheParticleSystem( NEMESIS_FX_IDLE_CHARGED_FP )
+
+	PrecacheParticleSystem( $"P_wpn_nem_reload_cyl_glow" )
+	PrecacheParticleSystem( $"P_wpn_nem_reload_cyl_glow_late" )
+	PrecacheParticleSystem( $"P_wpn_nem_cyl_elec" )
+	PrecacheParticleSystem( $"P_wpn_nem_reload_elec_ring" )
+
+	PrecacheParticleSystem( $"P_wpn_nem_reload_cyl_elec_01" )
+	PrecacheParticleSystem( $"P_wpn_nem_reload_cyl_elec_02" )
+	PrecacheParticleSystem( $"P_wpn_nem_reload_cyl_elec_03" )
+
+	#if CLIENT
+		AddCallback_OnPrimaryWeaponStatusUpdate( OnPrimaryWeaponStatusUpdate_Nemesis )
+		AddCallback_OnPlayerDisconnected( OnPlayerDisconnected )
+		AddCallback_UpdatePlayerWeaponEffects( UpdatePlayerWeaponCosmetics_Nemesis )
+	#endif
+
+	RegisterSignal( "WeaponDeactivate_Nemesis" )
+	RegisterSignal( "HeatRuiThinkAbortSignal" )
+	RegisterSignal( "PlayerDisconnected" )
+	RegisterSignal( "UpdateCosmetic" )
 }
 
-void function OnWeaponActivate_weapon_nemesis( entity weapon )
+#if CLIENT
+void function UpdatePlayerWeaponCosmetics_Nemesis( entity weapon )
 {
-	#if DEVELOPER
-		printt("[NEMESIS] Weapon activated")
+	if ( !IsValid( weapon ) )
+		return
+
+	if (!weapon.IsWeaponX())
+		return
+
+		if( weapon.GetWeaponClassName() == "mp_weapon_nemesis" )
+		{
+			weapon.Signal( "UpdateCosmetic" )
+			thread UpdateFX_Client( weapon )
+		}
+}
+#endif
+
+void function OnWeaponActivate_Nemesis( entity weapon )
+{
+	#if CLIENT
+		thread UpdateHeat_Client( weapon )
+		thread UpdateFX_Client( weapon )
 	#endif
-	
-	//Initialize nemesis data if not already present (preserves charge on re-equip)
-	if ( !(weapon in file.nemesisDataTable) )
-	{
-		NemesisData nemesisData
-		file.nemesisDataTable[weapon] <- nemesisData
-	}
-	
-	//Start charge decay monitoring (SERVER ONLY, once per weapon)
+
 	#if SERVER
-	NemesisData nemesisData = file.nemesisDataTable[weapon]
-	if ( !nemesisData.decayThreadRunning )
-	{
-		RemoveAllChargeMods( weapon ) //Required to avoid crash if charge mods were transferred to a dropped weapon
-		
-		nemesisData.decayThreadRunning = true
-		thread NemesisChargeDecayThink( weapon )
-	}
+		weapon.PlayWeaponEffect( $"", NEMESIS_FX_IDLE_3P, "fx_barrel_back", true )
 	#endif
-}
 
-void function OnWeaponDeactivate_weapon_nemesis( entity weapon )
-{
-	#if DEVELOPER
-		printt("[NEMESIS] Weapon deactivated")
-	#endif
-	
-	//Shouldn't remove the charges on weapon deactivate, it should be only on decay
-	//RemoveAllChargeMods( weapon )
-	
-	// if ( weapon in file.nemesisDataTable )
-		// delete file.nemesisDataTable[weapon]
-}
-
-var function OnWeaponPrimaryAttack_weapon_nemesis( entity weapon, WeaponPrimaryAttackParams attackParams )
-{
-	entity owner = weapon.GetOwner()
-	if ( !IsValid(owner) )
-		return 0
-	
-	//Get nemesis data from table
-	if ( !(weapon in file.nemesisDataTable) )
-		return 0
-	
-	NemesisData nemesisData = file.nemesisDataTable[weapon]
-	
-	//Increment shot counter
-	nemesisData.shotsInCurrentBurst++
-	nemesisData.lastFireTime = Time()
-	
-	//Get burst fire count from weapon (should be 4 for Nemesis)
-	int burstFireCount = weapon.GetWeaponSettingInt( eWeaponVar.burst_fire_count )
-	
-	weapon.FireWeapon_Default( attackParams.pos, attackParams.dir, 1.0, 1.0, false )
-	
-	//Check if burst is complete (SERVER ONLY for charge calculation)
-	if ( nemesisData.shotsInCurrentBurst >= burstFireCount )
-	{
-		#if DEVELOPER
-			printt("[NEMESIS] Burst completed after", nemesisData.shotsInCurrentBurst, "shots, charge level:", nemesisData.chargeLevel)
-		#endif
-		
-		#if SERVER
-		//Add charge (SERVER ONLY)
-		float oldCharge = nemesisData.chargeLevel
-		nemesisData.chargeLevel += NEMESIS_CHARGE_PER_BURST
-		
-		//Cap at maximum charge
-		if ( nemesisData.chargeLevel > NEMESIS_FULL_CHARGE )
-			nemesisData.chargeLevel = NEMESIS_FULL_CHARGE
-		
-		#if DEVELOPER
-			printt("[NEMESIS] Charge added:", oldCharge, "->", nemesisData.chargeLevel)
-		#endif
-		
-		//Update charge mod
-		UpdateChargeMod( weapon )
-		#endif // SERVER
-		
-		//Reset shot counter for next burst
-		nemesisData.shotsInCurrentBurst = 0
-	}
-	
-	//Use default attack behavior
-	return weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
+	thread UpdateSound( weapon )
 }
 
 
-#if SERVER
-void function NemesisChargeDecayThink( entity weapon )
+#if CLIENT
+void function UpdateFX_Client ( entity weapon)
 {
+	//////THREAD
+	AssertIsNewThread()
+
+	if ( !IsValid( weapon ) )
+		return
+
 	weapon.EndSignal( "OnDestroy" )
+	weapon.EndSignal( "WeaponDeactivate_Nemesis" )
+	weapon.EndSignal( "UpdateCosmetic" )
+
+	entity player = weapon.GetWeaponOwner()
+	if ( !IsValid( player ) || !IsLocalViewPlayer( player ) )
+		return
+
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "PlayerDisconnected" )
+	//////THREAD
+
+	//weapon.PlayWeaponEffect( NEMESIS_FX_IDLE_RIBBON_FP, $"", "fx_ribbon_charge_03", true )
+
+	weapon.PlayWeaponEffect( NEMESIS_FX_IDLE_PANEL_FP, $"", "fx_panel_L", true )
+	weapon.PlayWeaponEffect( NEMESIS_FX_IDLE_PANEL_FP, $"", "fx_panel_R", true )
+
+	weapon.PlayWeaponEffect( NEMESIS_FX_IDLE_MAGNET_FP, $"", "fx_magnet_01", true )
+	weapon.PlayWeaponEffect( NEMESIS_FX_IDLE_MAGNET_02_FP, $"", "fx_magnet_02", true )
+	weapon.PlayWeaponEffect( NEMESIS_FX_IDLE_MAGNET_FP, $"", "fx_magnet_03", true )
+	weapon.PlayWeaponEffect( NEMESIS_FX_IDLE_MAGNET_02_FP, $"", "fx_magnet_04", true )
+	weapon.PlayWeaponEffect( NEMESIS_FX_IDLE_MAGNET_FP, $"", "fx_magnet_05", true )
+
+	int fxHandle_Barrel
+	int fxHandle_Ribbon
+
+	if ( !EffectDoesExist(fxHandle_Barrel))
+		fxHandle_Barrel = weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_CENTER_FP, NEMESIS_FX_IDLE_3P, "fx_barrel_back", true )
+	if ( !EffectDoesExist(fxHandle_Ribbon))
+		fxHandle_Ribbon = weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_CHARGED_FP, $"", "fx_ribbon_charge", true )
+
+	//Left and right wing tendrils
+	array<int> fxHandlesLeft =
+	[
+		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_L_FP, $"", "fx_mag_latch_L_01", true ),
+		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_L_FP, $"", "fx_mag_latch_L_02", true ),
+		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_L_FP, $"", "fx_mag_latch_L_03", true ),
+		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_L_FP, $"", "fx_mag_latch_L_04", true ),
+		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_L_FP, $"", "fx_mag_latch_L_05", true ),
+		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_L_FP, $"", "fx_mag_latch_L_06", true ),
+	]
+	array<int> fxHandlesRight =
+	[
+		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_R_FP, $"", "fx_mag_latch_R_01", true ),
+		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_R_FP, $"", "fx_mag_latch_R_02", true ),
+		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_R_FP, $"", "fx_mag_latch_R_03", true ),
+		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_R_FP, $"", "fx_mag_latch_R_04", true ),
+		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_R_FP, $"", "fx_mag_latch_R_05", true ),
+		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_R_FP, $"", "fx_mag_latch_R_06", true ),
+	]
+
+	//Sleep latch particles after being created
+	for ( int i; i < fxHandlesLeft.len(); i++ )
+	{
+		if ( EffectDoesExist( fxHandlesLeft[i] ) )
+		{
+			EffectSleep( fxHandlesLeft[i])
+		}
+		if ( EffectDoesExist( fxHandlesRight[i]) )
+		{
+			EffectSleep( fxHandlesRight[i])
+		}
+	}
+
+	OnThreadEnd(
+		function() : ( weapon, fxHandlesLeft, fxHandlesRight, fxHandle_Barrel, fxHandle_Ribbon )
+		{
+			for ( int i; i < fxHandlesLeft.len(); i++ )
+			{
+				if ( EffectDoesExist( fxHandlesLeft[i] ) )
+				{
+					EffectStop( fxHandlesLeft[i], true, false )
+				}
+
+				if ( EffectDoesExist( fxHandlesRight[i]) )
+				{
+					EffectStop( fxHandlesRight[i], true, false )
+				}
+			}
+
+			if ( EffectDoesExist( fxHandle_Barrel ) )
+			{
+				EffectStop( fxHandle_Barrel, true, false )
+			}
+
+			if ( EffectDoesExist( fxHandle_Ribbon ) )
+			{
+				EffectStop( fxHandle_Ribbon, true, false )
+			}
+
+			weapon.StopWeaponEffect( $"", NEMESIS_FX_IDLE_3P )
+		}
+
+	)
+
+	float previousHeat = 0.0
+	float length = float( fxHandlesLeft.len() )
+
+	//Loop
+	while( true )
+	{
+		float heatValue 		= weapon.GetHeatValue()
+		float interp 			= 0.0
+
+		//Activate/Deactivate particles based on heatValue interpolation
+		if (heatValue != previousHeat)
+		{
+
+			if ( EffectDoesExist( fxHandle_Barrel ) )
+				EffectSetControlPointVector( fxHandle_Barrel, 15, <heatValue, heatValue, heatValue> )
+
+			if ( EffectDoesExist( fxHandle_Ribbon ) )
+				EffectSetControlPointVector( fxHandle_Ribbon, 15, <heatValue, heatValue, heatValue> )
+
+			for ( int i; i < fxHandlesLeft.len(); i++ )
+			{
+
+				interp = ( i / length )
+
+				if (heatValue > interp)
+				{
+					if ( EffectDoesExist( fxHandlesLeft[i] ) )
+					{
+						EffectWake( fxHandlesLeft[i] )
+					}
+					if ( EffectDoesExist( fxHandlesRight[i] ))
+					{
+						EffectWake( fxHandlesRight[i] )
+					}
+				}
+				else
+				{
+					if ( EffectDoesExist( fxHandlesLeft[i] ))
+					{
+						EffectSleep( fxHandlesLeft[i] )
+					}
+					if ( EffectDoesExist( fxHandlesRight[i] ))
+					{
+						EffectSleep( fxHandlesRight[i] )
+					}
+				}
+			}
+		}
+		previousHeat = heatValue
+		WaitFrame()
+	}
+}
+#endif
+
+
+#if CLIENT
+void function OnPrimaryWeaponStatusUpdate_Nemesis( entity selectedWeapon, var weaponRui )
+{
+	if ( !IsValid( selectedWeapon ) )
+		return
+
+	// send signal here to make sure it happens right after we switch to another weapon
+	entity activeWeapon = GetLocalViewPlayer().GetActiveWeapon( eActiveInventorySlot.mainHand  )
+	bool switchToMeleeOrGrenade = IsBitFlagSet( selectedWeapon.GetWeaponTypeFlags(), ( WPT_VIEWHANDS | WPT_GRENADE ) )
+	if ( IsValid( activeWeapon ) && activeWeapon != selectedWeapon && activeWeapon.HasHeatDecay() )
+	{
+		if ( !( activeWeapon.GetHeatValue() > 0.0 && switchToMeleeOrGrenade ) )
+			activeWeapon.Signal( "HeatRuiThinkAbortSignal" )
+	}
+
+	if( selectedWeapon.GetWeaponClassName() == "mp_weapon_nemesis" )
+		thread UpdateHeat_Client( selectedWeapon )
+}
+#endif
+
+#if CLIENT
+void function UpdateHeat_Client( entity weapon )
+{
+	AssertIsNewThread()
+
+	if ( !IsValid( weapon ) )
+		return
+
+	weapon.Signal( "HeatRuiThinkAbortSignal" )
+	weapon.EndSignal( "OnDestroy" )
+	weapon.EndSignal( "HeatRuiThinkAbortSignal" )
+
+	entity player = weapon.GetWeaponOwner()
+	if ( !IsValid( player ) || !IsLocalViewPlayer( player ) )
+		return
+
+	player.Signal( WEAPON_CHARGED_RUI_ABORT_SIGNAL )
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( WEAPON_CHARGED_RUI_ABORT_SIGNAL )
+
+	var rui = ClWeaponStatus_GetWeaponHudRui( player )
+	if ( rui == null )
+		return
+
+	RuiDestroyNestedIfAlive( rui, "chargedHandle" )
+
+	var nestedRui = RuiCreateNested( rui, "chargedHandle", $"ui/weapon_hud_charged_nemesis.rpak" )
+	if ( nestedRui == null )
+		return
+
+	OnThreadEnd(
+		function() : ( player, weapon, rui, nestedRui )
+		{
+			RuiSetBool( rui, "showChargeBar", false )
+			RuiDestroyNestedIfAlive( rui, "chargedHandle" )
+		}
+	)
+
+	//BAR PROGRESS COLOR
+	RuiSetFloat3( nestedRui, "startBorderColor", SrgbToLinear( <127, 127, 127> / 255.0 ) )
+	RuiSetFloat3( nestedRui, "middleBorderColor", SrgbToLinear( <84, 130, 219> / 255.0 ) )
+	RuiSetFloat3( nestedRui, "endBorderColor",SrgbToLinear( <92, 191, 218> / 255.0 ) )
+
+	//TURN OFF OTHER CHARGE BAR CHANGES
+	RuiSetFloat3( rui, "chargeBarBorderOverlayColor", SrgbToLinear( ENERGIZED_UI_LEFT_BAR_COLOR ) )
+	RuiSetBool( rui, "showChargeBarBorderColor", false )
+	RuiSetBool( rui, "showChargedAmmoIconOverride", false )
+	RuiSetBool( rui, "showChargedAmmoOverride", false )
+
+	RuiSetFloat( nestedRui, "chargeBarTimeRemaining", -1.0 )
+
+	while( true )
+	{
+
+		entity activeWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
+		if( IsValid ( activeWeapon ) )
+		{
+			bool IsPrimaryWeapon = IsBitFlagSet( activeWeapon.GetWeaponTypeFlags(), WPT_PRIMARY )
+			bool IsUltimateWeapon = IsBitFlagSet( activeWeapon.GetWeaponTypeFlags(), WPT_ULTIMATE )
+			if ( ( IsPrimaryWeapon && !activeWeapon.HasHeatDecay() ) || IsUltimateWeapon )
+				break
+		}
+
+		float heatValue = weapon.GetHeatValue()
+
+		RuiSetFloat( nestedRui, "chargeBarFrac", heatValue )
+		RuiSetBool( rui, "showChargeBar", true )
+
+		WaitFrame()
+	}
+}
+
+void function OnPlayerDisconnected( entity player )
+{
+	if ( player != GetLocalClientPlayer() )
+		return
+
+	player.Signal( "PlayerDisconnected" )
+}
+#endif
+
+
+void function UpdateSound( entity weapon )
+{
+	AssertIsNewThread()
+
+	if ( !IsValid( weapon ) )
+		return
+
+	weapon.EndSignal( "OnDestroy" )
+	weapon.EndSignal( "WeaponDeactivate_Nemesis" )
+
+	entity player = weapon.GetWeaponOwner()
+	if ( !IsValid( player ) )
+		return
+
+	player.EndSignal( "OnDeath" )
 
 	OnThreadEnd(
 		function() : ( weapon )
 		{
-			// printw("weapon is not valid anymore" )
-			if ( weapon in file.nemesisDataTable )
-				delete file.nemesisDataTable[weapon]
+			string startSound = weapon.GetWeaponSettingString( eWeaponVar.burst_or_looping_fire_sound_start_1p )
+			string middleSound = weapon.GetWeaponSettingString( eWeaponVar.burst_or_looping_fire_sound_middle_1p )
+			weapon.StopWeaponSound( startSound )
+			weapon.StopWeaponSound( middleSound )
 		}
 	)
 
-	while ( IsValid(weapon) )
+	float lastHeatValue
+	while( true )
 	{
-		//Check if weapon is still in the table
-		if ( !(weapon in file.nemesisDataTable) )
+		float heatValue = weapon.GetHeatValue()
+
+		#if SERVER
+			weapon.SetSoundCodeControllerValue( heatValue )
+		#endif
+
+		#if CLIENT
+		if( heatValue < BARREL_CLOSE_SOUND_HEAT_VALUE && lastHeatValue > BARREL_CLOSE_SOUND_HEAT_VALUE )
 		{
-			WaitFrame()
-			continue
+			weapon.EmitWeaponSound( "wpn_nemesis_barrelClose" )
 		}
-		
-		NemesisData nemesisData = file.nemesisDataTable[weapon]
-		
-		//Check if enough time has passed since last fire for decay to start
-		float timeSinceLastFire = Time() - nemesisData.lastFireTime
-		
-		if ( timeSinceLastFire >= NEMESIS_DECAY_DELAY && nemesisData.chargeLevel > 0.0 )
-		{
-			float oldCharge = nemesisData.chargeLevel
-			
-			//Decay charge at 15% per second
-			float decayAmount = NEMESIS_DECAY_RATE * 1.0	//1 second frame
-			nemesisData.chargeLevel -= decayAmount
-			
-			//Don't go below 0
-			if ( nemesisData.chargeLevel < 0.0 )
-				nemesisData.chargeLevel = 0.0
-			
-			#if DEVELOPER
-				if ( oldCharge != nemesisData.chargeLevel )
-					printt("[NEMESIS] Charge decayed:", oldCharge, "->", nemesisData.chargeLevel)
-			#endif
-			
-			//Update charge mod if charge level changed significantly
-			if ( fabs(oldCharge - nemesisData.chargeLevel) > NEMESIS_CHARGE_EPSILON )
-				UpdateChargeMod( weapon )
-		}
-		
-		wait 1.0	//Check every second for decay
+		lastHeatValue = heatValue
+		#endif
+
+		WaitFrame()
 	}
 }
 
-void function UpdateChargeMod( entity weapon )
+void function OnWeaponDeactivate_Nemesis( entity weapon )
 {
-	if ( !IsValid(weapon) )
-		return
-	
-	//Get nemesis data from global table
-	if ( !(weapon in file.nemesisDataTable) )
-		return
-	
-	NemesisData nemesisData = file.nemesisDataTable[weapon]
-	int newChargeMod = GetChargeModIndex( nemesisData.chargeLevel )
-	
-	//Only update if charge mod changed
-	if ( newChargeMod != nemesisData.currentChargeMod )
-	{
-		//Remove old charge mod
-		if ( nemesisData.currentChargeMod >= 0 && nemesisData.currentChargeMod < NEMESIS_CHARGE_MODS.len() )
-		{
-			string oldMod = NEMESIS_CHARGE_MODS[nemesisData.currentChargeMod]
-			if ( weapon.HasMod(oldMod) )
-			{
-				weapon.RemoveMod( oldMod )
-				#if DEVELOPER
-					printt("[NEMESIS] Removed charge mod:", oldMod)
-				#endif
-			}
-		}
-		
-		//Apply new charge mod
-		if ( newChargeMod >= 0 && newChargeMod < NEMESIS_CHARGE_MODS.len() )
-		{
-			string newMod = NEMESIS_CHARGE_MODS[newChargeMod]
-			weapon.AddMod( newMod )
-			
-			#if DEVELOPER
-				printt("[NEMESIS] Applied charge mod:", newMod, "at charge level:", nemesisData.chargeLevel)
-			#endif
-		}
-		
-		nemesisData.currentChargeMod = newChargeMod
-	}
-}
+	weapon.Signal( "WeaponDeactivate_Nemesis" )
 
-int function GetChargeModIndex( float chargeLevel )
-{
-	//Return -1 for no mod (base state)
-	if ( chargeLevel < NEMESIS_CHARGE_THRESHOLDS[0] )
-		return -1
-	
-	//Find the appropriate charge mod based on charge level
-	for ( int i = NEMESIS_CHARGE_THRESHOLDS.len() - 1; i >= 0; i-- )
-	{
-		if ( chargeLevel >= NEMESIS_CHARGE_THRESHOLDS[i] )
-			return i
-	}
-	
-	return -1
-}
-
-void function RemoveAllChargeMods( entity weapon )
-{
-	if ( !IsValid(weapon) )
-		return
-	
-	foreach ( string mod in NEMESIS_CHARGE_MODS )
-	{
-		if ( weapon.HasMod(mod) )
-		{
-			weapon.RemoveMod( mod )
-			#if DEVELOPER
-				printt("[NEMESIS] Removed charge mod during cleanup:", mod)
-			#endif
-		}
-	}
-}
-#endif
-
-#if SERVER || CLIENT
-void function OnWeaponHeatStateChanged_weapon_nemesis( entity weapon, int newHeatState )
-{
-	//This callback is called when the weapon's heat state changes
-	//We could use this for additional effects or logic if needed
-	#if DEVELOPER
-		printt("[NEMESIS] Heat state changed to:", newHeatState)
+	#if SERVER
+		weapon.StopWeaponEffect( $"", NEMESIS_FX_IDLE_3P )
 	#endif
 }
+
+void function OnWeaponHeatStateChanged_Nemesis( entity weapon, bool currentIsHeated )
+{
+	entity player = weapon.GetWeaponOwner()
+	if ( !IsValid( player ) )
+		return
+#if SERVER
+	WeaponStatsHook_OnWeaponHeatStateChanged( player, weapon, currentIsHeated )
 #endif
+}
+
+                                   

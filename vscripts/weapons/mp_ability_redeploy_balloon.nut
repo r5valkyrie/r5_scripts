@@ -19,7 +19,7 @@ global function RedeployBalloon_GetSkydiveVelOverride
 global function RedeployBalloon_GetHeight
 #endif
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 global function DEV_DeployRedeployBalloon
 #endif
 
@@ -1431,7 +1431,7 @@ void function AutoEquipInventoryItem( entity takeWeapon, entity ownerPlayer )
 }
 #endif
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function DEV_DeployRedeployBalloon( entity player, vector origin )
 {
 	RedeployBalloon_StartSequence ( player, origin, <0, 0, 0> )

@@ -42,7 +42,7 @@ global function Drones_GetDroneDataFromRollerModelEnt
 global function Drones_DroneKilled
 global function Drones_DroneFallSequence_Thread
 
-#if DEV
+#if DEVELOPER
 global function DEV_Drones_StopAllDrones
 const string SIGNAL_DRONE_STOP = "signalDroneStop"
 #endif // DEV
@@ -97,7 +97,7 @@ void function Drones_InitDrones()
 	RegisterSignal( SIGNAL_DRONE_FALL_START )
 	RegisterSignal( SIGNAL_DRONE_STOP_PANIC )
 
-	#if DEV
+	#if DEVELOPER
 		RegisterSignal( SIGNAL_DRONE_STOP )
 	#endif // DEV
 
@@ -179,7 +179,7 @@ void function Drone_FollowPath_Thread( DroneData droneData, array< entity > dron
 	EndSignal( mover, "OnDestroy" )
 	EndSignal( mover, SIGNAL_DRONE_FALL_START )
 	EndSignal( droneData.model, "OnDestroy" )
-	#if DEV
+	#if DEVELOPER
 		EndSignal( mover, SIGNAL_DRONE_STOP )
 	#endif // DEV
 
@@ -475,17 +475,17 @@ void function Drone_RotatorThread( DroneData droneData )
 			lookAheadPos = lastNodeEnt.GetSmoothPositionAtDistance( lookAheadDist )
 		vector fwdToLookAhead = FlattenNormalizeVec( lookAheadPos - currentPos )
 
-		#if DEV
+		#if DEVELOPER
 			if ( DRONE_DEBUG_BANK_YAW_VECTORS )
 			{
-				//DebugDrawLine( currentPos, (currentPos + forwardVec), COLOR_WHITE, true, DRONE_BANK_UPDATE_TIME )
-				//DebugDrawLine( currentPos, (currentPos + fwdToLookAhead), COLOR_RED, true, DRONE_BANK_UPDATE_TIME )
+				DebugDrawLine( currentPos, (currentPos + forwardVec), int(COLOR_WHITE.x), int(COLOR_WHITE.y), int(COLOR_WHITE.z), true, DRONE_BANK_UPDATE_TIME )
+				DebugDrawLine( currentPos, (currentPos + fwdToLookAhead), int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, DRONE_BANK_UPDATE_TIME )
 
-				//DebugDrawSphere( (currentPos + forwardVec), 8.0, COLOR_WHITE, true, DRONE_BANK_UPDATE_TIME )
-				//DebugDrawSphere( lookAheadPos, 8.0, COLOR_RED, true, DRONE_BANK_UPDATE_TIME )
+				DebugDrawSphere( (currentPos + forwardVec), 8.0, int(COLOR_WHITE.x), int(COLOR_WHITE.y), int(COLOR_WHITE.z), true, DRONE_BANK_UPDATE_TIME )
+				DebugDrawSphere( lookAheadPos, 8.0, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, DRONE_BANK_UPDATE_TIME )
 
-				//DebugDrawSphere( lastNodeEnt.GetOrigin(), 16.0, COLOR_BLUE, true, (DRONE_BANK_UPDATE_TIME * 2) )
-				//DebugDrawSphere( nextNodeEnt.GetOrigin(), 16.0, COLOR_GREEN, true, (DRONE_BANK_UPDATE_TIME * 2) )
+				DebugDrawSphere( lastNodeEnt.GetOrigin(), 16.0, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, (DRONE_BANK_UPDATE_TIME * 2) )
+				DebugDrawSphere( nextNodeEnt.GetOrigin(), 16.0, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, (DRONE_BANK_UPDATE_TIME * 2) )
 			}
 		#endif
 
@@ -510,17 +510,17 @@ void function Drone_RotatorThread( DroneData droneData )
 		float lerpPercent = pow( fwdDot, 2 ) //sin( fwdDot * PI * 0.5 )
 		goalAngles.z = LerpFloat( goalAngles.z, mover.GetAngles().z, lerpPercent )
 
-		#if DEV
+		#if DEVELOPER
 			if ( DRONE_DEBUG_BANK_YAW_VECTORS )
 			{
-				//DebugDrawLine( currentPos, (currentPos + forwardVec), COLOR_WHITE, true, DRONE_BANK_UPDATE_TIME )
-				//DebugDrawLine( currentPos, (currentPos + fwdToLookAhead), COLOR_RED, true, DRONE_BANK_UPDATE_TIME )
+				DebugDrawLine( currentPos, (currentPos + forwardVec), int(COLOR_WHITE.x), int(COLOR_WHITE.y), int(COLOR_WHITE.z), true, DRONE_BANK_UPDATE_TIME )
+				DebugDrawLine( currentPos, (currentPos + fwdToLookAhead), int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, DRONE_BANK_UPDATE_TIME )
 
-				//DebugDrawSphere( (currentPos + forwardVec), 8.0, COLOR_WHITE, true, DRONE_BANK_UPDATE_TIME )
-				//DebugDrawSphere( lookAheadPos, 8.0, COLOR_RED, true, DRONE_BANK_UPDATE_TIME )
+				DebugDrawSphere( (currentPos + forwardVec), 8.0, int(COLOR_WHITE.x), int(COLOR_WHITE.y), int(COLOR_WHITE.z), true, DRONE_BANK_UPDATE_TIME )
+				DebugDrawSphere( lookAheadPos, 8.0, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, DRONE_BANK_UPDATE_TIME )
 
-				//DebugDrawSphere( lastNodeEnt.GetOrigin(), 16.0, COLOR_BLUE, true, (DRONE_BANK_UPDATE_TIME * 2) )
-				//DebugDrawSphere( nextNodeEnt.GetOrigin(), 16.0, COLOR_GREEN, true, (DRONE_BANK_UPDATE_TIME * 2) )
+				DebugDrawSphere( lastNodeEnt.GetOrigin(), 16.0, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, (DRONE_BANK_UPDATE_TIME * 2) )
+				DebugDrawSphere( nextNodeEnt.GetOrigin(), 16.0, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, (DRONE_BANK_UPDATE_TIME * 2) )
 
 				printf( "LootDroneDebug: fwdDot = %f, yawAngle = %f, bankAmount = %f, goalAngles.z = %f", fwdDot, yawAngle, bankAmount, goalAngles.z )
 			}
@@ -1163,7 +1163,7 @@ void function DebugDrawSafeDronePathsByPathArray( array< array<entity> > dronePa
 		for ( int j; j < numNodes; j++ )
 		{
 			int j_next = ( j + 1 ) % numNodes
-			//DebugDrawLine( path[j].GetOrigin(), path[ j_next ].GetOrigin(), color, true, displayTime )
+			DebugDrawLine( path[j].GetOrigin(), path[ j_next ].GetOrigin(), int(color.x), int(color.y), int(color.z), true, displayTime )
 		}
 	}
 }
@@ -1364,7 +1364,7 @@ array< array<entity> > function InitAndReturnDronePathsByPathType( array< entity
 			if ( !IsValid( nextNode ) )
 			{
 				printf( "DroneDebug: WARNING!!! Next train node isn't valid! Breaking out and drawing previous node location." )
-				//DebugDrawSphere( curNode.GetOrigin(), 32, <255, 125, 0>, true, 600 )
+				DebugDrawSphere( curNode.GetOrigin(), 32, 255, 125, 0, true, 600 )
 				unparsedNodes.fastremovebyvalue( nextNode )
 				i--
 				break
@@ -1663,7 +1663,7 @@ void function Drones_SpawnDrones_Thread( int numToSpawn, int droneType )
  
       
 
-#if DEV
+#if DEVELOPER
 // Stop all drones from moving
 void function DEV_Drones_StopAllDrones()
 {

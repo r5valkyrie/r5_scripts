@@ -1667,7 +1667,7 @@ void function DEV_Show_TrigWarpGates()
 		if(( GetEditorClass( trigMultiple ) == "trigger_warp_gate") && trigMultiple.HasKey( "targetname" ))
 		{
 			printt( format( " +++++ trigger_warp_gate %s exists", trigMultiple.GetValueForKey( "targetname" ) ))
-			thread PortalWarningThread( 0, <0, 0, 0>, <0,0,0>, GP(), trigMultiple )
+			thread PortalWarningThread( 0, <0, 0, 0>, <0,0,0>, GetPlayerArray()[0], trigMultiple )
 		}
 	}
 }

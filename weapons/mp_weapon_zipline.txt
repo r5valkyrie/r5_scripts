@@ -1,370 +1,650 @@
-#base "_base_ability_ultimate.txt"
-
-WeaponData
+"WeaponData"
 {
-	// General
-	"printname"   									"Zipline Gun"
-	"shortprintname"								"Zipline Gun"
-	"description" 									"Zipline Gun"
-	"longdesc"										"Zipline Gun"
-	"weapon_type_flags"								"WPT_ULTIMATE"
-	"weaponClass" 									"human"
-	"pickup_hold_prompt"  							"Hold [USE] [WEAPONNAME]"
-	"pickup_press_prompt" 							"[USE] [WEAPONNAME]"
-	"minimap_reveal_distance"						"32000"
-	"fire_mode"   									"offhand"
-	"offhand_cancelled_by_melee"					"1"
-	"is_toss_weapon"								"1"
-	"play_fire_weapon_sound_on_toss"				"1"
-	"offhand_default_inventory_slot"				"4"
-	"offhand_hold_enabled"							"0"
-	"offhand_interupts_weapon_anims"				"1"
-	"offhand_raise_is_interrupt_resumable"			"1"
-	"offhand_toss_activates_on_attack"				"1"
-	"offhand_switch_on_attack"						"0"
-	"trophy_system_ignores"                          "always"
+	// val unk: 32
+	"printname" "#WPN_ZIPLINE"
+	// val unk: 94
+	"shortprintname" "#WPN_ZIPLINE"
+	// val unk: 99
+	"description" "#WPN_ZIPLINE_DESC"
+	// val unk: 149
+	"longdesc" "#WPN_ZIPLINE_LONGDESC"
+	// val unk: 24
+	"weaponClass" "human"
+	// val unk: 144
+	"pickup_hold_prompt" "Hold [USE] [WEAPONNAME]"
+	// val unk: 56
+	"pickup_press_prompt" "[USE] [WEAPONNAME]"
+	// val unk: 60
+	"minimap_reveal_distance" "32000"
+	// val unk: 13
+	"fire_mode" "offhand"
+	// val unk: 129
+	"offhand_cancelled_by_melee" "1"
+	// val unk: 105
+	"is_toss_weapon" "1"
+	// val unk: 23
+	"play_fire_weapon_sound_on_toss" "1"
+	// val unk: 184
+	"offhand_default_inventory_slot" "1"
+	// val unk: 74
+	"offhand_hold_enabled" "0"
+	// val unk: 75
+	"offhand_interupts_weapon_anims" "1"
+	// val unk: 139
+	"offhand_raise_is_interrupt_resumable" "1"
+	// val unk: 67
+	"offhand_toss_activates_on_attack" "1"
+	// val unk: 89
+	"offhand_switch_on_attack" "0"
+	// val unk: 154
+	"trophy_system_ignores" "always"
+	// val unk: 88
+	"OnWeaponToss" "OnWeaponPrimaryAttack_weapon_zipline"
+	// val unk: 41
+	"OnWeaponPrimaryAttack" "OnWeaponPrimaryAttack_weapon_zipline"
+	// val unk: 153
+	"OnWeaponNpcPrimaryAttack" "OnWeaponNpcPrimaryAttack_weapon_zipline"
+	// val unk: 175
+	"OnProjectileCollision" "OnProjectileCollision_weapon_zipline"
+	// val unk: 36
+	"OnCreateClientOnlyModel" "OnCreateClientOnlyModel_weapon_zipline"
+	// val unk: 130
+	"OnWeaponRaise" "OnWeaponRaise_weapon_zipline"
+	// val unk: 86
+	"OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
+	// val unk: 170
+	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_zipline"
+	// val unk: 98
+	"grenade_arc_indicator_effect" ""
+	// val unk: 43
+	"grenade_arc_impact_indicator_effect" ""
+	// val unk: 133
+	"grenade_arc_indicator_show_from_hip" "1"
+	// val unk: 194
+	"grenade_arc_indicator_bounce_count" "1"
+	// val unk: 131
+	"zipline_indicator_arc_blocked_effect" ""
+	// val unk: 157
+	"zipline_indicator_line_effect" "P_wpn_zipline_previs"
+	// val unk: 28
+	"zipline_indicator_impact_ground_effect" ""
+	// val unk: 146
+	"zipline_indicator_impact_wall_effect" ""
+	// val unk: 44
+	"zipline_indicator_impact_blocked_effect" ""
+	// val unk: 39
+	"zipline_station_model_ground" "mdl/props/pathfinder_zipline/pathfinder_zipline.rmdl"
+	// val unk: 158
+	"zipline_station_model_wall" "mdl/props/pathfinder_zipline/pathfinder_zipline.rmdl"
+	// val unk: 95
+	"zipline_station_model_ledge" "mdl/props/pathfinder_zipline/pathfinder_zipline.rmdl"
+	// val unk: 132
+	"zipline_station_attachment_ground" "ATTACH_TOP_ROPE"
+	// val unk: 38
+	"zipline_station_attachment_wall" "ATTACH_TOP_ROPE"
+	// val unk: 104
+	"zipline_station_attachment_ledge" "ATTACH_TOP_ROPE"
+	// val unk: 93
+	"zipline_station_animation_begin" "prop_pathfinder_zipline_release"
+	// val unk: 12
+	"zipline_station_animation_ground" "prop_pathfinder_zipline_expand_up"
+	// val unk: 185
+	"zipline_station_animation_wall" "prop_pathfinder_zipline_expand_side"
+	// val unk: 70
+	"zipline_station_animation_ledge" "prop_pathfinder_zipline_expand_sideup"
+	// val unk: 85
+	"zipline_grenade" "1"
+	// val unk: 147
+	"zipline_grenade_auto_detach_distance" "100"
+	// val unk: 80
+	"zipline_grenade_snap_distance" "250"
+	// val unk: 97
+	"zipline_grenade_snap_angle" "10"
+	// val unk: 8
+	"projectile_launch_speed" "2600"
+	// val unk: 190
+	"projectile_gravity_scale" "0"
+	// val unk: 136
+	"projectile_first_person_offset_fraction" "0"
+	// val unk: 14
+	"projectile_launch_pitch_offset" "0"
+	// val unk: 9
+	"zipline_distance_min" "700"
+	// val unk: 168
+	"zipline_distance_max" "8000"
+	// val unk: 108
+	"grenade_fuse_time" "10.000000"
+	// val unk: 68
+	"start_fuse_on_launch" "0"
+	// val unk: 51
+	"stat_damage" "60"
+	// val unk: 42
+	"stat_range" "25"
+	// val unk: 81
+	"stat_accuracy" "25"
+	// val unk: 91
+	"stat_rof" "50"
+	// val unk: 61
+	"viewmodel" "mdl/weapons/pathfinder_zipline/ptpov_pathfinder_zipline_held.rmdl"
+	// val unk: 47
+	"playermodel" "mdl/weapons/empty_handed/w_empty_handed_human.rmdl"
+	// val unk: 174
+	"projectilemodel" "mdl/Weapons/pathfinder_zipline/w_pathfinder_zipline.rmdl"
+	// val unk: 53
+	"projectile_trail_effect_0_1p" "P_zipline_projectile_trail"
+	// val unk: 191
+	"projectile_trail_effect_0_3p" "P_zipline_projectile_trail"
+	// val unk: 83
+	"projectile_trail_attachment" "FX_PROJECTILE_END"
+	// val unk: 121
+	"vortex_absorb_effect" "wpn_vortex_projectile_frag_FP"
+	// val unk: 164
+	"vortex_absorb_effect_third_person" "wpn_vortex_projectile_frag"
+	// val unk: 107
+	"vortex_absorb_sound" "Vortex_Shield_AbsorbBulletLarge"
+	// val unk: 199
+	"vortex_absorb_sound_1p_vs_3p" "Vortex_Shield_AbsorbBulletLarge_1P_VS_3P"
+	// val unk: 20
+	"vortex_drain" "0.000000"
+	// val unk: 11
+	"projectile_adjust_to_gun_barrel" "1"
+	// val unk: 101
+	"fire_sound_1_player_1p" "weapon_zipline_gun_fire_1p"
+	// val unk: 150
+	"fire_sound_1_player_3p" "weapon_zipline_gun_fire_3p"
+	// val unk: 76
+	"fire_sound_2_player_1p" "Weapon_bulletCasing.Single"
+	// val unk: 77
+	"fire_sound_2_player_3p" "Weapon_bulletCasing.Single"
+	// val unk: 59
+	"sound_zoom_in" "Weapon_MGL_ADS_In"
+	// val unk: 182
+	"sound_zoom_out" "Weapon_MGL_ADS_Out"
+	// val unk: 169
+	"fx_muzzle_flash_view" "P_wpn_muzzleflash_mgl_FP_FULL"
+	// val unk: 143
+	"fx_muzzle_flash_world" "P_wpn_muzzleflash_mgl_FULL"
+	// val unk: 145
+	"fx_muzzle_flash_attach" "ATTACH_ZIPLINE_FRONT"
+	// val unk: 193
+	"charge_time" "0.000000"
+	// val unk: 134
+	"charge_cooldown_time" "1.000000"
+	// val unk: 156
+	"charge_cooldown_delay" "0.000000"
+	// val unk: 21
+	"charge_end_forces_fire" "1"
+	// val unk: 6
+	"charge_require_input" "1"
+	// val unk: 96
+	"charge_remain_full_when_fired" "1"
+	// val unk: 152
+	"impact_effect_table" "default_nosound_nowhizby"
+	// val unk: 84
+	"damage_type" "burn"
+	// val unk: 46
+	"damage_near_distance" "100"
+	// val unk: 31
+	"damage_far_distance" "15000"
+	// val unk: 7
+	"damage_near_value" "0"
+	// val unk: 165
+	"damage_far_value" "0"
+	// val unk: 123
+	"damage_near_value_titanarmor" "0"
+	// val unk: 124
+	"damage_far_value_titanarmor" "0"
+	// val unk: 125
+	"explosion_damage" "120"
+	// val unk: 126
+	"explosion_damage_heavy_armor" "1000"
+	// val unk: 92
+	"explosion_inner_radius" "256"
+	// val unk: 103
+	"explosionradius" "384"
+	// val unk: 72
+	"impulse_force" "3000"
+	// val unk: 2
+	"npc_damage_near_distance" "100"
+	// val unk: 22
+	"npc_damage_far_distance" "1500"
+	// val unk: 66
+	"npc_damage_near_value" "0"
+	// val unk: 113
+	"npc_damage_far_value" "0"
+	// val unk: 102
+	"npc_damage_near_value_titanarmor" "0"
+	// val unk: 111
+	"npc_damage_far_value_titanarmor" "0"
+	// val unk: 188
+	"critical_hit" "0"
+	// val unk: 115
+	"ammo_clip_size" "180"
+	// val unk: 118
+	"ammo_default_total" "0"
+	// val unk: 87
+	"ammo_display" "count"
+	// val unk: 198
+	"ammo_min_to_fire" "180"
+	// val unk: 48
+	"ammo_per_shot" "180"
+	// val unk: 160
+	"ammo_stockpile_max" "0"
+	// val unk: 177
+	"regen_ammo_refill_rate" "1"
+	// val unk: 5
+	"regen_ammo_refill_start_delay" "0.100000"
+	// val unk: 187
+	"ammo_no_remove_from_stockpile" "0"
+	// val unk: 45
+	"fire_duration" "0.500000"
+	// val unk: 54
+	"zoom_time_in" "0.200000"
+	// val unk: 195
+	"zoom_time_out" "0.200000"
+	// val unk: 183
+	"zoom_fov" "26.275600"
+	// val unk: 30
+	"reload_time" "4.750000"
+	// val unk: 155
+	"reload_time_late1" "3.750000"
+	// val unk: 63
+	"reload_time_late2" "2.950000"
+	// val unk: 62
+	"reload_time_late3" "2.214000"
+	// val unk: 171
+	"reload_time_late4" "1.107000"
+	// val unk: 138
+	"reloadempty_time" "4.750000"
+	// val unk: 65
+	"reloadempty_time_late1" "3.750000"
+	// val unk: 173
+	"reloadempty_time_late2" "2.950000"
+	// val unk: 18
+	"reloadempty_time_late3" "2.214000"
+	// val unk: 114
+	"reloadempty_time_late4" "1.107000"
+	// val unk: 148
+	"vortex_refire_behavior" "grenade"
+	// val unk: 100
+	"allow_empty_fire" "0"
+	// val unk: 1
+	"reload_enabled" "0"
+	// val unk: 120
+	"allow_empty_click" "1"
+	// val unk: 180
+	"empty_reload_only" "0"
+	// val unk: 159
+	"trigger_snipercam" "1"
+	// val unk: 141
+	"allow_headshots" "0"
+	// val unk: 82
+	"grenade_bounce_vel_frac_shallow" "0.470000"
+	// val unk: 110
+	"grenade_bounce_vel_frac_sharp" "0.280000"
+	// val unk: 78
+	"grenade_bounce_vel_frac_along_normal" "0.500000"
+	// val unk: 135
+	"grenade_bounce_randomness" "0.200000"
+	// val unk: 57
+	"grenade_bounce_extra_vertical_randomness" "0.200000"
+	// val unk: 0
+	"grenade_roll_vel_frac_per_second" "0.100000"
+	// val unk: 29
+	"primary_fire_does_not_block_sprint" "1"
+	// val unk: 106
+	"aimassist_disable_hipfire" "0"
+	// val unk: 186
+	"aimassist_disable_ads" "0"
+	// val unk: 117
+	"aimassist_disable_hipfire_humansonly" "1"
+	// val unk: 162
+	"aimassist_disable_ads_humansonly" "1"
+	// val unk: 69
+	"spread_stand_hip" "0.000000"
+	// val unk: 34
+	"spread_stand_hip_run" "0.000000"
+	// val unk: 71
+	"spread_stand_ads" "0.000000"
+	// val unk: 4
+	"spread_stand_hip_sprint" "0.000000"
+	// val unk: 140
+	"spread_crouch_hip" "0.000000"
+	// val unk: 55
+	"spread_crouch_ads" "0.000000"
+	// val unk: 19
+	"spread_air_hip" "0.000000"
+	// val unk: 73
+	"spread_air_ads" "0.000000"
+	// val unk: 189
+	"ammo_suck_behavior" "primary_weapons"
+	// val unk: 167
+	"viewkick_spring" "launcher"
+	// val unk: 179
+	"viewkick_pitch_base" "-0.300000"
+	// val unk: 181
+	"viewkick_pitch_random" "0.100000"
+	// val unk: 25
+	"viewkick_pitch_softScale" "1.200000"
+	// val unk: 49
+	"viewkick_pitch_hardScale" "6.750000"
+	// val unk: 3
+	"viewkick_yaw_base" "0.000000"
+	// val unk: 197
+	"viewkick_yaw_random" "0.150000"
+	// val unk: 90
+	"viewkick_yaw_softScale" "1.300000"
+	// val unk: 178
+	"viewkick_yaw_hardScale" "1.000000"
+	// val unk: 112
+	"viewkick_roll_base" "0.000000"
+	// val unk: 172
+	"viewkick_roll_randomMin" "0.500000"
+	// val unk: 37
+	"viewkick_roll_randomMax" "0.700000"
+	// val unk: 52
+	"viewkick_roll_softScale" "0.200000"
+	// val unk: 17
+	"viewkick_roll_hardScale" "1.700000"
+	// val unk: 64
+	"viewkick_hipfire_weaponFraction" "0.800000"
+	// val unk: 79
+	"viewkick_hipfire_weaponFraction_vmScale" "1.000000"
+	// val unk: 50
+	"viewkick_ads_weaponFraction" "0.300000"
+	// val unk: 166
+	"viewkick_ads_weaponFraction_vmScale" "0.500000"
+	// val unk: 142
+	"viewkick_perm_pitch_base" "0.000000"
+	// val unk: 176
+	"viewkick_perm_pitch_random" "0.300000"
+	// val unk: 151
+	"viewkick_perm_yaw_base" "0.000000"
+	// val unk: 127
+	"viewkick_perm_yaw_random" "0.200000"
+	// val unk: 58
+	"viewpunch_multiplier" "1.250000"
+	// val unk: 119
+	"fire_rumble" "rumble_antititan"
+	// val unk: 161
+	"npc_min_range" "0"
+	// val unk: 122
+	"npc_max_range" "3000"
+	// val unk: 16
+	"npc_min_burst" "1"
+	// val unk: 163
+	"npc_max_burst" "1"
+	// val unk: 33
+	"npc_rest_time_between_bursts_min" "0.500000"
+	// val unk: 15
+	"npc_rest_time_between_bursts_max" "1"
+	// val unk: 196
+	"sprintcycle_time" "0.550000"
+	// val unk: 40
+	"menu_icon" "r2_ui/menus/loadout_icons/anti_titan/at_mgl"
+	// val unk: 27
+	"hud_icon" "rui/hud/ultimate_icons/ultimate_pathfinder"
+	// val unk: 109
+	"red_crosshair_range" "1500"
+	// val unk: 35
+	"weapon_type_flags" "WPT_ULTIMATE"
+	// val unk: 192
+	"OnWeaponRegenBegin" "Ultimate_OnWeaponRegenBegin"
+	// val unk: 10
+	"sound_disabledfire" "Survival_UI_Ability_NotReady_Silenced"
+	// val unk: 137
+	"sound_dryfire" "Survival_UI_Ability_NotReady"
+	// val unk: 116
+	"sound_weapon_ready" "Survival_UI_Ultimate_Ready"
+	// val unk: 128
+	"drops_on_death" "0"
+	// val unk: 26
+	"offhand_match_player_skin" "1"
 
-	"OnWeaponToss"									"OnWeaponPrimaryAttack_weapon_zipline"
-	"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_weapon_zipline"
-	"OnWeaponNpcPrimaryAttack"						"OnWeaponNpcPrimaryAttack_weapon_zipline"
-	"OnProjectileCollision"							"OnProjectileCollision_weapon_zipline"
-	"OnCreateClientOnlyModel"						"OnCreateClientOnlyModel_weapon_zipline"
-	"OnWeaponReadyToFire"                           "OnWeaponReadyToFire_weapon_zipline"
-	"OnWeaponRaise"									"OnWeaponRaise_weapon_zipline"
-
-    "grenade_arc_indicator_effect"					""
-    "grenade_arc_impact_indicator_effect"			""
-    "grenade_arc_indicator_show_from_hip"			"1"
-	"grenade_arc_indicator_bounce_count"			"1"
-
-	"zipline_indicator_arc_blocked_effect"			""
-    "zipline_indicator_line_effect"					"P_wpn_zipline_previs"
-    "zipline_indicator_impact_ground_effect"		""
-    "zipline_indicator_impact_wall_effect"			""
-    "zipline_indicator_impact_blocked_effect"		""
-    "zipline_station_model_ground"					"mdl/props/pathfinder_zipline/pathfinder_zipline.rmdl"
-    "zipline_station_model_wall"					"mdl/props/pathfinder_zipline/pathfinder_zipline.rmdl"
-    "zipline_station_model_ledge"					"mdl/props/pathfinder_zipline/pathfinder_zipline.rmdl"
-    "zipline_station_attachment_ground"				"ATTACH_TOP_ROPE"
-    "zipline_station_attachment_wall"				"ATTACH_TOP_ROPE"
-    "zipline_station_attachment_ledge"				"ATTACH_TOP_ROPE"
-    "zipline_station_animation_begin"				"prop_pathfinder_zipline_release"
-	"zipline_station_animation_ground"				"prop_pathfinder_zipline_expand_up"
-    "zipline_station_animation_wall"				"prop_pathfinder_zipline_expand_side"
-    "zipline_station_animation_ledge"				"prop_pathfinder_zipline_expand_sideup"
-    "zipline_grenade"								"1"
-    "zipline_grenade_auto_detach_distance"			"100"
-    "zipline_grenade_snap_distance"					"250"
-    "zipline_grenade_snap_angle"					"10"
-
-	"projectile_launch_speed"                       "2600"
-                     
-        "projectile_gravity_scale"                      "0"
-        "projectile_first_person_offset_fraction"       "0"
-        "projectile_launch_pitch_offset"                "0"
-        "zipline_distance_min"                          "700"
-        "zipline_distance_max"                          "8000"
-        
-	"grenade_fuse_time"								"10.0"
-	"start_fuse_on_launch"                          "0"
-
-	// Menu Stats
-	"stat_damage" 									"60"
-	"stat_range"  									"25"
-	"stat_accuracy"   								"25"
-	"stat_rof"			        					"50"
-
-	// Models
-	"viewmodel"   									"mdl/weapons/pathfinder_zipline/ptpov_pathfinder_zipline_held.rmdl"
-	"playermodel" 									"mdl/weapons/empty_handed/w_empty_handed_human.rmdl"
-
-	"projectilemodel" 								"mdl/Weapons/pathfinder_zipline/w_pathfinder_zipline.rmdl"
-
-	// Effects
-	"projectile_trail_effect_0" 					"P_zipline_projectile_trail"
-	"projectile_trail_attachment" 					"FX_PROJECTILE_END"
-
-	"vortex_absorb_effect"							"wpn_vortex_projectile_frag_FP"
-	"vortex_absorb_effect_third_person"				"wpn_vortex_projectile_frag"
-	"vortex_absorb_sound"							"Vortex_Shield_AbsorbBulletLarge"
-	"vortex_absorb_sound_1p_vs_3p"					"Vortex_Shield_AbsorbBulletLarge_1P_VS_3P"
-	"vortex_drain"									"0.0"
-	"projectile_adjust_to_gun_barrel"				"1"
-
-	// Sounds
-	"sound_dryfire"									"pathfinder_zipline_gun_deny"
-	"sound_weapon_ready"							"survival_ui_ultimate_ready"
-
-	"fire_sound_1_player_1p"						"weapon_zipline_gun_fire_1p"
-	"fire_sound_1_player_3p"						"weapon_zipline_gun_fire_3p"
-	"fire_sound_2_player_1p"						"Weapon_bulletCasing.Single"
-	"fire_sound_2_player_3p"						"Weapon_bulletCasing.Single"
-
-	"sound_zoom_in"									"Weapon_MGL_ADS_In"
-	"sound_zoom_out"								"Weapon_MGL_ADS_Out"
-
-	"fx_muzzle_flash_view"							"P_wpn_muzzleflash_mgl_FP_FULL"
-	"fx_muzzle_flash_world"							"P_wpn_muzzleflash_mgl_FULL"
-	"fx_muzzle_flash_attach"						"ATTACH_ZIPLINE_FRONT"
-
-	"charge_time" 									"0.0"
-	"charge_cooldown_time"							"1.0"
-	"charge_cooldown_delay"   						"0.0"
-	"charge_end_forces_fire"  						"1"
-	"charge_require_input"							"1"
-	"charge_remain_full_when_fired"					"1"
-
-                     
-	    // Sound FX - Impacts
-	    "impact_effect_table"                           "default_nosound_nowhizby"
-       
-	// Damage - When Used by Players
-	"damage_type" 									"burn"
-	"damage_near_distance"							"100"
-	"damage_far_distance" 							"15000"
-	"damage_near_value"   							"0"
-	"damage_far_value"								"0"
-	"damage_near_value_titanarmor"					"0"
-	"damage_far_value_titanarmor" 					"0"
-
-	"explosion_damage"								"120"
-	"explosion_damage_heavy_armor"					"1000"
-	"explosion_inner_radius"  						"256"
-	"explosionradius" 								"384"
-	"impulse_force"   								"3000"
-
-	// Damage - When Used by NPCs
-	"npc_damage_near_distance"						"100"
-	"npc_damage_far_distance" 						"1500"
-	"npc_damage_near_value"   						"0"
-	"npc_damage_far_value"							"0"
-	"npc_damage_near_value_titanarmor"				"0"
-	"npc_damage_far_value_titanarmor" 				"0"
-
-	"critical_hit"									"0"
-
-	// Ammo
-	"ammo_clip_size"								"180"
-    "ammo_default_total"							"0"
-    "ammo_display"									"count"
-    "ammo_min_to_fire"								"180"
-    "ammo_per_shot"									"180"
-    "ammo_stockpile_max"							"0"
-    "regen_ammo_refill_rate"						"1"
-    "regen_ammo_refill_start_delay"					"0.1"
-    "ammo_no_remove_from_stockpile"					"0"
-    "fire_duration"									"0.5"
-
-	// Behavior
-	//"fire_rate"   							    "5"
-	"zoom_time_in"									"0.2"
-	"zoom_time_out"   								"0.2"
-                     
-	    "zoom_fov"                                  "26.2756" // 3x @ 70
-      
-                                                         
-       
-	"reload_time" 									"4.75"
-	"reload_time_late1" 							"3.75"
-	"reload_time_late2" 							"2.95"
-	"reload_time_late3" 							"2.214"
-	"reload_time_late4"								"1.107"
-	"reloadempty_time"								"4.75"
-	"reloadempty_time_late1"						"3.75"
-	"reloadempty_time_late2"						"2.95"
-	"reloadempty_time_late3"						"2.214"
-	"reloadempty_time_late4"						"1.107"
-	//"holster_time"									"0.5"
-	//"deploy_time" 									"0.5"
-	//"lower_time"  									"0.25"
-	//"raise_time"  									"0.3"
-	"vortex_refire_behavior"  						"grenade"
-	"allow_empty_fire"								"0"
-	"reload_enabled"  								"0"
-	"allow_empty_click"   							"1"
-	"empty_reload_only"   							"0"
-	"trigger_snipercam"   							"1"
-	"allow_headshots" 								"0"
-	"grenade_bounce_vel_frac_shallow"				"0.47"
-	"grenade_bounce_vel_frac_sharp"					"0.28"
-	"grenade_bounce_vel_frac_along_normal"			"0.5"
-	"grenade_bounce_randomness"						"0.2"
-	"grenade_bounce_extra_vertical_randomness"		"0.2"
-	"grenade_roll_vel_frac_per_second"				"0.1"
-	"primary_fire_does_not_block_sprint"			"1"
-
-	"aimassist_disable_hipfire"						"0"
-	"aimassist_disable_ads"							"0"
-	"aimassist_disable_hipfire_humansonly"			"1"
-	"aimassist_disable_ads_humansonly"				"1"
-
-	// Spread
-	"spread_stand_hip"								"0.0"
-	"spread_stand_hip_run"							"0.0"
-	"spread_stand_ads"								"0.0"
-	"spread_stand_hip_sprint"                       "0.0"
-	"spread_crouch_hip"   							"0.0"
-	"spread_crouch_ads"   							"0.0"
-	"spread_air_hip"  								"0.0"
-	"spread_air_ads"  								"0.0"
-
-	"ammo_suck_behavior"							"primary_weapons"
-
-	// View Kick
-	"viewkick_spring" 								"launcher"
-
-	"viewkick_pitch_base" 							"-0.3"
-	"viewkick_pitch_random"   						"0.1"
-	"viewkick_pitch_softScale"						"1.2"
-	"viewkick_pitch_hardScale"						"6.75"
-
-	"viewkick_yaw_base"   							"0.0"
-	"viewkick_yaw_random" 							"0.15"
-	"viewkick_yaw_softScale"  						"1.3"
-	"viewkick_yaw_hardScale"  						"1.0"
-
-	"viewkick_roll_base"  							"0.0"
-	"viewkick_roll_randomMin" 						"0.5"
-	"viewkick_roll_randomMax" 						"0.7"
-	"viewkick_roll_softScale" 						"0.2"
-	"viewkick_roll_hardScale" 						"1.7"
-
-	"viewkick_hipfire_weaponFraction" 				"0.8"
-	"viewkick_hipfire_weaponFraction_vmScale" 		"1.0"
-	"viewkick_ads_weaponFraction" 					"0.3"
-	"viewkick_ads_weaponFraction_vmScale" 			"0.5"
-
-	"viewkick_perm_pitch_base" 						"0.0"
-	"viewkick_perm_pitch_random"   					"0.3"
-	"viewkick_perm_yaw_base"   						"0.0"
-	"viewkick_perm_yaw_random" 						"0.2"
-
-	"viewpunch_multiplier"							"1.25"
-
-	// Bob
-	//"bob_cycle_time"  								"0.45"
-	//"bob_vert_dist"   								"0.1"
-	//"bob_horz_dist"   								"0.1"
-	//"bob_max_speed"   								"150"
-	//"bob_pitch"   									"0.75"
-	//"bob_yaw" 										"0.5"
-	//"bob_roll"										"-0.75"
-
-	//// View Drift
-	//"viewdrift_ads_stand_scale_pitch" 				"0.6"
-	//"viewdrift_ads_crouch_scale_pitch"				"0.6"
-	//"viewdrift_ads_air_scale_pitch"   				"0.6"
-	//"viewdrift_ads_stand_scale_yaw"   				"0.6"
-	//"viewdrift_ads_crouch_scale_yaw"  				"0.6"
-	//"viewdrift_ads_air_scale_yaw" 					"0.6"
-
-	// Rumble
-	"fire_rumble"									"rumble_antititan"
-
-	// Sway
-	//"sway_rotate_attach"  							"SWAY_ROTATE"
-	//"sway_min_x"  									"-0.3"
-	//"sway_min_y"  									"-0.5"
-	//"sway_min_z"  									"-0.5"
-	//"sway_max_x"  									"0.3"
-	//"sway_max_y"  									"0.5"
-	//"sway_max_z"  									"0.1"
-	//"sway_min_pitch"  								"-3"
-	//"sway_min_yaw"									"-3.5"
-	//"sway_min_roll"   								"-2"
-	//"sway_max_pitch"  								"3"
-	//"sway_max_yaw"									"3.5"
-	//"sway_max_roll"   								"3"
-	//"sway_translate_gain" 							"10"
-	//"sway_rotate_gain"								"12"
-	//"sway_move_forward_translate_x"   				"0"
-	//"sway_move_forward_translate_z"   				"-0.5"
-	//"sway_move_back_translate_x"  					"-2"
-	//"sway_move_back_translate_z"  					"-1"
-	//"sway_move_left_translate_y"  					"-1"
-	//"sway_move_left_translate_z"  					"-0.5"
-	//"sway_move_left_rotate_roll"  					"-2"
-	//"sway_move_right_translate_y" 					"1"
-	//"sway_move_right_translate_z" 					"-0.5"
-	//"sway_move_right_rotate_roll" 					"4"
-	//"sway_move_up_translate_z"						"-1"
-	//"sway_move_down_translate_z"  					"1"
-	//"sway_turn_left_rotate_yaw"   					"-1"
-	//"sway_turn_right_rotate_yaw"  					"1"
-	//"sway_turn_up_rotate_pitch"   					"1"
-	//"sway_turn_down_rotate_pitch" 					"-1"
-
-	// NPC
-	"npc_min_range"   								"0"
-	"npc_max_range"   								"3000"
-	"npc_min_burst"   								"1"
-	"npc_max_burst"   								"1"
-	"npc_rest_time_between_bursts_min"					"0.5"
-	"npc_rest_time_between_bursts_max"					"1"
-
-	// WeaponED Unhandled Key/Values and custom script Key/Values
-	//"viewdrift_hipfire_stand_scale_pitch" 			"0.325"
-	//"viewdrift_hipfire_crouch_scale_pitch"			"0.275"
-	//"viewdrift_hipfire_air_scale_pitch"   			"0.5"
-	//"viewdrift_hipfire_stand_scale_yaw"   			"0.12"
-	//"viewdrift_hipfire_crouch_scale_yaw"  			"0.10"
-	//"viewdrift_hipfire_air_scale_yaw" 				"0.22"
-	//"viewdrift_hipfire_speed_pitch"   				"0.6"
-	//"viewdrift_hipfire_speed_yaw" 					"1.22"
-	//"viewdrift_ads_speed_pitch"   					"0.63"
-	//"viewdrift_ads_speed_yaw" 						"0.6"
-	"sprintcycle_time"								".55"
-	"menu_icon"										"r2_ui/menus/loadout_icons/anti_titan/at_mgl"
-	"hud_icon"										"rui/hud/ultimate_icons/ultimate_pathfinder"
-
-	// Crosshair
-	"red_crosshair_range" 							"1500"
-
-	Mods
+	// child unk: 0
+	"Mods"
 	{
-	    survival_armor_cooldown_mod
-        {
-            "regen_ammo_refill_rate"    "*1.25"
-        }
 
-        survival_finite_ordnance
-        {
+		// child unk: 11
+		"survival_finite_ordnance"
+		{
+
 		}
-        beacon_1
-        {
-			"ammo_clip_size"								"110"
-		    "ammo_min_to_fire"								"110"
-		    "ammo_per_shot"									"110"
-        }
-        beacon_2
-        {
-			"ammo_clip_size"								"100"
-		    "ammo_min_to_fire"								"100"
-		    "ammo_per_shot"									"100"
-        }
-        beacon_3
-        {
-			"ammo_clip_size"								"90"
-		    "ammo_min_to_fire"								"90"
-		    "ammo_per_shot"									"90"
-        }
-        beacon_4
-        {
-			"ammo_clip_size"								"80"
-		    "ammo_min_to_fire"								"80"
-		    "ammo_per_shot"									"80"
-        }
-        beacon_5
-        {
-			"ammo_clip_size"								"70"
-		    "ammo_min_to_fire"								"70"
-		    "ammo_per_shot"									"70"
-        }
-        beacon_6
-        {
-			"ammo_clip_size"								"60"
-		    "ammo_min_to_fire"								"60"
-		    "ammo_per_shot"									"60"
-        }
+
+		// child unk: 2
+		"beacon_1"
+		{
+			// val unk: 2
+			"ammo_clip_size" "170"
+			// val unk: 1
+			"ammo_min_to_fire" "170"
+			// val unk: 0
+			"ammo_per_shot" "170"
+
+		}
+
+		// child unk: 14
+		"beacon_2"
+		{
+			// val unk: 2
+			"ammo_clip_size" "160"
+			// val unk: 1
+			"ammo_min_to_fire" "160"
+			// val unk: 0
+			"ammo_per_shot" "160"
+
+		}
+
+		// child unk: 5
+		"beacon_3"
+		{
+			// val unk: 2
+			"ammo_clip_size" "150"
+			// val unk: 1
+			"ammo_min_to_fire" "150"
+			// val unk: 0
+			"ammo_per_shot" "150"
+
+		}
+
+		// child unk: 0
+		"beacon_4"
+		{
+			// val unk: 2
+			"ammo_clip_size" "140"
+			// val unk: 1
+			"ammo_min_to_fire" "140"
+			// val unk: 0
+			"ammo_per_shot" "140"
+
+		}
+
+		// child unk: 15
+		"beacon_5"
+		{
+			// val unk: 2
+			"ammo_clip_size" "130"
+			// val unk: 1
+			"ammo_min_to_fire" "130"
+			// val unk: 0
+			"ammo_per_shot" "130"
+
+		}
+
+		// child unk: 21
+		"beacon_6"
+		{
+			// val unk: 2
+			"ammo_clip_size" "120"
+			// val unk: 1
+			"ammo_min_to_fire" "120"
+			// val unk: 0
+			"ammo_per_shot" "120"
+
+		}
+
+		// child unk: 3
+		"cooldown_reduction_1"
+		{
+			// val unk: 2
+			"ammo_clip_size" "165"
+			// val unk: 1
+			"ammo_min_to_fire" "165"
+			// val unk: 0
+			"ammo_per_shot" "165"
+
+		}
+
+		// child unk: 9
+		"cooldown_reduction_2"
+		{
+			// val unk: 2
+			"ammo_clip_size" "150"
+			// val unk: 1
+			"ammo_min_to_fire" "150"
+			// val unk: 0
+			"ammo_per_shot" "150"
+
+		}
+
+		// child unk: 22
+		"cooldown_reduction_3"
+		{
+			// val unk: 2
+			"ammo_clip_size" "135"
+			// val unk: 1
+			"ammo_min_to_fire" "135"
+			// val unk: 0
+			"ammo_per_shot" "135"
+
+		}
+
+		// child unk: 12
+		"cooldown_reduction_4"
+		{
+			// val unk: 2
+			"ammo_clip_size" "120"
+			// val unk: 1
+			"ammo_min_to_fire" "120"
+			// val unk: 0
+			"ammo_per_shot" "120"
+
+		}
+
+		// child unk: 6
+		"cooldown_reduction_5"
+		{
+			// val unk: 2
+			"ammo_clip_size" "105"
+			// val unk: 1
+			"ammo_min_to_fire" "105"
+			// val unk: 0
+			"ammo_per_shot" "105"
+
+		}
+
+		// child unk: 17
+		"cooldown_reduction_6"
+		{
+			// val unk: 2
+			"ammo_clip_size" "90"
+			// val unk: 1
+			"ammo_min_to_fire" "90"
+			// val unk: 0
+			"ammo_per_shot" "90"
+
+		}
+
+		// child unk: 18
+		"cooldown_reduction_7"
+		{
+			// val unk: 2
+			"ammo_clip_size" "75"
+			// val unk: 1
+			"ammo_min_to_fire" "75"
+			// val unk: 0
+			"ammo_per_shot" "75"
+
+		}
+
+		// child unk: 19
+		"cooldown_reduction_8"
+		{
+			// val unk: 2
+			"ammo_clip_size" "60"
+			// val unk: 1
+			"ammo_min_to_fire" "60"
+			// val unk: 0
+			"ammo_per_shot" "60"
+
+		}
+
+		// child unk: 4
+		"upgrade_ult_one"
+		{
+			// val unk: 0
+			"ammo_per_shot" "*.5"
+			// val unk: 2
+			"ammo_min_to_fire" "*.5"
+			// val unk: 1
+			"zipline_distance_max" "4000"
+
+		}
+
+		// child unk: 7
+		"ultimates_charge_over_time_disabled"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "0"
+
+		}
+
+		// child unk: 10
+		"copycat_mod"
+		{
+			// val unk: 0
+			//"weapon_type_flags" "WPT_SURVIVAL"
+
+		}
+
+		// child unk: 1
+		"survival_armor_cooldown_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.25"
+
+		}
+
+		// child unk: 13
+		"survival_armor_cooldown_extra_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.5"
+
+		}
+
+		// child unk: 16
+		"survival_ammo_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 20
+		"ability_in_effect_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 8
+		"survival_ammo_regen_staging"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*5.0"
+
+		}
 	}
 }

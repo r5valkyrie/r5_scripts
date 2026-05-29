@@ -963,7 +963,7 @@ void function SpawnZoneTriggerInit( entity trigger )
 #if DEVELOPER
 void function randomspawnzone( int index )
 {
-	entity player = gp()[0]
+	entity player = GetPlayerArray()[0]
 
 	int teamId = player.GetTeam()
 	int otherTeamId = GetOtherTeam( teamId )

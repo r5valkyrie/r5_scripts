@@ -475,7 +475,7 @@ void function BubbleShieldDamageEnemies( entity bubbleShield, entity bubbleShiel
 	trigger.SearchForNewTouchingEntity() //JFS: trigger.GetTouchingEntities() will not return entities already in the trigger unless this is called. See bug 202843
 
 	/*DebugDrawCylinder( trigger.GetOrigin(), <270,0,0>, TITAN_BUBBLE_SHIELD_INVULNERABILITY_RANGE, TITAN_BUBBLE_SHIELD_CYLINDER_TRIGGER_HEIGHT, COLOR_WHITE, true, 20.0 )
-	DebugDrawSphere( bubbleShield.GetOrigin(), TITAN_BUBBLE_SHIELD_INVULNERABILITY_RANGE, COLOR_RED, true, 20 )*/
+	//DebugDrawSphere( bubbleShield.GetOrigin(), TITAN_BUBBLE_SHIELD_INVULNERABILITY_RANGE, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 20 )*/
 	OnThreadEnd(
 	function() : ( trigger )
 		{

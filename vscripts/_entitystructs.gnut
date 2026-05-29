@@ -777,7 +777,7 @@ global struct ServerPlayerStruct
 
 	bool isAllowedToUseTP = false
 
-	#if DEV
+	#if DEVELOPER
 		entity DEV_lastDroppedSurvivalWeaponProp = null
 	#endif
 

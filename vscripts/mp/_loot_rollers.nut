@@ -28,7 +28,7 @@ global function GetAllLootRollerData
 global function DestroyLootRoller
 global function LootRollerDestructionSequenceInternal
 
-#if DEV
+#if DEVELOPER
 global function DEV_SpawnLootRollerAtCrosshair
 global function DEV_SpawnPartyRoller
 global function DEV_SpawnLaunchingRoller
@@ -170,7 +170,7 @@ struct
 	table< entity, array< void functionref( entity, var ) > > Callbacks_OnLootRollerKilled
 	int allLootRollerSciptManagedEntArrayID
 
-	#if DEV
+	#if DEVELOPER
 		bool dev_pathfinderTT_roller = false
 		int dev_pathfinderTT_roller_lootTier = 4
 		string dev_pathfinderTT_roller_lootGroup = "gold_weapons"
@@ -365,7 +365,7 @@ void function LootRoller_PopulateLootTables_PathTT( LootRollerData data )
 	data.lootTables[4] <- GenerateLootRefsFromLootTable( PATHTT_LOOT_ROLLER_LOOT_TABLES_LEGENDARY, GetLootRollerNumLootToSpawn() )
 	string lootGroup = RandomFloat( 1.0 ) < 0.3 ? "gold_weapons" : "weapon_high"
 	// TODO: Remove this after debugging.
-	#if DEV
+	#if DEVELOPER
 		if( file.dev_pathfinderTT_roller )
 			lootGroup = file.dev_pathfinderTT_roller_lootGroup
 	#endif
@@ -461,7 +461,7 @@ LootRollerData function LootRollers_CreatePathTTLootRoller( vector origin, vecto
 {
 	int rollerLootTier = RandomFloat( 100.0 ) < 30.0 ? 4 : 3
 	// TODO: Remove DEV stuff after debugging.
-	#if DEV
+	#if DEVELOPER
 		if( file.dev_pathfinderTT_roller )
 			rollerLootTier = file.dev_pathfinderTT_roller_lootTier
 	#endif
@@ -1193,7 +1193,7 @@ entity function CreateLootRollerTrigger( entity lootRollerlootRollerModel )
 	return trig
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_SpawnLootRollerAtCrosshair( entity player, int forcedLootTier = -1 )
 {
 	Assert( IsNewThread(), "Must be threaded off due to precache issues" )

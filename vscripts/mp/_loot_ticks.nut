@@ -2,7 +2,7 @@ global function LootTicks_Init
 global function Debug_TestAllStaticLootTickSpawns
 global function Debug_SpawnStaticLootTicksAroundMe
 
-#if DEV
+#if DEVELOPER
 global function DEV_SpawnLootTickAtCrosshair
 #endif // DEV
 
@@ -163,7 +163,7 @@ void function RegisterLootTickFields_Internal()
 
 bool function HasDynamicLootTicks()
 {
-	#if DEV
+	#if DEVELOPER
 		if ( DEV_ForceLoadAllEntityTypes() )
 			return true
 	#endif
@@ -736,7 +736,7 @@ entity function SpawnStaticLootTick( vector spawnPos, vector spawnAngles )
 	if ( GetCurrentPlaylistVarInt( "debug_loot_ticks", 0 ) == 1 )
 	{
 		printt( "Loot tick spawned @", spawnPos, newTick.GetEntIndex() )
-		//DebugDrawSphere( spawnPos, 128, COLOR_RED, true, 600 )
+		DebugDrawSphere( spawnPos, 128, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 600 )
 	}
 
 	int arrayID = file.allLootTicksScriptManagedEntArrayID
@@ -755,7 +755,7 @@ entity function SpawnStaticLootTick( vector spawnPos, vector spawnAngles )
 	return newTick
 }
 
-#if DEV
+#if DEVELOPER
 entity function DEV_SpawnLootTickAtCrosshair( entity player, string skin = "" )
 {
 	vector origin = GetPlayerCrosshairOrigin( player )

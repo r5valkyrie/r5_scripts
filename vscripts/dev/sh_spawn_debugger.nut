@@ -1,4 +1,4 @@
-#if DEV
+#if DEVELOPER
 global function SpawnDebugger_Init
 global function DEV_EnableSpawnPointTesting
 #if SERVER
@@ -42,7 +42,7 @@ struct
 // SPAWN DEBUG TOOL //
 //////////////////////
 
-#if DEV
+#if DEVELOPER
 void function SpawnDebugger_Init()
 {
 	RegisterSignal( SPAWN_DEBUG_SIGNAL )
@@ -50,7 +50,7 @@ void function SpawnDebugger_Init()
 
 void function DEV_EnableSpawnPointTesting( bool enabled)
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	Assert( IsValid( player ), "[SPAWN DEBUGGER] Unable to find a local player: DEV_EnableSpawnPointTesting" )
 
 	if ( enabled )
@@ -96,7 +96,7 @@ void function DEV_EnableSpawnPointTesting( bool enabled)
 #if SERVER
 void function DEV_CheckSpawnsAgainstNavMesh( bool enabled )
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	Assert( IsValid( player ), "Unable to find a local player: DEV_CheckSpawnsAgainstNavMesh" )
 
 	file.spawnPointOnNavMeshArray.clear()
@@ -279,8 +279,8 @@ void function DEV_DrawLineForLowHeightSpawnPoint( entity spawnPoint )
 void function DEV_DrawSphereOnBadSpawnPoints( entity spawnPoint )
 {
 	printl( "[SPAWN DEBUGGER] Spawn Point off NavMash at: " + spawnPoint.GetOrigin() )
-	DebugDrawLine( spawnPoint.GetOrigin(), NavMesh_GetClosestPoint( spawnPoint.GetOrigin() ), SPAWN_DEBUG_COLOR_RED, true, DEBUG_DRAW_DURATION )
-	DebugDrawSphere( spawnPoint.GetOrigin() + DEBUG_BOX_CENTER_OFFSET, DEBUG_SPHERE_RADIUS, SPAWN_DEBUG_COLOR_RED, true, DEBUG_DRAW_DURATION )
+	DebugDrawLine( spawnPoint.GetOrigin(), NavMesh_GetClosestPoint( spawnPoint.GetOrigin() ), int(SPAWN_DEBUG_COLOR_RED.x), int(SPAWN_DEBUG_COLOR_RED.y), int(SPAWN_DEBUG_COLOR_RED.z), true, DEBUG_DRAW_DURATION )
+	DebugDrawSphere( spawnPoint.GetOrigin() + DEBUG_BOX_CENTER_OFFSET, DEBUG_SPHERE_RADIUS, int(SPAWN_DEBUG_COLOR_RED.x), int(SPAWN_DEBUG_COLOR_RED.y), int(SPAWN_DEBUG_COLOR_RED.z), true, DEBUG_DRAW_DURATION )
 }
 #endif // SERVER
 #endif // DEV 

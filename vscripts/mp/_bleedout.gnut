@@ -1852,11 +1852,11 @@ void function Bleedout_TrackContinuousUse( entity player, entity useTarget, floa
 			startPosForPlayer = newSpotTrace.endPos
 		}
 
-		#if DEV
+		#if DEVELOPER
 		if ( DEBUG_DRAG_REVIVE_PLACEMENT )
 		{
-			DebugDrawArrow( player.GetOrigin(), startPosForPlayer, 2, COLOR_RED, true, 5.0 )
-			DebugDrawMark( newSpotTrace.endPos, 3, COLOR_RED, true, 5.0 )
+			//DebugDrawArrow( player.GetOrigin(), startPosForPlayer, 2, COLOR_RED, true, 5.0 )
+			//DebugDrawMark( newSpotTrace.endPos, 3, COLOR_RED, true, 5.0 )
 			DebugDrawText( newSpotTrace.endPos, "newSpotTrace: fraction: " + newSpotTrace.fraction, true, 5.0 )
 		}
 		#endif //DEV
@@ -1880,7 +1880,7 @@ void function Bleedout_TrackContinuousUse( entity player, entity useTarget, floa
 					TraceResults colTrace = TraceLine( adjPlayerPos, targetPos, GetPlayerArray_Alive(), TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
 					if( colTrace.fraction != 1.0 ) //Something is blocking between Axiom & Target - update targetPos to use for position setting.
 					{
-						//DebugDrawSphere( colTrace.endPos, 5, 0, <255, 255, true>, 10, 8 )
+						//DebugDrawSphere( colTrace.endPos, 5, (0).x, (0).y, (0).z, <255, 255, true>, 10, 8 )
 						targetPos = colTrace.endPos
 					}
 
@@ -1900,7 +1900,7 @@ void function Bleedout_TrackContinuousUse( entity player, entity useTarget, floa
 					vector hullMaxs = useTarget.IsPlayer() ? useTarget.GetPlayerMaxs() : useTarget.GetBoundingMaxs()
 
 					TraceResults downTrace = TraceHull( downCheckPos, downPos, hullMins, hullMaxs, GetPlayerArray_Alive(), TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
-					//DebugDrawSphere( downTrace.endPos, 5, 0, <255, 255, true>, 10, 8 )
+					//DebugDrawSphere( downTrace.endPos, 5, (0).x, (0).y, (0).z, <255, 255, true>, 10, 8 )
 					if( downTrace.fraction != 1.0 ) //Ground Detected. Set Target Above Ground
 					{
 						useTarget.SetAbsOrigin( downTrace.endPos )
@@ -1922,10 +1922,10 @@ void function Bleedout_TrackContinuousUse( entity player, entity useTarget, floa
 					hullMaxs = useTarget.IsPlayer() ? useTarget.GetPlayerMaxs() : useTarget.GetBoundingMaxs()
 					TraceResults safeGroundPosTrace = TraceHull( traceStart, safeGroundPos, hullMins, hullMaxs, GetPlayerArray_Alive(), TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
 
-					#if DEV
+					#if DEVELOPER
 					if ( DEBUG_DRAG_REVIVE_PLACEMENT )
 					{
-						 DebugDrawArrow( traceStart, safeGroundPos, 2, COLOR_GREEN, true, 5.0 )
+						 //DebugDrawArrow( traceStart, safeGroundPos, 2, COLOR_GREEN, true, 5.0 )
 					}
 					#endif
 
@@ -1942,10 +1942,10 @@ void function Bleedout_TrackContinuousUse( entity player, entity useTarget, floa
 						useTarget.SetOrigin( safeGroundPos )
 					}
 
-					#if DEV
+					#if DEVELOPER
 					if ( DEBUG_DRAG_REVIVE_PLACEMENT )
 					{
-						DebugDrawMark( safeGroundPosTrace.endPos, 3, COLOR_GREEN, true, 5.0 )
+						//DebugDrawMark( safeGroundPosTrace.endPos, 3, COLOR_GREEN, true, 5.0 )
 						DebugDrawText( safeGroundPosTrace.endPos, "safeGroundPos: fraction: " + safeGroundPosTrace.fraction, true, 5.0 )
 					}
 					#endif

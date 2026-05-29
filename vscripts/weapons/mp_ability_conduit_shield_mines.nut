@@ -7,7 +7,7 @@ global function OnWeaponOwnerChanged_ability_shield_mines
 
 global function OnWeaponAttemptOffhandSwitch_ability_shield_mines
 
-#if DEV
+#if DEVELOPER
 global function DEV_ShieldMineLaunchDebug
 
 
@@ -206,7 +206,7 @@ var function OnWeaponPrimaryAttack_ability_shield_mines( entity weapon, WeaponPr
 		offset *= -1
 
 	finalTargetPos += offset
-	//DebugDrawSphere( finalTargetPos, 5, COLOR_RED, false, 5.0 )
+	//DebugDrawSphere( finalTargetPos, 5, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), false, 5.0 )
 	//DebugDrawText( finalTargetPos, ("p:"+attackParams.burstIndex), false, 5.0)
 
 
@@ -228,10 +228,10 @@ var function OnWeaponPrimaryAttack_ability_shield_mines( entity weapon, WeaponPr
 
 	#endif
 
-	//DebugDrawSphere( finalTargetPos, 20, COLOR_RED, false, 5.0 )
+	//DebugDrawSphere( finalTargetPos, 20, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), false, 5.0 )
 	float launchSpeed = weapon.GetWeaponSettingFloat( eWeaponVar.projectile_launch_speed )
 	ArcSolution as = SolveBallisticArc( weapon.GetAttackPosition(), launchSpeed*1.05, finalTargetPos, GetConVarFloat( "sv_gravity" ) )
-	//DebugDrawSphere( attackParams.pos, 10, COLOR_RED, false, 5.0 )
+	//DebugDrawSphere( attackParams.pos, 10, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), false, 5.0 )
 	//DebugDrawBox(attackParams.pos, <-5, -5, -2>, <5, 5, 5>, COLOR_LIGHT_RED, 1, 5.0 )
 
 	entity grenade = Grenade_Launch( weapon, attackParams.pos, as.fire_velocity/launchSpeed, projectilePredicted, projectileLagCompensated, ZERO_VECTOR )
@@ -297,10 +297,10 @@ void function BombFlightThread( entity projectile, entity weapon, entity player,
 				TraceResults adjTrace = TraceHull( projectileOrigin, target, SHIELD_MINE_BOUND_MINS, SHIELD_MINE_BOUND_MAXS, [], TRACE_MASK_SHOT_BRUSHONLY )
 				projectile.SetOrigin( adjTrace.endPos )
 
-				//DebugDrawSphere( projectileOrigin, 5, COLOR_YELLOW, false, 3.0 )
-				//DebugDrawLine( projectileOrigin, target, COLOR_LIGHT_GREEN, false, 3.0 )
-				//DebugDrawSphere( target, 8, COLOR_GREEN, false, 3.0 )
-				//DebugDrawSphere( adjTrace.endPos, 7, COLOR_RED, false, 3.0 )
+				//DebugDrawSphere( projectileOrigin, 5, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), false, 3.0 )
+				//DebugDrawLine( projectileOrigin, target, int(COLOR_LIGHT_GREEN.x), int(COLOR_LIGHT_GREEN.y), int(COLOR_LIGHT_GREEN.z), false, 3.0 )
+				//DebugDrawSphere( target, 8, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), false, 3.0 )
+				//DebugDrawSphere( adjTrace.endPos, 7, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), false, 3.0 )
 			}
 
 
@@ -337,7 +337,7 @@ void function OnProjectileCollision_ability_shield_mines( entity projectile, vec
 	#endif
 	//bool result = PlantStickyEntityOnWorldThatBouncesOffWalls( projectile, cp, 0.7, <0, 0, 0>, true )
 
-	//DebugDrawSphere( pos, 5, COLOR_PINK, false, 5.0)
+	//DebugDrawSphere( pos, 5, int(COLOR_PINK.x), int(COLOR_PINK.y), int(COLOR_PINK.z), false, 5.0 )
 	//DebugDrawArrow(pos, pos+(normal*32), 5, COLOR_PURPLE, false, 5.0)
 
 #if SERVER
@@ -464,12 +464,12 @@ void function WeaponArcPreviewThread_Client( entity owner, entity weapon )
 		
 		float distanceToTarget = Distance( weapon.GetAttackPosition(), impactPos )
 
-		#if DEV
+		#if DEVELOPER
 		if ( SHIELD_MINES_AIRBURST_DEBUG == eDebugStage.INITIAL_TARGET_AIR_POS )
 		{
-			//DebugDrawSphere( impactPos, 5, COLOR_RED, false, 0.1 )
-			//DebugDrawLine( impactPos, finalTargetPos, COLOR_RED, false, 0.1 )
-			//DebugDrawSphere( finalTargetPos, 10, COLOR_RED, false, 0.1 )
+			DebugDrawSphere( impactPos, 5, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), false, 0.1 )
+			DebugDrawLine( impactPos, finalTargetPos, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), false, 0.1 )
+			DebugDrawSphere( finalTargetPos, 10, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), false, 0.1 )
 		}
 		#endif
 
@@ -482,7 +482,7 @@ void function WeaponArcPreviewThread_Client( entity owner, entity weapon )
 		vector fwdAngles = VectorToAngles( flattenedAttackDir )//crosshairData.directionToTarget )
 		//if ( weapon.GetMostRecentGrenadeIndicatorData().hitNormal != UP_VECTOR )
 		//	fwdAngles = VectorToAngles( -weapon.GetMostRecentGrenadeIndicatorData().hitNormal )
-		//DebugDrawLine( origin, origin + ( projectileForward * 128.0 ), COLOR_CYAN, true, 2 )
+		//DebugDrawLine( origin, origin + ( projectileForward * 128.0 ), int(COLOR_CYAN.x), int(COLOR_CYAN.y), int(COLOR_CYAN.z), true, 2 )
 		vector directionRight = AnglesToRight( fwdAngles )
 		array<float> radiusMultiple = [1.0,-1,2,-2,3,-3]
 		array<vector> sideMarkerPositions
@@ -525,10 +525,10 @@ void function WeaponArcPreviewThread_Client( entity owner, entity weapon )
 		//	centerMinePos = traceDown.endPos
 		//}
 
-		#if DEV
+		#if DEVELOPER
 		if ( SHIELD_MINES_AIRBURST_DEBUG == eDebugStage.SIMULATED_ARC_END_POS )
 		{
-			//DebugDrawSphere( arcEndPos, 8, COLOR_GREEN, false, 0.1 )
+			DebugDrawSphere( arcEndPos, 8, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), false, 0.1 )
 			//DebugDrawArrow( arcEndPos, arcEndPos + arcEndNormal*60,6, COLOR_GREEN,false, 0.1)
 		}
 		#endif
@@ -556,16 +556,16 @@ void function WeaponArcPreviewThread_Client( entity owner, entity weapon )
 
 		vector start = owner.CameraPosition() + (owner.GetViewForward() * 10) + (owner.GetViewRight() * -5)
 
-		#if DEV
+		#if DEVELOPER
 		if ( SHIELD_MINES_POSE_PARAM_DEBUG )
 		{
 			//DebugDrawArrow( start, start + (aimDirection * 20), 2, COLOR_GREEN, false, 0.1 )
 
 			//DebugDrawArrow( start, start + (Normalize( as.fire_velocity ) * 20), 2, COLOR_YELLOW, false, 0.1 )
-			//DebugDrawLine( start, start + (fireUp * 20), COLOR_YELLOW, false, 0.1 )
+			DebugDrawLine( start, start + (fireUp * 20), int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), false, 0.1 )
 
-			//DebugDrawLine( start, start + (FlattenNormalizeVec( owner.GetViewForward() ) * 20), COLOR_RED, false, 0.1 )
-			//DebugDrawLine( start, start + (UP_VECTOR * 20), COLOR_RED, false, 0.1 )
+			DebugDrawLine( start, start + (FlattenNormalizeVec( owner.GetViewForward() ) * 20), int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), false, 0.1 )
+			DebugDrawLine( start, start + (UP_VECTOR * 20), int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), false, 0.1 )
 
 			printt( "dot " + dot + " angle " + angle + " desiredAimPitch " + desiredAimPitch )
 		}
@@ -575,12 +575,12 @@ void function WeaponArcPreviewThread_Client( entity owner, entity weapon )
 
 		array<vector> mineLocations = GenerateMineLocations( shieldMineLineWeapon, arcEndPos, directionRight, SHIELD_MINES_AIRBURST_DEBUG == eDebugStage.DRAW_GENERATED_MINE_LOCS )
 
-		#if DEV
+		#if DEVELOPER
 		//if ( SHIELD_MINES_AIRBURST_DEBUG == eDebugStage.DRAW_GENERATED_MINE_LOCS )
 		//{
 		//	foreach( mineLoc in mineLocations )
 		//	{
-		//		DebugDrawSphere( mineLoc, 15, COLOR_ORANGE, false, 0.1 )
+		//		//DebugDrawSphere( mineLoc, 15, int(COLOR_ORANGE.x), int(COLOR_ORANGE.y), int(COLOR_ORANGE.z), false, 0.1 )
 		//	}
 		//}
 		#endif
@@ -643,7 +643,7 @@ void function WeaponArcPreviewThread_Client( entity owner, entity weapon )
 
 		//if ( SHIELD_MINES_AIRBURST_DEBUG )
 		//{
-		//	DebugDrawSphere( centerMinePos, 20, COLOR_LIGHT_PINK, false, 0.1 )
+		//	//DebugDrawSphere( centerMinePos, 20, int(COLOR_LIGHT_PINK.x), int(COLOR_LIGHT_PINK.y), int(COLOR_LIGHT_PINK.z), false, 0.1 )
 		//}
 
 		if( EffectDoesExist( ringFX ) )
@@ -707,7 +707,7 @@ vector function GetFinalImpactPos( entity weapon, entity player, bool DEBUG_DRAW
 	TraceResults trImpact = TraceLine( impactPos, impactPos + flattenedAttackDir*1 * METERS_TO_INCHES, [player],TRACE_MASK_SHOT_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
 	if ( DEBUG_DRAW )
 	{
-		//DebugDrawLine( impactPos, trImpact.endPos, trImpact.fraction < 1.0 ? COLOR_RED : COLOR_GREEN, false, 0.1 )
+		DebugDrawLine( impactPos, trImpact.endPos, (trImpact.fraction < 1.0 ? COLOR_RED.x : COLOR_GREEN.x), (trImpact.fraction < 1.0 ? COLOR_RED.y : COLOR_GREEN.y), (trImpact.fraction < 1.0 ? COLOR_RED.z : COLOR_GREEN.z), false, 0.1 )
 		if ( trImpact.fraction < 1.0 )
 		{
 			//DebugDrawArrow( trImpact.endPos, trImpact.endPos +(trImpact.surfaceNormal*10), 5, COLOR_LIGHT_RED, false, 0.1)
@@ -759,7 +759,7 @@ float function GetShieldMineMaxRange( entity player )
 	return result
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_ShieldMineLaunchDebug( int stage = -1 )
 {
 	int desiredStage = (SHIELD_MINES_AIRBURST_DEBUG + 1)

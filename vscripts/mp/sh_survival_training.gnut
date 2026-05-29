@@ -990,7 +990,9 @@ entity function GetTrainingNPCNode( entity player, string nodeName )
 				}
 				#if DEVELOPER
 					if( DevDraws )
-						//DebugDrawSphere( node.GetOrigin(), 5, <255, 0, 0>, true, 30.0 )
+					{
+						DebugDrawSphere( node.GetOrigin(), 5, 255, 0, 0, true, 30.0 )
+					}
 				#endif // DEVELOPER
         
                                                                           
@@ -1025,7 +1027,9 @@ entity function GetTrainingNPCNode( entity player, string nodeName )
 				}
 				#if DEVELOPER
 					if( DevDraws )
-						//DebugDrawSphere( node.GetOrigin(), 5, <255, 0, 0>, true, 30.0 )
+					{
+						DebugDrawSphere( node.GetOrigin(), 5, 255, 0, 0, true, 30.0 )
+					}
 				#endif // DEVELOPER
         
                                                                           
@@ -1052,7 +1056,9 @@ entity function GetTrainingNPCNode( entity player, string nodeName )
 				}
 				#if DEVELOPER
 					if( DevDraws )
-						//DebugDrawSphere( node.GetOrigin(), 5, <255, 0, 0>, true, 30.0 )
+					{
+						DebugDrawSphere( node.GetOrigin(), 5, 255, 0, 0, true, 30.0 )
+					}
 				#endif // DEVELOPER
         
                                                                           
@@ -1079,7 +1085,9 @@ entity function GetTrainingNPCNode( entity player, string nodeName )
 				}
 				#if DEVELOPER
 					if( DevDraws )
-						//DebugDrawSphere( pos, 5, <255, 0, 0>, true, 30.0 )
+					{
+						DebugDrawSphere( pos, 5, 255, 0, 0, true, 30.0 )
+					}
 				#endif // DEVELOPER
         
                                                                          
@@ -1276,7 +1284,7 @@ void function StartTraining_Movement( entity player )
 		{
 			printt( format( "%s(): Bloodhound Hill Start Pos: %s", FUNC_NAME(), string( npc.GetOrigin() ) ))
 			printt( format( "%s(): Bloodhound Hill Start Ang: %s", FUNC_NAME(), string( npc.GetAngles() ) ))
-			//DebugDrawSphere( npc.GetOrigin(), 25, <0, 0, 255>, true, 100 )
+			DebugDrawSphere( npc.GetOrigin(), 25, 0, 0, 255, true, 100 )
 		}
 	#endif
 	waitthread TrainingNPCRecordedAnim( npc, bloodhoundRecordedAnim, $"", pos, angles )
@@ -1345,7 +1353,7 @@ void function DEV_DoTutAnims( string section )
 
 void function DEV_DoTutAnims_Thread( string section )
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	entity npc
 	entity node
 
@@ -1375,7 +1383,7 @@ void function DEV_DoTutAnims_Thread( string section )
 
 void function DEV_PrintDummieInfo()
 {
-	entity dummie = GetTrainingDummyForPlayer( GP() )
+	entity dummie = GetTrainingDummyForPlayer( GetPlayerArray() )
 	if( IsValid( dummie ) )
 	{
 		printt( "Dummie Position == " + dummie.GetOrigin() )
@@ -1385,7 +1393,7 @@ void function DEV_PrintDummieInfo()
 
 void function DEV_Seq_DropshipAndDummie()
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	entity dummy = GetTrainingDummyForPlayer( player )
 	Seq_DropshipAndDummie( player, dummy )
 }
@@ -1397,7 +1405,7 @@ void function DEV_Do_Training_Respawn()
 
 void function DEV_Do_Training_Respawn_Thread()
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 
 	// [92.653] setpos -5436.907715 -950.374695 396.061798;setang 17.843922 -171.789993 0.000000
 	vector pos = < -5436.907715, -950.374695, 396.061798 >
@@ -1417,13 +1425,13 @@ void function DEV_Do_Training_Respawn_Thread()
 
 void function DEV_Do_Training_Revive()
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	thread StartTraining_Revive( player)
 }
 
 void function DEV_Goto_Pathfinder_AfterDeath( )
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 
 	PlayerTrainingData data = file.playerTrainingData[ player ]
 
@@ -1514,7 +1522,7 @@ void function StartTraining_Loot( entity player )
 		{
 			printt( format( "%s(): Bloodhound Loot Start Pos: %s", FUNC_NAME(), string( npc.GetOrigin() ) ))
 			printt( format( "%s(): Bloodhound Loot Start Ang: %s", FUNC_NAME(), string( npc.GetAngles() ) ))
-			//DebugDrawSphere( npc.GetOrigin(), 25, <0, 0, 255>, true, 100 )
+			DebugDrawSphere( npc.GetOrigin(), 25, 0, 0, 255, true, 100 )
 		}
 	#endif
 	wait duration
@@ -2572,7 +2580,7 @@ void function Seq_DropshipAndDummie( entity player, entity dummy )
 				if( DevDraws )
 				{
 					printt( format( "%s(): dummieDropFromPos == ", string( dummieDropFromPos ) ) )
-					//DebugDrawSphere( dummieDropFromPos, 50, <255, 0, 0>, true, 100 )
+					DebugDrawSphere( dummieDropFromPos, 50, 255, 0, 0, true, 100 )
 				}
 			#endif
 
@@ -2883,7 +2891,7 @@ void function StartTraining_Ultimate( entity player )
 		{
 			printt( format( "%s(): PATHFINDER Pos: %s", FUNC_NAME(), string( npc.GetOrigin() ) ))
 			printt( format( "%s(): PATHFINDER Ang: %s", FUNC_NAME(), string( npc.GetAngles() ) ))
-			//DebugDrawSphere( npc.GetOrigin(), 25, <0, 255, 0>, true, 100 )
+			DebugDrawSphere( npc.GetOrigin(), 25, 0, 255, 0, true, 100 )
 		}
 	#endif
 	duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trUltimate_06_50_pathfinder_3p" )
@@ -3449,7 +3457,7 @@ bool function ClientCommand_mark_training_complete( entity player, array<string>
 
 void function TrainingBloodhoundSetup()
 {
-	entity player          = GP()
+	entity player          = GetPlayerArray()
 	vector bloodhoundStart = <0, 0, 0>
 
 	if ( IsRandomizedTrainingPlaylistEnabled() )

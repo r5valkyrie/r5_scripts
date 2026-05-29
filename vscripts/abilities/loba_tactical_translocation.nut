@@ -836,16 +836,18 @@ void function TranslocatePlayerThread( entity owner, entity weapon, entity proje
 
 	#if TRANSLOCATION_DEBUG
 		int numPathPts = weapon.w.translocate_projectileThrowPathTaken.len()
-		DebugDrawSphere( projectilePos, 5.0, COLOR_BLACK, false,TRANSLOCATION_DEBUG_TIMEOUT )
+		DebugDrawSphere( projectilePos, 5.0, int(COLOR_BLACK.x), int(COLOR_BLACK.y), int(COLOR_BLACK.z), false, TRANSLOCATION_DEBUG_TIMEOUT )
 		for ( int i = 1; i < numPathPts; ++i )
 		{
 			vector pathPos = weapon.w.translocate_projectileThrowPathTaken[i]
-			DebugDrawLine( weapon.w.translocate_projectileThrowPathTaken[i-1], pathPos, COLOR_RED, false,TRANSLOCATION_DEBUG_TIMEOUT )
-			DebugDrawSphere( pathPos, 4.0, COLOR_RED, false,TRANSLOCATION_DEBUG_TIMEOUT )
+			//DebugDrawLine( weapon.w.translocate_projectileThrowPathTaken[i-1], pathPos, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), false, TRANSLOCATION_DEBUG_TIMEOUT )
+			DebugDrawSphere( pathPos, 4.0, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), false, TRANSLOCATION_DEBUG_TIMEOUT )
 			DebugDrawText( pathPos, string( Distance( pathPos, projectilePos ) ), false, TRANSLOCATION_DEBUG_TIMEOUT )
 		}
 		if ( numPathPts > 0 )
-			DebugDrawLine( weapon.w.translocate_projectileThrowPathTaken[numPathPts-1], projectilePos, COLOR_RED, false,TRANSLOCATION_DEBUG_TIMEOUT )
+		{
+			//DebugDrawLine( weapon.w.translocate_projectileThrowPathTaken[numPathPts-1], projectilePos, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), false, TRANSLOCATION_DEBUG_TIMEOUT )
+		}
 	#endif
 
 	array<vector> candidateSpots = []
@@ -1119,7 +1121,7 @@ vector ornull function TryTranslocateSpots( entity owner, entity weapon, entity 
 	#if TRANSLOCATION_DEBUG
 		for ( int i = 0; i < candidateSpots.len(); i++ )
 		{
-			DebugDrawSphere( candidateSpots[i], 5.5, <204, 153, 255>, false, TRANSLOCATION_DEBUG_TIMEOUT )
+			DebugDrawSphere( candidateSpots[i], 5.5, 204, 153, 255, false, TRANSLOCATION_DEBUG_TIMEOUT )
 		}
 	#endif
 
@@ -1131,7 +1133,7 @@ vector ornull function TryTranslocateSpots( entity owner, entity weapon, entity 
 		vector spot = candidateSpots[spotIdx]
 
 #if TRANSLOCATION_DEBUG
-		DebugDrawArrow(  spot + 40*<0.0, 0.0, 1.0>, spot, 5.0, COLOR_RED, true, TRANSLOCATION_DEBUG_TIMEOUT )
+		//DebugDrawArrow(  spot + 40*<0.0, 0.0, 1.0>, spot, 5.0, COLOR_RED, true, TRANSLOCATION_DEBUG_TIMEOUT )
 #endif
 
 		if ( PassesAdditionalSafePosTests( spot, owner, projectile ) )

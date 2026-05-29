@@ -2585,7 +2585,7 @@ bool function IsCalEvent( int itemType )
  ********** DEV HELPER FUNCTION *********
  ****************************************/
 #if SERVER && DEVELOPER
-bool function ClientCommand_itemflavors_dump( entity player, array<string> args )
+void function ClientCommand_itemflavors_dump( entity player, array<string> args )
 {
 	// inv_dump
 
@@ -2593,7 +2593,7 @@ bool function ClientCommand_itemflavors_dump( entity player, array<string> args 
 	if ( args.len() != EXPECTED_ARG_COUNT )
 	{
 		Assert( false, "Incorrect number of arguments to client command 'itemflavors_dump' (got \"" + DEV_ArrayConcat( args, " " ) + "\", expected " + EXPECTED_ARG_COUNT + ")" )
-		return true
+		return
 	}
 
 	foreach ( int typeIndex in eItemType )
@@ -2610,7 +2610,6 @@ bool function ClientCommand_itemflavors_dump( entity player, array<string> args 
 			)
 		}
 	}
-	return true
 }
 #endif
 

@@ -531,9 +531,14 @@ var function FerroWallAttack_Common( entity weapon, WeaponPrimaryAttackParams at
 	if( deployMethod == eFerroWallDeployType.DEPLOY_OBJECT_PLACEMENT )
 	{
 		
-		entity placementParent = weapon.GetParent()
+		entity placementParent = weapon.GetObjectPlacementParent()
 		array<entity> ignoreArray = GetFerroWallIgnoreArray()
-
+		if( weapon.ObjectPlacementHasValidSpot() && ( !IsValid( placementParent ) || !ignoreArray.contains( placementParent ) ) )
+		{
+			targetOrigin = weapon.GetObjectPlacementOrigin()
+			printt("Ferrofluid targetorigin hasvalidspot" + weapon.GetObjectPlacementOrigin())
+		}
+		else
 		{
 			TraceResults fwdTrace = TraceLine( ownerOrigin, ownerOrigin + FlattenNormalizeVec( ownerPlayer.GetViewVector() ) * FERRO_WALL_DEFAULT_FWD_DISTANCE, ignoreArray, TRACE_MASK_NPCSOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
 			TraceResults downTrace = TraceLine( fwdTrace.endPos, fwdTrace.endPos + < 0, 0, -400 >, ignoreArray, TRACE_MASK_NPCSOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
@@ -546,6 +551,7 @@ var function FerroWallAttack_Common( entity weapon, WeaponPrimaryAttackParams at
 				return 0
 			}
 			targetOrigin = downTrace.endPos
+			printt("Ferrofluid targetorigin hasnotvalidspot" + targetOrigin )
 		}
 
 		vector angles = < 0, startAngles.y, 0 >
@@ -635,7 +641,7 @@ void function OnWeaponChargeEnd_weapon_ferro_wall( entity weapon )
 	Assert( ownerPlayer.IsPlayer() )
 }
 
-void function OnProjectileCollision_weapon_ferro_wall( entity projectile, vector pos, vector normal, entity hitEnt, int hitbox, bool isCritical, bool isPassthrough )
+void function OnProjectileCollision_weapon_ferro_wall( entity projectile, vector pos, vector normal, entity hitEnt, int hitbox, bool isCritical )
 {
 	projectile.SetVelocity( ZERO_VECTOR )
 	#if SERVER
@@ -977,8 +983,8 @@ void function CreateWallThread( entity weapon, vector pos, vector dir, int numPi
 			if( forwardTrace.fraction < 1.0 )
 				break
 		}
-		#if DEV && FERRO_WALL_DEBUG_DRAW
-			DebugDrawLine( traceStart, forwardTrace.endPos, COLOR_GREEN, true, 25.0 )
+		#if DEVELOPER && FERRO_WALL_DEBUG_DRAW
+			DebugDrawLine( traceStart, forwardTrace.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 25.0 )
 		#endif
 
 		vector traceDownEnd = forwardTrace.endPos + < 0, 0, -FERRO_WALL_DOWN_TRACE_LENGTH >
@@ -1032,8 +1038,8 @@ void function CreateWallThread( entity weapon, vector pos, vector dir, int numPi
 				TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_CATALYST_DARK_VEIL_START, owner, lastPosition, teamId, infoTarget )
 			}
 		}
-		#if DEV && FERRO_WALL_DEBUG_DRAW
-			DebugDrawLine( forwardTrace.endPos, downTrace.endPos, COLOR_BLUE, true, 25.0 )
+		#if DEVELOPER && FERRO_WALL_DEBUG_DRAW
+			DebugDrawLine( forwardTrace.endPos, downTrace.endPos, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 25.0 )
 		#endif
 
 		if( endTraces )
@@ -1360,12 +1366,12 @@ void function CreateFerroWallPillar( asset model, asset baseFX, vector pos, vect
 			EffectStop( friendlyLaunchFx )
 	}
 
-	#if DEV && FERRO_WALL_DEBUG_DRAW
+	#if DEVELOPER && FERRO_WALL_DEBUG_DRAW
 		vector pillarOrigin = trigger.GetOrigin()
 		vector mins = CalcWorldToLocalOrigin_Entity( pillar, pillarOrigin + ( FERRO_WALL_RADIUS * pillar.GetRightVector() ) + ( FERRO_WALL_WIDTH * pillar.GetForwardVector() ) )
 		vector maxs = CalcWorldToLocalOrigin_Entity( pillar, pillarOrigin - ( FERRO_WALL_RADIUS * pillar.GetRightVector() ) - ( FERRO_WALL_WIDTH * pillar.GetForwardVector() ) + < 0, 0, FERRO_WALL_HEIGHT > )
 		DebugDrawBox( pillar.GetOrigin(),  mins, maxs, COLOR_GREEN, 1, 25.0 )
-		//DebugDrawLine( pillarOrigin + < 0, 0, FERRO_WALL_HEIGHT/2.0>, pillarOrigin + < 0, 0, FERRO_WALL_HEIGHT/ 2.0> + ( FERRO_WALL_WIDTH * pillar.GetForwardVector() ), COLOR_GREEN, true, 25.0 )
+		//DebugDrawLine( pillarOrigin + < 0, 0, FERRO_WALL_HEIGHT/2.0>, pillarOrigin + < 0, 0, FERRO_WALL_HEIGHT/ 2.0> + ( FERRO_WALL_WIDTH * pillar.GetForwardVector() ), int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 25.0 )
 	#endif
 
 	wait GetWallDuration( attacker )
@@ -1557,7 +1563,7 @@ void function FerroWallTiggerEnterThread( entity trigger, entity ent )
 					int attachmentID = ent.LookupAttachment( "CHESTFOCUS" )
 					pOrigin = ent.GetAttachmentOrigin( attachmentID )
 				}
-				StartParticleEffectInWorld( GetParticleSystemIndex( FERRO_WALL_WALKTHROUGH_SPLASH ), pOrigin, ZERO_VECTOR )
+				StartParticleEffectInWorldForRealms( GetParticleSystemIndex( FERRO_WALL_WALKTHROUGH_SPLASH ), pOrigin, ZERO_VECTOR, ent )
 				splashTime = Time() + 0.5
 			}
 			wasInWall[ 0 ] = true
@@ -2183,9 +2189,13 @@ void function WeaponActive_Client( entity ownerPlayer, entity weapon )
 		entity targetParent
 		vector startAngles = ZERO_VECTOR
 		vector ownerOrigin = ownerPlayer.EyePosition()
-		entity placementParent = weapon.GetParent()
+		entity placementParent = weapon.GetObjectPlacementParent()
 		array<entity> ignoreArray = GetFerroWallIgnoreArray()
-
+		if( weapon.ObjectPlacementHasValidSpot() && ( !IsValid( placementParent ) || !ignoreArray.contains( placementParent ) ) )
+		{
+			targetOrigin = weapon.GetObjectPlacementOrigin()
+		}
+		else
 		{
 			TraceResults fwdTrace = TraceLine( ownerOrigin, ownerOrigin + FlattenNormalizeVec( ownerPlayer.GetViewVector() ) * FERRO_WALL_DEFAULT_FWD_DISTANCE, ignoreArray, TRACE_MASK_NPCSOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
 			TraceResults downTrace = TraceLine( fwdTrace.endPos, fwdTrace.endPos + < 0, 0, -400 >, ignoreArray, TRACE_MASK_NPCSOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
@@ -2240,8 +2250,8 @@ void function CreatePlacementWall( array< entity > proxies, array< entity > igno
 			if( forwardTrace.fraction < 1.0 )
 				break
 		}
-		#if DEV && FERRO_WALL_DEBUG_DRAW
-			DebugDrawLine( traceStart, forwardTrace.endPos, COLOR_GREEN, true, 25.0 )
+		#if DEVELOPER && FERRO_WALL_DEBUG_DRAW
+			DebugDrawLine( traceStart, forwardTrace.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 25.0 )
 		#endif
 
 		vector traceDownEnd = forwardTrace.endPos + < 0, 0, -FERRO_WALL_DOWN_TRACE_LENGTH >
@@ -2257,8 +2267,8 @@ void function CreatePlacementWall( array< entity > proxies, array< entity > igno
 			proxies[ i ].Show()
 			traceStart = downTrace.endPos + < 0, 0, FERRO_WALL_CLIMB_HEIGHT >
 		}
-		#if DEV && FERRO_WALL_DEBUG_DRAW
-			DebugDrawLine( forwardTrace.endPos, downTrace.endPos, COLOR_BLUE, true, 25.0 )
+		#if DEVELOPER && FERRO_WALL_DEBUG_DRAW
+			DebugDrawLine( forwardTrace.endPos, downTrace.endPos, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 25.0 )
 		#endif
 
 		if( endTraces )

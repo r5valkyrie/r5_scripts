@@ -10,7 +10,7 @@ global function CrowdNoiseMeterEnabled
 global function UpdateTeamOrAllianceCrowdNoiseMeterAndBroadcast
 global function UpdateOtherTeamsOrAlliancesCrowdNoiseMeterAndBroadcast
 global function ScaledUpdateTeamOrAllianceCrowdNoiseMeterAndBroadcast
-#if DEV
+#if DEVELOPER
 global function DEV_ModifyPlayerCrowdNoiseMeter
 global function DEV_ToggleCrowdNoiseMeterDecay
 global function DEV_ToggleCrowdNoiseMeterModifier
@@ -27,7 +27,7 @@ global function ToggleCrowdSoundOnEntity
                   
                                                             
       
-#if DEV
+#if DEVELOPER
 global function DEV_Cl_ToggleCrowdNoiseMeterOnPlayer
 global function DEV_Cl_ToggleCrowdNoiseMeterOnServer
 global function DEV_Cl_ToggleCrowdNoiseMeterDebug
@@ -161,7 +161,7 @@ struct
                                               
                          
 
-	#if DEV
+	#if DEVELOPER
 		bool areFiltersEnabled												= false
 		array<int> validCrowdNoiseMeterModifiers
 	#endif // DEV
@@ -196,7 +196,7 @@ struct
 
 	table < int, int > crowdSoundOdds
 
-	#if DEV
+	#if DEVELOPER
 		var meterRui														= null
 		bool isServerBroadcasting
 	#endif // DEV
@@ -204,7 +204,7 @@ struct
 	bool isFirstTimeSpawned													= false
 #endif // CLIENT
 
-#if DEV
+#if DEVELOPER
 	bool isDecayEnabled														= true
 #endif // DEV
 
@@ -222,9 +222,9 @@ void function CrowdNoiseMeter_Init()
                           
 	#endif // SERVER
 
-	#if CLIENT && DEV
+	#if CLIENT && DEVELOPER
 		file.isServerBroadcasting = GetCurrentPlaylistVarBool( "crowd_noise_meter_enable_server_broadcasting", false )
-	#endif // CLIENT && DEV
+	#endif // CLIENT && DEVELOPER
 
 	file.decayIntervalSeconds = GetCurrentPlaylistVarInt( "crowd_noise_meter_decay_interval_seconds", 0 )
 	file.decayValue = GetCurrentPlaylistVarFloat( "crowd_noise_meter_decay_value", 0.0 )
@@ -511,7 +511,7 @@ void function CLIENT_SetCrowdNoiseMeterValue( float updatedCrowdNoiseMeterValue,
 
 	//Sound_SetCrowdState( file.localNoiseMeterValue * 100, file.localNoiseMeterDeltaValue * 100 )
 
-	#if DEV
+	#if DEVELOPER
 		if ( IsValid( file.meterRui ) )
 		{
 			RuiSetFloat( file.meterRui, "progress", file.localNoiseMeterValue )
@@ -738,7 +738,7 @@ void function BroadcastPlayerCrowdNoiseMeter( entity player )
   
  
                         
-#endif // SERVER && DEV
+#endif // SERVER && DEVELOPER
 
 #if SERVER
 void function SERVER_CrowdNoiseMeter_Think()
@@ -756,7 +756,7 @@ void function SERVER_CrowdNoiseMeter_Think()
 
 		foreach ( int teamOrAlliance, float noiseMeterValue in file.teamNoiseMeterValues )
 		{
-			#if DEV
+			#if DEVELOPER
 				if ( !file.isDecayEnabled )
 					continue
 			#endif // DEV
@@ -826,7 +826,7 @@ void function UpdateTeamOrAllianceCrowdNoiseMeterAndBroadcast( int teamOrAllianc
 	if ( modifier >= eCrowdNoiseMeterModifiers._count )
 		return
 
-	#if DEV
+	#if DEVELOPER
 		if ( file.areFiltersEnabled && !file.validCrowdNoiseMeterModifiers.contains( modifier ) )
 			return
 	#endif // DEV
@@ -862,7 +862,7 @@ void function ScaledUpdateTeamOrAllianceCrowdNoiseMeterAndBroadcast( int teamOrA
 	if ( modifier >= eCrowdNoiseMeterModifiers._count )
 		return
 
-	#if DEV
+	#if DEVELOPER
 		if ( file.areFiltersEnabled && !file.validCrowdNoiseMeterModifiers.contains( modifier ) )
 			return
 	#endif // DEV
@@ -879,7 +879,7 @@ void function ScaledUpdateTeamOrAllianceCrowdNoiseMeterAndBroadcast( int teamOrA
 	file.teamNoiseMeterValues[teamOrAlliance] = clamp( updatedCrowdNoiseMeterValue, 0.0, 1.0 )
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_ModifyPlayerCrowdNoiseMeter( entity player, float delta )
 {
 	int teamOrAlliance = AllianceProximity_IsUsingAlliances() ? AllianceProximity_GetAllianceFromTeam( player.GetTeam() ) : player.GetTeam()
@@ -905,7 +905,7 @@ void function CLIENT_CrowdNoiseMeter_Think()
 	if ( !IsValid( player ) )
 		return
 
-	#if DEV
+	#if DEVELOPER
 		if ( !file.isServerBroadcasting )
 			return
 	#endif
@@ -932,7 +932,7 @@ void function CLIENT_CrowdNoiseMeter_Think()
 		file.nextDecayUnixTimestamp = GetUnixTimestamp() + file.decayIntervalSeconds
 		wait file.decayIntervalSeconds
 
-		#if DEV
+		#if DEVELOPER
 			if ( !file.isDecayEnabled )
 				continue
 		#endif // DEV
@@ -951,7 +951,7 @@ void function CLIENT_ScoreCheck_Thread()
 	if ( !IsValid( player ) || player.IsBot() )
 		return
 
-	#if DEV
+	#if DEVELOPER
 		if ( !file.isServerBroadcasting )
 			return
 	#endif
@@ -1081,7 +1081,7 @@ void function CrowdNoiseMeter_PlayGameEndSound( entity player, bool isOnWinningT
 }
 #endif // CLIENT
 
-#if CLIENT && DEV
+#if CLIENT && DEVELOPER
 void function DEV_Cl_ToggleCrowdNoiseMeterOnPlayer()
 {
 	entity player = GetLocalClientPlayer()
@@ -1100,9 +1100,9 @@ void function DEV_Cl_ToggleCrowdNoiseMeterOnPlayer()
 
 	Remote_ServerCallFunction( "ClientCallback_DevToggleCrowdNoiseMeterOnPlayer" )
 }
-#endif // CLIENT && DEV
+#endif // CLIENT && DEVELOPER
 
-#if CLIENT && DEV
+#if CLIENT && DEVELOPER
 void function DEV_Cl_ToggleCrowdNoiseMeterDebug()
 {
 	if ( IsValid( file.meterRui ) )
@@ -1116,23 +1116,23 @@ void function DEV_Cl_ToggleCrowdNoiseMeterDebug()
 		RuiSetFloat( file.meterRui, "progress", file.localNoiseMeterValue )
 	}
 }
-#endif // CLIENT && DEV
+#endif // CLIENT && DEVELOPER
 
-#if CLIENT && DEV
+#if CLIENT && DEVELOPER
 void function DEV_Cl_ToggleCrowdNoiseMeterOnServer()
 {
 	Remote_ServerCallFunction( "ClientCallback_DevToggleCrowdNoiseMeterOnServer" )
 }
-#endif // CLIENT && DEV
+#endif // CLIENT && DEVELOPER
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function DEV_ToggleCrowdNoiseMeterDecay()
 {
 	file.isDecayEnabled = !file.isDecayEnabled
 }
-#endif // SERVER && DEV
+#endif // SERVER && DEVELOPER
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function DEV_ToggleCrowdNoiseMeterModifier( int validModifier )
 {
 	if ( file.validCrowdNoiseMeterModifiers.contains( validModifier ) )
@@ -1144,18 +1144,18 @@ void function DEV_ToggleCrowdNoiseMeterModifier( int validModifier )
 		file.validCrowdNoiseMeterModifiers.append( validModifier )
 	}
 }
-#endif // SERVER && DEV
+#endif // SERVER && DEVELOPER
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function DEV_DisableAllCrowdNoiseMeterModifiers()
 {
 	file.validCrowdNoiseMeterModifiers.clear()
 }
-#endif // SERVER && DEV
+#endif // SERVER && DEVELOPER
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function DEV_ToggleCrowdNoiseMeterModifierFilters()
 {
 	file.areFiltersEnabled = !file.areFiltersEnabled
 }
-#endif // SERVER && DEV 
+#endif // SERVER && DEVELOPER 

@@ -2,7 +2,7 @@ global function ShPassiveConduit_Init
 
 #if SERVER
 
-#if DEV
+#if DEVELOPER
 global function DEV_PassiveConduitAdrenaline_ForceStart
 #endif //DEV
 
@@ -334,7 +334,7 @@ void function PassiveConduitAdrenaline_Start( entity player )
 
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_PassiveConduitAdrenaline_ForceStart( entity player )
 {
 	PassiveConduitAdrenaline_Start( player )

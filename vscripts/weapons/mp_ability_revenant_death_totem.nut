@@ -219,6 +219,8 @@ var function OnWeaponPrimaryAttack_ability_revenant_death_totem( entity weapon, 
 
 		vector origin = weapon.GetObjectPlacementOrigin()
 		vector angles = weapon.GetObjectPlacementAngles()
+		printt("vector origin = " + weapon.GetObjectPlacementOrigin() + " " + "weapon.GetObjectPlacementOrigin()")
+		printt("vector angles = " + weapon.GetObjectPlacementAngles() + " " + "weapon.GetObjectPlacementAngles()")
 		entity parentTo = weapon.GetObjectPlacementParent()
 		int vehicleAttachmentIndex = weapon.GetWeaponSettingInt( eWeaponVar.object_placement_vehicle_attachment_index )
 		thread DeathTotem_DeployTotem( ownerPlayer, origin, angles, parentTo, vehicleAttachmentIndex ) // Place your object in some utility function as normal using object placement's final positional data
@@ -770,9 +772,9 @@ void function DeathTotem_RecallPlayer( entity player )
 	vector playerStartLoc = player.GetOrigin()
 	if ( DEATH_TOTEM_DEBUG )
 	{
-		DebugDrawSphere( playerStartLoc, 10, COLOR_YELLOW,false, 5.0 )
-		DebugDrawSphere( totemOrigin, 5, <0,255,125>,false, 5.0 )
-		DebugDrawSphere( recallOrigin, 10, COLOR_CYAN,false, 5.0 )
+		DebugDrawSphere( playerStartLoc, 10, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), false, 5.0 )
+		DebugDrawSphere( totemOrigin, 5, 0, 255, 125, false, 5.0 )
+		DebugDrawSphere( recallOrigin, 10, int(COLOR_CYAN.x), int(COLOR_CYAN.y), int(COLOR_CYAN.z), false, 5.0 )
 	}
 
 	bool safeSpotSuccess = PutPlayerInSafeSpot( player, ( IsValid( totemProxy  ) ? totemProxy : null ), null, recallOrigin, recallOrigin )
@@ -795,8 +797,8 @@ void function DeathTotem_RecallPlayer( entity player )
 	{
 		float dist = sqrt( distSqrFromRecallPos )
 		printt( "Death Totem Player Recalled was " + dist + " units from RecallOrigin" )
-		DebugDrawSphere( player.GetOrigin(), 20, COLOR_GREEN,false, 5.0 )
-		DebugDrawLine( playerStartLoc, player.GetOrigin(), <0,255,125>,false, 5.0 )
+		DebugDrawSphere( player.GetOrigin(), 20, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), false, 5.0 )
+		DebugDrawLine( playerStartLoc, player.GetOrigin(), 0, 255, 125, false, 5.0 )
 
 	}
 
@@ -1370,7 +1372,7 @@ void function DeathTotem_MarkLocation( entity player, entity totemProxy )
 
 		if ( DEATH_TOTEM_DEBUG )
 		{
-			DebugDrawSphere( data.origin, 10, <255, 100, 0>, false, DEATH_TOTEM_EFFECT_DURATION_DEFAULT )
+			DebugDrawSphere( data.origin, 10, 255, 100, 0, false, DEATH_TOTEM_EFFECT_DURATION_DEFAULT )
 			DebugDrawText( data.origin, (data.wasCrouched ? "Standing" : "Crouched"), false, DEATH_TOTEM_EFFECT_DURATION_DEFAULT )
 		}
 
@@ -1749,14 +1751,14 @@ DeathTotemPlacementInfo function CalculateDeathTotemPosition( entity weaponOwner
 	totemBoundMaxs = < totemBoundMaxs.x + dx, totemBoundMaxs.y + dy, totemBoundMaxs.z >
 
 	TraceResults traceResults = TraceHull( startPos, startPos + viewVector * magnitude, totemBoundMins, totemBoundMaxs, [weaponOwner, totemProxy], TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER )
-	//DebugDrawSphere( traceResults.endPos, 16.0, COLOR_GREEN, true, 15.0, 2 )
+	//DebugDrawSphere( traceResults.endPos, 16.0, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 15.0, 2 )
 	bool isUpwardSlope        = (IsValid( traceResults.hitEnt ) && traceResults.hitEnt.IsWorld()) && forwardVector.Dot( traceResults.surfaceNormal ) < -0.05
 	if ( isUpwardSlope )
 	{
 		float slopeAngle   = 180 - RAD_TO_DEG * acos( forwardVector.Dot( traceResults.surfaceNormal ) )
 		vector slopeVector = ClampViewVectorToMaxAngle( upVector, viewVector, angle )
 		traceResults = TraceHull( startPos, startPos + slopeVector * magnitude, totemBoundMins, totemBoundMaxs, [weaponOwner, totemProxy], TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER )
-		//DebugDrawSphere( traceResults.endPos, 16.0, COLOR_BLUE, true, 15.0, 2 )
+		//DebugDrawSphere( traceResults.endPos, 16.0, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 15.0, 2 )
 	}
 	TraceResults traceResultsDown = TraceLine( traceResults.endPos, traceResults.endPos + <0, 0, -150>, [weaponOwner, totemProxy], TRACE_MASK_SOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
 	//TraceResults traceResultsDown = TraceHull( traceResults.endPos, traceResults.endPos + <0,0,-150>, DEATH_TOTEM_BOUND_MINS, DEATH_TOTEM_BOUND_MAXS, [weaponOwner], TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_NONE )
@@ -1771,7 +1773,7 @@ DeathTotemPlacementInfo function CalculateDeathTotemPosition( entity weaponOwner
 	}
 	else
 	{
-		//DebugDrawSphere( traceResultsDown.endPos, 16.0, COLOR_RED, true, 15.0, 2 )
+		//DebugDrawSphere( traceResultsDown.endPos, 16.0, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 15.0, 2 )
 		info.origin = traceResultsDown.endPos
 		info.parentTo = null
 		info.normal = traceResultsDown.surfaceNormal

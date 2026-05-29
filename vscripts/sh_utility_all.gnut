@@ -586,12 +586,12 @@ array<vector> function GetCircleToCircleIntersectionPoints( vector org1, float r
 	{
 		#if SERVER || CLIENT
 		// Circle origins
-		//DebugDrawLine( org1, org1 + < 0, 0, 32 >, <255, 0, 0>, true, 1.0 )
-		//DebugDrawLine( org2, org2 + < 0, 0, 32 >, <0, 255, 0>, true, 1.0 )
+		DebugDrawLine( org1, org1 + < 0, 0, 32 >, 255, 0, 0, true, 1.0 )
+		DebugDrawLine( org2, org2 + < 0, 0, 32 >, 0, 255, 0, true, 1.0 )
 
 		// Lines to intersection points
-		//DebugDrawLine( org2, intersectionPoints[ 0 ] + org1, <255, 255, 255>, true, 1.0 )
-		//DebugDrawLine( org2, intersectionPoints[ 1 ] + org1, COLOR_BLACK, true, 1.0 )
+		DebugDrawLine( org2, intersectionPoints[ 0 ] + org1, 255, 255, 255, true, 1.0 )
+		DebugDrawLine( org2, intersectionPoints[ 1 ] + org1, int(COLOR_BLACK.x), int(COLOR_BLACK.y), int(COLOR_BLACK.z), true, 1.0 )
 		#endif
 	}
 
@@ -2486,7 +2486,7 @@ bool function IsSurvivalTraining()
 
 bool function IsLobbyEvent1Active()
 {
-	#if DEV
+	#if DEVELOPER
 		// forcing lobby ignores MTX calevent check
 		int devLobby = GetCurrentPlaylistVarInt( "dev_force_lobby", -1 )
 		if ( devLobby != -1 )
@@ -2498,7 +2498,7 @@ bool function IsLobbyEvent1Active()
 
 bool function IsLobbyEvent2Active()
 {
-	#if DEV
+	#if DEVELOPER
 		// forcing lobby ignores MTX calevent check
 		int devLobby = GetCurrentPlaylistVarInt( "dev_force_lobby", -1 )
 		if ( devLobby != -1 )
@@ -3136,7 +3136,7 @@ void function WaitForUnixTime( int unixTime )
 		if ( delay <= 0.0 )
 			break
 
-		#if DEV
+		#if DEVELOPER
 			wait min( 1.0, delay )
 		#else
 			wait delay

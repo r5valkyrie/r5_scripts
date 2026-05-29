@@ -34,20 +34,20 @@ global function Sticker_CreateFlashData
 global function Sticker_FlashOnLoadComplete
 #endif
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 global function DEV_StickerTestSetup
-#endif // SERVER && DEV
+#endif // SERVER && DEVELOPER
 
-#if CLIENT && DEV
+#if CLIENT && DEVELOPER
 global function DEV_TestCreateStickerMesh
 global function DEV_TestCreateStickerDecal
 global function DEV_StickerTestSetupForLocalPlayer
 global function DEV_ReturnRandomStickerFlavs
 #endif
 
-#if UI && DEV
+#if UI && DEVELOPER
 global function DEV_PrintStickerLoadout
-#endif // UI && DEV
+#endif // UI && DEVELOPER
 
 global enum eStickerObjectType
 {
@@ -462,10 +462,10 @@ void function DEV_SetupStickerNetworking()
 }
 #endif
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function DEV_StickerTestSetup()
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	vector origin = player.GetOrigin()
 
 	player.SetHealth( 10 )
@@ -476,12 +476,12 @@ void function DEV_StickerTestSetup()
 	SpawnGenericLoot( "health_pickup_health_small", origin )
 	SpawnGenericLoot( "health_pickup_health_large", origin )
 }
-#endif // SERVER && DEV
+#endif // SERVER && DEVELOPER
 
-#if CLIENT && DEV
+#if CLIENT && DEVELOPER
 void function DEV_TestCreateStickerMesh( asset stickerMat )
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	vector origin = player.GetOrigin()
 	vector angles = <0, 0, 0>
 
@@ -493,7 +493,7 @@ void function DEV_TestCreateStickerDecal( asset stickerMat, float scale )
 {
 	asset test_model = $"mdl/weapons/shield_battery/ptpov_shield_battery_held.rmdl"
 
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	vector origin = player.GetOrigin()
 	vector angles = <0, 0, 0>
 
@@ -594,7 +594,7 @@ void function Sticker_FlashOnLoadComplete( int stickerInstance )
 }
 #endif
 
-#if UI && DEV
+#if UI && DEVELOPER
 void function DEV_PrintStickerLoadout()
 {
 	EHI playerEHI = ToEHI( GetLocalClientPlayer() )
@@ -615,9 +615,9 @@ void function DEV_PrintStickerLoadout()
 	ItemFlavor phoenixKitSticker = LoadoutSlot_GetItemFlavor( playerEHI, phoenixKitStickerSlot )
 	printt( "phoenixKitStickerSlot contains:   ", string(ItemFlavor_GetAsset( phoenixKitSticker )) )
 }
-#endif // UI && DEV
+#endif // UI && DEVELOPER
 
-#if CLIENT && DEV
+#if CLIENT && DEVELOPER
 array<ItemFlavor>function DEV_ReturnRandomStickerFlavs( int numRandomStickers )
 {
 	array<ItemFlavor> stickers = GetAllItemFlavorsOfType( eItemType.sticker )
@@ -625,4 +625,4 @@ array<ItemFlavor>function DEV_ReturnRandomStickerFlavs( int numRandomStickers )
 	stickers.randomize()
 	return stickers.slice( 0, numRandomStickers )
 }
-#endif // CLIENT && DEV
+#endif // CLIENT && DEVELOPER

@@ -175,7 +175,7 @@ void function OnProjectileIgnite_weapon_grenade_bangalore( entity projectile )
 		Assert( LengthSqr( projectileForwardOnSurf ) > 0.1 * 0.1 )
 	}
 	projectileForwardOnSurf = Normalize( projectileForwardOnSurf )
-	//DebugDrawLine( origin, origin + ( projectileForwardOnSurf * 128.0 ), 0, 128, 128, true, 2 )
+	DebugDrawLine( origin, origin + ( projectileForwardOnSurf * 128.0 ), 0, 128, 128, true, 2 )
 
 	vector projectileRightOnSurf = CrossProduct( projectileForwardOnSurf, normal )
 	Assert( IsNormalized( projectileRightOnSurf )  ) // Because the two args are normalized and perpendicular, this should return a normalized value
@@ -249,7 +249,7 @@ void function OnProjectileIgnite_weapon_grenade_bangalore_single( entity project
 		Assert( LengthSqr( projectileForwardOnSurf ) > 0.1 * 0.1 )
 	}
 	projectileForwardOnSurf = Normalize( projectileForwardOnSurf )
-	//DebugDrawLine( origin, origin + ( projectileForwardOnSurf * 128.0 ), 0, 128, 128, true, 2 )
+	DebugDrawLine( origin, origin + ( projectileForwardOnSurf * 128.0 ), 0, 128, 128, true, 2 )
 
 	vector projectileRightOnSurf = CrossProduct( projectileForwardOnSurf, normal )
 	Assert( IsNormalized( projectileRightOnSurf )  ) // Because the two args are normalized and perpendicular, this should return a normalized value
@@ -301,7 +301,7 @@ entity function Bangalore_CreateSmokeGrenade( vector origin, vector normal )
 	vector maxSafeSpot = origin + normal * BANGALORE_SMOKE_MAX_SAFE_SPAWN_PELLET_DISTANCE
 	TraceResults result = TraceLineHighDetail( origin, maxSafeSpot, null, TRACE_MASK_GRENADE, TRACE_COLLISION_GROUP_PROJECTILE )
 	vector safeSpot = result.endPos
-	//DebugDrawLine( safeSpot, origin, <0, 0, 255>, false, 25.0 )
+	//DebugDrawLine( safeSpot, origin, 0, 0, 255, false, 25.0 )
 
 	PutEntityInSafeSpot( prop_physics, null, null, safeSpot, origin )
 	DispatchSpawn( prop_physics )

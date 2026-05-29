@@ -1162,7 +1162,7 @@ entity function GravityCannon_Create( vector origin, vector angles )
 		if ( GRAVITY_CANNON_DEBUG )
 		{
 			vector launchDir = AnglesToForward( cannonEnt.GetAngles() )
-			DebugDrawArrow( origin, origin + launchDir * 200, 10, 255, 255, 0, true, 10000 )
+			//DebugDrawArrow( origin, origin + launchDir * 200, 10, 255, 255, 0, true, 10000 )
 		}
 	}
 	else

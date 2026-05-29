@@ -318,7 +318,7 @@ void function SpectreWaitToExplode( entity npc )
 	waitthread SuicideSpectre_WaittillNearEnemyOrExploding( npc )
 
 	PlayWarningFXOnMPFragDrone( npc )
-	//Remote_CallFunction_NonReplay( GP(), "PlayWarningFXOnSPTick", npc )
+	//Remote_CallFunction_NonReplay( GetPlayerArray(), "PlayWarningFXOnSPTick", npc )
 
 	if ( npc.ai.suicideSpectreExplodingAttacker == null )
 	{
@@ -377,7 +377,7 @@ void function SetSuicideSpectreExploding( entity spectre, entity attacker, float
 	spectre.ai.suicideSpectreExplosionDelay = explodingTime
 
 	PlayWarningFXOnMPFragDrone( spectre )
-	//Remote_CallFunction_NonReplay( GP(), "PlayWarningFXOnSPTick", spectre )
+	//Remote_CallFunction_NonReplay( GetPlayerArray(), "PlayWarningFXOnSPTick", spectre )
 
 	spectre.Signal( "SuicideSpectreExploding" )
 }

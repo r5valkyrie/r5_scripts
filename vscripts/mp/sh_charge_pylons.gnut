@@ -217,7 +217,7 @@ void function InitChargePylon_Thread( entity trig )
 	else
 	{
 		Assert( false, "Pylon battery not setup correctly. The battery needs the script name \"charge_pylon_battery_geo\"" )
-		//DebugDrawSphere( trig.GetOrigin(), 128, <255, 0, 0>, true, 100.0 )
+		//DebugDrawSphere( trig.GetOrigin(), 128, 255, 0, 0, true, 100.0 )
 	}
 
 	file.allChargePylons.append( newPylonData )
@@ -844,7 +844,7 @@ void function ChargePylon_OnEnterChargedState( ChargePylonData pylonData )
 	if ( IsValid( pylonData.button ) )
 		ChargePylon_SetCodeUsableState( pylonData.button )
 	//else
-	//	DebugDrawSphere( pylonData.fullPosition, 128, <255, 0, 0>, true, 100.0 )
+		//DebugDrawSphere( pylonData.fullPosition, 128, 255, 0, 0, true, 100.0 )
 }
 
 void function ChargePylon_OnEnterChannelingState( ChargePylonData pylonData )

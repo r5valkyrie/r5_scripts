@@ -265,7 +265,7 @@ SharedRankedTierData function Ranked_GetHistoricalTierForPlayerPeriod( entity pl
 void function Ranked_GiveRankedSeasonRewards( entity player )
 {
 	printf ("Ranked_GiveRankedSeasonRewards DEBUG: Ranked_GiveRankedSeasonRewards " + player.GetPlayerName())
-	#if DEV
+	#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return
 	#endif

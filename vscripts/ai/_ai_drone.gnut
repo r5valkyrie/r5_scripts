@@ -58,7 +58,7 @@ void function AiDrone_Init()
 // Change drone type on spawn or during gameplay (may transform from one to the other eventually)
 void function RunDroneTypeThink( entity drone )
 {
-	#if DEV
+	#if DEVELOPER
 	Assert( !( "RunDroneTypeThink" in drone.s ), "Already ran drone think!" )
 	drone.s.RunDroneTypeThink <- true
 	#endif

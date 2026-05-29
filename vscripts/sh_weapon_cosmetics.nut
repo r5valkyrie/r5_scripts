@@ -34,12 +34,12 @@ global function ClientCallback_WeaponCosmeticsApply
 global function WeaponCosmetics_Apply
 global function WeaponCosmetics_ApplyModelAndSkin
 #endif
-#if DEV && CLIENT
+#if DEVELOPER && CLIENT
 global function DEV_TestWeaponSkinData
 global function DEV_GetCharmForCurrentWeapon
 global function DEV_SetCharmForCurrentWeapon
 #endif
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 global function DEV_SetWeaponCharmForPlayer
 #endif
 #if CLIENT
@@ -143,7 +143,7 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 
 		LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "weapon_skin_for_" + ItemFlavor_GetGUIDString( weaponFlavor ), eLoadoutEntryClass.WEAPON )
 		entry.category     = eLoadoutCategory.WEAPON_SKINS
-		#if DEV
+		#if DEVELOPER
 			entry.pdefSectionKey = "weapon " + ItemFlavor_GetGUIDString( weaponFlavor )
 			entry.DEV_name       = DEV_ItemFlavor_GetCleanedAssetPath( weaponFlavor ) + " Skin"
 		#endif
@@ -155,7 +155,7 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 		}
 		entry.networkTo           = eLoadoutNetworking.PLAYER_EXCLUSIVE
 		entry.maxFavoriteCount    = 8
-		#if SERVER && DEV
+		#if SERVER && DEVELOPER
 			entry.isCurrentlyRelevant = bool function( EHI playerEHI ) : ( weaponFlavor ) {
 				entity player          = FromEHI( playerEHI )
 				string weaponClassName = WeaponItemFlavor_GetClassname( weaponFlavor )
@@ -190,7 +190,7 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 
 		LoadoutEntry charmEntry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "weapon_charm_for_" + ItemFlavor_GetGUIDString( weaponFlavor ), eLoadoutEntryClass.WEAPON )
 		charmEntry.category     = eLoadoutCategory.WEAPON_CHARMS
-		#if DEV
+		#if DEVELOPER
 			charmEntry.pdefSectionKey = "weapon " + ItemFlavor_GetGUIDString( weaponFlavor )
 			charmEntry.DEV_name       = DEV_ItemFlavor_GetCleanedAssetPath( weaponFlavor ) + " Charm"
 		#endif
@@ -210,7 +210,7 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 			return IsItemFlavorGRXUnlockedForLoadoutSlot( playerEHI, flavor, shouldIgnoreGRX, shouldIgnoreOtherSlots )
 		}
 
-		#if SERVER && DEV
+		#if SERVER && DEVELOPER
 			charmEntry.isCurrentlyRelevant = bool function( EHI playerEHI ) : ( weaponFlavor ) {
 				entity player          = FromEHI( playerEHI )
 				string weaponClassName = WeaponItemFlavor_GetClassname( weaponFlavor )
@@ -408,7 +408,7 @@ int function WeaponSkin_GetSortOrdinal( ItemFlavor flavor )
 	return fileLevel.cosmeticFlavorSortOrdinalMap[flavor]
 }
 
-#if DEV && CLIENT
+#if DEVELOPER && CLIENT
 void function DEV_SetCharmForCurrentWeapon( asset charmModel, string attachmentName )
 {
 	entity player = GetLocalClientPlayer()
@@ -445,9 +445,9 @@ entity function DEV_GetCharmForCurrentWeapon()
 	}
 	return charm
 }
-#endif // #if DEV && CLIENT
+#endif // #if DEVELOPER && CLIENT
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function DEV_SetWeaponCharmForPlayer( int playerEntIndex, asset charmModel, string attachmentName )
 {
 	entity player = GetEntByIndex( playerEntIndex )
@@ -484,7 +484,7 @@ void function DEV_SetWeaponCharmForPlayer( int playerEntIndex, asset charmModel,
 #if SERVER
 void function UpdatePlayerWeaponCosmetics( entity player, ItemFlavor weaponFlavor, ItemFlavor cosmetic )
 {
-	#if DEV
+	#if DEVELOPER
 		string weaponClassName = WeaponItemFlavor_GetClassname( weaponFlavor )
 
 		foreach( entity weapon in player.GetMainWeapons() )
@@ -885,7 +885,7 @@ void function AddCallback_UpdatePlayerWeaponEffects( void functionref( entity pl
 	file.callback_UpdatePlayerWeaponEffects.append( callbackFunc )
 }
 
-#if DEV && CLIENT
+#if DEVELOPER && CLIENT
 void function DEV_TestWeaponSkinData()
 {
 	entity model = CreateClientSidePropDynamic( <0, 0, 0>, <0, 0, 0>, $"mdl/dev/empty_model.rmdl" )

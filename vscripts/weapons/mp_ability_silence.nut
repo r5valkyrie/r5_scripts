@@ -168,7 +168,9 @@ void function CreateSilenceField( entity player, vector origin, entity mover, ve
 	inflictor.AddToOtherEntitysRealms( player )
 
 	if ( SILENCE_DEBUG )
+	{
 		DebugDrawSphere( origin, SILENCE_AREA_RADIUS, 255, 0, 0, true, SILENCE_AREA_DURATION )
+	}
 
 	if ( IsValid( mover ) )
 	{
@@ -180,7 +182,9 @@ void function CreateSilenceField( entity player, vector origin, entity mover, ve
 	}
 
 	if ( SILENCE_DEBUG )
-		DebugDrawSphere( origin, 100, 0, 255, 0, true, SILENCE_AREA_DURATION )
+	{
+		//DebugDrawSphere( origin, 100, 0, 255, 0, true, SILENCE_AREA_DURATION )
+	}
 
 	vector center = origin
 	float radius = SILENCE_AREA_RADIUS
@@ -246,7 +250,9 @@ void function CreateSilenceField( entity player, vector origin, entity mover, ve
 
 			#if DEVELOPER
 			if ( SILENCE_DEBUG )
-				DebugDrawMark( center, 15, [0, 255, 0], true, 0.1 )
+			{
+				//DebugDrawMark( center, 15, [0, 255, 0], true, 0.1 )
+			}
 			#endif
 
 			vector offsetVector = offsetVectors[i]
@@ -326,7 +332,9 @@ void function CreateSilenceField( entity player, vector origin, entity mover, ve
 									if ( IsValid( smokeFXs[i][1] ) )
 										smokeFXs[i][1].SetOrigin( org )
 									if ( SILENCE_DEBUG )
+									{
 										DebugDrawSphere( org, 64, 0, 255, 255, true, 0.1 )
+									}
 								}
 							}
 						//}
@@ -375,7 +383,9 @@ void function CreateSilenceField( entity player, vector origin, entity mover, ve
 						if ( IsValid( smokeFXs[i][1] ) )
 							smokeFXs[i][1].SetOrigin( org )
 						if ( SILENCE_DEBUG )
+						{
 							DebugDrawSphere( org, 64, 0, 255, 255, true, 0.1 )
+						}
 					}
 				}
 			}

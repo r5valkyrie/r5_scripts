@@ -501,7 +501,7 @@ bool function TitanSword_SlamHasPlayerLOS( entity attacker, entity victim )
 	TraceResults traceResults = TraceLine( traceStart, traceEnd, ignoreEnts, TRACE_MASK_SOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
 
 	#if TITAN_SWORD_LOS_DEBUG
-		DebugDrawLine( traceStart, traceEnd, <255, 1, 1>, true, 0.1 )
+		DebugDrawLine( traceStart, traceEnd, 255, 1, 1, true, 0.1 )
 	#endif
 
 	//We don't need the eye LOS I don't think
@@ -510,14 +510,14 @@ bool function TitanSword_SlamHasPlayerLOS( entity attacker, entity victim )
 		traceEnd     = victim.EyePosition()
 		traceResults = TraceLine( traceStart, traceEnd, ignoreEnts, TRACE_MASK_SOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
 		#if TITAN_SWORD_LOS_DEBUG
-			DebugDrawLine( traceStart, traceEnd, <255, 1, 1>, true, 0.1 )
+			DebugDrawLine( traceStart, traceEnd, 255, 1, 1, true, 0.1 )
 		#endif
 	}*/
 
 	if ( traceResults.fraction == 1.0 )
 	{
 		#if TITAN_SWORD_LOS_DEBUG
-			DebugDrawLine( traceStart, traceEnd, <1, 255, 1>, true, 10.0 )
+			DebugDrawLine( traceStart, traceEnd, 1, 255, 1, true, 10.0 )
 		#endif
 		return true
 	}

@@ -1027,7 +1027,7 @@ bool function FRC_IsPlayerActiveForChallenge ( entity player )
 #if DEVELOPER
 void function DEV_FiringRange_HideTargets()
 {
-	FRC_HideFiringRangeTargets( gp()[0].GetRealms()[0] )
+	FRC_HideFiringRangeTargets( GetPlayerArray()[0].GetRealms()[0] )
 }
 #endif // DEVELOPER
 

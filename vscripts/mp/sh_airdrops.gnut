@@ -36,7 +36,7 @@ global function DetermineAirdropTier
 
 global function RemoteOpenAirdrop
 
-global function DEV_AirdropPrint // cleans up extra #if DEV
+global function DEV_AirdropPrint // cleans up extra #if DEVELOPER
 
 #if DEVELOPER
 global function DEV_DrawAirdropLocations
@@ -1012,7 +1012,7 @@ void function DEV_DrawAirdropLocationsNearPlayer_Thread( entity player )
 	while( true )
 	{
 		Point closestAirdrop = GetClosestAirdropPoint( player.GetOrigin() )
-		//DebugDrawLine( closestAirdrop.origin, closestAirdrop.origin + < 0, 0, 256 >, <255, 0, 0>, true, 30.0 )
+		DebugDrawLine( closestAirdrop.origin, closestAirdrop.origin + < 0, 0, 256 >, 255, 0, 0, true, 30.0 )
 		//DebugDrawCircle( closestAirdrop.origin, closestAirdrop.angles, 16, <255, 0, 0>, true, 30.0 )
 
 		WaitFrame()

@@ -11,7 +11,7 @@ global function Odl_ClientValidateAllSkins
 global function Odl_ServerClientFinishedValidatingAllSkins
 #endif
 
-#if DEV
+#if DEVELOPER
 global function OdlStressSwitchChar
 global function OdlStressDoForceReload
 global function OdlStressDoRandomSkin
@@ -184,8 +184,8 @@ void function DoSkinLoadExample()
 	asset skin = $"mdl/Humans/class/medium/pilot_medium_holo.rmdl"
 	PrecacheModel( skin )
 
-	vector origin = gp()[0].GetOrigin()
-	vector angles = gp()[0].GetAngles()
+	vector origin = GetPlayerArray()[0].GetOrigin()
+	vector angles = GetPlayerArray()[0].GetAngles()
 	entity skinDummy = CreatePropDynamic( skin, origin, angles )
 }
 
@@ -194,12 +194,12 @@ void function OdlStressSwitchChar( entity e )
 	while (true)
 	{
 		// Pick a random character
-		ItemFlavor char = GetRandomGoodItemFlavorForLoadoutSlot( ToEHI( gp()[0] ), Loadout_Character() )
+		ItemFlavor char = GetRandomGoodItemFlavorForLoadoutSlot( ToEHI( GetPlayerArray()[0] ), Loadout_Character() )
 		ItemFlavor skin = CharacterClass_GetDefaultSkin( char )
 		// Pick a random skin
 		if ( file.testingParams.randomSkin )
 		{
-			ItemFlavor maybeSkin = GetRandomGoodItemFlavorForLoadoutSlot( ToEHI( gp()[0] ), Loadout_CharacterSkin( char ) )
+			ItemFlavor maybeSkin = GetRandomGoodItemFlavorForLoadoutSlot( ToEHI( GetPlayerArray()[0] ), Loadout_CharacterSkin( char ) )
 			if ( !BLACKLIST_MDLS.contains( CharacterSkin_GetBodyModel( maybeSkin ) ) )
 			{
 				skin = maybeSkin
@@ -413,7 +413,7 @@ void function Odl_SmokeTestPreamble()
 	// Grab all the spawn points and sort them based on distance from the player
 	array<entity> spawnpoints = GetEntArrayByClass_Expensive( "info_spawnpoint_human" )
 	spawnpoints.sort( int function( entity a, entity b ){
-		entity player = gp()[0]
+		entity player = GetPlayerArray()[0]
 		float a_distSqr = LengthSqr(player.GetOrigin() - a.GetOrigin())
 		float b_distSqr = LengthSqr(player.GetOrigin() - b.GetOrigin())
 
@@ -425,7 +425,7 @@ void function Odl_SmokeTestPreamble()
 	} )
 	foreach(entity sp in spawnpoints)
 	{
-		Remote_CallFunction_Replay( gp()[0], "Odl_ClientAddSpawnPoint", sp.GetOrigin(), sp.GetAngles() )
+		Remote_CallFunction_Replay( GetPlayerArray()[0], "Odl_ClientAddSpawnPoint", sp.GetOrigin(), sp.GetAngles() )
 	}
 }
 
@@ -434,27 +434,27 @@ void function Odl_RunSmokeTest_Thread(string smokeTestName)
 	printt( "RUNNING ODSL TEST " + smokeTestName )
 
 	EndSignal(file.dummy, "KillOdlStressTest")
-	OnThreadEnd(function() : () { Remote_CallFunction_Replay( gp()[0], "Odl_ClientEndCurrentTest" ) })
+	OnThreadEnd(function() : () { Remote_CallFunction_Replay( GetPlayerArray()[0], "Odl_ClientEndCurrentTest" ) })
 
-	while(gp().len() == 0)
+	while(GetPlayerArray().len() == 0)
 	{
-		SmokeTest_SetStatus(smokeTestName, "Wait for connect", 1)
+		//SmokeTest_SetStatus(smokeTestName, "Wait for connect", 1)
 		WaitFrame()
 	}
 
-	SmokeTest_SetStatus(smokeTestName, "Testing", SMOKE_TEST_TIME + 1)
+	//SmokeTest_SetStatus(smokeTestName, "Testing", SMOKE_TEST_TIME + 1)
 
 	// Make sure we are not using a character that will come up in the test.
-	ClientCommand_loadouts_devset( gp()[0], ["character_selection", "character_random"] )
+	ClientCommand_loadouts_devset( GetPlayerArray()[0], ["character_selection", "character_random"] )
 
 	// Generally ok position and angle for the player to see the test
-	// gp()[0].SetOrigin( <-537.311768, 1005.251953, 480.031250> )
-	// gp()[0].SetAngles( <13.979992, -88.764755, 0.000000> )
+	// GetPlayerArray()[0].SetOrigin( <-537.311768, 1005.251953, 480.031250> )
+	// GetPlayerArray()[0].SetAngles( <13.979992, -88.764755, 0.000000> )
 
 	Odl_SmokeTestPreamble()
-	Remote_CallFunction_Replay( gp()[0], "Odl_ClientSmokeTestCallback", ALL_ODL_TEST_PARAMS[smokeTestName].testNetworkId )
+	Remote_CallFunction_Replay( GetPlayerArray()[0], "Odl_ClientSmokeTestCallback", ALL_ODL_TEST_PARAMS[smokeTestName].testNetworkId )
 	wait SMOKE_TEST_TIME
-	Remote_CallFunction_Replay( gp()[0], "Odl_ClientEndCurrentTest" )
+	Remote_CallFunction_Replay( GetPlayerArray()[0], "Odl_ClientEndCurrentTest" )
 	WaitFrame()
 }
 
@@ -470,7 +470,7 @@ void function Odl_CancelSmokeTest()
 
 void function Odl_SmokeTestEntry(string smokeTestName, array< entity > bots)
 {
-	SmokeTest_SetStatus(smokeTestName, "Testing", SMOKE_TEST_TIME + 1)
+	//SmokeTest_SetStatus(smokeTestName, "Testing", SMOKE_TEST_TIME + 1)
 	Odl_RunSmokeTest_Thread(smokeTestName)
 }
 #endif
@@ -537,29 +537,29 @@ void function Odl_ClientValidateAllSkins()
 #if SERVER
 void function Odl_ServerValidateAllSkinsOnClient()
 {
-	#if DEV
-		Remote_CallFunction_Replay( gp()[0], "Odl_ClientValidateAllSkins" )
+	#if DEVELOPER
+		Remote_CallFunction_Replay( GetPlayerArray()[0], "Odl_ClientValidateAllSkins" )
 		WaitSignal( file.dummy, "OdlValidationTestFinished" )
 	#endif
 }
 
 void function Odl_ServerClientFinishedValidatingAllSkins( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		Signal( file.dummy, "OdlValidationTestFinished" )
 	#endif
 }
 
 void function Odl_ValidationTestEntry(string smokeTestName, array< entity > bots)
 {
-	#if DEV
-		while(gp().len() == 0)
+	#if DEVELOPER
+		while(GetPlayerArray().len() == 0)
 		{
-			SmokeTest_SetStatus(smokeTestName, "Wait for connect", 1)
+			//SmokeTest_SetStatus(smokeTestName, "Wait for connect", 1)
 			WaitFrame()
 		}
 
-		SmokeTest_SetStatus(smokeTestName, "Testing", 	60 * 5 * GetConVarFloat( "host_timescale" ))
+		//SmokeTest_SetStatus(smokeTestName, "Testing", 	60 * 5 * GetConVarFloat( "host_timescale" ))
 		Odl_ServerValidateAllSkinsOnClient()
 	#endif
 }
@@ -577,7 +577,7 @@ void function Odl_SmokeTestInit()
 
 	Remote_RegisterServerFunction( "Odl_ServerClientFinishedValidatingAllSkins" )
 
-	#if DEV
+	#if DEVELOPER
 	#if SERVER
 		string enabledTestName = GetConVarString( "sh_odsl_enabled_test_name" )
 		if ( enabledTestName != "" )

@@ -6,7 +6,7 @@ global function IsCryptoTTEnabled
 #if SERVER
 global function InitCryptoSquadTVs
 global function GetCryptoTTAssetsToPrecache
-	#if DEV
+	#if DEVELOPER
 	global function DEV_SpawnBotsRandomlyForCryptoTT
 	global function DEV_TestSatelliteBlendMatrix
 	global function DEV_TestFireCryptoSatellite_Thread
@@ -390,7 +390,7 @@ void function InitCryptoMap()
 		Warning( "!!! Warning !!! Missing ent for crypto holo map " + cryptoHoloMapEnt_Raw.len() )
 		foreach( entity mapEnt in cryptoHoloMapEnt_Raw )
 		{
-			//DebugDrawSphere( mapEnt.GetOrigin(), 4, COLOR_RED, true, 10.0 )
+			DebugDrawSphere( mapEnt.GetOrigin(), 4, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 10.0 )
 			printt( "!!! Entity:", mapEnt )
 		}
 		return
@@ -644,7 +644,7 @@ void function DisplayHoldUseRUIForCryptoTTSatellite_Internal( var rui, asset ico
 
 #if SERVER
 
-#if DEV
+#if DEVELOPER
 	void function DEV_TestFireCryptoSatellite_Thread()
 	{
 		ExtendedUseSettings blankSettings
@@ -690,7 +690,7 @@ void function CryptoTTScan_UseFailure( entity button, entity player, ExtendedUse
 	CryptoTT_SetSatelliteBlendValueTarget( CRYPTO_TT_SAT_BLEND_BASE )
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_CryptoTT_FakeReturningToIdle()
 {
 	CryptoTT_SetSatelliteBlendValueTarget( CRYPTO_TT_SAT_BLEND_BASE )
@@ -765,7 +765,7 @@ void function CryptoTT_SatelliteWarmupPoseParamsThink( float initialPoseOverride
 	file.satelliteBlendThinkActive = false
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_TestSatelliteBlendMatrix()
 {
 	if ( file.satelliteBlendThinkActive )
@@ -1349,7 +1349,7 @@ void function CryptoTT_CleanUpSoundByName( string soundName )
 	delete file.audioForCleanup[ soundName ]
 }
 
-#if DEV
+#if DEVELOPER
 const int DEV_NUM_BOTS_TO_SPAWN = 30
 void function DEV_SpawnBotsRandomlyForCryptoTT()
 {
@@ -1681,7 +1681,7 @@ void function CryptoTT_HoloMap_ExpandRUIThink( entity trigger, entity player, bo
 					//DebugDrawFOVCircle( viewTargetOrigin, player.CameraPosition(), fovTarget, debugColor, true, 0.1 )
 					//DebugDrawFOVCircle( viewTargetOrigin, player.CameraPosition(), fovBlockTarget, COLOR_YELLOW, true, 0.1 )
 					//if ( isActivatedPanel )
-					//	DebugDrawSphere( ruiData.originExpanded, 4, COLOR_WHITE, true, 0.1 )
+						//DebugDrawSphere( ruiData.originExpanded, 4, int(COLOR_WHITE.x), int(COLOR_WHITE.y), int(COLOR_WHITE.z), true, 0.1 )
 				}
 
 				// Of all targets player is looking at (looking within FOV range), get the closest to look direction, and closest to the player.

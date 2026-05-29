@@ -68,7 +68,7 @@ global function Has_BR_Respawn_WithWeapons
 global function LastDeathSuicideStatus_Analyze
 global function LastDeathSuicideStatus_Get
 
-#if DEV
+#if DEVELOPER
 global function DEV_RespawnBeacon_RespawnPlayerAtBeaconAtCrosshair
 global function DEV_RespawnBeacon_DebugDraws
 global function DEV_RespawnEquipped_AllowSuicides
@@ -263,7 +263,7 @@ struct
 		// Last Time Enemy Damaged Player Check
 		table< entity, float > lastCombatEncounterVsEnemy // Last time player was damaged by an enemy, indexed by player.
 
-		#if DEV
+		#if DEVELOPER
 			bool debugDraws = false
 			float debug_additional_dropship_heightmod = 0.0
 		#endif // DEV
@@ -1038,7 +1038,7 @@ array< sRestoreWeaponInfo > function _RestoreWeaponInfos_From_WeaponEnts( array<
 			restoreWeapInfo.weaponRef = weaponClassName
 			restoreWeapInfo.modRefs = weaponEnt.GetMods()
 
-			#if DEV
+			#if DEVELOPER
 				if( debug )
 				{
 					printt( FUNC_NAME() + "(): Weapon Saved for entity " + weaponEnt )
@@ -1082,7 +1082,7 @@ void function _RespawnEquipped_Save_Armor( entity player, bool wasDeath_Suicide 
 
 	file.brRespawnLoadouts[ player ].wasDeath_Suicide = wasDeath_Suicide
 
-	#if DEV
+	#if DEVELOPER
 		printt( format( "%s(): Player %s armor 	== %s", FUNC_NAME(), player.GetPlayerName(), file.brRespawnLoadouts[ player ].armorData.armorLevel ) )
 		printt( format( "%s(): Player %s helmet	== %s", FUNC_NAME(), player.GetPlayerName(), file.brRespawnLoadouts[ player ].helmetRef ) )
 	#endif // DEV
@@ -1163,7 +1163,7 @@ void function RespawnEquipped_Restore( entity player, bool skipWeapons = false, 
                       
 			bool ugradeCoreEnabled = UpgradeCore_IsEnabled()
 			bool armorCoreItemsEnabled = UpgradeCore_ArmorTiedToUpgrades()
-			#if DEV
+			#if DEVELOPER
 				printt( format( "%s(): Upgrade Cores Enabled? ", FUNC_NAME(), string( ugradeCoreEnabled ) ) )
 			#endif // DEV
 			if( ugradeCoreEnabled && armorCoreItemsEnabled )
@@ -1544,7 +1544,7 @@ float function RespawnDropship_GetHeightMod()
 {
 	float heightmod = GetCurrentPlaylistVarFloat( "respawn_dropship_heightmod", 0.0 )
 
-	#if DEV
+	#if DEVELOPER
 		heightmod += file.debug_additional_dropship_heightmod
 	#endif // DEV
 
@@ -1927,17 +1927,17 @@ bool function RespawnEquipped_SuicidesProhibited()
 	return( Has_BR_Respawn_Restore_NoSuicide() && !file.debug_RespawnEquipped_SuicidesAllowed )
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_RespawnEquipped_AllowSuicides( bool value )
 {
 	file.debug_RespawnEquipped_SuicidesAllowed = value
 }
 #endif // DEV
 
-#if DEV
+#if DEVELOPER
 void function DEV_RespawnEquipped_Test_Restore_Armor_ByName( string playerName )
 {
-	entity player = Get_Player_ByName( playerName )
+	entity player = GetPlayerArray()[0]
 	DEV_RespawnEquipped_Test_Restore_Armor( player )
 }
 
@@ -2740,7 +2740,7 @@ void function AttemptCancelBannerPickup( entity player )
 #if SERVER
 void function RespawnBeacons_OnSquadEliminated( int team )
 {
-	#if DEV
+	#if DEVELOPER
 		printt( FUNC_NAME() + "(): ----- " )
 	#endif // DEV
 
@@ -2936,7 +2936,7 @@ bool function LastDeathSuicideStatus_Analyze( entity victim, entity attacker, va
 	//			break
 	//	}
 	//}
-	#if DEV
+	#if DEVELOPER
 		string resultStr = wasSuicide ? "suicide" : "not suicide"
 		printt( FUNC_NAME() + "(): player " + victim.GetPlayerName() + " death was " + resultStr )
 	#endif // DEV
@@ -2995,7 +2995,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	PlayersWhoveDiedBefore_Add( victim )
 
 	// TODO: If NoBanners, Change player's status to "Delivery to Beacon"
-	#if DEV
+	#if DEVELOPER
 		DEV_Player_RespawnStatus( victim )
 	#endif // DEV
 
@@ -3349,7 +3349,7 @@ void function PutPlayerInDropship( entity player, entity ship, int positionIndex
 			jumpAnimSequence.firstPersonAnim =  jumpAnims[ positionIndex ]
 		}
 
-		#if DEV
+		#if DEVELOPER
 			printt( format( "%s(): Player %s 1p Anim == %s ", FUNC_NAME(), player.GetPlayerName(), jumpAnimSequence.firstPersonAnim ) )
 		#endif
 	}
@@ -3570,7 +3570,7 @@ entity function RespawnBeacon_GetClosestValidBeacon( entity player, vector origi
 				// predict moment in time that player will arrive
 				float predictedArrivalTime = Time() + traversalTime
 
-				#if DEV
+				#if DEVELOPER
 					printf( "distance to beacon: %f", distToBeacon)
 					printf( "Entire respawn time buffer is %f", traversalTime )
 					printf( "Current time is %f", Time() )
@@ -3748,7 +3748,7 @@ entity function RespawnBeacon_GetClosestValidBeacon( entity player, vector origi
 				// If we are still not safe from a level hazard, look for a different station
 				if ( !isSafeFromLevelHazard )
 				{
-					#if DEV
+					#if DEVELOPER
 						printf( "sh_respawn_beacon: Failing ExpensiveBeaconDetection test because this beacon is still not safe from a Level Hazard" )
 					#endif
 					continue
@@ -3756,7 +3756,7 @@ entity function RespawnBeacon_GetClosestValidBeacon( entity player, vector origi
 
 				if (predictedArrivalTime < data.startTime)
 				{
-					#if DEV
+					#if DEVELOPER
 						printf( "player should arrive before the ring shrinks", data.startTime - predictedArrivalTime )
 					#endif
 					return station
@@ -3767,7 +3767,7 @@ entity function RespawnBeacon_GetClosestValidBeacon( entity player, vector origi
 					float progress = ( predictedArrivalTime - data.startTime ) / ( data.endTime - data.startTime )
 					vector predictedCenter = LerpVector( data.center, data.nextCenter, progress )
 					float predictedRadius = LerpFloat( data.startRadius, data.endRadius, progress )
-					#if DEV
+					#if DEVELOPER
 						printf( "ring collapse progress at ETA: %f", progress )
 						printf (
 							"Ring Center | started: < %f, %f, %f > | ending: < %f, %f, %f > | predicted at ETA: < %f, %f, %f >",
@@ -3782,12 +3782,12 @@ entity function RespawnBeacon_GetClosestValidBeacon( entity player, vector origi
 					float beaconDistToCircleCenter = Distance2D( station.GetOrigin(), predictedCenter )
 					if (beaconDistToCircleCenter < predictedRadius)
 					{
-						#if DEV
+						#if DEVELOPER
 							printf( "This beacon should be safe to recommend" )
 						#endif
 						return station
 					}
-					#if DEV
+					#if DEVELOPER
 						printf( "Respawn Beacon was predicted to be outside the ring upon player arrival" )
 					#endif
 				}
@@ -3905,9 +3905,9 @@ bool function CanDeploy( FlightPath flightPath, vector origin, vector angles, ve
 	deployOrigin = deployOrigin - deployFwd * 150 // move backwards a bit
 
 	TraceResults results = TraceHull( deployOrigin, deployOrigin - <0, 0, 1000>, <-300, -300, -300>, <300, 300, 300>, null, flightPath.traceMask, TRACE_COLLISION_GROUP_NONE )
-	// DebugDrawSphere( deployOrigin, 20, COLOR_RED, true, 5.0 )
-	// DebugDrawLine( deployOrigin, results.endPos, COLOR_RED, true, 5.0 )
-	// DebugDrawSphere( deployOrigin - <0,0,1000>, 20, COLOR_RED, true, 5.0 )
+	// //DebugDrawSphere( deployOrigin, 20, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 5.0 )
+	// DebugDrawLine( deployOrigin, results.endPos, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 5.0 )
+	// //DebugDrawSphere( deployOrigin - <0,0,1000>, 20, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 5.0 )
 
 	if ( results.startSolid )
 		return false
@@ -4196,7 +4196,7 @@ void function RespawnSuccessClient_Mobile( entity ent, entity playerUser, Extend
 }
 #endif // CLIENT
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function DEV_RespawnBeacon_RespawnPlayerAtBeaconAtCrosshair( entity player )
 {
 	entity beacon
@@ -4225,7 +4225,7 @@ void function DEV_DebugSphere( vector pt, float radius, vector sphereColor, bool
 	if( !file.debugDraws )
 		return
 
-	DebugDrawSphere( pt, radius, sphereColor, throughGeo, duration )
+	DebugDrawSphere( pt, radius, int(sphereColor.x), int(sphereColor.y), int(sphereColor.z), throughGeo, duration )
 }
 
 void function DEV_DebugLine( vector start, vector end, vector lineColor, bool throughGeo, float duration )
@@ -4233,7 +4233,7 @@ void function DEV_DebugLine( vector start, vector end, vector lineColor, bool th
 	if( !file.debugDraws )
 		return
 
-	DebugDrawLine( start, end, lineColor, throughGeo, duration )
+	DebugDrawLine( start, end, int(lineColor.x), int(lineColor.y), int(lineColor.z), throughGeo, duration )
 }
 
 void function DEV_Dropship_HeightMod( float mod = 0.0 )
@@ -4243,7 +4243,7 @@ void function DEV_Dropship_HeightMod( float mod = 0.0 )
 
 void function DEV_Player_RespawnStatus_ByName( string playerName, float duration = 10 )
 {
-	entity player = Get_Player_ByName( playerName )
+	entity player = GetPlayerArray()[0]
 	thread DEV_Player_RespawnStatus_ForDuration_Thread( player, duration )
 }
 
@@ -4264,7 +4264,7 @@ void function DEV_Player_RespawnStatus( entity player )
 	printt( "Player " + player.GetPlayerName() + " respawnStatus: " + respawnStatusStr )
 }
 
-#endif // SERVER && DEV
+#endif // SERVER && DEVELOPER
 
 #if CLIENT
 entity function GetRespawnBeaconUnderAim( vector worldPos, float worldRange )

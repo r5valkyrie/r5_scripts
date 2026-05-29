@@ -258,8 +258,8 @@ array<SegmentData> function CreateSpreadPattern( entity owner, entity inflictor,
 		}
 		firstTrace = false
 
-		#if DEV && DEBUG_THERMITE_GRENADE_TRACES
-			DebugDrawLine( traceStart, traceEndUnder, COLOR_GREEN, true, 25.0 )
+		#if DEVELOPER && DEBUG_THERMITE_GRENADE_TRACES
+			DebugDrawLine( traceStart, traceEndUnder, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 25.0 )
 		#endif
 
 		array ignoreArray = []
@@ -269,8 +269,8 @@ array<SegmentData> function CreateSpreadPattern( entity owner, entity inflictor,
 		TraceResults forwardTrace = TraceLine( traceStart, traceEndUnder, ignoreArray, TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_BLOCK_WEAPONS )
 		if ( forwardTrace.fraction == 1.0 )
 		{
-			#if DEV && DEBUG_THERMITE_GRENADE_TRACES
-				DebugDrawLine( forwardTrace.endPos, forwardTrace.endPos + <0,0,-225>, COLOR_RED, true, 25.0 )
+			#if DEVELOPER && DEBUG_THERMITE_GRENADE_TRACES
+				DebugDrawLine( forwardTrace.endPos, forwardTrace.endPos + <0,0,-225>, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 25.0 )
 			#endif
 
 			TraceResults downTrace = TraceLine( forwardTrace.endPos, forwardTrace.endPos + <0,0,-225>, ignoreArray, TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_BLOCK_WEAPONS )
@@ -294,8 +294,8 @@ array<SegmentData> function CreateSpreadPattern( entity owner, entity inflictor,
 
 		TraceResults upwardTrace = TraceLine( traceStart, traceEndOver, ignoreArray, TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_BLOCK_WEAPONS )
 
-		#if DEV && DEBUG_THERMITE_GRENADE_TRACES
-			DebugDrawLine( traceStart, traceEndOver, COLOR_BLUE, true, 25.0 )
+		#if DEVELOPER && DEBUG_THERMITE_GRENADE_TRACES
+			DebugDrawLine( traceStart, traceEndOver, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 25.0 )
 		#endif
 
 		if ( upwardTrace.fraction < 1.0 && IsValid( upwardTrace.hitEnt ) && upwardTrace.hitEnt.IsWorld() )
@@ -322,7 +322,7 @@ array<SegmentData> function CreateSpreadPattern( entity owner, entity inflictor,
 		}
 	}
 
-	#if DEV && DEBUG_THERMITE_GRENADE_TRACES
+	#if DEVELOPER && DEBUG_THERMITE_GRENADE_TRACES
 		printt( "Total segments:", segmentsArray.len() )
 	#endif
 

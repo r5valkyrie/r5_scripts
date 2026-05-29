@@ -155,7 +155,7 @@ void function DEV_KoScreenToggle( bool toggle )
 void function InitSpawnpoint( entity spawn )
 {
 	// #if DEVELOPER
-	// DebugDrawSphere( spawn.GetOrigin(), 56, 255, 0, 0, true, 999.0 )
+	// //DebugDrawSphere( spawn.GetOrigin(), 56, 255, 0, 0, true, 999.0 )
 	// #endif
 	spawn.Destroy()
 }
@@ -183,7 +183,7 @@ void function InitInfoTarget( entity infotarget )
 	// printt( "Interesting Info target started. Editor: ", GetEditorClass( infotarget ), " ScriptRef: ", infotarget.GetScriptName()," Target: ", infotarget.GetTargetName() )
 
 	#if DEVELOPER
-	// DebugDrawSphere( infotarget.GetOrigin(), 56, 255, 255, 255, true, 999.0 )
+	// //DebugDrawSphere( infotarget.GetOrigin(), 56, 255, 255, 255, true, 999.0 )
 	#endif
 
 	infotarget.Destroy()
@@ -221,7 +221,7 @@ void function InitTriggerMultiple( entity trigger )
 	if( GetEditorClass( trigger ) == "trigger_skydive" || GetEditorClass( trigger ) == "trigger_pve_zone" || GetEditorClass( trigger ) == "trigger_warp_gate" || trigger.GetScriptName() == "path_tt_ring_trig" )
 	{
 		// #if DEVELOPER
-		// DebugDrawSphere( trigger.GetOrigin(), 128, 255, 255, 0, true, 999.0 )
+		// //DebugDrawSphere( trigger.GetOrigin(), 128, 255, 255, 0, true, 999.0 )
 		// #endif
 		return
 	}
@@ -274,20 +274,20 @@ void function InitWarpNode( entity infotarget )
 	#if DEVELOPER
 	if( infotarget.GetLinkEntArray().len() == 2 )
 	{
-		DebugDrawSphere( infotarget.GetOrigin(), 80, 255, 0, 255, true, 999.0 ) //purple
+		//DebugDrawSphere( infotarget.GetOrigin(), 80, 255, 0, 255, true, 999.0 ) //purple
 		DebugDrawLine( infotarget.GetOrigin(), infotarget.GetLinkEntArray()[0].GetOrigin(), 255, 0, 255, true, 999 )
 		DebugDrawLine( infotarget.GetOrigin(), infotarget.GetLinkEntArray()[1].GetOrigin(), 0, 255, 0, true, 999 )
 	}
 	else if( infotarget.GetLinkEntArray().len() == 1 )
 	{
-		DebugDrawSphere( infotarget.GetOrigin(), 80, 0, 0, 255, true, 999.0 ) //blue
+		//DebugDrawSphere( infotarget.GetOrigin(), 80, 0, 0, 255, true, 999.0 ) //blue
 		foreach( link in infotarget.GetLinkEntArray() )
 		{
 			DebugDrawLine( infotarget.GetOrigin(), link.GetOrigin(), 0, 0, 255, true, 999 )
 		}
 	} else if( infotarget.GetLinkEntArray().len() == 0 )
 	{
-		DebugDrawSphere( infotarget.GetOrigin(), 80, 0, 255, 0, true, 999.0 ) //green
+		//DebugDrawSphere( infotarget.GetOrigin(), 80, 0, 255, 0, true, 999.0 ) //green
 		foreach( link in infotarget.GetLinkEntArray() )
 		{
 			DebugDrawLine( infotarget.GetOrigin(), link.GetOrigin(), 0, 255, 0, true, 999 )
@@ -304,7 +304,7 @@ void function DEV_StartNodesLinksShow()
 		if( node.GetLinkEntArray().len() != 2 )
 			continue
 
-		DebugDrawSphere( node.GetOrigin(), 80, 255, 0, 255, true, 3.0 ) //purple
+		//DebugDrawSphere( node.GetOrigin(), 80, 255, 0, 255, true, 3.0 ) //purple
 
 		printt( "purple:", node.GetLinkEntArray()[0], node.GetLinkEntArray()[0].GetOrigin() )
 		printt( "green:", node.GetLinkEntArray()[1], node.GetLinkEntArray()[1].GetOrigin() )
@@ -478,7 +478,7 @@ void function WarpTunnel_MoveEntAlongPath( entity player, array<entity> entNodes
 	#if DEVELOPER
 	foreach( point in trigger.e.warpEntranceSmoothedPath )
 	{
-		DebugDrawSphere( point, 80, 255, 0, 255, true, 999 ) //morado
+		//DebugDrawSphere( point, 80, 255, 0, 255, true, 999 ) //morado
 	}
 	#endif
 

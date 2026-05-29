@@ -30,7 +30,7 @@ global function DeathboxNetwork_ServerToClient_TrackTargetOverTime
 global function DeathboxNetwork_ServerToClient_ForceUsable  // Should only be used in Dev
 #endif
 
-#if DEV
+#if DEVELOPER
 bool devForceDeathboxUsable = false
 #endif
 
@@ -208,7 +208,7 @@ bool function DeathboxNetwork_CanPlayerUse( entity player, entity deathbox, bool
 	if ( !IsValid( player ) || !IsValid( deathbox ) || !player.HasPassive( ePassives.PAS_ASH ) )
 		return false
 
-	#if DEV
+	#if DEVELOPER
 		if ( devForceDeathboxUsable )
 			return true
 	#endif
@@ -765,7 +765,7 @@ void function DeathboxNetwork_ServerToClient_TrackTargetOverTime_Thread( entity 
 
 void function DeathboxNetwork_ServerToClient_ForceUsable()
 {
-	#if DEV
+	#if DEVELOPER
 		devForceDeathboxUsable = true
 	#endif
 }
@@ -885,10 +885,10 @@ void function DeathboxNetwork_ClientToServer_PingDeathboxFromMap( entity player,
 
 void function DEV_TestAshDeathbox()
 {
-	#if DEV
+	#if DEVELOPER
 		devForceDeathboxUsable = true
-		Remote_CallFunction_NonReplay( GP(), "DeathboxNetwork_ServerToClient_ForceUsable" )
-		DEV_SpawnDeathBoxWithRandomLoot( GP() )
+		Remote_CallFunction_NonReplay( GetPlayerArray(), "DeathboxNetwork_ServerToClient_ForceUsable" )
+		DEV_SpawnDeathBoxWithRandomLoot( GetPlayerArray() )
 	#endif
 }
 #endif

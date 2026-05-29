@@ -2320,7 +2320,7 @@ void function InstanceLocationPing_Thread( entity wp )
 		return
 	}
 
-	#if DEV
+	#if DEVELOPER
 		if ( viewPlayer.GetTeamMemberIndex() < 0 )
 			Warning( "%s(): team member index was invalid.", FUNC_NAME() )
 	#endif // DEV
@@ -3356,7 +3356,7 @@ bool function MultiplePingsAllowed( int pingType )
                 
 		case ePingType.CRAFTING_GENERIC:
       
-#if DEV
+#if DEVELOPER
 		case ePingType.MULTILOCATION:
 #endif
 		case ePingType.LOOT_BIN:
@@ -3878,7 +3878,7 @@ void function Waypoint_ParentToPingEnt( entity wp, entity pingEnt, int pingType 
 		return
 
 	//Defensive fix for R5DEV-128295 (Pinging projectiles shouldn't be possible)
-	#if DEV
+	#if DEVELOPER
 		Assert( pingEnt.GetClassName() != "crossbow_bolt", "Attempted to parent a waypoint to a projectile!" )
 	#else
 		if ( pingEnt.GetClassName() == "crossbow_bolt" )

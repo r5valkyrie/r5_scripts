@@ -116,7 +116,7 @@ void function ClientCodeCallback_MapSpawn()
 
 	PrecacheResFiles()
 
-#if DEV
+#if DEVELOPER
 		ClModelViewer_Init()
 #endif
 

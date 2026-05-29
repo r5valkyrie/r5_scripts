@@ -15,7 +15,7 @@ global function AdDrones_SetBillboardForProjectorModel
 global function AdDrones_RemoveBillboardForProjectorModel
 #endif // SERVER
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 global function DEV_ForceBillboardIndex_For_AdDrones
 #endif // DEV && SERVER
 
@@ -206,7 +206,7 @@ void function ServerCallback_AdDroneSetBillboardVFX( entity projectorEnt, int bi
 // If we are changing the billboard it is ok to just run this thread again after setting the new billboard in file.projectorEHIToBillboardIndexTable, this thread will kill the old one
 void function AdDrones_PlayBillboardVFXOnAdDrone_Thread( entity projectorEnt )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -309,7 +309,7 @@ void function AdDrones_SetAdDroneTrailFXType( entity droneEnt, int trailType )
 }
 #endif //CLIENT
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 void function DEV_ForceBillboardIndex_For_AdDrones( int billboardVFXIndex )
 {
 	foreach ( DroneData data in Drones_GetAllActiveDrones() )

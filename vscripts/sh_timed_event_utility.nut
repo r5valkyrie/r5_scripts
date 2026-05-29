@@ -137,7 +137,7 @@ void function TimedEvents_RegisterTimedEvent( TimedEventData data )
 
 	if ( timedEventType in file.eventTypeToTimedEvent )
 	{
-		#if DEV
+		#if DEVELOPER
 			Assert( false, "Timed Events: eventType: " + timedEventType + " already exists for a registered Timed Event. Make sure to set a unique eventType int for each Timed Event when registering them." )
 		#endif // DEV
 		return
@@ -167,7 +167,7 @@ void function TimedEvents_SetSingleScheduleVars( bool shouldTriggerBackupEventsO
 	file.singleScheduleTimeBetweenEvents = singleScheduleTimeBetweenEvents
 	file.didSetSingleScheduleVars = true
 
-	#if DEV
+	#if DEVELOPER
 		printf( "Timed Events: Set Single Schedule Vars" )
 	#endif // DEV
 }
@@ -270,7 +270,7 @@ void function TimedEvent_ManagementThread( int gamestate )
 				//complete actions if we should be making a waypoint
 				if ( shouldCreateWaypointThisFrame )
 				{
-					#if DEV
+					#if DEVELOPER
 						printf( "Timed Events: Triggering Unique Schedule Timed Event" )
 					#endif // DEV
 
@@ -294,14 +294,14 @@ void function TimedEvent_ManagementThread( int gamestate )
 	}
 	else // There are no unique schedule timed events to manage. Just manage the gamestate termination signal
 	{
-		#if DEV
+		#if DEVELOPER
 			printf( "Timed Events: There are no unique schedule timed events going to wait for gamestate change" )
 		#endif // DEV
 
 		WaittillGameStateOrHigher( gamestate + 1 )
 	}
 
-	#if DEV
+	#if DEVELOPER
 		printf( "Timed Events: Reached Gamestate triggered event termination" )
 	#endif // DEV
 
@@ -339,7 +339,7 @@ void function TimedEvent_ManageSingleScheduleEvents_Thread( array< TimedEventDat
 	// Trigger the events on the single schedule
 	while ( eventPool.len() > 0 )
 	{
-		#if DEV
+		#if DEVELOPER
 			printf( "Timed Events: Going to try to trigger a single schedule timed event" )
 		#endif // DEV
 
@@ -387,7 +387,7 @@ void function TimedEvent_ManageSingleScheduleEvents_Thread( array< TimedEventDat
 
 		if ( didFindValidEvent )
 		{
-			#if DEV
+			#if DEVELOPER
 				printf( "Timed Events: Triggering a single schedule timed event" )
 			#endif // DEV
 
@@ -403,11 +403,11 @@ void function TimedEvent_ManageSingleScheduleEvents_Thread( array< TimedEventDat
 		}
 		else
 		{
-			#if DEV
+			#if DEVELOPER
 				printf( "Timed Events: Didn't find a valid single schedule timed event to trigger" )
 			#endif // DEV
 		}
-		#if DEV
+		#if DEVELOPER
 			printf( "Timed Events: Going to wait for the next single schedule timed event. Wait Time: " + timeBetweenEvents )
 		#endif // DEV
 
@@ -539,7 +539,7 @@ void function OnGamestateEpilogue_TimedEvents_Client()
 #if CLIENT
 void function ManageTimedEventTracker( var gameStateRui, int gamestate )
 {
-	#if DEV
+	#if DEVELOPER
 		printf( "Timed Events: starting management thread on client for gamestate " + gamestate )
 	#endif // DEV
 
@@ -658,7 +658,7 @@ void function TimedEvents_TriggerTimedEventByEventType( int eventType )
 
 		TimedEventData event = file.eventTypeToTimedEvent[ eventType ]
 
-		#if DEV
+		#if DEVELOPER
 			printf( "Timed Events: TimedEvents_TriggerTimedEventByEventType triggered for eventType: " + eventType )
 		#endif // DEV
 
@@ -670,7 +670,7 @@ void function TimedEvents_TriggerTimedEventByEventType( int eventType )
 	}
 	else
 	{
-		#if DEV
+		#if DEVELOPER
 			printf( "Timed Events: TimedEvents_TriggerTimedEventByEventType passed in eventType: " + eventType + " is not valid. Below are the current registered timed events:" )
 
 			foreach ( key, value in file.eventTypeToTimedEvent )

@@ -3640,7 +3640,7 @@ void function DEV_LoadoutsDebug( LoadoutEntry entry )
 #endif
 
 #if SERVER && DEVELOPER
-bool function ClientCommand_loadouts_devset( entity commandPlayer, array<string> args )
+void function ClientCommand_loadouts_devset( entity commandPlayer, array<string> args )
 {
 	// loadouts_devset
 	// 1: [loadout slot entry id string]
@@ -3653,7 +3653,7 @@ bool function ClientCommand_loadouts_devset( entity commandPlayer, array<string>
 	if ( args.len() < EXPECTED_ARG_COUNT_MIN || args.len() > EXPECTED_ARG_COUNT_MAX )
 	{
 		Warning( "Incorrect number of arguments to client command 'loadouts_devset' (got \"" + DEV_ArrayConcat( args, " " ) + "\", expected " + EXPECTED_ARG_COUNT_MIN + "-" + EXPECTED_ARG_COUNT_MAX + " arguments)." )
-		return true
+		return
 	}
 
 	array<entity> playersToAffect = ((args.len() < 3 || args[2] != "all") ? [commandPlayer] : GetPlayerArray())
@@ -3756,7 +3756,7 @@ bool function ClientCommand_loadouts_devset( entity commandPlayer, array<string>
 				Artifacts_DEV_SetupDaggerForLoadouts( playerEHI, entry )
 
 				if ( itemFlavor == LoadoutSlot_GetItemFlavor( playerEHI, entry ) )
-					return true
+					return
 			}
 
 			SetItemFlavorLoadoutSlotContentsInternal( playerEHI, entry, itemFlavor )
@@ -3764,7 +3764,6 @@ bool function ClientCommand_loadouts_devset( entity commandPlayer, array<string>
 			printt( player, "loadouts_devset", entry.id, DEV_ItemFlavor_GetCleanedAssetPath( itemFlavor ) )
 		}
 	}
-	return true
 }
 #endif
 

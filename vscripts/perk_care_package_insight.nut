@@ -8,7 +8,7 @@ const float CAREPACKAGE_HINT_NOTIFICATION_DIST = 20000
 const float FORWARD_CAST_RAY_LENGTH = 40000
 const float LOOKAT_HINT_COOLDOWN = 120
 
-#if DEV
+#if DEVELOPER
 const bool CARE_PACKAGE_INSIGHT_PERF_TESTING = false
 #endif
 
@@ -22,7 +22,7 @@ global function Perks_CarePackageInsight_ClientToServer_StartRevealPackage
 global function Perks_CarePackageInsight_ClientToServer_MinimapIconPinged
 global function Perks_CarePackageInsight_CreateCarePackageInsightPing
 
-#if DEV
+#if DEVELOPER
 global function DeleteCarepackagePerkLinks
 #endif
 
@@ -55,7 +55,7 @@ struct
 	#if SERVER
 		table<entity, CarePackageData  > carePackageArray
 
-		#if DEV
+		#if DEVELOPER
 			array < entity > carePackageExtraEnts
 		#endif
 	#endif
@@ -799,7 +799,7 @@ void function UpdateCarePackageLootAtReveal( entity player )
 			Wait( 1 )
 			continue
 		}
-#if DEV
+#if DEVELOPER
 		if( CARE_PACKAGE_INSIGHT_PERF_TESTING )
 		{
 			PerfStart( PerfIndexClient.CarePackagePerkLookatUpdate )
@@ -902,7 +902,7 @@ void function UpdateCarePackageLootAtReveal( entity player )
 			soundHandle = null
 		}
 
-#if DEV
+#if DEVELOPER
 		if( CARE_PACKAGE_INSIGHT_PERF_TESTING )
 		{
 			PerfEnd( PerfIndexClient.CarePackagePerkLookatUpdate )
@@ -1167,7 +1167,7 @@ void function ServerToClient_NotifyPathfinderCooldownReduction()
 #endif // CLIENT
 
 #if SERVER
-#if DEV
+#if DEVELOPER
 void function DeleteCarepackagePerkLinks()
 {
 	foreach( ent, carePackageData in file.carePackageArray )

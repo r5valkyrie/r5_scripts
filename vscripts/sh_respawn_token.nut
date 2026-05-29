@@ -21,7 +21,7 @@ global function Respawn_Token_Announcement_RespawnsDisabled
 global function Respawn_Token_OnReconnect_UpdateRUI
 #endif
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 global function DEV_Respawn_Token_GiveSquadLife
 global function DEV_Respawn_Token_ToggleInfiniteLives
 #endif
@@ -66,7 +66,7 @@ global enum eRespawnTokenType
 
 struct
 {
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 	bool infiniteLives = false
 #endif
 
@@ -477,7 +477,7 @@ void function AdjustPlayerLives( entity player, int lifeChange )
 #if SERVER
 void function TakePlayerLife( entity player )
 {
-#if DEV
+#if DEVELOPER
 	if ( file.infiniteLives )
 		return
 #endif // DEV
@@ -507,7 +507,7 @@ void function AdjustSquadLives( entity player, int lifeChange )
 #if SERVER
 void function TakeSquadLife( entity player )
 {
-#if DEV
+#if DEVELOPER
 	if ( file.infiniteLives )
 		return
 #endif // DEV
@@ -712,14 +712,14 @@ bool function Respawn_Token_IsPlayerWaitingForRespawn( entity player )
 }
 #endif // CLIENT
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 void function DEV_Respawn_Token_GiveSquadLife( entity player )
 {
 	GiveSquadLife( player )
 }
 #endif // DEV && SERVER
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 void function DEV_Respawn_Token_ToggleInfiniteLives()
 {
 	file.infiniteLives = !file.infiniteLives

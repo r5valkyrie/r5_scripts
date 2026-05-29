@@ -554,14 +554,14 @@ vector ornull function GetBestShieldDeployAngles( vector origin, vector angles, 
 			vector testAngles = angles + <0, angleOffset, 0>
 
 			#if DEBUG_SHIELD_ANGLES
-				DebugDrawLine( origin, origin + AnglesToForward( testAngles ) * 32, COLOR_RED, true, DEBUG_SHIELD_DRAW_TIME )
+				DebugDrawLine( origin, origin + AnglesToForward( testAngles ) * 32, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, DEBUG_SHIELD_DRAW_TIME )
 			#endif
 
 			int failes = CheckShieldFit( origin, testAngles, i )
 			if ( failes == 0 && leastFails > 0 )
 			{
 				#if DEBUG_SHIELD_ANGLES
-					DebugDrawLine( origin, origin + AnglesToForward( testAngles ) * 128, <0, 128, 0>, true, DEBUG_SHIELD_DRAW_TIME )
+					DebugDrawLine( origin, origin + AnglesToForward( testAngles ) * 128, 0, 128, 0, true, DEBUG_SHIELD_DRAW_TIME )
 					bestAngles = testAngles
 					leastFails = 0
 				#else
@@ -583,7 +583,7 @@ vector ornull function GetBestShieldDeployAngles( vector origin, vector angles, 
 	}
 
 	#if DEBUG_SHIELD_ANGLES
-		DebugDrawLine( origin, origin + AnglesToForward( bestAngles ) * 128, <255, 128, 64>, true, 3 )
+		DebugDrawLine( origin, origin + AnglesToForward( bestAngles ) * 128, 255, 128, 64, true, 3 )
 	#endif
 	if ( leastFails > MAX_FAILS )
 		return null
@@ -618,14 +618,14 @@ int function CheckShieldFit( vector origin, vector angles, int step )
 			if ( longest < streak )
 				longest = streak
 			#if DEBUG_SHIELD_ANGLES
-				DebugDrawLine( traceStart, traceEnd, COLOR_GREEN, true, DEBUG_SHIELD_DRAW_TIME )
+				DebugDrawLine( traceStart, traceEnd, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, DEBUG_SHIELD_DRAW_TIME )
 			#endif
 		}
 		else
 		{
 			streak = 0
 			#if DEBUG_SHIELD_ANGLES
-				DebugDrawLine( traceStart, traceEnd, COLOR_RED, true, DEBUG_SHIELD_DRAW_TIME )
+				DebugDrawLine( traceStart, traceEnd, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, DEBUG_SHIELD_DRAW_TIME )
 			#endif
 		}
 	}

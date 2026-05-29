@@ -24,8 +24,8 @@ void function DEV_Tropics_RegisterNPCCamp ( vector origin, int npcType, float ra
 void function DEV_Tropics_NPCCampAnalysis ( float timeout = 60 )
 {
 	// Set the player's origin and angles so they're looking straight down on the map
-	GP().SetOrigin( < 20645.253906, 1344.686279, 54229.070313 > )
-	GP().SetAngles( < 76.240051, 142.319931, 0.000000 > )
+	GetPlayerArray().SetOrigin( < 20645.253906, 1344.686279, 54229.070313 > )
+	GetPlayerArray().SetAngles( < 76.240051, 142.319931, 0.000000 > )
 
 	table < DEV_Tropic_NPCCamp, array < DEV_Tropic_NPCCamp > > badSpots
 
@@ -76,7 +76,7 @@ void function DEV_Tropics_NPCCampAnalysis ( float timeout = 60 )
 		namedCamps.append( key )
 
 		Color color = DEV_Tropic_GetNPCCampColor( key )
-		DebugDrawSphere( key.origin, 200, color.r, color.g, color.b, true, timeout )
+		DebugDrawSphere( key.origin, 200, int(color.r), int(color.g), int(color.b), true, timeout )
 		DebugDrawCircle( key.origin, <0,0,0>, key.range, 255, 255, 255, true, timeout )
 		DebugDrawCircle( key.origin, <0,0,0>, key.range + key.cullingRadius, 125, 200, 90, true, timeout )
 
@@ -90,17 +90,17 @@ void function DEV_Tropics_NPCCampAnalysis ( float timeout = 60 )
 			}
 
 			color = DEV_Tropic_GetNPCCampColor ( camp )
-			DebugDrawSphere( camp.origin, 200, color.r, color.g, color.b, true, timeout )
+			DebugDrawSphere( camp.origin, 200, int(color.r), int(color.g), int(color.b), true, timeout )
 
-			DebugDrawLine( key.origin, camp.origin, arrowColor.x, arrowColor.y, arrowColor.z, true, timeout )
+			DebugDrawLine( key.origin, camp.origin, int(arrowColor.x), int(arrowColor.y), int(arrowColor.z), true, timeout )
 
 			vector direction = Normalize(camp.origin - key.origin)
 
 			vector arrowOrigin1 = RotateAroundOrigin2D ( camp.origin - direction * 2000, key.origin, DegToRad( 7 ) )
 			vector arrowOrigin2 = RotateAroundOrigin2D ( camp.origin - direction * 2000, key.origin, DegToRad( -7 ) )
 
-			DebugDrawLine( arrowOrigin1, camp.origin, arrowColor.x, arrowColor.y, arrowColor.z, true, timeout )
-			DebugDrawLine( arrowOrigin2, camp.origin, arrowColor.x, arrowColor.y, arrowColor.z, true, timeout )
+			DebugDrawLine( arrowOrigin1, camp.origin, int(arrowColor.x), int(arrowColor.y), int(arrowColor.z), true, timeout )
+			DebugDrawLine( arrowOrigin2, camp.origin, int(arrowColor.x), int(arrowColor.y), int(arrowColor.z), true, timeout )
 		}
 
 		printf ( GetEnumString("eNPC", key.npcType) + " Spawner at "+ key.origin + " overlaps with " + val.len() + " other camps." )

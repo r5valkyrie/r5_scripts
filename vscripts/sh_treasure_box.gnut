@@ -32,7 +32,7 @@ void function TreasureBox_OnLootbinOpening( entity player, entity lootbin, array
 	const float HIGH_CHANCE_DEFAULT = 0.20
 	const float LOW_CHANCE_DEFAULT = 0.025
 	float chance = (HasHighChanceOfTreasureBoxDrop( player ) ? GetCurrentPlaylistVarFloat( "treasurebox_drop_chance_high", HIGH_CHANCE_DEFAULT ) : GetCurrentPlaylistVarFloat( "treasurebox_drop_chance_low", LOW_CHANCE_DEFAULT ))
-	#if DEV
+	#if DEVELOPER
 		if ( GetBugReproNum() == 555 )
 			chance = 1.0
 	#endif // DEV

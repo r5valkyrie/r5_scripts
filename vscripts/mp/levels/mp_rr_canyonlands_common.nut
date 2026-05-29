@@ -779,7 +779,7 @@ void function FireHoverTankZiplines( HoverTank hoverTank, entity endNode )
 			array<entity> ziplineEnts = CreateHovertankZipline( attachOrigin, ziplineEndOrigin )
 			thread HovertankZiplineLaunchSequence( ziplineEnts, attachOrigin, ziplineEndOrigin )
 			#if DEVELOPER
-			DebugDrawSphere( ziplineEndOrigin, 16, 255, 0, 255, true, 20 )
+			//DebugDrawSphere( ziplineEndOrigin, 16, 255, 0, 255, true, 20 )
 			#endif
 			endNodeZiplineTargetOrigins.remove( j )
 		}
@@ -919,9 +919,9 @@ array<entity> function GetHoverTankStartNodes( array<entity> endNodes )
 		DebugDrawLine( closestNode.GetOrigin(), endNodesMiddlePoint + DEV_APPROX_Z_OFFSET, 255, 0, 0, true, 100 )
 		DebugDrawLine( secondClosestNode.GetOrigin(), endNodesMiddlePoint + DEV_APPROX_Z_OFFSET, 255, 255, 0, true, 100 )
 
-		DebugDrawSphere( endNodesMiddlePoint + DEV_APPROX_Z_OFFSET, 32, 255, 0, 255, true, 100 )
-		DebugDrawSphere( endNodeOrigins2D[ 0 ] + DEV_APPROX_Z_OFFSET, 32, 255, 0, 255, true, 100 )
-		DebugDrawSphere( endNodeOrigins2D[ 1 ] + DEV_APPROX_Z_OFFSET, 32, 125, 125, 255, true, 100 )
+		//DebugDrawSphere( endNodesMiddlePoint + DEV_APPROX_Z_OFFSET, 32, 255, 0, 255, true, 100 )
+		//DebugDrawSphere( endNodeOrigins2D[ 0 ] + DEV_APPROX_Z_OFFSET, 32, 255, 0, 255, true, 100 )
+		//DebugDrawSphere( endNodeOrigins2D[ 1 ] + DEV_APPROX_Z_OFFSET, 32, 125, 125, 255, true, 100 )
 	}
 
 	return retArray

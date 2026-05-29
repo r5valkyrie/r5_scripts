@@ -322,7 +322,7 @@ struct FileStruct_LifetimeLevel
 
 	bool                 							traceThreadRunning
 	table<entity, bool > 							needTraceRotation				// <player, need trace rotation >
-#if DEV
+#if DEVELOPER
 	int currentParseMask
 	int currentParseParams
 #endif
@@ -339,7 +339,7 @@ const int CONDITION_PARAMS_WEAPON = 1
 const int CONDITION_PARAMS_VICTIM = 2
 void function RefreshParseCheck( int mask )
 {
-#if DEV
+#if DEVELOPER
 	fileLevel.currentParseMask = mask
 	fileLevel.currentParseParams = 0
 #endif
@@ -347,14 +347,14 @@ void function RefreshParseCheck( int mask )
 
 void function AddParamForChecking( int param )
 {
-#if DEV
+#if DEVELOPER
 	fileLevel.currentParseParams = fileLevel.currentParseParams | param
 #endif
 }
 
 void function CheckParamsInHook()
 {
-#if DEV
+#if DEVELOPER
 	if ( fileLevel.currentParseMask < 0 )
 		return
 	Assert ( ( fileLevel.currentParseMask & fileLevel.currentParseParams ) == fileLevel.currentParseParams, format( "Incorrect condition used: Hook: %d; Param: %d", fileLevel.currentParseMask, fileLevel.currentParseParams ) )

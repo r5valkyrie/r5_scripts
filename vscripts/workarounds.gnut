@@ -13,7 +13,6 @@ global const int PLAYER_MELEE_STATE_SLAM_ATTACK = 2
 global const int TT_GRAVITY_LIFT = 0
 global const int TT_BLACKHOLE = 0
 global const int PLAYER_MELEE_STATE_EXECUTION = 3
-global const int PLAYER_ARMORED_LEAP_PHASE_NONE = 0
 global const int CODE_REDEMPTION_RESULT_SUCCESS = 0
 global const int playedApexFalse = 0
 
@@ -98,7 +97,6 @@ global function SurvivalCommentary_KilledPlayerAnnounce
 global function SetChampion
 global function Flowstate_CheckForLv4MagazinesAndRefillAmmo
 global function FS_GetWeaponsThatUseThisAmmo
-global function GrantPathfinderCooldownReduction
 global function HoverVehicle_WakeVehiclesIntersectingEntity
 global function EmitSoundOnEntityExceptToPlayers
 global function ShuffleVectorArray
@@ -166,7 +164,6 @@ global function ServerCallback_SkydiveTrailEnd
 global function ServerCallback_Survival_PathfinderSurveyNotifications
 global function ServerCallback_Survival_CreateBeaconWorldIcon
 global function ServerCallback_PromptWelcome
-global function Zipline_IsCurvedZipline
 global function GetZiplinePingEntity
 global function GetZiplinePingPosition
 global function HasZiplinePingInRange
@@ -462,12 +459,6 @@ void function ServerCallback_Survival_CreateBeaconWorldIcon( entity beacon, enti
 void function ServerCallback_PromptWelcome()
 {
 	Warning( "STUB: ServerCallback_PromptWelcome\n" )
-}
-
-bool function Zipline_IsCurvedZipline( entity zipline )
-{
-	Warning("STUB: Zipline_IsCurvedZipline")
-	return false
 }
 
 entity function GetZiplinePingEntity( entity player, entity hitEnt, vector hitPos ) { return null }
@@ -1043,11 +1034,6 @@ array<entity> function FS_GetWeaponsThatUseThisAmmo( entity player, string ammoR
 	Warning( "STUB: FS_GetWeaponsThatUseThisAmmo" )
 	array<entity> result
 	return result
-}
-
-void function GrantPathfinderCooldownReduction( entity player )
-{
-	Warning( "STUB: GrantPathfinderCooldownReduction" )
 }
 
 void function HoverVehicle_WakeVehiclesIntersectingEntity( entity ent )

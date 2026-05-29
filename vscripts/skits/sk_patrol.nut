@@ -2,7 +2,7 @@
 
 global function LaunchSkit_Patrol
 
-#if DEV
+#if DEVELOPER
 global function DebugDrawPatrolPaths
 global function DebugToggleDrawLeader
 #endif
@@ -116,7 +116,7 @@ void function PatrolRuntime( SkitInstance si )
 			leader.AssaultSetFightRadius( 2500 )
 			PatrolFollowLeader( vars.patrolSquad.ents, leader )
 
-			#if DEV
+			#if DEVELOPER
 				thread DebugDrawLeader( leader )
 			#endif
 		}
@@ -342,7 +342,7 @@ void function LaunchSkit_Patrol( string resource = "patrol" )
 	}
 }
 
-#if DEV
+#if DEVELOPER
 bool s_shouldDrawLeader = false
 void function DebugToggleDrawLeader()
 {
@@ -387,12 +387,12 @@ void function DrawNodeConnections( PatrolRouteNode node, array<PatrolRouteNode> 
 	{
 		if ( !visitedNodes.contains( nextNode ) )
 		{
-			DebugDrawArrow( node.nodeOrigin + <0, 0, 16>, nextNode.nodeOrigin, 24, color, true, duration )
+			//DebugDrawArrow( node.nodeOrigin + <0, 0, 16>, nextNode.nodeOrigin, 24, color, true, duration )
 			DrawNodeConnections( nextNode, visitedNodes, color, duration )
 		}
 		else
 		{
-			DebugDrawArrow( node.nodeOrigin + <0, 0, 16>, nextNode.nodeOrigin, 24, <0, 0, 192>, true, duration )
+			//DebugDrawArrow( node.nodeOrigin + <0, 0, 16>, nextNode.nodeOrigin, 24, <0, 0, 192>, true, duration )
 		}
 
 		//DebugDrawText( node.nodeOrigin, string( node.visits ), false, duration )
@@ -403,7 +403,7 @@ void function DrawNodeConnections( PatrolRouteNode node, array<PatrolRouteNode> 
 		int inlinks = node.parentLinks.len()
 		if ( !visitedNodes.contains( prevNode ) )
 		{
-			DebugDrawArrow( prevNode.nodeOrigin + <0, 0, -8>, node.nodeOrigin + <0, 0, -8>, 24, <192, 128, 0>, true, duration )
+			//DebugDrawArrow( prevNode.nodeOrigin + <0, 0, -8>, node.nodeOrigin + <0, 0, -8>, 24, <192, 128, 0>, true, duration )
 		}
 
 		//DebugDrawText( node.nodeOrigin, string( node.visits ), false, duration )

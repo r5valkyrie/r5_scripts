@@ -364,9 +364,9 @@ OrderPosData function FindEchoOrderPos( entity player )
 	#if DEVELOPER
 	if ( VANTAGE_COMPANION_ORDER_DEBUG_DRAW )
 	{
-		//DebugDrawLine( startTraceInitial, endTraceInitial, <255, 255, 0>, false, 5.0 )
-		//DebugDrawLine( startTraceInitial, trInitial.endPos, <0, 255, 0>, false, 5.0 )
-		//DebugDrawSphere( trInitial.endPos, 3, <0, 255, 0>, false, 5.0 )
+		DebugDrawLine( startTraceInitial, endTraceInitial, 255, 255, 0, false, 5.0 )
+		DebugDrawLine( startTraceInitial, trInitial.endPos, 0, 255, 0, false, 5.0 )
+		DebugDrawSphere( trInitial.endPos, 3, 0, 255, 0, false, 5.0 )
 
 		string text = VM_NAME()
 		DebugDrawText( trInitial.endPos - <0,0,15> , text, true, 5.0 )
@@ -445,7 +445,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 				int b = normalIsFlat ? 255 : 50
 				string normalType = normalIsFlat ? "wall" : ( (upDot > 0) ? "ground" : "ceiling" )
 				DebugDrawText( trInitial.endPos, "normal (green): " + normalType, false, 5.0 )
-				DebugDrawArrow( trInitial.endPos, trInitial.endPos + (trInitial.surfaceNormal * 30), 5, 0, g, b, false, 5.0)
+				//DebugDrawArrow( trInitial.endPos, trInitial.endPos + (trInitial.surfaceNormal * 30), 5, 0, g, b, false, 5.0)
 			}
 		#endif //#if DEVELOPER
 
@@ -512,7 +512,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 							if ( VANTAGE_COMPANION_ORDER_DEBUG_DRAW )
 							{
 								DebugDrawText( trLedge.endPos,"CornerPos", false, 5.0 )
-								//DebugDrawSphere( trLedge.endPos, 8,COLOR_LIGHT_GREEN,false, 5.0 )
+								DebugDrawSphere( trLedge.endPos, 8, int(COLOR_LIGHT_GREEN.x), int(COLOR_LIGHT_GREEN.y), int(COLOR_LIGHT_GREEN.z), false, 5.0 )
 							}
 						#endif //#if DEVELOPER
 						orderPosData.orderPos = trLedge.endPos
@@ -653,9 +653,9 @@ OrderPosData function FindEchoOrderPos( entity player )
 	if ( isEchoPerched )
 	{
 		//if we don't have a path on the initial order, but we can do a simple one point pathfind
-		//DebugDrawLine( echoPosition, orderPosData.orderPos, <0, 255, 0>, false, 5  )
-		//DebugDrawLine( startTrace, endTrace, COLOR_PINK, false, 5  )
-		//DebugDrawSphere( trLoS.endPos, 2, <255, 0, 0>, false, 5 )
+		//DebugDrawLine( echoPosition, orderPosData.orderPos, 0, 255, 0, false, 5 )
+		//DebugDrawLine( startTrace, endTrace, int(COLOR_PINK.x), int(COLOR_PINK.y), int(COLOR_PINK.z), false, 5 )
+		//DebugDrawSphere( trLoS.endPos, 2, 255, 0, 0, false, 5 )
 
 		vector fromEchoToOrderPos = trLoS.endPos - echoPosition
 		float fromEchoToOrderPosLength = Length( fromEchoToOrderPos )
@@ -678,7 +678,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 
 		TraceResults trLoSBlockerHeight = TraceHull( losBlockerPointOnOriginalTrace, losBlockerPoint, VANTAGE_COMPANION_BOUND_MINS*1.5, VANTAGE_COMPANION_BOUND_MAXS*1.5, [ player ], ECHO_ORDER_TRACE_COL_MASK , ECHO_ORDER_TRACE_COL_GRP, UP_VECTOR, player )
 		//DebugDrawArrow( losBlockerPointOnOriginalTrace, losBlockerPoint, 5, <0, 0, 255>, false, 5  )
-		//DebugDrawSphere( trLoSBlockerHeight.endPos, 2, <0, 255, 0>, false, 5 )
+		//DebugDrawSphere( trLoSBlockerHeight.endPos, 2, 0, 255, 0, false, 5 )
 		vector pathNode = trLoSBlockerHeight.endPos + ( UP_VECTOR * VANTAGE_COMPANION_FINAL_HEIGHT_OFFSET )
 
 		currentCompanionData.orderRoute.append( pathNode )
@@ -696,7 +696,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 			if ( VANTAGE_COMPANION_ORDER_DEBUG_DRAW )
 			{
 				//Magenta are the actual points that we're trying to move to
-				//DebugDrawSphere( currentCompanionData.orderRoute[0], 10, COLOR_MAGENTA, false, 5 )
+				DebugDrawSphere( currentCompanionData.orderRoute[0], 10, int(COLOR_MAGENTA.x), int(COLOR_MAGENTA.y), int(COLOR_MAGENTA.z), false, 5 )
 				DebugDrawText( currentCompanionData.orderRoute[0], string(0), false, 5 )
 			}
 		#endif //#if DEVELOPER
@@ -732,7 +732,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 				if ( VANTAGE_COMPANION_ORDER_DEBUG_DRAW )
 				{
 					//Magenta are the actual points that we're trying to move to
-					//DebugDrawSphere( currentCompanionData.orderRoute[0], 10, COLOR_MAGENTA, false, 5 )
+					DebugDrawSphere( currentCompanionData.orderRoute[0], 10, int(COLOR_MAGENTA.x), int(COLOR_MAGENTA.y), int(COLOR_MAGENTA.z), false, 5 )
 					DebugDrawText( currentCompanionData.orderRoute[0], string(0), false, 5 )
 				}
 			#endif //#if DEVELOPER
@@ -782,7 +782,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 		if ( VANTAGE_COMPANION_ORDER_DEBUG_DRAW )
 		{
 			//White is our final destination
-			//DebugDrawSphere( orderPosData.orderPos, 10, <255, 255, 255>, false, 5 )
+			DebugDrawSphere( orderPosData.orderPos, 10, 255, 255, 255, false, 5 )
 			DebugDrawText( orderPosData.orderPos, "end:" + string( currentCompanionData.orderRoute.len() - 1 ), false, 5 )
 		}
 	#endif //#if DEVELOPER
@@ -885,12 +885,12 @@ vector function AdjustCompanionPosForHeight( vector proposedCompanionPos , entit
 			{
 
 				DebugDrawText( trHullDown.endPos, "Down Hit Something", false, drawTime )
-				DebugDrawArrow( proposedCompanionPos, trHullDown.endPos, 3, int(drawColor.x), int(drawColor.y), int(drawColor.z), false, drawTime )
+				//DebugDrawArrow( proposedCompanionPos, trHullDown.endPos, 3, int(drawColor.x), int(drawColor.y), int(drawColor.z), false, drawTime )
 				//DebugDrawMark( trHullDown.endPos, 3, <255, 0, 0>, false, drawTime )
 
 				drawColor = (trHullUp.fraction >= 1.0) ? COLOR_LIGHT_GREEN : COLOR_ORANGE
 
-				DebugDrawArrow( trHullDown.endPos, trHullUp.endPos, 3, int(drawColor.x), int(drawColor.y), int(drawColor.z), false, drawTime )
+				//DebugDrawArrow( trHullDown.endPos, trHullUp.endPos, 3, int(drawColor.x), int(drawColor.y), int(drawColor.z), false, drawTime )
 
 				DebugDrawText( adjustedPoint, "Adjusted pos", false, drawTime )
 				//DebugDrawMark( adjustedPoint, 5, COLOR_LIGHT_GREEN, false, drawTime )
@@ -1430,7 +1430,7 @@ void function DoMovementAndTurning( entity player, entity echoEnt, vector echoGo
 			if ( VANTAGE_COMPANION_DEBUG_DRAW || VANTAGE_COMPANION_ORDER_DEBUG_DRAW )
 			{
 				const float arrowLength = 30
-				//DebugDrawSphere( echoGoalPos, 2, <255, 0, 0>, true, UPDATE_RATE )
+				DebugDrawSphere( echoGoalPos, 2, 255, 0, 0, true, UPDATE_RATE )
 
 				//DebugDrawArrow( echoCurrentPos, echoCurrentPos + (companionFwd*arrowLength*2.0), 5, <0, 255, 0>, false, 2*UPDATE_RATE)
 
@@ -1439,7 +1439,7 @@ void function DoMovementAndTurning( entity player, entity echoEnt, vector echoGo
 				//DebugDrawArrow( echoCurrentPos, echoCurrentPos + (Normalize( toGoalPos )*arrowLength), 5, <255, 0, 0>, false, 2*UPDATE_RATE)
 				if ( echoActualSpeed > 10 )
 				{
-					//DebugDrawLine( currentCompanionData.prevPos, echoCurrentPos, COLOR_CYAN, false, 5.0 )
+					DebugDrawLine( currentCompanionData.prevPos, echoCurrentPos, int(COLOR_CYAN.x), int(COLOR_CYAN.y), int(COLOR_CYAN.z), false, 5.0 )
 					//DebugDrawText( echoCurrentPos, ("s: " + int(echoActualSpeed)), false, 5.0 )
 				}
 
@@ -2245,11 +2245,11 @@ void function VantageCompanion_CreateHUDMarker( entity echoEnt )
 				{
 					if ( canLaunchResult == eCanLaunchResult.SUCCESS )
 					{
-						DebugDrawSphere( echoEnt.GetOrigin(), 10, <0, 255,50>, true, 0.1)
+						DebugDrawSphere( echoEnt.GetOrigin(), 10, 0, 255, 50, true, 0.1 )
 					}
 					else
 					{
-						DebugDrawSphere( echoEnt.GetOrigin(), 7, <255, 50,0>, true, 0.1)
+						DebugDrawSphere( echoEnt.GetOrigin(), 7, 255, 50, 0, true, 0.1 )
 						string cantLaunchText = "FAIL"
 						if ( canLaunchResult == eCanLaunchResult.NO_OFF_SCREEN )
 							cantLaunchText = "OffScreen"

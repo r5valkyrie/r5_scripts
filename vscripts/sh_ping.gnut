@@ -1796,7 +1796,7 @@ entity function GetZiprailUseEntity( entity player )
 	if ( !IsValid( useEnt ) )
 		return null
 
-	if ( false ) // IsZipline() and Zipline_IsCurvedZipline() entity methods not in S3
+	if ( useEnt.IsZipline() && useEnt.Zipline_IsCurvedZipline() )
 	{
 		/*
 		vector pos = player.GetUsePromptPosition()
@@ -7289,7 +7289,7 @@ void function HandlePingNewLoot( entity player, entity lootEnt, entity deathBox,
 	{
 		printt( format( "----- %s: player '%s' is not facing %s directly enough at %s degrees.", FUNC_NAME(), player.GetPlayerName(), string( lootEnt ), string( angleFacingToTarget ) ) )
 		#if DEVELOPER
-			DebugDrawArrow( pingerOrigin, checkPos, 32, 255, 0, 0, true, 30 )
+			//DebugDrawArrow( pingerOrigin, checkPos, 32, 255, 0, 0, true, 30 )
 		#endif
 		return
 	}
@@ -7313,7 +7313,7 @@ void function HandlePingNewLoot( entity player, entity lootEnt, entity deathBox,
 	{
 		printt( format( "----- %s: player '%s' - given entity at %s is too far away from the given ping origin of %s: '%s'", FUNC_NAME(), player.GetPlayerName(), string( pingerOrigin ), string( checkPos ), string( lootEnt ) ) )
 		#if DEVELOPER
-			DebugDrawArrow( pingerOrigin, checkPos, 32, 255, 0, 0, true, 30 )
+			//DebugDrawArrow( pingerOrigin, checkPos, 32, 255, 0, 0, true, 30 )
 		#endif
 		return
 	}

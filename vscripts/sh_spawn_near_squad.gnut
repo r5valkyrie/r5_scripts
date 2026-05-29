@@ -43,7 +43,7 @@ global const vector SPAWN_NEAR_SQUAD_INVALID_SPAWN_POINT_ANGLE = <0, 0, 0>
 	global function RespawnNearSquad_GetMinDistFromEnemyForValidSpawn
 	global function RespawnNearSquad_GetMaxDistFromEnemyForValidSpawn
 
-	#if DEV
+	#if DEVELOPER
 		global function DEV_DrawSpawnNearSquadLocations
 	#endif //DEV
 
@@ -289,7 +289,7 @@ void function InitMapSpawnPoints()
 	if ( GetCurrentPlaylistVarBool( "squad_pet_use_all_spawnpoints", true ) )
 		file.spawnPointsPets = spawnPointsVetted
 
-	#if DEV
+	#if DEVELOPER
 		//thread DEV_DrawSpawnNearSquadLocations()
 	#endif
 }
@@ -418,7 +418,7 @@ void function OnSquadEliminated( int team )
 }
 #endif // SERVER
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function DEV_DrawSpawnNearSquadLocations()
 {
 	AssertIsNewThread()
@@ -428,7 +428,7 @@ void function DEV_DrawSpawnNearSquadLocations()
 		foreach( point in file.spawnPoints )
 		{
 			DrawAngledBox( point.origin, point.angles, <-16, -16, 0>, <16, 16, 72>, COLOR_GREEN, true, 1.1 )
-			 DebugDrawArrow( point.origin, point.origin + AnglesToForward( point.angles ) * 16, 8, COLOR_GREEN, true, 1.1 )
+			 //DebugDrawArrow( point.origin, point.origin + AnglesToForward( point.angles ) * 16, 8, COLOR_GREEN, true, 1.1 )
 		}
 		wait 1
 	}

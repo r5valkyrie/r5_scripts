@@ -254,7 +254,7 @@ entity function TreasureBoxCreate( vector origin, vector angles )
 void function AddCallback_OnTreasureExtractionApproached( TreasureExtractionData treasureExtractionData, void functionref( TreasureExtractionData ) callbackFunc )
 {
 
-	#if DEV
+	#if DEVELOPER
 		foreach ( func in treasureExtractionData.callbacksOnExtractionApproached )
 		{
 			Assert( func != callbackFunc, "Already added " + string( callbackFunc ) + " to treasureExtractionData" )
@@ -270,7 +270,7 @@ void function AddCallback_OnTreasureExtractionApproached( TreasureExtractionData
 void function AddCallback_OnTreasureExtractionStarted( TreasureExtractionData treasureExtractionData, void functionref( TreasureExtractionData ) callbackFunc )
 {
 
-	#if DEV
+	#if DEVELOPER
 		foreach ( func in treasureExtractionData.callbacksOnExtractionStarted )
 		{
 			Assert( func != callbackFunc, "Already added " + string( callbackFunc ) + " to treasureExtractionData" )
@@ -286,7 +286,7 @@ void function AddCallback_OnTreasureExtractionStarted( TreasureExtractionData tr
 void function AddCallback_OnTreasureExtractionFinished( TreasureExtractionData treasureExtractionData, void functionref( TreasureExtractionData ) callbackFunc )
 {
 
-	#if DEV
+	#if DEVELOPER
 		foreach ( func in treasureExtractionData.callbacksOnExtractionFinished )
 		{
 			Assert( func != callbackFunc, "Already added " + string( callbackFunc ) + " to treasureExtractionData" )
@@ -302,7 +302,7 @@ void function AddCallback_OnTreasureExtractionFinished( TreasureExtractionData t
 void function AddCallback_OnTreasureRetrieved( TreasureExtractionData treasureExtractionData, void functionref( entity, TreasureExtractionData ) callbackFunc )
 {
 
-	#if DEV
+	#if DEVELOPER
 		foreach ( func in treasureExtractionData.callbacksOnTreasureRetrieved )
 		{
 			Assert( func != callbackFunc, "Already added " + string( callbackFunc ) + " to treasureExtractionData" )

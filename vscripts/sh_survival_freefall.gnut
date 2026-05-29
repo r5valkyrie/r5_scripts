@@ -1412,14 +1412,14 @@ void function SkyDiveMovement( entity player, SkydivePlayerData skydiveData, vec
 
 				//DebugDrawAngles( rotator.GetOrigin(), rotator.GetAngles(), 0.1 )
 
-				//DebugDrawLine( lastPos, mover.GetOrigin(), COLOR_MAGENTA, true, 20.0 )
-				//DebugDrawLine( player.GetOrigin(), player.GetOrigin() + Normalize( horizonVec ) * 100, <255, 255, 255>, true, 0.1 )
-				DebugDrawLine( player.GetOrigin(), player.GetOrigin() + Normalize( rightVec ) * 100, <200, 200, 200>, true, 0.1 )
-				//DebugDrawLine( player.GetOrigin(), player.GetOrigin() + Normalize( newVelocity ) * 100, <255, 255, 0>, true, 0.1 )
-				//DebugDrawLine( player.GetOrigin(), player.GetOrigin() + minFallVector * 125, <0, 255, 0>, true, 0.1 )
+				//DebugDrawLine( lastPos, mover.GetOrigin(), int(COLOR_MAGENTA.x), int(COLOR_MAGENTA.y), int(COLOR_MAGENTA.z), true, 20.0 )
+				DebugDrawLine( player.GetOrigin(), player.GetOrigin() + Normalize( horizonVec ) * 100, 255, 255, 255, true, 0.1 )
+				DebugDrawLine( player.GetOrigin(), player.GetOrigin() + Normalize( rightVec ) * 100, 200, 200, 200, true, 0.1 )
+				DebugDrawLine( player.GetOrigin(), player.GetOrigin() + Normalize( newVelocity ) * 100, 255, 255, 0, true, 0.1 )
+				DebugDrawLine( player.GetOrigin(), player.GetOrigin() + minFallVector * 125, 0, 255, 0, true, 0.1 )
 
 				//DebugDrawRotatedBox( traceStart, mins, maxs, VectorToAngles( traceEnd - traceStart ), <255, 255, 0>, true, 0.1 )
-				//DebugDrawLine( player.GetOrigin(), player.GetOrigin() + newVelocity, <255, 255, 255>, true, 0.1 )
+				DebugDrawLine( player.GetOrigin(), player.GetOrigin() + newVelocity, 255, 255, 255, true, 0.1 )
 			}
 		#endif
 
@@ -1513,7 +1513,7 @@ void function FillSkyWithClouds()
 				float chance = GraphCapped( zIt, 0, GRID_COUNT_Z - 1, COVERAGE_MAX, COVERAGE_MIN )
 				if ( RandomInt( 100 ) >= chance )
 					continue
-				//DebugDrawSphere( cloudPos, 512, <255, 0, 0>, true, 99.0 )
+				//DebugDrawSphere( cloudPos, 512, 255, 0, 0, true, 99.0 )
 				entity model = CreatePropDynamic( CLOUD_MODEL, cloudPos, <0,RandomInt(359),0> )
 				file.cloudModels.append( model )
 			}
@@ -1640,7 +1640,7 @@ void function PlayerFallAssistanceDetection( entity player )
 		TraceResults result = TraceLine( player.GetOrigin(), traceEnd, [ player ], TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
 		float distFromGround = Distance( player.GetOrigin(), result.endPos )
 
-		//DebugDrawLine( player.GetOrigin(), traceEnd, <255, 255, 0>, true, 0.1 )
+		//DebugDrawLine( player.GetOrigin(), traceEnd, 255, 255, 0, true, 0.1 )
 		//printt( "Fall Assistance", speed, distFromGround )
 
 		if ( speed >= FREEFALL_JETPACK_ACTIVATION_VELOCITY && distFromGround >= FREEFALL_JETPACK_ACTIVATION_MIN_HEIGHT )

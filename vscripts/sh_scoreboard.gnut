@@ -188,7 +188,7 @@ bool function ShouldShowCharSelectForScoreboard()
 	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) && FiringRange_IsCharacterSwitchingEnabled() )
 		return true
 
-	#if DEV
+	#if DEVELOPER
 	bool cheatsEnabled = GetConVarBool( "sv_cheats" )
 	if ( !cheatsEnabled )
 		return false

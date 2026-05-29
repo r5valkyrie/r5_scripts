@@ -13,7 +13,7 @@ global function EvacShip_RegisterNetworking
 	global function EvacShipUseAltAttachments
 	global function GetEvacShipDataForShip
 	global function IsPlayerEvacShipPassenger
-	#if DEV
+	#if DEVELOPER
 	global function Dev_DebugEvacPos
 	global function Dev_TestEvacAtCursorPosition
 	#endif
@@ -111,7 +111,7 @@ void function EvacShip_RegisterNetworking()
 #if SERVER
 entity function CreateEvacShipSequence( vector origin, vector angles, float evacRadius = DEFAULT_EVAC_RADIUS, int friendlyTeamOrAlliance = -1, float timeToArrive = DEFAULT_TIME_UNTIL_SHIP_ARRIVES, float timeToDepart = DEFAULT_TIME_UNTIL_SHIP_DEPARTS, bool displayEvacWaypoint = true, bool displayEvacWaypointToAll = true, bool showEvacRing = false, bool shouldDepartIfFull = false )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( GetPlayerArray_AliveConnected().len() == 0 )
 			return null
 	#endif
@@ -864,11 +864,11 @@ void function EvacShip_ServerCallback_DisplayShipFullHint()
 }
 #endif //CLIENT
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 // Trigger an Evac sequence at the cursor position, used to test out different positions to make sure they work with the ship animation
 void function Dev_TestEvacAtCursorPosition( bool showEvacRing = false, bool showIconForEvacShip = false )
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	if ( IsValid( player ) )
 	{
 		vector origin = EyeTraceVec( player )
@@ -882,9 +882,9 @@ void function Dev_TestEvacAtCursorPosition( bool showEvacRing = false, bool show
 		printt("Failed to run Debug Command to spawn evac at cursor position, player InValid")
 	}
 }
-#endif //SERVER && DEV
+#endif //SERVER && DEVELOPER
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function Dev_DebugEvacPos( vector origin, vector angles, bool showEvacRing = false, bool showIconForEvacShip = true )
 {
 	AssertIsNewThread()
@@ -936,7 +936,7 @@ void function Dev_DebugEvacPos( vector origin, vector angles, bool showEvacRing 
 		waitthread PlayAnim( evacShip, animLeave2, evacShip.GetOrigin(), AnglesCompose( evacShip.GetAngles(), <0, -90, 0> ), 2.0 )
 	}
 }
-#endif //SERVER && DEV
+#endif //SERVER && DEVELOPER
 
 
 #if SERVER
@@ -954,7 +954,7 @@ void function AddEntityCallback_OnEvacShipArrived( entity evacShip, void functio
 {
 	EvacShipData evacShipData = GetEvacShipDataForShip( evacShip )
 
-	#if DEV
+	#if DEVELOPER
 		foreach ( func in  evacShipData.callbacksOnArrived )
 		{
 			Assert( func != callbackFunc, "Already added " + string( callbackFunc ) + " to evac ship" )
@@ -972,7 +972,7 @@ void function AddEntityCallback_OnEvacShipBeginningApproach( entity evacShip, vo
 {
 	EvacShipData evacShipData = GetEvacShipDataForShip( evacShip )
 
-	#if DEV
+	#if DEVELOPER
 		foreach ( func in  evacShipData.callbacksOnBeginningApproach )
 		{
 			Assert( func != callbackFunc, "Already added " + string( callbackFunc ) + " to evac ship" )
@@ -990,7 +990,7 @@ void function AddEntityCallback_OnEvacShipDeparted( entity evacShip, void functi
 {
 	EvacShipData evacShipData = GetEvacShipDataForShip( evacShip )
 
-	#if DEV
+	#if DEVELOPER
 		foreach ( func in  evacShipData.callbacksOnDeparted )
 		{
 			Assert( func != callbackFunc, "Already added " + string( callbackFunc ) + " to evac ship" )
@@ -1008,7 +1008,7 @@ void function AddEntityCallback_OnEvacShipDepartureCompleted( entity evacShip, v
 {
 	EvacShipData evacShipData = GetEvacShipDataForShip( evacShip )
 
-	#if DEV
+	#if DEVELOPER
 		foreach ( func in  evacShipData.callbacksOnDepartureCompleted )
 		{
 			Assert( func != callbackFunc, "Already added " + string( callbackFunc ) + " to evac ship" )
@@ -1026,7 +1026,7 @@ void function AddEntityCallback_OnEvacShipPlayerBoarded( entity evacShip, void f
 {
 	EvacShipData evacShipData = GetEvacShipDataForShip( evacShip )
 
-	#if DEV
+	#if DEVELOPER
 		foreach ( func in  evacShipData.callbacksOnPlayerBoarded )
 		{
 			Assert( func != callbackFunc, "Already added " + string( callbackFunc ) + " to evac ship" )

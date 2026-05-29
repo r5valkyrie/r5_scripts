@@ -85,7 +85,7 @@ const vector MOBILE_SHIELD_DRONE_VEHICLE_LEAVE_OFFSET = <0,0,20>
 const vector DRONE_MINS = <-9, -9, -10>
 const vector DRONE_MAXS = <9, 9, 10>
 
-#if DEV
+#if DEVELOPER
 const bool DEBUG_CODE_SCRIPT_MOVER_TRAVERSAL = false
 const bool DEBUG_WALL_CHECK = false
 const bool DEBUG_THROW_CHECK = false
@@ -284,10 +284,10 @@ void function TrackProjetilePath( entity player, entity projectile )
 	if ( IsValid( player ) )
 	{
 		pathPositions.append( player.EyePosition() )
-		#if DEV
+		#if DEVELOPER
 		if ( DEBUG_WALL_CHECK )
 		{
-			DebugDrawSphere( player.EyePosition(), 8.0, COLOR_BLUE, true, 3.0 )
+			DebugDrawSphere( player.EyePosition(), 8.0, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 3.0 )
 		}
 		#endif
 	}
@@ -296,10 +296,10 @@ void function TrackProjetilePath( entity player, entity projectile )
 
 	while ( true )
 	{
-		#if DEV
+		#if DEVELOPER
 		if ( DEBUG_WALL_CHECK )
 		{
-			DebugDrawSphere( projectile.GetOrigin(), 8.0, COLOR_BLUE, true, 3.0 )
+			DebugDrawSphere( projectile.GetOrigin(), 8.0, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 3.0 )
 		}
 		#endif
 		
@@ -333,20 +333,22 @@ entity function ThrowShield( entity weapon, WeaponPrimaryAttackParams attackPara
 	//attackPos can end up on the other side of geo if thrown right up against a wall (bad value from GetShieldThrowStartPos ? ).
 	TraceResults tr = TraceHull( player.EyePosition(), attackPos, DRONE_MINS, DRONE_MAXS, [player], TRACE_MASK_PLAYERSOLID_BRUSHONLY, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
 
-	#if DEV
+	#if DEVELOPER
 	if ( DEBUG_THROW_CHECK )
 	{
-		DebugDrawMark( attackPos, 5, COLOR_RED, true, 5.0 )
-		DebugDrawArrow( player.EyePosition(), attackPos, 8, COLOR_RED, true, 5.0 )
+		//DebugDrawMark( attackPos, 5, COLOR_RED, true, 5.0 )
+		//DebugDrawArrow( player.EyePosition(), attackPos, 8, COLOR_RED, true, 5.0 )
 		printt("ThrowShield: looking fraction: " + tr.fraction )
 	}
 	#endif //DEV
 
 	if ( tr.fraction < 1.0 )
 	{
-		#if DEV
+		#if DEVELOPER
 		if ( DEBUG_THROW_CHECK )
-			DebugDrawMark( attackPos, 5, COLOR_GREEN, true, 5.0 )
+		{
+			//DebugDrawMark( attackPos, 5, COLOR_GREEN, true, 5.0 )
+		}
 		#endif //DEV
 
 		attackPos = tr.endPos
@@ -530,9 +532,11 @@ void function DeployShieldOnGround_Thread( entity projectile )
 	{
 		projectile.SetAngles( file.initialGoalAngles[projectile] )
 
-		#if DEV
+		#if DEVELOPER
 		if ( DEBUG_CODE_SCRIPT_MOVER_TRAVERSAL )
-			 DebugDrawArrow( projectile.GetOrigin(), projectile.GetOrigin() + AnglesToForward( projectile.GetAngles() ) * 16, 8, COLOR_GREEN, true, 5.0 )
+		{
+			 //DebugDrawArrow( projectile.GetOrigin(), projectile.GetOrigin() + AnglesToForward( projectile.GetAngles() ) * 16, 8, COLOR_GREEN, true, 5.0 )
+		}
 		#endif //DEV
 	}
 
@@ -589,24 +593,30 @@ void function DeployMobileShield( entity projectile )
 		bool foundBetterOrigin = false
 		TraceResults wallCheck = TraceHull( origin - ( projectile.GetForwardVector() * 12.0 ), origin + ( projectile.GetForwardVector() * 12.0 ), DRONE_MINS, DRONE_MAXS, projectile, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT ) //DRONE_MINS, DRONE_MAXS
 
-		#if DEV
+		#if DEVELOPER
 			if ( DEBUG_WALL_CHECK )
 			{
 				if ( wallCheck.startSolid )
-					DebugDrawArrow( origin - (projectile.GetForwardVector() * 24.0), origin + (projectile.GetForwardVector() * 24.0), 15,COLOR_YELLOW, true, 10.0 )
+				{
+					//DebugDrawArrow( origin - (projectile.GetForwardVector() * 24.0), origin + (projectile.GetForwardVector() * 24.0), 15,COLOR_YELLOW, true, 10.0 )
+				}
 				else if ( wallCheck.fraction < 0.99 )
-					DebugDrawArrow( origin - (projectile.GetForwardVector() * 24.0), origin + (projectile.GetForwardVector() * 24.0), 15,COLOR_RED, true, 10.0 )
+				{
+					//DebugDrawArrow( origin - (projectile.GetForwardVector() * 24.0), origin + (projectile.GetForwardVector() * 24.0), 15,COLOR_RED, true, 10.0 )
+				}
 				else
-					DebugDrawArrow( origin - (projectile.GetForwardVector() * 24.0), origin + (projectile.GetForwardVector() * 24.0), 15,COLOR_GREEN, true, 10.0 )
+				{
+					//DebugDrawArrow( origin - (projectile.GetForwardVector() * 24.0), origin + (projectile.GetForwardVector() * 24.0), 15,COLOR_GREEN, true, 10.0 )
+				}
 			}
 		#endif
 
 		if ( wallCheck.fraction < 0.99 && !wallCheck.startSolid )
 		{
-			#if DEV
+			#if DEVELOPER
 			if ( DEBUG_WALL_CHECK )
 			{
-				DebugDrawMark( wallCheck.endPos, 5, COLOR_BLUE, true, 10.0 )
+				//DebugDrawMark( wallCheck.endPos, 5, COLOR_BLUE, true, 10.0 )
 				printt("EnableFindBetterShieldStartingPos - forward check found better starting pos.")
 			}
 			#endif
@@ -626,15 +636,21 @@ void function DeployMobileShield( entity projectile )
 
 				wallCheck = TraceHull( traceStart, traceEnd, DRONE_MINS, DRONE_MAXS, projectile, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT ) //DRONE_MINS, DRONE_MAXS
 
-				#if DEV
+				#if DEVELOPER
 					if ( DEBUG_WALL_CHECK )
 					{
 						if ( wallCheck.startSolid )
-							DebugDrawArrow( traceStart, traceEnd, 15,COLOR_YELLOW, true, 10.0 )
+						{
+							//DebugDrawArrow( traceStart, traceEnd, 15,COLOR_YELLOW, true, 10.0 )
+						}
 						else if ( wallCheck.fraction < 0.99 )
-							DebugDrawArrow( traceStart, traceEnd, 15,COLOR_RED, true, 10.0 )
+						{
+							//DebugDrawArrow( traceStart, traceEnd, 15,COLOR_RED, true, 10.0 )
+						}
 						else
-							DebugDrawArrow( traceStart, traceEnd, 15,COLOR_GREEN, true, 10.0 )
+						{
+							//DebugDrawArrow( traceStart, traceEnd, 15,COLOR_GREEN, true, 10.0 )
+						}
 					}
 				#endif
 
@@ -649,7 +665,7 @@ void function DeployMobileShield( entity projectile )
 				//trace has some endPos, can use that to place the shield.
 				if ( wallCheck.fraction < 0.99 )
 				{
-					#if DEV
+					#if DEVELOPER
 						if ( DEBUG_WALL_CHECK )
 						{
 							DrawStar( wallCheck.endPos, 8, 10.0, true )
@@ -1109,7 +1125,7 @@ void function MobileShield_Hover_Thread( entity mobileShield, vector velocity )
 				{
 					if ( !isYawOverrideSet )
 					{
-						#if DEV
+						#if DEVELOPER
 							if ( DEBUG_CODE_SCRIPT_MOVER_TRAVERSAL )
 								printt(FUNC_NAME() + " SETTING STRAFING YAW")
 						#endif //DEV
@@ -1122,7 +1138,7 @@ void function MobileShield_Hover_Thread( entity mobileShield, vector velocity )
 				{
 					if ( isYawOverrideSet )
 					{
-						#if DEV
+						#if DEVELOPER
 							if ( DEBUG_CODE_SCRIPT_MOVER_TRAVERSAL )
 								printt(FUNC_NAME() + " SETTING NORMAL YAW")
 						#endif //DEV
@@ -1135,10 +1151,10 @@ void function MobileShield_Hover_Thread( entity mobileShield, vector velocity )
 		}
 
 
-		#if DEV
+		#if DEVELOPER
 		if ( DEBUG_CODE_SCRIPT_MOVER_TRAVERSAL )
 		{
-			DebugDrawLine( mobileShield.GetOrigin(), mobileShield.GetMoveToPositionWorld(), COLOR_YELLOW, true, 0.1 )
+			DebugDrawLine( mobileShield.GetOrigin(), mobileShield.GetMoveToPositionWorld(), int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 0.1 )
 			DrawStar( mobileShield.GetMoveToPositionWorld(), 2, 0.5, true )
 		}
 		#endif //DEV

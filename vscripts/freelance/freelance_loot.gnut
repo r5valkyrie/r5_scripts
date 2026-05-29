@@ -151,13 +151,13 @@ void function PVELootGarbageCollectionThread()
 {
 	for ( ;; )
 	{
-#if DEV
+#if DEVELOPER
 		float preFrameTime = Time()
 #endif
 
 		PVELootGarbageCollection()
 
-#if DEV
+#if DEVELOPER
 		float postFrameTime = Time()
 		Assert( preFrameTime == postFrameTime, format( "PVELootGarbageCollection() stalled for %.2f seconds. Should have no waits.", (postFrameTime - preFrameTime) ) )
 #endif

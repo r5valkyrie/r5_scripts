@@ -404,7 +404,7 @@ vector function GetFlightAngles( vector perchPosition, entity player )
 		frac = result.fraction
 
 		#if DEVELOPER
-			if ( CLUSTER_DEBUG_CLUSTER && player == gp()[0]  )
+			if ( CLUSTER_DEBUG_CLUSTER && player == GetPlayerArray()[0]  )
 			{
 				DebugDrawText( traceOrigin, string( trace ), false, 3 )
 				DebugDrawLine( perchPosition, result.endPos, 0,255,0, true, 3 )
@@ -538,8 +538,8 @@ int function GetNumberOfBirdClustersBirds()
 #if DEVELOPER && SERVER
 void function DEV_CreateBirdCluster( entity owner = null )
 {
-	entity viewPlayer = gp()[0] 
-	owner = IsValid( owner ) ? owner : gp()[0] 
+	entity viewPlayer = GetPlayerArray()[0] 
+	owner = IsValid( owner ) ? owner : GetPlayerArray()[0] 
 	vector traceOrigin = viewPlayer.EyePosition() + viewPlayer.GetViewVector() * 5000
 
 	BirdCluster ornull birdCluster = CreateBirdCluster( owner, TraceLine( viewPlayer.EyePosition(), traceOrigin , null, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE ).endPos, 5 )
@@ -562,7 +562,7 @@ void function ClusterDebug()
 	
 	while( true )
 	{
-		if( gp().len() == 0 )
+		if( GetPlayerArray().len() == 0 )
 		{
 			WaitFrame()
 			continue
@@ -587,7 +587,7 @@ void function ClusterDebug()
 			{
 				DebugDrawCircle( cluster.clusterPos, <180,0,0>, 64, 128, 0, 255, true, 0.1 )
 			}
-			DebugDrawText( cluster.clusterPos + <0,0,-4>, format( "c:%i\nd:%i", cluster.numPointsNear, Distance(gp()[0] .GetOrigin(),cluster.clusterPos) ), false, 0.1 )
+			DebugDrawText( cluster.clusterPos + <0,0,-4>, format( "c:%i\nd:%i", cluster.numPointsNear, Distance(GetPlayerArray()[0] .GetOrigin(),cluster.clusterPos) ), false, 0.1 )
 		}
 
 		foreach( birdCluster in file.birdClusterArray )
@@ -598,7 +598,7 @@ void function ClusterDebug()
 				continue
 			}
 
-			if ( birdCluster.owner != gp()[0]  )
+			if ( birdCluster.owner != GetPlayerArray()[0]  )
 			{
 				float dist = Distance( birdCluster.owner.GetOrigin(), birdCluster.origin )
 				DebugDrawText( birdCluster.origin + <0,0,16>, format( "%.2f\n%s", Time() - birdCluster.spawnTime, birdCluster.owner.GetPlayerName() ), false, 0.1 )
@@ -624,8 +624,8 @@ void function ClusterDebug()
 
 void function AddFakeCluster()
 {
-	vector forward = gp()[0] .GetViewVector()
-	TraceResults results = TraceLine( gp()[0] .EyePosition(), gp()[0] .EyePosition() + forward * 3000, gp()[0] , TRACE_MASK_BLOCKLOS, TRACE_COLLISION_GROUP_NONE )
+	vector forward = GetPlayerArray()[0] .GetViewVector()
+	TraceResults results = TraceLine( GetPlayerArray()[0] .EyePosition(), GetPlayerArray()[0] .EyePosition() + forward * 3000, GetPlayerArray()[0] , TRACE_MASK_BLOCKLOS, TRACE_COLLISION_GROUP_NONE )
 	if  ( results.fraction == 1 )
 		return
 

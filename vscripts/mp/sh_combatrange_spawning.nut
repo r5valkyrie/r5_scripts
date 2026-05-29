@@ -2086,7 +2086,7 @@ void function DEV_debugDrawSpawnPoint( vector origin, float size, vector color, 
 
 void function DEV_CombatRange_CountParticipants()
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	int realm = GetCombatRangeRealm( player )
 	DEV_CombatRangePrint( format( "Number of Participants: %s", string( file.participants[ realm ].len()) ))
 }
@@ -2107,18 +2107,18 @@ void function DEV_CombatRange_TestSpawn( entity player )
 
 void function DEV_DynDummie_Spawns_Start()
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	Try_DynDummie_Spawns_Start( player )
 }
 
 void function DEV_DynDummie_Spawns_Stop()
 {
-	DynDummie_Spawns_Stop( GetCombatRangeRealm( GP() ) )
+	DynDummie_Spawns_Stop( GetCombatRangeRealm( GetPlayerArray() ) )
 }
 
 void function DEV_CombatRange_RecentSpawnPoints()
 {
-	int index = GetCombatRangeRealm( GP() )
+	int index = GetCombatRangeRealm( GetPlayerArray() )
 	DEV_CombatRangePrint( format( "Recent SpawnPoints: Count == %s", string( file.spawnPtsRecentByRealm[ index ].len() ) ))
 	foreach( spawnPoint in file.spawnPtsRecentByRealm[ index ])
 	{
@@ -2132,7 +2132,7 @@ void function DEV_CombatRange_RecentSpawnPoints()
 
 void function DEV_CombatRange_IndicateTargets()
 {
-	int index = GetCombatRangeRealm( GP() )
+	int index = GetCombatRangeRealm( GetPlayerArray() )
 	foreach( enemy in file.dummiesSpawnedInRealm[ index ])
 	{
 		if( IsValid( enemy ) )
@@ -2148,7 +2148,7 @@ void function DEV_CombatRange_IndicateTargets()
 
 void function DEV_CombatRange_CountDummies()
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	int realm = GetCombatRangeRealm( player )
 	DEV_CombatRangePrint( format( "Realm ==  %s", string( realm )))
 
@@ -2185,7 +2185,7 @@ void function ForceRangeTargets_Thread( entity player, bool cqbOn, bool midOn, b
 
 void function DEV_CR_Respawn_Dummies()
 {
-	int realm = GetCombatRangeRealm( GP() )
+	int realm = GetCombatRangeRealm( GetPlayerArray() )
 	CRDummies_RespawnInPlace( realm )
 }
 
@@ -2209,10 +2209,10 @@ void function DEV_CountDummies( entity playerParm )
 	entity player = playerParm
 	if( !IsValidPlayer( player ) )
 	{
-		player = GP()
+		player = GetPlayerArray()
 	}
 
-	//int realm = GetCombatRangeRealm( GP() )
+	//int realm = GetCombatRangeRealm( GetPlayerArray() )
 	int realm = GetPlayerSquadRealm( player )
 	foreach( dummie in file.dummiesSpawnedInRealm[ realm ] )
 	{

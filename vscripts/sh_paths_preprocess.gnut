@@ -1,4 +1,4 @@
-#if DEV
+#if DEVELOPER
 global function DEV_GenerateFlightPath_TraceHullMethod
 global function DEV_Individual_TraceHullMethod
 global function DEV_DrawFlightPath
@@ -13,7 +13,7 @@ global struct PathResult
 	array<vector> path
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_DrawFlightPath( vector start, vector end, array<vector> path )
 {
 	if ( path.len() > 0 )
@@ -21,21 +21,21 @@ void function DEV_DrawFlightPath( vector start, vector end, array<vector> path )
 		vector lastNode = path[0]
 		foreach ( vector pos in path )
 		{
-			DebugDrawArrow( lastNode, pos, 35, COLOR_WHITE, true, 100000 )
+			//DebugDrawArrow( lastNode, pos, 35, COLOR_WHITE, true, 100000 )
 			lastNode = pos
 		}
 	}
 	else
 	{
 		printt( "[DEV_DrawFlightPath] Can't draw flight path " + start + " to " + end + " as there is no path." )
-		DebugDrawArrow( start, end, 35, COLOR_RED, true, 100000 )
+		//DebugDrawArrow( start, end, 35, COLOR_RED, true, 100000 )
 	}
 }
 #endif
 
 array<vector> function GetFlightPath( vector startPoint, vector endPoint, array<PathResult> paths, bool pathsAreBidirectional )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( paths.len() == 0 )
 			Warning( "[GetFlightPath] paths is empty. No paths were preprocessed." )
 	#endif
@@ -61,7 +61,7 @@ array<vector> function GetFlightPath( vector startPoint, vector endPoint, array<
 		++i
 	}
 
-	#if DEV
+	#if DEVELOPER
 		if ( !found )
 			Warning( "[GetFlightPath] Could not find path for startPoint '" + startPoint + "' to endPoint '" + endPoint + "'.  Paths need to be re-processed or there was an error in preprocessing paths.  Check console output when generating paths." )
 		else
@@ -70,7 +70,7 @@ array<vector> function GetFlightPath( vector startPoint, vector endPoint, array<
 	return pathFound
 }
 
-#if DEV
+#if DEVELOPER
 // Returns an ordered array with paths to one another.
 // - If pathsAreBidrectional is true, then the logic to generate a path from startPoint will be the same as the reverse.
 // This assumes that every startPoint is unique and that every endPoint is unique (though startPoints can == endPoints).
@@ -80,7 +80,7 @@ void function DEV_GenerateFlightPath_TraceHullMethod( vector hullSize, vector hu
 	printt( "[Paths_Preprocess] Look out for any warnings (will be labelled with 'Paths_Preprocess').  There should be no warnings if successful. Successful paths will be in yellow. Failed paths will be red arrows in the world." )
 	printt( "[Paths_Preprocess] The file it is dumping out to must pre-exist or an error will be thrown about failing to dump to that file." )
 
-	#if DEV
+	#if DEVELOPER
 		// Verify the data. We expect very startpoint entry to be unique from one another and every endpoint entry to be unique from one another
 		VerifyPoints( startPoints )
 		if ( startPoints.len() == 0 )
@@ -136,7 +136,7 @@ void function DEV_GenerateFlightPath_TraceHullMethod( vector hullSize, vector hu
 }
 #endif
 
-#if DEV
+#if DEVELOPER
 bool function Internal_GetPastPathResult( vector startPoint, vector endPoint, array<PathResult> paths, PathResult outResult )
 {
 	foreach ( PathResult r in paths )
@@ -153,7 +153,7 @@ bool function Internal_GetPastPathResult( vector startPoint, vector endPoint, ar
 }
 #endif
 
-#if DEV
+#if DEVELOPER
 array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector hullSizeStartEnd, vector startPoint, vector endPoint, bool debugVerboseOn = false )
 {
 	const float HULL_BUFFER = 200 // Once smoothing happens to the path the ship may collide with geo again, so add some buffer
@@ -180,7 +180,7 @@ array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector h
 	array<vector> flightPathNodes
 	float totalDist = Distance( startPoint, endPoint )
 	float segmentDistance = FLIGHT_PATH_SEGMENT_DISTANCE
-	#if DEV
+	#if DEVELOPER
 		if ( DEBUG_ON )
 		{
 			printt("[Paths_Preprocess] TraceHull Pathing Start - Segment Distance: " + segmentDistance + " Total dist: " + totalDist )
@@ -198,10 +198,10 @@ array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector h
 		vector flightDirectionNormalized = Normalize( endPoint - currentStart )
 		vector proposedFlightPath = currentStart + ( flightDirectionNormalized * segmentDistance )
 
-		#if DEV
+		#if DEVELOPER
 			if ( DEBUG_VERBOSE )
 			{
-				DebugDrawArrow( currentStart, proposedFlightPath, 35, <0, 255, 255>, true, 100000 )
+				//DebugDrawArrow( currentStart, proposedFlightPath, 35, <0, 255, 255>, true, 100000 )
 			}
 		#endif //DEV
 
@@ -212,10 +212,10 @@ array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector h
 		//our proposed flight path hit something, so let's try modifying it a bit (rotations and Z offsets) to try and find a new valid path
 		if ( tr.fraction != 1.0 )
 		{
-			#if DEV
+			#if DEVELOPER
 				if ( DEBUG_VERBOSE )
 				{
-					DebugDrawMark( tr.endPos, 35, COLOR_RED, true, 100000 )
+					//DebugDrawMark( tr.endPos, 35, COLOR_RED, true, 100000 )
 				}
 			#endif //DEV
 
@@ -233,10 +233,10 @@ array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector h
 
 				proposedFlightPath = currentStart + ( rotatedPitchYaw * segmentDistance )
 
-				#if DEV
+				#if DEVELOPER
 					if ( DEBUG_VERBOSE )
 					{
-						DebugDrawArrow( currentStart, proposedFlightPath, 35, COLOR_RED, true, 100000 )
+						//DebugDrawArrow( currentStart, proposedFlightPath, 35, COLOR_RED, true, 100000 )
 					}
 				#endif //DEV
 
@@ -254,10 +254,10 @@ array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector h
 				}
 				else
 				{
-					#if DEV
+					#if DEVELOPER
 						if ( DEBUG_VERBOSE )
 						{
-							DebugDrawMark( tr.endPos, 35, COLOR_RED, true, 100000 )
+							//DebugDrawMark( tr.endPos, 35, COLOR_RED, true, 100000 )
 						}
 					#endif //DEV
 				}
@@ -269,10 +269,10 @@ array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector h
 
 				proposedFlightPath = currentStart + ( rotatedPitchYaw * segmentDistance )
 
-				#if DEV
+				#if DEVELOPER
 					if ( DEBUG_VERBOSE )
 					{
-						 DebugDrawArrow( currentStart, proposedFlightPath, 35, COLOR_GREEN, true, 100000 )
+						 //DebugDrawArrow( currentStart, proposedFlightPath, 35, COLOR_GREEN, true, 100000 )
 					}
 				#endif //DEV
 
@@ -290,10 +290,10 @@ array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector h
 				}
 				else
 				{
-					#if DEV
+					#if DEVELOPER
 						if ( DEBUG_VERBOSE )
 						{
-							DebugDrawMark( tr.endPos, 35, COLOR_RED, true, 100000 )
+							//DebugDrawMark( tr.endPos, 35, COLOR_RED, true, 100000 )
 						}
 					#endif //DEV
 				}
@@ -308,10 +308,10 @@ array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector h
 
 					proposedFlightPath = currentStart + ( rotatedPitch * segmentDistance )
 
-					#if DEV
+					#if DEVELOPER
 						if ( DEBUG_VERBOSE )
 						{
-							DebugDrawArrow( currentStart, proposedFlightPath, 35, COLOR_BLUE, true, 100000 )
+							//DebugDrawArrow( currentStart, proposedFlightPath, 35, COLOR_BLUE, true, 100000 )
 						}
 					#endif //DEV
 
@@ -329,10 +329,10 @@ array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector h
 					}
 					else
 					{
-						#if DEV
+						#if DEVELOPER
 							if ( DEBUG_VERBOSE )
 							{
-								DebugDrawMark( tr.endPos, 35, COLOR_RED, true, 100000 )
+								//DebugDrawMark( tr.endPos, 35, COLOR_RED, true, 100000 )
 							}
 						#endif //DEV
 					}
@@ -346,10 +346,10 @@ array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector h
 
 				if ( IsEqualFloat( tr.fraction, 1.0 ) )
 				{
-					#if DEV
+					#if DEVELOPER
 						if ( DEBUG_VERBOSE )
 						{
-							DebugDrawMark( tr.endPos, 55, COLOR_GREEN, true, 100000 )
+							//DebugDrawMark( tr.endPos, 55, COLOR_GREEN, true, 100000 )
 						}
 					#endif //DEV
 
@@ -357,10 +357,10 @@ array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector h
 				}
 				else
 				{
-					#if DEV
+					#if DEVELOPER
 						if ( DEBUG_VERBOSE )
 						{
-							DebugDrawMark( tr.endPos, 55, COLOR_RED, true, 100000 )
+							//DebugDrawMark( tr.endPos, 55, COLOR_RED, true, 100000 )
 						}
 					#endif //DEV
 				}
@@ -375,30 +375,30 @@ array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector h
 				{
 					tr = TraceLine( currentStart, currentStart + <0, 0, SEGMENT_Z_OFFSET_CLOSE_GEO>, exclusions, traceMask, traceCollisionGroup )
 
-					#if DEV
+					#if DEVELOPER
 						if ( DEBUG_VERBOSE )
 						{
-							DebugDrawArrow( currentStart, currentStart + <0, 0, SEGMENT_Z_OFFSET_CLOSE_GEO>, 35, COLOR_MAGENTA, true, 100000 )
+							//DebugDrawArrow( currentStart, currentStart + <0, 0, SEGMENT_Z_OFFSET_CLOSE_GEO>, 35, COLOR_MAGENTA, true, 100000 )
 						}
 					#endif //DEV
 
 					if ( IsEqualFloat( tr.fraction, 1.0 ) )
 					{
-						#if DEV
+						#if DEVELOPER
 							if ( DEBUG_VERBOSE )
 							{
 								printt("[Paths_Preprocess] Found lowestFraction " + lowestFraction + " removing last position from path." )
-								DebugDrawMark( tr.endPos, 55, COLOR_GREEN, true, 100000 )
+								//DebugDrawMark( tr.endPos, 55, COLOR_GREEN, true, 100000 )
 							}
 						#endif //DEV
 						flightPathNodes.pop()
 					}
 					else
 					{
-						#if DEV
+						#if DEVELOPER
 							if ( DEBUG_VERBOSE )
 							{
-								DebugDrawMark( tr.endPos, 55, COLOR_RED, true, 100000 )
+								//DebugDrawMark( tr.endPos, 55, COLOR_RED, true, 100000 )
 							}
 						#endif //DEV
 					}
@@ -407,10 +407,10 @@ array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector h
 		}
 		else
 		{
-			#if DEV
+			#if DEVELOPER
 				if ( DEBUG_ON )
 				{
-					DebugDrawMark( tr.endPos, 35, COLOR_GREEN, true, 100000 )
+					//DebugDrawMark( tr.endPos, 35, COLOR_GREEN, true, 100000 )
 				}
 			#endif //DEV
 		}
@@ -431,12 +431,12 @@ array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector h
 			{
 				vector projection = currentStart + ( normalizedCurrentStartToCurrentEnd * scale )
 
-				#if DEV
+				#if DEVELOPER
 					if ( DEBUG_ON )
 					{
-						DebugDrawArrow( currentStart, tr.endPos, 35, COLOR_RED, true, 100000 )
-						 DebugDrawArrow( currentStart, endPoint, 35, COLOR_GREEN, true, 100000 )
-						DebugDrawArrow( projection, endPoint, 35, COLOR_BLUE, true, 100000 )
+						//DebugDrawArrow( currentStart, tr.endPos, 35, COLOR_RED, true, 100000 )
+						 //DebugDrawArrow( currentStart, endPoint, 35, COLOR_GREEN, true, 100000 )
+						//DebugDrawArrow( projection, endPoint, 35, COLOR_BLUE, true, 100000 )
 					}
 				#endif //DEV
 
@@ -450,10 +450,10 @@ array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector h
 				}
 				else
 				{
-					#if DEV
+					#if DEVELOPER
 						if ( DEBUG_ON )
 						{
-							DebugDrawMark( tr.endPos, 100, COLOR_RED, true, 100000 )
+							//DebugDrawMark( tr.endPos, 100, COLOR_RED, true, 100000 )
 						}
 					#endif //DEV
 				}
@@ -467,10 +467,10 @@ array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector h
 		currentStart = tr.endPos
 		flightPathNodes.append( tr.endPos )
 
-		#if DEV
+		#if DEVELOPER
 			if ( DEBUG_ON )
 			{
-				DebugDrawMark( tr.endPos, 100, COLOR_GREEN, true, 100000 )
+				//DebugDrawMark( tr.endPos, 100, COLOR_GREEN, true, 100000 )
 			}
 		#endif //DEV
 
@@ -506,21 +506,21 @@ array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector h
 		if ( iterations >= 200 )
 		{
 			Warning( "[Paths_Preprocess] Path generation from " + startPoint + " to " + endPoint + " failed despite " + iterations + " iterations, forcing an exit from loop.  Look for red arrows in the world." )
-			#if DEV
+			#if DEVELOPER
 				if ( DEBUG_ON )
 				{
-					DebugDrawArrow( startPoint, endPoint, 50, COLOR_RED, true, 100000 )
+					//DebugDrawArrow( startPoint, endPoint, 50, COLOR_RED, true, 100000 )
 				}
 			#endif //DEV
 			break
 		}
 	}
 
-	#if DEV
+	#if DEVELOPER
 		if ( DEBUG_VERBOSE )
 		{
 			printt("[Paths_Preprocess] Generated initial Flight Path in " + iterations + " segments.")
-			DebugDrawArrow( currentStart, endPoint, 35, <255, 100, 50>, true, 100000 )
+			//DebugDrawArrow( currentStart, endPoint, 35, <255, 100, 50>, true, 100000 )
 		}
 	#endif //DEV
 	//last point is always going to be final destination
@@ -528,13 +528,13 @@ array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector h
 
 	array<vector> smoothedflightPathNotes = CreateOptimizedSmoothPath( flightPathNodes )
 
-	#if DEV
+	#if DEVELOPER
 		if ( DEBUG_ON )
 		{
 			vector lastNode = smoothedflightPathNotes[0]
 			foreach ( vector smoothNodePos in smoothedflightPathNotes )
 			{
-				DebugDrawArrow( lastNode, smoothNodePos, 35, COLOR_YELLOW, true, 100000 )
+				//DebugDrawArrow( lastNode, smoothNodePos, 35, COLOR_YELLOW, true, 100000 )
 				lastNode = smoothNodePos
 			}
 		}
@@ -544,7 +544,7 @@ array<vector> function DEV_Individual_TraceHullMethod( vector hullSize, vector h
 }
 #endif
 
-#if DEV
+#if DEVELOPER
 void function VerifyPoints( array<vector> points )
 {
 	array<vector> failures
@@ -574,7 +574,7 @@ void function VerifyPoints( array<vector> points )
 }
 #endif
 
-#if DEV
+#if DEVELOPER
 void function ExportPathsForMap( array<PathResult> preprocessedPaths, bool pathsAreBidirectional )
 {
 	string mapName = GetMapName().tolower()

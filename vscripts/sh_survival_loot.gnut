@@ -5349,7 +5349,7 @@ void function Dev_SpawnBotWithIncapShieldToView_Shared( int shieldTier )
 			break
 	}
 
-	entity player = gp()[0]
+	entity player = GetPlayerArray()[0]
 
 	array<entity> enemies = GetPlayerArrayOfEnemies_Alive( player.GetTeam() )
 	foreach ( enemy in enemies )
@@ -6004,8 +6004,8 @@ bool function SurvivalLoot_PlayerLookingAtLine( entity player, entity ent )
 	if ( viewAngles.x <= maxAngle && Distance( pointOnLinePlane, pointOnLine ) > minDist )
 		return false
 
-	//DebugDrawSphere( pointOnLine, 1.0, <255, 0, 0>, true, 0.1 )
-	//DebugDrawSphere( pointOnLinePlane, 1.0, <255, 255, 0>, true, 0.1 )
+	//DebugDrawSphere( pointOnLine, 1.0, 255, 0, 0, true, 0.1 )
+	//DebugDrawSphere( pointOnLinePlane, 1.0, 255, 255, 0, true, 0.1 )
 	return true
 }
 #endif

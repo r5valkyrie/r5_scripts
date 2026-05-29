@@ -695,11 +695,11 @@ vector ornull function GetArcConnectPoint( entity bolt, vector dir, vector maxAn
 	{
 		if ( arcTrace.fraction == 1.0 )
 		{
-			//DebugDrawSphere( arcTrace.endPos, 10, <255, 0, 0>, false, 5.0 )
+			DebugDrawSphere( arcTrace.endPos, 10, 255, 0, 0, false, 5.0 )
 		}
 		else
 		{
-			//DebugDrawSphere( arcTrace.endPos, 10, <255, 255, 0>, false, 5.0 )
+			DebugDrawSphere( arcTrace.endPos, 10, 255, 255, 0, false, 5.0 )
 		}
 	}
 

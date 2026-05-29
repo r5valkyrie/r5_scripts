@@ -45,9 +45,9 @@ void function LaserMeshClientThread( entity maxs, bool showStartupEffects )
 	vector dwn = Normalize( btmCorner - connectCorner )
 	vector nextDwn = btmCorner - connectCorner
 
-	// DebugDrawSphere( topCorner, 5, 255, 0, 0, true, 100.0 )
-	// DebugDrawSphere( btmCorner, 5, 0, 255, 0, true, 100.0 )
-	// DebugDrawSphere( connectCorner, 5, 0, 0, 255, true, 100.0 )
+	// //DebugDrawSphere( topCorner, 5, 255, 0, 0, true, 100.0 )
+	// //DebugDrawSphere( btmCorner, 5, 0, 255, 0, true, 100.0 )
+	// //DebugDrawSphere( connectCorner, 5, 0, 0, 255, true, 100.0 )
 
 	vector soundOrigin = (topCorner + btmCorner) * 0.5
 

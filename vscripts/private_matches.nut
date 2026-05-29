@@ -43,7 +43,7 @@ global function PrivateMatch_SortPlayersByName
 global function PrivateMatch_ToggleSurveyRing
 
 global function PrivateMatch_ClientOnSquadEliminated
-#if DEV
+#if DEVELOPER
 global function DEV_ShowSpectatorButtonHints
 #endif//DEV
 #endif
@@ -985,7 +985,7 @@ void function PrivateMatch_SetSelectedPlaylist( string playlistName )
 #endif
 
 #if CLIENT
-#if DEV
+#if DEVELOPER
 void function DEV_ShowSpectatorButtonHints()
 {
 	OnSpectatorStarted()

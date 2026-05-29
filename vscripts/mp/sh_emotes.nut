@@ -974,13 +974,13 @@ bool function ShouldCullPlayer( entity localPlayer, entity p, vector initialEyeA
 
 		if ( result.fraction >= 0.95 )
 		{
-			//DebugDrawLine( localPlayer.EyePosition(), p.GetAttachmentOrigin( attachIndex ), COLOR_RED, true, 0.05 )
+			//DebugDrawLine( localPlayer.EyePosition(), p.GetAttachmentOrigin( attachIndex ), int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.05 )
 			p.p.nextTraceCheckTime = Time() + 3.0
 			return false
 		}
 		else
 		{
-			//DebugDrawLine( localPlayer.EyePosition(), result.endPos, COLOR_GREEN, true, 0.05 )
+			//DebugDrawLine( localPlayer.EyePosition(), result.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.05 )
 		}
 	}
 
@@ -2228,7 +2228,7 @@ TraceResults function SprayTraceHelper( entity prop, vector start, float dist )
 	vector traceStart = start + VectorRotate( <-dist, 0, 0>, prop.GetAngles() )
 	vector doTrace   = traceStart + VectorRotate( <dist * 2, 0, 0>, prop.GetAngles() )
 
-	//DebugDrawLine( traceStart, doTrace, COLOR_RED, true, 10.0 )
+	//DebugDrawLine( traceStart, doTrace, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 10.0 )
 
 	return TraceLineHighDetail( traceStart, doTrace, prop, TRACE_MASK_VISIBLE, TRACE_COLLISION_GROUP_NONE )
 }

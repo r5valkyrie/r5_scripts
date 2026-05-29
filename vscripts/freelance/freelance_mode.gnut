@@ -41,7 +41,7 @@ global function FreelanceMode_StartTeamInsertionThread_Dropoff
 
 global function SpawnSafeZone
 
-#if DEV
+#if DEVELOPER
 global function DEV_ModeSkipAhead
 //global function DoItZZZ
 global function DoItYYY
@@ -52,7 +52,7 @@ global function DoItYYY
 global function SCB_DoFreelanceModeSplash
 global function DoModeChangeSplash
 
-#if DEV
+#if DEVELOPER
 global function DEV_TestAllFreelanceModeSplashes
 #endif // DEV
 #endif // CLIENT
@@ -885,7 +885,7 @@ void function FreelanceMode_SignalWhenObjectiveCompletes( ObjectiveInstance oi, 
 	}()
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_ModeSkipAhead()
 {
 	FreelanceMode_Signal( SIG_MODE_JUMP_AHEAD )
@@ -2021,7 +2021,7 @@ void function SCB_DoFreelanceModeSplash_( int idx )
 			AnnouncementFromClass( player, dt )
 	}()
 }
-#if DEV
+#if DEVELOPER
 void function DEV_TestAllFreelanceModeSplashes()
 {
 	for( int idx = 0; idx < eModeSplash._count; ++idx )

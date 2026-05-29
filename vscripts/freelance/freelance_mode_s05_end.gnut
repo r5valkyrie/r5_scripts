@@ -456,7 +456,7 @@ void function RunFinalSequence( entity player, SequenceVars vars )
 	thread PlayAnimTeleport( vars.propBottom, "obj_body_quest_se05", animRef )
 	waitthread FirstPersonSequence( seq, player, animRef )
 
-	#if DEV
+	#if DEVELOPER
 		if ( GetBugReproNum() == 555 )
 		{
 			printf( "%s() - Not ending the level, b/c of dev toggle.", FUNC_NAME() )

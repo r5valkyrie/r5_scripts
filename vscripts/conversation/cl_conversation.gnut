@@ -1150,7 +1150,7 @@ void function DoGuySpeechLine( entity guy, table aliases )
 	if ( file.DebugLevel > 1 )
 	{
 		printt( " Guy " + guy.GetTargetName() + ": " + radioAlias )
-		DebugDrawLine( GetLocalViewPlayer().GetOrigin(), guy.GetOrigin(), COLOR_WHITE, true, 3.0 )
+		DebugDrawLine( GetLocalViewPlayer().GetOrigin(), guy.GetOrigin(), int(COLOR_WHITE.x), int(COLOR_WHITE.y), int(COLOR_WHITE.z), true, 3.0 )
 		DebugDrawText( guy.GetOrigin() + <0,0,60>, radioAlias, true, 6.0 )
 	}
 

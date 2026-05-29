@@ -1,6 +1,6 @@
 global function PhaseDriver_Init
 global function PhaseDriver_IsPhaseDriverEnabled
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 global function DEV_ToggleDriverVFX
 global function DEV_ToggleDriverCooldown
 //global function ActiveSparks
@@ -108,7 +108,7 @@ struct PhaseDriverStruct
 		< 87.1546, -134.874, -92.6642 >,
 		< 87.6447, -158.202, -84.224 >,
 	]
-#if DEV
+#if DEVELOPER
 	bool bypassCooldown = false
 	bool flipVFX = false
 #endif // DEV
@@ -233,7 +233,7 @@ void function OnUse_PhaseDriverPanel( entity panel, entity player, int useInputF
 		return
 	}
 
-#if DEV
+#if DEVELOPER
 	printf( "Used a PhaseDriver Panel %s", panel.GetScriptName() )
 #endif
 	PlayBattleChatterLineToSpeakerAndTeam( player, "bc_usingPhaseDriver" )
@@ -360,7 +360,7 @@ void function PhaseDriverCooldown()
 	//phaseDriverStruct.panels[0].EndSignal( "PhaseDriver_CancelCooldown" )
 	phaseDriverStruct.cooldown = GetCurrentPlaylistVarFloat("oly_phaser_cooldown_time", phaseDriverStruct.cooldown)
 
-#if DEV
+#if DEVELOPER
 	if( !phaseDriverStruct.bypassCooldown )
 	{
 		wait phaseDriverStruct.cooldown
@@ -464,7 +464,7 @@ void function EnableVFX_Active()
 		EffectSleep( phaseDriverStruct.vfx_ambient )
 	}
 
-	#if DEV
+	#if DEVELOPER
 	phaseDriverStruct.flipVFX = true
 #endif
 }
@@ -488,7 +488,7 @@ void function EnableVFX_Ambient()
 		EffectSleep( phaseDriverStruct.vfx_active )
 	}
 
-	#if DEV
+	#if DEVELOPER
 	phaseDriverStruct.flipVFX = false
 #endif
 }
@@ -501,7 +501,7 @@ void function EnabledSparks_Ambient()
 
 #endif // SERVER
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 void function DEV_ToggleDriverVFX()
 {
 	phaseDriverStruct.panels[0].Signal( "PhaseDriver_CancelCooldown" )

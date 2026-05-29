@@ -452,8 +452,8 @@ void function PutTargetInSafeSpotAfterExecution( entity target, entity attacker,
 	if( DEBUG_PLACE_TARGET )
 	{
 		//DebugDrawBox( forwardTraceStartPos, targetBoundingMins, targetBoundingMaxs, <255, 255, 0>, 1, 5.0 )
-		//DebugDrawLine( forwardTraceStartPos, forwardTrace.endPos, <255, 0, 0>, true, 5.0 )
-		//DebugDrawLine( downTraceStartPosition, downTrace.endPos, <0, 0, 255>, true, 5.0 )
+		DebugDrawLine( forwardTraceStartPos, forwardTrace.endPos, 255, 0, 0, true, 5.0 )
+		DebugDrawLine( downTraceStartPosition, downTrace.endPos, 0, 0, 255, true, 5.0 )
 		//DebugDrawBox( downTraceStartPosition, targetBoundingMins, targetBoundingMaxs, <255, 255, 0>, 1, 5.0 )
 		//DebugDrawBox( downTrace.endPos, targetBoundingMins, targetBoundingMaxs, COLOR_CYAN, 1, 5.0 )
 	}

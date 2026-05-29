@@ -34,7 +34,7 @@ struct
 	bool hammerpointIgnoreShadows
 } file
 
-#if DEV
+#if DEVELOPER
 const bool DEBUG_DAMAGE_AMOUNT = false
 #endif
 
@@ -430,7 +430,7 @@ void function CodeCallback_DamagePlayerOrNPC( entity ent, var damageInfo )
 		printt( "    after damageSourceID callbacks:", DamageInfo_GetDamage( damageInfo ) )
 	#endif
 
-	#if DEV
+	#if DEVELOPER
 		if ( GetBugReproNum() == 1747 ) //Testing for FastPatch - Server script change - 2x damage
 		{
 			DamageInfo_ScaleDamage( damageInfo, 2.0 )
@@ -622,7 +622,7 @@ void function CodeCallback_DamagePlayerOrNPC( entity ent, var damageInfo )
 	{
 		PlayerTookDamage( ent, damageInfo, attacker, inflictor, damageSourceId )
 
-		#if DEV
+		#if DEVELOPER
 			if( DEBUG_DAMAGE_AMOUNT )
 			{
 				printt( "Player took damage, Actual Damage: ", actualDamage, " Total Damage: ", DamageInfo_GetDamage( damageInfo ), " Shield Damage: ", effectiveShieldDamage )

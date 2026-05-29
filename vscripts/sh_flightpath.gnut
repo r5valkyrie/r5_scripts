@@ -12,7 +12,7 @@ global function IsActiveNodeAnalysis
 
 global function AddDropshipFlightAnalysis
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 global function AddNewAnalysis
 #endif
 

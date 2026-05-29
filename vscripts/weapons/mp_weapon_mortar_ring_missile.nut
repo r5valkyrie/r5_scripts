@@ -444,9 +444,9 @@ void function BeginBombletFire( entity owner, entity projectile, entity projecti
 	foreach ( segment in segmentsArray )
 	{
 		#if DEVELOPER && MORTAR_RING_MISSILE_DEBUG
-			//DebugDrawSphere( segment.startPos + <0, 0, 10> , 10, <255, 0, 0>, true, 25.0 )
+			DebugDrawSphere( segment.startPos + <0, 0, 10>, 10, 255, 0, 0, true, 25.0 )
 			//DebugDrawArrow( segment.startPos, segment.endPos, 25, <0, 0, 255>, true, 25.0)
-			//DebugDrawSphere( segment.endPos, 10, <0, 255, 0>, true, 25.0 )
+			DebugDrawSphere( segment.endPos, 10, 0, 255, 0, true, 25.0 )
 		#endif
 	}
 
@@ -503,7 +503,7 @@ vector function FindValidEndPosForFireSegment( vector startPos, vector dir, floa
 			endTraces = true
 		}
 		#if DEVELOPER && MORTAR_RING_MISSILE_DEBUG
-			//DebugDrawLine( traceStart, forwardTrace.endPos, <0, 255, 0>, true, 25.0 )
+			DebugDrawLine( traceStart, forwardTrace.endPos, 0, 255, 0, true, 25.0 )
 		#endif
 
 		vector traceDownEnd = forwardTrace.endPos + < 0, 0, -MORTAR_RING_MISSILE_FIRE_DOWN_TRACE_LENGTH >
@@ -520,7 +520,7 @@ vector function FindValidEndPosForFireSegment( vector startPos, vector dir, floa
 			traceStart = downTrace.endPos + < 0, 0, MORTAR_RING_MISSILE_FIRE_FWD_TRACE_HEIGHT >
 		}
 		#if DEVELOPER && MORTAR_RING_MISSILE_DEBUG
-			//DebugDrawLine( forwardTrace.endPos, downTrace.endPos, <0, 0, 255>, true, 25.0 )
+			DebugDrawLine( forwardTrace.endPos, downTrace.endPos, 0, 0, 255, true, 25.0 )
 		#endif
 
 		if( Distance( FlattenVec( startPos ), FlattenVec( downTrace.endPos ) ) >= maxFlattnedDistance )
@@ -658,10 +658,10 @@ void function MortarRingFireSegmentTriggerThread( entity effect, entity controlP
 		#if DEVELOPER && MORTAR_RING_MISSILE_DEBUG
 			//DebugDrawCylinder( trigger.GetOrigin(), <270,0,0>, radius, height + MORTAR_RING_FIRE_SEGMENT_HEIGHT, <255, 255, 255>, true, 0.1 )
 			//DebugDrawCylinder( trigger.GetOrigin(), <270,0,0>, radius, -height, <255, 255, 255>, true, 0.1 )
-			//DebugDrawSphere( effect.GetOrigin(), 10, <0, 255, 0>, true, 0.1 )
-			//DebugDrawSphere( controlPoint.GetOrigin() + <0, 0, 10> , 10, <255, 0, 0>, true, 0.1 )
+			DebugDrawSphere( effect.GetOrigin(), 10, 0, 255, 0, true, 0.1 )
+			DebugDrawSphere( controlPoint.GetOrigin() + <0, 0, 10>, 10, 255, 0, 0, true, 0.1 )
 			//DebugDrawArrow( controlPoint.GetOrigin(), effect.GetOrigin(), 25, <0, 0, 255>, true, 0.1)
-			//DebugDrawLine( effect.GetOrigin(), controlPoint.GetOrigin(), <0, 255, 0>, true, 0.1 )
+			DebugDrawLine( effect.GetOrigin(), controlPoint.GetOrigin(), 0, 255, 0, true, 0.1 )
 		#endif
 		WaitFrame()
 	}
@@ -971,7 +971,7 @@ void function MortarRingAirburst( entity player, entity projectile, int numBombs
 
 	array<vector> orderedTargetPoints = GetTargetPointsAroundOrigin( projectileOrigin, numBombs, 420.0, -750.0, radiusModMin, radiusModMax )
 	#if DEVELOPER && MORTAR_RING_MISSILE_DEBUG
-		//DebugDrawSphere( projectileOrigin, 10, <0, 0, 255>, true, 10.0 )
+		DebugDrawSphere( projectileOrigin, 10, 0, 0, 255, true, 10.0 )
 	#endif
 
 	int currentIndex = 0
@@ -1025,9 +1025,13 @@ void function LaunchBomblet( entity player, entity weapon, vector origin, vector
 	vector velocity = ( as.valid ) ? as.fire_velocity : dirFromCenter * launchSpeed
 #if DEVELOPER && MORTAR_RING_MISSILE_DEBUG
 	if( !as.valid )
-		//DebugDrawSphere( target, 10, <255, 0, 0>, true, 10.0 )
+	{
+		DebugDrawSphere( target, 10, 255, 0, 0, true, 10.0 )
+	}
 	else
-		//DebugDrawSphere( target, 10, <0, 0, 255>, true, 10.0 )
+	{
+		DebugDrawSphere( target, 10, 0, 0, 255, true, 10.0 )
+	}
 #endif
 
 

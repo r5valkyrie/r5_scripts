@@ -1691,7 +1691,7 @@ CoverWallPlacementInfo function CoverWall_GetPlacementInfo( entity player, entit
 	if ( COVER_WALL_DEBUG_DRAW_PLACEMENT )
 	{
 		DebugDrawLine( fwdStart, fwdResults.endPos, 255,0,0, true, 0.05 )
-		DebugDrawSphere( fwdResults.endPos, 16, 255,0,0, true, 0.05 )
+		//DebugDrawSphere( fwdResults.endPos, 16, 255,0,0, true, 0.05 )
 		DebugDrawLine( fwdResults.endPos, fwdResults.endPos - COVER_WALL_PLACEMENT_TRACE_OFFSET, 255,0,0, true, 0.05 )
 		DebugDrawBox( downResults.endPos, COVER_WALL_BOUND_MINS, COVER_WALL_BOUND_MAXS, 0, 255, 0, 1, 1.0 )
 	}

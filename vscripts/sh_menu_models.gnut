@@ -1793,7 +1793,7 @@ void function EnableLobbyMenuCameraZoom()
 		cameraTargetIndex = eCameraTargetNames.customize_character_camera_target
 	}
 
-	//DebugDrawSphere( focalPoint, 2.0, COLOR_YELLOW, true, 15.0 )
+	//DebugDrawSphere( focalPoint, 2.0, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 15.0 )
 
 	entity cameraTarget      = file.cameraTargets[ cameraTargetIndex ]
 	vector cameraStartOrigin = file.cameraStartOriginsAngles[ cameraTargetIndex ]["origin"]

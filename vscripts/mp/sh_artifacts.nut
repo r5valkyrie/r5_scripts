@@ -102,7 +102,7 @@ global function Artifacts_IsBaseArtifactOwned
 global function Artifacts_ActivationEmote_GetVideo
 #endif
 
-#if DEV
+#if DEVELOPER
 #if UI
 global function Artifacts_DEV_RequestEquipSetByIndex
 #endif
@@ -116,7 +116,7 @@ global function Artifacts_DEV_SetThemeForActiveWeapon
 global function Artifacts_DEV_SetSkinForActiveWeapon
 global function Artifacts_DEV_PreviewFirstDraw
 #endif // #if SERVER
-#endif // #if DEV
+#endif // #if DEVELOPER
 
 global enum eArtifactComponentType {
 	BLADE,
@@ -332,7 +332,7 @@ const string ARTIFACT_EMISSIVE_FX_SIGNAL = "ArtifactsEmissiveFxSignal"
 // Loadouts
 const string LOADOUTS_ARTIFACT_INDEX_COMPONENT_TYPE = "artifact_%d_component_%s"
 const string LOADOUTS_ARTIFACT_COMPONENT_CHANGE = "artifact_configuration_component_change"
-#if DEV
+#if DEVELOPER
 const string LOADOUTS_DEV_ARTIFACT_COMPONENT_CHANGE_VERBOSE_PDEF_SECTION_KEY = "artifact configuration component change"
 const string LOADOUTS_DEV_ARTIFACT_COMPONENT_CHANGE_VERBOSE = "Artifact Configuration Componenent Change"
 const string LOADOUTS_DEV_ARTIFACT_CONFIGURATION_PDEF_SECTION_KEY = "artifact configuration %d"
@@ -517,7 +517,7 @@ void function ShArtifacts_LevelInit()
 
 void function RegisterArtifactComponentsForWeapon( ItemFlavor artifactWeapon )
 {
-	#if DEV
+	#if DEVELOPER
 		printf( "ArtifactsDebug: %s", FUNC_NAME() )
 	#endif
 
@@ -611,7 +611,7 @@ void function RegisterArtifactComponentsForWeapon( ItemFlavor artifactWeapon )
 					Assert( currentTheme == "" || themeName == currentTheme )
 					currentTheme = themeName
 
-					#if DEV
+					#if DEVELOPER
 					#if SERVER || CLIENT
 					switch( Artifacts_GetComponentType( component ) )
 					{
@@ -628,7 +628,7 @@ void function RegisterArtifactComponentsForWeapon( ItemFlavor artifactWeapon )
 							break
 					}
 					#endif // #if SERVER || CLIENT
-					#endif // #if DEV
+					#endif // #if DEVELOPER
 				}
 			}
 			else
@@ -652,7 +652,7 @@ void function OnAllItemFlavorsRegistered_Artifact_Weapon()
 // NOTE: we need to add the Loadout slots, then PDEF autogen adds the proper pvars
 void function BuildLoadoutEntries_ArtifactWeapons()
 {
-	#if DEV
+	#if DEVELOPER
 		printf("ArtifactsDebug: %s", FUNC_NAME() )
 	#endif
 
@@ -665,13 +665,13 @@ void function BuildLoadoutEntries_ArtifactWeapons()
 			if ( fileLevel.componentListsByType[ componentCounter ].len() == 0 )
 				continue // might have disabled a component via playlist during development
 
-			#if DEV
+			#if DEVELOPER
 				printf( "ArtifactsDebug: %s - %s", FUNC_NAME(), ARTIFACT_COMPONENTS_TO_LOADOUT_NAMES_MAP[ componentCounter ] )
 			#endif
 
 			LoadoutEntry componentEntry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, format( LOADOUTS_ARTIFACT_INDEX_COMPONENT_TYPE, artifactIdx, ARTIFACT_COMPONENTS_TO_LOADOUT_NAMES_MAP[ componentCounter ] ), eLoadoutEntryClass.ACCOUNT )
 			componentEntry.category = eLoadoutCategory.ARTIFACT_CONFIGURATIONS
-			#if DEV
+			#if DEVELOPER
 				componentEntry.pdefSectionKey = format( LOADOUTS_DEV_ARTIFACT_CONFIGURATION_PDEF_SECTION_KEY, artifactIdx )
 				componentEntry.DEV_name = format( LOADOUTS_DEV_ARTIFACT_CONFIGURATION_VERBOSE, artifactIdx )
 			#endif
@@ -701,7 +701,7 @@ void function BuildLoadoutEntries_ArtifactWeapons()
 	*/
 	LoadoutEntry componentEntry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, LOADOUTS_ARTIFACT_COMPONENT_CHANGE, eLoadoutEntryClass.ACCOUNT )
 	componentEntry.category = eLoadoutCategory.ARTIFACT_CONFIGURATIONS
-	#if DEV
+	#if DEVELOPER
 		componentEntry.pdefSectionKey = LOADOUTS_DEV_ARTIFACT_COMPONENT_CHANGE_VERBOSE_PDEF_SECTION_KEY
 		componentEntry.DEV_name = LOADOUTS_DEV_ARTIFACT_COMPONENT_CHANGE_VERBOSE
 	#endif
@@ -1131,7 +1131,7 @@ ArtifactViewmodelData ornull function ClientCodeCallback_GetArtifactViewmodelDat
 #if SERVER || CLIENT
 void function Artifacts_Loadouts_SetupWeaponComponents( entity weapon, entity owner )
 {
-	#if DEV && CLIENT
+	#if DEVELOPER && CLIENT
 		if ( weapon.IsWeaponX() )
 			DEV_UpdatePlayerArtifactConfiguration( weapon, owner ) // the DEV menu really messes with our cache...
 	#endif
@@ -1358,7 +1358,7 @@ int function Artifacts_Loadouts_GetEquippedTier( EHI playerEHI )
 	// - But we can query the Server via RPC if we need to based on the melee skin being an artifact config pointer
 	// - which saves having to network all **five** config Loadouts, which will not be used for most players
 
-	#if DEV
+	#if DEVELOPER
 		return GetConVarInt( "artifacts_tier_override" )
 	#endif
 
@@ -1513,7 +1513,7 @@ void function Artifact_PrecacheDeathboxModelAndFX( ItemFlavor deathbox )
 	asset deathboxMdl = Artifacts_GetDeathboxModel( deathbox )
 	if ( deathboxMdl != $"" )
 	{
-		#if DEV
+		#if DEVELOPER
 			printf( "ArtifactsDebug: precaching Deathbox model %s", string(deathboxMdl) )
 		#endif
 		PrecacheModel( deathboxMdl )
@@ -1522,7 +1522,7 @@ void function Artifact_PrecacheDeathboxModelAndFX( ItemFlavor deathbox )
 	asset particleFX = Artifacts_FX_GetDeathboxFX( deathbox )
 	if ( particleFX != $"" )
 	{
-		#if DEV
+		#if DEVELOPER
 			printf( "ArtifactsDebug: precaching Deathbox FX %s", string(particleFX) )
 		#endif
 		PrecacheParticleSystem( particleFX )
@@ -2090,7 +2090,7 @@ asset function Artifacts_ActivationEmote_GetVideo( ItemFlavor emote )
 }
 #endif // #if UI || CLIENT
 
-#if DEV
+#if DEVELOPER
 // DEV-ONLY HELPER FUNCTIONS
 #if UI
 void function Artifacts_DEV_RequestEquipSetByIndex( LoadoutEntry meleeSkinSlot, ItemFlavor configPointer, int setIndex )
@@ -2270,7 +2270,7 @@ void function Artifacts_DEV_SetComponentBodyGroupModsForWeapon( entity weapon, s
 
 void function Artifacts_DEV_SetBladeAndSkinByIndex( int idx, int playerIdx = 0, int weaponIdx = 0 )
 {
-	entity player = gp()[ playerIdx ]
+	entity player = GetPlayerArray()[ playerIdx ]
 	entity knife = player.GetMainWeapons()[ weaponIdx ]
 	entity knifeVM = player.GetMainWeapons()[ weaponIdx ].GetWeaponViewmodel()
 
@@ -2284,7 +2284,7 @@ void function Artifacts_DEV_SetBladeAndSkinByIndex( int idx, int playerIdx = 0, 
 
 void function Artifacts_DEV_SetComponentForActiveWeapon( string component, int idx )
 {
-	entity artifactWeap = GP().GetActiveWeapon( 0 )
+	entity artifactWeap = GetPlayerArray()[0].GetActiveWeapon( 0 )
 	if ( artifactWeap.GetWeaponClassName() == ARTIFACT_DAGGER_MP_WEAPON )
 	{
 		entity artifactVM = artifactWeap.GetWeaponViewmodel()
@@ -2299,7 +2299,7 @@ void function Artifacts_DEV_SetComponentForActiveWeapon( string component, int i
 		Warning( "Active weapon class " + artifactWeap.GetWeaponClassName() + " does not match expected artifact weap class : mp_weapon_artifact_dagger_primary. Equip the artifact weapon." )
 	}
 
-	entity meleeWeap = GP().GetOffhandWeapon( 5 )
+	entity meleeWeap = GetPlayerArray()[0].GetOffhandWeapon( 5 )
 	if ( meleeWeap.GetWeaponClassName() == ARTIFACT_DAGGER_MELEE_WEAPON )
 	{
 		if ( meleeWeap.FindBodygroup( component ) != BODY_GROUP_INVALID )
@@ -2321,14 +2321,14 @@ void function Artifacts_DEV_SetThemeForActiveWeapon( ItemFlavor theme )
 {
 	Assert( !Artifacts_IsEmptyComponent( theme ) )
 
-	entity artifactWeap = GP().GetActiveWeapon( 0 )
+	entity artifactWeap = GetPlayerArray()[0].GetActiveWeapon( 0 )
 	if ( artifactWeap.GetWeaponClassName() == ARTIFACT_DAGGER_MP_WEAPON )
 	{
 		Artifacts_Loadouts_ApplyModelForSet( artifactWeap, Artifacts_GetSetIndex( theme ) )
 		Artifacts_Loadouts_SetBaseSkinForTheme( artifactWeap, theme )
 	}
 
-	entity meleeWeap = GP().GetOffhandWeapon( 5 )
+	entity meleeWeap = GetPlayerArray()[0].GetOffhandWeapon( 5 )
 	if ( meleeWeap.GetWeaponClassName() == ARTIFACT_DAGGER_MELEE_WEAPON )
 	{
 		Artifacts_Loadouts_ApplyModelForSet( artifactWeap, Artifacts_GetSetIndex( theme ) )
@@ -2338,7 +2338,7 @@ void function Artifacts_DEV_SetThemeForActiveWeapon( ItemFlavor theme )
 
 void function Artifacts_DEV_SetSkinForActiveWeapon( string skinName )
 {
-	entity artifactWeap = GP().GetActiveWeapon( 0 )
+	entity artifactWeap = GetPlayerArray()[0].GetActiveWeapon( 0 )
 	if ( artifactWeap.GetWeaponClassName() == ARTIFACT_DAGGER_MP_WEAPON )
 	{
 		artifactWeap.SetWeaponSkin( artifactWeap.GetSkinIndexByName( skinName ) )
@@ -2351,7 +2351,7 @@ void function Artifacts_DEV_SetSkinForActiveWeapon( string skinName )
 
 void function Artifacts_DEV_PreviewFirstDraw( int firstDrawIdx )
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	entity artifactWeap = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
 	if ( !IsValid( artifactWeap ) || !artifactWeap.IsWeaponX() || !artifactWeap.GetWeaponSettingBool( eWeaponVar.is_artifact ) )
 		return
@@ -2409,4 +2409,4 @@ void function Artifacts_DEV_UnitTest_Blade( ItemFlavor blade )
 	Artifacts_FX_GetBladeControlPoints( blade, false )
 }
 #endif // #if CLIENT || SERVER
-#endif // #if DEV
+#endif // #if DEVELOPER

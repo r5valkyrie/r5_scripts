@@ -14,7 +14,7 @@ global function ServerToClient_MedBayRuiTriggerLeave
 
 #if SERVER
 global function MedBay_GetHealsPercentRemaining
-#if DEV
+#if DEVELOPER
 global function DEV_TestMedBayRing
 #endif
 #endif
@@ -544,7 +544,7 @@ void function MedBay_InitEye()
 	if ( !GetCurrentPlaylistVarBool( MEDBAY_PLAYLIST_EYE_ENABLED, true ) )
 		return
 
-#if DEV
+#if DEVELOPER
 	//We're running the survival preprocess right now, assets might not be precached yet
 	if ( Dev_CommandLineHasParm( "-survival_preprocess" ) )
 		return
@@ -1663,7 +1663,7 @@ void function PlaySparks( entity doc, vector origin )
 	EmitSoundAtPosition( TEAM_UNASSIGNED, origin, SFX_MEDBAY_SPARKS, doc )
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_TestMedBayRing()
 {
 	MedBayData data = file.allMedBays[0]

@@ -221,12 +221,12 @@ void function ScriptToys_Init()
 	AddSpawnCallback( "prop_dynamic", PlayEditorDefaultAnim )
 	RegisterSignal( "StopEditorDefaultAnim" )
 
-	#if DEV
+	#if DEVELOPER
 		AddSpawnCallbackEditorClass( "info_target", 				"info_text_panel", 				InfoTextPanelSpawnCallback )
 		AddSpawnCallbackEditorClass( "info_target", 				"info_debug_text", 				DevDebugText )
 	#endif
 
-	#if DEV
+	#if DEVELOPER
 	thread InfoTextPanelsCreate()
 	#endif
 
@@ -2767,7 +2767,7 @@ void function UnlockCreatureCage( CreatureCage cage )
 */
 /////////////////////////////////////////////////////////////////////////////////////////
 
-#if DEV
+#if DEVELOPER
 void function DevDebugText( entity node )
 {
 	Assert( node.HasKey( "text" ) && node.kv.text != "", "info_debug_text at " + node.GetOrigin() + " doesn't have text set on it." )

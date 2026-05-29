@@ -47,7 +47,7 @@ global function Cups_ShowCupSummary
 global function Cups_IsPlayerCupComplete
 #endif
 
-#if DEV
+#if DEVELOPER
 global function DEV_Cups_DumpAllCupBakeryAssetData
 global function DEV_Cups_DumpMyRegisteredCups
 global function DEV_Cups_DumpMyCupMatchSummaryData
@@ -858,7 +858,7 @@ array<UserCupEntryData> function Cups_GetPlayersFullPCupData ( entity player )
 {
 	array<UserCupEntryData> fullUserCupData = []
 	if( !GetConVarBool( "cups_enabled" ) ) return fullUserCupData
-	#if DEV
+	#if DEVELOPER
 		if ( DEV_ShouldIgnorePersistence() )
 			return fullUserCupData
 	#endif
@@ -1100,7 +1100,7 @@ bool function Cups_IsPlayerCupComplete( string playlistName )
 }
 #endif
 
-#if DEV
+#if DEVELOPER
 void function DEV_Cups_DumpAllCupBakeryAssetData( int Timezone_Offset_Hours = -7 )
 {
 	if( !GetConVarBool( "cups_enabled" ) ) return
@@ -1205,7 +1205,7 @@ void function DEV_Cups_DumpMyRegisteredCups()
 		#if CLIENT
 			entity player = GetLocalClientPlayer()
 		#else
-			entity player = gp()[0]
+			entity player = GetPlayerArray()[0]
 		#endif
 
 		foreach ( UserCupEntryData userCupEntry in Cups_GetPlayersFullPCupData( player ) )
@@ -1233,7 +1233,7 @@ void function DEV_Cups_DumpMyCupMatchSummaryData()
 	#if CLIENT
 		entity player = GetLocalClientPlayer()
 	#else
-		entity player = gp()[0]
+		entity player = GetPlayerArray()[0]
 	#endif
 
 	LastCupMatchPlayedData ornull cupsLastMatchData = Cups_GetLatestMatchSummaryData( player )
@@ -1280,8 +1280,8 @@ CupMatchSummary function DEV_GenerateDummyMatchHistory( SettingsAssetGUID cupID,
 			playerSummary.playerUID = GetPlayerUID()
 			playerSummary.playerHardware = GetPlayerHardware()
 		#else
-			playerSummary.playerUID = player.GetUserID()
-			playerSummary.playerHardware = player.GetHardwareName()
+			playerSummary.playerUID = "2"
+			playerSummary.playerHardware = "PC"
 		#endif// UI
 
 		matchSummary.squadCalculatedScore += Cups_GetPointsForPlacement( cup, squadPlacement )

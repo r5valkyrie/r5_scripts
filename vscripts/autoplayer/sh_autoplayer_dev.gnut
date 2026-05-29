@@ -1079,7 +1079,7 @@ int function AutoPlayer_GetWinterExpressRoundState()
 
 vector function AutoPlayer_GetWinterExpressNextStationPosition()
 {
-	#if SERVER && DEV
+	#if SERVER && DEVELOPER
 		                      
 		array<entity> pathNodes = DesertlandsTrain_GetCurrentPathNodes()
 		if ( pathNodes.len() > 0 )

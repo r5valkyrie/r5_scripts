@@ -8,7 +8,7 @@ global function GetFXCenterFromSmokescreen
 global function SmokeBlockThreatVision_IsEnabled
       
 
-#if DEV
+#if DEVELOPER
 const bool SMOKESCREEN_DEBUG = false
 #endif
 
@@ -90,7 +90,7 @@ void function Smokescreen( SmokescreenStruct smokescreen, entity ownerEnt )
 	if ( smokescreen.blockLOS )
 		traceBlocker = Smokescreen_CreateTraceBlockerVol( smokescreen, fxInfo, ownerEnt )
 
-#if DEV
+#if DEVELOPER
 	if ( SMOKESCREEN_DEBUG )
 		DebugDrawCircle( fxInfo.center, <0,0,0>, fxInfo.radius + 240.0, COLOR_YELLOW, true, smokescreen.lifetime )
 #endif
@@ -223,12 +223,12 @@ void function SmokescreenAffectsEntitiesInArea( SmokescreenStruct smokescreen, S
 
 	while ( Time() - startTime <= smokescreen.lifetime )
 	{
-#if DEV
+#if DEVELOPER
 		if ( SMOKESCREEN_DEBUG )
 		{
 			DebugDrawCircle( fxInfo.center, <0,0,0>, smokescreen.damageInnerRadius, COLOR_RED, true, tickRate )
 			DebugDrawCircle( fxInfo.center, <0,0,0>, smokescreen.damageOuterRadius, COLOR_RED, true, tickRate )
-			DebugDrawLine( fxInfo.center, smokescreen.origin, COLOR_RED, true, tickRate )
+			DebugDrawLine( fxInfo.center, smokescreen.origin, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, tickRate )
 		}
 #endif
 
@@ -286,7 +286,7 @@ entity function Smokescreen_CreateTraceBlockerVol( SmokescreenStruct smokescreen
 
 	AI_CreateDangerousArea_Static(tbl, null, fxInfo.radius, TEAM_INVALID, true, true, fxInfo.center);
 
-	#if DEV
+	#if DEVELOPER
 	if ( SMOKESCREEN_DEBUG )
 		DrawAngledBox( tbl.GetOrigin(), smokescreen.angles, tbl.GetBoundingMins(), tbl.GetBoundingMaxs(), COLOR_RED, true, smokescreen.lifetime - 0.6 )
 #endif
@@ -300,7 +300,7 @@ array<entity> function SmokescreenFX( SmokescreenStruct smokescreen, Smokescreen
 
 	foreach ( position in fxInfo.fxWorldPositions )
 	{
-#if DEV
+#if DEVELOPER
 		if ( SMOKESCREEN_DEBUG )
 			DebugDrawCircle( position, <0,0,0>, smokescreen.fxXYRadius, COLOR_BLUE, true, smokescreen.lifetime )
 #endif

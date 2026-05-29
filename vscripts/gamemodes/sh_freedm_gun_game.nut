@@ -5,7 +5,7 @@
 global function GunGame_Init
 global function GunGame_GetPlayerScore
 global function GunGame_IsPlayerAhead
-#if DEV
+#if DEVELOPER
 #if SERVER
 global function DEV_GunGame_BuildWeaponList
 global function DEV_GunGame_TestEndFlow
@@ -197,7 +197,7 @@ void function BuildWeaponList()
 		file.weaponRefs.append( weaponRef )
 		disabledRefs.append( GetBaseWeaponRef( weaponRef ) )
 
-	#if DEV
+	#if DEVELOPER
 		printt( "Gun Run: BuildWeaponList - Weapon %d: %s", i, weaponRef )
 	#endif
 
@@ -221,7 +221,7 @@ void function BuildWeaponList()
 		while( file.weaponRefs.len() < GetScoreLimit_FromPlaylist() )
 		{
 			string lastWeaponRef = file.weaponRefs[ file.weaponRefs.len() - 1 ]
-			#if DEV
+			#if DEVELOPER
 				printt( "Gun Run: BuildWeaponList - Weapon %d: %s", file.weaponRefs.len(), lastWeaponRef )
 			#endif
 			file.weaponRefs.append( lastWeaponRef )
@@ -1324,7 +1324,7 @@ int function GetScorePerGun()
 	return GetCurrentPlaylistVarInt( "gun_game_score_per_gun", 1 )
 }
 
-#if DEV
+#if DEVELOPER
 #if SERVER
 void function DEV_GunGame_BuildWeaponList()
 {

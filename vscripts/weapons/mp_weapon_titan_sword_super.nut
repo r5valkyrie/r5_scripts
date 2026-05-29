@@ -18,7 +18,7 @@ global function TitanSword_Super_AddCharge
 global function ClientCallback_TitanSword_SelectFirePressed
 #endif
 
-#if DEV
+#if DEVELOPER
 #if SERVER
 global function DEV_TitanSword_GiveSuper
 global function DEV_TitanSword_BotTestSuper
@@ -907,7 +907,7 @@ vector function GetSuperColor( float frac )
 #endif
 
 
-#if DEV
+#if DEVELOPER
 #if SERVER
 void function DEV_TitanSword_GiveSuper( entity player, int amount = -1 )
 {

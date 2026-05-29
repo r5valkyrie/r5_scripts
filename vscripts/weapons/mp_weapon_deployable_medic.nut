@@ -621,8 +621,8 @@ void function DroneMedicHoverThink( entity droneMedic, vector velocity )
 
 	droneMedic.SetMoveToPositionGround( moveToPosition, groundEnt )
 
-	//DebugDrawLine( deployOrigin, deployDest, COLOR_RED, true, 2 )
-	//DebugDrawLine( deployDest, groundTraceResult.endPos, COLOR_GREEN, true, 2 )
+	//DebugDrawLine( deployOrigin, deployDest, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 2 )
+	//DebugDrawLine( deployDest, groundTraceResult.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 2 )
 	//DrawStar( moveToPosition, 2, 5, true )
 
 	bool wasStuck = false
@@ -641,8 +641,8 @@ void function DroneMedicHoverThink( entity droneMedic, vector velocity )
 		//	r = 0
 		//	g = 255
 		//}
-		//DebugDrawLine( droneMedic.GetOrigin(), droneMedic.GetOrigin() - <0, 0, traceHeight>, <r, g, 0>, true, 0.1 )
-		//DebugDrawSphere( groundTraceResult.endPos, 3, <r,g,0>,true, 0.1 )
+		//DebugDrawLine( droneMedic.GetOrigin(), droneMedic.GetOrigin() - <0, 0, traceHeight>, r, g, 0, true, 0.1 )
+		//DebugDrawSphere( groundTraceResult.endPos, 3, r.x, r.y, r.z, g, 0, true, 0.1 )
 
 		entity newGroundEnt = groundTraceResult.hitEnt ? groundTraceResult.hitEnt.GetRootMoveParent() : null
 		if ( !isHealing && !CanDroneHoverTo( droneMedic, hoverOrigin ) )
@@ -687,7 +687,7 @@ void function DroneMedicHoverThink( entity droneMedic, vector velocity )
 		float speed   = GraphCapped( distSqr, BASE_SPEED_DIST, MAX_SPEED_DIST, baseSpeed, MAX_SPEED )
 		droneMedic.SetMaxSpeed( speed )
 
-		//DebugDrawLine( droneMedic.GetOrigin(), droneMedic.GetMoveToPositionWorld(), COLOR_YELLOW, true, 0.1 )
+		//DebugDrawLine( droneMedic.GetOrigin(), droneMedic.GetMoveToPositionWorld(), int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 0.1 )
 		//DrawStar( droneMedic.GetMoveToPositionWorld(), 2, 0.5, true )
 		WaitFrame()
 	}
@@ -707,9 +707,9 @@ vector ornull function GetClearHoverVector( entity droneMedic, vector deployOrig
 		float frac         = TraceHullSimple( droneMedic.GetOrigin(), traceOrigin, DRONE_MINS, DRONE_MAXS, droneMedic )
 
 		//DebugDrawBox( traceOrigin, DRONE_MINS, DRONE_MAXS, <92, 92, 255>, 1, 1.0 )
-		//DebugDrawLine( droneMedic.GetOrigin(), traceOrigin, <92, 92, 255>, true, 1.0 )
+		//DebugDrawLine( droneMedic.GetOrigin(), traceOrigin, 92, 92, 255, true, 1.0 )
 		vector endPoint = droneMedic.GetOrigin() + traceVec * TRACE_LENGTH * frac
-		//DebugDrawLine( endPoint, endPoint + <0,0,16>, <92, 92, 255>, true, 1.0 )
+		//DebugDrawLine( endPoint, endPoint + <0,0,16>, 92, 92, 255, true, 1.0 )
 
 
 		if ( frac >= minFrac )

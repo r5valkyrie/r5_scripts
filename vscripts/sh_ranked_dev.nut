@@ -1,6 +1,6 @@
 globalize_all_functions
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 RankLadderPointsBreakdown function AdjustForQAPlaylistOverrides ( RankLadderPointsBreakdown breakdown, entity player )
 {
 	bool hasQAOverride = GetCurrentPlaylistVarBool ( "DEV_Ranked_QA_Override" , false )
@@ -105,7 +105,7 @@ void function DEV_PrintRankScoreForPeriod ( entity player, ItemFlavor currentRan
 void function TestRankedPostGamePrep()
 {
 
-	entity player = GP ()
+	entity player = GetPlayerArray()[0]
 	SetDemotionProtectionBuffer ( player , DEMOTION_BUFFER_MAX )
 
 	RankLadderPointsBreakdown breakdown
@@ -184,7 +184,7 @@ void function TestRankedPostGame( RankLadderPointsBreakdown breakdown, int provi
 		}
 
 		int rankedTrialGuid = RankedTrials_PlayerHasIncompleteTrial( player ) ? ItemFlavor_GetGUID( RankedTrials_GetAssignedTrial( player ) ) : 0
-		SetPlayerMatchResult( player, breakdown.placement, breakdown.kills, breakdown.damage, MMR_GetInteractionsForPlayer( player, int function ( entity player ) : ( breakdown ) { return breakdown.placement } ), Ranked_HasFinishedProvisionalMatches( player ), rankedTrialGuid )
+		SetPlayerMatchResult( player, breakdown.placement, breakdown.kills, breakdown.damage )
 
 		string ornull currentRankedGUID = GetCurrentStatRankedPeriodRefOrNullByType( eItemType.calevent_rankedperiod )
 		if ( currentRankedGUID != null )
@@ -390,7 +390,7 @@ void function SimulateGameResultWithoutWrite_S20( int placement = 1, int startin
 		return
 	}
 
-	entity player = GP ()
+	entity player = GetPlayerArray()[0]
 	SetDemotionProtectionBuffer ( player , demotionProtection )
 	Ranked_SetPlayerTop5StreakCount ( player, top5Count )
 	SetPlayerMmrUtil (  player,  mmr,  variance , d )
@@ -517,7 +517,7 @@ void function SimulateGameResultWithoutWrite_S20( int placement = 1, int startin
 		breakdown.finalLP = breakdown.startingLP
 	}
 
-	#if DEV
+	#if DEVELOPER
 		PrintRankLadderPointsBreakdown ( breakdown, 0, "DEV S20 PrepareGameSummaryForPointCalculation for " + player.GetPlayerName()  )
 	#endif
 
@@ -536,7 +536,7 @@ void function SimulateGameResultWithoutWrite ( int placement = 1, int startingLP
 	// Building data
 	// this needs to mirror PrepareGameSummaryForPointCalculation() in data provided
 
-	entity player = GP ()
+	entity player = GetPlayerArray()[0]
 	SetDemotionProtectionBuffer ( player , demotionProtection )
 
 	SetPlayerMmrUtil (  player,  mmr,  variance )
@@ -644,7 +644,7 @@ void function SimulateGameResultWithoutWrite ( int placement = 1, int startingLP
 		breakdown.finalLP = breakdown.startingLP
 	}
 
-	#if DEV
+	#if DEVELOPER
 		PrintRankLadderPointsBreakdown ( breakdown, 0, "PrepareGameSummaryForPointCalculation for " + player.GetPlayerName()  )
 	#endif
 
@@ -664,7 +664,7 @@ void function SimulateAdjustForConvergence ( int placement = 2 , int startingLP 
 	// Building data
 	// this needs to mirror PrepareGameSummaryForPointCalculation() in data provided
 
-	entity player = GP ()
+	entity player = GetPlayerArray()[0]
 	SetDemotionProtectionBuffer ( player , DEMOTION_BUFFER_MAX )
 
 	SetPlayerMmrUtil (  player,  mmr,  variance )
@@ -762,7 +762,7 @@ void function SimulateAdjustForConvergence ( int placement = 2 , int startingLP 
 		breakdown.finalLP = breakdown.startingLP
 	}
 
-	#if DEV
+	#if DEVELOPER
 		PrintRankLadderPointsBreakdown ( breakdown, 0, "PrepareGameSummaryForPointCalculation for " + player.GetPlayerName()  )
 	#endif
 
@@ -783,7 +783,7 @@ void function SimulateAdjustForProvisional ( int placement = 2 , int startingLP 
 	// Building data
 	// this needs to mirror PrepareGameSummaryForPointCalculation() in data provided
 
-	entity player = GP ()
+	entity player = GetPlayerArray()[0]
 	SetDemotionProtectionBuffer ( player , DEMOTION_BUFFER_MAX )
 
 	SetPlayerMmrUtil (  player,  mmr,  variance )
@@ -880,7 +880,7 @@ void function SimulateAdjustForProvisional ( int placement = 2 , int startingLP 
 		breakdown.finalLP = breakdown.startingLP
 	}
 
-	#if DEV
+	#if DEVELOPER
 		PrintRankLadderPointsBreakdown ( breakdown, 0, "PrepareGameSummaryForPointCalculation for " + player.GetPlayerName()  )
 	#endif
 
@@ -904,7 +904,7 @@ void function SimulateRedistributeBonuses ( int k = 123, int c = 423, int s = 32
 		return
 	}
 
-	entity player = GP ()
+	entity player = GetPlayerArray()[0]
 	// Building data
 	// this needs to mirror PrepareGameSummaryForPointCalculation() in data provided
 
@@ -932,7 +932,7 @@ void function SimTop5Streak ( int maxCount = 5  )
 
 #endif // SERVER
 
-#if DEV
+#if DEVELOPER
 void function DEV_script_ranked_debug ( string message,int indent = 0 )
 {
 

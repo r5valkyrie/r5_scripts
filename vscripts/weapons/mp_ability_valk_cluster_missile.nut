@@ -561,7 +561,7 @@ void function ValkTacManageThreatIndicator()
 				continue
 
 			vector point = warningLoc.GetOrigin()
-			//DebugDrawSphere( point, 25, <100, 0, 0>, true, 0.1 )
+			//DebugDrawSphere( point, 25, 100, 0, 0, true, 0.1 )
 			if ( firstLoop )
 			{
 				closestPoint = point

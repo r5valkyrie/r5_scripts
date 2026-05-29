@@ -1063,7 +1063,7 @@ void function PhaseTunnel_CreateTriggerArea( entity tunnelEnt, PhaseTunnelPortal
 
 	//if ( PHASE_TUNNEL_DEBUG_DRAW_PROJECTILE_TELEPORT )
 	{
-	//	DebugDrawLine( startPointData.portalFX.GetOrigin(), startPointData.portalFX.GetOrigin() + (startPointData.portalFX.GetUpVector() * 64), COLOR_RED, true, 30.0 ) //Grenade Entry Vel
+	//	DebugDrawLine( startPointData.portalFX.GetOrigin(), startPointData.portalFX.GetOrigin() + (startPointData.portalFX.GetUpVector() * 64), int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 30.0 ) //Grenade Entry Vel
 	}
 
 	WaitForever()
@@ -1210,17 +1210,17 @@ void function PhaseTunnel_OnProjectileHitVortexTrigger( entity weapon, entity vo
 
 	/*if ( PHASE_TUNNEL_DEBUG_DRAW_PROJECTILE_TELEPORT )
 	{
-		DebugDrawLine( contactPos, contactPos + (velNorm * 64), COLOR_RED, true, 30.0 ) //Grenade Entry Vel
-		DebugDrawLine( startPortalData.portalFX.GetOrigin(), startPortalData.portalFX.GetOrigin() + (startPortalData.portalFX.GetUpVector() * 64), COLOR_GREEN, true, 30.0 ) //Grenade Entry Vel
+		DebugDrawLine( contactPos, contactPos + (velNorm * 64), int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 30.0 ) //Grenade Entry Vel
+		DebugDrawLine( startPortalData.portalFX.GetOrigin(), startPortalData.portalFX.GetOrigin() + (startPortalData.portalFX.GetUpVector() * 64), int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 30.0 ) //Grenade Entry Vel
 
-		DebugDrawLine( endPortalData.portalFX.GetOrigin(), impactPoint, COLOR_CYAN, true, 30.0 ) //Grenade Entry Vel
-		DebugDrawLine( endFXOrigin, endFXOrigin + exitPoint, COLOR_MAGENTA, true, 30.0 ) //Grenade Entry Vel
+		DebugDrawLine( endPortalData.portalFX.GetOrigin(), impactPoint, int(COLOR_CYAN.x), int(COLOR_CYAN.y), int(COLOR_CYAN.z), true, 30.0 ) //Grenade Entry Vel
+		DebugDrawLine( endFXOrigin, endFXOrigin + exitPoint, int(COLOR_MAGENTA.x), int(COLOR_MAGENTA.y), int(COLOR_MAGENTA.z), true, 30.0 ) //Grenade Entry Vel
 
-		DebugDrawLine( contactPos, endFXOrigin + exitPoint, COLOR_YELLOW, true, 30.0 ) //Grenade Entry Vel
+		DebugDrawLine( contactPos, endFXOrigin + exitPoint, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 30.0 ) //Grenade Entry Vel
 
-		DebugDrawLine( endFXOrigin, endFXOrigin + (endPortalData.portalFX.GetUpVector() * 64), COLOR_GREEN, true, 30.0 ) //Grenade Entry Vel
-		DebugDrawLine( endFXOrigin + exitPoint, (endFXOrigin + exitPoint) + (velNorm * 64), COLOR_RED, true, 30.0 ) //Grenade Entry Vel
-		DebugDrawLine( endFXOrigin + exitPoint, (endFXOrigin + exitPoint) + (newDir * 128), COLOR_BLUE, true, 30.0 ) //Grenade Entry Vel
+		DebugDrawLine( endFXOrigin, endFXOrigin + (endPortalData.portalFX.GetUpVector() * 64), int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 30.0 ) //Grenade Entry Vel
+		DebugDrawLine( endFXOrigin + exitPoint, (endFXOrigin + exitPoint) + (velNorm * 64), int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 30.0 ) //Grenade Entry Vel
+		DebugDrawLine( endFXOrigin + exitPoint, (endFXOrigin + exitPoint) + (newDir * 128), int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 30.0 ) //Grenade Entry Vel
 	}*/
 }
 
@@ -1243,13 +1243,13 @@ vector function PhaseTunnel_GetPointOnRectangularPlane( vector origin, vector pl
 
 	/*if ( PHASE_TUNNEL_DEBUG_DRAW_PROJECTILE_TELEPORT )
 	{
-		DebugDrawLine( triAPointA, triAPointB, COLOR_RED, true, 20.0 )
-		DebugDrawLine( triAPointB, triAPointC, COLOR_RED, true, 20.0 )
-		DebugDrawLine( triAPointC, triAPointA, COLOR_RED, true, 20.0 )
+		DebugDrawLine( triAPointA, triAPointB, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 20.0 )
+		DebugDrawLine( triAPointB, triAPointC, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 20.0 )
+		DebugDrawLine( triAPointC, triAPointA, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 20.0 )
 
-		DebugDrawLine( triBPointA, triBPointB, COLOR_GREEN, true, 20.0 )
-		DebugDrawLine( triBPointB, triBPointC, COLOR_GREEN, true, 20.0 )
-		DebugDrawLine( triBPointC, triBPointA, COLOR_GREEN, true, 20.0 )
+		DebugDrawLine( triBPointA, triBPointB, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 20.0 )
+		DebugDrawLine( triBPointB, triBPointC, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 20.0 )
+		DebugDrawLine( triBPointC, triBPointA, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 20.0 )
 	}*/
 
 	//Return the closer of the two points
@@ -1442,10 +1442,10 @@ void function PhaseTunnel_MoveEntAlongPath( entity player, PhaseTunnelPathData p
 		if ( PHASE_TUNNEL_DEBUG_DRAW_PLAYER_TRAVEL )
 		{
 			const float DRAW_TIME = 10.0
-			//DebugDrawLine( prevPosition, player.GetOrigin(), COLOR_GREEN, false, DRAW_TIME ) //Prev Player Position to current Pos
+			DebugDrawLine( prevPosition, player.GetOrigin(), int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), false, DRAW_TIME ) //Prev Player Position to current Pos
 			prevPosition = player.GetOrigin()
 			//if ( prevPathIndex != currentPathIndex )
-			//	DebugDrawSphere( pathNodeDataArray[currentPathIndex].origin, 6, COLOR_GREEN, false, DRAW_TIME )
+				//DebugDrawSphere( pathNodeDataArray[currentPathIndex].origin, 6, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), false, DRAW_TIME )
 
 		}
 
@@ -1554,9 +1554,9 @@ void function PhaseTunnel_MoveEntAlongPath( entity player, PhaseTunnelPathData p
 		dist = distInt/100.0
 
 		//DebugDrawText( player.GetOrigin(), ("Final Pos: " + dist + "m"), false, DRAW_TIME )
-		//DebugDrawSphere( player.GetOrigin(), 10, COLOR_BLUE,false, DRAW_TIME )
-		//DebugDrawSphere( pathNodeDataArray[stopPathIndex].origin, 6, COLOR_LIGHT_BLUE, false, DRAW_TIME )
-		//DebugDrawLine( player.GetOrigin(),pathNodeDataArray[stopPathIndex].origin, COLOR_LIGHT_BLUE, false, DRAW_TIME )
+		DebugDrawSphere( player.GetOrigin(), 10, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), false, DRAW_TIME )
+		DebugDrawSphere( pathNodeDataArray[stopPathIndex].origin, 6, int(COLOR_LIGHT_BLUE.x), int(COLOR_LIGHT_BLUE.y), int(COLOR_LIGHT_BLUE.z), false, DRAW_TIME )
+		DebugDrawLine( player.GetOrigin(), pathNodeDataArray[stopPathIndex].origin, int(COLOR_LIGHT_BLUE.x), int(COLOR_LIGHT_BLUE.y), int(COLOR_LIGHT_BLUE.z), false, DRAW_TIME )
 	}
 
 	if ( pathNodeData.nodeData.wasInContextAction && !PutPlayerInSafeSpot( player, null, null, pathNodeData.safeRelativeOrigin, player.GetOrigin() ) )
@@ -1739,8 +1739,8 @@ vector function GetNextAngleToLookAt( int currentIndex, int step, array< PhaseTu
 	bool DEBUG_DRAW_LOOK_AT = false
 	if ( DEBUG_DRAW_LOOK_AT )
 	{
-		//DebugDrawSphere( startPosition, 2, COLOR_GREEN, true, 10.0 )
-		//DebugDrawLine( startPosition, nextPosition, COLOR_RED, true, 10.0 )
+		DebugDrawSphere( startPosition, 2, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 10.0 )
+		DebugDrawLine( startPosition, nextPosition, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 10.0 )
 	}
 
 	return VectorToAngles( nextPosition - startPosition )
@@ -2326,13 +2326,13 @@ bool function PhaseTunnel_BarrierInDirection( entity player, vector origin, vect
 	if ( result.fraction < 1 )
 	{
 		//if ( PHASE_TUNNEL_DEBUG_DRAW_PLAYER_TRAVEL )
-		//	DebugDrawLine( origin, result.endPos, COLOR_RED, true, 20.0 )
+		//	DebugDrawLine( origin, result.endPos, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 20.0 )
 
 		return false
 	}
 
 	//if ( PHASE_TUNNEL_DEBUG_DRAW_PLAYER_TRAVEL )
-	//	DebugDrawLine( origin, result.endPos, COLOR_GREEN, true, 20.0 )
+	//	DebugDrawLine( origin, result.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 20.0 )
 
 	return true
 }

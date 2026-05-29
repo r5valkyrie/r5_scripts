@@ -184,7 +184,7 @@ int function Kepler_GetScenarioFromKey( string scenarioKey )
 			return scenario
 	}
 
-#if DEV
+#if DEVELOPER
 	Assert( false, "The scenario key " + scenarioKey + " is invalid" )
 #endif // DEV
 	return -1
@@ -206,7 +206,7 @@ asset ornull function Kepler_GetAssetForScenarioKey( entity player, string scena
 		{
 			if ( variant.controlledAssets.len() > 0 )
 			{
-				#if DEV
+				#if DEVELOPER
 					if ( variant.controlledAssets.len() > 1 )
 					{
 						Warning( "Scenario \"%s\" has multiple controlled assets and is trying to fetch only one", scenarioKey )
@@ -261,7 +261,7 @@ bool function Kepler_IsPlayerInVariant( entity player, int scenario, string vari
 		return false
 	}
 
-#if DEV
+#if DEVELOPER
 	string variantOverride = GetConVarString( "kepler_forceVariant" )
 	if ( variantOverride != "" )
 	{
@@ -425,7 +425,7 @@ void function AddCallbackOrCallNow_OnKeplerReady( entity client, void functionre
 #if SERVER
 void function CodeCallback_KeplerReady( entity client )
 {
-#if DEV
+#if DEVELOPER
 	if ( GetConVarBool( "kepler_forceNotReady" ) )
 	{
 		return

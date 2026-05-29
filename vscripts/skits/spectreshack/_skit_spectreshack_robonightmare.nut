@@ -36,7 +36,7 @@ global function ControlPanel_SpectreShack_OnUse_Server
 global function IMC_Armory_EntitiesDidLoad
 global function SpectreShackLootDefense
 
-#if DEV
+#if DEVELOPER
 global function DEV_SpectreShack_IsPlayerInSpectreShack
 global function DEV_SpectreShack_PauseEncounterTimer
 global function DEV_SpectreShack_UnpauseEncounter
@@ -132,7 +132,7 @@ array<string> armoryOpeningWarningDialogues =
 struct MyVars
 {
 #if SERVER
-	#if DEV
+	#if DEVELOPER
 		//Debugging Vars
 		float devTimeRemainingOnEncounter // this is -1 if the encounter is running normally
 	#endif //DEV
@@ -212,7 +212,7 @@ struct MyVars
 		float electricBoopInterval
 		table< entity, float > playerLastBoopTime
 
-	#if DEV
+	#if DEVELOPER
 		bool ceilingIsOpen = false
 	#endif // DEV
 #endif // SERVER
@@ -440,7 +440,7 @@ array<entity> function GetPlayersInsideShack( MyVars vars )
 			entity player = vars.playersInsideShack[i]
 			if ( (!IsValid(player) && !IsInvalidButMemberVarsStillValid(player) ) || ( IsValid(player) && !player.IsPlayer() ) )
 			{
-				#if DEV
+				#if DEVELOPER
 					ArmoryPrint( vars, "We're in trouble, there's an invaid entity in the shack!" )
 					foreach( entity ent in vars.playersInsideShack )
 					{
@@ -469,7 +469,7 @@ array<entity> function GetPlayersInsideShackProximity( MyVars vars )
 			entity player = vars.playersInsideProximity[i]
 			if ( (!IsValid(player) && !IsInvalidButMemberVarsStillValid(player) ) || ( IsValid(player) && !player.IsPlayer() ) )
 			{
-				#if DEV
+				#if DEVELOPER
 					ArmoryPrint( vars, "We're in trouble, there's an invaid entity in proximity of the shack!" )
 					foreach( entity ent in vars.playersInsideProximity )
 					{
@@ -541,7 +541,7 @@ SkitInstance ornull function InitThisSkit_Server( entity rootEnt, int skitID )
 
 	RegisterSignal( ON_EXIT_AFTER_COMPLETION_SIGNAL_KEYWORD )
 
-	#if DEV
+	#if DEVELOPER
 		vars.devTimeRemainingOnEncounter = -1
 	#endif
 
@@ -732,7 +732,7 @@ void function InitArmoryVariables_Server( SkitInstance si )
 				sp.attachmentIndex = vars.ceiling_Rig_Left.LookupAttachment( sp.attachmentName )
 				if( sp.attachmentIndex <= 0 )
 				{
-					#if DEV
+					#if DEVELOPER
 						ArmoryPrint( vars, "could not find a valid attachment index for " + sp.attachmentName )
 					#endif
 					continue
@@ -759,7 +759,7 @@ void function InitArmoryVariables_Server( SkitInstance si )
 				sp.attachmentIndex = vars.ceiling_Rig_Right.LookupAttachment( sp.attachmentName )
 				if( sp.attachmentIndex <= 0 )
 				{
-					#if DEV
+					#if DEVELOPER
 						ArmoryPrint( vars, "could not find a valid attachment index for " + sp.attachmentName )
 					#endif
 					continue
@@ -962,7 +962,7 @@ void function SpectreShack_OnInteriorTriggerEnter_Internal ( entity trigger, ent
 	if( vars.spectreShackState == eSpectreShackState.Activated )
 	{
 		float seekTime = Time() - vars.encounterMusicStartTime
-		#if DEV
+		#if DEVELOPER
 			ArmoryPrint( vars, "music seekTime: " + string( seekTime ))
 		#endif
 		if ( seekTime > 0 && seekTime < ARMORY_ENCOUNTER_DURATION )
@@ -1049,7 +1049,7 @@ void function Spectreshack_OnInteriorTriggerLeave_Internal ( entity trigger, ent
 
 	ArmoryPrint( vars, "TRIGGER LEAVE | a player left the shack: " + player.GetPlayerName(), false )
 	ArmoryPrint( vars, "TRIGGER LEAVE | num players still in the shack: " + string( vars.playersInsideShack.len() ), false )
-	#if DEV
+	#if DEVELOPER
 		foreach ( entity p in vars.playersInsideShack )
 		{
 			ArmoryPrint( vars, "TRIGGER LEAVE | " + p.GetPlayerName() + " is in the shack")
@@ -1292,7 +1292,7 @@ void function Runtime( SkitInstance si )
 		WaitFrame()
 	}
 
-	#if DEV
+	#if DEVELOPER
 		ArmoryPrint( vars, "AUDIO TRIGGER | 'SpectreShack_Scr_UI_Activate'" )
 		ArmoryPrint( vars, "AUDIO TRIGGER | broadcasting audio to num players: " + string(vars.playersInsideShack.len()) )
 	#endif
@@ -1360,7 +1360,7 @@ void function Runtime( SkitInstance si )
 
 	{ // ALERT / THREAT DETECTED
 		array< string > voLines = [ "diag_ap_aiNotify_armoryWave1st_01_01", "diag_ap_aiNotify_armoryWave1st_02_01" ]
-		#if DEV
+		#if DEVELOPER
 			ArmoryPrint( vars, "AUDIO TRIGGER | 'diag_ap_aiNotify_armoryWave1st_01_01'" )
 			ArmoryPrint( vars, "AUDIO TRIGGER | broadcasting audio to num players: " + string(vars.playersInsideShack.len()) )
 		#endif
@@ -1399,7 +1399,7 @@ void function Runtime( SkitInstance si )
 
 	// cue the music
 	vars.encounterMusicStartTime = Time()
-	#if DEV
+	#if DEVELOPER
 		ArmoryPrint( vars, "AUDIO TRIGGER | 'ARMORY_MUSIC_TRACK'" )
 		ArmoryPrint( vars, "AUDIO TRIGGER | broadcasting audio to num players: " + string(vars.playersInsideShack.len()) )
 	#endif
@@ -1445,7 +1445,7 @@ void function Runtime( SkitInstance si )
 		{
 			string waveEndSound = waveEndSounds[vars.currentWave - 1]
 
-			#if DEV
+			#if DEVELOPER
 				ArmoryPrint( vars, "AUDIO TRIGGER | " + waveEndSound )
 				ArmoryPrint( vars, "AUDIO TRIGGER | broadcasting audio to num players: " + string(vars.playersInsideShack.len()) )
 			#endif
@@ -1466,7 +1466,7 @@ void function Runtime( SkitInstance si )
 					// encounter continues, trigger another wave
 					vars.currentWave++
 					array< string > voLines = [ "diag_ap_aiNotify_armoryWaveNext_01_01", "diag_ap_aiNotify_armoryWaveNext_02_01" ]
-					#if DEV
+					#if DEVELOPER
 						ArmoryPrint( vars, "AUDIO TRIGGER | 'diag_ap_aiNotify_armoryWaveNext_01_01'" )
 						ArmoryPrint( vars, "AUDIO TRIGGER | broadcasting audio to num players: " + string(vars.playersInsideShack.len()) )
 					#endif
@@ -1529,7 +1529,7 @@ void function Runtime( SkitInstance si )
 	if( vars.spectreShackState == eSpectreShackState.Completed )
 	{
 		array< string > voLines = [ "diag_ap_aiNotify_armoryVictory_01_01", "diag_ap_aiNotify_armoryVictory_02_01" ]
-		#if DEV
+		#if DEVELOPER
 			ArmoryPrint( vars, "AUDIO TRIGGER | 'diag_ap_aiNotify_armoryVictory_01_01'" )
 			ArmoryPrint( vars, "AUDIO TRIGGER | broadcasting audio to num players: " + string(vars.playersInsideShack.len()) )
 		#endif
@@ -1580,7 +1580,7 @@ void function Runtime( SkitInstance si )
 		array<string> possibleRewards
 
 		int cargoBinsToSpawn = vars.currentWave
-		#if DEV
+		#if DEVELOPER
 			int cargoBinCountOverride = GetCurrentPlaylistVarInt( "spectreshack_cargobin_count", 0 )
 			if( cargoBinCountOverride > 0)
 			{
@@ -2002,7 +2002,7 @@ void function Runtime( SkitInstance si )
 								}
 								bool needsBattery = shieldPct < 1.0
 
-								#if DEV
+								#if DEVELOPER
 									ArmoryPrint( vars, "processing health for teammate "  + playerIndex + " | HEALTH : "  + healthPct )
 									ArmoryPrint( vars, "processing battery for teammate " + playerIndex + " | SHIELDS : " + shieldPct  )
 									ArmoryPrint( vars, "processing health items | needs med kit: " + string(needsMedKit) + "| needs battery: " + string(needsBattery) )
@@ -2303,7 +2303,7 @@ void function HighlightSmartLootBinForOwner_Thread ( entity lootBin, entity play
 	OnThreadEnd ( function ():(wp, player, vars) {
 		if ( IsValid( wp ) )
 			wp.Destroy()
-		#if DEV
+		#if DEVELOPER
 		if ( IsValid( player ) )
 			ArmoryPrint( vars, "Removing lootbin highlighting for " + player.GetPlayerName() )
 		#endif
@@ -2334,7 +2334,7 @@ void function SpawnCurrentWave_Thread( SkitInstance si, MyVars vars )
 	switch( vars.currentWave )
 	{
 		case 1:
-			#if DEV
+			#if DEVELOPER
 				ArmoryPrint( vars, "AUDIO TRIGGER | " + waveStartSound )
 				ArmoryPrint( vars, "AUDIO TRIGGER | broadcasting audio to num players: " + string(vars.playersInsideShack.len()) )
 			#endif
@@ -2351,7 +2351,7 @@ void function SpawnCurrentWave_Thread( SkitInstance si, MyVars vars )
 			}
 			float waitTime = GetPlaylistVarFloat( GetCurrentPlaylistName(), "armory_wave_start_delay_time", 2.0 )
 			wait waitTime
-			#if DEV
+			#if DEVELOPER
 				ArmoryPrint( vars, "AUDIO TRIGGER | " + waveStartSound )
 				ArmoryPrint( vars, "AUDIO TRIGGER | broadcasting audio to num players: " + string(vars.playersInsideShack.len()) )
 			#endif
@@ -2528,7 +2528,7 @@ void function Armory_InitSpectre( entity npc, SkitInstance si, entity spawnEnt, 
 		if ( Time() > vars.encounterEndTime && vars.kills >= vars.waveSpawnCount)
 		{
 			string encounterEndSound = "SpectreShack_Scr_SpectreWaveTimeOut_Success_End"
-			#if DEV
+			#if DEVELOPER
 				ArmoryPrint( vars, "AUDIO TRIGGER | 'SpectreShack_Scr_SpectreWaveTimeOut_Success_End'" )
 				ArmoryPrint( vars, "AUDIO TRIGGER | broadcasting audio to num players: " + string(vars.playersInsideShack.len()) )
 			#endif
@@ -2815,7 +2815,7 @@ void function AbortEncounter( SkitInstance si )
 
 	DisableActiveSpectres( si )
 	// stop the music
-	#if DEV
+	#if DEVELOPER
 		ArmoryPrint( vars, "AUDIO TRIGGER | Stopping music to num players: " + string(vars.playersInsideShack.len()) )
 	#endif
 
@@ -2897,7 +2897,7 @@ void function ControlPanel_SpectreShack_OnUse_Server( SkitInstance si, entity pl
 				EmitSoundAtPosition( TEAM_ANY, vars.sfx_powerDown.GetOrigin(), "SpectreShack_Scr_EmergencyShutdown_PowerDown", vars.sfx_powerDown )
 
 				array< string > voLines = [ "diag_ap_aiNotify_armoryWaveEscape_01_01", "diag_ap_aiNotify_armoryWaveEscape_02_01" ]
-				#if DEV
+				#if DEVELOPER
 					ArmoryPrint( vars, "ARMORY AUDIO TRIGGER | 'diag_ap_aiNotify_armoryWaveEscape_01_01'" )
 					ArmoryPrint( vars, "ARMORY AUDIO TRIGGER | broadcasting audio to num players: " + string(vars.playersInsideShack.len()) )
 				#endif
@@ -2948,7 +2948,7 @@ void function TransitionCompletedToDeactivated( SkitInstance si )
 	thread Manage_Skydive_Launcher_Thread( si )
 
 	array< string > voLines = [ "diag_ap_aiNotify_armoryExit_01_01", "diag_ap_aiNotify_armoryExit_02_01" ]
-	#if DEV
+	#if DEVELOPER
 		ArmoryPrint( vars, "ARMORY AUDIO TRIGGER | 'diag_ap_aiNotify_armoryExit_01_01'" )
 		ArmoryPrint( vars, "ARMORY AUDIO TRIGGER | broadcasting audio to num players: " + string(vars.playersInsideShack.len()) )
 	#endif
@@ -2967,7 +2967,7 @@ void function LootbinAnimation_SFX_Thread( SkitInstance si )
 	wait 1.5
 	for( int i = 0; i < vars.currentWave; i++ )
 	{
-		#if DEV
+		#if DEVELOPER
 			ArmoryPrint( vars, "ARMORY AUDIO TRIGGER | 'SpectreShack_Scr_UIUX_CargoCount_Won'" )
 			ArmoryPrint( vars, "ARMORY AUDIO TRIGGER | broadcasting audio to num players: " + string(vars.playersInsideShack.len()) )
 		#endif
@@ -3050,7 +3050,7 @@ void function ArmoryHackAnim_Thread( SkitInstance si, entity player )
 
 	if ( GetPlayersInsideShack( vars ).len() == 0)
 	{
-		#if DEV
+		#if DEVELOPER
 			ArmoryPrint(vars, "Players died during startup, aborting skit", false)
 		#endif
 		OpenLoadingHatch( si )
@@ -3111,7 +3111,7 @@ void function ArmoryHack_Success( SkitInstance si, int teamIndex )
 	thread Thread_ControlPanel_OnStateChange( si, vars.spectreShackState )
 
 	array< string > voLines = [ "diag_ap_aiNotify_armoryActivated_01_01", "diag_ap_aiNotify_armoryActivated_02_01" ]
-	#if DEV
+	#if DEVELOPER
 		ArmoryPrint( vars, "AUDIO TRIGGER | 'diag_ap_aiNotify_armoryActivated_01_01'" )
 		ArmoryPrint( vars, "AUDIO TRIGGER | broadcasting audio to num players: " + string( vars.playersInsideShack.len()) )
 	#endif
@@ -3196,7 +3196,7 @@ entity ornull function CreateRoofTrigger( entity originEnt, SkitInstance si )
 
 	roofTrigger.SetEnterCallback( void function ( entity trigger, entity ent ) : ( si )
 	{
-		#if DEV
+		#if DEVELOPER
 			printf( "Armory_OnRoofTriggerEnter" )
 		#endif
 		if( !IsValid( ent ) )
@@ -3261,12 +3261,12 @@ void function OnBoopTriggerEnter_Thread( entity trigger, entity ent, SkitInstanc
 	boopDirection = Normalize( boopDirection )
 	// give the boop a constant upward velocity
 	boopDirection.z = 1.0
-	#if DEV
+	#if DEVELOPER
 		bool drawDebugs = false
 		if ( drawDebugs )
 		{
-			DebugDrawMark( boopOrigin, 50, COLOR_BLUE, true, 30.0 )
-			DebugDrawLine( boopOrigin, boopOrigin + (boopDirection * 100), COLOR_WHITE, true, 30.0 )
+			//DebugDrawMark( boopOrigin, 50, COLOR_BLUE, true, 30.0 )
+			DebugDrawLine( boopOrigin, boopOrigin + (boopDirection * 100), int(COLOR_WHITE.x), int(COLOR_WHITE.y), int(COLOR_WHITE.z), true, 30.0 )
 		}
 	#endif // DEV
 	float boopForce = 600.0
@@ -3405,7 +3405,7 @@ void function OpenLoadingHatchInternal_Thread( SkitInstance si, float delayTime 
 	}
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_Armory_DestroyDeployablesOnRamps ()
 {
 	// destroy the deployables on all ramps
@@ -3529,7 +3529,7 @@ void function Thread_Entry_Teleport_Player( SkitInstance si, entity player )
 
 	int teleportDestinationIndex = RandomInt( vars.entryTeleportExitPositions.len() )
 	vector playerMaybePos = vars.entryTeleportExitPositions[ teleportDestinationIndex ]
-	#if DEV
+	#if DEVELOPER
 	// TODO: trace to validate this spot is ok // if they all fail, just pick one
 	#endif
 	vector ornull playerFinalPos = playerMaybePos
@@ -3848,7 +3848,7 @@ void function ManageTimerCallouts_Thread( SkitInstance si )
 	wait 34.75
 	if( vars.spectreShackState == eSpectreShackState.Activated )
 	{
-		#if DEV
+		#if DEVELOPER
 			ArmoryPrint( vars, "AUDIO TRIGGER | 'SpectreShack_Scr_30sec_Warning'" )
 			ArmoryPrint( vars, "AUDIO TRIGGER | broadcasting audio to num players: " + string(vars.playersInsideShack.len()) )
 		#endif
@@ -3864,7 +3864,7 @@ void function ManageTimerCallouts_Thread( SkitInstance si )
 	if( vars.spectreShackState == eSpectreShackState.Activated )
 	{
 		array< string > voLines = [ "diag_ap_aiNotify_armoryWaveEscalate30sec_01_01", "diag_ap_aiNotify_armoryWaveEscalate30sec_02_01" ]
-		#if DEV
+		#if DEVELOPER
 			ArmoryPrint( vars, "AUDIO TRIGGER | 'diag_ap_aiNotify_armoryWaveEscalate30sec_01_01'" )
 			ArmoryPrint( vars, "AUDIO TRIGGER | broadcasting audio to num players: " + string(vars.playersInsideShack.len()) )
 		#endif
@@ -3879,7 +3879,7 @@ void function ManageTimerCallouts_Thread( SkitInstance si )
 	wait 19.75
 	if( vars.spectreShackState == eSpectreShackState.Activated )
 	{
-		#if DEV
+		#if DEVELOPER
 			ArmoryPrint( vars, "AUDIO TRIGGER | 'SpectreShack_Scr_10sec_Warning'" )
 			ArmoryPrint( vars, "AUDIO TRIGGER | broadcasting audio to num players: " + string(vars.playersInsideShack.len()) )
 		#endif
@@ -3893,7 +3893,7 @@ void function ManageTimerCallouts_Thread( SkitInstance si )
 	if( vars.spectreShackState == eSpectreShackState.Activated )
 	{
 		array< string > voLines = [ "diag_ap_aiNotify_armoryWaveEscalate10sec_01_01", "diag_ap_aiNotify_armoryWaveEscalate10sec_02_01" ]
-		#if DEV
+		#if DEVELOPER
 			ArmoryPrint( vars, "AUDIO TRIGGER | 'diag_ap_aiNotify_armoryWaveEscalate10sec_01_01'" )
 			ArmoryPrint( vars, "AUDIO TRIGGER | broadcasting audio to num players: " + string(vars.playersInsideShack.len()) )
 		#endif
@@ -3919,7 +3919,7 @@ void function AddCallback_SpectreShack_V4_OnSkitEnded( SkitInstance si, void fun
 
 void function FillSpectreShackLootBin( entity lootBin, array<string> lootRefs, MyVars vars )
 {
-	#if DEV
+	#if DEVELOPER
 		ArmoryPrint( vars, "Filling armory lootbin" )
 
 		foreach( s in lootRefs )
@@ -3969,7 +3969,7 @@ void function ArmoryPrint( MyVars ornull varsOrNull, string message, bool devOnl
 
 	if( devOnly )
 	{
-		#if DEV
+		#if DEVELOPER
 			printf( armoryString + message )
 		#endif //DEV
 	}
@@ -3979,7 +3979,7 @@ void function ArmoryPrint( MyVars ornull varsOrNull, string message, bool devOnl
 	}
 }
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 bool function DEV_SpectreShack_IsPlayerInSpectreShack(SkitInstance si, int teamIndex)
 {
 	if (si in s_siToVars)
@@ -4115,7 +4115,7 @@ void function DEV_SpectreShack_CloseAllHatches()
 
 void function DEV_TestDoorExplodeVfx()
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	foreach( si, vars in s_siToVars )
 	{
 		foreach( entity e in GetPlayersInsideShack( vars ) )
@@ -4138,7 +4138,7 @@ void function DEV_TestDoorExplodeVfx()
 
 void function DEV_TestSpectresFall()
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	foreach ( si, vars in s_siToVars )
 	{
 		foreach ( entity e in GetPlayersInsideShack( vars ) )
@@ -4212,7 +4212,7 @@ void function DEV_TestSpectresDropAnim_Thread( SkitInstance si, MyVars vars )
 
 void function DEV_TestSpectreSpawn()
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	foreach ( si, vars in s_siToVars )
 	{
 		foreach ( entity e in GetPlayersInsideShack( vars ) )

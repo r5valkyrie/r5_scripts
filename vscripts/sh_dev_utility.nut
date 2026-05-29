@@ -141,16 +141,6 @@ void function PrintFloatArray( array<float> arr )
 		printf( " [%d] - %f", index, val )
 }
 
-
-// short cut for the console
-// script gp()[0].Die( gp()[1] )
-#if SERVER || CLIENT
-array<entity> function gp()
-{
-	return GetPlayerArray()
-}
-#endif
-
 #if SERVER || CLIENT
 array<entity> function getnpcs( entity player )
 {
@@ -165,7 +155,7 @@ entity function ge( int ornull index = null )
 	if ( index != null )
 		return GetEntByIndex( expect int( index ) )
 
-	entity player = gp()[0]
+	entity player = GetPlayerArray()[0]
 
 	vector traceStart = player.EyePosition()
 	vector traceDir   = player.GetViewVector()
@@ -182,7 +172,7 @@ entity function ge( int ornull index = null )
 vector function EyeTraceVec( entity player = null, bool debugDraws = false, int traceMask = 0, int traceGroup = 0, float debugDrawTime = 120 )
 {
 	if ( player == null )
-		player = gp()[0]
+		player = GetPlayerArray()[0]
 
 	vector traceStart = player.EyePosition()
 	vector traceDir   = player.GetViewVector()
@@ -190,7 +180,7 @@ vector function EyeTraceVec( entity player = null, bool debugDraws = false, int 
 
 	TraceResults results = TraceLine( traceStart, traceEnd, player, traceMask, traceGroup )
 
-	#if DEV
+	#if DEVELOPER
 		if( debugDraws )
 		{
 			DrawStar( results.endPos, 16,debugDrawTime, true )
@@ -448,7 +438,7 @@ void function DEV_ModelScaleTest()
 	entity ent = CreateEntity( "prop_physics" )
 	ent.SetValueForModelKey( $"mdl/weapons/grenades/m20_f_grenade_projectile.rmdl" )
 	ent.SetModelScale( 10.0 )
-	ent.SetOrigin( gp()[0].GetOrigin() + <0, 0, 300> )
+	ent.SetOrigin( GetPlayerArray()[0].GetOrigin() + <0, 0, 300> )
 	DispatchSpawn( ent )
 	ent.SetModelScale( 10.0 )
 }
@@ -696,7 +686,7 @@ void function DEV_HurtAllPlayers( int minDamage = 25, int maxDamage = -1 )
 
 void function DEV_SetMeToTeam( int teamNum = 5 )
 {
-	SetTeam( GP(), teamNum )
+	SetTeam( GetPlayerArray(), teamNum )
 }
 
 #endif
@@ -828,8 +818,8 @@ void function DEV_PreviewWorldRUI( asset ruiAsset, float width = 100, float heig
 		}
 	}
 
-	DebugDrawLine( pos, pos + 50.0 * right, <255, 120, 120>, true, 5 )
-	DebugDrawLine( pos, pos + 50.0 * down, <120, 255, 120>, true, 5 )
+	DebugDrawLine( pos, pos + 50.0 * right, 255, 120, 120, true, 5 )
+	DebugDrawLine( pos, pos + 50.0 * down, 120, 255, 120, true, 5 )
 
 	pos -= 0.5 * width * right
 	pos -= 0.5 * height * down
@@ -942,8 +932,8 @@ void function DEV_PlayerDebugLinesTool_Thread( entity localClientPlayer )
 	{
 		foreach ( entity player in GetPlayerArray() )
 		{
-			DebugDrawLine( player.GetOrigin(), player.EyePosition(), <10, 80, 65>, true, 0.0 )
-			DebugDrawLine( player.EyePosition(), player.EyePosition() + 40.0 * AnglesToForward( player.EyeAngles() ), <30, 255, 220>, false, 0.0 )
+			DebugDrawLine( player.GetOrigin(), player.EyePosition(), 10, 80, 65, true, 0.0 )
+			DebugDrawLine( player.EyePosition(), player.EyePosition() + 40.0 * AnglesToForward( player.EyeAngles() ), 30, 255, 220, false, 0.0 )
 			DebugDrawAxis( player.GetOrigin(), player.GetAngles(), 0.0, 10.0 )
 		}
 
@@ -995,18 +985,18 @@ void function DEV_DrawBoundingBox()
 
 		if ( cornerIdx == 0 )
 		{
-			fourCorners[0] = EyeTraceVec( GP() )
-			DebugDrawMark( fourCorners[0], 20, COLOR_WHITE, false, 0.0 )
-			DebugDrawMark( fourCorners[0], 20, <120, 120, 120>, true, 0.0 )
+			fourCorners[0] = EyeTraceVec( GetPlayerArray() )
+			//DebugDrawMark( fourCorners[0], 20, COLOR_WHITE, false, 0.0 )
+			//DebugDrawMark( fourCorners[0], 20, <120, 120, 120>, true, 0.0 )
 		}
 		else if ( cornerIdx >= 1 )
 		{
 			if ( cornerIdx == 1 )
 			{
-				fourCorners[1] = EyeTraceVec( GP() )
+				fourCorners[1] = EyeTraceVec( GetPlayerArray() )
 			}
-			DebugDrawLine( fourCorners[0], fourCorners[1], COLOR_GREEN, false, 0.0 )
-			DebugDrawLine( fourCorners[0], fourCorners[1], <0, 120, 0>, true, 0.0 )
+			DebugDrawLine( fourCorners[0], fourCorners[1], int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), false, 0.0 )
+			DebugDrawLine( fourCorners[0], fourCorners[1], 0, 120, 0, true, 0.0 )
 			vector fwdDir    = Normalize( fourCorners[1] - fourCorners[0] )
 			vector fwdDirAng = VectorToAngles( fwdDir )
 
@@ -1021,8 +1011,8 @@ void function DEV_DrawBoundingBox()
 						continue
 					fourCorners[2] = expect vector(intersection)
 				}
-				DebugDrawLine( fourCorners[0], fourCorners[2], COLOR_RED, false, 0.0 )
-				DebugDrawLine( fourCorners[0], fourCorners[2], <120, 0, 0>, true, 0.0 )
+				DebugDrawLine( fourCorners[0], fourCorners[2], int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), false, 0.0 )
+				DebugDrawLine( fourCorners[0], fourCorners[2], 120, 0, 0, true, 0.0 )
 				vector rightDir    = Normalize( fourCorners[2] - fourCorners[0] )
 				vector rightDirAng = VectorToAngles( rightDir )
 
@@ -1037,8 +1027,8 @@ void function DEV_DrawBoundingBox()
 						fourCorners[0], fourCorners[0] + 10000.0 * AnglesToUp( boxAng )
 					)
 					fourCorners[3] = bridgeSegment.end
-					DebugDrawLine( fourCorners[0], fourCorners[3], COLOR_BLUE, false, 0.0 )
-					DebugDrawLine( fourCorners[0], fourCorners[3], <0, 0, 120>, true, 0.0 )
+					DebugDrawLine( fourCorners[0], fourCorners[3], int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), false, 0.0 )
+					DebugDrawLine( fourCorners[0], fourCorners[3], 0, 0, 120, true, 0.0 )
 				}
 			}
 		}
@@ -1085,7 +1075,7 @@ void function DEV_DrawBoundingBox()
 #if SERVER
 entity function DEV_SpawnEntAtCursor( string classname, asset model )
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	entity ent    = CreateEntity( classname )
 	ent.SetModel( model )
 	ent.kv.solid = SOLID_VPHYSICS
@@ -1447,7 +1437,7 @@ void function Capture_fadeModelAlphaOutOverTime( entity model, float duration )
 // Records player animation for given secs, then saves it under given name.
 void function AnimRecordPlayer_Thread( int secs, string name, bool usePlayerCoords = false, vector posParm = < 0, 0, 0 >, vector anglesParm = < 0, 0, 0 > )
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	vector pos
 	vector ang
 

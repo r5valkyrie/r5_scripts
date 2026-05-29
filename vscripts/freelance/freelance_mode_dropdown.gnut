@@ -1,7 +1,7 @@
 global function DropDownModeInit
 
 #if SERVER
-#if DEV
+#if DEVELOPER
 //global function DEV_DropDownMode_ForceFail
 #endif // DEV
 
@@ -414,7 +414,7 @@ void function HandleGameOver_Thread( bool isVictory )
 		WaitFrame()
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_DropDownMode_ForceFail()
 {
 	if ( GamePlayingOrSuddenDeath() )

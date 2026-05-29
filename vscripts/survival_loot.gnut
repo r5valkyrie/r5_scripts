@@ -2140,32 +2140,32 @@ void function DebugLootZones()
 
 	FlagWait( "EntitiesDidLoad" )
 
-	while ( GP() == null )
+	while ( GetPlayerArray() == null )
 		WaitFrame()
 
-	GP().EndSignal( "OnDestroy" )
+	GetPlayerArray().EndSignal( "OnDestroy" )
 
 	while ( GetBugReproNum() == 99 )
 	{
-		while( !GP().IsInputCommandHeld( IN_USE_LONG ) )
+		while( !GetPlayerArray().IsInputCommandHeld( IN_USE_LONG ) )
 			WaitFrame()
 
 		foreach ( zone in zoneCopy )
 		{
 			foreach ( pt in zone.spawnPoints )
 			{
-				if ( Distance2D( GP().GetOrigin(), pt.pos ) > 300 )
+				if ( Distance2D( GetPlayerArray().GetOrigin(), pt.pos ) > 300 )
 					continue
 
 				printt( zone.zoneClass )
-				//DebugDrawLine( pt.pos, pt.pos + <0, 0, 100>, <255, 255, 255>, true, 8.0 )
+				DebugDrawLine( pt.pos, pt.pos + <0, 0, 100>, 255, 255, 255, true, 8.0 )
 				DebugDrawText( pt.pos, zone.zoneClass, true, 8.0 )
 			}
 		}
 
 		wait 0.5
 
-		while( GP().IsInputCommandHeld( IN_USE_LONG ) )
+		while( GetPlayerArray().IsInputCommandHeld( IN_USE_LONG ) )
 			WaitFrame()
 	}
 }
@@ -2569,9 +2569,9 @@ void function CreateHotZoneLoot( ActiveHotZone activeZone )
 
 		if( HOT_ZONE_DEBUG )
 		{
-			//DebugDrawLine( poiA.origin, poiA.origin + <0,0,256>, <255, 255, 0>, true, 9999.0 ) //Yellow Line
-			//DebugDrawLine( poiB.origin, poiB.origin + <0,0,256>, <0, 255, 0>, true, 9999.0 ) //Green Line
-			//DebugDrawLine( poiC.origin, poiC.origin + <0,0,256>, <0, 0, 255>, true, 9999.0 ) //Blue Line
+			DebugDrawLine( poiA.origin, poiA.origin + <0,0,256>, 255, 255, 0, true, 9999.0 ) //Yellow Line
+			DebugDrawLine( poiB.origin, poiB.origin + <0,0,256>, 0, 255, 0, true, 9999.0 ) //Green Line
+			DebugDrawLine( poiC.origin, poiC.origin + <0,0,256>, 0, 0, 255, true, 9999.0 ) //Blue Line
 		}
 	}
 
@@ -2701,7 +2701,7 @@ void function SURVIVAL_DebugLoot( string ref, vector origin )
 
 		if ( ref == "blank" )
 		{
-			//DebugDrawLine( origin, origin + <0, 0, 100>, <255, 0, 0>, true, 100.0 )
+			DebugDrawLine( origin, origin + <0, 0, 100>, 255, 0, 0, true, 100.0 )
 		}
 		else
 		{
@@ -2711,11 +2711,11 @@ void function SURVIVAL_DebugLoot( string ref, vector origin )
 				case eSurvivalDebugType.WEAPONS_NOT_WEAPONS:
 					if ( data.lootType == eLootType.MAINWEAPON )
 					{
-						//DebugDrawLine( origin, origin + <0, 0, 500>, <0, 0, 255>, true, 100.0 )
+						DebugDrawLine( origin, origin + <0, 0, 500>, 0, 0, 255, true, 100.0 )
 					}
 					else
 					{
-						//DebugDrawLine( origin, origin + <0, 0, 500>, <0, 255, 0>, true, 100.0 )
+						DebugDrawLine( origin, origin + <0, 0, 500>, 0, 255, 0, true, 100.0 )
 					}
 					break
 
@@ -2743,7 +2743,7 @@ void function SURVIVAL_DebugLoot( string ref, vector origin )
 					drawText = false
 					if ( data.lootType == eLootType.DATAKNIFE )
 					{
-						//DebugDrawLine( origin, origin + <0, 0, 500>, <0, 255, 0>, true, 100.0 )
+						DebugDrawLine( origin, origin + <0, 0, 500>, 0, 255, 0, true, 100.0 )
 					}
 			}
 
@@ -2863,7 +2863,7 @@ void function DelayedSpawnAmmo( entity weapon, string ammoType, vector origin, f
 	wait RandomFloatRange( 0, 1 )
 
 	TraceResults trace = TraceLine( newOrigin, startPos, [], LOOT_TRACE, LOOT_COLLISION_GROUP )
-	// DebugDrawLine( newOrigin, startPos, <255, 0, 0>, true, 100.0 )
+	// DebugDrawLine( newOrigin, startPos, 255, 0, 0, true, 100.0 )
 
 	//if ( trace.fraction < 0.99 )
 	//{
@@ -2890,11 +2890,11 @@ void function DelayedSpawnAmmo( entity weapon, string ammoType, vector origin, f
 		//trace = TraceLine( startPos, endPos, [], LOOT_TRACE, LOOT_COLLISION_GROUP )
 		trace = GetGroundPosition( startPos, endPos, [], <3, 3, 0> )
 		newOrigin = trace.endPos
-		// DebugDrawLine( startPos, trace.endPos, <0, 255, 0>, true, 100.0 )
+		// DebugDrawLine( startPos, trace.endPos, 0, 255, 0, true, 100.0 )
 
 		if ( DotProduct( trace.surfaceNormal, < 0, 0, 1 > ) > 0.9 )
 		{
-			// DebugDrawLine( startPos, endPos, COLOR_CYAN, true, 600.0 )
+			// DebugDrawLine( startPos, endPos, int(COLOR_CYAN.x), int(COLOR_CYAN.y), int(COLOR_CYAN.z), true, 600.0 )
 			entity ammo = SpawnGenericLoot( ammoType, newOrigin, <-1, -1, -1>, countPerDrop )
 			if ( IsValid( trace.hitEnt ) && trace.hitEnt.HasPusherAncestor() )
 				ammo.SetParent( trace.hitEnt, "", true, 0 )
@@ -2912,7 +2912,7 @@ void function DelayedSpawnAmmo( entity weapon, string ammoType, vector origin, f
 
 		angle = (angle + RandomFloatRange( 10, 20 )) % 360
 
-		// DebugDrawLine( startPos, endPos, <0, 0, 255>, true, 1.0 )
+		// DebugDrawLine( startPos, endPos, 0, 0, 255, true, 1.0 )
 
 		if ( triesForPitch < maxTriesForPitch && tries >= maxTriesForYaw )
 		{
@@ -2980,11 +2980,11 @@ void function DelayedSpawnArmorShard( string shardType, vector origin, int count
 		//trace = TraceLine( startPos, endPos, [], LOOT_TRACE, LOOT_COLLISION_GROUP )
 		trace = GetGroundPosition( startPos, endPos, [], <6, 6, 0> )
 		newOrigin = trace.endPos
-		// DebugDrawLine( startPos, trace.endPos, <0, 255, 0>, true, 100.0 )
+		// DebugDrawLine( startPos, trace.endPos, 0, 255, 0, true, 100.0 )
 
 		if ( DotProduct( trace.surfaceNormal, < 0, 0, 1 > ) > 0.9 )
 		{
-			// DebugDrawLine( startPos, endPos, COLOR_CYAN, true, 600.0 )
+			// DebugDrawLine( startPos, endPos, int(COLOR_CYAN.x), int(COLOR_CYAN.y), int(COLOR_CYAN.z), true, 600.0 )
 			entity shard = SpawnGenericLoot( shardType, newOrigin, <-1, -1, -1>, count )
 			if ( IsValid( trace.hitEnt ) && trace.hitEnt.HasPusherAncestor() )
 				shard.SetParent( trace.hitEnt, "", true, 0 )
@@ -2995,7 +2995,7 @@ void function DelayedSpawnArmorShard( string shardType, vector origin, int count
 
 		angle = (angle + RandomFloatRange( 10, 20 )) % 360
 
-		// DebugDrawLine( startPos, endPos, <0, 0, 255>, true, 1.0 )
+		// DebugDrawLine( startPos, endPos, 0, 0, 255, true, 1.0 )
 
 		if ( triesForPitch < maxTriesForPitch && tries >= maxTriesForYaw )
 		{
@@ -10472,7 +10472,7 @@ void function SURVIVAL_Loot_SetPreZoneDistributeCallback( void functionref( arra
 entity function DEV_SpawnDeathBox( entity player, table<string, int> contents )
 {
 	if ( !IsValid( player ) )
-		player = GP()
+		player = GetPlayerArray()
 
 	entity deathBox = CreateDeathBox( EyeTraceVec( player ), <0, player.EyeAngles().y, 0> )
 	deathBox.SetOwner( player )
@@ -10499,7 +10499,7 @@ entity function DEV_SpawnDeathBox( entity player, table<string, int> contents )
 entity function DEV_SpawnDeathBoxWithRandomLoot( entity player )
 {
 	if ( !IsValid( player ) )
-		player = GP()
+		player = GetPlayerArray()
 
 	table<string, int> contents = {}
 
@@ -10529,7 +10529,7 @@ entity function DEV_AddToDeathBox( entity deathBox, table<string, int> contents 
 {
 	if ( !IsValid( deathBox ) )
 	{
-		entity player   = GP()
+		entity player   = GetPlayerArray()
 		TraceResults tr = TraceLine( player.EyePosition(), player.EyePosition() + 1000.0 * player.GetViewForward(), [ player ] )
 		deathBox = tr.hitEnt
 	}
@@ -10599,7 +10599,7 @@ void function DEV_PrintDeathBoxContents( entity box )
 {
 	if ( !IsValid( box ) )
 	{
-		entity player   = GP()
+		entity player   = GetPlayerArray()
 		TraceResults tr = TraceLine( player.EyePosition(), player.EyePosition() + 1000.0 * player.GetViewForward(), [ player ] )
 		box = tr.hitEnt
 	}

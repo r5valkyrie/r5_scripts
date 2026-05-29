@@ -2252,7 +2252,7 @@ void function OnProwlerKilled_Dev( entity prowler, var DamageInfo )
 
 void function Bloodhound_TT_TpPlayerToDebugArea()
 {
-	entity player = gp()[0]
+	entity player = GetPlayerArray()[0]
 	player.SetVelocity( <0, 0, 0> )
 	player.SetPhysics( MOVETYPE_NOCLIP )
 	player.SetOrigin( <-24656.4883, 24307.1172, -2703.13452> )

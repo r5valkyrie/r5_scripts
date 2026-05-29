@@ -1515,7 +1515,7 @@ void function DEV_TPToVaultKeys()
 	{
 		if( IsValid( vaultKey ) )
 		{
-			gp()[0].SetOrigin(vaultKey.GetOrigin())
+			GetPlayerArray()[0].SetOrigin(vaultKey.GetOrigin())
 		}
 		else
 		{

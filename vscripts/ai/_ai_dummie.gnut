@@ -1702,7 +1702,7 @@ void function PlayerDriven_DummieTargeting_Thread( entity player )
 					{
 						//// uncomment to Debug
 						//#if DEVELOPER
-						//	DebugDrawSphere( dummie.GetOrigin(), 25, <255, 0, 0>, true, waitTime * 0.9 )
+						//	//DebugDrawSphere( dummie.GetOrigin(), 25, 255, 0, 0, true, waitTime * 0.9 )
 						//#endif // DEVELOPER
 
 						if( DummieShooting_Player_Has_MaxDummies( player ) )

@@ -10,7 +10,7 @@ global function PhaseDoor_CheckInvalidEnt
 global function OnCreateClientOnlyModel_ability_phase_door
 #endif
 
-#if DEV
+#if DEVELOPER
 #if SERVER
 global function AlterTacTest
 #endif
@@ -83,7 +83,7 @@ const bool PHASE_DOOR_DEBUG_ENABLE_FF_SELF_CHECK = true
 
 global const bool PHASE_DOOR_PORTAL_EXTENSIONS_DEBUG_DRAW = false
 
-#if DEV
+#if DEVELOPER
 global const bool PHASE_DOOR_LOGGING = true
 #else
 global const bool PHASE_DOOR_LOGGING = false
@@ -178,7 +178,7 @@ struct
 	#endif
 } file
 
-#if DEV
+#if DEVELOPER
 #if SERVER
 void function AlterTacTest( entity player )
 {
@@ -196,7 +196,7 @@ void function AlterTacTest_Thread( entity player )
 {
 	while( true )
 	{
-		DebugDrawMark( player.GetOrigin(), 10, COLOR_RED, true, 5.0 )
+		//DebugDrawMark( player.GetOrigin(), 10, COLOR_RED, true, 5.0 )
 		WaitFrame()
 	}
 }
@@ -399,7 +399,6 @@ void function OnCreateClientOnlyModel_ability_phase_door( entity weapon, entity 
 	printt("exitOrigin = " + weapon.GetObjectPlacementSpecialOrigin())
 	printt("exitAngles = " + weapon.GetObjectPlacementSpecialAngles())
 	//printt("result = " + weapon.GetObjectPlacementSpecialPlacementResult())
-	return
 
 	int result = weapon.GetObjectPlacementSpecialPlacementResult()
 
@@ -587,7 +586,6 @@ var function OnWeaponTossReleaseAnimEvent_ability_phase_door( entity weapon, Wea
 
 	// Check for valid spot
 	
-	return
 	if ( !weapon.ObjectPlacementHasValidSpot() )
 	{
 		weapon.StartCustomActivity( "ACT_VM_MISSCENTER", WCAF_PLAYRAISEONCOMPLETE )
@@ -626,7 +624,7 @@ var function OnWeaponTossReleaseAnimEvent_ability_phase_door( entity weapon, Wea
 
 		thread ManageDoorLifetime_Thread( ownerPlayer, origin, surfaceNormal, entranceParent, exitOrigin, exitSurfaceNormal, exitParent )
 
-		#if DEV
+		#if DEVELOPER
 			OPSPR_SavePortal( weapon, origin + (surfaceNormal * surfaceOffset), exitOrigin + (exitSurfaceNormal * surfaceOffset) )
 		#endif
 	#endif
@@ -790,7 +788,7 @@ void function DoPortalCleanup( entity portalRootEnt, entity trigger )
 	if ( trigger in file.portalExtensionToPlayersUsingMap )
 		delete file.portalExtensionToPlayersUsingMap[trigger]
 
-	#if DEV
+	#if DEVELOPER
 		OPSPR_RemovePortal( portalRootEnt.GetOrigin() )
 	#endif
 
@@ -833,10 +831,10 @@ entity function CreatePhaseDoorRootEnt( entity owner, vector origin, vector surf
 {
 	origin = origin + (surfaceNormal * surfaceOffset)
 
-	#if DEV
+	#if DEVELOPER
 		if ( PHASE_DOOR_DEBUG_DRAW )
 		{
-			DebugDrawArrow( origin - ( surfaceNormal * surfaceOffset ), origin + ( surfaceNormal * 50 ), 2.5, COLOR_PURPLE, true, 5.0 )
+			//DebugDrawArrow( origin - ( surfaceNormal * surfaceOffset ), origin + ( surfaceNormal * 50 ), 2.5, COLOR_PURPLE, true, 5.0 )
 		}
 	#endif
 
@@ -855,12 +853,12 @@ entity function CreatePhaseDoorRootEnt( entity owner, vector origin, vector surf
 		portalRootEnt.SetParent( parentEnt )
 	}
 
-	#if DEV
+	#if DEVELOPER
 		if ( PHASE_DOOR_DEBUG_DRAW )
 		{
-			DebugDrawArrow( portalRootEnt.GetCenter(), portalRootEnt.GetCenter() + ( portalRootEnt.GetForwardVector() * 40.0 ), 5, COLOR_RED, true, 15 )
-			DebugDrawArrow( portalRootEnt.GetCenter(), portalRootEnt.GetCenter() + ( portalRootEnt.GetUpVector() * 40.0 ), 5, COLOR_GREEN, true, 15 )
-			DebugDrawArrow( portalRootEnt.GetCenter(), portalRootEnt.GetCenter() + ( portalRootEnt.GetRightVector() * 40.0 ), 5, COLOR_BLUE, true, 15 )
+			//DebugDrawArrow( portalRootEnt.GetCenter(), portalRootEnt.GetCenter() + ( portalRootEnt.GetForwardVector() * 40.0 ), 5, COLOR_RED, true, 15 )
+			//DebugDrawArrow( portalRootEnt.GetCenter(), portalRootEnt.GetCenter() + ( portalRootEnt.GetUpVector() * 40.0 ), 5, COLOR_GREEN, true, 15 )
+			//DebugDrawArrow( portalRootEnt.GetCenter(), portalRootEnt.GetCenter() + ( portalRootEnt.GetRightVector() * 40.0 ), 5, COLOR_BLUE, true, 15 )
 		}
 	#endif
 
@@ -934,7 +932,7 @@ entity function CreatePhaseDoorTriggers( entity owner, entity portalRootEnt, vec
 		CreatePortalExtension( portalExtensionStartPos.value, portalExtensionEndPos.value, portalRootEnt, trigger )
 	}
 
-	#if DEV
+	#if DEVELOPER
 	if ( PHASE_DOOR_DEBUG_DRAW )
 	{
 		DebugDrawCylinder( triggerPos - <0, 0, PHASE_DOOR_TRIGGER_RADIUS>, <-90, 0, 0>, PHASE_DOOR_TRIGGER_RADIUS, PHASE_DOOR_TRIGGER_RADIUS * 2, COLOR_GOLDEN_ROD, false, 15 )
@@ -948,10 +946,10 @@ void function EnterPortalOnPlacement( entity trigger, entity owner )
 {
 	float minDist = PHASE_DOOR_TRIGGER_RADIUS * 2.0
 
-	#if DEV
+	#if DEVELOPER
 		if ( PHASE_DOOR_DEBUG_DRAW )
 		{
-			DebugDrawSphere( trigger.GetCenter(), minDist, COLOR_CYAN, true, 5.0, 8 )
+			DebugDrawSphere( trigger.GetCenter(), minDist, int(COLOR_CYAN.x), int(COLOR_CYAN.y), int(COLOR_CYAN.z), true, 5.0, 8 )
 		}
 	#endif
 
@@ -982,21 +980,21 @@ void function MonitorForMoversBlockingPortalOrParentMoving_Thread( vector origin
 
 		if ( initialPos != portalRootEnt.GetOrigin() )
 		{
-			#if DEV
+			#if DEVELOPER
 			printf("Destroying Portal due to entity moving")
 			#endif
 			break
 		}
 		if ( initialAng != portalRootEnt.GetAngles() )
 		{
-			#if DEV
+			#if DEVELOPER
 			printf("Destroying Portal due to entity rotating")
 			#endif
 			break
 		}
 		if ( ObjectPlacementSpecial_TraceForMoverBlocking( origin, surfaceNormal, portalRootEnt ) )
 		{
-			#if DEV
+			#if DEVELOPER
 			printf("Destroying Portal due to trace")
 			#endif
 			break
@@ -1058,7 +1056,7 @@ bool function ShouldCreateHorizontalPortalExtension( vector rootEntPos, vector r
 			#else
 			float debugDrawTime = 0
 			#endif
-			DebugDrawArrow( startPos, traceEndZPos + ( traceHorizontalStep * tan(angle) ), 5, COLOR_BLUE, false, debugDrawTime )
+			//DebugDrawArrow( startPos, traceEndZPos + ( traceHorizontalStep * tan(angle) ), 5, COLOR_BLUE, false, debugDrawTime )
 		#endif
 
 		if ( groundTrace.fraction < 0.99 )
@@ -1108,7 +1106,7 @@ bool function ShouldCreateVerticalPortalExtension( vector rootEntPos, PassByRefe
 		#else
 			float debugDrawTime = 0
 		#endif
-		DebugDrawArrow( startPos, startPos - <0,0,3000.0>, 5, COLOR_BLUE, false, debugDrawTime )
+		//DebugDrawArrow( startPos, startPos - <0,0,3000.0>, 5, COLOR_BLUE, false, debugDrawTime )
 	#endif
 
 	vector endPos = groundTrace.endPos
@@ -1360,11 +1358,11 @@ void function TeleportPlayerFromPortalTrigger( entity trigger, entity player )
 		velocityDirection = exitPortalOrientation == ePhaseDoorOrientation.PHASE_DOOR_ORIENTATION_CEILING_OR_FLOOR_UP ? <0,0,1> : <0,0,-1>
 	}
 
-	#if DEV
+	#if DEVELOPER
 		if ( PHASE_DOOR_DEBUG_DRAW )
 		{
-			DebugDrawArrow( endTrigger.GetCenter(), endPos, 2.5, COLOR_BLUE, true, 5.0 )
-			DebugDrawSphere( endPos, 5.0, COLOR_DARK_GREEN, true, 5.0)
+			//DebugDrawArrow( endTrigger.GetCenter(), endPos, 2.5, COLOR_BLUE, true, 5.0 )
+			DebugDrawSphere( endPos, 5.0, int(COLOR_DARK_GREEN.x), int(COLOR_DARK_GREEN.y), int(COLOR_DARK_GREEN.z), true, 5.0 )
 		}
 	#endif
 
@@ -1410,7 +1408,7 @@ void function TeleportPlayerFromPortalTrigger( entity trigger, entity player )
 
 			Warning("ALTER: Player entered portal, but ended up on the same side! TP: " + endPos + ", Player Pos: " + player.GetOrigin())
 
-			#if DEV
+			#if DEVELOPER
 				if ( IsValidMapForAutoReporting() )
 				{
 					OPSPR_ReportBadPortal( trigger.GetParent().GetOrigin() )
@@ -1520,7 +1518,7 @@ void function TravelingThroughPortalExtension_Thread( entity player, entity exte
 	vector extensionBottom = extension.GetOrigin() + extension.GetUpVector() * extension.GetBoundingMins().z
 
 	#if PHASE_DOOR_PORTAL_EXTENSIONS_DEBUG_DRAW
-		DebugDrawLine( endPos, extensionBottom, COLOR_GOLDEN_ROD, false, 10 )
+		DebugDrawLine( endPos, extensionBottom, int(COLOR_GOLDEN_ROD.x), int(COLOR_GOLDEN_ROD.y), int(COLOR_GOLDEN_ROD.z), false, 10 )
 	#endif
 
 	vector closestPointOnLine = GetClosestPointOnLineSegment( endPos, extensionBottom, playerPos )
@@ -1534,8 +1532,8 @@ void function TravelingThroughPortalExtension_Thread( entity player, entity exte
 	dir = closestPointOnLine - endPos
 
 	#if PHASE_DOOR_PORTAL_EXTENSIONS_DEBUG_DRAW
-		DebugDrawSphere( closestPointOnLine, 5, COLOR_GREEN, false, 10 )
-		DebugDrawSphere( endPos, 5, COLOR_RED, false, 10 )
+		DebugDrawSphere( closestPointOnLine, 5, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), false, 10 )
+		DebugDrawSphere( endPos, 5, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), false, 10 )
 	#endif
 
 	float pathDistance = dir.Length()

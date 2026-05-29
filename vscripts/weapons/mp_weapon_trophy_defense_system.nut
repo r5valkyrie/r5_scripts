@@ -16,7 +16,7 @@ global function Trophy_PointInRangeOfAnyTrophy
 global function Trophy_GetTrophyInRangeOfEntity
 global function Trophy_GetShieldsPercentRemaining
 global function Trophy_IsDecoyInRangeOfTrophy
-#if DEV
+#if DEVELOPER
 global function DEV_Trophy_SetHealAmount
 #endif
 #endif
@@ -195,7 +195,7 @@ struct
 		table < entity, array<entity> >           entTrophyTriggerArray
 		table < entity, int >                     playerToAdditionalTrophyCount
 		table < entity, int >                     decoyToTrophyCount
-#if DEV
+#if DEVELOPER
 		table < entity, entity >				  playerToTrophyLookup
 #endif
 	#else
@@ -412,14 +412,14 @@ TrophyPlacementInfo function _GetPlacementInfo( entity player, entity proxy, vec
 	{
 		DebugDrawBox( fwdResults.endPos, TROPHY_BOUND_MINS, TROPHY_BOUND_MAXS, COLOR_GREEN, 1, 1.0 ) //Forward Hull Cast Bounding Box
 		DebugDrawBox( downResults.endPos, TROPHY_BOUND_MINS, TROPHY_BOUND_MAXS, COLOR_BLUE, 1, 1.0 ) //Downward Hull Cast Bounding Box
-		DebugDrawLine( eyePos + viewVec * min( TROPHY_PLACEMENT_RANGE_MIN, maxRange ), fwdResults.endPos, COLOR_GREEN, true, 1.0 ) //Forward Hull Cast
-		DebugDrawLine( fwdResults.endPos, eyePos + viewVec * maxRange, COLOR_RED, true, 1.0 ) //Forward Hull Cast Blocked
-		DebugDrawLine( fwdResults.endPos, downResults.endPos, COLOR_BLUE, true, 1.0 ) //Downward Hull Cast
+		DebugDrawLine( eyePos + viewVec * min( TROPHY_PLACEMENT_RANGE_MIN, maxRange ), fwdResults.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 1.0 ) //Forward Hull Cast
+		DebugDrawLine( fwdResults.endPos, eyePos + viewVec * maxRange, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 1.0 ) //Forward Hull Cast Blocked
+		DebugDrawLine( fwdResults.endPos, downResults.endPos, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 1.0 ) //Downward Hull Cast
 		DebugDrawBox( upResults.endPos, TROPHY_BOUND_MINS, TROPHY_BOUND_MAXS, COLOR_CYAN, 1, 1.0 ) //"Upward" Hull Cast Bounding Box
-		DebugDrawLine( upStart, upResults.endPos, COLOR_CYAN, true, 1.0 ) //"Upward" Hull Cast
-		DebugDrawLine( eyePos, roofTraceEnd, COLOR_MAGENTA, true, 1.0 ) //Roof Check
-		DebugDrawLine( player.GetOrigin(), player.GetOrigin() + (AnglesToForward( angles ) * TROPHY_PLACEMENT_RANGE_MAX), COLOR_GREEN, true, 1.0 ) //Max Placement Dist
-		DebugDrawLine( eyePos + <0, 0, 8>, eyePos + <0, 0, 8> + (viewVec * TROPHY_PLACEMENT_RANGE_MAX), COLOR_GREEN, true, 1.0 ) //Max Placement Dist
+		DebugDrawLine( upStart, upResults.endPos, int(COLOR_CYAN.x), int(COLOR_CYAN.y), int(COLOR_CYAN.z), true, 1.0 ) //"Upward" Hull Cast
+		DebugDrawLine( eyePos, roofTraceEnd, int(COLOR_MAGENTA.x), int(COLOR_MAGENTA.y), int(COLOR_MAGENTA.z), true, 1.0 ) //Roof Check
+		DebugDrawLine( player.GetOrigin(), player.GetOrigin() + (AnglesToForward( angles ) * TROPHY_PLACEMENT_RANGE_MAX), int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 1.0 ) //Max Placement Dist
+		DebugDrawLine( eyePos + <0, 0, 8>, eyePos + <0, 0, 8> + (viewVec * TROPHY_PLACEMENT_RANGE_MAX), int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 1.0 ) //Max Placement Dist
 	}
 
 	//Handle placement of prop_scripts that support placeables.
@@ -489,8 +489,8 @@ TrophyPlacementInfo function _GetPlacementInfo( entity player, entity proxy, vec
 
 		if ( TROPHY_DEBUG_DRAW_PLACEMENT )
 		{
-			DebugDrawLine( proxy.GetOrigin(), proxy.GetOrigin() + (right * 64), COLOR_GREEN, true, 1.0 ) //Ground Right Vector
-			DebugDrawLine( proxy.GetOrigin(), proxy.GetOrigin() + (forward * 64), COLOR_BLUE, true, 1.0 ) //Ground Forward Vector
+			DebugDrawLine( proxy.GetOrigin(), proxy.GetOrigin() + (right * 64), int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 1.0 ) //Ground Right Vector
+			DebugDrawLine( proxy.GetOrigin(), proxy.GetOrigin() + (forward * 64), int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 1.0 ) //Ground Forward Vector
 		}
 
 		//Make sure we are getting placed on solid ground
@@ -500,7 +500,7 @@ TrophyPlacementInfo function _GetPlacementInfo( entity player, entity proxy, vec
 			TraceResults traceResult = TraceLine( testPos + (proxy.GetUpVector() * TROPHY_PLACEMENT_MAX_GROUND_DIST), testPos + (proxy.GetUpVector() * -TROPHY_PLACEMENT_MAX_GROUND_DIST), ignoreEnts, traceMask, collisionGroup )
 
 			if ( TROPHY_DEBUG_DRAW_PLACEMENT )
-				DebugDrawLine( testPos + (proxy.GetUpVector() * TROPHY_PLACEMENT_MAX_GROUND_DIST), traceResult.endPos, COLOR_RED, true, 1.0 ) //Ground Hull Cast
+				DebugDrawLine( testPos + (proxy.GetUpVector() * TROPHY_PLACEMENT_MAX_GROUND_DIST), traceResult.endPos, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 1.0 ) //Ground Hull Cast
 
 			if ( traceResult.fraction == 1.0 )
 			{
@@ -1495,7 +1495,7 @@ void function Trophy_RepairShields( entity trigger, entity player )
 
 	entity trophy = trigger.GetOwner()
 
-#if DEV
+#if DEVELOPER
 	if ( !(player in file.playerToTrophyLookup) )
 	{
 		file.playerToTrophyLookup[player] <- trophy
@@ -1549,7 +1549,7 @@ void function Trophy_RepairShields( entity trigger, entity player )
 					delete file.trophyTriggerEntArray[ trigger ]
 			}
 
-			#if DEV
+			#if DEVELOPER
 				if( IsValid(trigger) && (player in file.playerToTrophyLookup) && file.playerToTrophyLookup[player] == trigger.GetOwner() )
 				{
 					delete file.playerToTrophyLookup[player]
@@ -1864,7 +1864,7 @@ void function Trophy_RepairShields( entity trigger, entity player )
 
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_Trophy_SetHealAmount( entity player, int amount )
 {
 	if ( !IsValid(player) )
@@ -1999,8 +1999,8 @@ bool function Trophy_HasLOSToPlayer( entity trophy, entity player )
 
 		if ( TROPHY_DEBUG_DRAW )
 		{
-			DebugDrawLine( traceResults.endPos, traceEnd, COLOR_RED, true, 1.0 )
-			DebugDrawLine( traceStart, traceResults.endPos, COLOR_GREEN, true, 1.0 )
+			DebugDrawLine( traceResults.endPos, traceEnd, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 1.0 )
+			DebugDrawLine( traceStart, traceResults.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 1.0 )
 		}
 
 		if ( traceResults.fraction == 1.0 )
@@ -2597,8 +2597,8 @@ bool function Trophy_ShouldTargetProjectile( entity trophy, entity projectile, v
 
 	if ( TROPHY_DEBUG_DRAW )
 	{
-		DebugDrawLine( projectileOrigin, projectileOrigin + (velDirSaved * 128), COLOR_RED, true, 20.0 )
-		DebugDrawLine( projectileOrigin, projectileOrigin + (trophyToProj * 128), COLOR_GREEN, true, 20.0 )
+		DebugDrawLine( projectileOrigin, projectileOrigin + (velDirSaved * 128), int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 20.0 )
+		DebugDrawLine( projectileOrigin, projectileOrigin + (trophyToProj * 128), int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 20.0 )
 	}
 
 	float dotSaved  = DotProduct( velDirSaved, trophyToProj )
@@ -2621,7 +2621,7 @@ bool function Trophy_ShouldTargetProjectile( entity trophy, entity projectile, v
 		if ( traceResults.fraction < 1.0 )
 		{
 			if ( TROPHY_DEBUG_DRAW )
-				DebugDrawLine( projectileOrigin, traceResults.endPos, COLOR_RED, true, 20.0 )
+				DebugDrawLine( projectileOrigin, traceResults.endPos, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 20.0 )
 
 			// this is a wall. If we want the projectile to potentially bounce out of the wall, we should return false here
 			// not sure if there's a more procedural way of doing this
@@ -2692,8 +2692,8 @@ bool function Trophy_HasLOSToTarget( entity trophy, entity target, vector contac
 
 	if ( TROPHY_DEBUG_DRAW )
 	{
-		DebugDrawLine( results.endPos, endOrigin, COLOR_RED, true, 20.0 )
-		DebugDrawLine( startOrigin, results.endPos, COLOR_GREEN, true, 20.0 )
+		DebugDrawLine( results.endPos, endOrigin, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 20.0 )
+		DebugDrawLine( startOrigin, results.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 20.0 )
 	}
 
 	if ( results.fraction == 1.0 )

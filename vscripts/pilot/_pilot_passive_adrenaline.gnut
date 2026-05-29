@@ -2,7 +2,7 @@ untyped
 global function PassiveAdrenaline_Init
 global function PassiveAdrenaline_Start
 
-#if DEV
+#if DEVELOPER
 global function DEV_PassiveAdrenaline_ForceStart
 #endif //DEV
 
@@ -258,7 +258,7 @@ void function DelayedDestroyWP( entity wp )
 }
       
 
-#if DEV
+#if DEVELOPER
 void function DEV_PassiveAdrenaline_ForceStart( entity player )
 {
 	PassiveAdrenaline_Start( player )

@@ -3273,7 +3273,7 @@ void function DEV_GRX_OpenNPacks( int numPacks, string packOrRarity = "rare", en
 		if ( IsValid( player ) )
 			EndSignal( player, "OnDestroy" )
 
-		entity bot = IsValid( player ) ? player : GP()
+		entity bot = player
 		string ref
 		switch ( packOrRarity )
 		{

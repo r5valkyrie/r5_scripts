@@ -262,8 +262,8 @@ void function Bombardment_MortarBarrageCreeping( entity weapon, asset markerFx, 
 
 	if ( BOMBARDMENT_DEBUG )
 	{
-		//DebugDrawLine( targetOrigin, targetOrigin + (dir * creepDist), <255, 0, 0>, true, 20.0 )
-		//DebugDrawLine( targetOrigin, targetOrigin + (cross * (width / 2)), <0, 255, 0>, true, 20.0 )
+		DebugDrawLine( targetOrigin, targetOrigin + (dir * creepDist), 255, 0, 0, true, 20.0 )
+		DebugDrawLine( targetOrigin, targetOrigin + (cross * (width / 2)), 0, 255, 0, true, 20.0 )
 	}
 
 	//Generate a battry of gun positions to fire from.
@@ -377,8 +377,8 @@ void function Bombardment_MortarBarrageDetCord( entity weapon, asset markerFx, v
 
 	if ( BOMBARDMENT_DEBUG )
 	{
-		//DebugDrawLine( targetOrigin, targetOrigin + (dir * creepDist), <255, 0, 0>, true, 20.0 )
-		//DebugDrawLine( targetOrigin, targetOrigin + (cross * (width / 2)), <0, 255, 0>, true, 20.0 )
+		DebugDrawLine( targetOrigin, targetOrigin + (dir * creepDist), 255, 0, 0, true, 20.0 )
+		DebugDrawLine( targetOrigin, targetOrigin + (cross * (width / 2)), 0, 255, 0, true, 20.0 )
 	}
 
 	//Get targets along bombarment line
@@ -448,7 +448,7 @@ void function MortarFromWeapon( entity weapon, asset markerFx, float delay, vect
 	
 	wait delay
 
-	//DebugDrawSphere( target, 25, <210, 0, 0>, true, 2.0 )
+	//DebugDrawSphere( target, 25, 210, 0, 0, true, 2.0 )
 	bool isWeaponPlayerOffhand = false
 	entity weaponOwner = weapon.GetWeaponOwner()
 	if ( IsValid( weaponOwner ) && weaponOwner.IsPlayer() && IsWeaponOffhand( weapon ) )
@@ -606,7 +606,7 @@ vector function Bombardment_GetRandomGroundPosInRing( vector centerOrigin, float
 	{
 		//DebugDrawCircle( centerOrigin, <0, 0, 0>, innerRadius, <255, 0, 0>, true, 10.0, 16 )
 		//DebugDrawCircle( centerOrigin, <0, 0, 0>, outerRadius, <255, 0, 0>, true, 10.0, 16 )
-		//DebugDrawSphere( clusterTarget, 32.0, <255, 0, 0>, true, 10.0 )
+		DebugDrawSphere( clusterTarget, 32.0, 255, 0, 0, true, 10.0 )
 	}
 
 	return clusterTarget
@@ -636,7 +636,7 @@ array<vector> function Bombardment_GetGroundPositionsOnCircleEdge( vector center
 		if ( BOMBARDMENT_DEBUG )
 		{
 			//DebugDrawCircle( centerOrigin, <0, 0, 0>, radius, <255, 0, 0>, true, 10.0, 16 )
-			//DebugDrawSphere( clusterTarget, 32.0, <255, 0, 0>, true, 10.0 )
+			DebugDrawSphere( clusterTarget, 32.0, 255, 0, 0, true, 10.0 )
 		}
 
 		targets.append( clusterTarget )
@@ -829,7 +829,7 @@ GroundPosData function Bombardment_TestWeightedPoints( vector idealPos, array<ve
 
 			if ( BOMBARDMENT_DEBUG )
 			{
-				//DebugDrawLine( tracePoint, result.endPos, COLOR_CYAN, true, 60.0 )
+				DebugDrawLine( tracePoint, result.endPos, int(COLOR_CYAN.x), int(COLOR_CYAN.y), int(COLOR_CYAN.z), true, 60.0 )
 			}
 
 			if ( result.fraction >= minFrac )
@@ -839,7 +839,7 @@ GroundPosData function Bombardment_TestWeightedPoints( vector idealPos, array<ve
 				//printt( "FOUND NEW BEST POINT" )
 				if ( BOMBARDMENT_DEBUG )
 				{
-					//DebugDrawLine( tracePoint + <0, 0, highestZPoint>, result.endPos, <0, 255, 0>, true, 60.0 )
+					DebugDrawLine( tracePoint + <0, 0, highestZPoint>, result.endPos, 0, 255, 0, true, 60.0 )
 					//DebugDrawBox( result.endPos, hullMins, hullMaxes, <0, 255, 0>, 1, 60.0 )
 				}
 			}
@@ -847,7 +847,7 @@ GroundPosData function Bombardment_TestWeightedPoints( vector idealPos, array<ve
 			{
 				if ( BOMBARDMENT_DEBUG )
 				{
-					//DebugDrawLine( tracePoint + <0, 0, highestZPoint>, result.endPos, <255, 255, 0>, true, 60.0 )
+					DebugDrawLine( tracePoint + <0, 0, highestZPoint>, result.endPos, 255, 255, 0, true, 60.0 )
 					//DebugDrawBox( result.endPos, hullMins, hullMaxes, <255, 255, 0>, 1, 60.0 )
 				}
 			}
@@ -856,7 +856,7 @@ GroundPosData function Bombardment_TestWeightedPoints( vector idealPos, array<ve
 		{
 			if ( BOMBARDMENT_DEBUG )
 			{
-				//DebugDrawLine( testPoint + <0, 0, highestZPoint>, testPoint, <255, 0, 0>, true, 60.0 )
+				DebugDrawLine( testPoint + <0, 0, highestZPoint>, testPoint, 255, 0, 0, true, 60.0 )
 			}
 		}
 	}

@@ -8,7 +8,7 @@ global function Freelance_SendTeamCanRespawn
 //
 global function SquadHUDTracker_Create
 global function SquadHUDTracker_UpdateSquadProgress
-#if DEV
+#if DEVELOPER
 global function SquadHUDTracker_GetLatestDEV
 #endif // DEV
 #endif // SERVER
@@ -25,7 +25,7 @@ global function GetTeamFromSquadID
 global function GetSquadIDFromTeam
 
 #if UI
-#if DEV
+#if DEVELOPER
 global function PopulateFreelanceDevMenu
 global function ClearFreelanceDevMenu
 #endif // DEV
@@ -195,7 +195,7 @@ int function GetSquadIDFromTeam( int team )
 
 #if SERVER
 
-#if DEV
+#if DEVELOPER
 entity s_latestHUDTracker = null
 entity function SquadHUDTracker_GetLatestDEV()
 {
@@ -208,7 +208,7 @@ entity function SquadHUDTracker_Create( float revealTime )
 	entity wp = CreateWaypoint_Custom( WAYPOINTTYPE_SQUADHUDTRACKER )
 	wp.SetWaypointGametime( 0, Time() + revealTime )
 
-#if DEV
+#if DEVELOPER
 	s_latestHUDTracker = wp
 #endif // DEV
 
@@ -269,7 +269,7 @@ void function InstanceSquadHUDTrackerWP( entity wp )
 
 
 #if UI
-#if DEV
+#if DEVELOPER
 
 const string MENUPATH_MAIN = "Freelance"
 

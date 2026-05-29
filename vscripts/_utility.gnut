@@ -206,7 +206,7 @@ void function DestroyOverlimitObjectsThread( OneLegendsLimitedObjects thisLegend
 		loops++
 		if ( loops > 30 )
 		{
-			#if DEV
+			#if DEVELOPER
 			ServerCommand( "edict_dump_distribution" )
 			DEV_DumpAllLimitedLegendObjects( )
 			Assert( false, "LimitedLegendObject: Too many iterations trying to remove extra elements from the list. Player: " + player )
@@ -244,7 +244,7 @@ bool function RemoveLimitedLegendObject( entity player, entity object )
 	}
 	return ret
 }
-#if DEV
+#if DEVELOPER
 void function DEV_DumpAllLimitedLegendObjects(  )
 {
 	printt( "---- LimitedLegendObjects PRINTING ALL ----")
@@ -5210,18 +5210,22 @@ void function AddCallback_NPCLeeched( void functionref( entity, entity ) callbac
 	svGlobal.onLeechedCustomCallbackFunc.append( callbackFunc )
 }
 
-void function MessageToPlayer( entity player, int eventID, entity ent = null, var eventVal = null )
-{
-	var eHandle = null
-	if ( ent )
-		eHandle = ent.GetEncodedEHandle()
 
-	Remote_CallFunction_NonReplay( player, "ServerCallback_EventNotification", eventID, eHandle, eventVal )
+void function MessageToPlayer( entity player, int eventID, entity ent = null, entity eventEntity = null )
+{
+	if( IsValid( ent ) && IsValid( eventEntity ) )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_EventNotification_Entity_EventEntity", eventID, ent, eventEntity )
+	else if( IsValid( ent ) )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_EventNotification_Entity", eventID, ent )
+	else if( IsValid( eventEntity ) )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_EventNotification_EventEntity", eventID, eventEntity )
+	else
+		Remote_CallFunction_NonReplay( player, "ServerCallback_EventNotification", eventID )
 	//SendHudMessage( player, message, 0.33, 0.28, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
 }
 
 
-void function MessageToTeam( int team, int eventID, entity excludePlayer = null, entity ent = null, var eventVal = null )
+void function MessageToTeam( int team, int eventID, entity excludePlayer = null, entity ent = null, entity eventEntity = null )
 {
 	array<entity> players = GetPlayerArray()
 
@@ -5233,11 +5237,12 @@ void function MessageToTeam( int team, int eventID, entity excludePlayer = null,
 		if ( player == excludePlayer )
 			continue
 
-		MessageToPlayer( player, eventID, ent, eventVal )
+		MessageToPlayer( player, eventID, ent, eventEntity )
 	}
 }
 
-void function MessageToAll( int eventID, entity excludePlayer = null, entity ent = null, var eventVal = null )
+
+void function MessageToAll( int eventID, entity excludePlayer = null, entity ent = null, entity eventEntity = null )
 {
 	array<entity> players = GetPlayerArray()
 
@@ -5246,7 +5251,7 @@ void function MessageToAll( int eventID, entity excludePlayer = null, entity ent
 		if ( player == excludePlayer )
 			continue
 
-		MessageToPlayer( player, eventID, ent, eventVal )
+		MessageToPlayer( player, eventID, ent, eventEntity )
 	}
 }
 
@@ -5793,7 +5798,7 @@ void function Thread_CheckForGeoIntersection( entity ent, entity mover, float he
 
 	vector lastOrigin
 
-	#if DEV
+	#if DEVELOPER
 	OnThreadEnd(
 		function():(mover)
 		{
@@ -6158,7 +6163,7 @@ bool function SetHealthAndShieldByPercentage( entity player, float healthPercent
 
 	if ( healthPercent >= 0.0 )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( shouldAllowHealthLoss && healthPercent == 0.0 )
 				printf( "SetHealthAndShieldByPercentage is being used to set health to 0; if players are dying unexpectedly this could be the cause." )
 		#endif // DEV
@@ -7344,8 +7349,8 @@ void function PushOutOfTriggerThread( entity trigger, entity ent, float strength
 			#if DEVELOPER
 			if ( SkywardLaunchPushTriggerDebug )
 			{
-				DebugDrawLine( trigger.GetOrigin() - ( trigger.GetUpVector() * trigger.GetBelowHeight() ), trigger.GetOrigin() + ( trigger.GetUpVector() * trigger.GetAboveHeight() ),COLOR_BLUE, true, 15.0 )
-				DebugDrawMark( projectionToCylinderVertical, 10.0, COLOR_GREEN, true, 15.0 )
+				DebugDrawLine( trigger.GetOrigin() - ( trigger.GetUpVector() * trigger.GetBelowHeight() ), trigger.GetOrigin() + ( trigger.GetUpVector() * trigger.GetAboveHeight() ), int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 15.0 )
+				//DebugDrawMark( projectionToCylinderVertical, 10.0, COLOR_GREEN, true, 15.0 )
 			}
 			#endif
 
@@ -7366,19 +7371,19 @@ void function PushOutOfTriggerThread( entity trigger, entity ent, float strength
 
 				TraceResults tr    = TraceHull( ent.GetOrigin(), traceEndPos, ent.GetPlayerStandingMins(), ent.GetPlayerStandingMaxs(), ignoreEnts, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER )
 
-				#if DEV
+				#if DEVELOPER
 				if ( SkywardLaunchPushTriggerDebug )
 				{
-					DebugDrawArrow( ent.GetOrigin(), traceEndPos, 5, COLOR_GREEN, true, 15.0 )
+					//DebugDrawArrow( ent.GetOrigin(), traceEndPos, 5, COLOR_GREEN, true, 15.0 )
 				}
 				#endif
 
 				if ( !tr.startSolid && !tr.allSolid && tr.fraction >= 0.99 )
 				{
-					#if DEV
+					#if DEVELOPER
 					if ( SkywardLaunchPushTriggerDebug )
 					{
-						DebugDrawSphere( tr.endPos, 10.0, COLOR_GREEN, true, 15.0 )
+						DebugDrawSphere( tr.endPos, 10.0, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 15.0 )
 					}
 					#endif
 
@@ -7387,10 +7392,10 @@ void function PushOutOfTriggerThread( entity trigger, entity ent, float strength
 				}
 				else
 				{
-					#if DEV
+					#if DEVELOPER
 					if ( SkywardLaunchPushTriggerDebug )
 					{
-						DebugDrawSphere( tr.endPos, 10.0, COLOR_RED, true, 5.0 )
+						DebugDrawSphere( tr.endPos, 10.0, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 5.0 )
 					}
 					#endif
 				}

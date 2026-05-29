@@ -1137,7 +1137,7 @@ void function Ensure_Min_Consumables( entity player, array< string > refsInvento
 
 		if( itemCount_ToGive > 0 )
 		{
-			#if DEV
+			#if DEVELOPER
 				if( doDevOut )
 				{
 					printt( FUNC_NAME() + "(): Giving " + itemCount_ToGive + " " + itemRef )
@@ -1180,7 +1180,7 @@ array< LootData > function Remove_Weapons( entity player, bool devOut = false )
 	if( !IsValidPlayer( player ) )
 		return playerWeaponsData
 
-	#if DEV
+	#if DEVELOPER
 		if( devOut )
 		{
 			printt( FUNC_NAME() + "(): Remove_Weapons for " + player.GetPlayerName() )
@@ -1189,7 +1189,7 @@ array< LootData > function Remove_Weapons( entity player, bool devOut = false )
 
 	playerWeaponsData  = Get_Weapon_Datas( player )
 	array< string > playerWeaponRefs = LootDatas_To_LootRefs( playerWeaponsData )
-	#if DEV
+	#if DEVELOPER
 		if( devOut )
 		{
 			foreach( wpRef in playerWeaponRefs )
@@ -1211,7 +1211,7 @@ array< LootData > function Remove_Weapons( entity player, bool devOut = false )
 	player.SetPlayerNetInt( "playerPrimaryWeapon0", -1 )
 	player.SetPlayerNetInt( "playerPrimaryWeapon1", -1 )
 
-	#if DEV
+	#if DEVELOPER
 		if( devOut )
 		{
 			printt( FUNC_NAME() + "(): After Weapon Removal: " + player.GetPlayerName() )

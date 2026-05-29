@@ -1911,14 +1911,14 @@ void function ResetQuestPersistence()
 	ItemFlavor ornull quest = SeasonQuest_GetActiveSeasonQuest( GetUnixTimestamp() )
 	expect ItemFlavor( quest )
 
-	GP().SetPersistentVar( BuildPersistentVarName( quest, VARNAME_TB_lastPickupTime ), 0 )
-	GP().SetPersistentVar( BuildPersistentVarName( quest, VARNAME_TB_totalPickups ), 0 )
-	GP().SetPersistentVar( BuildPersistentVarName( quest, VARNAME_TB_displayStartNum ), 0 )
-	GP().SetPersistentVar( BuildPersistentVarName( quest, VARNAME_TB_displayCount ), 0 )
-	GP().SetPersistentVar( BuildPersistentVarName( quest, VARNAME_missionProgress ), 0 )
-	GP().SetPersistentVar( BuildPersistentVarName( quest, VARNAME_lastMissionUnlockTime ), 0 )
+	GetPlayerArray()[0].SetPersistentVar( BuildPersistentVarName( quest, VARNAME_TB_lastPickupTime ), 0 )
+	GetPlayerArray()[0].SetPersistentVar( BuildPersistentVarName( quest, VARNAME_TB_totalPickups ), 0 )
+	GetPlayerArray()[0].SetPersistentVar( BuildPersistentVarName( quest, VARNAME_TB_displayStartNum ), 0 )
+	GetPlayerArray()[0].SetPersistentVar( BuildPersistentVarName( quest, VARNAME_TB_displayCount ), 0 )
+	GetPlayerArray()[0].SetPersistentVar( BuildPersistentVarName( quest, VARNAME_missionProgress ), 0 )
+	GetPlayerArray()[0].SetPersistentVar( BuildPersistentVarName( quest, VARNAME_lastMissionUnlockTime ), 0 )
 
-	GP().SetPersistentVar( BuildPersistentVarName( quest, VARNAME_comicPagesRead ), 0 )
+	GetPlayerArray()[0].SetPersistentVar( BuildPersistentVarName( quest, VARNAME_comicPagesRead ), 0 )
 }
 #endif // SERVER
 

@@ -334,10 +334,10 @@ void function OnProjectileCollision_sniper_ult( entity projectile, vector pos, v
 
 
 
-		//DebugDrawSphere( midPoint, 10, <100,100,0>,false, 5.0 )
-		//DebugDrawSphere( midPoint, dist/2, COLOR_GREEN,false, 5.0 , 32 )
+		//DebugDrawSphere( midPoint, 10, 100, 100, 0, false, 5.0 )
+		//DebugDrawSphere( midPoint, dist/2, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), false, 5.0, 32 )
 
-		//DebugDrawLine( projectile.proj.savedOrigin, pos, COLOR_GREEN,false, 5.0 )
+		//DebugDrawLine( projectile.proj.savedOrigin, pos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), false, 5.0 )
 
 	#if SERVER
 		//printt( "hit ent class " + hitEnt.GetClassName() )

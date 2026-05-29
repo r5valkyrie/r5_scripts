@@ -609,7 +609,7 @@ void function DebugDrawPathConnections()
 				if ( DEBUG_DRAW_NODE_CONNECTIONS )
 				{
 					foreach( Waypoint _waypoint in waypoint.connectingWaypoints[group] )
-						DebugDrawLine( waypoint.origin + <0, 0, file.pathDebugColors[group][0]>, _waypoint.origin + <0, 0, file.pathDebugColors[group][0]>, <file.pathDebugColors[group][1], file.pathDebugColors[group][2], file.pathDebugColors[group][3]>, false, duration )
+						DebugDrawLine( waypoint.origin + <0, 0, file.pathDebugColors[group][0]>, _waypoint.origin + <0, 0, file.pathDebugColors[group][0]>, file.pathDebugColors[group][1], file.pathDebugColors[group][2], file.pathDebugColors[group][3], false, duration )
 				}
 			}
 			wait duration
@@ -630,7 +630,7 @@ void function HoverTankSetPathGroup( HoverTank hoverTank, string pathGroup )
 	{
 		vector color = < RandomInt( 255 ), RandomInt( 255 ), RandomInt( 255 ) >
 		foreach( Waypoint waypoint in file.waypoints[ pathGroup ] )
-			DebugDrawLine( hoverTank.flightMover.GetOrigin(), waypoint.origin, color, true, 10.0 )
+			DebugDrawLine( hoverTank.flightMover.GetOrigin(), waypoint.origin, int(color.x), int(color.y), int(color.z), true, 10.0 )
 	}
 }
 
@@ -1377,7 +1377,7 @@ void function HoverTankPlayAnim( HoverTank hoverTank, string anim, entity node )
 	//int attachID = dummyModel.LookupAttachment( "body" )
 	//vector absOrigin = dummyModel.GetAttachmentOrigin( attachID )
 	//vector absAngles = dummyModel.GetAttachmentAngles( attachID )
-	//DebugDrawSphere( absOrigin, 128.0, <255, 255, 0>, true, 30.0 )
+	//DebugDrawSphere( absOrigin, 128.0, 255, 255, 0, true, 30.0 )
 	//hoverTank.flightMover.SetAbsOrigin( absOrigin )
 	//hoverTank.flightMover.SetAbsAngles( absAngles )
 
@@ -1411,7 +1411,7 @@ void function HoverTankFlyToNode( HoverTank hoverTank, entity node, bool ignoreS
 	Waypoint startWaypoint = GetClosestWaypoint( hoverTank.flightMover.GetOrigin(), hoverTank.assignedPathGroup )
 	//Assert( IsValid( startWaypoint.node ) )
 	if ( DEBUG_PATHING )
-		//DebugDrawLine( startWaypoint.origin, hoverTank.flightMover.GetOrigin(), <255, 255, 255>, true, 2.0 )
+		DebugDrawLine( startWaypoint.origin, hoverTank.flightMover.GetOrigin(), 255, 255, 255, true, 2.0 )
 
 	float d = Distance( startWaypoint.origin, hoverTank.flightMover.GetOrigin() )
 	if ( !ignoreStartNodeTolerance )
@@ -1991,7 +1991,7 @@ void function HoverTankFlyPath( HoverTank hoverTank, FlyPathData flyPathData )
 		lookaheadPosition = GetPointAtDistanceAlongPath( flyPathData.lookaheadPath, lookaheadDistanceAlongPath )
 
 		// if ( DEBUG_PATHING )
-			// DebugDrawSphere( lookaheadPosition, 32.0, <255, 0, 0>, true, 0.1 )
+			 //DebugDrawSphere( lookaheadPosition, 32.0, 255, 0, 0, true, 0.1 )
 
 		float accelDecelModifier = 1.0
 
@@ -2091,7 +2091,7 @@ void function HoverTankFlyPath( HoverTank hoverTank, FlyPathData flyPathData )
 				vector tiltAxis = Normalize( CrossProduct( Normalize( velocity ), <0,0,1> ) )
 				maxTiltThisFrame = GetMaxTiltForFrame(hoverTank)
 				if ( DEBUG_PATHING )
-					DebugDrawLine( hoverTank.flightMover.GetOrigin(), hoverTank.flightMover.GetOrigin() + tiltAxis * 500, <125, 100, 150>, true, HOVER_TANK_FLY_FRAME_UPDATE_TIME * 2.0 )
+					DebugDrawLine( hoverTank.flightMover.GetOrigin(), hoverTank.flightMover.GetOrigin() + tiltAxis * 500, 125, 100, 150, true, HOVER_TANK_FLY_FRAME_UPDATE_TIME * 2.0 )
 				float frac = GraphCapped( moveSpeed, 0.0, GetFlySpeedForFrame(hoverTank), 0.0, 1.0 )
 				tiltAmount = GetMaxTiltAmount(hoverTank) * frac
 
@@ -2132,7 +2132,7 @@ void function HoverTankFlyPath( HoverTank hoverTank, FlyPathData flyPathData )
 			{
 				if ( i > 0 )
 				{
-					//DebugDrawLine( flyPathData.smoothPath[i-1], p, COLOR_ORANGE, true, HOVER_TANK_FLY_FRAME_UPDATE_TIME )
+					DebugDrawLine( flyPathData.smoothPath[i-1], p, int(COLOR_ORANGE.x), int(COLOR_ORANGE.y), int(COLOR_ORANGE.z), true, HOVER_TANK_FLY_FRAME_UPDATE_TIME )
 				}
 			}
 
@@ -2145,7 +2145,7 @@ void function HoverTankFlyPath( HoverTank hoverTank, FlyPathData flyPathData )
 			{
 				vector dir = flyPathData.path[i+1] - flyPathData.path[i]
 				float d = dir.Length()
-				DebugDrawArrow( flyPathData.path[i], flyPathData.path[i] + (Normalize(dir) * (d - arrowSize)), arrowSize, GREEN[0], GREEN[1], GREEN[2], true, HOVER_TANK_FLY_FRAME_UPDATE_TIME )
+				//DebugDrawArrow( flyPathData.path[i], flyPathData.path[i] + (Normalize(dir) * (d - arrowSize)), arrowSize, GREEN[0], GREEN[1], GREEN[2], true, HOVER_TANK_FLY_FRAME_UPDATE_TIME )
 			}
 
 			// Draw actual path taken in BLUE
@@ -2153,7 +2153,7 @@ void function HoverTankFlyPath( HoverTank hoverTank, FlyPathData flyPathData )
 			{
 				if ( i > 0 )
 				{
-					//DebugDrawLine( actualPathTaken[i-1], p, <0, 0, 255>, true, HOVER_TANK_FLY_FRAME_UPDATE_TIME )
+					DebugDrawLine( actualPathTaken[i-1], p, 0, 0, 255, true, HOVER_TANK_FLY_FRAME_UPDATE_TIME )
 				}
 			}
 		}
@@ -2176,7 +2176,7 @@ void function DebugDrawEntity( entity ent, float radius = 32.0 )
 	EndSignal( ent, "OnDestroy" )
 	while( true )
 	{
-		// DebugDrawSphere( ent.GetOrigin(), radius, <255, 0, 0>, true, 0.15 )
+		 //DebugDrawSphere( ent.GetOrigin(), radius, 255, 0, 0, true, 0.15 )
 		wait 0.1
 	}
 }

@@ -319,7 +319,7 @@ entity function SelectBestTargetFromArray( entity player, float maxRange, float 
 			if ( SNIPER_RECON_DEBUG )
 			{
 				DebugDrawText(  target.GetWorldSpaceCenter(), "Out of Range", true, 0.1 )
-				DebugDrawSphere( target.GetWorldSpaceCenter(), 3, COLOR_YELLOW, true, 0.1 )
+				DebugDrawSphere( target.GetWorldSpaceCenter(), 3, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 0.1 )
 			}
 			continue
 		}
@@ -367,11 +367,11 @@ entity function SelectBestTargetFromArray( entity player, float maxRange, float 
 		{
 			if ( SNIPER_RECON_DEBUG )
 			{
-				DebugDrawSphere( target.GetWorldSpaceCenter(), 3, COLOR_RED, true, 0.1 )
+				DebugDrawSphere( target.GetWorldSpaceCenter(), 3, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1 )
 				//DebugDrawText( target.GetWorldSpaceCenter(), "center", true, 0.1 )
-				DebugDrawSphere( target.EyePosition(), 3, COLOR_RED, true, 0.1 )
+				DebugDrawSphere( target.EyePosition(), 3, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1 )
 				//DebugDrawText( target.EyePosition(), "eye", true, 0.1 )
-				DebugDrawSphere( target.GetOrigin(), 3, COLOR_RED, true, 0.1 )
+				DebugDrawSphere( target.GetOrigin(), 3, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1 )
 				//DebugDrawText( target.GetOrigin(), "orig", true, 0.1 )
 			}
 			continue
@@ -396,7 +396,7 @@ entity function SelectBestTargetFromArray( entity player, float maxRange, float 
 					posToDraw = target.GetOrigin()
 				}
 
-				DebugDrawSphere( posToDraw, 3, COLOR_YELLOW, true, 0.1 )
+				DebugDrawSphere( posToDraw, 3, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 0.1 )
 
 				DebugDrawText( target.GetWorldSpaceCenter(), ""+bestDot , true, 0.1 )
 			}
@@ -441,13 +441,13 @@ entity function SelectBestTargetFromArray( entity player, float maxRange, float 
 				bestTarget = targetData.target
 				if ( SNIPER_RECON_DEBUG )
 				{
-					DebugDrawSphere( trace.endPos, 5, COLOR_GREEN, true, 0.1 )
+					DebugDrawSphere( trace.endPos, 5, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 )
 				}
 			}
 			else if ( SNIPER_RECON_DEBUG )
 			{
-				DebugDrawSphere( targetData.target.GetWorldSpaceCenter(), 5, COLOR_RED, true, 0.1 )
-				DebugDrawSphere( trace.endPos, 3, COLOR_PINK, true, 0.1 )
+				DebugDrawSphere( targetData.target.GetWorldSpaceCenter(), 5, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1 )
+				DebugDrawSphere( trace.endPos, 3, int(COLOR_PINK.x), int(COLOR_PINK.y), int(COLOR_PINK.z), true, 0.1 )
 			}
 
 			if ( bestTarget == null ) //If I cant see then check the origin
@@ -462,13 +462,13 @@ entity function SelectBestTargetFromArray( entity player, float maxRange, float 
 					bestTarget = targetData.target
 					if ( SNIPER_RECON_DEBUG )
 					{
-						DebugDrawSphere( trace.endPos, 5, COLOR_GREEN, true, 0.1 )
+						DebugDrawSphere( trace.endPos, 5, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 )
 					}
 				}
 				else if ( SNIPER_RECON_DEBUG )
 				{
-					DebugDrawSphere( targetData.target.GetOrigin(), 5, COLOR_RED, true, 0.1 )
-					DebugDrawSphere( trace.endPos, 3, COLOR_PINK, true, 0.1 )
+					DebugDrawSphere( targetData.target.GetOrigin(), 5, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1 )
+					DebugDrawSphere( trace.endPos, 3, int(COLOR_PINK.x), int(COLOR_PINK.y), int(COLOR_PINK.z), true, 0.1 )
 				}
 			}
 
@@ -490,13 +490,13 @@ entity function SelectBestTargetFromArray( entity player, float maxRange, float 
 					bestTarget = targetData.target
 					if ( SNIPER_RECON_DEBUG )
 					{
-						DebugDrawSphere( trace.endPos, 5, COLOR_GREEN, true, 0.1 )
+						DebugDrawSphere( trace.endPos, 5, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 )
 					}
 				}
 				else if ( SNIPER_RECON_DEBUG )
 				{
-					DebugDrawSphere( targetData.target.EyePosition(), 5, COLOR_RED, true, 0.1 )
-					DebugDrawSphere( trace.endPos, 3, COLOR_PINK, true, 0.1 )
+					DebugDrawSphere( targetData.target.EyePosition(), 5, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1 )
+					DebugDrawSphere( trace.endPos, 3, int(COLOR_PINK.x), int(COLOR_PINK.y), int(COLOR_PINK.z), true, 0.1 )
 				}
 			}
 
@@ -658,13 +658,13 @@ void function CL_SniperRecon_UI_Thread( entity owner )
 		{
 			if ( IsValid(bestScopeTarget) )
 			{
-				DebugDrawSphere( bestScopeTarget.GetWorldSpaceCenter(), 10, <0, 100, 255>, true, 0.1 )
+				DebugDrawSphere( bestScopeTarget.GetWorldSpaceCenter(), 10, 0, 100, 255, true, 0.1 )
 
 
 				entity aaTarget = GetAimAssistCurrentTarget()
 				if ( IsValid(aaTarget) && aaTarget != bestScopeTarget )
 				{
-					DebugDrawSphere( aaTarget.GetWorldSpaceCenter(), 15, COLOR_RED, true, 0.1 )
+					DebugDrawSphere( aaTarget.GetWorldSpaceCenter(), 15, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1 )
 				}
 			}
 		}

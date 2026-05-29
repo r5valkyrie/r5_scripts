@@ -206,7 +206,7 @@ void function HuntClosestPlayer_( entity npc, string signalToStopHunting, SkitIn
 		if ( npc.HasKey( "alwaysalert" ) )
 			npc.kv.alwaysalert = true
 
-		//DebugDrawLine( npc.GetOrigin() + <0, 0, 72>, goalPos, COLOR_RED, true, waitTime )
+		//DebugDrawLine( npc.GetOrigin() + <0, 0, 72>, goalPos, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, waitTime )
 	}
 }
 void function SkNPC_HuntClosestPlayerInObjective( entity npc, string signalToStopHunting, ObjectiveInstance oi )

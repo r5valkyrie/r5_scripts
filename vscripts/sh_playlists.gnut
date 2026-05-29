@@ -50,7 +50,7 @@ global function PartyHasPlaylistAccountLevelRequired
 global int rotationDurationMoreThanDayCount = 0
 #endif
 
-#if (SERVER || CLIENT || UI) && DEV
+#if (SERVER || CLIENT || UI) && DEVELOPER
 global function PrintPlaylists
 #endif
 
@@ -683,7 +683,7 @@ asset function GetImageFromImageMap( string keyName )
 			imageAsset = GAMEMODE_IMAGE_MAP[keyName]
 		else
 		{
-			#if DEV
+			#if DEVELOPER
 				if ( GetConVarBool( "ui_automation_enabled" ) )
 					return imageAsset // skip the warning
 			#endif // DEV
@@ -703,7 +703,7 @@ asset function GetThumbnailImageFromImageMap( string keyName )
 			imageAsset = GAMEMODE_THUMBNAIL_IMAGE_MAP[keyName]
 		else
 		{
-			#if DEV
+			#if DEVELOPER
 				if ( GetConVarBool( "ui_automation_enabled" ) )
 					return imageAsset // skip the warning
 			#endif // DEV
@@ -737,7 +737,7 @@ asset function GetGamemodeLogoFromImageMap( string keyName )
 
 		if ( !foundLogo )
 		{
-			#if DEV
+			#if DEVELOPER
 				if ( GetConVarBool( "ui_automation_enabled" ) )
 					return imageAsset // skip the warning
 			#endif // DEV
@@ -1359,7 +1359,7 @@ array<int> function GetEmblemColor( string playlistName )
 }
 #endif
 
-#if DEV
+#if DEVELOPER
 // this is only needed until rotation groups work on listen servers
 const DEV_SecondsPerRotation = 3600
 #endif
@@ -1368,7 +1368,7 @@ const DEV_SecondsPerRotation = 3600
 string function GetPlaylistRotationGroup()
 {
 	string rotationGroup = GetDefaultPlaylistRotationGroup()
-	#if DEV
+	#if DEVELOPER
 		if ( rotationGroup == "" )
 		{
 			//different map every minute
@@ -1387,7 +1387,7 @@ int function GetPlaylistRotationNextTime( string rotationName = "" )
 {
 	int nextTime = GetNamedPlaylistRotationNextTime( rotationName )
 
-	#if DEV
+	#if DEVELOPER
 		if ( nextTime == 0 )
 			nextTime = (GetUnixTimestamp() / DEV_SecondsPerRotation ) * DEV_SecondsPerRotation + DEV_SecondsPerRotation //fake switch every so often
 	#endif
@@ -1635,7 +1635,7 @@ bool function PartyHasPlaylistAccountLevelRequired( string playlistName )
 //// Dev functions ////
 ///////////////////////
 ///////////////////////
-#if (SERVER || CLIENT || UI) && DEV
+#if (SERVER || CLIENT || UI) && DEVELOPER
 void function PrintPlaylists()
 {
 	printt( "=== PLAYLIST NAMES: ===" )

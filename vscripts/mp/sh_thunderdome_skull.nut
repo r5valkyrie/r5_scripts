@@ -4,7 +4,7 @@ global function ThunderdomeSkull_Init
 global function ServerToClient_ThunderdomeSkullInteractionPlayGroundSmokeSound
 #endif
 
-#if DEV
+#if DEVELOPER
 #if SERVER
 global function DEV_ThunderdomeSkullResetButton
 #endif // SERVER
@@ -407,7 +407,7 @@ void function Client_ThunderdomeSkullInteractionPlayAudioEmitters( string script
 }
 #endif
 
-#if DEV
+#if DEVELOPER
 #if SERVER
 void function DEV_ThunderdomeSkullResetButton( entity player )
 {

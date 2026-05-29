@@ -1,0 +1,13 @@
+
+IsTestMap: false
+When: "SERVER"
+Scripts:
+[
+	mp/levels/mp_rr_olympus_mu2.nut
+	mp/levels/survival_preprocess/mp_rr_olympus_mu2.nut
+]
+When: "SERVER"
+Scripts:
+[
+	mp/levels/mp_rr_olympus_common.nut
+]

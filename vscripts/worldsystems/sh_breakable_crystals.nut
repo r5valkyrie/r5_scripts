@@ -253,7 +253,7 @@ void function BreakableCrystals_OnDamaged( entity crystal, var damageInfo )
 
         #if DEBUG_CRYSTALS
             printt( "BC: Bottom new health -", crystalData.bottomSection.health )
-            DebugDrawSphere( damagePosition, 25.0, COLOR_MAGENTA, true, 30.0 )
+            DebugDrawSphere( damagePosition, 25.0, int(COLOR_MAGENTA.x), int(COLOR_MAGENTA.y), int(COLOR_MAGENTA.z), true, 30.0 )
         #endif
     }
     else
@@ -270,7 +270,7 @@ void function BreakableCrystals_OnDamaged( entity crystal, var damageInfo )
 
             #if DEBUG_CRYSTALS
                 printt( "BC: Top new health -", crystalData.topSection.health )
-                DebugDrawSphere( damagePosition, 25.0, COLOR_GREEN, true, 30.0 )
+                DebugDrawSphere( damagePosition, 25.0, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 30.0 )
             #endif
         }
         else
@@ -285,7 +285,7 @@ void function BreakableCrystals_OnDamaged( entity crystal, var damageInfo )
 
              #if DEBUG_CRYSTALS
                  printt( "BC: Bottom new health -", crystalData.bottomSection.health )
-                 DebugDrawSphere( damagePosition, 25.0, COLOR_RED, true, 30.0 )
+                 DebugDrawSphere( damagePosition, 25.0, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 30.0 )
              #endif
         }
     }

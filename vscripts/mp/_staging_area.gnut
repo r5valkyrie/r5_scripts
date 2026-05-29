@@ -4110,7 +4110,7 @@ void function DEV_Record_Training_Bloodhound_Hillslide()
 	vector endPos = <-7312.84717, 405.521118, -19.9930382>
 	vector endAng = <-0.00253736973, 179.997314, -0.000686645508>
 
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	string name = "training_bloodhound_hillslide_mu1"
 
 	player.SetOrigin( startPos )
@@ -4131,7 +4131,7 @@ void function DEV_Record_Training_Pathfinder_Bye()
 	vector startPos = <-5823.47852, -929.081909, 398>
 	vector startAng = <5.36441803e-05, 5.36441803e-05, 5.36441803e-05>
 
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	string name = "training_pathfinder_bye_mu1"
 
 	player.SetOrigin( startPos )

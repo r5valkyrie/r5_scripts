@@ -450,7 +450,7 @@ void function PassiveAxiom_TrackReviveIsGrounded_Thread( entity reviver, entity 
 			vector origin = reviver.GetOrigin()
 			array<entity> ignoreArray = GetPlayerArray_Alive()
 			TraceResults groundTrace = TraceLine( origin, origin + <0, 0, -AUTO_REVIVE_MAX_ALLOWED_DIST_FROM_GROUND>, ignoreArray, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
-			//DebugDrawSphere( groundTrace.endPos, 10.0, COLOR_YELLOW, true, 10 )
+			//DebugDrawSphere( groundTrace.endPos, 10.0, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 10 )
 			if ( groundTrace.fraction == 1.0 )
 			{
 				//We are falling. Break the Revive

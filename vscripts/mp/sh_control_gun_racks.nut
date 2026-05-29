@@ -9,7 +9,7 @@ global function ControlGunRacks_SetLootTierForGunRackGroup
 global function ControlGunRacks_ResetGunRackLootOnAllGunRacksInGroup
 global function ControlGunRacks_GetAllUniqueGunRackGroups
 
-#if DEV
+#if DEVELOPER
 global function ControlGunRacks_DumpGunRackContent
 #endif
 
@@ -453,7 +453,7 @@ int function ControlGunRacks_GetLootTierForGunRackGroup( int gunRackGroup )
 	return file.gunRackGroupToLootTierTable[ gunRackGroup ]
 }
 
-#if DEV
+#if DEVELOPER
 void function ControlGunRacks_DumpGunRackContent()
 {
 	foreach( loot, rack in file.lootToRackTable )

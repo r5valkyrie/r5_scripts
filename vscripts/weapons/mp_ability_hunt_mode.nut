@@ -5,7 +5,7 @@ global function OnWeaponDeactivate_hunt_mode
 
 #if DEVELOPER && CLIENT
 global function GetBloodhoundColorCorrectionID
-#endif //DEVELOPER && CLIENT
+#endif //DEV && CLIENT
 
 const float HUNT_MODE_DURATION = 30.0
 const float HUNT_MODE_KNOCKDOWN_TIME_BONUS = 5.0
@@ -52,33 +52,39 @@ void function MpAbilityHuntModeWeapon_Init()
 
 }
 
+                    
 float function HuntMode_GetExtendedDuration()
 {
 	return GetCurrentPlaylistVarFloat( "bloodhound_ult_upgraded_duration", 40 )
 }
+      
 
 float function HuntMode_GetDuration( entity player )
 {
 	float result = HUNT_MODE_DURATION
 
-	// if( PlayerHasPassive( player, ePassives.PAS_ULT_UPGRADE_ONE ) ) // upgrade_bloodhound_extended_hunt
-	// {
-		// return HuntMode_GetExtendedDuration()
-	// }
-    
+	                    
+	if( PlayerHasPassive( player, ePassives.PAS_ULT_UPGRADE_ONE ) ) // upgrade_bloodhound_extended_hunt
+	{
+		return HuntMode_GetExtendedDuration()
+	}
+       
+
 	return result
 }
 
 #if SERVER
+                    
 void function HuntMode_TryRegenOnKnock( entity attacker )
 {
-	// if( PlayerHasPassive( attacker, ePassives.PAS_ULT_UPGRADE_TWO ) ) // upgrade_bloodhound_knock_regen_during_hunt
-	// {
+	if( PlayerHasPassive( attacker, ePassives.PAS_ULT_UPGRADE_TWO ) ) // upgrade_bloodhound_knock_regen_during_hunt
+	{
 		int health = attacker.GetHealth()
 		int newHealth = minint( health + HUNT_MODE_KNOCKDOWN_HEAL_BONUS, attacker.GetMaxHealth() )
 		attacker.SetHealth( newHealth )
-	// }
+	}
 }
+      
 
 void function HuntMode_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
@@ -91,7 +97,9 @@ void function HuntMode_OnPlayerKilled( entity victim, entity attacker, var damag
 	{
 		if ( !Bleedout_IsBleedingOut( victim ) )
 		{
-			// if ( PlayerHasPassive( attacker, ePassives.PAS_ULT_UPGRADE_THREE ) ) // upgrade_bloodhound_knock_extends_ult
+			                    
+			if ( PlayerHasPassive( attacker, ePassives.PAS_ULT_UPGRADE_THREE ) ) // upgrade_bloodhound_knock_extends_ult
+         
 			{
 				float extension = CalculateTimeExtension( timeRemaining )
 				file.huntModeEndTimes[attacker] += extension
@@ -100,16 +108,29 @@ void function HuntMode_OnPlayerKilled( entity victim, entity attacker, var damag
 				StatusEffect_AddTimed( attacker, eStatusEffect.hunt_mode, 1.0, timeRemaining + extension, HuntMode_GetDuration( attacker ) )
 				StatusEffect_AddTimed( attacker, eStatusEffect.hunt_mode_visuals, 1.0, timeRemaining + extension, 5.0 )
 
-				int extensionFloatToInt = int( extension )
-				float extensionRounded  = float( extensionFloatToInt )
 
-				// Remote_CallFunction_Replay( attacker, "ServerCallback_ShowUltTimeIncreasedHint", attacker, extensionRounded )
+			int extensionFloatToInt = int( extension )
+			float extensionRounded  = float( extensionFloatToInt )
+
+			                           
+				Remote_CallFunction_Replay( attacker, "ServerCallback_ShowUltTimeIncreasedHint", attacker, extensionRounded )
          
 			}
 
-			HuntMode_TryRegenOnKnock( attacker )
-			
+			                    
+				HuntMode_TryRegenOnKnock( attacker )
+         
+
+		                                              
+			if( !TrackingVision_HasActiveWhiteRaven( attacker ) )
+				TrackingVision_CreateWhiteRavenInFlight( attacker, eWhiteRavenTargetType.ENEMY, true )
+        
+
+		                                                                               
 			bool isValidMode = true
+                          
+                                                                    
+         
 
 			if ( isValidMode )
 			{
@@ -147,18 +168,45 @@ void function HuntMode_OnPlayerStartBleedout( entity player, entity attacker, va
 	float timeRemaining = StatusEffect_GetTimeRemaining( attacker, eStatusEffect.hunt_mode )
 	if ( (attacker in file.huntModeEndTimes) && timeRemaining > 0.0 )
 	{
-		HuntMode_TryRegenOnKnock( attacker )
-		
-		bool isValidMode = true
-
-		if ( isValidMode )
+		                    
+		if( PlayerHasPassive( attacker, ePassives.PAS_ULT_UPGRADE_THREE ) ) // upgrade_bloodhound_knock_extends_ult
+        
 		{
-			entity tacticalWeapon = player.GetOffhandWeapon( OFFHAND_TACTICAL )
-			int currentAmmo       = tacticalWeapon.GetWeaponPrimaryClipCount()
-			int maxAmmo           = tacticalWeapon.GetWeaponPrimaryClipCountMax()
-			if ( currentAmmo != maxAmmo )
-				tacticalWeapon.SetWeaponPrimaryClipCount( maxAmmo )
+		float extension = CalculateTimeExtension( timeRemaining )
+		file.huntModeEndTimes[attacker] += extension
+		StatusEffect_StopAllOfType( attacker, eStatusEffect.hunt_mode )
+		StatusEffect_StopAllOfType( attacker, eStatusEffect.hunt_mode_visuals )
+		StatusEffect_AddTimed( attacker, eStatusEffect.hunt_mode, 1.0, timeRemaining + extension, HuntMode_GetDuration( attacker ) )
+		StatusEffect_AddTimed( attacker, eStatusEffect.hunt_mode_visuals, 1.0, timeRemaining + extension, 5.0 )
+
+
+		int extensionFloatToInt = int( extension )
+		float extensionRounded = float( extensionFloatToInt )
+
+		                           
+		Remote_CallFunction_Replay( attacker, "ServerCallback_ShowUltTimeIncreasedHint", attacker, extensionRounded )
+        
+
 		}
+		                    
+			HuntMode_TryRegenOnKnock( attacker )
+        
+
+                                                                               
+	bool isValidMode = true
+                        
+                                                                  
+       
+
+	if ( isValidMode )
+	{
+		entity tacticalWeapon = player.GetOffhandWeapon( OFFHAND_TACTICAL )
+		int currentAmmo       = tacticalWeapon.GetWeaponPrimaryClipCount()
+		int maxAmmo           = tacticalWeapon.GetWeaponPrimaryClipCountMax()
+		if ( currentAmmo != maxAmmo )
+			tacticalWeapon.SetWeaponPrimaryClipCount( maxAmmo )
+	}
+      
 	}
 
 	if ( IsValid( player ) && StatusEffect_GetTimeRemaining( player, eStatusEffect.hunt_mode ) > 0.0 )
@@ -180,11 +228,12 @@ void function MpAbilityHuntModeWeapon_OnWeaponTossPrep( entity weapon, WeaponTos
 
 		Embark_Disallow( weaponOwner )
 		DisableMantle( weaponOwner )
-		LockWeaponsAndMelee( weaponOwner )
+		LockWeaponsAndMelee( weaponOwner, "hunt_mode" )
 
 		// temp fix to stop the issue with wallclimb holstering weapons.
 		const ACTIVATION_TIME = 2.1
-		StatusEffect_AddTimed( weaponOwner, eStatusEffect.disable_wall_run_and_double_jump, 1.0, ACTIVATION_TIME, 0.0 )
+		StatusEffect_AddTimed( weaponOwner, eStatusEffect.disable_wall_run, 1.0, ACTIVATION_TIME, 0.0 )
+		StatusEffect_AddTimed( weaponOwner, eStatusEffect.disable_double_jump, 1.0, ACTIVATION_TIME, 0.0 )
 	#endif
 }
 
@@ -240,6 +289,11 @@ void function HuntMode_Start( entity player )
 		{
 			thread HuntMode_ScanTargets( player )
 		}
+
+	                                              
+		TrackingVision_CreateWhiteRavenInFlight( player, eWhiteRavenTargetType.ENEMY, true )
+       
+
 	#endif
 }
 
@@ -252,7 +306,6 @@ void function EndThreadOn_HuntCommon( entity player )
 	player.EndSignal( "BleedOut_OnStartDying" )
 
 	#if SERVER
-		player.EndSignal( "CleanUpPlayerAbilities" )
 		EndThreadOn_PlayerChangedClass( player )
 	#endif // SERVER
 }
@@ -267,7 +320,7 @@ void function HuntMode_ScanTargets( entity player )
 	entity trigger = CreateEntity( "trigger_cylinder" )
 	trigger.RemoveFromAllRealms()
 	trigger.AddToOtherEntitysRealms( player )
-	trigger.SetRadius( file.sonarRange )
+	trigger.SetCylinderRadius( file.sonarRange )
 	trigger.SetAboveHeight( file.sonarRange )
 	trigger.SetBelowHeight( file.sonarRange ) // Need this because the player or entity can sink into the ground a tiny bit and we check player feet not half height
 	trigger.SetOrigin( player.GetOrigin() )
@@ -384,7 +437,7 @@ void function EntitySonarThink( entity trigger, entity weaponOwner, entity ent )
 
 bool function TargetShouldBeSonared( entity ent, entity looker )
 {
-	float minDot = deg_cos( 70.0 )
+	float minDot = deg_cos( DEFAULT_FOV )
 
 	vector origin = looker.EyePosition()
 	vector fwd    = looker.GetViewVector()
@@ -400,10 +453,7 @@ bool function TargetShouldBeSonared( entity ent, entity looker )
 
 	if ( results.fraction < 0.99 )
 		return false
-	
-	if( StatusEffect_GetSeverity( ent, eStatusEffect.smokescreen ) > 0.0 )
-		return false
-	
+
 	return true
 }
 
@@ -420,7 +470,58 @@ void function HuntMode_HandleStatusEffects( entity player, array<int> ids )
 	int tacClipCount = tacticalAbility.GetWeaponPrimaryClipCount()
 	int tacStockpile = tacticalAbility.GetWeaponPrimaryAmmoCount( AMMOSOURCE_STOCKPILE )
 
+                        
+                              
+       
+
 	array<string> currentTacMods = tacticalAbility.GetMods()
+                                                
+                                                                            
+  
+                                                 
+   
+                                         
+                         
+   
+
+                         
+                                                             
+   
+                                                                                    
+                                                                                             
+                    
+                    
+
+                                                                    
+    
+                         
+                 
+    
+       
+    
+                                                              
+                                                                                                                     
+    
+
+                                                         
+                                                                               
+                             
+   
+        
+  
+                                                    
+
+	if ( IsValid( player ) )
+	{
+		if ( PlayerHasPassive( player, ePassives.PAS_TAC_COOLDOWN_REDUCTION ) ) // upgrade_bloodhound_ult_tac_cooldown_reduction
+		{
+			if ( !currentTacMods.contains( "tac_cd_in_ult" ) )
+			{
+				tacticalAbility.AddMod( "tac_cd_in_ult" )
+				e[ "addedMod" ] = true
+			}
+		}
+	}
 
 	// Only the server will force the status effect to end in special circumstances
 	// Typical case is for the client to let the status effect time out naturally (in addition to the server stopping it after the fact)
@@ -430,6 +531,12 @@ void function HuntMode_HandleStatusEffects( entity player, array<int> ids )
 			array<string> currentTacMods = tacticalAbility.GetMods()
 			if ( IsValid( tacticalAbility ) && e[ "addedMod" ] )
 			{
+                                                   
+                                                  
+     
+                                              
+     
+                                                       
 				if ( currentTacMods.contains( "tac_cd_in_ult" ) )
 				{
 					tacticalAbility.RemoveMod( "tac_cd_in_ult" )
@@ -438,6 +545,16 @@ void function HuntMode_HandleStatusEffects( entity player, array<int> ids )
 
 			if ( IsValid( player ) )
 			{
+                                                   
+                           
+                                                             
+      
+                                                               
+                                                                                     
+      
+          
+                                                       
+
 				player.Signal( "HuntMode_End" )
 
 				foreach ( id in ids )
@@ -582,7 +699,7 @@ void function HuntMode_StartVisualEffect( entity ent, int statusEffect, bool act
 	if ( ent != GetLocalViewPlayer() )
 		return
 
-	GfxDesaturate( true )
+	GfxDesaturateOn()
 	Chroma_StartHuntMode()
 	thread HuntMode_UpdatePlayerScreenColorCorrection( ent )
 	thread HuntMode_PlayActivationScreenFX( ent )
@@ -596,7 +713,7 @@ void function HuntMode_StopVisualEffect( entity ent, int statusEffect, bool actu
 	if ( ent != GetLocalViewPlayer() )
 		return
 
-	GfxDesaturate( false )
+	GfxDesaturateOff()
 	Chroma_EndHuntMode()
 	ent.Signal( "HuntMode_StopColorCorrection" )
 	ent.Signal( "HuntMode_StopActivationScreenFX" )
@@ -610,7 +727,7 @@ void function HuntMode_PlayActivationScreenFX( entity clientPlayer )
 	entity viewPlayer = GetLocalViewPlayer()
 	int fxid          = GetParticleSystemIndex( HUNT_MODE_ACTIVATION_SCREEN_FX )
 
-	int fxHandle = StartParticleEffectOnEntity( viewPlayer, fxid, FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
+	int fxHandle = StartParticleEffectOnEntity( viewPlayer, fxid, FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
 	EffectSetIsWithCockpit( fxHandle, true )
 	Effects_SetParticleFlag( fxHandle, PARTICLE_SCRIPT_FLAG_NO_DESATURATE, true )
 
@@ -648,4 +765,4 @@ int function GetBloodhoundColorCorrectionID()
 {
 	return file.colorCorrection
 }
-#endif //DEVELOPER && CLIENT
+#endif //DEV && CLIENT

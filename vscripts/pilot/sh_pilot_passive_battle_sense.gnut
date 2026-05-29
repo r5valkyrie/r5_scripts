@@ -16,7 +16,7 @@ global function DEV_BattleSense_ServerCallback_DebugStart
 global function DEV_BattleSense_ServerCallback_DebugEnd
 #endif
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 global function DEV_BattleSense_TestUI
 #endif
 
@@ -42,9 +42,9 @@ const float TIME_STEP_BATTLE_SENSE_CHECK = 0.5
 const vector COLOR_DEBUG_TEXT_RED = < 255, 0, 0 >
 #endif
 
-#if CLIENT && DEV
+#if CLIENT && DEVELOPER
 const string FLAG_DEBUG = "Battle_Sense_Debug"
-#endif // CLIENT && DEV
+#endif // CLIENT && DEVELOPER
 
 struct
 {
@@ -70,9 +70,9 @@ void function ShPassiveBattleSense_RegisterNetworking()
 
 	RegisterSignal( SIG_BATTLE_SENSE_END )
 
-	#if CLIENT && DEV
+	#if CLIENT && DEVELOPER
 	FlagInit( FLAG_DEBUG )
-	#endif // CLIENT && DEV
+	#endif // CLIENT && DEVELOPER
 }
 #endif // CLIENT || SERVER
 
@@ -189,7 +189,7 @@ void function BattleSense_ServerCallback_UpdateEnd()
 #if CLIENT
 void function DEV_BattleSense_ServerCallback_DebugStart()
 {
-	#if DEV
+	#if DEVELOPER
 	FlagSet( FLAG_DEBUG )
 
 	BattleSense_Activate()
@@ -200,7 +200,7 @@ void function DEV_BattleSense_ServerCallback_DebugStart()
 #if CLIENT
 void function DEV_BattleSense_ServerCallback_DebugEnd()
 {
-	#if DEV
+	#if DEVELOPER
 	thread DEV_BattleSense_ServerCallback_DebugEnd_Thread()
 	#endif // DEV
 }
@@ -209,7 +209,7 @@ void function DEV_BattleSense_ServerCallback_DebugEnd()
 #if CLIENT
 void function DEV_BattleSense_ServerCallback_DebugEnd_Thread()
 {
-	#if DEV
+	#if DEVELOPER
 	BattleSense_Deactivate()
 
 	wait TIME_STEP_BATTLE_SENSE_CHECK
@@ -235,7 +235,7 @@ void function BattleSense_Update_Thread()
 
 	while( GetGameState() < eGameState.WinnerDetermined )
 	{
-		#if DEV
+		#if DEVELOPER
 		FlagWaitClear( FLAG_DEBUG )
 		#endif // DEV
 
@@ -328,7 +328,7 @@ void function BattleSense_Deactivate()
 }
 #endif // CLIENT
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function DEV_BattleSense_TestUI( entity player, float time = 2.0 )
 {
 	if ( !IsBattleSenseEnabled() )
@@ -339,9 +339,9 @@ void function DEV_BattleSense_TestUI( entity player, float time = 2.0 )
 
 	thread DEV_BattleSense_TestUI_Thread( player, time )
 }
-#endif // SERVER && DEV
+#endif // SERVER && DEVELOPER
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function DEV_BattleSense_TestUI_Thread( entity player, float time )
 {
 	Remote_CallFunction_NonReplay( player, NETFUNC_DEBUG_START )
@@ -350,7 +350,7 @@ void function DEV_BattleSense_TestUI_Thread( entity player, float time )
 
 	Remote_CallFunction_NonReplay( player, NETFUNC_DEBUG_END )
 }
-#endif // SERVER && DEV
+#endif // SERVER && DEVELOPER
 
 float function GetPlaylistVar_BattleSenseDistance()
 {

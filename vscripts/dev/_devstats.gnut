@@ -1,7 +1,7 @@
 global function SvDevStats_LevelInit
 global function HeatMapStat
 
-#if DEV
+#if DEVELOPER
 const int HEATMAP_VERSION = 3    // DONT CHANGE THIS UNLESS YOUR NAME IS CHAD G AND YOU ALSO CHANGE PARSER SOURCE CODE
 global const string HEATMAP_SEPARATOR = ";"
 #endif //DEV
@@ -14,7 +14,7 @@ struct
 
 void function SvDevStats_LevelInit()
 {
-	#if DEV
+	#if DEVELOPER
 		AddCallback_OnPlayerRespawned( OnPlayerRespawned )
 		Loot_AddCallback_OnPlayerLootPickup( LootPickedUp )
 		Bleedout_AddCallback_OnPlayerStartBleedout( OnPlayerStartBleedout )
@@ -33,7 +33,7 @@ void function SvDevStats_LevelInit()
 ╚══════╝  ╚═══╝  ╚══════╝╚═╝  ╚═══╝   ╚═╝        ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝╚═════╝ ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝
 */
 
-#if DEV
+#if DEVELOPER
 void function OnPlayerRespawned( entity player )
 {
 	if ( player.IsBot() )
@@ -184,7 +184,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 
 void function HeatMapStat( entity player, string heatmapType, vector position, array<int> values = [] )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( !ShouldSendDevStats() )
 			return
 

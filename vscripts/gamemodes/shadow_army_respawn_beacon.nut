@@ -49,7 +49,7 @@ global function ShadowArmy_RespawnBeacon_ServerCallback_ManageHoloFX
 global function ShadowArmy_RespawnBeacon_ServerCallback_OnBeaconStateChanged
 #endif
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 global function ShadowArmy_RespawnLegendsFromRespawnBeacon_Dev
 global function ShadowArmy_TriggerRespawnBeaconBeamVFX_Dev
 #endif // DEV && SERVER
@@ -317,7 +317,7 @@ void function EntitiesDidLoad_Client()
 // Because the ring starts enabled, we need to do this to catch any beacons that are outside the ring on match start
 void function UpdateBeaconStatesOnDeathfieldStart_Thread()
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -610,7 +610,7 @@ void function SetBeaconToDefaultState( entity beacon )
 
 	if ( beaconWaypoint.GetWaypointCustomType() != WAYPOINT_SHADOWARMY_RESPAWNBEACON )
 	{
-		#if DEV
+		#if DEVELOPER
 			Assert( false, "Shadow Army Respawn Beacon: Running SetBeaconToDefaultState on an entity that is not a respawn beacon waypoint" )
 		#endif // DEV
 		return
@@ -682,7 +682,7 @@ void function SetBeaconState( entity beacon, int newBeaconState )
 			isStateChangeValid = true
 			break
 		default:
-			#if DEV
+			#if DEVELOPER
 				Assert( false, "Shadow Army Respawn Beacon: Unsupported beacon state: " + newBeaconState + " for beacon: " + beacon + " in SetBeaconState" )
 			#endif // DEV
 			break
@@ -697,7 +697,7 @@ void function SetBeaconState( entity beacon, int newBeaconState )
 
 		if ( IsValid( beaconWaypoint ) && beaconWaypoint.GetWaypointCustomType() == WAYPOINT_SHADOWARMY_RESPAWNBEACON )
 			beaconWaypoint.SetWaypointInt( WAYPOINT_INT_IDX_BEACON_STATE, newBeaconState )
-	#if DEV
+	#if DEVELOPER
 		else
 			Assert( false, "Shadow Army Respawn Beacon: Couldn't set beacon state in SetBeaconState due to invalid beaconWaypoint" )
 	#endif // DEV
@@ -749,7 +749,7 @@ int function GetBeaconState( entity beacon )
 {
 	if ( !IsValid( beacon ) )
 	{
-		#if DEV
+		#if DEVELOPER
 			Assert( false, "Shadow Army Respawn Beacon: GetBeaconState is going to return eShadowArmyRespawnBeaconState.INVALID due to Invalid beacon" )
 		#endif // DEV
 		return eShadowArmyRespawnBeaconState.INVALID
@@ -843,7 +843,7 @@ float function GetBeaconDurationForDurationType( entity beacon, int durationType
 
 	if ( durationType < 0 || durationType >= eShadowArmyRespawnBeaconDurationType._count )
 	{
-		#if DEV
+		#if DEVELOPER
 			Warning( "Shadow Army Respawn Beacon: Tried to run GetBeaconDurationForDurationType with an invalid duration type: " + durationType + " valid types are: " )
 			for ( int i = 0; i < eShadowArmyRespawnBeaconDurationType._count; i++ )
 			{
@@ -873,13 +873,13 @@ float function GetBeaconDurationForDurationType( entity beacon, int durationType
 				duration = beaconWaypoint.GetWaypointFloat( WAYPOINT_FLOAT_IDX_RESPAWN_BEACON_USE_DURATION )
 				break
 			default:
-				#if DEV
+				#if DEVELOPER
 					Warning( "Shadow Army Respawn Beacon: GetBeaconDurationForDurationType encountered an unsupported duration type in the switch statement: " + durationType )
 				#endif // DEV
 				break
 		}
 	}
-#if DEV
+#if DEVELOPER
 	else
 	{
 		Warning( "Shadow Army Respawn Beacon: GetBeaconDurationForDurationType going to return UNSET_TIME because the Beacon Waypoint was not valid for durationType: " + GetEnumString( "eShadowArmyRespawnBeaconDurationType", durationType ) )
@@ -1032,7 +1032,7 @@ void function RespawnBeaconStartUse( entity beacon, entity player, ExtendedUseSe
 		// Try playing announcer commentary
 		TryPlayingBeaconInUseAnnouncerCommentary()
 	}
-	#if DEV
+	#if DEVELOPER
 	else
 	{
 		Assert( false, "Shadow Army Respawn Beacon: RespawnBeaconStartUse is running on a beacon: " + beacon + " with an unexpected state: " + currentBeaconState )
@@ -1236,7 +1236,7 @@ void function ShadowArmy_RespawnBeacon_SpawnPlayers( entity beaconUser, entity b
 // Put a respawn beacon on cooldown and manage the cooldown state
 void function ManageRespawnBeaconCooldown_Thread( entity beacon, float cooldownDuration )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -1335,7 +1335,7 @@ void function ManageRespawnBeaconCooldown_Thread( entity beacon, float cooldownD
 const float POST_SIGNAL_DELAY = 0.1 // Need to wait a little after the status changed signal comes through for the beacon state to update on the Client
 void function ManageRespawnBeaconData_Thread( entity beacon, var rui )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -1436,7 +1436,7 @@ void function ManageRespawnBeaconData_Thread( entity beacon, var rui )
 			default:
 				// Update Map Icons
 				UpdateMapIcons( beacon, $"" )
-				#if DEV
+				#if DEVELOPER
 					Assert( false, "Shadow Army Respawn Beacon: Unsupported beacon state: " + currentBeaconState + " for beacon: " + beacon + " in ManageRespawnBeaconData_Thread" )
 				#endif // DEV
 				break
@@ -1514,7 +1514,7 @@ const float RESPAWN_BEACON_HOLO_EFFECT_HEIGHT = 75.0
 // Play Beacon Hologram VFX but turn them off if the beacon is enters a cooldown or disabled state
 void function ManageRespawnBeaconHologramVFX_Thread( entity beacon )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -1587,7 +1587,7 @@ string function RespawnBeacon_TextOverride( entity beacon )
 			hintString = "#SHADOW_ARMY_RESPAWNBEACON_DISABLED_TEMP"
 			break
 		default:
-			#if DEV
+			#if DEVELOPER
 				Assert( false, "Shadow Army Respawn Beacon: Unsupported beacon state: " + currentBeaconState + " for beacon: " + beacon + " in RespawnBeacon_TextOverride" )
 			#endif // DEV
 			break
@@ -1650,7 +1650,7 @@ void function DisplayRuiForRespawnBeacon_Internal( var rui, asset icon, float st
 // Play VFX when the beacon is used ( to spawn in Legends or sabotaged by revs )
 void function PlayRespawnSuccessEffectsOnBeacon_Thread( entity beacon )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -1732,7 +1732,7 @@ void function ShadowArmy_RespawnBeacon_ServerCallback_ShowBeaconHint( int hintIn
 			hintText = "#SHADOW_ARMY_RESPAWNBEACON_USE_HINT"
 			break
 		default:
-			#if DEV
+			#if DEVELOPER
 				Assert( false, "Shadow Army Respawn Beacon: Unhandled hintIndex: " + hintIndex )
 			#endif // DEV
 			break
@@ -1762,7 +1762,7 @@ void function ShadowArmy_RespawnBeacon_UpdateBeaconMapFeature()
 const float PING_DELAY = 1.0
 void function ShadowArmy_RespawnBeacon_PingRespawnBeaconOnDelay_Thread( int victimTeam, bool isAlliancePing )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
 	#endif // DEV
 
@@ -1853,17 +1853,17 @@ void function TryPlayingBeaconInUseAnnouncerCommentary()
 
 
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 // Trigger a respawning of all Legends waiting to spawn
 void function ShadowArmy_RespawnLegendsFromRespawnBeacon_Dev()
 {
 	printt( "Shadow Army: Running Debug Command ShadowArmy_RespawnLegendsFromRespawnBeacon_Dev" )
 
-	ShadowArmy_RespawnBeacon_SpawnPlayers( GP() )
+	ShadowArmy_RespawnBeacon_SpawnPlayers( GetPlayerArray() )
 }
 #endif // DEV && SERVER
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 // Trigger beam VFX on all the Beacons and then kill them after a time
 void function ShadowArmy_TriggerRespawnBeaconBeamVFX_Dev( bool shouldPlaySuccessVFXAtEnd = true )
 {
@@ -1871,7 +1871,7 @@ void function ShadowArmy_TriggerRespawnBeaconBeamVFX_Dev( bool shouldPlaySuccess
 }
 #endif // DEV && SERVER
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 // Manage the debug beam VFX
 void function ShadowArmy_ManageBeamVFX_Thread_Dev( bool shouldPlaySuccessVFXAtEnd )
 {

@@ -12,7 +12,7 @@ global function GoldenHorse_ModifyCarePackageSpawnDistance
 global function GoldenHorse_OnPlayerReconnected
 global function ClientToServer_ClientToServer_PingLootTickFromMap
 
-#if DEV
+#if DEVELOPER
 global function DEV_SpawnGoldenHorseTick
 global function DEV_SpawnTitanSword
 #endif
@@ -1029,7 +1029,7 @@ array < array<ClusterSpawnData> > function GetSwordCluster_DividedMoon()
 #endif
 
 
-#if DEV
+#if DEVELOPER
 #if SERVER
 const vector CROSSHAIR_OFFSET = <0, 0, -32>
 void function DEV_SpawnGoldenHorseTick( entity player, bool usePlayerAngles = false )

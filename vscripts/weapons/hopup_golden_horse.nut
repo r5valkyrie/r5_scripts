@@ -1727,7 +1727,7 @@ vector function GetPetSpawnLocation( entity player )
 	}
 
 	vector safeSpotOnNavmesh = NavMesh_GetClosestPoint( spawnLocation )
-	//DebugDrawSphere( safeSpotOnNavmesh, 4.0, <0, 128, 0>, true, 100.0, 4 )
+	//DebugDrawSphere( safeSpotOnNavmesh, 4.0, 0, 128, 0, true, 100.0, 4 )
 
 	return safeSpotOnNavmesh
 }

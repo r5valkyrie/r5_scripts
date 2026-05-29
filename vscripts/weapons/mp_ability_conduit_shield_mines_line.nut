@@ -3,7 +3,7 @@ global function OnProjectileCollision_ability_shield_mines_line
 
 #if SERVER
 global function DeployShieldMineLine
-#if DEV
+#if DEVELOPER
 global function ShieldMineLifetime_Thread
 #endif
 #endif
@@ -138,7 +138,7 @@ void function DeployShieldMineLine( entity player, entity projectile )
 
 	FiringRange_AddToRemoveOnCharacterChange( shieldMineLineWeapon, player )
 
-	//DebugDrawSphere( projectile.GetOrigin(), 10, COLOR_LIGHT_RED, false, 3.0 )
+	//DebugDrawSphere( projectile.GetOrigin(), 10, int(COLOR_LIGHT_RED.x), int(COLOR_LIGHT_RED.y), int(COLOR_LIGHT_RED.z), false, 3.0 )
 
 	vector airBurstLocation = projectile.proj.trackingPosition
 	vector flattennedVel = FlattenNormalizeVec( projectile.GetVelocity() )
@@ -221,19 +221,19 @@ array<vector> function GenerateMineLocations( entity weapon, vector airBurstLoca
 			minePos = ZERO_VECTOR//weapon.SimulateGrenadeImpactPos( airBurstLocation, launchVel , -1, 3 )
 		}
 
-		#if DEV
+		#if DEVELOPER
 		const float DRAW_TIME = 0.1
 		if ( DEBUG_DRAW )
 		{
-			DebugDrawSphere( airBurstLocation, 6, COLOR_GREEN, false, DRAW_TIME )
-			DebugDrawSphere( idealMinePos, 6, COLOR_YELLOW, false, DRAW_TIME )
-			DebugDrawSphere( minePos, 5, COLOR_GREEN, false, DRAW_TIME )
+			DebugDrawSphere( airBurstLocation, 6, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), false, DRAW_TIME )
+			DebugDrawSphere( idealMinePos, 6, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), false, DRAW_TIME )
+			DebugDrawSphere( minePos, 5, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), false, DRAW_TIME )
 			DebugDrawText( minePos, (" Mine: " + radiusMultiple[i]), false, DRAW_TIME)
-			DebugDrawArrow( airBurstLocation, minePos, 3, COLOR_LIGHT_GREEN, false, DRAW_TIME )
+			//DebugDrawArrow( airBurstLocation, minePos, 3, COLOR_LIGHT_GREEN, false, DRAW_TIME )
 
 			vector lineEnd = airBurstLocation+ Normalize(launchVel)*30
 			DebugDrawText( lineEnd, ("Proj: " + projectileID + " Mine: " + radiusMultiple[i]), false, DRAW_TIME)
-			DebugDrawArrow(airBurstLocation, lineEnd, 5, COLOR_LIGHT_RED, false, DRAW_TIME)
+			//DebugDrawArrow(airBurstLocation, lineEnd, 5, COLOR_LIGHT_RED, false, DRAW_TIME)
 
 
 			//Check distances between
@@ -244,7 +244,7 @@ array<vector> function GenerateMineLocations( entity weapon, vector airBurstLoca
 			//	vector dirToNew    = Normalize( minePos - prevMinePos )
 			//	float distance     = Distance( prevMinePos, minePos )
 			//	DebugDrawText( prevMinePos + (dirToNew*distance/2), ("D: " + distance ), false, DRAW_TIME)
-			//	DebugDrawLine(prevMinePos, minePos, COLOR_YELLOW, false, DRAW_TIME)
+			//	DebugDrawLine( prevMinePos, minePos, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), false, DRAW_TIME )
 			//}
 		}
 		#endif
@@ -330,7 +330,7 @@ void function OnProjectileCollision_ability_shield_mines_line( entity projectile
 			DestroyEnemyMinesInRange( projectile.GetTeam(), projectile.GetOrigin() )
 			thread ShieldMineLifetime_Thread( player, projectile.GetOrigin(), GetMineRadius( player ), parentTo )
 		}
-		//DebugDrawSphere( projectile.GetOrigin(), range, COLOR_DARK_BLUE, false, ignitionTime )
+		//DebugDrawSphere( projectile.GetOrigin(), range, int(COLOR_DARK_BLUE.x), int(COLOR_DARK_BLUE.y), int(COLOR_DARK_BLUE.z), false, ignitionTime )
 	#endif
 	projectile.Destroy()
 }
@@ -478,7 +478,7 @@ void function ShieldMine_OnDamageDealt( entity target, var damageInfo )
 		}
 		else
 		{
-			//DebugDrawLine( inflictor.GetOrigin(), target.GetOrigin(), COLOR_RED, false, 0.1 )
+			//DebugDrawLine( inflictor.GetOrigin(), target.GetOrigin(), int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), false, 0.1 )
 			DamageInfo_SetDamage( damageInfo, SHIELD_MINE_HEALTH )
 		}
 		return
@@ -599,7 +599,7 @@ bool function PositionTooCloseToOtherMines( entity player, vector pos )
 			{
 				float distSqr = DistanceSqr( shieldMine.GetOrigin(), pos )
 
-				#if DEV
+				#if DEVELOPER
 				//{
 				//	vector prevMinePos = shieldMine.GetOrigin()
 				//	vector dirToNew    = Normalize( pos - prevMinePos )
@@ -613,7 +613,7 @@ bool function PositionTooCloseToOtherMines( entity player, vector pos )
 				//			color = COLOR_RED
 				//
 				//		DebugDrawText( prevMinePos + (dirToNew * distance / 2), ("D: " + distance), false, 5.0 )
-				//		DebugDrawLine( prevMinePos, pos, color, false, 5.0 )
+				//		DebugDrawLine( prevMinePos, pos, int(color.x), int(color.y), int(color.z), false, 5.0 )
 				//	}
 				//}
 				#endif
@@ -644,9 +644,9 @@ int function DestroyEnemyMinesInRange( int playerTeam, vector pos )
 		float distSqr = DistanceSqr( shieldMine.GetOrigin(), pos )
 		if ( distSqr <= (SHIELD_MINE_RANGE * SHIELD_MINE_RANGE) )
 		{
-			//DebugDrawSphere( pos,10, COLOR_GREEN, false, 2.0 )
-			//DebugDrawLine( pos, shieldMine.GetOrigin(), COLOR_RED, false, 2.0 )
-			//DebugDrawSphere( shieldMine.GetOrigin(),5, COLOR_RED, false, 2.0 )
+			//DebugDrawSphere( pos, 10, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), false, 2.0 )
+			//DebugDrawLine( pos, shieldMine.GetOrigin(), int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), false, 2.0 )
+			//DebugDrawSphere( shieldMine.GetOrigin(), 5, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), false, 2.0 )
 			ShieldMine_PlayTrapDestroyFX( shieldMine, true)
 			shieldMine.Destroy()
 			numDestroyed++
@@ -820,8 +820,8 @@ void function ShieldMineLifetime_Thread( entity player, vector pos, float radius
 		//
 		if ( SHIELD_MINES_DEBUG )
 		{
-			DebugDrawSphere( damagePos, 3, COLOR_RED, true, 0.1)
-			DebugDrawSphere( damagePos, radius, COLOR_YELLOW, false, 0.1 )
+			DebugDrawSphere( damagePos, 3, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1 )
+			DebugDrawSphere( damagePos, radius, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), false, 0.1 )
 		}
 
 

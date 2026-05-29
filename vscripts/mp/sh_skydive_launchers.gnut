@@ -298,7 +298,7 @@ void function CreateMoonSkydiveLaunchers_Thread( vector origin, vector angles, f
 	}
 	else
 	{
-		//DebugDrawLine( origin, < origin.x, origin.y, ziplinePos.z >, COLOR_GREEN, true, 20.0 )
+		//DebugDrawLine( origin, < origin.x, origin.y, ziplinePos.z >, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 20.0 )
 		height = ziplinePos.z - origin.z - GetBoundsMax( HULL_HUMAN ).z + 3.0
 		launchVelocityScale = sqrt(2 * GRAVITY * height)
 	}
@@ -462,9 +462,9 @@ entity function CreateSkydiveLauncher( vector origin, vector angles, int skydive
 
 				//if ( setTargetPosition )
 				//{
-				//	DebugDrawSphere( targetPosition, 200.0, <255, 200, 0>, true, 6000.0 )
-				//	DebugDrawSphere( targetPosition, 70.0, <255, 200, 0>, true, 6000.0 )
-				//	DebugDrawLine( origin, origin + < 0, 0, 1200 >, < 0, 255, 0 >, true, 6000.0 )
+				//	//DebugDrawSphere( targetPosition, 200.0, 255, 200, 0, true, 6000.0 )
+				//	//DebugDrawSphere( targetPosition, 70.0, 255, 200, 0, true, 6000.0 )
+				//	DebugDrawLine( origin, origin + < 0, 0, 1200 >, 0, 255, 0, true, 6000.0 )
 				//}
 
 				break
@@ -574,9 +574,9 @@ entity function CreateSkydiveLauncher( vector origin, vector angles, int skydive
 	{
 		launcherModel.SetScriptName( launcherScriptName )
 		//if ( launcherScriptName == "district_launcher_vertical" )
-		//	DebugDrawSphere( launcherModel.GetOrigin(), 40, COLOR_RED, true, 150 )
+		//	//DebugDrawSphere( launcherModel.GetOrigin(), 40, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 150 )
 		//if ( launcherScriptName == "district_launcher_horizontal" )
-		//	DebugDrawSphere( launcherModel.GetOrigin(), 40, COLOR_YELLOW, true, 150 )
+		//	//DebugDrawSphere( launcherModel.GetOrigin(), 40, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 150 )
 	}
 
 	AddSonarDetectionForPropScript( launcherModel )
@@ -1247,12 +1247,12 @@ void function Cl_ManageAmbientSound_Thread( entity trigger, entity clientAG )
 	OnThreadEnd(
 		function () : ( trigger, clientAG )
 		{
-			#if DEV
+			#if DEVELOPER
 				printf( "mini gravity skydive launcher thread end" )
 			#endif
 			if ( IsValid( clientAG ) )
 			{
-				#if DEV
+				#if DEVELOPER
 					printf( "DESTROYING AG" )
 				#endif
 				clientAG.SetEnabled( false )
@@ -1304,8 +1304,8 @@ void function SkydiveLauncher_OnProjectileHitVortexTrigger( entity weapon, entit
 
 	//printt( projectile )
 
-	//DebugDrawLine( origin, origin + ( posToTarget * JUMP_PAD_PUSH_PROJECTILE_RADIUS ), COLOR_RED, true, 5.0 )
-	//DebugDrawLine( origin, origin + ( surfaceNormal * JUMP_PAD_PUSH_PROJECTILE_RADIUS ), COLOR_GREEN, true, 5.0 )
+	//DebugDrawLine( origin, origin + ( posToTarget * JUMP_PAD_PUSH_PROJECTILE_RADIUS ), int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 5.0 )
+	//DebugDrawLine( origin, origin + ( surfaceNormal * JUMP_PAD_PUSH_PROJECTILE_RADIUS ), int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 5.0 )
 
 	//printt( dot )
 	//printt( accuracyScalar )
@@ -1346,7 +1346,7 @@ void function Launcher_PushProjectileAway( entity projectile, vector velocity )
 	vector result = velocity // + projectile.GetVelocity()
 	//result.z = max( 200, fabs( velocity.z ) )
 	projectile.SetVelocity( result )
-	//DebugDrawLine( projectile.GetOrigin(), projectile.GetOrigin() + result * 5, COLOR_RED, true, 5.0 )
+	//DebugDrawLine( projectile.GetOrigin(), projectile.GetOrigin() + result * 5, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 5.0 )
 }
       
 

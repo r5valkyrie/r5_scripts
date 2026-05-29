@@ -11,7 +11,7 @@ global function TreasureHunt_InstanceObjectivePing
 global function TreasureHunt_GetStarterPingFromTraceBlockerPing
 #endif // SERVER || CLIENT
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 global function TreasureHunt_ForceCompleteAllObjectives_Dev
 global function TreasureHunt_TriggerObjectiveUsingIndex_Dev
 global function TreasureHunt_TriggerClosestObjective_Dev
@@ -205,7 +205,7 @@ struct
 		table < string, entity > borderTable
 		int winningTeam = TEAM_INVALID
 
-		#if DEV
+		#if DEVELOPER
 			int forcedObjectiveIndex = INVALID_OBJ_INDEX_DEFAULT
 		#endif // DEV
 	#endif // SERVER
@@ -264,7 +264,7 @@ void function TreasureHunt_Init()
 		// Register signals
 		RegisterSignal( "TreasureHunt_ObjectiveCompleted" )
 
-		#if DEV
+		#if DEVELOPER
 			RegisterSignal( "TreasureHunt_StopTriggeringObjectives" )
 		#endif // DEV
 	#endif // SERVER
@@ -1103,7 +1103,7 @@ void function TreasureHunt_ManageObjectiveSpawnSchedule_Thread()
 {
 	Assert( IsNewThread(), "Must be threaded off" )
 
-	#if DEV
+	#if DEVELOPER
 		EndSignal( svGlobal.levelEnt, "TreasureHunt_StopTriggeringObjectives" )
 	#endif // DEV
 
@@ -1192,7 +1192,7 @@ bool function TreasureHunt_SpawnObjectiveValidation( float eventLength )
 	if ( file.allTreasureHuntObjectives.len() == 0 )
 		return false
 
-	#if DEV
+	#if DEVELOPER
 		if ( TreasureHunt_IsValidObjectiveIndex( file.forcedObjectiveIndex ) && GetCurrentActiveObjectivesCount() < GetMaxActiveObjectiveCount() )
 			return true
 	#endif // DEV
@@ -1277,7 +1277,7 @@ void function TreasureHunt_StartNewObjectiveTimedEvent_Thread( TimedEventData da
 		return
 	}
 
-	#if DEV
+	#if DEVELOPER
 		if ( TreasureHunt_IsValidObjectiveIndex( file.forcedObjectiveIndex ) )
 		{
 			newSpawn = file.allTreasureHuntObjectives[ file.forcedObjectiveIndex ]
@@ -3285,11 +3285,11 @@ entity function TreasureHunt_GetStarterPingFromTraceBlockerPing( entity pingedEn
 
 
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 // Force all objectives to be completed
 void function TreasureHunt_ForceCompleteAllObjectives_Dev()
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	if ( IsValid( player ) )
 	{
 		printt( "LOCKDOWN: ", FUNC_NAME(), " Completing All Objectives" )
@@ -3306,7 +3306,7 @@ void function TreasureHunt_ForceCompleteAllObjectives_Dev()
 }
 #endif // DEV && SERVER
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 // Stop objectives from triggering through normal logic and instead trigger the objective based on the index of objectives in the objective array
 void function TreasureHunt_TriggerObjectiveUsingIndex_Dev( int index )
 {
@@ -3333,11 +3333,11 @@ void function TreasureHunt_TriggerObjectiveUsingIndex_Dev( int index )
 }
 #endif // DEV && SERVER
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 // Stop objectives from triggering through normal logic and instead trigger the objective closest to you
 void function TreasureHunt_TriggerClosestObjective_Dev()
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 	if ( IsValid( player ) )
 	{
 		int closestObjectiveIndex = TreasureHunt_GetObjectiveToTriggerNearPlayer( player, true )

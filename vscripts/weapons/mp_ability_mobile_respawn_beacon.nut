@@ -392,7 +392,7 @@ void function SpawnMobileBeacon_Sequence( vector origin, vector angles, vector s
 
 	array<int> realmsToAdd = IsValid( owner ) ? owner.GetRealms() : [ eRealms.DEFAULT ]
 
-	#if DEV
+	#if DEVELOPER
 		if ( MOBILE_RESPAWN_BEACON_DEBUG_DRAW )
 		{
 			vector anglesOnSurface = AnglesOnSurface( surfaceNormal, AnglesToForward( angles ) )
@@ -448,7 +448,7 @@ void function SpawnMobileBeacon_Sequence( vector origin, vector angles, vector s
 	float LandingAnim_StartTime = TotalTimeToLand - LandingAnim_Duration // We subtract the landing animation so the total time the player sees visually is our total desired time (TotalTimeToLand)
 	Assert( LandingAnim_StartTime > 0.0 )
 	CreateAirdropBadPlace( respawnBeacon, origin, MOBILE_RESPAWN_BEACON_BAD_AIRSPACE_RADIUS )  // Prevent placement of beacons too close together while it's coming down
-	#if DEV
+	#if DEVELOPER
 		if ( MOBILE_RESPAWN_BEACON_DEBUG_DRAW )
 		{
 			 DebugDrawCylinder( origin, <270.0, 0.0, 0.0>, MOBILE_RESPAWN_BEACON_BAD_AIRSPACE_RADIUS, 2.0, COLOR_RED, true, TotalTimeToLand )
@@ -675,7 +675,7 @@ void function SpawnMobileBeacon_SetupPushAway_Thread( entity beaconPod, vector l
 	DispatchSpawn( pushAwayTrigger )
 
 	// Re-enable this to see the cylinder of prop destruction
-	#if DEV
+	#if DEVELOPER
 		if ( MOBILE_RESPAWN_BEACON_DEBUG_DRAW )
 		{
 			DebugDrawCylinder( pushAwayTrigger.GetOrigin() - <0.0, 0.0, pushAwayTrigger.GetBelowHeight()>, <270.0, 0.0, 0.0>, pushAwayTrigger.GetCylinderRadius(), pushAwayTrigger.GetAboveHeight() + pushAwayTrigger.GetBelowHeight(), COLOR_WHITE, true, 3.0 )
@@ -1352,4 +1352,4 @@ void function DEV_Spawn_MobileRespawnBeacon( entity player )
 
 	RespawnBeacon_SpawnMobileBeacon( origin, angles, surfNormal, player )
 }
-#endif // SERVER && DEV
+#endif // SERVER && DEVELOPER

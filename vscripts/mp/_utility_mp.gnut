@@ -406,14 +406,14 @@ void function PlayerKillsPlayer( string killerName, string victimName )
 
 void function AddLastSquadPlayer( int index, string name, string playerUID, string nucleusID, int hardwareID )
 {
-	GP().SetPersistentVar( "lastGameSquadStats[" + index + "].playerName", name )
-	GP().SetPersistentVar( "lastGameSquadStats[" + index + "].platformUid", playerUID )
-	GP().SetPersistentVar( "lastGameSquadStats[" + index + "].nucleusID", nucleusID )
-	GP().SetPersistentVar( "lastGameSquadStats[" + index + "].hardwareID", hardwareID )
+	GetPlayerArray().SetPersistentVar( "lastGameSquadStats[" + index + "].playerName", name )
+	GetPlayerArray().SetPersistentVar( "lastGameSquadStats[" + index + "].platformUid", playerUID )
+	GetPlayerArray().SetPersistentVar( "lastGameSquadStats[" + index + "].nucleusID", nucleusID )
+	GetPlayerArray().SetPersistentVar( "lastGameSquadStats[" + index + "].hardwareID", hardwareID )
 
 
-	GP().SetPersistentVar( "lastGamePlayers", 6 )
-	GP().SetPersistentVar( "lastGameTime", GetUnixTimestamp() + 3000 )
+	GetPlayerArray().SetPersistentVar( "lastGamePlayers", 6 )
+	GetPlayerArray().SetPersistentVar( "lastGameTime", GetUnixTimestamp() + 3000 )
 }
 
 void function DEV_SetShowBattlePassSummary( entity player  )

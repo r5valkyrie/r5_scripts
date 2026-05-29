@@ -163,9 +163,9 @@ global function Control_ForceEndMatch_Dev
 global function Control_FakeJoinInProgressFlow_Dev
 global function Control_SetForcedSpawnPointIndex_Dev
 global function Control_ForceTriggerTimedEvent_Dev
-#endif // #if DEV && SERVER
+#endif // #if DEVELOPER && SERVER
 
-#if DEV
+#if DEVELOPER
 	const bool CONTROL_SPAWN_DEBUGGING = false
 	const bool CONTROL_DISPLAY_DEBUG_DRAWS = false // Display in world draws for things like bad airdrop places, traces
 	const float CONTROL_DEBUG_DRAW_DISPLAY_TIME = 1000.0
@@ -370,7 +370,7 @@ const float MRB_ICON_OFFSET = 10
 const float MRB_ICON_OFFSET_CARRIED = 100
 #endif // CLIENT
 
-#if DEV
+#if DEVELOPER
 const float SPAWNPOINT_RADIUS = 20
 const float SPAWNPOINT_HEIGHT = 128
 const float SPAWNPOINT_DISPLAY_TIME = 60
@@ -939,7 +939,7 @@ void function Control_Init()
 		RegisterSignal( "Control_NewEXPLeaderFound" )
 		RegisterSignal( "PlayerExitedHovertankVolume" )
 
-		#if DEV
+		#if DEVELOPER
 			RegisterSignal( "Control_Dev_PlayerReachedSpawnSelect" )
 		#endif // DEV
 
@@ -1684,7 +1684,7 @@ void function Control_OnEditorFuncGeoCreated( entity funcBrush )
 	//ADD FUNC BRUSH TO ARRAY FOR LATER CHECKFUNCGEO() ON ENTITIES DID LOAD
 	if( funcBrush.GetScriptName() == CONTROL_FUNC_BRUSH_GEO_NAME )
 	{
-		#if DEV
+		#if DEVELOPER
 			printt("CONTROL: ADDING FUNC BRUSH TO ARRAY")
 		#endif // DEV
 
@@ -1717,7 +1717,7 @@ void function Control_CheckFuncGeo() //SHAWBS
 			}
 			else
 			{
-				#if DEV
+				#if DEVELOPER
 					printt( "CONTROL: destroying func brush at ", funcBrush.GetOrigin() )
 				#endif // DEV
 
@@ -1765,7 +1765,7 @@ void function Control_OnEditorControlWallCreated( entity wall )
 
 	string parentMapVariantName = string(parentMapVariant.kv.map_id)
 
-	#if DEV
+	#if DEVELOPER
 		printt( "CONTROL: created boundary wall at ", wall.GetOrigin(), " with parent map variant ", parentMapVariantName )
 	#endif // DEV
 
@@ -1820,9 +1820,11 @@ void function Control_OnSpawnedSkydiveLauncherEditorClass( entity prop )
 	{
 		CreateNonExpiringAirdropBadPlace( prop.GetOrigin(), CONTROL_SKYDIVE_LAUNCHER_AIRDROP_BAD_PLACE_RADIUS )
 
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DISPLAY_DEBUG_DRAWS )
-				DebugDrawSphere( prop.GetOrigin(), CONTROL_SKYDIVE_LAUNCHER_AIRDROP_BAD_PLACE_RADIUS, COLOR_RED, true, CONTROL_DEBUG_DRAW_DISPLAY_TIME )
+			{
+				DebugDrawSphere( prop.GetOrigin(), CONTROL_SKYDIVE_LAUNCHER_AIRDROP_BAD_PLACE_RADIUS, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, CONTROL_DEBUG_DRAW_DISPLAY_TIME )
+			}
 		#endif // DEV
 	}
 }
@@ -1848,7 +1850,7 @@ void function Control_OnEditorControlGunRackCreated( entity prop )
 
 	string parentMapVariantName = string( parentMapVariant.kv.map_id )
 
-	#if DEV
+	#if DEVELOPER
 		printt( "CONTROL: created Control Gun Rack at ", prop.GetOrigin(), " with parent map variant ", parentMapVariantName )
 	#endif // DEV
 
@@ -1867,7 +1869,7 @@ void function Control_OnEditorControlGunRackPanelCreated( entity prop )
 
 		string parentMapVariantName = string( parentMapVariant.kv.map_id )
 
-		#if DEV
+		#if DEVELOPER
 			printt( "CONTROL: created Control Gun Rack Panel at ", prop.GetOrigin(), " with parent map variant ", parentMapVariantName )
 		#endif // DEV
 
@@ -1992,9 +1994,11 @@ void function ParseControlPointDataForChosenMap()
 		int radius = int( Distance( boundingMaxs, boundingMins ) / 2 )
 		CreateNonExpiringAirdropBadPlace( controlPoint.location, radius )
 
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DISPLAY_DEBUG_DRAWS )
-				DebugDrawSphere( controlPoint.location, float( radius ), COLOR_RED, true, CONTROL_DEBUG_DRAW_DISPLAY_TIME )
+			{
+				DebugDrawSphere( controlPoint.location, float( radius ), int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, CONTROL_DEBUG_DRAW_DISPLAY_TIME )
+			}
 		#endif // DEV
 	}
 }
@@ -2286,7 +2290,7 @@ void function Control_SpawnAreaSetup()
 
 	foreach( spawnArea in file.teamSpawnAreas )
 	{
-		#if DEV
+		#if DEVELOPER
 			printt( "CONTROL: setting up spawn area at ", spawnArea.GetOrigin() )
 		#endif // DEV
 
@@ -2680,7 +2684,7 @@ entity function SetupObjectiveSpawnWaypoint( ControlPointData point )
 #if SERVER
 void function Control_OnPlayerEnteredHovertankVolume( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		printt( "CONTROL: Player entering hovertank: ", player )
 	#endif // DEV
 
@@ -2693,7 +2697,7 @@ void function Control_OnPlayerEnteredHovertankVolume( entity player )
 #if SERVER
 void function Control_OnPlayerExitedHovertankVolume( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		printt( "CONTROL: Player leaving hovertank: ", player )
 	#endif // DEV
 
@@ -3764,7 +3768,7 @@ void function SendBountyActiveAlertToPlayers( entity wp, int waypointID )
 // Update the score for an alliance and then update the score board to reflect the changes
 void function UpdateScoreForTeam( int allianceIndex, int scoreIncrease )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( file.isScoringPaused )
 			return
 	#endif // DEV
@@ -4455,7 +4459,7 @@ int function Control_GetObjectiveProgressPercentIntFromFloat( float progressPerc
 const float WINNER_DETERMINED_WAIT_DURATION = 4.0
 void function Control_SetWinner( int winningAlliance, int victoryCondition )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( GetConVarInt( "mp_enablematchending" ) == 0 )
 		{
 			if ( CONTROL_DETAILED_DEBUG )
@@ -5007,7 +5011,7 @@ void function Control_InstanceObjectivePing_Thread( entity wp )
 		return
 	}
 
-	#if DEV
+	#if DEVELOPER
 		if ( viewPlayer.GetTeamMemberIndex() < 0 )
 			Warning( "CONTROL: %s(): team member index was invalid.", FUNC_NAME() )
 	#endif // DEV
@@ -5124,7 +5128,7 @@ void function ManageObjectiveVFX_Client_Thread( entity wp )
 	if ( !IsValid( objectiveFlag ) && !IsValid( objectiveBorder ) )
 		return
 
-	#if DEV
+	#if DEVELOPER
 		printt( "CONTROL: Setting up flare on objective ", scriptParent, " with flag ent ", objectiveFlag )
 	#endif // DEV
 
@@ -7264,7 +7268,7 @@ void function SetPlayerForSpawnSelection( entity player )
 	if ( IsUsingLoadoutSelectionSystem() )
 		LoadoutSelection_UpdateLoadoutInfoForMenus( player )
 
-	#if DEV
+	#if DEVELOPER
 		Signal( player, "Control_Dev_PlayerReachedSpawnSelect" )
 	#endif // DEV
 }
@@ -7882,7 +7886,7 @@ void function Control_CommonRespawn( entity player, entity finalSpawn, bool didS
 		player.SnapFeetToEyes()
 		player.SetMinimapZoomScale( 2.0, 3.0 )
 
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_SPAWN_DEBUGGING )
 				thread Control_SpawnDebugging_Thread( player, finalSpawn )
 		#endif // DEV
@@ -8102,7 +8106,7 @@ bool function Control_RespawnPlayerAtHomeBase( entity player, bool shouldTryToSp
 	SortSpawnList( finalSpawnList, playerTeam, shouldTryToSpawnNearLastTeammateSpawn )
 	entity finalSpawn = Control_GetFirstSpawnpointFromValidSpawnsArray( finalSpawnList )
 
-	#if DEV
+	#if DEVELOPER
 		// If we are using debug to test a specific spawn, just use the specified index from the original unsorted spawn list
 		if ( file.testingSpawnPointIndex > -1 )
 		{
@@ -8158,7 +8162,7 @@ bool function Control_RespawnPlayerOnPoint( entity player, int respawnChoice, en
 		return false
 	}
 
-	#if DEV
+	#if DEVELOPER
 		bool showSpawnPoints = GetConVarBool( "spawnpoint_debug" )
 	#endif // DEV
 
@@ -8195,7 +8199,7 @@ bool function Control_RespawnPlayerOnPoint( entity player, int respawnChoice, en
 				//spawn is neutral, append
 				filteredSpawnList.append( spawn )
 
-				#if DEV
+				#if DEVELOPER
 					if ( CONTROL_DISPLAY_DEBUG_DRAWS && showSpawnPoints )
 						DebugDrawCylinder( spawn.GetOrigin(), spawn.GetAngles(), 20, 128, COLOR_YELLOW, true, SPAWNPOINT_DISPLAY_TIME )
 
@@ -8210,7 +8214,7 @@ bool function Control_RespawnPlayerOnPoint( entity player, int respawnChoice, en
 				//spawn is alliance filtered, append
 				filteredSpawnList.append( spawn )
 
-				#if DEV
+				#if DEVELOPER
 					if ( CONTROL_DISPLAY_DEBUG_DRAWS && showSpawnPoints )
 						DebugDrawCylinder( spawn.GetOrigin(), spawn.GetAngles(), 20, 128, COLOR_GREEN, true, SPAWNPOINT_DISPLAY_TIME )
 
@@ -8222,7 +8226,7 @@ bool function Control_RespawnPlayerOnPoint( entity player, int respawnChoice, en
 			}
 
 			//spawn is neither neutral nor matching player alliance, do nothing
-			#if DEV
+			#if DEVELOPER
 				if ( CONTROL_DISPLAY_DEBUG_DRAWS && showSpawnPoints )
 					DebugDrawCylinder( spawn.GetOrigin(), spawn.GetAngles(), 20, 128, COLOR_RED, true, SPAWNPOINT_DISPLAY_TIME )
 
@@ -8235,7 +8239,7 @@ bool function Control_RespawnPlayerOnPoint( entity player, int respawnChoice, en
 			//map has not been compiled with alliance designation, add all spawns
 			filteredSpawnList.append( spawn )
 
-			#if DEV
+			#if DEVELOPER
 				if ( CONTROL_DISPLAY_DEBUG_DRAWS && showSpawnPoints )
 					DebugDrawCylinder( spawn.GetOrigin(), spawn.GetAngles(), 20, 128, COLOR_BLUE, true, SPAWNPOINT_DISPLAY_TIME )
 
@@ -8252,7 +8256,7 @@ bool function Control_RespawnPlayerOnPoint( entity player, int respawnChoice, en
 	SortSpawnList( finalSpawns, playerTeam, shouldTryToSpawnNearLastTeammateSpawn )
 	entity finalSpawn = Control_GetFirstSpawnpointFromValidSpawnsArray( finalSpawns )
 
-	#if DEV
+	#if DEVELOPER
 		// If we are using debug to test a specific spawn, just use the specified index from the original unsorted spawn list
 		if ( file.testingSpawnPointIndex > -1 )
 		{
@@ -8431,7 +8435,7 @@ void function Control_SpawnKillDetection_Thread( entity player )
 }
 #endif // SERVER
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function Control_SpawnDebugging_Thread( entity player, entity finalSpawn )
 {
 	Assert( IsNewThread(), "Must be threaded off" )
@@ -8466,7 +8470,7 @@ void function Control_SpawnDebugging_Thread( entity player, entity finalSpawn )
 	if ( CONTROL_DISPLAY_DEBUG_DRAWS )
 		DebugDrawCylinder( finalSpawn.GetOrigin(), finalSpawn.GetAngles(), 20, 128, COLOR_GREEN, true, CONTROL_DEBUG_DRAW_DISPLAY_TIME )
 }
-#endif // SERVER && DEV
+#endif // SERVER && DEVELOPER
 
 #if SERVER
 // Just grab the first spawn if the provided array has any spawns in it
@@ -8480,7 +8484,7 @@ entity function Control_GetFirstSpawnpointFromValidSpawnsArray( array<entity> sp
 #if SERVER
 array<entity> function Control_GetValidSpawnpoints( array<entity> spawnpoints, entity player, int amount )
 {
-	#if DEV
+	#if DEVELOPER
 		bool showSpawnPoints = GetConVarBool( "spawnpoint_debug" )
 	#endif // DEV
 
@@ -8494,12 +8498,12 @@ array<entity> function Control_GetValidSpawnpoints( array<entity> spawnpoints, e
 		if ( Control_IsSpawnpointValid( spawn, player ) )
 		{
 			validSpawns.append( spawn )
-			#if DEV
+			#if DEVELOPER
 				if ( CONTROL_DISPLAY_DEBUG_DRAWS && showSpawnPoints )
 					DebugDrawCylinder( spawn.GetOrigin(), spawn.GetAngles(), SPAWNPOINT_RADIUS, SPAWNPOINT_HEIGHT, COLOR_YELLOW, true, SPAWNPOINT_DISPLAY_TIME )
 			#endif // DEV
 		}
-	#if DEV
+	#if DEVELOPER
 		else if ( CONTROL_DISPLAY_DEBUG_DRAWS && showSpawnPoints )
 		{
 			DebugDrawCylinder( spawn.GetOrigin(), spawn.GetAngles(), SPAWNPOINT_RADIUS, SPAWNPOINT_HEIGHT, COLOR_RED, true, SPAWNPOINT_DISPLAY_TIME )
@@ -10299,7 +10303,7 @@ bool function Control_PlayerIsInCombat( entity player, bool shouldDoWeaponTests 
 	// Test if the player is being damaged by another player or bot
 	if ( GetEffectiveDeltaSince( player.GetLastTimeDamagedByOtherPlayer() ) < LAST_DAMAGED_BY_PLAYER_OR_NPC )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_PlayerIsInCombat() - player damaged by other player" )
 		#endif // DEV
@@ -10309,7 +10313,7 @@ bool function Control_PlayerIsInCombat( entity player, bool shouldDoWeaponTests 
 
 	if ( GetEffectiveDeltaSince( player.GetLastTimeDamagedByNPC() ) < LAST_DAMAGED_BY_PLAYER_OR_NPC )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_PlayerIsInCombat() - player damaged by NPC" )
 		#endif // DEV
@@ -10319,7 +10323,7 @@ bool function Control_PlayerIsInCombat( entity player, bool shouldDoWeaponTests 
 
 	if ( GetEffectiveDeltaSince( player.GetLastTimeDidDamageToOtherPlayer() ) < LAST_DID_DAMAGE_TO_PLAYER_OR_NPC )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_PlayerIsInCombat() - Last did damage to other player" )
 		#endif // DEV
@@ -10329,7 +10333,7 @@ bool function Control_PlayerIsInCombat( entity player, bool shouldDoWeaponTests 
 
 	if ( GetEffectiveDeltaSince( player.GetLastTimeDidDamageToNPC() ) < LAST_DID_DAMAGE_TO_PLAYER_OR_NPC )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_PlayerIsInCombat() - Last did damage to NPC" )
 		#endif // DEV
@@ -10339,7 +10343,7 @@ bool function Control_PlayerIsInCombat( entity player, bool shouldDoWeaponTests 
 
 	if ( Waypoint_AnyEnemySpottedNearPointForPlayer( player.EyePosition(), TEAMMATE_NEAR_SPOTTED_ENEMY, player ) )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_PlayerIsInCombat() - Any teammate near spotted enemy" )
 		#endif // DEV
@@ -10349,7 +10353,7 @@ bool function Control_PlayerIsInCombat( entity player, bool shouldDoWeaponTests 
 
 	if ( shouldDoWeaponTests && GetEffectiveDeltaSince( Control_GetTimeOfEXPEvoBadWeaponCheck( player ) ) < LAST_BAD_WEAPON_CHECK )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_PlayerIsInCombat() - failed weapon check" )
 		#endif // DEV
@@ -10376,7 +10380,7 @@ float function Control_GetTimeOfEXPEvoBadWeaponCheck( entity player )
 	// Weapon Check fails if player is aiming down sights
 	if ( PlayerIsInADS( player ) )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_GetTimeOfEXPEvoBadWeaponCheck - Bad weapon check ( player in ADS )" )
 		#endif // DEV
@@ -10387,7 +10391,7 @@ float function Control_GetTimeOfEXPEvoBadWeaponCheck( entity player )
 	// Weapon Check fails if the player is using their tactical
 	if ( player.IsUsingOffhandWeapon( eActiveInventorySlot.altHand ) )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_GetTimeOfEXPEvoBadWeaponCheck - Bad weapon check ( using tac )" )
 		#endif // DEV
@@ -10398,7 +10402,7 @@ float function Control_GetTimeOfEXPEvoBadWeaponCheck( entity player )
 	// Weapon check fails if player is using their Ult or tac
 	if ( player.IsUsingOffhandWeapon( eActiveInventorySlot.mainHand ) )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_GetTimeOfEXPEvoBadWeaponCheck - Bad weapon check ( using main  )" )
 		#endif // DEV
@@ -10411,7 +10415,7 @@ float function Control_GetTimeOfEXPEvoBadWeaponCheck( entity player )
     // weapon check fails if the player is reloading
 	if ( IsValid( weapon ) && weapon.IsReloading() )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_GetTimeOfEXPEvoBadWeaponCheck - Bad weapon check ( reloading )" )
 		#endif // DEV
@@ -10425,7 +10429,7 @@ float function Control_GetTimeOfEXPEvoBadWeaponCheck( entity player )
 		LootData data = SURVIVAL_GetLootDataFromWeapon( weapon )
 		if ( data.lootType == eLootType.ORDNANCE )
 		{
-			#if DEV
+			#if DEVELOPER
 				if ( CONTROL_DETAILED_DEBUG )
 					printt( "CONTROL: Control_GetTimeOfEXPEvoBadWeaponCheck - Bad weapon check ( using ordnance )" )
 			#endif // DEV
@@ -10436,7 +10440,7 @@ float function Control_GetTimeOfEXPEvoBadWeaponCheck( entity player )
 
 	/*if ( IsValid( weapon ) && weapon.GetEnergizeState() == ENERGIZE_ENERGIZING )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_GetTimeOfEXPEvoBadWeaponCheck - Bad weapon check ( charging )" )
 		#endif // DEV
@@ -10447,7 +10451,7 @@ float function Control_GetTimeOfEXPEvoBadWeaponCheck( entity player )
 	// Weapon check fails if player is firing their weapon
 	if ( GetEffectiveDeltaSince( player.GetLastFiredTime() ) < LAST_FIRED_TIME_ALLOWANCE )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_GetTimeOfEXPEvoBadWeaponCheck - Bad weapon check ( firing weapon )" )
 		#endif // DEV
@@ -10458,7 +10462,7 @@ float function Control_GetTimeOfEXPEvoBadWeaponCheck( entity player )
 	// Weapon check fails if player is switching weapons
 	if ( player.IsSwitching( WEAPON_INVENTORY_SLOT_PRIMARY_0 ) || player.IsSwitching( WEAPON_INVENTORY_SLOT_PRIMARY_1 ) )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_GetTimeOfEXPEvoBadWeaponCheck - Bad weapon check ( switching weapons )" )
 		#endif // DEV
@@ -10469,7 +10473,7 @@ float function Control_GetTimeOfEXPEvoBadWeaponCheck( entity player )
 	// Weapon check fails if player is emoting
 	if ( player.Anim_IsActive() )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_GetTimeOfEXPEvoBadWeaponCheck - Bad weapon check ( Anim_IsActive )" )
 		#endif // DEV
@@ -10480,7 +10484,7 @@ float function Control_GetTimeOfEXPEvoBadWeaponCheck( entity player )
 	// weapon check fails if the player is using a console or picking something up
 	if ( player.IsInputCommandHeld( IN_USE ) || player.IsInputCommandHeld( IN_USE_LONG ) )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_GetTimeOfEXPEvoBadWeaponCheck - Bad weapon check ( using interaction )" )
 		#endif // DEV
@@ -10491,7 +10495,7 @@ float function Control_GetTimeOfEXPEvoBadWeaponCheck( entity player )
 	// Weapon check fails if player is phase shifted
 	if ( player.IsPhaseShifted() )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_GetTimeOfEXPEvoBadWeaponCheck - Bad weapon check ( phasing )" )
 		#endif // DEV
@@ -10502,7 +10506,7 @@ float function Control_GetTimeOfEXPEvoBadWeaponCheck( entity player )
 	// Weapon check fails if player is placing a portal
 	if ( StatusEffect_HasSeverity( player, eStatusEffect.placing_phase_tunnel ) )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_GetTimeOfEXPEvoBadWeaponCheck - Bad weapon check ( placing phase tunnel )" )
 		#endif // DEV
@@ -10513,7 +10517,7 @@ float function Control_GetTimeOfEXPEvoBadWeaponCheck( entity player )
 	// Weapon check fails if player is trying to heal
 	if ( player.GetPlayerNetBool( "isHealing" ) )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_GetTimeOfEXPEvoBadWeaponCheck - Bad weapon check ( healing )" )
 		#endif // DEV
@@ -10524,7 +10528,7 @@ float function Control_GetTimeOfEXPEvoBadWeaponCheck( entity player )
 	// Weapon check fails if player is using melee
 	if ( player.PlayerMelee_GetState() != PLAYER_MELEE_STATE_NONE )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_GetTimeOfEXPEvoBadWeaponCheck - Bad weapon check ( melee )" )
 		#endif // DEV
@@ -10534,7 +10538,7 @@ float function Control_GetTimeOfEXPEvoBadWeaponCheck( entity player )
 
 	if ( AreWeaponsLockedOrDisabled( player ) )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_GetTimeOfEXPEvoBadWeaponCheck - Bad weapon check ( weapons locked )" )
 		#endif // DEV
@@ -10545,7 +10549,7 @@ float function Control_GetTimeOfEXPEvoBadWeaponCheck( entity player )
 	// Weapon check fails if weapon is null
 	if ( !IsValid( weapon ) )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: Control_GetTimeOfEXPEvoBadWeaponCheck - Bad weapon check ( weapon is null )" )
 		#endif // DEV
@@ -10642,9 +10646,11 @@ void function Control_SetupVehicleSummonPlatform( entity summonPlatform )
 	// Don't allow airdrops at the location of the vehicle launchers
 	CreateNonExpiringAirdropBadPlace( summonPlatform.GetOrigin() + <0,0,200>, CONTROL_VEHICLE_AIRDROP_BAD_PLACE_RADIUS )
 
-	#if DEV
+	#if DEVELOPER
 		if ( CONTROL_DISPLAY_DEBUG_DRAWS )
-			DebugDrawSphere( summonPlatform.GetOrigin() + <0,0,200>, CONTROL_VEHICLE_AIRDROP_BAD_PLACE_RADIUS, COLOR_RED, true, CONTROL_DEBUG_DRAW_DISPLAY_TIME )
+		{
+			DebugDrawSphere( summonPlatform.GetOrigin() + <0,0,200>, CONTROL_VEHICLE_AIRDROP_BAD_PLACE_RADIUS, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, CONTROL_DEBUG_DRAW_DISPLAY_TIME )
+		}
 	#endif // DEV
 
 	thread VehicleBaseManagementThread( summonPlatform )
@@ -15044,7 +15050,7 @@ CarePackagePlacementInfo function Control_MRBTimedEvent_MRBDeployPositionValidat
 	// If the player is not valid, return the placementInfo right away
 	if ( !IsValid( player ) )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: MRB Event, MRB Deployment failing because player is Invalid" )
 		#endif // DEV
@@ -15083,15 +15089,17 @@ CarePackagePlacementInfo function Control_MRBTimedEvent_MRBDeployPositionValidat
 				int waypointTypeIndex = point.GetWaypointInt( INT_CONTROL_WAYPOINT_TYPE_INDEX )
 				if ( Control_IsSpawnWaypointIndexAnObjective( waypointTypeIndex ) )
 				{
-					#if DEV
+					#if DEVELOPER
 						if ( CONTROL_DISPLAY_DEBUG_DRAWS )
-							DebugDrawSphere( point.GetOrigin(), MIN_DIST_FROM_OBJECTIVES, COLOR_RED, true, 1.0 )
+						{
+							DebugDrawSphere( point.GetOrigin(), MIN_DIST_FROM_OBJECTIVES, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 1.0 )
+						}
 					#endif // DEV
 					if ( IsPositionWithinRadius( MIN_DIST_FROM_OBJECTIVES, point.GetOrigin(), placementInfo.origin ) ) // Don't allow placement close to objectives
 					{
 						placementInfo.failed = true
 						placementState = eControlMRBPlacementState.NEAR_OBJECTIVE
-						#if DEV
+						#if DEVELOPER
 							if ( CONTROL_DETAILED_DEBUG )
 								printt( "CONTROL: MRB Event, MRB Deployment failing because of proximity to an Objective" )
 						#endif // DEV
@@ -15105,7 +15113,7 @@ CarePackagePlacementInfo function Control_MRBTimedEvent_MRBDeployPositionValidat
 	// If the position didn't fail any of the Control specific tests, check if it failed the regular test
 	if ( placementInfo.failed && placementState == eControlMRBPlacementState.SUCCESS )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DETAILED_DEBUG )
 				printt( "CONTROL: MRB Event, MRB Deployment failing regular Airdrop tests" )
 		#endif // DEV
@@ -15130,16 +15138,18 @@ int function Control_GetMRBPlacementStateFromHomeBasePositionChecks( int current
 	// Check if the position is too close to locations around Home Base
 	foreach ( position in homebasePositions )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( CONTROL_DISPLAY_DEBUG_DRAWS )
-				DebugDrawSphere( position, minDistFromHomeBase, COLOR_RED, true, 1.0 )
+			{
+				DebugDrawSphere( position, minDistFromHomeBase, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 1.0 )
+			}
 		#endif // DEV
 
 		if ( IsPositionWithinRadius( minDistFromHomeBase, position, mrbPosition ) ) // Don't allow placement close to HomeBase
 		{
 			placementState = isEnemyHomebase ? eControlMRBPlacementState.NEAR_HOMEBASE_ENEMY : eControlMRBPlacementState.NEAR_HOMEBASE
 
-			#if DEV
+			#if DEVELOPER
 				if ( CONTROL_DETAILED_DEBUG )
 				{
 					string debugHomeBaseString = isEnemyHomebase ? "Enemy" : "Friendly"
@@ -15682,4 +15692,4 @@ void function Control_ForceTriggerTimedEvent_Dev( int eventType = eControlTimedE
 		TimedEvents_TriggerTimedEventByEventType( eventType )
 	}
 }
-#endif // #if DEV && SERVER
+#endif // #if DEVELOPER && SERVER

@@ -1,5 +1,5 @@
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 global function DEV_ResourceToggleDrawGroups
 global function DEV_ResourceToggleDrawSpawns
 global function DEV_ResourceToggleDrawProwlerSpawns
@@ -8,7 +8,7 @@ global function DEV_ResourceToggleDrawTextDetails
 global function DEV_PrintObjectiveEntsReport
 global function DEV_PrintGroup
 global function DEV_PrintCollection
-#endif // SERVER && DEV
+#endif // SERVER && DEVELOPER
 
 global function ObjectiveResourceSystem_Init
 
@@ -340,7 +340,7 @@ void function OnScriptOnlyEntPreSpawn( table<string, string> kvs )
 
 void function OnGameStateEnterPlaying()
 {
-#if DEV
+#if DEVELOPER
 	thread DebugFrameThread()
 #endif //DEV
 }
@@ -857,7 +857,7 @@ void function Groups_Finalize()
 	MapZones_PerZoneCallback( CreateGroupForMapZone )
 	FinalizeOrphanedGroups()
 
-#if DEV
+#if DEVELOPER
 	SanityCheckGroups()
 #endif // DEV
 
@@ -874,7 +874,7 @@ void function AddCallback_ResourceSystemIsReady( ResourceSystemIsReadyCallbackTy
 	s_resourceSystemIsReadyCallbacks.append( func )
 }
 
-#if DEV
+#if DEVELOPER
 void function SanityCheckGroups()
 {
 	foreach ( ResourceGroup group in s_all.groups )
@@ -1741,7 +1741,7 @@ array<LootSpawn> function ORS_GetLootSpawnsInRadiusByKeywords( vector center, fl
 }
 #endif // SERVER
 
-#if DEV
+#if DEVELOPER
 bool s_debugDrawFrame = false
 bool s_debugDrawTextDetails = false
 bool s_debugDrawGroups = false
@@ -1812,7 +1812,7 @@ void function DebugDrawFrame()
 			if ( s_debugDrawTextDetails )
 				DebugDrawText( pos + <0, 0, 60>, format( "Group -- keywords [ %s ]", GetKeywordsDescString( core.keywords ) ), true, 0.6 )
 			//DebugDrawCube( pos, size, color, false, 0.6 )
-			DebugDrawMark( pos, size, color, true, 0.6 )
+			//DebugDrawMark( pos, size, color, true, 0.6 )
 		}
 	}
 
@@ -1826,7 +1826,7 @@ void function DebugDrawFrame()
 			if ( s_debugDrawTextDetails )
 				DebugDrawText( pos + <0, 0, 80>, format( "Infantry Spawn -- keywords [ %s ]", GetKeywordsDescString( core.keywords ) ), true, 0.6 )
 			DebugDrawRotatedBox( pos, <-15, -15, 0>, <15, 15, 60>, angles, COLOR_RED, false, 0.6 )
-			DebugDrawArrow( pos + <0, 0, 30>, pos + <0, 0, 30> + forward * 20, 10, COLOR_RED, false, 0.6 )
+			//DebugDrawArrow( pos + <0, 0, 30>, pos + <0, 0, 30> + forward * 20, 10, COLOR_RED, false, 0.6 )
 		}
 	}
 
@@ -1840,7 +1840,7 @@ void function DebugDrawFrame()
 			if ( s_debugDrawTextDetails )
 				DebugDrawText( pos + <0, 0, 80>, format( "Prowler Spawn -- keywords [ %s ]", GetKeywordsDescString( core.keywords ) ), true, 0.6 )
 			DebugDrawRotatedBox( pos, <-15, -15, 0>, <15, 15, 60>, angles, COLOR_RED, false, 0.6 )
-			DebugDrawArrow( pos + <0, 0, 30>, pos + <0, 0, 30> + forward * 20, 10, COLOR_RED, false, 0.6 )
+			//DebugDrawArrow( pos + <0, 0, 30>, pos + <0, 0, 30> + forward * 20, 10, COLOR_RED, false, 0.6 )
 		}
 	}
 
@@ -1854,7 +1854,7 @@ void function DebugDrawFrame()
 			if ( s_debugDrawTextDetails )
 				DebugDrawText( pos + <0, 0, 30>, format( "POI -- keywords [ %s ]", GetKeywordsDescString( core.keywords ) ), true, 0.6 )
 			DebugDrawRotatedBox( pos, <-15, -15, 0>, <15, 15, 15>, angles, COLOR_WHITE, false, 0.6 )
-			DebugDrawArrow( pos + <0, 0, 15>, pos + <0, 0, 15> + forward * 10, 5, COLOR_WHITE, false, 0.6 )
+			//DebugDrawArrow( pos + <0, 0, 15>, pos + <0, 0, 15> + forward * 10, 5, COLOR_WHITE, false, 0.6 )
 		}
 	}
 }
@@ -1894,7 +1894,7 @@ void function DEV_PrintGroup( ResourceGroup group, int maxDepth = 999 )
 }
 #endif // DEV
 
-#if DEV
+#if DEVELOPER
 void function ZZZ_TestInternal()
 {
 	WaitFrame()

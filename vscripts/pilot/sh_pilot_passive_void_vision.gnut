@@ -24,7 +24,7 @@ global function VoidVision_GetPlayersToHighlight
 global function ServerToClient_VoidVisionChanged
 #endif
 
-#if DEV
+#if DEVELOPER
 #if SERVER
 global function DEV_TestVoidVision
 #endif
@@ -647,7 +647,7 @@ void function CleanupExitEnt_Thread( PhaseTunnelPathData pathData, entity exitEn
 }
 #endif
 
-#if DEV
+#if DEVELOPER
 #if SERVER
 void function DEV_TestVoidVision( entity player, float duration )
 {

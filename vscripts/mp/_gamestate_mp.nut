@@ -89,7 +89,7 @@ global function InitialPlayerSpawnOccurred
 
 global function MarkEntForCleanupOnRoundEnd
 global function MarkEntForCleanupOnWinnerDetermined
-#if DEV
+#if DEVELOPER
 global function TestRoundWinningReplay
 #endif
 global function GameState_HasRoundRestarted
@@ -959,7 +959,7 @@ bool function DoneWaitingForPlayers()
 	}
 
 	int expectedPlayers = maxint( minPlayers, knownPlayersCount )
-	#if DEV
+	#if DEVELOPER
 		minPlayers = knownPlayersCount
 		expectedPlayers = knownPlayersCount
 	#endif
@@ -1155,7 +1155,7 @@ void function ClearPetTitan( entity player )
 
 void function ClearWeapons()
 {
-	#if DEV
+	#if DEVELOPER
 		if ( GetMapName() == "mp_test_engagement_range" )
 			return
 	#endif
@@ -1185,7 +1185,7 @@ bool function ShouldEnterSuddenDeath( int winningTeam )
 void function SetWinner( int winningTeam, int winReason, string winReasonText, string lossReasonText, bool overrideWinLossReasonForLastRound = true )
 {
 	Assert( GamePlayingOrSuddenDeath() || level.devForcedWin )
-	#if DEV
+	#if DEVELOPER
 	if ( !Is2TeamPvPGame() )
 	{
 		printt( "SETTING WINNER", winningTeam, winReason, winReasonText, lossReasonText )
@@ -2612,13 +2612,13 @@ bool function InitialPlayerSpawnOccurred()
 	return file.initialPlayerSpawnOccurred
 }
 
-#if DEV
+#if DEVELOPER
 void function TestRoundWinningReplay()
 {
-	SetRoundWinningKillReplayEntities( gp().getrandom(), gp().getrandom(), -1 )
+	SetRoundWinningKillReplayEntities( GetPlayerArray().getrandom(), GetPlayerArray().getrandom(), -1 )
 	waitthread RoundWinningKillReplay()
-	ScreenFade( gp()[0], 255, 255, 255, 255, 0.1, 0, FFADE_PURGE )
-	UnMuteAll( gp()[0] )
+	ScreenFade( GetPlayerArray()[0], 255, 255, 255, 255, 0.1, 0, FFADE_PURGE )
+	UnMuteAll( GetPlayerArray()[0] )
 }
 #endif
 

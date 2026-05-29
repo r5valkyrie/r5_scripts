@@ -11,7 +11,7 @@ global function CalcHullCenterForOrigin
 global function PrintAttackerHistoryForNPC
 global function NpcShadowDeath
 
-#if DEV
+#if DEVELOPER
 global function DEV_CrosshairSpawn
 global function DEV_NPC_ToggleOverlay
 global function NPCDebugOverlayIsActive
@@ -121,7 +121,7 @@ void function FreelanceNPCs_Init()
 {
 	if ( isInitialized )
 	{
-		#if DEV
+		#if DEVELOPER
 			printf( "Freelance NPCs System is already initialized" )
 		#endif
 		return
@@ -262,7 +262,7 @@ void function EntitiesDidLoad()
 			turret.DisableTurret()
 	}
 
-#if DEV
+#if DEVELOPER
 	thread DebugFrameThread()
 #endif // DEV
 }
@@ -609,10 +609,10 @@ entity function SpawnNPC( int npcType, vector spawnOrigin, vector spawnAngles, i
 	return SpawnNPCDetailed( info )
 }
 
-#if DEV
+#if DEVELOPER
 entity function DEV_CrosshairSpawn( int npcType, int rank = 0 )
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 
 	NpcSpawnInfo info
 	info.npcType = npcType
@@ -622,7 +622,7 @@ entity function DEV_CrosshairSpawn( int npcType, int rank = 0 )
 
 	return SpawnNPCDetailed( info )
 }
-#endif // #if DEV
+#endif // #if DEVELOPER
 
 ////////////////
 
@@ -674,7 +674,7 @@ array<entity> function PVE_TestDropPod( vector dropPos, int npcType, int spawnCo
 ///////////////////
 // UTILS
 
-#if DEV
+#if DEVELOPER
 void function DebugDrawOverlay( array<entity> npcs )
 {
 	int skitWithGC = 0
@@ -728,7 +728,7 @@ void function DebugDrawEntsInWorld( array<entity> npcs )
 	{
 		vector color = (IsNPCOrphanedNoGC( npc ) ? <255, 10, 10> : <255, 0, 200>)
 		vector markPos = CalcHullCenterForOrigin( npc.GetOrigin(), GetNpcHullType( npc ) )
-		DebugDrawMark( markPos, 30.0, color, true, 0.15 )
+		//DebugDrawMark( markPos, 30.0, color, true, 0.15 )
 	}
 }
 

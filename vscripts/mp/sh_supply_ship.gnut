@@ -183,7 +183,7 @@ void function SupplyShip_OpenBackDoor( SupplyShip ship )
 void function TestSupplyShip()
 {
 	SupplyShip ship = GetAllSupplyShips()[0]
-	GP().SetOrigin( ship.mover.GetOrigin() )
+	GetPlayerArray().SetOrigin( ship.mover.GetOrigin() )
 
 	//foreach ( bin in ship.bins )
 	//{

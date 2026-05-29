@@ -653,8 +653,7 @@ bool function ShouldDoKillFeedback( entity ent )
 void function UpdateLastDamageTime( entity ent, entity attacker )
 {
 	if ( ent.IsPlayer() )
-		Warning("UpdateLastTimeDamaged is missing!")
-		//ent.UpdateLastTimeDamaged( attacker )
+		ent.UpdateLastTimeDamaged( attacker )
 	
 	if ( ent.IsNPC() )
 		ent.ai.lastDamageTime = Time()
@@ -1721,7 +1720,7 @@ bool function GameModeRemove( entity ent )
 	string gamemodeKey = "gamemode_" + gameMode
 	if ( ent.HasKey( gamemodeKey ) && (ent.kv[gamemodeKey] == "0" || ent.kv[gamemodeKey] == "") )
 	{
-		if ( ent.IsZipline() && Zipline_IsCurvedZipline( ent ) )
+		if ( ent.IsZipline() && ent.Zipline_IsCurvedZipline() )
 		{
 			if ( IsValid( ent.GetNextZiplineEnt() ) )
 				ent.GetNextZiplineEnt().Destroy()
@@ -1750,7 +1749,6 @@ bool function GameModeRemove( entity ent )
 
 	return false
 }
-
 
 void function OverrideGameModeUsedForEntityRemoval( string override )
 {

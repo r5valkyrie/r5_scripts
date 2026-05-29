@@ -504,12 +504,12 @@ void function RunClassPostDamageCallbacks( entity ent, var damageInfo )
 
 	foreach ( callbackFunc in file.classPostDamageCallbacks[className] )
 	{
-		#if DEV
+		#if DEVELOPER
 		float damage = DamageInfo_GetDamage( damageInfo )
 		#endif
 		callbackFunc( ent, damageInfo )
 
-		#if DEV
+		#if DEVELOPER
 		Assert( damage == DamageInfo_GetDamage( damageInfo ), "Damage changed in a post damage callback" )
 		#endif
 
@@ -836,7 +836,7 @@ void function RemoveEntityCallback_OnPostDamaged( entity ent, void functionref( 
 
 void function AddEntityCallback_OnKilled( entity ent, void functionref( entity, var ) callbackFunc )
 {
-	#if DEV
+	#if DEVELOPER
 	foreach ( func in  ent.e.entKilledCallbacks )
 	{
 		Assert( func != callbackFunc, "Already added " + string( callbackFunc ) + " to entity" )
@@ -860,7 +860,7 @@ void function RemoveEntityCallback_OnKilled( entity ent, void functionref( entit
 
 void function AddEntityCallback_OnShadowHealthExhausted( entity player, bool functionref( entity ) callbackFunc )
 {
-	#if DEV
+	#if DEVELOPER
 	foreach ( func in player.e.entOnShadowHealthExhaustedCallbacks )
 	{
 		Assert( func != callbackFunc , "Already added " + string( callbackFunc ) + " to entity" )
@@ -880,7 +880,7 @@ void function RemoveEntityCallback_OnShadowHealthExhausted( entity player, bool 
 
 void function AddEntityCallback_OnPostShieldDamage( entity ent, void functionref( entity, var, float ) callbackFunc )
 {
-	#if DEV
+	#if DEVELOPER
 	foreach ( func in  ent.e.entPostShieldDamageCallbacks )
 	{
 		Assert( func != callbackFunc , "Already added " + string( callbackFunc ) + " to entity" )

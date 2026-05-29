@@ -1076,7 +1076,7 @@ void function ManageVictims_Thread( entity player )
 		#if DEVELOPER
 			if ( HEARTBEAT_SENSOR_DEBUG_VERBOSE )
 			{
-				//DebugDrawSphere( player.EyePosition(), GetHeartbeatSensorRange( player ), <255, 0, 0>, true, 0.1 )
+				DebugDrawSphere( player.EyePosition(), GetHeartbeatSensorRange( player ), 255, 0, 0, true, 0.1 )
 				//DebugDrawCylinder( player.EyePosition(), < -90, 0, 0 >, GetHeartbeatSensorRange( player ), 750, <255, 0, 0>, true, 0.1 )
 			}
 		#endif //DEV

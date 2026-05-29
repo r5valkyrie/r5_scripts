@@ -39,7 +39,7 @@ void function PropOverride_Init()
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 }
 
-#if DEV
+#if DEVELOPER
 const bool PRINT_DEBUG = true
 #endif
 
@@ -61,7 +61,7 @@ void function RegisterPropReskinDatable()
 	int caleventColumn          		= GetDataTableColumnByName( dataTable, "calevent" )
 	int negativeCheckColumn     		= GetDataTableColumnByName( dataTable, "negativeCheck" )
 
-	#if DEV
+	#if DEVELOPER
 		if ( PRINT_DEBUG )
 			printf( "[RegisterPropReskinDatable] Starting Process - Total Number of Rows: %i", numRows )
 	#endif
@@ -70,7 +70,7 @@ void function RegisterPropReskinDatable()
 
 	for ( int i = 0; i < numRows; i++ )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( PRINT_DEBUG )
 				printf( "[RegisterPropReskinDatable] Row: %i", i )
 		#endif
@@ -111,7 +111,7 @@ void function RegisterPropReskinDatable()
 			case 1: // gamemode
 			{
 				Assert( variableName != "", "[RegisterPropReskinDatable] variableName field can't be empty for check type gamemode." )
-				#if DEV
+				#if DEVELOPER
 					if ( PRINT_DEBUG )
 						printf( "[RegisterPropReskinDatable] Row: %i - Gamemode(%s) - current Gamemode(%s) - isNegativeCheck(%s)", i, variableName, GameRules_GetGameMode(), ( negativeCheck ) ? "true" : "false" )
 				#endif
@@ -128,7 +128,7 @@ void function RegisterPropReskinDatable()
 				ItemFlavor eventFlav = GetItemFlavorByAsset( calevent )
 				Assert( IsCalEvent( ItemFlavor_GetType(eventFlav) ), "[SetupMapCleanUpFromDatatable] Specified event is not of type calevent." )
 				bool isCalEventActive = CalEvent_IsActive( eventFlav, unixTimeNow )
-				#if DEV
+				#if DEVELOPER
 					if ( PRINT_DEBUG )
 						printf( "[RegisterPropReskinDatable] Row: %i - IsCalEventActive(%s) - isNegativeCheck(%s)", i, ( isCalEventActive ) ? "true" : "false", ( negativeCheck ) ? "true" : "false" )
 				#endif
@@ -140,7 +140,7 @@ void function RegisterPropReskinDatable()
 			{
 				Assert( variableName != "", "[RegisterPropReskinDatable] variableName field can't be empty for check type bool playlist var." )
 				bool boolVar = GetCurrentPlaylistVarBool( variableName, false )
-				#if DEV
+				#if DEVELOPER
 					if ( PRINT_DEBUG )
 						printf( "[RegisterPropReskinDatable] Row: %i - Boolean Playlist Var(%s) - value(%s) - isNegativeCheck(%s) ", i, variableName,( boolVar ) ? "true" : "false", ( negativeCheck ) ? "true" : "false" )
 				#endif
@@ -154,7 +154,7 @@ void function RegisterPropReskinDatable()
 			{
 				Assert( variableName != "", "[RegisterPropReskinDatable] variableName field can't be empty for check type timestamp playlist var." )
 				bool isVariableActive =  ( unixTimeNow >= expect int(GetCurrentPlaylistVarTimestamp( variableName, UNIX_TIME_FALLBACK_2038 ) ) )
-				#if DEV
+				#if DEVELOPER
 					if ( PRINT_DEBUG )
 						printf( "[RegisterPropReskinDatable] Row: %i - timestamp Playlist Var(%s) - value(%i) - currentUnixTimestamp(%s) - isNegativeCheck(%s) ", i, variableName, ( expect int(GetCurrentPlaylistVarTimestamp( variableName, UNIX_TIME_FALLBACK_2038 ) ) ), unixTimeNow, ( negativeCheck ) ? "true" : "false" )
 				#endif
@@ -167,7 +167,7 @@ void function RegisterPropReskinDatable()
 			{
 				Assert( variableName != "", "[RegisterPropReskinDatable] variableName field can't be empty for check type map name." )
 				bool isMapActive = ( variableName == GetMapName() ) || ( GetMapName().find( variableName ) != -1 )
-				#if DEV
+				#if DEVELOPER
 					if ( PRINT_DEBUG )
 						printf( "[RegisterPropReskinDatable] Row: %i - map(%s) - current map(%s) - isNegativeCheck(%s)", i, variableName, GetMapName(), ( negativeCheck ) ? "true" : "false" )
 				#endif

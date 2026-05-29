@@ -791,16 +791,16 @@ TeslaTrapPlacementInfo function TeslaTrap_GetPlacementInfo( entity player, entit
 	{
 		DebugDrawBox( fwdResults.endPos, TESLA_TRAP_BOUND_MINS, TESLA_TRAP_BOUND_MAXS, COLOR_GREEN, 1, 0.1 ) //Forward Hull Cast Bounding Box
 		DebugDrawBox( downResults.endPos, TESLA_TRAP_BOUND_MINS, TESLA_TRAP_BOUND_MAXS, COLOR_BLUE, 1, 0.1 ) //Downward Hull Cast Bounding Box
-		DebugDrawLine( eyePos + viewVec * min( TESLA_TRAP_PLACEMENT_RANGE_MIN, maxRange ), fwdResults.endPos, COLOR_GREEN, true, 0.1 ) //Forward Hull Cast
-		DebugDrawLine( fwdResults.endPos, eyePos + viewVec * maxRange, COLOR_RED, true, 0.1 ) //Forward Hull Cast Blocked
-		DebugDrawLine( fwdResults.endPos, downResults.endPos, COLOR_BLUE, true, 0.1 ) //Downward Hull Cast
+		DebugDrawLine( eyePos + viewVec * min( TESLA_TRAP_PLACEMENT_RANGE_MIN, maxRange ), fwdResults.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 ) //Forward Hull Cast
+		DebugDrawLine( fwdResults.endPos, eyePos + viewVec * maxRange, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1 ) //Forward Hull Cast Blocked
+		DebugDrawLine( fwdResults.endPos, downResults.endPos, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 0.1 ) //Downward Hull Cast
 		DebugDrawBox( upResults.endPos, TESLA_TRAP_BOUND_MINS, TESLA_TRAP_BOUND_MAXS, COLOR_CYAN, 1, 0.1 ) //"Upward"" Hull Cast Bounding Box
-		DebugDrawLine( upStart, upResults.endPos, COLOR_CYAN, true, 0.1 ) //"Upward" Hull Cast
-		DebugDrawLine( roofTraceStart, roofTraceEnd, COLOR_MAGENTA, true, 0.1 ) //Roof Check
-		DebugDrawLine( player.GetOrigin(), player.GetOrigin() + (AnglesToForward( angles ) * file.balance_teslaTrapRange), COLOR_GREEN, true, 0.1 ) //Max Placement Dist
-		DebugDrawLine( eyePos + <0, 0, 8>, eyePos + <0, 0, 8> + (viewVec * file.balance_teslaTrapRange), COLOR_GREEN, true, 0.1 ) //Max Placement Dist
+		DebugDrawLine( upStart, upResults.endPos, int(COLOR_CYAN.x), int(COLOR_CYAN.y), int(COLOR_CYAN.z), true, 0.1 ) //"Upward" Hull Cast
+		DebugDrawLine( roofTraceStart, roofTraceEnd, int(COLOR_MAGENTA.x), int(COLOR_MAGENTA.y), int(COLOR_MAGENTA.z), true, 0.1 ) //Roof Check
+		DebugDrawLine( player.GetOrigin(), player.GetOrigin() + (AnglesToForward( angles ) * file.balance_teslaTrapRange), int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 ) //Max Placement Dist
+		DebugDrawLine( eyePos + <0, 0, 8>, eyePos + <0, 0, 8> + (viewVec * file.balance_teslaTrapRange), int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 ) //Max Placement Dist
 
-		DebugDrawLine( eyePos + <0, 0, 4>, viewTraceResults.endPos + <0, 0, 4>, COLOR_GREEN, true, 0.1 ) //Max Placement Dist Adjusted
+		DebugDrawLine( eyePos + <0, 0, 4>, viewTraceResults.endPos + <0, 0, 4>, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 ) //Max Placement Dist Adjusted
 	}
 
 	TeslaTrapPlacementInfo placementInfo = TeslaTrap_GetPlacementInfoFromTraceResults( player, proxy, downResults, upResults, viewTraceResults, ignoreEnts, idealPos )
@@ -965,7 +965,7 @@ TeslaTrapPlacementInfo function TeslaTrap_GetPlacementInfoFromTraceResults( enti
 
 			if ( TESLA_TRAP_DEBUG_DRAW_GROUND_CLAMP_PLACEMENT )
 			{
-				DebugDrawLine( testPos, traceResult.endPos, COLOR_RED, true, 0.05 )
+				DebugDrawLine( testPos, traceResult.endPos, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.05 )
 			}
 
 			float dot = DotProduct( testNormal, traceResult.surfaceNormal )
@@ -1030,8 +1030,8 @@ TeslaTrapPlacementInfo function TeslaTrap_GetPlacementInfoFromTraceResults( enti
 		int linkCount = int( height / TESLA_TRAP_LINK_HEIGHT )
 		success = success && linkCount >= TESLA_TRAP_LINK_FX_MIN
 
-//		DebugDrawLine( startPos, clearanceTraceResults.endPos, COLOR_GREEN, true, 0.1 )
-//		DebugDrawLine( clearanceTraceResults.endPos, endPos, COLOR_RED, true, 0.1 )
+//		DebugDrawLine( startPos, clearanceTraceResults.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 )
+//		DebugDrawLine( clearanceTraceResults.endPos, endPos, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1 )
 	}
 
 	if ( success )
@@ -1157,9 +1157,9 @@ bool function TelsaTrap_AttemptSnapToNeighbor( entity player, vector origin, Tes
 
 		if ( TESLA_TRAP_DEBUG_DRAW_LINKS )
 		{
-			DebugDrawSphere( focalTrap.GetOrigin(), 15, COLOR_PINK, false, 0.1 )
+			DebugDrawSphere( focalTrap.GetOrigin(), 15, int(COLOR_PINK.x), int(COLOR_PINK.y), int(COLOR_PINK.z), false, 0.1 )
 			DebugDrawText( trap.GetOrigin()+<0,0,8>, VM_NAME()+": link trap ", false, 0.1 )
-			DebugDrawSphere( trap.GetOrigin(), 15, COLOR_PURPLE, false, 0.1 )
+			DebugDrawSphere( trap.GetOrigin(), 15, int(COLOR_PURPLE.x), int(COLOR_PURPLE.y), int(COLOR_PURPLE.z), false, 0.1 )
 		}
 		if ( distSqr <= closestDist )
 		{
@@ -1516,7 +1516,7 @@ void function TeslaTrap_SnapClientOnlyModel( entity player, entity weapon, entit
 			RuiSetBool( linkRui, "showDial", true )
 
 			if ( TESLA_TRAP_DEBUG_DRAW_CLIENT_TRAP_LINKING )
-				DebugDrawLine( model.GetOrigin(), focalTrap.GetOrigin(), COLOR_GREEN, true, 0.1 )
+				DebugDrawLine( model.GetOrigin(), focalTrap.GetOrigin(), int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 )
 
 			if ( lastFocalTrap != focalTrap )
 			{
@@ -1694,7 +1694,7 @@ void function TeslaTrap_PlacementProxy( entity weapon, entity player, asset mode
 
 			if ( TESLA_TRAP_DEBUG_DRAW_CLIENT_TRAP_LINKING )
 			{
-				DebugDrawLine( proxy.GetOrigin(), focalTrap.GetOrigin(), COLOR_GREEN, true, 0.1 )
+				DebugDrawLine( proxy.GetOrigin(), focalTrap.GetOrigin(), int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 )
 			}
 
 			if ( lastFocalTrap != focalTrap )
@@ -2259,7 +2259,7 @@ void function TeslaTrap_LinkTraps( int mainTrapID, int linkTrapID )
 	mainData.trap.LinkToEnt( otherData.trap )
 	if ( TESLA_TRAP_DEBUG_DRAW )
 	{
-		DebugDrawLine( mainData.trap.GetOrigin(), otherData.trap.GetOrigin(), COLOR_RED, true, 30.0 )
+		DebugDrawLine( mainData.trap.GetOrigin(), otherData.trap.GetOrigin(), int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 30.0 )
 	}
 
 	//Link Other to Main
@@ -2398,8 +2398,8 @@ bool function TeslaTrap_IsFlushWithGround( TeslaTrapData mainTrapData, TeslaTrap
 
 		if ( TESLA_TRAP_DEBUG_DRAW_GROUND_CLEARANCE )
 		{
-			DebugDrawLine( results.endPos, endOffset, COLOR_RED, true, 1.0 )
-			DebugDrawLine( startOffset, results.endPos, COLOR_GREEN, true, 1.0 )
+			DebugDrawLine( results.endPos, endOffset, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 1.0 )
+			DebugDrawLine( startOffset, results.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 1.0 )
 		}
 
 		//PrintTraceResults( results )
@@ -2643,7 +2643,7 @@ entity function TeslaTrap_CreateLinkTriggerCylinder( TeslaTrapData mainTrapData,
 
 	if ( TESLA_TRAP_DEBUG_DRAW )
 	{
-		DebugDrawLine( mainOrigin, mainOrigin - (offsetDir * TESLA_TRAP_LINK_TRIGGER_RADIUS), COLOR_BLUE, true, 20.0 )
+		DebugDrawLine( mainOrigin, mainOrigin - (offsetDir * TESLA_TRAP_LINK_TRIGGER_RADIUS), int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 20.0 )
 	}
 
 	int attachID      = mainTrapData.trap.LookupAttachment( "BASE_POINT" )
@@ -2792,8 +2792,8 @@ void function TeslaTrap_CheckForRealTimeGeoObstructions( TeslaTrapData mainTrapD
 
 			if ( TESLA_TRAP_DEBUG_DRAW )
 			{
-				DebugDrawLine( results.endPos, endOffset, COLOR_RED, true, 20.0 )
-				DebugDrawLine( startOffset, results.endPos, COLOR_GREEN, true, 20.0 )
+				DebugDrawLine( results.endPos, endOffset, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 20.0 )
+				DebugDrawLine( startOffset, results.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 20.0 )
 			}
 
 			//PrintTraceResults( results )
@@ -2862,8 +2862,8 @@ void function TeslaTrap_CheckForPostIntersection( TeslaTrapData trapData )
 
 			if ( TESLA_TRAP_DEBUG_DRAW_POST_INTERSECTION )
 			{
-				DebugDrawLine( results.endPos, endPos, COLOR_RED, true, 20.0 )
-				DebugDrawLine( startPos, results.endPos, COLOR_GREEN, true, 20.0 )
+				DebugDrawLine( results.endPos, endPos, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 20.0 )
+				DebugDrawLine( startPos, results.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 20.0 )
 			}
 
 			if ( results.fraction < 1.0 )
@@ -3014,7 +3014,7 @@ entity function TeslaTrap_CalculateFocalTrap( entity player, entity trap )
 	if ( TESLA_TRAP_DEBUG_DRAW_PRE_PLACEMENT )
 	{
 		if ( IsValid( focalTrap ) )
-			DebugDrawSphere( focalTrap.GetOrigin(), 15, COLOR_PINK, false, 0.1 )
+			DebugDrawSphere( focalTrap.GetOrigin(), 15, int(COLOR_PINK.x), int(COLOR_PINK.y), int(COLOR_PINK.z), false, 0.1 )
 	}
 
 	//printt( "DISTANCE CULLED: " + distanceExcluded )
@@ -3189,13 +3189,13 @@ vector function TeslaTrap_GetPointOnRectangularPlane( TeslaTrapData mainTrapData
 
 	if ( TESLA_TRAP_DEBUG_DRAW )
 	{
-		DebugDrawLine( triAPointA, triAPointB, COLOR_RED, true, 20.0 )
-		DebugDrawLine( triAPointB, triAPointC, COLOR_RED, true, 20.0 )
-		DebugDrawLine( triAPointC, triAPointA, COLOR_RED, true, 20.0 )
+		DebugDrawLine( triAPointA, triAPointB, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 20.0 )
+		DebugDrawLine( triAPointB, triAPointC, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 20.0 )
+		DebugDrawLine( triAPointC, triAPointA, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 20.0 )
 
-		DebugDrawLine( triBPointA, triBPointB, COLOR_GREEN, true, 20.0 )
-		DebugDrawLine( triBPointB, triBPointC, COLOR_GREEN, true, 20.0 )
-		DebugDrawLine( triBPointC, triBPointA, COLOR_GREEN, true, 20.0 )
+		DebugDrawLine( triBPointA, triBPointB, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 20.0 )
+		DebugDrawLine( triBPointB, triBPointC, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 20.0 )
+		DebugDrawLine( triBPointC, triBPointA, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 20.0 )
 	}
 
 	//Return the closer of the two points
@@ -3397,10 +3397,10 @@ float function TeslaTrap_GetTrapViewRating( TeslaTrapPlayerPlacementData mainPla
 	vector viewToOther   = Normalize( otherOrigin - mainPlacementData.viewOrigin )
 	vector playerToOther = Normalize( otherOrigin - mainPlacementData.playerOrigin )
 
-	//DebugDrawLine( mainPlacementData.viewOrigin, mainPlacementData.viewOrigin + ( viewToOther * 128 ), COLOR_RED, true, 0.1 )
-	//DebugDrawLine( mainPlacementData.viewOrigin, mainPlacementData.viewOrigin + ( mainPlacementData.viewForward * 128 ), COLOR_WHITE, true, 0.1 )
-	//DebugDrawLine( mainPlacementData.playerOrigin, mainPlacementData.playerOrigin + ( playerToOther * 128 ), COLOR_RED, true, 0.1 )
-	//DebugDrawLine( mainPlacementData.playerOrigin, mainPlacementData.playerOrigin + ( mainPlacementData.playerForward * 128 ), COLOR_WHITE, true, 0.1 )
+	//DebugDrawLine( mainPlacementData.viewOrigin, mainPlacementData.viewOrigin + ( viewToOther * 128 ), int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1 )
+	//DebugDrawLine( mainPlacementData.viewOrigin, mainPlacementData.viewOrigin + ( mainPlacementData.viewForward * 128 ), int(COLOR_WHITE.x), int(COLOR_WHITE.y), int(COLOR_WHITE.z), true, 0.1 )
+	//DebugDrawLine( mainPlacementData.playerOrigin, mainPlacementData.playerOrigin + ( playerToOther * 128 ), int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1 )
+	//DebugDrawLine( mainPlacementData.playerOrigin, mainPlacementData.playerOrigin + ( mainPlacementData.playerForward * 128 ), int(COLOR_WHITE.x), int(COLOR_WHITE.y), int(COLOR_WHITE.z), true, 0.1 )
 
 	//Get a rating based on how close the trap is to the direction the player is looking.
 	float viewDot    = DotProduct( viewToOther, mainPlacementData.viewForward )
@@ -3868,7 +3868,7 @@ void function TeslaTrap_CreateClientEffects( entity trigger, entity start, entit
 	{
 		float heightOffset = TESLA_TRAP_LINK_HEIGHT * i
 
-		//DebugDrawLine( startOrigin, startOrigin + (startUp * TESLA_TRAP_LINK_HEIGHT), COLOR_BLUE, true, 20.0 )
+		//DebugDrawLine( startOrigin, startOrigin + (startUp * TESLA_TRAP_LINK_HEIGHT), int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 20.0 )
 
 		int fxIdxTeam = StartParticleEffectOnEntityWithPos( start, fxIDTeam, FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, (startUp * (heightOffset + file.proxyBaseOffset)), <0, 0, 0> )
 		EffectSetPlayFriendlyOnly( fxIdxTeam )
@@ -4506,8 +4506,8 @@ int function TeslaTrap_GetLinkLOSBeamCount( vector mainOrigin, vector mainUp, ve
 
 		if ( TESLA_TRAP_DEBUG_DRAW_LINKS )
 		{
-			DebugDrawLine( results.endPos, endOffset, COLOR_RED, true, 0.1 )
-			DebugDrawLine( startOffset, results.endPos, COLOR_GREEN, true, 0.1 )
+			DebugDrawLine( results.endPos, endOffset, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1 )
+			DebugDrawLine( startOffset, results.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 )
 		}
 
 		//PrintTraceResults( results )
@@ -4524,13 +4524,13 @@ bool function TeslaTrap_IsLinkAngleTooSteep( vector proxyTestPos, entity otherTr
 	vector otherToProxy = Normalize( proxyTestPos - otherTrap.GetOrigin() )
 	array<entity> links = otherTrap.GetLinkEntArray()
 
-	//DebugDrawLine( otherTrap.GetOrigin(), otherTrap.GetOrigin() + otherToProxy, COLOR_RED, true, 1.0 )
+	//DebugDrawLine( otherTrap.GetOrigin(), otherTrap.GetOrigin() + otherToProxy, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 1.0 )
 
 	foreach ( entity trap in links )
 	{
 		vector otherToTrap = Normalize( trap.GetOrigin() - otherTrap.GetOrigin() )
 
-		//DebugDrawLine( otherTrap.GetOrigin(), otherTrap.GetOrigin() + otherToTrap, COLOR_GREEN, true, 1.0 )
+		//DebugDrawLine( otherTrap.GetOrigin(), otherTrap.GetOrigin() + otherToTrap, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 1.0 )
 
 		float dot = DotProduct2D( otherToProxy, otherToTrap )
 		//printt( "CLIENT DOT: " + dot )

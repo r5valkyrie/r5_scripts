@@ -12,7 +12,7 @@ global function GetArcFlashRangeSqr
 global function GetArcFlashState
 
 #if SERVER
-#if DEV
+#if DEVELOPER
 global function DEV_ApplyConduitTac
 #endif
 
@@ -111,7 +111,7 @@ global enum eArcFlashState
 }
 
 
-#if DEV
+#if DEVELOPER
 array<string> sArcFlashStateStrings =
 [
 	"NONE"
@@ -167,7 +167,7 @@ void function MpAbilityConduitArcFlash_Init()
 		RegisterSignal( "ArcFlashCompleted" )
 	#endif
 
-	#if DEV
+	#if DEVELOPER
 	Assert( eArcFlashState.COUNT == sArcFlashStateStrings.len(), "Must define a string for each state." )
 	#endif
 
@@ -353,7 +353,7 @@ void function CheckTarget_thread( entity player , entity weapon )
 			bool hasValidTarget = IsValid( bestTarget )
 			if ( hasValidTarget )
 			{
-				//DebugDrawSphere( bestTarget.GetWorldSpaceCenter(), 30, COLOR_GREEN, false, 2.0 )
+				//DebugDrawSphere( bestTarget.GetWorldSpaceCenter(), 30, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), false, 2.0 )
 				weapon.SetWeaponChargeFraction( 1.0 )
 				return
 			}
@@ -456,7 +456,7 @@ void function TargetingThread( entity weapon, entity player )
 
 		player.SetPlayerNetEnt( CONDUIT_ARC_FLASH_BEST_TARGET_NETVAR, bestTarget )
 
-		#if DEV
+		#if DEVELOPER
 			if ( ARC_FLASH_DEBUG )
 			{
 				DebugScreenInfo( player,  allyArray, bestTarget )
@@ -596,7 +596,7 @@ void function SetPlayerTempshieldAmt( entity player, int value )
 }
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_ApplyConduitTac( entity player, entity target )
 {
 	DoArcFlash(player, null, target)
@@ -721,7 +721,7 @@ void function TempshieldRegen_Thread( entity player, entity target , float multi
 		{
 			if ( IsValid( target ) )
 			{
-				#if DEV
+				#if DEVELOPER
 					DEV_LogArcFlashState( target )
 				#endif
 
@@ -747,7 +747,7 @@ void function TempshieldRegen_Thread( entity player, entity target , float multi
 	// Start Steady time
 	statusEffectHandle = StatusEffect_AddTimed( target, eStatusEffect.shields_repairing, ARC_FLASH_TEMPSHIELD_SEVERITY, ARC_FLASH_TEMPSHIELD_DURATION, 0.0 )
 
-	#if DEV
+	#if DEVELOPER
 		DEV_LogArcFlashState( target )
 	#endif
 
@@ -777,7 +777,7 @@ void function TempshieldRegen_Thread( entity player, entity target , float multi
 		int newTempshieldAmt = minint( currentTempshield, missingShields )
 		SetPlayerTempshieldAmt( target, newTempshieldAmt )
 
-		#if DEV
+		#if DEVELOPER
 		DEV_VerifyTempShieldAmount( target )
 		#endif
 
@@ -787,7 +787,7 @@ void function TempshieldRegen_Thread( entity player, entity target , float multi
 	if ( statusEffectHandle != 0 )
 		StatusEffect_Stop( target, statusEffectHandle )
 
-	#if DEV
+	#if DEVELOPER
 		DEV_LogArcFlashState( target )
 	#endif
 
@@ -805,7 +805,7 @@ void function TempshieldRegen_Thread( entity player, entity target , float multi
 		if ( newTempshield == 0 )
 			break
 
-		#if DEV
+		#if DEVELOPER
 			DEV_VerifyTempShieldAmount( target )
 		#endif
 
@@ -818,7 +818,7 @@ void function TempshieldRegen_Thread( entity player, entity target , float multi
 
 	target.SetPlayerNetBool( TEMPSHIELD_ACTIVE_NETVAR, false )
 
-	#if DEV
+	#if DEVELOPER
 		DEV_LogArcFlashState( target )
 	#endif
 }
@@ -969,7 +969,7 @@ void function TempshieldRegen_RegenPhase_Thread( entity player, entity target, f
 
 			SetPlayerTempshieldAmt( target, newTempshieldAmt )
 
-			#if DEV
+			#if DEVELOPER
 				DEV_VerifyTempShieldAmount( target )
 			#endif
 		}
@@ -987,7 +987,7 @@ void function TempshieldRegen_RegenPhase_Thread( entity player, entity target, f
 
 	}
 
-	#if DEV
+	#if DEVELOPER
 		if ( ARC_FLASH_DEBUG )
 		{
 			float timeSinceStart = Time() - startTime
@@ -1134,7 +1134,7 @@ void function TempshieldRegen_RegenPhase_Thread( entity player, entity target, f
  
       
 
-#if DEV
+#if DEVELOPER
 void function DEV_VerifyTempShieldAmount( entity player )
 {
 	if ( ARC_FLASH_DEBUG )
@@ -1173,7 +1173,7 @@ void function PlayBeamFX_Thread( entity player, entity weapon, entity target )
 	{
 		//entity weaponViewModel = weapon.GetWeaponViewmodel()
 		//int droneAttachID = weaponViewModel.LookupAttachment( "attach_l_drone_arm_b" )
-		//DebugDrawSphere( weaponViewModel.GetAttachmentOrigin( droneAttachID ), 3, COLOR_LIGHT_BLUE, false, 2.0 )
+		//DebugDrawSphere( weaponViewModel.GetAttachmentOrigin( droneAttachID ), 3, int(COLOR_LIGHT_BLUE.x), int(COLOR_LIGHT_BLUE.y), int(COLOR_LIGHT_BLUE.z), false, 2.0 )
 		//printt( "weaponView " + weaponViewModel.GetAttachmentOrigin( droneAttachID ) )
 
 		//Beam start using a control point
@@ -1185,7 +1185,7 @@ void function PlayBeamFX_Thread( entity player, entity weapon, entity target )
 		+ player.GetViewRight() * -7.0
 		+ player.GetViewUp() * 5.0
 		vector angles = VectorToAngles( player.GetViewForward() )
-		//DebugDrawSphere( beamStartPos, 2, COLOR_BLUE, false, 2.0 )
+		//DebugDrawSphere( beamStartPos, 2, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), false, 2.0 )
 
 		controlPoint.SetOrigin( beamStartPos )
 		controlPoint.SetAngles( angles )
@@ -1372,7 +1372,7 @@ void function SingleTargetRui_Thread(  entity player, entity target )
 		{
 			if ( enemyTrace.hitEnt.IsPlayer() && !IsFriendlyTeam( enemyTrace.hitEnt.GetTeam(), player.GetTeam() ) )
 			{
-				//DebugDrawLine( player.EyePosition(), enemyTrace.endPos, COLOR_RED, false, 0.1 )
+				//DebugDrawLine( player.EyePosition(), enemyTrace.endPos, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), false, 0.1 )
 				//DebugDrawBox( enemyTrace.endPos, CONDUIT_TRACE_BOUND_MINS, CONDUIT_TRACE_BOUND_MAXS, COLOR_ORANGE, 1, 0.1 )
 				enemyObstructing = true
 			}
@@ -1579,7 +1579,7 @@ void function ArcFlash_ShieldsRepairingThread( entity player )
 
 #endif // CLIENT
 
-#if DEV
+#if DEVELOPER
 void function DebugScreenInfo( entity player, array<entity> allyList, entity bestTarget )
 {
 	//DebugDrawScreenTextWithColor
@@ -1605,7 +1605,7 @@ void function DebugDrawLockOns( entity player, array<entity> allyList, entity be
 	{
 		if( IsValid(target) )
 		{
-			DebugDrawSphere( target.GetWorldSpaceCenter(), 15, COLOR_CYAN, true, 0.1 )
+			DebugDrawSphere( target.GetWorldSpaceCenter(), 15, int(COLOR_CYAN.x), int(COLOR_CYAN.y), int(COLOR_CYAN.z), true, 0.1 )
 			float thisLockScore = ScoreTarget( player, target )
 			if ( target == bestTarget )
 			{

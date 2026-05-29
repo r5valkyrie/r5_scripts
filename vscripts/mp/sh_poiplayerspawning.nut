@@ -4,7 +4,7 @@ global function POIPlayerSpawning_Init
 #if SERVER
 global function POIPlayerSpawning_SpawnPlayers
 
-#if DEV
+#if DEVELOPER
 global function DEV_PrintLootAroundCuratedSpawns
 global function DEV_PrintLootTotalsForCuratedSpawns
 global function DEV_PrintLootTotalsAndDrawCuratedSpawns
@@ -63,7 +63,7 @@ const vector 	GROUNDMARKER_CENTER_FX_COLOR = < 19, 219, 190 >
 const string	POISPAWN_SKYDIVEDESTWP_NAME = "poispawn_wp"
 const int		POISPAWN_SKYDIVEDESTWP_NDX_TEAM = 0
 
-#if DEV
+#if DEVELOPER
 const FORCEDEBUG = false
 #endif
 
@@ -121,7 +121,7 @@ struct
 		table< int, array< Point > > spawnPoints_ByZoneID 		// Indexed by ZoneID
 		table< int, array< int > > teams_Assigned_ToZoneIDs 		// array< int > of teams indexed by zone IDs.
 
-		#if DEV
+		#if DEVELOPER
 			table< int, int > zoneIDs_ByTeam				// zoneIDs indexed by Team
 		#endif // DEV
 
@@ -143,7 +143,7 @@ struct
 // ---
 
 #if SERVER
-#if DEV
+#if DEVELOPER
 void function DEV_POISpawn_CheckStartRings()
 {
 	float radius_0 = GetCurrentPlaylistVarFloat( "deathfield_radius_0", -1 )
@@ -225,7 +225,7 @@ void function _CheckLocEnt_and_AddToList( entity spawnEnt, vector center, float 
 
 void function DEV_POISpawn_CustomDropship_Test( float dropshipAngleAdjust = 90.0, bool debug = false )
 {
-	entity player = GP()
+	entity player = GetPlayerArray()[0]
 
 	int team = player.GetTeam()
 
@@ -509,13 +509,13 @@ void function DEV_PrintLootAroundCuratedSpawns_Internal( float radius, bool prin
 #endif // DEV
 #endif // SERVER
 
-#if DEV
+#if DEVELOPER
 void function DEVSphere( bool debugParm, vector center, float radius, vector color, bool bShowThruGeo, float showTime, int segments = 4 )
 {
 	bool doDebug = debugParm || FORCEDEBUG
 	if ( doDebug )
 	{
-		DebugDrawSphere( center, radius, color, bShowThruGeo, showTime, segments )
+		DebugDrawSphere( center, radius, int(color.x), int(color.y), int(color.z), bShowThruGeo, showTime, segments )
 	}
 }
 
@@ -533,7 +533,7 @@ void function DEVLine( bool debugParm, vector start, vector end, vector color, b
 	bool doDebug = debugParm || FORCEDEBUG
 	if ( doDebug )
 	{
-		DebugDrawLine( start, end, color, showThruGeo, showTime )
+		DebugDrawLine( start, end, int(color.x), int(color.y), int(color.z), showThruGeo, showTime )
 	}
 }
 
@@ -730,7 +730,7 @@ void function Assign_Spawnpoints_FromLootLocs_ToZone( int zoneID, vector center,
 	{
 		vector locOnMesh = NavMesh_GetClosestPoint( loc )
 
-		#if DEV
+		#if DEVELOPER
 			DEVLine( debug, loc, locOnMesh, COLOR_PINK, true, POISPAWNING_DEBUGDRAWTIME )
 			DEVCube( debug, locOnMesh, 50, COLOR_DARK_GRAY, true, POISPAWNING_DEBUGDRAWTIME )
 		#endif // DEV
@@ -761,7 +761,7 @@ void function Assign_Spawnpoints_FromLootLocs_ToZone( int zoneID, vector center,
 	}
 	file.spawnPoints_ByZoneID[ zoneID ].extend( usablePoints )
 
-	#if DEV
+	#if DEVELOPER
 		if ( debug )
 		{
 			printt( format( "POISPAWNING: Zone ID %s usable points == %s.", string( zoneID ), string( usablePoints.len() ) ) )
@@ -772,7 +772,7 @@ void function Assign_Spawnpoints_FromLootLocs_ToZone( int zoneID, vector center,
 			}
 			foreach( pt in usablePoints )
 			{
-				DebugDrawLine( pt.origin, center, COLOR_ORANGE, true, POISPAWNING_DEBUGDRAWTIME )
+				DebugDrawLine( pt.origin, center, int(COLOR_ORANGE.x), int(COLOR_ORANGE.y), int(COLOR_ORANGE.z), true, POISPAWNING_DEBUGDRAWTIME )
 				DEVCylinder( true, pt.origin, < -90, 0, 0 >, CLEARING_X, CLEARING_Z, COLOR_ORANGE, true, POISPAWNING_DEBUGDRAWTIME )
 			}
 
@@ -949,7 +949,7 @@ void function Register_StartRing()
 	file.startMatch_Center = center
 	file.startMatch_Radius = radiusToUse // currentRadius // was radius.
 
-	#if DEV
+	#if DEVELOPER
 		printt( format( "%s(): START RING center == %s", FUNC_NAME(), string( center ) ) )
 
 		printt( format( "%s(): deathfield_radius_0 == %s", FUNC_NAME(), string( radius_0 ) ) )
@@ -982,9 +982,9 @@ void function OnCuratedSpawnpoint_Spawned( entity ent )
 			string warningStr = format( "CURATED SPAWNS PLACEMENT WARNING: curated Spawns @ %s and %s are too close together.", string( entLoc ), string( savedSpawnLoc ))
 			printt( warningStr )
 			Warning( warningStr )
-			#if DEV
-				DebugDrawSphere( savedSpawnLoc, 64, COLOR_DARK_RED, true, 120 )
-				DebugDrawSphere( entLoc, 		64, COLOR_RED, true, 120 )
+			#if DEVELOPER
+				DebugDrawSphere( savedSpawnLoc, 64, int(COLOR_DARK_RED.x), int(COLOR_DARK_RED.y), int(COLOR_DARK_RED.z), true, 120 )
+				DebugDrawSphere( entLoc, 64, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 120 )
 			#endif
 		}
 	}
@@ -999,18 +999,18 @@ void function Register_CuratedSpawns( bool debug = false )
 	if ( count_curatedSpawnEnts == 0 )
 	{
 		file.curatedSpawn_Ents = GetEntArrayByScriptName( POISPAWNING_CURATED_SPAWNPOINT_SCRIPTNAME )
-		#if DEV
+		#if DEVELOPER
 			printt( format( "%s(): Getting file.curatedSpawn_Ents by Scriptname", FUNC_NAME() ) )
 		#endif
 	}
 
 	count_curatedSpawnEnts				= file.curatedSpawn_Ents.len()
-	#if DEV
+	#if DEVELOPER
 		printt( format( "%s(): file.curatedSpawn_Ents.len() == %s", FUNC_NAME(), 	string( count_curatedSpawnEnts ) ) )
 	#endif
 
 	// Only consider spawns inside the start range.
-	#if DEV
+	#if DEVELOPER
 		printt( format( "%s(): ------ Curated Spawns outside of Start Circle. Center: %s, Radius: %s.",
 			FUNC_NAME(),
 			string( file.startMatch_Center ),
@@ -1025,18 +1025,18 @@ void function Register_CuratedSpawns( bool debug = false )
 		}
 		else
 		{
-			#if DEV
+			#if DEVELOPER
 				printt( format( "%s(): --- @ %s ", FUNC_NAME(), string( placedSpawnLoc )))
-				DebugDrawSphere( placedSpawnLoc, 128, COLOR_PINK, true, 120 )
+				DebugDrawSphere( placedSpawnLoc, 128, int(COLOR_PINK.x), int(COLOR_PINK.y), int(COLOR_PINK.z), true, 120 )
 			#endif // DEV
 		}
 	}
-	#if DEV
+	#if DEVELOPER
 		printt( format( "%s(): ------ ", FUNC_NAME()))
 	#endif // DEV
 
 	int count_curatedSpawnEntsInRange		= file.curatedSpawn_Ents_InStartRange.len()
-	#if DEV
+	#if DEVELOPER
 		printt( format( "%s(): file.curatedSpawn_Ents_InStartRange.len() == %s", FUNC_NAME(), 	string( count_curatedSpawnEntsInRange ) ) )
 	#endif
 
@@ -1059,7 +1059,7 @@ void function Register_CuratedSpawns( bool debug = false )
 						file.curatedSpawn_Map_LinkedEnts[linkedSpawn] <- placedEnt
 				}
 
-				#if DEV
+				#if DEVELOPER
 					DEVLine( debug, placedEnt.GetOrigin(), linkedSpawn.GetOrigin(), COLOR_LIGHT_GREEN, true, 60 )
 					DEVSphere( debug, linkedSpawn.GetOrigin(), 300, COLOR_LIGHT_GREEN, true, 60 )
 
@@ -1071,7 +1071,7 @@ void function Register_CuratedSpawns( bool debug = false )
 				{
 					file.curatedSpawn_Ents_WithoutLinks.append( placedEnt )
 					printt( format( "%s(): Curated Spawn @ %s links to a spawn outside of start radius. Has no link then.", FUNC_NAME(), string( linkedSpawn.GetOrigin() ) ) )
-					#if DEV
+					#if DEVELOPER
 						DEVLine( debug, placedEnt.GetOrigin(), linkedSpawn.GetOrigin(), COLOR_RED, true, 60 )
 						DEVSphere( debug, linkedSpawn.GetOrigin(), 300, COLOR_RED, true, 60 )
 					#endif
@@ -1088,7 +1088,7 @@ void function Register_CuratedSpawns( bool debug = false )
 			printt( format( "%s(): Curated Spawn with no link @ %s found", FUNC_NAME(), string( placedEnt.GetOrigin() ) ) )
 		}
 	}
-	#if DEV
+	#if DEVELOPER
 		printt( format( "%s(): Curated SpawnEnts WITH Linkeds found == %s", FUNC_NAME(), string( file.curatedSpawn_Ents_WithLinks.len() ) ) )
 		printt( format( "%s(): Curated SpawnEnts WITHOUT Linkeds found == %s", FUNC_NAME(), string( file.curatedSpawn_Ents_WithoutLinks.len() ) ) )
 	#endif // DEV
@@ -1122,7 +1122,7 @@ void function Register_LootBased_SpawnPoints_IntoZones( bool debug = false )
 	int numPointsToGet = file.zoneIDs_SortedByBounds.len() * POISPAWN_MAX_SPAWNPOINTS_PER_ZONE
 	file.allSpawnLocs_fromLootLocs = GetRandomPointsFromList( lootPointsSorted, center, radius, numPointsToGet, PLV_SquadsMinDistance()  )
 
-	#if DEV
+	#if DEVELOPER
 		printt( format( "%s(): POISpawning: Loot-based spawn points count BEFORE checking against curated spawns = %s", FUNC_NAME(), string( file.allSpawnLocs_fromLootLocs.len() ) ) )
 		if ( debug )
 		{
@@ -1139,7 +1139,7 @@ void function Register_LootBased_SpawnPoints_IntoZones( bool debug = false )
 		}
 	}
 
-	#if DEV
+	#if DEVELOPER
 		printt( format( "%s(): POISpawning: Loot-based spawn points count AFTER checking against curated spawns = %s", FUNC_NAME(), string( file.allSpawnLocs_fromLootLocs.len() ) ) )
 	#endif // DEV
 
@@ -1150,7 +1150,7 @@ void function Register_LootBased_SpawnPoints_IntoZones( bool debug = false )
 		Get_Spawnpoints_ForZone( zoneID, numPoints, debug )
 	}
 
-	#if DEV
+	#if DEVELOPER
 		if ( debug )
 		{
 			printt( format( "*** POISPAWNING: lootPointsSorted.len() == %s", string ( lootPointsSorted.len() ) ) )
@@ -1226,7 +1226,7 @@ void function Assign_TeamsToZones( bool debug = false )
 	TeamType_AnalyzeTeams()
 	array< int > teamsArray = file.teamsToSpawn
 	
-	#if DEV
+	#if DEVELOPER
 		if ( debug )
 		{
 			printt( "*** POIPlayerSpawning: Zones with 2 or more SpawnPoints: " + zoneIDs_With_Enough_SpawnPoints.len() )
@@ -1329,7 +1329,7 @@ void function TeamType_AnalyzeTeams()
 		TeamType_Record( team )
 	}
 
-	#if DEV
+	#if DEVELOPER
 		for( int i = 0; i < eTurboBRTeamType.COUNT_; i++ )
 		{
 			printt( format( "%s: %s Teams Count == %s ", FUNC_NAME(), GetEnumString( "eTurboBRTeamType", i ), string( file.teamsToSpawn_ByType[ i ].len() ) ) )
@@ -1342,7 +1342,7 @@ void function TeamType_AnalyzeTeams()
 		file.teamsToSpawn.extend( file.teamsToSpawn_ByType[ type ] )
 	}
 
-	#if DEV
+	#if DEVELOPER
 		printt( format( "%s(): file.teamsToSpawn.len() == ", FUNC_NAME(), string( file.teamsToSpawn.len() ) ) )
 	#endif
 }
@@ -1435,7 +1435,7 @@ int function TeamToSpawn_Pull_Next()
 {
 	array< int > searchOrder = [ eTurboBRTeamType.LOWERMMR, eTurboBRTeamType.HUMAN, eTurboBRTeamType.MIXED, eTurboBRTeamType.BOTS ]
 	int result = PullTeam_From_SearchOrder( searchOrder )
-	#if DEV
+	#if DEVELOPER
 		int teamType = TeamType_Get( result )
 		printt( format( "%s(): Next Team Pulled: %s of type %s", FUNC_NAME(), string( result ), GetEnumString( "eTurboBRTeamType", teamType )))
 	#endif
@@ -1473,7 +1473,7 @@ int function TeamToSpawn_Pull_ToMatch( int givenTeam )
 
 	if ( result != TEAM_INVALID )
 	{
-		#if DEV
+		#if DEVELOPER
 			givenTeamType = TeamType_Get( givenTeam )
 			int resultTeamType = TeamType_Get( result )
 			printt( format( "%s(): Team %s of type %s Matched With Team %s of type %s", FUNC_NAME(), string( givenTeam ), GetEnumString( "eTurboBRTeamType", givenTeamType ), string( result ), GetEnumString( "eTurboBRTeamType", resultTeamType ) ) )
@@ -1575,7 +1575,7 @@ bool function IsTeamForBotPairing( array< entity > teamPlayers, bool debugForceT
 		bool isLowerMMR = IsPlayerOnTeamWithBotPairing( player )
 		result = result || isLowerMMR
 
-		#if DEV
+		#if DEVELOPER
 			if( isLowerMMR )
 			{
 				// TODO: Output member data of interest
@@ -1619,7 +1619,7 @@ bool function Try_Assign_TeamToZone( int team, int zoneID, bool debug = false )
 		{
 			file.teams_Assigned_ToZoneIDs[ zoneID ].append( team )
 		}
-		#if DEV
+		#if DEVELOPER
 			file.zoneIDs_ByTeam[ team ] <- zoneID
 			if ( debug )
 			{
@@ -1770,7 +1770,7 @@ void function Spawn_Zone_Teams( int zoneID, array< int > teamsArray, bool debug 
 		zoneSpawnPointsLeft.append( pt )
 	}
 
-	#if DEV
+	#if DEVELOPER
 		printt( format( "%s(): zone ID %s Spawn Point Count == %s ( Includes Curated and Loot ).", FUNC_NAME(), string( zoneID ), string( zoneSpawnPointsLeft.len() )) )
 	#endif
 
@@ -1813,7 +1813,7 @@ void function Spawn_Team_At_SpawnEnt( int team, entity spawnEnt, bool debug = fa
 	file.allTeams_Spawned_At_CuratedSpawns.append( team )
 
 	Spawn_Team_At_SpawnPoint( team, spawnPt, debug )
-	#if DEV
+	#if DEVELOPER
 		DEVPrint( true, format( "%s(): Team %s spawning @ %s, a curated Spawn", FUNC_NAME(), string( team ), string( spawnPt.origin ) ) )
 	#endif // DEV
 }
@@ -1826,7 +1826,7 @@ void function Spawn_Team_At_SpawnPoint(  int team, Point spawnPoint, bool debug 
 		file.spawnLoc_Used_ByTeam[ team ] <- spawnLoc
 		file.spawnLocsUsed_All.append( spawnLoc )
 
-		#if DEV
+		#if DEVELOPER
 			DEVPrint( true, format( "%s(): Team %s spawning @ %s", FUNC_NAME(), string( team ), string( spawnLoc ) ) )
 		#endif // DEV
 
@@ -1970,7 +1970,7 @@ void function LootTick_SpawnAtSpawnPoint( Point destination, bool debug = false 
 	vector destElevated = destination.origin + < 0,0,5000 >
 	vector groundLoc = OriginToGround( destElevated )
 	LootTicks_SpawnLootTickAtOrigin( groundLoc, destination.angles, gunsToSpawn, 1 )
-	#if DEV
+	#if DEVELOPER
 		if ( debug )
 		{
 			DebugDrawCube( groundLoc, 64, COLOR_CYAN, true, 90 )
@@ -2466,7 +2466,7 @@ void function RemoveCrampedSpawnPoints( array< vector > lootPoints, vector exten
 			array<vector> neighborPoints = NavMesh_GetNeighborPositions( lootPoints[i], HULL_HUMAN, numPositions )
 			if ( neighborPoints.len() >= numPositions )
 			{
-				#if DEV
+				#if DEVELOPER
 					DEVSphere( debug, lootPoints[i], 4.0, <0, 128, 0>, true, 10.0 )
 					DEVLine( debug, lootPoints[i], lootPoints[i] + <0, 0, 2000>, <0, 128, 0>, true, 10.0 )
 				#endif // DEV
@@ -2475,7 +2475,7 @@ void function RemoveCrampedSpawnPoints( array< vector > lootPoints, vector exten
 		}
 
 		// Failed
-		#if DEV
+		#if DEVELOPER
 			DEVSphere( debug, lootPoints[i], 4.0, <255, 128, 128>, true, 10.0 )
 			DEVLine( debug, lootPoints[i], lootPoints[i] + <0, 0, 2000>, <255, 128, 128>, true, 10.0 )
 		#endif // DEV
@@ -2575,7 +2575,7 @@ void function CustomDropShip_SpawnPlayers_AtPoint( Point spawnPoint, int team, f
 
 	entity dropship = CreateEntity( "npc_dropship" )
 
-	#if DEV
+	#if DEVELOPER
 		DEVSphere( debug, dropshipOrigin, 200, COLOR_PURPLE, true, 30 )
 	#endif // DEV
 
@@ -2602,7 +2602,7 @@ void function CustomDropShip_SpawnPlayers_AtPoint( Point spawnPoint, int team, f
 	// Custom Dropship Timing Values
 	float animBlendTime = 0.5
 	float flyin_duration = dropship.GetSequenceDuration( CUSTOMDROPSHIP_ANIM_FLYIN_NAME )
-	#if DEV
+	#if DEVELOPER
 		printt( format( "%s(): flyin duration == %s", FUNC_NAME(), string( flyin_duration ) ) )
 	#endif // DEV
 
@@ -2618,7 +2618,7 @@ void function CustomDropShip_SpawnPlayers_AtPoint( Point spawnPoint, int team, f
 		{
 			int positionIndex = index
 			thread CustomDropship_PutPlayerInDropship( player, dropship, positionIndex, spawnPoint, false )
-			#if DEV
+			#if DEVELOPER
 				printt( format( "%s(): Player %s put in position %s", FUNC_NAME(), player.GetPlayerName(), string( positionIndex ) ) )
 			#endif
 		}
@@ -2664,7 +2664,7 @@ void function CustomDropship_PutPlayerInDropship( entity player, entity ship, in
 	float totalTime = idleTime + jumpTime
 	dummyEnt.Destroy()
 
-	#if DEV
+	#if DEVELOPER
 		printt( format( "%s(): idleTime == %s", FUNC_NAME(), string( idleTime ) ) )
 	#endif
 
@@ -2772,14 +2772,14 @@ void function CustomDropship_PutPlayerInDropship( entity player, entity ship, in
 				break
 		}
 
-		#if DEV
+		#if DEVELOPER
 			if ( debug )
 			{
 				float debugDrawDuration = 90
-				DebugDrawLine( posLoc0, posLoc0 + AnglesToForward( destination.angles ) * spacingXY * 2, COLOR_GREEN, true, debugDrawDuration )
-				DebugDrawLine( posLoc0, posLoc0 + vRight * spacingXY * 2, COLOR_RED, true, debugDrawDuration )
-				DebugDrawSphere( posLoc0, 96, COLOR_WHITE, true, debugDrawDuration )
-				DebugDrawSphere( posLoc, 64, COLOR_YELLOW, true, debugDrawDuration )
+				DebugDrawLine( posLoc0, posLoc0 + AnglesToForward( destination.angles ) * spacingXY * 2, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, debugDrawDuration )
+				DebugDrawLine( posLoc0, posLoc0 + vRight * spacingXY * 2, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, debugDrawDuration )
+				DebugDrawSphere( posLoc0, 96, int(COLOR_WHITE.x), int(COLOR_WHITE.y), int(COLOR_WHITE.z), true, debugDrawDuration )
+				DebugDrawSphere( posLoc, 64, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, debugDrawDuration )
 				DebugDrawText( posLoc, string( positionIndex ), false, debugDrawDuration )
 			}
 		#endif // DEV
@@ -2832,7 +2832,7 @@ void function CustomDropship_PutPlayerInDropship( entity player, entity ship, in
 				jumpAnimSequence.firstPersonAnim =  jumpAnims[ positionIndex ]
 			}
 
-			#if DEV
+			#if DEVELOPER
 				printt( format( "%s(): Player %s 1p Anim == %s ", FUNC_NAME(), player.GetPlayerName(), jumpAnimSequence.firstPersonAnim ) )
 			#endif
 		}
@@ -2928,14 +2928,14 @@ void function CustomDropship_View_Thread( entity player, entity ship, Point dest
 
 	// Shot: Overhead, show destination
 	shotDuration = shot1Duration
-	#if DEV
+	#if DEVELOPER
 		if ( debugShot1 )
 		{
 			float debugDuration = 120
-			DebugDrawLine( viewOrigin, shipLoc_Adjusted, COLOR_GREEN, true, debugDuration )
-			DebugDrawSphere( shipLoc_Adjusted, 128, COLOR_PURPLE, true, debugDuration )
-			DebugDrawSphere( ship.GetOrigin(), 128, COLOR_RED, true, debugDuration )
-			DebugDrawSphere( viewOrigin, 128, COLOR_GREEN, true, debugDuration )
+			DebugDrawLine( viewOrigin, shipLoc_Adjusted, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, debugDuration )
+			DebugDrawSphere( shipLoc_Adjusted, 128, int(COLOR_PURPLE.x), int(COLOR_PURPLE.y), int(COLOR_PURPLE.z), true, debugDuration )
+			DebugDrawSphere( ship.GetOrigin(), 128, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, debugDuration )
+			DebugDrawSphere( viewOrigin, 128, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, debugDuration )
 		}
 	#endif
 
@@ -2959,14 +2959,14 @@ void function CustomDropship_View_Thread( entity player, entity ship, Point dest
 	viewAngles = VectorToAngles( shipLoc_Adjusted - viewOrigin )
 	fovStart = 75
 	fovEnd = 70
-	#if DEV
+	#if DEVELOPER
 		if ( debugShot1 )
 		{
 			float debugDuration = 120
-			DebugDrawLine( viewOrigin, shipLoc_Adjusted, COLOR_GREEN, true, debugDuration )
-			DebugDrawSphere( shipLoc_Adjusted, 128, COLOR_PURPLE, true, debugDuration )
-			DebugDrawSphere( ship.GetOrigin(), 128, COLOR_RED, true, debugDuration )
-			DebugDrawSphere( viewOrigin, 128, COLOR_GREEN, true, debugDuration )
+			DebugDrawLine( viewOrigin, shipLoc_Adjusted, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, debugDuration )
+			DebugDrawSphere( shipLoc_Adjusted, 128, int(COLOR_PURPLE.x), int(COLOR_PURPLE.y), int(COLOR_PURPLE.z), true, debugDuration )
+			DebugDrawSphere( ship.GetOrigin(), 128, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, debugDuration )
+			DebugDrawSphere( viewOrigin, 128, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, debugDuration )
 		}
 	#endif
 	if ( !player.IsBot() )

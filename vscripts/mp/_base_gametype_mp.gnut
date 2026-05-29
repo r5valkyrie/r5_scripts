@@ -226,7 +226,7 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 		DecideRespawnPlayer( player, false )
 	}
 
-	#if DEV
+	#if DEVELOPER
 	if ( GetConVarBool( "persistence_run_pdef_autogen_on_connect" ) )
 		DEV_SaveDevPersistentPlayerDataDefinitionAutogenSection()
 	#endif
@@ -509,7 +509,7 @@ void function SetCallback_ObserverThreadOverride( void functionref( entity playe
 
 void function ObserverThread( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		//printt( "DS: ObserverThread", player )
 	#endif
 
@@ -536,7 +536,7 @@ void function ObserverThread( entity player )
 		}
 	)
 
-	#if DEV
+	#if DEVELOPER
 		//printt( "DS: ObserverThread - after wait", player, player.IsWatchingSpecReplay() )
 	#endif
 
@@ -872,7 +872,7 @@ void function OnInfoIntermissionSpawn( entity ent )
 void function CodeCallback_OnClientConnectionStarted( entity player )
 {
 	// not a real player?
-	#if DEV
+	#if DEVELOPER
 		if ( player.GetPlayerName() == "Replay" )
 			return
 	#endif
@@ -1513,7 +1513,7 @@ void function SetPlayerEliminationCheck( bool functionref( entity player ) func 
 
 bool function ShouldPlayerBeEliminated( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		bool ornull devRespawnOverride = DevRespawnGetPlayerEliminationOverride( player )
 		if ( devRespawnOverride != null )
 		{

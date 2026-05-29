@@ -112,14 +112,14 @@ bool function IsLegalFlightPath( FlightPath flightPath, vector origin, vector fo
 		{
 			if ( result.hitSky )
 			{
-				//DebugDrawLine( orgs[i-1], orgs[i], <0, 255, 0>, true, ANALYSIS_PREVIEW_TIME )
+				//DebugDrawLine( orgs[i-1], orgs[i], 0, 255, 0, true, ANALYSIS_PREVIEW_TIME )
 				continue
 			}
 
 			if ( Distance( result.endPos, endPos ) > 16 )
 			{
 				//if ( draw )
-				//  DebugDrawLine( orgs[i-1], orgs[i], <255, 0, 0>, true, ANALYSIS_PREVIEW_TIME )
+				//  DebugDrawLine( orgs[i-1], orgs[i], 255, 0, 0, true, ANALYSIS_PREVIEW_TIME )
 
 				DoTraceCoordCheck( true )
 				return false
@@ -127,10 +127,10 @@ bool function IsLegalFlightPath( FlightPath flightPath, vector origin, vector fo
 		}
 
 		//if ( draw )
-		// DebugDrawLine( orgs[i-1], orgs[i], <0, 255, 0>, true, ANALYSIS_PREVIEW_TIME )
+		// DebugDrawLine( orgs[i-1], orgs[i], 0, 255, 0, true, ANALYSIS_PREVIEW_TIME )
 	}
 
-	//DebugDrawLine( result.endPos, result.endPos + RandomVec( 50.0 ), <255, 255, 0>, true, 0.2 )
+	//DebugDrawLine( result.endPos, result.endPos + RandomVec( 50.0 ), 255, 255, 0, true, 0.2 )
 	DoTraceCoordCheck( true )
 	return true
 }
@@ -152,14 +152,14 @@ bool function IsLegalFlightPath_OverTime( FlightPath flightPath, vector origin, 
 			if ( result.hitSky )
 			{
 				if ( draw )
-					//DebugDrawLine( orgs[i - 1], orgs[i], <0, 255, 0>, true, ANALYSIS_PREVIEW_TIME )
+					DebugDrawLine( orgs[i - 1], orgs[i], 0, 255, 0, true, ANALYSIS_PREVIEW_TIME )
 				continue
 			}
 
 			if ( Distance( result.endPos, endPos ) > 16 )
 			{
 				if ( draw )
-					//DebugDrawLine( orgs[i - 1], orgs[i], <255, 0, 0>, true, ANALYSIS_PREVIEW_TIME )
+					DebugDrawLine( orgs[i - 1], orgs[i], 255, 0, 0, true, ANALYSIS_PREVIEW_TIME )
 
 				DoTraceCoordCheck( true )
 				return false
@@ -167,12 +167,12 @@ bool function IsLegalFlightPath_OverTime( FlightPath flightPath, vector origin, 
 		}
 
 		if ( draw )
-			//DebugDrawLine( orgs[i - 1], orgs[i], <0, 255, 0>, true, ANALYSIS_PREVIEW_TIME )
+			DebugDrawLine( orgs[i - 1], orgs[i], 0, 255, 0, true, ANALYSIS_PREVIEW_TIME )
 
 		WaitFrame()
 	}
 
-	//DebugDrawLine( result.endPos, result.endPos + RandomVec( 50.0 ), <255, 255, 0>, true, 0.2 )
+	//DebugDrawLine( result.endPos, result.endPos + RandomVec( 50.0 ), 255, 255, 0, true, 0.2 )
 	DoTraceCoordCheck( true )
 	return true
 }
@@ -231,7 +231,7 @@ int function NodeAnalysisPreview( FlightPath flightPath, int index, vector offse
 		float yaw      = p * ANALYSIS_YAW_STEP
 		vector angles  = <0, yaw, 0>
 		vector forward = AnglesToForward( angles )
-		//DebugDrawLine( origin, origin + forward * 80, <255, 100, 0>, true, 5.0 )
+		//DebugDrawLine( origin, origin + forward * 80, 255, 100, 0, true, 5.0 )
 		count++
 	}
 
@@ -247,22 +247,22 @@ void function TryAnalysisAtOriginPreview( FlightPath flightPath, array<bool> Arr
 
 SpawnPointFP function GetNearestSpawnPointFromFunc( FlightPath flightPath, vector origin, int count, var functionref( int, int, float, float ) getFunc, float variable )
 {
-	//DebugDrawLine( origin, origin + <0,0,100>, COLOR_MAGENTA, true, 2.0 )
+	//DebugDrawLine( origin, origin + <0,0,100>, int(COLOR_MAGENTA.x), int(COLOR_MAGENTA.y), int(COLOR_MAGENTA.z), true, 2.0 )
 	int node = NavMeshNode_GetNearestNodeToPos( origin )
 	if ( node == -1 )
 	{
-		//DebugDrawLine( origin, origin + <0,0,100>, <255, 0, 0>, true, 5.0 )
+		//DebugDrawLine( origin, origin + <0,0,100>, 255, 0, 0, true, 5.0 )
 		origin = OriginToGround( origin )
 		node = NavMeshNode_GetNearestNodeToPos( origin )
 
 		if ( node == -1 )
 		{
-			//DebugDrawLine( origin, origin + <0,0,100>, <255, 0, 0>, true, 5.0 )
+			//DebugDrawLine( origin, origin + <0,0,100>, 255, 0, 0, true, 5.0 )
 			return InvalidSpawnPoint()
 		}
 	}
 
-	//DebugDrawLine( origin, NavMeshNode_GetNodePos( node, flightPath.hull ), <0, 255, 0>, true, 5.0 )
+	//DebugDrawLine( origin, NavMeshNode_GetNodePos( node, flightPath.hull ), 0, 255, 0, true, 5.0 )
 
 	int dataIndex = GetAnalysisDataIndex( flightPath )
 
@@ -285,7 +285,7 @@ SpawnPointFP function GetNearestSpawnPointFromFunc( FlightPath flightPath, vecto
 		int neighborNode = expect int( neighborNodes[i] )
 		if ( !NodeAvailable( neighborNode ) )
 			continue
-		//DebugDrawLine( NavMeshNode_GetNodePos( neighborNode, HULL_HUMAN ), origin, <255, 255, 0>, true, 2.0 )
+		DebugDrawLine( NavMeshNode_GetNodePos( neighborNode, HULL_HUMAN ), origin, 255, 255, 0, true, 2.0 )
 
 		var foundSpawnYaw = getFunc( neighborNode, dataIndex, variable, 0 )
 		if ( foundSpawnYaw != null )
@@ -370,7 +370,7 @@ var function GetSpawnPoint_ClosestYaw( int nodeIndex, int dataIndex, float desir
 		//vector org = NavMeshNode_GetNodePos( nodeIndex, 0 )
 		if ( !NavMeshNode_GetBooleanData( nodeIndex, i + dataIndex ) )
 		{
-			//DebugDrawLine( org, org + <0,0,100>, <255, 150, 0>, true, 5.0 )
+			//DebugDrawLine( org, org + <0,0,100>, 255, 150, 0, true, 5.0 )
 			continue
 		}
 
@@ -378,12 +378,12 @@ var function GetSpawnPoint_ClosestYaw( int nodeIndex, int dataIndex, float desir
 		dif = YawDifference( desiredYaw, yaw )
 		if ( dif > lowestYawDifference )
 		{
-			//DebugDrawLine( org, org + <0,0,100>, <0, 100, 255>, true, 5.0 )
+			//DebugDrawLine( org, org + <0,0,100>, 0, 100, 255, true, 5.0 )
 			continue
 		}
 
 
-		//DebugDrawLine( org, org + <0,0,100>, <0, 255, 0>, true, 5.0 )
+		//DebugDrawLine( org, org + <0,0,100>, 0, 255, 0, true, 5.0 )
 		lowestYawDifference = dif
 
 		closestYaw = yaw
@@ -552,8 +552,8 @@ bool function NodeInHotDropFov( int nearestNode, FlightPath flightPath, int data
 	//if ( nearestDot >= 0.95 )
 	//{
 	//	local start = GetPlayerArray()[0].GetOrigin()
-	//	DebugDrawLine( start, start + forward * 1500, <255, 255, 0>, true, 5.0 )
-	//	DebugDrawLine( start, start + nearestVec * 1500, <155, 255, 50>, true, 5.0 )
+	//	DebugDrawLine( start, start + forward * 1500, 255, 255, 0, true, 5.0 )
+	//	DebugDrawLine( start, start + nearestVec * 1500, 155, 255, 50, true, 5.0 )
 	//}
 	//printt( "dot " + nearestDot )
 	return nearestDot >= 0.95
@@ -747,7 +747,7 @@ SpawnPointFP function GetSpawnPointForStyle( FlightPath flightPath, CallinData d
 	if ( !spawnPoint.valid )
 		return InvalidSpawnPoint()
 
-	//DebugDrawLine( spawnPoint.origin, drop.origin, COLOR_MAGENTA, true, 15.0 )
+	//DebugDrawLine( spawnPoint.origin, drop.origin, int(COLOR_MAGENTA.x), int(COLOR_MAGENTA.y), int(COLOR_MAGENTA.z), true, 15.0 )
 	//printt( "Reserved " + spawnPoint.node )
 	// reserve the spawn point
 
@@ -961,8 +961,8 @@ bool function VerifyAirdropPoint( vector baseOrigin, float yaw, bool isCarePacka
 		failCode = failCode | 0x0001
 		#if DEBUG_DROP_POINTS_LINES
 			vector right = CrossProduct( AnglesToForward( <0, yaw, 0> ), trace.surfaceNormal )
-			//DebugDrawLine( trace.endPos, trace.endPos + right * 64, <0, 255, 0>, true, DEBUG_DRAW_TIME )
-			//DebugDrawLine( trace.endPos, trace.endPos + trace.surfaceNormal * 64, <0, 0, 255>, true, DEBUG_DRAW_TIME )
+			DebugDrawLine( trace.endPos, trace.endPos + right * 64, 0, 255, 0, true, DEBUG_DRAW_TIME )
+			DebugDrawLine( trace.endPos, trace.endPos + trace.surfaceNormal * 64, 0, 0, 255, true, DEBUG_DRAW_TIME )
 			//DebugDrawArrow( trace.endPos, baseOrigin, 2, <255, 255, 255>, true, DEBUG_DRAW_TIME )
 		#endif
 	}
@@ -996,7 +996,7 @@ bool function VerifyAirdropPoint( vector baseOrigin, float yaw, bool isCarePacka
 		{
 			failCode = failCode | 0x0080
 			#if DEBUG_DROP_POINTS_LINES
-				DebugDrawArrow( ridgeOrigin, ridgeTrace.endPos, 4, <0, 128, 128>, true, DEBUG_DRAW_TIME )
+				//DebugDrawArrow( ridgeOrigin, ridgeTrace.endPos, 4, <0, 128, 128>, true, DEBUG_DRAW_TIME )
 			#endif
 			break
 		}
@@ -1579,8 +1579,8 @@ bool function CommonAirdropValidationCheck( vector origin, vector angles, vector
 			{
 				#if DEBUG_DROP_POINTS
 					vector boundaryWallClip = modifiedCenter + (modifiedAirdropPoint - modifiedCenter) * ret.fraction
-					//DebugDrawLine( modifiedCenter, boundaryWallClip, <255, 0, 0>, true, DEBUG_LINE_DRAWTIME )
-					//DebugDrawLine( boundaryWallClip, modifiedAirdropPoint, <0, 0, 255>, true, DEBUG_LINE_DRAWTIME )
+					DebugDrawLine( modifiedCenter, boundaryWallClip, 255, 0, 0, true, DEBUG_LINE_DRAWTIME )
+					DebugDrawLine( boundaryWallClip, modifiedAirdropPoint, 0, 0, 255, true, DEBUG_LINE_DRAWTIME )
 				#endif //DEBUG_DROP_POINTS
 
 				return false
@@ -1590,7 +1590,7 @@ bool function CommonAirdropValidationCheck( vector origin, vector angles, vector
 		#if DEBUG_DROP_POINTS
 			if ( ret.fraction == 1 )
 			{
-				//DebugDrawLine( modifiedCenter, modifiedAirdropPoint, <0, 255, 0>, true, DEBUG_LINE_DRAWTIME )
+				DebugDrawLine( modifiedCenter, modifiedAirdropPoint, 0, 255, 0, true, DEBUG_LINE_DRAWTIME )
 			}
 		#endif //DEBUG_DROP_POINTS
 	}
@@ -1868,10 +1868,10 @@ void function AirdropTraceTest( entity player )
 	vector startPosition = player.EyePosition() + <0, 0, 8>
 	vector endPosition   = startPosition + 1024 * player.GetViewVector()
 	TraceResults result  = TraceLine( startPosition, endPosition, player, (TRACE_MASK_PLAYERSOLID | TRACE_MASK_TITANSOLID | CONTENTS_NOAIRDROP), TRACE_COLLISION_GROUP_PLAYER )
-	//DebugDrawLine( startPosition, result.endPos, <0, 255, 0>, false, 5.0 )
+	DebugDrawLine( startPosition, result.endPos, 0, 255, 0, false, 5.0 )
 	if ( result.fraction < 1 )
 	{
-		//DebugDrawLine( result.endPos, endPosition, <255, 0, 0>, false, 5.0 )
+		DebugDrawLine( result.endPos, endPosition, 255, 0, 0, false, 5.0 )
 	}
 }
 #endif

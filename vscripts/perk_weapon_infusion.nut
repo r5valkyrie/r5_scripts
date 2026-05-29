@@ -234,7 +234,7 @@ void function Perk_WeaponInfusion_Active_Thread( entity player )
 
 
 		//DEV AUTO-CYCLE INFUSE WEAPONS
-		#if DEV
+		#if DEVELOPER
 			//printt( "Harvester Count: " + file.unstableHarvesters.len()  )
 
 			if( DEBUG_PERK_WEAPON_INFUSION_AUTO_LOOP )
@@ -592,7 +592,7 @@ void function CL_WeaponDurability_HUDMeterRui_Thread( entity player )
 #if SERVER
 void function Perk_WeaponInfusion_OnClientConnected( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( PERK_WEAPON_INFUSION_DEBUG )
 			printf("Perk_WeaponInfusion_OnClientConnected()")
 	#endif
@@ -606,7 +606,7 @@ void function Perk_WeaponInfusion_OnClientConnected( entity player )
 
 void function Perk_WeaponInfusion_OnPlayerReconnected( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( PERK_WEAPON_INFUSION_DEBUG )
 			printf( "Perk_WeaponInfusion_OnPlayerReconnected()" )
 	#endif
@@ -619,7 +619,7 @@ void function Perk_WeaponInfusion_OnPlayerReconnected( entity player )
 #if SERVER
 void function Perk_WeaponInfusion_OnClientDisconnected( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( PERK_WEAPON_INFUSION_DEBUG )
 			printf("Perk_WeaponInfusion_OnClientDisconnected()")
 	#endif
@@ -634,7 +634,7 @@ void function Perk_WeaponInfusion_OnClientDisconnected( entity player )
 #if SERVER
 void function Perk_WeaponInfusion_OnPlayerDamaged( entity player, var damageInfo )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( PERK_WEAPON_INFUSION_DEBUG )
 			printf("Perk_WeaponInfusion_OnPlayerDamaged()")
 	#endif
@@ -664,7 +664,7 @@ void function Perk_WeaponInfusion_OnPlayerDamaged( entity player, var damageInfo
 
 	attacker.SetPlayerNetInt( PERK_INFUSED_WEAPON_DURABILITY_NETVAR, newDurability )
 
-	#if DEV
+	#if DEVELOPER
 		if ( PERK_WEAPON_INFUSION_DEBUG )
 		{
 			printt("IW Durability:  " + durability)
@@ -730,12 +730,12 @@ void function Delayed_CreateUnstableHarvesters()
 		if( canBeUnstable )
 		{
 			file.unstableHarvesters.append( harvester )
-			//DebugDrawSphere( harvester.GetOrigin(), 200.0, COLOR_RED, true, 200 )
+			//DebugDrawSphere( harvester.GetOrigin(), 200.0, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 200 )
 		}
 
 	}
 
-#if DEV
+#if DEVELOPER
 	if ( PERK_WEAPON_INFUSION_DEBUG )
 	{
 		printt( "Total Unstable Harvesters: " + file.unstableHarvesters.len() )
@@ -944,7 +944,7 @@ void function CL_Track_UnstableHarvesters_Thread( entity player )
 
 					harvesterBeamFX[harvester] <- beamHandleFX
 
-					//DebugDrawSphere( harvester.GetOrigin(), 50.0, COLOR_YELLOW, true, 120 )
+					//DebugDrawSphere( harvester.GetOrigin(), 50.0, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 120 )
 				}
 
 			}

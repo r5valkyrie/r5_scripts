@@ -195,12 +195,12 @@ table<string,table<string,NodeFP> > function DropshipFindDropNodes( FlightPath f
 			DebugDrawLine( nodes.rightNode.origin, nodes.rightNode.attachOrigin, 120, 120, 255, true, time )
 			DebugDrawCircle( nodes.rightNode.origin, <0,0,0>, 15, <120, 120, 255>, true, time )
 
-			//DebugDrawLine( nodes.rightNode.origin, nodes.centerNode.origin, <200, 200, 200>, true, time )
+			//DebugDrawLine( nodes.rightNode.origin, nodes.centerNode.origin, 200, 200, 200, true, time )
 			//DebugDrawText( nodes.rightNode.origin + <0,0,20>, "dist: " + Distance( nodes.rightNode.origin, nodes.centerNode.origin ), true, time )
-			//DebugDrawLine( nodes.leftNode.origin, nodes.centerNode.origin, <200, 200, 200>, true, time )
+			//DebugDrawLine( nodes.leftNode.origin, nodes.centerNode.origin, 200, 200, 200, true, time )
 			//DebugDrawText( nodes.leftNode.origin + <0,0,20>, "dist: " + Distance( nodes.leftNode.origin, nodes.centerNode.origin ), true, time )
 
-			//DebugDrawLine( origin, origin + deployForward * 200, <50, 255, 50>, true, time )
+			//DebugDrawLine( origin, origin + deployForward * 200, 50, 255, 50, true, time )
 
 	        //foreach ( node in nodes.rightNodes )
 	        //{
@@ -229,7 +229,7 @@ table<int,NodeFP> function FindDropshipDeployNodes( vector deployOrigin, vector 
 
 	if ( LINEGEN_DEBUG )
 	{
-		DebugDrawLine( deployOrigin, result.endPos, COLOR_WHITE, true, LINEGEN_TIME )
+		DebugDrawLine( deployOrigin, result.endPos, int(COLOR_WHITE.x), int(COLOR_WHITE.y), int(COLOR_WHITE.z), true, LINEGEN_TIME )
 		DebugDrawText( result.endPos + <0,0,10>, "test", true, LINEGEN_TIME )
 		DebugDrawCircle( result.endPos, <0,0,0>, 35, COLOR_WHITE, true, LINEGEN_TIME )
 	}
@@ -413,7 +413,7 @@ NodeFP function GetBestDropshipNode( AttachPoint attachPoint, array<NodeFP> node
 	FlightPath offsetAnalysis = GetAnalysisForModel( GetModelForDropshipZipline(), ZIPLINE_IDLE_ANIM )
 	Point offsetPoint = GetPreviewPoint( offsetAnalysis )
 	vector offsetOrigin = GetOriginFromPoint( offsetPoint, attachOrigin, attachForward, attachRight )
-//	DebugDrawLine( offsetOrigin, attachOrigin, COLOR_YELLOW, true, 15 )
+//	DebugDrawLine( offsetOrigin, attachOrigin, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 15 )
 
 	nodeArray.sort( SortHighestDot )
 

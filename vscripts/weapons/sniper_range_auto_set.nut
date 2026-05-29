@@ -117,13 +117,13 @@ void function SniperRangeAutoSet_Thread( entity player )
 				{
 					float distance = Distance( player.EyePosition(), traceEndPos )
 
-					DebugDrawLine( player.EyePosition(), traceEndPos, COLOR_YELLOW, false, 0.3 )
-					DebugDrawSphere( traceEndPos, 3, COLOR_YELLOW, false, 0.3 )
+					DebugDrawLine( player.EyePosition(), traceEndPos, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), false, 0.3 )
+					DebugDrawSphere( traceEndPos, 3, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), false, 0.3 )
 
 					entity aaTarget = GetAimAssistCurrentTarget()
 					if ( IsValid(aaTarget) )
 					{
-						DebugDrawSphere( aaTarget.GetOrigin(), 3, COLOR_MAGENTA, false, 0.3 )
+						DebugDrawSphere( aaTarget.GetOrigin(), 3, int(COLOR_MAGENTA.x), int(COLOR_MAGENTA.y), int(COLOR_MAGENTA.z), false, 0.3 )
 					}
 
 

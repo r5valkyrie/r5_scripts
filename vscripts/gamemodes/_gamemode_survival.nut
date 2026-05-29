@@ -1400,7 +1400,7 @@ array< PlanePathData > function Survival_GenerateSingleRandomPlanePath( bool beQ
 		printt( "planeEnd:", planeEnd )
 	}
 	#if DEBUG_PLANE_PATH
-		//DebugDrawLine( planeStart, planeEnd, <255, 255, 0>, true, 10.0 )
+		DebugDrawLine( planeStart, planeEnd, 255, 255, 0, true, 10.0 )
 	#endif
 	LineSegment lineSegment    = ClampLineSegmentToWorldBounds2D( planeStart, planeEnd, SKYBOX_BUFFER )
 	vector clampedPlaneStart   = lineSegment.start
@@ -1422,7 +1422,7 @@ array< PlanePathData > function Survival_GenerateSingleRandomPlanePath( bool beQ
 	}
 	#if DEBUG_PLANE_PATH || DEBUG_PLANE_PATH_LIGHTWEIGHT
 		if ( !dev_numTriesFailed )
-			//DebugDrawLine( clampedPlaneStart - <0, 0, 10000>, clampedPlaneEnd - <0, 0, 10000>, <0, 255, 0>, true, 240.0 )
+			DebugDrawLine( clampedPlaneStart - <0, 0, 10000>, clampedPlaneEnd - <0, 0, 10000>, 0, 255, 0, true, 240.0 )
 	#endif
 
 	// We may need to shorten the waittimes due to line clamping making the line shorter before and after the playable space
@@ -1639,8 +1639,8 @@ void function DEV_SimulatePlanePaths_Internal( int count = 1 )
 	printt( "AverageTime:", averageTime )
 	printt( "MeanTime:", meanTime )
 
-	//DebugDrawLine( minPath.startPos, minPath.endPos, COLOR_MAGENTA, true, 30.0 )
-	//DebugDrawLine( maxPath.startPos, maxPath.endPos, <255, 255, 0>, true, 30.0 )
+	DebugDrawLine( minPath.startPos, minPath.endPos, int(COLOR_MAGENTA.x), int(COLOR_MAGENTA.y), int(COLOR_MAGENTA.z), true, 30.0 )
+	DebugDrawLine( maxPath.startPos, maxPath.endPos, 255, 255, 0, true, 30.0 )
 
 	thread Survival_RunSinglePlanePath_Thread( [ minPath ] )
 	thread PlaneTest_threaded_simulated()
@@ -2748,7 +2748,7 @@ vector function Survival_GetPlaneJumpPointOverMap( vector pathStart, vector path
 			if ( Distance2D( pointOnPlanePath, mapCenter ) < SURVIVAL_PLANE_DROP_RADIUS_MIN )
 			{
 				//DebugDrawCircle( mapCenter, <0, 0, 1>, SURVIVAL_PLANE_DROP_RADIUS_MIN, <255, 0, 0>, true, 10.0 )
-				//DebugDrawLine( pointOnPlanePath, pointOnPlanePath - <0, 0, 10000>, <255, 0, 0>, true, 10.0 )
+				DebugDrawLine( pointOnPlanePath, pointOnPlanePath - <0, 0, 10000>, 255, 0, 0, true, 10.0 )
 				return pointOnPlanePath
 			}
 
@@ -2759,16 +2759,16 @@ vector function Survival_GetPlaneJumpPointOverMap( vector pathStart, vector path
 				vector ornull closestTitanNavMesh = NavMesh_ClampPointForHullWithExtents( trace.endPos, FLIGHTPATH_HULL, <1024, 1024, 1024> )
 
 				#if DEBUG_PLANE_PATH
-					//DebugDrawLine( traceStart, trace.endPos, <0, 0, 255>, true, 10.0 )
+					DebugDrawLine( traceStart, trace.endPos, 0, 0, 255, true, 10.0 )
 					if ( closestTitanNavMesh == null )
 					{
-						//DebugDrawSphere( trace.endPos, 256.0, <255, 0, 0>, true, 10.0 )
+						DebugDrawSphere( trace.endPos, 256.0, 255, 0, 0, true, 10.0 )
 					}
 					else
 					{
 						expect vector(closestTitanNavMesh)
-						//DebugDrawLine( trace.endPos, closestTitanNavMesh, <0, 255, 0>, true, 10.0 )
-						//DebugDrawSphere( closestTitanNavMesh, 256.0, <0, 255, 0>, true, 10.0 )
+						DebugDrawLine( trace.endPos, closestTitanNavMesh, 0, 255, 0, true, 10.0 )
+						DebugDrawSphere( closestTitanNavMesh, 256.0, 0, 255, 0, true, 10.0 )
 					}
 				#endif
 
@@ -4299,7 +4299,7 @@ void function SpawnPlayersOnGroundWithSquadNearLoot()
 #if DEVELOPER
 void function DEV_TestNitroSpawning( float radius = 4000 )
 {
-	_SpawnPlayersOnGroundWithSquadNearLoot_internal( GP().GetOrigin(), radius, GetAllPlayersSortedByTeam(), true )
+	_SpawnPlayersOnGroundWithSquadNearLoot_internal( GetPlayerArray().GetOrigin(), radius, GetAllPlayersSortedByTeam(), true )
 }
 #endif
 
@@ -4339,7 +4339,7 @@ void function _SpawnPlayersOnGroundWithSquadNearLoot_internal( vector center, fl
 	{
 		foreach ( vector spawnPoint in spawnPoints )
 		{
-			//DebugDrawSphere( spawnPoint, 32.0, COLOR_MAGENTA, true, 10.0 )
+			DebugDrawSphere( spawnPoint, 32.0, int(COLOR_MAGENTA.x), int(COLOR_MAGENTA.y), int(COLOR_MAGENTA.z), true, 10.0 )
 			//DebugDrawCircle( spawnPoint, <0, 0, 0>, spawnSpacingRadius, COLOR_MAGENTA, true, 10.0 )
 		}
 	}
@@ -4374,7 +4374,7 @@ void function _SpawnPlayersOnGroundWithSquadNearLoot_internal( vector center, fl
 			if ( debug )
 			{
 				DrawAngledBox( neighborPoints[i], angles, <-16, -16, 0>, <16, 16, 72>, 255, 0, 0, true, 10.0 )
-				//DebugDrawLine( neighborPoints[i] + <0, 0, 36>, neighborPoints[i] + <0, 0, 36> + (AnglesToForward( angles ) * 128), <255, 0, 0>, true, 10.0 )
+				DebugDrawLine( neighborPoints[i] + <0, 0, 36>, neighborPoints[i] + <0, 0, 36> + (AnglesToForward( angles ) * 128), 255, 0, 0, true, 10.0 )
 			}
 			else
 			{
@@ -6001,7 +6001,7 @@ void function RespawnTeamAtRingEdge( int team )
 	}
 
 	//DebugDrawCircle( center, <0, 0, 1>, d.endRadius, <255, 255, 255>, true, 10.0 )
-	//DebugDrawLine( p.origin, p.origin + <0, 0, 10000>, <255, 255, 255>, true, 10.0 )
+	DebugDrawLine( p.origin, p.origin + <0, 0, 10000>, 255, 255, 255, true, 10.0 )
 
 	//thread RespawnPlayersInDropshipAtPoint( players, p.origin, p.angles, false )
 	foreach ( player in players )
@@ -9452,7 +9452,7 @@ void function DeadPeriodChecker_PlayerGrabbedItem( entity player )
 
 void function TestPrompt_RevealMyLastDeathbox()
 {
-	Remote_CallFunction_NonReplay( GP(), "ServerCallback_PromptMarkMyLastDeathbox" )
+	Remote_CallFunction_NonReplay( GetPlayerArray(), "ServerCallback_PromptMarkMyLastDeathbox" )
 }
 
 #endif

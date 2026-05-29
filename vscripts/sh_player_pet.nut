@@ -172,7 +172,7 @@ void function SquadPetsThread()
 	FlagWait( "GamePlaying" )
 	FlagWait( "Survival_LootSpawned" )
 
-	#if DEV
+	#if DEVELOPER
 		string playlistName = GetCurrentPlaylistName()
 		if ( playlistName  == "shadow_royale_test" )
 		{
@@ -702,7 +702,7 @@ void function SpawnPetForPlayer( entity player, vector origin, vector angles )
 		}
 	} )
 
-	#if DEV
+	#if DEVELOPER
 		if ( GetCurrentPlaylistVarBool( "squad_pets_debug", false ) )
 			thread DebugPlayerPet( pet, player )
 	#endif
@@ -1054,7 +1054,7 @@ void function Survival_AddCallback_OnPetFriendlyfireMessaging( void functionref(
 
 
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function DebugPlayerPet( entity npc, entity owner )
 {
 	if ( !IsValid( npc ) )
@@ -1068,8 +1068,8 @@ void function DebugPlayerPet( entity npc, entity owner )
 
 	while( true )
 	{
-		DebugDrawLine( npc.GetOrigin(), owner.GetOrigin() + <0, 0, 36>, COLOR_GREEN, true, 0.1 )
-		DebugDrawSphere( npc.GetOrigin(), 16, COLOR_GREEN, true, 0.1 )
+		DebugDrawLine( npc.GetOrigin(), owner.GetOrigin() + <0, 0, 36>, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 )
+		DebugDrawSphere( npc.GetOrigin(), 16, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 )
 		wait 0.05
 	}
 

@@ -48,7 +48,7 @@ global function DEV_LaunchObjectiveFarAway
 global function DEV_LaunchObjectiveCount
 global function DEV_ClearAllObjectives
 
-#if DEV
+#if DEVELOPER
 global function DEV_ObjEntReport
 #endif // DEV
 #endif // SERVER
@@ -521,7 +521,7 @@ void function DEV_ClearAllObjectives()
 }
 
 
-#if DEV
+#if DEVELOPER
 //global function DEV_Skits_ToggleOverlay
 #endif // DEV
 
@@ -569,7 +569,7 @@ void function ObjectiveSystem_Init()
 {
 	if( isInitialized )
 	{
-		#if DEV
+		#if DEVELOPER
 			printf( "Objective System is already initialized" )
 		#endif
 		return
@@ -682,7 +682,7 @@ bool function PlayerIsMarkedAsInsideObjectiveIndex( entity player, int index )
 #if SERVER
 void function OnGameStateEnterPlaying()
 {
-#if DEV
+#if DEVELOPER
 	//thread DebugFrameThread()
 #endif // DEV
 }
@@ -968,7 +968,7 @@ void function DEV_PrintAllSkits()
 //
 
 /*
-#if DEV
+#if DEVELOPER
 bool s_debugDrawFrame = false
 void function DEV_Skits_ToggleOverlay()
 {
@@ -1481,7 +1481,7 @@ void function InstanceObjectiveSplashMessage( entity wp )
 //////////////
 // Utils
 
-#if DEV
+#if DEVELOPER
 #if SERVER
 string function GetScriptGroup( entity ent )
 {

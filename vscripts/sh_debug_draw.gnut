@@ -195,9 +195,9 @@ void function DebugDrawAxis( vector origin, vector angles = <0,0,0>, float time 
 
 	if ( rgb != <0,0,0> )
 	{
-		DebugDrawLine( origin, origin + forward * scale, 	rgb.x, rgb.y, rgb.z, true, time )
-		DebugDrawLine( origin, origin + up * scale, 		rgb.x, rgb.y, rgb.z, true, time )
-		DebugDrawLine( origin, origin + right * scale, 		rgb.x, rgb.y, rgb.z, true, time )
+		DebugDrawLine( origin, origin + forward * scale, int(rgb.x), int(rgb.y), int(rgb.z), true, time )
+		DebugDrawLine( origin, origin + up * scale, int(rgb.x), int(rgb.y), int(rgb.z), true, time )
+		DebugDrawLine( origin, origin + right * scale, int(rgb.x), int(rgb.y), int(rgb.z), true, time )
 	}
 	else
 	{
@@ -498,9 +498,9 @@ void function DrawAttachment( entity pod, string attachment, float time = 0.1, v
 	else
 	{
 		expect vector( color )
-		DebugDrawLine( origin, origin + forward * scale, 	color.x, color.y, color.z, true, time )
-		DebugDrawLine( origin, origin + right * scale, 		color.x, color.y, color.z, true, time )
-		DebugDrawLine( origin, origin + up * scale, 		color.x, color.y, color.z, true, time )
+		DebugDrawLine( origin, origin + forward * scale, int(color.x), int(color.y), int(color.z), true, time )
+		DebugDrawLine( origin, origin + right * scale, int(color.x), int(color.y), int(color.z), true, time )
+		DebugDrawLine( origin, origin + up * scale, int(color.x), int(color.y), int(color.z), true, time )
 	}
 }
 
@@ -533,9 +533,9 @@ void function DrawEntityOrigin( entity ent, float time = 0.1, vector ornull colo
 	else
 	{
 		expect vector( color )
-		DebugDrawLine( origin, origin + forward * scale, 	color.x, color.y, color.z, true, time )
-		DebugDrawLine( origin, origin + up * scale, 		color.x, color.y, color.z, true, time )
-		DebugDrawLine( origin, origin + right * scale, 		color.x, color.y, color.z, true, time )
+		DebugDrawLine( origin, origin + forward * scale, int(color.x), int(color.y), int(color.z), true, time )
+		DebugDrawLine( origin, origin + up * scale, int(color.x), int(color.y), int(color.z), true, time )
+		DebugDrawLine( origin, origin + right * scale, int(color.x), int(color.y), int(color.z), true, time )
 	}
 }
 
@@ -556,9 +556,9 @@ void function DrawOrigin( vector origin, float time = 0.1, vector ornull color =
 	else
 	{
 		expect vector( color )
-		DebugDrawLine( origin, origin + forward * scale, 	color.x, color.y, color.z, true, time )
-		DebugDrawLine( origin, origin + up * scale, 		color.x, color.y, color.z, true, time )
-		DebugDrawLine( origin, origin + right * scale, 		color.x, color.y, color.z, true, time )
+		DebugDrawLine( origin, origin + forward * scale, int(color.x), int(color.y), int(color.z), true, time )
+		DebugDrawLine( origin, origin + up * scale, int(color.x), int(color.y), int(color.z), true, time )
+		DebugDrawLine( origin, origin + right * scale, int(color.x), int(color.y), int(color.z), true, time )
 	}
 }
 
@@ -804,7 +804,7 @@ void function DrawLineForPoints( array<vector> points, vector color, float durat
 {
 	Assert( points.len() >= 2 )
 	for ( int i = 0; i < points.len() - 1; i++ )
-		DebugDrawLine( points[i], points[i+1], color.x, color.y, color.z, true, duration )
+		DebugDrawLine( points[i], points[i+1], int(color.x), int(color.y), int(color.z), true, duration )
 }
 
 // Draws a circle with a consistent FOV size on screen. Useful for representing target view angles to focus on, etc.

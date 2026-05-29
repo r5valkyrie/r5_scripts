@@ -24,7 +24,7 @@ global function PlayerHasAnyInventory
 global function GiveSpawnLoadout
 global function GiveSimplePVELoadout
 
-#if DEV
+#if DEVELOPER
 global function DEV_Freelance_KillAllAI
 global function DEV_Freelance_ToggleOverlay
 
@@ -290,7 +290,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 void function OnGameStateEnterPlaying()
 {
 	//RunWorldEvents()
-#if DEV
+#if DEVELOPER
 	thread DebugFrameThread()
 #endif // DEV
 }
@@ -300,7 +300,7 @@ void function OnGameStateEnterResolution()
 	//
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_Freelance_KillAllAI()
 {
 	printf( "%s() - Started", FUNC_NAME() )
@@ -336,7 +336,7 @@ void function DebugFrameThread()
 	}
 }
 
-#endif // #if DEV
+#endif // #if DEVELOPER
 
 
 
@@ -1031,7 +1031,7 @@ void function Freelance_MissionEnd( int teamNumber )
 	}
 }
 
-#if DEV
+#if DEVELOPER
 const string SIG_SMOKETEST = "SMOKETEST"
 void function DEV_FreelanceSmoketest( array<string> objectiveTypes )
 {

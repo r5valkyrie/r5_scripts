@@ -734,7 +734,7 @@ void function RunToAnimStart_Deprecated( entity guy, string animation_name, refe
 	float dist = Distance( animStartPos.origin, guy.GetOrigin() )
 	if ( dist > 8 )
 	{
-		//DebugDrawLine( animStartPos.origin, guy.GetOrigin(), <255, 150, 0>, true, 60 )
+		//DebugDrawLine( animStartPos.origin, guy.GetOrigin(), 255, 150, 0, true, 60 )
 		printt( guy, " was ", dist, " units away from where he wanted to end his scripted sequence" )
 	}
 	//printt( guy + " finished assault at dist ", Distance( animStartPos.origin, guy.GetOrigin() ) )
@@ -797,7 +797,7 @@ void function RunToAnimStartPos( entity guy, string animation_name, reference = 
 
 	guy.AssaultPoint( animStartPos.origin )
 
-	//DebugDrawLine( guy.GetOrigin(), animStartPos.origin, COLOR_RED, true, 20.0 )
+	//DebugDrawLine( guy.GetOrigin(), animStartPos.origin, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 20.0 )
 	//DebugDrawAngles( animStartPos.origin, animStartPos.angles )
 	//thread DebugAssaultEnt( guy, assaultEnt )
 	WaitSignal( guy, "OnFinishedAssault" )
@@ -875,7 +875,7 @@ void function RunToAnimStartForced_Deprecated( entity guy, string animation_name
 	if ( !disableAssaultAngles )
 		guy.AssaultSetAngles( animStartPos.angles, true )
 
-	//DebugDrawLine( guy.GetOrigin(), animStartPos.origin, COLOR_RED, true, 20.0 )
+	//DebugDrawLine( guy.GetOrigin(), animStartPos.origin, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 20.0 )
 	//DebugDrawAngles( animStartPos.origin, animStartPos.angles )
 	//thread DebugAssaultEnt( guy, assaultEnt )
 	WaitSignal( guy, "OnFinishedAssault" )

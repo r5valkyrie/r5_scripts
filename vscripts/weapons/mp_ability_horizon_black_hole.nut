@@ -243,7 +243,7 @@ void function ShowBlackHoleRadius( entity weapon )
 	while( IsValid( fxHandle ) )
 	{
 		vector dropPosition = CalculateGrenadeLandingPos( weapon )
-		//DebugDrawSphere( dropPosition, GetBlackholeRadius( weapon.GetOwner() ), <0, 0, 150>, true, 0.1 )
+		//DebugDrawSphere( dropPosition, GetBlackholeRadius( weapon.GetOwner() ), 0, 0, 150, true, 0.1 )
 		EffectSetControlPointVector( fxHandle, 0, dropPosition )
 		WaitFrame()
 	}
