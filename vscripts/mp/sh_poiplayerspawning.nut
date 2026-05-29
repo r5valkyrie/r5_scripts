@@ -375,136 +375,6 @@ void function DEV_PrintLootTotalsAndDrawCuratedSpawns( float radius )
 void function DEV_PrintLootAroundCuratedSpawns_Internal( float radius, bool printAllContents, bool debugDrawAreas, bool debugDrawOverlappingLoot, bool debugDrawAllLoot )
 {
 
-	void functionref(string) myPrint = void function ( string s ) {
-		printf( "TurboLootDebugPrint - %s", s )
-	}
-
-	int numPairs = file.curatedSpawn_Ents.len() / 2 + ( file.curatedSpawn_Ents.len() % 2 ) // add one in case it's odd
-	array<vector> ZoneColors = GetEvenlySpacedPointsAroundCircle( < 125, 125, 125 >, <0, 0, 0>, numPairs, 120 )
-	table< int, vector > zoneColorMap
-	table< int, int > zoneLootAreaCounts
-	array< LootArea > lootAreas
-
-	table < LootArea, entity >  lootAreaToSpawnPointMap
-	table < LootArea, LootArea > pairedLootAreaMap
-
-	// TODO Change this to look at pairs of spawn points rather than grouping by POIs
-	foreach ( entity spawnPointEnt in file.curatedSpawn_Ents )
-	{
-		vector point = spawnPointEnt.GetOrigin()
-		string label
-
-		// get the zone ID and name
-		int zoneID = MapZones_GetZoneOrClosestZoneForPoint( point )
-		string zoneName = GetZoneNameForZoneId( zoneID )
-
-		// Decide its name, incremented suffix if needed
-		if ( !( zoneID in zoneLootAreaCounts ) )
-		{
-			zoneLootAreaCounts[zoneID] <- 1
-			label = zoneName
-		}
-		else
-		{
-			zoneLootAreaCounts[zoneID]++
-			label = zoneName + zoneLootAreaCounts[zoneID].tostring()
-		}
-
-		LootArea newArea = DEV_LootSpawn_CreateLootArea( point, radius, label )
-
-		lootAreas.append( newArea )
-		lootAreaToSpawnPointMap[ newArea ] <- spawnPointEnt
-
-		foreach ( otherLootArea in lootAreas )
-		{
-			if ( otherLootArea == newArea )
-				continue
-
-
-			if ( otherLootArea in lootAreaToSpawnPointMap && spawnPointEnt.GetLinkEnt() == lootAreaToSpawnPointMap[ otherLootArea ] )
-			{
-				// we have found two loot areas that are paired
-				Assert( !(otherLootArea in pairedLootAreaMap), " ERROR: The trying to pair a loot area that is already in the pairedLootAreaMap." )
-				{
-					pairedLootAreaMap[otherLootArea] <- newArea
-					pairedLootAreaMap[newArea] <- otherLootArea
-
-					newArea.color = ZoneColors.pop()
-					otherLootArea.color = newArea.color
-				}
-				break
-			}
-		}
-	}
-
-	foreach ( LootArea lootArea in lootAreas )
-	{
-		foreach ( LootObject lootObj in DEV_LootSpawn_GetLootObjectsForLootArea( lootArea ) )
-		{
-			lootArea.lootObjects.append( lootObj )
-		}
-	}
-
-	// Sort loot areas by amount of loot
-	lootAreas.sort ( LootAreaCompareMostLootToLeast )
-
-	array<LootArea> printedAreas
-
-	foreach ( LootArea lootArea in lootAreas )
-	{
-		// check what's been printed
-		if ( printedAreas.contains( lootArea ) )
-			continue
-
-		// check if area has pair
-		// TODO eventually allow user control over whether overlaps matter
-		LootArea pairedArea
-		array< LootObject > overlappingLoot
-
-		bool ignoreOverlaps = !(lootArea in pairedLootAreaMap)
-
-		if ( !ignoreOverlaps )
-		{
-			// get paired area
-			pairedArea = pairedLootAreaMap[ lootArea ]
-
-			// get overlapping loot
-			overlappingLoot = DEV_LootSpawn_GetOverlappingLootObjects ( lootArea, pairedArea )
-		}
-
-		// print and draw the loot area
-		myPrint( "===================================================================" )
-		myPrint( "Loot count for " + lootArea.label + ": " + (lootArea.lootObjects.len() - overlappingLoot.len()) )
-		if ( printAllContents )
-		{
-			myPrint( "CONTENTS: " + lootArea.label + "" )
-			DEV_LootSpawn_PrintLootObjects( lootArea.lootObjects, myPrint, overlappingLoot )
-		}
-		if ( debugDrawAreas )
-			DEV_LootSpawn_DebugDrawLootArea ( lootArea, overlappingLoot )
-		printedAreas.append( lootArea )
-
-		if ( !ignoreOverlaps )
-		{
-			// print and draw the paired loot area
-			myPrint( "Loot count for " + pairedArea.label  + ": "+ ( pairedArea.lootObjects.len() - overlappingLoot.len() )  )
-			if ( printAllContents )
-			{
-				myPrint( "CONTENTS: " + lootArea.label + "" )
-				DEV_LootSpawn_PrintLootObjects ( pairedArea.lootObjects, myPrint, overlappingLoot )
-			}
-			if ( debugDrawAreas )
-				DEV_LootSpawn_DebugDrawLootArea ( pairedArea, overlappingLoot )
-			printedAreas.append( pairedArea )
-
-			// print and draw overlapping loot
-			myPrint(" OVERLAPPING LOOT FOR " + lootArea.label + " and " + pairedArea.label + ": " + overlappingLoot.len() )
-			if ( printAllContents )
-				DEV_LootSpawn_PrintLootObjects ( overlappingLoot, myPrint )
-			if ( debugDrawOverlappingLoot )
-				DEV_LootSpawn_DebugDrawLootObjects ( overlappingLoot, COLOR_RED )
-		}
-	}
 }
 #endif // DEV
 #endif // SERVER
@@ -524,7 +394,7 @@ void function DEVCube( bool debugParm, vector center, float size, vector color, 
 	bool doDebug = debugParm || FORCEDEBUG
 	if ( doDebug )
 	{
-		DebugDrawCube( center, size, color, bShowThruGeo, showTime )
+		DebugDrawCube( center, size, int( color.x ), int( color.y ), int( color.z ), bShowThruGeo, showTime )
 	}
 }
 
@@ -542,7 +412,7 @@ void function DEVCylinder( bool debugParm, vector center, vector angles, float r
 	bool doDebug = debugParm || FORCEDEBUG
 	if ( doDebug )
 	{
-		DebugDrawCylinder( center, angles, radius, height, color, bShowThruGeo, showTime )
+		DebugDrawCylinder( center, angles, radius, height, int( color.x ), int( color.y ), int( color.z ), bShowThruGeo, showTime )
 	}
 }
 
@@ -1580,8 +1450,8 @@ bool function IsTeamForBotPairing( array< entity > teamPlayers, bool debugForceT
 			{
 				// TODO: Output member data of interest
 				string playerName = player.GetPlayerName()
-				string playerID = player.GetPINNucleusPid()
-				string uid = player.GetUserID()
+				string playerID = ""//player.GetPINNucleusPid()
+				string uid = ""//player.GetUserID()
 
 				printt( format( "%s(): ----- Low-Damage Player Detected:", FUNC_NAME() ) )
 				printt( format( "%s(): Player Name: 		%s", FUNC_NAME(), playerName ) )
@@ -1973,7 +1843,7 @@ void function LootTick_SpawnAtSpawnPoint( Point destination, bool debug = false 
 	#if DEVELOPER
 		if ( debug )
 		{
-			DebugDrawCube( groundLoc, 64, COLOR_CYAN, true, 90 )
+			DebugDrawCube( groundLoc, 64, int( COLOR_CYAN.x ), int( COLOR_CYAN.y ), int( COLOR_CYAN.z ), true, 90 )
 		}
 	#endif
 }
@@ -2988,4 +2858,4 @@ void function ServerToClient_CustomDropship_CameraZoom( entity player, float dur
 }
 #endif
 
-// ----- 
+// -----

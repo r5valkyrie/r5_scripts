@@ -789,12 +789,12 @@ TeslaTrapPlacementInfo function TeslaTrap_GetPlacementInfo( entity player, entit
 
 	if ( TESLA_TRAP_DEBUG_DRAW_PRE_PLACEMENT )
 	{
-		DebugDrawBox( fwdResults.endPos, TESLA_TRAP_BOUND_MINS, TESLA_TRAP_BOUND_MAXS, COLOR_GREEN, 1, 0.1 ) //Forward Hull Cast Bounding Box
-		DebugDrawBox( downResults.endPos, TESLA_TRAP_BOUND_MINS, TESLA_TRAP_BOUND_MAXS, COLOR_BLUE, 1, 0.1 ) //Downward Hull Cast Bounding Box
+		DebugDrawBox( fwdResults.endPos, TESLA_TRAP_BOUND_MINS, TESLA_TRAP_BOUND_MAXS, int( COLOR_GREEN.x ), int( COLOR_GREEN.y ), int( COLOR_GREEN.z ), 1, 0.1 ) //Forward Hull Cast Bounding Box
+		DebugDrawBox( downResults.endPos, TESLA_TRAP_BOUND_MINS, TESLA_TRAP_BOUND_MAXS, int( COLOR_BLUE.x ), int( COLOR_BLUE.y ), int( COLOR_BLUE.z ), 1, 0.1 ) //Downward Hull Cast Bounding Box
 		DebugDrawLine( eyePos + viewVec * min( TESLA_TRAP_PLACEMENT_RANGE_MIN, maxRange ), fwdResults.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 ) //Forward Hull Cast
 		DebugDrawLine( fwdResults.endPos, eyePos + viewVec * maxRange, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 0.1 ) //Forward Hull Cast Blocked
 		DebugDrawLine( fwdResults.endPos, downResults.endPos, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 0.1 ) //Downward Hull Cast
-		DebugDrawBox( upResults.endPos, TESLA_TRAP_BOUND_MINS, TESLA_TRAP_BOUND_MAXS, COLOR_CYAN, 1, 0.1 ) //"Upward"" Hull Cast Bounding Box
+		DebugDrawBox( upResults.endPos, TESLA_TRAP_BOUND_MINS, TESLA_TRAP_BOUND_MAXS, int( COLOR_CYAN.x ), int( COLOR_CYAN.y ), int( COLOR_CYAN.z ), 1, 0.1 ) //"Upward"" Hull Cast Bounding Box
 		DebugDrawLine( upStart, upResults.endPos, int(COLOR_CYAN.x), int(COLOR_CYAN.y), int(COLOR_CYAN.z), true, 0.1 ) //"Upward" Hull Cast
 		DebugDrawLine( roofTraceStart, roofTraceEnd, int(COLOR_MAGENTA.x), int(COLOR_MAGENTA.y), int(COLOR_MAGENTA.z), true, 0.1 ) //Roof Check
 		DebugDrawLine( player.GetOrigin(), player.GetOrigin() + (AnglesToForward( angles ) * file.balance_teslaTrapRange), int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 0.1 ) //Max Placement Dist
@@ -817,7 +817,7 @@ TeslaTrapPlacementInfo function TeslaTrap_GetPlacementInfo( entity player, entit
 
 		if ( TESLA_TRAP_DEBUG_DRAW_PRE_PLACEMENT )
 		{
-			DebugDrawBox( downFallbackResults.endPos, TESLA_TRAP_BOUND_MINS, TESLA_TRAP_BOUND_MAXS, COLOR_RED, 1, 0.1 ) //Downward Fallback Hull Cast Bounding Box
+			DebugDrawBox( downFallbackResults.endPos, TESLA_TRAP_BOUND_MINS, TESLA_TRAP_BOUND_MAXS, int( COLOR_RED.x ), int( COLOR_RED.y ), int( COLOR_RED.z ), 1, 0.1 ) //Downward Fallback Hull Cast Bounding Box
 		}
 
 		placementInfo = TeslaTrap_GetPlacementInfoFromTraceResults( player, proxy, downFallbackResults, upResults, viewTraceResults, ignoreEnts, idealPos )
@@ -2709,8 +2709,8 @@ entity function TeslaTrap_CreateLinkTriggerCylinder( TeslaTrapData mainTrapData,
 
 	if ( TESLA_TRAP_DEBUG_DRAW )
 	{
-		 DebugDrawCylinder( trigOrigin, AnglesCompose( trigger.GetAngles(), < 90, 0, 0 > ), trigger.GetRadius(), trigger.GetAboveHeight(), COLOR_RED, true, 60.0 )
-		 DebugDrawCylinder( trigOrigin, AnglesCompose( trigger.GetAngles(), < 90, 0, 0 > ), trigger.GetRadius(), -trigger.GetBelowHeight(), COLOR_RED, true, 60.0 )
+		 DebugDrawCylinder( trigOrigin, AnglesCompose( trigger.GetAngles(), < 90, 0, 0 > ), trigger.GetRadius(), trigger.GetAboveHeight(), int( COLOR_RED.x ), int( COLOR_RED.y ), int( COLOR_RED.z ), true, 60.0 )
+		 DebugDrawCylinder( trigOrigin, AnglesCompose( trigger.GetAngles(), < 90, 0, 0 > ), trigger.GetRadius(), -trigger.GetBelowHeight(), int( COLOR_RED.x ), int( COLOR_RED.y ), int( COLOR_RED.z ), true, 60.0 )
 	}
 
 	//Even though the traps are linked, don't activate them right away.

@@ -1725,4 +1725,3 @@ float function DebuffZone_GetRangeSqr()
 	float rangeSqr = file.bestTargetRange * file.bestTargetRange
 	return rangeSqr
 }
- 

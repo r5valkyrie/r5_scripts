@@ -527,4 +527,4 @@ void function DEV_ToggleDriverCooldown()
 bool function PhaseDriver_IsPhaseDriverEnabled()
 {
 	return HasEntWithScriptName( PHASEDRIVER_PANEL_SCRIPTNAME )
-} 
+}

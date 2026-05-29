@@ -343,4 +343,3 @@ void function SetAISettingsWrapper( entity npc, string settings )
 	//Assert( settings.find( npc.GetClassName() ) == 0, settings + " settings file needs the string " + npc.GetClassName() + " added to the actual npc name string as a prefix." )
 }
 
- 

@@ -1691,4 +1691,4 @@ void function PassiveAxiom_ReviveInterrupt_Thread( entity ent, entity target )
 
 	WaitForever()
 }
-#endif 
+#endif

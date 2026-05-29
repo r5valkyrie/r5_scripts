@@ -347,4 +347,4 @@ void function KnockbackPlayer( entity victim, vector dir, float mag )
 	}
 }
 #endif
-                                
+                               

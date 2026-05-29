@@ -8201,7 +8201,7 @@ bool function Control_RespawnPlayerOnPoint( entity player, int respawnChoice, en
 
 				#if DEVELOPER
 					if ( CONTROL_DISPLAY_DEBUG_DRAWS && showSpawnPoints )
-						DebugDrawCylinder( spawn.GetOrigin(), spawn.GetAngles(), 20, 128, COLOR_YELLOW, true, SPAWNPOINT_DISPLAY_TIME )
+						DebugDrawCylinder( spawn.GetOrigin(), spawn.GetAngles(), 20, 128, int( COLOR_YELLOW.x ), int( COLOR_YELLOW.y ), int( COLOR_YELLOW.z ), true, SPAWNPOINT_DISPLAY_TIME )
 
 					if ( CONTROL_DETAILED_DEBUG )
 						printt( "CONTROL SPAWN: spawn at ", spawn.GetOrigin(), " is neutral with key ", spawn.kv.control_teamnumber )
@@ -8216,7 +8216,7 @@ bool function Control_RespawnPlayerOnPoint( entity player, int respawnChoice, en
 
 				#if DEVELOPER
 					if ( CONTROL_DISPLAY_DEBUG_DRAWS && showSpawnPoints )
-						DebugDrawCylinder( spawn.GetOrigin(), spawn.GetAngles(), 20, 128, COLOR_GREEN, true, SPAWNPOINT_DISPLAY_TIME )
+						DebugDrawCylinder( spawn.GetOrigin(), spawn.GetAngles(), 20, 128, int( COLOR_GREEN.x ), int( COLOR_GREEN.y ), int( COLOR_GREEN.z ), true, SPAWNPOINT_DISPLAY_TIME )
 
 					if ( CONTROL_DETAILED_DEBUG )
 						printt( "CONTROL SPAWN: spawn at ", spawn.GetOrigin(), " is friendly with key ", spawn.kv.control_teamnumber )
@@ -8228,7 +8228,7 @@ bool function Control_RespawnPlayerOnPoint( entity player, int respawnChoice, en
 			//spawn is neither neutral nor matching player alliance, do nothing
 			#if DEVELOPER
 				if ( CONTROL_DISPLAY_DEBUG_DRAWS && showSpawnPoints )
-					DebugDrawCylinder( spawn.GetOrigin(), spawn.GetAngles(), 20, 128, COLOR_RED, true, SPAWNPOINT_DISPLAY_TIME )
+					DebugDrawCylinder( spawn.GetOrigin(), spawn.GetAngles(), 20, 128, int( COLOR_RED.x ), int( COLOR_RED.y ), int( COLOR_RED.z ), true, SPAWNPOINT_DISPLAY_TIME )
 
 				if ( CONTROL_DETAILED_DEBUG )
 					printt( "CONTROL SPAWN: spawn at ", spawn.GetOrigin(), " is enemy with key ", spawn.kv.control_teamnumber )
@@ -8241,7 +8241,7 @@ bool function Control_RespawnPlayerOnPoint( entity player, int respawnChoice, en
 
 			#if DEVELOPER
 				if ( CONTROL_DISPLAY_DEBUG_DRAWS && showSpawnPoints )
-					DebugDrawCylinder( spawn.GetOrigin(), spawn.GetAngles(), 20, 128, COLOR_BLUE, true, SPAWNPOINT_DISPLAY_TIME )
+					DebugDrawCylinder( spawn.GetOrigin(), spawn.GetAngles(), 20, 128, int( COLOR_BLUE.x ), int( COLOR_BLUE.y ), int( COLOR_BLUE.z ), true, SPAWNPOINT_DISPLAY_TIME )
 
 				if ( CONTROL_DETAILED_DEBUG )
 					printt( "CONTROL SPAWN: spawn at ", spawn.GetOrigin(), " does not have teamnumber filter " )
@@ -8452,7 +8452,7 @@ void function Control_SpawnDebugging_Thread( entity player, entity finalSpawn )
 			{
 				//draw debug bad spawn
 				if ( CONTROL_DISPLAY_DEBUG_DRAWS )
-					DebugDrawCylinder( finalSpawn.GetOrigin(), finalSpawn.GetAngles(), 20, 128, COLOR_RED, true, CONTROL_DEBUG_DRAW_DISPLAY_TIME )
+					DebugDrawCylinder( finalSpawn.GetOrigin(), finalSpawn.GetAngles(), 20, 128, int( COLOR_RED.x ), int( COLOR_RED.y ), int( COLOR_RED.z ), true, CONTROL_DEBUG_DRAW_DISPLAY_TIME )
 
 				printt( "CONTROL: player died too soon after spawning on ", finalSpawn.GetOrigin() )
 			}
@@ -8468,7 +8468,7 @@ void function Control_SpawnDebugging_Thread( entity player, entity finalSpawn )
 
 	//draw debug good spawn
 	if ( CONTROL_DISPLAY_DEBUG_DRAWS )
-		DebugDrawCylinder( finalSpawn.GetOrigin(), finalSpawn.GetAngles(), 20, 128, COLOR_GREEN, true, CONTROL_DEBUG_DRAW_DISPLAY_TIME )
+		DebugDrawCylinder( finalSpawn.GetOrigin(), finalSpawn.GetAngles(), 20, 128, int( COLOR_GREEN.x ), int( COLOR_GREEN.y ), int( COLOR_GREEN.z ), true, CONTROL_DEBUG_DRAW_DISPLAY_TIME )
 }
 #endif // SERVER && DEVELOPER
 
@@ -8500,13 +8500,13 @@ array<entity> function Control_GetValidSpawnpoints( array<entity> spawnpoints, e
 			validSpawns.append( spawn )
 			#if DEVELOPER
 				if ( CONTROL_DISPLAY_DEBUG_DRAWS && showSpawnPoints )
-					DebugDrawCylinder( spawn.GetOrigin(), spawn.GetAngles(), SPAWNPOINT_RADIUS, SPAWNPOINT_HEIGHT, COLOR_YELLOW, true, SPAWNPOINT_DISPLAY_TIME )
+					DebugDrawCylinder( spawn.GetOrigin(), spawn.GetAngles(), SPAWNPOINT_RADIUS, SPAWNPOINT_HEIGHT, int( COLOR_YELLOW.x ), int( COLOR_YELLOW.y ), int( COLOR_YELLOW.z ), true, SPAWNPOINT_DISPLAY_TIME )
 			#endif // DEV
 		}
 	#if DEVELOPER
 		else if ( CONTROL_DISPLAY_DEBUG_DRAWS && showSpawnPoints )
 		{
-			DebugDrawCylinder( spawn.GetOrigin(), spawn.GetAngles(), SPAWNPOINT_RADIUS, SPAWNPOINT_HEIGHT, COLOR_RED, true, SPAWNPOINT_DISPLAY_TIME )
+			DebugDrawCylinder( spawn.GetOrigin(), spawn.GetAngles(), SPAWNPOINT_RADIUS, SPAWNPOINT_HEIGHT, int( COLOR_RED.x ), int( COLOR_RED.y ), int( COLOR_RED.z ), true, SPAWNPOINT_DISPLAY_TIME )
 		}
 	#endif // DEV
 	}

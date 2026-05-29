@@ -186,7 +186,7 @@ void function AlterTacTest( entity player )
 	vector triggerAng = <0, 130, 0>
 	float radius = 8000
 	float height = 4000
-	DebugDrawCylinder( triggerPos, triggerAng, radius,height, COLOR_RED, false, 15 )
+	DebugDrawCylinder( triggerPos, triggerAng, radius,height, int( COLOR_RED.x ), int( COLOR_RED.y ), int( COLOR_RED.z ), false, 15 )
 	//DrawAngledBox( triggerPos, triggerAng, <-2000,-2000, -2000>, <2000, 2000, 20>, COLOR_RED, false, 10 )
 	//tuning.portalDuration = 60
 	//thread AlterTacTest_Thread( player )
@@ -625,7 +625,7 @@ var function OnWeaponTossReleaseAnimEvent_ability_phase_door( entity weapon, Wea
 		thread ManageDoorLifetime_Thread( ownerPlayer, origin, surfaceNormal, entranceParent, exitOrigin, exitSurfaceNormal, exitParent )
 
 		#if DEVELOPER
-			OPSPR_SavePortal( weapon, origin + (surfaceNormal * surfaceOffset), exitOrigin + (exitSurfaceNormal * surfaceOffset) )
+			//OPSPR_SavePortal( weapon, origin + (surfaceNormal * surfaceOffset), exitOrigin + (exitSurfaceNormal * surfaceOffset) )
 		#endif
 	#endif
 
@@ -789,7 +789,7 @@ void function DoPortalCleanup( entity portalRootEnt, entity trigger )
 		delete file.portalExtensionToPlayersUsingMap[trigger]
 
 	#if DEVELOPER
-		OPSPR_RemovePortal( portalRootEnt.GetOrigin() )
+		//OPSPR_RemovePortal( portalRootEnt.GetOrigin() )
 	#endif
 
 	if ( IsValid( portalRootEnt ) )
@@ -935,7 +935,7 @@ entity function CreatePhaseDoorTriggers( entity owner, entity portalRootEnt, vec
 	#if DEVELOPER
 	if ( PHASE_DOOR_DEBUG_DRAW )
 	{
-		DebugDrawCylinder( triggerPos - <0, 0, PHASE_DOOR_TRIGGER_RADIUS>, <-90, 0, 0>, PHASE_DOOR_TRIGGER_RADIUS, PHASE_DOOR_TRIGGER_RADIUS * 2, COLOR_GOLDEN_ROD, false, 15 )
+		DebugDrawCylinder( triggerPos - <0, 0, PHASE_DOOR_TRIGGER_RADIUS>, <-90, 0, 0>, PHASE_DOOR_TRIGGER_RADIUS, PHASE_DOOR_TRIGGER_RADIUS * 2, int( COLOR_GOLDEN_ROD.x ), int( COLOR_GOLDEN_ROD.y ), int( COLOR_GOLDEN_ROD.z ), false, 15 )
 	}
 	#endif
 
@@ -1173,7 +1173,7 @@ entity function CreatePortalExtension( vector startPos, vector endPos, entity po
 	#endif
 
 	#if PHASE_DOOR_PORTAL_EXTENSIONS_DEBUG_DRAW
-		DrawAngledBox( middle, angles, mins, maxes, COLOR_PURPLE, false, 15 )
+		DrawAngledBox( middle, angles, mins, maxes, int( COLOR_PURPLE.x ), int( COLOR_PURPLE.y ), int( COLOR_PURPLE.z ), false, 15 )
 	#endif
 
 	int beamFXID = GetParticleSystemIndex( PHASE_DOOR_ROPE_FX )
@@ -2248,4 +2248,3 @@ void function BreachKillerChallenge_EnemyKnockStep( entity attacker, entity vict
       
 
                   
- 

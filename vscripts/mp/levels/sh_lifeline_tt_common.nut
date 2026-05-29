@@ -554,4 +554,3 @@ bool function IsLifelineTTEnabled()
 	return false
 }
                          
- 

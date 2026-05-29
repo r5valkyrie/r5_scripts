@@ -664,4 +664,4 @@ void function DEV_TestVoidVision_Thread( entity player, float duration )
 	VoidVision_TakeVoidVision( player )
 }
 #endif
-#endif 
+#endif

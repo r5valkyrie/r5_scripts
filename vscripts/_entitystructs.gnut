@@ -1257,4 +1257,3 @@ global struct ServerFirstPersonProxyStruct
 {
 	// Struct definition needed even without anything defined in it. See R5DEV-77780
 }
- 

@@ -971,4 +971,3 @@ entity ornull function TryToReplaceFakeNpcWithReal( entity fakeNpc, SkitInstance
 }
 
 #endif // SERVER
- 

@@ -428,4 +428,4 @@ void function LiveAPI_ServerInit()
 	Survival_AddCallback_OnPlayerGameSummaryStatChanged( LiveAPI_OnGameSummaryStatChanged )
 
     AddCallback_OnPlayerObserverTargetChanged( LiveAPI_OnPlayerObserverTargetChanged )
-} 
+}

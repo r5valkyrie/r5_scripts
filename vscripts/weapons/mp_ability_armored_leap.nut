@@ -1098,8 +1098,8 @@ void function ArmoredLeap_LaunchHoverPrep_Thread( entity player, vector endPoint
 				{
 					float curGravity = player.GetLocalGravityStrength()
 					#if DEVELOPER
-						if ( curGravity != 1 )
-							player.SetLocalGravityStrength( 1 )
+						//if ( curGravity != 1 )
+						//	player.SetLocalGravityStrength( 1 )
 					#endif
 				}
 				#endif
@@ -1116,8 +1116,8 @@ void function ArmoredLeap_LaunchHoverPrep_Thread( entity player, vector endPoint
 
 		//Set Gravity & Hover Speed
 		#if DEVELOPER
-		player.SetLocalGravityStrength( ARMORED_LEAP_AIR_HOVER_GRAVITY )
-		player.SetVelocity( newVel )
+		//player.SetLocalGravityStrength( ARMORED_LEAP_AIR_HOVER_GRAVITY )
+		//player.SetVelocity( newVel )
 		#endif
 	}
 	#endif
@@ -3646,7 +3646,7 @@ ArmoredLeapTargetInfo function GetArmoredLeapTargetInfo( entity ent )
 				{
 					DebugDrawSphere( ledgeTraceStart, 8.0, int(COLOR_YELLOW.x), int(COLOR_YELLOW.y), int(COLOR_YELLOW.z), true, 0.1 ) //YELLOW (LedgeStart)
 					DebugDrawSphere( ledgeTrace.endPos, 15.0, 255, 175, 0, true, 0.1 ) //ORANGE (LedgeEnd)
-					DebugDrawCircle( ledgeTrace.endPos, VectorToAngles(ledgeTrace.surfaceNormal), 64, <255, 175, 175>, true, 0.1, 3 )
+					DebugDrawCircle( ledgeTrace.endPos, VectorToAngles(ledgeTrace.surfaceNormal), 64, 255, 175, 175, true, 0.1, 3 )
 				}
 			#endif
 
@@ -7870,4 +7870,4 @@ bool function GetArmoredLeapUseCode()
 bool function DoAdditionalAirPosChecks()
 {
 	return GetCurrentPlaylistVarBool( "newcastle_ult_additional_air_pos_checks", true )
-} 
+}

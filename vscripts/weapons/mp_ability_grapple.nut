@@ -498,4 +498,3 @@ void function AddAssistForGrappleAttach( entity player, entity hitent, vector hi
 		AddAssistingPlayerToVictim( player, hitent  )
 }
 #endif
- 

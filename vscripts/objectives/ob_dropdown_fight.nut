@@ -581,4 +581,3 @@ void function LockAllDoorsIn2DRadius( vector origin, float radius )
 }
 
 #endif // SERVER
- 

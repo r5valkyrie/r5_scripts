@@ -1049,4 +1049,3 @@ bool function IsPlayerEvacShipPassenger( entity player )
 	return false
 }
 #endif
- 

@@ -1440,4 +1440,4 @@ void function EmitSoundOnEntityDelayed( entity player, string alias, float delay
 	EmitSoundOnEntity( player, alias )
 }
 //END SHARED
-       
+      

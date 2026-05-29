@@ -615,4 +615,3 @@ void function InstanceWhispers( entity wp )
 	}()
 }
 #endif // CLIENT
- 

@@ -227,8 +227,8 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 	}
 
 	#if DEVELOPER
-	if ( GetConVarBool( "persistence_run_pdef_autogen_on_connect" ) )
-		DEV_SaveDevPersistentPlayerDataDefinitionAutogenSection()
+	//if ( GetConVarBool( "persistence_run_pdef_autogen_on_connect" ) )
+	//	DEV_SaveDevPersistentPlayerDataDefinitionAutogenSection()
 	#endif
 }
 

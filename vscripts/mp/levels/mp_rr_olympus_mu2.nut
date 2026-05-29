@@ -224,4 +224,4 @@ void function AddCircleOverrideLocations()
 	SURVIVAL_AddOverrideCircleLocation( <-13504, 11612, -6558>, 0, true )    // Turbine
 	SURVIVAL_AddOverrideCircleLocation( <-4818, 27611, -6108>, 0, true )    // Power Grid (outer)
 	SURVIVAL_AddOverrideCircleLocation( <-4969, 18418, -5892>, 0, true )    // Power Grid (inner)
-} 
+}

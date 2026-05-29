@@ -4299,7 +4299,7 @@ void function SpawnPlayersOnGroundWithSquadNearLoot()
 #if DEVELOPER
 void function DEV_TestNitroSpawning( float radius = 4000 )
 {
-	_SpawnPlayersOnGroundWithSquadNearLoot_internal( GetPlayerArray().GetOrigin(), radius, GetAllPlayersSortedByTeam(), true )
+	_SpawnPlayersOnGroundWithSquadNearLoot_internal( GetPlayerArray()[0].GetOrigin(), radius, GetAllPlayersSortedByTeam(), true )
 }
 #endif
 
@@ -5083,8 +5083,8 @@ void function SurvivalPlayerRespawnedInit( entity player )
 
 	Ultimates_OnPlayerRespawned( player )
 
-	player.GiveOffhandWeapon( HOLO_PROJECTOR_WEAPON_NAME, HOLO_PROJECTOR_INDEX )
-	player.GiveOffhandWeapon( GENERIC_OFFHAND_WEAPON_NAME, GENERIC_OFFHAND_INDEX )
+	//player.GiveOffhandWeapon( HOLO_PROJECTOR_WEAPON_NAME, HOLO_PROJECTOR_INDEX )
+	//player.GiveOffhandWeapon( GENERIC_OFFHAND_WEAPON_NAME, GENERIC_OFFHAND_INDEX )
 
 
 	player.DisableIdLights()
@@ -9452,7 +9452,7 @@ void function DeadPeriodChecker_PlayerGrabbedItem( entity player )
 
 void function TestPrompt_RevealMyLastDeathbox()
 {
-	Remote_CallFunction_NonReplay( GetPlayerArray(), "ServerCallback_PromptMarkMyLastDeathbox" )
+	Remote_CallFunction_NonReplay( GetPlayerArray()[0], "ServerCallback_PromptMarkMyLastDeathbox" )
 }
 
 #endif

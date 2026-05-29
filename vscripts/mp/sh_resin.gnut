@@ -418,4 +418,4 @@ void function GetResinStructureFromRoot( entity root, array< entity > shards )
 			GetResinStructureFromRoot( child, shards )
 		}
 	}
-} 
+}

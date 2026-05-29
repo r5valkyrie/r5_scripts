@@ -1114,8 +1114,8 @@ bool function VerifyAirdropPoint( vector baseOrigin, float yaw, bool isCarePacka
 	#if DEBUG_DROP_POINTS
 		if ( DEBUG_DROP_POINTS_LINES && (failCode & 0x0005) != 0 )
 		{
-			DebugDrawCylinder( trace.endPos, < -90, 0, 0 >, maxs.x, maxs.z, <250, 50, 0>, false, DEBUG_DRAW_TIME )
-			DebugDrawCylinder( baseOrigin, < -90, 0, 0 >, maxs.x, maxs.z, <70, 70, 70>, false, DEBUG_DRAW_TIME )
+			DebugDrawCylinder( trace.endPos, < -90, 0, 0 >, maxs.x, maxs.z, 250, 50, 0, false, DEBUG_DRAW_TIME )
+			DebugDrawCylinder( baseOrigin, < -90, 0, 0 >, maxs.x, maxs.z, 70, 70, 70, false, DEBUG_DRAW_TIME )
 		}
 
 		if ( failCode != 0 )
@@ -1390,7 +1390,7 @@ Point function GetClosestDrop_Internal( vector baseOrigin, int dataIndex )
 		vector ledgeOrigin   = doorEndOrigin + <0, 0, -72>
 
 		printt( node, origin, closestNodePoint.angles )
-		DebugDrawCylinder( origin, < -90, 0, 0 >, 64, 256, <250, 250, 0>, false, DEBUG_DRAW_TIME )
+		DebugDrawCylinder( origin, < -90, 0, 0 >, 64, 256, 250, 250, 0, false, DEBUG_DRAW_TIME )
 		//DebugDrawArrow( doorOrigin, doorEndOrigin, 4, <255, 0, 0>, true, DEBUG_DRAW_TIME )
 		//DebugDrawArrow( doorEndOrigin, ledgeOrigin, 4, COLOR_MAGENTA, true, DEBUG_DRAW_TIME )
 	#endif

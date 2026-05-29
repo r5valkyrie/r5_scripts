@@ -361,4 +361,3 @@ bool function IsBattleSenseEnabled()
 {
 	return GetCurrentPlaylistVarBool( PVAR_BATTLE_SENSE_ENABLED, PVAR_BATTLE_SENSE_ENABLED_DEFAULT )
 }
- 

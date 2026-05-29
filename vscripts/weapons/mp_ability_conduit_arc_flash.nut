@@ -1614,4 +1614,4 @@ void function DebugDrawLockOns( entity player, array<entity> allyList, entity be
 		}
 	}
 }
-#endif 
+#endif

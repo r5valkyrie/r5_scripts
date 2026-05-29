@@ -791,4 +791,3 @@ void function OnBallisticUltStatusChange( entity player, bool ultIsActive )
 	}
 }
 #endif //CLIENT
- 

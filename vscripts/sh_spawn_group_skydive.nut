@@ -212,7 +212,7 @@ void function DEV_DrawGroupSkyDiveSpawnLocations()
 	{
 		foreach( point in file.spawnPoints )
 		{
-			DrawAngledBox( point.GetOrigin(), point.GetAngles(), <-16, -16, 0>, <16, 16, 72>, COLOR_GREEN, true, 1.1 )
+			DrawAngledBox( point.GetOrigin(), point.GetAngles(), <-16, -16, 0>, <16, 16, 72>, int( COLOR_GREEN.x ), int( COLOR_GREEN.y ), int( COLOR_GREEN.z ), true, 1.1 )
 			//DebugDrawArrow( point.GetOrigin(), point.GetOrigin() + AnglesToForward( point.GetAngles() ) * 16, 8, COLOR_GREEN, true, 1.1 )
 		}
 		wait 1

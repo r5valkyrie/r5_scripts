@@ -489,7 +489,7 @@ void function Totem_CheckForGeoIntersection( entity totemProxy )
 		{
 			if ( DEATH_TOTEM_DEBUG )
 			{
-				DebugDrawBox( startPos, <-8,-8,0>, <8,8,32>, <255, 100, 0>, 1, 3.0 )
+				DebugDrawBox( startPos, <-8,-8,0>, <8,8,32>, 255, 100, 0, 1, 3.0 )
 				PrintTraceResults( results )
 			}
 
@@ -537,7 +537,7 @@ void function Totem_CheckForGeoIntersection( entity totemProxy )
 		else
 		{
 			if ( DEATH_TOTEM_DEBUG )
-				DebugDrawBox( results.endPos, <-8,-8,0>, <8,8,32>, COLOR_GREEN, 1, 0.3 )
+				DebugDrawBox( results.endPos, <-8,-8,0>, <8,8,32>, int( COLOR_GREEN.x ), int( COLOR_GREEN.y ), int( COLOR_GREEN.z ), 1, 0.3 )
 		}
 
 		WaitTime( 0.3 )

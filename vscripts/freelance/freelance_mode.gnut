@@ -2062,4 +2062,3 @@ void function FeelanceOverrideGameState()
 	ClGameState_RegisterGameStateFullmapAsset( $"ui/gamestate_quest_fullmap.rpak" )
 }
 #endif //CLIENT
- 

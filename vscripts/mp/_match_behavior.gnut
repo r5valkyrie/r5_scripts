@@ -499,4 +499,4 @@ void function MatchBehaviorPlayer_AddEndedCallback( void functionref( entity, bo
 {
 	Assert( !file.onMatchBehaviorEndedCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with MatchBehaviorPlayer_AddEndedCallback" )
 	file.onMatchBehaviorEndedCallbacks.append( callbackFunc )
-} 
+}

@@ -117,7 +117,7 @@ void function BreakableCrystals_Spawn( entity crystal )
     crystalData.topSection.effectsAngles = crystal.GetAngles()
 
     #if DEBUG_CRYSTALS
-        DebugDrawCube( crystalData.topSection.effectsOrigin, 10, COLOR_GREEN, true, 300.0 )
+        DebugDrawCube( crystalData.topSection.effectsOrigin, 10, int( COLOR_GREEN.x ), int( COLOR_GREEN.y ), int( COLOR_GREEN.z ), true, 300.0 )
     #endif
 
     crystalData.bottomSection.health = CRYSTAL_BOTTOM_HEALTH
@@ -316,4 +316,3 @@ void function BreakableCrystals_OnKilled( entity crystal, var damageInfo )
         delete file.crystalsData[crystal]
     }
 }
- 

@@ -360,4 +360,4 @@ string function GetSoundForSegment( int index, int max, BurnDamageSettings burnS
 	return soundAlias
 }
 
-#endif // SERVER 
+#endif // SERVER

@@ -909,12 +909,12 @@ void function FinalizeCampSetup()
 				printf("-= Camp Data Finalized =-")
 				DEV_TropicsWildlife_PrintCampDetails( campData )
 			}
-			DEV_Tropics_RegisterNPCCamp (
-				campData.assaultPoint.origin,
-				campData.type == eWildLifeCampType.PROWLER_DENS ? eNPC.PROWLER : eNPC.SPIDER_JUNGLE,
-				campData.fullAssaultRadius,
-				campData.scriptName == SCRIPT_NAME_GOLIATH_PIT_KEYWORD ? float(11000) : float(6000)
-			)
+			//DEV_Tropics_RegisterNPCCamp (
+			//	campData.assaultPoint.origin,
+			//	campData.type == eWildLifeCampType.PROWLER_DENS ? eNPC.PROWLER : eNPC.SPIDER_JUNGLE,
+			//	campData.fullAssaultRadius,
+			//	campData.scriptName == SCRIPT_NAME_GOLIATH_PIT_KEYWORD ? float(11000) : float(6000)
+			//)
 		#endif
 
 		printf( "Wildlife camp full assault radius = " + campData.fullAssaultRadius )

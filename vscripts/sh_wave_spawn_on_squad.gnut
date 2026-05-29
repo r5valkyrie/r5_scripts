@@ -249,4 +249,4 @@ void function TryToRespawnPlayerOnAttackerKill( entity attacker, entity victim )
 			RespawnPlayerInSkydiveAboveSquad( teammateToRespawn )
 	}
 }
-#endif // SERVER 
+#endif // SERVER

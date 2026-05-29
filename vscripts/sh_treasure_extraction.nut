@@ -635,4 +635,3 @@ void function MiniHarvesterDestroy( MiniHarvesterData miniHarvester )
 		miniHarvester.fxControlPointEnt.Destroy()
 }
 #endif //SERVER
- 

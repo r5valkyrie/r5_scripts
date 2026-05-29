@@ -667,4 +667,3 @@ array<string> function GetAdditionalLootRefsForLootSpawn( LootSpawn lootSpawn, i
 	return additionalRefs
 
 }
- 

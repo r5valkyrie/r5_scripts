@@ -325,4 +325,4 @@ void function DEV_ForceBillboardIndex_For_AdDrones( int billboardVFXIndex )
 		}
 	}
 }
-#endif // DEV && SERVER 
+#endif // DEV && SERVER

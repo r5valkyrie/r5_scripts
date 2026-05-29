@@ -1607,4 +1607,3 @@ bool function IsProtectedPveEntity( entity ent )
 
 	return false
 }
- 

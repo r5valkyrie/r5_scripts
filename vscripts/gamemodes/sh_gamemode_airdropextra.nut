@@ -588,4 +588,4 @@ string function GetAirdropTierTextFromTier( int tier )
 	}
 	return ""
 }
-#endif // CLIENT 
+#endif // CLIENT

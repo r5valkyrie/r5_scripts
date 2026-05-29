@@ -285,4 +285,3 @@ void function ServerCallback_StopLootRollerFX( int rollerHandle )
 //	RuiSetString( rui, "hintController", hint )
 //}
 //#endif //CLIENT
- 

@@ -1240,4 +1240,4 @@ void function Restore_Shields( entity player )
 }
 
 
-#endif // SERVER 
+#endif // SERVER

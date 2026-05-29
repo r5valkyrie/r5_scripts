@@ -255,4 +255,4 @@ void function AdDrones_DropLoot( entity droneModel )
 		string lootRef = SURVIVAL_GetWeightedItemFromGroup( lootGroup )
 		SpawnAndThrowItems_ReturnItems( droneModel, lootRef, 1, LOOT_THROW_STRENGTH, eSpawnSource.GAME, throwOriginOffset )
 	}
-} 
+}

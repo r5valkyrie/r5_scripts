@@ -710,4 +710,4 @@ bool function TitanSword_Slam_DeathboxOverride( entity box, entity attacker, ent
 }
 #endif
 
-                                
+                               

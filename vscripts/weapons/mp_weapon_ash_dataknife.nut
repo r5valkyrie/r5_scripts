@@ -888,8 +888,8 @@ void function DEV_TestAshDeathbox()
 {
 	#if DEVELOPER
 		devForceDeathboxUsable = true
-		Remote_CallFunction_NonReplay( GetPlayerArray(), "DeathboxNetwork_ServerToClient_ForceUsable" )
-		DEV_SpawnDeathBoxWithRandomLoot( GetPlayerArray() )
+		Remote_CallFunction_NonReplay( GetPlayerArray()[0], "DeathboxNetwork_ServerToClient_ForceUsable" )
+		DEV_SpawnDeathBoxWithRandomLoot( GetPlayerArray()[0] )
 	#endif
 }
 #endif
@@ -900,4 +900,4 @@ float function DeathboxNetwork_GetDeathboxAge( entity deathbox )
 		return Time() - file.deathboxInfoTable[deathbox].createdTime
 
 	return -1
-} 
+}

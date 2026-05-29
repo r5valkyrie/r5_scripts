@@ -147,7 +147,7 @@ void function ClientCallback_Dev_PrintTeamsMMR( entity player )
 
 		foreach(string line in printTeamBuffer)
 		{
-			RemotePrint( player, line + "\n" )
+			//RemotePrint( player, line + "\n" )
 		}
 	#endif
 }
@@ -452,4 +452,4 @@ void function MMR_OnPlayerStartBleedout( entity victim, entity attacker, var dam
 void function MMR_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
 	MMR_OnInteraction( victim, attacker )
-} 
+}

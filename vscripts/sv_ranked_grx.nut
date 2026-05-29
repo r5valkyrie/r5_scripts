@@ -442,4 +442,3 @@ void function Ranked_GRX_OnPlayerDisconnected( entity player )
 			delete file.rankedPlayerGRXStateIsUpdated[ player ]
 	}
 }
- 

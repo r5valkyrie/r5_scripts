@@ -2174,13 +2174,17 @@ void function ChasePortalDoTeleport( entity allyPortalRootEnt, entity player )
 		return
 
 	#if DEVELOPER
-	if (!TRANSPORT_PORTAL_NAVMESH_PATH_DEBUG)
+	//if (!TRANSPORT_PORTAL_NAVMESH_PATH_DEBUG)
 	#endif
+	{
+		//rootEnt.SetUseStateByIndex( player.GetPlayerIndex(), true )
+	}
+
 	PhaseTunnelPortalData portalData = file.allyPortalToDataMap[allyPortalRootEnt].tunnelData
 
 	StartParticleEffectOnEntityWithPos_ReturnEntity( allyPortalRootEnt, GetParticleSystemIndex( TRANSPORT_PORTAL_ONEWAY_START ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, CHASE_PORTAL_OFFSET, <0,0,0> )
 
-	StartParticleEffectInWorld( GetParticleSystemIndex( TRANSPORT_PORTAL_ENTER_EXIT_FX ), allyPortalRootEnt.GetOrigin(), <0,0,0> )
+	StartParticleEffectInWorldForRealms( GetParticleSystemIndex( TRANSPORT_PORTAL_ENTER_EXIT_FX ), allyPortalRootEnt.GetOrigin(), <0,0,0>, allyPortalRootEnt )
 
 	thread DoPhaseTravel_Thread( player, allyPortalRootEnt, portalData )
 }
@@ -2680,4 +2684,4 @@ void function RecieverPreview_Thread( entity receiverProxy, var rui, string argN
 }
 #endif
 
-       
+      

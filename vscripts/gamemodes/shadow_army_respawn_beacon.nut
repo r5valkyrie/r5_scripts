@@ -1859,7 +1859,7 @@ void function ShadowArmy_RespawnLegendsFromRespawnBeacon_Dev()
 {
 	printt( "Shadow Army: Running Debug Command ShadowArmy_RespawnLegendsFromRespawnBeacon_Dev" )
 
-	ShadowArmy_RespawnBeacon_SpawnPlayers( GetPlayerArray() )
+	ShadowArmy_RespawnBeacon_SpawnPlayers( GetPlayerArray()[0] )
 }
 #endif // DEV && SERVER
 
@@ -2041,4 +2041,4 @@ void function ShadowArmy_ManageBeamVFX_Thread_Dev( bool shouldPlaySuccessVFXAtEn
  
                 
                         
-                                   
+                                  

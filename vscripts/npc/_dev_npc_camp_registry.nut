@@ -24,8 +24,8 @@ void function DEV_Tropics_RegisterNPCCamp ( vector origin, int npcType, float ra
 void function DEV_Tropics_NPCCampAnalysis ( float timeout = 60 )
 {
 	// Set the player's origin and angles so they're looking straight down on the map
-	GetPlayerArray().SetOrigin( < 20645.253906, 1344.686279, 54229.070313 > )
-	GetPlayerArray().SetAngles( < 76.240051, 142.319931, 0.000000 > )
+	GetPlayerArray()[0].SetOrigin( < 20645.253906, 1344.686279, 54229.070313 > )
+	GetPlayerArray()[0].SetAngles( < 76.240051, 142.319931, 0.000000 > )
 
 	table < DEV_Tropic_NPCCamp, array < DEV_Tropic_NPCCamp > > badSpots
 

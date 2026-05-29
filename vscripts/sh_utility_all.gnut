@@ -32,8 +32,21 @@ global const float DOT_85DEGREE =	0.0871557427477
 // SHOW_UNKNOWN_ARTIFACTS + eQuestMissionStatus moved to sh_season_quest.gnut
 
 global array<asset> LEGAL_PLAYER_TITAN_SETTINGS
+#if DEVELOPER
+global const bool DEV_FORCE_LOAD_ALL_ENTITIES = false
+#endif
 
 //
+#if DEVELOPER
+global enum eAssetType
+{
+	ASSETTYPE_CHARACTER,
+	ASSETTYPE_WEAPON,
+	ASSETTYPE_CHARM,
+
+	_count
+}
+#endif
 
 global enum e1v1State
 {

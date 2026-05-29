@@ -1202,4 +1202,4 @@ void function PlayJetDriveDoubleJumpWindowSound(  entity player, float timeout )
 			WaitFrame()
 	}
 }
-#endif 
+#endif

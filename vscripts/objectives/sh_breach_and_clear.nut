@@ -527,4 +527,3 @@ bool function IsDoorBreachable( entity door )
 	return door.e.isDoorBreachable //proto - using as temp property to mark as breachable
 }
 #endif //SERVER
- 

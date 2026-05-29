@@ -1434,4 +1434,4 @@ void function ColorCorrection_LerpWeight( int colorCorrection, float startWeight
 
 	ColorCorrection_SetWeight( colorCorrection, endWeight )
 }
-#endif 
+#endif

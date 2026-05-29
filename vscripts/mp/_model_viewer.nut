@@ -102,10 +102,10 @@ void function ControlsInit()
 	DispatchSpawn( file.gameUIFreezeControls )
 }
 
-bool function ClientCommand_ModelViewer( entity player, array<string> args )
+void function ClientCommand_ModelViewer( entity player, array<string> args )
 {
 	if( !args.len() )
-		return false
+		return
 
 	//string command = args.remove( 0 )
 	//switch ( command )
@@ -118,8 +118,6 @@ bool function ClientCommand_ModelViewer( entity player, array<string> args )
 			file.gameUIFreezeControls.Fire( "Deactivate", "!player", 0 )
 			//break
 	}
-
-	return true
 }
 
 void function UpdateModelBounds()

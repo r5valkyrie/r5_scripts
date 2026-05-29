@@ -904,7 +904,7 @@ void function DEV_ProwlerDen_SpawnDenAtCrosshair( entity player, int numOfProwle
 void function DEV_ProwlerDen_DebugSpawnProwlerAtIndex( int idx )
 {
 	entity denToSpawnFrom
-	TraceResults traceResult = PlayerViewTrace( GetPlayerArray() )
+	TraceResults traceResult = PlayerViewTrace( GetPlayerArray()[0] )
 	if ( IsValid( traceResult.hitEnt ) )
 	{
 		if ( traceResult.hitEnt.GetScriptName().find( PROWLER_DEN_SCRIPT_NAME ) != -1 )

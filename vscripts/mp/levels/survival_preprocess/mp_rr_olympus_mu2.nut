@@ -4832,4 +4832,3 @@ void function AddZone_44()
 	SURVIVALPreProcess_AddBinLocationToLastLootZone( < -12172.8,  35499.5,  -6816.06 >, < 0,  175.342,  0 >, false, false )
 }
 
- 

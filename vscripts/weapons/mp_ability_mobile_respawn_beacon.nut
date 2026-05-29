@@ -451,7 +451,7 @@ void function SpawnMobileBeacon_Sequence( vector origin, vector angles, vector s
 	#if DEVELOPER
 		if ( MOBILE_RESPAWN_BEACON_DEBUG_DRAW )
 		{
-			 DebugDrawCylinder( origin, <270.0, 0.0, 0.0>, MOBILE_RESPAWN_BEACON_BAD_AIRSPACE_RADIUS, 2.0, COLOR_RED, true, TotalTimeToLand )
+			 DebugDrawCylinder( origin, <270.0, 0.0, 0.0>, MOBILE_RESPAWN_BEACON_BAD_AIRSPACE_RADIUS, 2.0, int( COLOR_RED.x ), int( COLOR_RED.y ), int( COLOR_RED.z ), true, TotalTimeToLand )
 			DebugDrawAngles( origin, angles, TotalTimeToLand )
 			//DebugDrawText( origin, format( "Angle: %1.2f|Slope: %1.2f", DotProduct( AnglesToUp(origin), <1, 0 ,0> ), fabs(angles.x) + fabs(angles.y) ), true, TotalTimeToLand )
 		}
@@ -678,7 +678,7 @@ void function SpawnMobileBeacon_SetupPushAway_Thread( entity beaconPod, vector l
 	#if DEVELOPER
 		if ( MOBILE_RESPAWN_BEACON_DEBUG_DRAW )
 		{
-			DebugDrawCylinder( pushAwayTrigger.GetOrigin() - <0.0, 0.0, pushAwayTrigger.GetBelowHeight()>, <270.0, 0.0, 0.0>, pushAwayTrigger.GetCylinderRadius(), pushAwayTrigger.GetAboveHeight() + pushAwayTrigger.GetBelowHeight(), COLOR_WHITE, true, 3.0 )
+			DebugDrawCylinder( pushAwayTrigger.GetOrigin() - <0.0, 0.0, pushAwayTrigger.GetBelowHeight()>, <270.0, 0.0, 0.0>, pushAwayTrigger.GetRadius(), pushAwayTrigger.GetAboveHeight() + pushAwayTrigger.GetBelowHeight(), int( COLOR_WHITE.x ), int( COLOR_WHITE.y ), int( COLOR_WHITE.z ), true, 3.0 )
 		}
 	#endif
 

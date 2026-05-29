@@ -569,4 +569,3 @@ int function GetConversationIndex( string conversation )
 void function CodeCallback_OnNPCLookAtHint( entity npc, entity hint )
 {
 }
- 

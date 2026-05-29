@@ -578,4 +578,4 @@ bool function PassiveAssassinsInstinct_EntityShouldBeHighlighted( entity viewPla
 	#endif
 
 	return false
-} 
+}

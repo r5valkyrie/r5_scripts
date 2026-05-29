@@ -164,8 +164,8 @@ void function RegisterLootTickFields_Internal()
 bool function HasDynamicLootTicks()
 {
 	#if DEVELOPER
-		if ( DEV_ForceLoadAllEntityTypes() )
-			return true
+		//if ( DEV_ForceLoadAllEntityTypes() )
+		//	return true
 	#endif
                     
                                                              

@@ -528,4 +528,4 @@ entity function Nessie_SpawnNPC( int team, entity owner = null, vector origin = 
 
 	return nessie
 }
-#endif 
+#endif

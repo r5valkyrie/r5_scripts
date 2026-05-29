@@ -616,4 +616,4 @@ void function OnGamestateResolution()
 	Remote_ServerCallFunction( "ClientCallback_LeaveMatch" )
 }
 
-#endif //CLIENT 
+#endif //CLIENT

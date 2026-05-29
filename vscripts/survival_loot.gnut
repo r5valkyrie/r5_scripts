@@ -566,7 +566,7 @@ void function SURVIVAL_Loot_InitServer()
 	AddPlaylistInvalidEndZones()
 
 	#if DEVELOPER
-		AddClientCommandCallback( "dev_survival_cycle_main_weapon", bool function( entity player, array<string> args ) { ClientCommand_dev_survival_cycle_main_weapon( player, args ); return true } ) // dev
+		AddClientCommandCallback( "dev_survival_cycle_main_weapon", void function( entity player, array<string> args ) { ClientCommand_dev_survival_cycle_main_weapon( player, args ) } ) // dev
 	#endif
 
 	AddCallback_OnPlayerAddWeaponMod( OnPlayerAddWeaponMod )
@@ -2140,21 +2140,21 @@ void function DebugLootZones()
 
 	FlagWait( "EntitiesDidLoad" )
 
-	while ( GetPlayerArray() == null )
+	while ( GetPlayerArray()[0] == null )
 		WaitFrame()
 
-	GetPlayerArray().EndSignal( "OnDestroy" )
+	GetPlayerArray()[0].EndSignal( "OnDestroy" )
 
 	while ( GetBugReproNum() == 99 )
 	{
-		while( !GetPlayerArray().IsInputCommandHeld( IN_USE_LONG ) )
+		while( !GetPlayerArray()[0].IsInputCommandHeld( IN_USE_LONG ) )
 			WaitFrame()
 
 		foreach ( zone in zoneCopy )
 		{
 			foreach ( pt in zone.spawnPoints )
 			{
-				if ( Distance2D( GetPlayerArray().GetOrigin(), pt.pos ) > 300 )
+				if ( Distance2D( GetPlayerArray()[0].GetOrigin(), pt.pos ) > 300 )
 					continue
 
 				printt( zone.zoneClass )
@@ -2165,7 +2165,7 @@ void function DebugLootZones()
 
 		wait 0.5
 
-		while( GetPlayerArray().IsInputCommandHeld( IN_USE_LONG ) )
+		while( GetPlayerArray()[0].IsInputCommandHeld( IN_USE_LONG ) )
 			WaitFrame()
 	}
 }
@@ -10472,7 +10472,7 @@ void function SURVIVAL_Loot_SetPreZoneDistributeCallback( void functionref( arra
 entity function DEV_SpawnDeathBox( entity player, table<string, int> contents )
 {
 	if ( !IsValid( player ) )
-		player = GetPlayerArray()
+		player = GetPlayerArray()[0]
 
 	entity deathBox = CreateDeathBox( EyeTraceVec( player ), <0, player.EyeAngles().y, 0> )
 	deathBox.SetOwner( player )
@@ -10499,7 +10499,7 @@ entity function DEV_SpawnDeathBox( entity player, table<string, int> contents )
 entity function DEV_SpawnDeathBoxWithRandomLoot( entity player )
 {
 	if ( !IsValid( player ) )
-		player = GetPlayerArray()
+		player = GetPlayerArray()[0]
 
 	table<string, int> contents = {}
 
@@ -10529,7 +10529,7 @@ entity function DEV_AddToDeathBox( entity deathBox, table<string, int> contents 
 {
 	if ( !IsValid( deathBox ) )
 	{
-		entity player   = GetPlayerArray()
+		entity player   = GetPlayerArray()[0]
 		TraceResults tr = TraceLine( player.EyePosition(), player.EyePosition() + 1000.0 * player.GetViewForward(), [ player ] )
 		deathBox = tr.hitEnt
 	}
@@ -10599,7 +10599,7 @@ void function DEV_PrintDeathBoxContents( entity box )
 {
 	if ( !IsValid( box ) )
 	{
-		entity player   = GetPlayerArray()
+		entity player   = GetPlayerArray()[0]
 		TraceResults tr = TraceLine( player.EyePosition(), player.EyePosition() + 1000.0 * player.GetViewForward(), [ player ] )
 		box = tr.hitEnt
 	}

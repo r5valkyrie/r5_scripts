@@ -932,4 +932,4 @@ string function GetGrenadeDeploySound_3p( entity weapon )
 string function GetGrenadeProjectileSound( entity weapon )
 {
 	return weapon.GetWeaponSettingString( eWeaponVar.sound_grenade_projectile )
-} 
+}

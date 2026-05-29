@@ -188,12 +188,12 @@ table<string,table<string,NodeFP> > function DropshipFindDropNodes( FlightPath f
 			//DebugDrawText( nodes.leftNode.origin + <0,0,55>, nodes.leftNode.fraction + "", true, time )
 			//DebugDrawText( nodes.leftNode.origin, "" + nodes.leftNode.dot, true, time )
 			DebugDrawLine( nodes.leftNode.origin, nodes.leftNode.attachOrigin, 255, 120, 120, true, time )
-			DebugDrawCircle( nodes.leftNode.origin, <0,0,0>, 15, <255, 120, 120>, true, time )
+			DebugDrawCircle( nodes.leftNode.origin, <0,0,0>, 15, 255, 120, 120, true, time )
 
 			//DebugDrawText( nodes.rightNode.origin + <0,0,55>, nodes.rightNode.fraction + "", true, time )
 			//DebugDrawText( nodes.rightNode.origin, "" + nodes.rightNode.dot, true, time )
 			DebugDrawLine( nodes.rightNode.origin, nodes.rightNode.attachOrigin, 120, 120, 255, true, time )
-			DebugDrawCircle( nodes.rightNode.origin, <0,0,0>, 15, <120, 120, 255>, true, time )
+			DebugDrawCircle( nodes.rightNode.origin, <0,0,0>, 15, 120, 120, 255, true, time )
 
 			//DebugDrawLine( nodes.rightNode.origin, nodes.centerNode.origin, 200, 200, 200, true, time )
 			//DebugDrawText( nodes.rightNode.origin + <0,0,20>, "dist: " + Distance( nodes.rightNode.origin, nodes.centerNode.origin ), true, time )
@@ -231,7 +231,7 @@ table<int,NodeFP> function FindDropshipDeployNodes( vector deployOrigin, vector 
 	{
 		DebugDrawLine( deployOrigin, result.endPos, int(COLOR_WHITE.x), int(COLOR_WHITE.y), int(COLOR_WHITE.z), true, LINEGEN_TIME )
 		DebugDrawText( result.endPos + <0,0,10>, "test", true, LINEGEN_TIME )
-		DebugDrawCircle( result.endPos, <0,0,0>, 35, COLOR_WHITE, true, LINEGEN_TIME )
+		DebugDrawCircle( result.endPos, <0,0,0>, 35, int( COLOR_WHITE.x ), int( COLOR_WHITE.y ), int( COLOR_WHITE.z ), true, LINEGEN_TIME )
 	}
 	// no hit?
 	if ( result.fraction >= 1.0 )
@@ -244,7 +244,7 @@ table<int,NodeFP> function FindDropshipDeployNodes( vector deployOrigin, vector 
 	if ( LINEGEN_DEBUG )
 	{
 		DebugDrawText( NavMeshNode_GetNodePos( node ) + <0,0,10>, "nearest node", true, 15.0 )
-		DebugDrawCircle( NavMeshNode_GetNodePos( node ), <0,0,0>, 20, <60, 60, 255>, true, LINEGEN_TIME )
+		DebugDrawCircle( NavMeshNode_GetNodePos( node ), <0,0,0>, 20, 60, 60, 255, true, LINEGEN_TIME )
 	}
 
 	array<vector> neighborPositions = NavMesh_GetNeighborPositions( NavMeshNode_GetNodePos( node ), HULL_HUMAN, 20 )

@@ -283,4 +283,4 @@ void function StopShieldWallFXOverTime( entity vortexSphere, float duration )
 void function SetShieldWallCPointOrigin( entity shieldWallFX, vector AT_TURRET_SHIELD_COLOR )
 {
 	EffectSetControlPointVector( shieldWallFX, 1, AT_TURRET_SHIELD_COLOR )
-} 
+}

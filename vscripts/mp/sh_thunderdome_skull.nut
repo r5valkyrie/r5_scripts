@@ -417,4 +417,4 @@ void function DEV_ThunderdomeSkullResetButton( entity player )
 	player.Signal( "ThunderdomeSkullButtonReset" )
 }
 #endif // SERVER
-#endif // DEV 
+#endif // DEV

@@ -2736,4 +2736,3 @@ void function NPCSoldier_OnDamaged( entity target, var di )
 }
 
 #endif // SERVER
- 

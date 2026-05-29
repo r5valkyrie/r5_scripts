@@ -330,7 +330,7 @@ void function SpectreShackControl_Init( entity cp )
 #if SERVER
 
 	#if DEVELOPER
-		DEV_Tropics_RegisterNPCCamp ( cp.GetOrigin(), eNPC.SPECTRE, 1000, 1000 )
+		//DEV_Tropics_RegisterNPCCamp ( cp.GetOrigin(), eNPC.SPECTRE, 1000, 1000 )
 	#endif // DEV
 
 	CreateSpectreShackPingProp ( cp.GetOrigin(), cp.GetAngles() + <0, 180, 0>, cp )
@@ -738,4 +738,3 @@ void function SpectreShack_ClientToServer_PingSpectreShackFromMap( entity player
 #endif
 
                             
- 

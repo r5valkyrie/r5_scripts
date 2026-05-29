@@ -560,4 +560,3 @@ void function AutoGrabBanners(entity deathbox, entity attacker, int damageSource
 	}
 }
 #endif // SERVER
- 

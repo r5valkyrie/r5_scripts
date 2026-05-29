@@ -447,4 +447,4 @@ void function CodeCallback_KeplerReady( entity client )
 	// Now that Kepler scenarios are ready for this client, we won't ever need these callbacks again
 	delete file.onScenariosReadyCallbacks[client]
 }
-#endif // SERVER 
+#endif // SERVER

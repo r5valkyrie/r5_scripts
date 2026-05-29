@@ -1741,10 +1741,10 @@ void function DrawSpawnPointRating( entity spawnPoint, table ratingData )
 	while ( true )
 	{
 		var enemyRating = ratingData.ter + ratingData.per + ratingData.ner
-		DebugDrawBox( spawnPoint.GetOrigin(), <-14, -14, enemyRating * -ratingScale>, <14,14,0>, <255, 128, 0>, 1, 1.1 )
+		DebugDrawBox( spawnPoint.GetOrigin(), <-14, -14, enemyRating * -ratingScale>, <14,14,0>, 255, 128, 0, 1, 1.1 )
 
 		var friendlyRating = ratingData.tfr + ratingData.pfr + ratingData.nfr
-		DebugDrawBox( spawnPoint.GetOrigin(), <-14,-14,0>, <14, 14, friendlyRating * ratingScale>, <0, 128, 255>, 1, 1.1 )
+		DebugDrawBox( spawnPoint.GetOrigin(), <-14,-14,0>, <14, 14, friendlyRating * ratingScale>, 0, 128, 255, 1, 1.1 )
 
 		//DebugDrawBox( spawnPoint.GetOrigin(), <-16,-16,0>, <16, 16, ratingData.rating * ratingScale>, <255, 255, 255>, 1, 1.1 )
 

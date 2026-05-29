@@ -92,7 +92,7 @@ void function Smokescreen( SmokescreenStruct smokescreen, entity ownerEnt )
 
 #if DEVELOPER
 	if ( SMOKESCREEN_DEBUG )
-		DebugDrawCircle( fxInfo.center, <0,0,0>, fxInfo.radius + 240.0, COLOR_YELLOW, true, smokescreen.lifetime )
+		DebugDrawCircle( fxInfo.center, <0,0,0>, fxInfo.radius + 240.0, int( COLOR_YELLOW.x ), int( COLOR_YELLOW.y ), int( COLOR_YELLOW.z ), true, smokescreen.lifetime )
 #endif
 	CreateNoSpawnArea( TEAM_ANY, TEAM_ANY, fxInfo.center, smokescreen.lifetime, fxInfo.radius + 240.0 )
 
@@ -226,8 +226,8 @@ void function SmokescreenAffectsEntitiesInArea( SmokescreenStruct smokescreen, S
 #if DEVELOPER
 		if ( SMOKESCREEN_DEBUG )
 		{
-			DebugDrawCircle( fxInfo.center, <0,0,0>, smokescreen.damageInnerRadius, COLOR_RED, true, tickRate )
-			DebugDrawCircle( fxInfo.center, <0,0,0>, smokescreen.damageOuterRadius, COLOR_RED, true, tickRate )
+			DebugDrawCircle( fxInfo.center, <0,0,0>, smokescreen.damageInnerRadius, int( COLOR_RED.x ), int( COLOR_RED.y ), int( COLOR_RED.z ), true, tickRate )
+			DebugDrawCircle( fxInfo.center, <0,0,0>, smokescreen.damageOuterRadius, int( COLOR_RED.x ), int( COLOR_RED.y ), int( COLOR_RED.z ), true, tickRate )
 			DebugDrawLine( fxInfo.center, smokescreen.origin, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, tickRate )
 		}
 #endif
@@ -288,7 +288,7 @@ entity function Smokescreen_CreateTraceBlockerVol( SmokescreenStruct smokescreen
 
 	#if DEVELOPER
 	if ( SMOKESCREEN_DEBUG )
-		DrawAngledBox( tbl.GetOrigin(), smokescreen.angles, tbl.GetBoundingMins(), tbl.GetBoundingMaxs(), COLOR_RED, true, smokescreen.lifetime - 0.6 )
+		DrawAngledBox( tbl.GetOrigin(), smokescreen.angles, tbl.GetBoundingMins(), tbl.GetBoundingMaxs(), int( COLOR_RED.x ), int( COLOR_RED.y ), int( COLOR_RED.z ), true, smokescreen.lifetime - 0.6 )
 #endif
 
 	return tbl
@@ -302,7 +302,7 @@ array<entity> function SmokescreenFX( SmokescreenStruct smokescreen, Smokescreen
 	{
 #if DEVELOPER
 		if ( SMOKESCREEN_DEBUG )
-			DebugDrawCircle( position, <0,0,0>, smokescreen.fxXYRadius, COLOR_BLUE, true, smokescreen.lifetime )
+			DebugDrawCircle( position, <0,0,0>, smokescreen.fxXYRadius, int( COLOR_BLUE.x ), int( COLOR_BLUE.y ), int( COLOR_BLUE.z ), true, smokescreen.lifetime )
 #endif
 		int fxID = GetParticleSystemIndex( smokescreen.smokescreenFX )
 		vector angles = smokescreen.fxUseWeaponOrProjectileAngles ? smokescreen.weaponOrProjectile.GetAngles() : <0,0,0>

@@ -370,4 +370,4 @@ void function CreateBlipAtIndex( int i )
 	file.olympus = CreatePropScript( blip, < file.blipOrigins[i].x, file.blipOrigins[i].y, height >, file.blipAngles[i] )
 }
 #endif
-       
+      

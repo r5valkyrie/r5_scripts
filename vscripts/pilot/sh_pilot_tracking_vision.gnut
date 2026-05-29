@@ -836,9 +836,9 @@ bool function TrackingVision_CanSpawnWhiteRaven( entity player )
 	#if DEVELOPER
 	if( DEBUG_WHITE_RAVEN_SPAWN_DRAW )
 	{
-		DebugDrawCircle( origin, <0,0,0>, GetRavenCloseBreadcrumbDistance( player ), COLOR_RED, true, 0.1 )
-		DebugDrawCircle( origin, <0,0,0>, GetRavenCloseEnemyDistance( player ), COLOR_YELLOW, true, 0.1 )
-		DebugDrawCircle( origin, <0,0,0>, WHITE_RAVEN_MAX_ENEMY_DETECTION_RANGE, COLOR_ORANGE, true, 0.1 )
+		DebugDrawCircle( origin, <0,0,0>, GetRavenCloseBreadcrumbDistance( player ), int( COLOR_RED.x ), int( COLOR_RED.y ), int( COLOR_RED.z ), true, 0.1 )
+		DebugDrawCircle( origin, <0,0,0>, GetRavenCloseEnemyDistance( player ), int( COLOR_YELLOW.x ), int( COLOR_YELLOW.y ), int( COLOR_YELLOW.z ), true, 0.1 )
+		DebugDrawCircle( origin, <0,0,0>, WHITE_RAVEN_MAX_ENEMY_DETECTION_RANGE, int( COLOR_ORANGE.x ), int( COLOR_ORANGE.y ), int( COLOR_ORANGE.z ), true, 0.1 )
 	}
 	#endif
 
@@ -1151,7 +1151,7 @@ bool function TrackingVision_IsValidRavenHull( vector hullPos, entity player )
 	#if DEVELOPER
 		if( DEBUG_WHITE_RAVEN_SPAWN_DRAW )
 		{
-			DebugDrawBox( hullPos, WHITE_RAVEN_PERCH_HULL_MINS, WHITE_RAVEN_PERCH_HULL_MAXS, COLOR_RED, 1, 15 )
+			DebugDrawBox( hullPos, WHITE_RAVEN_PERCH_HULL_MINS, WHITE_RAVEN_PERCH_HULL_MAXS, int( COLOR_RED.x ), int( COLOR_RED.y ), int( COLOR_RED.z ), 1, 15 )
 		}
 	#endif
 
@@ -2141,7 +2141,7 @@ void function WhiteRaven_Perched_Idle_Thread( entity player, entity bird, float 
 				if( DEBUG_WHITE_RAVEN_DRAW )
 				{
 					printt( "BIRD IDLE -> PLAYER NEARBY, DO NOT DESTROY:   " + birdDeathTime  )
-					DebugDrawCircle( birdOrigin, <0,0,0>, GetRavenRefreshDistance( player ), COLOR_AQUA, true, 0.1 )
+					DebugDrawCircle( birdOrigin, <0,0,0>, GetRavenRefreshDistance( player ), int( COLOR_AQUA.x ), int( COLOR_AQUA.y ), int( COLOR_AQUA.z ), true, 0.1 )
 				}
 			#endif
 		}

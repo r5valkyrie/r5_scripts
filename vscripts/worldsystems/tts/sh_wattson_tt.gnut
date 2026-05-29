@@ -349,4 +349,4 @@ void function ServertoClient_SetInitialValuesForBolts( entity bolt )
 	bolt.kv.intensity = 4.8
 }
 #endif
-       
+      

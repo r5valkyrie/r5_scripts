@@ -81,7 +81,7 @@ entity ornull function ClGetLeaderIfPartyMembersInSquad()
 	{
 		if ( IsValid( teammate ) && teammate.IsConnectionActive() )
 		{
-			string uid = teammate.GetUserID()
+			string uid = ""//teammate.GetUserID()
 			activeSquadMembers[uid] <- true
 			if ( uid == party.originatorUID )
 				leaderPlayer = teammate
@@ -103,7 +103,7 @@ void function OnPartyUpdated_AfterOptIn()
 		return
 
 	entity player = GetLocalClientPlayer()
-	string uid = player.GetUserID()
+	string uid = ""//player.GetUserID()
 
 	if ( clFile.optInLeaderUid == uid )
 	{
@@ -175,8 +175,8 @@ void function ServerCallback_SquadRequeueOptIn( entity optInPlayer, float optInS
 		if ( leaderPlayerOrNull != null )
 		{
 			entity leaderPlayer = expect entity( leaderPlayerOrNull )
-			if ( leaderPlayer.GetUserID() == optInPlayer.GetUserID() )
-				ClSquadRequeue_OptIn()
+			//if ( leaderPlayer.GetUserID() == optInPlayer.GetUserID() )
+			//	ClSquadRequeue_OptIn()
 		}
 	}
 
@@ -242,7 +242,7 @@ bool function ClSquadRequeue_OptIn()
 		return false
 
 	entity partyLeaderPlayer = expect entity( partyLeaderPlayerOrNull )
-	clFile.optInLeaderUid = partyLeaderPlayer.GetUserID()
+	clFile.optInLeaderUid = ""//partyLeaderPlayer.GetUserID()
 	Remote_ServerCallFunction( "ClientCallback_SquadRequeueOptIn", partyLeaderPlayer )
 	return true
 }
@@ -494,4 +494,4 @@ void function SvOnPlayerDisconnected( entity player )
 {
 	SvSquadRequeue_OptOutPlayer( player )
 }
-#endif // #if SERVER 
+#endif // #if SERVER

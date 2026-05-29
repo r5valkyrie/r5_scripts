@@ -1718,10 +1718,10 @@ void function OperateBlockableDoor( entity door, int goalNotch, entity operator,
 				#if BLOCKABLE_DOOR_DEBUG
 					//DebugDrawRotatedBox( capsuleCurr, capsuleMins, capsuleMaxs, VectorToAngles( -AnglesToUp( VectorToAngles( up ) ) ), COLOR_GREEN, true, operationDuration / BLOCKABLE_DOOR_TRACE_STEP_COUNT + 0.08 )
 					//DebugDrawRotatedBox( capsuleDest, capsuleMins, capsuleMaxs, VectorToAngles( -AnglesToUp( VectorToAngles( up ) ) ), COLOR_MAGENTA, true, operationDuration / BLOCKABLE_DOOR_TRACE_STEP_COUNT + 0.08 )
-					DebugDrawCircle( capsuleCurr, up, capsuleMins.x, COLOR_GREEN, true, stepDuration + 0.08 )
-					DebugDrawCircle( capsuleCurr + <0, 0, capsuleMaxs.z>, up, capsuleMins.x, COLOR_GREEN, true, stepDuration + 0.08 )
-					DebugDrawCircle( capsuleDest, up, capsuleMins.x, COLOR_MAGENTA, true, stepDuration + 0.08 )
-					DebugDrawCircle( capsuleDest + <0, 0, capsuleMaxs.z>, up, capsuleMins.x, COLOR_MAGENTA, true, stepDuration + 0.08 )
+					DebugDrawCircle( capsuleCurr, up, capsuleMins.x, int( COLOR_GREEN.x ), int( COLOR_GREEN.y ), int( COLOR_GREEN.z ), true, stepDuration + 0.08 )
+					DebugDrawCircle( capsuleCurr + <0, 0, capsuleMaxs.z>, up, capsuleMins.x, int( COLOR_GREEN.x ), int( COLOR_GREEN.y ), int( COLOR_GREEN.z ), true, stepDuration + 0.08 )
+					DebugDrawCircle( capsuleDest, up, capsuleMins.x, int( COLOR_MAGENTA.x ), int( COLOR_MAGENTA.y ), int( COLOR_MAGENTA.z ), true, stepDuration + 0.08 )
+					DebugDrawCircle( capsuleDest + <0, 0, capsuleMaxs.z>, up, capsuleMins.x, int( COLOR_MAGENTA.x ), int( COLOR_MAGENTA.y ), int( COLOR_MAGENTA.z ), true, stepDuration + 0.08 )
 				#endif
 
 				//if ( collTrace.startSolid && IsValid( collTrace.hitEnt ) && collTrace.hitEnt.IsPlayer() )
@@ -1787,7 +1787,7 @@ vector circleCenterIn, float circleRadius,
 vector arcCornerIn, float arcRadius, float arcStartAng, float arcEndAng )
 {
 	#if BLOCKABLE_DOOR_DEBUG
-		DebugDrawCircle( circleCenterIn, <0, 0, 0>, circleRadius, COLOR_WHITE, true, 0.6 )
+		DebugDrawCircle( circleCenterIn, <0, 0, 0>, circleRadius, int( COLOR_WHITE.x ), int( COLOR_WHITE.y ), int( COLOR_WHITE.z ), true, 0.6 )
 	#endif
 	bool intersect = true
 
@@ -1844,14 +1844,14 @@ vector arcCornerIn, float arcRadius, float arcStartAng, float arcEndAng )
 	if ( arcCornerCircleCenterDist > arcRadius + circleRadius )
 	{
 		#if BLOCKABLE_DOOR_DEBUG
-			DebugDrawCircle( arcCornerIn, <0, 0, 0>, arcRadius, <255, 40, 40>, true, 0.6 )
+			DebugDrawCircle( arcCornerIn, <0, 0, 0>, arcRadius, 255, 40, 40, true, 0.6 )
 		#endif
 		intersect = false
 	}
 	else
 	{
 		#if BLOCKABLE_DOOR_DEBUG
-			DebugDrawCircle( arcCornerIn, <0, 0, 0>, arcRadius, <40, 255, 40>, true, 0.6 )
+			DebugDrawCircle( arcCornerIn, <0, 0, 0>, arcRadius, 40, 255, 40, true, 0.6 )
 		#endif
 	}
 
@@ -2906,4 +2906,3 @@ entity function ReplaceDoor( entity door, entity otherDoor = null )
 	return null
 }
 #endif //SERVER
- 

@@ -1580,12 +1580,12 @@ void function SpikeTotemTriggerThread( entity totem, entity trigger, int teamId 
 			if( IsValid( spike ) )
 			{
 				vector cylinderBottom  = spike.GetOrigin()
-				DebugDrawCylinder( cylinderBottom, RotateAnglesAboutAxis( spike.GetAngles(), spike.GetRightVector(), 90 ), file.pieceRadius, file.pieceHeight, COLOR_YELLOW, true, 0.1 )
+				DebugDrawCylinder( cylinderBottom, RotateAnglesAboutAxis( spike.GetAngles(), spike.GetRightVector(), 90 ), file.pieceRadius, file.pieceHeight, int( COLOR_YELLOW.x ), int( COLOR_YELLOW.y ), int( COLOR_YELLOW.z ), true, 0.1 )
 			}
 		}
 
 		vector cylinderBottom  = totem.GetOrigin()
-		DebugDrawCylinder( cylinderBottom, RotateAnglesAboutAxis( totem.GetAngles(), totem.GetRightVector(), 90 ), file.pieceRadius, file.pieceHeight, COLOR_YELLOW, true, 0.1 )
+		DebugDrawCylinder( cylinderBottom, RotateAnglesAboutAxis( totem.GetAngles(), totem.GetRightVector(), 90 ), file.pieceRadius, file.pieceHeight, int( COLOR_YELLOW.x ), int( COLOR_YELLOW.y ), int( COLOR_YELLOW.z ), true, 0.1 )
 		#endif
 
                               
@@ -2033,4 +2033,3 @@ void function MinimapPackage_SpikeStrip( entity ent, var rui )
 	RuiSetFloat( rui, "iconBlend", 0.0 )
 }
 #endif // CLIENT
- 

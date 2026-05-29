@@ -1158,4 +1158,4 @@ void function DEV_ToggleCrowdNoiseMeterModifierFilters()
 {
 	file.areFiltersEnabled = !file.areFiltersEnabled
 }
-#endif // SERVER && DEVELOPER 
+#endif // SERVER && DEVELOPER

@@ -555,4 +555,4 @@ bool function TitanSword_HasPlayerLOS( entity trigger, entity player )
 }
 #endif
 
-                                
+                               

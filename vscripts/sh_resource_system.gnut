@@ -1825,7 +1825,7 @@ void function DebugDrawFrame()
 			vector forward = AnglesToForward( angles )
 			if ( s_debugDrawTextDetails )
 				DebugDrawText( pos + <0, 0, 80>, format( "Infantry Spawn -- keywords [ %s ]", GetKeywordsDescString( core.keywords ) ), true, 0.6 )
-			DebugDrawRotatedBox( pos, <-15, -15, 0>, <15, 15, 60>, angles, COLOR_RED, false, 0.6 )
+			DebugDrawRotatedBox( pos, <-15, -15, 0>, <15, 15, 60>, angles, int( COLOR_RED.x ), int( COLOR_RED.y ), int( COLOR_RED.z ), false, 0.6 )
 			//DebugDrawArrow( pos + <0, 0, 30>, pos + <0, 0, 30> + forward * 20, 10, COLOR_RED, false, 0.6 )
 		}
 	}
@@ -1839,7 +1839,7 @@ void function DebugDrawFrame()
 			vector forward = AnglesToForward( angles )
 			if ( s_debugDrawTextDetails )
 				DebugDrawText( pos + <0, 0, 80>, format( "Prowler Spawn -- keywords [ %s ]", GetKeywordsDescString( core.keywords ) ), true, 0.6 )
-			DebugDrawRotatedBox( pos, <-15, -15, 0>, <15, 15, 60>, angles, COLOR_RED, false, 0.6 )
+			DebugDrawRotatedBox( pos, <-15, -15, 0>, <15, 15, 60>, angles, int( COLOR_RED.x ), int( COLOR_RED.y ), int( COLOR_RED.z ), false, 0.6 )
 			//DebugDrawArrow( pos + <0, 0, 30>, pos + <0, 0, 30> + forward * 20, 10, COLOR_RED, false, 0.6 )
 		}
 	}
@@ -1853,7 +1853,7 @@ void function DebugDrawFrame()
 			vector forward = AnglesToForward( angles )
 			if ( s_debugDrawTextDetails )
 				DebugDrawText( pos + <0, 0, 30>, format( "POI -- keywords [ %s ]", GetKeywordsDescString( core.keywords ) ), true, 0.6 )
-			DebugDrawRotatedBox( pos, <-15, -15, 0>, <15, 15, 15>, angles, COLOR_WHITE, false, 0.6 )
+			DebugDrawRotatedBox( pos, <-15, -15, 0>, <15, 15, 15>, angles, int( COLOR_WHITE.x ), int( COLOR_WHITE.y ), int( COLOR_WHITE.z ), false, 0.6 )
 			//DebugDrawArrow( pos + <0, 0, 15>, pos + <0, 0, 15> + forward * 10, 5, COLOR_WHITE, false, 0.6 )
 		}
 	}
@@ -1950,4 +1950,3 @@ void function ZZZ_Test()
 
 #endif // DEV
 #endif // #if SERVER
- 

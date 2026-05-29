@@ -680,4 +680,4 @@ void function TimedEvents_TriggerTimedEventByEventType( int eventType )
 		#endif // DEV
 	}
 }
-#endif // SERVER 
+#endif // SERVER

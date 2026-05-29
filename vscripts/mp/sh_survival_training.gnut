@@ -1383,7 +1383,7 @@ void function DEV_DoTutAnims_Thread( string section )
 
 void function DEV_PrintDummieInfo()
 {
-	entity dummie = GetTrainingDummyForPlayer( GetPlayerArray() )
+	entity dummie = GetTrainingDummyForPlayer( GetPlayerArray()[0] )
 	if( IsValid( dummie ) )
 	{
 		printt( "Dummie Position == " + dummie.GetOrigin() )
@@ -3445,19 +3445,18 @@ void function ClientCallback_SetProceedToFiringRange( entity player, bool procee
 #endif
 
 #if SERVER && DEVELOPER
-bool function ClientCommand_mark_training_complete( entity player, array<string> args )
+void function ClientCommand_mark_training_complete( entity player, array<string> args )
 {
 	// Mark training as complete, with regular flow
 	PIN_Training( player, "complete", "training_complete" )
 	player.SetPlayerNetTime( "TrainingEndTime", Time() + GetTrainingEndTime() )
 
 	player.SetPersistentVar( "trainingCompleted", 1 )
-	return true
 }
 
 void function TrainingBloodhoundSetup()
 {
-	entity player          = GetPlayerArray()
+	entity player          = GetPlayerArray()[0]
 	vector bloodhoundStart = <0, 0, 0>
 
 	if ( IsRandomizedTrainingPlaylistEnabled() )

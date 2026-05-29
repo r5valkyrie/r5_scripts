@@ -1701,4 +1701,3 @@ bool function FR_Nessie_FlipRedNessieWeapons()
 	return GetCurrentPlaylistVarBool( "nessies_red_flip_red_weapons", false )
 }
       
- 

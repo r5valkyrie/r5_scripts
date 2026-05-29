@@ -410,12 +410,12 @@ TrophyPlacementInfo function _GetPlacementInfo( entity player, entity proxy, vec
 
 	if ( TROPHY_DEBUG_DRAW_PLACEMENT )
 	{
-		DebugDrawBox( fwdResults.endPos, TROPHY_BOUND_MINS, TROPHY_BOUND_MAXS, COLOR_GREEN, 1, 1.0 ) //Forward Hull Cast Bounding Box
-		DebugDrawBox( downResults.endPos, TROPHY_BOUND_MINS, TROPHY_BOUND_MAXS, COLOR_BLUE, 1, 1.0 ) //Downward Hull Cast Bounding Box
+		DebugDrawBox( fwdResults.endPos, TROPHY_BOUND_MINS, TROPHY_BOUND_MAXS, int( COLOR_GREEN.x ), int( COLOR_GREEN.y ), int( COLOR_GREEN.z ), 1, 1.0 ) //Forward Hull Cast Bounding Box
+		DebugDrawBox( downResults.endPos, TROPHY_BOUND_MINS, TROPHY_BOUND_MAXS, int( COLOR_BLUE.x ), int( COLOR_BLUE.y ), int( COLOR_BLUE.z ), 1, 1.0 ) //Downward Hull Cast Bounding Box
 		DebugDrawLine( eyePos + viewVec * min( TROPHY_PLACEMENT_RANGE_MIN, maxRange ), fwdResults.endPos, int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 1.0 ) //Forward Hull Cast
 		DebugDrawLine( fwdResults.endPos, eyePos + viewVec * maxRange, int(COLOR_RED.x), int(COLOR_RED.y), int(COLOR_RED.z), true, 1.0 ) //Forward Hull Cast Blocked
 		DebugDrawLine( fwdResults.endPos, downResults.endPos, int(COLOR_BLUE.x), int(COLOR_BLUE.y), int(COLOR_BLUE.z), true, 1.0 ) //Downward Hull Cast
-		DebugDrawBox( upResults.endPos, TROPHY_BOUND_MINS, TROPHY_BOUND_MAXS, COLOR_CYAN, 1, 1.0 ) //"Upward" Hull Cast Bounding Box
+		DebugDrawBox( upResults.endPos, TROPHY_BOUND_MINS, TROPHY_BOUND_MAXS, int( COLOR_CYAN.x ), int( COLOR_CYAN.y ), int( COLOR_CYAN.z ), 1, 1.0 ) //"Upward" Hull Cast Bounding Box
 		DebugDrawLine( upStart, upResults.endPos, int(COLOR_CYAN.x), int(COLOR_CYAN.y), int(COLOR_CYAN.z), true, 1.0 ) //"Upward" Hull Cast
 		DebugDrawLine( eyePos, roofTraceEnd, int(COLOR_MAGENTA.x), int(COLOR_MAGENTA.y), int(COLOR_MAGENTA.z), true, 1.0 ) //Roof Check
 		DebugDrawLine( player.GetOrigin(), player.GetOrigin() + (AnglesToForward( angles ) * TROPHY_PLACEMENT_RANGE_MAX), int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 1.0 ) //Max Placement Dist
@@ -2032,7 +2032,7 @@ void function Trophy_CheckForGeoIntersection( entity trophy )
 
 		if ( TROPHY_DEBUG_DRAW_INTERSECTION )
 		{
-			DebugDrawBox( results.endPos, TROPHY_INTERSECTION_BOUND_MINS, TROPHY_INTERSECTION_BOUND_MAXS, COLOR_GREEN, 1, 1.0 ) //Forward Hull Cast Bounding Box
+			DebugDrawBox( results.endPos, TROPHY_INTERSECTION_BOUND_MINS, TROPHY_INTERSECTION_BOUND_MAXS, int( COLOR_GREEN.x ), int( COLOR_GREEN.y ), int( COLOR_GREEN.z ), 1, 1.0 ) //Forward Hull Cast Bounding Box
 		}
 
 		//PrintTraceResults( results )
@@ -3215,4 +3215,3 @@ int function GetTrophySystem_MaxTrophyCount( entity owner )
 
 	return maxCount
 }
- 

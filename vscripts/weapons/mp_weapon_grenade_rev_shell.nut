@@ -904,4 +904,3 @@ bool function Rev_Shell_ConditionalCheck( string ref, entity player )
 }
 
                             
- 

@@ -1019,12 +1019,12 @@ void function OnPlayerConnected( entity player )
 	#if DEVELOPER
 		if ( GetCurrentPlaylistVarBool( "dev_force_revenant", false ) )
 		{
-			AllianceProximity_SetTeamToAlliance_Dev( SHADOWARMY_REVENANT_ALLIANCE )
+			//AllianceProximity_SetTeamToAlliance_Dev( SHADOWARMY_REVENANT_ALLIANCE )
 		}
 
 		if ( GetCurrentPlaylistVarBool( "dev_force_legend", false ) )
 		{
-			AllianceProximity_SetTeamToAlliance_Dev( SHADOWARMY_LEGEND_ALLIANCE )
+			//AllianceProximity_SetTeamToAlliance_Dev( SHADOWARMY_LEGEND_ALLIANCE )
 		}
 	#endif
 }
@@ -1069,12 +1069,12 @@ void function ShadowArmy_SetTeamsToRevAllianceOnMatchStart()
 
 	#if DEVELOPER
 		// Go through and remove teams that have been set to an alliance through Debug. Don't want to change them since it is something someone set for testing
-		array < int > teamsAddedToAllianceThroughDebug = AllianceProximity_GetTeamsSetToAllianceThroughDevCommand_Dev()
-		for ( int i = allTeamsSorted.len() - 1; i >= 0; i-- )
-		{
-			if ( teamsAddedToAllianceThroughDebug.contains( allTeamsSorted[ i ] ) )
-				allTeamsSorted.remove( i )
-		}
+		//array < int > teamsAddedToAllianceThroughDebug = AllianceProximity_GetTeamsSetToAllianceThroughDevCommand_Dev()
+		//for ( int i = allTeamsSorted.len() - 1; i >= 0; i-- )
+		//{
+		//	if ( teamsAddedToAllianceThroughDebug.contains( allTeamsSorted[ i ] ) )
+		//		allTeamsSorted.remove( i )
+		//}
 	#endif // DEV
 
 	foreach ( team in allTeamsSorted )
@@ -5362,7 +5362,7 @@ void function ShadowArmy_SetPlayerToFullRev_Dev( bool shouldUseRandomPlayer = fa
 	}
 	else
 	{
-		playerToRev = GetPlayerArray()
+		playerToRev = GetPlayerArray()[0]
 	}
 
 	if ( IsValid( playerToRev ) )
@@ -5485,4 +5485,4 @@ void function ShadowArmy_TriggerMatchEnd_Dev( int winningAlliance = SHADOWARMY_L
 	}
 }
 #endif // DEV && SERVER
-                                   
+                                  

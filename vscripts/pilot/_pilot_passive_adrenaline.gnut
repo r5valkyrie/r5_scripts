@@ -263,4 +263,4 @@ void function DEV_PassiveAdrenaline_ForceStart( entity player )
 {
 	PassiveAdrenaline_Start( player )
 }
-#endif //DEV 
+#endif //DEV

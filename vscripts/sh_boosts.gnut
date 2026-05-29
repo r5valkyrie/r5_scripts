@@ -2898,4 +2898,3 @@ void function Boost_UpdatePersistenceOnDisconnect( entity player )
 	}
 }
 #endif // SERVER
- 

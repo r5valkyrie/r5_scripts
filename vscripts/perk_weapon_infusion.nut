@@ -1219,4 +1219,4 @@ void function Create_GoldenBeamActivationVFX_Thread( entity player, entity harve
 	wait BEAM_DURATION
 
 }
-#endif //SERVER 
+#endif //SERVER

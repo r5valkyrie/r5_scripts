@@ -360,14 +360,13 @@ void function InitLootBinFromMap( entity lootBinMarker )
 
 
 #if SERVER && DEVELOPER
-bool function ClientCommand_dev_spawn_lootbin( entity player, array<string> args )
+void function ClientCommand_dev_spawn_lootbin( entity player, array<string> args )
 {
 	TraceResults tr = TraceLine(
 		player.EyePosition(),
 		player.EyePosition() + 900.0 * player.GetViewVector(),
 		player, TRACE_MASK_NPCWORLDSTATIC, TRACE_COLLISION_GROUP_NONE )
 	CreateLootBin( tr.endPos, VectorToAngles( FlattenNormalizeVec( player.EyePosition() - tr.endPos ) ) )
-	return true
 }
 #endif
 
@@ -2201,8 +2200,8 @@ void function DEV_TakeMeToAnUnopenedLootBin( bool withSecretCompartment, string 
 				continue
 		}
 
-		GetPlayerArray().SetOrigin( OriginToGround( lootBin.GetOrigin() + 100.0 * lootBin.GetForwardVector() + 50.0 * lootBin.GetUpVector() ) + <0, 0, 8> )
-		GetPlayerArray().SetAngles( VectorToAngles( lootBin.GetWorldSpaceCenter() - GetPlayerArray().EyePosition() ) )
+		GetPlayerArray()[0].SetOrigin( OriginToGround( lootBin.GetOrigin() + 100.0 * lootBin.GetForwardVector() + 50.0 * lootBin.GetUpVector() ) + <0, 0, 8> )
+		GetPlayerArray()[0].SetAngles( VectorToAngles( lootBin.GetWorldSpaceCenter() - GetPlayerArray()[0].EyePosition() ) )
 		printt( "Lootbin pos:", lootBin.GetOrigin() )
 		break
 	}
@@ -2221,8 +2220,8 @@ void function DEV_TakeMeToAnUnopenedCrowdedLootBin( bool withSecretCompartment )
 		if ( DEV_GetItemCountForLootBin( lootBin, false ) <= 5 )
 			continue
 
-		GetPlayerArray().SetOrigin( OriginToGround( lootBin.GetOrigin() + 100.0 * lootBin.GetForwardVector() + 50.0 * lootBin.GetUpVector() ) + <0, 0, 8> )
-		GetPlayerArray().SetAngles( VectorToAngles( lootBin.GetWorldSpaceCenter() - GetPlayerArray().EyePosition() ) )
+		GetPlayerArray()[0].SetOrigin( OriginToGround( lootBin.GetOrigin() + 100.0 * lootBin.GetForwardVector() + 50.0 * lootBin.GetUpVector() ) + <0, 0, 8> )
+		GetPlayerArray()[0].SetAngles( VectorToAngles( lootBin.GetWorldSpaceCenter() - GetPlayerArray()[0].EyePosition() ) )
 		printt( "Lootbin pos:", lootBin.GetOrigin() )
 		break
 	}

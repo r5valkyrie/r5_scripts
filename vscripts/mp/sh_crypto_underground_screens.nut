@@ -752,4 +752,4 @@ void function SCB_SetCryptoLoreScreenDialogueIdx( int queueIdx )
 {
 	file.customQueueIdx = queueIdx
 }
-#endif // CLIENT 
+#endif // CLIENT

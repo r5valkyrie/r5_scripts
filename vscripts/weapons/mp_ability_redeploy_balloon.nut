@@ -1556,4 +1556,4 @@ float function PlacementEasing( float frac )
 	return MID_VALUE + Tween_QuadEaseIn( (frac - CUT_POINT) / (DIVISIONS - CUT_POINT) ) * (1 - MID_VALUE)
 }
 
-                                   
+                                  

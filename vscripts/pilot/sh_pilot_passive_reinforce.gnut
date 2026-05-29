@@ -1368,4 +1368,4 @@ void function ResetRebuiltDoor( entity door )
 	UnsetReinforced( door )
 	BlockReinforcementOnDoorway( door )
 }
-#endif 
+#endif

@@ -563,4 +563,4 @@ void function TransportPortal_CancelUse( )
 		player.ClientCommand( "invnext" )
 	}
 }
-#endif 
+#endif

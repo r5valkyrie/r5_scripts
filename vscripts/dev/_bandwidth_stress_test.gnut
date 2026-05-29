@@ -504,4 +504,4 @@ From `net_dump_server_classes CScriptProp`
 0271: DT_ScriptProp:m_armorType - DPT_Int
 0272: DT_ScriptProp:m_scriptPropFlags - DPT_Int
 0273: DT_ScriptProp:m_scriptPropSmartAmmoLockType - DPT_Int
-*/ 
+*/

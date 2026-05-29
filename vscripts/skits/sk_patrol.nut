@@ -412,4 +412,3 @@ void function DrawNodeConnections( PatrolRouteNode node, array<PatrolRouteNode> 
 #endif //DEV
 
 #endif // #if SERVER
- 

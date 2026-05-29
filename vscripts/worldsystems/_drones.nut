@@ -1675,4 +1675,4 @@ void function DEV_Drones_StopAllDrones()
 		}
 	}
 }
-#endif // DEV 
+#endif // DEV

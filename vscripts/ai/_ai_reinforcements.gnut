@@ -290,4 +290,3 @@ entity function GetNextShuffledDroppodSpawn( ReinforceAIData data )
 	entity drop = data.params.droppodSpawns[index]
 	return drop
 }
- 

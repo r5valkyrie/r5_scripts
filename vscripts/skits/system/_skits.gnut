@@ -674,4 +674,3 @@ void function Instance_BroadcastHudSplashToRadius( entity wp )
 	AnnouncementMessageSweep( GetLocalClientPlayer(), messageText, subText, <220,220,220>, $"", SFX_HUD_ANNOUNCE_QUICK, duration )
 }
 #endif // CLIENT
- 

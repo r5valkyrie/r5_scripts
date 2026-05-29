@@ -4273,4 +4273,4 @@ void function DEV_TestSpectreSpawn_Thread( SkitInstance si, MyVars vars )
 	}
 }
 
-#endif //DEV && SERVER 
+#endif //DEV && SERVER

@@ -566,4 +566,3 @@ vector function GetFriendlyEnemyTriLerpColor( float frac, bool isFriendly )
 	return GetTriLerpColor( frac, <255, 255, 255>, LerpVector( color3, <255, 255, 255>, 0.5 ), color3, 0.55, 0.10 )
 }
 #endif // #if SERVER
- 

@@ -686,7 +686,7 @@ void function DEV_HurtAllPlayers( int minDamage = 25, int maxDamage = -1 )
 
 void function DEV_SetMeToTeam( int teamNum = 5 )
 {
-	SetTeam( GetPlayerArray(), teamNum )
+	SetTeam( GetPlayerArray()[0], teamNum )
 }
 
 #endif
@@ -1060,7 +1060,7 @@ void function DEV_DrawBoundingBox()
 	vector boxMaxs = 0.5 * boxSize
 	vector boxMins = -boxMaxs
 
-	DebugDrawRotatedBox( boxCenter, boxMins, boxMaxs, boxAng, COLOR_WHITE, true, 20.0 )
+	DebugDrawRotatedBox( boxCenter, boxMins, boxMaxs, boxAng, int( COLOR_WHITE.x ), int( COLOR_WHITE.y ), int( COLOR_WHITE.z ), true, 20.0 )
 
 	printf( "BOX!\n\tcenter = <%f, %f, %f>\n\t angle = <%f, %f, %f>\n\t  mins = <%f, %f, %f>\n\t  maxs = <%f, %f, %f>",
 		boxCenter.x, boxCenter.y, boxCenter.z,
@@ -1593,4 +1593,4 @@ void function DBC_KeyArtTest( entity player )
 		}
 	)
 }
-#endif 
+#endif

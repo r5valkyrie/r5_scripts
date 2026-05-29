@@ -826,7 +826,7 @@ void function test_putplayerinsafespotformap()
 	// - Loba tac between narrow bin and wall
 	// - Loba tac in corners of bins
 	// - Loba tac on areas with complex geo.
-	// - Loba tac between two large pipes (olympus mu1: script GetPlayerArray().SetOrigin(<-35748.375, -7397.88574, -4286.02783>)
+	// - Loba tac between two large pipes (olympus mu1: script GetPlayerArray()[0].SetOrigin(<-35748.375, -7397.88574, -4286.02783>)
 	// - Loba tac under stairwells
 	// - Loba tac under variety of static vehicles in the world
 	// - Loba tac large pockets in structure (particularly if you aim for the corner of these pockets)
@@ -890,10 +890,10 @@ void function test_putplayerinsafespotformap()
 
 int function test_putplayerinsafespotformap_internal( bool expectedValue, vector spot )
 {
-	vector ornull retVector = CanPutPlayerInSafeSpot( GetPlayerArray(), null, null, true, false, spot, spot )
+	vector ornull retVector = CanPutPlayerInSafeSpot( GetPlayerArray()[0], null, null, true, false, spot, spot )
 	bool didTestPass = expectedValue ? retVector != null : retVector == null
 	if ( !didTestPass )
-		printt( "test_putplayerinsafespotformap_internal - failed test: script CanPutPlayerInSafeSpot( GetPlayerArray(), null, null, true, false, " + spot + ", " + spot + " )" )
+		printt( "test_putplayerinsafespotformap_internal - failed test: script CanPutPlayerInSafeSpot( GetPlayerArray()[0], null, null, true, false, " + spot + ", " + spot + " )" )
 	return didTestPass ? 0 : 1 // Note:  we are testing for failure
 }
 

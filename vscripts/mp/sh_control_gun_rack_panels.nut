@@ -418,4 +418,3 @@ void function ControlGunRackPanels_CreateMapIcon_Thread( entity gunRackPanel, in
 	WaitForever()
 }
 #endif //CLIENT 
- 

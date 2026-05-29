@@ -3181,4 +3181,3 @@ array < float > function ExtractMMRFromRankedVictimDataByHwUID ( table< string, 
 bool function HasPlayerMMR(entity player){return false}
 array< float > function GetPlayerMMR(entity player){return [0.0,0.1]}
 
- 

@@ -2113,12 +2113,12 @@ void function DEV_DynDummie_Spawns_Start()
 
 void function DEV_DynDummie_Spawns_Stop()
 {
-	DynDummie_Spawns_Stop( GetCombatRangeRealm( GetPlayerArray() ) )
+	DynDummie_Spawns_Stop( GetCombatRangeRealm( GetPlayerArray()[0] ) )
 }
 
 void function DEV_CombatRange_RecentSpawnPoints()
 {
-	int index = GetCombatRangeRealm( GetPlayerArray() )
+	int index = GetCombatRangeRealm( GetPlayerArray()[0] )
 	DEV_CombatRangePrint( format( "Recent SpawnPoints: Count == %s", string( file.spawnPtsRecentByRealm[ index ].len() ) ))
 	foreach( spawnPoint in file.spawnPtsRecentByRealm[ index ])
 	{
@@ -2132,7 +2132,7 @@ void function DEV_CombatRange_RecentSpawnPoints()
 
 void function DEV_CombatRange_IndicateTargets()
 {
-	int index = GetCombatRangeRealm( GetPlayerArray() )
+	int index = GetCombatRangeRealm( GetPlayerArray()[0] )
 	foreach( enemy in file.dummiesSpawnedInRealm[ index ])
 	{
 		if( IsValid( enemy ) )
@@ -2185,7 +2185,7 @@ void function ForceRangeTargets_Thread( entity player, bool cqbOn, bool midOn, b
 
 void function DEV_CR_Respawn_Dummies()
 {
-	int realm = GetCombatRangeRealm( GetPlayerArray() )
+	int realm = GetCombatRangeRealm( GetPlayerArray()[0] )
 	CRDummies_RespawnInPlace( realm )
 }
 
@@ -2209,7 +2209,7 @@ void function DEV_CountDummies( entity playerParm )
 	entity player = playerParm
 	if( !IsValidPlayer( player ) )
 	{
-		player = GetPlayerArray()
+		player = GetPlayerArray()[0]
 	}
 
 	//int realm = GetCombatRangeRealm( GetPlayerArray() )

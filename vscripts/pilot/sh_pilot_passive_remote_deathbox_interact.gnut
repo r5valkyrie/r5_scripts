@@ -654,4 +654,3 @@ bool function IsDeathboxAccessedByEnemyAlter( entity deathbox )
 }
 #endif
 
- 

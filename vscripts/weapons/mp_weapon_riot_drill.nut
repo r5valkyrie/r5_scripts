@@ -901,7 +901,7 @@ array<entity> function RiotDrill_CreateDangerZoneFX( RiotDrillSystem fbs )
 	}
 
 	if( DEBUG_INFO )
-		DebugDrawCylinder( origin, VectorToAngles( Normalize( origin - fbs.riotDrillStart.GetOrigin() ) ), RiotDrill_GetRadius( ownerPlayer ), RiotDrill_GetLength( ownerPlayer ), <0, 200, 0>, true, RiotDrill_GetDuration( ownerPlayer ) )
+		DebugDrawCylinder( origin, VectorToAngles( Normalize( origin - fbs.riotDrillStart.GetOrigin() ) ), RiotDrill_GetRadius( ownerPlayer ), RiotDrill_GetLength( ownerPlayer ), 0, 200, 0, true, RiotDrill_GetDuration( ownerPlayer ) )
 
 	return fxEnts
 }

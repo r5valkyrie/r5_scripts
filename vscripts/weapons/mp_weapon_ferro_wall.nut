@@ -1370,7 +1370,7 @@ void function CreateFerroWallPillar( asset model, asset baseFX, vector pos, vect
 		vector pillarOrigin = trigger.GetOrigin()
 		vector mins = CalcWorldToLocalOrigin_Entity( pillar, pillarOrigin + ( FERRO_WALL_RADIUS * pillar.GetRightVector() ) + ( FERRO_WALL_WIDTH * pillar.GetForwardVector() ) )
 		vector maxs = CalcWorldToLocalOrigin_Entity( pillar, pillarOrigin - ( FERRO_WALL_RADIUS * pillar.GetRightVector() ) - ( FERRO_WALL_WIDTH * pillar.GetForwardVector() ) + < 0, 0, FERRO_WALL_HEIGHT > )
-		DebugDrawBox( pillar.GetOrigin(),  mins, maxs, COLOR_GREEN, 1, 25.0 )
+		DebugDrawBox( pillar.GetOrigin(),  mins, maxs, int( COLOR_GREEN.x ), int( COLOR_GREEN.y ), int( COLOR_GREEN.z ), 1, 25.0 )
 		//DebugDrawLine( pillarOrigin + < 0, 0, FERRO_WALL_HEIGHT/2.0>, pillarOrigin + < 0, 0, FERRO_WALL_HEIGHT/ 2.0> + ( FERRO_WALL_WIDTH * pillar.GetForwardVector() ), int(COLOR_GREEN.x), int(COLOR_GREEN.y), int(COLOR_GREEN.z), true, 25.0 )
 	#endif
 
@@ -2433,4 +2433,4 @@ array<entity> function GetFerroWallIgnoreArray()
 	ignoreArray.extend( GetEntArrayByScriptName( "TROPICS_BEACH_BALL" ) )
 
 	return ignoreArray
-} 
+}

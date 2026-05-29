@@ -487,4 +487,3 @@ void function AutoPlayer_UpgradeCoreXPChanged( entity player, int newXP )
 	}
 }
       
- 

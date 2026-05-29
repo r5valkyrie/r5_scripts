@@ -797,4 +797,4 @@ void function ClientCallback_GrantAllCupRewards( entity player, SettingsAssetGUI
 
 	GrantCupRewards( player, cupID, ladderPosition, rewardTiers, percentage )
 #endif //DEV
-} 
+}

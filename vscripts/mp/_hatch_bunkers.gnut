@@ -435,4 +435,4 @@ bool function IsHatchBunkerUnlocked( string hatchId )
 
 	return file.hatchIdsUnlocked.contains( hatchId )
 }
-#endif // SERVER || CLIENT 
+#endif // SERVER || CLIENT

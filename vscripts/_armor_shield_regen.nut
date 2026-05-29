@@ -475,4 +475,3 @@ bool function Armor_ShieldRegen_IsUsingShieldRegen()
 {
 	return GetCurrentPlaylistVarBool( "use_shield_regen", false )
 }
- 

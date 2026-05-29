@@ -698,4 +698,5 @@ array<vector> function CreateOptimizedSmoothPath( array<vector> points, bool opt
 
 	return smoothedPoints
 }
- 
+
+TraceResults function TraceHullHighDetail( vector currentStart, vector proposedFlightPath, vector hullSize, vector hullSize2, array< vector > exclusions, int traceMask, int traceCollisionGroup ){unreachable}

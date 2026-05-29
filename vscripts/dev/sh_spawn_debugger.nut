@@ -60,7 +60,7 @@ void function DEV_EnableSpawnPointTesting( bool enabled)
 
 			foreach ( entity spawnPoint in svSpawnGlobals.allNormalAndStartSpawnpoints )
 			{
-				DebugDrawSpawnpoint( spawnPoint, SPAWN_DEBUG_COLOR_GREEN, true, DEBUG_DRAW_DURATION )
+				DebugDrawSpawnpoint( spawnPoint, int( SPAWN_DEBUG_COLOR_GREEN.x ), int( SPAWN_DEBUG_COLOR_GREEN.y ), int( SPAWN_DEBUG_COLOR_GREEN.z ), true, DEBUG_DRAW_DURATION )
 			}
 		#endif // SERVER
 
@@ -271,7 +271,7 @@ void function DEV_PrintSpawnPointLocationToFile()
 void function DEV_DrawLineForLowHeightSpawnPoint( entity spawnPoint )
 {
 	printl( "[SPAWN DEBUGGER] Low Spawn Point Clearance at: " + spawnPoint.GetOrigin() )
-	DebugDrawBox( spawnPoint.GetOrigin(), TRACE_HULL_MIN, TRACE_HULL_MAX, SPAWN_DEBUG_COLOR_RED, 1, DEBUG_DRAW_DURATION )
+	DebugDrawBox( spawnPoint.GetOrigin(), TRACE_HULL_MIN, TRACE_HULL_MAX, int( SPAWN_DEBUG_COLOR_RED.x ), int( SPAWN_DEBUG_COLOR_RED.y ), int( SPAWN_DEBUG_COLOR_RED.z ), 1, DEBUG_DRAW_DURATION )
 }
 #endif //SERVER
 
@@ -283,4 +283,4 @@ void function DEV_DrawSphereOnBadSpawnPoints( entity spawnPoint )
 	DebugDrawSphere( spawnPoint.GetOrigin() + DEBUG_BOX_CENTER_OFFSET, DEBUG_SPHERE_RADIUS, int(SPAWN_DEBUG_COLOR_RED.x), int(SPAWN_DEBUG_COLOR_RED.y), int(SPAWN_DEBUG_COLOR_RED.z), true, DEBUG_DRAW_DURATION )
 }
 #endif // SERVER
-#endif // DEV 
+#endif // DEV
