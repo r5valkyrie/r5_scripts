@@ -398,8 +398,14 @@ void function OnItemFlavorRegistered_Character( ItemFlavor character )
 	fileLevel.characterRefMap[ tmp[ "character_ref" ] ] <- character
 
 	#if SERVER || CLIENT
-		PrecacheModel( GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "bodyModel" ) )
-		PrecacheModel( GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "armsModel" ) )
+		asset bodyModel = GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "bodyModel" )
+		asset loadingBodyModel = GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "loadingBodyModel" )
+		asset armsModel = GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "armsModel" )
+		asset loadingArmsModel = GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "loadingArmsModel" )
+		string pak = string(GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "pak" ))
+
+		PrecacheOnDemandLoadModel( ODL_SKINS, pak, bodyModel, loadingBodyModel )
+		PrecacheOnDemandLoadModel( ODL_SKINS, pak, armsModel, loadingArmsModel )
 	#endif
 
 	#if SERVER
