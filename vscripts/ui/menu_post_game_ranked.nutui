@@ -463,4 +463,4 @@ void function Ranked_OnUserInfoUpdatedInPostGame( string hardware, string id )
 				InitRankedScoreBarRuiForDoubleBadge( file.barRuiToUpdate, cui.rankScore, cui.rankedLadderPos )
 		}
 	}
-} 
+}

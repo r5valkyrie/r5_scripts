@@ -1152,4 +1152,4 @@ void function ClGameState_SetHasScreenBorder( bool value )
 	{
 		RuiSetBool( rui, "hasScreenBorder", value )
 	}
-} 
+}

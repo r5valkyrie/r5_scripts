@@ -916,4 +916,3 @@ void function AddStoryTrackerPinEvent( int panelIndex, int previousPanelIndex )
 
 	file.pin_viewStartTime = UITime()
 }
- 

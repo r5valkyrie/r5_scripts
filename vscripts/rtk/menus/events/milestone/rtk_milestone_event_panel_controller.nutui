@@ -987,4 +987,4 @@ void function OnGRXStateChanged()
 	BuildPackPricingDataModel()
 	BuildPurchaseButtonDataModel()
 	SetUpPurchaseButtons( file.self )
-} 
+}

@@ -246,4 +246,4 @@ string function RTKMutator_ConfirmEntryText( int tokenCount )
 string function RTKMutator_NumberTitleText( string titleText, int tokenCount )
 {
 	return Localize( "#SWEEPSTAKES_NUM_TITLE", tokenCount, Localize( titleText ) )
-} 
+}

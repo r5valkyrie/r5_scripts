@@ -2172,4 +2172,3 @@ bool function IsQuestCurrentOrLastSeason( ItemFlavor quest )
 
 	return false
 }
- 

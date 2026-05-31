@@ -4796,4 +4796,3 @@ void function FullmapPackage_SurveyBeacon( entity ent, var rui )
 	RuiSetFloat3( rui, "iconColor", <0.5,0.5,0.5> )
 }
 
- 

@@ -1281,4 +1281,4 @@ void function ServerCallback_SetDpadMenuVis( int flags )
 	RuiSetBool( GetDpadMenuRui(), "healthUIEnabled", IsBitFlagSet(flags,1) ) 
 	RuiSetBool( GetDpadMenuRui(), "ordinanceUIEnabled", IsBitFlagSet(flags, 2) ) 
 	RuiSetBool( GetDpadMenuRui(), "gadgetUIEnabled", IsBitFlagSet(flags, 4) ) 
-} 
+}

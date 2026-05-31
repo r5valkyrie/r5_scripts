@@ -1152,4 +1152,4 @@ void function SetNewsButtonTooltip( int status )
 float function GetLobbyMenuOpenedTime()
 {
 	return file.lobbyMenuOpenTime
-} 
+}

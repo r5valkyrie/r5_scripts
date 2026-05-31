@@ -4989,4 +4989,3 @@ vector function Season_GetSubTabGlowFocusedCol( ItemFlavor event )
 	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "subtabGlowFocusedCol" )
 }
 
- 

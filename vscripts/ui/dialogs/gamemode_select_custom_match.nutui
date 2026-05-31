@@ -593,4 +593,3 @@ void function UICodeCallback_CustomMatchGetPlayers()
 	CustomMatch_LiveAPI_SendPlayers(players)
 }
 
- 

@@ -1572,4 +1572,4 @@ array<entity> function Flyers_GetAllFlyers()
 	allFlyers.extend( GetEntArrayByScriptName( CAGED_FLYER_SCRIPT_NAME ) )
 
 	return allFlyers
-} 
+}

@@ -1306,4 +1306,3 @@ void function GameMode_AboutDialog_AppendRequeueTab(array<featureTutorialTab> ta
 	}
 }
 
- 

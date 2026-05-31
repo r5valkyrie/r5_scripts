@@ -2452,4 +2452,3 @@ void function DestroyVantageTacticalRui( entity player )
 	}
 }
 
- 

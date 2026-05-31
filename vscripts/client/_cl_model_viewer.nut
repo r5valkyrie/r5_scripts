@@ -1627,4 +1627,3 @@ void function MapLimitsProtect( entity model )
 }
 
 #endif
- 

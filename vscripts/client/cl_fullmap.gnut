@@ -2076,4 +2076,4 @@ void function ObserverTeleport_Thread()
 
 	GetLocalClientPlayer().SetObserverPosition( groundPosition + OBSERVER_TELEPORT_OFFSET )
 	ScreenFade( GetLocalViewPlayer(), 0, 0, 0, 255, 0.2, 0.1, FFADE_IN | FFADE_PURGE )
-} 
+}

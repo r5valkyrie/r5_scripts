@@ -368,4 +368,3 @@ array<ConVarData> function ControlsGamepadPanel_GetConVarData()
 {
 	return file.conVarDataList
 }
- 

@@ -933,4 +933,3 @@ void function SniperUlt_Mark_Client_Stop( entity ent, int statusEffect, bool act
 
 
 
- 

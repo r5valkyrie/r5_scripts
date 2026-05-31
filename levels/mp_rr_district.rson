@@ -1,0 +1,12 @@
+{
+	When: true
+	Scripts:
+	[
+		mp/levels/cl_mp_rr_district.nut
+	]
+	When: true
+	Scripts:
+	[
+		mp/levels/mp_rr_district_common.nut
+	]
+}

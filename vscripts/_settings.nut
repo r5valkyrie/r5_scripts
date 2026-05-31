@@ -372,4 +372,3 @@ void function Settings_Init()
 		printl( "MAX_TEAM_PLAYERS: " + MAX_TEAM_PLAYERS )
 
 }
- 

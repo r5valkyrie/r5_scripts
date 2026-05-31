@@ -8510,4 +8510,4 @@ bool function GetArmoredLeapUseCode()
 bool function DoAdditionalAirPosChecks()
 {
 	return GetCurrentPlaylistVarBool( "newcastle_ult_additional_air_pos_checks", true )
-} 
+}

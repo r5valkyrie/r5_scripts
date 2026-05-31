@@ -3066,4 +3066,3 @@ void function SetHintTextOnHudElem( var hudElem, string text, string subtext )
 	RuiSetString( Hud_GetRui( hudElem ), "buttonText", Localize( text, Localize( subtext ) ) )
 }
 
- 

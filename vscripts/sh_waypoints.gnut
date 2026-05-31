@@ -4383,4 +4383,3 @@ void function SetMaxDrawDistanceOnRuiAfterDelay( var rui, entity wp, float delay
 	RuiSetFloat( rui, "maxDrawDistance", maxDrawDistance * METERS_TO_INCHES )
 }
 
- 

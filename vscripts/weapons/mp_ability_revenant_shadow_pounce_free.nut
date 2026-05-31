@@ -815,4 +815,3 @@ void function ShadowPounce_UpdateIndicator( entity player, entity weapon )
 	}
 }
 
- 

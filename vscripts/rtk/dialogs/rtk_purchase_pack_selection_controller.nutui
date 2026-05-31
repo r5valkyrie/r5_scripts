@@ -428,4 +428,4 @@ bool function RTKMutator_IsPurchaseButtonInteractable( int state )
 			return false
 	}
 	unreachable
-} 
+}

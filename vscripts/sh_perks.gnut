@@ -1182,4 +1182,3 @@ asset function Perks_PingTypeToPingIcon( int pingType )
 	return Perks_GetIconForPerk( perkIndex )
 }
 
- 

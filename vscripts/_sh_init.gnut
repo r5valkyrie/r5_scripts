@@ -1176,4 +1176,3 @@ void function Client_Lobby_Init()
 	Sh_InitToolTips()
 } 
 
- 

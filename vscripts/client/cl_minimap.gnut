@@ -2266,4 +2266,3 @@ void function Minimap_SetVisiblityConeColor( vector color = <0,0,0>, float alpha
 	RuiSetFloat( file.minimap_you, "visibilityConeAlpha", alpha )
 	RuiSetFloat( file.minimap_you, "visibilityConeLerpTime", lerpTime )
 }
- 

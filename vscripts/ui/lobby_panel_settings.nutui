@@ -452,4 +452,3 @@ bool function AnySettingsConVarChanged( array<ConVarData> savedConVarData )
 
 	return false
 }
- 

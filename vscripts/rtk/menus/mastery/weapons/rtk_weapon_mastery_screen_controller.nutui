@@ -463,4 +463,3 @@ int function WeaponMastery_GetSmokeColor( int level = 1 )
 
 	unreachable
 }
- 

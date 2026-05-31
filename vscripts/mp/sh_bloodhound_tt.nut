@@ -2293,4 +2293,3 @@ bool function BloodHountTT_UseLootPositionOverrideHack()
 	return usePositionHack
 }
 
- 

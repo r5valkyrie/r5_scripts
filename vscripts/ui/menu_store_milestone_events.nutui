@@ -344,4 +344,4 @@ void function StoreMilestoneEvents_SendPageViewPurchaseDialog( bool asGift )
 	StoreMilestoneEvents_SaveTelemetryData()
 	PIN_PageView_StoreMilestoneViewPurchasePanel( fileTelemetry.pageName, fileTelemetry.prevPageDuration, fileTelemetry.prevPage,
 		fileTelemetry.pageNum, fileTelemetry.clickType, fileTelemetry.eventName, asGift )
-} 
+}

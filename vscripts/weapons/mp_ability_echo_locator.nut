@@ -2238,4 +2238,4 @@ float function GetEchoLocator_Gunfire_Tracking_Extension()
 {
 	return GetCurrentPlaylistVarFloat( "seer_ult_extended_gunfire_tracking", 3.0 )
 }
-       
+      

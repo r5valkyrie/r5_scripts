@@ -999,4 +999,3 @@ bool function Bleedout_GetCanForceBleedoutTimeout()
 {
 	return GetCurrentPlaylistVarBool( "bleedout_can_force_bleedout_timeout", false )
 }
- 

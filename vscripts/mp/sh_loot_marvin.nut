@@ -1520,4 +1520,3 @@ void function SetTopPriorityLootMarvin( entity player )
 	}
 }
 
- 

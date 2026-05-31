@@ -1710,4 +1710,3 @@ bool function IsEntNewcastleReviveTarget( entity ent )
 
 
 
- 

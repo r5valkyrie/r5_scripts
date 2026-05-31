@@ -4042,4 +4042,3 @@ int function GladiatorCardBadge_GetRewardParentChallengeTier( ItemFlavor parentC
 	return 0
 }
 
- 

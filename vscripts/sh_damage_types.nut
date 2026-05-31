@@ -1115,4 +1115,3 @@ bool function GetIsAdditionalMainWeapon( int damageSourceID )
 {
 	return file.additionalMainWeapons.contains( damageSourceID )
 }
- 

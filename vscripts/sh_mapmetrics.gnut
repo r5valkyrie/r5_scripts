@@ -753,4 +753,3 @@ string function CreateScreenShotFileName( vector position, vector angles )
 {
 	return "setpos_" + position.x + "_" + position.y + "_" + position.z + ",setang_" + angles.x + "_" + angles.y + "_" + angles.z
 }
- 

@@ -1029,4 +1029,4 @@ void function OnContinueButton_Activated( var button )
 void function InitRTKRankedMatchSummary( var panel )
 {
 	InitDeathScreenPanelFooter( panel, eDeathScreenPanel.RANK)
-} 
+}

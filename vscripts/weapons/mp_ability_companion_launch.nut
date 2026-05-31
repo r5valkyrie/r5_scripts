@@ -1222,4 +1222,3 @@ void function PlayJetDriveDoubleJumpWindowSound(  entity player, float timeout )
 	}
 }
 
- 

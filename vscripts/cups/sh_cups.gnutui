@@ -1310,4 +1310,3 @@ CupMatchSummary function DEV_GenerateDummyMatchHistory( SettingsAssetGUID cupID,
 }
 
 #endif
- 

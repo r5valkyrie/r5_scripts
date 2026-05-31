@@ -1887,4 +1887,4 @@ bool function IsGridItemCustomSize( int gridItemType )
 	}
 
 	return false
-} 
+}

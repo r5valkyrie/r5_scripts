@@ -2258,4 +2258,3 @@ asset function BattlePass_GetStoreBundleContentsImage ( ItemFlavor flavor )
 	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "storeBundleContentsImage" )
 }
 
- 

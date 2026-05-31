@@ -3150,4 +3150,4 @@ void function ClWeaponStatus_OverrideReloadHintText( string reloadText )
 {
 	if ( file.ammo_status_hint != null && IsValid( file.ammo_status_hint ) )
 		RuiSetString( file.ammo_status_hint, "reloadOverrideText", reloadText )
-} 
+}

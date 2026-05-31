@@ -299,4 +299,4 @@ void function FindFriendDialog_Cancel( var button )
 {
 	CloseAllToTargetMenu( file.menu )
 	CloseActiveMenu()
-} 
+}

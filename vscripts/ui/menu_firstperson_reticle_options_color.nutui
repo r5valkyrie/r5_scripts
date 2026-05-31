@@ -401,4 +401,3 @@ void function OnApplyManualColor( int result )
 			SaveCurrentColorToPlayerConfig();
 	}
 }
- 

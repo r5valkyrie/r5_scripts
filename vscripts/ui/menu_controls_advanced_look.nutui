@@ -386,4 +386,3 @@ void function RestoreLookControlsDefaults()
 	
 	SavePlayerSettings()
 }
- 

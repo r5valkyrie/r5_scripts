@@ -1528,4 +1528,3 @@ bool function FRC_CanCharacterPickup( entity player, entity weapon )
 }
 
 
- 

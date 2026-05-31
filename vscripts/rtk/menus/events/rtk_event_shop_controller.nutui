@@ -594,4 +594,3 @@ int function RTKMutator_TierYPosition( int input, int yOffset )
 {
 	return input * yOffset
 }
- 

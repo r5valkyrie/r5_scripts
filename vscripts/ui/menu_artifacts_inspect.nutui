@@ -347,4 +347,4 @@ void function SetItemSelected( var currentButton )
 	var rui = Hud_GetRui( currentButton )
 	RuiSetBool( rui, "isSelected", true )
 	s_inspectUIData.previousItemGrid = currentButton
-} 
+}

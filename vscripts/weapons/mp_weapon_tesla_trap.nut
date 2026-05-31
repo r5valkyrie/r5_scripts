@@ -4546,4 +4546,3 @@ bool function TeslaTrap_IsLinkAngleTooSteep( vector proxyTestPos, entity otherTr
 
 	return false
 }
- 

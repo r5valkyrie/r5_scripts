@@ -417,4 +417,4 @@ void function PerfInitLabels()
 
 function ClientCodeCallback_OnDropShipCinematicEventStateChanged()
 {
-} 
+}

@@ -1379,4 +1379,3 @@ float function GetSonicBlastRange( entity player )
 	return GetHeartbeatSensorRange( player ) + SONIC_BLAST_RANGE_EXTENSION
 }
 
- 

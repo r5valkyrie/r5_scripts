@@ -292,4 +292,3 @@ void function DoUpdateSpot( LootCeremonySpotInfo spot, int itemType, entity ligh
 	}
 }
 
- 

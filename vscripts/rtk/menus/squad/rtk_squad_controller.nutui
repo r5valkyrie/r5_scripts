@@ -607,4 +607,3 @@ bool function IsRTKSquadsEnabled()
 	return GetCurrentPlaylistVarBool( "rtk_squads_enabled", true )
 }
 
- 

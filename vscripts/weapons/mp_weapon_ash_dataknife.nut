@@ -900,4 +900,4 @@ float function DeathboxNetwork_GetDeathboxAge( entity deathbox )
 		return Time() - file.deathboxInfoTable[deathbox].createdTime
 
 	return -1
-} 
+}

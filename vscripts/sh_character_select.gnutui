@@ -5273,4 +5273,3 @@ bool function Character_IsCharacterUnlockedForCalevent( ItemFlavor characterItem
 {
 	return TempUnlock_IsCharacterUnlocked( characterItemFlavor )
 }
- 

@@ -516,4 +516,3 @@ void function ShowMoreInfo( var button )
 {
 	OpenRankedInfoMorePage( button )
 }
- 

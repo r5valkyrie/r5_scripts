@@ -418,4 +418,4 @@ void function OnWeaponHeatStateChanged_Nemesis( entity weapon, bool currentIsHea
 
 }
 
-                                    
+                                   

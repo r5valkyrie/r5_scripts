@@ -1263,4 +1263,3 @@ int function PrivateMatch_GetMaxTeamsForSelectedGamemode()
 	return GetMaxTeamsForPlaylistName( playlist )
 }
 
- 

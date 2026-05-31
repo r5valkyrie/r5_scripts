@@ -3808,4 +3808,3 @@ string function DEV_GetClassName( LoadoutEntry entry )
 }
 #endif
 
- 

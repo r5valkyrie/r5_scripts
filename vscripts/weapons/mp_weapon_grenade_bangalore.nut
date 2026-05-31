@@ -731,4 +731,3 @@ bool function BangSmoke_IsPlayerHighlighted( entity player, entity otherPlayer )
 
 
 
- 

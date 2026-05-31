@@ -685,4 +685,4 @@ string function RTKMutator_GetMilestonePackPurchaseButtonTitle( int state )
 			return Localize( "#COMPLETED" )
 	}
 	return Localize( "#UNAVAILABLE" )
-} 
+}

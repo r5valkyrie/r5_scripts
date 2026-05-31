@@ -991,4 +991,4 @@ string function RTKPagination_GetLastNavType( rtk_behavior self )
 	self.Private( p )
 
 	return p.navType
-} 
+}

@@ -1080,4 +1080,3 @@ void function ScoreboardMute( entity player )
 
 	TogglePlayerVoiceAndTextMute( file.selectedPlayer )
 }
- 

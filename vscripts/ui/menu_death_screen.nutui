@@ -1297,4 +1297,3 @@ void function DeathScreenPanelFooterAutomationThink( var menu )
 	}
 }
 #endif
- 

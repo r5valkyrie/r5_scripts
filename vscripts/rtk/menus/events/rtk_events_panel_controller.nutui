@@ -863,4 +863,4 @@ int function GetEventGiftButtonState( array<GRXScriptOffer> offers )
 		return eEventGiftingButtonState.GIFTING_EXCEEDED
 	}
 	return eEventGiftingButtonState.AVAILABLE
-} 
+}

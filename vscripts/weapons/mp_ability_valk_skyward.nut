@@ -1805,4 +1805,3 @@ void function ValkUlt_EnterGameStateResolution()
 
 
 }
- 

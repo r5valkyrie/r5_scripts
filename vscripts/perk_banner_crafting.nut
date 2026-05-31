@@ -669,4 +669,4 @@ bool function DoesTeammateHaveBannerCraftingPerk( entity player )
 	return hasPerk
 }
 
-                         
+                        

@@ -5297,4 +5297,4 @@ void function StoryModeButton_OnActivate( var button )
 	{
 		JumpToSeasonTab( "QuestPanel" )
 	}()
-} 
+}

@@ -805,4 +805,3 @@ bool function OpenBattlePassMilestoneDialog( bool forceShow = false )
 	return showMilestoneMenu
 }
 
- 

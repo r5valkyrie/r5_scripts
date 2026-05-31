@@ -1711,4 +1711,3 @@ bool function SURVIVAL_Loot_IsAmmoSpawningDisabled()
 	return GetCurrentPlaylistVarBool( "block_ammo_spawning", false )
 }
 
- 

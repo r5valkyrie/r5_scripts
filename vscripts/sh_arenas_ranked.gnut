@@ -1652,4 +1652,3 @@ var function CreateNestedHistoricalArenasRankedRui( var pRui, SharedRankedTierDa
 	return rui
 }
 
- 

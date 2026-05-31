@@ -283,4 +283,4 @@ void function Reset_HoldExitLobbyButtonPercentage()
 	var rui = Hud_GetRui( file.holdExitLobbyButton )
 
 	RuiSetFloat( rui, "holdPercentage", 0.0 )
-} 
+}

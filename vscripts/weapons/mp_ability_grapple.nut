@@ -498,4 +498,3 @@ bool function CodeCallback_GrappleDetachFromNPC( entity player, entity npc )
 
 
 
- 

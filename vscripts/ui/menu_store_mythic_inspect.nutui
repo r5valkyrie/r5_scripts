@@ -478,4 +478,4 @@ void function StoreMythicUpdateInspectButtons()
 	SetupExecutionButton()
 
 	Hud_SetVisible( file.ownedIndicator, GRX_IsItemOwnedByPlayer( expect ItemFlavor( GetBaseItemFlavor() ) ) ) 
-} 
+}

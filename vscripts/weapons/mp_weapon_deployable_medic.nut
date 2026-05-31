@@ -1789,4 +1789,3 @@ entity function GetHealDroneForHitEnt( entity hitEnt )
 	return null
 }
 
- 

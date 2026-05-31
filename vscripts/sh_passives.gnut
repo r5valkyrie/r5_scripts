@@ -1276,4 +1276,3 @@ int function Pas_GetWattsonUltAccelExtraCount()
 	return file.wattson_ult_accel_extra
 }
 
- 

@@ -698,4 +698,3 @@ array<vector> function CreateOptimizedSmoothPath( array<vector> points, bool opt
 
 	return smoothedPoints
 }
- 

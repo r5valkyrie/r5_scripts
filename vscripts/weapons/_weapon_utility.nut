@@ -7111,4 +7111,3 @@ bool function CodeCallback_GetIsModOptic( entity weapon, string modName )
 	return SURVIVAL_Loot_IsRefValid( weapon.GetWeaponClassName() ) && SURVIVAL_Loot_IsRefValid( modName ) && GetAttachPointForAttachmentOnWeapon( weapon.GetWeaponClassName(), modName ) == "sight"
 }
 
- 

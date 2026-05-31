@@ -1267,4 +1267,3 @@ void function MarkAsUsed( entity ent, entity player, ExtendedUseSettings setting
 	ent.e.lastUseTime = Time()
 }
 
- 

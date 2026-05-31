@@ -1466,4 +1466,3 @@ void function ThreatIndicatorThink( entity player, float damageRadius )
 	}
 }
 
- 

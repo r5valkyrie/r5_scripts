@@ -1043,4 +1043,3 @@ string function GetRankEmblemText( SharedRankedDivisionData division, int rankSc
 	unreachable
 }
 
- 

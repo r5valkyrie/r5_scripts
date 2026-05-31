@@ -438,4 +438,3 @@ void function ClGlobalAnimEvent_customReadyUpVoiceLine( entity player, array<str
 	if ( voiceLine != "" )
 		SetCustomReadyUpVoiceLine( voiceLine )
 }
- 

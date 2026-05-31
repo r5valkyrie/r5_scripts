@@ -747,4 +747,4 @@ void function _PopulatePlayerStatsRui( var cardElem, int index, bool connected )
 			break
 		}
 	}
-} 
+}

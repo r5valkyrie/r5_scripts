@@ -454,4 +454,4 @@ void function UpdateOptInFooter()
 bool function IsOptInEnabled()
 {
 	return file.isOptInEnabled
-} 
+}

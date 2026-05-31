@@ -2051,4 +2051,3 @@ void function VoidRing_WaypointUI_Thread( entity wp )
 }
 
 
- 

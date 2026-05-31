@@ -969,4 +969,3 @@ vector function GetSuperColor( float frac )
 #endif
 
 
- 

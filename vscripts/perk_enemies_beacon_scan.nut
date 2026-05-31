@@ -695,4 +695,3 @@ void function StopEffects_SurveyBeacon_Laser( entity player, entity soundEnt )
 	StopSoundOnEntity( soundEnt, "Recon_Hack_SurveyBeacon_LaserBeam_Stereo_3P" )
 }
 
- 

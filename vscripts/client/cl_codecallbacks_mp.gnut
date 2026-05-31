@@ -652,4 +652,3 @@ void function ClientCodeCallback_PerformSelfReport()
 	ReportPlayerCustomerService(hardwareID, uid, eaid, "#REPORT_PLAYER_REASON_OFFENSIVE" )
 }
 
- 

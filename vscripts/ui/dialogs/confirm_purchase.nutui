@@ -2035,4 +2035,3 @@ void function GiftButtonToolTipNotHighEnoughLevel( var giftButton  )
 	HudElem_SetRuiArg( giftButton, "buttonText", Localize( "#LOCKED_GIFT" ) )
 	Hud_SetLocked( giftButton, true )
 }
- 

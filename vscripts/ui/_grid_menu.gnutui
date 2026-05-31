@@ -1895,4 +1895,4 @@ bool function IsPageUpEdge( int row, GridMenuData data )
 bool function IsGridButton( var button, GridMenuData data )
 {
 	return data.gridButtons.contains( button )
-} 
+}

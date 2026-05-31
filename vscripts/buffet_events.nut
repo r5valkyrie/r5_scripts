@@ -654,4 +654,3 @@ vector function BuffetEvent_GetRewardIconCol( ItemFlavor event )
 
 
 
- 

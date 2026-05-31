@@ -2062,4 +2062,3 @@ string function GetBattleChatterAlias1P3PWithTempVoice( string aliasSubname, boo
 		return ""
 	return result
 }
- 

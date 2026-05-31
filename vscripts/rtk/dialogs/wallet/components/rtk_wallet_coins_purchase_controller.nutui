@@ -294,4 +294,4 @@ void function CheckEAPlay()
 		rtk_struct walletCoinsPurchasePanel = RTKDataModelType_GetOrCreateStruct( RTK_MODELTYPE_MENUS, "walletCoinsPurchasePanel", "CurrencyPurchaseItems" )
 		RTKStruct_SetValue( walletCoinsPurchasePanel, file.itemsData)
 	}
-} 
+}

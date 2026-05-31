@@ -1003,4 +1003,3 @@ RankedRumbleContainerInfo function RankedRumble_GetContainerInfo( ItemFlavor con
 	RankedRumbleContainerInfo info = fileLevel.rankedRumbleContainers[cupContainerID]
 	return info
 }
- 

@@ -231,4 +231,4 @@ void function CustomMatch_ShowSettingsCancelButton(string setting, string value)
 void function CustomMatch_ShowSettingsSubmitButton(string setting, string value)
 {
 	Hud_SetVisible(file.submitButton, value == CUSTOM_MATCH_STATUS_PREPARING )
-} 
+}

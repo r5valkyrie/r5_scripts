@@ -520,4 +520,3 @@ void function SetTeamName_OnOnSave( int teamIndex, string newTeamName )
 	Assert( 1 == 0, "This function is no longer used, it used to call an RPC ClientCallback_PrivateMatchSetTeamName, to remove strings in rpcs we're deleting that RPC.  If you need to bring it back you'll need to rewrite it without using a string" )
 }
 
- 

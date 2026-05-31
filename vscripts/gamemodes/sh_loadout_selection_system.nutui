@@ -2888,4 +2888,4 @@ bool function LoadoutSelection_IsRefValidWeapon( string weaponRef )
 
 	LootData lootData = SURVIVAL_Loot_GetLootDataByRef( weaponRef )
 	return lootData.lootType == eLootType.MAINWEAPON
-} 
+}

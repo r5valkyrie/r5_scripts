@@ -771,4 +771,3 @@ void function DEV_ShieldMineLaunchDebug( int stage = -1 )
 	printt( "Conduit ShieldMine Debug state " + SHIELD_MINES_AIRBURST_DEBUG )
 }
 #endif
- 

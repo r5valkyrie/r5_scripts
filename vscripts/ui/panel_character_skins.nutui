@@ -550,4 +550,4 @@ void function UpdateCharacterSkinsGiftFooter( InputDef footer )
 		footer.mouseLabel = Localize( "#BACK_BUTTON_GIFT" )
 		footer.activateFunc = OpenPurchaseCharacterDialogFromTop
 	}
-} 
+}

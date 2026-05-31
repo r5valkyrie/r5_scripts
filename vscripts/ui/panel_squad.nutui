@@ -452,4 +452,4 @@ void function AssignPlayerToButton( var button, string name, string uid, string 
 SquadPlayerData function GetPlayerDataForButton( var button )
 {
 	return file.buttonToPlayerData[ button ]
-} 
+}

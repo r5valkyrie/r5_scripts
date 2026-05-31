@@ -668,4 +668,3 @@ int function GetPlaylistVar_RespawnDisabledDeathstage()
 	return GetCurrentPlaylistVarInt( "strikeout_respawn_disable_deathstage_close", 4 )
 }
 
- 

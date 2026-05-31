@@ -4564,4 +4564,3 @@ void function CameraLerpTrainThread( entity player, vector estimatedCameraStart,
 }
 
 
- 

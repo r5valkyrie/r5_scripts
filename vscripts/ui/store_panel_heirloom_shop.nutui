@@ -655,4 +655,4 @@ void function ToggleWeaponOrMythicSkin( var button )
 {
 	file.mythicSkinsEnabled = !file.mythicSkinsEnabled
 	HeirloomShopPanel_UpdateGRXDependantElements()
-} 
+}

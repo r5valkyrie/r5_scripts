@@ -803,4 +803,3 @@ void function CapPlayerXPToLevel( entity player, int levelCap )
 
 
 
- 

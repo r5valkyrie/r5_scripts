@@ -804,4 +804,3 @@ string function StoryEvent_GetChapterTagString( ItemFlavor event, int idx )
 	return ""
 }
 
- 

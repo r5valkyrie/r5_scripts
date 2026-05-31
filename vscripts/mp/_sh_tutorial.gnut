@@ -887,4 +887,4 @@ bool function TryActionReload( entity player, InputHint inputHint )
 bool function TryActionBlank( entity player, InputHint inputHint )
 {
 	return true
-} 
+}

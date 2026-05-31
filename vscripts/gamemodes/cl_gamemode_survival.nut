@@ -6328,4 +6328,4 @@ void function SquadTag_SetRuiArgs()
 		RuiSetBool( squadTagRui, "shouldShowTeamName", false )
 		SquadTag_SetVisibility( false )
 	}
-} 
+}

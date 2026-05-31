@@ -611,4 +611,3 @@ void function DEV_UnitTestShortenNumber()
 	}
 }
 #endif
- 

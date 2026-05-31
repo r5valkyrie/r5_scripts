@@ -1147,4 +1147,4 @@ void function ShStatsDefs_Init()
 table< string, int > function StatsDefs_GetCharacterGUIDToBitmaskMap()
 {
 	return file.characterGUIDToBitmask
-} 
+}

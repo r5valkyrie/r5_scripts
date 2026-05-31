@@ -577,4 +577,3 @@ bool function DEV_Cups_ClearCupsLastMatchPlayedData()
 	return true
 }
 #endif
- 

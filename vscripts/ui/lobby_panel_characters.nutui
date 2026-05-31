@@ -1289,4 +1289,4 @@ void function UpdatePanelCharacterUpgradesFooter( InputDef footer )
 		footer.input = KEY_Q
 	}
 }
-       
+      

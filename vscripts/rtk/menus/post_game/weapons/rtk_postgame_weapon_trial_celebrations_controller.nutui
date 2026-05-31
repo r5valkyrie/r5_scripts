@@ -437,4 +437,3 @@ void function DEV_TestWeaponTrialCelebrationSoundsThread( int weaponLevel )
 	EmitUISound( unlockedSound )
 }
 #endif
- 

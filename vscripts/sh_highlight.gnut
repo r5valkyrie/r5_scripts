@@ -1810,4 +1810,4 @@ bool function Highlight_ShouldObserverHighlight( entity viewPlayer, entity ent )
 		return false
 
 	return true
-} 
+}

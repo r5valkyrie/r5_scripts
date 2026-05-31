@@ -498,4 +498,4 @@ StatCalcFuncInfo function SetupGetWarriorsCombinedBadgeEarned( StatEntry calcEnt
 	})
 
 	return info
-} 
+}

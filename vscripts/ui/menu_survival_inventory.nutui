@@ -434,4 +434,4 @@ void function SurvivalInventory_SetBGVisible( bool visible )
 {
 	Hud_SetVisible( Hud_GetChild( file.menu, "Blur" ), visible )
 	Hud_SetVisible( Hud_GetChild( file.menu, "Cover" ), visible )
-} 
+}

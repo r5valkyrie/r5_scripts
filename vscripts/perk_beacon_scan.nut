@@ -620,4 +620,3 @@ void function SurveyBeacon_AddSurveyBeaconMinimapPackage()
 	
 }
 
- 

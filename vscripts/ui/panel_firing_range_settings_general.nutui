@@ -684,4 +684,3 @@ void function TryOpenSystemMenu( var panel )
 
 	OpenSystemMenu()
 }
- 

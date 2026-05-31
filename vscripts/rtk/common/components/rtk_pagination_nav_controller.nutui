@@ -350,4 +350,4 @@ void function RTKPaginationNavController_UpdateNavArrowsState( rtk_behavior self
 			nextButton.PropSetBool( "interactive", true )
 			prevButton.PropSetBool( "interactive", true )
 	}
-} 
+}

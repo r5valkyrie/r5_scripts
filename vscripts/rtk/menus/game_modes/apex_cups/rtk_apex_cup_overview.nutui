@@ -470,4 +470,3 @@ void function InitRTKApexCupsOverview( var panel )
 	Cups_RegisterOnServerMessageRecievedCallback( CupsServerMessageType.CUP_MESSAGE_TYPE_REROLL, RTKApexCupsOverview_OnCupsServerMessage )
 	Cups_RegisterOnServerMessageRecievedCallback( CupsServerMessageType.CUP_MESSAGE_TYPE_REGISTRATION, RTKApexCupsOverview_OnCupsServerMessage )
 }
- 

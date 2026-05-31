@@ -442,4 +442,3 @@ void function SetCurrentChoice( int choice )
 	RuiSetInt( file.upgradesSelectionMenu, "highlightedChoice", choice )
 }
 
- 

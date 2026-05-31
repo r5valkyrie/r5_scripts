@@ -744,4 +744,4 @@ bool function IsPreloadingMap()
 	string compareSting = "#MATCHMAKING_LOADING"
 	string mmStatus     = GetMyMatchmakingStatus()
 	return ( mmStatus.len() >= compareSting.len() && mmStatus.slice( 0, compareSting.len() ) == compareSting )
-} 
+}

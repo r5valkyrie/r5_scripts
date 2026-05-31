@@ -894,4 +894,3 @@ string function GetEffectiveButtonHoldBinding( int buttonID )
 	return binding
 }
 
- 

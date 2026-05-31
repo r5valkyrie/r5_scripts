@@ -1220,4 +1220,3 @@ void function DEV_SetHasViewedMOTDThisSession( bool val )
 	file.hasViewedMOTDThisSession = val
 }
 #endif
- 

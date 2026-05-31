@@ -1958,4 +1958,3 @@ bool function IsIgnoredByVortex( string weaponName )
 
 
 
- 

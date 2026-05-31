@@ -1132,4 +1132,3 @@ void function AddQuestTextPinEvent( int pageIndex, int panelIndex, int previousP
 	file.pin_viewStartTime = UITime()
 }
 
- 

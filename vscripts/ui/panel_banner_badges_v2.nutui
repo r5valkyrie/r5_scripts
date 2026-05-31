@@ -504,4 +504,3 @@ string function GetBadgeCategoryName( ItemFlavor badge )
 
 	return categoryName
 }
- 

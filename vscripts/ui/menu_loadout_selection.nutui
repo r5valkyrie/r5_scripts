@@ -613,4 +613,4 @@ int function LoadoutSelectionMenu_GetLoadoutButtonCountByLoadoutSlotType( int lo
 			count++
 	}
 	return count
-} 
+}

@@ -2454,4 +2454,4 @@ array<entity> function GetFerroWallIgnoreArray()
 	ignoreArray.extend( GetEntArrayByScriptName( "TROPICS_BEACH_BALL" ) )
 
 	return ignoreArray
-} 
+}

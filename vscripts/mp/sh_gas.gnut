@@ -1511,4 +1511,4 @@ entity function FindTeamCaustic( entity player )
 bool function PlayerHasGasProtection( entity player )
 {
 	return ( PlayerHasPassive( player, ePassives.PAS_GAS_GEAR ) || PlayerHasPassive( player, ePassives.PAS_GAS_PROTECTION ) )
-} 
+}

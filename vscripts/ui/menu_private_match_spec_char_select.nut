@@ -700,4 +700,3 @@ void function FooterRui()
 
 
 
- 

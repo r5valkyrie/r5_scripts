@@ -1267,4 +1267,4 @@ string function GetBindString( string baseBind )
 	}
 
 	return "+" + baseBind
-} 
+}

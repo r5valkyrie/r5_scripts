@@ -3071,4 +3071,4 @@ bool function Mastery_IsEnabled()
 bool function Mastery_IsOptimizationEnabled()
 {
 	return GetCurrentPlaylistVarInt( "enable_mastery_opt", 1 ) == 1
-} 
+}

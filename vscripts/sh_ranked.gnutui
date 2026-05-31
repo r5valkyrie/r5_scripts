@@ -3068,4 +3068,3 @@ bool function Ranked_ShouldShowPreRankedBadge ()
 	return false
 }
 
- 

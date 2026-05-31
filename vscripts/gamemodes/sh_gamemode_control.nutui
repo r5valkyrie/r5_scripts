@@ -15709,4 +15709,3 @@ bool function Control_IsSpawnWaypointIndexAnObjective( int waypointIndex )
 
 
 
- 

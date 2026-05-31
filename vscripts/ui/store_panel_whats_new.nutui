@@ -921,4 +921,3 @@ void function TryOpenLootCeremonyAndCompletionRewardPack()
 	if ( GRX_GetPackCount( ItemFlavor_GetGRXIndex( completionRewardPack ) ) > 0 )
 		OnLobbyOpenLootBoxMenu_ButtonPress( completionRewardPack )
 }
- 

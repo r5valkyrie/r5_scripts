@@ -674,4 +674,4 @@ void function GlobalAnimEvent_SetSkin( entity model, array<string> tokens )
 	Assert( tokens.len() == 2 )
 	int skin = int( tokens[1] )
 	model.SetSkin( skin )
-} 
+}

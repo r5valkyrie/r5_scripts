@@ -1029,4 +1029,4 @@ int function GetEmoteProjectorLimit()
 		return 2
 
 	return 3
-} 
+}

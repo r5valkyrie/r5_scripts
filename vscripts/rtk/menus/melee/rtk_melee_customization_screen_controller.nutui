@@ -1241,4 +1241,4 @@ vector function RTKMutator_CelestialOutline( int state, int theme, rtk_array def
 		return RTKMutator_PickFloat3From( state, celestialColors )
 
 	return RTKMutator_PickFloat3From( state, defaultColors )
-} 
+}

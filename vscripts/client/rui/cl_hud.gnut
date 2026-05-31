@@ -1139,4 +1139,4 @@ void function SCB_ShowHitMarks_Set_ByNetvar()
 {
 	showTrainingHitIndicators = FRS_NetVar_Get_Bool( GetLocalViewPlayer(), eFRSettingType.SHOWHITMARKS )
 }
-       
+      

@@ -1545,4 +1545,3 @@ void function OnHold_internal( int button, int teamIndex, void functionref( int 
 	if ( InputIsButtonDown( button ) )
 		func( teamIndex )
 }
- 

@@ -909,4 +909,4 @@ bool function MainActionIsNotPickup( entity player, entity ent )
 	LootActionStruct asMain = SURVIVAL_GetActionForGroundItem( player, lootRef, eLootActionType.ALT_ACTION )
 
 	return asMain.action != eLootAction.PICKUP
-} 
+}

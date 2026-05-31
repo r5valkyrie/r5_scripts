@@ -912,4 +912,4 @@ void function ClientCodeCallback_Observer_SetObituaryFilter(int obitFlags, strin
 	file.obituaryFilter = 0 
 	Obituary_Print_Localized( message )
 	file.obituaryFilter = obitFlags
-} 
+}

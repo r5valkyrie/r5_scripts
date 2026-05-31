@@ -1469,4 +1469,4 @@ bool function CodeCallback_BreachTraceIsValidPos( vector pos )
 
 
 	return true
-} 
+}

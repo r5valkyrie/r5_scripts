@@ -1730,4 +1730,3 @@ bool function PingVaultUnderAim( entity vault )
 
 
 
- 

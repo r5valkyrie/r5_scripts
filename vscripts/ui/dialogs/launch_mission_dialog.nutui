@@ -338,4 +338,3 @@ void function LaunchMissionDialog_OnNavigateBack()
 {
 	CloseActiveMenu()
 }
- 

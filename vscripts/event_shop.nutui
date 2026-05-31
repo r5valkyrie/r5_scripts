@@ -1230,4 +1230,3 @@ array<int> function EventShop_GetWeeklyResetsTimestamps( ItemFlavor event )
 	return resetTimestamps
 }
 
- 

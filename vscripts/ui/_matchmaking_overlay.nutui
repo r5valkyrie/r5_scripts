@@ -338,4 +338,3 @@ void function MatchmakingSetCountdownTimer( float time, bool useServerTime = tru
 	foreach ( element in file.matchStatusRuis )
 		MMStatusRui_SetCountdownTimer( Hud_GetRui( element ), time, useServerTime )
 }
- 

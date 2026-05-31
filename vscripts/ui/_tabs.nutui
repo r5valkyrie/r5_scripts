@@ -1676,4 +1676,4 @@ TabData function GetTabBodyParent( var panel )
 	Assert( IsTabBody( panel ) )
 	TabDef def = GetTabForTabBody( panel )
 	return GetTabDataForPanel( def.parentPanel )
-} 
+}

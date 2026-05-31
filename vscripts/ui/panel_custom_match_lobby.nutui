@@ -697,4 +697,4 @@ void function SetJoinTeamHelper()
 		Hud_SetText( Hud_GetChild( file.panel, "JoinTeamHelper" ), Localize( "#TOURNAMENT_HINT_HOW_TO_JOIN" ) )
 	else
 		Hud_SetText( Hud_GetChild( file.panel, "JoinTeamHelper" ), "" )
-} 
+}

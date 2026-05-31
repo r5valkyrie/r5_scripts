@@ -641,4 +641,3 @@ void function HideWoundedMarker( entity woundedPlayer )
 		func( woundedPlayer )
 	}
 }
- 

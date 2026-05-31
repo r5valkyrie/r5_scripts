@@ -744,4 +744,4 @@ void function DebugDrawFOVCircle( vector targetOrigin, vector viewOrigin, float 
 	vector circleAngles = VectorToAngles( viewOrgToTargetDir )
 	circleAngles = AnglesCompose( circleAngles, < 90, 0, 0 > )
 	DebugDrawCircle( targetOrigin, circleAngles, radius, color, throughGeo, time, segments )
-} 
+}

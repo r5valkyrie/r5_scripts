@@ -1055,4 +1055,4 @@ int function TitanSword_CanGoThroughBlockingEntity( entity blockingEntity )
 	return GOING_THROUGH_FALSE
 }
 
-                                
+                               

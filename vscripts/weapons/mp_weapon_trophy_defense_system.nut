@@ -3221,4 +3221,3 @@ int function GetTrophySystem_MaxTrophyCount( entity owner )
 
 	return maxCount
 }
- 

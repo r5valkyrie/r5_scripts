@@ -2033,4 +2033,3 @@ void function MinimapPackage_SpikeStrip( entity ent, var rui )
 	RuiSetFloat( rui, "iconBlend", 0.0 )
 }
 
- 

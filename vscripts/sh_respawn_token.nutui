@@ -809,4 +809,3 @@ bool function GetPlaylistVar_KillPlayerOnDisconnect()
 {
 	return GetCurrentPlaylistVarBool( "respawn_token_kill_player_on_disconnect", false )
 }
- 

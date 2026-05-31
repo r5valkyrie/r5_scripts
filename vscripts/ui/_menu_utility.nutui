@@ -655,4 +655,3 @@ asset function GetMapImageForMapName( string mapName )
 }
 
 
- 

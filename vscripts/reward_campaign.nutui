@@ -372,4 +372,4 @@ table<SettingsAssetGUID, int> function RewardCampaign_GetChallengeOrderMap( Item
 		guidToIndexMap[ challengeFlav.guid ] <- index
 	}
 	return guidToIndexMap
-} 
+}

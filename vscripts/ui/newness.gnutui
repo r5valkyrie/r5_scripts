@@ -388,4 +388,3 @@ void function NEWNESS_DEBUG_AddPrintCallback( Newness_ReverseQuery rq, string de
 
 
 
- 

@@ -953,4 +953,4 @@ int function GetMaxChallengesPerPage( ChallengeGroupData group, int numPinned )
 bool function ChallengesMenu_ShouldShowBreakoutRewards()
 {
 	return RewardCampaign_GetActiveRewardCampaign() != null
-} 
+}

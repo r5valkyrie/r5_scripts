@@ -663,4 +663,3 @@ void function ShowBlockPlayerDialog( string playerName, string eaid, void functi
 	OpenConfirmDialogFromData( data )
 }
 
- 

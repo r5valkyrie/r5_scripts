@@ -307,4 +307,3 @@ void function QuipPanel_SetItemTypeFilter( array<int> filters )
 {
 	file.filterTypes = filters
 }
- 

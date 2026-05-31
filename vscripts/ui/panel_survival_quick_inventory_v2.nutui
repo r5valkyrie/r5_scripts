@@ -1805,4 +1805,3 @@ void function OnLevelShutdown()
 		Hud_SetWidth( button, Hud_GetBaseWidth( button ) )
 	}
 }
- 

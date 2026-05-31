@@ -694,4 +694,4 @@ array<entity> function SmartAmmo_GetWeaponTargets( entity weapon )
 	}
 
 	return validTargets
-} 
+}

@@ -581,4 +581,4 @@ ItemFlavor ornull function CharacterQuip_GetCharacterFlavor( ItemFlavor item )
 	Assert( GetGlobalSettingsAsset( ItemFlavor_GetAsset( item ), "parentItemFlavor" ) != "" )
 
 	return GetItemFlavorByAsset( GetGlobalSettingsAsset( ItemFlavor_GetAsset( item ), "parentItemFlavor" ) )
-} 
+}

@@ -2022,4 +2022,3 @@ void function MobileShield_TrackStickyEnt_Thread( entity mobileShield, entity st
 	}
 
 }
- 

@@ -1837,4 +1837,3 @@ void function RefreshCharacterAfterPurchase()
 	RemoveCallback_OnGRXInventoryStateChanged( RefreshCharacterAfterPurchase )
 }
 
- 

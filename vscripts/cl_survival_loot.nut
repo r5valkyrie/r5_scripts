@@ -2794,4 +2794,3 @@ void function DEV_ToggleLootRefs()
 	file.devShowLootRefs = !(file.devShowLootRefs)
 }
 #endif
- 

@@ -463,4 +463,3 @@ void function RemoveUICallback_NXOperationModeChanged( void functionref() callba
 	uiGlobal.nxOperationModeChangedCallbacks.removebyvalue( callbackFunc )
 }
 #endif
- 

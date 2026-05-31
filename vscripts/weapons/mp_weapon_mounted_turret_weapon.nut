@@ -541,4 +541,3 @@ entity function GetPlaceableTurretEntForPlayer( entity player )
 	return null
 }
 
- 

@@ -1087,4 +1087,3 @@ bool function CodeCallback_ObjectPlacementSpecial_CheckInvalidEnt( entity ent )
 
 	unreachable
 }
- 

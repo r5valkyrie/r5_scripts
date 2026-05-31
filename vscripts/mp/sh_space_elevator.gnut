@@ -1346,4 +1346,3 @@ void function CL_SpaceElevatorProgressRUIThread( entity player, entity base )
 }
 
 
- 

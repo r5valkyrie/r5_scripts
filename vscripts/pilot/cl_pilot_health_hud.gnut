@@ -443,4 +443,3 @@ void function PlayShieldOverlayFX( entity player, int particleSystemIdx )
 	EffectSetControlPointVector( fxHandle, 1, shieldColor )
 }
 
- 

@@ -1908,4 +1908,4 @@ bool function GetHideCrosshairHitIndicatorOverride()
 void function SetHideCrosshairHitIndicatorOverride( bool value )
 {
 	file.hideCrosshairHitIndicatorOverride = value
-} 
+}

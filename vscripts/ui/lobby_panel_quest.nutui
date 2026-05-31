@@ -862,4 +862,3 @@ float function UI_Tween_QuadEaseOut( float frac )
 	Assert( frac >= 0.0 && frac <= 1.0 )
 	return -1.0 * frac * (frac - 2)
 }
- 

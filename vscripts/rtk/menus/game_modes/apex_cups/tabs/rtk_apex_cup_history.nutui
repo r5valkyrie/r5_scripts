@@ -414,4 +414,4 @@ RTKSummaryBreakdownRowModel function RTKApexCupHistory_NewStatCardRow( int index
 	newRow.rightText 	= "#CUPS_LEADERBOARD_EMPTY_DATA"
 
 	return newRow
-} 
+}

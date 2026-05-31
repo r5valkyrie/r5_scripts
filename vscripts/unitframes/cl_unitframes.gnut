@@ -1344,4 +1344,4 @@ bool function UnitFrames_ShouldShowTeamName()
 		return true
 
 	return false
-} 
+}

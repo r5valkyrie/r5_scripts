@@ -744,4 +744,3 @@ void function LiveAPI_WriteLog( int category, table<string, var> data )
 
 	LiveAPI_LogRaw( data )
 }
- 

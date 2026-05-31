@@ -1964,4 +1964,3 @@ void function WreckingBall_SetupProjectileKillreplay( entity ball )
 	SetAllowForKillreplayProjectileCam( ball )
 }
 
- 

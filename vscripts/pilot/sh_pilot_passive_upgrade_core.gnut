@@ -4454,4 +4454,3 @@ string function GetUpgradeConsoleHoldUseTextOverride( entity ent )
 	return ""
 }
 
- 

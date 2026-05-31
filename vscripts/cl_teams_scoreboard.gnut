@@ -930,4 +930,4 @@ int function SortPlayersByName( TeamsScoreboardPlayer a, TeamsScoreboardPlayer b
 void function Teams_PopulateLockdownRui( var lockdownRui )
 {
 
-} 
+}

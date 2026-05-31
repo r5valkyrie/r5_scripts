@@ -717,4 +717,3 @@ void function ChangePromoPageToRight()
 	ChangePage( MINIPROMO_NAV_RIGHT, true )
 	thread AutoAdvancePages()
 }
- 

@@ -1213,4 +1213,3 @@ void function UpdateDamageArrows( entity localViewPlayer, entity cockpit )
 		wait(0.0)
 	}
 }
- 

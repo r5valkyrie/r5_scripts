@@ -669,4 +669,3 @@ int function Ranked_GetCombatBonusTotal ( int kill, int assist, int participatio
 }
 
 
- 

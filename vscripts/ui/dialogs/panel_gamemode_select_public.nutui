@@ -1202,4 +1202,3 @@ void function GamemodeSelect_SetFeaturedSlot( string slot, string modeString = "
 	file.featuredSlotString = modeString
 }
 
- 

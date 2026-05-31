@@ -827,4 +827,4 @@ void function RTKCollectionEventPanel_UpdateChaseItem()
 	rtk_struct collectionEventModelStruct = expect rtk_struct( RTKDataModelType_GetStruct( RTK_MODELTYPE_MENUS, "collectionEvent" ) )
 
 	BuildInspectInfo( collectionEventModelStruct, activeCollectionEvent, chaseItem, GRX_IsOfferRestricted() ) 
-} 
+}

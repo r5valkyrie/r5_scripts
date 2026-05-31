@@ -432,4 +432,3 @@ void function OnReasonButton_Activate( var button )
 
 	CloseAllToTargetMenu( file.menu )
 }
- 

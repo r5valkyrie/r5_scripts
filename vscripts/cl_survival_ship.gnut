@@ -691,4 +691,3 @@ void function SURVIVAL_RejoinedSquad( entity ent, entity eventEntity )
 	Obituary_Print_Localized( Localize( "#SURVIVAL_HUD_REJOINED_SQUAD", ent.GetPlayerName() ), GetChatTitleColorForPlayer( ent ) )
 }
 
- 

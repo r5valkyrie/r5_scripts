@@ -605,4 +605,4 @@ bool function InterruptedStopsFinishers()
 float function Interrupt_GetEffectDuration()
 {
 	return file.interruptedDuration
-} 
+}

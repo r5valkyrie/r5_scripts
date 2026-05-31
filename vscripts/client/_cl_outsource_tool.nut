@@ -1633,4 +1633,3 @@ void function ClientCodeCallback_ToggleOutsourceGladCard( bool showGladCard )
 	RuiSetVisible( file.gladCardRui, showGladCard )
 #endif
 }
- 

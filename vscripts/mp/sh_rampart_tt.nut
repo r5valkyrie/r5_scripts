@@ -1574,4 +1574,3 @@ void function ServertoClientCallback_RampartTT_BroadcastSystemPlay( int idxToPla
 	PlayDialogueOnCustomSpeakers( GetAnyAliasIdForName( lineToPlay ), dialogueFlags, file.customQueueIdx )
 }
 
- 

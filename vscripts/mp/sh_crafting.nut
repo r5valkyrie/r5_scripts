@@ -6887,4 +6887,3 @@ bool function PingCrafterUnderAim( entity crafter )
 
 
 
- 

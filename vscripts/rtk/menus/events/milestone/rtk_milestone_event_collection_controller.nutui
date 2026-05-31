@@ -496,4 +496,3 @@ void function ResetCarouselVars()
 	file.nextOfferChangeTime = 0
 	file.offerChangeStartTime = 0
 }
- 

@@ -535,4 +535,3 @@ bool function LobbyPlaylist_IsTournamentMatchmaking()
 	return GetConVarString( "match_roleToken" ) != ""
 }
 
- 

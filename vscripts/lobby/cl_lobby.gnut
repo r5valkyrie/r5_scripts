@@ -420,4 +420,4 @@ void function ToggleHighlightOnRadioPlayProp( bool focus )
 		foreach ( radioPlayProp in file.radioPlayProps )
 			SonarViewModelClearHighlight ( radioPlayProp )
 	}
-} 
+}

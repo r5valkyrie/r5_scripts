@@ -3649,4 +3649,4 @@ int function GetCountForLootType( int lootType )
 	}
 
 	return typeCount
-} 
+}

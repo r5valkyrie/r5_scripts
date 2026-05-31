@@ -1203,4 +1203,3 @@ void function SocialEvent_AddDevEvent( int eventType = eSocialEventType.FRIEND )
 	delaythread( 0.2 ) SocialEventUpdate()
 }
 #endif
- 

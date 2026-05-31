@@ -4007,4 +4007,3 @@ void function MinimapPackage_CryptoDrone( entity ent, var rui )
 
 }
 
- 

@@ -705,4 +705,4 @@ void function PostGameGeneral_SetSkippableWait( bool skippableWaitSkipped = fals
 bool function PartyStatusUnchangedDuringPostGameMenu()
 {
 	return file.wasPartyMember == AmIPartyMember()
-} 
+}

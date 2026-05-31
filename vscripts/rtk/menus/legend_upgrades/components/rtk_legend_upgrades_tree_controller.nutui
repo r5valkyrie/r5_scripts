@@ -449,4 +449,3 @@ bool function RTKMutator_ToolTipActionTextVisible( int input )
 {
 	return input == eTreeUpgradeState.LOCKED || input == eTreeUpgradeState.SELECTABLE
 }
- 

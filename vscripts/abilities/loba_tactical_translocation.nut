@@ -1522,4 +1522,3 @@ bool function GetLobaTacticalAllowDeployWhileZiplining()
 	return GetCurrentPlaylistVarBool( "loba_tactical_allow_deploy_while_ziplining", true )
 }
 
- 

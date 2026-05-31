@@ -565,4 +565,4 @@ void function RemoveBattlepassFromRewards()
 			break
 		}
 	}
-} 
+}

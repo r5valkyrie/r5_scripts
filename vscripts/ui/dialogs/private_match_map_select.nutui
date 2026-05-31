@@ -332,4 +332,4 @@ void function Ranked_OnUserInfoUpdatedInGameModeSelect( string hardware, string 
 		}
 
 	}
-} 
+}

@@ -2933,4 +2933,3 @@ bool function IsDoorLocked( entity door )
 
 
 
- 

@@ -2409,4 +2409,3 @@ void function Artifacts_DEV_RequestEquipSetByIndex( LoadoutEntry meleeSkinSlot, 
 
 
 #endif
- 

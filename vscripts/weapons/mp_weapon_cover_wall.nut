@@ -1844,4 +1844,3 @@ void function MinimapPackage_RampartWall( entity ent, var rui )
 	RuiSetFloat( rui, "iconBlend", 0.0 )
 }
 
- 

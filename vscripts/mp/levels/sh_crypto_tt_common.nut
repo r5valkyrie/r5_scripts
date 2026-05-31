@@ -1983,4 +1983,4 @@ bool function IsCryptoTTEnabled()
 	}
 
 	return false
-} 
+}

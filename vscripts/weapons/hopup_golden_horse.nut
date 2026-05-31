@@ -2038,4 +2038,4 @@ void function GoldenHorseRed_SummonRui_Thread( entity player )
 
 #endif
 
-                          
+                         

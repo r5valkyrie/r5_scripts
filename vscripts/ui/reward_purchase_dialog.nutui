@@ -500,4 +500,4 @@ void function UpdatePurchaseQuantity( int delta )
 
 	RewardPurchaseDialog_UpdateRewards()
 	EmitUISound( "UI_Menu_BattlePass_LevelIncreaseTab" )
-} 
+}

@@ -215,4 +215,3 @@ StatCalcFuncInfo function SetupRankedArenasCareerFindMaxFunc_Int( StatEntry calc
 
 	return info
 }
- 

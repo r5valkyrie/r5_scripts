@@ -941,4 +941,3 @@ void function Announcements_SetOnSetupAnnouncement_RemainingRespawns( var functi
 	file.onSetupAnnouncement_RemainingRespawns = setupAnnouncementCallback
 }
 
- 

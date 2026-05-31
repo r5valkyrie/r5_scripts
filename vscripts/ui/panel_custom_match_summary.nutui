@@ -391,4 +391,4 @@ void function ApplyTeamPanel( var panel, CustomMatch_MatchTeam team )
 		HudElem_SetRuiArg( panel, "playerImage" + i, $"", eRuiArgType.IMAGE )
 		HudElem_SetRuiArg( panel, "playerAlive" + i, false )
 	}
-} 
+}

@@ -422,4 +422,4 @@ void function OnApplyManualColor( int result )
 			UpdateColor( file.manualColor, true, true )
 			SaveCurrentColorToPlayerConfig();
 	}
-} 
+}

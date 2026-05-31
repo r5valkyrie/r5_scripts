@@ -2304,4 +2304,4 @@ const float ICON_HOT_CLUE_DURATION_EXT_DEFAULT = 150.0
 float function Get_IconHotClueDurationExt()
 {
 	return GetCurrentPlaylistVarFloat( "trackingvision_clue_duration_ext", ICON_HOT_CLUE_DURATION_EXT_DEFAULT )
-} 
+}

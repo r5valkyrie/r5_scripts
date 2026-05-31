@@ -968,4 +968,4 @@ float function GetWeaponChargeFrac( entity weapon )
 	if ( weapon.IsChargeWeapon() )
 		return weapon.GetWeaponChargeFraction()
 	return 1.0
-} 
+}
