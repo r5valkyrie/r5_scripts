@@ -48,6 +48,14 @@ void function PassiveSoftLandings_WaitForPlaneJump( entity player )
 	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "passive_softLandings_stop_plane_wait" )
 
+	while ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) && !Survival_HasPlayerJumpedOutOfPlane( player ) )
+	{
+		if ( !player.HasPassive( ePassives.PAS_NOVA ) )
+			return
+
+		WaitFrame()
+	}
+
 	thread PassiveSoftLandings_HardLandingThread( player )
 
 }

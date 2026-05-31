@@ -233,7 +233,6 @@ global function NavMesh_SearchForOpenAreas
 
 // === Gamemode Stubs ===
 global function PIN_ItemGrantedByScript
-global function GetTriggersByClassesInRealms_HullSize
 global function GetTriggersByClassesInRealms
 global function StunWhenInterruptable
 global function IsNessie
@@ -557,7 +556,6 @@ array<vector> function NavMesh_SearchForOpenAreas( int hullType, float idealTile
 }
 
 void function PIN_ItemGrantedByScript( entity player, ... ) { Warning("STUB: PIN_ItemGrantedByScript") }
-array<entity> function GetTriggersByClassesInRealms_HullSize( ... ) { return [] }
 array<entity> function GetTriggersByClassesInRealms( ... ) { return [] }
 void function StunWhenInterruptable( entity ent, var damageInfo ) { Warning( "STUB: StunWhenInterruptable" ) }
 bool function IsNessie( entity ent ) { Warning("STUB: IsNessie"); return false }

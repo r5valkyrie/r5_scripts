@@ -21,6 +21,17 @@
 	// val unk: 120
 	"hud_icon" "rui/hud/ultimate_icons/ultimate_alter"
 	// val unk: 46
+	"OnWeaponActivate" "OnWeaponActivate_ability_transport_portal"
+	// val unk: 186
+	"OnWeaponDeactivate" "OnWeaponDeactivate_ability_transport_portal"
+	// val unk: 169
+	"OnWeaponTossPrep" "OnWeaponTossPrep_ability_transport_portal"
+	// val unk: 10
+	"OnWeaponTossReleaseAnimEvent" "OnWeaponTossReleaseAnimEvent_ability_transport_portal"
+	// val unk: 142
+	"OnProjectileCollision" "OnProjectileCollision_weapon_deployable_noVehicles"
+	// val unk: 165
+	"OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
 	// val unk: 99
 	"viewmodel" "mdl/weapons/alter_teleporter/alter_teleporter_base_v.rmdl"
 	// val unk: 34
@@ -382,5 +393,82 @@
 	"Mods"
 	{
 
+		// child unk: 7
+		"survival_armor_cooldown_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.25"
+
+		}
+
+		// child unk: 8
+		"ability_used_mod"
+		{
+			// val unk: 0
+			//"activitymodifier1p" "ability_used"
+
+		}
+
+		// child unk: 4
+		"upgrade_core_ult_cooldown_reduction"
+		{
+			// val unk: 2
+			"ammo_clip_size" "180"
+			// val unk: 3
+			"ammo_min_to_fire" "180"
+			// val unk: 1
+			"ammo_per_shot" "180"
+			// val unk: 0
+			"ammo_stockpile_max" "180"
+
+		}
+
+		// child unk: 0
+		"ultimates_charge_over_time_disabled"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "0"
+
+		}
+
+		// child unk: 5
+		"copycat_mod"
+		{
+			// val unk: 0
+			"weapon_type_flags" "WPT_SURVIVAL"
+
+		}
+
+		// child unk: 3
+		"survival_armor_cooldown_extra_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.5"
+
+		}
+
+		// child unk: 1
+		"survival_ammo_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 6
+		"ability_in_effect_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 2
+		"survival_ammo_regen_staging"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*5.0"
+
+		}
 	}
 }

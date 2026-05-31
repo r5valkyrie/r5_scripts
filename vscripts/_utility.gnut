@@ -6790,6 +6790,25 @@ float function GetWeaponReloadTime( entity weapon, int currentClipCount )
 	unreachable
 }
 
+void function UnparentAndReparentIfNeededSimple( entity ent )
+{
+	entity entParent = ent.GetParent()
+	Assert( IsValid( entParent ), "Can't call unparent with no parent!" )
+	UnparentAndReparentIfNeeded( ent, entParent )
+}
+
+void function UnparentAndReparentIfNeeded( entity ent, entity rootEnt )
+{
+	if ( IsValid( rootEnt.GetParent() ) )
+	{
+		ent.SetParent( rootEnt.GetParent() )
+	}
+	else
+	{
+		ent.ClearParent()
+	}
+}
+
 void function RegisterDynamicEntCleanupItem_Area_Scriptname( string scriptname, void functionref(entity) func = null )
 {
 	file.dynamicEntCleanupFuncs_Area_Scriptname[ scriptname ] <- func

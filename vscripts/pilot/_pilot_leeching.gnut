@@ -12,15 +12,9 @@ global function IsBeingLeeched
 // 128	~ 10.6 feet
 const float SPECTRE_LEECH_SURROUNDING_RANGE = 384.0
 
-#if MP
 const int GLOBAL_LEECH_LIMIT 		= 100  // per team
 const int MAX_LEECHABLE 			= 100  // per player
 const bool PROPAGATE_ON_LEECH 		= true
-#elseif SP
-const int GLOBAL_LEECH_LIMIT 		= 8
-const int MAX_LEECHABLE 			= 4
-const bool PROPAGATE_ON_LEECH 		= false
-#endif
 
 void function PlayerLeeching_Init()
 {
@@ -106,10 +100,8 @@ void function LeechStartThread( entity player, entity target )
 						TryLeechAbortCallback( target, player ) //Make "failed leech" sounds play here after exiting leech animation
 					}
 				}
-				
-				#if MP
+
 				target.SetUsable()
-				#endif
 				target.SetNoTarget( false )
 				target.SetNoTargetSmartAmmo( false )
 				target.Anim_Stop()
@@ -122,7 +114,6 @@ void function LeechStartThread( entity player, entity target )
 
 				if ( target.ContextAction_IsLeeching() )
 					target.Event_LeechEnd()
-
 			}
 
 			foreach ( knife in e.knives )
@@ -131,7 +122,6 @@ void function LeechStartThread( entity player, entity target )
 				{
 					knife.Destroy()
 				}
-
 			}
 
 			if ( IsValid( player ) && player.p.leechTarget )
@@ -158,18 +148,13 @@ void function LeechStartThread( entity player, entity target )
 	player.p.leechTarget = target
 	player.Event_LeechStart()
 	target.Event_LeechStart()
-	player.ForceStand()
 	HolsterAndDisableWeapons( player )
 
 	float leechTime = svGlobal.defaultPilotLeechTime
-	if ( PlayerHasPassive( player, ePassives.PAS_FAST_HACK ) )
-		leechTime *= 0.85
 
 	e.leechTime = leechTime
 
-	#if MP
 	target.UnsetUsable()
-	#endif
 	target.SetNoTarget( true )
 	target.SetNoTargetSmartAmmo( true )
 
@@ -182,7 +167,7 @@ void function LeechStartThread( entity player, entity target )
 	Remote_CallFunction_Replay( player, "ServerCallback_DataKnifeStartLeech", e.leechTime )
 	waitthread WaittillFinishedLeeching( player, target, e )
 
-	if ( e.success  )
+	if ( e.success )
 	{
 		thread DataKnifeSuccessSounds( player )
 
@@ -276,7 +261,7 @@ void function LeechSurroundingSpectres( vector origin, entity player )
 {
 	array<entity> enemySpectreArray = GetNPCArrayEx( "npc_spectre", TEAM_ANY, player.GetTeam(), player.GetOrigin(), SPECTRE_LEECH_SURROUNDING_RANGE )
 
-	if ( !enemySpectreArray.len() )
+	if ( enemySpectreArray.len() == 0 )
 		return
 
 	// don't resize the array if we should kill the overflow instead
@@ -293,14 +278,6 @@ void function LeechSurroundingSpectres( vector origin, entity player )
 		thread LeechPropagate( spectre, player )
 	}
 
-	if ( enemySpectreArray.len() )
-	{
-		if ( PlayerHasPassive( player, ePassives.PAS_WIFI_SPECTRE ) )
-		{
-			EmitSoundOnEntity( player, "BurnCard_WiFiVirus_TurnSpectre" )
-			printt( "play BurnCard_WiFiVirus_TurnSpectre" )
-		}
-	}
 }
 
 void function LeechPropagate( entity spectre, entity player )
@@ -340,7 +317,7 @@ void function LeechPropagate( entity spectre, entity player )
 
 	spectre.Anim_Stop()
 	waitthread PlayAnim( spectre, "sp_reboot" )
-	spectre.SetVelocity( Vector(0,0,0) )
+	spectre.SetVelocity( <0,0,0> )
 }
 
 void function WaittillFinishedLeeching( entity player, entity target, LeechData e )
@@ -546,12 +523,6 @@ void function PlayerExitLeechingAnim( entity player, entity target, LeechActionI
 		thread FirstPersonSequence( targetSequence, target, ref )
 	}
 	waitthread FirstPersonSequence( playerSequence, player, null )
-
-	//-------------------------------------------------------------
-	// Detach from rodeo if applicable (drones, superspectres, etc)
-	//-------------------------------------------------------------
-	// if ( Rodeo_IsAttached( player ) )
-	// 	player.Signal( "RodeoOver" )
 }
 
 bool function IsBeingLeeched( entity npc )

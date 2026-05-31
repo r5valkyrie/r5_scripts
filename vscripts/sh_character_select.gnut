@@ -37,20 +37,16 @@ global function ClientCallback_UpdateCharacterSelectFocus
 #if UI
 global function UI_InitCharacterSelectMenu
 global function UI_RunCharacterSelect
-
+                            
 global function UI_SetSpecialCharacterMenu
 global function UI_RunSpecialCharacterSelect
-
+      
 global function UI_CloseCharacterSelect
 global function ClientToUI_UpdateSquadMute
 global function UI_ClearUIShelves
-
+                    
 global function ClientToUI_UpdateHighlightedCharacter
-global function CharacterSelectSetRUI
-global function CharacterSelectDeleteRUIEntities
-
-global function ServerToUI_CharacterLockRejected
-
+      
 #endif
 
 global function CharacterSelectSkinSelectionIsEnabled
@@ -58,10 +54,6 @@ global function CharacterSelectSkinSelectionIsEnabled
 #if SERVER || CLIENT
 global function AddCallback_CustomIsCharacterLockedForPlayer
 global function CharacterSelect_CustomIsCharacterLockedForPlayer
-#endif
-
-#if CLIENT
-global function CharacterSelect_EnsureMenuEntsReady
 #endif
 
 global const int NUM_CHARACTER_SELECT_BUTTONS = 50
@@ -174,7 +166,7 @@ global function ClientToServer_OnCharacterReselectMenuClose
                                                    
       
 
-#if CLIENT && DEVELOPER
+#if CLIENT && DEV
 global function Dev_CharacterSelectClearCamera
 global function Dev_CharacterSelectRefreshLighting
 #endif
@@ -453,13 +445,11 @@ void function ClientToUI_UpdateHighlightedCharacter( string charGuid )
 	SettingsAssetGUID characterGuid = ConvertItemFlavorGUIDStringToGUID( charGuid )
 	ItemFlavor character = GetItemFlavorByGUID( characterGuid )
 
-	#if RTK
-		RTKCharacterSkillsModel_SetCharacter( character )
-		RTKLegendUpgradeTree_SetCharacter( character )
-		RTKLegendUpgradeTree_IsInteractable( false )
-		RTKLegendUpgradeTree_SetTitleVisibility( false )
-		RTKLegendUpgradeTree_SetDescriptionVisibility( false )
-	#endif
+	RTKCharacterSkillsModel_SetCharacter( character )
+	RTKLegendUpgradeTree_SetCharacter( character )
+	RTKLegendUpgradeTree_IsInteractable( false )
+	RTKLegendUpgradeTree_SetTitleVisibility( false )
+	RTKLegendUpgradeTree_SetDescriptionVisibility( false )
 }
       
 #endif
@@ -492,15 +482,14 @@ void function CharacterSelectMenu_Init()
 		RegisterSignal( "LocalPlayerPickingSounds" )
 		RegisterSignal( "CloseCharacterSelectMenuAtTime" )
 
-		// NonRewind callbacks — use SDK event-driven system
-		RegisterNetworkedVariableChangeCallback_int( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, void function( entity ent, int oldVal, int newVal, bool changed ) { OnLockStepPickIndexChanged( ent, newVal ) } )
-		RegisterNetworkedVariableChangeCallback_time( CHARACTER_SELECT_NETVAR_LOCK_STEP_START_TIME, void function( entity ent, float oldVal, float newVal, bool changed ) { OnLockStepPickTimeChanged( ent, newVal ) } )
-		RegisterNetworkedVariableChangeCallback_time( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME, void function( entity ent, float oldVal, float newVal, bool changed ) { OnLockStepPickTimeChanged( ent, newVal ) } )
-		RegisterNetworkedVariableChangeCallback_bool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER, void function( entity ent, bool oldVal, bool newVal, bool changed ) { OnPlayerUpdatedCharacterLock( ent, newVal ) } )
-		RegisterNetworkedVariableChangeCallback_time( CHARACTER_SELECT_NETVAR_LOCKED_IN_CHARACTER_TIME, void function( entity ent, float oldVal, float newVal, bool changed ) { OnPlayerUpdatedCharacterLockTime( ent, newVal ) } )
+		RegisterNetVarIntChangeCallback( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, OnLockStepPickIndexChanged )
+		RegisterNetVarTimeChangeCallback( CHARACTER_SELECT_NETVAR_LOCK_STEP_START_TIME, OnLockStepPickTimeChanged )
+		RegisterNetVarTimeChangeCallback( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME, OnLockStepPickTimeChanged )
+		RegisterNetVarBoolChangeCallback( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER, OnPlayerUpdatedCharacterLock )
+		RegisterNetVarTimeChangeCallback( CHARACTER_SELECT_NETVAR_LOCKED_IN_CHARACTER_TIME, OnPlayerUpdatedCharacterLockTime )
 
-		RegisterNetworkedVariableChangeCallback_int( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX, void function( entity ent, int oldVal, int newVal, bool changed ) { OnLockStepPlayerIndexChanged( ent, newVal ) } )
-		RegisterNetVarIntChangeCallback( CHARACTER_SELECT_NETVAR_FOCUS_CHARACTER_GUID, OnPlayerUpdatedCharacterFocus, SNDC_PLAYER_GLOBAL )
+		RegisterNetVarIntChangeCallback( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX, OnLockStepPlayerIndexChanged )
+		RegisterNetVarIntChangeCallback( CHARACTER_SELECT_NETVAR_FOCUS_CHARACTER_GUID, OnPlayerUpdatedCharacterFocus )
 
 		AddCallback_FullUpdate( Client_FullUpdate )
 		AddCallback_UIScriptReset( Client_UIScriptReset )
@@ -602,7 +591,7 @@ bool function CharacterSelect_Menu_ShouldOpen( entity player )
 			return false
 	}
 
-	if( player.ContextAction_IsBusy() ) // ContextAction_IsEmoting() not available
+	if( player.ContextAction_IsEmoting() ) // player.ContextAction_IsBusy()
 		return false
 
 	return true
@@ -854,7 +843,7 @@ void function DoAllSquadsCardsPresentation( string endTime )
 			RuiSetImage( NestedRui, "characterPortrait", CharacterClass_GetGalleryPortrait( character ) )
 			RuiSetString( NestedRui, "characterName", GetDisplayablePlayerNameFromEHI( ToEHI( player ) ) )
 			RuiSetColorAlpha( NestedRui, "elementColor", Squads_GetSquadColor(uiSquadIndex), 1.0 )
-			string platformString = ""  // stub
+			string platformString = CrossplayUserOptIn() ? PlatformIDToIconString( GetHardwareFromName( player.GetHardwareName() ) ) : ""
 			RuiSetString( NestedRui, "platformIcon", platformString )
 		}
 
@@ -918,7 +907,7 @@ void function DoAllSquadsCardsPresentation( string endTime )
 		WaitFrame()
 }
 
-void function DoSquadCardsPresentation( string endTime = "squadPresentationEndTime", bool showTitleFrame = true )
+void function DoSquadCardsPresentation( string endTime, bool showTitleFrame )
 {
 	foreach( func in file.Callbacks_OnCharacterMenuClosed )
 		func()
@@ -1236,7 +1225,7 @@ void function DoMVPSquadCardsPresentation( string endTime )
 		WaitFrame()
 }
 
-void function DoChampionSquadCardsPresentation( string endTime = "championSquadPresentationEndTime" )
+void function DoChampionSquadCardsPresentation( string endTime )
 {
                        
                                                                                                                                                               
@@ -1550,7 +1539,7 @@ void function UI_RunSpecialCharacterSelect( bool isBrowseMode, bool menuEntsExis
 
 	FlashGameWindow()
 	RunClientScript( "OpenCharacterSelectClientSetup", fileForever.menu )
-	//AdvanceMenu( GetMenu( "SpecialCharacterSelectMenu" ) )
+	AdvanceMenu( GetMenu( "SpecialCharacterSelectMenu" ) )
 }
       
 #endif
@@ -1612,8 +1601,8 @@ void function _OpenCharacterSelectMenu( var menu )
 
 	RunUIScript( "CharacterSelectSetRUI")
 
-	if ( Hud_HasChild( menu, "LobbyLegendSkillPerkInfo" ) )
-		fileLevel.upgradeTreeRTK = Hud_GetChild( menu, "LobbyLegendSkillPerkInfo" )
+                    
+	fileLevel.upgradeTreeRTK = Hud_GetChild( menu, "LobbyLegendSkillPerkInfo" )
 	ItemFlavor defaultCharacter = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
 	RunUIScript( "ClientToUI_UpdateHighlightedCharacter", ItemFlavor_GetGUIDString( defaultCharacter ) )
       
@@ -2191,15 +2180,6 @@ void function UI_ClearUIShelves()
 
 }
 
-// Moved to RTK — empty stubs
-void function CharacterSelectSetRUI()
-{
-}
-
-void function CharacterSelectDeleteRUIEntities()
-{
-}
-
 void function UI_OnCharacterSelectMenu_NavBack()
 {
 	// Don't close the menu during loadout selection
@@ -2229,12 +2209,7 @@ void function UI_CloseCharacterSelect()
                             
 	else if ( MenuStack_Contains( fileForever.specialCharacterSelect ) )
 		MenuStack_Remove( fileForever.specialCharacterSelect )
-
-}
-
-void function ServerToUI_CharacterLockRejected()
-{
-	// Character lock was rejected by the server
+      
 }
 #endif //UI
 
@@ -2365,16 +2340,6 @@ void function RestoreCharacterSelectCamera()
 	GetLocalClientPlayer().SetMenuCameraEntity( fileLevel.camera )
 
 	cameraToDestroy.Destroy()
-}
-
-// Ensures menu entity state is initialized (ported from sh_character_select_new.gnut)
-void function CharacterSelect_EnsureMenuEntsReady()
-{
-	if ( fileLevel.menuEntsExist )
-		return
-
-	fileLevel.menuEntsExist = DoMenuEntsExist()
-	fileLevel.lightEntsExist = DoMenuLightsExist()
 }
 
 void function CreateCharacterSelectClientEnts()
@@ -4025,11 +3990,10 @@ void function UpdatePlayerModel( ItemFlavor character, ItemFlavor ornull charact
 		Hud_SetVisible( fileLevel.upgradeTreeRTK, showUpgradeTree )
 	}
 
-	// "hidden" arg doesn't exist on character_select_class_name_plate RUI
-	// if (fileLevel.backgroundRui)
-	// {
-	// 	RuiSetBool ( fileLevel.backgroundRui, "hidden", showUpgradeTree )
-	// }
+	if (fileLevel.backgroundRui)
+	{
+		RuiSetBool ( fileLevel.backgroundRui, "hidden", showUpgradeTree )
+	}
       
 
 	// Name and Quote
@@ -4060,9 +4024,8 @@ void function UpdatePlayerModel( ItemFlavor character, ItemFlavor ornull charact
 		RuiSetString( fileLevel.scrollingBGRui, "footnoteString", Localize( ItemFlavor_GetShortDescription( character ) ) )
 		RuiSetFloat( fileLevel.scrollingBGRui, "startTime", Time() )
 
-		// "is16x10" arg doesn't exist on character_select_scrolling_bg RUI
-		// UISize screenSize = GetScreenSize()
-		// RuiSetBool( fileLevel.scrollingBGRui, "is16x10", GetNearestAspectRatio( screenSize.width, screenSize.height ) == 1.6 )
+		UISize screenSize = GetScreenSize()
+		RuiSetBool( fileLevel.scrollingBGRui, "is16x10", GetNearestAspectRatio( screenSize.width, screenSize.height ) == 1.6 )
       
 	}
 
@@ -5202,7 +5165,7 @@ bool function IsCharacterReselectEnabled()
 	return GetCurrentPlaylistVarBool( "character_reselect_enabled", false )
 }
 
-#if CLIENT && DEVELOPER
+#if CLIENT && DEV
 void function Dev_CharacterSelectClearCamera()
 {
 	vector nodeOrigin = fileLevel.characterNode.GetOrigin() + fileLevel.characterNode.GetForwardVector() * 128 + <0,0,64>
@@ -5255,7 +5218,7 @@ void function Dev_CharacterSelectRefreshLighting_Thread()
 
 	TryUpdateLightingRig( character, characterSkin )
 }
-#endif // CLIENT && DEVELOPER
+#endif // CLIENT && DEV
 
 #if CLIENT
 void function TestBGupdate( int skin )

@@ -83,7 +83,7 @@ global const string LOOT_BIN_DELAY_LOOT_SPAWNING_PLAYLIST_VAR = "survival_lootbi
 global const string LOOT_BIN_MARKER_SCRIPTNAME = "survival_lootbin"
 global const string LOOT_BIN_SCRIPTNAME = "survival_lootbin_spawned"
 
-global const asset LOOT_BIN_MODEL = $"mdl/props/loot_bin/loot_bin_01_animated.rmdl"
+global const asset LOOT_BIN_MODEL = $"mdl/props/loot_bin/loot_bin_01_loba.rmdl"
 
 global const asset LOOT_BIN_OPEN_REGULAR_FX = $"P_LootBin_open"
 global const asset LOOT_BIN_OPEN_SECRET_FX = $"P_LootBin_open_lower"
@@ -139,9 +139,6 @@ struct LootBinServerData
 
 	array<entity> spawnedLootIndexes
 	int numberOfPiecesOfSpawnedLoot
-
-	array<entity> spawnedRegularLootEnts
-	array<entity> spawnedSecretLootEnts
 
 	void functionref( entity, entity ) addItemsToBinOnOpenCallback
 }
@@ -687,10 +684,6 @@ int function LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( entity lootB
 		CopyRealmsFromTo( lootBin, lootEnt )
 		amountOfLootSpawned++
 		spawnedLoot.append( lootEnt )
-		if ( isSecretCompartment )
-			lbsd.spawnedSecretLootEnts.append( lootEnt )
-		else
-			lbsd.spawnedRegularLootEnts.append( lootEnt )
 
 		SetItemSpawnSource( lootEnt, eSpawnSource.LOOTBIN, lootBin )
 		lootEnt.e.isSecretLoot = isSecretCompartment
@@ -720,21 +713,8 @@ int function LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( entity lootB
 		}
 	}
 
-	array<entity> existingLootEnts = LootBin_GetSpawnedLoot( lootBin, (compartment == eLootBinCompartment.REGULAR), (compartment == eLootBinCompartment.SECRET) )
-
-	// Merge: use existingLootEnts for items GetChildren() can see, plus the tracked array for items it may miss
-	// (GetChildren() may not reflect newly SetParent'd entities in the same frame)
-	// Use compartment-specific arrays so regular loot doesn't shift into secret compartment positions and vice versa
-	array<entity> trackedLootEnts = isSecretCompartment ? lbsd.spawnedSecretLootEnts : lbsd.spawnedRegularLootEnts
-	array<entity> lootEnts = []
-	foreach ( entity ent in existingLootEnts )
-	{
-		if ( !trackedLootEnts.contains( ent ) )
-			lootEnts.append( ent )
-	}
-	lootEnts.extend( trackedLootEnts )
-
-	int numberOfLootItems = lootEnts.len()
+	array<entity> lootEnts = LootBin_GetSpawnedLoot( lootBin, (compartment == eLootBinCompartment.REGULAR), (compartment == eLootBinCompartment.SECRET) )
+	int numberOfLootItems = lootEnts.len() + delayedLoot.len()
 	foreach ( int lootIdx, entity lootEnt in lootEnts )
 	{
 		if ( delayLootSpawning && !isSecretCompartment )

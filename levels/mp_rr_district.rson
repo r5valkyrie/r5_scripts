@@ -1,0 +1,12 @@
+When: "SERVER"
+Scripts:
+[
+    mp/levels/mp_rr_district.nut
+    mp/_lasermesh.gnut
+]
+
+When: "SERVER"
+Scripts:
+[
+	mp/levels/mp_rr_district_common.nut
+]

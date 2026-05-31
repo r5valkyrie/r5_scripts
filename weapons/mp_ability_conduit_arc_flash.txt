@@ -31,7 +31,21 @@
 	// val unk: 31
 	"hud_icon" "rui/hud/tactical_icons/tactical_conduit"
 	// val unk: 157
-
+	"OnWeaponOwnerChanged" "OnWeaponOwnerChanged_ability_conduit_arc_flash"
+	// val unk: 67
+	"OnWeaponAttemptOffhandSwitch" "OnWeaponAttemptOffhandSwitch_ability_conduit_arc_flash"
+	// val unk: 121
+	"OnWeaponActivate" "OnWeaponActivate_ability_conduit_arc_flash"
+	// val unk: 139
+	"OnWeaponDeactivate" "OnWeaponDeactivate_ability_conduit_arc_flash"
+	// val unk: 166
+	"OnWeaponReadyToFire" "OnWeaponReadyToFire_ability_conduit_arc_flash"
+	// val unk: 97
+	"OnWeaponPrimaryAttack" "OnWeaponPrimaryAttack_ability_conduit_arc_flash"
+	// val unk: 65
+	"OnWeaponPrimaryAttackAnimEvent" "OnWeaponPrimaryAttackAnimEvent_ability_conduit_arc_flash"
+	// val unk: 92
+	"OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
 	// val unk: 118
 	"viewmodel" "mdl/weapons/conduit_drone/conduit_drone_tactical_v.rmdl"
 	// val unk: 33
@@ -355,5 +369,68 @@
 	"Mods"
 	{
 
+		// child unk: 5
+		"upgrade_tac_one"
+		{
+			// val unk: 3
+			"ammo_default_total" "*2"
+			// val unk: 2
+			"ammo_clip_size" "*2"
+			// val unk: 0
+			"ammo_stockpile_max" "*2"
+			// val unk: 1
+			"ammo_display" "count"
+			// val unk: 4
+			"regen_ammo_refill_start_delay" "0"
+
+		}
+
+		// child unk: 6
+		"copycat_mod"
+		{
+			// val unk: 0
+			//"weapon_type_flags" "WPT_SURVIVAL"
+
+		}
+
+		// child unk: 1
+		"survival_armor_cooldown_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.25"
+
+		}
+
+		// child unk: 2
+		"survival_armor_cooldown_extra_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.5"
+
+		}
+
+		// child unk: 0
+		"survival_ammo_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 3
+		"ability_in_effect_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 4
+		"survival_ammo_regen_staging"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*5.0"
+
+		}
 	}
 }

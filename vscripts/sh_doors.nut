@@ -1905,7 +1905,7 @@ entity function CreateDoorFromData( DoorData data, entity linkDoor = null )
 	newDoor.SetOrigin( data.origin )
 	newDoor.SetAngles( data.angles )
 
-	DebugDrawSphere( data.origin, 2, 255,255,255, true, 5.0 )
+	//DebugDrawSphere( data.origin, 2, 255,255,255, true, 5.0 )
 
 	newDoor.kv.solid = 6
 

@@ -167,9 +167,6 @@ void function CodeCallback_MapSpawn() // original script entry point
 	PrecacheModel( $"mdl/dev/empty_model.rmdl" )
 	PrecacheModel( $"mdl/error.rmdl" ) // model used when no model is provided
 
-	PrecacheModel( $"mdl/techart/mshop/characters/legends/alter/alter_base_v.rmdl" )
-	PrecacheModel( $"mdl/techart/mshop/characters/legends/alter/alter_base_w.rmdl" )
-
 	printl( "Code Script: _mapspawn" )
 
 	Assert( GetCurrentPlaylistGamemodesCount() > 0, "No gamemodes in current playlist!" )

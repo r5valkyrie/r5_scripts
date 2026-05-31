@@ -57,7 +57,7 @@ global function DesertlandsTrain_ShowPath
 #endif // SERVER
 
 #if SERVER || CLIENT
-global const string TRAIN_MOVER_NAME = "desertlands_train_mover"
+const string TRAIN_MOVER_NAME = "desertlands_train_mover"
 const int TRAIN_CAR_COUNT = 6
 #endif
 

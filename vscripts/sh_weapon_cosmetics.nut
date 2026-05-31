@@ -686,11 +686,11 @@ void function WeaponCosmetics_Apply( entity ent, ItemFlavor ornull skinOrNull, I
 		ent.e.skinItemFlavorGUID = ItemFlavor_GetGUID( skin )
 		WeaponCosmetics_ApplyModelAndSkin( ent, skin )
 
-		if( ent.IsWeaponX() )
+		//if( ent.IsWeaponX() )
 		{
 		//	ent.UpdateReactiveEffects()
 			#if SERVER
-			Remote_CallFunction_NonReplay( ent.GetOwner(), "ServerCallback_UpdatePlayerWeaponEffects", ent )
+		//	Remote_CallFunction_NonReplay( ent.GetOwner(), "ServerCallback_UpdatePlayerWeaponEffects", ent )
 			#endif
 		}
 	}
@@ -778,10 +778,10 @@ void function WeaponCosmetics_ApplyModelAndSkin( entity ent, ItemFlavor skin )
        
 
 	ent.SetModel( weaponModel ) // in the world, we want to show the worldmodel
-	ent.SetItemFlavorGUID( ent.e.skinItemFlavorGUID )
+	//ent.SetItemFlavorGUID( ent.e.skinItemFlavorGUID )
 	// ent.SetLegendaryModelIndex *must* be called *after* ent.SetModel(...) as it also makes a SetModel call itself from within Code.
-	if ( ent.GetNetworkedClassName() == "weaponx" )
-		ent.SetLegendaryModelIndex( fileLevel.weaponSkinLegendaryIndexMap[skin] )
+	//if ( ent.GetNetworkedClassName() == "weaponx" )
+	//	ent.SetLegendaryModelIndex( fileLevel.weaponSkinLegendaryIndexMap[skin] )
 
 #elseif CLIENT
 	Assert( ent.IsClientOnly(), ent + " isn't client only" )
@@ -801,6 +801,11 @@ void function WeaponCosmetics_ApplyModelAndSkin( entity ent, ItemFlavor skin )
 	if ( camoIndex >= CAMO_SKIN_COUNT )
 	{
 		Assert ( false, "Tried to set camoIndex of " + string(camoIndex) + " but the maximum index is " + string(CAMO_SKIN_COUNT) )
+		camoIndex = 0
+	}
+	
+	if ( camoIndex == -1 )
+	{
 		camoIndex = 0
 	}
 

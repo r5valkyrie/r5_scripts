@@ -362,11 +362,6 @@ void function GamemodeSurvivalShared_Init()
 
 		Remote_RegisterServerFunction( "ClientCallback_TPPromptGoToMapPoint", "float", -FLT_MAX, FLT_MAX, 32, "float", -FLT_MAX, FLT_MAX, 32 )
 		RegisterNetworkedVariable( "numberOfAirdropRoundsLeft", SNDC_GLOBAL, SNVT_INT, 0 )
-
-		#if CLIENT
-			// Callbacks must be registered during the registration window (before EndRegisteringFunctions)
-			RegisterNetVarFloatChangeCallback( "ringOpacityOverride", Cl_Deathfield_SetOpacityOverride )
-		#endif
 	#endif
 
 	#if SERVER
@@ -1119,8 +1114,8 @@ int function Survival_GetCurrentRank( entity player )
 
 
 
-		//if( GameMode_IsActive( eGameModes.FREEDM ) )
-		//	return FreeDM_GetCurrentRank( player )
+		if( GameMode_IsActive( eGameModes.FREEDM ) )
+			return FreeDM_GetCurrentRank( player )
 
 
 

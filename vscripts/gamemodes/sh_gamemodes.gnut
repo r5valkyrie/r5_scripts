@@ -160,8 +160,8 @@ void function GameModes_Init()
 		#endif
 
 		#if UI
-			//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( CombatRange_PopulateAboutText, COMBATRANGE )
-			//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, COMBATRANGE )
+			AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( CombatRange_PopulateAboutText, COMBATRANGE )
+			AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, COMBATRANGE )
 		#endif // UI
        
 
@@ -197,19 +197,19 @@ void function GameModes_Init()
 	GameModeVariant_Create( eGameModeVariants.SURVIVAL_AIRDROPEXTRA, eGameModes.SURVIVAL )
 	GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_AIRDROPEXTRA, "airdrop_ltm_enabled" )
 	#if CLIENT || SERVER
-		//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_AIRDROPEXTRA, AirdropExtra_Init )
+		GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_AIRDROPEXTRA, AirdropExtra_Init )
 	#endif
 	                         
 		GameModeVariant_Create( eGameModeVariants.SURVIVAL_CAMPFIRE, eGameModes.SURVIVAL )
 		GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_CAMPFIRE, "is_campfire_mode" )
 		#if CLIENT || SERVER
-			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_CAMPFIRE, Campfire_Init )
+			GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_CAMPFIRE, Campfire_Init )
 		#endif
 
 		GameModeVariant_Create( eGameModeVariants.SURVIVAL_EXPLORE, eGameModes.SURVIVAL )
 		GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_EXPLORE, "survival_explore_mode" )
 		#if CLIENT || SERVER
-			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_EXPLORE, ShGameModeExplore_Init )
+			GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_EXPLORE, ShGameModeExplore_Init )
 		#endif
        
 
@@ -228,19 +228,19 @@ void function GameModes_Init()
 		GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_GOLDEN_HORSE, "is_golden_horse" )
 		GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_GOLDEN_HORSE, GAMEMODE_GOLDEN_HORSE )
 		#if CLIENT || SERVER
-			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_GOLDEN_HORSE, GoldenHorse_Init )
+			GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_GOLDEN_HORSE, GoldenHorse_Init )
 		#endif
 
 		#if UI
-			//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( GoldenHorse_PopulateAboutText, GAMEMODE_GOLDEN_HORSE )
-			//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_GOLDEN_HORSE )
+			AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( GoldenHorse_PopulateAboutText, GAMEMODE_GOLDEN_HORSE )
+			AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_GOLDEN_HORSE )
 		#endif
 
 
 	GameModeVariant_Create( eGameModeVariants.SURVIVAL_RECRUIT, eGameModes.SURVIVAL )
 	GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_RECRUIT, "recruit_mode" )
 	#if SERVER
-		//GameModeVariant_AddServerInit( eGameModeVariants.SURVIVAL_RECRUIT, RecruitMode_Init )
+		GameModeVariant_AddServerInit( eGameModeVariants.SURVIVAL_RECRUIT, RecruitMode_Init )
 	#endif
 
 	                            
@@ -248,13 +248,13 @@ void function GameModes_Init()
 		GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_SHADOW_ARMY, "is_shadow_army_gamemode" )
 		GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_SHADOW_ARMY, GAMEMODE_SHADOW_ARMY )
 		#if CLIENT || SERVER
-			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_SHADOW_ARMY, ShadowArmy_Init )
-			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_SHADOW_ARMY, ShadowArmy_RespawnBeacon_Init )
+			GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_SHADOW_ARMY, ShadowArmy_Init )
+			GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_SHADOW_ARMY, ShadowArmy_RespawnBeacon_Init )
 		#endif
 
 		#if UI
-			//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( ShadowArmy_PopulateAboutText, GAMEMODE_SHADOW_ARMY )
-			//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_SHADOW_ARMY )
+			AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( ShadowArmy_PopulateAboutText, GAMEMODE_SHADOW_ARMY )
+			AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_SHADOW_ARMY )
 		#endif
        
 
@@ -264,13 +264,13 @@ void function GameModes_Init()
 			GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_SHADOW_ROYALE, "shadow_royale_mode" )
 			GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_SHADOW_ROYALE, GAMEMODE_SHADOW_ROYALE )
 			#if CLIENT || SERVER
-				//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_SHADOW_ROYALE, ShGameModeShadowRoyale_Init )
-				//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_SHADOW_ROYALE, ShPlayerPet_Init )
+				GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_SHADOW_ROYALE, ShGameModeShadowRoyale_Init )
+				GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_SHADOW_ROYALE, ShPlayerPet_Init )
 			#endif
 
 			#if UI
-				//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( ShadowRoyale_PopulateAboutText, GAMEMODE_SHADOW_ROYALE )
-				//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_SHADOW_ROYALE )
+				AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( ShadowRoyale_PopulateAboutText, GAMEMODE_SHADOW_ROYALE )
+				AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_SHADOW_ROYALE )
 			#endif
 
 
@@ -278,12 +278,12 @@ void function GameModes_Init()
 	GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_HARDCORE, "is_hardcore_mode" )
 	GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_HARDCORE, GAMEMODE_SURVIVAL_HARDCORE )
 	#if CLIENT || SERVER
-		//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_HARDCORE, Sh_Survival_Hardcore_Init )
+		GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_HARDCORE, Sh_Survival_Hardcore_Init )
 	#endif
 
 	#if UI
-		//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Survival_Hardcore_PopulateAboutText, GAMEMODE_SURVIVAL_HARDCORE )
-		//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_SURVIVAL_HARDCORE )
+		AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Survival_Hardcore_PopulateAboutText, GAMEMODE_SURVIVAL_HARDCORE )
+		AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_SURVIVAL_HARDCORE )
 	#endif
 
 	                         
@@ -291,12 +291,12 @@ void function GameModes_Init()
 		GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_HEATWAVE, "is_heatwave_mode" )
 		GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_HEATWAVE, GAMEMODE_HEATWAVE )
 		#if CLIENT || SERVER
-			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_HARDCORE, Sh_Survival_Heatwave_Init )
+			GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_HARDCORE, Sh_Survival_Heatwave_Init )
 		#endif
 
 		#if UI
-			//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Survival_Heatwave_PopulateAboutText, GAMEMODE_HEATWAVE )
-			//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_HEATWAVE )
+			AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Survival_Heatwave_PopulateAboutText, GAMEMODE_HEATWAVE )
+			AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_HEATWAVE )
 		#endif
        
 
@@ -306,12 +306,12 @@ void function GameModes_Init()
 		GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_BATTLE_RUSH, "is_gamemode_battle_rush" )
 		GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_BATTLE_RUSH, GAMEMODE_QUICK_MATCH )
 		#if CLIENT || SERVER
-			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_BATTLE_RUSH, Sh_Survival_BattleRush_Init )
+			GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_BATTLE_RUSH, Sh_Survival_BattleRush_Init )
 		#endif
 
 		#if UI
-			//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Survival_Quickmatch_PopulateAboutText, GAMEMODE_QUICK_MATCH )
-			//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_QUICK_MATCH )
+			AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Survival_Quickmatch_PopulateAboutText, GAMEMODE_QUICK_MATCH )
+			AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_QUICK_MATCH )
 		#endif
                                    
 
@@ -320,15 +320,15 @@ void function GameModes_Init()
 		GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_VALENTINES_S15, "is_valentines_s15" )
 		GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_VALENTINES_S15, GAMEMODE_DATE_NIGHT )
 		#if CLIENT || SERVER
-			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_VALENTINES_S15, Valentines_S15_Mode_Init )
+			GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_VALENTINES_S15, Valentines_S15_Mode_Init )
 		#endif
 		#if CLIENT
-			//GameModeVariant_AddClientInit( eGameModeVariants.SURVIVAL_VALENTINES_S15, ClValentines_Init )
+			GameModeVariant_AddClientInit( eGameModeVariants.SURVIVAL_VALENTINES_S15, ClValentines_Init )
 		#endif
 
 		#if UI
-			//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Date_Night_PopulateAboutText, GAMEMODE_DATE_NIGHT )
-			//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_DATE_NIGHT )
+			AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Date_Night_PopulateAboutText, GAMEMODE_DATE_NIGHT )
+			AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_DATE_NIGHT )
 		#endif
 
 	                      
@@ -336,11 +336,11 @@ void function GameModes_Init()
 		GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_WINTEREXPRESS, "is_winter_express_game" )
 		GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_WINTEREXPRESS, GAMEMODE_WINTER_EXPRESS )
 		#if CLIENT || SERVER
-			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_WINTEREXPRESS, WinterExpress_Init )
+			GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_WINTEREXPRESS, WinterExpress_Init )
 		#endif
 		#if UI
-			//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( WinterExpress_PopulateAboutText, GAMEMODE_WINTER_EXPRESS )
-			//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_WINTER_EXPRESS )
+			AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( WinterExpress_PopulateAboutText, GAMEMODE_WINTER_EXPRESS )
+			AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_WINTER_EXPRESS )
 		#endif
        
 
@@ -349,17 +349,17 @@ void function GameModes_Init()
 		GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_THE_HUNT, "bounty_hunt_enabled" )
 		GameModeVariant_SetDevName( eGameModeVariants.SURVIVAL_THE_HUNT, GAMEMODE_THE_HUNT_20 )
 		#if CLIENT || SERVER
-			//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_THE_HUNT, BountyHunt_Init )
+			GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_THE_HUNT, BountyHunt_Init )
 		#endif
 		#if UI
-			//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( BeastWithIn_20_0_The_Hunt_PopulateAboutText, GAMEMODE_THE_HUNT_20 )
-			//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_THE_HUNT_20 )
+			AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( BeastWithIn_20_0_The_Hunt_PopulateAboutText, GAMEMODE_THE_HUNT_20 )
+			AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_THE_HUNT_20 )
 		#endif
        
 
 #if UI
-	//AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Ranked_PopulateAboutText, GAMEMODE_SURVIVAL_RANKED )
-	//AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_SURVIVAL_RANKED )
+	AddCallback_UI_FeatureTutorialDialog_PopulateTabsForMode( Ranked_PopulateAboutText, GAMEMODE_SURVIVAL_RANKED )
+	AddCallback_UI_FeatureTutorialDialog_SetTitle( FeatureTutorial_GetGameModeName, GAMEMODE_SURVIVAL_RANKED )
 #endif
 
 
@@ -384,7 +384,7 @@ void function GameModes_Init()
 	GameModeVariant_SetIcon( eGameModeVariants.SURVIVAL_STRIKEOUT, $"rui/menu/gamemode_emblem/emblem_three_strikes" )
 	GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_STRIKEOUT, "is_gamemode_strikeout" )
 	#if CLIENT || SERVER
-		//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_STRIKEOUT, Sh_Survival_Strikeout_Init )
+		GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_STRIKEOUT, Sh_Survival_Strikeout_Init )
 	#endif
 
 	// These are used for the About Screen
@@ -415,7 +415,7 @@ void function GameModes_Init()
 	GameModeVariant_SetName( eGameModeVariants.SURVIVAL_SOLOS, "#SURVIVAL_MODE_SOLOS" )
 	GameModeVariant_SetPlaylistFlag( eGameModeVariants.SURVIVAL_SOLOS, "is_gamemode_solos" )
 	#if CLIENT || SERVER
-		//GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_SOLOS, Sh_Survival_Solos_Init )
+		GameModeVariant_AddSharedInit( eGameModeVariants.SURVIVAL_SOLOS, Sh_Survival_Solos_Init )
 	#endif
 
 	// These are used for the About Screen
@@ -456,26 +456,26 @@ void function GameModes_Init()
 
 	GameMode_Create( eGameModes.FREELANCE, GAMEMODE_FREELANCE )
 	#if SERVER
-		//GameMode_AddServerInit( eGameModes.FREELANCE, ServerInit_Freelance )
+		GameMode_AddServerInit( eGameModes.FREELANCE, ServerInit_Freelance )
 		//GameMode_SetPilotSpawnpointsRatingFunc( gameMode, Freelance_RateSpawnpoints )
 	#endif
 	#if CLIENT
-		//GameMode_AddClientInit( eGameModes.FREELANCE, ClientInit_Freelance )
+		GameMode_AddClientInit( eGameModes.FREELANCE, ClientInit_Freelance )
 		//GameMode_SetScoreboardSetupFunc( gameMode, Fullmap_SetupScoreboard )
 	#endif
 	#if !UI
-		//GameMode_AddSharedInit( eGameModes.FREELANCE, SharedInit_Freelance )
+		GameMode_AddSharedInit( eGameModes.FREELANCE, SharedInit_Freelance )
 	#endif
 
                        
 	GameMode_Create( eGameModes.FREEDM, GAMEMODE_FREEDM )
 	#if SERVER
-		//GameMode_AddServerInit( eGameModes.FREEDM, FreeDM_GamemodeInitServer )
+		GameMode_AddServerInit( eGameModes.FREEDM, FreeDM_GamemodeInitServer )
 	#elseif CLIENT
-		//GameMode_AddClientInit( eGameModes.FREEDM, FreeDM_GamemodeInitClient )
+		GameMode_AddClientInit( eGameModes.FREEDM, FreeDM_GamemodeInitClient )
 	#endif
 	#if !UI
-		//GameMode_AddSharedInit( eGameModes.FREEDM, FreeDM_GamemodeInitShared )
+		GameMode_AddSharedInit( eGameModes.FREEDM, FreeDM_GamemodeInitShared )
 	#endif
 
 	// not a fan of this setup, can we have this playlist-driven? or at least handled by GameModeVariant_* stuff
@@ -490,7 +490,7 @@ void function GameModes_Init()
 		GameModeVariant_SetPlaylistFlag( eGameModeVariants.FREEDM_TDM, "freedm_tdm_active" )
 		GameModeVariant_SetDevName( eGameModeVariants.FREEDM_TDM, TEAM_DEATHMATCH )
 		#if CLIENT || SERVER
-			//GameModeVariant_AddSharedInit( eGameModeVariants.FREEDM_TDM, TDM_Init )
+			GameModeVariant_AddSharedInit( eGameModeVariants.FREEDM_TDM, TDM_Init )
 		#endif
 
 		#if UI
@@ -511,7 +511,7 @@ void function GameModes_Init()
 		GameModeVariant_Create( eGameModeVariants.FREEDM_GUNGAME, eGameModes.FREEDM )
 		GameModeVariant_SetPlaylistFlag( eGameModeVariants.FREEDM_GUNGAME, "freedm_gun_game_active" )
 		#if CLIENT || SERVER
-			//GameModeVariant_AddSharedInit( eGameModeVariants.FREEDM_GUNGAME, GunGame_Init )
+			GameModeVariant_AddSharedInit( eGameModeVariants.FREEDM_GUNGAME, GunGame_Init )
 		#endif
        
 
@@ -520,7 +520,7 @@ void function GameModes_Init()
 		GameModeVariant_SetPlaylistFlag( eGameModeVariants.FREEDM_LOCKDOWN, "freedm_treasure_hunt_active" )
 		GameModeVariant_SetDevName( eGameModeVariants.FREEDM_TDM, GAMEMODE_TREASURE_HUNT )
 		#if CLIENT || SERVER
-			//GameModeVariant_AddSharedInit( eGameModeVariants.FREEDM_LOCKDOWN, TreasureHunt_Init )
+			GameModeVariant_AddSharedInit( eGameModeVariants.FREEDM_LOCKDOWN, TreasureHunt_Init )
 		#endif
 
 		#if UI

@@ -569,7 +569,7 @@ float function ScoreTarget( entity player, entity target )
 
                                                                          
      
-	int overshieldAmt = 0//target.GetTempshieldHealth()
+	int overshieldAmt = target.GetTempshieldHealth()
       
 
 	scoreDebugString = "Total: " + score + "\n" + scoreDebugString + "\nOvershield: " + overshieldAmt
@@ -592,7 +592,7 @@ void function SetPlayerTempshieldAmt( entity player, int value )
 	Assert( value <= MAX_TEMPSHIELD )
 	Assert( value >= 0 )
 
-	//player.SetTempshieldHealth( value )
+	player.SetTempshieldHealth( value )
 }
 
 
@@ -761,7 +761,7 @@ void function TempshieldRegen_Thread( entity player, entity target , float multi
 			steadyFinishingSoundTime = FLT_MAX;
 		}
 
-		int currentTempshield = 0//target.GetTempshieldHealth()
+		int currentTempshield = target.GetTempshieldHealth()
 
 		if ( currentTempshield == 0 )
 		{
@@ -797,7 +797,7 @@ void function TempshieldRegen_Thread( entity player, entity target , float multi
 	{
 		const float DECAY_INTERVAL = 0.1
 
-		int currentTempshield = 0//target.GetTempshieldHealth()
+		int currentTempshield = target.GetTempshieldHealth()
 		int currentMissingShields = target.GetShieldHealthMax() - target.GetShieldHealth()
 		int newTempshield     = maxint(currentTempshield-ARC_FLASH_DECAY_RATE, 0)
 		newTempshield      = minint( newTempshield, currentMissingShields )
@@ -917,7 +917,7 @@ void function TempshieldRegen_RegenPhase_Thread( entity player, entity target, f
 
 			float timeSinceStart = Time() - startTime
 
-			int currentTempShieldAmt         = 0//target.GetTempshieldHealth()
+			int currentTempShieldAmt         = target.GetTempshieldHealth()
 			int currentMissingShields        = target.GetShieldHealthMax() - target.GetShieldHealth()
 			int baseTempShieldToAddThisFrame = int(TUNING_ArcFlashRegenPerFrame * multiplier)
 
@@ -994,7 +994,7 @@ void function TempshieldRegen_RegenPhase_Thread( entity player, entity target, f
 			int expectedAdded    = int(accumValidRegenTime * expectedRegenRate)
 			int deficit          = expectedAdded - totalBaseTempShieldAdded
 			printt( "Conduit Arc Flash, accumTime " + accumValidRegenTime + " expected " + expectedAdded + " actual " + totalBaseTempShieldAdded + " - Deficit " + deficit )//+ " - tempShieldsMadeup " + DEV_tempShieldsMadeup )
-			printt( "Conduit Arc Flash Ending Regen phase at time " + Time() + " actual time regening " + timeSinceStart + ", should be: " + duration + " Player current temp: " + 0 )
+			printt( "Conduit Arc Flash Ending Regen phase at time " + Time() + " actual time regening " + timeSinceStart + ", should be: " + duration + " Player current temp: " + player.GetTempshieldHealth() )
 
 			if ( expectedAdded != totalBaseTempShieldAdded )
 			{
@@ -1139,7 +1139,7 @@ void function DEV_VerifyTempShieldAmount( entity player )
 {
 	if ( ARC_FLASH_DEBUG )
 	{
-		int currentTempshield = 0//player.GetTempshieldHealth()
+		int currentTempshield = player.GetTempshieldHealth()
 		int totalShields =  currentTempshield + player.GetShieldHealth()
 		int arcFlashState = GetArcFlashState( player )
 		string arcFlashStateString = sArcFlashStateStrings[ arcFlashState ]

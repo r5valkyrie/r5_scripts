@@ -2249,7 +2249,7 @@ bool function PlayerHasUsedHarvester( entity player, entity harvester )
 		indexToCheck--
 	}
 
-	return false //GetUseStateByIndex not in S3
+	return harvester.GetUseStateByIndex( indexToCheck )
 }
 
 #if SERVER
@@ -2274,7 +2274,7 @@ void function SetHarvesterAsUsedByPlayer( entity player, entity harvester )
 		indexToSet--
 	}
 
-	//harvester.SetUseStateByIndex( indexToSet, true ) //not in S3
+	harvester.SetUseStateByIndex( indexToSet, true )
 }
 #endif
 

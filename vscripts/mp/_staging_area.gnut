@@ -262,12 +262,10 @@ void function Staging_Area_Init()
 		RegisterSignal( "fr_ammo_respawn_now" )
         
 
-		// S3: Nessie easter egg system not deployed
-			// if ( !IsNessieDisabled( NessieSkinIndexes.RED_NESSIE ) )
-			// {
-			// 	file.redNessieWeaponRefs.extend( FR_Nessie_GetRedNessieWeapons() )
-			// }
-
+			if ( !IsNessieDisabled( NessieSkinIndexes.RED_NESSIE ) )
+			{
+				file.redNessieWeaponRefs.extend( FR_Nessie_GetRedNessieWeapons() )
+			}
 	}
 }
 
@@ -1596,7 +1594,6 @@ array< LootData > function LootRefs_To_LootDatas( array< string > lootRefs )
 void function TurnOnStagingEffectsDelayed()
 {
 	wait 0.1 // Have to wait here so effects ents can be listening for the flag?
-	return
 	if ( GetGameState() == eGameState.WaitingForPlayers )
 		FlagSet( "staging_fx_enabled" )
 }
@@ -1750,7 +1747,7 @@ void function Survival_ClearStagingAreaSettings( entity player )
 
 	Survival_SetInventoryEnabled( player, true )
 	ResetPlayerInventory( player )
-	// CharacterLoadouts_GiveCurrentCharacterLoadoutToPlayer( player, GetCurrentPlaylistVarBool( "dev_loadout_bypass_match_state", false )  ) // S3: character loadout system not deployed
+	CharacterLoadouts_GiveCurrentCharacterLoadoutToPlayer( player, GetCurrentPlaylistVarBool( "dev_loadout_bypass_match_state", false )  )
 
 	player.RemoveFromAllRealms()
 	PutPlayerInDefaultRealms( player )
@@ -2732,11 +2729,10 @@ entity function CreateGunRangeTarget( entity ent, int type, int realm, bool auto
 
 	AddEntityCallback_OnPostDamaged( targetGeo, StagingAreaEntity_OnDamaged )
                   
-	// S3: Nessie easter egg not deployed
-	// if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
-	// {
-	// 	AddEntityCallback_OnPostDamaged( targetGeo, FR_Nessie_OnDamagedEntity )
-	// }
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+	{
+		AddEntityCallback_OnPostDamaged( targetGeo, FR_Nessie_OnDamagedEntity )
+	}
 
 	targetGeo.e.preventStickyEnts = true
 
@@ -2800,11 +2796,10 @@ entity function CreateSkinnedGunRangeTarget( entity ent, int type, int realm, bo
 	AddStagingCleanupEnt( targetGeo )
 
 	AddEntityCallback_OnPostDamaged( targetGeo, StagingAreaEntity_OnDamaged )
-	// S3: Nessie easter egg not deployed
-		// if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
-		// {
-		// 	AddEntityCallback_OnPostDamaged( targetGeo, FR_Nessie_OnDamagedEntity )
-		// }
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+		{
+			AddEntityCallback_OnPostDamaged( targetGeo, FR_Nessie_OnDamagedEntity )
+		}
 
 	thread GunRangeTargetSkinnedThink( targetGeo )
 
@@ -3445,8 +3440,8 @@ void function Staging_SpawnChargePylons_Thread()
 		WaitFrame()
 	}
 
-	foreach( ChargePylonData pylonToDestroy in allChargePylonInstances )
-		DestroyChargePylon( pylonToDestroy )
+	//foreach( ChargePylonData pylonToDestroy in allChargePylonInstances )
+	//	DestroyChargePylon( pylonToDestroy )
 }
 
 void function Staging_CreateChargePylonsForRealm( array< ChargePylonData > allChargePylonInstancesInLevel, int realm )
@@ -3604,7 +3599,7 @@ void function OnPlayerLootPickedUp( entity player, entity ent, string ref, int u
 
 			switch( deathBoxType )
 			{
-				case "prop_death_box":
+				case "prop_loot_grabber":
 					lootSrc = eFRLootSource.BLACKMARKET
 					lootSrcStr = "BLACKMARKET"
 					break
@@ -3774,7 +3769,7 @@ void function StagingCleanup()
 	AddStagingCleanupEnts( GetEntArrayByScriptName( "shooting_range_rotating_target" ) )
 	AddStagingCleanupEnts( GetEntArrayByScriptName( "shooting_range_folding_target" ) )
 
-	// Loot_RemoveCallback_OnPlayerLootPickup( OnPlayerLootPickedUp ) // S3: loot callback system not available
+	Loot_RemoveCallback_OnPlayerLootPickup( OnPlayerLootPickedUp )
 
 	foreach( entity ent in file.stagingCleanupEnts )
 	{
@@ -4119,7 +4114,7 @@ void function DEV_Record_Training_Bloodhound_Hillslide()
 	DebugDrawSphere( endPos, 25, 0, 255, 0, true, 100 )
 
 	int length = 10
-	// thread AnimRecordPlayer_Thread( length, name ) // S3: dev utility not available
+	thread AnimRecordPlayer_Thread( length, name )
 }
 
 void function DEV_Record_Training_Pathfinder_Bye()
@@ -4138,7 +4133,7 @@ void function DEV_Record_Training_Pathfinder_Bye()
 	player.SetAngles( startAng )
 
 	int length = 12
-	// thread AnimRecordPlayer_Thread( 12, name ) // S3: dev utility not available
+	thread AnimRecordPlayer_Thread( 12, name )
 }
 
                          

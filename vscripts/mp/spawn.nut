@@ -208,6 +208,33 @@ void function UseSpawnZoneRatingMultipliers()
 void function EntitiesDidLoad()
 {
 	InitSpawnsVisibleToTurret()
+
+	//#if DEVELOPER
+	//	WaitEndFrame()
+	//
+	//	if ( !level.isTestmap && Is2TeamPvPGame() )
+	//	{
+	//		array<entity> spawnpoints = SpawnPoints_GetPilotStart( TEAM_IMC )
+	//		if ( spawnpoints.len() == 0 )
+	//			Warning( "Team " + TEAM_IMC + " has no Pilot startspawns for " + GAMETYPE )
+	//
+	//		spawnpoints = SpawnPoints_GetPilotStart( TEAM_MILITIA )
+	//		if ( spawnpoints.len() == 0 )
+	//			Warning( "Team " + TEAM_MILITIA + " has no Pilot startspawns for " + GAMETYPE )
+	//
+	//		//if ( Riff_TitanAvailability() != eTitanAvailability.Never )
+	//		//{
+	//		//	spawnpoints = SpawnPoints_GetTitanStart( TEAM_IMC )
+	//		//	if ( spawnpoints.len() == 0 )
+	//		//		Warning( "Team " + TEAM_IMC + " has no Titan startspawns for " + GAMETYPE )
+	//		//
+	//		//	spawnpoints = SpawnPoints_GetTitanStart( TEAM_MILITIA )
+	//		//	if ( spawnpoints.len() == 0 )
+	//		//		Warning( "Team " + TEAM_MILITIA + " has no Titan startspawns for " + GAMETYPE )
+	//		//}
+	//	}
+	//#endif // DEV
+
 	InitSpawnZones()
 
 	printt( "Pilot spawnpoints rating func: " + string( file.spawnpointRatingFunc ) )
@@ -217,6 +244,12 @@ void function InitSpawnpoints( entity spawnpoint )
 {
 	if ( GameModeRemove( spawnpoint ) )
 		return
+
+	if ( GetRespawnStyle() == eRespawnStyle.SPAWN_GROUP_SKYDIVE && spawnpoint.e.isGroupSkydiveSpawnPoint == false )
+	{
+		spawnpoint.Destroy()
+		return
+	}
 
 	spawnpoint.sp.enabled = true
 	spawnpoint.sp.lastUsedTime = -9999.0
@@ -271,6 +304,7 @@ void function RemoveAllOtherSpawnpoints( array<entity> allowedSpawnpoints )
 	{
 		if( !allowedSpawnpoints.contains( svSpawnGlobals.allNormalAndStartSpawnpoints[i] ) )
 		{
+			//TODO Justin Moon: figure out why sometimes these are invalid
 			if ( IsValid( svSpawnGlobals.allNormalAndStartSpawnpoints[i] ) )
 				svSpawnGlobals.allNormalAndStartSpawnpoints[i].Destroy()
 			svSpawnGlobals.allNormalAndStartSpawnpoints.remove( i )
@@ -333,6 +367,8 @@ void function InitSpawnsVisibleToTurret()
 			spawnpoint.sp.visibleToTurret.append( turret )
 		}
 	}
+
+	//thread DebugSpawnsVisibleToTurret()
 }
 
 #if DEVELOPER
@@ -380,9 +416,11 @@ void function RateSpawnPointList( entity player, array<entity> spawnpoints )
 
 entity function NoSpawnpointsFallback()
 {
+	//PrintHorribleWarning( "WARNING: THIS MAP (" + GetMapName() + ") HAS NO SPAWNPOINTS\nSpawning at a random info_spawnpoint_titan" )
 	array<entity> spawnpoints = SpawnPoints_GetTitan()
 	if ( spawnpoints.len() == 0 )
 	{
+		//printt( "Also, no info_spawnpoint_titan." )
 		array<entity> start = GetEntArrayByClass_Expensive( "info_player_start" )
 		Assert( start.len() > 0, "No info_player_start entities exist, Failed to find any valid Spawnpoints" )
 
@@ -444,7 +482,10 @@ entity function FindSpawnPoint( entity player )
 
 	spawnpoint.sp.lastUsedTime = Time()
 
-	player.SetLastSpawnPoint( spawnpoint )
+	//if ( Flag( "DisplaySpawnData" ) == false ) //For repro spawn purposes, don't set last spawnpoint
+		player.SetLastSpawnPoint( spawnpoint )
+
+	//printt( "chosen", spawnpoint.GetOrigin() )
 
 	return spawnpoint
 }
@@ -456,14 +497,20 @@ entity function FindStartSpawnPoint( entity player )
 	int team = player.GetTeam()
 	array< entity > spawnpoints
 
-	// Alliance start spawns not available (SpawnPoints_GetPilotAllianceStart)
-	// AllianceProximity_IsUsingAlliances() returns false, so this path is never taken
+	if ( AllianceProximity_IsUsingAlliances() )
+	{
+		//int alliance = AllianceProximity_GetAllianceFromTeam( team )
+		//spawnpoints = SpawnPoints_GetPilotAllianceStart( alliance )
+	}
 
-	// fallback to teams
+	// not in alliance, or no spawnpoint for that alliance found, fallback to teams
 	if ( spawnpoints.len() == 0 )
 	{
 		if ( Is2TeamPvPGame() || IsMultiTeamPvPGame() )
 		{
+			// setting the teamnumber in leveled doesn't seem to affect GetTeamNumber in code so these fucntions don't actually filter by team correctly
+			// the GetFirstValidSpawnpoint will filter by team though so it works out
+			// -- Please remove comment if this ever gets fixed
 			spawnpoints = SpawnPoints_GetPilotStart( team )
 		}
 		else
@@ -472,8 +519,12 @@ entity function FindStartSpawnPoint( entity player )
 		}
 	}
 
+	//printt( "FindStartSpawnPoint - spawnpoints.len(): " + spawnpoints.len() )
+	//printt( "FindStartSpawnPoint - team #" + team )
+
 	if ( spawnpoints.len() == 0 )
 	{
+		//PrintHorribleWarning( "WARNING: THIS MAP (" + GetMapName() + ") HAS NO STARTSPAWNPOINTS FOR TEAM " + team )
 		return FindSpawnPoint( player )
 	}
 
@@ -560,11 +611,13 @@ void function RateSpawnpoints_Directional( int checkClass, array<entity> spawnPo
 		float additionalRating = 0.0
 		vector vecToEnemies = Normalize( enemyOrigin - spawnPoint.GetOrigin() )
 		additionalRating = vecToEnemies.Dot( spawnPoint.GetForwardVector() ) * distMultiplier
+		//printt( additionalRating )
 
 		float rating = spawnPoint.CalculateRating( checkClass, teamId, additionalRating, 0.0 )
 #if SPAWNING_DEBUG
 		spawnPoint.e.spawnPointData.lastRatingData = spawnPoint.GetRatingData()
 		spawnPoint.e.spawnPointData.lastRatingData.rating <- rating
+		//spawnPoint.e.spawnPointData.lastRatingData.enemyVis <- spawnPoint.IsVisibleToEnemies( teamId ) // expensive!
 #endif
 	}
 }
@@ -574,6 +627,9 @@ void function RateSpawnpoints_Generic( int checkclass, array<entity> spawnpoints
 	foreach ( spawnpoint in spawnpoints )
 	{
 		float rating = spawnpoint.CalculateRating( checkclass, team, 0.0, 0.0 )
+
+		//if ( IsHighPerfDevServer() )
+		//	AddSpawnPointDebugRatingData( spawnpoint, team, rating )
 	}
 }
 

@@ -1929,7 +1929,7 @@ void function OnUsed_UpgradeCoreConsole( entity beacon, entity player, int useFl
 		return
 
 	int team = player.GetTeam()
-	//beacon.SetUseStateByIndex( team, true )
+	beacon.SetUseStateByIndex( team, true )
 	UpgradeCore_GrantTeamXp( player, tunings.evoHarvesterXp, eUpgradeXPActions.XPSTATION )
 	entity minimapEnt = beacon.GetLinkEnt()
 	if( IsValid( minimapEnt ) )
@@ -3281,7 +3281,7 @@ bool function UpgradeCore_CanUseConsole( entity player, entity console, bool che
 	if( checkTime && Time() < GetGlobalNetTime( UPGRADE_CORE_HARVESTER_ACTIVATION_TIME ) )
 		return false
 
-	return true //GetUseState not in S3
+	return !console.GetUseStateByIndex( player.GetTeam() )
 }
 
 #if SERVER
@@ -4265,7 +4265,7 @@ entity function UpgradeCore_GetHighlightedHarvester()
 
 bool function UpgradeCore_UpdateHighlightedHarvesterIcon()
 {
-	if( Perks_GetPerkPingInfo().ent != null ) // DeathBoxInsight_GetCurrentPingInfo not available (perk_death_box_insight.nut not deployed)
+	if( Perks_GetPerkPingInfo().ent != null || DeathBoxInsight_GetCurrentPingInfo().loot != null )
 		return false
 
 	entity player = GetLocalClientPlayer()

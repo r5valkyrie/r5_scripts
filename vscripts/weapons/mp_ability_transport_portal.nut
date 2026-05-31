@@ -236,6 +236,7 @@ void function MpAbilityTransportPortal_Init()
 	#if SERVER
 	RegisterSignal( TRANSPORT_PORTAL_EXTRA_WAIT_TIME_SIGNAL )
 	RegisterSignal( TRANSPORT_PORTAL_LEAVE_WAYPOINT_TRIGGER_SIGNAL )
+	RegisterSignal( "OnBeginDissolve" )
 	#endif
 	#if CLIENT
 	RegisterSignal( TRANSPORT_PORTAL_HINT_THREAD )
@@ -502,7 +503,15 @@ void function OnPropScriptCreated( entity ent )
 			AddCallback_OnUseEntity_ClientServer( ent, OnUse_Receiver )
 
 			entity rootEnt = ent.GetOwner()
+			if ( IsValid( rootEnt ) )
+			{
+				thread ManageLookAtRui_Thread( ent, player )
 
+				if ( !rootEnt.GetUseStateByIndex( player.GetPlayerIndex() ) )
+				{
+					thread TransportPortalCreatedHint_Thread( ent, player, 3 )
+				}
+			}
 		}
 	}
 	else if ( ent.GetScriptName() == TRANSPORT_PORTAL_ALLY_PORTAL_SCRIPTNAME )
@@ -606,6 +615,9 @@ bool function IsPlacementPositionValid( vector position, entity player, entity p
 	{
 		return false
 	}
+
+
+
 	return true
 }
 #endif
@@ -914,7 +926,7 @@ void function ManageRootEntLifetime_Thread( entity translocator, entity receiver
 
 			if ( IsValid( translocator ) )
 			{
-				//UnparentAndReparentIfNeeded( translocator, rootEnt )
+				UnparentAndReparentIfNeeded( translocator, rootEnt )
 				EmitSoundAtPosition( TEAM_UNASSIGNED, translocator.GetCenter(), TRANSPORT_PORTAL_CLOSE_SOUND, translocator)
 				translocator.Dissolve( ENTITY_DISSOLVE_NONE, ZERO_VECTOR, 500 )
 				StopSoundOnEntity( translocator, TRANSPORT_PORTAL_AMBIENT_ACTIVE_HUM_SOUND )
@@ -1235,7 +1247,7 @@ void function Receiver_OnPostDamaged( entity receiver, var damageInfo )
 			PIN_PlayerItemDestruction( player, ITEM_DESTRUCTION_TYPES.TRANSPORTATION_PORTAL, { reason = destructionReason } )
 		}
 
-		StartParticleEffectInWorld( GetParticleSystemIndex( TRANSPORT_PORTAL_DESTROYED ), receiver.GetOrigin(), <0,0,0> )
+		StartParticleEffectInWorldForRealms( GetParticleSystemIndex( TRANSPORT_PORTAL_DESTROYED ), receiver.GetOrigin(), <0,0,0>, receiver )
 		EmitSoundAtPosition( TEAM_UNASSIGNED, receiver.GetOrigin(), TRANSPORT_PORTAL_DESTROYED_SOUND, receiver)
 
 		array<entity> children = receiver.GetChildren()
@@ -1274,7 +1286,7 @@ void function Receiver_OnPostDamaged( entity receiver, var damageInfo )
 #if SERVER
 void function DissolveReceiver( entity receiver, entity rootEnt )
 {
-	//UnparentAndReparentIfNeeded( receiver, rootEnt )
+	UnparentAndReparentIfNeeded( receiver, rootEnt )
 	receiver.Dissolve( ENTITY_DISSOLVE_NONE, ZERO_VECTOR, 500 )
 	receiver.NotSolid()
 }
@@ -1363,6 +1375,9 @@ bool function Receiver_CanUseStandardChecks( entity player, entity receiver )
 		return false
 
 	if ( IsBitFlagSet( player.GetWeaponDisableFlags(), WEAPON_DISABLE_FLAGS_MAIN) )
+		return false
+
+	if ( rootEnt.GetUseStateByIndex( player.GetPlayerIndex() ) )
 		return false
 
 	entity weapon = player.GetOffhandWeapon( OFFHAND_EQUIPMENT )
@@ -1603,6 +1618,10 @@ void function OnBleedoutStarted( entity victim, float endTime )
 		entity rootEnt = receiver.GetOwner()
 		if ( !IsValid( rootEnt ) )
 			continue
+
+		if ( rootEnt.GetUseStateByIndex( victim.GetPlayerIndex() ) )
+			continue
+
 		thread DelayUltHintThreadOnKnock( victim, receiver )
 		break
 	}
@@ -1724,7 +1743,7 @@ void function ManageLookAtRui_Thread( entity receiver, entity player )
 		RuiSetBool( iconRui, "isInRange", inRange )
 		RuiSetBool( regroupInfoRui, "isInRange", inRange )
 
-		bool hasPlayerUsedRecal = false
+		bool hasPlayerUsedRecal = rootEnt.GetUseStateByIndex( player.GetPlayerIndex() )
 		RuiSetBool( regroupInfoRui, "playerHasUsedRecall", hasPlayerUsedRecal )
 
 		if ( file.ultPendingRuiDurationUpdate == receiver )
@@ -1776,6 +1795,8 @@ void function ManageLookAtRui_Thread( entity receiver, entity player )
 		int team                   = player.GetTeam()
 		int squadUses			   = 0 //Counter for if it's been used by the squad or not
 
+		if (rootEnt.GetUseStateByIndex( player.GetPlayerIndex() ))
+			squadUses++
 
 		array<entity> playerSquad = GetPlayerArrayOfTeam( team )
 		ArrayRemoveInvalid( playerSquad )
@@ -1796,7 +1817,10 @@ void function ManageLookAtRui_Thread( entity receiver, entity player )
 				entity squadMate = playerSquad[index]
 				ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( squadMate ), Loadout_Character() )
 				RuiSetImage( iconRui, "teammatePortrait" + index, CharacterClass_GetGalleryPortrait(character) )
+				RuiSetBool( iconRui, "teammateHasUsed" + index, rootEnt.GetUseStateByIndex( squadMate.GetPlayerIndex() ) )
 
+				if (rootEnt.GetUseStateByIndex( squadMate.GetPlayerIndex() ))
+					squadUses++
 			}
 		}
 
@@ -2177,7 +2201,7 @@ void function ChasePortalDoTeleport( entity allyPortalRootEnt, entity player )
 	//if (!TRANSPORT_PORTAL_NAVMESH_PATH_DEBUG)
 	#endif
 	{
-		//rootEnt.SetUseStateByIndex( player.GetPlayerIndex(), true )
+		rootEnt.SetUseStateByIndex( player.GetPlayerIndex(), true )
 	}
 
 	PhaseTunnelPortalData portalData = file.allyPortalToDataMap[allyPortalRootEnt].tunnelData

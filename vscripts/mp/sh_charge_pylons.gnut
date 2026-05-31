@@ -278,7 +278,7 @@ ChargePylonData function DuplicateChargePylonToExclusiveRealm( ChargePylonData p
 
 	// Button
 	entity buttonToDupe = pylonDataToDupe.button
-	entity newButton = CreatePropDynamic( CHARGE_PYLON_BUTTON_MODEL, buttonToDupe.GetOrigin(), buttonToDupe.GetAngles(), SOLID_VPHYSICS, -1 )
+	entity newButton = CreatePropDynamic( CHARGE_PYLON_BUTTON_MODEL, buttonToDupe.GetOrigin(), buttonToDupe.GetAngles(), SOLID_VPHYSICS, -1, false )
 	newButton.SetScriptName( buttonToDupe.GetScriptName() )
 	newPylonData.button = newButton
 	DispatchSpawn( newButton )
@@ -332,7 +332,7 @@ ChargePylonData function DuplicateChargePylonToExclusiveRealm( ChargePylonData p
 
 void function SetChargePylonToExclusiveRealm( ChargePylonData pylonData, int newRealm )
 {
-	/*pylonData.trigger.RemoveFromAllRealms()
+	pylonData.trigger.RemoveFromAllRealms()
 	pylonData.mover.RemoveFromAllRealms()
 	pylonData.button.RemoveFromAllRealms()
 	pylonData.batteryProp.RemoveFromAllRealms()
@@ -351,7 +351,7 @@ void function SetChargePylonToExclusiveRealm( ChargePylonData pylonData, int new
 			SetRealms( ambGeneric, [ newRealm ] )
 		}
 
-	pylonData.realm = newRealm*/
+	pylonData.realm = newRealm
 
 }
 
@@ -538,7 +538,7 @@ void function ChargePylon_StartUse( entity panel, entity player, ExtendedUseSett
 void function ChargePylon_UseSuccess( entity panel, entity player, ExtendedUseSettings settings )
 {
 	                  
-	//Wattson_TT_ChargePylon( panel )
+	Wattson_TT_ChargePylon( panel )
        
 
 	ChargePylonData pylonData = GetPylonDataFromButton( panel )
@@ -553,9 +553,9 @@ void function ChargePylon_UseSuccess( entity panel, entity player, ExtendedUseSe
 	panel.UnsetUsable()
 
 	                  
-	//if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
 	{
-		//FR_Nessie_OnUseChargeTower( player )
+		FR_Nessie_OnUseChargeTower( player )
 	}
        
 
@@ -825,7 +825,7 @@ void function ChargePylon_StartRechargeFromEmptyFX( ChargePylonData pylonData )
 	foreach( vector org in pylonData.rechargeFXTargets )
 	{
 		entity fx_blinkLight = StartParticleEffectInWorld_ReturnEntity( fxId_blinkLight, org, < 0, 0, 0 > )
-		//SetRealms( fx_blinkLight, pylonData.batteryProp.GetRealms() )
+		SetRealms( fx_blinkLight, pylonData.batteryProp.GetRealms() )
 		pylonData.fxEntsForCleanup.append( fx_blinkLight )
 	}
 }
@@ -861,19 +861,19 @@ void function ChargePylon_OnEnterChannelingState( ChargePylonData pylonData )
 	ChargePylon_ClearAudioByName( pylonData, SFX_CHARGE_PYLON_FULL_3P )
 
 	entity fx_preFire = StartParticleEffectInWorld_ReturnEntity( fxId_preFire, pylonData.batteryProp.GetCenter(), pylonData.batteryProp.GetAngles() )
-	//SetRealms( fx_preFire, pylonData.batteryProp.GetRealms() )
+	SetRealms( fx_preFire, pylonData.batteryProp.GetRealms() )
 	pylonData.fxEntsForCleanup.append( fx_preFire )
 
 
 	foreach( Point pointData in pylonData.giveChargeFXTargets )
 	{
 		entity fx_rodElec = StartParticleEffectInWorld_ReturnEntity( fxId_rodElec, pointData.origin - < 0, 0, 20 >, AnglesCompose( pointData.angles, <-90, 0, 0> ) )
-		//SetRealms( fx_rodElec, pylonData.batteryProp.GetRealms() )
+		SetRealms( fx_rodElec, pylonData.batteryProp.GetRealms() )
 		pylonData.fxEntsForCleanup.append( fx_rodElec )
 
 		vector offsetOrg = LocalPosToWorldPos_NoEnt( CHARGE_PYLON_VERT_POLE_FX_OFFSET, pointData.origin, pointData.angles )
 		entity fx_rodElecPassive = StartParticleEffectInWorld_ReturnEntity( fxId_rodElecPassive, offsetOrg, < 0, 0, 0 > )
-		//SetRealms( fx_rodElecPassive, pylonData.batteryProp.GetRealms() )
+		SetRealms( fx_rodElecPassive, pylonData.batteryProp.GetRealms() )
 		pylonData.fxEntsForCleanup_Charging.append( fx_rodElecPassive )
 	}
 }
@@ -882,7 +882,7 @@ void function ChargePylon_GiveChargeInstantFX_Top( ChargePylonData pylonData )
 {
 	int fxId_lightGlow = GetParticleSystemIndex( FX_CHARGE_PYLON_GIVE_CHARGE_TOP )
 	entity fx_lightGlow = StartParticleEffectInWorld_ReturnEntity( fxId_lightGlow, pylonData.batteryProp.GetCenter(), pylonData.batteryProp.GetAngles() )
-	//SetRealms( fx_lightGlow, pylonData.batteryProp.GetRealms() )
+	SetRealms( fx_lightGlow, pylonData.batteryProp.GetRealms() )
 	pylonData.fxEntsForCleanup.append( fx_lightGlow )
 	EmitSoundAtPosition( TEAM_UNASSIGNED, pylonData.fullPosition, SFX_CHARGE_PYLON_SEQ_COMPLETE_3P, pylonData.batteryProp )
 }
@@ -891,14 +891,14 @@ void function ChargePylon_GiveChargeInstantFX_Bottom( ChargePylonData pylonData 
 {
 	int fxId_lightGlow2 = GetParticleSystemIndex( FX_CHARGE_PYLON_GIVE_CHARGE_BOTTOM )
 	entity fx_lightGlow2 = StartParticleEffectInWorld_ReturnEntity( fxId_lightGlow2, pylonData.batteryProp.GetCenter(), pylonData.batteryProp.GetAngles() )
-	//SetRealms( fx_lightGlow2, pylonData.batteryProp.GetRealms() )
+	SetRealms( fx_lightGlow2, pylonData.batteryProp.GetRealms() )
 	pylonData.fxEntsForCleanup.append( fx_lightGlow2 )
 }
 
 void function ChargePylon_BatteryPropFallCompleteFX( ChargePylonData pylonData )
 {
 	entity shake = CreateShake( pylonData.fullPosition, 8, 100, 0.75, 2048 )
-	//SetRealms( shake, pylonData.batteryProp.GetRealms() )
+	SetRealms( shake, pylonData.batteryProp.GetRealms() )
 	shake.kv.spawnflags = 4 // SF_SHAKE_INAIR
 }
 

@@ -472,7 +472,7 @@ void function BlueNessieSpawnSequenceThread( int realm )
 
 	entity nessie = FR_SpawnNessie( realm, start, angles, NessieSkinIndexes.BLUE_NESSIE )
 
-	StartParticleEffectInWorld( GetParticleSystemIndex( $"P_impact_dpod_default" ), start, angles )
+	StartParticleEffectInWorldForRealms( GetParticleSystemIndex( $"P_impact_dpod_default" ), start, angles, nessie )
 	EmitSoundAtPosition( TEAM_UNASSIGNED, start, SOUND_CARE_PACKAGE_LAND, nessie )
 	CreateShake( start, 7, 0.15, 1.75, 768 )
 
@@ -784,7 +784,7 @@ void function FR_Nessie_OnUseZipline( entity player, entity ziprail)
 	if ( IsNessieDisabled( NessieSkinIndexes.YELLOW_NESSIE ) )
 		return
 
-	if ( IsValid(player) && Zipline_IsCurvedZipline(ziprail) )
+	if ( IsValid(player) && ziprail.Zipline_IsCurvedZipline() )
 	{
 		int realm = player.GetRealms()[0]
 		if ( realm in file.yellowNessieConditionsPerRealm )
@@ -1656,7 +1656,7 @@ void function HighPointMonitorPlayer_Thread( entity player, array<entity> player
 	crouchHandle.value = player.PushForcedStance( FORCE_STANCE_CROUCH )
 	player.MovementDisable()
 	player.SetInvulnerable()
-	//player.DisableWeaponTypes( WPT_ALL_EXCEPT_VIEWHANDS )
+	player.DisableWeaponTypes( WPT_ALL_EXCEPT_VIEWHANDS )
 	AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD_INSTANT )
 	AddCinematicFlag( player, CE_FLAG_HIDE_PERMANENT_HUD )
 
@@ -1670,7 +1670,7 @@ void function HighPointMonitorPlayer_Thread( entity player, array<entity> player
 	player.ClearInvulnerable()
 	player.SetShieldHealth( player.GetShieldHealthMax() )
 	player.SetHealth( player.GetMaxHealth() )
-	//player.EnableWeaponTypes( WPT_ALL_EXCEPT_VIEWHANDS )
+	player.EnableWeaponTypes( WPT_ALL_EXCEPT_VIEWHANDS )
 	RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD_INSTANT )
 	RemoveCinematicFlag( player, CE_FLAG_HIDE_PERMANENT_HUD )
 	needToClearFlags.value = false

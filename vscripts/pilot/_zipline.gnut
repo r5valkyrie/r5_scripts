@@ -798,12 +798,12 @@ void function CodeCallback_ZiplineMount( entity player, entity zipline )
 	entity endPoint = zipline.GetLinkEnt()
 	    if ( IsValid( player ) && IsValid( endPoint ) && !zipline.Zipline_IsEndDetached() )
 	    {
-	    	//if ( IsZiplinePlacedByPathfinder( zipline ) )
+	    	if ( IsZiplinePlacedByPathfinder( zipline ) )
 	    	{
-	    	//	GivePlayerSettingsMods( player, ["fast_zipline"] )
-	    	//	PIN_Interact( player, "pathfinder_zipline", endPoint.GetOrigin() )
+	    		GivePlayerSettingsMods( player, ["fast_zipline"] )
+	    		PIN_Interact( player, "pathfinder_zipline", endPoint.GetOrigin() )
 	    	}
-	    	//else
+	    	else
 	    		PIN_Interact( player, "zipline", endPoint.GetOrigin() )
 	    }
 

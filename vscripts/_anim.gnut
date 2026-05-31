@@ -414,7 +414,7 @@ void function __PlayAnim( entity guy, string animation_name, reference = null, o
 
 	guy.SetNextThinkNow()
 
-	if ( guy.IsNPC() && !guy.IsInterruptableForScriptedAnim() )
+	if ( guy.IsNPC()  )
 	{
 		// better than nothing failsafe
 		guy.Signal( "OnAnimationInterrupted" )

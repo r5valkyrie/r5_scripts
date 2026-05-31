@@ -122,6 +122,24 @@ global enum eEntitiesDidLoadPriority
 	MEDIUM,
 	HIGH
 }
+
+global struct RingBuffer
+{
+	array<var> 	arr
+	int        	readIdx
+	int 		writeIdx
+	int 		sizeMax
+	int			sizeFilled
+}
+
+global struct RingBufferEntity
+{
+	array<entity>	arr
+	int				readIdx
+	int				writeIdx
+	int				sizeMax
+	int				sizeFilled
+}
 const array<string> ALLOWED_SCRIPT_PARENT_ENTS = [
 	"hatch_bunker_entrance_model_z16",
 	"hatch_bunker_entrance_model_z6",
@@ -6958,6 +6976,66 @@ void function DEV_PrintClientCommands( table< string, void functionref( entity, 
 	}
 
 	printt( data )
+}
+//=== entity ring buffers ===
+RingBufferEntity function RingBufferEntity_Init( int maxSize )
+{
+	RingBufferEntity rb
+	rb.arr     = []
+	rb.arr.resize( maxSize, null )
+	rb.readIdx = 0
+	rb.writeIdx = 0
+	rb.sizeMax = maxSize
+	rb.sizeFilled = 0
+
+	return rb
+}
+
+void function RingBufferEntity_Clear( RingBufferEntity buffer )
+{
+	buffer.arr = []
+	buffer.arr.resize( buffer.sizeMax, null )
+	buffer.readIdx = 0
+	buffer.writeIdx = 0
+	buffer.sizeFilled = 0
+}
+
+int function RingBufferEntity_GetSizeFilled( RingBufferEntity buffer )
+{
+	return buffer.sizeFilled
+}
+
+int function RingBufferEntity_GetSizeMax( RingBufferEntity buffer )
+{
+	return buffer.sizeMax
+}
+
+bool function RingBufferEntity_IsFull( RingBufferEntity buffer )
+{
+	return buffer.sizeFilled >= buffer.sizeMax
+}
+
+bool function RingBufferEntity_IsEmpty( RingBufferEntity buffer )
+{
+	return buffer.sizeFilled == 0
+}
+
+//if you call enqueue while the buffer is full, you will overwrite the current oldest entry
+void function RingBufferEntity_Enqueue( RingBufferEntity buffer, entity item )
+{
+	buffer.arr[ buffer.writeIdx ] = item
+	buffer.writeIdx = (buffer.writeIdx + 1) % buffer.sizeMax
+	buffer.sizeFilled = minint( buffer.sizeFilled + 1, buffer.sizeMax )
+}
+
+//dequeue on empty buffer returns null
+entity function RingBufferEntity_Dequeue( RingBufferEntity buffer )
+{
+	entity res = buffer.arr[ buffer.readIdx ]
+	buffer.readIdx = (buffer.readIdx + 1) % buffer.sizeMax
+	buffer.sizeFilled = maxint( buffer.sizeFilled - 1, 0 )
+
+	return res
 }
 
 #if SERVER

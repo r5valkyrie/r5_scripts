@@ -70,10 +70,10 @@ const bool ARROWS_CAN_BE_PICKED_UP_DEFAULT = false
 
 const string SHATTER_ARROWS_DMG_MODS_BASE_STR = "arrows_shatter_dmg_lv"
 
-
+                               
 const string VALENTINES_COLOR = "255 119 188 255"
 const vector VALENTINES_COLOR_VEC = <255, 119, 188>
-
+      
 
 const string FX_BOW_LIGHT_PREFIX = "fx_bow_light_"
 const int FX_BOW_LIGHT_COUNT = 3
@@ -102,6 +102,8 @@ struct
 
 	string chargeCompleteSound
 
+	MarksmansTempoSettings& bowTempoSettings
+
 	table<string, array<asset> > fxLightAssets1p
 
 	array<vector> arrowTypeColors
@@ -119,6 +121,10 @@ struct
 	float arrowsStickLifetimeWorld
 	bool  arrowsCanBePickedUp
 
+	#if SERVER
+		RingBufferEntity&            arrowsInWorld
+		table<int, RingBufferEntity> arrowsInZones
+	#endif
 	int ammoStackSize
 
 	LootData& singleArrowLootData
@@ -132,13 +138,13 @@ struct
 
 void function MpWeaponBow_Init()
 {
+	PrecacheWeapon( $"mp_weapon_bow" )
+
 	RegisterSignal( BOW_DEACTIVATE_SIGNAL )
 	RegisterSignal( HELPER_DOT_RUI_ABORT_SIGNAL )
 
 	PrecacheModel( SINGLE_ARROW_MODEL )
 	PrecacheModel( SINGLE_ARROW_MODEL_PICKUP )
-
-	PrecacheWeapon( "mp_weapon_bow" )
 
 	#if SERVER
 		AddWeaponModChangedCallback( "mp_weapon_bow", OnWeaponModChanged_WeaponBow )
@@ -183,6 +189,9 @@ void function MpWeaponBow_Init()
 	#if CLIENT
 		file.inspectDOF = GetPlaylistVarBool( GetCurrentPlaylistName(), "bow_inspect_dof", true )
 	#endif
+	#if SERVER
+		file.arrowsInWorld = RingBufferEntity_Init( file.arrowsStickMaxWorld )
+	#endif
 }
 
 
@@ -204,15 +213,57 @@ void function OnWeaponActivate_weapon_bow( entity weapon )
 
 		file.chargeCompleteSound = GetWeaponInfoFileKeyField_GlobalString( "mp_weapon_bow", CHARGE_COMPLETE_SOUND_SETTING )
 
+		MarksmansTempoSettings settings
+		settings.requiredShots             = GetWeaponInfoFileKeyField_GlobalInt( "mp_weapon_bow", MARKSMANS_TEMPO_REQUIRED_SHOTS_SETTING )
+		settings.graceTimeBuildup          = GetWeaponInfoFileKeyField_GlobalFloat( "mp_weapon_bow", MARKSMANS_TEMPO_GRACE_TIME_SETTING )
+		settings.graceTimeInTempo          = GetWeaponInfoFileKeyField_GlobalFloat( "mp_weapon_bow", MARKSMANS_TEMPO_GRACE_TIME_IN_TEMPO_SETTING )
+		settings.fadeoffMatchGraceTime     = GetWeaponInfoFileKeyField_GlobalInt( "mp_weapon_bow", MARKSMANS_TEMPO_FADEOFF_MATCH_GRACE_TIME )
+		settings.fadeoffOnPerfectMomentHit = GetWeaponInfoFileKeyField_GlobalFloat( "mp_weapon_bow", MARKSMANS_TEMPO_FADEOFF_ON_PERFECT_MOMENT_SETTING )
+		settings.fadeoffOnFire             = GetWeaponInfoFileKeyField_GlobalFloat( "mp_weapon_bow", MARKSMANS_TEMPO_FADEOFF_ON_FIRE_SETTING )
+		settings.weaponDeactivateSignal    = BOW_DEACTIVATE_SIGNAL
+		file.bowTempoSettings              = settings
+
 		file.centerDotHelperMinChargeLvl           = GetWeaponInfoFileKeyField_GlobalInt( "mp_weapon_bow", CENTER_DOT_MIN_CHARGE_SETTING )
 		file.centerDotHelperMinChargeLvlOpticClamp = GetWeaponInfoFileKeyField_GlobalInt( "mp_weapon_bow", CENTER_DOT_MIN_CHARGE_SETTING + "_optic_clamp" )
+
+		Assert( eArrowTypes._count == 2 )    //make sure to add new logic for new arrow tips here
+		file.arrowTypeColors.append( GetWeaponInfoFileKeyField_GlobalVectorInt( "mp_weapon_bow", ARROW_COLOR_STANDARD_SETTING ) )
+		file.arrowTypeColors.append( GetWeaponInfoFileKeyField_GlobalVectorInt( "mp_weapon_bow", ARROW_COLOR_SHATTER_SETTING ) )
 
 		//file.ammoStackSize = SURVIVAL_Loot_GetLootDataByRef( SURVIVAL_Loot_GetLootDataByRef( "mp_weapon_bow" ).ammoType ).inventorySlotCount
 
 		file.singleArrowLootData = SURVIVAL_Loot_GetLootDataByRef( ARROWS_AMMO )
+
+		if ( ArrowsCanBePickedUp() )
+			SetCallback_LootTypeExtraCanUseFunction( file.singleArrowLootData, StuckArrow_ExtraCanUseFunction )
+
+		#if SERVER
+			file.arrowsInZones[-1] <- RingBufferEntity_Init( file.arrowsStickMaxUnknownZone )
+			foreach ( int id in MapZones_GetAllZoneIDs() )
+			{
+				file.arrowsInZones[id] <- RingBufferEntity_Init( file.arrowsStickMaxZone )
+			}
+		#endif
 	}
 
 	entity player = weapon.GetWeaponOwner()
+
+
+	thread ShatterRounds_UpdateShatterRoundsThink( weapon )
+	#if SERVER
+		if ( weapon.HasMod( SHATTER_ROUNDS_ALTFIRE_MOD ) )
+			thread ShatterRounds_ADSThink ( player, weapon )
+		else
+			weapon.RemoveMod( SHATTER_ROUNDS_HIPFIRE_MOD )
+	#endif
+	thread MarksmansTempo_OnActivate( weapon, file.bowTempoSettings )
+
+	                               
+		#if SERVER
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_VALENTINES_S15 ) )
+			Valentines_ShowRangeFX( weapon.GetOwner() )
+		#endif
+       
 }
 
 
@@ -222,12 +273,25 @@ void function OnWeaponDeactivate_weapon_bow( entity weapon )
 	#if CLIENT
 		weapon.Signal( BOW_DEACTIVATE_SIGNAL )
 
+		weapon.Signal( SHATTER_ROUNDS_THINK_END_SIGNAL )
 
 		#if SERVER
 			weapon.Signal( SHATTER_ROUNDS_ADS_THINK_THREAD_ABORT_SIGNAL )
 		#endif
 
 	#endif
+	MarksmansTempo_OnDeactivate( weapon, file.bowTempoSettings )
+
+	                               
+	#if SERVER
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_VALENTINES_S15 ) )
+		{
+			entity player = weapon.GetOwner()
+			if ( IsValid( player ) )
+				weapon.GetOwner().Signal( VALENTINES_S15_HEAL_CANCELED_SIGNAL )
+		}
+		#endif
+       
 }
 
 
@@ -240,10 +304,6 @@ var function OnWeaponPrimaryAttack_weapon_bow( entity weapon, WeaponPrimaryAttac
 	if ( !IsValid( player ) || !player.IsPlayer() )
 		return 0
 
-	// Minimum charge threshold (replaces engine's charge_attack_min_charge_required)
-	if ( weapon.GetWeaponChargeFractionCurved() < 0.15 )
-		return 0
-
 	#if CLIENT
 		if ( !(InPrediction() && weapon.ShouldPredictProjectiles()) )
 			return 0
@@ -251,19 +311,36 @@ var function OnWeaponPrimaryAttack_weapon_bow( entity weapon, WeaponPrimaryAttac
 
 	ApplyModsForChargeLevel( weapon, weapon.GetWeaponChargeLevel() )
 
+	weapon.SetSoundCodeControllerValue( 100.0 * weapon.GetWeaponChargeFractionCurved() )
+
+	//charge varying vals
 	float adjustedChargeFrac = max( 0.0, min( weapon.GetWeaponChargeFractionCurved(), 1.0 ) )
 
 	float baseSpeed       = weapon.GetWeaponSettingFloat( eWeaponVar.projectile_launch_speed )
 	float speedMultiplier = 0.0
 	bool ignoreSpread     = false
 
-	speedMultiplier = GraphCapped( adjustedChargeFrac, 0.0, 1.0, baseSpeed, file.fullChargeSpeed )
+	if ( weapon.HasMod( SHATTER_ROUNDS_HIPFIRE_MOD ) )
+	{
+		speedMultiplier = GraphCapped( adjustedChargeFrac, 0.0, 1.0, baseSpeed, file.fullChargeSpeedSplit )
+		ignoreSpread    = true
+	}
+	else
+	{
+		speedMultiplier = GraphCapped( adjustedChargeFrac, 0.0, 1.0, baseSpeed, file.fullChargeSpeed )
+	}
 	speedMultiplier /= baseSpeed        //the code multiplies by projectile_launch_speed internally, the speed is meant to be a multipler of that base speed
 
 
+	                    
+		GoldenHorsePurple_OnWeaponPrimaryAttack( weapon, attackParams )
+       
 	weapon.FireWeapon_Default( attackParams.pos, attackParams.dir, speedMultiplier, 1.0, ignoreSpread )
+	                    
+		GoldenHorsePurple_PostFire( weapon )
+       
 
-
+	MarksmansTempo_OnFire( weapon, file.bowTempoSettings, true )
 
 	thread ClearChargeAfterFrame( weapon )
 
@@ -300,7 +377,7 @@ var function OnWeaponPrimaryAttack_weapon_bow( entity weapon, WeaponPrimaryAttac
 					duration -= clampOpticDelay
 					delay = clampOpticDelay
 				}
-				//thread DisplayCenterDotRui( weapon, HELPER_DOT_RUI_ABORT_SIGNAL, delay, duration, 0.7, 0.05, 0.1 )
+				thread DisplayCenterDotRui( weapon, HELPER_DOT_RUI_ABORT_SIGNAL, delay, duration, 0.7, 0.05, 0.1 )
 			}
 		}
 	#endif
@@ -324,17 +401,16 @@ void function OnWeaponCustomActivityStart_weapon_bow( entity weapon )
 }
 
 
-void function OnWeaponCustomActivityEnd_weapon_bow( entity weapon )
+void function OnWeaponCustomActivityEnd_weapon_bow( entity weapon)
 {
 	#if CLIENT
 		if ( !file.inspectDOF )
 			return
-		/*int activity == 0
 
-		if ( activity == ACT_VM_WEAPON_INSPECT )
+		if ( weapon.GetWeaponActivity() == ACT_VM_WEAPON_INSPECT )
 		{
 			DoF_LerpNearDepthToDefault( 0.3 )
-		}*/
+		}
 	#endif
 }
 
@@ -367,6 +443,8 @@ bool function OnWeaponChargeBegin_weapon_bow( entity weapon )
 		weapon.Signal( HELPER_DOT_RUI_ABORT_SIGNAL )
 		PlayChargeFX( player, weapon )
 	#endif
+
+	MarksmansTempo_AbortFadeoff( weapon, file.bowTempoSettings )
 	return true
 }
 
@@ -390,10 +468,11 @@ bool function OnWeaponChargeLevelIncreased_weapon_bow( entity weapon )
 
 			if ( IsValid( player ) && IsLocalClientPlayer( player ) )
 			{
-				//Rumble_Play( "rumble_bow_max_charge", {} )
+				Rumble_Play( "rumble_bow_max_charge", {} )
 			}
 		#endif
 
+		MarksmansTempo_SetPerfectTempoMoment( weapon, file.bowTempoSettings, player, Time(), true )
 	}
 
 	//apply mods every charge up to show spread
@@ -414,28 +493,59 @@ void function OnProjectileCollision_weapon_bow( entity projectile, vector pos, v
 		if ( GetCurrentPlaylistVarBool( "arrows_stick_disable", false ) )
 			return
 
+		if ( projectile.HasWeaponMod( SHATTER_ROUNDS_HIPFIRE_MOD ) )
+			return
+
 		if ( !IsValid( hitEnt ) )
 			return
+
+		if ( !hitEnt.e.canStickArrows )
+			return
+
 		//float rand = RandomFloat( 1.0 )
 		//if ( rand > file.arrowsStickChance )
 		//	return
 
 		if ( hitEnt.IsPlayer() || hitEnt.IsNPC() )
 		{
+			foreach ( entity arrow in hitEnt.e.arrowsInBody )
+			{
+				if ( !IsValid( arrow ) )
+				{
+					hitEnt.e.arrowsInBody.fastremovebyvalue( arrow )
+				}
+			}
+			if ( hitEnt.e.arrowsInBody.len() >= file.arrowsStickMaxPlayer )
+			{
+				entity arrow = hitEnt.e.arrowsInBody.getrandom()
+				hitEnt.e.arrowsInBody.fastremovebyvalue( arrow )
+				arrow.Destroy()
+			}
+
 			vector position = pos + projectile.GetForwardVector() * file.arrowsStickIntoPlayerDist
 			vector angles   = VectorToAngles( projectile.GetForwardVector() )
-			entity moverEnt = CreateScriptMover_NEW( BOW_MOVER_SCRIPTNAME, position, angles )
+			entity moverEnt = CreateScriptMover( BOW_MOVER_SCRIPTNAME, position, angles, 0 )
 			moverEnt.e.spawnTime = Time()
+			MarkEntForCleanupOnRoundEnd( moverEnt )
 			moverEnt.SetParentWithHitbox( hitEnt, hitBox, true )
 
 			entity ent = CreatePropDynamic( SINGLE_ARROW_MODEL, position, angles, 0 )
 			ent.kv.fadedist    = 3000
 			ent.e.spawnTime    = Time()
+			MarkEntForCleanupOnRoundEnd( ent )
 			ent.SetParent( moverEnt, "", true )
 
+			                               
+				if ( projectile.HasWeaponMod( WEAPON_LOCKEDSET_MOD_CUPID ) )
+				{
+					ent.kv.rendercolor = VALENTINES_COLOR
+				}
+				else
+         
+			ent.kv.rendercolor = file.arrowTypeColors[ eArrowTypes.STANDARD ]
 
-			//ent.kv.rendercolor = file.arrowTypeColors[ eArrowTypes.STANDARD ]
-
+			if ( hitEnt.IsPlayer() )
+				FiringRange_AddToRemoveOnCharacterChange( moverEnt, hitEnt )
 
 			ent.RemoveFromAllRealms()
 			if ( IsValid( projectile ) )
@@ -444,9 +554,28 @@ void function OnProjectileCollision_weapon_bow( entity projectile, vector pos, v
 				ent.AddToOtherEntitysRealms( hitEnt )
 
 			thread CleanupArrows( moverEnt, hitEnt, file.arrowsStickLifetimePlayer )
+
+			hitEnt.e.arrowsInBody.append( moverEnt )
 		}
-		else//if ( PositionIsInMapBounds( pos ) )
+		else if ( PositionIsInMapBounds( pos ) )
 		{
+			//we have a global ring buffer to limit the number of total arrows on the map
+			if ( RingBufferEntity_IsFull( file.arrowsInWorld ) )
+			{
+				entity oldArrow = RingBufferEntity_Dequeue( file.arrowsInWorld )
+				if ( IsValid( oldArrow ) )
+					oldArrow.Destroy()
+			}
+
+			//and a ring buffer per zone to prevent too many arrows in one spot
+			int zone                    = MapZones_GetZoneForOrigin( pos )
+			RingBufferEntity zoneBuffer = file.arrowsInZones[zone]
+			if ( RingBufferEntity_IsFull( zoneBuffer ) )
+			{
+				entity oldArrow = RingBufferEntity_Dequeue( zoneBuffer )
+				if ( IsValid( oldArrow ) )
+					oldArrow.Destroy()
+			}
 
 
 			entity ent
@@ -454,6 +583,7 @@ void function OnProjectileCollision_weapon_bow( entity projectile, vector pos, v
 			if ( ArrowsCanBePickedUp() )
 			{
 				ent = CreateEntity( "prop_survival" )
+				//ent.SetSurvivalPropFadeDist( 3000 )
 				ent.SetValueForModelKey( SINGLE_ARROW_MODEL_PICKUP )
 
 				ent.SetSurvivalInt( file.singleArrowLootData.index )
@@ -461,6 +591,7 @@ void function OnProjectileCollision_weapon_bow( entity projectile, vector pos, v
 				ent.SetUsable()
 				ent.SetUsableByGroup( "pilot" )
 				ent.AddUsableValue( USABLE_USE_COLLISION_ORIGIN | USABLE_CUSTOM_HINTS | USABLE_HORIZONTAL_FOV | USABLE_PRIORITY_LOW )
+				ent.EnableTouchAutoUse( AUTOPICKUP_DISTANCE_DEFAULT )
 
 				ent.e.lootRef = ARROWS_AMMO
 
@@ -476,18 +607,19 @@ void function OnProjectileCollision_weapon_bow( entity projectile, vector pos, v
 			ent.kv.fadedist       = 3000
 			ent.kv.renderamt      = 255
 
-
+			                               
 				if ( projectile.HasWeaponMod( WEAPON_LOCKEDSET_MOD_CUPID ) )
 				{
 					ent.kv.rendercolor = VALENTINES_COLOR
 				}
 				else
-
+         
 			ent.kv.rendercolor    = "255 255 255"
 			ent.kv.solid          = 0    // 0 = no collision, 2 = bounding box, 6 = use vPhysics, 8 = hitboxes only
 			SetForceDrawWhileParented( ent, true )
 
 			DispatchSpawn( ent )
+			MarkEntForCleanupOnRoundEnd( ent )
 
 			ent.e.spawnTime = Time()
 			SetItemSpawnSource( ent, eSpawnSource.PLAYER_DROP )
@@ -509,12 +641,21 @@ void function OnProjectileCollision_weapon_bow( entity projectile, vector pos, v
 			if ( ArrowsCanBePickedUp() )
 				angleOffset = <0, 90, 0>
 
+			if ( !PlantStickyEntity( ent, params, angleOffset, true ) )
+			{
+				ent.Destroy()
+				return
+			}
 
 			ent.RemoveFromAllRealms()
 			if ( IsValid( projectile ) )
 				ent.AddToOtherEntitysRealms( projectile )
 			else
 				Warning( "Could not add arrow to realm because it hit world and projectile was null." )
+
+
+			RingBufferEntity_Enqueue( file.arrowsInWorld, ent )
+			RingBufferEntity_Enqueue( zoneBuffer, ent )
 
 			thread CleanupArrows( ent, hitEnt, file.arrowsStickLifetimeWorld )
 		}
@@ -532,6 +673,28 @@ bool function StuckArrow_ExtraCanUseFunction( entity player, entity arrow, int u
 	if ( !ArrowsCanBePickedUp() )
 		return false
 
+	if ( IsBitFlagSet( useFlags, USE_FLAG_AUTO) )
+	{
+		//auto pickup only if you have a bow
+		array<entity> weapons = player.GetMainWeapons()
+		bool hasBow           = false
+		foreach ( entity weapon in weapons )
+		{
+			if ( weapon.GetWeaponClassName() == "mp_weapon_bow" )
+			{
+				hasBow = true
+				break
+			}
+		}
+
+		if ( !hasBow )
+			return false
+
+		//and if it won't create a new ammo stack if you already have arrows
+		int poolCount = player.AmmoPool_GetCount( eAmmoPoolType.arrows )
+		if ( poolCount > 0 && (poolCount % file.ammoStackSize) == 0 )
+			return false
+	}
 	return true
 }
 
@@ -555,6 +718,7 @@ void function CleanupArrows( entity ent, entity hitEnt, float time )
 
 		hitEnt.EndSignal( "OnDestroy" )
 		hitEnt.EndSignal( "OnDeath" )
+		hitEnt.EndSignal( ARROWS_UNSTICK_SIGNAL )
 	}
 	else
 	{
@@ -581,7 +745,18 @@ void function CleanupArrows( entity ent, entity hitEnt, float time )
 #if CLIENT
 void function WeaponBow_UpdateArrowColor( entity weapon, int shatterRoundsType )
 {
-	//weapon.kv.rendercolor = VectorToColorString( file.arrowTypeColors[ eArrowTypes.STANDARD ], 255 )
+	                               
+		if ( weapon.HasMod( WEAPON_LOCKEDSET_MOD_CUPID ) )
+		{
+			weapon.kv.rendercolor = VALENTINES_COLOR
+			return
+		}
+       
+
+	if ( shatterRoundsType == eShatterRoundsTypes.STANDARD )
+		weapon.kv.rendercolor = VectorToColorString( file.arrowTypeColors[ eArrowTypes.STANDARD ], 255 )
+	else if ( shatterRoundsType == eShatterRoundsTypes.SHATTER_TRI )
+		weapon.kv.rendercolor = VectorToColorString( file.arrowTypeColors[ eArrowTypes.SHATTER ], 255 )
 }
 #endif
 
@@ -604,7 +779,12 @@ void function ApplyModsForChargeLevel( entity weapon, int level )
 
 	int dmgModLevel
 	string baseDmgModStr
-
+	if ( weapon.HasMod( SHATTER_ROUNDS_HIPFIRE_MOD ) )
+	{
+		baseDmgModStr = SHATTER_ARROWS_DMG_MODS_BASE_STR
+		dmgModLevel   = GetBestAvailableModLevel( SHATTER_ARROWS_AVAILABLE_DMG_LEVELS, level - 1 )
+	}
+	else
 	{
 		baseDmgModStr = STANDARD_CHARGE_DMG_MODS_BASE_STR
 		dmgModLevel   = GetBestAvailableModLevel( STANDARD_ARROWS_AVAILABLE_DMG_LEVELS, level - 1 )
@@ -710,10 +890,17 @@ void function PlayChargeFX( entity player, entity weapon )
 		if ( fx1p == "" )
 			continue
 
-		//int handle = weapon.PlayWeaponEffectNoCullReturnViewEffectHandle( fx1p, $"", attachPoints[i], true, "" )
+		int handle = weapon.PlayWeaponEffectNoCullReturnViewEffectHandle( fx1p, $"", attachPoints[i], true, FX_PATTACH_WEAPON_CHARGE_FRACTION_CURVED )
 
 
-		//EffectSetControlPointVector( handle, 2, file.arrowTypeColors[ weapon.GetScriptInt0() ] )
+	                               
+		if ( weapon.HasMod( WEAPON_LOCKEDSET_MOD_CUPID ) )
+		{
+			EffectSetControlPointVector( handle, 2, VALENTINES_COLOR_VEC )
+		}
+		else
+       
+		EffectSetControlPointVector( handle, 2, file.arrowTypeColors[ weapon.GetScriptInt0() ] )
 	}
 }
 #endif
@@ -747,6 +934,24 @@ void function StopChargeFX( entity weapon )
 #if SERVER
 void function OnWeaponModChanged_WeaponBow( entity weapon, string mod, bool modAdded )
 {
+	if ( mod ==  SHATTER_ROUNDS_ALTFIRE_MOD )
+	{
+		if ( !IsValid( weapon ) )
+			return
 
+		if ( !weapon.IsWeaponX() )
+			return
+
+		entity player = weapon.GetWeaponOwner()
+		if ( !IsValid( player ) )
+			return
+
+		weapon.ForceChargeEndNoAttack()
+
+		if ( modAdded )
+			thread ShatterRounds_ADSThink ( player, weapon )
+		else
+			weapon.RemoveMod( SHATTER_ROUNDS_HIPFIRE_MOD )
+	}
 }
 #endif
